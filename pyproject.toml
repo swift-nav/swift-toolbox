@@ -5,10 +5,9 @@ description = ""
 authors = ["Swift Navigation <dev@swiftnav.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.7"
-PySide2 = "5.12.2"
+python = ">=3.9,<3.10"
+PySide2 = "^5.15.2"
 sbp = "^3.4.5"
-numpy = "^1.19.5"
 fbs = {git = "https://github.com/silverjam/fbs.git"}
 
 [tool.poetry.dev-dependencies]

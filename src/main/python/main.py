@@ -1,11 +1,10 @@
 import io
+import math
 import socket
 import sys
 import threading
 
 from fbs_runtime.application_context.PySide2 import ApplicationContext
-
-import numpy as np
 
 from PySide2.QtQuick import QQuickView
 from PySide2.QtCore import (Qt, QUrl, QObject, Slot, QPointF)
@@ -36,7 +35,7 @@ def sbp_main():
     with TCPDriver(host, port) as driver:
         with Handler(Framer(driver.read, None)) as source:
             for msg, _ in source.filter(SBP_MSG_VEL_NED):
-                h_vel = np.sqrt(msg.n**2 + msg.e**2) / 1000.0
+                h_vel = math.sqrt(msg.n**2 + msg.e**2) / 1000.0
                 v_vel = -msg.d / 1000.0
                 if len(POINTS_H) == 200:
                     POINTS_H.pop(0)
@@ -54,39 +53,39 @@ class ConsolePoints(QObject):
     _min: float = 0.0
     _max: float = 0.0
 
-    @Property(bool)
-    def valid(self) -> bool:
+    def getValid(self) -> bool:
         return self._valid
 
-    @valid.setter
     def setValid(self, valid) -> None:
         self._valid = valid
 
-    @Property('QVariantList')
-    def points(self) -> List[QPointF]:
+    valid = Property(bool, getValid, setValid)
+
+    def getPoints(self) -> List[QPointF]:
         return self._points
 
-    @points.setter
     def setPoints(self, points) -> None:
         self._points = points
 
-    @Property(float)
-    def min(self) -> float:
+    points = Property('QVariantList', getPoints, setPoints) # type: ignore
+
+    def getMin(self) -> float:
         return self._min
 
-    @min.setter
     def setMin(self, min: float) -> None:
         self._min = min
 
-    @Property(float)
-    def max(self) -> float:
+    min = Property(float, getMin, setMin)
+
+    def getMax(self) -> float:
         return self._max
 
-    @max.setter
     def setMax(self, max: float) -> None:
         self._max = max
 
-    @Slot(QtCharts.QXYSeries)
+    max = Property(float, getMax, setMax)
+
+    @Slot(QtCharts.QXYSeries) # type: ignore
     def fill_series(self, series):
         series.replace(self._points)
 

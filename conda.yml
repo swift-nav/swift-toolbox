@@ -1,0 +1,4 @@
+name: console_pp
+dependencies:
+  - python=3.7
+  - poetry=1.1

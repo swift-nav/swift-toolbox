@@ -94,7 +94,7 @@ class DataModel(QObject):
 
     points: List[QPointF]
 
-    @Slot(ConsolePoints)
+    @Slot(ConsolePoints) # type: ignore
     def fill_console_points(self, cp):
         if POINTS_H_MINMAX is None:
             cp.setValid(False)
@@ -111,7 +111,7 @@ if __name__ == '__main__':
 
     ctx = ApplicationContext()
 
-    qmlRegisterType(ConsolePoints, "SwiftConsole", 1, 0, "ConsolePoints")
+    qmlRegisterType(ConsolePoints, "SwiftConsole", 1, 0, "ConsolePoints") # type: ignore
     engine = QtQml.QQmlApplicationEngine()
 
     qml_view = ctx.get_resource('view.qml')

@@ -2,6 +2,14 @@
     "python.linting.pylintEnabled": true,
     "python.linting.enabled": true,
     "cSpell.ignoreWords": [
-        "piksi"
+        "console",
+        "piksi",
+        "points",
+        "swift"
+    ],
+    "python.linting.mypyEnabled": true,
+    "cSpell.words": [
+        "console",
+        "swift"
     ]
 }

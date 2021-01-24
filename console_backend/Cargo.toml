@@ -6,8 +6,12 @@ description = "A Python wrapper for the Rust console backend"
 edition = "2018"
 
 [dependencies]
-tokio = { version = "1.1", features = ["sync"] }
+capnp = "0.14"
 pyo3 = { version = "0.13", features = ["extension-module"] }
+sbp = { git = "https://github.com/swift-nav/libsbp.git", rev = "986af3f35033a720f21872794d0bd6579c02866c" }
+
+[build-dependencies]
+capnpc = "0.14"
 
 [lib]
 name = "console_backend"

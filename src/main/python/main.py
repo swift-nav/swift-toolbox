@@ -3,6 +3,7 @@ import math
 import socket
 import sys
 import threading
+import time
 
 from fbs_runtime.application_context.PySide2 import ApplicationContext
 
@@ -31,12 +32,15 @@ POINTS_H_MINMAX: Optional[Tuple[float, float]] = None
 POINTS_H: List[QPointF] = []
 
 
-def sbp_main():
-
+def receive_messages():
     backend_server = Server()
-    count = backend_server.from_bytes(b"12345678")
-    print(f"backend_server.from_bytes = {count}")
+    backend_server.start()
+    while True:
+        msg = backend_server.fetch_message()
+        print(msg)
 
+
+def sbp_main():
     global POINTS_H_MINMAX
     host, port = "piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com", 55555
     with TCPDriver(host, port) as driver:
@@ -128,6 +132,7 @@ if __name__ == '__main__':
     engine.rootContext().setContextProperty("data_model", data_model)
     engine.load(QUrl.fromLocalFile(qml_view))
 
+    threading.Thread(target=receive_messages, daemon=True).start()
     threading.Thread(target=sbp_main, daemon=True).start()
 
     sys.exit(ctx.app.exec_())

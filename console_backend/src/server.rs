@@ -15,6 +15,7 @@ impl Server {
 
     #[text_signature = "($self, bytes, /)"]
     pub fn from_bytes(&mut self, bytes: &PyBytes) -> PyResult<usize> {
+        println!("Hello");
         let byte_vec: Vec<u8> = bytes.extract().unwrap();
         Ok(byte_vec.len())
     }

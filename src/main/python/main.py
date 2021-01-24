@@ -22,6 +22,8 @@ from sbp.navigation import SBP_MSG_VEL_NED
 
 from typing import List, Optional, Tuple
 
+from console_backend.server import Server
+
 
 POINTS_V: List[QPointF] = []
 
@@ -30,6 +32,11 @@ POINTS_H: List[QPointF] = []
 
 
 def sbp_main():
+
+    backend_server = Server()
+    count = backend_server.from_bytes(b"12345678")
+    print(f"backend_server.from_bytes = {count}")
+
     global POINTS_H_MINMAX
     host, port = "piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com", 55555
     with TCPDriver(host, port) as driver:

@@ -14,7 +14,8 @@ fbs = {git = "https://github.com/silverjam/fbs.git"}
 pylint = "^2.6.0"
 jedi = "^0.18.0"
 mypy = "^0.790"
+setuptools-rust = "^0.11.6"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=1.0.0", "setuptools>=41.0.0", "wheel", "setuptools_rust>=0.10.2"]
 build-backend = "poetry.core.masonry.api"

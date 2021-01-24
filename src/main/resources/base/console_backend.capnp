@@ -1,6 +1,8 @@
 @0xe7871c33e8243ee4;
 
 struct ConnectRequest {
+    host @0 :Text;
+    port @1 :UInt16;
 }
 
 struct Point {

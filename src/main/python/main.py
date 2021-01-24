@@ -1,5 +1,6 @@
 import io
 import math
+import os
 import socket
 import sys
 import threading
@@ -14,7 +15,8 @@ from PySide2.QtCore import (Qt, QUrl, QObject, Slot, QPointF)
 from PySide2.QtGui import QGuiApplication
 from PySide2.QtCharts import QtCharts
 
-from PySide2 import QtQml
+from PySide2 import QtQml, QtCore
+
 from PySide2.QtQml import qmlRegisterType, QQmlListReference
 from PySide2.QtCore import Property
 
@@ -23,10 +25,12 @@ from sbp.client import Handler, Framer
 
 from sbp.navigation import SBP_MSG_VEL_NED
 
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Any
 
-from console_backend.server import Server
+import console_backend.server
 
+PIKSI_HOST = "piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com"
+PIKSI_PORT = 55555
 
 POINTS_V: List[QPointF] = []
 
@@ -36,12 +40,10 @@ POINTS_H: List[QPointF] = []
 capnp.remove_import_hook()
 
 
-def receive_messages(backend_messages):
-    backend_server = Server()
-    backend_server.start()
+def receive_messages(backend, messages):
     while True:
-        buffer = backend_server.fetch_message()
-        m = backend_messages.Message.from_bytes(buffer)
+        buffer = backend.fetch_message()
+        m = messages.Message.from_bytes(buffer)
         print(m)
 
 
@@ -108,10 +110,16 @@ class ConsolePoints(QObject):
 
 class DataModel(QObject):
 
-    points: List[QPointF]
+    endpoint: console_backend.server.ServerEndpoint
+    messages: Any
+
+    def __init__(self, endpoint, messages):
+        super(DataModel, self).__init__()
+        self.endpoint = endpoint
+        self.messages = messages
 
     @Slot(ConsolePoints) # type: ignore
-    def fill_console_points(self, cp):
+    def fill_console_points(self, cp: ConsolePoints) -> ConsolePoints:
         if POINTS_H_MINMAX is None:
             cp.setValid(False)
             return cp
@@ -121,9 +129,20 @@ class DataModel(QObject):
             cp.setMax(POINTS_H_MINMAX[1])
             cp.setPoints(POINTS_H)
             return cp
-        
+
+    @Slot() # type: ignore
+    def connect(self) -> None:
+        m = self.messages.Message()
+        m.connectRequest.host = PIKSI_HOST
+        m.connectRequest.port = PIKSI_PORT
+        buffer = m.to_bytes()
+        self.endpoint.send_message(buffer)
+
 
 if __name__ == '__main__':
+
+    QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
+    QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
 
     ctx = ApplicationContext()
 
@@ -133,14 +152,17 @@ if __name__ == '__main__':
     qml_view = ctx.get_resource('view.qml')
     capnp_path = ctx.get_resource('console_backend.capnp')
 
-    backend_messages = capnp.load(capnp_path)
+    messages = capnp.load(capnp_path)
 
-    data_model = DataModel()
+    backend = console_backend.server.Server()
+    endpoint = backend.start()
+
+    data_model = DataModel(endpoint, messages)
 
     engine.rootContext().setContextProperty("data_model", data_model)
     engine.load(QUrl.fromLocalFile(qml_view))
 
-    threading.Thread(target=receive_messages, args=(backend_messages,), daemon=True).start()
+    threading.Thread(target=receive_messages, args=(backend, messages,), daemon=True).start()
     threading.Thread(target=sbp_main, daemon=True).start()
 
     sys.exit(ctx.app.exec_())

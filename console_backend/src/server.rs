@@ -14,7 +14,33 @@ use crate::console_backend_capnp as m;
 #[pyclass]
 struct Server {
     client_recv: Option<mpsc::Receiver<Vec<u8>>>,
+}
+
+#[pyclass]
+struct ServerEndpoint {
     server_send: Option<mpsc::Sender<Vec<u8>>>,
+}
+
+#[pymethods]
+impl ServerEndpoint {
+    #[new]
+    pub fn __new__() -> Self {
+        ServerEndpoint {
+            server_send: None,
+        }
+    }
+
+    #[text_signature = "($self, bytes, /)"]
+    pub fn send_message(&mut self, bytes: &PyBytes) -> PyResult<()> {
+        let byte_vec: Vec<u8> = bytes.extract().unwrap();
+        if let Some(server_send) = &self.server_send {
+            server_send
+                .send(byte_vec)
+                .map_err(|e| exceptions::PyRuntimeError::new_err(format!("{}", e)))
+        } else {
+            Err(exceptions::PyRuntimeError::new_err("no server send endpoint"))
+        }
+    }
 }
 
 #[pymethods]
@@ -23,7 +49,6 @@ impl Server {
     pub fn __new__() -> Self {
         Server {
             client_recv: None,
-            server_send: None,
         }
     }
 
@@ -52,11 +77,22 @@ impl Server {
     }
 
     #[text_signature = "($self, /)"]
-    pub fn start(&mut self) -> PyResult<()> {
+    pub fn start(&mut self) -> PyResult<ServerEndpoint> {
         let (client_send, client_recv) = mpsc::channel::<Vec<u8>>();
         let (server_send, server_recv) = mpsc::channel::<Vec<u8>>();
         self.client_recv = Some(client_recv);
-        self.server_send = Some(server_send);
+        let server_endpoint = ServerEndpoint { server_send: Some(server_send) };
+        thread::spawn(move || {
+            loop {
+                let buf = server_recv.recv();
+                if let Ok(buf) = buf {
+                    println!("server_recv: {:?}", buf);
+                } else {
+                    println!("error: {:?}", buf);
+                    break;
+                }
+            }
+        });
         thread::spawn(move || {
             let mut builder = Builder::new_default();
             loop {
@@ -66,30 +102,16 @@ impl Server {
                 let mut msg_bytes: Vec<u8> = vec![];
                 serialize::write_message(&mut msg_bytes, &builder).unwrap();
                 client_send.send(msg_bytes).unwrap();
-                /*
-                let buf = server_recv.recv();
-                if let Ok(buf) = buf {
-                    println!("{:?}", buf);
-                } else {
-                    println!("error: {:?}", buf);
-                    break;
-                }
-                */
                 thread::sleep(std::time::Duration::from_secs(1));
             }
         });
-        Ok(())
-    }
-
-    #[text_signature = "($self, bytes, /)"]
-    pub fn send_message(&mut self, bytes: &PyBytes) -> PyResult<()> {
-        let byte_vec: Vec<u8> = bytes.extract().unwrap();
-        self.server_send.as_ref().unwrap().send(byte_vec).map_err(|e| exceptions::PyRuntimeError::new_err(format!("{}", e)))
+        Ok(server_endpoint)
     }
 }
 
 #[pymodule]
 pub fn server(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<Server>()?;
+    m.add_class::<ServerEndpoint>()?;
     Ok(())
 }

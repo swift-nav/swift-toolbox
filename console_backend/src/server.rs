@@ -1,3 +1,4 @@
+use std::io::{BufReader, Cursor};
 use std::thread;
 use std::sync::mpsc;
 
@@ -61,11 +62,11 @@ impl Server {
                 if let Ok(buf) = buf {
                     Some(buf)
                 } else {
-                    println!("no message, or error: {:?}", buf);
+                    println!("error receiving message: {:?}", buf);
                     None
                 }
             } else {
-                println!("no client recv");
+                println!("no client receive endpoint");
                 None
             }
         });
@@ -82,17 +83,32 @@ impl Server {
         let (server_send, server_recv) = mpsc::channel::<Vec<u8>>();
         self.client_recv = Some(client_recv);
         let server_endpoint = ServerEndpoint { server_send: Some(server_send) };
+        let client_send_clone = client_send.clone();
         thread::spawn(move || {
             loop {
                 let buf = server_recv.recv();
                 if let Ok(buf) = buf {
-                    println!("server_recv: {:?}", buf);
+                    let mut buf_reader = BufReader::new(Cursor::new(buf));
+                    let message_reader = serialize::read_message(&mut buf_reader, ::capnp::message::ReaderOptions::new()).unwrap();
+                    let message = message_reader.get_root::<m::message::Reader>().unwrap();
+                    match message.which() {
+                        Ok(m::message::Which::ConnectRequest(Ok(conn_req))) => {
+                            println!("connect request, host: {}, port: {}", conn_req.get_host().unwrap(), conn_req.get_port());
+                        }
+                        Ok(_) => {
+                            println!("something else");
+                        }
+                        Err(err) => {
+                            println!("error: {}", err);
+                        }
+                    }
                 } else {
                     println!("error: {:?}", buf);
                     break;
                 }
             }
         });
+        let client_send_clone2 = client_send.clone();
         thread::spawn(move || {
             let mut builder = Builder::new_default();
             loop {
@@ -101,7 +117,7 @@ impl Server {
                 status.set_text("hello");
                 let mut msg_bytes: Vec<u8> = vec![];
                 serialize::write_message(&mut msg_bytes, &builder).unwrap();
-                client_send.send(msg_bytes).unwrap();
+                client_send_clone2.send(msg_bytes).unwrap();
                 thread::sleep(std::time::Duration::from_secs(1));
             }
         });

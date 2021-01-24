@@ -1,0 +1,8 @@
+[config]
+default_to_workspace = false
+
+[tasks.run]
+script = '''
+pip install -e console_backend
+fbs run
+'''

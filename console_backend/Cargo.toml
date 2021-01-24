@@ -1,0 +1,14 @@
+[package]
+authors = ["Swift Navigation <dev@swift-nav.com>"]
+name = "console-backend"
+version = "0.1.0"
+description = "A Python wrapper for the Rust console backend"
+edition = "2018"
+
+[dependencies]
+tokio = { version = "1.1", features = ["sync"] }
+pyo3 = { version = "0.13", features = ["extension-module"] }
+
+[lib]
+name = "console_backend"
+crate-type = ["cdylib"]

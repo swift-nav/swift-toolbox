@@ -1,0 +1,2 @@
+[workspace]
+members = ["console_backend"]

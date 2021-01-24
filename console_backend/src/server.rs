@@ -5,6 +5,11 @@ use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 use pyo3::exceptions;
 
+use capnp::message::Builder;
+use capnp::serialize;
+
+use crate::console_backend_capnp as m;
+
 /// The backend server
 #[pyclass]
 struct Server {
@@ -53,8 +58,14 @@ impl Server {
         self.client_recv = Some(client_recv);
         self.server_send = Some(server_send);
         thread::spawn(move || {
+            let mut builder = Builder::new_default();
             loop {
-                client_send.send("hello".as_bytes().into()).unwrap();
+                let msg = builder.init_root::<m::message::Builder>();
+                let mut status = msg.init_status();
+                status.set_text("hello");
+                let mut msg_bytes: Vec<u8> = vec![];
+                serialize::write_message(&mut msg_bytes, &builder).unwrap();
+                client_send.send(msg_bytes).unwrap();
                 /*
                 let buf = server_recv.recv();
                 if let Ok(buf) = buf {

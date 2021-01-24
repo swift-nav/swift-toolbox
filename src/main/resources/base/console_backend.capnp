@@ -14,9 +14,14 @@ struct VelocityStatus {
     points @2 :List(Point);
 }
 
+struct Status {
+    text @0 :Text;
+}
+
 struct Message {
     union {
         connectRequest @0 :ConnectRequest;
         velocityStatus @1 :VelocityStatus;
+        status @2 :Status;
     }
 }

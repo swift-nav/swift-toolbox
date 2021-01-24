@@ -215,6 +215,14 @@ python-versions = ">=3.5"
 test = ["pytest (>=5.0.0)"]
 
 [[package]]
+name = "pycapnp"
+version = "1.0.0"
+description = "A cython wrapping of the C++ Cap'n Proto library"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "pyftdi"
 version = "0.13.4"
 description = "FTDI device driver (pure Python)"
@@ -442,7 +450,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.10"
-content-hash = "84ce02893bd9df3a40ce65096ad65c601edece2747120eebab376d0d08c7010b"
+content-hash = "ca9b3466ea5a1e2b97e90ffe11b975e5350fc26038b5c7a40e7530938b85e918"
 
 [metadata.files]
 altgraph = [
@@ -615,6 +623,21 @@ pybase64 = [
     {file = "pybase64-1.1.1-cp39-cp39-win32.whl", hash = "sha256:fc378a64d72feb20db296effeb49f4e817d8737e28c87b54490fa9d3484cd57f"},
     {file = "pybase64-1.1.1-cp39-cp39-win_amd64.whl", hash = "sha256:26d0dfb294156cf114b87bf00fd7748739a6ddfd415f724f8fb8e974b19f2b6e"},
     {file = "pybase64-1.1.1.tar.gz", hash = "sha256:60b40d3f0aeba4a72f3418aaf93376742e8cc476d56787b57958665b926fe07f"},
+]
+pycapnp = [
+    {file = "pycapnp-1.0.0-cp37-cp37m-macosx_10_14_x86_64.whl", hash = "sha256:e3c377fb3014e480ae10b6c8d0f84bdf3487516efe6ca7caf168ddea68c5cd7a"},
+    {file = "pycapnp-1.0.0-cp37-cp37m-manylinux2010_i686.whl", hash = "sha256:4a01246579646e06ce7b6f5c70c0465c0a457fb42c0ead06f410518509dd9325"},
+    {file = "pycapnp-1.0.0-cp37-cp37m-manylinux2010_x86_64.whl", hash = "sha256:b56933e65518ca204550d67a6d68742e05cce17264f04ff820a20872d76aee55"},
+    {file = "pycapnp-1.0.0-cp37-cp37m-win_amd64.whl", hash = "sha256:d3ebaf2796eeaa79e2f632d8d6509e7ea0e614513d133a4d1bc37fafdde5b7f6"},
+    {file = "pycapnp-1.0.0-cp38-cp38-macosx_10_14_x86_64.whl", hash = "sha256:37aaf0023939d00cd0554030b09caea194216df35831fd39677cf898954d1e57"},
+    {file = "pycapnp-1.0.0-cp38-cp38-manylinux2010_i686.whl", hash = "sha256:863a6e66c786b83bd4dce37680f3d006760ade25ce0d25d4ebf229c352b465c1"},
+    {file = "pycapnp-1.0.0-cp38-cp38-manylinux2010_x86_64.whl", hash = "sha256:d0fcbffb8326e05b4d41928312b967e1ddcee6cc600287e86118e7fde1de9f5c"},
+    {file = "pycapnp-1.0.0-cp38-cp38-win_amd64.whl", hash = "sha256:485e91799304095aa99ff5561ba1755d566f60e710f78307e32716ec0d1835e9"},
+    {file = "pycapnp-1.0.0-cp39-cp39-macosx_10_14_x86_64.whl", hash = "sha256:e2c7e8fb71add9ab392ef773bcfff95998ec1a65ad4cdefbdb3f09b202ac4e7a"},
+    {file = "pycapnp-1.0.0-cp39-cp39-manylinux2010_i686.whl", hash = "sha256:db4cf60c0fbdb0a63209280324f183dbe16a5ef9add4c3bf5fb34b0f10c3ec42"},
+    {file = "pycapnp-1.0.0-cp39-cp39-manylinux2010_x86_64.whl", hash = "sha256:78ec9536791f53a00b87dd93b0447e66bb1fbfe556130748e4743faca90a7028"},
+    {file = "pycapnp-1.0.0-cp39-cp39-win_amd64.whl", hash = "sha256:fc0c9ddb2099ef1c33bcebbea287f54e33cb52a701e59d7d12d54eeff36d0f96"},
+    {file = "pycapnp-1.0.0.tar.gz", hash = "sha256:9f6fcca349ebf2ec04ca7eacb076aea3e4fcdc010ac33c98b54f0a19d4e5d3e0"},
 ]
 pyftdi = [
     {file = "pyftdi-0.13.4.tar.gz", hash = "sha256:8703304a6f6cd7d0a713ba3e2d38a73cc924340221d808df6fa05ebf025ee9a1"},

@@ -5,6 +5,8 @@ import sys
 import threading
 import time
 
+import capnp
+
 from fbs_runtime.application_context.PySide2 import ApplicationContext
 
 from PySide2.QtQuick import QQuickView
@@ -31,13 +33,16 @@ POINTS_V: List[QPointF] = []
 POINTS_H_MINMAX: Optional[Tuple[float, float]] = None
 POINTS_H: List[QPointF] = []
 
+capnp.remove_import_hook()
 
-def receive_messages():
+
+def receive_messages(backend_messages):
     backend_server = Server()
     backend_server.start()
     while True:
-        msg = backend_server.fetch_message()
-        print(msg)
+        buffer = backend_server.fetch_message()
+        m = backend_messages.Message.from_bytes(buffer)
+        print(m)
 
 
 def sbp_main():
@@ -126,13 +131,16 @@ if __name__ == '__main__':
     engine = QtQml.QQmlApplicationEngine()
 
     qml_view = ctx.get_resource('view.qml')
+    capnp_path = ctx.get_resource('console_backend.capnp')
+
+    backend_messages = capnp.load(capnp_path)
 
     data_model = DataModel()
 
     engine.rootContext().setContextProperty("data_model", data_model)
     engine.load(QUrl.fromLocalFile(qml_view))
 
-    threading.Thread(target=receive_messages, daemon=True).start()
+    threading.Thread(target=receive_messages, args=(backend_messages,), daemon=True).start()
     threading.Thread(target=sbp_main, daemon=True).start()
 
     sys.exit(ctx.app.exec_())

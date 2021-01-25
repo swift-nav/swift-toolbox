@@ -20,10 +20,12 @@ from PySide2 import QtQml, QtCore
 from PySide2.QtQml import qmlRegisterType, QQmlListReference
 from PySide2.QtCore import Property
 
+"""
 from sbp.client.drivers.network_drivers import TCPDriver
 from sbp.client import Handler, Framer
 
 from sbp.navigation import SBP_MSG_VEL_NED
+"""
 
 from typing import List, Optional, Tuple, Any
 
@@ -34,7 +36,7 @@ PIKSI_PORT = 55555
 
 POINTS_V: List[QPointF] = []
 
-POINTS_H_MINMAX: Optional[Tuple[float, float]] = None
+POINTS_H_MINMAX: List[Optional[Tuple[float, float]]] = [None]
 POINTS_H: List[QPointF] = []
 
 capnp.remove_import_hook()
@@ -44,11 +46,19 @@ def receive_messages(backend, messages):
     while True:
         buffer = backend.fetch_message()
         m = messages.Message.from_bytes(buffer)
-        print(m)
+        if m.which == "status":
+            print(f"status message: {m.status}")
+        elif m.which == "velocityStatus":
+            POINTS_H_MINMAX[0] = (m.velocityStatus.min, m.velocityStatus.max)
+            POINTS_H[:] = [
+                QPointF(point.x, point.y) for point in m.velocityStatus.points
+            ]
+        else:
+            print(f"other message: {m}")
 
 
+"""
 def sbp_main():
-    global POINTS_H_MINMAX
     host, port = "piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com", 55555
     with TCPDriver(host, port) as driver:
         with Handler(Framer(driver.read, None)) as source:
@@ -59,9 +69,10 @@ def sbp_main():
                     POINTS_H.pop(0)
                 POINTS_H.append(QPointF(msg.tow / 1000.0, h_vel))
                 if POINTS_H_MINMAX is None:
-                    POINTS_H_MINMAX = (-abs(v_vel) * 1.5, abs(v_vel) * 1.5)
+                    POINTS_H_MINMAX[0] = (-abs(v_vel) * 1.5, abs(v_vel) * 1.5)
                 else:
-                    POINTS_H_MINMAX = (min(X.y() for X in POINTS_H), max(X.y() for X in POINTS_H))
+                    POINTS_H_MINMAX[0] = (min(X.y() for X in POINTS_H), max(X.y() for X in POINTS_H))
+"""
 
 
 class ConsolePoints(QObject):
@@ -120,13 +131,14 @@ class DataModel(QObject):
 
     @Slot(ConsolePoints) # type: ignore
     def fill_console_points(self, cp: ConsolePoints) -> ConsolePoints:
-        if POINTS_H_MINMAX is None:
+        if POINTS_H_MINMAX[0] is None:
             cp.setValid(False)
             return cp
         else:
             cp.setValid(True)
-            cp.setMin(POINTS_H_MINMAX[0])
-            cp.setMax(POINTS_H_MINMAX[1])
+            cp.setMin(POINTS_H_MINMAX[0][0])
+            cp.setMax(POINTS_H_MINMAX[0][1])
+            #print(POINTS_H)
             cp.setPoints(POINTS_H)
             return cp
 
@@ -163,6 +175,6 @@ if __name__ == '__main__':
     engine.load(QUrl.fromLocalFile(qml_view))
 
     threading.Thread(target=receive_messages, args=(backend, messages,), daemon=True).start()
-    threading.Thread(target=sbp_main, daemon=True).start()
+    #threading.Thread(target=sbp_main, daemon=True).start()
 
     sys.exit(ctx.app.exec_())

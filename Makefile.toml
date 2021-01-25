@@ -1,8 +1,22 @@
 [config]
 default_to_workspace = false
 
-[tasks.run]
+[tasks.copy-capnp]
+script_runner = "@shell"
 script = '''
-pip install -e console_backend
+cp src/main/resources/base/console_backend.capnp console_backend/console_backend.capnp
+'''
+
+[tasks.run]
+dependencies = ["copy-capnp"]
+script = '''
+pip install -e ./console_backend
+fbs run
+'''
+
+[tasks.run-prod]
+dependencies = ["copy-capnp"]
+script = '''
+pip install --force ./console_backend
 fbs run
 '''

@@ -46,11 +46,11 @@ ApplicationWindow {
                     max: 1.0
                     labelsFont.pointSize: 7
                 }
-                useOpenGL: true
+                //useOpenGL: true
             }
 
             Timer {
-                interval: 1000/50 // 50 Hz refresh
+                interval: 1000/5 // 5 Hz refresh
                 running: true
                 repeat: true
                 onTriggered: {

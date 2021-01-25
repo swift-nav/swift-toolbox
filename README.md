@@ -65,7 +65,7 @@ Python extension.
 PyInstaller (via [fbs]) is used to bundle the application and create an installer.
 Things that fbs trivially solves:
 
-- creating an installer: fbs uses fpm to create installers for unix/mac, it uses
+- creating an installer: *fbs* uses [fpm] to create installers for unix/mac, it uses
   makensis to create a windows installer.
   - The Windows installer looks to be "decent", it doesn't seem to do a good job cleaning up old installations though: https://github.com/mherrmann/fbs/pull/29
   - It would be ideal if it could use WiX instead of NSIS to generate an MSI: https://github.com/mherrmann/fbs/issues/8
@@ -73,10 +73,11 @@ Things that fbs trivially solves:
 - managing resources: the fbs runtime handles packaging of application resources, particularly things like .capnp files and QML files
 
 [fbs]: https://build-system.fman.io/
+[fpm]: https://github.com/jordansissel/fpm
 
 ### PySide2
 
-We're using Qt 5.15.2 via PySide2 (the official Python bindings for Qt).
+We're using Qt 5.15.2 via PySide2 (the official Python bindings for Qt).  Made possible via fork of fbs: https://github.com/silverjam/fbs
 
 ### QML
 
@@ -84,7 +85,7 @@ QML (QtQuick Mark-up Language) is used to model the UI.
 
 ### Python 3.9 (via Miniconda)
 
-Miniconda builds of Python provide a consistent (and reliable) build of Python across different platforms.
+Miniconda builds of Python provide a consistent (and reliable) build of Python across different platforms.  We use Python 3.9 (which requires PyInstaller 4.2).
 
 ### Poetry
 

@@ -62,7 +62,7 @@ Python extension.
 
 ### PyInstaller (fbs)
 
-PyInstaller (via fbs) is used to bundle the application and create an installer.
+PyInstaller (via [fbs]) is used to bundle the application and create an installer.
 Things that fbs trivially solves:
 
 - creating an installer: fbs uses fpm to create installers for unix/mac, it uses
@@ -71,6 +71,8 @@ Things that fbs trivially solves:
   - It would be ideal if it could use WiX instead of NSIS to generate an MSI: https://github.com/mherrmann/fbs/issues/8
 
 - managing resources: the fbs runtime handles packaging of application resources, particularly things like .capnp files and QML files
+
+[fbs]: https://build-system.fman.io/
 
 ### PySide2
 

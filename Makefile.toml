@@ -20,3 +20,10 @@ script = '''
 pip install --force ./console_backend
 fbs run
 '''
+
+[tasks.freeze]
+dependencies = ["copy-capnp"]
+script = '''
+pip install -e ./console_backend
+fbs freeze
+'''

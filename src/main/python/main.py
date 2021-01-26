@@ -35,10 +35,9 @@ import console_backend.server
 PIKSI_HOST = "piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com"
 PIKSI_PORT = 55555
 
-POINTS_V: List[QPointF] = []
-
 POINTS_H_MINMAX: List[Optional[Tuple[float, float]]] = [None]
 POINTS_H: List[QPointF] = []
+POINTS_V: List[QPointF] = []
 
 capnp.remove_import_hook()
 
@@ -48,38 +47,24 @@ def receive_messages(backend, messages):
         buffer = backend.fetch_message()
         m = messages.Message.from_bytes(buffer)
         if m.which == "status":
-            print(f"status message: {m.status}")
+            # print(f"status message: {m.status}")
+            pass
         elif m.which == "velocityStatus":
             POINTS_H_MINMAX[0] = (m.velocityStatus.min, m.velocityStatus.max)
             POINTS_H[:] = [
-                QPointF(point.x, point.y) for point in m.velocityStatus.points
+                QPointF(point.x, point.y) for point in m.velocityStatus.hpoints
+            ]
+            POINTS_V[:] = [
+                QPointF(point.x, point.y) for point in m.velocityStatus.vpoints
             ]
         else:
             print(f"other message: {m}")
 
-
-"""
-def sbp_main():
-    host, port = "piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com", 55555
-    with TCPDriver(host, port) as driver:
-        with Handler(Framer(driver.read, None)) as source:
-            for msg, _ in source.filter(SBP_MSG_VEL_NED):
-                h_vel = math.sqrt(msg.n**2 + msg.e**2) / 1000.0
-                v_vel = -msg.d / 1000.0
-                if len(POINTS_H) == 200:
-                    POINTS_H.pop(0)
-                POINTS_H.append(QPointF(msg.tow / 1000.0, h_vel))
-                if POINTS_H_MINMAX is None:
-                    POINTS_H_MINMAX[0] = (-abs(v_vel) * 1.5, abs(v_vel) * 1.5)
-                else:
-                    POINTS_H_MINMAX[0] = (min(X.y() for X in POINTS_H), max(X.y() for X in POINTS_H))
-"""
-
-
 class ConsolePoints(QObject):
 
     _valid: bool = False
-    _points: List[QPointF] = []
+    _hpoints: List[QPointF] = []
+    _vpoints: List[QPointF] = []
     _min: float = 0.0
     _max: float = 0.0
 
@@ -91,13 +76,20 @@ class ConsolePoints(QObject):
 
     valid = Property(bool, getValid, setValid)
 
-    def getPoints(self) -> List[QPointF]:
-        return self._points
+    def getHPoints(self) -> List[QPointF]:
+        return self._hpoints
 
-    def setPoints(self, points) -> None:
-        self._points = points
+    def setHPoints(self, hpoints) -> None:
+        self._hpoints = hpoints
+    
+    def getVPoints(self) -> List[QPointF]:
+        return self._vpoints
 
-    points = Property('QVariantList', getPoints, setPoints) # type: ignore
+    def setVPoints(self, vpoints) -> None:
+        self._vpoints = vpoints
+
+    hpoints = Property('QVariantList', getHPoints, setHPoints) # type: ignore
+    vpoints = Property('QVariantList', getVPoints, setVPoints) # type: ignore
 
     def getMin(self) -> float:
         return self._min
@@ -116,20 +108,26 @@ class ConsolePoints(QObject):
     max = Property(float, getMax, setMax)
 
     @Slot(QtCharts.QXYSeries) # type: ignore
-    def fill_series(self, series):
-        series.replace(self._points)
+    def fill_hseries(self, hseries):
+        hseries.replace(self._hpoints)
+
+    @Slot(QtCharts.QXYSeries) # type: ignore
+    def fill_vseries(self, vseries):
+        vseries.replace(self._vpoints)
 
 
 class DataModel(QObject):
 
     endpoint: console_backend.server.ServerEndpoint
     messages: Any
+    file_in: Any
 
     def __init__(self, endpoint, messages, file_in):
         super(DataModel, self).__init__()
         self.endpoint = endpoint
         self.messages = messages
         self.file_in = file_in
+        self.is_connected = False
 
     @Slot(ConsolePoints) # type: ignore
     def fill_console_points(self, cp: ConsolePoints) -> ConsolePoints:
@@ -138,26 +136,36 @@ class DataModel(QObject):
             return cp
         else:
             cp.setValid(True)
-            # cp.setMin(POINTS_H_MINMAX[0][0])
-            # cp.setMax(POINTS_H_MINMAX[0][1])
-            cp.setMin(min(POINTS_H))
-            cp.setMax(max(POINTS_H))
+            cp.setMin(POINTS_H_MINMAX[0][0])
+            cp.setMax(POINTS_H_MINMAX[0][1])
+            # cp.setMin(min(POINTS_H))
+            # cp.setMax(max(POINTS_H))
 
             #print(POINTS_H)
-            cp.setPoints(POINTS_H)
+            cp.setHPoints(POINTS_H)
+            cp.setVPoints(POINTS_V)
             return cp
 
     @Slot() # type: ignore
     def connect(self) -> None:
+        if self.is_connected:
+            print("One does not simply connect to Piksi twice.")
+            return
         m = self.messages.Message()
         m.connectRequest.host = PIKSI_HOST
         m.connectRequest.port = PIKSI_PORT
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
+        self.is_connected = True
 
     @Slot() # type: ignore
-    def read_file(self) -> None:
+    def readfile(self) -> None:
+        print(self.file_in)
+        if not self.file_in:
+            print("No file passed into application.")
+            return
         m = self.messages.Message()
+        m.fileinRequest = m.init("fileinRequest")
         m.fileinRequest.filename = self.file_in
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
@@ -185,13 +193,11 @@ if __name__ == '__main__':
 
     backend = console_backend.server.Server()
     endpoint = backend.start()
-
     data_model = DataModel(endpoint, messages, args.file_in)
 
     engine.rootContext().setContextProperty("data_model", data_model)
     engine.load(QUrl.fromLocalFile(qml_view))
 
     threading.Thread(target=receive_messages, args=(backend, messages,), daemon=True).start()
-    #threading.Thread(target=sbp_main, daemon=True).start()
 
     sys.exit(ctx.app.exec_())

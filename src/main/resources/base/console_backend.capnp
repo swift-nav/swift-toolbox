@@ -1,4 +1,4 @@
-@0xe7871c33e8243ee4;
+@0xc3bf8e2ae9033064;
 
 struct FileinRequest {
     filename @0 :Text;
@@ -17,7 +17,8 @@ struct Point {
 struct VelocityStatus {
     min @0 :Float64;
     max @1 :Float64;
-    points @2 :List(Point);
+    hpoints @2 :List(Point);
+    vpoints @3 :List(Point);
 }
 
 struct Status {

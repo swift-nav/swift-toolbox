@@ -52,7 +52,8 @@ impl ServerEndpoint {
 
 pub fn process_messages(messages: impl Iterator<Item = sbp::Result<SBP>>, client_send_clone: mpsc::Sender<Vec<u8>>){
     let mut min_max: Option<(f64, f64)> = None;
-    let mut points: Vec<(f64, OrderedFloat<f64>)> = vec![];
+    let mut hpoints: Vec<(f64, OrderedFloat<f64>)> = vec![];
+    let mut vpoints: Vec<(f64, OrderedFloat<f64>)> = vec![];
     for message in messages {
         match message {
             // Ok(SBP::MsgVelNED(msg)) if is_valid_vel_ned(msg.flags) => {
@@ -70,22 +71,26 @@ pub fn process_messages(messages: impl Iterator<Item = sbp::Result<SBP>>, client
                 let d = velocity_ned.d as f64;
 
                 let h_vel = f64::sqrt(f64::powi(n, 2) + f64::powi(e, 2)) / 1000.0;
-                let _v_vel = (-1.0 * d) / 1000.0;
+                let v_vel = (-1.0 * d) / 1000.0;
 
                 let tow = velocity_ned.tow as f64 / 1000.0;
 
                 min_max = if let Some(_) = min_max {
-                    let min = points.iter().min_by_key(|i| i.1).unwrap();
-                    let max = points.iter().max_by_key(|i| i.1).unwrap();
+                    let min = hpoints.iter().min_by_key(|i| i.1).unwrap();
+                    let max = hpoints.iter().max_by_key(|i| i.1).unwrap();
                     Some((min.1.into_inner(), max.1.into_inner()))
                 } else {
                     Some((-1.0 * f64::abs(h_vel) * 1.5, 1.0 * f64::abs(h_vel) * 1.5))
                 };
 
-                if points.len() >= 200 {
-                    points.remove(0);
+                if hpoints.len() >= 200 {
+                    hpoints.remove(0);
                 }
-                points.push((tow, OrderedFloat(h_vel)));
+                if vpoints.len() >= 200 {
+                    vpoints.remove(0);
+                }
+                hpoints.push((tow, OrderedFloat(h_vel)));
+                vpoints.push((tow, OrderedFloat(v_vel)));
 
                 let mut builder = Builder::new_default();
                 let msg = builder.init_root::<m::message::Builder>();
@@ -93,16 +98,27 @@ pub fn process_messages(messages: impl Iterator<Item = sbp::Result<SBP>>, client
                 let mut velocity_status = msg.init_velocity_status();
 
                 let (min, max) = min_max.unwrap();
-
+            
                 velocity_status.set_min(min);
                 velocity_status.set_max(max);
 
-                let mut vel_points = velocity_status.init_points(points.len() as u32);
-                for (i, (x, OrderedFloat(y))) in points.iter().enumerate() {
-                    let mut point_val = vel_points.reborrow().get(i as u32);
-                    point_val.set_x(*x);
-                    point_val.set_y(*y);
+                {
+                    let mut hvel_points = velocity_status.reborrow().init_hpoints(hpoints.len() as u32);
+                    for (i, (x, OrderedFloat(y))) in hpoints.iter().enumerate() {
+                        let mut point_val = hvel_points.reborrow().get(i as u32);
+                        point_val.set_x(*x);
+                        point_val.set_y(*y);
+                    }
                 }
+                {
+                    let mut vvel_points = velocity_status.reborrow().init_vpoints(vpoints.len() as u32);
+                    for (i, (x, OrderedFloat(y))) in vpoints.iter().enumerate() {
+                        let mut point_val = vvel_points.reborrow().get(i as u32);
+                        point_val.set_x(*x);
+                        point_val.set_y(*y);
+                    }
+                }
+                
 
                 let mut msg_bytes: Vec<u8> = vec![];
                 serialize::write_message(&mut msg_bytes, &builder).unwrap();
@@ -168,8 +184,9 @@ impl Server {
                     let mut buf_reader = BufReader::new(Cursor::new(buf));
                     let message_reader = serialize::read_message(&mut buf_reader, ::capnp::message::ReaderOptions::new()).unwrap();
                     let message = message_reader.get_root::<m::message::Reader>().unwrap();
-                    let message: &'static m::message::Reader = &message;
+                    // let message: &'static m::message::Reader = &message;
                     match message.which() {
+                        
                         Ok(m::message::Which::ConnectRequest(Ok(conn_req))) => {
                             let host = conn_req.get_host().unwrap();
                             let port = conn_req.get_port();
@@ -188,6 +205,9 @@ impl Server {
                         }
                         Ok(m::message::Which::FileinRequest(Ok(file_in))) => {
                             let filename = file_in.get_filename().unwrap();
+                            let filename = filename.to_string();
+                            // let filename = String::from(filename).unwrap();
+                            println!("{:?}", filename);
                             thread::spawn(move || {
                                 if let Ok(stream) = fs::File::open(filename) {
                                     println!("Opened file successfully!");
@@ -212,16 +232,16 @@ impl Server {
                 }
             }
         });
-        let client_send_clone2 = client_send.clone();
+        // let client_send_clone2 = client_send.clone();
         thread::spawn(move || {
-            let mut builder = Builder::new_default();
+            // let mut builder = Builder::new_default();
             loop {
-                let msg = builder.init_root::<m::message::Builder>();
-                let mut status = msg.init_status();
-                status.set_text("hello");
-                let mut msg_bytes: Vec<u8> = vec![];
-                serialize::write_message(&mut msg_bytes, &builder).unwrap();
-                client_send_clone2.send(msg_bytes).unwrap();
+                // let msg = builder.init_root::<m::message::Builder>();
+                // let mut status = msg.init_status();
+                // status.set_text("hello");
+                // let mut msg_bytes: Vec<u8> = vec![];
+                // serialize::write_message(&mut msg_bytes, &builder).unwrap();
+                // client_send_clone2.send(msg_bytes).unwrap();
                 thread::sleep(std::time::Duration::from_secs(1));
             }
         });

@@ -73,6 +73,10 @@ ApplicationWindow {
             text: "Connect"
             onClicked: data_model.connect()
         }
+        Button {
+            text: "File In"
+            onClicked: data_model.read_file()
+        }
     }
 
     Component.onCompleted: {

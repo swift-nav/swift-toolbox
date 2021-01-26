@@ -1,5 +1,9 @@
 @0xe7871c33e8243ee4;
 
+struct FileinRequest {
+    filename @0 :Text;
+}
+
 struct ConnectRequest {
     host @0 :Text;
     port @1 :UInt16;
@@ -23,7 +27,8 @@ struct Status {
 struct Message {
     union {
         connectRequest @0 :ConnectRequest;
-        velocityStatus @1 :VelocityStatus;
-        status @2 :Status;
+        fileinRequest @1 :FileinRequest;
+        velocityStatus @2 :VelocityStatus;
+        status @3 :Status;
     }
 }

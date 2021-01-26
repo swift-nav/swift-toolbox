@@ -1,3 +1,4 @@
+import argparse
 import io
 import math
 import os
@@ -124,10 +125,11 @@ class DataModel(QObject):
     endpoint: console_backend.server.ServerEndpoint
     messages: Any
 
-    def __init__(self, endpoint, messages):
+    def __init__(self, endpoint, messages, file_in):
         super(DataModel, self).__init__()
         self.endpoint = endpoint
         self.messages = messages
+        self.file_in = file_in
 
     @Slot(ConsolePoints) # type: ignore
     def fill_console_points(self, cp: ConsolePoints) -> ConsolePoints:
@@ -136,8 +138,11 @@ class DataModel(QObject):
             return cp
         else:
             cp.setValid(True)
-            cp.setMin(POINTS_H_MINMAX[0][0])
-            cp.setMax(POINTS_H_MINMAX[0][1])
+            # cp.setMin(POINTS_H_MINMAX[0][0])
+            # cp.setMax(POINTS_H_MINMAX[0][1])
+            cp.setMin(min(POINTS_H))
+            cp.setMax(max(POINTS_H))
+
             #print(POINTS_H)
             cp.setPoints(POINTS_H)
             return cp
@@ -150,9 +155,21 @@ class DataModel(QObject):
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
 
+    @Slot() # type: ignore
+    def read_file(self) -> None:
+        m = self.messages.Message()
+        m.fileinRequest.filename = self.file_in
+        buffer = m.to_bytes()
+        self.endpoint.send_message(buffer)
+
 
 if __name__ == '__main__':
 
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--file-in', help='Input file to parse.')
+
+    args = parser.parse_args()
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
 
@@ -169,7 +186,7 @@ if __name__ == '__main__':
     backend = console_backend.server.Server()
     endpoint = backend.start()
 
-    data_model = DataModel(endpoint, messages)
+    data_model = DataModel(endpoint, messages, args.file_in)
 
     engine.rootContext().setContextProperty("data_model", data_model)
     engine.load(QUrl.fromLocalFile(qml_view))

@@ -38,6 +38,7 @@ PIKSI_PORT = 55555
 POINTS_H_MINMAX: List[Optional[Tuple[float, float]]] = [None]
 POINTS_H: List[QPointF] = []
 POINTS_V: List[QPointF] = []
+TRACKING_POINTS: List[List[QPointF]] = [[]]
 
 capnp.remove_import_hook()
 
@@ -56,6 +57,10 @@ def receive_messages(backend, messages):
             ]
             POINTS_V[:] = [
                 QPointF(point.x, point.y) for point in m.velocityStatus.vpoints
+            ]
+        elif m.which == "trackingStatus":
+            TRACKING_POINTS[:] = [
+                [QPointF(point.x, point.y) for point in m.trackingStatus.points[idx]] for idx in range(len(m.trackingStatus.points))
             ]
         else:
             print(f"other message: {m}")
@@ -170,6 +175,50 @@ class DataModel(QObject):
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
 
+class TrackingPoints(QObject):
+
+    _valid: bool = False
+    _points: List[List[QPointF]] = [[]]
+    _min: float = 0.0
+    _max: float = 0.0
+
+    def getValid(self) -> bool:
+        return self._valid
+
+    def setValid(self, valid) -> None:
+        self._valid = valid
+
+    valid = Property(bool, getValid, setValid)
+
+    def getPoints(self) -> List[List[QPointF]]:
+        return self._points
+
+    def setPoints(self, points) -> None:
+        self._points = points
+
+    points = Property('QVariantList', getPoints, setPoints) # type: ignore
+
+    @Slot(QtCharts.QXYSeries, int) # type: ignore
+    def fill_series(self, series, idx):
+        series.replace(self._points[idx])
+
+
+class TrackingModel(QObject):
+
+    @Slot(TrackingPoints) # type: ignore
+    def fill_console_points(self, cp: TrackingPoints) -> TrackingPoints:
+        if POINTS_H_MINMAX[0] is None:
+            cp.setValid(False)
+            return cp
+        else:
+            cp.setValid(True)
+            # cp.setMin(POINTS_H_MINMAX[0][0])
+            # cp.setMax(POINTS_H_MINMAX[0][1])
+            # cp.setMin(min(POINTS_H))
+            # cp.setMax(max(POINTS_H))
+            cp.setPoints(TRACKING_POINTS)
+            return cp
+
 
 if __name__ == '__main__':
 
@@ -195,7 +244,9 @@ if __name__ == '__main__':
     endpoint = backend.start()
     data_model = DataModel(endpoint, messages, args.file_in)
 
-    engine.rootContext().setContextProperty("data_model", data_model)
+    root_context = engine.rootContext()
+    root_context.setContextProperty("data_model", data_model)
+    
     engine.load(QUrl.fromLocalFile(qml_view))
 
     threading.Thread(target=receive_messages, args=(backend, messages,), daemon=True).start()

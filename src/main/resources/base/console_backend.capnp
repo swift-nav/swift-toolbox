@@ -21,6 +21,13 @@ struct VelocityStatus {
     vpoints @3 :List(Point);
 }
 
+struct TrackingStatus {
+    min @0 :Float64;
+    max @1 :Float64;
+    headers @2 :List(Text);
+    data @3 :List(List(Point));
+}
+
 struct Status {
     text @0 :Text;
 }
@@ -31,5 +38,6 @@ struct Message {
         fileinRequest @1 :FileinRequest;
         velocityStatus @2 :VelocityStatus;
         status @3 :Status;
+        trackingStatus @4 :TrackingStatus;
     }
 }

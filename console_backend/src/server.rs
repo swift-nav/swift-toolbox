@@ -76,9 +76,24 @@ pub fn process_messages(messages: impl Iterator<Item = sbp::Result<SBP>>, client
                 let tow = velocity_ned.tow as f64 / 1000.0;
 
                 min_max = if let Some(_) = min_max {
-                    let min = hpoints.iter().min_by_key(|i| i.1).unwrap();
-                    let max = hpoints.iter().max_by_key(|i| i.1).unwrap();
-                    Some((min.1.into_inner(), max.1.into_inner()))
+                    let vmin = vpoints.iter().min_by_key(|i| i.1).unwrap();
+                    let vmax = vpoints.iter().max_by_key(|i| i.1).unwrap();
+                    let hmin = hpoints.iter().min_by_key(|i| i.1).unwrap();
+                    let hmax = hpoints.iter().max_by_key(|i| i.1).unwrap();
+                    let mut min = 0.0;
+                    let mut max = 1.0;
+                    if vmin.1.into_inner() < hmin.1.into_inner() {
+                        min = vmin.1.into_inner();
+                    } else {
+                        min = hmin.1.into_inner();
+                    }
+                    if vmax.1.into_inner() > hmax.1.into_inner() {
+                        max = vmax.1.into_inner();
+                    } else {
+                        max = hmax.1.into_inner();
+                    }
+
+                    Some((min, max))
                 } else {
                     Some((-1.0 * f64::abs(h_vel) * 1.5, 1.0 * f64::abs(h_vel) * 1.5))
                 };

@@ -1,4 +1,4 @@
-import QtQuick 2.12
+import QtQuick 2.5
 import QtQuick.Controls 2.12
 import QtCharts 2.2
 import QtQuick.Layouts 1.15
@@ -26,92 +26,109 @@ ApplicationWindow {
             id: bar
             width: parent.width
             
-            TabButton {
-                text: qsTr("Tracking")
-                width: implicitWidth
-            }
-            TabButton {
-                text: qsTr("Solution")
-                width: implicitWidth
-            }
-            TabButton {
-                text: qsTr("Baseline")
-                width: implicitWidth
-            }
-            TabButton {
-                text: qsTr("Observations")
-                width: implicitWidth
-            }
-            TabButton {
-                text: qsTr("Settings")
-                width: implicitWidth
-            }
-            TabButton {
-                text: qsTr("Update")
-                width: implicitWidth
-            }
-            TabButton {
-                text: qsTr("Advanced")
-                width: implicitWidth
-            }
-        }
-        ChartView {
+            Repeater {
+                model: ["Tracking", "Solution", "Baseline", "Observations", "Settings", "Update", "Advanced"]
 
-            Layout.fillHeight: true
-            Layout.fillWidth: true
-
-            legend.font.pointSize: 7
-            titleFont.pointSize: 8
-
-            title: "Velocity"
-            antialiasing: true
-
-            ValueAxis {
-                id: x_axis
-                labelsFont.pointSize: 7
-            }
-            ValueAxis {
-                id: y_axis
-                min: -1.0
-                max: 1.0
-                labelsFont.pointSize: 7
-            }
-
-            LineSeries {
-                id: velocity_graph
-                name: "m/s"
-                axisX: x_axis
-                axisY: y_axis
-                //useOpenGL: true
-            }
-            LineSeries {
-                id: velocity_graph2
-                name: "m/s"
-                axisX: x_axis
-                axisY: y_axis
-                //useOpenGL: true
-            }
-
-            Timer {
-                interval: 1000/5 // 5 Hz refresh
-                running: true
-                repeat: true
-                onTriggered: {
-                    data_model.fill_console_points(console_points);
-                    if (!console_points.valid) {
-                        return;
-                    }
-                    var hpoints = console_points.hpoints;
-                    var last = hpoints[hpoints.length - 1];
-                    x_axis.min = last.x - 10;
-                    x_axis.max = last.x;
-                    y_axis.min = console_points.min;
-                    y_axis.max = console_points.max;
-                    console_points.fill_hseries(velocity_graph);
-                    console_points.fill_vseries(velocity_graph2);
+                TabButton {
+                    text: modelData
+                    //width: Math.max(100, bar.width / 5)
+                    width: implicitWidth
                 }
             }
+
         }
+        StackLayout {
+            width: parent.width
+            currentIndex: bar.currentIndex
+            Item {
+                id: trackingTab
+            }
+            Item {
+                id: solutionTab
+                ChartView {
+
+                    //Layout.fillHeight: true
+                    //Layout.fillWidth: true
+
+                    
+                    titleFont.pointSize: 8
+                    antialiasing: true
+                    width: parent.width
+                    height: parent.height
+
+                    legend.font.pointSize: 7
+                    legend.alignment: Qt.AlignTop
+                    legend.showToolTips: true
+                    
+                    
+
+                    ValueAxis {
+                        id: x_axis
+                        labelsFont.pointSize: 7
+                        titleText: "GPS Time of Week"
+                    }
+                    ValueAxis {
+                        id: y_axis
+                        min: -1.0
+                        max: 1.0
+                        labelsFont.pointSize: 7
+                    }
+
+                    LineSeries {
+                        id: hseries
+                        name: "Horizontal [m/s]"
+                        axisX: x_axis
+                        axisY: y_axis
+                        //useOpenGL: true
+                    }
+                    LineSeries {
+                        id: vseries
+                        name: "Vertical [m/s]"
+                        axisX: x_axis
+                        axisY: y_axis
+                        //useOpenGL: true
+                    }
+
+                    Timer {
+                        interval: 1000/5 // 5 Hz refresh
+                        running: true
+                        repeat: true
+                        onTriggered: {
+                            data_model.fill_console_points(console_points);
+                            if (!console_points.valid) {
+                                return;
+                            }
+                            var hpoints = console_points.hpoints;
+                            var last = hpoints[hpoints.length - 1];
+                            x_axis.min = last.x - 10;
+                            x_axis.max = last.x;
+                            y_axis.min = console_points.min;
+                            y_axis.max = console_points.max;
+                            console_points.fill_hseries(hseries);
+                            console_points.fill_vseries(vseries);
+                        }
+                    }
+                }
+            }
+                
+            
+            Item {
+                id: baselineTab
+            }
+            Item {
+                id: observationsTab
+            }
+            Item {
+                id: settingsTab
+            }
+            Item {
+                id: updateTab
+            }
+            Item {
+                id: advancedTab
+            }
+        }
+        
         RowLayout {
             Button {
                 text: "Connect"

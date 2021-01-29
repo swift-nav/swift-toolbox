@@ -19,7 +19,7 @@ ApplicationWindow {
     ColumnLayout {
 
         anchors.fill: parent
-        anchors.margins: 2
+        anchors.margins: 4
         spacing: 2
 
         ChartView {

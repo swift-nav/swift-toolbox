@@ -1,6 +1,12 @@
 [config]
 default_to_workspace = false
 
+[tasks.generate-resources]
+script_runner = "@shell"
+script = '''
+pyside2-rcc resources/console_resources.qrc -o src/main/python/console_resources.py
+'''
+
 [tasks.copy-capnp]
 script_runner = "@shell"
 script = '''
@@ -8,14 +14,14 @@ cp src/main/resources/base/console_backend.capnp console_backend/console_backend
 '''
 
 [tasks.run]
-dependencies = ["copy-capnp"]
+dependencies = ["copy-capnp", "generate-resources"]
 script = '''
 pip install -e ./console_backend
 fbs run
 '''
 
 [tasks.run-prod]
-dependencies = ["copy-capnp"]
+dependencies = ["copy-capnp", "generate-resources"]
 script = '''
 pip install --force ./console_backend
 fbs run

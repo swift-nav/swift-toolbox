@@ -38,7 +38,8 @@ PIKSI_PORT = 55555
 POINTS_H_MINMAX: List[Optional[Tuple[float, float]]] = [None]
 POINTS_H: List[QPointF] = []
 POINTS_V: List[QPointF] = []
-TRACKING_POINTS: List[List[QPointF]] = [[]]
+TRACKING_POINTS: List[List[QPointF]] = []
+TRACKING_HEADERS: List[int] = []
 
 capnp.remove_import_hook()
 
@@ -59,8 +60,9 @@ def receive_messages(backend, messages):
                 QPointF(point.x, point.y) for point in m.velocityStatus.vpoints
             ]
         elif m.which == "trackingStatus":
+            TRACKING_HEADERS[:] = m.trackingStatus.headers
             TRACKING_POINTS[:] = [
-                [QPointF(point.x, point.y) for point in m.trackingStatus.points[idx]] for idx in range(len(m.trackingStatus.points))
+                [QPointF(point.x, point.y) for point in m.trackingStatus.data[idx]] for idx in range(len(m.trackingStatus.data))
             ]
         else:
             print(f"other message: {m}")
@@ -175,7 +177,7 @@ class DataModel(QObject):
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
 
-class TrackingPoints(QObject):
+class TrackingSignalsPoints(QObject):
 
     _valid: bool = False
     _points: List[List[QPointF]] = [[]]
@@ -200,24 +202,25 @@ class TrackingPoints(QObject):
 
     @Slot(QtCharts.QXYSeries, int) # type: ignore
     def fill_series(self, series, idx):
+        print(series.points)
         series.replace(self._points[idx])
 
 
-class TrackingModel(QObject):
+class TrackingSignalsModel(QObject):
 
-    @Slot(TrackingPoints) # type: ignore
-    def fill_console_points(self, cp: TrackingPoints) -> TrackingPoints:
-        if POINTS_H_MINMAX[0] is None:
-            cp.setValid(False)
-            return cp
-        else:
-            cp.setValid(True)
-            # cp.setMin(POINTS_H_MINMAX[0][0])
-            # cp.setMax(POINTS_H_MINMAX[0][1])
-            # cp.setMin(min(POINTS_H))
-            # cp.setMax(max(POINTS_H))
-            cp.setPoints(TRACKING_POINTS)
-            return cp
+    @Slot(TrackingSignalsPoints) # type: ignore
+    def fill_console_points(self, cp: TrackingSignalsPoints) -> TrackingSignalsPoints:
+        # if POINTS_MINMAX[0] is None:
+        #     cp.setValid(False)
+        #     return cp
+        # else:
+        #     cp.setValid(True)
+        # cp.setMin(POINTS_H_MINMAX[0][0])
+        # cp.setMax(POINTS_H_MINMAX[0][1])
+        # cp.setMin(min(POINTS_H))
+        # cp.setMax(max(POINTS_H))
+        cp.setPoints(TRACKING_POINTS)
+        return cp
 
 
 if __name__ == '__main__':
@@ -233,6 +236,7 @@ if __name__ == '__main__':
     ctx = ApplicationContext()
 
     qmlRegisterType(ConsolePoints, "SwiftConsole", 1, 0, "ConsolePoints") # type: ignore
+    qmlRegisterType(TrackingSignalsPoints, "SwiftConsole", 1, 0, "TrackingSignalsPoints") # type: ignore
     engine = QtQml.QQmlApplicationEngine()
 
     qml_view = ctx.get_resource('view.qml')
@@ -243,9 +247,12 @@ if __name__ == '__main__':
     backend = console_backend.server.Server()
     endpoint = backend.start()
     data_model = DataModel(endpoint, messages, args.file_in)
-
+    tracking_signals_model = TrackingSignalsModel()
     root_context = engine.rootContext()
+    root_context.setContextProperty("tracking_signals_model", tracking_signals_model)
     root_context.setContextProperty("data_model", data_model)
+    
+    
     
     engine.load(QUrl.fromLocalFile(qml_view))
 

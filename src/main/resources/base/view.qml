@@ -15,6 +15,11 @@ ApplicationWindow {
     ConsolePoints {
         id: console_points
     }
+
+    TrackingSignalsPoints {
+        id: tracking_signals_points
+    }
+    property variant lines: []
     
     ColumnLayout {
 
@@ -54,14 +59,17 @@ ApplicationWindow {
                 }
                 Item {
                     id: trackingsignalsTab
+                    
                     ChartView {
                         id: tracking_signals_chart
+
+                        
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         Layout.alignment: Qt.AlignLeft
                         titleFont.pointSize: 8
                         antialiasing: true
-                        width: parent.width/2
+                        width: parent.width
                         //height: parent.height
 
                         legend.font.pointSize: 7
@@ -76,37 +84,35 @@ ApplicationWindow {
                         ValueAxis {
                             id: tracking_signals_y_axis
                             min: -1.0
-                            max: 1.0
+                            max: 60.0
                             labelsFont.pointSize: 7
                         }
 
-                        LineSeries {
-                            id: hseries
-                            name: "Horizontal [m/s]"
-                            axisX: x_axis
-                            axisY: y_axis
-                            //useOpenGL: true
-                        }
-                        
 
                         Timer {
                             interval: 1000/5 // 5 Hz refresh
                             running: true
                             repeat: true
                             onTriggered: {
-                                data_model.fill_console_points(console_points);
-                                if (!console_points.valid) {
+                                
+                                tracking_signals_model.fill_console_points(tracking_signals_points);
+                                if (!tracking_signals_points.points.length) {
                                     return;
                                 }
-                                var hpoints = console_points.hpoints;
-                                var last = hpoints[hpoints.length - 1];
-                                x_axis.min = last.x - 10;
-                                x_axis.max = last.x;
-                                y_axis.min = console_points.min;
-                                y_axis.max = console_points.max;
-                                console_points.fill_hseries(hseries);
-                                console_points.fill_vseries(vseries);
+                                var points = tracking_signals_points.points;
+                                if (lines.length < points.length) {
+                                    for (var idx=0; idx< (points.length-lines.length); idx++){
+                                        var lineTypeSeries = tracking_signals_chart.createSeries(ChartView.SeriesTypeLine, lines.length, tracking_signals_x_axis, tracking_signals_y_axis);
+                                        lines.push(lineTypeSeries);
+                                    }
+                                }
+                                for (var idx = 0; idx < lines.length; idx++)  {
+                                    tracking_signals_points.fill_series(lines[idx], idx);                                
+                                    
+                                }
                             }
+                        }
+                        Component.onCompleted: {
                         }
                     }
                 

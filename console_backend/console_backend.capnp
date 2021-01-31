@@ -24,7 +24,7 @@ struct VelocityStatus {
 struct TrackingStatus {
     min @0 :Float64;
     max @1 :Float64;
-    headers @2 :List(Text);
+    headers @2 :List(UInt8);
     data @3 :List(List(Point));
 }
 

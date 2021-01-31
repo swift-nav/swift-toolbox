@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::io::{BufReader, Cursor};
 use std::fs;
 use std::net::TcpStream;
@@ -17,6 +18,26 @@ use sbp::{messages::SBP};
 
 use crate::console_backend_capnp as m;
 
+///For tests.
+// use std::sync::mpsc;
+
+
+use glob::glob;
+use ndarray::{s, Array, Array2, Axis};
+// use std::collections::HashMap;
+use std::{io::Write, path::Path};
+
+const MAX_DISCEPANCY_THRESHOLD_PERCENT: f64 = 0.1;
+const MAX_APPROXIMATION_ERROR_THRESHOLD: f64 = 0.001;
+const TEST_DATA_DIRECTORY: &str = "src/test_data/";
+const CSV_EXTENSION: &str = ".csv";
+const ICBINS_POSTFIX: &str = "-icbins";
+const GPS_TOW_SECS_M: &str = "GPS TOW [s]";
+const PDOP: &str = "PDOP";
+const HDOP: &str = "HDOP";
+const DELTA_TOW_MS: &str = "Delta TOW [ms]";
+
+
 /// The backend server
 #[pyclass]
 struct Server {
@@ -28,6 +49,7 @@ struct ServerEndpoint {
     server_send: Option<mpsc::Sender<Vec<u8>>>,
 }
 
+#[cfg(not(test))]
 #[pymethods]
 impl ServerEndpoint {
     #[new]
@@ -54,16 +76,64 @@ pub fn process_messages(messages: impl Iterator<Item = sbp::Result<SBP>>, client
     let mut min_max: Option<(f64, f64)> = None;
     let mut hpoints: Vec<(f64, OrderedFloat<f64>)> = vec![];
     let mut vpoints: Vec<(f64, OrderedFloat<f64>)> = vec![];
+    let mut sat_headers: Vec<u8> = vec![];
+    let mut sats: Vec<Vec<(f64, OrderedFloat<f64>)>> = vec![];
+    let mut tow: f64 = 0.0;
     for message in messages {
         match message {
-            // Ok(SBP::MsgVelNED(msg)) if is_valid_vel_ned(msg.flags) => {
+            Ok(SBP::MsgMeasurementState(msg)) => {
+                for state in msg.states {
+                    if state.cn0 != 0{
+                        let mut points = match sat_headers.iter().position(|&ele| ele == state.mesid.sat) {
+                            Some(idx) => sats.get_mut(idx).unwrap(),
+                            _ => {
+                                sat_headers.push(state.mesid.sat);
+                                sats.push(Vec::new());
+                                sats.last_mut().unwrap()
+                            },
+                        };
+                        if points.len() >= 200 {
+                            points.remove(0);
+                        }
+                        points.push((tow, OrderedFloat(state.cn0 as f64/4.0)));
+                    }
+                }
+                let mut builder = Builder::new_default();
+                let msg = builder.init_root::<m::message::Builder>();
+
+                let mut tracking_status = msg.init_tracking_status();
+                tracking_status.set_min(0 as f64);
+                tracking_status.set_max(60 as f64);
+                let mut tracking_headers = tracking_status.reborrow().init_headers(sat_headers.len() as u32);
                 
-            //     let vel_ned_data = extract_vel_ned_data(msg.n, msg.e, msg.d);
-            //     data_set.sog_mps = vel_ned_data.sog_mps;
-            //     data_set.cog_deg = vel_ned_data.cog_deg;
-            //     data_set.v_vel_mps = vel_ned_data.v_vel_mps;
-            // }
-            
+                for (i, header) in sat_headers.iter().enumerate() {
+                    tracking_headers.set(i as u32, *header);
+                }
+                
+                let mut tracking_points = tracking_status.reborrow().init_data(sat_headers.len() as u32);
+                {
+                    for idx in 0..sat_headers.len(){
+                        let mut points = sats.get_mut(idx).unwrap();
+                        let mut point_val_idx = tracking_points.reborrow().init(idx as u32, points.len() as u32);
+                        for (i, (x, OrderedFloat(y))) in points.iter().enumerate() {
+                            let mut point_val = point_val_idx.reborrow().get(i as u32);
+                            point_val.set_x(*x);
+                            point_val.set_y(*y);
+                        }
+                    }
+                    
+                }
+                let mut msg_bytes: Vec<u8> = vec![];
+                serialize::write_message(&mut msg_bytes, &builder).unwrap();
+
+                client_send_clone.send(msg_bytes).unwrap();
+                
+            }
+            Ok(SBP::MsgTrackingState(msg)) => {
+            }
+            Ok(SBP::MsgObs(msg)) => {
+            }
+
             Ok(SBP::MsgVelNED(velocity_ned)) => {
 
                 let n = velocity_ned.n as f64;
@@ -73,7 +143,7 @@ pub fn process_messages(messages: impl Iterator<Item = sbp::Result<SBP>>, client
                 let h_vel = f64::sqrt(f64::powi(n, 2) + f64::powi(e, 2)) / 1000.0;
                 let v_vel = (-1.0 * d) / 1000.0;
 
-                let tow = velocity_ned.tow as f64 / 1000.0;
+                tow = velocity_ned.tow as f64 / 1000.0;
 
                 min_max = if let Some(_) = min_max {
                     let vmin = vpoints.iter().min_by_key(|i| i.1).unwrap();
@@ -150,7 +220,7 @@ pub fn process_messages(messages: impl Iterator<Item = sbp::Result<SBP>>, client
     ()
 }
 
-
+#[cfg(not(test))]
 #[pymethods]
 impl Server {
     #[new]
@@ -264,9 +334,144 @@ impl Server {
     }
 }
 
+#[cfg(not(test))]
 #[pymodule]
 pub fn server(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<Server>()?;
     m.add_class::<ServerEndpoint>()?;
     Ok(())
+}
+
+
+#[test]
+fn test_regression() {
+    let glob_pattern = Path::new(&TEST_DATA_DIRECTORY).join("**/*.sbp");
+    let glob_pattern = match glob_pattern.to_str() {
+        Some(i) => i,
+        _ => "",
+    };
+    for ele in glob(glob_pattern).expect("failed to read glob") {
+        match ele {
+            Ok(filename) => {
+                println!("{:?}", filename.display());
+                let file_in_name = &filename;
+                let file_out_name = file_in_name
+                    .parent()
+                    .unwrap()
+                    .join(file_in_name.file_stem().unwrap());
+                let file_out_name = file_out_name.to_str().unwrap();
+                let file_out_orig_name = format!("{}{}", file_out_name, &CSV_EXTENSION);
+                let file_out_name =
+                    format!("{}{}{}", file_out_name, &ICBINS_POSTFIX, &CSV_EXTENSION);
+                let (client_send, client_recv) = mpsc::channel::<Vec<u8>>();
+                let messages = sbp::iter_messages(Box::new(fs::File::open(file_in_name).unwrap()));
+                process_messages(messages, client_send);
+                assert!(true);
+                // {
+                //     let mut output: OutputDispatcher<Box<dyn Write>> = OutputDispatcher::new(
+                //         Box::new(fs::File::create(&file_out_name).unwrap()),
+                //         OutputType::CSV,
+                //     );
+
+                //     let msg_options = MsgOptions {
+                //         use_gnss_only: false,
+                //         use_obs_for_trk: false,
+                //         ignore_gnss_pos: false,
+                //         ignore_ins_pos: false,
+                //     };
+                //     assert!(run_sbp2csv(msg_options, messages, &mut output).is_ok());
+                // }
+
+                // println!("{:?}", &file_out_name);
+                // println!("{:?}", &file_out_orig_name);
+                // assert_eq!(Path::new(&file_out_name).is_file(), true);
+                // assert_eq!(Path::new(&file_out_orig_name).is_file(), true);
+
+                // let icbins_dataframe = dataframe_from_csv_file(&file_out_name);
+                // let s2r_dataframe = dataframe_from_csv_file(&file_out_orig_name);
+
+                // let gps_tow_secs_m_idx = icbins_dataframe
+                //     .headers
+                //     .iter()
+                //     .position(|x| x == &String::from(GPS_TOW_SECS_M))
+                //     .unwrap();
+                // for col in 0..s2r_dataframe.values.len_of(Axis(1)) {
+                //     let mut err_count: f64 = 0.0;
+                //     println!(
+                //         "Column {:?}/{:?} : {:?}",
+                //         col,
+                //         s2r_dataframe.headers.len(),
+                //         s2r_dataframe.headers[col]
+                //     );
+                //     for row in 0..s2r_dataframe.values.len_of(Axis(0)) {
+                //         if row % 10000 == 0 {
+                //             println!("Row {:?}/{:?}", row, s2r_dataframe.values.len_of(Axis(0)));
+                //         }
+                //         let eq_row: Vec<_> = icbins_dataframe
+                //             .values
+                //             .slice(s![.., gps_tow_secs_m_idx])
+                //             .indexed_iter()
+                //             .filter_map(|(index, &item)| {
+                //                 if (item - s2r_dataframe.values[[row, gps_tow_secs_m_idx]]).abs()
+                //                     < f64::EPSILON
+                //                 {
+                //                     Some(index)
+                //                 } else {
+                //                     None
+                //                 }
+                //             })
+                //             .collect();
+                //         if eq_row.is_empty() {
+                //             continue;
+                //         }
+                //         let s2r_expected = s2r_dataframe.values[[row, col]];
+                //         let icbins_actual = icbins_dataframe.values[[eq_row[0], col]];
+                //         if !is_close!(s2r_expected, icbins_actual) && !s2r_expected.is_nan() {
+                //             // There is a noticeable issue with float rounding for columns PDOP and HDOP between
+                //             // sbp2report and ICBINS, using f32 results in roughly 3% of elements rounded up or
+                //             // down by +/-0.1. The interim solution is to have ICBINS expose two decimal places
+                //             // then compare to a tolerance of 1E-1.
+                //             if (s2r_dataframe.headers[col] == PDOP
+                //                 || s2r_dataframe.headers[col] == HDOP)
+                //                 && is_close!(s2r_expected, icbins_actual, abs_tol = 1e-1)
+                //             {
+                //                 continue;
+                //             }
+                //             let approx_percentage_error =
+                //                 ((s2r_expected - icbins_actual) / s2r_expected).abs();
+                //             if !(s2r_dataframe.headers[col] == DELTA_TOW_MS
+                //                 && s2r_expected > icbins_actual)
+                //             {
+                //                 assert!(approx_percentage_error<= MAX_APPROXIMATION_ERROR_THRESHOLD, format!(
+                //                     "Over Max Approx Err Threshold - Col:{:?},Row:{:?}\t\tActual:{:?}\tExpected:{:?} => ApproxErr:{:?}",
+                //                     s2r_dataframe.headers[col],
+                //                     row,
+                //                     s2r_expected,
+                //                     icbins_actual,
+                //                     approx_percentage_error
+                //                 ));
+                //             }
+                //             err_count += 1.0;
+                //         }
+                //     }
+                //     let error_percentage =
+                //         100.0 * err_count / s2r_dataframe.values.len_of(Axis(0)) as f64;
+                //     assert!(
+                //         error_percentage <= MAX_DISCEPANCY_THRESHOLD_PERCENT,
+                //         format!(
+                //             "Col: {:?},\t\t\tError: {:?}/{:?} => {:?}%",
+                //             s2r_dataframe.headers[col],
+                //             err_count,
+                //             s2r_dataframe.values.len_of(Axis(0)),
+                //             error_percentage
+                //         )
+                //     )
+                // }
+
+                // Clean up.
+                // fs::remove_file(file_out_name).unwrap();
+            }
+            Err(e) => println!("{:?}", e),
+        }
+    }
 }

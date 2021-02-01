@@ -28,7 +28,7 @@ fbs run
 '''
 
 [tasks.freeze]
-dependencies = ["copy-capnp"]
+dependencies = ["copy-capnp", "generate-resources"]
 script = '''
 pip install -e ./console_backend
 fbs freeze

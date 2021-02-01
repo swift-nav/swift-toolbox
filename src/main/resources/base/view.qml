@@ -95,6 +95,10 @@ ApplicationWindow {
                                 running: true
                                 repeat: true
                                 onTriggered: {
+
+                                    if (!trackingTab.visible) {
+                                        return;
+                                    }
                                     
                                     tracking_signals_model.fill_console_points(tracking_signals_points);
                                     if (!tracking_signals_points.points.length) {
@@ -205,6 +209,9 @@ ApplicationWindow {
                             running: true
                             repeat: true
                             onTriggered: {
+                                if (!solutionTab.visible) {
+                                    return;
+                                }
                                 data_model.fill_console_points(console_points);
                                 if (!console_points.valid) {
                                     return;

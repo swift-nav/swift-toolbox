@@ -31,6 +31,7 @@ from sbp.navigation import SBP_MSG_VEL_NED
 from typing import List, Optional, Tuple, Any
 
 import console_backend.server
+import console_resources
 
 PIKSI_HOST = "piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com"
 PIKSI_PORT = 55555

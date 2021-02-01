@@ -202,7 +202,7 @@ class TrackingSignalsPoints(QObject):
 
     @Slot(QtCharts.QXYSeries, int) # type: ignore
     def fill_series(self, series, idx):
-        print(series.points)
+        # print(series.points())
         series.replace(self._points[idx])
 
 
@@ -210,15 +210,7 @@ class TrackingSignalsModel(QObject):
 
     @Slot(TrackingSignalsPoints) # type: ignore
     def fill_console_points(self, cp: TrackingSignalsPoints) -> TrackingSignalsPoints:
-        # if POINTS_MINMAX[0] is None:
-        #     cp.setValid(False)
-        #     return cp
-        # else:
-        #     cp.setValid(True)
-        # cp.setMin(POINTS_H_MINMAX[0][0])
-        # cp.setMax(POINTS_H_MINMAX[0][1])
-        # cp.setMin(min(POINTS_H))
-        # cp.setMax(max(POINTS_H))
+
         cp.setPoints(TRACKING_POINTS)
         return cp
 

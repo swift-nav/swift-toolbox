@@ -44,11 +44,10 @@ ApplicationWindow {
             width: parent.width
             currentIndex: bar.currentIndex
             Item {
+                
                 id: trackingTab
                 TabBar {
                     id: trackingbar
-                    width: parent.width
-                    
                     Repeater {
                         model: ["Signals", "Sky Plot"]
                         TabButton {
@@ -57,69 +56,78 @@ ApplicationWindow {
                         }
                     }
                 }
-                Item {
-                    id: trackingsignalsTab
-                    
-                    ChartView {
-                        id: tracking_signals_chart
+                StackLayout {
+                    anchors.top: trackingbar.bottom
+                    anchors.bottom: trackingTab.bottom
+                    id: trackingbarlayout
+                    width: parent.width
+                    currentIndex: trackingbar.currentIndex
+                    Item {
+                        id: trackingsignalsTab
 
-                        
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        Layout.alignment: Qt.AlignLeft
-                        titleFont.pointSize: 8
-                        antialiasing: true
-                        width: parent.width
-                        //height: parent.height
+                        ChartView {
+                            id: tracking_signals_chart
 
-                        legend.font.pointSize: 7
-                        legend.alignment: Qt.AlignTop
-                        legend.showToolTips: true
+                            titleFont.pointSize: 8
+                            antialiasing: true
+                            width: trackingTab.width
+                            height: trackingTab.height
 
-                        ValueAxis {
-                            id: tracking_signals_x_axis
-                            labelsFont.pointSize: 7
-                            titleText: "GPS Time of Week"
-                        }
-                        ValueAxis {
-                            id: tracking_signals_y_axis
-                            min: -1.0
-                            max: 60.0
-                            labelsFont.pointSize: 7
-                        }
+                            legend.font.pointSize: 7
+                            legend.alignment: Qt.AlignTop
+                            legend.showToolTips: true
 
+                            ValueAxis {
+                                id: tracking_signals_x_axis
+                                labelsFont.pointSize: 7
+                                titleText: "GPS Time of Week"
+                            }
+                            ValueAxis {
+                                id: tracking_signals_y_axis
+                                min: -1.0
+                                max: 60.0
+                                labelsFont.pointSize: 7
+                            }
+                            
 
-                        Timer {
-                            interval: 1000/5 // 5 Hz refresh
-                            running: true
-                            repeat: true
-                            onTriggered: {
-                                
-                                tracking_signals_model.fill_console_points(tracking_signals_points);
-                                if (!tracking_signals_points.points.length) {
-                                    return;
-                                }
-                                var points = tracking_signals_points.points;
-                                if (lines.length < points.length) {
-                                    for (var idx=0; idx< (points.length-lines.length); idx++){
-                                        var lineTypeSeries = tracking_signals_chart.createSeries(ChartView.SeriesTypeLine, lines.length, tracking_signals_x_axis, tracking_signals_y_axis);
-                                        lines.push(lineTypeSeries);
-                                    }
-                                }
-                                for (var idx = 0; idx < lines.length; idx++)  {
-                                    tracking_signals_points.fill_series(lines[idx], idx);                                
+                            Timer {
+                                interval: 1000/5 // 5 Hz refresh
+                                running: true
+                                repeat: true
+                                onTriggered: {
                                     
+                                    tracking_signals_model.fill_console_points(tracking_signals_points);
+                                    if (!tracking_signals_points.points.length) {
+                                        return;
+                                    }
+                                    var points = tracking_signals_points.points;
+                                    if (lines.length < points.length) {
+                                        for (var idx=0; idx< (points.length-lines.length); idx++){
+                                            var lineTypeSeries = tracking_signals_chart.createSeries(ChartView.SeriesTypeLine, lines.length, tracking_signals_x_axis, tracking_signals_y_axis);
+                                            lines.push(lineTypeSeries);
+                                        }
+                                    }
+                                    for (var idx = 0; idx < lines.length; idx++)  {
+                                        tracking_signals_points.fill_series(lines[idx], idx);
+                                        visible = true;                               
+                                        
+                                    }
+                                    var last = points[0][points[0].length - 1];
+                                    tracking_signals_x_axis.min = last.x - 10;
+                                    tracking_signals_x_axis.max = last.x;
                                 }
                             }
+                            Component.onCompleted: {
+                            }
                         }
-                        Component.onCompleted: {
-                        }
+                    
                     }
+                    Item {
+                        id: trackingskyplotTab
+                    }
+
+                }
                 
-                }
-                Item {
-                    id: trackingskyplotTab
-                }
             }
             Item {
                 id: solutionTab
@@ -161,8 +169,6 @@ ApplicationWindow {
                         titleFont.pointSize: 8
                         antialiasing: true
                         width: parent.width/2
-                        //height: parent.height
-
                         legend.font.pointSize: 7
                         legend.alignment: Qt.AlignTop
                         legend.showToolTips: true
@@ -216,9 +222,7 @@ ApplicationWindow {
                     }
                 }
                 
-            }
-                
-            
+            }    
             Item {
                 id: baselineTab
             }

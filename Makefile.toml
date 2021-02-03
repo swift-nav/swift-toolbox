@@ -1,3 +1,6 @@
+[env]
+PYTHON_DIR = "src/main/python"
+
 [config]
 default_to_workspace = false
 
@@ -26,3 +29,45 @@ script = '''
 pip install --force ./console_backend
 fbs run
 '''
+
+[tasks.prod-installer]
+dependencies = ["copy-capnp", "generate-resources"]
+script = '''
+pip install --force ./console_backend
+fbs freeze
+fbs installer
+'''
+
+[tasks.rust-fmt]
+dependencies = ["copy-capnp"]
+command = "cargo"
+args    = ["fmt", "--", "--check"]
+
+[tasks.rust-clippy]
+dependencies = ["copy-capnp"]
+command = "cargo"
+args    = ["clippy", "--all-targets", "--", "--deny", "warnings"]
+
+[tasks.rust-tests]
+dependencies = ["copy-capnp"]
+command = "cargo"
+args    = ["test", "--", "--nocapture"]
+
+[tasks.python-type-check]
+command = "mypy"
+args    = ["${PYTHON_DIR}"]
+
+[tasks.python-format-check]
+command = "black"
+args    = ["--line-length=120", "--check", "--diff", "${PYTHON_DIR}"]
+
+[tasks.python-format-all]
+command = "black"
+args    = ["--line-length=120", "${PYTHON_DIR}"]
+
+[tasks.python-format]
+alias="python-format-all"
+
+[tasks.python-lint]
+command = "pylint"
+args    = ["--output-format=parseable", "${PYTHON_DIR}"]

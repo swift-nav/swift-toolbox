@@ -1,7 +1,6 @@
 extern crate capnpc;
 
 fn main() {
-
     let output_dir = std::env::var("OUT_DIR").unwrap();
 
     ::capnpc::CompilerCommand::new()

@@ -138,6 +138,14 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "nuitka"
+version = "0.6.11.5"
+description = "Python compiler with full language support and CPython compatibility"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "parso"
 version = "0.8.1"
 description = "A Python Parser"
@@ -300,7 +308,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.10"
-content-hash = "d9547738436ccffd7524260d2ad698462e338e8a5901433de9c9a09bb5f846e8"
+content-hash = "80ca346df6f1578568495b5bf770c2fe5eaff560c52a5939558ba237f2ae2fd0"
 
 [metadata.files]
 altgraph = [
@@ -377,6 +385,9 @@ mypy = [
 mypy-extensions = [
     {file = "mypy_extensions-0.4.3-py2.py3-none-any.whl", hash = "sha256:090fedd75945a69ae91ce1303b5824f428daf5a028d2f6ab8a299250a846f15d"},
     {file = "mypy_extensions-0.4.3.tar.gz", hash = "sha256:2d82818f5bb3e369420cb3c4060a7970edba416647068eb4c5343488a6c604a8"},
+]
+nuitka = [
+    {file = "Nuitka-0.6.11.5.tar.gz", hash = "sha256:eb9b9374e44648462cd7e3286e7a32bb47a3cb31a3c03e1743a8ff3516dbd9a3"},
 ]
 parso = [
     {file = "parso-0.8.1-py2.py3-none-any.whl", hash = "sha256:15b00182f472319383252c18d5913b69269590616c947747bc50bf4ac768f410"},

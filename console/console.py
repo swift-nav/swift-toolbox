@@ -164,10 +164,12 @@ if __name__ == '__main__':
     qmlRegisterType(ConsolePoints, "SwiftConsole", 1, 0, "ConsolePoints") # type: ignore
     engine = QtQml.QQmlApplicationEngine()
 
-    #qml_view = ctx.get_resource('view.qml')
-    #capnp_path = ctx.get_resource('console_backend.capnp')
-
     d = os.path.dirname(__file__)
+
+    #qml_view = ctx.get_resource('view.qml')
+    #qml_view = os.path.join(d, 'view.qml')
+
+    #capnp_path = ctx.get_resource('console_backend.capnp')
     capnp_path = os.path.join(d, 'console_backend.capnp')
 
     messages = capnp.load(capnp_path)

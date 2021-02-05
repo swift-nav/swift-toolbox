@@ -46,7 +46,7 @@ ApplicationWindow {
                     max: 1.0
                     labelsFont.pointSize: 7
                 }
-                //useOpenGL: true
+                useOpenGL: true
             }
 
             Timer {

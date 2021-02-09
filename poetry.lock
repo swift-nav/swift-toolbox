@@ -48,7 +48,7 @@ upload = ["boto3"]
 type = "git"
 url = "https://github.com/silverjam/fbs.git"
 reference = "master"
-resolved_reference = "7a8106b43fbd82ad4de11f6249453dc86bb865ed"
+resolved_reference = "e92cc841b99b294dcb11610f167906c045dbbb27"
 
 [[package]]
 name = "future"
@@ -139,7 +139,7 @@ python-versions = "*"
 
 [[package]]
 name = "nuitka"
-version = "0.6.11.5"
+version = "0.6.11.6"
 description = "Python compiler with full language support and CPython compatibility"
 category = "dev"
 optional = false
@@ -175,6 +175,10 @@ description = "A cython wrapping of the C++ Cap'n Proto library"
 category = "main"
 optional = false
 python-versions = "*"
+
+[package.source]
+type = "file"
+url = "pycapnp.tgz"
 
 [[package]]
 name = "pyinstaller"
@@ -308,7 +312,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.10"
-content-hash = "80ca346df6f1578568495b5bf770c2fe5eaff560c52a5939558ba237f2ae2fd0"
+content-hash = "33507081ae306d71c84aea4a56c66d662706c3cdf0dba348d2da5529ac4d604a"
 
 [metadata.files]
 altgraph = [
@@ -387,7 +391,7 @@ mypy-extensions = [
     {file = "mypy_extensions-0.4.3.tar.gz", hash = "sha256:2d82818f5bb3e369420cb3c4060a7970edba416647068eb4c5343488a6c604a8"},
 ]
 nuitka = [
-    {file = "Nuitka-0.6.11.5.tar.gz", hash = "sha256:eb9b9374e44648462cd7e3286e7a32bb47a3cb31a3c03e1743a8ff3516dbd9a3"},
+    {file = "Nuitka-0.6.11.6.tar.gz", hash = "sha256:be3f2ff35e44ebca5300d3c00ef1fa6d0b0bbdfbda4ce79422079157409dc4b9"},
 ]
 parso = [
     {file = "parso-0.8.1-py2.py3-none-any.whl", hash = "sha256:15b00182f472319383252c18d5913b69269590616c947747bc50bf4ac768f410"},
@@ -397,19 +401,7 @@ pefile = [
     {file = "pefile-2019.4.18.tar.gz", hash = "sha256:a5d6e8305c6b210849b47a6174ddf9c452b2888340b8177874b862ba6c207645"},
 ]
 pycapnp = [
-    {file = "pycapnp-1.0.0-cp37-cp37m-macosx_10_14_x86_64.whl", hash = "sha256:e3c377fb3014e480ae10b6c8d0f84bdf3487516efe6ca7caf168ddea68c5cd7a"},
-    {file = "pycapnp-1.0.0-cp37-cp37m-manylinux2010_i686.whl", hash = "sha256:4a01246579646e06ce7b6f5c70c0465c0a457fb42c0ead06f410518509dd9325"},
-    {file = "pycapnp-1.0.0-cp37-cp37m-manylinux2010_x86_64.whl", hash = "sha256:b56933e65518ca204550d67a6d68742e05cce17264f04ff820a20872d76aee55"},
-    {file = "pycapnp-1.0.0-cp37-cp37m-win_amd64.whl", hash = "sha256:d3ebaf2796eeaa79e2f632d8d6509e7ea0e614513d133a4d1bc37fafdde5b7f6"},
-    {file = "pycapnp-1.0.0-cp38-cp38-macosx_10_14_x86_64.whl", hash = "sha256:37aaf0023939d00cd0554030b09caea194216df35831fd39677cf898954d1e57"},
-    {file = "pycapnp-1.0.0-cp38-cp38-manylinux2010_i686.whl", hash = "sha256:863a6e66c786b83bd4dce37680f3d006760ade25ce0d25d4ebf229c352b465c1"},
-    {file = "pycapnp-1.0.0-cp38-cp38-manylinux2010_x86_64.whl", hash = "sha256:d0fcbffb8326e05b4d41928312b967e1ddcee6cc600287e86118e7fde1de9f5c"},
-    {file = "pycapnp-1.0.0-cp38-cp38-win_amd64.whl", hash = "sha256:485e91799304095aa99ff5561ba1755d566f60e710f78307e32716ec0d1835e9"},
-    {file = "pycapnp-1.0.0-cp39-cp39-macosx_10_14_x86_64.whl", hash = "sha256:e2c7e8fb71add9ab392ef773bcfff95998ec1a65ad4cdefbdb3f09b202ac4e7a"},
-    {file = "pycapnp-1.0.0-cp39-cp39-manylinux2010_i686.whl", hash = "sha256:db4cf60c0fbdb0a63209280324f183dbe16a5ef9add4c3bf5fb34b0f10c3ec42"},
-    {file = "pycapnp-1.0.0-cp39-cp39-manylinux2010_x86_64.whl", hash = "sha256:78ec9536791f53a00b87dd93b0447e66bb1fbfe556130748e4743faca90a7028"},
-    {file = "pycapnp-1.0.0-cp39-cp39-win_amd64.whl", hash = "sha256:fc0c9ddb2099ef1c33bcebbea287f54e33cb52a701e59d7d12d54eeff36d0f96"},
-    {file = "pycapnp-1.0.0.tar.gz", hash = "sha256:9f6fcca349ebf2ec04ca7eacb076aea3e4fcdc010ac33c98b54f0a19d4e5d3e0"},
+    {file = "pycapnp.tgz", hash = "sha256:f24da5a99e5f0c536a6091611135baef8e8035f67d24952cc3c21a88f0cfdb85"},
 ]
 pyinstaller = [
     {file = "pyinstaller-4.2.tar.gz", hash = "sha256:f5c0eeb2aa663cce9a5404292c0195011fa500a6501c873a466b2e8cad3c950c"},

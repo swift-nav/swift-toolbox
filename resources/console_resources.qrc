@@ -2,5 +2,6 @@
 <qresource>
     <file>qtquickcontrols2.conf</file>
     <file>view.qml</file>
+    <file>console_backend.capnp</file>
 </qresource>
 </RCC>

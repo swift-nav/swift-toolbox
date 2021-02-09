@@ -21,6 +21,8 @@ from PySide2 import QtQml, QtCore
 from PySide2.QtQml import qmlRegisterType, QQmlListReference
 from PySide2.QtCore import Property
 
+from PySide2 import Qt
+
 """
 from sbp.client.drivers.network_drivers import TCPDriver
 from sbp.client import Handler, Framer
@@ -181,6 +183,11 @@ if __name__ == '__main__':
 
     engine.rootContext().setContextProperty("data_model", data_model)
     #engine.load(QUrl.fromLocalFile(qml_view))
+    print(os.path.join(d, "qml"))
+    engine.addImportPath(os.path.join(d, "qml"))
+    engine.addImportPath(d)
+    engine.addImportPath("PySide2")
+
     engine.load(QUrl('qrc:/view.qml'))
 
     threading.Thread(target=receive_messages, args=(backend, messages,), daemon=True).start()

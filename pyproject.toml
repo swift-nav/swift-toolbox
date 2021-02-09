@@ -7,7 +7,7 @@ authors = ["Swift Navigation <dev@swiftnav.com>"]
 [tool.poetry.dependencies]
 python = ">=3.9,<3.10"
 PySide2 = "^5.15.2"
-pycapnp = "^1.0.0"
+pycapnp = { path = "pycapnp.tgz" }
 fbs = {git = "https://github.com/silverjam/fbs.git"}
 
 [tool.poetry.dev-dependencies]

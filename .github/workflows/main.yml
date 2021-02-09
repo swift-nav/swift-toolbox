@@ -46,9 +46,9 @@ jobs:
           environment-file: conda.yml
           use-only-tar-bz2: true
       
-      - name: Install Cap n Proto and FPM.
+      - name: Install Dependencies.
         run: |
-          sudo apt-get install -y capnproto ruby ruby-dev rubygems build-essential
+          sudo apt-get install -y capnproto ruby ruby-dev rubygems build-essential git-lfs
           sudo gem install --no-document fpm
 
       - name: Poetry Install
@@ -88,6 +88,7 @@ jobs:
           OS_NAME: linux
         run: |
           conda activate console_pp
+          cargo make prod-installer
           bash ./.github/ci-build.sh
           echo "RELEASE_ARCHIVE=$(cat release-archive.filename)" >>$GITHUB_ENV
 
@@ -136,9 +137,9 @@ jobs:
           environment-file: conda.yml
           use-only-tar-bz2: true
       
-      - name: Install Cap n Proto.
+      - name: Install Dependencies.
         run: |
-          brew install capnp
+          brew install capnp git-lfs
 
       - name: Poetry Install
         run: |
@@ -150,7 +151,7 @@ jobs:
           OS_NAME: osx
         run: |
           conda activate console_pp
-          cp $CONDA_PREFIX/lib/python3.9/site-packages/shiboken2/libshiboken2.abi3.5.15.dylib $CONDA_PREFIX/lib/python3.9/site-packages/PySide2/libshiboken2.abi3.5.15.dylib
+          cargo make prod-mac-nuitka-installer
           bash ./.github/ci-build.sh
           echo "RELEASE_ARCHIVE=$(cat release-archive.filename)" >>$GITHUB_ENV
 
@@ -160,108 +161,3 @@ jobs:
           path: |
             ${{ env.RELEASE_ARCHIVE }}
             release-archive.filename
-
-  # windows-rust:
-  #   runs-on: windows-2019
-  #   steps:
-
-  #     - name: Checkout source
-  #       uses: actions/checkout@v2
-  #       with:
-  #         submodules: recursive
-  #         ssh-key: ${{ secrets.SSH_KEY }}
-
-  #     - name: Install LLVM
-  #       run: choco install -y --no-progress llvm
-
-  #     - name: Install msys2 packages
-  #       uses: msys2/setup-msys2@v2
-  #       with:
-  #         msystem: MINGW64
-  #         install: bash git
-
-  #     - name: Install Rust toolchain
-  #       uses: actions-rs/toolchain@v1
-  #       with:
-  #         toolchain: stable-x86_64-pc-windows-msvc
-  #         override: true
-  #         components: rustfmt, clippy
-
-  #     - name: Run build
-  #       shell: msys2 {0}
-  #       env:
-  #         OS_NAME: windows
-  #         LIBCLANG_PATH: "C:\\Program Files\\LLVM\\bin"
-  #       run: |
-  #         export PATH="$PATH:/C/Rust/.cargo/bin:/C/ProgramData/chocolatey/bin:/C/Program Files/CMake/bin"
-  #         bash ./ci-build.sh
-  #         echo "RELEASE_ARCHIVE=$(cat release-archive.filename)" >>$GITHUB_ENV
-
-  #     - uses: actions/upload-artifact@v2
-  #       with:
-  #         name: windows-rust-artifacts
-  #         path: |
-  #           ${{ env.RELEASE_ARCHIVE }}
-  #           release-archive.filename
-
-  # release:
-  #   needs: [ubuntu-rust, windows-rust, macos-rust]
-  #   if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Create release
-  #       id: create_release
-  #       uses: actions/create-release@v1
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #       with:
-  #         tag_name: ${{ github.ref }}
-  #         release_name: Release ${{ github.ref }}
-  #         draft: false
-  #         prerelease: false
-  #     - uses: actions/download-artifact@v2
-  #       with:
-  #         name: ubuntu-rust-artifacts
-  #     - run: |
-  #         ls -l
-  #         echo "RELEASE_ARCHIVE=$(cat release-archive.filename)" >>$GITHUB_ENV
-  #     - name: Upload release asset
-  #       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-  #       uses: actions/upload-release-asset@v1
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #       with:
-  #         upload_url: ${{ steps.create_release.outputs.upload_url }}
-  #         asset_path: ${{ env.RELEASE_ARCHIVE }}
-  #         asset_name: ${{ env.RELEASE_ARCHIVE }}
-  #         asset_content_type: application/gzip
-  #     - uses: actions/download-artifact@v2
-  #       with:
-  #         name: macos-rust-artifacts
-  #     - run: |
-  #         echo "RELEASE_ARCHIVE=$(cat release-archive.filename)" >>$GITHUB_ENV
-  #     - name: Upload release asset
-  #       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-  #       uses: actions/upload-release-asset@v1
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #       with:
-  #         upload_url: ${{ steps.create_release.outputs.upload_url }}
-  #         asset_path: ${{ env.RELEASE_ARCHIVE }}
-  #         asset_name: ${{ env.RELEASE_ARCHIVE }}
-  #         asset_content_type: application/gzip
-  #     - uses: actions/download-artifact@v2
-  #       with:
-  #         name: windows-rust-artifacts
-  #     - run: |
-  #         echo "RELEASE_ARCHIVE=$(cat release-archive.filename)" >>$GITHUB_ENV
-  #     - name: Upload release asset
-  #       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-  #       uses: actions/upload-release-asset@v1
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #       with:
-  #         upload_url: ${{ steps.create_release.outputs.upload_url }}
-  #         asset_path: ${{ env.RELEASE_ARCHIVE }}
-  #         asset_name: ${{ env.RELEASE_ARCHIVE }}
-  #         asset_content_type: application/zip

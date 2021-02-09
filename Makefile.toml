@@ -1,5 +1,6 @@
 [env]
 PYTHON_DIR = "src/main/python"
+MAC_PYTHON_DIR = "console"
 
 [config]
 default_to_workspace = false
@@ -8,12 +9,15 @@ default_to_workspace = false
 script_runner = "@shell"
 script = '''
 pyside2-rcc resources/console_resources.qrc -o src/main/python/console_resources.py
+cp src/main/python/console_resources.py console/console_resources.py
 '''
 
 [tasks.copy-capnp]
 script_runner = "@shell"
 script = '''
 cp src/main/resources/base/console_backend.capnp console_backend/console_backend.capnp
+cp src/main/resources/base/console_backend.capnp resources/console_backend.capnp
+cp src/main/resources/base/view.qml resources/view.qml
 '''
 
 [tasks.run]
@@ -30,12 +34,42 @@ pip install --force ./console_backend
 fbs run
 '''
 
-[tasks.prod-installer]
+[tasks.prod-freeze]
 dependencies = ["copy-capnp", "generate-resources"]
 script = '''
 pip install --force ./console_backend
 fbs freeze
+'''
+
+[tasks.prod-installer]
+dependencies = ["prod-freeze"]
+script = '''
 fbs installer
+'''
+
+[tasks.prod-linux-nuitka-build]
+dependencies = ["copy-capnp", "generate-resources"]
+script_runner = "@shell"
+script = '''
+pip install --force ./console_backend
+bash console/linux.sh
+'''
+
+[tasks.prod-mac-nuitka-build]
+dependencies = ["copy-capnp", "generate-resources"]
+script_runner = "@shell"
+script = '''
+pip install --force ./console_backend
+bash console/mac.sh
+'''
+
+[tasks.prod-mac-nuitka-installer]
+dependencies = ["prod-mac-nuitka-build"]
+script_runner = "@shell"
+script = '''
+mkdir -p console.app/Contents/MacOS
+cp -r console.dist/* console.app/Contents/MacOS/.
+hdiutil create -volname SwiftNavConsole -srcfolder console.app -ov -format UDZO 'Swift Navigation Console.dmg'
 '''
 
 [tasks.rust-fmt]
@@ -55,19 +89,23 @@ args    = ["test", "--", "--nocapture"]
 
 [tasks.python-type-check]
 command = "mypy"
-args    = ["${PYTHON_DIR}"]
+args    = ["${PYTHON_DIR}", "${MAC_PYTHON_DIR}"]
 
 [tasks.python-format-check]
 command = "black"
-args    = ["--line-length=120", "--check", "--diff", "${PYTHON_DIR}"]
+args    = ["--line-length=120", "--check", "--diff", "${PYTHON_DIR}", "${MAC_PYTHON_DIR}"]
 
 [tasks.python-format-all]
 command = "black"
-args    = ["--line-length=120", "${PYTHON_DIR}"]
+args    = ["--line-length=120", "${PYTHON_DIR}" , "${MAC_PYTHON_DIR}"]
 
 [tasks.python-format]
 alias="python-format-all"
 
 [tasks.python-lint]
-command = "pylint"
-args    = ["--output-format=parseable", "${PYTHON_DIR}"]
+script_runner = "@shell"
+script = '''
+touch ${PYTHON_DIR}/__init__.py
+pylint --output-format=parseable ${PYTHON_DIR} ${MAC_PYTHON_DIR}
+rm ${PYTHON_DIR}/__init__.py
+'''

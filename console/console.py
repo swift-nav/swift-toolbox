@@ -1,5 +1,6 @@
 """Frontend module for the Swift Console.
 """
+import os
 import sys
 import threading
 
@@ -7,7 +8,7 @@ from typing import List, Optional, Tuple, Any
 
 import capnp  # type: ignore
 
-from fbs_runtime.application_context.PySide2 import ApplicationContext  # type: ignore
+from PySide2.QtWidgets import QApplication  # type: ignore  # pylint: disable=no-name-in-module
 
 from PySide2.QtCore import QUrl, QObject, Slot, QPointF  # pylint:disable=no-name-in-module
 from PySide2.QtCharts import QtCharts  # pylint:disable=no-name-in-module
@@ -143,13 +144,13 @@ if __name__ == "__main__":
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
 
-    ctx = ApplicationContext()
+    app = QApplication()
 
     qmlRegisterType(ConsolePoints, "SwiftConsole", 1, 0, "ConsolePoints")  # type: ignore
     engine = QtQml.QQmlApplicationEngine()
 
-    qml_view = ctx.get_resource("view.qml")
-    capnp_path = ctx.get_resource("console_backend.capnp")
+    d = os.path.dirname(__file__)
+    capnp_path = os.path.join(d, "console_backend.capnp")
 
     messages_main = capnp.load(capnp_path)  # pylint: disable=no-member
 
@@ -159,8 +160,9 @@ if __name__ == "__main__":
     data_model = DataModel(endpoint_main, messages_main)
 
     engine.rootContext().setContextProperty("data_model", data_model)
-    engine.load(QUrl.fromLocalFile(qml_view))
+    engine.addImportPath("PySide2")
+    engine.load(QUrl("qrc:/view.qml"))
 
     threading.Thread(target=receive_messages, args=(backend_main, messages_main,), daemon=True).start()
 
-    sys.exit(ctx.app.exec_())
+    sys.exit(app.exec_())

@@ -17,6 +17,7 @@ disable=bad-continuation,
         too-many-function-args,
         too-many-nested-blocks,
         fixme,
+        ungrouped-imports,
 
 [FORMAT]
 max-line-length=120

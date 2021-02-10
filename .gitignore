@@ -1,8 +1,6 @@
 __pycache__
 target
 .mypy_cache
-console.build
-console.dist
-console/console_resources.py
-resources/console_backend.capnp
-resources/view.qml
+.doit*
+*.build
+*.dist

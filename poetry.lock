@@ -89,7 +89,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 name = "cython"
 version = "0.29.21"
 description = "The Cython compiler for writing C extensions for the Python language."
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 
@@ -265,7 +265,7 @@ future = "*"
 name = "pkgconfig"
 version = "1.5.1"
 description = "Interface Python with pkg-config"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 
@@ -481,7 +481,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.10"
-content-hash = "962089224cb2f5b2cbe1c21034fe6927bfd6f95ad1eae65fedfbd897045945a0"
+content-hash = "5e4db313c283108435e60706da34f01ca12b5517e6163039f798d063b7f82019"
 
 [metadata.files]
 altgraph = [

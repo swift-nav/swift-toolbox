@@ -9,14 +9,12 @@ on:
   pull_request:
 
 jobs:
-
-  ubuntu-rust:
-    runs-on: ubuntu-20.04
+  checks:
+    runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash -l {0}
     steps:
-
       - name: Checkout source
         uses: actions/checkout@v2
         with:
@@ -30,7 +28,8 @@ jobs:
           override: true
           components: rustfmt, clippy
       - uses: davidB/rust-cargo-make@v1
-
+        with:
+          version: '0.32.11'
       - name: Cache conda
         uses: actions/cache@v1
         env:
@@ -45,62 +44,51 @@ jobs:
           activate-environment: console_pp
           environment-file: conda.yml
           use-only-tar-bz2: true
-      
       - name: Install Dependencies.
         run: |
-          sudo apt-get install -y capnproto ruby ruby-dev rubygems build-essential git-lfs
-          sudo gem install --no-document fpm
+          if [ "$RUNNER_OS" == "Linux" ]; then
+              sudo apt-get install -y capnproto ruby ruby-dev rubygems build-essential
+              sudo gem install --no-document fpm
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+              brew install capnp
+          fi
+        shell: bash
 
       - name: Poetry Install
         run: |
           conda activate console_pp
           python -m poetry install
 
-      - name: Run Python Format Check
+      - name: Run Format Check
         run: |
           conda activate console_pp
-          cargo make python-format-check
+          cargo make format-check
 
-      - name: Run Python Type Check
+      - name: Run Type Check
         run: |
           conda activate console_pp
-          cargo make python-type-check
+          cargo make types
 
-      - name: Run Python Lint Check
+      - name: Run Lint Check
         run: |
           conda activate console_pp
-          cargo make python-lint
+          cargo make lint
 
-      - name: Run Rust Lint Check
-        run: |
-          cargo make rust-clippy
-          
-      - name: Run Rust Format Check
-        run: |
-          cargo make rust-fmt
-
-      - name: Run Rust Tests
-        run: |
-          cargo make rust-tests
-
-      - name: Run build
-        env:
-          OS_NAME: linux
+      - name: Run Tests
         run: |
           conda activate console_pp
-          cargo make prod-installer
-          bash ./.github/ci-build.sh
-          echo "RELEASE_ARCHIVE=$(cat release-archive.filename)" >>$GITHUB_ENV
+          cargo make tests
 
-      - uses: actions/upload-artifact@v2
-        with:
-          name: ubuntu-rust-artifacts
-          path: |
-            ${{ env.RELEASE_ARCHIVE }}
-            release-archive.filename
-
-  macos-rust:
-    runs-on: macos-10.15
+  build:
+    name: Build Binaries
+    needs:
+      - checks
+    strategy:
+      matrix:
+        os:
+          - ubuntu-20.04
+          - macos-10.15
+    runs-on: ${{ matrix.os }}
     defaults:
       run:
         shell: bash -l {0}
@@ -111,6 +99,15 @@ jobs:
         with:
           submodules: recursive
           ssh-key: ${{ secrets.SSH_KEY }}
+
+      - name: Install ${{ runner.os }} Dependencies.
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+              sudo apt-get install -y capnproto ruby ruby-dev rubygems build-essential
+              sudo gem install --no-document fpm
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+              brew install capnp
+          fi
 
       - name: Install stable Rust
         uses: actions-rs/toolchain@v1
@@ -136,28 +133,28 @@ jobs:
           activate-environment: console_pp
           environment-file: conda.yml
           use-only-tar-bz2: true
-      
-      - name: Install Dependencies.
-        run: |
-          brew install capnp git-lfs
 
       - name: Poetry Install
         run: |
           conda activate console_pp
           python -m poetry install
 
-      - name: Run build
+      - name: Build ${{ runner.os }} Binaries.
         env:
-          OS_NAME: osx
+          OS_NAME: ${{ runner.os }}
         run: |
           conda activate console_pp
-          cargo make prod-mac-nuitka-installer
+          if [ "$RUNNER_OS" == "Linux" ]; then
+              cargo make prod-installer
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+              cargo make prod-mac-nuitka-installer
+          fi
           bash ./.github/ci-build.sh
           echo "RELEASE_ARCHIVE=$(cat release-archive.filename)" >>$GITHUB_ENV
 
       - uses: actions/upload-artifact@v2
         with:
-          name: macos-rust-artifacts
+          name: ${{ runner.os }}-artifacts
           path: |
             ${{ env.RELEASE_ARCHIVE }}
             release-archive.filename

@@ -1,7 +1,7 @@
 import os
 
 CONDA_DIR = os.environ["CONDA_PREFIX"]
-SITEPACK_DIR = "lib/python3.9/site-packages/"
+SITEPACK_DIR = "lib/python3.8/site-packages/"
 CONDA_PREFIX = "$CONDA_PREFIX"
 
 

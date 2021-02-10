@@ -7,7 +7,7 @@ set -o pipefail
 
 archive_name="console_pp"
 
-if [[ "$OS_NAME" == "osx" ]]; then
+if [[ "$OS_NAME" == "macOS" ]]; then
     (strip 'Swift Navigation Console.dmg');
     tar -czf ${archive_name}_osx.tar.gz 'Swift Navigation Console.dmg';
     VERSION="$(git describe --always --tags --dirty)";
@@ -17,7 +17,7 @@ if [[ "$OS_NAME" == "osx" ]]; then
     ls -l;
 fi
 
-if [[ "$OS_NAME" == "linux" ]]; then
+if [[ "$OS_NAME" == "Linux" ]]; then
     (cd target; strip 'Swift Navigation Console.deb');
     tar -C "target" -czf ${archive_name}_linux.tar.gz 'Swift Navigation Console.deb';
     VERSION="$(git describe --always --tags --dirty)";

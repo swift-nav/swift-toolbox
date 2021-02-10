@@ -1,13 +1,17 @@
 """Frontend module for the Swift Console.
 """
+import os
 import sys
 import threading
+from pathlib import Path
 
 from typing import List, Optional, Tuple, Any
 
 import capnp  # type: ignore
 
-from fbs_runtime.application_context.PySide2 import ApplicationContext  # type: ignore
+from PySide2.QtWidgets import QApplication  # type: ignore  # pylint: disable=no-name-in-module
+
+from fbs_runtime.application_context.PySide2 import ApplicationContext  # type: ignore  # pylint: disable=unused-import
 
 from PySide2.QtCore import QUrl, QObject, Slot, QPointF  # pylint:disable=no-name-in-module
 from PySide2.QtCharts import QtCharts  # pylint:disable=no-name-in-module
@@ -20,6 +24,8 @@ from PySide2.QtCore import Property  # pylint:disable=no-name-in-module
 import console_resources  # type: ignore # pylint: disable=unused-import,import-error
 
 import console_backend.server  # type: ignore  # pylint: disable=import-error,no-name-in-module
+
+DARWIN = "darwin"
 
 PIKSI_HOST = "piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com"
 PIKSI_PORT = 55555
@@ -110,7 +116,7 @@ class ConsolePoints(QObject):
 
 class DataModel(QObject):
 
-    endpoint: console_backend.server.ServerEndpoint
+    endpoint: console_backend.server.ServerEndpoint  # pylint: disable=no-member
     messages: Any
 
     def __init__(self, endpoint, messages):
@@ -138,29 +144,49 @@ class DataModel(QObject):
         self.endpoint.send_message(buffer)
 
 
+def get_fbs_resource_dirs():
+    project_dir = Path(os.getcwd())
+    resources = os.path.normpath(os.path.join(project_dir, *("src/main/resources").split("/")))
+    return [os.path.join(resources, profile) for profile in ["base", "secret", sys.platform.lower()]] + [
+        os.path.normpath(os.path.join(project_dir, *("src/main/icons").split("/")))
+    ]
+
+
 if __name__ == "__main__":
 
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
-
-    ctx = ApplicationContext()
+    app = QApplication()
 
     qmlRegisterType(ConsolePoints, "SwiftConsole", 1, 0, "ConsolePoints")  # type: ignore
     engine = QtQml.QQmlApplicationEngine()
 
-    qml_view = ctx.get_resource("view.qml")
-    capnp_path = ctx.get_resource("console_backend.capnp")
+    capnp_path = ""
+    d = os.path.dirname(sys.executable)
+    console_backend_capnp_path = "console_backend.capnp"
+    if getattr(sys, "frozen", False) or sys.platform == DARWIN:
+        capnp_path = os.path.join(d, console_backend_capnp_path)
+    else:
+        resource_dirs = get_fbs_resource_dirs()
+        print(resource_dirs)
+        for found_path in resource_dirs:
+            joined_path = os.path.join(found_path, console_backend_capnp_path)
+            if os.path.exists(joined_path):
+                capnp_path = joined_path
+                break
 
+    engine.addImportPath("PySide2")
+
+    engine.load(QUrl("qrc:/view.qml"))
     messages_main = capnp.load(capnp_path)  # pylint: disable=no-member
 
-    backend_main = console_backend.server.Server()
+    backend_main = console_backend.server.Server()  # pylint: disable=no-member
     endpoint_main = backend_main.start()
 
     data_model = DataModel(endpoint_main, messages_main)
 
     engine.rootContext().setContextProperty("data_model", data_model)
-    engine.load(QUrl.fromLocalFile(qml_view))
 
     threading.Thread(target=receive_messages, args=(backend_main, messages_main,), daemon=True).start()
 
-    sys.exit(ctx.app.exec_())
+    sys.exit(app.exec_())

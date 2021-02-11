@@ -3,7 +3,6 @@
 import os
 import sys
 import threading
-from pathlib import Path
 
 from typing import List, Optional, Tuple, Any
 
@@ -25,6 +24,7 @@ import console_resources  # type: ignore # pylint: disable=unused-import,import-
 
 import console_backend.server  # type: ignore  # pylint: disable=import-error,no-name-in-module
 
+CONSOLE_BACKEND_CAPNP_PATH = "console_backend.capnp"
 DARWIN = "darwin"
 
 PIKSI_HOST = "piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com"
@@ -144,12 +144,20 @@ class DataModel(QObject):
         self.endpoint.send_message(buffer)
 
 
-def get_fbs_resource_dirs():
-    project_dir = Path(os.getcwd())
-    resources = os.path.normpath(os.path.join(project_dir, *("src/main/resources").split("/")))
-    return [os.path.join(resources, profile) for profile in ["base", "secret", sys.platform.lower()]] + [
-        os.path.normpath(os.path.join(project_dir, *("src/main/icons").split("/")))
-    ]
+def get_capnp_path() -> str:
+    """Get the path to the capnp file based on current installer.
+
+    Returns:
+        str: The path to the capnp file.
+    """
+
+    d = os.path.dirname(sys.executable)
+    path = ""
+    if getattr(sys, "frozen", False) or sys.platform == DARWIN:
+        path = os.path.join(d, CONSOLE_BACKEND_CAPNP_PATH)
+    else:
+        path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "resources/base", CONSOLE_BACKEND_CAPNP_PATH)
+    return path
 
 
 if __name__ == "__main__":
@@ -161,19 +169,7 @@ if __name__ == "__main__":
     qmlRegisterType(ConsolePoints, "SwiftConsole", 1, 0, "ConsolePoints")  # type: ignore
     engine = QtQml.QQmlApplicationEngine()
 
-    capnp_path = ""
-    d = os.path.dirname(sys.executable)
-    console_backend_capnp_path = "console_backend.capnp"
-    if getattr(sys, "frozen", False) or sys.platform == DARWIN:
-        capnp_path = os.path.join(d, console_backend_capnp_path)
-    else:
-        resource_dirs = get_fbs_resource_dirs()
-        print(resource_dirs)
-        for found_path in resource_dirs:
-            joined_path = os.path.join(found_path, console_backend_capnp_path)
-            if os.path.exists(joined_path):
-                capnp_path = joined_path
-                break
+    capnp_path = get_capnp_path()
 
     engine.addImportPath("PySide2")
 

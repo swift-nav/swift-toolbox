@@ -26,3 +26,17 @@ if [[ "$OS_NAME" == "Linux" ]]; then
     echo "${archive_name}-${VERSION}-${BUILD_TRIPLET}.tar.gz" >release-archive.filename;
     ls -l;
 fi
+
+if [[ "$OS_NAME" == "Windows" ]]; then
+    ls -la target;
+    cd target;
+    # strip.exe 'Swift Navigation ConsoleSetup.exe';
+    # ls -la;
+    7z a -tzip ../${archive_name}_windows.zip 'Swift Navigation ConsoleSetup.exe';
+    cd ..;
+    VERSION="$(git describe --always --tags)";
+    BUILD_TRIPLET="x86_64-pc-windows-msvc";
+    mv ${archive_name}_windows.zip "${archive_name}-${VERSION}-windows-${BUILD_TRIPLET}.zip";
+    echo "${archive_name}-${VERSION}-windows-${BUILD_TRIPLET}.zip" >release-archive.filename;
+    ls -l;
+fi

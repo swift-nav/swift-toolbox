@@ -10,6 +10,8 @@ capnp = "0.14"
 pyo3 = { version = "0.13", features = ["extension-module"] }
 sbp = { git = "https://github.com/swift-nav/libsbp.git", rev = "986af3f35033a720f21872794d0bd6579c02866c" }
 ordered-float = "2.0"
+ndarray = "0.14.0"
+glob = { version = "0.3.0" }
 
 
 [build-dependencies]

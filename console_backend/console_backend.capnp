@@ -1,5 +1,9 @@
 @0xe7871c33e8243ee4;
 
+struct FileinRequest {
+    filename @0 :Text;
+}
+
 struct ConnectRequest {
     host @0 :Text;
     port @1 :UInt16;
@@ -13,7 +17,15 @@ struct Point {
 struct VelocityStatus {
     min @0 :Float64;
     max @1 :Float64;
-    points @2 :List(Point);
+    hpoints @2 :List(Point);
+    vpoints @3 :List(Point);
+}
+
+struct TrackingStatus {
+    min @0 :Float64;
+    max @1 :Float64;
+    headers @2 :List(UInt8);
+    data @3 :List(List(Point));
 }
 
 struct Status {
@@ -25,5 +37,7 @@ struct Message {
         connectRequest @0 :ConnectRequest;
         velocityStatus @1 :VelocityStatus;
         status @2 :Status;
+        fileinRequest @3 :FileinRequest;
+        trackingStatus @4 :TrackingStatus;
     }
 }

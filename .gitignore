@@ -1,3 +1,6 @@
 __pycache__
 target
 .mypy_cache
+.doit*
+*.build
+*.dist

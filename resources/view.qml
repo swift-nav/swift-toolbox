@@ -62,8 +62,8 @@ ApplicationWindow {
                     var last = points[points.length - 1];
                     x_axis.min = last.x - 10;
                     x_axis.max = last.x;
-                    y_axis.min = console_points.min;
-                    y_axis.max = console_points.max;
+                    y_axis.min = console_points.min_;
+                    y_axis.max = console_points.max_;
                     console_points.fill_series(velocity_graph);
                 }
             }

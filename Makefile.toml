@@ -1,3 +1,6 @@
+[env]
+PYTHON_FILES = { script = ["echo $(find . -path ./target -prune -false -o -name '*.py')"] }
+
 [config]
 default_to_workspace = false
 
@@ -20,9 +23,113 @@ pip install -e ./console_backend
 fbs run
 '''
 
-[tasks.run-prod]
+[tasks.prod-run]
 dependencies = ["copy-capnp", "generate-resources"]
 script = '''
 pip install --force ./console_backend
 fbs run
 '''
+
+[tasks.prod-freeze]
+dependencies = ["copy-capnp", "generate-resources"]
+script = '''
+pip install --force ./console_backend
+fbs freeze
+'''
+
+[tasks.prod-installer]
+dependencies = ["prod-freeze"]
+script = '''
+fbs installer
+'''
+
+[tasks.prod-linux-nuitka-build]
+dependencies = ["copy-capnp", "generate-resources"]
+script_runner = "@shell"
+script = '''
+pip install --force ./console_backend
+bash src/main/nuitka/linux.sh
+'''
+
+[tasks.prod-mac-nuitka-build]
+dependencies = ["copy-capnp", "generate-resources"]
+script_runner = "@shell"
+script = '''
+pip install --force ./console_backend
+bash src/main/nuitka/mac.sh
+'''
+
+[tasks.prod-mac-nuitka-installer]
+dependencies = ["prod-mac-nuitka-build"]
+script_runner = "@shell"
+script = '''
+mkdir -p main.app/Contents/MacOS
+cp -r main.dist/* main.app/Contents/MacOS/.
+hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'Swift Navigation Console.dmg'
+'''
+
+[tasks.rust-format]
+dependencies = ["copy-capnp"]
+command = "cargo"
+args    = ["fmt", "--all"]
+
+[tasks.rust-format-check]
+dependencies = ["copy-capnp"]
+command = "cargo"
+args    = ["fmt", "--", "--check"]
+
+[tasks.rust-lint]
+dependencies = ["copy-capnp"]
+command = "cargo"
+args    = ["clippy", "--all-targets", "--", "--deny", "warnings"]
+
+[tasks.rust-tests]
+dependencies = ["copy-capnp"]
+command = "cargo"
+args    = ["test", "--", "--nocapture"]
+
+[tasks.rust-type-check]
+dependencies = ["copy-capnp"]
+command = "cargo"
+args    = ["check"]
+
+[tasks.python-type-check]
+script_runner = "@shell"
+script = '''
+mypy $PYTHON_FILES
+'''
+
+[tasks.python-format-check]
+script = '''
+black --line-length=120 --check --diff $PYTHON_FILES
+'''
+
+[tasks.python-format-all]
+script = '''
+black --line-length=120 $PYTHON_FILES
+'''
+
+[tasks.python-format]
+alias="python-format-all"
+
+[tasks.python-lint]
+script_runner = "@shell"
+script = '''
+pylint --output-format=parseable $PYTHON_FILES
+'''
+
+[tasks.format-all]
+dependencies = ["python-format-all", "rust-format"]
+
+[tasks.format-check]
+dependencies = ["python-format-check", "rust-format-check"]
+
+[tasks.lint]
+dependencies = ["python-lint", "rust-lint"]
+
+[tasks.types]
+dependencies = ["python-type-check", "rust-type-check"]
+
+[tasks.tests]
+dependencies = ["rust-tests"]
+

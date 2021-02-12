@@ -1,46 +1,41 @@
-import io
-import math
+"""Frontend module for the Swift Console.
+"""
 import os
-import socket
 import sys
 import threading
-import time
-
-import capnp
-
-from fbs_runtime.application_context.PySide2 import ApplicationContext
-
-from PySide2.QtQuick import QQuickView
-from PySide2.QtCore import (Qt, QUrl, QObject, Slot, QPointF)
-from PySide2.QtGui import QGuiApplication
-from PySide2.QtCharts import QtCharts
-
-from PySide2 import QtQml, QtCore
-
-from PySide2.QtQml import qmlRegisterType, QQmlListReference
-from PySide2.QtCore import Property
-
-"""
-from sbp.client.drivers.network_drivers import TCPDriver
-from sbp.client import Handler, Framer
-
-from sbp.navigation import SBP_MSG_VEL_NED
-"""
 
 from typing import List, Optional, Tuple, Any
 
-import console_backend.server
-import console_resources
+import capnp  # type: ignore
+
+from PySide2.QtWidgets import QApplication  # type: ignore  # pylint: disable=no-name-in-module
+
+from fbs_runtime.application_context.PySide2 import ApplicationContext  # type: ignore  # pylint: disable=unused-import
+
+from PySide2.QtCore import QUrl, QObject, Slot, QPointF  # pylint:disable=no-name-in-module
+from PySide2.QtCharts import QtCharts  # pylint:disable=no-name-in-module
+
+from PySide2 import QtQml, QtCore  # pylint:disable=no-name-in-module
+
+from PySide2.QtQml import qmlRegisterType  # pylint:disable=no-name-in-module
+from PySide2.QtCore import Property  # pylint:disable=no-name-in-module
+
+import console_resources  # type: ignore # pylint: disable=unused-import,import-error
+
+import console_backend.server  # type: ignore  # pylint: disable=import-error,no-name-in-module
+
+CONSOLE_BACKEND_CAPNP_PATH = "console_backend.capnp"
+DARWIN = "darwin"
 
 PIKSI_HOST = "piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com"
 PIKSI_PORT = 55555
 
 POINTS_V: List[QPointF] = []
 
-POINTS_H_MINMAX: List[Optional[Tuple[float, float]]] = [None]
+POINTS_H_MINMAX: List[Optional[Tuple[float, float]]] = [None]  # pylint: disable=unsubscriptable-object
 POINTS_H: List[QPointF] = []
 
-capnp.remove_import_hook()
+capnp.remove_import_hook()  # pylint: disable=no-member
 
 
 def receive_messages(backend, messages):
@@ -51,29 +46,9 @@ def receive_messages(backend, messages):
             print(f"status message: {m.status}")
         elif m.which == "velocityStatus":
             POINTS_H_MINMAX[0] = (m.velocityStatus.min, m.velocityStatus.max)
-            POINTS_H[:] = [
-                QPointF(point.x, point.y) for point in m.velocityStatus.points
-            ]
+            POINTS_H[:] = [QPointF(point.x, point.y) for point in m.velocityStatus.points]
         else:
             print(f"other message: {m}")
-
-
-"""
-def sbp_main():
-    host, port = "piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com", 55555
-    with TCPDriver(host, port) as driver:
-        with Handler(Framer(driver.read, None)) as source:
-            for msg, _ in source.filter(SBP_MSG_VEL_NED):
-                h_vel = math.sqrt(msg.n**2 + msg.e**2) / 1000.0
-                v_vel = -msg.d / 1000.0
-                if len(POINTS_H) == 200:
-                    POINTS_H.pop(0)
-                POINTS_H.append(QPointF(msg.tow / 1000.0, h_vel))
-                if POINTS_H_MINMAX is None:
-                    POINTS_H_MINMAX[0] = (-abs(v_vel) * 1.5, abs(v_vel) * 1.5)
-                else:
-                    POINTS_H_MINMAX[0] = (min(X.y() for X in POINTS_H), max(X.y() for X in POINTS_H))
-"""
 
 
 class ConsolePoints(QObject):
@@ -83,99 +58,131 @@ class ConsolePoints(QObject):
     _min: float = 0.0
     _max: float = 0.0
 
-    def getValid(self) -> bool:
+    def get_valid(self) -> bool:
+        """Getter for _valid.
+
+        Returns:
+            bool: Whether it is valid or not.
+        """
         return self._valid
 
-    def setValid(self, valid) -> None:
+    def set_valid(self, valid: bool) -> None:
+        """Setter for _valid.
+        """
         self._valid = valid
 
-    valid = Property(bool, getValid, setValid)
+    valid = Property(bool, get_valid, set_valid)
 
-    def getPoints(self) -> List[QPointF]:
+    def get_points(self) -> List[QPointF]:
+        """Getter for _points.
+        """
         return self._points
 
-    def setPoints(self, points) -> None:
+    def set_points(self, points: List[QPointF]) -> None:
+        """Setter for _points.
+        """
         self._points = points
 
-    points = Property('QVariantList', getPoints, setPoints) # type: ignore
+    points = Property("QVariantList", get_points, set_points)  # type: ignore
 
-    def getMin(self) -> float:
+    def get_min(self) -> float:
+        """Getter for _min.
+        """
         return self._min
 
-    def setMin(self, min: float) -> None:
-        self._min = min
+    def set_min(self, min_: float) -> None:
+        """Setter for _min.
+        """
+        self._min = min_
 
-    min = Property(float, getMin, setMin)
+    min_ = Property(float, get_min, set_min)
 
-    def getMax(self) -> float:
+    def get_max(self) -> float:
+        """Getter for _max.
+        """
         return self._max
 
-    def setMax(self, max: float) -> None:
-        self._max = max
+    def set_max(self, max_: float) -> None:
+        """Setter for _max.
+        """
+        self._max = max_
 
-    max = Property(float, getMax, setMax)
+    max_ = Property(float, get_max, set_max)
 
-    @Slot(QtCharts.QXYSeries) # type: ignore
+    @Slot(QtCharts.QXYSeries)  # type: ignore
     def fill_series(self, series):
         series.replace(self._points)
 
 
 class DataModel(QObject):
 
-    endpoint: console_backend.server.ServerEndpoint
+    endpoint: console_backend.server.ServerEndpoint  # pylint: disable=no-member
     messages: Any
 
     def __init__(self, endpoint, messages):
-        super(DataModel, self).__init__()
+        super().__init__()
         self.endpoint = endpoint
         self.messages = messages
 
-    @Slot(ConsolePoints) # type: ignore
-    def fill_console_points(self, cp: ConsolePoints) -> ConsolePoints:
+    @Slot(ConsolePoints)  # type: ignore
+    def fill_console_points(self, cp: ConsolePoints) -> ConsolePoints:  # pylint: disable=no-self-use
         if POINTS_H_MINMAX[0] is None:
-            cp.setValid(False)
+            cp.set_valid(False)
             return cp
-        else:
-            cp.setValid(True)
-            cp.setMin(POINTS_H_MINMAX[0][0])
-            cp.setMax(POINTS_H_MINMAX[0][1])
-            #print(POINTS_H)
-            cp.setPoints(POINTS_H)
-            return cp
+        cp.set_valid(True)
+        cp.set_min(POINTS_H_MINMAX[0][0])  # pylint: disable=unsubscriptable-object
+        cp.set_max(POINTS_H_MINMAX[0][1])  # pylint: disable=unsubscriptable-object
+        cp.set_points(POINTS_H)
+        return cp
 
-    @Slot() # type: ignore
+    @Slot()  # type: ignore
     def connect(self) -> None:
-        m = self.messages.Message()
-        m.connectRequest.host = PIKSI_HOST
-        m.connectRequest.port = PIKSI_PORT
-        buffer = m.to_bytes()
+        msg = self.messages.Message()
+        msg.connectRequest.host = PIKSI_HOST
+        msg.connectRequest.port = PIKSI_PORT
+        buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
 
 
-if __name__ == '__main__':
+def get_capnp_path() -> str:
+    """Get the path to the capnp file based on current installer.
+
+    Returns:
+        str: The path to the capnp file.
+    """
+
+    d = os.path.dirname(sys.executable)
+    path = ""
+    if getattr(sys, "frozen", False) or sys.platform == DARWIN:
+        path = os.path.join(d, CONSOLE_BACKEND_CAPNP_PATH)
+    else:
+        path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "resources/base", CONSOLE_BACKEND_CAPNP_PATH)
+    return path
+
+
+if __name__ == "__main__":
 
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
+    app = QApplication()
 
-    ctx = ApplicationContext()
-
-    qmlRegisterType(ConsolePoints, "SwiftConsole", 1, 0, "ConsolePoints") # type: ignore
+    qmlRegisterType(ConsolePoints, "SwiftConsole", 1, 0, "ConsolePoints")  # type: ignore
     engine = QtQml.QQmlApplicationEngine()
 
-    qml_view = ctx.get_resource('view.qml')
-    capnp_path = ctx.get_resource('console_backend.capnp')
+    capnp_path = get_capnp_path()
 
-    messages = capnp.load(capnp_path)
+    engine.addImportPath("PySide2")
 
-    backend = console_backend.server.Server()
-    endpoint = backend.start()
+    engine.load(QUrl("qrc:/view.qml"))
+    messages_main = capnp.load(capnp_path)  # pylint: disable=no-member
 
-    data_model = DataModel(endpoint, messages)
+    backend_main = console_backend.server.Server()  # pylint: disable=no-member
+    endpoint_main = backend_main.start()
+
+    data_model = DataModel(endpoint_main, messages_main)
 
     engine.rootContext().setContextProperty("data_model", data_model)
-    engine.load(QUrl.fromLocalFile(qml_view))
 
-    threading.Thread(target=receive_messages, args=(backend, messages,), daemon=True).start()
-    #threading.Thread(target=sbp_main, daemon=True).start()
+    threading.Thread(target=receive_messages, args=(backend_main, messages_main,), daemon=True).start()
 
-    sys.exit(ctx.app.exec_())
+    sys.exit(app.exec_())

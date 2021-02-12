@@ -1,8 +1,8 @@
 import sys
 import platform
 
-from setuptools import setup
-from setuptools_rust import RustExtension
+from setuptools import setup  # type: ignore
+from setuptools_rust import RustExtension  # type: ignore
 
 
 def get_py_version_cfgs():
@@ -20,22 +20,15 @@ def get_py_version_cfgs():
 
 
 def make_rust_extension(module_name):
-    return RustExtension(
-        module_name, "Cargo.toml", rustc_flags=get_py_version_cfgs(), debug=True
-    )
+    return RustExtension(module_name, "Cargo.toml", rustc_flags=get_py_version_cfgs(), debug=True)
 
 
 setup(
     name="console-backend",
     version="0.1.0",
-    classifiers=[
-        "Programming Language :: Python",
-        "Programming Language :: Rust",
-    ],
+    classifiers=["Programming Language :: Python", "Programming Language :: Rust",],
     packages=["console_backend"],
-    rust_extensions=[
-        make_rust_extension("console_backend.server"),
-    ],
+    rust_extensions=[make_rust_extension("console_backend.server"),],
     include_package_data=True,
     zip_safe=False,
 )

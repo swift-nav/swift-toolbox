@@ -1,5 +1,6 @@
 """Frontend module for the Swift Console.
 """
+import argparse
 import os
 import sys
 import threading
@@ -30,10 +31,11 @@ DARWIN = "darwin"
 PIKSI_HOST = "piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com"
 PIKSI_PORT = 55555
 
-POINTS_V: List[QPointF] = []
-
 POINTS_H_MINMAX: List[Optional[Tuple[float, float]]] = [None]  # pylint: disable=unsubscriptable-object
 POINTS_H: List[QPointF] = []
+POINTS_V: List[QPointF] = []
+TRACKING_POINTS: List[List[QPointF]] = []
+TRACKING_HEADERS: List[int] = []
 
 capnp.remove_import_hook()  # pylint: disable=no-member
 
@@ -46,15 +48,24 @@ def receive_messages(backend, messages):
             print(f"status message: {m.status}")
         elif m.which == "velocityStatus":
             POINTS_H_MINMAX[0] = (m.velocityStatus.min, m.velocityStatus.max)
-            POINTS_H[:] = [QPointF(point.x, point.y) for point in m.velocityStatus.points]
+            POINTS_H[:] = [QPointF(point.x, point.y) for point in m.velocityStatus.hpoints]
+            POINTS_V[:] = [QPointF(point.x, point.y) for point in m.velocityStatus.vpoints]
+        elif m.which == "trackingStatus":
+            TRACKING_HEADERS[:] = m.trackingStatus.headers
+            TRACKING_POINTS[:] = [
+                [QPointF(point.x, point.y) for point in m.trackingStatus.data[idx]]
+                for idx in range(len(m.trackingStatus.data))
+            ]
         else:
-            print(f"other message: {m}")
+            pass
+            # print(f"other message: {m}")
 
 
 class ConsolePoints(QObject):
 
     _valid: bool = False
-    _points: List[QPointF] = []
+    _hpoints: List[QPointF] = []
+    _vpoints: List[QPointF] = []
     _min: float = 0.0
     _max: float = 0.0
 
@@ -73,17 +84,20 @@ class ConsolePoints(QObject):
 
     valid = Property(bool, get_valid, set_valid)
 
-    def get_points(self) -> List[QPointF]:
-        """Getter for _points.
-        """
-        return self._points
+    def get_hpoints(self) -> List[QPointF]:
+        return self._hpoints
 
-    def set_points(self, points: List[QPointF]) -> None:
-        """Setter for _points.
-        """
-        self._points = points
+    def set_hpoints(self, hpoints) -> None:
+        self._hpoints = hpoints
 
-    points = Property("QVariantList", get_points, set_points)  # type: ignore
+    def get_vpoints(self) -> List[QPointF]:
+        return self._vpoints
+
+    def set_vpoints(self, vpoints) -> None:
+        self._vpoints = vpoints
+
+    hpoints = Property("QVariantList", get_hpoints, set_hpoints)  # type: ignore
+    vpoints = Property("QVariantList", get_vpoints, set_vpoints)  # type: ignore
 
     def get_min(self) -> float:
         """Getter for _min.
@@ -110,8 +124,12 @@ class ConsolePoints(QObject):
     max_ = Property(float, get_max, set_max)
 
     @Slot(QtCharts.QXYSeries)  # type: ignore
-    def fill_series(self, series):
-        series.replace(self._points)
+    def fill_hseries(self, hseries):
+        hseries.replace(self._hpoints)
+
+    @Slot(QtCharts.QXYSeries)  # type: ignore
+    def fill_vseries(self, vseries):
+        vseries.replace(self._vpoints)
 
 
 class DataModel(QObject):
@@ -119,10 +137,12 @@ class DataModel(QObject):
     endpoint: console_backend.server.ServerEndpoint  # pylint: disable=no-member
     messages: Any
 
-    def __init__(self, endpoint, messages):
+    def __init__(self, endpoint, messages, file_in):
         super().__init__()
         self.endpoint = endpoint
         self.messages = messages
+        self.file_in = file_in
+        self.is_connected = False
 
     @Slot(ConsolePoints)  # type: ignore
     def fill_console_points(self, cp: ConsolePoints) -> ConsolePoints:  # pylint: disable=no-self-use
@@ -132,16 +152,69 @@ class DataModel(QObject):
         cp.set_valid(True)
         cp.set_min(POINTS_H_MINMAX[0][0])  # pylint: disable=unsubscriptable-object
         cp.set_max(POINTS_H_MINMAX[0][1])  # pylint: disable=unsubscriptable-object
-        cp.set_points(POINTS_H)
+        cp.set_hpoints(POINTS_H)
+        cp.set_vpoints(POINTS_V)
         return cp
 
     @Slot()  # type: ignore
     def connect(self) -> None:
+        if self.is_connected:
+            print("Already connected.")
+            return
         msg = self.messages.Message()
         msg.connectRequest.host = PIKSI_HOST
         msg.connectRequest.port = PIKSI_PORT
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
+        self.is_connected = True
+
+    @Slot()  # type: ignore
+    def readfile(self) -> None:
+        if not self.file_in:
+            print("No file passed into application.")
+            return
+        m = self.messages.Message()
+        m.fileinRequest = m.init("fileinRequest")
+        m.fileinRequest.filename = self.file_in
+        buffer = m.to_bytes()
+        self.endpoint.send_message(buffer)
+
+
+class TrackingSignalsPoints(QObject):
+
+    _valid: bool = False
+    _points: List[List[QPointF]] = [[]]
+    _min: float = 0.0
+    _max: float = 0.0
+
+    def get_valid(self) -> bool:
+        return self._valid
+
+    def set_valid(self, valid) -> None:
+        self._valid = valid
+
+    valid = Property(bool, get_valid, set_valid)
+
+    def get_points(self) -> List[List[QPointF]]:
+        return self._points
+
+    def set_points(self, points) -> None:
+        self._points = points
+
+    points = Property("QVariantList", get_points, set_points)  # type: ignore
+
+    @Slot(list)  # type: ignore
+    def fill_series(self, series_list):
+        for idx, series in enumerate(series_list):
+            series.replace(self._points[idx])
+
+
+class TrackingSignalsModel(QObject):  # pylint: disable=too-few-public-methods
+    @Slot(TrackingSignalsPoints)  # type: ignore
+    def fill_console_points(self, cp: TrackingSignalsPoints) -> TrackingSignalsPoints:  # pylint:disable=no-self-use
+
+        cp.set_points(TRACKING_POINTS)
+        return cp
 
 
 def get_capnp_path() -> str:
@@ -161,12 +234,16 @@ def get_capnp_path() -> str:
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--file-in", help="Input file to parse.")
+    args = parser.parse_args()
 
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
     app = QApplication()
 
     qmlRegisterType(ConsolePoints, "SwiftConsole", 1, 0, "ConsolePoints")  # type: ignore
+    qmlRegisterType(TrackingSignalsPoints, "SwiftConsole", 1, 0, "TrackingSignalsPoints")  # type: ignore
     engine = QtQml.QQmlApplicationEngine()
 
     capnp_path = get_capnp_path()
@@ -174,14 +251,17 @@ if __name__ == "__main__":
     engine.addImportPath("PySide2")
 
     engine.load(QUrl("qrc:/view.qml"))
+
     messages_main = capnp.load(capnp_path)  # pylint: disable=no-member
 
     backend_main = console_backend.server.Server()  # pylint: disable=no-member
     endpoint_main = backend_main.start()
 
-    data_model = DataModel(endpoint_main, messages_main)
-
-    engine.rootContext().setContextProperty("data_model", data_model)
+    data_model = DataModel(endpoint_main, messages_main, args.file_in)
+    tracking_signals_model = TrackingSignalsModel()
+    root_context = engine.rootContext()
+    root_context.setContextProperty("tracking_signals_model", tracking_signals_model)
+    root_context.setContextProperty("data_model", data_model)
 
     threading.Thread(target=receive_messages, args=(backend_main, messages_main,), daemon=True).start()
 

@@ -28,10 +28,7 @@ if [[ "$OS_NAME" == "Linux" ]]; then
 fi
 
 if [[ "$OS_NAME" == "Windows" ]]; then
-    ls -la target;
     cd target;
-    # strip.exe 'Swift Navigation ConsoleSetup.exe';
-    # ls -la;
     7z a -tzip ../${archive_name}_windows.zip 'Swift Navigation ConsoleSetup.exe';
     cd ..;
     VERSION="$(git describe --always --tags)";

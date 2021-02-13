@@ -9,81 +9,81 @@ on:
   pull_request:
 
 jobs:
-  # checks:
-  #   runs-on: ubuntu-latest
-  #   defaults:
-  #     run:
-  #       shell: bash -l {0}
-  #   steps:
-  #     - name: Checkout source
-  #       uses: actions/checkout@v2
-  #       with:
-  #         submodules: recursive
-  #         ssh-key: ${{ secrets.SSH_KEY }}
+  checks:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          ssh-key: ${{ secrets.SSH_KEY }}
 
-  #     - name: Install stable Rust
-  #       uses: actions-rs/toolchain@v1
-  #       with:
-  #         toolchain: stable
-  #         override: true
-  #         components: rustfmt, clippy
-  #     - uses: davidB/rust-cargo-make@v1
-  #       with:
-  #         version: '0.32.11'
-  #     - name: Cache conda
-  #       uses: actions/cache@v1
-  #       env:
-  #         CACHE_NUMBER: 0
-  #       with:
-  #         path: ~/conda_pkgs_dir
-  #         key:
-  #           ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
-  #           hashFiles('conda.yml') }}
-  #     - uses: conda-incubator/setup-miniconda@v2
-  #       with:
-  #         activate-environment: console_pp
-  #         environment-file: conda.yml
-  #         use-only-tar-bz2: true
-  #     - name: Install Dependencies.
-  #       run: |
-  #         sudo apt-get install -y capnproto ruby ruby-dev rubygems build-essential
-  #         sudo gem install --no-document fpm
-  #       shell: bash
+      - name: Install stable Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+      - uses: davidB/rust-cargo-make@v1
+        with:
+          version: '0.32.11'
+      - name: Cache conda
+        uses: actions/cache@v1
+        env:
+          CACHE_NUMBER: 0
+        with:
+          path: ~/conda_pkgs_dir
+          key:
+            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
+            hashFiles('conda.yml') }}
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: console_pp
+          environment-file: conda.yml
+          use-only-tar-bz2: true
+      - name: Install Dependencies.
+        run: |
+          sudo apt-get install -y capnproto ruby ruby-dev rubygems build-essential
+          sudo gem install --no-document fpm
+        shell: bash
 
-  #     - name: Poetry Install
-  #       run: |
-  #         conda activate console_pp
-  #         python -m poetry install
+      - name: Poetry Install
+        run: |
+          conda activate console_pp
+          python -m poetry install
 
-  #     - name: Run Format Check
-  #       run: |
-  #         conda activate console_pp
-  #         cargo make format-check
+      - name: Run Format Check
+        run: |
+          conda activate console_pp
+          cargo make format-check
 
-  #     - name: Run Type Check
-  #       run: |
-  #         conda activate console_pp
-  #         cargo make types
+      - name: Run Type Check
+        run: |
+          conda activate console_pp
+          cargo make types
 
-  #     - name: Run Lint Check
-  #       run: |
-  #         conda activate console_pp
-  #         cargo make lint
+      - name: Run Lint Check
+        run: |
+          conda activate console_pp
+          cargo make lint
 
-  #     - name: Run Tests
-  #       run: |
-  #         conda activate console_pp
-  #         cargo make tests
+      - name: Run Tests
+        run: |
+          conda activate console_pp
+          cargo make tests
 
   build:
     name: Build Binaries
-    # needs:
-    #   - checks
+    needs:
+      - checks
     strategy:
       matrix:
         os:
-          # - ubuntu-20.04
-          # - macos-10.15
+          - ubuntu-20.04
+          - macos-10.15
           - windows-2019
     runs-on: ${{ matrix.os }}
     defaults:

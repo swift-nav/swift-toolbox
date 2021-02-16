@@ -143,10 +143,12 @@ jobs:
           OS_NAME: ${{ runner.os }}
         run: |
           conda activate console_pp
-          if [ "$RUNNER_OS" == "Linux" ] || [ "$RUNNER_OS" == "Windows" ]; then
-              cargo make prod-installer
+          if [ "$RUNNER_OS" == "Linux" ]; then
+              cargo make prod-linux-installer
           elif [ "$RUNNER_OS" == "macOS" ]; then
               cargo make prod-mac-nuitka-installer
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+              cargo make prod-windows-installer
           fi
           bash ./.github/ci-build.sh
           echo "RELEASE_ARCHIVE=$(cat release-archive.filename)" >>$GITHUB_ENV

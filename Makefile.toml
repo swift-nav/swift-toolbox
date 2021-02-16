@@ -43,6 +43,30 @@ script = '''
 fbs installer
 '''
 
+[tasks.remove-linux-frozen-negligibles]
+dependencies = []
+script = '''
+bash src/main/fbs/linux.sh
+'''
+
+[tasks.prod-linux-installer]
+dependencies = ["prod-freeze", "remove-linux-frozen-negligibles"]
+script = '''
+fbs installer
+'''
+
+[tasks.remove-windows-frozen-negligibles]
+dependencies = []
+script = '''
+bash src/main/fbs/windows.sh
+'''
+
+[tasks.prod-windows-installer]
+dependencies = ["prod-freeze", "remove-windows-frozen-negligibles"]
+script = '''
+fbs installer
+'''
+
 [tasks.prod-linux-nuitka-build]
 dependencies = ["copy-capnp", "generate-resources"]
 script_runner = "@shell"
@@ -120,6 +144,9 @@ pylint --output-format=parseable $PYTHON_FILES
 
 [tasks.format-all]
 dependencies = ["python-format-all", "rust-format"]
+
+[tasks.format]
+alias = "format-all"
 
 [tasks.format-check]
 dependencies = ["python-format-check", "rust-format-check"]

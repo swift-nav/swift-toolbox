@@ -38,33 +38,21 @@ fbs freeze
 '''
 
 [tasks.prod-installer]
-dependencies = ["prod-freeze"]
+dependencies = ["prod-freeze", "remove-frozen-negligibles"]
 script = '''
 fbs installer
 '''
 
-[tasks.remove-linux-frozen-negligibles]
+[tasks.remove-frozen-negligibles.linux]
 dependencies = []
 script = '''
 bash src/main/fbs/linux.sh
 '''
 
-[tasks.prod-linux-installer]
-dependencies = ["prod-freeze", "remove-linux-frozen-negligibles"]
-script = '''
-fbs installer
-'''
-
-[tasks.remove-windows-frozen-negligibles]
+[tasks.remove-frozen-negligibles.windows]
 dependencies = []
 script = '''
 bash src/main/fbs/windows.sh
-'''
-
-[tasks.prod-windows-installer]
-dependencies = ["prod-freeze", "remove-windows-frozen-negligibles"]
-script = '''
-fbs installer
 '''
 
 [tasks.prod-linux-nuitka-build]
@@ -75,7 +63,7 @@ pip install --force ./console_backend
 bash src/main/nuitka/linux.sh
 '''
 
-[tasks.prod-mac-nuitka-build]
+[tasks.prod-installer.mac]
 dependencies = ["copy-capnp", "generate-resources"]
 script_runner = "@shell"
 script = '''

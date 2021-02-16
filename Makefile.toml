@@ -38,24 +38,30 @@ fbs freeze
 '''
 
 [tasks.prod-installer]
-dependencies = ["prod-freeze", "remove-frozen-negligibles"]
+dependencies = ["prod-freeze", "remove-negligibles"]
 script = '''
 fbs installer
 '''
 
-[tasks.remove-frozen-negligibles.linux]
-dependencies = []
+[tasks.create-remove-negligibles-file]
+script_runner = "@shell"
 script = '''
-bash src/main/fbs/linux.sh
+python utils/get_fbs_remove_list.py
 '''
 
-[tasks.remove-frozen-negligibles.windows]
+[tasks.remove-negligibles.linux]
 dependencies = []
 script = '''
-bash src/main/fbs/windows.sh
+bash src/main/fbs/linux-remove-negligibles.sh
 '''
 
-[tasks.prod-linux-nuitka-build]
+[tasks.remove-negligibles.windows]
+dependencies = []
+script = '''
+bash src/main/fbs/windows-remove-negligibles.sh
+'''
+
+[tasks.prod-nuitka-build.linux]
 dependencies = ["copy-capnp", "generate-resources"]
 script_runner = "@shell"
 script = '''
@@ -63,7 +69,7 @@ pip install --force ./console_backend
 bash src/main/nuitka/linux.sh
 '''
 
-[tasks.prod-installer.mac]
+[tasks.prod-nuitka-build.mac]
 dependencies = ["copy-capnp", "generate-resources"]
 script_runner = "@shell"
 script = '''
@@ -71,8 +77,14 @@ pip install --force ./console_backend
 bash src/main/nuitka/mac.sh
 '''
 
-[tasks.prod-mac-nuitka-installer]
-dependencies = ["prod-mac-nuitka-build"]
+[tasks.create-nuitka-script]
+script_runner = "@shell"
+script = '''
+python utils/create_nuitka_script.py
+'''
+
+[tasks.prod-installer.mac]
+dependencies = ["prod-nuitka-build"]
 script_runner = "@shell"
 script = '''
 mkdir -p main.app/Contents/MacOS

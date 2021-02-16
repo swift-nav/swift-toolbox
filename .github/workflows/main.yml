@@ -46,8 +46,7 @@ jobs:
           use-only-tar-bz2: true
       - name: Install Dependencies.
         run: |
-          sudo apt-get install -y capnproto ruby ruby-dev rubygems build-essential
-          sudo gem install --no-document fpm
+          sudo apt-get install -y capnproto
         shell: bash
 
       - name: Poetry Install

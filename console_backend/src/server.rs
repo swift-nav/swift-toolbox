@@ -2,6 +2,7 @@
 #![allow(unused_imports)]
 use capnp::message::Builder;
 use capnp::serialize;
+use ndarray::{s, Array, Array2, Axis};
 use ordered_float::*;
 use pyo3::exceptions;
 use pyo3::prelude::*;
@@ -14,16 +15,7 @@ use std::net::TcpStream;
 use std::sync::mpsc;
 use std::thread;
 
-///For tests.
-use glob::glob;
-use ndarray::{s, Array, Array2, Axis};
-use std::{io::Write, path::Path};
-
 use crate::console_backend_capnp as m;
-
-const TEST_DATA_DIRECTORY: &str = "src/test_data/";
-const CSV_EXTENSION: &str = ".csv";
-const ICBINS_POSTFIX: &str = "-icbins";
 
 /// The backend server
 #[pyclass]
@@ -36,6 +28,7 @@ struct ServerEndpoint {
     server_send: Option<mpsc::Sender<Vec<u8>>>,
 }
 
+#[cfg(not(bench))]
 #[cfg(not(test))]
 #[pymethods]
 impl ServerEndpoint {
@@ -218,6 +211,7 @@ pub fn process_messages(
     }
 }
 
+#[cfg(not(bench))]
 #[cfg(not(test))]
 #[pymethods]
 impl Server {
@@ -316,39 +310,11 @@ impl Server {
         Ok(server_endpoint)
     }
 }
+#[cfg(not(bench))]
 #[cfg(not(test))]
 #[pymodule]
 pub fn server(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<Server>()?;
     m.add_class::<ServerEndpoint>()?;
     Ok(())
-}
-
-#[test]
-fn test_readfile() {
-    let glob_pattern = Path::new(&TEST_DATA_DIRECTORY).join("**/*.sbp");
-    let glob_pattern = match glob_pattern.to_str() {
-        Some(i) => i,
-        _ => "",
-    };
-    for ele in glob(glob_pattern).expect("failed to read glob") {
-        match ele {
-            Ok(filename) => {
-                println!("{:?}", filename.display());
-                let file_in_name = &filename;
-                let file_out_name = file_in_name
-                    .parent()
-                    .unwrap()
-                    .join(file_in_name.file_stem().unwrap());
-                let file_out_name = file_out_name.to_str().unwrap();
-                let _file_out_orig_name = format!("{}{}", file_out_name, &CSV_EXTENSION);
-                let _file_out_name =
-                    format!("{}{}{}", file_out_name, &ICBINS_POSTFIX, &CSV_EXTENSION);
-                let (client_send, _) = mpsc::channel::<Vec<u8>>();
-                let messages = sbp::iter_messages(Box::new(fs::File::open(file_in_name).unwrap()));
-                process_messages(messages, client_send);
-            }
-            Err(e) => println!("{:?}", e),
-        }
-    }
 }

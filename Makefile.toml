@@ -89,7 +89,7 @@ script_runner = "@shell"
 script = '''
 mkdir -p main.app/Contents/MacOS
 cp -r main.dist/* main.app/Contents/MacOS/.
-hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'Swift Navigation Console.dmg'
+hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg'
 '''
 
 [tasks.rust-format]
@@ -160,3 +160,10 @@ dependencies = ["python-type-check", "rust-type-check"]
 [tasks.tests]
 dependencies = ["rust-tests"]
 
+[tasks.frontend-bench.windows]
+command = "python"
+args    = ["benches/frontend_bench.py", "--binary=swift_navigation_console.exe"]
+
+[tasks.frontend-bench]
+command = "python"
+args    = ["benches/frontend_bench.py", "--binary=swift_navigation_console"]

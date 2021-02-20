@@ -25,3 +25,7 @@ capnpc = "0.14"
 [lib]
 name = "console_backend"
 crate-type = ["cdylib", "lib"]
+
+[features]
+default = []
+criterion_bench = []

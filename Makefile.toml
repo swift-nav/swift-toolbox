@@ -160,3 +160,14 @@ dependencies = ["python-type-check", "rust-type-check"]
 [tasks.tests]
 dependencies = ["rust-tests"]
 
+[tasks.bench-rust]
+dependencies = ["copy-capnp", "generate-resources"]
+command = "cargo"
+args    = ["bench", "--all-features", "--", "--verbose", "--noplot"]
+
+[tasks.bench-rust-validate]
+command = "python"
+args    = ["console_backend/benches/benchmarks.py"]
+
+[tasks.benches]
+dependencies = ["bench-rust", "bench-rust-validate"]

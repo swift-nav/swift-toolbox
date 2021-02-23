@@ -1,9 +1,7 @@
 use capnp::message::Builder;
 use capnp::serialize;
-use ndarray::{s, Array, Array2, Axis};
 use ordered_float::*;
 use sbp::messages::SBP;
-use std::collections::HashMap;
 use std::sync::mpsc;
 
 use crate::console_backend_capnp as m;

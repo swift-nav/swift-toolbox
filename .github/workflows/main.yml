@@ -9,6 +9,65 @@ on:
   pull_request:
 
 jobs:
+  backend_bench:
+    name: Backend Benchmarks
+    strategy:
+      matrix:
+        os:
+          - ubuntu-20.04
+          # - macos-10.15
+          # - windows-2019
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+
+      - name: Checkout source
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          ssh-key: ${{ secrets.SSH_KEY }}
+
+      - name: Install ${{ runner.os }} Dependencies.
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+              sudo apt-get install -y capnproto
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+              brew install capnp
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+              choco install capnproto
+          fi
+
+      - name: Install stable Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+      - uses: davidB/rust-cargo-make@v1
+        with:
+          version: '0.32.11'
+      - name: Cache conda
+        uses: actions/cache@v1
+        env:
+          CACHE_NUMBER: 0
+        with:
+          path: ~/conda_pkgs_dir
+          key:
+            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
+            hashFiles('conda.yml') }}
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: console_pp
+          environment-file: conda.yml
+          use-only-tar-bz2: true
+      - name: Poetry Install
+        run: |
+          conda activate console_pp
+          python -m poetry install
+      - name: Run Benchmarks
+        run: |
+          cargo make benches
   checks:
     runs-on: ubuntu-latest
     defaults:
@@ -21,10 +80,10 @@ jobs:
           submodules: recursive
           ssh-key: ${{ secrets.SSH_KEY }}
 
-      - name: Install stable Rust
+      - name: Install nightly Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: nightly
           override: true
           components: rustfmt, clippy
       - uses: davidB/rust-cargo-make@v1
@@ -78,6 +137,7 @@ jobs:
     name: Build Binaries
     needs:
       - checks
+      - backend_bench
     strategy:
       matrix:
         os:
@@ -107,10 +167,10 @@ jobs:
               choco install capnproto nsis
           fi
 
-      - name: Install stable Rust
+      - name: Install nightly Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: nightly
           override: true
           components: rustfmt, clippy
       - uses: davidB/rust-cargo-make@v1

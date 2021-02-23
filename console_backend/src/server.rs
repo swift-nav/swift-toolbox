@@ -27,7 +27,6 @@ struct ServerEndpoint {
     server_send: Option<mpsc::Sender<Vec<u8>>>,
 }
 
-
 #[cfg(not(any(test, feature = "criterion_bench")))]
 #[pymethods]
 impl ServerEndpoint {

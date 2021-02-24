@@ -26,7 +26,7 @@ RUST_BENCHMARKS = {
             NAME: "2020-09-04-BayLoop/M8L_BDS_ADR431_nativeODO_Swiftlets_OSR_prod_10Hz_AmotechL2/04-155800",
             FILE_PATH: "target/criterion/proc_messages/RPM/base/estimates.json",
             KEY_LOCATION: "mean.point_estimate",
-            EXPECTED: 27500000,
+            EXPECTED: 70000000,
             ERROR_MARGIN_FRAC: 0.05,
         },
     ],

@@ -11,7 +11,7 @@ const BENCHMARK_TIME_LIMIT: u64 = 10000;
 const BENCHMARK_SAMPLE_SIZE: usize = 50;
 
 pub fn criterion_benchmark(c: &mut Criterion) {
-    let glob_pattern = Path::new(&TEST_DATA_DIRECTORY).join("**/**/*.sbp");
+    let glob_pattern = Path::new(&TEST_DATA_DIRECTORY).join("*.sbp");
     let glob_pattern = glob_pattern.to_str().unwrap();
 
     for ele in glob(glob_pattern).expect("failed to read glob") {
@@ -28,13 +28,31 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         }
     }
 }
+
 fn run_process_messages(file_in_name: &str) {
-    let (client_send, client_recv) = mpsc::channel::<Vec<u8>>();
-    thread::spawn(move || loop {
-        if client_recv.try_recv().is_err() {}
+    use std::sync::mpsc::Receiver;
+    let (client_recv_tx, client_recv_rx) = mpsc::channel::<Receiver<Vec<u8>>>();
+    let recv_thread = thread::spawn(move || {
+        let client_recv = client_recv_rx.recv().unwrap();
+        let mut iter_count = 0;
+        loop {
+            if client_recv.recv().is_err() {
+                break;
+            }
+            iter_count += 1;
+        }
+        assert!(iter_count > 0);
     });
-    let messages = sbp::iter_messages(Box::new(fs::File::open(file_in_name).unwrap()));
-    process_messages::process_messages(messages, client_send);
+    {
+        let (client_send, client_recv) = mpsc::channel::<Vec<u8>>();
+        client_recv_tx
+            .send(client_recv)
+            .expect("sending client recv handle should succeed");
+
+        let messages = sbp::iter_messages(Box::new(fs::File::open(file_in_name).unwrap()));
+        process_messages::process_messages(messages, client_send);
+    }
+    recv_thread.join().expect("join should succeed");
 }
 
 #[cfg(feature = "criterion_bench")]

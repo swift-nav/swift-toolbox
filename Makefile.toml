@@ -1,5 +1,6 @@
 [env]
-PYTHON_FILES = { script = ["echo $(find . -path ./target -prune -false -o -name '*.py')"] }
+PYTHON_FILES = { script = ["python utils/glob_python_files.py"] }
+CONDA_ENV = "console_pp"
 
 [config]
 default_to_workspace = false
@@ -7,7 +8,7 @@ default_to_workspace = false
 [tasks.generate-resources]
 script_runner = "@shell"
 script = '''
-pyside2-rcc resources/console_resources.qrc -o src/main/python/console_resources.py
+conda run -n $CONDA_ENV pyside2-rcc resources/console_resources.qrc -o src/main/python/console_resources.py
 '''
 
 [tasks.copy-capnp]
@@ -18,35 +19,50 @@ cp src/main/resources/base/console_backend.capnp console_backend/console_backend
 
 [tasks.run]
 dependencies = ["copy-capnp", "generate-resources"]
+script_runner = "@shell"
 script = '''
-pip install -e ./console_backend
-fbs run
+conda run -n $CONDA_ENV pip install -e ./console_backend
+conda run -n $CONDA_ENV fbs run
 '''
 
 [tasks.prod-run]
 dependencies = ["copy-capnp", "generate-resources"]
+script_runner = "@shell"
 script = '''
-pip install --force ./console_backend
-fbs run
+conda run -n $CONDA_ENV pip install --force ./console_backend
+conda run -n $CONDA_ENV fbs run
+'''
+
+[tasks.setuptools-rust]
+script_runner = "@shell"
+script = '''
+conda run -n $CONDA_ENV python -m pip install setuptools-rust==0.11.6
+'''
+
+[tasks.prod-install-backend]
+script_runner = "@shell"
+script = '''
+conda run -n $CONDA_ENV python -m pip install --force ./console_backend
 '''
 
 [tasks.prod-freeze]
-dependencies = ["copy-capnp", "generate-resources"]
+dependencies = ["copy-capnp", "generate-resources", "setuptools-rust", "prod-install-backend"]
+script_runner = "@shell"
 script = '''
-pip install --force ./console_backend
-fbs freeze
+conda run -n $CONDA_ENV fbs freeze
 '''
 
 [tasks.prod-installer]
 dependencies = ["prod-freeze", "remove-negligibles"]
+script_runner = "@shell"
 script = '''
-fbs installer
+conda run -n $CONDA_ENV fbs installer
 '''
 
 [tasks.create-remove-negligibles-file]
 script_runner = "@shell"
 script = '''
-python utils/get_fbs_remove_list.py
+conda run -n $CONDA_ENV python utils/get_fbs_remove_list.py
 '''
 
 [tasks.remove-negligibles.linux]
@@ -65,22 +81,22 @@ bash src/main/fbs/windows-remove-negligibles.sh
 dependencies = ["copy-capnp", "generate-resources"]
 script_runner = "@shell"
 script = '''
-pip install --force ./console_backend
-bash src/main/nuitka/linux.sh
+conda run -n $CONDA_ENV pip install --force ./console_backend
+conda run -n $CONDA_ENV bash src/main/nuitka/linux.sh
 '''
 
 [tasks.prod-nuitka-build.mac]
 dependencies = ["copy-capnp", "generate-resources"]
 script_runner = "@shell"
 script = '''
-pip install --force ./console_backend
-bash src/main/nuitka/mac.sh
+conda run -n $CONDA_ENV pip install --force ./console_backend
+conda run -n $CONDA_ENV bash src/main/nuitka/mac.sh
 '''
 
 [tasks.create-nuitka-script]
 script_runner = "@shell"
 script = '''
-python utils/create_nuitka_script.py
+conda run -n $CONDA_ENV python utils/create_nuitka_script.py
 '''
 
 [tasks.prod-installer.mac]
@@ -120,17 +136,19 @@ args    = ["check"]
 [tasks.python-type-check]
 script_runner = "@shell"
 script = '''
-mypy $PYTHON_FILES
+conda run -n $CONDA_ENV mypy $PYTHON_FILES
 '''
 
 [tasks.python-format-check]
+script_runner = "@shell"
 script = '''
-black --line-length=120 --check --diff $PYTHON_FILES
+conda run -n $CONDA_ENV black --line-length=120 --check --diff $PYTHON_FILES
 '''
 
 [tasks.python-format-all]
+script_runner = "@shell"
 script = '''
-black --line-length=120 $PYTHON_FILES
+conda run -n $CONDA_ENV black --line-length=120 $PYTHON_FILES
 '''
 
 [tasks.python-format]
@@ -139,7 +157,7 @@ alias="python-format-all"
 [tasks.python-lint]
 script_runner = "@shell"
 script = '''
-pylint --output-format=parseable $PYTHON_FILES
+conda run -n $CONDA_ENV pylint --output-format=parseable $PYTHON_FILES
 '''
 
 [tasks.format-all]
@@ -166,8 +184,10 @@ command = "cargo"
 args    = ["bench", "--all-features", "--", "--verbose", "--noplot"]
 
 [tasks.bench-rust-validate]
-command = "python"
-args    = ["console_backend/benches/benchmarks.py"]
+script_runner = "@shell"
+script = '''
+conda run -n $CONDA_ENV python console_backend/benches/benchmarks.py
+'''
 
 [tasks.benches]
 dependencies = ["bench-rust", "bench-rust-validate"]

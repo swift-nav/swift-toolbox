@@ -124,11 +124,13 @@ mypy $PYTHON_FILES
 '''
 
 [tasks.python-format-check]
+script_runner = "@shell"
 script = '''
 black --line-length=120 --check --diff $PYTHON_FILES
 '''
 
 [tasks.python-format-all]
+script_runner = "@shell"
 script = '''
 black --line-length=120 $PYTHON_FILES
 '''

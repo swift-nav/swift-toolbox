@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
+#![cfg(not(feature = "criterion_bench"))]
 use capnp::message::Builder;
 use capnp::serialize;
 
@@ -27,7 +28,7 @@ struct ServerEndpoint {
     server_send: Option<mpsc::Sender<Vec<u8>>>,
 }
 
-#[cfg(not(any(test, feature = "criterion_bench")))]
+#[cfg(not(test))]
 #[pymethods]
 impl ServerEndpoint {
     #[new]
@@ -50,7 +51,7 @@ impl ServerEndpoint {
     }
 }
 
-#[cfg(not(any(test, feature = "criterion_bench")))]
+#[cfg(not(test))]
 #[pymethods]
 impl Server {
     #[new]
@@ -149,7 +150,6 @@ impl Server {
     }
 }
 
-#[cfg(not(any(test, feature = "criterion_bench")))]
 #[pymodule]
 pub fn server(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<Server>()?;

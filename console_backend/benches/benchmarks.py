@@ -10,33 +10,61 @@ FILE_PATH = "file_path"
 KEY_LOCATION = "key_location"
 EXPECTED = "expected"
 ERROR_MARGIN_FRAC = "error_margin_frac"
+SUCCESS = "success"
 
 RUST_BENCHMARKS = {
     WINDOWS: [
         {
             NAME: "piksi-relay.sbp",
-            FILE_PATH: "target/criterion/proc_messages/RPM/base/estimates.json",
+            FILE_PATH: "target/criterion/proc_messages/RPM_success/base/estimates.json",
             KEY_LOCATION: "mean.point_estimate",
             EXPECTED: 77500000,
             ERROR_MARGIN_FRAC: 0.05,
+            SUCCESS: True,
+        },
+        {
+            NAME: "piksi-relay.sbp",
+            FILE_PATH: "target/criterion/proc_messages/RPM_failure/base/estimates.json",
+            KEY_LOCATION: "mean.point_estimate",
+            EXPECTED: 77500000,
+            ERROR_MARGIN_FRAC: 0.05,
+            SUCCESS: False,
         },
     ],
     MACOS: [
         {
             NAME: "piksi-relay.sbp",
-            FILE_PATH: "target/criterion/proc_messages/RPM/base/estimates.json",
+            FILE_PATH: "target/criterion/proc_messages/RPM_success/base/estimates.json",
             KEY_LOCATION: "mean.point_estimate",
             EXPECTED: 77500000,
             ERROR_MARGIN_FRAC: 0.05,
+            SUCCESS: True,
+        },
+        {
+            NAME: "piksi-relay.sbp",
+            FILE_PATH: "target/criterion/proc_messages/RPM_failure/base/estimates.json",
+            KEY_LOCATION: "mean.point_estimate",
+            EXPECTED: 77500000,
+            ERROR_MARGIN_FRAC: 0.05,
+            SUCCESS: False,
         },
     ],
     LINUX: [
         {
             NAME: "piksi-relay.sbp",
-            FILE_PATH: "target/criterion/proc_messages/RPM/base/estimates.json",
+            FILE_PATH: "target/criterion/proc_messages/RPM_success/base/estimates.json",
             KEY_LOCATION: "mean.point_estimate",
             EXPECTED: 77500000,
             ERROR_MARGIN_FRAC: 0.05,
+            SUCCESS: True,
+        },
+        {
+            NAME: "piksi-relay.sbp",
+            FILE_PATH: "target/criterion/proc_messages/RPM_failure/base/estimates.json",
+            KEY_LOCATION: "mean.point_estimate",
+            EXPECTED: 77500000,
+            ERROR_MARGIN_FRAC: 0.05,
+            SUCCESS: False,
         },
     ],
 }
@@ -71,11 +99,18 @@ def run_validate_benchmarks():
                 bench_result = json.load(fileo)
                 bench_value = get_nested_key(bench_result, bench[KEY_LOCATION])
                 assert bench_value is not None, f"Test:{bench[NAME]} retrieved bench value None."
-                assert bench_value - bench[EXPECTED] <= bench[ERROR_MARGIN_FRAC] * bench[EXPECTED], (
-                    f"Test:{bench[NAME]} Bench Value:{bench_value} not within "
-                    f"{bench[ERROR_MARGIN_FRAC]} of {bench[EXPECTED]}."
-                )
-                print(f"PASS - {os_}:{bench[NAME]} MARGIN={bench_value - bench[EXPECTED]}")
+                if bench[SUCCESS]:
+                    assert bench_value - bench[EXPECTED] <= bench[ERROR_MARGIN_FRAC] * bench[EXPECTED], (
+                        f"Success Test:{bench[NAME]} Bench Value:{bench_value} not within "
+                        f"{bench[ERROR_MARGIN_FRAC]} of {bench[EXPECTED]}."
+                    )
+                    print(f"PASS - {os_}:{bench[NAME]} MARGIN={bench_value - bench[EXPECTED]}")
+                else:
+                    assert bench_value - bench[EXPECTED] > bench[ERROR_MARGIN_FRAC] * bench[EXPECTED], (
+                        f"Failure Test:{bench[NAME]} Bench Value:{bench_value} not outside of "
+                        f"{bench[ERROR_MARGIN_FRAC]} of {bench[EXPECTED]}."
+                    )
+                    print(f"PASS(Fail Test) - {os_}:{bench[NAME]} MARGIN={bench_value - bench[EXPECTED]}")
 
 
 if __name__ == "__main__":

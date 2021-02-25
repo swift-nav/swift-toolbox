@@ -18,9 +18,6 @@ jobs:
           - macos-10.15
           - windows-2019
     runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        shell: bash -l {0}
     steps:
 
       - name: Checkout source
@@ -31,7 +28,7 @@ jobs:
           lfs: true
 
       - name: Pull Git LFS objects
-        run: git lfs pull
+        run: GIT_TRACE=1 git lfs pull
 
       - name: Install ${{ runner.os }} Dependencies.
         run: |
@@ -80,9 +77,6 @@ jobs:
           fi
   checks:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash -l {0}
     steps:
       - name: Checkout source
         uses: actions/checkout@v2
@@ -116,7 +110,6 @@ jobs:
       - name: Install Dependencies.
         run: |
           sudo apt-get install -y capnproto
-        shell: bash
 
       - name: Poetry Install
         run: |
@@ -155,9 +148,6 @@ jobs:
           - macos-10.15
           - windows-2019
     runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        shell: bash -l {0}
     steps:
 
       - name: Checkout source

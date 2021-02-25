@@ -39,6 +39,8 @@ jobs:
 
       - name: Pull Git LFS objects
         run: git lfs pull
+        env:
+          GIT_TRACE: 1
 
       - name: Install stable Rust
         uses: actions-rs/toolchain@v1

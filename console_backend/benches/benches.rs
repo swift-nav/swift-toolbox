@@ -44,7 +44,9 @@ fn run_process_messages(file_in_name: &str) {
     });
     {
         let (client_send, client_recv) = mpsc::channel::<Vec<u8>>();
-        client_recv_tx.send(client_recv).expect("sending client recv handle should succeed");
+        client_recv_tx
+            .send(client_recv)
+            .expect("sending client recv handle should succeed");
 
         let messages = sbp::iter_messages(Box::new(fs::File::open(file_in_name).unwrap()));
         process_messages::process_messages(messages, client_send);
@@ -58,5 +60,4 @@ criterion_group!(benches, criterion_benchmark);
 criterion_main!(benches);
 
 #[cfg(not(feature = "criterion_bench"))]
-fn main() {
-}
+fn main() {}

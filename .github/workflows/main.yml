@@ -124,23 +124,23 @@ jobs:
 
       - name: Poetry Install
         run: |
-          conda run -p console_pp python -m poetry install
+          conda run -n console_pp python -m poetry install
 
       - name: Run Format Check
         run: |
-          conda run -p console_pp cargo make format-check
+          conda run -n console_pp cargo make format-check
 
       - name: Run Type Check
         run: |
-          conda run -p console_pp cargo make types
+          conda run -n console_pp cargo make types
 
       - name: Run Lint Check
         run: |
-          conda run -p console_pp cargo make lint
+          conda run -n console_pp cargo make lint
 
       - name: Run Tests
         run: |
-          conda run -p console_pp cargo make tests
+          conda run -n console_pp cargo make tests
 
   build:
     name: Build Binaries

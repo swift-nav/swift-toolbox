@@ -19,6 +19,7 @@ cp src/main/resources/base/console_backend.capnp console_backend/console_backend
 
 [tasks.run]
 dependencies = ["copy-capnp", "generate-resources"]
+script_runner = "@shell"
 script = '''
 conda run -n $CONDA_ENV pip install -e ./console_backend
 conda run -n $CONDA_ENV fbs run
@@ -26,6 +27,7 @@ conda run -n $CONDA_ENV fbs run
 
 [tasks.prod-run]
 dependencies = ["copy-capnp", "generate-resources"]
+script_runner = "@shell"
 script = '''
 conda run -n $CONDA_ENV pip install --force ./console_backend
 conda run -n $CONDA_ENV fbs run
@@ -33,6 +35,7 @@ conda run -n $CONDA_ENV fbs run
 
 [tasks.prod-freeze]
 dependencies = ["copy-capnp", "generate-resources"]
+script_runner = "@shell"
 script = '''
 conda run -n $CONDA_ENV pip install --force ./console_backend
 conda run -n $CONDA_ENV fbs freeze
@@ -40,6 +43,7 @@ conda run -n $CONDA_ENV fbs freeze
 
 [tasks.prod-installer]
 dependencies = ["prod-freeze", "remove-negligibles"]
+script_runner = "@shell"
 script = '''
 conda run -n $CONDA_ENV fbs installer
 '''

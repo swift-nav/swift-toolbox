@@ -37,7 +37,7 @@ jobs:
       - name: Run ssh-keyscan (for Windows Git cygwin)
         run: |
           & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
-          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo ${{ secrets.SSH_KEY }} >> ~/.ssh/id_rsa"
+          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
         if: matrix.os == 'windows-2019'
 
       - name: Install ${{ runner.os }} Dependencies.

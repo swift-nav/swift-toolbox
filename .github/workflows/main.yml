@@ -81,11 +81,10 @@ jobs:
         with:
           activate-environment: console_pp
           environment-file: conda.yml
-          use-only-tar-bz2: true
 
       - name: Poetry Install
         run: |
-          conda run -n console_pp python -m poetry install
+          conda run -n console_pp poetry install
 
       - name: Run Benchmarks
         shell: bash
@@ -134,7 +133,7 @@ jobs:
 
       - name: Poetry Install
         run: |
-          conda run -n console_pp python -m poetry install
+          conda run -n console_pp poetry install
 
       - name: Run Format Check
         run: |
@@ -211,7 +210,7 @@ jobs:
 
       - name: Poetry Install
         run: |
-          conda run -n console_pp python -m poetry install
+          conda run -n console_pp poetry install
 
       - name: Build ${{ runner.os }} Binaries.
         env:

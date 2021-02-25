@@ -31,6 +31,7 @@ jobs:
         run: GIT_TRACE=1 git lfs pull
 
       - name: Install ${{ runner.os }} Dependencies.
+        shell: bash
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
               sudo apt-get install -y capnproto
@@ -45,9 +46,11 @@ jobs:
         with:
           toolchain: stable
           override: true
+
       - uses: davidB/rust-cargo-make@v1
         with:
           version: '0.32.11'
+
       - name: Cache conda
         uses: actions/cache@v1
         env:
@@ -57,16 +60,19 @@ jobs:
           key:
             ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
             hashFiles('conda.yml') }}
+
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: console_pp
           environment-file: conda.yml
           use-only-tar-bz2: true
+
       - name: Poetry Install
         run: |
-          conda activate console_pp
-          python -m poetry install
+          conda run -n console_pp python -m poetry install
+
       - name: Run Benchmarks
+        shell: bash
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
               cargo make benches
@@ -78,6 +84,7 @@ jobs:
   checks:
     runs-on: ubuntu-latest
     steps:
+
       - name: Checkout source
         uses: actions/checkout@v2
         with:
@@ -90,9 +97,11 @@ jobs:
           toolchain: stable
           override: true
           components: rustfmt, clippy
+
       - uses: davidB/rust-cargo-make@v1
         with:
           version: '0.32.11'
+
       - name: Cache conda
         uses: actions/cache@v1
         env:
@@ -102,39 +111,36 @@ jobs:
           key:
             ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
             hashFiles('conda.yml') }}
+
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: console_pp
           environment-file: conda.yml
           use-only-tar-bz2: true
+
       - name: Install Dependencies.
         run: |
           sudo apt-get install -y capnproto
 
       - name: Poetry Install
         run: |
-          conda activate console_pp
-          python -m poetry install
+          conda run -p console_pp python -m poetry install
 
       - name: Run Format Check
         run: |
-          conda activate console_pp
-          cargo make format-check
+          conda run -p console_pp cargo make format-check
 
       - name: Run Type Check
         run: |
-          conda activate console_pp
-          cargo make types
+          conda run -p console_pp cargo make types
 
       - name: Run Lint Check
         run: |
-          conda activate console_pp
-          cargo make lint
+          conda run -p console_pp cargo make lint
 
       - name: Run Tests
         run: |
-          conda activate console_pp
-          cargo make tests
+          conda run -p console_pp cargo make tests
 
   build:
     name: Build Binaries
@@ -157,6 +163,7 @@ jobs:
           ssh-key: ${{ secrets.SSH_KEY }}
 
       - name: Install ${{ runner.os }} Dependencies.
+        shell: bash
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
               sudo apt-get install -y capnproto ruby ruby-dev rubygems build-essential
@@ -194,15 +201,14 @@ jobs:
 
       - name: Poetry Install
         run: |
-          conda activate console_pp
-          python -m poetry install
+          conda run -n console_pp python -m poetry install
 
       - name: Build ${{ runner.os }} Binaries.
         env:
           OS_NAME: ${{ runner.os }}
+        shell: bash
         run: |
-          conda activate console_pp
-          cargo make prod-installer
+          conda run -n console_pp cargo make prod-installer
           bash ./.github/ci-build.sh
           echo "RELEASE_ARCHIVE=$(cat release-archive.filename)" >>$GITHUB_ENV
 

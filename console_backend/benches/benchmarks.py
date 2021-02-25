@@ -14,7 +14,7 @@ ERROR_MARGIN_FRAC = "error_margin_frac"
 RUST_BENCHMARKS = {
     WINDOWS: [
         {
-            NAME: "2020-09-04-BayLoop/M8L_BDS_ADR431_nativeODO_Swiftlets_OSR_prod_10Hz_AmotechL2/04-155800",
+            NAME: "piksi-relay.sbp",
             FILE_PATH: "target/criterion/proc_messages/RPM/base/estimates.json",
             KEY_LOCATION: "mean.point_estimate",
             EXPECTED: 77500000,
@@ -23,7 +23,7 @@ RUST_BENCHMARKS = {
     ],
     MACOS: [
         {
-            NAME: "2020-09-04-BayLoop/M8L_BDS_ADR431_nativeODO_Swiftlets_OSR_prod_10Hz_AmotechL2/04-155800",
+            NAME: "piksi-relay.sbp",
             FILE_PATH: "target/criterion/proc_messages/RPM/base/estimates.json",
             KEY_LOCATION: "mean.point_estimate",
             EXPECTED: 77500000,
@@ -32,7 +32,7 @@ RUST_BENCHMARKS = {
     ],
     LINUX: [
         {
-            NAME: "2020-09-04-BayLoop/M8L_BDS_ADR431_nativeODO_Swiftlets_OSR_prod_10Hz_AmotechL2/04-155800",
+            NAME: "piksi-relay.sbp",
             FILE_PATH: "target/criterion/proc_messages/RPM/base/estimates.json",
             KEY_LOCATION: "mean.point_estimate",
             EXPECTED: 77500000,

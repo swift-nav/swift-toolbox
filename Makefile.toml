@@ -7,7 +7,7 @@ default_to_workspace = false
 [tasks.generate-resources]
 script_runner = "@shell"
 script = '''
-pyside2-rcc resources/console_resources.qrc -o src/main/python/console_resources.py
+conda run -n console_pp pyside2-rcc resources/console_resources.qrc -o src/main/python/console_resources.py
 '''
 
 [tasks.copy-capnp]
@@ -19,28 +19,28 @@ cp src/main/resources/base/console_backend.capnp console_backend/console_backend
 [tasks.run]
 dependencies = ["copy-capnp", "generate-resources"]
 script = '''
-pip install -e ./console_backend
-fbs run
+conda run -n console_pp pip install -e ./console_backend
+conda run -n console_pp fbs run
 '''
 
 [tasks.prod-run]
 dependencies = ["copy-capnp", "generate-resources"]
 script = '''
-pip install --force ./console_backend
-fbs run
+conda run -n console_pp pip install --force ./console_backend
+conda run -n console_pp fbs run
 '''
 
 [tasks.prod-freeze]
 dependencies = ["copy-capnp", "generate-resources"]
 script = '''
-pip install --force ./console_backend
-fbs freeze
+conda run -n console_pp pip install --force ./console_backend
+conda run -n console_pp fbs freeze
 '''
 
 [tasks.prod-installer]
 dependencies = ["prod-freeze", "remove-negligibles"]
 script = '''
-fbs installer
+conda run -n console_pp fbs installer
 '''
 
 [tasks.create-remove-negligibles-file]
@@ -65,7 +65,7 @@ bash src/main/fbs/windows-remove-negligibles.sh
 dependencies = ["copy-capnp", "generate-resources"]
 script_runner = "@shell"
 script = '''
-pip install --force ./console_backend
+conda run -n console_pp pip install --force ./console_backend
 bash src/main/nuitka/linux.sh
 '''
 
@@ -73,7 +73,7 @@ bash src/main/nuitka/linux.sh
 dependencies = ["copy-capnp", "generate-resources"]
 script_runner = "@shell"
 script = '''
-pip install --force ./console_backend
+conda run -n console_pp pip install --force ./console_backend
 bash src/main/nuitka/mac.sh
 '''
 
@@ -120,19 +120,19 @@ args    = ["check"]
 [tasks.python-type-check]
 script_runner = "@shell"
 script = '''
-mypy $PYTHON_FILES
+conda run -n console_pp mypy $PYTHON_FILES
 '''
 
 [tasks.python-format-check]
 script_runner = "@shell"
 script = '''
-black --line-length=120 --check --diff $PYTHON_FILES
+conda run -n console_pp black --line-length=120 --check --diff $PYTHON_FILES
 '''
 
 [tasks.python-format-all]
 script_runner = "@shell"
 script = '''
-black --line-length=120 $PYTHON_FILES
+conda run -n console_pp black --line-length=120 $PYTHON_FILES
 '''
 
 [tasks.python-format]
@@ -141,7 +141,7 @@ alias="python-format-all"
 [tasks.python-lint]
 script_runner = "@shell"
 script = '''
-pylint --output-format=parseable $PYTHON_FILES
+conda run -n console_pp pylint --output-format=parseable $PYTHON_FILES
 '''
 
 [tasks.format-all]

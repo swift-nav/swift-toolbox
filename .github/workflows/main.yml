@@ -25,21 +25,20 @@ jobs:
         with:
           submodules: recursive
           ssh-key: ${{ secrets.SSH_KEY }}
-          lfs: true
-
-      - name: Pull Git LFS objects
-        run: GIT_TRACE=1 git lfs pull
 
       - name: Install ${{ runner.os }} Dependencies.
         shell: bash
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
-              sudo apt-get install -y capnproto
+              sudo apt-get install -y capnproto git-lfs
           elif [ "$RUNNER_OS" == "macOS" ]; then
-              brew install capnp
+              brew install capnp git-lfs
           elif [ "$RUNNER_OS" == "Windows" ]; then
-              choco install capnproto
+              choco install -y capnproto git-lfs
           fi
+
+      - name: Pull Git LFS objects
+        run: git lfs pull
 
       - name: Install stable Rust
         uses: actions-rs/toolchain@v1
@@ -74,13 +73,7 @@ jobs:
       - name: Run Benchmarks
         shell: bash
         run: |
-          if [ "$RUNNER_OS" == "Linux" ]; then
-              cargo make benches
-          elif [ "$RUNNER_OS" == "macOS" ]; then
-              cargo make benches
-          elif [ "$RUNNER_OS" == "Windows" ]; then
-              echo "cargo make benches"
-          fi
+          cargo make benches
   checks:
     runs-on: ubuntu-latest
     steps:
@@ -128,19 +121,19 @@ jobs:
 
       - name: Run Format Check
         run: |
-          conda run -n console_pp cargo make format-check
+          cargo make format-check
 
       - name: Run Type Check
         run: |
-          conda run -n console_pp cargo make types
+          cargo make types
 
       - name: Run Lint Check
         run: |
-          conda run -n console_pp cargo make lint
+          cargo make lint
 
       - name: Run Tests
         run: |
-          conda run -n console_pp cargo make tests
+          cargo make tests
 
   build:
     name: Build Binaries
@@ -208,7 +201,7 @@ jobs:
           OS_NAME: ${{ runner.os }}
         shell: bash
         run: |
-          conda run -n console_pp cargo make prod-installer
+          cargo make prod-installer
           bash ./.github/ci-build.sh
           echo "RELEASE_ARCHIVE=$(cat release-archive.filename)" >>$GITHUB_ENV
 

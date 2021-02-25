@@ -30,10 +30,18 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
+      - name: Run ssh-keyscan
+        run: ssh-keyscan github.com >> ~/.ssh/known_hosts
+        if: matrix.os != 'windows-2019'
+
+      - name: Run ssh-keyscan
+        run: ssh-keyscan github.com >> ~/.ssh/known_hosts
+        shell: "C:\\Program Files\\Git\\bin\\sh.exe -c {0}"
+        if: matrix.os == 'windows-2019'
+
       - name: Install ${{ runner.os }} Dependencies.
         shell: bash
         run: |
-          ssh-keyscan github.com
           if [ "$RUNNER_OS" == "Linux" ]; then
               sudo apt-get install -y capnproto git-lfs
           elif [ "$RUNNER_OS" == "macOS" ]; then

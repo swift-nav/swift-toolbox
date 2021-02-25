@@ -35,8 +35,7 @@ jobs:
         if: matrix.os != 'windows-2019'
 
       - name: Run ssh-keyscan
-        run: ssh-keyscan github.com >> ~/.ssh/known_hosts
-        shell: "C:\\Program Files\\Git\\bin\\sh.exe -c {0}"
+        run: & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
         if: matrix.os == 'windows-2019'
 
       - name: Install ${{ runner.os }} Dependencies.

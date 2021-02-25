@@ -46,7 +46,7 @@ conda run -n console_pp fbs installer
 [tasks.create-remove-negligibles-file]
 script_runner = "@shell"
 script = '''
-python utils/get_fbs_remove_list.py
+conda run -n console_pp python utils/get_fbs_remove_list.py
 '''
 
 [tasks.remove-negligibles.linux]
@@ -80,7 +80,7 @@ bash src/main/nuitka/mac.sh
 [tasks.create-nuitka-script]
 script_runner = "@shell"
 script = '''
-python utils/create_nuitka_script.py
+conda run -n console_pp python utils/create_nuitka_script.py
 '''
 
 [tasks.prod-installer.mac]
@@ -168,8 +168,10 @@ command = "cargo"
 args    = ["bench", "--all-features", "--", "--verbose", "--noplot"]
 
 [tasks.bench-rust-validate]
-command = "python"
-args    = ["console_backend/benches/benchmarks.py"]
+script_runner = "@shell"
+script = '''
+conda run -n console_pp python console_backend/benches/benchmarks.py
+'''
 
 [tasks.benches]
 dependencies = ["bench-rust", "bench-rust-validate"]

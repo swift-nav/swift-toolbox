@@ -33,11 +33,17 @@ conda run -n $CONDA_ENV pip install --force ./console_backend
 conda run -n $CONDA_ENV fbs run
 '''
 
-[tasks.prod-freeze]
-dependencies = ["copy-capnp", "generate-resources"]
+[tasks.setuptools-rust]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV pip install --force ./console_backend
+conda run -n $CONDA_ENV python -m pip install setuptools-rust==0.11.6
+'''
+
+[tasks.prod-freeze]
+dependencies = ["copy-capnp", "generate-resources", "setuptools-rust"]
+script_runner = "@shell"
+script = '''
+conda run -n $CONDA_ENV python -m pip install --force ./console_backend
 conda run -n $CONDA_ENV fbs freeze
 '''
 

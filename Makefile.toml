@@ -39,11 +39,16 @@ script = '''
 conda run -n $CONDA_ENV python -m pip install setuptools-rust==0.11.6
 '''
 
-[tasks.prod-freeze]
-dependencies = ["copy-capnp", "generate-resources", "setuptools-rust"]
+[tasks.prod-install-backend]
 script_runner = "@shell"
 script = '''
 conda run -n $CONDA_ENV python -m pip install --force ./console_backend
+'''
+
+[tasks.prod-freeze]
+dependencies = ["copy-capnp", "generate-resources", "setuptools-rust", "prod-install-backend"]
+script_runner = "@shell"
+script = '''
 conda run -n $CONDA_ENV fbs freeze
 '''
 

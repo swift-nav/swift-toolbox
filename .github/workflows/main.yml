@@ -25,6 +25,7 @@ jobs:
         with:
           submodules: recursive
           ssh-key: ${{ secrets.SSH_KEY }}
+          ssh-strict: false
 
       - uses: webfactory/ssh-agent@v0.5.0
         with:
@@ -32,9 +33,8 @@ jobs:
 
       - name: Run ssh-keyscan
         run: ssh-keyscan github.com >> ~/.ssh/known_hosts
-        if: matrix.os != 'windows-2019'
 
-      - name: Run ssh-keyscan
+      - name: Run ssh-keyscan (for Windows Git cygwin)
         run: |
           & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
         if: matrix.os == 'windows-2019'
@@ -54,6 +54,7 @@ jobs:
         run: git lfs pull
         env:
           GIT_TRACE: 1
+          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
 
       - name: Install stable Rust
         uses: actions-rs/toolchain@v1

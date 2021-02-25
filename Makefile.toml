@@ -1,5 +1,5 @@
 [env]
-PYTHON_FILES = { script = ["echo $(find . -path ./target -prune -false -o -name '*.py')"] }
+PYTHON_FILES = { script = ["python utils/glob_python_files.py"] }
 
 [config]
 default_to_workspace = false

@@ -71,7 +71,13 @@ jobs:
           python -m poetry install
       - name: Run Benchmarks
         run: |
-          cargo make benches
+          if [ "$RUNNER_OS" == "Linux" ]; then
+              cargo make benches
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+              cargo make benches
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+              echo "cargo make benches"
+          fi
   checks:
     runs-on: ubuntu-latest
     defaults:

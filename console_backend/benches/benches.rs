@@ -28,6 +28,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         }
     }
 }
+
 fn run_process_messages(file_in_name: &str) {
     use std::sync::mpsc::Receiver;
     let (client_recv_tx, client_recv_rx) = mpsc::channel::<Receiver<Vec<u8>>>();

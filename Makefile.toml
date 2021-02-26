@@ -191,3 +191,9 @@ conda run -n $CONDA_ENV python console_backend/benches/benchmarks.py
 
 [tasks.benches]
 dependencies = ["bench-rust", "bench-rust-validate"]
+
+[tasks.disk-usage-bench]
+script_runner = "@shell"
+script = '''
+conda run -n $CONDA_ENV python .github/disk_usage_benchmarks.py
+'''

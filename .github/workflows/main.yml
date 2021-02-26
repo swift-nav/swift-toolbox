@@ -204,6 +204,12 @@ jobs:
           cargo make prod-installer
           bash ./.github/ci-build.sh
           echo "RELEASE_ARCHIVE=$(cat release-archive.filename)" >>$GITHUB_ENV
+      - name: Build ${{ runner.os }} Binaries.
+        env:
+          OS_NAME: ${{ runner.os }}
+        shell: bash
+        run: |
+          cargo make disk-usage-bench
 
       - uses: actions/upload-artifact@v2
         with:

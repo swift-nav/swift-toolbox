@@ -15,7 +15,6 @@ if [[ "$OS_NAME" == "macOS" ]]; then
     echo "${archive_name}-${VERSION}-${BUILD_TRIPLET}.tar.gz" >release-archive.filename;
 
     cp -r src/main/benches 'main.dist';
-    cp Makefile.toml 'main.dist';
     cd 'main.dist';
     7z a -tzip "../$OS_NAME.zip" *;
     cd ..;
@@ -31,7 +30,6 @@ if [[ "$OS_NAME" == "Linux" ]]; then
     echo "${archive_name}-${VERSION}-${BUILD_TRIPLET}.tar.gz" >release-archive.filename;
 
     cp -r src/main/benches 'target/swift_navigation_console';
-    cp Makefile.toml 'target/swift_navigation_console';
     cd 'target/swift_navigation_console';
     7z a -tzip "../../$OS_NAME.zip" *;
     cd ../..;
@@ -47,8 +45,8 @@ if [[ "$OS_NAME" == "Windows" ]]; then
     echo "${archive_name}-${VERSION}-windows-${BUILD_TRIPLET}.exe" >release-archive.filename;
 
     cp -r src/main/benches 'target/swift_navigation_console';
-    cp Makefile.toml 'target/swift_navigation_console';
     cd 'target/swift_navigation_console';
+    ls -l;
     7z a -tzip "../../$OS_NAME.zip" *;
     cd ../..;
     echo "${OS_NAME}.zip" >bench.filename;

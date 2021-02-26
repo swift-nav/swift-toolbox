@@ -2,3 +2,6 @@ build/
 dist/
 *.egg-info
 console_backend.capnp
+console_backend/*.pyd
+console_backend/*.so
+*.dist-info

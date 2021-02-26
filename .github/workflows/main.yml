@@ -202,6 +202,16 @@ jobs:
         shell: bash
         run: |
           cargo make prod-installer
+
+      - name: Find pyd.
+        run: |
+          Get-ChildItem -Filter *.pyd -Recurse /
+
+      - name: Zip ${{ runner.os }} Binaries.
+        env:
+          OS_NAME: ${{ runner.os }}
+        shell: bash
+        run: |
           bash ./.github/ci-build.sh
           echo "RELEASE_ARCHIVE=$(cat release-archive.filename)" >>$GITHUB_ENV
           echo "BENCH_ARCHIVE=$(cat bench.filename)" >>$GITHUB_ENV
@@ -236,9 +246,17 @@ jobs:
           name: ${{ runner.os }}-artifacts-bench
           path: |
             output
-      - name: Extract zip and run bench.
+      - name: Extract binary and data.
         run: |
           cd output
           7z x $(cat bench.filename) -aoa -o${{ runner.os }}
-          cd ${{ runner.os }}
-          cargo make frontend-bench   
+          
+      - name: Run Frontend Benchmark.
+        shell: bash
+        run: |
+          cd output/${{ runner.os }}
+          if [ "$RUNNER_OS" == "Windows" ]; then
+              python benches/frontend_bench.py --binary=swift_navigation_console.exe
+          else
+              python benches/frontend_bench.py --binary=swift_navigation_console
+          fi

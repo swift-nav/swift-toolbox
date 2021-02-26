@@ -12,6 +12,11 @@ sbp = { git = "https://github.com/swift-nav/libsbp.git", rev = "986af3f35033a720
 ordered-float = "2.0"
 ndarray = "0.14.0"
 glob = "0.3.0"
+criterion = "0.3.4"
+
+[[bench]]
+name = "benches"
+harness = false
 
 
 [build-dependencies]
@@ -19,4 +24,9 @@ capnpc = "0.14"
 
 [lib]
 name = "console_backend"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "lib"]
+bench = false
+
+[features]
+default = []
+criterion_bench = []

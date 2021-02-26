@@ -1,2 +1,5 @@
 [workspace]
-members = ["console_backend"]
+members = [
+    "console_backend",
+]
+

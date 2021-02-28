@@ -243,7 +243,7 @@ def get_capnp_path() -> str:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--file-in", help="Input file to parse.")
-    parser.add_argument("-connect", help="Connect automatically.", action="store_true")
+    parser.add_argument("--connect", help="Connect automatically.", action="store_true")
     args = parser.parse_args()
 
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)

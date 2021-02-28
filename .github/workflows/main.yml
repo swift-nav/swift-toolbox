@@ -203,10 +203,6 @@ jobs:
         run: |
           cargo make prod-installer
 
-      - name: Find pyd.
-        run: |
-          Get-ChildItem -Filter *.pyd -Recurse /
-
       - name: Zip ${{ runner.os }} Binaries.
         env:
           OS_NAME: ${{ runner.os }}

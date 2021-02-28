@@ -4,8 +4,6 @@ import subprocess
 import os
 import sys
 
-HYPERFINE_COMMAND = lambda file_out: f"hyperfine --warmup 1 --runs 5 --show-output --export-json {file_out} "
-
 WINDOWS = "win32"
 MACOS = "darwin"
 LINUX = "linux"
@@ -17,9 +15,10 @@ EXPECTED = "expected"
 ERROR_MARGIN_FRAC = "error_margin_frac"
 
 DEFAULT_JSON_FILEPATH = "fileout.json"
-BENCHMARK_COMMAND_ARGS = lambda file_path: f"--file-in={file_path} -connect"
+BENCHMARK_COMMAND_ARGS = lambda file_path: f"--file-in={file_path} --connect"
+HYPERFINE_COMMAND = lambda file_out: f"hyperfine --warmup 1 --runs 5 --show-output --export-json {file_out} "
 
-RUST_BENCHMARKS = {
+FRONTEND_BENCHMARKS = {
     WINDOWS: [
         {
             NAME: "202010224_192043",
@@ -56,7 +55,7 @@ def run_frontend_benchmark(binary: str):
         binary (str): Path to the binary location to run the benchmark on.
     """
     prepped_command = f"{binary}"
-    for os_, benchmarks in RUST_BENCHMARKS.items():
+    for os_, benchmarks in FRONTEND_BENCHMARKS.items():
         if os_ != sys.platform:
             continue
         for bench in benchmarks:

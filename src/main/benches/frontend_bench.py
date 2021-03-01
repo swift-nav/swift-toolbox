@@ -55,24 +55,23 @@ def run_frontend_benchmark(binary: str):
         binary (str): Path to the binary location to run the benchmark on.
     """
     prepped_command = f"{binary}"
-    for os_, benchmarks in FRONTEND_BENCHMARKS.items():
-        if os_ != sys.platform:
-            continue
-        for bench in benchmarks:
-            bench_command = (
-                f"{HYPERFINE_COMMAND(DEFAULT_JSON_FILEPATH)} \"{prepped_command} "
-                f"{BENCHMARK_COMMAND_ARGS(bench[FILE_PATH])}\""
+    os_ = sys.platform
+    benchmarks = FRONTEND_BENCHMARKS.get(sys.platform, [])
+    for bench in benchmarks:
+        bench_command = (
+            f"{HYPERFINE_COMMAND(DEFAULT_JSON_FILEPATH)} \"{prepped_command} "
+            f"{BENCHMARK_COMMAND_ARGS(bench[FILE_PATH])}\""
+        )
+        subprocess.call(bench_command, shell=True)
+        with open(DEFAULT_JSON_FILEPATH) as fileo:
+            bench_result = json.load(fileo)
+            bench_value = bench_result[RESULTS][0].get(bench[KEY_LOCATION], None)
+            assert bench_value is not None, f"Test:{bench[NAME]} retrieved bench value None."
+            assert bench_value - bench[EXPECTED] <= bench[ERROR_MARGIN_FRAC] * bench[EXPECTED], (  # type: ignore
+                f"Test:{bench[NAME]} Bench Value:{bench_value} not within "
+                f"{bench[ERROR_MARGIN_FRAC]} of {bench[EXPECTED]}."
             )
-            subprocess.call(bench_command, shell=True)
-            with open(DEFAULT_JSON_FILEPATH) as fileo:
-                bench_result = json.load(fileo)
-                bench_value = bench_result[RESULTS][0].get(bench[KEY_LOCATION], None)
-                assert bench_value is not None, f"Test:{bench[NAME]} retrieved bench value None."
-                assert bench_value - bench[EXPECTED] <= bench[ERROR_MARGIN_FRAC] * bench[EXPECTED], (  # type: ignore
-                    f"Test:{bench[NAME]} Bench Value:{bench_value} not within "
-                    f"{bench[ERROR_MARGIN_FRAC]} of {bench[EXPECTED]}."
-                )
-                print(f"PASS - {os_}:{bench[NAME]} MARGIN={bench_value - bench[EXPECTED]}")
+            print(f"PASS - {os_}:{bench[NAME]} MARGIN={bench_value - bench[EXPECTED]}")
 
 
 if __name__ == "__main__":

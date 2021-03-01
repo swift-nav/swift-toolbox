@@ -1,3 +1,4 @@
 src/main/fbs/* linguist-vendored
 src/main/nuitka/* linguist-vendored
-console_backend/benches/data/**/**/*.sbp filter=lfs diff=lfs merge=lfs -text
+"console_backend/benches/data/*" filter=lfs diff=lfs merge=lfs -text
+"src/main/benches/data/*" filter=lfs diff=lfs merge=lfs -text

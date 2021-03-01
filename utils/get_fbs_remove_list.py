@@ -3,7 +3,7 @@ import sys
 
 FBS_DIR = "src/main/fbs"
 FILENAME_POSTFIX = "-remove-negligibles.sh"
-INSTALLER_DIR = "target/Swift Navigation Console"
+INSTALLER_DIR = "target/swift_navigation_console"
 
 BLACKLIST = ["translations", "QtQuick3D", "Web"]
 SYS_PLATFORM_PREFIXS = {"win32": "windows", "linux": "linux"}

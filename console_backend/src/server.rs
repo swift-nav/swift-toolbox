@@ -17,6 +17,8 @@ use std::thread;
 use crate::console_backend_capnp as m;
 use crate::process_messages::process_messages;
 
+const CLOSE: &str = "CLOSE";
+
 /// The backend server
 #[pyclass]
 struct Server {
@@ -128,7 +130,14 @@ impl Server {
                                 println!("Opened file successfully!");
 
                                 let messages = sbp::iter_messages(stream);
-                                process_messages(messages, client_send_clone);
+                                process_messages(messages, client_send_clone.clone());
+                                let mut builder = Builder::new_default();
+                                let msg = builder.init_root::<m::message::Builder>();
+                                let mut status = msg.init_status();
+                                status.set_text(CLOSE);
+                                let mut msg_bytes: Vec<u8> = vec![];
+                                serialize::write_message(&mut msg_bytes, &builder).unwrap();
+                                client_send_clone.send(msg_bytes).unwrap();
                             } else {
                                 println!("Couldn't open file...");
                             }

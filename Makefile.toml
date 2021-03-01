@@ -26,10 +26,9 @@ conda run -n $CONDA_ENV fbs run
 '''
 
 [tasks.prod-run]
-dependencies = ["copy-capnp", "generate-resources"]
+dependencies = ["copy-capnp", "generate-resources", "prod-install-backend"]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV pip install --force ./console_backend
 conda run -n $CONDA_ENV fbs run
 '''
 
@@ -42,7 +41,7 @@ conda run -n $CONDA_ENV python -m pip install setuptools-rust==0.11.6
 [tasks.prod-install-backend]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV python -m pip install --force ./console_backend
+conda run -n $CONDA_ENV python -m pip install -t ./console_backend --upgrade --force ./console_backend -v
 '''
 
 [tasks.prod-freeze]
@@ -52,8 +51,20 @@ script = '''
 conda run -n $CONDA_ENV fbs freeze
 '''
 
+[tasks.copy-console-backend-to-fbs]
+script_runner = "@shell"
+script = '''
+mkdir target/swift_navigation_console/console_backend
+cp -r console_backend/console_backend/*  target/swift_navigation_console/console_backend/.
+'''
+
+[tasks.copy-console-backend-to-fbs.mac]
+script_runner = "@shell"
+script = '''
+'''
+
 [tasks.prod-installer]
-dependencies = ["prod-freeze", "remove-negligibles"]
+dependencies = ["prod-freeze", "remove-negligibles", "copy-console-backend-to-fbs"]
 script_runner = "@shell"
 script = '''
 conda run -n $CONDA_ENV fbs installer
@@ -105,7 +116,7 @@ script_runner = "@shell"
 script = '''
 mkdir -p main.app/Contents/MacOS
 cp -r main.dist/* main.app/Contents/MacOS/.
-hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'Swift Navigation Console.dmg'
+hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg'
 '''
 
 [tasks.rust-format]

@@ -25,8 +25,10 @@ import console_resources  # type: ignore # pylint: disable=unused-import,import-
 
 import console_backend.server  # type: ignore  # pylint: disable=import-error,no-name-in-module
 
-CONSOLE_BACKEND_CAPNP_PATH = "console_backend.capnp"
+CLOSE = "CLOSE"
 DARWIN = "darwin"
+
+CONSOLE_BACKEND_CAPNP_PATH = "console_backend.capnp"
 
 PIKSI_HOST = "piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com"
 PIKSI_PORT = 55555
@@ -40,12 +42,13 @@ TRACKING_HEADERS: List[int] = []
 capnp.remove_import_hook()  # pylint: disable=no-member
 
 
-def receive_messages(backend, messages):
+def receive_messages(app_, backend, messages):
     while True:
         buffer = backend.fetch_message()
         m = messages.Message.from_bytes(buffer)
         if m.which == "status":
-            print(f"status message: {m.status}")
+            if m.status.text == CLOSE:
+                return app_.quit()
         elif m.which == "velocityStatus":
             POINTS_H_MINMAX[0] = (m.velocityStatus.min, m.velocityStatus.max)
             POINTS_H[:] = [QPointF(point.x, point.y) for point in m.velocityStatus.hpoints]
@@ -137,12 +140,16 @@ class DataModel(QObject):
     endpoint: console_backend.server.ServerEndpoint  # pylint: disable=no-member
     messages: Any
 
-    def __init__(self, endpoint, messages, file_in):
+    def __init__(self, endpoint, messages, file_in, connect=False):
         super().__init__()
         self.endpoint = endpoint
         self.messages = messages
         self.file_in = file_in
         self.is_connected = False
+        if connect and file_in is not None:
+            self.readfile()
+        elif connect:
+            self.connect()
 
     @Slot(ConsolePoints)  # type: ignore
     def fill_console_points(self, cp: ConsolePoints) -> ConsolePoints:  # pylint: disable=no-self-use
@@ -236,6 +243,7 @@ def get_capnp_path() -> str:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--file-in", help="Input file to parse.")
+    parser.add_argument("--connect", help="Connect automatically.", action="store_true")
     args = parser.parse_args()
 
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
@@ -257,12 +265,12 @@ if __name__ == "__main__":
     backend_main = console_backend.server.Server()  # pylint: disable=no-member
     endpoint_main = backend_main.start()
 
-    data_model = DataModel(endpoint_main, messages_main, args.file_in)
+    data_model = DataModel(endpoint_main, messages_main, args.file_in, args.connect)
     tracking_signals_model = TrackingSignalsModel()
     root_context = engine.rootContext()
     root_context.setContextProperty("tracking_signals_model", tracking_signals_model)
     root_context.setContextProperty("data_model", data_model)
 
-    threading.Thread(target=receive_messages, args=(backend_main, messages_main,), daemon=True).start()
+    threading.Thread(target=receive_messages, args=(app, backend_main, messages_main,), daemon=True).start()
 
     sys.exit(app.exec_())

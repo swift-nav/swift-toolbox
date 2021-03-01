@@ -202,12 +202,59 @@ jobs:
         shell: bash
         run: |
           cargo make prod-installer
+
+      - name: Zip ${{ runner.os }} Binaries.
+        env:
+          OS_NAME: ${{ runner.os }}
+        shell: bash
+        run: |
           bash ./.github/ci-build.sh
           echo "RELEASE_ARCHIVE=$(cat release-archive.filename)" >>$GITHUB_ENV
-
+          echo "BENCH_ARCHIVE=$(cat bench.filename)" >>$GITHUB_ENV
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ runner.os }}-artifacts
           path: |
             ${{ env.RELEASE_ARCHIVE }}
             release-archive.filename
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ runner.os }}-artifacts-bench
+          path: |
+            ${{ env.BENCH_ARCHIVE }}
+            bench.filename
+  frontend_bench:
+    name: Run Frontend Benchmarks
+    continue-on-error: true
+    timeout-minutes: 5
+    needs:
+      - build
+    strategy:
+      matrix:
+        os:
+          - Windows
+    runs-on: [self-hosted]
+    steps:
+      - name: Remove previous build.
+        shell: bash
+        run: |
+          rm -rf output
+      - uses: actions/download-artifact@v2
+        with:
+          name: ${{ runner.os }}-artifacts-bench
+          path: |
+            output
+      - name: Extract binary and data.
+        run: |
+          cd output
+          7z x $(cat bench.filename) -aoa -o${{ runner.os }}
+          
+      - name: Run Frontend Benchmark.
+        shell: bash
+        run: |
+          cd output/${{ runner.os }}
+          if [ "$RUNNER_OS" == "Windows" ]; then
+              python benches/frontend_bench.py --binary=swift_navigation_console.exe
+          else
+              python benches/frontend_bench.py --binary=swift_navigation_console
+          fi

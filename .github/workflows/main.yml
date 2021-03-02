@@ -5,7 +5,7 @@ on:
     branches:
       - 'main'
     tags:
-      - 'v*'
+      - '[0-9]+.[0-9]+.[0-9]+*'
   pull_request:
 
 jobs:
@@ -158,126 +158,225 @@ jobs:
 
     steps:
 
-      - name: Checkout source
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
-          ssh-key: ${{ secrets.SSH_KEY }}
-          ssh-strict: false
+  #     - name: Checkout source
+  #       uses: actions/checkout@v2
+  #       with:
+  #         submodules: recursive
+  #         ssh-key: ${{ secrets.SSH_KEY }}
+  #         ssh-strict: false
 
-      - uses: webfactory/ssh-agent@v0.5.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_KEY }}
+  #     - uses: webfactory/ssh-agent@v0.5.0
+  #       with:
+  #         ssh-private-key: ${{ secrets.SSH_KEY }}
 
-      - name: Run ssh-keyscan
-        run: ssh-keyscan github.com >> ~/.ssh/known_hosts
+  #     - name: Run ssh-keyscan
+  #       run: ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-      - name: Setup SSH for Windows Git LFS
-        run: |
-          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
-          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
-        if: matrix.os == 'windows-2019'
+  #     - name: Setup SSH for Windows Git LFS
+  #       run: |
+  #         & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
+  #         & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
+  #       if: matrix.os == 'windows-2019'
 
-      - name: Install ${{ runner.os }} Dependencies.
-        shell: bash
-        run: |
-          if [ "$RUNNER_OS" == "Linux" ]; then
-              sudo apt-get install -y capnproto ruby ruby-dev rubygems build-essential
-              sudo gem install --no-document fpm
-          elif [ "$RUNNER_OS" == "macOS" ]; then
-              brew install capnp
-          elif [ "$RUNNER_OS" == "Windows" ]; then
-              choco install capnproto nsis
-          fi
+  #     - name: Install ${{ runner.os }} Dependencies.
+  #       shell: bash
+  #       run: |
+  #         if [ "$RUNNER_OS" == "Linux" ]; then
+  #             sudo apt-get install -y capnproto ruby ruby-dev rubygems build-essential
+  #             sudo gem install --no-document fpm
+  #         elif [ "$RUNNER_OS" == "macOS" ]; then
+  #             brew install capnp
+  #         elif [ "$RUNNER_OS" == "Windows" ]; then
+  #             choco install capnproto nsis
+  #         fi
 
-      - name: Install stable Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          components: rustfmt, clippy
+  #     - name: Install stable Rust
+  #       uses: actions-rs/toolchain@v1
+  #       with:
+  #         toolchain: stable
+  #         override: true
+  #         components: rustfmt, clippy
 
-      - uses: davidB/rust-cargo-make@v1
-        with:
-          version: '0.32.11'
+  #     - uses: davidB/rust-cargo-make@v1
+  #       with:
+  #         version: '0.32.11'
 
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          activate-environment: console_pp
-          environment-file: conda.yml
+  #     - uses: conda-incubator/setup-miniconda@v2
+  #       with:
+  #         activate-environment: console_pp
+  #         environment-file: conda.yml
 
-      - name: Poetry Install
-        run: |
-          conda run -n console_pp poetry install
+  #     - name: Poetry Install
+  #       run: |
+  #         conda run -n console_pp poetry install
 
-      - name: Build ${{ runner.os }} Binaries.
-        env:
-          OS_NAME: ${{ runner.os }}
-        shell: bash
-        run: |
-          cargo make prod-installer
-      - name: Pull Git LFS objects
-        run: git lfs pull
-        env:
-          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
+  #     - name: Build ${{ runner.os }} Binaries.
+  #       env:
+  #         OS_NAME: ${{ runner.os }}
+  #       shell: bash
+  #       run: |
+  #         cargo make prod-installer
+  #     - name: Pull Git LFS objects
+  #       run: git lfs pull
+  #       env:
+  #         GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
       - name: Zip ${{ runner.os }} Binaries.
         env:
           OS_NAME: ${{ runner.os }}
         shell: bash
         run: |
-          bash ./.github/ci-build.sh
+          echo abcdefghijklmnop > hello.txt
+          echo hello.txt > release-archive.filename
           echo "RELEASE_ARCHIVE=$(cat release-archive.filename)" >>$GITHUB_ENV
-          echo "BENCH_ARCHIVE=$(cat bench.filename)" >>$GITHUB_ENV
-      - name: ${{ runner.os }} Installer Size Benchmark.
-        env:
-          OS_NAME: ${{ runner.os }}
-        shell: bash
-        run: |
-          cargo make disk-usage-bench
+  #     - name: ${{ runner.os }} Installer Size Benchmark.
+  #       env:
+  #         OS_NAME: ${{ runner.os }}
+  #       shell: bash
+  #       run: |
+  #         cargo make disk-usage-bench
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ runner.os }}-artifacts
           path: |
             ${{ env.RELEASE_ARCHIVE }}
             release-archive.filename
-      - uses: actions/upload-artifact@v2
-        with:
-          name: ${{ runner.os }}-artifacts-bench
-          path: |
-            ${{ env.BENCH_ARCHIVE }}
-            bench.filename
-  frontend_bench:
-    name: Run Frontend Benchmarks
-    continue-on-error: true
-    timeout-minutes: 5
-    needs:
-      - build
+  #     - uses: actions/upload-artifact@v2
+  #       with:
+  #         name: ${{ runner.os }}-artifacts-bench
+  #         path: |
+  #           ${{ env.BENCH_ARCHIVE }}
+  #           bench.filename
+  # frontend_bench:
+  #   name: Run Frontend Benchmarks
+  #   continue-on-error: true
+  #   timeout-minutes: 5
+  #   needs:
+  #     - build
+  #   strategy:
+  #     matrix:
+  #       os:
+  #         - Windows
+  #   runs-on: [self-hosted]
+  #   steps:
+  #     - name: Remove previous build.
+  #       shell: bash
+  #       run: |
+  #         rm -rf output
+  #     - uses: actions/download-artifact@v2
+  #       with:
+  #         name: ${{ runner.os }}-artifacts-bench
+  #         path: |
+  #           output
+  #     - name: Extract binary and data.
+  #       run: |
+  #         cd output
+  #         7z x $(cat bench.filename) -aoa -o${{ runner.os }}
+          
+  #     - name: Run Frontend Benchmark.
+  #       shell: bash
+  #       run: |
+  #         cd output/${{ runner.os }}
+  #         if [ "$RUNNER_OS" == "Windows" ]; then
+  #             python benches/frontend_bench.py --binary=swift_navigation_console.exe
+  #         else
+  #             python benches/frontend_bench.py --binary=swift_navigation_console
+  #         fi
+
+  release:
+    name: Create Release
+    # needs:
+    #   - build
+    # if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
     strategy:
       matrix:
         os:
-          - Windows
-    runs-on: [self-hosted]
+          - ubuntu-20.04
+          # - macos-10.15
+          # - windows-2019
+
+    runs-on: ${{ matrix.os }}
+
     steps:
-      - name: Remove previous build.
-        shell: bash
-        run: |
-          rm -rf output
-      - uses: actions/download-artifact@v2
+      
+      # - name: Create Release
+      #   id: create_release
+      #   uses: actions/create-release@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     tag_name: ${{ github.ref }}
+      #     release_name: Release ${{ github.ref }}
+      #     draft: false
+      #     prerelease: false
+
+      - name: Pull Windows Artifacts
+        uses: actions/download-artifact@v2
         with:
-          name: ${{ runner.os }}-artifacts-bench
+          name: Windows-artifacts
           path: |
-            output
-      - name: Extract binary and data.
-        run: |
-          cd output
-          7z x $(cat bench.filename) -aoa -o${{ runner.os }}
-          
-      - name: Run Frontend Benchmark.
+            windows
+      - name: Show artifacts
         shell: bash
         run: |
-          cd output/${{ runner.os }}
-          if [ "$RUNNER_OS" == "Windows" ]; then
-              python benches/frontend_bench.py --binary=swift_navigation_console.exe
-          else
-              python benches/frontend_bench.py --binary=swift_navigation_console
-          fi
+          ls windows
+          echo "RELEASE_ARCHIVE=$(cat windows/release-archive.filename)" >>$GITHUB_ENV
+          echo $GITHUB_ENV
+
+          echo $RELEASE_ARCHIVE
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        # if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            windows/${{ env.RELEASE_ARCHIVE }}
+            windows/release-archive.filename
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # - name: Upload Windows Release Asset
+      #   id: upload-release-asset 
+      #   uses: actions/upload-release-asset@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     upload_url: ${{ steps.create_release.outputs.upload_url }}
+      #     asset_path: ./windows/${{ env.RELEASE_ARCHIVE }}
+      #     asset_name: ${{ env.RELEASE_ARCHIVE }}
+      #     asset_content_type: application/zip
+
+
+      # - name: Pull Linux Artifacts
+      #   uses: actions/download-artifact@v2
+      #   with:
+      #     name: Linux-artifacts
+      #     path: |
+      #       linux
+      # - name: Upload Linux Release Asset
+      #   id: upload-release-asset 
+      #   uses: actions/upload-release-asset@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     upload_url: ${{ steps.create_release.outputs.upload_url }}
+      #     asset_path: ./linux/$(cat linux/release-archive.filename)
+      #     asset_name: $(cat linux/release-archive.filename)
+      #     asset_content_type: application/zip
+
+
+      # - name: Pull macOS Artifacts
+      #   uses: actions/download-artifact@v2
+      #   with:
+      #     name: macOS-artifacts
+      #     path: |
+      #       macos
+      # - name: Upload macOS Release Asset
+      #   id: upload-release-asset 
+      #   uses: actions/upload-release-asset@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     upload_url: ${{ steps.create_release.outputs.upload_url }}
+      #     asset_path: ./macos/$(cat macos/release-archive.filename)
+      #     asset_name: $(cat macos/release-archive.filename)
+      #     asset_content_type: application/zip

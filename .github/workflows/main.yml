@@ -10,15 +10,148 @@ on:
 
 jobs:
 
-  backend_bench:
+  # backend_bench:
 
-    name: Backend Benchmarks
+  #   name: Backend Benchmarks
+
+  #   strategy:
+  #     matrix:
+  #       os:
+  #         - ubuntu-20.04
+  #         - macos-10.15
+  #         - windows-2019
+
+  #   runs-on: ${{ matrix.os }}
+
+  #   steps:
+
+  #     - name: Checkout source
+  #       uses: actions/checkout@v2
+  #       with:
+  #         submodules: recursive
+  #         ssh-key: ${{ secrets.SSH_KEY }}
+  #         ssh-strict: false
+
+  #     - uses: webfactory/ssh-agent@v0.5.0
+  #       with:
+  #         ssh-private-key: ${{ secrets.SSH_KEY }}
+
+  #     - name: Run ssh-keyscan
+  #       run: ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+  #     - name: Setup SSH for Windows Git LFS
+  #       run: |
+  #         & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
+  #         & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
+  #       if: matrix.os == 'windows-2019'
+
+  #     - name: Install ${{ runner.os }} Dependencies.
+  #       shell: bash
+  #       run: |
+  #         if [ "$RUNNER_OS" == "Linux" ]; then
+  #             sudo apt-get install -y capnproto git-lfs
+  #         elif [ "$RUNNER_OS" == "macOS" ]; then
+  #             brew install capnp git-lfs
+  #         elif [ "$RUNNER_OS" == "Windows" ]; then
+  #             choco install -y capnproto git-lfs
+  #         fi
+
+  #     - name: Pull Git LFS objects
+  #       run: git lfs pull
+  #       env:
+  #         GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
+
+  #     - name: Install stable Rust
+  #       uses: actions-rs/toolchain@v1
+  #       with:
+  #         toolchain: stable
+  #         override: true
+
+  #     - uses: davidB/rust-cargo-make@v1
+  #       with:
+  #         version: '0.32.11'
+
+  #     - uses: conda-incubator/setup-miniconda@v2
+  #       with:
+  #         activate-environment: console_pp
+  #         environment-file: conda.yml
+
+  #     - name: Poetry Install
+  #       run: |
+  #         conda run -n console_pp poetry install
+
+  #     - name: Run Benchmarks
+  #       shell: bash
+  #       run: |
+  #         cargo make benches
+
+  # checks:
+
+  #   name: Code Quality Checks
+
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+
+  #     - name: Checkout source
+  #       uses: actions/checkout@v2
+  #       with:
+  #         submodules: recursive
+  #         ssh-key: ${{ secrets.SSH_KEY }}
+
+  #     - name: Install stable Rust
+  #       uses: actions-rs/toolchain@v1
+  #       with:
+  #         toolchain: stable
+  #         override: true
+  #         components: rustfmt, clippy
+
+  #     - uses: davidB/rust-cargo-make@v1
+  #       with:
+  #         version: '0.32.11'
+
+  #     - uses: conda-incubator/setup-miniconda@v2
+  #       with:
+  #         activate-environment: console_pp
+  #         environment-file: conda.yml
+
+  #     - name: Install Dependencies.
+  #       run: |
+  #         sudo apt-get install -y capnproto
+
+  #     - name: Poetry Install
+  #       run: |
+  #         conda run -n console_pp poetry install
+
+  #     - name: Run Format Check
+  #       run: |
+  #         cargo make format-check
+
+  #     - name: Run Type Check
+  #       run: |
+  #         cargo make types
+
+  #     - name: Run Lint Check
+  #       run: |
+  #         cargo make lint
+
+  #     - name: Run Tests
+  #       run: |
+  #         cargo make tests
+
+  build:
+
+    name: Build Binaries
+
+    # needs:
+    #   - checks
+    #   - backend_bench
 
     strategy:
       matrix:
         os:
-          - ubuntu-20.04
-          - macos-10.15
+          # - ubuntu-20.04
+          # - macos-10.15
           - windows-2019
 
     runs-on: ${{ matrix.os }}
@@ -44,125 +177,6 @@ jobs:
           & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
           & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
         if: matrix.os == 'windows-2019'
-
-      - name: Install ${{ runner.os }} Dependencies.
-        shell: bash
-        run: |
-          if [ "$RUNNER_OS" == "Linux" ]; then
-              sudo apt-get install -y capnproto git-lfs
-          elif [ "$RUNNER_OS" == "macOS" ]; then
-              brew install capnp git-lfs
-          elif [ "$RUNNER_OS" == "Windows" ]; then
-              choco install -y capnproto git-lfs
-          fi
-
-      - name: Pull Git LFS objects
-        run: git lfs pull
-        env:
-          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
-
-      - name: Install stable Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-
-      - uses: davidB/rust-cargo-make@v1
-        with:
-          version: '0.32.11'
-
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          activate-environment: console_pp
-          environment-file: conda.yml
-
-      - name: Poetry Install
-        run: |
-          conda run -n console_pp poetry install
-
-      - name: Run Benchmarks
-        shell: bash
-        run: |
-          cargo make benches
-
-  checks:
-
-    name: Code Quality Checks
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-      - name: Checkout source
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
-          ssh-key: ${{ secrets.SSH_KEY }}
-
-      - name: Install stable Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          components: rustfmt, clippy
-
-      - uses: davidB/rust-cargo-make@v1
-        with:
-          version: '0.32.11'
-
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          activate-environment: console_pp
-          environment-file: conda.yml
-
-      - name: Install Dependencies.
-        run: |
-          sudo apt-get install -y capnproto
-
-      - name: Poetry Install
-        run: |
-          conda run -n console_pp poetry install
-
-      - name: Run Format Check
-        run: |
-          cargo make format-check
-
-      - name: Run Type Check
-        run: |
-          cargo make types
-
-      - name: Run Lint Check
-        run: |
-          cargo make lint
-
-      - name: Run Tests
-        run: |
-          cargo make tests
-
-  build:
-
-    name: Build Binaries
-
-    needs:
-      - checks
-      - backend_bench
-
-    strategy:
-      matrix:
-        os:
-          - ubuntu-20.04
-          - macos-10.15
-          - windows-2019
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-
-      - name: Checkout source
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
-          ssh-key: ${{ secrets.SSH_KEY }}
 
       - name: Install ${{ runner.os }} Dependencies.
         shell: bash
@@ -202,7 +216,10 @@ jobs:
         shell: bash
         run: |
           cargo make prod-installer
-
+      - name: Pull Git LFS objects
+        run: git lfs pull
+        env:
+          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
       - name: Zip ${{ runner.os }} Binaries.
         env:
           OS_NAME: ${{ runner.os }}

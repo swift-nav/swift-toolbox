@@ -5,153 +5,153 @@ on:
     branches:
       - 'main'
     tags:
-      - 'v*'
+      - '[0-9]+.[0-9]+.[0-9]+*'
   pull_request:
 
 jobs:
 
-  # backend_bench:
+  backend_bench:
 
-  #   name: Backend Benchmarks
+    name: Backend Benchmarks
 
-  #   strategy:
-  #     matrix:
-  #       os:
-  #         - ubuntu-20.04
-  #         - macos-10.15
-  #         - windows-2019
+    strategy:
+      matrix:
+        os:
+          - ubuntu-20.04
+          - macos-10.15
+          - windows-2019
 
-  #   runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
 
-  #   steps:
+    steps:
 
-  #     - name: Checkout source
-  #       uses: actions/checkout@v2
-  #       with:
-  #         submodules: recursive
-  #         ssh-key: ${{ secrets.SSH_KEY }}
-  #         ssh-strict: false
+      - name: Checkout source
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          ssh-key: ${{ secrets.SSH_KEY }}
+          ssh-strict: false
 
-  #     - uses: webfactory/ssh-agent@v0.5.0
-  #       with:
-  #         ssh-private-key: ${{ secrets.SSH_KEY }}
+      - uses: webfactory/ssh-agent@v0.5.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
 
-  #     - name: Run ssh-keyscan
-  #       run: ssh-keyscan github.com >> ~/.ssh/known_hosts
+      - name: Run ssh-keyscan
+        run: ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-  #     - name: Setup SSH for Windows Git LFS
-  #       run: |
-  #         & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
-  #         & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
-  #       if: matrix.os == 'windows-2019'
+      - name: Setup SSH for Windows Git LFS
+        run: |
+          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
+          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
+        if: matrix.os == 'windows-2019'
 
-  #     - name: Install ${{ runner.os }} Dependencies.
-  #       shell: bash
-  #       run: |
-  #         if [ "$RUNNER_OS" == "Linux" ]; then
-  #             sudo apt-get install -y capnproto git-lfs
-  #         elif [ "$RUNNER_OS" == "macOS" ]; then
-  #             brew install capnp git-lfs
-  #         elif [ "$RUNNER_OS" == "Windows" ]; then
-  #             choco install -y capnproto git-lfs
-  #         fi
+      - name: Install ${{ runner.os }} Dependencies.
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+              sudo apt-get install -y capnproto git-lfs
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+              brew install capnp git-lfs
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+              choco install -y capnproto git-lfs
+          fi
 
-  #     - name: Pull Git LFS objects
-  #       run: git lfs pull
-  #       env:
-  #         GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
+      - name: Pull Git LFS objects
+        run: git lfs pull
+        env:
+          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
 
-  #     - name: Install stable Rust
-  #       uses: actions-rs/toolchain@v1
-  #       with:
-  #         toolchain: stable
-  #         override: true
+      - name: Install stable Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
 
-  #     - uses: davidB/rust-cargo-make@v1
-  #       with:
-  #         version: '0.32.11'
+      - uses: davidB/rust-cargo-make@v1
+        with:
+          version: '0.32.11'
 
-  #     - uses: conda-incubator/setup-miniconda@v2
-  #       with:
-  #         activate-environment: console_pp
-  #         environment-file: conda.yml
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: console_pp
+          environment-file: conda.yml
 
-  #     - name: Poetry Install
-  #       run: |
-  #         conda run -n console_pp poetry install
+      - name: Poetry Install
+        run: |
+          conda run -n console_pp poetry install
 
-  #     - name: Run Benchmarks
-  #       shell: bash
-  #       run: |
-  #         cargo make benches
+      - name: Run Benchmarks
+        shell: bash
+        run: |
+          cargo make benches
 
-  # checks:
+  checks:
 
-  #   name: Code Quality Checks
+    name: Code Quality Checks
 
-  #   runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
 
-  #   steps:
+    steps:
 
-  #     - name: Checkout source
-  #       uses: actions/checkout@v2
-  #       with:
-  #         submodules: recursive
-  #         ssh-key: ${{ secrets.SSH_KEY }}
+      - name: Checkout source
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          ssh-key: ${{ secrets.SSH_KEY }}
 
-  #     - name: Install stable Rust
-  #       uses: actions-rs/toolchain@v1
-  #       with:
-  #         toolchain: stable
-  #         override: true
-  #         components: rustfmt, clippy
+      - name: Install stable Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
 
-  #     - uses: davidB/rust-cargo-make@v1
-  #       with:
-  #         version: '0.32.11'
+      - uses: davidB/rust-cargo-make@v1
+        with:
+          version: '0.32.11'
 
-  #     - uses: conda-incubator/setup-miniconda@v2
-  #       with:
-  #         activate-environment: console_pp
-  #         environment-file: conda.yml
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: console_pp
+          environment-file: conda.yml
 
-  #     - name: Install Dependencies.
-  #       run: |
-  #         sudo apt-get install -y capnproto
+      - name: Install Dependencies.
+        run: |
+          sudo apt-get install -y capnproto
 
-  #     - name: Poetry Install
-  #       run: |
-  #         conda run -n console_pp poetry install
+      - name: Poetry Install
+        run: |
+          conda run -n console_pp poetry install
 
-  #     - name: Run Format Check
-  #       run: |
-  #         cargo make format-check
+      - name: Run Format Check
+        run: |
+          cargo make format-check
 
-  #     - name: Run Type Check
-  #       run: |
-  #         cargo make types
+      - name: Run Type Check
+        run: |
+          cargo make types
 
-  #     - name: Run Lint Check
-  #       run: |
-  #         cargo make lint
+      - name: Run Lint Check
+        run: |
+          cargo make lint
 
-  #     - name: Run Tests
-  #       run: |
-  #         cargo make tests
+      - name: Run Tests
+        run: |
+          cargo make tests
 
   build:
 
     name: Build Binaries
 
-    # needs:
-    #   - checks
-    #   - backend_bench
+    needs:
+      - checks
+      - backend_bench
 
     strategy:
       matrix:
         os:
-          # - ubuntu-20.04
-          # - macos-10.15
+          - ubuntu-20.04
+          - macos-10.15
           - windows-2019
 
     runs-on: ${{ matrix.os }}
@@ -281,3 +281,45 @@ jobs:
           else
               python benches/frontend_bench.py --binary=swift_navigation_console
           fi
+
+  release:
+    name: Create Release
+    needs:
+      - frontend_bench
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Pull Windows Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: Windows-artifacts
+          path: |
+            windows
+      - name: Pull Linux Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: Linux-artifacts
+          path: |
+            linux
+      - name: Pull macOS Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: macOS-artifacts
+          path: |
+            macos
+      - name: Store Env Vars
+        shell: bash
+        run: |
+          echo "WINDOWS_ARCHIVE=$(cat windows/release-archive.filename)" >>$GITHUB_ENV
+          echo "LINUX_ARCHIVE=$(cat linux/release-archive.filename)" >>$GITHUB_ENV
+          echo "MACOS_ARCHIVE=$(cat macos/release-archive.filename)" >>$GITHUB_ENV
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            windows/${{ env.WINDOWS_ARCHIVE }}
+            linux/${{ env.LINUX_ARCHIVE }}
+            macos/${{ env.MACOS_ARCHIVE }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      

@@ -211,6 +211,12 @@ jobs:
           bash ./.github/ci-build.sh
           echo "RELEASE_ARCHIVE=$(cat release-archive.filename)" >>$GITHUB_ENV
           echo "BENCH_ARCHIVE=$(cat bench.filename)" >>$GITHUB_ENV
+      - name: ${{ runner.os }} Installer Size Benchmark.
+        env:
+          OS_NAME: ${{ runner.os }}
+        shell: bash
+        run: |
+          cargo make disk-usage-bench
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ runner.os }}-artifacts

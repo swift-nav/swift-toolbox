@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
-#![cfg(not(feature = "criterion_bench"))]
+#![cfg(not(feature = "benches"))]
 use capnp::message::Builder;
 use capnp::serialize;
 

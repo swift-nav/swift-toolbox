@@ -84,6 +84,10 @@ jobs:
         shell: bash
         run: |
           cargo make benches
+      - name: Run Benchmarks - Memory
+        shell: bash
+        run: |
+          cd console_backend && cargo test test_run_process_messages --features benches -- --ignored --nocapture
 
   checks:
 

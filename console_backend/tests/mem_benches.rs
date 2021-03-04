@@ -1,20 +1,22 @@
+#![allow(dead_code)]
+#![allow(unused_imports)]
 use ndarray::{ArrayView, Axis};
 use std::{
     fs,
     sync::{mpsc, Arc, Mutex},
     thread, time,
 };
-use sysinfo::*;
+use sysinfo::{get_current_pid, ProcessExt, System, SystemExt};
 extern crate console_backend;
 use console_backend::process_messages;
 
 const BENCH_FILEPATH: &str = "./tests/data/piksi-relay-1min.sbp";
-const MINIMUM_MEM_READINGS: usize = 25;
+const MINIMUM_MEM_READINGS: usize = 20;
 
 const DIFF_THRESHOLD: f32 = 0.05;
-const MAXIMUM_MEM_USAGE_KB: f32 = 10000.0;
+const MAXIMUM_MEM_USAGE_KB: f32 = 20000.0;
 const ABSOLUTE_MINIMUM_MEM_USAGE: f32 = 1000.0;
-const MAXIMUM_STANDARD_DEV_RATE_OF_MAXIMUM_MEM: f32 = 0.1;
+const MAXIMUM_STANDARD_DEV_RATE_OF_MAXIMUM_MEM: f32 = 0.2;
 
 #[test]
 #[cfg(feature = "benches")]
@@ -40,7 +42,6 @@ fn test_run_process_messages() {
             if !*is_running_mem {
                 break;
             }
-            thread::sleep(time::Duration::from_millis(5));
         }
         let mems = ArrayView::from_shape(mem_readings_kb.len(), &mem_readings_kb).unwrap();
         let cpus = ArrayView::from_shape(cpu_readings.len(), &cpu_readings).unwrap();
@@ -62,11 +63,11 @@ fn test_run_process_messages() {
         let mem_usage_mean = mem_usage_mean.first().unwrap();
         let mem_usage_std = mem_usage_std.into_owned();
         let mem_usage_std = mem_usage_std.first().unwrap();
-        
+
         let mem_usage_max = mem_usage_mean + mem_usage_std;
-        
+
         let mem_usage_min = mem_usage_mean - mem_usage_std;
-        
+
         assert!((mem_usage_max - MAXIMUM_MEM_USAGE_KB)<=MAXIMUM_MEM_USAGE_KB*DIFF_THRESHOLD, format!(
             "Worst Case Memory Usage: {:.2}kB was {:.2}kb greater than threshold margin {:.2}kB where max is {:.2}kB.", mem_usage_max, (
                 mem_usage_max - MAXIMUM_MEM_USAGE_KB), MAXIMUM_MEM_USAGE_KB*DIFF_THRESHOLD, MAXIMUM_MEM_USAGE_KB));
@@ -74,8 +75,13 @@ fn test_run_process_messages() {
             "Memory Standard Deviation {:.2}kB was greater than {:.2}kB which is {:.2} of the maximum memory usage {:.2}kB.", *mem_usage_std, (
                 MAXIMUM_MEM_USAGE_KB*MAXIMUM_STANDARD_DEV_RATE_OF_MAXIMUM_MEM), MAXIMUM_STANDARD_DEV_RATE_OF_MAXIMUM_MEM, MAXIMUM_MEM_USAGE_KB
         ));
-        assert!(mem_usage_min >= ABSOLUTE_MINIMUM_MEM_USAGE, format!(
-            "Best Case Memory Usage: {:.2}kB was less than absolute minimum {:.2}kB.", mem_usage_min, ABSOLUTE_MINIMUM_MEM_USAGE));
+        assert!(
+            mem_usage_min >= ABSOLUTE_MINIMUM_MEM_USAGE,
+            format!(
+                "Best Case Memory Usage: {:.2}kB was less than absolute minimum {:.2}kB.",
+                mem_usage_min, ABSOLUTE_MINIMUM_MEM_USAGE
+            )
+        );
         println!(
             "CPU Usage: {:.2}% ~ +/- {:.2}%",
             cpus.mean_axis(Axis(0)).unwrap(),

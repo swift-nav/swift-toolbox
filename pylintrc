@@ -18,7 +18,6 @@ disable=bad-continuation,
         too-many-nested-blocks,
         fixme,
         ungrouped-imports,
-        duplicate-code,
 
 [FORMAT]
 max-line-length=120

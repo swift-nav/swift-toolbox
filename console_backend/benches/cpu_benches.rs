@@ -6,7 +6,7 @@ use std::{fs, path::Path, sync::mpsc, thread, time};
 extern crate console_backend;
 use console_backend::process_messages;
 
-const BENCH_FILEPATH: &str = "./benches/data/piksi-relay.sbp";
+const BENCH_FILEPATH: &str = "./tests/data/piksi-relay.sbp";
 const BENCHMARK_TIME_LIMIT: u64 = 10000;
 const BENCHMARK_SAMPLE_SIZE: usize = 50;
 const FAILURE_CASE_SLEEP_MILLIS: u64 = 1000;

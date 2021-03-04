@@ -14,7 +14,7 @@ if [[ "$OS_NAME" == "macOS" ]]; then
     mv ${archive_name}_osx.tar.gz "${archive_name}-${VERSION}-${BUILD_TRIPLET}.tar.gz";
     echo "${archive_name}-${VERSION}-${BUILD_TRIPLET}.tar.gz" >release-archive.filename;
 
-    cp -r src/main/benches 'main.dist';
+    cp -r console_backend/tests/data 'main.dist' && cp utils/bench_runner.py 'main.dist';
     cd 'main.dist';
     7z a -tzip "../$OS_NAME.zip" *;
     cd ..;
@@ -29,7 +29,7 @@ if [[ "$OS_NAME" == "Linux" ]]; then
     mv ${archive_name}_linux.tar.gz "${archive_name}-${VERSION}-${BUILD_TRIPLET}.tar.gz";
     echo "${archive_name}-${VERSION}-${BUILD_TRIPLET}.tar.gz" >release-archive.filename;
 
-    cp -r src/main/benches 'target/swift_navigation_console';
+    cp -r console_backend/tests/data 'target/swift_navigation_console' && cp utils/bench_runner.py 'target/swift_navigation_console';
     cd 'target/swift_navigation_console';
     7z a -tzip "../../$OS_NAME.zip" *;
     cd ../..;
@@ -44,7 +44,7 @@ if [[ "$OS_NAME" == "Windows" ]]; then
     mv 'target/swift_navigation_consoleSetup.exe' "${archive_name}-${VERSION}-windows-${BUILD_TRIPLET}.exe";
     echo "${archive_name}-${VERSION}-windows-${BUILD_TRIPLET}.exe" >release-archive.filename;
 
-    cp -r src/main/benches 'target/swift_navigation_console';
+    cp -r console_backend/tests/data 'target/swift_navigation_console' && cp utils/bench_runner.py 'target/swift_navigation_console';
     cd 'target/swift_navigation_console';
     ls -l;
     7z a -tzip "../../$OS_NAME.zip" *;

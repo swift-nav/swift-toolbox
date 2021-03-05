@@ -6,7 +6,7 @@ use std::{fs, path::Path, sync::mpsc, thread, time};
 extern crate console_backend;
 use console_backend::process_messages;
 
-const TEST_DATA_DIRECTORY: &str = "./benches/data/";
+const BENCH_FILEPATH: &str = "./tests/data/piksi-relay.sbp";
 const BENCHMARK_TIME_LIMIT: u64 = 10000;
 const BENCHMARK_SAMPLE_SIZE: usize = 50;
 const FAILURE_CASE_SLEEP_MILLIS: u64 = 1000;
@@ -14,27 +14,15 @@ const BENCH_NAME_FAILURE: &str = "RPM_failure";
 const BENCH_NAME_SUCCESS: &str = "RPM_success";
 
 pub fn criterion_benchmark(c: &mut Criterion) {
-    let glob_pattern = Path::new(&TEST_DATA_DIRECTORY).join("*.sbp");
-    let glob_pattern = glob_pattern.to_str().unwrap();
-
-    for ele in glob(glob_pattern).expect("failed to read glob") {
-        match ele {
-            Ok(filename) => {
-                println!("{:?}", filename.display());
-                let file_in_name = filename.to_str().unwrap();
-                let mut group = c.benchmark_group("proc_messages");
-                group.measurement_time(time::Duration::from_millis(BENCHMARK_TIME_LIMIT));
-                group.sample_size(BENCHMARK_SAMPLE_SIZE);
-                group.bench_function(BENCH_NAME_FAILURE, |b| {
-                    b.iter(|| run_process_messages(file_in_name, true))
-                });
-                group.bench_function(BENCH_NAME_SUCCESS, |b| {
-                    b.iter(|| run_process_messages(file_in_name, false))
-                });
-            }
-            Err(e) => println!("{:?}", e),
-        }
-    }
+    let mut group = c.benchmark_group("proc_messages");
+    group.measurement_time(time::Duration::from_millis(BENCHMARK_TIME_LIMIT));
+    group.sample_size(BENCHMARK_SAMPLE_SIZE);
+    group.bench_function(BENCH_NAME_FAILURE, |b| {
+        b.iter(|| run_process_messages(&BENCH_FILEPATH, true))
+    });
+    group.bench_function(BENCH_NAME_SUCCESS, |b| {
+        b.iter(|| run_process_messages(&BENCH_FILEPATH, false))
+    });
 }
 
 fn run_process_messages(file_in_name: &str, failure: bool) {
@@ -65,10 +53,10 @@ fn run_process_messages(file_in_name: &str, failure: bool) {
     recv_thread.join().expect("join should succeed");
 }
 
-#[cfg(feature = "criterion_bench")]
+#[cfg(feature = "benches")]
 criterion_group!(benches, criterion_benchmark);
-#[cfg(feature = "criterion_bench")]
+#[cfg(feature = "benches")]
 criterion_main!(benches);
 
-#[cfg(not(feature = "criterion_bench"))]
+#[cfg(not(feature = "benches"))]
 fn main() {}

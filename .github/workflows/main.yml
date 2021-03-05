@@ -80,10 +80,10 @@ jobs:
         run: |
           conda run -n console_pp poetry install
 
-      - name: Run Benchmarks
+      - name: Run Backend Benchmarks
         shell: bash
         run: |
-          cargo make benches
+          cargo make backend-benches
 
   checks:
 
@@ -277,9 +277,9 @@ jobs:
         run: |
           cd output/${{ runner.os }}
           if [ "$RUNNER_OS" == "Windows" ]; then
-              python benches/frontend_bench.py --binary=swift_navigation_console.exe
+              python bench_runner.py --frontend_cpu --executable=swift_navigation_console.exe
           else
-              python benches/frontend_bench.py --binary=swift_navigation_console
+              python bench_runner.py --frontend_cpu --executable=swift_navigation_console
           fi
 
   release:

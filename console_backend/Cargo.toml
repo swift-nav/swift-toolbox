@@ -13,9 +13,10 @@ ordered-float = "2.0"
 ndarray = "0.14.0"
 glob = "0.3.0"
 criterion = "0.3.4"
+sysinfo = "0.16.4"
 
 [[bench]]
-name = "benches"
+name = "cpu_benches"
 harness = false
 
 
@@ -29,4 +30,4 @@ bench = false
 
 [features]
 default = []
-criterion_bench = []
+benches = []

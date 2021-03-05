@@ -189,22 +189,48 @@ dependencies = ["python-type-check", "rust-type-check"]
 [tasks.tests]
 dependencies = ["rust-tests"]
 
-[tasks.bench-rust]
+[tasks.backend-cpu-bench]
 dependencies = ["copy-capnp", "generate-resources"]
 command = "cargo"
 args    = ["bench", "--all-features", "--", "--verbose", "--noplot"]
 
-[tasks.bench-rust-validate]
+[tasks.backend-cpu-bench-validate]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV python console_backend/benches/benchmarks.py
+conda run -n $CONDA_ENV python utils/bench_runner.py --backend_cpu
 '''
 
-[tasks.benches]
-dependencies = ["bench-rust", "bench-rust-validate"]
+[tasks.backend-mem-bench]
+dependencies = ["copy-capnp", "generate-resources"]
+command = "cargo"
+args    = ["test", "test_run_process_messages", "--manifest-path=console_backend/Cargo.toml", "--features", "benches", "--", "--nocapture"]
+
+[tasks.backend-benches]
+dependencies = ["backend-cpu-bench", "backend-cpu-bench-validate", "backend-mem-bench"]
 
 [tasks.disk-usage-bench]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV python utils/disk_usage_benchmarks.py
+conda run -n $CONDA_ENV python utils/bench_runner.py --disk_usage
+'''
+
+[tasks.frontend-cpu-bench.linux]
+script_runner = "@shell"
+script = '''
+echo 'This is only used to validate locally.'
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=../../target/swift_navigation_console/swift_navigation_console && cd -
+'''
+
+[tasks.frontend-cpu-bench.windows]
+script_runner = "@shell"
+script = '''
+echo 'This is only used to validate locally.'
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=../../target/swift_navigation_console/swift_navigation_console.exe && cd -
+'''
+
+[tasks.frontend-cpu-bench.mac]
+script_runner = "@shell"
+script = '''
+echo 'This is only used to validate locally.'
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=../../main.dist/main && cd -
 '''

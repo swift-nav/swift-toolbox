@@ -1,12 +1,14 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
-use ndarray::{ArrayView, Axis};
+use ndarray::{ArrayView, Axis, Dim};
 use std::{
+    error::Error,
     fs,
+    result::Result,
     sync::{mpsc, Arc, Mutex},
     thread, time,
 };
-use sysinfo::{get_current_pid, ProcessExt, System, SystemExt};
+use sysinfo::{get_current_pid, Process, ProcessExt, System, SystemExt};
 extern crate console_backend;
 use console_backend::process_messages;
 
@@ -18,9 +20,44 @@ const MAXIMUM_MEM_USAGE_KB: f32 = 20000.0;
 const ABSOLUTE_MINIMUM_MEM_USAGE: f32 = 1000.0;
 const MAXIMUM_STANDARD_DEV_RATE_OF_MAXIMUM_MEM: f32 = 0.2;
 
+/// Convert a 1D Vector to an ArrayView.
+///
+/// Parameters:
+///   - `vec`: The generic vector for which to get a read-only ArrayView.
+///
+/// Returns:
+///   - `Ok`: ArrayView of the vector passed in.
+///   - `Err`: If the ArrayView was not converted correctly.
+#[allow(clippy::type_complexity)]
+fn vec_1d_to_array<'a, T>(
+    vec_1d: &[T],
+) -> Result<ArrayView<T, Dim<[usize; 1]>>, Box<dyn Error + 'a>> {
+    Ok(ArrayView::from_shape(vec_1d.len(), vec_1d)?)
+}
+
+/// Get updated information from a running process.
+///
+/// Parameters:
+///   - `sys`: The current running System instance to get Process information from.
+///   - `pid`: The pid for which we desire the Process information.
+///
+/// Returns:
+///   - `Ok`: Process pertaining to the pid passed in.
+///   - `Err`: If unable to successfully get the process from the pid.
+fn get_refreshed_process(sys: &mut System, pid: i32) -> Result<&Process, Box<dyn Error>> {
+    sys.refresh_process(pid);
+    Ok(sys.get_process(pid).unwrap())
+}
+
+/// Get updated information from a running process.
+///
+/// Asserts:
+///   - num_mem_readings >= min_allowed_mem_readings
+///   - mean + std - max_allowed <= max_allowed * threshold_rate
+///   - std <= max_allowed * max_allowed_std_dev_rate
+///   - mean - std >= absolute_mean
 #[test]
 #[cfg(feature = "benches")]
-#[ignore]
 fn test_run_process_messages() {
     use std::sync::mpsc::Receiver;
     let (client_recv_tx, client_recv_rx) = mpsc::channel::<Receiver<Vec<u8>>>();
@@ -34,8 +71,8 @@ fn test_run_process_messages() {
         let mut mem_readings_kb: Vec<f32> = vec![];
         let mut cpu_readings: Vec<f32> = vec![];
         loop {
-            sys.refresh_process(pid);
-            let proc = sys.get_process(pid).unwrap();
+            let proc = get_refreshed_process(&mut sys, pid).unwrap();
+
             mem_readings_kb.push(proc.memory() as f32);
             cpu_readings.push(proc.cpu_usage());
             let is_running_mem = is_running_mem.lock().unwrap();
@@ -43,8 +80,8 @@ fn test_run_process_messages() {
                 break;
             }
         }
-        let mems = ArrayView::from_shape(mem_readings_kb.len(), &mem_readings_kb).unwrap();
-        let cpus = ArrayView::from_shape(cpu_readings.len(), &cpu_readings).unwrap();
+        let mems = vec_1d_to_array(&mem_readings_kb).unwrap();
+        let cpus = vec_1d_to_array(&cpu_readings).unwrap();
         assert!(
             mem_readings_kb.len() >= MINIMUM_MEM_READINGS,
             format!(

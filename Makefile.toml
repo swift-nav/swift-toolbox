@@ -203,7 +203,7 @@ conda run -n $CONDA_ENV python utils/bench_runner.py --backend_cpu
 [tasks.backend-mem-bench]
 dependencies = ["copy-capnp", "generate-resources"]
 command = "cargo"
-args    = ["test", "test_run_process_messages", "--manifest-path=console_backend/Cargo.toml", "--features", "benches", "--", "--ignored", "--nocapture"]
+args    = ["test", "test_run_process_messages", "--manifest-path=console_backend/Cargo.toml", "--features", "benches", "--", "--nocapture"]
 
 [tasks.backend-benches]
 dependencies = ["backend-cpu-bench", "backend-cpu-bench-validate", "backend-mem-bench"]

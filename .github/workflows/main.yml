@@ -272,7 +272,7 @@ jobs:
           cd output
           7z x $(cat bench.filename) -aoa -o${{ runner.os }}
           
-      - name: Run Frontend Benchmark.
+      - name: Run CPU Frontend Benchmark.
         shell: bash
         run: |
           cd output/${{ runner.os }}
@@ -281,6 +281,16 @@ jobs:
           else
               python bench_runner.py --frontend_cpu --executable=swift_navigation_console
           fi
+      - name: Run MEM Frontend Benchmark.
+        shell: bash
+        run: |
+          cd output/${{ runner.os }}
+          if [ "$RUNNER_OS" == "Windows" ]; then
+              python bench_runner.py --frontend_mem --executable=swift_navigation_console.exe
+          else
+              python bench_runner.py --frontend_mem --executable=swift_navigation_console
+          fi
+          
 
   release:
     name: Create Release

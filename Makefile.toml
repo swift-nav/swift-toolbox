@@ -44,7 +44,7 @@ script = '''
 conda run -n $CONDA_ENV python -m pip install -t ./console_backend --upgrade --force ./console_backend -v
 '''
 
-[tasks.prod-freeze]
+[tasks.prod-freeze-no-copy]
 dependencies = ["copy-capnp", "generate-resources", "setuptools-rust", "prod-install-backend"]
 script_runner = "@shell"
 script = '''
@@ -63,8 +63,11 @@ script_runner = "@shell"
 script = '''
 '''
 
+[tasks.prod-freeze]
+dependencies = ["prod-freeze-no-copy", "remove-negligibles", "copy-console-backend-to-fbs"]
+
 [tasks.prod-installer]
-dependencies = ["prod-freeze", "remove-negligibles", "copy-console-backend-to-fbs"]
+dependencies = ["prod-freeze"]
 script_runner = "@shell"
 script = '''
 conda run -n $CONDA_ENV fbs installer
@@ -233,4 +236,25 @@ script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
 cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=../../main.dist/main && cd -
+'''
+
+[tasks.frontend-mem-bench.linux]
+script_runner = "@shell"
+script = '''
+echo 'This is only used to validate locally.'
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=../../target/swift_navigation_console/swift_navigation_console && cd -
+'''
+
+[tasks.frontend-mem-bench.windows]
+script_runner = "@shell"
+script = '''
+echo 'This is only used to validate locally.'
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=../../target/swift_navigation_console/swift_navigation_console.exe && cd -
+'''
+
+[tasks.frontend-mem-bench.mac]
+script_runner = "@shell"
+script = '''
+echo 'This is only used to validate locally.'
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=../../main.dist/main && cd -
 '''

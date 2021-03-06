@@ -2,7 +2,13 @@ import argparse
 import json
 import subprocess
 import sys
-from typing import Any, Optional
+from multiprocessing.pool import ThreadPool
+from typing import Any, Dict, List, Optional, Tuple
+
+try:
+    import psutil  # type: ignore
+except ModuleNotFoundError:
+    pass
 
 # sys.platform keys.
 LINUX = "linux"
@@ -88,12 +94,12 @@ BACKEND_CPU_BENCHMARKS = {
     ],
 }
 
-# Frontend Benchmarks.
+# Frontend CPU Benchmarks.
 DEFAULT_JSON_FILEPATH = "fileout.json"
 BENCHMARK_COMMAND_ARGS = lambda file_path: f"--file-in={file_path} --connect"
 HYPERFINE_COMMAND = lambda file_out: f"hyperfine --warmup 1 --runs 5 --show-output --export-json {file_out} "
 
-FRONTEND_BENCHMARKS = {
+FRONTEND_CPU_BENCHMARKS = {
     WINDOWS: [
         {
             NAME: "202010224_192043",
@@ -119,6 +125,47 @@ FRONTEND_BENCHMARKS = {
             KEY_LOCATION: "mean",
             EXPECTED: 1.75,
             ERROR_MARGIN_FRAC: 0.05,
+        },
+    ],
+}
+
+# Frontend MEM Benchmarks.
+MAXIMUM_RATE_OF_MAX_STD = "maximum_rate_of_max_std"
+MAXIMUM_RATE_OF_MAX_MEAN = "maximum_rate_of_max_mean"
+MAXIMUM_MEAN_MB = "maximum_mean_mb"
+
+BYTES_TO_MB = lambda x: float(x) / (1 << 20)
+ABSOLUTE_MINIMUM_MEMORY_MB = 1
+ABSOLUTE_MINIMUM_READINGS = 200
+THREAD_TIMEOUT_SEC = 30
+RUN_COUNT = 5
+
+FRONTEND_MEM_BENCHMARKS: Dict[str, List[Dict[str, Any]]] = {
+    WINDOWS: [
+        {
+            NAME: "piksi-relay-1min",
+            FILE_PATH: "data/piksi-relay-1min.sbp",
+            MAXIMUM_MEAN_MB: 200,
+            MAXIMUM_RATE_OF_MAX_MEAN: 0.05,
+            MAXIMUM_RATE_OF_MAX_STD: 0.3,
+        },
+    ],
+    MACOS: [
+        {
+            NAME: "piksi-relay-1min",
+            FILE_PATH: "data/piksi-relay-1min.sbp",
+            MAXIMUM_MEAN_MB: 200,
+            MAXIMUM_RATE_OF_MAX_MEAN: 0.05,
+            MAXIMUM_RATE_OF_MAX_STD: 0.3,
+        },
+    ],
+    LINUX: [
+        {
+            NAME: "piksi-relay-1min",
+            FILE_PATH: "data/piksi-relay-1min.sbp",
+            MAXIMUM_MEAN_MB: 200,
+            MAXIMUM_RATE_OF_MAX_MEAN: 0.05,
+            MAXIMUM_RATE_OF_MAX_STD: 0.3,
         },
     ],
 }
@@ -202,7 +249,7 @@ def run_frontend_cpu_benchmark(executable: str):
     """
     prepped_command = f"{executable}"
     os_ = sys.platform
-    benchmarks = FRONTEND_BENCHMARKS.get(sys.platform, [])
+    benchmarks = FRONTEND_CPU_BENCHMARKS.get(sys.platform, [])
     for bench in benchmarks:
         bench_command = (
             f'{HYPERFINE_COMMAND(DEFAULT_JSON_FILEPATH)} "{prepped_command} '
@@ -220,19 +267,97 @@ def run_frontend_cpu_benchmark(executable: str):
             print(f"PASS - {os_}:{bench[NAME]} MARGIN={bench_value - bench[EXPECTED]}")
 
 
+def collect_memory_readings(pid: str) -> List[float]:
+    """Collect a series of memory readings for a running process.
+
+    If a child process is present, switch focus to the child process.
+
+    Args:
+        pid (str): The PID of the process for which to read memory usage.
+
+    Returns:
+        List[float]: All memory readings collected with zeros filtered out.
+    """
+    memory_readings = []
+    proc = psutil.Process(pid)
+    while True:
+        try:
+            if proc.status() == psutil.STATUS_ZOMBIE:
+                break
+            children = proc.children()
+            if children:
+                proc = children[0]
+            memory_readings.append(proc.memory_info().rss)
+        except psutil.NoSuchProcess:
+            break
+    memory_readings = [float(reading) for reading in memory_readings if reading != 0]
+    return memory_readings
+
+
+def get_mean_and_pop_stdev(values: List[float]) -> Tuple[float, float]:
+    """Get the mean and population standard deviation.
+
+    Args:
+        values (List[float]): The list of values to parse for statistics.
+
+    Returns:
+        Tuple[float, float]: The mean and population standard deviation.
+    """
+    lenn = float(len(values))
+    mean = sum(values) / lenn
+    std = ((1.0 / lenn) * sum([(val - mean) ** 2 for val in values])) ** (1 / 2)
+    return (mean, std)
+
+
+def run_frontend_mem_benchmark(executable: str):
+    """Runner for a suite of frontend cpu benchmark validations.
+    Args:
+        executable (str): Path to the executable location to run the benchmark on.
+    """
+    os_ = sys.platform
+    benchmarks = FRONTEND_MEM_BENCHMARKS.get(os_, [])
+    for bench in benchmarks:
+        bench_command = f"{executable} {BENCHMARK_COMMAND_ARGS(bench[FILE_PATH])}"
+        for _ in range(RUN_COUNT):
+            pool = ThreadPool(processes=1)
+            process = subprocess.Popen(bench_command.split())
+            mem_readings = pool.apply_async(collect_memory_readings, (process.pid,)).get(THREAD_TIMEOUT_SEC)
+            mean_bytes, std_bytes = get_mean_and_pop_stdev(mem_readings)
+            mean_mb = BYTES_TO_MB(mean_bytes)
+            std_mb = BYTES_TO_MB(std_bytes)
+            print(f"Mean: {mean_mb:.2f}MB, Stdev: {std_mb:.2f}MB")
+            assert (
+                len(mem_readings) >= ABSOLUTE_MINIMUM_READINGS
+            ), f"Not enough readings recorded {len(mem_readings)} < {ABSOLUTE_MINIMUM_READINGS}"
+            mean_std_max_diff = mean_mb + std_mb - bench[MAXIMUM_MEAN_MB]
+            max_diff_allowed = bench[MAXIMUM_MEAN_MB] * bench[MAXIMUM_RATE_OF_MAX_MEAN]
+            assert (
+                mean_std_max_diff <= max_diff_allowed
+            ), f"mean + std - max, {mean_std_max_diff}, > max * max_rate, {max_diff_allowed}"
+
+            max_std_allowed = bench[MAXIMUM_MEAN_MB] * bench[MAXIMUM_RATE_OF_MAX_STD]
+            assert std_mb <= max_std_allowed, f"std, {std_mb}, > max_std_allowed, {max_std_allowed}"
+
+            print(f"PASS - {os_}:{bench[NAME]} MARGIN={mean_std_max_diff}")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--disk_usage", action="store_true", help="Run Installer Disk Usage Benchmark.")
     group.add_argument("--backend_cpu", action="store_true", help="Validate Backend CPU Benchmark.")
     group.add_argument("--frontend_cpu", action="store_true", help="Run Frontend CPU Benchmark.")
-    parser.add_argument("--executable", help="Path to executable required to run Frontend CPU Benchmark.")
+    group.add_argument("--frontend_mem", action="store_true", help="Run Frontend MEM Benchmark.")
+    parser.add_argument("--executable", help="Path to executable required to run Frontend CPU or MEM Benchmark.")
     args = parser.parse_args()
-    if args.frontend_cpu:
+    if args.frontend_cpu or args.frontend_mem:
         assert (
             args.executable is not None
-        ), "'--executable=<path/to/console/executable>' is required to run the Frontend CPU Benchmark."
-        run_frontend_cpu_benchmark(args.executable)
+        ), "'--executable=<path/to/console/executable>' is required to run the Frontend CPU or MEM Benchmark."
+        if args.frontend_cpu:
+            run_frontend_cpu_benchmark(args.executable)
+        else:
+            run_frontend_mem_benchmark(args.executable)
     if args.disk_usage:
         run_disk_usage_benchmark()
     if args.backend_cpu:

@@ -9,6 +9,7 @@ python = ">=3.9,<3.10"
 PySide2 = "^5.15.2"
 fbs = {git = "https://github.com/silverjam/fbs.git"}
 pycapnp = {git = "https://github.com/silverjam/pycapnp.git", rev = "disable-import-hook"}
+psutil = "^5.8.0"
 
 [tool.poetry.dev-dependencies]
 black = "^19.10b0"

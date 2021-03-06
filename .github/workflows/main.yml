@@ -121,7 +121,7 @@ jobs:
 
       - name: Poetry Install
         run: |
-          conda run -n console_pp poetry install
+          conda run -n console_pp poetry install -vvv
 
       - name: Run Format Check
         run: |

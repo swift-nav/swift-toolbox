@@ -77,12 +77,13 @@ jobs:
           environment-file: conda.yml
 
       - name: Poetry Install
+        shell: cmd
         run: |
           conda run -n console_pp python -m poetry install -vvv
 
       - name: Run Backend Benchmarks
+        shell: cmd
         run: |
-          
           cargo make backend-benches
 
   # checks:

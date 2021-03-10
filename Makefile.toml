@@ -1,14 +1,35 @@
 [env]
 PYTHON_FILES = { script = ["python utils/glob_python_files.py"] }
 CONDA_ENV = "console_pp"
+REQUIREMENTS_FILE = "requirements.txt"
+REQUIREMENTS_DEV_FILE = "requirements-dev.txt"
 
 [config]
 default_to_workspace = false
 
-[tasks.poetry-install]
+[tasks.poetry-export-dev]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV python -m poetry install -vvv
+conda run -n console_pp poetry export --dev -f $REQUIREMENTS_FILE --output $REQUIREMENTS_DEV_FILE --without-hashes
+'''
+
+[tasks.poetry-export]
+dependencies = ["poetry-export-dev"]
+script_runner = "@shell"
+script = '''
+conda run -n console_pp poetry export -f $REQUIREMENTS_FILE --output $REQUIREMENTS_FILE --without-hashes
+'''
+
+[tasks.pip-install-dev]
+script_runner = "@shell"
+script = '''
+conda run -n console_pp pip install -r $REQUIREMENTS_DEV_FILE
+'''
+
+[tasks.pip-install]
+script_runner = "@shell"
+script = '''
+conda run -n console_pp pip install -r $REQUIREMENTS_FILE
 '''
 
 [tasks.generate-resources]
@@ -206,8 +227,7 @@ args    = ["bench", "--all-features", "--", "--verbose", "--noplot"]
 [tasks.backend-cpu-bench-validate]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV python -m pip list
-conda run -n $CONDA_ENV poetry run python utils/bench_runner.py --backend_cpu
+conda run -n $CONDA_ENV python utils/bench_runner.py --backend_cpu
 '''
 
 [tasks.backend-mem-bench]

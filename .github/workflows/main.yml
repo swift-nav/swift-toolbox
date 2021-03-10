@@ -17,8 +17,8 @@ jobs:
     strategy:
       matrix:
         os:
-          # - ubuntu-20.04
-          # - macos-10.15
+          - ubuntu-20.04
+          - macos-10.15
           - windows-2019
 
     runs-on: ${{ matrix.os }}
@@ -76,77 +76,79 @@ jobs:
           activate-environment: console_pp
           environment-file: conda.yml
 
-      - name: Poetry Install
-        shell: bash
+      - name: Run Pip Install
         run: |
-          conda run -n console_pp where.exe poetry
-          conda run -n console_pp poetry install -vvv
-
+          cargo make pip-install-dev
+      
       - name: Run Backend Benchmarks
         run: |
-          
           cargo make backend-benches
 
-  # checks:
+  checks:
 
-  #   name: Code Quality Checks
+    name: Code Quality Checks
 
-  #   runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
 
-  #   steps:
+    steps:
 
-  #     - name: Checkout source
-  #       uses: actions/checkout@v2
-  #       with:
-  #         submodules: recursive
-  #         ssh-key: ${{ secrets.SSH_KEY }}
+      - name: Checkout source
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          ssh-key: ${{ secrets.SSH_KEY }}
 
-  #     - name: Install stable Rust
-  #       uses: actions-rs/toolchain@v1
-  #       with:
-  #         toolchain: stable
-  #         override: true
-  #         components: rustfmt, clippy
+      - name: Install stable Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
 
-  #     - uses: davidB/rust-cargo-make@v1
-  #       with:
-  #         version: '0.32.11'
+      - uses: davidB/rust-cargo-make@v1
+        with:
+          version: '0.32.11'
 
-  #     - uses: conda-incubator/setup-miniconda@v2
-  #       with:
-  #         activate-environment: console_pp
-  #         environment-file: conda.yml
+      - name: Install Dependencies.
+        run: |
+          sudo apt-get install -y capnproto
 
-  #     - name: Install Dependencies.
-  #       run: |
-  #         sudo apt-get install -y capnproto
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: console_pp
+          environment-file: conda.yml
 
-  #     - name: Poetry Install
-  #       run: |
-  #         conda run -n console_pp poetry install -vvv
+      - name: Run Requirements Generation Check
+        run: |
+          cargo make poetry-export
+          git diff --exit-code
 
-  #     - name: Run Format Check
-  #       run: |
-  #         cargo make format-check
+      - name: Run Pip Install
+        run: |
+          cargo make pip-install-dev
+      
+      - name: Run Format Check
+        run: |
+          cargo make format-check
 
-  #     - name: Run Type Check
-  #       run: |
-  #         cargo make types
+      - name: Run Type Check
+        run: |
+          cargo make types
 
-  #     - name: Run Lint Check
-  #       run: |
-  #         cargo make lint
+      - name: Run Lint Check
+        run: |
+          cargo make lint
 
-  #     - name: Run Tests
-  #       run: |
-  #         cargo make tests
+      - name: Run Tests
+        run: |
+          cargo make tests
 
   build:
 
     name: Build Binaries
 
     needs:
-      # - checks
+      - checks
       - backend_bench
 
     strategy:
@@ -208,9 +210,9 @@ jobs:
           activate-environment: console_pp
           environment-file: conda.yml
 
-      - name: Poetry Install
+      - name: Run Pip Install
         run: |
-          conda run -n console_pp python -m poetry install
+          cargo make pip-install-dev
 
       - name: Build ${{ runner.os }} Binaries.
         env:
@@ -257,6 +259,7 @@ jobs:
     strategy:
       matrix:
         os:
+          - macOS
           - Windows
     runs-on: [self-hosted]
     steps:
@@ -280,7 +283,9 @@ jobs:
           cd output/${{ runner.os }}
           if [ "$RUNNER_OS" == "Windows" ]; then
               python bench_runner.py --frontend_cpu --executable=swift_navigation_console.exe
-          else
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+              python bench_runner.py --frontend_cpu --executable=main
+          elif [ "$RUNNER_OS" == "Linux" ]; then
               python bench_runner.py --frontend_cpu --executable=swift_navigation_console
           fi
       - name: Run MEM Frontend Benchmark.
@@ -289,7 +294,9 @@ jobs:
           cd output/${{ runner.os }}
           if [ "$RUNNER_OS" == "Windows" ]; then
               python bench_runner.py --frontend_mem --executable=swift_navigation_console.exe
-          else
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+              python bench_runner.py --frontend_mem --executable=main
+          elif [ "$RUNNER_OS" == "Linux" ]; then
               python bench_runner.py --frontend_mem --executable=swift_navigation_console
           fi
           

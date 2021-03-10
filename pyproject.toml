@@ -6,21 +6,21 @@ authors = ["Swift Navigation <dev@swiftnav.com>"]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.10"
-PySide2 = "5.15.2"
+PySide2 = "^5.15.2"
 fbs = {git = "https://github.com/silverjam/fbs.git"}
 pycapnp = {git = "https://github.com/silverjam/pycapnp.git", rev = "disable-import-hook"}
-psutil = "5.8.0"
 
 [tool.poetry.dev-dependencies]
-black = "19.10b0"
-jedi = "0.18.0"
-mypy = "0.790"
-pylint = "2.7.2"
-pytest = "5.4.3"
-setuptools-rust = "0.11.6"
-pkgconfig = "1.5.2"
-Cython = "0.29.22"
-nuitka = "0.6.12.3"
+black = "^19.10b0"
+jedi = "^0.18.0"
+mypy = "^0.790"
+pylint = "^2.6.0"
+pytest = "^5.4.3"
+setuptools-rust = "^0.11.6"
+pkgconfig = "^1.5.1"
+Cython = "^0.29.21"
+nuitka = "^0.6.11"
+psutil = "5.8.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0", "setuptools>=41.0.0", "wheel", "setuptools_rust>=0.10.2"]

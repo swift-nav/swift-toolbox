@@ -8,8 +8,7 @@ default_to_workspace = false
 [tasks.poetry-install]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV poetry shell
-conda run -n $CONDA_ENV poetry install -vvv
+conda run -n $CONDA_ENV python -m poetry install -vvv
 '''
 
 [tasks.generate-resources]
@@ -207,8 +206,8 @@ args    = ["bench", "--all-features", "--", "--verbose", "--noplot"]
 [tasks.backend-cpu-bench-validate]
 script_runner = "@shell"
 script = '''
-
-conda run -n $CONDA_ENV python -m pip list && conda run -n $CONDA_ENV python utils/bench_runner.py --backend_cpu
+conda run -n $CONDA_ENV python -m pip list
+conda run -n $CONDA_ENV poetry run python utils/bench_runner.py --backend_cpu
 '''
 
 [tasks.backend-mem-bench]

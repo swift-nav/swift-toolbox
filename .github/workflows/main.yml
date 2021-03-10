@@ -78,8 +78,7 @@ jobs:
 
       - name: Poetry Install
         run: |
-          conda run -n console_pp poetry shell
-          conda run -n console_pp poetry install -vvv
+          conda run -n console_pp python -m poetry install -vvv
 
       - name: Run Backend Benchmarks
         run: |
@@ -209,7 +208,7 @@ jobs:
 
       - name: Poetry Install
         run: |
-          conda run -n console_pp poetry install
+          conda run -n console_pp python -m poetry install
 
       - name: Build ${{ runner.os }} Binaries.
         env:

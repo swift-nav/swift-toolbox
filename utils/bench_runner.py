@@ -1,14 +1,11 @@
 import argparse
 import json
+import psutil  # type: ignore
 import subprocess
 import sys
 from multiprocessing.pool import ThreadPool
 from typing import Any, Dict, List, Optional, Tuple
 
-try:
-    import psutil  # type: ignore
-except ModuleNotFoundError:
-    pass
 
 # sys.platform keys.
 LINUX = "linux"
@@ -280,18 +277,15 @@ def collect_memory_readings(pid: str) -> List[float]:
     """
     memory_readings = []
     proc = psutil.Process(pid)
-    while True:
-        try:
-            if proc.status() == psutil.STATUS_ZOMBIE:
-                break
-            children = proc.children()
-            if children:
-                proc = children[0]
-            memory_readings.append(proc.memory_info().rss)
-        except psutil.NoSuchProcess:
-            break
-    memory_readings = [float(reading) for reading in memory_readings if reading != 0]
-    return memory_readings
+    try:
+        while proc.status() != psutil.STATUS_ZOMBIE:
+            total_mem_usage = 0
+            for pid_ in [proc] + proc.children(recursive=True):
+                total_mem_usage += pid_.memory_info().rss
+            memory_readings.append(total_mem_usage)
+    except psutil.NoSuchProcess:
+        pass
+    return [float(reading) for reading in memory_readings if reading != 0]
 
 
 def get_mean_and_pop_stdev(values: List[float]) -> Tuple[float, float]:

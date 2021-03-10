@@ -17,8 +17,8 @@ jobs:
     strategy:
       matrix:
         os:
-          - ubuntu-20.04
-          - macos-10.15
+          # - ubuntu-20.04
+          # - macos-10.15
           - windows-2019
 
     runs-on: ${{ matrix.os }}
@@ -78,73 +78,74 @@ jobs:
 
       - name: Poetry Install
         run: |
-          conda run -n console_pp poetry install
-
-      - name: Run Backend Benchmarks
-        shell: bash
-        run: |
-          cargo make backend-benches
-
-  checks:
-
-    name: Code Quality Checks
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-      - name: Checkout source
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
-          ssh-key: ${{ secrets.SSH_KEY }}
-
-      - name: Install stable Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          components: rustfmt, clippy
-
-      - uses: davidB/rust-cargo-make@v1
-        with:
-          version: '0.32.11'
-
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          activate-environment: console_pp
-          environment-file: conda.yml
-
-      - name: Install Dependencies.
-        run: |
-          sudo apt-get install -y capnproto
-
-      - name: Poetry Install
-        run: |
+          conda run -n console_pp poetry shell
           conda run -n console_pp poetry install -vvv
 
-      - name: Run Format Check
+      - name: Run Backend Benchmarks
         run: |
-          cargo make format-check
+          
+          cargo make backend-benches
 
-      - name: Run Type Check
-        run: |
-          cargo make types
+  # checks:
 
-      - name: Run Lint Check
-        run: |
-          cargo make lint
+  #   name: Code Quality Checks
 
-      - name: Run Tests
-        run: |
-          cargo make tests
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+
+  #     - name: Checkout source
+  #       uses: actions/checkout@v2
+  #       with:
+  #         submodules: recursive
+  #         ssh-key: ${{ secrets.SSH_KEY }}
+
+  #     - name: Install stable Rust
+  #       uses: actions-rs/toolchain@v1
+  #       with:
+  #         toolchain: stable
+  #         override: true
+  #         components: rustfmt, clippy
+
+  #     - uses: davidB/rust-cargo-make@v1
+  #       with:
+  #         version: '0.32.11'
+
+  #     - uses: conda-incubator/setup-miniconda@v2
+  #       with:
+  #         activate-environment: console_pp
+  #         environment-file: conda.yml
+
+  #     - name: Install Dependencies.
+  #       run: |
+  #         sudo apt-get install -y capnproto
+
+  #     - name: Poetry Install
+  #       run: |
+  #         conda run -n console_pp poetry install -vvv
+
+  #     - name: Run Format Check
+  #       run: |
+  #         cargo make format-check
+
+  #     - name: Run Type Check
+  #       run: |
+  #         cargo make types
+
+  #     - name: Run Lint Check
+  #       run: |
+  #         cargo make lint
+
+  #     - name: Run Tests
+  #       run: |
+  #         cargo make tests
 
   build:
 
     name: Build Binaries
 
     needs:
-      - checks
+      # - checks
       - backend_bench
 
     strategy:

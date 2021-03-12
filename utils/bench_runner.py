@@ -283,7 +283,7 @@ def collect_memory_readings(pid: str) -> List[float]:
             for pid_ in [proc] + proc.children(recursive=True):
                 total_mem_usage += pid_.memory_info().rss
             memory_readings.append(total_mem_usage)
-    except psutil.NoSuchProcess:
+    except (psutil.AccessDenied, psutil.NoSuchProcess):
         pass
     return [float(reading) for reading in memory_readings if reading != 0]
 

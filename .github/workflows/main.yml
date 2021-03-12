@@ -261,7 +261,8 @@ jobs:
         os:
           - macOS
           - Windows
-    runs-on: [self-hosted]
+          # - Linux
+    runs-on: [self-hosted, '${{ matrix.os }}']
     steps:
       - name: Remove previous build.
         shell: bash
@@ -269,35 +270,35 @@ jobs:
           rm -rf output
       - uses: actions/download-artifact@v2
         with:
-          name: ${{ runner.os }}-artifacts-bench
+          name: ${{ matrix.os }}-artifacts-bench
           path: |
             output
       - name: Extract binary and data.
         run: |
           cd output
-          7z x $(cat bench.filename) -aoa -o${{ runner.os }}
+          7z x $(cat bench.filename) -aoa -o${{ matrix.os }}
           
       - name: Run CPU Frontend Benchmark.
         shell: bash
         run: |
-          cd output/${{ runner.os }}
+          cd output/${{ matrix.os }}
           if [ "$RUNNER_OS" == "Windows" ]; then
               python bench_runner.py --frontend_cpu --executable=swift_navigation_console.exe
           elif [ "$RUNNER_OS" == "macOS" ]; then
-              python bench_runner.py --frontend_cpu --executable=main
+              python bench_runner.py --frontend_cpu --executable=./main
           elif [ "$RUNNER_OS" == "Linux" ]; then
-              python bench_runner.py --frontend_cpu --executable=swift_navigation_console
+              python bench_runner.py --frontend_cpu --executable=./swift_navigation_console
           fi
       - name: Run MEM Frontend Benchmark.
         shell: bash
         run: |
-          cd output/${{ runner.os }}
+          cd output/${{ matrix.os }}
           if [ "$RUNNER_OS" == "Windows" ]; then
               python bench_runner.py --frontend_mem --executable=swift_navigation_console.exe
           elif [ "$RUNNER_OS" == "macOS" ]; then
-              python bench_runner.py --frontend_mem --executable=main
+              python bench_runner.py --frontend_mem --executable=./main
           elif [ "$RUNNER_OS" == "Linux" ]; then
-              python bench_runner.py --frontend_mem --executable=swift_navigation_console
+              python bench_runner.py --frontend_mem --executable=./swift_navigation_console
           fi
           
 

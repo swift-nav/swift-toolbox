@@ -76,12 +76,11 @@ jobs:
           activate-environment: console_pp
           environment-file: conda.yml
 
-      - name: Poetry Install
+      - name: Run Pip Install
         run: |
-          conda run -n console_pp poetry install
-
+          cargo make pip-install-dev
+      
       - name: Run Backend Benchmarks
-        shell: bash
         run: |
           cargo make backend-benches
 
@@ -110,19 +109,24 @@ jobs:
         with:
           version: '0.32.11'
 
+      - name: Install Dependencies.
+        run: |
+          sudo apt-get install -y capnproto
+
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: console_pp
           environment-file: conda.yml
 
-      - name: Install Dependencies.
+      - name: Run Requirements Generation Check
         run: |
-          sudo apt-get install -y capnproto
+          cargo make poetry-export
+          git diff --exit-code
 
-      - name: Poetry Install
+      - name: Run Pip Install
         run: |
-          conda run -n console_pp poetry install -vvv
-
+          cargo make pip-install-dev
+      
       - name: Run Format Check
         run: |
           cargo make format-check
@@ -206,9 +210,9 @@ jobs:
           activate-environment: console_pp
           environment-file: conda.yml
 
-      - name: Poetry Install
+      - name: Run Pip Install
         run: |
-          conda run -n console_pp poetry install
+          cargo make pip-install-dev
 
       - name: Build ${{ runner.os }} Binaries.
         env:
@@ -255,8 +259,10 @@ jobs:
     strategy:
       matrix:
         os:
+          - macOS
           - Windows
-    runs-on: [self-hosted]
+          # - Linux
+    runs-on: [self-hosted, '${{ matrix.os }}']
     steps:
       - name: Remove previous build.
         shell: bash
@@ -264,23 +270,37 @@ jobs:
           rm -rf output
       - uses: actions/download-artifact@v2
         with:
-          name: ${{ runner.os }}-artifacts-bench
+          name: ${{ matrix.os }}-artifacts-bench
           path: |
             output
       - name: Extract binary and data.
         run: |
           cd output
-          7z x $(cat bench.filename) -aoa -o${{ runner.os }}
+          7z x $(cat bench.filename) -aoa -o${{ matrix.os }}
           
-      - name: Run Frontend Benchmark.
+      - name: Run CPU Frontend Benchmark.
         shell: bash
         run: |
-          cd output/${{ runner.os }}
+          cd output/${{ matrix.os }}
           if [ "$RUNNER_OS" == "Windows" ]; then
               python bench_runner.py --frontend_cpu --executable=swift_navigation_console.exe
-          else
-              python bench_runner.py --frontend_cpu --executable=swift_navigation_console
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+              python bench_runner.py --frontend_cpu --executable=./main
+          elif [ "$RUNNER_OS" == "Linux" ]; then
+              python bench_runner.py --frontend_cpu --executable=./swift_navigation_console
           fi
+      - name: Run MEM Frontend Benchmark.
+        shell: bash
+        run: |
+          cd output/${{ matrix.os }}
+          if [ "$RUNNER_OS" == "Windows" ]; then
+              python bench_runner.py --frontend_mem --executable=swift_navigation_console.exe
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+              python bench_runner.py --frontend_mem --executable=./main
+          elif [ "$RUNNER_OS" == "Linux" ]; then
+              python bench_runner.py --frontend_mem --executable=./swift_navigation_console
+          fi
+          
 
   release:
     name: Create Release

@@ -20,6 +20,19 @@ conda activate console_pp
 pip install poetry
 ```
 
+Install capnp.
+
+```
+# Windows
+choco install capnproto
+
+# Mac
+brew install capnp
+
+# Linux
+apt-get install capnproto
+```
+
 Setup the poetry environment
 
 ```
@@ -37,7 +50,7 @@ cargo make run
 Or in "prod" mode (compiles a wheel for the backend):
 
 ```
-cargo make run-prod
+cargo make prod-run
 ```
 
 ## Building the installer
@@ -45,8 +58,7 @@ cargo make run-prod
 To build the installer:
 
 ```
-fbs freeze
-fbs installer
+cargo make prod-installer
 ```
 
 ## Technologies

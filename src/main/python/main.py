@@ -233,7 +233,9 @@ def get_capnp_path() -> str:
 
     d = os.path.dirname(sys.executable)
     path = ""
-    if getattr(sys, "frozen", False) or sys.platform == DARWIN:
+    frozen_ = os.environ.get("FROZEN", "true")
+    frozen = frozen_ == "true"
+    if frozen:
         path = os.path.join(d, CONSOLE_BACKEND_CAPNP_PATH)
     else:
         path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "resources/base", CONSOLE_BACKEND_CAPNP_PATH)

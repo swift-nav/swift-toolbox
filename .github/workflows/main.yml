@@ -186,7 +186,7 @@ jobs:
         shell: bash
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
-              sudo apt-get install -y capnproto ruby ruby-dev rubygems build-essential
+              sudo apt-get install -y capnproto libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-render0 libxcb-shape0 libxcb-shm0 libxcb-sync1 libxcb-util1 libxcb-xfixes0 libxcb-xinerama0 libxcb-xkb1 libxkbcommon-x11-0 ruby ruby-dev rubygems build-essential
               sudo gem install --no-document fpm
           elif [ "$RUNNER_OS" == "macOS" ]; then
               brew install capnp
@@ -261,7 +261,7 @@ jobs:
         os:
           - macOS
           - Windows
-          # - Linux
+          - Linux
     runs-on: [self-hosted, '${{ matrix.os }}']
     steps:
       - name: Remove previous build.

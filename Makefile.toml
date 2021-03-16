@@ -58,7 +58,6 @@ Get-ChildItem .\console_backend -Recurse -Include "*.egg-info", "*.dist-info" | 
 '''
 
 [tasks.run]
-env = {"FROZEN" = false}
 dependencies = ["copy-capnp", "generate-resources", "remove-egg-dist", "install-backend"]
 script_runner = "@shell"
 script = '''
@@ -66,7 +65,6 @@ conda run -n $CONDA_ENV fbs run
 '''
 
 [tasks.prod-run]
-env = {"FROZEN" = false}
 dependencies = ["copy-capnp", "generate-resources", "remove-egg-dist", "prod-install-backend"]
 script_runner = "@shell"
 script = '''
@@ -99,14 +97,15 @@ conda run -n $CONDA_ENV fbs freeze
 '''
 
 [tasks.copy-console-backend-to-fbs.windows]
-script_runner = "powershell"
+script_runner = "@shell"
 script = '''
-XCOPY /E /Y /I .\console_backend\console_backend\server.cp38-win_amd64.pyd .\target\swift_navigation_console\console_backend\
+mkdir .\target\swift_navigation_console\console_backend\ | mv .\console_backend\console_backend\server.cp38-win_amd64.pyd .\target\swift_navigation_console\console_backend\ | true
 '''
 
 [tasks.copy-console-backend-to-fbs]
 script_runner = "@shell"
 script = '''
+mkdir -p target/swift_navigation_console/console_backend && cp -r console_backend/console_backend/* target/swift_navigation_console/console_backend/.
 '''
 
 [tasks.prod-freeze]

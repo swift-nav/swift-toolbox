@@ -252,7 +252,6 @@ jobs:
             bench.filename
   frontend_bench:
     name: Run Frontend Benchmarks
-    continue-on-error: true
     timeout-minutes: 5
     needs:
       - build

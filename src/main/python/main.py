@@ -223,6 +223,15 @@ class TrackingSignalsModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_points(TRACKING_POINTS)
         return cp
 
+def is_frozen() -> bool:
+    """Check whether the application is frozen.
+
+    FBS and nuitka agnostic.
+
+    Returns:
+        bool: Whether the application is frozen.
+    """
+    return getattr(sys, "frozen", False) or "__compiled__" in globals()
 
 def get_capnp_path() -> str:
     """Get the path to the capnp file based on current installer.
@@ -233,7 +242,7 @@ def get_capnp_path() -> str:
 
     d = os.path.dirname(sys.executable)
     path = ""
-    if getattr(sys, "frozen", False) or sys.platform == DARWIN:
+    if is_frozen():
         path = os.path.join(d, CONSOLE_BACKEND_CAPNP_PATH)
     else:
         path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "resources/base", CONSOLE_BACKEND_CAPNP_PATH)

@@ -44,16 +44,28 @@ script = '''
 cp src/main/resources/base/console_backend.capnp console_backend/console_backend.capnp
 '''
 
-[tasks.run]
-dependencies = ["copy-capnp", "generate-resources"]
+[tasks.remove-egg-dist]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV pip install -e ./console_backend
+rm -rf console_backend/*.dist-info || rm -rf console_backend/*.egg-info
+'''
+
+[tasks.remove-egg-dist.windows]
+script_runner = "powershell"
+script_extension = "ps1"
+script = '''
+Get-ChildItem .\console_backend -Recurse -Include "*.egg-info", "*.dist-info" | Remove-Item -Force -Recurse
+'''
+
+[tasks.run]
+dependencies = ["copy-capnp", "generate-resources", "remove-egg-dist", "install-backend"]
+script_runner = "@shell"
+script = '''
 conda run -n $CONDA_ENV fbs run
 '''
 
 [tasks.prod-run]
-dependencies = ["copy-capnp", "generate-resources", "prod-install-backend"]
+dependencies = ["copy-capnp", "generate-resources", "remove-egg-dist", "prod-install-backend"]
 script_runner = "@shell"
 script = '''
 conda run -n $CONDA_ENV fbs run
@@ -63,6 +75,12 @@ conda run -n $CONDA_ENV fbs run
 script_runner = "@shell"
 script = '''
 conda run -n $CONDA_ENV python -m pip install setuptools-rust==0.11.6
+'''
+
+[tasks.install-backend]
+script_runner = "@shell"
+script = '''
+conda run -n $CONDA_ENV pip install -e ./console_backend
 '''
 
 [tasks.prod-install-backend]
@@ -78,16 +96,17 @@ script = '''
 conda run -n $CONDA_ENV fbs freeze
 '''
 
+[tasks.copy-console-backend-to-fbs.windows]
+script_runner = "powershell"
+script_extension = "ps1"
+script = '''
+xcopy /E /Y /I .\console_backend\console_backend\server.cp38-win_amd64.pyd .\target\swift_navigation_console\console_backend\
+'''
+
 [tasks.copy-console-backend-to-fbs]
 script_runner = "@shell"
 script = '''
-mkdir target/swift_navigation_console/console_backend
-cp -r console_backend/console_backend/*  target/swift_navigation_console/console_backend/.
-'''
-
-[tasks.copy-console-backend-to-fbs.mac]
-script_runner = "@shell"
-script = '''
+mkdir -p target/swift_navigation_console/console_backend && cp -r console_backend/console_backend/* target/swift_navigation_console/console_backend/.
 '''
 
 [tasks.prod-freeze]

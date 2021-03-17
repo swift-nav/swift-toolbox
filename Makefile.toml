@@ -97,9 +97,10 @@ conda run -n $CONDA_ENV fbs freeze
 '''
 
 [tasks.copy-console-backend-to-fbs.windows]
-script_runner = "@shell"
+script_runner = "powershell"
+script_extension = "ps1"
 script = '''
-mkdir .\target\swift_navigation_console\console_backend\ || mv .\console_backend\console_backend\server.cp38-win_amd64.pyd .\target\swift_navigation_console\console_backend\ || true
+xcopy /E /Y /I .\console_backend\console_backend\server.cp38-win_amd64.pyd .\target\swift_navigation_console\console_backend\
 '''
 
 [tasks.copy-console-backend-to-fbs]

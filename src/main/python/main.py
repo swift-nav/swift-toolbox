@@ -9,17 +9,17 @@ from typing import List, Optional, Tuple, Any
 
 import capnp  # type: ignore
 
-from PySide2.QtWidgets import QApplication  # type: ignore  # pylint: disable=no-name-in-module
+from PySide2.QtWidgets import QApplication  # type: ignore
 
 from fbs_runtime.application_context.PySide2 import ApplicationContext  # type: ignore  # pylint: disable=unused-import
 
-from PySide2.QtCore import QUrl, QObject, Slot, QPointF  # pylint:disable=no-name-in-module
-from PySide2.QtCharts import QtCharts  # pylint:disable=no-name-in-module
+from PySide2.QtCore import QUrl, QObject, Slot, QPointF
+from PySide2.QtCharts import QtCharts
 
-from PySide2 import QtQml, QtCore  # pylint:disable=no-name-in-module
+from PySide2 import QtQml, QtCore
 
-from PySide2.QtQml import qmlRegisterType  # pylint:disable=no-name-in-module
-from PySide2.QtCore import Property  # pylint:disable=no-name-in-module
+from PySide2.QtQml import qmlRegisterType
+from PySide2.QtCore import Property
 
 import console_resources  # type: ignore # pylint: disable=unused-import,import-error
 

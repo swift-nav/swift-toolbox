@@ -1,22 +1,18 @@
 [MASTER]
 jobs=0
+extension-pkg-whitelist=PySide2
 
 [MESSAGES CONTROL]
 # Disable undesired lints here (https://stackoverflow.com/a/4341833/749342)
-disable=bad-continuation,
-        c-extension-no-member,
-        missing-function-docstring,
+disable=missing-function-docstring,
         invalid-name,
         missing-module-docstring,
         missing-class-docstring,
-        wrong-import-order,
         too-many-locals,
         too-many-statements,
         too-many-arguments,
         too-many-branches,
         too-many-function-args,
-        too-many-nested-blocks,
-        fixme,
         ungrouped-imports,
 
 [FORMAT]

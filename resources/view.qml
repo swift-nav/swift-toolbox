@@ -67,26 +67,27 @@ ApplicationWindow {
 
                         ChartView {
                             id: tracking_signals_chart
-
-                            titleFont.pointSize: 8
+                            title: "Tracking C/N0"
+                            titleFont.pointSize: 14
                             antialiasing: true
                             width: trackingTab.width
                             height: trackingTab.height
 
-                            legend.font.pointSize: 7
+                            // legend.font.pointSize: 7
                             legend.alignment: Qt.AlignTop
                             legend.showToolTips: true
 
                             ValueAxis {
                                 id: tracking_signals_x_axis
-                                labelsFont.pointSize: 7
-                                titleText: "GPS Time of Week"
+                                labelsFont.pointSize: 10
+                                titleText: "seconds"
                             }
                             ValueAxis {
                                 id: tracking_signals_y_axis
+                                titleText: "dB-Hz"
                                 min: -1.0
-                                max: 60.0
-                                labelsFont.pointSize: 7
+                                max: 0.0
+                                labelsFont.pointSize: 10
                             }
                             
 
@@ -104,17 +105,40 @@ ApplicationWindow {
                                     if (!tracking_signals_points.points.length) {
                                         return;
                                     }
+                                    
                                     var points = tracking_signals_points.points;
-                                    if (lines.length < points.length) {
-                                        for (var idx=0; idx< (points.length-lines.length); idx++){
-                                            var lineTypeSeries = tracking_signals_chart.createSeries(ChartView.SeriesTypeLine, lines.length, tracking_signals_x_axis, tracking_signals_y_axis);
-                                            lines.push(lineTypeSeries);
+                                    var colors = tracking_signals_points.colors;
+                                    var labels = tracking_signals_points.labels;
+                                
+
+                                    for (var idx in labels) {
+                                       
+                                        if (idx < lines.length) {
+                                            if (labels[idx]!=lines[idx][1]){
+                                                var line = tracking_signals_chart.createSeries(ChartView.SeriesTypeLine, labels[idx], tracking_signals_x_axis);
+                                                line.color = colors[idx];
+                                                line.axisYRight = tracking_signals_y_axis;
+                                                lines[idx] = [line, labels[idx]];
+                                            }
+                                        } else {
+                                            var line = tracking_signals_chart.createSeries(ChartView.SeriesTypeLine, labels[idx], tracking_signals_x_axis);
+                                            line.color = colors[idx];
+                                            line.axisYRight = tracking_signals_y_axis;
+                                            lines.push([line, labels[idx]]);
                                         }
                                     }
                                     tracking_signals_points.fill_series(lines);
+                                    
                                     var last = points[0][points[0].length - 1];
                                     tracking_signals_x_axis.min = last.x - 10;
                                     tracking_signals_x_axis.max = last.x;
+                                    
+                                    if (tracking_signals_y_axis.min!=tracking_signals_points.min_){
+                                        tracking_signals_y_axis.min = tracking_signals_points.min_;
+                                        tracking_signals_y_axis.max = tracking_signals_points.max_;
+                                    }
+                                    
+                                    
                                 }
                             }
                             Component.onCompleted: {

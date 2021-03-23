@@ -1,10 +1,12 @@
 use capnp::message::Builder;
 use capnp::serialize;
-use ordered_float::*;
+use ordered_float::OrderedFloat;
 use sbp::messages::SBP;
 use std::sync::mpsc;
 
-use crate::{flags::*, types::*};
+use crate::{constants::*, flags::*, types::*};
+
+
 
 use crate::console_backend_capnp as m;
 
@@ -26,57 +28,60 @@ pub fn process_messages(
     for message in messages {
         match message {
             Ok(SBP::MsgMeasurementState(msg)) => {
-                for state in msg.states {
-                    if state.cn0 != 0 {
-                        let points =
-                            match sat_headers.iter().position(|&ele| ele == state.mesid.sat) {
-                                Some(idx) => sats.get_mut(idx).unwrap(),
-                                _ => {
-                                    sat_headers.push(state.mesid.sat);
-                                    sats.push(Vec::new());
-                                    sats.last_mut().unwrap()
-                                }
-                            };
-                        if points.len() >= 200 {
-                            points.remove(0);
-                        }
-                        points.push((tow, OrderedFloat(state.cn0 as f64 / 4.0)));
-                    }
-                }
-                let mut builder = Builder::new_default();
-                let msg = builder.init_root::<m::message::Builder>();
+                
+                tracking_signals.handle_msg_measurement_state(msg.states.clone(), client_send_clone.clone());
 
-                let mut tracking_status = msg.init_tracking_status();
-                tracking_status.set_min(0_f64);
-                tracking_status.set_max(60_f64);
-                let mut tracking_headers = tracking_status
-                    .reborrow()
-                    .init_headers(sat_headers.len() as u32);
+                // for state in msg.states {
+                //     if state.cn0 != 0 {
+                //         let points =
+                //             match sat_headers.iter().position(|&ele| ele == state.mesid.sat) {
+                //                 Some(idx) => sats.get_mut(idx).unwrap(),
+                //                 _ => {
+                //                     sat_headers.push(state.mesid.sat);
+                //                     sats.push(Vec::new());
+                //                     sats.last_mut().unwrap()
+                //                 }
+                //             };
+                //         if points.len() >= 200 {
+                //             points.remove(0);
+                //         }
+                //         points.push((tow, OrderedFloat(state.cn0 as f64 / 4.0)));
+                //     }
+                // }
+                // let mut builder = Builder::new_default();
+                // let msg = builder.init_root::<m::message::Builder>();
 
-                for (i, header) in sat_headers.iter().enumerate() {
-                    tracking_headers.set(i as u32, *header);
-                }
+                // let mut tracking_status = msg.init_tracking_status();
+                // tracking_status.set_min(0_f64);
+                // tracking_status.set_max(60_f64);
+                // let mut tracking_headers = tracking_status
+                //     .reborrow()
+                //     .init_headers(sat_headers.len() as u32);
 
-                let mut tracking_points = tracking_status
-                    .reborrow()
-                    .init_data(sat_headers.len() as u32);
-                {
-                    for idx in 0..sat_headers.len() {
-                        let points = sats.get_mut(idx).unwrap();
-                        let mut point_val_idx = tracking_points
-                            .reborrow()
-                            .init(idx as u32, points.len() as u32);
-                        for (i, (x, OrderedFloat(y))) in points.iter().enumerate() {
-                            let mut point_val = point_val_idx.reborrow().get(i as u32);
-                            point_val.set_x(*x);
-                            point_val.set_y(*y);
-                        }
-                    }
-                }
-                let mut msg_bytes: Vec<u8> = vec![];
-                serialize::write_message(&mut msg_bytes, &builder).unwrap();
+                // for (i, header) in sat_headers.iter().enumerate() {
+                //     tracking_headers.set(i as u32, *header);
+                // }
 
-                client_send_clone.send(msg_bytes).unwrap();
+                // let mut tracking_points = tracking_status
+                //     .reborrow()
+                //     .init_data(sat_headers.len() as u32);
+                // {
+                //     for idx in 0..sat_headers.len() {
+                //         let points = sats.get_mut(idx).unwrap();
+                //         let mut point_val_idx = tracking_points
+                //             .reborrow()
+                //             .init(idx as u32, points.len() as u32);
+                //         for (i, (x, OrderedFloat(y))) in points.iter().enumerate() {
+                //             let mut point_val = point_val_idx.reborrow().get(i as u32);
+                //             point_val.set_x(*x);
+                //             point_val.set_y(*y);
+                //         }
+                //     }
+                // }
+                // let mut msg_bytes: Vec<u8> = vec![];
+                // serialize::write_message(&mut msg_bytes, &builder).unwrap();
+
+                // client_send_clone.send(msg_bytes).unwrap();
             }
             Ok(SBP::MsgTrackingState(_msg)) => {}
             Ok(SBP::MsgObs(_msg)) => {}

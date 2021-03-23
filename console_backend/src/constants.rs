@@ -1,124 +1,130 @@
 
 use std::collections::HashMap;
 
-// Common
+// Tracking Tab constants.
 pub const NUM_POINTS: usize = 200;
+pub const NUM_SATELLITES: usize = 60;
+pub const TRK_RATE: f64 = 2.0;
+pub const GLO_SLOT_SAT_MAX: u8 = 90;
+pub const GLO_FCN_OFFSET: u8 = 8;
+pub const SBAS_NEG_OFFSET: u8 = 120;
+pub const QZSS_NEG_OFFSET: u8 = 193;
+pub const SNR_THRESHOLD: f64 = 15.0;
+pub const TRACKING_SIGNALS_PLOT_MAX: f64 = 60.0;
 
-// Tracking Tab pub constants.
-pub const NUM_SATELLITES: usize = 37;
 
-pub const CODE_GPS_L1CA: u16 = 0;
-pub const CODE_GPS_L2CM: u16 = 1;
-pub const CODE_GPS_L2CL: u16 = 7;
-pub const CODE_GPS_L2CX: u16 = 8;
-pub const CODE_GPS_L1P: u16 = 5;
-pub const CODE_GPS_L2P: u16 = 6;
-pub const CODE_GPS_L5I: u16 = 9;
-pub const CODE_GPS_L5Q: u16 = 10;
-pub const CODE_GPS_L5X: u16 = 11;
-pub const CODE_GPS_L1CI: u16 = 56;
-pub const CODE_GPS_L1CQ: u16 = 57;
-pub const CODE_GPS_L1CX: u16 = 58;
-pub const CODE_AUX_GPS: u16 = 59;
+pub const CODE_GPS_L1CA: u8 = 0;
+pub const CODE_GPS_L2CM: u8 = 1;
+pub const CODE_GPS_L2CL: u8 = 7;
+pub const CODE_GPS_L2CX: u8 = 8;
+pub const CODE_GPS_L1P: u8 = 5;
+pub const CODE_GPS_L2P: u8 = 6;
+pub const CODE_GPS_L5I: u8 = 9;
+pub const CODE_GPS_L5Q: u8 = 10;
+pub const CODE_GPS_L5X: u8 = 11;
+pub const CODE_GPS_L1CI: u8 = 56;
+pub const CODE_GPS_L1CQ: u8 = 57;
+pub const CODE_GPS_L1CX: u8 = 58;
+pub const CODE_AUX_GPS: u8 = 59;
 
-pub const CODE_GLO_L1OF: u16 = 3;
-pub const CODE_GLO_L2OF: u16 = 4;
-pub const CODE_GLO_L1P: u16 = 29;
-pub const CODE_GLO_L2P: u16 = 30;
+pub const CODE_GLO_L1OF: u8 = 3;
+pub const CODE_GLO_L2OF: u8 = 4;
+pub const CODE_GLO_L1P: u8 = 29;
+pub const CODE_GLO_L2P: u8 = 30;
 
-pub const CODE_SBAS_L1CA: u16 = 2;
-pub const CODE_SBAS_L5I: u16 = 41;
-pub const CODE_SBAS_L5Q: u16 = 42;
-pub const CODE_SBAS_L5X: u16 = 43;
-pub const CODE_AUX_SBAS: u16 = 60;
+pub const CODE_SBAS_L1CA: u8 = 2;
+pub const CODE_SBAS_L5I: u8 = 41;
+pub const CODE_SBAS_L5Q: u8 = 42;
+pub const CODE_SBAS_L5X: u8 = 43;
+pub const CODE_AUX_SBAS: u8 = 60;
 
-pub const CODE_BDS2_B1: u16 = 12;
-pub const CODE_BDS2_B2: u16 = 13;
-pub const CODE_BDS3_B1CI: u16 = 44;
-pub const CODE_BDS3_B1CQ: u16 = 45;
-pub const CODE_BDS3_B1CX: u16 = 46;
-pub const CODE_BDS3_B5I: u16 = 47;
-pub const CODE_BDS3_B5Q: u16 = 48;
-pub const CODE_BDS3_B5X: u16 = 49;
-pub const CODE_BDS3_B7I: u16 = 50;
-pub const CODE_BDS3_B7Q: u16 = 51;
-pub const CODE_BDS3_B7X: u16 = 52;
-pub const CODE_BDS3_B3I: u16 = 53;
-pub const CODE_BDS3_B3Q: u16 = 54;
-pub const CODE_BDS3_B3X: u16 = 55;
+pub const CODE_BDS2_B1: u8 = 12;
+pub const CODE_BDS2_B2: u8 = 13;
+pub const CODE_BDS3_B1CI: u8 = 44;
+pub const CODE_BDS3_B1CQ: u8 = 45;
+pub const CODE_BDS3_B1CX: u8 = 46;
+pub const CODE_BDS3_B5I: u8 = 47;
+pub const CODE_BDS3_B5Q: u8 = 48;
+pub const CODE_BDS3_B5X: u8 = 49;
+pub const CODE_BDS3_B7I: u8 = 50;
+pub const CODE_BDS3_B7Q: u8 = 51;
+pub const CODE_BDS3_B7X: u8 = 52;
+pub const CODE_BDS3_B3I: u8 = 53;
+pub const CODE_BDS3_B3Q: u8 = 54;
+pub const CODE_BDS3_B3X: u8 = 55;
 
-pub const CODE_GAL_E1B: u16 = 14;
-pub const CODE_GAL_E1C: u16 = 15;
-pub const CODE_GAL_E1X: u16 = 16;
-pub const CODE_GAL_E6B: u16 = 17;
-pub const CODE_GAL_E6C: u16 = 18;
-pub const CODE_GAL_E6X: u16 = 19;
-pub const CODE_GAL_E7I: u16 = 20;
-pub const CODE_GAL_E7Q: u16 = 21;
-pub const CODE_GAL_E7X: u16 = 22;
-pub const CODE_GAL_E8I: u16 = 23;
-pub const CODE_GAL_E8Q: u16 = 24;
-pub const CODE_GAL_E8X: u16 = 25;
-pub const CODE_GAL_E5I: u16 = 26;
-pub const CODE_GAL_E5Q: u16 = 27;
-pub const CODE_GAL_E5X: u16 = 28;
-pub const CODE_AUX_GAL: u16 = 61;
+pub const CODE_GAL_E1B: u8 = 14;
+pub const CODE_GAL_E1C: u8 = 15;
+pub const CODE_GAL_E1X: u8 = 16;
+pub const CODE_GAL_E6B: u8 = 17;
+pub const CODE_GAL_E6C: u8 = 18;
+pub const CODE_GAL_E6X: u8 = 19;
+pub const CODE_GAL_E7I: u8 = 20;
+pub const CODE_GAL_E7Q: u8 = 21;
+pub const CODE_GAL_E7X: u8 = 22;
+pub const CODE_GAL_E8I: u8 = 23;
+pub const CODE_GAL_E8Q: u8 = 24;
+pub const CODE_GAL_E8X: u8 = 25;
+pub const CODE_GAL_E5I: u8 = 26;
+pub const CODE_GAL_E5Q: u8 = 27;
+pub const CODE_GAL_E5X: u8 = 28;
+pub const CODE_AUX_GAL: u8 = 61;
 
-pub const CODE_QZS_L1CA: u16 = 31;
-pub const CODE_QZS_L1CI: u16 = 32;
-pub const CODE_QZS_L1CQ: u16 = 33;
-pub const CODE_QZS_L1CX: u16 = 34;
-pub const CODE_QZS_L2CM: u16 = 35;
-pub const CODE_QZS_L2CL: u16 = 36;
-pub const CODE_QZS_L2CX: u16 = 37;
-pub const CODE_QZS_L5I: u16 = 38;
-pub const CODE_QZS_L5Q: u16 = 39;
-pub const CODE_QZS_L5X: u16 = 40;
-pub const CODE_AUX_QZS: u16 = 62;
+pub const CODE_QZS_L1CA: u8 = 31;
+pub const CODE_QZS_L1CI: u8 = 32;
+pub const CODE_QZS_L1CQ: u8 = 33;
+pub const CODE_QZS_L1CX: u8 = 34;
+pub const CODE_QZS_L2CM: u8 = 35;
+pub const CODE_QZS_L2CL: u8 = 36;
+pub const CODE_QZS_L2CX: u8 = 37;
+pub const CODE_QZS_L5I: u8 = 38;
+pub const CODE_QZS_L5Q: u8 = 39;
+pub const CODE_QZS_L5X: u8 = 40;
+pub const CODE_AUX_QZS: u8 = 62;
 
-pub fn code_is_gps(code: u16) -> bool {
+pub fn code_is_gps(code: u8) -> bool {
     match code {
         CODE_GPS_L1CA | CODE_GPS_L2CM | CODE_GPS_L2CL | CODE_GPS_L2CX | CODE_GPS_L1P | CODE_GPS_L2P | CODE_GPS_L5I | CODE_GPS_L5Q | CODE_GPS_L5X | CODE_AUX_GPS => true,
         _ => false
     }
 }
 
-pub fn code_is_glo(code: u16) -> bool {
+pub fn code_is_glo(code: u8) -> bool {
     match code {
         CODE_GLO_L1OF | CODE_GLO_L2OF | CODE_GLO_L1P | CODE_GLO_L2P => true,
         _ => false
     }
 }
 
-pub fn code_is_sbas(code: u16) -> bool {
+pub fn code_is_sbas(code: u8) -> bool {
     match code {
         CODE_SBAS_L1CA | CODE_SBAS_L5I | CODE_SBAS_L5Q | CODE_SBAS_L5X | CODE_AUX_SBAS => true,
         _ => false
     }
 }
 
-pub fn code_is_bds(code: u16) -> bool {
+pub fn code_is_bds(code: u8) -> bool {
     match code {
         CODE_BDS2_B1 | CODE_BDS2_B2 | CODE_BDS3_B1CI | CODE_BDS3_B1CQ | CODE_BDS3_B1CX | CODE_BDS3_B5I | CODE_BDS3_B5Q | CODE_BDS3_B5X | CODE_BDS3_B3I | CODE_BDS3_B3Q | CODE_BDS3_B3X | CODE_BDS3_B7I | CODE_BDS3_B7Q | CODE_BDS3_B7X => true,
         _ => false
     }
 }
 
-pub fn code_is_galileo(code: u16) -> bool {
+pub fn code_is_galileo(code: u8) -> bool {
     match code {
         CODE_GAL_E1B | CODE_GAL_E1C | CODE_GAL_E1X | CODE_GAL_E6B | CODE_GAL_E6C | CODE_GAL_E6X | CODE_GAL_E7I | CODE_GAL_E7Q | CODE_GAL_E7X | CODE_GAL_E8I | CODE_GAL_E8Q | CODE_GAL_E8X | CODE_GAL_E5I | CODE_GAL_E5Q | CODE_GAL_E5X | CODE_AUX_GAL => true,
         _ => false
     }
 }
 
-pub fn code_is_qzss(code: u16) -> bool {
+pub fn code_is_qzss(code: u8) -> bool {
     match code {
         CODE_QZS_L1CA | CODE_QZS_L2CM | CODE_QZS_L2CL | CODE_QZS_L2CX | CODE_QZS_L5I | CODE_QZS_L5Q | CODE_QZS_L5X | CODE_AUX_QZS => true,
         _ => false
     }
 }
 
-pub fn get_label(key: (u16, u16), extra: &HashMap<u16, u16>) -> (Option<String>, Option<String>, Option<String>) {
+pub fn get_label(key: (u8, u8), extra: &HashMap<u8, u8>) -> (Option<String>, Option<String>, Option<String>) {
     let (code, sat) = key;
     let code_lbl = Some(code_to_str_map(code).to_string());
     let mut freq_lbl = None;
@@ -146,7 +152,7 @@ pub fn get_label(key: (u16, u16), extra: &HashMap<u16, u16>) -> (Option<String>,
     (code_lbl, freq_lbl, id_lbl)
 }
 
-pub static SUPPORTED_CODES: &'static [u16] = &[
+pub static SUPPORTED_CODES: &'static [u8] = &[
     CODE_GPS_L1CA,
     CODE_GPS_L2CM,
     CODE_GPS_L2CL,
@@ -221,7 +227,7 @@ pub const QZS: &'static str = "QZS";
 pub const BDS: &'static str = "BDS";
 pub const SBAS: &'static str = "SBAS";
 
-pub fn gui_codes(sat_type: &str) -> &'static [u16] {
+pub fn gui_codes(sat_type: &str) -> &'static [u8] {
 
     match sat_type {
         GPS => &[
@@ -368,7 +374,7 @@ pub const QZS_AUX_STR: &'static str = "AUX QZS L1";
 
 pub const CODE_NOT_AVAILABLE: &'static str = "N/A";
 
-pub fn code_to_str_map(sat_code: u16) -> &'static str {
+pub fn code_to_str_map(sat_code: u8) -> &'static str {
     match sat_code {
         CODE_GPS_L1CA => GPS_L1CA_STR,
         CODE_GPS_L2CM => GPS_L2CM_STR,
@@ -435,7 +441,7 @@ pub fn code_to_str_map(sat_code: u16) -> &'static str {
     }
 }
 
-pub fn str_to_code_map(sat_str: &str) -> u16 {
+pub fn str_to_code_map(sat_str: &str) -> u8 {
     match sat_str {
         GPS_L1CA_STR => CODE_GPS_L1CA,
         GPS_L2CM_STR => CODE_GPS_L2CM,
@@ -503,55 +509,52 @@ pub fn str_to_code_map(sat_str: &str) -> u16 {
     }
 }
 
-
-pub const GLO_FCN_OFFSET: u16 = 8;
-pub const SBAS_NEG_OFFSET: u16 = 120;
-pub const QZSS_NEG_OFFSET: u16 = 193;
-
-pub fn color_map(code: u16) -> &'static str {
+pub fn color_map(code: u8) -> &'static str {
     match code {
-        1 => "0xe58a8a",
-        2 => "0x664949",
-        3 => "0x590c00",
-        4 => "0xcc4631",
-        5 => "0xe56c1c",
-        6 => "0x4c2a12",
-        7 => "0x996325",
-        8 => "0xf2b774",
-        9 => "0xffaa00",
-        10 => "0xccb993",
-        11 => "0x997a00",
-        12 => "0x4c4700",
-        13 => "0xd0d94e",
-        14 => "0xaaff00",
-        15 => "0x4ea614",
-        16 => "0x123306",
-        17 => "0x18660c",
-        18 => "0x6e9974",
-        19 => "0x8ae6a2",
-        20 => "0x00ff66",
-        21 => "0x57f2e8",
-        22 => "0x1f7980",
-        23 => "0x263e40",
-        24 => "0x004d73",
-        25 => "0x37abe6",
-        26 => "0x7790a6",
-        27 => "0x144ea6",
-        28 => "0x263040",
-        29 => "0x152859",
-        30 => "0x1d39f2",
-        31 => "0x828ed9",
-        32 => "0x000073",
-        33 => "0x000066",
-        34 => "0x8c7aff",
-        35 => "0x1b0033",
-        36 => "0xd900ca",
-        37 => "0x730e6c",
-        _ => "0xff0000"
+        1 => "#e58a8a",
+        2 => "#664949",
+        3 => "#590c00",
+        4 => "#cc4631",
+        5 => "#e56c1c",
+        6 => "#4c2a12",
+        7 => "#996325",
+        8 => "#f2b774",
+        9 => "#ffaa00",
+        10 => "#ccb993",
+        11 => "#997a00",
+        12 => "#4c4700",
+        13 => "#d0d94e",
+        14 => "#aaff00",
+        15 => "#4ea614",
+        16 => "#123306",
+        17 => "#18660c",
+        18 => "#6e9974",
+        19 => "#8ae6a2",
+        20 => "#00ff66",
+        21 => "#57f2e8",
+        22 => "#1f7980",
+        23 => "#263e40",
+        24 => "#004d73",
+        25 => "#37abe6",
+        26 => "#7790a6",
+        27 => "#144ea6",
+        28 => "#263040",
+        29 => "#152859",
+        30 => "#1d39f2",
+        31 => "#828ed9",
+        32 => "#000073",
+        33 => "#000066",
+        34 => "#8c7aff",
+        35 => "#1b0033",
+        36 => "#d900ca",
+        37 => "#730e6c",
+        _ => "#ff0000"
     }
 }
 
-pub fn get_color(key: (u16, u16)) -> &'static str {
+const NUM_COLORS: u8 = 37;
+
+pub fn get_color(key: (u8, u8)) -> &'static str {
     let (code, mut sat) = key;
 
     if code_is_glo(code) {
@@ -561,8 +564,8 @@ pub fn get_color(key: (u16, u16)) -> &'static str {
     } else if code_is_qzss(code) {
         sat -= QZSS_NEG_OFFSET;
     }
-    if sat > NUM_SATELLITES as u16 {
-        sat %= NUM_SATELLITES as u16;
+    if sat > NUM_COLORS as u8 {
+        sat %= NUM_COLORS as u8;
     }
     color_map(sat)
 }
@@ -570,7 +573,7 @@ pub fn get_color(key: (u16, u16)) -> &'static str {
 #[test]
 fn get_label_test() {
 
-    let mut extra: HashMap<u16,u16> = HashMap::new();
+    let mut extra: HashMap<u8,u8> = HashMap::new();
     extra.insert(CODE_GLO_L2P, CODE_GLO_L2P);
 
     let (code_lbl, freq_lbl, id_lbl) = get_label((CODE_GLO_L2P, CODE_GLO_L2P), &extra);

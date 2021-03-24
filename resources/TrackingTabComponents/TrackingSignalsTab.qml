@@ -13,26 +13,26 @@ Item {
     ChartView {
         id: tracking_signals_chart
         title: "Tracking C/N0"
-        titleFont.pointSize: 14
-        antialiasing: true
-        width: trackingTab.width
-        height: trackingTab.height
-
-        
+        titleFont { pointSize: 14; bold: true }
+        titleColor: "#00006E"
+        width: trackingTabBackground.width
+        height: trackingTabBackground.height
+        backgroundColor: "#CDC9C9"
+        plotAreaColor:  "#FFFFFF"
         legend.visible: false
 
         Rectangle {
             id: rect
-            
             border.color: "#000000"
             border.width: 1
+            
             anchors.bottom: tracking_signals_chart.bottom
-            // anchors.left: tracking_signals_chart.left
-            // radius: 20
-            // implicitWidth: 200//parent.width/4//label.implicitWidth + marker.implicitWidth + 30
-            // implicitHeight: tracking_signals_chart.height
+            anchors.left: tracking_signals_chart.left
+            anchors.bottomMargin: parent.height/6
+            anchors.leftMargin: parent.width/10
             implicitHeight: legendRow.height
             width: legendRow.width
+            
 
             Column {
                 id: legendRow
@@ -66,21 +66,32 @@ Item {
 
         ValueAxis {
             id: tracking_signals_x_axis
-            labelsFont.pointSize: 10
+            labelsFont { pointSize: 10; bold: true }
             titleText: "seconds"
+            gridVisible: true
+            lineVisible: true
+            minorGridVisible: true
+            minorGridLineColor: "#CDC9C9"
+            visible: true
         }
         ValueAxis {
             id: tracking_signals_y_axis
             titleText: "dB-Hz"
-            min: -1.0
-            max: 0.0
-            labelsFont.pointSize: 10
+            min: 0
+            max: 1
+            labelsFont { pointSize: 10; bold: true }
+            gridVisible: true
+            lineVisible: true
+            minorGridVisible: true
+            minorGridLineColor: "#CDC9C9"
+            visible: true
         }
         Timer {
             interval: 1000/5 // 5 Hz refresh
             running: true
             repeat: true
             onTriggered: {
+                
 
                 if (!trackingTab.visible) {
                     return;

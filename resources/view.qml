@@ -5,6 +5,8 @@ import QtQuick.Layouts 1.15
 
 import SwiftConsole 1.0
 
+import "TrackingTab" as TrackingTab
+
 ApplicationWindow {
 
     width: 640
@@ -19,10 +21,10 @@ ApplicationWindow {
     TrackingSignalsPoints {
         id: tracking_signals_points
     }
-    property variant lines: []
+    
     
     ColumnLayout {
-
+        id: tabzone
         anchors.fill: parent
         anchors.margins: 4
         spacing: 2
@@ -43,8 +45,7 @@ ApplicationWindow {
         StackLayout {
             width: parent.width
             currentIndex: bar.currentIndex
-            Item {
-                
+            Item{
                 id: trackingTab
                 TabBar {
                     id: trackingbar
@@ -62,96 +63,12 @@ ApplicationWindow {
                     id: trackingbarlayout
                     width: parent.width
                     currentIndex: trackingbar.currentIndex
-                    Item {
-                        id: trackingsignalsTab
-
-                        ChartView {
-                            id: tracking_signals_chart
-                            title: "Tracking C/N0"
-                            titleFont.pointSize: 14
-                            antialiasing: true
-                            width: trackingTab.width
-                            height: trackingTab.height
-
-                            // legend.font.pointSize: 7
-                            legend.alignment: Qt.AlignTop
-                            legend.showToolTips: true
-
-                            ValueAxis {
-                                id: tracking_signals_x_axis
-                                labelsFont.pointSize: 10
-                                titleText: "seconds"
-                            }
-                            ValueAxis {
-                                id: tracking_signals_y_axis
-                                titleText: "dB-Hz"
-                                min: -1.0
-                                max: 0.0
-                                labelsFont.pointSize: 10
-                            }
-                            
-
-                            Timer {
-                                interval: 1000/5 // 5 Hz refresh
-                                running: true
-                                repeat: true
-                                onTriggered: {
-
-                                    if (!trackingTab.visible) {
-                                        return;
-                                    }
-                                    
-                                    tracking_signals_model.fill_console_points(tracking_signals_points);
-                                    if (!tracking_signals_points.points.length) {
-                                        return;
-                                    }
-                                    
-                                    var points = tracking_signals_points.points;
-                                    var colors = tracking_signals_points.colors;
-                                    var labels = tracking_signals_points.labels;
-                                
-
-                                    for (var idx in labels) {
-                                       
-                                        if (idx < lines.length) {
-                                            if (labels[idx]!=lines[idx][1]){
-                                                var line = tracking_signals_chart.createSeries(ChartView.SeriesTypeLine, labels[idx], tracking_signals_x_axis);
-                                                line.color = colors[idx];
-                                                line.axisYRight = tracking_signals_y_axis;
-                                                lines[idx] = [line, labels[idx]];
-                                            }
-                                        } else {
-                                            var line = tracking_signals_chart.createSeries(ChartView.SeriesTypeLine, labels[idx], tracking_signals_x_axis);
-                                            line.color = colors[idx];
-                                            line.axisYRight = tracking_signals_y_axis;
-                                            lines.push([line, labels[idx]]);
-                                        }
-                                    }
-                                    tracking_signals_points.fill_series(lines);
-                                    
-                                    var last = points[0][points[0].length - 1];
-                                    tracking_signals_x_axis.min = last.x - 10;
-                                    tracking_signals_x_axis.max = last.x;
-                                    
-                                    if (tracking_signals_y_axis.min!=tracking_signals_points.min_){
-                                        tracking_signals_y_axis.min = tracking_signals_points.min_;
-                                        tracking_signals_y_axis.max = tracking_signals_points.max_;
-                                    }
-                                    
-                                    
-                                }
-                            }
-                            Component.onCompleted: {
-                            }
-                        }
-                    
-                    }
+                    TrackingTab.TrackingSignalsTab{}
                     Item {
                         id: trackingskyplotTab
                     }
 
-                }
-                
+                }    
             }
             Item {
                 id: solutionTab

@@ -6,9 +6,9 @@ pub const NUM_POINTS: usize = 200;
 pub const NUM_SATELLITES: usize = 60;
 pub const TRK_RATE: f64 = 2.0;
 pub const GLO_SLOT_SAT_MAX: u8 = 90;
-pub const GLO_FCN_OFFSET: u8 = 8;
-pub const SBAS_NEG_OFFSET: u8 = 120;
-pub const QZSS_NEG_OFFSET: u8 = 193;
+pub const GLO_FCN_OFFSET: i16 = 8;
+pub const SBAS_NEG_OFFSET: i16 = 120;
+pub const QZSS_NEG_OFFSET: i16 = 193;
 pub const SNR_THRESHOLD: f64 = 15.0;
 pub const TRACKING_SIGNALS_PLOT_MAX: f64 = 60.0;
 
@@ -124,7 +124,7 @@ pub fn code_is_qzss(code: u8) -> bool {
     }
 }
 
-pub fn get_label(key: (u8, u8), extra: &HashMap<u8, u8>) -> (Option<String>, Option<String>, Option<String>) {
+pub fn get_label(key: (u8, i16), extra: &HashMap<i16, i16>) -> (Option<String>, Option<String>, Option<String>) {
     let (code, sat) = key;
     let code_lbl = Some(code_to_str_map(code).to_string());
     let mut freq_lbl = None;
@@ -509,7 +509,7 @@ pub fn str_to_code_map(sat_str: &str) -> u8 {
     }
 }
 
-pub fn color_map(code: u8) -> &'static str {
+pub fn color_map(code: i16) -> &'static str {
     match code {
         1 => "#e58a8a",
         2 => "#664949",
@@ -554,7 +554,7 @@ pub fn color_map(code: u8) -> &'static str {
 
 const NUM_COLORS: u8 = 37;
 
-pub fn get_color(key: (u8, u8)) -> &'static str {
+pub fn get_color(key: (u8, i16)) -> &'static str {
     let (code, mut sat) = key;
 
     if code_is_glo(code) {
@@ -564,8 +564,8 @@ pub fn get_color(key: (u8, u8)) -> &'static str {
     } else if code_is_qzss(code) {
         sat -= QZSS_NEG_OFFSET;
     }
-    if sat > NUM_COLORS as u8 {
-        sat %= NUM_COLORS as u8;
+    if sat > NUM_COLORS as i16 {
+        sat %= NUM_COLORS as i16;
     }
     color_map(sat)
 }

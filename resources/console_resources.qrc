@@ -3,5 +3,6 @@
     <file>qtquickcontrols2.conf</file>
     <file>view.qml</file>
     <file>ContactModel.qml</file>
+    <file>TrackingTab/TrackingSignalsTab.qml</file>
 </qresource>
 </RCC>

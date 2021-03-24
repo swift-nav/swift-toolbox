@@ -42,10 +42,10 @@ pub struct TrackingSignalsTab {
     pub colors: Vec<String>,
     pub max: f64,
     pub min: f64,
-    pub glo_fcn_dict: HashMap<u8, u8>,
-    pub glo_slot_dict: HashMap<u8, u8>,
-    pub cn0_dict: HashMap<(u8, u8), Deque<(OrderedFloat<f64>, f64)>>,
-    pub cn0_age: HashMap<(u8, u8), f64>,
+    pub glo_fcn_dict: HashMap<u8, i16>,
+    pub glo_slot_dict: HashMap<i16, i16>,
+    pub cn0_dict: HashMap<(u8, i16), Deque<(OrderedFloat<f64>, f64)>>,
+    pub cn0_age: HashMap<(u8, i16), f64>,
     pub received_codes: Vec<u8>,
     pub t_init: Instant,
     pub time: VecDeque<f64>,
@@ -82,17 +82,17 @@ impl TrackingSignalsTab {
 
         }
     }
-    fn push_to_cn0_dict(&mut self, key: (u8, u8), t: f64, cn0: f64) {
+    fn push_to_cn0_dict(&mut self, key: (u8, i16), t: f64, cn0: f64) {
         let cn0_deque = self.cn0_dict.entry(key).or_insert(Deque::with_capacity(NUM_POINTS));
         cn0_deque.add((OrderedFloat(t), cn0));
     }
-    fn push_to_cn0_age(&mut self, key: (u8, u8), age: f64) {
+    fn push_to_cn0_age(&mut self, key: (u8, i16), age: f64) {
         let cn0_age = self.cn0_age.entry(key).or_insert(-1.0);
         *cn0_age = age;
     }
 
     pub fn clean_cn0(&mut self){
-        let mut remove_vec: Vec<(u8,u8)> = Vec::new();
+        let mut remove_vec: Vec<(u8,i16)> = Vec::new();
         for (key, _) in self.cn0_dict.iter_mut(){
             if self.cn0_age[key] < self.time[0] {
                 remove_vec.push(*key);
@@ -173,18 +173,18 @@ impl TrackingSignalsTab {
     }
 
     pub fn handle_msg_measurement_state(&mut self, states: Vec<MeasurementState>, client_send: Sender<Vec<u8>>) {
-        let mut codes_that_came: Vec<(u8,u8)> = Vec::new();
+        let mut codes_that_came: Vec<(u8,i16)> = Vec::new();
         let t = (Instant::now()).duration_since(self.t_init).as_secs_f64();
         self.time.add(t);
         for (idx, state) in states.iter().enumerate() {
-            let mut sat = state.mesid.sat;
+            let mut sat = state.mesid.sat as i16;
             if code_is_glo(state.mesid.code) {
                 if state.mesid.sat > GLO_SLOT_SAT_MAX {
-                    self.glo_fcn_dict.insert(idx as u8, (state.mesid.sat as f64 - 100.0 as f64) as u8);
+                    self.glo_fcn_dict.insert(idx as u8, state.mesid.sat as i16 - 100.0 as i16);
                 }
-                sat = *self.glo_fcn_dict.get(&(idx as u8)).unwrap_or(&(0 as u8));
+                sat = *self.glo_fcn_dict.get(&(idx as u8)).unwrap_or(&(0 as i16));
                 if state.mesid.sat <= GLO_SLOT_SAT_MAX {
-                    self.glo_slot_dict.insert(idx as u8, state.mesid.sat);
+                    self.glo_slot_dict.insert(sat, state.mesid.sat as i16);
                 }
             }
             // println!("{:?}", self.glo_fcn_dict);

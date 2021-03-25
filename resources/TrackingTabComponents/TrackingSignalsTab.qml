@@ -40,14 +40,15 @@ Item {
                 anchors.bottom: rect.bottom
                 Repeater {
                     model: labels
-                    id: rows
+                    id: legendRepeaterRows
                     Row {
+                        id: legendRepeaterRow
                         Rectangle {
                             id: marker
                             width: 20
                             height: 2
-                            // color: "#000000"//
-                            color: colors[index]
+                            color: "#000000"//
+                            // color: colors[index]
                             anchors.verticalCenter: parent.verticalCenter
                         }
                         Text { 
@@ -57,9 +58,16 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             anchors.verticalCenterOffset: -1
                         }
+                        Component.onCompleted: {
+                            for (var idx in colors) {
+                                if (legendRepeaterRows.itemAt(idx)){
+                                    legendRepeaterRows.itemAt(idx).children[0].color = colors[idx];
+                                }                                
+                            }
+                        }
                     }
-                    
                 }
+                
             }
         }
 
@@ -104,13 +112,11 @@ Item {
                 
                 var points = tracking_signals_points.points;
                 colors = tracking_signals_points.colors;
-                labels = tracking_signals_points.labels;
-            
-
+                labels = tracking_signals_points.labels;          
                 for (var idx in labels) {
-                    
                     if (idx < lines.length) {
                         if (labels[idx]!=lines[idx][1]){
+                            tracking_signals_chart.removeSeries(lines[idx][0])
                             var line = tracking_signals_chart.createSeries(ChartView.SeriesTypeLine, labels[idx], tracking_signals_x_axis);
                             line.color = colors[idx];
                             line.axisYRight = tracking_signals_y_axis;

@@ -11,6 +11,7 @@ pub const SBAS_NEG_OFFSET: i16 = 120;
 pub const QZSS_NEG_OFFSET: i16 = 193;
 pub const SNR_THRESHOLD: f64 = 15.0;
 pub const TRACKING_SIGNALS_PLOT_MAX: f64 = 60.0;
+pub const GUI_UPDATE_PERIOD: f64 = 0.2;
 
 
 pub const CODE_GPS_L1CA: u8 = 0;
@@ -573,40 +574,40 @@ pub fn get_color(key: (u8, i16)) -> &'static str {
 #[test]
 fn get_label_test() {
 
-    let mut extra: HashMap<u8,u8> = HashMap::new();
-    extra.insert(CODE_GLO_L2P, CODE_GLO_L2P);
+    let mut extra: HashMap<i16,i16> = HashMap::new();
+    extra.insert(CODE_GLO_L2P as i16, CODE_GLO_L2P as i16);
 
-    let (code_lbl, freq_lbl, id_lbl) = get_label((CODE_GLO_L2P, CODE_GLO_L2P), &extra);
+    let (code_lbl, freq_lbl, id_lbl) = get_label((CODE_GLO_L2P, CODE_GLO_L2P as i16), &extra);
     assert_eq!(code_lbl.unwrap(), GLO_L2P_STR);
     assert_eq!(freq_lbl.unwrap(), "F+30");
     assert_eq!(id_lbl.unwrap(), "R30");
     
-    let (code_lbl, freq_lbl, id_lbl) = get_label((CODE_GLO_L2OF, CODE_GLO_L2OF), &extra);
+    let (code_lbl, freq_lbl, id_lbl) = get_label((CODE_GLO_L2OF, CODE_GLO_L2OF as i16), &extra);
     assert_eq!(code_lbl.unwrap(), GLO_L2OF_STR);
     assert_eq!(freq_lbl.unwrap(), "F+04");
     assert_eq!(id_lbl.unwrap(), "R04");
     
-    let (code_lbl, freq_lbl, id_lbl) = get_label((CODE_SBAS_L5Q, CODE_SBAS_L5Q), &extra);
+    let (code_lbl, freq_lbl, id_lbl) = get_label((CODE_SBAS_L5Q, CODE_SBAS_L5Q as i16), &extra);
     assert_eq!(code_lbl.unwrap(), SBAS_L5Q_STR);
     assert_eq!(freq_lbl, None);
     assert_eq!(id_lbl.unwrap(), "S 42");
 
-    let (code_lbl, freq_lbl, id_lbl) = get_label((CODE_BDS3_B5Q, CODE_BDS3_B5Q), &extra);
+    let (code_lbl, freq_lbl, id_lbl) = get_label((CODE_BDS3_B5Q, CODE_BDS3_B5Q as i16), &extra);
     assert_eq!(code_lbl.unwrap(), BDS3_B5Q_STR);
     assert_eq!(freq_lbl, None);
     assert_eq!(id_lbl.unwrap(), "C48");
 
-    let (code_lbl, freq_lbl, id_lbl) = get_label((CODE_QZS_L2CX, CODE_QZS_L2CX), &extra);
+    let (code_lbl, freq_lbl, id_lbl) = get_label((CODE_QZS_L2CX, CODE_QZS_L2CX as i16), &extra);
     assert_eq!(code_lbl.unwrap(), QZS_L2CX_STR);
     assert_eq!(freq_lbl, None);
     assert_eq!(id_lbl.unwrap(), "J 37");
 
-    let (code_lbl, freq_lbl, id_lbl) = get_label((CODE_GAL_E8X, CODE_GAL_E8X), &extra);
+    let (code_lbl, freq_lbl, id_lbl) = get_label((CODE_GAL_E8X, CODE_GAL_E8X as i16), &extra);
     assert_eq!(code_lbl.unwrap(), GAL_E8X_STR);
     assert_eq!(freq_lbl, None);
     assert_eq!(id_lbl.unwrap(), "E25");
 
-    let (code_lbl, freq_lbl, id_lbl) = get_label((255, 255), &extra);
+    let (code_lbl, freq_lbl, id_lbl) = get_label((255, 255 as i16), &extra);
     assert_eq!(code_lbl.unwrap(), CODE_NOT_AVAILABLE);
     assert_eq!(freq_lbl, None);
     assert_eq!(id_lbl.unwrap(), "G255");

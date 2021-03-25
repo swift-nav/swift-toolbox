@@ -281,8 +281,8 @@ class TrackingSignalsPoints(QObject):
     def fill_series(self, series_list):
         for idx, series_and_key in enumerate(series_list):
             series, _ = series_and_key
-            series.replace(self._points[idx])
-
+            if idx < len(self._points):
+                series.replace(self._points[idx])
 
 class TrackingSignalsModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(TrackingSignalsPoints)  # type: ignore

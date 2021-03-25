@@ -1,22 +1,12 @@
-// use chrono::{DateTime, Utc};
-// use serde::Serialize;
 
-// use crate::formatters::*;
-// use crate::msg_utils::{GnssMode, InsMode, ProtectionLevel};
-
-use std::{borrow::BorrowMut, sync::mpsc::Sender};
-use std::{collections::{HashMap, VecDeque}, time::Instant};
-use ndarray::{arr0, arr1, arr2, Array, Array0, Array1, Array2, ArrayBase, Axis, concatenate, Dim, OwnedRepr, s, stack};
+use std::{collections::{HashMap, VecDeque}, time::Instant, sync::mpsc::Sender};
 use ordered_float::OrderedFloat;
 
 use capnp::message::Builder;
 use capnp::serialize;
-use std::sync::mpsc;
 
+use sbp::messages::{observation::{MsgObs, MsgObsDepA, MsgObsDepB, MsgObsDepC, PackedObsContent, PackedObsContentDepA, PackedObsContentDepB, PackedObsContentDepC}, tracking::{MeasurementState, TrackingChannelState}};
 use crate::constants::*;
-
-
-use sbp::messages::tracking::MeasurementState;
 use crate::console_backend_capnp as m;
 
 pub type Error = std::boxed::Box<dyn std::error::Error>;
@@ -37,16 +27,23 @@ impl<T> DequeExt<T> for Deque<T> {
 
 #[derive(Debug)]
 pub struct TrackingSignalsTab {
-    pub sats: Vec<Deque<(OrderedFloat<f64>, f64)>>,
-    pub sv_labels: Vec<String>,
+    pub at_least_one_track_received: bool,
+    pub cn0_age: HashMap<(u8, i16), f64>,
+    pub cn0_dict: HashMap<(u8, i16), Deque<(OrderedFloat<f64>, f64)>>,
     pub colors: Vec<String>,
-    pub max: f64,
-    pub min: f64,
     pub glo_fcn_dict: HashMap<u8, i16>,
     pub glo_slot_dict: HashMap<i16, i16>,
-    pub cn0_dict: HashMap<(u8, i16), Deque<(OrderedFloat<f64>, f64)>>,
-    pub cn0_age: HashMap<(u8, i16), f64>,
+    pub gps_tow: f64,
+    pub gps_week: u16,
+    pub incoming_obs_cn0: HashMap<(u8, i16), f64>,
+    pub last_update_time: Instant,
+    pub max: f64,
+    pub min: f64,
+    pub prev_obs_count: u8,
+    pub prev_obs_total: u8,
     pub received_codes: Vec<u8>,
+    pub sats: Vec<Deque<(OrderedFloat<f64>, f64)>>,
+    pub sv_labels: Vec<String>,
     pub t_init: Instant,
     pub time: VecDeque<f64>,
 }
@@ -54,11 +51,22 @@ pub struct TrackingSignalsTab {
 impl TrackingSignalsTab {
     pub fn new() -> TrackingSignalsTab {
         TrackingSignalsTab {
+            at_least_one_track_received: false,
             cn0_dict: HashMap::new(),
             cn0_age: HashMap::new(),
             colors: Vec::new(),
             glo_fcn_dict: HashMap::new(),
             glo_slot_dict: HashMap::new(),
+            gps_tow: 0.0,
+            gps_week: 0,
+            incoming_obs_cn0: HashMap::new(),
+            last_update_time: Instant::now(),
+            max: TRACKING_SIGNALS_PLOT_MAX,
+            min: SNR_THRESHOLD,
+            prev_obs_count: 0,
+            prev_obs_total: 0,
+            received_codes: Vec::new(),
+            sats: Vec::new(),
             sv_labels: {
                 let mut labels: Vec<String> = Vec::new();
                 for code in SUPPORTED_CODES {
@@ -67,10 +75,6 @@ impl TrackingSignalsTab {
                 }
                 labels
             },
-            max: TRACKING_SIGNALS_PLOT_MAX,
-            min: SNR_THRESHOLD,
-            received_codes: Vec::new(),
-            sats: Vec::new(),
             t_init: Instant::now(),
             time: {
                 let mut time: Deque<f64> = Deque::with_capacity(NUM_POINTS);
@@ -78,7 +82,8 @@ impl TrackingSignalsTab {
                     time.push_back((-x as f64)*(1.0/TRK_RATE));
                 }
                 time
-            }
+            },
+            
 
         }
     }
@@ -101,7 +106,11 @@ impl TrackingSignalsTab {
         for key in remove_vec {
             self.cn0_dict.remove(&key);
             self.cn0_age.remove(&key);
-        }        
+        }
+        // for (key, vals) in self.cn0_dict.iter() {
+        //     let hey: Vec<f64> = vals.iter().map(|&x| x.1).collect();
+        //     println!("{:?} {:?}", key, hey);
+        // }        
     }
 
     pub fn update_plot(&mut self) {
@@ -123,7 +132,9 @@ impl TrackingSignalsTab {
             self.sv_labels.push(label);
             self.colors.push(String::from(get_color(*key)));
             self.sats.push(cn0_deque.clone());
+            
         }
+
     }
 
     fn send_data(&mut self, client_send: Sender<Vec<u8>>){
@@ -179,15 +190,19 @@ impl TrackingSignalsTab {
         for (idx, state) in states.iter().enumerate() {
             let mut sat = state.mesid.sat as i16;
             if code_is_glo(state.mesid.code) {
+                // println!("{:?}", self.glo_fcn_dict);
+                // println!("{:?}>{:?}=={:?}", state.mesid.sat, GLO_SLOT_SAT_MAX, state.mesid.sat>GLO_SLOT_SAT_MAX);
                 if state.mesid.sat > GLO_SLOT_SAT_MAX {
                     self.glo_fcn_dict.insert(idx as u8, state.mesid.sat as i16 - 100.0 as i16);
                 }
+                println!("{:?}", self.glo_fcn_dict);
                 sat = *self.glo_fcn_dict.get(&(idx as u8)).unwrap_or(&(0 as i16));
+                
                 if state.mesid.sat <= GLO_SLOT_SAT_MAX {
                     self.glo_slot_dict.insert(sat, state.mesid.sat as i16);
                 }
             }
-            // println!("{:?}", self.glo_fcn_dict);
+            
             let key = (state.mesid.code, sat);
             codes_that_came.push(key);
             if state.cn0 != 0 {
@@ -198,15 +213,165 @@ impl TrackingSignalsTab {
                 self.received_codes.push(state.mesid.code);
             }
         }
-        for (key, cn0_deque) in self.cn0_dict.iter_mut() {
-            if !codes_that_came.contains(key){
-                cn0_deque.add((OrderedFloat(t), 0.0));
-            }
-        }
+        // for (key, cn0_deque) in self.cn0_dict.iter_mut() {
+        //     if !codes_that_came.contains(key){
+        //         cn0_deque.add((OrderedFloat(t), 0.0));
+        //     }
+        // }
         self.clean_cn0();
         self.update_plot();
         self.send_data(client_send);
     }
+    pub fn handle_msg_tracking_state(&mut self, states: Vec<TrackingChannelState>, client_send: Sender<Vec<u8>>) {
+        self.at_least_one_track_received = true;
+        let mut codes_that_came: Vec<(u8,i16)> = Vec::new();
+        let t = (Instant::now()).duration_since(self.t_init).as_secs_f64();
+        self.time.add(t);
+        for (idx, state) in states.iter().enumerate() {
+            let mut sat = state.sid.sat as i16;
+            if code_is_glo(state.sid.code) {
+                if state.sid.sat > GLO_SLOT_SAT_MAX {
+                    sat = sat - 100.0 as i16;
+                } else {
+                    sat = state.fcn as i16 - GLO_FCN_OFFSET;
+                }
+                self.glo_slot_dict.insert(sat, state.sid.sat as i16);
+            }
+            let key = (state.sid.code, sat);
+            codes_that_came.push(key);
+            if state.cn0 != 0 {
+                self.push_to_cn0_dict(key, t, state.cn0 as f64 / 4.0);
+                self.push_to_cn0_age(key, t);
+            }
+            if !self.received_codes.contains(&state.sid.code){
+                self.received_codes.push(state.sid.code);
+            }
+        }
+        // for (key, cn0_deque) in self.cn0_dict.iter_mut() {
+        //     if !codes_that_came.contains(key){
+        //         cn0_deque.add((OrderedFloat(t), 0.0));
+        //     }
+        // }
+        self.clean_cn0();
+        self.update_plot();
+        self.send_data(client_send);
+    }
+    pub fn handle_obs(&mut self, msg: ObservationMsg, client_send: Sender<Vec<u8>>) {
+                
+        let (seq, tow, wn, states) = match &msg {
+            ObservationMsg::MsgObs(obs) => {
+                let states: Vec<Observations> = obs.obs.clone().into_iter().map(|x| Observations::PackedObsContent(x)).collect();
+                (obs.header.n_obs, obs.header.t.tow as f64 /1000.0_f64, obs.header.t.wn,states)
+            }
+            // ObservationMsg::MsgObsDepA(obs)
+            ObservationMsg::MsgObsDepB(obs) => {
+                let states: Vec<Observations> = obs.obs.clone().into_iter().map(|x| Observations::PackedObsContentDepB(x)).collect();
+                (obs.header.n_obs, obs.header.t.tow as f64 /1000.0_f64, obs.header.t.wn,states)
+            }
+            ObservationMsg::MsgObsDepC(obs) => {
+                let states: Vec<Observations> = obs.obs.clone().into_iter().map(|x| Observations::PackedObsContentDepC(x)).collect();
+                (obs.header.n_obs, obs.header.t.tow as f64 /1000.0_f64, obs.header.t.wn,states)
+            }
+        };
+
+        // obs_packed_callback
+        let total = seq >> 4;
+        let count = seq & ((1 << 4) - 1);
+
+        if count == 0 {
+            self.obs_reset(tow, wn, total);
+        } else if self.gps_tow != tow || self.gps_week != wn || self.prev_obs_count + 1 != count || self.prev_obs_total != total {
+            println!("We dropped a packet. Skipping this ObservationMsg sequence");
+            self.obs_reset(tow, wn, total);
+            self.prev_obs_count = count;
+            return;
+        } else {
+            self.prev_obs_count = count;
+        }
+
+        for (idx, state) in states.iter().enumerate() {
+            
+            let (code, sat, cn0) = match state {
+                // Observations::PackedObsContentDepA(obs) => {
+                //     let mut sat_ = obs.prn as i16;
+                //     if code_is_gps(obs.prn){
+                //         sat_ += 1;
+                //     }
+                //     (sat_ as u8, sat_, obs.cn0)
+                // }
+                Observations::PackedObsContentDepB(obs) => {
+                    let mut sat_ = obs.sid.sat as i16;
+                    if code_is_gps(obs.sid.code){
+                        sat_ += 1;
+                    }
+                    (obs.sid.code, sat_, obs.cn0 as f64)
+                }
+                Observations::PackedObsContentDepC(obs) => {
+                    let mut sat_ = obs.sid.sat as i16;
+                    if code_is_gps(obs.sid.code){
+                        sat_ += 1;
+                    }
+                    (obs.sid.code, sat_, obs.cn0 as f64)
+                }
+                Observations::PackedObsContent(obs) => (obs.sid.code, obs.sid.sat as i16, obs.cn0 as f64)
+            };
+            self.incoming_obs_cn0.insert((code, sat), cn0/ 4.0);
+        }
+
+        if count == (total - 1) && (Instant::now()).duration_since(self.last_update_time).as_secs_f64() < GUI_UPDATE_PERIOD{
+            self.last_update_time = Instant::now();
+            self.update_from_obs(self.incoming_obs_cn0.clone(), client_send);
+        }
+    }
+
+    pub fn update_from_obs(&mut self, obs_dict: HashMap<(u8, i16), f64>, client_send: Sender<Vec<u8>>) {
+        if self.at_least_one_track_received{
+            return;
+        }
+
+        let mut codes_that_came: Vec<(u8,i16)> = Vec::new();
+        let t = (Instant::now()).duration_since(self.t_init).as_secs_f64();
+        self.time.add(t);
+        for (key, cn0) in obs_dict.iter() {
+            let (code, _) = key;
+            codes_that_came.push(*key);
+            if *cn0 > 0.0_f64 {
+                self.push_to_cn0_dict(*key, t, *cn0);
+                self.push_to_cn0_age(*key, t);
+            }
+            if !self.received_codes.contains(&code){
+                self.received_codes.push(code.clone());
+            }
+        }
+        // for (key, cn0_deque) in self.cn0_dict.iter_mut() {
+        //     if !codes_that_came.contains(key){
+        //         cn0_deque.add((OrderedFloat(t), 0.0));
+        //     }
+        // }
+        self.clean_cn0();
+        self.update_plot();
+        self.send_data(client_send);
+    }
+    pub fn obs_reset(&mut self, tow: f64, wn: u16, obs_total: u8) {
+        self.gps_tow = tow;
+        self.gps_week = wn;
+        self.prev_obs_total = obs_total;
+        self.prev_obs_count = 0;
+        self.incoming_obs_cn0.clear()
+    }
+}
+
+pub enum ObservationMsg {
+    MsgObs(MsgObs),
+    // MsgObsDepA(MsgObsDepA),
+    MsgObsDepB(MsgObsDepB),
+    MsgObsDepC(MsgObsDepC),
+}
+pub enum Observations {
+    PackedObsContent(PackedObsContent),
+    // PackedObsContentDepA(PackedObsContentDepA),
+    PackedObsContentDepB(PackedObsContentDepB),
+    PackedObsContentDepC(PackedObsContentDepC),
 }
 
 // #[test]

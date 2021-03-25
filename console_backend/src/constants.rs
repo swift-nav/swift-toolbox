@@ -1,4 +1,3 @@
-
 use std::collections::HashMap;
 
 // Tracking Tab constants.
@@ -12,7 +11,6 @@ pub const QZSS_NEG_OFFSET: i16 = 193;
 pub const SNR_THRESHOLD: f64 = 15.0;
 pub const TRACKING_SIGNALS_PLOT_MAX: f64 = 60.0;
 pub const GUI_UPDATE_PERIOD: f64 = 0.2;
-
 
 pub const CODE_GPS_L1CA: u8 = 0;
 pub const CODE_GPS_L2CM: u8 = 1;
@@ -84,76 +82,123 @@ pub const CODE_QZS_L5X: u8 = 40;
 pub const CODE_AUX_QZS: u8 = 62;
 
 pub fn code_is_gps(code: u8) -> bool {
-    match code {
-        CODE_GPS_L1CA | CODE_GPS_L2CM | CODE_GPS_L2CL | CODE_GPS_L2CX | CODE_GPS_L1P | CODE_GPS_L2P | CODE_GPS_L5I | CODE_GPS_L5Q | CODE_GPS_L5X | CODE_AUX_GPS => true,
-        _ => false
-    }
+    matches!(
+        code,
+        CODE_GPS_L1CA
+            | CODE_GPS_L2CM
+            | CODE_GPS_L2CL
+            | CODE_GPS_L2CX
+            | CODE_GPS_L1P
+            | CODE_GPS_L2P
+            | CODE_GPS_L5I
+            | CODE_GPS_L5Q
+            | CODE_GPS_L5X
+            | CODE_AUX_GPS
+    )
 }
 
 pub fn code_is_glo(code: u8) -> bool {
-    match code {
-        CODE_GLO_L1OF | CODE_GLO_L2OF | CODE_GLO_L1P | CODE_GLO_L2P => true,
-        _ => false
-    }
+    matches!(
+        code,
+        CODE_GLO_L1OF | CODE_GLO_L2OF | CODE_GLO_L1P | CODE_GLO_L2P
+    )
 }
 
 pub fn code_is_sbas(code: u8) -> bool {
-    match code {
-        CODE_SBAS_L1CA | CODE_SBAS_L5I | CODE_SBAS_L5Q | CODE_SBAS_L5X | CODE_AUX_SBAS => true,
-        _ => false
-    }
+    matches!(
+        code,
+        CODE_SBAS_L1CA | CODE_SBAS_L5I | CODE_SBAS_L5Q | CODE_SBAS_L5X | CODE_AUX_SBAS
+    )
 }
 
 pub fn code_is_bds(code: u8) -> bool {
-    match code {
-        CODE_BDS2_B1 | CODE_BDS2_B2 | CODE_BDS3_B1CI | CODE_BDS3_B1CQ | CODE_BDS3_B1CX | CODE_BDS3_B5I | CODE_BDS3_B5Q | CODE_BDS3_B5X | CODE_BDS3_B3I | CODE_BDS3_B3Q | CODE_BDS3_B3X | CODE_BDS3_B7I | CODE_BDS3_B7Q | CODE_BDS3_B7X => true,
-        _ => false
-    }
+    matches!(
+        code,
+        CODE_BDS2_B1
+            | CODE_BDS2_B2
+            | CODE_BDS3_B1CI
+            | CODE_BDS3_B1CQ
+            | CODE_BDS3_B1CX
+            | CODE_BDS3_B5I
+            | CODE_BDS3_B5Q
+            | CODE_BDS3_B5X
+            | CODE_BDS3_B3I
+            | CODE_BDS3_B3Q
+            | CODE_BDS3_B3X
+            | CODE_BDS3_B7I
+            | CODE_BDS3_B7Q
+            | CODE_BDS3_B7X
+    )
 }
 
 pub fn code_is_galileo(code: u8) -> bool {
-    match code {
-        CODE_GAL_E1B | CODE_GAL_E1C | CODE_GAL_E1X | CODE_GAL_E6B | CODE_GAL_E6C | CODE_GAL_E6X | CODE_GAL_E7I | CODE_GAL_E7Q | CODE_GAL_E7X | CODE_GAL_E8I | CODE_GAL_E8Q | CODE_GAL_E8X | CODE_GAL_E5I | CODE_GAL_E5Q | CODE_GAL_E5X | CODE_AUX_GAL => true,
-        _ => false
-    }
+    matches!(
+        code,
+        CODE_GAL_E1B
+            | CODE_GAL_E1C
+            | CODE_GAL_E1X
+            | CODE_GAL_E6B
+            | CODE_GAL_E6C
+            | CODE_GAL_E6X
+            | CODE_GAL_E7I
+            | CODE_GAL_E7Q
+            | CODE_GAL_E7X
+            | CODE_GAL_E8I
+            | CODE_GAL_E8Q
+            | CODE_GAL_E8X
+            | CODE_GAL_E5I
+            | CODE_GAL_E5Q
+            | CODE_GAL_E5X
+            | CODE_AUX_GAL
+    )
 }
 
 pub fn code_is_qzss(code: u8) -> bool {
-    match code {
-        CODE_QZS_L1CA | CODE_QZS_L2CM | CODE_QZS_L2CL | CODE_QZS_L2CX | CODE_QZS_L5I | CODE_QZS_L5Q | CODE_QZS_L5X | CODE_AUX_QZS => true,
-        _ => false
-    }
+    matches!(
+        code,
+        CODE_QZS_L1CA
+            | CODE_QZS_L2CM
+            | CODE_QZS_L2CL
+            | CODE_QZS_L2CX
+            | CODE_QZS_L5I
+            | CODE_QZS_L5Q
+            | CODE_QZS_L5X
+            | CODE_AUX_QZS
+    )
 }
 
-pub fn get_label(key: (u8, i16), extra: &HashMap<i16, i16>) -> (Option<String>, Option<String>, Option<String>) {
+pub fn get_label(
+    key: (u8, i16),
+    extra: &HashMap<i16, i16>,
+) -> (Option<String>, Option<String>, Option<String>) {
     let (code, sat) = key;
     let code_lbl = Some(code_to_str_map(code).to_string());
     let mut freq_lbl = None;
     let id_lbl;
-    
+
     if code_is_glo(code) {
-        let freq_lbl_ = format!("F+{:02}", sat).to_string();
+        let freq_lbl_ = format!("F+{:02}", sat);
         freq_lbl = Some(freq_lbl_);
         if extra.contains_key(&sat) {
-            id_lbl = Some(format!("R{:<02}", extra[&sat]).to_string());
+            id_lbl = Some(format!("R{:<02}", extra[&sat]));
         } else {
-            id_lbl = Some(format!("R{:<02}", sat).to_string());
+            id_lbl = Some(format!("R{:<02}", sat));
         }
     } else if code_is_sbas(code) {
-        id_lbl = Some(format!("S{: >3}", sat).to_string());
+        id_lbl = Some(format!("S{: >3}", sat));
     } else if code_is_bds(code) {
-        id_lbl = Some(format!("C{:0>2}", sat).to_string());
+        id_lbl = Some(format!("C{:0>2}", sat));
     } else if code_is_qzss(code) {
-        id_lbl = Some(format!("J{: >3}", sat).to_string());
+        id_lbl = Some(format!("J{: >3}", sat));
     } else if code_is_galileo(code) {
-        id_lbl = Some(format!("E{:0>2}", sat).to_string());
+        id_lbl = Some(format!("E{:0>2}", sat));
     } else {
-        id_lbl = Some(format!("G{:0>2}", sat).to_string());
+        id_lbl = Some(format!("G{:0>2}", sat));
     }
     (code_lbl, freq_lbl, id_lbl)
 }
 
-pub static SUPPORTED_CODES: &'static [u8] = &[
+pub static SUPPORTED_CODES: &[u8] = &[
     CODE_GPS_L1CA,
     CODE_GPS_L2CM,
     CODE_GPS_L2CL,
@@ -167,18 +212,15 @@ pub static SUPPORTED_CODES: &'static [u8] = &[
     CODE_GPS_L1CQ,
     CODE_GPS_L1CX,
     CODE_AUX_GPS,
-
     CODE_GLO_L1OF,
     CODE_GLO_L2OF,
     CODE_GLO_L1P,
     CODE_GLO_L2P,
-
     CODE_SBAS_L1CA,
     CODE_SBAS_L5I,
     CODE_SBAS_L5Q,
     CODE_SBAS_L5X,
     CODE_AUX_SBAS,
-
     CODE_BDS2_B1,
     CODE_BDS2_B2,
     CODE_BDS3_B1CI,
@@ -193,7 +235,6 @@ pub static SUPPORTED_CODES: &'static [u8] = &[
     CODE_BDS3_B3I,
     CODE_BDS3_B3Q,
     CODE_BDS3_B3X,
-
     CODE_GAL_E1B,
     CODE_GAL_E1C,
     CODE_GAL_E1X,
@@ -210,7 +251,6 @@ pub static SUPPORTED_CODES: &'static [u8] = &[
     CODE_GAL_E8Q,
     CODE_GAL_E8X,
     CODE_AUX_GAL,
-
     CODE_QZS_L1CA,
     CODE_QZS_L2CM,
     CODE_QZS_L2CL,
@@ -218,18 +258,17 @@ pub static SUPPORTED_CODES: &'static [u8] = &[
     CODE_QZS_L5I,
     CODE_QZS_L5Q,
     CODE_QZS_L5X,
-    CODE_AUX_QZS
+    CODE_AUX_QZS,
 ];
 
-pub const GPS: &'static str = "GPS";
-pub const GLO: &'static str = "GLO";
-pub const GAL: &'static str = "GAL";
-pub const QZS: &'static str = "QZS";
-pub const BDS: &'static str = "BDS";
-pub const SBAS: &'static str = "SBAS";
+pub const GPS: &str = "GPS";
+pub const GLO: &str = "GLO";
+pub const GAL: &str = "GAL";
+pub const QZS: &str = "QZS";
+pub const BDS: &str = "BDS";
+pub const SBAS: &str = "SBAS";
 
 pub fn gui_codes(sat_type: &str) -> &'static [u8] {
-
     match sat_type {
         GPS => &[
             CODE_GPS_L1CA,
@@ -244,14 +283,9 @@ pub fn gui_codes(sat_type: &str) -> &'static [u8] {
             CODE_GPS_L1CI,
             CODE_GPS_L1CQ,
             CODE_GPS_L1CX,
-            CODE_AUX_GPS
+            CODE_AUX_GPS,
         ],
-        GLO => &[
-            CODE_GLO_L1OF,
-            CODE_GLO_L2OF,
-            CODE_GLO_L1P,
-            CODE_GLO_L2P
-        ],
+        GLO => &[CODE_GLO_L1OF, CODE_GLO_L2OF, CODE_GLO_L1P, CODE_GLO_L2P],
         GAL => &[
             CODE_GAL_E1B,
             CODE_GAL_E1C,
@@ -268,7 +302,7 @@ pub fn gui_codes(sat_type: &str) -> &'static [u8] {
             CODE_GAL_E5I,
             CODE_GAL_E5Q,
             CODE_GAL_E5X,
-            CODE_AUX_GAL
+            CODE_AUX_GAL,
         ],
         QZS => &[
             CODE_QZS_L1CA,
@@ -278,7 +312,7 @@ pub fn gui_codes(sat_type: &str) -> &'static [u8] {
             CODE_QZS_L5I,
             CODE_QZS_L5Q,
             CODE_QZS_L5X,
-            CODE_AUX_QZS
+            CODE_AUX_QZS,
         ],
         BDS => &[
             CODE_BDS2_B1,
@@ -294,86 +328,84 @@ pub fn gui_codes(sat_type: &str) -> &'static [u8] {
             CODE_BDS3_B7X,
             CODE_BDS3_B3I,
             CODE_BDS3_B3Q,
-            CODE_BDS3_B3X
+            CODE_BDS3_B3X,
         ],
         SBAS => &[
             CODE_SBAS_L1CA,
             CODE_SBAS_L5I,
             CODE_SBAS_L5Q,
             CODE_SBAS_L5X,
-            CODE_AUX_SBAS
+            CODE_AUX_SBAS,
         ],
-        _ => panic!("Unknown GUI Code.")
+        _ => panic!("Unknown GUI Code."),
     }
-
 }
 
+pub const GPS_L1CA_STR: &str = "GPS L1CA";
+pub const GPS_L2CM_STR: &str = "GPS L2C M";
+pub const GPS_L2CL_STR: &str = "GPS L2C L";
+pub const GPS_L2CX_STR: &str = "GPS L2C M+L";
+pub const GPS_L1P_STR: &str = "GPS L1P";
+pub const GPS_L2P_STR: &str = "GPS L2P";
+pub const GPS_L5I_STR: &str = "GPS L5 I";
+pub const GPS_L5Q_STR: &str = "GPS L5 Q";
+pub const GPS_L5X_STR: &str = "GPS L5 I+Q";
+pub const GPS_AUX_STR: &str = "AUX GPS L1";
 
-pub const GPS_L1CA_STR: &'static str = "GPS L1CA";
-pub const GPS_L2CM_STR: &'static str = "GPS L2C M";
-pub const GPS_L2CL_STR: &'static str = "GPS L2C L";
-pub const GPS_L2CX_STR: &'static str = "GPS L2C M+L";
-pub const GPS_L1P_STR: &'static str = "GPS L1P";
-pub const GPS_L2P_STR: &'static str = "GPS L2P";
-pub const GPS_L5I_STR: &'static str = "GPS L5 I";
-pub const GPS_L5Q_STR: &'static str = "GPS L5 Q";
-pub const GPS_L5X_STR: &'static str = "GPS L5 I+Q";
-pub const GPS_AUX_STR: &'static str = "AUX GPS L1";
+pub const SBAS_L1_STR: &str = "SBAS L1";
+pub const SBAS_L5I_STR: &str = "SBAS L5 I";
+pub const SBAS_L5Q_STR: &str = "SBAS L5 Q";
+pub const SBAS_L5X_STR: &str = "SBAS L5 I+Q";
+pub const SBAS_AUX_STR: &str = "AUX SBAS L1";
 
-pub const SBAS_L1_STR: &'static str = "SBAS L1";
-pub const SBAS_L5I_STR: &'static str = "SBAS L5 I";
-pub const SBAS_L5Q_STR: &'static str = "SBAS L5 Q";
-pub const SBAS_L5X_STR: &'static str = "SBAS L5 I+Q";
-pub const SBAS_AUX_STR: &'static str = "AUX SBAS L1";
+pub const GLO_L1OF_STR: &str = "GLO L1OF";
+pub const GLO_L2OF_STR: &str = "GLO L2OF";
+pub const GLO_L1P_STR: &str = "GLO L1P";
+pub const GLO_L2P_STR: &str = "GLO L2P";
 
-pub const GLO_L1OF_STR: &'static str = "GLO L1OF";
-pub const GLO_L2OF_STR: &'static str = "GLO L2OF";
-pub const GLO_L1P_STR: &'static str = "GLO L1P";
-pub const GLO_L2P_STR: &'static str = "GLO L2P";
+pub const BDS2_B1_STR: &str = "BDS2 B1 I";
+pub const BDS2_B2_STR: &str = "BDS2 B2 I";
+pub const BDS3_B1CI_STR: &str = "BDS3 B1C I";
+pub const BDS3_B1CQ_STR: &str = "BDS3 B1C Q";
+pub const BDS3_B1CX_STR: &str = "BDS3 B1C I+Q";
+pub const BDS3_B5I_STR: &str = "BDS3 B2a I";
+pub const BDS3_B5Q_STR: &str = "BDS3 B2a Q";
+pub const BDS3_B5X_STR: &str = "BDS3 B2a X";
+pub const BDS3_B7I_STR: &str = "BDS3 B2b I";
+pub const BDS3_B7Q_STR: &str = "BDS3 B2b Q";
+pub const BDS3_B7X_STR: &str = "BDS3 B2b X";
+pub const BDS3_B3I_STR: &str = "BDS3 B3I";
+pub const BDS3_B3Q_STR: &str = "BDS3 B3Q";
+pub const BDS3_B3X_STR: &str = "BDS3 B3X";
+pub const BDS3_AUX_STR: &str = "AUX BDS B1";
 
-pub const BDS2_B1_STR: &'static str = "BDS2 B1 I";
-pub const BDS2_B2_STR: &'static str = "BDS2 B2 I";
-pub const BDS3_B1CI_STR: &'static str = "BDS3 B1C I";
-pub const BDS3_B1CQ_STR: &'static str = "BDS3 B1C Q";
-pub const BDS3_B1CX_STR: &'static str = "BDS3 B1C I+Q";
-pub const BDS3_B5I_STR: &'static str = "BDS3 B2a I";
-pub const BDS3_B5Q_STR: &'static str = "BDS3 B2a Q";
-pub const BDS3_B5X_STR: &'static str = "BDS3 B2a X";
-pub const BDS3_B7I_STR: &'static str = "BDS3 B2b I";
-pub const BDS3_B7Q_STR: &'static str = "BDS3 B2b Q";
-pub const BDS3_B7X_STR: &'static str = "BDS3 B2b X";
-pub const BDS3_B3I_STR: &'static str = "BDS3 B3I";
-pub const BDS3_B3Q_STR: &'static str = "BDS3 B3Q";
-pub const BDS3_B3X_STR: &'static str = "BDS3 B3X";
-pub const BDS3_AUX_STR: &'static str = "AUX BDS B1";
+pub const GAL_E1B_STR: &str = "GAL E1 B";
+pub const GAL_E1C_STR: &str = "GAL E1 C";
+pub const GAL_E1X_STR: &str = "GAL E1 B+C";
+pub const GAL_E5I_STR: &str = "GAL E5a I";
+pub const GAL_E5Q_STR: &str = "GAL E5a Q";
+pub const GAL_E5X_STR: &str = "GAL E5a I+Q";
+pub const GAL_E6B_STR: &str = "GAL E6 B";
+pub const GAL_E6C_STR: &str = "GAL E6 C";
+pub const GAL_E6X_STR: &str = "GAL E6 B+C";
+pub const GAL_E8I_STR: &str = "GAL AltBOC";
+pub const GAL_E8Q_STR: &str = "GAL AltBOC";
+pub const GAL_E8X_STR: &str = "GAL AltBOC";
+pub const GAL_E7I_STR: &str = "GAL E5b I";
+pub const GAL_E7Q_STR: &str = "GAL E5b Q";
+pub const GAL_E7X_STR: &str = "GAL E5b I+Q";
+pub const GAL_AUX_STR: &str = "AUX GAL E1";
 
-pub const GAL_E1B_STR: &'static str = "GAL E1 B";
-pub const GAL_E1C_STR: &'static str = "GAL E1 C";
-pub const GAL_E1X_STR: &'static str = "GAL E1 B+C";
-pub const GAL_E5I_STR: &'static str = "GAL E5a I";
-pub const GAL_E5Q_STR: &'static str = "GAL E5a Q";
-pub const GAL_E5X_STR: &'static str = "GAL E5a I+Q";
-pub const GAL_E6B_STR: &'static str = "GAL E6 B";
-pub const GAL_E6C_STR: &'static str = "GAL E6 C";
-pub const GAL_E6X_STR: &'static str = "GAL E6 B+C";
-pub const GAL_E8I_STR: &'static str = "GAL AltBOC";
-pub const GAL_E8Q_STR: &'static str = "GAL AltBOC";
-pub const GAL_E8X_STR: &'static str = "GAL AltBOC";
-pub const GAL_E7I_STR: &'static str = "GAL E5b I";
-pub const GAL_E7Q_STR: &'static str = "GAL E5b Q";
-pub const GAL_E7X_STR: &'static str = "GAL E5b I+Q";
-pub const GAL_AUX_STR: &'static str = "AUX GAL E1";
+pub const QZS_L1CA_STR: &str = "QZS L1CA";
+pub const QZS_L2CM_STR: &str = "QZS L2C M";
+pub const QZS_L2CL_STR: &str = "QZS L2C L";
+pub const QZS_L2CX_STR: &str = "QZS L2C M+L";
+pub const QZS_L5I_STR: &str = "QZS L5 I";
+pub const QZS_L5Q_STR: &str = "QZS L5 Q";
+pub const QZS_L5X_STR: &str = "QZS L5 I+Q";
+pub const QZS_AUX_STR: &str = "AUX QZS L1";
 
-pub const QZS_L1CA_STR: &'static str = "QZS L1CA";
-pub const QZS_L2CM_STR: &'static str = "QZS L2C M";
-pub const QZS_L2CL_STR: &'static str = "QZS L2C L";
-pub const QZS_L2CX_STR: &'static str = "QZS L2C M+L";
-pub const QZS_L5I_STR: &'static str = "QZS L5 I";
-pub const QZS_L5Q_STR: &'static str = "QZS L5 Q";
-pub const QZS_L5X_STR: &'static str = "QZS L5 I+Q";
-pub const QZS_AUX_STR: &'static str = "AUX QZS L1";
-
-pub const CODE_NOT_AVAILABLE: &'static str = "N/A";
+pub const CODE_NOT_AVAILABLE: &str = "N/A";
 
 pub fn code_to_str_map(sat_code: u8) -> &'static str {
     match sat_code {
@@ -438,7 +470,7 @@ pub fn code_to_str_map(sat_code: u8) -> &'static str {
         CODE_QZS_L5I => QZS_L5I_STR,
         CODE_QZS_L5Q => QZS_L5Q_STR,
         CODE_QZS_L5X => QZS_L5X_STR,
-        _ => CODE_NOT_AVAILABLE
+        _ => CODE_NOT_AVAILABLE,
     }
 }
 
@@ -494,8 +526,8 @@ pub fn str_to_code_map(sat_str: &str) -> u8 {
         GAL_E7Q_STR => CODE_GAL_E7Q,
         GAL_E7X_STR => CODE_GAL_E7X,
         GAL_E8I_STR => CODE_GAL_E8I,
-        GAL_E8Q_STR => CODE_GAL_E8Q,
-        GAL_E8X_STR => CODE_GAL_E8X,
+        // GAL_E8Q_STR => CODE_GAL_E8Q,  // Unreachable
+        // GAL_E8X_STR => CODE_GAL_E8X,  // Unreachable
         GAL_AUX_STR => CODE_AUX_GAL,
 
         QZS_L1CA_STR => CODE_QZS_L1CA,
@@ -506,7 +538,7 @@ pub fn str_to_code_map(sat_str: &str) -> u8 {
         QZS_L5Q_STR => CODE_QZS_L5Q,
         QZS_L5X_STR => CODE_QZS_L5X,
         QZS_AUX_STR => CODE_AUX_QZS,
-        _ => panic!("Unknown sat string!!")
+        _ => panic!("Unknown sat string!!"),
     }
 }
 
@@ -549,7 +581,7 @@ pub fn color_map(code: i16) -> &'static str {
         35 => "#1b0033",
         36 => "#d900ca",
         37 => "#730e6c",
-        _ => "#ff0000"
+        _ => "#ff0000",
     }
 }
 
@@ -571,44 +603,47 @@ pub fn get_color(key: (u8, i16)) -> &'static str {
     color_map(sat)
 }
 
-#[test]
-fn get_label_test() {
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn get_label_test() {
+        let mut extra: HashMap<i16, i16> = HashMap::new();
+        extra.insert(CODE_GLO_L2P as i16, CODE_GLO_L2P as i16);
 
-    let mut extra: HashMap<i16,i16> = HashMap::new();
-    extra.insert(CODE_GLO_L2P as i16, CODE_GLO_L2P as i16);
+        let (code_lbl, freq_lbl, id_lbl) = get_label((CODE_GLO_L2P, CODE_GLO_L2P as i16), &extra);
+        assert_eq!(code_lbl.unwrap(), GLO_L2P_STR);
+        assert_eq!(freq_lbl.unwrap(), "F+30");
+        assert_eq!(id_lbl.unwrap(), "R30");
 
-    let (code_lbl, freq_lbl, id_lbl) = get_label((CODE_GLO_L2P, CODE_GLO_L2P as i16), &extra);
-    assert_eq!(code_lbl.unwrap(), GLO_L2P_STR);
-    assert_eq!(freq_lbl.unwrap(), "F+30");
-    assert_eq!(id_lbl.unwrap(), "R30");
-    
-    let (code_lbl, freq_lbl, id_lbl) = get_label((CODE_GLO_L2OF, CODE_GLO_L2OF as i16), &extra);
-    assert_eq!(code_lbl.unwrap(), GLO_L2OF_STR);
-    assert_eq!(freq_lbl.unwrap(), "F+04");
-    assert_eq!(id_lbl.unwrap(), "R04");
-    
-    let (code_lbl, freq_lbl, id_lbl) = get_label((CODE_SBAS_L5Q, CODE_SBAS_L5Q as i16), &extra);
-    assert_eq!(code_lbl.unwrap(), SBAS_L5Q_STR);
-    assert_eq!(freq_lbl, None);
-    assert_eq!(id_lbl.unwrap(), "S 42");
+        let (code_lbl, freq_lbl, id_lbl) = get_label((CODE_GLO_L2OF, CODE_GLO_L2OF as i16), &extra);
+        assert_eq!(code_lbl.unwrap(), GLO_L2OF_STR);
+        assert_eq!(freq_lbl.unwrap(), "F+04");
+        assert_eq!(id_lbl.unwrap(), "R04");
 
-    let (code_lbl, freq_lbl, id_lbl) = get_label((CODE_BDS3_B5Q, CODE_BDS3_B5Q as i16), &extra);
-    assert_eq!(code_lbl.unwrap(), BDS3_B5Q_STR);
-    assert_eq!(freq_lbl, None);
-    assert_eq!(id_lbl.unwrap(), "C48");
+        let (code_lbl, freq_lbl, id_lbl) = get_label((CODE_SBAS_L5Q, CODE_SBAS_L5Q as i16), &extra);
+        assert_eq!(code_lbl.unwrap(), SBAS_L5Q_STR);
+        assert_eq!(freq_lbl, None);
+        assert_eq!(id_lbl.unwrap(), "S 42");
 
-    let (code_lbl, freq_lbl, id_lbl) = get_label((CODE_QZS_L2CX, CODE_QZS_L2CX as i16), &extra);
-    assert_eq!(code_lbl.unwrap(), QZS_L2CX_STR);
-    assert_eq!(freq_lbl, None);
-    assert_eq!(id_lbl.unwrap(), "J 37");
+        let (code_lbl, freq_lbl, id_lbl) = get_label((CODE_BDS3_B5Q, CODE_BDS3_B5Q as i16), &extra);
+        assert_eq!(code_lbl.unwrap(), BDS3_B5Q_STR);
+        assert_eq!(freq_lbl, None);
+        assert_eq!(id_lbl.unwrap(), "C48");
 
-    let (code_lbl, freq_lbl, id_lbl) = get_label((CODE_GAL_E8X, CODE_GAL_E8X as i16), &extra);
-    assert_eq!(code_lbl.unwrap(), GAL_E8X_STR);
-    assert_eq!(freq_lbl, None);
-    assert_eq!(id_lbl.unwrap(), "E25");
+        let (code_lbl, freq_lbl, id_lbl) = get_label((CODE_QZS_L2CX, CODE_QZS_L2CX as i16), &extra);
+        assert_eq!(code_lbl.unwrap(), QZS_L2CX_STR);
+        assert_eq!(freq_lbl, None);
+        assert_eq!(id_lbl.unwrap(), "J 37");
 
-    let (code_lbl, freq_lbl, id_lbl) = get_label((255, 255 as i16), &extra);
-    assert_eq!(code_lbl.unwrap(), CODE_NOT_AVAILABLE);
-    assert_eq!(freq_lbl, None);
-    assert_eq!(id_lbl.unwrap(), "G255");
+        let (code_lbl, freq_lbl, id_lbl) = get_label((CODE_GAL_E8X, CODE_GAL_E8X as i16), &extra);
+        assert_eq!(code_lbl.unwrap(), GAL_E8X_STR);
+        assert_eq!(freq_lbl, None);
+        assert_eq!(id_lbl.unwrap(), "E25");
+
+        let (code_lbl, freq_lbl, id_lbl) = get_label((255, 255_i16), &extra);
+        assert_eq!(code_lbl.unwrap(), CODE_NOT_AVAILABLE);
+        assert_eq!(freq_lbl, None);
+        assert_eq!(id_lbl.unwrap(), "G255");
+    }
 }

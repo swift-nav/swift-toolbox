@@ -27,6 +27,7 @@ struct TrackingStatus {
     labels @2 :List(Text);
     data @3 :List(List(Point));
     colors @4 :List(Text);
+    checkLabels @5 :List(Text);
 }
 
 struct Status {

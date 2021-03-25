@@ -107,11 +107,9 @@ fn validate_memory_benchmark(mem_readings: &[f32], cpu_readings: &[f32]) {
     let cpus = vec_1d_to_array(&cpu_readings).unwrap();
     assert!(
         mem_readings.len() >= MINIMUM_MEM_READINGS,
-        format!(
-            "Benchmark does not meet minimum samples collected {} requires {}",
-            mem_readings.len(),
-            MINIMUM_MEM_READINGS
-        )
+        "Benchmark does not meet minimum samples collected {} requires {}",
+        mem_readings.len(),
+        MINIMUM_MEM_READINGS
     );
     let mem_usage_mean = mems.mean_axis(Axis(0)).unwrap();
     let mem_usage_std = mems.std_axis(Axis(0), 0.0);
@@ -128,19 +126,18 @@ fn validate_memory_benchmark(mem_readings: &[f32], cpu_readings: &[f32]) {
 
     let mem_usage_min = mem_usage_mean - mem_usage_std;
 
-    assert!((mem_usage_max - MAXIMUM_MEM_USAGE_KB)<=MAXIMUM_MEM_USAGE_KB*DIFF_THRESHOLD, format!(
-        "Worst Case Memory Usage: {:.2}kB was {:.2}kb greater than threshold margin {:.2}kB where max is {:.2}kB.", mem_usage_max, (
-            mem_usage_max - MAXIMUM_MEM_USAGE_KB), MAXIMUM_MEM_USAGE_KB*DIFF_THRESHOLD, MAXIMUM_MEM_USAGE_KB));
-    assert!(*mem_usage_std <= MAXIMUM_MEM_USAGE_KB*MAXIMUM_STANDARD_DEV_RATE_OF_MAXIMUM_MEM, format!(
+    let mem_usage_over_amount = mem_usage_max - MAXIMUM_MEM_USAGE_KB;
+    let mem_usage_threshold = MAXIMUM_MEM_USAGE_KB * DIFF_THRESHOLD;
+    assert!((mem_usage_max - MAXIMUM_MEM_USAGE_KB)<=MAXIMUM_MEM_USAGE_KB*DIFF_THRESHOLD, "Worst Case Memory Usage: {:.2}kB was {:.2}kb greater than threshold margin {:.2}kB where max is {:.2}kB.", mem_usage_max, mem_usage_over_amount, mem_usage_threshold, MAXIMUM_MEM_USAGE_KB);
+    assert!(*mem_usage_std <= MAXIMUM_MEM_USAGE_KB*MAXIMUM_STANDARD_DEV_RATE_OF_MAXIMUM_MEM,
         "Memory Standard Deviation {:.2}kB was greater than {:.2}kB which is {:.2} of the maximum memory usage {:.2}kB.", *mem_usage_std, (
             MAXIMUM_MEM_USAGE_KB*MAXIMUM_STANDARD_DEV_RATE_OF_MAXIMUM_MEM), MAXIMUM_STANDARD_DEV_RATE_OF_MAXIMUM_MEM, MAXIMUM_MEM_USAGE_KB
-    ));
+    );
     assert!(
         mem_usage_min >= ABSOLUTE_MINIMUM_MEM_USAGE,
-        format!(
-            "Best Case Memory Usage: {:.2}kB was less than absolute minimum {:.2}kB.",
-            mem_usage_min, ABSOLUTE_MINIMUM_MEM_USAGE
-        )
+        "Best Case Memory Usage: {:.2}kB was less than absolute minimum {:.2}kB.",
+        mem_usage_min,
+        ABSOLUTE_MINIMUM_MEM_USAGE
     );
     println!(
         "CPU Usage: {:.2}% ~ +/- {:.2}%",

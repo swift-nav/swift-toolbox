@@ -13,28 +13,20 @@ ApplicationWindow {
     font.pointSize: 8
 
     ConsolePoints {
-        id: console_points
+        id: consolePoints
     }
-
-    TrackingSignalsPoints {
-        id: tracking_signals_points
-    }
-    
     
     ColumnLayout {
-        id: tabzone
         anchors.fill: parent
         spacing: 2
         width: parent.width
-        height: parent.height
-
-        
+        height: parent.height        
         Rectangle {
-            id: tabs
-            height: parent.height - console_log.height
+            id: mainTabs
+            height: parent.height - consoleLog.height
             width: parent.width
             TabBar {
-                id: bar
+                id: tab
                 z: 100
                 width: parent.width
                 
@@ -50,9 +42,9 @@ ApplicationWindow {
             
             StackLayout {
                 width: parent.width
-                height: parent.height - bar.height
-                anchors.top: bar.bottom
-                currentIndex: bar.currentIndex
+                height: parent.height - tab.height
+                anchors.top: tab.bottom
+                currentIndex: tab.currentIndex
                 TrackingTab {}
                 Item {
                     id: solutionTab
@@ -84,10 +76,7 @@ ApplicationWindow {
                             delegate: contactsDelegate
                             focus: true
                         }
-
                         ChartView {
-
-                            
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             Layout.alignment: Qt.AlignLeft
@@ -133,18 +122,18 @@ ApplicationWindow {
                                     if (!solutionTab.visible) {
                                         return;
                                     }
-                                    data_model.fill_console_points(console_points);
-                                    if (!console_points.valid) {
+                                    data_model.fill_console_points(consolePoints);
+                                    if (!consolePoints.valid) {
                                         return;
                                     }
-                                    var hpoints = console_points.hpoints;
+                                    var hpoints = consolePoints.hpoints;
                                     var last = hpoints[hpoints.length - 1];
                                     x_axis.min = last.x - 10;
                                     x_axis.max = last.x;
-                                    y_axis.min = console_points.min_;
-                                    y_axis.max = console_points.max_;
-                                    console_points.fill_hseries(hseries);
-                                    console_points.fill_vseries(vseries);
+                                    y_axis.min = consolePoints.min_;
+                                    y_axis.max = consolePoints.max_;
+                                    consolePoints.fill_hseries(hseries);
+                                    consolePoints.fill_vseries(vseries);
                                 }
                             }
                         }
@@ -170,7 +159,7 @@ ApplicationWindow {
 
         }
         Rectangle {
-            id: console_log
+            id: consoleLog
             width: parent.width
             height: 100
             Layout.alignment: Qt.AlignBottom

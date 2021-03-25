@@ -1,17 +1,12 @@
 use capnp::message::Builder;
 use capnp::serialize;
 use ordered_float::OrderedFloat;
-use sbp::messages::{SBP, SBPMessage};
+use sbp::messages::SBP;
 use std::sync::mpsc;
-
-use crate::{constants::*, flags::*, types::*};
-
-
 
 use crate::console_backend_capnp as m;
 
-
-
+use crate::tracking_tab::*;
 
 pub fn process_messages(
     messages: impl Iterator<Item = sbp::Result<SBP>>,
@@ -19,30 +14,39 @@ pub fn process_messages(
 ) {
     let mut hpoints: Vec<(f64, OrderedFloat<f64>)> = vec![];
     let mut vpoints: Vec<(f64, OrderedFloat<f64>)> = vec![];
-    let mut sat_headers: Vec<u8> = vec![];
-    let mut sats: Vec<Vec<(f64, OrderedFloat<f64>)>> = vec![];
-    let mut tow: f64 = 0.0;
+    let mut tow: f64;
 
     let mut tracking_signals = TrackingSignalsTab::new();
 
     for message in messages {
         match message {
             Ok(SBP::MsgTrackingState(msg)) => {
-                tracking_signals.handle_msg_tracking_state(msg.states.clone(), client_send_clone.clone());
+                tracking_signals
+                    .handle_msg_tracking_state(msg.states.clone(), client_send_clone.clone());
             }
             Ok(SBP::MsgObs(msg)) => {
-                tracking_signals.handle_obs(ObservationMsg::MsgObs(msg.clone()), client_send_clone.clone());
+                tracking_signals.handle_obs(
+                    ObservationMsg::MsgObs(msg.clone()),
+                    client_send_clone.clone(),
+                );
             }
             Ok(SBP::MsgMeasurementState(msg)) => {
-                tracking_signals.handle_msg_measurement_state(msg.states.clone(), client_send_clone.clone());
+                tracking_signals
+                    .handle_msg_measurement_state(msg.states.clone(), client_send_clone.clone());
             }
             // Ok(SBP::MsgObsDepA(_msg)) => {
             // }
             Ok(SBP::MsgObsDepB(msg)) => {
-                tracking_signals.handle_obs(ObservationMsg::MsgObsDepB(msg.clone()), client_send_clone.clone());
+                tracking_signals.handle_obs(
+                    ObservationMsg::MsgObsDepB(msg.clone()),
+                    client_send_clone.clone(),
+                );
             }
             Ok(SBP::MsgObsDepC(msg)) => {
-                tracking_signals.handle_obs(ObservationMsg::MsgObsDepC(msg.clone()), client_send_clone.clone());
+                tracking_signals.handle_obs(
+                    ObservationMsg::MsgObsDepC(msg.clone()),
+                    client_send_clone.clone(),
+                );
             }
 
             Ok(SBP::MsgVelNED(velocity_ned)) => {
@@ -136,36 +140,3 @@ pub fn process_messages(
         }
     }
 }
-
-// pub fn is_valid_gps_time(flags: u8) -> bool {
-//     UTC_TIME_FLAGS_TIME_SOURCE_NONE != (flags & UTC_TIME_FLAGS_TIME_SOURCE_MASK)
-// }
-
-// fn handle_gps_time(
-//     wn: u16,   // GPS week number.
-//     tow: u32,  // GPS time of week rounded to the nearest millisecond.
-//     flags: u8, // Status flags (reserved).
-//     outputs: &mut OutputDispatchers,
-//     data_sets: &mut DataSets,
-// ) -> Result<()> {
-//     if is_valid_gps_time(flags) {
-//         let gps_tow_secs_new_inner = tow as f64 / 1.0e+3_f64;
-//         let gps_tow_secs_new = Some(gps_tow_secs_new_inner);
-//         if let Some(gps_tow_secs_inner) = data_sets.dataset.gps_tow_secs {
-//             if (gps_tow_secs_new_inner - gps_tow_secs_inner) > TIME_INTERVAL_ERROR_MARGIN_SEC {
-//                 data_sets.dataset.delta_tow_ms =
-//                     Some((gps_tow_secs_new_inner - gps_tow_secs_inner) * 1.0e+3_f64);
-//                 let last_delta_tow_ms = data_sets.dataset.delta_tow_ms;
-//                 outputs.output.serialize(&data_sets.dataset)?;
-//                 data_sets.dataset_clear();
-//                 data_sets.dataset.gps_week = Some(wn as f64);
-//                 data_sets.dataset.gps_tow_secs = gps_tow_secs_new;
-//                 data_sets.dataset.delta_tow_ms = last_delta_tow_ms;
-//             }
-//         } else {
-//             data_sets.dataset.gps_week = Some(wn as f64);
-//             data_sets.dataset.gps_tow_secs = gps_tow_secs_new;
-//         }
-//     }
-//     Ok(())
-// }

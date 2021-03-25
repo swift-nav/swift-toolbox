@@ -41,12 +41,14 @@ TRACKING_HEADERS: List[int] = []
 
 POINTS = "POINTS"
 LABELS = "LABELS"
+CHECK_LABELS = "CHECK_LABELS"
 COLORS = "COLORS"
 MAX = "MAX"
 MIN = "MIN"
 
 TRACKING_SIGNALS_TAB: Dict[str, Any] = {
     POINTS: [],
+    CHECK_LABELS: [],
     LABELS: [],
     COLORS: [],
     MAX: 0,
@@ -68,6 +70,7 @@ def receive_messages(app_, backend, messages):
             POINTS_H[:] = [QPointF(point.x, point.y) for point in m.velocityStatus.hpoints]
             POINTS_V[:] = [QPointF(point.x, point.y) for point in m.velocityStatus.vpoints]
         elif m.which == "trackingStatus":
+            TRACKING_SIGNALS_TAB[CHECK_LABELS][:] = m.trackingStatus.checkLabels
             TRACKING_SIGNALS_TAB[LABELS][:] = m.trackingStatus.labels
             TRACKING_SIGNALS_TAB[COLORS][:] = m.trackingStatus.colors
             TRACKING_SIGNALS_TAB[POINTS][:] = [
@@ -208,6 +211,7 @@ class DataModel(QObject):
 class TrackingSignalsPoints(QObject):
 
     _colors: List[str] = []
+    _check_labels: List[str] = []
     _labels: List[str] = []
     _points: List[List[QPointF]] = [[]]
     _valid: bool = False
@@ -253,6 +257,14 @@ class TrackingSignalsPoints(QObject):
 
     max_ = Property(float, get_max, set_max)
 
+    def get_check_labels(self) -> List[str]:
+        return self._check_labels
+
+    def set_check_labels(self, check_labels) -> None:
+        self._check_labels = check_labels
+
+    check_labels = Property("QVariantList", get_check_labels, set_check_labels)  # type: ignore
+
     def get_labels(self) -> List[str]:
         return self._labels
 
@@ -289,6 +301,7 @@ class TrackingSignalsModel(QObject):  # pylint: disable=too-few-public-methods
     def fill_console_points(self, cp: TrackingSignalsPoints) -> TrackingSignalsPoints:  # pylint:disable=no-self-use
         cp.set_points(TRACKING_SIGNALS_TAB[POINTS])
         cp.set_labels(TRACKING_SIGNALS_TAB[LABELS])
+        cp.set_check_labels(TRACKING_SIGNALS_TAB[CHECK_LABELS])
         cp.set_colors(TRACKING_SIGNALS_TAB[COLORS])
         cp.set_max(TRACKING_SIGNALS_TAB[MAX])
         cp.set_min(TRACKING_SIGNALS_TAB[MIN])

@@ -27,11 +27,13 @@ Item{
         anchors.top: trackingBar.bottom
         anchors.bottom: trackingTab.bottom
         StackLayout {
-            id: trackingbarlayout
+            id: trackingBarLayout
+            width: parent.width
+            height: parent.height
             currentIndex: trackingBar.currentIndex
             TrackingTabComponents.TrackingSignalsTab{}
             Item {
-                id: trackingskyplotTab
+                id: trackingSkyplotTab
             }
 
         } 

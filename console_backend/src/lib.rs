@@ -5,4 +5,5 @@ pub mod constants;
 pub mod flags;
 pub mod process_messages;
 pub mod server;
+pub mod tracking_tab;
 pub mod types;

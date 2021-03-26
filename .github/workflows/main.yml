@@ -253,7 +253,7 @@ jobs:
   frontend_bench:
     name: Run Frontend Benchmarks
     continue-on-error: true
-    timeout-minutes: 5
+    timeout-minutes: 30
     needs:
       - build
     strategy:

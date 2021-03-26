@@ -111,7 +111,7 @@ FRONTEND_CPU_BENCHMARKS = {
             NAME: "202010224_192043",
             FILE_PATH: "data/202010224_192043.sbp",
             KEY_LOCATION: "mean",
-            EXPECTED: 1.75,
+            EXPECTED: 12.0,
             ERROR_MARGIN_FRAC: 0.05,
         },
     ],
@@ -151,7 +151,7 @@ FRONTEND_MEM_BENCHMARKS: Dict[str, List[Dict[str, Any]]] = {
         {
             NAME: "piksi-relay-1min",
             FILE_PATH: "data/piksi-relay-1min.sbp",
-            MAXIMUM_MEAN_MB: 200,
+            MAXIMUM_MEAN_MB: 300,
             MAXIMUM_RATE_OF_MAX_MEAN: 0.05,
             MAXIMUM_RATE_OF_MAX_STD: 0.3,
         },

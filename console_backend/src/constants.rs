@@ -407,6 +407,11 @@ pub const QZS_AUX_STR: &str = "AUX QZS L1";
 
 pub const CODE_NOT_AVAILABLE: &str = "N/A";
 
+/// Retrieve associated string with the provided signal code.
+///
+/// # Parameters
+///
+/// - `key`: The code, which is signal code, and satellite constellation-specific satellite identifier.
 pub fn code_to_str_map(sat_code: u8) -> &'static str {
     match sat_code {
         CODE_GPS_L1CA => GPS_L1CA_STR,
@@ -474,6 +479,11 @@ pub fn code_to_str_map(sat_code: u8) -> &'static str {
     }
 }
 
+/// Retrieve the signal constellation, band and code based off provided string.
+///
+/// # Parameters
+///
+/// - `sat_str`: The signal code.
 pub fn str_to_code_map(sat_str: &str) -> u8 {
     match sat_str {
         GPS_L1CA_STR => CODE_GPS_L1CA,
@@ -542,6 +552,11 @@ pub fn str_to_code_map(sat_str: &str) -> u8 {
     }
 }
 
+/// These colors are distinguishable from one another based on expected codes.
+///
+/// # Parameters
+///
+/// - `code`: The signal code.
 pub fn color_map(code: i16) -> &'static str {
     match code {
         1 => "#e58a8a",
@@ -587,6 +602,11 @@ pub fn color_map(code: i16) -> &'static str {
 
 const NUM_COLORS: u8 = 37;
 
+/// Retreive the associated color based on provided key.
+///
+/// # Parameters
+///
+/// - `key`: The code, which is signal code and satellite constellation-specific satellite identifier.
 pub fn get_color(key: (u8, i16)) -> &'static str {
     let (code, mut sat) = key;
 

@@ -107,7 +107,7 @@ fn validate_memory_benchmark(mem_readings: &[f32], cpu_readings: &[f32]) {
     let cpus = vec_1d_to_array(&cpu_readings).unwrap();
     assert!(
         mem_readings.len() >= MINIMUM_MEM_READINGS,
-        "Benchmark does not meet minimum samples collected {} requires {}",
+        "This benchmark requires {} samples to be collected for analysis and only {} samples were collected.",
         mem_readings.len(),
         MINIMUM_MEM_READINGS
     );
@@ -128,7 +128,17 @@ fn validate_memory_benchmark(mem_readings: &[f32], cpu_readings: &[f32]) {
 
     let mem_usage_over_amount = mem_usage_max - MAXIMUM_MEM_USAGE_KB;
     let mem_usage_threshold = MAXIMUM_MEM_USAGE_KB * DIFF_THRESHOLD;
-    assert!((mem_usage_max - MAXIMUM_MEM_USAGE_KB)<=MAXIMUM_MEM_USAGE_KB*DIFF_THRESHOLD, "Worst Case Memory Usage: {:.2}kB was {:.2}kb greater than threshold margin {:.2}kB where max is {:.2}kB.", mem_usage_max, mem_usage_over_amount, mem_usage_threshold, MAXIMUM_MEM_USAGE_KB);
+    let worst_case_message = format!("Worst Case Memory Usage:\nThe mean memory usage, {:.2}kB, is added to the stdev, {:.2}kB, equaling {:.2}kB.", mem_usage_mean, mem_usage_std, mem_usage_max);
+    let worst_case_message = format!("{}\nThen this value is subtracted by the ideal maximum memory usage {:.2}kB equaling {:.2}kB.", worst_case_message, MAXIMUM_MEM_USAGE_KB, mem_usage_over_amount);
+    let worst_case_message = format!(
+        "{}\nThis amount is greater than {:.2}kB which is {:.2} of the maximum amount {:.2}.",
+        worst_case_message, mem_usage_threshold, DIFF_THRESHOLD, MAXIMUM_MEM_USAGE_KB
+    );
+    assert!(
+        (mem_usage_max - MAXIMUM_MEM_USAGE_KB) <= MAXIMUM_MEM_USAGE_KB * DIFF_THRESHOLD,
+        "{}",
+        worst_case_message
+    );
     assert!(*mem_usage_std <= MAXIMUM_MEM_USAGE_KB*MAXIMUM_STANDARD_DEV_RATE_OF_MAXIMUM_MEM,
         "Memory Standard Deviation {:.2}kB was greater than {:.2}kB which is {:.2} of the maximum memory usage {:.2}kB.", *mem_usage_std, (
             MAXIMUM_MEM_USAGE_KB*MAXIMUM_STANDARD_DEV_RATE_OF_MAXIMUM_MEM), MAXIMUM_STANDARD_DEV_RATE_OF_MAXIMUM_MEM, MAXIMUM_MEM_USAGE_KB

@@ -102,7 +102,7 @@ FRONTEND_CPU_BENCHMARKS = {
             NAME: "202010224_192043",
             FILE_PATH: "data/202010224_192043.sbp",
             KEY_LOCATION: "mean",
-            EXPECTED: 5.0,
+            EXPECTED: 50.0,
             ERROR_MARGIN_FRAC: 0.05,
         },
     ],

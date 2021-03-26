@@ -21,12 +21,11 @@ from PySide2 import QtQml, QtCore  # pylint:disable=no-name-in-module
 from PySide2.QtQml import qmlRegisterType  # pylint:disable=no-name-in-module
 from PySide2.QtCore import Property  # pylint:disable=no-name-in-module
 
+from constants import ApplicationStates, MessageKeys, Keys, PlatformKeys, QTKeys  # pylint: disable=unused-import
+
 import console_resources  # type: ignore # pylint: disable=unused-import,import-error
 
 import console_backend.server  # type: ignore  # pylint: disable=import-error,no-name-in-module
-
-CLOSE = "CLOSE"
-DARWIN = "darwin"
 
 CONSOLE_BACKEND_CAPNP_PATH = "console_backend.capnp"
 
@@ -39,20 +38,14 @@ POINTS_V: List[QPointF] = []
 TRACKING_POINTS: List[List[QPointF]] = []
 TRACKING_HEADERS: List[int] = []
 
-POINTS = "POINTS"
-LABELS = "LABELS"
-CHECK_LABELS = "CHECK_LABELS"
-COLORS = "COLORS"
-MAX = "MAX"
-MIN = "MIN"
 
 TRACKING_SIGNALS_TAB: Dict[str, Any] = {
-    POINTS: [],
-    CHECK_LABELS: [],
-    LABELS: [],
-    COLORS: [],
-    MAX: 0,
-    MIN: 0,
+    Keys.POINTS: [],
+    Keys.CHECK_LABELS: [],
+    Keys.LABELS: [],
+    Keys.COLORS: [],
+    Keys.MAX: 0,
+    Keys.MIN: 0,
 }
 
 capnp.remove_import_hook()  # pylint: disable=no-member
@@ -62,26 +55,25 @@ def receive_messages(app_, backend, messages):
     while True:
         buffer = backend.fetch_message()
         m = messages.Message.from_bytes(buffer)
-        if m.which == "status":
-            if m.status.text == CLOSE:
+        if m.which == MessageKeys.STATUS:
+            if m.status.text == ApplicationStates.CLOSE:
                 return app_.quit()
-        elif m.which == "velocityStatus":
+        elif m.which == MessageKeys.VELOCITY_STATUS:
             POINTS_H_MINMAX[0] = (m.velocityStatus.min, m.velocityStatus.max)
             POINTS_H[:] = [QPointF(point.x, point.y) for point in m.velocityStatus.hpoints]
             POINTS_V[:] = [QPointF(point.x, point.y) for point in m.velocityStatus.vpoints]
-        elif m.which == "trackingStatus":
-            TRACKING_SIGNALS_TAB[CHECK_LABELS][:] = m.trackingStatus.checkLabels
-            TRACKING_SIGNALS_TAB[LABELS][:] = m.trackingStatus.labels
-            TRACKING_SIGNALS_TAB[COLORS][:] = m.trackingStatus.colors
-            TRACKING_SIGNALS_TAB[POINTS][:] = [
+        elif m.which == MessageKeys.TRACKING_STATUS:
+            TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS][:] = m.trackingStatus.checkLabels
+            TRACKING_SIGNALS_TAB[Keys.LABELS][:] = m.trackingStatus.labels
+            TRACKING_SIGNALS_TAB[Keys.COLORS][:] = m.trackingStatus.colors
+            TRACKING_SIGNALS_TAB[Keys.POINTS][:] = [
                 [QPointF(point.x, point.y) for point in m.trackingStatus.data[idx]]
                 for idx in range(len(m.trackingStatus.data))
             ]
-            TRACKING_SIGNALS_TAB[MAX] = m.trackingStatus.max
-            TRACKING_SIGNALS_TAB[MIN] = m.trackingStatus.min
+            TRACKING_SIGNALS_TAB[Keys.MAX] = m.trackingStatus.max
+            TRACKING_SIGNALS_TAB[Keys.MIN] = m.trackingStatus.min
         else:
             pass
-            # print(f"other message: {m}")
 
 
 
@@ -144,8 +136,8 @@ class ConsolePoints(QObject):
     def set_vpoints(self, vpoints) -> None:
         self._vpoints = vpoints
 
-    hpoints = Property("QVariantList", get_hpoints, set_hpoints)  # type: ignore
-    vpoints = Property("QVariantList", get_vpoints, set_vpoints)  # type: ignore
+    hpoints = Property(QTKeys.QVARIANTLIST, get_hpoints, set_hpoints)  # type: ignore
+    vpoints = Property(QTKeys.QVARIANTLIST, get_vpoints, set_vpoints)  # type: ignore
 
     @Slot(QtCharts.QXYSeries)  # type: ignore
     def fill_hseries(self, hseries):
@@ -263,7 +255,7 @@ class TrackingSignalsPoints(QObject):
     def set_check_labels(self, check_labels) -> None:
         self._check_labels = check_labels
 
-    check_labels = Property("QVariantList", get_check_labels, set_check_labels)  # type: ignore
+    check_labels = Property(QTKeys.QVARIANTLIST, get_check_labels, set_check_labels)  # type: ignore
 
     def get_labels(self) -> List[str]:
         return self._labels
@@ -271,7 +263,7 @@ class TrackingSignalsPoints(QObject):
     def set_labels(self, labels) -> None:
         self._labels = labels
 
-    labels = Property("QVariantList", get_labels, set_labels)  # type: ignore
+    labels = Property(QTKeys.QVARIANTLIST, get_labels, set_labels)  # type: ignore
 
     def get_colors(self) -> List[str]:
         return self._colors
@@ -279,7 +271,7 @@ class TrackingSignalsPoints(QObject):
     def set_colors(self, colors) -> None:
         self._colors = colors
 
-    colors = Property("QVariantList", get_colors, set_colors)  # type: ignore
+    colors = Property(QTKeys.QVARIANTLIST, get_colors, set_colors)  # type: ignore
 
     def get_points(self) -> List[List[QPointF]]:
         return self._points
@@ -287,7 +279,7 @@ class TrackingSignalsPoints(QObject):
     def set_points(self, points) -> None:
         self._points = points
 
-    points = Property("QVariantList", get_points, set_points)  # type: ignore
+    points = Property(QTKeys.QVARIANTLIST, get_points, set_points)  # type: ignore
 
     @Slot(list)  # type: ignore
     def fill_series(self, series_list):
@@ -299,12 +291,12 @@ class TrackingSignalsPoints(QObject):
 class TrackingSignalsModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(TrackingSignalsPoints)  # type: ignore
     def fill_console_points(self, cp: TrackingSignalsPoints) -> TrackingSignalsPoints:  # pylint:disable=no-self-use
-        cp.set_points(TRACKING_SIGNALS_TAB[POINTS])
-        cp.set_labels(TRACKING_SIGNALS_TAB[LABELS])
-        cp.set_check_labels(TRACKING_SIGNALS_TAB[CHECK_LABELS])
-        cp.set_colors(TRACKING_SIGNALS_TAB[COLORS])
-        cp.set_max(TRACKING_SIGNALS_TAB[MAX])
-        cp.set_min(TRACKING_SIGNALS_TAB[MIN])
+        cp.set_points(TRACKING_SIGNALS_TAB[Keys.POINTS])
+        cp.set_labels(TRACKING_SIGNALS_TAB[Keys.LABELS])
+        cp.set_check_labels(TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS])
+        cp.set_colors(TRACKING_SIGNALS_TAB[Keys.COLORS])
+        cp.set_max(TRACKING_SIGNALS_TAB[Keys.MAX])
+        cp.set_min(TRACKING_SIGNALS_TAB[Keys.MIN])
         return cp
 
 def is_frozen() -> bool:

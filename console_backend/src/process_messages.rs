@@ -34,8 +34,10 @@ pub fn process_messages(
                 tracking_signals
                     .handle_msg_measurement_state(msg.states.clone(), client_send_clone.clone());
             }
-            // Ok(SBP::MsgObsDepA(_msg)) => {
-            // }
+            Ok(SBP::MsgObsDepA(_msg)) => {
+                //CPP-85 Unhandled for tracking signals plot tab.
+                println!("The message type, MsgObsDepA, is not handled in the Tracking->SignalsPlot tab.");
+            }
             Ok(SBP::MsgObsDepB(msg)) => {
                 tracking_signals.handle_obs(
                     ObservationMsg::MsgObsDepB(msg.clone()),

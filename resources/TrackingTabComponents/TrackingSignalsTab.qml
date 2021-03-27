@@ -19,6 +19,7 @@ Item {
     property variant labels: []
     property variant colors: []
     property variant check_labels: []
+    property variant check_visibility: []
     Rectangle {
         id: trackingSignalsArea
         width: parent.width
@@ -156,11 +157,12 @@ Item {
             Component.onCompleted: {
             }
         }
-        RowLayout {
+        GridLayout {
             id: trackingSignalsCheckboxes
-            width: parent.width
-            height: 25
+            columns: 6
+            anchors.horizontalCenter: trackingSignalsChart.horizontalCenter
             anchors.top: trackingSignalsChart.bottom
+            
             
             Repeater {
                 model: check_labels
@@ -169,7 +171,26 @@ Item {
                     CheckBox {
                         checked: true
                         text: modelData
+                        verticalPadding: 0
+                        onClicked: {
+                            check_visibility[index] = checked;
+                            if (index == 0){
+                                lineLegend.visible = !lineLegend.visible;
+                                return;
+                            }
+                            var labels_not_visible = [];
+                            for (var idx in check_visibility){
+                                if (!check_visibility[idx]){
+                                    labels_not_visible.push(check_labels[idx]);
+                                }
+                            }
+                            data_model.check_visibility(labels_not_visible);
+                        } 
+                        Component.onCompleted: {
+                            check_visibility.push(checked);
+                        }
                     }
+
                 }
             }
         }

@@ -1,7 +1,7 @@
 use ordered_float::OrderedFloat;
 use std::{
     collections::{HashMap, VecDeque},
-    sync::mpsc::Sender,
+    sync::{mpsc::Sender, Arc, Mutex},
     time::Instant,
 };
 
@@ -19,10 +19,8 @@ use sbp::messages::{
     tracking::{MeasurementState, TrackingChannelState},
 };
 
-pub type Cn0Dict = HashMap<(u8, i16), Deque<(OrderedFloat<f64>, f64)>>;
-pub type Cn0Age = HashMap<(u8, i16), f64>;
-pub type Error = std::boxed::Box<dyn std::error::Error>;
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Cn0Dict = HashMap<(SignalCodes, i16), Deque<(OrderedFloat<f64>, f64)>>;
+pub type Cn0Age = HashMap<(SignalCodes, i16), f64>;
 
 /// TrackingSignalsTab struct.
 ///
@@ -47,8 +45,9 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// - `t_init`: Instant monotonic time used as starting reference time.
 /// - `time`: Vector of Monotic times stored.
 #[derive(Debug)]
-pub struct TrackingSignalsTab {
+pub struct TrackingSignalsTab<'a> {
     pub at_least_one_track_received: bool,
+    pub check_labels: [&'static str; 12],
     pub cn0_age: Cn0Age,
     pub cn0_dict: Cn0Dict,
     pub colors: Vec<String>,
@@ -56,28 +55,37 @@ pub struct TrackingSignalsTab {
     pub glo_slot_dict: HashMap<i16, i16>,
     pub gps_tow: f64,
     pub gps_week: u16,
-    pub incoming_obs_cn0: HashMap<(u8, i16), f64>,
+    pub incoming_obs_cn0: HashMap<(SignalCodes, i16), f64>,
     pub last_update_time: Instant,
     pub max: f64,
     pub min: f64,
     pub prev_obs_count: u8,
     pub prev_obs_total: u8,
     pub sats: Vec<Deque<(OrderedFloat<f64>, f64)>>,
+    pub shared_state: &'a Arc<Mutex<SharedState>>,
     pub sv_labels: Vec<String>,
     pub t_init: Instant,
     pub time: VecDeque<f64>,
 }
 
-impl Default for TrackingSignalsTab {
-    fn default() -> TrackingSignalsTab {
-        TrackingSignalsTab::new()
-    }
-}
-
-impl TrackingSignalsTab {
-    pub fn new() -> TrackingSignalsTab {
+impl<'a> TrackingSignalsTab<'a> {
+    pub fn new(shared_state: &'a Arc<Mutex<SharedState>>) -> TrackingSignalsTab {
         TrackingSignalsTab {
             at_least_one_track_received: false,
+            check_labels: [
+                SHOW_LEGEND,
+                GPS_L1CA,
+                GPS_L2C_M,
+                GLO_L10F,
+                GLO_L20F,
+                BDS2_B1_I,
+                BDS2_B2_I,
+                GAL_E1_B,
+                GAL_E5B_I,
+                QZS_L1CA,
+                QZS_L2C_M,
+                SBAS_L1,
+            ],
             cn0_dict: Cn0Dict::new(),
             cn0_age: Cn0Age::new(),
             colors: Vec::new(),
@@ -92,14 +100,8 @@ impl TrackingSignalsTab {
             prev_obs_count: 0,
             prev_obs_total: 0,
             sats: Vec::new(),
-            sv_labels: {
-                let mut labels: Vec<String> = Vec::new();
-                for code in SUPPORTED_CODES {
-                    let code_str = code_to_str_map(*code);
-                    labels.push(String::from(code_str));
-                }
-                labels
-            },
+            shared_state,
+            sv_labels: Vec::new(),
             t_init: Instant::now(),
             time: {
                 let mut time: Deque<f64> = Deque::with_capacity(NUM_POINTS);
@@ -116,7 +118,7 @@ impl TrackingSignalsTab {
     ///
     /// - `key`: The (code, sat) to store.
     /// - `cn0`: The carrier-to-noise density.
-    fn push_to_cn0_dict(&mut self, key: (u8, i16), t: f64, cn0: f64) {
+    fn push_to_cn0_dict(&mut self, key: (SignalCodes, i16), t: f64, cn0: f64) {
         let cn0_deque = self
             .cn0_dict
             .entry(key)
@@ -129,14 +131,14 @@ impl TrackingSignalsTab {
     ///
     /// - `key`: The (code, sat) to store.
     /// - `age`: The time elapsed since last start.
-    fn push_to_cn0_age(&mut self, key: (u8, i16), age: f64) {
+    fn push_to_cn0_age(&mut self, key: (SignalCodes, i16), age: f64) {
         let cn0_age = self.cn0_age.entry(key).or_insert(-1.0);
         *cn0_age = age;
     }
 
     /// Remove cn0 data if age is too old.
     pub fn clean_cn0(&mut self) {
-        let mut remove_vec: Vec<(u8, i16)> = Vec::new();
+        let mut remove_vec: Vec<(SignalCodes, i16)> = Vec::new();
         for (key, _) in self.cn0_dict.iter_mut() {
             if self.cn0_age[key] < self.time[0] {
                 remove_vec.push(*key);
@@ -154,7 +156,18 @@ impl TrackingSignalsTab {
         self.colors.clear();
         self.sats.clear();
         let mut temp_labels = Vec::new();
+        let filters;
+        {
+            let shared_data = self.shared_state.lock().unwrap();
+            filters = (*shared_data).tracking_tab.check_visibility.clone();
+        }
         for (key, _) in self.cn0_dict.iter_mut() {
+            let (signal_code, _) = key;
+            if let Some(filter) = signal_code.filters() {
+                if filters.contains(&filter) {
+                    continue;
+                }
+            }
             let (code_lbl, freq_lbl, id_lbl) = get_label(*key, &self.glo_slot_dict);
             let mut label = String::from("");
             if let Some(lbl) = code_lbl {
@@ -166,9 +179,11 @@ impl TrackingSignalsTab {
             if let Some(lbl) = id_lbl {
                 label = format!("{} {}", label, lbl);
             }
+
             temp_labels.push((label, *key));
         }
         temp_labels.sort_by(|x, y| (x.0).cmp(&(y.0)));
+
         for (label, key) in temp_labels.iter() {
             self.sv_labels.push(label.clone());
             self.colors.push(String::from(get_color(*key)));
@@ -187,12 +202,13 @@ impl TrackingSignalsTab {
         states: Vec<MeasurementState>,
         client_send: Sender<Vec<u8>>,
     ) {
-        let mut codes_that_came: Vec<(u8, i16)> = Vec::new();
+        let mut codes_that_came: Vec<(SignalCodes, i16)> = Vec::new();
         let t = (Instant::now()).duration_since(self.t_init).as_secs_f64();
         self.time.add(t);
         for (idx, state) in states.iter().enumerate() {
             let mut sat = state.mesid.sat as i16;
-            if code_is_glo(state.mesid.code) {
+            let signal_code = SignalCodes::from(state.mesid.code);
+            if signal_code.code_is_glo() {
                 if state.mesid.sat > GLO_SLOT_SAT_MAX {
                     self.glo_fcn_dict
                         .insert(idx as u8, state.mesid.sat as i16 - 100.0 as i16);
@@ -204,7 +220,7 @@ impl TrackingSignalsTab {
                 }
             }
 
-            let key = (state.mesid.code, sat);
+            let key = (signal_code, sat);
             codes_that_came.push(key);
             if state.cn0 != 0 {
                 self.push_to_cn0_dict(key, t, state.cn0 as f64 / 4.0);
@@ -227,12 +243,13 @@ impl TrackingSignalsTab {
         client_send: Sender<Vec<u8>>,
     ) {
         self.at_least_one_track_received = true;
-        let mut codes_that_came: Vec<(u8, i16)> = Vec::new();
+        let mut codes_that_came: Vec<(SignalCodes, i16)> = Vec::new();
         let t = (Instant::now()).duration_since(self.t_init).as_secs_f64();
         self.time.add(t);
         for state in states.iter() {
             let mut sat = state.sid.sat as i16;
-            if code_is_glo(state.sid.code) {
+            let signal_code = SignalCodes::from(state.sid.code);
+            if signal_code.code_is_glo() {
                 if state.sid.sat > GLO_SLOT_SAT_MAX {
                     sat -= 100.0 as i16;
                 } else {
@@ -240,7 +257,7 @@ impl TrackingSignalsTab {
                 }
                 self.glo_slot_dict.insert(sat, state.sid.sat as i16);
             }
-            let key = (state.sid.code, sat);
+            let key = (signal_code, sat);
             codes_that_came.push(key);
             if state.cn0 != 0 {
                 self.push_to_cn0_dict(key, t, state.cn0 as f64 / 4.0);
@@ -326,21 +343,25 @@ impl TrackingSignalsTab {
             let (code, sat, cn0) = match state {
                 Observations::PackedObsContentDepB(obs) => {
                     let mut sat_ = obs.sid.sat as i16;
-                    if code_is_gps(obs.sid.code) {
+                    let signal_code = SignalCodes::from(obs.sid.code);
+                    if signal_code.code_is_gps() {
                         sat_ += 1;
                     }
-                    (obs.sid.code, sat_, obs.cn0 as f64)
+                    (signal_code, sat_, obs.cn0 as f64)
                 }
                 Observations::PackedObsContentDepC(obs) => {
                     let mut sat_ = obs.sid.sat as i16;
-                    if code_is_gps(obs.sid.code) {
+                    let signal_code = SignalCodes::from(obs.sid.code);
+                    if signal_code.code_is_gps() {
                         sat_ += 1;
                     }
-                    (obs.sid.code, sat_, obs.cn0 as f64)
+                    (signal_code, sat_, obs.cn0 as f64)
                 }
-                Observations::PackedObsContent(obs) => {
-                    (obs.sid.code, obs.sid.sat as i16, obs.cn0 as f64)
-                }
+                Observations::PackedObsContent(obs) => (
+                    SignalCodes::from(obs.sid.code),
+                    obs.sid.sat as i16,
+                    obs.cn0 as f64,
+                ),
             };
             self.incoming_obs_cn0.insert((code, sat), cn0 / 4.0);
         }
@@ -364,14 +385,14 @@ impl TrackingSignalsTab {
     /// - `client_send`: The Sender channel to be used to send data to frontend.
     pub fn update_from_obs(
         &mut self,
-        obs_dict: HashMap<(u8, i16), f64>,
+        obs_dict: HashMap<(SignalCodes, i16), f64>,
         client_send: Sender<Vec<u8>>,
     ) {
         if self.at_least_one_track_received {
             return;
         }
 
-        let mut codes_that_came: Vec<(u8, i16)> = Vec::new();
+        let mut codes_that_came: Vec<(SignalCodes, i16)> = Vec::new();
         let t = (Instant::now()).duration_since(self.t_init).as_secs_f64();
         self.time.add(t);
         for (key, cn0) in obs_dict.iter() {
@@ -417,7 +438,7 @@ pub enum Observations {
     PackedObsContentDepC(PackedObsContentDepC),
 }
 
-impl TabBackend for TrackingSignalsTab {
+impl TabBackend for TrackingSignalsTab<'_> {
     /// Package data into a message buffer and send to frontend.
     ///
     /// # Parameters:
@@ -462,12 +483,10 @@ impl TabBackend for TrackingSignalsTab {
                 }
             }
         }
-        //TODO(@johnmichael.burke)[CPP-83]Fix this once implemented reverse communication with backend tabs.
-        let checkbox_labels = vec![GPS, GLO, GAL, QZS, BDS, SBAS];
         let mut tracking_checkbox_labels = tracking_status
             .reborrow()
-            .init_check_labels(checkbox_labels.len() as u32);
-        for (i, label) in checkbox_labels.iter().enumerate() {
+            .init_check_labels(self.check_labels.len() as u32);
+        for (i, label) in self.check_labels.iter().enumerate() {
             tracking_checkbox_labels.set(i as u32, label);
         }
 

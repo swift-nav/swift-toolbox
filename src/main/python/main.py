@@ -21,7 +21,7 @@ from PySide2 import QtQml, QtCore  # pylint:disable=no-name-in-module
 from PySide2.QtQml import qmlRegisterType  # pylint:disable=no-name-in-module
 from PySide2.QtCore import Property  # pylint:disable=no-name-in-module
 
-from constants import ApplicationStates, MessageKeys, Keys, PlatformKeys, QTKeys  # pylint: disable=unused-import
+from constants import ApplicationStates, MessageKeys, Keys, QTKeys
 
 import console_resources  # type: ignore # pylint: disable=unused-import,import-error
 
@@ -196,6 +196,14 @@ class DataModel(QObject):
         m = self.messages.Message()
         m.fileinRequest = m.init("fileinRequest")
         m.fileinRequest.filename = self.file_in
+        buffer = m.to_bytes()
+        self.endpoint.send_message(buffer)
+
+    @Slot(list)  # type: ignore
+    def check_visibility(self, checks: List[str]) -> None:
+        m = self.messages.Message()
+        m.trackingStatusFront = m.init("trackingStatusFront")
+        m.trackingStatusFront.checkVisibility = checks
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
 

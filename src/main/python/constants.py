@@ -16,8 +16,5 @@ class MessageKeys(str, Enum):
     VELOCITY_STATUS = "velocityStatus"
     TRACKING_STATUS = "trackingStatus"
 
-class PlatformKeys(str, Enum):
-    DARWIN = "darwin"
-
 class QTKeys(str, Enum):
     QVARIANTLIST = "QVariantList"

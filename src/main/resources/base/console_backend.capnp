@@ -30,6 +30,10 @@ struct TrackingStatus {
     checkLabels @5 :List(Text);
 }
 
+struct TrackingStatusFront {
+    checkVisibility @0 :List(Text);
+}
+
 struct Status {
     text @0 :Text;
 }
@@ -41,5 +45,6 @@ struct Message {
         status @2 :Status;
         fileinRequest @3 :FileinRequest;
         trackingStatus @4 :TrackingStatus;
+        trackingStatusFront @5 :TrackingStatusFront;
     }
 }

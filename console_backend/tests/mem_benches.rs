@@ -10,7 +10,7 @@ use std::{
 };
 use sysinfo::{get_current_pid, Process, ProcessExt, System, SystemExt};
 extern crate console_backend;
-use console_backend::process_messages;
+use console_backend::{process_messages, types::SharedState};
 
 const BENCH_FILEPATH: &str = "./tests/data/piksi-relay-1min.sbp";
 const MINIMUM_MEM_READINGS: usize = 20;
@@ -91,7 +91,9 @@ fn test_run_process_messages() {
             .expect("sending client recv handle should succeed");
 
         let messages = sbp::iter_messages(Box::new(fs::File::open(BENCH_FILEPATH).unwrap()));
-        process_messages::process_messages(messages, client_send);
+        let shared_state = SharedState::new();
+        let shared_state = Arc::new(Mutex::new(shared_state));
+        process_messages::process_messages(messages, &shared_state, client_send);
     }
     recv_thread.join().expect("join should succeed");
     mem_read_thread.join().expect("join should succeed");
@@ -140,7 +142,7 @@ fn validate_memory_benchmark(mem_readings: &[f32], cpu_readings: &[f32]) {
         worst_case_message
     );
     assert!(*mem_usage_std <= MAXIMUM_MEM_USAGE_KB*MAXIMUM_STANDARD_DEV_RATE_OF_MAXIMUM_MEM,
-        "Memory Standard Deviation {:.2}kB was greater than {:.2}kB which is {:.2} of the maximum memory usage {:.2}kB.", *mem_usage_std, (
+        "Memory Standard Deviation, {:.2}kB, was greater than {:.2}kB which is {:.2} of the maximum memory usage {:.2}kB.", *mem_usage_std, (
             MAXIMUM_MEM_USAGE_KB*MAXIMUM_STANDARD_DEV_RATE_OF_MAXIMUM_MEM), MAXIMUM_STANDARD_DEV_RATE_OF_MAXIMUM_MEM, MAXIMUM_MEM_USAGE_KB
     );
     assert!(

@@ -2,21 +2,25 @@ use capnp::message::Builder;
 use capnp::serialize;
 use ordered_float::OrderedFloat;
 use sbp::messages::SBP;
-use std::sync::mpsc;
+use std::sync::{mpsc, Arc, Mutex};
 
 use crate::console_backend_capnp as m;
 
 use crate::tracking_tab::*;
+use crate::types::SharedState;
 
 pub fn process_messages(
     messages: impl Iterator<Item = sbp::Result<SBP>>,
+    shared_state: &Arc<Mutex<SharedState>>,
     client_send_clone: mpsc::Sender<Vec<u8>>,
 ) {
     let mut hpoints: Vec<(f64, OrderedFloat<f64>)> = vec![];
     let mut vpoints: Vec<(f64, OrderedFloat<f64>)> = vec![];
     let mut tow: f64;
-
-    let mut tracking_signals = TrackingSignalsTab::new();
+    let shared_state_clone = Arc::clone(&shared_state);
+    // let shared_state_clone2 = Arc::clone(&shared_state);
+    let mut tracking_signals = TrackingSignalsTab::new(&shared_state_clone);
+    // let mut tracking_signals2 = TrackingSignalsTab::new(&shared_state_clone2);
 
     for message in messages {
         match message {

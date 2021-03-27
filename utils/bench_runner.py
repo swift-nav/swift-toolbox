@@ -120,7 +120,7 @@ FRONTEND_CPU_BENCHMARKS = {
             NAME: "202010224_192043",
             FILE_PATH: "data/202010224_192043.sbp",
             KEY_LOCATION: "mean",
-            EXPECTED: 12.0,
+            EXPECTED: 70.0,
             ERROR_MARGIN_FRAC: 0.05,
         },
     ],
@@ -134,7 +134,7 @@ MAXIMUM_MEAN_MB = "maximum_mean_mb"
 BYTES_TO_MB = lambda x: float(x) / (1 << 20)
 ABSOLUTE_MINIMUM_MEMORY_MB = 1
 ABSOLUTE_MINIMUM_READINGS = 200
-THREAD_TIMEOUT_SEC = 30
+THREAD_TIMEOUT_SEC = 180
 RUN_COUNT = 5
 
 FRONTEND_MEM_BENCHMARKS: Dict[str, List[Dict[str, Any]]] = {
@@ -142,7 +142,7 @@ FRONTEND_MEM_BENCHMARKS: Dict[str, List[Dict[str, Any]]] = {
         {
             NAME: "piksi-relay-1min",
             FILE_PATH: "data/piksi-relay-1min.sbp",
-            MAXIMUM_MEAN_MB: 200,
+            MAXIMUM_MEAN_MB: 300,
             MAXIMUM_RATE_OF_MAX_MEAN: 0.05,
             MAXIMUM_RATE_OF_MAX_STD: 0.3,
         },
@@ -160,7 +160,7 @@ FRONTEND_MEM_BENCHMARKS: Dict[str, List[Dict[str, Any]]] = {
         {
             NAME: "piksi-relay-1min",
             FILE_PATH: "data/piksi-relay-1min.sbp",
-            MAXIMUM_MEAN_MB: 200,
+            MAXIMUM_MEAN_MB: 350,
             MAXIMUM_RATE_OF_MAX_MEAN: 0.05,
             MAXIMUM_RATE_OF_MAX_STD: 0.4,
         },

@@ -768,7 +768,7 @@ dependencies = [
 [[package]]
 name = "sbp"
 version = "3.4.5"
-source = "git+https://github.com/swift-nav/libsbp.git?rev=bee5001068bc36c4a3385548dbd5478d7c95fcee#bee5001068bc36c4a3385548dbd5478d7c95fcee"
+source = "git+https://github.com/swift-nav/libsbp.git?rev=0563350bb387e4a966a2b558adb7b05b2baf005f#0563350bb387e4a966a2b558adb7b05b2baf005f"
 dependencies = [
  "byteorder",
  "bytes",

@@ -18,9 +18,7 @@ pub fn process_messages(
     let mut vpoints: Vec<(f64, OrderedFloat<f64>)> = vec![];
     let mut tow: f64;
     let shared_state_clone = Arc::clone(&shared_state);
-    // let shared_state_clone2 = Arc::clone(&shared_state);
     let mut tracking_signals = TrackingSignalsTab::new(&shared_state_clone);
-    // let mut tracking_signals2 = TrackingSignalsTab::new(&shared_state_clone2);
 
     for message in messages {
         match message {

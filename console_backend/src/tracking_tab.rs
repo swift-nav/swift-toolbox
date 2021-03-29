@@ -61,6 +61,7 @@ pub struct TrackingSignalsTab<'a> {
     pub min: f64,
     pub prev_obs_count: u8,
     pub prev_obs_total: u8,
+    pub received_codes: Vec<SignalCodes>,
     pub sats: Vec<Deque<(OrderedFloat<f64>, f64)>>,
     pub shared_state: &'a Arc<Mutex<SharedState>>,
     pub sv_labels: Vec<String>,
@@ -99,6 +100,7 @@ impl<'a> TrackingSignalsTab<'a> {
             min: SNR_THRESHOLD,
             prev_obs_count: 0,
             prev_obs_total: 0,
+            received_codes: Vec::new(),
             sats: Vec::new(),
             shared_state,
             sv_labels: Vec::new(),
@@ -202,6 +204,7 @@ impl<'a> TrackingSignalsTab<'a> {
         states: Vec<MeasurementState>,
         client_send: Sender<Vec<u8>>,
     ) {
+        self.at_least_one_track_received = true;
         let mut codes_that_came: Vec<(SignalCodes, i16)> = Vec::new();
         let t = (Instant::now()).duration_since(self.t_init).as_secs_f64();
         self.time.add(t);
@@ -211,7 +214,7 @@ impl<'a> TrackingSignalsTab<'a> {
             if signal_code.code_is_glo() {
                 if state.mesid.sat > GLO_SLOT_SAT_MAX {
                     self.glo_fcn_dict
-                        .insert(idx as u8, state.mesid.sat as i16 - 100.0 as i16);
+                        .insert(idx as u8, state.mesid.sat as i16 - 100);
                 }
                 sat = *self.glo_fcn_dict.get(&(idx as u8)).unwrap_or(&(0_i16));
 
@@ -219,12 +222,19 @@ impl<'a> TrackingSignalsTab<'a> {
                     self.glo_slot_dict.insert(sat, state.mesid.sat as i16);
                 }
             }
-
             let key = (signal_code, sat);
             codes_that_came.push(key);
             if state.cn0 != 0 {
                 self.push_to_cn0_dict(key, t, state.cn0 as f64 / 4.0);
                 self.push_to_cn0_age(key, t);
+            }
+            if !self.received_codes.contains(&signal_code){
+                self.received_codes.push(signal_code);
+            }
+        }
+        for (key, cn0_deque) in self.cn0_dict.iter_mut() {
+            if !codes_that_came.contains(key){
+                cn0_deque.add((OrderedFloat(t), 0.0));
             }
         }
         self.clean_cn0();
@@ -366,12 +376,7 @@ impl<'a> TrackingSignalsTab<'a> {
             self.incoming_obs_cn0.insert((code, sat), cn0 / 4.0);
         }
 
-        if count == (total - 1)
-            && (Instant::now())
-                .duration_since(self.last_update_time)
-                .as_secs_f64()
-                < GUI_UPDATE_PERIOD
-        {
+        if count == (total - 1){
             self.last_update_time = Instant::now();
             self.update_from_obs(self.incoming_obs_cn0.clone(), client_send);
         }
@@ -391,15 +396,23 @@ impl<'a> TrackingSignalsTab<'a> {
         if self.at_least_one_track_received {
             return;
         }
-
         let mut codes_that_came: Vec<(SignalCodes, i16)> = Vec::new();
         let t = (Instant::now()).duration_since(self.t_init).as_secs_f64();
         self.time.add(t);
         for (key, cn0) in obs_dict.iter() {
+            let (signal_code, _) = *key;
             codes_that_came.push(*key);
             if *cn0 > 0.0_f64 {
                 self.push_to_cn0_dict(*key, t, *cn0);
                 self.push_to_cn0_age(*key, t);
+            }
+            if !self.received_codes.contains(&signal_code){
+                self.received_codes.push(signal_code);
+            }
+        }
+        for (key, cn0_deque) in self.cn0_dict.iter_mut() {
+            if !codes_that_came.contains(key){
+                cn0_deque.add((OrderedFloat(t), 0.0));
             }
         }
         self.clean_cn0();

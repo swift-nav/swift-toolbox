@@ -44,8 +44,8 @@ Item {
                 
                 anchors.bottom: trackingSignalsChart.bottom
                 anchors.left: trackingSignalsChart.left
-                anchors.bottomMargin: parent.height/6
-                anchors.leftMargin: parent.width/10
+                anchors.bottomMargin: 85
+                anchors.leftMargin: 60
                 implicitHeight: lineLegendRepeater.height
                 width: lineLegendRepeater.width
                 
@@ -130,12 +130,14 @@ Item {
                                 trackingSignalsChart.removeSeries(lines[idx][0])
                                 var line = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, labels[idx], trackingSignalsXAxis);
                                 line.color = colors[idx];
+                                line.width = 1.5;
                                 line.axisYRight = trackingSignalsYAxis;
                                 lines[idx] = [line, labels[idx]];
                             }
                         } else {
                             var line = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, labels[idx], trackingSignalsXAxis);
                             line.color = colors[idx];
+                            line.width = 1.5;
                             line.axisYRight = trackingSignalsYAxis;
                             lines.push([line, labels[idx]]);
                         }
@@ -143,7 +145,7 @@ Item {
                     trackingSignalsPoints.fill_series(lines);
                     
                     var last = points[0][points[0].length - 1];
-                    trackingSignalsXAxis.min = last.x - 10;
+                    trackingSignalsXAxis.min = last.x - 100;
                     trackingSignalsXAxis.max = last.x;
                     
                     if (trackingSignalsYAxis.min!=trackingSignalsPoints.min_){

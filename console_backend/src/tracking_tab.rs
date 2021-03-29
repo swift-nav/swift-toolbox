@@ -228,12 +228,12 @@ impl<'a> TrackingSignalsTab<'a> {
                 self.push_to_cn0_dict(key, t, state.cn0 as f64 / 4.0);
                 self.push_to_cn0_age(key, t);
             }
-            if !self.received_codes.contains(&signal_code){
+            if !self.received_codes.contains(&signal_code) {
                 self.received_codes.push(signal_code);
             }
         }
         for (key, cn0_deque) in self.cn0_dict.iter_mut() {
-            if !codes_that_came.contains(key){
+            if !codes_that_came.contains(key) {
                 cn0_deque.add((OrderedFloat(t), 0.0));
             }
         }
@@ -376,7 +376,7 @@ impl<'a> TrackingSignalsTab<'a> {
             self.incoming_obs_cn0.insert((code, sat), cn0 / 4.0);
         }
 
-        if count == (total - 1){
+        if count == (total - 1) {
             self.last_update_time = Instant::now();
             self.update_from_obs(self.incoming_obs_cn0.clone(), client_send);
         }
@@ -406,12 +406,12 @@ impl<'a> TrackingSignalsTab<'a> {
                 self.push_to_cn0_dict(*key, t, *cn0);
                 self.push_to_cn0_age(*key, t);
             }
-            if !self.received_codes.contains(&signal_code){
+            if !self.received_codes.contains(&signal_code) {
                 self.received_codes.push(signal_code);
             }
         }
         for (key, cn0_deque) in self.cn0_dict.iter_mut() {
-            if !codes_that_came.contains(key){
+            if !codes_that_came.contains(key) {
                 cn0_deque.add((OrderedFloat(t), 0.0));
             }
         }

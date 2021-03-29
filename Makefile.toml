@@ -47,14 +47,15 @@ cp src/main/resources/base/console_backend.capnp console_backend/console_backend
 [tasks.remove-egg-dist]
 script_runner = "@shell"
 script = '''
-rm -rf console_backend/*.dist-info || rm -rf console_backend/*.egg-info
+rm -rf console_backend/*.dist-info
+rm -rf console_backend/*.egg-info
 '''
 
 [tasks.remove-egg-dist.windows]
 script_runner = "powershell"
 script_extension = "ps1"
 script = '''
-Get-ChildItem .\console_backend -Recurse -Include "*.egg-info", "*.dist-info" | Remove-Item -Force -Recurse
+Get-ChildItem .\console_backend -Recurse -Include @("*.egg-info", "*.dist-info") | Remove-Item -Force -Recurse
 '''
 
 [tasks.run]

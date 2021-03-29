@@ -1,11 +1,11 @@
 import argparse
 import json
-import psutil  # type: ignore
 import subprocess
 import sys
 from multiprocessing.pool import ThreadPool
 from typing import Any, Dict, List, Optional, Tuple
 
+import psutil  # type: ignore
 
 # sys.platform keys.
 LINUX = "linux"

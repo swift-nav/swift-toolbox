@@ -1,11 +1,11 @@
 import argparse
 import json
-import psutil  # type: ignore
 import subprocess
 import sys
 from multiprocessing.pool import ThreadPool
 from typing import Any, Dict, List, Optional, Tuple
 
+import psutil  # type: ignore
 
 # sys.platform keys.
 LINUX = "linux"
@@ -120,7 +120,7 @@ FRONTEND_CPU_BENCHMARKS = {
             NAME: "202010224_192043",
             FILE_PATH: "data/202010224_192043.sbp",
             KEY_LOCATION: "mean",
-            EXPECTED: 70.0,
+            EXPECTED: 80.0,
             ERROR_MARGIN_FRAC: 0.05,
         },
     ],

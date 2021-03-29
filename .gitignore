@@ -4,3 +4,6 @@ target
 .doit*
 *.build
 *.dist
+main.app/
+*.dmg
+.DS_Store

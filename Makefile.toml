@@ -163,8 +163,11 @@ conda run -n $CONDA_ENV python utils/create_nuitka_script.py
 dependencies = ["prod-nuitka-build"]
 script_runner = "@shell"
 script = '''
-mkdir -p main.app/Contents/MacOS
-cp -r main.dist/* main.app/Contents/MacOS/.
+mkdir -p main.app/Contents/MacOS main.app/Contents/Resources
+cp -r main.dist/* main.app/Contents/MacOS/
+iconutil --convert icns src/main/icons/Mac.iconset
+mv src/main/icons/Mac.icns main.app/Contents/Resources/SwiftNavConsole.icns
+conda run -n $CONDA_ENV python src/build/generate-mac-info-plist.py
 hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg'
 '''
 
@@ -202,13 +205,13 @@ conda run -n $CONDA_ENV mypy $PYTHON_FILES
 [tasks.python-format-check]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV black --line-length=120 --check --diff $PYTHON_FILES
+conda run -n $CONDA_ENV black --check --diff $PYTHON_FILES
 '''
 
 [tasks.python-format-all]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV black --line-length=120 $PYTHON_FILES
+conda run -n $CONDA_ENV black $PYTHON_FILES
 '''
 
 [tasks.python-format]
@@ -230,7 +233,7 @@ alias = "format-all"
 dependencies = ["python-format-check", "rust-format-check"]
 
 [tasks.lint]
-dependencies = ["python-lint", "rust-lint"]
+dependencies = ["python-lint", "rust-lint", "format-check"]
 
 [tasks.types]
 dependencies = ["python-type-check", "rust-type-check"]

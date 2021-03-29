@@ -35,7 +35,7 @@ conda run -n console_pp pip install -r $REQUIREMENTS_FILE
 [tasks.generate-resources]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV pyside2-rcc resources/console_resources.qrc -o src/main/python/console_resources.py
+conda run -n $CONDA_ENV --no-capture-output --live-stream pyside2-rcc resources/console_resources.qrc -o src/main/python/console_resources.py
 '''
 
 [tasks.copy-capnp]
@@ -68,7 +68,7 @@ conda run -n $CONDA_ENV fbs run
 dependencies = ["copy-capnp", "generate-resources", "remove-egg-dist", "prod-install-backend"]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV fbs run
+conda run -n $CONDA_ENV --no-capture-output --live-stream fbs run
 '''
 
 [tasks.setuptools-rust]
@@ -86,7 +86,7 @@ conda run -n $CONDA_ENV pip install -e ./console_backend
 [tasks.prod-install-backend]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV python -m pip install -t ./console_backend --upgrade --force ./console_backend -v
+conda run -n $CONDA_ENV --no-capture-output --live-stream python -m pip install ./console_backend --upgrade --force ./console_backend -v
 '''
 
 [tasks.prod-freeze-no-copy]

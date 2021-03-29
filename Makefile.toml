@@ -202,13 +202,13 @@ conda run -n $CONDA_ENV mypy $PYTHON_FILES
 [tasks.python-format-check]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV black --line-length=120 --check --diff $PYTHON_FILES
+conda run -n $CONDA_ENV black --check --diff $PYTHON_FILES
 '''
 
 [tasks.python-format-all]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV black --line-length=120 $PYTHON_FILES
+conda run -n $CONDA_ENV black $PYTHON_FILES
 '''
 
 [tasks.python-format]

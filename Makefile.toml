@@ -230,7 +230,7 @@ alias = "format-all"
 dependencies = ["python-format-check", "rust-format-check"]
 
 [tasks.lint]
-dependencies = ["python-lint", "rust-lint"]
+dependencies = ["python-lint", "rust-lint", "format-check"]
 
 [tasks.types]
 dependencies = ["python-type-check", "rust-type-check"]

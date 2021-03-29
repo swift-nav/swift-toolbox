@@ -10,32 +10,32 @@ default_to_workspace = false
 [tasks.poetry-export-dev]
 script_runner = "@shell"
 script = '''
-conda run -n console_pp poetry export --dev -f $REQUIREMENTS_FILE --output $REQUIREMENTS_DEV_FILE --without-hashes
+conda run -n $CONDA_ENV poetry export --dev -f $REQUIREMENTS_FILE --output $REQUIREMENTS_DEV_FILE --without-hashes
 '''
 
 [tasks.poetry-export]
 dependencies = ["poetry-export-dev"]
 script_runner = "@shell"
 script = '''
-conda run -n console_pp poetry export -f $REQUIREMENTS_FILE --output $REQUIREMENTS_FILE --without-hashes
+conda run -n $CONDA_ENV poetry export -f $REQUIREMENTS_FILE --output $REQUIREMENTS_FILE --without-hashes
 '''
 
 [tasks.pip-install-dev]
 script_runner = "@shell"
 script = '''
-conda run -n console_pp pip install -r $REQUIREMENTS_DEV_FILE
+conda run -n $CONDA_ENV pip install -r $REQUIREMENTS_DEV_FILE
 '''
 
 [tasks.pip-install]
 script_runner = "@shell"
 script = '''
-conda run -n console_pp pip install -r $REQUIREMENTS_FILE
+conda run -n $CONDA_ENV pip install -r $REQUIREMENTS_FILE
 '''
 
 [tasks.generate-resources]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV pyside2-rcc resources/console_resources.qrc -o src/main/python/console_resources.py
+conda run -n $CONDA_ENV --no-capture-output --live-stream pyside2-rcc resources/console_resources.qrc -o src/main/python/console_resources.py
 '''
 
 [tasks.copy-capnp]
@@ -61,14 +61,14 @@ Get-ChildItem .\console_backend -Recurse -Include "*.egg-info", "*.dist-info" | 
 dependencies = ["copy-capnp", "generate-resources", "remove-egg-dist", "install-backend"]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV fbs run
+conda run -n $CONDA_ENV --no-capture-output --live-stream fbs run
 '''
 
 [tasks.prod-run]
 dependencies = ["copy-capnp", "generate-resources", "remove-egg-dist", "prod-install-backend"]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV fbs run
+conda run -n $CONDA_ENV --no-capture-output --live-stream fbs run
 '''
 
 [tasks.setuptools-rust]
@@ -86,7 +86,7 @@ conda run -n $CONDA_ENV pip install -e ./console_backend
 [tasks.prod-install-backend]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV python -m pip install -t ./console_backend --upgrade --force ./console_backend -v
+conda run -n $CONDA_ENV --no-capture-output --live-stream python -m pip install ./console_backend --upgrade --force ./console_backend -v
 '''
 
 [tasks.prod-freeze-no-copy]

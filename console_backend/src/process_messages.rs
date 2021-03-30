@@ -2,17 +2,17 @@ use capnp::message::Builder;
 use capnp::serialize;
 use ordered_float::OrderedFloat;
 use sbp::messages::SBP;
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::{Arc, Mutex};
 
 use crate::console_backend_capnp as m;
 
 use crate::tracking_tab::*;
-use crate::types::SharedState;
+use crate::types::{ClientSender, ProtoMsgSender, SharedState};
 
 pub fn process_messages(
     messages: impl Iterator<Item = sbp::Result<SBP>>,
     shared_state: &Arc<Mutex<SharedState>>,
-    client_send_clone: mpsc::Sender<Vec<u8>>,
+    client_send_clone: ClientSender,
 ) {
     let mut hpoints: Vec<(f64, OrderedFloat<f64>)> = vec![];
     let mut vpoints: Vec<(f64, OrderedFloat<f64>)> = vec![];
@@ -24,17 +24,19 @@ pub fn process_messages(
         match message {
             Ok(SBP::MsgTrackingState(msg)) => {
                 tracking_signals
-                    .handle_msg_tracking_state(msg.states.clone(), client_send_clone.clone());
+                    .handle_msg_tracking_state(msg.states.clone(), &mut client_send_clone.clone());
             }
             Ok(SBP::MsgObs(msg)) => {
                 tracking_signals.handle_obs(
                     ObservationMsg::MsgObs(msg.clone()),
-                    client_send_clone.clone(),
+                    &mut client_send_clone.clone(),
                 );
             }
             Ok(SBP::MsgMeasurementState(msg)) => {
-                tracking_signals
-                    .handle_msg_measurement_state(msg.states.clone(), client_send_clone.clone());
+                tracking_signals.handle_msg_measurement_state(
+                    msg.states.clone(),
+                    &mut client_send_clone.clone(),
+                );
             }
             Ok(SBP::MsgObsDepA(_msg)) => {
                 //CPP-85 Unhandled for tracking signals plot tab.
@@ -43,13 +45,13 @@ pub fn process_messages(
             Ok(SBP::MsgObsDepB(msg)) => {
                 tracking_signals.handle_obs(
                     ObservationMsg::MsgObsDepB(msg.clone()),
-                    client_send_clone.clone(),
+                    &mut client_send_clone.clone(),
                 );
             }
             Ok(SBP::MsgObsDepC(msg)) => {
                 tracking_signals.handle_obs(
                     ObservationMsg::MsgObsDepC(msg.clone()),
-                    client_send_clone.clone(),
+                    &mut client_send_clone.clone(),
                 );
             }
 
@@ -136,7 +138,7 @@ pub fn process_messages(
                 let mut msg_bytes: Vec<u8> = vec![];
                 serialize::write_message(&mut msg_bytes, &builder).unwrap();
 
-                client_send_clone.send(msg_bytes).unwrap();
+                client_send_clone.clone().send_data(msg_bytes);
             }
             _ => {
                 // no-op

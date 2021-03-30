@@ -16,7 +16,7 @@ use std::thread;
 
 use crate::console_backend_capnp as m;
 use crate::process_messages::process_messages;
-use crate::types::SharedState;
+use crate::types::{ClientSender, ProtoMsgSender, SharedState};
 
 const CLOSE: &str = "CLOSE";
 
@@ -88,18 +88,20 @@ impl Server {
 
     #[text_signature = "($self, /)"]
     pub fn start(&mut self) -> PyResult<ServerEndpoint> {
-        let (client_send, client_recv) = mpsc::channel::<Vec<u8>>();
+        let (client_send_, client_recv) = mpsc::channel::<Vec<u8>>();
         let (server_send, server_recv) = mpsc::channel::<Vec<u8>>();
         self.client_recv = Some(client_recv);
         let server_endpoint = ServerEndpoint {
             server_send: Some(server_send),
         };
-        let client_send_clone = client_send;
+        let client_send = ClientSender {
+            inner: client_send_,
+        };
         let shared_state = SharedState::new();
         let shared_state = Arc::new(Mutex::new(shared_state));
         thread::spawn(move || loop {
             let buf = server_recv.recv();
-            let client_send_clone = client_send_clone.clone();
+            // let client_send_clone = client_send_clone.clone();
             if let Ok(buf) = buf {
                 let mut buf_reader = BufReader::new(Cursor::new(buf));
                 let message_reader = serialize::read_message(
@@ -115,11 +117,12 @@ impl Server {
                         println!("connect request, host: {}, port: {}", host, port);
                         let host_port = format!("{}:{}", host, port);
                         let shared_state_clone = Arc::clone(&shared_state);
+                        let client_send_clone = client_send.clone();
                         thread::spawn(move || {
                             if let Ok(stream) = TcpStream::connect(host_port) {
                                 println!("Connected to the server!");
                                 let messages = sbp::iter_messages(stream);
-                                // let shared_state_clone = Arc::clone(&shared_state_clone);
+
                                 process_messages(messages, &shared_state_clone, client_send_clone);
                             } else {
                                 println!("Couldn't connect to server...");
@@ -131,13 +134,12 @@ impl Server {
                         let filename = filename.to_string();
                         println!("{}", filename);
                         let shared_state_clone = Arc::clone(&shared_state);
+                        let mut client_send_clone = client_send.clone();
                         thread::spawn(move || {
                             if let Ok(stream) = fs::File::open(filename) {
                                 println!("Opened file successfully!");
 
                                 let messages = sbp::iter_messages(stream);
-                                // process_messages(messages, &Arc::clone(&shared_state), client_send_clone.clone());
-
                                 process_messages(
                                     messages,
                                     &shared_state_clone,
@@ -149,7 +151,8 @@ impl Server {
                                 status.set_text(CLOSE);
                                 let mut msg_bytes: Vec<u8> = vec![];
                                 serialize::write_message(&mut msg_bytes, &builder).unwrap();
-                                client_send_clone.send(msg_bytes).unwrap();
+
+                                client_send_clone.send_data(msg_bytes);
                             } else {
                                 println!("Couldn't open file...");
                             }

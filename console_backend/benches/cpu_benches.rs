@@ -9,7 +9,10 @@ use std::{
 };
 
 extern crate console_backend;
-use console_backend::{process_messages, types::SharedState};
+use console_backend::{
+    process_messages,
+    types::{ClientSender, SharedState},
+};
 
 const BENCH_FILEPATH: &str = "./tests/data/piksi-relay.sbp";
 const BENCHMARK_TIME_LIMIT: u64 = 10000;
@@ -45,7 +48,7 @@ fn run_process_messages(file_in_name: &str, failure: bool) {
         assert!(iter_count > 0);
     });
     {
-        let (client_send, client_recv) = mpsc::channel::<Vec<u8>>();
+        let (client_send_, client_recv) = mpsc::channel::<Vec<u8>>();
         client_recv_tx
             .send(client_recv)
             .expect("sending client recv handle should succeed");
@@ -55,6 +58,9 @@ fn run_process_messages(file_in_name: &str, failure: bool) {
         let messages = sbp::iter_messages(Box::new(fs::File::open(file_in_name).unwrap()));
         let shared_state = SharedState::new();
         let shared_state = Arc::new(Mutex::new(shared_state));
+        let client_send = ClientSender {
+            inner: client_send_,
+        };
         process_messages::process_messages(messages, &shared_state, client_send);
     }
     recv_thread.join().expect("join should succeed");

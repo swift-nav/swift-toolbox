@@ -252,7 +252,7 @@ jobs:
             bench.filename
   frontend_bench:
     name: Run Frontend Benchmarks
-    timeout-minutes: 5
+    timeout-minutes: 30
     needs:
       - build
     strategy:

@@ -33,10 +33,11 @@ brew install capnp
 apt-get install capnproto
 ```
 
-Setup the poetry environment
+Install development dependencies (On Windows make sure you're using Adminstrator shell).
 
 ```
-poetry install
+cargo make pip-install-dev
+git pull lfs
 ```
 
 ## Running

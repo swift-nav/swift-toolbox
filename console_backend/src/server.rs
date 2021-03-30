@@ -11,11 +11,12 @@ use pyo3::types::PyBytes;
 use std::fs;
 use std::io::{BufReader, Cursor};
 use std::net::TcpStream;
-use std::sync::mpsc;
+use std::sync::{mpsc, Arc, Mutex};
 use std::thread;
 
 use crate::console_backend_capnp as m;
 use crate::process_messages::process_messages;
+use crate::types::SharedState;
 
 const CLOSE: &str = "CLOSE";
 
@@ -94,6 +95,8 @@ impl Server {
             server_send: Some(server_send),
         };
         let client_send_clone = client_send;
+        let shared_state = SharedState::new();
+        let shared_state = Arc::new(Mutex::new(shared_state));
         thread::spawn(move || loop {
             let buf = server_recv.recv();
             let client_send_clone = client_send_clone.clone();
@@ -111,11 +114,13 @@ impl Server {
                         let port = conn_req.get_port();
                         println!("connect request, host: {}, port: {}", host, port);
                         let host_port = format!("{}:{}", host, port);
+                        let shared_state_clone = Arc::clone(&shared_state);
                         thread::spawn(move || {
                             if let Ok(stream) = TcpStream::connect(host_port) {
                                 println!("Connected to the server!");
                                 let messages = sbp::iter_messages(stream);
-                                process_messages(messages, client_send_clone);
+                                // let shared_state_clone = Arc::clone(&shared_state_clone);
+                                process_messages(messages, &shared_state_clone, client_send_clone);
                             } else {
                                 println!("Couldn't connect to server...");
                             }
@@ -125,12 +130,19 @@ impl Server {
                         let filename = file_in.get_filename().unwrap();
                         let filename = filename.to_string();
                         println!("{}", filename);
+                        let shared_state_clone = Arc::clone(&shared_state);
                         thread::spawn(move || {
                             if let Ok(stream) = fs::File::open(filename) {
                                 println!("Opened file successfully!");
 
                                 let messages = sbp::iter_messages(stream);
-                                process_messages(messages, client_send_clone.clone());
+                                // process_messages(messages, &Arc::clone(&shared_state), client_send_clone.clone());
+
+                                process_messages(
+                                    messages,
+                                    &shared_state_clone,
+                                    client_send_clone.clone(),
+                                );
                                 let mut builder = Builder::new_default();
                                 let msg = builder.init_root::<m::message::Builder>();
                                 let mut status = msg.init_status();
@@ -142,6 +154,18 @@ impl Server {
                                 println!("Couldn't open file...");
                             }
                         });
+                    }
+                    Ok(m::message::Which::TrackingStatusFront(Ok(cv_in))) => {
+                        let check_visibility = cv_in.get_check_visibility().unwrap();
+                        let check_visibility: Vec<String> = check_visibility
+                            .iter()
+                            .map(|x| String::from(x.unwrap()))
+                            .collect();
+                        let shared_state_clone = Arc::clone(&shared_state);
+                        {
+                            let mut shared_data = shared_state_clone.lock().unwrap();
+                            (*shared_data).tracking_tab.check_visibility = check_visibility;
+                        }
                     }
                     Ok(_) => {
                         println!("something else");

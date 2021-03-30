@@ -8,7 +8,7 @@ edition = "2018"
 [dependencies]
 capnp = "0.14"
 pyo3 = { version = "0.13", features = ["extension-module"] }
-sbp = { git = "https://github.com/swift-nav/libsbp.git", rev = "986af3f35033a720f21872794d0bd6579c02866c" }
+sbp = { git = "https://github.com/swift-nav/libsbp.git", rev = "0563350bb387e4a966a2b558adb7b05b2baf005f" }
 ordered-float = "2.0"
 ndarray = "0.14.0"
 glob = "0.3.0"

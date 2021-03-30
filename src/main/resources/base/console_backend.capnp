@@ -24,8 +24,14 @@ struct VelocityStatus {
 struct TrackingStatus {
     min @0 :Float64;
     max @1 :Float64;
-    headers @2 :List(UInt8);
+    labels @2 :List(Text);
     data @3 :List(List(Point));
+    colors @4 :List(Text);
+    checkLabels @5 :List(Text);
+}
+
+struct TrackingStatusFront {
+    checkVisibility @0 :List(Text);
 }
 
 struct Status {
@@ -39,5 +45,6 @@ struct Message {
         status @2 :Status;
         fileinRequest @3 :FileinRequest;
         trackingStatus @4 :TrackingStatus;
+        trackingStatusFront @5 :TrackingStatusFront;
     }
 }

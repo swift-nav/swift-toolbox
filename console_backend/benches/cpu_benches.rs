@@ -1,10 +1,15 @@
 #![allow(unused_imports)]
 use criterion::{criterion_group, criterion_main, Criterion};
 use glob::glob;
-use std::{fs, path::Path, sync::mpsc, thread, time};
+use std::{
+    fs,
+    path::Path,
+    sync::{mpsc, Arc, Mutex},
+    thread, time,
+};
 
 extern crate console_backend;
-use console_backend::process_messages;
+use console_backend::{process_messages, types::SharedState};
 
 const BENCH_FILEPATH: &str = "./tests/data/piksi-relay.sbp";
 const BENCHMARK_TIME_LIMIT: u64 = 10000;
@@ -48,7 +53,9 @@ fn run_process_messages(file_in_name: &str, failure: bool) {
             thread::sleep(time::Duration::from_millis(FAILURE_CASE_SLEEP_MILLIS));
         }
         let messages = sbp::iter_messages(Box::new(fs::File::open(file_in_name).unwrap()));
-        process_messages::process_messages(messages, client_send);
+        let shared_state = SharedState::new();
+        let shared_state = Arc::new(Mutex::new(shared_state));
+        process_messages::process_messages(messages, &shared_state, client_send);
     }
     recv_thread.join().expect("join should succeed");
 }

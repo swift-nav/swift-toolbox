@@ -20,7 +20,7 @@ def get_py_version_cfgs():
 
 
 def make_rust_extension(module_name):
-    return RustExtension(module_name, "Cargo.toml", rustc_flags=get_py_version_cfgs(), debug=True)
+    return RustExtension(module_name, "Cargo.toml", rustc_flags=get_py_version_cfgs())
 
 
 setup(

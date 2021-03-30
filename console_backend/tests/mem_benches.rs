@@ -10,7 +10,7 @@ use std::{
 };
 use sysinfo::{get_current_pid, Process, ProcessExt, System, SystemExt};
 extern crate console_backend;
-use console_backend::process_messages;
+use console_backend::{process_messages, types::SharedState};
 
 const BENCH_FILEPATH: &str = "./tests/data/piksi-relay-1min.sbp";
 const MINIMUM_MEM_READINGS: usize = 20;
@@ -91,7 +91,9 @@ fn test_run_process_messages() {
             .expect("sending client recv handle should succeed");
 
         let messages = sbp::iter_messages(Box::new(fs::File::open(BENCH_FILEPATH).unwrap()));
-        process_messages::process_messages(messages, client_send);
+        let shared_state = SharedState::new();
+        let shared_state = Arc::new(Mutex::new(shared_state));
+        process_messages::process_messages(messages, &shared_state, client_send);
     }
     recv_thread.join().expect("join should succeed");
     mem_read_thread.join().expect("join should succeed");

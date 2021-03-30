@@ -5,7 +5,7 @@ import os
 import sys
 import threading
 
-from typing import List, Optional, Tuple, Any
+from typing import Dict, List, Optional, Tuple, Any
 
 import capnp  # type: ignore
 
@@ -21,12 +21,11 @@ from PySide2 import QtQml, QtCore
 from PySide2.QtQml import qmlRegisterType
 from PySide2.QtCore import Property
 
+from constants import ApplicationStates, MessageKeys, Keys, QTKeys
+
 import console_resources  # type: ignore # pylint: disable=unused-import,import-error
 
 import console_backend.server  # type: ignore  # pylint: disable=import-error,no-name-in-module
-
-CLOSE = "CLOSE"
-DARWIN = "darwin"
 
 CONSOLE_BACKEND_CAPNP_PATH = "console_backend.capnp"
 
@@ -39,6 +38,16 @@ POINTS_V: List[QPointF] = []
 TRACKING_POINTS: List[List[QPointF]] = []
 TRACKING_HEADERS: List[int] = []
 
+
+TRACKING_SIGNALS_TAB: Dict[str, Any] = {
+    Keys.POINTS: [],
+    Keys.CHECK_LABELS: [],
+    Keys.LABELS: [],
+    Keys.COLORS: [],
+    Keys.MAX: 0,
+    Keys.MIN: 0,
+}
+
 capnp.remove_import_hook()  # pylint: disable=no-member
 
 
@@ -46,29 +55,33 @@ def receive_messages(app_, backend, messages):
     while True:
         buffer = backend.fetch_message()
         m = messages.Message.from_bytes(buffer)
-        if m.which == "status":
-            if m.status.text == CLOSE:
+        if m.which == MessageKeys.STATUS:
+            if m.status.text == ApplicationStates.CLOSE:
                 return app_.quit()
-        elif m.which == "velocityStatus":
+        elif m.which == MessageKeys.VELOCITY_STATUS:
             POINTS_H_MINMAX[0] = (m.velocityStatus.min, m.velocityStatus.max)
             POINTS_H[:] = [QPointF(point.x, point.y) for point in m.velocityStatus.hpoints]
             POINTS_V[:] = [QPointF(point.x, point.y) for point in m.velocityStatus.vpoints]
-        elif m.which == "trackingStatus":
-            TRACKING_HEADERS[:] = m.trackingStatus.headers
-            TRACKING_POINTS[:] = [
+        elif m.which == MessageKeys.TRACKING_STATUS:
+            TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS][:] = m.trackingStatus.checkLabels
+            TRACKING_SIGNALS_TAB[Keys.LABELS][:] = m.trackingStatus.labels
+            TRACKING_SIGNALS_TAB[Keys.COLORS][:] = m.trackingStatus.colors
+            TRACKING_SIGNALS_TAB[Keys.POINTS][:] = [
                 [QPointF(point.x, point.y) for point in m.trackingStatus.data[idx]]
                 for idx in range(len(m.trackingStatus.data))
             ]
+            TRACKING_SIGNALS_TAB[Keys.MAX] = m.trackingStatus.max
+            TRACKING_SIGNALS_TAB[Keys.MIN] = m.trackingStatus.min
         else:
             pass
-            # print(f"other message: {m}")
+
 
 
 class ConsolePoints(QObject):
 
-    _valid: bool = False
     _hpoints: List[QPointF] = []
     _vpoints: List[QPointF] = []
+    _valid: bool = False
     _min: float = 0.0
     _max: float = 0.0
 
@@ -86,21 +99,6 @@ class ConsolePoints(QObject):
         self._valid = valid
 
     valid = Property(bool, get_valid, set_valid)
-
-    def get_hpoints(self) -> List[QPointF]:
-        return self._hpoints
-
-    def set_hpoints(self, hpoints) -> None:
-        self._hpoints = hpoints
-
-    def get_vpoints(self) -> List[QPointF]:
-        return self._vpoints
-
-    def set_vpoints(self, vpoints) -> None:
-        self._vpoints = vpoints
-
-    hpoints = Property("QVariantList", get_hpoints, set_hpoints)  # type: ignore
-    vpoints = Property("QVariantList", get_vpoints, set_vpoints)  # type: ignore
 
     def get_min(self) -> float:
         """Getter for _min.
@@ -125,6 +123,21 @@ class ConsolePoints(QObject):
         self._max = max_
 
     max_ = Property(float, get_max, set_max)
+
+    def get_hpoints(self) -> List[QPointF]:
+        return self._hpoints
+
+    def set_hpoints(self, hpoints) -> None:
+        self._hpoints = hpoints
+
+    def get_vpoints(self) -> List[QPointF]:
+        return self._vpoints
+
+    def set_vpoints(self, vpoints) -> None:
+        self._vpoints = vpoints
+
+    hpoints = Property(QTKeys.QVARIANTLIST, get_hpoints, set_hpoints)  # type: ignore
+    vpoints = Property(QTKeys.QVARIANTLIST, get_vpoints, set_vpoints)  # type: ignore
 
     @Slot(QtCharts.QXYSeries)  # type: ignore
     def fill_hseries(self, hseries):
@@ -186,21 +199,87 @@ class DataModel(QObject):
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
 
+    @Slot(list)  # type: ignore
+    def check_visibility(self, checks: List[str]) -> None:
+        m = self.messages.Message()
+        m.trackingStatusFront = m.init("trackingStatusFront")
+        m.trackingStatusFront.checkVisibility = checks
+        buffer = m.to_bytes()
+        self.endpoint.send_message(buffer)
+
 
 class TrackingSignalsPoints(QObject):
 
-    _valid: bool = False
+    _colors: List[str] = []
+    _check_labels: List[str] = []
+    _labels: List[str] = []
     _points: List[List[QPointF]] = [[]]
+    _valid: bool = False
     _min: float = 0.0
     _max: float = 0.0
 
     def get_valid(self) -> bool:
+        """Getter for _valid.
+
+        Returns:
+            bool: Whether it is valid or not.
+        """
         return self._valid
 
-    def set_valid(self, valid) -> None:
+    def set_valid(self, valid: bool) -> None:
+        """Setter for _valid.
+        """
         self._valid = valid
 
     valid = Property(bool, get_valid, set_valid)
+
+    def get_min(self) -> float:
+        """Getter for _min.
+        """
+        return self._min
+
+    def set_min(self, min_: float) -> None:
+        """Setter for _min.
+        """
+        self._min = min_
+
+    min_ = Property(float, get_min, set_min)
+
+    def get_max(self) -> float:
+        """Getter for _max.
+        """
+        return self._max
+
+    def set_max(self, max_: float) -> None:
+        """Setter for _max.
+        """
+        self._max = max_
+
+    max_ = Property(float, get_max, set_max)
+
+    def get_check_labels(self) -> List[str]:
+        return self._check_labels
+
+    def set_check_labels(self, check_labels) -> None:
+        self._check_labels = check_labels
+
+    check_labels = Property(QTKeys.QVARIANTLIST, get_check_labels, set_check_labels)  # type: ignore
+
+    def get_labels(self) -> List[str]:
+        return self._labels
+
+    def set_labels(self, labels) -> None:
+        self._labels = labels
+
+    labels = Property(QTKeys.QVARIANTLIST, get_labels, set_labels)  # type: ignore
+
+    def get_colors(self) -> List[str]:
+        return self._colors
+
+    def set_colors(self, colors) -> None:
+        self._colors = colors
+
+    colors = Property(QTKeys.QVARIANTLIST, get_colors, set_colors)  # type: ignore
 
     def get_points(self) -> List[List[QPointF]]:
         return self._points
@@ -208,19 +287,24 @@ class TrackingSignalsPoints(QObject):
     def set_points(self, points) -> None:
         self._points = points
 
-    points = Property("QVariantList", get_points, set_points)  # type: ignore
+    points = Property(QTKeys.QVARIANTLIST, get_points, set_points)  # type: ignore
 
     @Slot(list)  # type: ignore
     def fill_series(self, series_list):
-        for idx, series in enumerate(series_list):
-            series.replace(self._points[idx])
-
+        for idx, series_and_key in enumerate(series_list):
+            series, _ = series_and_key
+            if idx < len(self._points):
+                series.replace(self._points[idx])
 
 class TrackingSignalsModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(TrackingSignalsPoints)  # type: ignore
     def fill_console_points(self, cp: TrackingSignalsPoints) -> TrackingSignalsPoints:  # pylint:disable=no-self-use
-
-        cp.set_points(TRACKING_POINTS)
+        cp.set_points(TRACKING_SIGNALS_TAB[Keys.POINTS])
+        cp.set_labels(TRACKING_SIGNALS_TAB[Keys.LABELS])
+        cp.set_check_labels(TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS])
+        cp.set_colors(TRACKING_SIGNALS_TAB[Keys.COLORS])
+        cp.set_max(TRACKING_SIGNALS_TAB[Keys.MAX])
+        cp.set_min(TRACKING_SIGNALS_TAB[Keys.MIN])
         return cp
 
 def is_frozen() -> bool:
@@ -281,5 +365,4 @@ if __name__ == "__main__":
     root_context.setContextProperty("data_model", data_model)
 
     threading.Thread(target=receive_messages, args=(app, backend_main, messages_main,), daemon=True).start()
-
     sys.exit(app.exec_())

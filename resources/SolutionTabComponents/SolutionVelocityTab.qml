@@ -112,6 +112,7 @@ Item {
                     minorGridVisible: true
                     minorGridLineColor: "#CDC9C9"
                     visible: true
+                    // useOpenGL: true // [CPP-93] Invesigate usage of `useOpenGL` in plots
                 }
                 ValueAxis {
                     id: solutionVelocityYAxis
@@ -124,6 +125,7 @@ Item {
                     minorGridVisible: true
                     minorGridLineColor: "#CDC9C9"
                     visible: true
+                    // useOpenGL: true // [CPP-93] Invesigate usage of `useOpenGL` in plots
                 }
                 Timer {
                     interval: 1000/5 // 5 Hz refresh

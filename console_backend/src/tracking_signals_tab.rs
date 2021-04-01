@@ -11,16 +11,7 @@ use capnp::serialize;
 use crate::console_backend_capnp as m;
 use crate::constants::*;
 use crate::types::*;
-use sbp::messages::{
-    observation::{
-        MsgObs, MsgObsDepB, MsgObsDepC, PackedObsContent, PackedObsContentDepB,
-        PackedObsContentDepC,
-    },
-    tracking::{MeasurementState, TrackingChannelState},
-};
-
-pub type Cn0Dict = HashMap<(SignalCodes, i16), Deque<(OrderedFloat<f64>, f64)>>;
-pub type Cn0Age = HashMap<(SignalCodes, i16), f64>;
+use sbp::messages::tracking::{MeasurementState, TrackingChannelState};
 
 /// TrackingSignalsTab struct.
 ///
@@ -161,7 +152,11 @@ impl<'a> TrackingSignalsTab<'a> {
         let filters;
         {
             let shared_data = self.shared_state.lock().unwrap();
-            filters = (*shared_data).tracking_tab.check_visibility.clone();
+            filters = (*shared_data)
+                .tracking_tab
+                .signals_tab
+                .check_visibility
+                .clone();
         }
         for (key, _) in self.cn0_dict.iter_mut() {
             let (signal_code, _) = key;
@@ -444,10 +439,10 @@ impl<'a> TrackingSignalsTab<'a> {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<m::message::Builder>();
 
-        let mut tracking_status = msg.init_tracking_status();
-        tracking_status.set_min(self.min);
-        tracking_status.set_max(self.max);
-        let mut labels = tracking_status
+        let mut tracking_signals_status = msg.init_tracking_signals_status();
+        tracking_signals_status.set_min(self.min);
+        tracking_signals_status.set_max(self.max);
+        let mut labels = tracking_signals_status
             .reborrow()
             .init_labels(self.sv_labels.len() as u32);
 
@@ -455,7 +450,7 @@ impl<'a> TrackingSignalsTab<'a> {
             labels.set(i as u32, header);
         }
 
-        let mut colors = tracking_status
+        let mut colors = tracking_signals_status
             .reborrow()
             .init_colors(self.colors.len() as u32);
 
@@ -463,7 +458,7 @@ impl<'a> TrackingSignalsTab<'a> {
             colors.set(i as u32, color);
         }
 
-        let mut tracking_points = tracking_status
+        let mut tracking_points = tracking_signals_status
             .reborrow()
             .init_data(self.sv_labels.len() as u32);
         {
@@ -479,12 +474,13 @@ impl<'a> TrackingSignalsTab<'a> {
                 }
             }
         }
-        let mut tracking_checkbox_labels = tracking_status
+        let mut tracking_checkbox_labels = tracking_signals_status
             .reborrow()
             .init_check_labels(self.check_labels.len() as u32);
         for (i, label) in self.check_labels.iter().enumerate() {
             tracking_checkbox_labels.set(i as u32, label);
         }
+        // println!("{:?}", self.sats);
 
         let mut msg_bytes: Vec<u8> = vec![];
         serialize::write_message(&mut msg_bytes, &builder).unwrap();
@@ -493,27 +489,12 @@ impl<'a> TrackingSignalsTab<'a> {
     }
 }
 
-/// Enum wrapping around various Observation Message types.
-pub enum ObservationMsg {
-    MsgObs(MsgObs),
-    // MsgObsDepA(MsgObsDepA),
-    MsgObsDepB(MsgObsDepB),
-    MsgObsDepC(MsgObsDepC),
-}
-/// Enum wrapping around various Observation Message observation types.
-pub enum Observations {
-    PackedObsContent(PackedObsContent),
-    // PackedObsContentDepA(PackedObsContentDepA),
-    PackedObsContentDepB(PackedObsContentDepB),
-    PackedObsContentDepC(PackedObsContentDepC),
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use sbp::messages::{
         gnss::{CarrierPhase, GPSTime, GnssSignal},
-        observation::{Doppler, ObservationHeader},
+        observation::{Doppler, MsgObs, ObservationHeader, PackedObsContent},
     };
 
     #[test]
@@ -709,7 +690,8 @@ mod tests {
         );
         {
             let mut shared_data = tracking_signals_tab.shared_state.lock().unwrap();
-            (*shared_data).tracking_tab.check_visibility = vec![String::from(BDS2_B1_I)];
+            (*shared_data).tracking_tab.signals_tab.check_visibility =
+                vec![String::from(BDS2_B1_I)];
         }
         tracking_signals_tab.update_plot();
         assert_eq!(tracking_signals_tab.sv_labels.len(), 2);

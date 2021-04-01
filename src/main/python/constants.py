@@ -7,14 +7,15 @@ class Keys(str, Enum):
     COLORS = "COLORS"
     MAX = "MAX"
     MIN = "MIN"
+    AVAILABLE_UNITS = "AVAILABLE_UNITS"
 
 class ApplicationStates(str, Enum):
     CLOSE = "CLOSE"
 
 class MessageKeys(str, Enum):
     STATUS = "status"
-    VELOCITY_STATUS = "velocityStatus"
-    TRACKING_STATUS = "trackingStatus"
+    SOLUTION_VELOCITY_STATUS = "solutionVelocityStatus"
+    TRACKING_SIGNALS_STATUS = "trackingSignalsStatus"
 
 class QTKeys(str, Enum):
     QVARIANTLIST = "QVariantList"

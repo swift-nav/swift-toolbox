@@ -12,10 +12,6 @@ ApplicationWindow {
 
     font.pointSize: 8
 
-    ConsolePoints {
-        id: consolePoints
-    }
-    
     ColumnLayout {
         anchors.fill: parent
         spacing: 2
@@ -46,100 +42,7 @@ ApplicationWindow {
                 anchors.top: tab.bottom
                 currentIndex: tab.currentIndex
                 TrackingTab {}
-                Item {
-                    id: solutionTab
-                    RowLayout{
-                        anchors.fill: parent
-                        spacing: 2
-                        ListView {
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            Layout.alignment: Qt.AlignLeft
-                            
-
-                            Component {
-                                id: contactsDelegate
-                                Rectangle {
-                                    id: wrapper
-                                    width: 180
-                                    height: contactInfo.height
-                                    color: ListView.isCurrentItem ? "black" : "red"
-                                    Text {
-                                        id: contactInfo
-                                        text: name + ": " + number
-                                        color: wrapper.ListView.isCurrentItem ? "red" : "black"
-                                    }
-                                }
-                            }
-
-                            model: ContactModel {}
-                            delegate: contactsDelegate
-                            focus: true
-                        }
-                        ChartView {
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            Layout.alignment: Qt.AlignLeft
-                            titleFont.pointSize: 8
-                            antialiasing: true
-                            width: parent.width/2
-                            legend.font.pointSize: 7
-                            legend.alignment: Qt.AlignTop
-                            legend.showToolTips: true
-
-                            ValueAxis {
-                                id: x_axis
-                                labelsFont.pointSize: 7
-                                titleText: "GPS Time of Week"
-                            }
-                            ValueAxis {
-                                id: y_axis
-                                min: -1.0
-                                max: 1.0
-                                labelsFont.pointSize: 7
-                            }
-
-                            LineSeries {
-                                id: hseries
-                                name: "Horizontal [m/s]"
-                                axisX: x_axis
-                                axisY: y_axis
-                                //useOpenGL: true
-                            }
-                            LineSeries {
-                                id: vseries
-                                name: "Vertical [m/s]"
-                                axisX: x_axis
-                                axisY: y_axis
-                                //useOpenGL: true
-                            }
-
-                            Timer {
-                                interval: 1000/5 // 5 Hz refresh
-                                running: true
-                                repeat: true
-                                onTriggered: {
-                                    if (!solutionTab.visible) {
-                                        return;
-                                    }
-                                    data_model.fill_console_points(consolePoints);
-                                    if (!consolePoints.valid) {
-                                        return;
-                                    }
-                                    var hpoints = consolePoints.hpoints;
-                                    var last = hpoints[hpoints.length - 1];
-                                    x_axis.min = last.x - 10;
-                                    x_axis.max = last.x;
-                                    y_axis.min = consolePoints.min_;
-                                    y_axis.max = consolePoints.max_;
-                                    consolePoints.fill_hseries(hseries);
-                                    consolePoints.fill_vseries(vseries);
-                                }
-                            }
-                        }
-                    }
-                    
-                }    
+                SolutionTab {}
                 Item {
                     id: baselineTab
                 }

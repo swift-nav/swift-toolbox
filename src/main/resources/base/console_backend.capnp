@@ -14,14 +14,15 @@ struct Point {
     y @1 :Float64;
 }
 
-struct VelocityStatus {
+struct SolutionVelocityStatus {
     min @0 :Float64;
     max @1 :Float64;
-    hpoints @2 :List(Point);
-    vpoints @3 :List(Point);
+    data @2 :List(List(Point));
+    availableUnits @3 : List(Text);
+    colors @4 :List(Text);
 }
 
-struct TrackingStatus {
+struct TrackingSignalsStatus {
     min @0 :Float64;
     max @1 :Float64;
     labels @2 :List(Text);
@@ -30,8 +31,12 @@ struct TrackingStatus {
     checkLabels @5 :List(Text);
 }
 
-struct TrackingStatusFront {
-    checkVisibility @0 :List(Text);
+struct TrackingSignalsStatusFront {
+    trackingSignalsCheckVisibility @0 :List(Text);
+}
+
+struct SolutionVelocityStatusFront {
+    solutionVelocityUnit @0 :Text;
 }
 
 struct Status {
@@ -41,10 +46,11 @@ struct Status {
 struct Message {
     union {
         connectRequest @0 :ConnectRequest;
-        velocityStatus @1 :VelocityStatus;
+        solutionVelocityStatus @1 :SolutionVelocityStatus;
         status @2 :Status;
         fileinRequest @3 :FileinRequest;
-        trackingStatus @4 :TrackingStatus;
-        trackingStatusFront @5 :TrackingStatusFront;
+        trackingSignalsStatus @4 :TrackingSignalsStatus;
+        trackingSignalsStatusFront @5 :TrackingSignalsStatusFront;
+        solutionVelocityStatusFront @6 :SolutionVelocityStatusFront;
     }
 }

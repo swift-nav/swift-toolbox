@@ -186,7 +186,7 @@ Item {
                                     labels_not_visible.push(check_labels[idx]);
                                 }
                             }
-                            data_model.check_visibility(labels_not_visible);
+                            data_model.tracking_signals_check_visibility(labels_not_visible);
                         } 
                         Component.onCompleted: {
                             check_visibility.push(checked);

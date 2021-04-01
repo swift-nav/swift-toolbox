@@ -16,7 +16,7 @@ use std::thread;
 
 use crate::console_backend_capnp as m;
 use crate::process_messages::process_messages;
-use crate::types::{ClientSender, ProtoMsgSender, SharedState};
+use crate::types::{ClientSender, ProtoMsgSender, SharedState, VelocityUnits};
 
 const CLOSE: &str = "CLOSE";
 
@@ -101,7 +101,6 @@ impl Server {
         let shared_state = Arc::new(Mutex::new(shared_state));
         thread::spawn(move || loop {
             let buf = server_recv.recv();
-            // let client_send_clone = client_send_clone.clone();
             if let Ok(buf) = buf {
                 let mut buf_reader = BufReader::new(Cursor::new(buf));
                 let message_reader = serialize::read_message(
@@ -158,8 +157,9 @@ impl Server {
                             }
                         });
                     }
-                    Ok(m::message::Which::TrackingStatusFront(Ok(cv_in))) => {
-                        let check_visibility = cv_in.get_check_visibility().unwrap();
+                    Ok(m::message::Which::TrackingSignalsStatusFront(Ok(cv_in))) => {
+                        let check_visibility =
+                            cv_in.get_tracking_signals_check_visibility().unwrap();
                         let check_visibility: Vec<String> = check_visibility
                             .iter()
                             .map(|x| String::from(x.unwrap()))
@@ -167,7 +167,16 @@ impl Server {
                         let shared_state_clone = Arc::clone(&shared_state);
                         {
                             let mut shared_data = shared_state_clone.lock().unwrap();
-                            (*shared_data).tracking_tab.check_visibility = check_visibility;
+                            (*shared_data).tracking_tab.signals_tab.check_visibility =
+                                check_visibility;
+                        }
+                    }
+                    Ok(m::message::Which::SolutionVelocityStatusFront(Ok(cv_in))) => {
+                        let unit = cv_in.get_solution_velocity_unit().unwrap();
+                        let shared_state_clone = Arc::clone(&shared_state);
+                        {
+                            let mut shared_data = shared_state_clone.lock().unwrap();
+                            (*shared_data).solution_tab.velocity_tab.unit = unit.to_string();
                         }
                     }
                     Ok(_) => {

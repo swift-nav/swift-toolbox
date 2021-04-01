@@ -11,7 +11,7 @@ use capnp::serialize;
 
 use crate::console_backend_capnp as m;
 use crate::constants::{HORIZONTAL_COLOR, NUM_POINTS, VERTICAL_COLOR};
-use crate::types::{Deque, ProtoMsgSender, SharedState, VelocityUnits};
+use crate::types::{Deque, MessageSender, SharedState, VelocityUnits};
 
 /// TrackingSignalsTab struct.
 ///
@@ -88,8 +88,8 @@ impl<'a> SolutionVelocityTab<'a> {
     /// # Parameters:
     ///
     /// - `msg`: The message to update set of points with.
-    /// - `client_send`: The ProtoMsgSender to be used to send data to frontend.
-    pub fn handle_vel_ned<P: ProtoMsgSender>(&mut self, msg: MsgVelNED, client_send: &mut P) {
+    /// - `client_send`: The MessageSender to be used to send data to frontend.
+    pub fn handle_vel_ned<P: MessageSender>(&mut self, msg: MsgVelNED, client_send: &mut P) {
         let n = msg.n as f64;
         let e = msg.e as f64;
         let d = msg.d as f64;
@@ -130,8 +130,8 @@ impl<'a> SolutionVelocityTab<'a> {
     ///
     /// # Parameters:
     ///
-    /// - `client_send`: The ProtoMsgSender channel to be used to send data to frontend.
-    fn send_data<P: ProtoMsgSender>(&mut self, client_send: &mut P) {
+    /// - `client_send`: The MessageSender channel to be used to send data to frontend.
+    fn send_data<P: MessageSender>(&mut self, client_send: &mut P) {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<m::message::Builder>();
 

@@ -194,7 +194,7 @@ impl<'a> TrackingSignalsTab<'a> {
     ///
     /// - `states`: All states contained within the measurementstate message.
     /// - `client_send`: The Sender channel to be used to send data to frontend.
-    pub fn handle_msg_measurement_state<P: ProtoMsgSender>(
+    pub fn handle_msg_measurement_state<P: MessageSender>(
         &mut self,
         states: Vec<MeasurementState>,
         client_send: &mut P,
@@ -242,7 +242,7 @@ impl<'a> TrackingSignalsTab<'a> {
     ///
     /// - `states`: All states contained within the trackingstate message.
     /// - `client_send`: The Sender channel to be used to send data to frontend.
-    pub fn handle_msg_tracking_state<P: ProtoMsgSender>(
+    pub fn handle_msg_tracking_state<P: MessageSender>(
         &mut self,
         states: Vec<TrackingChannelState>,
         client_send: &mut P,
@@ -279,7 +279,7 @@ impl<'a> TrackingSignalsTab<'a> {
     ///
     /// - `msg`: The full SBP message cast as an ObservationMsg variant.
     /// - `client_send`: The Sender channel to be used to send data to frontend.
-    pub fn handle_obs<P: ProtoMsgSender>(&mut self, msg: ObservationMsg, client_send: &mut P) {
+    pub fn handle_obs<P: MessageSender>(&mut self, msg: ObservationMsg, client_send: &mut P) {
         let (seq, tow, wn, states) = match &msg {
             ObservationMsg::MsgObs(obs) => {
                 let states: Vec<Observations> = obs
@@ -383,7 +383,7 @@ impl<'a> TrackingSignalsTab<'a> {
     ///
     /// - `msg`: The full SBP message cast as an ObservationMsg variant.
     /// - `client_send`: The Sender channel to be used to send data to frontend.
-    pub fn update_from_obs<P: ProtoMsgSender>(
+    pub fn update_from_obs<P: MessageSender>(
         &mut self,
         obs_dict: HashMap<(SignalCodes, i16), f64>,
         client_send: &mut P,
@@ -435,7 +435,7 @@ impl<'a> TrackingSignalsTab<'a> {
     /// # Parameters:
     ///
     /// - `client_send`: The Sender channel to be used to send data to frontend.
-    fn send_data<P: ProtoMsgSender>(&mut self, client_send: &mut P) {
+    fn send_data<P: MessageSender>(&mut self, client_send: &mut P) {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<m::message::Builder>();
 

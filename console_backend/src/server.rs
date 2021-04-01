@@ -16,7 +16,7 @@ use std::thread;
 
 use crate::console_backend_capnp as m;
 use crate::process_messages::process_messages;
-use crate::types::{ClientSender, ProtoMsgSender, SharedState, VelocityUnits};
+use crate::types::{ClientSender, MessageSender, SharedState, VelocityUnits};
 
 const CLOSE: &str = "CLOSE";
 

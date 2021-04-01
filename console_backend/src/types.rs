@@ -36,11 +36,7 @@ impl<T> Deque<T> {
     }
 }
 
-// pub trait TabBackend<P: ProtoMsgSender> {
-//     fn send_data(&mut self, client_send: P);
-// }
-
-pub trait ProtoMsgSender {
+pub trait MessageSender {
     fn send_data(&mut self, msg_bytes: Vec<u8>);
 }
 
@@ -48,7 +44,7 @@ pub trait ProtoMsgSender {
 pub struct ClientSender {
     pub inner: Sender<Vec<u8>>,
 }
-impl ProtoMsgSender for ClientSender {
+impl MessageSender for ClientSender {
     fn send_data(&mut self, msg_bytes: Vec<u8>) {
         self.inner.send(msg_bytes).unwrap();
     }
@@ -58,7 +54,7 @@ impl ProtoMsgSender for ClientSender {
 pub struct TestSender {
     pub inner: Vec<Vec<u8>>,
 }
-impl ProtoMsgSender for TestSender {
+impl MessageSender for TestSender {
     fn send_data(&mut self, msg: Vec<u8>) {
         self.inner.push(msg)
     }

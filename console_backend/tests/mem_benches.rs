@@ -12,7 +12,7 @@ use sysinfo::{get_current_pid, Process, ProcessExt, System, SystemExt};
 extern crate console_backend;
 use console_backend::{
     process_messages,
-    types::{ClientSender, ProtoMsgSender, SharedState},
+    types::{ClientSender, MessageSender, SharedState},
 };
 
 const BENCH_FILEPATH: &str = "./tests/data/piksi-relay-1min.sbp";

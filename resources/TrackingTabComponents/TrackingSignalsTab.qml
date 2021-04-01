@@ -133,6 +133,7 @@ Item {
                                 line.color = colors[idx];
                                 line.width = 1;
                                 line.axisYRight = trackingSignalsYAxis;
+                                line.useOpenGL = true;
                                 lines[idx] = [line, labels[idx]];
                             }
                         } else {
@@ -140,6 +141,7 @@ Item {
                             line.color = colors[idx];
                             line.width = 1;
                             line.axisYRight = trackingSignalsYAxis;
+                            line.useOpenGL = true;
                             lines.push([line, labels[idx]]);
                         }
                     }

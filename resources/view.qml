@@ -104,14 +104,14 @@ ApplicationWindow {
                                 name: "Horizontal [m/s]"
                                 axisX: x_axis
                                 axisY: y_axis
-                                //useOpenGL: true
+                                useOpenGL: true
                             }
                             LineSeries {
                                 id: vseries
                                 name: "Vertical [m/s]"
                                 axisX: x_axis
                                 axisY: y_axis
-                                //useOpenGL: true
+                                useOpenGL: true
                             }
 
                             Timer {

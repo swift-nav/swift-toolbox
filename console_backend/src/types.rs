@@ -1,7 +1,8 @@
 use ordered_float::OrderedFloat;
 use std::{
     collections::{HashMap, VecDeque},
-    sync::mpsc::Sender,
+    ops::Deref,
+    sync::{mpsc::Sender, Arc, Mutex},
 };
 
 use sbp::messages::observation::{
@@ -19,7 +20,7 @@ pub struct Deque<T> {
     capacity: usize,
 }
 impl<T> Deque<T> {
-    pub fn with_capacity(capacity: usize) -> Deque<T> {
+    pub fn with_size_limit(capacity: usize) -> Deque<T> {
         Deque {
             d: VecDeque::new(),
             capacity,
@@ -61,21 +62,78 @@ impl MessageSender for TestSender {
 }
 
 #[derive(Debug)]
-pub struct SharedState {
-    pub tracking_tab: TrackingTabState,
-    pub solution_tab: SolutionTabState,
-}
+pub struct SharedState(Arc<Mutex<SharedStateInner>>);
+
 impl SharedState {
     pub fn new() -> SharedState {
         SharedState {
+            0: Arc::new(Mutex::new(SharedStateInner::default())),
+        }
+    }
+    pub fn server_is_connected(&self) -> bool {
+        {
+            let shared_data = self.lock().unwrap();
+            (*shared_data).server.connected
+        }
+    }
+    pub fn server_set_connected(&self, set_to: bool) {
+        {
+            let mut shared_data = self.lock().unwrap();
+            (*shared_data).server.connected = set_to;
+        }
+    }
+}
+
+impl Deref for SharedState {
+    type Target = Mutex<SharedStateInner>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Default for SharedState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Clone for SharedState {
+    fn clone(&self) -> Self {
+        SharedState {
+            0: Arc::clone(&self.0),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct SharedStateInner {
+    pub tracking_tab: TrackingTabState,
+    pub server: ServerState,
+    pub solution_tab: SolutionTabState,
+}
+impl SharedStateInner {
+    pub fn new() -> SharedStateInner {
+        SharedStateInner {
             tracking_tab: TrackingTabState::new(),
+            server: ServerState::new(),
             solution_tab: SolutionTabState::new(),
         }
     }
 }
-impl Default for SharedState {
+impl Default for SharedStateInner {
     fn default() -> Self {
-        SharedState::new()
+        SharedStateInner::new()
+    }
+}
+
+#[derive(Debug)]
+pub struct ServerState {
+    pub connected: bool,
+}
+
+impl ServerState {
+    fn new() -> ServerState {
+        ServerState { connected: false }
     }
 }
 

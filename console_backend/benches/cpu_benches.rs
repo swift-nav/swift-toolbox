@@ -57,11 +57,10 @@ fn run_process_messages(file_in_name: &str, failure: bool) {
         }
         let messages = sbp::iter_messages(Box::new(fs::File::open(file_in_name).unwrap()));
         let shared_state = SharedState::new();
-        let shared_state = Arc::new(Mutex::new(shared_state));
         let client_send = ClientSender {
             inner: client_send_,
         };
-        process_messages::process_messages(messages, &shared_state, client_send);
+        process_messages::process_messages(messages, shared_state, client_send);
     }
     recv_thread.join().expect("join should succeed");
 }

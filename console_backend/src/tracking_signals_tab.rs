@@ -1,9 +1,5 @@
 use ordered_float::OrderedFloat;
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-    time::Instant,
-};
+use std::{collections::HashMap, time::Instant};
 
 use capnp::message::Builder;
 use capnp::serialize;
@@ -36,7 +32,7 @@ use sbp::messages::tracking::{MeasurementState, TrackingChannelState};
 /// - `t_init`: Instant monotonic time used as starting reference time.
 /// - `time`: Vector of Monotic times stored.
 #[derive(Debug)]
-pub struct TrackingSignalsTab<'a> {
+pub struct TrackingSignalsTab {
     pub at_least_one_track_received: bool,
     pub check_labels: [&'static str; 12],
     pub cn0_age: Cn0Age,
@@ -54,14 +50,14 @@ pub struct TrackingSignalsTab<'a> {
     pub prev_obs_total: u8,
     pub received_codes: Vec<SignalCodes>,
     pub sats: Vec<Deque<(OrderedFloat<f64>, f64)>>,
-    pub shared_state: &'a Arc<Mutex<SharedState>>,
+    pub shared_state: SharedState,
     pub sv_labels: Vec<String>,
     pub t_init: Instant,
     pub time: Deque<f64>,
 }
 
-impl<'a> TrackingSignalsTab<'a> {
-    pub fn new(shared_state: &'a Arc<Mutex<SharedState>>) -> TrackingSignalsTab {
+impl<'a> TrackingSignalsTab {
+    pub fn new(shared_state: SharedState) -> TrackingSignalsTab {
         TrackingSignalsTab {
             at_least_one_track_received: false,
             check_labels: [
@@ -97,7 +93,7 @@ impl<'a> TrackingSignalsTab<'a> {
             sv_labels: Vec::new(),
             t_init: Instant::now(),
             time: {
-                let mut time = Deque::with_capacity(NUM_POINTS);
+                let mut time = Deque::with_size_limit(NUM_POINTS);
                 for x in (0..(NUM_POINTS as i32)).rev() {
                     time.add((-x as f64) * (1.0 / TRK_RATE));
                 }
@@ -115,7 +111,7 @@ impl<'a> TrackingSignalsTab<'a> {
         let cn0_deque = self
             .cn0_dict
             .entry(key)
-            .or_insert_with(|| Deque::with_capacity(NUM_POINTS));
+            .or_insert_with(|| Deque::with_size_limit(NUM_POINTS));
         cn0_deque.add((OrderedFloat(t), cn0));
     }
     /// Push carrier-to-noise density age to cn0_age with key.
@@ -480,8 +476,6 @@ impl<'a> TrackingSignalsTab<'a> {
         for (i, label) in self.check_labels.iter().enumerate() {
             tracking_checkbox_labels.set(i as u32, label);
         }
-        // println!("{:?}", self.sats);
-
         let mut msg_bytes: Vec<u8> = vec![];
         serialize::write_message(&mut msg_bytes, &builder).unwrap();
 
@@ -500,8 +494,7 @@ mod tests {
     #[test]
     fn cn0_age_and_cn0_dict_test() {
         let shared_state = SharedState::new();
-        let shared_state = &Arc::new(Mutex::new(shared_state));
-        let mut tracking_signals_tab = TrackingSignalsTab::new(&shared_state);
+        let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state);
         let t_init = tracking_signals_tab.t_init;
         let signal_code = SignalCodes::from(4_u8);
         let sat = 5_i16;
@@ -536,8 +529,7 @@ mod tests {
     #[test]
     fn handle_msg_measurement_state_test() {
         let shared_state = SharedState::new();
-        let shared_state = &Arc::new(Mutex::new(shared_state));
-        let mut tracking_signals_tab = TrackingSignalsTab::new(&shared_state);
+        let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state);
 
         let mut states: Vec<MeasurementState> = Vec::new();
         let glo_sat_above_one_hundred = 103;
@@ -582,8 +574,7 @@ mod tests {
     #[test]
     fn handle_msg_tracking_state_test() {
         let shared_state = SharedState::new();
-        let shared_state = &Arc::new(Mutex::new(shared_state));
-        let mut tracking_signals_tab = TrackingSignalsTab::new(&shared_state);
+        let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state);
 
         let mut states: Vec<TrackingChannelState> = Vec::new();
         let glo_sat_above_one_hundred = 103;
@@ -631,8 +622,7 @@ mod tests {
     #[test]
     fn handle_msg_obs_test() {
         let shared_state = SharedState::new();
-        let shared_state = &Arc::new(Mutex::new(shared_state));
-        let mut tracking_signals_tab = TrackingSignalsTab::new(&shared_state);
+        let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state);
         let mut obs_msg = MsgObs {
             sender_id: Some(5),
             obs: Vec::new(),
@@ -669,8 +659,7 @@ mod tests {
     #[test]
     fn update_plot_test() {
         let shared_state = SharedState::new();
-        let shared_state = &Arc::new(Mutex::new(shared_state));
-        let mut tracking_signals_tab = TrackingSignalsTab::new(&shared_state);
+        let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state);
         let t = (Instant::now())
             .duration_since(tracking_signals_tab.t_init)
             .as_secs_f64();

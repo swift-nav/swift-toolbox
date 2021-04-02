@@ -1,8 +1,5 @@
 use ordered_float::OrderedFloat;
-use std::{
-    str::FromStr,
-    sync::{Arc, Mutex},
-};
+use std::str::FromStr;
 
 use sbp::messages::navigation::MsgVelNED;
 
@@ -13,7 +10,7 @@ use crate::console_backend_capnp as m;
 use crate::constants::{HORIZONTAL_COLOR, NUM_POINTS, VERTICAL_COLOR};
 use crate::types::{Deque, MessageSender, SharedState, VelocityUnits};
 
-/// TrackingSignalsTab struct.
+/// SolutionVelocityTab struct.
 ///
 /// # Fields:
 ///
@@ -34,13 +31,13 @@ pub struct SolutionVelocityTab<'a> {
     pub min: f64,
     pub multiplier: f64,
     pub points: Vec<Deque<(f64, OrderedFloat<f64>)>>,
-    pub shared_state: &'a Arc<Mutex<SharedState>>,
+    pub shared_state: SharedState,
     pub tow: f64,
     pub unit: VelocityUnits,
 }
 
 impl<'a> SolutionVelocityTab<'a> {
-    pub fn new(shared_state: &'a Arc<Mutex<SharedState>>) -> SolutionVelocityTab {
+    pub fn new(shared_state: SharedState) -> SolutionVelocityTab<'a> {
         SolutionVelocityTab {
             available_units: vec![
                 VelocityUnits::Mps.as_str(),
@@ -52,8 +49,8 @@ impl<'a> SolutionVelocityTab<'a> {
             min: 0_f64,
             multiplier: VelocityUnits::Mps.get_multiplier(),
             points: vec![
-                Deque::with_capacity(NUM_POINTS),
-                Deque::with_capacity(NUM_POINTS),
+                Deque::with_size_limit(NUM_POINTS),
+                Deque::with_size_limit(NUM_POINTS),
             ],
             shared_state,
             tow: 0_f64,
@@ -64,8 +61,8 @@ impl<'a> SolutionVelocityTab<'a> {
     fn convert_points(&mut self, new_unit: VelocityUnits) {
         let new_mult = new_unit.get_multiplier();
         let mut points = vec![
-            Deque::with_capacity(NUM_POINTS),
-            Deque::with_capacity(NUM_POINTS),
+            Deque::with_size_limit(NUM_POINTS),
+            Deque::with_size_limit(NUM_POINTS),
         ];
         let hpoints = &mut self.points[0].get();
         let vpoints = &mut self.points[1].get();
@@ -184,8 +181,7 @@ mod tests {
     #[test]
     fn handle_vel_ned_test() {
         let shared_state = SharedState::new();
-        let shared_state = &Arc::new(Mutex::new(shared_state));
-        let mut solution_velocity_tab = SolutionVelocityTab::new(&shared_state);
+        let mut solution_velocity_tab = SolutionVelocityTab::new(shared_state);
 
         let msg: MsgVelNED = MsgVelNED {
             sender_id: Some(5),
@@ -249,8 +245,7 @@ mod tests {
     #[test]
     fn test_convert_points() {
         let shared_state = SharedState::new();
-        let shared_state = &Arc::new(Mutex::new(shared_state));
-        let mut solution_velocity_tab = SolutionVelocityTab::new(&shared_state);
+        let mut solution_velocity_tab = SolutionVelocityTab::new(shared_state);
 
         let mut msg: MsgVelNED = MsgVelNED {
             sender_id: Some(5),

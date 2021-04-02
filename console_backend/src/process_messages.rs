@@ -1,16 +1,14 @@
 use sbp::messages::SBP;
-use std::sync::{Arc, Mutex};
 
 use crate::main_tab::*;
 use crate::types::*;
 
 pub fn process_messages(
     messages: impl Iterator<Item = sbp::Result<SBP>>,
-    shared_state: &Arc<Mutex<SharedState>>,
+    shared_state: SharedState,
     client_send_clone: ClientSender,
 ) {
-    let shared_state_clone = Arc::clone(&shared_state);
-    let mut main = MainTab::new(&shared_state_clone);
+    let mut main = MainTab::new(shared_state);
     for message in messages {
         match message {
             Ok(SBP::MsgTrackingState(msg)) => {

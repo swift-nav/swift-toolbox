@@ -91,7 +91,6 @@ class DataModel(QObject):
         self.endpoint = endpoint
         self.messages = messages
         self.file_in = file_in
-        self.is_connected = False
         if connect and file_in is not None:
             self.readfile()
         elif connect:
@@ -99,24 +98,17 @@ class DataModel(QObject):
 
     @Slot()  # type: ignore
     def connect(self) -> None:
-        if self.is_connected:
-            print("Already connected.")
-            return
         msg = self.messages.Message()
         msg.connectRequest.host = PIKSI_HOST
         msg.connectRequest.port = PIKSI_PORT
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
-        self.is_connected = True
 
     @Slot()  # type: ignore
     def readfile(self) -> None:
-        if not self.file_in:
-            print("No file passed into application.")
-            return
         m = self.messages.Message()
         m.fileinRequest = m.init("fileinRequest")
-        m.fileinRequest.filename = self.file_in
+        m.fileinRequest.filename = str(self.file_in)
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
 

@@ -32,12 +32,13 @@ CONSOLE_BACKEND_CAPNP_PATH = "console_backend.capnp"
 PIKSI_HOST = "piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com"
 PIKSI_PORT = 55555
 
-POINTS_H_MINMAX: List[Optional[Tuple[float, float]]] = [None]  # pylint: disable=unsubscriptable-object
-POINTS_H: List[QPointF] = []
-POINTS_V: List[QPointF] = []
-TRACKING_POINTS: List[List[QPointF]] = []
-TRACKING_HEADERS: List[int] = []
-
+SOLUTION_VELOCITY_TAB: Dict[str, Any] = {
+    Keys.AVAILABLE_UNITS: [],
+    Keys.POINTS: [],
+    Keys.COLORS: [],
+    Keys.MAX: 0,
+    Keys.MIN: 0,
+}
 
 TRACKING_SIGNALS_TAB: Dict[str, Any] = {
     Keys.POINTS: [],
@@ -58,32 +59,83 @@ def receive_messages(app_, backend, messages):
         if m.which == MessageKeys.STATUS:
             if m.status.text == ApplicationStates.CLOSE:
                 return app_.quit()
-        elif m.which == MessageKeys.VELOCITY_STATUS:
-            POINTS_H_MINMAX[0] = (m.velocityStatus.min, m.velocityStatus.max)
-            POINTS_H[:] = [QPointF(point.x, point.y) for point in m.velocityStatus.hpoints]
-            POINTS_V[:] = [QPointF(point.x, point.y) for point in m.velocityStatus.vpoints]
-        elif m.which == MessageKeys.TRACKING_STATUS:
-            TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS][:] = m.trackingStatus.checkLabels
-            TRACKING_SIGNALS_TAB[Keys.LABELS][:] = m.trackingStatus.labels
-            TRACKING_SIGNALS_TAB[Keys.COLORS][:] = m.trackingStatus.colors
-            TRACKING_SIGNALS_TAB[Keys.POINTS][:] = [
-                [QPointF(point.x, point.y) for point in m.trackingStatus.data[idx]]
-                for idx in range(len(m.trackingStatus.data))
+        elif m.which == MessageKeys.SOLUTION_VELOCITY_STATUS:
+            SOLUTION_VELOCITY_TAB[Keys.COLORS][:] = m.solutionVelocityStatus.colors
+            SOLUTION_VELOCITY_TAB[Keys.POINTS][:] = [
+                [QPointF(point.x, point.y) for point in m.solutionVelocityStatus.data[idx]]
+                for idx in range(len(m.solutionVelocityStatus.data))
             ]
-            TRACKING_SIGNALS_TAB[Keys.MAX] = m.trackingStatus.max
-            TRACKING_SIGNALS_TAB[Keys.MIN] = m.trackingStatus.min
+            SOLUTION_VELOCITY_TAB[Keys.MAX] = m.solutionVelocityStatus.max
+            SOLUTION_VELOCITY_TAB[Keys.MIN] = m.solutionVelocityStatus.min
+            SOLUTION_VELOCITY_TAB[Keys.AVAILABLE_UNITS][:] = m.solutionVelocityStatus.availableUnits
+        elif m.which == MessageKeys.TRACKING_SIGNALS_STATUS:
+            TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS][:] = m.trackingSignalsStatus.checkLabels
+            TRACKING_SIGNALS_TAB[Keys.LABELS][:] = m.trackingSignalsStatus.labels
+            TRACKING_SIGNALS_TAB[Keys.COLORS][:] = m.trackingSignalsStatus.colors
+            TRACKING_SIGNALS_TAB[Keys.POINTS][:] = [
+                [QPointF(point.x, point.y) for point in m.trackingSignalsStatus.data[idx]]
+                for idx in range(len(m.trackingSignalsStatus.data))
+            ]
+            TRACKING_SIGNALS_TAB[Keys.MAX] = m.trackingSignalsStatus.max
+            TRACKING_SIGNALS_TAB[Keys.MIN] = m.trackingSignalsStatus.min
         else:
             pass
 
+class DataModel(QObject):
 
+    endpoint: console_backend.server.ServerEndpoint  # pylint: disable=no-member
+    messages: Any
 
-class ConsolePoints(QObject):
+    def __init__(self, endpoint, messages, file_in, connect=False):
+        super().__init__()
+        self.endpoint = endpoint
+        self.messages = messages
+        self.file_in = file_in
+        if connect and file_in is not None:
+            self.readfile()
+        elif connect:
+            self.connect()
 
-    _hpoints: List[QPointF] = []
-    _vpoints: List[QPointF] = []
+    @Slot()  # type: ignore
+    def connect(self) -> None:
+        msg = self.messages.Message()
+        msg.connectRequest.host = PIKSI_HOST
+        msg.connectRequest.port = PIKSI_PORT
+        buffer = msg.to_bytes()
+        self.endpoint.send_message(buffer)
+
+    @Slot()  # type: ignore
+    def readfile(self) -> None:
+        m = self.messages.Message()
+        m.fileinRequest = m.init("fileinRequest")
+        m.fileinRequest.filename = str(self.file_in)
+        buffer = m.to_bytes()
+        self.endpoint.send_message(buffer)
+
+    @Slot(list)  # type: ignore
+    def tracking_signals_check_visibility(self, checks: List[str]) -> None:
+        m = self.messages.Message()
+        m.trackingSignalsStatusFront = m.init("trackingSignalsStatusFront")
+        m.trackingSignalsStatusFront.trackingSignalsCheckVisibility = checks
+        buffer = m.to_bytes()
+        self.endpoint.send_message(buffer)
+
+    @Slot(str)  # type: ignore
+    def solution_velocity_unit(self, unit: str) -> None:
+        m = self.messages.Message()
+        m.solutionVelocityStatusFront = m.init("solutionVelocityStatusFront")
+        m.solutionVelocityStatusFront.solutionVelocityUnit = unit
+        buffer = m.to_bytes()
+        self.endpoint.send_message(buffer)
+
+class SolutionVelocityPoints(QObject):
+
+    _colors: List[str] = []
+    _points: List[List[QPointF]] = [[]]
     _valid: bool = False
     _min: float = 0.0
     _max: float = 0.0
+    _available_units: List[str] = []
 
     def get_valid(self) -> bool:
         """Getter for _valid.
@@ -124,88 +176,48 @@ class ConsolePoints(QObject):
 
     max_ = Property(float, get_max, set_max)
 
-    def get_hpoints(self) -> List[QPointF]:
-        return self._hpoints
+    def get_available_units(self) -> List[str]:
+        """Getter for _available_units.
+        """
+        return self._available_units
 
-    def set_hpoints(self, hpoints) -> None:
-        self._hpoints = hpoints
+    def set_available_units(self, available_units: List[str]) -> None:
+        """Setter for _available_units.
+        """
+        self._available_units = available_units
 
-    def get_vpoints(self) -> List[QPointF]:
-        return self._vpoints
+    available_units = Property(QTKeys.QVARIANTLIST, get_available_units, set_available_units)
 
-    def set_vpoints(self, vpoints) -> None:
-        self._vpoints = vpoints
+    def get_colors(self) -> List[str]:
+        return self._colors
 
-    hpoints = Property(QTKeys.QVARIANTLIST, get_hpoints, set_hpoints)  # type: ignore
-    vpoints = Property(QTKeys.QVARIANTLIST, get_vpoints, set_vpoints)  # type: ignore
+    def set_colors(self, colors) -> None:
+        self._colors = colors
 
-    @Slot(QtCharts.QXYSeries)  # type: ignore
-    def fill_hseries(self, hseries):
-        hseries.replace(self._hpoints)
+    colors = Property(QTKeys.QVARIANTLIST, get_colors, set_colors)  # type: ignore
 
-    @Slot(QtCharts.QXYSeries)  # type: ignore
-    def fill_vseries(self, vseries):
-        vseries.replace(self._vpoints)
+    def get_points(self) -> List[List[QPointF]]:
+        return self._points
 
+    def set_points(self, points) -> None:
+        self._points = points
 
-class DataModel(QObject):
-
-    endpoint: console_backend.server.ServerEndpoint  # pylint: disable=no-member
-    messages: Any
-
-    def __init__(self, endpoint, messages, file_in, connect=False):
-        super().__init__()
-        self.endpoint = endpoint
-        self.messages = messages
-        self.file_in = file_in
-        self.is_connected = False
-        if connect and file_in is not None:
-            self.readfile()
-        elif connect:
-            self.connect()
-
-    @Slot(ConsolePoints)  # type: ignore
-    def fill_console_points(self, cp: ConsolePoints) -> ConsolePoints:  # pylint: disable=no-self-use
-        if POINTS_H_MINMAX[0] is None:
-            cp.set_valid(False)
-            return cp
-        cp.set_valid(True)
-        cp.set_min(POINTS_H_MINMAX[0][0])  # pylint: disable=unsubscriptable-object
-        cp.set_max(POINTS_H_MINMAX[0][1])  # pylint: disable=unsubscriptable-object
-        cp.set_hpoints(POINTS_H)
-        cp.set_vpoints(POINTS_V)
-        return cp
-
-    @Slot()  # type: ignore
-    def connect(self) -> None:
-        if self.is_connected:
-            print("Already connected.")
-            return
-        msg = self.messages.Message()
-        msg.connectRequest.host = PIKSI_HOST
-        msg.connectRequest.port = PIKSI_PORT
-        buffer = msg.to_bytes()
-        self.endpoint.send_message(buffer)
-        self.is_connected = True
-
-    @Slot()  # type: ignore
-    def readfile(self) -> None:
-        if not self.file_in:
-            print("No file passed into application.")
-            return
-        m = self.messages.Message()
-        m.fileinRequest = m.init("fileinRequest")
-        m.fileinRequest.filename = self.file_in
-        buffer = m.to_bytes()
-        self.endpoint.send_message(buffer)
+    points = Property(QTKeys.QVARIANTLIST, get_points, set_points)  # type: ignore
 
     @Slot(list)  # type: ignore
-    def check_visibility(self, checks: List[str]) -> None:
-        m = self.messages.Message()
-        m.trackingStatusFront = m.init("trackingStatusFront")
-        m.trackingStatusFront.checkVisibility = checks
-        buffer = m.to_bytes()
-        self.endpoint.send_message(buffer)
+    def fill_series(self, series_list):
+        for idx, series in enumerate(series_list):
+            series.replace(self._points[idx])
+
+class SolutionVelocityModel(QObject):  # pylint: disable=too-few-public-methods
+    @Slot(SolutionVelocityPoints)  # type: ignore
+    def fill_console_points(self, cp: SolutionVelocityPoints) -> SolutionVelocityPoints:  # pylint:disable=no-self-use
+        cp.set_points(SOLUTION_VELOCITY_TAB[Keys.POINTS])
+        cp.set_colors(SOLUTION_VELOCITY_TAB[Keys.COLORS])
+        cp.set_max(SOLUTION_VELOCITY_TAB[Keys.MAX])
+        cp.set_min(SOLUTION_VELOCITY_TAB[Keys.MIN])
+        cp.set_available_units(SOLUTION_VELOCITY_TAB[Keys.AVAILABLE_UNITS])
+        return cp
 
 
 class TrackingSignalsPoints(QObject):
@@ -343,7 +355,7 @@ if __name__ == "__main__":
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
     app = QApplication()
 
-    qmlRegisterType(ConsolePoints, "SwiftConsole", 1, 0, "ConsolePoints")  # type: ignore
+    qmlRegisterType(SolutionVelocityPoints, "SwiftConsole", 1, 0, "SolutionVelocityPoints")  # type: ignore
     qmlRegisterType(TrackingSignalsPoints, "SwiftConsole", 1, 0, "TrackingSignalsPoints")  # type: ignore
     engine = QtQml.QQmlApplicationEngine()
 
@@ -359,8 +371,10 @@ if __name__ == "__main__":
     endpoint_main = backend_main.start()
 
     data_model = DataModel(endpoint_main, messages_main, args.file_in, args.connect)
+    solution_velocity_model = SolutionVelocityModel()
     tracking_signals_model = TrackingSignalsModel()
     root_context = engine.rootContext()
+    root_context.setContextProperty("solution_velocity_model", solution_velocity_model)
     root_context.setContextProperty("tracking_signals_model", tracking_signals_model)
     root_context.setContextProperty("data_model", data_model)
 

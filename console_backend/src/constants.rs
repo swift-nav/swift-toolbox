@@ -6,8 +6,10 @@ use std::{
 
 use crate::types::Error;
 
-// Tracking Tab constants.
+// Common constants.
 pub const NUM_POINTS: usize = 200;
+
+// Tracking Signals Tab constants.
 pub const NUM_SATELLITES: usize = 60;
 pub const TRK_RATE: f64 = 2.0;
 pub const GLO_SLOT_SAT_MAX: u8 = 90;
@@ -29,6 +31,15 @@ pub const QZS_L1CA: &str = "QZS L1CA";
 pub const QZS_L2C_M: &str = "QZS L2C M";
 pub const SBAS_L1: &str = "SBAS L1";
 pub const SHOW_LEGEND: &str = "Show Legend";
+
+// Solution Velocity Tab constants.
+pub const HORIZONTAL_COLOR: &str = "#E41A1C";
+pub const VERTICAL_COLOR: &str = "#377EB8";
+pub const MPS: &str = "m/s";
+pub const MPH: &str = "mph";
+pub const KPH: &str = "kph";
+pub const MPS2MPH: f64 = 2.236934;
+pub const MPS2KPH: f64 = 3.600000;
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]

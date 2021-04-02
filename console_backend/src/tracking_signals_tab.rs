@@ -1,9 +1,5 @@
 use ordered_float::OrderedFloat;
-use std::{
-    collections::{HashMap, VecDeque},
-    sync::{mpsc::Sender, Arc, Mutex},
-    time::Instant,
-};
+use std::{collections::HashMap, time::Instant};
 
 use capnp::message::Builder;
 use capnp::serialize;
@@ -11,16 +7,7 @@ use capnp::serialize;
 use crate::console_backend_capnp as m;
 use crate::constants::*;
 use crate::types::*;
-use sbp::messages::{
-    observation::{
-        MsgObs, MsgObsDepB, MsgObsDepC, PackedObsContent, PackedObsContentDepB,
-        PackedObsContentDepC,
-    },
-    tracking::{MeasurementState, TrackingChannelState},
-};
-
-pub type Cn0Dict = HashMap<(SignalCodes, i16), Deque<(OrderedFloat<f64>, f64)>>;
-pub type Cn0Age = HashMap<(SignalCodes, i16), f64>;
+use sbp::messages::tracking::{MeasurementState, TrackingChannelState};
 
 /// TrackingSignalsTab struct.
 ///
@@ -45,7 +32,7 @@ pub type Cn0Age = HashMap<(SignalCodes, i16), f64>;
 /// - `t_init`: Instant monotonic time used as starting reference time.
 /// - `time`: Vector of Monotic times stored.
 #[derive(Debug)]
-pub struct TrackingSignalsTab<'a> {
+pub struct TrackingSignalsTab {
     pub at_least_one_track_received: bool,
     pub check_labels: [&'static str; 12],
     pub cn0_age: Cn0Age,
@@ -63,14 +50,14 @@ pub struct TrackingSignalsTab<'a> {
     pub prev_obs_total: u8,
     pub received_codes: Vec<SignalCodes>,
     pub sats: Vec<Deque<(OrderedFloat<f64>, f64)>>,
-    pub shared_state: &'a Arc<Mutex<SharedState>>,
+    pub shared_state: SharedState,
     pub sv_labels: Vec<String>,
     pub t_init: Instant,
-    pub time: VecDeque<f64>,
+    pub time: Deque<f64>,
 }
 
-impl<'a> TrackingSignalsTab<'a> {
-    pub fn new(shared_state: &'a Arc<Mutex<SharedState>>) -> TrackingSignalsTab {
+impl<'a> TrackingSignalsTab {
+    pub fn new(shared_state: SharedState) -> TrackingSignalsTab {
         TrackingSignalsTab {
             at_least_one_track_received: false,
             check_labels: [
@@ -106,9 +93,9 @@ impl<'a> TrackingSignalsTab<'a> {
             sv_labels: Vec::new(),
             t_init: Instant::now(),
             time: {
-                let mut time: Deque<f64> = Deque::with_capacity(NUM_POINTS);
+                let mut time = Deque::with_size_limit(NUM_POINTS);
                 for x in (0..(NUM_POINTS as i32)).rev() {
-                    time.push_back((-x as f64) * (1.0 / TRK_RATE));
+                    time.add((-x as f64) * (1.0 / TRK_RATE));
                 }
                 time
             },
@@ -124,7 +111,7 @@ impl<'a> TrackingSignalsTab<'a> {
         let cn0_deque = self
             .cn0_dict
             .entry(key)
-            .or_insert_with(|| Deque::with_capacity(NUM_POINTS));
+            .or_insert_with(|| Deque::with_size_limit(NUM_POINTS));
         cn0_deque.add((OrderedFloat(t), cn0));
     }
     /// Push carrier-to-noise density age to cn0_age with key.
@@ -142,7 +129,7 @@ impl<'a> TrackingSignalsTab<'a> {
     pub fn clean_cn0(&mut self) {
         let mut remove_vec: Vec<(SignalCodes, i16)> = Vec::new();
         for (key, _) in self.cn0_dict.iter_mut() {
-            if self.cn0_age[key] < self.time[0] {
+            if self.cn0_age[key] < self.time.get()[0] {
                 remove_vec.push(*key);
             }
         }
@@ -161,7 +148,11 @@ impl<'a> TrackingSignalsTab<'a> {
         let filters;
         {
             let shared_data = self.shared_state.lock().unwrap();
-            filters = (*shared_data).tracking_tab.check_visibility.clone();
+            filters = (*shared_data)
+                .tracking_tab
+                .signals_tab
+                .check_visibility
+                .clone();
         }
         for (key, _) in self.cn0_dict.iter_mut() {
             let (signal_code, _) = key;
@@ -199,10 +190,10 @@ impl<'a> TrackingSignalsTab<'a> {
     ///
     /// - `states`: All states contained within the measurementstate message.
     /// - `client_send`: The Sender channel to be used to send data to frontend.
-    pub fn handle_msg_measurement_state(
+    pub fn handle_msg_measurement_state<P: MessageSender>(
         &mut self,
         states: Vec<MeasurementState>,
-        client_send: Sender<Vec<u8>>,
+        client_send: &mut P,
     ) {
         self.at_least_one_track_received = true;
         let mut codes_that_came: Vec<(SignalCodes, i16)> = Vec::new();
@@ -247,10 +238,10 @@ impl<'a> TrackingSignalsTab<'a> {
     ///
     /// - `states`: All states contained within the trackingstate message.
     /// - `client_send`: The Sender channel to be used to send data to frontend.
-    pub fn handle_msg_tracking_state(
+    pub fn handle_msg_tracking_state<P: MessageSender>(
         &mut self,
         states: Vec<TrackingChannelState>,
-        client_send: Sender<Vec<u8>>,
+        client_send: &mut P,
     ) {
         self.at_least_one_track_received = true;
         let mut codes_that_came: Vec<(SignalCodes, i16)> = Vec::new();
@@ -284,7 +275,7 @@ impl<'a> TrackingSignalsTab<'a> {
     ///
     /// - `msg`: The full SBP message cast as an ObservationMsg variant.
     /// - `client_send`: The Sender channel to be used to send data to frontend.
-    pub fn handle_obs(&mut self, msg: ObservationMsg, client_send: Sender<Vec<u8>>) {
+    pub fn handle_obs<P: MessageSender>(&mut self, msg: ObservationMsg, client_send: &mut P) {
         let (seq, tow, wn, states) = match &msg {
             ObservationMsg::MsgObs(obs) => {
                 let states: Vec<Observations> = obs
@@ -388,10 +379,10 @@ impl<'a> TrackingSignalsTab<'a> {
     ///
     /// - `msg`: The full SBP message cast as an ObservationMsg variant.
     /// - `client_send`: The Sender channel to be used to send data to frontend.
-    pub fn update_from_obs(
+    pub fn update_from_obs<P: MessageSender>(
         &mut self,
         obs_dict: HashMap<(SignalCodes, i16), f64>,
-        client_send: Sender<Vec<u8>>,
+        client_send: &mut P,
     ) {
         if self.at_least_one_track_received {
             return;
@@ -434,37 +425,20 @@ impl<'a> TrackingSignalsTab<'a> {
         self.prev_obs_count = 0;
         self.incoming_obs_cn0.clear()
     }
-}
 
-/// Enum wrapping around various Observation Message types.
-pub enum ObservationMsg {
-    MsgObs(MsgObs),
-    // MsgObsDepA(MsgObsDepA),
-    MsgObsDepB(MsgObsDepB),
-    MsgObsDepC(MsgObsDepC),
-}
-/// Enum wrapping around various Observation Message observation types.
-pub enum Observations {
-    PackedObsContent(PackedObsContent),
-    // PackedObsContentDepA(PackedObsContentDepA),
-    PackedObsContentDepB(PackedObsContentDepB),
-    PackedObsContentDepC(PackedObsContentDepC),
-}
-
-impl TabBackend for TrackingSignalsTab<'_> {
     /// Package data into a message buffer and send to frontend.
     ///
     /// # Parameters:
     ///
     /// - `client_send`: The Sender channel to be used to send data to frontend.
-    fn send_data(&mut self, client_send: Sender<Vec<u8>>) {
+    fn send_data<P: MessageSender>(&mut self, client_send: &mut P) {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<m::message::Builder>();
 
-        let mut tracking_status = msg.init_tracking_status();
-        tracking_status.set_min(self.min);
-        tracking_status.set_max(self.max);
-        let mut labels = tracking_status
+        let mut tracking_signals_status = msg.init_tracking_signals_status();
+        tracking_signals_status.set_min(self.min);
+        tracking_signals_status.set_max(self.max);
+        let mut labels = tracking_signals_status
             .reborrow()
             .init_labels(self.sv_labels.len() as u32);
 
@@ -472,7 +446,7 @@ impl TabBackend for TrackingSignalsTab<'_> {
             labels.set(i as u32, header);
         }
 
-        let mut colors = tracking_status
+        let mut colors = tracking_signals_status
             .reborrow()
             .init_colors(self.colors.len() as u32);
 
@@ -480,12 +454,12 @@ impl TabBackend for TrackingSignalsTab<'_> {
             colors.set(i as u32, color);
         }
 
-        let mut tracking_points = tracking_status
+        let mut tracking_points = tracking_signals_status
             .reborrow()
             .init_data(self.sv_labels.len() as u32);
         {
             for idx in 0..self.sv_labels.len() {
-                let points = self.sats.get_mut(idx).unwrap();
+                let points = self.sats.get_mut(idx).unwrap().get();
                 let mut point_val_idx = tracking_points
                     .reborrow()
                     .init(idx as u32, points.len() as u32);
@@ -496,16 +470,225 @@ impl TabBackend for TrackingSignalsTab<'_> {
                 }
             }
         }
-        let mut tracking_checkbox_labels = tracking_status
+        let mut tracking_checkbox_labels = tracking_signals_status
             .reborrow()
             .init_check_labels(self.check_labels.len() as u32);
         for (i, label) in self.check_labels.iter().enumerate() {
             tracking_checkbox_labels.set(i as u32, label);
         }
-
         let mut msg_bytes: Vec<u8> = vec![];
         serialize::write_message(&mut msg_bytes, &builder).unwrap();
 
-        client_send.send(msg_bytes).unwrap();
+        client_send.send_data(msg_bytes);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sbp::messages::{
+        gnss::{CarrierPhase, GPSTime, GnssSignal},
+        observation::{Doppler, MsgObs, ObservationHeader, PackedObsContent},
+    };
+
+    #[test]
+    fn cn0_age_and_cn0_dict_test() {
+        let shared_state = SharedState::new();
+        let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state);
+        let t_init = tracking_signals_tab.t_init;
+        let signal_code = SignalCodes::from(4_u8);
+        let sat = 5_i16;
+        let key = (signal_code, sat);
+
+        for idx in 0..NUM_POINTS {
+            let mut cn0_age = 0_f64;
+            if idx < NUM_POINTS / 2 {
+                cn0_age = (NUM_POINTS - idx) as f64;
+            }
+            let t = (Instant::now()).duration_since(t_init).as_secs_f64();
+            tracking_signals_tab.time.add(t);
+            tracking_signals_tab.push_to_cn0_dict(key, t, idx as f64);
+            tracking_signals_tab.push_to_cn0_age(key, cn0_age);
+        }
+        assert_eq!(tracking_signals_tab.cn0_dict[&key].get().len(), NUM_POINTS);
+        assert!(tracking_signals_tab.cn0_age[&key] - 1_f64 <= f64::EPSILON);
+
+        let t = (Instant::now()).duration_since(t_init).as_secs_f64();
+        tracking_signals_tab.time.add(t);
+        let cn0 = 400.0;
+        assert!(tracking_signals_tab.cn0_dict[&key].get()[0].1 - 0_f64 <= f64::EPSILON);
+        tracking_signals_tab.push_to_cn0_dict(key, t, cn0);
+
+        assert_eq!(tracking_signals_tab.cn0_dict[&key].get().len(), NUM_POINTS);
+        assert!(tracking_signals_tab.cn0_dict[&key].get()[0].1 - 1_f64 <= f64::EPSILON);
+
+        tracking_signals_tab.clean_cn0();
+        assert_eq!(tracking_signals_tab.cn0_dict.len(), 0);
+    }
+
+    #[test]
+    fn handle_msg_measurement_state_test() {
+        let shared_state = SharedState::new();
+        let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state);
+
+        let mut states: Vec<MeasurementState> = Vec::new();
+        let glo_sat_above_one_hundred = 103;
+        let glo_sat_under_one_hundred = 25;
+        states.push(MeasurementState {
+            cn0: 200_u8,
+            mesid: GnssSignal {
+                sat: glo_sat_above_one_hundred,
+                code: 4,
+            },
+        });
+        states.push(MeasurementState {
+            cn0: 100_u8,
+            mesid: GnssSignal {
+                sat: glo_sat_under_one_hundred,
+                code: 3,
+            },
+        });
+        states.push(MeasurementState {
+            cn0: 100_u8,
+            mesid: GnssSignal { sat: 25, code: 5 },
+        });
+
+        let mut client_send = TestSender { inner: Vec::new() };
+        tracking_signals_tab.handle_msg_measurement_state(states, &mut client_send);
+        assert_eq!(tracking_signals_tab.glo_fcn_dict.len(), 1);
+        assert_eq!(
+            tracking_signals_tab.glo_fcn_dict[&0_u8],
+            glo_sat_above_one_hundred as i16 - 100_i16
+        );
+        assert_eq!(tracking_signals_tab.glo_slot_dict.len(), 1);
+        assert_eq!(
+            tracking_signals_tab.glo_slot_dict[&0_i16],
+            glo_sat_under_one_hundred as i16
+        );
+        assert_eq!(tracking_signals_tab.cn0_dict.len(), 3);
+        assert_eq!(tracking_signals_tab.sv_labels.len(), 3);
+        assert_eq!(tracking_signals_tab.colors.len(), 3);
+        assert_eq!(tracking_signals_tab.sats.len(), 3);
+    }
+
+    #[test]
+    fn handle_msg_tracking_state_test() {
+        let shared_state = SharedState::new();
+        let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state);
+
+        let mut states: Vec<TrackingChannelState> = Vec::new();
+        let glo_sat_above_one_hundred = 103;
+        let glo_sat_under_one_hundred = 25;
+        states.push(TrackingChannelState {
+            cn0: 200_u8,
+            fcn: 0,
+            sid: GnssSignal {
+                sat: glo_sat_above_one_hundred,
+                code: 4,
+            },
+        });
+        states.push(TrackingChannelState {
+            cn0: 100_u8,
+            fcn: 10,
+            sid: GnssSignal {
+                sat: glo_sat_under_one_hundred,
+                code: 3,
+            },
+        });
+        states.push(TrackingChannelState {
+            cn0: 100_u8,
+            fcn: 0,
+            sid: GnssSignal { sat: 25, code: 5 },
+        });
+        let mut client_send = TestSender { inner: Vec::new() };
+        tracking_signals_tab.handle_msg_tracking_state(states, &mut client_send);
+
+        assert_eq!(tracking_signals_tab.glo_slot_dict.len(), 2);
+        assert_eq!(
+            tracking_signals_tab.glo_slot_dict[&(glo_sat_above_one_hundred as i16 - 100_i16)],
+            glo_sat_above_one_hundred as i16
+        );
+        assert_eq!(
+            tracking_signals_tab.glo_slot_dict
+                [&(glo_sat_under_one_hundred as i16 - (10 - GLO_FCN_OFFSET))],
+            glo_sat_under_one_hundred as i16
+        );
+        assert_eq!(tracking_signals_tab.cn0_dict.len(), 3);
+        assert_eq!(tracking_signals_tab.sv_labels.len(), 3);
+        assert_eq!(tracking_signals_tab.colors.len(), 3);
+        assert_eq!(tracking_signals_tab.sats.len(), 3);
+    }
+
+    #[test]
+    fn handle_msg_obs_test() {
+        let shared_state = SharedState::new();
+        let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state);
+        let mut obs_msg = MsgObs {
+            sender_id: Some(5),
+            obs: Vec::new(),
+            header: ObservationHeader {
+                t: GPSTime {
+                    tow: 0,
+                    ns_residual: 0,
+                    wn: 1,
+                },
+                n_obs: 16,
+            },
+        };
+        let signal_code = 4;
+        let sat = 25;
+        obs_msg.obs.push(PackedObsContent {
+            P: 0_u32,
+            L: CarrierPhase { i: 0_i32, f: 0_u8 },
+            D: Doppler { i: 0_i16, f: 0_u8 },
+            cn0: 5,
+            lock: 0,
+            flags: 1,
+            sid: GnssSignal {
+                code: signal_code,
+                sat,
+            },
+        });
+
+        let mut client_send = TestSender { inner: Vec::new() };
+        assert_eq!(tracking_signals_tab.cn0_dict.len(), 0);
+        tracking_signals_tab.handle_obs(ObservationMsg::MsgObs(obs_msg), &mut client_send);
+        assert_eq!(tracking_signals_tab.cn0_dict.len(), 1);
+    }
+
+    #[test]
+    fn update_plot_test() {
+        let shared_state = SharedState::new();
+        let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state);
+        let t = (Instant::now())
+            .duration_since(tracking_signals_tab.t_init)
+            .as_secs_f64();
+        tracking_signals_tab.push_to_cn0_dict((SignalCodes::from(0), 6_i16), t, 5_f64);
+        tracking_signals_tab.push_to_cn0_dict((SignalCodes::from(2), 7_i16), t, 6_f64);
+        tracking_signals_tab.push_to_cn0_dict((SignalCodes::from(12), 8_i16), t, 7_f64);
+        assert_eq!(tracking_signals_tab.sv_labels.len(), 0);
+        assert_eq!(tracking_signals_tab.colors.len(), 0);
+        assert_eq!(tracking_signals_tab.sats.len(), 0);
+        tracking_signals_tab.update_plot();
+        assert_eq!(tracking_signals_tab.sv_labels.len(), 3);
+        assert_eq!(tracking_signals_tab.colors.len(), 3);
+        assert_eq!(tracking_signals_tab.sats.len(), 3);
+        assert_eq!(
+            tracking_signals_tab.sv_labels,
+            vec![" BDS2 B1 I C08", " GPS L1CA G06", " SBAS L1 S  7"]
+        );
+        {
+            let mut shared_data = tracking_signals_tab.shared_state.lock().unwrap();
+            (*shared_data).tracking_tab.signals_tab.check_visibility =
+                vec![String::from(BDS2_B1_I)];
+        }
+        tracking_signals_tab.update_plot();
+        assert_eq!(tracking_signals_tab.sv_labels.len(), 2);
+        assert_eq!(tracking_signals_tab.colors.len(), 2);
+        assert_eq!(tracking_signals_tab.sats.len(), 2);
+        assert_eq!(
+            tracking_signals_tab.sv_labels,
+            vec![" GPS L1CA G06", " SBAS L1 S  7"]
+        );
     }
 }

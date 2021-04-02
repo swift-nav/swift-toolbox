@@ -66,21 +66,15 @@ pub struct SharedState(Arc<Mutex<SharedStateInner>>);
 
 impl SharedState {
     pub fn new() -> SharedState {
-        SharedState {
-            0: Arc::new(Mutex::new(SharedStateInner::default())),
-        }
+        SharedState(Arc::new(Mutex::new(SharedStateInner::default())))
     }
     pub fn server_is_connected(&self) -> bool {
-        {
-            let shared_data = self.lock().unwrap();
-            (*shared_data).server.connected
-        }
+        let shared_data = self.lock().unwrap();
+        (*shared_data).server.connected
     }
     pub fn server_set_connected(&self, set_to: bool) {
-        {
-            let mut shared_data = self.lock().unwrap();
-            (*shared_data).server.connected = set_to;
-        }
+        let mut shared_data = self.lock().unwrap();
+        (*shared_data).server.connected = set_to;
     }
 }
 

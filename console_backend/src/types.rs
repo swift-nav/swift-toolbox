@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use ordered_float::OrderedFloat;
 use std::{
     collections::{HashMap, VecDeque},
@@ -5,14 +6,19 @@ use std::{
     sync::{mpsc::Sender, Arc, Mutex},
 };
 
-use sbp::messages::observation::{
-    MsgObs, MsgObsDepB, MsgObsDepC, PackedObsContent, PackedObsContentDepB, PackedObsContentDepC,
+use sbp::messages::{
+    navigation::{MsgVelNED, MsgVelNEDDepA},
+    observation::{
+        MsgObs, MsgObsDepB, MsgObsDepC, PackedObsContent, PackedObsContentDepB,
+        PackedObsContentDepC,
+    },
 };
 
 use crate::constants::{SignalCodes, KPH, MPH, MPS, MPS2KPH, MPS2MPH};
 
 pub type Error = std::boxed::Box<dyn std::error::Error>;
 pub type Result<T> = std::result::Result<T, Error>;
+pub type UtcDateTime = DateTime<Utc>;
 
 #[derive(Debug, Clone)]
 pub struct Deque<T> {
@@ -200,6 +206,15 @@ pub enum Observations {
     // PackedObsContentDepA(PackedObsContentDepA),
     PackedObsContentDepB(PackedObsContentDepB),
     PackedObsContentDepC(PackedObsContentDepC),
+}
+
+// Solution Table Types.
+
+// Enum wrapping around various Vel NED Message types.
+#[derive(Debug)]
+pub enum VelNED {
+    MsgVelNED(MsgVelNED),
+    MsgVelNEDDepA(MsgVelNEDDepA),
 }
 
 // Solution Velocity Tab Types.

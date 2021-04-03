@@ -1,10 +1,11 @@
+use chrono::{DateTime, Duration, TimeZone, Utc};
 use std::{
     cmp::{Eq, PartialEq},
     collections::HashMap,
     hash::Hash,
 };
 
-use crate::types::Error;
+use crate::types::{Error, UtcDateTime};
 
 // Common constants.
 pub const NUM_POINTS: usize = 200;
@@ -32,6 +33,43 @@ pub const QZS_L2C_M: &str = "QZS L2C M";
 pub const SBAS_L1: &str = "SBAS L1";
 pub const SHOW_LEGEND: &str = "Show Legend";
 
+// Solution Table.
+pub const PLOT_HISTORY_MAX: usize = 1000;
+pub const SPP: &str = "spp";
+pub const DGNSS: &str = "dgnss";
+pub const FLOAT: &str = "float";
+pub const FIXED: &str = "fixed";
+pub const DR: &str = "dr";
+pub const SBAS: &str = "sbas";
+
+pub const LAT_SPP: &str = "lat_spp";
+pub const LNG_SPP: &str = "lng_spp";
+pub const ALT_SPP: &str = "alt_spp";
+pub const LAT_DGNSS: &str = "lat_dgnss";
+pub const LNG_DGNSS: &str = "lng_dgnss";
+pub const ALT_DGNSS: &str = "alt_dgnss";
+pub const LAT_FLOAT: &str = "lat_float";
+pub const LNG_FLOAT: &str = "lng_float";
+pub const ALT_FLOAT: &str = "alt_float";
+pub const LAT_FIXED: &str = "lat_fixed";
+pub const LNG_FIXED: &str = "lng_fixed";
+pub const ALT_FIXED: &str = "alt_fixed";
+pub const LAT_DR: &str = "lat_dr";
+pub const LNG_DR: &str = "lng_dr";
+pub const ALT_DR: &str = "alt_dr";
+pub const LAT_SBAS: &str = "lat_sbas";
+pub const LNG_SBAS: &str = "lng_sbas";
+pub const ALT_SBAS: &str = "alt_sbas";
+pub const SOLUTIONS_KEYS: &[&str] = &[
+    LAT_SPP, LNG_SPP, ALT_SPP, LAT_DGNSS, LNG_DGNSS, ALT_DGNSS, LAT_FLOAT, LNG_FLOAT, ALT_FLOAT,
+    LAT_FIXED, LNG_FIXED, ALT_FIXED, LAT_DR, LNG_DR, ALT_DR, LAT_SBAS, LNG_SBAS, ALT_SBAS,
+];
+
+pub const FACTORY_DEFAULT: &str = "Factory Default";
+pub const NON_VOLATILE_MEMORY: &str = "Non Volatile Memory";
+pub const DECODED_THIS_SESSION: &str = "Decoded this Session";
+pub const UNKNOWN: &str = "Unknown";
+
 // Solution Velocity Tab constants.
 pub const HORIZONTAL_COLOR: &str = "#E41A1C";
 pub const VERTICAL_COLOR: &str = "#377EB8";
@@ -40,6 +78,49 @@ pub const MPH: &str = "mph";
 pub const KPH: &str = "kph";
 pub const MPS2MPH: f64 = 2.236934;
 pub const MPS2KPH: f64 = 3.600000;
+
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
+pub enum GnssModes {
+    Spp = 1,
+    Dgnss = 2,
+    Float = 3,
+    Fixed = 4,
+    Dr = 5,
+    Sbas = 6,
+}
+impl From<u8> for GnssModes {
+    fn from(s: u8) -> Self {
+        match s {
+            1 => GnssModes::Spp,
+            2 => GnssModes::Dgnss,
+            3 => GnssModes::Float,
+            4 => GnssModes::Fixed,
+            5 => GnssModes::Dr,
+            6 => GnssModes::Sbas,
+            _ => panic!("this u8 does not convert to a gnss mode"),
+        }
+    }
+}
+impl ToString for GnssModes {
+    /// Retrieve associated string with the provided signal code.
+    ///
+    /// # Parameters
+    ///
+    /// - `key`: The code, which is signal code, and satellite constellation-specific satellite identifier.
+    fn to_string(&self) -> String {
+        let gnss_mode_str = match self {
+            GnssModes::Spp => SPP,
+            GnssModes::Dgnss => DGNSS,
+            GnssModes::Float => FLOAT,
+            GnssModes::Fixed => FIXED,
+            GnssModes::Dr => DR,
+            GnssModes::Sbas => SBAS,
+            _ => panic!("gnss mode not implemented"),
+        };
+        String::from(gnss_mode_str)
+    }
+}
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
@@ -620,6 +701,109 @@ pub fn get_color(key: (SignalCodes, i16)) -> &'static str {
     color_map(sat)
 }
 
+/// Calculate the length of a degree of latitude and longitude in meters.
+///
+/// # Parameters
+///
+/// - `lat_deg`: The latitude degree value to convert to lat/lon meters.
+pub fn meters_per_deg(lat_deg: f64) -> (f64, f64) {
+    let lat_term_1: f64 = 111132.92;
+    let lat_term_2: f64 = -559.82;
+    let lat_term_3: f64 = 1.175;
+    let lat_term_4: f64 = -0.0023;
+    let lon_term_1: f64 = 111412.84;
+    let lon_term_2: f64 = -93.5;
+    let lon_term_3: f64 = 0.118;
+
+    let latlen = lat_term_1
+        + (lat_term_2 * f64::cos(2_f64 * f64::to_radians(lat_deg)))
+        + (lat_term_3 * f64::cos(4_f64 * f64::to_radians(lat_deg)))
+        + (lat_term_4 * f64::cos(6_f64 * f64::to_radians(lat_deg)));
+    let lonlen = (lon_term_1 * f64::cos(f64::to_radians(lat_deg)))
+        + (lon_term_2 * f64::cos(3_f64 * f64::to_radians(lat_deg)))
+        + (lon_term_3 * f64::cos(5_f64 * f64::to_radians(lat_deg)));
+    (latlen, lonlen)
+}
+
+/// Nanoseconds to Microseconds
+///
+/// # Parameters
+/// - `ns`: The nanoseconds value to be converted.
+///
+/// # Returns
+/// - Newly converted microseconds value.
+pub fn nano_to_micro_sec(ns: f64) -> f64 {
+    ns / 1000_f64
+}
+
+/// Get string corresponding to UTC source.
+///
+/// # Parameters
+/// - `utc_flags`: The utc flags to decipher and extract source.
+///
+/// # Returns
+/// - The string corresponding to the utc source.
+pub fn get_utc_source(utc_flags: u8) -> String {
+    let source_str = match (utc_flags >> 3) & 0x3 {
+        0 => FACTORY_DEFAULT,
+        1 => NON_VOLATILE_MEMORY,
+        2 => DECODED_THIS_SESSION,
+        _ => UNKNOWN,
+    };
+    String::from(source_str)
+}
+
+/// Get UTC date time.
+/// Code taken from ICBINS/src/runner.rs.
+///
+/// # Parameters
+/// - `year`: The datetime year.
+/// - `month`: The datetime month.
+/// - `day`: The datetime day.
+/// - `hours`: The datetime hours.
+/// - `minutes`: The datetime minutes.
+/// - `seconds`: The datetime seconds.
+/// - `nanoseconds`: The datetime nanoseconds.
+pub fn get_utc_time(
+    year: i32,
+    month: u32,
+    day: u32,
+    hours: u32,
+    minutes: u32,
+    seconds: u32,
+    nanoseconds: u32,
+) -> UtcDateTime {
+    Utc.ymd(year, month, day)
+        .and_hms_nano(hours, minutes, seconds, nanoseconds)
+}
+
+pub fn datetime_2_str(datetm: DateTime<Utc>) -> (String, String){
+    (datetm.format("%Y-%m-%d %H:%M").to_string(), datetm.format("%S.%f").to_string())
+}
+
+/// Returns local time and gps time as a string date and precise seconds string.
+///
+/// # Parameters
+/// - `week`: The week number.
+/// - `tow`: The GPS time of week in seconds.
+///
+/// # Returns
+/// - Local Date and Seconds and GPS Date and Seconds
+pub fn log_time_strings(week: Option<u8>, tow: u32) -> (f64, f64){
+    let mut t_gps_date = "";
+    let mut t_gps_secs = 0;
+
+    if let Some(wn) = week {
+        if tow > 0 {
+            let t_gps = Utc.ymd(1980, 1, 6).and_hms(0, 0, 0) + Duration::weeks(wn) + Duration::seconds(tow);
+        }
+    } 
+
+    (0.0,0.0)
+    
+
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -678,5 +862,34 @@ mod tests {
         assert_eq!(code_lbl.unwrap(), GAL_E8X_STR);
         assert_eq!(freq_lbl, None);
         assert_eq!(id_lbl.unwrap(), "E25");
+    }
+
+    #[test]
+    fn meters_per_deg_test() {
+        // Latitude range: [-90, 90]
+        assert_eq!(
+            meters_per_deg(-90_f64),
+            (111693.9173, 6.839280692934427e-12)
+        );
+        assert_eq!(meters_per_deg(-45_f64), (111131.745, 78846.80572069259));
+        assert_eq!(meters_per_deg(0_f64), (110574.2727, 111319.458));
+        assert_eq!(meters_per_deg(45_f64), (111131.745, 78846.80572069259));
+        assert_eq!(meters_per_deg(90_f64), (111693.9173, 6.839280692934427e-12));
+    }
+
+    #[test]
+    fn nano_to_micro_sec_test() {
+        assert_eq!(nano_to_micro_sec(1000_f64), 1_f64);
+        assert_eq!(nano_to_micro_sec(1000000_f64), 1000_f64);
+        assert_eq!(nano_to_micro_sec(0_f64), 0_f64);
+        assert_eq!(nano_to_micro_sec(1337_f64), 1.337_f64);
+    }
+
+    #[test]
+    fn get_utc_source_test() {
+        assert_eq!(get_utc_source(5_u8), String::from(FACTORY_DEFAULT));
+        assert_eq!(get_utc_source(8_u8), String::from(NON_VOLATILE_MEMORY));
+        assert_eq!(get_utc_source(16_u8), String::from(DECODED_THIS_SESSION));
+        assert_eq!(get_utc_source(255_u8), String::from(UNKNOWN));
     }
 }

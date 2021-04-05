@@ -1,0 +1,11 @@
+fn glob_paths_excluding_target
+    handle = glob_array ${1}
+    out = array
+    for i in ${handle}
+        if not starts_with ${i} "target"
+            array_push ${out} ${i}
+        end
+    end
+    s = array_join ${out} " "
+    return ${s}
+end

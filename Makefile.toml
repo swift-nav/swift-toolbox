@@ -1,11 +1,32 @@
+env_scripts = [
+# Two proposed methods of simplifying path globbing
+# https://github.com/sagiegurari/cargo-make/issues/542
+# https://github.com/sagiegurari/cargo-make/issues/543
+'''
+#!@duckscript
+!include_files ./utils/glob.ds
+
+py_files = glob_paths_excluding_target ./**/*.py
+
+set_env PYTHON_FILES ${py_files}
+echo PYTHON_FILES=${py_files}
+
+qml_files = glob_paths_excluding_target resources/**/*.qml
+
+set_env QML_FILES ${qml_files}
+echo QML_FILES=${qml_files}
+''']
+
 [env]
-PYTHON_FILES = { script = ["python utils/glob_python_files.py"] }
 CONDA_ENV = "console_pp"
 REQUIREMENTS_FILE = "requirements.txt"
 REQUIREMENTS_DEV_FILE = "requirements-dev.txt"
 
 [config]
 default_to_workspace = false
+init_task = "init"
+
+[tasks.init]
 
 [tasks.poetry-export-dev]
 script_runner = "@shell"
@@ -172,6 +193,20 @@ conda run -n $CONDA_ENV python src/build/generate-mac-info-plist.py
 hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg'
 '''
 
+[tasks.qml-format.linux]
+env = { QT_APP = { script = ["conda run -n $CONDA_ENV python utils/echo-qt-dir.py"] } }
+script_runner = "@shell"
+script = '''
+${QT_APP}/Qt/bin/qmlformat -i $QML_FILES
+'''
+
+[tasks.qml-format-check.linux]
+dependencies = ["qml-format"]
+script_runner = "@shell"
+script = '''
+git diff --exit-code -- $QML_FILES
+'''
+
 [tasks.rust-format]
 dependencies = ["copy-capnp"]
 command = "cargo"
@@ -225,13 +260,13 @@ conda run -n $CONDA_ENV pylint --output-format=parseable $PYTHON_FILES
 '''
 
 [tasks.format-all]
-dependencies = ["python-format-all", "rust-format"]
+dependencies = ["python-format-all", "qml-format", "rust-format"]
 
 [tasks.format]
 alias = "format-all"
 
 [tasks.format-check]
-dependencies = ["python-format-check", "rust-format-check"]
+dependencies = ["python-format-check", "qml-format-check", "rust-format-check"]
 
 [tasks.lint]
 dependencies = ["python-lint", "rust-lint", "format-check"]

@@ -5,7 +5,7 @@ import os
 import sys
 import threading
 
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Any
 
 import capnp  # type: ignore
 
@@ -14,7 +14,7 @@ from PySide2.QtWidgets import QApplication  # type: ignore
 from fbs_runtime.application_context.PySide2 import ApplicationContext  # type: ignore  # pylint: disable=unused-import
 
 from PySide2.QtCore import QUrl, QObject, Slot, QPointF
-from PySide2.QtCharts import QtCharts
+from PySide2.QtCharts import QtCharts  # pylint: disable=unused-import
 
 from PySide2 import QtQml, QtCore
 
@@ -81,6 +81,7 @@ def receive_messages(app_, backend, messages):
         else:
             pass
 
+
 class DataModel(QObject):
 
     endpoint: console_backend.server.ServerEndpoint  # pylint: disable=no-member
@@ -127,6 +128,7 @@ class DataModel(QObject):
         m.solutionVelocityStatusFront.solutionVelocityUnit = unit
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
+
 
 class SolutionVelocityPoints(QObject):
 
@@ -186,7 +188,7 @@ class SolutionVelocityPoints(QObject):
         """
         self._available_units = available_units
 
-    available_units = Property(QTKeys.QVARIANTLIST, get_available_units, set_available_units)
+    available_units = Property(QTKeys.QVARIANTLIST, get_available_units, set_available_units)  # type: ignore
 
     def get_colors(self) -> List[str]:
         return self._colors
@@ -208,6 +210,7 @@ class SolutionVelocityPoints(QObject):
     def fill_series(self, series_list):
         for idx, series in enumerate(series_list):
             series.replace(self._points[idx])
+
 
 class SolutionVelocityModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(SolutionVelocityPoints)  # type: ignore
@@ -308,6 +311,7 @@ class TrackingSignalsPoints(QObject):
             if idx < len(self._points):
                 series.replace(self._points[idx])
 
+
 class TrackingSignalsModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(TrackingSignalsPoints)  # type: ignore
     def fill_console_points(self, cp: TrackingSignalsPoints) -> TrackingSignalsPoints:  # pylint:disable=no-self-use
@@ -319,6 +323,7 @@ class TrackingSignalsModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_min(TRACKING_SIGNALS_TAB[Keys.MIN])
         return cp
 
+
 def is_frozen() -> bool:
     """Check whether the application is frozen.
 
@@ -328,6 +333,7 @@ def is_frozen() -> bool:
         bool: Whether the application is frozen.
     """
     return getattr(sys, "frozen", False) or "__compiled__" in globals()
+
 
 def get_capnp_path() -> str:
     """Get the path to the capnp file based on current installer.

@@ -11,9 +11,22 @@ pub fn process_messages(
     let mut main = MainTab::new(shared_state);
     for message in messages {
         match message {
-            // Ok(SBP::MsgGPSTime(msg)) => {
-            //     main.solution_table.handle_gps_time(msg.clone());
-            // }
+            Ok(SBP::MsgDops(msg)) => {
+                main.solution_tab.handle_dops(Dops::MsgDops(msg.clone()));
+            }
+            Ok(SBP::MsgDopsDepA(msg)) => {
+                main.solution_tab
+                    .handle_dops(Dops::MsgDopsDepA(msg.clone()));
+            }
+            Ok(SBP::MsgGPSTime(msg)) => {
+                main.solution_tab.handle_gps_time(msg.clone());
+            }
+            Ok(SBP::MsgInsStatus(msg)) => {
+                main.solution_tab.handle_ins_status(msg.clone());
+            }
+            Ok(SBP::MsgInsUpdates(msg)) => {
+                main.solution_tab.handle_ins_updates(msg.clone());
+            }
             Ok(SBP::MsgMeasurementState(msg)) => {
                 main.tracking_signals_tab.handle_msg_measurement_state(
                     msg.states.clone(),
@@ -42,6 +55,18 @@ pub fn process_messages(
                     &mut client_send_clone.clone(),
                 );
             }
+            Ok(SBP::MsgPosLLH(msg)) => {
+                main.solution_tab.handle_pos_llh(
+                    PosLLH::MsgPosLLH(msg.clone()),
+                    &mut client_send_clone.clone(),
+                );
+            }
+            Ok(SBP::MsgPosLLHDepA(msg)) => {
+                main.solution_tab.handle_pos_llh(
+                    PosLLH::MsgPosLLHDepA(msg.clone()),
+                    &mut client_send_clone.clone(),
+                );
+            }
             Ok(SBP::MsgTrackingState(msg)) => {
                 main.tracking_signals_tab
                     .handle_msg_tracking_state(msg.states.clone(), &mut client_send_clone.clone());
@@ -51,7 +76,7 @@ pub fn process_messages(
                     .handle_vel_ned(msg.clone(), &mut client_send_clone.clone());
             }
             Ok(SBP::MsgUtcTime(msg)) => {
-                main.solution_table.handle_utc_time(msg.clone());
+                main.solution_tab.handle_utc_time(msg.clone());
             }
 
             _ => {

@@ -1,4 +1,4 @@
-use chrono::{DateTime, Duration, TimeZone, Utc};
+use chrono::{prelude::*, DateTime, Duration, Local, TimeZone, Utc};
 use std::{
     cmp::{Eq, PartialEq},
     collections::HashMap,
@@ -35,6 +35,7 @@ pub const SHOW_LEGEND: &str = "Show Legend";
 
 // Solution Table.
 pub const PLOT_HISTORY_MAX: usize = 1000;
+pub const DILUTION_OF_PRECISION_UNITS: f64 = 0.01;
 pub const SPP: &str = "spp";
 pub const DGNSS: &str = "dgnss";
 pub const FLOAT: &str = "float";
@@ -69,6 +70,63 @@ pub const FACTORY_DEFAULT: &str = "Factory Default";
 pub const NON_VOLATILE_MEMORY: &str = "Non Volatile Memory";
 pub const DECODED_THIS_SESSION: &str = "Decoded this Session";
 pub const UNKNOWN: &str = "Unknown";
+
+pub const EMPTY_STR: &str = "--";
+pub const GPS_WEEK: &str = "GPS Week";
+pub const GPS_TOW: &str = "GPS TOW";
+pub const GPS_TIME: &str = "GPS Time";
+pub const UTC_TIME: &str = "UTC Time";
+pub const UTC_SRC: &str = "UTC Src";
+pub const SATS_USED: &str = "Sats Used";
+pub const LAT: &str = "Lat";
+pub const LNG: &str = "Lng";
+pub const HEIGHT: &str = "Height";
+pub const HORIZ_ACC: &str = "Horiz Acc";
+pub const VERT_ACC: &str = "Vert Acc";
+pub const POS_FLAGS: &str = "Pos Flags";
+pub const INS_USED: &str = "INS Used";
+pub const POS_FIX_MODE: &str = "Pos Fix Mode";
+pub const CORR_AGE_S: &str = "Corr. Age [s]";
+pub const VEL_N: &str = "Vel. N";
+pub const VEL_E: &str = "Vel. E";
+pub const VEL_D: &str = "Vel. D";
+pub const VEL_FLAGS: &str = "Vel. Flags";
+pub const PDOP: &str = "PDOP";
+pub const GDOP: &str = "GDOP";
+pub const TDOP: &str = "TDOP";
+pub const HDOP: &str = "HDOP";
+pub const VDOP: &str = "VDOP";
+pub const DOPS_FLAGS: &str = "DOPS Flags";
+pub const INS_STATUS: &str = "INS Status";
+
+pub const SOLUTION_TABLE_KEYS: &[&str] = &[
+    GPS_WEEK,
+    GPS_TOW,
+    GPS_TIME,
+    UTC_TIME,
+    UTC_SRC,
+    SATS_USED,
+    LAT,
+    LNG,
+    HEIGHT,
+    HORIZ_ACC,
+    VERT_ACC,
+    POS_FLAGS,
+    INS_USED,
+    POS_FIX_MODE,
+    CORR_AGE_S,
+    VEL_N,
+    VEL_E,
+    VEL_D,
+    VEL_FLAGS,
+    PDOP,
+    GDOP,
+    TDOP,
+    HDOP,
+    VDOP,
+    DOPS_FLAGS,
+    INS_STATUS,
+];
 
 // Solution Velocity Tab constants.
 pub const HORIZONTAL_COLOR: &str = "#E41A1C";
@@ -116,7 +174,6 @@ impl ToString for GnssModes {
             GnssModes::Fixed => FIXED,
             GnssModes::Dr => DR,
             GnssModes::Sbas => SBAS,
-            _ => panic!("gnss mode not implemented"),
         };
         String::from(gnss_mode_str)
     }
@@ -777,8 +834,28 @@ pub fn get_utc_time(
         .and_hms_nano(hours, minutes, seconds, nanoseconds)
 }
 
-pub fn datetime_2_str(datetm: DateTime<Utc>) -> (String, String){
-    (datetm.format("%Y-%m-%d %H:%M").to_string(), datetm.format("%S.%f").to_string())
+/// Return Utc datetime as date and seconds.
+///
+/// # Parameters
+/// - `datetm`: The datetime to be converted into partial date and seconds strings.
+///
+/// # Returns:
+/// - Partial datetime string and seconds/microseconds string.
+pub fn datetime_2_str_utc(datetm: DateTime<Utc>) -> (String, f64) {
+    let seconds = datetm.second() as f64 + datetm.nanosecond() as f64 / 1000_f64;
+    (datetm.format("%Y-%m-%d %H:%M").to_string(), seconds)
+}
+
+/// Return Local datetime as date and seconds.
+///
+/// # Parameters
+/// - `datetm`: The datetime to be converted into partial date and seconds strings.
+///
+/// # Returns:
+/// - Partial datetime string and seconds/microseconds string.
+pub fn datetime_2_str_local(datetm: DateTime<Local>) -> (String, f64) {
+    let seconds = datetm.second() as f64 + datetm.nanosecond() as f64 / 1000_f64;
+    (datetm.format("%Y-%m-%d %H:%M").to_string(), seconds)
 }
 
 /// Returns local time and gps time as a string date and precise seconds string.
@@ -788,20 +865,50 @@ pub fn datetime_2_str(datetm: DateTime<Utc>) -> (String, String){
 /// - `tow`: The GPS time of week in seconds.
 ///
 /// # Returns
-/// - Local Date and Seconds and GPS Date and Seconds
-pub fn log_time_strings(week: Option<u8>, tow: u32) -> (f64, f64){
-    let mut t_gps_date = "";
-    let mut t_gps_secs = 0;
+/// - Local Date and Seconds and GPS Date and Seconds.
+pub fn log_time_strings(
+    week: Option<u16>,
+    tow: f64,
+) -> ((String, f64), (Option<String>, Option<f64>)) {
+    let mut t_gps_date = None;
+    let mut t_gps_secs = None;
 
     if let Some(wn) = week {
-        if tow > 0 {
-            let t_gps = Utc.ymd(1980, 1, 6).and_hms(0, 0, 0) + Duration::weeks(wn) + Duration::seconds(tow);
+        if tow > 0_f64 {
+            let t_gps = Utc.ymd(1980, 1, 6).and_hms(0, 0, 0)
+                + Duration::weeks(wn as i64)
+                + Duration::seconds(tow as i64);
+            let (t_gps_date_, t_gps_secs_) = datetime_2_str_utc(t_gps);
+            t_gps_date = Some(t_gps_date_);
+            t_gps_secs = Some(t_gps_secs_);
         }
-    } 
+    }
+    let local_t = Local::now();
+    let (t_local_date, t_local_secs) = datetime_2_str_local(local_t);
+    ((t_local_date, t_local_secs), (t_gps_date, t_gps_secs))
+}
 
-    (0.0,0.0)
-    
+/// Convert millimeters to meters.
+/// Taken from ICBINS/src/msg_utils.rs.
+///
+/// # Parameters
+/// - `mm`: Value in millimeters.
+///
+/// # Returns
+/// - Value in meters.
+pub fn mm_to_m(mm: f64) -> f64 {
+    mm / 1.0e+3_f64
+}
 
+/// Convert deciseconds to seconds.
+///
+/// # Parameters
+/// - `ds`: Value in deciseconds.
+///
+/// # Returns
+/// - Value in seconds.
+pub fn decisec_to_sec(ds: f64) -> f64 {
+    ds / 10_f64
 }
 
 #[cfg(test)]

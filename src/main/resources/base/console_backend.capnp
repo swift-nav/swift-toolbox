@@ -9,6 +9,15 @@ struct ConnectRequest {
     port @1 :UInt16;
 }
 
+struct KeyValPair {
+    key @0 :Text;
+    val @1 :Text;
+}
+
+struct SolutionTableStatus {
+    data @0 :List(KeyValPair);
+}
+
 struct Point {
     x @0 :Float64;
     y @1 :Float64;
@@ -52,5 +61,6 @@ struct Message {
         trackingSignalsStatus @4 :TrackingSignalsStatus;
         trackingSignalsStatusFront @5 :TrackingSignalsStatusFront;
         solutionVelocityStatusFront @6 :SolutionVelocityStatusFront;
+        solutionTableStatus @7 :SolutionTableStatus;
     }
 }

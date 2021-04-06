@@ -1,7 +1,7 @@
 import "Constants"
 import QtCharts 2.2
 import QtQuick 2.5
-import QtQuick.Controls 2.12
+import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
@@ -13,85 +13,94 @@ ApplicationWindow {
         visible = true;
     }
 
-    ColumnLayout {
-        spacing: 2
-        width: parent.width
+    Rectangle {
         height: parent.height
+        width: parent.width
 
-        Rectangle {
-            id: mainTabs
+        SplitView {
+            orientation: Qt.Vertical
+            spacing: 2
+            width: parent.width
+            height: parent.height - bottomNavBar.height
 
-            Layout.alignment: Qt.AlignTop
-            Layout.preferredWidth: parent.width
-            Layout.fillHeight: true
+            Rectangle {
+                id: mainTabs
 
-            TabBar {
-                id: tab
-
-                z: 100
+                Layout.alignment: Qt.AlignTop
+                Layout.preferredWidth: parent.width
+                SplitView.fillHeight: true
                 width: parent.width
 
-                Repeater {
-                    model: ["Tracking", "Solution", "Baseline", "Observations", "Settings", "Update", "Advanced"]
+                TabBar {
+                    id: tab
 
-                    TabButton {
-                        text: modelData
-                        width: implicitWidth
+                    z: 100
+                    width: parent.width
+
+                    Repeater {
+                        model: ["Tracking", "Solution", "Baseline", "Observations", "Settings", "Update", "Advanced"]
+
+                        TabButton {
+                            text: modelData
+                            width: implicitWidth
+                        }
+
+                    }
+
+                }
+
+                StackLayout {
+                    width: parent.width
+                    height: parent.height - tab.height
+                    anchors.top: tab.bottom
+                    currentIndex: tab.currentIndex
+
+                    TrackingTab {
+                    }
+
+                    SolutionTab {
+                    }
+
+                    Item {
+                        id: baselineTab
+                    }
+
+                    Item {
+                        id: observationsTab
+                    }
+
+                    Item {
+                        id: settingsTab
+                    }
+
+                    Item {
+                        id: updateTab
+                    }
+
+                    Item {
+                        id: advancedTab
                     }
 
                 }
 
             }
 
-            StackLayout {
+            Rectangle {
+                id: consoleLog
+
                 width: parent.width
-                height: parent.height - tab.height
-                anchors.top: tab.bottom
-                currentIndex: tab.currentIndex
-
-                TrackingTab {
-                }
-
-                SolutionTab {
-                }
-
-                Item {
-                    id: baselineTab
-                }
-
-                Item {
-                    id: observationsTab
-                }
-
-                Item {
-                    id: settingsTab
-                }
-
-                Item {
-                    id: updateTab
-                }
-
-                Item {
-                    id: advancedTab
-                }
-
+                SplitView.preferredHeight: 100
+                Layout.alignment: Qt.AlignBottom
             }
 
         }
 
         Rectangle {
-            id: consoleLog
-
-            Layout.preferredWidth: parent.width
-            Layout.minimumHeight: 50
-            Layout.alignment: Qt.AlignBottom
-        }
-
-        Rectangle {
             id: bottomNavBar
 
-            Layout.preferredWidth: parent.width
-            Layout.minimumHeight: 50
+            width: parent.width
+            anchors.bottom: parent.bottom
+            height: 50
             Layout.alignment: Qt.AlignBottom
 
             BottomNavBar {

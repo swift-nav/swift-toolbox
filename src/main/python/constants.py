@@ -9,6 +9,7 @@ class Keys(str, Enum):
     MAX = "MAX"
     MIN = "MIN"
     AVAILABLE_UNITS = "AVAILABLE_UNITS"
+    ENTRIES = "ENTRIES"
 
 
 class ApplicationStates(str, Enum):
@@ -17,6 +18,7 @@ class ApplicationStates(str, Enum):
 
 class MessageKeys(str, Enum):
     STATUS = "status"
+    SOLUTION_TABLE_STATUS = "solutionTableStatus"
     SOLUTION_VELOCITY_STATUS = "solutionVelocityStatus"
     TRACKING_SIGNALS_STATUS = "trackingSignalsStatus"
 

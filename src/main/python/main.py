@@ -32,6 +32,10 @@ CONSOLE_BACKEND_CAPNP_PATH = "console_backend.capnp"
 PIKSI_HOST = "piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com"
 PIKSI_PORT = 55555
 
+SOLUTION_TABLE: Dict[str, Any] = {
+    Keys.ENTRIES: [],
+}
+
 SOLUTION_VELOCITY_TAB: Dict[str, Any] = {
     Keys.AVAILABLE_UNITS: [],
     Keys.POINTS: [],
@@ -59,6 +63,10 @@ def receive_messages(app_, backend, messages):
         if m.which == MessageKeys.STATUS:
             if m.status.text == ApplicationStates.CLOSE:
                 return app_.quit()
+        elif m.which == MessageKeys.SOLUTION_TABLE_STATUS:
+            SOLUTION_TABLE[Keys.ENTRIES][:] = [
+                (entry.key, entry.val) for entry in m.solutionTableStatus.data
+            ]
         elif m.which == MessageKeys.SOLUTION_VELOCITY_STATUS:
             SOLUTION_VELOCITY_TAB[Keys.COLORS][:] = m.solutionVelocityStatus.colors
             SOLUTION_VELOCITY_TAB[Keys.POINTS][:] = [
@@ -130,6 +138,57 @@ class DataModel(QObject):
         self.endpoint.send_message(buffer)
 
 
+<<<<<<< Updated upstream
+=======
+class SolutionTableEntries(QObject):
+
+    _entries: List[Tuple[str, str]] = []
+    _valid: bool = False
+
+    def get_valid(self) -> bool:
+        """Getter for _valid.
+
+        Returns:
+            bool: Whether it is valid or not.
+        """
+        return self._valid
+
+    def set_valid(self, valid: bool) -> None:
+        """Setter for _valid.
+        """
+        self._valid = valid
+
+    valid = Property(bool, get_valid, set_valid)
+
+    def get_entries(self) -> List[Tuple[str, str]]:
+        """Getter for _entries.
+        """
+        return self._entries
+
+    def set_entries(self, entries: List[Tuple[str, str]]) -> None:
+        """Setter for _entries.
+        """
+        self._entries = entries
+
+    entries = Property(QTKeys.QVARIANTLIST, get_entries, set_entries)  # type: ignore
+
+    @Slot(list)  # type: ignore
+    def fill_series(self, series_list):
+        for idx, series in enumerate(series_list):
+            series.replace(self._points[idx])
+
+class SolutionTableModel(QObject):  # pylint: disable=too-few-public-methods
+    @Slot(SolutionVelocityPoints)  # type: ignore
+    def fill_console_points(self, cp: SolutionVelocityPoints) -> SolutionVelocityPoints:  # pylint:disable=no-self-use
+        cp.set_points(SOLUTION_VELOCITY_TAB[Keys.POINTS])
+        cp.set_colors(SOLUTION_VELOCITY_TAB[Keys.COLORS])
+        cp.set_max(SOLUTION_VELOCITY_TAB[Keys.MAX])
+        cp.set_min(SOLUTION_VELOCITY_TAB[Keys.MIN])
+        cp.set_available_units(SOLUTION_VELOCITY_TAB[Keys.AVAILABLE_UNITS])
+        return cp
+
+
+>>>>>>> Stashed changes
 class SolutionVelocityPoints(QObject):
 
     _colors: List[str] = []

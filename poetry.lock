@@ -408,6 +408,14 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "qt5-applications"
+version = "5.15.2.2.1"
+description = "The collection of Qt tools easily installable in Python"
+category = "dev"
+optional = false
+python-versions = ">=3.5"
+
+[[package]]
 name = "regex"
 version = "2020.11.13"
 description = "Alternative regular expression module, to replace re."
@@ -486,7 +494,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.10"
-content-hash = "7d11194c8de309923c09ddfd81b9f28315d13de05deee471ed5acc331392439d"
+content-hash = "c34486e70ed232018b5c6cdcb21edc3b6c0c8b2feab685dd1fcd8fafad365c12"
 
 [metadata.files]
 altgraph = [
@@ -715,6 +723,11 @@ pytest = [
 pywin32-ctypes = [
     {file = "pywin32-ctypes-0.2.0.tar.gz", hash = "sha256:24ffc3b341d457d48e8922352130cf2644024a4ff09762a2261fd34c36ee5942"},
     {file = "pywin32_ctypes-0.2.0-py2.py3-none-any.whl", hash = "sha256:9dc2d991b3479cc2df15930958b674a48a227d5361d413827a4cfd0b5876fc98"},
+]
+qt5-applications = [
+    {file = "qt5_applications-5.15.2.2.1-py3-none-manylinux2014_x86_64.whl", hash = "sha256:f1bc26fc6bda0a4956a0d205e3da0b292c6deeadf5d98b502023bc905acb34fb"},
+    {file = "qt5_applications-5.15.2.2.1-py3-none-win32.whl", hash = "sha256:a23048b33aca505aee0ee2d47145ef15c55eba5e4cc00881de1a1c96ee913661"},
+    {file = "qt5_applications-5.15.2.2.1-py3-none-win_amd64.whl", hash = "sha256:8a02edae16deea9377caef57ab07fc33776c851b13989255fe333cfbb044d61e"},
 ]
 regex = [
     {file = "regex-2020.11.13-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:8b882a78c320478b12ff024e81dc7d43c1462aa4a3341c754ee65d857a521f85"},

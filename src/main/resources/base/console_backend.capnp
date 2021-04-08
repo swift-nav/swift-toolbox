@@ -23,6 +23,12 @@ struct Point {
     y @1 :Float64;
 }
 
+struct SolutionPositionStatus {
+    data @0 :List(List(Point));
+    labels @1 :List(Text);
+    colors @1 :List(Text);
+}
+
 struct SolutionVelocityStatus {
     min @0 :Float64;
     max @1 :Float64;
@@ -62,5 +68,6 @@ struct Message {
         trackingSignalsStatusFront @5 :TrackingSignalsStatusFront;
         solutionVelocityStatusFront @6 :SolutionVelocityStatusFront;
         solutionTableStatus @7 :SolutionTableStatus;
+        solutionPositionStatus @8 :SolutionPositionStatus;
     }
 }

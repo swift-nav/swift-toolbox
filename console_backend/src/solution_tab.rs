@@ -12,7 +12,9 @@ use std::{collections::HashMap, time::Instant};
 use crate::console_backend_capnp as m;
 use crate::constants::*;
 use crate::output::CsvSerializer;
-use crate::types::{Deque, Dops, MessageSender, PosLLH, PosLLHLog, SharedState, UtcDateTime, VelLog, VelNED};
+use crate::types::{
+    Deque, Dops, MessageSender, PosLLH, PosLLHLog, SharedState, UtcDateTime, VelLog, VelNED,
+};
 
 const VEL_TIME_STR_FILEPATH: &str = "velocity_log_%Y%m%d-%H%M%S.csv";
 const POS_LLH_TIME_STR_FILEPATH: &str = "position_log_%Y%m%d-%H%M%S.csv";
@@ -42,15 +44,17 @@ pub struct SolutionTab {
     pub last_ins_status_receipt_time: Instant,
     pub last_pos_mode: u8,
     pub last_odo_update_time: Instant,
-    pub last_soln_lat: f64,
-    pub last_soln_lon: f64,
     pub logging: bool,
     pub max: f64,
     pub min: f64,
+    pub mode_strings: Vec<String>,
     pub modes: Deque<u8>,
     pub nsec: Option<i32>,
+    pub pending_draw_modes: Vec<String>,
     pub pos_log_file: Option<CsvSerializer>,
     pub shared_state: SharedState,
+    pub sln_cur_data: Vec<(f64, f64)>,
+    pub sln_data: Vec<Vec<(f64, f64)>>,
     pub slns: HashMap<String, Deque<f64>>,
     pub table: HashMap<String, String>,
     pub tows: Deque<f64>,
@@ -73,15 +77,36 @@ impl SolutionTab {
             last_ins_status_receipt_time: Instant::now(),
             last_pos_mode: 0,
             last_odo_update_time: Instant::now(),
-            last_soln_lat: 0_f64,
-            last_soln_lon: 0_f64,
             logging: false,
             max: 0_f64,
             min: 0_f64,
             modes: Deque::with_size_limit(PLOT_HISTORY_MAX),
+            mode_strings: vec![
+                GnssModes::Spp.to_string(),
+                GnssModes::Dgnss.to_string(),
+                GnssModes::Float.to_string(),
+                GnssModes::Fixed.to_string(),
+                GnssModes::Dr.to_string(),
+                GnssModes::Sbas.to_string(),
+            ],
             nsec: Some(0),
+            pending_draw_modes: Vec::new(),
             pos_log_file: None,
             shared_state,
+            sln_cur_data: {
+                let mut sln_data = Vec::new();
+                for _ in 0..NUM_GNSS_MODES {
+                    sln_data.push((f64::NAN, f64::NAN));
+                }
+                sln_data
+            },
+            sln_data: {
+                let mut sln_data = Vec::new();
+                for _ in 0..NUM_GNSS_MODES {
+                    sln_data.push(Vec::new());
+                }
+                sln_data
+            },
             slns: {
                 let mut slns_map = HashMap::new();
                 for key in SOLUTIONS_KEYS {
@@ -103,8 +128,6 @@ impl SolutionTab {
             week: None,
         }
     }
-
-    fn update_table(&mut self) {}
 
     pub fn handle_utc_time(&mut self, msg: MsgUtcTime) {
         if msg.flags & 0x7 == 0 {
@@ -239,7 +262,6 @@ impl SolutionTab {
             self.table
                 .insert(String::from(VEL_D), String::from(EMPTY_STR));
         }
-        self.update_table();
     }
 
     pub fn handle_ins_updates(&mut self, msg: MsgInsUpdates) {
@@ -348,14 +370,14 @@ impl SolutionTab {
             ),
         };
         let gnss_mode = GnssModes::from(self.last_pos_mode);
+        let mode_string = gnss_mode.to_string();
         if self.last_pos_mode != 0 {
-            self.last_soln_lat = lat;
-            self.last_soln_lon = lon;
-            // let mode_string = gnss_mode.to_string();
-
-            // self._update_sln_data_by_mode(mode_string);
+            if !self.pending_draw_modes.contains(&mode_string) {
+                self.pending_draw_modes.push(mode_string.clone());
+            }
+            self._update_sln_data_by_mode(lat, lon, mode_string);
         } else {
-            // self._append_empty_sln_data();
+            self._append_empty_sln_data(None);
         }
         self.ins_used = ((flags & 0x8) >> 3) == 1;
         let mut tow = tow * 1.0e-3_f64;
@@ -368,20 +390,18 @@ impl SolutionTab {
         if let Some(utc_time_) = self.utc_time {
             let (tutc, secutc) = datetime_2_str_utc(utc_time_);
             utc_time_str = Some(format!("{}:{:0>6.03}", tutc, secutc));
-
         }
         let mut gps_time = None;
         let mut gps_time_short = None;
-        
+
         if self.logging {
             if let None = self.pos_log_file {
-                let local_t = Local::now();                
+                let local_t = Local::now();
                 let filepath = local_t.format(POS_LLH_TIME_STR_FILEPATH).to_string();
 
                 self.pos_log_file = self.init_logging(self.directory_name.clone(), filepath);
             }
             if let Some(pos_file) = &mut self.pos_log_file {
-                
                 if let Some(tgps) = tgps_ {
                     if let Some(secgps) = secgps_ {
                         gps_time = Some(format!("{}:{:0>6.06}", tgps, secgps));
@@ -435,21 +455,17 @@ impl SolutionTab {
                 .insert(String::from(VERT_ACC), String::from(EMPTY_STR));
         } else {
             if let Some(week) = self.week {
-                self.table
-                    .insert(String::from(GPS_WEEK), week.to_string());
+                self.table.insert(String::from(GPS_WEEK), week.to_string());
                 if let Some(gps_time_) = gps_time_short {
-                    self.table
-                    .insert(String::from(GPS_TIME), gps_time_);
+                    self.table.insert(String::from(GPS_TIME), gps_time_);
                 }
             }
             self.table
                 .insert(String::from(GPS_TOW), format!("{:.3}", tow));
             if let Some(utc_time_) = utc_time_str {
-                self.table
-                    .insert(String::from(UTC_TIME), utc_time_);
+                self.table.insert(String::from(UTC_TIME), utc_time_);
                 if let Some(utc_src_) = self.utc_source.clone() {
-                    self.table
-                        .insert(String::from(UTC_SRC), utc_src_);
+                    self.table.insert(String::from(UTC_SRC), utc_src_);
                 }
             } else {
                 self.table
@@ -459,10 +475,8 @@ impl SolutionTab {
             }
             self.table
                 .insert(String::from(SATS_USED), n_sats.to_string());
-            self.table
-                .insert(String::from(LAT), format!("{:.12}", lat));
-            self.table
-                .insert(String::from(LNG), format!("{:.12}", lon));
+            self.table.insert(String::from(LAT), format!("{:.12}", lat));
+            self.table.insert(String::from(LNG), format!("{:.12}", lon));
             self.table
                 .insert(String::from(HEIGHT), format!("{:.3}", height));
             self.table
@@ -486,62 +500,117 @@ impl SolutionTab {
             self.table
                 .insert(String::from(CORR_AGE_S), age_corrections_.to_string());
         }
+        self.solution_draw();
+        self.send_solution_data(client_send);
         self.send_table_data(client_send);
     }
 
-    pub fn solution_draw() {}
+    pub fn solution_draw(&mut self) {
+        let current_mode: Option<String> = if self.pending_draw_modes.len()>0 {
+            Some(self.pending_draw_modes[self.pending_draw_modes.len()-1].clone())
+        } else {
+            None
+        };
+        for mode_string in self.mode_strings.clone() {
+            let mut update_current = true;
+            if let Some( cur_mode) = current_mode.clone() {
+                update_current = mode_string == cur_mode;
+            }
+            self._synchronize_plot_data_by_mode(&mode_string, update_current);
+            if self.pending_draw_modes.contains(&mode_string) {
+                self.pending_draw_modes.retain(|x| *x != mode_string);
+            }
+        }
+    }
 
     pub fn rescale_for_units_change() {}
 
     pub fn _display_units_changed() {}
 
-    // /// Package data into a message buffer and send to frontend.
-    // ///
-    // /// # Parameters:
-    // ///
-    // /// - `client_send`: The MessageSender channel to be used to send data to frontend.
-    // fn send_data<P: MessageSender>(&mut self, client_send: &mut P) {
-    //     let mut builder = Builder::new_default();
-    //     let msg = builder.init_root::<m::message::Builder>();
+    fn _update_sln_data_by_mode(&mut self, last_lat: f64, last_lng: f64, mode_string: String) {
+        let lat = last_lat; // - self.offset) * self.sf
+        let lng = last_lng; // - self.offset) * self.sf
 
-    //     let mut velocity_status = msg.init_solution_velocity_status();
-    //     velocity_status.set_min(self.min);
-    //     velocity_status.set_max(self.max);
+        let lat_str = format!("lat_{}", mode_string);
+        let lng_str = format!("lng_{}", mode_string);
+        self.slns.get_mut(&lat_str).unwrap().add(lat);
+        self.slns.get_mut(&lng_str).unwrap().add(lng);
+        self._append_empty_sln_data(Some(mode_string));
+    }
 
-    //     let mut velocity_points = velocity_status
-    //         .reborrow()
-    //         .init_data(self.points.len() as u32);
-    //     for idx in 0..self.points.len() {
-    //         let points = self.points.get_mut(idx).unwrap().get();
-    //         let mut point_val_idx = velocity_points
-    //             .reborrow()
-    //             .init(idx as u32, points.len() as u32);
-    //         for (i, (x, OrderedFloat(y))) in points.iter().enumerate() {
-    //             let mut point_val = point_val_idx.reborrow().get(i as u32);
-    //             point_val.set_x(*x);
-    //             point_val.set_y(*y);
-    //         }
-    //     }
-    //     let mut available_units = velocity_status
-    //         .reborrow()
-    //         .init_available_units(self.available_units.len() as u32);
+    fn _append_empty_sln_data(&mut self, exclude_mode: Option<String>) {
+        for each_mode in self.mode_strings.clone() {
+            if exclude_mode.is_some() {
+                continue;
+            }
+            let lat_str = format!("lat_{}", each_mode);
+            let lng_str = format!("lng_{}", each_mode);
+            self.slns.get_mut(&lat_str).unwrap().add(f64::NAN);
+            self.slns.get_mut(&lng_str).unwrap().add(f64::NAN);
+        }
+    }
 
-    //     for (i, unit) in self.available_units.iter().enumerate() {
-    //         available_units.set(i as u32, *unit);
-    //     }
-    //     let mut colors = velocity_status
-    //         .reborrow()
-    //         .init_colors(self.colors.len() as u32);
+    fn _synchronize_plot_data_by_mode(&mut self, mode_string: &String, update_current: bool) {
+        let lat_string = format!("lat_{}", mode_string);
+        let lng_string = format!("lng_{}", mode_string);
 
-    //     for (i, color) in self.colors.iter().enumerate() {
-    //         colors.set(i as u32, color);
-    //     }
+        if let Some(idx) = self.mode_strings.iter().position(|x| *x == *mode_string) {
+            self.sln_data[idx] = self.slns[&lat_string].get()
+                .iter()
+                .zip(self.slns[&lng_string].get().iter())
+                .filter(|(x, y)| !x.is_nan() || !y.is_nan())
+                .map(|(x, y)| (*x, *y))
+                .collect();
+            if update_current {
+                if self.sln_data[idx].len() > 0 {
+                    self.sln_cur_data[idx] = self.sln_data[idx][self.sln_data[idx].len()-1];
+                } else {
+                    self.sln_cur_data[idx] = (f64::NAN, f64::NAN);
+                }
+            }
+        }
+    }
 
-    //     let mut msg_bytes: Vec<u8> = vec![];
-    //     serialize::write_message(&mut msg_bytes, &builder).unwrap();
+    /// Package data into a message buffer and send to frontend.
+    ///
+    /// # Parameters:
+    ///
+    /// - `client_send`: The MessageSender channel to be used to send data to frontend.
+    fn send_solution_data<P: MessageSender>(&mut self, client_send: &mut P) {
+        let mut builder = Builder::new_default();
+        let msg = builder.init_root::<m::message::Builder>();
 
-    //     client_send.send_data(msg_bytes);
-    // }
+        let mut solution_status = msg.init_solution_position_status();
+        // velocity_status.set_min(self.min);
+        // velocity_status.set_max(self.max);
+
+        let mut solution_points = solution_status
+            .reborrow()
+            .init_data(self.sln_data.len() as u32);
+        for idx in 0..self.sln_data.len() {
+            let points = self.sln_data.get_mut(idx).unwrap().get();
+            let mut point_idx = solution_points
+                .reborrow()
+                .init(idx as u32, points.len() as u32);
+            for (i, (x, OrderedFloat(y))) in points.iter().enumerate() {
+                let mut point_val = point_idx.reborrow().get(i as u32);
+                point_val.set_x(*x);
+                point_val.set_y(*y);
+            }
+        }
+        // let mut colors = velocity_status
+        //     .reborrow()
+        //     .init_colors(self.colors.len() as u32);
+
+        // for (i, color) in self.colors.iter().enumerate() {
+        //     colors.set(i as u32, color);
+        // }
+
+        let mut msg_bytes: Vec<u8> = vec![];
+        serialize::write_message(&mut msg_bytes, &builder).unwrap();
+
+        client_send.send_data(msg_bytes);
+    }
 
     /// Package solution table data into a message buffer and send to frontend.
     ///
@@ -551,22 +620,20 @@ impl SolutionTab {
     fn send_table_data<P: MessageSender>(&mut self, client_send: &mut P) {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<m::message::Builder>();
-
         let mut solution_table_status = msg.init_solution_table_status();
-
         let mut table_entries = solution_table_status
             .reborrow()
             .init_data(self.table.len() as u32);
         {
-            for (i, (key, val)) in self.table.iter().enumerate() {
+            for (i, key) in SOLUTION_TABLE_KEYS.iter().enumerate() {
                 let mut entry = table_entries.reborrow().get(i as u32);
+                let val = self.table[*key].clone();
                 entry.set_key(key);
-                entry.set_val(val);
+                entry.set_val(&val);
             }
-        }        
+        }
         let mut msg_bytes: Vec<u8> = vec![];
         serialize::write_message(&mut msg_bytes, &builder).unwrap();
-
         client_send.send_data(msg_bytes);
     }
 }

@@ -36,6 +36,7 @@ pub const SHOW_LEGEND: &str = "Show Legend";
 // Solution Table.
 pub const PLOT_HISTORY_MAX: usize = 1000;
 pub const DILUTION_OF_PRECISION_UNITS: f64 = 0.01;
+pub const NUM_GNSS_MODES: usize = 6;
 pub const SPP: &str = "spp";
 pub const DGNSS: &str = "dgnss";
 pub const FLOAT: &str = "float";
@@ -64,6 +65,10 @@ pub const ALT_SBAS: &str = "alt_sbas";
 pub const SOLUTIONS_KEYS: &[&str] = &[
     LAT_SPP, LNG_SPP, ALT_SPP, LAT_DGNSS, LNG_DGNSS, ALT_DGNSS, LAT_FLOAT, LNG_FLOAT, ALT_FLOAT,
     LAT_FIXED, LNG_FIXED, ALT_FIXED, LAT_DR, LNG_DR, ALT_DR, LAT_SBAS, LNG_SBAS, ALT_SBAS,
+];
+pub const SOLUTION_DATA_KEYS: &[&str] = &[
+    LAT_SPP, LNG_SPP, LAT_DGNSS, LNG_DGNSS, LAT_FLOAT, LNG_FLOAT, LAT_FIXED, LNG_FIXED, LAT_DR,
+    LNG_DR, LAT_SBAS, LNG_SBAS,
 ];
 
 pub const FACTORY_DEFAULT: &str = "Factory Default";

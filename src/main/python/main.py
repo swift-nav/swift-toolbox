@@ -5,7 +5,7 @@ import os
 import sys
 import threading
 
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Tuple
 
 import capnp  # type: ignore
 
@@ -64,9 +64,7 @@ def receive_messages(app_, backend, messages):
             if m.status.text == ApplicationStates.CLOSE:
                 return app_.quit()
         elif m.which == MessageKeys.SOLUTION_TABLE_STATUS:
-            SOLUTION_TABLE[Keys.ENTRIES][:] = [
-                (entry.key, entry.val) for entry in m.solutionTableStatus.data
-            ]
+            SOLUTION_TABLE[Keys.ENTRIES][:] = [[entry.key, entry.val] for entry in m.solutionTableStatus.data]
         elif m.which == MessageKeys.SOLUTION_VELOCITY_STATUS:
             SOLUTION_VELOCITY_TAB[Keys.COLORS][:] = m.solutionVelocityStatus.colors
             SOLUTION_VELOCITY_TAB[Keys.POINTS][:] = [
@@ -138,11 +136,9 @@ class DataModel(QObject):
         self.endpoint.send_message(buffer)
 
 
-<<<<<<< Updated upstream
-=======
 class SolutionTableEntries(QObject):
 
-    _entries: List[Tuple[str, str]] = []
+    _entries: List[List[str]] = []
     _valid: bool = False
 
     def get_valid(self) -> bool:
@@ -160,12 +156,12 @@ class SolutionTableEntries(QObject):
 
     valid = Property(bool, get_valid, set_valid)
 
-    def get_entries(self) -> List[Tuple[str, str]]:
+    def get_entries(self) -> List[List[str]]:
         """Getter for _entries.
         """
         return self._entries
 
-    def set_entries(self, entries: List[Tuple[str, str]]) -> None:
+    def set_entries(self, entries: List[List[str]]) -> None:
         """Setter for _entries.
         """
         self._entries = entries
@@ -177,18 +173,14 @@ class SolutionTableEntries(QObject):
         for idx, series in enumerate(series_list):
             series.replace(self._points[idx])
 
+
 class SolutionTableModel(QObject):  # pylint: disable=too-few-public-methods
-    @Slot(SolutionVelocityPoints)  # type: ignore
-    def fill_console_points(self, cp: SolutionVelocityPoints) -> SolutionVelocityPoints:  # pylint:disable=no-self-use
-        cp.set_points(SOLUTION_VELOCITY_TAB[Keys.POINTS])
-        cp.set_colors(SOLUTION_VELOCITY_TAB[Keys.COLORS])
-        cp.set_max(SOLUTION_VELOCITY_TAB[Keys.MAX])
-        cp.set_min(SOLUTION_VELOCITY_TAB[Keys.MIN])
-        cp.set_available_units(SOLUTION_VELOCITY_TAB[Keys.AVAILABLE_UNITS])
+    @Slot(SolutionTableEntries)  # type: ignore
+    def fill_console_points(self, cp: SolutionTableEntries) -> SolutionTableEntries:  # pylint:disable=no-self-use
+        cp.set_entries(SOLUTION_TABLE[Keys.ENTRIES])
         return cp
 
 
->>>>>>> Stashed changes
 class SolutionVelocityPoints(QObject):
 
     _colors: List[str] = []
@@ -420,6 +412,7 @@ if __name__ == "__main__":
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
     app = QApplication()
 
+    qmlRegisterType(SolutionTableEntries, "SwiftConsole", 1, 0, "SolutionTableEntries")  # type: ignore
     qmlRegisterType(SolutionVelocityPoints, "SwiftConsole", 1, 0, "SolutionVelocityPoints")  # type: ignore
     qmlRegisterType(TrackingSignalsPoints, "SwiftConsole", 1, 0, "TrackingSignalsPoints")  # type: ignore
     engine = QtQml.QQmlApplicationEngine()
@@ -436,9 +429,11 @@ if __name__ == "__main__":
     endpoint_main = backend_main.start()
 
     data_model = DataModel(endpoint_main, messages_main, args.file_in, args.connect)
+    solution_table_model = SolutionTableModel()
     solution_velocity_model = SolutionVelocityModel()
     tracking_signals_model = TrackingSignalsModel()
     root_context = engine.rootContext()
+    root_context.setContextProperty("solution_table_model", solution_table_model)
     root_context.setContextProperty("solution_velocity_model", solution_velocity_model)
     root_context.setContextProperty("tracking_signals_model", tracking_signals_model)
     root_context.setContextProperty("data_model", data_model)

@@ -11,6 +11,9 @@ pub fn process_messages(
     let mut main = MainTab::new(shared_state);
     for message in messages {
         match message {
+            Ok(SBP::MsgAgeCorrections(msg)) => {
+                main.solution_tab.handle_age_corrections(msg.clone());
+            }
             Ok(SBP::MsgDops(msg)) => {
                 main.solution_tab.handle_dops(Dops::MsgDops(msg.clone()));
             }
@@ -72,8 +75,14 @@ pub fn process_messages(
                     .handle_msg_tracking_state(msg.states.clone(), &mut client_send_clone.clone());
             }
             Ok(SBP::MsgVelNED(msg)) => {
+                main.solution_tab
+                    .handle_vel_ned(VelNED::MsgVelNED(msg.clone()));
                 main.solution_velocity_tab
                     .handle_vel_ned(msg.clone(), &mut client_send_clone.clone());
+            }
+            Ok(SBP::MsgVelNEDDepA(msg)) => {
+                main.solution_tab
+                    .handle_vel_ned(VelNED::MsgVelNEDDepA(msg.clone()));
             }
             Ok(SBP::MsgUtcTime(msg)) => {
                 main.solution_tab.handle_utc_time(msg.clone());

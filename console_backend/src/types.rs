@@ -9,8 +9,8 @@ use ordered_float::OrderedFloat;
 use sbp::messages::{
     navigation::{MsgDops, MsgDopsDepA, MsgPosLLH, MsgPosLLHDepA, MsgVelNED, MsgVelNEDDepA},
     observation::{
-        MsgObs, MsgObsDepB, MsgObsDepC, PackedObsContent, PackedObsContentDepB,
-        PackedObsContentDepC,
+        MsgObs, MsgObsDepB, MsgObsDepC, MsgOsr, PackedObsContent, PackedObsContentDepB,
+        PackedObsContentDepC, PackedOsrContent,
     },
 };
 use serde::Serialize;
@@ -390,7 +390,7 @@ pub type Cn0Dict = HashMap<(SignalCodes, i16), Deque<(OrderedFloat<f64>, f64)>>;
 pub type Cn0Age = HashMap<(SignalCodes, i16), f64>;
 
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum SignalCodes {
     CodeGpsL1Ca = 0,
     CodeGpsL2Cm = 1,
@@ -805,6 +805,7 @@ pub struct ObservationMsgFields {
     pub n_obs: u8,
     pub tow: f64,
     pub wn: u16,
+    pub ns_residual: i32,
     pub states: Vec<Observations>,
     pub sender_id: Option<u16>,
 }
@@ -814,10 +815,11 @@ pub enum ObservationMsg {
     // MsgObsDepA(MsgObsDepA),
     MsgObsDepB(MsgObsDepB),
     MsgObsDepC(MsgObsDepC),
+    MsgOsr(MsgOsr),
 }
 impl ObservationMsg {
     pub fn fields(&self) -> ObservationMsgFields {
-        let (n_obs, tow, wn, states, sender_id) = match &self {
+        let (n_obs, tow, wn, ns_residual, states, sender_id) = match &self {
             ObservationMsg::MsgObs(obs) => {
                 let states: Vec<Observations> = obs
                     .obs
@@ -829,6 +831,7 @@ impl ObservationMsg {
                     obs.header.n_obs,
                     ms_to_sec(obs.header.t.tow as f64),
                     obs.header.t.wn,
+                    obs.header.t.ns_residual,
                     states,
                     obs.sender_id,
                 )
@@ -845,6 +848,7 @@ impl ObservationMsg {
                     obs.header.n_obs,
                     ms_to_sec(obs.header.t.tow as f64),
                     obs.header.t.wn,
+                    0_i32,
                     states,
                     obs.sender_id,
                 )
@@ -860,6 +864,24 @@ impl ObservationMsg {
                     obs.header.n_obs,
                     ms_to_sec(obs.header.t.tow as f64),
                     obs.header.t.wn,
+                    0_i32,
+                    states,
+                    obs.sender_id,
+                )
+            }
+
+            ObservationMsg::MsgOsr(obs) => {
+                let states: Vec<Observations> = obs
+                    .obs
+                    .clone()
+                    .into_iter()
+                    .map(Observations::PackedOsrContent)
+                    .collect();
+                (
+                    obs.header.n_obs,
+                    ms_to_sec(obs.header.t.tow as f64),
+                    obs.header.t.wn,
+                    obs.header.t.ns_residual,
                     states,
                     obs.sender_id,
                 )
@@ -869,6 +891,7 @@ impl ObservationMsg {
             n_obs,
             tow,
             wn,
+            ns_residual,
             states,
             sender_id,
         }
@@ -876,9 +899,16 @@ impl ObservationMsg {
 }
 // Struct with shared fields for various Observation Contents types.
 pub struct ObservationFields {
+    pub dep_type: char,
     pub code: SignalCodes,
     pub sat: i16,
+    pub pseudo_range: f64,
+    pub carrier_phase: f64,
     pub cn0: f64,
+    pub measured_doppler: f64,
+    pub computed_doppler: f64,
+    pub lock: u16,
+    pub flags: u8,
 }
 // Enum wrapping around various Observation Contents observation types.
 pub enum Observations {
@@ -886,17 +916,45 @@ pub enum Observations {
     // PackedObsContentDepA(PackedObsContentDepA),
     PackedObsContentDepB(PackedObsContentDepB),
     PackedObsContentDepC(PackedObsContentDepC),
+    PackedOsrContent(PackedOsrContent),
 }
 impl Observations {
     pub fn fields(&self) -> ObservationFields {
-        let (code, sat, cn0) = match self {
+        // DEP_B and DEP_A obs had different pseudorange scaling
+        let divisor = match self {
+            Observations::PackedObsContentDepB(_) => 1e2,
+            _ => 5e1,
+        };
+        let (
+            dep_type, // TODO(JV): this could be replaced with bool is_B_or_C
+            code,
+            sat,
+            pseudo_range,
+            carrier_phase_cycles,
+            carrier_phase_fractional,
+            cn0,
+            measured_doppler,
+            lock,
+            flags,
+        ) = match self {
             Observations::PackedObsContentDepB(obs) => {
                 let mut sat_ = obs.sid.sat as i16;
                 let signal_code = SignalCodes::from(obs.sid.code);
                 if signal_code.code_is_gps() {
                     sat_ += 1;
                 }
-                (signal_code, sat_, obs.cn0 as f64)
+                (
+                    'B',
+                    signal_code,
+                    sat_,
+                    obs.P as f64 / divisor,
+                    obs.L.i,
+                    obs.L.f,
+                    obs.cn0 as f64,
+                    0_f64, // obs.D
+                    obs.lock,
+                    0_u8,
+                )
             }
             Observations::PackedObsContentDepC(obs) => {
                 let mut sat_ = obs.sid.sat as i16;
@@ -904,15 +962,58 @@ impl Observations {
                 if signal_code.code_is_gps() {
                     sat_ += 1;
                 }
-                (signal_code, sat_, obs.cn0 as f64)
+                (
+                    'C',
+                    signal_code,
+                    sat_,
+                    obs.P as f64 / divisor,
+                    obs.L.i,
+                    obs.L.f,
+                    obs.cn0 as f64,
+                    0_f64, // obs.D
+                    obs.lock,
+                    0_u8,
+                )
             }
             Observations::PackedObsContent(obs) => (
+                ' ',
                 SignalCodes::from(obs.sid.code),
                 obs.sid.sat as i16,
+                obs.P as f64 / divisor,
+                obs.L.i,
+                obs.L.f,
                 obs.cn0 as f64,
+                obs.D.i as f64 + obs.D.f as f64 / ((1 << 8) as f64),
+                obs.lock as u16,
+                obs.flags,
+            ),
+            Observations::PackedOsrContent(obs) => (
+                ' ',
+                SignalCodes::from(obs.sid.code),
+                obs.sid.sat as i16,
+                obs.P as f64 / divisor,
+                obs.L.i,
+                obs.L.f,
+                0_f64, // cn0
+                0_f64, // obs.D
+                obs.lock as u16,
+                obs.flags,
             ),
         };
-        ObservationFields { code, sat, cn0 }
+        let carrier_phase =
+            carrier_phase_cycles as f64 + carrier_phase_fractional as f64 / ((1 << 8) as f64);
+        ObservationFields {
+            dep_type,
+            code,
+            sat,
+            pseudo_range,
+            carrier_phase,
+            cn0,
+            measured_doppler,
+            computed_doppler: 0_f64,
+            lock,
+            flags,
+        }
     }
 }
 

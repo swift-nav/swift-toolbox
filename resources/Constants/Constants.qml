@@ -6,8 +6,11 @@ QtObject {
     readonly property int height: 480
     property QtObject bottomNavBar
     property QtObject trackingSignals
+    property QtObject observationTab
     property int currentRefreshRate: 1000 / 5 // 5 Hz
     property int defaultTimerIntervalRate: 1000 / 5 // 5 Hz
+    property string monoSpaceFont: "Courier New"
+    readonly property bool debugMode: false
 
     bottomNavBar: QtObject {
         readonly property int connectionDropdownWidth: 90
@@ -33,6 +36,11 @@ QtObject {
         readonly property int legendBorderWidth: 1
         readonly property int legendBottomMargin: 85
         readonly property int legendLeftMargin: 60
+    }
+
+    observationTab: QtObject {
+        readonly property int titlePointSize: 14
+        readonly property int titleAreaHight: 25
     }
 
 }

@@ -1,3 +1,8 @@
+// 'Universal' constants
+
+pub const NANOSECONDS_PER_SECOND: f64 = 1.0e+9;
+pub const SECONDS_PER_NANOSECOND: f64 = 1.0e-9;
+
 // Server constants.
 pub const CLOSE: &str = "CLOSE";
 

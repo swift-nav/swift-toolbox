@@ -13,15 +13,21 @@ from PySide2.QtWidgets import QApplication  # type: ignore
 
 from fbs_runtime.application_context.PySide2 import ApplicationContext  # type: ignore  # pylint: disable=unused-import
 
-from PySide2.QtCore import QUrl, QObject, QMutex, Slot, QPointF
+from PySide2.QtCore import Property, QMutex, QObject, QUrl, QPointF, Slot
 from PySide2.QtCharts import QtCharts  # pylint: disable=unused-import
 
 from PySide2 import QtQml, QtCore
 
 from PySide2.QtQml import qmlRegisterType
-from PySide2.QtCore import Property
 
 from constants import ApplicationStates, MessageKeys, Keys, QTKeys
+from observation_tab import (
+    ObservationData,
+    ObservationModel,
+    REMOTE_OBSERVATION_TAB,
+    LOCAL_OBSERVATION_TAB,
+    obs_rows_to_json,
+)
 
 import console_resources  # type: ignore # pylint: disable=unused-import,import-error
 
@@ -76,6 +82,7 @@ TRACKING_SIGNALS_TAB: Dict[str, Any] = {
     Keys.MIN: 0,
 }
 
+
 capnp.remove_import_hook()  # pylint: disable=no-member
 
 
@@ -123,6 +130,15 @@ def receive_messages(app_, backend, messages):
             ]
             TRACKING_SIGNALS_TAB[Keys.MAX] = m.trackingSignalsStatus.max
             TRACKING_SIGNALS_TAB[Keys.MIN] = m.trackingSignalsStatus.min
+        elif m.which == MessageKeys.OBSERVATION_STATUS:
+            if m.observationStatus.isRemote:
+                REMOTE_OBSERVATION_TAB[Keys.TOW] = m.observationStatus.tow
+                REMOTE_OBSERVATION_TAB[Keys.WEEK] = m.observationStatus.week
+                REMOTE_OBSERVATION_TAB[Keys.ROWS][:] = obs_rows_to_json(m.observationStatus.rows)
+            else:
+                LOCAL_OBSERVATION_TAB[Keys.TOW] = m.observationStatus.tow
+                LOCAL_OBSERVATION_TAB[Keys.WEEK] = m.observationStatus.week
+                LOCAL_OBSERVATION_TAB[Keys.ROWS][:] = obs_rows_to_json(m.observationStatus.rows)
         elif m.which == MessageKeys.BOTTOM_NAVBAR_STATUS:
             BOTTOM_NAVBAR[Keys.AVAILABLE_PORTS][:] = m.bottomNavbarStatus.availablePorts
             BOTTOM_NAVBAR[Keys.AVAILABLE_BAUDRATES][:] = m.bottomNavbarStatus.availableBaudrates
@@ -751,6 +767,8 @@ if __name__ == "__main__":
     qmlRegisterType(SolutionTableEntries, "SwiftConsole", 1, 0, "SolutionTableEntries")  # type: ignore
     qmlRegisterType(SolutionVelocityPoints, "SwiftConsole", 1, 0, "SolutionVelocityPoints")  # type: ignore
     qmlRegisterType(TrackingSignalsPoints, "SwiftConsole", 1, 0, "TrackingSignalsPoints")  # type: ignore
+    qmlRegisterType(ObservationData, "SwiftConsole", 1, 0, "ObservationData")  # type: ignore
+
     engine = QtQml.QQmlApplicationEngine()
 
     capnp_path = get_capnp_path()
@@ -771,6 +789,8 @@ if __name__ == "__main__":
     solution_table_model = SolutionTableModel()
     solution_velocity_model = SolutionVelocityModel()
     tracking_signals_model = TrackingSignalsModel()
+    remote_observation_model = ObservationModel()
+    local_observation_model = ObservationModel()
     root_context = engine.rootContext()
     root_context.setContextProperty("log_panel_model", log_panel_model)
     root_context.setContextProperty("bottom_navbar_model", bottom_navbar_model)
@@ -778,6 +798,8 @@ if __name__ == "__main__":
     root_context.setContextProperty("solution_table_model", solution_table_model)
     root_context.setContextProperty("solution_velocity_model", solution_velocity_model)
     root_context.setContextProperty("tracking_signals_model", tracking_signals_model)
+    root_context.setContextProperty("remote_observation_model", remote_observation_model)
+    root_context.setContextProperty("local_observation_model", local_observation_model)
     root_context.setContextProperty("data_model", data_model)
 
     threading.Thread(target=receive_messages, args=(app, backend_main, messages_main,), daemon=True).start()

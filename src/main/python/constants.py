@@ -18,6 +18,10 @@ class Keys(str, Enum):
     AVAILABLE_PORTS = "AVAILABLE_PORTS"
     AVAILABLE_BAUDRATES = "AVAILABLE_BAUDRATES"
     AVAILABLE_FLOWS = "AVAILABLE_FLOWS"
+    REMOTE = "REMOTE"
+    TOW = "TOW"
+    WEEK = "WEEK"
+    ROWS = "ROWS"
 
 
 class ApplicationStates(str, Enum):
@@ -31,6 +35,7 @@ class MessageKeys(str, Enum):
     SOLUTION_TABLE_STATUS = "solutionTableStatus"
     SOLUTION_VELOCITY_STATUS = "solutionVelocityStatus"
     TRACKING_SIGNALS_STATUS = "trackingSignalsStatus"
+    OBSERVATION_STATUS = "observationStatus"
     CONNECT_REQUEST = "connectRequest"
     FILE_REQUEST = "fileRequest"
     TCP_REQUEST = "tcpRequest"

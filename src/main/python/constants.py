@@ -18,6 +18,10 @@ class Keys(str, Enum):
     AVAILABLE_PORTS = "AVAILABLE_PORTS"
     AVAILABLE_BAUDRATES = "AVAILABLE_BAUDRATES"
     AVAILABLE_FLOWS = "AVAILABLE_FLOWS"
+    REMOTE = "REMOTE"
+    TOW = "TOW"
+    WEEK = "WEEK"
+    ROWS = "ROWS"
 
 
 class ApplicationStates(str, Enum):
@@ -42,6 +46,7 @@ class MessageKeys(str, Enum):
     SOLUTION_VELOCITY_STATUS_FRONT = "solutionVelocityStatusFront"
     SOLUTION_POSITION_STATUS_UNIT_FRONT = "solutionPositionStatusUnitFront"
     SOLUTION_POSITION_STATUS_BUTTON_FRONT = "solutionPositionStatusButtonFront"
+    OBSERVATION_STATUS = "observationStatus"
 
 
 class QTKeys(str, Enum):

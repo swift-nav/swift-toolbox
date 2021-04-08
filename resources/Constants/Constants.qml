@@ -8,6 +8,8 @@ QtObject {
     property QtObject trackingSignals
     property int currentRefreshRate: 1000 / 5 // 5 Hz
     property int defaultTimerIntervalRate: 1000 / 5 // 5 Hz
+    property string monoSpaceFont: "Courier New"
+    readonly property bool debugMode: false
 
     bottomNavBar: QtObject {
         readonly property int connectionDropdownWidth: 90

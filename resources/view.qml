@@ -59,8 +59,7 @@ ApplicationWindow {
                     id: baselineTab
                 }
 
-                Item {
-                    id: observationsTab
+                ObservationTab {
                 }
 
                 Item {

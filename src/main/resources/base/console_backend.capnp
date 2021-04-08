@@ -51,6 +51,24 @@ struct BottomNavbarStatus {
     availableFlows @2 : List(Text);
 }
 
+struct ObservationTableRow {
+    prn @0 :Text;
+    pseudoRange @1 :Float64;
+    carrierPhase @2 :Float64;
+    cn0 @3 :Float64;
+    measuredDoppler @4 :Float64;
+    computedDoppler @5 :Float64;
+    lock @6 :UInt16;
+    flags @7 :Text;
+}
+
+struct ObservationStatus {
+    isRemote @0 :Bool;
+    tow @1 :Float64;
+    week @2 :UInt16;
+    rows @3 :List(ObservationTableRow);
+}
+
 struct SolutionPositionStatus {
     data @0 :List(List(Point));
     labels @1 :List(Text);
@@ -121,5 +139,6 @@ struct Message {
         disconnectRequest @14 :DisconnectRequest;
         bottomNavbarStatus @15 :BottomNavbarStatus;
         serialRefreshRequest @16 :SerialRefreshRequest;
+        observationStatus @17 :ObservationStatus;
     }
 }

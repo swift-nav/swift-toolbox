@@ -257,9 +257,11 @@ class SolutionPositionPoints(QObject):
 
     @Slot(list)  # type: ignore
     def fill_series(self, series_list):
-        for idx, series in enumerate(series_list):
-            series.replace(self._points[idx])
-
+        lines = series_list[0]
+        scatters = series_list[1]
+        for idx, _ in enumerate(lines):
+            lines[idx].replace(self._points[idx])
+            scatters[idx].replace(self._points[idx])
 
 class SolutionPositionModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(SolutionPositionPoints)  # type: ignore

@@ -1,7 +1,8 @@
 // import "ContactModel" as ContactModel
 
 import QtCharts 2.2
-import QtQuick 2.6
+import QtQuick 2.14
+import Qt.labs.qmlmodels 1.0
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
@@ -11,6 +12,8 @@ Item {
 
     property variant keys: []
     property variant vals: []
+    property variant table: []
+    property variant columnWidths: [50, 50]
 
     width: parent.width
     height: parent.height
@@ -30,104 +33,89 @@ Item {
         // anchors.left: trackingSignalsChart.left
         // anchors.bottomMargin: 85
         // anchors.leftMargin: 60
+        
         width: parent.width
         height: parent.height
 
-        RowLayout {
+        ColumnLayout {
             id: solutionTableRowLayout
-
+            spacing: 0
             width: parent.width
             height: parent.height
+            TableView {
+                id: solutionTableElementHeaders
+                // width: solutionTabBackground.width
+                interactive: false
+                Layout.minimumHeight: 20
+                Layout.fillWidth: true
+                Layout.leftMargin: 2
+                Layout.rightMargin: 2
+                Layout.bottomMargin: 0
+                Layout.topMargin: 2
+                // anchors.fill: parent
+                columnSpacing: 0
+                rowSpacing: 0
+                clip: true
+                // onWidthChanged: solutionTableElement.forceLayout()
+                columnWidthProvider: function (column) { return columnWidths[column] }
+                model: TableModel {
+                    TableModelColumn { display: "Item" }
+                    TableModelColumn { display: "Value" }
 
-            ListView {
-                id: solutionTableKeys
-                width: parent.width / 2
-                Layout.fillHeight: true
-                spacing: 1
-                model: keys
-                delegate: keysDelegate
-                focus: true
-                Component {
-                    id: keysDelegate
-                    Rectangle {
-                        id: key
-                        border.color: "#000000"
-                        border.width: 1
-                        width: implicitWidth
-                        height: keyText.height
-                        Text {
-                            id: keyText
-                            text: modelData
-                        }
-
-                    }
-
+                    rows: [{"Item": "Item", "Value": "Value"}]
                 }
 
-                header: Rectangle {
-                    id: kheader
-                    border.color: "#FFFFFF"
+                delegate: Rectangle {
+                    id: textDelegate
+                    implicitHeight: 20
                     border.width: 1
-                    width: implicitWidth
-                    height: kheaderText.height
+
                     Text {
-                        id: kheaderText
-                        text: "Item"
+                        id: rowText
+                        text: display
+                        anchors.centerIn: parent
+                        leftPadding: 2
                     }
                 }
             }
 
-            ListView {
-                id: solutionTableVals
-
+            TableView {
+                id: solutionTableElement
+                // width: solutionTabBackground.width
                 Layout.fillHeight: true
                 Layout.fillWidth: true
-                model: keys
-                delegate: valsDelegate
-                focus: true
+                Layout.leftMargin: 2
+                Layout.rightMargin: 2
+                Layout.bottomMargin: 2
+                Layout.topMargin: 0
+                // anchors.fill: parent
+                interactive: false
+                columnSpacing: 0
+                rowSpacing: 0
+                clip: true
+                
+                // contentWidth: solutionTab.width
+                onWidthChanged: solutionTableElement.forceLayout()
+                columnWidthProvider: function (column) { return columnWidths[column] }
+                model: TableModel {
+                    TableModelColumn { display: "Item" }
+                    TableModelColumn { id: hello; display: "Value" }
 
-                Component {
-                    id: valsDelegate
-
-                    Rectangle {
-                        id: val
-
-                        z: 100
-                        width: implicitWidth
-                        height: valText.height
-                        border.color: "#000000"
-                        border.width: 4
-
-                        Text {
-                            id: valText
-
-                            text: modelData
-                        }
-
-                    }
-
+                    rows: []
                 }
 
-                // width: parent.width/2
-                // height: parent.height
-                header: Rectangle {
-                    id: vheader
-
-                    width: implicitWidth
-                    height: vheaderText.height
-                    border.color: "#000000"
-                    border.width: 4
+                delegate: Rectangle {
+                    id: textDelegate
+                    implicitHeight: 20
+                    border.width: 1
 
                     Text {
-                        id: vheaderText
-
-                        text: "Value"
+                        id: rowText
+                        text: display
+                        leftPadding: 2
                     }
-
                 }
-
             }
-
         }
         Timer {
             interval: 1000 / 10 // 10 Hz refresh
@@ -142,16 +130,17 @@ Item {
                     return ;
 
                 var entries = solutionTableEntries.entries;
+                var table_update = [];
                 for (var idx in entries) {
                     if (keys.length != entries.length) {
-                        keys.push(entries[idx][0]);
-                        vals.push(entries[idx][1]);
-                        solutionTableKeys.model = keys;
-                    } else {
-                        vals[idx] = entries[idx][1];
+                        table_update.push({"Item": entries[idx][0], "Value": entries[idx][1]});
                     }
                 }
-                solutionTableVals.model = vals;
+                solutionTableElement.model.rows = table_update;
+                columnWidths = [120, solutionTableArea.width-120]
+                solutionTableElement.forceLayout();
+                solutionTableElementHeaders.forceLayout();
+                
             }
         }
     }

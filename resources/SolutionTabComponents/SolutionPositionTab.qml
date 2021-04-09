@@ -7,6 +7,7 @@ import SwiftConsole 1.0
 Item {
     id: solutionPositionTab
 
+    property variant scatters: []
     property variant lines: []
     property variant labels: []
     property variant colors: []
@@ -173,18 +174,25 @@ Item {
                         if (labels != solutionPositionPoints.labels)
                             labels = solutionPositionPoints.labels;
 
-                        if (!lines.length){
+                        if (!lines.length || !scatters.length){
                             for (var idx in labels) {
+                                var scatter = solutionPositionChart.createSeries(ChartView.SeriesTypeScatter, labels[idx]+"scatter", solutionPositionXAxis);
+                                scatter.color = colors[idx];
+                                scatter.markerSize = 5.0;
+                                scatter.axisY = solutionPositionYAxis;
                                 var line = solutionPositionChart.createSeries(ChartView.SeriesTypeLine, labels[idx], solutionPositionXAxis);
                                 line.color = colors[idx];
-                                line.width = 2;
+                                line.width = 0.2;
                                 line.axisY = solutionPositionYAxis;
                                 // line.useOpenGL = true; // [CPP-93] Invesigate usage of `useOpenGL` in plots
+                                // scatter.useOpenGL = true; // [CPP-93] Invesigate usage of `useOpenGL` in plots
                                 lines.push(line);
+                                scatters.push(scatter);
                             }
                         }
-
-                        solutionPositionPoints.fill_series(lines);
+                        
+                        var combined = [lines, scatters];
+                        solutionPositionPoints.fill_series(combined);
                         if (solutionPositionYAxis.min != solutionPositionPoints.lat_min_ || solutionPositionYAxis.max != solutionPositionPoints.lat_max_) {
                             solutionPositionYAxis.min = solutionPositionPoints.lat_min_;
                             solutionPositionYAxis.max = solutionPositionPoints.lat_max_;

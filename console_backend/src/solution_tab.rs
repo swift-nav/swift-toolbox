@@ -533,6 +533,10 @@ impl SolutionTab {
 
     pub fn solution_draw(&mut self) {
         let current_mode: Option<String> = if self.pending_draw_modes.len()>0 {
+            self.lat_min = LAT_MAX;
+            self.lat_max = LAT_MIN;
+            self.lon_min = LON_MAX;
+            self.lon_max = LON_MIN;
             Some(self.pending_draw_modes[self.pending_draw_modes.len()-1].clone())
         } else {
             None
@@ -558,9 +562,9 @@ impl SolutionTab {
         let lng = last_lng; // - self.offset) * self.sf
 
         let lat_str = format!("lat_{}", mode_string);
-        let lng_str = format!("lng_{}", mode_string);
+        let lon_str = format!("lng_{}", mode_string);
         self.slns.get_mut(&lat_str).unwrap().add(lat);
-        self.slns.get_mut(&lng_str).unwrap().add(lng);
+        self.slns.get_mut(&lon_str).unwrap().add(lng);
         self._append_empty_sln_data(Some(mode_string));
     }
 
@@ -570,37 +574,40 @@ impl SolutionTab {
                 continue;
             }
             let lat_str = format!("lat_{}", each_mode);
-            let lng_str = format!("lng_{}", each_mode);
+            let lon_str = format!("lng_{}", each_mode);
             self.slns.get_mut(&lat_str).unwrap().add(f64::NAN);
-            self.slns.get_mut(&lng_str).unwrap().add(f64::NAN);
+            self.slns.get_mut(&lon_str).unwrap().add(f64::NAN);
         }
     }
 
     fn _synchronize_plot_data_by_mode(&mut self, mode_string: &String, update_current: bool) {
         let lat_string = format!("lat_{}", mode_string);
-        let lng_string = format!("lng_{}", mode_string);
+        let lon_string = format!("lng_{}", mode_string);
 
         if let Some(idx) = self.mode_strings.iter().position(|x| *x == *mode_string) {
-            self.sln_data[idx] = self.slns[&lat_string].get()
-                .iter()
-                .zip(self.slns[&lng_string].get().iter())
-                .filter(|(x, y)| !x.is_nan() || !y.is_nan())
-                .map(|(x, y)| (*y, *x))
-                .collect();
+            let lat_values = self.slns[&lat_string].get();
+            let lon_values = self.slns[&lon_string].get();
+            
+            let mut new_sln: Vec<(f64, f64)> = vec![];
+            for jdx in 0..lat_values.len() {
+                if lat_values[jdx].is_nan() || lon_values[jdx].is_nan() {
+                    continue;
+                }
+                self.lat_min = f64::min(self.lat_min, lat_values[jdx]);
+                self.lat_max = f64::max(self.lat_max, lat_values[jdx]);
+                self.lon_min = f64::min(self.lon_min, lon_values[jdx]);
+                self.lon_max = f64::max(self.lon_max, lon_values[jdx]);
+                new_sln.push((lon_values[jdx], lat_values[jdx]));
+            }
+            self.sln_data[idx] = new_sln;
+
             if update_current {
                 if self.sln_data[idx].len() > 0 {
                     self.sln_cur_data[idx] = self.sln_data[idx][self.sln_data[idx].len()-1];
                 } else {
                     self.sln_cur_data[idx] = (f64::NAN, f64::NAN);
                 }
-            }
-            if self.sln_data[idx].len()>10 {
-                self.lat_max = self.sln_data[idx][0].1;
-                self.lat_min = self.sln_data[idx][self.sln_data[idx].len()-1].1;
-                self.lon_max = self.sln_data[idx][0].0;
-                self.lon_min = self.sln_data[idx][self.sln_data[idx].len()-1].0;
-            }
-            
+            } 
         }
     }
 

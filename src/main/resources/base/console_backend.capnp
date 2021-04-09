@@ -26,7 +26,11 @@ struct Point {
 struct SolutionPositionStatus {
     data @0 :List(List(Point));
     labels @1 :List(Text);
-    colors @1 :List(Text);
+    colors @2 :List(Text);
+    latMin @3 :Float64;
+    latMax @4 :Float64;
+    lonMin @5 :Float64;
+    lonMax @6 :Float64;
 }
 
 struct SolutionVelocityStatus {

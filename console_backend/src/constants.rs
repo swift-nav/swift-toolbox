@@ -37,31 +37,47 @@ pub const SHOW_LEGEND: &str = "Show Legend";
 pub const PLOT_HISTORY_MAX: usize = 1000;
 pub const DILUTION_OF_PRECISION_UNITS: f64 = 0.01;
 pub const NUM_GNSS_MODES: usize = 6;
-pub const SPP: &str = "spp";
-pub const DGNSS: &str = "dgnss";
-pub const FLOAT: &str = "float";
-pub const FIXED: &str = "fixed";
-pub const DR: &str = "dr";
-pub const SBAS: &str = "sbas";
+pub const NO_FIX_LABEL: &str = "No Fix";
+pub const SPP_LABEL: &str = "SPP";
+pub const DGNSS_LABEL: &str = "DGPS";
+pub const FLOAT_LABEL: &str = "RTK float";
+pub const FIXED_LABEL: &str = "RTK fixed";
+pub const DR_LABEL: &str = "DR";
+pub const SBAS_LABEL: &str = "SBAS";
 
-pub const LAT_SPP: &str = "lat_spp";
-pub const LNG_SPP: &str = "lng_spp";
-pub const ALT_SPP: &str = "alt_spp";
-pub const LAT_DGNSS: &str = "lat_dgnss";
-pub const LNG_DGNSS: &str = "lng_dgnss";
-pub const ALT_DGNSS: &str = "alt_dgnss";
-pub const LAT_FLOAT: &str = "lat_float";
-pub const LNG_FLOAT: &str = "lng_float";
-pub const ALT_FLOAT: &str = "alt_float";
-pub const LAT_FIXED: &str = "lat_fixed";
-pub const LNG_FIXED: &str = "lng_fixed";
-pub const ALT_FIXED: &str = "alt_fixed";
-pub const LAT_DR: &str = "lat_dr";
-pub const LNG_DR: &str = "lng_dr";
-pub const ALT_DR: &str = "alt_dr";
-pub const LAT_SBAS: &str = "lat_sbas";
-pub const LNG_SBAS: &str = "lng_sbas";
-pub const ALT_SBAS: &str = "alt_sbas";
+pub const NO_FIX: &str = "No Fix";
+pub const SPP: &str = "SPP";
+pub const DGNSS: &str = "DGPS";
+pub const FLOAT: &str = "Float RTK";
+pub const FIXED: &str = "Fixed RTK";
+pub const DR: &str = "Dead Reckoning";
+pub const SBAS: &str = "SBAS";
+pub const NO_FIX_COLOR: &str = "#FFFFFF";
+pub const SPP_COLOR: &str = "#0000FF";
+pub const DGNSS_COLOR: &str = "#00B3FF";
+pub const FLOAT_COLOR: &str = "#BF00BF";
+pub const FIXED_COLOR: &str = "#FFA500";
+pub const DR_COLOR: &str = "#000000";
+pub const SBAS_COLOR: &str = "#00FF00";
+
+pub const LAT_SPP: &str = "lat_SPP";
+pub const LNG_SPP: &str = "lng_SPP";
+pub const ALT_SPP: &str = "alt_SPP";
+pub const LAT_DGNSS: &str = "lat_DGPS";
+pub const LNG_DGNSS: &str = "lng_DGPS";
+pub const ALT_DGNSS: &str = "alt_DGPS";
+pub const LAT_FLOAT: &str = "lat_Float RTK";
+pub const LNG_FLOAT: &str = "lng_Float RTK";
+pub const ALT_FLOAT: &str = "alt_Float RTK";
+pub const LAT_FIXED: &str = "lat_Fixed RTK";
+pub const LNG_FIXED: &str = "lng_Fixed RTK";
+pub const ALT_FIXED: &str = "alt_Fixed RTK";
+pub const LAT_DR: &str = "lat_Dead Reckoning";
+pub const LNG_DR: &str = "lng_Dead Reckoning";
+pub const ALT_DR: &str = "alt_Dead Reckoning";
+pub const LAT_SBAS: &str = "lat_SBAS";
+pub const LNG_SBAS: &str = "lng_SBAS";
+pub const ALT_SBAS: &str = "alt_SBAS";
 pub const SOLUTIONS_KEYS: &[&str] = &[
     LAT_SPP, LNG_SPP, ALT_SPP, LAT_DGNSS, LNG_DGNSS, ALT_DGNSS, LAT_FLOAT, LNG_FLOAT, ALT_FLOAT,
     LAT_FIXED, LNG_FIXED, ALT_FIXED, LAT_DR, LNG_DR, ALT_DR, LAT_SBAS, LNG_SBAS, ALT_SBAS,
@@ -145,6 +161,7 @@ pub const MPS2KPH: f64 = 3.600000;
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
 pub enum GnssModes {
+    NoFix = 0,
     Spp = 1,
     Dgnss = 2,
     Float = 3,
@@ -155,6 +172,7 @@ pub enum GnssModes {
 impl From<u8> for GnssModes {
     fn from(s: u8) -> Self {
         match s {
+            0 => GnssModes::NoFix,
             1 => GnssModes::Spp,
             2 => GnssModes::Dgnss,
             3 => GnssModes::Float,
@@ -173,6 +191,7 @@ impl ToString for GnssModes {
     /// - `key`: The code, which is signal code, and satellite constellation-specific satellite identifier.
     fn to_string(&self) -> String {
         let gnss_mode_str = match self {
+            GnssModes::NoFix => NO_FIX,
             GnssModes::Spp => SPP,
             GnssModes::Dgnss => DGNSS,
             GnssModes::Float => FLOAT,
@@ -181,6 +200,32 @@ impl ToString for GnssModes {
             GnssModes::Sbas => SBAS,
         };
         String::from(gnss_mode_str)
+    }
+}
+impl GnssModes {
+    pub fn get_label(&self) -> String {
+        let gnss_mode_label = match self {
+            GnssModes::NoFix => NO_FIX_LABEL,
+            GnssModes::Spp => SPP_LABEL,
+            GnssModes::Dgnss => DGNSS_LABEL,
+            GnssModes::Float => FLOAT_LABEL,
+            GnssModes::Fixed => FIXED_LABEL,
+            GnssModes::Dr => DR_LABEL,
+            GnssModes::Sbas => SBAS_LABEL,
+        };
+        String::from(gnss_mode_label)
+    }
+    pub fn get_color(&self) -> String  {
+        let gnss_mode_color = match self {
+            GnssModes::NoFix => NO_FIX_COLOR,
+            GnssModes::Spp => SPP_COLOR,
+            GnssModes::Dgnss => DGNSS_COLOR,
+            GnssModes::Float => FLOAT_COLOR,
+            GnssModes::Fixed => FIXED_COLOR,
+            GnssModes::Dr => DR_COLOR,
+            GnssModes::Sbas => SBAS_COLOR,
+        };
+        String::from(gnss_mode_color)
     }
 }
 

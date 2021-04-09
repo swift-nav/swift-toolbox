@@ -68,8 +68,7 @@ Item {
                     height: parent.height
                     currentIndex: solutionBar.currentIndex
 
-                    Item {
-                        id: solutionPositionTab
+                    SolutionTabComponents.SolutionPositionTab {
                     }
 
                     SolutionTabComponents.SolutionVelocityTab {

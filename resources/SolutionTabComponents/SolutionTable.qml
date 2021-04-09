@@ -41,29 +41,22 @@ Item {
 
             ListView {
                 id: solutionTableKeys
-
                 width: parent.width / 2
                 Layout.fillHeight: true
-                // Layout.fillWidth:
-                spacing: 5
+                spacing: 1
                 model: keys
                 delegate: keysDelegate
                 focus: true
-
                 Component {
                     id: keysDelegate
-
                     Rectangle {
                         id: key
-
                         border.color: "#000000"
                         border.width: 1
                         width: implicitWidth
                         height: keyText.height
-
                         Text {
                             id: keyText
-
                             text: modelData
                         }
 
@@ -73,20 +66,15 @@ Item {
 
                 header: Rectangle {
                     id: kheader
-
                     border.color: "#FFFFFF"
                     border.width: 1
                     width: implicitWidth
                     height: kheaderText.height
-
                     Text {
                         id: kheaderText
-
                         text: "Item"
                     }
-
                 }
-
             }
 
             ListView {
@@ -141,9 +129,8 @@ Item {
             }
 
         }
-
         Timer {
-            interval: 1000 / 5 // 5 Hz refresh
+            interval: 1000 / 10 // 10 Hz refresh
             running: true
             repeat: true
             onTriggered: {
@@ -167,7 +154,5 @@ Item {
                 solutionTableVals.model = vals;
             }
         }
-
     }
-
 }

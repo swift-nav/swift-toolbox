@@ -36,17 +36,21 @@ const POS_LLH_TIME_STR_FILEPATH: &str = "position_log_%Y%m%d-%H%M%S.csv";
 pub struct SolutionTab {
     pub age_corrections: Option<f64>,
     pub alts: Deque<f64>,
+    pub colors: Vec<String>,
     pub directory_name: Option<String>,
     pub ins_status_flags: u32,
     pub ins_used: bool,
+    pub labels: Vec<String>,
     pub lats: Deque<f64>,
     pub lngs: Deque<f64>,
     pub last_ins_status_receipt_time: Instant,
     pub last_pos_mode: u8,
     pub last_odo_update_time: Instant,
     pub logging: bool,
-    pub max: f64,
-    pub min: f64,
+    pub lat_max: f64,
+    pub lat_min: f64,
+    pub lon_max: f64,
+    pub lon_min: f64,
     pub mode_strings: Vec<String>,
     pub modes: Deque<u8>,
     pub nsec: Option<i32>,
@@ -69,17 +73,39 @@ impl SolutionTab {
         SolutionTab {
             age_corrections: None,
             alts: Deque::with_size_limit(PLOT_HISTORY_MAX),
+            colors: {
+                vec![
+                    GnssModes::Spp.get_color(),
+                    GnssModes::Dgnss.get_color(),
+                    GnssModes::Float.get_color(),
+                    GnssModes::Fixed.get_color(),
+                    GnssModes::Dr.get_color(),
+                    GnssModes::Sbas.get_color(),
+                ]
+            },
             directory_name: None,
             ins_status_flags: 0,
             ins_used: false,
+            labels: {
+                vec![
+                    GnssModes::Spp.get_label(),
+                    GnssModes::Dgnss.get_label(),
+                    GnssModes::Float.get_label(),
+                    GnssModes::Fixed.get_label(),
+                    GnssModes::Dr.get_label(),
+                    GnssModes::Sbas.get_label(),
+                ]
+            },
             lats: Deque::with_size_limit(PLOT_HISTORY_MAX),
             lngs: Deque::with_size_limit(PLOT_HISTORY_MAX),
             last_ins_status_receipt_time: Instant::now(),
             last_pos_mode: 0,
             last_odo_update_time: Instant::now(),
             logging: false,
-            max: 0_f64,
-            min: 0_f64,
+            lat_max: 38_f64,
+            lat_min: 36_f64,
+            lon_max: -121_f64,
+            lon_min: -123_f64,
             modes: Deque::with_size_limit(PLOT_HISTORY_MAX),
             mode_strings: vec![
                 GnssModes::Spp.to_string(),
@@ -480,9 +506,9 @@ impl SolutionTab {
             self.table
                 .insert(String::from(HEIGHT), format!("{:.3}", height));
             self.table
-                .insert(String::from(HORIZ_ACC), format!("{:.12}", h_accuracy));
+                .insert(String::from(HORIZ_ACC), format!("{:.3}", h_accuracy));
             self.table
-                .insert(String::from(VERT_ACC), format!("{:.12}", v_accuracy));
+                .insert(String::from(VERT_ACC), format!("{:.3}", v_accuracy));
 
             self.lats.add(lat);
             self.lngs.add(lon);
@@ -559,7 +585,7 @@ impl SolutionTab {
                 .iter()
                 .zip(self.slns[&lng_string].get().iter())
                 .filter(|(x, y)| !x.is_nan() || !y.is_nan())
-                .map(|(x, y)| (*x, *y))
+                .map(|(x, y)| (*y, *x))
                 .collect();
             if update_current {
                 if self.sln_data[idx].len() > 0 {
@@ -568,6 +594,13 @@ impl SolutionTab {
                     self.sln_cur_data[idx] = (f64::NAN, f64::NAN);
                 }
             }
+            if self.sln_data[idx].len()>10 {
+                self.lat_max = self.sln_data[idx][0].1;
+                self.lat_min = self.sln_data[idx][self.sln_data[idx].len()-1].1;
+                self.lon_max = self.sln_data[idx][0].0;
+                self.lon_min = self.sln_data[idx][self.sln_data[idx].len()-1].0;
+            }
+            
         }
     }
 
@@ -581,30 +614,40 @@ impl SolutionTab {
         let msg = builder.init_root::<m::message::Builder>();
 
         let mut solution_status = msg.init_solution_position_status();
-        // velocity_status.set_min(self.min);
-        // velocity_status.set_max(self.max);
+        solution_status.set_lat_min(self.lat_min);
+        solution_status.set_lat_max(self.lat_max);
+        solution_status.set_lon_min(self.lon_min);
+        solution_status.set_lon_max(self.lon_max);
 
         let mut solution_points = solution_status
             .reborrow()
             .init_data(self.sln_data.len() as u32);
         for idx in 0..self.sln_data.len() {
-            let points = self.sln_data.get_mut(idx).unwrap().get();
+            let points = self.sln_data.get_mut(idx).unwrap();
             let mut point_idx = solution_points
                 .reborrow()
                 .init(idx as u32, points.len() as u32);
-            for (i, (x, OrderedFloat(y))) in points.iter().enumerate() {
+            for (i, (x, y)) in points.iter().enumerate() {
                 let mut point_val = point_idx.reborrow().get(i as u32);
                 point_val.set_x(*x);
                 point_val.set_y(*y);
             }
         }
-        // let mut colors = velocity_status
-        //     .reborrow()
-        //     .init_colors(self.colors.len() as u32);
+        let mut colors = solution_status
+            .reborrow()
+            .init_colors(self.colors.len() as u32);
 
-        // for (i, color) in self.colors.iter().enumerate() {
-        //     colors.set(i as u32, color);
-        // }
+        for (i, color) in self.colors.iter().enumerate() {
+            colors.set(i as u32, color);
+        }
+
+        let mut labels = solution_status
+            .reborrow()
+            .init_labels(self.mode_strings.len() as u32);
+
+        for (i, label) in self.mode_strings.iter().enumerate() {
+            labels.set(i as u32, label);
+        }
 
         let mut msg_bytes: Vec<u8> = vec![];
         serialize::write_message(&mut msg_bytes, &builder).unwrap();

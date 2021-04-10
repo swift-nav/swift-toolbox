@@ -1,4 +1,3 @@
-use serde::Serialize;
 use std::fs::File;
 
 use crate::types::{PosLLHLog, Result, VelLog};
@@ -30,6 +29,7 @@ impl CsvSerializer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde::Serialize;
     use std::path::Path;
     use tempfile::TempDir;
     const TEST_FILEPATH: &str = "test.csv";

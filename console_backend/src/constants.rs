@@ -41,6 +41,8 @@ pub const LAT_MAX: f64 = 90_f64;
 pub const LAT_MIN: f64 = -90_f64;
 pub const LON_MAX: f64 = 180_f64;
 pub const LON_MIN: f64 = -180_f64;
+pub const DEGREES: &str = "degrees";
+pub const METERS: &str = "meters";
 pub const NO_FIX_LABEL: &str = "No Fix";
 pub const SPP_LABEL: &str = "SPP";
 pub const DGNSS_LABEL: &str = "DGPS";
@@ -82,10 +84,7 @@ pub const ALT_DR: &str = "alt_Dead Reckoning";
 pub const LAT_SBAS: &str = "lat_SBAS";
 pub const LNG_SBAS: &str = "lng_SBAS";
 pub const ALT_SBAS: &str = "alt_SBAS";
-pub const SOLUTIONS_KEYS: &[&str] = &[
-    LAT_SPP, LNG_SPP, ALT_SPP, LAT_DGNSS, LNG_DGNSS, ALT_DGNSS, LAT_FLOAT, LNG_FLOAT, ALT_FLOAT,
-    LAT_FIXED, LNG_FIXED, ALT_FIXED, LAT_DR, LNG_DR, ALT_DR, LAT_SBAS, LNG_SBAS, ALT_SBAS,
-];
+
 pub const SOLUTION_DATA_KEYS: &[&str] = &[
     LAT_SPP, LNG_SPP, LAT_DGNSS, LNG_DGNSS, LAT_FLOAT, LNG_FLOAT, LAT_FIXED, LNG_FIXED, LAT_DR,
     LNG_DR, LAT_SBAS, LNG_SBAS,
@@ -219,7 +218,7 @@ impl GnssModes {
         };
         String::from(gnss_mode_label)
     }
-    pub fn get_color(&self) -> String  {
+    pub fn get_color(&self) -> String {
         let gnss_mode_color = match self {
             GnssModes::NoFix => NO_FIX_COLOR,
             GnssModes::Spp => SPP_COLOR,
@@ -896,7 +895,7 @@ pub fn get_utc_time(
 /// # Returns:
 /// - Partial datetime string and seconds/microseconds string.
 pub fn datetime_2_str_utc(datetm: DateTime<Utc>) -> (String, f64) {
-    let seconds = datetm.second() as f64 + datetm.nanosecond() as f64 / 1000_f64;
+    let seconds = datetm.second() as f64 + datetm.nanosecond() as f64 / 1e9_f64;
     (datetm.format("%Y-%m-%d %H:%M").to_string(), seconds)
 }
 
@@ -908,7 +907,7 @@ pub fn datetime_2_str_utc(datetm: DateTime<Utc>) -> (String, f64) {
 /// # Returns:
 /// - Partial datetime string and seconds/microseconds string.
 pub fn datetime_2_str_local(datetm: DateTime<Local>) -> (String, f64) {
-    let seconds = datetm.second() as f64 + datetm.nanosecond() as f64 / 1000_f64;
+    let seconds = datetm.second() as f64 + datetm.nanosecond() as f64 / 1e9_f64;
     (datetm.format("%Y-%m-%d %H:%M").to_string(), seconds)
 }
 
@@ -1040,10 +1039,10 @@ mod tests {
 
     #[test]
     fn nano_to_micro_sec_test() {
-        assert_eq!(nano_to_micro_sec(1000_f64), 1_f64);
-        assert_eq!(nano_to_micro_sec(1000000_f64), 1000_f64);
-        assert_eq!(nano_to_micro_sec(0_f64), 0_f64);
-        assert_eq!(nano_to_micro_sec(1337_f64), 1.337_f64);
+        assert!(f64::abs(nano_to_micro_sec(1000_f64) - 1_f64) <= f64::EPSILON);
+        assert!(f64::abs(nano_to_micro_sec(1000000_f64) - 1000_f64) <= f64::EPSILON);
+        assert!(f64::abs(nano_to_micro_sec(0_f64) - 0_f64) <= f64::EPSILON);
+        assert!(f64::abs(nano_to_micro_sec(1337_f64) - 1.337_f64) <= f64::EPSILON);
     }
 
     #[test]

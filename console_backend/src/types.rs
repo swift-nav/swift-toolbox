@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use ordered_float::OrderedFloat;
 use serde::Serialize;
 use std::{
-    collections::{HashMap, VecDeque},
+    collections::HashMap,
     ops::Deref,
     sync::{mpsc::Sender, Arc, Mutex},
     time::Instant,
@@ -16,7 +16,7 @@ use sbp::messages::{
     },
 };
 
-use crate::constants::{SignalCodes, KPH, MPH, MPS, MPS2KPH, MPS2MPH};
+use crate::constants::{SignalCodes, DEGREES, KPH, MPH, MPS, MPS2KPH, MPS2MPH};
 use crate::formatters::*;
 
 pub type Error = std::boxed::Box<dyn std::error::Error>;
@@ -25,24 +25,27 @@ pub type UtcDateTime = DateTime<Utc>;
 
 #[derive(Debug, Clone)]
 pub struct Deque<T> {
-    d: VecDeque<T>,
+    d: Vec<T>,
     capacity: usize,
 }
 impl<T> Deque<T> {
     pub fn with_size_limit(capacity: usize) -> Deque<T> {
         Deque {
-            d: VecDeque::new(),
+            d: Vec::new(),
             capacity,
         }
     }
     pub fn add(&mut self, ele: T) {
         if self.d.len() == self.capacity {
-            self.d.pop_front();
+            self.d.remove(0);
         }
-        self.d.push_back(ele);
+        self.d.push(ele);
     }
-    pub fn get(&self) -> &VecDeque<T> {
+    pub fn get(&self) -> &Vec<T> {
         &self.d
+    }
+    pub fn clear(&mut self) {
+        self.d.clear();
     }
 }
 
@@ -183,17 +186,27 @@ impl SolutionTabState {
 
 #[derive(Debug)]
 pub struct SolutionPositionTabState {
+    pub center: bool,
+    pub clear: bool,
     pub ins_status_flags: u32,
     pub last_ins_status_receipt_time: Instant,
     pub last_odo_update_time: Instant,
+    pub pause: bool,
+    pub unit: String,
+    pub zoom: bool,
 }
 
 impl SolutionPositionTabState {
     fn new() -> SolutionPositionTabState {
         SolutionPositionTabState {
+            center: false,
+            clear: false,
             ins_status_flags: 0,
             last_ins_status_receipt_time: Instant::now(),
             last_odo_update_time: Instant::now(),
+            pause: false,
+            unit: String::from(DEGREES),
+            zoom: false,
         }
     }
 }

@@ -218,6 +218,24 @@ impl Server {
                             (*shared_data).solution_tab.velocity_tab.unit = unit.to_string();
                         }
                     }
+                    Ok(m::message::Which::SolutionPositionStatusUnitFront(Ok(cv_in))) => {
+                        let shared_state_clone = shared_state.clone();
+                        let mut shared_data = shared_state_clone.lock().unwrap();
+                        let unit = cv_in.get_solution_position_unit().unwrap();
+                        (*shared_data).solution_tab.position_tab.unit = unit.to_string();
+                    }
+                    Ok(m::message::Which::SolutionPositionStatusButtonFront(Ok(cv_in))) => {
+                        let shared_state_clone = shared_state.clone();
+                        let mut shared_data = shared_state_clone.lock().unwrap();
+                        (*shared_data).solution_tab.position_tab.zoom =
+                            cv_in.get_solution_position_zoom();
+                        (*shared_data).solution_tab.position_tab.center =
+                            cv_in.get_solution_position_center();
+                        (*shared_data).solution_tab.position_tab.clear =
+                            cv_in.get_solution_position_clear();
+                        (*shared_data).solution_tab.position_tab.pause =
+                            cv_in.get_solution_position_pause();
+                    }
                     Ok(_) => {
                         println!("something else");
                     }

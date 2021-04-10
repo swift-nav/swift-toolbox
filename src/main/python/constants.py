@@ -14,6 +14,7 @@ class Keys(str, Enum):
     LAT_MIN = "LAT_MIN"
     LON_MAX = "LON_MAX"
     LON_MIN = "LON_MIN"
+    CUR_POINTS = "CUR_POINTS"
 
 
 class ApplicationStates(str, Enum):

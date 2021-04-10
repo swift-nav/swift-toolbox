@@ -33,6 +33,8 @@ PIKSI_HOST = "piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com"
 PIKSI_PORT = 55555
 
 SOLUTION_POSITION_TAB: Dict[str, Any] = {
+    Keys.AVAILABLE_UNITS: [],
+    Keys.CUR_POINTS: [],
     Keys.POINTS: [],
     Keys.LABELS: [],
     Keys.COLORS: [],
@@ -80,10 +82,15 @@ def receive_messages(app_, backend, messages):
                 [QPointF(point.x, point.y) for point in m.solutionPositionStatus.data[idx]]
                 for idx in range(len(m.solutionPositionStatus.data))
             ]
+            SOLUTION_POSITION_TAB[Keys.CUR_POINTS][:] = [
+                [QPointF(point.x, point.y) for point in m.solutionPositionStatus.curData[idx]]
+                for idx in range(len(m.solutionPositionStatus.curData))
+            ]
             SOLUTION_POSITION_TAB[Keys.LAT_MAX] = m.solutionPositionStatus.latMax
             SOLUTION_POSITION_TAB[Keys.LAT_MIN] = m.solutionPositionStatus.latMin
             SOLUTION_POSITION_TAB[Keys.LON_MAX] = m.solutionPositionStatus.lonMax
             SOLUTION_POSITION_TAB[Keys.LON_MIN] = m.solutionPositionStatus.lonMin
+            SOLUTION_POSITION_TAB[Keys.AVAILABLE_UNITS][:] = m.solutionPositionStatus.availableUnits
         elif m.which == MessageKeys.SOLUTION_TABLE_STATUS:
             SOLUTION_TABLE[Keys.ENTRIES][:] = [[entry.key, entry.val] for entry in m.solutionTableStatus.data]
         elif m.which == MessageKeys.SOLUTION_VELOCITY_STATUS:
@@ -156,17 +163,38 @@ class DataModel(QObject):
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
 
+    @Slot(str)  # type: ignore
+    def solution_position_unit(self, unit: str) -> None:
+        m = self.messages.Message()
+        m.solutionPositionStatusUnitFront = m.init("solutionPositionStatusUnitFront")
+        m.solutionPositionStatusUnitFront.solutionPositionUnit = unit
+        buffer = m.to_bytes()
+        self.endpoint.send_message(buffer)
 
-class SolutionPositionPoints(QObject):
+    @Slot(list)  # type: ignore
+    def solution_position(self, buttons: list) -> None:
+        m = self.messages.Message()
+        m.solutionPositionStatusButtonFront = m.init("solutionPositionStatusButtonFront")
+        m.solutionPositionStatusButtonFront.solutionPositionPause = buttons[0]
+        m.solutionPositionStatusButtonFront.solutionPositionClear = buttons[1]
+        m.solutionPositionStatusButtonFront.solutionPositionZoom = buttons[2]
+        m.solutionPositionStatusButtonFront.solutionPositionCenter = buttons[3]
+        buffer = m.to_bytes()
+        self.endpoint.send_message(buffer)
+
+
+class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
 
     _colors: List[str] = []
     _labels: List[str] = []
     _points: List[List[QPointF]] = [[]]
+    _cur_points: List[List[QPointF]] = [[]]
     _valid: bool = False
     _lat_min: float = 0.0
     _lat_max: float = 0.0
     _lon_min: float = 0.0
     _lon_max: float = 0.0
+    _available_units: List[str] = []
 
     def get_valid(self) -> bool:
         """Getter for _valid.
@@ -255,24 +283,45 @@ class SolutionPositionPoints(QObject):
 
     points = Property(QTKeys.QVARIANTLIST, get_points, set_points)  # type: ignore
 
+    def get_cur_points(self) -> List[List[QPointF]]:
+        return self._cur_points
+
+    def set_cur_points(self, cur_points) -> None:
+        self._cur_points = cur_points
+
+    cur_points = Property(QTKeys.QVARIANTLIST, get_cur_points, set_cur_points)  # type: ignore
+
+    def get_available_units(self) -> List[str]:
+        return self._available_units
+
+    def set_available_units(self, available_units: List[str]) -> None:
+        self._available_units = available_units
+
+    available_units = Property(QTKeys.QVARIANTLIST, get_available_units, set_available_units)  # type: ignore
+
     @Slot(list)  # type: ignore
     def fill_series(self, series_list):
         lines = series_list[0]
         scatters = series_list[1]
+        cur_scatters = series_list[2]
         for idx, _ in enumerate(lines):
             lines[idx].replace(self._points[idx])
             scatters[idx].replace(self._points[idx])
+            cur_scatters[idx].replace(self._cur_points[idx])
+
 
 class SolutionPositionModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(SolutionPositionPoints)  # type: ignore
     def fill_console_points(self, cp: SolutionPositionPoints) -> SolutionPositionPoints:  # pylint:disable=no-self-use
         cp.set_points(SOLUTION_POSITION_TAB[Keys.POINTS])
+        cp.set_cur_points(SOLUTION_POSITION_TAB[Keys.CUR_POINTS])
         cp.set_labels(SOLUTION_POSITION_TAB[Keys.LABELS])
         cp.set_colors(SOLUTION_POSITION_TAB[Keys.COLORS])
         cp.set_lat_max(SOLUTION_POSITION_TAB[Keys.LAT_MAX])
         cp.set_lat_min(SOLUTION_POSITION_TAB[Keys.LAT_MIN])
         cp.set_lon_max(SOLUTION_POSITION_TAB[Keys.LON_MAX])
         cp.set_lon_min(SOLUTION_POSITION_TAB[Keys.LON_MIN])
+        cp.set_available_units(SOLUTION_POSITION_TAB[Keys.AVAILABLE_UNITS])
         return cp
 
 

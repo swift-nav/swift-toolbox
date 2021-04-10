@@ -31,6 +31,8 @@ struct SolutionPositionStatus {
     latMax @4 :Float64;
     lonMin @5 :Float64;
     lonMax @6 :Float64;
+    curData @7 :List(List(Point));
+    availableUnits @8 : List(Text);
 }
 
 struct SolutionVelocityStatus {
@@ -58,6 +60,16 @@ struct SolutionVelocityStatusFront {
     solutionVelocityUnit @0 :Text;
 }
 
+struct SolutionPositionStatusUnitFront {
+    solutionPositionUnit @0 :Text;
+}
+struct SolutionPositionStatusButtonFront {
+    solutionPositionCenter @0 :Bool;
+    solutionPositionZoom @1 :Bool;
+    solutionPositionClear @2 :Bool;
+    solutionPositionPause @3 :Bool;
+}
+
 struct Status {
     text @0 :Text;
 }
@@ -73,5 +85,7 @@ struct Message {
         solutionVelocityStatusFront @6 :SolutionVelocityStatusFront;
         solutionTableStatus @7 :SolutionTableStatus;
         solutionPositionStatus @8 :SolutionPositionStatus;
+        solutionPositionStatusButtonFront @9 :SolutionPositionStatusButtonFront;
+        solutionPositionStatusUnitFront @10 :SolutionPositionStatusUnitFront;
     }
 }

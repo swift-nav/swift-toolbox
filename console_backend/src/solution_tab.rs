@@ -156,18 +156,16 @@ impl SolutionTab {
                 sln_data
             },
             slns: {
-                let mut slns_map = HashMap::new();
-                for key in SOLUTION_DATA_KEYS {
-                    slns_map.insert(*key, Deque::with_size_limit(PLOT_HISTORY_MAX));
-                }
-                slns_map
+                SOLUTION_DATA_KEYS
+                    .iter()
+                    .map(|key| (*key, Deque::with_size_limit(PLOT_HISTORY_MAX)))
+                    .collect()
             },
             table: {
-                let mut table = HashMap::new();
-                for key in SOLUTION_TABLE_KEYS {
-                    table.insert(*key, String::from(EMPTY_STR));
-                }
-                table
+                SOLUTION_TABLE_KEYS
+                    .iter()
+                    .map(|key| (*key, String::from(EMPTY_STR)))
+                    .collect()
             },
             unit: DEGREES,
             utc_source: None,
@@ -615,14 +613,15 @@ impl SolutionTab {
         } else {
             None
         };
+        let mut update_current = true;
         for mode_string in self.mode_strings.clone() {
-            let mut update_current = true;
-            if let Some(cur_mode) = current_mode.clone() {
-                update_current = mode_string == cur_mode;
+            if let Some(cur_mode) = &current_mode {
+                update_current = mode_string == *cur_mode;
             }
+
             self._synchronize_plot_data_by_mode(&mode_string, update_current);
             if self.pending_draw_modes.contains(&mode_string) {
-                self.pending_draw_modes.retain(|x| *x != mode_string);
+                self.pending_draw_modes.retain(|x| x != &mode_string);
             }
         }
     }
@@ -680,7 +679,7 @@ impl SolutionTab {
     /// # Parameters:
     /// - `exclude_mode`: The mode as a string not to update. Otherwise, None.
     fn _append_empty_sln_data(&mut self, exclude_mode: Option<String>) {
-        for each_mode in self.mode_strings.clone() {
+        for each_mode in self.mode_strings.iter() {
             if exclude_mode.is_some() {
                 continue;
             }

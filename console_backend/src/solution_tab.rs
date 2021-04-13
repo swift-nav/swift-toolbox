@@ -138,23 +138,11 @@ impl SolutionTab {
                 GnssModes::Sbas.to_string(),
             ],
             nsec: Some(0),
-            pending_draw_modes: Vec::new(),
+            pending_draw_modes: vec![],
             pos_log_file: None,
             shared_state,
-            sln_cur_data: {
-                let mut sln_data = Vec::new();
-                for _ in 0..NUM_GNSS_MODES {
-                    sln_data.push(Vec::new());
-                }
-                sln_data
-            },
-            sln_data: {
-                let mut sln_data = Vec::new();
-                for _ in 0..NUM_GNSS_MODES {
-                    sln_data.push(Vec::new());
-                }
-                sln_data
-            },
+            sln_cur_data: { vec![vec![]; NUM_GNSS_MODES as usize] },
+            sln_data: { vec![vec![]; NUM_GNSS_MODES as usize] },
             slns: {
                 SOLUTION_DATA_KEYS
                     .iter()

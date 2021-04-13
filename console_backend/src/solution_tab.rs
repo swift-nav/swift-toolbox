@@ -11,10 +11,13 @@ use std::{collections::HashMap, time::Instant};
 
 use crate::console_backend_capnp as m;
 use crate::constants::*;
+use crate::date_conv::*;
 use crate::output::CsvSerializer;
 use crate::types::{
-    Deque, Dops, MessageSender, PosLLH, PosLLHLog, SharedState, UtcDateTime, VelLog, VelNED,
+    Deque, Dops, GnssModes, MessageSender, PosLLH, PosLLHLog, SharedState, UtcDateTime, VelLog,
+    VelNED,
 };
+use crate::utils::*;
 
 const VEL_TIME_STR_FILEPATH: &str = "velocity_log_%Y%m%d-%H%M%S.csv";
 const POS_LLH_TIME_STR_FILEPATH: &str = "position_log_%Y%m%d-%H%M%S.csv";
@@ -94,12 +97,12 @@ impl SolutionTab {
             available_units: [DEGREES, METERS],
             colors: {
                 vec![
-                    GnssModes::Spp.get_color(),
-                    GnssModes::Dgnss.get_color(),
-                    GnssModes::Float.get_color(),
-                    GnssModes::Fixed.get_color(),
-                    GnssModes::Dr.get_color(),
-                    GnssModes::Sbas.get_color(),
+                    GnssModes::Spp.color(),
+                    GnssModes::Dgnss.color(),
+                    GnssModes::Float.color(),
+                    GnssModes::Fixed.color(),
+                    GnssModes::Dr.color(),
+                    GnssModes::Sbas.color(),
                 ]
             },
             directory_name: None,
@@ -107,12 +110,12 @@ impl SolutionTab {
             ins_used: false,
             labels: {
                 vec![
-                    GnssModes::Spp.get_label(),
-                    GnssModes::Dgnss.get_label(),
-                    GnssModes::Float.get_label(),
-                    GnssModes::Fixed.get_label(),
-                    GnssModes::Dr.get_label(),
-                    GnssModes::Sbas.get_label(),
+                    GnssModes::Spp.label(),
+                    GnssModes::Dgnss.label(),
+                    GnssModes::Float.label(),
+                    GnssModes::Fixed.label(),
+                    GnssModes::Dr.label(),
+                    GnssModes::Sbas.label(),
                 ]
             },
             lats: Deque::with_size_limit(PLOT_HISTORY_MAX),
@@ -184,7 +187,7 @@ impl SolutionTab {
             self.utc_source = None;
             return;
         }
-        self.utc_time = Some(get_utc_time(
+        self.utc_time = Some(utc_time(
             msg.year as i32,
             msg.month as u32,
             msg.day as u32,
@@ -193,7 +196,7 @@ impl SolutionTab {
             msg.seconds as u32,
             msg.ns as u32,
         ));
-        self.utc_source = Some(get_utc_source(msg.flags));
+        self.utc_source = Some(utc_source(msg.flags));
     }
 
     /// Handler for GPS time messages.
@@ -270,7 +273,8 @@ impl SolutionTab {
             tow += nsec as f64 * 1.0e-9_f64;
         }
 
-        let ((tloc, secloc), (tgps_, secgps_)) = log_time_strings(self.week, tow);
+        let (tloc, secloc) = convert_local_time_to_logging_format();
+        let (tgps_, secgps_) = convert_gps_time_to_logging_format(self.week, tow);
 
         // TODO(johnmichael.burke@) https://swift-nav.atlassian.net/browse/CPP-95
         // Validate logging.
@@ -455,11 +459,12 @@ impl SolutionTab {
         if let Some(nsec) = self.nsec {
             tow += nsec as f64 * 1.0e-9_f64;
         }
+        let (tloc, secloc) = convert_local_time_to_logging_format();
+        let (tgps_, secgps_) = convert_gps_time_to_logging_format(self.week, tow);
 
-        let ((tloc, secloc), (tgps_, secgps_)) = log_time_strings(self.week, tow);
         let mut utc_time_str = None;
         if let Some(utc_time_) = self.utc_time {
-            let (tutc, secutc) = datetime_2_str_utc(utc_time_);
+            let (tutc, secutc) = utc_datetime_to_string_and_seconds(utc_time_);
             utc_time_str = Some(format!("{}:{:0>6.03}", tutc, secutc));
         }
         let mut gps_time = None;
@@ -829,10 +834,10 @@ mod tests {
     use super::*;
     use crate::types::TestSender;
     use chrono::{TimeZone, Utc};
-
     use sbp::messages::navigation::{
         MsgAgeCorrections, MsgDops, MsgDopsDepA, MsgPosLLH, MsgPosLLHDepA, MsgVelNED, MsgVelNEDDepA,
     };
+    use std::{thread::sleep, time::Duration};
 
     #[test]
     fn handle_utc_time_test() {
@@ -1050,6 +1055,7 @@ mod tests {
         };
 
         let odo_update_time = Instant::now();
+        sleep(Duration::from_secs(1));
         solution_tab.handle_ins_updates(msg);
 
         assert!(solution_tab.last_odo_update_time > odo_update_time);
@@ -1197,10 +1203,8 @@ mod tests {
         let shared_state = SharedState::new();
         let mut solution_tab = SolutionTab::new(shared_state);
         let mut client_send = TestSender { inner: Vec::new() };
-        solution_tab.utc_time = Some(get_utc_time(
-            1_i32, 3_u32, 3_u32, 7_u32, 6_u32, 6_u32, 6_u32,
-        ));
-        solution_tab.utc_source = Some(get_utc_source(0x02));
+        solution_tab.utc_time = Some(utc_time(1_i32, 3_u32, 3_u32, 7_u32, 6_u32, 6_u32, 6_u32));
+        solution_tab.utc_source = Some(utc_source(0x02));
         solution_tab.nsec = Some(1337);
         solution_tab.week = Some(13);
         let bad_flags = 0;

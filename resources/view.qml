@@ -5,24 +5,23 @@ import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
 ApplicationWindow {
-    width: 640
-    height: 480
+    width: Constants.width
+    height: Constants.height
     font.pointSize: 8
     Component.onCompleted: {
         visible = true;
     }
 
     ColumnLayout {
-        anchors.fill: parent
         spacing: 2
         width: parent.width
         height: parent.height
 
         Rectangle {
             id: mainTabs
-
-            height: parent.height - consoleLog.height
-            width: parent.width
+            Layout.alignment: Qt.AlignTop
+            Layout.preferredWidth: parent.width
+            Layout.fillHeight: true
 
             TabBar {
                 id: tab
@@ -81,25 +80,17 @@ ApplicationWindow {
         Rectangle {
             id: consoleLog
 
-            width: parent.width
-            height: 100
+            Layout.preferredWidth: parent.width
+            Layout.minimumHeight: 50
             Layout.alignment: Qt.AlignBottom
 
-            RowLayout {
-                Button {
-                    text: "Connect"
-                    onClicked: data_model.connect()
-                }
-
-                Button {
-                    text: "File In"
-                    onClicked: data_model.readfile()
-                }
-
-            }
-
         }
-
+        Rectangle {
+            id: bottomNavBar
+            Layout.preferredWidth: parent.width
+            Layout.minimumHeight: 50
+            Layout.alignment: Qt.AlignBottom
+            BottomNavBar {}
+        }
     }
-
 }

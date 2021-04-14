@@ -7,6 +7,7 @@ use capnp::serialize;
 use crate::console_backend_capnp as m;
 use crate::constants::*;
 use crate::types::*;
+use crate::utils::{signal_key_color, signal_key_label};
 use sbp::messages::tracking::{MeasurementState, TrackingChannelState};
 
 /// TrackingSignalsTab struct.
@@ -161,7 +162,7 @@ impl<'a> TrackingSignalsTab {
                     continue;
                 }
             }
-            let (code_lbl, freq_lbl, id_lbl) = get_label(*key, &self.glo_slot_dict);
+            let (code_lbl, freq_lbl, id_lbl) = signal_key_label(*key, &self.glo_slot_dict);
             let mut label = String::from("");
             if let Some(lbl) = code_lbl {
                 label = format!("{} {}", label, lbl);
@@ -179,7 +180,7 @@ impl<'a> TrackingSignalsTab {
 
         for (label, key) in temp_labels.iter() {
             self.sv_labels.push(label.clone());
-            self.colors.push(String::from(get_color(*key)));
+            self.colors.push(String::from(signal_key_color(*key)));
             self.sats.push(self.cn0_dict[key].clone());
         }
     }

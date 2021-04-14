@@ -20,14 +20,11 @@ Item {
         height: parent.height
 
         Rectangle {
-            id: solutionTable
+            id: solutionTableArea
 
             width: 200
-            color: "lightblue"
 
-            Text {
-                text: "View 1"
-                anchors.centerIn: parent
+            SolutionTabComponents.SolutionTable {
             }
 
         }
@@ -71,8 +68,7 @@ Item {
                     height: parent.height
                     currentIndex: solutionBar.currentIndex
 
-                    Item {
-                        id: solutionPositionTab
+                    SolutionTabComponents.SolutionPositionTab {
                     }
 
                     SolutionTabComponents.SolutionVelocityTab {

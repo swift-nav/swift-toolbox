@@ -22,7 +22,6 @@ use crate::utils::*;
 const VEL_TIME_STR_FILEPATH: &str = "velocity_log_%Y%m%d-%H%M%S.csv";
 const POS_LLH_TIME_STR_FILEPATH: &str = "position_log_%Y%m%d-%H%M%S.csv";
 
-// }
 /// SolutionTab struct.
 ///
 /// # Fields
@@ -450,7 +449,7 @@ impl SolutionTab {
 
         let mut utc_time_str = None;
         if let Some(utc_time_) = self.utc_time {
-            let (tutc, secutc) = utc_datetime_to_string_and_seconds(utc_time_);
+            let (tutc, secutc) = datetime_to_string_and_seconds(utc_time_);
             utc_time_str = Some(format!("{}:{:0>6.03}", tutc, secutc));
         }
         let mut gps_time = None;

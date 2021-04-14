@@ -1,4 +1,5 @@
 use chrono::{prelude::*, DateTime, Duration, Local, TimeZone, Utc};
+use std::fmt::Display;
 
 use crate::constants::{DECODED_THIS_SESSION, FACTORY_DEFAULT, NON_VOLATILE_MEMORY, UNKNOWN};
 use crate::types::UtcDateTime;
@@ -44,26 +45,18 @@ pub fn utc_time(
         .and_hms_nano(hours, minutes, seconds, nanoseconds)
 }
 
-/// Return Utc datetime as date and seconds.
+/// Return generic datetime as date and seconds.
 ///
 /// # Parameters
 /// - `datetm`: The datetime to be converted into partial date and seconds strings.
 ///
 /// # Returns:
 /// - Partial datetime string and seconds/microseconds string.
-pub fn utc_datetime_to_string_and_seconds(datetm: DateTime<Utc>) -> (String, f64) {
-    let seconds = datetm.second() as f64 + datetm.nanosecond() as f64 / 1e9_f64;
-    (datetm.format("%Y-%m-%d %H:%M").to_string(), seconds)
-}
-
-/// Return Local datetime as date and seconds.
-///
-/// # Parameters
-/// - `datetm`: The datetime to be converted into partial date and seconds strings.
-///
-/// # Returns:
-/// - Partial datetime string and seconds/microseconds string.
-pub fn local_datetime_to_string_and_seconds(datetm: DateTime<Local>) -> (String, f64) {
+pub fn datetime_to_string_and_seconds<T>(datetm: DateTime<T>) -> (String, f64)
+where
+    T: TimeZone,
+    T::Offset: Display,
+{
     let seconds = datetm.second() as f64 + datetm.nanosecond() as f64 / 1e9_f64;
     (datetm.format("%Y-%m-%d %H:%M").to_string(), seconds)
 }
@@ -88,7 +81,7 @@ pub fn convert_gps_time_to_logging_format(
             let t_gps = Utc.ymd(1980, 1, 6).and_hms(0, 0, 0)
                 + Duration::weeks(wn as i64)
                 + Duration::seconds(gnss_tow as i64);
-            let (t_gps_date_, t_gps_secs_) = utc_datetime_to_string_and_seconds(t_gps);
+            let (t_gps_date_, t_gps_secs_) = datetime_to_string_and_seconds(t_gps);
             t_gps_date = Some(t_gps_date_);
             t_gps_secs = Some(t_gps_secs_);
         }
@@ -102,7 +95,7 @@ pub fn convert_gps_time_to_logging_format(
 /// - Local Date string and Seconds float.
 pub fn convert_local_time_to_logging_format() -> (String, f64) {
     let local_t = Local::now();
-    let (t_local_date, t_local_secs) = local_datetime_to_string_and_seconds(local_t);
+    let (t_local_date, t_local_secs) = datetime_to_string_and_seconds(local_t);
     (t_local_date, t_local_secs)
 }
 

@@ -1,0 +1,8 @@
+
+ignore:
+  - .git/
+rules:
+  end-of-file:
+    enable: true
+    disable-autofix: true
+    single-new-line: true

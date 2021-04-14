@@ -1,0 +1,14 @@
+name: Final new line
+on:
+  pull_request:
+    types: [synchronize, opened]
+jobs:
+  linelint:
+    runs-on: ubuntu-latest
+    name: Check if all files end in newline
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Linelint
+        uses: fernandrone/linelint@0.0.6
+        id: linelint

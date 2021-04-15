@@ -158,8 +158,15 @@ impl Server {
                 )
                 .unwrap();
                 let message = message_reader.get_root::<m::message::Reader>().unwrap();
-                match message.which() {
-                    Ok(m::message::Which::ConnectRequest(Ok(conn_req))) => {
+                let message = match message.which() {
+                    Ok(msg) => msg,
+                    Err(e) => {
+                        eprintln!("error reading message: {}", e);
+                        continue;
+                    }
+                };
+                match message {
+                    m::message::ConnectRequest(Ok(conn_req)) => {
                         let shared_state_clone = shared_state.clone();
                         if shared_state_clone.server_is_connected() {
                             println!("Already connected.");
@@ -178,7 +185,7 @@ impl Server {
                             connect_to_host(client_send_clone, shared_state_clone_, host_port);
                         });
                     }
-                    Ok(m::message::Which::FileinRequest(Ok(file_in))) => {
+                    m::message::FileinRequest(Ok(file_in)) => {
                         let shared_state_clone = shared_state.clone();
                         if shared_state_clone.server_is_connected() {
                             println!("Already connected.");
@@ -196,7 +203,7 @@ impl Server {
                             connect_to_file(&mut client_send_clone, shared_state_clone_, filename);
                         });
                     }
-                    Ok(m::message::Which::TrackingSignalsStatusFront(Ok(cv_in))) => {
+                    m::message::TrackingSignalsStatusFront(Ok(cv_in)) => {
                         let check_visibility =
                             cv_in.get_tracking_signals_check_visibility().unwrap();
                         let check_visibility: Vec<String> = check_visibility
@@ -210,7 +217,7 @@ impl Server {
                                 check_visibility;
                         }
                     }
-                    Ok(m::message::Which::SolutionVelocityStatusFront(Ok(cv_in))) => {
+                    m::message::SolutionVelocityStatusFront(Ok(cv_in)) => {
                         let unit = cv_in.get_solution_velocity_unit().unwrap();
                         let shared_state_clone = shared_state.clone();
                         {
@@ -218,13 +225,13 @@ impl Server {
                             (*shared_data).solution_tab.velocity_tab.unit = unit.to_string();
                         }
                     }
-                    Ok(m::message::Which::SolutionPositionStatusUnitFront(Ok(cv_in))) => {
+                    m::message::SolutionPositionStatusUnitFront(Ok(cv_in)) => {
                         let shared_state_clone = shared_state.clone();
                         let mut shared_data = shared_state_clone.lock().unwrap();
                         let unit = cv_in.get_solution_position_unit().unwrap();
                         (*shared_data).solution_tab.position_tab.unit = unit.to_string();
                     }
-                    Ok(m::message::Which::SolutionPositionStatusButtonFront(Ok(cv_in))) => {
+                    m::message::SolutionPositionStatusButtonFront(Ok(cv_in)) => {
                         let shared_state_clone = shared_state.clone();
                         let mut shared_data = shared_state_clone.lock().unwrap();
                         (*shared_data).solution_tab.position_tab.zoom =
@@ -236,11 +243,8 @@ impl Server {
                         (*shared_data).solution_tab.position_tab.pause =
                             cv_in.get_solution_position_pause();
                     }
-                    Ok(_) => {
-                        println!("something else");
-                    }
-                    Err(err) => {
-                        println!("error: {}", err);
+                    _ => {
+                        eprintln!("unknown message from front-end");
                     }
                 }
             } else {

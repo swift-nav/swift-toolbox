@@ -1,4 +1,5 @@
 use chrono::{prelude::*, DateTime, Duration, Local, TimeZone, Utc};
+use std::fmt::Display;
 
 use crate::constants::{DECODED_THIS_SESSION, FACTORY_DEFAULT, NON_VOLATILE_MEMORY, UNKNOWN};
 use crate::types::UtcDateTime;
@@ -44,26 +45,18 @@ pub fn utc_time(
         .and_hms_nano(hours, minutes, seconds, nanoseconds)
 }
 
-/// Return Utc datetime as date and seconds.
+/// Return generic datetime as date and seconds.
 ///
 /// # Parameters
 /// - `datetm`: The datetime to be converted into partial date and seconds strings.
 ///
 /// # Returns:
 /// - Partial datetime string and seconds/microseconds string.
-pub fn utc_datetime_to_string_and_seconds(datetm: DateTime<Utc>) -> (String, f64) {
-    let seconds = datetm.second() as f64 + datetm.nanosecond() as f64 / 1e9_f64;
-    (datetm.format("%Y-%m-%d %H:%M").to_string(), seconds)
-}
-
-/// Return Local datetime as date and seconds.
-///
-/// # Parameters
-/// - `datetm`: The datetime to be converted into partial date and seconds strings.
-///
-/// # Returns:
-/// - Partial datetime string and seconds/microseconds string.
-pub fn local_datetime_to_string_and_seconds(datetm: DateTime<Local>) -> (String, f64) {
+pub fn datetime_to_string_and_seconds<T>(datetm: DateTime<T>) -> (String, f64)
+where
+    T: TimeZone,
+    T::Offset: Display,
+{
     let seconds = datetm.second() as f64 + datetm.nanosecond() as f64 / 1e9_f64;
     (datetm.format("%Y-%m-%d %H:%M").to_string(), seconds)
 }
@@ -88,7 +81,7 @@ pub fn convert_gps_time_to_logging_format(
             let t_gps = Utc.ymd(1980, 1, 6).and_hms(0, 0, 0)
                 + Duration::weeks(wn as i64)
                 + Duration::seconds(gnss_tow as i64);
-            let (t_gps_date_, t_gps_secs_) = utc_datetime_to_string_and_seconds(t_gps);
+            let (t_gps_date_, t_gps_secs_) = datetime_to_string_and_seconds(t_gps);
             t_gps_date = Some(t_gps_date_);
             t_gps_secs = Some(t_gps_secs_);
         }
@@ -102,7 +95,7 @@ pub fn convert_gps_time_to_logging_format(
 /// - Local Date string and Seconds float.
 pub fn convert_local_time_to_logging_format() -> (String, f64) {
     let local_t = Local::now();
-    let (t_local_date, t_local_secs) = local_datetime_to_string_and_seconds(local_t);
+    let (t_local_date, t_local_secs) = datetime_to_string_and_seconds(local_t);
     (t_local_date, t_local_secs)
 }
 
@@ -115,5 +108,85 @@ mod tests {
         assert_eq!(utc_source(8_u8), String::from(NON_VOLATILE_MEMORY));
         assert_eq!(utc_source(16_u8), String::from(DECODED_THIS_SESSION));
         assert_eq!(utc_source(255_u8), String::from(UNKNOWN));
+    }
+
+    #[test]
+    fn utc_time_test() {
+        let year = 1337;
+        let month = 12;
+        let day = 13;
+        let hour = 11;
+        let minute = 14;
+        let second = 6;
+        let nanosecond = 1338;
+        assert_eq!(
+            utc_time(year, month, day, hour, minute, second, nanosecond).year(),
+            year
+        );
+        assert_eq!(
+            utc_time(year, month, day, hour, minute, second, nanosecond).month(),
+            month
+        );
+        assert_eq!(
+            utc_time(year, month, day, hour, minute, second, nanosecond).day(),
+            day
+        );
+        assert_eq!(
+            utc_time(year, month, day, hour, minute, second, nanosecond).hour(),
+            hour
+        );
+        assert_eq!(
+            utc_time(year, month, day, hour, minute, second, nanosecond).minute(),
+            minute
+        );
+        assert_eq!(
+            utc_time(year, month, day, hour, minute, second, nanosecond).second(),
+            second
+        );
+        assert_eq!(
+            utc_time(year, month, day, hour, minute, second, nanosecond).nanosecond(),
+            nanosecond
+        );
+    }
+
+    #[test]
+    fn datetime_to_string_and_seconds_test() {
+        let year = 1337;
+        let month = 12;
+        let day = 13;
+        let hour = 11;
+        let minute = 14;
+        let second = 6;
+        let nanosecond = 1338000;
+        let datetime = utc_time(year, month, day, hour, minute, second, nanosecond);
+        assert_eq!(
+            datetime_to_string_and_seconds(datetime),
+            (("1337-12-13 11:14").to_string(), 6.001338)
+        );
+        let datetime = Local::now();
+        let year = datetime.year();
+        let month = datetime.month();
+        let day = datetime.day();
+        let hour = datetime.hour();
+        let minute = datetime.minute();
+        let second = datetime.second();
+        let nanosecond = datetime.nanosecond();
+        assert_eq!(
+            datetime_to_string_and_seconds(datetime),
+            (
+                format!("{}-{:02}-{:02} {:02}:{:02}", year, month, day, hour, minute),
+                second as f64 + nanosecond as f64 / 1E9_f64
+            )
+        );
+    }
+
+    #[test]
+    fn convert_gps_time_to_logging_format_test() {
+        let week = Some(32);
+        let gnss_tow = 1337000_f64;
+        assert_eq!(
+            convert_gps_time_to_logging_format(week, gnss_tow),
+            (Some(("1980-09-01 11:23").to_string()), Some(20.0))
+        );
     }
 }

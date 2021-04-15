@@ -549,8 +549,8 @@ impl std::str::FromStr for SignalCodes {
             GAL_E7Q_STR => Ok(SignalCodes::CodeGalE7Q),
             GAL_E7X_STR => Ok(SignalCodes::CodeGalE7X),
             GAL_E8I_STR => Ok(SignalCodes::CodeGalE8I),
-            // GAL_E8Q_STR => SignalCodes::CodeGalE8Q,  // Unreachable
-            // GAL_E8X_STR => SignalCodes::CodeGalE8X,  // Unreachable
+            GAL_E8Q_STR => Ok(SignalCodes::CodeGalE8Q),
+            GAL_E8X_STR => Ok(SignalCodes::CodeGalE8X),
             GAL_AUX_STR => Ok(SignalCodes::CodeAuxGal),
 
             QZS_L1CA_STR => Ok(SignalCodes::CodeQzsL1Ca),
@@ -760,12 +760,34 @@ pub enum Dops {
     MsgDopsDepA(MsgDopsDepA),
 }
 
+impl Dops {
+    pub fn fields(self) -> (u16, u16, u16, u16, u16, u8) {
+        match self {
+            Dops::MsgDops(msg_) => (
+                msg_.pdop, msg_.gdop, msg_.tdop, msg_.hdop, msg_.vdop, msg_.flags,
+            ),
+            Dops::MsgDopsDepA(msg_) => {
+                (msg_.pdop, msg_.gdop, msg_.tdop, msg_.hdop, msg_.vdop, 1_u8)
+            }
+        }
+    }
+}
+
 // Enum wrapping around various Vel NED Message types.
 #[derive(Debug)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum VelNED {
     MsgVelNED(MsgVelNED),
     MsgVelNEDDepA(MsgVelNEDDepA),
+}
+
+impl VelNED {
+    pub fn fields(self) -> (u8, f64, i32, i32, i32, u8) {
+        match self {
+            VelNED::MsgVelNED(msg) => (msg.flags, msg.tow as f64, msg.n, msg.e, msg.d, msg.n_sats),
+            VelNED::MsgVelNEDDepA(msg) => (1, msg.tow as f64, msg.n, msg.e, msg.d, msg.n_sats),
+        }
+    }
 }
 
 // Solution Velocity Tab Types.

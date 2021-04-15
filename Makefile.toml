@@ -345,7 +345,7 @@ cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --
 '''
 
 [tasks.newline-terminator]
-private = false
+private = true
 script_runner = "python"
 script_extension = "py"
 script = '''

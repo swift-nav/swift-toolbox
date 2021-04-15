@@ -1,6 +1,7 @@
+use serde::Serialize;
 use std::fs::File;
 
-use crate::types::{PosLLHLog, Result, VelLog};
+use crate::types::Result;
 /// CsvSerializer for creating and writing to a csv.
 /// Taken from ICBINS/src/output.rs.
 #[derive(Debug)]
@@ -14,12 +15,12 @@ impl CsvSerializer {
             writer: csv::Writer::from_path(filepath)?,
         })
     }
-    pub fn serialize_vel_log(&mut self, ds: &VelLog) -> Result<()> {
-        self.writer.serialize(ds)?;
-        self.writer.flush()?;
-        Ok(())
-    }
-    pub fn serialize_pos_llh_log(&mut self, ds: &PosLLHLog) -> Result<()> {
+    // TODO(john-michaelburke@) https://swift-nav.atlassian.net/browse/CPP-95
+    // Validate Solution Tab logging.
+    pub fn serialize<T>(&mut self, ds: &T) -> Result<()>
+    where
+        T: Serialize,
+    {
         self.writer.serialize(ds)?;
         self.writer.flush()?;
         Ok(())

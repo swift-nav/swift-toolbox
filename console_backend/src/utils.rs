@@ -161,6 +161,28 @@ pub fn decisec_to_sec(ds: f64) -> f64 {
     ds / 10_f64
 }
 
+/// Convert milliseconds to seconds.
+///
+/// # Parameters
+/// - `ms`: Value in milliseconds.
+///
+/// # Returns
+/// - Value in seconds.
+pub fn ms_to_sec(ms: f64) -> f64 {
+    ms / 1.0e+3_f64
+}
+
+/// Convert nanoseconds to seconds.
+///
+/// # Parameters
+/// - `ns`: Value in nanoseconds.
+///
+/// # Returns
+/// - Value in seconds.
+pub fn ns_to_sec(ns: f64) -> f64 {
+    ns / 1.0e+9_f64
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

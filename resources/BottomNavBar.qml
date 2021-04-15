@@ -6,11 +6,6 @@ import QtQuick.Layouts 1.15
 Item {
     width: parent.width
     height: parent.height
-
-    
-    // property var tcp_ip: {"a": "Host:Port", "b": "TCP/IP"}
-    // property var serial_usb: {"a": "", "b": "Serial/USB"}
-    // property var file: {"a": "path/to/file", "b": "File"}
     property string tcp_ip: "TCP/IP"
     property string serial_usb: "Serial/USB"
     property string file: "File"
@@ -22,13 +17,11 @@ Item {
         id: bottomNavBarRowLayout
         ComboBox {
             Layout.alignment: Qt.AlignLeft
-            Layout.leftMargin: Constants.navBarMargin
-            Layout.bottomMargin: 10
+            Layout.leftMargin: Constants.bottomNavBar.navBarMargin
+            Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
             id: bottomNavBarSourceSelection
             
             model: sources
-
-            //[sources[0]["a"], sources[1]["a"]]
             
             onActivated: {
                 if (find(tcp_ip) === currentIndex || find(file) === currentIndex){
@@ -52,10 +45,8 @@ Item {
 
         }
         ComboBox {
-            height: 25
             visible: false
-            // Layout.preferredWidth: 100
-            Layout.bottomMargin: 10
+            Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
             id: serialDevice
 
             model: ["usb0", "usb1"]
@@ -67,15 +58,13 @@ Item {
         Button {
             id: serialDeviceRefresh
             visible: false
-            Layout.preferredWidth: 30
-            Layout.bottomMargin: 10
+            Layout.preferredWidth: Constants.bottomNavBar.serialDeviceRefreshWidth
+            Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
             text: "F5"
         }
         ComboBox {
-            height: 25
             visible: false
-            // Layout.preferredWidth: 100
-            Layout.bottomMargin: 10
+            Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
             id: serialDeviceBaudRate
             currentIndex: 1
 
@@ -86,10 +75,8 @@ Item {
             }
         }
         ComboBox {
-            height: 25
             visible: false
-            // Layout.preferredWidth: 120
-            Layout.bottomMargin: 10
+            Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
             id: serialDeviceFlowControl
 
             model: ["None", "Hardware RTS/CTS"]
@@ -117,7 +104,7 @@ Item {
                 Text {
                     id: placeholderText
                     text: ""
-                    color: "#CDC9C9"
+                    color: Constants.bottomNavBar.placeholderTextColor
                     visible: !urlBarText.text
                 }
             }
@@ -125,19 +112,19 @@ Item {
         }
         Button {
             Layout.alignment: Qt.AlignRight
-            Layout.rightMargin: 10
-            Layout.bottomMargin: 10
+            Layout.rightMargin: Constants.bottomNavBar.navBarMargin
+            Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
             checkable: true
             text: "Connect"
-            onClicked: data_model.connect()
+            onClicked: data_model.connect(checked)
         }
         Timer {
             interval: 1000 / 5 // 5 Hz refresh
             running: true
             repeat: true
             onTriggered: {
-                if (urlBar.children[0].text != source_defaults[bottomNavBarSourceSelection.currentText]){
-                    urlBar.children[0].text = source_defaults[bottomNavBarSourceSelection.currentText];
+                if (placeholderText.text != source_defaults[bottomNavBarSourceSelection.currentText]){
+                    placeholderText.text = source_defaults[bottomNavBarSourceSelection.currentText];
                 }
                 
             }

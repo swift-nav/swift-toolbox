@@ -57,6 +57,7 @@ const POS_LLH_TIME_STR_FILEPATH: &str = "position_log_%Y%m%d-%H%M%S.csv";
 pub struct SolutionTab {
     pub age_corrections: Option<f64>,
     pub available_units: [&'static str; 2],
+    pub client_sender: Box<dyn MessageSender>,
     pub colors: Vec<String>,
     pub directory_name: Option<String>,
     pub ins_status_flags: u32,
@@ -90,10 +91,11 @@ pub struct SolutionTab {
 }
 
 impl SolutionTab {
-    pub fn new(shared_state: SharedState) -> SolutionTab {
+    pub fn new<P: 'static + MessageSender>(shared_state: SharedState, client_sender: P) -> SolutionTab {
         SolutionTab {
             age_corrections: None,
             available_units: [DEGREES, METERS],
+            client_sender: Box::new(client_sender),
             colors: {
                 vec![
                     GnssModes::Spp.color(),
@@ -803,7 +805,8 @@ mod tests {
     #[test]
     fn handle_utc_time_test() {
         let shared_state = SharedState::new();
-        let mut solution_table = SolutionTab::new(shared_state);
+        let mut client_send = TestSender { inner: Vec::new() };
+        let mut solution_table = SolutionTab::new(shared_state, client_send);
         let year = 2020_u16;
         let month = 3_u8;
         let day = 19_u8;
@@ -862,7 +865,8 @@ mod tests {
     #[test]
     fn handle_gps_time_test() {
         let shared_state = SharedState::new();
-        let mut solution_table = SolutionTab::new(shared_state);
+        let mut client_send = TestSender { inner: Vec::new() };
+        let mut solution_table = SolutionTab::new(shared_state, client_send);
         let wn = 0_u16;
         let ns_residual = 1337_i32;
         let bad_flags = 0_u8;
@@ -897,7 +901,8 @@ mod tests {
     #[test]
     fn handle_vel_ned_test() {
         let shared_state = SharedState::new();
-        let mut solution_tab = SolutionTab::new(shared_state);
+        let mut client_send = TestSender { inner: Vec::new() };
+        let mut solution_tab = SolutionTab::new(shared_state, client_send);
         let good_flags = 0x07;
         let bad_flags = 0xF0;
         let n = 1;
@@ -988,7 +993,8 @@ mod tests {
     #[test]
     fn handle_ins_status_test() {
         let shared_state = SharedState::new();
-        let mut solution_tab = SolutionTab::new(shared_state);
+        let mut client_send = TestSender { inner: Vec::new() };
+        let mut solution_tab = SolutionTab::new(shared_state, client_send);
         let flags = 0xf0_u32;
         let msg = MsgInsStatus {
             sender_id: Some(1337),
@@ -1003,7 +1009,8 @@ mod tests {
     #[test]
     fn handle_ins_updates_test() {
         let shared_state = SharedState::new();
-        let mut solution_tab = SolutionTab::new(shared_state);
+        let mut client_send = TestSender { inner: Vec::new() };
+        let mut solution_tab = SolutionTab::new(shared_state, client_send);
         let msg = MsgInsUpdates {
             sender_id: Some(1337),
             gnsspos: 0,
@@ -1041,7 +1048,8 @@ mod tests {
     #[test]
     fn handle_dops_test() {
         let shared_state = SharedState::new();
-        let mut solution_tab = SolutionTab::new(shared_state);
+        let mut client_send = TestSender { inner: Vec::new() };
+        let mut solution_tab = SolutionTab::new(shared_state, client_send);
         let pdop = 1;
         let gdop = 2;
         let tdop = 3;
@@ -1137,7 +1145,8 @@ mod tests {
     #[test]
     fn handle_age_corrections_test() {
         let shared_state = SharedState::new();
-        let mut solution_tab = SolutionTab::new(shared_state);
+        let mut client_send = TestSender { inner: Vec::new() };
+        let mut solution_tab = SolutionTab::new(shared_state, client_send);
         assert!(solution_tab.age_corrections.is_none());
         let msg = MsgAgeCorrections {
             sender_id: Some(1337),
@@ -1162,8 +1171,8 @@ mod tests {
     #[test]
     fn handle_pos_llh_test() {
         let shared_state = SharedState::new();
-        let mut solution_tab = SolutionTab::new(shared_state);
         let mut client_send = TestSender { inner: Vec::new() };
+        let mut solution_tab = SolutionTab::new(shared_state, client_send);
         solution_tab.utc_time = Some(utc_time(1_i32, 3_u32, 3_u32, 7_u32, 6_u32, 6_u32, 6_u32));
         solution_tab.utc_source = Some(utc_source(0x02));
         solution_tab.nsec = Some(1337);
@@ -1200,7 +1209,7 @@ mod tests {
         assert_eq!(solution_tab.table[HEIGHT], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[HORIZ_ACC], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[VERT_ACC], String::from(EMPTY_STR));
-        solution_tab.handle_pos_llh(msg, &mut client_send);
+        solution_tab.handle_pos_llh(msg);
         assert_eq!(solution_tab.table[GPS_WEEK], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[GPS_TOW], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[GPS_TIME], String::from(EMPTY_STR));
@@ -1239,7 +1248,7 @@ mod tests {
         assert_eq!(solution_tab.table[HEIGHT], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[HORIZ_ACC], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[VERT_ACC], String::from(EMPTY_STR));
-        solution_tab.handle_pos_llh(msg, &mut client_send);
+        solution_tab.handle_pos_llh(msg);
         assert_ne!(solution_tab.table[GPS_WEEK], String::from(EMPTY_STR));
         assert_ne!(solution_tab.table[GPS_TOW], String::from(EMPTY_STR));
         assert_ne!(solution_tab.table[GPS_TIME], String::from(EMPTY_STR));
@@ -1266,7 +1275,7 @@ mod tests {
             v_accuracy,
             tow,
         });
-        solution_tab.handle_pos_llh(msg, &mut client_send);
+        solution_tab.handle_pos_llh(msg);
         assert_eq!(solution_tab.last_pos_mode, 4);
     }
 

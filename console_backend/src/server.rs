@@ -12,7 +12,7 @@ use std::fs;
 use std::io::{BufReader, Cursor};
 use std::net::TcpStream;
 use std::sync::{mpsc, Arc, Mutex};
-use std::thread;
+use std::{thread, time::Duration};
 
 use crate::console_backend_capnp as m;
 use crate::process_messages::process_messages;
@@ -148,6 +148,7 @@ impl Server {
             inner: client_send_,
         };
         let shared_state = SharedState::new();
+        // let mut current_thread: thread::JoinHandle<_>;
         thread::spawn(move || loop {
             let buf = server_recv.recv();
             if let Ok(buf) = buf {
@@ -169,17 +170,23 @@ impl Server {
                     m::message::ConnectRequest(Ok(conn_req)) => {
                         let shared_state_clone = shared_state.clone();
                         if shared_state_clone.server_is_connected() {
-                            println!("Already connected.");
+                            // println!("Already connected.");
+                            shared_state_clone.server_set_connected(false);
+                            thread::sleep(Duration::from_secs(1));
                             continue;
+                            // current_thread.join();
+                            // continue;
                         } else {
                             shared_state_clone.server_set_connected(true);
                         }
+                        shared_state_clone.server_set_connected(true);
                         let host = conn_req.get_host().unwrap();
                         let port = conn_req.get_port();
                         println!("connect request, host: {}, port: {}", host, port);
                         let host_port = format!("{}:{}", host, port);
                         let client_send_clone = client_send.clone();
                         let shared_state_clone = shared_state.clone();
+                        // current_thread = 
                         thread::spawn(move || {
                             let shared_state_clone_ = shared_state_clone.clone();
                             connect_to_host(client_send_clone, shared_state_clone_, host_port);

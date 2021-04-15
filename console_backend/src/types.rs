@@ -55,7 +55,14 @@ pub trait MessageSender {
     fn send_data(&mut self, msg_bytes: Vec<u8>);
 }
 
-#[derive(Clone)]
+use std::fmt::Debug;
+impl Debug for dyn MessageSender {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct ClientSender {
     pub inner: Sender<Vec<u8>>,
 }
@@ -65,7 +72,7 @@ impl MessageSender for ClientSender {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct TestSender {
     pub inner: Vec<Vec<u8>>,
 }

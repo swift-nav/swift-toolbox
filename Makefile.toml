@@ -349,3 +349,41 @@ script = '''
 echo 'This is only used to validate locally.'
 cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=../../main.dist/main && cd -
 '''
+
+[tasks.newline-terminator]
+private = false
+script_runner = "python"
+script_extension = "py"
+script = '''
+import os
+import sys
+import subprocess
+def raises_exc(func):
+    try: func()
+    except: return True
+    return False
+dry_run = os.environ.get("NLT_DRY_RUN", "") == "1"
+open_append = lambda fn: open(fn, "ta")
+open_read = lambda fn: open(fn, "rb")
+seek_end = lambda fp: (fp.seek(-1, 2), fp)[-1]
+has_newline = lambda fn: seek_end(open_read(fn)).read(1) == b"\n"
+append_newline = lambda fn: (open_append(fn).write("\n") if not dry_run else None, fn)[-1]
+try_open_text = lambda fn: lambda: (open(fn, "ta"), open(fn, "tr").read(4096))
+valid_file = lambda fn: os.path.getsize(fn) > 0 and not raises_exc(try_open_text(fn))
+no_trailing_lf = lambda fn: valid_file(fn) and not has_newline(fn)
+all_files = subprocess.check_output(["git", "ls-files"]).decode('utf8').splitlines()
+no_newline = list(map(append_newline, filter(no_trailing_lf, all_files)))
+footer = "*********************************************\n"
+err = "ERROR: " if dry_run else "Fixing "
+header = footer + "*** " + err + "files missing trailing newline ***\n" + footer
+sys.stderr.write(header + str.join("\n", no_newline) + "\n" + footer) \
+  if no_newline else None
+sys.exit(int(len(no_newline) > 0) if dry_run else 0)
+'''
+
+[tasks.check-newline]
+env = { "NLT_DRY_RUN" = "1" }
+run_task = "newline-terminator"
+
+[tasks.format-newline]
+run_task = "newline-terminator"

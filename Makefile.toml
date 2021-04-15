@@ -193,6 +193,12 @@ conda run -n $CONDA_ENV python src/build/generate-mac-info-plist.py
 hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg'
 '''
 
+[tasks.newline-format.linux]
+script_runner = "@shell"
+script = '''
+find . -type f \( -name "*.py" -o -name "*.rs" -o -iname "*.yml" -o -iname "*.yaml" \) -not \( -path "./target/*" -o -path "./.git/*" \) -exec sed -i -e '$a\' {} \; -print
+'''
+
 [tasks.qml-format.linux]
 env = { QT_APP = { script = ["conda run -n $CONDA_ENV python utils/echo-qt-dir.py"] } }
 script_runner = "@shell"
@@ -260,7 +266,7 @@ conda run -n $CONDA_ENV pylint --output-format=parseable $PYTHON_FILES
 '''
 
 [tasks.format-all]
-dependencies = ["python-format-all", "qml-format", "rust-format"]
+dependencies = ["python-format-all", "qml-format", "rust-format", "newline-format"]
 
 [tasks.format]
 alias = "format-all"

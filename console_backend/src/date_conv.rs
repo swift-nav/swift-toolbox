@@ -109,4 +109,84 @@ mod tests {
         assert_eq!(utc_source(16_u8), String::from(DECODED_THIS_SESSION));
         assert_eq!(utc_source(255_u8), String::from(UNKNOWN));
     }
+
+    #[test]
+    fn utc_time_test() {
+        let year = 1337;
+        let month = 12;
+        let day = 13;
+        let hour = 11;
+        let minute = 14;
+        let second = 6;
+        let nanosecond = 1338;
+        assert_eq!(
+            utc_time(year, month, day, hour, minute, second, nanosecond).year(),
+            year
+        );
+        assert_eq!(
+            utc_time(year, month, day, hour, minute, second, nanosecond).month(),
+            month
+        );
+        assert_eq!(
+            utc_time(year, month, day, hour, minute, second, nanosecond).day(),
+            day
+        );
+        assert_eq!(
+            utc_time(year, month, day, hour, minute, second, nanosecond).hour(),
+            hour
+        );
+        assert_eq!(
+            utc_time(year, month, day, hour, minute, second, nanosecond).minute(),
+            minute
+        );
+        assert_eq!(
+            utc_time(year, month, day, hour, minute, second, nanosecond).second(),
+            second
+        );
+        assert_eq!(
+            utc_time(year, month, day, hour, minute, second, nanosecond).nanosecond(),
+            nanosecond
+        );
+    }
+
+    #[test]
+    fn datetime_to_string_and_seconds_test() {
+        let year = 1337;
+        let month = 12;
+        let day = 13;
+        let hour = 11;
+        let minute = 14;
+        let second = 6;
+        let nanosecond = 1338000;
+        let datetime = utc_time(year, month, day, hour, minute, second, nanosecond);
+        assert_eq!(
+            datetime_to_string_and_seconds(datetime),
+            (("1337-12-13 11:14").to_string(), 6.001338)
+        );
+        let datetime = Local::now();
+        let year = datetime.year();
+        let month = datetime.month();
+        let day = datetime.day();
+        let hour = datetime.hour();
+        let minute = datetime.minute();
+        let second = datetime.second();
+        let nanosecond = datetime.nanosecond();
+        assert_eq!(
+            datetime_to_string_and_seconds(datetime),
+            (
+                format!("{}-{:02}-{:02} {:02}:{:02}", year, month, day, hour, minute),
+                second as f64 + nanosecond as f64 / 1E9_f64
+            )
+        );
+    }
+
+    #[test]
+    fn convert_gps_time_to_logging_format_test() {
+        let week = Some(32);
+        let gnss_tow = 1337000_f64;
+        assert_eq!(
+            convert_gps_time_to_logging_format(week, gnss_tow),
+            (Some(("1980-09-01 11:23").to_string()), Some(20.0))
+        );
+    }
 }

@@ -123,10 +123,10 @@ impl SolutionTab {
             last_pos_mode: 0,
             last_odo_update_time: Instant::now(),
             logging: false,
-            lat_max: 38_f64,
-            lat_min: 36_f64,
-            lon_max: -121_f64,
-            lon_min: -123_f64,
+            lat_max: LAT_MAX,
+            lat_min: LAT_MIN,
+            lon_max: LON_MAX,
+            lon_min: LON_MIN,
             modes: Deque::with_size_limit(PLOT_HISTORY_MAX),
             mode_strings: vec![
                 GnssModes::Spp.to_string(),
@@ -170,18 +170,18 @@ impl SolutionTab {
         if msg.flags & 0x7 == 0 {
             self.utc_time = None;
             self.utc_source = None;
-            return;
+        } else {
+            self.utc_time = Some(utc_time(
+                msg.year as i32,
+                msg.month as u32,
+                msg.day as u32,
+                msg.hours as u32,
+                msg.minutes as u32,
+                msg.seconds as u32,
+                msg.ns as u32,
+            ));
+            self.utc_source = Some(utc_source(msg.flags));
         }
-        self.utc_time = Some(utc_time(
-            msg.year as i32,
-            msg.month as u32,
-            msg.day as u32,
-            msg.hours as u32,
-            msg.minutes as u32,
-            msg.seconds as u32,
-            msg.ns as u32,
-        ));
-        self.utc_source = Some(utc_source(msg.flags));
     }
 
     /// Handler for GPS time messages.
@@ -189,11 +189,10 @@ impl SolutionTab {
     /// # Parameters
     /// - `msg`: MsgGPSTime to extract data from.
     pub fn handle_gps_time(&mut self, msg: MsgGPSTime) {
-        if msg.flags == 0 {
-            return;
+        if msg.flags != 0 {
+            self.week = Some(msg.wn);
+            self.nsec = Some(msg.ns_residual);
         }
-        self.week = Some(msg.wn);
-        self.nsec = Some(msg.ns_residual);
     }
 
     /// A helper function for creating a new solution tab log.
@@ -231,31 +230,14 @@ impl SolutionTab {
     /// # Parameters
     /// - `msg`: VelNED wrapper around a MsgVelNED or MsgVELNEDDepA.
     pub fn handle_vel_ned(&mut self, msg: VelNED) {
-        let (flags, tow, n, e, d, n_sats) = match msg {
-            VelNED::MsgVelNED(msg) => (
-                msg.flags,
-                msg.tow as f64,
-                msg.n as f64,
-                msg.e as f64,
-                msg.d as f64,
-                msg.n_sats,
-            ),
-            VelNED::MsgVelNEDDepA(msg) => (
-                1,
-                msg.tow as f64,
-                msg.n as f64,
-                msg.e as f64,
-                msg.d as f64,
-                msg.n_sats,
-            ),
-        };
-        let speed: f64 = mm_to_m(f64::sqrt(n * n + e * e));
-        let n = mm_to_m(n);
-        let e = mm_to_m(e);
-        let d = mm_to_m(d);
-        let mut tow = tow * 1.0e-3_f64;
+        let (flags, tow, n, e, d, n_sats) = msg.fields();
+        let speed: f64 = mm_to_m(f64::sqrt((i32::pow(n, 2) + i32::pow(e, 2)) as f64));
+        let n = mm_to_m(n as f64);
+        let e = mm_to_m(e as f64);
+        let d = mm_to_m(d as f64);
+        let mut tow = ms_to_sec(tow);
         if let Some(nsec) = self.nsec {
-            tow += nsec as f64 * 1.0e-9_f64;
+            tow += ns_to_sec(nsec as f64);
         }
 
         let (tloc, secloc) = convert_local_time_to_logging_format();
@@ -278,7 +260,7 @@ impl SolutionTab {
                     }
                 }
                 let pc_time = format!("{}:{:0>6.06}", tloc, secloc);
-                if let Err(err) = vel_file.serialize_vel_log(&VelLog {
+                if let Err(err) = vel_file.serialize(&VelLog {
                     pc_time,
                     gps_time,
                     tow_s: Some(tow),
@@ -345,14 +327,7 @@ impl SolutionTab {
     /// # Parameters
     /// - `msg`: Dops wrapper around a MsgDops or MsgDopsDepA.
     pub fn handle_dops(&mut self, msg: Dops) {
-        let (pdop, gdop, tdop, hdop, vdop, flags) = match msg {
-            Dops::MsgDops(msg_) => (
-                msg_.pdop, msg_.gdop, msg_.tdop, msg_.hdop, msg_.vdop, msg_.flags,
-            ),
-            Dops::MsgDopsDepA(msg_) => {
-                (msg_.pdop, msg_.gdop, msg_.tdop, msg_.hdop, msg_.vdop, 1_u8)
-            }
-        };
+        let (pdop, gdop, tdop, hdop, vdop, flags) = msg.fields();
         self.table.insert(DOPS_FLAGS, format!("0x{:<03x}", flags));
         self.table
             .insert(INS_STATUS, format!("0x{:<01x}", self.ins_status_flags));
@@ -472,7 +447,7 @@ impl SolutionTab {
             }
             if let Some(pos_file) = &mut self.pos_log_file {
                 let pc_time = format!("{}:{:>6.06}", tloc, secloc);
-                if let Err(err) = pos_file.serialize_pos_llh_log(&PosLLHLog {
+                if let Err(err) = pos_file.serialize(&PosLLHLog {
                     pc_time,
                     gps_time,
                     tow_s: Some(tow),

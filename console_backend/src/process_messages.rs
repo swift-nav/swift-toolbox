@@ -12,11 +12,16 @@ use crate::types::*;
 ///
 /// # Returns:
 /// - The filtered out Ok messages iterator.
-fn log_errors(messages: impl Iterator<Item = sbp::Result<SBP>>) -> impl Iterator<Item = SBP> {
+fn strip_errors_iter(
+    log_errors: bool,
+    messages: impl Iterator<Item = sbp::Result<SBP>>,
+) -> impl Iterator<Item = SBP> {
     messages
-        .inspect(|msg| {
+        .inspect(move |msg| {
             if let Err(e) = msg {
-                eprintln!("error reading message: {}", e);
+                if log_errors {
+                    eprintln!("error reading message: {}", e);
+                }
             }
         })
         .filter_map(sbp::Result::ok)
@@ -28,7 +33,7 @@ pub fn process_messages(
     client_send_clone: ClientSender,
 ) {
     let mut main = MainTab::new(shared_state);
-    let messages = log_errors(messages);
+    let messages = strip_errors_iter(true, messages);
     for message in messages {
         match message {
             SBP::MsgAgeCorrections(msg) => {

@@ -53,6 +53,13 @@ script = '''
 conda run -n $CONDA_ENV pip install -r $REQUIREMENTS_FILE
 '''
 
+[tasks.generate-common-constants]
+script_runner = "@shell"
+script = '''
+conda run -n $CONDA_ENV --no-capture-output --live-stream py2many --rust=1 src/main/python/constants.py
+mv src/main/python/constants.rs console_backend/src/common_constants.rs
+'''
+
 [tasks.generate-resources]
 script_runner = "@shell"
 script = '''

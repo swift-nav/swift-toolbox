@@ -14,11 +14,10 @@ use std::net::TcpStream;
 use std::sync::{mpsc, Arc, Mutex};
 use std::thread;
 
+use crate::common_constants as cc;
 use crate::console_backend_capnp as m;
 use crate::process_messages::process_messages;
 use crate::types::{ClientSender, MessageSender, SharedState, VelocityUnits};
-
-const CLOSE: &str = "CLOSE";
 
 /// The backend server
 #[pyclass]
@@ -73,7 +72,8 @@ pub fn connect_to_file(
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<m::message::Builder>();
         let mut status = msg.init_status();
-        status.set_text(CLOSE);
+        let app_state = cc::ApplicationStates::CLOSE;
+        status.set_text(&app_state.to_string());
         let mut msg_bytes: Vec<u8> = vec![];
         serialize::write_message(&mut msg_bytes, &builder).unwrap();
 

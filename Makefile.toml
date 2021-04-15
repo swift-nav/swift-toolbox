@@ -193,12 +193,6 @@ conda run -n $CONDA_ENV python src/build/generate-mac-info-plist.py
 hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg'
 '''
 
-[tasks.newline-format.linux]
-script_runner = "@shell"
-script = '''
-find . -type f \( -name "*.py" -o -name "*.rs" -o -iname "*.yml" -o -iname "*.yaml" \) -not \( -path "./target/*" -o -path "./.git/*" \) -exec sed -i -e '$a\' {} \; -print
-'''
-
 [tasks.qml-format.linux]
 env = { QT_APP = { script = ["conda run -n $CONDA_ENV python utils/echo-qt-dir.py"] } }
 script_runner = "@shell"
@@ -272,7 +266,7 @@ dependencies = ["python-format-all", "qml-format", "rust-format", "newline-forma
 alias = "format-all"
 
 [tasks.format-check]
-dependencies = ["python-format-check", "qml-format-check", "rust-format-check"]
+dependencies = ["python-format-check", "qml-format-check", "rust-format-check", "newline-check"]
 
 [tasks.lint]
 dependencies = ["python-lint", "rust-lint", "format-check"]
@@ -381,9 +375,9 @@ sys.stderr.write(header + str.join("\n", no_newline) + "\n" + footer) \
 sys.exit(int(len(no_newline) > 0) if dry_run else 0)
 '''
 
-[tasks.check-newline]
+[tasks.newline-check]
 env = { "NLT_DRY_RUN" = "1" }
 run_task = "newline-terminator"
 
-[tasks.format-newline]
+[tasks.newline-format]
 run_task = "newline-terminator"

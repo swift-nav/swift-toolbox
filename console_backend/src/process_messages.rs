@@ -32,11 +32,10 @@ pub fn process_messages(
     shared_state: SharedState,
     client_send: ClientSender,
 ) {
-    let mut main = MainTab::new(shared_state.clone(), client_send.clone());
+    let mut main = MainTab::new(shared_state.clone(), client_send);
     let messages = strip_errors_iter(true, messages);
     for message in messages {
         if !shared_state.server_is_connected() {
-            println!("yo");
             break;
         }
         match message {
@@ -60,45 +59,38 @@ pub fn process_messages(
             }
             SBP::MsgMeasurementState(msg) => {
                 main.tracking_signals_tab
-                    .handle_msg_measurement_state(msg.states, &mut client_send.clone());
+                    .handle_msg_measurement_state(msg.states);
             }
             SBP::MsgObs(msg) => {
                 main.tracking_signals_tab
-                    .handle_obs(ObservationMsg::MsgObs(msg), &mut client_send.clone());
+                    .handle_obs(ObservationMsg::MsgObs(msg));
             }
             SBP::MsgObsDepA(_msg) => {
                 //CPP-85 Unhandled for tracking signals plot tab.
                 println!("The message type, MsgObsDepA, is not handled in the Tracking->SignalsPlot tab.");
             }
             SBP::MsgObsDepB(msg) => {
-                main.tracking_signals_tab.handle_obs(
-                    ObservationMsg::MsgObsDepB(msg),
-                    &mut client_send.clone(),
-                );
+                main.tracking_signals_tab
+                    .handle_obs(ObservationMsg::MsgObsDepB(msg));
             }
             SBP::MsgObsDepC(msg) => {
-                main.tracking_signals_tab.handle_obs(
-                    ObservationMsg::MsgObsDepC(msg),
-                    &mut client_send.clone(),
-                );
+                main.tracking_signals_tab
+                    .handle_obs(ObservationMsg::MsgObsDepC(msg));
             }
             SBP::MsgPosLLH(msg) => {
-                main.solution_tab
-                    .handle_pos_llh(PosLLH::MsgPosLLH(msg), &mut client_send.clone());
+                main.solution_tab.handle_pos_llh(PosLLH::MsgPosLLH(msg));
             }
             SBP::MsgPosLLHDepA(msg) => {
-                main.solution_tab
-                    .handle_pos_llh(PosLLH::MsgPosLLHDepA(msg), &mut client_send.clone());
+                main.solution_tab.handle_pos_llh(PosLLH::MsgPosLLHDepA(msg));
             }
             SBP::MsgTrackingState(msg) => {
                 main.tracking_signals_tab
-                    .handle_msg_tracking_state(msg.states, &mut client_send.clone());
+                    .handle_msg_tracking_state(msg.states);
             }
             SBP::MsgVelNED(msg) => {
                 main.solution_tab
                     .handle_vel_ned(VelNED::MsgVelNED(msg.clone()));
-                main.solution_velocity_tab
-                    .handle_vel_ned(msg, &mut client_send.clone());
+                main.solution_velocity_tab.handle_vel_ned(msg);
             }
             SBP::MsgVelNEDDepA(msg) => {
                 main.solution_tab.handle_vel_ned(VelNED::MsgVelNEDDepA(msg));

@@ -2,7 +2,7 @@
 #![allow(unused_imports)]
 #![cfg(not(feature = "benches"))]
 use capnp::message::Builder;
-use capnp::serialize;
+use capnp::{serialize, serialize_packed};
 
 use pyo3::exceptions;
 use pyo3::prelude::*;
@@ -153,7 +153,7 @@ impl Server {
             let buf = server_recv.recv();
             if let Ok(buf) = buf {
                 let mut buf_reader = BufReader::new(Cursor::new(buf));
-                let message_reader = serialize::read_message(
+                let message_reader = serialize_packed::read_message(
                     &mut buf_reader,
                     ::capnp::message::ReaderOptions::new(),
                 )
@@ -180,36 +180,62 @@ impl Server {
                             shared_state_clone.server_set_connected(true);
                         }
                         shared_state_clone.server_set_connected(true);
-                        let host = conn_req.get_host().unwrap();
-                        let port = conn_req.get_port();
-                        println!("connect request, host: {}, port: {}", host, port);
-                        let host_port = format!("{}:{}", host, port);
-                        let client_send_clone = client_send.clone();
-                        let shared_state_clone = shared_state.clone();
-                        // current_thread = 
-                        thread::spawn(move || {
-                            let shared_state_clone_ = shared_state_clone.clone();
-                            connect_to_host(client_send_clone, shared_state_clone_, host_port);
-                        });
+                        // let reader = conn_req.get_request().unwrap();
+                        // reader.get();
+                        // match  {
+                        //     _ => println!("asdf")
+                        // }
+                        // let req = capnp::any_pointer::Reader::<'_>::new(conn_req);
+                        // println!("{:?}", conn_req.get_request().unwrap().get_type());
+                        // let buf_reader = conn_req.get_request().unwrap();
+                        // let message_reader = serialize_packed::read_message(
+                        //     &mut buf_reader,
+                        //     ::capnp::message::ReaderOptions::new(),
+                        // )
+                        // .unwrap();
+                        // let message_ = message_reader.get_root::<m::message::Reader>().unwrap();
+                        // match req.get_as() {
+                        //     Ok(m::message::TcpRequest(Ok(tcp))) => {
+                        //         println!("ay");
+                        //     }
+                        // }
+                        // println!("{:?}", req.);
+                        // req.tcp_request();
+                        // match conn_req.get_request().unwrap() {
+                        //     a => println!("{:?}", a)
+
+                        // }
+
+                        // let host = conn_req.get_host().unwrap();
+                        // let port = conn_req.get_port();
+                        // println!("connect request, host: {}, port: {}", host, port);
+                        // let host_port = format!("{}:{}", host, port);
+                        // let client_send_clone = client_send.clone();
+                        // let shared_state_clone = shared_state.clone();
+                        // // current_thread =
+                        // thread::spawn(move || {
+                        //     let shared_state_clone_ = shared_state_clone.clone();
+                        //     connect_to_host(client_send_clone, shared_state_clone_, host_port);
+                        // });
                     }
-                    m::message::FileinRequest(Ok(file_in)) => {
-                        let shared_state_clone = shared_state.clone();
-                        if shared_state_clone.server_is_connected() {
-                            println!("Already connected.");
-                            continue;
-                        } else {
-                            shared_state_clone.server_set_connected(true);
-                        }
-                        let filename = file_in.get_filename().unwrap();
-                        let filename = filename.to_string();
-                        println!("{}", filename);
-                        let shared_state_clone = shared_state.clone();
-                        let mut client_send_clone = client_send.clone();
-                        thread::spawn(move || {
-                            let shared_state_clone_ = shared_state_clone.clone();
-                            connect_to_file(&mut client_send_clone, shared_state_clone_, filename);
-                        });
-                    }
+                    // m::message::FileinRequest(Ok(file_in)) => {
+                    //     let shared_state_clone = shared_state.clone();
+                    //     if shared_state_clone.server_is_connected() {
+                    //         println!("Already connected.");
+                    //         continue;
+                    //     } else {
+                    //         shared_state_clone.server_set_connected(true);
+                    //     }
+                    //     let filename = file_in.get_filename().unwrap();
+                    //     let filename = filename.to_string();
+                    //     println!("{}", filename);
+                    //     let shared_state_clone = shared_state.clone();
+                    //     let mut client_send_clone = client_send.clone();
+                    //     thread::spawn(move || {
+                    //         let shared_state_clone_ = shared_state_clone.clone();
+                    //         connect_to_file(&mut client_send_clone, shared_state_clone_, filename);
+                    //     });
+                    // }
                     m::message::TrackingSignalsStatusFront(Ok(cv_in)) => {
                         let check_visibility =
                             cv_in.get_tracking_signals_check_visibility().unwrap();

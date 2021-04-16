@@ -1,12 +1,30 @@
 @0xe7871c33e8243ee4;
 
-struct FileinRequest {
+struct ConnectRequest(RequestType) {
+    request @0 :RequestType;
+}
+
+struct TcpRequest {
+    host @0 :Text;
+    port @1 :UInt16;
+}
+
+struct FileRequest {
     filename @0 :Text;
 }
 
-struct ConnectRequest {
-    host @0 :Text;
-    port @1 :UInt16;
+struct SerialRequest {
+    device @0 :Text;
+    baudrate @1 :UInt16;
+    flowControl @2 :Bool;
+}
+
+struct PauseRequest {
+    pause @0 :Bool;
+}
+
+struct DisconnectRequest {
+    disconnect @0 :Void = void;
 }
 
 struct KeyValPair {
@@ -79,13 +97,17 @@ struct Message {
         connectRequest @0 :ConnectRequest;
         solutionVelocityStatus @1 :SolutionVelocityStatus;
         status @2 :Status;
-        fileinRequest @3 :FileinRequest;
-        trackingSignalsStatus @4 :TrackingSignalsStatus;
-        trackingSignalsStatusFront @5 :TrackingSignalsStatusFront;
-        solutionVelocityStatusFront @6 :SolutionVelocityStatusFront;
-        solutionTableStatus @7 :SolutionTableStatus;
-        solutionPositionStatus @8 :SolutionPositionStatus;
-        solutionPositionStatusButtonFront @9 :SolutionPositionStatusButtonFront;
-        solutionPositionStatusUnitFront @10 :SolutionPositionStatusUnitFront;
+        trackingSignalsStatus @3 :TrackingSignalsStatus;
+        trackingSignalsStatusFront @4 :TrackingSignalsStatusFront;
+        solutionVelocityStatusFront @5 :SolutionVelocityStatusFront;
+        solutionTableStatus @6 :SolutionTableStatus;
+        solutionPositionStatus @7 :SolutionPositionStatus;
+        solutionPositionStatusButtonFront @8 :SolutionPositionStatusButtonFront;
+        solutionPositionStatusUnitFront @9 :SolutionPositionStatusUnitFront;
+        tcpRequest @10 :TcpRequest;
+        fileRequest @11 :FileRequest;
+        serialRequest @12 :SerialRequest;
+        pauseRequest @13 :PauseRequest;
+        disconnectRequest @14 :DisconnectRequest;
     }
 }

@@ -19,6 +19,7 @@ ApplicationWindow {
 
         Rectangle {
             id: mainTabs
+
             Layout.alignment: Qt.AlignTop
             Layout.preferredWidth: parent.width
             Layout.fillHeight: true
@@ -78,19 +79,33 @@ ApplicationWindow {
         }
 
         Rectangle {
+            // PlayPauseButton {
+            //     id: "playPauseButton"
+            //     width: height
+            //     height: 20
+            //     state: data_model.get_status_text() == "CONNECTED" ? "pause" : "play"
+            //     // onClicked: data_model.disconnect()
+            // }
+
             id: consoleLog
 
             Layout.preferredWidth: parent.width
             Layout.minimumHeight: 50
             Layout.alignment: Qt.AlignBottom
-
         }
+
         Rectangle {
             id: bottomNavBar
+
             Layout.preferredWidth: parent.width
             Layout.minimumHeight: 50
             Layout.alignment: Qt.AlignBottom
-            BottomNavBar {}
+
+            BottomNavBar {
+            }
+
         }
+
     }
+
 }

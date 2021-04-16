@@ -2,6 +2,7 @@
 <qresource>
     <file>qtquickcontrols2.conf</file>
     <file>view.qml</file>
+    <file>PlayPauseButton.qml</file>
     <file>BottomNavBar.qml</file>
     <file>Constants.qml</file>
     <file>qmldir</file>

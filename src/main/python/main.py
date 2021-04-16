@@ -125,26 +125,39 @@ class DataModel(QObject):
         super().__init__()
         self.endpoint = endpoint
         self.messages = messages
-        self.file_in = file_in
         if connect and file_in is not None:
-            self.readfile()
+            self.connect_file(file_in)
         elif connect:
-            self.connect()
+            self.connect_tcp(PIKSI_HOST, PIKSI_PORT)
 
-    @Slot()  # type: ignore
-    def connect(self) -> None:
+    @Slot(str)  # type: ignore
+    def connect_file(self, filename: str) -> None:
         msg = self.messages.Message()
-        msg.connectRequest.host = PIKSI_HOST
-        msg.connectRequest.port = PIKSI_PORT
+        msg.connectRequest = msg.init("connectRequest")
+        msg.connectRequest.fileRequest.filename = filename
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
 
-    @Slot()  # type: ignore
-    def readfile(self) -> None:
-        m = self.messages.Message()
-        m.fileinRequest = m.init("fileinRequest")
-        m.fileinRequest.filename = str(self.file_in)
-        buffer = m.to_bytes()
+    @Slot(int, str)  # type: ignore
+    def connect_tcp(self, host: str, port: int) -> None:
+        msg = self.messages.Message()
+        msg.connectRequest = msg.init("connectRequest")
+        req = self.messages.Message()
+        req.tcpRequest = req.init("tcpRequest")
+        req.tcpRequest.host = str(host)
+        req.tcpRequest.port = int(port)
+        msg.connectRequest.request = req
+        buffer = msg.to_bytes()
+        self.endpoint.send_message(buffer)
+
+    @Slot(int, str, bool)  # type: ignore
+    def connect_serial(self, device: str, baudrate: int, flow_control: bool) -> None:
+        msg = self.messages.Message()
+        msg.connectRequest = msg.init("connectRequest")
+        msg.connectRequest.serialRequest.device = device
+        msg.connectRequest.serialRequest.baudrate = baudrate
+        msg.connectRequest.serialRequest.flowControl = flow_control
+        buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
 
     @Slot(list)  # type: ignore

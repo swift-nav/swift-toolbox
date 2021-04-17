@@ -215,6 +215,14 @@ impl SharedState {
         let mut shared_data = self.lock().unwrap();
         (*shared_data).running = set_to;
     }
+    pub fn is_paused(&self) -> bool {
+        let shared_data = self.lock().unwrap();
+        (*shared_data).paused
+    }
+    pub fn set_paused(&self, set_to: bool) {
+        let mut shared_data = self.lock().unwrap();
+        (*shared_data).paused = set_to;
+    }
 }
 
 impl Deref for SharedState {
@@ -241,13 +249,15 @@ impl Clone for SharedState {
 #[derive(Debug)]
 pub struct SharedStateInner {
     pub tracking_tab: TrackingTabState,
-    pub running: bool,
+    pub paused: bool,
+    pub running: bool,    
     pub solution_tab: SolutionTabState,
 }
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
         SharedStateInner {
             tracking_tab: TrackingTabState::new(),
+            paused: false,
             running: false,
             solution_tab: SolutionTabState::new(),
         }

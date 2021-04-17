@@ -143,16 +143,20 @@ Item {
             }
 
             Timer {
+                id: trackingSignalsTimer
                 interval: 1000 / 5 // 5 Hz refresh
                 running: true
                 repeat: true
                 onTriggered: {
                     if (!trackingTab.visible)
                         return ;
-
                     tracking_signals_model.fill_console_points(trackingSignalsPoints);
                     if (!trackingSignalsPoints.points.length)
                         return ;
+
+                    // if (trackingSignalsTimer.interval != Constants.current_ref_rate) {
+                    //     trackingSignalsTimer.interval = Constants.current_ref_rate
+                    // }
 
                     var points = trackingSignalsPoints.points;
                     colors = trackingSignalsPoints.colors;

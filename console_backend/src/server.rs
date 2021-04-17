@@ -145,6 +145,13 @@ impl Server {
                                     true,
                                 );
                             }
+                            m::message::PauseRequest(Ok(_)) => {
+                                if shared_state_clone.is_paused() {
+                                    shared_state_clone.set_paused(false);
+                                } else {
+                                    shared_state_clone.set_paused(true);
+                                }
+                            }
                             m::message::TcpRequest(Ok(req)) => {
                                 let host = req.get_host().unwrap();
                                 let port = req.get_port();

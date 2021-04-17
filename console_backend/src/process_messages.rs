@@ -38,6 +38,13 @@ pub fn process_messages(
         if !shared_state.is_running() {
             break;
         }
+        if shared_state.is_paused() {
+            loop {
+                if !shared_state.is_paused(){
+                    break;
+                }
+            }
+        }
         match message {
             SBP::MsgAgeCorrections(msg) => {
                 main.solution_tab.handle_age_corrections(msg);

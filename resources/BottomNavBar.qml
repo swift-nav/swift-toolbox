@@ -8,11 +8,6 @@ Item {
     property string serial_usb: "Serial/USB"
     property string file: "File"
     property var sources: [tcp_ip, serial_usb, file]
-    property var source_defaults: {
-        "TCP/IP": "Host",
-        "Serial/USB": "",
-        "File": "path/to/file"
-    }
 
     width: parent.width
     height: parent.height
@@ -180,7 +175,17 @@ Item {
             }
 
         }
+        Button {
+            id: connectionPauseButton
 
+            Layout.preferredWidth: Constants.bottomNavBar.connectionPauseWidth
+            Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
+            text: "| |"
+            ToolTip.visible: hovered
+            ToolTip.text: "Pause"
+            checkable: true
+            onClicked: data_model.pause(checked)
+        }
         Button {
             Layout.alignment: Qt.AlignRight
             Layout.rightMargin: Constants.bottomNavBar.navBarMargin
@@ -206,8 +211,19 @@ Item {
                 }
             }
         }
+        ComboBox {
+            id: refreshRateDrop
+
+            visible: true
+            Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
+            model: Constants.bottomNavBar.available_ref_rates
+            onActivated: {
+                Constants.current_ref_rate = 1000 / Constants.bottomNavBar.available_ref_rates[currentIndex]
+            }
+        }
 
         Timer {
+            
             // if (placeholderText.text != source_defaults[bottomNavBarSourceSelection.currentText]){
             //     placeholderText.text = source_defaults[bottomNavBarSourceSelection.currentText];
             // }
@@ -216,6 +232,9 @@ Item {
             running: true
             repeat: true
             onTriggered: {
+                // if (refreshRateDrop.model != Constants.navBarMargin.available_ref_rates) {
+                //     refreshRateDrop.model = Constants.navBarMargin.available_ref_rates;
+                // }
             }
         }
 

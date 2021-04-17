@@ -110,6 +110,7 @@ Item {
                 TextInput {
                     id: tcpUrlBarText
 
+                    clip: true
                     anchors.fill: parent
                     anchors.margins: 4
                     onTextChanged: {
@@ -135,6 +136,7 @@ Item {
                 TextInput {
                     id: tcpPortBarText
 
+                    clip: true
                     anchors.fill: parent
                     anchors.margins: 4
                     onTextChanged: {
@@ -167,6 +169,7 @@ Item {
                 anchors.margins: 4
                 onTextChanged: {
                 }
+                clip: true
 
                 Text {
                     text: "path/to/file"
@@ -188,9 +191,18 @@ Item {
                 if (!checked) {
                     data_model.disconnect();
                 } else {
-                    if (bottomNavBarSourceSelection.currentText === tcp_ip)
-                        data_model.connect_tcp(tcpUrlBarText.text, tcpPortBarText.text);
+                    if (bottomNavBarSourceSelection.currentText === tcp_ip) {
+                        if (tcpUrlBarText.text && tcpPortBarText.text)
+                            data_model.connect_tcp(tcpUrlBarText.text, tcpPortBarText.text);
+                        else
+                            data_model.connect();
+                    } else if (bottomNavBarSourceSelection.currentText === file) {
+                        if (fileUrlBarText.text)
+                            data_model.connect_file(fileUrlBarText.text);
 
+                    } else {
+                        data_model.connect_file(serialDevice.currentText, serialDeviceBaudRate.currentText, serialDeviceFlowControl.currentIndex == 1);
+                    }
                 }
             }
         }

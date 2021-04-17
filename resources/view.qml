@@ -79,13 +79,6 @@ ApplicationWindow {
         }
 
         Rectangle {
-            // PlayPauseButton {
-            //     id: "playPauseButton"
-            //     width: height
-            //     height: 20
-            //     state: data_model.get_status_text() == "CONNECTED" ? "pause" : "play"
-            //     // onClicked: data_model.disconnect()
-            // }
 
             id: consoleLog
 

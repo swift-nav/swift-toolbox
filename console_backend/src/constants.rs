@@ -1,3 +1,6 @@
+// Server constants.
+pub const CLOSE: &str = "CLOSE";
+
 // Common constants.
 pub const NUM_POINTS: usize = 200;
 

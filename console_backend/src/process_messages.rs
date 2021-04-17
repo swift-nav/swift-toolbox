@@ -35,7 +35,7 @@ pub fn process_messages(
     let mut main = MainTab::new(shared_state.clone(), client_send);
     let messages = strip_errors_iter(true, messages);
     for message in messages {
-        if !shared_state.server_is_connected() {
+        if !shared_state.is_running() {
             break;
         }
         match message {

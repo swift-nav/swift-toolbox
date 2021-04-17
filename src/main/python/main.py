@@ -130,15 +130,22 @@ class DataModel(QObject):
         elif connect:
             self.connect_tcp(PIKSI_HOST, PIKSI_PORT)
 
+    @Slot()  # type: ignore
+    def connect(self) -> None:
+        self.connect_tcp(PIKSI_HOST, PIKSI_PORT)
+
     @Slot(str)  # type: ignore
     def connect_file(self, filename: str) -> None:
         msg = self.messages.Message()
         msg.connectRequest = msg.init("connectRequest")
-        msg.connectRequest.fileRequest.filename = filename
+        req = self.messages.Message()
+        req.fileRequest = req.init("fileRequest")
+        req.fileRequest.filename = str(filename)
+        msg.connectRequest.request = req
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
 
-    @Slot(int, str)  # type: ignore
+    @Slot(str, int)  # type: ignore
     def connect_tcp(self, host: str, port: int) -> None:
         msg = self.messages.Message()
         msg.connectRequest = msg.init("connectRequest")
@@ -154,9 +161,33 @@ class DataModel(QObject):
     def connect_serial(self, device: str, baudrate: int, flow_control: bool) -> None:
         msg = self.messages.Message()
         msg.connectRequest = msg.init("connectRequest")
-        msg.connectRequest.serialRequest.device = device
-        msg.connectRequest.serialRequest.baudrate = baudrate
-        msg.connectRequest.serialRequest.flowControl = flow_control
+        req = self.messages.Message()
+        req.serialRequest = req.init("serialRequest")
+        req.serialRequest.device = str(device)
+        req.serialRequest.baudrate = int(baudrate)
+        req.serialRequest.flowControl = flow_control
+        msg.connectRequest.request = req
+        buffer = msg.to_bytes()
+        self.endpoint.send_message(buffer)
+
+    @Slot()  # type: ignore
+    def disconnect(self) -> None:
+        msg = self.messages.Message()
+        msg.connectRequest = msg.init("connectRequest")
+        req = self.messages.Message()
+        req.disconnectRequest = req.init("disconnectRequest")
+        msg.connectRequest.request = req
+        buffer = msg.to_bytes()
+        self.endpoint.send_message(buffer)
+
+    @Slot(bool)  # type: ignore
+    def pause(self, pause_: bool) -> None:
+        msg = self.messages.Message()
+        msg.connectRequest = msg.init("connectRequest")
+        req = self.messages.Message()
+        req.pauseRequest = req.init("pauseRequest")
+        req.pauseRequest.pause = pause_
+        msg.connectRequest.request = req
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
 

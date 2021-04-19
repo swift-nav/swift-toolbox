@@ -309,9 +309,9 @@ develop = false
 
 [package.source]
 type = "git"
-url = "https://github.com/adsharma/py2many"
-reference = "main"
-resolved_reference = "6966df639ec3c43c3c409a074ba2fd85d10ca1dd"
+url = "https://github.com/jayvdb/py2many"
+reference = "console"
+resolved_reference = "f6e3023ee2eb48865ada965e0e5407c30cdaa8f8"
 
 [[package]]
 name = "pycapnp"

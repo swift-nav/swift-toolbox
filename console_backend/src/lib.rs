@@ -7,6 +7,7 @@ pub mod date_conv;
 pub mod formatters;
 pub mod main_tab;
 pub mod output;
+pub mod piksi_tools_constants;
 pub mod process_messages;
 pub mod server;
 pub mod solution_tab;

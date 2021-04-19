@@ -20,6 +20,7 @@ use std::{
 
 use crate::constants::*;
 use crate::formatters::*;
+use crate::piksi_tools_constants::*;
 
 pub type Error = std::boxed::Box<dyn std::error::Error>;
 pub type Result<T> = std::result::Result<T, Error>;
@@ -397,17 +398,17 @@ impl SignalCodes {
 
     pub fn filters(&self) -> Option<String> {
         match self {
-            SignalCodes::CodeGpsL1Ca => Some(GPS_L1CA.to_string()),
-            SignalCodes::CodeGpsL2Cm => Some(GPS_L2C_M.to_string()),
-            SignalCodes::CodeGloL1Of => Some(GLO_L10F.to_string()),
-            SignalCodes::CodeGloL2Of => Some(GLO_L20F.to_string()),
-            SignalCodes::CodeBds2B1 => Some(BDS2_B1_I.to_string()),
-            SignalCodes::CodeBds2B2 => Some(BDS2_B2_I.to_string()),
-            SignalCodes::CodeGalE1B => Some(GAL_E1_B.to_string()),
-            SignalCodes::CodeGalE7I => Some(GAL_E5B_I.to_string()),
-            SignalCodes::CodeQzsL1Ca => Some(QZS_L1CA.to_string()),
-            SignalCodes::CodeQzsL2Cm => Some(QZS_L2C_M.to_string()),
-            SignalCodes::CodeSbasL1Ca => Some(SBAS_L1.to_string()),
+            SignalCodes::CodeGpsL1Ca => Some(GPS_L1CA_STR.to_string()),
+            SignalCodes::CodeGpsL2Cm => Some(GPS_L2CM_STR.to_string()),
+            SignalCodes::CodeGloL1Of => Some(GLO_L1OF_STR.to_string()),
+            SignalCodes::CodeGloL2Of => Some(GLO_L2OF_STR.to_string()),
+            SignalCodes::CodeBds2B1 => Some(BDS2_B1_STR.to_string()),
+            SignalCodes::CodeBds2B2 => Some(BDS2_B2_STR.to_string()),
+            SignalCodes::CodeGalE1B => Some(GAL_E1B_STR.to_string()),
+            SignalCodes::CodeGalE7I => Some(GAL_E7I_STR.to_string()),
+            SignalCodes::CodeQzsL1Ca => Some(QZS_L1CA_STR.to_string()),
+            SignalCodes::CodeQzsL2Cm => Some(QZS_L2CM_STR.to_string()),
+            SignalCodes::CodeSbasL1Ca => Some(SBAS_L1_STR.to_string()),
             _ => None,
         }
     }

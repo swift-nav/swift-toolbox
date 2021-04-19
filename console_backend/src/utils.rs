@@ -186,6 +186,7 @@ pub fn ns_to_sec(ns: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::piksi_tools_constants::*;
 
     #[test]
     fn get_signal_key_label_test() {

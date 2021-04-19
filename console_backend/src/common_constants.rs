@@ -1,3 +1,12 @@
+#![allow(clippy::all)]
+#![allow(unknown_lints)]
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+#![allow(non_upper_case_globals)]
+#![allow(trivial_casts)]
+#![allow(unsafe_code)]
+#![allow(unused_imports)]
+#![allow(unused_results)]
 // cargo-deps: strum,strum_macros
 extern crate strum;
 extern crate strum_macros;

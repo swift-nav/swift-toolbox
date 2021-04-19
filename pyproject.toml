@@ -22,6 +22,7 @@ Cython = "^0.29.21"
 nuitka = "^0.6.11"
 psutil = "5.8.0"
 qt5-applications = [{ version = "^5.15.2", platform = "linux" }]
+py2many = {git = "https://github.com/jayvdb/py2many", rev = "console"}
 
 [build-system]
 requires = ["poetry-core>=1.0.0", "setuptools>=41.0.0", "wheel", "setuptools_rust>=0.10.2"]

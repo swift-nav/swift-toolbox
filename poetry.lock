@@ -299,6 +299,21 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
+name = "py2many"
+version = "0.1.0"
+description = "Python to CLike language transpiler."
+category = "dev"
+optional = false
+python-versions = ">=3.8"
+develop = false
+
+[package.source]
+type = "git"
+url = "https://github.com/adsharma/py2many"
+reference = "main"
+resolved_reference = "6966df639ec3c43c3c409a074ba2fd85d10ca1dd"
+
+[[package]]
 name = "pycapnp"
 version = "1.0.0"
 description = "A cython wrapping of the C++ Cap'n Proto library"
@@ -494,7 +509,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.10"
-content-hash = "c34486e70ed232018b5c6cdcb21edc3b6c0c8b2feab685dd1fcd8fafad365c12"
+content-hash = "d8656a9147b0c48852c029884e5878b0b01fb4a15ee2959084dc2665ddf7598a"
 
 [metadata.files]
 altgraph = [
@@ -692,6 +707,7 @@ py = [
     {file = "py-1.10.0-py2.py3-none-any.whl", hash = "sha256:3b80836aa6d1feeaa108e046da6423ab8f6ceda6468545ae8d02d9d58d18818a"},
     {file = "py-1.10.0.tar.gz", hash = "sha256:21b81bda15b66ef5e1a777a21c4dcd9c20ad3efd0b3f817e7a809035269e1bd3"},
 ]
+py2many = []
 pycapnp = []
 pyinstaller = [
     {file = "pyinstaller-4.2.tar.gz", hash = "sha256:f5c0eeb2aa663cce9a5404292c0195011fa500a6501c873a466b2e8cad3c950c"},

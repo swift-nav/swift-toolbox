@@ -250,7 +250,7 @@ impl Clone for SharedState {
 pub struct SharedStateInner {
     pub tracking_tab: TrackingTabState,
     pub paused: bool,
-    pub running: bool,    
+    pub running: bool,
     pub solution_tab: SolutionTabState,
 }
 impl SharedStateInner {

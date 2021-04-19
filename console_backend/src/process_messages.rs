@@ -40,7 +40,7 @@ pub fn process_messages(
         }
         if shared_state.is_paused() {
             loop {
-                if !shared_state.is_paused(){
+                if !shared_state.is_paused() {
                     break;
                 }
             }

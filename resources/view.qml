@@ -79,7 +79,6 @@ ApplicationWindow {
         }
 
         Rectangle {
-
             id: consoleLog
 
             Layout.preferredWidth: parent.width

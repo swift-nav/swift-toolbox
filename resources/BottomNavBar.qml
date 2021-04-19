@@ -175,6 +175,7 @@ Item {
             }
 
         }
+
         Button {
             id: connectionPauseButton
 
@@ -186,6 +187,7 @@ Item {
             checkable: true
             onClicked: data_model.pause(checked)
         }
+
         Button {
             Layout.alignment: Qt.AlignRight
             Layout.rightMargin: Constants.bottomNavBar.navBarMargin
@@ -211,6 +213,7 @@ Item {
                 }
             }
         }
+
         ComboBox {
             id: refreshRateDrop
 
@@ -218,23 +221,22 @@ Item {
             Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
             model: Constants.bottomNavBar.available_ref_rates
             onActivated: {
-                Constants.current_ref_rate = 1000 / Constants.bottomNavBar.available_ref_rates[currentIndex]
+                Constants.current_ref_rate = 1000 / Constants.bottomNavBar.available_ref_rates[currentIndex];
             }
         }
 
         Timer {
-            
             // if (placeholderText.text != source_defaults[bottomNavBarSourceSelection.currentText]){
             //     placeholderText.text = source_defaults[bottomNavBarSourceSelection.currentText];
+            // }
+            // if (refreshRateDrop.model != Constants.navBarMargin.available_ref_rates) {
+            //     refreshRateDrop.model = Constants.navBarMargin.available_ref_rates;
             // }
 
             interval: 1000 / 5 // 5 Hz refresh
             running: true
             repeat: true
             onTriggered: {
-                // if (refreshRateDrop.model != Constants.navBarMargin.available_ref_rates) {
-                //     refreshRateDrop.model = Constants.navBarMargin.available_ref_rates;
-                // }
             }
         }
 

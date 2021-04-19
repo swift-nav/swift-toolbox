@@ -142,6 +142,7 @@ dependencies = [
  "criterion",
  "csv",
  "glob",
+ "lazy_static",
  "ndarray",
  "ordered-float",
  "paste",

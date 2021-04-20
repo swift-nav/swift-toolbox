@@ -6,6 +6,7 @@ use capnp::serialize;
 
 use crate::console_backend_capnp as m;
 use crate::constants::*;
+use crate::piksi_tools_constants::*;
 use crate::types::*;
 use crate::utils::{signal_key_color, signal_key_label};
 use sbp::messages::tracking::{MeasurementState, TrackingChannelState};
@@ -67,17 +68,17 @@ impl<'a> TrackingSignalsTab {
             at_least_one_track_received: false,
             check_labels: [
                 SHOW_LEGEND,
-                GPS_L1CA,
-                GPS_L2C_M,
-                GLO_L10F,
-                GLO_L20F,
-                BDS2_B1_I,
-                BDS2_B2_I,
-                GAL_E1_B,
-                GAL_E5B_I,
-                QZS_L1CA,
-                QZS_L2C_M,
-                SBAS_L1,
+                GPS_L1CA_STR,
+                GPS_L2CM_STR,
+                GLO_L1OF_STR,
+                GLO_L2OF_STR,
+                BDS2_B1_STR,
+                BDS2_B2_STR,
+                GAL_E1B_STR,
+                GAL_E7I_STR,
+                QZS_L1CA_STR,
+                QZS_L2CM_STR,
+                SBAS_L1_STR,
             ],
             client_sender: Box::new(client_sender),
             cn0_dict: Cn0Dict::new(),
@@ -668,7 +669,7 @@ mod tests {
         {
             let mut shared_data = tracking_signals_tab.shared_state.lock().unwrap();
             (*shared_data).tracking_tab.signals_tab.check_visibility =
-                vec![String::from(BDS2_B1_I)];
+                vec![String::from(BDS2_B1_STR)];
         }
         tracking_signals_tab.update_plot();
         assert_eq!(tracking_signals_tab.sv_labels.len(), 2);

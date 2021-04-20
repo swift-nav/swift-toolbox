@@ -14,6 +14,7 @@ use std::net::TcpStream;
 use std::sync::{mpsc, Arc, Mutex};
 use std::{thread, time::Duration};
 
+use crate::common_constants as cc;
 use crate::console_backend_capnp as m;
 use crate::process_messages::process_messages;
 use crate::types::{ClientSender, MessageSender, ServerState, SharedState, VelocityUnits};

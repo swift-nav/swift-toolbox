@@ -3,6 +3,7 @@ use capnp::serialize;
 
 use std::collections::HashMap;
 
+use crate::common_constants as cc;
 use crate::console_backend_capnp as m;
 use crate::constants::*;
 use crate::types::{MessageSender, SignalCodes};
@@ -12,7 +13,8 @@ pub fn close_frontend<P: MessageSender + Clone>(client_send: &mut P) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<m::message::Builder>();
     let mut status = msg.init_status();
-    status.set_text(CLOSE);
+    let app_state = cc::ApplicationStates::CLOSE;
+    status.set_text(&app_state.to_string());
     let mut msg_bytes: Vec<u8> = vec![];
     serialize::write_message(&mut msg_bytes, &builder).unwrap();
     client_send.send_data(msg_bytes);
@@ -201,6 +203,7 @@ pub fn ns_to_sec(ns: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::piksi_tools_constants::*;
 
     #[test]
     fn get_signal_key_label_test() {

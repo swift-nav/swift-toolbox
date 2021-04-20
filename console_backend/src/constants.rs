@@ -15,84 +15,8 @@ pub const QZSS_NEG_OFFSET: i16 = 193;
 pub const SNR_THRESHOLD: f64 = 15.0;
 pub const TRACKING_SIGNALS_PLOT_MAX: f64 = 60.0;
 pub const GUI_UPDATE_PERIOD: f64 = 0.2;
-pub const GPS_L1CA: &str = "GPS L1CA";
-pub const GPS_L2C_M: &str = "GPS L2C M";
-pub const GLO_L10F: &str = "GLO L1OF";
-pub const GLO_L20F: &str = "GLO L2OF";
-pub const BDS2_B1_I: &str = "BDS2 B1 I";
-pub const BDS2_B2_I: &str = "BDS2 B2 I";
-pub const GAL_E1_B: &str = "GAL E1 B";
-pub const GAL_E5B_I: &str = "GAL E5b I";
-pub const QZS_L1CA: &str = "QZS L1CA";
-pub const QZS_L2C_M: &str = "QZS L2C M";
-pub const SBAS_L1: &str = "SBAS L1";
+
 pub const SHOW_LEGEND: &str = "Show Legend";
-
-pub const GPS_L1CA_STR: &str = "GPS L1CA";
-pub const GPS_L2CM_STR: &str = "GPS L2C M";
-pub const GPS_L2CL_STR: &str = "GPS L2C L";
-pub const GPS_L2CX_STR: &str = "GPS L2C M+L";
-pub const GPS_L1P_STR: &str = "GPS L1P";
-pub const GPS_L2P_STR: &str = "GPS L2P";
-pub const GPS_L5I_STR: &str = "GPS L5 I";
-pub const GPS_L5Q_STR: &str = "GPS L5 Q";
-pub const GPS_L5X_STR: &str = "GPS L5 I+Q";
-pub const GPS_AUX_STR: &str = "AUX GPS L1";
-
-pub const SBAS_L1_STR: &str = "SBAS L1";
-pub const SBAS_L5I_STR: &str = "SBAS L5 I";
-pub const SBAS_L5Q_STR: &str = "SBAS L5 Q";
-pub const SBAS_L5X_STR: &str = "SBAS L5 I+Q";
-pub const SBAS_AUX_STR: &str = "AUX SBAS L1";
-
-pub const GLO_L1OF_STR: &str = "GLO L1OF";
-pub const GLO_L2OF_STR: &str = "GLO L2OF";
-pub const GLO_L1P_STR: &str = "GLO L1P";
-pub const GLO_L2P_STR: &str = "GLO L2P";
-
-pub const BDS2_B1_STR: &str = "BDS2 B1 I";
-pub const BDS2_B2_STR: &str = "BDS2 B2 I";
-pub const BDS3_B1CI_STR: &str = "BDS3 B1C I";
-pub const BDS3_B1CQ_STR: &str = "BDS3 B1C Q";
-pub const BDS3_B1CX_STR: &str = "BDS3 B1C I+Q";
-pub const BDS3_B5I_STR: &str = "BDS3 B2a I";
-pub const BDS3_B5Q_STR: &str = "BDS3 B2a Q";
-pub const BDS3_B5X_STR: &str = "BDS3 B2a X";
-pub const BDS3_B7I_STR: &str = "BDS3 B2b I";
-pub const BDS3_B7Q_STR: &str = "BDS3 B2b Q";
-pub const BDS3_B7X_STR: &str = "BDS3 B2b X";
-pub const BDS3_B3I_STR: &str = "BDS3 B3I";
-pub const BDS3_B3Q_STR: &str = "BDS3 B3Q";
-pub const BDS3_B3X_STR: &str = "BDS3 B3X";
-pub const BDS3_AUX_STR: &str = "AUX BDS B1";
-
-pub const GAL_E1B_STR: &str = "GAL E1 B";
-pub const GAL_E1C_STR: &str = "GAL E1 C";
-pub const GAL_E1X_STR: &str = "GAL E1 B+C";
-pub const GAL_E5I_STR: &str = "GAL E5a I";
-pub const GAL_E5Q_STR: &str = "GAL E5a Q";
-pub const GAL_E5X_STR: &str = "GAL E5a I+Q";
-pub const GAL_E6B_STR: &str = "GAL E6 B";
-pub const GAL_E6C_STR: &str = "GAL E6 C";
-pub const GAL_E6X_STR: &str = "GAL E6 B+C";
-pub const GAL_E8I_STR: &str = "GAL E5ab I";
-pub const GAL_E8Q_STR: &str = "GAL E5ab Q";
-pub const GAL_E8X_STR: &str = "GAL E5ab I+Q";
-pub const GAL_E7I_STR: &str = "GAL E5b I";
-pub const GAL_E7Q_STR: &str = "GAL E5b Q";
-pub const GAL_E7X_STR: &str = "GAL E5b I+Q";
-pub const GAL_AUX_STR: &str = "AUX GAL E1";
-
-pub const QZS_L1CA_STR: &str = "QZS L1CA";
-pub const QZS_L2CM_STR: &str = "QZS L2C M";
-pub const QZS_L2CL_STR: &str = "QZS L2C L";
-pub const QZS_L2CX_STR: &str = "QZS L2C M+L";
-pub const QZS_L5I_STR: &str = "QZS L5 I";
-pub const QZS_L5Q_STR: &str = "QZS L5 Q";
-pub const QZS_L5X_STR: &str = "QZS L5 I+Q";
-pub const QZS_AUX_STR: &str = "AUX QZS L1";
-
-pub const CODE_NOT_AVAILABLE: &str = "N/A";
 
 // Solution Table.
 pub const PLOT_HISTORY_MAX: usize = 1000;

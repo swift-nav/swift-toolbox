@@ -53,6 +53,23 @@ script = '''
 conda run -n $CONDA_ENV pip install -r $REQUIREMENTS_FILE
 '''
 
+[tasks.generate-common-constants-rs]
+script_runner = "@shell"
+script = '''
+conda run -n $CONDA_ENV --no-capture-output --live-stream py2many --rust=1 src/main/python/constants.py
+mv src/main/python/constants.rs console_backend/src/common_constants.rs
+'''
+
+[tasks.extract-piksi-constants-rs]
+dependencies = ["pip-install-dev"]
+script_runner = "@shell"
+script = '''
+conda run -n $CONDA_ENV --no-capture-output --live-stream python utils/extract_piksi_tools_constants.py > /tmp/piski_tools_constants.py
+conda run -n $CONDA_ENV --no-capture-output --live-stream black /tmp/piski_tools_constants.py
+conda run -n $CONDA_ENV --no-capture-output --live-stream python -m py2many --rust=1 /tmp/piski_tools_constants.py
+mv /tmp/piski_tools_constants.rs console_backend/src/piksi_tools_constants.rs
+'''
+
 [tasks.generate-resources]
 script_runner = "@shell"
 script = '''

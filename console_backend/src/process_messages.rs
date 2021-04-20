@@ -27,10 +27,10 @@ fn strip_errors_iter(
         .filter_map(sbp::Result::ok)
 }
 
-pub fn process_messages(
+pub fn process_messages<S: MessageSender>(
     messages: impl Iterator<Item = sbp::Result<SBP>>,
     shared_state: SharedState,
-    client_send: ClientSender,
+    client_send: S,
 ) {
     let mut main = MainTab::new(shared_state.clone(), client_send);
     let messages = strip_errors_iter(true, messages);

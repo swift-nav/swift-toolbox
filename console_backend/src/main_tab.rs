@@ -9,7 +9,7 @@ pub struct MainTab<'a, S: MessageSender> {
     pub solution_velocity_tab: SolutionVelocityTab<'a, S>,
 }
 
-impl<'a, S: MessageSender + Clone> MainTab<'a, S> {
+impl<'a, S: MessageSender> MainTab<'a, S> {
     pub fn new(shared_state: SharedState, client_sender: S) -> MainTab<'a, S> {
         MainTab {
             tracking_signals_tab: TrackingSignalsTab::new(

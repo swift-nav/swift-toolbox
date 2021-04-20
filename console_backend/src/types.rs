@@ -1,3 +1,8 @@
+use crate::constants::*;
+use crate::formatters::*;
+use crate::piksi_tools_constants::*;
+use crate::process_messages::process_messages;
+use crate::utils::close_frontend;
 use chrono::{DateTime, Utc};
 use ordered_float::OrderedFloat;
 use sbp::messages::{
@@ -11,7 +16,9 @@ use serde::Serialize;
 use std::{
     cmp::{Eq, PartialEq},
     collections::HashMap,
-    fmt, fs,
+    fmt,
+    fmt::Debug,
+    fs,
     hash::Hash,
     net::TcpStream,
     ops::Deref,
@@ -20,12 +27,6 @@ use std::{
     thread::JoinHandle,
     time::Instant,
 };
-
-use crate::constants::*;
-use crate::formatters::*;
-use crate::piksi_tools_constants::*;
-use crate::process_messages::process_messages;
-use crate::utils::close_frontend;
 
 pub type Error = std::boxed::Box<dyn std::error::Error>;
 pub type Result<T> = std::result::Result<T, Error>;
@@ -57,15 +58,8 @@ impl<T> Deque<T> {
     }
 }
 
-pub trait MessageSender {
+pub trait MessageSender: Debug + Clone {
     fn send_data(&mut self, msg_bytes: Vec<u8>);
-}
-
-use std::fmt::Debug;
-impl Debug for dyn MessageSender {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
 }
 
 #[derive(Debug, Clone)]

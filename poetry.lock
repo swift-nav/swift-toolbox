@@ -212,7 +212,7 @@ python-versions = "*"
 
 [[package]]
 name = "nuitka"
-version = "0.6.14.4"
+version = "0.6.12.4"
 description = "Python compiler with full language support and CPython compatibility"
 category = "dev"
 optional = false
@@ -509,7 +509,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.10"
-content-hash = "f8645befb0ffae30da7d92cb74c98e1e23be66371d7914b1d149f8b284b9bc55"
+content-hash = "32f12f2562154032079388312bdf4058c334363126536c1bd6e415476d619c8b"
 
 [metadata.files]
 altgraph = [
@@ -650,7 +650,7 @@ mypy-extensions = [
     {file = "mypy_extensions-0.4.3.tar.gz", hash = "sha256:2d82818f5bb3e369420cb3c4060a7970edba416647068eb4c5343488a6c604a8"},
 ]
 nuitka = [
-    {file = "Nuitka-0.6.14.4.tar.gz", hash = "sha256:db72496a362d460408029bcc96ac002ac87342bc474ba859e452fba03a6fa44c"},
+    {file = "Nuitka-0.6.12.4.tar.gz", hash = "sha256:a7cec3b5752db8c32570797f420c42062b90f2411e6c60a8aa54d761f34a"},
 ]
 packaging = [
     {file = "packaging-20.9-py2.py3-none-any.whl", hash = "sha256:67714da7f7bc052e064859c05c595155bd1ee9f69f76557e21f051443c20947a"},

@@ -24,9 +24,9 @@ use crate::types::{Deque, MessageSender, SharedState, VelocityUnits};
 /// - `tow`: The GPS Time of Week.
 /// - `unit`: Currently displayed and converted to unit of measure.
 #[derive(Debug)]
-pub struct SolutionVelocityTab<'a> {
+pub struct SolutionVelocityTab<'a, S: MessageSender> {
     pub available_units: Vec<&'a str>,
-    pub client_sender: Box<dyn MessageSender>,
+    pub client_sender: S,
     pub colors: Vec<String>,
     pub max: f64,
     pub min: f64,
@@ -37,18 +37,15 @@ pub struct SolutionVelocityTab<'a> {
     pub unit: VelocityUnits,
 }
 
-impl<'a> SolutionVelocityTab<'a> {
-    pub fn new<P: 'static + MessageSender>(
-        shared_state: SharedState,
-        client_sender: P,
-    ) -> SolutionVelocityTab<'a> {
+impl<'a, S: MessageSender> SolutionVelocityTab<'a, S> {
+    pub fn new(shared_state: SharedState, client_sender: S) -> SolutionVelocityTab<'a, S> {
         SolutionVelocityTab {
             available_units: vec![
                 VelocityUnits::Mps.as_str(),
                 VelocityUnits::Mph.as_str(),
                 VelocityUnits::Kph.as_str(),
             ],
-            client_sender: Box::new(client_sender),
+            client_sender,
             colors: vec![String::from(HORIZONTAL_COLOR), String::from(VERTICAL_COLOR)],
             max: 0_f64,
             min: 0_f64,

@@ -1071,7 +1071,7 @@ mod tests {
             inner: client_send_,
         };
         let filename = TEST_FILEPATH.to_string();
-        let expected_duration = Duration::from_millis(10);
+        let expected_duration = Duration::from_millis(100);
         let handle = receive_thread(client_receive);
         assert!(!shared_state.is_running());
         server_state.connect_to_file(client_send, shared_state.clone(), filename, true);

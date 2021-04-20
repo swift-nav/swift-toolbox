@@ -54,10 +54,10 @@ const POS_LLH_TIME_STR_FILEPATH: &str = "position_log_%Y%m%d-%H%M%S.csv";
 /// - `vel_log_file`: The CsvSerializer corresponding to an open velocity log if any.
 /// - `week`: The stored week value from GPS Time messages.
 #[derive(Debug)]
-pub struct SolutionTab {
+pub struct SolutionTab<S: MessageSender> {
     pub age_corrections: Option<f64>,
     pub available_units: [&'static str; 2],
-    pub client_sender: Box<dyn MessageSender>,
+    pub client_sender: S,
     pub colors: Vec<String>,
     pub directory_name: Option<String>,
     pub ins_status_flags: u32,
@@ -90,15 +90,12 @@ pub struct SolutionTab {
     pub week: Option<u16>,
 }
 
-impl SolutionTab {
-    pub fn new<P: 'static + MessageSender>(
-        shared_state: SharedState,
-        client_sender: P,
-    ) -> SolutionTab {
+impl<S: MessageSender> SolutionTab<S> {
+    pub fn new(shared_state: SharedState, client_sender: S) -> SolutionTab<S> {
         SolutionTab {
             age_corrections: None,
             available_units: [DEGREES, METERS],
-            client_sender: Box::new(client_sender),
+            client_sender,
             colors: {
                 vec![
                     GnssModes::Spp.color(),

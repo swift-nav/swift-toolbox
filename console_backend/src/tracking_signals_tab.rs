@@ -34,10 +34,10 @@ use sbp::messages::tracking::{MeasurementState, TrackingChannelState};
 /// - `t_init`: Instant monotonic time used as starting reference time.
 /// - `time`: Vector of Monotic times stored.
 #[derive(Debug)]
-pub struct TrackingSignalsTab {
+pub struct TrackingSignalsTab<S: MessageSender> {
     pub at_least_one_track_received: bool,
     pub check_labels: [&'static str; 12],
-    pub client_sender: Box<dyn MessageSender>,
+    pub client_sender: S,
     pub cn0_age: Cn0Age,
     pub cn0_dict: Cn0Dict,
     pub colors: Vec<String>,
@@ -59,11 +59,8 @@ pub struct TrackingSignalsTab {
     pub time: Deque<f64>,
 }
 
-impl<'a> TrackingSignalsTab {
-    pub fn new<P: 'static + MessageSender>(
-        shared_state: SharedState,
-        client_sender: P,
-    ) -> TrackingSignalsTab {
+impl<S: MessageSender> TrackingSignalsTab<S> {
+    pub fn new(shared_state: SharedState, client_sender: S) -> TrackingSignalsTab<S> {
         TrackingSignalsTab {
             at_least_one_track_received: false,
             check_labels: [
@@ -80,7 +77,7 @@ impl<'a> TrackingSignalsTab {
                 QZS_L2CM_STR,
                 SBAS_L1_STR,
             ],
-            client_sender: Box::new(client_sender),
+            client_sender,
             cn0_dict: Cn0Dict::new(),
             cn0_age: Cn0Age::new(),
             colors: Vec::new(),

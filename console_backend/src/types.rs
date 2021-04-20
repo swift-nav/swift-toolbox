@@ -995,3 +995,110 @@ pub struct VelLog {
     pub flags: u8,
     pub num_signals: u8,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::{
+        sync::mpsc,
+        thread::sleep,
+        time::{Duration, SystemTime},
+    };
+    const TEST_FILEPATH: &str = "./tests/data/piksi-relay-1min.sbp";
+
+    fn receive_thread(client_recv: mpsc::Receiver<Vec<u8>>) -> JoinHandle<()> {
+        thread::spawn(move || {
+            let mut iter_count = 0;
+
+            loop {
+                if client_recv.recv().is_err() {
+                    break;
+                }
+
+                iter_count += 1;
+            }
+            assert!(iter_count > 0);
+        })
+    }
+
+    #[test]
+    fn connect_to_file_test() {
+        let shared_state = SharedState::new();
+        let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
+        let server_state = ServerState::new();
+        let client_send = ClientSender {
+            inner: client_send_,
+        };
+        let filename = TEST_FILEPATH.to_string();
+        receive_thread(client_receive);
+        assert!(!shared_state.is_running());
+        server_state.connect_to_file(client_send, shared_state.clone(), filename, true);
+        sleep(Duration::from_millis(5));
+        assert!(shared_state.is_running());
+        sleep(Duration::from_secs(5));
+        assert!(!shared_state.is_running());
+    }
+
+    #[test]
+    fn pause_via_connect_to_file_test() {
+        let shared_state = SharedState::new();
+        let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
+        let server_state = ServerState::new();
+        let client_send = ClientSender {
+            inner: client_send_,
+        };
+        let filename = TEST_FILEPATH.to_string();
+        receive_thread(client_receive);
+        assert!(!shared_state.is_running());
+        server_state.connect_to_file(client_send, shared_state.clone(), filename, true);
+        sleep(Duration::from_millis(5));
+        assert!(shared_state.is_running());
+        shared_state.set_paused(true);
+        sleep(Duration::from_secs(5));
+        assert!(shared_state.is_running());
+        shared_state.set_paused(false);
+        sleep(Duration::from_secs(5));
+        assert!(!shared_state.is_running());
+    }
+
+    #[test]
+    fn disconnect_via_connect_to_file_test() {
+        let shared_state = SharedState::new();
+        let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
+        let server_state = ServerState::new();
+        let client_send = ClientSender {
+            inner: client_send_,
+        };
+        let filename = TEST_FILEPATH.to_string();
+        let expected_duration = Duration::from_millis(10);
+        let handle = receive_thread(client_receive);
+        assert!(!shared_state.is_running());
+        server_state.connect_to_file(client_send, shared_state.clone(), filename, true);
+        sleep(Duration::from_millis(5));
+        assert!(shared_state.is_running());
+        let now = SystemTime::now();
+        sleep(Duration::from_millis(1));
+        shared_state.set_running(false);
+        sleep(Duration::from_millis(1));
+        assert!(handle.join().is_ok());
+
+        match now.elapsed() {
+            Ok(elapsed) => {
+                assert!(
+                    elapsed < expected_duration,
+                    "Time elapsed for disconnect test {:?}, expecting {:?}ms",
+                    elapsed,
+                    expected_duration
+                );
+            }
+            Err(e) => {
+                panic!("unknown error {}", e);
+            }
+        }
+    }
+
+    // TODO(johnmichael.burke@) [CPP-111] Need to implement unittest for TCPStream.
+    // #[test]
+    // fn connect_to_host_test() {
+    // }
+}

@@ -19,7 +19,6 @@ ndarray = "0.14.0"
 glob = "0.3.0"
 criterion = "0.3.4"
 sysinfo = "0.16.4"
-serialport = "4.0.1"
 
 [[bench]]
 name = "cpu_benches"

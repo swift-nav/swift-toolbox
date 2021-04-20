@@ -92,7 +92,7 @@ Item {
             id: tcpUrlBarPortBar
 
             Layout.preferredWidth: parent.width / 2
-            Layout.preferredHeight: 25
+            Layout.preferredHeight: Constants.bottomNavBar.urlBarHeight
             spacing: 1
 
             Rectangle {
@@ -100,14 +100,14 @@ Item {
 
                 height: parent.height
                 width: parent.width / 2
-                border.width: 1
+                border.width: Constants.bottomNavBar.urlBarBorder
 
                 TextInput {
                     id: tcpUrlBarText
 
                     clip: true
                     anchors.fill: parent
-                    anchors.margins: 4
+                    anchors.margins: Constants.bottomNavBar.urlBarTextMargin
                     onTextChanged: {
                     }
 
@@ -126,14 +126,14 @@ Item {
 
                 height: parent.height
                 width: parent.width / 2
-                border.width: 1
+                border.width: Constants.bottomNavBar.urlBarBorder
 
                 TextInput {
                     id: tcpPortBarText
 
                     clip: true
                     anchors.fill: parent
-                    anchors.margins: 4
+                    anchors.margins: Constants.bottomNavBar.urlBarTextMargin
                     onTextChanged: {
                     }
 
@@ -154,14 +154,14 @@ Item {
 
             visible: false
             Layout.preferredWidth: parent.width / 2
-            Layout.preferredHeight: 25
-            border.width: 1
+            Layout.preferredHeight: Constants.bottomNavBar.urlBarHeight
+            border.width: Constants.bottomNavBar.urlBarBorder
 
             TextInput {
                 id: fileUrlBarText
 
                 anchors.fill: parent
-                anchors.margins: 4
+                anchors.margins: Constants.bottomNavBar.urlBarTextMargin
                 onTextChanged: {
                 }
                 clip: true
@@ -211,32 +211,6 @@ Item {
                         data_model.connect_file(serialDevice.currentText, serialDeviceBaudRate.currentText, serialDeviceFlowControl.currentIndex == 1);
                     }
                 }
-            }
-        }
-
-        ComboBox {
-            id: refreshRateDrop
-
-            visible: true
-            Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
-            model: Constants.bottomNavBar.available_ref_rates
-            onActivated: {
-                Constants.current_ref_rate = 1000 / Constants.bottomNavBar.available_ref_rates[currentIndex];
-            }
-        }
-
-        Timer {
-            // if (placeholderText.text != source_defaults[bottomNavBarSourceSelection.currentText]){
-            //     placeholderText.text = source_defaults[bottomNavBarSourceSelection.currentText];
-            // }
-            // if (refreshRateDrop.model != Constants.navBarMargin.available_ref_rates) {
-            //     refreshRateDrop.model = Constants.navBarMargin.available_ref_rates;
-            // }
-
-            interval: 1000 / 5 // 5 Hz refresh
-            running: true
-            repeat: true
-            onTriggered: {
             }
         }
 

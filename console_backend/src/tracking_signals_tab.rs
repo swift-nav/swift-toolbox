@@ -269,51 +269,14 @@ impl<S: MessageSender> TrackingSignalsTab<S> {
     ///
     /// - `msg`: The full SBP message cast as an ObservationMsg variant.
     pub fn handle_obs(&mut self, msg: ObservationMsg) {
-        let (seq, tow, wn, states) = match &msg {
-            ObservationMsg::MsgObs(obs) => {
-                let states: Vec<Observations> = obs
-                    .obs
-                    .clone()
-                    .into_iter()
-                    .map(Observations::PackedObsContent)
-                    .collect();
-                (
-                    obs.header.n_obs,
-                    obs.header.t.tow as f64 / 1000.0_f64,
-                    obs.header.t.wn,
-                    states,
-                )
+        let (seq, tow, wn, states, sender_id) = msg.fields();
+        if let Some(sender_id_) = sender_id {
+            if sender_id_ == 0_u16 {
+                return;
             }
-            // ObservationMsg::MsgObsDepA(obs)
-            ObservationMsg::MsgObsDepB(obs) => {
-                let states: Vec<Observations> = obs
-                    .obs
-                    .clone()
-                    .into_iter()
-                    .map(Observations::PackedObsContentDepB)
-                    .collect();
-                (
-                    obs.header.n_obs,
-                    obs.header.t.tow as f64 / 1000.0_f64,
-                    obs.header.t.wn,
-                    states,
-                )
-            }
-            ObservationMsg::MsgObsDepC(obs) => {
-                let states: Vec<Observations> = obs
-                    .obs
-                    .clone()
-                    .into_iter()
-                    .map(Observations::PackedObsContentDepC)
-                    .collect();
-                (
-                    obs.header.n_obs,
-                    obs.header.t.tow as f64 / 1000.0_f64,
-                    obs.header.t.wn,
-                    states,
-                )
-            }
-        };
+        } else {
+            return;
+        }
 
         let total = seq >> 4;
         let count = seq & ((1 << 4) - 1);
@@ -334,29 +297,7 @@ impl<S: MessageSender> TrackingSignalsTab<S> {
         }
 
         for state in states.iter() {
-            let (code, sat, cn0) = match state {
-                Observations::PackedObsContentDepB(obs) => {
-                    let mut sat_ = obs.sid.sat as i16;
-                    let signal_code = SignalCodes::from(obs.sid.code);
-                    if signal_code.code_is_gps() {
-                        sat_ += 1;
-                    }
-                    (signal_code, sat_, obs.cn0 as f64)
-                }
-                Observations::PackedObsContentDepC(obs) => {
-                    let mut sat_ = obs.sid.sat as i16;
-                    let signal_code = SignalCodes::from(obs.sid.code);
-                    if signal_code.code_is_gps() {
-                        sat_ += 1;
-                    }
-                    (signal_code, sat_, obs.cn0 as f64)
-                }
-                Observations::PackedObsContent(obs) => (
-                    SignalCodes::from(obs.sid.code),
-                    obs.sid.sat as i16,
-                    obs.cn0 as f64,
-                ),
-            };
+            let (code, sat, cn0) = state.fields();
             self.incoming_obs_cn0.insert((code, sat), cn0 / 4.0);
         }
 
@@ -394,6 +335,7 @@ impl<S: MessageSender> TrackingSignalsTab<S> {
                 cn0_deque.add((OrderedFloat(t), 0.0));
             }
         }
+        // println!("{:?}", obs_dict);
         self.clean_cn0();
         self.update_plot();
         self.send_data();

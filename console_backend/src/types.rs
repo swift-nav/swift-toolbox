@@ -2,7 +2,7 @@ use crate::constants::*;
 use crate::formatters::*;
 use crate::piksi_tools_constants::*;
 use crate::process_messages::process_messages;
-use crate::utils::close_frontend;
+use crate::utils::{close_frontend, ms_to_sec};
 use chrono::{DateTime, Utc};
 use ordered_float::OrderedFloat;
 use sbp::messages::{
@@ -13,6 +13,7 @@ use sbp::messages::{
     },
 };
 use serde::Serialize;
+use serialport;
 use std::{
     cmp::{Eq, PartialEq},
     collections::HashMap,
@@ -25,7 +26,7 @@ use std::{
     sync::{mpsc::Sender, Arc, Mutex},
     thread,
     thread::JoinHandle,
-    time::Instant,
+    time::{Duration, Instant},
 };
 
 pub type Error = std::boxed::Box<dyn std::error::Error>;
@@ -179,6 +180,48 @@ impl ServerState {
             } else {
                 println!("Couldn't connect to server...");
             }
+            shared_state.set_running(false);
+        });
+        self.new_connection(handle);
+    }
+
+    /// Helper function for attempting to open a tcp connection and process SBP messages from it.
+    ///
+    /// # Parameters
+    /// - `client_send`: Client Sender channel for bidirectional communication between front/backend.
+    /// - `shared_state`: The shared state for validating another connection is not already running.
+    /// - `host_port`: The host and port combined as a string to be opend as a TCP stream.
+    pub fn connect_to_serial(
+        &self,
+        client_send: ClientSender,
+        shared_state: SharedState,
+        // host_port: String,
+    ) {
+        let shared_state_clone = shared_state.clone();
+        shared_state_clone.set_running(true);
+        self.connection_join();
+        let handle = thread::spawn(move || {
+            let shared_state_clone = shared_state.clone();
+
+            // let port = serialport::new("/dev/ttyUSB0", 115200)
+            //     .timeout(Duration::from_millis(10))
+            //     .open().expect("Failed to open port");
+
+            match serialport::new("/dev/ttyUSB0", 115200).timeout(Duration::from_millis(1000)).open() {
+                Ok(port) => {
+                    println!("Connected to the port!");
+                    let messages = sbp::iter_messages(port);
+                    process_messages(messages, shared_state_clone, client_send);
+                }
+                Err(e) => ()//eprint!("Error: {}", e)
+            }
+            // if let Ok(port) = serialport::new("/dev/ttyUSB0", 115200).timeout(Duration::from_millis(10)).open() {
+            //     println!("Connected to the port!");
+            //     let messages = sbp::iter_messages(port);
+            //     process_messages(messages, shared_state_clone, client_send);
+            // } else {
+            //     println!("Couldn't connect to server...");
+            // }
             shared_state.set_running(false);
         });
         self.new_connection(handle);
@@ -767,12 +810,92 @@ pub enum ObservationMsg {
     MsgObsDepB(MsgObsDepB),
     MsgObsDepC(MsgObsDepC),
 }
+impl ObservationMsg {
+    pub fn fields(&self) -> (u8, f64, u16, Vec<Observations>, Option<u16>) {
+        match &self {
+            ObservationMsg::MsgObs(obs) => {
+                let states: Vec<Observations> = obs
+                    .obs
+                    .clone()
+                    .into_iter()
+                    .map(Observations::PackedObsContent)
+                    .collect();
+                (
+                    obs.header.n_obs,
+                    ms_to_sec(obs.header.t.tow as f64),
+                    obs.header.t.wn,
+                    states,
+                    obs.sender_id,
+                )
+            }
+            // ObservationMsg::MsgObsDepA(obs)
+            ObservationMsg::MsgObsDepB(obs) => {
+                let states: Vec<Observations> = obs
+                    .obs
+                    .clone()
+                    .into_iter()
+                    .map(Observations::PackedObsContentDepB)
+                    .collect();
+                (
+                    obs.header.n_obs,
+                    ms_to_sec(obs.header.t.tow as f64),
+                    obs.header.t.wn,
+                    states,
+                    obs.sender_id,
+                )
+            }
+            ObservationMsg::MsgObsDepC(obs) => {
+                let states: Vec<Observations> = obs
+                    .obs
+                    .clone()
+                    .into_iter()
+                    .map(Observations::PackedObsContentDepC)
+                    .collect();
+                (
+                    obs.header.n_obs,
+                    ms_to_sec(obs.header.t.tow as f64),
+                    obs.header.t.wn,
+                    states,
+                    obs.sender_id,
+                )
+            }
+        }
+    }
+}
 // Enum wrapping around various Observation Message observation types.
 pub enum Observations {
     PackedObsContent(PackedObsContent),
     // PackedObsContentDepA(PackedObsContentDepA),
     PackedObsContentDepB(PackedObsContentDepB),
     PackedObsContentDepC(PackedObsContentDepC),
+}
+impl Observations {
+    pub fn fields(&self) -> (SignalCodes, i16, f64) {
+        match self {
+            Observations::PackedObsContentDepB(obs) => {
+                let mut sat_ = obs.sid.sat as i16;
+                let signal_code = SignalCodes::from(obs.sid.code);
+                if signal_code.code_is_gps() {
+                    sat_ += 1;
+                }
+                (signal_code, sat_, obs.cn0 as f64)
+            }
+            Observations::PackedObsContentDepC(obs) => {
+                let mut sat_ = obs.sid.sat as i16;
+                let signal_code = SignalCodes::from(obs.sid.code);
+                if signal_code.code_is_gps() {
+                    sat_ += 1;
+                }
+                (signal_code, sat_, obs.cn0 as f64)
+            }
+            Observations::PackedObsContent(obs) => (
+                SignalCodes::from(obs.sid.code),
+                obs.sid.sat as i16,
+                obs.cn0 as f64,
+            ),
+        }
+    }
+
 }
 
 // Solution Tab Types.

@@ -5,7 +5,8 @@ QtObject {
     readonly property int width: 640
     readonly property int height: 480
     property QtObject bottomNavBar
-    property int current_ref_rate: 1000 / 5 // 5 Hz
+    property int currentRefreshRate: 1000 / 5 // 5 Hz
+    property int defaultTimerIntervalRate: 1000 / 5 // 5 Hz
 
     bottomNavBar: QtObject {
         readonly property int urlBarHeight: 25

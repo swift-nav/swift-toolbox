@@ -163,6 +163,12 @@ impl Server {
                                     host_port,
                                 );
                             }
+                            m::message::SerialRequest(Ok(req)) => {
+                                server_state_clone.connect_to_serial(
+                                    client_send_clone,
+                                    shared_state_clone,
+                                );
+                            }
                             _ => println!("err"),
                         }
                     }

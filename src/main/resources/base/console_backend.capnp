@@ -15,7 +15,7 @@ struct FileRequest {
 
 struct SerialRequest {
     device @0 :Text;
-    baudrate @1 :UInt16;
+    baudrate @1 :UInt32;
     flowControl @2 :Bool;
 }
 
@@ -39,6 +39,11 @@ struct SolutionTableStatus {
 struct Point {
     x @0 :Float64;
     y @1 :Float64;
+}
+
+struct BottomNavbarStatus {
+    availableBaudrates @0 : List(UInt32);
+    availablePorts @1 : List(Text);
 }
 
 struct SolutionPositionStatus {
@@ -109,5 +114,6 @@ struct Message {
         serialRequest @12 :SerialRequest;
         pauseRequest @13 :PauseRequest;
         disconnectRequest @14 :DisconnectRequest;
+        bottomNavbarStatus @15 :BottomNavbarStatus;
     }
 }

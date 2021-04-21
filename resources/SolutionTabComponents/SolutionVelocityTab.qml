@@ -3,6 +3,7 @@ import QtQuick 2.6
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
+import "../Constants"
 
 Item {
     id: solutionVelocityTab
@@ -166,7 +167,7 @@ Item {
                 }
 
                 Timer {
-                    interval: 1000 / 5 // 5 Hz refresh
+                    interval: Constants.currentRefreshRate
                     running: true
                     repeat: true
                     onTriggered: {

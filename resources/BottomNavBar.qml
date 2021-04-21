@@ -2,6 +2,7 @@ import QtCharts 2.2
 import QtQuick 2.5
 import QtQuick.Controls 2.2
 import QtQuick.Layouts 1.15
+import "Constants"
 
 Item {
     property string tcp_ip: "TCP/IP"
@@ -208,9 +209,29 @@ Item {
                             data_model.connect_file(fileUrlBarText.text);
 
                     } else {
-                        data_model.connect_file(serialDevice.currentText, serialDeviceBaudRate.currentText, serialDeviceFlowControl.currentIndex == 1);
+                        data_model.connect_serial(serialDevice.currentText, serialDeviceBaudRate.currentText, serialDeviceFlowControl.currentIndex == 1);
                     }
                 }
+            }
+        }
+
+        ComboBox {
+            id: refreshRateDrop
+
+            visible: true
+            Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
+            model: Constants.bottomNavBar.available_ref_rates
+            onActivated: {
+                Constants.currentRefreshRate = 1000 / Constants.bottomNavBar.available_ref_rates[currentIndex];
+            }
+        }
+
+        Timer {
+
+            interval: Constants.defaultTimerIntervalRate
+            running: true
+            repeat: true
+            onTriggered: {
             }
         }
 

@@ -4,6 +4,7 @@ import QtQuick 2.14
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
+import "../Constants"
 
 Item {
     id: solutionTable
@@ -109,7 +110,6 @@ Item {
                     }
 
                     TableModelColumn {
-                        id: hello
 
                         display: "Value"
                     }
@@ -154,7 +154,7 @@ Item {
         }
 
         Timer {
-            interval: 1000 / 10 // 10 Hz refresh
+            interval: Constants.currentRefreshRate
             running: true
             repeat: true
             onTriggered: {

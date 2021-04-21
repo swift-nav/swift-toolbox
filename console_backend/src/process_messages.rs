@@ -1,5 +1,7 @@
 use sbp::messages::SBP;
+use std::{thread::sleep, time::Duration};
 
+use crate::constants::PAUSE_LOOP_SLEEP_DURATION_MS;
 use crate::main_tab::*;
 use crate::types::*;
 
@@ -43,6 +45,7 @@ pub fn process_messages<S: MessageSender>(
                 if !shared_state.is_paused() {
                     break;
                 }
+                sleep(Duration::from_millis(PAUSE_LOOP_SLEEP_DURATION_MS));
             }
         }
         match message {

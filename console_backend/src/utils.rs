@@ -1,7 +1,24 @@
+use capnp::message::Builder;
+use capnp::serialize;
+
 use std::collections::HashMap;
 
+use crate::common_constants as cc;
+use crate::console_backend_capnp as m;
 use crate::constants::*;
-use crate::types::SignalCodes;
+use crate::types::{MessageSender, SignalCodes};
+
+/// Send a CLOSE, or kill, signal to the frontend.
+pub fn close_frontend<P: MessageSender + Clone>(client_send: &mut P) {
+    let mut builder = Builder::new_default();
+    let msg = builder.init_root::<m::message::Builder>();
+    let mut status = msg.init_status();
+    let app_state = cc::ApplicationStates::CLOSE;
+    status.set_text(&app_state.to_string());
+    let mut msg_bytes: Vec<u8> = vec![];
+    serialize::write_message(&mut msg_bytes, &builder).unwrap();
+    client_send.send_data(msg_bytes);
+}
 
 pub fn signal_key_label(
     key: (SignalCodes, i16),

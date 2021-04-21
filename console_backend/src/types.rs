@@ -1,3 +1,8 @@
+use crate::constants::*;
+use crate::formatters::*;
+use crate::piksi_tools_constants::*;
+use crate::process_messages::process_messages;
+use crate::utils::close_frontend;
 use chrono::{DateTime, Utc};
 use ordered_float::OrderedFloat;
 use sbp::messages::{
@@ -12,15 +17,16 @@ use std::{
     cmp::{Eq, PartialEq},
     collections::HashMap,
     fmt,
+    fmt::Debug,
+    fs,
     hash::Hash,
+    net::TcpStream,
     ops::Deref,
     sync::{mpsc::Sender, Arc, Mutex},
+    thread,
+    thread::JoinHandle,
     time::Instant,
 };
-
-use crate::constants::*;
-use crate::formatters::*;
-use crate::piksi_tools_constants::*;
 
 pub type Error = std::boxed::Box<dyn std::error::Error>;
 pub type Result<T> = std::result::Result<T, Error>;
@@ -52,11 +58,11 @@ impl<T> Deque<T> {
     }
 }
 
-pub trait MessageSender {
+pub trait MessageSender: Debug + Clone {
     fn send_data(&mut self, msg_bytes: Vec<u8>);
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct ClientSender {
     pub inner: Sender<Vec<u8>>,
 }
@@ -66,7 +72,7 @@ impl MessageSender for ClientSender {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct TestSender {
     pub inner: Vec<Vec<u8>>,
 }
@@ -77,19 +83,140 @@ impl MessageSender for TestSender {
 }
 
 #[derive(Debug)]
+pub struct ServerState(Arc<Mutex<ServerStateInner>>);
+
+impl Deref for ServerState {
+    type Target = Mutex<ServerStateInner>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Default for ServerState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Clone for ServerState {
+    fn clone(&self) -> Self {
+        ServerState {
+            0: Arc::clone(&self.0),
+        }
+    }
+}
+
+impl ServerState {
+    pub fn new() -> ServerState {
+        ServerState(Arc::new(Mutex::new(ServerStateInner::default())))
+    }
+    pub fn new_connection(&self, new_thread: JoinHandle<()>) {
+        let mut shared_data = self.lock().unwrap();
+        (*shared_data).handler = Some(new_thread);
+    }
+    pub fn connection_join(&self) {
+        let mut shared_data = self.lock().unwrap();
+        let handler = &mut (*shared_data).handler;
+        if let Some(handle) = handler.take() {
+            handle.join().unwrap();
+        }
+    }
+
+    /// Helper function for attempting to open a file and process SBP messages from it.
+    ///
+    /// # Parameters
+    /// - `client_send`: Client Sender channel for bidirectional communication between front/backend.
+    /// - `shared_state`: The shared state for validating another connection is not already running.
+    /// - `filename`: The path to the filename to be read for SBP messages.
+    pub fn connect_to_file(
+        &self,
+        client_send: ClientSender,
+        shared_state: SharedState,
+        filename: String,
+        close_when_done: bool,
+    ) {
+        let shared_state_clone = shared_state.clone();
+        self.connection_join();
+        shared_state_clone.set_running(true);
+        let handle = thread::spawn(move || {
+            if let Ok(stream) = fs::File::open(filename) {
+                println!("Opened file successfully!");
+                let shared_state_clone_ = shared_state.clone();
+                let messages = sbp::iter_messages(stream);
+                process_messages(messages, shared_state_clone_, client_send.clone());
+                if close_when_done {
+                    close_frontend(&mut client_send.clone());
+                }
+            } else {
+                println!("Couldn't open file...");
+            }
+            shared_state.set_running(false);
+        });
+        self.new_connection(handle);
+    }
+
+    /// Helper function for attempting to open a tcp connection and process SBP messages from it.
+    ///
+    /// # Parameters
+    /// - `client_send`: Client Sender channel for bidirectional communication between front/backend.
+    /// - `shared_state`: The shared state for validating another connection is not already running.
+    /// - `host_port`: The host and port combined as a string to be opend as a TCP stream.
+    pub fn connect_to_host(
+        &self,
+        client_send: ClientSender,
+        shared_state: SharedState,
+        host_port: String,
+    ) {
+        let shared_state_clone = shared_state.clone();
+        shared_state_clone.set_running(true);
+        self.connection_join();
+        let handle = thread::spawn(move || {
+            let shared_state_clone = shared_state.clone();
+            if let Ok(stream) = TcpStream::connect(host_port.clone()) {
+                println!("Connected to the server {}!", host_port);
+                let messages = sbp::iter_messages(stream);
+                process_messages(messages, shared_state_clone, client_send);
+            } else {
+                println!("Couldn't connect to server...");
+            }
+            shared_state.set_running(false);
+        });
+        self.new_connection(handle);
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct ServerStateInner {
+    pub handler: Option<JoinHandle<()>>,
+}
+impl ServerStateInner {
+    pub fn new() -> ServerStateInner {
+        ServerStateInner { handler: None }
+    }
+}
+
+#[derive(Debug)]
 pub struct SharedState(Arc<Mutex<SharedStateInner>>);
 
 impl SharedState {
     pub fn new() -> SharedState {
         SharedState(Arc::new(Mutex::new(SharedStateInner::default())))
     }
-    pub fn server_is_connected(&self) -> bool {
+    pub fn is_running(&self) -> bool {
         let shared_data = self.lock().unwrap();
-        (*shared_data).server.connected
+        (*shared_data).running
     }
-    pub fn server_set_connected(&self, set_to: bool) {
+    pub fn set_running(&self, set_to: bool) {
         let mut shared_data = self.lock().unwrap();
-        (*shared_data).server.connected = set_to;
+        (*shared_data).running = set_to;
+    }
+    pub fn is_paused(&self) -> bool {
+        let shared_data = self.lock().unwrap();
+        (*shared_data).paused
+    }
+    pub fn set_paused(&self, set_to: bool) {
+        let mut shared_data = self.lock().unwrap();
+        (*shared_data).paused = set_to;
     }
 }
 
@@ -117,14 +244,16 @@ impl Clone for SharedState {
 #[derive(Debug)]
 pub struct SharedStateInner {
     pub tracking_tab: TrackingTabState,
-    pub server: ServerState,
+    pub paused: bool,
+    pub running: bool,
     pub solution_tab: SolutionTabState,
 }
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
         SharedStateInner {
             tracking_tab: TrackingTabState::new(),
-            server: ServerState::new(),
+            paused: false,
+            running: false,
             solution_tab: SolutionTabState::new(),
         }
     }
@@ -132,17 +261,6 @@ impl SharedStateInner {
 impl Default for SharedStateInner {
     fn default() -> Self {
         SharedStateInner::new()
-    }
-}
-
-#[derive(Debug)]
-pub struct ServerState {
-    pub connected: bool,
-}
-
-impl ServerState {
-    fn new() -> ServerState {
-        ServerState { connected: false }
     }
 }
 
@@ -871,4 +989,111 @@ pub struct VelLog {
     pub speed_mps: Option<f64>,
     pub flags: u8,
     pub num_signals: u8,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::{
+        sync::mpsc,
+        thread::sleep,
+        time::{Duration, SystemTime},
+    };
+    const TEST_FILEPATH: &str = "./tests/data/piksi-relay-1min.sbp";
+
+    fn receive_thread(client_recv: mpsc::Receiver<Vec<u8>>) -> JoinHandle<()> {
+        thread::spawn(move || {
+            let mut iter_count = 0;
+
+            loop {
+                if client_recv.recv().is_err() {
+                    break;
+                }
+
+                iter_count += 1;
+            }
+            assert!(iter_count > 0);
+        })
+    }
+
+    #[test]
+    fn connect_to_file_test() {
+        let shared_state = SharedState::new();
+        let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
+        let server_state = ServerState::new();
+        let client_send = ClientSender {
+            inner: client_send_,
+        };
+        let filename = TEST_FILEPATH.to_string();
+        receive_thread(client_receive);
+        assert!(!shared_state.is_running());
+        server_state.connect_to_file(client_send, shared_state.clone(), filename, true);
+        sleep(Duration::from_millis(5));
+        assert!(shared_state.is_running());
+        sleep(Duration::from_secs(5));
+        assert!(!shared_state.is_running());
+    }
+
+    #[test]
+    fn pause_via_connect_to_file_test() {
+        let shared_state = SharedState::new();
+        let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
+        let server_state = ServerState::new();
+        let client_send = ClientSender {
+            inner: client_send_,
+        };
+        let filename = TEST_FILEPATH.to_string();
+        receive_thread(client_receive);
+        assert!(!shared_state.is_running());
+        server_state.connect_to_file(client_send, shared_state.clone(), filename, true);
+        sleep(Duration::from_millis(5));
+        assert!(shared_state.is_running());
+        shared_state.set_paused(true);
+        sleep(Duration::from_secs(5));
+        assert!(shared_state.is_running());
+        shared_state.set_paused(false);
+        sleep(Duration::from_secs(5));
+        assert!(!shared_state.is_running());
+    }
+
+    #[test]
+    fn disconnect_via_connect_to_file_test() {
+        let shared_state = SharedState::new();
+        let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
+        let server_state = ServerState::new();
+        let client_send = ClientSender {
+            inner: client_send_,
+        };
+        let filename = TEST_FILEPATH.to_string();
+        let expected_duration = Duration::from_millis(100);
+        let handle = receive_thread(client_receive);
+        assert!(!shared_state.is_running());
+        server_state.connect_to_file(client_send, shared_state.clone(), filename, true);
+        sleep(Duration::from_millis(5));
+        assert!(shared_state.is_running());
+        let now = SystemTime::now();
+        sleep(Duration::from_millis(1));
+        shared_state.set_running(false);
+        sleep(Duration::from_millis(1));
+        assert!(handle.join().is_ok());
+
+        match now.elapsed() {
+            Ok(elapsed) => {
+                assert!(
+                    elapsed < expected_duration,
+                    "Time elapsed for disconnect test {:?}, expecting {:?}ms",
+                    elapsed,
+                    expected_duration
+                );
+            }
+            Err(e) => {
+                panic!("unknown error {}", e);
+            }
+        }
+    }
+
+    // TODO(johnmichael.burke@) [CPP-111] Need to implement unittest for TCPStream.
+    // #[test]
+    // fn connect_to_host_test() {
+    // }
 }

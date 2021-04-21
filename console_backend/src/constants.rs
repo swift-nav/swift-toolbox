@@ -1,3 +1,9 @@
+// Server constants.
+pub const CLOSE: &str = "CLOSE";
+
+// Process Message constants.
+pub const PAUSE_LOOP_SLEEP_DURATION_MS: u64 = 100;
+
 // Common constants.
 pub const NUM_POINTS: usize = 200;
 

@@ -34,9 +34,10 @@ use sbp::messages::tracking::{MeasurementState, TrackingChannelState};
 /// - `t_init`: Instant monotonic time used as starting reference time.
 /// - `time`: Vector of Monotic times stored.
 #[derive(Debug)]
-pub struct TrackingSignalsTab {
+pub struct TrackingSignalsTab<S: MessageSender> {
     pub at_least_one_track_received: bool,
     pub check_labels: [&'static str; 12],
+    pub client_sender: S,
     pub cn0_age: Cn0Age,
     pub cn0_dict: Cn0Dict,
     pub colors: Vec<String>,
@@ -58,8 +59,8 @@ pub struct TrackingSignalsTab {
     pub time: Deque<f64>,
 }
 
-impl<'a> TrackingSignalsTab {
-    pub fn new(shared_state: SharedState) -> TrackingSignalsTab {
+impl<S: MessageSender> TrackingSignalsTab<S> {
+    pub fn new(shared_state: SharedState, client_sender: S) -> TrackingSignalsTab<S> {
         TrackingSignalsTab {
             at_least_one_track_received: false,
             check_labels: [
@@ -76,6 +77,7 @@ impl<'a> TrackingSignalsTab {
                 QZS_L2CM_STR,
                 SBAS_L1_STR,
             ],
+            client_sender,
             cn0_dict: Cn0Dict::new(),
             cn0_age: Cn0Age::new(),
             colors: Vec::new(),
@@ -191,12 +193,7 @@ impl<'a> TrackingSignalsTab {
     /// # Parameters:
     ///
     /// - `states`: All states contained within the measurementstate message.
-    /// - `client_send`: The Sender channel to be used to send data to frontend.
-    pub fn handle_msg_measurement_state<P: MessageSender>(
-        &mut self,
-        states: Vec<MeasurementState>,
-        client_send: &mut P,
-    ) {
+    pub fn handle_msg_measurement_state(&mut self, states: Vec<MeasurementState>) {
         self.at_least_one_track_received = true;
         let mut codes_that_came: Vec<(SignalCodes, i16)> = Vec::new();
         let t = (Instant::now()).duration_since(self.t_init).as_secs_f64();
@@ -232,19 +229,14 @@ impl<'a> TrackingSignalsTab {
         }
         self.clean_cn0();
         self.update_plot();
-        self.send_data(client_send);
+        self.send_data();
     }
     /// Handle MsgTrackingState message states.
     ///
     /// # Parameters:
     ///
     /// - `states`: All states contained within the trackingstate message.
-    /// - `client_send`: The Sender channel to be used to send data to frontend.
-    pub fn handle_msg_tracking_state<P: MessageSender>(
-        &mut self,
-        states: Vec<TrackingChannelState>,
-        client_send: &mut P,
-    ) {
+    pub fn handle_msg_tracking_state(&mut self, states: Vec<TrackingChannelState>) {
         self.at_least_one_track_received = true;
         let mut codes_that_came: Vec<(SignalCodes, i16)> = Vec::new();
         let t = (Instant::now()).duration_since(self.t_init).as_secs_f64();
@@ -269,15 +261,14 @@ impl<'a> TrackingSignalsTab {
         }
         self.clean_cn0();
         self.update_plot();
-        self.send_data(client_send);
+        self.send_data();
     }
     /// Handle MsgObs, MsgObsDepB, and MsgObsDepC full messages.
     ///
     /// # Parameters:
     ///
     /// - `msg`: The full SBP message cast as an ObservationMsg variant.
-    /// - `client_send`: The Sender channel to be used to send data to frontend.
-    pub fn handle_obs<P: MessageSender>(&mut self, msg: ObservationMsg, client_send: &mut P) {
+    pub fn handle_obs(&mut self, msg: ObservationMsg) {
         let (seq, tow, wn, states) = match &msg {
             ObservationMsg::MsgObs(obs) => {
                 let states: Vec<Observations> = obs
@@ -371,7 +362,7 @@ impl<'a> TrackingSignalsTab {
 
         if count == (total - 1) {
             self.last_update_time = Instant::now();
-            self.update_from_obs(self.incoming_obs_cn0.clone(), client_send);
+            self.update_from_obs(self.incoming_obs_cn0.clone());
         }
     }
 
@@ -380,12 +371,7 @@ impl<'a> TrackingSignalsTab {
     /// # Parameters:
     ///
     /// - `msg`: The full SBP message cast as an ObservationMsg variant.
-    /// - `client_send`: The Sender channel to be used to send data to frontend.
-    pub fn update_from_obs<P: MessageSender>(
-        &mut self,
-        obs_dict: HashMap<(SignalCodes, i16), f64>,
-        client_send: &mut P,
-    ) {
+    pub fn update_from_obs(&mut self, obs_dict: HashMap<(SignalCodes, i16), f64>) {
         if self.at_least_one_track_received {
             return;
         }
@@ -410,7 +396,7 @@ impl<'a> TrackingSignalsTab {
         }
         self.clean_cn0();
         self.update_plot();
-        self.send_data(client_send);
+        self.send_data();
     }
 
     /// Reset observation cn0 data in the event of empty observation packet drop.
@@ -429,11 +415,7 @@ impl<'a> TrackingSignalsTab {
     }
 
     /// Package data into a message buffer and send to frontend.
-    ///
-    /// # Parameters:
-    ///
-    /// - `client_send`: The Sender channel to be used to send data to frontend.
-    fn send_data<P: MessageSender>(&mut self, client_send: &mut P) {
+    fn send_data(&mut self) {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<m::message::Builder>();
 
@@ -481,7 +463,7 @@ impl<'a> TrackingSignalsTab {
         let mut msg_bytes: Vec<u8> = vec![];
         serialize::write_message(&mut msg_bytes, &builder).unwrap();
 
-        client_send.send_data(msg_bytes);
+        self.client_sender.send_data(msg_bytes);
     }
 }
 
@@ -496,7 +478,8 @@ mod tests {
     #[test]
     fn cn0_age_and_cn0_dict_test() {
         let shared_state = SharedState::new();
-        let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state);
+        let client_send = TestSender { inner: Vec::new() };
+        let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state, client_send);
         let t_init = tracking_signals_tab.t_init;
         let signal_code = SignalCodes::from(4_u8);
         let sat = 5_i16;
@@ -531,7 +514,8 @@ mod tests {
     #[test]
     fn handle_msg_measurement_state_test() {
         let shared_state = SharedState::new();
-        let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state);
+        let client_send = TestSender { inner: Vec::new() };
+        let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state, client_send);
 
         let mut states: Vec<MeasurementState> = Vec::new();
         let glo_sat_above_one_hundred = 103;
@@ -555,8 +539,7 @@ mod tests {
             mesid: GnssSignal { sat: 25, code: 5 },
         });
 
-        let mut client_send = TestSender { inner: Vec::new() };
-        tracking_signals_tab.handle_msg_measurement_state(states, &mut client_send);
+        tracking_signals_tab.handle_msg_measurement_state(states);
         assert_eq!(tracking_signals_tab.glo_fcn_dict.len(), 1);
         assert_eq!(
             tracking_signals_tab.glo_fcn_dict[&0_u8],
@@ -576,7 +559,8 @@ mod tests {
     #[test]
     fn handle_msg_tracking_state_test() {
         let shared_state = SharedState::new();
-        let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state);
+        let client_send = TestSender { inner: Vec::new() };
+        let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state, client_send);
 
         let mut states: Vec<TrackingChannelState> = Vec::new();
         let glo_sat_above_one_hundred = 103;
@@ -602,8 +586,7 @@ mod tests {
             fcn: 0,
             sid: GnssSignal { sat: 25, code: 5 },
         });
-        let mut client_send = TestSender { inner: Vec::new() };
-        tracking_signals_tab.handle_msg_tracking_state(states, &mut client_send);
+        tracking_signals_tab.handle_msg_tracking_state(states);
 
         assert_eq!(tracking_signals_tab.glo_slot_dict.len(), 2);
         assert_eq!(
@@ -624,7 +607,8 @@ mod tests {
     #[test]
     fn handle_msg_obs_test() {
         let shared_state = SharedState::new();
-        let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state);
+        let client_send = TestSender { inner: Vec::new() };
+        let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state, client_send);
         let mut obs_msg = MsgObs {
             sender_id: Some(5),
             obs: Vec::new(),
@@ -652,16 +636,16 @@ mod tests {
             },
         });
 
-        let mut client_send = TestSender { inner: Vec::new() };
         assert_eq!(tracking_signals_tab.cn0_dict.len(), 0);
-        tracking_signals_tab.handle_obs(ObservationMsg::MsgObs(obs_msg), &mut client_send);
+        tracking_signals_tab.handle_obs(ObservationMsg::MsgObs(obs_msg));
         assert_eq!(tracking_signals_tab.cn0_dict.len(), 1);
     }
 
     #[test]
     fn update_plot_test() {
         let shared_state = SharedState::new();
-        let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state);
+        let client_send = TestSender { inner: Vec::new() };
+        let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state, client_send);
         let t = (Instant::now())
             .duration_since(tracking_signals_tab.t_init)
             .as_secs_f64();

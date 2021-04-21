@@ -24,8 +24,9 @@ use crate::types::{Deque, MessageSender, SharedState, VelocityUnits};
 /// - `tow`: The GPS Time of Week.
 /// - `unit`: Currently displayed and converted to unit of measure.
 #[derive(Debug)]
-pub struct SolutionVelocityTab<'a> {
+pub struct SolutionVelocityTab<'a, S: MessageSender> {
     pub available_units: Vec<&'a str>,
+    pub client_sender: S,
     pub colors: Vec<String>,
     pub max: f64,
     pub min: f64,
@@ -36,14 +37,15 @@ pub struct SolutionVelocityTab<'a> {
     pub unit: VelocityUnits,
 }
 
-impl<'a> SolutionVelocityTab<'a> {
-    pub fn new(shared_state: SharedState) -> SolutionVelocityTab<'a> {
+impl<'a, S: MessageSender> SolutionVelocityTab<'a, S> {
+    pub fn new(shared_state: SharedState, client_sender: S) -> SolutionVelocityTab<'a, S> {
         SolutionVelocityTab {
             available_units: vec![
                 VelocityUnits::Mps.as_str(),
                 VelocityUnits::Mph.as_str(),
                 VelocityUnits::Kph.as_str(),
             ],
+            client_sender,
             colors: vec![String::from(HORIZONTAL_COLOR), String::from(VERTICAL_COLOR)],
             max: 0_f64,
             min: 0_f64,
@@ -85,8 +87,7 @@ impl<'a> SolutionVelocityTab<'a> {
     /// # Parameters:
     ///
     /// - `msg`: The message to update set of points with.
-    /// - `client_send`: The MessageSender to be used to send data to frontend.
-    pub fn handle_vel_ned<P: MessageSender>(&mut self, msg: MsgVelNED, client_send: &mut P) {
+    pub fn handle_vel_ned(&mut self, msg: MsgVelNED) {
         let n = msg.n as f64;
         let e = msg.e as f64;
         let d = msg.d as f64;
@@ -120,15 +121,11 @@ impl<'a> SolutionVelocityTab<'a> {
         }
         self.min = min_;
         self.max = max_;
-        self.send_data(client_send);
+        self.send_data();
     }
 
     /// Package data into a message buffer and send to frontend.
-    ///
-    /// # Parameters:
-    ///
-    /// - `client_send`: The MessageSender channel to be used to send data to frontend.
-    fn send_data<P: MessageSender>(&mut self, client_send: &mut P) {
+    fn send_data(&mut self) {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<m::message::Builder>();
 
@@ -168,7 +165,7 @@ impl<'a> SolutionVelocityTab<'a> {
         let mut msg_bytes: Vec<u8> = vec![];
         serialize::write_message(&mut msg_bytes, &builder).unwrap();
 
-        client_send.send_data(msg_bytes);
+        self.client_sender.send_data(msg_bytes);
     }
 }
 
@@ -181,7 +178,8 @@ mod tests {
     #[test]
     fn handle_vel_ned_test() {
         let shared_state = SharedState::new();
-        let mut solution_velocity_tab = SolutionVelocityTab::new(shared_state);
+        let client_send = TestSender { inner: Vec::new() };
+        let mut solution_velocity_tab = SolutionVelocityTab::new(shared_state, client_send);
 
         let msg: MsgVelNED = MsgVelNED {
             sender_id: Some(5),
@@ -195,8 +193,7 @@ mod tests {
             n_sats: 1,
         };
 
-        let mut client_send = TestSender { inner: Vec::new() };
-        solution_velocity_tab.handle_vel_ned(msg, &mut client_send);
+        solution_velocity_tab.handle_vel_ned(msg);
         assert_eq!(solution_velocity_tab.points.len(), 2);
         let hpoints = solution_velocity_tab.points[0].get();
         let vpoints = solution_velocity_tab.points[1].get();
@@ -215,7 +212,7 @@ mod tests {
             flags: 1,
             n_sats: 1,
         };
-        solution_velocity_tab.handle_vel_ned(msg, &mut client_send);
+        solution_velocity_tab.handle_vel_ned(msg);
         let hpoints = solution_velocity_tab.points[0].get();
         let vpoints = solution_velocity_tab.points[1].get();
         assert_eq!(hpoints.len(), 2);
@@ -233,7 +230,7 @@ mod tests {
             flags: 1,
             n_sats: 1,
         };
-        solution_velocity_tab.handle_vel_ned(msg, &mut client_send);
+        solution_velocity_tab.handle_vel_ned(msg);
         let hpoints = solution_velocity_tab.points[0].get();
         let vpoints = solution_velocity_tab.points[1].get();
         assert_eq!(hpoints.len(), 3);
@@ -245,7 +242,8 @@ mod tests {
     #[test]
     fn test_convert_points() {
         let shared_state = SharedState::new();
-        let mut solution_velocity_tab = SolutionVelocityTab::new(shared_state);
+        let client_send = TestSender { inner: Vec::new() };
+        let mut solution_velocity_tab = SolutionVelocityTab::new(shared_state, client_send);
 
         let mut msg: MsgVelNED = MsgVelNED {
             sender_id: Some(5),
@@ -259,8 +257,7 @@ mod tests {
             n_sats: 1,
         };
 
-        let mut client_send = TestSender { inner: Vec::new() };
-        solution_velocity_tab.handle_vel_ned(msg, &mut client_send);
+        solution_velocity_tab.handle_vel_ned(msg);
         msg = MsgVelNED {
             sender_id: Some(5),
             n: 1,
@@ -272,7 +269,7 @@ mod tests {
             flags: 1,
             n_sats: 1,
         };
-        solution_velocity_tab.handle_vel_ned(msg, &mut client_send);
+        solution_velocity_tab.handle_vel_ned(msg);
         let hpoints = solution_velocity_tab.points[0].get().clone();
         let vpoints = solution_velocity_tab.points[1].get().clone();
 

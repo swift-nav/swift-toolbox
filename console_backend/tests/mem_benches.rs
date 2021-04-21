@@ -98,6 +98,7 @@ fn test_run_process_messages() {
             inner: client_send_,
         };
         let shared_state = SharedState::new();
+        shared_state.set_running(true);
         process_messages::process_messages(messages, shared_state, client_send);
     }
     recv_thread.join().expect("join should succeed");

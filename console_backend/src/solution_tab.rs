@@ -54,9 +54,10 @@ const POS_LLH_TIME_STR_FILEPATH: &str = "position_log_%Y%m%d-%H%M%S.csv";
 /// - `vel_log_file`: The CsvSerializer corresponding to an open velocity log if any.
 /// - `week`: The stored week value from GPS Time messages.
 #[derive(Debug)]
-pub struct SolutionTab {
+pub struct SolutionTab<S: MessageSender> {
     pub age_corrections: Option<f64>,
     pub available_units: [&'static str; 2],
+    pub client_sender: S,
     pub colors: Vec<String>,
     pub directory_name: Option<String>,
     pub ins_status_flags: u32,
@@ -89,11 +90,12 @@ pub struct SolutionTab {
     pub week: Option<u16>,
 }
 
-impl SolutionTab {
-    pub fn new(shared_state: SharedState) -> SolutionTab {
+impl<S: MessageSender> SolutionTab<S> {
+    pub fn new(shared_state: SharedState, client_sender: S) -> SolutionTab<S> {
         SolutionTab {
             age_corrections: None,
             available_units: [DEGREES, METERS],
+            client_sender,
             colors: {
                 vec![
                     GnssModes::Spp.color(),
@@ -377,10 +379,7 @@ impl SolutionTab {
     ///
     /// TODO(johnmichael.burke@) https://swift-nav.atlassian.net/browse/CPP-95
     /// Need to validate logging.
-    ///
-    /// # Parameters
-    /// - `msg`: PosLLH wrapper around a MsgPosLLH or MsgPosLLHDepA.
-    pub fn handle_pos_llh<P: MessageSender>(&mut self, msg: PosLLH, client_send: &mut P) {
+    pub fn handle_pos_llh(&mut self, msg: PosLLH) {
         self.last_pos_mode = msg.mode();
         let (flags, h_accuracy, v_accuracy, tow, lat, lon, height, n_sats) = match msg {
             PosLLH::MsgPosLLH(msg_) => (
@@ -516,8 +515,8 @@ impl SolutionTab {
         }
         let (center, clear, pause, unit, zoom) = self.check_state();
         self.solution_draw(center, clear, pause, unit, zoom);
-        self.send_solution_data(client_send);
-        self.send_table_data(client_send);
+        self.send_solution_data();
+        self.send_table_data();
     }
 
     pub fn check_state(&self) -> (bool, bool, bool, String, bool) {
@@ -694,11 +693,7 @@ impl SolutionTab {
     }
 
     /// Package solution data into a message buffer and send to frontend.
-    ///
-    /// # Parameters:
-    ///
-    /// - `client_send`: The MessageSender channel to be used to send data to frontend.
-    fn send_solution_data<P: MessageSender>(&mut self, client_send: &mut P) {
+    fn send_solution_data(&mut self) {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<m::message::Builder>();
 
@@ -761,15 +756,11 @@ impl SolutionTab {
         let mut msg_bytes: Vec<u8> = vec![];
         serialize::write_message(&mut msg_bytes, &builder).unwrap();
 
-        client_send.send_data(msg_bytes);
+        self.client_sender.send_data(msg_bytes);
     }
 
     /// Package solution table data into a message buffer and send to frontend.
-    ///
-    /// # Parameters:
-    ///
-    /// - `client_send`: The Sender channel to be used to send data to frontend.
-    fn send_table_data<P: MessageSender>(&mut self, client_send: &mut P) {
+    fn send_table_data(&mut self) {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<m::message::Builder>();
         let mut solution_table_status = msg.init_solution_table_status();
@@ -786,7 +777,7 @@ impl SolutionTab {
         }
         let mut msg_bytes: Vec<u8> = vec![];
         serialize::write_message(&mut msg_bytes, &builder).unwrap();
-        client_send.send_data(msg_bytes);
+        self.client_sender.send_data(msg_bytes);
     }
 }
 
@@ -803,7 +794,8 @@ mod tests {
     #[test]
     fn handle_utc_time_test() {
         let shared_state = SharedState::new();
-        let mut solution_table = SolutionTab::new(shared_state);
+        let client_send = TestSender { inner: Vec::new() };
+        let mut solution_table = SolutionTab::new(shared_state, client_send);
         let year = 2020_u16;
         let month = 3_u8;
         let day = 19_u8;
@@ -862,7 +854,8 @@ mod tests {
     #[test]
     fn handle_gps_time_test() {
         let shared_state = SharedState::new();
-        let mut solution_table = SolutionTab::new(shared_state);
+        let client_send = TestSender { inner: Vec::new() };
+        let mut solution_table = SolutionTab::new(shared_state, client_send);
         let wn = 0_u16;
         let ns_residual = 1337_i32;
         let bad_flags = 0_u8;
@@ -897,7 +890,8 @@ mod tests {
     #[test]
     fn handle_vel_ned_test() {
         let shared_state = SharedState::new();
-        let mut solution_tab = SolutionTab::new(shared_state);
+        let client_send = TestSender { inner: Vec::new() };
+        let mut solution_tab = SolutionTab::new(shared_state, client_send);
         let good_flags = 0x07;
         let bad_flags = 0xF0;
         let n = 1;
@@ -988,7 +982,8 @@ mod tests {
     #[test]
     fn handle_ins_status_test() {
         let shared_state = SharedState::new();
-        let mut solution_tab = SolutionTab::new(shared_state);
+        let client_send = TestSender { inner: Vec::new() };
+        let mut solution_tab = SolutionTab::new(shared_state, client_send);
         let flags = 0xf0_u32;
         let msg = MsgInsStatus {
             sender_id: Some(1337),
@@ -1003,7 +998,8 @@ mod tests {
     #[test]
     fn handle_ins_updates_test() {
         let shared_state = SharedState::new();
-        let mut solution_tab = SolutionTab::new(shared_state);
+        let client_send = TestSender { inner: Vec::new() };
+        let mut solution_tab = SolutionTab::new(shared_state, client_send);
         let msg = MsgInsUpdates {
             sender_id: Some(1337),
             gnsspos: 0,
@@ -1041,7 +1037,8 @@ mod tests {
     #[test]
     fn handle_dops_test() {
         let shared_state = SharedState::new();
-        let mut solution_tab = SolutionTab::new(shared_state);
+        let client_send = TestSender { inner: Vec::new() };
+        let mut solution_tab = SolutionTab::new(shared_state, client_send);
         let pdop = 1;
         let gdop = 2;
         let tdop = 3;
@@ -1137,7 +1134,8 @@ mod tests {
     #[test]
     fn handle_age_corrections_test() {
         let shared_state = SharedState::new();
-        let mut solution_tab = SolutionTab::new(shared_state);
+        let client_send = TestSender { inner: Vec::new() };
+        let mut solution_tab = SolutionTab::new(shared_state, client_send);
         assert!(solution_tab.age_corrections.is_none());
         let msg = MsgAgeCorrections {
             sender_id: Some(1337),
@@ -1162,8 +1160,8 @@ mod tests {
     #[test]
     fn handle_pos_llh_test() {
         let shared_state = SharedState::new();
-        let mut solution_tab = SolutionTab::new(shared_state);
-        let mut client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender { inner: Vec::new() };
+        let mut solution_tab = SolutionTab::new(shared_state, client_send);
         solution_tab.utc_time = Some(utc_time(1_i32, 3_u32, 3_u32, 7_u32, 6_u32, 6_u32, 6_u32));
         solution_tab.utc_source = Some(utc_source(0x02));
         solution_tab.nsec = Some(1337);
@@ -1200,7 +1198,7 @@ mod tests {
         assert_eq!(solution_tab.table[HEIGHT], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[HORIZ_ACC], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[VERT_ACC], String::from(EMPTY_STR));
-        solution_tab.handle_pos_llh(msg, &mut client_send);
+        solution_tab.handle_pos_llh(msg);
         assert_eq!(solution_tab.table[GPS_WEEK], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[GPS_TOW], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[GPS_TIME], String::from(EMPTY_STR));
@@ -1213,8 +1211,6 @@ mod tests {
         assert_eq!(solution_tab.table[HORIZ_ACC], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[VERT_ACC], String::from(EMPTY_STR));
         assert_eq!(solution_tab.last_pos_mode, 0);
-
-        assert!(!client_send.inner.is_empty());
 
         let good_flags = 0x01;
         let msg = PosLLH::MsgPosLLH(MsgPosLLH {
@@ -1239,7 +1235,7 @@ mod tests {
         assert_eq!(solution_tab.table[HEIGHT], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[HORIZ_ACC], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[VERT_ACC], String::from(EMPTY_STR));
-        solution_tab.handle_pos_llh(msg, &mut client_send);
+        solution_tab.handle_pos_llh(msg);
         assert_ne!(solution_tab.table[GPS_WEEK], String::from(EMPTY_STR));
         assert_ne!(solution_tab.table[GPS_TOW], String::from(EMPTY_STR));
         assert_ne!(solution_tab.table[GPS_TIME], String::from(EMPTY_STR));
@@ -1266,7 +1262,7 @@ mod tests {
             v_accuracy,
             tow,
         });
-        solution_tab.handle_pos_llh(msg, &mut client_send);
+        solution_tab.handle_pos_llh(msg);
         assert_eq!(solution_tab.last_pos_mode, 4);
     }
 

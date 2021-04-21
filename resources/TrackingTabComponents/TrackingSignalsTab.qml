@@ -143,6 +143,12 @@ Item {
             }
 
             Timer {
+                // if (trackingSignalsTimer.interval != Constants.current_ref_rate) {
+                //     trackingSignalsTimer.interval = Constants.current_ref_rate
+                // }
+
+                id: trackingSignalsTimer
+
                 interval: 1000 / 5 // 5 Hz refresh
                 running: true
                 repeat: true

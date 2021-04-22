@@ -195,6 +195,7 @@ Item {
                                 line.color = colors[idx];
                                 line.width = 1;
                                 line.axisYRight = solutionVelocityYAxis;
+                                line.useOpenGL = true; // [CPP-93] Invesigate usage of `useOpenGL` in plots
                                 lines.push(line);
                             }
                         }

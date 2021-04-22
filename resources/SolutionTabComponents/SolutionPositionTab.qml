@@ -257,8 +257,8 @@ Item {
                                 var line = solutionPositionChart.createSeries(ChartView.SeriesTypeLine, labels[idx], solutionPositionXAxis, solutionPositionYAxis);
                                 line.color = colors[idx];
                                 line.width = 0.2;
-                                // line.useOpenGL = true; // [CPP-93] Invesigate usage of `useOpenGL` in plots
-                                // scatter.useOpenGL = true; // [CPP-93] Invesigate usage of `useOpenGL` in plots
+                                line.useOpenGL = true; // [CPP-93] Invesigate usage of `useOpenGL` in plots
+                                scatter.useOpenGL = true; // [CPP-93] Invesigate usage of `useOpenGL` in plots
                                 lines.push(line);
                                 scatters.push(scatter);
                                 cur_scatters.push(cur_scatter);

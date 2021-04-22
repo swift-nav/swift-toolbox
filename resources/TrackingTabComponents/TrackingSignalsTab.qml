@@ -174,7 +174,7 @@ Item {
                                 line.color = colors[idx];
                                 line.width = 1;
                                 line.axisYRight = trackingSignalsYAxis;
-                                // line.useOpenGL = true; // [CPP-93] Invesigate usage of `useOpenGL` in plots
+                                line.useOpenGL = true; // [CPP-93] Invesigate usage of `useOpenGL` in plots
                                 lines[idx] = [line, labels[idx]];
                             }
                         } else {
@@ -182,7 +182,7 @@ Item {
                             line.color = colors[idx];
                             line.width = 1;
                             line.axisYRight = trackingSignalsYAxis;
-                            // line.useOpenGL = true; // [CPP-93] Invesigate usage of `useOpenGL` in plots
+                            line.useOpenGL = true; // [CPP-93] Invesigate usage of `useOpenGL` in plots
                             lines.push([line, labels[idx]]);
                         }
                     }

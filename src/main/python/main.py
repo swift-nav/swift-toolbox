@@ -269,7 +269,7 @@ class BottomNavbarData(QObject):
 
     available_baudrates = Property(
         QTKeys.QVARIANTLIST, get_available_baudrates, set_available_baudrates  # type: ignore
-    )  
+    )
 
     def get_available_flows(self) -> List[str]:
         return self._available_flows

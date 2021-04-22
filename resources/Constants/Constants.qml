@@ -5,6 +5,7 @@ QtObject {
     readonly property int width: 640
     readonly property int height: 480
     property QtObject bottomNavBar
+    property QtObject trackingSignals
     property int currentRefreshRate: 1000 / 5 // 5 Hz
     property int defaultTimerIntervalRate: 1000 / 5 // 5 Hz
 
@@ -15,6 +16,7 @@ QtObject {
         readonly property int urlBarBorder: 1
         readonly property int urlBarTextMargin: 4
         readonly property int navBarMargin: 10
+        readonly property int plotRefreshRateDropdownWidth: 60
         readonly property int serialDeviceRefreshWidth: 30
         readonly property int connectionPauseWidth: 30
         readonly property color placeholderTextColor: "#CDC9C9"
@@ -29,7 +31,8 @@ QtObject {
         readonly property color plotAreaColor: "#FFFFFF"
         readonly property color legendBorderColor: "#000000"
         readonly property int legendBorderWidth: 1
-
+        readonly property int legendBottomMargin: 85
+        readonly property int legendLeftMargin: 60
     }
 
 }

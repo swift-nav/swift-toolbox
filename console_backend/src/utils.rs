@@ -21,7 +21,12 @@ pub fn close_frontend<P: MessageSender>(client_send: &mut P) {
 }
 
 pub fn refresh_ports<P: MessageSender>(client_send: &mut P) {
-    if let Ok(ports) = available_ports() {
+    if let Ok(ports) = &mut available_ports() {
+        // TODO(johnmichael.burke@) [CPP-114]Find solution to this hack for Linux serialport.
+        let ports: Vec<String> = ports
+            .iter_mut()
+            .map(|x| x.port_name.replace("/sys/class/tty/", "/dev/"))
+            .collect();
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<m::message::Builder>();
 
@@ -32,7 +37,7 @@ pub fn refresh_ports<P: MessageSender>(client_send: &mut P) {
             .init_available_ports(ports.len() as u32);
 
         for (i, serialportinfo) in ports.iter().enumerate() {
-            available_ports.set(i as u32, &(*serialportinfo).port_name);
+            available_ports.set(i as u32, &(*serialportinfo));
         }
 
         let mut available_baudrates = bottom_navbar_status
@@ -73,7 +78,6 @@ pub fn flow_control(flow_str: &str) -> FlowControl {
         _ => panic!("unable to convert to FlowControl"),
     }
 }
-
 
 pub fn signal_key_label(
     key: (SignalCodes, i16),

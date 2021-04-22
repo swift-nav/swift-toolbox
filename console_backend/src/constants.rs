@@ -12,7 +12,11 @@ pub const AVAILABLE_BAUDRATES: [u32; 6] = [57600, 115200, 230400, 460800, 921600
 pub const FLOW_CONTROL_NONE: &str = "None";
 pub const FLOW_CONTROL_SOFTWARE: &str = "Software XON/XOFF";
 pub const FLOW_CONTROL_HARDWARE: &str = "Hardware RTS/CTS";
-pub const AVAILABLE_FLOWS: &[&str] = &[FLOW_CONTROL_NONE, FLOW_CONTROL_SOFTWARE, FLOW_CONTROL_HARDWARE];
+pub const AVAILABLE_FLOWS: &[&str] = &[
+    FLOW_CONTROL_NONE,
+    FLOW_CONTROL_SOFTWARE,
+    FLOW_CONTROL_HARDWARE,
+];
 pub const SERIALPORT_READ_TIMEOUT_MS: u64 = 1000;
 
 // Tracking Signals Tab constants.

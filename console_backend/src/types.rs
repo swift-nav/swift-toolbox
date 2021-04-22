@@ -13,7 +13,20 @@ use sbp::messages::{
     },
 };
 use serde::Serialize;
-use std::{cmp::{Eq, PartialEq}, collections::HashMap, fmt, fmt::Debug, fs, hash::Hash, net::TcpStream, ops::Deref, sync::{mpsc::Sender, Arc, Mutex}, thread, thread::JoinHandle, time::{Duration, Instant}};
+use std::{
+    cmp::{Eq, PartialEq},
+    collections::HashMap,
+    fmt,
+    fmt::Debug,
+    fs,
+    hash::Hash,
+    net::TcpStream,
+    ops::Deref,
+    sync::{mpsc::Sender, Arc, Mutex},
+    thread,
+    thread::JoinHandle,
+    time::{Duration, Instant},
+};
 
 pub type Error = std::boxed::Box<dyn std::error::Error>;
 pub type Result<T> = std::result::Result<T, Error>;
@@ -134,7 +147,6 @@ impl ServerState {
                 if close_when_done {
                     close_frontend(&mut client_send.clone());
                 }
-                
             } else {
                 println!("Couldn't open file...");
             }
@@ -1175,7 +1187,7 @@ mod tests {
         {
             server_state.connect_to_file(client_send, shared_state.clone(), filename, true);
         }
-        
+
         sleep(Duration::from_millis(5));
         assert!(shared_state.is_running());
         let now = SystemTime::now();

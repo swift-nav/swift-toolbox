@@ -23,7 +23,7 @@ glob = "0.3.0"
 criterion = "0.3.4"
 sysinfo = "0.16.4"
 serial = "0.4.0"
-serialport = "4.0.1"
+serialport = { version = "4.0.1", default-features = false }
 
 [[bench]]
 name = "cpu_benches"

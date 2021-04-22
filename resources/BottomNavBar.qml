@@ -29,6 +29,7 @@ Item {
 
         ComboBox {
             id: bottomNavBarSourceSelection
+
             Layout.preferredWidth: Constants.bottomNavBar.connectionDropdownWidth
             Layout.alignment: Qt.AlignLeft
             Layout.leftMargin: Constants.bottomNavBar.navBarMargin
@@ -106,6 +107,7 @@ Item {
 
         Row {
             id: tcpUrlBarPortBar
+
             Layout.alignment: Qt.AlignLeft
             Layout.preferredWidth: parent.width / 2
             Layout.preferredHeight: Constants.bottomNavBar.urlBarHeight
@@ -235,6 +237,7 @@ Item {
             id: refreshRateDrop
 
             visible: true
+            Layout.preferredWidth: Constants.bottomNavBar.plotRefreshRateDropdownWidth
             Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
             model: Constants.bottomNavBar.available_ref_rates
             onActivated: {
@@ -247,17 +250,18 @@ Item {
             running: true
             repeat: true
             onTriggered: {
-
                 bottom_navbar_model.fill_data(bottomNavbarData);
                 if (!bottomNavbarData.available_baudrates.length)
                     return ;
+
                 if (available_baudrates.length == 0) {
-                    available_baudrates = bottomNavbarData.available_baudrates
-                    serialDeviceBaudRate.currentIndex = 1
+                    available_baudrates = bottomNavbarData.available_baudrates;
+                    serialDeviceBaudRate.currentIndex = 1;
                 }
                 if (available_flows.length == 0)
-                    available_flows = bottomNavbarData.available_flows
-                available_devices = bottomNavbarData.available_ports
+                    available_flows = bottomNavbarData.available_flows;
+
+                available_devices = bottomNavbarData.available_ports;
             }
         }
 

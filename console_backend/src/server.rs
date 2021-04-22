@@ -174,8 +174,13 @@ impl Server {
                                 let flow = req.get_flow_control().unwrap();
                                 let flow = flow.to_string();
                                 println!("{}", device);
-                                server_state_clone
-                                    .connect_to_serial(client_send_clone, shared_state_clone, device, baudrate, flow);
+                                server_state_clone.connect_to_serial(
+                                    client_send_clone,
+                                    shared_state_clone,
+                                    device,
+                                    baudrate,
+                                    flow,
+                                );
                             }
                             _ => println!("err"),
                         }

@@ -173,7 +173,6 @@ impl Server {
                                 let baudrate = req.get_baudrate();
                                 let flow = req.get_flow_control().unwrap();
                                 let flow = flow.to_string();
-                                println!("{}", device);
                                 server_state_clone.connect_to_serial(
                                     client_send_clone,
                                     shared_state_clone,

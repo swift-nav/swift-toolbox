@@ -798,6 +798,13 @@ impl fmt::Display for SignalCodes {
 }
 
 // Enum wrapping around various Observation Message types.
+pub struct ObservationMsgFields {
+    pub n_obs: u8,
+    pub tow: f64,
+    pub wn: u16,
+    pub states: Vec<Observations>,
+    pub sender_id: Option<u16>,
+}
 pub enum ObservationMsg {
     MsgObs(MsgObs),
     // MsgObsDepA(MsgObsDepA),
@@ -805,8 +812,8 @@ pub enum ObservationMsg {
     MsgObsDepC(MsgObsDepC),
 }
 impl ObservationMsg {
-    pub fn fields(&self) -> (u8, f64, u16, Vec<Observations>, Option<u16>) {
-        match &self {
+    pub fn fields(&self) -> ObservationMsgFields {
+        let (n_obs, tow, wn, states, sender_id) = match &self {
             ObservationMsg::MsgObs(obs) => {
                 let states: Vec<Observations> = obs
                     .obs
@@ -853,10 +860,22 @@ impl ObservationMsg {
                     obs.sender_id,
                 )
             }
+        };
+        ObservationMsgFields {
+            n_obs,
+            tow,
+            wn,
+            states,
+            sender_id,
         }
     }
 }
 // Enum wrapping around various Observation Message observation types.
+pub struct ObservationFields {
+    pub code: SignalCodes,
+    pub sat: i16,
+    pub cn0: f64,
+}
 pub enum Observations {
     PackedObsContent(PackedObsContent),
     // PackedObsContentDepA(PackedObsContentDepA),
@@ -864,8 +883,8 @@ pub enum Observations {
     PackedObsContentDepC(PackedObsContentDepC),
 }
 impl Observations {
-    pub fn fields(&self) -> (SignalCodes, i16, f64) {
-        match self {
+    pub fn fields(&self) -> ObservationFields {
+        let (code, sat, cn0) = match self {
             Observations::PackedObsContentDepB(obs) => {
                 let mut sat_ = obs.sid.sat as i16;
                 let signal_code = SignalCodes::from(obs.sid.code);
@@ -887,7 +906,8 @@ impl Observations {
                 obs.sid.sat as i16,
                 obs.cn0 as f64,
             ),
-        }
+        };
+        ObservationFields { code, sat, cn0 }
     }
 }
 
@@ -989,6 +1009,14 @@ impl PosLLH {
 }
 
 // Enum wrapping around various Dops Message types.
+pub struct DopsFields {
+    pub pdop: u16,
+    pub gdop: u16,
+    pub tdop: u16,
+    pub hdop: u16,
+    pub vdop: u16,
+    pub flags: u8,
+}
 #[derive(Debug)]
 pub enum Dops {
     MsgDops(MsgDops),
@@ -996,19 +1024,36 @@ pub enum Dops {
 }
 
 impl Dops {
-    pub fn fields(self) -> (u16, u16, u16, u16, u16, u8) {
-        match self {
+    pub fn fields(self) -> DopsFields {
+        let (pdop, gdop, tdop, hdop, vdop, flags) = match self {
             Dops::MsgDops(msg_) => (
                 msg_.pdop, msg_.gdop, msg_.tdop, msg_.hdop, msg_.vdop, msg_.flags,
             ),
             Dops::MsgDopsDepA(msg_) => {
                 (msg_.pdop, msg_.gdop, msg_.tdop, msg_.hdop, msg_.vdop, 1_u8)
             }
+        };
+        DopsFields {
+            pdop,
+            gdop,
+            tdop,
+            hdop,
+            vdop,
+            flags,
         }
     }
 }
 
 // Enum wrapping around various Vel NED Message types.
+#[allow(clippy::upper_case_acronyms)]
+pub struct VelNEDFields {
+    pub flags: u8,
+    pub tow: f64,
+    pub n: i32,
+    pub e: i32,
+    pub d: i32,
+    pub n_sats: u8,
+}
 #[derive(Debug)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum VelNED {
@@ -1017,10 +1062,18 @@ pub enum VelNED {
 }
 
 impl VelNED {
-    pub fn fields(self) -> (u8, f64, i32, i32, i32, u8) {
-        match self {
+    pub fn fields(self) -> VelNEDFields {
+        let (flags, tow, n, e, d, n_sats) = match self {
             VelNED::MsgVelNED(msg) => (msg.flags, msg.tow as f64, msg.n, msg.e, msg.d, msg.n_sats),
             VelNED::MsgVelNEDDepA(msg) => (1, msg.tow as f64, msg.n, msg.e, msg.d, msg.n_sats),
+        };
+        VelNEDFields {
+            flags,
+            tow,
+            n,
+            e,
+            d,
+            n_sats,
         }
     }
 }
@@ -1216,7 +1269,7 @@ mod tests {
     // fn connect_to_host_test() {
     // }
 
-    // TODO(johnmichael.burke@) [CPP-111] Need to implement unittest for TCPStream.
+    // TODO(johnmichael.burke@) [CPP-111] Need to implement unittest for serial.
     // #[test]
     // fn connect_to_serial_test() {
     // }

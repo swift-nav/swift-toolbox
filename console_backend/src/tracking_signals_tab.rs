@@ -269,7 +269,14 @@ impl<S: MessageSender> TrackingSignalsTab<S> {
     ///
     /// - `msg`: The full SBP message cast as an ObservationMsg variant.
     pub fn handle_obs(&mut self, msg: ObservationMsg) {
-        let (seq, tow, wn, states, sender_id) = msg.fields();
+        let msg_fields = msg.fields();
+        let (seq, tow, wn, states, sender_id) = (
+            msg_fields.n_obs,
+            msg_fields.tow,
+            msg_fields.wn,
+            msg_fields.states,
+            msg_fields.sender_id,
+        );
         if let Some(sender_id_) = sender_id {
             if sender_id_ == 0_u16 {
                 return;
@@ -297,7 +304,8 @@ impl<S: MessageSender> TrackingSignalsTab<S> {
         }
 
         for state in states.iter() {
-            let (code, sat, cn0) = state.fields();
+            let obs_fields = state.fields();
+            let (code, sat, cn0) = (obs_fields.code, obs_fields.sat, obs_fields.cn0);
             self.incoming_obs_cn0.insert((code, sat), cn0 / 4.0);
         }
 
@@ -335,7 +343,6 @@ impl<S: MessageSender> TrackingSignalsTab<S> {
                 cn0_deque.add((OrderedFloat(t), 0.0));
             }
         }
-        // println!("{:?}", obs_dict);
         self.clean_cn0();
         self.update_plot();
         self.send_data();

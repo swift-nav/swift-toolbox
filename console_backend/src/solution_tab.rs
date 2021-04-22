@@ -232,7 +232,15 @@ impl<S: MessageSender> SolutionTab<S> {
     /// # Parameters
     /// - `msg`: VelNED wrapper around a MsgVelNED or MsgVELNEDDepA.
     pub fn handle_vel_ned(&mut self, msg: VelNED) {
-        let (flags, tow, n, e, d, n_sats) = msg.fields();
+        let vel_ned_fields = msg.fields();
+        let (flags, tow, n, e, d, n_sats) = (
+            vel_ned_fields.flags,
+            vel_ned_fields.tow,
+            vel_ned_fields.n,
+            vel_ned_fields.e,
+            vel_ned_fields.d,
+            vel_ned_fields.n_sats,
+        );
         let speed: f64 = mm_to_m(f64::sqrt((i32::pow(n, 2) + i32::pow(e, 2)) as f64));
         let n = mm_to_m(n as f64);
         let e = mm_to_m(e as f64);
@@ -329,7 +337,15 @@ impl<S: MessageSender> SolutionTab<S> {
     /// # Parameters
     /// - `msg`: Dops wrapper around a MsgDops or MsgDopsDepA.
     pub fn handle_dops(&mut self, msg: Dops) {
-        let (pdop, gdop, tdop, hdop, vdop, flags) = msg.fields();
+        let dops_fields = msg.fields();
+        let (pdop, gdop, tdop, hdop, vdop, flags) = (
+            dops_fields.pdop,
+            dops_fields.gdop,
+            dops_fields.tdop,
+            dops_fields.hdop,
+            dops_fields.vdop,
+            dops_fields.flags,
+        );
         self.table.insert(DOPS_FLAGS, format!("0x{:<03x}", flags));
         self.table
             .insert(INS_STATUS, format!("0x{:<01x}", self.ins_status_flags));

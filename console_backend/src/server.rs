@@ -18,6 +18,7 @@ use crate::common_constants as cc;
 use crate::console_backend_capnp as m;
 use crate::process_messages::process_messages;
 use crate::types::{ClientSender, MessageSender, ServerState, SharedState, VelocityUnits};
+use crate::utils::refresh_ports;
 
 /// The backend server
 #[pyclass]
@@ -98,6 +99,7 @@ impl Server {
         };
         let shared_state = SharedState::new();
         let server_state = ServerState::new();
+        refresh_ports(&mut client_send.clone());
         thread::spawn(move || loop {
             let buf = server_recv.recv();
             if let Ok(buf) = buf {
@@ -130,11 +132,13 @@ impl Server {
                         let shared_state_clone = shared_state.clone();
                         let client_send_clone = client_send.clone();
                         match request {
+                            m::message::SerialRefreshRequest(Ok(_)) => {
+                                refresh_ports(&mut client_send_clone.clone());
+                            }
                             m::message::DisconnectRequest(Ok(_)) => {
                                 shared_state_clone.set_running(false);
                                 server_state_clone.connection_join();
                                 println!("Disconnected successfully.");
-                                continue;
                             }
                             m::message::FileRequest(Ok(req)) => {
                                 let filename = req.get_filename().unwrap();
@@ -164,10 +168,14 @@ impl Server {
                                 );
                             }
                             m::message::SerialRequest(Ok(req)) => {
-                                server_state_clone.connect_to_serial(
-                                    client_send_clone,
-                                    shared_state_clone,
-                                );
+                                let device = req.get_device().unwrap();
+                                let device = device.to_string();
+                                let baudrate = req.get_baudrate();
+                                let flow = req.get_flow_control().unwrap();
+                                let flow = flow.to_string();
+                                println!("{}", device);
+                                server_state_clone
+                                    .connect_to_serial(client_send_clone, shared_state_clone, device, baudrate, flow);
                             }
                             _ => println!("err"),
                         }

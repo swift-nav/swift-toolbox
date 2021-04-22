@@ -1,10 +1,10 @@
+import "../Constants"
 import Qt.labs.qmlmodels 1.0
 import QtCharts 2.2
 import QtQuick 2.14
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
-import "../Constants"
 
 Item {
     id: solutionTable
@@ -110,7 +110,6 @@ Item {
                     }
 
                     TableModelColumn {
-
                         display: "Value"
                     }
 

@@ -1,9 +1,10 @@
+import "../Constants"
 import QtCharts 2.2
 import QtQuick 2.5
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
-import "../Constants"
+
 Item {
     id: trackingSignalsTab
 
@@ -31,32 +32,32 @@ Item {
         ChartView {
             id: trackingSignalsChart
 
-            title: "Tracking C/N0"
-            titleColor: "#00006E"
+            title: Constants.trackingSignals.title
+            titleColor: Constants.trackingSignals.titleColor
             width: parent.width
             height: parent.height - trackingSignalsCheckboxes.height
             anchors.top: parent.top
-            backgroundColor: "#CDC9C9"
-            plotAreaColor: "#FFFFFF"
+            backgroundColor: Constants.trackingSignals.plotBackgroundColor
+            plotAreaColor: Constants.trackingSignals.plotAreaColor
             legend.visible: false
             antialiasing: true
             Component.onCompleted: {
             }
 
             titleFont {
-                pointSize: 14
+                pointSize: Constants.trackingSignals.titlePointSize
                 bold: true
             }
 
             Rectangle {
                 id: lineLegend
 
-                border.color: "#000000"
-                border.width: 1
+                border.color: Constants.trackingSignals.legendBorderColor
+                border.width: Constants.trackingSignals.legendBorderWidth
                 anchors.bottom: trackingSignalsChart.bottom
                 anchors.left: trackingSignalsChart.left
-                anchors.bottomMargin: 85
-                anchors.leftMargin: 60
+                anchors.bottomMargin: Constants.trackingSignals.legendBottomMargin
+                anchors.leftMargin: Constants.trackingSignals.legendLeftMargin
                 implicitHeight: lineLegendRepeater.height
                 width: lineLegendRepeater.width
 
@@ -143,7 +144,6 @@ Item {
             }
 
             Timer {
-
                 id: trackingSignalsTimer
 
                 interval: Constants.currentRefreshRate
@@ -156,11 +156,13 @@ Item {
                     tracking_signals_model.fill_console_points(trackingSignalsPoints);
                     if (!trackingSignalsPoints.points.length)
                         return ;
+
                     var points = trackingSignalsPoints.points;
                     colors = trackingSignalsPoints.colors;
                     labels = trackingSignalsPoints.labels;
                     if (check_labels != trackingSignalsPoints.check_labels)
                         check_labels = trackingSignalsPoints.check_labels;
+
                     for (var idx in labels) {
                         if (idx < lines.length) {
                             if (labels[idx] != lines[idx][1]) {

@@ -2,7 +2,7 @@ use crate::constants::*;
 use crate::formatters::*;
 use crate::piksi_tools_constants::*;
 use crate::process_messages::process_messages;
-use crate::utils::{close_frontend, ms_to_sec};
+use crate::utils::{close_frontend, flow_control, ms_to_sec};
 use chrono::{DateTime, Utc};
 use ordered_float::OrderedFloat;
 use sbp::messages::{
@@ -13,21 +13,7 @@ use sbp::messages::{
     },
 };
 use serde::Serialize;
-use serialport;
-use std::{
-    cmp::{Eq, PartialEq},
-    collections::HashMap,
-    fmt,
-    fmt::Debug,
-    fs,
-    hash::Hash,
-    net::TcpStream,
-    ops::Deref,
-    sync::{mpsc::Sender, Arc, Mutex},
-    thread,
-    thread::JoinHandle,
-    time::{Duration, Instant},
-};
+use std::{cmp::{Eq, PartialEq}, collections::HashMap, fmt, fmt::Debug, fs, hash::Hash, net::TcpStream, ops::Deref, sync::{mpsc::Sender, Arc, Mutex}, thread, thread::JoinHandle, time::{Duration, Instant}};
 
 pub type Error = std::boxed::Box<dyn std::error::Error>;
 pub type Result<T> = std::result::Result<T, Error>;
@@ -148,6 +134,7 @@ impl ServerState {
                 if close_when_done {
                     close_frontend(&mut client_send.clone());
                 }
+                
             } else {
                 println!("Couldn't open file...");
             }
@@ -195,33 +182,28 @@ impl ServerState {
         &self,
         client_send: ClientSender,
         shared_state: SharedState,
-        // host_port: String,
+        device: String,
+        baudrate: u32,
+        flow: String,
     ) {
         let shared_state_clone = shared_state.clone();
         shared_state_clone.set_running(true);
         self.connection_join();
         let handle = thread::spawn(move || {
             let shared_state_clone = shared_state.clone();
-
-            // let port = serialport::new("/dev/ttyUSB0", 115200)
-            //     .timeout(Duration::from_millis(10))
-            //     .open().expect("Failed to open port");
-
-            match serialport::new("/dev/ttyUSB0", 115200).timeout(Duration::from_millis(1000)).open() {
+            let flow = flow_control(&flow);
+            match serialport::new(&device, baudrate)
+                .flow_control(flow)
+                .timeout(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))
+                .open()
+            {
                 Ok(port) => {
-                    println!("Connected to the port!");
+                    println!("Connected to serialport {}.", device);
                     let messages = sbp::iter_messages(port);
                     process_messages(messages, shared_state_clone, client_send);
                 }
-                Err(e) => ()//eprint!("Error: {}", e)
+                Err(e) => eprint!("Unable to connect to serialport: {}", e),
             }
-            // if let Ok(port) = serialport::new("/dev/ttyUSB0", 115200).timeout(Duration::from_millis(10)).open() {
-            //     println!("Connected to the port!");
-            //     let messages = sbp::iter_messages(port);
-            //     process_messages(messages, shared_state_clone, client_send);
-            // } else {
-            //     println!("Couldn't connect to server...");
-            // }
             shared_state.set_running(false);
         });
         self.new_connection(handle);
@@ -895,7 +877,6 @@ impl Observations {
             ),
         }
     }
-
 }
 
 // Solution Tab Types.
@@ -1143,10 +1124,10 @@ mod tests {
     fn connect_to_file_test() {
         let shared_state = SharedState::new();
         let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
-        let server_state = ServerState::new();
         let client_send = ClientSender {
             inner: client_send_,
         };
+        let server_state = ServerState::new();
         let filename = TEST_FILEPATH.to_string();
         receive_thread(client_receive);
         assert!(!shared_state.is_running());
@@ -1161,10 +1142,10 @@ mod tests {
     fn pause_via_connect_to_file_test() {
         let shared_state = SharedState::new();
         let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
-        let server_state = ServerState::new();
         let client_send = ClientSender {
             inner: client_send_,
         };
+        let server_state = ServerState::new();
         let filename = TEST_FILEPATH.to_string();
         receive_thread(client_receive);
         assert!(!shared_state.is_running());
@@ -1183,21 +1164,24 @@ mod tests {
     fn disconnect_via_connect_to_file_test() {
         let shared_state = SharedState::new();
         let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
-        let server_state = ServerState::new();
         let client_send = ClientSender {
             inner: client_send_,
         };
+        let server_state = ServerState::new();
         let filename = TEST_FILEPATH.to_string();
         let expected_duration = Duration::from_millis(100);
         let handle = receive_thread(client_receive);
         assert!(!shared_state.is_running());
-        server_state.connect_to_file(client_send, shared_state.clone(), filename, true);
+        {
+            server_state.connect_to_file(client_send, shared_state.clone(), filename, true);
+        }
+        
         sleep(Duration::from_millis(5));
         assert!(shared_state.is_running());
         let now = SystemTime::now();
         sleep(Duration::from_millis(1));
         shared_state.set_running(false);
-        sleep(Duration::from_millis(1));
+        sleep(Duration::from_millis(5));
         assert!(handle.join().is_ok());
 
         match now.elapsed() {
@@ -1218,5 +1202,10 @@ mod tests {
     // TODO(johnmichael.burke@) [CPP-111] Need to implement unittest for TCPStream.
     // #[test]
     // fn connect_to_host_test() {
+    // }
+
+    // TODO(johnmichael.burke@) [CPP-111] Need to implement unittest for TCPStream.
+    // #[test]
+    // fn connect_to_serial_test() {
     // }
 }

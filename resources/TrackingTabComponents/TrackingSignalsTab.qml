@@ -37,8 +37,8 @@ Item {
             width: parent.width
             height: parent.height - trackingSignalsCheckboxes.height
             anchors.top: parent.top
-            backgroundColor: Constants.trackingSignals.plotBackgroundColor
-            plotAreaColor: Constants.trackingSignals.plotAreaColor
+            backgroundColor: Constants.plotBackgroundColor
+            plotAreaColor: Constants.plotAreaColor
             legend.visible: false
             antialiasing: true
             Component.onCompleted: {
@@ -52,8 +52,8 @@ Item {
             Rectangle {
                 id: lineLegend
 
-                border.color: Constants.trackingSignals.legendBorderColor
-                border.width: Constants.trackingSignals.legendBorderWidth
+                border.color: Constants.legendBorderColor
+                border.width: Constants.legendBorderWidth
                 anchors.bottom: trackingSignalsChart.bottom
                 anchors.left: trackingSignalsChart.left
                 anchors.bottomMargin: Constants.trackingSignals.legendBottomMargin
@@ -114,8 +114,9 @@ Item {
                 gridVisible: true
                 lineVisible: true
                 minorGridVisible: true
-                minorGridLineColor: "#CDC9C9"
-                visible: true
+                minorGridLineColor: Constants.plotMinorGridLineColor
+                gridLineColor: Constants.plotGridLineColor
+                labelsColor: Constants.plotLabelsColor
 
                 labelsFont {
                     pointSize: 10
@@ -133,8 +134,9 @@ Item {
                 gridVisible: true
                 lineVisible: true
                 minorGridVisible: true
-                minorGridLineColor: "#CDC9C9"
-                visible: true
+                minorGridLineColor: Constants.plotMinorGridLineColor
+                gridLineColor: Constants.plotGridLineColor
+                labelsColor: Constants.plotLabelsColor
 
                 labelsFont {
                     pointSize: 10

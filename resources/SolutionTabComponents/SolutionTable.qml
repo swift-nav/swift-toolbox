@@ -10,7 +10,7 @@ Item {
     id: solutionTable
 
     property variant table: []
-    property variant columnWidths: [50, 50]
+    property variant columnWidths: Constants.solutionTable.defaultColumnWidths
 
     width: parent.width
     height: parent.height
@@ -22,15 +22,15 @@ Item {
     Rectangle {
         id: solutionTableInner
 
-        border.color: "#000000"
-        border.width: 1
+        border.color: Constants.solutionTable.tableBorderColor
+        border.width: Constants.solutionTable.tableBorderWidth
         width: parent.width
         height: parent.height
 
         ColumnLayout {
             id: solutionTableRowLayout
 
-            spacing: 0
+            spacing: Constants.solutionTable.tableHeaderTableDataTableSpacing
             width: parent.width
             height: parent.height
 
@@ -38,31 +38,27 @@ Item {
                 id: solutionTableElementHeaders
 
                 interactive: false
-                Layout.minimumHeight: 20
+                Layout.minimumHeight: Constants.solutionTable.tableCellHeight
                 Layout.fillWidth: true
-                Layout.leftMargin: 2
-                Layout.rightMargin: 2
-                Layout.bottomMargin: 0
-                Layout.topMargin: 2
-                columnSpacing: 0
-                rowSpacing: 0
+                Layout.leftMargin: Constants.solutionTable.tableSurroundingMargin
+                Layout.rightMargin: Constants.solutionTable.tableSurroundingMargin
+                Layout.bottomMargin: Constants.solutionTable.tableInnerMargin
+                Layout.topMargin: Constants.solutionTable.tableSurroundingMargin
+                columnSpacing: Constants.solutionTable.tableCellSpacing
+                rowSpacing: Constants.solutionTable.tableCellSpacing
                 clip: true
                 columnWidthProvider: function(column) {
                     return columnWidths[column];
                 }
 
                 model: TableModel {
-                    rows: [{
-                        "Item": "Item",
-                        "Value": "Value"
-                    }]
-
+                    rows: Constants.solutionTable.tableHeaderModel
                     TableModelColumn {
-                        display: "Item"
+                        display: Constants.solutionTable.tableLeftColumnHeader
                     }
 
                     TableModelColumn {
-                        display: "Value"
+                        display: Constants.solutionTable.tableRightColumnHeader
                     }
 
                 }
@@ -70,15 +66,15 @@ Item {
                 delegate: Rectangle {
                     id: textDelegate
 
-                    implicitHeight: 20
-                    border.width: 1
+                    implicitHeight: Constants.solutionTable.tableCellHeight
+                    border.width: Constants.solutionTable.tableBorderWidth
 
                     Text {
                         id: rowText
 
                         text: display
                         anchors.centerIn: parent
-                        leftPadding: 2
+                        leftPadding: Constants.solutionTable.tableLeftPadding
                     }
 
                 }
@@ -90,13 +86,13 @@ Item {
 
                 Layout.fillHeight: true
                 Layout.fillWidth: true
-                Layout.leftMargin: 2
-                Layout.rightMargin: 2
-                Layout.bottomMargin: 2
-                Layout.topMargin: 0
+                Layout.leftMargin: Constants.solutionTable.tableSurroundingMargin
+                Layout.rightMargin: Constants.solutionTable.tableSurroundingMargin
+                Layout.bottomMargin: Constants.solutionTable.tableInnerMargin
+                Layout.topMargin: Constants.solutionTable.tableSurroundingMargin
+                columnSpacing: Constants.solutionTable.tableCellSpacing
+                rowSpacing: Constants.solutionTable.tableCellSpacing
                 interactive: false
-                columnSpacing: 0
-                rowSpacing: 0
                 clip: true
                 columnWidthProvider: function(column) {
                     return columnWidths[column];
@@ -106,11 +102,11 @@ Item {
                     rows: []
 
                     TableModelColumn {
-                        display: "Item"
+                        display: Constants.solutionTable.tableLeftColumnHeader
                     }
 
                     TableModelColumn {
-                        display: "Value"
+                        display: Constants.solutionTable.tableRightColumnHeader
                     }
 
                 }
@@ -118,14 +114,14 @@ Item {
                 delegate: Rectangle {
                     id: textDelegate
 
-                    implicitHeight: 20
-                    border.width: 1
+                    implicitHeight: Constants.solutionTable.tableCellHeight
+                    border.width: Constants.solutionTable.tableBorderWidth
 
                     Text {
                         id: rowText
 
                         text: display
-                        leftPadding: 2
+                        leftPadding: Constants.solutionTable.tableLeftPadding
                     }
 
                 }
@@ -135,17 +131,17 @@ Item {
             Rectangle {
                 id: solutionRTKNote
 
-                Layout.minimumHeight: 40
+                Layout.minimumHeight: Constants.solutionTable.rtkNoteHeight
                 Layout.fillWidth: true
                 width: parent.width
-                Layout.margins: 2
+                Layout.margins: Constants.solutionTable.rtkNoteMargins
                 Layout.alignment: Qt.AlignLeft | Qt.AlignBottom
-                border.width: 1
+                border.width: Constants.solutionTable.rtkNoteBorderWidth
 
                 Text {
                     wrapMode: Text.Wrap
                     anchors.fill: parent
-                    text: "It is necessary to enter the \"Surveyed Position\" settings for the base station in order to view the RTK Positions in this tab."
+                    text: Constants.solutionTable.rtkNoteText
                 }
 
             }
@@ -173,9 +169,12 @@ Item {
                     });
                 }
                 solutionTableElement.model.rows = table_update;
-                columnWidths = [120, solutionTableArea.width - 120];
-                solutionTableElement.forceLayout();
-                solutionTableElementHeaders.forceLayout();
+                var new_width = solutionTableArea.width - Constants.solutionTable.defaultColumnWidths[1];
+                if (columnWidths[1] != new_width) {                    
+                    columnWidths = [Constants.solutionTable.defaultColumnWidths[0], solutionTableArea.width - Constants.solutionTable.defaultColumnWidths[1]];
+                    solutionTableElement.forceLayout();
+                    solutionTableElementHeaders.forceLayout();
+                } 
             }
         }
 

@@ -2,7 +2,7 @@ use crate::constants::*;
 use crate::formatters::*;
 use crate::piksi_tools_constants::*;
 use crate::process_messages::process_messages;
-use crate::utils::{close_frontend, flow_control, ms_to_sec};
+use crate::utils::{close_frontend, from_flowcontrol_str, ms_to_sec};
 use chrono::{DateTime, Utc};
 use ordered_float::OrderedFloat;
 use sbp::messages::{
@@ -125,7 +125,7 @@ impl ServerState {
     /// Helper function for attempting to open a file and process SBP messages from it.
     ///
     /// # Parameters
-    /// - `client_send`: Client Sender channel for bidirectional communication between front/backend.
+    /// - `client_send`: Client Sender channel for communication from backend to frontend.
     /// - `shared_state`: The shared state for validating another connection is not already running.
     /// - `filename`: The path to the filename to be read for SBP messages.
     pub fn connect_to_file(
@@ -158,7 +158,7 @@ impl ServerState {
     /// Helper function for attempting to open a tcp connection and process SBP messages from it.
     ///
     /// # Parameters
-    /// - `client_send`: Client Sender channel for bidirectional communication between front/backend.
+    /// - `client_send`: Client Sender channel for communication from backend to frontend.
     /// - `shared_state`: The shared state for validating another connection is not already running.
     /// - `host_port`: The host and port combined as a string to be opend as a TCP stream.
     pub fn connect_to_host(
@@ -184,12 +184,14 @@ impl ServerState {
         self.new_connection(handle);
     }
 
-    /// Helper function for attempting to open a tcp connection and process SBP messages from it.
+    /// Helper function for attempting to open a serial port and process SBP messages from it.
     ///
     /// # Parameters
-    /// - `client_send`: Client Sender channel for bidirectional communication between front/backend.
+    /// - `client_send`: Client Sender channel for communication from backend to frontend.
     /// - `shared_state`: The shared state for validating another connection is not already running.
-    /// - `host_port`: The host and port combined as a string to be opend as a TCP stream.
+    /// - `device`: The string path corresponding to the serial device to connect with.
+    /// - `baudrate`: The baudrate to use when communicating with the serial device.
+    /// - `flow`: The flow control mode to use when communicating with the serial device.
     pub fn connect_to_serial(
         &self,
         client_send: ClientSender,
@@ -203,7 +205,7 @@ impl ServerState {
         self.connection_join();
         let handle = thread::spawn(move || {
             let shared_state_clone = shared_state.clone();
-            let flow = flow_control(&flow);
+            let flow = from_flowcontrol_str(&flow);
             match serialport::new(&device, baudrate)
                 .flow_control(flow)
                 .timeout(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))
@@ -797,7 +799,7 @@ impl fmt::Display for SignalCodes {
     }
 }
 
-// Enum wrapping around various Observation Message types.
+// Struct with shared fields for various Observation Message types.
 pub struct ObservationMsgFields {
     pub n_obs: u8,
     pub tow: f64,
@@ -805,6 +807,7 @@ pub struct ObservationMsgFields {
     pub states: Vec<Observations>,
     pub sender_id: Option<u16>,
 }
+// Enum wrapping around various Observation Message types.
 pub enum ObservationMsg {
     MsgObs(MsgObs),
     // MsgObsDepA(MsgObsDepA),
@@ -870,12 +873,13 @@ impl ObservationMsg {
         }
     }
 }
-// Enum wrapping around various Observation Message observation types.
+// Struct with shared fields for various Observation Contents types.
 pub struct ObservationFields {
     pub code: SignalCodes,
     pub sat: i16,
     pub cn0: f64,
 }
+// Enum wrapping around various Observation Contents observation types.
 pub enum Observations {
     PackedObsContent(PackedObsContent),
     // PackedObsContentDepA(PackedObsContentDepA),
@@ -1007,8 +1011,7 @@ impl PosLLH {
         }
     }
 }
-
-// Enum wrapping around various Dops Message types.
+// Struct with shared fields for various Dops Message types.
 pub struct DopsFields {
     pub pdop: u16,
     pub gdop: u16,
@@ -1017,6 +1020,7 @@ pub struct DopsFields {
     pub vdop: u16,
     pub flags: u8,
 }
+// Enum wrapping around various Dops Message types.
 #[derive(Debug)]
 pub enum Dops {
     MsgDops(MsgDops),
@@ -1044,7 +1048,7 @@ impl Dops {
     }
 }
 
-// Enum wrapping around various Vel NED Message types.
+// Struct with shared fields for various VelNED Message types.
 #[allow(clippy::upper_case_acronyms)]
 pub struct VelNEDFields {
     pub flags: u8,
@@ -1054,6 +1058,7 @@ pub struct VelNEDFields {
     pub d: i32,
     pub n_sats: u8,
 }
+// Enum wrapping around various Vel NED Message types.
 #[derive(Debug)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum VelNED {

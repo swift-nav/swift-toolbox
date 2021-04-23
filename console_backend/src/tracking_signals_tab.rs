@@ -270,14 +270,7 @@ impl<S: MessageSender> TrackingSignalsTab<S> {
     /// - `msg`: The full SBP message cast as an ObservationMsg variant.
     pub fn handle_obs(&mut self, msg: ObservationMsg) {
         let msg_fields = msg.fields();
-        let (seq, tow, wn, states, sender_id) = (
-            msg_fields.n_obs,
-            msg_fields.tow,
-            msg_fields.wn,
-            msg_fields.states,
-            msg_fields.sender_id,
-        );
-        if let Some(sender_id_) = sender_id {
+        if let Some(sender_id_) = msg_fields.sender_id {
             if sender_id_ == 0_u16 {
                 return;
             }
@@ -285,25 +278,25 @@ impl<S: MessageSender> TrackingSignalsTab<S> {
             return;
         }
 
-        let total = seq >> 4;
-        let count = seq & ((1 << 4) - 1);
+        let total = msg_fields.n_obs >> 4;
+        let count = msg_fields.n_obs & ((1 << 4) - 1);
 
         if count == 0 {
-            self.obs_reset(tow, wn, total);
-        } else if (self.gps_tow - tow) > f64::EPSILON
-            || self.gps_week != wn
+            self.obs_reset(msg_fields.tow, msg_fields.wn, total);
+        } else if (self.gps_tow - msg_fields.tow) > f64::EPSILON
+            || self.gps_week != msg_fields.wn
             || self.prev_obs_count + 1 != count
             || self.prev_obs_total != total
         {
             println!("We dropped a packet. Skipping this ObservationMsg sequence");
-            self.obs_reset(tow, wn, total);
+            self.obs_reset(msg_fields.tow, msg_fields.wn, total);
             self.prev_obs_count = count;
             return;
         } else {
             self.prev_obs_count = count;
         }
 
-        for state in states.iter() {
+        for state in msg_fields.states.iter() {
             let obs_fields = state.fields();
             let (code, sat, cn0) = (obs_fields.code, obs_fields.sat, obs_fields.cn0);
             self.incoming_obs_cn0.insert((code, sat), cn0 / 4.0);

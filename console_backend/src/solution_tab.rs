@@ -233,19 +233,13 @@ impl<S: MessageSender> SolutionTab<S> {
     /// - `msg`: VelNED wrapper around a MsgVelNED or MsgVELNEDDepA.
     pub fn handle_vel_ned(&mut self, msg: VelNED) {
         let vel_ned_fields = msg.fields();
-        let (flags, tow, n, e, d, n_sats) = (
-            vel_ned_fields.flags,
-            vel_ned_fields.tow,
-            vel_ned_fields.n,
-            vel_ned_fields.e,
-            vel_ned_fields.d,
-            vel_ned_fields.n_sats,
-        );
-        let speed: f64 = mm_to_m(f64::sqrt((i32::pow(n, 2) + i32::pow(e, 2)) as f64));
-        let n = mm_to_m(n as f64);
-        let e = mm_to_m(e as f64);
-        let d = mm_to_m(d as f64);
-        let mut tow = ms_to_sec(tow);
+        let speed: f64 = mm_to_m(f64::sqrt(
+            (i32::pow(vel_ned_fields.n, 2) + i32::pow(vel_ned_fields.e, 2)) as f64,
+        ));
+        let n = mm_to_m(vel_ned_fields.n as f64);
+        let e = mm_to_m(vel_ned_fields.e as f64);
+        let d = mm_to_m(vel_ned_fields.d as f64);
+        let mut tow = ms_to_sec(vel_ned_fields.tow);
         if let Some(nsec) = self.nsec {
             tow += ns_to_sec(nsec as f64);
         }
@@ -278,8 +272,8 @@ impl<S: MessageSender> SolutionTab<S> {
                     east_mps: Some(e),
                     down_mps: Some(d),
                     speed_mps: Some(speed),
-                    flags,
-                    num_signals: n_sats,
+                    flags: vel_ned_fields.flags,
+                    num_signals: vel_ned_fields.n_sats,
                 }) {
                     eprintln!("Unable to to write to vel log, error {}.", err);
                 }
@@ -289,8 +283,9 @@ impl<S: MessageSender> SolutionTab<S> {
         } else {
             self.vel_log_file = None;
         }
-        self.table.insert(VEL_FLAGS, format!("0x{:<03x}", flags));
-        if (flags & 0x7) != 0 {
+        self.table
+            .insert(VEL_FLAGS, format!("0x{:<03x}", vel_ned_fields.flags));
+        if (vel_ned_fields.flags & 0x7) != 0 {
             self.table.insert(VEL_N, format!("{: >8.4}", n));
             self.table.insert(VEL_E, format!("{: >8.4}", e));
             self.table.insert(VEL_D, format!("{: >8.4}", d));
@@ -338,37 +333,45 @@ impl<S: MessageSender> SolutionTab<S> {
     /// - `msg`: Dops wrapper around a MsgDops or MsgDopsDepA.
     pub fn handle_dops(&mut self, msg: Dops) {
         let dops_fields = msg.fields();
-        let (pdop, gdop, tdop, hdop, vdop, flags) = (
-            dops_fields.pdop,
-            dops_fields.gdop,
-            dops_fields.tdop,
-            dops_fields.hdop,
-            dops_fields.vdop,
-            dops_fields.flags,
-        );
-        self.table.insert(DOPS_FLAGS, format!("0x{:<03x}", flags));
+        self.table
+            .insert(DOPS_FLAGS, format!("0x{:<03x}", dops_fields.flags));
         self.table
             .insert(INS_STATUS, format!("0x{:<01x}", self.ins_status_flags));
-        if flags != 0 {
+        if dops_fields.flags != 0 {
             self.table.insert(
                 PDOP,
-                format!("{:.1}", pdop as f64 * DILUTION_OF_PRECISION_UNITS),
+                format!(
+                    "{:.1}",
+                    dops_fields.pdop as f64 * DILUTION_OF_PRECISION_UNITS
+                ),
             );
             self.table.insert(
                 GDOP,
-                format!("{:.1}", gdop as f64 * DILUTION_OF_PRECISION_UNITS),
+                format!(
+                    "{:.1}",
+                    dops_fields.gdop as f64 * DILUTION_OF_PRECISION_UNITS
+                ),
             );
             self.table.insert(
                 TDOP,
-                format!("{:.1}", tdop as f64 * DILUTION_OF_PRECISION_UNITS),
+                format!(
+                    "{:.1}",
+                    dops_fields.tdop as f64 * DILUTION_OF_PRECISION_UNITS
+                ),
             );
             self.table.insert(
                 HDOP,
-                format!("{:.1}", hdop as f64 * DILUTION_OF_PRECISION_UNITS),
+                format!(
+                    "{:.1}",
+                    dops_fields.hdop as f64 * DILUTION_OF_PRECISION_UNITS
+                ),
             );
             self.table.insert(
                 VDOP,
-                format!("{:.1}", vdop as f64 * DILUTION_OF_PRECISION_UNITS),
+                format!(
+                    "{:.1}",
+                    dops_fields.vdop as f64 * DILUTION_OF_PRECISION_UNITS
+                ),
             );
         } else {
             self.table.insert(PDOP, String::from(EMPTY_STR));

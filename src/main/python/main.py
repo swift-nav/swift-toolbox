@@ -279,16 +279,6 @@ class BottomNavbarData(QObject):
 
     available_flows = Property(QTKeys.QVARIANTLIST, get_available_flows, set_available_flows)  # type: ignore
 
-    @Slot(list)  # type: ignore
-    def fill_series(self, series_list):
-        lines = series_list[0]
-        scatters = series_list[1]
-        cur_scatters = series_list[2]
-        for idx, _ in enumerate(lines):
-            lines[idx].replace(self._points[idx])
-            scatters[idx].replace(self._points[idx])
-            cur_scatters[idx].replace(self._cur_points[idx])
-
 
 class BottomNavbarModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(BottomNavbarData)  # type: ignore

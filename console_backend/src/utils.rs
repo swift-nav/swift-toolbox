@@ -63,14 +63,14 @@ pub fn refresh_ports<P: MessageSender>(client_send: &mut P) {
     }
 }
 
-/// Convert this FlowControl type to expected serialport FlowControl.
+/// Convert flow control string slice to expected serialport FlowControl variant.
 ///
 /// # Parameters
 /// - `flow_str`: A string slice corresponding to serialport FlowControl variant.
 ///
 /// # Returns
 /// - the associated serialport::FlowControl variant.
-pub fn flow_control(flow_str: &str) -> FlowControl {
+pub fn from_flowcontrol_str(flow_str: &str) -> FlowControl {
     match flow_str {
         FLOW_CONTROL_NONE => FlowControl::None,
         FLOW_CONTROL_SOFTWARE => FlowControl::Software,

@@ -7,6 +7,18 @@ pub const PAUSE_LOOP_SLEEP_DURATION_MS: u64 = 100;
 // Common constants.
 pub const NUM_POINTS: usize = 200;
 
+// Bottom Navbar constants.
+pub const AVAILABLE_BAUDRATES: [u32; 6] = [57600, 115200, 230400, 460800, 921600, 1000000];
+pub const FLOW_CONTROL_NONE: &str = "None";
+pub const FLOW_CONTROL_SOFTWARE: &str = "Software XON/XOFF";
+pub const FLOW_CONTROL_HARDWARE: &str = "Hardware RTS/CTS";
+pub const AVAILABLE_FLOWS: &[&str] = &[
+    FLOW_CONTROL_NONE,
+    FLOW_CONTROL_SOFTWARE,
+    FLOW_CONTROL_HARDWARE,
+];
+pub const SERIALPORT_READ_TIMEOUT_MS: u64 = 1000;
+
 // Tracking Signals Tab constants.
 pub const NUM_SATELLITES: usize = 60;
 pub const NUM_COLORS: u8 = 37;

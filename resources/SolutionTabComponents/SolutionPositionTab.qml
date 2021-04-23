@@ -1,3 +1,4 @@
+import "../Constants"
 import QtCharts 2.15
 import QtQuick 2.15
 import QtQuick.Controls 2.12
@@ -219,7 +220,7 @@ Item {
                 }
 
                 Timer {
-                    interval: 1000 / 5 // 5 Hz refresh
+                    interval: Constants.currentRefreshRate
                     running: true
                     repeat: true
                     onTriggered: {

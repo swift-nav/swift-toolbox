@@ -1,16 +1,25 @@
+import "Constants"
 import QtCharts 2.2
 import QtQuick 2.5
 import QtQuick.Controls 2.2
 import QtQuick.Layouts 1.15
+import SwiftConsole 1.0
 
 Item {
     property string tcp_ip: "TCP/IP"
     property string serial_usb: "Serial/USB"
     property string file: "File"
     property var sources: [tcp_ip, serial_usb, file]
+    property variant available_baudrates: []
+    property variant available_devices: []
+    property variant available_flows: []
 
     width: parent.width
     height: parent.height
+
+    BottomNavbarData {
+        id: bottomNavbarData
+    }
 
     RowLayout {
         id: bottomNavBarRowLayout
@@ -21,6 +30,7 @@ Item {
         ComboBox {
             id: bottomNavBarSourceSelection
 
+            Layout.preferredWidth: Constants.bottomNavBar.connectionDropdownWidth
             Layout.alignment: Qt.AlignLeft
             Layout.leftMargin: Constants.bottomNavBar.navBarMargin
             Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
@@ -52,8 +62,10 @@ Item {
             id: serialDevice
 
             visible: false
+            Layout.alignment: Qt.AlignLeft
+            Layout.preferredWidth: Constants.bottomNavBar.serialSelectionDropdownWidth
             Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
-            model: ["usb0", "usb1"]
+            model: available_devices
             onActivated: {
             }
         }
@@ -62,18 +74,22 @@ Item {
             id: serialDeviceRefresh
 
             visible: false
+            Layout.alignment: Qt.AlignLeft
             Layout.preferredWidth: Constants.bottomNavBar.serialDeviceRefreshWidth
             Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
             text: "F5"
+            onClicked: {
+                data_model.serial_refresh();
+            }
         }
 
         ComboBox {
             id: serialDeviceBaudRate
 
             visible: false
+            Layout.alignment: Qt.AlignLeft
             Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
-            currentIndex: 1
-            model: [57600, 115200, 230400, 460800, 921600, 1e+06]
+            model: available_baudrates
             onActivated: {
             }
         }
@@ -82,8 +98,9 @@ Item {
             id: serialDeviceFlowControl
 
             visible: false
+            Layout.alignment: Qt.AlignLeft
             Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
-            model: ["None", "Hardware RTS/CTS"]
+            model: available_flows
             onActivated: {
             }
         }
@@ -91,6 +108,7 @@ Item {
         Row {
             id: tcpUrlBarPortBar
 
+            Layout.alignment: Qt.AlignLeft
             Layout.preferredWidth: parent.width / 2
             Layout.preferredHeight: Constants.bottomNavBar.urlBarHeight
             spacing: 1
@@ -153,6 +171,7 @@ Item {
             id: fileUrlBar
 
             visible: false
+            Layout.alignment: Qt.AlignLeft
             Layout.preferredWidth: parent.width / 2
             Layout.preferredHeight: Constants.bottomNavBar.urlBarHeight
             border.width: Constants.bottomNavBar.urlBarBorder
@@ -183,7 +202,7 @@ Item {
             Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
             text: "| |"
             ToolTip.visible: hovered
-            ToolTip.text: "Pause"
+            ToolTip.text: !checked ? "Pause" : "Unpause"
             checkable: true
             onClicked: data_model.pause(checked)
         }
@@ -193,7 +212,7 @@ Item {
             Layout.rightMargin: Constants.bottomNavBar.navBarMargin
             Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
             checkable: true
-            text: "Connect"
+            text: !checked ? "Connect" : "Disconnect"
             onClicked: {
                 if (!checked) {
                     data_model.disconnect();
@@ -208,9 +227,41 @@ Item {
                             data_model.connect_file(fileUrlBarText.text);
 
                     } else {
-                        data_model.connect_file(serialDevice.currentText, serialDeviceBaudRate.currentText, serialDeviceFlowControl.currentIndex == 1);
+                        data_model.connect_serial(serialDevice.currentText, serialDeviceBaudRate.currentText, serialDeviceFlowControl.currentText);
                     }
                 }
+            }
+        }
+
+        ComboBox {
+            id: refreshRateDrop
+
+            visible: true
+            Layout.preferredWidth: Constants.bottomNavBar.plotRefreshRateDropdownWidth
+            Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
+            model: Constants.bottomNavBar.available_ref_rates
+            onActivated: {
+                Constants.currentRefreshRate = 1000 / Constants.bottomNavBar.available_ref_rates[currentIndex];
+            }
+        }
+
+        Timer {
+            interval: Constants.defaultTimerIntervalRate
+            running: true
+            repeat: true
+            onTriggered: {
+                bottom_navbar_model.fill_data(bottomNavbarData);
+                if (!bottomNavbarData.available_baudrates.length)
+                    return ;
+
+                if (available_baudrates.length == 0) {
+                    available_baudrates = bottomNavbarData.available_baudrates;
+                    serialDeviceBaudRate.currentIndex = 1;
+                }
+                if (available_flows.length == 0)
+                    available_flows = bottomNavbarData.available_flows;
+
+                available_devices = bottomNavbarData.available_ports;
             }
         }
 

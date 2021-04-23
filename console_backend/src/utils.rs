@@ -1,6 +1,6 @@
 use capnp::message::Builder;
 use capnp::serialize;
-
+use serialport::{available_ports, FlowControl};
 use std::collections::HashMap;
 
 use crate::common_constants as cc;
@@ -9,7 +9,7 @@ use crate::constants::*;
 use crate::types::{MessageSender, SignalCodes};
 
 /// Send a CLOSE, or kill, signal to the frontend.
-pub fn close_frontend<P: MessageSender + Clone>(client_send: &mut P) {
+pub fn close_frontend<P: MessageSender>(client_send: &mut P) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<m::message::Builder>();
     let mut status = msg.init_status();
@@ -18,6 +18,65 @@ pub fn close_frontend<P: MessageSender + Clone>(client_send: &mut P) {
     let mut msg_bytes: Vec<u8> = vec![];
     serialize::write_message(&mut msg_bytes, &builder).unwrap();
     client_send.send_data(msg_bytes);
+}
+
+pub fn refresh_ports<P: MessageSender>(client_send: &mut P) {
+    if let Ok(ports) = &mut available_ports() {
+        // TODO(johnmichael.burke@) [CPP-114]Find solution to this hack for Linux serialport.
+        let ports: Vec<String> = ports
+            .iter_mut()
+            .map(|x| x.port_name.replace("/sys/class/tty/", "/dev/"))
+            .collect();
+        let mut builder = Builder::new_default();
+        let msg = builder.init_root::<m::message::Builder>();
+
+        let mut bottom_navbar_status = msg.init_bottom_navbar_status();
+
+        let mut available_ports = bottom_navbar_status
+            .reborrow()
+            .init_available_ports(ports.len() as u32);
+
+        for (i, serialportinfo) in ports.iter().enumerate() {
+            available_ports.set(i as u32, &(*serialportinfo));
+        }
+
+        let mut available_baudrates = bottom_navbar_status
+            .reborrow()
+            .init_available_baudrates(AVAILABLE_BAUDRATES.len() as u32);
+
+        for (i, baudrate) in AVAILABLE_BAUDRATES.iter().enumerate() {
+            available_baudrates.set(i as u32, *baudrate);
+        }
+
+        let mut available_flows = bottom_navbar_status
+            .reborrow()
+            .init_available_flows(AVAILABLE_FLOWS.len() as u32);
+
+        for (i, flow) in AVAILABLE_FLOWS.iter().enumerate() {
+            available_flows.set(i as u32, &flow.to_string());
+        }
+
+        let mut msg_bytes: Vec<u8> = vec![];
+        serialize::write_message(&mut msg_bytes, &builder).unwrap();
+
+        client_send.send_data(msg_bytes);
+    }
+}
+
+/// Convert flow control string slice to expected serialport FlowControl variant.
+///
+/// # Parameters
+/// - `flow_str`: A string slice corresponding to serialport FlowControl variant.
+///
+/// # Returns
+/// - the associated serialport::FlowControl variant.
+pub fn from_flowcontrol_str(flow_str: &str) -> FlowControl {
+    match flow_str {
+        FLOW_CONTROL_NONE => FlowControl::None,
+        FLOW_CONTROL_SOFTWARE => FlowControl::Software,
+        FLOW_CONTROL_HARDWARE => FlowControl::Hardware,
+        _ => panic!("unable to convert to FlowControl"),
+    }
 }
 
 pub fn signal_key_label(

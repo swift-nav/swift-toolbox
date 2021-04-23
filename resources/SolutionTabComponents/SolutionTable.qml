@@ -1,3 +1,4 @@
+import "../Constants"
 import Qt.labs.qmlmodels 1.0
 import QtCharts 2.2
 import QtQuick 2.14
@@ -109,8 +110,6 @@ Item {
                     }
 
                     TableModelColumn {
-                        id: hello
-
                         display: "Value"
                     }
 
@@ -154,7 +153,7 @@ Item {
         }
 
         Timer {
-            interval: 1000 / 10 // 10 Hz refresh
+            interval: Constants.currentRefreshRate
             running: true
             repeat: true
             onTriggered: {

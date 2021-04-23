@@ -6,7 +6,7 @@ use crate::utils::{close_frontend, from_flowcontrol_str, ms_to_sec};
 use chrono::{DateTime, Utc};
 use ordered_float::OrderedFloat;
 use sbp::messages::{
-    navigation::{MsgDops, MsgDopsDepA, MsgPosLLH, MsgPosLLHDepA, MsgVelNED, MsgVelNEDDepA},
+    navigation::{MsgAgeCorrections, MsgDops, MsgDopsDepA, MsgGPSTime, MsgPosLLH, MsgPosLLHDepA, MsgUtcTime, MsgVelNED, MsgVelNEDDepA},
     observation::{
         MsgObs, MsgObsDepB, MsgObsDepC, PackedObsContent, PackedObsContentDepB,
         PackedObsContentDepC,
@@ -1082,6 +1082,43 @@ impl VelNED {
         }
     }
 }
+
+// Enum wrapping around various Vel NED Message types.
+#[derive(Debug)]
+#[allow(clippy::upper_case_acronyms)]
+pub enum GPSTime {
+    MsgAgeCorrections(MsgAgeCorrections),
+    MsgGPSTime(MsgGPSTime),
+    MsgObs(MsgObs),
+    // MsgObsDepA(MsgObsDepA),
+    MsgObsDepB(MsgObsDepB),
+    MsgObsDepC(MsgObsDepC),
+    MsgPosLLH(MsgPosLLH),
+    MsgPosLLHDepA(MsgPosLLHDepA),
+    MsgUtcTime(MsgUtcTime),
+    MsgVelNED(MsgVelNED),
+    MsgVelNEDDepA(MsgVelNEDDepA),
+    
+}
+
+impl GPSTime {
+    pub fn tow(&self) -> u32 {
+        match self {
+            GPSTime::MsgAgeCorrections(msg) => msg.tow,
+            GPSTime::MsgGPSTime(msg) => msg.tow,
+            GPSTime::MsgObs(msg) => msg.header.t.tow,
+            GPSTime::MsgObsDepB(msg) => msg.header.t.tow,
+            GPSTime::MsgObsDepC(msg) => msg.header.t.tow,
+            GPSTime::MsgPosLLH(msg) => msg.tow,
+            GPSTime::MsgPosLLHDepA(msg) => msg.tow,
+            GPSTime::MsgUtcTime(msg) => msg.tow,
+            GPSTime::MsgVelNED(msg) => msg.tow,
+            GPSTime::MsgVelNEDDepA(msg) => msg.tow,
+        }
+        
+    }
+}
+
 
 // Solution Velocity Tab Types.
 #[derive(Debug, Clone, PartialEq)]

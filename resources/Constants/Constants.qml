@@ -103,6 +103,18 @@ QtObject {
         readonly property int titlePointSize: 14
         readonly property int legendBottomMargin: 85
         readonly property int legendLeftMargin: 60
+        readonly property int legendMarkerHeight: 3
+        readonly property int legendMarkerWidth: 20
+        readonly property int legendLabelPointSize: 6
+        readonly property int legendVerticalCenterOffset: -1
+
+        readonly property string yAxisTitleText: "dB-Hz"
+        readonly property string xAxisTitleText: "seconds"
+        readonly property int xAxisMinOffsetFromMaxSeconds: 100
+        readonly property int chartLineWidth: 1
+        readonly property int checkBoxColumns: 6
+        readonly property int checkBoxVerticalPadding: 0
+        
     }
 
 }

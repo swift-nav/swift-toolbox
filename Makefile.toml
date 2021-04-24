@@ -76,7 +76,16 @@ script = '''
 conda run -n $CONDA_ENV --no-capture-output --live-stream pyside2-rcc resources/console_resources.qrc -o src/main/python/console_resources.py
 '''
 
+[tasks.check-capnp]
+script_runner = "@shell"
+script = '''
+capnp compile -oc++ src/main/resources/base/console_backend.capnp
+rm src/main/resources/base/console_backend.capnp.c++
+rm src/main/resources/base/console_backend.capnp.h
+'''
+
 [tasks.copy-capnp]
+dependencies = ["check-capnp"]
 script_runner = "@shell"
 script = '''
 cp src/main/resources/base/console_backend.capnp console_backend/console_backend.capnp

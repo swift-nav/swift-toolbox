@@ -4,6 +4,7 @@ use crate::piksi_tools_constants::*;
 use crate::process_messages::process_messages;
 use crate::utils::{close_frontend, from_flowcontrol_str, ms_to_sec};
 use chrono::{DateTime, Utc};
+use log::{info, warn};
 use ordered_float::OrderedFloat;
 use sbp::messages::{
     navigation::{MsgDops, MsgDopsDepA, MsgPosLLH, MsgPosLLHDepA, MsgVelNED, MsgVelNEDDepA},
@@ -173,11 +174,11 @@ impl ServerState {
         let handle = thread::spawn(move || {
             let shared_state_clone = shared_state.clone();
             if let Ok(stream) = TcpStream::connect(host_port.clone()) {
-                println!("Connected to the server {}!", host_port);
+                info!("Connected to the server {}!", host_port);
                 let messages = sbp::iter_messages(stream);
                 process_messages(messages, shared_state_clone, client_send);
             } else {
-                println!("Couldn't connect to server...");
+                warn!("Couldn't connect to server...");
             }
             shared_state.set_running(false);
         });

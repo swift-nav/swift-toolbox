@@ -77,9 +77,11 @@ conda run -n $CONDA_ENV --no-capture-output --live-stream pyside2-rcc resources/
 '''
 
 [tasks.check-capnp]
+script_runner = "@shell"
 script = '''
 capnp compile -oc++ src/main/resources/base/console_backend.capnp
-rm src/main/resources/base/console_backend.capnp.*
+rm src/main/resources/base/console_backend.capnp.c++
+rm src/main/resources/base/console_backend.capnp.h
 '''
 
 [tasks.copy-capnp]

@@ -5,7 +5,6 @@ QtObject {
     readonly property int width: 640
     readonly property int height: 480
     property QtObject bottomNavBar
-
     property QtObject solutionPosition
     property QtObject solutionTable
     property QtObject solutionVelocity
@@ -52,7 +51,6 @@ QtObject {
         readonly property int legendLabelPointSize: 10
         readonly property int legendPadding: 10
         readonly property int legendVerticalCenterOffset: -1
-        
     }
 
     solutionTable: QtObject {
@@ -68,14 +66,13 @@ QtObject {
         readonly property string tableLeftColumnHeader: "Item"
         readonly property string tableRightColumnHeader: "Value"
         readonly property var tableHeaderModel: [{
-                        "Item": "Item",
-                        "Value": "Value"
-                    }]
+            "Item": "Item",
+            "Value": "Value"
+        }]
         readonly property int rtkNoteHeight: 40
         readonly property int rtkNoteMargins: 2
         readonly property int rtkNoteBorderWidth: 1
         readonly property string rtkNoteText: "It is necessary to enter the \"Surveyed Position\" settings for the base station in order to view the RTK Positions in this tab."
-        
     }
 
     solutionVelocity: QtObject {
@@ -85,7 +82,7 @@ QtObject {
         readonly property int xAxisMinOffsetFromMaxSeconds: 20
         readonly property int unitDropdownWidth: 100
         readonly property int chartLineWidth: 1
-        readonly property int chartHeightOffset: 0//100
+        readonly property int chartHeightOffset: 0 //100
         readonly property int chartBottomMargin: 20
         readonly property int legendBottomMargin: 120
         readonly property int legendLeftMargin: 80
@@ -94,7 +91,6 @@ QtObject {
         readonly property int legendLabelPointSize: 9
         readonly property int legendPadding: 10
         readonly property int legendVerticalCenterOffset: -1
-        
     }
 
     trackingSignals: QtObject {
@@ -107,14 +103,12 @@ QtObject {
         readonly property int legendMarkerWidth: 20
         readonly property int legendLabelPointSize: 6
         readonly property int legendVerticalCenterOffset: -1
-
         readonly property string yAxisTitleText: "dB-Hz"
         readonly property string xAxisTitleText: "seconds"
         readonly property int xAxisMinOffsetFromMaxSeconds: 100
         readonly property int chartLineWidth: 1
         readonly property int checkBoxColumns: 6
         readonly property int checkBoxVerticalPadding: 0
-        
     }
 
 }

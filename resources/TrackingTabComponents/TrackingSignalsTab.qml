@@ -142,6 +142,8 @@ Item {
             }
 
             Timer {
+                // line.useOpenGL = true; // [CPP-93] Invesigate usage of `useOpenGL` in plots
+
                 id: trackingSignalsTimer
 
                 interval: Constants.currentRefreshRate
@@ -172,17 +174,13 @@ Item {
                                 // line.useOpenGL = true; // [CPP-93] Invesigate usage of `useOpenGL` in plots
                                 lines[idx] = [line, labels[idx]];
                             }
-                            
                         } else {
                             var line = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, labels[idx], trackingSignalsXAxis);
                             line.color = colors[idx];
                             line.width = Constants.trackingSignals.chartLineWidth;
                             line.axisYRight = trackingSignalsYAxis;
-                            // line.useOpenGL = true; // [CPP-93] Invesigate usage of `useOpenGL` in plots
-                            
                             lines.push([line, labels[idx]]);
                         }
-                        
                     }
                     trackingSignalsPoints.fill_series(lines);
                     var last = points[0][points[0].length - 1];

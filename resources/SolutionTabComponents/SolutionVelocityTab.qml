@@ -135,6 +135,7 @@ Item {
                     minorGridLineColor: Constants.plotMinorGridLineColor
                     gridLineColor: Constants.plotGridLineColor
                     labelsColor: Constants.plotLabelsColor
+
                     labelsFont {
                         pointSize: Constants.plotTickPointSize
                         bold: true
@@ -146,6 +147,7 @@ Item {
                     // useOpenGL: true // [CPP-93] Invesigate usage of `useOpenGL` in plots
 
                     id: solutionVelocityYAxis
+
                     titleText: solutionVelocitySelectedUnit.currentText
                     gridVisible: true
                     lineVisible: true

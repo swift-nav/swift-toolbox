@@ -53,6 +53,7 @@ Item {
 
                 model: TableModel {
                     rows: Constants.solutionTable.tableHeaderModel
+
                     TableModelColumn {
                         display: Constants.solutionTable.tableLeftColumnHeader
                     }
@@ -170,11 +171,11 @@ Item {
                 }
                 solutionTableElement.model.rows = table_update;
                 var new_width = solutionTableArea.width - Constants.solutionTable.defaultColumnWidths[1];
-                if (columnWidths[1] != new_width) {                    
+                if (columnWidths[1] != new_width) {
                     columnWidths = [Constants.solutionTable.defaultColumnWidths[0], solutionTableArea.width - Constants.solutionTable.defaultColumnWidths[1]];
                     solutionTableElement.forceLayout();
                     solutionTableElementHeaders.forceLayout();
-                } 
+                }
             }
         }
 

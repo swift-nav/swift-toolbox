@@ -2,6 +2,7 @@ use sbp::messages::SBP;
 use std::{thread::sleep, time::Duration};
 
 use crate::constants::PAUSE_LOOP_SLEEP_DURATION_MS;
+use crate::log_panel::handle_log_msg;
 use crate::main_tab::*;
 use crate::types::*;
 
@@ -108,6 +109,7 @@ pub fn process_messages<S: MessageSender>(
             SBP::MsgUtcTime(msg) => {
                 main.solution_tab.handle_utc_time(msg);
             }
+            SBP::MsgLog(msg) => handle_log_msg(msg),
 
             _ => {
                 // no-op

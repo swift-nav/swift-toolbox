@@ -1,3 +1,5 @@
+use sbp::messages::logging::MsgLog;
+
 use capnp::message::Builder;
 use capnp::serialize;
 
@@ -7,17 +9,60 @@ use crate::console_backend_capnp as m;
 
 use async_logger::Writer;
 use chrono::Local;
-use log::Record;
+use log::{debug, error, info, warn, Record};
 
-// Custom formatting of `log::Record`
+// Custom formatting of `log::Record` to account for SbpLog values
 pub fn splitable_log_formatter(record: &Record) -> String {
-    // TODO (JV): Timestamp should be "remote"
+    // TODO (JV): CPP-117 Extract SbpLog timestamp and level from message
     format!(
         "{} {} {}",
         Local::now().format("%Y-%m-%dT%H:%M:%S"),
         record.level(),
         record.args()
     )
+}
+
+enum SbpMsgLevel {
+    Emergency = 0,
+    Alert = 1,
+    Critical = 2,
+    Error = 3,
+    Warn = 4,
+    Notice = 5,
+    Info = 6,
+    Debug = 7,
+    Other,
+}
+
+impl From<u8> for SbpMsgLevel {
+    fn from(orig: u8) -> Self {
+        match orig {
+            0 => SbpMsgLevel::Emergency,
+            1 => SbpMsgLevel::Alert,
+            2 => SbpMsgLevel::Critical,
+            3 => SbpMsgLevel::Error,
+            4 => SbpMsgLevel::Warn,
+            5 => SbpMsgLevel::Notice,
+            6 => SbpMsgLevel::Info,
+            7 => SbpMsgLevel::Debug,
+            _ => SbpMsgLevel::Other,
+        }
+    }
+}
+
+pub fn handle_log_msg(msg: MsgLog) {
+    let text = msg.text.to_string();
+    let level: SbpMsgLevel = SbpMsgLevel::from(msg.level);
+    // TODO(JV): CPP-117 Include log level and remote timestamp in text message
+    match level {
+        SbpMsgLevel::Emergency
+        | SbpMsgLevel::Alert
+        | SbpMsgLevel::Critical
+        | SbpMsgLevel::Error => error!("{}", text),
+        SbpMsgLevel::Warn | SbpMsgLevel::Notice => warn!("{}", text),
+        SbpMsgLevel::Info => info!("{}", text),
+        _ => debug!("{}", text),
+    }
 }
 
 #[derive(Debug)]

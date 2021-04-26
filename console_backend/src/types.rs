@@ -58,7 +58,7 @@ impl<T> Deque<T> {
     }
 }
 
-pub trait MessageSender: Debug + Clone {
+pub trait MessageSender: Debug + Clone + Send {
     fn send_data(&mut self, msg_bytes: Vec<u8>);
 }
 

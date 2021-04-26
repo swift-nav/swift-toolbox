@@ -4,6 +4,9 @@ pub const CLOSE: &str = "CLOSE";
 // Process Message constants.
 pub const PAUSE_LOOP_SLEEP_DURATION_MS: u64 = 100;
 
+// Logging constants
+pub const LOG_WRITER_BUFFER_MESSAGE_COUNT: usize = 50;
+
 // Common constants.
 pub const NUM_POINTS: usize = 200;
 

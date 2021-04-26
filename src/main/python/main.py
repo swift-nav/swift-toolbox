@@ -13,7 +13,7 @@ from PySide2.QtWidgets import QApplication  # type: ignore
 
 from fbs_runtime.application_context.PySide2 import ApplicationContext  # type: ignore  # pylint: disable=unused-import
 
-from PySide2.QtCore import QUrl, QObject, Slot, QPointF
+from PySide2.QtCore import QUrl, QObject, QMutex, Slot, QPointF
 from PySide2.QtCharts import QtCharts  # pylint: disable=unused-import
 
 from PySide2 import QtQml, QtCore
@@ -31,6 +31,11 @@ CONSOLE_BACKEND_CAPNP_PATH = "console_backend.capnp"
 
 PIKSI_HOST = "piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com"
 PIKSI_PORT = 55555
+
+LOG_PANEL: Dict[str, Any] = {
+    Keys.ENTRIES: [],
+}
+log_panel_lock = QMutex()
 
 BOTTOM_NAVBAR: Dict[str, Any] = {
     Keys.AVAILABLE_PORTS: [],
@@ -122,6 +127,10 @@ def receive_messages(app_, backend, messages):
             BOTTOM_NAVBAR[Keys.AVAILABLE_PORTS][:] = m.bottomNavbarStatus.availablePorts
             BOTTOM_NAVBAR[Keys.AVAILABLE_BAUDRATES][:] = m.bottomNavbarStatus.availableBaudrates
             BOTTOM_NAVBAR[Keys.AVAILABLE_FLOWS][:] = m.bottomNavbarStatus.availableFlows
+        elif m.which == MessageKeys.LOG_APPEND:
+            log_panel_lock.lock()
+            LOG_PANEL[Keys.ENTRIES] += [entry.line for entry in m.logAppend.entries]
+            log_panel_lock.unlock()
         else:
             pass
 
@@ -245,6 +254,35 @@ class DataModel(QObject):
         m.solutionPositionStatusButtonFront.solutionPositionCenter = buttons[3]
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
+
+
+class LogPanelData(QObject):
+    _entries: List[str] = []
+
+    def get_entries(self) -> List[str]:
+        """Getter for _entries."""
+        return self._entries
+
+    def set_entries(self, entries: List[str]) -> None:
+        """Setter for _entries."""
+        self._entries = entries
+
+    entries = Property(QTKeys.QVARIANTLIST, get_entries, set_entries)  # type: ignore
+
+    def append_entries(self, entries: List[str]) -> None:
+        self._entries += entries
+
+
+class LogPanelModel(QObject):  # pylint: disable=too-few-public-methods
+    @Slot(LogPanelData)  # type: ignore
+    def fill_data(self, cp: LogPanelData) -> LogPanelData:  # pylint:disable=no-self-use
+        # Avoid locking so that message processor has priority to lock
+        if LOG_PANEL[Keys.ENTRIES]:
+            if log_panel_lock.try_lock():
+                cp.append_entries(LOG_PANEL[Keys.ENTRIES])
+                LOG_PANEL[Keys.ENTRIES][:] = []
+                log_panel_lock.unlock()
+        return cp
 
 
 class BottomNavbarData(QObject):
@@ -707,6 +745,7 @@ if __name__ == "__main__":
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
     app = QApplication()
 
+    qmlRegisterType(LogPanelData, "SwiftConsole", 1, 0, "LogPanelData")  # type: ignore
     qmlRegisterType(BottomNavbarData, "SwiftConsole", 1, 0, "BottomNavbarData")  # type: ignore
     qmlRegisterType(SolutionPositionPoints, "SwiftConsole", 1, 0, "SolutionPositionPoints")  # type: ignore
     qmlRegisterType(SolutionTableEntries, "SwiftConsole", 1, 0, "SolutionTableEntries")  # type: ignore
@@ -726,12 +765,14 @@ if __name__ == "__main__":
     endpoint_main = backend_main.start()
 
     data_model = DataModel(endpoint_main, messages_main, args.file_in, args.connect)
+    log_panel_model = LogPanelModel()
     bottom_navbar_model = BottomNavbarModel()
     solution_position_model = SolutionPositionModel()
     solution_table_model = SolutionTableModel()
     solution_velocity_model = SolutionVelocityModel()
     tracking_signals_model = TrackingSignalsModel()
     root_context = engine.rootContext()
+    root_context.setContextProperty("log_panel_model", log_panel_model)
     root_context.setContextProperty("bottom_navbar_model", bottom_navbar_model)
     root_context.setContextProperty("solution_position_model", solution_position_model)
     root_context.setContextProperty("solution_table_model", solution_table_model)

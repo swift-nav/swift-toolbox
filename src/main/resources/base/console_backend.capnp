@@ -31,6 +31,24 @@ struct DisconnectRequest {
     disconnect @0 :Void = void;
 }
 
+enum LogLevel {
+    error @0;
+    warn @1;
+    info @2;
+    debug @3;
+    trace @4;
+}
+
+struct LogEntry {
+    timestamp @0 :Text;
+    level @1 :LogLevel;
+    line @2 :Text;
+}
+
+struct LogAppend {
+    entries @0 :List(LogEntry);
+}
+
 struct KeyValPair {
     key @0 :Text;
     val @1 :Text;
@@ -121,5 +139,6 @@ struct Message {
         disconnectRequest @14 :DisconnectRequest;
         bottomNavbarStatus @15 :BottomNavbarStatus;
         serialRefreshRequest @16 :SerialRefreshRequest;
+        logAppend @17 :LogAppend;
     }
 }

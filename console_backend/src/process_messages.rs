@@ -113,5 +113,6 @@ pub fn process_messages<S: MessageSender>(
                 // no-op
             }
         }
+        log::logger().flush();
     }
 }

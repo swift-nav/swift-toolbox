@@ -91,6 +91,10 @@ ApplicationWindow {
                 width: parent.width
                 SplitView.preferredHeight: 100
                 Layout.alignment: Qt.AlignBottom
+
+                LogPanel {
+                }
+
             }
 
         }

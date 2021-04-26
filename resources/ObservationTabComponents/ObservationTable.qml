@@ -16,58 +16,77 @@ Rectangle {
     border.color: "#000000"
     border.width: 1
 
-    Text {
-        id: innerText
+    Rectangle {
+        id: innerTextArea
+
+        height: Constants.observationTab.titleAreaHight
+
+        Text {
+            id: innerText
+
+            padding: 5
+            font.pointSize: Constants.observationTab.titlePointSize
+        }
+
     }
 
-    RowLayout {
+    Rectangle {
         id: innerStats
 
-        anchors.top: innerText.bottom
-        spacing: 2
+        anchors.top: innerTextArea.bottom
+        border.width: 5
+        height: 25
 
-        Text {
-            id: weekLabel
+        RowLayout {
+            Text {
+                id: weekLabel
 
-            text: "Week:"
-            ToolTip.text: "GPS Week Number (since 1980)"
-        }
+                text: "Week:"
+                ToolTip.text: "GPS Week Number (since 1980)"
+            }
 
-        Text {
-            id: weekValue
+            Text {
+                id: weekValue
 
-            text: week
-        }
+                text: week
+                font: Constants.monoSpaceFont
+            }
 
-        Text {
-            id: towLabel
+            Text {
+                id: towLabel
 
-            text: "TOW:"
-            ToolTip.text: "GPS milliseconds in week"
-        }
+                text: "TOW:"
+                ToolTip.text: "GPS milliseconds in week"
+            }
 
-        Text {
-            id: towValue
+            Text {
+                id: towValue
 
-            text: tow
-        }
+                text: ObsTabJS.padFloat(tow, 2)
+                font: Constants.monoSpaceFont
+            }
 
-        Text {
-            id: totalLabel
+            Text {
+                id: totalLabel
 
-            text: "Total:"
-            ToolTip.text: "Total observation count"
-        }
+                text: "Total:"
+                ToolTip.text: "Total observation count"
+            }
 
-        Text {
-            id: totalValue
+            Text {
+                id: totalValue
 
-            text: innerTable.model.rows.length
+                text: innerTable.model.rows.length
+                font: Constants.monoSpaceFont
+            }
+
         }
 
     }
 
     TableView {
+        // force comment inside
+
         id: columnHeaderTable
 
         interactive: false

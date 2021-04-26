@@ -24,8 +24,8 @@ Item {
         height: parent.height
 
         Rectangle {
-            SplitView.minimumHeight: 100
-            SplitView.preferredHeight: 300
+            SplitView.minimumHeight: Constants.observationTab.titleAreaHight
+            SplitView.preferredHeight: 0.5 * parent.height
             width: parent.width
             color: "lightblue"
             border.color: "#333"
@@ -42,8 +42,9 @@ Item {
         }
 
         Rectangle {
-            SplitView.minimumHeight: 100
-            SplitView.fillHeight: true
+            SplitView.minimumHeight: Constants.observationTab.titleAreaHight
+            SplitView.preferredHeight: 0.5 * parent.height
+            Layout.fillHeight: true
             width: parent.width
             border.color: "#000000"
             border.width: 1

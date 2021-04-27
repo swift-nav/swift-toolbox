@@ -143,7 +143,7 @@ impl ServerState {
                 println!("Opened file successfully!");
                 let shared_state_clone_ = shared_state.clone();
                 let messages = sbp::iter_messages(stream);
-                process_messages(messages, shared_state_clone_, client_send.clone());
+                process_messages(messages, shared_state_clone_, client_send.clone(), true);
                 if close_when_done {
                     close_frontend(&mut client_send.clone());
                 }
@@ -175,7 +175,7 @@ impl ServerState {
             if let Ok(stream) = TcpStream::connect(host_port.clone()) {
                 println!("Connected to the server {}!", host_port);
                 let messages = sbp::iter_messages(stream);
-                process_messages(messages, shared_state_clone, client_send);
+                process_messages(messages, shared_state_clone, client_send, false);
             } else {
                 println!("Couldn't connect to server...");
             }
@@ -214,7 +214,7 @@ impl ServerState {
                 Ok(port) => {
                     println!("Connected to serialport {}.", device);
                     let messages = sbp::iter_messages(port);
-                    process_messages(messages, shared_state_clone, client_send);
+                    process_messages(messages, shared_state_clone, client_send, false);
                 }
                 Err(e) => eprint!("Unable to connect to serialport: {}", e),
             }

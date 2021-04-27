@@ -33,9 +33,11 @@ pub fn process_messages<S: MessageSender>(
     messages: impl Iterator<Item = sbp::Result<SBP>>,
     shared_state: SharedState,
     client_send: S,
+    realtime_delay: bool
 ) {
     let mut main = MainTab::new(shared_state.clone(), client_send);
     let messages = strip_errors_iter(true, messages);
+
     for message in messages {
         if !shared_state.is_running() {
             break;
@@ -48,7 +50,8 @@ pub fn process_messages<S: MessageSender>(
                 sleep(Duration::from_millis(PAUSE_LOOP_SLEEP_DURATION_MS));
             }
         }
-        match message {
+        
+        match message.clone() {
             SBP::MsgAgeCorrections(msg) => {
                 main.solution_tab.handle_age_corrections(msg);
             }
@@ -113,5 +116,10 @@ pub fn process_messages<S: MessageSender>(
                 // no-op
             }
         }
+        if realtime_delay {
+            main.realtime_delay(message);
+        }
+
+        
     }
 }

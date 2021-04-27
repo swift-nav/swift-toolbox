@@ -1,18 +1,18 @@
 use capnp::message::Builder;
 use capnp::serialize;
-
+use log::info;
 use std::{
     collections::{BTreeMap, HashMap},
     time::Instant,
 };
 
 use crate::types::*;
+use crate::utils::{compute_doppler, sec_to_ns};
 
 use crate::console_backend_capnp as m;
 
 #[derive(Clone, Debug)]
 pub struct ObservationTableRow {
-    pub order_id: u16,
     pub prn: String,
     pub pseudo_range: f64,     // (m)
     pub carrier_phase: f64,    // (cycles)
@@ -20,13 +20,12 @@ pub struct ObservationTableRow {
     pub measured_doppler: f64, // (Hz)
     pub computed_doppler: f64, // (Hz)
     pub lock: u16,
-    pub flags: String,
+    pub flags: u8,
 }
 
 impl ObservationTableRow {
     pub fn new() -> ObservationTableRow {
         ObservationTableRow {
-            order_id: 0,
             prn: "".to_string(),
             pseudo_range: 0.0,
             carrier_phase: 0.0,
@@ -34,7 +33,7 @@ impl ObservationTableRow {
             measured_doppler: 0.0,
             computed_doppler: 0.0,
             lock: 0,
-            flags: "".to_string(),
+            flags: 0,
         }
     }
 }
@@ -116,7 +115,6 @@ impl<S: MessageSender> ObservationTab<S> {
                                          // and computed_doppler
         let msg_fields = msg.fields();
 
-        assert!(!msg_fields.sender_id.is_none()); // TODO (JV): Determine if/when is this possible
         if let Some(sender_id) = msg_fields.sender_id {
             if sender_id == 0 {
                 is_remote = true;
@@ -154,59 +152,27 @@ impl<S: MessageSender> ObservationTab<S> {
             let is_carrier_phase_valid = obs_fields.flags & 0x02 != 0;
             let is_valid = is_pseudo_range_valid && is_carrier_phase_valid;
 
-            // piksi_tools included message type A in this condition
             let is_b_or_c = obs_fields.dep_type == 'B' || obs_fields.dep_type == 'C';
+            if is_b_or_c {
+                info!("Encounted {} in Observation tab.", obs_fields.dep_type);
+            }
             if msg_fields.ns_residual != 0 {
-                self.gps_tow += msg_fields.ns_residual as f64 * 1e-9
+                self.gps_tow += sec_to_ns(msg_fields.ns_residual as f64);
             }
 
-            let computed_doppler = match self.old_carrier_phase.get(&table_key) {
-                Some(val) => {
-                    let mut cpdopp: f64 = 0.0;
-                    if is_b_or_c || is_valid {
-                        // Doppler per RINEX has opposite sign direction to carrier phase
-                        cpdopp = match (self.gps_tow - self.prev_tow).abs() <= f64::EPSILON {
-                            true => {
-                                println!(
-                                    "Received two complete observation sets with identical TOW"
-                                );
-                                0 as f64
-                            }
-                            false => {
-                                (val - obs_fields.carrier_phase) as f64
-                                    / (self.gps_tow - self.prev_tow) as f64
-                            }
-                        };
-
-                        assert!(!is_b_or_c); // TODO(JV): Why is this never true?
-
-                        // Older messages had flipped sign carrier phase values
-                        if is_b_or_c {
-                            cpdopp = -cpdopp;
-                        }
-                    }
-                    cpdopp
-                }
-                None => 0 as f64,
+            let computed_doppler = match (
+                self.old_carrier_phase.get(&table_key),
+                is_b_or_c || is_valid,
+            ) {
+                (Some(val), true) => compute_doppler(
+                    obs_fields.carrier_phase,
+                    *val,
+                    self.gps_tow,
+                    self.prev_tow,
+                    is_b_or_c,
+                ),
+                _ => 0 as f64,
             };
-
-            let mut flags_str = format!("0x{:04X} =", obs_fields.flags).to_string();
-
-            // Add some indicators to help understand the flags values
-            if is_pseudo_range_valid {
-                flags_str += " PR"
-            }
-            if is_carrier_phase_valid {
-                flags_str += " CP"
-            }
-            // Bit 2 is Half-cycle ambiguity
-            if obs_fields.flags & 0x04 != 0 {
-                flags_str += " 1/2C"
-            }
-            // Bit 3 is Measured Doppler Valid
-            if obs_fields.flags & 0x08 != 0 {
-                flags_str += " MD"
-            }
 
             let mut row = ObservationTableRow::new();
             row.prn = format!("{} ({})", obs_fields.sat, obs_fields.code).to_string();
@@ -217,7 +183,7 @@ impl<S: MessageSender> ObservationTab<S> {
             row.measured_doppler = obs_fields.measured_doppler;
             row.computed_doppler = computed_doppler;
             // Note: piksi_tools console did not show flags when is_b_or_c
-            row.flags = flags_str;
+            row.flags = obs_fields.flags;
 
             self.incoming_obs
                 .insert((obs_fields.sat, obs_fields.code), row);
@@ -303,7 +269,7 @@ impl<S: MessageSender> ObservationTab<S> {
             list_item.set_measured_doppler(row.measured_doppler);
             list_item.set_computed_doppler(row.computed_doppler);
             list_item.set_lock(row.lock);
-            list_item.set_flags(&row.flags);
+            list_item.set_flags(row.flags);
         }
 
         let mut msg_bytes: Vec<u8> = vec![];

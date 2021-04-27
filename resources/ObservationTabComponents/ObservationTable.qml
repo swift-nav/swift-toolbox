@@ -369,7 +369,7 @@ Rectangle {
                     border.width: 1
 
                     Text {
-                        text: display
+                        text: ObsTabJS.showFlags(display)
                         font: Constants.monoSpaceFont
                         leftPadding: 2
                     }

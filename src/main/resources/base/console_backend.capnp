@@ -77,7 +77,7 @@ struct ObservationTableRow {
     measuredDoppler @4 :Float64;
     computedDoppler @5 :Float64;
     lock @6 :UInt16;
-    flags @7 :Text;
+    flags @7 :UInt8;
 }
 
 struct ObservationStatus {

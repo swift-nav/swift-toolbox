@@ -73,3 +73,28 @@ function padFloat(num, length, digits=2, allowNegative = true) {
     return s.padStart(length + 1);
   }
 }
+
+function showFlags(flags) {
+  if (!flags) {
+    return '0x0000';
+  }
+  let flagStr = '0x' + flags.toString(16).padStart(4, '0') + ' =';
+
+  // Bit 0 is Pseudorange valid
+  if (flags & 0x01) {
+    flagStr += ' PR';
+  }
+  // Bit 1 is Carrier phase valid
+  if (flags & 0x02) {
+    flagStr += ' CP';
+  }
+  // Bit 2 is Half-cycle ambiguity
+  if (flags & 0x04) {
+    flagStr += ' 1/2C';
+  }
+  // Bit 3 is Measured Doppler Valid
+  if (flags & 0x08) {
+    flagStr += ' MD';
+  }
+  return flagStr;
+}

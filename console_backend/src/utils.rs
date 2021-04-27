@@ -1,5 +1,6 @@
 use capnp::message::Builder;
 use capnp::serialize;
+use log::warn;
 use serialport::{available_ports, FlowControl};
 use std::collections::HashMap;
 
@@ -256,7 +257,37 @@ pub fn ms_to_sec(ms: f64) -> f64 {
 /// # Returns
 /// - Value in seconds.
 pub fn ns_to_sec(ns: f64) -> f64 {
-    ns / 1.0e+9_f64
+    ns / NANOSECONDS_PER_SECOND
+}
+
+/// Convert seconds to nanoseconds.
+///
+/// # Parameters
+/// - `ns`: Value in econds.
+///
+/// # Returns
+/// - Value in nanoseconds.
+pub fn sec_to_ns(ns: f64) -> f64 {
+    ns * SECONDS_PER_NANOSECOND
+}
+
+pub fn compute_doppler(
+    new_carrier_phase: f64,
+    old_carrier_phase: f64,
+    current_gps_tow: f64,
+    previous_tow: f64,
+    is_a_b_c: bool,
+) -> f64 {
+    if (current_gps_tow - previous_tow).abs() <= f64::EPSILON {
+        warn!("Received two complete observation sets with identical TOW");
+        return 0 as f64;
+    }
+    let mut computed_doppler =
+        (old_carrier_phase - new_carrier_phase) as f64 / (current_gps_tow - previous_tow) as f64;
+    if is_a_b_c {
+        computed_doppler = -computed_doppler;
+    }
+    computed_doppler
 }
 
 #[cfg(test)]

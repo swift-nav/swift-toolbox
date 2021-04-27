@@ -295,6 +295,10 @@ mod tests {
     use super::*;
     use crate::piksi_tools_constants::*;
 
+    fn float_eq(f1: f64, f2: f64) -> bool {
+        f64::abs(f1 - f2) <= f64::EPSILON
+    }
+
     #[test]
     fn get_signal_key_label_test() {
         let mut extra: HashMap<i16, i16> = HashMap::new();
@@ -367,9 +371,81 @@ mod tests {
 
     #[test]
     fn nano_to_micro_sec_test() {
-        assert!(f64::abs(nano_to_micro_sec(1000_f64) - 1_f64) <= f64::EPSILON);
-        assert!(f64::abs(nano_to_micro_sec(1000000_f64) - 1000_f64) <= f64::EPSILON);
-        assert!(f64::abs(nano_to_micro_sec(0_f64) - 0_f64) <= f64::EPSILON);
-        assert!(f64::abs(nano_to_micro_sec(1337_f64) - 1.337_f64) <= f64::EPSILON);
+        assert!(float_eq(nano_to_micro_sec(1000_f64), 1_f64));
+        assert!(float_eq(nano_to_micro_sec(1000000_f64), 1000_f64));
+        assert!(float_eq(nano_to_micro_sec(0_f64), 0_f64));
+        assert!(float_eq(nano_to_micro_sec(1337_f64), 1.337_f64));
+    }
+
+    #[test]
+    fn compute_doppler_test() {
+        assert!(float_eq(
+            compute_doppler(
+                123438650.3359375,
+                123438590.203125,
+                251746.8,
+                251746.8,
+                false
+            ),
+            0.0
+        ));
+        assert!(float_eq(
+            compute_doppler(
+                123438650.3359375,
+                123438590.203125,
+                251746.9,
+                251746.8,
+                false
+            ),
+            -601.3281249649981
+        ));
+        assert!(float_eq(
+            compute_doppler(89473356.9453125, 89473456.921875, 251746.9, 251746.8, false),
+            999.765624941806
+        ));
+        assert!(float_eq(
+            compute_doppler(
+                96692940.6015625,
+                96692834.87890625,
+                251746.9,
+                251746.8,
+                false
+            ),
+            -1057.2265624384613
+        ));
+        assert!(float_eq(
+            compute_doppler(
+                108296328.85546875,
+                108296130.609375,
+                251746.9,
+                251746.8,
+                false
+            ),
+            -1982.4609373846056
+        ));
+        assert!(float_eq(
+            compute_doppler(99816633.2109375, 99816774.25, 251746.9, 251746.8, false),
+            1410.3906249179045
+        ));
+        assert!(float_eq(
+            compute_doppler(
+                109036269.546875,
+                109036058.60546875,
+                251746.9,
+                251746.8,
+                false
+            ),
+            -2109.414062377216
+        ));
+        assert!(float_eq(
+            compute_doppler(
+                94582860.46484375,
+                94582814.38671875,
+                251746.9,
+                251746.8,
+                false
+            ),
+            -460.781249973179
+        ));
     }
 }

@@ -37,8 +37,8 @@ Item {
             width: parent.width
             height: parent.height - trackingSignalsCheckboxes.height
             anchors.top: parent.top
-            backgroundColor: Constants.plotBackgroundColor
-            plotAreaColor: Constants.plotAreaColor
+            backgroundColor: Constants.commonChart.backgroundColor
+            plotAreaColor: Constants.commonChart.areaColor
             legend.visible: false
             antialiasing: true
             Component.onCompleted: {
@@ -52,8 +52,8 @@ Item {
             Rectangle {
                 id: lineLegend
 
-                border.color: Constants.legendBorderColor
-                border.width: Constants.legendBorderWidth
+                border.color: Constants.commonLegend.borderColor
+                border.width: Constants.commonLegend.borderWidth
                 anchors.bottom: trackingSignalsChart.bottom
                 anchors.left: trackingSignalsChart.left
                 anchors.bottomMargin: Constants.trackingSignals.legendBottomMargin
@@ -83,8 +83,8 @@ Item {
                             Rectangle {
                                 id: marker
 
-                                width: Constants.trackingSignals.legendMarkerWidth
-                                height: Constants.trackingSignals.legendMarkerHeight
+                                width: Constants.commonLegend.markerWidth
+                                height: Constants.commonLegend.markerHeight
                                 anchors.verticalCenter: parent.verticalCenter
                             }
 
@@ -94,7 +94,7 @@ Item {
                                 text: modelData
                                 font.pointSize: Constants.trackingSignals.legendLabelPointSize
                                 anchors.verticalCenter: parent.verticalCenter
-                                anchors.verticalCenterOffset: Constants.trackingSignals.legendVerticalCenterOffset
+                                anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                             }
 
                         }
@@ -112,12 +112,12 @@ Item {
                 gridVisible: true
                 lineVisible: true
                 minorGridVisible: true
-                minorGridLineColor: Constants.plotMinorGridLineColor
-                gridLineColor: Constants.plotGridLineColor
-                labelsColor: Constants.plotLabelsColor
+                minorGridLineColor: Constants.commonChart.minorGridLineColor
+                gridLineColor: Constants.commonChart.gridLineColor
+                labelsColor: Constants.commonChart.labelsColor
 
                 labelsFont {
-                    pointSize: Constants.plotTickPointSize
+                    pointSize: Constants.commonChart.tickPointSize
                     bold: true
                 }
 
@@ -130,20 +130,18 @@ Item {
                 gridVisible: true
                 lineVisible: true
                 minorGridVisible: true
-                minorGridLineColor: Constants.plotMinorGridLineColor
-                gridLineColor: Constants.plotGridLineColor
-                labelsColor: Constants.plotLabelsColor
+                minorGridLineColor: Constants.commonChart.minorGridLineColor
+                gridLineColor: Constants.commonChart.gridLineColor
+                labelsColor: Constants.commonChart.labelsColor
 
                 labelsFont {
-                    pointSize: Constants.plotTickPointSize
+                    pointSize: Constants.commonChart.tickPointSize
                     bold: true
                 }
 
             }
 
             Timer {
-                // line.useOpenGL = true; // [CPP-93] Invesigate usage of `useOpenGL` in plots
-
                 id: trackingSignalsTimer
 
                 interval: Constants.currentRefreshRate
@@ -169,7 +167,7 @@ Item {
                                 trackingSignalsChart.removeSeries(lines[idx][0]);
                                 var line = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, labels[idx], trackingSignalsXAxis);
                                 line.color = colors[idx];
-                                line.width = Constants.trackingSignals.chartLineWidth;
+                                line.width = Constants.commonChart.lineWidth;
                                 line.axisYRight = trackingSignalsYAxis;
                                 // line.useOpenGL = true; // [CPP-93] Invesigate usage of `useOpenGL` in plots
                                 lines[idx] = [line, labels[idx]];
@@ -177,7 +175,7 @@ Item {
                         } else {
                             var line = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, labels[idx], trackingSignalsXAxis);
                             line.color = colors[idx];
-                            line.width = Constants.trackingSignals.chartLineWidth;
+                            line.width = Constants.commonChart.lineWidth;
                             line.axisYRight = trackingSignalsYAxis;
                             lines.push([line, labels[idx]]);
                         }
@@ -198,7 +196,7 @@ Item {
         GridLayout {
             id: trackingSignalsCheckboxes
 
-            columns: Constants.trackingSignals.checkBoxColumns
+            columns: parent.width / Constants.trackingSignals.checkBoxPreferredWidth
             anchors.horizontalCenter: trackingSignalsChart.horizontalCenter
             anchors.top: trackingSignalsChart.bottom
 

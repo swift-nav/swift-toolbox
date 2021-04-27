@@ -1,16 +1,14 @@
 import "../Constants"
 import Qt.labs.qmlmodels 1.0
-import QtCharts 2.2
+import QtQml.Models 2.15
 import QtQuick 2.14
-import QtQuick.Controls 2.12
+import QtQuick.Controls 1.4
+import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
 Item {
     id: solutionTable
-
-    property variant table: []
-    property variant columnWidths: Constants.solutionTable.defaultColumnWidths
 
     width: parent.width
     height: parent.height
@@ -28,101 +26,66 @@ Item {
         height: parent.height
 
         ColumnLayout {
-            id: solutionTableRowLayout
+            id: solutionTableElement
 
             spacing: Constants.solutionTable.tableHeaderTableDataTableSpacing
             width: parent.width
             height: parent.height
 
-            TableView {
-                id: solutionTableElementHeaders
-
-                interactive: false
-                Layout.minimumHeight: Constants.solutionTable.tableCellHeight
-                Layout.fillWidth: true
-                Layout.leftMargin: Constants.solutionTable.tableSurroundingMargin
-                Layout.rightMargin: Constants.solutionTable.tableSurroundingMargin
-                Layout.bottomMargin: Constants.solutionTable.tableInnerMargin
-                Layout.topMargin: Constants.solutionTable.tableSurroundingMargin
-                columnSpacing: Constants.solutionTable.tableCellSpacing
-                rowSpacing: Constants.solutionTable.tableCellSpacing
-                clip: true
-                columnWidthProvider: function(column) {
-                    return columnWidths[column];
-                }
-
-                model: TableModel {
-                    rows: Constants.solutionTable.tableHeaderModel
-
-                    TableModelColumn {
-                        display: Constants.solutionTable.tableLeftColumnHeader
-                    }
-
-                    TableModelColumn {
-                        display: Constants.solutionTable.tableRightColumnHeader
-                    }
-
-                }
-
-                delegate: Rectangle {
-                    id: textDelegate
-
-                    implicitHeight: Constants.solutionTable.tableCellHeight
-                    border.width: Constants.solutionTable.tableBorderWidth
-
-                    Text {
-                        id: rowText
-
-                        text: display
-                        anchors.centerIn: parent
-                        leftPadding: Constants.solutionTable.tableLeftPadding
-                    }
-
-                }
-
+            ListModel {
+                id: myModel
             }
 
             TableView {
-                id: solutionTableElement
+                id: solutionTableElementHeaders
 
-                Layout.fillHeight: true
+                Layout.minimumHeight: parent.height
                 Layout.fillWidth: true
                 Layout.leftMargin: Constants.solutionTable.tableSurroundingMargin
                 Layout.rightMargin: Constants.solutionTable.tableSurroundingMargin
-                Layout.bottomMargin: Constants.solutionTable.tableInnerMargin
+                Layout.bottomMargin: Constants.solutionTable.tableSurroundingMargin
                 Layout.topMargin: Constants.solutionTable.tableSurroundingMargin
-                columnSpacing: Constants.solutionTable.tableCellSpacing
-                rowSpacing: Constants.solutionTable.tableCellSpacing
-                interactive: false
                 clip: true
-                columnWidthProvider: function(column) {
-                    return columnWidths[column];
+                model: myModel
+
+                TableViewColumn {
+                    id: nonresizableColumn
+
+                    role: Constants.solutionTable.tableLeftColumnHeader
+                    title: Constants.solutionTable.tableLeftColumnHeader
+                    width: Constants.solutionTable.defaultColumnWidth
+                    horizontalAlignment: Text.AlignHCenter
                 }
 
-                model: TableModel {
-                    rows: []
+                TableViewColumn {
+                    id: resizableColumn
 
-                    TableModelColumn {
-                        display: Constants.solutionTable.tableLeftColumnHeader
-                    }
-
-                    TableModelColumn {
-                        display: Constants.solutionTable.tableRightColumnHeader
-                    }
-
+                    role: Constants.solutionTable.tableRightColumnHeader
+                    title: Constants.solutionTable.tableRightColumnHeader
+                    width: parent.width - nonresizableColumn.width
+                    horizontalAlignment: Text.AlignHCenter
                 }
 
-                delegate: Rectangle {
-                    id: textDelegate
+                itemDelegate: Item {
+                    Row {
+                        id: row
 
-                    implicitHeight: Constants.solutionTable.tableCellHeight
-                    border.width: Constants.solutionTable.tableBorderWidth
+                        width: parent.width
 
-                    Text {
-                        id: rowText
+                        Rectangle {
+                            width: parent.width
+                            implicitHeight: Constants.solutionTable.tableCellHeight
+                            border.width: Constants.solutionTable.tableBorderWidth
 
-                        text: display
-                        leftPadding: Constants.solutionTable.tableLeftPadding
+                            Text {
+                                width: parent.width
+                                text: styleData.value
+                                horizontalAlignment: Text.AlignLeft
+                                leftPadding: Constants.solutionTable.tableLeftPadding
+                            }
+
+                        }
+
                     }
 
                 }
@@ -162,19 +125,12 @@ Item {
                     return ;
 
                 var entries = solutionTableEntries.entries;
-                var table_update = [];
                 for (var idx in entries) {
-                    table_update.push({
-                        "Item": entries[idx][0],
-                        "Value": entries[idx][1]
-                    });
-                }
-                solutionTableElement.model.rows = table_update;
-                var new_width = solutionTableArea.width - Constants.solutionTable.defaultColumnWidths[1];
-                if (columnWidths[1] != new_width) {
-                    columnWidths = [Constants.solutionTable.defaultColumnWidths[0], solutionTableArea.width - Constants.solutionTable.defaultColumnWidths[1]];
-                    solutionTableElement.forceLayout();
-                    solutionTableElementHeaders.forceLayout();
+                    var new_row = {
+                    };
+                    new_row[Constants.solutionTable.tableLeftColumnHeader] = entries[idx][0];
+                    new_row[Constants.solutionTable.tableRightColumnHeader] = entries[idx][1];
+                    myModel.set(idx, new_row);
                 }
             }
         }

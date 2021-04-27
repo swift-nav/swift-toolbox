@@ -40,7 +40,7 @@ Item {
                 id: solutionVelocitySelectedUnit
 
                 Layout.alignment: Qt.AlignCenter
-                width: Constants.unitDropdownWidth
+                width: Constants.solutionVelocity.unitDropdownWidth
                 model: available_units
                 onCurrentIndexChanged: {
                     if (!available_units)
@@ -54,12 +54,12 @@ Item {
                 id: solutionVelocityChart
 
                 Layout.preferredWidth: parent.width
-                Layout.preferredHeight: parent.height - Constants.solutionVelocity.chartHeightOffset
+                Layout.preferredHeight: parent.height
                 Layout.alignment: Qt.AlignBottom
                 Layout.bottomMargin: Constants.solutionVelocity.chartBottomMargin
                 Layout.fillHeight: true
-                backgroundColor: Constants.plotBackgroundColor
-                plotAreaColor: Constants.plotAreaColor
+                backgroundColor: Constants.commonChart.backgroundColor
+                plotAreaColor: Constants.commonChart.areaColor
                 legend.visible: false
                 antialiasing: true
                 Component.onCompleted: {
@@ -68,8 +68,8 @@ Item {
                 Rectangle {
                     id: lineLegend
 
-                    border.color: Constants.legendBorderColor
-                    border.width: Constants.legendBorderWidth
+                    border.color: Constants.commonLegend.borderColor
+                    border.width: Constants.commonLegend.borderWidth
                     anchors.bottom: solutionVelocityChart.bottom
                     anchors.left: solutionVelocityChart.left
                     anchors.bottomMargin: Constants.solutionVelocity.legendBottomMargin
@@ -80,7 +80,7 @@ Item {
                     Column {
                         id: lineLegendRepeater
 
-                        padding: Constants.solutionVelocity.legendPadding
+                        padding: Constants.commonLegend.padding
                         anchors.bottom: lineLegend.bottom
 
                         Repeater {
@@ -100,8 +100,8 @@ Item {
                                 Rectangle {
                                     id: marker
 
-                                    width: Constants.solutionVelocity.legendMarkerWidth
-                                    height: Constants.solutionVelocity.legendMarkerHeight
+                                    width: Constants.commonLegend.markerWidth
+                                    height: Constants.commonLegend.markerHeight
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
 
@@ -111,7 +111,7 @@ Item {
                                     text: modelData
                                     font.pointSize: Constants.solutionVelocity.legendLabelPointSize
                                     anchors.verticalCenter: parent.verticalCenter
-                                    anchors.verticalCenterOffset: Constants.solutionVelocity.legendVerticalCenterOffset
+                                    anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                                 }
 
                             }
@@ -132,12 +132,12 @@ Item {
                     gridVisible: true
                     lineVisible: true
                     minorGridVisible: true
-                    minorGridLineColor: Constants.plotMinorGridLineColor
-                    gridLineColor: Constants.plotGridLineColor
-                    labelsColor: Constants.plotLabelsColor
+                    minorGridLineColor: Constants.commonChart.minorGridLineColor
+                    gridLineColor: Constants.commonChart.gridLineColor
+                    labelsColor: Constants.commonChart.labelsColor
 
                     labelsFont {
-                        pointSize: Constants.plotTickPointSize
+                        pointSize: Constants.commonChart.tickPointSize
                         bold: true
                     }
 
@@ -152,12 +152,12 @@ Item {
                     gridVisible: true
                     lineVisible: true
                     minorGridVisible: true
-                    minorGridLineColor: Constants.plotMinorGridLineColor
-                    gridLineColor: Constants.plotGridLineColor
-                    labelsColor: Constants.plotLabelsColor
+                    minorGridLineColor: Constants.commonChart.minorGridLineColor
+                    gridLineColor: Constants.commonChart.gridLineColor
+                    labelsColor: Constants.commonChart.labelsColor
 
                     labelsFont {
-                        pointSize: Constants.plotTickPointSize
+                        pointSize: Constants.commonChart.tickPointSize
                         bold: true
                     }
 
@@ -191,7 +191,7 @@ Item {
                             for (var idx in labels) {
                                 var line = solutionVelocityChart.createSeries(ChartView.SeriesTypeLine, Constants.solutionVelocity.labels[idx], solutionVelocityXAxis);
                                 line.color = colors[idx];
-                                line.width = Constants.solutionVelocity.chartLineWidth;
+                                line.width = Constants.commonChart.lineWidth;
                                 line.axisYRight = solutionVelocityYAxis;
                                 lines.push(line);
                             }

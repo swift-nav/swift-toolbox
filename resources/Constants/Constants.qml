@@ -5,20 +5,14 @@ QtObject {
     readonly property int width: 640
     readonly property int height: 480
     property QtObject bottomNavBar
+    property QtObject commonChart
+    property QtObject commonLegend
     property QtObject solutionPosition
     property QtObject solutionTable
     property QtObject solutionVelocity
     property QtObject trackingSignals
     property int currentRefreshRate: 1000 / 5 // 5 Hz
     property int defaultTimerIntervalRate: 1000 / 5 // 5 Hz
-    readonly property color plotBackgroundColor: "#CDC9C9"
-    readonly property color plotAreaColor: "#FFFFFF"
-    readonly property color plotMinorGridLineColor: "#CDC9C9"
-    readonly property color plotGridLineColor: "#CDC9C9"
-    readonly property color plotLabelsColor: "#000000"
-    readonly property int plotTickPointSize: 10
-    readonly property color legendBorderColor: "#000000"
-    readonly property int legendBorderWidth: 1
 
     bottomNavBar: QtObject {
         readonly property int connectionDropdownWidth: 90
@@ -38,23 +32,15 @@ QtObject {
         readonly property int navBarMargin: 10
         readonly property int navBarSpacing: 0
         readonly property real navBarButtonProportionOfParent: 0.1
-        readonly property int chartHeightOffset: 50
-        readonly property int chartMargin: 20
         readonly property int chartCurrentSolutionMarkerSize: 15
         readonly property int chartSolutionMarkerSize: 5
         readonly property real chartSolutionLineWidth: 0.1
         readonly property string yAxisTitleText: "Latitude"
         readonly property string xAxisTitleText: "Longitude"
-        readonly property int legendTopMargin: 85
-        readonly property int legendRightMargin: 60
-        readonly property int legendMarkerPointSize: 14
-        readonly property int legendLabelPointSize: 10
-        readonly property int legendPadding: 10
-        readonly property int legendVerticalCenterOffset: -1
     }
 
     solutionTable: QtObject {
-        readonly property var defaultColumnWidths: [120, 120]
+        readonly property int defaultColumnWidth: 120
         readonly property color tableBorderColor: "#000000"
         readonly property int tableBorderWidth: 1
         readonly property int tableHeaderTableDataTableSpacing: 0
@@ -65,10 +51,6 @@ QtObject {
         readonly property int tableLeftPadding: 2
         readonly property string tableLeftColumnHeader: "Item"
         readonly property string tableRightColumnHeader: "Value"
-        readonly property var tableHeaderModel: [{
-            "Item": "Item",
-            "Value": "Value"
-        }]
         readonly property int rtkNoteHeight: 40
         readonly property int rtkNoteMargins: 2
         readonly property int rtkNoteBorderWidth: 1
@@ -81,16 +63,41 @@ QtObject {
         readonly property string xAxisTitleText: "GPS Time of Week"
         readonly property int xAxisMinOffsetFromMaxSeconds: 20
         readonly property int unitDropdownWidth: 100
-        readonly property int chartLineWidth: 1
-        readonly property int chartHeightOffset: 0 //100
-        readonly property int chartBottomMargin: 20
+        readonly property int chartHeightOffset: 0
+        readonly property int chartBottomMargin: 30
         readonly property int legendBottomMargin: 120
         readonly property int legendLeftMargin: 80
-        readonly property int legendMarkerHeight: 3
-        readonly property int legendMarkerWidth: 20
         readonly property int legendLabelPointSize: 9
-        readonly property int legendPadding: 10
-        readonly property int legendVerticalCenterOffset: -1
+    }
+
+    commonLegend: QtObject {
+        readonly property int bottomMargin: 120
+        readonly property int leftMargin: 80
+        readonly property int markerHeight: 3
+        readonly property int markerWidth: 20
+        readonly property int topMargin: 85
+        readonly property int rightMargin: 60
+        readonly property int markerPointSize: 14
+        readonly property int labelPointSize: 10
+        readonly property int padding: 10
+        readonly property int verticalCenterOffset: -1
+        readonly property color borderColor: "#000000"
+        readonly property int borderWidth: 1
+    }
+
+    commonChart: QtObject {
+        readonly property int lineWidth: 1
+        readonly property int heightOffset: 50
+        readonly property int margin: 20
+        readonly property int currentSolutionMarkerSize: 15
+        readonly property int solutionMarkerSize: 5
+        readonly property real solutionLineWidth: 0.1
+        readonly property color backgroundColor: "#CDC9C9"
+        readonly property color areaColor: "#FFFFFF"
+        readonly property color minorGridLineColor: "#CDC9C9"
+        readonly property color gridLineColor: "#CDC9C9"
+        readonly property color labelsColor: "#000000"
+        readonly property int tickPointSize: 10
     }
 
     trackingSignals: QtObject {
@@ -99,16 +106,12 @@ QtObject {
         readonly property int titlePointSize: 14
         readonly property int legendBottomMargin: 85
         readonly property int legendLeftMargin: 60
-        readonly property int legendMarkerHeight: 3
-        readonly property int legendMarkerWidth: 20
         readonly property int legendLabelPointSize: 6
-        readonly property int legendVerticalCenterOffset: -1
         readonly property string yAxisTitleText: "dB-Hz"
         readonly property string xAxisTitleText: "seconds"
         readonly property int xAxisMinOffsetFromMaxSeconds: 100
-        readonly property int chartLineWidth: 1
-        readonly property int checkBoxColumns: 6
         readonly property int checkBoxVerticalPadding: 0
+        readonly property int checkBoxPreferredWidth: 100
     }
 
 }

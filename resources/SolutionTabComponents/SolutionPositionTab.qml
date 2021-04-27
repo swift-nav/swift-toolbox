@@ -117,12 +117,12 @@ Item {
                 id: solutionPositionChart
 
                 Layout.preferredWidth: parent.width
-                Layout.preferredHeight: parent.height - Constants.solutionPosition.chartHeightOffset
+                Layout.preferredHeight: parent.height - Constants.commonChart.heightOffset
                 Layout.alignment: Qt.AlignBottom
-                Layout.bottomMargin: Constants.solutionPosition.chartMargin
+                Layout.bottomMargin: Constants.commonChart.margin
                 Layout.fillHeight: true
-                backgroundColor: Constants.plotBackgroundColor
-                plotAreaColor: Constants.plotAreaColor
+                backgroundColor: Constants.commonChart.backgroundColor
+                plotAreaColor: Constants.commonChart.areaColor
                 legend.visible: false
                 antialiasing: true
                 Component.onCompleted: {
@@ -131,19 +131,19 @@ Item {
                 Rectangle {
                     id: lineLegend
 
-                    border.color: Constants.legendBorderColor
-                    border.width: Constants.legendBorderWidth
+                    border.color: Constants.commonLegend.borderColor
+                    border.width: Constants.commonLegend.borderWidth
                     anchors.top: solutionPositionChart.top
                     anchors.right: solutionPositionChart.right
-                    anchors.topMargin: Constants.solutionPosition.legendTopMargin
-                    anchors.rightMargin: Constants.solutionPosition.legendRightMargin
+                    anchors.topMargin: Constants.commonLegend.topMargin
+                    anchors.rightMargin: Constants.commonLegend.rightMargin
                     implicitHeight: lineLegendRepeater.height
                     width: lineLegendRepeater.width
 
                     Column {
                         id: lineLegendRepeater
 
-                        padding: Constants.solutionPosition.legendPadding
+                        padding: Constants.commonLegend.padding
                         anchors.bottom: lineLegend.bottom
 
                         Repeater {
@@ -156,20 +156,20 @@ Item {
                                     id: marker
 
                                     text: "+ "
-                                    font.pointSize: Constants.solutionPosition.legendMarkerPointSize
+                                    font.pointSize: Constants.commonLegend.markerPointSize
                                     font.bold: true
                                     anchors.verticalCenter: parent.verticalCenter
-                                    anchors.verticalCenterOffset: Constants.solutionPosition.legendVerticalCenterOffset
+                                    anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                                 }
 
                                 Text {
                                     id: label
 
                                     text: modelData
-                                    font.pointSize: Constants.solutionPosition.legendLabelPointSize
+                                    font.pointSize: Constants.commonLegend.labelPointSize
                                     font.bold: true
                                     anchors.verticalCenter: parent.verticalCenter
-                                    anchors.verticalCenterOffset: Constants.solutionPosition.legendVerticalCenterOffset
+                                    anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                                 }
 
                             }
@@ -187,12 +187,12 @@ Item {
                     gridVisible: true
                     lineVisible: true
                     minorGridVisible: true
-                    minorGridLineColor: Constants.plotMinorGridLineColor
-                    gridLineColor: Constants.plotGridLineColor
-                    labelsColor: Constants.plotLabelsColor
+                    minorGridLineColor: Constants.commonChart.minorGridLineColor
+                    gridLineColor: Constants.commonChart.gridLineColor
+                    labelsColor: Constants.commonChart.labelsColor
 
                     labelsFont {
-                        pointSize: Constants.plotTickPointSize
+                        pointSize: Constants.commonChart.tickPointSize
                         bold: true
                     }
 
@@ -205,12 +205,12 @@ Item {
                     gridVisible: true
                     lineVisible: true
                     minorGridVisible: true
-                    minorGridLineColor: Constants.plotMinorGridLineColor
-                    gridLineColor: Constants.plotGridLineColor
-                    labelsColor: Constants.plotLabelsColor
+                    minorGridLineColor: Constants.commonChart.minorGridLineColor
+                    gridLineColor: Constants.commonChart.gridLineColor
+                    labelsColor: Constants.commonChart.labelsColor
 
                     labelsFont {
-                        pointSize: Constants.plotTickPointSize
+                        pointSize: Constants.commonChart.tickPointSize
                         bold: true
                     }
 
@@ -248,13 +248,13 @@ Item {
                             for (var idx in labels) {
                                 var cur_scatter = solutionPositionChart.createSeries(ChartView.SeriesTypeScatter, labels[idx] + "cur-scatter", solutionPositionXAxis, solutionPositionYAxis);
                                 cur_scatter.color = colors[idx];
-                                cur_scatter.markerSize = Constants.solutionPosition.chartCurrentSolutionMarkerSize;
+                                cur_scatter.markerSize = Constants.commonChart.currentSolutionMarkerSize;
                                 var scatter = solutionPositionChart.createSeries(ChartView.SeriesTypeScatter, labels[idx] + "scatter", solutionPositionXAxis, solutionPositionYAxis);
                                 scatter.color = colors[idx];
-                                scatter.markerSize = Constants.solutionPosition.chartSolutionMarkerSize;
+                                scatter.markerSize = Constants.commonChart.solutionMarkerSize;
                                 var line = solutionPositionChart.createSeries(ChartView.SeriesTypeLine, labels[idx], solutionPositionXAxis, solutionPositionYAxis);
                                 line.color = colors[idx];
-                                line.width = Constants.solutionPosition.chartSolutionLineWidth;
+                                line.width = Constants.commonChart.solutionLineWidth;
                                 // line.useOpenGL = true; // [CPP-93] Invesigate usage of `useOpenGL` in plots
                                 // scatter.useOpenGL = true; // [CPP-93] Invesigate usage of `useOpenGL` in plots
                                 lines.push(line);

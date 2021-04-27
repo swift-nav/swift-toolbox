@@ -248,17 +248,6 @@ pub fn ms_to_sec(ms: f64) -> f64 {
     ms / 1.0e+3_f64
 }
 
-/// Convert seconds to milliseconds.
-///
-/// # Parameters
-/// - `sec`: Value in milliseconds.
-///
-/// # Returns
-/// - Value in seconds.
-pub fn sec_to_ms(sec: f64) -> f64 {
-    sec * 1.0e+3_f64
-}
-
 /// Convert nanoseconds to seconds.
 ///
 /// # Parameters

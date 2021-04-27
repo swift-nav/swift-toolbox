@@ -34,6 +34,8 @@ serialport = "4.0.1"
 name = "cpu_benches"
 harness = false
 
+[dev-dependencies]
+logtest = "2.0.0"
 
 [build-dependencies]
 capnpc = "0.14"

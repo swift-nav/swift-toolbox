@@ -1,5 +1,6 @@
-use sbp::messages::SBP;
+use sbp::{messages::GpsTime, GpsTimeError};
 use std::{
+    result::Result,
     thread::sleep,
     time::{Duration, Instant},
 };
@@ -11,7 +12,7 @@ use crate::types::*;
 
 pub struct MainTab<'a, S: MessageSender> {
     last_gps_update: Instant,
-    last_gps_time: Option<f64>,
+    last_gps_time: Option<GpsTime>,
     pub tracking_signals_tab: TrackingSignalsTab<S>,
     pub solution_tab: SolutionTab<S>,
     pub solution_velocity_tab: SolutionVelocityTab<'a, S>,
@@ -31,26 +32,23 @@ impl<'a, S: MessageSender> MainTab<'a, S> {
         }
     }
 
-    pub fn realtime_delay(&mut self, msg: SBP) {
-        let time_aware = sbp_chopper::maybe_time_aware(&msg);
-        if let Some(time_aware) = time_aware {
-            if let Some(gps_time) = time_aware.gps_time() {
-                let gps_time = gps_time.tow();
-                if let Some(l_time) = self.last_gps_time {
-                    if l_time < gps_time {
-                        let diff = gps_time - l_time;
+    pub fn realtime_delay(&mut self, gps_time: Option<Result<GpsTime, GpsTimeError>>) {
+        if let Some(Ok(g_time)) = gps_time {
+            let gps_time_tow = g_time.tow();
+            if let Some(l_time) = self.last_gps_time {
+                let last_gps_time_tow = l_time.tow();
+                if last_gps_time_tow < gps_time_tow {
+                    let diff = gps_time_tow - last_gps_time_tow;
+                    let elapsed = self.last_gps_update.elapsed().as_secs_f64();
+                    if diff > elapsed {
+                        let sleep_duration = diff - elapsed;
 
-                        let elapsed = self.last_gps_update.elapsed().as_secs_f64();
-                        if diff > elapsed {
-                            let sleep_duration = diff - elapsed;
-
-                            sleep(Duration::from_secs_f64(sleep_duration));
-                        }
-                        self.last_gps_update = Instant::now();
+                        sleep(Duration::from_secs_f64(sleep_duration));
                     }
+                    self.last_gps_update = Instant::now();
                 }
-                self.last_gps_time = Some(gps_time);
             }
+            self.last_gps_time = Some(g_time);
         }
     }
 }

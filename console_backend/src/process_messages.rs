@@ -1,4 +1,4 @@
-use sbp::messages::SBP;
+use sbp::messages::{SBPMessage, SBP};
 use std::{thread::sleep, time::Duration};
 
 use crate::constants::PAUSE_LOOP_SLEEP_DURATION_MS;
@@ -50,8 +50,9 @@ pub fn process_messages<S: MessageSender>(
                 sleep(Duration::from_millis(PAUSE_LOOP_SLEEP_DURATION_MS));
             }
         }
-
-        match message.clone() {
+        let gps_time = message.gps_time();
+        // println!("{}", message.get_message_name());
+        match message {
             SBP::MsgAgeCorrections(msg) => {
                 main.solution_tab.handle_age_corrections(msg);
             }
@@ -113,11 +114,11 @@ pub fn process_messages<S: MessageSender>(
             }
 
             _ => {
-                // no-op
+                continue;
             }
         }
         if realtime_delay {
-            main.realtime_delay(message);
+            main.realtime_delay(gps_time);
         }
     }
 }

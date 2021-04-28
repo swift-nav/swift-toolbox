@@ -251,7 +251,7 @@ args    = ["clippy", "--all-targets", "--", "--deny", "warnings"]
 [tasks.rust-tests]
 dependencies = ["copy-capnp"]
 command = "cargo"
-args    = ["test", "--", "--nocapture"]
+args    = ["test", "--features", "tests", "--", "--nocapture"]
 
 [tasks.rust-type-check]
 dependencies = ["copy-capnp"]

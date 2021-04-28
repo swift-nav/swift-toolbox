@@ -48,3 +48,4 @@ bench = false
 [features]
 default = []
 benches = []
+tests = []

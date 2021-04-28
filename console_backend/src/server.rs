@@ -4,22 +4,16 @@ use pyo3::exceptions;
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 
-use async_logger::Writer;
 use async_logger_log::Logger;
-use log::{debug, Record};
 
-use std::fs;
 use std::io::{BufReader, Cursor};
-use std::net::TcpStream;
-use std::sync::{mpsc, Arc, Mutex};
-use std::{thread, time::Duration};
+use std::sync::mpsc;
+use std::thread;
 
-use crate::common_constants as cc;
 use crate::console_backend_capnp as m;
 use crate::constants::LOG_WRITER_BUFFER_MESSAGE_COUNT;
 use crate::log_panel::{splitable_log_formatter, LogPanelWriter};
-use crate::process_messages::process_messages;
-use crate::types::{ClientSender, MessageSender, ServerState, SharedState, VelocityUnits};
+use crate::types::{ClientSender, ServerState, SharedState};
 use crate::utils::refresh_ports;
 
 /// The backend server
@@ -33,7 +27,6 @@ struct ServerEndpoint {
     server_send: Option<mpsc::Sender<Vec<u8>>>,
 }
 
-#[cfg(not(test))]
 #[pymethods]
 impl ServerEndpoint {
     #[new]
@@ -56,7 +49,6 @@ impl ServerEndpoint {
     }
 }
 
-#[cfg(not(test))]
 #[pymethods]
 impl Server {
     #[new]

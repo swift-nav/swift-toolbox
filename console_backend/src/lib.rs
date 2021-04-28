@@ -11,6 +11,7 @@ pub mod observation_tab;
 pub mod output;
 pub mod piksi_tools_constants;
 pub mod process_messages;
+#[cfg(not(test))]
 #[cfg(all(not(feature = "benches"), not(feature = "tests")))]
 pub mod server;
 pub mod solution_tab;

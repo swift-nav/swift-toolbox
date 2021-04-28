@@ -13,6 +13,7 @@ use crate::types::*;
 pub struct MainTab<'a, S: MessageSender> {
     last_gps_update: Instant,
     last_gps_time: Option<GpsTime>,
+    last_gps_week: i16,
     pub tracking_signals_tab: TrackingSignalsTab<S>,
     pub solution_tab: SolutionTab<S>,
     pub solution_velocity_tab: SolutionVelocityTab<'a, S>,
@@ -23,6 +24,7 @@ impl<'a, S: MessageSender> MainTab<'a, S> {
         MainTab {
             last_gps_time: None,
             last_gps_update: Instant::now(),
+            last_gps_week: 0,
             tracking_signals_tab: TrackingSignalsTab::new(
                 shared_state.clone(),
                 client_sender.clone(),
@@ -32,10 +34,22 @@ impl<'a, S: MessageSender> MainTab<'a, S> {
         }
     }
 
+    /// Calculate time since last epoch began and sleep for previous epoch time difference.
+    ///
+    /// # Parameters
+    /// - `gps_time`: The GpsTime corresponding to a message.
     pub fn realtime_delay(&mut self, gps_time: Option<Result<GpsTime, GpsTimeError>>) {
         if let Some(Ok(g_time)) = gps_time {
+            let mut g_time = g_time;
             let gps_time_tow = g_time.tow();
+            let gps_time_week = g_time.wn();
+            
             if let Some(l_time) = self.last_gps_time {
+                if gps_time_week != 0 {
+                    self.last_gps_week = gps_time_week;
+                } else {
+                    g_time.
+                }
                 let last_gps_time_tow = l_time.tow();
                 if last_gps_time_tow < gps_time_tow {
                     let diff = gps_time_tow - last_gps_time_tow;
@@ -49,6 +63,10 @@ impl<'a, S: MessageSender> MainTab<'a, S> {
                 }
             }
             self.last_gps_time = Some(g_time);
+            if gps_time_week != 0 {
+                self.last_gps_week = gps_time_week;
+            }
+            
         }
     }
 }

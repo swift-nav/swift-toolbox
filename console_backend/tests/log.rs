@@ -1,9 +1,12 @@
+#![allow(dead_code)]
+#![allow(unused_imports)]
 use log::Level;
 use logtest::Logger;
 
 use console_backend::utils::compute_doppler;
 
 #[test]
+#[cfg(feature = "tests")]
 fn log_test() {
     // Start the logger.
 

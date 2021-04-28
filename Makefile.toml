@@ -28,6 +28,10 @@ init_task = "init"
 
 [tasks.init]
 
+# Create 'test' alias
+[tasks.test]
+dependencies = ["tests"]
+
 [tasks.poetry-export-dev]
 script_runner = "@shell"
 script = '''

@@ -1,8 +1,3 @@
-#![allow(dead_code)]
-#![allow(unused_imports)]
-#![cfg(not(feature = "benches"))]
-#![cfg(not(feature = "tests"))]
-use capnp::message::Builder;
 use capnp::serialize;
 
 use pyo3::exceptions;

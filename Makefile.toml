@@ -30,7 +30,7 @@ init_task = "init"
 
 # Create 'test' alias
 [tasks.test]
-dependencies = ["tests"]
+run_task = "tests"
 
 [tasks.poetry-export-dev]
 script_runner = "@shell"
@@ -255,6 +255,7 @@ args    = ["clippy", "--all-targets", "--", "--deny", "warnings"]
 [tasks.rust-tests]
 dependencies = ["copy-capnp"]
 command = "cargo"
+cwd     = "console_backend"
 args    = ["test", "--features", "tests", "--", "--nocapture"]
 
 [tasks.rust-type-check]

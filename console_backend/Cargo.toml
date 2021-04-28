@@ -23,8 +23,6 @@ glob = "0.3.0"
 criterion = "0.3.4"
 sysinfo = "0.16.4"
 serialport = { version = "4.0.1", default-features = false }
-swiftnav-rs = { git = "https://github.com/swift-nav/swiftnav-rs", tag = "v0.4.0" }
-
 sbp-chopper={git="ssh://git@github.com/swift-nav/thachoppa.git", branch="john-michaelburke/console_pp_additions"}
 
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]

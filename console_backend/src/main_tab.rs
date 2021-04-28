@@ -1,5 +1,8 @@
 use sbp::messages::SBP;
-use std::{thread::sleep, time::{Duration, Instant}};
+use std::{
+    thread::sleep,
+    time::{Duration, Instant},
+};
 
 use crate::solution_tab::SolutionTab;
 use crate::solution_velocity_tab::SolutionVelocityTab;
@@ -36,21 +39,18 @@ impl<'a, S: MessageSender> MainTab<'a, S> {
                 if let Some(l_time) = self.last_gps_time {
                     if l_time < gps_time {
                         let diff = gps_time - l_time;
-                        
+
                         let elapsed = self.last_gps_update.elapsed().as_secs_f64();
                         if diff > elapsed {
                             let sleep_duration = diff - elapsed;
-                            
+
                             sleep(Duration::from_secs_f64(sleep_duration));
-                            
-    
                         }
-                        self.last_gps_update = Instant::now();                        
+                        self.last_gps_update = Instant::now();
                     }
                 }
                 self.last_gps_time = Some(gps_time);
             }
         }
     }
-    
 }

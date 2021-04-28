@@ -61,7 +61,7 @@ fn run_process_messages(file_in_name: &str, failure: bool) {
             inner: client_send_,
         };
         shared_state.set_running(true);
-        process_messages::process_messages(messages, shared_state, client_send);
+        process_messages::process_messages(messages, shared_state, client_send, false);
     }
     recv_thread.join().expect("join should succeed");
 }

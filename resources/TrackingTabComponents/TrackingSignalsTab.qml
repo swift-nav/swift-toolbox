@@ -37,8 +37,8 @@ Item {
             width: parent.width
             height: parent.height - trackingSignalsCheckboxes.height
             anchors.top: parent.top
-            backgroundColor: Constants.trackingSignals.plotBackgroundColor
-            plotAreaColor: Constants.trackingSignals.plotAreaColor
+            backgroundColor: Constants.commonChart.backgroundColor
+            plotAreaColor: Constants.commonChart.areaColor
             legend.visible: false
             antialiasing: true
             Component.onCompleted: {
@@ -52,8 +52,8 @@ Item {
             Rectangle {
                 id: lineLegend
 
-                border.color: Constants.trackingSignals.legendBorderColor
-                border.width: Constants.trackingSignals.legendBorderWidth
+                border.color: Constants.commonLegend.borderColor
+                border.width: Constants.commonLegend.borderWidth
                 anchors.bottom: trackingSignalsChart.bottom
                 anchors.left: trackingSignalsChart.left
                 anchors.bottomMargin: Constants.trackingSignals.legendBottomMargin
@@ -64,7 +64,6 @@ Item {
                 Column {
                     id: lineLegendRepeater
 
-                    spacing: -1
                     anchors.bottom: lineLegend.bottom
 
                     Repeater {
@@ -84,9 +83,8 @@ Item {
                             Rectangle {
                                 id: marker
 
-                                width: 20
-                                height: 3
-                                color: "#000000"
+                                width: Constants.commonLegend.markerWidth
+                                height: Constants.commonLegend.markerHeight
                                 anchors.verticalCenter: parent.verticalCenter
                             }
 
@@ -94,9 +92,9 @@ Item {
                                 id: label
 
                                 text: modelData
-                                font.pointSize: 6
+                                font.pointSize: Constants.trackingSignals.legendLabelPointSize
                                 anchors.verticalCenter: parent.verticalCenter
-                                anchors.verticalCenterOffset: -1
+                                anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                             }
 
                         }
@@ -110,15 +108,16 @@ Item {
             ValueAxis {
                 id: trackingSignalsXAxis
 
-                titleText: "seconds"
+                titleText: Constants.trackingSignals.xAxisTitleText
                 gridVisible: true
                 lineVisible: true
                 minorGridVisible: true
-                minorGridLineColor: "#CDC9C9"
-                visible: true
+                minorGridLineColor: Constants.commonChart.minorGridLineColor
+                gridLineColor: Constants.commonChart.gridLineColor
+                labelsColor: Constants.commonChart.labelsColor
 
                 labelsFont {
-                    pointSize: 10
+                    pointSize: Constants.commonChart.tickPointSize
                     bold: true
                 }
 
@@ -127,17 +126,16 @@ Item {
             ValueAxis {
                 id: trackingSignalsYAxis
 
-                titleText: "dB-Hz"
-                min: 0
-                max: 1
+                titleText: Constants.trackingSignals.yAxisTitleText
                 gridVisible: true
                 lineVisible: true
                 minorGridVisible: true
-                minorGridLineColor: "#CDC9C9"
-                visible: true
+                minorGridLineColor: Constants.commonChart.minorGridLineColor
+                gridLineColor: Constants.commonChart.gridLineColor
+                labelsColor: Constants.commonChart.labelsColor
 
                 labelsFont {
-                    pointSize: 10
+                    pointSize: Constants.commonChart.tickPointSize
                     bold: true
                 }
 
@@ -169,7 +167,7 @@ Item {
                                 trackingSignalsChart.removeSeries(lines[idx][0]);
                                 var line = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, labels[idx], trackingSignalsXAxis);
                                 line.color = colors[idx];
-                                line.width = 1;
+                                line.width = Constants.commonChart.lineWidth;
                                 line.axisYRight = trackingSignalsYAxis;
                                 // line.useOpenGL = true; // [CPP-93] Invesigate usage of `useOpenGL` in plots
                                 lines[idx] = [line, labels[idx]];
@@ -177,15 +175,14 @@ Item {
                         } else {
                             var line = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, labels[idx], trackingSignalsXAxis);
                             line.color = colors[idx];
-                            line.width = 1;
+                            line.width = Constants.commonChart.lineWidth;
                             line.axisYRight = trackingSignalsYAxis;
-                            // line.useOpenGL = true; // [CPP-93] Invesigate usage of `useOpenGL` in plots
                             lines.push([line, labels[idx]]);
                         }
                     }
                     trackingSignalsPoints.fill_series(lines);
                     var last = points[0][points[0].length - 1];
-                    trackingSignalsXAxis.min = last.x - 100;
+                    trackingSignalsXAxis.min = last.x - Constants.trackingSignals.xAxisMinOffsetFromMaxSeconds;
                     trackingSignalsXAxis.max = last.x;
                     if (trackingSignalsYAxis.min != trackingSignalsPoints.min_) {
                         trackingSignalsYAxis.min = trackingSignalsPoints.min_;
@@ -199,7 +196,7 @@ Item {
         GridLayout {
             id: trackingSignalsCheckboxes
 
-            columns: 6
+            columns: parent.width / Constants.trackingSignals.checkBoxPreferredWidth
             anchors.horizontalCenter: trackingSignalsChart.horizontalCenter
             anchors.top: trackingSignalsChart.bottom
 
@@ -212,7 +209,7 @@ Item {
                     CheckBox {
                         checked: true
                         text: modelData
-                        verticalPadding: 0
+                        verticalPadding: Constants.trackingSignals.checkBoxVerticalPadding
                         onClicked: {
                             check_visibility[index] = checked;
                             if (index == 0) {

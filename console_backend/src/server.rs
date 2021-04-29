@@ -8,6 +8,10 @@ use pyo3::exceptions;
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 
+use async_logger::Writer;
+use async_logger_log::Logger;
+use log::{debug, Record};
+
 use std::fs;
 use std::io::{BufReader, Cursor};
 use std::net::TcpStream;
@@ -16,6 +20,8 @@ use std::{thread, time::Duration};
 
 use crate::common_constants as cc;
 use crate::console_backend_capnp as m;
+use crate::constants::LOG_WRITER_BUFFER_MESSAGE_COUNT;
+use crate::log_panel::{splitable_log_formatter, LogPanelWriter};
 use crate::process_messages::process_messages;
 use crate::types::{ClientSender, MessageSender, ServerState, SharedState, VelocityUnits};
 use crate::utils::refresh_ports;
@@ -100,6 +106,16 @@ impl Server {
         let shared_state = SharedState::new();
         let server_state = ServerState::new();
         refresh_ports(&mut client_send.clone());
+        let logger = Logger::builder()
+            .buf_size(LOG_WRITER_BUFFER_MESSAGE_COUNT)
+            .formatter(splitable_log_formatter)
+            .writer(Box::new(LogPanelWriter::new(client_send.clone())))
+            .build()
+            .unwrap();
+
+        log::set_boxed_logger(Box::new(logger)).expect("Failed to set logger");
+        log::set_max_level(log::LevelFilter::Info);
+
         thread::spawn(move || loop {
             let buf = server_recv.recv();
             if let Ok(buf) = buf {

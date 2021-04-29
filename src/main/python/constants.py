@@ -42,6 +42,7 @@ class MessageKeys(str, Enum):
     SOLUTION_VELOCITY_STATUS_FRONT = "solutionVelocityStatusFront"
     SOLUTION_POSITION_STATUS_UNIT_FRONT = "solutionPositionStatusUnitFront"
     SOLUTION_POSITION_STATUS_BUTTON_FRONT = "solutionPositionStatusButtonFront"
+    LOG_APPEND = "logAppend"
 
 
 class QTKeys(str, Enum):

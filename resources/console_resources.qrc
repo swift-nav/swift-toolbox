@@ -3,6 +3,7 @@
     <file>qtquickcontrols2.conf</file>
     <file>view.qml</file>
     <file>BottomNavBar.qml</file>
+    <file>LogPanel.qml</file>
     <file>Constants/Constants.qml</file>
     <file>Constants/qmldir</file>
     <file>SolutionTab.qml</file>

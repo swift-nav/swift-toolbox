@@ -4,6 +4,8 @@ use std::{collections::HashMap, time::Instant};
 use capnp::message::Builder;
 use capnp::serialize;
 
+use log::warn;
+
 use crate::console_backend_capnp as m;
 use crate::constants::*;
 use crate::piksi_tools_constants::*;
@@ -288,7 +290,7 @@ impl<S: MessageSender> TrackingSignalsTab<S> {
             || self.prev_obs_count + 1 != count
             || self.prev_obs_total != total
         {
-            println!("We dropped a packet. Skipping this ObservationMsg sequence");
+            warn!("We dropped a packet. Skipping this ObservationMsg sequence");
             self.obs_reset(msg_fields.tow, msg_fields.wn, total);
             self.prev_obs_count = count;
             return;

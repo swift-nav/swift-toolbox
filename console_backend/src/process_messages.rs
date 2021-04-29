@@ -78,7 +78,7 @@ pub fn process_messages<S: MessageSender>(
             SBP::MsgObs(msg) => {
                 main.tracking_signals_tab
                     .handle_obs(ObservationMsg::MsgObs(msg));
-                    continue;
+                continue;
             }
             SBP::MsgObsDepA(_msg) => {
                 //CPP-85 Unhandled for tracking signals plot tab.

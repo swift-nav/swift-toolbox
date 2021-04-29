@@ -1,9 +1,5 @@
-use sbp::{messages::GpsTime, GpsTimeError};
-use std::{
-    result::Result,
-    thread::sleep,
-    time::Instant,
-};
+use sbp::messages::GpsTime;
+use std::{result::Result, thread::sleep, time::Instant};
 
 use crate::solution_tab::SolutionTab;
 use crate::solution_velocity_tab::SolutionVelocityTab;
@@ -38,9 +34,7 @@ impl<'a, S: MessageSender> MainTab<'a, S> {
     /// - `gps_time`: The GpsTime corresponding to a message.
     pub fn realtime_delay<T>(&mut self, gps_time: Option<Result<GpsTime, T>>) {
         if let Some(Ok(mut g_time)) = gps_time {
-            
             if let Some(mut l_time) = self.last_gps_time {
-
                 let gps_time_tow = g_time.tow();
                 let gps_time_week = g_time.wn();
                 let last_gps_time_tow = l_time.tow();
@@ -56,7 +50,6 @@ impl<'a, S: MessageSender> MainTab<'a, S> {
                     if let Ok(g_time_ok) = g_time_ {
                         g_time = g_time_ok;
                     }
-
                 }
 
                 if l_time < g_time {
@@ -75,31 +68,28 @@ impl<'a, S: MessageSender> MainTab<'a, S> {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::{
-        sync::mpsc,
-        time::Duration,
-    };
+    use std::{sync::mpsc, time::Duration};
     struct GpsTimeTests {
         pub zero_week: i16,
         pub good_week: i16,
         pub early_gps_tow_good: f64,
-        pub later_gps_tow_good: f64
+        pub later_gps_tow_good: f64,
     }
-
-    fn gps_time_test_struct() -> GpsTimeTests {
-        let zero_week: i16 = 0;
-        let good_week: i16 = 2000;
-        let early_gps_tow_good: f64 = 5432.0;
-        let later_gps_tow_good: f64 = 5433.0;
-        GpsTimeTests {
-            zero_week,
-            good_week,
-            early_gps_tow_good,
-            later_gps_tow_good
+    impl GpsTimeTests {
+        fn new() -> GpsTimeTests {
+            let zero_week: i16 = 0;
+            let good_week: i16 = 2000;
+            let early_gps_tow_good: f64 = 5432.0;
+            let later_gps_tow_good: f64 = 5433.0;
+            GpsTimeTests {
+                zero_week,
+                good_week,
+                early_gps_tow_good,
+                later_gps_tow_good,
+            }
         }
     }
 
@@ -110,15 +100,18 @@ mod tests {
         let client_send = ClientSender {
             inner: client_send_,
         };
-        let gps_s = gps_time_test_struct();
-        let mut main = MainTab::new(shared_state.clone(), client_send);
+        let gps_s = GpsTimeTests::new();
+        let mut main = MainTab::new(shared_state, client_send);
         let early_gps_time_good = GpsTime::new(gps_s.good_week, gps_s.early_gps_tow_good).unwrap();
         let later_gps_time_good = GpsTime::new(gps_s.good_week, gps_s.later_gps_tow_good);
         main.last_gps_time = Some(early_gps_time_good);
         let now = Instant::now();
         main.last_gps_update = Instant::now();
         main.realtime_delay(Some(later_gps_time_good));
-        assert!(now.elapsed() > Duration::from_secs_f64(gps_s.later_gps_tow_good - gps_s.early_gps_tow_good));
+        assert!(
+            now.elapsed()
+                > Duration::from_secs_f64(gps_s.later_gps_tow_good - gps_s.early_gps_tow_good)
+        );
     }
     #[test]
     fn realtime_delay_bad_last_test() {
@@ -127,15 +120,18 @@ mod tests {
         let client_send = ClientSender {
             inner: client_send_,
         };
-        let gps_s = gps_time_test_struct();
-        let mut main = MainTab::new(shared_state.clone(), client_send);
+        let gps_s = GpsTimeTests::new();
+        let mut main = MainTab::new(shared_state, client_send);
         let early_gps_time_good = GpsTime::new(gps_s.zero_week, gps_s.early_gps_tow_good).unwrap();
         let later_gps_time_good = GpsTime::new(gps_s.good_week, gps_s.later_gps_tow_good);
         main.last_gps_time = Some(early_gps_time_good);
         let now = Instant::now();
         main.last_gps_update = Instant::now();
         main.realtime_delay(Some(later_gps_time_good));
-        assert!(now.elapsed() > Duration::from_secs_f64(gps_s.later_gps_tow_good - gps_s.early_gps_tow_good));
+        assert!(
+            now.elapsed()
+                > Duration::from_secs_f64(gps_s.later_gps_tow_good - gps_s.early_gps_tow_good)
+        );
     }
     #[test]
     fn realtime_delay_bad_current_test() {
@@ -144,15 +140,18 @@ mod tests {
         let client_send = ClientSender {
             inner: client_send_,
         };
-        let gps_s = gps_time_test_struct();
-        let mut main = MainTab::new(shared_state.clone(), client_send);
+        let gps_s = GpsTimeTests::new();
+        let mut main = MainTab::new(shared_state, client_send);
         let early_gps_time_good = GpsTime::new(gps_s.good_week, gps_s.early_gps_tow_good).unwrap();
         let later_gps_time_good = GpsTime::new(gps_s.zero_week, gps_s.later_gps_tow_good);
         main.last_gps_time = Some(early_gps_time_good);
         let now = Instant::now();
         main.last_gps_update = Instant::now();
         main.realtime_delay(Some(later_gps_time_good));
-        assert!(now.elapsed() > Duration::from_secs_f64(gps_s.later_gps_tow_good - gps_s.early_gps_tow_good));
+        assert!(
+            now.elapsed()
+                > Duration::from_secs_f64(gps_s.later_gps_tow_good - gps_s.early_gps_tow_good)
+        );
     }
 
     #[test]
@@ -162,8 +161,8 @@ mod tests {
         let client_send = ClientSender {
             inner: client_send_,
         };
-        let gps_s = gps_time_test_struct();
-        let mut main = MainTab::new(shared_state.clone(), client_send);
+        let gps_s = GpsTimeTests::new();
+        let mut main = MainTab::new(shared_state, client_send);
         let later_gps_time_good = GpsTime::new(gps_s.good_week, gps_s.later_gps_tow_good);
         let now = Instant::now();
         main.last_gps_update = Instant::now();

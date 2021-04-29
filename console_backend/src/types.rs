@@ -1177,7 +1177,6 @@ mod tests {
     const TEST_FILEPATH: &str = "./tests/data/piksi-relay-1min.sbp";
     const TEST_SHORT_FILEPATH: &str = "./tests/data/piksi-relay.sbp";
     const SBP_FILE_SHORT_DURATION_SEC: f64 = 26.1;
-    
 
     fn receive_thread(client_recv: mpsc::Receiver<Vec<u8>>) -> JoinHandle<()> {
         thread::spawn(move || {

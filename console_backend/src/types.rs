@@ -1174,6 +1174,9 @@ mod tests {
         time::{Duration, SystemTime},
     };
     const TEST_FILEPATH: &str = "./tests/data/piksi-relay-1min.sbp";
+    const TEST_SHORT_FILEPATH: &str = "./tests/data/piksi-relay.sbp";
+    const SBP_FILE_SHORT_DURATION_SEC: f64 = 26.1;
+    
 
     fn receive_thread(client_recv: mpsc::Receiver<Vec<u8>>) -> JoinHandle<()> {
         thread::spawn(move || {
@@ -1198,13 +1201,13 @@ mod tests {
             inner: client_send_,
         };
         let server_state = ServerState::new();
-        let filename = TEST_FILEPATH.to_string();
+        let filename = TEST_SHORT_FILEPATH.to_string();
         receive_thread(client_receive);
         assert!(!shared_state.is_running());
         server_state.connect_to_file(client_send, shared_state.clone(), filename, true);
-        sleep(Duration::from_millis(5));
+        sleep(Duration::from_millis(100));
         assert!(shared_state.is_running());
-        sleep(Duration::from_secs(5));
+        sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
         assert!(!shared_state.is_running());
     }
 
@@ -1216,17 +1219,17 @@ mod tests {
             inner: client_send_,
         };
         let server_state = ServerState::new();
-        let filename = TEST_FILEPATH.to_string();
+        let filename = TEST_SHORT_FILEPATH.to_string();
         receive_thread(client_receive);
         assert!(!shared_state.is_running());
         server_state.connect_to_file(client_send, shared_state.clone(), filename, true);
-        sleep(Duration::from_millis(5));
+        sleep(Duration::from_millis(100));
         assert!(shared_state.is_running());
         shared_state.set_paused(true);
-        sleep(Duration::from_secs(5));
+        sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
         assert!(shared_state.is_running());
         shared_state.set_paused(false);
-        sleep(Duration::from_secs(5));
+        sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
         assert!(!shared_state.is_running());
     }
 

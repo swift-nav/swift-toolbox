@@ -51,7 +51,6 @@ pub fn process_messages<S: MessageSender>(
             }
         }
         let gps_time = message.gps_time();
-        // println!("{}", message.get_message_name());
         match message {
             SBP::MsgAgeCorrections(msg) => {
                 main.solution_tab.handle_age_corrections(msg);
@@ -78,6 +77,7 @@ pub fn process_messages<S: MessageSender>(
             SBP::MsgObs(msg) => {
                 main.tracking_signals_tab
                     .handle_obs(ObservationMsg::MsgObs(msg));
+                    continue;
             }
             SBP::MsgObsDepA(_msg) => {
                 //CPP-85 Unhandled for tracking signals plot tab.
@@ -86,10 +86,12 @@ pub fn process_messages<S: MessageSender>(
             SBP::MsgObsDepB(msg) => {
                 main.tracking_signals_tab
                     .handle_obs(ObservationMsg::MsgObsDepB(msg));
+                continue;
             }
             SBP::MsgObsDepC(msg) => {
                 main.tracking_signals_tab
                     .handle_obs(ObservationMsg::MsgObsDepC(msg));
+                continue;
             }
             SBP::MsgPosLLH(msg) => {
                 main.solution_tab.handle_pos_llh(PosLLH::MsgPosLLH(msg));

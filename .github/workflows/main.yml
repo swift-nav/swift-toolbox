@@ -18,8 +18,8 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - ubuntu-20.04
-          - macos-10.15
+          # - ubuntu-20.04
+          # - macos-10.15
           - windows-2019
 
     runs-on: ${{ matrix.os }}
@@ -33,9 +33,18 @@ jobs:
           ssh-key: ${{ secrets.SSH_KEY }}
           ssh-strict: false
 
+      - name: Find windows llvm 64bit
+        shell: bash
+        run: |
+          ls "C:/Program Files"
+          ls "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64"
+          ls "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
+
       - uses: webfactory/ssh-agent@v0.5.0
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
+
+
 
       - name: Run ssh-keyscan
         run: ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -46,12 +55,14 @@ jobs:
           & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
         if: matrix.os == 'windows-2019'
 
-      - name: Install LLVM and Clang (Windows)
-        uses: KyleMayes/install-llvm-action@v1
-        with:
-          version: "10.0"
-          directory: ${{ runner.temp }}/llvm
-        if: matrix.os == 'windows-2019'
+      # - name: Install LLVM and Clang (Windows)
+      #   uses: KyleMayes/install-llvm-action@v1
+      #   with:
+      #     version: "10.0"
+      #     directory: ${{ runner.temp }}/llvm
+      #   if: matrix.os == 'windows-2019'
+      
+        
 
       - name: Install ${{ runner.os }} Dependencies.
         shell: bash
@@ -61,7 +72,7 @@ jobs:
           elif [ "$RUNNER_OS" == "macOS" ]; then
               brew install capnp llvm
           elif [ "$RUNNER_OS" == "Windows" ]; then
-              choco install -y capnproto git-lfs
+              choco install -y capnproto
           fi
 
       - name: Pull Git LFS objects
@@ -118,9 +129,13 @@ jobs:
         run: |
           cargo make pip-install-dev
 
+      
+          
+          
+
       - name: Run Backend Benchmarks (Windows)
         env:
-          LIBCLANG_PATH: ${{ runner.temp }}/llvm/bin
+          LIBCLANG_PATH: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
         run: |
           cargo make backend-benches
         if: matrix.os == 'windows-2019'
@@ -130,91 +145,91 @@ jobs:
           cargo make backend-benches
         if: matrix.os != 'windows-2019'
 
-  checks:
+  # checks:
 
-    name: Code Quality Checks
+  #   name: Code Quality Checks
 
-    runs-on: ubuntu-20.04
+  #   runs-on: ubuntu-20.04
 
-    steps:
+  #   steps:
 
-      - name: Checkout source
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
-          ssh-key: ${{ secrets.SSH_KEY }}
-          ssh-strict: false
+  #     - name: Checkout source
+  #       uses: actions/checkout@v2
+  #       with:
+  #         submodules: recursive
+  #         ssh-key: ${{ secrets.SSH_KEY }}
+  #         ssh-strict: false
 
-      - uses: webfactory/ssh-agent@v0.5.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_KEY }}
+  #     - uses: webfactory/ssh-agent@v0.5.0
+  #       with:
+  #         ssh-private-key: ${{ secrets.SSH_KEY }}
 
-      - name: Pull Git LFS objects
-        run: git lfs pull
-        env:
-          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
+  #     - name: Pull Git LFS objects
+  #       run: git lfs pull
+  #       env:
+  #         GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
 
-      - name: Install stable Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          components: rustfmt, clippy
+  #     - name: Install stable Rust
+  #       uses: actions-rs/toolchain@v1
+  #       with:
+  #         toolchain: stable
+  #         override: true
+  #         components: rustfmt, clippy
 
-      - uses: davidB/rust-cargo-make@v1
-        with:
-          version: '0.32.11'
+  #     - uses: davidB/rust-cargo-make@v1
+  #       with:
+  #         version: '0.32.11'
 
-      - name: Install Dependencies.
-        run: |
-          sudo apt-get install -y capnproto libudev-dev
+  #     - name: Install Dependencies.
+  #       run: |
+  #         sudo apt-get install -y capnproto libudev-dev
 
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          activate-environment: console_pp
-          environment-file: conda.yml
+  #     - uses: conda-incubator/setup-miniconda@v2
+  #       with:
+  #         activate-environment: console_pp
+  #         environment-file: conda.yml
 
-      - name: Run Requirements Generation Check
-        run: |
-          cargo make poetry-export
-          git diff --exit-code
+  #     - name: Run Requirements Generation Check
+  #       run: |
+  #         cargo make poetry-export
+  #         git diff --exit-code
 
-      - name: Cache pip
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-            ${{ runner.os }}-
-        if: matrix.os == 'ubuntu-20.04'
+  #     - name: Cache pip
+  #       uses: actions/cache@v2
+  #       with:
+  #         path: ~/.cache/pip
+  #         key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
+  #         restore-keys: |
+  #           ${{ runner.os }}-pip-
+  #           ${{ runner.os }}-
+  #       if: matrix.os == 'ubuntu-20.04'
 
-      - name: Run Pip Install
-        run: |
-          cargo make pip-install-dev
+  #     - name: Run Pip Install
+  #       run: |
+  #         cargo make pip-install-dev
       
-      - name: Run Format Check
-        run: |
-          cargo make format-check
+  #     - name: Run Format Check
+  #       run: |
+  #         cargo make format-check
 
-      - name: Run Type Check
-        run: |
-          cargo make types
+  #     - name: Run Type Check
+  #       run: |
+  #         cargo make types
 
-      - name: Run Lint Check
-        run: |
-          cargo make lint
+  #     - name: Run Lint Check
+  #       run: |
+  #         cargo make lint
 
-      - name: Run Tests
-        run: |
-          cargo make tests
+  #     - name: Run Tests
+  #       run: |
+  #         cargo make tests
 
   build:
 
     name: Build Binaries
 
     needs:
-      - checks
+      # - checks
       - backend_bench
 
     strategy:

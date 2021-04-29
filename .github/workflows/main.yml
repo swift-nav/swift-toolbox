@@ -52,6 +52,14 @@ jobs:
           directory: ${{ runner.temp }}/llvm
         if: matrix.os == 'windows-2019'
 
+      - name: What is in folder.
+        env:
+          OS_NAME: ${{ runner.os }}
+          LIBCLANG_PATH: ${{ runner.temp }}/llvm
+        shell: bash
+        run: |
+          ls $LIBCLANG_PATH/bin
+
       # - name: Install LLVM
       #   run: choco install -y --no-progress llvm
 
@@ -98,7 +106,7 @@ jobs:
       
       - name: Run Backend Benchmarks
         env:
-          LIBCLANG_PATH: ${{ runner.temp }}/llvm
+          LIBCLANG_PATH: ${{ runner.temp }}/llvm/bin
         run: |
           cargo make backend-benches
 

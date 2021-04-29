@@ -12,5 +12,8 @@
     <file>SolutionTabComponents/SolutionVelocityTab.qml</file>
     <file>TrackingTab.qml</file>
     <file>TrackingTabComponents/TrackingSignalsTab.qml</file>
+    <file>ObservationTab.qml</file>
+    <file>ObservationTabComponents/observation_tab.js</file>
+    <file>ObservationTabComponents/ObservationTable.qml</file>
 </qresource>
 </RCC>

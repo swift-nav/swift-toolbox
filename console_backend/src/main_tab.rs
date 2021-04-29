@@ -60,13 +60,14 @@ impl<'a, S: MessageSender> MainTab<'a, S> {
                     let elapsed = self.last_gps_update.elapsed();
                     if diff > elapsed {
                         let sleep_duration = diff - elapsed;
-
                         sleep(sleep_duration);
                     }
                     self.last_gps_update = Instant::now();
+                    self.last_gps_time = Some(g_time);
                 }
+            } else {
+                self.last_gps_time = Some(g_time);
             }
-            self.last_gps_time = Some(g_time);
         }
     }
 }

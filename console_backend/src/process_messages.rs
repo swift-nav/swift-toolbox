@@ -29,7 +29,6 @@ fn strip_errors_iter(
         })
         .filter_map(sbp::Result::ok)
 }
-
 pub fn process_messages<S: MessageSender>(
     messages: impl Iterator<Item = sbp::Result<SBP>>,
     shared_state: SharedState,
@@ -38,7 +37,6 @@ pub fn process_messages<S: MessageSender>(
 ) {
     let mut main = MainTab::new(shared_state.clone(), client_send);
     let messages = strip_errors_iter(true, messages);
-
     for message in messages {
         if !shared_state.is_running() {
             break;
@@ -79,7 +77,6 @@ pub fn process_messages<S: MessageSender>(
                 main.tracking_signals_tab
                     .handle_obs(ObservationMsg::MsgObs(msg.clone()));
                 main.observation_tab.handle_obs(ObservationMsg::MsgObs(msg));
-                continue;
             }
             SBP::MsgObsDepA(_msg) => {
                 //CPP-85 Unhandled for tracking signals plot tab.
@@ -91,7 +88,6 @@ pub fn process_messages<S: MessageSender>(
 
                 main.observation_tab
                     .handle_obs(ObservationMsg::MsgObsDepB(msg));
-                continue;
             }
             SBP::MsgObsDepC(msg) => {
                 main.tracking_signals_tab
@@ -99,7 +95,6 @@ pub fn process_messages<S: MessageSender>(
 
                 main.observation_tab
                     .handle_obs(ObservationMsg::MsgObsDepC(msg));
-                continue;
             }
             SBP::MsgOsr(msg) => {
                 main.observation_tab.handle_obs(ObservationMsg::MsgOsr(msg));

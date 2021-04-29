@@ -15,7 +15,7 @@ use console_backend::{
     types::{ClientSender, MessageSender, SharedState},
 };
 
-const BENCH_FILEPATH: &str = "./tests/data/piksi-relay-1min.sbp";
+const BENCH_FILEPATH: &str = "./tests/data/piksi-relay.sbp";
 const MINIMUM_MEM_READINGS: usize = 20;
 
 const DIFF_THRESHOLD: f32 = 0.05;

@@ -1,29 +1,30 @@
-#![allow(dead_code)]
-#![allow(unused_imports)]
-use log::Level;
-use logtest::Logger;
-
-use console_backend::utils::compute_doppler;
-
-#[test]
 #[cfg(feature = "tests")]
-fn log_test() {
-    // Start the logger.
+mod log_test_impl {
 
-    let mut logger = Logger::start();
+    use log::Level;
+    use logtest::Logger;
 
-    compute_doppler(
-        123438650.3359375,
-        123438590.203125,
-        251746.8,
-        251746.8,
-        false,
-    );
+    use console_backend::utils::compute_doppler;
 
-    let log_msg = logger.pop().unwrap();
-    assert_eq!(
-        log_msg.args(),
-        "Received two complete observation sets with identical TOW"
-    );
-    assert_eq!(log_msg.level(), Level::Warn);
+    #[test]
+    fn log_test() {
+        // Start the logger.
+
+        let mut logger = Logger::start();
+
+        compute_doppler(
+            123438650.3359375,
+            123438590.203125,
+            251746.8,
+            251746.8,
+            false,
+        );
+
+        let log_msg = logger.pop().unwrap();
+        assert_eq!(
+            log_msg.args(),
+            "Received two complete observation sets with identical TOW"
+        );
+        assert_eq!(log_msg.level(), Level::Warn);
+    }
 }

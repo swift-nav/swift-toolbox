@@ -15,6 +15,7 @@ jobs:
     name: Backend Benchmarks
 
     strategy:
+      fail-fast: false
       matrix:
         os:
           - ubuntu-20.04
@@ -45,11 +46,12 @@ jobs:
           & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
         if: matrix.os == 'windows-2019'
 
-      - name: Install LLVM and Clang
+      - name: Install LLVM and Clang (Windows)
         uses: KyleMayes/install-llvm-action@v1
         with:
           version: "10.0"
           directory: ${{ runner.temp }}/llvm
+        if: matrix.os == 'windows-2019'
 
       - name: Install ${{ runner.os }} Dependencies.
         shell: bash
@@ -57,7 +59,7 @@ jobs:
           if [ "$RUNNER_OS" == "Linux" ]; then
               sudo apt-get install -y capnproto git-lfs libudev-dev
           elif [ "$RUNNER_OS" == "macOS" ]; then
-              brew install capnp git-lfs
+              brew install capnp llvm
           elif [ "$RUNNER_OS" == "Windows" ]; then
               choco install -y capnproto git-lfs
           fi
@@ -82,21 +84,57 @@ jobs:
           activate-environment: console_pp
           environment-file: conda.yml
 
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ~/Library/Caches/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-
+        if: matrix.os == 'macos-10.15'
+
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ~/AppData/Local/pip/Cache
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-
+        if: matrix.os == 'windows-2019'
+
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-
+        if: matrix.os == 'ubuntu-20.04'
+
       - name: Run Pip Install
         run: |
           cargo make pip-install-dev
-      
-      - name: Run Backend Benchmarks
+
+      - name: Run Backend Benchmarks (Windows)
         env:
           LIBCLANG_PATH: ${{ runner.temp }}/llvm/bin
         run: |
           cargo make backend-benches
+        if: matrix.os == 'windows-2019'
+      
+      - name: Run Backend Benchmarks
+        run: |
+          cargo make backend-benches
+        if: matrix.os != 'windows-2019'
 
   checks:
 
     name: Code Quality Checks
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
 
@@ -140,6 +178,16 @@ jobs:
         run: |
           cargo make poetry-export
           git diff --exit-code
+
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-
+        if: matrix.os == 'ubuntu-20.04'
 
       - name: Run Pip Install
         run: |
@@ -200,13 +248,6 @@ jobs:
           & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
         if: matrix.os == 'windows-2019'
 
-      - name: Install LLVM and Clang for Windows
-        uses: KyleMayes/install-llvm-action@v1
-        with:
-          version: "10.0"
-          directory: ${{ runner.temp }}/llvm
-        if: matrix.os == 'windows-2019'
-
       - name: Install ${{ runner.os }} Dependencies.
         shell: bash
         run: |
@@ -214,10 +255,17 @@ jobs:
               sudo apt-get install -y capnproto libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-render0 libxcb-shape0 libxcb-shm0 libxcb-sync1 libxcb-util1 libxcb-xfixes0 libxcb-xinerama0 libxcb-xkb1 libxkbcommon-x11-0 ruby ruby-dev rubygems build-essential libudev-dev
               sudo gem install --no-document fpm
           elif [ "$RUNNER_OS" == "macOS" ]; then
-              brew install capnp
+              brew install capnp llvm
           elif [ "$RUNNER_OS" == "Windows" ]; then
               choco install capnproto nsis
           fi
+
+      - name: Install LLVM and Clang (Windows)
+        uses: KyleMayes/install-llvm-action@v1
+        with:
+          version: "10.0"
+          directory: ${{ runner.temp }}/llvm
+        if: matrix.os == 'windows-2019'
 
       - name: Install stable Rust
         uses: actions-rs/toolchain@v1
@@ -235,10 +283,47 @@ jobs:
           activate-environment: console_pp
           environment-file: conda.yml
 
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ~/Library/Caches/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-
+        if: matrix.os == 'macos-10.15'
+
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ~/AppData/Local/pip/Cache
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-
+        if: matrix.os == 'windows-2019'
+
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-
+        if: matrix.os == 'ubuntu-20.04'
+
       - name: Run Pip Install
         run: |
           cargo make pip-install-dev
 
+      - name: Build ${{ runner.os }} Binaries.
+        env:
+          LIBCLANG_PATH: ${{ runner.temp }}/llvm/bin
+        run: |
+          cargo make prod-installer
+        if: matrix.os == 'windows-2019'
+  
       - name: Build ${{ runner.os }} Binaries.
         env:
           OS_NAME: ${{ runner.os }}

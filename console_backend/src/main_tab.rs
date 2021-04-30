@@ -1,3 +1,4 @@
+use log::debug;
 use sbp::messages::GpsTime;
 use std::{result::Result, thread::sleep, time::Instant};
 
@@ -60,6 +61,10 @@ impl<'a, S: MessageSender> MainTab<'a, S> {
                     let elapsed = self.last_gps_update.elapsed();
                     if diff > elapsed {
                         let sleep_duration = diff - elapsed;
+                        debug!(
+                            "Realtime delay encounterred. Sleeping for {:?}.",
+                            sleep_duration
+                        );
                         sleep(sleep_duration);
                     }
                     self.last_gps_update = Instant::now();

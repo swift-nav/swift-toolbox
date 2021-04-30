@@ -1,3 +1,4 @@
+use log::debug;
 use sbp::messages::{SBPMessage, SBP};
 use std::{thread::sleep, time::Duration};
 
@@ -50,6 +51,7 @@ pub fn process_messages<S: MessageSender>(
             }
         }
         let gps_time = message.gps_time();
+        let msg_name = message.get_message_name();
         let mut attempt_delay = true;
         match message {
             SBP::MsgAgeCorrections(msg) => {
@@ -127,8 +129,12 @@ pub fn process_messages<S: MessageSender>(
                 attempt_delay = false;
             }
         }
-        if realtime_delay && attempt_delay {
-            main.realtime_delay(gps_time);
+        if realtime_delay {
+            if attempt_delay {
+                main.realtime_delay(gps_time);
+            } else {
+                debug!("Message, {}, ignored for realtime delay.", msg_name);
+            }
         }
         log::logger().flush();
     }

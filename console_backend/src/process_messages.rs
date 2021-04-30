@@ -34,7 +34,7 @@ pub fn process_messages<S: MessageSender>(
     messages: impl Iterator<Item = sbp::Result<SBP>>,
     shared_state: SharedState,
     client_send: S,
-    realtime_delay: bool,
+    realtime_delay: RealtimeDelay,
 ) {
     let mut main = MainTab::new(shared_state.clone(), client_send);
     let messages = strip_errors_iter(true, messages);
@@ -129,7 +129,7 @@ pub fn process_messages<S: MessageSender>(
                 attempt_delay = false;
             }
         }
-        if realtime_delay {
+        if let RealtimeDelay::On = realtime_delay {
             if attempt_delay {
                 main.realtime_delay(gps_time);
             } else {

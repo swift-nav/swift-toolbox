@@ -11,7 +11,7 @@ use std::{
 extern crate console_backend;
 use console_backend::{
     process_messages,
-    types::{ClientSender, SharedState},
+    types::{ClientSender, RealtimeDelay, SharedState},
 };
 
 const BENCH_FILEPATH: &str = "./tests/data/piksi-relay.sbp";
@@ -61,7 +61,7 @@ fn run_process_messages(file_in_name: &str, failure: bool) {
             inner: client_send_,
         };
         shared_state.set_running(true);
-        process_messages::process_messages(messages, shared_state, client_send, false);
+        process_messages::process_messages(messages, shared_state, client_send, RealtimeDelay::Off);
     }
     recv_thread.join().expect("join should succeed");
 }

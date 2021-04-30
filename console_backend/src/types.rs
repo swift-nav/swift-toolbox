@@ -144,7 +144,12 @@ impl ServerState {
                 println!("Opened file successfully!");
                 let shared_state_clone_ = shared_state.clone();
                 let messages = sbp::iter_messages(stream);
-                process_messages(messages, shared_state_clone_, client_send.clone(), true);
+                process_messages(
+                    messages,
+                    shared_state_clone_,
+                    client_send.clone(),
+                    RealtimeDelay::On,
+                );
                 if close_when_done {
                     close_frontend(&mut client_send.clone());
                 }
@@ -176,7 +181,12 @@ impl ServerState {
             if let Ok(stream) = TcpStream::connect(host_port.clone()) {
                 info!("Connected to the server {}!", host_port);
                 let messages = sbp::iter_messages(stream);
-                process_messages(messages, shared_state_clone, client_send, false);
+                process_messages(
+                    messages,
+                    shared_state_clone,
+                    client_send,
+                    RealtimeDelay::Off,
+                );
             } else {
                 warn!("Couldn't connect to server...");
             }
@@ -215,7 +225,12 @@ impl ServerState {
                 Ok(port) => {
                     println!("Connected to serialport {}.", device);
                     let messages = sbp::iter_messages(port);
-                    process_messages(messages, shared_state_clone, client_send, false);
+                    process_messages(
+                        messages,
+                        shared_state_clone,
+                        client_send,
+                        RealtimeDelay::Off,
+                    );
                 }
                 Err(e) => eprint!("Unable to connect to serialport: {}", e),
             }
@@ -383,6 +398,12 @@ impl SolutionVelocityTabState {
             unit: String::from(MPS),
         }
     }
+}
+
+// Main Tab Types.
+pub enum RealtimeDelay {
+    On,
+    Off,
 }
 
 // Tracking Signals Tab Types.
@@ -1305,7 +1326,12 @@ mod tests {
         let filename = TEST_SHORT_FILEPATH.to_string();
         receive_thread(client_receive);
         assert!(!shared_state.is_running());
-        server_state.connect_to_file(client_send, shared_state.clone(), filename, true);
+        server_state.connect_to_file(
+            client_send,
+            shared_state.clone(),
+            filename,
+            /*close_when_done = */ true,
+        );
         sleep(Duration::from_millis(100));
         assert!(shared_state.is_running());
         sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
@@ -1323,7 +1349,12 @@ mod tests {
         let filename = TEST_SHORT_FILEPATH.to_string();
         receive_thread(client_receive);
         assert!(!shared_state.is_running());
-        server_state.connect_to_file(client_send, shared_state.clone(), filename, true);
+        server_state.connect_to_file(
+            client_send,
+            shared_state.clone(),
+            filename,
+            /*close_when_done = */ true,
+        );
         sleep(Duration::from_millis(100));
         assert!(shared_state.is_running());
         shared_state.set_paused(true);
@@ -1347,7 +1378,12 @@ mod tests {
         let handle = receive_thread(client_receive);
         assert!(!shared_state.is_running());
         {
-            server_state.connect_to_file(client_send, shared_state.clone(), filename, true);
+            server_state.connect_to_file(
+                client_send,
+                shared_state.clone(),
+                filename,
+                /*close_when_done = */ true,
+            );
         }
 
         sleep(Duration::from_millis(5));

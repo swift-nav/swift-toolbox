@@ -325,9 +325,9 @@ develop = false
 
 [package.source]
 type = "git"
-url = "https://github.com/silverjam/pycapnp.git"
-reference = "disable-import-hook"
-resolved_reference = "5668fa3156247f6ca832e74475722ace2e04c385"
+url = "https://github.com/jayvdb/pycapnp.git"
+reference = "hook-if-file-exists"
+resolved_reference = "a7305540309c17c00e5231d095bcf555f7d6ed3f"
 
 [[package]]
 name = "pyinstaller"

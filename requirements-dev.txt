@@ -27,7 +27,7 @@ pluggy==0.13.1; python_version >= "3.5" and python_full_version < "3.0.0" or pyt
 psutil==5.8.0; (python_version >= "2.6" and python_full_version < "3.0.0") or (python_full_version >= "3.4.0")
 py2many @ git+https://github.com/john-michaelburke/py2many@console ; python_version >= "3.8"
 py==1.10.0; python_version >= "3.5" and python_full_version < "3.0.0" or python_full_version >= "3.4.0" and python_version >= "3.5"
-pycapnp @ git+https://github.com/silverjam/pycapnp.git@disable-import-hook
+pycapnp @ git+https://github.com/jayvdb/pycapnp.git@hook-if-file-exists
 pyinstaller-hooks-contrib==2021.1; python_version >= "3.5"
 pyinstaller==4.2; python_version >= "3.5"
 pylint==2.8.2; python_version >= "3.6" and python_version < "4.0"

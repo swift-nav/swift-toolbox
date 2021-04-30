@@ -193,6 +193,7 @@ Item {
                                 line.color = colors[idx];
                                 line.width = Constants.commonChart.lineWidth;
                                 line.axisYRight = solutionVelocityYAxis;
+                                line.useOpenGL = true;
                                 lines.push(line);
                             }
                         }

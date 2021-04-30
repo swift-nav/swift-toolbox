@@ -15,16 +15,16 @@ mod mem_bench_impl {
 
     use console_backend::{
         process_messages,
-        types::{ClientSender, SharedState},
+        types::{ClientSender, RealtimeDelay, SharedState},
     };
 
     const BENCH_FILEPATH: &str = "./tests/data/piksi-relay-1min.sbp";
     const MINIMUM_MEM_READINGS: usize = 20;
 
     const DIFF_THRESHOLD: f32 = 0.05;
-    const MAXIMUM_MEM_USAGE_KB: f32 = 30000.0;
+    const MAXIMUM_MEM_USAGE_KB: f32 = 140000.0;
     const ABSOLUTE_MINIMUM_MEM_USAGE: f32 = 1000.0;
-    const MAXIMUM_STANDARD_DEV_RATE_OF_MAXIMUM_MEM: f32 = 0.2;
+    const MAXIMUM_STANDARD_DEV_RATE_OF_MAXIMUM_MEM: f32 = 0.4;
 
     /// Convert a 1D Vector to an ArrayView.
     ///
@@ -101,7 +101,12 @@ mod mem_bench_impl {
             };
             let shared_state = SharedState::new();
             shared_state.set_running(true);
-            process_messages::process_messages(messages, shared_state, client_send);
+            process_messages::process_messages(
+                messages,
+                shared_state,
+                client_send,
+                RealtimeDelay::On,
+            );
         }
         recv_thread.join().expect("join should succeed");
         mem_read_thread.join().expect("join should succeed");

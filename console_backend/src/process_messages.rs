@@ -1,4 +1,5 @@
-use sbp::messages::SBP;
+use log::debug;
+use sbp::messages::{SBPMessage, SBP};
 use std::{thread::sleep, time::Duration};
 
 use crate::constants::PAUSE_LOOP_SLEEP_DURATION_MS;
@@ -29,11 +30,11 @@ fn strip_errors_iter(
         })
         .filter_map(sbp::Result::ok)
 }
-
 pub fn process_messages<S: MessageSender>(
     messages: impl Iterator<Item = sbp::Result<SBP>>,
     shared_state: SharedState,
     client_send: S,
+    realtime_delay: RealtimeDelay,
 ) {
     let mut main = MainTab::new(shared_state.clone(), client_send);
     let messages = strip_errors_iter(true, messages);
@@ -49,6 +50,9 @@ pub fn process_messages<S: MessageSender>(
                 sleep(Duration::from_millis(PAUSE_LOOP_SLEEP_DURATION_MS));
             }
         }
+        let gps_time = message.gps_time();
+        let msg_name = message.get_message_name();
+        let mut attempt_delay = true;
         match message {
             SBP::MsgAgeCorrections(msg) => {
                 main.solution_tab.handle_age_corrections(msg);
@@ -75,7 +79,6 @@ pub fn process_messages<S: MessageSender>(
             SBP::MsgObs(msg) => {
                 main.tracking_signals_tab
                     .handle_obs(ObservationMsg::MsgObs(msg.clone()));
-
                 main.observation_tab.handle_obs(ObservationMsg::MsgObs(msg));
             }
             SBP::MsgObsDepA(_msg) => {
@@ -123,7 +126,14 @@ pub fn process_messages<S: MessageSender>(
             SBP::MsgLog(msg) => handle_log_msg(msg),
 
             _ => {
-                // no-op
+                attempt_delay = false;
+            }
+        }
+        if let RealtimeDelay::On = realtime_delay {
+            if attempt_delay {
+                main.realtime_delay(gps_time);
+            } else {
+                debug!("Message, {}, ignored for realtime delay.", msg_name);
             }
         }
         log::logger().flush();

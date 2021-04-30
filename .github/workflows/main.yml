@@ -8,6 +8,10 @@ on:
       - '[0-9]+.[0-9]+.[0-9]+*'
   pull_request:
 
+env:
+  PIP_CACHE_DIR: ~/.cache/pip
+  LIBCLANG_PATH_WIN: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
+
 jobs:
 
   backend_bench:
@@ -49,11 +53,11 @@ jobs:
         shell: bash
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
-              sudo apt-get install -y capnproto git-lfs libudev-dev
+              sudo apt-get install -y capnproto libudev-dev
           elif [ "$RUNNER_OS" == "macOS" ]; then
-              brew install capnp git-lfs
+              brew install capnp llvm
           elif [ "$RUNNER_OS" == "Windows" ]; then
-              choco install -y capnproto git-lfs
+              choco install -y capnproto
           fi
 
       - name: Pull Git LFS objects
@@ -76,19 +80,36 @@ jobs:
           activate-environment: console_pp
           environment-file: conda.yml
 
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.PIP_CACHE_DIR }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-
+
       - name: Run Pip Install
         run: |
           cargo make pip-install-dev
+
+      - name: Run Backend Benchmarks (Windows)
+        env:
+          LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
+        run: |
+          cargo make backend-benches
+        if: matrix.os == 'windows-2019'
       
       - name: Run Backend Benchmarks
         run: |
           cargo make backend-benches
+        if: matrix.os != 'windows-2019'
 
   checks:
 
     name: Code Quality Checks
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
 
@@ -132,6 +153,15 @@ jobs:
         run: |
           cargo make poetry-export
           git diff --exit-code
+
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.PIP_CACHE_DIR }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-
 
       - name: Run Pip Install
         run: |
@@ -199,7 +229,7 @@ jobs:
               sudo apt-get install -y capnproto libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-render0 libxcb-shape0 libxcb-shm0 libxcb-sync1 libxcb-util1 libxcb-xfixes0 libxcb-xinerama0 libxcb-xkb1 libxkbcommon-x11-0 ruby ruby-dev rubygems build-essential libudev-dev
               sudo gem install --no-document fpm
           elif [ "$RUNNER_OS" == "macOS" ]; then
-              brew install capnp
+              brew install capnp llvm
           elif [ "$RUNNER_OS" == "Windows" ]; then
               choco install capnproto nsis
           fi
@@ -220,16 +250,32 @@ jobs:
           activate-environment: console_pp
           environment-file: conda.yml
 
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.PIP_CACHE_DIR }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-
+
       - name: Run Pip Install
         run: |
           cargo make pip-install-dev
 
       - name: Build ${{ runner.os }} Binaries.
         env:
-          OS_NAME: ${{ runner.os }}
+          LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
+        run: |
+          cargo make prod-installer
+        if: matrix.os == 'windows-2019'
+  
+      - name: Build ${{ runner.os }} Binaries.
         shell: bash
         run: |
           cargo make prod-installer
+        if: matrix.os != 'windows-2019'
+
       - name: Pull Git LFS objects
         run: git lfs pull
         env:

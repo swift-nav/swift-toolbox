@@ -8,6 +8,10 @@ on:
       - '[0-9]+.[0-9]+.[0-9]+*'
   pull_request:
 
+env:
+  PIP_CACHE_DIR: ~/.cache/pip
+  LIBCLANG_PATH_WIN: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
+
 jobs:
 
   backend_bench:
@@ -15,7 +19,6 @@ jobs:
     name: Backend Benchmarks
 
     strategy:
-      fail-fast: false
       matrix:
         os:
           - ubuntu-20.04
@@ -50,7 +53,7 @@ jobs:
         shell: bash
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
-              sudo apt-get install -y capnproto git-lfs libudev-dev
+              sudo apt-get install -y capnproto libudev-dev
           elif [ "$RUNNER_OS" == "macOS" ]; then
               brew install capnp llvm
           elif [ "$RUNNER_OS" == "Windows" ]; then
@@ -80,32 +83,11 @@ jobs:
       - name: Cache pip
         uses: actions/cache@v2
         with:
-          path: ~/Library/Caches/pip
+          path: ${{ env.PIP_CACHE_DIR }}
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
             ${{ runner.os }}-
-        if: matrix.os == 'macos-10.15'
-
-      - name: Cache pip
-        uses: actions/cache@v2
-        with:
-          path: ~/AppData/Local/pip/Cache
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-            ${{ runner.os }}-
-        if: matrix.os == 'windows-2019'
-
-      - name: Cache pip
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-            ${{ runner.os }}-
-        if: matrix.os == 'ubuntu-20.04'
 
       - name: Run Pip Install
         run: |
@@ -113,7 +95,7 @@ jobs:
 
       - name: Run Backend Benchmarks (Windows)
         env:
-          LIBCLANG_PATH: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
+          LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
         run: |
           cargo make backend-benches
         if: matrix.os == 'windows-2019'
@@ -175,7 +157,7 @@ jobs:
       - name: Cache pip
         uses: actions/cache@v2
         with:
-          path: ~/.cache/pip
+          path: ${{ env.PIP_CACHE_DIR }}
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
@@ -271,32 +253,11 @@ jobs:
       - name: Cache pip
         uses: actions/cache@v2
         with:
-          path: ~/Library/Caches/pip
+          path: ${{ env.PIP_CACHE_DIR }}
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
             ${{ runner.os }}-
-        if: matrix.os == 'macos-10.15'
-
-      - name: Cache pip
-        uses: actions/cache@v2
-        with:
-          path: ~/AppData/Local/pip/Cache
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-            ${{ runner.os }}-
-        if: matrix.os == 'windows-2019'
-
-      - name: Cache pip
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-            ${{ runner.os }}-
-        if: matrix.os == 'ubuntu-20.04'
 
       - name: Run Pip Install
         run: |
@@ -304,7 +265,7 @@ jobs:
 
       - name: Build ${{ runner.os }} Binaries.
         env:
-          LIBCLANG_PATH: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
+          LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
         run: |
           cargo make prod-installer
         if: matrix.os == 'windows-2019'

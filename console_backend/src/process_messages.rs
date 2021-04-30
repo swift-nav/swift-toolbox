@@ -50,6 +50,7 @@ pub fn process_messages<S: MessageSender>(
             }
         }
         let gps_time = message.gps_time();
+        let mut attempt_delay = true;
         match message {
             SBP::MsgAgeCorrections(msg) => {
                 main.solution_tab.handle_age_corrections(msg);
@@ -123,10 +124,10 @@ pub fn process_messages<S: MessageSender>(
             SBP::MsgLog(msg) => handle_log_msg(msg),
 
             _ => {
-                continue;
+                attempt_delay = false;
             }
         }
-        if realtime_delay {
+        if realtime_delay && attempt_delay {
             main.realtime_delay(gps_time);
         }
         log::logger().flush();

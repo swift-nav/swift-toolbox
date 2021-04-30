@@ -206,19 +206,23 @@ impl ServerState {
         self.connection_join();
         let handle = thread::spawn(move || {
             let shared_state_clone = shared_state.clone();
-            let flow = from_flowcontrol_str(&flow);
-            match serialport::new(&device, baudrate)
-                .flow_control(flow)
-                .timeout(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))
-                .open()
-            {
-                Ok(port) => {
-                    println!("Connected to serialport {}.", device);
-                    let messages = sbp::iter_messages(port);
-                    process_messages(messages, shared_state_clone, client_send);
+            match from_flowcontrol_str(&flow) {
+                Ok(flow) => {
+                    match serialport::new(&device, baudrate)
+                        .flow_control(flow)
+                        .timeout(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))
+                        .open()
+                    {
+                        Ok(port) => {
+                            println!("Connected to serialport {}.", device);
+                            let messages = sbp::iter_messages(port);
+                            process_messages(messages, shared_state_clone, client_send);
+                        }
+                        Err(e) => eprintln!("Unable to connect to serialport: {}", e),
+                    }
                 }
-                Err(e) => eprint!("Unable to connect to serialport: {}", e),
-            }
+                Err(e) => eprintln!("{}", e)   
+            }            
             shared_state.set_running(false);
         });
         self.new_connection(handle);

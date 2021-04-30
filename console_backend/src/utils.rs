@@ -70,13 +70,14 @@ pub fn refresh_ports<P: MessageSender>(client_send: &mut P) {
 /// - `flow_str`: A string slice corresponding to serialport FlowControl variant.
 ///
 /// # Returns
-/// - the associated serialport::FlowControl variant.
-pub fn from_flowcontrol_str(flow_str: &str) -> FlowControl {
+/// - `Ok`: The associated serialport::FlowControl variant.
+/// - `Err`: Error describing available flow controls available.
+pub fn from_flowcontrol_str(flow_str: &str) -> Result<FlowControl, String> {
     match flow_str {
-        FLOW_CONTROL_NONE => FlowControl::None,
-        FLOW_CONTROL_SOFTWARE => FlowControl::Software,
-        FLOW_CONTROL_HARDWARE => FlowControl::Hardware,
-        _ => panic!("unable to convert to FlowControl"),
+        FLOW_CONTROL_NONE => Ok(FlowControl::None),
+        FLOW_CONTROL_SOFTWARE => Ok(FlowControl::Software),
+        FLOW_CONTROL_HARDWARE => Ok(FlowControl::Hardware),
+        _ => Err(format!("Not a valid flow control option. Choose from [\"{}\", \"{}\", \"{}\"]", FLOW_CONTROL_NONE, FLOW_CONTROL_SOFTWARE, FLOW_CONTROL_HARDWARE)),
     }
 }
 

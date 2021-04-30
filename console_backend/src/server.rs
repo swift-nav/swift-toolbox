@@ -9,7 +9,9 @@ use async_logger_log::Logger;
 use std::io::{BufReader, Cursor};
 use std::sync::mpsc;
 use std::thread;
+use structopt::StructOpt;
 
+use crate::cli_options::*;
 use crate::console_backend_capnp as m;
 use crate::constants::LOG_WRITER_BUFFER_MESSAGE_COUNT;
 use crate::log_panel::{splitable_log_formatter, LogPanelWriter};
@@ -82,6 +84,8 @@ impl Server {
 
     #[text_signature = "($self, /)"]
     pub fn start(&mut self) -> PyResult<ServerEndpoint> {
+        let opt = CliOptions::from_args();
+        
         let (client_send_, client_recv) = mpsc::channel::<Vec<u8>>();
         let (server_send, server_recv) = mpsc::channel::<Vec<u8>>();
         self.client_recv = Some(client_recv);
@@ -104,6 +108,44 @@ impl Server {
         log::set_boxed_logger(Box::new(logger)).expect("Failed to set logger");
         log::set_max_level(log::LevelFilter::Info);
 
+        let server_state_clone = server_state.clone();
+        let shared_state_clone = shared_state.clone();
+        let client_send_clone = client_send.clone();
+        // Handle CLI Opts.
+        if let Some(opt_input) = opt.input {
+            match opt_input {
+                Input::Tcp{host, port} => {
+                    let host_port = format!("{}:{}", host, port);
+                    server_state_clone.connect_to_host(
+                        client_send_clone,
+                        shared_state_clone,
+                        host_port,
+                    );
+                },
+                Input::File {file_in} => {
+                    let filename = file_in.display().to_string();
+                    server_state_clone.connect_to_file(
+                        client_send_clone,
+                        shared_state_clone,
+                        filename,
+                        /*close_when_done = */ true,
+                    );
+                },
+                Input::Serial {serialport, baudrate, flow_control} => {
+                    let serialport = serialport.display().to_string();
+                    server_state_clone.connect_to_serial(
+                        client_send_clone,
+                        shared_state_clone,
+                        serialport,
+                        baudrate,
+                        flow_control,
+                    );
+                }
+                _ => {
+                    // no-op
+                }
+            }
+        }
         thread::spawn(move || loop {
             let buf = server_recv.recv();
             if let Ok(buf) = buf {

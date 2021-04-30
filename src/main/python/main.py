@@ -156,14 +156,10 @@ class DataModel(QObject):
     endpoint: console_backend.server.ServerEndpoint  # pylint: disable=no-member
     messages: Any
 
-    def __init__(self, endpoint, messages, file_in, connect=False):
+    def __init__(self, endpoint, messages):
         super().__init__()
         self.endpoint = endpoint
         self.messages = messages
-        if connect and file_in is not None:
-            self.connect_file(file_in)
-        elif connect:
-            self.connect_tcp(PIKSI_HOST, PIKSI_PORT)
 
     @Slot()  # type: ignore
     def connect(self) -> None:
@@ -752,10 +748,9 @@ def get_capnp_path() -> str:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--file-in", help="Input file to parse.")
-    parser.add_argument("--connect", help="Connect automatically.", action="store_true")
-    args = parser.parse_args()
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--no-opengl")
+    args, _ = parser.parse_known_args()
 
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
@@ -782,7 +777,7 @@ if __name__ == "__main__":
     backend_main = console_backend.server.Server()  # pylint: disable=no-member
     endpoint_main = backend_main.start()
 
-    data_model = DataModel(endpoint_main, messages_main, args.file_in, args.connect)
+    data_model = DataModel(endpoint_main, messages_main)
     log_panel_model = LogPanelModel()
     bottom_navbar_model = BottomNavbarModel()
     solution_position_model = SolutionPositionModel()

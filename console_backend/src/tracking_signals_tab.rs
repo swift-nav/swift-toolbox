@@ -4,6 +4,8 @@ use std::{collections::HashMap, time::Instant};
 use capnp::message::Builder;
 use capnp::serialize;
 
+use log::warn;
+
 use crate::console_backend_capnp as m;
 use crate::constants::*;
 use crate::piksi_tools_constants::*;
@@ -269,94 +271,36 @@ impl<S: MessageSender> TrackingSignalsTab<S> {
     ///
     /// - `msg`: The full SBP message cast as an ObservationMsg variant.
     pub fn handle_obs(&mut self, msg: ObservationMsg) {
-        let (seq, tow, wn, states) = match &msg {
-            ObservationMsg::MsgObs(obs) => {
-                let states: Vec<Observations> = obs
-                    .obs
-                    .clone()
-                    .into_iter()
-                    .map(Observations::PackedObsContent)
-                    .collect();
-                (
-                    obs.header.n_obs,
-                    obs.header.t.tow as f64 / 1000.0_f64,
-                    obs.header.t.wn,
-                    states,
-                )
+        let msg_fields = msg.fields();
+        if let Some(sender_id_) = msg_fields.sender_id {
+            if sender_id_ == 0_u16 {
+                return;
             }
-            // ObservationMsg::MsgObsDepA(obs)
-            ObservationMsg::MsgObsDepB(obs) => {
-                let states: Vec<Observations> = obs
-                    .obs
-                    .clone()
-                    .into_iter()
-                    .map(Observations::PackedObsContentDepB)
-                    .collect();
-                (
-                    obs.header.n_obs,
-                    obs.header.t.tow as f64 / 1000.0_f64,
-                    obs.header.t.wn,
-                    states,
-                )
-            }
-            ObservationMsg::MsgObsDepC(obs) => {
-                let states: Vec<Observations> = obs
-                    .obs
-                    .clone()
-                    .into_iter()
-                    .map(Observations::PackedObsContentDepC)
-                    .collect();
-                (
-                    obs.header.n_obs,
-                    obs.header.t.tow as f64 / 1000.0_f64,
-                    obs.header.t.wn,
-                    states,
-                )
-            }
-        };
+        } else {
+            return;
+        }
 
-        let total = seq >> 4;
-        let count = seq & ((1 << 4) - 1);
+        let total = msg_fields.n_obs >> 4;
+        let count = msg_fields.n_obs & ((1 << 4) - 1);
 
         if count == 0 {
-            self.obs_reset(tow, wn, total);
-        } else if (self.gps_tow - tow) > f64::EPSILON
-            || self.gps_week != wn
+            self.obs_reset(msg_fields.tow, msg_fields.wn, total);
+        } else if (self.gps_tow - msg_fields.tow) > f64::EPSILON
+            || self.gps_week != msg_fields.wn
             || self.prev_obs_count + 1 != count
             || self.prev_obs_total != total
         {
-            println!("We dropped a packet. Skipping this ObservationMsg sequence");
-            self.obs_reset(tow, wn, total);
+            warn!("We dropped a packet. Skipping this ObservationMsg sequence");
+            self.obs_reset(msg_fields.tow, msg_fields.wn, total);
             self.prev_obs_count = count;
             return;
         } else {
             self.prev_obs_count = count;
         }
 
-        for state in states.iter() {
-            let (code, sat, cn0) = match state {
-                Observations::PackedObsContentDepB(obs) => {
-                    let mut sat_ = obs.sid.sat as i16;
-                    let signal_code = SignalCodes::from(obs.sid.code);
-                    if signal_code.code_is_gps() {
-                        sat_ += 1;
-                    }
-                    (signal_code, sat_, obs.cn0 as f64)
-                }
-                Observations::PackedObsContentDepC(obs) => {
-                    let mut sat_ = obs.sid.sat as i16;
-                    let signal_code = SignalCodes::from(obs.sid.code);
-                    if signal_code.code_is_gps() {
-                        sat_ += 1;
-                    }
-                    (signal_code, sat_, obs.cn0 as f64)
-                }
-                Observations::PackedObsContent(obs) => (
-                    SignalCodes::from(obs.sid.code),
-                    obs.sid.sat as i16,
-                    obs.cn0 as f64,
-                ),
-            };
+        for state in msg_fields.states.iter() {
+            let obs_fields = state.fields();
+            let (code, sat, cn0) = (obs_fields.code, obs_fields.sat, obs_fields.cn0);
             self.incoming_obs_cn0.insert((code, sat), cn0 / 4.0);
         }
 

@@ -1,3 +1,4 @@
+import "../Constants"
 import QtCharts 2.15
 import QtQuick 2.15
 import QtQuick.Controls 2.12
@@ -35,7 +36,7 @@ Item {
             anchors.fill: parent
             width: parent.width
             height: parent.height
-            spacing: 0
+            spacing: Constants.solutionPosition.navBarSpacing
 
             ButtonGroup {
                 id: solutionButtonGroup
@@ -45,13 +46,13 @@ Item {
 
             RowLayout {
                 Layout.alignment: Qt.AlignLeft
-                Layout.leftMargin: 10
+                Layout.leftMargin: Constants.solutionPosition.navBarMargin
 
                 Button {
                     id: solutionPauseButton
 
                     ButtonGroup.group: solutionButtonGroup
-                    Layout.preferredWidth: parent.width * 0.1
+                    Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
                     text: "| |"
                     ToolTip.visible: hovered
                     ToolTip.text: "Pause"
@@ -63,7 +64,7 @@ Item {
                     id: solutionClearButton
 
                     ButtonGroup.group: solutionButtonGroup
-                    Layout.preferredWidth: parent.width * 0.1
+                    Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
                     text: " X "
                     ToolTip.visible: hovered
                     ToolTip.text: "Clear"
@@ -74,7 +75,7 @@ Item {
                     id: solutionZoomAllButton
 
                     ButtonGroup.group: solutionButtonGroup
-                    Layout.preferredWidth: parent.width * 0.1
+                    Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
                     text: "[ ]"
                     ToolTip.visible: hovered
                     ToolTip.text: "Zoom All"
@@ -86,7 +87,7 @@ Item {
                     id: solutionCenterButton
 
                     ButtonGroup.group: solutionButtonGroup
-                    Layout.preferredWidth: parent.width * 0.1
+                    Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
                     text: "(><)"
                     ToolTip.visible: hovered
                     ToolTip.text: "Center On Solution"
@@ -116,12 +117,12 @@ Item {
                 id: solutionPositionChart
 
                 Layout.preferredWidth: parent.width
-                Layout.preferredHeight: parent.height - 50
+                Layout.preferredHeight: parent.height - Constants.commonChart.heightOffset
                 Layout.alignment: Qt.AlignBottom
-                Layout.bottomMargin: 20
+                Layout.bottomMargin: Constants.commonChart.margin
                 Layout.fillHeight: true
-                backgroundColor: "#CDC9C9"
-                plotAreaColor: "#FFFFFF"
+                backgroundColor: Constants.commonChart.backgroundColor
+                plotAreaColor: Constants.commonChart.areaColor
                 legend.visible: false
                 antialiasing: true
                 Component.onCompleted: {
@@ -130,20 +131,19 @@ Item {
                 Rectangle {
                     id: lineLegend
 
-                    border.color: "#000000"
-                    border.width: 1
+                    border.color: Constants.commonLegend.borderColor
+                    border.width: Constants.commonLegend.borderWidth
                     anchors.top: solutionPositionChart.top
                     anchors.right: solutionPositionChart.right
-                    anchors.topMargin: 85
-                    anchors.rightMargin: 60
+                    anchors.topMargin: Constants.commonLegend.topMargin
+                    anchors.rightMargin: Constants.commonLegend.rightMargin
                     implicitHeight: lineLegendRepeater.height
                     width: lineLegendRepeater.width
 
                     Column {
                         id: lineLegendRepeater
 
-                        padding: 5
-                        spacing: -1
+                        padding: Constants.commonLegend.padding
                         anchors.bottom: lineLegend.bottom
 
                         Repeater {
@@ -156,20 +156,20 @@ Item {
                                     id: marker
 
                                     text: "+ "
-                                    font.pointSize: 14
+                                    font.pointSize: Constants.commonLegend.markerPointSize
                                     font.bold: true
                                     anchors.verticalCenter: parent.verticalCenter
-                                    anchors.verticalCenterOffset: -1
+                                    anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                                 }
 
                                 Text {
                                     id: label
 
                                     text: modelData
-                                    font.pointSize: 10
+                                    font.pointSize: Constants.commonLegend.labelPointSize
                                     font.bold: true
                                     anchors.verticalCenter: parent.verticalCenter
-                                    anchors.verticalCenterOffset: -1
+                                    anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                                 }
 
                             }
@@ -183,16 +183,16 @@ Item {
                 ValueAxis {
                     id: solutionPositionXAxis
 
-                    titleText: "Longitude"
+                    titleText: Constants.solutionPosition.xAxisTitleText
                     gridVisible: true
                     lineVisible: true
                     minorGridVisible: true
-                    minorGridLineColor: "#CDC9C9"
-                    gridLineColor: "#CDC9C9"
-                    labelsColor: "#000000"
+                    minorGridLineColor: Constants.commonChart.minorGridLineColor
+                    gridLineColor: Constants.commonChart.gridLineColor
+                    labelsColor: Constants.commonChart.labelsColor
 
                     labelsFont {
-                        pointSize: 10
+                        pointSize: Constants.commonChart.tickPointSize
                         bold: true
                     }
 
@@ -201,25 +201,23 @@ Item {
                 ValueAxis {
                     id: solutionPositionYAxis
 
-                    titleText: "Latitude"
-                    min: 0
-                    max: 1
+                    titleText: Constants.solutionPosition.yAxisTitleText
                     gridVisible: true
                     lineVisible: true
                     minorGridVisible: true
-                    minorGridLineColor: "#CDC9C9"
-                    gridLineColor: "#CDC9C9"
-                    labelsColor: "#000000"
+                    minorGridLineColor: Constants.commonChart.minorGridLineColor
+                    gridLineColor: Constants.commonChart.gridLineColor
+                    labelsColor: Constants.commonChart.labelsColor
 
                     labelsFont {
-                        pointSize: 10
+                        pointSize: Constants.commonChart.tickPointSize
                         bold: true
                     }
 
                 }
 
                 Timer {
-                    interval: 1000 / 5 // 5 Hz refresh
+                    interval: Constants.currentRefreshRate
                     running: true
                     repeat: true
                     onTriggered: {
@@ -250,15 +248,15 @@ Item {
                             for (var idx in labels) {
                                 var cur_scatter = solutionPositionChart.createSeries(ChartView.SeriesTypeScatter, labels[idx] + "cur-scatter", solutionPositionXAxis, solutionPositionYAxis);
                                 cur_scatter.color = colors[idx];
-                                cur_scatter.markerSize = 15;
+                                cur_scatter.markerSize = Constants.commonChart.currentSolutionMarkerSize;
                                 var scatter = solutionPositionChart.createSeries(ChartView.SeriesTypeScatter, labels[idx] + "scatter", solutionPositionXAxis, solutionPositionYAxis);
                                 scatter.color = colors[idx];
-                                scatter.markerSize = 5;
+                                scatter.markerSize = Constants.commonChart.solutionMarkerSize;
                                 var line = solutionPositionChart.createSeries(ChartView.SeriesTypeLine, labels[idx], solutionPositionXAxis, solutionPositionYAxis);
                                 line.color = colors[idx];
-                                line.width = 0.2;
-                                line.useOpenGL = true; // [CPP-93] Invesigate usage of `useOpenGL` in plots
-                                scatter.useOpenGL = true; // [CPP-93] Invesigate usage of `useOpenGL` in plots
+                                line.width = Constants.commonChart.solutionLineWidth;
+                                line.useOpenGL = true;
+                                scatter.useOpenGL = true;
                                 lines.push(line);
                                 scatters.push(scatter);
                                 cur_scatters.push(cur_scatter);

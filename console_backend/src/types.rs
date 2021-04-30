@@ -2,14 +2,15 @@ use crate::constants::*;
 use crate::formatters::*;
 use crate::piksi_tools_constants::*;
 use crate::process_messages::process_messages;
-use crate::utils::close_frontend;
+use crate::utils::{close_frontend, from_flowcontrol_str, ms_to_sec};
 use chrono::{DateTime, Utc};
+use log::{info, warn};
 use ordered_float::OrderedFloat;
 use sbp::messages::{
     navigation::{MsgDops, MsgDopsDepA, MsgPosLLH, MsgPosLLHDepA, MsgVelNED, MsgVelNEDDepA},
     observation::{
-        MsgObs, MsgObsDepB, MsgObsDepC, PackedObsContent, PackedObsContentDepB,
-        PackedObsContentDepC,
+        MsgObs, MsgObsDepB, MsgObsDepC, MsgOsr, PackedObsContent, PackedObsContentDepB,
+        PackedObsContentDepC, PackedOsrContent,
     },
 };
 use serde::Serialize;
@@ -25,7 +26,7 @@ use std::{
     sync::{mpsc::Sender, Arc, Mutex},
     thread,
     thread::JoinHandle,
-    time::Instant,
+    time::{Duration, Instant},
 };
 
 pub type Error = std::boxed::Box<dyn std::error::Error>;
@@ -58,7 +59,7 @@ impl<T> Deque<T> {
     }
 }
 
-pub trait MessageSender: Debug + Clone {
+pub trait MessageSender: Debug + Clone + Send {
     fn send_data(&mut self, msg_bytes: Vec<u8>);
 }
 
@@ -125,7 +126,7 @@ impl ServerState {
     /// Helper function for attempting to open a file and process SBP messages from it.
     ///
     /// # Parameters
-    /// - `client_send`: Client Sender channel for bidirectional communication between front/backend.
+    /// - `client_send`: Client Sender channel for communication from backend to frontend.
     /// - `shared_state`: The shared state for validating another connection is not already running.
     /// - `filename`: The path to the filename to be read for SBP messages.
     pub fn connect_to_file(
@@ -158,7 +159,7 @@ impl ServerState {
     /// Helper function for attempting to open a tcp connection and process SBP messages from it.
     ///
     /// # Parameters
-    /// - `client_send`: Client Sender channel for bidirectional communication between front/backend.
+    /// - `client_send`: Client Sender channel for communication from backend to frontend.
     /// - `shared_state`: The shared state for validating another connection is not already running.
     /// - `host_port`: The host and port combined as a string to be opend as a TCP stream.
     pub fn connect_to_host(
@@ -173,11 +174,50 @@ impl ServerState {
         let handle = thread::spawn(move || {
             let shared_state_clone = shared_state.clone();
             if let Ok(stream) = TcpStream::connect(host_port.clone()) {
-                println!("Connected to the server {}!", host_port);
+                info!("Connected to the server {}!", host_port);
                 let messages = sbp::iter_messages(stream);
                 process_messages(messages, shared_state_clone, client_send);
             } else {
-                println!("Couldn't connect to server...");
+                warn!("Couldn't connect to server...");
+            }
+            shared_state.set_running(false);
+        });
+        self.new_connection(handle);
+    }
+
+    /// Helper function for attempting to open a serial port and process SBP messages from it.
+    ///
+    /// # Parameters
+    /// - `client_send`: Client Sender channel for communication from backend to frontend.
+    /// - `shared_state`: The shared state for validating another connection is not already running.
+    /// - `device`: The string path corresponding to the serial device to connect with.
+    /// - `baudrate`: The baudrate to use when communicating with the serial device.
+    /// - `flow`: The flow control mode to use when communicating with the serial device.
+    pub fn connect_to_serial(
+        &self,
+        client_send: ClientSender,
+        shared_state: SharedState,
+        device: String,
+        baudrate: u32,
+        flow: String,
+    ) {
+        let shared_state_clone = shared_state.clone();
+        shared_state_clone.set_running(true);
+        self.connection_join();
+        let handle = thread::spawn(move || {
+            let shared_state_clone = shared_state.clone();
+            let flow = from_flowcontrol_str(&flow);
+            match serialport::new(&device, baudrate)
+                .flow_control(flow)
+                .timeout(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))
+                .open()
+            {
+                Ok(port) => {
+                    println!("Connected to serialport {}.", device);
+                    let messages = sbp::iter_messages(port);
+                    process_messages(messages, shared_state_clone, client_send);
+                }
+                Err(e) => eprint!("Unable to connect to serialport: {}", e),
             }
             shared_state.set_running(false);
         });
@@ -350,7 +390,7 @@ pub type Cn0Dict = HashMap<(SignalCodes, i16), Deque<(OrderedFloat<f64>, f64)>>;
 pub type Cn0Age = HashMap<(SignalCodes, i16), f64>;
 
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum SignalCodes {
     CodeGpsL1Ca = 0,
     CodeGpsL2Cm = 1,
@@ -760,19 +800,221 @@ impl fmt::Display for SignalCodes {
     }
 }
 
+// Struct with shared fields for various Observation Message types.
+pub struct ObservationMsgFields {
+    pub n_obs: u8,
+    pub tow: f64,
+    pub wn: u16,
+    pub ns_residual: i32,
+    pub states: Vec<Observations>,
+    pub sender_id: Option<u16>,
+}
 // Enum wrapping around various Observation Message types.
 pub enum ObservationMsg {
     MsgObs(MsgObs),
     // MsgObsDepA(MsgObsDepA),
     MsgObsDepB(MsgObsDepB),
     MsgObsDepC(MsgObsDepC),
+    MsgOsr(MsgOsr),
 }
-// Enum wrapping around various Observation Message observation types.
+impl ObservationMsg {
+    pub fn fields(&self) -> ObservationMsgFields {
+        let (n_obs, tow, wn, ns_residual, states, sender_id) = match &self {
+            ObservationMsg::MsgObs(obs) => {
+                let states: Vec<Observations> = obs
+                    .obs
+                    .clone()
+                    .into_iter()
+                    .map(Observations::PackedObsContent)
+                    .collect();
+                (
+                    obs.header.n_obs,
+                    ms_to_sec(obs.header.t.tow as f64),
+                    obs.header.t.wn,
+                    obs.header.t.ns_residual,
+                    states,
+                    obs.sender_id,
+                )
+            }
+            // ObservationMsg::MsgObsDepA(obs)
+            ObservationMsg::MsgObsDepB(obs) => {
+                let states: Vec<Observations> = obs
+                    .obs
+                    .clone()
+                    .into_iter()
+                    .map(Observations::PackedObsContentDepB)
+                    .collect();
+                (
+                    obs.header.n_obs,
+                    ms_to_sec(obs.header.t.tow as f64),
+                    obs.header.t.wn,
+                    0_i32,
+                    states,
+                    obs.sender_id,
+                )
+            }
+            ObservationMsg::MsgObsDepC(obs) => {
+                let states: Vec<Observations> = obs
+                    .obs
+                    .clone()
+                    .into_iter()
+                    .map(Observations::PackedObsContentDepC)
+                    .collect();
+                (
+                    obs.header.n_obs,
+                    ms_to_sec(obs.header.t.tow as f64),
+                    obs.header.t.wn,
+                    0_i32,
+                    states,
+                    obs.sender_id,
+                )
+            }
+
+            ObservationMsg::MsgOsr(obs) => {
+                let states: Vec<Observations> = obs
+                    .obs
+                    .clone()
+                    .into_iter()
+                    .map(Observations::PackedOsrContent)
+                    .collect();
+                (
+                    obs.header.n_obs,
+                    ms_to_sec(obs.header.t.tow as f64),
+                    obs.header.t.wn,
+                    obs.header.t.ns_residual,
+                    states,
+                    obs.sender_id,
+                )
+            }
+        };
+        ObservationMsgFields {
+            n_obs,
+            tow,
+            wn,
+            ns_residual,
+            states,
+            sender_id,
+        }
+    }
+}
+// Struct with shared fields for various Observation Contents types.
+pub struct ObservationFields {
+    pub is_deprecated_msg_type: bool,
+    pub code: SignalCodes,
+    pub sat: i16,
+    pub pseudo_range: f64,
+    pub carrier_phase: f64,
+    pub cn0: f64,
+    pub measured_doppler: f64,
+    pub computed_doppler: f64,
+    pub lock: u16,
+    pub flags: u8,
+}
+// Enum wrapping around various Observation Contents observation types.
 pub enum Observations {
     PackedObsContent(PackedObsContent),
     // PackedObsContentDepA(PackedObsContentDepA),
     PackedObsContentDepB(PackedObsContentDepB),
     PackedObsContentDepC(PackedObsContentDepC),
+    PackedOsrContent(PackedOsrContent),
+}
+impl Observations {
+    pub fn fields(&self) -> ObservationFields {
+        // DEP_B and DEP_A obs had different pseudorange scaling
+        let divisor = match self {
+            Observations::PackedObsContentDepB(_) => 1e2,
+            _ => 5e1,
+        };
+        let (
+            is_deprecated_msg_type,
+            code,
+            sat,
+            pseudo_range,
+            carrier_phase_cycles,
+            carrier_phase_fractional,
+            cn0,
+            measured_doppler,
+            lock,
+            flags,
+        ) = match self {
+            Observations::PackedObsContentDepB(obs) => {
+                let mut sat_ = obs.sid.sat as i16;
+                let signal_code = SignalCodes::from(obs.sid.code);
+                if signal_code.code_is_gps() {
+                    sat_ += 1;
+                }
+                (
+                    true,
+                    signal_code,
+                    sat_,
+                    obs.P as f64 / divisor,
+                    obs.L.i,
+                    obs.L.f,
+                    obs.cn0 as f64,
+                    0_f64, // obs.D
+                    obs.lock,
+                    0_u8,
+                )
+            }
+            Observations::PackedObsContentDepC(obs) => {
+                let mut sat_ = obs.sid.sat as i16;
+                let signal_code = SignalCodes::from(obs.sid.code);
+                if signal_code.code_is_gps() {
+                    sat_ += 1;
+                }
+                (
+                    true,
+                    signal_code,
+                    sat_,
+                    obs.P as f64 / divisor,
+                    obs.L.i,
+                    obs.L.f,
+                    obs.cn0 as f64,
+                    0_f64, // obs.D
+                    obs.lock,
+                    0_u8,
+                )
+            }
+            Observations::PackedObsContent(obs) => (
+                false,
+                SignalCodes::from(obs.sid.code),
+                obs.sid.sat as i16,
+                obs.P as f64 / divisor,
+                obs.L.i,
+                obs.L.f,
+                obs.cn0 as f64,
+                obs.D.i as f64 + obs.D.f as f64 / ((1 << 8) as f64),
+                obs.lock as u16,
+                obs.flags,
+            ),
+            Observations::PackedOsrContent(obs) => (
+                false,
+                SignalCodes::from(obs.sid.code),
+                obs.sid.sat as i16,
+                obs.P as f64 / divisor,
+                obs.L.i,
+                obs.L.f,
+                0_f64, // cn0
+                0_f64, // obs.D
+                obs.lock as u16,
+                obs.flags,
+            ),
+        };
+        let carrier_phase =
+            carrier_phase_cycles as f64 + carrier_phase_fractional as f64 / ((1 << 8) as f64);
+        ObservationFields {
+            is_deprecated_msg_type,
+            code,
+            sat,
+            pseudo_range,
+            carrier_phase,
+            cn0,
+            measured_doppler,
+            computed_doppler: 0_f64,
+            lock,
+            flags,
+        }
+    }
 }
 
 // Solution Tab Types.
@@ -871,7 +1113,15 @@ impl PosLLH {
         }
     }
 }
-
+// Struct with shared fields for various Dops Message types.
+pub struct DopsFields {
+    pub pdop: u16,
+    pub gdop: u16,
+    pub tdop: u16,
+    pub hdop: u16,
+    pub vdop: u16,
+    pub flags: u8,
+}
 // Enum wrapping around various Dops Message types.
 #[derive(Debug)]
 pub enum Dops {
@@ -880,18 +1130,36 @@ pub enum Dops {
 }
 
 impl Dops {
-    pub fn fields(self) -> (u16, u16, u16, u16, u16, u8) {
-        match self {
+    pub fn fields(self) -> DopsFields {
+        let (pdop, gdop, tdop, hdop, vdop, flags) = match self {
             Dops::MsgDops(msg_) => (
                 msg_.pdop, msg_.gdop, msg_.tdop, msg_.hdop, msg_.vdop, msg_.flags,
             ),
             Dops::MsgDopsDepA(msg_) => {
                 (msg_.pdop, msg_.gdop, msg_.tdop, msg_.hdop, msg_.vdop, 1_u8)
             }
+        };
+        DopsFields {
+            pdop,
+            gdop,
+            tdop,
+            hdop,
+            vdop,
+            flags,
         }
     }
 }
 
+// Struct with shared fields for various VelNED Message types.
+#[allow(clippy::upper_case_acronyms)]
+pub struct VelNEDFields {
+    pub flags: u8,
+    pub tow: f64,
+    pub n: i32,
+    pub e: i32,
+    pub d: i32,
+    pub n_sats: u8,
+}
 // Enum wrapping around various Vel NED Message types.
 #[derive(Debug)]
 #[allow(clippy::upper_case_acronyms)]
@@ -901,10 +1169,18 @@ pub enum VelNED {
 }
 
 impl VelNED {
-    pub fn fields(self) -> (u8, f64, i32, i32, i32, u8) {
-        match self {
+    pub fn fields(self) -> VelNEDFields {
+        let (flags, tow, n, e, d, n_sats) = match self {
             VelNED::MsgVelNED(msg) => (msg.flags, msg.tow as f64, msg.n, msg.e, msg.d, msg.n_sats),
             VelNED::MsgVelNEDDepA(msg) => (1, msg.tow as f64, msg.n, msg.e, msg.d, msg.n_sats),
+        };
+        VelNEDFields {
+            flags,
+            tow,
+            n,
+            e,
+            d,
+            n_sats,
         }
     }
 }
@@ -1020,10 +1296,10 @@ mod tests {
     fn connect_to_file_test() {
         let shared_state = SharedState::new();
         let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
-        let server_state = ServerState::new();
         let client_send = ClientSender {
             inner: client_send_,
         };
+        let server_state = ServerState::new();
         let filename = TEST_FILEPATH.to_string();
         receive_thread(client_receive);
         assert!(!shared_state.is_running());
@@ -1038,10 +1314,10 @@ mod tests {
     fn pause_via_connect_to_file_test() {
         let shared_state = SharedState::new();
         let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
-        let server_state = ServerState::new();
         let client_send = ClientSender {
             inner: client_send_,
         };
+        let server_state = ServerState::new();
         let filename = TEST_FILEPATH.to_string();
         receive_thread(client_receive);
         assert!(!shared_state.is_running());
@@ -1060,21 +1336,24 @@ mod tests {
     fn disconnect_via_connect_to_file_test() {
         let shared_state = SharedState::new();
         let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
-        let server_state = ServerState::new();
         let client_send = ClientSender {
             inner: client_send_,
         };
+        let server_state = ServerState::new();
         let filename = TEST_FILEPATH.to_string();
         let expected_duration = Duration::from_millis(100);
         let handle = receive_thread(client_receive);
         assert!(!shared_state.is_running());
-        server_state.connect_to_file(client_send, shared_state.clone(), filename, true);
+        {
+            server_state.connect_to_file(client_send, shared_state.clone(), filename, true);
+        }
+
         sleep(Duration::from_millis(5));
         assert!(shared_state.is_running());
         let now = SystemTime::now();
         sleep(Duration::from_millis(1));
         shared_state.set_running(false);
-        sleep(Duration::from_millis(1));
+        sleep(Duration::from_millis(5));
         assert!(handle.join().is_ok());
 
         match now.elapsed() {
@@ -1095,5 +1374,10 @@ mod tests {
     // TODO(johnmichael.burke@) [CPP-111] Need to implement unittest for TCPStream.
     // #[test]
     // fn connect_to_host_test() {
+    // }
+
+    // TODO(johnmichael.burke@) [CPP-111] Need to implement unittest for serial.
+    // #[test]
+    // fn connect_to_serial_test() {
     // }
 }

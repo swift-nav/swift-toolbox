@@ -13,15 +13,21 @@ from PySide2.QtWidgets import QApplication  # type: ignore
 
 from fbs_runtime.application_context.PySide2 import ApplicationContext  # type: ignore  # pylint: disable=unused-import
 
-from PySide2.QtCore import QUrl, QObject, Slot, QPointF
+from PySide2.QtCore import Property, QMutex, QObject, QUrl, QPointF, Slot
 from PySide2.QtCharts import QtCharts  # pylint: disable=unused-import
 
 from PySide2 import QtQml, QtCore
 
 from PySide2.QtQml import qmlRegisterType
-from PySide2.QtCore import Property
 
 from constants import ApplicationStates, MessageKeys, Keys, QTKeys
+from observation_tab import (
+    ObservationData,
+    ObservationModel,
+    REMOTE_OBSERVATION_TAB,
+    LOCAL_OBSERVATION_TAB,
+    obs_rows_to_json,
+)
 
 import console_resources  # type: ignore # pylint: disable=unused-import,import-error
 
@@ -31,6 +37,17 @@ CONSOLE_BACKEND_CAPNP_PATH = "console_backend.capnp"
 
 PIKSI_HOST = "piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com"
 PIKSI_PORT = 55555
+
+LOG_PANEL: Dict[str, Any] = {
+    Keys.ENTRIES: [],
+}
+log_panel_lock = QMutex()
+
+BOTTOM_NAVBAR: Dict[str, Any] = {
+    Keys.AVAILABLE_PORTS: [],
+    Keys.AVAILABLE_BAUDRATES: [],
+    Keys.AVAILABLE_FLOWS: [],
+}
 
 SOLUTION_POSITION_TAB: Dict[str, Any] = {
     Keys.AVAILABLE_UNITS: [],
@@ -64,6 +81,7 @@ TRACKING_SIGNALS_TAB: Dict[str, Any] = {
     Keys.MAX: 0,
     Keys.MIN: 0,
 }
+
 
 capnp.remove_import_hook()  # pylint: disable=no-member
 
@@ -112,6 +130,23 @@ def receive_messages(app_, backend, messages):
             ]
             TRACKING_SIGNALS_TAB[Keys.MAX] = m.trackingSignalsStatus.max
             TRACKING_SIGNALS_TAB[Keys.MIN] = m.trackingSignalsStatus.min
+        elif m.which == MessageKeys.OBSERVATION_STATUS:
+            if m.observationStatus.isRemote:
+                REMOTE_OBSERVATION_TAB[Keys.TOW] = m.observationStatus.tow
+                REMOTE_OBSERVATION_TAB[Keys.WEEK] = m.observationStatus.week
+                REMOTE_OBSERVATION_TAB[Keys.ROWS][:] = obs_rows_to_json(m.observationStatus.rows)
+            else:
+                LOCAL_OBSERVATION_TAB[Keys.TOW] = m.observationStatus.tow
+                LOCAL_OBSERVATION_TAB[Keys.WEEK] = m.observationStatus.week
+                LOCAL_OBSERVATION_TAB[Keys.ROWS][:] = obs_rows_to_json(m.observationStatus.rows)
+        elif m.which == MessageKeys.BOTTOM_NAVBAR_STATUS:
+            BOTTOM_NAVBAR[Keys.AVAILABLE_PORTS][:] = m.bottomNavbarStatus.availablePorts
+            BOTTOM_NAVBAR[Keys.AVAILABLE_BAUDRATES][:] = m.bottomNavbarStatus.availableBaudrates
+            BOTTOM_NAVBAR[Keys.AVAILABLE_FLOWS][:] = m.bottomNavbarStatus.availableFlows
+        elif m.which == MessageKeys.LOG_APPEND:
+            log_panel_lock.lock()
+            LOG_PANEL[Keys.ENTRIES] += [entry.line for entry in m.logAppend.entries]
+            log_panel_lock.unlock()
         else:
             pass
 
@@ -137,9 +172,9 @@ class DataModel(QObject):
     @Slot(str)  # type: ignore
     def connect_file(self, filename: str) -> None:
         msg = self.messages.Message()
-        msg.connectRequest = msg.init("connectRequest")
+        msg.connectRequest = msg.init(MessageKeys.CONNECT_REQUEST)
         req = self.messages.Message()
-        req.fileRequest = req.init("fileRequest")
+        req.fileRequest = req.init(MessageKeys.FILE_REQUEST)
         req.fileRequest.filename = str(filename)
         msg.connectRequest.request = req
         buffer = msg.to_bytes()
@@ -148,24 +183,24 @@ class DataModel(QObject):
     @Slot(str, int)  # type: ignore
     def connect_tcp(self, host: str, port: int) -> None:
         msg = self.messages.Message()
-        msg.connectRequest = msg.init("connectRequest")
+        msg.connectRequest = msg.init(MessageKeys.CONNECT_REQUEST)
         req = self.messages.Message()
-        req.tcpRequest = req.init("tcpRequest")
+        req.tcpRequest = req.init(MessageKeys.TCP_REQUEST)
         req.tcpRequest.host = str(host)
         req.tcpRequest.port = int(port)
         msg.connectRequest.request = req
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
 
-    @Slot(int, str, bool)  # type: ignore
-    def connect_serial(self, device: str, baudrate: int, flow_control: bool) -> None:
+    @Slot(str, int, str)  # type: ignore
+    def connect_serial(self, device: str, baudrate: int, flow_control: str) -> None:
         msg = self.messages.Message()
-        msg.connectRequest = msg.init("connectRequest")
+        msg.connectRequest = msg.init(MessageKeys.CONNECT_REQUEST)
         req = self.messages.Message()
-        req.serialRequest = req.init("serialRequest")
+        req.serialRequest = req.init(MessageKeys.SERIAL_REQUEST)
         req.serialRequest.device = str(device)
         req.serialRequest.baudrate = int(baudrate)
-        req.serialRequest.flowControl = flow_control
+        req.serialRequest.flowControl = str(flow_control)
         msg.connectRequest.request = req
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
@@ -173,9 +208,19 @@ class DataModel(QObject):
     @Slot()  # type: ignore
     def disconnect(self) -> None:
         msg = self.messages.Message()
-        msg.connectRequest = msg.init("connectRequest")
+        msg.connectRequest = msg.init(MessageKeys.CONNECT_REQUEST)
         req = self.messages.Message()
-        req.disconnectRequest = req.init("disconnectRequest")
+        req.disconnectRequest = req.init(MessageKeys.DISCONNECT_REQUEST)
+        msg.connectRequest.request = req
+        buffer = msg.to_bytes()
+        self.endpoint.send_message(buffer)
+
+    @Slot()  # type: ignore
+    def serial_refresh(self) -> None:
+        msg = self.messages.Message()
+        msg.connectRequest = msg.init(MessageKeys.CONNECT_REQUEST)
+        req = self.messages.Message()
+        req.serialRefreshRequest = req.init(MessageKeys.SERIAL_REFRESH_REQUEST)
         msg.connectRequest.request = req
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
@@ -183,9 +228,9 @@ class DataModel(QObject):
     @Slot(bool)  # type: ignore
     def pause(self, pause_: bool) -> None:
         msg = self.messages.Message()
-        msg.connectRequest = msg.init("connectRequest")
+        msg.connectRequest = msg.init(MessageKeys.CONNECT_REQUEST)
         req = self.messages.Message()
-        req.pauseRequest = req.init("pauseRequest")
+        req.pauseRequest = req.init(MessageKeys.PAUSE_REQUEST)
         req.pauseRequest.pause = pause_
         msg.connectRequest.request = req
         buffer = msg.to_bytes()
@@ -194,7 +239,7 @@ class DataModel(QObject):
     @Slot(list)  # type: ignore
     def tracking_signals_check_visibility(self, checks: List[str]) -> None:
         m = self.messages.Message()
-        m.trackingSignalsStatusFront = m.init("trackingSignalsStatusFront")
+        m.trackingSignalsStatusFront = m.init(MessageKeys.TRACKING_SIGNALS_STATUS_FRONT)
         m.trackingSignalsStatusFront.trackingSignalsCheckVisibility = checks
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
@@ -202,7 +247,7 @@ class DataModel(QObject):
     @Slot(str)  # type: ignore
     def solution_velocity_unit(self, unit: str) -> None:
         m = self.messages.Message()
-        m.solutionVelocityStatusFront = m.init("solutionVelocityStatusFront")
+        m.solutionVelocityStatusFront = m.init(MessageKeys.SOLUTION_VELOCITY_STATUS_FRONT)
         m.solutionVelocityStatusFront.solutionVelocityUnit = unit
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
@@ -210,7 +255,7 @@ class DataModel(QObject):
     @Slot(str)  # type: ignore
     def solution_position_unit(self, unit: str) -> None:
         m = self.messages.Message()
-        m.solutionPositionStatusUnitFront = m.init("solutionPositionStatusUnitFront")
+        m.solutionPositionStatusUnitFront = m.init(MessageKeys.SOLUTION_POSITION_STATUS_UNIT_FRONT)
         m.solutionPositionStatusUnitFront.solutionPositionUnit = unit
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
@@ -218,13 +263,84 @@ class DataModel(QObject):
     @Slot(list)  # type: ignore
     def solution_position(self, buttons: list) -> None:
         m = self.messages.Message()
-        m.solutionPositionStatusButtonFront = m.init("solutionPositionStatusButtonFront")
+        m.solutionPositionStatusButtonFront = m.init(MessageKeys.SOLUTION_POSITION_STATUS_BUTTON_FRONT)
         m.solutionPositionStatusButtonFront.solutionPositionPause = buttons[0]
         m.solutionPositionStatusButtonFront.solutionPositionClear = buttons[1]
         m.solutionPositionStatusButtonFront.solutionPositionZoom = buttons[2]
         m.solutionPositionStatusButtonFront.solutionPositionCenter = buttons[3]
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
+
+
+class LogPanelData(QObject):
+    _entries: List[str] = []
+
+    def get_entries(self) -> List[str]:
+        """Getter for _entries."""
+        return self._entries
+
+    def set_entries(self, entries: List[str]) -> None:
+        """Setter for _entries."""
+        self._entries = entries
+
+    entries = Property(QTKeys.QVARIANTLIST, get_entries, set_entries)  # type: ignore
+
+    def append_entries(self, entries: List[str]) -> None:
+        self._entries += entries
+
+
+class LogPanelModel(QObject):  # pylint: disable=too-few-public-methods
+    @Slot(LogPanelData)  # type: ignore
+    def fill_data(self, cp: LogPanelData) -> LogPanelData:  # pylint:disable=no-self-use
+        # Avoid locking so that message processor has priority to lock
+        if LOG_PANEL[Keys.ENTRIES]:
+            if log_panel_lock.try_lock():
+                cp.append_entries(LOG_PANEL[Keys.ENTRIES])
+                LOG_PANEL[Keys.ENTRIES][:] = []
+                log_panel_lock.unlock()
+        return cp
+
+
+class BottomNavbarData(QObject):
+
+    _available_ports: List[str] = []
+    _available_baudrates: List[str] = []
+    _available_flows: List[str] = []
+
+    def get_available_ports(self) -> List[str]:
+        return self._available_ports
+
+    def set_available_ports(self, available_ports: List[str]) -> None:
+        self._available_ports = available_ports
+
+    available_ports = Property(QTKeys.QVARIANTLIST, get_available_ports, set_available_ports)  # type: ignore
+
+    def get_available_baudrates(self) -> List[str]:
+        return self._available_baudrates
+
+    def set_available_baudrates(self, available_baudrates: List[str]) -> None:
+        self._available_baudrates = available_baudrates
+
+    available_baudrates = Property(
+        QTKeys.QVARIANTLIST, get_available_baudrates, set_available_baudrates  # type: ignore
+    )
+
+    def get_available_flows(self) -> List[str]:
+        return self._available_flows
+
+    def set_available_flows(self, available_flows: List[str]) -> None:
+        self._available_flows = available_flows
+
+    available_flows = Property(QTKeys.QVARIANTLIST, get_available_flows, set_available_flows)  # type: ignore
+
+
+class BottomNavbarModel(QObject):  # pylint: disable=too-few-public-methods
+    @Slot(BottomNavbarData)  # type: ignore
+    def fill_data(self, cp: BottomNavbarData) -> BottomNavbarData:  # pylint:disable=no-self-use
+        cp.set_available_ports(BOTTOM_NAVBAR[Keys.AVAILABLE_PORTS])
+        cp.set_available_baudrates(BOTTOM_NAVBAR[Keys.AVAILABLE_BAUDRATES])
+        cp.set_available_flows(BOTTOM_NAVBAR[Keys.AVAILABLE_FLOWS])
+        return cp
 
 
 class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
@@ -645,10 +761,14 @@ if __name__ == "__main__":
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
     app = QApplication()
 
+    qmlRegisterType(LogPanelData, "SwiftConsole", 1, 0, "LogPanelData")  # type: ignore
+    qmlRegisterType(BottomNavbarData, "SwiftConsole", 1, 0, "BottomNavbarData")  # type: ignore
     qmlRegisterType(SolutionPositionPoints, "SwiftConsole", 1, 0, "SolutionPositionPoints")  # type: ignore
     qmlRegisterType(SolutionTableEntries, "SwiftConsole", 1, 0, "SolutionTableEntries")  # type: ignore
     qmlRegisterType(SolutionVelocityPoints, "SwiftConsole", 1, 0, "SolutionVelocityPoints")  # type: ignore
     qmlRegisterType(TrackingSignalsPoints, "SwiftConsole", 1, 0, "TrackingSignalsPoints")  # type: ignore
+    qmlRegisterType(ObservationData, "SwiftConsole", 1, 0, "ObservationData")  # type: ignore
+
     engine = QtQml.QQmlApplicationEngine()
 
     capnp_path = get_capnp_path()
@@ -663,15 +783,23 @@ if __name__ == "__main__":
     endpoint_main = backend_main.start()
 
     data_model = DataModel(endpoint_main, messages_main, args.file_in, args.connect)
+    log_panel_model = LogPanelModel()
+    bottom_navbar_model = BottomNavbarModel()
     solution_position_model = SolutionPositionModel()
     solution_table_model = SolutionTableModel()
     solution_velocity_model = SolutionVelocityModel()
     tracking_signals_model = TrackingSignalsModel()
+    remote_observation_model = ObservationModel()
+    local_observation_model = ObservationModel()
     root_context = engine.rootContext()
+    root_context.setContextProperty("log_panel_model", log_panel_model)
+    root_context.setContextProperty("bottom_navbar_model", bottom_navbar_model)
     root_context.setContextProperty("solution_position_model", solution_position_model)
     root_context.setContextProperty("solution_table_model", solution_table_model)
     root_context.setContextProperty("solution_velocity_model", solution_velocity_model)
     root_context.setContextProperty("tracking_signals_model", tracking_signals_model)
+    root_context.setContextProperty("remote_observation_model", remote_observation_model)
+    root_context.setContextProperty("local_observation_model", local_observation_model)
     root_context.setContextProperty("data_model", data_model)
 
     threading.Thread(target=receive_messages, args=(app, backend_main, messages_main,), daemon=True).start()

@@ -1,3 +1,4 @@
+import "../Constants"
 import QtCharts 2.2
 import QtQuick 2.6
 import QtQuick.Controls 2.12
@@ -34,13 +35,12 @@ Item {
             anchors.fill: parent
             width: parent.width
             height: parent.height
-            spacing: 0
 
             ComboBox {
                 id: solutionVelocitySelectedUnit
 
                 Layout.alignment: Qt.AlignCenter
-                width: 100
+                width: Constants.solutionVelocity.unitDropdownWidth
                 model: available_units
                 onCurrentIndexChanged: {
                     if (!available_units)
@@ -54,12 +54,12 @@ Item {
                 id: solutionVelocityChart
 
                 Layout.preferredWidth: parent.width
-                Layout.preferredHeight: parent.height - 100
+                Layout.preferredHeight: parent.height
                 Layout.alignment: Qt.AlignBottom
-                Layout.bottomMargin: 20
+                Layout.bottomMargin: Constants.solutionVelocity.chartBottomMargin
                 Layout.fillHeight: true
-                backgroundColor: "#CDC9C9"
-                plotAreaColor: "#FFFFFF"
+                backgroundColor: Constants.commonChart.backgroundColor
+                plotAreaColor: Constants.commonChart.areaColor
                 legend.visible: false
                 antialiasing: true
                 Component.onCompleted: {
@@ -68,26 +68,25 @@ Item {
                 Rectangle {
                     id: lineLegend
 
-                    border.color: "#000000"
-                    border.width: 1
+                    border.color: Constants.commonLegend.borderColor
+                    border.width: Constants.commonLegend.borderWidth
                     anchors.bottom: solutionVelocityChart.bottom
                     anchors.left: solutionVelocityChart.left
-                    anchors.bottomMargin: 120
-                    anchors.leftMargin: 80
+                    anchors.bottomMargin: Constants.solutionVelocity.legendBottomMargin
+                    anchors.leftMargin: Constants.solutionVelocity.legendLeftMargin
                     implicitHeight: lineLegendRepeater.height
                     width: lineLegendRepeater.width
 
                     Column {
                         id: lineLegendRepeater
 
-                        spacing: -1
-                        padding: 10
+                        padding: Constants.commonLegend.padding
                         anchors.bottom: lineLegend.bottom
 
                         Repeater {
                             id: lineLegendRepeaterRows
 
-                            model: labels
+                            model: Constants.solutionVelocity.labels
 
                             Row {
                                 Component.onCompleted: {
@@ -101,9 +100,8 @@ Item {
                                 Rectangle {
                                     id: marker
 
-                                    width: 20
-                                    height: 3
-                                    color: "#000000"
+                                    width: Constants.commonLegend.markerWidth
+                                    height: Constants.commonLegend.markerHeight
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
 
@@ -111,9 +109,9 @@ Item {
                                     id: label
 
                                     text: modelData
-                                    font.pointSize: 9
+                                    font.pointSize: Constants.solutionVelocity.legendLabelPointSize
                                     anchors.verticalCenter: parent.verticalCenter
-                                    anchors.verticalCenterOffset: -1
+                                    anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                                 }
 
                             }
@@ -129,16 +127,17 @@ Item {
 
                     id: solutionVelocityXAxis
 
-                    labelsAngle: 45
-                    titleText: "GPS Time of Week"
+                    labelsAngle: Constants.solutionVelocity.xAxisLabelsAngle
+                    titleText: Constants.solutionVelocity.xAxisTitleText
                     gridVisible: true
                     lineVisible: true
                     minorGridVisible: true
-                    minorGridLineColor: "#CDC9C9"
-                    visible: true
+                    minorGridLineColor: Constants.commonChart.minorGridLineColor
+                    gridLineColor: Constants.commonChart.gridLineColor
+                    labelsColor: Constants.commonChart.labelsColor
 
                     labelsFont {
-                        pointSize: 10
+                        pointSize: Constants.commonChart.tickPointSize
                         bold: true
                     }
 
@@ -150,23 +149,22 @@ Item {
                     id: solutionVelocityYAxis
 
                     titleText: solutionVelocitySelectedUnit.currentText
-                    min: 0
-                    max: 1
                     gridVisible: true
                     lineVisible: true
                     minorGridVisible: true
-                    minorGridLineColor: "#CDC9C9"
-                    visible: true
+                    minorGridLineColor: Constants.commonChart.minorGridLineColor
+                    gridLineColor: Constants.commonChart.gridLineColor
+                    labelsColor: Constants.commonChart.labelsColor
 
                     labelsFont {
-                        pointSize: 10
+                        pointSize: Constants.commonChart.tickPointSize
                         bold: true
                     }
 
                 }
 
                 Timer {
-                    interval: 1000 / 5 // 5 Hz refresh
+                    interval: Constants.currentRefreshRate
                     running: true
                     repeat: true
                     onTriggered: {
@@ -191,9 +189,9 @@ Item {
 
                         if (!lines.length) {
                             for (var idx in labels) {
-                                var line = solutionVelocityChart.createSeries(ChartView.SeriesTypeLine, labels[idx], solutionVelocityXAxis);
+                                var line = solutionVelocityChart.createSeries(ChartView.SeriesTypeLine, Constants.solutionVelocity.labels[idx], solutionVelocityXAxis);
                                 line.color = colors[idx];
-                                line.width = 1;
+                                line.width = Constants.commonChart.lineWidth;
                                 line.axisYRight = solutionVelocityYAxis;
                                 line.useOpenGL = true; // [CPP-93] Invesigate usage of `useOpenGL` in plots
                                 lines.push(line);
@@ -201,7 +199,7 @@ Item {
                         }
                         solutionVelocityPoints.fill_series(lines);
                         var last = points[0][points[0].length - 1];
-                        solutionVelocityXAxis.min = last.x - 20;
+                        solutionVelocityXAxis.min = last.x - Constants.solutionVelocity.xAxisMinOffsetFromMaxSeconds;
                         solutionVelocityXAxis.max = last.x;
                         if (solutionVelocityYAxis.min != solutionVelocityPoints.min_ || solutionVelocityYAxis.max != solutionVelocityPoints.max_) {
                             solutionVelocityYAxis.min = solutionVelocityPoints.min_;

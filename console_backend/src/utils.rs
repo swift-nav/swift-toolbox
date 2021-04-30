@@ -1,6 +1,7 @@
 use capnp::message::Builder;
 use capnp::serialize;
-
+use log::warn;
+use serialport::{available_ports, FlowControl};
 use std::collections::HashMap;
 
 use crate::common_constants as cc;
@@ -9,7 +10,7 @@ use crate::constants::*;
 use crate::types::{MessageSender, SignalCodes};
 
 /// Send a CLOSE, or kill, signal to the frontend.
-pub fn close_frontend<P: MessageSender + Clone>(client_send: &mut P) {
+pub fn close_frontend<P: MessageSender>(client_send: &mut P) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<m::message::Builder>();
     let mut status = msg.init_status();
@@ -18,6 +19,65 @@ pub fn close_frontend<P: MessageSender + Clone>(client_send: &mut P) {
     let mut msg_bytes: Vec<u8> = vec![];
     serialize::write_message(&mut msg_bytes, &builder).unwrap();
     client_send.send_data(msg_bytes);
+}
+
+pub fn refresh_ports<P: MessageSender>(client_send: &mut P) {
+    if let Ok(ports) = &mut available_ports() {
+        // TODO(johnmichael.burke@) [CPP-114]Find solution to this hack for Linux serialport.
+        let ports: Vec<String> = ports
+            .iter_mut()
+            .map(|x| x.port_name.replace("/sys/class/tty/", "/dev/"))
+            .collect();
+        let mut builder = Builder::new_default();
+        let msg = builder.init_root::<m::message::Builder>();
+
+        let mut bottom_navbar_status = msg.init_bottom_navbar_status();
+
+        let mut available_ports = bottom_navbar_status
+            .reborrow()
+            .init_available_ports(ports.len() as u32);
+
+        for (i, serialportinfo) in ports.iter().enumerate() {
+            available_ports.set(i as u32, &(*serialportinfo));
+        }
+
+        let mut available_baudrates = bottom_navbar_status
+            .reborrow()
+            .init_available_baudrates(AVAILABLE_BAUDRATES.len() as u32);
+
+        for (i, baudrate) in AVAILABLE_BAUDRATES.iter().enumerate() {
+            available_baudrates.set(i as u32, *baudrate);
+        }
+
+        let mut available_flows = bottom_navbar_status
+            .reborrow()
+            .init_available_flows(AVAILABLE_FLOWS.len() as u32);
+
+        for (i, flow) in AVAILABLE_FLOWS.iter().enumerate() {
+            available_flows.set(i as u32, &flow.to_string());
+        }
+
+        let mut msg_bytes: Vec<u8> = vec![];
+        serialize::write_message(&mut msg_bytes, &builder).unwrap();
+
+        client_send.send_data(msg_bytes);
+    }
+}
+
+/// Convert flow control string slice to expected serialport FlowControl variant.
+///
+/// # Parameters
+/// - `flow_str`: A string slice corresponding to serialport FlowControl variant.
+///
+/// # Returns
+/// - the associated serialport::FlowControl variant.
+pub fn from_flowcontrol_str(flow_str: &str) -> FlowControl {
+    match flow_str {
+        FLOW_CONTROL_NONE => FlowControl::None,
+        FLOW_CONTROL_SOFTWARE => FlowControl::Software,
+        FLOW_CONTROL_HARDWARE => FlowControl::Hardware,
+        _ => panic!("unable to convert to FlowControl"),
+    }
 }
 
 pub fn signal_key_label(
@@ -197,13 +257,47 @@ pub fn ms_to_sec(ms: f64) -> f64 {
 /// # Returns
 /// - Value in seconds.
 pub fn ns_to_sec(ns: f64) -> f64 {
-    ns / 1.0e+9_f64
+    ns / NANOSECONDS_PER_SECOND
+}
+
+/// Convert seconds to nanoseconds.
+///
+/// # Parameters
+/// - `ns`: Value in econds.
+///
+/// # Returns
+/// - Value in nanoseconds.
+pub fn sec_to_ns(ns: f64) -> f64 {
+    ns * SECONDS_PER_NANOSECOND
+}
+
+pub fn compute_doppler(
+    new_carrier_phase: f64,
+    old_carrier_phase: f64,
+    current_gps_tow: f64,
+    previous_tow: f64,
+    is_deprecated_message: bool,
+) -> f64 {
+    if (current_gps_tow - previous_tow).abs() <= f64::EPSILON {
+        warn!("Received two complete observation sets with identical TOW");
+        return 0 as f64;
+    }
+    let mut computed_doppler =
+        (old_carrier_phase - new_carrier_phase) as f64 / (current_gps_tow - previous_tow) as f64;
+    if is_deprecated_message {
+        computed_doppler = -computed_doppler;
+    }
+    computed_doppler
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::piksi_tools_constants::*;
+
+    fn float_eq(f1: f64, f2: f64) -> bool {
+        f64::abs(f1 - f2) <= f64::EPSILON
+    }
 
     #[test]
     fn get_signal_key_label_test() {
@@ -277,9 +371,81 @@ mod tests {
 
     #[test]
     fn nano_to_micro_sec_test() {
-        assert!(f64::abs(nano_to_micro_sec(1000_f64) - 1_f64) <= f64::EPSILON);
-        assert!(f64::abs(nano_to_micro_sec(1000000_f64) - 1000_f64) <= f64::EPSILON);
-        assert!(f64::abs(nano_to_micro_sec(0_f64) - 0_f64) <= f64::EPSILON);
-        assert!(f64::abs(nano_to_micro_sec(1337_f64) - 1.337_f64) <= f64::EPSILON);
+        assert!(float_eq(nano_to_micro_sec(1000_f64), 1_f64));
+        assert!(float_eq(nano_to_micro_sec(1000000_f64), 1000_f64));
+        assert!(float_eq(nano_to_micro_sec(0_f64), 0_f64));
+        assert!(float_eq(nano_to_micro_sec(1337_f64), 1.337_f64));
+    }
+
+    #[test]
+    fn compute_doppler_test() {
+        assert!(float_eq(
+            compute_doppler(
+                123438650.3359375,
+                123438590.203125,
+                251746.8,
+                251746.8,
+                false
+            ),
+            0.0
+        ));
+        assert!(float_eq(
+            compute_doppler(
+                123438650.3359375,
+                123438590.203125,
+                251746.9,
+                251746.8,
+                false
+            ),
+            -601.3281249649981
+        ));
+        assert!(float_eq(
+            compute_doppler(89473356.9453125, 89473456.921875, 251746.9, 251746.8, false),
+            999.765624941806
+        ));
+        assert!(float_eq(
+            compute_doppler(
+                96692940.6015625,
+                96692834.87890625,
+                251746.9,
+                251746.8,
+                false
+            ),
+            -1057.2265624384613
+        ));
+        assert!(float_eq(
+            compute_doppler(
+                108296328.85546875,
+                108296130.609375,
+                251746.9,
+                251746.8,
+                false
+            ),
+            -1982.4609373846056
+        ));
+        assert!(float_eq(
+            compute_doppler(99816633.2109375, 99816774.25, 251746.9, 251746.8, false),
+            1410.3906249179045
+        ));
+        assert!(float_eq(
+            compute_doppler(
+                109036269.546875,
+                109036058.60546875,
+                251746.9,
+                251746.8,
+                false
+            ),
+            -2109.414062377216
+        ));
+        assert!(float_eq(
+            compute_doppler(
+                94582860.46484375,
+                94582814.38671875,
+                251746.9,
+                251746.8,
+                false
+            ),
+            -460.781249973179
+        ));
     }
 }

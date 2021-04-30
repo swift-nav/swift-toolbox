@@ -2,6 +2,7 @@ use sbp::messages::SBP;
 use std::{thread::sleep, time::Duration};
 
 use crate::constants::PAUSE_LOOP_SLEEP_DURATION_MS;
+use crate::log_panel::handle_log_msg;
 use crate::main_tab::*;
 use crate::types::*;
 
@@ -73,19 +74,30 @@ pub fn process_messages<S: MessageSender>(
             }
             SBP::MsgObs(msg) => {
                 main.tracking_signals_tab
-                    .handle_obs(ObservationMsg::MsgObs(msg));
+                    .handle_obs(ObservationMsg::MsgObs(msg.clone()));
+
+                main.observation_tab.handle_obs(ObservationMsg::MsgObs(msg));
             }
             SBP::MsgObsDepA(_msg) => {
                 //CPP-85 Unhandled for tracking signals plot tab.
-                println!("The message type, MsgObsDepA, is not handled in the Tracking->SignalsPlot tab.");
+                println!("The message type, MsgObsDepA, is not handled in the Tracking->SignalsPlot or Observation tab.");
             }
             SBP::MsgObsDepB(msg) => {
                 main.tracking_signals_tab
+                    .handle_obs(ObservationMsg::MsgObsDepB(msg.clone()));
+
+                main.observation_tab
                     .handle_obs(ObservationMsg::MsgObsDepB(msg));
             }
             SBP::MsgObsDepC(msg) => {
                 main.tracking_signals_tab
+                    .handle_obs(ObservationMsg::MsgObsDepC(msg.clone()));
+
+                main.observation_tab
                     .handle_obs(ObservationMsg::MsgObsDepC(msg));
+            }
+            SBP::MsgOsr(msg) => {
+                main.observation_tab.handle_obs(ObservationMsg::MsgOsr(msg));
             }
             SBP::MsgPosLLH(msg) => {
                 main.solution_tab.handle_pos_llh(PosLLH::MsgPosLLH(msg));
@@ -108,10 +120,12 @@ pub fn process_messages<S: MessageSender>(
             SBP::MsgUtcTime(msg) => {
                 main.solution_tab.handle_utc_time(msg);
             }
+            SBP::MsgLog(msg) => handle_log_msg(msg),
 
             _ => {
                 // no-op
             }
         }
+        log::logger().flush();
     }
 }

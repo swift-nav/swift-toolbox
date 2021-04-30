@@ -15,8 +15,12 @@ struct FileRequest {
 
 struct SerialRequest {
     device @0 :Text;
-    baudrate @1 :UInt16;
-    flowControl @2 :Bool;
+    baudrate @1 :UInt32;
+    flowControl @2 :Text;
+}
+
+struct SerialRefreshRequest {
+    refresh @0 :Void = void;
 }
 
 struct PauseRequest {
@@ -25,6 +29,24 @@ struct PauseRequest {
 
 struct DisconnectRequest {
     disconnect @0 :Void = void;
+}
+
+enum LogLevel {
+    error @0;
+    warn @1;
+    info @2;
+    debug @3;
+    trace @4;
+}
+
+struct LogEntry {
+    timestamp @0 :Text;
+    level @1 :LogLevel;
+    line @2 :Text;
+}
+
+struct LogAppend {
+    entries @0 :List(LogEntry);
 }
 
 struct KeyValPair {
@@ -39,6 +61,30 @@ struct SolutionTableStatus {
 struct Point {
     x @0 :Float64;
     y @1 :Float64;
+}
+
+struct BottomNavbarStatus {
+    availableBaudrates @0 : List(UInt32);
+    availablePorts @1 : List(Text);
+    availableFlows @2 : List(Text);
+}
+
+struct ObservationTableRow {
+    prn @0 :Text;
+    pseudoRange @1 :Float64;
+    carrierPhase @2 :Float64;
+    cn0 @3 :Float64;
+    measuredDoppler @4 :Float64;
+    computedDoppler @5 :Float64;
+    lock @6 :UInt16;
+    flags @7 :UInt8;
+}
+
+struct ObservationStatus {
+    isRemote @0 :Bool;
+    tow @1 :Float64;
+    week @2 :UInt16;
+    rows @3 :List(ObservationTableRow);
 }
 
 struct SolutionPositionStatus {
@@ -109,5 +155,9 @@ struct Message {
         serialRequest @12 :SerialRequest;
         pauseRequest @13 :PauseRequest;
         disconnectRequest @14 :DisconnectRequest;
+        bottomNavbarStatus @15 :BottomNavbarStatus;
+        serialRefreshRequest @16 :SerialRefreshRequest;
+        logAppend @17 :LogAppend;
+        observationStatus @18 :ObservationStatus;
     }
 }

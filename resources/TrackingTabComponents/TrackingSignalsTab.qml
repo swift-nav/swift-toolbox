@@ -1,3 +1,4 @@
+import "../Constants"
 import QtCharts 2.2
 import QtQuick 2.5
 import QtQuick.Controls 2.12
@@ -31,39 +32,38 @@ Item {
         ChartView {
             id: trackingSignalsChart
 
-            title: "Tracking C/N0"
-            titleColor: "#00006E"
+            title: Constants.trackingSignals.title
+            titleColor: Constants.trackingSignals.titleColor
             width: parent.width
             height: parent.height - trackingSignalsCheckboxes.height
             anchors.top: parent.top
-            backgroundColor: "#CDC9C9"
-            plotAreaColor: "#FFFFFF"
+            backgroundColor: Constants.commonChart.backgroundColor
+            plotAreaColor: Constants.commonChart.areaColor
             legend.visible: false
             antialiasing: true
             Component.onCompleted: {
             }
 
             titleFont {
-                pointSize: 14
+                pointSize: Constants.trackingSignals.titlePointSize
                 bold: true
             }
 
             Rectangle {
                 id: lineLegend
 
-                border.color: "#000000"
-                border.width: 1
+                border.color: Constants.commonLegend.borderColor
+                border.width: Constants.commonLegend.borderWidth
                 anchors.bottom: trackingSignalsChart.bottom
                 anchors.left: trackingSignalsChart.left
-                anchors.bottomMargin: 85
-                anchors.leftMargin: 60
+                anchors.bottomMargin: Constants.trackingSignals.legendBottomMargin
+                anchors.leftMargin: Constants.trackingSignals.legendLeftMargin
                 implicitHeight: lineLegendRepeater.height
                 width: lineLegendRepeater.width
 
                 Column {
                     id: lineLegendRepeater
 
-                    spacing: -1
                     anchors.bottom: lineLegend.bottom
 
                     Repeater {
@@ -83,9 +83,8 @@ Item {
                             Rectangle {
                                 id: marker
 
-                                width: 20
-                                height: 3
-                                color: "#000000"
+                                width: Constants.commonLegend.markerWidth
+                                height: Constants.commonLegend.markerHeight
                                 anchors.verticalCenter: parent.verticalCenter
                             }
 
@@ -93,9 +92,9 @@ Item {
                                 id: label
 
                                 text: modelData
-                                font.pointSize: 6
+                                font.pointSize: Constants.trackingSignals.legendLabelPointSize
                                 anchors.verticalCenter: parent.verticalCenter
-                                anchors.verticalCenterOffset: -1
+                                anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                             }
 
                         }
@@ -109,15 +108,16 @@ Item {
             ValueAxis {
                 id: trackingSignalsXAxis
 
-                titleText: "seconds"
+                titleText: Constants.trackingSignals.xAxisTitleText
                 gridVisible: true
                 lineVisible: true
                 minorGridVisible: true
-                minorGridLineColor: "#CDC9C9"
-                visible: true
+                minorGridLineColor: Constants.commonChart.minorGridLineColor
+                gridLineColor: Constants.commonChart.gridLineColor
+                labelsColor: Constants.commonChart.labelsColor
 
                 labelsFont {
-                    pointSize: 10
+                    pointSize: Constants.commonChart.tickPointSize
                     bold: true
                 }
 
@@ -126,30 +126,25 @@ Item {
             ValueAxis {
                 id: trackingSignalsYAxis
 
-                titleText: "dB-Hz"
-                min: 0
-                max: 1
+                titleText: Constants.trackingSignals.yAxisTitleText
                 gridVisible: true
                 lineVisible: true
                 minorGridVisible: true
-                minorGridLineColor: "#CDC9C9"
-                visible: true
+                minorGridLineColor: Constants.commonChart.minorGridLineColor
+                gridLineColor: Constants.commonChart.gridLineColor
+                labelsColor: Constants.commonChart.labelsColor
 
                 labelsFont {
-                    pointSize: 10
+                    pointSize: Constants.commonChart.tickPointSize
                     bold: true
                 }
 
             }
 
             Timer {
-                // if (trackingSignalsTimer.interval != Constants.current_ref_rate) {
-                //     trackingSignalsTimer.interval = Constants.current_ref_rate
-                // }
-
                 id: trackingSignalsTimer
 
-                interval: 1000 / 5 // 5 Hz refresh
+                interval: Constants.currentRefreshRate
                 running: true
                 repeat: true
                 onTriggered: {
@@ -172,15 +167,15 @@ Item {
                                 trackingSignalsChart.removeSeries(lines[idx][0]);
                                 var line = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, labels[idx], trackingSignalsXAxis);
                                 line.color = colors[idx];
-                                line.width = 1;
+                                line.width = Constants.commonChart.lineWidth;
                                 line.axisYRight = trackingSignalsYAxis;
-                                line.useOpenGL = true; // [CPP-93] Invesigate usage of `useOpenGL` in plots
+                                line.useOpenGL = true;
                                 lines[idx] = [line, labels[idx]];
                             }
                         } else {
                             var line = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, labels[idx], trackingSignalsXAxis);
                             line.color = colors[idx];
-                            line.width = 1;
+                            line.width = Constants.commonChart.lineWidth;
                             line.axisYRight = trackingSignalsYAxis;
                             line.useOpenGL = true; // [CPP-93] Invesigate usage of `useOpenGL` in plots
                             lines.push([line, labels[idx]]);
@@ -188,7 +183,7 @@ Item {
                     }
                     trackingSignalsPoints.fill_series(lines);
                     var last = points[0][points[0].length - 1];
-                    trackingSignalsXAxis.min = last.x - 100;
+                    trackingSignalsXAxis.min = last.x - Constants.trackingSignals.xAxisMinOffsetFromMaxSeconds;
                     trackingSignalsXAxis.max = last.x;
                     if (trackingSignalsYAxis.min != trackingSignalsPoints.min_) {
                         trackingSignalsYAxis.min = trackingSignalsPoints.min_;
@@ -202,7 +197,7 @@ Item {
         GridLayout {
             id: trackingSignalsCheckboxes
 
-            columns: 6
+            columns: parent.width / Constants.trackingSignals.checkBoxPreferredWidth
             anchors.horizontalCenter: trackingSignalsChart.horizontalCenter
             anchors.top: trackingSignalsChart.bottom
 
@@ -215,7 +210,7 @@ Item {
                     CheckBox {
                         checked: true
                         text: modelData
-                        verticalPadding: 0
+                        verticalPadding: Constants.trackingSignals.checkBoxVerticalPadding
                         onClicked: {
                             check_visibility[index] = checked;
                             if (index == 0) {

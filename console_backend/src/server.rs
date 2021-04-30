@@ -1,23 +1,20 @@
-#![allow(dead_code)]
-#![allow(unused_imports)]
-#![cfg(not(feature = "benches"))]
-use capnp::message::Builder;
 use capnp::serialize;
 
 use pyo3::exceptions;
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 
-use std::fs;
-use std::io::{BufReader, Cursor};
-use std::net::TcpStream;
-use std::sync::{mpsc, Arc, Mutex};
-use std::{thread, time::Duration};
+use async_logger_log::Logger;
 
-use crate::common_constants as cc;
+use std::io::{BufReader, Cursor};
+use std::sync::mpsc;
+use std::thread;
+
 use crate::console_backend_capnp as m;
-use crate::process_messages::process_messages;
-use crate::types::{ClientSender, MessageSender, ServerState, SharedState, VelocityUnits};
+use crate::constants::LOG_WRITER_BUFFER_MESSAGE_COUNT;
+use crate::log_panel::{splitable_log_formatter, LogPanelWriter};
+use crate::types::{ClientSender, ServerState, SharedState};
+use crate::utils::refresh_ports;
 
 /// The backend server
 #[pyclass]
@@ -30,7 +27,6 @@ struct ServerEndpoint {
     server_send: Option<mpsc::Sender<Vec<u8>>>,
 }
 
-#[cfg(not(test))]
 #[pymethods]
 impl ServerEndpoint {
     #[new]
@@ -53,7 +49,6 @@ impl ServerEndpoint {
     }
 }
 
-#[cfg(not(test))]
 #[pymethods]
 impl Server {
     #[new]
@@ -98,6 +93,17 @@ impl Server {
         };
         let shared_state = SharedState::new();
         let server_state = ServerState::new();
+        refresh_ports(&mut client_send.clone());
+        let logger = Logger::builder()
+            .buf_size(LOG_WRITER_BUFFER_MESSAGE_COUNT)
+            .formatter(splitable_log_formatter)
+            .writer(Box::new(LogPanelWriter::new(client_send.clone())))
+            .build()
+            .unwrap();
+
+        log::set_boxed_logger(Box::new(logger)).expect("Failed to set logger");
+        log::set_max_level(log::LevelFilter::Info);
+
         thread::spawn(move || loop {
             let buf = server_recv.recv();
             if let Ok(buf) = buf {
@@ -130,11 +136,13 @@ impl Server {
                         let shared_state_clone = shared_state.clone();
                         let client_send_clone = client_send.clone();
                         match request {
+                            m::message::SerialRefreshRequest(Ok(_)) => {
+                                refresh_ports(&mut client_send_clone.clone());
+                            }
                             m::message::DisconnectRequest(Ok(_)) => {
                                 shared_state_clone.set_running(false);
                                 server_state_clone.connection_join();
                                 println!("Disconnected successfully.");
-                                continue;
                             }
                             m::message::FileRequest(Ok(req)) => {
                                 let filename = req.get_filename().unwrap();
@@ -161,6 +169,20 @@ impl Server {
                                     client_send_clone,
                                     shared_state_clone,
                                     host_port,
+                                );
+                            }
+                            m::message::SerialRequest(Ok(req)) => {
+                                let device = req.get_device().unwrap();
+                                let device = device.to_string();
+                                let baudrate = req.get_baudrate();
+                                let flow = req.get_flow_control().unwrap();
+                                let flow = flow.to_string();
+                                server_state_clone.connect_to_serial(
+                                    client_send_clone,
+                                    shared_state_clone,
+                                    device,
+                                    baudrate,
+                                    flow,
                                 );
                             }
                             _ => println!("err"),

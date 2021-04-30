@@ -3,13 +3,17 @@
     <file>qtquickcontrols2.conf</file>
     <file>view.qml</file>
     <file>BottomNavBar.qml</file>
-    <file>Constants.qml</file>
-    <file>qmldir</file>
+    <file>LogPanel.qml</file>
+    <file>Constants/Constants.qml</file>
+    <file>Constants/qmldir</file>
     <file>SolutionTab.qml</file>
     <file>SolutionTabComponents/SolutionPositionTab.qml</file>
     <file>SolutionTabComponents/SolutionTable.qml</file>
     <file>SolutionTabComponents/SolutionVelocityTab.qml</file>
     <file>TrackingTab.qml</file>
     <file>TrackingTabComponents/TrackingSignalsTab.qml</file>
+    <file>ObservationTab.qml</file>
+    <file>ObservationTabComponents/observation_tab.js</file>
+    <file>ObservationTabComponents/ObservationTable.qml</file>
 </qresource>
 </RCC>

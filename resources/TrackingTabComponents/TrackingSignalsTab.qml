@@ -177,7 +177,7 @@ Item {
                             line.color = colors[idx];
                             line.width = Constants.commonChart.lineWidth;
                             line.axisYRight = trackingSignalsYAxis;
-                            line.useOpenGL = true; // [CPP-93] Invesigate usage of `useOpenGL` in plots
+                            line.useOpenGL = true;
                             lines.push([line, labels[idx]]);
                         }
                     }

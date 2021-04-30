@@ -257,6 +257,7 @@ Item {
                                 line.width = Constants.commonChart.solutionLineWidth;
                                 line.useOpenGL = true;
                                 scatter.useOpenGL = true;
+                                cur_scatter.useOpenGL = true;
                                 lines.push(line);
                                 scatters.push(scatter);
                                 cur_scatters.push(cur_scatter);

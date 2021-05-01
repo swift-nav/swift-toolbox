@@ -10,6 +10,7 @@ on:
 
 env:
   PIP_CACHE_DIR: ~/.cache/pip
+  RUST_CACHE_DIRS: "~/.cargo/registry\n~/.cargo/git\ntarget\n"
   LIBCLANG_PATH_WIN: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
 
 jobs:
@@ -70,6 +71,13 @@ jobs:
         with:
           toolchain: stable
           override: true
+
+      - name: Cache rust.
+        uses: actions/cache@v2
+        with:
+          path: |
+            ${{ env.RUST_CACHE_DIRS }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - uses: davidB/rust-cargo-make@v1
         with:
@@ -135,6 +143,13 @@ jobs:
           toolchain: stable
           override: true
           components: rustfmt, clippy
+
+      - name: Cache rust.
+        uses: actions/cache@v2
+        with:
+          path: |
+            ${{ env.RUST_CACHE_DIRS }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - uses: davidB/rust-cargo-make@v1
         with:
@@ -240,6 +255,13 @@ jobs:
           toolchain: stable
           override: true
           components: rustfmt, clippy
+
+      - name: Cache rust.
+        uses: actions/cache@v2
+        with:
+          path: |
+            ${{ env.RUST_CACHE_DIRS }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - uses: davidB/rust-cargo-make@v1
         with:

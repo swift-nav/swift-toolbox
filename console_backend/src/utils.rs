@@ -21,6 +21,18 @@ pub fn close_frontend<P: MessageSender>(client_send: &mut P) {
     client_send.send_data(msg_bytes);
 }
 
+/// Send a CONNECTED, or kill, signal to the frontend.
+pub fn connected_frontend<P: MessageSender>(client_send: &mut P) {
+    let mut builder = Builder::new_default();
+    let msg = builder.init_root::<m::message::Builder>();
+    let mut status = msg.init_status();
+    let app_state = cc::ApplicationStates::CONNECTED;
+    status.set_text(&app_state.to_string());
+    let mut msg_bytes: Vec<u8> = vec![];
+    serialize::write_message(&mut msg_bytes, &builder).unwrap();
+    client_send.send_data(msg_bytes);
+}
+
 pub fn refresh_ports<P: MessageSender>(client_send: &mut P) {
     if let Ok(ports) = &mut available_ports() {
         // TODO(johnmichael.burke@) [CPP-114]Find solution to this hack for Linux serialport.

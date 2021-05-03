@@ -140,9 +140,7 @@ impl Server {
                         baudrate,
                         flow_control,
                     );
-                }
-                _ => {
-                    // no-op
+                    
                 }
             }
         }

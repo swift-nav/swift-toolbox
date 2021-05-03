@@ -22,14 +22,18 @@ class Keys(str, Enum):
     TOW = "TOW"
     WEEK = "WEEK"
     ROWS = "ROWS"
+    CONNECTED = "CONNECTED"
 
 
 class ApplicationStates(str, Enum):
     CLOSE = "CLOSE"
+    CONNECTED = "CONNECTED"
+    DISCONNECTED = "DISCONNECTED"
 
 
 class MessageKeys(str, Enum):
     STATUS = "status"
+    CONNECTED_STATUS = "connectedStatus"
     BOTTOM_NAVBAR_STATUS = "bottomNavbarStatus"
     SOLUTION_POSITION_STATUS = "solutionPositionStatus"
     SOLUTION_TABLE_STATUS = "solutionTableStatus"

@@ -47,6 +47,7 @@ BOTTOM_NAVBAR: Dict[str, Any] = {
     Keys.AVAILABLE_PORTS: [],
     Keys.AVAILABLE_BAUDRATES: [],
     Keys.AVAILABLE_FLOWS: [],
+    Keys.CONNECTED: False,
 }
 
 SOLUTION_POSITION_TAB: Dict[str, Any] = {
@@ -93,6 +94,9 @@ def receive_messages(app_, backend, messages):
         if m.which == MessageKeys.STATUS:
             if m.status.text == ApplicationStates.CLOSE:
                 return app_.quit()
+            elif m.status.text == ApplicationStates.CONNECTED:
+                BOTTOM_NAVBAR[Keys.CONNECTED] = True
+
         elif m.which == MessageKeys.SOLUTION_POSITION_STATUS:
             SOLUTION_POSITION_TAB[Keys.LABELS][:] = m.solutionPositionStatus.labels
             SOLUTION_POSITION_TAB[Keys.COLORS][:] = m.solutionPositionStatus.colors
@@ -302,6 +306,7 @@ class BottomNavbarData(QObject):
     _available_ports: List[str] = []
     _available_baudrates: List[str] = []
     _available_flows: List[str] = []
+    _connected: bool = False
 
     def get_available_ports(self) -> List[str]:
         return self._available_ports
@@ -329,8 +334,30 @@ class BottomNavbarData(QObject):
 
     available_flows = Property(QTKeys.QVARIANTLIST, get_available_flows, set_available_flows)  # type: ignore
 
+    def get_connected(self) -> bool:
+        """Getter for _connected.
+
+        Returns:
+            bool: Whether a connection is live or not.
+        """
+        return self._connected
+
+    def set_connected(self, connected: bool) -> None:
+        """Setter for _connected.
+        """
+        self._connected = connected
+
+    connected = Property(bool, get_connected, set_connected)
+
 
 class BottomNavbarModel(QObject):  # pylint: disable=too-few-public-methods
+    @Slot(BottomNavbarData)  # type: ignore
+    def fill_data(self, cp: BottomNavbarData) -> BottomNavbarData:  # pylint:disable=no-self-use
+        cp.set_available_ports(BOTTOM_NAVBAR[Keys.AVAILABLE_PORTS])
+        cp.set_available_baudrates(BOTTOM_NAVBAR[Keys.AVAILABLE_BAUDRATES])
+        cp.set_available_flows(BOTTOM_NAVBAR[Keys.AVAILABLE_FLOWS])
+        return cp
+
     @Slot(BottomNavbarData)  # type: ignore
     def fill_data(self, cp: BottomNavbarData) -> BottomNavbarData:  # pylint:disable=no-self-use
         cp.set_available_ports(BOTTOM_NAVBAR[Keys.AVAILABLE_PORTS])

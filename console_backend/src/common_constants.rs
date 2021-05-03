@@ -46,6 +46,8 @@ pub enum Keys {
 pub enum ApplicationStates {
     #[strum(serialize = "CLOSE")]
     CLOSE,
+    #[strum(serialize = "CONNECTED")]
+    CONNECTED,
 }
 
 #[derive(Clone, Debug, Display, EnumString, Eq, Hash, PartialEq)]

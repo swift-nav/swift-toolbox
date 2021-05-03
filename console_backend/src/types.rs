@@ -2,7 +2,7 @@ use crate::constants::*;
 use crate::formatters::*;
 use crate::piksi_tools_constants::*;
 use crate::process_messages::process_messages;
-use crate::utils::{close_frontend, from_flowcontrol_str, ms_to_sec};
+use crate::utils::{close_frontend, connected_frontend, from_flowcontrol_str, ms_to_sec};
 use chrono::{DateTime, Utc};
 use log::{info, warn};
 use ordered_float::OrderedFloat;
@@ -144,6 +144,7 @@ impl ServerState {
                 println!("Opened file successfully!");
                 let shared_state_clone_ = shared_state.clone();
                 let messages = sbp::iter_messages(stream);
+                connected_frontend(&mut client_send.clone());
                 process_messages(messages, shared_state_clone_, client_send.clone());
                 if close_when_done {
                     close_frontend(&mut client_send.clone());
@@ -176,6 +177,7 @@ impl ServerState {
             if let Ok(stream) = TcpStream::connect(host_port.clone()) {
                 info!("Connected to the server {}!", host_port);
                 let messages = sbp::iter_messages(stream);
+                connected_frontend(&mut client_send.clone());
                 process_messages(messages, shared_state_clone, client_send);
             } else {
                 warn!("Couldn't connect to server...");
@@ -216,6 +218,7 @@ impl ServerState {
                         Ok(port) => {
                             println!("Connected to serialport {}.", device);
                             let messages = sbp::iter_messages(port);
+                            connected_frontend(&mut client_send.clone());
                             process_messages(messages, shared_state_clone, client_send);
                         }
                         Err(e) => eprintln!("Unable to connect to serialport: {}", e),

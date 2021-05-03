@@ -7,14 +7,15 @@ pub struct CliOptions {
     #[structopt(subcommand)]
     pub input: Option<Input>,
 
-    // Frontend Options
+    // // Frontend Options
+
     /// Don't use opengl in plots.
     #[structopt(long = "no-opengl", parse(from_flag = ops::Not::not))]
-    pub no_opengl: Option<bool>,
+    pub no_opengl: bool,
 
     /// Don't use opengl in plots.
     #[structopt(long = "refresh-rate")]
-    pub refresh_rate: Option<u32>
+    pub refresh_rate: Option<u32>,
 }
 
 #[derive(Debug, StructOpt)]

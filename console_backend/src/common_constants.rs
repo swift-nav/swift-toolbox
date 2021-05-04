@@ -13,6 +13,18 @@ extern crate strum_macros;
 use strum_macros::{Display, EnumString};
 
 #[derive(Clone, Debug, Display, EnumString, Eq, Hash, PartialEq)]
+pub enum Tabs {
+    #[strum(serialize = "TRACKING_SIGNALS")]
+    TRACKING_SIGNALS,
+    #[strum(serialize = "SOLUTION_POSITION")]
+    SOLUTION_POSITION,
+    #[strum(serialize = "SOLUTION_VELOCITY")]
+    SOLUTION_VELOCITY,
+    #[strum(serialize = "OBSERVATIONS")]
+    OBSERVATIONS,
+}
+
+#[derive(Clone, Debug, Display, EnumString, Eq, Hash, PartialEq)]
 pub enum Keys {
     #[strum(serialize = "POINTS")]
     POINTS,
@@ -40,6 +52,22 @@ pub enum Keys {
     LON_MIN,
     #[strum(serialize = "CUR_POINTS")]
     CUR_POINTS,
+    #[strum(serialize = "AVAILABLE_PORTS")]
+    AVAILABLE_PORTS,
+    #[strum(serialize = "AVAILABLE_BAUDRATES")]
+    AVAILABLE_BAUDRATES,
+    #[strum(serialize = "AVAILABLE_FLOWS")]
+    AVAILABLE_FLOWS,
+    #[strum(serialize = "REMOTE")]
+    REMOTE,
+    #[strum(serialize = "TOW")]
+    TOW,
+    #[strum(serialize = "WEEK")]
+    WEEK,
+    #[strum(serialize = "ROWS")]
+    ROWS,
+    #[strum(serialize = "CONNECTED")]
+    CONNECTED,
 }
 
 #[derive(Clone, Debug, Display, EnumString, Eq, Hash, PartialEq)]
@@ -48,12 +76,18 @@ pub enum ApplicationStates {
     CLOSE,
     #[strum(serialize = "CONNECTED")]
     CONNECTED,
+    #[strum(serialize = "DISCONNECTED")]
+    DISCONNECTED,
 }
 
 #[derive(Clone, Debug, Display, EnumString, Eq, Hash, PartialEq)]
 pub enum MessageKeys {
     #[strum(serialize = "status")]
     STATUS,
+    #[strum(serialize = "connectedStatus")]
+    CONNECTED_STATUS,
+    #[strum(serialize = "bottomNavbarStatus")]
+    BOTTOM_NAVBAR_STATUS,
     #[strum(serialize = "solutionPositionStatus")]
     SOLUTION_POSITION_STATUS,
     #[strum(serialize = "solutionTableStatus")]
@@ -62,6 +96,32 @@ pub enum MessageKeys {
     SOLUTION_VELOCITY_STATUS,
     #[strum(serialize = "trackingSignalsStatus")]
     TRACKING_SIGNALS_STATUS,
+    #[strum(serialize = "observationStatus")]
+    OBSERVATION_STATUS,
+    #[strum(serialize = "connectRequest")]
+    CONNECT_REQUEST,
+    #[strum(serialize = "fileRequest")]
+    FILE_REQUEST,
+    #[strum(serialize = "tcpRequest")]
+    TCP_REQUEST,
+    #[strum(serialize = "serialRequest")]
+    SERIAL_REQUEST,
+    #[strum(serialize = "disconnectRequest")]
+    DISCONNECT_REQUEST,
+    #[strum(serialize = "pauseRequest")]
+    PAUSE_REQUEST,
+    #[strum(serialize = "serialRefreshRequest")]
+    SERIAL_REFRESH_REQUEST,
+    #[strum(serialize = "trackingSignalsStatusFront")]
+    TRACKING_SIGNALS_STATUS_FRONT,
+    #[strum(serialize = "solutionVelocityStatusFront")]
+    SOLUTION_VELOCITY_STATUS_FRONT,
+    #[strum(serialize = "solutionPositionStatusUnitFront")]
+    SOLUTION_POSITION_STATUS_UNIT_FRONT,
+    #[strum(serialize = "solutionPositionStatusButtonFront")]
+    SOLUTION_POSITION_STATUS_BUTTON_FRONT,
+    #[strum(serialize = "logAppend")]
+    LOG_APPEND,
 }
 
 #[derive(Clone, Debug, Display, EnumString, Eq, Hash, PartialEq)]

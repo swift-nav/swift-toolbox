@@ -1,6 +1,13 @@
 from enum import Enum
 
 
+class Tabs(str, Enum):
+    TRACKING_SIGNALS = "TRACKING_SIGNALS"
+    SOLUTION_POSITION = "SOLUTION_POSITION"
+    SOLUTION_VELOCITY = "SOLUTION_VELOCITY"
+    OBSERVATIONS = "OBSERVATIONS"
+
+
 class Keys(str, Enum):
     POINTS = "POINTS"
     LABELS = "LABELS"

@@ -1,7 +1,16 @@
+use crate::common_constants::Tabs;
 // 'Universal' constants
 
 pub const NANOSECONDS_PER_SECOND: f64 = 1.0e+9;
 pub const SECONDS_PER_NANOSECOND: f64 = 1.0e-9;
+
+// CLI constants.
+pub const TAB_LIST: &[Tabs] = &[
+    Tabs::TRACKING_SIGNALS,
+    Tabs::SOLUTION_POSITION,
+    Tabs::SOLUTION_VELOCITY,
+    Tabs::OBSERVATIONS,
+];
 
 // Server constants.
 pub const CLOSE: &str = "CLOSE";

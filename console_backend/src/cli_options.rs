@@ -1,7 +1,10 @@
 use clap::Clap;
-use std::{ops, path::PathBuf};
+use std::{ops, path::PathBuf, str::FromStr};
 
-#[derive(Debug, Clap)]
+use crate::common_constants::Tabs;
+use crate::constants::TAB_LIST;
+
+#[derive(Clap, Debug)]
 #[clap(name = "swift_navigation_console", about = "Swift Navigation Console.")]
 pub struct CliOptions {
     #[clap(subcommand)]
@@ -15,9 +18,12 @@ pub struct CliOptions {
     /// Don't use opengl in plots.
     #[clap(long = "refresh-rate")]
     pub refresh_rate: Option<u32>,
+
+    #[clap(long = "tab", validator(is_tab))]
+    pub tab: Option<String>,
 }
 
-#[derive(Debug, Clap)]
+#[derive(Clap, Debug)]
 #[clap(about = "Input type and corresponding options.")]
 pub enum Input {
     Tcp {
@@ -46,4 +52,20 @@ pub enum Input {
         #[clap(parse(from_os_str))]
         file_in: PathBuf,
     },
+}
+
+/// Validation for the tab cli option.
+///
+/// # Parameters
+/// - `tab`: The user input tab.
+///
+/// # Returns
+/// - `Ok`: The tab was found in TAB_LIST.
+/// - `Err`: The tab was not found in TAB_LIST.
+fn is_tab(tab: &str) -> Result<(), String> {
+    if Tabs::from_str(tab).is_ok() {
+        return Ok(());
+    }
+
+    Err(format!("Must choose from available tabs {:?}", TAB_LIST))
 }

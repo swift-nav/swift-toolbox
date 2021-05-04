@@ -29,6 +29,30 @@ from observation_tab import (
     obs_rows_to_json,
 )
 
+from solution_position_tab import (
+    SolutionPositionModel,
+    SolutionPositionPoints,
+    SOLUTION_POSITION_TAB,
+)
+
+from solution_table import (
+    SolutionTableEntries,
+    SolutionTableModel,
+    SOLUTION_TABLE,
+)
+
+from solution_velocity_tab import (
+    SolutionVelocityModel,
+    SolutionVelocityPoints,
+    SOLUTION_VELOCITY_TAB,
+)
+
+from tracking_signals_tab import (
+    TrackingSignalsModel,
+    TrackingSignalsPoints,
+    TRACKING_SIGNALS_TAB,
+)
+
 import console_resources  # type: ignore # pylint: disable=unused-import,import-error
 
 import console_backend.server  # type: ignore  # pylint: disable=import-error,no-name-in-module
@@ -48,39 +72,6 @@ BOTTOM_NAVBAR: Dict[str, Any] = {
     Keys.AVAILABLE_BAUDRATES: [],
     Keys.AVAILABLE_FLOWS: [],
     Keys.CONNECTED: False,
-}
-
-SOLUTION_POSITION_TAB: Dict[str, Any] = {
-    Keys.AVAILABLE_UNITS: [],
-    Keys.CUR_POINTS: [],
-    Keys.POINTS: [],
-    Keys.LABELS: [],
-    Keys.COLORS: [],
-    Keys.LAT_MAX: 0,
-    Keys.LAT_MIN: 0,
-    Keys.LON_MAX: 0,
-    Keys.LON_MIN: 0,
-}
-
-SOLUTION_TABLE: Dict[str, Any] = {
-    Keys.ENTRIES: [],
-}
-
-SOLUTION_VELOCITY_TAB: Dict[str, Any] = {
-    Keys.AVAILABLE_UNITS: [],
-    Keys.POINTS: [],
-    Keys.COLORS: [],
-    Keys.MAX: 0,
-    Keys.MIN: 0,
-}
-
-TRACKING_SIGNALS_TAB: Dict[str, Any] = {
-    Keys.POINTS: [],
-    Keys.CHECK_LABELS: [],
-    Keys.LABELS: [],
-    Keys.COLORS: [],
-    Keys.MAX: 0,
-    Keys.MIN: 0,
 }
 
 
@@ -360,394 +351,6 @@ class BottomNavbarModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_available_flows(BOTTOM_NAVBAR[Keys.AVAILABLE_FLOWS])
         return cp
 
-    # @Slot(BottomNavbarData)  # type: ignore
-    # def fill_data(self, cp: BottomNavbarData) -> BottomNavbarData:  # pylint:disable=no-self-use
-    #     cp.set_available_ports(BOTTOM_NAVBAR[Keys.AVAILABLE_PORTS])
-    #     cp.set_available_baudrates(BOTTOM_NAVBAR[Keys.AVAILABLE_BAUDRATES])
-    #     cp.set_available_flows(BOTTOM_NAVBAR[Keys.AVAILABLE_FLOWS])
-    #     return cp
-
-
-class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
-
-    _colors: List[str] = []
-    _labels: List[str] = []
-    _points: List[List[QPointF]] = [[]]
-    _cur_points: List[List[QPointF]] = [[]]
-    _valid: bool = False
-    _lat_min: float = 0.0
-    _lat_max: float = 0.0
-    _lon_min: float = 0.0
-    _lon_max: float = 0.0
-    _available_units: List[str] = []
-
-    def get_valid(self) -> bool:
-        """Getter for _valid.
-
-        Returns:
-            bool: Whether it is valid or not.
-        """
-        return self._valid
-
-    def set_valid(self, valid: bool) -> None:
-        """Setter for _valid.
-        """
-        self._valid = valid
-
-    valid = Property(bool, get_valid, set_valid)
-
-    def get_lat_min(self) -> float:
-        """Getter for _lat_min.
-        """
-        return self._lat_min
-
-    def set_lat_min(self, lat_min_: float) -> None:
-        """Setter for _lat_min.
-        """
-        self._lat_min = lat_min_
-
-    lat_min_ = Property(float, get_lat_min, set_lat_min)
-
-    def get_lat_max(self) -> float:
-        """Getter for _lat_max.
-        """
-        return self._lat_max
-
-    def set_lat_max(self, lat_max_: float) -> None:
-        """Setter for _lat_max.
-        """
-        self._lat_max = lat_max_
-
-    lat_max_ = Property(float, get_lat_max, set_lat_max)
-
-    def get_lon_min(self) -> float:
-        """Getter for _lon_min.
-        """
-        return self._lon_min
-
-    def set_lon_min(self, lon_min_: float) -> None:
-        """Setter for _lon_min.
-        """
-        self._lon_min = lon_min_
-
-    lon_min_ = Property(float, get_lon_min, set_lon_min)
-
-    def get_lon_max(self) -> float:
-        """Getter for _lon_max.
-        """
-        return self._lon_max
-
-    def set_lon_max(self, lon_max_: float) -> None:
-        """Setter for _lon_max.
-        """
-        self._lon_max = lon_max_
-
-    lon_max_ = Property(float, get_lon_max, set_lon_max)
-
-    def get_labels(self) -> List[str]:
-        return self._labels
-
-    def set_labels(self, labels) -> None:
-        self._labels = labels
-
-    labels = Property(QTKeys.QVARIANTLIST, get_labels, set_labels)  # type: ignore
-
-    def get_colors(self) -> List[str]:
-        return self._colors
-
-    def set_colors(self, colors) -> None:
-        self._colors = colors
-
-    colors = Property(QTKeys.QVARIANTLIST, get_colors, set_colors)  # type: ignore
-
-    def get_points(self) -> List[List[QPointF]]:
-        return self._points
-
-    def set_points(self, points) -> None:
-        self._points = points
-
-    points = Property(QTKeys.QVARIANTLIST, get_points, set_points)  # type: ignore
-
-    def get_cur_points(self) -> List[List[QPointF]]:
-        return self._cur_points
-
-    def set_cur_points(self, cur_points) -> None:
-        self._cur_points = cur_points
-
-    cur_points = Property(QTKeys.QVARIANTLIST, get_cur_points, set_cur_points)  # type: ignore
-
-    def get_available_units(self) -> List[str]:
-        return self._available_units
-
-    def set_available_units(self, available_units: List[str]) -> None:
-        self._available_units = available_units
-
-    available_units = Property(QTKeys.QVARIANTLIST, get_available_units, set_available_units)  # type: ignore
-
-    @Slot(list)  # type: ignore
-    def fill_series(self, series_list):
-        lines = series_list[0]
-        scatters = series_list[1]
-        cur_scatters = series_list[2]
-        for idx, _ in enumerate(lines):
-            lines[idx].replace(self._points[idx])
-            scatters[idx].replace(self._points[idx])
-            cur_scatters[idx].replace(self._cur_points[idx])
-
-
-class SolutionPositionModel(QObject):  # pylint: disable=too-few-public-methods
-    @Slot(SolutionPositionPoints)  # type: ignore
-    def fill_console_points(self, cp: SolutionPositionPoints) -> SolutionPositionPoints:  # pylint:disable=no-self-use
-        cp.set_points(SOLUTION_POSITION_TAB[Keys.POINTS])
-        cp.set_cur_points(SOLUTION_POSITION_TAB[Keys.CUR_POINTS])
-        cp.set_labels(SOLUTION_POSITION_TAB[Keys.LABELS])
-        cp.set_colors(SOLUTION_POSITION_TAB[Keys.COLORS])
-        cp.set_lat_max(SOLUTION_POSITION_TAB[Keys.LAT_MAX])
-        cp.set_lat_min(SOLUTION_POSITION_TAB[Keys.LAT_MIN])
-        cp.set_lon_max(SOLUTION_POSITION_TAB[Keys.LON_MAX])
-        cp.set_lon_min(SOLUTION_POSITION_TAB[Keys.LON_MIN])
-        cp.set_available_units(SOLUTION_POSITION_TAB[Keys.AVAILABLE_UNITS])
-        return cp
-
-
-class SolutionTableEntries(QObject):
-
-    _entries: List[List[str]] = []
-    _valid: bool = False
-
-    def get_valid(self) -> bool:
-        """Getter for _valid.
-
-        Returns:
-            bool: Whether it is valid or not.
-        """
-        return self._valid
-
-    def set_valid(self, valid: bool) -> None:
-        """Setter for _valid.
-        """
-        self._valid = valid
-
-    valid = Property(bool, get_valid, set_valid)
-
-    def get_entries(self) -> List[List[str]]:
-        """Getter for _entries.
-        """
-        return self._entries
-
-    def set_entries(self, entries: List[List[str]]) -> None:
-        """Setter for _entries.
-        """
-        self._entries = entries
-
-    entries = Property(QTKeys.QVARIANTLIST, get_entries, set_entries)  # type: ignore
-
-    @Slot(list)  # type: ignore
-    def fill_series(self, series_list):
-        for idx, series in enumerate(series_list):
-            series.replace(self._points[idx])
-
-
-class SolutionTableModel(QObject):  # pylint: disable=too-few-public-methods
-    @Slot(SolutionTableEntries)  # type: ignore
-    def fill_console_points(self, cp: SolutionTableEntries) -> SolutionTableEntries:  # pylint:disable=no-self-use
-        cp.set_entries(SOLUTION_TABLE[Keys.ENTRIES])
-        return cp
-
-
-class SolutionVelocityPoints(QObject):
-
-    _colors: List[str] = []
-    _points: List[List[QPointF]] = [[]]
-    _valid: bool = False
-    _min: float = 0.0
-    _max: float = 0.0
-    _available_units: List[str] = []
-
-    def get_valid(self) -> bool:
-        """Getter for _valid.
-
-        Returns:
-            bool: Whether it is valid or not.
-        """
-        return self._valid
-
-    def set_valid(self, valid: bool) -> None:
-        """Setter for _valid.
-        """
-        self._valid = valid
-
-    valid = Property(bool, get_valid, set_valid)
-
-    def get_min(self) -> float:
-        """Getter for _min.
-        """
-        return self._min
-
-    def set_min(self, min_: float) -> None:
-        """Setter for _min.
-        """
-        self._min = min_
-
-    min_ = Property(float, get_min, set_min)
-
-    def get_max(self) -> float:
-        """Getter for _max.
-        """
-        return self._max
-
-    def set_max(self, max_: float) -> None:
-        """Setter for _max.
-        """
-        self._max = max_
-
-    max_ = Property(float, get_max, set_max)
-
-    def get_available_units(self) -> List[str]:
-        """Getter for _available_units.
-        """
-        return self._available_units
-
-    def set_available_units(self, available_units: List[str]) -> None:
-        """Setter for _available_units.
-        """
-        self._available_units = available_units
-
-    available_units = Property(QTKeys.QVARIANTLIST, get_available_units, set_available_units)  # type: ignore
-
-    def get_colors(self) -> List[str]:
-        return self._colors
-
-    def set_colors(self, colors) -> None:
-        self._colors = colors
-
-    colors = Property(QTKeys.QVARIANTLIST, get_colors, set_colors)  # type: ignore
-
-    def get_points(self) -> List[List[QPointF]]:
-        return self._points
-
-    def set_points(self, points) -> None:
-        self._points = points
-
-    points = Property(QTKeys.QVARIANTLIST, get_points, set_points)  # type: ignore
-
-    @Slot(list)  # type: ignore
-    def fill_series(self, series_list):
-        for idx, series in enumerate(series_list):
-            series.replace(self._points[idx])
-
-
-class SolutionVelocityModel(QObject):  # pylint: disable=too-few-public-methods
-    @Slot(SolutionVelocityPoints)  # type: ignore
-    def fill_console_points(self, cp: SolutionVelocityPoints) -> SolutionVelocityPoints:  # pylint:disable=no-self-use
-        cp.set_points(SOLUTION_VELOCITY_TAB[Keys.POINTS])
-        cp.set_colors(SOLUTION_VELOCITY_TAB[Keys.COLORS])
-        cp.set_max(SOLUTION_VELOCITY_TAB[Keys.MAX])
-        cp.set_min(SOLUTION_VELOCITY_TAB[Keys.MIN])
-        cp.set_available_units(SOLUTION_VELOCITY_TAB[Keys.AVAILABLE_UNITS])
-        return cp
-
-
-class TrackingSignalsPoints(QObject):
-
-    _colors: List[str] = []
-    _check_labels: List[str] = []
-    _labels: List[str] = []
-    _points: List[List[QPointF]] = [[]]
-    _valid: bool = False
-    _min: float = 0.0
-    _max: float = 0.0
-
-    def get_valid(self) -> bool:
-        """Getter for _valid.
-
-        Returns:
-            bool: Whether it is valid or not.
-        """
-        return self._valid
-
-    def set_valid(self, valid: bool) -> None:
-        """Setter for _valid.
-        """
-        self._valid = valid
-
-    valid = Property(bool, get_valid, set_valid)
-
-    def get_min(self) -> float:
-        """Getter for _min.
-        """
-        return self._min
-
-    def set_min(self, min_: float) -> None:
-        """Setter for _min.
-        """
-        self._min = min_
-
-    min_ = Property(float, get_min, set_min)
-
-    def get_max(self) -> float:
-        """Getter for _max.
-        """
-        return self._max
-
-    def set_max(self, max_: float) -> None:
-        """Setter for _max.
-        """
-        self._max = max_
-
-    max_ = Property(float, get_max, set_max)
-
-    def get_check_labels(self) -> List[str]:
-        return self._check_labels
-
-    def set_check_labels(self, check_labels) -> None:
-        self._check_labels = check_labels
-
-    check_labels = Property(QTKeys.QVARIANTLIST, get_check_labels, set_check_labels)  # type: ignore
-
-    def get_labels(self) -> List[str]:
-        return self._labels
-
-    def set_labels(self, labels) -> None:
-        self._labels = labels
-
-    labels = Property(QTKeys.QVARIANTLIST, get_labels, set_labels)  # type: ignore
-
-    def get_colors(self) -> List[str]:
-        return self._colors
-
-    def set_colors(self, colors) -> None:
-        self._colors = colors
-
-    colors = Property(QTKeys.QVARIANTLIST, get_colors, set_colors)  # type: ignore
-
-    def get_points(self) -> List[List[QPointF]]:
-        return self._points
-
-    def set_points(self, points) -> None:
-        self._points = points
-
-    points = Property(QTKeys.QVARIANTLIST, get_points, set_points)  # type: ignore
-
-    @Slot(list)  # type: ignore
-    def fill_series(self, series_list):
-        for idx, series_and_key in enumerate(series_list):
-            series, _ = series_and_key
-            if idx < len(self._points):
-                series.replace(self._points[idx])
-
-
-class TrackingSignalsModel(QObject):  # pylint: disable=too-few-public-methods
-    @Slot(TrackingSignalsPoints)  # type: ignore
-    def fill_console_points(self, cp: TrackingSignalsPoints) -> TrackingSignalsPoints:  # pylint:disable=no-self-use
-        cp.set_points(TRACKING_SIGNALS_TAB[Keys.POINTS])
-        cp.set_labels(TRACKING_SIGNALS_TAB[Keys.LABELS])
-        cp.set_check_labels(TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS])
-        cp.set_colors(TRACKING_SIGNALS_TAB[Keys.COLORS])
-        cp.set_max(TRACKING_SIGNALS_TAB[Keys.MAX])
-        cp.set_min(TRACKING_SIGNALS_TAB[Keys.MIN])
-        return cp
-
 
 def is_frozen() -> bool:
     """Check whether the application is frozen.
@@ -779,6 +382,9 @@ def get_capnp_path() -> str:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--no-opengl")
+    parser.add_argument("--refresh-rate")
+    parser.add_argument("--tab")
+
     args, _ = parser.parse_known_args()
 
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
@@ -825,8 +431,6 @@ if __name__ == "__main__":
     root_context.setContextProperty("remote_observation_model", remote_observation_model)
     root_context.setContextProperty("local_observation_model", local_observation_model)
     root_context.setContextProperty("data_model", data_model)
-    # obj = engine.rootObjects()[0].property("Constants")
-    # print(obj)
 
-    threading.Thread(target=receive_messages, args=(app, backend_main, messages_main,), daemon=True).start()
+    threading.Thread(target=receive_messages, args=(app, backend_main, messages_main), daemon=True).start()
     sys.exit(app.exec_())

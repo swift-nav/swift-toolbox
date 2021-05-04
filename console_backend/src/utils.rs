@@ -89,7 +89,10 @@ pub fn from_flowcontrol_str(flow_str: &str) -> Result<FlowControl, String> {
         FLOW_CONTROL_NONE => Ok(FlowControl::None),
         FLOW_CONTROL_SOFTWARE => Ok(FlowControl::Software),
         FLOW_CONTROL_HARDWARE => Ok(FlowControl::Hardware),
-        _ => Err(format!("Not a valid flow control option. Choose from [\"{}\", \"{}\", \"{}\"]", FLOW_CONTROL_NONE, FLOW_CONTROL_SOFTWARE, FLOW_CONTROL_HARDWARE)),
+        _ => Err(format!(
+            "Not a valid flow control option. Choose from [\"{}\", \"{}\", \"{}\"]",
+            FLOW_CONTROL_NONE, FLOW_CONTROL_SOFTWARE, FLOW_CONTROL_HARDWARE
+        )),
     }
 }
 

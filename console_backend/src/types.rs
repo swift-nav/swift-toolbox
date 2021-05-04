@@ -224,8 +224,8 @@ impl ServerState {
                         Err(e) => eprintln!("Unable to connect to serialport: {}", e),
                     }
                 }
-                Err(e) => eprintln!("{}", e)   
-            }            
+                Err(e) => eprintln!("{}", e),
+            }
             shared_state.set_running(false);
         });
         self.new_connection(handle);

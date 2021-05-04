@@ -94,8 +94,10 @@ def receive_messages(app_, backend, messages):
         if m.which == MessageKeys.STATUS:
             if m.status.text == ApplicationStates.CLOSE:
                 return app_.quit()
-            elif m.status.text == ApplicationStates.CONNECTED:
+            if m.status.text == ApplicationStates.CONNECTED:
                 BOTTOM_NAVBAR[Keys.CONNECTED] = True
+            elif m.status.text == ApplicationStates.DISCONNECTED:
+                BOTTOM_NAVBAR[Keys.CONNECTED] = False
 
         elif m.which == MessageKeys.SOLUTION_POSITION_STATUS:
             SOLUTION_POSITION_TAB[Keys.LABELS][:] = m.solutionPositionStatus.labels
@@ -358,12 +360,12 @@ class BottomNavbarModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_available_flows(BOTTOM_NAVBAR[Keys.AVAILABLE_FLOWS])
         return cp
 
-    @Slot(BottomNavbarData)  # type: ignore
-    def fill_data(self, cp: BottomNavbarData) -> BottomNavbarData:  # pylint:disable=no-self-use
-        cp.set_available_ports(BOTTOM_NAVBAR[Keys.AVAILABLE_PORTS])
-        cp.set_available_baudrates(BOTTOM_NAVBAR[Keys.AVAILABLE_BAUDRATES])
-        cp.set_available_flows(BOTTOM_NAVBAR[Keys.AVAILABLE_FLOWS])
-        return cp
+    # @Slot(BottomNavbarData)  # type: ignore
+    # def fill_data(self, cp: BottomNavbarData) -> BottomNavbarData:  # pylint:disable=no-self-use
+    #     cp.set_available_ports(BOTTOM_NAVBAR[Keys.AVAILABLE_PORTS])
+    #     cp.set_available_baudrates(BOTTOM_NAVBAR[Keys.AVAILABLE_BAUDRATES])
+    #     cp.set_available_flows(BOTTOM_NAVBAR[Keys.AVAILABLE_FLOWS])
+    #     return cp
 
 
 class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
@@ -823,6 +825,8 @@ if __name__ == "__main__":
     root_context.setContextProperty("remote_observation_model", remote_observation_model)
     root_context.setContextProperty("local_observation_model", local_observation_model)
     root_context.setContextProperty("data_model", data_model)
+    # obj = engine.rootObjects()[0].property("Constants")
+    # print(obj)
 
     threading.Thread(target=receive_messages, args=(app, backend_main, messages_main,), daemon=True).start()
     sys.exit(app.exec_())

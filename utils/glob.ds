@@ -1,8 +1,10 @@
 fn glob_paths_excluding_target
+    exclude_files = array "src/main/python/console_resources.py"
     handle = glob_array ${1}
     out = array
     for i in ${handle}
-        if not starts_with ${i} "target"
+        not_excluded = array_contains ${exclude_files} ${i}
+        if equals ${not_excluded} \"false\" and (not starts_with ${i} "target")
             array_push ${out} ${i}
         end
     end

@@ -113,7 +113,7 @@ Get-ChildItem .\console_backend -Recurse -Include @("*.egg-info", "*.dist-info")
 dependencies = ["copy-capnp", "generate-resources", "remove-egg-dist", "install-backend"]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV --no-capture-output --live-stream fbs run
+conda run -n $CONDA_ENV --no-capture-output --live-stream python src/main/python/main.py "${@}"
 '''
 
 [tasks.prod-run]

@@ -235,6 +235,7 @@ Item {
 
         ComboBox {
             id: refreshRateDrop
+
             visible: true
             Layout.preferredWidth: Constants.bottomNavBar.plotRefreshRateDropdownWidth
             Layout.bottomMargin: Constants.bottomNavBar.navBarMargin

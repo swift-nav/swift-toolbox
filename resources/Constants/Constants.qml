@@ -24,11 +24,12 @@ QtObject {
         readonly property int urlBarBorder: 1
         readonly property int urlBarTextMargin: 4
         readonly property int navBarMargin: 10
-        readonly property int plotRefreshRateDropdownWidth: 60
+        readonly property int plotRefreshRateDropdownWidth: 63
         readonly property int serialDeviceRefreshWidth: 30
         readonly property int connectionPauseWidth: 30
         readonly property color placeholderTextColor: "#CDC9C9"
-        readonly property var available_ref_rates: [5, 10, 25]
+        readonly property var all_refresh_rates: [1, 5, 10, 25]
+        readonly property var default_refresh_rate_index: 1
     }
 
     solutionPosition: QtObject {

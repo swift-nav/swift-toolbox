@@ -31,9 +31,9 @@ pub fn refresh_ports<P: MessageSender>(client_send: &mut P) {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<m::message::Builder>();
 
-        let mut bottom_navbar_status = msg.init_bottom_navbar_status();
+        let mut nav_bar_status = msg.init_nav_bar_status();
 
-        let mut available_ports = bottom_navbar_status
+        let mut available_ports = nav_bar_status
             .reborrow()
             .init_available_ports(ports.len() as u32);
 
@@ -41,7 +41,7 @@ pub fn refresh_ports<P: MessageSender>(client_send: &mut P) {
             available_ports.set(i as u32, &(*serialportinfo));
         }
 
-        let mut available_baudrates = bottom_navbar_status
+        let mut available_baudrates = nav_bar_status
             .reborrow()
             .init_available_baudrates(AVAILABLE_BAUDRATES.len() as u32);
 
@@ -49,7 +49,7 @@ pub fn refresh_ports<P: MessageSender>(client_send: &mut P) {
             available_baudrates.set(i as u32, *baudrate);
         }
 
-        let mut available_flows = bottom_navbar_status
+        let mut available_flows = nav_bar_status
             .reborrow()
             .init_available_flows(AVAILABLE_FLOWS.len() as u32);
 

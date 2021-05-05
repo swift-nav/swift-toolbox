@@ -30,7 +30,7 @@ class ApplicationStates(str, Enum):
 
 class MessageKeys(str, Enum):
     STATUS = "status"
-    BOTTOM_NAVBAR_STATUS = "bottomNavbarStatus"
+    NAV_BAR_STATUS = "navBarStatus"
     SOLUTION_POSITION_STATUS = "solutionPositionStatus"
     SOLUTION_TABLE_STATUS = "solutionTableStatus"
     SOLUTION_VELOCITY_STATUS = "solutionVelocityStatus"

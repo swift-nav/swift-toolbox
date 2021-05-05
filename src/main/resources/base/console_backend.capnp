@@ -63,7 +63,7 @@ struct Point {
     y @1 :Float64;
 }
 
-struct BottomNavbarStatus {
+struct NavBarStatus {
     availableBaudrates @0 : List(UInt32);
     availablePorts @1 : List(Text);
     availableFlows @2 : List(Text);
@@ -155,7 +155,7 @@ struct Message {
         serialRequest @12 :SerialRequest;
         pauseRequest @13 :PauseRequest;
         disconnectRequest @14 :DisconnectRequest;
-        bottomNavbarStatus @15 :BottomNavbarStatus;
+        navBarStatus @15 :NavBarStatus;
         serialRefreshRequest @16 :SerialRefreshRequest;
         logAppend @17 :LogAppend;
         observationStatus @18 :ObservationStatus;

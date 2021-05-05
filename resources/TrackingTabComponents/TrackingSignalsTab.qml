@@ -32,6 +32,7 @@ Item {
         ChartView {
             id: trackingSignalsChart
 
+            visible: false
             title: Constants.trackingSignals.title
             titleColor: Constants.trackingSignals.titleColor
             width: parent.width
@@ -92,7 +93,7 @@ Item {
                                 id: label
 
                                 text: modelData
-                                font.pointSize: Constants.trackingSignals.legendLabelPointSize
+                                font.pointSize: Constants.pointSize // Constants.trackingSignals.legendLabelPointSize
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                             }
@@ -117,7 +118,7 @@ Item {
                 labelsColor: Constants.commonChart.labelsColor
 
                 labelsFont {
-                    pointSize: Constants.commonChart.tickPointSize
+                    pointSize: Constants.pointSize // Constants.commonChart.tickPointSize
                     bold: true
                 }
 
@@ -135,7 +136,7 @@ Item {
                 labelsColor: Constants.commonChart.labelsColor
 
                 labelsFont {
-                    pointSize: Constants.commonChart.tickPointSize
+                    pointSize: Constants.pointSize // Constants.commonChart.tickPointSize
                     bold: true
                 }
 
@@ -144,7 +145,7 @@ Item {
             Timer {
                 id: trackingSignalsTimer
 
-                interval: Constants.currentRefreshRate
+                interval: Globals.currentRefreshRate
                 running: true
                 repeat: true
                 onTriggered: {
@@ -159,8 +160,9 @@ Item {
                     colors = trackingSignalsPoints.colors;
                     labels = trackingSignalsPoints.labels;
                     if (check_labels != trackingSignalsPoints.check_labels)
-                        check_labels = trackingSignalsPoints.check_labels;
+                        trackingSignalsChart.visible = true;
 
+                    check_labels = trackingSignalsPoints.check_labels;
                     for (var idx in labels) {
                         if (idx < lines.length) {
                             if (labels[idx] != lines[idx][1]) {

@@ -1,1 +1,2 @@
 singleton Constants 1.0 Constants.qml
+singleton Globals 1.0 Globals.qml

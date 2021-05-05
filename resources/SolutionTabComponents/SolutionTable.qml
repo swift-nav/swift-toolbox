@@ -74,6 +74,7 @@ Item {
 
                         text: display
                         anchors.centerIn: parent
+                        font.pointSize: Constants.pointSize
                         leftPadding: Constants.solutionTable.tableLeftPadding
                     }
 
@@ -121,6 +122,7 @@ Item {
                         id: rowTextEle
 
                         text: display
+                        font.pointSize: Constants.pointSize
                         leftPadding: Constants.solutionTable.tableLeftPadding
                     }
 
@@ -149,7 +151,7 @@ Item {
         }
 
         Timer {
-            interval: Constants.currentRefreshRate
+            interval: Globals.currentRefreshRate
             running: true
             repeat: true
             onTriggered: {

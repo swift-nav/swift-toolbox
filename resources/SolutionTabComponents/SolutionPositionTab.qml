@@ -217,7 +217,7 @@ Item {
                 }
 
                 Timer {
-                    interval: Constants.currentRefreshRate
+                    interval: Globals.currentRefreshRate
                     running: true
                     repeat: true
                     onTriggered: {

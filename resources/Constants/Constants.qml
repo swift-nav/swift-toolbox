@@ -4,7 +4,11 @@ pragma Singleton
 QtObject {
     readonly property int width: 640
     readonly property int height: 480
-    property QtObject bottomNavBar
+    readonly property real margins: 2
+    readonly property real topLevelSpacing: 0
+    readonly property real logPanelPreferredHeight: 100
+    readonly property real navBarPreferredHeight: 30
+    property QtObject navBar
     property QtObject commonChart
     property QtObject commonLegend
     property QtObject solutionPosition
@@ -12,20 +16,23 @@ QtObject {
     property QtObject solutionVelocity
     property QtObject trackingSignals
     property QtObject observationTab
-    property int currentRefreshRate: 1000 / 5 // 5 Hz
     property int defaultTimerIntervalRate: 1000 / 5 // 5 Hz
     property string monoSpaceFont: "Courier New"
+    property int pointSize: 5
     readonly property bool debugMode: false
 
-    bottomNavBar: QtObject {
-        readonly property int connectionDropdownWidth: 90
+    navBar: QtObject {
+        readonly property int connectionDropdownWidth: 70
         readonly property int serialSelectionDropdownWidth: 90
         readonly property int urlBarHeight: 25
         readonly property int urlBarBorder: 1
         readonly property int urlBarTextMargin: 4
         readonly property int navBarMargin: 10
-        readonly property int plotRefreshRateDropdownWidth: 63
+        readonly property int plotRefreshRateDropdownWidth: 50
+        readonly property int serialDeviceBaudRateDropdownWidth: 90
+        readonly property int serialDeviceFlowControlDropdownWidth: 100
         readonly property int serialDeviceRefreshWidth: 30
+        readonly property int connectButtonWidth: 60
         readonly property int connectionPauseWidth: 30
         readonly property color placeholderTextColor: "#CDC9C9"
         readonly property var all_refresh_rates: [1, 5, 10, 25]
@@ -66,7 +73,7 @@ QtObject {
         readonly property int xAxisLabelsAngle: 45
         readonly property string xAxisTitleText: "GPS Time of Week"
         readonly property int xAxisMinOffsetFromMaxSeconds: 20
-        readonly property int unitDropdownWidth: 100
+        readonly property int unitDropdownWidth: 50
         readonly property int chartHeightOffset: 0
         readonly property int chartBottomMargin: 30
         readonly property int legendBottomMargin: 120
@@ -90,6 +97,7 @@ QtObject {
     }
 
     commonChart: QtObject {
+        readonly property int zAboveCharts: 100
         readonly property int lineWidth: 1
         readonly property int heightOffset: 50
         readonly property int margin: 20

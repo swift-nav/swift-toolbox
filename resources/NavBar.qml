@@ -14,26 +14,29 @@ Item {
     property variant available_devices: []
     property variant available_flows: []
 
+    // anchors.centerIn: parent
+    anchors.top: parent.top
     width: parent.width
     height: parent.height
 
-    BottomNavbarData {
-        id: bottomNavbarData
+    NavBarData {
+        id: navBarData
     }
 
     RowLayout {
-        id: bottomNavBarRowLayout
+        id: navBarRowLayout
 
         width: parent.width
         height: parent.height
 
         ComboBox {
-            id: bottomNavBarSourceSelection
+            id: navBarSourceSelection
 
-            Layout.preferredWidth: Constants.bottomNavBar.connectionDropdownWidth
-            Layout.alignment: Qt.AlignLeft
-            Layout.leftMargin: Constants.bottomNavBar.navBarMargin
-            Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
+            Component.onCompleted: {
+                navBarSourceSelection.indicator.width = Constants.navBar.connectionDropdownWidth / 3;
+            }
+            Layout.preferredWidth: Constants.navBar.connectionDropdownWidth
+            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
             model: sources
             onActivated: {
                 if (find(tcp_ip) === currentIndex)
@@ -61,10 +64,12 @@ Item {
         ComboBox {
             id: serialDevice
 
+            Component.onCompleted: {
+                serialDevice.indicator.width = Constants.navBar.serialSelectionDropdownWidth / 3;
+            }
             visible: false
-            Layout.alignment: Qt.AlignLeft
-            Layout.preferredWidth: Constants.bottomNavBar.serialSelectionDropdownWidth
-            Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
+            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+            Layout.preferredWidth: Constants.navBar.serialSelectionDropdownWidth
             model: available_devices
             onActivated: {
             }
@@ -74,9 +79,8 @@ Item {
             id: serialDeviceRefresh
 
             visible: false
-            Layout.alignment: Qt.AlignLeft
-            Layout.preferredWidth: Constants.bottomNavBar.serialDeviceRefreshWidth
-            Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
+            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+            Layout.preferredWidth: Constants.navBar.serialDeviceRefreshWidth
             text: "F5"
             onClicked: {
                 data_model.serial_refresh();
@@ -86,9 +90,12 @@ Item {
         ComboBox {
             id: serialDeviceBaudRate
 
+            Component.onCompleted: {
+                serialDeviceBaudRate.indicator.width = Constants.navBar.serialDeviceBaudRateDropdownWidth / 3;
+            }
             visible: false
-            Layout.alignment: Qt.AlignLeft
-            Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
+            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+            Layout.preferredWidth: Constants.navBar.serialDeviceBaudRateDropdownWidth
             model: available_baudrates
             onActivated: {
             }
@@ -97,9 +104,12 @@ Item {
         ComboBox {
             id: serialDeviceFlowControl
 
+            Component.onCompleted: {
+                serialDeviceFlowControl.indicator.width = Constants.navBar.serialDeviceFlowControlDropdownWidth / 3;
+            }
             visible: false
-            Layout.alignment: Qt.AlignLeft
-            Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
+            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+            Layout.preferredWidth: Constants.navBar.serialDeviceFlowControlDropdownWidth
             model: available_flows
             onActivated: {
             }
@@ -109,29 +119,29 @@ Item {
             id: tcpUrlBarPortBar
 
             Layout.alignment: Qt.AlignLeft
-            Layout.preferredWidth: parent.width / 2
-            Layout.preferredHeight: Constants.bottomNavBar.urlBarHeight
+            Layout.fillWidth: true
+            Layout.preferredHeight: Constants.navBar.urlBarHeight
             spacing: 1
 
             Rectangle {
                 id: tcpUrlBar
 
                 height: parent.height
-                width: parent.width / 2
-                border.width: Constants.bottomNavBar.urlBarBorder
+                width: 3 * parent.width / 4
+                border.width: Constants.navBar.urlBarBorder
 
                 TextInput {
                     id: tcpUrlBarText
 
                     clip: true
                     anchors.fill: parent
-                    anchors.margins: Constants.bottomNavBar.urlBarTextMargin
+                    anchors.margins: Constants.navBar.urlBarTextMargin
                     onTextChanged: {
                     }
 
                     Text {
                         text: "Host"
-                        color: Constants.bottomNavBar.placeholderTextColor
+                        color: Constants.navBar.placeholderTextColor
                         visible: !tcpUrlBarText.text
                     }
 
@@ -143,21 +153,21 @@ Item {
                 id: tcpPortBar
 
                 height: parent.height
-                width: parent.width / 2
-                border.width: Constants.bottomNavBar.urlBarBorder
+                width: parent.width / 4
+                border.width: Constants.navBar.urlBarBorder
 
                 TextInput {
                     id: tcpPortBarText
 
                     clip: true
                     anchors.fill: parent
-                    anchors.margins: Constants.bottomNavBar.urlBarTextMargin
+                    anchors.margins: Constants.navBar.urlBarTextMargin
                     onTextChanged: {
                     }
 
                     Text {
                         text: "Port"
-                        color: Constants.bottomNavBar.placeholderTextColor
+                        color: Constants.navBar.placeholderTextColor
                         visible: !tcpPortBarText.text
                     }
 
@@ -172,22 +182,22 @@ Item {
 
             visible: false
             Layout.alignment: Qt.AlignLeft
-            Layout.preferredWidth: parent.width / 2
-            Layout.preferredHeight: Constants.bottomNavBar.urlBarHeight
-            border.width: Constants.bottomNavBar.urlBarBorder
+            Layout.fillWidth: true
+            Layout.preferredHeight: Constants.navBar.urlBarHeight
+            border.width: Constants.navBar.urlBarBorder
 
             TextInput {
                 id: fileUrlBarText
 
                 anchors.fill: parent
-                anchors.margins: Constants.bottomNavBar.urlBarTextMargin
+                anchors.margins: Constants.navBar.urlBarTextMargin
                 onTextChanged: {
                 }
                 clip: true
 
                 Text {
                     text: "path/to/file"
-                    color: Constants.bottomNavBar.placeholderTextColor
+                    color: Constants.navBar.placeholderTextColor
                     visible: !fileUrlBarText.text
                 }
 
@@ -198,8 +208,8 @@ Item {
         Button {
             id: connectionPauseButton
 
-            Layout.preferredWidth: Constants.bottomNavBar.connectionPauseWidth
-            Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
+            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+            Layout.preferredWidth: Constants.navBar.connectionPauseWidth
             text: "| |"
             ToolTip.visible: hovered
             ToolTip.text: !checked ? "Pause" : "Unpause"
@@ -208,21 +218,20 @@ Item {
         }
 
         Button {
-            Layout.alignment: Qt.AlignRight
-            Layout.rightMargin: Constants.bottomNavBar.navBarMargin
-            Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
+            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+            Layout.preferredWidth: Constants.navBar.connectButtonWidth
             checkable: true
             text: !checked ? "Connect" : "Disconnect"
             onClicked: {
                 if (!checked) {
                     data_model.disconnect();
                 } else {
-                    if (bottomNavBarSourceSelection.currentText === tcp_ip) {
+                    if (navBarSourceSelection.currentText === tcp_ip) {
                         if (tcpUrlBarText.text && tcpPortBarText.text)
                             data_model.connect_tcp(tcpUrlBarText.text, tcpPortBarText.text);
                         else
                             data_model.connect();
-                    } else if (bottomNavBarSourceSelection.currentText === file) {
+                    } else if (navBarSourceSelection.currentText === file) {
                         if (fileUrlBarText.text)
                             data_model.connect_file(fileUrlBarText.text);
 
@@ -236,15 +245,18 @@ Item {
         ComboBox {
             id: refreshRateDrop
 
+            Component.onCompleted: {
+                refreshRateDrop.indicator.width = Constants.navBar.plotRefreshRateDropdownWidth / 3;
+            }
             visible: true
-            Layout.preferredWidth: Constants.bottomNavBar.plotRefreshRateDropdownWidth
-            Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
+            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+            Layout.preferredWidth: Constants.navBar.plotRefreshRateDropdownWidth
             ToolTip.visible: hovered
             ToolTip.text: "Refresh Rate (Hz)"
-            model: Constants.bottomNavBar.all_refresh_rates
-            currentIndex: Constants.bottomNavBar.default_refresh_rate_index
+            model: Constants.navBar.all_refresh_rates
+            currentIndex: Constants.navBar.default_refresh_rate_index
             onActivated: {
-                Constants.currentRefreshRate = 1000 / Constants.bottomNavBar.all_refresh_rates[currentIndex];
+                Globals.currentRefreshRate = 1000 / Constants.navBar.all_refresh_rates[currentIndex];
             }
         }
 
@@ -253,18 +265,18 @@ Item {
             running: true
             repeat: true
             onTriggered: {
-                bottom_navbar_model.fill_data(bottomNavbarData);
-                if (!bottomNavbarData.available_baudrates.length)
+                nav_bar_model.fill_data(navBarData);
+                if (!navBarData.available_baudrates.length)
                     return ;
 
                 if (available_baudrates.length == 0) {
-                    available_baudrates = bottomNavbarData.available_baudrates;
+                    available_baudrates = navBarData.available_baudrates;
                     serialDeviceBaudRate.currentIndex = 1;
                 }
                 if (available_flows.length == 0)
-                    available_flows = bottomNavbarData.available_flows;
+                    available_flows = navBarData.available_flows;
 
-                available_devices = bottomNavbarData.available_ports;
+                available_devices = navBarData.available_ports;
             }
         }
 

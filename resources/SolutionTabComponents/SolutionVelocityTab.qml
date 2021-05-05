@@ -35,12 +35,16 @@ Item {
             anchors.fill: parent
             width: parent.width
             height: parent.height
+            spacing: 0
 
             ComboBox {
                 id: solutionVelocitySelectedUnit
 
-                Layout.alignment: Qt.AlignCenter
-                width: Constants.solutionVelocity.unitDropdownWidth
+                Component.onCompleted: {
+                    solutionVelocitySelectedUnit.indicator.width = Constants.solutionVelocity.unitDropdownWidth / 3;
+                }
+                Layout.alignment: Qt.AlignCenter | Qt.AlignTop
+                Layout.preferredWidth: Constants.solutionVelocity.unitDropdownWidth
                 model: available_units
                 onCurrentIndexChanged: {
                     if (!available_units)
@@ -53,11 +57,10 @@ Item {
             ChartView {
                 id: solutionVelocityChart
 
-                Layout.preferredWidth: parent.width
-                Layout.preferredHeight: parent.height
                 Layout.alignment: Qt.AlignBottom
                 Layout.bottomMargin: Constants.solutionVelocity.chartBottomMargin
                 Layout.fillHeight: true
+                Layout.fillWidth: true
                 backgroundColor: Constants.commonChart.backgroundColor
                 plotAreaColor: Constants.commonChart.areaColor
                 legend.visible: false
@@ -109,7 +112,7 @@ Item {
                                     id: label
 
                                     text: modelData
-                                    font.pointSize: Constants.solutionVelocity.legendLabelPointSize
+                                    font.pointSize: Constants.pointSize
                                     anchors.verticalCenter: parent.verticalCenter
                                     anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                                 }
@@ -135,7 +138,7 @@ Item {
                     labelsColor: Constants.commonChart.labelsColor
 
                     labelsFont {
-                        pointSize: Constants.commonChart.tickPointSize
+                        pointSize: Constants.pointSize
                         bold: true
                     }
 
@@ -153,14 +156,14 @@ Item {
                     labelsColor: Constants.commonChart.labelsColor
 
                     labelsFont {
-                        pointSize: Constants.commonChart.tickPointSize
+                        pointSize: Constants.pointSize
                         bold: true
                     }
 
                 }
 
                 Timer {
-                    interval: Constants.currentRefreshRate
+                    interval: Globals.currentRefreshRate
                     running: true
                     repeat: true
                     onTriggered: {

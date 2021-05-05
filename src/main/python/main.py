@@ -43,7 +43,7 @@ LOG_PANEL: Dict[str, Any] = {
 }
 log_panel_lock = QMutex()
 
-BOTTOM_NAVBAR: Dict[str, Any] = {
+NAV_BAR: Dict[str, Any] = {
     Keys.AVAILABLE_PORTS: [],
     Keys.AVAILABLE_BAUDRATES: [],
     Keys.AVAILABLE_FLOWS: [],
@@ -139,10 +139,10 @@ def receive_messages(app_, backend, messages):
                 LOCAL_OBSERVATION_TAB[Keys.TOW] = m.observationStatus.tow
                 LOCAL_OBSERVATION_TAB[Keys.WEEK] = m.observationStatus.week
                 LOCAL_OBSERVATION_TAB[Keys.ROWS][:] = obs_rows_to_json(m.observationStatus.rows)
-        elif m.which == MessageKeys.BOTTOM_NAVBAR_STATUS:
-            BOTTOM_NAVBAR[Keys.AVAILABLE_PORTS][:] = m.bottomNavbarStatus.availablePorts
-            BOTTOM_NAVBAR[Keys.AVAILABLE_BAUDRATES][:] = m.bottomNavbarStatus.availableBaudrates
-            BOTTOM_NAVBAR[Keys.AVAILABLE_FLOWS][:] = m.bottomNavbarStatus.availableFlows
+        elif m.which == MessageKeys.NAV_BAR_STATUS:
+            NAV_BAR[Keys.AVAILABLE_PORTS][:] = m.navBarStatus.availablePorts
+            NAV_BAR[Keys.AVAILABLE_BAUDRATES][:] = m.navBarStatus.availableBaudrates
+            NAV_BAR[Keys.AVAILABLE_FLOWS][:] = m.navBarStatus.availableFlows
         elif m.which == MessageKeys.LOG_APPEND:
             log_panel_lock.lock()
             LOG_PANEL[Keys.ENTRIES] += [entry.line for entry in m.logAppend.entries]
@@ -301,7 +301,7 @@ class LogPanelModel(QObject):  # pylint: disable=too-few-public-methods
         return cp
 
 
-class BottomNavbarData(QObject):
+class NavBarData(QObject):
 
     _available_ports: List[str] = []
     _available_baudrates: List[str] = []
@@ -334,12 +334,12 @@ class BottomNavbarData(QObject):
     available_flows = Property(QTKeys.QVARIANTLIST, get_available_flows, set_available_flows)  # type: ignore
 
 
-class BottomNavbarModel(QObject):  # pylint: disable=too-few-public-methods
-    @Slot(BottomNavbarData)  # type: ignore
-    def fill_data(self, cp: BottomNavbarData) -> BottomNavbarData:  # pylint:disable=no-self-use
-        cp.set_available_ports(BOTTOM_NAVBAR[Keys.AVAILABLE_PORTS])
-        cp.set_available_baudrates(BOTTOM_NAVBAR[Keys.AVAILABLE_BAUDRATES])
-        cp.set_available_flows(BOTTOM_NAVBAR[Keys.AVAILABLE_FLOWS])
+class NavBarModel(QObject):  # pylint: disable=too-few-public-methods
+    @Slot(NavBarData)  # type: ignore
+    def fill_data(self, cp: NavBarData) -> NavBarData:  # pylint:disable=no-self-use
+        cp.set_available_ports(NAV_BAR[Keys.AVAILABLE_PORTS])
+        cp.set_available_baudrates(NAV_BAR[Keys.AVAILABLE_BAUDRATES])
+        cp.set_available_flows(NAV_BAR[Keys.AVAILABLE_FLOWS])
         return cp
 
 
@@ -762,7 +762,7 @@ if __name__ == "__main__":
     app = QApplication()
 
     qmlRegisterType(LogPanelData, "SwiftConsole", 1, 0, "LogPanelData")  # type: ignore
-    qmlRegisterType(BottomNavbarData, "SwiftConsole", 1, 0, "BottomNavbarData")  # type: ignore
+    qmlRegisterType(NavBarData, "SwiftConsole", 1, 0, "NavBarData")  # type: ignore
     qmlRegisterType(SolutionPositionPoints, "SwiftConsole", 1, 0, "SolutionPositionPoints")  # type: ignore
     qmlRegisterType(SolutionTableEntries, "SwiftConsole", 1, 0, "SolutionTableEntries")  # type: ignore
     qmlRegisterType(SolutionVelocityPoints, "SwiftConsole", 1, 0, "SolutionVelocityPoints")  # type: ignore
@@ -784,7 +784,7 @@ if __name__ == "__main__":
 
     data_model = DataModel(endpoint_main, messages_main, args.file_in, args.connect)
     log_panel_model = LogPanelModel()
-    bottom_navbar_model = BottomNavbarModel()
+    nav_bar_model = NavBarModel()
     solution_position_model = SolutionPositionModel()
     solution_table_model = SolutionTableModel()
     solution_velocity_model = SolutionVelocityModel()
@@ -793,7 +793,7 @@ if __name__ == "__main__":
     local_observation_model = ObservationModel()
     root_context = engine.rootContext()
     root_context.setContextProperty("log_panel_model", log_panel_model)
-    root_context.setContextProperty("bottom_navbar_model", bottom_navbar_model)
+    root_context.setContextProperty("nav_bar_model", nav_bar_model)
     root_context.setContextProperty("solution_position_model", solution_position_model)
     root_context.setContextProperty("solution_table_model", solution_table_model)
     root_context.setContextProperty("solution_velocity_model", solution_velocity_model)

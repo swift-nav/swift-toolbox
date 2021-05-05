@@ -16,12 +16,22 @@ use strum_macros::{Display, EnumString};
 pub enum Tabs {
     #[strum(serialize = "TRACKING_SIGNALS")]
     TRACKING_SIGNALS,
+    #[strum(serialize = "TRACKING_SKYPLOT")]
+    TRACKING_SKYPLOT,
     #[strum(serialize = "SOLUTION_POSITION")]
     SOLUTION_POSITION,
     #[strum(serialize = "SOLUTION_VELOCITY")]
     SOLUTION_VELOCITY,
+    #[strum(serialize = "BASELINE")]
+    BASELINE,
     #[strum(serialize = "OBSERVATIONS")]
     OBSERVATIONS,
+    #[strum(serialize = "SETTINGS")]
+    SETTINGS,
+    #[strum(serialize = "UPDATE")]
+    UPDATE,
+    #[strum(serialize = "ADVANCED")]
+    ADVANCED,
 }
 
 #[derive(Clone, Debug, Display, EnumString, Eq, Hash, PartialEq)]
@@ -58,6 +68,8 @@ pub enum Keys {
     AVAILABLE_BAUDRATES,
     #[strum(serialize = "AVAILABLE_FLOWS")]
     AVAILABLE_FLOWS,
+    #[strum(serialize = "AVAILABLE_REFRESH_RATES")]
+    AVAILABLE_REFRESH_RATES,
     #[strum(serialize = "REMOTE")]
     REMOTE,
     #[strum(serialize = "TOW")]

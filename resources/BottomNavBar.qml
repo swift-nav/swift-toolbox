@@ -210,6 +210,7 @@ Item {
 
         Button {
             id: connectButton
+
             Layout.alignment: Qt.AlignRight
             Layout.rightMargin: Constants.bottomNavBar.navBarMargin
             Layout.bottomMargin: Constants.bottomNavBar.navBarMargin

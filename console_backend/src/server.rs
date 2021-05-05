@@ -51,6 +51,47 @@ impl ServerEndpoint {
     }
 }
 
+/// Start connections based on CLI options.
+///
+/// # Parameters
+/// - `opt`: CLI Options to start specific connection type.
+/// - `server_state`: The Server state to start a specific connection.
+/// - `client_send`: Client Sender channel for communication from backend to frontend.
+/// - `shared_state`: The shared state for validating another connection is not already running.
+fn handle_cli(
+    opt: CliOptions,
+    server_state: ServerState,
+    client_send: ClientSender,
+    shared_state: SharedState,
+) {
+    if let Some(opt_input) = opt.input {
+        match opt_input {
+            Input::Tcp { host, port } => {
+                let host_port = format!("{}:{}", host, port);
+                server_state.connect_to_host(client_send, shared_state, host_port);
+            }
+            Input::File { file_in } => {
+                let filename = file_in.display().to_string();
+                server_state.connect_to_file(client_send, shared_state, filename, opt.exit_after);
+            }
+            Input::Serial {
+                serialport,
+                baudrate,
+                flow_control,
+            } => {
+                let serialport = serialport.display().to_string();
+                server_state.connect_to_serial(
+                    client_send,
+                    shared_state,
+                    serialport,
+                    baudrate,
+                    flow_control,
+                );
+            }
+        }
+    }
+}
+
 #[pymethods]
 impl Server {
     #[new]
@@ -108,45 +149,13 @@ impl Server {
         log::set_boxed_logger(Box::new(logger)).expect("Failed to set logger");
         log::set_max_level(log::LevelFilter::Info);
 
-        let server_state_clone = server_state.clone();
-        let shared_state_clone = shared_state.clone();
-        let client_send_clone = client_send.clone();
         // Handle CLI Opts.
-        if let Some(opt_input) = opt.input {
-            match opt_input {
-                Input::Tcp { host, port } => {
-                    let host_port = format!("{}:{}", host, port);
-                    server_state_clone.connect_to_host(
-                        client_send_clone,
-                        shared_state_clone,
-                        host_port,
-                    );
-                }
-                Input::File { file_in } => {
-                    let filename = file_in.display().to_string();
-                    server_state_clone.connect_to_file(
-                        client_send_clone,
-                        shared_state_clone,
-                        filename,
-                        opt.exit_after,
-                    );
-                }
-                Input::Serial {
-                    serialport,
-                    baudrate,
-                    flow_control,
-                } => {
-                    let serialport = serialport.display().to_string();
-                    server_state_clone.connect_to_serial(
-                        client_send_clone,
-                        shared_state_clone,
-                        serialport,
-                        baudrate,
-                        flow_control,
-                    );
-                }
-            }
-        }
+        handle_cli(
+            opt,
+            server_state.clone(),
+            client_send.clone(),
+            shared_state.clone(),
+        );
         thread::spawn(move || loop {
             let buf = server_recv.recv();
             if let Ok(buf) = buf {
@@ -194,7 +203,7 @@ impl Server {
                                     client_send_clone,
                                     shared_state_clone,
                                     filename,
-                                    /*close_when_done = */ true,
+                                    /*close_when_done = */ false,
                                 );
                             }
                             m::message::PauseRequest(Ok(_)) => {

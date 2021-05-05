@@ -3,7 +3,7 @@ use crate::constants::*;
 use crate::formatters::*;
 use crate::piksi_tools_constants::*;
 use crate::process_messages::process_messages;
-use crate::utils::{close_frontend, set_connected_frontend, from_flowcontrol_str, ms_to_sec};
+use crate::utils::{close_frontend, from_flowcontrol_str, ms_to_sec, set_connected_frontend};
 use chrono::{DateTime, Utc};
 use log::{info, warn};
 use ordered_float::OrderedFloat;
@@ -158,7 +158,10 @@ impl ServerState {
             } else {
                 println!("Couldn't open file...");
             }
-            set_connected_frontend(cc::ApplicationStates::DISCONNECTED, &mut client_send.clone());
+            set_connected_frontend(
+                cc::ApplicationStates::DISCONNECTED,
+                &mut client_send.clone(),
+            );
             shared_state.set_running(false);
         });
         self.new_connection(handle);
@@ -182,19 +185,21 @@ impl ServerState {
         let handle = thread::spawn(move || {
             if let Ok(stream) = TcpStream::connect(host_port.clone()) {
                 info!("Connected to the server {}!", host_port);
-                let shared_state_clone_ = shared_state.clone();
                 let messages = sbp::iter_messages(stream);
                 set_connected_frontend(cc::ApplicationStates::CONNECTED, &mut client_send.clone());
                 process_messages(
                     messages,
                     shared_state_clone,
-                    client_send,
+                    client_send.clone(),
                     RealtimeDelay::Off,
                 );
             } else {
                 warn!("Couldn't connect to server...");
             }
-            // set_connected_frontend(cc::ApplicationStates::DISCONNECTED, &mut client_send.clone());
+            set_connected_frontend(
+                cc::ApplicationStates::DISCONNECTED,
+                &mut client_send.clone(),
+            );
             shared_state.set_running(false);
         });
         self.new_connection(handle);
@@ -231,11 +236,14 @@ impl ServerState {
                         Ok(port) => {
                             println!("Connected to serialport {}.", device);
                             let messages = sbp::iter_messages(port);
-                            set_connected_frontend(cc::ApplicationStates::CONNECTED, &mut client_send.clone());
+                            set_connected_frontend(
+                                cc::ApplicationStates::CONNECTED,
+                                &mut client_send.clone(),
+                            );
                             process_messages(
                                 messages,
                                 shared_state_clone,
-                                client_send,
+                                client_send.clone(),
                                 RealtimeDelay::Off,
                             );
                         }
@@ -244,6 +252,10 @@ impl ServerState {
                 }
                 Err(e) => eprintln!("{}", e),
             }
+            set_connected_frontend(
+                cc::ApplicationStates::DISCONNECTED,
+                &mut client_send.clone(),
+            );
             shared_state.set_running(false);
         });
         self.new_connection(handle);

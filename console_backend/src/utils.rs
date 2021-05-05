@@ -22,7 +22,10 @@ pub fn close_frontend<P: MessageSender>(client_send: &mut P) {
 }
 
 /// Send a CONNECTED or DISCONNECTED, signal to the frontend.
-pub fn set_connected_frontend<P: MessageSender>(app_state: cc::ApplicationStates, client_send: &mut P) {
+pub fn set_connected_frontend<P: MessageSender>(
+    app_state: cc::ApplicationStates,
+    client_send: &mut P,
+) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<m::message::Builder>();
     let mut status = msg.init_status();

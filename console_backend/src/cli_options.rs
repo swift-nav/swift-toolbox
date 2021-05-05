@@ -2,7 +2,7 @@ use clap::Clap;
 use std::{ops, path::PathBuf, str::FromStr};
 
 use crate::common_constants::Tabs;
-use crate::constants::{AVAILABLE_REFRESH_RATES, TAB_LIST};
+use crate::constants::{AVAILABLE_BAUDRATES, AVAILABLE_FLOWS, AVAILABLE_REFRESH_RATES, TAB_LIST};
 
 #[derive(Clap, Debug)]
 #[clap(name = "swift_navigation_console", about = "Swift Navigation Console.")]
@@ -44,11 +44,15 @@ pub enum Input {
         serialport: PathBuf,
 
         /// The baudrate for processing packets.
-        #[clap(long, default_value = "115200")]
+        #[clap(long, default_value = "115200", validator(is_baudrate))]
         baudrate: u32,
 
         /// The flow control spec to use.
-        #[clap(long = "flow-control", default_value = "None")]
+        #[clap(
+            long = "flow-control",
+            default_value = "None",
+            validator(is_flow_control)
+        )]
         flow_control: String,
     },
     File {
@@ -88,6 +92,47 @@ fn is_refresh_rate(rr: &str) -> Result<(), String> {
             return Ok(());
         }
     }
-    Err(format!("Must choose from available refresh rates {:?}", AVAILABLE_REFRESH_RATES))
+    Err(format!(
+        "Must choose from available refresh rates {:?}",
+        AVAILABLE_REFRESH_RATES
+    ))
 }
 
+/// Validation for the baudrate cli option.
+///
+/// # Parameters
+/// - `br`: The user input baudrate.
+///
+/// # Returns
+/// - `Ok`: The baudrate was found in AVAILABLE_BAUDRATES.
+/// - `Err`: The tab was not found in AVAILABLE_BAUDRATES.
+fn is_baudrate(br: &str) -> Result<(), String> {
+    if let Ok(br_) = br.parse::<u32>() {
+        if AVAILABLE_BAUDRATES.contains(&br_) {
+            return Ok(());
+        }
+    }
+    Err(format!(
+        "Must choose from available baudrates {:?}",
+        AVAILABLE_BAUDRATES
+    ))
+}
+
+/// Validation for the flow-control cli option.
+///
+/// # Parameters
+/// - `fc`: The user input flow-control.
+///
+/// # Returns
+/// - `Ok`: The flow-control was found in AVAILABLE_FLOWS.
+/// - `Err`: The flow-control was not found in AVAILABLE_FLOWS.
+fn is_flow_control(fc: &str) -> Result<(), String> {
+    if AVAILABLE_FLOWS.contains(&fc) {
+        return Ok(());
+    }
+
+    Err(format!(
+        "Must choose from available tabs {:?}",
+        AVAILABLE_FLOWS
+    ))
+}

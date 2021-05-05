@@ -20,7 +20,7 @@ from PySide2 import QtQml, QtCore
 
 from PySide2.QtQml import QQmlComponent, qmlRegisterType
 
-from constants import ApplicationStates, MessageKeys, Keys, QTKeys
+from constants import ApplicationStates, MessageKeys, Keys, QTKeys, Tabs
 from observation_tab import (
     ObservationData,
     ObservationModel,
@@ -62,6 +62,21 @@ CONSOLE_BACKEND_CAPNP_PATH = "console_backend.capnp"
 PIKSI_HOST = "piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com"
 PIKSI_PORT = 55555
 
+
+MAIN_INDEX = "MAIN_INDEX"
+SUB_INDEX = "SUB_INDEX"
+
+TAB_LAYOUT = {
+    Tabs.TRACKING_SIGNALS: {MAIN_INDEX: 0, SUB_INDEX: 0,},
+    Tabs.SOLUTION_POSITION: {MAIN_INDEX: 1, SUB_INDEX: 0,},
+    Tabs.SOLUTION_VELOCITY: {MAIN_INDEX: 1, SUB_INDEX: 1,},
+    Tabs.BASELINE: {MAIN_INDEX: 2, SUB_INDEX: 0,},
+    Tabs.OBSERVATIONS: {MAIN_INDEX: 3, SUB_INDEX: 0,},
+    Tabs.SETTINGS: {MAIN_INDEX: 4, SUB_INDEX: 0,},
+    Tabs.UPDATE: {MAIN_INDEX: 5, SUB_INDEX: 0,},
+    Tabs.ADVANCED: {MAIN_INDEX: 6, SUB_INDEX: 0,},
+}
+
 LOG_PANEL: Dict[str, Any] = {
     Keys.ENTRIES: [],
 }
@@ -79,7 +94,7 @@ BOTTOM_NAVBAR: Dict[str, Any] = {
 capnp.remove_import_hook()  # pylint: disable=no-member
 
 
-def receive_messages(app_, backend, messages, constants):
+def receive_messages(app_, backend, messages):
     while True:
         buffer = backend.fetch_message()
         m = messages.Message.from_bytes(buffer)
@@ -88,8 +103,6 @@ def receive_messages(app_, backend, messages, constants):
                 return app_.quit()
             if m.status.text == ApplicationStates.CONNECTED:
                 BOTTOM_NAVBAR[Keys.CONNECTED] = True
-                print(constants.property("currentRefreshRate"))
-                
             elif m.status.text == ApplicationStates.DISCONNECTED:
                 BOTTOM_NAVBAR[Keys.CONNECTED] = False
 
@@ -338,7 +351,9 @@ class BottomNavbarData(QObject):
     def set_available_refresh_rates(self, available_refresh_rates: List[str]) -> None:
         self._available_refresh_rates = available_refresh_rates
 
-    available_refresh_rates = Property(QTKeys.QVARIANTLIST, get_available_refresh_rates, set_available_refresh_rates)  # type: ignore
+    available_refresh_rates = Property(
+        QTKeys.QVARIANTLIST, get_available_refresh_rates, set_available_refresh_rates
+    )  # type: ignore
 
     def get_connected(self) -> bool:
         """Getter for _connected.
@@ -393,12 +408,16 @@ def get_capnp_path() -> str:
         path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "resources/base", CONSOLE_BACKEND_CAPNP_PATH)
     return path
 
+
 def handle_cli_arguments(args: argparse.Namespace, constants: QObject):
     if args.no_opengl:
         constants.setProperty("useOpenGL", False)
     if args.refresh_rate is not None:
         constants.setProperty("currentRefreshRate", args.refresh_rate)
-        print(constants.property("bottomNavBar").property("default_refresh_rate_index"))
+    if args.tab is not None:
+        layout_idxs = TAB_LAYOUT[args.tab]
+        constants.setProperty("initialMainTabIndex", layout_idxs[MAIN_INDEX])
+        constants.setProperty("initialSubTabIndex", layout_idxs[SUB_INDEX])
 
 
 if __name__ == "__main__":
@@ -464,7 +483,5 @@ if __name__ == "__main__":
 
     handle_cli_arguments(args_main, constants_main)
 
-    threading.Thread(
-        target=receive_messages, args=(app, backend_main, messages_main, constants_main), daemon=True
-    ).start()
+    threading.Thread(target=receive_messages, args=(app, backend_main, messages_main), daemon=True).start()
     sys.exit(app.exec_())

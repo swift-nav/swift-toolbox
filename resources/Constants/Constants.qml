@@ -15,6 +15,8 @@ QtObject {
     property int currentRefreshRate: 5 // 5 Hz
     readonly property int staticTimerIntervalRate: 5 // 5 Hz
     property bool useOpenGL: true
+    property int initialMainTabIndex: 0 // Tracking
+    property int initialSubTabIndex: 0 // Signals
     property string monoSpaceFont: "Courier New"
     readonly property bool debugMode: false
 

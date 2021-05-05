@@ -128,7 +128,7 @@ impl Server {
                         client_send_clone,
                         shared_state_clone,
                         filename,
-                        /*close_when_done = */ true,
+                        opt.exit_after,
                     );
                 }
                 Input::Serial {

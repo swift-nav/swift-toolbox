@@ -2,7 +2,7 @@ use clap::Clap;
 use std::{ops, path::PathBuf, str::FromStr};
 
 use crate::common_constants::Tabs;
-use crate::constants::TAB_LIST;
+use crate::constants::{AVAILABLE_REFRESH_RATES, TAB_LIST};
 
 #[derive(Clap, Debug)]
 #[clap(name = "swift_navigation_console", about = "Swift Navigation Console.")]
@@ -10,14 +10,18 @@ pub struct CliOptions {
     #[clap(subcommand)]
     pub input: Option<Input>,
 
+    /// Exit when connection closes.
+    #[clap(long = "exit-after")]
+    pub exit_after: bool,
+
     // // Frontend Options
     /// Don't use opengl in plots.
     #[clap(long = "no-opengl", parse(from_flag = ops::Not::not))]
     pub no_opengl: bool,
 
     /// Don't use opengl in plots.
-    #[clap(long = "refresh-rate")]
-    pub refresh_rate: Option<u32>,
+    #[clap(long = "refresh-rate", validator(is_refresh_rate))]
+    pub refresh_rate: Option<u8>,
 
     #[clap(long = "tab", validator(is_tab))]
     pub tab: Option<String>,
@@ -69,3 +73,21 @@ fn is_tab(tab: &str) -> Result<(), String> {
 
     Err(format!("Must choose from available tabs {:?}", TAB_LIST))
 }
+
+/// Validation for the refresh-rate cli option.
+///
+/// # Parameters
+/// - `rr`: The user input refresh-rate.
+///
+/// # Returns
+/// - `Ok`: The refresh-rate was found in AVAILABLE_REFRESH_RATES.
+/// - `Err`: The tab was not found in AVAILABLE_REFRESH_RATES.
+fn is_refresh_rate(rr: &str) -> Result<(), String> {
+    if let Ok(rr_) = rr.parse::<u8>() {
+        if AVAILABLE_REFRESH_RATES.contains(&rr_) {
+            return Ok(());
+        }
+    }
+    Err(format!("Must choose from available refresh rates {:?}", AVAILABLE_REFRESH_RATES))
+}
+

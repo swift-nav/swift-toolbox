@@ -67,6 +67,7 @@ struct BottomNavbarStatus {
     availableBaudrates @0 : List(UInt32);
     availablePorts @1 : List(Text);
     availableFlows @2 : List(Text);
+    availableRefreshRates @3 : List(UInt8);
 }
 
 struct ObservationTableRow {

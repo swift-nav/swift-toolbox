@@ -18,7 +18,7 @@ from PySide2.QtCharts import QtCharts  # pylint: disable=unused-import
 
 from PySide2 import QtQml, QtCore
 
-from PySide2.QtQml import qmlRegisterType
+from PySide2.QtQml import QQmlComponent, qmlRegisterType
 
 from constants import ApplicationStates, MessageKeys, Keys, QTKeys
 from observation_tab import (
@@ -71,6 +71,7 @@ BOTTOM_NAVBAR: Dict[str, Any] = {
     Keys.AVAILABLE_PORTS: [],
     Keys.AVAILABLE_BAUDRATES: [],
     Keys.AVAILABLE_FLOWS: [],
+    Keys.AVAILABLE_REFRESH_RATES: [],
     Keys.CONNECTED: False,
 }
 
@@ -78,7 +79,7 @@ BOTTOM_NAVBAR: Dict[str, Any] = {
 capnp.remove_import_hook()  # pylint: disable=no-member
 
 
-def receive_messages(app_, backend, messages):
+def receive_messages(app_, backend, messages, constants):
     while True:
         buffer = backend.fetch_message()
         m = messages.Message.from_bytes(buffer)
@@ -87,6 +88,8 @@ def receive_messages(app_, backend, messages):
                 return app_.quit()
             if m.status.text == ApplicationStates.CONNECTED:
                 BOTTOM_NAVBAR[Keys.CONNECTED] = True
+                print(constants.property("currentRefreshRate"))
+                
             elif m.status.text == ApplicationStates.DISCONNECTED:
                 BOTTOM_NAVBAR[Keys.CONNECTED] = False
 
@@ -140,6 +143,7 @@ def receive_messages(app_, backend, messages):
             BOTTOM_NAVBAR[Keys.AVAILABLE_PORTS][:] = m.bottomNavbarStatus.availablePorts
             BOTTOM_NAVBAR[Keys.AVAILABLE_BAUDRATES][:] = m.bottomNavbarStatus.availableBaudrates
             BOTTOM_NAVBAR[Keys.AVAILABLE_FLOWS][:] = m.bottomNavbarStatus.availableFlows
+            BOTTOM_NAVBAR[Keys.AVAILABLE_REFRESH_RATES][:] = m.bottomNavbarStatus.availableRefreshRates
         elif m.which == MessageKeys.LOG_APPEND:
             log_panel_lock.lock()
             LOG_PANEL[Keys.ENTRIES] += [entry.line for entry in m.logAppend.entries]
@@ -299,6 +303,7 @@ class BottomNavbarData(QObject):
     _available_ports: List[str] = []
     _available_baudrates: List[str] = []
     _available_flows: List[str] = []
+    _available_refresh_rates: List[str] = []
     _connected: bool = False
 
     def get_available_ports(self) -> List[str]:
@@ -327,6 +332,14 @@ class BottomNavbarData(QObject):
 
     available_flows = Property(QTKeys.QVARIANTLIST, get_available_flows, set_available_flows)  # type: ignore
 
+    def get_available_refresh_rates(self) -> List[str]:
+        return self._available_refresh_rates
+
+    def set_available_refresh_rates(self, available_refresh_rates: List[str]) -> None:
+        self._available_refresh_rates = available_refresh_rates
+
+    available_refresh_rates = Property(QTKeys.QVARIANTLIST, get_available_refresh_rates, set_available_refresh_rates)  # type: ignore
+
     def get_connected(self) -> bool:
         """Getter for _connected.
 
@@ -349,6 +362,8 @@ class BottomNavbarModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_available_ports(BOTTOM_NAVBAR[Keys.AVAILABLE_PORTS])
         cp.set_available_baudrates(BOTTOM_NAVBAR[Keys.AVAILABLE_BAUDRATES])
         cp.set_available_flows(BOTTOM_NAVBAR[Keys.AVAILABLE_FLOWS])
+        cp.set_available_refresh_rates(BOTTOM_NAVBAR[Keys.AVAILABLE_REFRESH_RATES])
+        cp.set_connected(BOTTOM_NAVBAR[Keys.CONNECTED])
         return cp
 
 
@@ -378,14 +393,21 @@ def get_capnp_path() -> str:
         path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "resources/base", CONSOLE_BACKEND_CAPNP_PATH)
     return path
 
+def handle_cli_arguments(args: argparse.Namespace, constants: QObject):
+    if args.no_opengl:
+        constants.setProperty("useOpenGL", False)
+    if args.refresh_rate is not None:
+        constants.setProperty("currentRefreshRate", args.refresh_rate)
+        print(constants.property("bottomNavBar").property("default_refresh_rate_index"))
+
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--no-opengl")
+    parser = argparse.ArgumentParser(add_help=False, usage=argparse.SUPPRESS)
+    parser.add_argument("--no-opengl", action="store_false")
     parser.add_argument("--refresh-rate")
     parser.add_argument("--tab")
 
-    args, _ = parser.parse_known_args()
+    args_main, _ = parser.parse_known_args()
 
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
@@ -432,5 +454,17 @@ if __name__ == "__main__":
     root_context.setContextProperty("local_observation_model", local_observation_model)
     root_context.setContextProperty("data_model", data_model)
 
-    threading.Thread(target=receive_messages, args=(app, backend_main, messages_main), daemon=True).start()
+    component = QQmlComponent(engine)
+    component.setData(
+        b'import QtQuick 2.0\nimport "Constants"\nItem{ property var constants: Constants }',
+        QUrl("qrc:/grabConstants.qml"),
+    )
+    constants_main = component.create()
+    constants_main = constants_main.property("constants")
+
+    handle_cli_arguments(args_main, constants_main)
+
+    threading.Thread(
+        target=receive_messages, args=(app, backend_main, messages_main, constants_main), daemon=True
+    ).start()
     sys.exit(app.exec_())

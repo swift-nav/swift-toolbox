@@ -6,6 +6,7 @@
     <file>LogPanel.qml</file>
     <file>Constants/Constants.qml</file>
     <file>Constants/qmldir</file>
+    <file>Constants/utils.js</file>
     <file>SolutionTab.qml</file>
     <file>SolutionTabComponents/SolutionPositionTab.qml</file>
     <file>SolutionTabComponents/SolutionTable.qml</file>

@@ -1,8 +1,9 @@
+use crate::common_constants as cc;
 use crate::constants::*;
 use crate::formatters::*;
 use crate::piksi_tools_constants::*;
 use crate::process_messages::process_messages;
-use crate::utils::{close_frontend, connected_frontend, from_flowcontrol_str, ms_to_sec};
+use crate::utils::{close_frontend, set_connected_frontend, from_flowcontrol_str, ms_to_sec};
 use chrono::{DateTime, Utc};
 use log::{info, warn};
 use ordered_float::OrderedFloat;
@@ -144,7 +145,7 @@ impl ServerState {
                 println!("Opened file successfully!");
                 let shared_state_clone_ = shared_state.clone();
                 let messages = sbp::iter_messages(stream);
-                connected_frontend(&mut client_send.clone());
+                set_connected_frontend(cc::ApplicationStates::CONNECTED, &mut client_send.clone());
                 process_messages(
                     messages,
                     shared_state_clone_,
@@ -157,6 +158,7 @@ impl ServerState {
             } else {
                 println!("Couldn't open file...");
             }
+            set_connected_frontend(cc::ApplicationStates::DISCONNECTED, &mut client_send.clone());
             shared_state.set_running(false);
         });
         self.new_connection(handle);
@@ -178,11 +180,11 @@ impl ServerState {
         shared_state_clone.set_running(true);
         self.connection_join();
         let handle = thread::spawn(move || {
-            let shared_state_clone = shared_state.clone();
             if let Ok(stream) = TcpStream::connect(host_port.clone()) {
                 info!("Connected to the server {}!", host_port);
+                let shared_state_clone_ = shared_state.clone();
                 let messages = sbp::iter_messages(stream);
-                connected_frontend(&mut client_send.clone());
+                set_connected_frontend(cc::ApplicationStates::CONNECTED, &mut client_send.clone());
                 process_messages(
                     messages,
                     shared_state_clone,
@@ -192,6 +194,7 @@ impl ServerState {
             } else {
                 warn!("Couldn't connect to server...");
             }
+            // set_connected_frontend(cc::ApplicationStates::DISCONNECTED, &mut client_send.clone());
             shared_state.set_running(false);
         });
         self.new_connection(handle);
@@ -228,7 +231,7 @@ impl ServerState {
                         Ok(port) => {
                             println!("Connected to serialport {}.", device);
                             let messages = sbp::iter_messages(port);
-                            connected_frontend(&mut client_send.clone());
+                            set_connected_frontend(cc::ApplicationStates::CONNECTED, &mut client_send.clone());
                             process_messages(
                                 messages,
                                 shared_state_clone,

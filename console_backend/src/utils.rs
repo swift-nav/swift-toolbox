@@ -21,12 +21,11 @@ pub fn close_frontend<P: MessageSender>(client_send: &mut P) {
     client_send.send_data(msg_bytes);
 }
 
-/// Send a CONNECTED, or kill, signal to the frontend.
-pub fn connected_frontend<P: MessageSender>(client_send: &mut P) {
+/// Send a CONNECTED or DISCONNECTED, signal to the frontend.
+pub fn set_connected_frontend<P: MessageSender>(app_state: cc::ApplicationStates, client_send: &mut P) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<m::message::Builder>();
     let mut status = msg.init_status();
-    let app_state = cc::ApplicationStates::CONNECTED;
     status.set_text(&app_state.to_string());
     let mut msg_bytes: Vec<u8> = vec![];
     serialize::write_message(&mut msg_bytes, &builder).unwrap();
@@ -67,6 +66,14 @@ pub fn refresh_ports<P: MessageSender>(client_send: &mut P) {
 
         for (i, flow) in AVAILABLE_FLOWS.iter().enumerate() {
             available_flows.set(i as u32, &flow.to_string());
+        }
+
+        let mut available_refresh_rates = bottom_navbar_status
+            .reborrow()
+            .init_available_refresh_rates(AVAILABLE_REFRESH_RATES.len() as u32);
+
+        for (i, rr) in AVAILABLE_REFRESH_RATES.iter().enumerate() {
+            available_refresh_rates.set(i as u32, *rr);
         }
 
         let mut msg_bytes: Vec<u8> = vec![];

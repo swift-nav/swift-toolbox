@@ -1332,7 +1332,7 @@ mod tests {
             filename,
             /*close_when_done = */ true,
         );
-        sleep(Duration::from_millis(100));
+        sleep(Duration::from_millis(150));
         assert!(shared_state.is_running());
         sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
         assert!(!shared_state.is_running());

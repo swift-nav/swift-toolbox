@@ -123,8 +123,6 @@ Item {
                 }
 
                 ValueAxis {
-                    // useOpenGL: true // [CPP-93] Invesigate usage of `useOpenGL` in plots
-
                     id: solutionVelocityXAxis
 
                     labelsAngle: Constants.solutionVelocity.xAxisLabelsAngle
@@ -144,8 +142,6 @@ Item {
                 }
 
                 ValueAxis {
-                    // useOpenGL: true // [CPP-93] Invesigate usage of `useOpenGL` in plots
-
                     id: solutionVelocityYAxis
 
                     titleText: solutionVelocitySelectedUnit.currentText
@@ -193,6 +189,7 @@ Item {
                                 line.color = colors[idx];
                                 line.width = Constants.commonChart.lineWidth;
                                 line.axisYRight = solutionVelocityYAxis;
+                                line.useOpenGL = true;
                                 lines.push(line);
                             }
                         }

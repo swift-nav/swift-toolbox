@@ -194,7 +194,7 @@ impl Server {
                                     client_send_clone,
                                     shared_state_clone,
                                     filename,
-                                    true,
+                                    /*close_when_done = */ true,
                                 );
                             }
                             m::message::PauseRequest(Ok(_)) => {

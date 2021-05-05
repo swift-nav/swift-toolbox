@@ -220,7 +220,7 @@ cp -r main.dist/* main.app/Contents/MacOS/
 iconutil --convert icns src/main/icons/Mac.iconset
 mv src/main/icons/Mac.icns main.app/Contents/Resources/SwiftNavConsole.icns
 conda run -n $CONDA_ENV python src/build/generate-mac-info-plist.py
-hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg'
+hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg' || (echo 'Failed to create Mac dmg. Retrying in 10s...' && sleep 10 && hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg' )
 '''
 
 [tasks.qml-format.linux]

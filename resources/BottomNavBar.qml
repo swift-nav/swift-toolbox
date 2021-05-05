@@ -239,9 +239,12 @@ Item {
             visible: true
             Layout.preferredWidth: Constants.bottomNavBar.plotRefreshRateDropdownWidth
             Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
-            model: Constants.bottomNavBar.available_ref_rates
+            ToolTip.visible: hovered
+            ToolTip.text: "Refresh Rate (Hz)"
+            model: Constants.bottomNavBar.all_refresh_rates
+            currentIndex: Constants.bottomNavBar.default_refresh_rate_index
             onActivated: {
-                Constants.currentRefreshRate = 1000 / Constants.bottomNavBar.available_ref_rates[currentIndex];
+                Constants.currentRefreshRate = 1000 / Constants.bottomNavBar.all_refresh_rates[currentIndex];
             }
         }
 

@@ -145,7 +145,12 @@ impl ServerState {
                 let shared_state_clone_ = shared_state.clone();
                 let messages = sbp::iter_messages(stream);
                 connected_frontend(&mut client_send.clone());
-                process_messages(messages, shared_state_clone_, client_send.clone());
+                process_messages(
+                    messages,
+                    shared_state_clone_,
+                    client_send.clone(),
+                    RealtimeDelay::On,
+                );
                 if close_when_done {
                     close_frontend(&mut client_send.clone());
                 }
@@ -178,7 +183,12 @@ impl ServerState {
                 info!("Connected to the server {}!", host_port);
                 let messages = sbp::iter_messages(stream);
                 connected_frontend(&mut client_send.clone());
-                process_messages(messages, shared_state_clone, client_send);
+                process_messages(
+                    messages,
+                    shared_state_clone,
+                    client_send,
+                    RealtimeDelay::Off,
+                );
             } else {
                 warn!("Couldn't connect to server...");
             }
@@ -219,7 +229,12 @@ impl ServerState {
                             println!("Connected to serialport {}.", device);
                             let messages = sbp::iter_messages(port);
                             connected_frontend(&mut client_send.clone());
-                            process_messages(messages, shared_state_clone, client_send);
+                            process_messages(
+                                messages,
+                                shared_state_clone,
+                                client_send,
+                                RealtimeDelay::Off,
+                            );
                         }
                         Err(e) => eprintln!("Unable to connect to serialport: {}", e),
                     }
@@ -390,6 +405,12 @@ impl SolutionVelocityTabState {
             unit: String::from(MPS),
         }
     }
+}
+
+// Main Tab Types.
+pub enum RealtimeDelay {
+    On,
+    Off,
 }
 
 // Tracking Signals Tab Types.
@@ -1283,6 +1304,8 @@ mod tests {
         time::{Duration, SystemTime},
     };
     const TEST_FILEPATH: &str = "./tests/data/piksi-relay-1min.sbp";
+    const TEST_SHORT_FILEPATH: &str = "./tests/data/piksi-relay.sbp";
+    const SBP_FILE_SHORT_DURATION_SEC: f64 = 26.1;
 
     fn receive_thread(client_recv: mpsc::Receiver<Vec<u8>>) -> JoinHandle<()> {
         thread::spawn(move || {
@@ -1307,13 +1330,18 @@ mod tests {
             inner: client_send_,
         };
         let server_state = ServerState::new();
-        let filename = TEST_FILEPATH.to_string();
+        let filename = TEST_SHORT_FILEPATH.to_string();
         receive_thread(client_receive);
         assert!(!shared_state.is_running());
-        server_state.connect_to_file(client_send, shared_state.clone(), filename, true);
-        sleep(Duration::from_millis(5));
+        server_state.connect_to_file(
+            client_send,
+            shared_state.clone(),
+            filename,
+            /*close_when_done = */ true,
+        );
+        sleep(Duration::from_millis(150));
         assert!(shared_state.is_running());
-        sleep(Duration::from_secs(5));
+        sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
         assert!(!shared_state.is_running());
     }
 
@@ -1325,17 +1353,22 @@ mod tests {
             inner: client_send_,
         };
         let server_state = ServerState::new();
-        let filename = TEST_FILEPATH.to_string();
+        let filename = TEST_SHORT_FILEPATH.to_string();
         receive_thread(client_receive);
         assert!(!shared_state.is_running());
-        server_state.connect_to_file(client_send, shared_state.clone(), filename, true);
-        sleep(Duration::from_millis(5));
+        server_state.connect_to_file(
+            client_send,
+            shared_state.clone(),
+            filename,
+            /*close_when_done = */ true,
+        );
+        sleep(Duration::from_millis(100));
         assert!(shared_state.is_running());
         shared_state.set_paused(true);
-        sleep(Duration::from_secs(5));
+        sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
         assert!(shared_state.is_running());
         shared_state.set_paused(false);
-        sleep(Duration::from_secs(5));
+        sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
         assert!(!shared_state.is_running());
     }
 
@@ -1352,7 +1385,12 @@ mod tests {
         let handle = receive_thread(client_receive);
         assert!(!shared_state.is_running());
         {
-            server_state.connect_to_file(client_send, shared_state.clone(), filename, true);
+            server_state.connect_to_file(
+                client_send,
+                shared_state.clone(),
+                filename,
+                /*close_when_done = */ true,
+            );
         }
 
         sleep(Duration::from_millis(5));

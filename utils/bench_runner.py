@@ -99,8 +99,8 @@ HYPERFINE_COMMAND = lambda file_out: f"hyperfine --warmup 1 --runs 5 --show-outp
 FRONTEND_CPU_BENCHMARKS = {
     WINDOWS: [
         {
-            NAME: "202010224_192043",
-            FILE_PATH: "data/202010224_192043.sbp",
+            NAME: "piksi-relay-5sec",
+            FILE_PATH: "data/piksi-relay-5sec.sbp",
             KEY_LOCATION: "mean",
             EXPECTED: 50.0,
             ERROR_MARGIN_FRAC: 0.05,
@@ -108,8 +108,8 @@ FRONTEND_CPU_BENCHMARKS = {
     ],
     MACOS: [
         {
-            NAME: "202010224_192043",
-            FILE_PATH: "data/202010224_192043.sbp",
+            NAME: "piksi-relay-5sec",
+            FILE_PATH: "data/piksi-relay-5sec.sbp",
             KEY_LOCATION: "mean",
             EXPECTED: 12.0,
             ERROR_MARGIN_FRAC: 0.05,
@@ -117,8 +117,8 @@ FRONTEND_CPU_BENCHMARKS = {
     ],
     LINUX: [
         {
-            NAME: "202010224_192043",
-            FILE_PATH: "data/202010224_192043.sbp",
+            NAME: "piksi-relay-5sec",
+            FILE_PATH: "data/piksi-relay-5sec.sbp",
             KEY_LOCATION: "mean",
             EXPECTED: 80.0,
             ERROR_MARGIN_FRAC: 0.05,
@@ -140,8 +140,8 @@ RUN_COUNT = 5
 FRONTEND_MEM_BENCHMARKS: Dict[str, List[Dict[str, Any]]] = {
     WINDOWS: [
         {
-            NAME: "piksi-relay-1min",
-            FILE_PATH: "data/piksi-relay-1min.sbp",
+            NAME: "piksi-relay-5sec",
+            FILE_PATH: "data/piksi-relay-5sec.sbp",
             MAXIMUM_MEAN_MB: 300,
             MAXIMUM_RATE_OF_MAX_MEAN: 0.05,
             MAXIMUM_RATE_OF_MAX_STD: 0.3,
@@ -149,8 +149,8 @@ FRONTEND_MEM_BENCHMARKS: Dict[str, List[Dict[str, Any]]] = {
     ],
     MACOS: [
         {
-            NAME: "piksi-relay-1min",
-            FILE_PATH: "data/piksi-relay-1min.sbp",
+            NAME: "piksi-relay-5sec",
+            FILE_PATH: "data/piksi-relay-5sec.sbp",
             MAXIMUM_MEAN_MB: 300,
             MAXIMUM_RATE_OF_MAX_MEAN: 0.05,
             MAXIMUM_RATE_OF_MAX_STD: 0.3,
@@ -158,8 +158,8 @@ FRONTEND_MEM_BENCHMARKS: Dict[str, List[Dict[str, Any]]] = {
     ],
     LINUX: [
         {
-            NAME: "piksi-relay-1min",
-            FILE_PATH: "data/piksi-relay-1min.sbp",
+            NAME: "piksi-relay-5sec",
+            FILE_PATH: "data/piksi-relay-5sec.sbp",
             MAXIMUM_MEAN_MB: 400,
             MAXIMUM_RATE_OF_MAX_MEAN: 0.05,
             MAXIMUM_RATE_OF_MAX_STD: 0.4,

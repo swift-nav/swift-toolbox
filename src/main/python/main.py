@@ -352,8 +352,8 @@ class BottomNavbarData(QObject):
         self._available_refresh_rates = available_refresh_rates
 
     available_refresh_rates = Property(
-        QTKeys.QVARIANTLIST, get_available_refresh_rates, set_available_refresh_rates
-    )  # type: ignore
+        QTKeys.QVARIANTLIST, get_available_refresh_rates, set_available_refresh_rates  # type: ignore
+    )
 
     def get_connected(self) -> bool:
         """Getter for _connected.
@@ -411,13 +411,13 @@ def get_capnp_path() -> str:
 
 def handle_cli_arguments(args: argparse.Namespace, constants: QObject):
     if args.no_opengl:
-        constants.setProperty("useOpenGL", False)
+        constants.setProperty("useOpenGL", False)  # type: ignore
     if args.refresh_rate is not None:
-        constants.setProperty("currentRefreshRate", args.refresh_rate)
+        constants.setProperty("currentRefreshRate", args.refresh_rate)  # type: ignore
     if args.tab is not None:
         layout_idxs = TAB_LAYOUT[args.tab]
-        constants.setProperty("initialMainTabIndex", layout_idxs[MAIN_INDEX])
-        constants.setProperty("initialSubTabIndex", layout_idxs[SUB_INDEX])
+        constants.setProperty("initialMainTabIndex", layout_idxs[MAIN_INDEX])  # type: ignore
+        constants.setProperty("initialSubTabIndex", layout_idxs[SUB_INDEX])  # type: ignore
 
 
 if __name__ == "__main__":
@@ -475,11 +475,11 @@ if __name__ == "__main__":
 
     component = QQmlComponent(engine)
     component.setData(
-        b'import QtQuick 2.0\nimport "Constants"\nItem{ property var constants: Constants }',
+        b'import QtQuick 2.0\nimport "Constants"\nItem{ property var constants: Constants }',  # type: ignore
         QUrl("qrc:/grabConstants.qml"),
     )
     constants_main = component.create()
-    constants_main = constants_main.property("constants")
+    constants_main = constants_main.property("constants")  # type: ignore
 
     handle_cli_arguments(args_main, constants_main)
 

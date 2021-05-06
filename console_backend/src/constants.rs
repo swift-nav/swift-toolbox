@@ -7,9 +7,14 @@ pub const SECONDS_PER_NANOSECOND: f64 = 1.0e-9;
 // CLI constants.
 pub const TAB_LIST: &[Tabs] = &[
     Tabs::TRACKING_SIGNALS,
+    Tabs::TRACKING_SKYPLOT,
     Tabs::SOLUTION_POSITION,
     Tabs::SOLUTION_VELOCITY,
+    Tabs::BASELINE,
     Tabs::OBSERVATIONS,
+    Tabs::SETTINGS,
+    Tabs::UPDATE,
+    Tabs::ADVANCED,
 ];
 
 // Server constants.

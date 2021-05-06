@@ -280,12 +280,6 @@ impl Server {
                         (*shared_data).solution_tab.position_tab.pause =
                             cv_in.get_solution_position_pause();
                     }
-                    // m::message::SysArgs(Ok(args)) => {
-
-                    //     let args = args.get_args().unwrap();
-                    //     let opt = CliOptions::from_iter(args);
-                    //     println!("{}", opt);
-                    // }
                     _ => {
                         eprintln!("unknown message from front-end");
                     }

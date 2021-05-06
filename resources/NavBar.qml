@@ -57,6 +57,14 @@ Item {
                     serialDeviceFlowControl.visible = false;
                 }
             }
+            Keys.onTabPressed: {
+                if (tcp_ip === navBarSourceSelection.currentText)
+                    tcpUrlBarText.focus = true;
+                else if (file === navBarSourceSelection.currentText)
+                    fileUrlBarText.focus = true;
+                else
+                    serialDevice.focus = true;
+            }
 
             states: State {
                 when: navBarSourceSelection.down
@@ -164,6 +172,18 @@ Item {
             Layout.fillWidth: true
             Layout.preferredHeight: Constants.navBar.urlBarHeight
             spacing: 1
+            Keys.onTabPressed: {
+                if (tcpUrlBarText.focus === true)
+                    tcpPortBarText.focus = true;
+                else
+                    connectionPauseButton.focus = true;
+            }
+            Keys.onBacktabPressed: {
+                if (tcpUrlBarText.focus === true)
+                    navBarSourceSelection.focus = true;
+                else
+                    tcpUrlBarText.focus = true;
+            }
 
             Rectangle {
                 id: tcpUrlBar
@@ -175,6 +195,7 @@ Item {
                 TextInput {
                     id: tcpUrlBarText
 
+                    focus: true
                     clip: true
                     anchors.fill: parent
                     anchors.margins: Constants.navBar.urlBarTextMargin
@@ -227,6 +248,12 @@ Item {
             Layout.fillWidth: true
             Layout.preferredHeight: Constants.navBar.urlBarHeight
             border.width: Constants.navBar.urlBarBorder
+            Keys.onTabPressed: {
+                connectionPauseButton.focus = true;
+            }
+            Keys.onBacktabPressed: {
+                navBarSourceSelection.focus = true;
+            }
 
             TextInput {
                 id: fileUrlBarText
@@ -257,6 +284,14 @@ Item {
             ToolTip.text: !checked ? "Pause" : "Unpause"
             checkable: true
             onClicked: data_model.pause(checked)
+            Keys.onBacktabPressed: {
+                if (tcp_ip === navBarSourceSelection.currentText)
+                    tcpPortBarText.focus = true;
+                else if (file === navBarSourceSelection.currentText)
+                    fileUrlBarText.focus = true;
+                else
+                    serialDeviceFlowControl.focus = true;
+            }
         }
 
         Button {

@@ -14,10 +14,7 @@ Item {
     property variant available_devices: []
     property variant available_flows: []
 
-    // anchors.centerIn: parent
-    anchors.top: parent.top
-    width: parent.width
-    height: parent.height
+    anchors.fill: parent
 
     NavBarData {
         id: navBarData
@@ -26,8 +23,9 @@ Item {
     RowLayout {
         id: navBarRowLayout
 
-        width: parent.width
-        height: parent.height
+        anchors.fill: parent
+        anchors.leftMargin: Constants.navBar.navBarMargin
+        anchors.rightMargin: Constants.navBar.navBarMargin
 
         ComboBox {
             id: navBarSourceSelection
@@ -36,7 +34,7 @@ Item {
                 navBarSourceSelection.indicator.width = Constants.navBar.connectionDropdownWidth / 3;
             }
             Layout.preferredWidth: Constants.navBar.connectionDropdownWidth
-            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+            Layout.preferredHeight: Constants.navBar.dropdownHeight
             model: sources
             onActivated: {
                 if (find(tcp_ip) === currentIndex)
@@ -59,6 +57,17 @@ Item {
                     serialDeviceFlowControl.visible = false;
                 }
             }
+
+            states: State {
+                when: navBarSourceSelection.down
+
+                PropertyChanges {
+                    target: navBarSourceSelection
+                    width: Constants.navBar.connectionDropdownWidth * 1.5
+                }
+
+            }
+
         }
 
         ComboBox {
@@ -68,18 +77,29 @@ Item {
                 serialDevice.indicator.width = Constants.navBar.serialSelectionDropdownWidth / 3;
             }
             visible: false
-            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+            Layout.preferredHeight: Constants.navBar.dropdownHeight
             Layout.preferredWidth: Constants.navBar.serialSelectionDropdownWidth
             model: available_devices
             onActivated: {
             }
+
+            states: State {
+                when: serialDevice.down
+
+                PropertyChanges {
+                    target: serialDevice
+                    width: Constants.navBar.serialSelectionDropdownWidth * 1.5
+                }
+
+            }
+
         }
 
         Button {
             id: serialDeviceRefresh
 
             visible: false
-            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+            Layout.preferredHeight: Constants.navBar.buttonHeight
             Layout.preferredWidth: Constants.navBar.serialDeviceRefreshWidth
             text: "F5"
             onClicked: {
@@ -94,11 +114,22 @@ Item {
                 serialDeviceBaudRate.indicator.width = Constants.navBar.serialDeviceBaudRateDropdownWidth / 3;
             }
             visible: false
-            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+            Layout.preferredHeight: Constants.navBar.dropdownHeight
             Layout.preferredWidth: Constants.navBar.serialDeviceBaudRateDropdownWidth
             model: available_baudrates
             onActivated: {
             }
+
+            states: State {
+                when: serialDeviceBaudRate.down
+
+                PropertyChanges {
+                    target: serialDeviceBaudRate
+                    width: Constants.navBar.serialDeviceBaudRateDropdownWidth * 1.5
+                }
+
+            }
+
         }
 
         ComboBox {
@@ -108,11 +139,22 @@ Item {
                 serialDeviceFlowControl.indicator.width = Constants.navBar.serialDeviceFlowControlDropdownWidth / 3;
             }
             visible: false
-            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+            Layout.preferredHeight: Constants.navBar.dropdownHeight
             Layout.preferredWidth: Constants.navBar.serialDeviceFlowControlDropdownWidth
             model: available_flows
             onActivated: {
             }
+
+            states: State {
+                when: serialDeviceFlowControl.down
+
+                PropertyChanges {
+                    target: serialDeviceFlowControl
+                    width: Constants.navBar.serialDeviceFlowControlDropdownWidth * 1.5
+                }
+
+            }
+
         }
 
         Row {
@@ -208,8 +250,8 @@ Item {
         Button {
             id: connectionPauseButton
 
-            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
             Layout.preferredWidth: Constants.navBar.connectionPauseWidth
+            Layout.preferredHeight: Constants.navBar.buttonHeight
             text: "| |"
             ToolTip.visible: hovered
             ToolTip.text: !checked ? "Pause" : "Unpause"
@@ -218,8 +260,8 @@ Item {
         }
 
         Button {
-            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
             Layout.preferredWidth: Constants.navBar.connectButtonWidth
+            Layout.preferredHeight: Constants.navBar.buttonHeight
             checkable: true
             text: !checked ? "Connect" : "Disconnect"
             onClicked: {
@@ -249,8 +291,8 @@ Item {
                 refreshRateDrop.indicator.width = Constants.navBar.plotRefreshRateDropdownWidth / 3;
             }
             visible: true
-            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
             Layout.preferredWidth: Constants.navBar.plotRefreshRateDropdownWidth
+            Layout.preferredHeight: Constants.navBar.dropdownHeight
             ToolTip.visible: hovered
             ToolTip.text: "Refresh Rate (Hz)"
             model: Constants.navBar.all_refresh_rates
@@ -258,6 +300,17 @@ Item {
             onActivated: {
                 Globals.currentRefreshRate = 1000 / Constants.navBar.all_refresh_rates[currentIndex];
             }
+
+            states: State {
+                when: refreshRateDrop.down
+
+                PropertyChanges {
+                    target: refreshRateDrop
+                    width: Constants.navBar.plotRefreshRateDropdownWidth * 1.5
+                }
+
+            }
+
         }
 
         Timer {

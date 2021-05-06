@@ -143,6 +143,7 @@ Item {
                 Text {
                     wrapMode: Text.Wrap
                     anchors.fill: parent
+                    font.pointSize: Constants.pointSize
                     text: Constants.solutionTable.rtkNoteText
                 }
 

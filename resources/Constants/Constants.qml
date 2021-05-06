@@ -7,7 +7,7 @@ QtObject {
     readonly property real margins: 2
     readonly property real topLevelSpacing: 0
     readonly property real logPanelPreferredHeight: 100
-    readonly property real navBarPreferredHeight: 30
+    readonly property real navBarPreferredHeight: 50
     property QtObject navBar
     property QtObject commonChart
     property QtObject commonLegend
@@ -18,12 +18,14 @@ QtObject {
     property QtObject observationTab
     property int defaultTimerIntervalRate: 1000 / 5 // 5 Hz
     property string monoSpaceFont: "Courier New"
-    property int pointSize: 5
+    property int pointSize: 6
     readonly property bool debugMode: false
 
     navBar: QtObject {
         readonly property int connectionDropdownWidth: 70
         readonly property int serialSelectionDropdownWidth: 90
+        readonly property int dropdownHeight: 40
+        readonly property int buttonHeight: 40
         readonly property int urlBarHeight: 25
         readonly property int urlBarBorder: 1
         readonly property int urlBarTextMargin: 4
@@ -32,7 +34,7 @@ QtObject {
         readonly property int serialDeviceBaudRateDropdownWidth: 90
         readonly property int serialDeviceFlowControlDropdownWidth: 100
         readonly property int serialDeviceRefreshWidth: 30
-        readonly property int connectButtonWidth: 60
+        readonly property int connectButtonWidth: 70
         readonly property int connectionPauseWidth: 30
         readonly property color placeholderTextColor: "#CDC9C9"
         readonly property var all_refresh_rates: [1, 5, 10, 25]
@@ -51,7 +53,7 @@ QtObject {
     }
 
     solutionTable: QtObject {
-        readonly property int defaultColumnWidth: 120
+        readonly property int defaultColumnWidth: 80
         readonly property color tableBorderColor: "#000000"
         readonly property int tableBorderWidth: 1
         readonly property int tableHeaderTableDataTableSpacing: 0

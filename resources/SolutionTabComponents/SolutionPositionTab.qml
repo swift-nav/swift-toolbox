@@ -166,7 +166,7 @@ Item {
                                     id: label
 
                                     text: modelData
-                                    font.pointSize: Constants.commonLegend.labelPointSize
+                                    font.pointSize: Constants.pointSize
                                     font.bold: true
                                     anchors.verticalCenter: parent.verticalCenter
                                     anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
@@ -192,7 +192,7 @@ Item {
                     labelsColor: Constants.commonChart.labelsColor
 
                     labelsFont {
-                        pointSize: Constants.commonChart.tickPointSize
+                        pointSize: Constants.pointSize
                         bold: true
                     }
 
@@ -210,7 +210,7 @@ Item {
                     labelsColor: Constants.commonChart.labelsColor
 
                     labelsFont {
-                        pointSize: Constants.commonChart.tickPointSize
+                        pointSize: Constants.pointSize
                         bold: true
                     }
 

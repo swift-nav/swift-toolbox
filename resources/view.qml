@@ -17,28 +17,13 @@ ApplicationWindow {
         anchors.fill: parent
         spacing: Constants.topLevelSpacing
 
-        Rectangle {
-            id: navBar
-
-            Layout.leftMargin: Constants.margins
-            Layout.rightMargin: Constants.margins
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignTop
-            Layout.minimumHeight: Constants.navBarPreferredHeight
-            z: Constants.commonChart.zAboveCharts
-
-            NavBar {
-            }
-
-        }
-
         SplitView {
             orientation: Qt.Vertical
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.leftMargin: Constants.margins
             Layout.rightMargin: Constants.margins
-            Layout.bottomMargin: Constants.margins
+            Layout.alignment: Qt.AlignTop
 
             ColumnLayout {
                 id: mainTabs
@@ -104,6 +89,20 @@ ApplicationWindow {
                 LogPanel {
                 }
 
+            }
+
+        }
+
+        Rectangle {
+            id: navBar
+
+            Layout.leftMargin: Constants.margins
+            Layout.rightMargin: Constants.margins
+            Layout.fillWidth: true
+            Layout.preferredHeight: Constants.navBarPreferredHeight
+            z: Constants.commonChart.zAboveCharts
+
+            NavBar {
             }
 
         }

@@ -13,6 +13,7 @@ Rectangle {
         id: innerText
 
         text: ""
+        font.pointSize: Constants.pointSize
         padding: 5
     }
 

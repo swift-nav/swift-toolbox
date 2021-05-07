@@ -28,6 +28,28 @@ pub struct CliOptions {
     pub tab: Option<CliTabs>,
 }
 
+impl CliOptions {
+    /// Get vector of filtered cli arguments.
+    /// Primarily needed to prevent backend from thinking .py file is cli arg.
+    ///
+    /// # Returns
+    /// - `filtered_args`: The filtered args parsed via CliOptions.
+    pub fn from_filtered_cli() -> CliOptions {
+        let args = std::env::args();
+        let mut next_args = std::env::args().skip(1);
+        let mut filtered_args: Vec<String> = vec![];
+        for arg in args {
+            if let Some(n_arg) = next_args.next() {
+                if arg == "python" && n_arg.ends_with(".py") {
+                    continue;
+                }
+            }
+            filtered_args.push(arg);
+        }
+        CliOptions::parse_from(filtered_args)
+    }
+}
+
 #[derive(Clap, Debug)]
 #[clap(about = "Input type and corresponding options.")]
 pub enum Input {

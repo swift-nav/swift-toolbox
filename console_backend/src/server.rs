@@ -119,17 +119,12 @@ impl Server {
                 None
             }
         });
-        if let Some(result) = result {
-            Some(PyBytes::new(py, &result).into())
-        } else {
-            None
-        }
+        result.map(|result| PyBytes::new(py, &result).into())
     }
 
     #[text_signature = "($self, /)"]
     pub fn start(&mut self) -> PyResult<ServerEndpoint> {
-        let filtered_args: Vec<String> = std::env::args().filter(|x| x != "python").collect();
-        let opt = CliOptions::parse_from(filtered_args);
+        let opt = CliOptions::from_filtered_cli();
         let (client_send_, client_recv) = mpsc::channel::<Vec<u8>>();
         let (server_send, server_recv) = mpsc::channel::<Vec<u8>>();
         self.client_recv = Some(client_recv);

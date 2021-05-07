@@ -1,4 +1,4 @@
-use crate::common_constants as cc;
+use crate::common_constants::{self as cc, Tabs};
 use crate::constants::*;
 use crate::formatters::*;
 use crate::piksi_tools_constants::*;
@@ -25,6 +25,7 @@ use std::{
     hash::Hash,
     net::TcpStream,
     ops::Deref,
+    str::FromStr,
     sync::{mpsc::Sender, Arc, Mutex},
     thread,
     thread::JoinHandle,
@@ -414,13 +415,9 @@ pub enum RealtimeDelay {
 // NavBar Types.
 // Enum wrapping around various Vel NED Message types.
 #[derive(Debug)]
-pub enum FlowControl {
-    None,
-    Software,
-    Hardware,
-}
+pub struct FlowControl(SPFlowControl);
 
-impl std::str::FromStr for FlowControl {
+impl FromStr for FlowControl {
     type Err = String;
 
     /// Convert flow control string slice to expected serialport FlowControl variant.
@@ -430,9 +427,9 @@ impl std::str::FromStr for FlowControl {
     /// - `sat_str`: The signal code.
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         match s {
-            FLOW_CONTROL_NONE => Ok(FlowControl::None),
-            FLOW_CONTROL_SOFTWARE => Ok(FlowControl::Software),
-            FLOW_CONTROL_HARDWARE => Ok(FlowControl::Hardware),
+            FLOW_CONTROL_NONE => Ok(FlowControl(SPFlowControl::None)),
+            FLOW_CONTROL_SOFTWARE => Ok(FlowControl(SPFlowControl::Software)),
+            FLOW_CONTROL_HARDWARE => Ok(FlowControl(SPFlowControl::Hardware)),
             _ => Err(format!(
                 "Not a valid flow control option. Choose from [\"{}\", \"{}\", \"{}\"]",
                 FLOW_CONTROL_NONE, FLOW_CONTROL_SOFTWARE, FLOW_CONTROL_HARDWARE
@@ -442,13 +439,32 @@ impl std::str::FromStr for FlowControl {
 }
 
 impl Deref for FlowControl {
+
     type Target = SPFlowControl;
+
     fn deref(&self) -> &Self::Target {
-        match self {
-            FlowControl::None => &SPFlowControl::None,
-            FlowControl::Software => &SPFlowControl::Software,
-            FlowControl::Hardware => &SPFlowControl::Hardware,
-        }
+        &self.0
+    }
+}
+
+#[derive(Debug)]
+pub struct CliTabs(Tabs);
+
+impl Deref for CliTabs {
+
+    type Target = Tabs;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl FromStr for CliTabs {
+    type Err = String;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        // TODO: add custom error handling
+        Ok(CliTabs(Tabs::from_str(s).map_err(|e| format!("{}", e))?))
     }
 }
 

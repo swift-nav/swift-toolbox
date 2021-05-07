@@ -3,7 +3,7 @@ use std::{ops, path::PathBuf, str::FromStr};
 
 use crate::common_constants::Tabs;
 use crate::constants::{AVAILABLE_BAUDRATES, AVAILABLE_REFRESH_RATES, TAB_LIST};
-use crate::types::FlowControl;
+use crate::types::{CliTabs, FlowControl};
 
 #[derive(Clap, Debug)]
 #[clap(name = "swift_navigation_console", about = "Swift Navigation Console.")]
@@ -24,8 +24,8 @@ pub struct CliOptions {
     #[clap(long = "refresh-rate", validator(is_refresh_rate))]
     pub refresh_rate: Option<u8>,
 
-    #[clap(long = "tab", validator(is_tab))]
-    pub tab: Option<String>,
+    #[clap(long = "tab")]
+    pub tab: Option<CliTabs>,
 }
 
 #[derive(Clap, Debug)]

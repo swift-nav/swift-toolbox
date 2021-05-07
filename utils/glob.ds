@@ -1,10 +1,18 @@
 fn glob_paths_excluding_target
-    exclude_files = array "src/main/python/console_resources.py"
+    
     handle = glob_array ${1}
     out = array
+    gi_handle = array
+    gi_handle_unfiltered = gitignore_path_array ./
+    for i in ${gi_handle_unfiltered}
+        if not equals ${i} ./
+            new_var = substring ${i} 2
+            array_push ${gi_handle} ${new_var}
+        end
+    end
     for i in ${handle}
-        not_excluded = array_contains ${exclude_files} ${i}
-        if equals ${not_excluded} \"false\" and (not starts_with ${i} "target")
+        ignored = array_contains ${gi_handle} ${i}
+        if not equals ${ignored} \"false\"
             array_push ${out} ${i}
         end
     end

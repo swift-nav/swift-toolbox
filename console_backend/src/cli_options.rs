@@ -2,7 +2,8 @@ use clap::Clap;
 use std::{ops, path::PathBuf, str::FromStr};
 
 use crate::common_constants::Tabs;
-use crate::constants::{AVAILABLE_BAUDRATES, AVAILABLE_FLOWS, AVAILABLE_REFRESH_RATES, TAB_LIST};
+use crate::constants::{AVAILABLE_BAUDRATES, AVAILABLE_REFRESH_RATES, TAB_LIST};
+use crate::types::FlowControl;
 
 #[derive(Clap, Debug)]
 #[clap(name = "swift_navigation_console", about = "Swift Navigation Console.")]
@@ -48,12 +49,8 @@ pub enum Input {
         baudrate: u32,
 
         /// The flow control spec to use.
-        #[clap(
-            long = "flow-control",
-            default_value = "None",
-            validator(is_flow_control)
-        )]
-        flow_control: String,
+        #[clap(long = "flow-control", default_value = "None")]
+        flow_control: FlowControl,
     },
     File {
         /// Open and run an SBP file.
@@ -115,24 +112,5 @@ fn is_baudrate(br: &str) -> Result<(), String> {
     Err(format!(
         "Must choose from available baudrates {:?}",
         AVAILABLE_BAUDRATES
-    ))
-}
-
-/// Validation for the flow-control cli option.
-///
-/// # Parameters
-/// - `fc`: The user input flow-control.
-///
-/// # Returns
-/// - `Ok`: The flow-control was found in AVAILABLE_FLOWS.
-/// - `Err`: The flow-control was not found in AVAILABLE_FLOWS.
-fn is_flow_control(fc: &str) -> Result<(), String> {
-    if AVAILABLE_FLOWS.contains(&fc) {
-        return Ok(());
-    }
-
-    Err(format!(
-        "Must choose from available tabs {:?}",
-        AVAILABLE_FLOWS
     ))
 }

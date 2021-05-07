@@ -60,7 +60,7 @@ fn run_process_messages(file_in_name: &str, failure: bool) {
         let client_send = ClientSender {
             inner: client_send_,
         };
-        shared_state.set_running(true);
+        shared_state.set_running(true, client_send.clone());
         process_messages::process_messages(messages, shared_state, client_send, RealtimeDelay::Off);
     }
     recv_thread.join().expect("join should succeed");

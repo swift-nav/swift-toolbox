@@ -7,15 +7,18 @@ use pyo3::types::PyBytes;
 use async_logger_log::Logger;
 
 use clap::Clap;
-use std::io::{BufReader, Cursor};
-use std::sync::mpsc;
-use std::thread;
+use std::{
+    io::{BufReader, Cursor},
+    str::FromStr,
+    sync::mpsc,
+    thread,
+};
 
 use crate::cli_options::*;
 use crate::console_backend_capnp as m;
 use crate::constants::LOG_WRITER_BUFFER_MESSAGE_COUNT;
 use crate::log_panel::{splitable_log_formatter, LogPanelWriter};
-use crate::types::{ClientSender, ServerState, SharedState};
+use crate::types::{ClientSender, FlowControl, ServerState, SharedState};
 use crate::utils::refresh_ports;
 
 /// The backend server
@@ -192,7 +195,7 @@ impl Server {
                                 refresh_ports(&mut client_send_clone.clone());
                             }
                             m::message::DisconnectRequest(Ok(_)) => {
-                                shared_state_clone.set_running(false);
+                                shared_state_clone.set_running(false, client_send_clone.clone());
                                 server_state_clone.connection_join();
                                 println!("Disconnected successfully.");
                             }
@@ -228,7 +231,7 @@ impl Server {
                                 let device = device.to_string();
                                 let baudrate = req.get_baudrate();
                                 let flow = req.get_flow_control().unwrap();
-                                let flow = flow.to_string();
+                                let flow = FlowControl::from_str(flow).unwrap();
                                 server_state_clone.connect_to_serial(
                                     client_send_clone,
                                     shared_state_clone,

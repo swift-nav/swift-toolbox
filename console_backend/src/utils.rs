@@ -1,7 +1,7 @@
 use capnp::message::Builder;
 use capnp::serialize;
 use log::warn;
-use serialport::{available_ports, FlowControl};
+use serialport::available_ports;
 use std::collections::HashMap;
 
 use crate::common_constants as cc;
@@ -83,26 +83,6 @@ pub fn refresh_ports<P: MessageSender>(client_send: &mut P) {
         serialize::write_message(&mut msg_bytes, &builder).unwrap();
 
         client_send.send_data(msg_bytes);
-    }
-}
-
-/// Convert flow control string slice to expected serialport FlowControl variant.
-///
-/// # Parameters
-/// - `flow_str`: A string slice corresponding to serialport FlowControl variant.
-///
-/// # Returns
-/// - `Ok`: The associated serialport::FlowControl variant.
-/// - `Err`: Error describing available flow controls available.
-pub fn from_flowcontrol_str(flow_str: &str) -> Result<FlowControl, String> {
-    match flow_str {
-        FLOW_CONTROL_NONE => Ok(FlowControl::None),
-        FLOW_CONTROL_SOFTWARE => Ok(FlowControl::Software),
-        FLOW_CONTROL_HARDWARE => Ok(FlowControl::Hardware),
-        _ => Err(format!(
-            "Not a valid flow control option. Choose from [\"{}\", \"{}\", \"{}\"]",
-            FLOW_CONTROL_NONE, FLOW_CONTROL_SOFTWARE, FLOW_CONTROL_HARDWARE
-        )),
     }
 }
 

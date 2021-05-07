@@ -22,7 +22,6 @@ pub fn close_frontend<P: MessageSender>(client_send: &mut P) {
 }
 
 pub fn refresh_navbar<P: MessageSender>(client_send: &mut P) {
-    
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<m::message::Builder>();
 
@@ -88,7 +87,6 @@ pub fn refresh_navbar<P: MessageSender>(client_send: &mut P) {
     serialize::write_message(&mut msg_bytes, &builder).unwrap();
 
     client_send.send_data(msg_bytes);
-
 }
 
 /// Convert flow control string slice to expected serialport FlowControl variant.

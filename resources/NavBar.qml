@@ -60,14 +60,6 @@ Item {
                     serialDeviceFlowControl.visible = false;
                 }
             }
-            Keys.onTabPressed: {
-                if (tcp_ip === navBarSourceSelection.currentText)
-                    tcpUrlBarText.focus = true;
-                else if (file === navBarSourceSelection.currentText)
-                    fileUrlBarText.focus = true;
-                else
-                    serialDevice.focus = true;
-            }
 
             states: State {
                 when: navBarSourceSelection.down
@@ -175,25 +167,12 @@ Item {
             Layout.fillWidth: true
             Layout.preferredHeight: Constants.navBar.urlBarHeight
             spacing: 1
-            Keys.onTabPressed: {
-                if (tcpUrlBarText.focus === true)
-                    tcpPortBarText.focus = true;
-                else
-                    connectionPauseButton.focus = true;
-            }
-            Keys.onBacktabPressed: {
-                if (tcpUrlBarText.focus === true)
-                    navBarSourceSelection.focus = true;
-                else
-                    tcpUrlBarText.focus = true;
-            }
 
             ComboBox {
                 id: tcpUrlBar
 
                 height: parent.height
                 width: 3 * parent.width / 4
-                // border.width: Constants.navBar.urlBarBorder
                 model: previous_hosts
                 editable: true
 
@@ -210,7 +189,6 @@ Item {
 
                 height: parent.height
                 width: parent.width / 4
-                // border.width: Constants.navBar.urlBarBorder
                 model: previous_ports
                 editable: true
 
@@ -234,12 +212,6 @@ Item {
             model: previous_files
             editable: true
 
-            Keys.onTabPressed: {
-                connectionPauseButton.focus = true;
-            }
-            Keys.onBacktabPressed: {
-                navBarSourceSelection.focus = true;
-            }
             Text {
                 text: "path/to/file"
                 color: Constants.navBar.placeholderTextColor
@@ -260,14 +232,6 @@ Item {
             onClicked: data_model.pause(checked)
             leftPadding: 0
             rightPadding: 0
-            Keys.onBacktabPressed: {
-                if (tcp_ip === navBarSourceSelection.currentText)
-                    tcpPortBarText.focus = true;
-                else if (file === navBarSourceSelection.currentText)
-                    fileUrlBarText.focus = true;
-                else
-                    serialDeviceFlowControl.focus = true;
-            }
         }
 
         Button {
@@ -287,13 +251,13 @@ Item {
                     data_model.disconnect();
                 } else {
                     if (navBarSourceSelection.currentText === tcp_ip) {
-                        if (tcpUrlBarText.text && tcpPortBarText.text)
-                            data_model.connect_tcp(tcpUrlBarText.text, tcpPortBarText.text);
+                        if (tcpUrlBar.text && tcpPortBar.text)
+                            data_model.connect_tcp(tcpUrlBar.text, tcpPortBar.text);
                         else
                             data_model.connect();
                     } else if (navBarSourceSelection.currentText === file) {
-                        if (fileUrlBarText.text)
-                            data_model.connect_file(fileUrlBarText.text);
+                        if (fileUrlBar.text)
+                            data_model.connect_file(fileUrlBar.text);
 
                     } else {
                         data_model.connect_serial(serialDevice.currentText, serialDeviceBaudRate.currentText, serialDeviceFlowControl.currentText);
@@ -345,10 +309,10 @@ Item {
                     serialDeviceBaudRate.currentIndex = 1;
                     available_flows = navBarData.available_flows;
                 }
-
                 available_devices = navBarData.available_ports;
                 previous_hosts = navBarData.previous_hosts;
-
+                previous_ports = navBarData.previous_ports;
+                previous_files = navBarData.previous_files;
             }
         }
 

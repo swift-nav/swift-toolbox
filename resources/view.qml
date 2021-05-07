@@ -8,7 +8,7 @@ import SwiftConsole 1.0
 ApplicationWindow {
     width: Constants.width
     height: Constants.height
-    font.pointSize: Constants.pointSize
+    font.pointSize: Constants.mediumPointSize
     Component.onCompleted: {
         visible = true;
     }

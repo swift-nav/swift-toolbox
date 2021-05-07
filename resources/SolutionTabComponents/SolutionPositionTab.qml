@@ -103,7 +103,7 @@ Item {
                 Text {
                     text: "Display Units: "
                     font.family: Constants.monoSpaceFont
-                    font.pointSize: Constants.pointSize
+                    font.pointSize: Constants.mediumPointSize
                 }
 
                 ComboBox {
@@ -175,7 +175,7 @@ Item {
                                     id: marker
 
                                     text: "+ "
-                                    font.pointSize: (Constants.pointSize + Constants.commonLegend.markerPointSizeOffset)
+                                    font.pointSize: (Constants.mediumPointSize + Constants.commonLegend.markerPointSizeOffset)
                                     font.bold: true
                                     anchors.verticalCenter: parent.verticalCenter
                                     anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
@@ -185,7 +185,7 @@ Item {
                                     id: label
 
                                     text: modelData
-                                    font.pointSize: Constants.pointSize
+                                    font.pointSize: Constants.mediumPointSize
                                     font.bold: true
                                     anchors.verticalCenter: parent.verticalCenter
                                     anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
@@ -211,7 +211,7 @@ Item {
                     labelsColor: Constants.commonChart.labelsColor
 
                     labelsFont {
-                        pointSize: Constants.pointSize
+                        pointSize: Constants.mediumPointSize
                         bold: true
                     }
 
@@ -229,7 +229,7 @@ Item {
                     labelsColor: Constants.commonChart.labelsColor
 
                     labelsFont {
-                        pointSize: Constants.pointSize
+                        pointSize: Constants.mediumPointSize
                         bold: true
                     }
 

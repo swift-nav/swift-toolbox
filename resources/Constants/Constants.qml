@@ -18,7 +18,9 @@ QtObject {
     property QtObject observationTab
     property int defaultTimerIntervalRate: 1000 / 5 // 5 Hz
     property string monoSpaceFont: "Courier New"
-    property real pointSize: 8
+    property real smallPointSize: 7
+    property real mediumPointSize: 8
+    property real largePointSize: 9
     readonly property bool debugMode: false
 
     navBar: QtObject {

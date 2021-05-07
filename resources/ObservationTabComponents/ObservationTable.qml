@@ -161,7 +161,7 @@ Rectangle {
             Text {
                 text: display
                 anchors.centerIn: parent
-                font.pointSize: Constants.pointSize
+                font.pointSize: Constants.mediumPointSize
                 leftPadding: 2
             }
 
@@ -246,7 +246,7 @@ Rectangle {
                     Text {
                         text: display
                         font.family: Constants.monoSpaceFont
-                        font.pointSize: Constants.pointSize
+                        font.pointSize: Constants.mediumPointSize
                         anchors.centerIn: parent
                         leftPadding: 2
                     }
@@ -265,7 +265,7 @@ Rectangle {
                     Text {
                         text: ObsTabJS.padFloat(display, 11)
                         font.family: Constants.monoSpaceFont
-                        font.pointSize: Constants.pointSize
+                        font.pointSize: Constants.mediumPointSize
                         anchors.centerIn: parent
                         leftPadding: 2
                     }
@@ -284,7 +284,7 @@ Rectangle {
                     Text {
                         text: ObsTabJS.padFloat(display, 13)
                         font.family: Constants.monoSpaceFont
-                        font.pointSize: Constants.pointSize
+                        font.pointSize: Constants.mediumPointSize
                         anchors.centerIn: parent
                         leftPadding: 2
                     }
@@ -303,7 +303,7 @@ Rectangle {
                     Text {
                         text: ObsTabJS.padFloat(display, 9)
                         font.family: Constants.monoSpaceFont
-                        font.pointSize: Constants.pointSize
+                        font.pointSize: Constants.mediumPointSize
                         anchors.centerIn: parent
                         leftPadding: 2
                     }
@@ -322,7 +322,7 @@ Rectangle {
                     Text {
                         text: ObsTabJS.padFloat(display, 9)
                         font.family: Constants.monoSpaceFont
-                        font.pointSize: Constants.pointSize
+                        font.pointSize: Constants.mediumPointSize
                         anchors.centerIn: parent
                         leftPadding: 2
                     }
@@ -341,7 +341,7 @@ Rectangle {
                     Text {
                         text: ObsTabJS.padFloat(display, 9)
                         font.family: Constants.monoSpaceFont
-                        font.pointSize: Constants.pointSize
+                        font.pointSize: Constants.mediumPointSize
                         anchors.centerIn: parent
                         leftPadding: 2
                     }
@@ -360,7 +360,7 @@ Rectangle {
                     Text {
                         text: display
                         font.family: Constants.monoSpaceFont
-                        font.pointSize: Constants.pointSize
+                        font.pointSize: Constants.mediumPointSize
                         anchors.centerIn: parent
                         leftPadding: 2
                     }
@@ -379,7 +379,7 @@ Rectangle {
                     Text {
                         text: ObsTabJS.showFlags(display)
                         font.family: Constants.monoSpaceFont
-                        font.pointSize: Constants.pointSize
+                        font.pointSize: Constants.mediumPointSize
                         leftPadding: 2
                     }
 

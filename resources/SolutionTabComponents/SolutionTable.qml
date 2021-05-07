@@ -75,7 +75,7 @@ Item {
 
                         text: display
                         anchors.centerIn: parent
-                        font.pointSize: Constants.pointSize
+                        font.pointSize: Constants.mediumPointSize
                         leftPadding: Constants.solutionTable.tableLeftPadding
                     }
 
@@ -123,7 +123,7 @@ Item {
                         id: rowTextEle
 
                         text: display
-                        font.pointSize: Constants.pointSize
+                        font.pointSize: Constants.mediumPointSize
                         leftPadding: Constants.solutionTable.tableLeftPadding
                     }
 
@@ -144,7 +144,7 @@ Item {
                 Text {
                     wrapMode: Text.Wrap
                     anchors.fill: parent
-                    font.pointSize: Constants.pointSize
+                    font.pointSize: Constants.mediumPointSize
                     text: Constants.solutionTable.rtkNoteText
                 }
 

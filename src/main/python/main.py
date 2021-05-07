@@ -367,8 +367,6 @@ class NavBarData(QObject):
     previous_files = Property(QTKeys.QVARIANTLIST, get_previous_files, set_previous_files)  # type: ignore
 
 
-
-
 class NavBarModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(NavBarData)  # type: ignore
     def fill_data(self, cp: NavBarData) -> NavBarData:  # pylint:disable=no-self-use

@@ -6,7 +6,6 @@ use pyo3::types::PyBytes;
 
 use async_logger_log::Logger;
 
-use clap::Clap;
 use std::{
     io::{BufReader, Cursor},
     str::FromStr,

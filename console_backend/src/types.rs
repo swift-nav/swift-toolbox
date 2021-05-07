@@ -461,8 +461,9 @@ impl FromStr for CliTabs {
     type Err = String;
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        // TODO: add custom error handling
-        Ok(CliTabs(Tabs::from_str(s).map_err(|e| format!("{}", e))?))
+        Ok(CliTabs(Tabs::from_str(s).map_err(|_| {
+            format!("Must choose from available tabs {:?}", TAB_LIST)
+        })?))
     }
 }
 

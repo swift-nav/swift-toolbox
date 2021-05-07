@@ -1,8 +1,7 @@
 use clap::Clap;
-use std::{ops, path::PathBuf, str::FromStr};
+use std::{ops, path::PathBuf};
 
-use crate::common_constants::Tabs;
-use crate::constants::{AVAILABLE_BAUDRATES, AVAILABLE_REFRESH_RATES, TAB_LIST};
+use crate::constants::{AVAILABLE_BAUDRATES, AVAILABLE_REFRESH_RATES};
 use crate::types::{CliTabs, FlowControl};
 
 #[derive(Clap, Debug)]
@@ -79,22 +78,6 @@ pub enum Input {
         #[clap(parse(from_os_str))]
         file_in: PathBuf,
     },
-}
-
-/// Validation for the tab cli option.
-///
-/// # Parameters
-/// - `tab`: The user input tab.
-///
-/// # Returns
-/// - `Ok`: The tab was found in TAB_LIST.
-/// - `Err`: The tab was not found in TAB_LIST.
-fn is_tab(tab: &str) -> Result<(), String> {
-    if Tabs::from_str(tab).is_ok() {
-        return Ok(());
-    }
-
-    Err(format!("Must choose from available tabs {:?}", TAB_LIST))
 }
 
 /// Validation for the refresh-rate cli option.

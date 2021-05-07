@@ -2,7 +2,8 @@ use clap::Clap;
 use std::{ops, path::PathBuf, str::FromStr};
 
 use crate::common_constants::Tabs;
-use crate::constants::{AVAILABLE_BAUDRATES, AVAILABLE_FLOWS, AVAILABLE_REFRESH_RATES, TAB_LIST};
+use crate::constants::{AVAILABLE_BAUDRATES, AVAILABLE_REFRESH_RATES, TAB_LIST};
+use crate::types::FlowControl;
 
 #[derive(Clap, Debug)]
 #[clap(name = "swift_navigation_console", about = "Swift Navigation Console.")]
@@ -27,6 +28,28 @@ pub struct CliOptions {
     pub tab: Option<String>,
 }
 
+impl CliOptions {
+    /// Get vector of filtered cli arguments.
+    /// Primarily needed to prevent backend from thinking .py file is cli arg.
+    ///
+    /// # Returns
+    /// - `filtered_args`: The filtered args parsed via CliOptions.
+    pub fn from_filtered_cli() -> CliOptions {
+        let args = std::env::args();
+        let mut next_args = std::env::args().skip(1);
+        let mut filtered_args: Vec<String> = vec![];
+        for arg in args {
+            if let Some(n_arg) = next_args.next() {
+                if arg == "python" && n_arg.ends_with(".py") {
+                    continue;
+                }
+            }
+            filtered_args.push(arg);
+        }
+        CliOptions::parse_from(filtered_args)
+    }
+}
+
 #[derive(Clap, Debug)]
 #[clap(about = "Input type and corresponding options.")]
 pub enum Input {
@@ -48,12 +71,8 @@ pub enum Input {
         baudrate: u32,
 
         /// The flow control spec to use.
-        #[clap(
-            long = "flow-control",
-            default_value = "None",
-            validator(is_flow_control)
-        )]
-        flow_control: String,
+        #[clap(long = "flow-control", default_value = "None")]
+        flow_control: FlowControl,
     },
     File {
         /// Open and run an SBP file.
@@ -115,24 +134,5 @@ fn is_baudrate(br: &str) -> Result<(), String> {
     Err(format!(
         "Must choose from available baudrates {:?}",
         AVAILABLE_BAUDRATES
-    ))
-}
-
-/// Validation for the flow-control cli option.
-///
-/// # Parameters
-/// - `fc`: The user input flow-control.
-///
-/// # Returns
-/// - `Ok`: The flow-control was found in AVAILABLE_FLOWS.
-/// - `Err`: The flow-control was not found in AVAILABLE_FLOWS.
-fn is_flow_control(fc: &str) -> Result<(), String> {
-    if AVAILABLE_FLOWS.contains(&fc) {
-        return Ok(());
-    }
-
-    Err(format!(
-        "Must choose from available tabs {:?}",
-        AVAILABLE_FLOWS
     ))
 }

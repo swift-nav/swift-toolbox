@@ -3,7 +3,7 @@ use crate::constants::*;
 use crate::formatters::*;
 use crate::piksi_tools_constants::*;
 use crate::process_messages::process_messages;
-use crate::utils::{close_frontend, from_flowcontrol_str, ms_to_sec, set_connected_frontend};
+use crate::utils::{close_frontend, ms_to_sec, set_connected_frontend};
 use chrono::{DateTime, Utc};
 use log::{info, warn};
 use ordered_float::OrderedFloat;
@@ -15,6 +15,7 @@ use sbp::messages::{
     },
 };
 use serde::Serialize;
+use serialport::FlowControl as SPFlowControl;
 use std::{
     cmp::{Eq, PartialEq},
     collections::HashMap,
@@ -139,13 +140,12 @@ impl ServerState {
     ) {
         let shared_state_clone = shared_state.clone();
         self.connection_join();
-        shared_state_clone.set_running(true);
+        shared_state_clone.set_running(true, client_send.clone());
         let handle = thread::spawn(move || {
             if let Ok(stream) = fs::File::open(filename) {
                 println!("Opened file successfully!");
                 let shared_state_clone_ = shared_state.clone();
                 let messages = sbp::iter_messages(stream);
-                set_connected_frontend(cc::ApplicationStates::CONNECTED, &mut client_send.clone());
                 process_messages(
                     messages,
                     shared_state_clone_,
@@ -158,11 +158,7 @@ impl ServerState {
             } else {
                 println!("Couldn't open file...");
             }
-            set_connected_frontend(
-                cc::ApplicationStates::DISCONNECTED,
-                &mut client_send.clone(),
-            );
-            shared_state.set_running(false);
+            shared_state.set_running(false, client_send.clone());
         });
         self.new_connection(handle);
     }
@@ -180,13 +176,12 @@ impl ServerState {
         host_port: String,
     ) {
         let shared_state_clone = shared_state.clone();
-        shared_state_clone.set_running(true);
+        shared_state_clone.set_running(true, client_send.clone());
         self.connection_join();
         let handle = thread::spawn(move || {
             if let Ok(stream) = TcpStream::connect(host_port.clone()) {
                 info!("Connected to the server {}!", host_port);
                 let messages = sbp::iter_messages(stream);
-                set_connected_frontend(cc::ApplicationStates::CONNECTED, &mut client_send.clone());
                 process_messages(
                     messages,
                     shared_state_clone,
@@ -196,11 +191,7 @@ impl ServerState {
             } else {
                 warn!("Couldn't connect to server...");
             }
-            set_connected_frontend(
-                cc::ApplicationStates::DISCONNECTED,
-                &mut client_send.clone(),
-            );
-            shared_state.set_running(false);
+            shared_state.set_running(false, client_send.clone());
         });
         self.new_connection(handle);
     }
@@ -219,44 +210,31 @@ impl ServerState {
         shared_state: SharedState,
         device: String,
         baudrate: u32,
-        flow: String,
+        flow: FlowControl,
     ) {
         let shared_state_clone = shared_state.clone();
-        shared_state_clone.set_running(true);
+        shared_state_clone.set_running(true, client_send.clone());
         self.connection_join();
         let handle = thread::spawn(move || {
             let shared_state_clone = shared_state.clone();
-            match from_flowcontrol_str(&flow) {
-                Ok(flow) => {
-                    match serialport::new(&device, baudrate)
-                        .flow_control(flow)
-                        .timeout(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))
-                        .open()
-                    {
-                        Ok(port) => {
-                            println!("Connected to serialport {}.", device);
-                            let messages = sbp::iter_messages(port);
-                            set_connected_frontend(
-                                cc::ApplicationStates::CONNECTED,
-                                &mut client_send.clone(),
-                            );
-                            process_messages(
-                                messages,
-                                shared_state_clone,
-                                client_send.clone(),
-                                RealtimeDelay::Off,
-                            );
-                        }
-                        Err(e) => eprintln!("Unable to connect to serialport: {}", e),
-                    }
+            match serialport::new(&device, baudrate)
+                .flow_control(*flow)
+                .timeout(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))
+                .open()
+            {
+                Ok(port) => {
+                    println!("Connected to serialport {}.", device);
+                    let messages = sbp::iter_messages(port);
+                    process_messages(
+                        messages,
+                        shared_state_clone,
+                        client_send.clone(),
+                        RealtimeDelay::Off,
+                    );
                 }
-                Err(e) => eprintln!("{}", e),
+                Err(e) => eprintln!("Unable to connect to serialport: {}", e),
             }
-            set_connected_frontend(
-                cc::ApplicationStates::DISCONNECTED,
-                &mut client_send.clone(),
-            );
-            shared_state.set_running(false);
+            shared_state.set_running(false, client_send.clone());
         });
         self.new_connection(handle);
     }
@@ -283,7 +261,12 @@ impl SharedState {
         let shared_data = self.lock().unwrap();
         (*shared_data).running
     }
-    pub fn set_running(&self, set_to: bool) {
+    pub fn set_running(&self, set_to: bool, mut client_send: ClientSender) {
+        if set_to {
+            set_connected_frontend(cc::ApplicationStates::CONNECTED, &mut client_send);
+        } else {
+            set_connected_frontend(cc::ApplicationStates::DISCONNECTED, &mut client_send);
+        }
         let mut shared_data = self.lock().unwrap();
         (*shared_data).running = set_to;
     }
@@ -426,6 +409,47 @@ impl SolutionVelocityTabState {
 pub enum RealtimeDelay {
     On,
     Off,
+}
+
+// NavBar Types.
+// Enum wrapping around various Vel NED Message types.
+#[derive(Debug)]
+pub enum FlowControl {
+    None,
+    Software,
+    Hardware,
+}
+
+impl std::str::FromStr for FlowControl {
+    type Err = String;
+
+    /// Convert flow control string slice to expected serialport FlowControl variant.
+    ///
+    /// # Parameters
+    ///
+    /// - `sat_str`: The signal code.
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        match s {
+            FLOW_CONTROL_NONE => Ok(FlowControl::None),
+            FLOW_CONTROL_SOFTWARE => Ok(FlowControl::Software),
+            FLOW_CONTROL_HARDWARE => Ok(FlowControl::Hardware),
+            _ => Err(format!(
+                "Not a valid flow control option. Choose from [\"{}\", \"{}\", \"{}\"]",
+                FLOW_CONTROL_NONE, FLOW_CONTROL_SOFTWARE, FLOW_CONTROL_HARDWARE
+            )),
+        }
+    }
+}
+
+impl Deref for FlowControl {
+    type Target = SPFlowControl;
+    fn deref(&self) -> &Self::Target {
+        match self {
+            FlowControl::None => &SPFlowControl::None,
+            FlowControl::Software => &SPFlowControl::Software,
+            FlowControl::Hardware => &SPFlowControl::Hardware,
+        }
+    }
 }
 
 // Tracking Signals Tab Types.
@@ -1321,6 +1345,7 @@ mod tests {
     const TEST_FILEPATH: &str = "./tests/data/piksi-relay-1min.sbp";
     const TEST_SHORT_FILEPATH: &str = "./tests/data/piksi-relay.sbp";
     const SBP_FILE_SHORT_DURATION_SEC: f64 = 26.1;
+    const DELAY_BEFORE_CHECKING_APP_STARTED_IN_MS: u64 = 150;
 
     fn receive_thread(client_recv: mpsc::Receiver<Vec<u8>>) -> JoinHandle<()> {
         thread::spawn(move || {
@@ -1354,7 +1379,9 @@ mod tests {
             filename,
             /*close_when_done = */ true,
         );
-        sleep(Duration::from_millis(150));
+        sleep(Duration::from_millis(
+            DELAY_BEFORE_CHECKING_APP_STARTED_IN_MS,
+        ));
         assert!(shared_state.is_running());
         sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
         assert!(!shared_state.is_running());
@@ -1377,7 +1404,9 @@ mod tests {
             filename,
             /*close_when_done = */ true,
         );
-        sleep(Duration::from_millis(150));
+        sleep(Duration::from_millis(
+            DELAY_BEFORE_CHECKING_APP_STARTED_IN_MS,
+        ));
         assert!(shared_state.is_running());
         shared_state.set_paused(true);
         sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
@@ -1401,7 +1430,7 @@ mod tests {
         assert!(!shared_state.is_running());
         {
             server_state.connect_to_file(
-                client_send,
+                client_send.clone(),
                 shared_state.clone(),
                 filename,
                 /*close_when_done = */ true,
@@ -1412,7 +1441,7 @@ mod tests {
         assert!(shared_state.is_running());
         let now = SystemTime::now();
         sleep(Duration::from_millis(1));
-        shared_state.set_running(false);
+        shared_state.set_running(false, client_send);
         sleep(Duration::from_millis(5));
         assert!(handle.join().is_ok());
 

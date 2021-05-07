@@ -439,7 +439,6 @@ impl FromStr for FlowControl {
 }
 
 impl Deref for FlowControl {
-
     type Target = SPFlowControl;
 
     fn deref(&self) -> &Self::Target {
@@ -451,7 +450,6 @@ impl Deref for FlowControl {
 pub struct CliTabs(Tabs);
 
 impl Deref for CliTabs {
-
     type Target = Tabs;
 
     fn deref(&self) -> &Self::Target {

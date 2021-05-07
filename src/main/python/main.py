@@ -473,6 +473,8 @@ if __name__ == "__main__":
     root_context.setContextProperty("local_observation_model", local_observation_model)
     root_context.setContextProperty("data_model", data_model)
 
+    # Unfortunately it is not possible to access singletons directly using the PySide2 API.
+    # This approach stores the constants somwhere that can be grabbed and manipulated.
     component = QQmlComponent(engine)
     component.setData(
         b'import QtQuick 2.0\nimport "Constants"\nItem{ property var constants: Constants }',  # type: ignore

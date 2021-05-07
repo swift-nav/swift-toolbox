@@ -14,7 +14,7 @@ use crate::console_backend_capnp as m;
 use crate::constants::LOG_WRITER_BUFFER_MESSAGE_COUNT;
 use crate::log_panel::{splitable_log_formatter, LogPanelWriter};
 use crate::types::{ClientSender, ServerState, SharedState};
-use crate::utils::refresh_ports;
+use crate::utils::refresh_navbar;
 
 /// The backend server
 #[pyclass]
@@ -93,7 +93,7 @@ impl Server {
         };
         let shared_state = SharedState::new();
         let server_state = ServerState::new();
-        refresh_ports(&mut client_send.clone());
+        refresh_navbar(&mut client_send.clone());
         let logger = Logger::builder()
             .buf_size(LOG_WRITER_BUFFER_MESSAGE_COUNT)
             .formatter(splitable_log_formatter)
@@ -137,7 +137,7 @@ impl Server {
                         let client_send_clone = client_send.clone();
                         match request {
                             m::message::SerialRefreshRequest(Ok(_)) => {
-                                refresh_ports(&mut client_send_clone.clone());
+                                refresh_navbar(&mut client_send_clone.clone());
                             }
                             m::message::DisconnectRequest(Ok(_)) => {
                                 shared_state_clone.set_running(false);

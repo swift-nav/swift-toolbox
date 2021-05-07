@@ -21,47 +21,74 @@ pub fn close_frontend<P: MessageSender>(client_send: &mut P) {
     client_send.send_data(msg_bytes);
 }
 
-pub fn refresh_ports<P: MessageSender>(client_send: &mut P) {
-    if let Ok(ports) = &mut available_ports() {
+pub fn refresh_navbar<P: MessageSender>(client_send: &mut P) {
+    
+    let mut builder = Builder::new_default();
+    let msg = builder.init_root::<m::message::Builder>();
+
+    let mut nav_bar_status = msg.init_nav_bar_status();
+    let mut ports: Vec<String> = vec![];
+    if let Ok(ports_) = &mut available_ports() {
         // TODO(johnmichael.burke@) [CPP-114]Find solution to this hack for Linux serialport.
-        let ports: Vec<String> = ports
+        ports = ports_
             .iter_mut()
             .map(|x| x.port_name.replace("/sys/class/tty/", "/dev/"))
             .collect();
-        let mut builder = Builder::new_default();
-        let msg = builder.init_root::<m::message::Builder>();
-
-        let mut nav_bar_status = msg.init_nav_bar_status();
-
-        let mut available_ports = nav_bar_status
-            .reborrow()
-            .init_available_ports(ports.len() as u32);
-
-        for (i, serialportinfo) in ports.iter().enumerate() {
-            available_ports.set(i as u32, &(*serialportinfo));
-        }
-
-        let mut available_baudrates = nav_bar_status
-            .reborrow()
-            .init_available_baudrates(AVAILABLE_BAUDRATES.len() as u32);
-
-        for (i, baudrate) in AVAILABLE_BAUDRATES.iter().enumerate() {
-            available_baudrates.set(i as u32, *baudrate);
-        }
-
-        let mut available_flows = nav_bar_status
-            .reborrow()
-            .init_available_flows(AVAILABLE_FLOWS.len() as u32);
-
-        for (i, flow) in AVAILABLE_FLOWS.iter().enumerate() {
-            available_flows.set(i as u32, &flow.to_string());
-        }
-
-        let mut msg_bytes: Vec<u8> = vec![];
-        serialize::write_message(&mut msg_bytes, &builder).unwrap();
-
-        client_send.send_data(msg_bytes);
     }
+
+    let mut available_ports = nav_bar_status
+        .reborrow()
+        .init_available_ports(ports.len() as u32);
+
+    for (i, serialportinfo) in ports.iter().enumerate() {
+        available_ports.set(i as u32, &(*serialportinfo));
+    }
+
+    let mut available_baudrates = nav_bar_status
+        .reborrow()
+        .init_available_baudrates(AVAILABLE_BAUDRATES.len() as u32);
+
+    for (i, baudrate) in AVAILABLE_BAUDRATES.iter().enumerate() {
+        available_baudrates.set(i as u32, *baudrate);
+    }
+
+    let mut available_flows = nav_bar_status
+        .reborrow()
+        .init_available_flows(AVAILABLE_FLOWS.len() as u32);
+
+    for (i, flow) in AVAILABLE_FLOWS.iter().enumerate() {
+        available_flows.set(i as u32, &flow.to_string());
+    }
+
+    let mut prevous_hosts = nav_bar_status
+        .reborrow()
+        .init_previous_hosts(AVAILABLE_FLOWS.len() as u32);
+
+    for (i, hosts) in AVAILABLE_FLOWS.iter().enumerate() {
+        prevous_hosts.set(i as u32, *hosts);
+    }
+
+    let mut prevous_ports = nav_bar_status
+        .reborrow()
+        .init_previous_ports(AVAILABLE_FLOWS.len() as u32);
+
+    for (i, ports) in AVAILABLE_FLOWS.iter().enumerate() {
+        prevous_ports.set(i as u32, *ports);
+    }
+
+    let mut prevous_files = nav_bar_status
+        .reborrow()
+        .init_previous_files(AVAILABLE_FLOWS.len() as u32);
+
+    for (i, filename) in AVAILABLE_FLOWS.iter().enumerate() {
+        prevous_files.set(i as u32, *filename);
+    }
+
+    let mut msg_bytes: Vec<u8> = vec![];
+    serialize::write_message(&mut msg_bytes, &builder).unwrap();
+
+    client_send.send_data(msg_bytes);
+
 }
 
 /// Convert flow control string slice to expected serialport FlowControl variant.

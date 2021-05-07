@@ -13,6 +13,9 @@ Item {
     property variant available_baudrates: []
     property variant available_devices: []
     property variant available_flows: []
+    property variant previous_hosts: []
+    property variant previous_ports: []
+    property variant previous_files: []
 
     anchors.fill: parent
 
@@ -185,91 +188,62 @@ Item {
                     tcpUrlBarText.focus = true;
             }
 
-            Rectangle {
+            ComboBox {
                 id: tcpUrlBar
 
                 height: parent.height
                 width: 3 * parent.width / 4
-                border.width: Constants.navBar.urlBarBorder
+                // border.width: Constants.navBar.urlBarBorder
+                model: previous_hosts
+                editable: true
 
-                TextInput {
-                    id: tcpUrlBarText
-
-                    focus: true
-                    clip: true
-                    anchors.fill: parent
-                    anchors.margins: Constants.navBar.urlBarTextMargin
-                    onTextChanged: {
-                    }
-
-                    Text {
-                        text: "Host"
-                        color: Constants.navBar.placeholderTextColor
-                        visible: !tcpUrlBarText.text
-                    }
-
+                Text {
+                    text: "Host"
+                    color: Constants.navBar.placeholderTextColor
+                    visible: (!tcpUrlBar.editText)
                 }
 
             }
 
-            Rectangle {
+            ComboBox {
                 id: tcpPortBar
 
                 height: parent.height
                 width: parent.width / 4
-                border.width: Constants.navBar.urlBarBorder
+                // border.width: Constants.navBar.urlBarBorder
+                model: previous_ports
+                editable: true
 
-                TextInput {
-                    id: tcpPortBarText
-
-                    clip: true
-                    anchors.fill: parent
-                    anchors.margins: Constants.navBar.urlBarTextMargin
-                    onTextChanged: {
-                    }
-
-                    Text {
-                        text: "Port"
-                        color: Constants.navBar.placeholderTextColor
-                        visible: !tcpPortBarText.text
-                    }
-
+                Text {
+                    text: "Port"
+                    color: Constants.navBar.placeholderTextColor
+                    visible: !tcpPortBar.editText
                 }
 
             }
 
         }
 
-        Rectangle {
+        ComboBox {
             id: fileUrlBar
 
             visible: false
             Layout.alignment: Qt.AlignLeft
             Layout.fillWidth: true
             Layout.preferredHeight: Constants.navBar.urlBarHeight
-            border.width: Constants.navBar.urlBarBorder
+            model: previous_files
+            editable: true
+
             Keys.onTabPressed: {
                 connectionPauseButton.focus = true;
             }
             Keys.onBacktabPressed: {
                 navBarSourceSelection.focus = true;
             }
-
-            TextInput {
-                id: fileUrlBarText
-
-                anchors.fill: parent
-                anchors.margins: Constants.navBar.urlBarTextMargin
-                onTextChanged: {
-                }
-                clip: true
-
-                Text {
-                    text: "path/to/file"
-                    color: Constants.navBar.placeholderTextColor
-                    visible: !fileUrlBarText.text
-                }
-
+            Text {
+                text: "path/to/file"
+                color: Constants.navBar.placeholderTextColor
+                visible: !fileUrlBar.text
             }
 
         }
@@ -366,14 +340,15 @@ Item {
                 if (!navBarData.available_baudrates.length)
                     return ;
 
-                if (available_baudrates.length == 0) {
+                if (!available_baudrates.length || !available_flows.length) {
                     available_baudrates = navBarData.available_baudrates;
                     serialDeviceBaudRate.currentIndex = 1;
-                }
-                if (available_flows.length == 0)
                     available_flows = navBarData.available_flows;
+                }
 
                 available_devices = navBarData.available_ports;
+                previous_hosts = navBarData.previous_hosts;
+
             }
         }
 

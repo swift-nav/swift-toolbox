@@ -22,6 +22,9 @@ class Keys(str, Enum):
     TOW = "TOW"
     WEEK = "WEEK"
     ROWS = "ROWS"
+    PREVIOUS_HOSTS = "PREVIOUS_HOSTS"
+    PREVIOUS_PORTS = "PREVIOUS_PORTS"
+    PREVIOUS_FILES = "PREVIOUS_FILES"
 
 
 class ApplicationStates(str, Enum):

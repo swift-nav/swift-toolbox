@@ -47,6 +47,9 @@ NAV_BAR: Dict[str, Any] = {
     Keys.AVAILABLE_PORTS: [],
     Keys.AVAILABLE_BAUDRATES: [],
     Keys.AVAILABLE_FLOWS: [],
+    Keys.PREVIOUS_HOSTS: [],
+    Keys.PREVIOUS_PORTS: [],
+    Keys.PREVIOUS_FILES: [],
 }
 
 SOLUTION_POSITION_TAB: Dict[str, Any] = {
@@ -143,6 +146,9 @@ def receive_messages(app_, backend, messages):
             NAV_BAR[Keys.AVAILABLE_PORTS][:] = m.navBarStatus.availablePorts
             NAV_BAR[Keys.AVAILABLE_BAUDRATES][:] = m.navBarStatus.availableBaudrates
             NAV_BAR[Keys.AVAILABLE_FLOWS][:] = m.navBarStatus.availableFlows
+            NAV_BAR[Keys.PREVIOUS_HOSTS][:] = m.navBarStatus.previousHosts
+            NAV_BAR[Keys.PREVIOUS_PORTS][:] = m.navBarStatus.previousPorts
+            NAV_BAR[Keys.PREVIOUS_FILES][:] = m.navBarStatus.previousFiles
         elif m.which == MessageKeys.LOG_APPEND:
             log_panel_lock.lock()
             LOG_PANEL[Keys.ENTRIES] += [entry.line for entry in m.logAppend.entries]
@@ -306,6 +312,9 @@ class NavBarData(QObject):
     _available_ports: List[str] = []
     _available_baudrates: List[str] = []
     _available_flows: List[str] = []
+    _previous_hosts: List[str] = []
+    _previous_ports: List[str] = []
+    _previous_files: List[str] = []
 
     def get_available_ports(self) -> List[str]:
         return self._available_ports
@@ -333,6 +342,32 @@ class NavBarData(QObject):
 
     available_flows = Property(QTKeys.QVARIANTLIST, get_available_flows, set_available_flows)  # type: ignore
 
+    def get_previous_hosts(self) -> List[str]:
+        return self._previous_hosts
+
+    def set_previous_hosts(self, previous_hosts: List[str]) -> None:
+        self._previous_hosts = previous_hosts
+
+    previous_hosts = Property(QTKeys.QVARIANTLIST, get_previous_hosts, set_previous_hosts)  # type: ignore
+
+    def get_previous_ports(self) -> List[str]:
+        return self._previous_ports
+
+    def set_previous_ports(self, previous_ports: List[str]) -> None:
+        self._previous_ports = previous_ports
+
+    previous_ports = Property(QTKeys.QVARIANTLIST, get_previous_ports, set_previous_ports)  # type: ignore
+
+    def get_previous_files(self) -> List[str]:
+        return self._previous_files
+
+    def set_previous_files(self, previous_files: List[str]) -> None:
+        self._previous_files = previous_files
+
+    previous_files = Property(QTKeys.QVARIANTLIST, get_previous_files, set_previous_files)  # type: ignore
+
+
+
 
 class NavBarModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(NavBarData)  # type: ignore
@@ -340,6 +375,9 @@ class NavBarModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_available_ports(NAV_BAR[Keys.AVAILABLE_PORTS])
         cp.set_available_baudrates(NAV_BAR[Keys.AVAILABLE_BAUDRATES])
         cp.set_available_flows(NAV_BAR[Keys.AVAILABLE_FLOWS])
+        cp.set_previous_hosts(NAV_BAR[Keys.PREVIOUS_HOSTS])
+        cp.set_previous_ports(NAV_BAR[Keys.PREVIOUS_PORTS])
+        cp.set_previous_files(NAV_BAR[Keys.PREVIOUS_FILES])
         return cp
 
 

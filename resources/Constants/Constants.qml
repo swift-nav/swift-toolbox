@@ -27,8 +27,6 @@ QtObject {
         readonly property int dropdownHeight: 40
         readonly property int buttonHeight: 40
         readonly property int urlBarHeight: 25
-        readonly property int urlBarBorder: 1
-        readonly property int urlBarTextMargin: 4
         readonly property int navBarMargin: 10
         readonly property int plotRefreshRateDropdownWidth: 50
         readonly property int serialDeviceBaudRateDropdownWidth: 90

@@ -67,6 +67,9 @@ struct NavBarStatus {
     availableBaudrates @0 : List(UInt32);
     availablePorts @1 : List(Text);
     availableFlows @2 : List(Text);
+    previousHosts @3: List(Text);
+    previousPorts @4: List(Text);
+    previousFiles @5: List(Text);
 }
 
 struct ObservationTableRow {

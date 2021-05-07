@@ -284,6 +284,8 @@ Item {
             ToolTip.text: !checked ? "Pause" : "Unpause"
             checkable: true
             onClicked: data_model.pause(checked)
+            leftPadding: 0
+            rightPadding: 0
             Keys.onBacktabPressed: {
                 if (tcp_ip === navBarSourceSelection.currentText)
                     tcpPortBarText.focus = true;
@@ -295,10 +297,17 @@ Item {
         }
 
         Button {
+            id: connectButton
+
+            Component.onCompleted: {
+                connectButton.contentItem.children[0].elide = Text.ElideNone;
+            }
             Layout.preferredWidth: Constants.navBar.connectButtonWidth
             Layout.preferredHeight: Constants.navBar.buttonHeight
             checkable: true
             text: !checked ? "Connect" : "Disconnect"
+            ToolTip.visible: hovered
+            ToolTip.text: !checked ? "Connect" : "Disconnect"
             onClicked: {
                 if (!checked) {
                     data_model.disconnect();

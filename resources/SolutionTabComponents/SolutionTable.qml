@@ -13,6 +13,7 @@ Item {
 
     width: parent.width
     height: parent.height
+    visible: false
 
     SolutionTableEntries {
         id: solutionTableEntries
@@ -163,6 +164,7 @@ Item {
                 if (!solutionTableEntries.entries.length)
                     return ;
 
+                solutionTable.visible = true;
                 if (solutionTableElementHeaders.model.rows.length == 0) {
                     var new_row = {
                     };

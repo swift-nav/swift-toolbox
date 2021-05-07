@@ -18,7 +18,7 @@ QtObject {
     property QtObject observationTab
     property int defaultTimerIntervalRate: 1000 / 5 // 5 Hz
     property string monoSpaceFont: "Courier New"
-    property int pointSize: 6
+    property real pointSize: 8
     readonly property bool debugMode: false
 
     navBar: QtObject {
@@ -34,7 +34,7 @@ QtObject {
         readonly property int serialDeviceBaudRateDropdownWidth: 90
         readonly property int serialDeviceFlowControlDropdownWidth: 100
         readonly property int serialDeviceRefreshWidth: 30
-        readonly property int connectButtonWidth: 70
+        readonly property int connectButtonWidth: 100
         readonly property int connectionPauseWidth: 30
         readonly property color placeholderTextColor: "#CDC9C9"
         readonly property var all_refresh_rates: [1, 5, 10, 25]
@@ -45,9 +45,6 @@ QtObject {
         readonly property int navBarMargin: 10
         readonly property int navBarSpacing: 0
         readonly property real navBarButtonProportionOfParent: 0.1
-        readonly property int chartCurrentSolutionMarkerSize: 15
-        readonly property int chartSolutionMarkerSize: 5
-        readonly property real chartSolutionLineWidth: 0.1
         readonly property string yAxisTitleText: "Latitude"
         readonly property string xAxisTitleText: "Longitude"
     }
@@ -90,7 +87,7 @@ QtObject {
         readonly property int markerWidth: 20
         readonly property int topMargin: 85
         readonly property int rightMargin: 60
-        readonly property int markerPointSize: 14
+        readonly property real markerPointSizeOffset: 4
         readonly property int labelPointSize: 10
         readonly property int padding: 10
         readonly property int verticalCenterOffset: -1
@@ -103,8 +100,8 @@ QtObject {
         readonly property int lineWidth: 1
         readonly property int heightOffset: 50
         readonly property int margin: 20
-        readonly property int currentSolutionMarkerSize: 15
-        readonly property int solutionMarkerSize: 5
+        readonly property real currentSolutionMarkerSize: 7
+        readonly property real solutionMarkerSize: 2.5
         readonly property real solutionLineWidth: 0.1
         readonly property color backgroundColor: "#CDC9C9"
         readonly property color areaColor: "#FFFFFF"
@@ -112,6 +109,8 @@ QtObject {
         readonly property color gridLineColor: "#CDC9C9"
         readonly property color labelsColor: "#000000"
         readonly property int tickPointSize: 10
+        readonly property int buttonHeight: 40
+        readonly property int unitDropdownWidth: 90
     }
 
     trackingSignals: QtObject {

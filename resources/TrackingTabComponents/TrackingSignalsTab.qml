@@ -159,9 +159,7 @@ Item {
                     var points = trackingSignalsPoints.points;
                     colors = trackingSignalsPoints.colors;
                     labels = trackingSignalsPoints.labels;
-                    if (check_labels != trackingSignalsPoints.check_labels)
-                        trackingSignalsChart.visible = true;
-
+                    trackingSignalsChart.visible = true;
                     check_labels = trackingSignalsPoints.check_labels;
                     for (var idx in labels) {
                         if (idx < lines.length) {

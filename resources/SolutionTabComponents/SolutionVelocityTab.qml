@@ -28,6 +28,7 @@ Item {
 
         width: parent.width
         height: parent.height
+        visible: false
 
         ColumnLayout {
             id: solutionVelocityAreaRowLayout
@@ -174,6 +175,7 @@ Item {
                         if (!solutionVelocityPoints.points.length)
                             return ;
 
+                        solutionVelocityArea.visible = true;
                         var points = solutionVelocityPoints.points;
                         if (colors != solutionVelocityPoints.colors) {
                             colors = solutionVelocityPoints.colors;

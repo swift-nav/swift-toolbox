@@ -31,6 +31,7 @@ use std::{
     thread::JoinHandle,
     time::{Duration, Instant},
 };
+use strum::VariantNames;
 
 pub type Error = std::boxed::Box<dyn std::error::Error>;
 pub type Result<T> = std::result::Result<T, Error>;
@@ -462,7 +463,7 @@ impl FromStr for CliTabs {
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         Ok(CliTabs(Tabs::from_str(s).map_err(|_| {
-            format!("Must choose from available tabs {:?}", TAB_LIST)
+            format!("Must choose from available tabs {:?}", Tabs::VARIANTS)
         })?))
     }
 }

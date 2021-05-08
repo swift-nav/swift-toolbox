@@ -1,18 +1,16 @@
-#![allow(clippy::all)]
-#![allow(unknown_lints)]
-#![allow(non_camel_case_types)]
+// cargo-deps: strum,strum_macros
+
 #![allow(non_snake_case)]
 #![allow(non_upper_case_globals)]
-#![allow(trivial_casts)]
-#![allow(unsafe_code)]
 #![allow(unused_imports)]
-#![allow(unused_results)]
-// cargo-deps: strum,strum_macros
+#![allow(unused_mut)]
+#![allow(unused_parens)]
+
 extern crate strum;
 extern crate strum_macros;
-use strum_macros::{Display, EnumString};
+use strum_macros::{Display, EnumString, EnumVariantNames};
 
-#[derive(Clone, Debug, Display, EnumString, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
 pub enum Tabs {
     #[strum(serialize = "TRACKING_SIGNALS")]
     TRACKING_SIGNALS,
@@ -34,7 +32,7 @@ pub enum Tabs {
     ADVANCED,
 }
 
-#[derive(Clone, Debug, Display, EnumString, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
 pub enum Keys {
     #[strum(serialize = "POINTS")]
     POINTS,
@@ -82,7 +80,7 @@ pub enum Keys {
     CONNECTED,
 }
 
-#[derive(Clone, Debug, Display, EnumString, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
 pub enum ApplicationStates {
     #[strum(serialize = "CLOSE")]
     CLOSE,
@@ -92,7 +90,7 @@ pub enum ApplicationStates {
     DISCONNECTED,
 }
 
-#[derive(Clone, Debug, Display, EnumString, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
 pub enum MessageKeys {
     #[strum(serialize = "status")]
     STATUS,
@@ -136,7 +134,7 @@ pub enum MessageKeys {
     LOG_APPEND,
 }
 
-#[derive(Clone, Debug, Display, EnumString, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
 pub enum QTKeys {
     #[strum(serialize = "QVariantList")]
     QVARIANTLIST,

@@ -212,7 +212,7 @@ python-versions = "*"
 
 [[package]]
 name = "nuitka"
-version = "0.6.14.6"
+version = "0.6.12.4"
 description = "Python compiler with full language support and CPython compatibility"
 category = "dev"
 optional = false
@@ -310,8 +310,8 @@ develop = false
 [package.source]
 type = "git"
 url = "https://github.com/john-michaelburke/py2many"
-reference = "john-michaelburke/add_enumvariantnames"
-resolved_reference = "0ec5d202a2995b48557b2c0b5f97005a41d879d9"
+reference = "console"
+resolved_reference = "8b7574ad46579405ebed8af386028518d9a692db"
 
 [[package]]
 name = "pycapnp"
@@ -506,7 +506,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.10"
-content-hash = "2b223017dd682a7fb5a98eb2fcee3845391e6c1568e8d7b5720d27a8d9dbd6ec"
+content-hash = "de62b7af01f824b1d18c15d3c86c70c8708b91ff8a18101bdbdfc7b3a0e14bed"
 
 [metadata.files]
 altgraph = [
@@ -647,7 +647,7 @@ mypy-extensions = [
     {file = "mypy_extensions-0.4.3.tar.gz", hash = "sha256:2d82818f5bb3e369420cb3c4060a7970edba416647068eb4c5343488a6c604a8"},
 ]
 nuitka = [
-    {file = "Nuitka-0.6.14.6.tar.gz", hash = "sha256:45360eadc26f4f573eaf30ca7a1b81359d21fda726cb339a43d5410f1ffc15c5"},
+    {file = "Nuitka-0.6.12.4.tar.gz", hash = "sha256:16e93238cdddc93c2362b00d9ab17c01a095bae3f3b58baf63a31ae7b7f4e61d"},
 ]
 packaging = [
     {file = "packaging-20.9-py2.py3-none-any.whl", hash = "sha256:67714da7f7bc052e064859c05c595155bd1ee9f69f76557e21f051443c20947a"},

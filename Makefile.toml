@@ -67,9 +67,7 @@ dependencies = ["pip-install-dev"]
 script_runner = "@shell"
 script = '''
 conda run -n $CONDA_ENV --no-capture-output --live-stream python utils/extract_piksi_tools_constants.py > /tmp/piksi_tools_constants.py
-conda run -n $CONDA_ENV --no-capture-output --live-stream black /tmp/piksi_tools_constants.py
-conda run -n $CONDA_ENV --no-capture-output --live-stream python -m py2many --rust=1 /tmp/piksi_tools_constants.py
-mv /tmp/piksi_tools_constants.rs console_backend/src/piksi_tools_constants.rs
+conda run -n $CONDA_ENV --no-capture-output --live-stream python -m py2many --rust=1 /tmp/piksi_tools_constants.py --outdir console_backend/src/
 '''
 
 [tasks.generate-resources]

@@ -73,11 +73,7 @@ impl Server {
                 None
             }
         });
-        if let Some(result) = result {
-            Some(PyBytes::new(py, &result).into())
-        } else {
-            None
-        }
+        result.map(|result| PyBytes::new(py, &result).into())
     }
 
     #[text_signature = "($self, /)"]

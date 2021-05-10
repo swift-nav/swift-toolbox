@@ -314,7 +314,7 @@ def run_frontend_mem_benchmark(executable: str):
         bench_command = f"{executable} {BENCHMARK_COMMAND_ARGS(bench[FILE_PATH])}"
         for _ in range(RUN_COUNT):
             pool = ThreadPool(processes=1)
-            process = subprocess.Popen(bench_command.split())
+            process = subprocess.Popen(bench_command.split())  # pylint: disable=consider-using-with
             mem_readings = pool.apply_async(collect_memory_readings, (process.pid,)).get(THREAD_TIMEOUT_SEC)
             mean_bytes, std_bytes = get_mean_and_pop_stdev(mem_readings)
             mean_mb = BYTES_TO_MB(mean_bytes)

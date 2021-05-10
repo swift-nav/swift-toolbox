@@ -27,10 +27,29 @@ DISK_USAGE_COMMAND = lambda file_path: f"du -ch {file_path} | grep total"
 
 INSTALLER_BENCHMARKS = {
     WINDOWS: [
-        {NAME: "Windows Installer", FILE_PATH: "release-archive.filename", EXPECTED: 55, ERROR_MARGIN_FRAC: 0.05,},
+        {
+            NAME: "Windows Installer",
+            FILE_PATH: "release-archive.filename",
+            EXPECTED: 55,
+            ERROR_MARGIN_FRAC: 0.05,
+        },
     ],
-    MACOS: [{NAME: "macOS Installer", FILE_PATH: "release-archive.filename", EXPECTED: 95, ERROR_MARGIN_FRAC: 0.05,},],
-    LINUX: [{NAME: "Linux Installer", FILE_PATH: "release-archive.filename", EXPECTED: 85, ERROR_MARGIN_FRAC: 0.05,},],
+    MACOS: [
+        {
+            NAME: "macOS Installer",
+            FILE_PATH: "release-archive.filename",
+            EXPECTED: 95,
+            ERROR_MARGIN_FRAC: 0.05,
+        },
+    ],
+    LINUX: [
+        {
+            NAME: "Linux Installer",
+            FILE_PATH: "release-archive.filename",
+            EXPECTED: 85,
+            ERROR_MARGIN_FRAC: 0.05,
+        },
+    ],
 }
 
 # Backend CPU Benchmark.
@@ -187,8 +206,7 @@ def get_nested_key(nested_dict: dict, key_path: str) -> Optional[Any]:
 
 
 def run_disk_usage_benchmark():
-    """Runner for disk usage benchmark validations.
-    """
+    """Runner for disk usage benchmark validations."""
     os_ = sys.platform
     benchmarks = INSTALLER_BENCHMARKS.get(os_, [])
     for bench in benchmarks:
@@ -216,8 +234,7 @@ def run_disk_usage_benchmark():
 
 
 def run_backend_cpu_validate_benchmarks():
-    """Runner for a suite of cpu benchmark validations.
-    """
+    """Runner for a suite of cpu benchmark validations."""
     os_ = sys.platform
     benchmarks = BACKEND_CPU_BENCHMARKS.get(os_, [])
     for bench in benchmarks:

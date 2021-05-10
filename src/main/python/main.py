@@ -365,56 +365,47 @@ class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attr
         return self._valid
 
     def set_valid(self, valid: bool) -> None:
-        """Setter for _valid.
-        """
+        """Setter for _valid."""
         self._valid = valid
 
     valid = Property(bool, get_valid, set_valid)
 
     def get_lat_min(self) -> float:
-        """Getter for _lat_min.
-        """
+        """Getter for _lat_min."""
         return self._lat_min
 
     def set_lat_min(self, lat_min_: float) -> None:
-        """Setter for _lat_min.
-        """
+        """Setter for _lat_min."""
         self._lat_min = lat_min_
 
     lat_min_ = Property(float, get_lat_min, set_lat_min)
 
     def get_lat_max(self) -> float:
-        """Getter for _lat_max.
-        """
+        """Getter for _lat_max."""
         return self._lat_max
 
     def set_lat_max(self, lat_max_: float) -> None:
-        """Setter for _lat_max.
-        """
+        """Setter for _lat_max."""
         self._lat_max = lat_max_
 
     lat_max_ = Property(float, get_lat_max, set_lat_max)
 
     def get_lon_min(self) -> float:
-        """Getter for _lon_min.
-        """
+        """Getter for _lon_min."""
         return self._lon_min
 
     def set_lon_min(self, lon_min_: float) -> None:
-        """Setter for _lon_min.
-        """
+        """Setter for _lon_min."""
         self._lon_min = lon_min_
 
     lon_min_ = Property(float, get_lon_min, set_lon_min)
 
     def get_lon_max(self) -> float:
-        """Getter for _lon_max.
-        """
+        """Getter for _lon_max."""
         return self._lon_max
 
     def set_lon_max(self, lon_max_: float) -> None:
-        """Setter for _lon_max.
-        """
+        """Setter for _lon_max."""
         self._lon_max = lon_max_
 
     lon_max_ = Property(float, get_lon_max, set_lon_max)
@@ -499,20 +490,17 @@ class SolutionTableEntries(QObject):
         return self._valid
 
     def set_valid(self, valid: bool) -> None:
-        """Setter for _valid.
-        """
+        """Setter for _valid."""
         self._valid = valid
 
     valid = Property(bool, get_valid, set_valid)
 
     def get_entries(self) -> List[List[str]]:
-        """Getter for _entries.
-        """
+        """Getter for _entries."""
         return self._entries
 
     def set_entries(self, entries: List[List[str]]) -> None:
-        """Setter for _entries.
-        """
+        """Setter for _entries."""
         self._entries = entries
 
     entries = Property(QTKeys.QVARIANTLIST, get_entries, set_entries)  # type: ignore
@@ -548,44 +536,37 @@ class SolutionVelocityPoints(QObject):
         return self._valid
 
     def set_valid(self, valid: bool) -> None:
-        """Setter for _valid.
-        """
+        """Setter for _valid."""
         self._valid = valid
 
     valid = Property(bool, get_valid, set_valid)
 
     def get_min(self) -> float:
-        """Getter for _min.
-        """
+        """Getter for _min."""
         return self._min
 
     def set_min(self, min_: float) -> None:
-        """Setter for _min.
-        """
+        """Setter for _min."""
         self._min = min_
 
     min_ = Property(float, get_min, set_min)
 
     def get_max(self) -> float:
-        """Getter for _max.
-        """
+        """Getter for _max."""
         return self._max
 
     def set_max(self, max_: float) -> None:
-        """Setter for _max.
-        """
+        """Setter for _max."""
         self._max = max_
 
     max_ = Property(float, get_max, set_max)
 
     def get_available_units(self) -> List[str]:
-        """Getter for _available_units.
-        """
+        """Getter for _available_units."""
         return self._available_units
 
     def set_available_units(self, available_units: List[str]) -> None:
-        """Setter for _available_units.
-        """
+        """Setter for _available_units."""
         self._available_units = available_units
 
     available_units = Property(QTKeys.QVARIANTLIST, get_available_units, set_available_units)  # type: ignore
@@ -642,32 +623,27 @@ class TrackingSignalsPoints(QObject):
         return self._valid
 
     def set_valid(self, valid: bool) -> None:
-        """Setter for _valid.
-        """
+        """Setter for _valid."""
         self._valid = valid
 
     valid = Property(bool, get_valid, set_valid)
 
     def get_min(self) -> float:
-        """Getter for _min.
-        """
+        """Getter for _min."""
         return self._min
 
     def set_min(self, min_: float) -> None:
-        """Setter for _min.
-        """
+        """Setter for _min."""
         self._min = min_
 
     min_ = Property(float, get_min, set_min)
 
     def get_max(self) -> float:
-        """Getter for _max.
-        """
+        """Getter for _max."""
         return self._max
 
     def set_max(self, max_: float) -> None:
-        """Setter for _max.
-        """
+        """Setter for _max."""
         self._max = max_
 
     max_ = Property(float, get_max, set_max)
@@ -802,5 +778,13 @@ if __name__ == "__main__":
     root_context.setContextProperty("local_observation_model", local_observation_model)
     root_context.setContextProperty("data_model", data_model)
 
-    threading.Thread(target=receive_messages, args=(app, backend_main, messages_main,), daemon=True).start()
+    threading.Thread(
+        target=receive_messages,
+        args=(
+            app,
+            backend_main,
+            messages_main,
+        ),
+        daemon=True,
+    ).start()
     sys.exit(app.exec_())

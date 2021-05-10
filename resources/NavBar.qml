@@ -251,13 +251,13 @@ Item {
                     data_model.disconnect();
                 } else {
                     if (navBarSourceSelection.currentText === tcp_ip) {
-                        if (tcpUrlBar.text && tcpPortBar.text)
-                            data_model.connect_tcp(tcpUrlBar.text, tcpPortBar.text);
+                        if (tcpUrlBar.editText && tcpPortBar.editText)
+                            data_model.connect_tcp(tcpUrlBar.editText, tcpPortBar.editText);
                         else
                             data_model.connect();
                     } else if (navBarSourceSelection.currentText === file) {
-                        if (fileUrlBar.text)
-                            data_model.connect_file(fileUrlBar.text);
+                        if (fileUrlBar.editText)
+                            data_model.connect_file(fileUrlBar.editText);
 
                     } else {
                         data_model.connect_serial(serialDevice.currentText, serialDeviceBaudRate.currentText, serialDeviceFlowControl.currentText);

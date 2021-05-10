@@ -68,7 +68,7 @@ struct NavBarStatus {
     availablePorts @1 : List(Text);
     availableFlows @2 : List(Text);
     previousHosts @3: List(Text);
-    previousPorts @4: List(Text);
+    previousPorts @4: List(UInt16);
     previousFiles @5: List(Text);
 }
 

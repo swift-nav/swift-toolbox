@@ -93,7 +93,7 @@ impl Server {
         };
         let shared_state = SharedState::new();
         let server_state = ServerState::new();
-        refresh_navbar(&mut client_send.clone());
+        refresh_navbar(&mut client_send.clone(), shared_state.clone());
         let logger = Logger::builder()
             .buf_size(LOG_WRITER_BUFFER_MESSAGE_COUNT)
             .formatter(splitable_log_formatter)
@@ -137,7 +137,7 @@ impl Server {
                         let client_send_clone = client_send.clone();
                         match request {
                             m::message::SerialRefreshRequest(Ok(_)) => {
-                                refresh_navbar(&mut client_send_clone.clone());
+                                refresh_navbar(&mut client_send_clone.clone(), shared_state_clone);
                             }
                             m::message::DisconnectRequest(Ok(_)) => {
                                 shared_state_clone.set_running(false);
@@ -164,11 +164,11 @@ impl Server {
                             m::message::TcpRequest(Ok(req)) => {
                                 let host = req.get_host().unwrap();
                                 let port = req.get_port();
-                                let host_port = format!("{}:{}", host, port);
                                 server_state_clone.connect_to_host(
                                     client_send_clone,
                                     shared_state_clone,
-                                    host_port,
+                                    host.to_string(),
+                                    port,
                                 );
                             }
                             m::message::SerialRequest(Ok(req)) => {

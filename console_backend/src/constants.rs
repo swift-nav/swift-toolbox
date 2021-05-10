@@ -3,6 +3,10 @@
 pub const NANOSECONDS_PER_SECOND: f64 = 1.0e+9;
 pub const SECONDS_PER_NANOSECOND: f64 = 1.0e-9;
 
+pub const APPLICATION_QUALIFIER: &str = "com.swift-nav";
+pub const APPLICATION_ORGANIZATION: &str = "swift-nav";
+pub const APPLICATION_NAME: &str = "swift_navigation_console";
+
 // Server constants.
 pub const CLOSE: &str = "CLOSE";
 
@@ -15,7 +19,7 @@ pub const LOG_WRITER_BUFFER_MESSAGE_COUNT: usize = 50;
 // Common constants.
 pub const NUM_POINTS: usize = 200;
 
-// Bottom Navbar constants.
+// Navbar constants.
 pub const AVAILABLE_BAUDRATES: [u32; 6] = [57600, 115200, 230400, 460800, 921600, 1000000];
 pub const FLOW_CONTROL_NONE: &str = "None";
 pub const FLOW_CONTROL_SOFTWARE: &str = "Software XON/XOFF";
@@ -26,6 +30,7 @@ pub const AVAILABLE_FLOWS: &[&str] = &[
     FLOW_CONTROL_HARDWARE,
 ];
 pub const SERIALPORT_READ_TIMEOUT_MS: u64 = 1000;
+pub const CONNECTION_HISTORY_FILENAME: &str = "connection_history.yaml";
 
 // Tracking Signals Tab constants.
 pub const NUM_SATELLITES: usize = 60;

@@ -4,10 +4,10 @@ use log::warn;
 use serialport::{available_ports, FlowControl};
 use std::collections::HashMap;
 
-use crate::common_constants as cc;
 use crate::console_backend_capnp as m;
 use crate::constants::*;
 use crate::types::{MessageSender, SignalCodes};
+use crate::{common_constants as cc, types::SharedState};
 
 /// Send a CLOSE, or kill, signal to the frontend.
 pub fn close_frontend<P: MessageSender>(client_send: &mut P) {
@@ -21,7 +21,7 @@ pub fn close_frontend<P: MessageSender>(client_send: &mut P) {
     client_send.send_data(msg_bytes);
 }
 
-pub fn refresh_navbar<P: MessageSender>(client_send: &mut P) {
+pub fn refresh_navbar<P: MessageSender>(client_send: &mut P, shared_state: SharedState) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<m::message::Builder>();
 
@@ -58,29 +58,30 @@ pub fn refresh_navbar<P: MessageSender>(client_send: &mut P) {
     for (i, flow) in AVAILABLE_FLOWS.iter().enumerate() {
         available_flows.set(i as u32, &flow.to_string());
     }
-
+    let hosts = shared_state.host_history();
     let mut prevous_hosts = nav_bar_status
         .reborrow()
-        .init_previous_hosts(AVAILABLE_FLOWS.len() as u32);
+        .init_previous_hosts(hosts.len() as u32);
 
-    for (i, hosts) in AVAILABLE_FLOWS.iter().enumerate() {
-        prevous_hosts.set(i as u32, *hosts);
+    for (i, hosts) in hosts.iter().enumerate() {
+        prevous_hosts.set(i as u32, hosts);
     }
 
+    let ports = shared_state.port_history();
     let mut prevous_ports = nav_bar_status
         .reborrow()
-        .init_previous_ports(AVAILABLE_FLOWS.len() as u32);
+        .init_previous_ports(ports.len() as u32);
 
-    for (i, ports) in AVAILABLE_FLOWS.iter().enumerate() {
+    for (i, ports) in ports.iter().enumerate() {
         prevous_ports.set(i as u32, *ports);
     }
-
+    let files = shared_state.file_history();
     let mut prevous_files = nav_bar_status
         .reborrow()
-        .init_previous_files(AVAILABLE_FLOWS.len() as u32);
+        .init_previous_files(files.len() as u32);
 
-    for (i, filename) in AVAILABLE_FLOWS.iter().enumerate() {
-        prevous_files.set(i as u32, *filename);
+    for (i, filename) in files.iter().enumerate() {
+        prevous_files.set(i as u32, filename);
     }
 
     let mut msg_bytes: Vec<u8> = vec![];

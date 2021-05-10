@@ -3,8 +3,11 @@ use crate::formatters::*;
 use crate::piksi_tools_constants::*;
 use crate::process_messages::process_messages;
 use crate::utils::{close_frontend, from_flowcontrol_str, ms_to_sec};
+use anyhow::{anyhow, bail, Context, Result as AHResult};
 use chrono::{DateTime, Utc};
+use directories::{BaseDirs, ProjectDirs, UserDirs};
 use log::{info, warn};
+use once_cell::sync::OnceCell;
 use ordered_float::OrderedFloat;
 use sbp::messages::{
     navigation::{MsgDops, MsgDopsDepA, MsgPosLLH, MsgPosLLHDepA, MsgVelNED, MsgVelNEDDepA},
@@ -13,7 +16,7 @@ use sbp::messages::{
         PackedObsContentDepC, PackedOsrContent,
     },
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::{
     cmp::{Eq, PartialEq},
     collections::HashMap,
@@ -23,11 +26,13 @@ use std::{
     hash::Hash,
     net::TcpStream,
     ops::Deref,
+    path::{Path, PathBuf},
     sync::{mpsc::Sender, Arc, Mutex},
     thread,
     thread::JoinHandle,
     time::{Duration, Instant},
 };
+use xshell::mkdir_p;
 
 pub type Error = std::boxed::Box<dyn std::error::Error>;
 pub type Result<T> = std::result::Result<T, Error>;
@@ -140,8 +145,9 @@ impl ServerState {
         self.connection_join();
         shared_state_clone.set_running(true);
         let handle = thread::spawn(move || {
-            if let Ok(stream) = fs::File::open(filename) {
+            if let Ok(stream) = fs::File::open(&filename) {
                 println!("Opened file successfully!");
+                shared_state_clone.update_file_history(filename);
                 let shared_state_clone_ = shared_state.clone();
                 let messages = sbp::iter_messages(stream);
                 process_messages(
@@ -166,20 +172,24 @@ impl ServerState {
     /// # Parameters
     /// - `client_send`: Client Sender channel for communication from backend to frontend.
     /// - `shared_state`: The shared state for validating another connection is not already running.
-    /// - `host_port`: The host and port combined as a string to be opend as a TCP stream.
+    /// - `host`: The host portion of the TCP stream to open.
+    /// - `port`: The port to be used to open a TCP stream.
     pub fn connect_to_host(
         &self,
         client_send: ClientSender,
         shared_state: SharedState,
-        host_port: String,
+        host: String,
+        port: u16,
     ) {
         let shared_state_clone = shared_state.clone();
         shared_state_clone.set_running(true);
         self.connection_join();
         let handle = thread::spawn(move || {
             let shared_state_clone = shared_state.clone();
+            let host_port = format!("{}:{}", host, port);
             if let Ok(stream) = TcpStream::connect(host_port.clone()) {
                 info!("Connected to the server {}!", host_port);
+                shared_state_clone.update_tcp_history(host, port);
                 let messages = sbp::iter_messages(stream);
                 process_messages(
                     messages,
@@ -273,6 +283,31 @@ impl SharedState {
         let mut shared_data = self.lock().unwrap();
         (*shared_data).paused = set_to;
     }
+
+    pub fn file_history(&self) -> Vec<String> {
+        let shared_data = self.lock().unwrap();
+        (*shared_data).connection_history.files()
+    }
+    pub fn host_history(&self) -> Vec<String> {
+        let shared_data = self.lock().unwrap();
+        (*shared_data).connection_history.hosts()
+    }
+    pub fn port_history(&self) -> Vec<u16> {
+        let shared_data = self.lock().unwrap();
+        (*shared_data).connection_history.ports()
+    }
+    pub fn update_file_history(&self, filename: String) {
+        let mut shared_data = self.lock().unwrap();
+        (*shared_data)
+            .connection_history
+            .successful_file_connection(filename);
+    }
+    pub fn update_tcp_history(&self, host: String, port: u16) {
+        let mut shared_data = self.lock().unwrap();
+        (*shared_data)
+            .connection_history
+            .successful_tcp_connection(host, port);
+    }
 }
 
 impl Deref for SharedState {
@@ -300,6 +335,7 @@ impl Clone for SharedState {
 pub struct SharedStateInner {
     pub tracking_tab: TrackingTabState,
     pub paused: bool,
+    pub connection_history: ConnectionHistory,
     pub running: bool,
     pub solution_tab: SolutionTabState,
 }
@@ -308,6 +344,7 @@ impl SharedStateInner {
         SharedStateInner {
             tracking_tab: TrackingTabState::new(),
             paused: false,
+            connection_history: ConnectionHistory::new(),
             running: false,
             solution_tab: SolutionTabState::new(),
         }
@@ -404,6 +441,117 @@ impl SolutionVelocityTabState {
 pub enum RealtimeDelay {
     On,
     Off,
+}
+
+// Navbar Types.
+
+/// Data Directory struct for storing informating and helpers pertaining to project directory.
+///
+/// Taken from swift-cli/swift/src/types.rs.
+/// impl taken from swift-cli/swift/src/lib.rs.
+#[derive(Debug)]
+pub struct DataDirectory {
+    path_: PathBuf,
+}
+pub static DATA_DIRECTORY: OnceCell<DataDirectory> = OnceCell::new();
+
+impl DataDirectory {
+    pub fn init() {
+        DATA_DIRECTORY
+            .set(DataDirectory {
+                path_: create_data_dir().unwrap(),
+            })
+            .unwrap();
+    }
+    pub fn get() -> &'static DataDirectory {
+        DATA_DIRECTORY.get().unwrap()
+    }
+    pub fn path() -> &'static Path {
+        let mut data_dir = DATA_DIRECTORY.get();
+        if data_dir.is_none() {
+            DataDirectory::init();
+            data_dir = DATA_DIRECTORY.get();
+        }
+        &data_dir.unwrap().path_
+    }
+}
+
+/// Deduce data directory path and create folder.
+///
+/// Taken from swift-cli/swift/src/lib.rs.
+/// # Returns
+/// - `Ok`: The PathBuf for the data directory path.
+/// - `Err`: Issue deducing path or creating the data directory.
+pub fn create_data_dir() -> AHResult<PathBuf> {
+    let proj_dirs = ProjectDirs::from(
+        APPLICATION_QUALIFIER,
+        APPLICATION_ORGANIZATION,
+        APPLICATION_NAME.into(),
+    )
+    .context("could not discover local project directory")?;
+    let path: PathBuf = ProjectDirs::data_local_dir(&proj_dirs).into();
+    mkdir_p(path.clone())?;
+    Ok(path)
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub struct ConnectionHistory {
+    hosts_: Vec<String>,
+    ports_: Vec<u16>,
+    files_: Vec<String>,
+    #[serde(skip)]
+    filename: PathBuf,
+}
+impl ConnectionHistory {
+    pub fn new() -> ConnectionHistory {
+        let filename = DataDirectory::path().join(CONNECTION_HISTORY_FILENAME);
+        if let Ok(file) = fs::File::open(&filename) {
+            if let Ok(conn_yaml) = serde_yaml::from_reader(file) {
+                let mut conn_yaml: ConnectionHistory = conn_yaml;
+                conn_yaml.filename = filename;
+                return conn_yaml;
+            }
+        }
+        ConnectionHistory {
+            hosts_: vec![],
+            ports_: vec![],
+            files_: vec![],
+            filename,
+        }
+    }
+    pub fn hosts(&self) -> Vec<String> {
+        self.hosts_.clone()
+    }
+    pub fn ports(&self) -> Vec<u16> {
+        self.ports_.clone()
+    }
+    pub fn files(&self) -> Vec<String> {
+        self.files_.clone()
+    }
+    pub fn successful_tcp_connection(&mut self, host: String, port: u16) {
+        if self.hosts_.len() == 0 || self.hosts_[0] != host {
+            self.hosts_.insert(0, host);
+        }
+        if self.ports_.len() == 0 || self.ports_[0] != port {
+            self.ports_.insert(0, port);
+        }
+        if let Err(e) = self.save() {
+            eprintln!("Unable to save connection history, {}.", e);
+        }
+    }
+    pub fn successful_file_connection(&mut self, filename: String) {
+        if self.files_.len() == 0 || self.files_[0] != filename {
+            self.files_.insert(0, filename);
+        }
+        if let Err(e) = self.save() {
+            eprintln!("Unable to save connection history, {}.", e);
+        }
+    }
+
+    fn save(&self) -> Result<()> {
+        serde_yaml::to_writer(fs::File::create(&self.filename)?, self)?;
+        Ok(())
+    }
 }
 
 // Tracking Signals Tab Types.

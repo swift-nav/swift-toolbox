@@ -105,46 +105,6 @@ mod tests {
                 > Duration::from_secs_f64(gps_s.later_gps_tow_good - gps_s.early_gps_tow_good)
         );
     }
-    #[test]
-    fn realtime_delay_bad_last_test() {
-        let shared_state = SharedState::new();
-        let (client_send_, _) = mpsc::channel::<Vec<u8>>();
-        let client_send = ClientSender {
-            inner: client_send_,
-        };
-        let gps_s = GpsTimeTests::new();
-        let mut main = MainTab::new(shared_state, client_send);
-        let early_gps_time_good = GpsTime::new(gps_s.zero_week, gps_s.early_gps_tow_good).unwrap();
-        let later_gps_time_good = GpsTime::new(gps_s.good_week, gps_s.later_gps_tow_good);
-        main.last_gps_time = Some(early_gps_time_good);
-        let now = Instant::now();
-        main.last_gps_update = Instant::now();
-        main.realtime_delay(Some(later_gps_time_good));
-        assert!(
-            now.elapsed()
-                > Duration::from_secs_f64(gps_s.later_gps_tow_good - gps_s.early_gps_tow_good)
-        );
-    }
-    #[test]
-    fn realtime_delay_bad_current_test() {
-        let shared_state = SharedState::new();
-        let (client_send_, _) = mpsc::channel::<Vec<u8>>();
-        let client_send = ClientSender {
-            inner: client_send_,
-        };
-        let gps_s = GpsTimeTests::new();
-        let mut main = MainTab::new(shared_state, client_send);
-        let early_gps_time_good = GpsTime::new(gps_s.good_week, gps_s.early_gps_tow_good).unwrap();
-        let later_gps_time_good = GpsTime::new(gps_s.zero_week, gps_s.later_gps_tow_good);
-        main.last_gps_time = Some(early_gps_time_good);
-        let now = Instant::now();
-        main.last_gps_update = Instant::now();
-        main.realtime_delay(Some(later_gps_time_good));
-        assert!(
-            now.elapsed()
-                > Duration::from_secs_f64(gps_s.later_gps_tow_good - gps_s.early_gps_tow_good)
-        );
-    }
 
     #[test]
     fn realtime_delay_no_last_test() {

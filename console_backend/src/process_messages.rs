@@ -17,7 +17,7 @@ pub fn process_messages<S: MessageSender, T>(
     realtime_delay: RealtimeDelay,
 ) {
     let mut main = MainTab::new(shared_state.clone(), client_send);
-    for message_and_time in messages {
+    for (message, gps_time) in messages {
         if !shared_state.is_running() {
             break;
         }
@@ -29,7 +29,6 @@ pub fn process_messages<S: MessageSender, T>(
                 sleep(Duration::from_millis(PAUSE_LOOP_SLEEP_DURATION_MS));
             }
         }
-        let (message, gps_time) = message_and_time;
         let msg_name = message.get_message_name();
         let mut attempt_delay = true;
         match message {

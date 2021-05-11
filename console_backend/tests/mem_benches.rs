@@ -100,7 +100,7 @@ mod mem_bench_impl {
                 inner: client_send_,
             };
             let shared_state = SharedState::new();
-            shared_state.set_running(true);
+            shared_state.set_running(true, client_send.clone());
             process_messages::process_messages(
                 messages,
                 shared_state,

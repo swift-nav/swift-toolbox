@@ -144,7 +144,7 @@ Item {
             Timer {
                 id: trackingSignalsTimer
 
-                interval: Constants.currentRefreshRate
+                interval: Utils.hzToMilliseconds(Constants.currentRefreshRate)
                 running: true
                 repeat: true
                 onTriggered: {
@@ -169,7 +169,7 @@ Item {
                                 line.color = colors[idx];
                                 line.width = Constants.commonChart.lineWidth;
                                 line.axisYRight = trackingSignalsYAxis;
-                                line.useOpenGL = true;
+                                line.useOpenGL = Constants.useOpenGL;
                                 lines[idx] = [line, labels[idx]];
                             }
                         } else {
@@ -177,7 +177,7 @@ Item {
                             line.color = colors[idx];
                             line.width = Constants.commonChart.lineWidth;
                             line.axisYRight = trackingSignalsYAxis;
-                            line.useOpenGL = true;
+                            line.useOpenGL = Constants.useOpenGL;
                             lines.push([line, labels[idx]]);
                         }
                     }

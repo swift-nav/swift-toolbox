@@ -12,8 +12,11 @@ QtObject {
     property QtObject solutionVelocity
     property QtObject trackingSignals
     property QtObject observationTab
-    property int currentRefreshRate: 1000 / 5 // 5 Hz
-    property int defaultTimerIntervalRate: 1000 / 5 // 5 Hz
+    property int currentRefreshRate: 5 // 5 Hz
+    readonly property int staticTimerIntervalRate: 5 // 5 Hz
+    property bool useOpenGL: true
+    property int initialMainTabIndex: 0 // Tracking
+    property int initialSubTabIndex: 0 // Signals
     property string monoSpaceFont: "Courier New"
     readonly property bool debugMode: false
 

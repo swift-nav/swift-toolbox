@@ -1,7 +1,7 @@
 use capnp::message::Builder;
 use capnp::serialize;
 use log::warn;
-use serialport::{available_ports, FlowControl};
+use serialport::available_ports;
 use std::collections::HashMap;
 
 use crate::common_constants as cc;
@@ -15,6 +15,20 @@ pub fn close_frontend<P: MessageSender>(client_send: &mut P) {
     let msg = builder.init_root::<m::message::Builder>();
     let mut status = msg.init_status();
     let app_state = cc::ApplicationStates::CLOSE;
+    status.set_text(&app_state.to_string());
+    let mut msg_bytes: Vec<u8> = vec![];
+    serialize::write_message(&mut msg_bytes, &builder).unwrap();
+    client_send.send_data(msg_bytes);
+}
+
+/// Send a CONNECTED or DISCONNECTED, signal to the frontend.
+pub fn set_connected_frontend<P: MessageSender>(
+    app_state: cc::ApplicationStates,
+    client_send: &mut P,
+) {
+    let mut builder = Builder::new_default();
+    let msg = builder.init_root::<m::message::Builder>();
+    let mut status = msg.init_status();
     status.set_text(&app_state.to_string());
     let mut msg_bytes: Vec<u8> = vec![];
     serialize::write_message(&mut msg_bytes, &builder).unwrap();
@@ -57,26 +71,18 @@ pub fn refresh_ports<P: MessageSender>(client_send: &mut P) {
             available_flows.set(i as u32, &flow.to_string());
         }
 
+        let mut available_refresh_rates = bottom_navbar_status
+            .reborrow()
+            .init_available_refresh_rates(AVAILABLE_REFRESH_RATES.len() as u32);
+
+        for (i, rr) in AVAILABLE_REFRESH_RATES.iter().enumerate() {
+            available_refresh_rates.set(i as u32, *rr);
+        }
+
         let mut msg_bytes: Vec<u8> = vec![];
         serialize::write_message(&mut msg_bytes, &builder).unwrap();
 
         client_send.send_data(msg_bytes);
-    }
-}
-
-/// Convert flow control string slice to expected serialport FlowControl variant.
-///
-/// # Parameters
-/// - `flow_str`: A string slice corresponding to serialport FlowControl variant.
-///
-/// # Returns
-/// - the associated serialport::FlowControl variant.
-pub fn from_flowcontrol_str(flow_str: &str) -> FlowControl {
-    match flow_str {
-        FLOW_CONTROL_NONE => FlowControl::None,
-        FLOW_CONTROL_SOFTWARE => FlowControl::Software,
-        FLOW_CONTROL_HARDWARE => FlowControl::Hardware,
-        _ => panic!("unable to convert to FlowControl"),
     }
 }
 

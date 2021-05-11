@@ -7,3 +7,4 @@ target
 main.app/
 *.dmg
 .DS_Store
+src/main/python/console_resources.py

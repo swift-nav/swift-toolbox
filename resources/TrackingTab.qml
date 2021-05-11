@@ -1,3 +1,4 @@
+import "Constants"
 import QtCharts 2.2
 import QtQuick 2.5
 import QtQuick.Controls 2.12
@@ -14,6 +15,7 @@ Item {
         id: trackingBar
 
         z: 100
+        currentIndex: Constants.initialSubTabIndex
 
         Repeater {
             model: ["Signals", "Sky Plot"]

@@ -26,6 +26,7 @@ glob = "0.3.0"
 criterion = "0.3.4"
 sysinfo = "0.16.4"
 serialport = { version = "4.0.1", default-features = false }
+clap = "3.0.0-beta.2"
 
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 serialport = "4.0.1"

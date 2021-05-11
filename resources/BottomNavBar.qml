@@ -13,6 +13,7 @@ Item {
     property variant available_baudrates: []
     property variant available_devices: []
     property variant available_flows: []
+    property variant available_refresh_rates: []
 
     width: parent.width
     height: parent.height
@@ -208,6 +209,8 @@ Item {
         }
 
         Button {
+            id: connectButton
+
             Layout.alignment: Qt.AlignRight
             Layout.rightMargin: Constants.bottomNavBar.navBarMargin
             Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
@@ -241,15 +244,14 @@ Item {
             Layout.bottomMargin: Constants.bottomNavBar.navBarMargin
             ToolTip.visible: hovered
             ToolTip.text: "Refresh Rate (Hz)"
-            model: Constants.bottomNavBar.all_refresh_rates
-            currentIndex: Constants.bottomNavBar.default_refresh_rate_index
+            model: available_refresh_rates
             onActivated: {
-                Constants.currentRefreshRate = 1000 / Constants.bottomNavBar.all_refresh_rates[currentIndex];
+                Constants.currentRefreshRate = available_refresh_rates[currentIndex];
             }
         }
 
         Timer {
-            interval: Constants.defaultTimerIntervalRate
+            interval: Utils.hzToMilliseconds(Constants.staticTimerIntervalRate)
             running: true
             repeat: true
             onTriggered: {
@@ -264,7 +266,12 @@ Item {
                 if (available_flows.length == 0)
                     available_flows = bottomNavbarData.available_flows;
 
+                if (available_refresh_rates.length == 0) {
+                    available_refresh_rates = bottomNavbarData.available_refresh_rates;
+                    refreshRateDrop.currentIndex = available_refresh_rates.indexOf(Constants.currentRefreshRate);
+                }
                 available_devices = bottomNavbarData.available_ports;
+                connectButton.checked = bottomNavbarData.connected;
             }
         }
 

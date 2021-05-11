@@ -383,7 +383,7 @@ Rectangle {
     }
 
     Timer {
-        interval: Constants.currentRefreshRate
+        interval: Utils.hzToMilliseconds(Constants.currentRefreshRate)
         running: true
         repeat: true
         onTriggered: {

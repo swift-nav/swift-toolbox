@@ -4,6 +4,7 @@ extension-pkg-whitelist=PySide2
 
 [MESSAGES CONTROL]
 # Disable undesired lints here (https://stackoverflow.com/a/4341833/749342)
+# TODO(john-michaelburke@)[CPP-147]Address duplicate-code global disable.
 disable=missing-function-docstring,
         invalid-name,
         missing-module-docstring,
@@ -14,6 +15,7 @@ disable=missing-function-docstring,
         too-many-branches,
         too-many-function-args,
         ungrouped-imports,
+        duplicate-code
 
 [FORMAT]
 max-line-length=120

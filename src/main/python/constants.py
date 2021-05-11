@@ -1,6 +1,18 @@
 from enum import Enum
 
 
+class Tabs(str, Enum):
+    TRACKING_SIGNALS = "TRACKING_SIGNALS"
+    TRACKING_SKYPLOT = "TRACKING_SKYPLOT"
+    SOLUTION_POSITION = "SOLUTION_POSITION"
+    SOLUTION_VELOCITY = "SOLUTION_VELOCITY"
+    BASELINE = "BASELINE"
+    OBSERVATIONS = "OBSERVATIONS"
+    SETTINGS = "SETTINGS"
+    UPDATE = "UPDATE"
+    ADVANCED = "ADVANCED"
+
+
 class Keys(str, Enum):
     POINTS = "POINTS"
     LABELS = "LABELS"
@@ -18,18 +30,23 @@ class Keys(str, Enum):
     AVAILABLE_PORTS = "AVAILABLE_PORTS"
     AVAILABLE_BAUDRATES = "AVAILABLE_BAUDRATES"
     AVAILABLE_FLOWS = "AVAILABLE_FLOWS"
+    AVAILABLE_REFRESH_RATES = "AVAILABLE_REFRESH_RATES"
     REMOTE = "REMOTE"
     TOW = "TOW"
     WEEK = "WEEK"
     ROWS = "ROWS"
+    CONNECTED = "CONNECTED"
 
 
 class ApplicationStates(str, Enum):
     CLOSE = "CLOSE"
+    CONNECTED = "CONNECTED"
+    DISCONNECTED = "DISCONNECTED"
 
 
 class MessageKeys(str, Enum):
     STATUS = "status"
+    CONNECTED_STATUS = "connectedStatus"
     BOTTOM_NAVBAR_STATUS = "bottomNavbarStatus"
     SOLUTION_POSITION_STATUS = "solutionPositionStatus"
     SOLUTION_TABLE_STATUS = "solutionTableStatus"

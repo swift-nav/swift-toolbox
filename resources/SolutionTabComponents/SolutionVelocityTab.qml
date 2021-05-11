@@ -160,7 +160,7 @@ Item {
                 }
 
                 Timer {
-                    interval: Constants.currentRefreshRate
+                    interval: Utils.hzToMilliseconds(Constants.currentRefreshRate)
                     running: true
                     repeat: true
                     onTriggered: {
@@ -189,7 +189,7 @@ Item {
                                 line.color = colors[idx];
                                 line.width = Constants.commonChart.lineWidth;
                                 line.axisYRight = solutionVelocityYAxis;
-                                line.useOpenGL = true;
+                                line.useOpenGL = Constants.useOpenGL;
                                 lines.push(line);
                             }
                         }

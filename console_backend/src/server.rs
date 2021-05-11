@@ -6,14 +6,18 @@ use pyo3::types::PyBytes;
 
 use async_logger_log::Logger;
 
-use std::io::{BufReader, Cursor};
-use std::sync::mpsc;
-use std::thread;
+use std::{
+    io::{BufReader, Cursor},
+    str::FromStr,
+    sync::mpsc,
+    thread,
+};
 
+use crate::cli_options::*;
 use crate::console_backend_capnp as m;
 use crate::constants::LOG_WRITER_BUFFER_MESSAGE_COUNT;
 use crate::log_panel::{splitable_log_formatter, LogPanelWriter};
-use crate::types::{ClientSender, ServerState, SharedState};
+use crate::types::{ClientSender, FlowControl, ServerState, SharedState};
 use crate::utils::refresh_ports;
 
 /// The backend server
@@ -49,6 +53,47 @@ impl ServerEndpoint {
     }
 }
 
+/// Start connections based on CLI options.
+///
+/// # Parameters
+/// - `opt`: CLI Options to start specific connection type.
+/// - `server_state`: The Server state to start a specific connection.
+/// - `client_send`: Client Sender channel for communication from backend to frontend.
+/// - `shared_state`: The shared state for validating another connection is not already running.
+fn handle_cli(
+    opt: CliOptions,
+    server_state: ServerState,
+    client_send: ClientSender,
+    shared_state: SharedState,
+) {
+    if let Some(opt_input) = opt.input {
+        match opt_input {
+            Input::Tcp { host, port } => {
+                let host_port = format!("{}:{}", host, port);
+                server_state.connect_to_host(client_send, shared_state, host_port);
+            }
+            Input::File { file_in } => {
+                let filename = file_in.display().to_string();
+                server_state.connect_to_file(client_send, shared_state, filename, opt.exit_after);
+            }
+            Input::Serial {
+                serialport,
+                baudrate,
+                flow_control,
+            } => {
+                let serialport = serialport.display().to_string();
+                server_state.connect_to_serial(
+                    client_send,
+                    shared_state,
+                    serialport,
+                    baudrate,
+                    flow_control,
+                );
+            }
+        }
+    }
+}
+
 #[pymethods]
 impl Server {
     #[new]
@@ -78,6 +123,7 @@ impl Server {
 
     #[text_signature = "($self, /)"]
     pub fn start(&mut self) -> PyResult<ServerEndpoint> {
+        let opt = CliOptions::from_filtered_cli();
         let (client_send_, client_recv) = mpsc::channel::<Vec<u8>>();
         let (server_send, server_recv) = mpsc::channel::<Vec<u8>>();
         self.client_recv = Some(client_recv);
@@ -100,6 +146,13 @@ impl Server {
         log::set_boxed_logger(Box::new(logger)).expect("Failed to set logger");
         log::set_max_level(log::LevelFilter::Info);
 
+        // Handle CLI Opts.
+        handle_cli(
+            opt,
+            server_state.clone(),
+            client_send.clone(),
+            shared_state.clone(),
+        );
         thread::spawn(move || loop {
             let buf = server_recv.recv();
             if let Ok(buf) = buf {
@@ -136,7 +189,7 @@ impl Server {
                                 refresh_ports(&mut client_send_clone.clone());
                             }
                             m::message::DisconnectRequest(Ok(_)) => {
-                                shared_state_clone.set_running(false);
+                                shared_state_clone.set_running(false, client_send_clone.clone());
                                 server_state_clone.connection_join();
                                 println!("Disconnected successfully.");
                             }
@@ -147,7 +200,7 @@ impl Server {
                                     client_send_clone,
                                     shared_state_clone,
                                     filename,
-                                    /*close_when_done = */ true,
+                                    /*close_when_done = */ false,
                                 );
                             }
                             m::message::PauseRequest(Ok(_)) => {
@@ -172,7 +225,7 @@ impl Server {
                                 let device = device.to_string();
                                 let baudrate = req.get_baudrate();
                                 let flow = req.get_flow_control().unwrap();
-                                let flow = flow.to_string();
+                                let flow = FlowControl::from_str(flow).unwrap();
                                 server_state_clone.connect_to_serial(
                                     client_send_clone,
                                     shared_state_clone,

@@ -36,6 +36,7 @@ ApplicationWindow {
 
                     z: 100
                     width: parent.width
+                    currentIndex: Constants.initialMainTabIndex
 
                     Repeater {
                         model: ["Tracking", "Solution", "Baseline", "Observations", "Settings", "Update", "Advanced"]

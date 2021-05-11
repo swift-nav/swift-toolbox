@@ -1246,8 +1246,8 @@ dependencies = [
 
 [[package]]
 name = "sbp"
-version = "3.4.7-alpha"
-source = "git+https://github.com/swift-nav/libsbp.git?rev=983e98b17b89dc2c688ef201703978535c6b86af#983e98b17b89dc2c688ef201703978535c6b86af"
+version = "3.4.8-alpha"
+source = "git+https://github.com/swift-nav/libsbp.git?rev=629974666b1aa5fdab9fdbd517e180a2aee3809b#629974666b1aa5fdab9fdbd517e180a2aee3809b"
 dependencies = [
  "byteorder",
  "bytes",
@@ -1452,8 +1452,8 @@ dependencies = [
 
 [[package]]
 name = "swiftnav-rs"
-version = "0.4.0"
-source = "git+https://github.com/swift-nav/swiftnav-rs?branch=steve/sbp#d9ec3767ab120d8d75bb3b04a887dce5bf73c1ee"
+version = "0.5.0"
+source = "git+https://github.com/swift-nav/swiftnav-rs?tag=v0.5.0#a2a1fca1f6be8975fdd3886eb5267b01587d7952"
 dependencies = [
  "bindgen",
  "cmake",

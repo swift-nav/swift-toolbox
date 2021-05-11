@@ -1,6 +1,7 @@
 #![allow(unused_imports)]
 use criterion::{criterion_group, criterion_main, Criterion};
 use glob::glob;
+use sbp::sbp_tools::SBPTools;
 use std::{
     fs,
     path::Path,
@@ -55,7 +56,9 @@ fn run_process_messages(file_in_name: &str, failure: bool) {
         if failure {
             thread::sleep(time::Duration::from_millis(FAILURE_CASE_SLEEP_MILLIS));
         }
-        let messages = sbp::iter_messages(Box::new(fs::File::open(file_in_name).unwrap()));
+        let messages = sbp::iter_messages(Box::new(fs::File::open(file_in_name).unwrap()))
+            .log_errors(log::Level::Debug)
+            .with_rover_time();
         let shared_state = SharedState::new();
         let client_send = ClientSender {
             inner: client_send_,

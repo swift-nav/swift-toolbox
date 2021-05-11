@@ -37,32 +37,27 @@ class TrackingSignalsPoints(QObject):
         return self._valid
 
     def set_valid(self, valid: bool) -> None:
-        """Setter for _valid.
-        """
+        """Setter for _valid."""
         self._valid = valid
 
     valid = Property(bool, get_valid, set_valid)
 
     def get_min(self) -> float:
-        """Getter for _min.
-        """
+        """Getter for _min."""
         return self._min
 
     def set_min(self, min_: float) -> None:
-        """Setter for _min.
-        """
+        """Setter for _min."""
         self._min = min_
 
     min_ = Property(float, get_min, set_min)
 
     def get_max(self) -> float:
-        """Getter for _max.
-        """
+        """Getter for _max."""
         return self._max
 
     def set_max(self, max_: float) -> None:
-        """Setter for _max.
-        """
+        """Setter for _max."""
         self._max = max_
 
     max_ = Property(float, get_max, set_max)

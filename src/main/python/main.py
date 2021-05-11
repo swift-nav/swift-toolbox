@@ -67,14 +67,38 @@ MAIN_INDEX = "MAIN_INDEX"
 SUB_INDEX = "SUB_INDEX"
 
 TAB_LAYOUT = {
-    Tabs.TRACKING_SIGNALS: {MAIN_INDEX: 0, SUB_INDEX: 0,},
-    Tabs.SOLUTION_POSITION: {MAIN_INDEX: 1, SUB_INDEX: 0,},
-    Tabs.SOLUTION_VELOCITY: {MAIN_INDEX: 1, SUB_INDEX: 1,},
-    Tabs.BASELINE: {MAIN_INDEX: 2, SUB_INDEX: 0,},
-    Tabs.OBSERVATIONS: {MAIN_INDEX: 3, SUB_INDEX: 0,},
-    Tabs.SETTINGS: {MAIN_INDEX: 4, SUB_INDEX: 0,},
-    Tabs.UPDATE: {MAIN_INDEX: 5, SUB_INDEX: 0,},
-    Tabs.ADVANCED: {MAIN_INDEX: 6, SUB_INDEX: 0,},
+    Tabs.TRACKING_SIGNALS: {
+        MAIN_INDEX: 0,
+        SUB_INDEX: 0,
+    },
+    Tabs.SOLUTION_POSITION: {
+        MAIN_INDEX: 1,
+        SUB_INDEX: 0,
+    },
+    Tabs.SOLUTION_VELOCITY: {
+        MAIN_INDEX: 1,
+        SUB_INDEX: 1,
+    },
+    Tabs.BASELINE: {
+        MAIN_INDEX: 2,
+        SUB_INDEX: 0,
+    },
+    Tabs.OBSERVATIONS: {
+        MAIN_INDEX: 3,
+        SUB_INDEX: 0,
+    },
+    Tabs.SETTINGS: {
+        MAIN_INDEX: 4,
+        SUB_INDEX: 0,
+    },
+    Tabs.UPDATE: {
+        MAIN_INDEX: 5,
+        SUB_INDEX: 0,
+    },
+    Tabs.ADVANCED: {
+        MAIN_INDEX: 6,
+        SUB_INDEX: 0,
+    },
 }
 
 LOG_PANEL: Dict[str, Any] = {
@@ -364,8 +388,7 @@ class BottomNavbarData(QObject):
         return self._connected
 
     def set_connected(self, connected: bool) -> None:
-        """Setter for _connected.
-        """
+        """Setter for _connected."""
         self._connected = connected
 
     connected = Property(bool, get_connected, set_connected)
@@ -485,5 +508,13 @@ if __name__ == "__main__":
 
     handle_cli_arguments(args_main, constants_main)
 
-    threading.Thread(target=receive_messages, args=(app, backend_main, messages_main), daemon=True).start()
+    threading.Thread(
+        target=receive_messages,
+        args=(
+            app,
+            backend_main,
+            messages_main,
+        ),
+        daemon=True,
+    ).start()
     sys.exit(app.exec_())

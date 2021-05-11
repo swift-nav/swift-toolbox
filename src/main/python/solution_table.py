@@ -27,20 +27,17 @@ class SolutionTableEntries(QObject):
         return self._valid
 
     def set_valid(self, valid: bool) -> None:
-        """Setter for _valid.
-        """
+        """Setter for _valid."""
         self._valid = valid
 
     valid = Property(bool, get_valid, set_valid)
 
     def get_entries(self) -> List[List[str]]:
-        """Getter for _entries.
-        """
+        """Getter for _entries."""
         return self._entries
 
     def set_entries(self, entries: List[List[str]]) -> None:
-        """Setter for _entries.
-        """
+        """Setter for _entries."""
         self._entries = entries
 
     entries = Property(QTKeys.QVARIANTLIST, get_entries, set_entries)  # type: ignore

@@ -42,56 +42,47 @@ class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attr
         return self._valid
 
     def set_valid(self, valid: bool) -> None:
-        """Setter for _valid.
-        """
+        """Setter for _valid."""
         self._valid = valid
 
     valid = Property(bool, get_valid, set_valid)
 
     def get_lat_min(self) -> float:
-        """Getter for _lat_min.
-        """
+        """Getter for _lat_min."""
         return self._lat_min
 
     def set_lat_min(self, lat_min_: float) -> None:
-        """Setter for _lat_min.
-        """
+        """Setter for _lat_min."""
         self._lat_min = lat_min_
 
     lat_min_ = Property(float, get_lat_min, set_lat_min)
 
     def get_lat_max(self) -> float:
-        """Getter for _lat_max.
-        """
+        """Getter for _lat_max."""
         return self._lat_max
 
     def set_lat_max(self, lat_max_: float) -> None:
-        """Setter for _lat_max.
-        """
+        """Setter for _lat_max."""
         self._lat_max = lat_max_
 
     lat_max_ = Property(float, get_lat_max, set_lat_max)
 
     def get_lon_min(self) -> float:
-        """Getter for _lon_min.
-        """
+        """Getter for _lon_min."""
         return self._lon_min
 
     def set_lon_min(self, lon_min_: float) -> None:
-        """Setter for _lon_min.
-        """
+        """Setter for _lon_min."""
         self._lon_min = lon_min_
 
     lon_min_ = Property(float, get_lon_min, set_lon_min)
 
     def get_lon_max(self) -> float:
-        """Getter for _lon_max.
-        """
+        """Getter for _lon_max."""
         return self._lon_max
 
     def set_lon_max(self, lon_max_: float) -> None:
-        """Setter for _lon_max.
-        """
+        """Setter for _lon_max."""
         self._lon_max = lon_max_
 
     lon_max_ = Property(float, get_lon_max, set_lon_max)

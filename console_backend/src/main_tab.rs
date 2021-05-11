@@ -1,5 +1,5 @@
 use log::debug;
-use sbp::messages::GpsTime;
+use sbp::time::GpsTime;
 use std::{result::Result, thread::sleep, time::Instant};
 
 use crate::observation_tab::ObservationTab;
@@ -37,25 +37,8 @@ impl<'a, S: MessageSender> MainTab<'a, S> {
     /// # Parameters
     /// - `gps_time`: The GpsTime corresponding to a message.
     pub fn realtime_delay<T>(&mut self, gps_time: Option<Result<GpsTime, T>>) {
-        if let Some(Ok(mut g_time)) = gps_time {
-            if let Some(mut l_time) = self.last_gps_time {
-                let gps_time_tow = g_time.tow();
-                let gps_time_week = g_time.wn();
-                let last_gps_time_tow = l_time.tow();
-                let last_gps_time_week = l_time.wn();
-
-                if gps_time_week != 0 && last_gps_time_week == 0 {
-                    let l_time_ = GpsTime::new(gps_time_week, last_gps_time_tow);
-                    if let Ok(l_time_ok) = l_time_ {
-                        l_time = l_time_ok;
-                    }
-                } else if gps_time_week == 0 && last_gps_time_week != 0 {
-                    let g_time_ = GpsTime::new(last_gps_time_week, gps_time_tow);
-                    if let Ok(g_time_ok) = g_time_ {
-                        g_time = g_time_ok;
-                    }
-                }
-
+        if let Some(Ok(g_time)) = gps_time {
+            if let Some(l_time) = self.last_gps_time {
                 if l_time < g_time {
                     let diff = g_time - l_time;
                     let elapsed = self.last_gps_update.elapsed();

@@ -7,12 +7,15 @@ use crate::utils::{close_frontend, ms_to_sec, set_connected_frontend};
 use chrono::{DateTime, Utc};
 use log::{info, warn};
 use ordered_float::OrderedFloat;
-use sbp::messages::{
-    navigation::{MsgDops, MsgDopsDepA, MsgPosLLH, MsgPosLLHDepA, MsgVelNED, MsgVelNEDDepA},
-    observation::{
-        MsgObs, MsgObsDepB, MsgObsDepC, MsgOsr, PackedObsContent, PackedObsContentDepB,
-        PackedObsContentDepC, PackedOsrContent,
+use sbp::{
+    messages::{
+        navigation::{MsgDops, MsgDopsDepA, MsgPosLLH, MsgPosLLHDepA, MsgVelNED, MsgVelNEDDepA},
+        observation::{
+            MsgObs, MsgObsDepB, MsgObsDepC, MsgOsr, PackedObsContent, PackedObsContentDepB,
+            PackedObsContentDepC, PackedOsrContent,
+        },
     },
+    sbp_tools::SBPTools,
 };
 use serde::Serialize;
 use serialport::FlowControl as SPFlowControl;
@@ -147,7 +150,9 @@ impl ServerState {
             if let Ok(stream) = fs::File::open(filename) {
                 println!("Opened file successfully!");
                 let shared_state_clone_ = shared_state.clone();
-                let messages = sbp::iter_messages(stream);
+                let messages = sbp::iter_messages(stream)
+                    .log_errors(log::Level::Debug)
+                    .with_rover_time();
                 process_messages(
                     messages,
                     shared_state_clone_,
@@ -183,7 +188,9 @@ impl ServerState {
         let handle = thread::spawn(move || {
             if let Ok(stream) = TcpStream::connect(host_port.clone()) {
                 info!("Connected to the server {}!", host_port);
-                let messages = sbp::iter_messages(stream);
+                let messages = sbp::iter_messages(stream)
+                    .log_errors(log::Level::Debug)
+                    .with_rover_time();
                 process_messages(
                     messages,
                     shared_state_clone,
@@ -226,7 +233,9 @@ impl ServerState {
             {
                 Ok(port) => {
                     println!("Connected to serialport {}.", device);
-                    let messages = sbp::iter_messages(port);
+                    let messages = sbp::iter_messages(port)
+                        .log_errors(log::Level::Debug)
+                        .with_rover_time();
                     process_messages(
                         messages,
                         shared_state_clone,

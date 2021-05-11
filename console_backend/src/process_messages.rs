@@ -1,5 +1,8 @@
 use log::debug;
-use sbp::messages::{SBPMessage, SBP};
+use sbp::{
+    messages::{SBPMessage, SBP},
+    time::GpsTime,
+};
 use std::{thread::sleep, time::Duration};
 
 use crate::constants::PAUSE_LOOP_SLEEP_DURATION_MS;
@@ -7,38 +10,14 @@ use crate::log_panel::handle_log_msg;
 use crate::main_tab::*;
 use crate::types::*;
 
-/// SBP messages preprocessor to filter Result Ok and log Err.
-///
-/// Taken from ICBINS/src/lib.rs.
-///
-/// # Parameters:
-/// - `messages`: The iterator of messages to process.
-///
-/// # Returns:
-/// - The filtered out Ok messages iterator.
-fn strip_errors_iter(
-    log_errors: bool,
-    messages: impl Iterator<Item = sbp::Result<SBP>>,
-) -> impl Iterator<Item = SBP> {
-    messages
-        .inspect(move |msg| {
-            if let Err(e) = msg {
-                if log_errors {
-                    eprintln!("error reading message: {}", e);
-                }
-            }
-        })
-        .filter_map(sbp::Result::ok)
-}
-pub fn process_messages<S: MessageSender>(
-    messages: impl Iterator<Item = sbp::Result<SBP>>,
+pub fn process_messages<S: MessageSender, T>(
+    messages: impl Iterator<Item = (SBP, Option<std::result::Result<GpsTime, T>>)>,
     shared_state: SharedState,
     client_send: S,
     realtime_delay: RealtimeDelay,
 ) {
     let mut main = MainTab::new(shared_state.clone(), client_send);
-    let messages = strip_errors_iter(true, messages);
-    for message in messages {
+    for message_and_time in messages {
         if !shared_state.is_running() {
             break;
         }
@@ -50,7 +29,7 @@ pub fn process_messages<S: MessageSender>(
                 sleep(Duration::from_millis(PAUSE_LOOP_SLEEP_DURATION_MS));
             }
         }
-        let gps_time = message.gps_time();
+        let (message, gps_time) = message_and_time;
         let msg_name = message.get_message_name();
         let mut attempt_delay = true;
         match message {

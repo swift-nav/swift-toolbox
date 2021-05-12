@@ -18,15 +18,39 @@ from PySide2.QtCharts import QtCharts  # pylint: disable=unused-import
 
 from PySide2 import QtQml, QtCore
 
-from PySide2.QtQml import qmlRegisterType
+from PySide2.QtQml import QQmlComponent, qmlRegisterType
 
-from constants import ApplicationStates, MessageKeys, Keys, QTKeys
+from constants import ApplicationStates, MessageKeys, Keys, QTKeys, Tabs
 from observation_tab import (
     ObservationData,
     ObservationModel,
     REMOTE_OBSERVATION_TAB,
     LOCAL_OBSERVATION_TAB,
     obs_rows_to_json,
+)
+
+from solution_position_tab import (
+    SolutionPositionModel,
+    SolutionPositionPoints,
+    SOLUTION_POSITION_TAB,
+)
+
+from solution_table import (
+    SolutionTableEntries,
+    SolutionTableModel,
+    SOLUTION_TABLE,
+)
+
+from solution_velocity_tab import (
+    SolutionVelocityModel,
+    SolutionVelocityPoints,
+    SOLUTION_VELOCITY_TAB,
+)
+
+from tracking_signals_tab import (
+    TrackingSignalsModel,
+    TrackingSignalsPoints,
+    TRACKING_SIGNALS_TAB,
 )
 
 import console_resources  # type: ignore # pylint: disable=unused-import,import-error
@@ -38,6 +62,45 @@ CONSOLE_BACKEND_CAPNP_PATH = "console_backend.capnp"
 PIKSI_HOST = "piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com"
 PIKSI_PORT = 55555
 
+
+MAIN_INDEX = "MAIN_INDEX"
+SUB_INDEX = "SUB_INDEX"
+
+TAB_LAYOUT = {
+    Tabs.TRACKING_SIGNALS: {
+        MAIN_INDEX: 0,
+        SUB_INDEX: 0,
+    },
+    Tabs.SOLUTION_POSITION: {
+        MAIN_INDEX: 1,
+        SUB_INDEX: 0,
+    },
+    Tabs.SOLUTION_VELOCITY: {
+        MAIN_INDEX: 1,
+        SUB_INDEX: 1,
+    },
+    Tabs.BASELINE: {
+        MAIN_INDEX: 2,
+        SUB_INDEX: 0,
+    },
+    Tabs.OBSERVATIONS: {
+        MAIN_INDEX: 3,
+        SUB_INDEX: 0,
+    },
+    Tabs.SETTINGS: {
+        MAIN_INDEX: 4,
+        SUB_INDEX: 0,
+    },
+    Tabs.UPDATE: {
+        MAIN_INDEX: 5,
+        SUB_INDEX: 0,
+    },
+    Tabs.ADVANCED: {
+        MAIN_INDEX: 6,
+        SUB_INDEX: 0,
+    },
+}
+
 LOG_PANEL: Dict[str, Any] = {
     Keys.ENTRIES: [],
 }
@@ -47,44 +110,12 @@ NAV_BAR: Dict[str, Any] = {
     Keys.AVAILABLE_PORTS: [],
     Keys.AVAILABLE_BAUDRATES: [],
     Keys.AVAILABLE_FLOWS: [],
+    Keys.AVAILABLE_REFRESH_RATES: [],
+    Keys.CONNECTED: False,
     Keys.PREVIOUS_HOSTS: [],
     Keys.PREVIOUS_PORTS: [],
     Keys.PREVIOUS_FILES: [],
 }
-
-SOLUTION_POSITION_TAB: Dict[str, Any] = {
-    Keys.AVAILABLE_UNITS: [],
-    Keys.CUR_POINTS: [],
-    Keys.POINTS: [],
-    Keys.LABELS: [],
-    Keys.COLORS: [],
-    Keys.LAT_MAX: 0,
-    Keys.LAT_MIN: 0,
-    Keys.LON_MAX: 0,
-    Keys.LON_MIN: 0,
-}
-
-SOLUTION_TABLE: Dict[str, Any] = {
-    Keys.ENTRIES: [],
-}
-
-SOLUTION_VELOCITY_TAB: Dict[str, Any] = {
-    Keys.AVAILABLE_UNITS: [],
-    Keys.POINTS: [],
-    Keys.COLORS: [],
-    Keys.MAX: 0,
-    Keys.MIN: 0,
-}
-
-TRACKING_SIGNALS_TAB: Dict[str, Any] = {
-    Keys.POINTS: [],
-    Keys.CHECK_LABELS: [],
-    Keys.LABELS: [],
-    Keys.COLORS: [],
-    Keys.MAX: 0,
-    Keys.MIN: 0,
-}
-
 
 capnp.remove_import_hook()  # pylint: disable=no-member
 
@@ -96,6 +127,11 @@ def receive_messages(app_, backend, messages):
         if m.which == MessageKeys.STATUS:
             if m.status.text == ApplicationStates.CLOSE:
                 return app_.quit()
+            if m.status.text == ApplicationStates.CONNECTED:
+                NAV_BAR[Keys.CONNECTED] = True
+            elif m.status.text == ApplicationStates.DISCONNECTED:
+                NAV_BAR[Keys.CONNECTED] = False
+
         elif m.which == MessageKeys.SOLUTION_POSITION_STATUS:
             SOLUTION_POSITION_TAB[Keys.LABELS][:] = m.solutionPositionStatus.labels
             SOLUTION_POSITION_TAB[Keys.COLORS][:] = m.solutionPositionStatus.colors
@@ -146,6 +182,7 @@ def receive_messages(app_, backend, messages):
             NAV_BAR[Keys.AVAILABLE_PORTS][:] = m.navBarStatus.availablePorts
             NAV_BAR[Keys.AVAILABLE_BAUDRATES][:] = m.navBarStatus.availableBaudrates
             NAV_BAR[Keys.AVAILABLE_FLOWS][:] = m.navBarStatus.availableFlows
+            NAV_BAR[Keys.AVAILABLE_REFRESH_RATES][:] = m.navBarStatus.availableRefreshRates
             NAV_BAR[Keys.PREVIOUS_HOSTS][:] = m.navBarStatus.previousHosts
             NAV_BAR[Keys.PREVIOUS_PORTS][:] = m.navBarStatus.previousPorts
             NAV_BAR[Keys.PREVIOUS_FILES][:] = m.navBarStatus.previousFiles
@@ -162,14 +199,10 @@ class DataModel(QObject):
     endpoint: console_backend.server.ServerEndpoint  # pylint: disable=no-member
     messages: Any
 
-    def __init__(self, endpoint, messages, file_in, connect=False):
+    def __init__(self, endpoint, messages):
         super().__init__()
         self.endpoint = endpoint
         self.messages = messages
-        if connect and file_in is not None:
-            self.connect_file(file_in)
-        elif connect:
-            self.connect_tcp(PIKSI_HOST, PIKSI_PORT)
 
     @Slot()  # type: ignore
     def connect(self) -> None:
@@ -307,11 +340,13 @@ class LogPanelModel(QObject):  # pylint: disable=too-few-public-methods
         return cp
 
 
-class NavBarData(QObject):
+class NavBarData(QObject):  # pylint: disable=too-many-instance-attributes
 
     _available_ports: List[str] = []
     _available_baudrates: List[str] = []
     _available_flows: List[str] = []
+    _available_refresh_rates: List[str] = []
+    _connected: bool = False
     _previous_hosts: List[str] = []
     _previous_ports: List[str] = []
     _previous_files: List[str] = []
@@ -341,6 +376,30 @@ class NavBarData(QObject):
         self._available_flows = available_flows
 
     available_flows = Property(QTKeys.QVARIANTLIST, get_available_flows, set_available_flows)  # type: ignore
+
+    def get_available_refresh_rates(self) -> List[str]:
+        return self._available_refresh_rates
+
+    def set_available_refresh_rates(self, available_refresh_rates: List[str]) -> None:
+        self._available_refresh_rates = available_refresh_rates
+
+    available_refresh_rates = Property(
+        QTKeys.QVARIANTLIST, get_available_refresh_rates, set_available_refresh_rates  # type: ignore
+    )
+
+    def get_connected(self) -> bool:
+        """Getter for _connected.
+
+        Returns:
+            bool: Whether a connection is live or not.
+        """
+        return self._connected
+
+    def set_connected(self, connected: bool) -> None:
+        """Setter for _connected."""
+        self._connected = connected
+
+    connected = Property(bool, get_connected, set_connected)
 
     def get_previous_hosts(self) -> List[str]:
         return self._previous_hosts
@@ -373,366 +432,11 @@ class NavBarModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_available_ports(NAV_BAR[Keys.AVAILABLE_PORTS])
         cp.set_available_baudrates(NAV_BAR[Keys.AVAILABLE_BAUDRATES])
         cp.set_available_flows(NAV_BAR[Keys.AVAILABLE_FLOWS])
+        cp.set_available_refresh_rates(NAV_BAR[Keys.AVAILABLE_REFRESH_RATES])
+        cp.set_connected(NAV_BAR[Keys.CONNECTED])
         cp.set_previous_hosts(NAV_BAR[Keys.PREVIOUS_HOSTS])
         cp.set_previous_ports(NAV_BAR[Keys.PREVIOUS_PORTS])
         cp.set_previous_files(NAV_BAR[Keys.PREVIOUS_FILES])
-        return cp
-
-
-class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
-
-    _colors: List[str] = []
-    _labels: List[str] = []
-    _points: List[List[QPointF]] = [[]]
-    _cur_points: List[List[QPointF]] = [[]]
-    _valid: bool = False
-    _lat_min: float = 0.0
-    _lat_max: float = 0.0
-    _lon_min: float = 0.0
-    _lon_max: float = 0.0
-    _available_units: List[str] = []
-
-    def get_valid(self) -> bool:
-        """Getter for _valid.
-
-        Returns:
-            bool: Whether it is valid or not.
-        """
-        return self._valid
-
-    def set_valid(self, valid: bool) -> None:
-        """Setter for _valid."""
-        self._valid = valid
-
-    valid = Property(bool, get_valid, set_valid)
-
-    def get_lat_min(self) -> float:
-        """Getter for _lat_min."""
-        return self._lat_min
-
-    def set_lat_min(self, lat_min_: float) -> None:
-        """Setter for _lat_min."""
-        self._lat_min = lat_min_
-
-    lat_min_ = Property(float, get_lat_min, set_lat_min)
-
-    def get_lat_max(self) -> float:
-        """Getter for _lat_max."""
-        return self._lat_max
-
-    def set_lat_max(self, lat_max_: float) -> None:
-        """Setter for _lat_max."""
-        self._lat_max = lat_max_
-
-    lat_max_ = Property(float, get_lat_max, set_lat_max)
-
-    def get_lon_min(self) -> float:
-        """Getter for _lon_min."""
-        return self._lon_min
-
-    def set_lon_min(self, lon_min_: float) -> None:
-        """Setter for _lon_min."""
-        self._lon_min = lon_min_
-
-    lon_min_ = Property(float, get_lon_min, set_lon_min)
-
-    def get_lon_max(self) -> float:
-        """Getter for _lon_max."""
-        return self._lon_max
-
-    def set_lon_max(self, lon_max_: float) -> None:
-        """Setter for _lon_max."""
-        self._lon_max = lon_max_
-
-    lon_max_ = Property(float, get_lon_max, set_lon_max)
-
-    def get_labels(self) -> List[str]:
-        return self._labels
-
-    def set_labels(self, labels) -> None:
-        self._labels = labels
-
-    labels = Property(QTKeys.QVARIANTLIST, get_labels, set_labels)  # type: ignore
-
-    def get_colors(self) -> List[str]:
-        return self._colors
-
-    def set_colors(self, colors) -> None:
-        self._colors = colors
-
-    colors = Property(QTKeys.QVARIANTLIST, get_colors, set_colors)  # type: ignore
-
-    def get_points(self) -> List[List[QPointF]]:
-        return self._points
-
-    def set_points(self, points) -> None:
-        self._points = points
-
-    points = Property(QTKeys.QVARIANTLIST, get_points, set_points)  # type: ignore
-
-    def get_cur_points(self) -> List[List[QPointF]]:
-        return self._cur_points
-
-    def set_cur_points(self, cur_points) -> None:
-        self._cur_points = cur_points
-
-    cur_points = Property(QTKeys.QVARIANTLIST, get_cur_points, set_cur_points)  # type: ignore
-
-    def get_available_units(self) -> List[str]:
-        return self._available_units
-
-    def set_available_units(self, available_units: List[str]) -> None:
-        self._available_units = available_units
-
-    available_units = Property(QTKeys.QVARIANTLIST, get_available_units, set_available_units)  # type: ignore
-
-    @Slot(list)  # type: ignore
-    def fill_series(self, series_list):
-        lines = series_list[0]
-        scatters = series_list[1]
-        cur_scatters = series_list[2]
-        for idx, _ in enumerate(lines):
-            lines[idx].replace(self._points[idx])
-            scatters[idx].replace(self._points[idx])
-            cur_scatters[idx].replace(self._cur_points[idx])
-
-
-class SolutionPositionModel(QObject):  # pylint: disable=too-few-public-methods
-    @Slot(SolutionPositionPoints)  # type: ignore
-    def fill_console_points(self, cp: SolutionPositionPoints) -> SolutionPositionPoints:  # pylint:disable=no-self-use
-        cp.set_points(SOLUTION_POSITION_TAB[Keys.POINTS])
-        cp.set_cur_points(SOLUTION_POSITION_TAB[Keys.CUR_POINTS])
-        cp.set_labels(SOLUTION_POSITION_TAB[Keys.LABELS])
-        cp.set_colors(SOLUTION_POSITION_TAB[Keys.COLORS])
-        cp.set_lat_max(SOLUTION_POSITION_TAB[Keys.LAT_MAX])
-        cp.set_lat_min(SOLUTION_POSITION_TAB[Keys.LAT_MIN])
-        cp.set_lon_max(SOLUTION_POSITION_TAB[Keys.LON_MAX])
-        cp.set_lon_min(SOLUTION_POSITION_TAB[Keys.LON_MIN])
-        cp.set_available_units(SOLUTION_POSITION_TAB[Keys.AVAILABLE_UNITS])
-        return cp
-
-
-class SolutionTableEntries(QObject):
-
-    _entries: List[List[str]] = []
-    _valid: bool = False
-
-    def get_valid(self) -> bool:
-        """Getter for _valid.
-
-        Returns:
-            bool: Whether it is valid or not.
-        """
-        return self._valid
-
-    def set_valid(self, valid: bool) -> None:
-        """Setter for _valid."""
-        self._valid = valid
-
-    valid = Property(bool, get_valid, set_valid)
-
-    def get_entries(self) -> List[List[str]]:
-        """Getter for _entries."""
-        return self._entries
-
-    def set_entries(self, entries: List[List[str]]) -> None:
-        """Setter for _entries."""
-        self._entries = entries
-
-    entries = Property(QTKeys.QVARIANTLIST, get_entries, set_entries)  # type: ignore
-
-    @Slot(list)  # type: ignore
-    def fill_series(self, series_list):
-        for idx, series in enumerate(series_list):
-            series.replace(self._points[idx])
-
-
-class SolutionTableModel(QObject):  # pylint: disable=too-few-public-methods
-    @Slot(SolutionTableEntries)  # type: ignore
-    def fill_console_points(self, cp: SolutionTableEntries) -> SolutionTableEntries:  # pylint:disable=no-self-use
-        cp.set_entries(SOLUTION_TABLE[Keys.ENTRIES])
-        return cp
-
-
-class SolutionVelocityPoints(QObject):
-
-    _colors: List[str] = []
-    _points: List[List[QPointF]] = [[]]
-    _valid: bool = False
-    _min: float = 0.0
-    _max: float = 0.0
-    _available_units: List[str] = []
-
-    def get_valid(self) -> bool:
-        """Getter for _valid.
-
-        Returns:
-            bool: Whether it is valid or not.
-        """
-        return self._valid
-
-    def set_valid(self, valid: bool) -> None:
-        """Setter for _valid."""
-        self._valid = valid
-
-    valid = Property(bool, get_valid, set_valid)
-
-    def get_min(self) -> float:
-        """Getter for _min."""
-        return self._min
-
-    def set_min(self, min_: float) -> None:
-        """Setter for _min."""
-        self._min = min_
-
-    min_ = Property(float, get_min, set_min)
-
-    def get_max(self) -> float:
-        """Getter for _max."""
-        return self._max
-
-    def set_max(self, max_: float) -> None:
-        """Setter for _max."""
-        self._max = max_
-
-    max_ = Property(float, get_max, set_max)
-
-    def get_available_units(self) -> List[str]:
-        """Getter for _available_units."""
-        return self._available_units
-
-    def set_available_units(self, available_units: List[str]) -> None:
-        """Setter for _available_units."""
-        self._available_units = available_units
-
-    available_units = Property(QTKeys.QVARIANTLIST, get_available_units, set_available_units)  # type: ignore
-
-    def get_colors(self) -> List[str]:
-        return self._colors
-
-    def set_colors(self, colors) -> None:
-        self._colors = colors
-
-    colors = Property(QTKeys.QVARIANTLIST, get_colors, set_colors)  # type: ignore
-
-    def get_points(self) -> List[List[QPointF]]:
-        return self._points
-
-    def set_points(self, points) -> None:
-        self._points = points
-
-    points = Property(QTKeys.QVARIANTLIST, get_points, set_points)  # type: ignore
-
-    @Slot(list)  # type: ignore
-    def fill_series(self, series_list):
-        for idx, series in enumerate(series_list):
-            series.replace(self._points[idx])
-
-
-class SolutionVelocityModel(QObject):  # pylint: disable=too-few-public-methods
-    @Slot(SolutionVelocityPoints)  # type: ignore
-    def fill_console_points(self, cp: SolutionVelocityPoints) -> SolutionVelocityPoints:  # pylint:disable=no-self-use
-        cp.set_points(SOLUTION_VELOCITY_TAB[Keys.POINTS])
-        cp.set_colors(SOLUTION_VELOCITY_TAB[Keys.COLORS])
-        cp.set_max(SOLUTION_VELOCITY_TAB[Keys.MAX])
-        cp.set_min(SOLUTION_VELOCITY_TAB[Keys.MIN])
-        cp.set_available_units(SOLUTION_VELOCITY_TAB[Keys.AVAILABLE_UNITS])
-        return cp
-
-
-class TrackingSignalsPoints(QObject):
-
-    _colors: List[str] = []
-    _check_labels: List[str] = []
-    _labels: List[str] = []
-    _points: List[List[QPointF]] = [[]]
-    _valid: bool = False
-    _min: float = 0.0
-    _max: float = 0.0
-
-    def get_valid(self) -> bool:
-        """Getter for _valid.
-
-        Returns:
-            bool: Whether it is valid or not.
-        """
-        return self._valid
-
-    def set_valid(self, valid: bool) -> None:
-        """Setter for _valid."""
-        self._valid = valid
-
-    valid = Property(bool, get_valid, set_valid)
-
-    def get_min(self) -> float:
-        """Getter for _min."""
-        return self._min
-
-    def set_min(self, min_: float) -> None:
-        """Setter for _min."""
-        self._min = min_
-
-    min_ = Property(float, get_min, set_min)
-
-    def get_max(self) -> float:
-        """Getter for _max."""
-        return self._max
-
-    def set_max(self, max_: float) -> None:
-        """Setter for _max."""
-        self._max = max_
-
-    max_ = Property(float, get_max, set_max)
-
-    def get_check_labels(self) -> List[str]:
-        return self._check_labels
-
-    def set_check_labels(self, check_labels) -> None:
-        self._check_labels = check_labels
-
-    check_labels = Property(QTKeys.QVARIANTLIST, get_check_labels, set_check_labels)  # type: ignore
-
-    def get_labels(self) -> List[str]:
-        return self._labels
-
-    def set_labels(self, labels) -> None:
-        self._labels = labels
-
-    labels = Property(QTKeys.QVARIANTLIST, get_labels, set_labels)  # type: ignore
-
-    def get_colors(self) -> List[str]:
-        return self._colors
-
-    def set_colors(self, colors) -> None:
-        self._colors = colors
-
-    colors = Property(QTKeys.QVARIANTLIST, get_colors, set_colors)  # type: ignore
-
-    def get_points(self) -> List[List[QPointF]]:
-        return self._points
-
-    def set_points(self, points) -> None:
-        self._points = points
-
-    points = Property(QTKeys.QVARIANTLIST, get_points, set_points)  # type: ignore
-
-    @Slot(list)  # type: ignore
-    def fill_series(self, series_list):
-        for idx, series_and_key in enumerate(series_list):
-            series, _ = series_and_key
-            if idx < len(self._points):
-                series.replace(self._points[idx])
-
-
-class TrackingSignalsModel(QObject):  # pylint: disable=too-few-public-methods
-    @Slot(TrackingSignalsPoints)  # type: ignore
-    def fill_console_points(self, cp: TrackingSignalsPoints) -> TrackingSignalsPoints:  # pylint:disable=no-self-use
-        cp.set_points(TRACKING_SIGNALS_TAB[Keys.POINTS])
-        cp.set_labels(TRACKING_SIGNALS_TAB[Keys.LABELS])
-        cp.set_check_labels(TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS])
-        cp.set_colors(TRACKING_SIGNALS_TAB[Keys.COLORS])
-        cp.set_max(TRACKING_SIGNALS_TAB[Keys.MAX])
-        cp.set_min(TRACKING_SIGNALS_TAB[Keys.MIN])
         return cp
 
 
@@ -763,11 +467,24 @@ def get_capnp_path() -> str:
     return path
 
 
+def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
+    if args.no_opengl:
+        globals_.setProperty("useOpenGL", False)  # type: ignore
+    if args.refresh_rate is not None:
+        globals_.setProperty("currentRefreshRate", args.refresh_rate)  # type: ignore
+    if args.tab is not None:
+        layout_idxs = TAB_LAYOUT[args.tab]
+        globals_.setProperty("initialMainTabIndex", layout_idxs[MAIN_INDEX])  # type: ignore
+        globals_.setProperty("initialSubTabIndex", layout_idxs[SUB_INDEX])  # type: ignore
+
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--file-in", help="Input file to parse.")
-    parser.add_argument("--connect", help="Connect automatically.", action="store_true")
-    args = parser.parse_args()
+    parser = argparse.ArgumentParser(add_help=False, usage=argparse.SUPPRESS)
+    parser.add_argument("--no-opengl", action="store_false")
+    parser.add_argument("--refresh-rate")
+    parser.add_argument("--tab")
+
+    args_main, _ = parser.parse_known_args()
 
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
@@ -794,7 +511,7 @@ if __name__ == "__main__":
     backend_main = console_backend.server.Server()  # pylint: disable=no-member
     endpoint_main = backend_main.start()
 
-    data_model = DataModel(endpoint_main, messages_main, args.file_in, args.connect)
+    data_model = DataModel(endpoint_main, messages_main)
     log_panel_model = LogPanelModel()
     nav_bar_model = NavBarModel()
     solution_position_model = SolutionPositionModel()
@@ -813,6 +530,18 @@ if __name__ == "__main__":
     root_context.setContextProperty("remote_observation_model", remote_observation_model)
     root_context.setContextProperty("local_observation_model", local_observation_model)
     root_context.setContextProperty("data_model", data_model)
+
+    # Unfortunately it is not possible to access singletons directly using the PySide2 API.
+    # This approach stores the globals somwhere that can be grabbed and manipulated.
+    component = QQmlComponent(engine)
+    component.setData(
+        b'import QtQuick 2.0\nimport "Constants"\nItem{ property var globals: Globals }',  # type: ignore
+        QUrl("qrc:/grabGlobals.qml"),
+    )
+    globals_main = component.create()
+    globals_main = globals_main.property("globals")  # type: ignore
+
+    handle_cli_arguments(args_main, globals_main)
 
     threading.Thread(
         target=receive_messages,

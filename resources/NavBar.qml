@@ -13,6 +13,7 @@ Item {
     property variant available_baudrates: []
     property variant available_devices: []
     property variant available_flows: []
+    property variant available_refresh_rates: []
     property variant previous_hosts: []
     property variant previous_ports: []
     property variant previous_files: []
@@ -230,8 +231,6 @@ Item {
             ToolTip.text: !checked ? "Pause" : "Unpause"
             checkable: true
             onClicked: data_model.pause(checked)
-            leftPadding: 0
-            rightPadding: 0
         }
 
         Button {
@@ -277,10 +276,9 @@ Item {
             Layout.preferredHeight: Constants.navBar.dropdownHeight
             ToolTip.visible: hovered
             ToolTip.text: "Refresh Rate (Hz)"
-            model: Constants.navBar.all_refresh_rates
-            currentIndex: Constants.navBar.default_refresh_rate_index
+            model: available_refresh_rates
             onActivated: {
-                Globals.currentRefreshRate = 1000 / Constants.navBar.all_refresh_rates[currentIndex];
+                Globals.currentRefreshRate = available_refresh_rates[currentIndex];
             }
 
             states: State {
@@ -296,7 +294,7 @@ Item {
         }
 
         Timer {
-            interval: Constants.defaultTimerIntervalRate
+            interval: Utils.hzToMilliseconds(Constants.staticTimerIntervalRate)
             running: true
             repeat: true
             onTriggered: {
@@ -304,15 +302,18 @@ Item {
                 if (!navBarData.available_baudrates.length)
                     return ;
 
-                if (!available_baudrates.length || !available_flows.length) {
+                if (!available_baudrates.length || !available_flows.length || available_refresh_rates.length) {
                     available_baudrates = navBarData.available_baudrates;
                     serialDeviceBaudRate.currentIndex = 1;
                     available_flows = navBarData.available_flows;
+                    available_refresh_rates = navBarData.available_refresh_rates;
+                    refreshRateDrop.currentIndex = available_refresh_rates.indexOf(Globals.currentRefreshRate);
                 }
                 available_devices = navBarData.available_ports;
                 previous_hosts = navBarData.previous_hosts;
                 previous_ports = navBarData.previous_ports;
                 previous_files = navBarData.previous_files;
+                connectButton.checked = navBarData.connected;
             }
         }
 

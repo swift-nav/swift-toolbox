@@ -16,11 +16,11 @@ QtObject {
     property QtObject solutionVelocity
     property QtObject trackingSignals
     property QtObject observationTab
-    property int defaultTimerIntervalRate: 1000 / 5 // 5 Hz
-    property string monoSpaceFont: "Courier New"
-    property real smallPointSize: 7
-    property real mediumPointSize: 8
-    property real largePointSize: 9
+    readonly property int staticTimerIntervalRate: 5 // 5 Hz
+    readonly property string monoSpaceFont: "Courier New"
+    readonly property real smallPointSize: 7
+    readonly property real mediumPointSize: 8
+    readonly property real largePointSize: 9
     readonly property bool debugMode: false
 
     navBar: QtObject {
@@ -37,8 +37,7 @@ QtObject {
         readonly property int connectButtonWidth: 100
         readonly property int connectionPauseWidth: 30
         readonly property color placeholderTextColor: "#CDC9C9"
-        readonly property var all_refresh_rates: [1, 5, 10, 25]
-        readonly property var default_refresh_rate_index: 1
+        readonly property int padding: 0
     }
 
     solutionPosition: QtObject {

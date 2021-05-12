@@ -1,22 +1,27 @@
+use crate::common_constants::{self as cc, Tabs};
 use crate::constants::*;
 use crate::formatters::*;
 use crate::piksi_tools_constants::*;
 use crate::process_messages::process_messages;
-use crate::utils::{close_frontend, from_flowcontrol_str, ms_to_sec};
-use anyhow::{anyhow, bail, Context, Result as AHResult};
+use crate::utils::{close_frontend, ms_to_sec, set_connected_frontend};
+use anyhow::{Context, Result as AHResult};
 use chrono::{DateTime, Utc};
-use directories::{BaseDirs, ProjectDirs, UserDirs};
+use directories::ProjectDirs;
 use log::{info, warn};
 use once_cell::sync::OnceCell;
 use ordered_float::OrderedFloat;
-use sbp::messages::{
-    navigation::{MsgDops, MsgDopsDepA, MsgPosLLH, MsgPosLLHDepA, MsgVelNED, MsgVelNEDDepA},
-    observation::{
-        MsgObs, MsgObsDepB, MsgObsDepC, MsgOsr, PackedObsContent, PackedObsContentDepB,
-        PackedObsContentDepC, PackedOsrContent,
+use sbp::{
+    messages::{
+        navigation::{MsgDops, MsgDopsDepA, MsgPosLLH, MsgPosLLHDepA, MsgVelNED, MsgVelNEDDepA},
+        observation::{
+            MsgObs, MsgObsDepB, MsgObsDepC, MsgOsr, PackedObsContent, PackedObsContentDepB,
+            PackedObsContentDepC, PackedOsrContent,
+        },
     },
+    sbp_tools::SBPTools,
 };
 use serde::{Deserialize, Serialize};
+use serialport::FlowControl as SPFlowControl;
 use std::{
     cmp::{Eq, PartialEq},
     collections::HashMap,
@@ -27,11 +32,13 @@ use std::{
     net::TcpStream,
     ops::Deref,
     path::{Path, PathBuf},
+    str::FromStr,
     sync::{mpsc::Sender, Arc, Mutex},
     thread,
     thread::JoinHandle,
     time::{Duration, Instant},
 };
+use strum::VariantNames;
 use xshell::mkdir_p;
 
 pub type Error = std::boxed::Box<dyn std::error::Error>;
@@ -143,13 +150,15 @@ impl ServerState {
     ) {
         let shared_state_clone = shared_state.clone();
         self.connection_join();
-        shared_state_clone.set_running(true);
+        shared_state_clone.set_running(true, client_send.clone());
         let handle = thread::spawn(move || {
             if let Ok(stream) = fs::File::open(&filename) {
                 println!("Opened file successfully!");
                 shared_state_clone.update_file_history(filename);
                 let shared_state_clone_ = shared_state.clone();
-                let messages = sbp::iter_messages(stream);
+                let messages = sbp::iter_messages(stream)
+                    .log_errors(log::Level::Debug)
+                    .with_rover_time();
                 process_messages(
                     messages,
                     shared_state_clone_,
@@ -162,7 +171,7 @@ impl ServerState {
             } else {
                 println!("Couldn't open file...");
             }
-            shared_state.set_running(false);
+            shared_state.set_running(false, client_send.clone());
         });
         self.new_connection(handle);
     }
@@ -182,7 +191,7 @@ impl ServerState {
         port: u16,
     ) {
         let shared_state_clone = shared_state.clone();
-        shared_state_clone.set_running(true);
+        shared_state_clone.set_running(true, client_send.clone());
         self.connection_join();
         let handle = thread::spawn(move || {
             let shared_state_clone = shared_state.clone();
@@ -190,17 +199,19 @@ impl ServerState {
             if let Ok(stream) = TcpStream::connect(host_port.clone()) {
                 info!("Connected to the server {}!", host_port);
                 shared_state_clone.update_tcp_history(host, port);
-                let messages = sbp::iter_messages(stream);
+                let messages = sbp::iter_messages(stream)
+                    .log_errors(log::Level::Debug)
+                    .with_rover_time();
                 process_messages(
                     messages,
                     shared_state_clone,
-                    client_send,
+                    client_send.clone(),
                     RealtimeDelay::Off,
                 );
             } else {
                 warn!("Couldn't connect to server...");
             }
-            shared_state.set_running(false);
+            shared_state.set_running(false, client_send.clone());
         });
         self.new_connection(handle);
     }
@@ -219,32 +230,33 @@ impl ServerState {
         shared_state: SharedState,
         device: String,
         baudrate: u32,
-        flow: String,
+        flow: FlowControl,
     ) {
         let shared_state_clone = shared_state.clone();
-        shared_state_clone.set_running(true);
+        shared_state_clone.set_running(true, client_send.clone());
         self.connection_join();
         let handle = thread::spawn(move || {
             let shared_state_clone = shared_state.clone();
-            let flow = from_flowcontrol_str(&flow);
             match serialport::new(&device, baudrate)
-                .flow_control(flow)
+                .flow_control(*flow)
                 .timeout(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))
                 .open()
             {
                 Ok(port) => {
                     println!("Connected to serialport {}.", device);
-                    let messages = sbp::iter_messages(port);
+                    let messages = sbp::iter_messages(port)
+                        .log_errors(log::Level::Debug)
+                        .with_rover_time();
                     process_messages(
                         messages,
                         shared_state_clone,
-                        client_send,
+                        client_send.clone(),
                         RealtimeDelay::Off,
                     );
                 }
-                Err(e) => eprint!("Unable to connect to serialport: {}", e),
+                Err(e) => eprintln!("Unable to connect to serialport: {}", e),
             }
-            shared_state.set_running(false);
+            shared_state.set_running(false, client_send.clone());
         });
         self.new_connection(handle);
     }
@@ -271,7 +283,12 @@ impl SharedState {
         let shared_data = self.lock().unwrap();
         (*shared_data).running
     }
-    pub fn set_running(&self, set_to: bool) {
+    pub fn set_running(&self, set_to: bool, mut client_send: ClientSender) {
+        if set_to {
+            set_connected_frontend(cc::ApplicationStates::CONNECTED, &mut client_send);
+        } else {
+            set_connected_frontend(cc::ApplicationStates::DISCONNECTED, &mut client_send);
+        }
         let mut shared_data = self.lock().unwrap();
         (*shared_data).running = set_to;
     }
@@ -486,7 +503,7 @@ pub fn create_data_dir() -> AHResult<PathBuf> {
     let proj_dirs = ProjectDirs::from(
         APPLICATION_QUALIFIER,
         APPLICATION_ORGANIZATION,
-        APPLICATION_NAME.into(),
+        APPLICATION_NAME,
     )
     .context("could not discover local project directory")?;
     let path: PathBuf = ProjectDirs::data_local_dir(&proj_dirs).into();
@@ -502,6 +519,13 @@ pub struct ConnectionHistory {
     #[serde(skip)]
     filename: PathBuf,
 }
+
+impl Default for ConnectionHistory {
+    fn default() -> Self {
+        ConnectionHistory::new()
+    }
+}
+
 impl ConnectionHistory {
     pub fn new() -> ConnectionHistory {
         let filename = DataDirectory::path().join(CONNECTION_HISTORY_FILENAME);
@@ -529,10 +553,10 @@ impl ConnectionHistory {
         self.files_.clone()
     }
     pub fn successful_tcp_connection(&mut self, host: String, port: u16) {
-        if self.hosts_.len() == 0 || self.hosts_[0] != host {
+        if self.hosts_.is_empty() || self.hosts_[0] != host {
             self.hosts_.insert(0, host);
         }
-        if self.ports_.len() == 0 || self.ports_[0] != port {
+        if self.ports_.is_empty() || self.ports_[0] != port {
             self.ports_.insert(0, port);
         }
         if let Err(e) = self.save() {
@@ -540,7 +564,7 @@ impl ConnectionHistory {
         }
     }
     pub fn successful_file_connection(&mut self, filename: String) {
-        if self.files_.len() == 0 || self.files_[0] != filename {
+        if self.files_.is_empty() || self.files_[0] != filename {
             self.files_.insert(0, filename);
         }
         if let Err(e) = self.save() {
@@ -551,6 +575,60 @@ impl ConnectionHistory {
     fn save(&self) -> Result<()> {
         serde_yaml::to_writer(fs::File::create(&self.filename)?, self)?;
         Ok(())
+    }
+}
+
+// Enum wrapping around various Vel NED Message types.
+#[derive(Debug)]
+pub struct FlowControl(SPFlowControl);
+
+impl FromStr for FlowControl {
+    type Err = String;
+
+    /// Convert flow control string slice to expected serialport FlowControl variant.
+    ///
+    /// # Parameters
+    ///
+    /// - `sat_str`: The signal code.
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        match s {
+            FLOW_CONTROL_NONE => Ok(FlowControl(SPFlowControl::None)),
+            FLOW_CONTROL_SOFTWARE => Ok(FlowControl(SPFlowControl::Software)),
+            FLOW_CONTROL_HARDWARE => Ok(FlowControl(SPFlowControl::Hardware)),
+            _ => Err(format!(
+                "Not a valid flow control option. Choose from [\"{}\", \"{}\", \"{}\"]",
+                FLOW_CONTROL_NONE, FLOW_CONTROL_SOFTWARE, FLOW_CONTROL_HARDWARE
+            )),
+        }
+    }
+}
+
+impl Deref for FlowControl {
+    type Target = SPFlowControl;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[derive(Debug)]
+pub struct CliTabs(Tabs);
+
+impl Deref for CliTabs {
+    type Target = Tabs;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl FromStr for CliTabs {
+    type Err = String;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        Ok(CliTabs(Tabs::from_str(s).map_err(|_| {
+            format!("Must choose from available tabs {:?}", Tabs::VARIANTS)
+        })?))
     }
 }
 
@@ -1447,6 +1525,7 @@ mod tests {
     const TEST_FILEPATH: &str = "./tests/data/piksi-relay-1min.sbp";
     const TEST_SHORT_FILEPATH: &str = "./tests/data/piksi-relay.sbp";
     const SBP_FILE_SHORT_DURATION_SEC: f64 = 26.1;
+    const DELAY_BEFORE_CHECKING_APP_STARTED_IN_MS: u64 = 150;
 
     fn receive_thread(client_recv: mpsc::Receiver<Vec<u8>>) -> JoinHandle<()> {
         thread::spawn(move || {
@@ -1480,7 +1559,9 @@ mod tests {
             filename,
             /*close_when_done = */ true,
         );
-        sleep(Duration::from_millis(150));
+        sleep(Duration::from_millis(
+            DELAY_BEFORE_CHECKING_APP_STARTED_IN_MS,
+        ));
         assert!(shared_state.is_running());
         sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
         assert!(!shared_state.is_running());
@@ -1503,7 +1584,9 @@ mod tests {
             filename,
             /*close_when_done = */ true,
         );
-        sleep(Duration::from_millis(100));
+        sleep(Duration::from_millis(
+            DELAY_BEFORE_CHECKING_APP_STARTED_IN_MS,
+        ));
         assert!(shared_state.is_running());
         shared_state.set_paused(true);
         sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
@@ -1527,7 +1610,7 @@ mod tests {
         assert!(!shared_state.is_running());
         {
             server_state.connect_to_file(
-                client_send,
+                client_send.clone(),
                 shared_state.clone(),
                 filename,
                 /*close_when_done = */ true,
@@ -1538,7 +1621,7 @@ mod tests {
         assert!(shared_state.is_running());
         let now = SystemTime::now();
         sleep(Duration::from_millis(1));
-        shared_state.set_running(false);
+        shared_state.set_running(false, client_send);
         sleep(Duration::from_millis(5));
         assert!(handle.join().is_ok());
 

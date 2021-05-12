@@ -164,7 +164,7 @@ Item {
                 }
 
                 Timer {
-                    interval: Globals.currentRefreshRate
+                    interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
                     running: true
                     repeat: true
                     onTriggered: {
@@ -194,7 +194,7 @@ Item {
                                 line.color = colors[idx];
                                 line.width = Constants.commonChart.lineWidth;
                                 line.axisYRight = solutionVelocityYAxis;
-                                line.useOpenGL = true;
+                                line.useOpenGL = Globals.useOpenGL;
                                 lines.push(line);
                             }
                         }

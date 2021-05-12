@@ -1,3 +1,4 @@
+import "Constants"
 import QtCharts 2.2
 import QtQuick 2.5
 import QtQuick.Controls 2.12
@@ -38,6 +39,7 @@ Item {
             TabBar {
                 id: solutionBar
 
+                currentIndex: Globals.initialSubTabIndex
                 z: 100
 
                 Repeater {

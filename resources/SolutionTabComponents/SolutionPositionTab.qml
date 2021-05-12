@@ -236,7 +236,7 @@ Item {
                 }
 
                 Timer {
-                    interval: Globals.currentRefreshRate
+                    interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
                     running: true
                     repeat: true
                     onTriggered: {
@@ -275,9 +275,9 @@ Item {
                                 var line = solutionPositionChart.createSeries(ChartView.SeriesTypeLine, labels[idx], solutionPositionXAxis, solutionPositionYAxis);
                                 line.color = colors[idx];
                                 line.width = Constants.commonChart.solutionLineWidth;
-                                line.useOpenGL = true;
-                                scatter.useOpenGL = true;
-                                cur_scatter.useOpenGL = true;
+                                line.useOpenGL = Globals.useOpenGL;
+                                scatter.useOpenGL = Globals.useOpenGL;
+                                cur_scatter.useOpenGL = Globals.useOpenGL;
                                 lines.push(line);
                                 scatters.push(scatter);
                                 cur_scatters.push(cur_scatter);

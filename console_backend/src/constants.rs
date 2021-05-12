@@ -1,3 +1,4 @@
+use crate::common_constants::Tabs;
 // 'Universal' constants
 
 pub const NANOSECONDS_PER_SECOND: f64 = 1.0e+9;
@@ -6,6 +7,18 @@ pub const SECONDS_PER_NANOSECOND: f64 = 1.0e-9;
 pub const APPLICATION_QUALIFIER: &str = "com.swift-nav";
 pub const APPLICATION_ORGANIZATION: &str = "swift-nav";
 pub const APPLICATION_NAME: &str = "swift_navigation_console";
+// CLI constants.
+pub const TAB_LIST: &[Tabs] = &[
+    Tabs::TRACKING_SIGNALS,
+    Tabs::TRACKING_SKYPLOT,
+    Tabs::SOLUTION_POSITION,
+    Tabs::SOLUTION_VELOCITY,
+    Tabs::BASELINE,
+    Tabs::OBSERVATIONS,
+    Tabs::SETTINGS,
+    Tabs::UPDATE,
+    Tabs::ADVANCED,
+];
 
 // Server constants.
 pub const CLOSE: &str = "CLOSE";
@@ -20,6 +33,7 @@ pub const LOG_WRITER_BUFFER_MESSAGE_COUNT: usize = 50;
 pub const NUM_POINTS: usize = 200;
 
 // Navbar constants.
+pub const AVAILABLE_REFRESH_RATES: [u8; 4] = [1, 5, 10, 25];
 pub const AVAILABLE_BAUDRATES: [u32; 6] = [57600, 115200, 230400, 460800, 921600, 1000000];
 pub const FLOW_CONTROL_NONE: &str = "None";
 pub const FLOW_CONTROL_SOFTWARE: &str = "Software XON/XOFF";

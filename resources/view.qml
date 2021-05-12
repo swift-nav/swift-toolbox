@@ -37,6 +37,7 @@ ApplicationWindow {
 
                     Layout.fillWidth: true
                     z: Constants.commonChart.zAboveCharts
+                    currentIndex: Globals.initialMainTabIndex
 
                     Repeater {
                         model: ["Tracking", "Solution", "Baseline", "Observations", "Settings", "Update", "Advanced"]

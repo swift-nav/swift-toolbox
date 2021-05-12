@@ -188,3 +188,6 @@ pub const MPH: &str = "mph";
 pub const KPH: &str = "kph";
 pub const MPS2MPH: f64 = 2.236934;
 pub const MPS2KPH: f64 = 3.600000;
+
+// Status Bar constants.
+pub const UPDATE_TOLERANCE_SECONDS: f64 = 1.2;

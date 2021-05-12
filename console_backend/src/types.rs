@@ -3,7 +3,7 @@ use crate::constants::*;
 use crate::formatters::*;
 use crate::piksi_tools_constants::*;
 use crate::process_messages::process_messages;
-use crate::utils::{close_frontend, ms_to_sec, refresh_navbar, set_connected_frontend};
+use crate::utils::{close_frontend, mm_to_m, ms_to_sec, refresh_navbar, set_connected_frontend};
 use anyhow::{Context, Result as AHResult};
 use chrono::{DateTime, Utc};
 use directories::ProjectDirs;
@@ -13,7 +13,10 @@ use log::{error, info, warn};
 use ordered_float::OrderedFloat;
 use sbp::{
     messages::{
-        navigation::{MsgDops, MsgDopsDepA, MsgPosLLH, MsgPosLLHDepA, MsgVelNED, MsgVelNEDDepA},
+        navigation::{
+            MsgBaselineNED, MsgBaselineNEDDepA, MsgDops, MsgDopsDepA, MsgPosLLH, MsgPosLLHDepA,
+            MsgVelNED, MsgVelNEDDepA,
+        },
         observation::{
             MsgObs, MsgObsDepB, MsgObsDepC, MsgOsr, PackedObsContent, PackedObsContentDepB,
             PackedObsContentDepC, PackedOsrContent,
@@ -1345,6 +1348,17 @@ impl GnssModes {
     }
 }
 
+// Struct with shared fields for various PosLLH Message types.
+pub struct PosLLHFields {
+    pub flags: u8,
+    pub h_accuracy: f64,
+    pub v_accuracy: f64,
+    pub tow: f64,
+    pub lat: f64,
+    pub lon: f64,
+    pub height: f64,
+    pub n_sats: u8,
+}
 // Enum wrapping around various PosLLH Message types.
 #[derive(Debug)]
 #[allow(clippy::upper_case_acronyms)]
@@ -1353,6 +1367,43 @@ pub enum PosLLH {
     MsgPosLLHDepA(MsgPosLLHDepA),
 }
 impl PosLLH {
+    pub fn fields(&self) -> PosLLHFields {
+        match self {
+            PosLLH::MsgPosLLH(MsgPosLLH {
+                flags,
+                h_accuracy,
+                v_accuracy,
+                tow,
+                lat,
+                lon,
+                height,
+                n_sats,
+                ..
+            })
+            | PosLLH::MsgPosLLHDepA(MsgPosLLHDepA {
+                flags,
+                h_accuracy,
+                v_accuracy,
+                tow,
+                lat,
+                lon,
+                height,
+                n_sats,
+                ..
+            }) => {
+                (PosLLHFields {
+                    flags: *flags,
+                    h_accuracy: mm_to_m(*h_accuracy as f64),
+                    v_accuracy: mm_to_m(*v_accuracy as f64),
+                    tow: *tow as f64,
+                    lat: *lat,
+                    lon: *lon,
+                    height: *height,
+                    n_sats: *n_sats,
+                })
+            }
+        }
+    }
     pub fn mode(&self) -> u8 {
         match self {
             PosLLH::MsgPosLLH(msg) => msg.flags & 0x7,
@@ -1436,6 +1487,53 @@ impl VelNED {
             e,
             d,
             n_sats,
+        }
+    }
+}
+
+// Baseline Tab Types.
+
+// Struct with shared fields for various BaselineNED Message types.
+#[allow(clippy::upper_case_acronyms)]
+pub struct BaselineNEDFields {
+    pub flags: u8,
+    pub tow: f64,
+    pub n: i32,
+    pub e: i32,
+    pub d: i32,
+    pub n_sats: u8,
+}
+// Enum wrapping around various Baseline NED Message types.
+#[derive(Debug)]
+#[allow(clippy::upper_case_acronyms)]
+pub enum BaselineNED {
+    MsgBaselineNED(MsgBaselineNED),
+    MsgBaselineNEDDepA(MsgBaselineNEDDepA),
+}
+
+impl BaselineNED {
+    pub fn fields(&self) -> BaselineNEDFields {
+        let (flags, tow, n, e, d, n_sats) = match self {
+            BaselineNED::MsgBaselineNED(msg) => {
+                (msg.flags, msg.tow as f64, msg.n, msg.e, msg.d, msg.n_sats)
+            }
+            BaselineNED::MsgBaselineNEDDepA(msg) => {
+                (1, msg.tow as f64, msg.n, msg.e, msg.d, msg.n_sats)
+            }
+        };
+        BaselineNEDFields {
+            flags,
+            tow,
+            n,
+            e,
+            d,
+            n_sats,
+        }
+    }
+    pub fn mode(&self) -> u8 {
+        match self {
+            BaselineNED::MsgBaselineNED(MsgBaselineNED { flags, .. })
+            | BaselineNED::MsgBaselineNEDDepA(MsgBaselineNEDDepA { flags, .. }) => *flags & 0x7,
         }
     }
 }

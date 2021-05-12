@@ -17,6 +17,7 @@ pub mod process_messages;
 pub mod server;
 pub mod solution_tab;
 pub mod solution_velocity_tab;
+pub mod status_bar;
 pub mod tracking_signals_tab;
 pub mod types;
 pub mod utils;

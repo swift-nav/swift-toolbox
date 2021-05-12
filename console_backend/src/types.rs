@@ -7,8 +7,8 @@ use crate::utils::{close_frontend, ms_to_sec, refresh_navbar, set_connected_fron
 use anyhow::{Context, Result as AHResult};
 use chrono::{DateTime, Utc};
 use directories::ProjectDirs;
+use lazy_static::lazy_static;
 use log::{info, warn};
-use once_cell::sync::OnceCell;
 use ordered_float::OrderedFloat;
 use sbp::{
     messages::{
@@ -31,7 +31,7 @@ use std::{
     hash::Hash,
     net::TcpStream,
     ops::Deref,
-    path::{Path, PathBuf},
+    path::PathBuf,
     str::FromStr,
     sync::{mpsc::Sender, Arc, Mutex},
     thread,
@@ -39,7 +39,6 @@ use std::{
     time::{Duration, Instant},
 };
 use strum::VariantNames;
-use xshell::mkdir_p;
 
 pub type Error = std::boxed::Box<dyn std::error::Error>;
 pub type Result<T> = std::result::Result<T, Error>;
@@ -472,26 +471,23 @@ pub enum RealtimeDelay {
 pub struct DataDirectory {
     path_: PathBuf,
 }
-pub static DATA_DIRECTORY: OnceCell<DataDirectory> = OnceCell::new();
+lazy_static! {
+    pub static ref DATA_DIRECTORY: DataDirectory = DataDirectory::new();
+}
 
 impl DataDirectory {
-    pub fn init() {
-        DATA_DIRECTORY
-            .set(DataDirectory {
-                path_: create_data_dir().unwrap(),
-            })
-            .unwrap();
-    }
-    pub fn get() -> &'static DataDirectory {
-        DATA_DIRECTORY.get().unwrap()
-    }
-    pub fn path() -> &'static Path {
-        let mut data_dir = DATA_DIRECTORY.get();
-        if data_dir.is_none() {
-            DataDirectory::init();
-            data_dir = DATA_DIRECTORY.get();
+    pub fn new() -> DataDirectory {
+        DataDirectory {
+            path_: create_data_dir().unwrap(),
         }
-        &data_dir.unwrap().path_
+    }
+    pub fn path(&self) -> PathBuf {
+        self.path_.clone()
+    }
+}
+impl Default for DataDirectory {
+    fn default() -> Self {
+        DataDirectory::new()
     }
 }
 
@@ -501,7 +497,7 @@ impl DataDirectory {
 /// # Returns
 /// - `Ok`: The PathBuf for the data directory path.
 /// - `Err`: Issue deducing path or creating the data directory.
-pub fn create_data_dir() -> AHResult<PathBuf> {
+fn create_data_dir() -> AHResult<PathBuf> {
     let proj_dirs = ProjectDirs::from(
         APPLICATION_QUALIFIER,
         APPLICATION_ORGANIZATION,
@@ -509,7 +505,7 @@ pub fn create_data_dir() -> AHResult<PathBuf> {
     )
     .context("could not discover local project directory")?;
     let path: PathBuf = ProjectDirs::data_local_dir(&proj_dirs).into();
-    mkdir_p(path.clone())?;
+    fs::create_dir_all(path.clone())?;
     Ok(path)
 }
 
@@ -530,7 +526,7 @@ impl Default for ConnectionHistory {
 
 impl ConnectionHistory {
     pub fn new() -> ConnectionHistory {
-        let filename = DataDirectory::path().join(CONNECTION_HISTORY_FILENAME);
+        let filename = DATA_DIRECTORY.path().join(CONNECTION_HISTORY_FILENAME);
         if let Ok(file) = fs::File::open(&filename) {
             if let Ok(conn_yaml) = serde_yaml::from_reader(file) {
                 let mut conn_yaml: ConnectionHistory = conn_yaml;

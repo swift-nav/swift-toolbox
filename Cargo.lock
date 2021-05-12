@@ -346,7 +346,6 @@ dependencies = [
  "log",
  "logtest",
  "ndarray",
- "once_cell",
  "ordered-float",
  "paste 1.0.5",
  "pyo3",
@@ -358,7 +357,6 @@ dependencies = [
  "strum_macros",
  "sysinfo",
  "tempfile",
- "xshell",
 ]
 
 [[package]]
@@ -1914,21 +1912,6 @@ name = "wyz"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "85e60b0d1b5f99db2556934e21937020776a5d31520bf169e851ac44e6420214"
-
-[[package]]
-name = "xshell"
-version = "0.1.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e3f93d5e767c73e5b2604549613ce051d3d2880ec5ae7f346900f6ee4eec6bf"
-dependencies = [
- "xshell-macros",
-]
-
-[[package]]
-name = "xshell-macros"
-version = "0.1.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "58d215d6837186f9f3d0d2d835545c7bf19142296e9184279ad240f90101af30"
 
 [[package]]
 name = "yaml-rust"

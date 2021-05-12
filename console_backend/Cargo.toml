@@ -27,8 +27,6 @@ criterion = "0.3.4"
 sysinfo = "0.16.4"
 serialport = { version = "4.0.1", default-features = false }
 directories = "3"
-once_cell = "1"
-xshell = "0.1"
 anyhow = { version = "1", features = ["backtrace"] }
 serde_yaml = "0.8.17"
 clap = "3.0.0-beta.2"

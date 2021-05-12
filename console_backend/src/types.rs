@@ -481,6 +481,7 @@ impl DataDirectory {
             path_: create_data_dir().unwrap(),
         }
     }
+    /// Return a clone to the private path_ PathBuf.
     pub fn path(&self) -> PathBuf {
         self.path_.clone()
     }
@@ -525,6 +526,7 @@ impl Default for ConnectionHistory {
 }
 
 impl ConnectionHistory {
+    /// Attempts to create a new ConnectionHistory from expected filepath otherwise empty.
     pub fn new() -> ConnectionHistory {
         let filename = DATA_DIRECTORY.path().join(CONNECTION_HISTORY_FILENAME);
         if let Ok(file) = fs::File::open(&filename) {
@@ -541,15 +543,23 @@ impl ConnectionHistory {
             filename,
         }
     }
+    /// Returns a clone of the private hosts vec.
     pub fn hosts(&self) -> Vec<String> {
         self.hosts_.clone()
     }
+    /// Returns a clone of the private ports vec.
     pub fn ports(&self) -> Vec<u16> {
         self.ports_.clone()
     }
+    /// Returns a clone of the private files vec.
     pub fn files(&self) -> Vec<String> {
         self.files_.clone()
     }
+    /// Attempt to add a new host and port if not the most recent entries.
+    ///
+    /// # Parameters
+    /// - `host`: The TCP host to add to the history.
+    /// - `port`: The TCP port to add to the history.
     pub fn successful_tcp_connection(&mut self, host: String, port: u16) {
         if self.hosts_.is_empty() || self.hosts_[0] != host {
             self.hosts_.insert(0, host);
@@ -561,6 +571,10 @@ impl ConnectionHistory {
             eprintln!("Unable to save connection history, {}.", e);
         }
     }
+    /// Attempt to add a new filepath if not the most recent entry.
+    ///
+    /// # Parameters
+    /// - `filename`: The path to the file to add to history.
     pub fn successful_file_connection(&mut self, filename: String) {
         if self.files_.is_empty() || self.files_[0] != filename {
             self.files_.insert(0, filename);
@@ -570,6 +584,7 @@ impl ConnectionHistory {
         }
     }
 
+    /// Save the history to the expected filepath.
     fn save(&self) -> Result<()> {
         serde_yaml::to_writer(fs::File::create(&self.filename)?, self)?;
         Ok(())
@@ -1514,7 +1529,9 @@ pub struct VelLog {
 
 #[cfg(test)]
 mod tests {
+    #![allow(dead_code)]
     use super::*;
+    use directories::UserDirs;
     use std::{
         sync::mpsc,
         thread::sleep,
@@ -1524,6 +1541,93 @@ mod tests {
     const TEST_SHORT_FILEPATH: &str = "./tests/data/piksi-relay.sbp";
     const SBP_FILE_SHORT_DURATION_SEC: f64 = 26.1;
     const DELAY_BEFORE_CHECKING_APP_STARTED_IN_MS: u64 = 150;
+    const LINUX_DATA_DIRECTORY_PATH: &str = ".local/share/swift_navigation_console";
+    const MAC_DATA_DIRECTORY_PATH: &str =
+        "Library/Application Support/com.swift-nav.swift-nav.swift_navigation_console";
+    const WINDOWS_DATA_DIRECTORY_PATH: &str =
+        "AppData\\Local\\swift-nav\\swift_navigation_console\\data";
+    #[test]
+    fn create_data_dir_test() {
+        create_data_dir().unwrap();
+        let user_dirs = UserDirs::new().unwrap();
+        let home_dir = user_dirs.home_dir();
+        #[cfg(target_os = "linux")]
+        {
+            assert!(home_dir.join(LINUX_DATA_DIRECTORY_PATH).exists());
+        }
+
+        #[cfg(target_os = "macos")]
+        {
+            assert!(home_dir.join(MAC_DATA_DIRECTORY_PATH).exists());
+        }
+        #[cfg(target_os = "windows")]
+        {
+            assert!(home_dir.join(WINDOWS_DATA_DIRECTORY_PATH).exists());
+        }
+    }
+
+    #[test]
+    fn connection_history_save_test() {
+        let conn_history = ConnectionHistory::new();
+        let user_dirs = UserDirs::new().unwrap();
+        let home_dir = user_dirs.home_dir();
+        conn_history.save().unwrap();
+        #[cfg(target_os = "linux")]
+        {
+            assert!(home_dir
+                .join(LINUX_DATA_DIRECTORY_PATH)
+                .join(CONNECTION_HISTORY_FILENAME)
+                .exists());
+        }
+
+        #[cfg(target_os = "macos")]
+        {
+            assert!(home_dir
+                .join(MAC_DATA_DIRECTORY_PATH)
+                .join(CONNECTION_HISTORY_FILENAME)
+                .exists());
+        }
+        #[cfg(target_os = "windows")]
+        {
+            assert!(home_dir
+                .join(WINDOWS_DATA_DIRECTORY_PATH)
+                .join(CONNECTION_HISTORY_FILENAME)
+                .exists());
+        }
+    }
+
+    #[test]
+    fn connection_history_additions_test() {
+        let mut conn_history = ConnectionHistory::new();
+        let host1 = String::from("host1");
+        let host2 = String::from("host2");
+        let port1 = 100;
+        conn_history.successful_tcp_connection(host1.clone(), port1);
+        let hosts = conn_history.hosts();
+        let hosts_len = hosts.len();
+        let ports = conn_history.ports();
+        let ports_len = ports.len();
+        assert_eq!(host1, *(hosts.first().unwrap()));
+        assert_eq!(port1, *(ports.first().unwrap()));
+        conn_history.successful_tcp_connection(host2.clone(), port1);
+        let hosts = conn_history.hosts();
+        let ports = conn_history.ports();
+        assert_eq!(host2, *(hosts.first().unwrap()));
+        assert_eq!(port1, *(ports.first().unwrap()));
+        assert_eq!(hosts_len + 1, hosts.len());
+        assert_eq!(ports_len, ports.len());
+
+        let filename1 = String::from("filename1");
+        let filename2 = String::from("filename2");
+        conn_history.successful_file_connection(filename1.clone());
+        conn_history.successful_file_connection(filename2.clone());
+        conn_history.successful_file_connection(filename1.clone());
+        let files = conn_history.files();
+        assert!(files.len() >= 3);
+        assert_eq!(filename1, files[2]);
+        assert_eq!(files[0], files[2]);
+        assert_eq!(filename2, files[1]);
+    }
 
     fn receive_thread(client_recv: mpsc::Receiver<Vec<u8>>) -> JoinHandle<()> {
         thread::spawn(move || {

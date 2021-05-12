@@ -109,19 +109,23 @@ script = '''
 Get-ChildItem .\console_backend -Recurse -Include @("*.egg-info", "*.dist-info") | Remove-Item -Force -Recurse
 '''
 
+[tasks.start-console]
+private = true
+command = "conda"
+args = [
+  "run", "-n", "${CONDA_ENV}",
+  "--no-capture-output", "--live-stream",
+  "python", "src/main/python/main.py",
+  "${@}",
+  ]
+
 [tasks.run]
 dependencies = ["copy-capnp", "generate-resources", "remove-egg-dist", "install-backend"]
-script_runner = "@shell"
-script = '''
-conda run -n $CONDA_ENV --no-capture-output --live-stream python src/main/python/main.py "${@}"
-'''
+run_task = "start-console"
 
 [tasks.prod-run]
 dependencies = ["copy-capnp", "generate-resources", "remove-egg-dist", "prod-install-backend"]
-script_runner = "@shell"
-script = '''
-conda run -n $CONDA_ENV --no-capture-output --live-stream fbs run
-'''
+run_task = "start-console"
 
 [tasks.setuptools-rust]
 script_runner = "@shell"

@@ -3,7 +3,7 @@ use crate::constants::*;
 use crate::formatters::*;
 use crate::piksi_tools_constants::*;
 use crate::process_messages::process_messages;
-use crate::utils::{close_frontend, ms_to_sec, set_connected_frontend};
+use crate::utils::{close_frontend, ms_to_sec, refresh_navbar, set_connected_frontend};
 use anyhow::{Context, Result as AHResult};
 use chrono::{DateTime, Utc};
 use directories::ProjectDirs;
@@ -155,6 +155,7 @@ impl ServerState {
             if let Ok(stream) = fs::File::open(&filename) {
                 println!("Opened file successfully!");
                 shared_state_clone.update_file_history(filename);
+                refresh_navbar(&mut client_send.clone(), shared_state.clone());
                 let shared_state_clone_ = shared_state.clone();
                 let messages = sbp::iter_messages(stream)
                     .log_errors(log::Level::Debug)
@@ -199,6 +200,7 @@ impl ServerState {
             if let Ok(stream) = TcpStream::connect(host_port.clone()) {
                 info!("Connected to the server {}!", host_port);
                 shared_state_clone.update_tcp_history(host, port);
+                refresh_navbar(&mut client_send.clone(), shared_state.clone());
                 let messages = sbp::iter_messages(stream)
                     .log_errors(log::Level::Debug)
                     .with_rover_time();

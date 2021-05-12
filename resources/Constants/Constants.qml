@@ -43,7 +43,7 @@ QtObject {
     solutionPosition: QtObject {
         readonly property int navBarMargin: 10
         readonly property int navBarSpacing: 0
-        readonly property real navBarButtonProportionOfParent: 0.1
+        readonly property real navBarButtonProportionOfParent: 0.11
         readonly property string yAxisTitleText: "Latitude"
         readonly property string xAxisTitleText: "Longitude"
     }
@@ -99,9 +99,9 @@ QtObject {
         readonly property int lineWidth: 1
         readonly property int heightOffset: 50
         readonly property int margin: 20
-        readonly property real currentSolutionMarkerSize: 7
-        readonly property real solutionMarkerSize: 2.5
-        readonly property real solutionLineWidth: 0.1
+        readonly property real currentSolutionMarkerSize: 12
+        readonly property real solutionMarkerSize: 5
+        readonly property real solutionLineWidth: 0.5
         readonly property color backgroundColor: "#CDC9C9"
         readonly property color areaColor: "#FFFFFF"
         readonly property color minorGridLineColor: "#CDC9C9"

@@ -176,6 +176,7 @@ Item {
                 width: 3 * parent.width / 4
                 model: previous_hosts
                 editable: true
+                selectTextByMouse: true
 
                 Text {
                     text: "Host"
@@ -192,6 +193,7 @@ Item {
                 width: parent.width / 4
                 model: previous_ports
                 editable: true
+                selectTextByMouse: true
 
                 Text {
                     text: "Port"
@@ -212,11 +214,12 @@ Item {
             Layout.preferredHeight: Constants.navBar.urlBarHeight
             model: previous_files
             editable: true
+            selectTextByMouse: true
 
             Text {
                 text: "path/to/file"
                 color: Constants.navBar.placeholderTextColor
-                visible: !fileUrlBar.text
+                visible: !fileUrlBar.editText
             }
 
         }

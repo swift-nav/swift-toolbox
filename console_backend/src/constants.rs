@@ -45,6 +45,7 @@ pub const AVAILABLE_FLOWS: &[&str] = &[
 ];
 pub const SERIALPORT_READ_TIMEOUT_MS: u64 = 1000;
 pub const CONNECTION_HISTORY_FILENAME: &str = "connection_history.yaml";
+pub const MAX_CONNECTION_HISTORY: i32 = 15;
 
 // Tracking Signals Tab constants.
 pub const NUM_SATELLITES: usize = 60;

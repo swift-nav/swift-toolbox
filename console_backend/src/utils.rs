@@ -1,5 +1,6 @@
 use capnp::message::Builder;
 use capnp::serialize;
+use indexmap::IndexSet;
 use log::warn;
 use serialport::available_ports;
 use std::collections::HashMap;
@@ -81,7 +82,14 @@ pub fn refresh_navbar<P: MessageSender>(client_send: &mut P, shared_state: Share
         available_refresh_rates.set(i as u32, *rr);
     }
 
-    let hosts = shared_state.host_history();
+    let addresses = shared_state.address_history();
+    let hosts: IndexSet<String> = addresses
+        .clone()
+        .into_iter()
+        .map(|addy| addy.host)
+        .rev()
+        .collect();
+    let ports: IndexSet<u16> = addresses.into_iter().map(|addy| addy.port).rev().collect();
     let mut prevous_hosts = nav_bar_status
         .reborrow()
         .init_previous_hosts(hosts.len() as u32);
@@ -90,7 +98,6 @@ pub fn refresh_navbar<P: MessageSender>(client_send: &mut P, shared_state: Share
         prevous_hosts.set(i as u32, hosts);
     }
 
-    let ports = shared_state.port_history();
     let mut prevous_ports = nav_bar_status
         .reborrow()
         .init_previous_ports(ports.len() as u32);
@@ -98,7 +105,8 @@ pub fn refresh_navbar<P: MessageSender>(client_send: &mut P, shared_state: Share
     for (i, ports) in ports.iter().enumerate() {
         prevous_ports.set(i as u32, *ports);
     }
-    let files = shared_state.file_history();
+    let mut files = shared_state.file_history();
+    files.reverse();
     let mut prevous_files = nav_bar_status
         .reborrow()
         .init_previous_files(files.len() as u32);

@@ -30,6 +30,7 @@ directories = "3"
 anyhow = { version = "1", features = ["backtrace"] }
 serde_yaml = "0.8.17"
 clap = "3.0.0-beta.2"
+indexmap = {version = "1.6.2", features = ["serde"] }
 
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 serialport = "4.0.1"
@@ -40,6 +41,7 @@ harness = false
 
 [dev-dependencies]
 logtest = "2.0.0"
+serial_test = "0.5.1"
 
 [build-dependencies]
 capnpc = "0.14"

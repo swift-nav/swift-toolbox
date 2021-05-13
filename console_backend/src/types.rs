@@ -7,8 +7,9 @@ use crate::utils::{close_frontend, ms_to_sec, refresh_navbar, set_connected_fron
 use anyhow::{Context, Result as AHResult};
 use chrono::{DateTime, Utc};
 use directories::ProjectDirs;
+use indexmap::set::IndexSet;
 use lazy_static::lazy_static;
-use log::{info, warn};
+use log::{error, info, warn};
 use ordered_float::OrderedFloat;
 use sbp::{
     messages::{
@@ -302,29 +303,21 @@ impl SharedState {
         (*shared_data).paused = set_to;
     }
 
-    pub fn file_history(&self) -> Vec<String> {
+    pub fn file_history(&self) -> IndexSet<String> {
         let shared_data = self.lock().unwrap();
         (*shared_data).connection_history.files()
     }
-    pub fn host_history(&self) -> Vec<String> {
+    pub fn address_history(&self) -> IndexSet<Address> {
         let shared_data = self.lock().unwrap();
-        (*shared_data).connection_history.hosts()
-    }
-    pub fn port_history(&self) -> Vec<u16> {
-        let shared_data = self.lock().unwrap();
-        (*shared_data).connection_history.ports()
+        (*shared_data).connection_history.addresses()
     }
     pub fn update_file_history(&self, filename: String) {
         let mut shared_data = self.lock().unwrap();
-        (*shared_data)
-            .connection_history
-            .successful_file_connection(filename);
+        (*shared_data).connection_history.record_file(filename);
     }
     pub fn update_tcp_history(&self, host: String, port: u16) {
         let mut shared_data = self.lock().unwrap();
-        (*shared_data)
-            .connection_history
-            .successful_tcp_connection(host, port);
+        (*shared_data).connection_history.record_address(host, port);
     }
 }
 
@@ -510,13 +503,16 @@ fn create_data_dir() -> AHResult<PathBuf> {
     Ok(path)
 }
 
+#[derive(Debug, Clone, Eq, Hash, PartialEq, Serialize, Deserialize)]
+pub struct Address {
+    pub host: String,
+    pub port: u16,
+}
+
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct ConnectionHistory {
-    hosts: Vec<String>,
-    ports: Vec<u16>,
-    files: Vec<String>,
-    #[serde(skip)]
-    filename: PathBuf,
+    addresses: IndexSet<Address>,
+    files: IndexSet<String>,
 }
 
 impl Default for ConnectionHistory {
@@ -531,62 +527,61 @@ impl ConnectionHistory {
         let filename = DATA_DIRECTORY.path().join(CONNECTION_HISTORY_FILENAME);
         if let Ok(file) = fs::File::open(&filename) {
             if let Ok(conn_yaml) = serde_yaml::from_reader(file) {
-                let mut conn_yaml: ConnectionHistory = conn_yaml;
-                conn_yaml.filename = filename;
                 return conn_yaml;
             }
         }
         ConnectionHistory {
-            hosts: vec![],
-            ports: vec![],
-            files: vec![],
-            filename,
+            addresses: IndexSet::new(),
+            files: IndexSet::new(),
         }
     }
-    /// Returns a clone of the private hosts vec.
-    pub fn hosts(&self) -> Vec<String> {
-        self.hosts.clone()
+    /// Return the filename of the saved connection history file.
+    fn filename(&self) -> PathBuf {
+        DATA_DIRECTORY.path().join(CONNECTION_HISTORY_FILENAME)
     }
-    /// Returns a clone of the private ports vec.
-    pub fn ports(&self) -> Vec<u16> {
-        self.ports.clone()
+    /// Returns a clone of the private addresses vec.
+    pub fn addresses(&self) -> IndexSet<Address> {
+        self.addresses.clone()
     }
     /// Returns a clone of the private files vec.
-    pub fn files(&self) -> Vec<String> {
+    pub fn files(&self) -> IndexSet<String> {
         self.files.clone()
     }
+
     /// Attempt to add a new host and port if not the most recent entries.
     ///
     /// # Parameters
     /// - `host`: The TCP host to add to the history.
     /// - `port`: The TCP port to add to the history.
-    pub fn successful_tcp_connection(&mut self, host: String, port: u16) {
-        if self.hosts.is_empty() || self.hosts[0] != host {
-            self.hosts.insert(0, host);
-        }
-        if self.ports.is_empty() || self.ports[0] != port {
-            self.ports.insert(0, port);
-        }
+    pub fn record_address(&mut self, host: String, port: u16) {
+        let address = Address { host, port };
+        self.addresses.shift_remove(&address);
+        self.addresses.insert(address);
+        let diff = i32::max(0, self.addresses.len() as i32 - MAX_CONNECTION_HISTORY);
+        self.addresses = self.addresses.split_off(diff as usize);
+
         if let Err(e) = self.save() {
-            eprintln!("Unable to save connection history, {}.", e);
+            error!("Unable to save connection history, {}.", e);
         }
     }
     /// Attempt to add a new filepath if not the most recent entry.
     ///
     /// # Parameters
     /// - `filename`: The path to the file to add to history.
-    pub fn successful_file_connection(&mut self, filename: String) {
-        if self.files.is_empty() || self.files[0] != filename {
-            self.files.insert(0, filename);
-        }
+    pub fn record_file(&mut self, filename: String) {
+        self.files.shift_remove(&filename);
+        self.files.insert(filename);
+        let diff = i32::max(0, self.files.len() as i32 - MAX_CONNECTION_HISTORY);
+        self.files = self.files.split_off(diff as usize);
+
         if let Err(e) = self.save() {
-            eprintln!("Unable to save connection history, {}.", e);
+            error!("Unable to save connection history, {}.", e);
         }
     }
 
     /// Save the history to the expected filepath.
     fn save(&self) -> Result<()> {
-        serde_yaml::to_writer(fs::File::create(&self.filename)?, self)?;
+        serde_yaml::to_writer(fs::File::create(&self.filename())?, self)?;
         Ok(())
     }
 }
@@ -1532,6 +1527,7 @@ mod tests {
     #![allow(dead_code)]
     use super::*;
     use directories::UserDirs;
+    use serial_test::serial;
     use std::{
         sync::mpsc,
         thread::sleep,
@@ -1566,102 +1562,113 @@ mod tests {
         }
     }
 
-    #[test]
-    fn connection_history_save_test() {
-        let conn_history = ConnectionHistory::new();
+    fn filename() -> PathBuf {
         let user_dirs = UserDirs::new().unwrap();
         let home_dir = user_dirs.home_dir();
-        conn_history.save().unwrap();
         #[cfg(target_os = "linux")]
         {
-            assert!(home_dir
+            home_dir
                 .join(LINUX_DATA_DIRECTORY_PATH)
                 .join(CONNECTION_HISTORY_FILENAME)
-                .exists());
         }
 
         #[cfg(target_os = "macos")]
         {
-            assert!(home_dir
+            home_dir
                 .join(MAC_DATA_DIRECTORY_PATH)
                 .join(CONNECTION_HISTORY_FILENAME)
-                .exists());
         }
         #[cfg(target_os = "windows")]
         {
-            assert!(home_dir
+            home_dir
                 .join(WINDOWS_DATA_DIRECTORY_PATH)
                 .join(CONNECTION_HISTORY_FILENAME)
-                .exists());
+        }
+    }
+
+    fn backup_file(filename: PathBuf) {
+        if filename.exists() {
+            let mut backup_filename = filename.clone();
+            backup_filename.set_extension("backup");
+            println!("{:?}", backup_filename);
+            fs::rename(filename, backup_filename).unwrap();
+        }
+    }
+
+    fn restore_backup_file(filename: PathBuf) {
+        let mut backup_filename = filename.clone();
+        backup_filename.set_extension("backup");
+        if filename.exists() {
+            fs::remove_file(filename.clone()).unwrap();
+        }
+        if backup_filename.exists() {
+            fs::rename(backup_filename, filename).unwrap();
         }
     }
 
     #[test]
-    fn connection_history_additions_test() {
-        let user_dirs = UserDirs::new().unwrap();
-        let home_dir = user_dirs.home_dir();
-        let filename;
-        #[cfg(target_os = "linux")]
-        {
-            filename = home_dir
-                .join(LINUX_DATA_DIRECTORY_PATH)
-                .join(CONNECTION_HISTORY_FILENAME);
-        }
+    #[serial]
+    fn connection_history_save_test() {
+        let bfilename = filename();
+        backup_file(bfilename.clone());
+        let conn_history = ConnectionHistory::new();
+        conn_history.save().unwrap();
+        assert!(bfilename.exists());
+        restore_backup_file(bfilename);
+    }
 
-        #[cfg(target_os = "macos")]
-        {
-            filename = home_dir
-                .join(MAC_DATA_DIRECTORY_PATH)
-                .join(CONNECTION_HISTORY_FILENAME);
-        }
-        #[cfg(target_os = "windows")]
-        {
-            filename = home_dir
-                .join(WINDOWS_DATA_DIRECTORY_PATH)
-                .join(CONNECTION_HISTORY_FILENAME);
-        }
-        let mut backup_filename: Option<PathBuf> = None;
-        if filename.exists() {
-            let mut backup_filename_ = filename.clone();
-            backup_filename_.set_extension("backup");
-            fs::copy(filename.clone(), backup_filename_.clone()).unwrap();
-            backup_filename = Some(backup_filename_);
-        }
+    #[test]
+    #[serial]
+    fn connection_history_additions_test() {
+        let bfilename = filename();
+        backup_file(bfilename.clone());
 
         let mut conn_history = ConnectionHistory::new();
         let host1 = String::from("host1");
         let host2 = String::from("host2");
-        let port1 = 100;
-        conn_history.successful_tcp_connection(host1.clone(), port1);
-        let hosts = conn_history.hosts();
-        let hosts_len = hosts.len();
-        let ports = conn_history.ports();
-        let ports_len = ports.len();
-        assert_eq!(host1, *(hosts.first().unwrap()));
-        assert_eq!(port1, *(ports.first().unwrap()));
-        conn_history.successful_tcp_connection(host2.clone(), port1);
-        let hosts = conn_history.hosts();
-        let ports = conn_history.ports();
-        assert_eq!(host2, *(hosts.first().unwrap()));
-        assert_eq!(port1, *(ports.first().unwrap()));
-        assert_eq!(hosts_len + 1, hosts.len());
-        assert_eq!(ports_len, ports.len());
+        let port = 100;
+
+        conn_history.record_address(host1.clone(), port);
+        let addresses = conn_history.addresses();
+        let addresses_len = addresses.len();
+        let first_addy = addresses.first().unwrap();
+        assert_eq!(host1, first_addy.host);
+        assert_eq!(port, first_addy.port);
+
+        conn_history.record_address(host2.clone(), port);
+        let addresses = conn_history.addresses();
+        let first_addy = addresses.first().unwrap();
+        let second_addy = addresses.get_index(1).unwrap();
+        assert_eq!(host1, first_addy.host);
+        assert_eq!(port, first_addy.port);
+        assert_eq!(host2, second_addy.host);
+        assert_eq!(port, second_addy.port);
+        assert_eq!(addresses_len + 1, addresses.len());
+
+        conn_history.record_address(host1.clone(), port);
+        let addresses = conn_history.addresses();
+        let first_addy = addresses.first().unwrap();
+        let second_addy = addresses.get_index(1).unwrap();
+        assert_eq!(host2, first_addy.host);
+        assert_eq!(port, first_addy.port);
+        assert_eq!(host1, second_addy.host);
+        assert_eq!(port, second_addy.port);
+        assert_eq!(addresses_len + 1, addresses.len());
 
         let filename1 = String::from("filename1");
         let filename2 = String::from("filename2");
-        conn_history.successful_file_connection(filename1.clone());
-        conn_history.successful_file_connection(filename2.clone());
-        conn_history.successful_file_connection(filename1.clone());
+        conn_history.record_file(filename1.clone());
+        conn_history.record_file(filename2.clone());
+        conn_history.record_file(filename1.clone());
         let files = conn_history.files();
-        assert!(files.len() >= 3);
-        assert_eq!(filename1, files[2]);
-        assert_eq!(files[0], files[2]);
-        assert_eq!(filename2, files[1]);
+        assert_eq!(filename1, files[1]);
+        assert_eq!(filename2, files[0]);
 
-        if let Some(backup_filename_) = backup_filename {
-            fs::copy(backup_filename_.clone(), filename).unwrap();
-            fs::remove_file(backup_filename_).unwrap();
+        for ele in 0..MAX_CONNECTION_HISTORY {
+            conn_history.record_file(ele.to_string());
         }
+        assert_eq!(conn_history.files().len(), MAX_CONNECTION_HISTORY as usize);
+        restore_backup_file(bfilename);
     }
 
     fn receive_thread(client_recv: mpsc::Receiver<Vec<u8>>) -> JoinHandle<()> {
@@ -1680,7 +1687,10 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn connect_to_file_test() {
+        let bfilename = filename();
+        backup_file(bfilename.clone());
         let shared_state = SharedState::new();
         let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
         let client_send = ClientSender {
@@ -1702,10 +1712,14 @@ mod tests {
         assert!(shared_state.is_running());
         sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
         assert!(!shared_state.is_running());
+        restore_backup_file(bfilename);
     }
 
     #[test]
+    #[serial]
     fn pause_via_connect_to_file_test() {
+        let bfilename = filename();
+        backup_file(bfilename.clone());
         let shared_state = SharedState::new();
         let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
         let client_send = ClientSender {
@@ -1731,10 +1745,14 @@ mod tests {
         shared_state.set_paused(false);
         sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
         assert!(!shared_state.is_running());
+        restore_backup_file(bfilename);
     }
 
     #[test]
+    #[serial]
     fn disconnect_via_connect_to_file_test() {
+        let bfilename = filename();
+        backup_file(bfilename.clone());
         let shared_state = SharedState::new();
         let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
         let client_send = ClientSender {
@@ -1775,6 +1793,7 @@ mod tests {
                 panic!("unknown error {}", e);
             }
         }
+        restore_backup_file(bfilename);
     }
 
     // TODO(johnmichael.burke@) [CPP-111] Need to implement unittest for TCPStream.

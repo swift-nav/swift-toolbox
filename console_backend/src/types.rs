@@ -1598,6 +1598,36 @@ mod tests {
 
     #[test]
     fn connection_history_additions_test() {
+        let user_dirs = UserDirs::new().unwrap();
+        let home_dir = user_dirs.home_dir();
+        let filename;
+        #[cfg(target_os = "linux")]
+        {
+            filename = home_dir
+                .join(LINUX_DATA_DIRECTORY_PATH)
+                .join(CONNECTION_HISTORY_FILENAME);
+        }
+
+        #[cfg(target_os = "macos")]
+        {
+            filename = home_dir
+                .join(MAC_DATA_DIRECTORY_PATH)
+                .join(CONNECTION_HISTORY_FILENAME);
+        }
+        #[cfg(target_os = "windows")]
+        {
+            filename = home_dir
+                .join(WINDOWS_DATA_DIRECTORY_PATH)
+                .join(CONNECTION_HISTORY_FILENAME);
+        }
+        let mut backup_filename: Option<PathBuf> = None;
+        if filename.exists() {
+            let mut backup_filename_ = filename.clone();
+            backup_filename_.set_extension("backup");
+            fs::copy(filename.clone(), backup_filename_.clone()).unwrap();
+            backup_filename = Some(backup_filename_);
+        }
+
         let mut conn_history = ConnectionHistory::new();
         let host1 = String::from("host1");
         let host2 = String::from("host2");
@@ -1627,6 +1657,11 @@ mod tests {
         assert_eq!(filename1, files[2]);
         assert_eq!(files[0], files[2]);
         assert_eq!(filename2, files[1]);
+
+        if let Some(backup_filename_) = backup_filename {
+            fs::copy(backup_filename_.clone(), filename).unwrap();
+            fs::remove_file(backup_filename_).unwrap();
+        }
     }
 
     fn receive_thread(client_recv: mpsc::Receiver<Vec<u8>>) -> JoinHandle<()> {

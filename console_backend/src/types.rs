@@ -469,7 +469,7 @@ pub enum RealtimeDelay {
 /// impl taken from swift-cli/swift/src/lib.rs.
 #[derive(Debug)]
 pub struct DataDirectory {
-    path_: PathBuf,
+    path: PathBuf,
 }
 lazy_static! {
     pub static ref DATA_DIRECTORY: DataDirectory = DataDirectory::new();
@@ -478,12 +478,12 @@ lazy_static! {
 impl DataDirectory {
     pub fn new() -> DataDirectory {
         DataDirectory {
-            path_: create_data_dir().unwrap(),
+            path: create_data_dir().unwrap(),
         }
     }
-    /// Return a clone to the private path_ PathBuf.
+    /// Return a clone to the private path PathBuf.
     pub fn path(&self) -> PathBuf {
-        self.path_.clone()
+        self.path.clone()
     }
 }
 impl Default for DataDirectory {
@@ -512,9 +512,9 @@ fn create_data_dir() -> AHResult<PathBuf> {
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct ConnectionHistory {
-    hosts_: Vec<String>,
-    ports_: Vec<u16>,
-    files_: Vec<String>,
+    hosts: Vec<String>,
+    ports: Vec<u16>,
+    files: Vec<String>,
     #[serde(skip)]
     filename: PathBuf,
 }
@@ -537,23 +537,23 @@ impl ConnectionHistory {
             }
         }
         ConnectionHistory {
-            hosts_: vec![],
-            ports_: vec![],
-            files_: vec![],
+            hosts: vec![],
+            ports: vec![],
+            files: vec![],
             filename,
         }
     }
     /// Returns a clone of the private hosts vec.
     pub fn hosts(&self) -> Vec<String> {
-        self.hosts_.clone()
+        self.hosts.clone()
     }
     /// Returns a clone of the private ports vec.
     pub fn ports(&self) -> Vec<u16> {
-        self.ports_.clone()
+        self.ports.clone()
     }
     /// Returns a clone of the private files vec.
     pub fn files(&self) -> Vec<String> {
-        self.files_.clone()
+        self.files.clone()
     }
     /// Attempt to add a new host and port if not the most recent entries.
     ///
@@ -561,11 +561,11 @@ impl ConnectionHistory {
     /// - `host`: The TCP host to add to the history.
     /// - `port`: The TCP port to add to the history.
     pub fn successful_tcp_connection(&mut self, host: String, port: u16) {
-        if self.hosts_.is_empty() || self.hosts_[0] != host {
-            self.hosts_.insert(0, host);
+        if self.hosts.is_empty() || self.hosts[0] != host {
+            self.hosts.insert(0, host);
         }
-        if self.ports_.is_empty() || self.ports_[0] != port {
-            self.ports_.insert(0, port);
+        if self.ports.is_empty() || self.ports[0] != port {
+            self.ports.insert(0, port);
         }
         if let Err(e) = self.save() {
             eprintln!("Unable to save connection history, {}.", e);
@@ -576,8 +576,8 @@ impl ConnectionHistory {
     /// # Parameters
     /// - `filename`: The path to the file to add to history.
     pub fn successful_file_connection(&mut self, filename: String) {
-        if self.files_.is_empty() || self.files_[0] != filename {
-            self.files_.insert(0, filename);
+        if self.files.is_empty() || self.files[0] != filename {
+            self.files.insert(0, filename);
         }
         if let Err(e) = self.save() {
             eprintln!("Unable to save connection history, {}.", e);

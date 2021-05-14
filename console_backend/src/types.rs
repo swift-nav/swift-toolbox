@@ -1542,8 +1542,7 @@ mod tests {
         pub const LINUX: &str = ".local/share/swift_navigation_console";
         pub const MACOS: &str =
             "Library/Application Support/com.swift-nav.swift-nav.swift_navigation_console";
-        pub const WINDOWS: &str =
-            "AppData\\Local\\swift-nav\\swift_navigation_console\\data";
+        pub const WINDOWS: &str = "AppData\\Local\\swift-nav\\swift_navigation_console\\data";
     }
 
     #[test]

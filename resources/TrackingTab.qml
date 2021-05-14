@@ -15,7 +15,7 @@ Item {
         id: trackingBar
 
         z: 100
-        currentIndex: Constants.initialSubTabIndex
+        currentIndex: Globals.initialSubTabIndex
 
         Repeater {
             model: ["Signals", "Sky Plot"]

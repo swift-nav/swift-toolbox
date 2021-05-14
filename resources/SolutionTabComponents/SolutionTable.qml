@@ -13,6 +13,7 @@ Item {
 
     width: parent.width
     height: parent.height
+    visible: false
 
     SolutionTableEntries {
         id: solutionTableEntries
@@ -74,6 +75,7 @@ Item {
 
                         text: display
                         anchors.centerIn: parent
+                        font.pointSize: Constants.mediumPointSize
                         leftPadding: Constants.solutionTable.tableLeftPadding
                     }
 
@@ -121,6 +123,7 @@ Item {
                         id: rowTextEle
 
                         text: display
+                        font.pointSize: Constants.mediumPointSize
                         leftPadding: Constants.solutionTable.tableLeftPadding
                     }
 
@@ -141,6 +144,7 @@ Item {
                 Text {
                     wrapMode: Text.Wrap
                     anchors.fill: parent
+                    font.pointSize: Constants.mediumPointSize
                     text: Constants.solutionTable.rtkNoteText
                 }
 
@@ -149,7 +153,7 @@ Item {
         }
 
         Timer {
-            interval: Utils.hzToMilliseconds(Constants.currentRefreshRate)
+            interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
             running: true
             repeat: true
             onTriggered: {
@@ -160,6 +164,7 @@ Item {
                 if (!solutionTableEntries.entries.length)
                     return ;
 
+                solutionTable.visible = true;
                 if (solutionTableElementHeaders.model.rows.length == 0) {
                     var new_row = {
                     };

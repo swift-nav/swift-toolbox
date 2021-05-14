@@ -4,7 +4,11 @@ pragma Singleton
 QtObject {
     readonly property int width: 640
     readonly property int height: 480
-    property QtObject bottomNavBar
+    readonly property real margins: 2
+    readonly property real topLevelSpacing: 0
+    readonly property real logPanelPreferredHeight: 100
+    readonly property real navBarPreferredHeight: 50
+    property QtObject navBar
     property QtObject commonChart
     property QtObject commonLegend
     property QtObject solutionPosition
@@ -12,42 +16,40 @@ QtObject {
     property QtObject solutionVelocity
     property QtObject trackingSignals
     property QtObject observationTab
-    property int currentRefreshRate: 5 // 5 Hz
     readonly property int staticTimerIntervalRate: 5 // 5 Hz
-    property bool useOpenGL: true
-    property int initialMainTabIndex: 0 // Tracking
-    property int initialSubTabIndex: 0 // Signals
-    property string monoSpaceFont: "Courier New"
+    readonly property string monoSpaceFont: "Courier New"
+    readonly property real smallPointSize: 7
+    readonly property real mediumPointSize: 8
+    readonly property real largePointSize: 9
     readonly property bool debugMode: false
 
-    bottomNavBar: QtObject {
-        readonly property int connectionDropdownWidth: 90
+    navBar: QtObject {
+        readonly property int connectionDropdownWidth: 70
         readonly property int serialSelectionDropdownWidth: 90
+        readonly property int dropdownHeight: 40
+        readonly property int buttonHeight: 40
         readonly property int urlBarHeight: 25
-        readonly property int urlBarBorder: 1
-        readonly property int urlBarTextMargin: 4
         readonly property int navBarMargin: 10
-        readonly property int plotRefreshRateDropdownWidth: 63
+        readonly property int plotRefreshRateDropdownWidth: 50
+        readonly property int serialDeviceBaudRateDropdownWidth: 90
+        readonly property int serialDeviceFlowControlDropdownWidth: 100
         readonly property int serialDeviceRefreshWidth: 30
+        readonly property int connectButtonWidth: 100
         readonly property int connectionPauseWidth: 30
         readonly property color placeholderTextColor: "#CDC9C9"
-        readonly property var all_refresh_rates: [1, 5, 10, 25]
-        readonly property var default_refresh_rate_index: 1
+        readonly property int padding: 0
     }
 
     solutionPosition: QtObject {
         readonly property int navBarMargin: 10
         readonly property int navBarSpacing: 0
-        readonly property real navBarButtonProportionOfParent: 0.1
-        readonly property int chartCurrentSolutionMarkerSize: 15
-        readonly property int chartSolutionMarkerSize: 5
-        readonly property real chartSolutionLineWidth: 0.1
+        readonly property real navBarButtonProportionOfParent: 0.11
         readonly property string yAxisTitleText: "Latitude"
         readonly property string xAxisTitleText: "Longitude"
     }
 
     solutionTable: QtObject {
-        readonly property int defaultColumnWidth: 120
+        readonly property int defaultColumnWidth: 80
         readonly property color tableBorderColor: "#000000"
         readonly property int tableBorderWidth: 1
         readonly property int tableHeaderTableDataTableSpacing: 0
@@ -69,7 +71,7 @@ QtObject {
         readonly property int xAxisLabelsAngle: 45
         readonly property string xAxisTitleText: "GPS Time of Week"
         readonly property int xAxisMinOffsetFromMaxSeconds: 20
-        readonly property int unitDropdownWidth: 100
+        readonly property int unitDropdownWidth: 50
         readonly property int chartHeightOffset: 0
         readonly property int chartBottomMargin: 30
         readonly property int legendBottomMargin: 120
@@ -84,7 +86,7 @@ QtObject {
         readonly property int markerWidth: 20
         readonly property int topMargin: 85
         readonly property int rightMargin: 60
-        readonly property int markerPointSize: 14
+        readonly property real markerPointSizeOffset: 4
         readonly property int labelPointSize: 10
         readonly property int padding: 10
         readonly property int verticalCenterOffset: -1
@@ -93,18 +95,21 @@ QtObject {
     }
 
     commonChart: QtObject {
+        readonly property int zAboveCharts: 100
         readonly property int lineWidth: 1
         readonly property int heightOffset: 50
         readonly property int margin: 20
-        readonly property int currentSolutionMarkerSize: 15
-        readonly property int solutionMarkerSize: 5
-        readonly property real solutionLineWidth: 0.1
+        readonly property real currentSolutionMarkerSize: 12
+        readonly property real solutionMarkerSize: 5
+        readonly property real solutionLineWidth: 0.5
         readonly property color backgroundColor: "#CDC9C9"
         readonly property color areaColor: "#FFFFFF"
         readonly property color minorGridLineColor: "#CDC9C9"
         readonly property color gridLineColor: "#CDC9C9"
         readonly property color labelsColor: "#000000"
         readonly property int tickPointSize: 10
+        readonly property int buttonHeight: 40
+        readonly property int unitDropdownWidth: 90
     }
 
     trackingSignals: QtObject {

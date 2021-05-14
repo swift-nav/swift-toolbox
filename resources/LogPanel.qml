@@ -13,11 +13,12 @@ Rectangle {
         id: innerText
 
         text: ""
+        font.pointSize: Constants.largePointSize
         padding: 5
     }
 
     Timer {
-        interval: Constants.currentRefreshRate
+        interval: Globals.currentRefreshRate
         running: true
         repeat: true
         onTriggered: {

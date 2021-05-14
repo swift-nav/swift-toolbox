@@ -8,35 +8,36 @@ import SwiftConsole 1.0
 ApplicationWindow {
     width: Constants.width
     height: Constants.height
-    font.pointSize: 8
+    font.pointSize: Constants.mediumPointSize
     Component.onCompleted: {
         visible = true;
     }
 
-    Rectangle {
-        height: parent.height
-        width: parent.width
+    ColumnLayout {
+        anchors.fill: parent
+        spacing: Constants.topLevelSpacing
 
         SplitView {
             orientation: Qt.Vertical
-            spacing: 2
-            width: parent.width
-            height: parent.height - bottomNavBar.height
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.leftMargin: Constants.margins
+            Layout.rightMargin: Constants.margins
+            Layout.alignment: Qt.AlignTop
 
-            Rectangle {
+            ColumnLayout {
                 id: mainTabs
 
-                Layout.alignment: Qt.AlignTop
-                Layout.preferredWidth: parent.width
+                spacing: Constants.topLevelSpacing
                 SplitView.fillHeight: true
-                width: parent.width
+                SplitView.fillWidth: true
 
                 TabBar {
                     id: tab
 
-                    z: 100
-                    width: parent.width
-                    currentIndex: Constants.initialMainTabIndex
+                    Layout.fillWidth: true
+                    z: Constants.commonChart.zAboveCharts
+                    currentIndex: Globals.initialMainTabIndex
 
                     Repeater {
                         model: ["Tracking", "Solution", "Baseline", "Observations", "Settings", "Update", "Advanced"]
@@ -51,9 +52,8 @@ ApplicationWindow {
                 }
 
                 StackLayout {
-                    width: parent.width
-                    height: parent.height - tab.height
-                    anchors.top: tab.bottom
+                    Layout.fillHeight: true
+                    Layout.fillWidth: true
                     currentIndex: tab.currentIndex
 
                     TrackingTab {
@@ -84,9 +84,8 @@ ApplicationWindow {
             Rectangle {
                 id: consoleLog
 
-                width: parent.width
-                SplitView.preferredHeight: 100
-                Layout.alignment: Qt.AlignBottom
+                SplitView.fillWidth: true
+                SplitView.preferredHeight: Constants.logPanelPreferredHeight
 
                 LogPanel {
                 }
@@ -96,14 +95,15 @@ ApplicationWindow {
         }
 
         Rectangle {
-            id: bottomNavBar
+            id: navBar
 
-            width: parent.width
-            anchors.bottom: parent.bottom
-            height: 50
-            Layout.alignment: Qt.AlignBottom
+            Layout.leftMargin: Constants.margins
+            Layout.rightMargin: Constants.margins
+            Layout.fillWidth: true
+            Layout.preferredHeight: Constants.navBarPreferredHeight
+            z: Constants.commonChart.zAboveCharts
 
-            BottomNavBar {
+            NavBar {
             }
 
         }

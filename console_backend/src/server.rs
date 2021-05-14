@@ -18,7 +18,7 @@ use crate::console_backend_capnp as m;
 use crate::constants::LOG_WRITER_BUFFER_MESSAGE_COUNT;
 use crate::log_panel::{splitable_log_formatter, LogPanelWriter};
 use crate::types::{ClientSender, FlowControl, ServerState, SharedState};
-use crate::utils::refresh_ports;
+use crate::utils::refresh_navbar;
 
 /// The backend server
 #[pyclass]
@@ -69,8 +69,7 @@ fn handle_cli(
     if let Some(opt_input) = opt.input {
         match opt_input {
             Input::Tcp { host, port } => {
-                let host_port = format!("{}:{}", host, port);
-                server_state.connect_to_host(client_send, shared_state, host_port);
+                server_state.connect_to_host(client_send, shared_state, host, port);
             }
             Input::File { file_in } => {
                 let filename = file_in.display().to_string();
@@ -135,7 +134,7 @@ impl Server {
         };
         let shared_state = SharedState::new();
         let server_state = ServerState::new();
-        refresh_ports(&mut client_send.clone());
+        refresh_navbar(&mut client_send.clone(), shared_state.clone());
         let logger = Logger::builder()
             .buf_size(LOG_WRITER_BUFFER_MESSAGE_COUNT)
             .formatter(splitable_log_formatter)
@@ -186,7 +185,7 @@ impl Server {
                         let client_send_clone = client_send.clone();
                         match request {
                             m::message::SerialRefreshRequest(Ok(_)) => {
-                                refresh_ports(&mut client_send_clone.clone());
+                                refresh_navbar(&mut client_send_clone.clone(), shared_state_clone);
                             }
                             m::message::DisconnectRequest(Ok(_)) => {
                                 shared_state_clone.set_running(false, client_send_clone.clone());
@@ -213,11 +212,11 @@ impl Server {
                             m::message::TcpRequest(Ok(req)) => {
                                 let host = req.get_host().unwrap();
                                 let port = req.get_port();
-                                let host_port = format!("{}:{}", host, port);
                                 server_state_clone.connect_to_host(
                                     client_send_clone,
                                     shared_state_clone,
-                                    host_port,
+                                    host.to_string(),
+                                    port,
                                 );
                             }
                             m::message::SerialRequest(Ok(req)) => {

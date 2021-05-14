@@ -1,13 +1,14 @@
 use capnp::message::Builder;
 use capnp::serialize;
+use indexmap::IndexSet;
 use log::warn;
 use serialport::available_ports;
 use std::collections::HashMap;
 
-use crate::common_constants as cc;
 use crate::console_backend_capnp as m;
 use crate::constants::*;
 use crate::types::{MessageSender, SignalCodes};
+use crate::{common_constants as cc, types::SharedState};
 
 /// Send a CLOSE, or kill, signal to the frontend.
 pub fn close_frontend<P: MessageSender>(client_send: &mut P) {
@@ -35,55 +36,89 @@ pub fn set_connected_frontend<P: MessageSender>(
     client_send.send_data(msg_bytes);
 }
 
-pub fn refresh_ports<P: MessageSender>(client_send: &mut P) {
-    if let Ok(ports) = &mut available_ports() {
+pub fn refresh_navbar<P: MessageSender>(client_send: &mut P, shared_state: SharedState) {
+    let mut builder = Builder::new_default();
+    let msg = builder.init_root::<m::message::Builder>();
+
+    let mut nav_bar_status = msg.init_nav_bar_status();
+    let mut ports: Vec<String> = vec![];
+    if let Ok(ports_) = &mut available_ports() {
         // TODO(johnmichael.burke@) [CPP-114]Find solution to this hack for Linux serialport.
-        let ports: Vec<String> = ports
+        ports = ports_
             .iter_mut()
             .map(|x| x.port_name.replace("/sys/class/tty/", "/dev/"))
             .collect();
-        let mut builder = Builder::new_default();
-        let msg = builder.init_root::<m::message::Builder>();
-
-        let mut bottom_navbar_status = msg.init_bottom_navbar_status();
-
-        let mut available_ports = bottom_navbar_status
-            .reborrow()
-            .init_available_ports(ports.len() as u32);
-
-        for (i, serialportinfo) in ports.iter().enumerate() {
-            available_ports.set(i as u32, &(*serialportinfo));
-        }
-
-        let mut available_baudrates = bottom_navbar_status
-            .reborrow()
-            .init_available_baudrates(AVAILABLE_BAUDRATES.len() as u32);
-
-        for (i, baudrate) in AVAILABLE_BAUDRATES.iter().enumerate() {
-            available_baudrates.set(i as u32, *baudrate);
-        }
-
-        let mut available_flows = bottom_navbar_status
-            .reborrow()
-            .init_available_flows(AVAILABLE_FLOWS.len() as u32);
-
-        for (i, flow) in AVAILABLE_FLOWS.iter().enumerate() {
-            available_flows.set(i as u32, &flow.to_string());
-        }
-
-        let mut available_refresh_rates = bottom_navbar_status
-            .reborrow()
-            .init_available_refresh_rates(AVAILABLE_REFRESH_RATES.len() as u32);
-
-        for (i, rr) in AVAILABLE_REFRESH_RATES.iter().enumerate() {
-            available_refresh_rates.set(i as u32, *rr);
-        }
-
-        let mut msg_bytes: Vec<u8> = vec![];
-        serialize::write_message(&mut msg_bytes, &builder).unwrap();
-
-        client_send.send_data(msg_bytes);
     }
+
+    let mut available_ports = nav_bar_status
+        .reborrow()
+        .init_available_ports(ports.len() as u32);
+
+    for (i, serialportinfo) in ports.iter().enumerate() {
+        available_ports.set(i as u32, &(*serialportinfo));
+    }
+
+    let mut available_baudrates = nav_bar_status
+        .reborrow()
+        .init_available_baudrates(AVAILABLE_BAUDRATES.len() as u32);
+
+    for (i, baudrate) in AVAILABLE_BAUDRATES.iter().enumerate() {
+        available_baudrates.set(i as u32, *baudrate);
+    }
+
+    let mut available_flows = nav_bar_status
+        .reborrow()
+        .init_available_flows(AVAILABLE_FLOWS.len() as u32);
+
+    for (i, flow) in AVAILABLE_FLOWS.iter().enumerate() {
+        available_flows.set(i as u32, &flow.to_string());
+    }
+
+    let mut available_refresh_rates = nav_bar_status
+        .reborrow()
+        .init_available_refresh_rates(AVAILABLE_REFRESH_RATES.len() as u32);
+
+    for (i, rr) in AVAILABLE_REFRESH_RATES.iter().enumerate() {
+        available_refresh_rates.set(i as u32, *rr);
+    }
+
+    let addresses = shared_state.address_history();
+    let hosts: IndexSet<String> = addresses
+        .clone()
+        .into_iter()
+        .map(|addy| addy.host)
+        .rev()
+        .collect();
+    let ports: IndexSet<u16> = addresses.into_iter().map(|addy| addy.port).rev().collect();
+    let mut prevous_hosts = nav_bar_status
+        .reborrow()
+        .init_previous_hosts(hosts.len() as u32);
+
+    for (i, hosts) in hosts.iter().enumerate() {
+        prevous_hosts.set(i as u32, hosts);
+    }
+
+    let mut prevous_ports = nav_bar_status
+        .reborrow()
+        .init_previous_ports(ports.len() as u32);
+
+    for (i, ports) in ports.iter().enumerate() {
+        prevous_ports.set(i as u32, *ports);
+    }
+    let mut files = shared_state.file_history();
+    files.reverse();
+    let mut prevous_files = nav_bar_status
+        .reborrow()
+        .init_previous_files(files.len() as u32);
+
+    for (i, filename) in files.iter().enumerate() {
+        prevous_files.set(i as u32, filename);
+    }
+
+    let mut msg_bytes: Vec<u8> = vec![];
+    serialize::write_message(&mut msg_bytes, &builder).unwrap();
+
+    client_send.send_data(msg_bytes);
 }
 
 pub fn signal_key_label(

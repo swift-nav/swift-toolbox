@@ -58,7 +58,7 @@ pub enum Input {
 
         /// The port to use when connecting via TCP.
         #[clap(long, default_value = "55555")]
-        port: u32,
+        port: u16,
     },
     Serial {
         /// The serialport to connect to.

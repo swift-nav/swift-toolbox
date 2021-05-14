@@ -29,6 +29,7 @@ Item {
 
         width: parent.width
         height: parent.height
+        visible: false
 
         ColumnLayout {
             id: solutionPositionAreaRowLayout
@@ -53,6 +54,7 @@ Item {
 
                     ButtonGroup.group: solutionButtonGroup
                     Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
+                    Layout.preferredHeight: Constants.commonChart.buttonHeight
                     text: "| |"
                     ToolTip.visible: hovered
                     ToolTip.text: "Pause"
@@ -65,6 +67,7 @@ Item {
 
                     ButtonGroup.group: solutionButtonGroup
                     Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
+                    Layout.preferredHeight: Constants.commonChart.buttonHeight
                     text: " X "
                     ToolTip.visible: hovered
                     ToolTip.text: "Clear"
@@ -76,6 +79,7 @@ Item {
 
                     ButtonGroup.group: solutionButtonGroup
                     Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
+                    Layout.preferredHeight: Constants.commonChart.buttonHeight
                     text: "[ ]"
                     ToolTip.visible: hovered
                     ToolTip.text: "Zoom All"
@@ -88,6 +92,7 @@ Item {
 
                     ButtonGroup.group: solutionButtonGroup
                     Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
+                    Layout.preferredHeight: Constants.commonChart.buttonHeight
                     text: "(><)"
                     ToolTip.visible: hovered
                     ToolTip.text: "Center On Solution"
@@ -97,18 +102,32 @@ Item {
 
                 Text {
                     text: "Display Units: "
+                    font.family: Constants.monoSpaceFont
+                    font.pointSize: Constants.mediumPointSize
                 }
 
                 ComboBox {
                     id: solutionPositionSelectedUnit
 
                     model: available_units
+                    Layout.preferredWidth: Constants.commonChart.unitDropdownWidth
                     onCurrentIndexChanged: {
                         if (!available_units)
                             return ;
 
                         data_model.solution_position_unit(available_units[currentIndex]);
                     }
+
+                    states: State {
+                        when: solutionPositionSelectedUnit.down
+
+                        PropertyChanges {
+                            target: solutionPositionSelectedUnit
+                            width: Constants.commonChart.unitDropdownWidth * 1.5
+                        }
+
+                    }
+
                 }
 
             }
@@ -156,7 +175,7 @@ Item {
                                     id: marker
 
                                     text: "+ "
-                                    font.pointSize: Constants.commonLegend.markerPointSize
+                                    font.pointSize: (Constants.mediumPointSize + Constants.commonLegend.markerPointSizeOffset)
                                     font.bold: true
                                     anchors.verticalCenter: parent.verticalCenter
                                     anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
@@ -166,7 +185,7 @@ Item {
                                     id: label
 
                                     text: modelData
-                                    font.pointSize: Constants.commonLegend.labelPointSize
+                                    font.pointSize: Constants.mediumPointSize
                                     font.bold: true
                                     anchors.verticalCenter: parent.verticalCenter
                                     anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
@@ -192,7 +211,7 @@ Item {
                     labelsColor: Constants.commonChart.labelsColor
 
                     labelsFont {
-                        pointSize: Constants.commonChart.tickPointSize
+                        pointSize: Constants.mediumPointSize
                         bold: true
                     }
 
@@ -210,14 +229,14 @@ Item {
                     labelsColor: Constants.commonChart.labelsColor
 
                     labelsFont {
-                        pointSize: Constants.commonChart.tickPointSize
+                        pointSize: Constants.mediumPointSize
                         bold: true
                     }
 
                 }
 
                 Timer {
-                    interval: Utils.hzToMilliseconds(Constants.currentRefreshRate)
+                    interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
                     running: true
                     repeat: true
                     onTriggered: {
@@ -228,6 +247,7 @@ Item {
                         if (!solutionPositionPoints.points.length)
                             return ;
 
+                        solutionPositionArea.visible = true;
                         var points = solutionPositionPoints.points;
                         labels = solutionPositionPoints.labels;
                         if (colors != solutionPositionPoints.colors)
@@ -255,9 +275,9 @@ Item {
                                 var line = solutionPositionChart.createSeries(ChartView.SeriesTypeLine, labels[idx], solutionPositionXAxis, solutionPositionYAxis);
                                 line.color = colors[idx];
                                 line.width = Constants.commonChart.solutionLineWidth;
-                                line.useOpenGL = Constants.useOpenGL;
-                                scatter.useOpenGL = Constants.useOpenGL;
-                                cur_scatter.useOpenGL = Constants.useOpenGL;
+                                line.useOpenGL = Globals.useOpenGL;
+                                scatter.useOpenGL = Globals.useOpenGL;
+                                cur_scatter.useOpenGL = Globals.useOpenGL;
                                 lines.push(line);
                                 scatters.push(scatter);
                                 cur_scatters.push(cur_scatter);

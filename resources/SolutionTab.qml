@@ -39,7 +39,7 @@ Item {
             TabBar {
                 id: solutionBar
 
-                currentIndex: Constants.initialSubTabIndex
+                currentIndex: Globals.initialSubTabIndex
                 z: 100
 
                 Repeater {

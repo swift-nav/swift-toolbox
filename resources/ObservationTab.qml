@@ -22,6 +22,7 @@ Item {
         orientation: Qt.Vertical
         width: parent.width
         height: parent.height
+        visible: false
 
         Rectangle {
             SplitView.minimumHeight: Constants.observationTab.titleAreaHight
@@ -60,7 +61,7 @@ Item {
         }
 
         Timer {
-            interval: Constants.currentRefreshRate
+            interval: Globals.currentRefreshRate
             running: true
             repeat: true
             onTriggered: {
@@ -72,6 +73,7 @@ Item {
                     remoteTable.tow = observationData.tow;
                     remoteTable.week = observationData.week;
                     remoteTable.model.rows = observationData.rows;
+                    observationView.visible = true;
                 }
                 local_observation_model.fill_data(observationData, false);
                 if (observationData.rows.length) {

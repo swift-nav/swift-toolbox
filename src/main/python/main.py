@@ -5,7 +5,7 @@ import os
 import sys
 import threading
 
-from typing import Dict, List, Any
+from typing import List, Any
 
 import capnp  # type: ignore
 
@@ -13,14 +13,28 @@ from PySide2.QtWidgets import QApplication  # type: ignore
 
 from fbs_runtime.application_context.PySide2 import ApplicationContext  # type: ignore  # pylint: disable=unused-import
 
-from PySide2.QtCore import Property, QMutex, QObject, QUrl, QPointF, Slot
+from PySide2.QtCore import QObject, QUrl, QPointF, Slot
 from PySide2.QtCharts import QtCharts  # pylint: disable=unused-import
 
 from PySide2 import QtQml, QtCore
 
 from PySide2.QtQml import QQmlComponent, qmlRegisterType
 
-from constants import ApplicationStates, MessageKeys, Keys, QTKeys, Tabs
+from constants import ApplicationStates, MessageKeys, Keys, Tabs
+
+from log_panel import (
+    LOG_PANEL,
+    log_panel_lock,
+    LogPanelData,
+    LogPanelModel,
+)
+
+from nav_bar import (
+    NAV_BAR,
+    NavBarData,
+    NavBarModel,
+)
+
 from observation_tab import (
     ObservationData,
     ObservationModel,
@@ -101,19 +115,6 @@ TAB_LAYOUT = {
     },
 }
 
-LOG_PANEL: Dict[str, Any] = {
-    Keys.ENTRIES: [],
-}
-log_panel_lock = QMutex()
-
-BOTTOM_NAVBAR: Dict[str, Any] = {
-    Keys.AVAILABLE_PORTS: [],
-    Keys.AVAILABLE_BAUDRATES: [],
-    Keys.AVAILABLE_FLOWS: [],
-    Keys.AVAILABLE_REFRESH_RATES: [],
-    Keys.CONNECTED: False,
-}
-
 
 capnp.remove_import_hook()  # pylint: disable=no-member
 
@@ -126,9 +127,9 @@ def receive_messages(app_, backend, messages):
             if m.status.text == ApplicationStates.CLOSE:
                 return app_.quit()
             if m.status.text == ApplicationStates.CONNECTED:
-                BOTTOM_NAVBAR[Keys.CONNECTED] = True
+                NAV_BAR[Keys.CONNECTED] = True
             elif m.status.text == ApplicationStates.DISCONNECTED:
-                BOTTOM_NAVBAR[Keys.CONNECTED] = False
+                NAV_BAR[Keys.CONNECTED] = False
 
         elif m.which == MessageKeys.SOLUTION_POSITION_STATUS:
             SOLUTION_POSITION_TAB[Keys.LABELS][:] = m.solutionPositionStatus.labels
@@ -176,11 +177,14 @@ def receive_messages(app_, backend, messages):
                 LOCAL_OBSERVATION_TAB[Keys.TOW] = m.observationStatus.tow
                 LOCAL_OBSERVATION_TAB[Keys.WEEK] = m.observationStatus.week
                 LOCAL_OBSERVATION_TAB[Keys.ROWS][:] = obs_rows_to_json(m.observationStatus.rows)
-        elif m.which == MessageKeys.BOTTOM_NAVBAR_STATUS:
-            BOTTOM_NAVBAR[Keys.AVAILABLE_PORTS][:] = m.bottomNavbarStatus.availablePorts
-            BOTTOM_NAVBAR[Keys.AVAILABLE_BAUDRATES][:] = m.bottomNavbarStatus.availableBaudrates
-            BOTTOM_NAVBAR[Keys.AVAILABLE_FLOWS][:] = m.bottomNavbarStatus.availableFlows
-            BOTTOM_NAVBAR[Keys.AVAILABLE_REFRESH_RATES][:] = m.bottomNavbarStatus.availableRefreshRates
+        elif m.which == MessageKeys.NAV_BAR_STATUS:
+            NAV_BAR[Keys.AVAILABLE_PORTS][:] = m.navBarStatus.availablePorts
+            NAV_BAR[Keys.AVAILABLE_BAUDRATES][:] = m.navBarStatus.availableBaudrates
+            NAV_BAR[Keys.AVAILABLE_FLOWS][:] = m.navBarStatus.availableFlows
+            NAV_BAR[Keys.AVAILABLE_REFRESH_RATES][:] = m.navBarStatus.availableRefreshRates
+            NAV_BAR[Keys.PREVIOUS_HOSTS][:] = m.navBarStatus.previousHosts
+            NAV_BAR[Keys.PREVIOUS_PORTS][:] = m.navBarStatus.previousPorts
+            NAV_BAR[Keys.PREVIOUS_FILES][:] = m.navBarStatus.previousFiles
         elif m.which == MessageKeys.LOG_APPEND:
             log_panel_lock.lock()
             LOG_PANEL[Keys.ENTRIES] += [entry.line for entry in m.logAppend.entries]
@@ -306,105 +310,6 @@ class DataModel(QObject):
         self.endpoint.send_message(buffer)
 
 
-class LogPanelData(QObject):
-    _entries: List[str] = []
-
-    def get_entries(self) -> List[str]:
-        """Getter for _entries."""
-        return self._entries
-
-    def set_entries(self, entries: List[str]) -> None:
-        """Setter for _entries."""
-        self._entries = entries
-
-    entries = Property(QTKeys.QVARIANTLIST, get_entries, set_entries)  # type: ignore
-
-    def append_entries(self, entries: List[str]) -> None:
-        self._entries += entries
-
-
-class LogPanelModel(QObject):  # pylint: disable=too-few-public-methods
-    @Slot(LogPanelData)  # type: ignore
-    def fill_data(self, cp: LogPanelData) -> LogPanelData:  # pylint:disable=no-self-use
-        # Avoid locking so that message processor has priority to lock
-        if LOG_PANEL[Keys.ENTRIES]:
-            if log_panel_lock.try_lock():
-                cp.append_entries(LOG_PANEL[Keys.ENTRIES])
-                LOG_PANEL[Keys.ENTRIES][:] = []
-                log_panel_lock.unlock()
-        return cp
-
-
-class BottomNavbarData(QObject):
-
-    _available_ports: List[str] = []
-    _available_baudrates: List[str] = []
-    _available_flows: List[str] = []
-    _available_refresh_rates: List[str] = []
-    _connected: bool = False
-
-    def get_available_ports(self) -> List[str]:
-        return self._available_ports
-
-    def set_available_ports(self, available_ports: List[str]) -> None:
-        self._available_ports = available_ports
-
-    available_ports = Property(QTKeys.QVARIANTLIST, get_available_ports, set_available_ports)  # type: ignore
-
-    def get_available_baudrates(self) -> List[str]:
-        return self._available_baudrates
-
-    def set_available_baudrates(self, available_baudrates: List[str]) -> None:
-        self._available_baudrates = available_baudrates
-
-    available_baudrates = Property(
-        QTKeys.QVARIANTLIST, get_available_baudrates, set_available_baudrates  # type: ignore
-    )
-
-    def get_available_flows(self) -> List[str]:
-        return self._available_flows
-
-    def set_available_flows(self, available_flows: List[str]) -> None:
-        self._available_flows = available_flows
-
-    available_flows = Property(QTKeys.QVARIANTLIST, get_available_flows, set_available_flows)  # type: ignore
-
-    def get_available_refresh_rates(self) -> List[str]:
-        return self._available_refresh_rates
-
-    def set_available_refresh_rates(self, available_refresh_rates: List[str]) -> None:
-        self._available_refresh_rates = available_refresh_rates
-
-    available_refresh_rates = Property(
-        QTKeys.QVARIANTLIST, get_available_refresh_rates, set_available_refresh_rates  # type: ignore
-    )
-
-    def get_connected(self) -> bool:
-        """Getter for _connected.
-
-        Returns:
-            bool: Whether a connection is live or not.
-        """
-        return self._connected
-
-    def set_connected(self, connected: bool) -> None:
-        """Setter for _connected."""
-        self._connected = connected
-
-    connected = Property(bool, get_connected, set_connected)
-
-
-class BottomNavbarModel(QObject):  # pylint: disable=too-few-public-methods
-    @Slot(BottomNavbarData)  # type: ignore
-    def fill_data(self, cp: BottomNavbarData) -> BottomNavbarData:  # pylint:disable=no-self-use
-        cp.set_available_ports(BOTTOM_NAVBAR[Keys.AVAILABLE_PORTS])
-        cp.set_available_baudrates(BOTTOM_NAVBAR[Keys.AVAILABLE_BAUDRATES])
-        cp.set_available_flows(BOTTOM_NAVBAR[Keys.AVAILABLE_FLOWS])
-        cp.set_available_refresh_rates(BOTTOM_NAVBAR[Keys.AVAILABLE_REFRESH_RATES])
-        cp.set_connected(BOTTOM_NAVBAR[Keys.CONNECTED])
-        return cp
-
-
 def is_frozen() -> bool:
     """Check whether the application is frozen.
 
@@ -432,15 +337,15 @@ def get_capnp_path() -> str:
     return path
 
 
-def handle_cli_arguments(args: argparse.Namespace, constants: QObject):
+def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
     if args.no_opengl:
-        constants.setProperty("useOpenGL", False)  # type: ignore
+        globals_.setProperty("useOpenGL", False)  # type: ignore
     if args.refresh_rate is not None:
-        constants.setProperty("currentRefreshRate", args.refresh_rate)  # type: ignore
+        globals_.setProperty("currentRefreshRate", args.refresh_rate)  # type: ignore
     if args.tab is not None:
         layout_idxs = TAB_LAYOUT[args.tab]
-        constants.setProperty("initialMainTabIndex", layout_idxs[MAIN_INDEX])  # type: ignore
-        constants.setProperty("initialSubTabIndex", layout_idxs[SUB_INDEX])  # type: ignore
+        globals_.setProperty("initialMainTabIndex", layout_idxs[MAIN_INDEX])  # type: ignore
+        globals_.setProperty("initialSubTabIndex", layout_idxs[SUB_INDEX])  # type: ignore
 
 
 if __name__ == "__main__":
@@ -456,7 +361,7 @@ if __name__ == "__main__":
     app = QApplication()
 
     qmlRegisterType(LogPanelData, "SwiftConsole", 1, 0, "LogPanelData")  # type: ignore
-    qmlRegisterType(BottomNavbarData, "SwiftConsole", 1, 0, "BottomNavbarData")  # type: ignore
+    qmlRegisterType(NavBarData, "SwiftConsole", 1, 0, "NavBarData")  # type: ignore
     qmlRegisterType(SolutionPositionPoints, "SwiftConsole", 1, 0, "SolutionPositionPoints")  # type: ignore
     qmlRegisterType(SolutionTableEntries, "SwiftConsole", 1, 0, "SolutionTableEntries")  # type: ignore
     qmlRegisterType(SolutionVelocityPoints, "SwiftConsole", 1, 0, "SolutionVelocityPoints")  # type: ignore
@@ -478,7 +383,7 @@ if __name__ == "__main__":
 
     data_model = DataModel(endpoint_main, messages_main)
     log_panel_model = LogPanelModel()
-    bottom_navbar_model = BottomNavbarModel()
+    nav_bar_model = NavBarModel()
     solution_position_model = SolutionPositionModel()
     solution_table_model = SolutionTableModel()
     solution_velocity_model = SolutionVelocityModel()
@@ -487,7 +392,7 @@ if __name__ == "__main__":
     local_observation_model = ObservationModel()
     root_context = engine.rootContext()
     root_context.setContextProperty("log_panel_model", log_panel_model)
-    root_context.setContextProperty("bottom_navbar_model", bottom_navbar_model)
+    root_context.setContextProperty("nav_bar_model", nav_bar_model)
     root_context.setContextProperty("solution_position_model", solution_position_model)
     root_context.setContextProperty("solution_table_model", solution_table_model)
     root_context.setContextProperty("solution_velocity_model", solution_velocity_model)
@@ -497,16 +402,16 @@ if __name__ == "__main__":
     root_context.setContextProperty("data_model", data_model)
 
     # Unfortunately it is not possible to access singletons directly using the PySide2 API.
-    # This approach stores the constants somwhere that can be grabbed and manipulated.
+    # This approach stores the globals somwhere that can be grabbed and manipulated.
     component = QQmlComponent(engine)
     component.setData(
-        b'import QtQuick 2.0\nimport "Constants"\nItem{ property var constants: Constants }',  # type: ignore
-        QUrl("qrc:/grabConstants.qml"),
+        b'import QtQuick 2.0\nimport "Constants"\nItem{ property var globals: Globals }',  # type: ignore
+        QUrl("qrc:/grabGlobals.qml"),
     )
-    constants_main = component.create()
-    constants_main = constants_main.property("constants")  # type: ignore
+    globals_main = component.create()
+    globals_main = globals_main.property("globals")  # type: ignore
 
-    handle_cli_arguments(args_main, constants_main)
+    handle_cli_arguments(args_main, globals_main)
 
     threading.Thread(
         target=receive_messages,

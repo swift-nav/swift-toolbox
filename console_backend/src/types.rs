@@ -1524,7 +1524,6 @@ pub struct VelLog {
 
 #[cfg(test)]
 mod tests {
-    #![allow(dead_code)]
     use super::*;
     use directories::UserDirs;
     use serial_test::serial;
@@ -1537,11 +1536,15 @@ mod tests {
     const TEST_SHORT_FILEPATH: &str = "./tests/data/piksi-relay.sbp";
     const SBP_FILE_SHORT_DURATION_SEC: f64 = 26.1;
     const DELAY_BEFORE_CHECKING_APP_STARTED_IN_MS: u64 = 150;
-    const LINUX_DATA_DIRECTORY_PATH: &str = ".local/share/swift_navigation_console";
-    const MAC_DATA_DIRECTORY_PATH: &str =
-        "Library/Application Support/com.swift-nav.swift-nav.swift_navigation_console";
-    const WINDOWS_DATA_DIRECTORY_PATH: &str =
-        "AppData\\Local\\swift-nav\\swift_navigation_console\\data";
+
+    pub mod data_directories {
+        #![allow(dead_code)]
+        pub const LINUX: &str = ".local/share/swift_navigation_console";
+        pub const MACOS: &str =
+            "Library/Application Support/com.swift-nav.swift-nav.swift_navigation_console";
+        pub const WINDOWS: &str = "AppData\\Local\\swift-nav\\swift_navigation_console\\data";
+    }
+
     #[test]
     fn create_data_dir_test() {
         create_data_dir().unwrap();
@@ -1549,16 +1552,16 @@ mod tests {
         let home_dir = user_dirs.home_dir();
         #[cfg(target_os = "linux")]
         {
-            assert!(home_dir.join(LINUX_DATA_DIRECTORY_PATH).exists());
+            assert!(home_dir.join(data_directories::LINUX).exists());
         }
 
         #[cfg(target_os = "macos")]
         {
-            assert!(home_dir.join(MAC_DATA_DIRECTORY_PATH).exists());
+            assert!(home_dir.join(data_directories::MACOS).exists());
         }
         #[cfg(target_os = "windows")]
         {
-            assert!(home_dir.join(WINDOWS_DATA_DIRECTORY_PATH).exists());
+            assert!(home_dir.join(data_directories::WINDOWS).exists());
         }
     }
 
@@ -1568,20 +1571,20 @@ mod tests {
         #[cfg(target_os = "linux")]
         {
             home_dir
-                .join(LINUX_DATA_DIRECTORY_PATH)
+                .join(data_directories::LINUX)
                 .join(CONNECTION_HISTORY_FILENAME)
         }
 
         #[cfg(target_os = "macos")]
         {
             home_dir
-                .join(MAC_DATA_DIRECTORY_PATH)
+                .join(data_directories::MACOS)
                 .join(CONNECTION_HISTORY_FILENAME)
         }
         #[cfg(target_os = "windows")]
         {
             home_dir
-                .join(WINDOWS_DATA_DIRECTORY_PATH)
+                .join(data_directories::WINDOWS)
                 .join(CONNECTION_HISTORY_FILENAME)
         }
     }

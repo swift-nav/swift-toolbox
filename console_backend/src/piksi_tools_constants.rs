@@ -362,7 +362,7 @@ lazy_static! {
     .collect::<HashMap<_, _>>();
 }
 lazy_static! {
-    static ref rtk_mode_dict: HashMap<i32, &'static str> =
+    pub static ref rtk_mode_dict: HashMap<i32, &'static str> =
         [(FLOAT_MODE, "Float"), (FIXED_MODE, "Fixed")]
             .iter()
             .cloned()
@@ -373,7 +373,7 @@ pub const DYNAMICALLY_ALIGNING: i32 = 1;
 pub const READY: i32 = 2;
 pub const GNSS_OUTAGE_MAX: i32 = 3;
 lazy_static! {
-    static ref ins_mode_dict: HashMap<i32, &'static str> = [
+    pub static ref ins_mode_dict: HashMap<i32, &'static str> = [
         (AWAITING_INITIALIZATION, "Init"),
         (DYNAMICALLY_ALIGNING, "Align"),
         (READY, "Ready"),
@@ -387,7 +387,7 @@ pub const IMU_DATA_ERROR: i32 = 1;
 pub const IMU_LICENSE_ERROR: i32 = 2;
 pub const IMU_CALIBRATION_ERROR: i32 = 3;
 lazy_static! {
-    static ref ins_error_dict: HashMap<i32, &'static str> = [
+    pub static ref ins_error_dict: HashMap<i32, &'static str> = [
         (IMU_DATA_ERROR, "Data Error"),
         (IMU_LICENSE_ERROR, "License Error"),
         (IMU_CALIBRATION_ERROR, "Cal Error")
@@ -399,10 +399,11 @@ lazy_static! {
 pub const SMOOTHPOSE: i32 = 0;
 pub const DR_RUNNER: i32 = 1;
 lazy_static! {
-    static ref ins_type_dict: HashMap<i32, &'static str> = [(SMOOTHPOSE, "SP"), (DR_RUNNER, "DR")]
-        .iter()
-        .cloned()
-        .collect::<HashMap<_, _>>();
+    pub static ref ins_type_dict: HashMap<i32, &'static str> =
+        [(SMOOTHPOSE, "SP"), (DR_RUNNER, "DR")]
+            .iter()
+            .cloned()
+            .collect::<HashMap<_, _>>();
 }
 lazy_static! {
     static ref gps_codes: HashSet<i32> = [

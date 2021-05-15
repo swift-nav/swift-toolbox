@@ -61,6 +61,12 @@ from solution_velocity_tab import (
     SOLUTION_VELOCITY_TAB,
 )
 
+from status_bar import (
+    STATUS_BAR,
+    StatusBarData,
+    StatusBarModel,
+)
+
 from tracking_signals_tab import (
     TrackingSignalsModel,
     TrackingSignalsPoints,
@@ -177,6 +183,15 @@ def receive_messages(app_, backend, messages):
                 LOCAL_OBSERVATION_TAB[Keys.TOW] = m.observationStatus.tow
                 LOCAL_OBSERVATION_TAB[Keys.WEEK] = m.observationStatus.week
                 LOCAL_OBSERVATION_TAB[Keys.ROWS][:] = obs_rows_to_json(m.observationStatus.rows)
+        elif m.which == MessageKeys.STATUS_BAR_STATUS:
+            STATUS_BAR[Keys.PORT] = m.statusBarStatus.port
+            STATUS_BAR[Keys.POS] = m.statusBarStatus.pos
+            STATUS_BAR[Keys.RTK] = m.statusBarStatus.rtk
+            STATUS_BAR[Keys.SATS] = m.statusBarStatus.sats
+            STATUS_BAR[Keys.CORR_AGE] = m.statusBarStatus.corrAge
+            STATUS_BAR[Keys.INS] = m.statusBarStatus.ins
+            STATUS_BAR[Keys.DATA_RATE] = m.statusBarStatus.dataRate
+            print(STATUS_BAR)
         elif m.which == MessageKeys.NAV_BAR_STATUS:
             NAV_BAR[Keys.AVAILABLE_PORTS][:] = m.navBarStatus.availablePorts
             NAV_BAR[Keys.AVAILABLE_BAUDRATES][:] = m.navBarStatus.availableBaudrates
@@ -365,6 +380,7 @@ if __name__ == "__main__":
     qmlRegisterType(SolutionPositionPoints, "SwiftConsole", 1, 0, "SolutionPositionPoints")  # type: ignore
     qmlRegisterType(SolutionTableEntries, "SwiftConsole", 1, 0, "SolutionTableEntries")  # type: ignore
     qmlRegisterType(SolutionVelocityPoints, "SwiftConsole", 1, 0, "SolutionVelocityPoints")  # type: ignore
+    qmlRegisterType(StatusBarData, "SwiftConsole", 1, 0, "StatusBarData")  # type: ignore
     qmlRegisterType(TrackingSignalsPoints, "SwiftConsole", 1, 0, "TrackingSignalsPoints")  # type: ignore
     qmlRegisterType(ObservationData, "SwiftConsole", 1, 0, "ObservationData")  # type: ignore
 
@@ -387,6 +403,7 @@ if __name__ == "__main__":
     solution_position_model = SolutionPositionModel()
     solution_table_model = SolutionTableModel()
     solution_velocity_model = SolutionVelocityModel()
+    status_bar_model = StatusBarModel()
     tracking_signals_model = TrackingSignalsModel()
     remote_observation_model = ObservationModel()
     local_observation_model = ObservationModel()
@@ -396,6 +413,7 @@ if __name__ == "__main__":
     root_context.setContextProperty("solution_position_model", solution_position_model)
     root_context.setContextProperty("solution_table_model", solution_table_model)
     root_context.setContextProperty("solution_velocity_model", solution_velocity_model)
+    root_context.setContextProperty("status_bar_model", status_bar_model)
     root_context.setContextProperty("tracking_signals_model", tracking_signals_model)
     root_context.setContextProperty("remote_observation_model", remote_observation_model)
     root_context.setContextProperty("local_observation_model", local_observation_model)

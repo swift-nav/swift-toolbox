@@ -123,7 +123,6 @@ pub const NON_VOLATILE_MEMORY: &str = "Non Volatile Memory";
 pub const DECODED_THIS_SESSION: &str = "Decoded this Session";
 pub const UNKNOWN: &str = "Unknown";
 
-pub const EMPTY_STR: &str = "--";
 pub const GPS_WEEK: &str = "GPS Week";
 pub const GPS_TOW: &str = "GPS TOW";
 pub const GPS_TIME: &str = "GPS Time";

@@ -157,7 +157,8 @@ impl ServerState {
         let handle = thread::spawn(move || {
             if let Ok(stream) = fs::File::open(&filename) {
                 println!("Opened file successfully!");
-                shared_state_clone.update_file_history(filename);
+                shared_state_clone.update_file_history(filename.clone());
+                shared_state_clone.set_current_connection(filename);
                 refresh_navbar(&mut client_send.clone(), shared_state.clone());
                 let shared_state_clone_ = shared_state.clone();
                 let messages = sbp::iter_messages(stream)
@@ -203,6 +204,7 @@ impl ServerState {
             if let Ok(stream) = TcpStream::connect(host_port.clone()) {
                 info!("Connected to the server {}!", host_port);
                 shared_state_clone.update_tcp_history(host, port);
+                shared_state_clone.set_current_connection(host_port);
                 refresh_navbar(&mut client_send.clone(), shared_state.clone());
                 let messages = sbp::iter_messages(stream)
                     .log_errors(log::Level::Debug)
@@ -249,6 +251,7 @@ impl ServerState {
             {
                 Ok(port) => {
                     println!("Connected to serialport {}.", device);
+                    shared_state_clone.set_current_connection(format!("{} @{}", device, baudrate));
                     let messages = sbp::iter_messages(port)
                         .log_errors(log::Level::Debug)
                         .with_rover_time();
@@ -293,9 +296,14 @@ impl SharedState {
             set_connected_frontend(cc::ApplicationStates::CONNECTED, &mut client_send);
         } else {
             set_connected_frontend(cc::ApplicationStates::DISCONNECTED, &mut client_send);
+            self.set_current_connection(EMPTY_STR.to_string());
         }
         let mut shared_data = self.lock().unwrap();
         (*shared_data).running = set_to;
+    }
+    pub fn add_bytes(&self, num_bytes: usize) {
+        let mut shared_data = self.lock().unwrap();
+        (*shared_data).total_bytes_read += num_bytes;
     }
     pub fn is_paused(&self) -> bool {
         let shared_data = self.lock().unwrap();
@@ -304,6 +312,15 @@ impl SharedState {
     pub fn set_paused(&self, set_to: bool) {
         let mut shared_data = self.lock().unwrap();
         (*shared_data).paused = set_to;
+    }
+
+    pub fn current_connection(&self) -> String {
+        let shared_data = self.lock().unwrap();
+        (*shared_data).current_connection.clone()
+    }
+    pub fn set_current_connection(&self, current_connection: String) {
+        let mut shared_data = self.lock().unwrap();
+        (*shared_data).current_connection = current_connection;
     }
 
     pub fn file_history(&self) -> IndexSet<String> {
@@ -347,6 +364,8 @@ impl Clone for SharedState {
 
 #[derive(Debug)]
 pub struct SharedStateInner {
+    pub total_bytes_read: usize,
+    pub current_connection: String,
     pub tracking_tab: TrackingTabState,
     pub paused: bool,
     pub connection_history: ConnectionHistory,
@@ -358,9 +377,11 @@ impl SharedStateInner {
         SharedStateInner {
             tracking_tab: TrackingTabState::new(),
             paused: false,
+            current_connection: String::from(""),
             connection_history: ConnectionHistory::new(),
             running: false,
             solution_tab: SolutionTabState::new(),
+            total_bytes_read: 0,
         }
     }
 }
@@ -1390,18 +1411,16 @@ impl PosLLH {
                 height,
                 n_sats,
                 ..
-            }) => {
-                (PosLLHFields {
-                    flags: *flags,
-                    h_accuracy: mm_to_m(*h_accuracy as f64),
-                    v_accuracy: mm_to_m(*v_accuracy as f64),
-                    tow: *tow as f64,
-                    lat: *lat,
-                    lon: *lon,
-                    height: *height,
-                    n_sats: *n_sats,
-                })
-            }
+            }) => PosLLHFields {
+                flags: *flags,
+                h_accuracy: mm_to_m(*h_accuracy as f64),
+                v_accuracy: mm_to_m(*v_accuracy as f64),
+                tow: *tow as f64,
+                lat: *lat,
+                lon: *lon,
+                height: *height,
+                n_sats: *n_sats,
+            },
         }
     }
     pub fn mode(&self) -> u8 {

@@ -13,6 +13,7 @@ use crate::console_backend_capnp as m;
 use crate::constants::*;
 use crate::date_conv::*;
 use crate::output::CsvSerializer;
+use crate::piksi_tools_constants::EMPTY_STR;
 use crate::types::{
     Deque, Dops, GnssModes, MessageSender, PosLLH, PosLLHLog, SharedState, UtcDateTime, VelLog,
     VelNED,

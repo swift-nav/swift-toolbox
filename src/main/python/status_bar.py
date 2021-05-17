@@ -15,6 +15,7 @@ STATUS_BAR: Dict[str, Any] = {
     Keys.CORR_AGE: str,
     Keys.INS: str,
     Keys.DATA_RATE: str,
+    Keys.SOLID_CONNECTION: bool,
 }
 
 
@@ -27,14 +28,15 @@ class StatusBarData(QObject):  # pylint: disable=too-many-instance-attributes
     _corr_age: str = ""
     _ins: str = ""
     _data_rate: str = ""
+    _solid_connection: bool = False
 
     def get_port(self) -> str:
         return self._port
 
-    def set_port(self, available_ports: str) -> None:
-        self._port = available_ports
+    def set_port(self, port: str) -> None:
+        self._port = port
 
-    available_ports = Property(str, get_port, set_port)
+    port = Property(str, get_port, set_port)
 
     def get_pos(self) -> str:
         return self._pos
@@ -84,6 +86,14 @@ class StatusBarData(QObject):  # pylint: disable=too-many-instance-attributes
 
     data_rate = Property(str, get_data_rate, set_data_rate)
 
+    def get_solid_connection(self) -> bool:
+        return self._solid_connection
+
+    def set_solid_connection(self, solid_connection: bool) -> None:
+        self._solid_connection = solid_connection
+
+    solid_connection = Property(bool, get_solid_connection, set_solid_connection)
+
 
 class StatusBarModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(StatusBarData)  # type: ignore
@@ -95,4 +105,5 @@ class StatusBarModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_corr_age(STATUS_BAR[Keys.CORR_AGE])
         cp.set_ins(STATUS_BAR[Keys.INS])
         cp.set_data_rate(STATUS_BAR[Keys.DATA_RATE])
+        cp.set_solid_connection(STATUS_BAR[Keys.SOLID_CONNECTION])
         return cp

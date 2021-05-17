@@ -28,6 +28,7 @@ pub struct StatusBarUpdate {
     num_sats: String,
     pos_mode: String,
     rtk_mode: String,
+    solid_connection: bool,
 }
 impl StatusBarUpdate {
     pub fn connection_dropped() -> StatusBarUpdate {
@@ -37,6 +38,7 @@ impl StatusBarUpdate {
             num_sats: String::from(EMPTY_STR),
             pos_mode: String::from(EMPTY_STR),
             rtk_mode: String::from(EMPTY_STR),
+            solid_connection: false,
         }
     }
 }
@@ -115,7 +117,8 @@ impl<S: MessageSender> StatusBar<S> {
         status_bar_status.set_sats(&sb_update.num_sats);
         status_bar_status.set_corr_age(&sb_update.age_of_corrections);
         status_bar_status.set_ins(&sb_update.ins_status);
-        status_bar_status.set_data_rate(&format!("{:.2}", data_rate));
+        status_bar_status.set_data_rate(&format!("{:.2} KB/s", data_rate));
+        status_bar_status.set_solid_connection(sb_update.solid_connection);
 
         let mut msg_bytes: Vec<u8> = vec![];
         serialize::write_message(&mut msg_bytes, &builder).unwrap();
@@ -401,6 +404,7 @@ impl HeartbeatInner {
             num_sats: self.llh_num_sats.to_string(),
             pos_mode: self.llh_display_mode.clone(),
             rtk_mode: self.baseline_display_mode.clone(),
+            solid_connection: self.solid_connection,
         };
         self.new_update = Some(sb_update);
     }

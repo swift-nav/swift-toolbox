@@ -191,7 +191,7 @@ def receive_messages(app_, backend, messages):
             STATUS_BAR[Keys.CORR_AGE] = m.statusBarStatus.corrAge
             STATUS_BAR[Keys.INS] = m.statusBarStatus.ins
             STATUS_BAR[Keys.DATA_RATE] = m.statusBarStatus.dataRate
-            print(STATUS_BAR)
+            STATUS_BAR[Keys.SOLID_CONNECTION] = m.statusBarStatus.solidConnection
         elif m.which == MessageKeys.NAV_BAR_STATUS:
             NAV_BAR[Keys.AVAILABLE_PORTS][:] = m.navBarStatus.availablePorts
             NAV_BAR[Keys.AVAILABLE_BAUDRATES][:] = m.navBarStatus.availableBaudrates

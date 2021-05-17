@@ -2,12 +2,14 @@ import QtQuick 2.6
 pragma Singleton
 
 QtObject {
-    readonly property int width: 640
-    readonly property int height: 480
+    readonly property int width: 1050
+    readonly property int height: 600
     readonly property real margins: 2
     readonly property real topLevelSpacing: 0
     readonly property real logPanelPreferredHeight: 100
     readonly property real navBarPreferredHeight: 50
+    readonly property real statusBarPreferredHeight: 30
+    property QtObject statusBar
     property QtObject navBar
     property QtObject commonChart
     property QtObject commonLegend
@@ -22,6 +24,19 @@ QtObject {
     readonly property real mediumPointSize: 8
     readonly property real largePointSize: 9
     readonly property bool debugMode: false
+
+    statusBar: QtObject {
+        readonly property int margin: 10
+        readonly property int spacing: 10
+        readonly property color borderColor: "#CDC9C9"
+        readonly property int borderWidth: 1
+        readonly property color keyTextColor: "#00006E"
+        readonly property real smallKeyWidthRatio: 0.05
+        readonly property int innerKeyValSpacing: 5
+        readonly property int arrowsSideLength: 15
+        readonly property string arrowsBluePath: "images/iconic/arrows_blue.png"
+        readonly property string arrowsGreyPath: "images/iconic/arrows_grey.png"
+    }
 
     navBar: QtObject {
         readonly property int connectionDropdownWidth: 70

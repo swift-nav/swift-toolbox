@@ -46,6 +46,7 @@ class Keys(str, Enum):
     CORR_AGE = "CORR_AGE"
     INS = "INS"
     DATA_RATE = "DATA_RATE"
+    SOLID_CONNECTION = "SOLID_CONNECTION"
 
 
 class ApplicationStates(str, Enum):

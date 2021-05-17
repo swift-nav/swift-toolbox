@@ -31,6 +31,9 @@ ApplicationWindow {
                 spacing: Constants.topLevelSpacing
                 SplitView.fillHeight: true
                 SplitView.fillWidth: true
+                // SplitView.rightMargin: Constants.margins
+                Layout.leftMargin: Constants.margins
+                Layout.rightMargin: Constants.margins
 
                 TabBar {
                     id: tab
@@ -97,13 +100,23 @@ ApplicationWindow {
         Rectangle {
             id: navBar
 
-            Layout.leftMargin: Constants.margins
-            Layout.rightMargin: Constants.margins
             Layout.fillWidth: true
             Layout.preferredHeight: Constants.navBarPreferredHeight
             z: Constants.commonChart.zAboveCharts
 
             NavBar {
+            }
+
+        }
+
+        Rectangle {
+            id: statusBar
+
+            Layout.fillWidth: true
+            Layout.preferredHeight: Constants.statusBarPreferredHeight
+            z: Constants.commonChart.zAboveCharts
+
+            StatusBar {
             }
 
         }

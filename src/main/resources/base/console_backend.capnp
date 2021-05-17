@@ -81,6 +81,7 @@ struct StatusBarStatus {
     corrAge @4 : Text;
     ins @5: Text;
     dataRate @6: Text;
+    solidConnection @7: Bool;
 }
 
 struct ObservationTableRow {

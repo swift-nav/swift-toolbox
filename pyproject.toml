@@ -7,8 +7,8 @@ authors = ["Swift Navigation <dev@swiftnav.com>"]
 [tool.poetry.dependencies]
 python = ">=3.9,<3.10"
 PySide2 = "^5.15.2"
-fbs = {git = "https://github.com/silverjam/fbs.git"}
-pycapnp = {git = "https://github.com/silverjam/pycapnp.git", rev = "disable-import-hook"}
+fbs = { git = "https://github.com/silverjam/fbs.git" }
+pycapnp = { git = "https://github.com/silverjam/pycapnp.git", rev = "disable-import-hook" }
 
 [tool.poetry.dev-dependencies]
 black = "^21.5b0"
@@ -22,10 +22,15 @@ Cython = "^0.29.21"
 nuitka = "<=0.6.12.4"
 psutil = "5.8.0"
 qt5-applications = [{ version = "^5.15.2", platform = "linux" }]
-py2many = {git = "https://github.com/john-michaelburke/py2many", rev = "console"}
+py2many = { git = "https://github.com/john-michaelburke/py2many", rev = "console" }
 
 [build-system]
-requires = ["poetry-core>=1.0.0", "setuptools>=41.0.0", "wheel", "setuptools_rust>=0.10.2"]
+requires = [
+  "poetry-core>=1.0.0",
+  "setuptools>=41.0.0",
+  "wheel",
+  "setuptools_rust>=0.10.2",
+]
 build-backend = "poetry.core.masonry.api"
 
 [tool.black]

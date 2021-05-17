@@ -45,7 +45,6 @@ impl CliOptions {
             }
             filtered_args.push(arg);
         }
-        eprintln!("{:?}", filtered_args);
         CliOptions::parse_from(filtered_args)
     }
 }

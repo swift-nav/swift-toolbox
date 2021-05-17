@@ -82,6 +82,7 @@ pub const SBAS_LABEL: &str = "SBAS";
 pub const NO_FIX: &str = "No Fix";
 pub const SPP: &str = "SPP";
 pub const DGNSS: &str = "DGPS";
+pub const RTK: &str = "RTK";
 pub const FLOAT: &str = "Float RTK";
 pub const FIXED: &str = "Fixed RTK";
 pub const DR: &str = "Dead Reckoning";
@@ -190,3 +191,7 @@ pub const MPS2KPH: f64 = 3.600000;
 
 // Status Bar constants.
 pub const UPDATE_TOLERANCE_SECONDS: f64 = 1.2;
+pub const UNKNOWN_ERROR: &str = "Unk Error";
+pub const UNKNOWN_ERROR_SHORT: &str = "unk";
+pub const ODO_POSTFIX: &str = "+Odo";
+pub const INS_POSTFIX: &str = "+INS";

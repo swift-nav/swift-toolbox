@@ -1,14 +1,14 @@
-use std::str::FromStr;
-
 use capnp::message::Builder;
 use capnp::serialize;
 
 use sbp::messages::{
-    navigation::{MsgAgeCorrections, MsgGPSTime, MsgUtcTime},
+    navigation::MsgAgeCorrections,
     system::{MsgInsStatus, MsgInsUpdates},
 };
 
 use std::{
+    ops::Deref,
+    sync::{Arc, Mutex},
     thread::{sleep, spawn, JoinHandle},
     time::{Duration, Instant},
 };
@@ -24,21 +24,19 @@ use crate::utils::decisec_to_sec;
 #[derive(Debug, Clone)]
 pub struct StatusBarUpdate {
     age_of_corrections: String,
-    data_rate: String,
     ins_status: String,
     num_sats: String,
     pos_mode: String,
     rtk_mode: String,
 }
 impl StatusBarUpdate {
-    pub fn connection_dropped(data_rate: String) -> StatusBarUpdate {
+    pub fn connection_dropped() -> StatusBarUpdate {
         StatusBarUpdate {
             age_of_corrections: String::from(EMPTY_STR),
-            data_rate,
-            ins_status: "None".to_string(),
+            ins_status: String::from(EMPTY_STR),
             num_sats: String::from(EMPTY_STR),
-            pos_mode: "None".to_string(),
-            rtk_mode: "None".to_string(),
+            pos_mode: String::from(EMPTY_STR),
+            rtk_mode: String::from(EMPTY_STR),
         }
     }
 }
@@ -46,9 +44,11 @@ impl StatusBarUpdate {
 /// StatusBar struct.
 ///
 /// # Fields:
-///
-/// - `age_corrections`: Stored age corrections to be checked for validity.
+/// - `client_send`: Client Sender channel for communication from backend to frontend.
 /// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
+/// - `heartbeat_data`: The shared object for storing and accessing relevant status bar data.
+/// - `heartbeat_handler`: The handler to store the running heartbeat thread.
+/// - `port`: The string corresponding to the current connection.
 #[derive(Debug)]
 pub struct StatusBar<S: MessageSender> {
     client_sender: S,
@@ -57,22 +57,33 @@ pub struct StatusBar<S: MessageSender> {
     heartbeat_handler: Option<JoinHandle<()>>,
     port: String,
 }
-
 impl<S: MessageSender> StatusBar<S> {
+    /// Create a new StatusBar.
+    ///
+    /// # Parameters:
+    /// - `client_send`: Client Sender channel for communication from backend to frontend.
+    /// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
     pub fn new(shared_state: SharedState, client_sender: S) -> StatusBar<S> {
         let heartbeat_data = Heartbeat::new();
         StatusBar {
             client_sender,
             shared_state: shared_state.clone(),
             heartbeat_data: heartbeat_data.clone(),
-            port: shared_state.clone().current_connection(),
+            port: shared_state.current_connection(),
             heartbeat_handler: {
+                let mut last_time = Instant::now();
                 Some(spawn(move || loop {
                     if !shared_state.is_running() {
                         break;
                     }
                     heartbeat_data.heartbeat();
-                    sleep(Duration::from_millis(1200));
+                    let new_time = Instant::now();
+                    let time_diff = (new_time - last_time).as_secs_f64();
+                    let delay_time = UPDATE_TOLERANCE_SECONDS - time_diff;
+                    if delay_time > 0_f64 {
+                        sleep(Duration::from_secs_f64(delay_time));
+                    }
+                    last_time = Instant::now();
                 }))
             },
         }
@@ -80,17 +91,13 @@ impl<S: MessageSender> StatusBar<S> {
 
     /// Package data into a message buffer and send to frontend.
     fn send_data(&mut self) {
-        let total_bytes_read;
-        {
-            let shared_data = self.shared_state.lock().unwrap();
-            total_bytes_read = (*shared_data).total_bytes_read;
-        }
+        let data_rate = self.shared_state.data_rate();
         let sb_update;
         {
             let mut shared_data = self.heartbeat_data.lock().unwrap();
             sb_update = (*shared_data).new_update.clone();
             (*shared_data).new_update = None;
-            (*shared_data).total_bytes_read = total_bytes_read;
+            (*shared_data).data_rate = data_rate;
         }
         let sb_update = if let Some(sb_update_) = sb_update {
             sb_update_
@@ -108,7 +115,7 @@ impl<S: MessageSender> StatusBar<S> {
         status_bar_status.set_sats(&sb_update.num_sats);
         status_bar_status.set_corr_age(&sb_update.age_of_corrections);
         status_bar_status.set_ins(&sb_update.ins_status);
-        status_bar_status.set_data_rate(&sb_update.data_rate);
+        status_bar_status.set_data_rate(&format!("{:.2}", data_rate));
 
         let mut msg_bytes: Vec<u8> = vec![];
         serialize::write_message(&mut msg_bytes, &builder).unwrap();
@@ -213,9 +220,6 @@ impl<S: MessageSender> StatusBar<S> {
     }
 }
 
-use std::ops::Deref;
-use std::sync::{Arc, Mutex};
-
 #[derive(Debug)]
 pub struct HeartbeatInner {
     age_of_corrections: String,
@@ -248,7 +252,7 @@ impl HeartbeatInner {
         HeartbeatInner {
             age_of_corrections: String::from(EMPTY_STR),
             age_corrections: None,
-            baseline_display_mode: String::from("None"),
+            baseline_display_mode: String::from(EMPTY_STR),
             baseline_solution_mode: 0,
             current_time: Instant::now(),
             data_rate: 0.0,
@@ -263,7 +267,7 @@ impl HeartbeatInner {
             last_ins_status_receipt_time: None,
             last_odo_update_time: None,
             last_stime_update: None,
-            llh_display_mode: String::from("None"),
+            llh_display_mode: String::from(EMPTY_STR),
             llh_is_rtk: false,
             llh_num_sats: 0,
             llh_solution_mode: 0,
@@ -272,22 +276,13 @@ impl HeartbeatInner {
             total_bytes_read: 0,
         }
     }
-    fn bytes_to_kb(&self, bytes: usize) -> f64 {
-        bytes as f64 / 1024_f64
-    }
-
-    fn data_rate_update(&mut self) {
-        let diff = self.total_bytes_read - self.last_bytes_read;
-        self.data_rate = self.bytes_to_kb(diff) / UPDATE_TOLERANCE_SECONDS;
-        self.last_bytes_read = self.total_bytes_read;
-    }
 
     pub fn check_heartbeat(&mut self) -> bool {
         self.solid_connection = if (self.heartbeat_count == self.last_heartbeat_count
             && self.heartbeat_count != 0)
             || (self.data_rate <= f64::EPSILON)
         {
-            // self.new_update = Some(StatusBarUpdate::connection_dropped(String::from("")));
+            self.new_update = Some(StatusBarUpdate::connection_dropped());
             false
         } else {
             true
@@ -297,17 +292,17 @@ impl HeartbeatInner {
         if self.solid_connection {
             self.current_time = Instant::now();
         }
-        return self.solid_connection;
+        self.solid_connection
     }
 
     pub fn pos_llh_update(&mut self) {
         if let Some(last_stime_update) = self.last_stime_update {
             if (self.current_time - last_stime_update).as_secs_f64() < UPDATE_TOLERANCE_SECONDS {
                 let llh_display_mode = GnssModes::from(self.llh_solution_mode);
-                let llh_display_mode = llh_display_mode.to_string();
+                self.llh_display_mode = llh_display_mode.pos_mode();
                 self.llh_is_rtk = RTK_MODES.contains(&(self.llh_solution_mode as i32));
                 if self.ins_used && (self.llh_solution_mode as i32) != DR_MODE {
-                    self.llh_display_mode = format!("{}+INS", llh_display_mode);
+                    self.llh_display_mode = format!("{}{}", llh_display_mode, INS_POSTFIX);
                 }
             }
         }
@@ -361,24 +356,24 @@ impl HeartbeatInner {
                         if let Some(err_string) = ins_error_dict.get(&(ins_error as i32)) {
                             err_string.to_string()
                         } else {
-                            "Unk Error".to_string()
+                            UNKNOWN_ERROR.to_string()
                         };
                 } else {
                     let ins_type_string =
                         if let Some(type_string) = ins_type_dict.get(&(ins_type as i32)) {
                             type_string
                         } else {
-                            "unk"
+                            UNKNOWN_ERROR_SHORT
                         };
                     let ins_mode_string =
                         if let Some(mode_string) = ins_mode_dict.get(&(ins_mode as i32)) {
                             mode_string
                         } else {
-                            "unk"
+                            UNKNOWN_ERROR_SHORT
                         };
                     let mut odo_str = "";
                     if odo_status == 1 {
-                        odo_str = "+Odo";
+                        odo_str = ODO_POSTFIX;
                     }
                     self.ins_status_string =
                         format!("{}-{}{}", ins_type_string, ins_mode_string, odo_str);
@@ -402,7 +397,6 @@ impl HeartbeatInner {
     pub fn prepare_update_packet(&mut self) {
         let sb_update = StatusBarUpdate {
             age_of_corrections: self.age_of_corrections.clone(),
-            data_rate: format!("{:.2}", self.data_rate),
             ins_status: self.ins_status_string.clone(),
             num_sats: self.llh_num_sats.to_string(),
             pos_mode: self.llh_display_mode.clone(),
@@ -426,7 +420,6 @@ impl Heartbeat {
     }
     pub fn heartbeat(&self) {
         let mut shared_data = self.lock().unwrap();
-        (*shared_data).data_rate_update();
         let good_heartbeat: bool = (*shared_data).check_heartbeat();
         if !good_heartbeat {
             return;
@@ -458,75 +451,4 @@ impl Clone for Heartbeat {
             0: Arc::clone(&self.0),
         }
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::constants::{MPS2KPH, MPS2MPH};
-    use crate::types::TestSender;
-
-    // #[test]
-    // fn handle_vel_ned_test() {
-    //     let shared_state = SharedState::new();
-    //     let client_send = TestSender { inner: Vec::new() };
-    //     let mut solution_velocity_tab = StatusBar::new(shared_state, client_send);
-
-    //     let msg: MsgVelNED = MsgVelNED {
-    //         sender_id: Some(5),
-    //         n: 6,
-    //         e: 66,
-    //         d: 666,
-    //         tow: 1001_u32,
-    //         h_accuracy: 0,
-    //         v_accuracy: 0,
-    //         flags: 1,
-    //         n_sats: 1,
-    //     };
-
-    //     solution_velocity_tab.handle_vel_ned(msg);
-    //     assert_eq!(solution_velocity_tab.points.len(), 2);
-    //     let hpoints = solution_velocity_tab.points[0].get();
-    //     let vpoints = solution_velocity_tab.points[1].get();
-    //     assert_eq!(hpoints.len(), 1);
-    //     assert_eq!(vpoints.len(), 1);
-    //     assert!((*hpoints[0].1 - 0.06627216610312357) <= f64::EPSILON);
-    //     assert!((*vpoints[0].1 - (-0.666)) <= f64::EPSILON);
-    //     let msg = MsgVelNED {
-    //         sender_id: Some(5),
-    //         n: 1,
-    //         e: 133,
-    //         d: 1337,
-    //         tow: 1002_u32,
-    //         h_accuracy: 0,
-    //         v_accuracy: 0,
-    //         flags: 1,
-    //         n_sats: 1,
-    //     };
-    //     solution_velocity_tab.handle_vel_ned(msg);
-    //     let hpoints = solution_velocity_tab.points[0].get();
-    //     let vpoints = solution_velocity_tab.points[1].get();
-    //     assert_eq!(hpoints.len(), 2);
-    //     assert_eq!(vpoints.len(), 2);
-    //     assert!(f64::abs(*hpoints[1].1 - 0.13300375934536587) <= f64::EPSILON);
-    //     assert!(f64::abs(*vpoints[1].1 - (-1.337)) <= f64::EPSILON);
-    //     let msg = MsgVelNED {
-    //         sender_id: Some(5),
-    //         n: 7,
-    //         e: 67,
-    //         d: 667,
-    //         tow: 1003_u32,
-    //         h_accuracy: 0,
-    //         v_accuracy: 0,
-    //         flags: 1,
-    //         n_sats: 1,
-    //     };
-    //     solution_velocity_tab.handle_vel_ned(msg);
-    //     let hpoints = solution_velocity_tab.points[0].get();
-    //     let vpoints = solution_velocity_tab.points[1].get();
-    //     assert_eq!(hpoints.len(), 3);
-    //     assert_eq!(vpoints.len(), 3);
-    //     assert!(f64::abs(*hpoints[1].1 - solution_velocity_tab.max) <= f64::EPSILON);
-    //     assert!(f64::abs(*vpoints[1].1 - solution_velocity_tab.min) <= f64::EPSILON);
-    // }
 }

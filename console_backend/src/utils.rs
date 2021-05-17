@@ -331,6 +331,17 @@ pub fn compute_doppler(
     computed_doppler
 }
 
+/// Convert bytes to kilobytes.
+///
+/// # Parameters:
+/// - `bytes`: The bytes to convert.
+///
+/// # Returns
+/// - The converted bytes in kilobytes.
+pub fn bytes_to_kb(bytes: f64) -> f64 {
+    bytes / 1024_f64
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -3,7 +3,9 @@ use crate::constants::*;
 use crate::formatters::*;
 use crate::piksi_tools_constants::*;
 use crate::process_messages::process_messages;
-use crate::utils::{close_frontend, mm_to_m, ms_to_sec, refresh_navbar, set_connected_frontend};
+use crate::utils::{
+    bytes_to_kb, close_frontend, mm_to_m, ms_to_sec, refresh_navbar, set_connected_frontend,
+};
 use anyhow::{Context, Result as AHResult};
 use chrono::{DateTime, Utc};
 use directories::ProjectDirs;
@@ -303,7 +305,11 @@ impl SharedState {
     }
     pub fn add_bytes(&self, num_bytes: usize) {
         let mut shared_data = self.lock().unwrap();
-        (*shared_data).total_bytes_read += num_bytes;
+        (*shared_data).status_bar.add_bytes(num_bytes);
+    }
+    pub fn data_rate(&self) -> f64 {
+        let shared_data = self.lock().unwrap();
+        (*shared_data).status_bar.data_rate
     }
     pub fn is_paused(&self) -> bool {
         let shared_data = self.lock().unwrap();
@@ -316,11 +322,11 @@ impl SharedState {
 
     pub fn current_connection(&self) -> String {
         let shared_data = self.lock().unwrap();
-        (*shared_data).current_connection.clone()
+        (*shared_data).status_bar.current_connection.clone()
     }
     pub fn set_current_connection(&self, current_connection: String) {
         let mut shared_data = self.lock().unwrap();
-        (*shared_data).current_connection = current_connection;
+        (*shared_data).status_bar.current_connection = current_connection;
     }
 
     pub fn file_history(&self) -> IndexSet<String> {
@@ -364,8 +370,7 @@ impl Clone for SharedState {
 
 #[derive(Debug)]
 pub struct SharedStateInner {
-    pub total_bytes_read: usize,
-    pub current_connection: String,
+    pub status_bar: StatusBarState,
     pub tracking_tab: TrackingTabState,
     pub paused: bool,
     pub connection_history: ConnectionHistory,
@@ -375,19 +380,46 @@ pub struct SharedStateInner {
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
         SharedStateInner {
+            status_bar: StatusBarState::new(),
             tracking_tab: TrackingTabState::new(),
             paused: false,
-            current_connection: String::from(""),
             connection_history: ConnectionHistory::new(),
             running: false,
             solution_tab: SolutionTabState::new(),
-            total_bytes_read: 0,
         }
     }
 }
 impl Default for SharedStateInner {
     fn default() -> Self {
         SharedStateInner::new()
+    }
+}
+
+#[derive(Debug)]
+pub struct StatusBarState {
+    pub data_rate: f64,
+    total_bytes_read: usize,
+    last_time_bytes_read: Instant,
+    pub current_connection: String,
+}
+
+impl StatusBarState {
+    fn new() -> StatusBarState {
+        StatusBarState {
+            data_rate: 0.0,
+            current_connection: String::from(""),
+            total_bytes_read: 0,
+            last_time_bytes_read: Instant::now(),
+        }
+    }
+    pub fn add_bytes(&mut self, bytes: usize) {
+        let new_bytes_time_read = Instant::now();
+        let new_bytes_read = self.total_bytes_read + bytes;
+        let diff = new_bytes_read - self.total_bytes_read;
+        self.data_rate = bytes_to_kb(diff as f64)
+            / (new_bytes_time_read - self.last_time_bytes_read).as_secs_f64();
+        self.total_bytes_read = new_bytes_read;
+        self.last_time_bytes_read = new_bytes_time_read;
     }
 }
 
@@ -1367,9 +1399,22 @@ impl GnssModes {
         };
         String::from(gnss_mode_color)
     }
+    pub fn pos_mode(&self) -> String {
+        let gnss_pos_mode = match self {
+            GnssModes::NoFix => NO_FIX_LABEL,
+            GnssModes::Spp => SPP,
+            GnssModes::Dgnss => DGNSS,
+            GnssModes::Float => RTK,
+            GnssModes::Fixed => RTK,
+            GnssModes::Dr => DR_LABEL,
+            GnssModes::Sbas => SBAS,
+        };
+        String::from(gnss_pos_mode)
+    }
 }
 
 // Struct with shared fields for various PosLLH Message types.
+#[allow(clippy::upper_case_acronyms)]
 pub struct PosLLHFields {
     pub flags: u8,
     pub h_accuracy: f64,

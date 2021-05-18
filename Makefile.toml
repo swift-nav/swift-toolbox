@@ -1,8 +1,5 @@
 env_scripts = [
-# Two proposed methods of simplifying path globbing
-# https://github.com/sagiegurari/cargo-make/issues/542
-# https://github.com/sagiegurari/cargo-make/issues/543
-'''
+  '''
 #!@duckscript
 !include_files ./utils/glob.ds
 
@@ -15,7 +12,8 @@ qml_files = glob_paths_excluding_target resources/**/*.qml
 
 set_env QML_FILES ${qml_files}
 echo QML_FILES=${qml_files}
-''']
+''',
+] # Two proposed methods of simplifying path globbing # https://github.com/sagiegurari/cargo-make/issues/542 # https://github.com/sagiegurari/cargo-make/issues/543
 
 [env]
 CONDA_ENV = "console_pp"
@@ -113,18 +111,32 @@ Get-ChildItem .\console_backend -Recurse -Include @("*.egg-info", "*.dist-info")
 private = true
 command = "conda"
 args = [
-  "run", "-n", "${CONDA_ENV}",
-  "--no-capture-output", "--live-stream",
-  "python", "src/main/python/main.py",
+  "run",
+  "-n",
+  "${CONDA_ENV}",
+  "--no-capture-output",
+  "--live-stream",
+  "python",
+  "src/main/python/main.py",
   "${@}",
-  ]
+]
 
 [tasks.run]
-dependencies = ["copy-capnp", "generate-resources", "remove-egg-dist", "install-backend"]
+dependencies = [
+  "copy-capnp",
+  "generate-resources",
+  "remove-egg-dist",
+  "install-backend",
+]
 run_task = "start-console"
 
 [tasks.prod-run]
-dependencies = ["copy-capnp", "generate-resources", "remove-egg-dist", "prod-install-backend"]
+dependencies = [
+  "copy-capnp",
+  "generate-resources",
+  "remove-egg-dist",
+  "prod-install-backend",
+]
 run_task = "start-console"
 
 [tasks.setuptools-rust]
@@ -146,7 +158,12 @@ conda run -n $CONDA_ENV --no-capture-output --live-stream python -m pip install 
 '''
 
 [tasks.prod-freeze-no-copy]
-dependencies = ["copy-capnp", "generate-resources", "setuptools-rust", "prod-install-backend"]
+dependencies = [
+  "copy-capnp",
+  "generate-resources",
+  "setuptools-rust",
+  "prod-install-backend",
+]
 script_runner = "@shell"
 script = '''
 conda run -n $CONDA_ENV fbs freeze
@@ -166,7 +183,11 @@ mkdir -p target/swift_navigation_console/console_backend && cp -r console_backen
 '''
 
 [tasks.prod-freeze]
-dependencies = ["prod-freeze-no-copy", "remove-negligibles", "copy-console-backend-to-fbs"]
+dependencies = [
+  "prod-freeze-no-copy",
+  "remove-negligibles",
+  "copy-console-backend-to-fbs",
+]
 
 [tasks.prod-installer]
 dependencies = ["prod-freeze"]
@@ -244,28 +265,28 @@ git diff --exit-code -- $QML_FILES
 [tasks.rust-format]
 dependencies = ["copy-capnp"]
 command = "cargo"
-args    = ["fmt", "--all"]
+args = ["fmt", "--all"]
 
 [tasks.rust-format-check]
 dependencies = ["copy-capnp"]
 command = "cargo"
-args    = ["fmt", "--", "--check"]
+args = ["fmt", "--", "--check"]
 
 [tasks.rust-lint]
 dependencies = ["copy-capnp"]
 command = "cargo"
-args    = ["clippy", "--all-targets", "--", "--deny", "warnings"]
+args = ["clippy", "--all-targets", "--", "--deny", "warnings"]
 
 [tasks.rust-tests]
 dependencies = ["copy-capnp"]
 command = "cargo"
-cwd     = "console_backend"
-args    = ["test", "--features", "tests", "--", "--nocapture"]
+cwd = "console_backend"
+args = ["test", "--features", "tests", "--", "--nocapture"]
 
 [tasks.rust-type-check]
 dependencies = ["copy-capnp"]
 command = "cargo"
-args    = ["check"]
+args = ["check"]
 
 [tasks.python-type-check]
 script_runner = "@shell"
@@ -286,7 +307,7 @@ conda run -n $CONDA_ENV black $PYTHON_FILES
 '''
 
 [tasks.python-format]
-alias="python-format-all"
+alias = "python-format-all"
 
 [tasks.python-lint]
 script_runner = "@shell"
@@ -294,14 +315,33 @@ script = '''
 conda run -n $CONDA_ENV pylint --output-format=parseable $PYTHON_FILES
 '''
 
+[tasks.format-toml-check]
+dependencies = ["format-toml"]
+script_runner = "@shell"
+script = '''
+git diff --exit-code
+'''
+
 [tasks.format-all]
-dependencies = ["python-format-all", "qml-format", "rust-format", "newline-format"]
+dependencies = [
+  "python-format-all",
+  "qml-format",
+  "rust-format",
+  "newline-format",
+  "format-toml",
+]
 
 [tasks.format]
 alias = "format-all"
 
 [tasks.format-check]
-dependencies = ["python-format-check", "qml-format-check", "rust-format-check", "newline-check"]
+dependencies = [
+  "python-format-check",
+  "qml-format-check",
+  "rust-format-check",
+  "newline-check",
+  "format-toml-check",
+]
 
 [tasks.lint]
 dependencies = ["python-lint", "rust-lint", "format-check"]
@@ -315,7 +355,7 @@ dependencies = ["rust-tests"]
 [tasks.backend-cpu-bench]
 dependencies = ["copy-capnp", "generate-resources"]
 command = "cargo"
-args    = ["bench", "--all-features", "--", "--verbose", "--noplot"]
+args = ["bench", "--all-features", "--", "--verbose", "--noplot"]
 
 [tasks.backend-cpu-bench-validate]
 script_runner = "@shell"
@@ -326,10 +366,22 @@ conda run -n $CONDA_ENV python utils/bench_runner.py --backend_cpu
 [tasks.backend-mem-bench]
 dependencies = ["copy-capnp", "generate-resources"]
 command = "cargo"
-args    = ["test", "test_run_process_messages", "--manifest-path=console_backend/Cargo.toml", "--features", "benches", "--", "--nocapture"]
+args = [
+  "test",
+  "test_run_process_messages",
+  "--manifest-path=console_backend/Cargo.toml",
+  "--features",
+  "benches",
+  "--",
+  "--nocapture",
+]
 
 [tasks.backend-benches]
-dependencies = ["backend-cpu-bench", "backend-cpu-bench-validate", "backend-mem-bench"]
+dependencies = [
+  "backend-cpu-bench",
+  "backend-cpu-bench-validate",
+  "backend-mem-bench",
+]
 
 [tasks.disk-usage-bench]
 script_runner = "@shell"

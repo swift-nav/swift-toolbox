@@ -95,16 +95,13 @@ mod mem_bench_impl {
                 .send(client_recv)
                 .expect("sending client recv handle should succeed");
 
-            let messages = sbp::iter_messages(Box::new(fs::File::open(BENCH_FILEPATH).unwrap()))
-                .log_errors(log::Level::Debug)
-                .with_rover_time();
             let client_send = ClientSender {
                 inner: client_send_,
             };
             let shared_state = SharedState::new();
             shared_state.set_running(true, client_send.clone());
             process_messages::process_messages(
-                messages,
+                Box::new(fs::File::open(BENCH_FILEPATH).unwrap()),
                 shared_state,
                 client_send,
                 RealtimeDelay::On,

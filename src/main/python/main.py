@@ -131,6 +131,7 @@ def receive_messages(app_, backend, messages):
         m = messages.Message.from_bytes(buffer)
         if m.which == MessageKeys.STATUS:
             if m.status.text == ApplicationStates.CLOSE:
+                print('hi')
                 return app_.quit()
             if m.status.text == ApplicationStates.CONNECTED:
                 NAV_BAR[Keys.CONNECTED] = True

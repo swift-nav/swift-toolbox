@@ -39,7 +39,9 @@ impl CliOptions {
         let mut filtered_args: Vec<String> = vec![];
         for arg in args {
             if let Some(n_arg) = next_args.next() {
-                if arg == "python" && n_arg.ends_with(".py") {
+                if (arg.ends_with("python") || arg.ends_with("python.exe"))
+                    && n_arg.ends_with(".py")
+                {
                     continue;
                 }
             }

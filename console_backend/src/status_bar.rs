@@ -15,6 +15,7 @@ use std::{
 
 use crate::console_backend_capnp as m;
 use crate::constants::*;
+use crate::errors::*;
 use crate::piksi_tools_constants::{
     ins_error_dict, ins_mode_dict, ins_type_dict, rtk_mode_dict, DR_MODE, EMPTY_STR, RTK_MODES,
 };
@@ -56,7 +57,7 @@ pub struct StatusBar<S: MessageSender> {
     client_sender: S,
     shared_state: SharedState,
     heartbeat_data: Heartbeat,
-    heartbeat_handler: Option<JoinHandle<()>>,
+    heartbeat_handler: JoinHandle<()>,
     port: String,
 }
 impl<S: MessageSender> StatusBar<S> {
@@ -72,23 +73,30 @@ impl<S: MessageSender> StatusBar<S> {
             shared_state: shared_state.clone(),
             heartbeat_data: heartbeat_data.clone(),
             port: shared_state.current_connection(),
-            heartbeat_handler: {
-                let mut last_time = Instant::now();
-                Some(spawn(move || loop {
-                    if !shared_state.is_running() {
-                        break;
-                    }
-                    heartbeat_data.heartbeat();
-                    let new_time = Instant::now();
-                    let time_diff = (new_time - last_time).as_secs_f64();
-                    let delay_time = UPDATE_TOLERANCE_SECONDS - time_diff;
-                    if delay_time > 0_f64 {
-                        sleep(Duration::from_secs_f64(delay_time));
-                    }
-                    last_time = Instant::now();
-                }))
-            },
+            heartbeat_handler: StatusBar::<S>::heartbeat_thread(shared_state, heartbeat_data),
         }
+    }
+
+    /// Thread for handling the consistently repeating heartbeat.
+    ///
+    /// # Parameters:
+    /// - `client_send`: Client Sender channel for communication from backend to frontend.
+    /// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
+    fn heartbeat_thread(shared_state: SharedState, heartbeat_data: Heartbeat) -> JoinHandle<()> {
+        let mut last_time = Instant::now();
+        spawn(move || loop {
+            if !shared_state.is_running() {
+                break;
+            }
+            heartbeat_data.heartbeat();
+            let new_time = Instant::now();
+            let time_diff = (new_time - last_time).as_secs_f64();
+            let delay_time = UPDATE_TOLERANCE_SECONDS - time_diff;
+            if delay_time > 0_f64 {
+                sleep(Duration::from_secs_f64(delay_time));
+            }
+            last_time = Instant::now();
+        })
     }
 
     /// Package data into a message buffer and send to frontend.
@@ -96,7 +104,10 @@ impl<S: MessageSender> StatusBar<S> {
         let data_rate = self.shared_state.data_rate();
         let sb_update;
         {
-            let mut shared_data = self.heartbeat_data.lock().unwrap();
+            let mut shared_data = self
+                .heartbeat_data
+                .lock()
+                .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
             sb_update = (*shared_data).new_update.clone();
             (*shared_data).new_update = None;
             (*shared_data).data_rate = data_rate;
@@ -121,13 +132,17 @@ impl<S: MessageSender> StatusBar<S> {
         status_bar_status.set_solid_connection(sb_update.solid_connection);
 
         let mut msg_bytes: Vec<u8> = vec![];
-        serialize::write_message(&mut msg_bytes, &builder).unwrap();
+        serialize::write_message(&mut msg_bytes, &builder)
+            .expect(CAP_N_PROTO_SERIALIZATION_FAILURE);
 
         self.client_sender.send_data(msg_bytes);
     }
 
     pub fn handle_heartbeat(&mut self) {
-        let mut shared_data = self.heartbeat_data.lock().unwrap();
+        let mut shared_data = self
+            .heartbeat_data
+            .lock()
+            .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
         (*shared_data).heartbeat_count += 1;
     }
 
@@ -142,12 +157,16 @@ impl<S: MessageSender> StatusBar<S> {
         let llh_num_sats = pos_llh_fields.n_sats;
         let ins_used = ((pos_llh_fields.flags & 0x8) >> 3) == 1;
 
-        let mut last_stime_update = None;
-        if llh_solution_mode != 0 {
-            last_stime_update = Some(Instant::now());
-        }
+        let last_stime_update = if llh_solution_mode != 0 {
+            Some(Instant::now())
+        } else {
+            None
+        };
         {
-            let mut shared_data = self.heartbeat_data.lock().unwrap();
+            let mut shared_data = self
+                .heartbeat_data
+                .lock()
+                .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
             (*shared_data).llh_solution_mode = llh_solution_mode;
             (*shared_data).last_stime_update = last_stime_update;
             if llh_solution_mode > 0 {
@@ -162,12 +181,16 @@ impl<S: MessageSender> StatusBar<S> {
     /// Handle BaselineNED and BaselineNEDDepA messages.
     pub fn handle_baseline_ned(&mut self, msg: BaselineNED) {
         let baseline_solution_mode = msg.mode();
-        let mut last_btime_update = None;
-        if baseline_solution_mode > 0 {
-            last_btime_update = Some(Instant::now());
-        }
+        let last_btime_update = if baseline_solution_mode > 0 {
+            Some(Instant::now())
+        } else {
+            None
+        };
         {
-            let mut shared_data = self.heartbeat_data.lock().unwrap();
+            let mut shared_data = self
+                .heartbeat_data
+                .lock()
+                .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
             (*shared_data).baseline_solution_mode = baseline_solution_mode;
             (*shared_data).last_btime_update = last_btime_update;
         }
@@ -182,7 +205,10 @@ impl<S: MessageSender> StatusBar<S> {
         let tic = msg.wheelticks;
         if ((tic & 0xF0) >> 4) > (tic & 0x0F) {
             let last_odo_update_time = Instant::now();
-            let mut shared_data = self.heartbeat_data.lock().unwrap();
+            let mut shared_data = self
+                .heartbeat_data
+                .lock()
+                .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
             (*shared_data).last_odo_update_time = Some(last_odo_update_time);
         }
         self.send_data();
@@ -196,7 +222,10 @@ impl<S: MessageSender> StatusBar<S> {
         let ins_status_flags = msg.flags;
         let last_ins_status_receipt_time = Some(Instant::now());
         {
-            let mut shared_data = self.heartbeat_data.lock().unwrap();
+            let mut shared_data = self
+                .heartbeat_data
+                .lock()
+                .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
             (*shared_data).ins_status_flags = ins_status_flags;
             (*shared_data).last_ins_status_receipt_time = last_ins_status_receipt_time;
         }
@@ -215,7 +244,10 @@ impl<S: MessageSender> StatusBar<S> {
             None
         };
         {
-            let mut shared_data = self.heartbeat_data.lock().unwrap();
+            let mut shared_data = self
+                .heartbeat_data
+                .lock()
+                .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
             (*shared_data).age_corrections = age_corrections;
             (*shared_data).last_age_corr_receipt_time = Some(Instant::now());
         }
@@ -288,13 +320,11 @@ impl HeartbeatInner {
             self.new_update = Some(StatusBarUpdate::connection_dropped());
             false
         } else {
+            self.current_time = Instant::now();
             true
         };
         self.last_heartbeat_count = self.heartbeat_count;
 
-        if self.solid_connection {
-            self.current_time = Instant::now();
-        }
         self.solid_connection
     }
 
@@ -423,16 +453,15 @@ impl Heartbeat {
         Heartbeat(Arc::new(Mutex::new(HeartbeatInner::default())))
     }
     pub fn heartbeat(&self) {
-        let mut shared_data = self.lock().unwrap();
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         let good_heartbeat: bool = (*shared_data).check_heartbeat();
-        if !good_heartbeat {
-            return;
+        if good_heartbeat {
+            (*shared_data).pos_llh_update();
+            (*shared_data).baseline_ned_update();
+            (*shared_data).ins_update();
+            (*shared_data).age_of_corrections_update();
+            (*shared_data).prepare_update_packet();
         }
-        (*shared_data).pos_llh_update();
-        (*shared_data).baseline_ned_update();
-        (*shared_data).ins_update();
-        (*shared_data).age_of_corrections_update();
-        (*shared_data).prepare_update_packet();
     }
 }
 

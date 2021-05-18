@@ -31,7 +31,6 @@ ApplicationWindow {
                 spacing: Constants.topLevelSpacing
                 SplitView.fillHeight: true
                 SplitView.fillWidth: true
-                // SplitView.rightMargin: Constants.margins
                 Layout.leftMargin: Constants.margins
                 Layout.rightMargin: Constants.margins
 

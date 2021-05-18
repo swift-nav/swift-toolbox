@@ -27,9 +27,6 @@ Rectangle {
     }
 
     RowLayout {
-        // anchors.leftMargin: Constants.navBar.navBarMargin
-        // anchors.rightMargin: Constants.navBar.navBarMargin
-
         id: navBarRowLayout
 
         anchors.fill: parent

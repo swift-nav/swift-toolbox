@@ -485,3 +485,141 @@ impl Clone for Heartbeat {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::TestSender;
+
+    #[test]
+    fn handle_age_corrections_test() {
+        let shared_state = SharedState::new();
+        let client_send = TestSender { inner: Vec::new() };
+        let mut status_bar = StatusBar::new(shared_state, client_send);
+        let age_corrections = {
+            let shared_data = status_bar
+                .heartbeat_data
+                .lock()
+                .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
+            (*shared_data).age_corrections
+        };
+
+        assert!(age_corrections.is_none());
+        let msg = MsgAgeCorrections {
+            sender_id: Some(1337),
+            age: 0xFFFF,
+            tow: 0,
+        };
+        status_bar.handle_age_corrections(msg);
+        let age_corrections = {
+            let shared_data = status_bar
+                .heartbeat_data
+                .lock()
+                .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
+            (*shared_data).age_corrections
+        };
+        assert!(age_corrections.is_none());
+        let good_age = 0x4DC6;
+        let msg = MsgAgeCorrections {
+            sender_id: Some(1337),
+            age: good_age,
+            tow: 0,
+        };
+        status_bar.handle_age_corrections(msg);
+        let age_corrections = {
+            let shared_data = status_bar
+                .heartbeat_data
+                .lock()
+                .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
+            (*shared_data).age_corrections
+        };
+        assert!(age_corrections.is_some());
+        if let Some(age) = age_corrections {
+            assert!(f64::abs(age - 1991_f64) <= f64::EPSILON);
+        }
+    }
+
+    #[test]
+    fn handle_ins_status_test() {
+        let shared_state = SharedState::new();
+        let client_send = TestSender { inner: Vec::new() };
+        let mut status_bar = StatusBar::new(shared_state, client_send);
+        let flags = 0xf0_u32;
+        let msg = MsgInsStatus {
+            sender_id: Some(1337),
+            flags,
+        };
+        let update_time = Instant::now();
+        status_bar.handle_ins_status(msg);
+        let last_ins_status_receipt_time = {
+            let shared_data = status_bar
+                .heartbeat_data
+                .lock()
+                .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
+            (*shared_data).last_ins_status_receipt_time
+        };
+        assert!(last_ins_status_receipt_time.unwrap() > update_time);
+        let ins_status_flags = {
+            let shared_data = status_bar
+                .heartbeat_data
+                .lock()
+                .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
+            (*shared_data).ins_status_flags
+        };
+        assert_eq!(ins_status_flags, flags);
+    }
+
+    #[test]
+    fn handle_ins_updates_test() {
+        let shared_state = SharedState::new();
+        let client_send = TestSender { inner: Vec::new() };
+        let mut status_bar = StatusBar::new(shared_state, client_send);
+        let msg = MsgInsUpdates {
+            sender_id: Some(1337),
+            gnsspos: 0,
+            gnssvel: 0,
+            wheelticks: 0xf0_u8,
+            speed: 0,
+            nhc: 0,
+            zerovel: 0,
+            tow: 0,
+        };
+
+        let odo_update_time = Instant::now();
+        sleep(Duration::from_secs(1));
+        status_bar.handle_ins_updates(msg);
+        let last_odo_update_time = {
+            let shared_data = status_bar
+                .heartbeat_data
+                .lock()
+                .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
+            (*shared_data).last_odo_update_time
+        };
+        assert!(last_odo_update_time.unwrap() > odo_update_time);
+
+        let msg = MsgInsUpdates {
+            sender_id: Some(1337),
+            gnsspos: 4,
+            gnssvel: 4,
+            wheelticks: 0xff_u8,
+            speed: 0,
+            nhc: 0,
+            zerovel: 0,
+            tow: 0,
+        };
+
+        let odo_update_time = Instant::now();
+        status_bar.handle_ins_updates(msg);
+        let last_odo_update_time = {
+            let shared_data = status_bar
+                .heartbeat_data
+                .lock()
+                .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
+            (*shared_data).last_odo_update_time
+        };
+
+        assert!(last_odo_update_time.unwrap() < odo_update_time);
+    }
+
+    // TODO (john-michaelburke@) [CPP-173] Add missing unittests!!
+}

@@ -5,7 +5,7 @@ import QtQuick.Controls 2.2
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
-Item {
+Rectangle {
     property string tcp_ip: "TCP/IP"
     property string serial_usb: "Serial/USB"
     property string file: "File"
@@ -19,6 +19,8 @@ Item {
     property variant previous_files: []
 
     anchors.fill: parent
+    anchors.leftMargin: Constants.navBar.navBarMargin
+    anchors.rightMargin: Constants.navBar.navBarMargin
 
     NavBarData {
         id: navBarData
@@ -28,8 +30,6 @@ Item {
         id: navBarRowLayout
 
         anchors.fill: parent
-        anchors.leftMargin: Constants.navBar.navBarMargin
-        anchors.rightMargin: Constants.navBar.navBarMargin
 
         ComboBox {
             id: navBarSourceSelection

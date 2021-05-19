@@ -39,6 +39,14 @@ class Keys(str, Enum):
     PREVIOUS_PORTS = "PREVIOUS_PORTS"
     PREVIOUS_FILES = "PREVIOUS_FILES"
     CONNECTED = "CONNECTED"
+    PORT = "PORT"
+    POS = "POS"
+    RTK = "RTK"
+    SATS = "SATS"
+    CORR_AGE = "CORR_AGE"
+    INS = "INS"
+    DATA_RATE = "DATA_RATE"
+    SOLID_CONNECTION = "SOLID_CONNECTION"
 
 
 class ApplicationStates(str, Enum):
@@ -49,6 +57,7 @@ class ApplicationStates(str, Enum):
 
 class MessageKeys(str, Enum):
     STATUS = "status"
+    STATUS_BAR_STATUS = "statusBarStatus"
     NAV_BAR_STATUS = "navBarStatus"
     SOLUTION_POSITION_STATUS = "solutionPositionStatus"
     SOLUTION_TABLE_STATUS = "solutionTableStatus"

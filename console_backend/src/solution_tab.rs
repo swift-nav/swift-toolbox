@@ -13,6 +13,7 @@ use crate::console_backend_capnp as m;
 use crate::constants::*;
 use crate::date_conv::*;
 use crate::output::CsvSerializer;
+use crate::piksi_tools_constants::EMPTY_STR;
 use crate::types::{
     Deque, Dops, GnssModes, MessageSender, PosLLH, PosLLHLog, SharedState, UtcDateTime, VelLog,
     VelNED,
@@ -400,40 +401,19 @@ impl<S: MessageSender> SolutionTab<S> {
     /// Need to validate logging.
     pub fn handle_pos_llh(&mut self, msg: PosLLH) {
         self.last_pos_mode = msg.mode();
-        let (flags, h_accuracy, v_accuracy, tow, lat, lon, height, n_sats) = match msg {
-            PosLLH::MsgPosLLH(msg_) => (
-                msg_.flags,
-                mm_to_m(msg_.h_accuracy as f64),
-                mm_to_m(msg_.v_accuracy as f64),
-                msg_.tow as f64,
-                msg_.lat,
-                msg_.lon,
-                msg_.height,
-                msg_.n_sats,
-            ),
-            PosLLH::MsgPosLLHDepA(msg_) => (
-                msg_.flags,
-                mm_to_m(msg_.h_accuracy as f64),
-                mm_to_m(msg_.v_accuracy as f64),
-                msg_.tow as f64,
-                msg_.lat,
-                msg_.lon,
-                msg_.height,
-                msg_.n_sats,
-            ),
-        };
+        let pos_llh_fields = msg.fields();
         let gnss_mode = GnssModes::from(self.last_pos_mode);
         let mode_string = gnss_mode.to_string();
         if self.last_pos_mode != 0 {
             if !self.pending_draw_modes.contains(&mode_string) {
                 self.pending_draw_modes.push(mode_string.clone());
             }
-            self._update_sln_data_by_mode(lat, lon, mode_string);
+            self._update_sln_data_by_mode(pos_llh_fields.lat, pos_llh_fields.lon, mode_string);
         } else {
             self._append_empty_sln_data(None);
         }
-        self.ins_used = ((flags & 0x8) >> 3) == 1;
-        let mut tow = tow * 1.0e-3_f64;
+        self.ins_used = ((pos_llh_fields.flags & 0x8) >> 3) == 1;
+        let mut tow = pos_llh_fields.tow * 1.0e-3_f64;
         if let Some(nsec) = self.nsec {
             tow += nsec as f64 * 1.0e-9_f64;
         }
@@ -469,13 +449,13 @@ impl<S: MessageSender> SolutionTab<S> {
                     pc_time,
                     gps_time,
                     tow_s: Some(tow),
-                    latitude_d: Some(lat),
-                    longitude_d: Some(lon),
-                    altitude_m: Some(height),
-                    h_accuracy_m: Some(h_accuracy),
-                    v_accuracy_m: Some(v_accuracy),
-                    n_sats,
-                    flags,
+                    latitude_d: Some(pos_llh_fields.lat),
+                    longitude_d: Some(pos_llh_fields.lon),
+                    altitude_m: Some(pos_llh_fields.height),
+                    h_accuracy_m: Some(pos_llh_fields.h_accuracy),
+                    v_accuracy_m: Some(pos_llh_fields.v_accuracy),
+                    n_sats: pos_llh_fields.n_sats,
+                    flags: pos_llh_fields.flags,
                 }) {
                     eprintln!("Unable to to write to pos llh log, error {}.", err);
                 }
@@ -515,17 +495,24 @@ impl<S: MessageSender> SolutionTab<S> {
                 self.table.insert(UTC_TIME, String::from(EMPTY_STR));
                 self.table.insert(UTC_SRC, String::from(EMPTY_STR));
             }
-            self.table.insert(SATS_USED, n_sats.to_string());
-            self.table.insert(LAT, format!("{:.12}", lat));
-            self.table.insert(LNG, format!("{:.12}", lon));
-            self.table.insert(HEIGHT, format!("{:.3}", height));
-            self.table.insert(HORIZ_ACC, format!("{:.3}", h_accuracy));
-            self.table.insert(VERT_ACC, format!("{:.3}", v_accuracy));
-            self.lats.add(lat);
-            self.lngs.add(lon);
+            self.table
+                .insert(SATS_USED, pos_llh_fields.n_sats.to_string());
+            self.table
+                .insert(LAT, format!("{:.12}", pos_llh_fields.lat));
+            self.table
+                .insert(LNG, format!("{:.12}", pos_llh_fields.lon));
+            self.table
+                .insert(HEIGHT, format!("{:.3}", pos_llh_fields.height));
+            self.table
+                .insert(HORIZ_ACC, format!("{:.3}", pos_llh_fields.h_accuracy));
+            self.table
+                .insert(VERT_ACC, format!("{:.3}", pos_llh_fields.v_accuracy));
+            self.lats.add(pos_llh_fields.lat);
+            self.lngs.add(pos_llh_fields.lon);
             self.modes.add(self.last_pos_mode);
         }
-        self.table.insert(POS_FLAGS, format!("0x{:<03x}", flags));
+        self.table
+            .insert(POS_FLAGS, format!("0x{:<03x}", pos_llh_fields.flags));
         self.table.insert(INS_USED, self.ins_used.to_string());
         self.table.insert(POS_FIX_MODE, self.ins_used.to_string());
         if let Some(age_corrections_) = self.age_corrections {

@@ -82,6 +82,7 @@ pub const SBAS_LABEL: &str = "SBAS";
 pub const NO_FIX: &str = "No Fix";
 pub const SPP: &str = "SPP";
 pub const DGNSS: &str = "DGPS";
+pub const RTK: &str = "RTK";
 pub const FLOAT: &str = "Float RTK";
 pub const FIXED: &str = "Fixed RTK";
 pub const DR: &str = "Dead Reckoning";
@@ -123,7 +124,6 @@ pub const NON_VOLATILE_MEMORY: &str = "Non Volatile Memory";
 pub const DECODED_THIS_SESSION: &str = "Decoded this Session";
 pub const UNKNOWN: &str = "Unknown";
 
-pub const EMPTY_STR: &str = "--";
 pub const GPS_WEEK: &str = "GPS Week";
 pub const GPS_TOW: &str = "GPS TOW";
 pub const GPS_TIME: &str = "GPS Time";
@@ -188,3 +188,10 @@ pub const MPH: &str = "mph";
 pub const KPH: &str = "kph";
 pub const MPS2MPH: f64 = 2.236934;
 pub const MPS2KPH: f64 = 3.600000;
+
+// Status Bar constants.
+pub const UPDATE_TOLERANCE_SECONDS: f64 = 1.2;
+pub const UNKNOWN_ERROR: &str = "Unk Error";
+pub const UNKNOWN_ERROR_SHORT: &str = "unk";
+pub const ODO_POSTFIX: &str = "+Odo";
+pub const INS_POSTFIX: &str = "+INS";

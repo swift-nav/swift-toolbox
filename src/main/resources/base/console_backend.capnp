@@ -73,6 +73,17 @@ struct NavBarStatus {
     previousFiles @6: List(Text);
 }
 
+struct StatusBarStatus {
+    port @0 : Text;
+    pos @1 : Text;
+    rtk @2 : Text;
+    sats @3: Text;
+    corrAge @4 : Text;
+    ins @5: Text;
+    dataRate @6: Text;
+    solidConnection @7: Bool;
+}
+
 struct ObservationTableRow {
     prn @0 :Text;
     pseudoRange @1 :Float64;
@@ -163,5 +174,6 @@ struct Message {
         serialRefreshRequest @16 :SerialRefreshRequest;
         logAppend @17 :LogAppend;
         observationStatus @18 :ObservationStatus;
+        statusBarStatus @19 :StatusBarStatus;
     }
 }

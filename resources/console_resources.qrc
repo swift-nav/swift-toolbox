@@ -4,6 +4,7 @@
     <file>view.qml</file>
     <file>NavBar.qml</file>
     <file>LogPanel.qml</file>
+    <file>StatusBar.qml</file>
     <file>Constants/Constants.qml</file>
     <file>Constants/Globals.qml</file>
     <file>Constants/qmldir</file>
@@ -17,5 +18,7 @@
     <file>ObservationTab.qml</file>
     <file>ObservationTabComponents/observation_tab.js</file>
     <file>ObservationTabComponents/ObservationTable.qml</file>
+    <file>images/iconic/arrows_blue.png</file>
+    <file>images/iconic/arrows_grey.png</file>
 </qresource>
 </RCC>

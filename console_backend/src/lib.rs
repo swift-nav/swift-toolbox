@@ -5,6 +5,7 @@ pub mod console_backend_capnp {
 pub mod common_constants;
 pub mod constants;
 pub mod date_conv;
+pub mod errors;
 pub mod formatters;
 pub mod log_panel;
 pub mod main_tab;
@@ -17,6 +18,7 @@ pub mod process_messages;
 pub mod server;
 pub mod solution_tab;
 pub mod solution_velocity_tab;
+pub mod status_bar;
 pub mod tracking_signals_tab;
 pub mod types;
 pub mod utils;

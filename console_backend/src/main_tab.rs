@@ -5,6 +5,7 @@ use std::{result::Result, thread::sleep, time::Instant};
 use crate::observation_tab::ObservationTab;
 use crate::solution_tab::SolutionTab;
 use crate::solution_velocity_tab::SolutionVelocityTab;
+use crate::status_bar::StatusBar;
 use crate::tracking_signals_tab::TrackingSignalsTab;
 use crate::types::*;
 
@@ -15,6 +16,7 @@ pub struct MainTab<'a, S: MessageSender> {
     pub solution_tab: SolutionTab<S>,
     pub observation_tab: ObservationTab<S>,
     pub solution_velocity_tab: SolutionVelocityTab<'a, S>,
+    pub status_bar: StatusBar<S>,
 }
 
 impl<'a, S: MessageSender> MainTab<'a, S> {
@@ -28,7 +30,11 @@ impl<'a, S: MessageSender> MainTab<'a, S> {
             ),
             observation_tab: ObservationTab::new(shared_state.clone(), client_sender.clone()),
             solution_tab: SolutionTab::new(shared_state.clone(), client_sender.clone()),
-            solution_velocity_tab: SolutionVelocityTab::new(shared_state, client_sender),
+            solution_velocity_tab: SolutionVelocityTab::new(
+                shared_state.clone(),
+                client_sender.clone(),
+            ),
+            status_bar: StatusBar::new(shared_state, client_sender),
         }
     }
 

@@ -3,7 +3,7 @@ use crate::constants::*;
 use crate::formatters::*;
 use crate::piksi_tools_constants::*;
 use crate::process_messages::process_messages;
-use crate::utils::{close_frontend, ms_to_sec, refresh_navbar, set_connected_frontend};
+use crate::utils::{close_frontend, mm_to_m, ms_to_sec, refresh_navbar, set_connected_frontend};
 use anyhow::{Context, Result as AHResult};
 use chrono::{DateTime, Utc};
 use directories::ProjectDirs;
@@ -13,7 +13,10 @@ use log::{error, info, warn};
 use ordered_float::OrderedFloat;
 use sbp::{
     messages::{
-        navigation::{MsgDops, MsgDopsDepA, MsgPosLLH, MsgPosLLHDepA, MsgVelNED, MsgVelNEDDepA},
+        navigation::{
+            MsgBaselineNED, MsgBaselineNEDDepA, MsgDops, MsgDopsDepA, MsgPosLLH, MsgPosLLHDepA,
+            MsgVelNED, MsgVelNEDDepA,
+        },
         observation::{
             MsgObs, MsgObsDepB, MsgObsDepC, MsgOsr, PackedObsContent, PackedObsContentDepB,
             PackedObsContentDepC, PackedOsrContent,
@@ -154,7 +157,8 @@ impl ServerState {
         let handle = thread::spawn(move || {
             if let Ok(stream) = fs::File::open(&filename) {
                 println!("Opened file successfully!");
-                shared_state_clone.update_file_history(filename);
+                shared_state_clone.update_file_history(filename.clone());
+                shared_state_clone.set_current_connection(filename);
                 refresh_navbar(&mut client_send.clone(), shared_state.clone());
                 let shared_state_clone_ = shared_state.clone();
                 let messages = sbp::iter_messages(stream)
@@ -200,6 +204,7 @@ impl ServerState {
             if let Ok(stream) = TcpStream::connect(host_port.clone()) {
                 info!("Connected to the server {}!", host_port);
                 shared_state_clone.update_tcp_history(host, port);
+                shared_state_clone.set_current_connection(host_port);
                 refresh_navbar(&mut client_send.clone(), shared_state.clone());
                 let messages = sbp::iter_messages(stream)
                     .log_errors(log::Level::Debug)
@@ -246,6 +251,7 @@ impl ServerState {
             {
                 Ok(port) => {
                     println!("Connected to serialport {}.", device);
+                    shared_state_clone.set_current_connection(format!("{} @{}", device, baudrate));
                     let messages = sbp::iter_messages(port)
                         .log_errors(log::Level::Debug)
                         .with_rover_time();
@@ -290,6 +296,7 @@ impl SharedState {
             set_connected_frontend(cc::ApplicationStates::CONNECTED, &mut client_send);
         } else {
             set_connected_frontend(cc::ApplicationStates::DISCONNECTED, &mut client_send);
+            self.set_current_connection(EMPTY_STR.to_string());
         }
         let mut shared_data = self.lock().unwrap();
         (*shared_data).running = set_to;
@@ -301,6 +308,15 @@ impl SharedState {
     pub fn set_paused(&self, set_to: bool) {
         let mut shared_data = self.lock().unwrap();
         (*shared_data).paused = set_to;
+    }
+
+    pub fn current_connection(&self) -> String {
+        let shared_data = self.lock().unwrap();
+        (*shared_data).status_bar.current_connection.clone()
+    }
+    pub fn set_current_connection(&self, current_connection: String) {
+        let mut shared_data = self.lock().unwrap();
+        (*shared_data).status_bar.current_connection = current_connection;
     }
 
     pub fn file_history(&self) -> IndexSet<String> {
@@ -344,6 +360,7 @@ impl Clone for SharedState {
 
 #[derive(Debug)]
 pub struct SharedStateInner {
+    pub status_bar: StatusBarState,
     pub tracking_tab: TrackingTabState,
     pub paused: bool,
     pub connection_history: ConnectionHistory,
@@ -353,6 +370,7 @@ pub struct SharedStateInner {
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
         SharedStateInner {
+            status_bar: StatusBarState::new(),
             tracking_tab: TrackingTabState::new(),
             paused: false,
             connection_history: ConnectionHistory::new(),
@@ -364,6 +382,19 @@ impl SharedStateInner {
 impl Default for SharedStateInner {
     fn default() -> Self {
         SharedStateInner::new()
+    }
+}
+
+#[derive(Debug)]
+pub struct StatusBarState {
+    pub current_connection: String,
+}
+
+impl StatusBarState {
+    fn new() -> StatusBarState {
+        StatusBarState {
+            current_connection: String::from(""),
+        }
     }
 }
 
@@ -1343,8 +1374,32 @@ impl GnssModes {
         };
         String::from(gnss_mode_color)
     }
+    pub fn pos_mode(&self) -> String {
+        let gnss_pos_mode = match self {
+            GnssModes::NoFix => NO_FIX_LABEL,
+            GnssModes::Spp => SPP,
+            GnssModes::Dgnss => DGNSS,
+            GnssModes::Float => RTK,
+            GnssModes::Fixed => RTK,
+            GnssModes::Dr => DR_LABEL,
+            GnssModes::Sbas => SBAS,
+        };
+        String::from(gnss_pos_mode)
+    }
 }
 
+// Struct with shared fields for various PosLLH Message types.
+#[allow(clippy::upper_case_acronyms)]
+pub struct PosLLHFields {
+    pub flags: u8,
+    pub h_accuracy: f64,
+    pub v_accuracy: f64,
+    pub tow: f64,
+    pub lat: f64,
+    pub lon: f64,
+    pub height: f64,
+    pub n_sats: u8,
+}
 // Enum wrapping around various PosLLH Message types.
 #[derive(Debug)]
 #[allow(clippy::upper_case_acronyms)]
@@ -1353,6 +1408,41 @@ pub enum PosLLH {
     MsgPosLLHDepA(MsgPosLLHDepA),
 }
 impl PosLLH {
+    pub fn fields(&self) -> PosLLHFields {
+        match self {
+            PosLLH::MsgPosLLH(MsgPosLLH {
+                flags,
+                h_accuracy,
+                v_accuracy,
+                tow,
+                lat,
+                lon,
+                height,
+                n_sats,
+                ..
+            })
+            | PosLLH::MsgPosLLHDepA(MsgPosLLHDepA {
+                flags,
+                h_accuracy,
+                v_accuracy,
+                tow,
+                lat,
+                lon,
+                height,
+                n_sats,
+                ..
+            }) => PosLLHFields {
+                flags: *flags,
+                h_accuracy: mm_to_m(*h_accuracy as f64),
+                v_accuracy: mm_to_m(*v_accuracy as f64),
+                tow: *tow as f64,
+                lat: *lat,
+                lon: *lon,
+                height: *height,
+                n_sats: *n_sats,
+            },
+        }
+    }
     pub fn mode(&self) -> u8 {
         match self {
             PosLLH::MsgPosLLH(msg) => msg.flags & 0x7,
@@ -1436,6 +1526,53 @@ impl VelNED {
             e,
             d,
             n_sats,
+        }
+    }
+}
+
+// Baseline Tab Types.
+
+// Struct with shared fields for various BaselineNED Message types.
+#[allow(clippy::upper_case_acronyms)]
+pub struct BaselineNEDFields {
+    pub flags: u8,
+    pub tow: f64,
+    pub n: i32,
+    pub e: i32,
+    pub d: i32,
+    pub n_sats: u8,
+}
+// Enum wrapping around various Baseline NED Message types.
+#[derive(Debug)]
+#[allow(clippy::upper_case_acronyms)]
+pub enum BaselineNED {
+    MsgBaselineNED(MsgBaselineNED),
+    MsgBaselineNEDDepA(MsgBaselineNEDDepA),
+}
+
+impl BaselineNED {
+    pub fn fields(&self) -> BaselineNEDFields {
+        let (flags, tow, n, e, d, n_sats) = match self {
+            BaselineNED::MsgBaselineNED(msg) => {
+                (msg.flags, msg.tow as f64, msg.n, msg.e, msg.d, msg.n_sats)
+            }
+            BaselineNED::MsgBaselineNEDDepA(msg) => {
+                (1, msg.tow as f64, msg.n, msg.e, msg.d, msg.n_sats)
+            }
+        };
+        BaselineNEDFields {
+            flags,
+            tow,
+            n,
+            e,
+            d,
+            n_sats,
+        }
+    }
+    pub fn mode(&self) -> u8 {
+        match self {
+            BaselineNED::MsgBaselineNED(MsgBaselineNED { flags, .. })
+            | BaselineNED::MsgBaselineNEDDepA(MsgBaselineNEDDepA { flags, .. }) => *flags & 0x7,
         }
     }
 }

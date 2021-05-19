@@ -22,7 +22,7 @@ use sbp::messages::tracking::{MeasurementState, TrackingChannelState};
 /// - `cn0_dict`: Main storage of (code, sat) keys corresponding to cn0 values.
 /// - `colors`: Stored rgb codes for frontend correspond to index of sv_labels.
 /// - `glo_fcn_dict`:  Storage of glonass sat codes if 100 +[-6, 7] case.
-/// - `glo_slot_dict`: Storage of glonass sat codes if [1,28] slot.
+/// - `glo_slot_dict`: Storage of glonass sat codes if [1, 28] slot.
 /// - `gps_tow`: The GPS Time of Week.
 /// - `gps_week`: The GPS week.
 /// - `incoming_obs_cn0`: Map used for accumulating (key, cn0) pairs before performing update_from_obs.

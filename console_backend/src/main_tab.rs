@@ -1,8 +1,11 @@
-use log::debug;
-use sbp::time::GpsTime;
+use chrono::Local;
+use log::{debug, error};
+use sbp::{messages::SBP, time::GpsTime};
 use std::{result::Result, thread::sleep, time::Instant};
 
+use crate::constants::*;
 use crate::observation_tab::ObservationTab;
+use crate::output::*;
 use crate::solution_tab::SolutionTab;
 use crate::solution_velocity_tab::SolutionVelocityTab;
 use crate::status_bar::StatusBar;
@@ -10,6 +13,7 @@ use crate::tracking_signals_tab::TrackingSignalsTab;
 use crate::types::*;
 
 pub struct MainTab<'a, S: MessageSender> {
+    sbp_logger: Option<SbpLogger>,
     last_gps_update: Instant,
     last_gps_time: Option<GpsTime>,
     pub tracking_signals_tab: TrackingSignalsTab<S>,
@@ -22,6 +26,7 @@ pub struct MainTab<'a, S: MessageSender> {
 impl<'a, S: MessageSender> MainTab<'a, S> {
     pub fn new(shared_state: SharedState, client_sender: S) -> MainTab<'a, S> {
         MainTab {
+            sbp_logger: None,
             last_gps_time: None,
             last_gps_update: Instant::now(),
             tracking_signals_tab: TrackingSignalsTab::new(
@@ -61,6 +66,95 @@ impl<'a, S: MessageSender> MainTab<'a, S> {
                 }
             } else {
                 self.last_gps_time = Some(g_time);
+            }
+        }
+    }
+
+    /// Initialize Baseline and Solution Position and Velocity Loggers.
+    ///
+    /// # Generates:
+    /// - `Solution Position Log`
+    /// - `Solution Velocity Log`
+    /// - `Baseline Log` // TODO(john-michaelburke@) [CPP-1337] Implement Baseline log.
+    ///
+    /// # Parameters:
+    /// - `logging`: The type of sbp logging to use; otherwise, None.
+    pub fn init_csv_logging(&mut self) {
+        let local_t = Local::now();
+        let vel_log_file = local_t.format(VEL_TIME_STR_FILEPATH).to_string();
+        let vel_log_file = DATA_DIRECTORY.path().join(vel_log_file);
+        self.solution_tab.vel_log_file = match CsvSerializer::new(&vel_log_file) {
+            Ok(vel_csv) => Some(vel_csv),
+            Err(e) => {
+                error!("issue creating file, {:?}, error, {}", vel_log_file, e);
+                None
+            }
+        };
+        let pos_log_file = local_t.format(POS_LLH_TIME_STR_FILEPATH).to_string();
+        let pos_log_file = DATA_DIRECTORY.path().join(pos_log_file);
+        self.solution_tab.pos_log_file = match CsvSerializer::new(&pos_log_file) {
+            Ok(pos_csv) => Some(pos_csv),
+            Err(e) => {
+                error!("issue creating file, {:?}, error, {}", pos_log_file, e);
+                None
+            }
+        };
+    }
+    pub fn end_csv_logging(&mut self) -> crate::types::Result<()> {
+        if let Some(vel_log) = &mut self.solution_tab.vel_log_file {
+            vel_log.flush()?;
+            self.solution_tab.vel_log_file = None;
+        }
+        if let Some(pos_log) = &mut self.solution_tab.pos_log_file {
+            pos_log.flush()?;
+            self.solution_tab.pos_log_file = None;
+        }
+        Ok(())
+    }
+
+    /// Initialize SBP Logger.
+    ///
+    /// # Parameters:
+    /// - `logging`: The type of sbp logging to use; otherwise, None.
+    pub fn init_sbp_logging(&mut self, logging: SbpLogging) {
+        let local_t = Local::now();
+        self.sbp_logger = match logging {
+            SbpLogging::Sbp => {
+                let sbp_log_file = local_t.format(SBP_FILEPATH).to_string();
+                let sbp_log_file = DATA_DIRECTORY.path().join(sbp_log_file);
+                match SbpLogger::new_sbp(&sbp_log_file) {
+                    Ok(logger) => Some(logger),
+                    Err(e) => {
+                        error!("issue creating file, {:?}, error, {}", sbp_log_file, e);
+                        None
+                    }
+                }
+            }
+            SbpLogging::Json => {
+                let sbp_json_log_file = local_t.format(SBP_JSON_FILEPATH).to_string();
+                let sbp_json_log_file = DATA_DIRECTORY.path().join(sbp_json_log_file);
+                match SbpLogger::new_sbp_json(&sbp_json_log_file) {
+                    Ok(logger) => Some(logger),
+                    Err(e) => {
+                        error!("issue creating file, {:?}, error, {}", sbp_json_log_file, e);
+                        None
+                    }
+                }
+            }
+            _ => None,
+        };
+    }
+    pub fn serialize_sbp(&mut self, msg: &SBP) {
+        if let Some(sbp_logger) = &mut self.sbp_logger {
+            if let Err(e) = sbp_logger.serialize(msg) {
+                error!("error, {}, unable to log sbp msg, {:?}", e, msg);
+            }
+        }
+    }
+    pub fn close_sbp(&mut self, msg: &SBP) {
+        if let Some(sbp_logger) = &mut self.sbp_logger {
+            if let Err(e) = sbp_logger.serialize(msg) {
+                error!("error, {}, unable to log sbp msg, {:?}", e, msg);
             }
         }
     }

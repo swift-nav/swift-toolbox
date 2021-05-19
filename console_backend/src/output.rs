@@ -1,7 +1,65 @@
+use sbp::{
+    codec::{
+        dencode::{FramedWrite, IterSinkExt},
+        json::JsonEncoder,
+        sbp::SbpEncoder,
+    },
+    messages::SBP,
+};
 use serde::Serialize;
-use std::fs::File;
+use serde_json::ser::CompactFormatter;
+use std::{fs::File, path::Path};
 
 use crate::types::Result;
+
+pub enum CsvLogging {
+    Off,
+    On,
+}
+
+pub enum SbpLogging {
+    Off,
+    Sbp,
+    Json,
+}
+
+pub enum SbpLogger {
+    Sbp(FramedWrite<File, SbpEncoder>),
+    Json(FramedWrite<File, JsonEncoder<CompactFormatter>>),
+}
+impl SbpLogger {
+    pub fn new_sbp<P: AsRef<Path>>(filepath: P) -> Result<SbpLogger> {
+        Ok(SbpLogger::Sbp(SbpEncoder::framed(File::open(filepath)?)))
+    }
+    pub fn new_sbp_json<P: AsRef<Path>>(filepath: P) -> Result<SbpLogger> {
+        Ok(SbpLogger::Json(JsonEncoder::framed(
+            File::open(filepath)?,
+            CompactFormatter,
+        )))
+    }
+    pub fn serialize(&mut self, msg: &SBP) -> Result<()> {
+        match self {
+            SbpLogger::Sbp(logger) => {
+                logger.send(msg)?;
+            }
+            SbpLogger::Json(logger) => {
+                logger.send(msg)?;
+            }
+        }
+        Ok(())
+    }
+    pub fn close(self) {
+        match self {
+            SbpLogger::Sbp(logger) => {
+                logger.release();
+            }
+            SbpLogger::Json(logger) => {
+                logger.release();
+            }
+        }
+    }
+}
+
 /// CsvSerializer for creating and writing to a csv.
 /// Taken from ICBINS/src/output.rs.
 #[derive(Debug)]
@@ -10,18 +68,19 @@ pub struct CsvSerializer {
 }
 
 impl CsvSerializer {
-    pub fn new(filepath: String) -> Result<CsvSerializer> {
+    pub fn new<P: AsRef<Path>>(filepath: P) -> Result<CsvSerializer> {
         Ok(CsvSerializer {
             writer: csv::Writer::from_path(filepath)?,
         })
     }
-    // TODO(john-michaelburke@) https://swift-nav.atlassian.net/browse/CPP-95
-    // Validate Solution Tab logging.
     pub fn serialize<T>(&mut self, ds: &T) -> Result<()>
     where
         T: Serialize,
     {
         self.writer.serialize(ds)?;
+        Ok(())
+    }
+    pub fn flush(&mut self) -> Result<()> {
         self.writer.flush()?;
         Ok(())
     }

@@ -29,6 +29,12 @@ pub const PAUSE_LOOP_SLEEP_DURATION_MS: u64 = 100;
 // Logging constants
 pub const LOG_WRITER_BUFFER_MESSAGE_COUNT: usize = 50;
 
+// Main Tab constants.
+pub const VEL_TIME_STR_FILEPATH: &str = "velocity_log_%Y%m%d-%H%M%S.csv";
+pub const POS_LLH_TIME_STR_FILEPATH: &str = "position_log_%Y%m%d-%H%M%S.csv";
+pub const SBP_FILEPATH: &str = "swift-gnss-%Y%m%d-%H%M%S.sbp";
+pub const SBP_JSON_FILEPATH: &str = "swift-gnss-%Y%m%d-%H%M%S.sbp.json";
+
 // Common constants.
 pub const NUM_POINTS: usize = 200;
 

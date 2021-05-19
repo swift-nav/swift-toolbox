@@ -1,8 +1,6 @@
 use capnp::message::Builder;
 use capnp::serialize;
 
-use chrono::Local;
-
 use sbp::messages::{
     navigation::{MsgAgeCorrections, MsgGPSTime, MsgUtcTime},
     system::{MsgInsStatus, MsgInsUpdates},
@@ -19,9 +17,6 @@ use crate::types::{
     VelNED,
 };
 use crate::utils::*;
-
-const VEL_TIME_STR_FILEPATH: &str = "velocity_log_%Y%m%d-%H%M%S.csv";
-const POS_LLH_TIME_STR_FILEPATH: &str = "position_log_%Y%m%d-%H%M%S.csv";
 
 /// SolutionTab struct.
 ///
@@ -198,36 +193,6 @@ impl<S: MessageSender> SolutionTab<S> {
         }
     }
 
-    /// A helper function for creating a new solution tab log.
-    ///
-    /// TODO(johnmichael.burke@) https://swift-nav.atlassian.net/browse/CPP-95
-    /// Validate logging.
-    pub fn init_logging(
-        &mut self,
-        directory_name: Option<String>,
-        filepath_: String,
-    ) -> Option<CsvSerializer> {
-        let mut filepath = filepath_.clone();
-        if let Some(dir_name) = directory_name.clone() {
-            filepath = format!("{}/{}", dir_name, filepath);
-        }
-        match CsvSerializer::new(filepath.clone()) {
-            Ok(vel_csv) => Some(vel_csv),
-            Err(e) => {
-                if directory_name.is_some() {
-                    eprintln!(
-                        "Issue creating file in directory, {}, error, {}.",
-                        filepath, e
-                    );
-                    self.init_logging(None, filepath_);
-                } else {
-                    eprintln!("issue creating file, {}, error, {}", filepath, e);
-                }
-                None
-            }
-        }
-    }
-
     /// Handle Vel NED / NEDDepA messages.
     ///
     /// # Parameters
@@ -250,39 +215,27 @@ impl<S: MessageSender> SolutionTab<S> {
 
         // TODO(johnmichael.burke@) https://swift-nav.atlassian.net/browse/CPP-95
         // Validate logging.
-        if self.logging {
-            if self.vel_log_file.is_none() {
-                let local_t = Local::now();
-                let filepath = local_t.format(VEL_TIME_STR_FILEPATH).to_string();
-
-                self.vel_log_file = self.init_logging(self.directory_name.clone(), filepath);
-            }
-            if let Some(vel_file) = &mut self.vel_log_file {
-                let mut gps_time = None;
-                if let Some(tgps) = tgps_ {
-                    if let Some(secgps) = secgps_ {
-                        gps_time = Some(format!("{}:{:0>6.06}", tgps, secgps));
-                    }
+        if let Some(vel_file) = &mut self.vel_log_file {
+            let mut gps_time = None;
+            if let Some(tgps) = tgps_ {
+                if let Some(secgps) = secgps_ {
+                    gps_time = Some(format!("{}:{:0>6.06}", tgps, secgps));
                 }
-                let pc_time = format!("{}:{:0>6.06}", tloc, secloc);
-                if let Err(err) = vel_file.serialize(&VelLog {
-                    pc_time,
-                    gps_time,
-                    tow_s: Some(tow),
-                    north_mps: Some(n),
-                    east_mps: Some(e),
-                    down_mps: Some(d),
-                    speed_mps: Some(speed),
-                    flags: vel_ned_fields.flags,
-                    num_signals: vel_ned_fields.n_sats,
-                }) {
-                    eprintln!("Unable to to write to vel log, error {}.", err);
-                }
-            } else {
-                eprintln!("Unable to write to vel log file.");
             }
-        } else {
-            self.vel_log_file = None;
+            let pc_time = format!("{}:{:0>6.06}", tloc, secloc);
+            if let Err(err) = vel_file.serialize(&VelLog {
+                pc_time,
+                gps_time,
+                tow_s: Some(tow),
+                north_mps: Some(n),
+                east_mps: Some(e),
+                down_mps: Some(d),
+                speed_mps: Some(speed),
+                flags: vel_ned_fields.flags,
+                num_signals: vel_ned_fields.n_sats,
+            }) {
+                eprintln!("Unable to to write to vel log, error {}.", err);
+            }
         }
         self.table
             .insert(VEL_FLAGS, format!("0x{:<03x}", vel_ned_fields.flags));
@@ -427,7 +380,6 @@ impl<S: MessageSender> SolutionTab<S> {
         }
         let mut gps_time = None;
         let mut gps_time_short = None;
-        let local_t = Local::now();
         if let Some(tgps) = tgps_ {
             if let Some(secgps) = secgps_ {
                 gps_time = Some(format!("{}:{:0>6.06}", tgps, secgps));
@@ -437,33 +389,22 @@ impl<S: MessageSender> SolutionTab<S> {
 
         // TODO(johnmichael.burke@) https://swift-nav.atlassian.net/browse/CPP-95
         // Validate logging.
-        if self.logging {
-            if self.pos_log_file.is_none() {
-                let filepath = local_t.format(POS_LLH_TIME_STR_FILEPATH).to_string();
-
-                self.pos_log_file = self.init_logging(self.directory_name.clone(), filepath);
+        if let Some(pos_file) = &mut self.pos_log_file {
+            let pc_time = format!("{}:{:>6.06}", tloc, secloc);
+            if let Err(err) = pos_file.serialize(&PosLLHLog {
+                pc_time,
+                gps_time,
+                tow_s: Some(tow),
+                latitude_d: Some(pos_llh_fields.lat),
+                longitude_d: Some(pos_llh_fields.lon),
+                altitude_m: Some(pos_llh_fields.height),
+                h_accuracy_m: Some(pos_llh_fields.h_accuracy),
+                v_accuracy_m: Some(pos_llh_fields.v_accuracy),
+                n_sats: pos_llh_fields.n_sats,
+                flags: pos_llh_fields.flags,
+            }) {
+                eprintln!("Unable to to write to pos llh log, error {}.", err);
             }
-            if let Some(pos_file) = &mut self.pos_log_file {
-                let pc_time = format!("{}:{:>6.06}", tloc, secloc);
-                if let Err(err) = pos_file.serialize(&PosLLHLog {
-                    pc_time,
-                    gps_time,
-                    tow_s: Some(tow),
-                    latitude_d: Some(pos_llh_fields.lat),
-                    longitude_d: Some(pos_llh_fields.lon),
-                    altitude_m: Some(pos_llh_fields.height),
-                    h_accuracy_m: Some(pos_llh_fields.h_accuracy),
-                    v_accuracy_m: Some(pos_llh_fields.v_accuracy),
-                    n_sats: pos_llh_fields.n_sats,
-                    flags: pos_llh_fields.flags,
-                }) {
-                    eprintln!("Unable to to write to pos llh log, error {}.", err);
-                }
-            } else {
-                eprintln!("Unable to write to vel pos llh file.");
-            }
-        } else {
-            self.pos_log_file = None;
         }
 
         if self.last_pos_mode == 0 {

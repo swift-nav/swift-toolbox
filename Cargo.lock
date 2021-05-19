@@ -125,6 +125,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a4521f3e3d031370679b3b140beb36dfe4801b09ac77e30c61941f97df3ef28b"
 
 [[package]]
+name = "base64"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "904dfeac50f3cdaba28fc6f57fdcddb75f49ed61346676a78c4ffe55877802fd"
+
+[[package]]
 name = "bindgen"
 version = "0.58.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -352,6 +358,7 @@ dependencies = [
  "pyo3",
  "sbp",
  "serde",
+ "serde_json",
  "serde_yaml",
  "serial_test",
  "serialport",
@@ -494,9 +501,9 @@ dependencies = [
 
 [[package]]
 name = "dencode"
-version = "0.1.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "51adcfc074e73db16c18fa2183287cc1738507e83d7c8479a25036cfce4e0c58"
+checksum = "baff253c790c651e3a050be1ce663c8a2d4894aadb23d218657f231bff76411b"
 dependencies = [
  "bytes",
 ]
@@ -1362,14 +1369,17 @@ dependencies = [
 [[package]]
 name = "sbp"
 version = "3.4.8-alpha"
-source = "git+https://github.com/swift-nav/libsbp.git?rev=629974666b1aa5fdab9fdbd517e180a2aee3809b#629974666b1aa5fdab9fdbd517e180a2aee3809b"
+source = "git+https://github.com/swift-nav/libsbp.git?rev=a5c221684439f2124306a2daa44126aac5457c80#a5c221684439f2124306a2daa44126aac5457c80"
 dependencies = [
+ "base64",
  "byteorder",
  "bytes",
  "crc16",
  "dencode",
  "log",
  "nom 6.1.2",
+ "serde",
+ "serde_json",
  "swiftnav-rs",
  "thiserror",
 ]
@@ -1601,8 +1611,8 @@ dependencies = [
 
 [[package]]
 name = "swiftnav-rs"
-version = "0.5.0"
-source = "git+https://github.com/swift-nav/swiftnav-rs?tag=v0.5.0#a2a1fca1f6be8975fdd3886eb5267b01587d7952"
+version = "0.5.1"
+source = "git+https://github.com/swift-nav/swiftnav-rs?tag=v0.5.1#9ea7f56d8089c4416b7b5b237f22e79ea3460582"
 dependencies = [
  "bindgen",
  "cmake",

@@ -11,18 +11,15 @@ use indexmap::set::IndexSet;
 use lazy_static::lazy_static;
 use log::{error, info, warn};
 use ordered_float::OrderedFloat;
-use sbp::{
-    messages::{
-        navigation::{
-            MsgBaselineNED, MsgBaselineNEDDepA, MsgDops, MsgDopsDepA, MsgPosLLH, MsgPosLLHDepA,
-            MsgVelNED, MsgVelNEDDepA,
-        },
-        observation::{
-            MsgObs, MsgObsDepB, MsgObsDepC, MsgOsr, PackedObsContent, PackedObsContentDepB,
-            PackedObsContentDepC, PackedOsrContent,
-        },
+use sbp::messages::{
+    navigation::{
+        MsgBaselineNED, MsgBaselineNEDDepA, MsgDops, MsgDopsDepA, MsgPosLLH, MsgPosLLHDepA,
+        MsgVelNED, MsgVelNEDDepA,
     },
-    sbp_tools::SBPTools,
+    observation::{
+        MsgObs, MsgObsDepB, MsgObsDepC, MsgOsr, PackedObsContent, PackedObsContentDepB,
+        PackedObsContentDepC, PackedOsrContent,
+    },
 };
 use serde::{Deserialize, Serialize};
 use serialport::FlowControl as SPFlowControl;
@@ -33,7 +30,6 @@ use std::{
     fmt::Debug,
     fs,
     hash::Hash,
-    io::{Read, Write},
     net::TcpStream,
     ops::Deref,
     path::PathBuf,
@@ -261,53 +257,6 @@ impl ServerState {
         self.new_connection(handle);
     }
 }
-
-// pub struct TcpConnection {
-//     host: String,
-//     port: u16,
-//     stream: 
-// }
-
-// pub struct FileConnection {
-//     filename: String,
-// }
-
-// pub struct SerialConnection {
-//     device: String,
-//     baudrate: u32,
-//     flow: FlowControl
-// }
-
-
-pub struct Connection <R: Read, W: Write> {
-    host: String,
-    stream_read: R,
-    stream_write: W,
-}
-impl <R: Read, W: Write> Connection<R, W> {
-    pub fn from_tcp(client_send: ClientSender, shared_state: SharedState, host: String, port: u16) -> Result<Connection<R, W>> {
-        
-        let host_port = format!("{}:{}", host, port);
-        let stream = TcpStream::connect(host_port.clone())?;
-        shared_state.update_tcp_history(host, port);
-        shared_state.set_running(false, client_send);
-        let new_str = stream.try_clone()?;
-        Ok(Connection {
-            host: host_port,
-            stream_read: new_str,
-            stream_write: stream,
-        })
-
-    }
-    // pub fn from_file() -> Connection<R, W> {
-
-    // }
-    // pub fn from_serial() -> Connection<R, W> {
-
-    // }
-}
-
-
 
 #[derive(Debug, Default)]
 pub struct ServerStateInner {

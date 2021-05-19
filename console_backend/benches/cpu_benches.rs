@@ -61,7 +61,12 @@ fn run_process_messages(file_in_name: &str, failure: bool) {
             inner: client_send_,
         };
         shared_state.set_running(true, client_send.clone());
-        process_messages::process_messages(Box::new(fs::File::open(file_in_name).unwrap()), shared_state, client_send, RealtimeDelay::Off);
+        process_messages::process_messages(
+            Box::new(fs::File::open(file_in_name).unwrap()),
+            shared_state,
+            client_send,
+            RealtimeDelay::Off,
+        );
     }
     recv_thread.join().expect("join should succeed");
 }

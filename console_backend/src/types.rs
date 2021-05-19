@@ -3,9 +3,7 @@ use crate::constants::*;
 use crate::formatters::*;
 use crate::piksi_tools_constants::*;
 use crate::process_messages::process_messages;
-use crate::utils::{
-    bytes_to_kb, close_frontend, mm_to_m, ms_to_sec, refresh_navbar, set_connected_frontend,
-};
+use crate::utils::{close_frontend, mm_to_m, ms_to_sec, refresh_navbar, set_connected_frontend};
 use anyhow::{Context, Result as AHResult};
 use chrono::{DateTime, Utc};
 use directories::ProjectDirs;
@@ -303,14 +301,6 @@ impl SharedState {
         let mut shared_data = self.lock().unwrap();
         (*shared_data).running = set_to;
     }
-    pub fn add_bytes(&self, num_bytes: usize) {
-        let mut shared_data = self.lock().unwrap();
-        (*shared_data).status_bar.add_bytes(num_bytes);
-    }
-    pub fn data_rate(&self) -> f64 {
-        let shared_data = self.lock().unwrap();
-        (*shared_data).status_bar.data_rate
-    }
     pub fn is_paused(&self) -> bool {
         let shared_data = self.lock().unwrap();
         (*shared_data).paused
@@ -397,29 +387,14 @@ impl Default for SharedStateInner {
 
 #[derive(Debug)]
 pub struct StatusBarState {
-    pub data_rate: f64,
-    total_bytes_read: usize,
-    last_time_bytes_read: Instant,
     pub current_connection: String,
 }
 
 impl StatusBarState {
     fn new() -> StatusBarState {
         StatusBarState {
-            data_rate: 0.0,
             current_connection: String::from(""),
-            total_bytes_read: 0,
-            last_time_bytes_read: Instant::now(),
         }
-    }
-    pub fn add_bytes(&mut self, bytes: usize) {
-        let new_bytes_time_read = Instant::now();
-        let new_bytes_read = self.total_bytes_read + bytes;
-        let diff = new_bytes_read - self.total_bytes_read;
-        self.data_rate = bytes_to_kb(diff as f64)
-            / (new_bytes_time_read - self.last_time_bytes_read).as_secs_f64();
-        self.total_bytes_read = new_bytes_read;
-        self.last_time_bytes_read = new_bytes_time_read;
     }
 }
 

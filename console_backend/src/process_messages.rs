@@ -31,7 +31,7 @@ pub fn process_messages<S: MessageSender, T>(
             }
         }
         let msg_name = message.get_message_name();
-        shared_state.add_bytes(message.sbp_size());
+        main.status_bar.add_bytes(message.sbp_size());
         let mut attempt_delay = true;
         match message {
             SBP::MsgAgeCorrections(msg) => {

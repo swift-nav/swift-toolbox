@@ -36,6 +36,13 @@ QtObject {
         readonly property int arrowsSideLength: 15
         readonly property string arrowsBluePath: "images/iconic/arrows_blue.png"
         readonly property string arrowsGreyPath: "images/iconic/arrows_grey.png"
+        readonly property string portLabel: "Port: "
+        readonly property string posLabel: "Pos: "
+        readonly property string rtkLabel: "RTK: "
+        readonly property string satsLabel: "Sats: "
+        readonly property string corrAgeLabel: "Corr Age: "
+        readonly property string insLabel: "INS: "
+        readonly property string defaultValue: "--"
     }
 
     navBar: QtObject {

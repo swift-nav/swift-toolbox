@@ -20,11 +20,12 @@ use crate::piksi_tools_constants::{
     ins_error_dict, ins_mode_dict, ins_type_dict, rtk_mode_dict, DR_MODE, EMPTY_STR, RTK_MODES,
 };
 use crate::types::{BaselineNED, GnssModes, MessageSender, PosLLH, SharedState};
-use crate::utils::decisec_to_sec;
+use crate::utils::{bytes_to_kb, decisec_to_sec};
 
 #[derive(Debug, Clone)]
 pub struct StatusBarUpdate {
     age_of_corrections: String,
+    data_rate: String,
     ins_status: String,
     num_sats: String,
     pos_mode: String,
@@ -35,6 +36,7 @@ impl StatusBarUpdate {
     pub fn connection_dropped() -> StatusBarUpdate {
         StatusBarUpdate {
             age_of_corrections: String::from(EMPTY_STR),
+            data_rate: String::from(EMPTY_STR),
             ins_status: String::from(EMPTY_STR),
             num_sats: String::from(EMPTY_STR),
             pos_mode: String::from(EMPTY_STR),
@@ -99,9 +101,16 @@ impl<S: MessageSender> StatusBar<S> {
         })
     }
 
+    pub fn add_bytes(&mut self, bytes: usize) {
+        let mut shared_data = self
+            .heartbeat_data
+            .lock()
+            .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
+        (*shared_data).total_bytes_read += bytes;
+    }
+
     /// Package data into a message buffer and send to frontend.
     fn send_data(&mut self) {
-        let data_rate = self.shared_state.data_rate();
         let sb_update;
         {
             let mut shared_data = self
@@ -110,7 +119,6 @@ impl<S: MessageSender> StatusBar<S> {
                 .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
             sb_update = (*shared_data).new_update.clone();
             (*shared_data).new_update = None;
-            (*shared_data).data_rate = data_rate;
         }
         let sb_update = if let Some(sb_update_) = sb_update {
             sb_update_
@@ -128,7 +136,7 @@ impl<S: MessageSender> StatusBar<S> {
         status_bar_status.set_sats(&sb_update.num_sats);
         status_bar_status.set_corr_age(&sb_update.age_of_corrections);
         status_bar_status.set_ins(&sb_update.ins_status);
-        status_bar_status.set_data_rate(&format!("{:.2} KB/s", data_rate));
+        status_bar_status.set_data_rate(&sb_update.data_rate);
         status_bar_status.set_solid_connection(sb_update.solid_connection);
 
         let mut msg_bytes: Vec<u8> = vec![];
@@ -269,7 +277,6 @@ pub struct HeartbeatInner {
     ins_used: bool,
     last_age_corr_receipt_time: Option<Instant>,
     last_btime_update: Option<Instant>,
-    last_bytes_read: usize,
     last_heartbeat_count: usize,
     last_ins_status_receipt_time: Option<Instant>,
     last_odo_update_time: Option<Instant>,
@@ -281,6 +288,8 @@ pub struct HeartbeatInner {
     new_update: Option<StatusBarUpdate>,
     solid_connection: bool,
     total_bytes_read: usize,
+    last_bytes_read: usize,
+    last_time_bytes_read: Instant,
 }
 impl HeartbeatInner {
     pub fn new() -> HeartbeatInner {
@@ -297,7 +306,6 @@ impl HeartbeatInner {
             ins_used: false,
             last_age_corr_receipt_time: None,
             last_btime_update: None,
-            last_bytes_read: 0,
             last_heartbeat_count: 0,
             last_ins_status_receipt_time: None,
             last_odo_update_time: None,
@@ -309,6 +317,8 @@ impl HeartbeatInner {
             new_update: None,
             solid_connection: false,
             total_bytes_read: 0,
+            last_bytes_read: 0,
+            last_time_bytes_read: Instant::now(),
         }
     }
 
@@ -324,8 +334,18 @@ impl HeartbeatInner {
             true
         };
         self.last_heartbeat_count = self.heartbeat_count;
+        self.data_rate_update();
 
         self.solid_connection
+    }
+
+    pub fn data_rate_update(&mut self) {
+        let new_bytes_time_read = Instant::now();
+        let diff = self.total_bytes_read - self.last_bytes_read;
+        self.data_rate = bytes_to_kb(diff as f64)
+            / (new_bytes_time_read - self.last_time_bytes_read).as_secs_f64();
+        self.last_bytes_read = self.total_bytes_read;
+        self.last_time_bytes_read = new_bytes_time_read;
     }
 
     pub fn pos_llh_update(&mut self) {
@@ -430,6 +450,7 @@ impl HeartbeatInner {
     pub fn prepare_update_packet(&mut self) {
         let sb_update = StatusBarUpdate {
             age_of_corrections: self.age_of_corrections.clone(),
+            data_rate: format!("{:.2} KB/s", self.data_rate),
             ins_status: self.ins_status_string.clone(),
             num_sats: self.llh_num_sats.to_string(),
             pos_mode: self.llh_display_mode.clone(),

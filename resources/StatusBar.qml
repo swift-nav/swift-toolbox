@@ -22,134 +22,141 @@ Rectangle {
         anchors.rightMargin: Constants.statusBar.margin
         spacing: Constants.statusBar.spacing
 
-        Row {
-            id: statusBarRowPort
+        RowLayout {
+            Row {
+                id: statusBarRowPort
 
-            spacing: Constants.statusBar.innerKeyValSpacing
+                spacing: Constants.statusBar.innerKeyValSpacing
 
-            Text {
-                text: "Port: "
-                color: Constants.statusBar.keyTextColor
-                font.pointSize: Constants.largePointSize
-                font.bold: true
+                Text {
+                    text: Constants.statusBar.portLabel
+                    color: Constants.statusBar.keyTextColor
+                    font.pointSize: Constants.largePointSize
+                    font.bold: true
+                }
+
+                Text {
+                    id: statusBarPort
+
+                    text: Constants.statusBar.defaultValue
+                    font.pointSize: Constants.largePointSize
+                }
+
             }
 
-            Text {
-                id: statusBarPort
+            Row {
+                id: statusBarRowPos
 
-                font.pointSize: Constants.largePointSize
+                spacing: Constants.statusBar.innerKeyValSpacing
+
+                Text {
+                    text: Constants.statusBar.posLabel
+                    color: Constants.statusBar.keyTextColor
+                    font.pointSize: Constants.largePointSize
+                    font.bold: true
+                }
+
+                Text {
+                    id: statusBarPos
+
+                    text: Constants.statusBar.defaultValue
+                    font.pointSize: Constants.largePointSize
+                }
+
+            }
+
+            Row {
+                id: statusBarRowRTK
+
+                Layout.alignment: Qt.AlignLeft
+                spacing: Constants.statusBar.innerKeyValSpacing
+
+                Text {
+                    text: Constants.statusBar.rtkLabel
+                    color: Constants.statusBar.keyTextColor
+                    font.pointSize: Constants.largePointSize
+                    font.bold: true
+                }
+
+                Text {
+                    id: statusBarRTK
+
+                    text: Constants.statusBar.defaultValue
+                    font.pointSize: Constants.largePointSize
+                }
+
+            }
+
+            Row {
+                id: statusBarRowSats
+
+                spacing: Constants.statusBar.innerKeyValSpacing
+
+                Text {
+                    text: Constants.statusBar.satsLabel
+                    color: Constants.statusBar.keyTextColor
+                    font.pointSize: Constants.largePointSize
+                    font.bold: true
+                }
+
+                Text {
+                    id: statusBarSats
+
+                    text: Constants.statusBar.defaultValue
+                    font.pointSize: Constants.largePointSize
+                }
+
+            }
+
+            Row {
+                id: statusBarRowCorrAge
+
+                spacing: Constants.statusBar.innerKeyValSpacing
+
+                Text {
+                    text: Constants.statusBar.corrAgeLabel
+                    color: Constants.statusBar.keyTextColor
+                    font.pointSize: Constants.largePointSize
+                    font.bold: true
+                }
+
+                Text {
+                    id: statusBarCorrAge
+
+                    text: Constants.statusBar.defaultValue
+                    font.pointSize: Constants.largePointSize
+                }
+
+            }
+
+            Row {
+                id: statusBarRowINS
+
+                spacing: Constants.statusBar.innerKeyValSpacing
+
+                Text {
+                    text: Constants.statusBar.insLabel
+                    color: Constants.statusBar.keyTextColor
+                    font.pointSize: Constants.largePointSize
+                    font.bold: true
+                }
+
+                Text {
+                    id: statusBarINS
+
+                    text: Constants.statusBar.defaultValue
+                    font.pointSize: Constants.largePointSize
+                }
+
             }
 
         }
 
-        Row {
-            id: statusBarRowPos
-
-            Layout.minimumWidth: statusBarRowLayout.width * Constants.statusBar.smallKeyWidthRatio
-            spacing: Constants.statusBar.innerKeyValSpacing
-
-            Text {
-                text: "Pos: "
-                color: Constants.statusBar.keyTextColor
-                font.pointSize: Constants.largePointSize
-                font.bold: true
-            }
-
-            Text {
-                id: statusBarPos
-
-                font.pointSize: Constants.largePointSize
-            }
-
-        }
-
-        Row {
-            id: statusBarRowRTK
-
-            Layout.minimumWidth: statusBarRowLayout.width * Constants.statusBar.smallKeyWidthRatio
-            Layout.alignment: Qt.AlignLeft
-            spacing: Constants.statusBar.innerKeyValSpacing
-
-            Text {
-                text: "RTK: "
-                color: Constants.statusBar.keyTextColor
-                font.pointSize: Constants.largePointSize
-                font.bold: true
-            }
-
-            Text {
-                id: statusBarRTK
-
-                font.pointSize: Constants.largePointSize
-            }
-
-        }
-
-        Row {
-            id: statusBarRowSats
-
-            Layout.minimumWidth: statusBarRowLayout.width * Constants.statusBar.smallKeyWidthRatio
-            spacing: Constants.statusBar.innerKeyValSpacing
-
-            Text {
-                text: "Sats: "
-                color: Constants.statusBar.keyTextColor
-                font.pointSize: Constants.largePointSize
-                font.bold: true
-            }
-
-            Text {
-                id: statusBarSats
-
-                font.pointSize: Constants.largePointSize
-            }
-
-        }
-
-        Row {
-            id: statusBarRowCorrAge
-
-            Layout.minimumWidth: statusBarRowLayout.width * Constants.statusBar.smallKeyWidthRatio
-            spacing: Constants.statusBar.innerKeyValSpacing
-
-            Text {
-                text: "Corr Age: "
-                color: Constants.statusBar.keyTextColor
-                font.pointSize: Constants.largePointSize
-                font.bold: true
-            }
-
-            Text {
-                id: statusBarCorrAge
-
-                font.pointSize: Constants.largePointSize
-            }
-
-        }
-
-        Row {
-            id: statusBarRowINS
-
-            Layout.minimumWidth: statusBarRowLayout.width * Constants.statusBar.smallKeyWidthRatio
-            spacing: Constants.statusBar.innerKeyValSpacing
-
-            Text {
-                text: "INS: "
-                color: Constants.statusBar.keyTextColor
-                font.pointSize: Constants.largePointSize
-                font.bold: true
-            }
-
-            Text {
-                id: statusBarINS
-
-                font.pointSize: Constants.largePointSize
-            }
-
+        Rectangle {
+            Layout.fillWidth: true
         }
 
         RowLayout {
-            Layout.fillWidth: true
             Layout.alignment: Qt.AlignRight
 
             Text {
@@ -183,39 +190,26 @@ Rectangle {
         }
 
         Timer {
-            // if (!statusBarData.available_baudrates.length)
-            //     return ;
-            // if (!available_baudrates.length || !available_flows.length || available_refresh_rates.length) {
-            //     available_baudrates = statusBarData.available_baudrates;
-            //     serialDeviceBaudRate.currentIndex = 1;
-            //     available_flows = statusBarData.available_flows;
-            //     available_refresh_rates = statusBarData.available_refresh_rates;
-            //     refreshRateDrop.currentIndex = available_refresh_rates.indexOf(Globals.currentRefreshRate);
-            // }
-            // available_devices = statusBarData.available_ports;
-            // previous_hosts = statusBarData.previous_hosts;
-            // previous_ports = statusBarData.previous_ports;
-            // previous_files = statusBarData.previous_files;
-            // connectButton.checked = statusBarData.connected;
-
             interval: Utils.hzToMilliseconds(Constants.staticTimerIntervalRate)
             running: true
             repeat: true
             onTriggered: {
                 status_bar_model.fill_data(statusBarData);
-                statusBarPort.text = statusBarData.port;
-                statusBarPos.text = statusBarData.pos;
-                statusBarRTK.text = statusBarData.rtk;
-                statusBarSats.text = statusBarData.sats;
-                statusBarCorrAge.text = statusBarData.corr_age;
-                statusBarINS.text = statusBarData.ins;
-                statusBarDataRate.text = statusBarData.data_rate;
-                if (statusBarData.solid_connection) {
-                    statusBarGoodConnectionImage.visible = true;
-                    statusBarBadConnectionImage.visible = false;
-                } else {
-                    statusBarGoodConnectionImage.visible = false;
-                    statusBarBadConnectionImage.visible = true;
+                if (statusBarData.port) {
+                    statusBarPort.text = statusBarData.port;
+                    statusBarPos.text = statusBarData.pos;
+                    statusBarRTK.text = statusBarData.rtk;
+                    statusBarSats.text = statusBarData.sats;
+                    statusBarCorrAge.text = statusBarData.corr_age;
+                    statusBarINS.text = statusBarData.ins;
+                    statusBarDataRate.text = statusBarData.data_rate;
+                    if (statusBarData.solid_connection) {
+                        statusBarGoodConnectionImage.visible = true;
+                        statusBarBadConnectionImage.visible = false;
+                    } else {
+                        statusBarGoodConnectionImage.visible = false;
+                        statusBarBadConnectionImage.visible = true;
+                    }
                 }
             }
         }

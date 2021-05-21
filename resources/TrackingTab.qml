@@ -14,8 +14,9 @@ Item {
     TabBar {
         id: trackingBar
 
-        z: 100
+        z: Constants.commonChart.zAboveCharts
         currentIndex: Globals.initialSubTabIndex
+        contentHeight: Constants.tabBarHeight
 
         Repeater {
             model: ["Signals", "Sky Plot"]

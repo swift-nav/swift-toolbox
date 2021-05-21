@@ -40,6 +40,7 @@ ApplicationWindow {
                     Layout.fillWidth: true
                     z: Constants.commonChart.zAboveCharts
                     currentIndex: Globals.initialMainTabIndex
+                    contentHeight: Constants.tabBarHeight
 
                     Repeater {
                         model: ["Tracking", "Solution", "Baseline", "Observations", "Settings", "Update", "Advanced"]

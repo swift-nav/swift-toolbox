@@ -6,6 +6,7 @@ QtObject {
     readonly property int width: 1050
     readonly property int height: 600
     readonly property real margins: 2
+    readonly property real tabBarHeight: 30
     readonly property real topLevelSpacing: 0
     readonly property real logPanelPreferredHeight: 100
     readonly property real navBarPreferredHeight: 50

@@ -97,6 +97,19 @@ ApplicationWindow {
         }
 
         Rectangle {
+            id: loggingBar
+
+            Layout.fillWidth: true
+            Layout.preferredHeight: Constants.navBarPreferredHeight
+            z: Constants.commonChart.zAboveCharts
+            visible: false
+
+            LoggingBar {
+            }
+
+        }
+
+        Rectangle {
             id: navBar
 
             Layout.fillWidth: true

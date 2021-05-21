@@ -131,6 +131,18 @@ struct TrackingSignalsStatus {
     checkLabels @5 :List(Text);
 }
 
+struct LoggingBarFront {
+    solutionLogging @0 :Bool;
+    sbpLogging @1 :Bool;
+    sbpFileFormat @2 :Bool;
+    directory @3 :Text;
+}
+
+struct LoggingBarStatus {
+    previousFolders @0 : List(Text);
+    folder @1 :Text;
+}
+
 struct TrackingSignalsStatusFront {
     trackingSignalsCheckVisibility @0 :List(Text);
 }
@@ -175,5 +187,7 @@ struct Message {
         logAppend @17 :LogAppend;
         observationStatus @18 :ObservationStatus;
         statusBarStatus @19 :StatusBarStatus;
+        loggingBarFront @20 :LoggingBarFront;
+        loggingBarStatus @21 :LoggingBarStatus;
     }
 }

@@ -47,6 +47,8 @@ class Keys(str, Enum):
     INS = "INS"
     DATA_RATE = "DATA_RATE"
     SOLID_CONNECTION = "SOLID_CONNECTION"
+    PREVIOUS_FOLDERS = "PREVIOUS_FOLDERS"
+    FOLDER = "FOLDER"
 
 
 class ApplicationStates(str, Enum):
@@ -76,6 +78,8 @@ class MessageKeys(str, Enum):
     SOLUTION_POSITION_STATUS_UNIT_FRONT = "solutionPositionStatusUnitFront"
     SOLUTION_POSITION_STATUS_BUTTON_FRONT = "solutionPositionStatusButtonFront"
     LOG_APPEND = "logAppend"
+    LOGGING_BAR_FRONT = "loggingBarFront"
+    LOGGING_BAR_STATUS = "loggingBarStatus"
 
 
 class QTKeys(str, Enum):

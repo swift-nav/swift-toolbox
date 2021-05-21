@@ -12,15 +12,40 @@ use std::{fs::File, path::Path};
 
 use crate::types::Result;
 
+#[derive(Clone, Debug, PartialEq)]
 pub enum CsvLogging {
     Off,
     On,
 }
+impl From<bool> for CsvLogging {
+    fn from(logging: bool) -> Self {
+        if logging {
+            CsvLogging::On
+        } else {
+            CsvLogging::Off
+        }
+    }
+}
 
+#[derive(Clone, Debug, PartialEq)]
 pub enum SbpLogging {
     Off,
     Sbp,
     Json,
+}
+impl From<(bool, bool)> for SbpLogging {
+    fn from(logging_and_format: (bool, bool)) -> Self {
+        let (sbp_logging, sbp_format) = logging_and_format;
+        if sbp_logging {
+            if sbp_format {
+                SbpLogging::Sbp
+            } else {
+                SbpLogging::Json
+            }
+        } else {
+            SbpLogging::Off
+        }
+    }
 }
 
 pub enum SbpLogger {
@@ -29,11 +54,11 @@ pub enum SbpLogger {
 }
 impl SbpLogger {
     pub fn new_sbp<P: AsRef<Path>>(filepath: P) -> Result<SbpLogger> {
-        Ok(SbpLogger::Sbp(SbpEncoder::framed(File::open(filepath)?)))
+        Ok(SbpLogger::Sbp(SbpEncoder::framed(File::create(filepath)?)))
     }
     pub fn new_sbp_json<P: AsRef<Path>>(filepath: P) -> Result<SbpLogger> {
         Ok(SbpLogger::Json(JsonEncoder::framed(
-            File::open(filepath)?,
+            File::create(filepath)?,
             CompactFormatter,
         )))
     }

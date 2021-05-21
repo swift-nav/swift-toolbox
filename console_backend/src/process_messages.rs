@@ -1,4 +1,4 @@
-use log::debug;
+use log::{debug, error};
 use sbp::sbp_tools::SBPTools;
 use sbp::{
     messages::{SBPMessage, SBP},
@@ -24,6 +24,10 @@ pub fn process_messages<S: MessageSender, T: std::io::Read>(
         .with_rover_time();
     for (message, gps_time) in messages {
         if !shared_state.is_running() {
+            if let Err(e) = main.end_csv_logging() {
+                error!("Issue closing csv file, {}", e);
+            }
+            main.close_sbp();
             break;
         }
         if shared_state.is_paused() {

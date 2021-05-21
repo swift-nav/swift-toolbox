@@ -1,6 +1,8 @@
 use crate::common_constants::{self as cc, Tabs};
 use crate::constants::*;
+use crate::errors::*;
 use crate::formatters::*;
+use crate::output::{CsvLogging, SbpLogging};
 use crate::piksi_tools_constants::*;
 use crate::process_messages::process_messages;
 use crate::utils::{close_frontend, mm_to_m, ms_to_sec, refresh_navbar, set_connected_frontend};
@@ -124,11 +126,11 @@ impl ServerState {
         ServerState(Arc::new(Mutex::new(ServerStateInner::default())))
     }
     pub fn new_connection(&self, new_thread: JoinHandle<()>) {
-        let mut shared_data = self.lock().unwrap();
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).handler = Some(new_thread);
     }
     pub fn connection_join(&self) {
-        let mut shared_data = self.lock().unwrap();
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         let handler = &mut (*shared_data).handler;
         if let Some(handle) = handler.take() {
             handle.join().unwrap();
@@ -276,7 +278,7 @@ impl SharedState {
         SharedState(Arc::new(Mutex::new(SharedStateInner::default())))
     }
     pub fn is_running(&self) -> bool {
-        let shared_data = self.lock().unwrap();
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).running
     }
     pub fn set_running(&self, set_to: bool, mut client_send: ClientSender) {
@@ -286,41 +288,56 @@ impl SharedState {
             set_connected_frontend(cc::ApplicationStates::DISCONNECTED, &mut client_send);
             self.set_current_connection(EMPTY_STR.to_string());
         }
-        let mut shared_data = self.lock().unwrap();
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).running = set_to;
     }
     pub fn is_paused(&self) -> bool {
-        let shared_data = self.lock().unwrap();
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).paused
     }
     pub fn set_paused(&self, set_to: bool) {
-        let mut shared_data = self.lock().unwrap();
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).paused = set_to;
     }
-
     pub fn current_connection(&self) -> String {
-        let shared_data = self.lock().unwrap();
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).status_bar.current_connection.clone()
     }
     pub fn set_current_connection(&self, current_connection: String) {
-        let mut shared_data = self.lock().unwrap();
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).status_bar.current_connection = current_connection;
     }
-
+    pub fn logging_directory(&self) -> PathBuf {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).logging_bar.logging_directory.clone()
+    }
+    pub fn set_logging_directory(&self, directory: PathBuf) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).logging_bar.logging_directory = directory;
+    }
+    pub fn folder_history(&self) -> IndexSet<String> {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).connection_history.folders()
+    }
     pub fn file_history(&self) -> IndexSet<String> {
-        let shared_data = self.lock().unwrap();
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).connection_history.files()
     }
     pub fn address_history(&self) -> IndexSet<Address> {
-        let shared_data = self.lock().unwrap();
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).connection_history.addresses()
     }
+    pub fn update_folder_history(&self, folder: PathBuf) {
+        let folder = String::from(folder.to_str().expect(CONVERT_TO_STR_FAILURE));
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).connection_history.record_folder(folder);
+    }
     pub fn update_file_history(&self, filename: String) {
-        let mut shared_data = self.lock().unwrap();
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).connection_history.record_file(filename);
     }
     pub fn update_tcp_history(&self, host: String, port: u16) {
-        let mut shared_data = self.lock().unwrap();
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).connection_history.record_address(host, port);
     }
 }
@@ -349,6 +366,7 @@ impl Clone for SharedState {
 #[derive(Debug)]
 pub struct SharedStateInner {
     pub status_bar: StatusBarState,
+    pub logging_bar: LoggingBarState,
     pub tracking_tab: TrackingTabState,
     pub paused: bool,
     pub connection_history: ConnectionHistory,
@@ -359,6 +377,7 @@ impl SharedStateInner {
     pub fn new() -> SharedStateInner {
         SharedStateInner {
             status_bar: StatusBarState::new(),
+            logging_bar: LoggingBarState::new(),
             tracking_tab: TrackingTabState::new(),
             paused: false,
             connection_history: ConnectionHistory::new(),
@@ -382,6 +401,23 @@ impl StatusBarState {
     fn new() -> StatusBarState {
         StatusBarState {
             current_connection: String::from(""),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct LoggingBarState {
+    pub sbp_logging: SbpLogging,
+    pub solution_logging: CsvLogging,
+    pub logging_directory: PathBuf,
+}
+
+impl LoggingBarState {
+    fn new() -> LoggingBarState {
+        LoggingBarState {
+            sbp_logging: SbpLogging::Off,
+            solution_logging: CsvLogging::Off,
+            logging_directory: DATA_DIRECTORY.path(),
         }
     }
 }
@@ -522,6 +558,17 @@ fn create_data_dir() -> AHResult<PathBuf> {
     Ok(path)
 }
 
+/// Create directory.
+///
+/// Taken from swift-cli/swift/src/lib.rs.
+/// # Returns
+/// - `Ok`: The PathBuf for the data directory path.
+/// - `Err`: Issue deducing path or creating the data directory.
+pub fn create_directory(directory: PathBuf) -> Result<PathBuf> {
+    fs::create_dir_all(&directory)?;
+    Ok(directory)
+}
+
 #[derive(Debug, Clone, Eq, Hash, PartialEq, Serialize, Deserialize)]
 pub struct Address {
     pub host: String,
@@ -532,6 +579,7 @@ pub struct Address {
 pub struct ConnectionHistory {
     addresses: IndexSet<Address>,
     files: IndexSet<String>,
+    folders: IndexSet<String>,
 }
 
 impl Default for ConnectionHistory {
@@ -552,6 +600,7 @@ impl ConnectionHistory {
         ConnectionHistory {
             addresses: IndexSet::new(),
             files: IndexSet::new(),
+            folders: IndexSet::new(),
         }
     }
     /// Return the filename of the saved connection history file.
@@ -566,7 +615,10 @@ impl ConnectionHistory {
     pub fn files(&self) -> IndexSet<String> {
         self.files.clone()
     }
-
+    /// Returns a clone of the private folders vec.
+    pub fn folders(&self) -> IndexSet<String> {
+        self.folders.clone()
+    }
     /// Attempt to add a new host and port if not the most recent entries.
     ///
     /// # Parameters
@@ -592,6 +644,20 @@ impl ConnectionHistory {
         self.files.insert(filename);
         let diff = i32::max(0, self.files.len() as i32 - MAX_CONNECTION_HISTORY);
         self.files = self.files.split_off(diff as usize);
+
+        if let Err(e) = self.save() {
+            error!("Unable to save connection history, {}.", e);
+        }
+    }
+    /// Attempt to add a new folder if not the most recent entry.
+    ///
+    /// # Parameters
+    /// - `folder`: The path to the folder to add to history.
+    pub fn record_folder(&mut self, folder: String) {
+        self.folders.shift_remove(&folder);
+        self.folders.insert(folder);
+        let diff = i32::max(0, self.folders.len() as i32 - MAX_CONNECTION_HISTORY);
+        self.folders = self.folders.split_off(diff as usize);
 
         if let Err(e) = self.save() {
             error!("Unable to save connection history, {}.", e);

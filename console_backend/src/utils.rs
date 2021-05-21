@@ -7,6 +7,7 @@ use std::collections::HashMap;
 
 use crate::console_backend_capnp as m;
 use crate::constants::*;
+use crate::errors::*;
 use crate::types::{MessageSender, SignalCodes};
 use crate::{common_constants as cc, types::SharedState};
 
@@ -117,6 +118,31 @@ pub fn refresh_navbar<P: MessageSender>(client_send: &mut P, shared_state: Share
 
     let mut msg_bytes: Vec<u8> = vec![];
     serialize::write_message(&mut msg_bytes, &builder).unwrap();
+
+    client_send.send_data(msg_bytes);
+}
+
+pub fn refresh_loggingbar<P: MessageSender>(client_send: &mut P, shared_state: SharedState) {
+    let mut builder = Builder::new_default();
+    let msg = builder.init_root::<m::message::Builder>();
+
+    let mut logging_bar_status = msg.init_logging_bar_status();
+    let logging_directory = shared_state.logging_directory();
+    let logging_directory = logging_directory.to_str().expect(CONVERT_TO_STR_FAILURE);
+    logging_bar_status.set_folder(logging_directory);
+
+    let mut folders = shared_state.folder_history();
+    folders.reverse();
+    let mut prevous_folders = logging_bar_status
+        .reborrow()
+        .init_previous_folders(folders.len() as u32);
+
+    for (i, folder) in folders.iter().enumerate() {
+        prevous_folders.set(i as u32, folder);
+    }
+
+    let mut msg_bytes: Vec<u8> = vec![];
+    serialize::write_message(&mut msg_bytes, &builder).expect(CAP_N_PROTO_SERIALIZATION_FAILURE);
 
     client_send.send_data(msg_bytes);
 }

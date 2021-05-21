@@ -1,5 +1,6 @@
 import "Constants"
 import QtCharts 2.2
+import QtGraphicalEffects 1.15
 import QtQuick 2.5
 import QtQuick.Controls 2.2
 import QtQuick.Layouts 1.15
@@ -19,8 +20,8 @@ Rectangle {
     property variant previous_files: []
 
     anchors.fill: parent
-    anchors.leftMargin: Constants.navBar.navBarMargin
-    anchors.rightMargin: Constants.navBar.navBarMargin
+    border.width: Constants.statusBar.borderWidth
+    border.color: Constants.statusBar.borderColor
 
     NavBarData {
         id: navBarData
@@ -30,6 +31,8 @@ Rectangle {
         id: navBarRowLayout
 
         anchors.fill: parent
+        anchors.leftMargin: Constants.navBar.navBarMargin
+        anchors.rightMargin: Constants.navBar.navBarMargin
 
         ComboBox {
             id: navBarSourceSelection
@@ -239,13 +242,9 @@ Rectangle {
         Button {
             id: connectButton
 
-            Component.onCompleted: {
-                connectButton.contentItem.children[0].elide = Text.ElideNone;
-            }
             Layout.preferredWidth: Constants.navBar.connectButtonWidth
             Layout.preferredHeight: Constants.navBar.buttonHeight
             checkable: true
-            text: !checked ? "Connect" : "Disconnect"
             ToolTip.visible: hovered
             ToolTip.text: !checked ? "Connect" : "Disconnect"
             onClicked: {
@@ -266,6 +265,62 @@ Rectangle {
                     }
                 }
             }
+
+            Image {
+                id: navBarConnect
+
+                anchors.centerIn: parent
+                width: Constants.navBar.buttonSvgHeight
+                height: Constants.navBar.buttonSvgHeight
+                smooth: true
+                source: Constants.navBar.connectButtonPath
+                visible: false
+                antialiasing: true
+            }
+
+            ColorOverlay {
+                anchors.fill: navBarConnect
+                source: navBarConnect
+                color: !connectButton.checked ? "dimgrey" : "crimson"
+                antialiasing: true
+            }
+
+        }
+
+        Button {
+            id: folderBarButton
+
+            Layout.preferredWidth: Constants.navBar.folderButtonWidth
+            Layout.preferredHeight: Constants.navBar.buttonHeight
+            checkable: true
+            ToolTip.visible: hovered
+            ToolTip.text: "Logging Bar"
+            onClicked: {
+                if (!checked)
+                    loggingBar.visible = false;
+                else
+                    loggingBar.visible = true;
+            }
+
+            Image {
+                id: navBarFolder
+
+                anchors.centerIn: parent
+                width: Constants.navBar.buttonSvgHeight
+                height: Constants.navBar.buttonSvgHeight
+                smooth: true
+                source: Constants.navBar.folderButtonPath
+                visible: false
+                antialiasing: true
+            }
+
+            ColorOverlay {
+                anchors.fill: navBarFolder
+                source: navBarFolder
+                color: !folderBarButton.checked ? "dimgrey" : "crimson"
+                antialiasing: true
+            }
+
         }
 
         ComboBox {

@@ -1,7 +1,7 @@
 use chrono::Local;
 use log::{debug, error};
 use sbp::{messages::SBP, time::GpsTime};
-use std::{result::Result, thread::sleep, time::Instant};
+use std::{path::PathBuf, result::Result, thread::sleep, time::Instant};
 
 use crate::constants::*;
 use crate::observation_tab::ObservationTab;
@@ -11,11 +11,17 @@ use crate::solution_velocity_tab::SolutionVelocityTab;
 use crate::status_bar::StatusBar;
 use crate::tracking_signals_tab::TrackingSignalsTab;
 use crate::types::*;
+use crate::utils::refresh_loggingbar;
 
 pub struct MainTab<'a, S: MessageSender> {
+    logging_directory: PathBuf,
+    last_solution_logging: CsvLogging,
+    last_sbp_logging: SbpLogging,
     sbp_logger: Option<SbpLogger>,
     last_gps_update: Instant,
     last_gps_time: Option<GpsTime>,
+    client_sender: S,
+    shared_state: SharedState,
     pub tracking_signals_tab: TrackingSignalsTab<S>,
     pub solution_tab: SolutionTab<S>,
     pub observation_tab: ObservationTab<S>,
@@ -26,9 +32,14 @@ pub struct MainTab<'a, S: MessageSender> {
 impl<'a, S: MessageSender> MainTab<'a, S> {
     pub fn new(shared_state: SharedState, client_sender: S) -> MainTab<'a, S> {
         MainTab {
+            logging_directory: DATA_DIRECTORY.path(),
+            last_solution_logging: CsvLogging::Off,
+            last_sbp_logging: SbpLogging::Off,
             sbp_logger: None,
             last_gps_time: None,
             last_gps_update: Instant::now(),
+            client_sender: client_sender.clone(),
+            shared_state: shared_state.clone(),
             tracking_signals_tab: TrackingSignalsTab::new(
                 shared_state.clone(),
                 client_sender.clone(),
@@ -82,7 +93,7 @@ impl<'a, S: MessageSender> MainTab<'a, S> {
     pub fn init_csv_logging(&mut self) {
         let local_t = Local::now();
         let vel_log_file = local_t.format(VEL_TIME_STR_FILEPATH).to_string();
-        let vel_log_file = DATA_DIRECTORY.path().join(vel_log_file);
+        let vel_log_file = self.logging_directory.join(vel_log_file);
         self.solution_tab.vel_log_file = match CsvSerializer::new(&vel_log_file) {
             Ok(vel_csv) => Some(vel_csv),
             Err(e) => {
@@ -91,7 +102,7 @@ impl<'a, S: MessageSender> MainTab<'a, S> {
             }
         };
         let pos_log_file = local_t.format(POS_LLH_TIME_STR_FILEPATH).to_string();
-        let pos_log_file = DATA_DIRECTORY.path().join(pos_log_file);
+        let pos_log_file = self.logging_directory.join(pos_log_file);
         self.solution_tab.pos_log_file = match CsvSerializer::new(&pos_log_file) {
             Ok(pos_csv) => Some(pos_csv),
             Err(e) => {
@@ -121,7 +132,7 @@ impl<'a, S: MessageSender> MainTab<'a, S> {
         self.sbp_logger = match logging {
             SbpLogging::Sbp => {
                 let sbp_log_file = local_t.format(SBP_FILEPATH).to_string();
-                let sbp_log_file = DATA_DIRECTORY.path().join(sbp_log_file);
+                let sbp_log_file = self.logging_directory.join(sbp_log_file);
                 match SbpLogger::new_sbp(&sbp_log_file) {
                     Ok(logger) => Some(logger),
                     Err(e) => {
@@ -132,7 +143,7 @@ impl<'a, S: MessageSender> MainTab<'a, S> {
             }
             SbpLogging::Json => {
                 let sbp_json_log_file = local_t.format(SBP_JSON_FILEPATH).to_string();
-                let sbp_json_log_file = DATA_DIRECTORY.path().join(sbp_json_log_file);
+                let sbp_json_log_file = self.logging_directory.join(sbp_json_log_file);
                 match SbpLogger::new_sbp_json(&sbp_json_log_file) {
                     Ok(logger) => Some(logger),
                     Err(e) => {
@@ -145,18 +156,51 @@ impl<'a, S: MessageSender> MainTab<'a, S> {
         };
     }
     pub fn serialize_sbp(&mut self, msg: &SBP) {
+        let solution_logging;
+        let sbp_logging;
+        let directory;
+        {
+            let shared_data = self.shared_state.lock().unwrap();
+            solution_logging = (*shared_data).logging_bar.solution_logging.clone();
+            sbp_logging = (*shared_data).logging_bar.sbp_logging.clone();
+            directory = (*shared_data).logging_bar.logging_directory.clone();
+        }
+        if self.last_solution_logging != solution_logging {
+            if let Err(e) = self.end_csv_logging() {
+                error!("Issue closing csv file, {}", e);
+            }
+            if let CsvLogging::On = &solution_logging {
+                self.init_csv_logging();
+            }
+            self.last_solution_logging = solution_logging;
+        }
+        if self.last_sbp_logging != sbp_logging {
+            self.close_sbp();
+            if let SbpLogging::Off = &sbp_logging {
+            } else {
+                self.init_sbp_logging(sbp_logging.clone());
+            }
+            self.last_sbp_logging = sbp_logging;
+        }
+        if self.logging_directory != directory {
+            if let Err(e) = create_directory(directory.clone()) {
+                error!("Issue creating directory {}.", e);
+                self.shared_state
+                    .set_logging_directory(self.logging_directory.clone());
+            } else {
+                self.shared_state.update_folder_history(directory);
+            }
+            refresh_loggingbar(&mut self.client_sender, self.shared_state.clone());
+        }
+
         if let Some(sbp_logger) = &mut self.sbp_logger {
             if let Err(e) = sbp_logger.serialize(msg) {
                 error!("error, {}, unable to log sbp msg, {:?}", e, msg);
             }
         }
     }
-    pub fn close_sbp(&mut self, msg: &SBP) {
-        if let Some(sbp_logger) = &mut self.sbp_logger {
-            if let Err(e) = sbp_logger.serialize(msg) {
-                error!("error, {}, unable to log sbp msg, {:?}", e, msg);
-            }
-        }
+    pub fn close_sbp(&mut self) {
+        self.sbp_logger = None;
     }
 }
 

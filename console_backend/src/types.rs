@@ -1725,7 +1725,7 @@ mod tests {
     };
     const TEST_FILEPATH: &str = "./tests/data/piksi-relay-1min.sbp";
     const TEST_SHORT_FILEPATH: &str = "./tests/data/piksi-relay.sbp";
-    const SBP_FILE_SHORT_DURATION_SEC: f64 = 26.1;
+    const SBP_FILE_SHORT_DURATION_SEC: f64 = 27.1;
     const DELAY_BEFORE_CHECKING_APP_STARTED_IN_MS: u64 = 150;
 
     pub mod data_directories {

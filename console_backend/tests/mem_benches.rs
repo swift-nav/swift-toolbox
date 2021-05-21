@@ -100,12 +100,15 @@ mod mem_bench_impl {
             };
             let shared_state = SharedState::new();
             shared_state.set_running(true, client_send.clone());
-            process_messages::process_messages(
-                Box::new(fs::File::open(BENCH_FILEPATH).unwrap()),
-                shared_state,
-                client_send,
-                RealtimeDelay::On,
-            );
+            match fs::File::open(BENCH_FILEPATH) {
+                Ok(fileopen) => process_messages::process_messages(
+                    fileopen,
+                    shared_state,
+                    client_send,
+                    RealtimeDelay::On,
+                ),
+                Err(e) => panic!("unable to read file, {}.", e),
+            }
         }
         recv_thread.join().expect("join should succeed");
         mem_read_thread.join().expect("join should succeed");

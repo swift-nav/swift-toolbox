@@ -73,16 +73,6 @@ impl SbpLogger {
         }
         Ok(())
     }
-    pub fn close(self) {
-        match self {
-            SbpLogger::Sbp(logger) => {
-                logger.release();
-            }
-            SbpLogger::Json(logger) => {
-                logger.release();
-            }
-        }
-    }
 }
 
 /// CsvSerializer for creating and writing to a csv.

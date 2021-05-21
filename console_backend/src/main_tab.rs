@@ -188,7 +188,8 @@ impl<'a, S: MessageSender> MainTab<'a, S> {
                 self.shared_state
                     .set_logging_directory(self.logging_directory.clone());
             } else {
-                self.shared_state.update_folder_history(directory);
+                self.shared_state.update_folder_history(directory.clone());
+                self.logging_directory = directory;
             }
             refresh_loggingbar(&mut self.client_sender, self.shared_state.clone());
         }

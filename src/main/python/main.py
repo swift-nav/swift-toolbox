@@ -211,7 +211,6 @@ def receive_messages(app_, backend, messages):
         elif m.which == MessageKeys.LOGGING_BAR_STATUS:
             LOGGING_BAR[Keys.FOLDER] = m.loggingBarStatus.folder
             LOGGING_BAR[Keys.PREVIOUS_FOLDERS][:] = m.loggingBarStatus.previousFolders
-            print(LOGGING_BAR)
         elif m.which == MessageKeys.LOG_APPEND:
             log_panel_lock.lock()
             LOG_PANEL[Keys.ENTRIES] += [entry.line for entry in m.logAppend.entries]

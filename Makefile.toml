@@ -248,14 +248,14 @@ conda run -n $CONDA_ENV python src/build/generate-mac-info-plist.py
 hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg' || (echo 'Failed to create Mac dmg. Retrying in 10s...' && sleep 10 && hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg' )
 '''
 
-[tasks.qml-format.linux]
+[tasks.qml-format]
 env = { QT_APP = { script = ["conda run -n $CONDA_ENV python utils/echo-qt-dir.py"] } }
 script_runner = "@shell"
 script = '''
 ${QT_APP}/Qt/bin/qmlformat -i $QML_FILES
 '''
 
-[tasks.qml-format-check.linux]
+[tasks.qml-format-check]
 dependencies = ["qml-format"]
 script_runner = "@shell"
 script = '''

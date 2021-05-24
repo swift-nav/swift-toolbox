@@ -64,6 +64,15 @@ To build the installer:
 cargo make prod-installer
 ```
 
+## Contributing
+
+After making changes, run to tasks to ensure the code is ready for submission
+
+```
+cargo make check-all
+cargo make tests
+```
+
 ## Technologies
 
 ### Rust

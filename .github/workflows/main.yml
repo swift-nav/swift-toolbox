@@ -179,21 +179,9 @@ jobs:
             ${{ runner.os }}-pip-
             ${{ runner.os }}-
 
-      - name: Run Pip Install
+      - name: Run Checks
         run: |
-          cargo make pip-install-dev
-
-      - name: Run Format Check
-        run: |
-          cargo make format-check
-
-      - name: Run Type Check
-        run: |
-          cargo make types
-
-      - name: Run Lint Check
-        run: |
-          cargo make lint
+          cargo make check-all
 
       - name: Run Tests
         run: |

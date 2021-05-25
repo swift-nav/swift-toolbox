@@ -2,7 +2,6 @@
 mod mem_bench_impl {
 
     use ndarray::{ArrayView, Axis, Dim};
-    use sbp::sbp_tools::SBPTools;
     use std::{
         error::Error,
         fs,

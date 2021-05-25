@@ -294,7 +294,7 @@ Rectangle {
             Layout.preferredHeight: Constants.navBar.buttonHeight
             checkable: true
             ToolTip.visible: hovered
-            ToolTip.text: "Logging Bar"
+            ToolTip.text: "Logging"
             onClicked: {
                 if (!checked)
                     loggingBar.visible = false;

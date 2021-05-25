@@ -6,6 +6,6 @@ function hzToMilliseconds(hz) {
 }
 
 function fileUrlToString(url) {
-    return url.toString().replace("file://", "")
+    return url.toString().replace("file:///", "")
 }
   

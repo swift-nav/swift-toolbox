@@ -13,6 +13,25 @@ class Tabs(str, Enum):
     ADVANCED = "ADVANCED"
 
 
+class SbpLogging(str, Enum):
+    OFF = "OFF"
+    SBP_JSON = "SBP_JSON"
+    SBP = "SBP"
+
+
+class CsvLogging(str, Enum):
+    OFF = "OFF"
+    ON = "ON"
+
+
+class LogLevel(str, Enum):
+    ERROR = "ERROR"
+    WARNING = "WARNING"
+    NOTICE = "NOTICE"
+    INFO = "INFO"
+    DEBUG = "DEBUG"
+
+
 class Keys(str, Enum):
     POINTS = "POINTS"
     LABELS = "LABELS"
@@ -48,7 +67,10 @@ class Keys(str, Enum):
     DATA_RATE = "DATA_RATE"
     SOLID_CONNECTION = "SOLID_CONNECTION"
     PREVIOUS_FOLDERS = "PREVIOUS_FOLDERS"
-    FOLDER = "FOLDER"
+    SBP_LOGGING = "SBP_LOGGING"
+    CSV_LOGGING = "CSV_LOGGING"
+    SBP_LOGGING_LABELS = "SBP_LOGGING_LABELS"
+    LOG_LEVEL_LABELS = "LOG_LEVEL_LABELS"
 
 
 class ApplicationStates(str, Enum):

@@ -78,7 +78,7 @@ QtObject {
         readonly property int urlBarHeight: 25
         readonly property int loggingBarMargin: 10
         readonly property int sbpLoggingButtonWidth: 120
-        readonly property int solutionLoggingButtonWidth: 120
+        readonly property int csvLoggingButtonWidth: 120
         readonly property int folderButtonWidth: 30
         readonly property int directoryBarBorder: 1
         readonly property int directoryBarTextMargin: 10

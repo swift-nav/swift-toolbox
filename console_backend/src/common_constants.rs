@@ -35,6 +35,38 @@ pub enum Tabs {
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
+pub enum SbpLogging {
+    #[strum(serialize = "OFF")]
+    OFF,
+    #[strum(serialize = "SBP_JSON")]
+    SBP_JSON,
+    #[strum(serialize = "SBP")]
+    SBP,
+}
+
+#[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
+pub enum CsvLogging {
+    #[strum(serialize = "OFF")]
+    OFF,
+    #[strum(serialize = "ON")]
+    ON,
+}
+
+#[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
+pub enum LogLevel {
+    #[strum(serialize = "ERROR")]
+    ERROR,
+    #[strum(serialize = "WARNING")]
+    WARNING,
+    #[strum(serialize = "NOTICE")]
+    NOTICE,
+    #[strum(serialize = "INFO")]
+    INFO,
+    #[strum(serialize = "DEBUG")]
+    DEBUG,
+}
+
+#[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
 pub enum Keys {
     #[strum(serialize = "POINTS")]
     POINTS,
@@ -78,8 +110,40 @@ pub enum Keys {
     WEEK,
     #[strum(serialize = "ROWS")]
     ROWS,
+    #[strum(serialize = "PREVIOUS_HOSTS")]
+    PREVIOUS_HOSTS,
+    #[strum(serialize = "PREVIOUS_PORTS")]
+    PREVIOUS_PORTS,
+    #[strum(serialize = "PREVIOUS_FILES")]
+    PREVIOUS_FILES,
     #[strum(serialize = "CONNECTED")]
     CONNECTED,
+    #[strum(serialize = "PORT")]
+    PORT,
+    #[strum(serialize = "POS")]
+    POS,
+    #[strum(serialize = "RTK")]
+    RTK,
+    #[strum(serialize = "SATS")]
+    SATS,
+    #[strum(serialize = "CORR_AGE")]
+    CORR_AGE,
+    #[strum(serialize = "INS")]
+    INS,
+    #[strum(serialize = "DATA_RATE")]
+    DATA_RATE,
+    #[strum(serialize = "SOLID_CONNECTION")]
+    SOLID_CONNECTION,
+    #[strum(serialize = "PREVIOUS_FOLDERS")]
+    PREVIOUS_FOLDERS,
+    #[strum(serialize = "SBP_LOGGING")]
+    SBP_LOGGING,
+    #[strum(serialize = "CSV_LOGGING")]
+    CSV_LOGGING,
+    #[strum(serialize = "SBP_LOGGING_LABELS")]
+    SBP_LOGGING_LABELS,
+    #[strum(serialize = "LOG_LEVEL_LABELS")]
+    LOG_LEVEL_LABELS,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
@@ -96,10 +160,10 @@ pub enum ApplicationStates {
 pub enum MessageKeys {
     #[strum(serialize = "status")]
     STATUS,
-    #[strum(serialize = "connectedStatus")]
-    CONNECTED_STATUS,
-    #[strum(serialize = "bottomNavbarStatus")]
-    BOTTOM_NAVBAR_STATUS,
+    #[strum(serialize = "statusBarStatus")]
+    STATUS_BAR_STATUS,
+    #[strum(serialize = "navBarStatus")]
+    NAV_BAR_STATUS,
     #[strum(serialize = "solutionPositionStatus")]
     SOLUTION_POSITION_STATUS,
     #[strum(serialize = "solutionTableStatus")]
@@ -134,6 +198,10 @@ pub enum MessageKeys {
     SOLUTION_POSITION_STATUS_BUTTON_FRONT,
     #[strum(serialize = "logAppend")]
     LOG_APPEND,
+    #[strum(serialize = "loggingBarFront")]
+    LOGGING_BAR_FRONT,
+    #[strum(serialize = "loggingBarStatus")]
+    LOGGING_BAR_STATUS,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]

@@ -9,6 +9,8 @@ import SwiftConsole 1.0
 
 Rectangle {
     property variant previous_folders: []
+    property variant log_level_labels: []
+    property variant sbp_logging_labels: []
 
     anchors.fill: parent
     border.width: Constants.statusBar.borderWidth
@@ -26,39 +28,33 @@ Rectangle {
         anchors.rightMargin: Constants.loggingBar.loggingBarMargin
 
         Button {
-            id: solutionLoggingButton
+            id: csvLoggingButton
 
-            Layout.preferredWidth: Constants.loggingBar.solutionLoggingButtonWidth
+            Layout.preferredWidth: Constants.loggingBar.csvLoggingButtonWidth
             Layout.preferredHeight: Constants.loggingBar.buttonHeight
-            text: "Log Solution"
+            text: "CSV Log"
             ToolTip.visible: hovered
             ToolTip.text: !checked ? "On" : "Off"
             checkable: true
-            onClicked: data_model.logging_bar([solutionLoggingButton.checked, sbpLoggingButton.checked, sbpFileFormatSwitch.checked], folderPathBar.editText)
+            visible: Globals.showCsvLog
+            onClicked: data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.currentText, logLevelButton.currentText], folderPathBar.editText)
         }
 
-        Button {
+        ComboBox {
             id: sbpLoggingButton
 
             Layout.preferredWidth: Constants.loggingBar.sbpLoggingButtonWidth
             Layout.preferredHeight: Constants.loggingBar.buttonHeight
-            text: "Log SBP"
+            model: sbp_logging_labels
             ToolTip.visible: hovered
-            ToolTip.text: !checked ? "On" : "Off"
-            checkable: true
-            onClicked: data_model.logging_bar([solutionLoggingButton.checked, sbpLoggingButton.checked, sbpFileFormatSwitch.checked], folderPathBar.editText)
-        }
+            ToolTip.text: "SBP Log"
+            onActivated: data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.currentText, logLevelButton.currentText], folderPathBar.editText)
 
-        Switch {
-            id: sbpFileFormatSwitch
-
-            Component.onCompleted: {
-                sbpFileFormatSwitch.checked = true;
+            background: Rectangle {
+                border.width: 3
+                border.color: sbpLoggingButton.currentIndex === 0 ? "dimgrey" : "crimson"
             }
-            text: !checked ? "SBP Json" : "SBP"
-            ToolTip.visible: hovered
-            ToolTip.text: "SBP File Type"
-            onClicked: data_model.logging_bar([solutionLoggingButton.checked, sbpLoggingButton.checked, sbpFileFormatSwitch.checked], folderPathBar.editText)
+
         }
 
         ComboBox {
@@ -69,6 +65,12 @@ Rectangle {
             model: previous_folders
             editable: true
             selectTextByMouse: true
+            onActivated: {
+                var text = folderPathBar.currentText;
+                folderPathBar.currentIndex = -1;
+                folderPathBar.editText = text;
+                data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.currentText, logLevelButton.currentText], folderPathBar.editText);
+            }
 
             Text {
                 text: "Enter folder path"
@@ -117,11 +119,28 @@ Rectangle {
             folder: shortcuts.home
             selectFolder: true
             onAccepted: {
-                folderPathBar.editText = Utils.fileUrlToString(fileDialog.folder);
-                data_model.logging_bar([solutionLoggingButton.checked, sbpLoggingButton.checked, sbpFileFormatSwitch.checked], folderPathBar.editText);
+                var filepath = Utils.fileUrlToString(fileDialog.folder);
+                // Fix for fileUrlToString which removes file:/// prefix but leaves unix
+                // path without leading forward slash.
+                if (Qt.platform.os !== "windows")
+                    filepath = "/" + filepath;
+
+                folderPathBar.editText = filepath;
+                data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.currentText, logLevelButton.currentText], folderPathBar.editText);
             }
             onRejected: {
             }
+        }
+
+        ComboBox {
+            id: logLevelButton
+
+            Layout.preferredWidth: Constants.loggingBar.sbpLoggingButtonWidth
+            Layout.preferredHeight: Constants.loggingBar.buttonHeight
+            model: log_level_labels
+            ToolTip.visible: hovered
+            ToolTip.text: "Log Level"
+            onActivated: data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.currentText, logLevelButton.currentText], folderPathBar.editText)
         }
 
         Timer {
@@ -131,9 +150,10 @@ Rectangle {
             onTriggered: {
                 logging_bar_model.fill_data(loggingBarData);
                 previous_folders = loggingBarData.previous_folders;
-                if (!folderPathBar.focus)
-                    folderPathBar.editText = loggingBarData.folder;
-
+                log_level_labels = loggingBarData.log_level_labels;
+                sbp_logging_labels = loggingBarData.sbp_logging_labels;
+                sbpLoggingButton.currentIndex = sbp_logging_labels.indexOf(loggingBarData.sbp_logging);
+                csvLoggingButton.checked = loggingBarData.csv_logging;
             }
         }
 

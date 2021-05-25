@@ -10,44 +10,26 @@ use serde::Serialize;
 use serde_json::ser::CompactFormatter;
 use std::{fs::File, path::Path};
 
+use crate::common_constants as cc;
 use crate::types::Result;
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum CsvLogging {
-    Off,
-    On,
-}
+pub type CsvLogging = cc::CsvLogging;
 impl From<bool> for CsvLogging {
     fn from(logging: bool) -> Self {
         if logging {
-            CsvLogging::On
+            CsvLogging::ON
         } else {
-            CsvLogging::Off
+            CsvLogging::OFF
         }
     }
 }
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum SbpLogging {
-    Off,
-    Sbp,
-    Json,
-}
-impl From<(bool, bool)> for SbpLogging {
-    fn from(logging_and_format: (bool, bool)) -> Self {
-        let (sbp_logging, sbp_format) = logging_and_format;
-        if sbp_logging {
-            if sbp_format {
-                SbpLogging::Sbp
-            } else {
-                SbpLogging::Json
-            }
-        } else {
-            SbpLogging::Off
-        }
+impl CsvLogging {
+    pub fn to_bool(&self) -> bool {
+        matches!(self, CsvLogging::ON)
     }
 }
 
+pub type SbpLogging = cc::SbpLogging;
 pub enum SbpLogger {
     Sbp(FramedWrite<File, SbpEncoder>),
     Json(FramedWrite<File, JsonEncoder<CompactFormatter>>),

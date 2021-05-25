@@ -16,6 +16,7 @@ use std::{
 
 use crate::cli_options::*;
 use crate::console_backend_capnp as m;
+// use crate::common_constants::;
 use crate::constants::LOG_WRITER_BUFFER_MESSAGE_COUNT;
 use crate::errors::*;
 use crate::log_panel::{splitable_log_formatter, LogPanelWriter};
@@ -72,11 +73,16 @@ fn handle_cli(
     if let Some(opt_input) = opt.input {
         match opt_input {
             Input::Tcp { host, port } => {
-                server_state.connect_to_host(client_send, shared_state, host, port);
+                server_state.connect_to_host(client_send, shared_state.clone(), host, port);
             }
             Input::File { file_in } => {
                 let filename = file_in.display().to_string();
-                server_state.connect_to_file(client_send, shared_state, filename, opt.exit_after);
+                server_state.connect_to_file(
+                    client_send,
+                    shared_state.clone(),
+                    filename,
+                    opt.exit_after,
+                );
             }
             Input::Serial {
                 serialport,
@@ -86,13 +92,23 @@ fn handle_cli(
                 let serialport = serialport.display().to_string();
                 server_state.connect_to_serial(
                     client_send,
-                    shared_state,
+                    shared_state.clone(),
                     serialport,
                     baudrate,
                     flow_control,
                 );
             }
         }
+    }
+    if let Some(folder) = opt.dirname {
+        shared_state.set_logging_directory(PathBuf::from(folder));
+    }
+    // let shared_state_clone = shared_state.clone();
+    let mut shared_data = shared_state.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+    (*shared_data).logging_bar.csv_logging = CsvLogging::from(opt.csv_log);
+    if let Some(sbp_log) = opt.sbp_log {
+        (*shared_data).logging_bar.sbp_logging =
+            SbpLogging::from_str(&sbp_log.to_string()).expect(CONVERT_TO_STR_FAILURE);
     }
 }
 
@@ -268,21 +284,21 @@ impl Server {
                         }
                     }
                     m::message::LoggingBarFront(Ok(cv_in)) => {
+                        let directory = cv_in
+                            .get_directory()
+                            .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
+                        shared_state.set_logging_directory(PathBuf::from(directory));
                         let shared_state_clone = shared_state.clone();
                         let mut shared_data = shared_state_clone
                             .lock()
                             .expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-                        (*shared_data).logging_bar.solution_logging =
-                            CsvLogging::from(cv_in.get_solution_logging());
-                        let sbp_logging = cv_in.get_sbp_logging();
-                        let sbp_format = cv_in.get_sbp_file_format();
-                        let sbp_logging_and_format = (sbp_logging, sbp_format);
-                        (*shared_data).logging_bar.sbp_logging =
-                            SbpLogging::from(sbp_logging_and_format);
-                        let directory = cv_in
-                            .get_directory()
+                        (*shared_data).logging_bar.csv_logging =
+                            CsvLogging::from(cv_in.get_csv_logging());
+                        let sbp_logging = cv_in
+                            .get_sbp_logging()
                             .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
-                        (*shared_data).logging_bar.logging_directory = PathBuf::from(directory);
+                        (*shared_data).logging_bar.sbp_logging =
+                            SbpLogging::from_str(sbp_logging).expect(CONVERT_TO_STR_FAILURE);
                     }
                     m::message::SolutionVelocityStatusFront(Ok(cv_in)) => {
                         let unit = cv_in

@@ -138,7 +138,6 @@ def receive_messages(app_, backend, messages):
         m = messages.Message.from_bytes(buffer)
         if m.which == MessageKeys.STATUS:
             if m.status.text == ApplicationStates.CLOSE:
-                print("hi")
                 return app_.quit()
             if m.status.text == ApplicationStates.CONNECTED:
                 NAV_BAR[Keys.CONNECTED] = True
@@ -209,8 +208,9 @@ def receive_messages(app_, backend, messages):
             NAV_BAR[Keys.PREVIOUS_PORTS][:] = m.navBarStatus.previousPorts
             NAV_BAR[Keys.PREVIOUS_FILES][:] = m.navBarStatus.previousFiles
         elif m.which == MessageKeys.LOGGING_BAR_STATUS:
-            LOGGING_BAR[Keys.FOLDER] = m.loggingBarStatus.folder
             LOGGING_BAR[Keys.PREVIOUS_FOLDERS][:] = m.loggingBarStatus.previousFolders
+            LOGGING_BAR[Keys.CSV_LOGGING] = m.loggingBarStatus.csvLogging
+            LOGGING_BAR[Keys.SBP_LOGGING] = m.loggingBarStatus.sbpLogging
         elif m.which == MessageKeys.LOG_APPEND:
             log_panel_lock.lock()
             LOG_PANEL[Keys.ENTRIES] += [entry.line for entry in m.logAppend.entries]
@@ -339,9 +339,9 @@ class DataModel(QObject):
     def logging_bar(self, buttons, directory) -> None:
         m = self.messages.Message()
         m.loggingBarFront = m.init(MessageKeys.LOGGING_BAR_FRONT)
-        m.loggingBarFront.solutionLogging = buttons[0]
+        m.loggingBarFront.csvLogging = buttons[0]
         m.loggingBarFront.sbpLogging = buttons[1]
-        m.loggingBarFront.sbpFileFormat = buttons[2]
+        m.loggingBarFront.logLevel = buttons[2]
         m.loggingBarFront.directory = directory
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
@@ -383,6 +383,8 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
         layout_idxs = TAB_LAYOUT[args.tab]
         globals_.setProperty("initialMainTabIndex", layout_idxs[MAIN_INDEX])  # type: ignore
         globals_.setProperty("initialSubTabIndex", layout_idxs[SUB_INDEX])  # type: ignore
+    if args.show_csv_log:
+        globals_.setProperty("showCsvLog", True)  # type: ignore
 
 
 if __name__ == "__main__":
@@ -390,6 +392,7 @@ if __name__ == "__main__":
     parser.add_argument("--no-opengl", action="store_false")
     parser.add_argument("--refresh-rate")
     parser.add_argument("--tab")
+    parser.add_argument("--show-csv-log", action="store_true")
 
     args_main, _ = parser.parse_known_args()
 

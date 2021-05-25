@@ -34,6 +34,7 @@ pub const VEL_TIME_STR_FILEPATH: &str = "velocity_log_%Y%m%d-%H%M%S.csv";
 pub const POS_LLH_TIME_STR_FILEPATH: &str = "position_log_%Y%m%d-%H%M%S.csv";
 pub const SBP_FILEPATH: &str = "swift-gnss-%Y%m%d-%H%M%S.sbp";
 pub const SBP_JSON_FILEPATH: &str = "swift-gnss-%Y%m%d-%H%M%S.sbp.json";
+pub const DEFAULT_LOG_DIRECTORY: &str = "SwiftNav";
 
 // Common constants.
 pub const NUM_POINTS: usize = 200;

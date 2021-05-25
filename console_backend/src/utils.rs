@@ -127,9 +127,10 @@ pub fn refresh_loggingbar<P: MessageSender>(client_send: &mut P, shared_state: S
     let msg = builder.init_root::<m::message::Builder>();
 
     let mut logging_bar_status = msg.init_logging_bar_status();
-    let logging_directory = shared_state.logging_directory();
-    let logging_directory = logging_directory.to_str().expect(CONVERT_TO_STR_FAILURE);
-    logging_bar_status.set_folder(logging_directory);
+    let csv_logging = shared_state.csv_logging();
+    logging_bar_status.set_csv_logging(csv_logging.to_bool());
+    let sbp_logging = shared_state.sbp_logging();
+    logging_bar_status.set_sbp_logging(&sbp_logging.to_string());
 
     let mut folders = shared_state.folder_history();
     folders.reverse();

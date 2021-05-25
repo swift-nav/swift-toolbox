@@ -1,14 +1,14 @@
-use crate::common_constants::{self as cc, Tabs};
+use crate::common_constants::{self as cc, SbpLogging};
 use crate::constants::*;
 use crate::errors::*;
 use crate::formatters::*;
-use crate::output::{CsvLogging, SbpLogging};
+use crate::output::CsvLogging;
 use crate::piksi_tools_constants::*;
 use crate::process_messages::process_messages;
 use crate::utils::{close_frontend, mm_to_m, ms_to_sec, refresh_navbar, set_connected_frontend};
 use anyhow::{Context, Result as AHResult};
 use chrono::{DateTime, Utc};
-use directories::ProjectDirs;
+use directories::{ProjectDirs, UserDirs};
 use indexmap::set::IndexSet;
 use lazy_static::lazy_static;
 use log::{error, info, warn};
@@ -41,7 +41,6 @@ use std::{
     thread::JoinHandle,
     time::{Duration, Instant},
 };
-use strum::VariantNames;
 
 pub type Error = std::boxed::Box<dyn std::error::Error>;
 pub type Result<T> = std::result::Result<T, Error>;
@@ -309,11 +308,41 @@ impl SharedState {
     }
     pub fn logging_directory(&self) -> PathBuf {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).logging_bar.logging_directory.clone()
+        let mut folders = (*shared_data).connection_history.folders();
+        if let Some(folder) = folders.pop() {
+            PathBuf::from(folder)
+        } else {
+            LOG_DIRECTORY.path()
+        }
+    }
+    pub fn sbp_logging(&self) -> SbpLogging {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).logging_bar.sbp_logging.clone()
+    }
+    pub fn csv_logging(&self) -> CsvLogging {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).logging_bar.csv_logging.clone()
     }
     pub fn set_logging_directory(&self, directory: PathBuf) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        let directory = if directory.starts_with("~/") {
+            if let Ok(dir) = directory.strip_prefix("~/") {
+                user_directory().join(dir)
+            } else {
+                directory
+            }
+        } else {
+            directory
+        };
         (*shared_data).logging_bar.logging_directory = directory;
+    }
+    pub fn set_sbp_logging(&self, logging: SbpLogging) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).logging_bar.sbp_logging = logging;
+    }
+    pub fn set_csv_logging(&self, logging: CsvLogging) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).logging_bar.csv_logging = logging;
     }
     pub fn folder_history(&self) -> IndexSet<String> {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
@@ -375,12 +404,14 @@ pub struct SharedStateInner {
 }
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
+        let connection_history = ConnectionHistory::new();
+        let log_directory = connection_history.folders().pop();
         SharedStateInner {
             status_bar: StatusBarState::new(),
-            logging_bar: LoggingBarState::new(),
+            logging_bar: LoggingBarState::new(log_directory),
             tracking_tab: TrackingTabState::new(),
             paused: false,
-            connection_history: ConnectionHistory::new(),
+            connection_history,
             running: false,
             solution_tab: SolutionTabState::new(),
         }
@@ -408,16 +439,21 @@ impl StatusBarState {
 #[derive(Debug)]
 pub struct LoggingBarState {
     pub sbp_logging: SbpLogging,
-    pub solution_logging: CsvLogging,
+    pub csv_logging: CsvLogging,
     pub logging_directory: PathBuf,
 }
 
 impl LoggingBarState {
-    fn new() -> LoggingBarState {
+    fn new(log_directory: Option<String>) -> LoggingBarState {
+        let logging_directory = if let Some(dir) = log_directory {
+            PathBuf::from(dir)
+        } else {
+            LOG_DIRECTORY.path()
+        };
         LoggingBarState {
-            sbp_logging: SbpLogging::Off,
-            solution_logging: CsvLogging::Off,
-            logging_directory: DATA_DIRECTORY.path(),
+            sbp_logging: SbpLogging::OFF,
+            csv_logging: CsvLogging::OFF,
+            logging_directory,
         }
     }
 }
@@ -511,22 +547,30 @@ pub enum RealtimeDelay {
 
 // Navbar Types.
 
-/// Data Directory struct for storing informating and helpers pertaining to project directory.
+/// Directory struct for storing informating and helpers pertaining to project directory.
 ///
 /// Taken from swift-cli/swift/src/types.rs.
 /// impl taken from swift-cli/swift/src/lib.rs.
 #[derive(Debug)]
-pub struct DataDirectory {
+pub struct Directory {
     path: PathBuf,
 }
 lazy_static! {
-    pub static ref DATA_DIRECTORY: DataDirectory = DataDirectory::new();
+    pub static ref DATA_DIRECTORY: Directory = Directory::new_data_directory();
 }
-
-impl DataDirectory {
-    pub fn new() -> DataDirectory {
-        DataDirectory {
+lazy_static! {
+    pub static ref LOG_DIRECTORY: Directory = Directory::new_log_directory();
+}
+impl Directory {
+    pub fn new_data_directory() -> Directory {
+        Directory {
             path: create_data_dir().unwrap(),
+        }
+    }
+
+    pub fn new_log_directory() -> Directory {
+        Directory {
+            path: user_directory().join(DEFAULT_LOG_DIRECTORY),
         }
     }
     /// Return a clone to the private path PathBuf.
@@ -534,9 +578,9 @@ impl DataDirectory {
         self.path.clone()
     }
 }
-impl Default for DataDirectory {
+impl Default for Directory {
     fn default() -> Self {
-        DataDirectory::new()
+        Directory::new_data_directory()
     }
 }
 
@@ -569,6 +613,18 @@ pub fn create_directory(directory: PathBuf) -> Result<PathBuf> {
     Ok(directory)
 }
 
+/// Get user directory.
+///
+/// # Returns
+/// - The PathBuf for the user directory path. Otherwise empty pathbuf.
+pub fn user_directory() -> PathBuf {
+    if let Some(user_dirs) = UserDirs::new() {
+        PathBuf::from(user_dirs.home_dir())
+    } else {
+        PathBuf::from("")
+    }
+}
+
 #[derive(Debug, Clone, Eq, Hash, PartialEq, Serialize, Deserialize)]
 pub struct Address {
     pub host: String,
@@ -597,10 +653,14 @@ impl ConnectionHistory {
                 return conn_yaml;
             }
         }
+        let mut folders = IndexSet::new();
+        if let Ok(default_path) = LOG_DIRECTORY.path().into_os_string().into_string() {
+            folders.insert(default_path);
+        }
         ConnectionHistory {
             addresses: IndexSet::new(),
             files: IndexSet::new(),
-            folders: IndexSet::new(),
+            folders,
         }
     }
     /// Return the filename of the saved connection history file.
@@ -701,27 +761,6 @@ impl Deref for FlowControl {
 
     fn deref(&self) -> &Self::Target {
         &self.0
-    }
-}
-
-#[derive(Debug)]
-pub struct CliTabs(Tabs);
-
-impl Deref for CliTabs {
-    type Target = Tabs;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl FromStr for CliTabs {
-    type Err = String;
-
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        Ok(CliTabs(Tabs::from_str(s).map_err(|_| {
-            format!("Must choose from available tabs {:?}", Tabs::VARIANTS)
-        })?))
     }
 }
 
@@ -1716,7 +1755,6 @@ pub struct VelLog {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use directories::UserDirs;
     use serial_test::serial;
     use std::{
         sync::mpsc,

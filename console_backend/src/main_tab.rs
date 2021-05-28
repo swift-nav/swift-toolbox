@@ -311,14 +311,14 @@ mod tests {
 
         let msg = MsgPosLLH {
             sender_id,
-            flags,
+            tow,
             lat,
             lon,
             height,
-            n_sats,
             h_accuracy,
             v_accuracy,
-            tow,
+            n_sats,
+            flags,
         };
 
         let n = 1;
@@ -326,14 +326,14 @@ mod tests {
         let d = 3;
         let msg_two = MsgVelNED {
             sender_id,
-            flags,
+            tow,
             n,
             e,
             d,
+            h_accuracy,
+            v_accuracy,
             n_sats,
-            tow,
-            h_accuracy: 0,
-            v_accuracy: 0,
+            flags,
         };
 
         {
@@ -406,14 +406,14 @@ mod tests {
 
         let msg_one = MsgPosLLH {
             sender_id,
-            flags,
+            tow,
             lat,
             lon,
             height,
-            n_sats,
             h_accuracy,
             v_accuracy,
-            tow,
+            n_sats,
+            flags,
         };
 
         let n = 1;
@@ -421,14 +421,14 @@ mod tests {
         let d = 3;
         let msg_two = MsgVelNED {
             sender_id,
-            flags,
+            tow,
             n,
             e,
             d,
+            h_accuracy,
+            v_accuracy,
             n_sats,
-            tow,
-            h_accuracy: 0,
-            v_accuracy: 0,
+            flags,
         };
 
         {
@@ -496,14 +496,14 @@ mod tests {
 
         let msg_one = MsgPosLLH {
             sender_id,
-            flags,
+            tow,
             lat,
             lon,
             height,
-            n_sats,
             h_accuracy,
             v_accuracy,
-            tow,
+            n_sats,
+            flags,
         };
 
         let n = 1;
@@ -511,14 +511,14 @@ mod tests {
         let d = 3;
         let msg_two = MsgVelNED {
             sender_id,
-            flags,
+            tow,
             n,
             e,
             d,
+            h_accuracy,
+            v_accuracy,
             n_sats,
-            tow,
-            h_accuracy: 0,
-            v_accuracy: 0,
+            flags,
         };
 
         {

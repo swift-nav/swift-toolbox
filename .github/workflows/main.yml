@@ -12,6 +12,8 @@ env:
   PIP_CACHE_DIR: ~/.cache/pip
   RUST_CACHE_DIRS: "~/.cargo/registry\n~/.cargo/git\ntarget\n"
   LIBCLANG_PATH_WIN: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
+  CC_PATH_WIN: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/MSVC/14.29.30037/bin/Hostx64/x64/cl.exe"
+  CXX_PATH_WIN: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/MSVC/14.29.30037/bin/Hostx64/x64/cl.exe"
 
 jobs:
 
@@ -104,6 +106,8 @@ jobs:
       - name: Run Backend Benchmarks (Windows)
         env:
           LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
+          CC: ${{ env.CC_PATH_WIN }}
+          CXX: ${{ env.CXX_PATH_WIN }}
         run: |
           cargo make backend-benches
         if: matrix.os == 'windows-2019'
@@ -288,6 +292,8 @@ jobs:
       - name: Build ${{ runner.os }} Binaries.
         env:
           LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
+          CC: ${{ env.CC_PATH_WIN }}
+          CXX: ${{ env.CXX_PATH_WIN }}
         run: |
           cargo make prod-installer
         if: matrix.os == 'windows-2019'

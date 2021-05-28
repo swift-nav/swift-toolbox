@@ -1822,7 +1822,6 @@ mod tests {
         if filename.exists() {
             let mut backup_filename = filename.clone();
             backup_filename.set_extension("backup");
-            println!("{:?}", backup_filename);
             fs::rename(filename, backup_filename).unwrap();
         }
     }

@@ -86,10 +86,13 @@ impl CsvSerializer {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    use sbp::messages::{navigation::MsgAgeCorrections, system::MsgInsUpdates};
     use serde::Serialize;
-    use std::path::Path;
+    use std::{fs::File, path::Path};
     use tempfile::TempDir;
     const TEST_FILEPATH: &str = "test.csv";
+    const TEST_SBP_FILEPATH: &str = "test.sbp";
 
     #[derive(Serialize)]
     struct TestDataSet {
@@ -125,5 +128,61 @@ mod tests {
             serialize_test_dataset(&mut csv_s, &dataset_second).unwrap();
         }
         assert!(Path::new(&filepath).is_file());
+    }
+    #[test]
+    fn sbp_serializer_test() {
+        let tmp_dir = TempDir::new().unwrap();
+        let filepath = tmp_dir.path();
+        let filepath = filepath.join(TEST_SBP_FILEPATH);
+        let msg_one = MsgAgeCorrections {
+            sender_id: Some(1337),
+            age: 0xFFFF,
+            tow: 0,
+        };
+        let msg_one_wrapped = SBP::MsgAgeCorrections(msg_one.clone());
+        let msg_two = MsgInsUpdates {
+            sender_id: Some(1337),
+            gnsspos: 4,
+            gnssvel: 4,
+            wheelticks: 0xff_u8,
+            speed: 0,
+            nhc: 0,
+            zerovel: 0,
+            tow: 0,
+        };
+        let msg_two_wrapped = SBP::MsgInsUpdates(msg_two.clone());
+        {
+            let mut sbp_logger = SbpLogger::new_sbp(&filepath).unwrap();
+            sbp_logger.serialize(&msg_one_wrapped).unwrap();
+            sbp_logger.serialize(&msg_two_wrapped).unwrap();
+        }
+        assert!(&filepath.is_file());
+        {
+            let file_read = File::open(filepath).unwrap();
+            let mut messages = sbp::iter_messages(file_read);
+            let msg = messages.next().unwrap().unwrap();
+            match msg {
+                SBP::MsgAgeCorrections(msg) => {
+                    assert_eq!(msg.sender_id, msg_one.sender_id);
+                    assert_eq!(msg.age, msg_one.age);
+                    assert_eq!(msg.tow, msg_one.tow);
+                }
+                _ => panic!("first message does not match"),
+            }
+            let msg = messages.next().unwrap().unwrap();
+            match msg {
+                SBP::MsgInsUpdates(msg) => {
+                    assert_eq!(msg.sender_id, msg_two.sender_id);
+                    assert_eq!(msg.gnsspos, msg_two.gnsspos);
+                    assert_eq!(msg.gnssvel, msg_two.gnssvel);
+                    assert_eq!(msg.wheelticks, msg_two.wheelticks);
+                    assert_eq!(msg.speed, msg_two.speed);
+                    assert_eq!(msg.nhc, msg_two.nhc);
+                    assert_eq!(msg.zerovel, msg_two.zerovel);
+                    assert_eq!(msg.tow, msg_two.tow);
+                }
+                _ => panic!("second message does not match"),
+            }
+        }
     }
 }

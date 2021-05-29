@@ -1,8 +1,56 @@
 use clap::Clap;
-use std::{ops, path::PathBuf};
+use std::{
+    ops::{Deref, Not},
+    path::PathBuf,
+    str::FromStr,
+};
+use strum::VariantNames;
 
+use crate::common_constants::{SbpLogging, Tabs};
 use crate::constants::{AVAILABLE_BAUDRATES, AVAILABLE_REFRESH_RATES};
-use crate::types::{CliTabs, FlowControl};
+use crate::types::FlowControl;
+
+#[derive(Debug)]
+pub struct CliTabs(Tabs);
+
+impl Deref for CliTabs {
+    type Target = Tabs;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl FromStr for CliTabs {
+    type Err = String;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        Ok(CliTabs(Tabs::from_str(s).map_err(|_| {
+            format!("Must choose from available tabs {:?}", Tabs::VARIANTS)
+        })?))
+    }
+}
+
+#[derive(Debug)]
+pub struct CliSbpLogging(SbpLogging);
+
+impl Deref for CliSbpLogging {
+    type Target = SbpLogging;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl FromStr for CliSbpLogging {
+    type Err = String;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        Ok(CliSbpLogging(SbpLogging::from_str(s).map_err(|_| {
+            format!("Must choose from available tabs {:?}", SbpLogging::VARIANTS)
+        })?))
+    }
+}
 
 #[derive(Clap, Debug)]
 #[clap(name = "swift_navigation_console", about = "Swift Navigation Console.")]
@@ -14,17 +62,34 @@ pub struct CliOptions {
     #[clap(long = "exit-after")]
     pub exit_after: bool,
 
-    // // Frontend Options
+    /// Enable CSV logging.
+    #[clap(long = "csv-log")]
+    pub csv_log: bool,
+
+    /// Enable SBP-JSON or SBP logging.
+    #[clap(long = "sbp-log")]
+    pub sbp_log: Option<CliSbpLogging>,
+
+    /// Set log directory.
+    #[clap(long = "log-dirname")]
+    pub dirname: Option<String>,
+
+    // Frontend Options
     /// Don't use opengl in plots.
-    #[clap(long = "no-opengl", parse(from_flag = ops::Not::not))]
+    #[clap(long = "no-opengl", parse(from_flag = Not::not))]
     pub no_opengl: bool,
 
-    /// Don't use opengl in plots.
+    /// Change the refresh rate of the plots.
     #[clap(long = "refresh-rate", validator(is_refresh_rate))]
     pub refresh_rate: Option<u8>,
 
+    /// Start console from specific tab.
     #[clap(long = "tab")]
     pub tab: Option<CliTabs>,
+
+    /// Show CSV logging button.
+    #[clap(long = "show-csv-log")]
+    pub show_csv_log: bool,
 }
 
 impl CliOptions {

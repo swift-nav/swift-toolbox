@@ -13,6 +13,25 @@ class Tabs(str, Enum):
     ADVANCED = "ADVANCED"
 
 
+class SbpLogging(str, Enum):
+    OFF = "OFF"
+    SBP_JSON = "SBP_JSON"
+    SBP = "SBP"
+
+
+class CsvLogging(str, Enum):
+    OFF = "OFF"
+    ON = "ON"
+
+
+class LogLevel(str, Enum):
+    ERROR = "ERROR"
+    WARNING = "WARNING"
+    NOTICE = "NOTICE"
+    INFO = "INFO"
+    DEBUG = "DEBUG"
+
+
 class Keys(str, Enum):
     POINTS = "POINTS"
     LABELS = "LABELS"
@@ -47,6 +66,11 @@ class Keys(str, Enum):
     INS = "INS"
     DATA_RATE = "DATA_RATE"
     SOLID_CONNECTION = "SOLID_CONNECTION"
+    PREVIOUS_FOLDERS = "PREVIOUS_FOLDERS"
+    SBP_LOGGING = "SBP_LOGGING"
+    CSV_LOGGING = "CSV_LOGGING"
+    SBP_LOGGING_LABELS = "SBP_LOGGING_LABELS"
+    LOG_LEVEL_LABELS = "LOG_LEVEL_LABELS"
 
 
 class ApplicationStates(str, Enum):
@@ -76,6 +100,8 @@ class MessageKeys(str, Enum):
     SOLUTION_POSITION_STATUS_UNIT_FRONT = "solutionPositionStatusUnitFront"
     SOLUTION_POSITION_STATUS_BUTTON_FRONT = "solutionPositionStatusButtonFront"
     LOG_APPEND = "logAppend"
+    LOGGING_BAR_FRONT = "loggingBarFront"
+    LOGGING_BAR_STATUS = "loggingBarStatus"
 
 
 class QTKeys(str, Enum):

@@ -35,6 +35,13 @@ from nav_bar import (
     NavBarModel,
 )
 
+from logging_bar import (
+    LOGGING_BAR,
+    LoggingBarData,
+    LoggingBarModel,
+)
+
+
 from observation_tab import (
     ObservationData,
     ObservationModel,
@@ -200,6 +207,10 @@ def receive_messages(app_, backend, messages):
             NAV_BAR[Keys.PREVIOUS_HOSTS][:] = m.navBarStatus.previousHosts
             NAV_BAR[Keys.PREVIOUS_PORTS][:] = m.navBarStatus.previousPorts
             NAV_BAR[Keys.PREVIOUS_FILES][:] = m.navBarStatus.previousFiles
+        elif m.which == MessageKeys.LOGGING_BAR_STATUS:
+            LOGGING_BAR[Keys.PREVIOUS_FOLDERS][:] = m.loggingBarStatus.previousFolders
+            LOGGING_BAR[Keys.CSV_LOGGING] = m.loggingBarStatus.csvLogging
+            LOGGING_BAR[Keys.SBP_LOGGING] = m.loggingBarStatus.sbpLogging
         elif m.which == MessageKeys.LOG_APPEND:
             log_panel_lock.lock()
             LOG_PANEL[Keys.ENTRIES] += [entry.line for entry in m.logAppend.entries]
@@ -324,6 +335,17 @@ class DataModel(QObject):
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
 
+    @Slot(list, str)  # type: ignore
+    def logging_bar(self, buttons, directory) -> None:
+        m = self.messages.Message()
+        m.loggingBarFront = m.init(MessageKeys.LOGGING_BAR_FRONT)
+        m.loggingBarFront.csvLogging = buttons[0]
+        m.loggingBarFront.sbpLogging = buttons[1]
+        m.loggingBarFront.logLevel = buttons[2]
+        m.loggingBarFront.directory = directory
+        buffer = m.to_bytes()
+        self.endpoint.send_message(buffer)
+
 
 def is_frozen() -> bool:
     """Check whether the application is frozen.
@@ -361,6 +383,8 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
         layout_idxs = TAB_LAYOUT[args.tab]
         globals_.setProperty("initialMainTabIndex", layout_idxs[MAIN_INDEX])  # type: ignore
         globals_.setProperty("initialSubTabIndex", layout_idxs[SUB_INDEX])  # type: ignore
+    if args.show_csv_log:
+        globals_.setProperty("showCsvLog", True)  # type: ignore
 
 
 if __name__ == "__main__":
@@ -368,6 +392,7 @@ if __name__ == "__main__":
     parser.add_argument("--no-opengl", action="store_false")
     parser.add_argument("--refresh-rate")
     parser.add_argument("--tab")
+    parser.add_argument("--show-csv-log", action="store_true")
 
     args_main, _ = parser.parse_known_args()
 
@@ -377,6 +402,7 @@ if __name__ == "__main__":
 
     qmlRegisterType(LogPanelData, "SwiftConsole", 1, 0, "LogPanelData")  # type: ignore
     qmlRegisterType(NavBarData, "SwiftConsole", 1, 0, "NavBarData")  # type: ignore
+    qmlRegisterType(LoggingBarData, "SwiftConsole", 1, 0, "LoggingBarData")  # type: ignore
     qmlRegisterType(SolutionPositionPoints, "SwiftConsole", 1, 0, "SolutionPositionPoints")  # type: ignore
     qmlRegisterType(SolutionTableEntries, "SwiftConsole", 1, 0, "SolutionTableEntries")  # type: ignore
     qmlRegisterType(SolutionVelocityPoints, "SwiftConsole", 1, 0, "SolutionVelocityPoints")  # type: ignore
@@ -404,6 +430,7 @@ if __name__ == "__main__":
     solution_table_model = SolutionTableModel()
     solution_velocity_model = SolutionVelocityModel()
     status_bar_model = StatusBarModel()
+    logging_bar_model = LoggingBarModel()
     tracking_signals_model = TrackingSignalsModel()
     remote_observation_model = ObservationModel()
     local_observation_model = ObservationModel()
@@ -414,6 +441,7 @@ if __name__ == "__main__":
     root_context.setContextProperty("solution_table_model", solution_table_model)
     root_context.setContextProperty("solution_velocity_model", solution_velocity_model)
     root_context.setContextProperty("status_bar_model", status_bar_model)
+    root_context.setContextProperty("logging_bar_model", logging_bar_model)
     root_context.setContextProperty("tracking_signals_model", tracking_signals_model)
     root_context.setContextProperty("remote_observation_model", remote_observation_model)
     root_context.setContextProperty("local_observation_model", local_observation_model)

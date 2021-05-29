@@ -40,7 +40,8 @@ Item {
                 id: solutionBar
 
                 currentIndex: Globals.initialSubTabIndex
-                z: 100
+                z: Constants.commonChart.zAboveCharts
+                contentHeight: Constants.tabBarHeight
 
                 Repeater {
                     model: ["Position", "Velocity"]

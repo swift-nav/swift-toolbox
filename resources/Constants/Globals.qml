@@ -6,4 +6,5 @@ QtObject {
     property bool useOpenGL: true
     property int initialMainTabIndex: 0 // Tracking
     property int initialSubTabIndex: 0 // Signals
+    property bool showCsvLog: false
 }

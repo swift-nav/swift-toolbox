@@ -1,16 +1,19 @@
 import QtQuick 2.6
+import QtQuick.Controls.Material 2.12
 pragma Singleton
 
 QtObject {
     readonly property int width: 1050
     readonly property int height: 600
     readonly property real margins: 2
+    readonly property real tabBarHeight: 30
     readonly property real topLevelSpacing: 0
     readonly property real logPanelPreferredHeight: 100
     readonly property real navBarPreferredHeight: 50
     readonly property real statusBarPreferredHeight: 30
     property QtObject statusBar
     property QtObject navBar
+    property QtObject loggingBar
     property QtObject commonChart
     property QtObject commonLegend
     property QtObject solutionPosition
@@ -24,6 +27,8 @@ QtObject {
     readonly property real mediumPointSize: 8
     readonly property real largePointSize: 9
     readonly property bool debugMode: false
+    readonly property string materialRed: "crimson"
+    readonly property string materialGrey: "dimgrey"
 
     statusBar: QtObject {
         readonly property int margin: 10
@@ -50,16 +55,36 @@ QtObject {
         readonly property int serialSelectionDropdownWidth: 90
         readonly property int dropdownHeight: 40
         readonly property int buttonHeight: 40
+        readonly property int buttonSvgHeight: 15
         readonly property int urlBarHeight: 25
         readonly property int navBarMargin: 10
         readonly property int plotRefreshRateDropdownWidth: 50
         readonly property int serialDeviceBaudRateDropdownWidth: 90
         readonly property int serialDeviceFlowControlDropdownWidth: 100
         readonly property int serialDeviceRefreshWidth: 30
-        readonly property int connectButtonWidth: 100
+        readonly property int connectButtonWidth: 30
         readonly property int connectionPauseWidth: 30
+        readonly property int folderButtonWidth: 30
         readonly property color placeholderTextColor: "#CDC9C9"
         readonly property int padding: 0
+        readonly property string connectButtonPath: "images/fontawesome/power-off-solid.svg"
+        readonly property string pauseButtonPath: "images/fontawesome/pause-solid.svg"
+        readonly property string folderButtonPath: "images/fontawesome/folder-open-regular.svg"
+    }
+
+    loggingBar: QtObject {
+        readonly property int buttonHeight: 40
+        readonly property int buttonSvgHeight: 15
+        readonly property int urlBarHeight: 25
+        readonly property int loggingBarMargin: 10
+        readonly property int sbpLoggingButtonWidth: 120
+        readonly property int csvLoggingButtonWidth: 120
+        readonly property int folderButtonWidth: 30
+        readonly property int directoryBarBorder: 1
+        readonly property int directoryBarTextMargin: 10
+        readonly property int folderPathBarHeight: 25
+        readonly property color placeholderTextColor: "#CDC9C9"
+        readonly property string folderButtonPath: "images/fontawesome/folder-solid.svg"
     }
 
     solutionPosition: QtObject {

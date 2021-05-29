@@ -2,7 +2,6 @@
 mod mem_bench_impl {
 
     use ndarray::{ArrayView, Axis, Dim};
-    use sbp::sbp_tools::SBPTools;
     use std::{
         error::Error,
         fs,
@@ -95,20 +94,20 @@ mod mem_bench_impl {
                 .send(client_recv)
                 .expect("sending client recv handle should succeed");
 
-            let messages = sbp::iter_messages(Box::new(fs::File::open(BENCH_FILEPATH).unwrap()))
-                .log_errors(log::Level::Debug)
-                .with_rover_time();
             let client_send = ClientSender {
                 inner: client_send_,
             };
             let shared_state = SharedState::new();
             shared_state.set_running(true, client_send.clone());
-            process_messages::process_messages(
-                messages,
-                shared_state,
-                client_send,
-                RealtimeDelay::On,
-            );
+            match fs::File::open(BENCH_FILEPATH) {
+                Ok(fileopen) => process_messages::process_messages(
+                    fileopen,
+                    shared_state,
+                    client_send,
+                    RealtimeDelay::On,
+                ),
+                Err(e) => panic!("unable to read file, {}.", e),
+            }
         }
         recv_thread.join().expect("join should succeed");
         mem_read_thread.join().expect("join should succeed");

@@ -1,8 +1,8 @@
-use log::debug;
+use log::{debug, error};
+use sbp::sbp_tools::SBPTools;
 use sbp::{
     messages::{SBPMessage, SBP},
     serialize::SbpSerialize,
-    time::GpsTime,
 };
 use std::{thread::sleep, time::Duration};
 
@@ -11,15 +11,23 @@ use crate::log_panel::handle_log_msg;
 use crate::main_tab::*;
 use crate::types::*;
 
-pub fn process_messages<S: MessageSender, T>(
-    messages: impl Iterator<Item = (SBP, Option<std::result::Result<GpsTime, T>>)>,
+pub fn process_messages<S: MessageSender, T: std::io::Read>(
+    messages: T,
     shared_state: SharedState,
     client_send: S,
     realtime_delay: RealtimeDelay,
 ) {
     let mut main = MainTab::new(shared_state.clone(), client_send);
+
+    let messages = sbp::iter_messages(messages)
+        .log_errors(log::Level::Debug)
+        .with_rover_time();
     for (message, gps_time) in messages {
         if !shared_state.is_running() {
+            if let Err(e) = main.end_csv_logging() {
+                error!("Issue closing csv file, {}", e);
+            }
+            main.close_sbp();
             break;
         }
         if shared_state.is_paused() {
@@ -30,6 +38,7 @@ pub fn process_messages<S: MessageSender, T>(
                 sleep(Duration::from_millis(PAUSE_LOOP_SLEEP_DURATION_MS));
             }
         }
+        main.serialize_sbp(&message);
         let msg_name = message.get_message_name();
         main.status_bar.add_bytes(message.sbp_size());
         let mut attempt_delay = true;

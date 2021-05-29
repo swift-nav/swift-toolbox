@@ -1,28 +1,27 @@
-use crate::common_constants::{self as cc, Tabs};
+use crate::common_constants::{self as cc, SbpLogging};
 use crate::constants::*;
+use crate::errors::*;
 use crate::formatters::*;
+use crate::output::CsvLogging;
 use crate::piksi_tools_constants::*;
 use crate::process_messages::process_messages;
 use crate::utils::{close_frontend, mm_to_m, ms_to_sec, refresh_navbar, set_connected_frontend};
 use anyhow::{Context, Result as AHResult};
 use chrono::{DateTime, Utc};
-use directories::ProjectDirs;
+use directories::{ProjectDirs, UserDirs};
 use indexmap::set::IndexSet;
 use lazy_static::lazy_static;
 use log::{error, info, warn};
 use ordered_float::OrderedFloat;
-use sbp::{
-    messages::{
-        navigation::{
-            MsgBaselineNED, MsgBaselineNEDDepA, MsgDops, MsgDopsDepA, MsgPosLLH, MsgPosLLHDepA,
-            MsgVelNED, MsgVelNEDDepA,
-        },
-        observation::{
-            MsgObs, MsgObsDepB, MsgObsDepC, MsgOsr, PackedObsContent, PackedObsContentDepB,
-            PackedObsContentDepC, PackedOsrContent,
-        },
+use sbp::messages::{
+    navigation::{
+        MsgBaselineNED, MsgBaselineNEDDepA, MsgDops, MsgDopsDepA, MsgPosLLH, MsgPosLLHDepA,
+        MsgVelNED, MsgVelNEDDepA,
     },
-    sbp_tools::SBPTools,
+    observation::{
+        MsgObs, MsgObsDepB, MsgObsDepC, MsgOsr, PackedObsContent, PackedObsContentDepB,
+        PackedObsContentDepC, PackedOsrContent,
+    },
 };
 use serde::{Deserialize, Serialize};
 use serialport::FlowControl as SPFlowControl;
@@ -42,7 +41,6 @@ use std::{
     thread::JoinHandle,
     time::{Duration, Instant},
 };
-use strum::VariantNames;
 
 pub type Error = std::boxed::Box<dyn std::error::Error>;
 pub type Result<T> = std::result::Result<T, Error>;
@@ -127,11 +125,11 @@ impl ServerState {
         ServerState(Arc::new(Mutex::new(ServerStateInner::default())))
     }
     pub fn new_connection(&self, new_thread: JoinHandle<()>) {
-        let mut shared_data = self.lock().unwrap();
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).handler = Some(new_thread);
     }
     pub fn connection_join(&self) {
-        let mut shared_data = self.lock().unwrap();
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         let handler = &mut (*shared_data).handler;
         if let Some(handle) = handler.take() {
             handle.join().unwrap();
@@ -161,11 +159,8 @@ impl ServerState {
                 shared_state_clone.set_current_connection(filename);
                 refresh_navbar(&mut client_send.clone(), shared_state.clone());
                 let shared_state_clone_ = shared_state.clone();
-                let messages = sbp::iter_messages(stream)
-                    .log_errors(log::Level::Debug)
-                    .with_rover_time();
                 process_messages(
-                    messages,
+                    stream,
                     shared_state_clone_,
                     client_send.clone(),
                     RealtimeDelay::On,
@@ -206,11 +201,8 @@ impl ServerState {
                 shared_state_clone.update_tcp_history(host, port);
                 shared_state_clone.set_current_connection(host_port);
                 refresh_navbar(&mut client_send.clone(), shared_state.clone());
-                let messages = sbp::iter_messages(stream)
-                    .log_errors(log::Level::Debug)
-                    .with_rover_time();
                 process_messages(
-                    messages,
+                    stream,
                     shared_state_clone,
                     client_send.clone(),
                     RealtimeDelay::Off,
@@ -252,11 +244,8 @@ impl ServerState {
                 Ok(port) => {
                     println!("Connected to serialport {}.", device);
                     shared_state_clone.set_current_connection(format!("{} @{}", device, baudrate));
-                    let messages = sbp::iter_messages(port)
-                        .log_errors(log::Level::Debug)
-                        .with_rover_time();
                     process_messages(
-                        messages,
+                        port,
                         shared_state_clone,
                         client_send.clone(),
                         RealtimeDelay::Off,
@@ -288,7 +277,7 @@ impl SharedState {
         SharedState(Arc::new(Mutex::new(SharedStateInner::default())))
     }
     pub fn is_running(&self) -> bool {
-        let shared_data = self.lock().unwrap();
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).running
     }
     pub fn set_running(&self, set_to: bool, mut client_send: ClientSender) {
@@ -298,41 +287,86 @@ impl SharedState {
             set_connected_frontend(cc::ApplicationStates::DISCONNECTED, &mut client_send);
             self.set_current_connection(EMPTY_STR.to_string());
         }
-        let mut shared_data = self.lock().unwrap();
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).running = set_to;
     }
     pub fn is_paused(&self) -> bool {
-        let shared_data = self.lock().unwrap();
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).paused
     }
     pub fn set_paused(&self, set_to: bool) {
-        let mut shared_data = self.lock().unwrap();
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).paused = set_to;
     }
-
     pub fn current_connection(&self) -> String {
-        let shared_data = self.lock().unwrap();
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).status_bar.current_connection.clone()
     }
     pub fn set_current_connection(&self, current_connection: String) {
-        let mut shared_data = self.lock().unwrap();
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).status_bar.current_connection = current_connection;
     }
-
+    pub fn logging_directory(&self) -> PathBuf {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        let mut folders = (*shared_data).connection_history.folders();
+        if let Some(folder) = folders.pop() {
+            PathBuf::from(folder)
+        } else {
+            LOG_DIRECTORY.path()
+        }
+    }
+    pub fn sbp_logging(&self) -> SbpLogging {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).logging_bar.sbp_logging.clone()
+    }
+    pub fn csv_logging(&self) -> CsvLogging {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).logging_bar.csv_logging.clone()
+    }
+    pub fn set_logging_directory(&self, directory: PathBuf) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        let directory = if directory.starts_with("~/") {
+            if let Ok(dir) = directory.strip_prefix("~/") {
+                user_directory().join(dir)
+            } else {
+                directory
+            }
+        } else {
+            directory
+        };
+        (*shared_data).logging_bar.logging_directory = directory;
+    }
+    pub fn set_sbp_logging(&self, logging: SbpLogging) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).logging_bar.sbp_logging = logging;
+    }
+    pub fn set_csv_logging(&self, logging: CsvLogging) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).logging_bar.csv_logging = logging;
+    }
+    pub fn folder_history(&self) -> IndexSet<String> {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).connection_history.folders()
+    }
     pub fn file_history(&self) -> IndexSet<String> {
-        let shared_data = self.lock().unwrap();
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).connection_history.files()
     }
     pub fn address_history(&self) -> IndexSet<Address> {
-        let shared_data = self.lock().unwrap();
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).connection_history.addresses()
     }
+    pub fn update_folder_history(&self, folder: PathBuf) {
+        let folder = String::from(folder.to_str().expect(CONVERT_TO_STR_FAILURE));
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).connection_history.record_folder(folder);
+    }
     pub fn update_file_history(&self, filename: String) {
-        let mut shared_data = self.lock().unwrap();
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).connection_history.record_file(filename);
     }
     pub fn update_tcp_history(&self, host: String, port: u16) {
-        let mut shared_data = self.lock().unwrap();
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).connection_history.record_address(host, port);
     }
 }
@@ -361,6 +395,7 @@ impl Clone for SharedState {
 #[derive(Debug)]
 pub struct SharedStateInner {
     pub status_bar: StatusBarState,
+    pub logging_bar: LoggingBarState,
     pub tracking_tab: TrackingTabState,
     pub paused: bool,
     pub connection_history: ConnectionHistory,
@@ -369,11 +404,14 @@ pub struct SharedStateInner {
 }
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
+        let connection_history = ConnectionHistory::new();
+        let log_directory = connection_history.folders().pop();
         SharedStateInner {
             status_bar: StatusBarState::new(),
+            logging_bar: LoggingBarState::new(log_directory),
             tracking_tab: TrackingTabState::new(),
             paused: false,
-            connection_history: ConnectionHistory::new(),
+            connection_history,
             running: false,
             solution_tab: SolutionTabState::new(),
         }
@@ -394,6 +432,28 @@ impl StatusBarState {
     fn new() -> StatusBarState {
         StatusBarState {
             current_connection: String::from(""),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct LoggingBarState {
+    pub sbp_logging: SbpLogging,
+    pub csv_logging: CsvLogging,
+    pub logging_directory: PathBuf,
+}
+
+impl LoggingBarState {
+    fn new(log_directory: Option<String>) -> LoggingBarState {
+        let logging_directory = if let Some(dir) = log_directory {
+            PathBuf::from(dir)
+        } else {
+            LOG_DIRECTORY.path()
+        };
+        LoggingBarState {
+            sbp_logging: SbpLogging::OFF,
+            csv_logging: CsvLogging::OFF,
+            logging_directory,
         }
     }
 }
@@ -487,22 +547,30 @@ pub enum RealtimeDelay {
 
 // Navbar Types.
 
-/// Data Directory struct for storing informating and helpers pertaining to project directory.
+/// Directory struct for storing informating and helpers pertaining to project directory.
 ///
 /// Taken from swift-cli/swift/src/types.rs.
 /// impl taken from swift-cli/swift/src/lib.rs.
 #[derive(Debug)]
-pub struct DataDirectory {
+pub struct Directory {
     path: PathBuf,
 }
 lazy_static! {
-    pub static ref DATA_DIRECTORY: DataDirectory = DataDirectory::new();
+    pub static ref DATA_DIRECTORY: Directory = Directory::new_data_directory();
 }
-
-impl DataDirectory {
-    pub fn new() -> DataDirectory {
-        DataDirectory {
+lazy_static! {
+    pub static ref LOG_DIRECTORY: Directory = Directory::new_log_directory();
+}
+impl Directory {
+    pub fn new_data_directory() -> Directory {
+        Directory {
             path: create_data_dir().unwrap(),
+        }
+    }
+
+    pub fn new_log_directory() -> Directory {
+        Directory {
+            path: user_directory().join(DEFAULT_LOG_DIRECTORY),
         }
     }
     /// Return a clone to the private path PathBuf.
@@ -510,9 +578,9 @@ impl DataDirectory {
         self.path.clone()
     }
 }
-impl Default for DataDirectory {
+impl Default for Directory {
     fn default() -> Self {
-        DataDirectory::new()
+        Directory::new_data_directory()
     }
 }
 
@@ -534,6 +602,29 @@ fn create_data_dir() -> AHResult<PathBuf> {
     Ok(path)
 }
 
+/// Create directory.
+///
+/// Taken from swift-cli/swift/src/lib.rs.
+/// # Returns
+/// - `Ok`: The PathBuf for the data directory path.
+/// - `Err`: Issue deducing path or creating the data directory.
+pub fn create_directory(directory: PathBuf) -> Result<PathBuf> {
+    fs::create_dir_all(&directory)?;
+    Ok(directory)
+}
+
+/// Get user directory.
+///
+/// # Returns
+/// - The PathBuf for the user directory path. Otherwise empty pathbuf.
+pub fn user_directory() -> PathBuf {
+    if let Some(user_dirs) = UserDirs::new() {
+        PathBuf::from(user_dirs.home_dir())
+    } else {
+        PathBuf::from("")
+    }
+}
+
 #[derive(Debug, Clone, Eq, Hash, PartialEq, Serialize, Deserialize)]
 pub struct Address {
     pub host: String,
@@ -544,6 +635,7 @@ pub struct Address {
 pub struct ConnectionHistory {
     addresses: IndexSet<Address>,
     files: IndexSet<String>,
+    folders: IndexSet<String>,
 }
 
 impl Default for ConnectionHistory {
@@ -561,9 +653,14 @@ impl ConnectionHistory {
                 return conn_yaml;
             }
         }
+        let mut folders = IndexSet::new();
+        if let Ok(default_path) = LOG_DIRECTORY.path().into_os_string().into_string() {
+            folders.insert(default_path);
+        }
         ConnectionHistory {
             addresses: IndexSet::new(),
             files: IndexSet::new(),
+            folders,
         }
     }
     /// Return the filename of the saved connection history file.
@@ -578,7 +675,10 @@ impl ConnectionHistory {
     pub fn files(&self) -> IndexSet<String> {
         self.files.clone()
     }
-
+    /// Returns a clone of the private folders vec.
+    pub fn folders(&self) -> IndexSet<String> {
+        self.folders.clone()
+    }
     /// Attempt to add a new host and port if not the most recent entries.
     ///
     /// # Parameters
@@ -604,6 +704,20 @@ impl ConnectionHistory {
         self.files.insert(filename);
         let diff = i32::max(0, self.files.len() as i32 - MAX_CONNECTION_HISTORY);
         self.files = self.files.split_off(diff as usize);
+
+        if let Err(e) = self.save() {
+            error!("Unable to save connection history, {}.", e);
+        }
+    }
+    /// Attempt to add a new folder if not the most recent entry.
+    ///
+    /// # Parameters
+    /// - `folder`: The path to the folder to add to history.
+    pub fn record_folder(&mut self, folder: String) {
+        self.folders.shift_remove(&folder);
+        self.folders.insert(folder);
+        let diff = i32::max(0, self.folders.len() as i32 - MAX_CONNECTION_HISTORY);
+        self.folders = self.folders.split_off(diff as usize);
 
         if let Err(e) = self.save() {
             error!("Unable to save connection history, {}.", e);
@@ -647,27 +761,6 @@ impl Deref for FlowControl {
 
     fn deref(&self) -> &Self::Target {
         &self.0
-    }
-}
-
-#[derive(Debug)]
-pub struct CliTabs(Tabs);
-
-impl Deref for CliTabs {
-    type Target = Tabs;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl FromStr for CliTabs {
-    type Err = String;
-
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        Ok(CliTabs(Tabs::from_str(s).map_err(|_| {
-            format!("Must choose from available tabs {:?}", Tabs::VARIANTS)
-        })?))
     }
 }
 
@@ -1662,7 +1755,6 @@ pub struct VelLog {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use directories::UserDirs;
     use serial_test::serial;
     use std::{
         sync::mpsc,
@@ -1671,7 +1763,7 @@ mod tests {
     };
     const TEST_FILEPATH: &str = "./tests/data/piksi-relay-1min.sbp";
     const TEST_SHORT_FILEPATH: &str = "./tests/data/piksi-relay.sbp";
-    const SBP_FILE_SHORT_DURATION_SEC: f64 = 26.1;
+    const SBP_FILE_SHORT_DURATION_SEC: f64 = 27.1;
     const DELAY_BEFORE_CHECKING_APP_STARTED_IN_MS: u64 = 150;
 
     pub mod data_directories {
@@ -1730,7 +1822,6 @@ mod tests {
         if filename.exists() {
             let mut backup_filename = filename.clone();
             backup_filename.set_extension("backup");
-            println!("{:?}", backup_filename);
             fs::rename(filename, backup_filename).unwrap();
         }
     }

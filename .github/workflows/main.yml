@@ -77,7 +77,7 @@ jobs:
         with:
           path: |
             ${{ env.RUST_CACHE_DIRS }}
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock', '**/console_backend.capnp') }}
 
       - uses: davidB/rust-cargo-make@v1
         with:

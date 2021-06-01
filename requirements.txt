@@ -1,9 +1,9 @@
 altgraph==0.17; sys_platform == "darwin" and python_version >= "3.5"
 fbs @ git+https://github.com/silverjam/fbs.git@master
-future==0.18.2; python_version >= "3.5" and python_full_version < "3.0.0" and sys_platform == "win32" or sys_platform == "win32" and python_version >= "3.5" and python_full_version >= "3.3.0"
+future==0.18.2; sys_platform == "win32" and python_version >= "3.5" and python_full_version >= "3.6.0"
 macholib==1.14; sys_platform == "darwin" and python_version >= "3.5"
-pefile==2019.4.18; sys_platform == "win32" and python_version >= "3.5"
-pycapnp @ git+https://github.com/jayvdb/pycapnp.git@hook-if-file-exists
+pefile==2021.5.24; sys_platform == "win32" and python_version >= "3.5" and python_full_version >= "3.6.0"
+pycapnp @ git+https://github.com/jayvdb/pycapnp.git@bare-except
 pyinstaller-hooks-contrib==2021.1; python_version >= "3.5"
 pyinstaller==4.2; python_version >= "3.5"
 pyside2==5.15.2; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.5.0" and python_version < "3.10")

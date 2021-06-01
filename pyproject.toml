@@ -21,7 +21,7 @@ pkgconfig = "^1.5.1"
 Cython = "^0.29.21"
 nuitka = "<=0.6.12.4"
 psutil = "5.8.0"
-qt5-applications = [{ version = "^5.15.2", platform = "linux" }]
+qt5-applications = [{ version = "^5.15.2" }]
 py2many = { git = "https://github.com/john-michaelburke/py2many", rev = "console" }
 
 [build-system]

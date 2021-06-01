@@ -157,54 +157,6 @@ pub enum ApplicationStates {
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
-pub enum MessageKeys {
-    #[strum(serialize = "status")]
-    STATUS,
-    #[strum(serialize = "statusBarStatus")]
-    STATUS_BAR_STATUS,
-    #[strum(serialize = "navBarStatus")]
-    NAV_BAR_STATUS,
-    #[strum(serialize = "solutionPositionStatus")]
-    SOLUTION_POSITION_STATUS,
-    #[strum(serialize = "solutionTableStatus")]
-    SOLUTION_TABLE_STATUS,
-    #[strum(serialize = "solutionVelocityStatus")]
-    SOLUTION_VELOCITY_STATUS,
-    #[strum(serialize = "trackingSignalsStatus")]
-    TRACKING_SIGNALS_STATUS,
-    #[strum(serialize = "observationStatus")]
-    OBSERVATION_STATUS,
-    #[strum(serialize = "connectRequest")]
-    CONNECT_REQUEST,
-    #[strum(serialize = "fileRequest")]
-    FILE_REQUEST,
-    #[strum(serialize = "tcpRequest")]
-    TCP_REQUEST,
-    #[strum(serialize = "serialRequest")]
-    SERIAL_REQUEST,
-    #[strum(serialize = "disconnectRequest")]
-    DISCONNECT_REQUEST,
-    #[strum(serialize = "pauseRequest")]
-    PAUSE_REQUEST,
-    #[strum(serialize = "serialRefreshRequest")]
-    SERIAL_REFRESH_REQUEST,
-    #[strum(serialize = "trackingSignalsStatusFront")]
-    TRACKING_SIGNALS_STATUS_FRONT,
-    #[strum(serialize = "solutionVelocityStatusFront")]
-    SOLUTION_VELOCITY_STATUS_FRONT,
-    #[strum(serialize = "solutionPositionStatusUnitFront")]
-    SOLUTION_POSITION_STATUS_UNIT_FRONT,
-    #[strum(serialize = "solutionPositionStatusButtonFront")]
-    SOLUTION_POSITION_STATUS_BUTTON_FRONT,
-    #[strum(serialize = "logAppend")]
-    LOG_APPEND,
-    #[strum(serialize = "loggingBarFront")]
-    LOGGING_BAR_FRONT,
-    #[strum(serialize = "loggingBarStatus")]
-    LOGGING_BAR_STATUS,
-}
-
-#[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
 pub enum QTKeys {
     #[strum(serialize = "QVariantList")]
     QVARIANTLIST,

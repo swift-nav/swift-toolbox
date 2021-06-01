@@ -20,7 +20,7 @@ from PySide2 import QtQml, QtCore
 
 from PySide2.QtQml import QQmlComponent, qmlRegisterType
 
-from constants import ApplicationStates, MessageKeys, Keys, Tabs
+from constants import ApplicationStates, Keys, Tabs
 
 from log_panel import (
     LOG_PANEL,
@@ -135,8 +135,9 @@ capnp.remove_import_hook()  # pylint: disable=no-member
 def receive_messages(app_, backend, messages):
     while True:
         buffer = backend.fetch_message()
-        m = messages.Message.from_bytes(buffer)
-        if m.which == MessageKeys.STATUS:
+        Message = messages.Message
+        m = Message.from_bytes(buffer)
+        if m.which == Message.Union.Status:
             if m.status.text == ApplicationStates.CLOSE:
                 return app_.quit()
             if m.status.text == ApplicationStates.CONNECTED:
@@ -144,7 +145,7 @@ def receive_messages(app_, backend, messages):
             elif m.status.text == ApplicationStates.DISCONNECTED:
                 NAV_BAR[Keys.CONNECTED] = False
 
-        elif m.which == MessageKeys.SOLUTION_POSITION_STATUS:
+        elif m.which == Message.Union.SolutionPositionStatus:
             SOLUTION_POSITION_TAB[Keys.LABELS][:] = m.solutionPositionStatus.labels
             SOLUTION_POSITION_TAB[Keys.COLORS][:] = m.solutionPositionStatus.colors
             SOLUTION_POSITION_TAB[Keys.POINTS][:] = [
@@ -160,9 +161,9 @@ def receive_messages(app_, backend, messages):
             SOLUTION_POSITION_TAB[Keys.LON_MAX] = m.solutionPositionStatus.lonMax
             SOLUTION_POSITION_TAB[Keys.LON_MIN] = m.solutionPositionStatus.lonMin
             SOLUTION_POSITION_TAB[Keys.AVAILABLE_UNITS][:] = m.solutionPositionStatus.availableUnits
-        elif m.which == MessageKeys.SOLUTION_TABLE_STATUS:
+        elif m.which == Message.Union.SolutionTableStatus:
             SOLUTION_TABLE[Keys.ENTRIES][:] = [[entry.key, entry.val] for entry in m.solutionTableStatus.data]
-        elif m.which == MessageKeys.SOLUTION_VELOCITY_STATUS:
+        elif m.which == Message.Union.SolutionVelocityStatus:
             SOLUTION_VELOCITY_TAB[Keys.COLORS][:] = m.solutionVelocityStatus.colors
             SOLUTION_VELOCITY_TAB[Keys.POINTS][:] = [
                 [QPointF(point.x, point.y) for point in m.solutionVelocityStatus.data[idx]]
@@ -171,7 +172,7 @@ def receive_messages(app_, backend, messages):
             SOLUTION_VELOCITY_TAB[Keys.MAX] = m.solutionVelocityStatus.max
             SOLUTION_VELOCITY_TAB[Keys.MIN] = m.solutionVelocityStatus.min
             SOLUTION_VELOCITY_TAB[Keys.AVAILABLE_UNITS][:] = m.solutionVelocityStatus.availableUnits
-        elif m.which == MessageKeys.TRACKING_SIGNALS_STATUS:
+        elif m.which == Message.Union.TrackingSignalsStatus:
             TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS][:] = m.trackingSignalsStatus.checkLabels
             TRACKING_SIGNALS_TAB[Keys.LABELS][:] = m.trackingSignalsStatus.labels
             TRACKING_SIGNALS_TAB[Keys.COLORS][:] = m.trackingSignalsStatus.colors
@@ -181,7 +182,7 @@ def receive_messages(app_, backend, messages):
             ]
             TRACKING_SIGNALS_TAB[Keys.MAX] = m.trackingSignalsStatus.max
             TRACKING_SIGNALS_TAB[Keys.MIN] = m.trackingSignalsStatus.min
-        elif m.which == MessageKeys.OBSERVATION_STATUS:
+        elif m.which == Message.Union.ObservationStatus:
             if m.observationStatus.isRemote:
                 REMOTE_OBSERVATION_TAB[Keys.TOW] = m.observationStatus.tow
                 REMOTE_OBSERVATION_TAB[Keys.WEEK] = m.observationStatus.week
@@ -190,7 +191,7 @@ def receive_messages(app_, backend, messages):
                 LOCAL_OBSERVATION_TAB[Keys.TOW] = m.observationStatus.tow
                 LOCAL_OBSERVATION_TAB[Keys.WEEK] = m.observationStatus.week
                 LOCAL_OBSERVATION_TAB[Keys.ROWS][:] = obs_rows_to_json(m.observationStatus.rows)
-        elif m.which == MessageKeys.STATUS_BAR_STATUS:
+        elif m.which == Message.Union.StatusBarStatus:
             STATUS_BAR[Keys.PORT] = m.statusBarStatus.port
             STATUS_BAR[Keys.POS] = m.statusBarStatus.pos
             STATUS_BAR[Keys.RTK] = m.statusBarStatus.rtk
@@ -199,7 +200,7 @@ def receive_messages(app_, backend, messages):
             STATUS_BAR[Keys.INS] = m.statusBarStatus.ins
             STATUS_BAR[Keys.DATA_RATE] = m.statusBarStatus.dataRate
             STATUS_BAR[Keys.SOLID_CONNECTION] = m.statusBarStatus.solidConnection
-        elif m.which == MessageKeys.NAV_BAR_STATUS:
+        elif m.which == Message.Union.NavBarStatus:
             NAV_BAR[Keys.AVAILABLE_PORTS][:] = m.navBarStatus.availablePorts
             NAV_BAR[Keys.AVAILABLE_BAUDRATES][:] = m.navBarStatus.availableBaudrates
             NAV_BAR[Keys.AVAILABLE_FLOWS][:] = m.navBarStatus.availableFlows
@@ -207,11 +208,11 @@ def receive_messages(app_, backend, messages):
             NAV_BAR[Keys.PREVIOUS_HOSTS][:] = m.navBarStatus.previousHosts
             NAV_BAR[Keys.PREVIOUS_PORTS][:] = m.navBarStatus.previousPorts
             NAV_BAR[Keys.PREVIOUS_FILES][:] = m.navBarStatus.previousFiles
-        elif m.which == MessageKeys.LOGGING_BAR_STATUS:
+        elif m.which == Message.Union.LoggingBarStatus:
             LOGGING_BAR[Keys.PREVIOUS_FOLDERS][:] = m.loggingBarStatus.previousFolders
             LOGGING_BAR[Keys.CSV_LOGGING] = m.loggingBarStatus.csvLogging
             LOGGING_BAR[Keys.SBP_LOGGING] = m.loggingBarStatus.sbpLogging
-        elif m.which == MessageKeys.LOG_APPEND:
+        elif m.which == Message.Union.LogAppend:
             log_panel_lock.lock()
             LOG_PANEL[Keys.ENTRIES] += [entry.line for entry in m.logAppend.entries]
             log_panel_lock.unlock()
@@ -235,10 +236,11 @@ class DataModel(QObject):
 
     @Slot(str)  # type: ignore
     def connect_file(self, filename: str) -> None:
-        msg = self.messages.Message()
-        msg.connectRequest = msg.init(MessageKeys.CONNECT_REQUEST)
-        req = self.messages.Message()
-        req.fileRequest = req.init(MessageKeys.FILE_REQUEST)
+        Message = self.messages.Message
+        msg = Message()
+        msg.connectRequest = msg.init(Message.Union.ConnectRequest)
+        req = Message()
+        req.fileRequest = req.init(Message.Union.FileRequest)
         req.fileRequest.filename = str(filename)
         msg.connectRequest.request = req
         buffer = msg.to_bytes()
@@ -246,10 +248,11 @@ class DataModel(QObject):
 
     @Slot(str, int)  # type: ignore
     def connect_tcp(self, host: str, port: int) -> None:
-        msg = self.messages.Message()
-        msg.connectRequest = msg.init(MessageKeys.CONNECT_REQUEST)
-        req = self.messages.Message()
-        req.tcpRequest = req.init(MessageKeys.TCP_REQUEST)
+        Message = self.messages.Message
+        msg = Message()
+        msg.connectRequest = msg.init(Message.Union.ConnectRequest)
+        req = Message()
+        req.tcpRequest = req.init(Message.Union.TcpRequest)
         req.tcpRequest.host = str(host)
         req.tcpRequest.port = int(port)
         msg.connectRequest.request = req
@@ -258,10 +261,11 @@ class DataModel(QObject):
 
     @Slot(str, int, str)  # type: ignore
     def connect_serial(self, device: str, baudrate: int, flow_control: str) -> None:
-        msg = self.messages.Message()
-        msg.connectRequest = msg.init(MessageKeys.CONNECT_REQUEST)
+        Message = self.messages.Message
+        msg = Message()
+        msg.connectRequest = msg.init(Message.Union.ConnectRequest)
         req = self.messages.Message()
-        req.serialRequest = req.init(MessageKeys.SERIAL_REQUEST)
+        req.serialRequest = req.init(Message.Union.SerialRequest)
         req.serialRequest.device = str(device)
         req.serialRequest.baudrate = int(baudrate)
         req.serialRequest.flowControl = str(flow_control)
@@ -271,30 +275,33 @@ class DataModel(QObject):
 
     @Slot()  # type: ignore
     def disconnect(self) -> None:
-        msg = self.messages.Message()
-        msg.connectRequest = msg.init(MessageKeys.CONNECT_REQUEST)
+        Message = self.messages.Message
+        msg = Message()
+        msg.connectRequest = msg.init(Message.Union.ConnectRequest)
         req = self.messages.Message()
-        req.disconnectRequest = req.init(MessageKeys.DISCONNECT_REQUEST)
+        req.disconnectRequest = req.init(Message.Union.DisconnectRequest)
         msg.connectRequest.request = req
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
 
     @Slot()  # type: ignore
     def serial_refresh(self) -> None:
-        msg = self.messages.Message()
-        msg.connectRequest = msg.init(MessageKeys.CONNECT_REQUEST)
+        Message = self.messages.Message
+        msg = Message()
+        msg.connectRequest = msg.init(Message.Union.ConnectRequest)
         req = self.messages.Message()
-        req.serialRefreshRequest = req.init(MessageKeys.SERIAL_REFRESH_REQUEST)
+        req.serialRefreshRequest = req.init(Message.Union.SerialRefreshRequest)
         msg.connectRequest.request = req
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
 
     @Slot(bool)  # type: ignore
     def pause(self, pause_: bool) -> None:
-        msg = self.messages.Message()
-        msg.connectRequest = msg.init(MessageKeys.CONNECT_REQUEST)
+        Message = self.messages.Message
+        msg = Message()
+        msg.connectRequest = msg.init(Message.Union.ConnectRequest)
         req = self.messages.Message()
-        req.pauseRequest = req.init(MessageKeys.PAUSE_REQUEST)
+        req.pauseRequest = req.init(Message.Union.PauseRequest)
         req.pauseRequest.pause = pause_
         msg.connectRequest.request = req
         buffer = msg.to_bytes()
@@ -302,32 +309,36 @@ class DataModel(QObject):
 
     @Slot(list)  # type: ignore
     def tracking_signals_check_visibility(self, checks: List[str]) -> None:
-        m = self.messages.Message()
-        m.trackingSignalsStatusFront = m.init(MessageKeys.TRACKING_SIGNALS_STATUS_FRONT)
+        Message = self.messages.Message
+        m = Message()
+        m.trackingSignalsStatusFront = m.init(Message.Union.TrackingSignalsStatusFront)
         m.trackingSignalsStatusFront.trackingSignalsCheckVisibility = checks
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
 
     @Slot(str)  # type: ignore
     def solution_velocity_unit(self, unit: str) -> None:
-        m = self.messages.Message()
-        m.solutionVelocityStatusFront = m.init(MessageKeys.SOLUTION_VELOCITY_STATUS_FRONT)
+        Message = self.messages.Message
+        m = Message()
+        m.solutionVelocityStatusFront = m.init(Message.Union.SolutionVelocityStatusFront)
         m.solutionVelocityStatusFront.solutionVelocityUnit = unit
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
 
     @Slot(str)  # type: ignore
     def solution_position_unit(self, unit: str) -> None:
-        m = self.messages.Message()
-        m.solutionPositionStatusUnitFront = m.init(MessageKeys.SOLUTION_POSITION_STATUS_UNIT_FRONT)
+        Message = self.messages.Message
+        m = Message()
+        m.solutionPositionStatusUnitFront = m.init(Message.Union.SolutionPositionStatusUnitFront)
         m.solutionPositionStatusUnitFront.solutionPositionUnit = unit
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
 
     @Slot(list)  # type: ignore
     def solution_position(self, buttons: list) -> None:
-        m = self.messages.Message()
-        m.solutionPositionStatusButtonFront = m.init(MessageKeys.SOLUTION_POSITION_STATUS_BUTTON_FRONT)
+        Message = self.messages.Message
+        m = Message()
+        m.solutionPositionStatusButtonFront = m.init(Message.Union.SolutionPositionStatusButtonFront)
         m.solutionPositionStatusButtonFront.solutionPositionPause = buttons[0]
         m.solutionPositionStatusButtonFront.solutionPositionClear = buttons[1]
         m.solutionPositionStatusButtonFront.solutionPositionZoom = buttons[2]
@@ -337,8 +348,9 @@ class DataModel(QObject):
 
     @Slot(list, str)  # type: ignore
     def logging_bar(self, buttons, directory) -> None:
-        m = self.messages.Message()
-        m.loggingBarFront = m.init(MessageKeys.LOGGING_BAR_FRONT)
+        Message = self.messages.Message
+        m = Message()
+        m.loggingBarFront = m.init(Message.Union.LoggingBarFront)
         m.loggingBarFront.csvLogging = buttons[0]
         m.loggingBarFront.sbpLogging = buttons[1]
         m.loggingBarFront.logLevel = buttons[2]

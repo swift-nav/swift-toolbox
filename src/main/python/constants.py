@@ -79,30 +79,5 @@ class ApplicationStates(str, Enum):
     DISCONNECTED = "DISCONNECTED"
 
 
-class MessageKeys(str, Enum):
-    STATUS = "status"
-    STATUS_BAR_STATUS = "statusBarStatus"
-    NAV_BAR_STATUS = "navBarStatus"
-    SOLUTION_POSITION_STATUS = "solutionPositionStatus"
-    SOLUTION_TABLE_STATUS = "solutionTableStatus"
-    SOLUTION_VELOCITY_STATUS = "solutionVelocityStatus"
-    TRACKING_SIGNALS_STATUS = "trackingSignalsStatus"
-    OBSERVATION_STATUS = "observationStatus"
-    CONNECT_REQUEST = "connectRequest"
-    FILE_REQUEST = "fileRequest"
-    TCP_REQUEST = "tcpRequest"
-    SERIAL_REQUEST = "serialRequest"
-    DISCONNECT_REQUEST = "disconnectRequest"
-    PAUSE_REQUEST = "pauseRequest"
-    SERIAL_REFRESH_REQUEST = "serialRefreshRequest"
-    TRACKING_SIGNALS_STATUS_FRONT = "trackingSignalsStatusFront"
-    SOLUTION_VELOCITY_STATUS_FRONT = "solutionVelocityStatusFront"
-    SOLUTION_POSITION_STATUS_UNIT_FRONT = "solutionPositionStatusUnitFront"
-    SOLUTION_POSITION_STATUS_BUTTON_FRONT = "solutionPositionStatusButtonFront"
-    LOG_APPEND = "logAppend"
-    LOGGING_BAR_FRONT = "loggingBarFront"
-    LOGGING_BAR_STATUS = "loggingBarStatus"
-
-
 class QTKeys(str, Enum):
     QVARIANTLIST = "QVariantList"

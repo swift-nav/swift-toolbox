@@ -30,8 +30,16 @@ pub enum Tabs {
     SETTINGS,
     #[strum(serialize = "UPDATE")]
     UPDATE,
-    #[strum(serialize = "ADVANCED")]
-    ADVANCED,
+    #[strum(serialize = "ADVANCED_SYSTEM_MONITOR")]
+    ADVANCED_SYSTEM_MONITOR,
+    #[strum(serialize = "ADVANCED_INS")]
+    ADVANCED_INS,
+    #[strum(serialize = "ADVANCED_MAGNETOMETER")]
+    ADVANCED_MAGNETOMETER,
+    #[strum(serialize = "ADVANCED_NETWORKING")]
+    ADVANCED_NETWORKING,
+    #[strum(serialize = "ADVANCED_SPECTRUM_ANALYZER")]
+    ADVANCED_SPECTRUM_ANALYZER,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
@@ -144,6 +152,8 @@ pub enum Keys {
     SBP_LOGGING_LABELS,
     #[strum(serialize = "LOG_LEVEL_LABELS")]
     LOG_LEVEL_LABELS,
+    #[strum(serialize = "TEXT_DATA")]
+    TEXT_DATA,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]

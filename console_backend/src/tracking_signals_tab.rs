@@ -99,7 +99,7 @@ impl<S: MessageSender> TrackingSignalsTab<S> {
             sv_labels: Vec::new(),
             t_init: Instant::now(),
             time: {
-                let mut time = Deque::with_size_limit(NUM_POINTS);
+                let mut time = Deque::with_size_limit(NUM_POINTS, /*fill_value=*/ None);
                 for x in (0..(NUM_POINTS as i32)).rev() {
                     time.add((-x as f64) * (1.0 / TRK_RATE));
                 }
@@ -117,7 +117,7 @@ impl<S: MessageSender> TrackingSignalsTab<S> {
         let cn0_deque = self
             .cn0_dict
             .entry(key)
-            .or_insert_with(|| Deque::with_size_limit(NUM_POINTS));
+            .or_insert_with(|| Deque::with_size_limit(NUM_POINTS, /*fill_value=*/ None));
         cn0_deque.add((OrderedFloat(t), cn0));
     }
     /// Push carrier-to-noise density age to cn0_age with key.

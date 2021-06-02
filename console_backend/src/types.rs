@@ -51,12 +51,14 @@ pub struct Deque<T> {
     d: Vec<T>,
     capacity: usize,
 }
-impl<T> Deque<T> {
-    pub fn with_size_limit(capacity: usize) -> Deque<T> {
-        Deque {
-            d: Vec::new(),
-            capacity,
-        }
+impl<T: Clone> Deque<T> {
+    pub fn with_size_limit(capacity: usize, fill_value: Option<T>) -> Deque<T> {
+        let d = if let Some(val) = fill_value {
+            vec![val; capacity]
+        } else {
+            vec![]
+        };
+        Deque { d, capacity }
     }
     pub fn add(&mut self, ele: T) {
         if self.d.len() == self.capacity {

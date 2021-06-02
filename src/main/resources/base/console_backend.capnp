@@ -131,6 +131,13 @@ struct TrackingSignalsStatus {
     checkLabels @5 :List(Text);
 }
 
+struct AdvancedInsStatus {
+    min @0 :Float64;
+    max @1 :Float64;
+    data @2 :List(List(Point));
+    textData @3 :List(Text);
+}
+
 struct LoggingBarFront {
     csvLogging @0 :Bool;
     sbpLogging @1 :Text;
@@ -190,5 +197,6 @@ struct Message {
         statusBarStatus @19 :StatusBarStatus;
         loggingBarFront @20 :LoggingBarFront;
         loggingBarStatus @21 :LoggingBarStatus;
+        advancedInsStatus @22 :AdvancedInsStatus;
     }
 }

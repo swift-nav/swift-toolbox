@@ -1,4 +1,3 @@
-use crate::common_constants::Tabs;
 // 'Universal' constants
 
 pub const NANOSECONDS_PER_SECOND: f64 = 1.0e+9;
@@ -8,17 +7,6 @@ pub const APPLICATION_QUALIFIER: &str = "com.swift-nav";
 pub const APPLICATION_ORGANIZATION: &str = "swift-nav";
 pub const APPLICATION_NAME: &str = "swift_navigation_console";
 // CLI constants.
-pub const TAB_LIST: &[Tabs] = &[
-    Tabs::TRACKING_SIGNALS,
-    Tabs::TRACKING_SKYPLOT,
-    Tabs::SOLUTION_POSITION,
-    Tabs::SOLUTION_VELOCITY,
-    Tabs::BASELINE,
-    Tabs::OBSERVATIONS,
-    Tabs::SETTINGS,
-    Tabs::UPDATE,
-    Tabs::ADVANCED,
-];
 
 // Server constants.
 pub const CLOSE: &str = "CLOSE";
@@ -38,6 +26,12 @@ pub const DEFAULT_LOG_DIRECTORY: &str = "SwiftNav";
 
 // Common constants.
 pub const NUM_POINTS: usize = 200;
+
+// Advanced Ins Tab constants.
+pub const NUM_INS_PLOT_ROWS: usize = 6;
+pub const NUM_INS_TEXT_FIELDS: usize = 5;
+pub const INS_PLOT_YLIM_MAX: f64 = 32768_f64;
+pub const INS_PLOT_YLIM_MIN: f64 = -32768_f64;
 
 // Navbar constants.
 pub const AVAILABLE_REFRESH_RATES: [u8; 4] = [1, 5, 10, 25];

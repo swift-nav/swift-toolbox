@@ -13,30 +13,34 @@ use crate::types::{Deque, MessageSender, SharedState};
 ///
 /// # Fields:
 ///
-/// - `available_units` - The available units of measure to send to frontend for selection.
-/// - `colors`: Stored rgb codes for frontend correspond to index of sv_labels.
-/// - `max`: Stored maximum measure of unit used for frontend plot.
-/// - `min`: Stored minimum measure of unit used for frontend plot.
-/// - `multiplier`: The current multiplier used to modify points accounting for unit of measure.
-/// - `points`: The horizontal and vertical velocity points of size, NUM_POINTS, to be sent to frontend.
+/// - `client_send`: Client Sender channel for communication from backend to frontend.
+/// - `imu_conf`: Storage for the Imu configuration.
+/// - `imu_temp`: Storage for the raw Imu temperature converted to proper units.
+/// - `rms_acc_x`: The calculated root mean squared imu acceleration for x axis.
+/// - `rms_acc_y`: The calculated root mean squared imu acceleration for y axis.
+/// - `rms_acc_z`: The calculated root mean squared imu acceleration for z axis.
+/// - `acc_x`: The stored historic Imu acceleration values along x axis.
+/// - `acc_y`: The stored historic Imu acceleration values along y axis.
+/// - `acc_z`: The stored historic Imu acceleration values along z axis.
+/// - `gyro_x`: The stored historic Imu angular rate values along x axis.
+/// - `gyro_y`: The stored historic Imu angular rate values along y axis.
+/// - `gyro_z`: The stored historic Imu angular rate values along z axis.
 /// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
-/// - `tow`: The GPS Time of Week.
-/// - `unit`: Currently displayed and converted to unit of measure.
 #[derive(Debug)]
 pub struct AdvancedInsTab<S: MessageSender> {
-    pub client_sender: S,
-    pub imu_conf: u8,
-    pub imu_temp: f64,
-    pub rms_acc_x: f64,
-    pub rms_acc_y: f64,
-    pub rms_acc_z: f64,
-    pub acc_x: Deque<f64>,
-    pub acc_y: Deque<f64>,
-    pub acc_z: Deque<f64>,
-    pub gyro_x: Deque<f64>,
-    pub gyro_y: Deque<f64>,
-    pub gyro_z: Deque<f64>,
-    pub shared_state: SharedState,
+    client_sender: S,
+    imu_conf: u8,
+    imu_temp: f64,
+    rms_acc_x: f64,
+    rms_acc_y: f64,
+    rms_acc_z: f64,
+    acc_x: Deque<f64>,
+    acc_y: Deque<f64>,
+    acc_z: Deque<f64>,
+    gyro_x: Deque<f64>,
+    gyro_y: Deque<f64>,
+    gyro_z: Deque<f64>,
+    shared_state: SharedState,
 }
 
 impl<S: MessageSender> AdvancedInsTab<S> {
@@ -60,7 +64,8 @@ impl<S: MessageSender> AdvancedInsTab<S> {
         }
     }
 
-    pub fn imu_set_data(&mut self) {
+    /// Method for preparing some rms_acc data and initiating sending of data to frontend.
+    fn imu_set_data(&mut self) {
         let acc_x = &mut self.acc_x.get();
         let acc_y = &mut self.acc_y.get();
         let acc_z = &mut self.acc_z.get();
@@ -87,6 +92,10 @@ impl<S: MessageSender> AdvancedInsTab<S> {
         self.send_data();
     }
 
+    /// Handler for Imu Aux messages.
+    ///
+    /// # Parameters
+    /// - `msg`: MsgImuAux to extract data from.
     pub fn handle_imu_aux(&mut self, msg: MsgImuAux) {
         match msg.imu_type {
             0 => {
@@ -102,6 +111,11 @@ impl<S: MessageSender> AdvancedInsTab<S> {
             }
         }
     }
+
+    /// Handler for Imu Raw messages.
+    ///
+    /// # Parameters
+    /// - `msg`: MsgImuRaw to extract data from.
     pub fn handle_imu_raw(&mut self, msg: MsgImuRaw) {
         self.acc_x.add(msg.acc_x as f64);
         self.acc_y.add(msg.acc_y as f64);
@@ -112,6 +126,7 @@ impl<S: MessageSender> AdvancedInsTab<S> {
         self.imu_set_data();
     }
 
+    /// Package data into a message buffer and send to frontend.
     fn send_data(&mut self) {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<m::message::Builder>();
@@ -158,5 +173,203 @@ impl<S: MessageSender> AdvancedInsTab<S> {
         serialize::write_message(&mut msg_bytes, &builder)
             .expect(CAP_N_PROTO_SERIALIZATION_FAILURE);
         self.client_sender.send_data(msg_bytes);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::TestSender;
+    use sbp::messages::imu::{MsgImuAux, MsgImuRaw};
+
+    #[test]
+    fn handle_imu_raw_test() {
+        let shared_state = SharedState::new();
+        let client_send = TestSender { inner: Vec::new() };
+        let mut ins_tab = AdvancedInsTab::new(shared_state, client_send);
+        let tow = 1_u32;
+        let tow_f = 1_u8;
+        let acc_x = 2_i16;
+        let acc_y = 3_i16;
+        let acc_z = 4_i16;
+        let gyr_x = 5_i16;
+        let gyr_y = 6_i16;
+        let gyr_z = 7_i16;
+        let msg = MsgImuRaw {
+            sender_id: Some(1337),
+            tow,
+            tow_f,
+            acc_x,
+            acc_y,
+            acc_z,
+            gyr_x,
+            gyr_y,
+            gyr_z,
+        };
+        let acc_xs = ins_tab.acc_x.get();
+        let acc_ys = ins_tab.acc_y.get();
+        let acc_zs = ins_tab.acc_z.get();
+        let gyro_xs = ins_tab.gyro_x.get();
+        let gyro_ys = ins_tab.gyro_y.get();
+        let gyro_zs = ins_tab.gyro_z.get();
+        for idx in 0..NUM_POINTS {
+            assert!(f64::abs(acc_xs[idx] - 0_f64) <= f64::EPSILON);
+            assert!(f64::abs(acc_ys[idx] - 0_f64) <= f64::EPSILON);
+            assert!(f64::abs(acc_zs[idx] - 0_f64) <= f64::EPSILON);
+            assert!(f64::abs(gyro_xs[idx] - 0_f64) <= f64::EPSILON);
+            assert!(f64::abs(gyro_ys[idx] - 0_f64) <= f64::EPSILON);
+            assert!(f64::abs(gyro_zs[idx] - 0_f64) <= f64::EPSILON);
+        }
+        assert!(f64::abs(ins_tab.rms_acc_x - 0_f64) <= f64::EPSILON);
+        assert!(f64::abs(ins_tab.rms_acc_y - 0_f64) <= f64::EPSILON);
+        assert!(f64::abs(ins_tab.rms_acc_z - 0_f64) <= f64::EPSILON);
+        ins_tab.handle_imu_raw(msg);
+        let acc_xs = ins_tab.acc_x.get();
+        let acc_ys = ins_tab.acc_y.get();
+        let acc_zs = ins_tab.acc_z.get();
+        let gyro_xs = ins_tab.gyro_x.get();
+        let gyro_ys = ins_tab.gyro_y.get();
+        let gyro_zs = ins_tab.gyro_z.get();
+        assert!(f64::abs(acc_xs[NUM_POINTS - 1] - acc_x as f64) <= f64::EPSILON);
+        assert!(f64::abs(acc_ys[NUM_POINTS - 1] - acc_y as f64) <= f64::EPSILON);
+        assert!(f64::abs(acc_zs[NUM_POINTS - 1] - acc_z as f64) <= f64::EPSILON);
+        assert!(f64::abs(gyro_xs[NUM_POINTS - 1] - gyr_x as f64) <= f64::EPSILON);
+        assert!(f64::abs(gyro_ys[NUM_POINTS - 1] - gyr_y as f64) <= f64::EPSILON);
+        assert!(f64::abs(gyro_zs[NUM_POINTS - 1] - gyr_z as f64) <= f64::EPSILON);
+        assert!(f64::abs(ins_tab.rms_acc_x - 0_f64) > f64::EPSILON);
+        assert!(f64::abs(ins_tab.rms_acc_y - 0_f64) > f64::EPSILON);
+        assert!(f64::abs(ins_tab.rms_acc_z - 0_f64) > f64::EPSILON);
+    }
+
+    #[test]
+    fn handle_imu_aux_test() {
+        let shared_state = SharedState::new();
+        let client_send = TestSender { inner: Vec::new() };
+        let mut ins_tab = AdvancedInsTab::new(shared_state.clone(), client_send.clone());
+        let imu_type_a = 0_u8;
+        let imu_type_b = 1_u8;
+        let imu_type_unknown = 2_u8;
+        let imu_conf = 1_u8;
+        let temp = 200;
+        let msg = MsgImuAux {
+            sender_id: Some(1337),
+            imu_type: imu_type_unknown,
+            imu_conf,
+            temp,
+        };
+        assert!(f64::abs(ins_tab.imu_temp - 0_f64) <= f64::EPSILON);
+        assert_eq!(ins_tab.imu_conf, 0_u8);
+        ins_tab.handle_imu_aux(msg);
+        assert!(f64::abs(ins_tab.imu_temp - 0_f64) <= f64::EPSILON);
+        assert_ne!(ins_tab.imu_conf, imu_conf);
+
+        let mut ins_tab = AdvancedInsTab::new(shared_state.clone(), client_send.clone());
+        let msg = MsgImuAux {
+            sender_id: Some(1337),
+            imu_type: imu_type_a,
+            imu_conf,
+            temp,
+        };
+        assert!(f64::abs(ins_tab.imu_temp - 0_f64) <= f64::EPSILON);
+        assert_eq!(ins_tab.imu_conf, 0_u8);
+        ins_tab.handle_imu_aux(msg);
+        assert!(f64::abs(ins_tab.imu_temp - 23.390625_f64) <= f64::EPSILON);
+        assert_eq!(ins_tab.imu_conf, imu_conf);
+
+        let mut ins_tab = AdvancedInsTab::new(shared_state, client_send);
+        let msg = MsgImuAux {
+            sender_id: Some(1337),
+            imu_type: imu_type_b,
+            imu_conf,
+            temp,
+        };
+        assert!(f64::abs(ins_tab.imu_temp - 0_f64) <= f64::EPSILON);
+        assert_eq!(ins_tab.imu_conf, 0_u8);
+        ins_tab.handle_imu_aux(msg);
+        assert!(f64::abs(ins_tab.imu_temp - 25.78125_f64) <= f64::EPSILON);
+        assert_eq!(ins_tab.imu_conf, imu_conf);
+    }
+
+    #[test]
+    fn handle_imu_send_data_test() {
+        let shared_state = SharedState::new();
+        let client_send = TestSender { inner: Vec::new() };
+        let mut ins_tab = AdvancedInsTab::new(shared_state, client_send);
+
+        assert!(f64::abs(ins_tab.rms_acc_x - 0_f64) <= f64::EPSILON);
+        assert!(f64::abs(ins_tab.rms_acc_y - 0_f64) <= f64::EPSILON);
+        assert!(f64::abs(ins_tab.rms_acc_z - 0_f64) <= f64::EPSILON);
+
+        let imu_type = 0_u8;
+        let imu_conf = 1_u8;
+        let temp = 200;
+        let msg = MsgImuAux {
+            sender_id: Some(1337),
+            imu_type,
+            imu_conf,
+            temp,
+        };
+        ins_tab.handle_imu_aux(msg);
+
+        let tow = 1_u32;
+        let tow_f = 1_u8;
+        let acc_x = 2_i16;
+        let acc_y = 3_i16;
+        let acc_z = 4_i16;
+        let gyr_x = 5_i16;
+        let gyr_y = 6_i16;
+        let gyr_z = 7_i16;
+        let msg = MsgImuRaw {
+            sender_id: Some(1337),
+            tow,
+            tow_f,
+            acc_x,
+            acc_y,
+            acc_z,
+            gyr_x,
+            gyr_y,
+            gyr_z,
+        };
+        ins_tab.handle_imu_raw(msg);
+        let sig_figs = 0.0001220703125_f64;
+        let acc_x = acc_x as f64;
+        let acc_y = acc_y as f64;
+        let acc_z = acc_z as f64;
+
+        let rms_acc_x = f64::sqrt((acc_x * acc_x) / NUM_POINTS as f64);
+        let rms_acc_y = f64::sqrt((acc_y * acc_y) / NUM_POINTS as f64);
+        let rms_acc_z = f64::sqrt((acc_z * acc_z) / NUM_POINTS as f64);
+        assert!(f64::abs(ins_tab.rms_acc_x - rms_acc_x * sig_figs) <= f64::EPSILON);
+        assert!(f64::abs(ins_tab.rms_acc_y - rms_acc_y * sig_figs) <= f64::EPSILON);
+        assert!(f64::abs(ins_tab.rms_acc_z - rms_acc_z * sig_figs) <= f64::EPSILON);
+
+        let acc_x = 4_i16;
+        let acc_y = 6_i16;
+        let acc_z = 8_i16;
+        let msg = MsgImuRaw {
+            sender_id: Some(1337),
+            tow,
+            tow_f,
+            acc_x,
+            acc_y,
+            acc_z,
+            gyr_x,
+            gyr_y,
+            gyr_z,
+        };
+        ins_tab.handle_imu_raw(msg);
+        let sig_figs = 0.0001220703125_f64;
+        let acc_x = acc_x as f64;
+        let acc_y = acc_y as f64;
+        let acc_z = acc_z as f64;
+        let rms_acc_x =
+            f64::sqrt((acc_x * acc_x + (acc_x / 2_f64) * (acc_x / 2_f64)) / NUM_POINTS as f64);
+        let rms_acc_y =
+            f64::sqrt((acc_y * acc_y + (acc_y / 2_f64) * (acc_y / 2_f64)) / NUM_POINTS as f64);
+        let rms_acc_z =
+            f64::sqrt((acc_z * acc_z + (acc_z / 2_f64) * (acc_z / 2_f64)) / NUM_POINTS as f64);
+        assert!(f64::abs(ins_tab.rms_acc_x - rms_acc_x * sig_figs) <= f64::EPSILON);
+        assert!(f64::abs(ins_tab.rms_acc_y - rms_acc_y * sig_figs) <= f64::EPSILON);
+        assert!(f64::abs(ins_tab.rms_acc_z - rms_acc_z * sig_figs) <= f64::EPSILON);
     }
 }

@@ -31,10 +31,6 @@ Item {
             visible: false
             title: Constants.advancedIns.title
             titleColor: Constants.advancedIns.titleColor
-            // width: parent.width
-            // height: parent.height
-            // height: parent.height - advancedInsCheckboxes.height
-            // anchors.top: parent.top
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.alignment: Qt.AlignTop
@@ -160,12 +156,12 @@ Item {
                     if (!advancedTab.visible)
                         return ;
 
+                    advancedInsChart.visible = true;
                     advanced_ins_model.fill_console_points(advancedInsPoints);
                     if (!advancedInsPoints.points.length)
                         return ;
 
                     var points = advancedInsPoints.points;
-                    advancedInsChart.visible = true;
                     textDataRow.visible = true;
                     if (!lines.length) {
                         for (var idx in advancedInsPoints.points) {

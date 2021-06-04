@@ -123,12 +123,11 @@ struct SolutionVelocityStatus {
 }
 
 struct TrackingSignalsStatus {
-    min @0 :Float64;
-    max @1 :Float64;
-    labels @2 :List(Text);
-    data @3 :List(List(Point));
-    colors @4 :List(Text);
-    checkLabels @5 :List(Text);
+    xminOffset @0 :Float64;
+    labels @1 :List(Text);
+    data @2 :List(List(Point));
+    colors @3 :List(Text);
+    checkLabels @4 :List(Text);
 }
 
 struct AdvancedInsStatus {

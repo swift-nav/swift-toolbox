@@ -194,6 +194,8 @@ QtObject {
         readonly property int xAxisMinOffsetFromMaxSeconds: 100
         readonly property int checkBoxVerticalPadding: 0
         readonly property int checkBoxPreferredWidth: 100
+        readonly property int snrThreshold: 15
+        readonly property int yAxisMax: 60
     }
 
     observationTab: QtObject {

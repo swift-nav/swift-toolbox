@@ -199,8 +199,6 @@ def receive_messages(app_, backend, messages):
                 [QPointF(point.x, point.y) for point in m.advancedInsStatus.data[idx]]
                 for idx in range(len(m.advancedInsStatus.data))
             ]
-            ADVANCED_INS_TAB[Keys.MAX] = m.advancedInsStatus.max
-            ADVANCED_INS_TAB[Keys.MIN] = m.advancedInsStatus.min
         elif m.which == Message.Union.TrackingSignalsStatus:
             TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS][:] = m.trackingSignalsStatus.checkLabels
             TRACKING_SIGNALS_TAB[Keys.LABELS][:] = m.trackingSignalsStatus.labels

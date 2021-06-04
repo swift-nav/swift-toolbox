@@ -27,8 +27,6 @@ pub struct AdvancedInsTab<S: MessageSender> {
     pub client_sender: S,
     pub imu_conf: u8,
     pub imu_temp: f64,
-    pub max: f64,
-    pub min: f64,
     pub rms_acc_x: f64,
     pub rms_acc_y: f64,
     pub rms_acc_z: f64,
@@ -49,8 +47,6 @@ impl<S: MessageSender> AdvancedInsTab<S> {
             client_sender,
             imu_conf: 0_u8,
             imu_temp: 0_f64,
-            max: INS_PLOT_YLIM_MAX,
-            min: INS_PLOT_YLIM_MIN,
             rms_acc_x: 0_f64,
             rms_acc_y: 0_f64,
             rms_acc_z: 0_f64,
@@ -69,20 +65,20 @@ impl<S: MessageSender> AdvancedInsTab<S> {
         let acc_y = &mut self.acc_y.get();
         let acc_z = &mut self.acc_z.get();
         let acc_range = self.imu_conf & 0xF;
-        let sig_figs = f64::powi(f64::powi(2_f64, acc_range as i32 + 1_i32) / 2_f64, 15);
+        let sig_figs = f64::powi(2_f64, acc_range as i32 + 1_i32) / f64::powi(2_f64, 15);
         let (rms_x, rms_y, rms_z) = {
             let mut squared_sum_x: f64 = 0_f64;
             let mut squared_sum_y: f64 = 0_f64;
             let mut squared_sum_z: f64 = 0_f64;
-            for idx in 0..acc_x.len() {
+            for idx in 0..NUM_POINTS {
                 squared_sum_x += f64::powi(acc_x[idx], 2);
                 squared_sum_y += f64::powi(acc_y[idx], 2);
                 squared_sum_z += f64::powi(acc_z[idx], 2);
             }
             (
-                squared_sum_x / acc_x.len() as f64,
-                squared_sum_y / acc_y.len() as f64,
-                squared_sum_z / acc_z.len() as f64,
+                f64::sqrt(squared_sum_x / acc_x.len() as f64),
+                f64::sqrt(squared_sum_y / acc_y.len() as f64),
+                f64::sqrt(squared_sum_z / acc_z.len() as f64),
             )
         };
         self.rms_acc_x = sig_figs * rms_x;
@@ -94,7 +90,7 @@ impl<S: MessageSender> AdvancedInsTab<S> {
     pub fn handle_imu_aux(&mut self, msg: MsgImuAux) {
         match msg.imu_type {
             0 => {
-                self.imu_temp = 23_f64 + f64::powi(msg.temp as f64 / 2_f64, 9);
+                self.imu_temp = 23_f64 + msg.temp as f64 / f64::powi(2_f64, 9);
                 self.imu_conf = msg.imu_conf;
             }
             1 => {
@@ -121,8 +117,6 @@ impl<S: MessageSender> AdvancedInsTab<S> {
         let msg = builder.init_root::<m::message::Builder>();
 
         let mut tab_status = msg.init_advanced_ins_status();
-        tab_status.set_min(self.min);
-        tab_status.set_max(self.max);
 
         let mut tab_points = tab_status.reborrow().init_data(NUM_INS_PLOT_ROWS as u32);
 

@@ -6,11 +6,6 @@ import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
 Item {
-    // property variant labels: []
-    // property variant colors: []
-    // property variant check_labels: []
-    // property variant check_visibility: []
-
     id: advancedInsTab
 
     property variant lines: []
@@ -24,41 +19,7 @@ Item {
         id: advancedInsPoints
     }
 
-    Rectangle {
-        // GridLayout {
-        //     id: advancedInsCheckboxes
-        //     columns: parent.width / Constants.advancedIns.checkBoxPreferredWidth
-        //     anchors.horizontalCenter: advancedInsChart.horizontalCenter
-        //     anchors.top: advancedInsChart.bottom
-        //     Repeater {
-        //         id: advancedInsCheckbox
-        //         model: check_labels
-        //         Column {
-        //             CheckBox {
-        //                 checked: true
-        //                 text: modelData
-        //                 verticalPadding: Constants.advancedIns.checkBoxVerticalPadding
-        //                 onClicked: {
-        //                     check_visibility[index] = checked;
-        //                     if (index == 0) {
-        //                         lineLegend.visible = !lineLegend.visible;
-        //                         return ;
-        //                     }
-        //                     var labels_not_visible = [];
-        //                     for (var idx in check_visibility) {
-        //                         if (!check_visibility[idx])
-        //                             labels_not_visible.push(check_labels[idx]);
-        //                     }
-        //                     data_model.advanced_ins_check_visibility(labels_not_visible);
-        //                 }
-        //                 Component.onCompleted: {
-        //                     check_visibility.push(checked);
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
-
+    ColumnLayout {
         id: advancedInsArea
 
         width: parent.width
@@ -70,10 +31,13 @@ Item {
             visible: false
             title: Constants.advancedIns.title
             titleColor: Constants.advancedIns.titleColor
-            width: parent.width
-            height: parent.height
+            // width: parent.width
+            // height: parent.height
             // height: parent.height - advancedInsCheckboxes.height
-            anchors.top: parent.top
+            // anchors.top: parent.top
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.alignment: Qt.AlignTop
             backgroundColor: Constants.commonChart.backgroundColor
             plotAreaColor: Constants.commonChart.areaColor
             legend.visible: false
@@ -131,6 +95,7 @@ Item {
 
                                 text: modelData
                                 font.pointSize: Constants.smallPointSize
+                                font.bold: true
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                             }
@@ -154,6 +119,8 @@ Item {
                 labelsColor: Constants.commonChart.labelsColor
                 tickInterval: Constants.advancedIns.xAxisTickCount
                 tickType: ValueAxis.TicksDynamic
+                min: Constants.advancedIns.xAxisMin
+                max: Constants.advancedIns.xAxisMax
 
                 labelsFont {
                     pointSize: Constants.mediumPointSize
@@ -173,6 +140,8 @@ Item {
                 labelsColor: Constants.commonChart.labelsColor
                 tickInterval: Constants.advancedIns.yAxisTickCount
                 tickType: ValueAxis.TicksDynamic
+                min: Constants.advancedIns.yAxisMin
+                max: Constants.advancedIns.yAxisMax
 
                 labelsFont {
                     pointSize: Constants.mediumPointSize
@@ -196,28 +165,150 @@ Item {
                         return ;
 
                     var points = advancedInsPoints.points;
-                    // colors = advancedInsPoints.colors;
-                    // labels = advancedInsPoints.labels;
                     advancedInsChart.visible = true;
-                    // check_labels = advancedInsPoints.check_labels;
+                    textDataRow.visible = true;
                     if (!lines.length) {
                         for (var idx in advancedInsPoints.points) {
                             var line = advancedInsChart.createSeries(ChartView.SeriesTypeLine, idx, advancedInsXAxis);
-                            // line.color = colors[idx];
+                            line.color = Constants.advancedIns.lineColors[idx];
                             line.width = Constants.commonChart.lineWidth;
                             line.axisYRight = advancedInsYAxis;
                             line.useOpenGL = Globals.useOpenGL;
                             lines.push(line);
                         }
                     }
+                    imuTempText.text = advancedInsPoints.text_data[0];
+                    imuConfText.text = advancedInsPoints.text_data[1];
+                    rmsAccXText.text = advancedInsPoints.text_data[2];
+                    rmsAccYText.text = advancedInsPoints.text_data[3];
+                    rmsAccZText.text = advancedInsPoints.text_data[4];
                     advancedInsPoints.fill_series(lines);
-                    advancedInsXAxis.min = 0;
-                    advancedInsXAxis.max = 200;
-                    if (advancedInsYAxis.min != advancedInsPoints.min_) {
-                        advancedInsYAxis.min = advancedInsPoints.min_;
-                        advancedInsYAxis.max = advancedInsPoints.max_;
-                    }
                 }
+            }
+
+        }
+
+        RowLayout {
+            id: textDataRow
+
+            visible: false
+            Layout.fillWidth: true
+            Layout.preferredHeight: Constants.navBar.urlBarHeight
+            Layout.alignment: Qt.AlignBottom
+
+            Text {
+                text: Constants.advancedIns.textDataLabels[0]
+                Layout.preferredWidth: Constants.advancedIns.textDataLabelWidth
+                font.pointSize: Constants.mediumPointSize
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: Constants.advancedIns.textDataBarHeight
+                Layout.alignment: Qt.AlignVCenter
+                border.width: Constants.advancedIns.textDataBarBorderWidth
+
+                Text {
+                    id: imuTempText
+
+                    clip: true
+                    anchors.fill: parent
+                    anchors.margins: Constants.advancedIns.textDataBarMargin
+                    font.pointSize: Constants.mediumPointSize
+                }
+
+            }
+
+            Text {
+                text: Constants.advancedIns.textDataLabels[1]
+                Layout.preferredWidth: Constants.advancedIns.textDataLabelWidth
+                font.pointSize: Constants.mediumPointSize
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: Constants.advancedIns.textDataBarHeight
+                Layout.alignment: Qt.AlignVCenter
+                border.width: Constants.advancedIns.textDataBarBorderWidth
+
+                Text {
+                    id: imuConfText
+
+                    clip: true
+                    anchors.fill: parent
+                    anchors.margins: Constants.advancedIns.textDataBarMargin
+                    font.pointSize: Constants.mediumPointSize
+                }
+
+            }
+
+            Text {
+                text: Constants.advancedIns.textDataLabels[2]
+                Layout.preferredWidth: Constants.advancedIns.textDataLabelWidth
+                font.pointSize: Constants.mediumPointSize
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: Constants.advancedIns.textDataBarHeight
+                Layout.alignment: Qt.AlignVCenter
+                border.width: Constants.advancedIns.textDataBarBorderWidth
+
+                Text {
+                    id: rmsAccXText
+
+                    clip: true
+                    anchors.fill: parent
+                    anchors.margins: Constants.advancedIns.textDataBarMargin
+                    font.pointSize: Constants.mediumPointSize
+                }
+
+            }
+
+            Text {
+                text: Constants.advancedIns.textDataLabels[3]
+                Layout.preferredWidth: Constants.advancedIns.textDataLabelWidth
+                font.pointSize: Constants.mediumPointSize
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: Constants.advancedIns.textDataBarHeight
+                Layout.alignment: Qt.AlignVCenter
+                border.width: Constants.advancedIns.textDataBarBorderWidth
+
+                Text {
+                    id: rmsAccYText
+
+                    clip: true
+                    anchors.fill: parent
+                    anchors.margins: Constants.advancedIns.textDataBarMargin
+                    font.pointSize: Constants.mediumPointSize
+                }
+
+            }
+
+            Text {
+                text: Constants.advancedIns.textDataLabels[4]
+                Layout.preferredWidth: Constants.advancedIns.textDataLabelWidth
+                font.pointSize: Constants.mediumPointSize
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: Constants.advancedIns.textDataBarHeight
+                Layout.alignment: Qt.AlignVCenter
+                border.width: Constants.advancedIns.textDataBarBorderWidth
+
+                Text {
+                    id: rmsAccZText
+
+                    clip: true
+                    anchors.fill: parent
+                    anchors.margins: Constants.advancedIns.textDataBarMargin
+                    font.pointSize: Constants.mediumPointSize
+                }
+
             }
 
         }

@@ -13,8 +13,6 @@ ADVANCED_INS_TAB: Dict[str, Any] = {
     Keys.POINTS: [],
     # Keys.LABELS: [],
     Keys.COLORS: [],
-    Keys.MAX: 0,
-    Keys.MIN: 0,
 }
 
 
@@ -22,30 +20,8 @@ class AdvancedInsPoints(QObject):
 
     _points: List[List[QPointF]] = [[]]
     # _labels: List[str] = []
-    _min: float = 0.0
-    _max: float = 0.0
     _text_data: List[str] = []
     # _text_data_labels: List[str] = []
-
-    def get_min(self) -> float:
-        """Getter for _min."""
-        return self._min
-
-    def set_min(self, min_: float) -> None:
-        """Setter for _min."""
-        self._min = min_
-
-    min_ = Property(float, get_min, set_min)
-
-    def get_max(self) -> float:
-        """Getter for _max."""
-        return self._max
-
-    def set_max(self, max_: float) -> None:
-        """Setter for _max."""
-        self._max = max_
-
-    max_ = Property(float, get_max, set_max)
 
     def get_text_data(self) -> List[str]:
         """Getter for _text_data."""
@@ -92,8 +68,6 @@ class AdvancedInsModel(QObject):  # pylint: disable=too-few-public-methods
     def fill_console_points(self, cp: AdvancedInsPoints) -> AdvancedInsPoints:  # pylint:disable=no-self-use
         cp.set_points(ADVANCED_INS_TAB[Keys.POINTS])
         # cp.set_labels(ADVANCED_INS_TAB[Keys.LABELS])
-        cp.set_max(ADVANCED_INS_TAB[Keys.MAX])
-        cp.set_min(ADVANCED_INS_TAB[Keys.MIN])
         cp.set_text_data(ADVANCED_INS_TAB[Keys.TEXT_DATA])
         # cp.set_text_data_labels(ADVANCED_INS_TAB[Keys.TEXT_DATA_LABELS])
         return cp

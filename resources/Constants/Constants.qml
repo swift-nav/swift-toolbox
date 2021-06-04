@@ -3,15 +3,6 @@ import QtQuick.Controls.Material 2.12
 pragma Singleton
 
 QtObject {
-    // readonly property int legendBottomMargin: 85
-    // readonly property int legendLeftMargin: 60
-    // readonly property int legendLabelPointSize: 6
-    // readonly property string yAxisTitleText: "dB-Hz"
-    // readonly property string xAxisTitleText: "seconds"
-    // readonly property int xAxisMinOffsetFromMaxSeconds: 100
-    // readonly property int checkBoxVerticalPadding: 0
-    // readonly property int checkBoxPreferredWidth: 100
-
     readonly property int width: 1050
     readonly property int height: 600
     readonly property real margins: 2
@@ -108,6 +99,15 @@ QtObject {
         readonly property int legendLeftMargin: 80
         readonly property int yAxisTickCount: 10000
         readonly property int xAxisTickCount: 25
+        readonly property int xAxisMax: 200
+        readonly property int xAxisMin: 0
+        readonly property int yAxisMax: 32768
+        readonly property int yAxisMin: -32768
+        readonly property int textDataLabelWidth: 50
+        readonly property int textDataRowHeight: 25
+        readonly property int textDataBarHeight: 20
+        readonly property int textDataBarMargin: 2
+        readonly property int textDataBarBorderWidth: 1
     }
 
     solutionPosition: QtObject {

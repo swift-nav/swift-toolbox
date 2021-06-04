@@ -132,10 +132,8 @@ struct TrackingSignalsStatus {
 }
 
 struct AdvancedInsStatus {
-    min @0 :Float64;
-    max @1 :Float64;
-    data @2 :List(List(Point));
-    textData @3 :List(Text);
+    data @0 :List(List(Point));
+    textData @1 :List(Text);
 }
 
 struct LoggingBarFront {

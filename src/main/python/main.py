@@ -207,8 +207,7 @@ def receive_messages(app_, backend, messages):
                 [QPointF(point.x, point.y) for point in m.trackingSignalsStatus.data[idx]]
                 for idx in range(len(m.trackingSignalsStatus.data))
             ]
-            TRACKING_SIGNALS_TAB[Keys.MAX] = m.trackingSignalsStatus.max
-            TRACKING_SIGNALS_TAB[Keys.MIN] = m.trackingSignalsStatus.min
+            TRACKING_SIGNALS_TAB[Keys.XMIN_OFFSET] = m.trackingSignalsStatus.xminOffset
         elif m.which == Message.Union.ObservationStatus:
             if m.observationStatus.isRemote:
                 REMOTE_OBSERVATION_TAB[Keys.TOW] = m.observationStatus.tow

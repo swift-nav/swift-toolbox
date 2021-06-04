@@ -8,6 +8,7 @@ use log::warn;
 
 use crate::console_backend_capnp as m;
 use crate::constants::*;
+use crate::errors::SHARED_STATE_LOCK_MUTEX_FAILURE;
 use crate::piksi_tools_constants::*;
 use crate::types::*;
 use crate::utils::{signal_key_color, signal_key_label};
@@ -49,8 +50,6 @@ pub struct TrackingSignalsTab<S: MessageSender> {
     pub gps_week: u16,
     pub incoming_obs_cn0: HashMap<(SignalCodes, i16), f64>,
     pub last_update_time: Instant,
-    pub max: f64,
-    pub min: f64,
     pub prev_obs_count: u8,
     pub prev_obs_total: u8,
     pub received_codes: Vec<SignalCodes>,
@@ -89,8 +88,6 @@ impl<S: MessageSender> TrackingSignalsTab<S> {
             gps_week: 0,
             incoming_obs_cn0: HashMap::new(),
             last_update_time: Instant::now(),
-            max: TRACKING_SIGNALS_PLOT_MAX,
-            min: SNR_THRESHOLD,
             prev_obs_count: 0,
             prev_obs_total: 0,
             received_codes: Vec::new(),
@@ -358,14 +355,20 @@ impl<S: MessageSender> TrackingSignalsTab<S> {
         self.incoming_obs_cn0.clear()
     }
 
+    fn chart_xmin_offset(&self) -> f64 {
+        if self.at_least_one_track_received {
+            CHART_XMIN_OFFSET_TRACKING
+        } else {
+            CHART_XMIN_OFFSET_NO_TRACKING
+        }
+    }
+
     /// Package data into a message buffer and send to frontend.
     fn send_data(&mut self) {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<m::message::Builder>();
 
         let mut tracking_signals_status = msg.init_tracking_signals_status();
-        tracking_signals_status.set_min(self.min);
-        tracking_signals_status.set_max(self.max);
         let mut labels = tracking_signals_status
             .reborrow()
             .init_labels(self.sv_labels.len() as u32);
@@ -398,6 +401,7 @@ impl<S: MessageSender> TrackingSignalsTab<S> {
                 }
             }
         }
+        tracking_signals_status.set_xmin_offset(self.chart_xmin_offset());
         let mut tracking_checkbox_labels = tracking_signals_status
             .reborrow()
             .init_check_labels(self.check_labels.len() as u32);

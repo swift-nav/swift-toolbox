@@ -134,6 +134,8 @@ Item {
                 minorGridLineColor: Constants.commonChart.minorGridLineColor
                 gridLineColor: Constants.commonChart.gridLineColor
                 labelsColor: Constants.commonChart.labelsColor
+                max: Constants.trackingSignals.yAxisMax
+                min: Constants.trackingSignals.snrThreshold
 
                 labelsFont {
                     pointSize: Constants.mediumPointSize
@@ -183,12 +185,8 @@ Item {
                     }
                     trackingSignalsPoints.fill_series(lines);
                     var last = points[0][points[0].length - 1];
-                    trackingSignalsXAxis.min = last.x - Constants.trackingSignals.xAxisMinOffsetFromMaxSeconds;
+                    trackingSignalsXAxis.min = last.x + trackingSignalsPoints.xmin_offset;
                     trackingSignalsXAxis.max = last.x;
-                    if (trackingSignalsYAxis.min != trackingSignalsPoints.min_) {
-                        trackingSignalsYAxis.min = trackingSignalsPoints.min_;
-                        trackingSignalsYAxis.max = trackingSignalsPoints.max_;
-                    }
                 }
             }
 

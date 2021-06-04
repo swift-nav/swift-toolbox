@@ -76,6 +76,7 @@ class Keys(str, Enum):
     SBP_LOGGING_LABELS = "SBP_LOGGING_LABELS"
     LOG_LEVEL_LABELS = "LOG_LEVEL_LABELS"
     TEXT_DATA = "TEXT_DATA"
+    XMIN_OFFSET = "XMIN"
 
 
 class ApplicationStates(str, Enum):

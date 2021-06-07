@@ -386,6 +386,11 @@ jobs:
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
     runs-on: ubuntu-20.04
     steps:
+      - name: Store git tag and date vars.
+        run: |
+          DATE="$(date '+%Y-%m-%d')";
+          echo "DATE=${DATE}" >> $GITHUB_ENV
+          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
       - name: Pull Windows Artifacts
         uses: actions/download-artifact@v2
         with:
@@ -413,6 +418,7 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
+          name: "${{ env.VERSION }}-${{ env.DATE }}"
           files: |
             windows/${{ env.WINDOWS_ARCHIVE }}
             linux/${{ env.LINUX_ARCHIVE }}

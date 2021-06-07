@@ -5,6 +5,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 
 use async_logger_log::Logger;
+use log::warn;
 
 use std::{
     io::{BufReader, Cursor},
@@ -73,16 +74,22 @@ fn handle_cli(
     if let Some(opt_input) = opt.input {
         match opt_input {
             Input::Tcp { host, port } => {
-                server_state.connect_to_host(client_send, shared_state.clone(), host, port);
+                if let Err(e) =
+                    server_state.connect_to_host(client_send, shared_state.clone(), host, port)
+                {
+                    warn!("failed to connect over tcp: {}", e);
+                }
             }
             Input::File { file_in } => {
                 let filename = file_in.display().to_string();
-                server_state.connect_to_file(
+                if let Err(e) = server_state.connect_to_file(
                     client_send,
                     shared_state.clone(),
                     filename,
                     opt.exit_after,
-                );
+                ) {
+                    warn!("failed to connect to file: {}", e);
+                }
             }
             Input::Serial {
                 serialport,
@@ -90,13 +97,15 @@ fn handle_cli(
                 flow_control,
             } => {
                 let serialport = serialport.display().to_string();
-                server_state.connect_to_serial(
+                if let Err(e) = server_state.connect_to_serial(
                     client_send,
                     shared_state.clone(),
                     serialport,
                     baudrate,
                     flow_control,
-                );
+                ) {
+                    warn!("failed to connect over serial: {}", e);
+                }
             }
         }
     }
@@ -223,12 +232,14 @@ impl Server {
                                     .get_filename()
                                     .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
                                 let filename = filename.to_string();
-                                server_state_clone.connect_to_file(
+                                if let Err(e) = server_state_clone.connect_to_file(
                                     client_send_clone,
                                     shared_state_clone,
                                     filename,
                                     /*close_when_done = */ false,
-                                );
+                                ) {
+                                    warn!("Failed to connect to file: {}", e);
+                                }
                             }
                             m::message::PauseRequest(Ok(_)) => {
                                 if shared_state_clone.is_paused() {
@@ -241,12 +252,14 @@ impl Server {
                                 let host =
                                     req.get_host().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
                                 let port = req.get_port();
-                                server_state_clone.connect_to_host(
+                                if let Err(e) = server_state_clone.connect_to_host(
                                     client_send_clone,
                                     shared_state_clone,
                                     host.to_string(),
                                     port,
-                                );
+                                ) {
+                                    warn!("Failed to connect over tcp: {}", e);
+                                }
                             }
                             m::message::SerialRequest(Ok(req)) => {
                                 let device =
@@ -255,13 +268,15 @@ impl Server {
                                 let baudrate = req.get_baudrate();
                                 let flow = req.get_flow_control().unwrap();
                                 let flow = FlowControl::from_str(flow).unwrap();
-                                server_state_clone.connect_to_serial(
+                                if let Err(e) = server_state_clone.connect_to_serial(
                                     client_send_clone,
                                     shared_state_clone,
                                     device,
                                     baudrate,
                                     flow,
-                                );
+                                ) {
+                                    warn!("Failed to connect over serial: {}", e);
+                                }
                             }
                             _ => println!("err"),
                         }

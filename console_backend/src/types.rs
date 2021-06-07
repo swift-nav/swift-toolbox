@@ -11,7 +11,7 @@ use chrono::{DateTime, Utc};
 use directories::{ProjectDirs, UserDirs};
 use indexmap::set::IndexSet;
 use lazy_static::lazy_static;
-use log::{error, info, warn};
+use log::{error, info};
 use ordered_float::OrderedFloat;
 use sbp::messages::{
     navigation::{
@@ -32,6 +32,7 @@ use std::{
     fmt::Debug,
     fs,
     hash::Hash,
+    io,
     net::TcpStream,
     ops::Deref,
     path::PathBuf,
@@ -148,32 +149,24 @@ impl ServerState {
         shared_state: SharedState,
         filename: String,
         close_when_done: bool,
-    ) {
-        let shared_state_clone = shared_state.clone();
-        self.connection_join();
-        shared_state_clone.set_running(true, client_send.clone());
-        let handle = thread::spawn(move || {
-            if let Ok(stream) = fs::File::open(&filename) {
-                println!("Opened file successfully!");
-                shared_state_clone.update_file_history(filename.clone());
-                shared_state_clone.set_current_connection(filename);
-                refresh_navbar(&mut client_send.clone(), shared_state.clone());
-                let shared_state_clone_ = shared_state.clone();
-                process_messages(
-                    stream,
-                    shared_state_clone_,
-                    client_send.clone(),
-                    RealtimeDelay::On,
-                );
-                if close_when_done {
-                    close_frontend(&mut client_send.clone());
-                }
-            } else {
-                println!("Couldn't open file...");
-            }
-            shared_state.set_running(false, client_send.clone());
-        });
-        self.new_connection(handle);
+    ) -> Result<()> {
+        let rdr = fs::File::open(&filename)?;
+        let wtr = io::sink();
+
+        info!("Opened file successfully!");
+        shared_state.update_file_history(filename.clone());
+        self.connect(
+            rdr,
+            wtr,
+            filename,
+            client_send.clone(),
+            shared_state,
+            RealtimeDelay::On,
+        );
+        if close_when_done {
+            close_frontend(&mut client_send.clone());
+        }
+        Ok(())
     }
 
     /// Helper function for attempting to open a tcp connection and process SBP messages from it.
@@ -189,30 +182,22 @@ impl ServerState {
         shared_state: SharedState,
         host: String,
         port: u16,
-    ) {
-        let shared_state_clone = shared_state.clone();
-        shared_state_clone.set_running(true, client_send.clone());
-        self.connection_join();
-        let handle = thread::spawn(move || {
-            let shared_state_clone = shared_state.clone();
-            let host_port = format!("{}:{}", host, port);
-            if let Ok(stream) = TcpStream::connect(host_port.clone()) {
-                info!("Connected to the server {}!", host_port);
-                shared_state_clone.update_tcp_history(host, port);
-                shared_state_clone.set_current_connection(host_port);
-                refresh_navbar(&mut client_send.clone(), shared_state.clone());
-                process_messages(
-                    stream,
-                    shared_state_clone,
-                    client_send.clone(),
-                    RealtimeDelay::Off,
-                );
-            } else {
-                warn!("Couldn't connect to server...");
-            }
-            shared_state.set_running(false, client_send.clone());
-        });
-        self.new_connection(handle);
+    ) -> Result<()> {
+        let host_port = format!("{}:{}", host, port);
+        let rdr = TcpStream::connect(&host_port)?;
+        let wtr = rdr.try_clone()?;
+
+        info!("Connected to the tcp stream {}!", host_port);
+        shared_state.update_tcp_history(host, port);
+        self.connect(
+            rdr,
+            wtr,
+            host_port,
+            client_send,
+            shared_state,
+            RealtimeDelay::Off,
+        );
+        Ok(())
     }
 
     /// Helper function for attempting to open a serial port and process SBP messages from it.
@@ -230,30 +215,53 @@ impl ServerState {
         device: String,
         baudrate: u32,
         flow: FlowControl,
-    ) {
+    ) -> Result<()> {
+        let rdr = serialport::new(&device, baudrate)
+            .flow_control(*flow)
+            .timeout(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))
+            .open()?;
+        let wtr = rdr.try_clone()?;
+
+        info!("Connected to the serialport {}!", device);
+        // serial port history?
+        self.connect(
+            rdr,
+            wtr,
+            format!("{} @{}", device, baudrate),
+            client_send,
+            shared_state,
+            RealtimeDelay::Off,
+        );
+        Ok(())
+    }
+
+    fn connect<R, W>(
+        &self,
+        rdr: R,
+        wtr: W,
+        connection_name: String,
+        client_send: ClientSender,
+        shared_state: SharedState,
+        delay: RealtimeDelay,
+    ) where
+        R: io::Read + Send + 'static,
+        W: io::Write + Send + 'static,
+    {
+        shared_state.set_current_connection(connection_name);
+        shared_state.set_running(true, client_send.clone());
         let shared_state_clone = shared_state.clone();
-        shared_state_clone.set_running(true, client_send.clone());
+        let mut client_send_clone = client_send.clone();
         self.connection_join();
         let handle = thread::spawn(move || {
-            let shared_state_clone = shared_state.clone();
-            match serialport::new(&device, baudrate)
-                .flow_control(*flow)
-                .timeout(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))
-                .open()
-            {
-                Ok(port) => {
-                    println!("Connected to serialport {}.", device);
-                    shared_state_clone.set_current_connection(format!("{} @{}", device, baudrate));
-                    process_messages(
-                        port,
-                        shared_state_clone,
-                        client_send.clone(),
-                        RealtimeDelay::Off,
-                    );
-                }
-                Err(e) => eprintln!("Unable to connect to serialport: {}", e),
-            }
-            shared_state.set_running(false, client_send.clone());
+            refresh_navbar(&mut client_send_clone, shared_state_clone.clone());
+            process_messages(
+                rdr,
+                wtr,
+                shared_state_clone.clone(),
+                client_send_clone.clone(),
+                delay,
+            );
+            shared_state_clone.set_running(false, client_send_clone);
         });
         self.new_connection(handle);
     }

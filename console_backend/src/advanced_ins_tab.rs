@@ -7,6 +7,7 @@ use capnp::serialize;
 use crate::console_backend_capnp as m;
 use crate::constants::*;
 use crate::errors::{CAP_N_PROTO_SERIALIZATION_FAILURE, GET_MUT_OBJECT_FAILURE};
+use crate::fusion_engine_status::FusionEngineStatus;
 use crate::types::{Deque, MessageSender, SharedState};
 
 /// AdvancedInsTab struct.
@@ -29,6 +30,7 @@ use crate::types::{Deque, MessageSender, SharedState};
 #[derive(Debug)]
 pub struct AdvancedInsTab<S: MessageSender> {
     client_sender: S,
+    pub fusion_engine_status: FusionEngineStatus<S>,
     imu_conf: u8,
     imu_temp: f64,
     rms_acc_x: f64,
@@ -48,6 +50,10 @@ impl<S: MessageSender> AdvancedInsTab<S> {
         let acc_fill_val = Some(0_f64);
         let gyro_fill_val = Some(0_f64);
         AdvancedInsTab {
+            fusion_engine_status: FusionEngineStatus::new(
+                shared_state.clone(),
+                client_sender.clone(),
+            ),
             client_sender,
             imu_conf: 0_u8,
             imu_temp: 0_f64,

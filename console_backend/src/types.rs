@@ -98,6 +98,43 @@ impl MessageSender for TestSender {
     }
 }
 
+#[derive(Debug, Default)]
+pub struct IsRunning(Arc<Mutex<bool>>);
+impl IsRunning {
+    pub fn new() -> IsRunning {
+        IsRunning(Arc::new(Mutex::new(false)))
+    }
+    pub fn get(&self) -> bool {
+        let is_running = self.lock().expect(IS_RUNNING_LOCK_MUTEX_FAILURE);
+        *is_running
+    }
+    pub fn set(&self, set_to: bool) {
+        let mut is_running = self.lock().expect(IS_RUNNING_LOCK_MUTEX_FAILURE);
+        (*is_running) = set_to;
+    }
+}
+
+impl Deref for IsRunning {
+    type Target = Mutex<bool>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+// impl Default for IsRunning {
+//     fn default() -> Self {
+//         Self::new()
+//     }
+// }
+
+impl Clone for IsRunning {
+    fn clone(&self) -> Self {
+        IsRunning {
+            0: Arc::clone(&self.0),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct ServerState(Arc<Mutex<ServerStateInner>>);
 

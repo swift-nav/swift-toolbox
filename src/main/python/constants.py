@@ -78,6 +78,13 @@ class Keys(str, Enum):
     TEXT_DATA = "TEXT_DATA"
     XMIN_OFFSET = "XMIN"
 
+    GNSSPOS = "GNSSPOS"
+    GNSSVEL = "GNSSVEL"
+    WHEELTICKS = "WHEELTICKS"
+    SPEED = "SPEED"
+    NHC = "NHC"
+    ZEROVEL = "ZEROVEL"
+
 
 class ApplicationStates(str, Enum):
     CLOSE = "CLOSE"

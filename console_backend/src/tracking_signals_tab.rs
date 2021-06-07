@@ -8,7 +8,6 @@ use log::warn;
 
 use crate::console_backend_capnp as m;
 use crate::constants::*;
-use crate::errors::SHARED_STATE_LOCK_MUTEX_FAILURE;
 use crate::piksi_tools_constants::*;
 use crate::types::*;
 use crate::utils::{signal_key_color, signal_key_label};

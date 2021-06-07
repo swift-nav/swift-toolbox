@@ -47,6 +47,12 @@ from advanced_ins_tab import (
     ADVANCED_INS_TAB,
 )
 
+from fusion_engine_status_bar import (
+    FusionEngineStatusBarModel,
+    FusionEngineStatusBarData,
+    FUSION_ENGINE_STATUS_BAR,
+)
+
 from observation_tab import (
     ObservationData,
     ObservationModel,

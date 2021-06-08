@@ -177,7 +177,7 @@ impl ServerState {
     /// - `filename`: The path to the filename to be read for SBP messages.
     pub fn connect_to_file(
         &self,
-        client_send: ClientSender,
+        mut client_send: ClientSender,
         shared_state: SharedState,
         filename: String,
         close_when_done: bool,
@@ -196,7 +196,7 @@ impl ServerState {
             RealtimeDelay::On,
         );
         if close_when_done {
-            close_frontend(&mut client_send.clone());
+            close_frontend(&mut client_send);
         }
         Ok(())
     }
@@ -272,7 +272,7 @@ impl ServerState {
         rdr: R,
         wtr: W,
         connection_name: String,
-        client_send: ClientSender,
+        mut client_send: ClientSender,
         shared_state: SharedState,
         delay: RealtimeDelay,
     ) where
@@ -282,18 +282,17 @@ impl ServerState {
         shared_state.set_current_connection(connection_name);
         shared_state.set_running(true, client_send.clone());
         let shared_state_clone = shared_state.clone();
-        let mut client_send_clone = client_send.clone();
         self.connection_join();
         let handle = thread::spawn(move || {
-            refresh_navbar(&mut client_send_clone, shared_state_clone.clone());
+            refresh_navbar(&mut client_send, shared_state_clone.clone());
             process_messages(
                 rdr,
                 wtr,
                 shared_state_clone.clone(),
-                client_send_clone.clone(),
+                client_send.clone(),
                 delay,
             );
-            shared_state_clone.set_running(false, client_send_clone);
+            shared_state_clone.set_running(false, client_send);
         });
         self.new_connection(handle);
     }

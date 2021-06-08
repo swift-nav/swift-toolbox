@@ -31,6 +31,10 @@ struct DisconnectRequest {
     disconnect @0 :Void = void;
 }
 
+struct LogLevelFront {
+    logLevel @0 :Text;
+}
+
 enum LogLevel {
     error @0;
     warn @1;
@@ -134,8 +138,7 @@ struct TrackingSignalsStatus {
 struct LoggingBarFront {
     csvLogging @0 :Bool;
     sbpLogging @1 :Text;
-    logLevel @2 :Text;
-    directory @3 :Text;
+    directory @2 :Text;
 }
 
 struct LoggingBarStatus {
@@ -190,5 +193,6 @@ struct Message {
         statusBarStatus @19 :StatusBarStatus;
         loggingBarFront @20 :LoggingBarFront;
         loggingBarStatus @21 :LoggingBarStatus;
+        logLevelFront @22 :LogLevelFront;
     }
 }

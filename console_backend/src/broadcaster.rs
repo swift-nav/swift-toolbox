@@ -6,10 +6,10 @@ use std::{
 };
 
 use crossbeam::channel;
-use sbp::messages::{ConcreteMessage, SBP};
+use sbp::messages::{ConcreteMessage, SBPMessage, SBP};
 
 pub struct Broadcaster {
-    channels: Arc<Mutex<Vec<channel::Sender<SBP>>>>,
+    channels: Arc<Mutex<Vec<Sender>>>,
 }
 
 impl Broadcaster {
@@ -22,8 +22,15 @@ impl Broadcaster {
     }
 
     pub fn send(&self, message: &SBP) {
+        let msg_type = message.get_message_type();
         let mut channels = self.channels.lock().expect(Self::CHANNELS_LOCK_FAILURE);
-        channels.retain(|chan| chan.send(message.clone()).is_ok());
+        channels.retain(|chan| {
+            if chan.msg_types.iter().any(|ty| ty == &msg_type) {
+                chan.inner.send(message.clone()).is_ok()
+            } else {
+                true
+            }
+        });
     }
 
     pub fn subscribe<E>(&self) -> Receiver<E>
@@ -32,7 +39,10 @@ impl Broadcaster {
     {
         let (tx, rx) = channel::unbounded();
         let mut channels = self.channels.lock().expect(Self::CHANNELS_LOCK_FAILURE);
-        channels.push(tx);
+        channels.push(Sender {
+            inner: tx,
+            msg_types: E::MESSAGE_TYPES,
+        });
         Receiver {
             inner: rx,
             marker: PhantomData,
@@ -55,6 +65,12 @@ impl Clone for Broadcaster {
             channels: Arc::clone(&self.channels),
         }
     }
+}
+
+/// A wrapper around a channel sender that knows what message types its receivers expect.
+pub struct Sender {
+    inner: channel::Sender<SBP>,
+    msg_types: &'static [u16],
 }
 
 /// A wrapper around a channel receiver that converts to the appropriate event.

@@ -7,7 +7,6 @@ pub mod constants;
 pub mod date_conv;
 pub mod broadcaster;
 pub mod errors;
-pub mod fileio;
 pub mod formatters;
 pub mod log_panel;
 pub mod main_tab;

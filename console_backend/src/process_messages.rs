@@ -25,7 +25,7 @@ pub fn process_messages<S, R, W>(
 {
     let mut main = MainTab::new(shared_state.clone(), client_send);
 
-    let sender = MsgSender::new(wtr);
+    let _sender = MsgSender::new(wtr);
     let broadcast = Broadcaster::new();
 
     let messages = sbp::iter_messages(rdr)

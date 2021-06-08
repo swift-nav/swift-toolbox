@@ -17,8 +17,7 @@ chrono = { version = "0.4", features = ["serde"] }
 csv = "1"
 paste = "1"
 pyo3 = { version = "0.13", features = ["extension-module"] }
-# sbp = { git = "https://github.com/swift-nav/libsbp.git", branch = "steve/console", features = ["json", "swiftnav-rs"] }
-sbp = { path = "../../libsbp/rust/sbp", features = ["json", "swiftnav-rs"] }
+sbp = { git = "https://github.com/swift-nav/libsbp.git", branch = "steve/try-from", features = ["json", "swiftnav-rs"] }
 serde = { version = "1.0.123", features = ["derive"] }
 tempfile = "3.2.0"
 ordered-float = "2.0"

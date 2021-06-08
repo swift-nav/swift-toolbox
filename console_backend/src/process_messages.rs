@@ -4,15 +4,13 @@ use sbp::{
     messages::{SBPMessage, SBP},
     serialize::SbpSerialize,
 };
-use std::thread;
 use std::{thread::sleep, time::Duration};
 
+use crate::broadcaster::Broadcaster;
 use crate::constants::PAUSE_LOOP_SLEEP_DURATION_MS;
-use crate::fileio::FileIo;
 use crate::log_panel::handle_log_msg;
 use crate::main_tab::*;
 use crate::types::*;
-use crate::utils::{MsgDispatcher, MsgSender};
 
 pub fn process_messages<S, R, W>(
     rdr: R,
@@ -27,18 +25,12 @@ pub fn process_messages<S, R, W>(
 {
     let mut main = MainTab::new(shared_state.clone(), client_send);
 
-    let dispatcher = MsgDispatcher::new();
     let sender = MsgSender::new(wtr);
+    let broadcast = Broadcaster::new();
+
     let messages = sbp::iter_messages(rdr)
         .log_errors(log::Level::Debug)
         .with_rover_time();
-
-    let d = dispatcher.clone();
-    let s = sender.clone();
-    thread::spawn(move || {
-        let mut fileio = FileIo::new(d, s);
-        let files = fileio.readdir(".".into()).unwrap();
-    });
 
     for (message, gps_time) in messages {
         if !shared_state.is_running() {
@@ -56,7 +48,7 @@ pub fn process_messages<S, R, W>(
                 sleep(Duration::from_millis(PAUSE_LOOP_SLEEP_DURATION_MS));
             }
         }
-        dispatcher.run(&message);
+        broadcast.send(&message);
         main.serialize_sbp(&message);
         let msg_name = message.get_message_name();
         main.status_bar.add_bytes(message.sbp_size());

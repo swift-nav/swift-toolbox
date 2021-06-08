@@ -1,9 +1,20 @@
 fn glob_paths_excluding_target
+
     handle = glob_array ${1}
     out = array
+    cargo_home = pwd
+    gi_non_unix_handle = gitignore_path_array ${cargo_home}
+    gi_unix = array
+    for i in ${gi_non_unix_handle}
+        unix_filename = replace ${i} \\ /
+        array_push ${gi_unix} ${unix_filename}
+    end
     for i in ${handle}
-        if not starts_with ${i} "target"
-            array_push ${out} ${i}
+        filename = concat ${cargo_home} "/" ${i}
+        unix_filename = replace ${filename} \\ /
+        ignored = array_contains ${gi_unix} ${unix_filename}
+        if not contains ${ignored} \"false\"
+            array_push ${out} ${unix_filename}
         end
     end
     s = array_join ${out} " "

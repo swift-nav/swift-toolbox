@@ -148,6 +148,7 @@ mod tests {
         assert!(msg_obs.try_recv().is_ok());
         assert!(msg_obs.try_recv().is_err());
     }
+
     enum ObsMsg {
         Obs(MsgObs),
         DepA(MsgObsDepA),

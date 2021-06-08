@@ -1394,6 +1394,7 @@ dependencies = [
 [[package]]
 name = "sbp"
 version = "3.4.8-alpha"
+source = "git+https://github.com/swift-nav/libsbp.git?branch=steve/try-from#9dd08497a280cba7e7bd7d86926fb9691762fbe7"
 dependencies = [
  "base64",
  "byteorder",

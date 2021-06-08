@@ -357,7 +357,6 @@ dependencies = [
  "ordered-float",
  "paste 1.0.5",
  "pyo3",
- "rand",
  "sbp",
  "serde",
  "serde_json",

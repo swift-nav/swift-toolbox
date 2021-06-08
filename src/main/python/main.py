@@ -358,6 +358,15 @@ class DataModel(QObject):
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
 
+    @Slot(str)  # type: ignore
+    def log_level(self, log_level) -> None:
+        Message = self.messages.Message
+        m = Message()
+        m.logLevelFront = m.init(Message.Union.LogLevelFront)
+        m.logLevelFront.logLevel = str(log_level)
+        buffer = m.to_bytes()
+        self.endpoint.send_message(buffer)
+
 
 def is_frozen() -> bool:
     """Check whether the application is frozen.

@@ -8,7 +8,7 @@ authors = ["Swift Navigation <dev@swiftnav.com>"]
 python = ">=3.9,<3.10"
 PySide2 = "^5.15.2"
 fbs = { git = "https://github.com/silverjam/fbs.git" }
-pycapnp = { git = "https://github.com/jayvdb/pycapnp.git", rev = "bare-except" }
+pycapnp = "^1.1.0"
 
 [tool.poetry.dev-dependencies]
 black = "^21.5b0"

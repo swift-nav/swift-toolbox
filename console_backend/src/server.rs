@@ -16,8 +16,8 @@ use std::{
 };
 
 use crate::cli_options::*;
+use crate::common_constants::LogLevel;
 use crate::console_backend_capnp as m;
-// use crate::common_constants::;
 use crate::constants::LOG_WRITER_BUFFER_MESSAGE_COUNT;
 use crate::errors::*;
 use crate::log_panel::{splitable_log_formatter, LogPanelWriter};
@@ -112,7 +112,6 @@ fn handle_cli(
     if let Some(folder) = opt.dirname {
         shared_state.set_logging_directory(PathBuf::from(folder));
     }
-    // let shared_state_clone = shared_state.clone();
     let mut shared_data = shared_state.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
     (*shared_data).logging_bar.csv_logging = CsvLogging::from(opt.csv_log);
     if let Some(sbp_log) = opt.sbp_log {
@@ -314,6 +313,17 @@ impl Server {
                             .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
                         (*shared_data).logging_bar.sbp_logging =
                             SbpLogging::from_str(sbp_logging).expect(CONVERT_TO_STR_FAILURE);
+                    }
+                    m::message::LogLevelFront(Ok(cv_in)) => {
+                        let shared_state_clone = shared_state.clone();
+                        let mut shared_data = shared_state_clone
+                            .lock()
+                            .expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+                        let log_level = cv_in
+                            .get_log_level()
+                            .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
+                        (*shared_data).log_panel.log_level =
+                            LogLevel::from_str(log_level).expect(CONVERT_TO_STR_FAILURE);
                     }
                     m::message::SolutionVelocityStatusFront(Ok(cv_in)) => {
                         let unit = cv_in

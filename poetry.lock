@@ -267,11 +267,11 @@ future = "*"
 
 [[package]]
 name = "pkgconfig"
-version = "1.5.2"
+version = "1.5.4"
 description = "Interface Python with pkg-config"
 category = "dev"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
+python-versions = ">=3.3,<4.0"
 
 [[package]]
 name = "pluggy"
@@ -320,18 +320,11 @@ resolved_reference = "8b7574ad46579405ebed8af386028518d9a692db"
 
 [[package]]
 name = "pycapnp"
-version = "1.0.0"
+version = "1.1.0"
 description = "A cython wrapping of the C++ Cap'n Proto library"
 category = "main"
 optional = false
 python-versions = "*"
-develop = false
-
-[package.source]
-type = "git"
-url = "https://github.com/jayvdb/pycapnp.git"
-reference = "bare-except"
-resolved_reference = "2850b3792da4ab9cd79daa76c11922b044bd076c"
 
 [[package]]
 name = "pyinstaller"
@@ -511,7 +504,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.10"
-content-hash = "41995c4c25666d8b6682db0cae297cac18f4e66b3c75ef1409d83e7a6a9bb98b"
+content-hash = "5aa8b9ba23d1a45e3914a28189cc664ac67f6500be4c469e873661886a0ff08f"
 
 [metadata.files]
 altgraph = [
@@ -670,8 +663,8 @@ pefile = [
     {file = "pefile-2021.5.24.tar.gz", hash = "sha256:ed79b2353daa58421459abf4d685953bde0adf9f6e188944f97ba9795f100246"},
 ]
 pkgconfig = [
-    {file = "pkgconfig-1.5.2-py2.py3-none-any.whl", hash = "sha256:28013c66ae10363036759bae5ee85ce0ff7106f5e9e6e6fbd8ceca59330480e9"},
-    {file = "pkgconfig-1.5.2.tar.gz", hash = "sha256:38d612488f0633755a2e7a8acab6c01d20d63dbc31af75e2a9ac98a6f638ca94"},
+    {file = "pkgconfig-1.5.4-py3-none-any.whl", hash = "sha256:04fcfa5a326e3babe959cc9662290515a6fa138ab81e7435185d972927d0cc69"},
+    {file = "pkgconfig-1.5.4.tar.gz", hash = "sha256:c34503829fd226822fd93c902b1cf275516908a023a24be0a02ba687f3a00399"},
 ]
 pluggy = [
     {file = "pluggy-0.13.1-py2.py3-none-any.whl", hash = "sha256:966c145cd83c96502c3c3868f50408687b38434af77734af1e9ca461a4081d2d"},
@@ -712,7 +705,21 @@ py = [
     {file = "py-1.10.0.tar.gz", hash = "sha256:21b81bda15b66ef5e1a777a21c4dcd9c20ad3efd0b3f817e7a809035269e1bd3"},
 ]
 py2many = []
-pycapnp = []
+pycapnp = [
+    {file = "pycapnp-1.1.0-cp37-cp37m-macosx_10_14_x86_64.whl", hash = "sha256:bdd013eae51d190a2426d00cc72d0aaed148a5be778ca86ee1adae3ab7a0613f"},
+    {file = "pycapnp-1.1.0-cp37-cp37m-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:b9a1d6306a0e3e0090574aeb08d432bd67f9eb04ab564e89ef34cd1fe320b20f"},
+    {file = "pycapnp-1.1.0-cp37-cp37m-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:47c8bc28521312660c95cfc8a552654949407f8b17bc7ed6955ad7dae34d21a4"},
+    {file = "pycapnp-1.1.0-cp37-cp37m-win_amd64.whl", hash = "sha256:60adf2674f89f629551171116b8f400b17e9a41a2ef15736767acec405d4ca50"},
+    {file = "pycapnp-1.1.0-cp38-cp38-macosx_10_14_x86_64.whl", hash = "sha256:a788a374ccb93354943c89f5b1caf785faf7bb90191cd6265e042aa004f8b206"},
+    {file = "pycapnp-1.1.0-cp38-cp38-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:2a1746017079107232faf26af8ef4284ab0b20ce5cbe688d44e7553a67e5e5cb"},
+    {file = "pycapnp-1.1.0-cp38-cp38-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:0c770145a4eccfe97f53ab500283aa9bf969d4a37bffc75737a964db4f2af833"},
+    {file = "pycapnp-1.1.0-cp38-cp38-win_amd64.whl", hash = "sha256:1774a4fe9db5f094ba40cf00898fa4b437773e7f9c538b779275b9f422a92ebc"},
+    {file = "pycapnp-1.1.0-cp39-cp39-macosx_10_14_x86_64.whl", hash = "sha256:2b28d5d951602c0b832bbe63f85ebdd7685b33118b1c11c2c65a243ec9f35a66"},
+    {file = "pycapnp-1.1.0-cp39-cp39-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:61b009faba34855c9d29db107e188898c83099347e22ebcbc1d955774403247b"},
+    {file = "pycapnp-1.1.0-cp39-cp39-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:2a7aa9af0185e5977a59228db5042dffb048b2d4bf4f665d2105b4781cf2fcbc"},
+    {file = "pycapnp-1.1.0-cp39-cp39-win_amd64.whl", hash = "sha256:13badfb644e2eb7f1219aab259d18b262d1512021e4112fa1ad5e74d17bc30cf"},
+    {file = "pycapnp-1.1.0.tar.gz", hash = "sha256:786a2e39b79e592a41e8a1eaeea6e41e2015ecb9f5b7f7c20dfc5768ba1ae077"},
+]
 pyinstaller = [
     {file = "pyinstaller-4.2.tar.gz", hash = "sha256:f5c0eeb2aa663cce9a5404292c0195011fa500a6501c873a466b2e8cad3c950c"},
 ]

@@ -9,7 +9,6 @@ import SwiftConsole 1.0
 
 Rectangle {
     property variant previous_folders: []
-    property variant log_level_labels: []
     property variant sbp_logging_labels: []
 
     anchors.fill: parent
@@ -132,17 +131,6 @@ Rectangle {
             }
         }
 
-        ComboBox {
-            id: logLevelButton
-
-            Layout.preferredWidth: Constants.loggingBar.sbpLoggingButtonWidth
-            Layout.preferredHeight: Constants.loggingBar.buttonHeight
-            model: log_level_labels
-            ToolTip.visible: hovered
-            ToolTip.text: "Log Level"
-            onActivated: data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.currentText, logLevelButton.currentText], folderPathBar.editText)
-        }
-
         Timer {
             interval: Utils.hzToMilliseconds(Constants.staticTimerIntervalRate)
             running: true
@@ -150,8 +138,9 @@ Rectangle {
             onTriggered: {
                 logging_bar_model.fill_data(loggingBarData);
                 previous_folders = loggingBarData.previous_folders;
-                log_level_labels = loggingBarData.log_level_labels;
-                sbp_logging_labels = loggingBarData.sbp_logging_labels;
+                if (!sbp_logging_labels.length)
+                    sbp_logging_labels = loggingBarData.sbp_logging_labels;
+
                 sbpLoggingButton.currentIndex = sbp_logging_labels.indexOf(loggingBarData.sbp_logging);
                 csvLoggingButton.checked = loggingBarData.csv_logging;
             }

@@ -22,12 +22,12 @@ packaging==20.9; python_version >= "3.5" and python_full_version < "3.0.0" or py
 parso==0.8.2; python_version >= "3.6"
 pathspec==0.8.1; python_full_version >= "3.6.2"
 pefile==2021.5.24; sys_platform == "win32" and python_version >= "3.5" and python_full_version >= "3.6.0"
-pkgconfig==1.5.2; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.3.0")
+pkgconfig==1.5.4; python_version >= "3.3" and python_version < "4.0"
 pluggy==0.13.1; python_version >= "3.5" and python_full_version < "3.0.0" or python_full_version >= "3.4.0" and python_version >= "3.5"
 psutil==5.8.0; (python_version >= "2.6" and python_full_version < "3.0.0") or (python_full_version >= "3.4.0")
 py2many @ git+https://github.com/john-michaelburke/py2many@console ; python_version >= "3.8"
 py==1.10.0; python_version >= "3.5" and python_full_version < "3.0.0" or python_full_version >= "3.4.0" and python_version >= "3.5"
-pycapnp @ git+https://github.com/jayvdb/pycapnp.git@bare-except
+pycapnp==1.1.0
 pyinstaller-hooks-contrib==2021.1; python_version >= "3.5"
 pyinstaller==4.2; python_version >= "3.5"
 pylint==2.8.3; python_version >= "3.6" and python_version < "4.0"

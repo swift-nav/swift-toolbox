@@ -13,6 +13,8 @@ use indexmap::set::IndexSet;
 use lazy_static::lazy_static;
 use log::{error, info};
 use ordered_float::OrderedFloat;
+use sbp::codec::dencode::{FramedWrite, IterSinkExt};
+use sbp::codec::sbp::SbpEncoder;
 use sbp::messages::{
     navigation::{
         MsgBaselineNED, MsgBaselineNEDDepA, MsgDops, MsgDopsDepA, MsgPosLLH, MsgPosLLHDepA,
@@ -22,6 +24,7 @@ use sbp::messages::{
         MsgObs, MsgObsDepB, MsgObsDepC, MsgOsr, PackedObsContent, PackedObsContentDepB,
         PackedObsContentDepC, PackedOsrContent,
     },
+    SBP,
 };
 use serde::{Deserialize, Serialize};
 use serialport::FlowControl as SPFlowControl;
@@ -46,6 +49,35 @@ use std::{
 pub type Error = std::boxed::Box<dyn std::error::Error>;
 pub type Result<T> = std::result::Result<T, Error>;
 pub type UtcDateTime = DateTime<Utc>;
+
+/// Sends SBP messages to the connected device
+pub struct MsgSender<W> {
+    inner: Arc<Mutex<FramedWrite<W, SbpEncoder>>>,
+}
+
+impl<W: std::io::Write> MsgSender<W> {
+    const SEND_MSG_FAILURE: &'static str = "failed to send message";
+    const LOCK_FAILURE: &'static str = "failed to aquire sender lock";
+
+    pub fn new(wtr: W) -> Self {
+        Self {
+            inner: Arc::new(Mutex::new(FramedWrite::new(wtr, SbpEncoder::new()))),
+        }
+    }
+
+    pub fn send(&self, msg: &SBP) {
+        let mut framed = self.inner.lock().expect(Self::LOCK_FAILURE);
+        framed.send(msg).expect(Self::SEND_MSG_FAILURE);
+    }
+}
+
+impl<W> Clone for MsgSender<W> {
+    fn clone(&self) -> Self {
+        MsgSender {
+            inner: Arc::clone(&self.inner),
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct Deque<T> {
@@ -1954,12 +1986,14 @@ mod tests {
         let filename = TEST_SHORT_FILEPATH.to_string();
         receive_thread(client_receive);
         assert!(!shared_state.is_running());
-        server_state.connect_to_file(
-            client_send,
-            shared_state.clone(),
-            filename,
-            /*close_when_done = */ true,
-        );
+        server_state
+            .connect_to_file(
+                client_send,
+                shared_state.clone(),
+                filename,
+                /*close_when_done = */ true,
+            )
+            .unwrap();
         sleep(Duration::from_millis(
             DELAY_BEFORE_CHECKING_APP_STARTED_IN_MS,
         ));
@@ -1983,12 +2017,14 @@ mod tests {
         let filename = TEST_SHORT_FILEPATH.to_string();
         receive_thread(client_receive);
         assert!(!shared_state.is_running());
-        server_state.connect_to_file(
-            client_send,
-            shared_state.clone(),
-            filename,
-            /*close_when_done = */ true,
-        );
+        server_state
+            .connect_to_file(
+                client_send,
+                shared_state.clone(),
+                filename,
+                /*close_when_done = */ true,
+            )
+            .unwrap();
         sleep(Duration::from_millis(
             DELAY_BEFORE_CHECKING_APP_STARTED_IN_MS,
         ));
@@ -2018,12 +2054,14 @@ mod tests {
         let handle = receive_thread(client_receive);
         assert!(!shared_state.is_running());
         {
-            server_state.connect_to_file(
-                client_send.clone(),
-                shared_state.clone(),
-                filename,
-                /*close_when_done = */ true,
-            );
+            server_state
+                .connect_to_file(
+                    client_send.clone(),
+                    shared_state.clone(),
+                    filename,
+                    /*close_when_done = */ true,
+                )
+                .unwrap();
         }
 
         sleep(Duration::from_millis(5));

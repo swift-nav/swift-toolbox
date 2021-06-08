@@ -5,6 +5,7 @@ pub mod console_backend_capnp {
 pub mod common_constants;
 pub mod constants;
 pub mod date_conv;
+pub mod broadcaster;
 pub mod errors;
 pub mod fileio;
 pub mod formatters;

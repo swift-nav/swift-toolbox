@@ -154,11 +154,11 @@ impl<S: MessageSender> AdvancedInsTab<S> {
         }
         let text_data = {
             vec![
-                format!("{:.2} C", self.imu_temp),
-                format!("{:#04x}", self.imu_conf),
-                format!("{:.2} g", self.rms_acc_x),
-                format!("{:.2} g", self.rms_acc_y),
-                format!("{:.2} g", self.rms_acc_z),
+                self.imu_temp,
+                self.imu_conf as f64,
+                self.rms_acc_x,
+                self.rms_acc_y,
+                self.rms_acc_z,
             ]
         };
         let mut text_data_status = tab_status
@@ -166,7 +166,7 @@ impl<S: MessageSender> AdvancedInsTab<S> {
             .init_text_data(NUM_INS_TEXT_FIELDS as u32);
 
         for (i, datur) in text_data.iter().enumerate() {
-            text_data_status.set(i as u32, datur);
+            text_data_status.set(i as u32, *datur);
         }
 
         let mut msg_bytes: Vec<u8> = vec![];

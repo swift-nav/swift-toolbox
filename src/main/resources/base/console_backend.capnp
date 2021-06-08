@@ -136,7 +136,7 @@ struct TrackingSignalsStatus {
 
 struct AdvancedInsStatus {
     data @0 :List(List(Point));
-    textData @1 :List(Float64);
+    fieldsData @1 :List(Float64);
 }
 
 struct LoggingBarFront {

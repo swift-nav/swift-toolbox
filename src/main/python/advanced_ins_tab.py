@@ -8,7 +8,7 @@ from PySide2.QtCore import Property, QObject, QPointF, Slot
 from constants import Keys, QTKeys
 
 ADVANCED_INS_TAB: Dict[str, Any] = {
-    Keys.TEXT_DATA: [],
+    Keys.FIELDS_DATA: [],
     Keys.POINTS: [],
 }
 
@@ -16,17 +16,17 @@ ADVANCED_INS_TAB: Dict[str, Any] = {
 class AdvancedInsPoints(QObject):
 
     _points: List[List[QPointF]] = [[]]
-    _text_data: List[float] = []
+    _fields_data: List[float] = []
 
-    def get_text_data(self) -> List[float]:
-        """Getter for _text_data."""
-        return self._text_data
+    def get_fields_data(self) -> List[float]:
+        """Getter for _fields_data."""
+        return self._fields_data
 
-    def set_text_data(self, text_data: List[float]) -> None:
-        """Setter for _text_data."""
-        self._text_data = text_data
+    def set_fields_data(self, fields_data: List[float]) -> None:
+        """Setter for _fields_data."""
+        self._fields_data = fields_data
 
-    text_data = Property(QTKeys.QVARIANTLIST, get_text_data, set_text_data)  # type: ignore
+    fields_data = Property(QTKeys.QVARIANTLIST, get_fields_data, set_fields_data)  # type: ignore
 
     def get_points(self) -> List[List[QPointF]]:
         return self._points
@@ -46,5 +46,5 @@ class AdvancedInsModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(AdvancedInsPoints)  # type: ignore
     def fill_console_points(self, cp: AdvancedInsPoints) -> AdvancedInsPoints:  # pylint:disable=no-self-use
         cp.set_points(ADVANCED_INS_TAB[Keys.POINTS])
-        cp.set_text_data(ADVANCED_INS_TAB[Keys.TEXT_DATA])
+        cp.set_fields_data(ADVANCED_INS_TAB[Keys.FIELDS_DATA])
         return cp

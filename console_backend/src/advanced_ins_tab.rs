@@ -152,7 +152,7 @@ impl<S: MessageSender> AdvancedInsTab<S> {
                 point_val.set_y(points[idx]);
             }
         }
-        let text_data = {
+        let fields_data = {
             vec![
                 self.imu_temp,
                 self.imu_conf as f64,
@@ -161,12 +161,12 @@ impl<S: MessageSender> AdvancedInsTab<S> {
                 self.rms_acc_z,
             ]
         };
-        let mut text_data_status = tab_status
+        let mut fields_data_status = tab_status
             .reborrow()
-            .init_text_data(NUM_INS_TEXT_FIELDS as u32);
+            .init_fields_data(NUM_INS_FIELDS as u32);
 
-        for (i, datur) in text_data.iter().enumerate() {
-            text_data_status.set(i as u32, *datur);
+        for (i, datur) in fields_data.iter().enumerate() {
+            fields_data_status.set(i as u32, *datur);
         }
 
         let mut msg_bytes: Vec<u8> = vec![];

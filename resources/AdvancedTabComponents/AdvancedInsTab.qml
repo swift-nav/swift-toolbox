@@ -173,11 +173,11 @@ Item {
                             lines.push(line);
                         }
                     }
-                    imuTempText.text = `${advancedInsPoints.text_data[0].toFixed(2)} C`;
-                    imuConfText.text = `0x${advancedInsPoints.text_data[1].toString(16).padStart(2, "0")}`;
-                    rmsAccXText.text = `${advancedInsPoints.text_data[2].toFixed(2)} g`;
-                    rmsAccYText.text = `${advancedInsPoints.text_data[3].toFixed(2)} g`;
-                    rmsAccZText.text = `${advancedInsPoints.text_data[4].toFixed(2)} g`;
+                    imuTempText.text = `${advancedInsPoints.fields_data[0].toFixed(2)} C`;
+                    imuConfText.text = `0x${advancedInsPoints.fields_data[1].toString(16).padStart(2, "0")}`;
+                    rmsAccXText.text = `${advancedInsPoints.fields_data[2].toFixed(2)} g`;
+                    rmsAccYText.text = `${advancedInsPoints.fields_data[3].toFixed(2)} g`;
+                    rmsAccZText.text = `${advancedInsPoints.fields_data[4].toFixed(2)} g`;
                     advancedInsPoints.fill_series(lines);
                 }
             }

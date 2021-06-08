@@ -194,7 +194,7 @@ def receive_messages(app_, backend, messages):
             SOLUTION_VELOCITY_TAB[Keys.MIN] = m.solutionVelocityStatus.min
             SOLUTION_VELOCITY_TAB[Keys.AVAILABLE_UNITS][:] = m.solutionVelocityStatus.availableUnits
         elif m.which == Message.Union.AdvancedInsStatus:
-            ADVANCED_INS_TAB[Keys.TEXT_DATA][:] = m.advancedInsStatus.textData
+            ADVANCED_INS_TAB[Keys.FIELDS_DATA][:] = m.advancedInsStatus.fieldsData
             ADVANCED_INS_TAB[Keys.POINTS][:] = [
                 [QPointF(point.x, point.y) for point in m.advancedInsStatus.data[idx]]
                 for idx in range(len(m.advancedInsStatus.data))

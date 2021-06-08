@@ -29,7 +29,7 @@ pub const NUM_POINTS: usize = 200;
 
 // Advanced Ins Tab constants.
 pub const NUM_INS_PLOT_ROWS: usize = 6;
-pub const NUM_INS_TEXT_FIELDS: usize = 5;
+pub const NUM_INS_FIELDS: usize = 5;
 
 // Navbar constants.
 pub const AVAILABLE_REFRESH_RATES: [u8; 4] = [1, 5, 10, 25];

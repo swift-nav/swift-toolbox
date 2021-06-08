@@ -2,10 +2,10 @@ pub mod cli_options;
 pub mod console_backend_capnp {
     include!(concat!(env!("OUT_DIR"), "/console_backend_capnp.rs"));
 }
+pub mod broadcaster;
 pub mod common_constants;
 pub mod constants;
 pub mod date_conv;
-pub mod broadcaster;
 pub mod errors;
 pub mod formatters;
 pub mod log_panel;

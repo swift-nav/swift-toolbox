@@ -1,14 +1,27 @@
+use std::collections::HashMap;
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::time::Duration;
+
 use capnp::message::Builder;
 use capnp::serialize;
+use crossbeam::channel;
+use crossbeam::channel::Receiver;
 use indexmap::IndexSet;
 use log::warn;
+use sbp::codec::dencode::FramedWrite;
+use sbp::codec::dencode::IterSinkExt;
+use sbp::codec::sbp::SbpEncoder;
+use sbp::dispatcher::Dispatcher;
+use sbp::dispatcher::Event;
+use sbp::dispatcher::HandlerKey;
+use sbp::messages::SBP;
 use serialport::available_ports;
-use std::collections::HashMap;
 
 use crate::console_backend_capnp as m;
 use crate::constants::*;
 use crate::errors::*;
-use crate::types::{MessageSender, SignalCodes};
+use crate::types::{MessageSender, Result, SignalCodes};
 use crate::{common_constants as cc, types::SharedState};
 
 /// Send a CLOSE, or kill, signal to the frontend.
@@ -367,6 +380,99 @@ pub fn compute_doppler(
 /// - The converted bytes in kilobytes.
 pub fn bytes_to_kb(bytes: f64) -> f64 {
     bytes / 1024_f64
+}
+
+pub struct MsgDispatcher {
+    inner: Arc<Mutex<Dispatcher<'static>>>,
+}
+
+impl MsgDispatcher {
+    const LOCK_FAILURE: &'static str = "failed to aquire dispatcher lock";
+
+    pub fn new() -> Self {
+        Self {
+            inner: Arc::new(Mutex::new(Dispatcher::new())),
+        }
+    }
+
+    pub fn run(&self, msg: &SBP) {
+        let mut d = self.inner.lock().expect(Self::LOCK_FAILURE);
+        d.run(msg);
+    }
+
+    pub fn wait<E>(&self, timeout: u64) -> Result<E>
+    where
+        E: Event + Send + 'static,
+    {
+        let (rx, key) = self.on::<E>();
+        let res = rx.recv_timeout(Duration::from_secs(timeout));
+        self.remove_callback(key);
+        res.map_err(Into::into)
+    }
+
+    pub fn on<E>(&self) -> (Receiver<E>, HandlerKey<E>)
+    where
+        E: Event + Send + 'static,
+    {
+        let (tx, rx) = channel::unbounded::<E>();
+        let key = self.add_callback(move |e: E| {
+            tx.send(e).unwrap();
+        });
+        (rx, key)
+    }
+
+    fn add_callback<F, E>(&self, cb: F) -> HandlerKey<E>
+    where
+        F: FnMut(E) + Send + 'static,
+        E: Event,
+    {
+        let mut d = self.inner.lock().expect(Self::LOCK_FAILURE);
+        d.add(cb)
+    }
+
+    fn remove_callback<E>(&self, key: HandlerKey<E>)
+    where
+        E: Event + Send + 'static,
+    {
+        let mut d = self.inner.lock().expect(Self::LOCK_FAILURE);
+        d.remove(key);
+    }
+}
+
+impl Clone for MsgDispatcher {
+    fn clone(&self) -> Self {
+        MsgDispatcher {
+            inner: Arc::clone(&self.inner),
+        }
+    }
+}
+
+pub struct MsgSender<W> {
+    inner: Arc<Mutex<FramedWrite<W, SbpEncoder>>>,
+}
+
+impl<W: std::io::Write> MsgSender<W> {
+    const SEND_MSG_FAILURE: &'static str = "failed to send message";
+    const LOCK_FAILURE: &'static str = "failed to aquire sender lock";
+
+    pub fn new(wtr: W) -> Self {
+        Self {
+            inner: Arc::new(Mutex::new(FramedWrite::new(wtr, SbpEncoder::new()))),
+        }
+    }
+
+    pub fn send(&self, msg: &SBP) {
+        let mut framed = self.inner.lock().expect(Self::LOCK_FAILURE);
+        framed.send(msg).expect(Self::SEND_MSG_FAILURE);
+    }
+}
+
+impl<W> Clone for MsgSender<W> {
+    fn clone(&self) -> Self {
+        MsgSender {
+            inner: Arc::clone(&self.inner),
+        }
+    }
 }
 
 #[cfg(test)]

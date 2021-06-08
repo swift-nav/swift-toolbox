@@ -5,7 +5,7 @@ from typing import Dict, List, Any
 
 from PySide2.QtCore import Property, QObject, Slot
 
-from constants import Keys, QTKeys
+from constants import Keys, LogLevel, QTKeys
 
 NAV_BAR: Dict[str, Any] = {
     Keys.AVAILABLE_PORTS: [],
@@ -16,6 +16,7 @@ NAV_BAR: Dict[str, Any] = {
     Keys.PREVIOUS_HOSTS: [],
     Keys.PREVIOUS_PORTS: [],
     Keys.PREVIOUS_FILES: [],
+    Keys.LOG_LEVEL_LABELS: [LogLevel.ERROR, LogLevel.WARNING, LogLevel.NOTICE, LogLevel.INFO, LogLevel.DEBUG],
 }
 
 
@@ -29,6 +30,15 @@ class NavBarData(QObject):  # pylint: disable=too-many-instance-attributes
     _previous_hosts: List[str] = []
     _previous_ports: List[str] = []
     _previous_files: List[str] = []
+    _log_level_labels: List[str] = []
+
+    def get_log_level_labels(self) -> List[str]:
+        return self._log_level_labels
+
+    def set_log_level_labels(self, log_level_labels: List[str]) -> None:
+        self._log_level_labels = log_level_labels
+
+    log_level_labels = Property(QTKeys.QVARIANTLIST, get_log_level_labels, set_log_level_labels)  # type: ignore
 
     def get_available_ports(self) -> List[str]:
         return self._available_ports
@@ -116,4 +126,5 @@ class NavBarModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_previous_hosts(NAV_BAR[Keys.PREVIOUS_HOSTS])
         cp.set_previous_ports(NAV_BAR[Keys.PREVIOUS_PORTS])
         cp.set_previous_files(NAV_BAR[Keys.PREVIOUS_FILES])
+        cp.set_log_level_labels(NAV_BAR[Keys.LOG_LEVEL_LABELS])
         return cp

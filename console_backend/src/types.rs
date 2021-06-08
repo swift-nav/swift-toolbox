@@ -1,4 +1,4 @@
-use crate::common_constants::{self as cc, SbpLogging};
+use crate::common_constants::{self as cc, LogLevel, SbpLogging};
 use crate::constants::*;
 use crate::errors::*;
 use crate::formatters::*;
@@ -398,6 +398,7 @@ impl Clone for SharedState {
 pub struct SharedStateInner {
     pub status_bar: StatusBarState,
     pub logging_bar: LoggingBarState,
+    pub log_panel: LogPanelState,
     pub tracking_tab: TrackingTabState,
     pub paused: bool,
     pub connection_history: ConnectionHistory,
@@ -411,6 +412,7 @@ impl SharedStateInner {
         SharedStateInner {
             status_bar: StatusBarState::new(),
             logging_bar: LoggingBarState::new(log_directory),
+            log_panel: LogPanelState::new(),
             tracking_tab: TrackingTabState::new(),
             paused: false,
             connection_history,
@@ -456,6 +458,19 @@ impl LoggingBarState {
             sbp_logging: SbpLogging::OFF,
             csv_logging: CsvLogging::OFF,
             logging_directory,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct LogPanelState {
+    pub log_level: LogLevel,
+}
+
+impl LogPanelState {
+    fn new() -> LogPanelState {
+        LogPanelState {
+            log_level: LogLevel::DEBUG,
         }
     }
 }

@@ -66,6 +66,7 @@ QtObject {
         readonly property int connectButtonWidth: 30
         readonly property int connectionPauseWidth: 30
         readonly property int folderButtonWidth: 30
+        readonly property int logLevelButtonWidth: 90
         readonly property color placeholderTextColor: "#CDC9C9"
         readonly property int padding: 0
         readonly property string connectButtonPath: "images/fontawesome/power-off-solid.svg"

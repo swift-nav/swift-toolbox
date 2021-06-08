@@ -14,10 +14,10 @@ Rectangle {
     property variant available_baudrates: []
     property variant available_devices: []
     property variant available_flows: []
-    property variant available_refresh_rates: []
     property variant previous_hosts: []
     property variant previous_ports: []
     property variant previous_files: []
+    property variant log_level_labels: []
 
     anchors.fill: parent
     border.width: Constants.statusBar.borderWidth
@@ -324,31 +324,14 @@ Rectangle {
         }
 
         ComboBox {
-            id: refreshRateDrop
+            id: logLevelButton
 
-            Component.onCompleted: {
-                refreshRateDrop.indicator.width = Constants.navBar.plotRefreshRateDropdownWidth / 3;
-            }
-            visible: true
-            Layout.preferredWidth: Constants.navBar.plotRefreshRateDropdownWidth
-            Layout.preferredHeight: Constants.navBar.dropdownHeight
+            Layout.preferredWidth: Constants.navBar.logLevelButtonWidth
+            Layout.preferredHeight: Constants.navBar.buttonHeight
+            model: log_level_labels
             ToolTip.visible: hovered
-            ToolTip.text: "Refresh Rate (Hz)"
-            model: available_refresh_rates
-            onActivated: {
-                Globals.currentRefreshRate = available_refresh_rates[currentIndex];
-            }
-
-            states: State {
-                when: refreshRateDrop.down
-
-                PropertyChanges {
-                    target: refreshRateDrop
-                    width: Constants.navBar.plotRefreshRateDropdownWidth * 1.5
-                }
-
-            }
-
+            ToolTip.text: "Log Level"
+            onActivated: data_model.log_level(logLevelButton.currentText)
         }
 
         Timer {
@@ -360,12 +343,11 @@ Rectangle {
                 if (!navBarData.available_baudrates.length)
                     return ;
 
-                if (!available_baudrates.length || !available_flows.length || available_refresh_rates.length) {
+                if (!available_baudrates.length || !available_flows.length || !log_level_labels.length) {
                     available_baudrates = navBarData.available_baudrates;
                     serialDeviceBaudRate.currentIndex = 1;
                     available_flows = navBarData.available_flows;
-                    available_refresh_rates = navBarData.available_refresh_rates;
-                    refreshRateDrop.currentIndex = available_refresh_rates.indexOf(Globals.currentRefreshRate);
+                    log_level_labels = navBarData.log_level_labels;
                 }
                 available_devices = navBarData.available_ports;
                 previous_hosts = navBarData.previous_hosts;

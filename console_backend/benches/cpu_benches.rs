@@ -3,7 +3,7 @@ use criterion::{criterion_group, criterion_main, Criterion};
 use glob::glob;
 use sbp::sbp_tools::SBPTools;
 use std::{
-    fs,
+    fs, io,
     path::Path,
     sync::{mpsc, Arc, Mutex},
     thread, time,
@@ -64,6 +64,7 @@ fn run_process_messages(file_in_name: &str, failure: bool) {
         match fs::File::open(file_in_name) {
             Ok(fileopen) => process_messages::process_messages(
                 fileopen,
+                io::sink(),
                 shared_state,
                 client_send,
                 RealtimeDelay::Off,

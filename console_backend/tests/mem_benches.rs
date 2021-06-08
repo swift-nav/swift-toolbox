@@ -4,7 +4,7 @@ mod mem_bench_impl {
     use ndarray::{ArrayView, Axis, Dim};
     use std::{
         error::Error,
-        fs,
+        fs, io,
         result::Result,
         sync::{mpsc, Arc, Mutex},
         thread,
@@ -102,6 +102,7 @@ mod mem_bench_impl {
             match fs::File::open(BENCH_FILEPATH) {
                 Ok(fileopen) => process_messages::process_messages(
                     fileopen,
+                    io::sink(),
                     shared_state,
                     client_send,
                     RealtimeDelay::On,

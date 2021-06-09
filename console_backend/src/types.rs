@@ -56,7 +56,6 @@ pub struct MsgSender<W> {
 }
 
 impl<W: std::io::Write> MsgSender<W> {
-    const SEND_MSG_FAILURE: &'static str = "failed to send message";
     const LOCK_FAILURE: &'static str = "failed to aquire sender lock";
 
     pub fn new(wtr: W) -> Self {
@@ -65,9 +64,10 @@ impl<W: std::io::Write> MsgSender<W> {
         }
     }
 
-    pub fn send(&self, msg: &SBP) {
+    pub fn send(&self, msg: &SBP) -> Result<()> {
         let mut framed = self.inner.lock().expect(Self::LOCK_FAILURE);
-        framed.send(msg).expect(Self::SEND_MSG_FAILURE);
+        framed.send(msg)?;
+        Ok(())
     }
 }
 

@@ -152,8 +152,10 @@ pub enum Keys {
     SBP_LOGGING_LABELS,
     #[strum(serialize = "LOG_LEVEL_LABELS")]
     LOG_LEVEL_LABELS,
-    #[strum(serialize = "TEXT_DATA")]
-    TEXT_DATA,
+    #[strum(serialize = "FIELDS_DATA")]
+    FIELDS_DATA,
+    #[strum(serialize = "XMIN")]
+    XMIN_OFFSET,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]

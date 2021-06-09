@@ -67,8 +67,14 @@ impl Clone for Broadcaster {
     }
 }
 
+impl Default for Broadcaster {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// A wrapper around a channel sender that knows what message types its receivers expect.
-pub struct Sender {
+struct Sender {
     inner: channel::Sender<SBP>,
     msg_types: &'static [u16],
 }

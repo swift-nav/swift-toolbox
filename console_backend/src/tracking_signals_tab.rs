@@ -426,6 +426,8 @@ impl<S: MessageSender> TrackingSignalsTab<S> {
 
 #[cfg(test)]
 mod tests {
+    use std::thread::sleep;
+
     use super::*;
     use sbp::messages::{
         gnss::{CarrierPhase, GPSTime, GnssSignal},
@@ -592,7 +594,7 @@ mod tests {
                 sat,
             },
         });
-
+        sleep(Duration::from_secs_f64(GUI_UPDATE_PERIOD));
         assert_eq!(tracking_signals_tab.cn0_dict.len(), 0);
         tracking_signals_tab.handle_obs(ObservationMsg::MsgObs(obs_msg));
         assert_eq!(tracking_signals_tab.cn0_dict.len(), 1);

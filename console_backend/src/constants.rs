@@ -55,8 +55,8 @@ pub const GLO_FCN_OFFSET: i16 = 8;
 pub const SBAS_NEG_OFFSET: i16 = 120;
 pub const QZSS_NEG_OFFSET: i16 = 193;
 pub const GUI_UPDATE_PERIOD: f64 = 0.2;
-pub const CHART_XMIN_OFFSET_NO_TRACKING: f64 = -10.0;
-pub const CHART_XMIN_OFFSET_TRACKING: f64 = -100.0;
+pub const CHART_XMIN_OFFSET_NO_TRACKING: f64 = -45.0;
+pub const CHART_XMIN_OFFSET_TRACKING: f64 = -95.0;
 
 pub const SHOW_LEGEND: &str = "Show Legend";
 

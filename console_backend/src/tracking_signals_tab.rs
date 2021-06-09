@@ -1,5 +1,8 @@
 use ordered_float::OrderedFloat;
-use std::{collections::HashMap, time::Instant};
+use std::{
+    collections::HashMap,
+    time::{Duration, Instant},
+};
 
 use capnp::message::Builder;
 use capnp::serialize;
@@ -48,6 +51,7 @@ pub struct TrackingSignalsTab<S: MessageSender> {
     pub gps_tow: f64,
     pub gps_week: u16,
     pub incoming_obs_cn0: HashMap<(SignalCodes, i16), f64>,
+    pub last_obs_update_time: Instant,
     pub last_update_time: Instant,
     pub prev_obs_count: u8,
     pub prev_obs_total: u8,
@@ -86,6 +90,7 @@ impl<S: MessageSender> TrackingSignalsTab<S> {
             gps_tow: 0.0,
             gps_week: 0,
             incoming_obs_cn0: HashMap::new(),
+            last_obs_update_time: Instant::now(),
             last_update_time: Instant::now(),
             prev_obs_count: 0,
             prev_obs_total: 0,
@@ -315,6 +320,11 @@ impl<S: MessageSender> TrackingSignalsTab<S> {
         if self.at_least_one_track_received {
             return;
         }
+        if Instant::now() - self.last_obs_update_time <= Duration::from_secs_f64(GUI_UPDATE_PERIOD)
+        {
+            return;
+        }
+        self.last_obs_update_time = Instant::now();
         let mut codes_that_came: Vec<(SignalCodes, i16)> = Vec::new();
         let t = (Instant::now()).duration_since(self.t_init).as_secs_f64();
         self.time.add(t);

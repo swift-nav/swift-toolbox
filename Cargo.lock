@@ -357,6 +357,7 @@ dependencies = [
  "ordered-float",
  "paste 1.0.5",
  "pyo3",
+ "rand",
  "sbp",
  "serde",
  "serde_json",
@@ -1393,7 +1394,7 @@ dependencies = [
 [[package]]
 name = "sbp"
 version = "3.4.8-alpha"
-source = "git+https://github.com/swift-nav/libsbp.git?branch=steve/try-from#9dd08497a280cba7e7bd7d86926fb9691762fbe7"
+source = "git+https://github.com/swift-nav/libsbp.git?rev=ce5e3d14ae4284c53982bc3fd79a2fa15976ff9f#ce5e3d14ae4284c53982bc3fd79a2fa15976ff9f"
 dependencies = [
  "base64",
  "byteorder",

@@ -104,6 +104,14 @@ where
         Ok(E::from_sbp(msg))
     }
 
+    pub fn iter(&self) -> impl Iterator<Item = E> + '_ {
+        self.inner.iter().map(E::from_sbp)
+    }
+
+    pub fn try_iter(&self) -> impl Iterator<Item = E> + '_ {
+        self.inner.try_iter().map(E::from_sbp)
+    }
+
     // other channel methods as needed
 }
 

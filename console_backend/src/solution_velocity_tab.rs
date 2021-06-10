@@ -51,8 +51,8 @@ impl<'a, S: MessageSender> SolutionVelocityTab<'a, S> {
             min: 0_f64,
             multiplier: VelocityUnits::Mps.get_multiplier(),
             points: vec![
-                Deque::with_size_limit(NUM_POINTS),
-                Deque::with_size_limit(NUM_POINTS),
+                Deque::with_size_limit(NUM_POINTS, /*fill_value=*/ None),
+                Deque::with_size_limit(NUM_POINTS, /*fill_value=*/ None),
             ],
             shared_state,
             tow: 0_f64,
@@ -63,8 +63,8 @@ impl<'a, S: MessageSender> SolutionVelocityTab<'a, S> {
     fn convert_points(&mut self, new_unit: VelocityUnits) {
         let new_mult = new_unit.get_multiplier();
         let mut points = vec![
-            Deque::with_size_limit(NUM_POINTS),
-            Deque::with_size_limit(NUM_POINTS),
+            Deque::with_size_limit(NUM_POINTS, /*fill_value=*/ None),
+            Deque::with_size_limit(NUM_POINTS, /*fill_value=*/ None),
         ];
         let hpoints = &mut self.points[0].get();
         let vpoints = &mut self.points[1].get();

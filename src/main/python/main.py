@@ -41,6 +41,11 @@ from logging_bar import (
     LoggingBarModel,
 )
 
+from advanced_ins_tab import (
+    AdvancedInsModel,
+    AdvancedInsPoints,
+    ADVANCED_INS_TAB,
+)
 
 from observation_tab import (
     ObservationData,
@@ -122,9 +127,25 @@ TAB_LAYOUT = {
         MAIN_INDEX: 5,
         SUB_INDEX: 0,
     },
-    Tabs.ADVANCED: {
+    Tabs.ADVANCED_SYSTEM_MONITOR: {
         MAIN_INDEX: 6,
         SUB_INDEX: 0,
+    },
+    Tabs.ADVANCED_INS: {
+        MAIN_INDEX: 6,
+        SUB_INDEX: 1,
+    },
+    Tabs.ADVANCED_MAGNETOMETER: {
+        MAIN_INDEX: 6,
+        SUB_INDEX: 2,
+    },
+    Tabs.ADVANCED_NETWORKING: {
+        MAIN_INDEX: 6,
+        SUB_INDEX: 3,
+    },
+    Tabs.ADVANCED_SPECTRUM_ANALYZER: {
+        MAIN_INDEX: 6,
+        SUB_INDEX: 4,
     },
 }
 
@@ -172,6 +193,12 @@ def receive_messages(app_, backend, messages):
             SOLUTION_VELOCITY_TAB[Keys.MAX] = m.solutionVelocityStatus.max
             SOLUTION_VELOCITY_TAB[Keys.MIN] = m.solutionVelocityStatus.min
             SOLUTION_VELOCITY_TAB[Keys.AVAILABLE_UNITS][:] = m.solutionVelocityStatus.availableUnits
+        elif m.which == Message.Union.AdvancedInsStatus:
+            ADVANCED_INS_TAB[Keys.FIELDS_DATA][:] = m.advancedInsStatus.fieldsData
+            ADVANCED_INS_TAB[Keys.POINTS][:] = [
+                [QPointF(point.x, point.y) for point in m.advancedInsStatus.data[idx]]
+                for idx in range(len(m.advancedInsStatus.data))
+            ]
         elif m.which == Message.Union.TrackingSignalsStatus:
             TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS][:] = m.trackingSignalsStatus.checkLabels
             TRACKING_SIGNALS_TAB[Keys.LABELS][:] = m.trackingSignalsStatus.labels
@@ -180,8 +207,7 @@ def receive_messages(app_, backend, messages):
                 [QPointF(point.x, point.y) for point in m.trackingSignalsStatus.data[idx]]
                 for idx in range(len(m.trackingSignalsStatus.data))
             ]
-            TRACKING_SIGNALS_TAB[Keys.MAX] = m.trackingSignalsStatus.max
-            TRACKING_SIGNALS_TAB[Keys.MIN] = m.trackingSignalsStatus.min
+            TRACKING_SIGNALS_TAB[Keys.XMIN_OFFSET] = m.trackingSignalsStatus.xminOffset
         elif m.which == Message.Union.ObservationStatus:
             if m.observationStatus.isRemote:
                 REMOTE_OBSERVATION_TAB[Keys.TOW] = m.observationStatus.tow
@@ -424,6 +450,7 @@ if __name__ == "__main__":
     qmlRegisterType(LogPanelData, "SwiftConsole", 1, 0, "LogPanelData")  # type: ignore
     qmlRegisterType(NavBarData, "SwiftConsole", 1, 0, "NavBarData")  # type: ignore
     qmlRegisterType(LoggingBarData, "SwiftConsole", 1, 0, "LoggingBarData")  # type: ignore
+    qmlRegisterType(AdvancedInsPoints, "SwiftConsole", 1, 0, "AdvancedInsPoints")  # type: ignore
     qmlRegisterType(SolutionPositionPoints, "SwiftConsole", 1, 0, "SolutionPositionPoints")  # type: ignore
     qmlRegisterType(SolutionTableEntries, "SwiftConsole", 1, 0, "SolutionTableEntries")  # type: ignore
     qmlRegisterType(SolutionVelocityPoints, "SwiftConsole", 1, 0, "SolutionVelocityPoints")  # type: ignore
@@ -447,6 +474,7 @@ if __name__ == "__main__":
     data_model = DataModel(endpoint_main, messages_main)
     log_panel_model = LogPanelModel()
     nav_bar_model = NavBarModel()
+    advanced_ins_model = AdvancedInsModel()
     solution_position_model = SolutionPositionModel()
     solution_table_model = SolutionTableModel()
     solution_velocity_model = SolutionVelocityModel()
@@ -458,6 +486,7 @@ if __name__ == "__main__":
     root_context = engine.rootContext()
     root_context.setContextProperty("log_panel_model", log_panel_model)
     root_context.setContextProperty("nav_bar_model", nav_bar_model)
+    root_context.setContextProperty("advanced_ins_model", advanced_ins_model)
     root_context.setContextProperty("solution_position_model", solution_position_model)
     root_context.setContextProperty("solution_table_model", solution_table_model)
     root_context.setContextProperty("solution_velocity_model", solution_velocity_model)

@@ -15,7 +15,7 @@ Item {
         id: trackingBar
 
         z: Constants.commonChart.zAboveCharts
-        currentIndex: Globals.initialSubTabIndex
+        currentIndex: Globals.initialMainTabIndex == 0 ? Globals.initialSubTabIndex : 0
         contentHeight: Constants.tabBarHeight
 
         Repeater {

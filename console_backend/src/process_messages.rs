@@ -67,6 +67,12 @@ pub fn process_messages<S: MessageSender, T: std::io::Read>(
             SBP::MsgHeartbeat(_) => {
                 main.status_bar.handle_heartbeat();
             }
+            SBP::MsgImuAux(msg) => {
+                main.advanced_ins_tab.handle_imu_aux(msg);
+            }
+            SBP::MsgImuRaw(msg) => {
+                main.advanced_ins_tab.handle_imu_raw(msg);
+            }
             SBP::MsgInsStatus(msg) => {
                 main.solution_tab.handle_ins_status(msg.clone());
                 main.status_bar.handle_ins_status(msg);

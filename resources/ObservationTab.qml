@@ -80,6 +80,7 @@ Item {
                     localTable.tow = observationData.tow;
                     localTable.week = observationData.week;
                     localTable.model.rows = observationData.rows;
+                    observationView.visible = true;
                 }
             }
         }

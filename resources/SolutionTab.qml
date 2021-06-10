@@ -39,7 +39,7 @@ Item {
             TabBar {
                 id: solutionBar
 
-                currentIndex: Globals.initialSubTabIndex
+                currentIndex: Globals.initialMainTabIndex == 1 ? Globals.initialSubTabIndex : 0
                 z: Constants.commonChart.zAboveCharts
                 contentHeight: Constants.tabBarHeight
 

@@ -28,6 +28,7 @@ use sbp::messages::{
 };
 use serde::{Deserialize, Serialize};
 use serialport::FlowControl as SPFlowControl;
+use std::borrow::Borrow;
 use std::{
     cmp::{Eq, PartialEq},
     collections::HashMap,
@@ -64,7 +65,11 @@ impl<W: std::io::Write> MsgSender<W> {
         }
     }
 
-    pub fn send(&self, msg: &SBP) -> Result<()> {
+    pub fn send<B>(&self, msg: B) -> sbp::Result<()>
+    where
+        B: Borrow<SBP>,
+    {
+        let msg = msg.borrow();
         let mut framed = self.inner.lock().expect(Self::LOCK_FAILURE);
         framed.send(msg)?;
         Ok(())

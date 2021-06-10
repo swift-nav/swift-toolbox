@@ -36,7 +36,11 @@ use std::{
     ops::Deref,
     path::PathBuf,
     str::FromStr,
-    sync::{mpsc::Sender, Arc, Mutex},
+    sync::{
+        atomic::{AtomicBool, Ordering::*},
+        mpsc::Sender,
+        Arc, Mutex,
+    },
     thread,
     thread::JoinHandle,
     time::{Duration, Instant},
@@ -99,33 +103,25 @@ impl MessageSender for TestSender {
 }
 
 #[derive(Debug, Default)]
-pub struct IsRunning(Arc<Mutex<bool>>);
+pub struct IsRunning(Arc<AtomicBool>);
 impl IsRunning {
     pub fn new() -> IsRunning {
-        IsRunning(Arc::new(Mutex::new(false)))
+        IsRunning(Arc::new(AtomicBool::new(false)))
     }
     pub fn get(&self) -> bool {
-        let is_running = self.lock().expect(IS_RUNNING_LOCK_MUTEX_FAILURE);
-        *is_running
+        self.load(Acquire)
     }
     pub fn set(&self, set_to: bool) {
-        let mut is_running = self.lock().expect(IS_RUNNING_LOCK_MUTEX_FAILURE);
-        (*is_running) = set_to;
+        self.store(set_to, Release);
     }
 }
 
 impl Deref for IsRunning {
-    type Target = Mutex<bool>;
+    type Target = AtomicBool;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
-
-// impl Default for IsRunning {
-//     fn default() -> Self {
-//         Self::new()
-//     }
-// }
 
 impl Clone for IsRunning {
     fn clone(&self) -> Self {

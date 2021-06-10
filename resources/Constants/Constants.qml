@@ -94,6 +94,7 @@ QtObject {
         readonly property color titleColor: "#00006E"
         readonly property int titlePointSize: 14
         readonly property var textDataLabels: ["Imu temp:", "Imu conf:", "Rms acc x:", "Rms acc y:", "Rms acc z:"]
+        readonly property var insStatusLabels: ["GNSS Pos:", "GNSS Vel:", "Wheelticks:", "Wheelspeed:", "nhc:", "Static Detection:"]
         readonly property var legendLabels: ["Accn. X", "Accn. Y", "Accn. Z", "Gyro X", "Gyro Y", "Gyro Z"]
         readonly property var lineColors: ["#8c510a", "#d8b365", "#f6e8c3", "#c7eae5", "#5ab4ac", "#01665e"]
         readonly property int legendBottomMargin: 120
@@ -109,6 +110,7 @@ QtObject {
         readonly property int textDataBarHeight: 20
         readonly property int textDataBarMargin: 2
         readonly property int textDataBarBorderWidth: 1
+        readonly property int insStatusEmojiWidth: 40
     }
 
     solutionPosition: QtObject {

@@ -309,6 +309,12 @@ Item {
 
         }
 
+        FusionEngineStatusBar {
+            Layout.fillWidth: true
+            Layout.preferredHeight: Constants.navBar.urlBarHeight
+            Layout.alignment: Qt.AlignBottom
+        }
+
     }
 
 }

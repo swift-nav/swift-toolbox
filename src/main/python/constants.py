@@ -76,7 +76,13 @@ class Keys(str, Enum):
     SBP_LOGGING_LABELS = "SBP_LOGGING_LABELS"
     LOG_LEVEL_LABELS = "LOG_LEVEL_LABELS"
     FIELDS_DATA = "FIELDS_DATA"
-    XMIN_OFFSET = "XMIN"
+    XMIN_OFFSET = "XMIN_OFFSET"
+    GNSSPOS = "GNSSPOS"
+    GNSSVEL = "GNSSVEL"
+    WHEELTICKS = "WHEELTICKS"
+    SPEED = "SPEED"
+    NHC = "NHC"
+    ZEROVEL = "ZEROVEL"
 
 
 class ApplicationStates(str, Enum):

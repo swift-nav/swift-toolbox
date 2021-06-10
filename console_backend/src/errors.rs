@@ -8,3 +8,5 @@ pub const CONVERT_TO_STR_FAILURE: &str = "error converting to str";
 pub const GET_MUT_OBJECT_FAILURE: &str = "error trying to get mut object";
 pub const THREAD_HANDLER_MISSING_FAILURE: &str = "error taking thread handler";
 pub const THREAD_JOIN_FAILURE: &str = "thread join failure";
+pub const GET_FUSION_ENGINE_STATUS_FAILURE: &str =
+    "error getting the status of a fusion status field";

@@ -10,3 +10,5 @@ pub const THREAD_HANDLER_MISSING_FAILURE: &str = "error taking thread handler";
 pub const THREAD_JOIN_FAILURE: &str = "thread join failure";
 pub const GET_FUSION_ENGINE_STATUS_FAILURE: &str =
     "error getting the status of a fusion status field";
+pub const UNABLE_TO_STOP_TIMER_THREAD_FAILURE: &str = "unable to kill running timer thread";
+pub const UNABLE_TO_STOP_STATUS_THREAD_FAILURE: &str = "unable to kill running timer thread";

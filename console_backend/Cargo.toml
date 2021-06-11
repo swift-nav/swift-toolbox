@@ -33,7 +33,6 @@ clap = "3.0.0-beta.2"
 indexmap = { version = "1.6.2", features = ["serde"] }
 serde_json = { version = "1" }
 
-
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 serialport = "4.0.1"
 

@@ -2058,7 +2058,7 @@ mod tests {
         let now = SystemTime::now();
         sleep(Duration::from_millis(1));
         shared_state.set_running(false, client_send);
-        sleep(Duration::from_millis(5));
+        sleep(Duration::from_millis(10));
         assert!(handle.join().is_ok());
 
         match now.elapsed() {

@@ -12,7 +12,7 @@ use std::{
 use crate::console_backend_capnp as m;
 use crate::errors::{
     CAP_N_PROTO_SERIALIZATION_FAILURE, GET_FUSION_ENGINE_STATUS_FAILURE,
-    UPDATE_STATUS_LOCK_MUTEX_FAILURE,
+    UNABLE_TO_STOP_TIMER_THREAD_FAILURE, UPDATE_STATUS_LOCK_MUTEX_FAILURE,
 };
 use crate::types::{IsRunning, MessageSender, SharedState};
 
@@ -110,7 +110,6 @@ impl StatusTimer {
     }
     fn restart(&mut self, storage: UpdateStatus, value: UpdateStatusInner, delay: f64) {
         self.cancel();
-        sleep(Duration::from_millis(5));
         self.handle = Some(StatusTimer::timer_thread(
             self.is_running.clone(),
             storage,
@@ -132,6 +131,7 @@ impl StatusTimer {
             while is_running.get() {
                 if (Instant::now() - start_time).as_secs_f64() > delay {
                     expired = true;
+                    is_running.set(false);
                     break;
                 }
                 sleep(Duration::from_millis(5));
@@ -148,7 +148,7 @@ impl StatusTimer {
     fn cancel(&mut self) {
         self.is_running.set(false);
         if let Some(handle) = self.handle.take() {
-            drop(handle);
+            handle.join().expect(UNABLE_TO_STOP_TIMER_THREAD_FAILURE);
         }
     }
 }
@@ -251,12 +251,12 @@ impl FlagStatus {
 ///
 /// - `client_send`: Client Sender channel for communication from backend to frontend.
 /// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
-/// - `gnsspos`: Storage for the Imu configuration.
-/// - `gnssvel`: Storage for the Imu configuration.
-/// - `wheelticks`: Storage for the Imu configuration.
-/// - `speed`: Storage for the Imu configuration.
-/// - `nhc`: Storage for the Imu configuration.
-/// - `zerovel`: Storage for the Imu configuration.
+/// - `gnsspos`: Storage for the GNSS Position status.
+/// - `gnssvel`: Storage for the GNSS Velocity status.
+/// - `wheelticks`: Storage for the wheel ticks status.
+/// - `speed`: Storage for the wheel speed status.
+/// - `nhc`: Storage for the non-holonomic constraints model status.
+/// - `zerovel`: Storage for the zero velocity status.
 #[derive(Debug)]
 pub struct FusionEngineStatus<S: MessageSender> {
     client_sender: S,
@@ -332,10 +332,10 @@ impl<S: MessageSender> Drop for FusionEngineStatus<S> {
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
     use std::{thread::sleep, time::Duration};
     const DELAY: f64 = 1.0;
+    const SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN: f64 = 1.1;
 
     #[test]
     fn update_status_inner_test() {
@@ -389,7 +389,8 @@ mod tests {
             update_status.clone().get().unwrap(),
             UpdateStatusInner::Unknown
         );
-        sleep(Duration::from_secs_f64(DELAY as f64 * 1.01_f64));
+        sleep(Duration::from_secs_f64(DELAY as f64 * 1.005_f64));
+
         assert!(!status_timer.active());
         assert_eq!(update_status.get().unwrap(), update_status_inner);
     }
@@ -435,7 +436,9 @@ mod tests {
         assert_eq!(flag_status.incoming.clone().get(), None);
         flag_status.update_status(ok_status);
         assert_eq!(flag_status.incoming.get().unwrap(), UpdateStatusInner::Ok);
-        sleep(Duration::from_secs_f64(SET_STATUS_THREAD_SLEEP_SEC * 1.1));
+        sleep(Duration::from_secs_f64(
+            SET_STATUS_THREAD_SLEEP_SEC * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
+        ));
         assert_eq!(flag_status.incoming.get(), None);
     }
 
@@ -446,7 +449,9 @@ mod tests {
         {
             flag_status.stop();
         }
-        sleep(Duration::from_secs_f64(SET_STATUS_THREAD_SLEEP_SEC * 1.1));
+        sleep(Duration::from_secs_f64(
+            SET_STATUS_THREAD_SLEEP_SEC * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
+        ));
         assert!(!flag_status.is_running.get());
     }
 
@@ -461,14 +466,18 @@ mod tests {
             UpdateStatusInner::Unknown
         );
         flag_status.update_status(warning_status);
-        sleep(Duration::from_secs_f64(SET_STATUS_THREAD_SLEEP_SEC * 1.1));
+        sleep(Duration::from_secs_f64(
+            SET_STATUS_THREAD_SLEEP_SEC * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
+        ));
         // Update_status for an unknown should not change the result.
         flag_status.update_status(unknown_status);
         assert_eq!(
             flag_status.status.clone().get().unwrap(),
             UpdateStatusInner::Warning
         );
-        sleep(Duration::from_secs_f64(STATUS_PERIOD));
+        sleep(Duration::from_secs_f64(
+            STATUS_PERIOD * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
+        ));
         assert_eq!(
             flag_status.status.get().unwrap(),
             UpdateStatusInner::Unknown
@@ -484,24 +493,32 @@ mod tests {
 
         // Ok message then initiate warning, send another ok which should not take, then unknown kicks in.
         flag_status.update_status(ok_status);
-        sleep(Duration::from_secs_f64(SET_STATUS_THREAD_SLEEP_SEC * 1.1));
+        sleep(Duration::from_secs_f64(
+            SET_STATUS_THREAD_SLEEP_SEC * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
+        ));
         assert_eq!(
             flag_status.status.clone().get().unwrap(),
             UpdateStatusInner::Ok
         );
         flag_status.update_status(warning_status);
-        sleep(Duration::from_secs_f64(SET_STATUS_THREAD_SLEEP_SEC * 1.1));
+        sleep(Duration::from_secs_f64(
+            SET_STATUS_THREAD_SLEEP_SEC * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
+        ));
         assert_eq!(
             flag_status.status.clone().get().unwrap(),
             UpdateStatusInner::Warning
         );
         flag_status.update_status(ok_status);
-        sleep(Duration::from_secs_f64(SET_STATUS_THREAD_SLEEP_SEC * 1.1));
+        sleep(Duration::from_secs_f64(
+            SET_STATUS_THREAD_SLEEP_SEC * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
+        ));
         assert_eq!(
             flag_status.status.clone().get().unwrap(),
             UpdateStatusInner::Warning
         );
-        sleep(Duration::from_secs_f64(STATUS_PERIOD));
+        sleep(Duration::from_secs_f64(
+            STATUS_PERIOD * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
+        ));
         assert_eq!(
             flag_status.status.clone().get().unwrap(),
             UpdateStatusInner::Unknown
@@ -509,13 +526,17 @@ mod tests {
 
         // Ok message with no warning active should set status ok then after expires goes unknown.
         flag_status.update_status(ok_status);
-        sleep(Duration::from_secs_f64(SET_STATUS_THREAD_SLEEP_SEC * 1.1));
+        sleep(Duration::from_secs_f64(
+            SET_STATUS_THREAD_SLEEP_SEC * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
+        ));
         assert_eq!(
             flag_status.status.clone().get().unwrap(),
             UpdateStatusInner::Ok
         );
         flag_status.update_status(unknown_status);
-        sleep(Duration::from_secs_f64(STATUS_PERIOD));
+        sleep(Duration::from_secs_f64(
+            STATUS_PERIOD * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
+        ));
         assert_eq!(
             flag_status.status.get().unwrap(),
             UpdateStatusInner::Unknown

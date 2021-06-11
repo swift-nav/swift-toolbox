@@ -60,7 +60,7 @@ pub struct StatusBar<S: MessageSender> {
     shared_state: SharedState,
     heartbeat_data: Heartbeat,
     is_running: IsRunning,
-    heartbeat_handler: Option<JoinHandle<()>>,
+    heartbeat_handler: JoinHandle<()>,
     port: String,
 }
 impl<S: MessageSender> StatusBar<S> {
@@ -77,10 +77,7 @@ impl<S: MessageSender> StatusBar<S> {
             shared_state: shared_state.clone(),
             heartbeat_data: heartbeat_data.clone(),
             port: shared_state.current_connection(),
-            heartbeat_handler: Some(StatusBar::<S>::heartbeat_thread(
-                is_running.clone(),
-                heartbeat_data,
-            )),
+            heartbeat_handler: StatusBar::<S>::heartbeat_thread(is_running.clone(), heartbeat_data),
             is_running,
         }
     }
@@ -101,7 +98,7 @@ impl<S: MessageSender> StatusBar<S> {
             let new_time = Instant::now();
             let time_diff = (new_time - last_time).as_secs_f64();
             let delay_time = UPDATE_TOLERANCE_SECONDS - time_diff;
-            if delay_time > 0_f64 {
+            if delay_time > 0_f64 && is_running.get() {
                 sleep(Duration::from_secs_f64(delay_time));
             }
             last_time = Instant::now();
@@ -273,11 +270,6 @@ impl<S: MessageSender> StatusBar<S> {
 impl<S: MessageSender> Drop for StatusBar<S> {
     fn drop(&mut self) {
         self.is_running.set(false);
-        self.heartbeat_handler
-            .take()
-            .expect(THREAD_HANDLER_MISSING_FAILURE)
-            .join()
-            .expect(THREAD_JOIN_FAILURE);
     }
 }
 

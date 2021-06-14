@@ -6,7 +6,6 @@ use sbp::{
 };
 use std::{thread::sleep, time::Duration};
 
-use crate::broadcaster::Broadcaster;
 use crate::constants::PAUSE_LOOP_SLEEP_DURATION_MS;
 use crate::log_panel::handle_log_msg;
 use crate::main_tab::*;
@@ -14,7 +13,7 @@ use crate::types::*;
 
 pub fn process_messages<S, R, W>(
     rdr: R,
-    wtr: W,
+    _wtr: W,
     shared_state: SharedState,
     client_send: S,
     realtime_delay: RealtimeDelay,
@@ -24,9 +23,6 @@ pub fn process_messages<S, R, W>(
     W: std::io::Write + Send + 'static,
 {
     let mut main = MainTab::new(shared_state.clone(), client_send);
-
-    let _sender = MsgSender::new(wtr);
-    let broadcast = Broadcaster::new();
 
     let messages = sbp::iter_messages(rdr)
         .log_errors(log::Level::Debug)
@@ -48,7 +44,6 @@ pub fn process_messages<S, R, W>(
                 sleep(Duration::from_millis(PAUSE_LOOP_SLEEP_DURATION_MS));
             }
         }
-        broadcast.send(&message);
         main.serialize_sbp(&message);
         let msg_name = message.get_message_name();
         main.status_bar.add_bytes(message.sbp_size());

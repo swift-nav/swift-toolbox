@@ -70,9 +70,7 @@ fn main() -> Result<()> {
             dest,
             input,
         } => {
-            let conn = input.into_conn().unwrap();
-            let rdr = conn.rdr;
-            let wtr = conn.wtr;
+            let (rdr, wtr) = input.into_conn()?.into_io();
             let sender = MsgSender::new(wtr);
             scope(|s| {
                 s.spawn(|_| run(rdr));
@@ -90,9 +88,7 @@ fn main() -> Result<()> {
             dest,
             input,
         } => {
-            let conn = input.into_conn().unwrap();
-            let rdr = conn.rdr;
-            let wtr = conn.wtr;
+            let (rdr, wtr) = input.into_conn()?.into_io();
             let sender = MsgSender::new(wtr);
             scope(|s| {
                 s.spawn(|_| run(rdr));
@@ -109,9 +105,7 @@ fn main() -> Result<()> {
             .unwrap()
         }
         Opts::List { path, input } => {
-            let conn = input.into_conn()?;
-            let rdr = conn.rdr;
-            let wtr = conn.wtr;
+            let (rdr, wtr) = input.into_conn()?.into_io();
             let sender = MsgSender::new(wtr);
             scope(|s| {
                 s.spawn(|_| run(rdr));
@@ -124,9 +118,7 @@ fn main() -> Result<()> {
             .unwrap()
         }
         Opts::Delete { path, input } => {
-            let conn = input.into_conn()?;
-            let rdr = conn.rdr;
-            let wtr = conn.wtr;
+            let (rdr, wtr) = input.into_conn()?.into_io();
             let sender = MsgSender::new(wtr);
             scope(|s| {
                 s.spawn(|_| run(rdr));

@@ -4,7 +4,6 @@ mod mem_bench_impl {
     use ndarray::{ArrayView, Axis, Dim};
     use std::{
         error::Error,
-        fs, io,
         result::Result,
         sync::{mpsc, Arc, Mutex},
         thread,
@@ -14,7 +13,7 @@ mod mem_bench_impl {
 
     use console_backend::{
         process_messages,
-        types::{ClientSender, RealtimeDelay, SharedState},
+        types::{ClientSender, Connection, RealtimeDelay, SharedState},
     };
 
     const BENCH_FILEPATH: &str = "./tests/data/piksi-relay-1min.sbp";
@@ -99,16 +98,8 @@ mod mem_bench_impl {
             };
             let shared_state = SharedState::new();
             shared_state.set_running(true, client_send.clone());
-            match fs::File::open(BENCH_FILEPATH) {
-                Ok(fileopen) => process_messages::process_messages(
-                    fileopen,
-                    io::sink(),
-                    shared_state,
-                    client_send,
-                    RealtimeDelay::On,
-                ),
-                Err(e) => panic!("unable to read file, {}.", e),
-            }
+            let conn = Connection::file(BENCH_FILEPATH.into()).unwrap();
+            process_messages::process_messages(conn, shared_state, client_send, RealtimeDelay::On);
         }
         recv_thread.join().expect("join should succeed");
         mem_read_thread.join().expect("join should succeed");

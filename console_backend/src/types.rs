@@ -251,18 +251,11 @@ impl ServerState {
         shared_state.set_current_connection(conn.name.clone());
         shared_state.set_running(true, client_send.clone());
         self.connection_join();
-        let handle = thread::spawn(move || {
+        self.new_connection(thread::spawn(move || {
             refresh_navbar(&mut client_send, shared_state.clone());
-            process_messages(
-                conn.rdr,
-                conn.wtr,
-                shared_state.clone(),
-                client_send.clone(),
-                delay,
-            );
+            process_messages(conn, shared_state.clone(), client_send.clone(), delay);
             shared_state.set_running(false, client_send);
-        });
-        self.new_connection(handle);
+        }));
     }
 }
 
@@ -1813,6 +1806,10 @@ impl Connection {
             rdr: Box::new(rdr),
             wtr: Box::new(wtr),
         })
+    }
+
+    pub fn into_io(self) -> (Box<dyn io::Read + Send>, Box<dyn io::Write + Send>) {
+        (self.rdr, self.wtr)
     }
 }
 

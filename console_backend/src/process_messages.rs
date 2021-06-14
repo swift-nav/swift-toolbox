@@ -11,19 +11,16 @@ use crate::log_panel::handle_log_msg;
 use crate::main_tab::*;
 use crate::types::*;
 
-pub fn process_messages<S, R, W>(
-    rdr: R,
-    _wtr: W,
+pub fn process_messages<S>(
+    conn: Connection,
     shared_state: SharedState,
     client_send: S,
     realtime_delay: RealtimeDelay,
 ) where
     S: MessageSender,
-    R: std::io::Read + Send + 'static,
-    W: std::io::Write + Send + 'static,
 {
+    let (rdr, _) = conn.into_io();
     let mut main = MainTab::new(shared_state.clone(), client_send);
-
     let messages = sbp::iter_messages(rdr)
         .log_errors(log::Level::Debug)
         .with_rover_time();

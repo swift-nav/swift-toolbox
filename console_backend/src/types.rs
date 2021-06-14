@@ -187,19 +187,10 @@ impl ServerState {
         filename: String,
         close_when_done: bool,
     ) -> Result<()> {
-        let rdr = fs::File::open(&filename)?;
-        let wtr = io::sink();
-
+        let conn = Connection::file(filename.clone())?;
         info!("Opened file successfully!");
-        shared_state.update_file_history(filename.clone());
-        self.connect(
-            rdr,
-            wtr,
-            filename,
-            client_send.clone(),
-            shared_state,
-            RealtimeDelay::On,
-        );
+        shared_state.update_file_history(filename);
+        self.connect(conn, client_send.clone(), shared_state, RealtimeDelay::On);
         if close_when_done {
             close_frontend(&mut client_send);
         }
@@ -220,20 +211,10 @@ impl ServerState {
         host: String,
         port: u16,
     ) -> Result<()> {
-        let host_port = format!("{}:{}", host, port);
-        let rdr = TcpStream::connect(&host_port)?;
-        let wtr = rdr.try_clone()?;
-
-        info!("Connected to the tcp stream {}!", host_port);
+        let conn = Connection::tcp(host.clone(), port)?;
+        info!("Connected to tcp stream!");
         shared_state.update_tcp_history(host, port);
-        self.connect(
-            rdr,
-            wtr,
-            host_port,
-            client_send,
-            shared_state,
-            RealtimeDelay::Off,
-        );
+        self.connect(conn, client_send, shared_state, RealtimeDelay::Off);
         Ok(())
     }
 
@@ -253,43 +234,32 @@ impl ServerState {
         baudrate: u32,
         flow: FlowControl,
     ) -> Result<()> {
-        let rdr = serialport::new(&device, baudrate)
-            .flow_control(*flow)
-            .timeout(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))
-            .open()?;
-        let wtr = rdr.try_clone()?;
-
-        info!("Connected to the serialport {}!", device);
+        let conn = Connection::serial(device, baudrate, flow)?;
+        info!("Connected to serialport!");
         // serial port history?
-        self.connect(
-            rdr,
-            wtr,
-            format!("{} @{}", device, baudrate),
-            client_send,
-            shared_state,
-            RealtimeDelay::Off,
-        );
+        self.connect(conn, client_send, shared_state, RealtimeDelay::Off);
         Ok(())
     }
 
-    fn connect<R, W>(
+    fn connect(
         &self,
-        rdr: R,
-        wtr: W,
-        connection_name: String,
+        conn: Connection,
         mut client_send: ClientSender,
         shared_state: SharedState,
         delay: RealtimeDelay,
-    ) where
-        R: io::Read + Send + 'static,
-        W: io::Write + Send + 'static,
-    {
-        shared_state.set_current_connection(connection_name);
+    ) {
+        shared_state.set_current_connection(conn.name.clone());
         shared_state.set_running(true, client_send.clone());
         self.connection_join();
         let handle = thread::spawn(move || {
             refresh_navbar(&mut client_send, shared_state.clone());
-            process_messages(rdr, wtr, shared_state.clone(), client_send.clone(), delay);
+            process_messages(
+                conn.rdr,
+                conn.wtr,
+                shared_state.clone(),
+                client_send.clone(),
+                delay,
+            );
             shared_state.set_running(false, client_send);
         });
         self.new_connection(handle);
@@ -1802,6 +1772,48 @@ pub struct VelLog {
     pub speed_mps: Option<f64>,
     pub flags: u8,
     pub num_signals: u8,
+}
+
+pub struct Connection {
+    pub name: String,
+    pub rdr: Box<dyn io::Read + Send>,
+    pub wtr: Box<dyn io::Write + Send>,
+}
+
+impl Connection {
+    pub fn tcp(host: String, port: u16) -> Result<Self> {
+        let name = format!("{}:{}", host, port);
+        let rdr = TcpStream::connect(&name)?;
+        let wtr = rdr.try_clone()?;
+        Ok(Self {
+            name,
+            rdr: Box::new(rdr),
+            wtr: Box::new(wtr),
+        })
+    }
+
+    pub fn serial(device: String, baudrate: u32, flow: FlowControl) -> Result<Self> {
+        let rdr = serialport::new(&device, baudrate)
+            .flow_control(*flow)
+            .timeout(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))
+            .open()?;
+        let wtr = rdr.try_clone()?;
+        Ok(Self {
+            name: device,
+            rdr: Box::new(rdr),
+            wtr: Box::new(wtr),
+        })
+    }
+
+    pub fn file(filename: String) -> Result<Self> {
+        let rdr = fs::File::open(&filename)?;
+        let wtr = io::sink();
+        Ok(Self {
+            name: filename,
+            rdr: Box::new(rdr),
+            wtr: Box::new(wtr),
+        })
+    }
 }
 
 #[cfg(test)]

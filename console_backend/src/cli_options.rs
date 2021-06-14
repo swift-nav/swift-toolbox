@@ -56,48 +56,8 @@ impl FromStr for CliSbpLogging {
 }
 
 #[derive(Clap, Debug)]
-#[clap(about = "Cli subcommands.")]
-pub enum CliCommand {
-    /// Open the console.
-    Open {
-        #[clap(flatten)]
-        opts: OpenOptions,
-    },
-
-    /// Perform file io operations.
-    Fs {
-        #[clap(subcommand)]
-        opts: FileioCommands,
-    },
-}
-
-impl CliCommand {
-    /// Get vector of filtered cli arguments.
-    /// Primarily needed to prevent backend from thinking .py file is cli arg.
-    ///
-    /// # Returns
-    /// - `filtered_args`: The filtered args parsed via CliCommand.
-    pub fn from_filtered_cli() -> CliCommand {
-        let args = std::env::args();
-        let mut next_args = std::env::args().skip(1);
-        let mut filtered_args: Vec<String> = vec![];
-        for arg in args {
-            if let Some(n_arg) = next_args.next() {
-                if (arg.ends_with("python") || arg.ends_with("python.exe"))
-                    && n_arg.ends_with(".py")
-                {
-                    continue;
-                }
-            }
-            filtered_args.push(arg);
-        }
-        CliCommand::parse_from(filtered_args)
-    }
-}
-
-#[derive(Clap, Debug)]
 #[clap(name = "swift_navigation_console", about = "Swift Navigation Console.")]
-pub struct OpenOptions {
+pub struct CliOptions {
     #[clap(subcommand)]
     pub input: Option<Input>,
 
@@ -135,38 +95,28 @@ pub struct OpenOptions {
     pub show_csv_log: bool,
 }
 
-#[derive(Clap, Debug)]
-#[clap(about = "Fileio operations.")]
-pub enum FileioCommands {
-    /// Write a file from local source to remote destination dest.
-    Write {
-        source: String,
-        dest: String,
-        #[clap(subcommand)]
-        input: Input,
-    },
-
-    /// Read a file from remote source to local dest. If no dest is provided, file is read to stdout.
-    Read {
-        source: String,
-        dest: Option<String>,
-        #[clap(subcommand)]
-        input: Input,
-    },
-
-    /// List a directory.
-    List {
-        path: String,
-        #[clap(subcommand)]
-        input: Input,
-    },
-
-    /// Delete a file.
-    Delete {
-        path: String,
-        #[clap(subcommand)]
-        input: Input,
-    },
+impl CliOptions {
+    /// Get vector of filtered cli arguments.
+    /// Primarily needed to prevent backend from thinking .py file is cli arg.
+    ///
+    /// # Returns
+    /// - `filtered_args`: The filtered args parsed via CliOptions.
+    pub fn from_filtered_cli() -> CliOptions {
+        let args = std::env::args();
+        let mut next_args = std::env::args().skip(1);
+        let mut filtered_args: Vec<String> = vec![];
+        for arg in args {
+            if let Some(n_arg) = next_args.next() {
+                if (arg.ends_with("python") || arg.ends_with("python.exe"))
+                    && n_arg.ends_with(".py")
+                {
+                    continue;
+                }
+            }
+            filtered_args.push(arg);
+        }
+        CliOptions::parse_from(filtered_args)
+    }
 }
 
 #[derive(Clap, Debug)]

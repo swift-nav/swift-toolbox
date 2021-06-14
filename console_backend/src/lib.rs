@@ -16,7 +16,7 @@ pub mod output;
 pub mod piksi_tools_constants;
 pub mod process_messages;
 #[cfg(not(test))]
-#[cfg(all(not(feature = "benches"), not(feature = "tests")))]
+#[cfg(all(not(feature = "benches"), not(feature = "tests"), feature = "pyo3"))]
 pub mod server;
 pub mod solution_tab;
 pub mod solution_velocity_tab;

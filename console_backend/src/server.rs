@@ -1,18 +1,12 @@
 use capnp::serialize;
 
-use crossbeam::channel;
-use crossbeam::scope;
 use pyo3::exceptions;
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 
 use async_logger_log::Logger;
 use log::warn;
-use sbp::sbp_tools::SBPTools;
 
-use std::fs;
-use std::io;
-use std::io::Write;
 use std::{
     io::{BufReader, Cursor},
     path::PathBuf,
@@ -21,16 +15,13 @@ use std::{
     thread,
 };
 
-use crate::broadcaster::Broadcaster;
 use crate::cli_options::*;
 use crate::common_constants::LogLevel;
 use crate::console_backend_capnp as m;
 use crate::constants::LOG_WRITER_BUFFER_MESSAGE_COUNT;
 use crate::errors::*;
-use crate::fileio::Fileio;
 use crate::log_panel::{splitable_log_formatter, LogPanelWriter};
 use crate::output::{CsvLogging, SbpLogging};
-use crate::types::MsgSender;
 use crate::types::{ClientSender, FlowControl, ServerState, SharedState};
 use crate::utils::{refresh_loggingbar, refresh_navbar};
 
@@ -75,115 +66,7 @@ impl ServerEndpoint {
 /// - `client_send`: Client Sender channel for communication from backend to frontend.
 /// - `shared_state`: The shared state for validating another connection is not already running.
 fn handle_cli(
-    opt: CliCommand,
-    server_state: ServerState,
-    client_send: ClientSender,
-    shared_state: SharedState,
-) {
-    match opt {
-        CliCommand::Open { opts } => handle_open(opts, server_state, client_send, shared_state),
-        CliCommand::Fs { opts } => {
-            handle_fs(opts).expect("fileio operation failed");
-            std::process::exit(0);
-        }
-    }
-}
-
-fn handle_fs(opts: FileioCommands) -> crate::types::Result<()> {
-    let bc = Broadcaster::new();
-
-    let (done_tx, done_rx) = channel::bounded(0);
-
-    let bc_source = bc.clone();
-    let run = move |rdr| {
-        let messages = sbp::iter_messages(rdr).log_errors(log::Level::Debug);
-        for m in messages {
-            bc_source.send(&m);
-            if done_rx.try_recv().is_ok() {
-                break;
-            }
-        }
-    };
-
-    match opts {
-        FileioCommands::Write {
-            source,
-            dest,
-            input,
-        } => {
-            let conn = input.into_conn().unwrap();
-            let rdr = conn.rdr;
-            let wtr = conn.wtr;
-            let sender = MsgSender::new(wtr);
-            scope(|s| {
-                s.spawn(|_| run(rdr));
-                let mut fileio = Fileio::new(bc, sender);
-                let data = fs::read(source)?;
-                fileio.write(dest, &data)?;
-                done_tx.send(true).unwrap();
-                eprintln!("file written successfully.");
-                crate::types::Result::Ok(())
-            })
-            .unwrap()
-        }
-        FileioCommands::Read {
-            source,
-            dest,
-            input,
-        } => {
-            let conn = input.into_conn().unwrap();
-            let rdr = conn.rdr;
-            let wtr = conn.wtr;
-            let sender = MsgSender::new(wtr);
-            scope(|s| {
-                s.spawn(|_| run(rdr));
-                let mut fileio = Fileio::new(bc, sender);
-                let data = fileio.read(source)?;
-                let mut dest: Box<dyn Write> = match dest {
-                    Some(path) => Box::new(fs::File::create(path)?),
-                    None => Box::new(io::stdout()),
-                };
-                dest.write_all(&data)?;
-                done_tx.send(true).unwrap();
-                crate::types::Result::Ok(())
-            })
-            .unwrap()
-        }
-        FileioCommands::List { path, input } => {
-            let conn = input.into_conn()?;
-            let rdr = conn.rdr;
-            let wtr = conn.wtr;
-            let sender = MsgSender::new(wtr);
-            scope(|s| {
-                s.spawn(|_| run(rdr));
-                let mut fileio = Fileio::new(bc, sender);
-                let files = fileio.readdir(path)?;
-                eprintln!("{:#?}", files);
-                done_tx.send(true).unwrap();
-                crate::types::Result::Ok(())
-            })
-            .unwrap()
-        }
-        FileioCommands::Delete { path, input } => {
-            let conn = input.into_conn()?;
-            let rdr = conn.rdr;
-            let wtr = conn.wtr;
-            let sender = MsgSender::new(wtr);
-            scope(|s| {
-                s.spawn(|_| run(rdr));
-                let fileio = Fileio::new(bc, sender);
-                fileio.remove(path)?;
-                done_tx.send(true).unwrap();
-                eprintln!("file deleted.");
-                crate::types::Result::Ok(())
-            })
-            .unwrap()
-        }
-    }
-}
-
-fn handle_open(
-    opt: OpenOptions,
+    opt: CliOptions,
     server_state: ServerState,
     client_send: ClientSender,
     shared_state: SharedState,
@@ -266,7 +149,7 @@ impl Server {
 
     #[text_signature = "($self, /)"]
     pub fn start(&mut self) -> PyResult<ServerEndpoint> {
-        let opt = CliCommand::from_filtered_cli();
+        let opt = CliOptions::from_filtered_cli();
         let (client_send_, client_recv) = mpsc::channel::<Vec<u8>>();
         let (server_send, server_recv) = mpsc::channel::<Vec<u8>>();
         self.client_recv = Some(client_recv);

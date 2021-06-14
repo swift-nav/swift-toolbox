@@ -34,6 +34,7 @@ indexmap = { version = "1.6.2", features = ["serde"] }
 serde_json = { version = "1" }
 crossbeam = "0.8.1"
 rand = "0.8.3"
+slotmap = "1.0.3"
 
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 serialport = "4.0.1"

@@ -7,9 +7,10 @@ use std::{
 
 use crossbeam::channel;
 use sbp::messages::{ConcreteMessage, SBPMessage, SBP};
+use slotmap::HopSlotMap;
 
 pub struct Broadcaster {
-    channels: Arc<Mutex<Vec<Sender>>>,
+    channels: Arc<Mutex<HopSlotMap<KeyInner, Sender>>>,
 }
 
 impl Broadcaster {
@@ -17,14 +18,14 @@ impl Broadcaster {
 
     pub fn new() -> Self {
         Self {
-            channels: Arc::new(Mutex::new(Vec::new())),
+            channels: Arc::new(Mutex::new(HopSlotMap::with_key())),
         }
     }
 
     pub fn send(&self, message: &SBP) {
         let msg_type = message.get_message_type();
         let mut channels = self.channels.lock().expect(Self::CHANNELS_LOCK_FAILURE);
-        channels.retain(|chan| {
+        channels.retain(|_, chan| {
             if chan.msg_types.iter().any(|ty| ty == &msg_type) {
                 chan.inner.send(message.clone()).is_ok()
             } else {
@@ -33,20 +34,28 @@ impl Broadcaster {
         });
     }
 
-    pub fn subscribe<E>(&self) -> Receiver<E>
+    pub fn subscribe<E>(&self) -> (Receiver<E>, Key)
     where
         E: Event,
     {
         let (tx, rx) = channel::unbounded();
         let mut channels = self.channels.lock().expect(Self::CHANNELS_LOCK_FAILURE);
-        channels.push(Sender {
+        let key = channels.insert(Sender {
             inner: tx,
             msg_types: E::MESSAGE_TYPES,
         });
-        Receiver {
-            inner: rx,
-            marker: PhantomData,
-        }
+        (
+            Receiver {
+                inner: rx,
+                marker: PhantomData,
+            },
+            Key { inner: key },
+        )
+    }
+
+    pub fn unsubscribe(&self, key: Key) {
+        let mut channels = self.channels.lock().expect(Self::CHANNELS_LOCK_FAILURE);
+        channels.remove(key.inner);
     }
 
     /// Wait once for a specific message. Returns an error if `dur` elapses.
@@ -54,7 +63,7 @@ impl Broadcaster {
     where
         E: Event,
     {
-        let rx = self.subscribe::<E>();
+        let (rx, _) = self.subscribe::<E>();
         rx.recv_timeout(dur)
     }
 }
@@ -83,6 +92,15 @@ struct Sender {
 pub struct Receiver<E> {
     inner: channel::Receiver<SBP>,
     marker: PhantomData<E>,
+}
+
+slotmap::new_key_type! {
+    struct KeyInner;
+}
+
+/// Returned along with calls to `subscribe`. Used to unsubscribe to an event.
+pub struct Key {
+    inner: KeyInner,
 }
 
 impl<E> Receiver<E>
@@ -150,7 +168,7 @@ mod tests {
     #[test]
     fn test_broadcaster() {
         let b = Broadcaster::new();
-        let msg_obs = b.subscribe::<MsgObs>();
+        let (msg_obs, _) = b.subscribe::<MsgObs>();
 
         b.send(&make_msg_obs());
         b.send(&make_msg_obs_dep_a());
@@ -163,8 +181,8 @@ mod tests {
     fn test_custom_event() {
         let b = Broadcaster::new();
 
-        let obs_msg = b.subscribe::<ObsMsg>();
-        let msg_obs = b.subscribe::<MsgObs>();
+        let (obs_msg, _) = b.subscribe::<ObsMsg>();
+        let (msg_obs, _) = b.subscribe::<MsgObs>();
 
         b.send(&make_msg_obs());
         b.send(&make_msg_obs_dep_a());

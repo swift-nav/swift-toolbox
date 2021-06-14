@@ -58,6 +58,7 @@ bench = false
 [[bin]]
 name = "fileio"
 path = "src/bin/fileio.rs"
+bench = false
 
 [features]
 default = ["pyo3"]

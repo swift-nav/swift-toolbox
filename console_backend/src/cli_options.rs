@@ -6,9 +6,12 @@ use std::{
 };
 use strum::VariantNames;
 
-use crate::common_constants::{SbpLogging, Tabs};
 use crate::constants::{AVAILABLE_BAUDRATES, AVAILABLE_REFRESH_RATES};
 use crate::types::FlowControl;
+use crate::{
+    common_constants::{SbpLogging, Tabs},
+    types::Connection,
+};
 
 #[derive(Debug)]
 pub struct CliTabs(Tabs);
@@ -53,8 +56,48 @@ impl FromStr for CliSbpLogging {
 }
 
 #[derive(Clap, Debug)]
+#[clap(about = "Cli subcommands.")]
+pub enum CliCommand {
+    /// Open the console.
+    Open {
+        #[clap(flatten)]
+        opts: OpenOptions,
+    },
+
+    /// Perform file io operations.
+    Fs {
+        #[clap(subcommand)]
+        opts: FileioCommands,
+    },
+}
+
+impl CliCommand {
+    /// Get vector of filtered cli arguments.
+    /// Primarily needed to prevent backend from thinking .py file is cli arg.
+    ///
+    /// # Returns
+    /// - `filtered_args`: The filtered args parsed via CliCommand.
+    pub fn from_filtered_cli() -> CliCommand {
+        let args = std::env::args();
+        let mut next_args = std::env::args().skip(1);
+        let mut filtered_args: Vec<String> = vec![];
+        for arg in args {
+            if let Some(n_arg) = next_args.next() {
+                if (arg.ends_with("python") || arg.ends_with("python.exe"))
+                    && n_arg.ends_with(".py")
+                {
+                    continue;
+                }
+            }
+            filtered_args.push(arg);
+        }
+        CliCommand::parse_from(filtered_args)
+    }
+}
+
+#[derive(Clap, Debug)]
 #[clap(name = "swift_navigation_console", about = "Swift Navigation Console.")]
-pub struct CliOptions {
+pub struct OpenOptions {
     #[clap(subcommand)]
     pub input: Option<Input>,
 
@@ -92,28 +135,38 @@ pub struct CliOptions {
     pub show_csv_log: bool,
 }
 
-impl CliOptions {
-    /// Get vector of filtered cli arguments.
-    /// Primarily needed to prevent backend from thinking .py file is cli arg.
-    ///
-    /// # Returns
-    /// - `filtered_args`: The filtered args parsed via CliOptions.
-    pub fn from_filtered_cli() -> CliOptions {
-        let args = std::env::args();
-        let mut next_args = std::env::args().skip(1);
-        let mut filtered_args: Vec<String> = vec![];
-        for arg in args {
-            if let Some(n_arg) = next_args.next() {
-                if (arg.ends_with("python") || arg.ends_with("python.exe"))
-                    && n_arg.ends_with(".py")
-                {
-                    continue;
-                }
-            }
-            filtered_args.push(arg);
-        }
-        CliOptions::parse_from(filtered_args)
-    }
+#[derive(Clap, Debug)]
+#[clap(about = "Fileio operations.")]
+pub enum FileioCommands {
+    /// Write a file from local source to remote destination dest.
+    Write {
+        source: String,
+        dest: String,
+        #[clap(subcommand)]
+        input: Input,
+    },
+
+    /// Read a file from remote source to local dest. If no dest is provided, file is read to stdout.
+    Read {
+        source: String,
+        dest: Option<String>,
+        #[clap(subcommand)]
+        input: Input,
+    },
+
+    /// List a directory.
+    List {
+        path: String,
+        #[clap(subcommand)]
+        input: Input,
+    },
+
+    /// Delete a file.
+    Delete {
+        path: String,
+        #[clap(subcommand)]
+        input: Input,
+    },
 }
 
 #[derive(Clap, Debug)]
@@ -145,6 +198,20 @@ pub enum Input {
         #[clap(parse(from_os_str))]
         file_in: PathBuf,
     },
+}
+
+impl Input {
+    pub fn into_conn(self) -> crate::types::Result<Connection> {
+        match self {
+            Input::Tcp { host, port } => Connection::tcp(host, port),
+            Input::Serial {
+                serialport,
+                baudrate,
+                flow_control,
+            } => Connection::serial(serialport.to_string_lossy().into(), baudrate, flow_control),
+            Input::File { file_in } => Connection::file(file_in.to_string_lossy().into()),
+        }
+    }
 }
 
 /// Validation for the refresh-rate cli option.

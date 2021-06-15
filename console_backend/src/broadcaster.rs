@@ -224,6 +224,8 @@ mod tests {
                 assert_eq!(msg_obs.iter().count(), 2);
             });
 
+            std::thread::sleep(Duration::from_secs(1));
+
             b.send(&make_msg_obs());
             b.send(&make_msg_obs_dep_a());
             b.send(&make_msg_obs());

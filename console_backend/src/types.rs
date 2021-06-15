@@ -103,10 +103,10 @@ impl MessageSender for TestSender {
 }
 
 #[derive(Debug, Default)]
-pub struct IsRunning(Arc<AtomicBool>);
-impl IsRunning {
-    pub fn new() -> IsRunning {
-        IsRunning(Arc::new(AtomicBool::new(false)))
+pub struct ArcBool(Arc<AtomicBool>);
+impl ArcBool {
+    pub fn new() -> ArcBool {
+        ArcBool(Arc::new(AtomicBool::new(false)))
     }
     pub fn get(&self) -> bool {
         self.load(Acquire)
@@ -116,16 +116,16 @@ impl IsRunning {
     }
 }
 
-impl Deref for IsRunning {
+impl Deref for ArcBool {
     type Target = AtomicBool;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl Clone for IsRunning {
+impl Clone for ArcBool {
     fn clone(&self) -> Self {
-        IsRunning {
+        ArcBool {
             0: Arc::clone(&self.0),
         }
     }

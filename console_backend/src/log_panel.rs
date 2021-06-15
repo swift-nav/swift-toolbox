@@ -1,11 +1,10 @@
 use sbp::messages::logging::MsgLog;
 
 use capnp::message::Builder;
-use capnp::serialize;
-
-use crate::types::*;
 
 use crate::console_backend_capnp as m;
+use crate::types::*;
+use crate::utils::serialize_capnproto_builder;
 
 use async_logger::Writer;
 use chrono::Local;
@@ -95,10 +94,8 @@ impl<S: MessageSender> Writer<Box<String>> for LogPanelWriter<S> {
             entry.set_line(&**item);
         }
 
-        let mut msg_bytes: Vec<u8> = vec![];
-        serialize::write_message(&mut msg_bytes, &builder).unwrap();
-
-        self.client_sender.send_data(msg_bytes);
+        self.client_sender
+            .send_data(serialize_capnproto_builder(builder));
     }
 
     fn flush(&mut self) {}

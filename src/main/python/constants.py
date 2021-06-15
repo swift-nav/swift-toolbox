@@ -17,7 +17,7 @@ class Tabs(str, Enum):
     ADVANCED_SPECTRUM_ANALYZER = "ADVANCED_SPECTRUM_ANALYZER"
 
 
-class FusionEngineStatus(str, Enum):
+class FusionStatus(str, Enum):
     UNKNOWN = "UNKNOWN"
     WARNING = "WARNING"
     OK = "OK"

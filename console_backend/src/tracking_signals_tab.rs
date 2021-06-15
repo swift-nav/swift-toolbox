@@ -5,7 +5,6 @@ use std::{
 };
 
 use capnp::message::Builder;
-use capnp::serialize;
 
 use log::warn;
 
@@ -13,7 +12,7 @@ use crate::console_backend_capnp as m;
 use crate::constants::*;
 use crate::piksi_tools_constants::*;
 use crate::types::*;
-use crate::utils::{signal_key_color, signal_key_label};
+use crate::utils::{serialize_capnproto_builder, signal_key_color, signal_key_label};
 use sbp::messages::tracking::{MeasurementState, TrackingChannelState};
 
 /// TrackingSignalsTab struct.
@@ -417,10 +416,8 @@ impl<S: MessageSender> TrackingSignalsTab<S> {
         for (i, label) in self.check_labels.iter().enumerate() {
             tracking_checkbox_labels.set(i as u32, label);
         }
-        let mut msg_bytes: Vec<u8> = vec![];
-        serialize::write_message(&mut msg_bytes, &builder).unwrap();
-
-        self.client_sender.send_data(msg_bytes);
+        self.client_sender
+            .send_data(serialize_capnproto_builder(builder));
     }
 }
 

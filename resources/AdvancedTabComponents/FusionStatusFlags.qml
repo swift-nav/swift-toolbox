@@ -6,7 +6,7 @@ import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
 Item {
-    id: fusionEngineStatusBar
+    id: fusionStatusFlags
 
     property variant lines: []
     property string last_gnsspos: "UNKNOWN"
@@ -21,12 +21,12 @@ Item {
     Component.onCompleted: {
     }
 
-    FusionEngineStatusBarData {
-        id: fusionEngineStatusBarData
+    FusionStatusFlagsData {
+        id: fusionStatusFlagsData
     }
 
     ColumnLayout {
-        id: fusionEngineStatusBarArea
+        id: fusionStatusFlagsArea
 
         width: parent.width
         height: parent.height
@@ -201,12 +201,12 @@ Item {
                     if (!advancedTab.visible)
                         return ;
 
-                    fusion_engine_status_bar_model.fill_console_points(fusionEngineStatusBarData);
-                    if (!fusionEngineStatusBarData.gnsspos)
+                    fusion_engine_flags_model.fill_console_points(fusionStatusFlagsData);
+                    if (!fusionStatusFlagsData.gnsspos)
                         return ;
 
                     insStatusRow.visible = true;
-                    var gnsspos = fusionEngineStatusBarData.gnsspos;
+                    var gnsspos = fusionStatusFlagsData.gnsspos;
                     if (gnsspos != last_gnsspos) {
                         if (gnsspos == "UNKNOWN") {
                             gnssposUnknown.visible = true;
@@ -223,7 +223,7 @@ Item {
                         }
                         last_gnsspos = gnsspos;
                     }
-                    var gnssvel = fusionEngineStatusBarData.gnssvel;
+                    var gnssvel = fusionStatusFlagsData.gnssvel;
                     if (gnssvel != last_gnssvel) {
                         if (gnssvel == "UNKNOWN") {
                             gnssvelUnknown.visible = true;
@@ -240,7 +240,7 @@ Item {
                         }
                         last_gnssvel = gnssvel;
                     }
-                    var wheelticks = fusionEngineStatusBarData.wheelticks;
+                    var wheelticks = fusionStatusFlagsData.wheelticks;
                     if (wheelticks != last_wheelticks) {
                         if (wheelticks == "UNKNOWN") {
                             wheelticksUnknown.visible = true;
@@ -257,7 +257,7 @@ Item {
                         }
                         last_wheelticks = wheelticks;
                     }
-                    var speed = fusionEngineStatusBarData.speed;
+                    var speed = fusionStatusFlagsData.speed;
                     if (speed != last_speed) {
                         if (speed == "UNKNOWN") {
                             speedUnknown.visible = true;
@@ -274,7 +274,7 @@ Item {
                         }
                         last_speed = speed;
                     }
-                    var nhc = fusionEngineStatusBarData.nhc;
+                    var nhc = fusionStatusFlagsData.nhc;
                     if (nhc != last_nhc) {
                         if (nhc == "UNKNOWN") {
                             nhcUnknown.visible = true;
@@ -291,7 +291,7 @@ Item {
                         }
                         last_nhc = nhc;
                     }
-                    var zerovel = fusionEngineStatusBarData.zerovel;
+                    var zerovel = fusionStatusFlagsData.zerovel;
                     if (zerovel != last_zerovel) {
                         if (zerovel == "UNKNOWN") {
                             zerovelUnknown.visible = true;

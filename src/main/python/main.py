@@ -47,10 +47,10 @@ from advanced_ins_tab import (
     ADVANCED_INS_TAB,
 )
 
-from fusion_engine_status_bar import (
-    FusionEngineStatusBarModel,
-    FusionEngineStatusBarData,
-    FUSION_ENGINE_STATUS_BAR,
+from fusion_status_flags import (
+    FusionStatusFlagsModel,
+    FusionStatusFlagsData,
+    FUSION_STATUS_FLAGS,
 )
 
 from observation_tab import (
@@ -205,13 +205,13 @@ def receive_messages(app_, backend, messages):
                 [QPointF(point.x, point.y) for point in m.advancedInsStatus.data[idx]]
                 for idx in range(len(m.advancedInsStatus.data))
             ]
-        elif m.which == Message.Union.FusionEngineStatus:
-            FUSION_ENGINE_STATUS_BAR[Keys.GNSSPOS] = m.fusionEngineStatus.gnsspos
-            FUSION_ENGINE_STATUS_BAR[Keys.GNSSVEL] = m.fusionEngineStatus.gnssvel
-            FUSION_ENGINE_STATUS_BAR[Keys.WHEELTICKS] = m.fusionEngineStatus.wheelticks
-            FUSION_ENGINE_STATUS_BAR[Keys.SPEED] = m.fusionEngineStatus.speed
-            FUSION_ENGINE_STATUS_BAR[Keys.NHC] = m.fusionEngineStatus.nhc
-            FUSION_ENGINE_STATUS_BAR[Keys.ZEROVEL] = m.fusionEngineStatus.zerovel
+        elif m.which == Message.Union.FusionStatusFlagsStatus:
+            FUSION_STATUS_FLAGS[Keys.GNSSPOS] = m.fusionStatusFlagsStatus.gnsspos
+            FUSION_STATUS_FLAGS[Keys.GNSSVEL] = m.fusionStatusFlagsStatus.gnssvel
+            FUSION_STATUS_FLAGS[Keys.WHEELTICKS] = m.fusionStatusFlagsStatus.wheelticks
+            FUSION_STATUS_FLAGS[Keys.SPEED] = m.fusionStatusFlagsStatus.speed
+            FUSION_STATUS_FLAGS[Keys.NHC] = m.fusionStatusFlagsStatus.nhc
+            FUSION_STATUS_FLAGS[Keys.ZEROVEL] = m.fusionStatusFlagsStatus.zerovel
         elif m.which == Message.Union.TrackingSignalsStatus:
             TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS][:] = m.trackingSignalsStatus.checkLabels
             TRACKING_SIGNALS_TAB[Keys.LABELS][:] = m.trackingSignalsStatus.labels
@@ -464,7 +464,7 @@ if __name__ == "__main__":
     qmlRegisterType(NavBarData, "SwiftConsole", 1, 0, "NavBarData")  # type: ignore
     qmlRegisterType(LoggingBarData, "SwiftConsole", 1, 0, "LoggingBarData")  # type: ignore
     qmlRegisterType(AdvancedInsPoints, "SwiftConsole", 1, 0, "AdvancedInsPoints")  # type: ignore
-    qmlRegisterType(FusionEngineStatusBarData, "SwiftConsole", 1, 0, "FusionEngineStatusBarData")  # type: ignore
+    qmlRegisterType(FusionStatusFlagsData, "SwiftConsole", 1, 0, "FusionStatusFlagsData")  # type: ignore
     qmlRegisterType(SolutionPositionPoints, "SwiftConsole", 1, 0, "SolutionPositionPoints")  # type: ignore
     qmlRegisterType(SolutionTableEntries, "SwiftConsole", 1, 0, "SolutionTableEntries")  # type: ignore
     qmlRegisterType(SolutionVelocityPoints, "SwiftConsole", 1, 0, "SolutionVelocityPoints")  # type: ignore
@@ -489,7 +489,7 @@ if __name__ == "__main__":
     log_panel_model = LogPanelModel()
     nav_bar_model = NavBarModel()
     advanced_ins_model = AdvancedInsModel()
-    fusion_engine_status_bar_model = FusionEngineStatusBarModel()
+    fusion_engine_flags_model = FusionStatusFlagsModel()
     solution_position_model = SolutionPositionModel()
     solution_table_model = SolutionTableModel()
     solution_velocity_model = SolutionVelocityModel()
@@ -502,7 +502,7 @@ if __name__ == "__main__":
     root_context.setContextProperty("log_panel_model", log_panel_model)
     root_context.setContextProperty("nav_bar_model", nav_bar_model)
     root_context.setContextProperty("advanced_ins_model", advanced_ins_model)
-    root_context.setContextProperty("fusion_engine_status_bar_model", fusion_engine_status_bar_model)
+    root_context.setContextProperty("fusion_engine_flags_model", fusion_engine_flags_model)
     root_context.setContextProperty("solution_position_model", solution_position_model)
     root_context.setContextProperty("solution_table_model", solution_table_model)
     root_context.setContextProperty("solution_velocity_model", solution_velocity_model)

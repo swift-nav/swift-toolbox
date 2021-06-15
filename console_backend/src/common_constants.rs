@@ -43,7 +43,7 @@ pub enum Tabs {
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
-pub enum FusionEngineStatus {
+pub enum FusionStatus {
     #[strum(serialize = "UNKNOWN")]
     UNKNOWN,
     #[strum(serialize = "WARNING")]

@@ -1,5 +1,4 @@
 use capnp::message::Builder;
-use capnp::serialize;
 use crossbeam::channel::{after, select, unbounded, Receiver, Sender, TrySendError};
 use log::error;
 use sbp::messages::system::MsgInsUpdates;
@@ -13,67 +12,68 @@ use std::{
 use crate::common_constants as cc;
 use crate::console_backend_capnp as m;
 use crate::errors::{
-    CAP_N_PROTO_SERIALIZATION_FAILURE, THREAD_JOIN_FAILURE, UNABLE_TO_SEND_INS_UPDATE_FAILURE,
-    UNABLE_TO_STOP_TIMER_THREAD_FAILURE, UPDATE_STATUS_LOCK_MUTEX_FAILURE,
+    THREAD_JOIN_FAILURE, UNABLE_TO_SEND_INS_UPDATE_FAILURE, UNABLE_TO_STOP_TIMER_THREAD_FAILURE,
+    UPDATE_STATUS_LOCK_MUTEX_FAILURE,
 };
-use crate::types::IsRunning;
+use crate::types::ArcBool;
 use crate::types::{MessageSender, SharedState};
+use crate::utils::serialize_capnproto_builder;
 
 const STATUS_PERIOD: f64 = 1.0;
 const SET_STATUS_THREAD_SLEEP_SEC: f64 = 0.25;
 
 #[derive(Debug)]
-pub struct UpdateStatus(Arc<Mutex<UpdateStatusInner>>);
-impl UpdateStatus {
-    fn new(update_status: UpdateStatusInner) -> UpdateStatus {
-        UpdateStatus(Arc::new(Mutex::new(update_status)))
+pub struct FusionStatus(Arc<Mutex<FusionStatusInner>>);
+impl FusionStatus {
+    fn new(update_status: FusionStatusInner) -> FusionStatus {
+        FusionStatus(Arc::new(Mutex::new(update_status)))
     }
-    fn get(&mut self) -> UpdateStatusInner {
+    fn get(&mut self) -> FusionStatusInner {
         let update_status = self.lock().expect(UPDATE_STATUS_LOCK_MUTEX_FAILURE);
         (*update_status).clone()
     }
-    fn set(&mut self, status: UpdateStatusInner) {
+    fn set(&mut self, status: FusionStatusInner) {
         let mut update_status = self.lock().expect(UPDATE_STATUS_LOCK_MUTEX_FAILURE);
         (*update_status) = status;
     }
 }
 
-impl Deref for UpdateStatus {
-    type Target = Mutex<UpdateStatusInner>;
+impl Deref for FusionStatus {
+    type Target = Mutex<FusionStatusInner>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl Default for UpdateStatus {
+impl Default for FusionStatus {
     fn default() -> Self {
-        Self::new(UpdateStatusInner::UNKNOWN)
+        Self::new(FusionStatusInner::UNKNOWN)
     }
 }
 
-impl Clone for UpdateStatus {
+impl Clone for FusionStatus {
     fn clone(&self) -> Self {
-        UpdateStatus {
+        FusionStatus {
             0: Arc::clone(&self.0),
         }
     }
 }
 
-pub type UpdateStatusInner = cc::FusionEngineStatus;
-impl UpdateStatusInner {
-    fn from(status: u8) -> UpdateStatusInner {
+pub type FusionStatusInner = cc::FusionStatus;
+impl FusionStatusInner {
+    fn from(status: u8) -> FusionStatusInner {
         if status & 0x0f != 0 {
-            UpdateStatusInner::WARNING
+            FusionStatusInner::WARNING
         } else if status & 0xf0 != 0 {
-            UpdateStatusInner::OK
+            FusionStatusInner::OK
         } else {
-            UpdateStatusInner::UNKNOWN
+            FusionStatusInner::UNKNOWN
         }
     }
 }
 
 struct StatusTimer {
-    is_running: IsRunning,
+    is_running: ArcBool,
     running_sender: Option<Sender<bool>>,
     handle: Option<JoinHandle<()>>,
 }
@@ -81,14 +81,14 @@ impl StatusTimer {
     fn new() -> StatusTimer {
         StatusTimer {
             handle: None,
-            is_running: IsRunning::new(),
+            is_running: ArcBool::new(),
             running_sender: None,
         }
     }
     fn restart(
         &mut self,
-        msg_sender: Sender<Option<UpdateStatusInner>>,
-        value: UpdateStatusInner,
+        msg_sender: Sender<Option<FusionStatusInner>>,
+        value: FusionStatusInner,
         delay: f64,
     ) {
         self.cancel();
@@ -104,10 +104,10 @@ impl StatusTimer {
         ));
     }
     fn timer_thread(
-        is_running: IsRunning,
+        is_running: ArcBool,
         running_receiver: Receiver<bool>,
-        msg_sender: Sender<Option<UpdateStatusInner>>,
-        value: UpdateStatusInner,
+        msg_sender: Sender<Option<FusionStatusInner>>,
+        value: FusionStatusInner,
         delay: f64,
     ) -> JoinHandle<()> {
         spawn(move || {
@@ -140,30 +140,32 @@ impl StatusTimer {
 }
 
 #[derive(Debug)]
-struct FlagStatus {
-    status: UpdateStatus,
-    sender: Sender<Option<UpdateStatusInner>>,
+struct FusionStatusFlag {
+    status: FusionStatus,
+    sender: Sender<Option<FusionStatusInner>>,
     handle: Option<JoinHandle<()>>,
 }
 
-impl FlagStatus {
-    fn new() -> FlagStatus {
+impl FusionStatusFlag {
+    fn new() -> FusionStatusFlag {
         let (sender, receiver) = unbounded();
-        let status = UpdateStatus::default();
-        FlagStatus {
+        let status = FusionStatus::default();
+        FusionStatusFlag {
             status: status.clone(),
             sender: sender.clone(),
-            handle: Some(FlagStatus::set_status_thread(status, sender, receiver)),
+            handle: Some(FusionStatusFlag::set_status_thread(
+                status, sender, receiver,
+            )),
         }
     }
 
     fn set_status_thread(
-        mut status: UpdateStatus,
-        sender: Sender<Option<UpdateStatusInner>>,
-        receiver: Receiver<Option<UpdateStatusInner>>,
+        mut status: FusionStatus,
+        sender: Sender<Option<FusionStatusInner>>,
+        receiver: Receiver<Option<FusionStatusInner>>,
     ) -> JoinHandle<()> {
         spawn(move || {
-            let mut last_status = UpdateStatus::default();
+            let mut last_status = FusionStatus::default();
             let mut warning_timer = StatusTimer::new();
             let mut unknown_timer = StatusTimer::new();
             let mut is_running = true;
@@ -177,7 +179,7 @@ impl FlagStatus {
                             last_status.set(new_status.clone());
 
                             match new_status {
-                                UpdateStatusInner::WARNING => {
+                                FusionStatusInner::WARNING => {
                                     status.set(new_status.clone());
                                     warning_timer.restart(
                                         sender_clone.clone(),
@@ -186,11 +188,11 @@ impl FlagStatus {
                                     );
                                     unknown_timer.restart(
                                         sender_clone,
-                                        UpdateStatusInner::UNKNOWN,
+                                        FusionStatusInner::UNKNOWN,
                                         STATUS_PERIOD,
                                     );
                                 }
-                                UpdateStatusInner::UNKNOWN => {
+                                FusionStatusInner::UNKNOWN => {
                                     if warning_timer.active() {
                                         warning_timer.cancel();
                                         sender_clone
@@ -199,13 +201,13 @@ impl FlagStatus {
                                     }
                                     status.set(new_status);
                                 }
-                                UpdateStatusInner::OK => {
+                                FusionStatusInner::OK => {
                                     if !warning_timer.active() {
                                         status.set(new_status);
                                     }
                                     unknown_timer.restart(
                                         sender_clone,
-                                        UpdateStatusInner::UNKNOWN,
+                                        FusionStatusInner::UNKNOWN,
                                         STATUS_PERIOD,
                                     );
                                 }
@@ -219,24 +221,26 @@ impl FlagStatus {
             }
         })
     }
-    fn status(&mut self) -> UpdateStatusInner {
+    fn status(&mut self) -> FusionStatusInner {
         self.status.get()
     }
 
     fn stop(&mut self) {
-        self.sender
-            .clone()
-            .try_send(None)
-            .expect(UNABLE_TO_SEND_INS_UPDATE_FAILURE);
+        if let Err(err) = self.sender.try_send(None) {
+            match err {
+                TrySendError::Disconnected(_) => (),
+                _ => error!("Issue stopping timer, {}.", err),
+            }
+        }
         if let Some(handle) = self.handle.take() {
             handle.join().expect(THREAD_JOIN_FAILURE);
         }
     }
 
     fn update_status(&mut self, status: u8) {
-        let status = UpdateStatusInner::from(status);
+        let status = FusionStatusInner::from(status);
         match status {
-            UpdateStatusInner::OK | UpdateStatusInner::WARNING => {
+            FusionStatusInner::OK | FusionStatusInner::WARNING => {
                 self.sender
                     .try_send(Some(status))
                     .expect(UNABLE_TO_SEND_INS_UPDATE_FAILURE);
@@ -246,7 +250,13 @@ impl FlagStatus {
     }
 }
 
-/// FusionEngineStatusBar struct.
+impl Drop for FusionStatusFlag {
+    fn drop(&mut self) {
+        self.stop();
+    }
+}
+
+/// FusionStatusFlags struct.
 ///
 /// # Fields:
 ///
@@ -259,28 +269,28 @@ impl FlagStatus {
 /// - `nhc`: Storage for the non-holonomic constraints model status.
 /// - `zerovel`: Storage for the zero velocity status.
 #[derive(Debug)]
-pub struct FusionEngineStatusBar<S: MessageSender> {
+pub struct FusionStatusFlags<S: MessageSender> {
     client_sender: S,
     shared_state: SharedState,
-    gnsspos: FlagStatus,
-    gnssvel: FlagStatus,
-    wheelticks: FlagStatus,
-    speed: FlagStatus,
-    nhc: FlagStatus,
-    zerovel: FlagStatus,
+    gnsspos: FusionStatusFlag,
+    gnssvel: FusionStatusFlag,
+    wheelticks: FusionStatusFlag,
+    speed: FusionStatusFlag,
+    nhc: FusionStatusFlag,
+    zerovel: FusionStatusFlag,
 }
 
-impl<S: MessageSender> FusionEngineStatusBar<S> {
-    pub fn new(shared_state: SharedState, client_sender: S) -> FusionEngineStatusBar<S> {
-        FusionEngineStatusBar {
+impl<S: MessageSender> FusionStatusFlags<S> {
+    pub fn new(shared_state: SharedState, client_sender: S) -> FusionStatusFlags<S> {
+        FusionStatusFlags {
             client_sender,
             shared_state,
-            gnsspos: FlagStatus::new(),
-            gnssvel: FlagStatus::new(),
-            wheelticks: FlagStatus::new(),
-            speed: FlagStatus::new(),
-            nhc: FlagStatus::new(),
-            zerovel: FlagStatus::new(),
+            gnsspos: FusionStatusFlag::new(),
+            gnssvel: FusionStatusFlag::new(),
+            wheelticks: FusionStatusFlag::new(),
+            speed: FusionStatusFlag::new(),
+            nhc: FusionStatusFlag::new(),
+            zerovel: FusionStatusFlag::new(),
         }
     }
 
@@ -302,7 +312,7 @@ impl<S: MessageSender> FusionEngineStatusBar<S> {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<m::message::Builder>();
 
-        let mut tab_status = msg.init_fusion_engine_status();
+        let mut tab_status = msg.init_fusion_status_flags_status();
 
         tab_status.set_gnsspos(&self.gnsspos.status().to_string());
         tab_status.set_gnssvel(&self.gnssvel.status().to_string());
@@ -311,21 +321,8 @@ impl<S: MessageSender> FusionEngineStatusBar<S> {
         tab_status.set_nhc(&self.nhc.status().to_string());
         tab_status.set_zerovel(&self.zerovel.status().to_string());
 
-        let mut msg_bytes: Vec<u8> = vec![];
-        serialize::write_message(&mut msg_bytes, &builder)
-            .expect(CAP_N_PROTO_SERIALIZATION_FAILURE);
-        self.client_sender.send_data(msg_bytes);
-    }
-}
-
-impl<S: MessageSender> Drop for FusionEngineStatusBar<S> {
-    fn drop(&mut self) {
-        self.gnsspos.stop();
-        self.gnssvel.stop();
-        self.wheelticks.stop();
-        self.speed.stop();
-        self.nhc.stop();
-        self.zerovel.stop();
+        self.client_sender
+            .send_data(serialize_capnproto_builder(builder));
     }
 }
 
@@ -342,34 +339,34 @@ mod tests {
     #[test]
     fn update_status_inner_test() {
         assert_eq!(
-            UpdateStatusInner::from(0b00000000),
-            UpdateStatusInner::UNKNOWN
+            FusionStatusInner::from(0b00000000),
+            FusionStatusInner::UNKNOWN
         );
         assert_eq!(
-            UpdateStatusInner::from(0b00000001),
-            UpdateStatusInner::WARNING
+            FusionStatusInner::from(0b00000001),
+            FusionStatusInner::WARNING
         );
         assert_eq!(
-            UpdateStatusInner::from(0b00000010),
-            UpdateStatusInner::WARNING
+            FusionStatusInner::from(0b00000010),
+            FusionStatusInner::WARNING
         );
         assert_eq!(
-            UpdateStatusInner::from(0b00000100),
-            UpdateStatusInner::WARNING
+            FusionStatusInner::from(0b00000100),
+            FusionStatusInner::WARNING
         );
         assert_eq!(
-            UpdateStatusInner::from(0b00001000),
-            UpdateStatusInner::WARNING
+            FusionStatusInner::from(0b00001000),
+            FusionStatusInner::WARNING
         );
         assert_eq!(
-            UpdateStatusInner::from(0b00001001),
-            UpdateStatusInner::WARNING
+            FusionStatusInner::from(0b00001001),
+            FusionStatusInner::WARNING
         );
-        assert_eq!(UpdateStatusInner::from(0b00010000), UpdateStatusInner::OK);
-        assert_eq!(UpdateStatusInner::from(0b00100000), UpdateStatusInner::OK);
-        assert_eq!(UpdateStatusInner::from(0b01000000), UpdateStatusInner::OK);
-        assert_eq!(UpdateStatusInner::from(0b10000000), UpdateStatusInner::OK);
-        assert_eq!(UpdateStatusInner::from(0b01010000), UpdateStatusInner::OK);
+        assert_eq!(FusionStatusInner::from(0b00010000), FusionStatusInner::OK);
+        assert_eq!(FusionStatusInner::from(0b00100000), FusionStatusInner::OK);
+        assert_eq!(FusionStatusInner::from(0b01000000), FusionStatusInner::OK);
+        assert_eq!(FusionStatusInner::from(0b10000000), FusionStatusInner::OK);
+        assert_eq!(FusionStatusInner::from(0b01010000), FusionStatusInner::OK);
     }
 
     #[test]
@@ -377,7 +374,7 @@ mod tests {
         let mut status_timer = StatusTimer::new();
 
         let (sender, receiver) = unbounded();
-        let update_status_inner = UpdateStatusInner::WARNING;
+        let update_status_inner = FusionStatusInner::WARNING;
 
         assert!(!status_timer.active());
         assert!(receiver.is_empty());
@@ -399,7 +396,7 @@ mod tests {
 
         let (sender, receiver) = unbounded();
 
-        let update_status_inner = UpdateStatusInner::WARNING;
+        let update_status_inner = FusionStatusInner::WARNING;
 
         assert!(!status_timer.active());
         assert!(receiver.is_empty());
@@ -417,7 +414,7 @@ mod tests {
 
     #[test]
     fn flag_status_update_status_test() {
-        let mut flag_status = FlagStatus::new();
+        let mut flag_status = FusionStatusFlag::new();
         let ok_status = 0b00010000;
         assert!(flag_status.sender.is_empty());
         flag_status.update_status(ok_status);
@@ -428,7 +425,7 @@ mod tests {
 
     #[test]
     fn flag_status_stop_test() {
-        let mut flag_status = FlagStatus::new();
+        let mut flag_status = FusionStatusFlag::new();
         assert!(flag_status.handle.is_some());
         {
             flag_status.stop();
@@ -439,31 +436,31 @@ mod tests {
 
     #[test]
     fn flag_status_warning_test() {
-        let mut flag_status = FlagStatus::new();
+        let mut flag_status = FusionStatusFlag::new();
         let unknown_status = 0b00000000;
         let warning_status = 0b00000001;
         // Let warning message initiate and expire to go back to unknown.
-        assert_eq!(flag_status.status.clone().get(), UpdateStatusInner::UNKNOWN);
+        assert_eq!(flag_status.status.clone().get(), FusionStatusInner::UNKNOWN);
         flag_status.update_status(warning_status);
         sleep(Duration::from_secs_f64(SET_STATUS_THREAD_SLEEP_SEC));
         // Update_status for an unknown should not change the result.
         flag_status.update_status(unknown_status);
-        assert_eq!(flag_status.status.clone().get(), UpdateStatusInner::WARNING);
+        assert_eq!(flag_status.status.clone().get(), FusionStatusInner::WARNING);
         sleep(Duration::from_secs_f64(STATUS_PERIOD));
         let now = Instant::now();
-        while flag_status.status.get() != UpdateStatusInner::UNKNOWN {
+        while flag_status.status.get() != FusionStatusInner::UNKNOWN {
             sleep(Duration::from_millis(10));
             if (Instant::now() - now).as_secs_f64() > TIMEOUT_SWITCHING_TO_UNKNOWN_AFTER_TIMEOUT_SEC
             {
                 break;
             }
         }
-        assert_eq!(flag_status.status.get(), UpdateStatusInner::UNKNOWN);
+        assert_eq!(flag_status.status.get(), FusionStatusInner::UNKNOWN);
     }
 
     #[test]
     fn flag_status_ok_test() {
-        let mut flag_status = FlagStatus::new();
+        let mut flag_status = FusionStatusFlag::new();
         let unknown_status = 0b00000000;
         let warning_status = 0b00000001;
         let ok_status = 0b00010000;
@@ -473,18 +470,18 @@ mod tests {
         sleep(Duration::from_secs_f64(
             SET_STATUS_THREAD_SLEEP_SEC * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
         ));
-        assert_eq!(flag_status.status.clone().get(), UpdateStatusInner::OK);
+        assert_eq!(flag_status.status.clone().get(), FusionStatusInner::OK);
         flag_status.update_status(warning_status);
         sleep(Duration::from_secs_f64(
             SET_STATUS_THREAD_SLEEP_SEC * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
         ));
-        assert_eq!(flag_status.status.clone().get(), UpdateStatusInner::WARNING);
+        assert_eq!(flag_status.status.clone().get(), FusionStatusInner::WARNING);
         flag_status.update_status(ok_status);
         sleep(Duration::from_secs_f64(SET_STATUS_THREAD_SLEEP_SEC));
-        assert_eq!(flag_status.status.clone().get(), UpdateStatusInner::WARNING);
+        assert_eq!(flag_status.status.clone().get(), FusionStatusInner::WARNING);
         sleep(Duration::from_secs_f64(STATUS_PERIOD));
         let now = Instant::now();
-        while flag_status.status.get() != UpdateStatusInner::UNKNOWN {
+        while flag_status.status.get() != FusionStatusInner::UNKNOWN {
             sleep(Duration::from_millis(10));
             if (Instant::now() - now).as_secs_f64() > TIMEOUT_SWITCHING_TO_UNKNOWN_AFTER_TIMEOUT_SEC
             {
@@ -492,18 +489,18 @@ mod tests {
             }
         }
 
-        assert_eq!(flag_status.status.clone().get(), UpdateStatusInner::UNKNOWN);
+        assert_eq!(flag_status.status.clone().get(), FusionStatusInner::UNKNOWN);
 
         // Ok message with no warning active should set status ok then after expires goes unknown.
         flag_status.update_status(ok_status);
         sleep(Duration::from_secs_f64(
             SET_STATUS_THREAD_SLEEP_SEC * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
         ));
-        assert_eq!(flag_status.status.clone().get(), UpdateStatusInner::OK);
+        assert_eq!(flag_status.status.clone().get(), FusionStatusInner::OK);
         flag_status.update_status(unknown_status);
         sleep(Duration::from_secs_f64(
             STATUS_PERIOD * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
         ));
-        assert_eq!(flag_status.status.get(), UpdateStatusInner::UNKNOWN);
+        assert_eq!(flag_status.status.get(), FusionStatusInner::UNKNOWN);
     }
 }

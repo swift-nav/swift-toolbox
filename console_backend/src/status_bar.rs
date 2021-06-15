@@ -1,5 +1,4 @@
 use capnp::message::Builder;
-use capnp::serialize;
 
 use sbp::messages::{
     navigation::MsgAgeCorrections,
@@ -19,8 +18,8 @@ use crate::errors::*;
 use crate::piksi_tools_constants::{
     ins_error_dict, ins_mode_dict, ins_type_dict, rtk_mode_dict, DR_MODE, EMPTY_STR, RTK_MODES,
 };
-use crate::types::{BaselineNED, GnssModes, IsRunning, MessageSender, PosLLH, SharedState};
-use crate::utils::{bytes_to_kb, decisec_to_sec};
+use crate::types::{ArcBool, BaselineNED, GnssModes, MessageSender, PosLLH, SharedState};
+use crate::utils::{bytes_to_kb, decisec_to_sec, serialize_capnproto_builder};
 
 #[derive(Debug, Clone)]
 pub struct StatusBarUpdate {
@@ -59,7 +58,7 @@ pub struct StatusBar<S: MessageSender> {
     client_sender: S,
     shared_state: SharedState,
     heartbeat_data: Heartbeat,
-    is_running: IsRunning,
+    is_running: ArcBool,
     heartbeat_handler: JoinHandle<()>,
     port: String,
 }
@@ -71,7 +70,7 @@ impl<S: MessageSender> StatusBar<S> {
     /// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
     pub fn new(shared_state: SharedState, client_sender: S) -> StatusBar<S> {
         let heartbeat_data = Heartbeat::new();
-        let is_running = IsRunning::new();
+        let is_running = ArcBool::new();
         StatusBar {
             client_sender,
             shared_state: shared_state.clone(),
@@ -87,7 +86,7 @@ impl<S: MessageSender> StatusBar<S> {
     /// # Parameters:
     /// - `client_send`: Client Sender channel for communication from backend to frontend.
     /// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
-    fn heartbeat_thread(is_running: IsRunning, heartbeat_data: Heartbeat) -> JoinHandle<()> {
+    fn heartbeat_thread(is_running: ArcBool, heartbeat_data: Heartbeat) -> JoinHandle<()> {
         is_running.set(true);
         let mut last_time = Instant::now();
         spawn(move || loop {
@@ -143,11 +142,8 @@ impl<S: MessageSender> StatusBar<S> {
         status_bar_status.set_data_rate(&sb_update.data_rate);
         status_bar_status.set_solid_connection(sb_update.solid_connection);
 
-        let mut msg_bytes: Vec<u8> = vec![];
-        serialize::write_message(&mut msg_bytes, &builder)
-            .expect(CAP_N_PROTO_SERIALIZATION_FAILURE);
-
-        self.client_sender.send_data(msg_bytes);
+        self.client_sender
+            .send_data(serialize_capnproto_builder(builder));
     }
 
     pub fn handle_heartbeat(&mut self) {

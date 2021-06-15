@@ -363,7 +363,7 @@ struct WriteState {
 
 impl WriteState {
     fn new(filename: String) -> Self {
-        let (chunk_size, filename) = if filename.ends_with("\x00") {
+        let (chunk_size, filename) = if filename.ends_with('\x00') {
             (
                 MAX_PAYLOAD_SIZE - WRITE_REQ_OVERHEAD_LEN - filename.len() - 1,
                 filename,

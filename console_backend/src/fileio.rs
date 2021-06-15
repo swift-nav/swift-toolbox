@@ -166,6 +166,8 @@ where
 
     pub fn write(&mut self, filename: String, data: impl Read) -> Result<()> {
         let mut data = BufReader::new(data);
+        let mut sequence: Option<u32> = None;
+        let mut offset: Option<usize> = None;
 
         loop {
             let buf = data.fill_buf()?;
@@ -173,14 +175,22 @@ where
             if bytes_read == 0 {
                 break;
             }
-            self.write_slice(filename.clone(), buf)?;
-            data.consume(bytes_read)
+            let res = self.write_slice(filename.clone(), buf, sequence, offset)?;
+            sequence = Some(res.0);
+            offset = Some(res.1);
+            data.consume(bytes_read);
         }
 
         Ok(())
     }
 
-    pub fn write_slice(&mut self, mut filename: String, data: &[u8]) -> Result<()> {
+    pub fn write_slice(
+        &mut self,
+        mut filename: String,
+        data: &[u8],
+        sequence: Option<u32>,
+        offset: Option<usize>,
+    ) -> Result<(u32, usize)> {
         let config = self.fetch_config();
 
         self.remove(filename.clone())?;
@@ -209,24 +219,27 @@ where
             sender.send(msg)
         };
 
+        let mut sequence = sequence.unwrap_or_else(|| new_sequence());
+        let mut file_offset = offset.unwrap_or(0);
+
         scope(|s| {
             s.spawn(|_| {
-                let mut sequence = new_sequence();
-                let mut offset = 0;
                 let backoff = Backoff::new();
+                let mut slice_offset = 0;
 
-                while offset < data_len {
+                while slice_offset < data_len {
                     while open_requests.load() >= config.window_size {
                         backoff.snooze();
                     }
-                    let end_offset = std::cmp::min(offset + chunk_size, data_len);
-                    let chunk_len = std::cmp::min(chunk_size, data_len - offset);
+                    let end_offset = std::cmp::min(slice_offset + chunk_size, data_len);
+                    let chunk_len = std::cmp::min(chunk_size, data_len - slice_offset);
                     let is_last = chunk_len < chunk_size;
-                    send_msg(sequence, offset, end_offset)?;
+                    send_msg(sequence, slice_offset, end_offset)?;
                     req_tx
-                        .send((sequence, WriteReq::new(offset, end_offset), is_last))
+                        .send((sequence, WriteReq::new(slice_offset, end_offset), is_last))
                         .unwrap();
-                    offset += chunk_len;
+                    file_offset += chunk_len;
+                    slice_offset += chunk_len;
                     sequence += 1;
                     open_requests.fetch_add(1);
                 }
@@ -276,9 +289,11 @@ where
 
             self.broadcast.unsubscribe(key);
 
-            Ok(())
+            Result::Ok(())
         })
-        .unwrap()
+        .unwrap()?;
+
+        Ok((sequence, file_offset))
     }
 
     pub fn readdir(&mut self, path: String) -> Result<Vec<String>> {

@@ -38,7 +38,7 @@ const WRITE_REQ_OVERHEAD_LEN: usize = SEQUENCE_LEN + OFFSET_LEN + NULL_SEP_LEN;
 pub struct Fileio<W> {
     broadcast: Broadcaster,
     sender: MsgSender<W>,
-    config: Option<FileIoConfig>,
+    config: Option<FileioConfig>,
 }
 
 impl<W> Fileio<W>
@@ -209,12 +209,10 @@ where
                     }
                     let end_offset = std::cmp::min(slice_offset + state.chunk_size, data_len);
                     let chunk_len = std::cmp::min(state.chunk_size, data_len - slice_offset);
-                    let is_last = chunk_len < state.chunk_size;
-                    let req = WriteReq::new(slice_offset, end_offset);
+                    let req = WriteReq::new(slice_offset, end_offset, chunk_len < state.chunk_size);
                     send_msg(&state, &req)?;
-                    req_tx.send((state.clone(), req, is_last)).unwrap();
-                    state.sequence += 1;
-                    state.offset += chunk_len;
+                    req_tx.send((state.clone(), req)).unwrap();
+                    state.update(chunk_len);
                     slice_offset += chunk_len;
                     open_requests.fetch_add(1);
                 }
@@ -235,8 +233,8 @@ where
             loop {
                 select! {
                     recv(req_rx) -> msg => {
-                        let (req_state, req, is_last) = msg?;
-                        if !last_sent && is_last {
+                        let (req_state, req) = msg?;
+                        if req.is_last {
                             last_sent = true;
                         }
                         pending.insert(req_state.sequence, (req_state, req));
@@ -318,7 +316,7 @@ where
         Ok(())
     }
 
-    fn fetch_config(&mut self) -> FileIoConfig {
+    fn fetch_config(&mut self) -> FileioConfig {
         if let Some(ref config) = self.config {
             return config.clone();
         }
@@ -353,9 +351,11 @@ where
     }
 }
 
+/// State that spans an entire call to `write` (i.e. potentially multiple `write_slice` calls)
 #[derive(Debug, Clone)]
 struct WriteState {
     sequence: u32,
+    /// Offset into the file (not the current slice of data)
     offset: usize,
     filename: String,
     chunk_size: usize,
@@ -385,90 +385,117 @@ impl WriteState {
     fn filename(&self) -> sbp::SbpString {
         self.filename.clone().into()
     }
+
+    fn update(&mut self, chunk_len: usize) {
+        self.offset += chunk_len;
+        self.sequence += 1;
+    }
+}
+
+struct FileioRequest {
+    sent_at: Instant,
+    retries: usize,
+}
+
+impl FileioRequest {
+    fn new() -> Self {
+        Self {
+            sent_at: Instant::now(),
+            retries: 0,
+        }
+    }
+
+    fn expired(&self) -> bool {
+        self.sent_at.elapsed() >= FILE_IO_TIMEOUT
+    }
+
+    fn track_retry(&mut self) -> Result<()> {
+        self.retries += 1;
+        self.sent_at = Instant::now();
+
+        if self.retries >= MAX_RETRIES {
+            Err("fileio send message timeout".into())
+        } else {
+            Ok(())
+        }
+    }
+}
+
+impl Default for FileioRequest {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 struct ReadReq {
     offset: u32,
-    sent_at: Instant,
-    retries: usize,
+    req: FileioRequest,
 }
 
 impl ReadReq {
     fn new(offset: u32) -> Self {
         Self {
             offset,
-            sent_at: Instant::now(),
-            retries: 0,
+            req: FileioRequest::new(),
         }
     }
 
     fn expired(&self) -> bool {
-        self.sent_at.elapsed() >= FILE_IO_TIMEOUT
+        self.req.expired()
     }
 
     fn track_retry(&mut self) -> Result<()> {
-        self.retries += 1;
-        self.sent_at = Instant::now();
-
-        if self.retries >= MAX_RETRIES {
-            Err("fileio send message timeout".into())
-        } else {
-            Ok(())
-        }
+        self.req.track_retry()
     }
 }
 
 struct WriteReq {
+    /// Offset start into current slice of data
     offset: usize,
+    /// Offset end into current slice of data
     end_offset: usize,
-    sent_at: Instant,
-    retries: usize,
+    /// Is this the last request for this chunk of data
+    is_last: bool,
+    req: FileioRequest,
 }
 
 impl WriteReq {
-    fn new(offset: usize, end_offset: usize) -> Self {
+    fn new(offset: usize, end_offset: usize, is_last: bool) -> Self {
         Self {
             offset,
             end_offset,
-            sent_at: Instant::now(),
-            retries: 0,
+            is_last,
+            req: FileioRequest::new(),
         }
     }
 
     fn expired(&self) -> bool {
-        self.sent_at.elapsed() >= FILE_IO_TIMEOUT
+        self.req.expired()
     }
 
     fn track_retry(&mut self) -> Result<()> {
-        self.retries += 1;
-        self.sent_at = Instant::now();
-
-        if self.retries >= MAX_RETRIES {
-            Err("fileio send message timeout".into())
-        } else {
-            Ok(())
-        }
+        self.req.track_retry()
     }
 }
 
 #[derive(Debug, Clone)]
-struct FileIoConfig {
+struct FileioConfig {
     window_size: u32,
     batch_size: u32,
 }
 
-impl From<MsgFileioConfigResp> for FileIoConfig {
+impl From<MsgFileioConfigResp> for FileioConfig {
     fn from(msg: MsgFileioConfigResp) -> Self {
-        FileIoConfig {
+        FileioConfig {
             window_size: msg.window_size,
             batch_size: msg.batch_size,
         }
     }
 }
 
-impl Default for FileIoConfig {
+impl Default for FileioConfig {
     fn default() -> Self {
-        FileIoConfig {
+        FileioConfig {
             window_size: 100,
             batch_size: 1,
         }

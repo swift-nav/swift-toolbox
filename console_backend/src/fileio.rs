@@ -158,16 +158,11 @@ where
         .unwrap()
     }
 
-    pub fn read_vec(&mut self, path: String) -> Result<Vec<u8>> {
-        let mut dest = Vec::new();
-        self.read(path, &mut dest)?;
-        Ok(dest)
-    }
-
     pub fn write(&mut self, filename: String, data: impl Read) -> Result<()> {
+        self.remove(filename.clone())?;
+
         let mut data = BufReader::new(data);
-        let mut sequence: Option<u32> = None;
-        let mut offset: Option<usize> = None;
+        let mut state = WriteState::new(filename);
 
         loop {
             let buf = data.fill_buf()?;
@@ -175,31 +170,15 @@ where
             if bytes_read == 0 {
                 break;
             }
-            let res = self.write_slice(filename.clone(), buf, sequence, offset)?;
-            sequence = Some(res.0);
-            offset = Some(res.1);
+            state = self.write_slice(state, buf)?;
             data.consume(bytes_read);
         }
 
         Ok(())
     }
 
-    pub fn write_slice(
-        &mut self,
-        mut filename: String,
-        data: &[u8],
-        sequence: Option<u32>,
-        offset: Option<usize>,
-    ) -> Result<(u32, usize)> {
+    fn write_slice(&mut self, mut state: WriteState, data: &[u8]) -> Result<WriteState> {
         let config = self.fetch_config();
-
-        self.remove(filename.clone())?;
-
-        let filename_len = filename.len();
-        let data_len = data.len();
-        filename.push(b'\x00' as char);
-
-        let chunk_size = MAX_PAYLOAD_SIZE - WRITE_REQ_OVERHEAD_LEN - filename_len;
 
         let (req_tx, req_rx) = channel::unbounded();
         let (res_tx, res_rx) = channel::unbounded();
@@ -207,20 +186,17 @@ where
         let open_requests = AtomicCell::new(0u32);
 
         let sender = self.sender.clone();
-        let send_msg = |sequence, offset, end_offset| {
-            let data = data[offset..end_offset].to_vec();
-            let msg = SBP::from(MsgFileioWriteReq {
+        let send_msg = |state: &WriteState, req: &WriteReq| {
+            sender.send(SBP::from(MsgFileioWriteReq {
                 sender_id: Some(42),
-                sequence,
-                offset: offset as u32,
-                filename: filename.clone().into(),
-                data,
-            });
-            sender.send(msg)
+                sequence: state.sequence,
+                offset: state.offset as u32,
+                filename: state.filename(),
+                data: data[req.offset..req.end_offset].to_vec(),
+            }))
         };
 
-        let mut sequence = sequence.unwrap_or_else(|| new_sequence());
-        let mut file_offset = offset.unwrap_or(0);
+        let data_len = data.len();
 
         scope(|s| {
             s.spawn(|_| {
@@ -231,16 +207,15 @@ where
                     while open_requests.load() >= config.window_size {
                         backoff.snooze();
                     }
-                    let end_offset = std::cmp::min(slice_offset + chunk_size, data_len);
-                    let chunk_len = std::cmp::min(chunk_size, data_len - slice_offset);
-                    let is_last = chunk_len < chunk_size;
-                    send_msg(sequence, slice_offset, end_offset)?;
-                    req_tx
-                        .send((sequence, WriteReq::new(slice_offset, end_offset), is_last))
-                        .unwrap();
-                    file_offset += chunk_len;
+                    let end_offset = std::cmp::min(slice_offset + state.chunk_size, data_len);
+                    let chunk_len = std::cmp::min(state.chunk_size, data_len - slice_offset);
+                    let is_last = chunk_len < state.chunk_size;
+                    let req = WriteReq::new(slice_offset, end_offset);
+                    send_msg(&state, &req)?;
+                    req_tx.send((state.clone(), req, is_last)).unwrap();
+                    state.sequence += 1;
+                    state.offset += chunk_len;
                     slice_offset += chunk_len;
-                    sequence += 1;
                     open_requests.fetch_add(1);
                 }
 
@@ -254,17 +229,17 @@ where
                 }
             });
 
-            let mut pending: HashMap<u32, WriteReq> = HashMap::new();
+            let mut pending: HashMap<u32, (WriteState, WriteReq)> = HashMap::new();
             let mut last_sent = false;
 
             loop {
                 select! {
                     recv(req_rx) -> msg => {
-                        let (sequence, req, is_last) = msg?;
+                        let (req_state, req, is_last) = msg?;
                         if !last_sent && is_last {
                             last_sent = true;
                         }
-                        pending.insert(sequence, req);
+                        pending.insert(req_state.sequence, (req_state, req));
                     },
                     recv(res_rx) -> msg => {
                         let msg = msg?;
@@ -277,10 +252,10 @@ where
                         }
                     },
                     recv(channel::tick(CHECK_INTERVAL)) -> _ => {
-                        for (seq, req) in pending.iter_mut() {
+                        for (req_state, req) in pending.values_mut() {
                             if req.expired() {
                                 req.track_retry()?;
-                                send_msg(*seq, req.offset, req.end_offset)?;
+                                send_msg(req_state, req)?;
                             }
                         }
                     }
@@ -293,7 +268,7 @@ where
         })
         .unwrap()?;
 
-        Ok((sequence, file_offset))
+        Ok(state)
     }
 
     pub fn readdir(&mut self, path: String) -> Result<Vec<String>> {
@@ -375,6 +350,40 @@ where
 
         self.config = Some(config);
         self.config.clone().unwrap()
+    }
+}
+
+#[derive(Debug, Clone)]
+struct WriteState {
+    sequence: u32,
+    offset: usize,
+    filename: String,
+    chunk_size: usize,
+}
+
+impl WriteState {
+    fn new(filename: String) -> Self {
+        let (chunk_size, filename) = if filename.ends_with("\x00") {
+            (
+                MAX_PAYLOAD_SIZE - WRITE_REQ_OVERHEAD_LEN - filename.len() - 1,
+                filename,
+            )
+        } else {
+            (
+                MAX_PAYLOAD_SIZE - WRITE_REQ_OVERHEAD_LEN - filename.len(),
+                filename + "\x00",
+            )
+        };
+        Self {
+            sequence: new_sequence(),
+            offset: 0,
+            filename,
+            chunk_size,
+        }
+    }
+
+    fn filename(&self) -> sbp::SbpString {
+        self.filename.clone().into()
     }
 }
 

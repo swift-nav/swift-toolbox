@@ -1,23 +1,27 @@
 use capnp::message::Builder;
 use capnp::serialize;
+use crossbeam::channel::{after, Receiver, select, Sender, TrySendError, unbounded};
+use log::error;
 use sbp::messages::system::MsgInsUpdates;
+use std::thread::sleep;
 use std::{
     fmt,
     ops::Deref,
     sync::{Arc, Mutex},
-    thread::{self, sleep, spawn, JoinHandle},
-    time::{Duration, Instant},
+    thread::{spawn, JoinHandle},
+    time::Duration,
 };
 
 use crate::console_backend_capnp as m;
 use crate::errors::{
-    CAP_N_PROTO_SERIALIZATION_FAILURE, GET_FUSION_ENGINE_STATUS_FAILURE,
-    UNABLE_TO_STOP_TIMER_THREAD_FAILURE, UPDATE_STATUS_LOCK_MUTEX_FAILURE,
+    CAP_N_PROTO_SERIALIZATION_FAILURE,
+    UNABLE_TO_STOP_TIMER_THREAD_FAILURE, UPDATE_STATUS_LOCK_MUTEX_FAILURE, UNABLE_TO_SEND_INS_UPDATE_FAILURE, THREAD_JOIN_FAILURE
 };
-use crate::types::{IsRunning, MessageSender, SharedState};
+use crate::types::IsRunning;
+use crate::types::{MessageSender, SharedState};
 
 const STATUS_PERIOD: f64 = 1.0;
-const SET_STATUS_THREAD_SLEEP_SEC: f64 = 0.05;
+const SET_STATUS_THREAD_SLEEP_SEC: f64 = 0.25;
 
 // No updates have been attempted in the past `STATUS_PERIOD`
 const UNKNOWN: &str = "\u{2B1B}"; // Unicode Character “⬛” (U+2B1B)
@@ -27,29 +31,23 @@ const WARNING: &str = "\u{26A0}"; // Unicode Character “⚠” (U+26A0)
 const OK: &str = "\u{26AB}"; // Unicode Character “⚫” (U+26AB)
 
 #[derive(Debug)]
-pub struct UpdateStatus(Arc<Mutex<Option<UpdateStatusInner>>>);
+pub struct UpdateStatus(Arc<Mutex<UpdateStatusInner>>);
 impl UpdateStatus {
-    fn new(update_status: Option<UpdateStatusInner>) -> UpdateStatus {
+    fn new(update_status: UpdateStatusInner) -> UpdateStatus {
         UpdateStatus(Arc::new(Mutex::new(update_status)))
     }
-    fn get(&mut self) -> Option<UpdateStatusInner> {
+    fn get(&mut self) -> UpdateStatusInner {
         let update_status = self.lock().expect(UPDATE_STATUS_LOCK_MUTEX_FAILURE);
         *update_status
     }
-    fn take(&mut self) -> Option<UpdateStatusInner> {
-        let mut update_status = self.lock().expect(UPDATE_STATUS_LOCK_MUTEX_FAILURE);
-        let inner = *update_status;
-        (*update_status) = None;
-        inner
-    }
     fn set(&mut self, status: UpdateStatusInner) {
         let mut update_status = self.lock().expect(UPDATE_STATUS_LOCK_MUTEX_FAILURE);
-        (*update_status) = Some(status);
+        (*update_status) = status;
     }
 }
 
 impl Deref for UpdateStatus {
-    type Target = Mutex<Option<UpdateStatusInner>>;
+    type Target = Mutex<UpdateStatusInner>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -57,7 +55,7 @@ impl Deref for UpdateStatus {
 
 impl Default for UpdateStatus {
     fn default() -> Self {
-        Self::new(Some(UpdateStatusInner::Unknown))
+        Self::new(UpdateStatusInner::Unknown)
     }
 }
 
@@ -99,6 +97,7 @@ impl fmt::Display for UpdateStatusInner {
 
 struct StatusTimer {
     is_running: IsRunning,
+    running_sender: Option<Sender<bool>>,
     handle: Option<JoinHandle<()>>,
 }
 impl StatusTimer {
@@ -106,39 +105,37 @@ impl StatusTimer {
         StatusTimer {
             handle: None,
             is_running: IsRunning::new(),
+            running_sender: None,
         }
     }
-    fn restart(&mut self, storage: UpdateStatus, value: UpdateStatusInner, delay: f64) {
+    fn restart(&mut self, msg_sender: Sender<Option<UpdateStatusInner>>, value: UpdateStatusInner, delay: f64) {
         self.cancel();
+        let (running_sender, running_receiver) = unbounded::<bool>();
+        self.running_sender = Some(running_sender.clone());
+        self.is_running.set(true);
         self.handle = Some(StatusTimer::timer_thread(
             self.is_running.clone(),
-            storage,
+            running_receiver,
+            msg_sender,
             value,
             delay,
         ));
     }
     fn timer_thread(
         is_running: IsRunning,
-        storage: UpdateStatus,
+        running_receiver: Receiver<bool>,
+        msg_sender: Sender<Option<UpdateStatusInner>>,
         value: UpdateStatusInner,
         delay: f64,
     ) -> JoinHandle<()> {
-        let start_time = Instant::now();
-        let mut storage = storage;
-        is_running.set(true);
         spawn(move || {
-            let mut expired = false;
-            while is_running.get() {
-                if (Instant::now() - start_time).as_secs_f64() > delay {
-                    expired = true;
-                    is_running.set(false);
-                    break;
-                }
-                sleep(Duration::from_millis(5));
+            select! {
+                recv(after(Duration::from_secs_f64(delay))) -> _ => {
+                    msg_sender.try_send(Some(value)).expect(UNABLE_TO_SEND_INS_UPDATE_FAILURE);
+                },
+                recv(running_receiver) -> _ => (),
             }
-            if expired {
-                storage.set(value);
-            }
+            is_running.set(false);
         })
     }
     fn active(&mut self) -> bool {
@@ -146,7 +143,14 @@ impl StatusTimer {
     }
 
     fn cancel(&mut self) {
-        self.is_running.set(false);
+        if let Some(running_sender) = self.running_sender.take() {
+            if let Err(err) = running_sender.try_send(false) {
+                match err {
+                    TrySendError::Disconnected(_) => (),
+                    _ => error!("Issue cancelling timer, {}.", err)
+                }   
+            }
+        }
         if let Some(handle) = self.handle.take() {
             handle.join().expect(UNABLE_TO_STOP_TIMER_THREAD_FAILURE);
         }
@@ -155,90 +159,90 @@ impl StatusTimer {
 
 #[derive(Debug)]
 struct FlagStatus {
-    last_status: UpdateStatus,
     status: UpdateStatus,
-    incoming: UpdateStatus,
-    is_running: IsRunning,
+    sender: Sender<Option<UpdateStatusInner>>,
     handle: Option<JoinHandle<()>>,
 }
 
 impl FlagStatus {
     fn new() -> FlagStatus {
-        let mut flag_status = FlagStatus {
-            last_status: UpdateStatus::default(),
-            status: UpdateStatus::default(),
-            incoming: UpdateStatus::new(None),
-            is_running: IsRunning::new(),
-            handle: None,
-        };
-        flag_status.set_status_thread();
-        flag_status
+        let (sender, receiver) = unbounded();
+        let status = UpdateStatus::default();
+        FlagStatus {
+            status: status.clone(),
+            sender: sender.clone(),
+            handle: Some(FlagStatus::set_status_thread(status, sender, receiver)),
+        }
     }
 
-    fn set_status_thread(&mut self) {
-        self.is_running.set(true);
-        let mut incoming_clone = self.incoming.clone();
-        let mut last_status_clone = self.last_status.clone();
-        let mut status_clone = self.status.clone();
-        let mut warning_timer = StatusTimer::new();
-        let mut unknown_timer = StatusTimer::new();
-        let is_running = self.is_running.clone();
-
-        let handle = spawn(move || loop {
-            if !is_running.get() {
-                break;
-            }
-            if let Some(status) = incoming_clone.take() {
-                last_status_clone.set(status);
-
-                match status {
-                    UpdateStatusInner::Warning => {
-                        status_clone.set(status);
-                        warning_timer.restart(last_status_clone.clone(), status, STATUS_PERIOD);
-                        unknown_timer.restart(
-                            incoming_clone.clone(),
-                            UpdateStatusInner::Unknown,
-                            STATUS_PERIOD,
-                        );
-                    }
-                    UpdateStatusInner::Unknown => {
-                        if warning_timer.active() {
-                            warning_timer.cancel();
-                            if let Some(last_status) = last_status_clone.get() {
-                                incoming_clone.set(last_status);
+    fn set_status_thread(mut status: UpdateStatus, sender: Sender<Option<UpdateStatusInner>>, receiver: Receiver<Option<UpdateStatusInner>>) -> JoinHandle<()>{
+        
+        spawn(move || {
+            let mut last_status = UpdateStatus::default();
+            let mut warning_timer = StatusTimer::new();
+            let mut unknown_timer = StatusTimer::new();
+            let mut is_running = true;
+            while is_running {
+                if let Ok(status_option) = receiver.recv_timeout(Duration::from_secs_f64(SET_STATUS_THREAD_SLEEP_SEC)) {
+                    let sender_clone = sender.clone();
+                    match status_option {
+                        Some(new_status) => {
+                            last_status.set(new_status);
+                            
+                            match new_status {
+                                UpdateStatusInner::Warning => {
+                                    status.set(new_status);
+                                    warning_timer.restart(sender_clone.clone(), new_status, STATUS_PERIOD);
+                                    unknown_timer.restart(
+                                        sender_clone,
+                                        UpdateStatusInner::Unknown,
+                                        STATUS_PERIOD,
+                                    );
+                                }
+                                UpdateStatusInner::Unknown => {
+                                    if warning_timer.active() {
+                                        warning_timer.cancel();
+                                        sender_clone.try_send(Some(last_status.get())).expect(UNABLE_TO_SEND_INS_UPDATE_FAILURE);
+                                    }
+                                    status.set(new_status);
+                                }
+                                UpdateStatusInner::Ok => {
+                                    if !warning_timer.active() {
+                                        status.set(new_status);
+                                    }
+                                    unknown_timer.restart(
+                                        sender_clone,
+                                        UpdateStatusInner::Unknown,
+                                        STATUS_PERIOD,
+                                    );
+                                }
                             }
+                        },
+                        None => {
+                            is_running = false;
                         }
-                        status_clone.set(status);
                     }
-                    UpdateStatusInner::Ok => {
-                        if !warning_timer.active() {
-                            status_clone.set(status);
-                        }
-                        unknown_timer.restart(
-                            incoming_clone.clone(),
-                            UpdateStatusInner::Unknown,
-                            STATUS_PERIOD,
-                        );
-                    }
+                    
                 }
             }
-            thread::sleep(Duration::from_secs_f64(SET_STATUS_THREAD_SLEEP_SEC));
-        });
-        self.handle = Some(handle);
+        })
     }
     fn status(&mut self) -> UpdateStatusInner {
-        self.status.get().expect(GET_FUSION_ENGINE_STATUS_FAILURE)
+        self.status.get()
     }
 
     fn stop(&mut self) {
-        self.is_running.set(false);
+        self.sender.clone().try_send(None).expect(UNABLE_TO_SEND_INS_UPDATE_FAILURE);
+        if let Some(handle) = self.handle.take() {
+            handle.join().expect(THREAD_JOIN_FAILURE);
+        }
     }
 
     fn update_status(&mut self, status: u8) {
         let status = UpdateStatusInner::from(status);
         match status {
             UpdateStatusInner::Ok | UpdateStatusInner::Warning => {
-                self.incoming.set(status);
+                self.sender.try_send(Some(status)).expect(UNABLE_TO_SEND_INS_UPDATE_FAILURE);
             }
             _ => {}
         }
@@ -290,6 +294,7 @@ impl<S: MessageSender> FusionEngineStatus<S> {
     /// # Parameters
     /// - `msg`: The MsgInsUpdates to extract data from.
     pub fn handle_ins_updates(&mut self, msg: MsgInsUpdates) {
+        println!("{:?}", msg);
         self.gnsspos.update_status(msg.gnsspos);
         self.gnssvel.update_status(msg.gnssvel);
         self.wheelticks.update_status(msg.wheelticks);
@@ -334,7 +339,6 @@ impl<S: MessageSender> Drop for FusionEngineStatus<S> {
 mod tests {
     use super::*;
     use std::{thread::sleep, time::Duration};
-    const DELAY: f64 = 1.0;
     const SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN: f64 = 1.1;
 
     #[test]
@@ -374,85 +378,68 @@ mod tests {
     fn status_timer_new_test() {
         let mut status_timer = StatusTimer::new();
 
-        let mut update_status = UpdateStatus::default();
-
+        let (sender, receiver) = unbounded();
         let update_status_inner = UpdateStatusInner::Warning;
 
         assert!(!status_timer.active());
-        assert_eq!(
-            update_status.clone().get().unwrap(),
-            UpdateStatusInner::Unknown
-        );
-        status_timer.restart(update_status.clone(), update_status_inner, DELAY);
+        assert!(receiver.is_empty());
+        status_timer.restart(sender.clone(), update_status_inner, STATUS_PERIOD);
+        
         assert!(status_timer.active());
-        assert_eq!(
-            update_status.clone().get().unwrap(),
-            UpdateStatusInner::Unknown
-        );
-        sleep(Duration::from_secs_f64(DELAY as f64 * 1.005_f64));
+        assert!(receiver.is_empty());
+        sleep(Duration::from_secs_f64(STATUS_PERIOD*SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN));
 
         assert!(!status_timer.active());
-        assert_eq!(update_status.get().unwrap(), update_status_inner);
+        assert_eq!(receiver.recv().unwrap().unwrap(), update_status_inner);
     }
 
     #[test]
     fn status_timer_restart_active_test() {
         let mut status_timer = StatusTimer::new();
 
-        let mut update_status = UpdateStatus::default();
-
+        let (sender, receiver) = unbounded();
+        
+        
         let update_status_inner = UpdateStatusInner::Warning;
 
         assert!(!status_timer.active());
-        assert_eq!(
-            update_status.clone().get().unwrap(),
-            UpdateStatusInner::Unknown
-        );
-        status_timer.restart(update_status.clone(), update_status_inner, DELAY);
+        assert!(receiver.is_empty());
+        status_timer.restart(sender.clone(), update_status_inner, STATUS_PERIOD);
         assert!(status_timer.active());
-        assert_eq!(
-            update_status.clone().get().unwrap(),
-            UpdateStatusInner::Unknown
-        );
-        sleep(Duration::from_secs_f64(DELAY as f64 * 0.5));
-        status_timer.restart(update_status.clone(), update_status_inner, DELAY);
-        assert_eq!(
-            update_status.clone().get().unwrap(),
-            UpdateStatusInner::Unknown
-        );
-        sleep(Duration::from_secs_f64(DELAY as f64 * 0.75));
-        assert_eq!(
-            update_status.clone().get().unwrap(),
-            UpdateStatusInner::Unknown
-        );
-        sleep(Duration::from_secs_f64(DELAY as f64 * 0.26));
-        assert_eq!(update_status.get().unwrap(), update_status_inner);
+        assert!(receiver.is_empty());
+        sleep(Duration::from_secs_f64(STATUS_PERIOD as f64 * 0.5));
+        status_timer.restart(sender.clone(), update_status_inner, STATUS_PERIOD);
+        assert!(receiver.is_empty());
+        sleep(Duration::from_secs_f64(STATUS_PERIOD as f64 * 0.75));
+        assert!(receiver.is_empty());
+        sleep(Duration::from_secs_f64(STATUS_PERIOD as f64 * 0.26));
+        assert_eq!(receiver.recv().unwrap().unwrap(), update_status_inner);
     }
 
     #[test]
     fn flag_status_update_status_test() {
         let mut flag_status = FlagStatus::new();
         let ok_status = 0b00010000;
-        assert_eq!(flag_status.incoming.clone().get(), None);
+        assert!(flag_status.sender.is_empty());
         flag_status.update_status(ok_status);
-        assert_eq!(flag_status.incoming.get().unwrap(), UpdateStatusInner::Ok);
+        assert!(!flag_status.sender.is_empty());
         sleep(Duration::from_secs_f64(
-            SET_STATUS_THREAD_SLEEP_SEC * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
+            SET_STATUS_THREAD_SLEEP_SEC,
         ));
-        assert_eq!(flag_status.incoming.get(), None);
+        assert!(flag_status.sender.is_empty());
     }
 
     #[test]
     fn flag_status_stop_test() {
         let mut flag_status = FlagStatus::new();
-        assert!(flag_status.is_running.get());
+        assert!(flag_status.handle.is_some());
         {
             flag_status.stop();
         }
         sleep(Duration::from_secs_f64(
-            SET_STATUS_THREAD_SLEEP_SEC * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
+            SET_STATUS_THREAD_SLEEP_SEC,
         ));
-        assert!(!flag_status.is_running.get());
+        assert!(flag_status.handle.is_none());
     }
 
     #[test]
@@ -462,24 +449,32 @@ mod tests {
         let warning_status = 0b00000001;
         // Let warning message initiate and expire to go back to unknown.
         assert_eq!(
-            flag_status.status.clone().get().unwrap(),
+            flag_status.status.clone().get(),
             UpdateStatusInner::Unknown
         );
         flag_status.update_status(warning_status);
         sleep(Duration::from_secs_f64(
-            SET_STATUS_THREAD_SLEEP_SEC * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
+            SET_STATUS_THREAD_SLEEP_SEC,
         ));
         // Update_status for an unknown should not change the result.
         flag_status.update_status(unknown_status);
-        assert_eq!(
-            flag_status.status.clone().get().unwrap(),
-            UpdateStatusInner::Warning
-        );
+        let now = std::time::Instant::now();
+        // assert_eq!(
+        //     flag_status.status.clone().get(),
+        //     UpdateStatusInner::Warning
+        // );
+        loop {
+            {
+                println!("{} - {}", flag_status.status.clone().get(), (std::time::Instant::now() - now).as_secs_f64());
+            
+            }
+            sleep(Duration::from_millis(800));
+        }
         sleep(Duration::from_secs_f64(
-            STATUS_PERIOD * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
+            STATUS_PERIOD * 3.0//SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
         ));
         assert_eq!(
-            flag_status.status.get().unwrap(),
+            flag_status.status.get(),
             UpdateStatusInner::Unknown
         );
     }
@@ -497,7 +492,7 @@ mod tests {
             SET_STATUS_THREAD_SLEEP_SEC * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
         ));
         assert_eq!(
-            flag_status.status.clone().get().unwrap(),
+            flag_status.status.clone().get(),
             UpdateStatusInner::Ok
         );
         flag_status.update_status(warning_status);
@@ -505,22 +500,22 @@ mod tests {
             SET_STATUS_THREAD_SLEEP_SEC * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
         ));
         assert_eq!(
-            flag_status.status.clone().get().unwrap(),
+            flag_status.status.clone().get(),
             UpdateStatusInner::Warning
         );
         flag_status.update_status(ok_status);
         sleep(Duration::from_secs_f64(
-            SET_STATUS_THREAD_SLEEP_SEC * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
+            SET_STATUS_THREAD_SLEEP_SEC,
         ));
         assert_eq!(
-            flag_status.status.clone().get().unwrap(),
+            flag_status.status.clone().get(),
             UpdateStatusInner::Warning
         );
         sleep(Duration::from_secs_f64(
-            STATUS_PERIOD * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
+            STATUS_PERIOD * 3.0,
         ));
         assert_eq!(
-            flag_status.status.clone().get().unwrap(),
+            flag_status.status.clone().get(),
             UpdateStatusInner::Unknown
         );
 
@@ -530,7 +525,7 @@ mod tests {
             SET_STATUS_THREAD_SLEEP_SEC * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
         ));
         assert_eq!(
-            flag_status.status.clone().get().unwrap(),
+            flag_status.status.clone().get(),
             UpdateStatusInner::Ok
         );
         flag_status.update_status(unknown_status);
@@ -538,7 +533,7 @@ mod tests {
             STATUS_PERIOD * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
         ));
         assert_eq!(
-            flag_status.status.get().unwrap(),
+            flag_status.status.get(),
             UpdateStatusInner::Unknown
         );
     }

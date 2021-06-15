@@ -4,13 +4,13 @@ use crossbeam::channel::{after, select, unbounded, Receiver, Sender, TrySendErro
 use log::error;
 use sbp::messages::system::MsgInsUpdates;
 use std::{
-    fmt,
     ops::Deref,
     sync::{Arc, Mutex},
     thread::{spawn, JoinHandle},
     time::Duration,
 };
 
+use crate::common_constants as cc;
 use crate::console_backend_capnp as m;
 use crate::errors::{
     CAP_N_PROTO_SERIALIZATION_FAILURE, THREAD_JOIN_FAILURE, UNABLE_TO_SEND_INS_UPDATE_FAILURE,
@@ -22,13 +22,6 @@ use crate::types::{MessageSender, SharedState};
 const STATUS_PERIOD: f64 = 1.0;
 const SET_STATUS_THREAD_SLEEP_SEC: f64 = 0.25;
 
-// No updates have been attempted in the past `STATUS_PERIOD`
-const UNKNOWN: &str = "\u{2B1B}"; // Unicode Character “⬛” (U+2B1B)
-                                  // There have been attempted updates in the past `STATUS_PERIOD` but at least one was rejected
-const WARNING: &str = "\u{26A0}"; // Unicode Character “⚠” (U+26A0)
-                                  // There have been updates in the past `STATUS_PERIOD` and none were rejected
-const OK: &str = "\u{26AB}"; // Unicode Character “⚫” (U+26AB)
-
 #[derive(Debug)]
 pub struct UpdateStatus(Arc<Mutex<UpdateStatusInner>>);
 impl UpdateStatus {
@@ -37,7 +30,7 @@ impl UpdateStatus {
     }
     fn get(&mut self) -> UpdateStatusInner {
         let update_status = self.lock().expect(UPDATE_STATUS_LOCK_MUTEX_FAILURE);
-        *update_status
+        (*update_status).clone()
     }
     fn set(&mut self, status: UpdateStatusInner) {
         let mut update_status = self.lock().expect(UPDATE_STATUS_LOCK_MUTEX_FAILURE);
@@ -54,7 +47,7 @@ impl Deref for UpdateStatus {
 
 impl Default for UpdateStatus {
     fn default() -> Self {
-        Self::new(UpdateStatusInner::Unknown)
+        Self::new(UpdateStatusInner::UNKNOWN)
     }
 }
 
@@ -66,31 +59,16 @@ impl Clone for UpdateStatus {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum UpdateStatusInner {
-    Unknown,
-    Warning,
-    Ok,
-}
+pub type UpdateStatusInner = cc::FusionEngineStatus;
 impl UpdateStatusInner {
     fn from(status: u8) -> UpdateStatusInner {
         if status & 0x0f != 0 {
-            UpdateStatusInner::Warning
+            UpdateStatusInner::WARNING
         } else if status & 0xf0 != 0 {
-            UpdateStatusInner::Ok
+            UpdateStatusInner::OK
         } else {
-            UpdateStatusInner::Unknown
+            UpdateStatusInner::UNKNOWN
         }
-    }
-}
-impl fmt::Display for UpdateStatusInner {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let status_emoji = match self {
-            UpdateStatusInner::Unknown => UNKNOWN,
-            UpdateStatusInner::Warning => WARNING,
-            UpdateStatusInner::Ok => OK,
-        };
-        write!(f, "{}", status_emoji)
     }
 }
 
@@ -196,11 +174,11 @@ impl FlagStatus {
                     let sender_clone = sender.clone();
                     match status_option {
                         Some(new_status) => {
-                            last_status.set(new_status);
+                            last_status.set(new_status.clone());
 
                             match new_status {
-                                UpdateStatusInner::Warning => {
-                                    status.set(new_status);
+                                UpdateStatusInner::WARNING => {
+                                    status.set(new_status.clone());
                                     warning_timer.restart(
                                         sender_clone.clone(),
                                         new_status,
@@ -208,11 +186,11 @@ impl FlagStatus {
                                     );
                                     unknown_timer.restart(
                                         sender_clone,
-                                        UpdateStatusInner::Unknown,
+                                        UpdateStatusInner::UNKNOWN,
                                         STATUS_PERIOD,
                                     );
                                 }
-                                UpdateStatusInner::Unknown => {
+                                UpdateStatusInner::UNKNOWN => {
                                     if warning_timer.active() {
                                         warning_timer.cancel();
                                         sender_clone
@@ -221,13 +199,13 @@ impl FlagStatus {
                                     }
                                     status.set(new_status);
                                 }
-                                UpdateStatusInner::Ok => {
+                                UpdateStatusInner::OK => {
                                     if !warning_timer.active() {
                                         status.set(new_status);
                                     }
                                     unknown_timer.restart(
                                         sender_clone,
-                                        UpdateStatusInner::Unknown,
+                                        UpdateStatusInner::UNKNOWN,
                                         STATUS_PERIOD,
                                     );
                                 }
@@ -258,7 +236,7 @@ impl FlagStatus {
     fn update_status(&mut self, status: u8) {
         let status = UpdateStatusInner::from(status);
         match status {
-            UpdateStatusInner::Ok | UpdateStatusInner::Warning => {
+            UpdateStatusInner::OK | UpdateStatusInner::WARNING => {
                 self.sender
                     .try_send(Some(status))
                     .expect(UNABLE_TO_SEND_INS_UPDATE_FAILURE);
@@ -268,7 +246,7 @@ impl FlagStatus {
     }
 }
 
-/// FusionEngineStatus struct.
+/// FusionEngineStatusBar struct.
 ///
 /// # Fields:
 ///
@@ -281,7 +259,7 @@ impl FlagStatus {
 /// - `nhc`: Storage for the non-holonomic constraints model status.
 /// - `zerovel`: Storage for the zero velocity status.
 #[derive(Debug)]
-pub struct FusionEngineStatus<S: MessageSender> {
+pub struct FusionEngineStatusBar<S: MessageSender> {
     client_sender: S,
     shared_state: SharedState,
     gnsspos: FlagStatus,
@@ -292,9 +270,9 @@ pub struct FusionEngineStatus<S: MessageSender> {
     zerovel: FlagStatus,
 }
 
-impl<S: MessageSender> FusionEngineStatus<S> {
-    pub fn new(shared_state: SharedState, client_sender: S) -> FusionEngineStatus<S> {
-        let mut fusion_engine_status = FusionEngineStatus {
+impl<S: MessageSender> FusionEngineStatusBar<S> {
+    pub fn new(shared_state: SharedState, client_sender: S) -> FusionEngineStatusBar<S> {
+        FusionEngineStatusBar {
             client_sender,
             shared_state,
             gnsspos: FlagStatus::new(),
@@ -303,9 +281,7 @@ impl<S: MessageSender> FusionEngineStatus<S> {
             speed: FlagStatus::new(),
             nhc: FlagStatus::new(),
             zerovel: FlagStatus::new(),
-        };
-        fusion_engine_status.send_data();
-        fusion_engine_status
+        }
     }
 
     /// Handle INS Updates messages.
@@ -342,7 +318,7 @@ impl<S: MessageSender> FusionEngineStatus<S> {
     }
 }
 
-impl<S: MessageSender> Drop for FusionEngineStatus<S> {
+impl<S: MessageSender> Drop for FusionEngineStatusBar<S> {
     fn drop(&mut self) {
         self.gnsspos.stop();
         self.gnssvel.stop();
@@ -367,33 +343,33 @@ mod tests {
     fn update_status_inner_test() {
         assert_eq!(
             UpdateStatusInner::from(0b00000000),
-            UpdateStatusInner::Unknown
+            UpdateStatusInner::UNKNOWN
         );
         assert_eq!(
             UpdateStatusInner::from(0b00000001),
-            UpdateStatusInner::Warning
+            UpdateStatusInner::WARNING
         );
         assert_eq!(
             UpdateStatusInner::from(0b00000010),
-            UpdateStatusInner::Warning
+            UpdateStatusInner::WARNING
         );
         assert_eq!(
             UpdateStatusInner::from(0b00000100),
-            UpdateStatusInner::Warning
+            UpdateStatusInner::WARNING
         );
         assert_eq!(
             UpdateStatusInner::from(0b00001000),
-            UpdateStatusInner::Warning
+            UpdateStatusInner::WARNING
         );
         assert_eq!(
             UpdateStatusInner::from(0b00001001),
-            UpdateStatusInner::Warning
+            UpdateStatusInner::WARNING
         );
-        assert_eq!(UpdateStatusInner::from(0b00010000), UpdateStatusInner::Ok);
-        assert_eq!(UpdateStatusInner::from(0b00100000), UpdateStatusInner::Ok);
-        assert_eq!(UpdateStatusInner::from(0b01000000), UpdateStatusInner::Ok);
-        assert_eq!(UpdateStatusInner::from(0b10000000), UpdateStatusInner::Ok);
-        assert_eq!(UpdateStatusInner::from(0b01010000), UpdateStatusInner::Ok);
+        assert_eq!(UpdateStatusInner::from(0b00010000), UpdateStatusInner::OK);
+        assert_eq!(UpdateStatusInner::from(0b00100000), UpdateStatusInner::OK);
+        assert_eq!(UpdateStatusInner::from(0b01000000), UpdateStatusInner::OK);
+        assert_eq!(UpdateStatusInner::from(0b10000000), UpdateStatusInner::OK);
+        assert_eq!(UpdateStatusInner::from(0b01010000), UpdateStatusInner::OK);
     }
 
     #[test]
@@ -401,11 +377,11 @@ mod tests {
         let mut status_timer = StatusTimer::new();
 
         let (sender, receiver) = unbounded();
-        let update_status_inner = UpdateStatusInner::Warning;
+        let update_status_inner = UpdateStatusInner::WARNING;
 
         assert!(!status_timer.active());
         assert!(receiver.is_empty());
-        status_timer.restart(sender, update_status_inner, STATUS_PERIOD);
+        status_timer.restart(sender, update_status_inner.clone(), STATUS_PERIOD);
 
         assert!(status_timer.active());
         assert!(receiver.is_empty());
@@ -423,15 +399,15 @@ mod tests {
 
         let (sender, receiver) = unbounded();
 
-        let update_status_inner = UpdateStatusInner::Warning;
+        let update_status_inner = UpdateStatusInner::WARNING;
 
         assert!(!status_timer.active());
         assert!(receiver.is_empty());
-        status_timer.restart(sender.clone(), update_status_inner, STATUS_PERIOD);
+        status_timer.restart(sender.clone(), update_status_inner.clone(), STATUS_PERIOD);
         assert!(status_timer.active());
         assert!(receiver.is_empty());
         sleep(Duration::from_secs_f64(STATUS_PERIOD as f64 * 0.5));
-        status_timer.restart(sender, update_status_inner, STATUS_PERIOD);
+        status_timer.restart(sender, update_status_inner.clone(), STATUS_PERIOD);
         assert!(receiver.is_empty());
         sleep(Duration::from_secs_f64(STATUS_PERIOD as f64 * 0.75));
         assert!(receiver.is_empty());
@@ -467,22 +443,22 @@ mod tests {
         let unknown_status = 0b00000000;
         let warning_status = 0b00000001;
         // Let warning message initiate and expire to go back to unknown.
-        assert_eq!(flag_status.status.clone().get(), UpdateStatusInner::Unknown);
+        assert_eq!(flag_status.status.clone().get(), UpdateStatusInner::UNKNOWN);
         flag_status.update_status(warning_status);
         sleep(Duration::from_secs_f64(SET_STATUS_THREAD_SLEEP_SEC));
         // Update_status for an unknown should not change the result.
         flag_status.update_status(unknown_status);
-        assert_eq!(flag_status.status.clone().get(), UpdateStatusInner::Warning);
+        assert_eq!(flag_status.status.clone().get(), UpdateStatusInner::WARNING);
         sleep(Duration::from_secs_f64(STATUS_PERIOD));
         let now = Instant::now();
-        while flag_status.status.get() != UpdateStatusInner::Unknown {
+        while flag_status.status.get() != UpdateStatusInner::UNKNOWN {
             sleep(Duration::from_millis(10));
             if (Instant::now() - now).as_secs_f64() > TIMEOUT_SWITCHING_TO_UNKNOWN_AFTER_TIMEOUT_SEC
             {
                 break;
             }
         }
-        assert_eq!(flag_status.status.get(), UpdateStatusInner::Unknown);
+        assert_eq!(flag_status.status.get(), UpdateStatusInner::UNKNOWN);
     }
 
     #[test]
@@ -497,18 +473,18 @@ mod tests {
         sleep(Duration::from_secs_f64(
             SET_STATUS_THREAD_SLEEP_SEC * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
         ));
-        assert_eq!(flag_status.status.clone().get(), UpdateStatusInner::Ok);
+        assert_eq!(flag_status.status.clone().get(), UpdateStatusInner::OK);
         flag_status.update_status(warning_status);
         sleep(Duration::from_secs_f64(
             SET_STATUS_THREAD_SLEEP_SEC * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
         ));
-        assert_eq!(flag_status.status.clone().get(), UpdateStatusInner::Warning);
+        assert_eq!(flag_status.status.clone().get(), UpdateStatusInner::WARNING);
         flag_status.update_status(ok_status);
         sleep(Duration::from_secs_f64(SET_STATUS_THREAD_SLEEP_SEC));
-        assert_eq!(flag_status.status.clone().get(), UpdateStatusInner::Warning);
+        assert_eq!(flag_status.status.clone().get(), UpdateStatusInner::WARNING);
         sleep(Duration::from_secs_f64(STATUS_PERIOD));
         let now = Instant::now();
-        while flag_status.status.get() != UpdateStatusInner::Unknown {
+        while flag_status.status.get() != UpdateStatusInner::UNKNOWN {
             sleep(Duration::from_millis(10));
             if (Instant::now() - now).as_secs_f64() > TIMEOUT_SWITCHING_TO_UNKNOWN_AFTER_TIMEOUT_SEC
             {
@@ -516,18 +492,18 @@ mod tests {
             }
         }
 
-        assert_eq!(flag_status.status.clone().get(), UpdateStatusInner::Unknown);
+        assert_eq!(flag_status.status.clone().get(), UpdateStatusInner::UNKNOWN);
 
         // Ok message with no warning active should set status ok then after expires goes unknown.
         flag_status.update_status(ok_status);
         sleep(Duration::from_secs_f64(
             SET_STATUS_THREAD_SLEEP_SEC * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
         ));
-        assert_eq!(flag_status.status.clone().get(), UpdateStatusInner::Ok);
+        assert_eq!(flag_status.status.clone().get(), UpdateStatusInner::OK);
         flag_status.update_status(unknown_status);
         sleep(Duration::from_secs_f64(
             STATUS_PERIOD * SLEEP_BUFFER_MULT_WITH_ERROR_MARGIN,
         ));
-        assert_eq!(flag_status.status.get(), UpdateStatusInner::Unknown);
+        assert_eq!(flag_status.status.get(), UpdateStatusInner::UNKNOWN);
     }
 }

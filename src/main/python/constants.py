@@ -17,6 +17,12 @@ class Tabs(str, Enum):
     ADVANCED_SPECTRUM_ANALYZER = "ADVANCED_SPECTRUM_ANALYZER"
 
 
+class FusionEngineStatus(str, Enum):
+    UNKNOWN = "UNKNOWN"
+    WARNING = "WARNING"
+    OK = "OK"
+
+
 class SbpLogging(str, Enum):
     OFF = "OFF"
     SBP_JSON = "SBP_JSON"

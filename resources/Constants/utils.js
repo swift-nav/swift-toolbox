@@ -8,13 +8,3 @@ function hzToMilliseconds(hz) {
 function fileUrlToString(url) {
     return url.toString().replace("file:///", "")
 }
-  
-function insStatusColor(status) {
-    if (status === "⚫") {
-        return "green" ;
-    } else if (status === "⬛") {
-        return "grey" ;
-    } else {
-        return "goldenrod" ;
-    }
-}

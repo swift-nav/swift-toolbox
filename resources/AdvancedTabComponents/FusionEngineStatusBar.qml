@@ -9,6 +9,12 @@ Item {
     id: fusionEngineStatusBar
 
     property variant lines: []
+    property string last_gnsspos: "UNKNOWN"
+    property string last_gnssvel: "UNKNOWN"
+    property string last_wheelticks: "UNKNOWN"
+    property string last_speed: "UNKNOWN"
+    property string last_nhc: "UNKNOWN"
+    property string last_zerovel: "UNKNOWN"
 
     width: parent.width
     height: parent.height
@@ -38,10 +44,24 @@ Item {
                 font.pointSize: Constants.mediumPointSize
             }
 
-            Text {
-                id: gnssposText
+            UnknownStatus {
+                id: gnssposUnknown
 
-                Layout.preferredWidth: Constants.advancedIns.insStatusEmojiWidth
+                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+            }
+
+            WarningStatus {
+                id: gnssposWarning
+
+                visible: false
+                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+            }
+
+            OkStatus {
+                id: gnssposOk
+
+                visible: false
+                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
             }
 
             Text {
@@ -49,10 +69,24 @@ Item {
                 font.pointSize: Constants.mediumPointSize
             }
 
-            Text {
-                id: gnssvelText
+            UnknownStatus {
+                id: gnssvelUnknown
 
-                Layout.preferredWidth: Constants.advancedIns.insStatusEmojiWidth
+                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+            }
+
+            WarningStatus {
+                id: gnssvelWarning
+
+                visible: false
+                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+            }
+
+            OkStatus {
+                id: gnssvelOk
+
+                visible: false
+                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
             }
 
             Text {
@@ -60,10 +94,24 @@ Item {
                 font.pointSize: Constants.mediumPointSize
             }
 
-            Text {
-                id: wheelticksText
+            UnknownStatus {
+                id: wheelticksUnknown
 
-                Layout.preferredWidth: Constants.advancedIns.insStatusEmojiWidth
+                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+            }
+
+            WarningStatus {
+                id: wheelticksWarning
+
+                visible: false
+                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+            }
+
+            OkStatus {
+                id: wheelticksOk
+
+                visible: false
+                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
             }
 
             Text {
@@ -71,10 +119,24 @@ Item {
                 font.pointSize: Constants.mediumPointSize
             }
 
-            Text {
-                id: speedText
+            UnknownStatus {
+                id: speedUnknown
 
-                Layout.preferredWidth: Constants.advancedIns.insStatusEmojiWidth
+                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+            }
+
+            WarningStatus {
+                id: speedWarning
+
+                visible: false
+                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+            }
+
+            OkStatus {
+                id: speedOk
+
+                visible: false
+                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
             }
 
             Text {
@@ -82,10 +144,24 @@ Item {
                 font.pointSize: Constants.mediumPointSize
             }
 
-            Text {
-                id: nhcText
+            UnknownStatus {
+                id: nhcUnknown
 
-                Layout.preferredWidth: Constants.advancedIns.insStatusEmojiWidth
+                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+            }
+
+            WarningStatus {
+                id: nhcWarning
+
+                visible: false
+                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+            }
+
+            OkStatus {
+                id: nhcOk
+
+                visible: false
+                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
             }
 
             Text {
@@ -93,10 +169,24 @@ Item {
                 font.pointSize: Constants.mediumPointSize
             }
 
-            Text {
-                id: zerovelText
+            UnknownStatus {
+                id: zerovelUnknown
 
-                Layout.preferredWidth: Constants.advancedIns.insStatusEmojiWidth
+                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+            }
+
+            WarningStatus {
+                id: zerovelWarning
+
+                visible: false
+                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+            }
+
+            OkStatus {
+                id: zerovelOk
+
+                visible: false
+                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
             }
 
             Item {
@@ -116,18 +206,108 @@ Item {
                         return ;
 
                     insStatusRow.visible = true;
-                    gnssposText.text = fusionEngineStatusBarData.gnsspos;
-                    gnssposText.color = Utils.insStatusColor(fusionEngineStatusBarData.gnsspos);
-                    gnssvelText.text = fusionEngineStatusBarData.gnssvel;
-                    gnssvelText.color = Utils.insStatusColor(fusionEngineStatusBarData.gnssvel);
-                    wheelticksText.text = fusionEngineStatusBarData.wheelticks;
-                    wheelticksText.color = Utils.insStatusColor(fusionEngineStatusBarData.wheelticks);
-                    speedText.text = fusionEngineStatusBarData.speed;
-                    speedText.color = Utils.insStatusColor(fusionEngineStatusBarData.speed);
-                    nhcText.text = fusionEngineStatusBarData.nhc;
-                    nhcText.color = Utils.insStatusColor(fusionEngineStatusBarData.nhc);
-                    zerovelText.text = fusionEngineStatusBarData.zerovel;
-                    zerovelText.color = Utils.insStatusColor(fusionEngineStatusBarData.zerovel);
+                    var gnsspos = fusionEngineStatusBarData.gnsspos;
+                    if (gnsspos != last_gnsspos) {
+                        if (gnsspos == "UNKNOWN") {
+                            gnssposUnknown.visible = true;
+                            gnssposWarning.visible = false;
+                            gnssposOk.visible = false;
+                        } else if (gnsspos == "WARNING") {
+                            gnssposUnknown.visible = false;
+                            gnssposWarning.visible = true;
+                            gnssposOk.visible = false;
+                        } else {
+                            gnssposUnknown.visible = false;
+                            gnssposWarning.visible = false;
+                            gnssposOk.visible = true;
+                        }
+                        last_gnsspos = gnsspos;
+                    }
+                    var gnssvel = fusionEngineStatusBarData.gnssvel;
+                    if (gnssvel != last_gnssvel) {
+                        if (gnssvel == "UNKNOWN") {
+                            gnssvelUnknown.visible = true;
+                            gnssvelWarning.visible = false;
+                            gnssvelOk.visible = false;
+                        } else if (gnssvel == "WARNING") {
+                            gnssvelUnknown.visible = false;
+                            gnssvelWarning.visible = true;
+                            gnssvelOk.visible = false;
+                        } else {
+                            gnssvelUnknown.visible = false;
+                            gnssvelWarning.visible = false;
+                            gnssvelOk.visible = true;
+                        }
+                        last_gnssvel = gnssvel;
+                    }
+                    var wheelticks = fusionEngineStatusBarData.wheelticks;
+                    if (wheelticks != last_wheelticks) {
+                        if (wheelticks == "UNKNOWN") {
+                            wheelticksUnknown.visible = true;
+                            wheelticksWarning.visible = false;
+                            wheelticksOk.visible = false;
+                        } else if (wheelticks == "WARNING") {
+                            wheelticksUnknown.visible = false;
+                            wheelticksWarning.visible = true;
+                            wheelticksOk.visible = false;
+                        } else {
+                            wheelticksUnknown.visible = false;
+                            wheelticksWarning.visible = false;
+                            wheelticksOk.visible = true;
+                        }
+                        last_wheelticks = wheelticks;
+                    }
+                    var speed = fusionEngineStatusBarData.speed;
+                    if (speed != last_speed) {
+                        if (speed == "UNKNOWN") {
+                            speedUnknown.visible = true;
+                            speedWarning.visible = false;
+                            speedOk.visible = false;
+                        } else if (speed == "WARNING") {
+                            speedUnknown.visible = false;
+                            speedWarning.visible = true;
+                            speedOk.visible = false;
+                        } else {
+                            speedUnknown.visible = false;
+                            speedWarning.visible = false;
+                            speedOk.visible = true;
+                        }
+                        last_speed = speed;
+                    }
+                    var nhc = fusionEngineStatusBarData.nhc;
+                    if (nhc != last_nhc) {
+                        if (nhc == "UNKNOWN") {
+                            nhcUnknown.visible = true;
+                            nhcWarning.visible = false;
+                            nhcOk.visible = false;
+                        } else if (nhc == "WARNING") {
+                            nhcUnknown.visible = false;
+                            nhcWarning.visible = true;
+                            nhcOk.visible = false;
+                        } else {
+                            nhcUnknown.visible = false;
+                            nhcWarning.visible = false;
+                            nhcOk.visible = true;
+                        }
+                        last_nhc = nhc;
+                    }
+                    var zerovel = fusionEngineStatusBarData.zerovel;
+                    if (zerovel != last_zerovel) {
+                        if (zerovel == "UNKNOWN") {
+                            zerovelUnknown.visible = true;
+                            zerovelWarning.visible = false;
+                            zerovelOk.visible = false;
+                        } else if (zerovel == "WARNING") {
+                            zerovelUnknown.visible = false;
+                            zerovelWarning.visible = true;
+                            zerovelOk.visible = false;
+                        } else {
+                            zerovelUnknown.visible = false;
+                            zerovelWarning.visible = false;
+                            zerovelOk.visible = true;
+                        }
+                        last_zerovel = zerovel;
+                    }
                 }
             }
 

@@ -1,30 +1,30 @@
-"""Advanced Ins Tab QObjects.
+"""Fusion Engine Status Bar QObjects.
 """
 
 from typing import Dict, Any
 
 from PySide2.QtCore import Property, QObject, Slot
 
-from constants import Keys
+from constants import Keys, FusionEngineStatus
 
 FUSION_ENGINE_STATUS_BAR: Dict[str, Any] = {
-    Keys.GNSSPOS: "",
-    Keys.GNSSVEL: "",
-    Keys.WHEELTICKS: "",
-    Keys.SPEED: "",
-    Keys.NHC: "",
-    Keys.ZEROVEL: "",
+    Keys.GNSSPOS: FusionEngineStatus.UNKNOWN,
+    Keys.GNSSVEL: FusionEngineStatus.UNKNOWN,
+    Keys.WHEELTICKS: FusionEngineStatus.UNKNOWN,
+    Keys.SPEED: FusionEngineStatus.UNKNOWN,
+    Keys.NHC: FusionEngineStatus.UNKNOWN,
+    Keys.ZEROVEL: FusionEngineStatus.UNKNOWN,
 }
 
 
 class FusionEngineStatusBarData(QObject):
 
-    _gnsspos: str = ""
-    _gnssvel: str = ""
-    _wheelticks: str = ""
-    _speed: str = ""
-    _nhc: str = ""
-    _zerovel: str = ""
+    _gnsspos: str = FusionEngineStatus.UNKNOWN
+    _gnssvel: str = FusionEngineStatus.UNKNOWN
+    _wheelticks: str = FusionEngineStatus.UNKNOWN
+    _speed: str = FusionEngineStatus.UNKNOWN
+    _nhc: str = FusionEngineStatus.UNKNOWN
+    _zerovel: str = FusionEngineStatus.UNKNOWN
 
     def get_gnsspos(self) -> str:
         return self._gnsspos

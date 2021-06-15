@@ -110,7 +110,13 @@ QtObject {
         readonly property int textDataBarHeight: 20
         readonly property int textDataBarMargin: 2
         readonly property int textDataBarBorderWidth: 1
-        readonly property int insStatusEmojiWidth: 40
+        readonly property string unknownStatusPath: "images/fontawesome/square-solid.svg"
+        readonly property string unknownStatusColor: "dimgrey"
+        readonly property string warningStatusPath: "images/fontawesome/exclamation-triangle-solid.svg"
+        readonly property string warningStatusColor: "goldenrod"
+        readonly property string okStatusPath: "images/fontawesome/circle-solid.svg"
+        readonly property string okStatusColor: "green"
+        readonly property int insStatusImageWidth: 15
     }
 
     solutionPosition: QtObject {

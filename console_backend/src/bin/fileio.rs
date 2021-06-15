@@ -75,10 +75,10 @@ fn main() -> Result<()> {
             scope(|s| {
                 s.spawn(|_| run(rdr));
                 let mut fileio = Fileio::new(bc, sender);
-                let data = fs::read(source)?;
-                fileio.write(dest, &data)?;
-                done_tx.send(true).unwrap();
+                let data = fs::File::open(source)?;
+                fileio.write(dest, data)?;
                 eprintln!("file written successfully.");
+                done_tx.send(true).unwrap();
                 Result::Ok(())
             })
             .unwrap()
@@ -93,12 +93,11 @@ fn main() -> Result<()> {
             scope(|s| {
                 s.spawn(|_| run(rdr));
                 let mut fileio = Fileio::new(bc, sender);
-                let data = fileio.read(source)?;
-                let mut dest: Box<dyn Write> = match dest {
+                let dest: Box<dyn Write> = match dest {
                     Some(path) => Box::new(fs::File::create(path)?),
                     None => Box::new(io::stdout()),
                 };
-                dest.write_all(&data)?;
+                fileio.read(source, dest)?;
                 done_tx.send(true).unwrap();
                 Result::Ok(())
             })
@@ -124,8 +123,8 @@ fn main() -> Result<()> {
                 s.spawn(|_| run(rdr));
                 let fileio = Fileio::new(bc, sender);
                 fileio.remove(path)?;
-                done_tx.send(true).unwrap();
                 eprintln!("file deleted.");
+                done_tx.send(true).unwrap();
                 Result::Ok(())
             })
             .unwrap()

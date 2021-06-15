@@ -1,6 +1,6 @@
 use std::{
     collections::HashMap,
-    io::Write,
+    io::{BufRead, BufReader, Read, Write},
     time::{Duration, Instant},
 };
 
@@ -53,7 +53,7 @@ where
         }
     }
 
-    pub fn read(&mut self, path: String) -> Result<Vec<u8>> {
+    pub fn read(&mut self, path: String, mut dest: impl Write) -> Result<()> {
         let config = self.fetch_config();
 
         let sender = self.sender.clone();
@@ -74,9 +74,16 @@ where
 
         let open_requests = AtomicCell::new(0u32);
 
+        let mut sequence = new_sequence();
+        // sequence number of the request we need to write to `dest` next
+        let mut current_sequence = sequence;
+        // holds data while we wait for out of order requests
+        let mut data: HashMap<u32, Vec<u8>> = HashMap::new();
+        let mut pending: HashMap<u32, ReadReq> = HashMap::new();
+        let mut last_sent = false;
+
         scope(|s| {
             s.spawn(|_| {
-                let mut sequence = new_sequence();
                 let mut offset = 0;
                 let backoff = Backoff::new();
 
@@ -101,10 +108,6 @@ where
                 }
             });
 
-            let mut data: HashMap<u32, Vec<u8>> = HashMap::new();
-            let mut pending: HashMap<u32, ReadReq> = HashMap::new();
-            let mut last_sent = false;
-
             loop {
                 select! {
                     recv(req_rx) -> msg => {
@@ -118,7 +121,16 @@ where
                             None => continue,
                         };
                         let bytes_read = msg.contents.len();
-                        data.insert(req.offset, msg.contents);
+                        if msg.sequence == current_sequence {
+                            dest.write_all(&msg.contents)?;
+                            current_sequence += 1;
+                            while let Some(d) = data.remove(&current_sequence) {
+                                dest.write_all(&d)?;
+                                current_sequence += 1;
+                            }
+                        } else {
+                            data.insert(req.offset, msg.contents);
+                        }
                         open_requests.fetch_sub(1);
                         if !last_sent && bytes_read != READ_CHUNK_SIZE as usize {
                             last_sent = true;
@@ -141,19 +153,34 @@ where
 
             self.broadcast.unsubscribe(key);
 
-            let mut data: Vec<_> = data.into_iter().collect();
-            data.sort_by_key(|(seq, _)| *seq);
-            let results = data.into_iter().fold(Vec::new(), |mut acc, (_, data)| {
-                acc.extend(data);
-                acc
-            });
-
-            Ok(results)
+            Ok(())
         })
         .unwrap()
     }
 
-    pub fn write(&mut self, mut filename: String, data: &[u8]) -> Result<()> {
+    pub fn read_vec(&mut self, path: String) -> Result<Vec<u8>> {
+        let mut dest = Vec::new();
+        self.read(path, &mut dest)?;
+        Ok(dest)
+    }
+
+    pub fn write(&mut self, filename: String, data: impl Read) -> Result<()> {
+        let mut data = BufReader::new(data);
+
+        loop {
+            let buf = data.fill_buf()?;
+            let bytes_read = buf.len();
+            if bytes_read == 0 {
+                break;
+            }
+            self.write_slice(filename.clone(), buf)?;
+            data.consume(bytes_read)
+        }
+
+        Ok(())
+    }
+
+    pub fn write_slice(&mut self, mut filename: String, data: &[u8]) -> Result<()> {
         let config = self.fetch_config();
 
         self.remove(filename.clone())?;

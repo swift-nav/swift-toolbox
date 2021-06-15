@@ -210,6 +210,31 @@ mod tests {
     }
 
     #[test]
+    fn test_iter_subscription() {
+        let b = Broadcaster::new();
+
+        let (msg_obs, key) = b.subscribe::<MsgObs>();
+
+        scope(|s| {
+            s.spawn(|_| {
+                // initial non-blocking call should have no messages
+                assert_eq!(msg_obs.try_iter().count(), 0);
+
+                // blocking call will get the two messages
+                assert_eq!(msg_obs.iter().count(), 2);
+            });
+
+            b.send(&make_msg_obs());
+            b.send(&make_msg_obs_dep_a());
+            b.send(&make_msg_obs());
+
+            // msg_obs.iter() goes forever if you don't drop the channel
+            b.unsubscribe(key);
+        })
+        .unwrap();
+    }
+
+    #[test]
     fn test_wait() {
         let b = Broadcaster::new();
 

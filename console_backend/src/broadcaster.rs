@@ -158,6 +158,7 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crossbeam::scope;
     use sbp::messages::{
         self,
         observation::{MsgObs, MsgObsDepA, ObservationHeader, ObservationHeaderDep},
@@ -175,6 +176,67 @@ mod tests {
 
         assert!(msg_obs.try_recv().is_ok());
         assert!(msg_obs.try_recv().is_err());
+    }
+
+    #[test]
+    fn test_multiple_subs() {
+        let b = Broadcaster::new();
+        let (msg_obs1, _) = b.subscribe::<MsgObs>();
+        let (msg_obs2, _) = b.subscribe::<MsgObs>();
+
+        b.send(&make_msg_obs());
+        b.send(&make_msg_obs());
+
+        assert_eq!(msg_obs1.try_iter().count(), 2);
+        assert_eq!(msg_obs2.try_iter().count(), 2);
+    }
+
+    #[test]
+    fn test_unsubscribe() {
+        let b = Broadcaster::new();
+
+        let (msg_obs1, key) = b.subscribe::<MsgObs>();
+        let (msg_obs2, _) = b.subscribe::<MsgObs>();
+
+        b.send(&make_msg_obs());
+        assert_eq!(msg_obs1.try_iter().count(), 1);
+        assert_eq!(msg_obs2.try_iter().count(), 1);
+
+        b.unsubscribe(key);
+
+        b.send(&make_msg_obs());
+        assert_eq!(msg_obs1.try_iter().count(), 0);
+        assert_eq!(msg_obs2.try_iter().count(), 1);
+    }
+
+    #[test]
+    fn test_wait() {
+        let b = Broadcaster::new();
+
+        scope(|s| {
+            s.spawn(|_| {
+                std::thread::sleep(Duration::from_secs(1));
+                b.send(&make_msg_obs())
+            });
+
+            assert!(b.wait::<MsgObs>(Duration::from_secs(2)).is_ok());
+        })
+        .unwrap()
+    }
+
+    #[test]
+    fn test_wait_timeout() {
+        let b = Broadcaster::new();
+
+        scope(|s| {
+            s.spawn(|_| {
+                std::thread::sleep(Duration::from_secs(2));
+                b.send(&make_msg_obs())
+            });
+
+            assert!(b.wait::<MsgObs>(Duration::from_secs(1)).is_err());
+        })
+        .unwrap()
     }
 
     #[test]

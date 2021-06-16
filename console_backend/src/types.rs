@@ -274,7 +274,6 @@ impl ServerState {
     ) -> Result<()> {
         let conn = Connection::serial(device, baudrate, flow)?;
         info!("Connected to serialport!");
-        // serial port history?
         self.connect(conn, client_send, shared_state, RealtimeDelay::Off, false);
         Ok(())
     }

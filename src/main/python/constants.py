@@ -89,6 +89,8 @@ class Keys(str, Enum):
     SPEED = "SPEED"
     NHC = "NHC"
     ZEROVEL = "ZEROVEL"
+    YMIN = "YMIN"
+    YMAX = "YMAX"
 
 
 class ApplicationStates(str, Enum):

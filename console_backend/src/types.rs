@@ -217,7 +217,7 @@ impl ServerState {
     /// - `filename`: The path to the filename to be read for SBP messages.
     pub fn connect_to_file(
         &self,
-        mut client_send: ClientSender,
+        client_send: ClientSender,
         shared_state: SharedState,
         filename: String,
         close_when_done: bool,
@@ -225,10 +225,13 @@ impl ServerState {
         let conn = Connection::file(filename.clone())?;
         info!("Opened file successfully!");
         shared_state.update_file_history(filename);
-        self.connect(conn, client_send.clone(), shared_state, RealtimeDelay::On);
-        if close_when_done {
-            close_frontend(&mut client_send);
-        }
+        self.connect(
+            conn,
+            client_send,
+            shared_state,
+            RealtimeDelay::On,
+            close_when_done,
+        );
         Ok(())
     }
 
@@ -249,7 +252,7 @@ impl ServerState {
         let conn = Connection::tcp(host.clone(), port)?;
         info!("Connected to tcp stream!");
         shared_state.update_tcp_history(host, port);
-        self.connect(conn, client_send, shared_state, RealtimeDelay::Off);
+        self.connect(conn, client_send, shared_state, RealtimeDelay::Off, false);
         Ok(())
     }
 
@@ -272,7 +275,7 @@ impl ServerState {
         let conn = Connection::serial(device, baudrate, flow)?;
         info!("Connected to serialport!");
         // serial port history?
-        self.connect(conn, client_send, shared_state, RealtimeDelay::Off);
+        self.connect(conn, client_send, shared_state, RealtimeDelay::Off, false);
         Ok(())
     }
 
@@ -282,6 +285,7 @@ impl ServerState {
         mut client_send: ClientSender,
         shared_state: SharedState,
         delay: RealtimeDelay,
+        close_when_done: bool,
     ) {
         shared_state.set_current_connection(conn.name.clone());
         shared_state.set_running(true, client_send.clone());
@@ -289,6 +293,9 @@ impl ServerState {
         self.new_connection(thread::spawn(move || {
             refresh_navbar(&mut client_send, shared_state.clone());
             process_messages(conn, shared_state.clone(), client_send.clone(), delay);
+            if close_when_done {
+                close_frontend(&mut client_send);
+            }
             shared_state.set_running(false, client_send);
         }));
     }

@@ -1,4 +1,3 @@
-use crate::common_constants::Tabs;
 // 'Universal' constants
 
 pub const NANOSECONDS_PER_SECOND: f64 = 1.0e+9;
@@ -8,17 +7,6 @@ pub const APPLICATION_QUALIFIER: &str = "com.swift-nav";
 pub const APPLICATION_ORGANIZATION: &str = "swift-nav";
 pub const APPLICATION_NAME: &str = "swift_navigation_console";
 // CLI constants.
-pub const TAB_LIST: &[Tabs] = &[
-    Tabs::TRACKING_SIGNALS,
-    Tabs::TRACKING_SKYPLOT,
-    Tabs::SOLUTION_POSITION,
-    Tabs::SOLUTION_VELOCITY,
-    Tabs::BASELINE,
-    Tabs::OBSERVATIONS,
-    Tabs::SETTINGS,
-    Tabs::UPDATE,
-    Tabs::ADVANCED,
-];
 
 // Server constants.
 pub const CLOSE: &str = "CLOSE";
@@ -38,6 +26,10 @@ pub const DEFAULT_LOG_DIRECTORY: &str = "SwiftNav";
 
 // Common constants.
 pub const NUM_POINTS: usize = 200;
+
+// Advanced Ins Tab constants.
+pub const NUM_INS_PLOT_ROWS: usize = 6;
+pub const NUM_INS_FIELDS: usize = 5;
 
 // Navbar constants.
 pub const AVAILABLE_REFRESH_RATES: [u8; 4] = [1, 5, 10, 25];
@@ -62,9 +54,9 @@ pub const GLO_SLOT_SAT_MAX: u8 = 90;
 pub const GLO_FCN_OFFSET: i16 = 8;
 pub const SBAS_NEG_OFFSET: i16 = 120;
 pub const QZSS_NEG_OFFSET: i16 = 193;
-pub const SNR_THRESHOLD: f64 = 15.0;
-pub const TRACKING_SIGNALS_PLOT_MAX: f64 = 60.0;
 pub const GUI_UPDATE_PERIOD: f64 = 0.2;
+pub const CHART_XMIN_OFFSET_NO_TRACKING: f64 = -45.0;
+pub const CHART_XMIN_OFFSET_TRACKING: f64 = -95.0;
 
 pub const SHOW_LEGEND: &str = "Show Legend";
 

@@ -73,11 +73,14 @@ ApplicationWindow {
                     }
 
                     Item {
-                        id: updateTab
+                        id: settingsTab
                     }
 
                     Item {
-                        id: advancedTab
+                        id: updateTab
+                    }
+
+                    AdvancedTab {
                     }
 
                 }

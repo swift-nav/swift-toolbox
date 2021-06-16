@@ -70,11 +70,20 @@ pub fn process_messages<S>(
             SBP::MsgHeartbeat(_) => {
                 main.status_bar.handle_heartbeat();
             }
+            SBP::MsgImuAux(msg) => {
+                main.advanced_ins_tab.handle_imu_aux(msg);
+            }
+            SBP::MsgImuRaw(msg) => {
+                main.advanced_ins_tab.handle_imu_raw(msg);
+            }
             SBP::MsgInsStatus(msg) => {
                 main.solution_tab.handle_ins_status(msg.clone());
                 main.status_bar.handle_ins_status(msg);
             }
             SBP::MsgInsUpdates(msg) => {
+                main.advanced_ins_tab
+                    .fusion_engine_status_bar
+                    .handle_ins_updates(msg.clone());
                 main.solution_tab.handle_ins_updates(msg.clone());
                 main.status_bar.handle_ins_updates(msg);
             }

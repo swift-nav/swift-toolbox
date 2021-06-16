@@ -41,7 +41,11 @@ use std::{
     ops::Deref,
     path::PathBuf,
     str::FromStr,
-    sync::{mpsc::Sender, Arc, Mutex},
+    sync::{
+        atomic::{AtomicBool, Ordering::*},
+        mpsc::Sender,
+        Arc, Mutex,
+    },
     thread,
     thread::JoinHandle,
     time::{Duration, Instant},
@@ -89,12 +93,14 @@ pub struct Deque<T> {
     d: Vec<T>,
     capacity: usize,
 }
-impl<T> Deque<T> {
-    pub fn with_size_limit(capacity: usize) -> Deque<T> {
-        Deque {
-            d: Vec::new(),
-            capacity,
-        }
+impl<T: Clone> Deque<T> {
+    pub fn with_size_limit(capacity: usize, fill_value: Option<T>) -> Deque<T> {
+        let d = if let Some(val) = fill_value {
+            vec![val; capacity]
+        } else {
+            vec![]
+        };
+        Deque { d, capacity }
     }
     pub fn add(&mut self, ele: T) {
         if self.d.len() == self.capacity {
@@ -131,6 +137,35 @@ pub struct TestSender {
 impl MessageSender for TestSender {
     fn send_data(&mut self, msg: Vec<u8>) {
         self.inner.push(msg)
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct ArcBool(Arc<AtomicBool>);
+impl ArcBool {
+    pub fn new() -> ArcBool {
+        ArcBool(Arc::new(AtomicBool::new(false)))
+    }
+    pub fn get(&self) -> bool {
+        self.load(Acquire)
+    }
+    pub fn set(&self, set_to: bool) {
+        self.store(set_to, Release);
+    }
+}
+
+impl Deref for ArcBool {
+    type Target = AtomicBool;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Clone for ArcBool {
+    fn clone(&self) -> Self {
+        ArcBool {
+            0: Arc::clone(&self.0),
+        }
     }
 }
 
@@ -2075,7 +2110,7 @@ mod tests {
         let now = SystemTime::now();
         sleep(Duration::from_millis(1));
         shared_state.set_running(false, client_send);
-        sleep(Duration::from_millis(5));
+        sleep(Duration::from_millis(10));
         assert!(handle.join().is_ok());
 
         match now.elapsed() {

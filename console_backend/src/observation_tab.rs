@@ -1,5 +1,5 @@
 use capnp::message::Builder;
-use capnp::serialize;
+
 use log::warn;
 use std::collections::{BTreeMap, HashMap};
 
@@ -7,6 +7,7 @@ use crate::types::*;
 use crate::utils::{compute_doppler, sec_to_ns};
 
 use crate::console_backend_capnp as m;
+use crate::utils::serialize_capnproto_builder;
 
 #[derive(Clone, Debug)]
 pub struct ObservationTableRow {
@@ -291,9 +292,7 @@ impl<S: MessageSender> ObservationTab<S> {
             list_item.set_flags(row.flags);
         }
 
-        let mut msg_bytes: Vec<u8> = vec![];
-        serialize::write_message(&mut msg_bytes, &builder).unwrap();
-
-        self.client_sender.send_data(msg_bytes);
+        self.client_sender
+            .send_data(serialize_capnproto_builder(builder));
     }
 }

@@ -1,3 +1,4 @@
+pub mod advanced_ins_tab;
 pub mod cli_options;
 pub mod console_backend_capnp {
     include!(concat!(env!("OUT_DIR"), "/console_backend_capnp.rs"));
@@ -9,6 +10,7 @@ pub mod date_conv;
 pub mod errors;
 pub mod fileio;
 pub mod formatters;
+pub mod fusion_status_flags;
 pub mod log_panel;
 pub mod main_tab;
 pub mod observation_tab;

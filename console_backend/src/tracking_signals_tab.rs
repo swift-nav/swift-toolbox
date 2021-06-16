@@ -1,8 +1,10 @@
 use ordered_float::OrderedFloat;
-use std::{collections::HashMap, time::Instant};
+use std::{
+    collections::HashMap,
+    time::{Duration, Instant},
+};
 
 use capnp::message::Builder;
-use capnp::serialize;
 
 use log::warn;
 
@@ -10,7 +12,7 @@ use crate::console_backend_capnp as m;
 use crate::constants::*;
 use crate::piksi_tools_constants::*;
 use crate::types::*;
-use crate::utils::{signal_key_color, signal_key_label};
+use crate::utils::{serialize_capnproto_builder, signal_key_color, signal_key_label};
 use sbp::messages::tracking::{MeasurementState, TrackingChannelState};
 
 /// TrackingSignalsTab struct.
@@ -48,9 +50,8 @@ pub struct TrackingSignalsTab<S: MessageSender> {
     pub gps_tow: f64,
     pub gps_week: u16,
     pub incoming_obs_cn0: HashMap<(SignalCodes, i16), f64>,
+    pub last_obs_update_time: Instant,
     pub last_update_time: Instant,
-    pub max: f64,
-    pub min: f64,
     pub prev_obs_count: u8,
     pub prev_obs_total: u8,
     pub received_codes: Vec<SignalCodes>,
@@ -88,9 +89,8 @@ impl<S: MessageSender> TrackingSignalsTab<S> {
             gps_tow: 0.0,
             gps_week: 0,
             incoming_obs_cn0: HashMap::new(),
+            last_obs_update_time: Instant::now(),
             last_update_time: Instant::now(),
-            max: TRACKING_SIGNALS_PLOT_MAX,
-            min: SNR_THRESHOLD,
             prev_obs_count: 0,
             prev_obs_total: 0,
             received_codes: Vec::new(),
@@ -99,7 +99,7 @@ impl<S: MessageSender> TrackingSignalsTab<S> {
             sv_labels: Vec::new(),
             t_init: Instant::now(),
             time: {
-                let mut time = Deque::with_size_limit(NUM_POINTS);
+                let mut time = Deque::with_size_limit(NUM_POINTS, /*fill_value=*/ None);
                 for x in (0..(NUM_POINTS as i32)).rev() {
                     time.add((-x as f64) * (1.0 / TRK_RATE));
                 }
@@ -117,7 +117,7 @@ impl<S: MessageSender> TrackingSignalsTab<S> {
         let cn0_deque = self
             .cn0_dict
             .entry(key)
-            .or_insert_with(|| Deque::with_size_limit(NUM_POINTS));
+            .or_insert_with(|| Deque::with_size_limit(NUM_POINTS, /*fill_value=*/ None));
         cn0_deque.add((OrderedFloat(t), cn0));
     }
     /// Push carrier-to-noise density age to cn0_age with key.
@@ -319,6 +319,11 @@ impl<S: MessageSender> TrackingSignalsTab<S> {
         if self.at_least_one_track_received {
             return;
         }
+        if Instant::now() - self.last_obs_update_time <= Duration::from_secs_f64(GUI_UPDATE_PERIOD)
+        {
+            return;
+        }
+        self.last_obs_update_time = Instant::now();
         let mut codes_that_came: Vec<(SignalCodes, i16)> = Vec::new();
         let t = (Instant::now()).duration_since(self.t_init).as_secs_f64();
         self.time.add(t);
@@ -358,14 +363,20 @@ impl<S: MessageSender> TrackingSignalsTab<S> {
         self.incoming_obs_cn0.clear()
     }
 
+    fn chart_xmin_offset(&self) -> f64 {
+        if self.at_least_one_track_received {
+            CHART_XMIN_OFFSET_TRACKING
+        } else {
+            CHART_XMIN_OFFSET_NO_TRACKING
+        }
+    }
+
     /// Package data into a message buffer and send to frontend.
     fn send_data(&mut self) {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<m::message::Builder>();
 
         let mut tracking_signals_status = msg.init_tracking_signals_status();
-        tracking_signals_status.set_min(self.min);
-        tracking_signals_status.set_max(self.max);
         let mut labels = tracking_signals_status
             .reborrow()
             .init_labels(self.sv_labels.len() as u32);
@@ -398,21 +409,22 @@ impl<S: MessageSender> TrackingSignalsTab<S> {
                 }
             }
         }
+        tracking_signals_status.set_xmin_offset(self.chart_xmin_offset());
         let mut tracking_checkbox_labels = tracking_signals_status
             .reborrow()
             .init_check_labels(self.check_labels.len() as u32);
         for (i, label) in self.check_labels.iter().enumerate() {
             tracking_checkbox_labels.set(i as u32, label);
         }
-        let mut msg_bytes: Vec<u8> = vec![];
-        serialize::write_message(&mut msg_bytes, &builder).unwrap();
-
-        self.client_sender.send_data(msg_bytes);
+        self.client_sender
+            .send_data(serialize_capnproto_builder(builder));
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::thread::sleep;
+
     use super::*;
     use sbp::messages::{
         gnss::{CarrierPhase, GPSTime, GnssSignal},
@@ -579,7 +591,7 @@ mod tests {
                 sat,
             },
         });
-
+        sleep(Duration::from_secs_f64(GUI_UPDATE_PERIOD));
         assert_eq!(tracking_signals_tab.cn0_dict.len(), 0);
         tracking_signals_tab.handle_obs(ObservationMsg::MsgObs(obs_msg));
         assert_eq!(tracking_signals_tab.cn0_dict.len(), 1);

@@ -30,8 +30,26 @@ pub enum Tabs {
     SETTINGS,
     #[strum(serialize = "UPDATE")]
     UPDATE,
-    #[strum(serialize = "ADVANCED")]
-    ADVANCED,
+    #[strum(serialize = "ADVANCED_SYSTEM_MONITOR")]
+    ADVANCED_SYSTEM_MONITOR,
+    #[strum(serialize = "ADVANCED_INS")]
+    ADVANCED_INS,
+    #[strum(serialize = "ADVANCED_MAGNETOMETER")]
+    ADVANCED_MAGNETOMETER,
+    #[strum(serialize = "ADVANCED_NETWORKING")]
+    ADVANCED_NETWORKING,
+    #[strum(serialize = "ADVANCED_SPECTRUM_ANALYZER")]
+    ADVANCED_SPECTRUM_ANALYZER,
+}
+
+#[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
+pub enum FusionStatus {
+    #[strum(serialize = "UNKNOWN")]
+    UNKNOWN,
+    #[strum(serialize = "WARNING")]
+    WARNING,
+    #[strum(serialize = "OK")]
+    OK,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
@@ -144,6 +162,22 @@ pub enum Keys {
     SBP_LOGGING_LABELS,
     #[strum(serialize = "LOG_LEVEL_LABELS")]
     LOG_LEVEL_LABELS,
+    #[strum(serialize = "FIELDS_DATA")]
+    FIELDS_DATA,
+    #[strum(serialize = "XMIN_OFFSET")]
+    XMIN_OFFSET,
+    #[strum(serialize = "GNSSPOS")]
+    GNSSPOS,
+    #[strum(serialize = "GNSSVEL")]
+    GNSSVEL,
+    #[strum(serialize = "WHEELTICKS")]
+    WHEELTICKS,
+    #[strum(serialize = "SPEED")]
+    SPEED,
+    #[strum(serialize = "NHC")]
+    NHC,
+    #[strum(serialize = "ZEROVEL")]
+    ZEROVEL,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]

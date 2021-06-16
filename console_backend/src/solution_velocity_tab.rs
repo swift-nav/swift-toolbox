@@ -4,12 +4,11 @@ use std::str::FromStr;
 use sbp::messages::navigation::MsgVelNED;
 
 use capnp::message::Builder;
-use capnp::serialize;
 
 use crate::console_backend_capnp as m;
 use crate::constants::{HORIZONTAL_COLOR, NUM_POINTS, VERTICAL_COLOR};
 use crate::types::{Deque, MessageSender, SharedState, VelocityUnits};
-
+use crate::utils::serialize_capnproto_builder;
 /// SolutionVelocityTab struct.
 ///
 /// # Fields:
@@ -51,8 +50,8 @@ impl<'a, S: MessageSender> SolutionVelocityTab<'a, S> {
             min: 0_f64,
             multiplier: VelocityUnits::Mps.get_multiplier(),
             points: vec![
-                Deque::with_size_limit(NUM_POINTS),
-                Deque::with_size_limit(NUM_POINTS),
+                Deque::with_size_limit(NUM_POINTS, /*fill_value=*/ None),
+                Deque::with_size_limit(NUM_POINTS, /*fill_value=*/ None),
             ],
             shared_state,
             tow: 0_f64,
@@ -63,8 +62,8 @@ impl<'a, S: MessageSender> SolutionVelocityTab<'a, S> {
     fn convert_points(&mut self, new_unit: VelocityUnits) {
         let new_mult = new_unit.get_multiplier();
         let mut points = vec![
-            Deque::with_size_limit(NUM_POINTS),
-            Deque::with_size_limit(NUM_POINTS),
+            Deque::with_size_limit(NUM_POINTS, /*fill_value=*/ None),
+            Deque::with_size_limit(NUM_POINTS, /*fill_value=*/ None),
         ];
         let hpoints = &mut self.points[0].get();
         let vpoints = &mut self.points[1].get();
@@ -162,10 +161,8 @@ impl<'a, S: MessageSender> SolutionVelocityTab<'a, S> {
             colors.set(i as u32, color);
         }
 
-        let mut msg_bytes: Vec<u8> = vec![];
-        serialize::write_message(&mut msg_bytes, &builder).unwrap();
-
-        self.client_sender.send_data(msg_bytes);
+        self.client_sender
+            .send_data(serialize_capnproto_builder(builder));
     }
 }
 

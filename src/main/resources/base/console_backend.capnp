@@ -127,12 +127,25 @@ struct SolutionVelocityStatus {
 }
 
 struct TrackingSignalsStatus {
-    min @0 :Float64;
-    max @1 :Float64;
-    labels @2 :List(Text);
-    data @3 :List(List(Point));
-    colors @4 :List(Text);
-    checkLabels @5 :List(Text);
+    xminOffset @0 :Float64;
+    labels @1 :List(Text);
+    data @2 :List(List(Point));
+    colors @3 :List(Text);
+    checkLabels @4 :List(Text);
+}
+
+struct AdvancedInsStatus {
+    data @0 :List(List(Point));
+    fieldsData @1 :List(Float64);
+}
+
+struct FusionStatusFlagsStatus {
+    gnsspos @0 :Text;
+    gnssvel @1 :Text;
+    wheelticks @2 :Text;
+    speed @3 :Text;
+    nhc @4 :Text;
+    zerovel @5 :Text;
 }
 
 struct LoggingBarFront {
@@ -194,5 +207,7 @@ struct Message {
         loggingBarFront @20 :LoggingBarFront;
         loggingBarStatus @21 :LoggingBarStatus;
         logLevelFront @22 :LogLevelFront;
+        advancedInsStatus @23 :AdvancedInsStatus;
+        fusionStatusFlagsStatus @24 :FusionStatusFlagsStatus;
     }
 }

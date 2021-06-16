@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use capnp::message::Builder;
+use capnp::message::HeapAllocator;
 use capnp::serialize;
 use indexmap::IndexSet;
 use log::warn;
@@ -19,9 +20,7 @@ pub fn close_frontend<P: MessageSender>(client_send: &mut P) {
     let mut status = msg.init_status();
     let app_state = cc::ApplicationStates::CLOSE;
     status.set_text(&app_state.to_string());
-    let mut msg_bytes: Vec<u8> = vec![];
-    serialize::write_message(&mut msg_bytes, &builder).unwrap();
-    client_send.send_data(msg_bytes);
+    client_send.send_data(serialize_capnproto_builder(builder));
 }
 
 /// Send a CONNECTED or DISCONNECTED, signal to the frontend.
@@ -33,9 +32,7 @@ pub fn set_connected_frontend<P: MessageSender>(
     let msg = builder.init_root::<m::message::Builder>();
     let mut status = msg.init_status();
     status.set_text(&app_state.to_string());
-    let mut msg_bytes: Vec<u8> = vec![];
-    serialize::write_message(&mut msg_bytes, &builder).unwrap();
-    client_send.send_data(msg_bytes);
+    client_send.send_data(serialize_capnproto_builder(builder));
 }
 
 pub fn refresh_navbar<P: MessageSender>(client_send: &mut P, shared_state: SharedState) {
@@ -117,10 +114,13 @@ pub fn refresh_navbar<P: MessageSender>(client_send: &mut P, shared_state: Share
         prevous_files.set(i as u32, filename);
     }
 
-    let mut msg_bytes: Vec<u8> = vec![];
-    serialize::write_message(&mut msg_bytes, &builder).unwrap();
+    client_send.send_data(serialize_capnproto_builder(builder));
+}
 
-    client_send.send_data(msg_bytes);
+pub fn serialize_capnproto_builder(builder: Builder<HeapAllocator>) -> Vec<u8> {
+    let mut msg_bytes: Vec<u8> = vec![];
+    serialize::write_message(&mut msg_bytes, &builder).expect(CAP_N_PROTO_SERIALIZATION_FAILURE);
+    msg_bytes
 }
 
 pub fn refresh_loggingbar<P: MessageSender>(client_send: &mut P, shared_state: SharedState) {
@@ -143,10 +143,7 @@ pub fn refresh_loggingbar<P: MessageSender>(client_send: &mut P, shared_state: S
         prevous_folders.set(i as u32, folder);
     }
 
-    let mut msg_bytes: Vec<u8> = vec![];
-    serialize::write_message(&mut msg_bytes, &builder).expect(CAP_N_PROTO_SERIALIZATION_FAILURE);
-
-    client_send.send_data(msg_bytes);
+    client_send.send_data(serialize_capnproto_builder(builder));
 }
 
 pub fn signal_key_label(

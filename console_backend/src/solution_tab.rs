@@ -1,5 +1,4 @@
 use capnp::message::Builder;
-use capnp::serialize;
 
 use sbp::messages::{
     navigation::{MsgAgeCorrections, MsgGPSTime, MsgUtcTime},
@@ -115,8 +114,8 @@ impl<S: MessageSender> SolutionTab<S> {
                     GnssModes::Sbas.label(),
                 ]
             },
-            lats: Deque::with_size_limit(PLOT_HISTORY_MAX),
-            lngs: Deque::with_size_limit(PLOT_HISTORY_MAX),
+            lats: Deque::with_size_limit(PLOT_HISTORY_MAX, /*fill_value=*/ None),
+            lngs: Deque::with_size_limit(PLOT_HISTORY_MAX, /*fill_value=*/ None),
             last_ins_status_receipt_time: Instant::now(),
             last_pos_mode: 0,
             last_odo_update_time: Instant::now(),
@@ -125,7 +124,7 @@ impl<S: MessageSender> SolutionTab<S> {
             lat_min: LAT_MIN,
             lon_max: LON_MAX,
             lon_min: LON_MIN,
-            modes: Deque::with_size_limit(PLOT_HISTORY_MAX),
+            modes: Deque::with_size_limit(PLOT_HISTORY_MAX, /*fill_value=*/ None),
             mode_strings: vec![
                 GnssModes::Spp.to_string(),
                 GnssModes::Dgnss.to_string(),
@@ -143,7 +142,12 @@ impl<S: MessageSender> SolutionTab<S> {
             slns: {
                 SOLUTION_DATA_KEYS
                     .iter()
-                    .map(|key| (*key, Deque::with_size_limit(PLOT_HISTORY_MAX)))
+                    .map(|key| {
+                        (
+                            *key,
+                            Deque::with_size_limit(PLOT_HISTORY_MAX, /*fill_value=*/ None),
+                        )
+                    })
                     .collect()
             },
             table: {
@@ -700,10 +704,8 @@ impl<S: MessageSender> SolutionTab<S> {
             labels.set(i as u32, label);
         }
 
-        let mut msg_bytes: Vec<u8> = vec![];
-        serialize::write_message(&mut msg_bytes, &builder).unwrap();
-
-        self.client_sender.send_data(msg_bytes);
+        self.client_sender
+            .send_data(serialize_capnproto_builder(builder));
     }
 
     /// Package solution table data into a message buffer and send to frontend.
@@ -722,9 +724,8 @@ impl<S: MessageSender> SolutionTab<S> {
                 entry.set_val(&val);
             }
         }
-        let mut msg_bytes: Vec<u8> = vec![];
-        serialize::write_message(&mut msg_bytes, &builder).unwrap();
-        self.client_sender.send_data(msg_bytes);
+        self.client_sender
+            .send_data(serialize_capnproto_builder(builder));
     }
 }
 

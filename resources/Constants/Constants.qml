@@ -16,6 +16,7 @@ QtObject {
     property QtObject loggingBar
     property QtObject commonChart
     property QtObject commonLegend
+    property QtObject advancedIns
     property QtObject solutionPosition
     property QtObject solutionTable
     property QtObject solutionVelocity
@@ -86,6 +87,36 @@ QtObject {
         readonly property int folderPathBarHeight: 25
         readonly property color placeholderTextColor: "#CDC9C9"
         readonly property string folderButtonPath: "images/fontawesome/folder-solid.svg"
+    }
+
+    advancedIns: QtObject {
+        readonly property string title: "Raw IMU Data"
+        readonly property color titleColor: "#00006E"
+        readonly property int titlePointSize: 14
+        readonly property var textDataLabels: ["Imu temp:", "Imu conf:", "Rms acc x:", "Rms acc y:", "Rms acc z:"]
+        readonly property var insStatusLabels: ["GNSS Pos:", "GNSS Vel:", "Wheelticks:", "Wheelspeed:", "nhc:", "Static Detection:"]
+        readonly property var legendLabels: ["Accn. X", "Accn. Y", "Accn. Z", "Gyro X", "Gyro Y", "Gyro Z"]
+        readonly property var lineColors: ["#8c510a", "#d8b365", "#f6e8c3", "#c7eae5", "#5ab4ac", "#01665e"]
+        readonly property int legendBottomMargin: 120
+        readonly property int legendLeftMargin: 80
+        readonly property int yAxisTickCount: 10000
+        readonly property int xAxisTickCount: 25
+        readonly property int xAxisMax: 200
+        readonly property int xAxisMin: 0
+        readonly property int yAxisMax: 32768
+        readonly property int yAxisMin: -32768
+        readonly property int textDataLabelWidth: 50
+        readonly property int textDataRowHeight: 25
+        readonly property int textDataBarHeight: 20
+        readonly property int textDataBarMargin: 2
+        readonly property int textDataBarBorderWidth: 1
+        readonly property string unknownStatusPath: "images/fontawesome/square-solid.svg"
+        readonly property string unknownStatusColor: "dimgrey"
+        readonly property string warningStatusPath: "images/fontawesome/exclamation-triangle-solid.svg"
+        readonly property string warningStatusColor: "goldenrod"
+        readonly property string okStatusPath: "images/fontawesome/circle-solid.svg"
+        readonly property string okStatusColor: "green"
+        readonly property int insStatusImageWidth: 15
     }
 
     solutionPosition: QtObject {
@@ -172,6 +203,8 @@ QtObject {
         readonly property int xAxisMinOffsetFromMaxSeconds: 100
         readonly property int checkBoxVerticalPadding: 0
         readonly property int checkBoxPreferredWidth: 100
+        readonly property int snrThreshold: 15
+        readonly property int yAxisMax: 60
     }
 
     observationTab: QtObject {

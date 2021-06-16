@@ -3,6 +3,7 @@ use log::{debug, error};
 use sbp::{messages::SBP, time::GpsTime};
 use std::{path::PathBuf, result::Result, thread::sleep, time::Instant};
 
+use crate::advanced_ins_tab::AdvancedInsTab;
 use crate::common_constants::SbpLogging;
 use crate::constants::*;
 use crate::observation_tab::ObservationTab;
@@ -23,6 +24,7 @@ pub struct MainTab<'a, S: MessageSender> {
     last_gps_time: Option<GpsTime>,
     client_sender: S,
     shared_state: SharedState,
+    pub advanced_ins_tab: AdvancedInsTab<S>,
     pub tracking_signals_tab: TrackingSignalsTab<S>,
     pub solution_tab: SolutionTab<S>,
     pub observation_tab: ObservationTab<S>,
@@ -41,6 +43,7 @@ impl<'a, S: MessageSender> MainTab<'a, S> {
             last_gps_update: Instant::now(),
             client_sender: client_sender.clone(),
             shared_state: shared_state.clone(),
+            advanced_ins_tab: AdvancedInsTab::new(shared_state.clone(), client_sender.clone()),
             tracking_signals_tab: TrackingSignalsTab::new(
                 shared_state.clone(),
                 client_sender.clone(),
@@ -225,7 +228,6 @@ mod tests {
     use std::{
         fs::File,
         io::{BufRead, BufReader},
-        sync::mpsc,
         time::Duration,
     };
     use tempfile::TempDir;
@@ -254,10 +256,7 @@ mod tests {
     #[test]
     fn realtime_delay_full_test() {
         let shared_state = SharedState::new();
-        let (client_send_, _) = mpsc::channel::<Vec<u8>>();
-        let client_send = ClientSender {
-            inner: client_send_,
-        };
+        let client_send = TestSender { inner: Vec::new() };
         let gps_s = GpsTimeTests::new();
         let mut main = MainTab::new(shared_state, client_send);
         let early_gps_time_good = GpsTime::new(gps_s.good_week, gps_s.early_gps_tow_good).unwrap();
@@ -275,10 +274,7 @@ mod tests {
     #[test]
     fn realtime_delay_no_last_test() {
         let shared_state = SharedState::new();
-        let (client_send_, _) = mpsc::channel::<Vec<u8>>();
-        let client_send = ClientSender {
-            inner: client_send_,
-        };
+        let client_send = TestSender { inner: Vec::new() };
         let gps_s = GpsTimeTests::new();
         let mut main = MainTab::new(shared_state, client_send);
         let later_gps_time_good = GpsTime::new(gps_s.good_week, gps_s.later_gps_tow_good);

@@ -1,5 +1,4 @@
 use capnp::message::Builder;
-use capnp::serialize;
 
 use sbp::messages::{
     navigation::{MsgAgeCorrections, MsgGPSTime, MsgUtcTime},
@@ -705,10 +704,8 @@ impl<S: MessageSender> SolutionTab<S> {
             labels.set(i as u32, label);
         }
 
-        let mut msg_bytes: Vec<u8> = vec![];
-        serialize::write_message(&mut msg_bytes, &builder).unwrap();
-
-        self.client_sender.send_data(msg_bytes);
+        self.client_sender
+            .send_data(serialize_capnproto_builder(builder));
     }
 
     /// Package solution table data into a message buffer and send to frontend.
@@ -727,9 +724,8 @@ impl<S: MessageSender> SolutionTab<S> {
                 entry.set_val(&val);
             }
         }
-        let mut msg_bytes: Vec<u8> = vec![];
-        serialize::write_message(&mut msg_bytes, &builder).unwrap();
-        self.client_sender.send_data(msg_bytes);
+        self.client_sender
+            .send_data(serialize_capnproto_builder(builder));
     }
 }
 

@@ -43,6 +43,16 @@ pub enum Tabs {
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
+pub enum FusionStatus {
+    #[strum(serialize = "UNKNOWN")]
+    UNKNOWN,
+    #[strum(serialize = "WARNING")]
+    WARNING,
+    #[strum(serialize = "OK")]
+    OK,
+}
+
+#[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
 pub enum SbpLogging {
     #[strum(serialize = "OFF")]
     OFF,
@@ -154,8 +164,20 @@ pub enum Keys {
     LOG_LEVEL_LABELS,
     #[strum(serialize = "FIELDS_DATA")]
     FIELDS_DATA,
-    #[strum(serialize = "XMIN")]
+    #[strum(serialize = "XMIN_OFFSET")]
     XMIN_OFFSET,
+    #[strum(serialize = "GNSSPOS")]
+    GNSSPOS,
+    #[strum(serialize = "GNSSVEL")]
+    GNSSVEL,
+    #[strum(serialize = "WHEELTICKS")]
+    WHEELTICKS,
+    #[strum(serialize = "SPEED")]
+    SPEED,
+    #[strum(serialize = "NHC")]
+    NHC,
+    #[strum(serialize = "ZEROVEL")]
+    ZEROVEL,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]

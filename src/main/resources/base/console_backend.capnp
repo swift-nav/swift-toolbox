@@ -139,6 +139,15 @@ struct AdvancedInsStatus {
     fieldsData @1 :List(Float64);
 }
 
+struct FusionStatusFlagsStatus {
+    gnsspos @0 :Text;
+    gnssvel @1 :Text;
+    wheelticks @2 :Text;
+    speed @3 :Text;
+    nhc @4 :Text;
+    zerovel @5 :Text;
+}
+
 struct LoggingBarFront {
     csvLogging @0 :Bool;
     sbpLogging @1 :Text;
@@ -199,5 +208,6 @@ struct Message {
         loggingBarStatus @21 :LoggingBarStatus;
         logLevelFront @22 :LogLevelFront;
         advancedInsStatus @23 :AdvancedInsStatus;
+        fusionStatusFlagsStatus @24 :FusionStatusFlagsStatus;
     }
 }

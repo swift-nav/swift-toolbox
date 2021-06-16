@@ -78,6 +78,9 @@ pub fn process_messages<S: MessageSender, T: std::io::Read>(
                 main.status_bar.handle_ins_status(msg);
             }
             SBP::MsgInsUpdates(msg) => {
+                main.advanced_ins_tab
+                    .fusion_engine_status_bar
+                    .handle_ins_updates(msg.clone());
                 main.solution_tab.handle_ins_updates(msg.clone());
                 main.status_bar.handle_ins_updates(msg);
             }

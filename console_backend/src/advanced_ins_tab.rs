@@ -2,12 +2,13 @@ use log::error;
 use sbp::messages::imu::{MsgImuAux, MsgImuRaw};
 
 use capnp::message::Builder;
-use capnp::serialize;
 
 use crate::console_backend_capnp as m;
 use crate::constants::*;
-use crate::errors::{CAP_N_PROTO_SERIALIZATION_FAILURE, GET_MUT_OBJECT_FAILURE};
+use crate::errors::GET_MUT_OBJECT_FAILURE;
+use crate::fusion_status_flags::FusionStatusFlags;
 use crate::types::{Deque, MessageSender, SharedState};
+use crate::utils::serialize_capnproto_builder;
 
 /// AdvancedInsTab struct.
 ///
@@ -29,6 +30,7 @@ use crate::types::{Deque, MessageSender, SharedState};
 #[derive(Debug)]
 pub struct AdvancedInsTab<S: MessageSender> {
     client_sender: S,
+    pub fusion_engine_status_bar: FusionStatusFlags<S>,
     imu_conf: u8,
     imu_temp: f64,
     rms_acc_x: f64,
@@ -48,6 +50,10 @@ impl<S: MessageSender> AdvancedInsTab<S> {
         let acc_fill_val = Some(0_f64);
         let gyro_fill_val = Some(0_f64);
         AdvancedInsTab {
+            fusion_engine_status_bar: FusionStatusFlags::new(
+                shared_state.clone(),
+                client_sender.clone(),
+            ),
             client_sender,
             imu_conf: 0_u8,
             imu_temp: 0_f64,
@@ -169,10 +175,8 @@ impl<S: MessageSender> AdvancedInsTab<S> {
             fields_data_status.set(i as u32, *datur);
         }
 
-        let mut msg_bytes: Vec<u8> = vec![];
-        serialize::write_message(&mut msg_bytes, &builder)
-            .expect(CAP_N_PROTO_SERIALIZATION_FAILURE);
-        self.client_sender.send_data(msg_bytes);
+        self.client_sender
+            .send_data(serialize_capnproto_builder(builder));
     }
 }
 

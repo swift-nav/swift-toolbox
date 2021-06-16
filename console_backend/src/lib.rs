@@ -8,6 +8,7 @@ pub mod constants;
 pub mod date_conv;
 pub mod errors;
 pub mod formatters;
+pub mod fusion_status_flags;
 pub mod log_panel;
 pub mod main_tab;
 pub mod observation_tab;

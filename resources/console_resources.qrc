@@ -12,6 +12,10 @@
     <file>Constants/utils.js</file>
     <file>AdvancedTab.qml</file>
     <file>AdvancedTabComponents/AdvancedInsTab.qml</file>
+    <file>AdvancedTabComponents/FusionStatusFlags.qml</file>
+    <file>AdvancedTabComponents/UnknownStatus.qml</file>
+    <file>AdvancedTabComponents/WarningStatus.qml</file>
+    <file>AdvancedTabComponents/OkStatus.qml</file>
     <file>SolutionTab.qml</file>
     <file>SolutionTabComponents/SolutionPositionTab.qml</file>
     <file>SolutionTabComponents/SolutionTable.qml</file>
@@ -28,5 +32,8 @@
     <file>images/fontawesome/pause-solid.svg</file>
     <file>images/fontawesome/folder-open-regular.svg</file>
     <file>images/fontawesome/folder-solid.svg</file>
+    <file>images/fontawesome/square-solid.svg</file>
+    <file>images/fontawesome/exclamation-triangle-solid.svg</file>
+    <file>images/fontawesome/circle-solid.svg</file>
 </qresource>
 </RCC>

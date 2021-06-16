@@ -228,7 +228,6 @@ mod tests {
     use std::{
         fs::File,
         io::{BufRead, BufReader},
-        sync::mpsc,
         time::Duration,
     };
     use tempfile::TempDir;
@@ -257,10 +256,7 @@ mod tests {
     #[test]
     fn realtime_delay_full_test() {
         let shared_state = SharedState::new();
-        let (client_send_, _) = mpsc::channel::<Vec<u8>>();
-        let client_send = ClientSender {
-            inner: client_send_,
-        };
+        let client_send = TestSender { inner: Vec::new() };
         let gps_s = GpsTimeTests::new();
         let mut main = MainTab::new(shared_state, client_send);
         let early_gps_time_good = GpsTime::new(gps_s.good_week, gps_s.early_gps_tow_good).unwrap();
@@ -278,10 +274,7 @@ mod tests {
     #[test]
     fn realtime_delay_no_last_test() {
         let shared_state = SharedState::new();
-        let (client_send_, _) = mpsc::channel::<Vec<u8>>();
-        let client_send = ClientSender {
-            inner: client_send_,
-        };
+        let client_send = TestSender { inner: Vec::new() };
         let gps_s = GpsTimeTests::new();
         let mut main = MainTab::new(shared_state, client_send);
         let later_gps_time_good = GpsTime::new(gps_s.good_week, gps_s.later_gps_tow_good);

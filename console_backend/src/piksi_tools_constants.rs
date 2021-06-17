@@ -334,7 +334,7 @@ pub const NO_FIX_MODE: i32 = 0;
 pub const DIFFERENTIAL_MODES: [i32; 3] = [FIXED_MODE, FLOAT_MODE, DGNSS_MODE];
 pub const RTK_MODES: [i32; 2] = [FIXED_MODE, FLOAT_MODE];
 lazy_static! {
-    static ref mode_dict: HashMap<i32, &'static str> = [
+    pub static ref mode_dict: HashMap<i32, &'static str> = [
         (NO_FIX_MODE, "No Fix"),
         (SPP_MODE, "SPP"),
         (DGNSS_MODE, "DGPS"),

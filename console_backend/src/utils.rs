@@ -336,6 +336,17 @@ pub fn sec_to_ns(ns: f64) -> f64 {
     ns * SECONDS_PER_NANOSECOND
 }
 
+/// Convert millisdegree to degree.
+///
+/// # Parameters
+/// - `ms`: Value in millidegrees.
+///
+/// # Returns
+/// - Value in degrees.
+pub fn mdeg_to_deg(mdeg: f64) -> f64 {
+    mdeg / 1.0e+3_f64
+}
+
 pub fn compute_doppler(
     new_carrier_phase: f64,
     old_carrier_phase: f64,

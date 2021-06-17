@@ -60,6 +60,31 @@ pub const CHART_XMIN_OFFSET_TRACKING: f64 = -95.0;
 
 pub const SHOW_LEGEND: &str = "Show Legend";
 
+// Baseline Tab.
+pub const BASELINE_DIRECTION_MAX: f64 = 1.0;
+pub const BASELINE_DIRECTION_MIN: f64 = -1.0;
+
+pub const N_FLOAT: &str = "n_float";
+pub const N_FIXED: &str = "n_fixed";
+pub const N_DGNSS: &str = "n_dgnss";
+pub const E_FLOAT: &str = "e_float";
+pub const E_FIXED: &str = "e_fixed";
+pub const E_DGNSS: &str = "e_dgnss";
+pub const N: &str = "N";
+pub const E: &str = "E";
+pub const D: &str = "D";
+pub const DIST: &str = "Dist.";
+pub const FLAGS: &str = "Flags";
+pub const MODE: &str = "Mode";
+pub const HEADING: &str = "Heading";
+
+pub const BASELINE_DATA_KEYS: &[&str] = &[N_FLOAT, N_FIXED, N_DGNSS, E_FLOAT, E_FIXED, E_DGNSS];
+
+pub const BASELINE_TABLE_KEYS: &[&str] = &[
+    GPS_WEEK, GPS_TOW, GPS_TIME, UTC_TIME, UTC_SRC, N, E, D, HORIZ_ACC, VERT_ACC, DIST, SATS_USED,
+    FLAGS, MODE, HEADING, CORR_AGE_S,
+];
+
 // Solution Table.
 pub const PLOT_HISTORY_MAX: usize = 1000;
 pub const DILUTION_OF_PRECISION_UNITS: f64 = 0.01;
@@ -73,8 +98,8 @@ pub const METERS: &str = "meters";
 pub const NO_FIX_LABEL: &str = "No Fix";
 pub const SPP_LABEL: &str = "SPP";
 pub const DGNSS_LABEL: &str = "DGPS";
-pub const FLOAT_LABEL: &str = "RTK float";
-pub const FIXED_LABEL: &str = "RTK fixed";
+pub const FLOAT_LABEL: &str = "RTK Float";
+pub const FIXED_LABEL: &str = "RTK Fixed";
 pub const DR_LABEL: &str = "DR";
 pub const SBAS_LABEL: &str = "SBAS";
 

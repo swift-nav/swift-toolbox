@@ -11,6 +11,7 @@ use serde_json::ser::CompactFormatter;
 use std::{fs::File, path::Path};
 
 use crate::common_constants as cc;
+use crate::formatters::*;
 use crate::types::Result;
 
 pub type CsvLogging = cc::CsvLogging;
@@ -81,6 +82,67 @@ impl CsvSerializer {
         self.writer.flush()?;
         Ok(())
     }
+}
+
+#[derive(Serialize)]
+pub struct BaselineLog {
+    pub pc_time: String,
+    pub gps_time: Option<String>,
+    #[serde(rename = "tow(sec)", with = "float_formatter_3")]
+    pub tow_s: Option<f64>,
+    #[serde(rename = "north(meters)", with = "float_formatter_6")]
+    pub north_m: Option<f64>,
+    #[serde(rename = "east(meters)", with = "float_formatter_6")]
+    pub east_m: Option<f64>,
+    #[serde(rename = "down(meters)", with = "float_formatter_6")]
+    pub down_m: Option<f64>,
+    #[serde(rename = "h_accuracy(meters)", with = "float_formatter_4")]
+    pub h_accuracy_m: Option<f64>,
+    #[serde(rename = "v_accuracy(meters)", with = "float_formatter_4")]
+    pub v_accuracy_m: Option<f64>,
+    #[serde(rename = "distance(meters)", with = "float_formatter_6")]
+    pub distance_m: Option<f64>,
+    pub num_sats: u8,
+    pub flags: u8,
+}
+
+#[derive(Serialize)]
+#[allow(clippy::upper_case_acronyms)]
+pub struct PosLLHLog {
+    pub pc_time: String,
+    pub gps_time: Option<String>,
+    #[serde(rename = "tow(sec)", with = "float_formatter_3")]
+    pub tow_s: Option<f64>,
+    #[serde(rename = "latitude(degrees)", with = "float_formatter_10")]
+    pub latitude_d: Option<f64>,
+    #[serde(rename = "longitude(degrees)", with = "float_formatter_10")]
+    pub longitude_d: Option<f64>,
+    #[serde(rename = "altitude(meters)", with = "float_formatter_4")]
+    pub altitude_m: Option<f64>,
+    #[serde(rename = "h_accuracy(meters)", with = "float_formatter_4")]
+    pub h_accuracy_m: Option<f64>,
+    #[serde(rename = "v_accuracy(meters)", with = "float_formatter_4")]
+    pub v_accuracy_m: Option<f64>,
+    pub n_sats: u8,
+    pub flags: u8,
+}
+
+#[derive(Serialize)]
+pub struct VelLog {
+    pub pc_time: String,
+    pub gps_time: Option<String>,
+    #[serde(rename = "tow(sec)", with = "float_formatter_3")]
+    pub tow_s: Option<f64>,
+    #[serde(rename = "north(m/s)", with = "float_formatter_6")]
+    pub north_mps: Option<f64>,
+    #[serde(rename = "east(m/s)", with = "float_formatter_6")]
+    pub east_mps: Option<f64>,
+    #[serde(rename = "down(m/s)", with = "float_formatter_6")]
+    pub down_mps: Option<f64>,
+    #[serde(rename = "speed(m/s)", with = "float_formatter_6")]
+    pub speed_mps: Option<f64>,
+    pub flags: u8,
+    pub num_signals: u8,
 }
 
 #[cfg(test)]

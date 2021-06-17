@@ -1,7 +1,6 @@
 use crate::common_constants::{self as cc, LogLevel, SbpLogging};
 use crate::constants::*;
 use crate::errors::*;
-use crate::formatters::*;
 use crate::output::CsvLogging;
 use crate::piksi_tools_constants::*;
 use crate::process_messages::process_messages;
@@ -1683,6 +1682,8 @@ pub struct BaselineNEDFields {
     pub n: i32,
     pub e: i32,
     pub d: i32,
+    pub h_accuracy: u16,
+    pub v_accuracy: u16,
     pub n_sats: u8,
 }
 // Enum wrapping around various Baseline NED Message types.
@@ -1695,13 +1696,27 @@ pub enum BaselineNED {
 
 impl BaselineNED {
     pub fn fields(&self) -> BaselineNEDFields {
-        let (flags, tow, n, e, d, n_sats) = match self {
-            BaselineNED::MsgBaselineNED(msg) => {
-                (msg.flags, msg.tow as f64, msg.n, msg.e, msg.d, msg.n_sats)
-            }
-            BaselineNED::MsgBaselineNEDDepA(msg) => {
-                (1, msg.tow as f64, msg.n, msg.e, msg.d, msg.n_sats)
-            }
+        let (flags, tow, n, e, d, h_accuracy, v_accuracy, n_sats) = match self {
+            BaselineNED::MsgBaselineNED(msg) => (
+                msg.flags,
+                msg.tow as f64,
+                msg.n,
+                msg.e,
+                msg.d,
+                msg.h_accuracy,
+                msg.v_accuracy,
+                msg.n_sats,
+            ),
+            BaselineNED::MsgBaselineNEDDepA(msg) => (
+                1,
+                msg.tow as f64,
+                msg.n,
+                msg.e,
+                msg.d,
+                msg.h_accuracy,
+                msg.v_accuracy,
+                msg.n_sats,
+            ),
         };
         BaselineNEDFields {
             flags,
@@ -1709,6 +1724,8 @@ impl BaselineNED {
             n,
             e,
             d,
+            h_accuracy,
+            v_accuracy,
             n_sats,
         }
     }
@@ -1761,45 +1778,6 @@ impl std::str::FromStr for VelocityUnits {
             _ => panic!("unable to convert to VelocityUnits"),
         }
     }
-}
-
-#[derive(Serialize)]
-#[allow(clippy::upper_case_acronyms)]
-pub struct PosLLHLog {
-    pub pc_time: String,
-    pub gps_time: Option<String>,
-    #[serde(rename = "tow(sec)", with = "float_formatter_3")]
-    pub tow_s: Option<f64>,
-    #[serde(rename = "latitude(degrees)", with = "float_formatter_10")]
-    pub latitude_d: Option<f64>,
-    #[serde(rename = "longitude(degrees)", with = "float_formatter_10")]
-    pub longitude_d: Option<f64>,
-    #[serde(rename = "altitude(meters)", with = "float_formatter_4")]
-    pub altitude_m: Option<f64>,
-    #[serde(rename = "h_accuracy(meters)", with = "float_formatter_4")]
-    pub h_accuracy_m: Option<f64>,
-    #[serde(rename = "v_accuracy(meters)", with = "float_formatter_4")]
-    pub v_accuracy_m: Option<f64>,
-    pub n_sats: u8,
-    pub flags: u8,
-}
-
-#[derive(Serialize)]
-pub struct VelLog {
-    pub pc_time: String,
-    pub gps_time: Option<String>,
-    #[serde(rename = "tow(sec)", with = "float_formatter_3")]
-    pub tow_s: Option<f64>,
-    #[serde(rename = "north(m/s)", with = "float_formatter_6")]
-    pub north_mps: Option<f64>,
-    #[serde(rename = "east(m/s)", with = "float_formatter_6")]
-    pub east_mps: Option<f64>,
-    #[serde(rename = "down(m/s)", with = "float_formatter_6")]
-    pub down_mps: Option<f64>,
-    #[serde(rename = "speed(m/s)", with = "float_formatter_6")]
-    pub speed_mps: Option<f64>,
-    pub flags: u8,
-    pub num_signals: u8,
 }
 
 #[cfg(test)]

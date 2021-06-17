@@ -9,11 +9,10 @@ use std::{collections::HashMap, time::Instant};
 use crate::console_backend_capnp as m;
 use crate::constants::*;
 use crate::date_conv::*;
-use crate::output::CsvSerializer;
+use crate::output::{CsvSerializer, PosLLHLog, VelLog};
 use crate::piksi_tools_constants::EMPTY_STR;
 use crate::types::{
-    Deque, Dops, GnssModes, MessageSender, PosLLH, PosLLHLog, SharedState, UtcDateTime, VelLog,
-    VelNED,
+    Deque, Dops, GnssModes, MessageSender, PosLLH, SharedState, UtcDateTime, VelNED,
 };
 use crate::utils::*;
 

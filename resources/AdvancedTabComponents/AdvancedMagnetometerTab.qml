@@ -70,6 +70,7 @@ Item {
                         model: Constants.advancedMagnetometer.legendLabels
 
                         Row {
+                            spacing: Constants.commonLegend.spacing
                             Component.onCompleted: {
                                 for (var idx in Constants.advancedMagnetometer.lineColors) {
                                     if (lineLegendRepeaterRows.itemAt(idx))

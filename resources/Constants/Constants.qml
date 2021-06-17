@@ -183,6 +183,7 @@ QtObject {
         readonly property real markerPointSizeOffset: 4
         readonly property int labelPointSize: 10
         readonly property int padding: 10
+        readonly property int spacing: 5
         readonly property int verticalCenterOffset: -1
         readonly property color borderColor: "#000000"
         readonly property int borderWidth: 1

@@ -318,7 +318,8 @@ impl<S: MessageSender> TrackingSignalsTab<S> {
         if self.at_least_one_track_received {
             return;
         }
-        if Instant::now() - self.last_obs_update_time <= Duration::from_secs_f64(GUI_UPDATE_PERIOD)
+        if Instant::now() - self.last_obs_update_time
+            <= Duration::from_secs_f64(TRACKING_UPDATE_PERIOD)
         {
             return;
         }
@@ -590,7 +591,7 @@ mod tests {
                 sat,
             },
         });
-        sleep(Duration::from_secs_f64(GUI_UPDATE_PERIOD));
+        sleep(Duration::from_secs_f64(TRACKING_UPDATE_PERIOD));
         assert_eq!(tracking_signals_tab.cn0_dict.len(), 0);
         tracking_signals_tab.handle_obs(ObservationMsg::MsgObs(obs_msg));
         assert_eq!(tracking_signals_tab.cn0_dict.len(), 1);

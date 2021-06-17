@@ -51,7 +51,7 @@ pub(crate) const GLO_SLOT_SAT_MAX: u8 = 90;
 pub(crate) const GLO_FCN_OFFSET: i16 = 8;
 pub(crate) const SBAS_NEG_OFFSET: i16 = 120;
 pub(crate) const QZSS_NEG_OFFSET: i16 = 193;
-pub(crate) const GUI_UPDATE_PERIOD: f64 = 0.2;
+pub(crate) const TRACKING_UPDATE_PERIOD: f64 = 0.2;
 pub(crate) const CHART_XMIN_OFFSET_NO_TRACKING: f64 = -45.0;
 pub(crate) const CHART_XMIN_OFFSET_TRACKING: f64 = -95.0;
 

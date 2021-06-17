@@ -2,10 +2,8 @@ use sbp::messages::mag::MsgMagRaw;
 
 use capnp::message::Builder;
 
-use std::time::{Duration, Instant};
-
 use crate::console_backend_capnp as m;
-use crate::constants::{GUI_UPDATE_PERIOD, MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER, NUM_POINTS};
+use crate::constants::{MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER, NUM_POINTS};
 use crate::errors::GET_MUT_OBJECT_FAILURE;
 use crate::types::{Deque, MessageSender, SharedState};
 use crate::utils::serialize_capnproto_builder;
@@ -23,7 +21,6 @@ use crate::utils::serialize_capnproto_builder;
 #[derive(Debug)]
 pub struct AdvancedMagnetometerTab<S: MessageSender> {
     client_sender: S,
-    last_plot_update_time: Instant,
     mag_x: Deque<f64>,
     mag_y: Deque<f64>,
     mag_z: Deque<f64>,
@@ -37,7 +34,6 @@ impl<S: MessageSender> AdvancedMagnetometerTab<S> {
         let mag_fill_val = Some(0_f64);
         AdvancedMagnetometerTab {
             client_sender,
-            last_plot_update_time: Instant::now(),
             mag_x: Deque::with_size_limit(NUM_POINTS, mag_fill_val),
             mag_y: Deque::with_size_limit(NUM_POINTS, mag_fill_val),
             mag_z: Deque::with_size_limit(NUM_POINTS, mag_fill_val),
@@ -49,7 +45,6 @@ impl<S: MessageSender> AdvancedMagnetometerTab<S> {
 
     /// Method for preparing magnetometer data and initiating sending to frontend.
     fn mag_set_data(&mut self) {
-        self.last_plot_update_time = Instant::now();
         let mag_x = &mut self.mag_x.get();
         let mag_y = &mut self.mag_y.get();
         let mag_z = &mut self.mag_z.get();
@@ -60,16 +55,9 @@ impl<S: MessageSender> AdvancedMagnetometerTab<S> {
             min_ = f64::min(mag_x[idx], f64::min(mag_y[idx], f64::min(mag_z[idx], min_)));
             max_ = f64::max(mag_x[idx], f64::max(mag_y[idx], f64::max(mag_z[idx], max_)));
         }
-        self.ymin = if f64::abs(min_ - 0_f64) <= f64::EPSILON {
-            min_ + min_ * MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER
-        } else {
-            min_ - min_ * MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER
-        };
-        self.ymax = if f64::abs(max_ - 0_f64) <= f64::EPSILON {
-            max_ - max_ * MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER
-        } else {
-            max_ + max_ * MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER
-        };
+        self.ymin = min_ - f64::abs(min_ * MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER);
+
+        self.ymax = max_ + f64::abs(max_ * MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER);
 
         self.send_data();
     }
@@ -82,10 +70,7 @@ impl<S: MessageSender> AdvancedMagnetometerTab<S> {
         self.mag_x.add(msg.mag_x as f64);
         self.mag_y.add(msg.mag_y as f64);
         self.mag_z.add(msg.mag_z as f64);
-        if Instant::now() - self.last_plot_update_time > Duration::from_secs_f64(GUI_UPDATE_PERIOD)
-        {
-            self.mag_set_data();
-        }
+        self.mag_set_data();
     }
 
     /// Package data into a message buffer and send to frontend.
@@ -119,7 +104,6 @@ impl<S: MessageSender> AdvancedMagnetometerTab<S> {
 
 #[cfg(test)]
 mod tests {
-    use std::thread::sleep;
 
     use super::*;
     use crate::types::TestSender;
@@ -164,7 +148,6 @@ mod tests {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
         let mut mag_tab = AdvancedMagnetometerTab::new(shared_state, client_send);
-        sleep(Duration::from_secs_f64(GUI_UPDATE_PERIOD));
         assert!(f64::abs(mag_tab.ymin - f64::MAX) <= f64::EPSILON);
         assert!(f64::abs(mag_tab.ymax - f64::MIN) <= f64::EPSILON);
 
@@ -181,19 +164,17 @@ mod tests {
             mag_y,
             mag_z,
         };
-        // Waited long enough for gui to update so max and min mag values here should match.
         mag_tab.handle_mag_raw(msg);
         let mag_x = mag_x as f64;
         let mag_z = mag_z as f64;
-
         assert!(
             f64::abs(
-                (mag_tab.ymin / (1_f64 - MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER)) - mag_x as f64
+                mag_tab.ymin - (mag_x - f64::abs(mag_x * MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER))
             ) <= f64::EPSILON
         );
         assert!(
             f64::abs(
-                (mag_tab.ymax / (1_f64 + MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER)) - mag_z as f64
+                mag_tab.ymax - (mag_z + f64::abs(mag_z * MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER))
             ) <= f64::EPSILON
         );
 
@@ -208,34 +189,17 @@ mod tests {
             mag_y,
             mag_z: mag_z_,
         };
-        mag_tab.handle_mag_raw(msg.clone());
+        mag_tab.handle_mag_raw(msg);
         let mag_x_ = mag_x_ as f64;
 
-        // Have not waited long enough for gui to update so the max/min from this new message should not take effect yet.
         assert!(
             f64::abs(
-                (mag_tab.ymin / (1_f64 - MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER)) - mag_x as f64
+                mag_tab.ymin - (mag_x - f64::abs(mag_x * MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER))
             ) <= f64::EPSILON
         );
         assert!(
             f64::abs(
-                (mag_tab.ymax / (1_f64 + MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER)) - mag_z as f64
-            ) <= f64::EPSILON
-        );
-
-        sleep(Duration::from_secs_f64(GUI_UPDATE_PERIOD));
-
-        mag_tab.handle_mag_raw(msg);
-
-        // Now we have waited long enough so these values should take.
-        assert!(
-            f64::abs(
-                (mag_tab.ymin / (1_f64 - MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER)) - mag_x as f64
-            ) <= f64::EPSILON
-        );
-        assert!(
-            f64::abs(
-                (mag_tab.ymax / (1_f64 + MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER)) - mag_x_ as f64
+                mag_tab.ymax - (mag_x_ + f64::abs(mag_x_ * MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER))
             ) <= f64::EPSILON
         );
     }

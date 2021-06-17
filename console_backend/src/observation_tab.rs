@@ -6,7 +6,6 @@ use std::collections::{BTreeMap, HashMap};
 use crate::types::*;
 use crate::utils::{compute_doppler, sec_to_ns};
 
-use crate::console_backend_capnp as m;
 use crate::utils::serialize_capnproto_builder;
 
 #[derive(Clone, Debug)]
@@ -271,7 +270,7 @@ impl<S: MessageSender> ObservationTab<S> {
             false => &self.local,
         };
         let mut builder = Builder::new_default();
-        let msg = builder.init_root::<m::message::Builder>();
+        let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
         let mut observation_status = msg.init_observation_status();
         observation_status.set_is_remote(table.is_remote);

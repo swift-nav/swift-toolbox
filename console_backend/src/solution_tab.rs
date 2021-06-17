@@ -6,7 +6,6 @@ use sbp::messages::{
 };
 use std::{collections::HashMap, time::Instant};
 
-use crate::console_backend_capnp as m;
 use crate::constants::*;
 use crate::date_conv::*;
 use crate::output::CsvSerializer;
@@ -646,7 +645,7 @@ impl<S: MessageSender> SolutionTab<S> {
     /// Package solution data into a message buffer and send to frontend.
     fn send_solution_data(&mut self) {
         let mut builder = Builder::new_default();
-        let msg = builder.init_root::<m::message::Builder>();
+        let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
         let mut solution_status = msg.init_solution_position_status();
         solution_status.set_lat_min(self.lat_min);
@@ -711,7 +710,7 @@ impl<S: MessageSender> SolutionTab<S> {
     /// Package solution table data into a message buffer and send to frontend.
     fn send_table_data(&mut self) {
         let mut builder = Builder::new_default();
-        let msg = builder.init_root::<m::message::Builder>();
+        let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
         let mut solution_table_status = msg.init_solution_table_status();
         let mut table_entries = solution_table_status
             .reborrow()

@@ -3,7 +3,6 @@ use sbp::messages::imu::{MsgImuAux, MsgImuRaw};
 
 use capnp::message::Builder;
 
-use crate::console_backend_capnp as m;
 use crate::constants::*;
 use crate::errors::GET_MUT_OBJECT_FAILURE;
 use crate::fusion_status_flags::FusionStatusFlags;
@@ -135,7 +134,7 @@ impl<S: MessageSender> AdvancedInsTab<S> {
     /// Package data into a message buffer and send to frontend.
     fn send_data(&mut self) {
         let mut builder = Builder::new_default();
-        let msg = builder.init_root::<m::message::Builder>();
+        let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
         let mut tab_status = msg.init_advanced_ins_status();
 

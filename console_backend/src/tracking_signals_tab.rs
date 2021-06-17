@@ -8,7 +8,6 @@ use capnp::message::Builder;
 
 use log::warn;
 
-use crate::console_backend_capnp as m;
 use crate::constants::*;
 use crate::piksi_tools_constants::*;
 use crate::types::*;
@@ -374,7 +373,7 @@ impl<S: MessageSender> TrackingSignalsTab<S> {
     /// Package data into a message buffer and send to frontend.
     fn send_data(&mut self) {
         let mut builder = Builder::new_default();
-        let msg = builder.init_root::<m::message::Builder>();
+        let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
         let mut tracking_signals_status = msg.init_tracking_signals_status();
         let mut labels = tracking_signals_status

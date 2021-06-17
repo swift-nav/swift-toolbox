@@ -2,7 +2,6 @@ use sbp::messages::mag::MsgMagRaw;
 
 use capnp::message::Builder;
 
-use crate::console_backend_capnp as m;
 use crate::constants::{MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER, NUM_POINTS};
 use crate::errors::GET_MUT_OBJECT_FAILURE;
 use crate::types::{Deque, MessageSender, SharedState};
@@ -76,7 +75,7 @@ impl<S: MessageSender> AdvancedMagnetometerTab<S> {
     /// Package data into a message buffer and send to frontend.
     fn send_data(&mut self) {
         let mut builder = Builder::new_default();
-        let msg = builder.init_root::<m::message::Builder>();
+        let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
         let mut tab_status = msg.init_advanced_magnetometer_status();
 

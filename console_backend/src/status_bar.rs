@@ -12,7 +12,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crate::console_backend_capnp as m;
 use crate::constants::*;
 use crate::errors::*;
 use crate::piksi_tools_constants::{
@@ -130,7 +129,7 @@ impl<S: MessageSender> StatusBar<S> {
         };
 
         let mut builder = Builder::new_default();
-        let msg = builder.init_root::<m::message::Builder>();
+        let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
         let mut status_bar_status = msg.init_status_bar_status();
         status_bar_status.set_port(&self.port);

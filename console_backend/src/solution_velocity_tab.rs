@@ -5,7 +5,6 @@ use sbp::messages::navigation::MsgVelNED;
 
 use capnp::message::Builder;
 
-use crate::console_backend_capnp as m;
 use crate::constants::{HORIZONTAL_COLOR, NUM_POINTS, VERTICAL_COLOR};
 use crate::types::{Deque, MessageSender, SharedState, VelocityUnits};
 use crate::utils::serialize_capnproto_builder;
@@ -126,7 +125,7 @@ impl<'a, S: MessageSender> SolutionVelocityTab<'a, S> {
     /// Package data into a message buffer and send to frontend.
     fn send_data(&mut self) {
         let mut builder = Builder::new_default();
-        let msg = builder.init_root::<m::message::Builder>();
+        let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
         let mut velocity_status = msg.init_solution_velocity_status();
         velocity_status.set_min(self.min);

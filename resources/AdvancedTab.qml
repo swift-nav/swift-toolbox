@@ -54,8 +54,7 @@ Item {
             AdvancedTabComponents.AdvancedInsTab {
             }
 
-            Item {
-                id: advancedMagnetometerTab
+            AdvancedTabComponents.AdvancedMagnetometerTab {
             }
 
             Item {

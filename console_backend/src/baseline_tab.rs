@@ -489,90 +489,90 @@ impl<'a, S: MessageSender> BaselineTab<'a, S> {
         }
     }
 
-    /// Package solution data into a message buffer and send to frontend.
-    fn send_solution_data(&mut self) {
-        let mut builder = Builder::new_default();
-        let msg = builder.init_root::<m::message::Builder>();
+    // /// Package solution data into a message buffer and send to frontend.
+    // fn send_solution_data(&mut self) {
+    //     let mut builder = Builder::new_default();
+    //     let msg = builder.init_root::<m::message::Builder>();
 
-        let mut solution_status = msg.init_solution_position_status();
-        solution_status.set_n_min(self.n_min);
-        solution_status.set_n_max(self.n_max);
-        solution_status.set_e_min(self.e_min);
-        solution_status.set_e_max(self.e_max);
+    //     let mut solution_status = msg.init_solution_position_status();
+    //     solution_status.set_n_min(self.n_min);
+    //     solution_status.set_n_max(self.n_max);
+    //     solution_status.set_e_min(self.e_min);
+    //     solution_status.set_e_max(self.e_max);
 
-        let mut solution_points = solution_status
-            .reborrow()
-            .init_data(self.sln_data.len() as u32);
-        for idx in 0..self.sln_data.len() {
-            let points = self.sln_data.get_mut(idx).unwrap();
-            let mut point_idx = solution_points
-                .reborrow()
-                .init(idx as u32, points.len() as u32);
-            for (i, (x, y)) in points.iter().enumerate() {
-                let mut point_val = point_idx.reborrow().get(i as u32);
-                point_val.set_x(*x);
-                point_val.set_y(*y);
-            }
-        }
-        let mut available_units = solution_status
-            .reborrow()
-            .init_available_units(self.available_units.len() as u32);
-        for (i, unit) in self.available_units.iter().enumerate() {
-            available_units.set(i as u32, *unit);
-        }
-        let mut solution_points = solution_status
-            .reborrow()
-            .init_cur_data(self.sln_cur_data.len() as u32);
-        for idx in 0..self.sln_cur_data.len() {
-            let points = self.sln_cur_data.get_mut(idx).unwrap();
-            let mut point_idx = solution_points
-                .reborrow()
-                .init(idx as u32, points.len() as u32);
-            for (i, (x, y)) in points.iter().enumerate() {
-                let mut point_val = point_idx.reborrow().get(i as u32);
-                point_val.set_x(*x);
-                point_val.set_y(*y);
-            }
-        }
-        let mut colors = solution_status
-            .reborrow()
-            .init_colors(self.colors.len() as u32);
+    //     let mut solution_points = solution_status
+    //         .reborrow()
+    //         .init_data(self.sln_data.len() as u32);
+    //     for idx in 0..self.sln_data.len() {
+    //         let points = self.sln_data.get_mut(idx).unwrap();
+    //         let mut point_idx = solution_points
+    //             .reborrow()
+    //             .init(idx as u32, points.len() as u32);
+    //         for (i, (x, y)) in points.iter().enumerate() {
+    //             let mut point_val = point_idx.reborrow().get(i as u32);
+    //             point_val.set_x(*x);
+    //             point_val.set_y(*y);
+    //         }
+    //     }
+    //     let mut available_units = solution_status
+    //         .reborrow()
+    //         .init_available_units(self.available_units.len() as u32);
+    //     for (i, unit) in self.available_units.iter().enumerate() {
+    //         available_units.set(i as u32, *unit);
+    //     }
+    //     let mut solution_points = solution_status
+    //         .reborrow()
+    //         .init_cur_data(self.sln_cur_data.len() as u32);
+    //     for idx in 0..self.sln_cur_data.len() {
+    //         let points = self.sln_cur_data.get_mut(idx).unwrap();
+    //         let mut point_idx = solution_points
+    //             .reborrow()
+    //             .init(idx as u32, points.len() as u32);
+    //         for (i, (x, y)) in points.iter().enumerate() {
+    //             let mut point_val = point_idx.reborrow().get(i as u32);
+    //             point_val.set_x(*x);
+    //             point_val.set_y(*y);
+    //         }
+    //     }
+    //     let mut colors = solution_status
+    //         .reborrow()
+    //         .init_colors(self.colors.len() as u32);
 
-        for (i, color) in self.colors.iter().enumerate() {
-            colors.set(i as u32, color);
-        }
+    //     for (i, color) in self.colors.iter().enumerate() {
+    //         colors.set(i as u32, color);
+    //     }
 
-        let mut labels = solution_status
-            .reborrow()
-            .init_labels(self.labels.len() as u32);
+    //     let mut labels = solution_status
+    //         .reborrow()
+    //         .init_labels(self.labels.len() as u32);
 
-        for (i, label) in self.labels.iter().enumerate() {
-            labels.set(i as u32, label);
-        }
+    //     for (i, label) in self.labels.iter().enumerate() {
+    //         labels.set(i as u32, label);
+    //     }
 
-        self.client_sender
-            .send_data(serialize_capnproto_builder(builder));
-    }
+    //     self.client_sender
+    //         .send_data(serialize_capnproto_builder(builder));
+    // }
 
-    /// Package solution table data into a message buffer and send to frontend.
-    fn send_table_data(&mut self) {
-        let mut builder = Builder::new_default();
-        let msg = builder.init_root::<m::message::Builder>();
-        let mut solution_table_status = msg.init_solution_table_status();
-        let mut table_entries = solution_table_status
-            .reborrow()
-            .init_data(self.table.len() as u32);
-        {
-            for (i, key) in SOLUTION_TABLE_KEYS.iter().enumerate() {
-                let mut entry = table_entries.reborrow().get(i as u32);
-                let val = self.table[*key].clone();
-                entry.set_key(key);
-                entry.set_val(&val);
-            }
-        }
-        self.client_sender
-            .send_data(serialize_capnproto_builder(builder));
-    }
+    // /// Package solution table data into a message buffer and send to frontend.
+    // fn send_table_data(&mut self) {
+    //     let mut builder = Builder::new_default();
+    //     let msg = builder.init_root::<m::message::Builder>();
+    //     let mut solution_table_status = msg.init_solution_table_status();
+    //     let mut table_entries = solution_table_status
+    //         .reborrow()
+    //         .init_data(self.table.len() as u32);
+    //     {
+    //         for (i, key) in SOLUTION_TABLE_KEYS.iter().enumerate() {
+    //             let mut entry = table_entries.reborrow().get(i as u32);
+    //             let val = self.table[*key].clone();
+    //             entry.set_key(key);
+    //             entry.set_val(&val);
+    //         }
+    //     }
+    //     self.client_sender
+    //         .send_data(serialize_capnproto_builder(builder));
+    // }
 }
 
 // #[cfg(test)]

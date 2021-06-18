@@ -4,6 +4,7 @@ use sbp::{messages::SBP, time::GpsTime};
 use std::{path::PathBuf, result::Result, thread::sleep, time::Instant};
 
 use crate::advanced_ins_tab::AdvancedInsTab;
+use crate::advanced_magnetometer_tab::AdvancedMagnetometerTab;
 use crate::common_constants::SbpLogging;
 use crate::constants::*;
 use crate::observation_tab::ObservationTab;
@@ -25,6 +26,7 @@ pub struct MainTab<'a, S: MessageSender> {
     client_sender: S,
     shared_state: SharedState,
     pub advanced_ins_tab: AdvancedInsTab<S>,
+    pub advanced_magnetometer_tab: AdvancedMagnetometerTab<S>,
     pub tracking_signals_tab: TrackingSignalsTab<S>,
     pub solution_tab: SolutionTab<S>,
     pub observation_tab: ObservationTab<S>,
@@ -44,6 +46,10 @@ impl<'a, S: MessageSender> MainTab<'a, S> {
             client_sender: client_sender.clone(),
             shared_state: shared_state.clone(),
             advanced_ins_tab: AdvancedInsTab::new(shared_state.clone(), client_sender.clone()),
+            advanced_magnetometer_tab: AdvancedMagnetometerTab::new(
+                shared_state.clone(),
+                client_sender.clone(),
+            ),
             tracking_signals_tab: TrackingSignalsTab::new(
                 shared_state.clone(),
                 client_sender.clone(),

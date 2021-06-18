@@ -10,7 +10,6 @@ use std::{
 };
 
 use crate::common_constants as cc;
-use crate::console_backend_capnp as m;
 use crate::errors::{
     THREAD_JOIN_FAILURE, UNABLE_TO_SEND_INS_UPDATE_FAILURE, UNABLE_TO_STOP_TIMER_THREAD_FAILURE,
     UPDATE_STATUS_LOCK_MUTEX_FAILURE,
@@ -310,7 +309,7 @@ impl<S: MessageSender> FusionStatusFlags<S> {
 
     fn send_data(&mut self) {
         let mut builder = Builder::new_default();
-        let msg = builder.init_root::<m::message::Builder>();
+        let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
         let mut tab_status = msg.init_fusion_status_flags_status();
 

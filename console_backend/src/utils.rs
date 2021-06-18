@@ -7,7 +7,6 @@ use indexmap::IndexSet;
 use log::warn;
 use serialport::available_ports;
 
-use crate::console_backend_capnp as m;
 use crate::constants::*;
 use crate::errors::*;
 use crate::types::{MessageSender, SignalCodes};
@@ -16,7 +15,7 @@ use crate::{common_constants as cc, types::SharedState};
 /// Send a CLOSE, or kill, signal to the frontend.
 pub fn close_frontend<P: MessageSender>(client_send: &mut P) {
     let mut builder = Builder::new_default();
-    let msg = builder.init_root::<m::message::Builder>();
+    let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
     let mut status = msg.init_status();
     let app_state = cc::ApplicationStates::CLOSE;
     status.set_text(&app_state.to_string());
@@ -29,7 +28,7 @@ pub fn set_connected_frontend<P: MessageSender>(
     client_send: &mut P,
 ) {
     let mut builder = Builder::new_default();
-    let msg = builder.init_root::<m::message::Builder>();
+    let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
     let mut status = msg.init_status();
     status.set_text(&app_state.to_string());
     client_send.send_data(serialize_capnproto_builder(builder));
@@ -37,7 +36,7 @@ pub fn set_connected_frontend<P: MessageSender>(
 
 pub fn refresh_navbar<P: MessageSender>(client_send: &mut P, shared_state: SharedState) {
     let mut builder = Builder::new_default();
-    let msg = builder.init_root::<m::message::Builder>();
+    let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
     let mut nav_bar_status = msg.init_nav_bar_status();
     let mut ports: Vec<String> = vec![];
@@ -125,7 +124,7 @@ pub fn serialize_capnproto_builder(builder: Builder<HeapAllocator>) -> Vec<u8> {
 
 pub fn refresh_loggingbar<P: MessageSender>(client_send: &mut P, shared_state: SharedState) {
     let mut builder = Builder::new_default();
-    let msg = builder.init_root::<m::message::Builder>();
+    let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
     let mut logging_bar_status = msg.init_logging_bar_status();
     let csv_logging = shared_state.csv_logging();

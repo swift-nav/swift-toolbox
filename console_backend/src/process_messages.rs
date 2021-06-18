@@ -87,6 +87,9 @@ pub fn process_messages<S>(
                 main.solution_tab.handle_ins_updates(msg.clone());
                 main.status_bar.handle_ins_updates(msg);
             }
+            SBP::MsgMagRaw(msg) => {
+                main.advanced_magnetometer_tab.handle_mag_raw(msg);
+            }
             SBP::MsgMeasurementState(msg) => {
                 main.tracking_signals_tab
                     .handle_msg_measurement_state(msg.states);

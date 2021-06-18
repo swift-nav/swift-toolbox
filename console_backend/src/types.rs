@@ -15,6 +15,7 @@ use log::{error, info};
 use ordered_float::OrderedFloat;
 use sbp::codec::dencode::{FramedWrite, IterSinkExt};
 use sbp::codec::sbp::SbpEncoder;
+use sbp::messages::SBPMessage;
 use sbp::messages::{
     navigation::{
         MsgBaselineNED, MsgBaselineNEDDepA, MsgDops, MsgDopsDepA, MsgPosLLH, MsgPosLLHDepA,
@@ -28,7 +29,6 @@ use sbp::messages::{
 };
 use serde::{Deserialize, Serialize};
 use serialport::FlowControl as SPFlowControl;
-use std::borrow::Borrow;
 use std::{
     cmp::{Eq, PartialEq},
     collections::HashMap,
@@ -61,6 +61,8 @@ pub struct MsgSender<W> {
 }
 
 impl<W: std::io::Write> MsgSender<W> {
+    /// 42 is the conventional sender ID intended for messages sent from the host to the device
+    const SENDER_ID: u16 = 42;
     const LOCK_FAILURE: &'static str = "failed to aquire sender lock";
 
     pub fn new(wtr: W) -> Self {
@@ -69,11 +71,8 @@ impl<W: std::io::Write> MsgSender<W> {
         }
     }
 
-    pub fn send<B>(&self, msg: B) -> sbp::Result<()>
-    where
-        B: Borrow<SBP>,
-    {
-        let msg = msg.borrow();
+    pub fn send(&self, mut msg: SBP) -> sbp::Result<()> {
+        msg.set_sender_id(Self::SENDER_ID);
         let mut framed = self.inner.lock().expect(Self::LOCK_FAILURE);
         framed.send(msg)?;
         Ok(())

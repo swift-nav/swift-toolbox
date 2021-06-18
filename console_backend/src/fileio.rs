@@ -59,7 +59,7 @@ where
         let sender = self.sender.clone();
         let send_msg = move |sequence, offset| {
             sender.send(SBP::from(MsgFileioReadReq {
-                sender_id: Some(42),
+                sender_id: None,
                 filename: path.clone().into(),
                 chunk_size: READ_CHUNK_SIZE as u8,
                 sequence,
@@ -188,7 +188,7 @@ where
         let sender = self.sender.clone();
         let send_msg = |state: &WriteState, req: &WriteReq| {
             sender.send(SBP::from(MsgFileioWriteReq {
-                sender_id: Some(42),
+                sender_id: None,
                 sequence: state.sequence,
                 offset: state.offset as u32,
                 filename: state.filename(),
@@ -275,7 +275,7 @@ where
 
         loop {
             self.sender.send(SBP::from(MsgFileioReadDirReq {
-                sender_id: Some(42),
+                sender_id: None,
                 sequence: seq,
                 offset: files.len() as u32,
                 dirname: path.clone().into(),
@@ -310,7 +310,7 @@ where
 
     pub fn remove(&self, filename: String) -> Result<()> {
         self.sender.send(SBP::from(MsgFileioRemove {
-            sender_id: Some(42),
+            sender_id: None,
             filename: filename.into(),
         }))?;
         Ok(())
@@ -328,7 +328,7 @@ where
             s.spawn(|_| {
                 while rx.try_recv().is_err() {
                     let _ = self.sender.send(SBP::from(MsgFileioConfigReq {
-                        sender_id: Some(42),
+                        sender_id: None,
                         sequence,
                     }));
                     std::thread::sleep(CONFIG_REQ_RETRY);

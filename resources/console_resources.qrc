@@ -13,6 +13,7 @@
     <file>AdvancedTab.qml</file>
     <file>AdvancedTabComponents/AdvancedInsTab.qml</file>
     <file>AdvancedTabComponents/FusionStatusFlags.qml</file>
+    <file>AdvancedTabComponents/AdvancedMagnetometerTab.qml</file>
     <file>AdvancedTabComponents/UnknownStatus.qml</file>
     <file>AdvancedTabComponents/WarningStatus.qml</file>
     <file>AdvancedTabComponents/OkStatus.qml</file>

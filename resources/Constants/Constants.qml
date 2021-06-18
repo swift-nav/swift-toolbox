@@ -17,6 +17,7 @@ QtObject {
     property QtObject commonChart
     property QtObject commonLegend
     property QtObject advancedIns
+    property QtObject advancedMagnetometer
     property QtObject solutionPosition
     property QtObject solutionTable
     property QtObject solutionVelocity
@@ -87,6 +88,20 @@ QtObject {
         readonly property int folderPathBarHeight: 25
         readonly property color placeholderTextColor: "#CDC9C9"
         readonly property string folderButtonPath: "images/fontawesome/folder-solid.svg"
+    }
+
+    advancedMagnetometer: QtObject {
+        readonly property string title: "Raw Magnetometer Data"
+        readonly property color titleColor: "#00006E"
+        readonly property int titlePointSize: 14
+        readonly property var legendLabels: ["Mag. X (uT)", "Mag. Y (uT)", "Mag. Z (uT)"]
+        readonly property var lineColors: ["#66c2a5", "#fc8d62", "#8da0cb"]
+        readonly property int xAxisMax: 200
+        readonly property int xAxisMin: 0
+        readonly property int xAxisTickCount: 25
+        readonly property int yAxisTickCount: 20
+        readonly property int legendBottomMargin: 60
+        readonly property int legendLeftMargin: 50
     }
 
     advancedIns: QtObject {
@@ -168,6 +183,7 @@ QtObject {
         readonly property real markerPointSizeOffset: 4
         readonly property int labelPointSize: 10
         readonly property int padding: 10
+        readonly property int spacing: 5
         readonly property int verticalCenterOffset: -1
         readonly property color borderColor: "#000000"
         readonly property int borderWidth: 1

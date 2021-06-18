@@ -2,7 +2,6 @@ use sbp::messages::logging::MsgLog;
 
 use capnp::message::Builder;
 
-use crate::console_backend_capnp as m;
 use crate::types::*;
 use crate::utils::serialize_capnproto_builder;
 
@@ -82,7 +81,7 @@ impl<S: MessageSender> Writer<Box<String>> for LogPanelWriter<S> {
         }
 
         let mut builder = Builder::new_default();
-        let msg = builder.init_root::<m::message::Builder>();
+        let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
         let log_update = msg.init_log_append();
         let mut entries = log_update.init_entries(slice.len() as u32);

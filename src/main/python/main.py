@@ -47,6 +47,12 @@ from advanced_ins_tab import (
     ADVANCED_INS_TAB,
 )
 
+from advanced_magnetometer_tab import (
+    AdvancedMagnetometerModel,
+    AdvancedMagnetometerPoints,
+    ADVANCED_MAGNETOMETER_TAB,
+)
+
 from fusion_status_flags import (
     FusionStatusFlagsModel,
     FusionStatusFlagsData,
@@ -204,6 +210,13 @@ def receive_messages(app_, backend, messages):
             ADVANCED_INS_TAB[Keys.POINTS][:] = [
                 [QPointF(point.x, point.y) for point in m.advancedInsStatus.data[idx]]
                 for idx in range(len(m.advancedInsStatus.data))
+            ]
+        elif m.which == Message.Union.AdvancedMagnetometerStatus:
+            ADVANCED_MAGNETOMETER_TAB[Keys.YMAX] = m.advancedMagnetometerStatus.ymax
+            ADVANCED_MAGNETOMETER_TAB[Keys.YMIN] = m.advancedMagnetometerStatus.ymin
+            ADVANCED_MAGNETOMETER_TAB[Keys.POINTS][:] = [
+                [QPointF(point.x, point.y) for point in m.advancedMagnetometerStatus.data[idx]]
+                for idx in range(len(m.advancedMagnetometerStatus.data))
             ]
         elif m.which == Message.Union.FusionStatusFlagsStatus:
             FUSION_STATUS_FLAGS[Keys.GNSSPOS] = m.fusionStatusFlagsStatus.gnsspos
@@ -464,6 +477,7 @@ if __name__ == "__main__":
     qmlRegisterType(NavBarData, "SwiftConsole", 1, 0, "NavBarData")  # type: ignore
     qmlRegisterType(LoggingBarData, "SwiftConsole", 1, 0, "LoggingBarData")  # type: ignore
     qmlRegisterType(AdvancedInsPoints, "SwiftConsole", 1, 0, "AdvancedInsPoints")  # type: ignore
+    qmlRegisterType(AdvancedMagnetometerPoints, "SwiftConsole", 1, 0, "AdvancedMagnetometerPoints")  # type: ignore
     qmlRegisterType(FusionStatusFlagsData, "SwiftConsole", 1, 0, "FusionStatusFlagsData")  # type: ignore
     qmlRegisterType(SolutionPositionPoints, "SwiftConsole", 1, 0, "SolutionPositionPoints")  # type: ignore
     qmlRegisterType(SolutionTableEntries, "SwiftConsole", 1, 0, "SolutionTableEntries")  # type: ignore
@@ -489,6 +503,7 @@ if __name__ == "__main__":
     log_panel_model = LogPanelModel()
     nav_bar_model = NavBarModel()
     advanced_ins_model = AdvancedInsModel()
+    advanced_magnetometer_model = AdvancedMagnetometerModel()
     fusion_engine_flags_model = FusionStatusFlagsModel()
     solution_position_model = SolutionPositionModel()
     solution_table_model = SolutionTableModel()
@@ -502,6 +517,7 @@ if __name__ == "__main__":
     root_context.setContextProperty("log_panel_model", log_panel_model)
     root_context.setContextProperty("nav_bar_model", nav_bar_model)
     root_context.setContextProperty("advanced_ins_model", advanced_ins_model)
+    root_context.setContextProperty("advanced_magnetometer_model", advanced_magnetometer_model)
     root_context.setContextProperty("fusion_engine_flags_model", fusion_engine_flags_model)
     root_context.setContextProperty("solution_position_model", solution_position_model)
     root_context.setContextProperty("solution_table_model", solution_table_model)

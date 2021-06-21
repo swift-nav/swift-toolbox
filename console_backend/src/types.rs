@@ -11,8 +11,11 @@ use chrono::{DateTime, Utc};
 use directories::{ProjectDirs, UserDirs};
 use indexmap::set::IndexSet;
 use lazy_static::lazy_static;
-use log::{error, info, warn};
+use log::{error, info};
 use ordered_float::OrderedFloat;
+use sbp::codec::dencode::{FramedWrite, IterSinkExt};
+use sbp::codec::sbp::SbpEncoder;
+use sbp::messages::SBPMessage;
 use sbp::messages::{
     navigation::{
         MsgBaselineNED, MsgBaselineNEDDepA, MsgDops, MsgDopsDepA, MsgPosLLH, MsgPosLLHDepA,
@@ -22,6 +25,7 @@ use sbp::messages::{
         MsgObs, MsgObsDepB, MsgObsDepC, MsgOsr, PackedObsContent, PackedObsContentDepB,
         PackedObsContentDepC, PackedOsrContent,
     },
+    SBP,
 };
 use serde::{Deserialize, Serialize};
 use serialport::FlowControl as SPFlowControl;
@@ -32,6 +36,7 @@ use std::{
     fmt::Debug,
     fs,
     hash::Hash,
+    io,
     net::TcpStream,
     ops::Deref,
     path::PathBuf,
@@ -49,6 +54,38 @@ use std::{
 pub type Error = std::boxed::Box<dyn std::error::Error>;
 pub type Result<T> = std::result::Result<T, Error>;
 pub type UtcDateTime = DateTime<Utc>;
+
+/// Sends SBP messages to the connected device
+pub struct MsgSender<W> {
+    inner: Arc<Mutex<FramedWrite<W, SbpEncoder>>>,
+}
+
+impl<W: std::io::Write> MsgSender<W> {
+    /// 42 is the conventional sender ID intended for messages sent from the host to the device
+    const SENDER_ID: u16 = 42;
+    const LOCK_FAILURE: &'static str = "failed to aquire sender lock";
+
+    pub fn new(wtr: W) -> Self {
+        Self {
+            inner: Arc::new(Mutex::new(FramedWrite::new(wtr, SbpEncoder::new()))),
+        }
+    }
+
+    pub fn send(&self, mut msg: SBP) -> sbp::Result<()> {
+        msg.set_sender_id(Self::SENDER_ID);
+        let mut framed = self.inner.lock().expect(Self::LOCK_FAILURE);
+        framed.send(msg)?;
+        Ok(())
+    }
+}
+
+impl<W> Clone for MsgSender<W> {
+    fn clone(&self) -> Self {
+        MsgSender {
+            inner: Arc::clone(&self.inner),
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct Deque<T> {
@@ -183,32 +220,18 @@ impl ServerState {
         shared_state: SharedState,
         filename: String,
         close_when_done: bool,
-    ) {
-        let shared_state_clone = shared_state.clone();
-        self.connection_join();
-        shared_state_clone.set_running(true, client_send.clone());
-        let handle = thread::spawn(move || {
-            if let Ok(stream) = fs::File::open(&filename) {
-                println!("Opened file successfully!");
-                shared_state_clone.update_file_history(filename.clone());
-                shared_state_clone.set_current_connection(filename);
-                refresh_navbar(&mut client_send.clone(), shared_state.clone());
-                let shared_state_clone_ = shared_state.clone();
-                process_messages(
-                    stream,
-                    shared_state_clone_,
-                    client_send.clone(),
-                    RealtimeDelay::On,
-                );
-                if close_when_done {
-                    close_frontend(&mut client_send.clone());
-                }
-            } else {
-                println!("Couldn't open file...");
-            }
-            shared_state.set_running(false, client_send.clone());
-        });
-        self.new_connection(handle);
+    ) -> Result<()> {
+        let conn = Connection::file(filename.clone())?;
+        info!("Opened file successfully!");
+        shared_state.update_file_history(filename);
+        self.connect(
+            conn,
+            client_send,
+            shared_state,
+            RealtimeDelay::On,
+            close_when_done,
+        );
+        Ok(())
     }
 
     /// Helper function for attempting to open a tcp connection and process SBP messages from it.
@@ -224,30 +247,12 @@ impl ServerState {
         shared_state: SharedState,
         host: String,
         port: u16,
-    ) {
-        let shared_state_clone = shared_state.clone();
-        shared_state_clone.set_running(true, client_send.clone());
-        self.connection_join();
-        let handle = thread::spawn(move || {
-            let shared_state_clone = shared_state.clone();
-            let host_port = format!("{}:{}", host, port);
-            if let Ok(stream) = TcpStream::connect(host_port.clone()) {
-                info!("Connected to the server {}!", host_port);
-                shared_state_clone.update_tcp_history(host, port);
-                shared_state_clone.set_current_connection(host_port);
-                refresh_navbar(&mut client_send.clone(), shared_state.clone());
-                process_messages(
-                    stream,
-                    shared_state_clone,
-                    client_send.clone(),
-                    RealtimeDelay::Off,
-                );
-            } else {
-                warn!("Couldn't connect to server...");
-            }
-            shared_state.set_running(false, client_send.clone());
-        });
-        self.new_connection(handle);
+    ) -> Result<()> {
+        let conn = Connection::tcp(host.clone(), port)?;
+        info!("Connected to tcp stream!");
+        shared_state.update_tcp_history(host, port);
+        self.connect(conn, client_send, shared_state, RealtimeDelay::Off, false);
+        Ok(())
     }
 
     /// Helper function for attempting to open a serial port and process SBP messages from it.
@@ -265,32 +270,32 @@ impl ServerState {
         device: String,
         baudrate: u32,
         flow: FlowControl,
+    ) -> Result<()> {
+        let conn = Connection::serial(device, baudrate, flow)?;
+        info!("Connected to serialport!");
+        self.connect(conn, client_send, shared_state, RealtimeDelay::Off, false);
+        Ok(())
+    }
+
+    fn connect(
+        &self,
+        conn: Connection,
+        mut client_send: ClientSender,
+        shared_state: SharedState,
+        delay: RealtimeDelay,
+        close_when_done: bool,
     ) {
-        let shared_state_clone = shared_state.clone();
-        shared_state_clone.set_running(true, client_send.clone());
+        shared_state.set_current_connection(conn.name.clone());
+        shared_state.set_running(true, client_send.clone());
         self.connection_join();
-        let handle = thread::spawn(move || {
-            let shared_state_clone = shared_state.clone();
-            match serialport::new(&device, baudrate)
-                .flow_control(*flow)
-                .timeout(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))
-                .open()
-            {
-                Ok(port) => {
-                    println!("Connected to serialport {}.", device);
-                    shared_state_clone.set_current_connection(format!("{} @{}", device, baudrate));
-                    process_messages(
-                        port,
-                        shared_state_clone,
-                        client_send.clone(),
-                        RealtimeDelay::Off,
-                    );
-                }
-                Err(e) => eprintln!("Unable to connect to serialport: {}", e),
+        self.new_connection(thread::spawn(move || {
+            refresh_navbar(&mut client_send, shared_state.clone());
+            process_messages(conn, shared_state.clone(), client_send.clone(), delay);
+            if close_when_done {
+                close_frontend(&mut client_send);
             }
-            shared_state.set_running(false, client_send.clone());
-        });
-        self.new_connection(handle);
+            shared_state.set_running(false, client_send);
+        }));
     }
 }
 
@@ -1802,6 +1807,52 @@ pub struct VelLog {
     pub num_signals: u8,
 }
 
+pub struct Connection {
+    pub name: String,
+    pub rdr: Box<dyn io::Read + Send>,
+    pub wtr: Box<dyn io::Write + Send>,
+}
+
+impl Connection {
+    pub fn tcp(host: String, port: u16) -> Result<Self> {
+        let name = format!("{}:{}", host, port);
+        let rdr = TcpStream::connect(&name)?;
+        let wtr = rdr.try_clone()?;
+        Ok(Self {
+            name,
+            rdr: Box::new(rdr),
+            wtr: Box::new(wtr),
+        })
+    }
+
+    pub fn serial(device: String, baudrate: u32, flow: FlowControl) -> Result<Self> {
+        let rdr = serialport::new(&device, baudrate)
+            .flow_control(*flow)
+            .timeout(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))
+            .open()?;
+        let wtr = rdr.try_clone()?;
+        Ok(Self {
+            name: device,
+            rdr: Box::new(rdr),
+            wtr: Box::new(wtr),
+        })
+    }
+
+    pub fn file(filename: String) -> Result<Self> {
+        let rdr = fs::File::open(&filename)?;
+        let wtr = io::sink();
+        Ok(Self {
+            name: filename,
+            rdr: Box::new(rdr),
+            wtr: Box::new(wtr),
+        })
+    }
+
+    pub fn into_io(self) -> (Box<dyn io::Read + Send>, Box<dyn io::Write + Send>) {
+        (self.rdr, self.wtr)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1981,12 +2032,14 @@ mod tests {
         let filename = TEST_SHORT_FILEPATH.to_string();
         receive_thread(client_receive);
         assert!(!shared_state.is_running());
-        server_state.connect_to_file(
-            client_send,
-            shared_state.clone(),
-            filename,
-            /*close_when_done = */ true,
-        );
+        server_state
+            .connect_to_file(
+                client_send,
+                shared_state.clone(),
+                filename,
+                /*close_when_done = */ true,
+            )
+            .unwrap();
         sleep(Duration::from_millis(
             DELAY_BEFORE_CHECKING_APP_STARTED_IN_MS,
         ));
@@ -2010,12 +2063,14 @@ mod tests {
         let filename = TEST_SHORT_FILEPATH.to_string();
         receive_thread(client_receive);
         assert!(!shared_state.is_running());
-        server_state.connect_to_file(
-            client_send,
-            shared_state.clone(),
-            filename,
-            /*close_when_done = */ true,
-        );
+        server_state
+            .connect_to_file(
+                client_send,
+                shared_state.clone(),
+                filename,
+                /*close_when_done = */ true,
+            )
+            .unwrap();
         sleep(Duration::from_millis(
             DELAY_BEFORE_CHECKING_APP_STARTED_IN_MS,
         ));
@@ -2045,12 +2100,14 @@ mod tests {
         let handle = receive_thread(client_receive);
         assert!(!shared_state.is_running());
         {
-            server_state.connect_to_file(
-                client_send.clone(),
-                shared_state.clone(),
-                filename,
-                /*close_when_done = */ true,
-            );
+            server_state
+                .connect_to_file(
+                    client_send.clone(),
+                    shared_state.clone(),
+                    filename,
+                    /*close_when_done = */ true,
+                )
+                .unwrap();
         }
 
         sleep(Duration::from_millis(5));

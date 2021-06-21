@@ -76,7 +76,7 @@ fn main() -> Result<()> {
                 s.spawn(|_| run(rdr));
                 let mut fileio = Fileio::new(bc, sender);
                 let data = fs::File::open(source)?;
-                fileio.write(dest, data)?;
+                fileio.overwrite(dest, data)?;
                 eprintln!("file written successfully.");
                 done_tx.send(true).unwrap();
                 Result::Ok(())

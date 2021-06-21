@@ -158,7 +158,10 @@ where
         .unwrap()
     }
 
-    pub fn write(&mut self, filename: String, data: impl Read) -> Result<()> {
+    /// Deletes `filename` on the remote device (if it exists) and writes the contents of `data` to the file.
+    /// This operation is NOT atomic. If the write fails and `filename` existed, it is gone forever.
+    /// For more context see: https://github.com/swift-nav/console_pp/pull/72#discussion_r654751414
+    pub fn overwrite(&mut self, filename: String, data: impl Read) -> Result<()> {
         self.remove(filename.clone())?;
 
         let mut data = BufReader::new(data);

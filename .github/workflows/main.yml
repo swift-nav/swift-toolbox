@@ -54,7 +54,7 @@ jobs:
         shell: bash
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
-              sudo apt-get install -y capnproto libudev-dev
+              sudo apt-get install -y capnproto libudev-dev=245.4-4ubuntu3.7
           elif [ "$RUNNER_OS" == "macOS" ]; then
               brew install capnp llvm
           elif [ "$RUNNER_OS" == "Windows" ]; then
@@ -157,7 +157,7 @@ jobs:
 
       - name: Install Dependencies.
         run: |
-          sudo apt-get install -y capnproto libudev-dev
+          sudo apt-get install -y capnproto libudev-dev=245.4-4ubuntu3.7
 
       - uses: conda-incubator/setup-miniconda@v2
         with:

@@ -6,12 +6,10 @@ use sbp::messages::{
 };
 use std::collections::HashMap;
 
-use crate::console_backend_capnp as m;
 use crate::constants::*;
 use crate::date_conv::*;
-use crate::errors::*;
 use crate::output::{BaselineLog, CsvSerializer};
-use crate::piksi_tools_constants::{mode_dict, EMPTY_STR};
+use crate::piksi_tools_constants::EMPTY_STR;
 use crate::types::{BaselineNED, Deque, GnssModes, MessageSender, SharedState, UtcDateTime};
 use crate::utils::*;
 
@@ -400,13 +398,11 @@ impl<'a, S: MessageSender> BaselineTab<'a, S> {
                 self.table.insert(UTC_TIME, String::from(EMPTY_STR));
                 self.table.insert(UTC_SRC, String::from(EMPTY_STR));
             }
-            self.table.insert(N, format!("{:.12}", n));
-            self.table.insert(E, format!("{:.12}", e));
-            self.table.insert(D, format!("{:.12}", d));
-            self.table
-                .insert(HORIZ_ACC, format!("{:.12}", baseline_ned_fields.h_accuracy));
-            self.table
-                .insert(VERT_ACC, format!("{:.12}", baseline_ned_fields.v_accuracy));
+            self.table.insert(N, n.to_string());
+            self.table.insert(E, e.to_string());
+            self.table.insert(D, d.to_string());
+            self.table.insert(HORIZ_ACC, h_accuracy.to_string());
+            self.table.insert(VERT_ACC, v_accuracy.to_string());
             self.table.insert(DIST, format!("{:.3}", dist));
             self.table
                 .insert(SATS_USED, baseline_ned_fields.n_sats.to_string());
@@ -432,8 +428,8 @@ impl<'a, S: MessageSender> BaselineTab<'a, S> {
 
         let (center, clear, pause, zoom) = self.check_state();
         self.solution_draw(center, clear, pause, zoom);
-        // self.send_solution_data();
-        // self.send_table_data();
+        self.send_solution_data();
+        self.send_table_data();
     }
 
     pub fn check_state(&self) -> (bool, bool, bool, bool) {
@@ -489,90 +485,78 @@ impl<'a, S: MessageSender> BaselineTab<'a, S> {
         }
     }
 
-    // /// Package solution data into a message buffer and send to frontend.
-    // fn send_solution_data(&mut self) {
-    //     let mut builder = Builder::new_default();
-    //     let msg = builder.init_root::<m::message::Builder>();
+    /// Package solution data into a message buffer and send to frontend.
+    fn send_solution_data(&mut self) {
+        let mut builder = Builder::new_default();
+        let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
-    //     let mut solution_status = msg.init_solution_position_status();
-    //     solution_status.set_n_min(self.n_min);
-    //     solution_status.set_n_max(self.n_max);
-    //     solution_status.set_e_min(self.e_min);
-    //     solution_status.set_e_max(self.e_max);
+        let mut tab_status = msg.init_baseline_plot_status();
+        tab_status.set_n_min(self.n_min);
+        tab_status.set_n_max(self.n_max);
+        tab_status.set_e_min(self.e_min);
+        tab_status.set_e_max(self.e_max);
 
-    //     let mut solution_points = solution_status
-    //         .reborrow()
-    //         .init_data(self.sln_data.len() as u32);
-    //     for idx in 0..self.sln_data.len() {
-    //         let points = self.sln_data.get_mut(idx).unwrap();
-    //         let mut point_idx = solution_points
-    //             .reborrow()
-    //             .init(idx as u32, points.len() as u32);
-    //         for (i, (x, y)) in points.iter().enumerate() {
-    //             let mut point_val = point_idx.reborrow().get(i as u32);
-    //             point_val.set_x(*x);
-    //             point_val.set_y(*y);
-    //         }
-    //     }
-    //     let mut available_units = solution_status
-    //         .reborrow()
-    //         .init_available_units(self.available_units.len() as u32);
-    //     for (i, unit) in self.available_units.iter().enumerate() {
-    //         available_units.set(i as u32, *unit);
-    //     }
-    //     let mut solution_points = solution_status
-    //         .reborrow()
-    //         .init_cur_data(self.sln_cur_data.len() as u32);
-    //     for idx in 0..self.sln_cur_data.len() {
-    //         let points = self.sln_cur_data.get_mut(idx).unwrap();
-    //         let mut point_idx = solution_points
-    //             .reborrow()
-    //             .init(idx as u32, points.len() as u32);
-    //         for (i, (x, y)) in points.iter().enumerate() {
-    //             let mut point_val = point_idx.reborrow().get(i as u32);
-    //             point_val.set_x(*x);
-    //             point_val.set_y(*y);
-    //         }
-    //     }
-    //     let mut colors = solution_status
-    //         .reborrow()
-    //         .init_colors(self.colors.len() as u32);
+        let mut solution_points = tab_status.reborrow().init_data(self.sln_data.len() as u32);
+        for idx in 0..self.sln_data.len() {
+            let points = self.sln_data.get_mut(idx).unwrap();
+            let mut point_idx = solution_points
+                .reborrow()
+                .init(idx as u32, points.len() as u32);
+            for (i, (x, y)) in points.iter().enumerate() {
+                let mut point_val = point_idx.reborrow().get(i as u32);
+                point_val.set_x(*x);
+                point_val.set_y(*y);
+            }
+        }
+        let mut solution_points = tab_status
+            .reborrow()
+            .init_cur_data(self.sln_cur_data.len() as u32);
+        for idx in 0..self.sln_cur_data.len() {
+            let points = self.sln_cur_data.get_mut(idx).unwrap();
+            let mut point_idx = solution_points
+                .reborrow()
+                .init(idx as u32, points.len() as u32);
+            for (i, (x, y)) in points.iter().enumerate() {
+                let mut point_val = point_idx.reborrow().get(i as u32);
+                point_val.set_x(*x);
+                point_val.set_y(*y);
+            }
+        }
+        let mut colors = tab_status.reborrow().init_colors(self.colors.len() as u32);
 
-    //     for (i, color) in self.colors.iter().enumerate() {
-    //         colors.set(i as u32, color);
-    //     }
+        for (i, color) in self.colors.iter().enumerate() {
+            colors.set(i as u32, color);
+        }
 
-    //     let mut labels = solution_status
-    //         .reborrow()
-    //         .init_labels(self.labels.len() as u32);
+        let mut labels = tab_status.reborrow().init_labels(self.labels.len() as u32);
 
-    //     for (i, label) in self.labels.iter().enumerate() {
-    //         labels.set(i as u32, label);
-    //     }
+        for (i, label) in self.labels.iter().enumerate() {
+            labels.set(i as u32, label);
+        }
 
-    //     self.client_sender
-    //         .send_data(serialize_capnproto_builder(builder));
-    // }
+        self.client_sender
+            .send_data(serialize_capnproto_builder(builder));
+    }
 
-    // /// Package solution table data into a message buffer and send to frontend.
-    // fn send_table_data(&mut self) {
-    //     let mut builder = Builder::new_default();
-    //     let msg = builder.init_root::<m::message::Builder>();
-    //     let mut solution_table_status = msg.init_solution_table_status();
-    //     let mut table_entries = solution_table_status
-    //         .reborrow()
-    //         .init_data(self.table.len() as u32);
-    //     {
-    //         for (i, key) in SOLUTION_TABLE_KEYS.iter().enumerate() {
-    //             let mut entry = table_entries.reborrow().get(i as u32);
-    //             let val = self.table[*key].clone();
-    //             entry.set_key(key);
-    //             entry.set_val(&val);
-    //         }
-    //     }
-    //     self.client_sender
-    //         .send_data(serialize_capnproto_builder(builder));
-    // }
+    /// Package solution table data into a message buffer and send to frontend.
+    fn send_table_data(&mut self) {
+        let mut builder = Builder::new_default();
+        let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
+        let mut solution_table_status = msg.init_baseline_table_status();
+        let mut table_entries = solution_table_status
+            .reborrow()
+            .init_data(self.table.len() as u32);
+        {
+            for (i, key) in BASELINE_TABLE_KEYS.iter().enumerate() {
+                let mut entry = table_entries.reborrow().get(i as u32);
+                let val = self.table[*key].clone();
+                entry.set_key(key);
+                entry.set_val(&val);
+            }
+        }
+        self.client_sender
+            .send_data(serialize_capnproto_builder(builder));
+    }
 }
 
 // #[cfg(test)]

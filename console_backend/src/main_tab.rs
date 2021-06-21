@@ -5,6 +5,7 @@ use std::{path::PathBuf, result::Result, thread::sleep, time::Instant};
 
 use crate::advanced_ins_tab::AdvancedInsTab;
 use crate::advanced_magnetometer_tab::AdvancedMagnetometerTab;
+use crate::baseline_tab::BaselineTab;
 use crate::common_constants::SbpLogging;
 use crate::constants::*;
 use crate::observation_tab::ObservationTab;
@@ -27,6 +28,7 @@ pub struct MainTab<'a, S: MessageSender> {
     shared_state: SharedState,
     pub advanced_ins_tab: AdvancedInsTab<S>,
     pub advanced_magnetometer_tab: AdvancedMagnetometerTab<S>,
+    pub baseline_tab: BaselineTab<'a, S>,
     pub tracking_signals_tab: TrackingSignalsTab<S>,
     pub solution_tab: SolutionTab<S>,
     pub observation_tab: ObservationTab<S>,
@@ -50,6 +52,7 @@ impl<'a, S: MessageSender> MainTab<'a, S> {
                 shared_state.clone(),
                 client_sender.clone(),
             ),
+            baseline_tab: BaselineTab::new(shared_state.clone(), client_sender.clone()),
             tracking_signals_tab: TrackingSignalsTab::new(
                 shared_state.clone(),
                 client_sender.clone(),

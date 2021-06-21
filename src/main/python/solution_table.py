@@ -42,11 +42,6 @@ class SolutionTableEntries(QObject):
 
     entries = Property(QTKeys.QVARIANTLIST, get_entries, set_entries)  # type: ignore
 
-    @Slot(list)  # type: ignore
-    def fill_series(self, series_list):
-        for idx, series in enumerate(series_list):
-            series.replace(self._points[idx])
-
 
 class SolutionTableModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(SolutionTableEntries)  # type: ignore

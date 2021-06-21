@@ -88,6 +88,21 @@ struct StatusBarStatus {
     solidConnection @7: Bool;
 }
 
+struct BaselinePlotStatus {
+    data @0 :List(List(Point));
+    labels @1 :List(Text);
+    colors @2 :List(Text);
+    nMin @3 :Float64;
+    nMax @4 :Float64;
+    eMin @5 :Float64;
+    eMax @6 :Float64;
+    curData @7 :List(List(Point));
+}
+
+struct BaselineTableStatus {
+    data @0 :List(KeyValPair);
+}
+
 struct ObservationTableRow {
     prn @0 :Text;
     pseudoRange @1 :Float64;
@@ -216,5 +231,7 @@ struct Message {
         advancedInsStatus @23 :AdvancedInsStatus;
         fusionStatusFlagsStatus @24 :FusionStatusFlagsStatus;
         advancedMagnetometerStatus @25 :AdvancedMagnetometerStatus;
+        baselinePlotStatus @26 :BaselinePlotStatus;
+        baselineTableStatus @27 :BaselineTableStatus;
     }
 }

@@ -65,8 +65,7 @@ ApplicationWindow {
                     SolutionTab {
                     }
 
-                    Item {
-                        id: baselineTab
+                    BaselineTab {
                     }
 
                     ObservationTab {

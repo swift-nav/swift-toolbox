@@ -61,22 +61,22 @@ pub(crate) const SHOW_LEGEND: &str = "Show Legend";
 pub(crate) const MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER: f64 = 0.25;
 
 // Baseline Tab.
-pub (crate)const BASELINE_DIRECTION_MAX: f64 = 1.0;
-pub (crate)const BASELINE_DIRECTION_MIN: f64 = -1.0;
+pub(crate) const BASELINE_DIRECTION_MAX: f64 = 1.0;
+pub(crate) const BASELINE_DIRECTION_MIN: f64 = -1.0;
 
-pub (crate)const N_FLOAT: &str = "n_float";
-pub (crate)const N_FIXED: &str = "n_fixed";
-pub (crate)const N_DGNSS: &str = "n_dgnss";
-pub (crate)const E_FLOAT: &str = "e_float";
-pub (crate)const E_FIXED: &str = "e_fixed";
-pub (crate)const E_DGNSS: &str = "e_dgnss";
-pub (crate)const N: &str = "N";
-pub (crate)const E: &str = "E";
-pub (crate)const D: &str = "D";
-pub (crate)const DIST: &str = "Dist.";
-pub (crate)const FLAGS: &str = "Flags";
-pub (crate)const MODE: &str = "Mode";
-pub (crate)const HEADING: &str = "Heading";
+pub(crate) const N_FLOAT: &str = "n_Float RTK";
+pub(crate) const N_FIXED: &str = "n_Fixed RTK";
+pub(crate) const N_DGNSS: &str = "n_DGPS";
+pub(crate) const E_FLOAT: &str = "e_Float RTK";
+pub(crate) const E_FIXED: &str = "e_Fixed RTK";
+pub(crate) const E_DGNSS: &str = "e_DGPS";
+pub(crate) const N: &str = "N";
+pub(crate) const E: &str = "E";
+pub(crate) const D: &str = "D";
+pub(crate) const DIST: &str = "Dist.";
+pub(crate) const FLAGS: &str = "Flags";
+pub(crate) const MODE: &str = "Mode";
+pub(crate) const HEADING: &str = "Heading";
 
 pub const BASELINE_DATA_KEYS: &[&str] = &[N_FLOAT, N_FIXED, N_DGNSS, E_FLOAT, E_FIXED, E_DGNSS];
 

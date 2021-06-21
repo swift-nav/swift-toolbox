@@ -16,8 +16,10 @@ QtObject {
     property QtObject loggingBar
     property QtObject commonChart
     property QtObject commonLegend
+    property QtObject commonTable
     property QtObject advancedIns
     property QtObject advancedMagnetometer
+    property QtObject baselineTable
     property QtObject solutionPosition
     property QtObject solutionTable
     property QtObject solutionVelocity
@@ -132,6 +134,20 @@ QtObject {
         readonly property string okStatusPath: "images/fontawesome/circle-solid.svg"
         readonly property string okStatusColor: "green"
         readonly property int insStatusImageWidth: 15
+    }
+
+    baselineTable: QtObject {
+        readonly property int defaultColumnWidth: 80
+        readonly property color borderColor: "#000000"
+        readonly property int borderWidth: 1
+        readonly property int headerTableDataTableSpacing: 0
+        readonly property int cellHeight: 20
+        readonly property int cellSpacing: 0
+        readonly property int surroundingMargin: 2
+        readonly property int innerMargin: 0
+        readonly property int leftPadding: 2
+        readonly property string leftColumnHeader: "Item"
+        readonly property string rightColumnHeader: "Value"
     }
 
     solutionPosition: QtObject {

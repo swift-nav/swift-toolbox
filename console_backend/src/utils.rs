@@ -1,10 +1,11 @@
+use std::collections::HashMap;
+
 use capnp::message::Builder;
 use capnp::message::HeapAllocator;
 use capnp::serialize;
 use indexmap::IndexSet;
 use log::warn;
 use serialport::available_ports;
-use std::collections::HashMap;
 
 use crate::constants::*;
 use crate::errors::*;

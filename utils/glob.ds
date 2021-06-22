@@ -1,5 +1,5 @@
 fn glob_paths_excluding_target
-    
+
     handle = glob_array ${1}
     out = array
     cargo_home = pwd

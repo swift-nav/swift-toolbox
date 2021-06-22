@@ -54,7 +54,7 @@ jobs:
         shell: bash
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
-              sudo apt-get install -y capnproto libudev-dev
+              sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
           elif [ "$RUNNER_OS" == "macOS" ]; then
               brew install capnp llvm
           elif [ "$RUNNER_OS" == "Windows" ]; then
@@ -157,7 +157,7 @@ jobs:
 
       - name: Install Dependencies.
         run: |
-          sudo apt-get install -y capnproto libudev-dev
+          sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
 
       - uses: conda-incubator/setup-miniconda@v2
         with:
@@ -241,7 +241,28 @@ jobs:
         shell: bash
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
-              sudo apt-get install -y capnproto libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-render0 libxcb-shape0 libxcb-shm0 libxcb-sync1 libxcb-util1 libxcb-xfixes0 libxcb-xinerama0 libxcb-xkb1 libxkbcommon-x11-0 ruby ruby-dev rubygems build-essential libudev-dev
+              sudo apt-get update
+              sudo apt-get install -y \
+                capnproto \
+                libxcb-icccm4 \
+                libxcb-image0 \
+                libxcb-keysyms1 \
+                libxcb-randr0 \
+                libxcb-render-util0 \
+                libxcb-render0 \
+                libxcb-shape0 \
+                libxcb-shm0 \
+                libxcb-sync1 \
+                libxcb-util1 \
+                libxcb-xfixes0 \
+                libxcb-xinerama0 \
+                libxcb-xkb1 \
+                libxkbcommon-x11-0 \
+                ruby \
+                ruby-dev \
+                rubygems \
+                build-essential \
+                libudev-dev
               sudo gem install --no-document fpm
           elif [ "$RUNNER_OS" == "macOS" ]; then
               brew install capnp llvm

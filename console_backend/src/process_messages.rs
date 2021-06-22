@@ -11,17 +11,20 @@ use crate::log_panel::handle_log_msg;
 use crate::main_tab::*;
 use crate::types::*;
 
-pub fn process_messages<S: MessageSender, T: std::io::Read>(
-    messages: T,
+pub fn process_messages<S>(
+    conn: Connection,
     shared_state: SharedState,
     client_send: S,
     realtime_delay: RealtimeDelay,
-) {
+) where
+    S: MessageSender,
+{
+    let (rdr, _) = conn.into_io();
     let mut main = MainTab::new(shared_state.clone(), client_send);
-
-    let messages = sbp::iter_messages(messages)
+    let messages = sbp::iter_messages(rdr)
         .log_errors(log::Level::Debug)
         .with_rover_time();
+
     for (message, gps_time) in messages {
         if !shared_state.is_running() {
             if let Err(e) = main.end_csv_logging() {

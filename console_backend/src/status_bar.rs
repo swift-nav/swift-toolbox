@@ -516,6 +516,7 @@ impl Clone for Heartbeat {
 mod tests {
     use super::*;
     use crate::types::TestSender;
+    const DELAY_BUFFER_MS: u64 = 10;
 
     #[test]
     fn handle_age_corrections_test() {
@@ -576,6 +577,7 @@ mod tests {
             flags,
         };
         let update_time = Instant::now();
+        sleep(Duration::from_millis(DELAY_BUFFER_MS));
         status_bar.handle_ins_status(msg);
         let last_ins_status_receipt_time = {
             let shared_data = status_bar

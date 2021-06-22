@@ -6,9 +6,12 @@ use std::{
 };
 use strum::VariantNames;
 
-use crate::common_constants::{SbpLogging, Tabs};
 use crate::constants::{AVAILABLE_BAUDRATES, AVAILABLE_REFRESH_RATES};
 use crate::types::FlowControl;
+use crate::{
+    common_constants::{SbpLogging, Tabs},
+    types::Connection,
+};
 
 #[derive(Debug)]
 pub struct CliTabs(Tabs);
@@ -145,6 +148,20 @@ pub enum Input {
         #[clap(parse(from_os_str))]
         file_in: PathBuf,
     },
+}
+
+impl Input {
+    pub fn into_conn(self) -> crate::types::Result<Connection> {
+        match self {
+            Input::Tcp { host, port } => Connection::tcp(host, port),
+            Input::Serial {
+                serialport,
+                baudrate,
+                flow_control,
+            } => Connection::serial(serialport.to_string_lossy().into(), baudrate, flow_control),
+            Input::File { file_in } => Connection::file(file_in.to_string_lossy().into()),
+        }
+    }
 }
 
 /// Validation for the refresh-rate cli option.

@@ -357,12 +357,14 @@ dependencies = [
  "ordered-float",
  "paste 1.0.5",
  "pyo3",
+ "rand",
  "sbp",
  "serde",
  "serde_json",
  "serde_yaml",
  "serial_test",
  "serialport",
+ "slotmap",
  "strum",
  "strum_macros",
  "sysinfo",
@@ -1393,7 +1395,7 @@ dependencies = [
 [[package]]
 name = "sbp"
 version = "3.4.8-alpha"
-source = "git+https://github.com/swift-nav/libsbp.git?rev=a5c221684439f2124306a2daa44126aac5457c80#a5c221684439f2124306a2daa44126aac5457c80"
+source = "git+https://github.com/swift-nav/libsbp.git?rev=ce5e3d14ae4284c53982bc3fd79a2fa15976ff9f#ce5e3d14ae4284c53982bc3fd79a2fa15976ff9f"
 dependencies = [
  "base64",
  "byteorder",
@@ -1532,6 +1534,15 @@ name = "shlex"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "42a568c8f2cd051a4d283bd6eb0343ac214c1b0f1ac19f93e1175b2dee38c73d"
+
+[[package]]
+name = "slotmap"
+version = "1.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "585cd5dffe4e9e06f6dfdf66708b70aca3f781bed561f4f667b2d9c0d4559e36"
+dependencies = [
+ "version_check",
+]
 
 [[package]]
 name = "smallvec"

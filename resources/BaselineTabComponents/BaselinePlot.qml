@@ -10,8 +10,15 @@ Item {
 
     property variant cur_scatters: []
     property variant scatters: []
-    property variant labels: []
     property variant colors: []
+    property real mouse_x: 0
+    property real mouse_y: 0
+    property real orig_n_max: 0
+    property real orig_n_min: 0
+    property real orig_e_max: 0
+    property real orig_e_min: 0
+    property bool is_moving: false
+
 
     width: parent.width
     height: parent.height
@@ -33,8 +40,6 @@ Item {
             id: baselinePlotAreaRowLayout
 
             anchors.fill: parent
-            width: parent.width
-            height: parent.height
             spacing: Constants.baselinePlot.navBarSpacing
 
             ButtonGroup {
@@ -46,27 +51,28 @@ Item {
             RowLayout {
                 Layout.alignment: Qt.AlignLeft
                 Layout.leftMargin: Constants.baselinePlot.navBarMargin
-                Layout.fillWidth: true
 
                 Button {
                     id: baselinePauseButton
 
-                    onClicked: data_model.baseline_plot([baselineButtonGroup.buttons[4].pressed, baselineButtonGroup.buttons[3].checked, baselineButtonGroup.buttons[2].pressed, baselineButtonGroup.buttons[1].checked, baselineButtonGroup.buttons[0].checked])
                     ButtonGroup.group: baselineButtonGroup
-                    Layout.preferredWidth: parent.width * Constants.baselinePlot.navBarButtonProportionOfParent
+                    Layout.preferredWidth: Constants.baselinePlot.navBarButtonWidth
                     Layout.preferredHeight: Constants.commonChart.buttonHeight
                     text: "| |"
                     ToolTip.visible: hovered
                     ToolTip.text: "Pause"
                     checkable: true
+                    onClicked: {
+                        data_model.baseline_plot([baselineButtonGroup.buttons[4].checked, baselineButtonGroup.buttons[3].pressed, baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].checked, baselineButtonGroup.buttons[0].pressed]);
+                    }
                 }
 
                 Button {
                     id: baselineClearButton
 
-                    onPressed: data_model.baseline_plot([baselineButtonGroup.buttons[4].pressed, baselineButtonGroup.buttons[3].checked, baselineButtonGroup.buttons[2].pressed, baselineButtonGroup.buttons[1].checked, baselineButtonGroup.buttons[0].checked])
+                    onPressed: data_model.baseline_plot([baselineButtonGroup.buttons[4].checked, baselineButtonGroup.buttons[3].pressed, baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].checked, baselineButtonGroup.buttons[0].pressed])
                     ButtonGroup.group: baselineButtonGroup
-                    Layout.preferredWidth: parent.width * Constants.baselinePlot.navBarButtonProportionOfParent
+                    Layout.preferredWidth: Constants.baselinePlot.navBarButtonWidth
                     Layout.preferredHeight: Constants.commonChart.buttonHeight
                     text: " X "
                     ToolTip.visible: hovered
@@ -76,9 +82,9 @@ Item {
                 Button {
                     id: baselineZoomAllButton
 
-                    onClicked: data_model.baseline_plot([baselineButtonGroup.buttons[4].pressed, baselineButtonGroup.buttons[3].checked, baselineButtonGroup.buttons[2].pressed, baselineButtonGroup.buttons[1].checked, baselineButtonGroup.buttons[0].checked])
+                    onClicked: data_model.baseline_plot([baselineButtonGroup.buttons[4].checked, baselineButtonGroup.buttons[3].pressed, baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].checked, baselineButtonGroup.buttons[0].pressed])
                     ButtonGroup.group: baselineButtonGroup
-                    Layout.preferredWidth: parent.width * Constants.baselinePlot.navBarButtonProportionOfParent
+                    Layout.preferredWidth: Constants.baselinePlot.navBarButtonWidth
                     Layout.preferredHeight: Constants.commonChart.buttonHeight
                     text: "[ ]"
                     ToolTip.visible: hovered
@@ -89,9 +95,9 @@ Item {
                 Button {
                     id: baselineCenterButton
 
-                    onClicked: data_model.baseline_plot([baselineButtonGroup.buttons[4].pressed, baselineButtonGroup.buttons[3].checked, baselineButtonGroup.buttons[2].pressed, baselineButtonGroup.buttons[1].checked, baselineButtonGroup.buttons[0].checked])
+                    onClicked: data_model.baseline_plot([baselineButtonGroup.buttons[4].checked, baselineButtonGroup.buttons[3].pressed, baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].checked, baselineButtonGroup.buttons[0].pressed])
                     ButtonGroup.group: baselineButtonGroup
-                    Layout.preferredWidth: parent.width * Constants.baselinePlot.navBarButtonProportionOfParent
+                    Layout.preferredWidth: Constants.baselinePlot.navBarButtonWidth
                     Layout.preferredHeight: Constants.commonChart.buttonHeight
                     text: "(><)"
                     ToolTip.visible: hovered
@@ -100,12 +106,11 @@ Item {
                 }
 
                 Button {
-                    // onPressed: data_model.baseline_plot([baselineButtonGroup.buttons[3].checked, baselineButtonGroup.buttons[2].pressed, baselineButtonGroup.buttons[1].checked, baselineButtonGroup.buttons[0].checked])
-
                     id: baselineResetFiltersButton
 
+                    onPressed: data_model.baseline_plot([baselineButtonGroup.buttons[4].checked, baselineButtonGroup.buttons[3].pressed, baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].checked, baselineButtonGroup.buttons[0].pressed])
                     ButtonGroup.group: baselineButtonGroup
-                    Layout.preferredWidth: parent.width * Constants.baselinePlot.navBarButtonProportionOfParent
+                    Layout.preferredWidth: Constants.baselinePlot.resetFiltersButtonWidth
                     Layout.preferredHeight: Constants.commonChart.buttonHeight
                     text: "Reset Filters"
                     ToolTip.visible: hovered
@@ -120,7 +125,6 @@ Item {
                 Layout.preferredWidth: parent.width
                 Layout.preferredHeight: parent.height - Constants.commonChart.heightOffset
                 Layout.alignment: Qt.AlignBottom
-                Layout.bottomMargin: Constants.commonChart.margin
                 Layout.fillHeight: true
                 backgroundColor: Constants.commonChart.backgroundColor
                 plotAreaColor: Constants.commonChart.areaColor
@@ -150,7 +154,7 @@ Item {
                         Repeater {
                             id: lineLegendRepeaterRows
 
-                            model: labels
+                            model: Constants.baselinePlot.legendLabels
 
                             Row {
                                 Text {
@@ -216,6 +220,58 @@ Item {
                     }
 
                 }
+                // MouseArea{
+                //     anchors.fill: parent
+                //     drag.target: item
+                //     drag.axis: Drag.XAndYAxis
+                //     onClicked: resetPosition()
+                // }
+                MouseArea {
+                    anchors.fill: baselinePlotChart
+                    onDoubleClicked: baselinePlotChart.zoomReset();
+                    onWheel: {
+                        if (wheel.angleDelta.y > 0) {
+                            baselinePlotChart.zoom(1.1);
+                        } else {
+                            baselinePlotChart.zoom(0.9);
+                        }
+                    }
+                    onPositionChanged: {
+                        if (pressed && !is_moving) {
+                            is_moving = true
+                            var current = baselinePlotChart.plotArea
+
+
+                            var x_unit = Math.abs(baselinePlotXAxis.max - baselinePlotXAxis.min)/current.width
+                            var y_unit = Math.abs(baselinePlotYAxis.max - baselinePlotYAxis.min)/current.height
+                            
+                            var delta_x = (mouse_x - mouseX)*x_unit
+                            var delta_y = (mouse_y - mouseY)*y_unit
+                            // var r = Qt.rect((delta_x + current.x), (delta_y + current.y), current.width, current.height)
+                            // print(r)
+                            // baselinePlotChart.plotArea = r
+                            // baselinePlotChart.zoomReset()
+                            // baselinePlotChart.zoomIn(r)
+                            baselinePlotXAxis.max += delta_x
+                            baselinePlotXAxis.min += delta_x
+                            baselinePlotYAxis.max -= delta_y
+                            baselinePlotYAxis.min -= delta_y
+                            mouse_x = mouseX
+                            mouse_y = mouseY
+                            // print(delta_x, delta_y)
+                            // print(baselinePlotChart.plotArea)
+                            is_moving = false
+
+                        }
+                        
+                    }
+                    onPressed: {
+                        mouse_x = mouseX
+                        mouse_y = mouseY
+                    }
+                }
+                
+
 
                 Timer {
                     interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
@@ -228,45 +284,43 @@ Item {
                         baseline_plot_model.fill_console_points(baselinePlotPoints);
                         if (!baselinePlotPoints.points.length)
                             return ;
-
+                        // print(baselinePlotChart.x)
+                        // print(baselinePlotChart.scale)
+                        // print(Object.keys(baselinePlotChart))
                         baselinePlotArea.visible = true;
                         var points = baselinePlotPoints.points;
-                        labels = baselinePlotPoints.labels;
-                        if (colors != baselinePlotPoints.colors)
-                            colors = baselinePlotPoints.colors;
-
-                        for (var idx in colors) {
-                            if (lineLegendRepeaterRows.itemAt(idx))
-                                lineLegendRepeaterRows.itemAt(idx).children[0].color = colors[idx];
-
-                        }
-                        if (labels != baselinePlotPoints.labels)
-                            labels = baselinePlotPoints.labels;
-
                         if (!scatters.length || !cur_scatters.length) {
-                            for (var idx in labels) {
-                                var cur_scatter = baselinePlotChart.createSeries(ChartView.SeriesTypeScatter, labels[idx] + "cur-scatter", baselinePlotXAxis, baselinePlotYAxis);
-                                cur_scatter.color = colors[idx];
+                            for (var idx in Constants.baselinePlot.legendLabels) {
+                                if (lineLegendRepeaterRows.itemAt(idx))
+                                    lineLegendRepeaterRows.itemAt(idx).children[0].color = Constants.baselinePlot.colors[idx];
+
+                                var cur_scatter = baselinePlotChart.createSeries(ChartView.SeriesTypeScatter, Constants.baselinePlot.legendLabels[idx] + "cur-scatter", baselinePlotXAxis, baselinePlotYAxis);
+                                cur_scatter.color = Constants.baselinePlot.colors[idx];
                                 cur_scatter.markerSize = Constants.commonChart.currentSolutionMarkerSize;
-                                var scatter = baselinePlotChart.createSeries(ChartView.SeriesTypeScatter, labels[idx] + "scatter", baselinePlotXAxis, baselinePlotYAxis);
-                                scatter.color = colors[idx];
+                                cur_scatter.useOpenGL = Globals.useOpenGL;
+                                if (idx == 0) {
+                                    cur_scatter.append(0, 0);
+                                    cur_scatter.pointsVisible = true;
+                                    continue;
+                                }
+                                var scatter = baselinePlotChart.createSeries(ChartView.SeriesTypeScatter, Constants.baselinePlot.legendLabels[idx] + "scatter", baselinePlotXAxis, baselinePlotYAxis);
+                                scatter.color = Constants.baselinePlot.colors[idx];
                                 scatter.markerSize = Constants.commonChart.solutionMarkerSize;
                                 scatter.useOpenGL = Globals.useOpenGL;
-                                cur_scatter.useOpenGL = Globals.useOpenGL;
                                 scatters.push(scatter);
                                 cur_scatters.push(cur_scatter);
                             }
                         }
                         var combined = [scatters, cur_scatters];
                         baselinePlotPoints.fill_series(combined);
-                        if (baselinePlotYAxis.min != baselinePlotPoints.n_min || baselinePlotYAxis.max != baselinePlotPoints.n_max) {
-                            baselinePlotYAxis.min = baselinePlotPoints.n_min;
-                            baselinePlotYAxis.max = baselinePlotPoints.n_max;
-                        }
-                        if (baselinePlotXAxis.min != baselinePlotPoints.e_min || baselinePlotXAxis.max != baselinePlotPoints.e_max) {
-                            baselinePlotXAxis.min = baselinePlotPoints.e_min;
-                            baselinePlotXAxis.max = baselinePlotPoints.e_max;
-                        }
+                        // if (baselinePlotYAxis.min != baselinePlotPoints.n_min || baselinePlotYAxis.max != baselinePlotPoints.n_max) {
+                        //     baselinePlotYAxis.min = baselinePlotPoints.n_min;
+                        //     baselinePlotYAxis.max = baselinePlotPoints.n_max;
+                        // }
+                        // if (baselinePlotXAxis.min != baselinePlotPoints.e_min || baselinePlotXAxis.max != baselinePlotPoints.e_max) {
+                        //     baselinePlotXAxis.min = baselinePlotPoints.e_min;
+                        //     baselinePlotXAxis.max = baselinePlotPoints.e_max;
+                        // }
                     }
                 }
 

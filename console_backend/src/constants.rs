@@ -18,6 +18,7 @@ pub(crate) const LOG_WRITER_BUFFER_MESSAGE_COUNT: usize = 50;
 // Main Tab constants.
 pub(crate) const VEL_TIME_STR_FILEPATH: &str = "velocity_log_%Y%m%d-%H%M%S.csv";
 pub(crate) const POS_LLH_TIME_STR_FILEPATH: &str = "position_log_%Y%m%d-%H%M%S.csv";
+pub(crate) const BASELINE_TIME_STR_FILEPATH: &str = "baseline_log_%Y%m%d-%H%M%S.csv";
 pub(crate) const SBP_FILEPATH: &str = "swift-gnss-%Y%m%d-%H%M%S.sbp";
 pub(crate) const SBP_JSON_FILEPATH: &str = "swift-gnss-%Y%m%d-%H%M%S.sbp.json";
 pub(crate) const DEFAULT_LOG_DIRECTORY: &str = "SwiftNav";

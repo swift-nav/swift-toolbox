@@ -8,11 +8,8 @@ from PySide2.QtCore import Property, QObject, QPointF, Slot
 from constants import Keys, QTKeys
 
 BASELINE_PLOT: Dict[str, Any] = {
-    Keys.AVAILABLE_UNITS: [],
     Keys.CUR_POINTS: [],
     Keys.POINTS: [],
-    Keys.LABELS: [],
-    Keys.COLORS: [],
     Keys.N_MAX: 0,
     Keys.N_MIN: 0,
     Keys.E_MAX: 0,
@@ -22,8 +19,6 @@ BASELINE_PLOT: Dict[str, Any] = {
 
 class BaselinePlotPoints(QObject):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
 
-    _colors: List[str] = []
-    _labels: List[str] = []
     _points: List[List[QPointF]] = [[]]
     _cur_points: List[List[QPointF]] = [[]]
     _n_min: float = 0.0
@@ -71,22 +66,6 @@ class BaselinePlotPoints(QObject):  # pylint: disable=too-many-instance-attribut
 
     e_max = Property(float, get_e_max, set_e_max)
 
-    def get_labels(self) -> List[str]:
-        return self._labels
-
-    def set_labels(self, labels) -> None:
-        self._labels = labels
-
-    labels = Property(QTKeys.QVARIANTLIST, get_labels, set_labels)  # type: ignore
-
-    def get_colors(self) -> List[str]:
-        return self._colors
-
-    def set_colors(self, colors) -> None:
-        self._colors = colors
-
-    colors = Property(QTKeys.QVARIANTLIST, get_colors, set_colors)  # type: ignore
-
     def get_points(self) -> List[List[QPointF]]:
         return self._points
 
@@ -107,7 +86,7 @@ class BaselinePlotPoints(QObject):  # pylint: disable=too-many-instance-attribut
     def fill_series(self, series_list):
         scatters = series_list[0]
         cur_scatters = series_list[1]
-        for idx in range(len(scatters)):
+        for idx, _ in enumerate(scatters):
             scatters[idx].replace(self._points[idx])
             cur_scatters[idx].replace(self._cur_points[idx])
 
@@ -117,8 +96,6 @@ class BaselinePlotModel(QObject):  # pylint: disable=too-few-public-methods
     def fill_console_points(self, cp: BaselinePlotPoints) -> BaselinePlotPoints:  # pylint:disable=no-self-use
         cp.set_points(BASELINE_PLOT[Keys.POINTS])
         cp.set_cur_points(BASELINE_PLOT[Keys.CUR_POINTS])
-        cp.set_labels(BASELINE_PLOT[Keys.LABELS])
-        cp.set_colors(BASELINE_PLOT[Keys.COLORS])
         cp.set_n_max(BASELINE_PLOT[Keys.N_MAX])
         cp.set_n_min(BASELINE_PLOT[Keys.N_MIN])
         cp.set_e_max(BASELINE_PLOT[Keys.E_MAX])

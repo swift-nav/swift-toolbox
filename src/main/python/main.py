@@ -218,8 +218,6 @@ def receive_messages(app_, backend, messages):
             SOLUTION_VELOCITY_TAB[Keys.MIN] = m.solutionVelocityStatus.min
             SOLUTION_VELOCITY_TAB[Keys.AVAILABLE_UNITS][:] = m.solutionVelocityStatus.availableUnits
         elif m.which == Message.Union.BaselinePlotStatus:
-            BASELINE_PLOT[Keys.LABELS][:] = m.baselinePlotStatus.labels
-            BASELINE_PLOT[Keys.COLORS][:] = m.baselinePlotStatus.colors
             BASELINE_PLOT[Keys.POINTS][:] = [
                 [QPointF(point.x, point.y) for point in m.baselinePlotStatus.data[idx]]
                 for idx in range(len(m.baselinePlotStatus.data))

@@ -90,13 +90,11 @@ struct StatusBarStatus {
 
 struct BaselinePlotStatus {
     data @0 :List(List(Point));
-    labels @1 :List(Text);
-    colors @2 :List(Text);
-    nMin @3 :Float64;
-    nMax @4 :Float64;
-    eMin @5 :Float64;
-    eMax @6 :Float64;
-    curData @7 :List(List(Point));
+    nMin @1 :Float64;
+    nMax @2 :Float64;
+    eMin @3 :Float64;
+    eMax @4 :Float64;
+    curData @5 :List(List(Point));
 }
 
 struct BaselineTableStatus {

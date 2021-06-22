@@ -123,6 +123,15 @@ impl<'a, S: MessageSender> MainTab<'a, S> {
                 None
             }
         };
+        let baseline_log_file = local_t.format(BASELINE_TIME_STR_FILEPATH).to_string();
+        let baseline_log_file = self.logging_directory.join(baseline_log_file);
+        self.baseline_tab.baseline_log_file = match CsvSerializer::new(&baseline_log_file) {
+            Ok(baseline_csv) => Some(baseline_csv),
+            Err(e) => {
+                error!("issue creating file, {:?}, error, {}", baseline_log_file, e);
+                None
+            }
+        };
         self.shared_state.set_csv_logging(CsvLogging::ON);
     }
     pub fn end_csv_logging(&mut self) -> crate::types::Result<()> {
@@ -134,6 +143,10 @@ impl<'a, S: MessageSender> MainTab<'a, S> {
         if let Some(pos_log) = &mut self.solution_tab.pos_log_file {
             pos_log.flush()?;
             self.solution_tab.pos_log_file = None;
+        }
+        if let Some(baseline_log) = &mut self.baseline_tab.baseline_log_file {
+            baseline_log.flush()?;
+            self.baseline_tab.baseline_log_file = None;
         }
         Ok(())
     }
@@ -233,7 +246,7 @@ mod tests {
     use crate::types::{PosLLH, VelNED};
     use crate::utils::{mm_to_m, ms_to_sec};
     use glob::glob;
-    use sbp::messages::navigation::{MsgPosLLH, MsgVelNED};
+    use sbp::messages::navigation::{MsgBaselineNED, MsgPosLLH, MsgVelNED};
     use std::{
         fs::File,
         io::{BufRead, BufReader},
@@ -341,12 +354,31 @@ mod tests {
             flags,
         };
 
+        let n_m3 = 4;
+        let e_m3 = 5;
+        let d_m3 = 6;
+        let flags = 0x2;
+        let msg_three = MsgBaselineNED {
+            sender_id,
+            tow,
+            n,
+            e,
+            d,
+            h_accuracy,
+            v_accuracy,
+            n_sats,
+            flags,
+        };
+
         {
             main.serialize_sbp(&SBP::MsgPosLLH(msg.clone()));
             main.solution_tab.handle_pos_llh(PosLLH::MsgPosLLH(msg));
             main.serialize_sbp(&SBP::MsgVelNED(msg_two.clone()));
             main.solution_tab
                 .handle_vel_ned(VelNED::MsgVelNED(msg_two.clone()));
+            main.serialize_sbp(&SBP::MsgBaselineNED(msg_three.clone()));
+            main.baseline_tab
+                .handle_baseline_ned(BaselineNED::MsgBaselineNED(msg_three));
             assert_eq!(main.last_csv_logging, CsvLogging::ON);
             main.end_csv_logging().unwrap();
             main.serialize_sbp(&SBP::MsgVelNED(msg_two));
@@ -386,6 +418,24 @@ mod tests {
         assert!(n_ - mm_to_m(n as f64) <= f64::EPSILON);
         assert!(e_ - mm_to_m(e as f64) <= f64::EPSILON);
         assert!(d_ - mm_to_m(d as f64) <= f64::EPSILON);
+
+        let pattern = tmp_dir.join("baseline_log_*");
+        let path = glob(&pattern.to_string_lossy())
+            .unwrap()
+            .next()
+            .unwrap()
+            .unwrap();
+        let mut reader = csv::Reader::from_reader(File::open(path).unwrap());
+        let mut records = reader.records();
+        let record = records.next().unwrap().unwrap();
+        let tow_: &f64 = &record[2].parse().unwrap();
+        assert!(tow_ - ms_to_sec(tow as f64) <= f64::EPSILON);
+        let n_: &f64 = &record[3].parse().unwrap();
+        let e_: &f64 = &record[4].parse().unwrap();
+        let d_: &f64 = &record[5].parse().unwrap();
+        assert!(n_ - mm_to_m(n_m3 as f64) <= f64::EPSILON);
+        assert!(e_ - mm_to_m(e_m3 as f64) <= f64::EPSILON);
+        assert!(d_ - mm_to_m(d_m3 as f64) <= f64::EPSILON);
     }
 
     #[test]

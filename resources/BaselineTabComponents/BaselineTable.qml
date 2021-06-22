@@ -37,7 +37,6 @@ Item {
         TableView {
             id: tableViewInner
 
-            // anchors.centerIn: parent
             width: parent.width
             height: parent.height
             anchors.margins: Constants.baselineTable.surroundingMargin
@@ -49,7 +48,7 @@ Item {
 
                 role: Constants.baselineTable.leftColumnHeader
                 title: Constants.baselineTable.leftColumnHeader
-                width: parent.width / 2 - Constants.baselineTable.surroundingMargin * 2 - Constants.baselineTable.borderWidth
+                width: parent.width / 2
                 horizontalAlignment: Text.AlignHCenter
             }
 
@@ -58,6 +57,7 @@ Item {
 
                 role: Constants.baselineTable.rightColumnHeader
                 title: Constants.baselineTable.rightColumnHeader
+                width: parent.width / 2 - Constants.baselineTable.surroundingMargin
                 horizontalAlignment: Text.AlignHCenter
             }
 
@@ -89,7 +89,7 @@ Item {
         }
 
         Timer {
-            interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
+            interval: Utils.hzToMilliseconds(Constants.staticTableTimerIntervalRate)
             running: true
             repeat: true
             onTriggered: {

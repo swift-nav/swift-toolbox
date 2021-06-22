@@ -17,8 +17,8 @@ use sbp::codec::sbp::SbpEncoder;
 use sbp::messages::SBPMessage;
 use sbp::messages::{
     navigation::{
-        MsgBaselineNED, MsgBaselineNEDDepA, MsgDops, MsgDopsDepA, MsgPosLLH, MsgPosLLHDepA,
-        MsgVelNED, MsgVelNEDDepA,
+        MsgBaselineNED, MsgBaselineNEDDepA, MsgDops, MsgDopsDepA, MsgGPSTime, MsgGPSTimeDepA,
+        MsgPosLLH, MsgPosLLHDepA, MsgVelNED, MsgVelNEDDepA,
     },
     observation::{
         MsgObs, MsgObsDepB, MsgObsDepC, MsgOsr, PackedObsContent, PackedObsContentDepB,
@@ -433,14 +433,15 @@ impl Clone for SharedState {
 
 #[derive(Debug)]
 pub struct SharedStateInner {
-    pub status_bar: StatusBarState,
-    pub logging_bar: LoggingBarState,
-    pub log_panel: LogPanelState,
-    pub tracking_tab: TrackingTabState,
-    pub paused: bool,
-    pub connection_history: ConnectionHistory,
-    pub running: bool,
-    pub solution_tab: SolutionTabState,
+    pub(crate) status_bar: StatusBarState,
+    pub(crate) logging_bar: LoggingBarState,
+    pub(crate) log_panel: LogPanelState,
+    pub(crate) tracking_tab: TrackingTabState,
+    pub(crate) paused: bool,
+    pub(crate) connection_history: ConnectionHistory,
+    pub(crate) running: bool,
+    pub(crate) solution_tab: SolutionTabState,
+    pub(crate) baseline_tab: BaselineTabState,
 }
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
@@ -455,6 +456,7 @@ impl SharedStateInner {
             connection_history,
             running: false,
             solution_tab: SolutionTabState::new(),
+            baseline_tab: BaselineTabState::new(),
         }
     }
 }
@@ -534,6 +536,27 @@ impl TrackingSignalsTabState {
     fn new() -> TrackingSignalsTabState {
         TrackingSignalsTabState {
             check_visibility: vec![],
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct BaselineTabState {
+    pub(crate) center: bool,
+    pub(crate) clear: bool,
+    pub(crate) pause: bool,
+    pub(crate) zoom: bool,
+    pub(crate) reset: bool,
+}
+
+impl BaselineTabState {
+    fn new() -> BaselineTabState {
+        BaselineTabState {
+            center: false,
+            clear: false,
+            pause: false,
+            zoom: false,
+            reset: false,
         }
     }
 }
@@ -1637,6 +1660,33 @@ impl Dops {
             tdop,
             hdop,
             vdop,
+            flags,
+        }
+    }
+}
+
+// Struct with shared fields for various GpsTime Message types.
+pub struct GpsTimeFields {
+    pub wn: u16,
+    pub ns_residual: i32,
+    pub flags: u8,
+}
+// Enum wrapping around various GpsTime Message types.
+#[derive(Debug)]
+pub enum GpsTime {
+    MsgGpsTime(MsgGPSTime),
+    MsgGpsTimeDepA(MsgGPSTimeDepA),
+}
+
+impl GpsTime {
+    pub fn fields(self) -> GpsTimeFields {
+        let (wn, ns_residual, flags) = match self {
+            GpsTime::MsgGpsTime(msg_) => (msg_.wn, msg_.ns_residual, msg_.flags),
+            GpsTime::MsgGpsTimeDepA(msg_) => (msg_.wn, msg_.ns_residual, msg_.flags),
+        };
+        GpsTimeFields {
+            wn,
+            ns_residual,
             flags,
         }
     }

@@ -19,7 +19,7 @@ Item {
         width: parent.width
         height: parent.height
 
-        Item {
+        Rectangle {
             SplitView.minimumWidth: Constants.baselineTable.width
             SplitView.fillHeight: true
 

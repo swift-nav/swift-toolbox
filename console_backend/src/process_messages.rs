@@ -73,8 +73,15 @@ pub fn process_messages<S>(
                 main.solution_tab.handle_dops(Dops::MsgDopsDepA(msg));
             }
             SBP::MsgGPSTime(msg) => {
-                main.baseline_tab.handle_gps_time(msg.clone());
-                main.solution_tab.handle_gps_time(msg);
+                main.baseline_tab
+                    .handle_gps_time(GpsTime::MsgGpsTime(msg.clone()));
+                main.solution_tab.handle_gps_time(GpsTime::MsgGpsTime(msg));
+            }
+            SBP::MsgGPSTimeDepA(msg) => {
+                main.baseline_tab
+                    .handle_gps_time(GpsTime::MsgGpsTimeDepA(msg.clone()));
+                main.solution_tab
+                    .handle_gps_time(GpsTime::MsgGpsTimeDepA(msg));
             }
             SBP::MsgHeartbeat(_) => {
                 main.status_bar.handle_heartbeat();

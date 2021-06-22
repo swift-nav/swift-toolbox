@@ -27,6 +27,7 @@ QtObject {
     property QtObject trackingSignals
     property QtObject observationTab
     readonly property int staticTimerIntervalRate: 5 // 5 Hz
+    readonly property int staticTableTimerIntervalRate: 10 // 10 Hz
     readonly property string monoSpaceFont: "Courier New"
     readonly property real smallPointSize: 7
     readonly property real mediumPointSize: 8
@@ -140,9 +141,12 @@ QtObject {
     baselinePlot: QtObject {
         readonly property int navBarMargin: 10
         readonly property int navBarSpacing: 0
-        readonly property real navBarButtonProportionOfParent: 0.11
+        readonly property real navBarButtonWidth: 40
+        readonly property real resetFiltersButtonWidth: 100
         readonly property string yAxisTitleText: "N (meters)"
         readonly property string xAxisTitleText: "E (meters)"
+        readonly property var legendLabels: ["Base Position", "DGPS", "RTK Float", "RTK Fixed"]
+        readonly property var colors: ["#FF0000", "#00B3FF", "#BF00BF", "#FFA500"]
     }
 
     baselineTable: QtObject {

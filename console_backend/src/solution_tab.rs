@@ -1,7 +1,7 @@
 use capnp::message::Builder;
 
 use sbp::messages::{
-    navigation::{MsgAgeCorrections, MsgGPSTime, MsgUtcTime},
+    navigation::{MsgAgeCorrections, MsgUtcTime},
     system::{MsgInsStatus, MsgInsUpdates},
 };
 use std::{collections::HashMap, time::Instant};
@@ -11,7 +11,7 @@ use crate::date_conv::*;
 use crate::output::{CsvSerializer, PosLLHLog, VelLog};
 use crate::piksi_tools_constants::EMPTY_STR;
 use crate::types::{
-    Deque, Dops, GnssModes, MessageSender, PosLLH, SharedState, UtcDateTime, VelNED,
+    Deque, Dops, GnssModes, GpsTime, MessageSender, PosLLH, SharedState, UtcDateTime, VelNED,
 };
 use crate::utils::*;
 
@@ -187,11 +187,12 @@ impl<S: MessageSender> SolutionTab<S> {
     /// Handler for GPS time messages.
     ///
     /// # Parameters
-    /// - `msg`: MsgGPSTime to extract data from.
-    pub fn handle_gps_time(&mut self, msg: MsgGPSTime) {
-        if msg.flags != 0 {
-            self.week = Some(msg.wn);
-            self.nsec = Some(msg.ns_residual);
+    /// - `msg`: GpsTime to extract data from.
+    pub fn handle_gps_time(&mut self, msg: GpsTime) {
+        let gps_time_fields = msg.fields();
+        if gps_time_fields.flags != 0 {
+            self.week = Some(gps_time_fields.wn);
+            self.nsec = Some(gps_time_fields.ns_residual);
         }
     }
 
@@ -733,7 +734,8 @@ mod tests {
     use crate::types::TestSender;
     use chrono::{TimeZone, Utc};
     use sbp::messages::navigation::{
-        MsgAgeCorrections, MsgDops, MsgDopsDepA, MsgPosLLH, MsgPosLLHDepA, MsgVelNED, MsgVelNEDDepA,
+        MsgAgeCorrections, MsgDops, MsgDopsDepA, MsgGPSTime, MsgPosLLH, MsgPosLLHDepA, MsgVelNED,
+        MsgVelNEDDepA,
     };
     use std::{thread::sleep, time::Duration};
 
@@ -816,7 +818,7 @@ mod tests {
         let old_nsec = 678_i32;
         solution_table.week = Some(old_wn);
         solution_table.nsec = Some(old_nsec);
-        solution_table.handle_gps_time(msg);
+        solution_table.handle_gps_time(GpsTime::MsgGpsTime(msg));
         assert_eq!(solution_table.week, Some(old_wn));
         assert_eq!(solution_table.nsec, Some(old_nsec));
 
@@ -828,7 +830,7 @@ mod tests {
             ns_residual,
             flags: good_flags,
         };
-        solution_table.handle_gps_time(msg);
+        solution_table.handle_gps_time(GpsTime::MsgGpsTime(msg));
         assert_eq!(solution_table.week, Some(wn));
         assert_eq!(solution_table.nsec, Some(ns_residual));
     }

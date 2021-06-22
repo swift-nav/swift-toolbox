@@ -6,12 +6,10 @@ import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
 Item {
-    id: solutionPositionTab
+    id: baselinePlot
 
-    property variant available_units: []
     property variant cur_scatters: []
     property variant scatters: []
-    property variant lines: []
     property variant labels: []
     property variant colors: []
 
@@ -20,120 +18,104 @@ Item {
     Component.onCompleted: {
     }
 
-    SolutionPositionPoints {
-        id: solutionPositionPoints
+    BaselinePlotPoints {
+        id: baselinePlotPoints
     }
 
     Rectangle {
-        id: solutionPositionArea
+        id: baselinePlotArea
 
         width: parent.width
         height: parent.height
         visible: false
 
         ColumnLayout {
-            id: solutionPositionAreaRowLayout
+            id: baselinePlotAreaRowLayout
 
             anchors.fill: parent
             width: parent.width
             height: parent.height
-            spacing: Constants.solutionPosition.navBarSpacing
+            spacing: Constants.baselinePlot.navBarSpacing
 
             ButtonGroup {
-                id: solutionButtonGroup
+                id: baselineButtonGroup
 
                 exclusive: false
             }
 
             RowLayout {
                 Layout.alignment: Qt.AlignLeft
-                Layout.leftMargin: Constants.solutionPosition.navBarMargin
+                Layout.leftMargin: Constants.baselinePlot.navBarMargin
+                Layout.fillWidth: true
 
                 Button {
-                    id: solutionPauseButton
+                    id: baselinePauseButton
 
-                    ButtonGroup.group: solutionButtonGroup
-                    Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
+                    onClicked: data_model.baseline_plot([baselineButtonGroup.buttons[4].pressed, baselineButtonGroup.buttons[3].checked, baselineButtonGroup.buttons[2].pressed, baselineButtonGroup.buttons[1].checked, baselineButtonGroup.buttons[0].checked])
+                    ButtonGroup.group: baselineButtonGroup
+                    Layout.preferredWidth: parent.width * Constants.baselinePlot.navBarButtonProportionOfParent
                     Layout.preferredHeight: Constants.commonChart.buttonHeight
                     text: "| |"
                     ToolTip.visible: hovered
                     ToolTip.text: "Pause"
                     checkable: true
-                    onClicked: data_model.solution_position([solutionButtonGroup.buttons[3].checked, solutionButtonGroup.buttons[2].pressed, solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].checked])
                 }
 
                 Button {
-                    id: solutionClearButton
+                    id: baselineClearButton
 
-                    ButtonGroup.group: solutionButtonGroup
-                    Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
+                    onPressed: data_model.baseline_plot([baselineButtonGroup.buttons[4].pressed, baselineButtonGroup.buttons[3].checked, baselineButtonGroup.buttons[2].pressed, baselineButtonGroup.buttons[1].checked, baselineButtonGroup.buttons[0].checked])
+                    ButtonGroup.group: baselineButtonGroup
+                    Layout.preferredWidth: parent.width * Constants.baselinePlot.navBarButtonProportionOfParent
                     Layout.preferredHeight: Constants.commonChart.buttonHeight
                     text: " X "
                     ToolTip.visible: hovered
                     ToolTip.text: "Clear"
-                    onPressed: data_model.solution_position([solutionButtonGroup.buttons[3].checked, solutionButtonGroup.buttons[2].pressed, solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].checked])
                 }
 
                 Button {
-                    id: solutionZoomAllButton
+                    id: baselineZoomAllButton
 
-                    ButtonGroup.group: solutionButtonGroup
-                    Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
+                    onClicked: data_model.baseline_plot([baselineButtonGroup.buttons[4].pressed, baselineButtonGroup.buttons[3].checked, baselineButtonGroup.buttons[2].pressed, baselineButtonGroup.buttons[1].checked, baselineButtonGroup.buttons[0].checked])
+                    ButtonGroup.group: baselineButtonGroup
+                    Layout.preferredWidth: parent.width * Constants.baselinePlot.navBarButtonProportionOfParent
                     Layout.preferredHeight: Constants.commonChart.buttonHeight
                     text: "[ ]"
                     ToolTip.visible: hovered
                     ToolTip.text: "Zoom All"
                     checkable: true
-                    onClicked: data_model.solution_position([solutionButtonGroup.buttons[3].checked, solutionButtonGroup.buttons[2].pressed, solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].checked])
                 }
 
                 Button {
-                    id: solutionCenterButton
+                    id: baselineCenterButton
 
-                    ButtonGroup.group: solutionButtonGroup
-                    Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
+                    onClicked: data_model.baseline_plot([baselineButtonGroup.buttons[4].pressed, baselineButtonGroup.buttons[3].checked, baselineButtonGroup.buttons[2].pressed, baselineButtonGroup.buttons[1].checked, baselineButtonGroup.buttons[0].checked])
+                    ButtonGroup.group: baselineButtonGroup
+                    Layout.preferredWidth: parent.width * Constants.baselinePlot.navBarButtonProportionOfParent
                     Layout.preferredHeight: Constants.commonChart.buttonHeight
                     text: "(><)"
                     ToolTip.visible: hovered
                     ToolTip.text: "Center On Solution"
                     checkable: true
-                    onClicked: data_model.solution_position([solutionButtonGroup.buttons[3].checked, solutionButtonGroup.buttons[2].pressed, solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].checked])
                 }
 
-                Text {
-                    text: "Display Units: "
-                    font.family: Constants.monoSpaceFont
-                    font.pointSize: Constants.mediumPointSize
-                }
+                Button {
+                    // onPressed: data_model.baseline_plot([baselineButtonGroup.buttons[3].checked, baselineButtonGroup.buttons[2].pressed, baselineButtonGroup.buttons[1].checked, baselineButtonGroup.buttons[0].checked])
 
-                ComboBox {
-                    id: solutionPositionSelectedUnit
+                    id: baselineResetFiltersButton
 
-                    model: available_units
-                    Layout.preferredWidth: Constants.commonChart.unitDropdownWidth
-                    onCurrentIndexChanged: {
-                        if (!available_units)
-                            return ;
-
-                        data_model.solution_position_unit(available_units[currentIndex]);
-                    }
-
-                    states: State {
-                        when: solutionPositionSelectedUnit.down
-
-                        PropertyChanges {
-                            target: solutionPositionSelectedUnit
-                            width: Constants.commonChart.unitDropdownWidth * 1.5
-                        }
-
-                    }
-
+                    ButtonGroup.group: baselineButtonGroup
+                    Layout.preferredWidth: parent.width * Constants.baselinePlot.navBarButtonProportionOfParent
+                    Layout.preferredHeight: Constants.commonChart.buttonHeight
+                    text: "Reset Filters"
+                    ToolTip.visible: hovered
+                    ToolTip.text: "Reset Filters"
                 }
 
             }
 
             ChartView {
-                id: solutionPositionChart
+                id: baselinePlotChart
 
                 Layout.preferredWidth: parent.width
                 Layout.preferredHeight: parent.height - Constants.commonChart.heightOffset
@@ -152,8 +134,8 @@ Item {
 
                     border.color: Constants.commonLegend.borderColor
                     border.width: Constants.commonLegend.borderWidth
-                    anchors.top: solutionPositionChart.top
-                    anchors.right: solutionPositionChart.right
+                    anchors.top: baselinePlotChart.top
+                    anchors.right: baselinePlotChart.right
                     anchors.topMargin: Constants.commonLegend.topMargin
                     anchors.rightMargin: Constants.commonLegend.rightMargin
                     implicitHeight: lineLegendRepeater.height
@@ -200,9 +182,9 @@ Item {
                 }
 
                 ValueAxis {
-                    id: solutionPositionXAxis
+                    id: baselinePlotXAxis
 
-                    titleText: Constants.solutionPosition.xAxisTitleText
+                    titleText: Constants.baselinePlot.xAxisTitleText
                     gridVisible: true
                     lineVisible: true
                     minorGridVisible: true
@@ -218,9 +200,9 @@ Item {
                 }
 
                 ValueAxis {
-                    id: solutionPositionYAxis
+                    id: baselinePlotYAxis
 
-                    titleText: Constants.solutionPosition.yAxisTitleText
+                    titleText: Constants.baselinePlot.yAxisTitleText
                     gridVisible: true
                     lineVisible: true
                     minorGridVisible: true
@@ -240,58 +222,50 @@ Item {
                     running: true
                     repeat: true
                     onTriggered: {
-                        if (!solutionTab.visible)
+                        if (!baselineTab.visible)
                             return ;
 
-                        solution_position_model.fill_console_points(solutionPositionPoints);
-                        if (!solutionPositionPoints.points.length)
+                        baseline_plot_model.fill_console_points(baselinePlotPoints);
+                        if (!baselinePlotPoints.points.length)
                             return ;
 
-                        solutionPositionArea.visible = true;
-                        var points = solutionPositionPoints.points;
-                        labels = solutionPositionPoints.labels;
-                        if (colors != solutionPositionPoints.colors)
-                            colors = solutionPositionPoints.colors;
+                        baselinePlotArea.visible = true;
+                        var points = baselinePlotPoints.points;
+                        labels = baselinePlotPoints.labels;
+                        if (colors != baselinePlotPoints.colors)
+                            colors = baselinePlotPoints.colors;
 
                         for (var idx in colors) {
                             if (lineLegendRepeaterRows.itemAt(idx))
                                 lineLegendRepeaterRows.itemAt(idx).children[0].color = colors[idx];
 
                         }
-                        if (labels != solutionPositionPoints.labels)
-                            labels = solutionPositionPoints.labels;
+                        if (labels != baselinePlotPoints.labels)
+                            labels = baselinePlotPoints.labels;
 
-                        if (available_units != solutionPositionPoints.available_units)
-                            available_units = solutionPositionPoints.available_units;
-
-                        if (!lines.length || !scatters.length || !cur_scatters.length) {
+                        if (!scatters.length || !cur_scatters.length) {
                             for (var idx in labels) {
-                                var cur_scatter = solutionPositionChart.createSeries(ChartView.SeriesTypeScatter, labels[idx] + "cur-scatter", solutionPositionXAxis, solutionPositionYAxis);
+                                var cur_scatter = baselinePlotChart.createSeries(ChartView.SeriesTypeScatter, labels[idx] + "cur-scatter", baselinePlotXAxis, baselinePlotYAxis);
                                 cur_scatter.color = colors[idx];
                                 cur_scatter.markerSize = Constants.commonChart.currentSolutionMarkerSize;
-                                var scatter = solutionPositionChart.createSeries(ChartView.SeriesTypeScatter, labels[idx] + "scatter", solutionPositionXAxis, solutionPositionYAxis);
+                                var scatter = baselinePlotChart.createSeries(ChartView.SeriesTypeScatter, labels[idx] + "scatter", baselinePlotXAxis, baselinePlotYAxis);
                                 scatter.color = colors[idx];
                                 scatter.markerSize = Constants.commonChart.solutionMarkerSize;
-                                var line = solutionPositionChart.createSeries(ChartView.SeriesTypeLine, labels[idx], solutionPositionXAxis, solutionPositionYAxis);
-                                line.color = colors[idx];
-                                line.width = Constants.commonChart.solutionLineWidth;
-                                line.useOpenGL = Globals.useOpenGL;
                                 scatter.useOpenGL = Globals.useOpenGL;
                                 cur_scatter.useOpenGL = Globals.useOpenGL;
-                                lines.push(line);
                                 scatters.push(scatter);
                                 cur_scatters.push(cur_scatter);
                             }
                         }
-                        var combined = [lines, scatters, cur_scatters];
-                        solutionPositionPoints.fill_series(combined);
-                        if (solutionPositionYAxis.min != solutionPositionPoints.lat_min_ || solutionPositionYAxis.max != solutionPositionPoints.lat_max_) {
-                            solutionPositionYAxis.min = solutionPositionPoints.lat_min_;
-                            solutionPositionYAxis.max = solutionPositionPoints.lat_max_;
+                        var combined = [scatters, cur_scatters];
+                        baselinePlotPoints.fill_series(combined);
+                        if (baselinePlotYAxis.min != baselinePlotPoints.n_min || baselinePlotYAxis.max != baselinePlotPoints.n_max) {
+                            baselinePlotYAxis.min = baselinePlotPoints.n_min;
+                            baselinePlotYAxis.max = baselinePlotPoints.n_max;
                         }
-                        if (solutionPositionXAxis.min != solutionPositionPoints.lon_min_ || solutionPositionXAxis.max != solutionPositionPoints.lon_max_) {
-                            solutionPositionXAxis.min = solutionPositionPoints.lon_min_;
-                            solutionPositionXAxis.max = solutionPositionPoints.lon_max_;
+                        if (baselinePlotXAxis.min != baselinePlotPoints.e_min || baselinePlotXAxis.max != baselinePlotPoints.e_max) {
+                            baselinePlotXAxis.min = baselinePlotPoints.e_min;
+                            baselinePlotXAxis.max = baselinePlotPoints.e_max;
                         }
                     }
                 }

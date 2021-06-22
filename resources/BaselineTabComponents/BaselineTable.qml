@@ -37,8 +37,10 @@ Item {
         TableView {
             id: tableViewInner
 
-            anchors.centerIn: parent
-            margins: Constants.baselineTable.surroundingMargin
+            // anchors.centerIn: parent
+            width: parent.width
+            height: parent.height
+            anchors.margins: Constants.baselineTable.surroundingMargin
             clip: true
             model: tableModel
 

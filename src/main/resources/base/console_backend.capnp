@@ -199,6 +199,14 @@ struct SolutionPositionStatusButtonFront {
     solutionPositionPause @3 :Bool;
 }
 
+struct BaselinePlotStatusButtonFront {
+    center @0 :Bool;
+    zoom @1 :Bool;
+    clear @2 :Bool;
+    pause @3 :Bool;
+    resetFilters @4 :Bool;
+}
+
 struct Status {
     text @0 :Text;
 }
@@ -233,5 +241,6 @@ struct Message {
         advancedMagnetometerStatus @25 :AdvancedMagnetometerStatus;
         baselinePlotStatus @26 :BaselinePlotStatus;
         baselineTableStatus @27 :BaselineTableStatus;
+        baselinePlotStatusButtonFront @28 :BaselinePlotStatusButtonFront;
     }
 }

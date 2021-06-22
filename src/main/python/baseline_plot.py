@@ -107,7 +107,7 @@ class BaselinePlotPoints(QObject):  # pylint: disable=too-many-instance-attribut
     def fill_series(self, series_list):
         scatters = series_list[0]
         cur_scatters = series_list[1]
-        for idx in range(scatters.len()):
+        for idx in range(len(scatters)):
             scatters[idx].replace(self._points[idx])
             cur_scatters[idx].replace(self._cur_points[idx])
 

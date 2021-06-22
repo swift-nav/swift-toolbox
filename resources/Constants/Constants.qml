@@ -19,6 +19,7 @@ QtObject {
     property QtObject commonTable
     property QtObject advancedIns
     property QtObject advancedMagnetometer
+    property QtObject baselinePlot
     property QtObject baselineTable
     property QtObject solutionPosition
     property QtObject solutionTable
@@ -136,11 +137,20 @@ QtObject {
         readonly property int insStatusImageWidth: 15
     }
 
+    baselinePlot: QtObject {
+        readonly property int navBarMargin: 10
+        readonly property int navBarSpacing: 0
+        readonly property real navBarButtonProportionOfParent: 0.11
+        readonly property string yAxisTitleText: "N (meters)"
+        readonly property string xAxisTitleText: "E (meters)"
+    }
+
     baselineTable: QtObject {
         readonly property int defaultColumnWidth: 80
         readonly property color borderColor: "#000000"
         readonly property int borderWidth: 1
         readonly property int headerTableDataTableSpacing: 0
+        readonly property int width: 300
         readonly property int cellHeight: 20
         readonly property int cellSpacing: 0
         readonly property int surroundingMargin: 2

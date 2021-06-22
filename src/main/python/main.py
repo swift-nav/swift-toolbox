@@ -427,6 +427,19 @@ class DataModel(QObject):
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
 
+    @Slot(list)  # type: ignore
+    def baseline_plot(self, buttons: list) -> None:
+        Message = self.messages.Message
+        m = Message()
+        m.baselinePlotStatusButtonFront = m.init(Message.Union.BaselinePlotStatusButtonFront)
+        m.baselinePlotStatusButtonFront.pause = buttons[0]
+        m.baselinePlotStatusButtonFront.clear = buttons[1]
+        m.baselinePlotStatusButtonFront.zoom = buttons[2]
+        m.baselinePlotStatusButtonFront.center = buttons[3]
+        m.baselinePlotStatusButtonFront.resetFilters = buttons[4]
+        buffer = m.to_bytes()
+        self.endpoint.send_message(buffer)
+
     @Slot(list, str)  # type: ignore
     def logging_bar(self, buttons, directory) -> None:
         Message = self.messages.Message

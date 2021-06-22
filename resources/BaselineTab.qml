@@ -12,9 +12,6 @@ Item {
     height: parent.height
 
     SplitView {
-        //     SplitView.fillWidth: true
-        // }
-
         id: baselineSplitView
 
         anchors.fill: parent
@@ -23,7 +20,7 @@ Item {
         height: parent.height
 
         Item {
-            SplitView.minimumWidth: 200
+            SplitView.minimumWidth: Constants.baselineTable.width
             SplitView.fillHeight: true
 
             BaselineTabComponents.BaselineTable {
@@ -31,14 +28,10 @@ Item {
 
         }
 
-        Item {
-            // BaselineTabComponents.BaselineTable {
-            // }
-
+        BaselineTabComponents.BaselinePlot {
             SplitView.fillWidth: true
             SplitView.fillHeight: true
         }
-        // BaselineTabComponents.BaselinePlot {
 
     }
 

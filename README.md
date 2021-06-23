@@ -2,7 +2,8 @@
 
 ## Setup
 
-Install Rust: https://rustup.rs/ -- install *cargo-make*: `cargo install --force cargo-make`.
+Install Rust: https://rustup.rs/ 
+Install *cargo-make*: `cargo install --force cargo-make`.
 
 Download and install miniconda3:
 - https://docs.conda.io/en/latest/miniconda.html
@@ -37,7 +38,7 @@ Install development dependencies (On Windows make sure you're using Adminstrator
 
 ```
 cargo make pip-install-dev
-git pull lfs
+git lfs pull
 ```
 
 ## Running

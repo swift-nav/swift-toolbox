@@ -3,6 +3,7 @@
 ## Setup
 
 Install Rust: https://rustup.rs/ 
+
 Install *cargo-make*: `cargo install --force cargo-make`.
 
 Download and install miniconda3:

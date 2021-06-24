@@ -130,6 +130,10 @@ pub fn process_messages<S>(
                     .handle_pos_llh(PosLLH::MsgPosLLHDepA(msg.clone()));
                 main.status_bar.handle_pos_llh(PosLLH::MsgPosLLHDepA(msg));
             }
+            SBP::MsgPosLLHCov(msg) => {
+                main.solution_tab
+                    .handle_pos_llh_cov(msg);
+            }
             SBP::MsgTrackingState(msg) => {
                 main.tracking_signals_tab
                     .handle_msg_tracking_state(msg.states);

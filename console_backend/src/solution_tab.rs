@@ -2,6 +2,7 @@ use capnp::message::Builder;
 
 use sbp::messages::{
     navigation::{MsgAgeCorrections, MsgGPSTime, MsgUtcTime},
+    orientation::MsgOrientEuler,
     system::{MsgInsStatus, MsgInsUpdates},
 };
 use std::{collections::HashMap, time::Instant};
@@ -193,6 +194,22 @@ impl<S: MessageSender> SolutionTab<S> {
         if msg.flags != 0 {
             self.week = Some(msg.wn);
             self.nsec = Some(msg.ns_residual);
+        }
+    }
+
+    /// Handler for Orientation / Attitude messages.
+    ///
+    /// # Parameters
+    /// - `msg`: MsgOrientEuler to extract data from.
+    pub fn handle_orientation_euler(&mut self, msg: MsgOrientEuler) {
+        if msg.flags != 0 {
+            self.table.insert(ROLL, format!("{}", msg.roll));
+            self.table.insert(PITCH, format!("{}", msg.pitch));
+            self.table.insert(YAW, format!("{}", msg.yaw));
+        } else {
+            self.table.insert(ROLL, String::from(EMPTY_STR));
+            self.table.insert(PITCH, String::from(EMPTY_STR));
+            self.table.insert(YAW, String::from(EMPTY_STR));
         }
     }
 

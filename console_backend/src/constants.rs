@@ -143,6 +143,9 @@ pub(crate) const HDOP: &str = "HDOP";
 pub(crate) const VDOP: &str = "VDOP";
 pub(crate) const DOPS_FLAGS: &str = "DOPS Flags";
 pub(crate) const INS_STATUS: &str = "INS Status";
+pub(crate) const ROLL: &str = "Roll";
+pub(crate) const PITCH: &str = "Pitch";
+pub(crate) const YAW: &str = "Yaw";
 
 pub(crate) const SOLUTION_TABLE_KEYS: &[&str] = &[
     GPS_WEEK,
@@ -171,6 +174,9 @@ pub(crate) const SOLUTION_TABLE_KEYS: &[&str] = &[
     VDOP,
     DOPS_FLAGS,
     INS_STATUS,
+    ROLL,
+    PITCH,
+    YAW,
 ];
 
 // Solution Velocity Tab constants.

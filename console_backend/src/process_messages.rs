@@ -131,8 +131,7 @@ pub fn process_messages<S>(
                 main.status_bar.handle_pos_llh(PosLLH::MsgPosLLHDepA(msg));
             }
             SBP::MsgPosLLHCov(msg) => {
-                main.solution_tab
-                    .handle_pos_llh_cov(msg);
+                main.solution_tab.handle_pos_llh_cov(msg);
             }
             SBP::MsgTrackingState(msg) => {
                 main.tracking_signals_tab

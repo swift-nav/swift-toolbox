@@ -432,9 +432,7 @@ class DataModel(QObject):
         m.baselinePlotStatusButtonFront = m.init(Message.Union.BaselinePlotStatusButtonFront)
         m.baselinePlotStatusButtonFront.pause = buttons[0]
         m.baselinePlotStatusButtonFront.clear = buttons[1]
-        m.baselinePlotStatusButtonFront.zoom = buttons[2]
-        m.baselinePlotStatusButtonFront.center = buttons[3]
-        m.baselinePlotStatusButtonFront.resetFilters = buttons[4]
+        m.baselinePlotStatusButtonFront.resetFilters = buttons[2]
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
 

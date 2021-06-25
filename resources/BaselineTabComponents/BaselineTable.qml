@@ -8,8 +8,6 @@ import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
 Item {
-    // property variant columnWidths: [Constants.baselineTable.defaultColumnWidth, Constants.baselineTable.defaultColumnWidth]
-
     id: baselineTable
 
     width: parent.width

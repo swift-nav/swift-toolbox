@@ -8,3 +8,7 @@ function hzToMilliseconds(hz) {
 function fileUrlToString(url) {
     return url.toString().replace("file:///", "")
 }
+
+function spanBetweenValues(v1, v2){
+    return Math.abs(v1 - v2)
+}

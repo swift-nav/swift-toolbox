@@ -17,8 +17,11 @@ Item {
     property real orig_n_min: 0
     property real orig_e_max: 0
     property real orig_e_min: 0
-    property bool is_moving: false
-
+    property real x_axis_half: 0
+    property real y_axis_half: 0
+    property variant cur_solution: null
+    property bool zoom_all: true
+    property bool center_solution: false
 
     width: parent.width
     height: parent.height
@@ -48,6 +51,12 @@ Item {
                 exclusive: false
             }
 
+            ButtonGroup {
+                id: baselineZoomButtonGroup
+
+                exclusive: true
+            }
+
             RowLayout {
                 Layout.alignment: Qt.AlignLeft
                 Layout.leftMargin: Constants.baselinePlot.navBarMargin
@@ -62,15 +71,13 @@ Item {
                     ToolTip.visible: hovered
                     ToolTip.text: "Pause"
                     checkable: true
-                    onClicked: {
-                        data_model.baseline_plot([baselineButtonGroup.buttons[4].checked, baselineButtonGroup.buttons[3].pressed, baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].checked, baselineButtonGroup.buttons[0].pressed]);
-                    }
+                    onClicked: data_model.baseline_plot([baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].pressed, baselineButtonGroup.buttons[0].pressed])
                 }
 
                 Button {
                     id: baselineClearButton
 
-                    onPressed: data_model.baseline_plot([baselineButtonGroup.buttons[4].checked, baselineButtonGroup.buttons[3].pressed, baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].checked, baselineButtonGroup.buttons[0].pressed])
+                    onPressed: data_model.baseline_plot([baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].pressed, baselineButtonGroup.buttons[0].pressed])
                     ButtonGroup.group: baselineButtonGroup
                     Layout.preferredWidth: Constants.baselinePlot.navBarButtonWidth
                     Layout.preferredHeight: Constants.commonChart.buttonHeight
@@ -82,21 +89,39 @@ Item {
                 Button {
                     id: baselineZoomAllButton
 
-                    onClicked: data_model.baseline_plot([baselineButtonGroup.buttons[4].checked, baselineButtonGroup.buttons[3].pressed, baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].checked, baselineButtonGroup.buttons[0].pressed])
-                    ButtonGroup.group: baselineButtonGroup
+                    onClicked: {
+                        if (checked) {
+                            zoom_all = true;
+                            baselineCenterButton.checked = false;
+                            center_solution = false;
+                            baselinePlotChart.resetChartZoom();
+                        } else {
+                            zoom_all = false;
+                        }
+                    }
                     Layout.preferredWidth: Constants.baselinePlot.navBarButtonWidth
                     Layout.preferredHeight: Constants.commonChart.buttonHeight
                     text: "[ ]"
                     ToolTip.visible: hovered
                     ToolTip.text: "Zoom All"
                     checkable: true
+                    checked: true
                 }
 
                 Button {
                     id: baselineCenterButton
 
-                    onClicked: data_model.baseline_plot([baselineButtonGroup.buttons[4].checked, baselineButtonGroup.buttons[3].pressed, baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].checked, baselineButtonGroup.buttons[0].pressed])
-                    ButtonGroup.group: baselineButtonGroup
+                    onClicked: {
+                        if (checked) {
+                            baselineZoomAllButton.checked = false;
+                            y_axis_half = Utils.spanBetweenValues(baselinePlotXAxis.max, baselinePlotXAxis.min) / 2;
+                            x_axis_half = Utils.spanBetweenValues(baselinePlotYAxis.max, baselinePlotYAxis.min) / 2;
+                            center_solution = true;
+                            zoom_all = false;
+                        } else {
+                            center_solution = false;
+                        }
+                    }
                     Layout.preferredWidth: Constants.baselinePlot.navBarButtonWidth
                     Layout.preferredHeight: Constants.commonChart.buttonHeight
                     text: "(><)"
@@ -108,7 +133,7 @@ Item {
                 Button {
                     id: baselineResetFiltersButton
 
-                    onPressed: data_model.baseline_plot([baselineButtonGroup.buttons[4].checked, baselineButtonGroup.buttons[3].pressed, baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].checked, baselineButtonGroup.buttons[0].pressed])
+                    onPressed: data_model.baseline_plot([baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].pressed, baselineButtonGroup.buttons[0].pressed])
                     ButtonGroup.group: baselineButtonGroup
                     Layout.preferredWidth: Constants.baselinePlot.resetFiltersButtonWidth
                     Layout.preferredHeight: Constants.commonChart.buttonHeight
@@ -121,6 +146,38 @@ Item {
 
             ChartView {
                 id: baselinePlotChart
+
+                function resetChartZoom() {
+                    baselinePlotChart.zoomReset();
+                    baselinePlotXAxis.max = orig_e_max;
+                    baselinePlotXAxis.min = orig_e_min;
+                    baselinePlotYAxis.max = orig_n_max;
+                    baselinePlotYAxis.min = orig_n_min;
+                }
+
+                function centerToSolution() {
+                    baselinePlotChart.zoomReset();
+                    if (cur_scatters.length) {
+                        baselinePlotXAxis.max = cur_solution.x + x_axis_half;
+                        baselinePlotXAxis.min = cur_solution.x - x_axis_half;
+                        baselinePlotYAxis.max = cur_solution.y + y_axis_half;
+                        baselinePlotYAxis.min = cur_solution.y - y_axis_half;
+                    }
+                }
+
+                function chartZoomByDirection(delta) {
+                    if (delta > 0)
+                        baselinePlotChart.zoom(Constants.commonChart.zoomInMult);
+                    else
+                        baselinePlotChart.zoom(Constants.commonChart.zoomOutMult);
+                }
+
+                function stopZoomFeatures() {
+                    baselineCenterButton.checked = false;
+                    center_solution = false;
+                    baselineZoomAllButton.checked = false;
+                    zoom_all = false;
+                }
 
                 Layout.preferredWidth: parent.width
                 Layout.preferredHeight: parent.height - Constants.commonChart.heightOffset
@@ -220,58 +277,39 @@ Item {
                     }
 
                 }
-                // MouseArea{
-                //     anchors.fill: parent
-                //     drag.target: item
-                //     drag.axis: Drag.XAndYAxis
-                //     onClicked: resetPosition()
-                // }
+
                 MouseArea {
                     anchors.fill: baselinePlotChart
-                    onDoubleClicked: baselinePlotChart.zoomReset();
+                    onDoubleClicked: {
+                        baselinePlotChart.stopZoomFeatures();
+                        baselineZoomAllButton.checked = true;
+                        baselinePlotChart.resetChartZoom();
+                    }
                     onWheel: {
-                        if (wheel.angleDelta.y > 0) {
-                            baselinePlotChart.zoom(1.1);
-                        } else {
-                            baselinePlotChart.zoom(0.9);
-                        }
+                        baselinePlotChart.stopZoomFeatures();
+                        baselinePlotChart.chartZoomByDirection(wheel.angleDelta.y);
                     }
                     onPositionChanged: {
-                        if (pressed && !is_moving) {
-                            is_moving = true
-                            var current = baselinePlotChart.plotArea
-
-
-                            var x_unit = Math.abs(baselinePlotXAxis.max - baselinePlotXAxis.min)/current.width
-                            var y_unit = Math.abs(baselinePlotYAxis.max - baselinePlotYAxis.min)/current.height
-                            
-                            var delta_x = (mouse_x - mouseX)*x_unit
-                            var delta_y = (mouse_y - mouseY)*y_unit
-                            // var r = Qt.rect((delta_x + current.x), (delta_y + current.y), current.width, current.height)
-                            // print(r)
-                            // baselinePlotChart.plotArea = r
-                            // baselinePlotChart.zoomReset()
-                            // baselinePlotChart.zoomIn(r)
-                            baselinePlotXAxis.max += delta_x
-                            baselinePlotXAxis.min += delta_x
-                            baselinePlotYAxis.max -= delta_y
-                            baselinePlotYAxis.min -= delta_y
-                            mouse_x = mouseX
-                            mouse_y = mouseY
-                            // print(delta_x, delta_y)
-                            // print(baselinePlotChart.plotArea)
-                            is_moving = false
-
+                        if (pressed) {
+                            baselinePlotChart.stopZoomFeatures();
+                            var current = baselinePlotChart.plotArea;
+                            var x_unit = Utils.spanBetweenValues(baselinePlotXAxis.max, baselinePlotXAxis.min) / current.width;
+                            var y_unit = Utils.spanBetweenValues(baselinePlotYAxis.max, baselinePlotYAxis.min) / current.height;
+                            var delta_x = (mouse_x - mouseX) * x_unit;
+                            var delta_y = (mouse_y - mouseY) * y_unit;
+                            baselinePlotXAxis.max += delta_x;
+                            baselinePlotXAxis.min += delta_x;
+                            baselinePlotYAxis.max -= delta_y;
+                            baselinePlotYAxis.min -= delta_y;
+                            mouse_x = mouseX;
+                            mouse_y = mouseY;
                         }
-                        
                     }
                     onPressed: {
-                        mouse_x = mouseX
-                        mouse_y = mouseY
+                        mouse_x = mouseX;
+                        mouse_y = mouseY;
                     }
                 }
-                
-
 
                 Timer {
                     interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
@@ -284,9 +322,7 @@ Item {
                         baseline_plot_model.fill_console_points(baselinePlotPoints);
                         if (!baselinePlotPoints.points.length)
                             return ;
-                        // print(baselinePlotChart.x)
-                        // print(baselinePlotChart.scale)
-                        // print(Object.keys(baselinePlotChart))
+
                         baselinePlotArea.visible = true;
                         var points = baselinePlotPoints.points;
                         if (!scatters.length || !cur_scatters.length) {
@@ -313,14 +349,23 @@ Item {
                         }
                         var combined = [scatters, cur_scatters];
                         baselinePlotPoints.fill_series(combined);
-                        // if (baselinePlotYAxis.min != baselinePlotPoints.n_min || baselinePlotYAxis.max != baselinePlotPoints.n_max) {
-                        //     baselinePlotYAxis.min = baselinePlotPoints.n_min;
-                        //     baselinePlotYAxis.max = baselinePlotPoints.n_max;
-                        // }
-                        // if (baselinePlotXAxis.min != baselinePlotPoints.e_min || baselinePlotXAxis.max != baselinePlotPoints.e_max) {
-                        //     baselinePlotXAxis.min = baselinePlotPoints.e_min;
-                        //     baselinePlotXAxis.max = baselinePlotPoints.e_max;
-                        // }
+                        for (var idx in baselinePlotPoints.cur_points) {
+                            if (baselinePlotPoints.cur_points[idx].length)
+                                cur_solution = baselinePlotPoints.cur_points[idx][0];
+
+                        }
+                        if (center_solution)
+                            baselinePlotChart.centerToSolution();
+
+                        if (orig_n_min != baselinePlotPoints.n_min || orig_n_max != baselinePlotPoints.n_max || orig_e_min != baselinePlotPoints.e_min || orig_e_max != baselinePlotPoints.e_max) {
+                            orig_n_min = baselinePlotPoints.n_min;
+                            orig_n_max = baselinePlotPoints.n_max;
+                            orig_e_min = baselinePlotPoints.e_min;
+                            orig_e_max = baselinePlotPoints.e_max;
+                            if (zoom_all)
+                                baselinePlotChart.resetChartZoom();
+
+                        }
                     }
                 }
 

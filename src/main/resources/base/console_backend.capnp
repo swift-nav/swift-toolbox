@@ -198,11 +198,9 @@ struct SolutionPositionStatusButtonFront {
 }
 
 struct BaselinePlotStatusButtonFront {
-    center @0 :Bool;
-    zoom @1 :Bool;
-    clear @2 :Bool;
-    pause @3 :Bool;
-    resetFilters @4 :Bool;
+    clear @0 :Bool;
+    pause @1 :Bool;
+    resetFilters @2 :Bool;
 }
 
 struct Status {

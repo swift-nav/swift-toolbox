@@ -62,8 +62,8 @@ pub(crate) const SHOW_LEGEND: &str = "Show Legend";
 pub(crate) const MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER: f64 = 0.25;
 
 // Baseline Tab.
-pub(crate) const BASELINE_DIRECTION_MAX: f64 = 1.0;
-pub(crate) const BASELINE_DIRECTION_MIN: f64 = -1.0;
+pub(crate) const BASELINE_DIRECTION_MAX: f64 = f64::MAX;
+pub(crate) const BASELINE_DIRECTION_MIN: f64 = f64::MIN;
 
 pub(crate) const N_FLOAT: &str = "n_Float RTK";
 pub(crate) const N_FIXED: &str = "n_Fixed RTK";

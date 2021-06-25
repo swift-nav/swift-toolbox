@@ -18,16 +18,12 @@ use crate::utils::*;
 /// Baseline Tab Button Struct.
 ///
 /// # Parameters
-/// - `center`: Indicates to whether or not to center on the current solution on the frontend.
 /// - `clear`: Indicates whether to initiate a clearing of all solution data stored.
 /// - `pause`: Indicates whther or not to pause the plot updates.
-/// - `zoom`: Indicates whether or not to zoom into the solution.
 /// - `reset`: Indicates whether or not to reset filters.
 pub(crate) struct BaselineTabButtons {
-    _center: bool,
     clear: bool,
     pause: bool,
-    _zoom: bool,
     _reset: bool,
 }
 
@@ -154,7 +150,6 @@ impl<'a, S: MessageSender> BaselineTab<'a, S> {
                 new_sln.push((e_values[jdx], n_values[jdx]));
             }
             self.sln_data[idx] = new_sln;
-
             if update_current {
                 if !self.sln_data[idx].is_empty() {
                     self.sln_cur_data[idx] = vec![self.sln_data[idx][self.sln_data[idx].len() - 1]];
@@ -391,18 +386,14 @@ impl<'a, S: MessageSender> BaselineTab<'a, S> {
 
     fn check_state(&self) -> BaselineTabButtons {
         let mut shared_data = self.shared_state.lock().unwrap();
-        let _center = (*shared_data).baseline_tab.center;
         let clear = (*shared_data).baseline_tab.clear;
         (*shared_data).baseline_tab.clear = false;
         let pause = (*shared_data).baseline_tab.pause;
-        let _zoom = (*shared_data).baseline_tab.zoom;
         let _reset = (*shared_data).baseline_tab.reset;
         (*shared_data).baseline_tab.reset = false;
         BaselineTabButtons {
-            _center,
             clear,
             pause,
-            _zoom,
             _reset,
         }
     }
@@ -425,9 +416,9 @@ impl<'a, S: MessageSender> BaselineTab<'a, S> {
             return;
         }
         let current_mode: Option<String> = if !self.pending_draw_modes.is_empty() {
-            self.n_min = 0.0;
+            self.n_min = BASELINE_DIRECTION_MAX;
             self.n_max = BASELINE_DIRECTION_MIN;
-            self.e_min = 0.0;
+            self.e_min = BASELINE_DIRECTION_MAX;
             self.e_max = BASELINE_DIRECTION_MIN;
             Some(self.pending_draw_modes[self.pending_draw_modes.len() - 1].clone())
         } else {
@@ -823,30 +814,22 @@ mod tests {
         let client_send = TestSender { inner: Vec::new() };
         let baseline_tab = BaselineTab::new(shared_state, client_send);
         let buttons = baseline_tab.check_state();
-        assert!(!buttons._center);
         assert!(!buttons.clear);
         assert!(!buttons.pause);
-        assert!(!buttons._zoom);
         assert!(!buttons._reset);
         {
             let mut shared_data = baseline_tab.shared_state.lock().unwrap();
-            (*shared_data).baseline_tab.center = true;
             (*shared_data).baseline_tab.clear = true;
             (*shared_data).baseline_tab.pause = true;
-            (*shared_data).baseline_tab.zoom = true;
             (*shared_data).baseline_tab.reset = true;
         }
         let buttons = baseline_tab.check_state();
-        assert!(buttons._center);
         assert!(buttons.clear);
         assert!(buttons.pause);
-        assert!(buttons._zoom);
         assert!(buttons._reset);
         let buttons = baseline_tab.check_state();
-        assert!(buttons._center);
         assert!(!buttons.clear);
         assert!(buttons.pause);
-        assert!(buttons._zoom);
         assert!(!buttons._reset);
     }
 

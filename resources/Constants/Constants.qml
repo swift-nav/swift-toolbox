@@ -235,6 +235,8 @@ QtObject {
         readonly property int tickPointSize: 10
         readonly property int buttonHeight: 40
         readonly property int unitDropdownWidth: 90
+        readonly property real zoomInMult: 1.1
+        readonly property real zoomOutMult: 0.9
     }
 
     trackingSignals: QtObject {

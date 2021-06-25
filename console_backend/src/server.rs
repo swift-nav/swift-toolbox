@@ -366,8 +366,6 @@ impl Server {
                         let mut shared_data = shared_state_clone
                             .lock()
                             .expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-                        (*shared_data).baseline_tab.zoom = cv_in.get_zoom();
-                        (*shared_data).baseline_tab.center = cv_in.get_center();
                         (*shared_data).baseline_tab.clear = cv_in.get_clear();
                         (*shared_data).baseline_tab.pause = cv_in.get_pause();
                         (*shared_data).baseline_tab.reset = cv_in.get_reset_filters();

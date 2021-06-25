@@ -542,20 +542,16 @@ impl TrackingSignalsTabState {
 
 #[derive(Debug)]
 pub struct BaselineTabState {
-    pub(crate) center: bool,
     pub(crate) clear: bool,
     pub(crate) pause: bool,
-    pub(crate) zoom: bool,
     pub(crate) reset: bool,
 }
 
 impl BaselineTabState {
     fn new() -> BaselineTabState {
         BaselineTabState {
-            center: false,
             clear: false,
             pause: false,
-            zoom: false,
             reset: false,
         }
     }

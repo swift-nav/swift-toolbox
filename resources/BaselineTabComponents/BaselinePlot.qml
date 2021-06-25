@@ -1,4 +1,5 @@
 import "../Constants"
+import "BaselinePlotLoop.js" as BaselinePlotLoop
 import QtCharts 2.15
 import QtQuick 2.15
 import QtQuick.Controls 2.12
@@ -220,6 +221,7 @@ Item {
                                     text: "+ "
                                     font.pointSize: (Constants.mediumPointSize + Constants.commonLegend.markerPointSizeOffset)
                                     font.bold: true
+                                    color: Constants.baselinePlot.colors[index]
                                     anchors.verticalCenter: parent.verticalCenter
                                     anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                                 }
@@ -324,36 +326,14 @@ Item {
                             return ;
 
                         baselinePlotArea.visible = true;
-                        var points = baselinePlotPoints.points;
-                        if (!scatters.length || !cur_scatters.length) {
-                            for (var idx in Constants.baselinePlot.legendLabels) {
-                                if (lineLegendRepeaterRows.itemAt(idx))
-                                    lineLegendRepeaterRows.itemAt(idx).children[0].color = Constants.baselinePlot.colors[idx];
+                        if (!scatters.length || !cur_scatters.length)
+                            [scatters, cur_scatters] = BaselinePlotLoop.setupScatterSeries(baselinePlotChart, Constants, Globals, baselinePlotXAxis, baselinePlotYAxis);
 
-                                var cur_scatter = baselinePlotChart.createSeries(ChartView.SeriesTypeScatter, Constants.baselinePlot.legendLabels[idx] + "cur-scatter", baselinePlotXAxis, baselinePlotYAxis);
-                                cur_scatter.color = Constants.baselinePlot.colors[idx];
-                                cur_scatter.markerSize = Constants.commonChart.currentSolutionMarkerSize;
-                                cur_scatter.useOpenGL = Globals.useOpenGL;
-                                if (idx == 0) {
-                                    cur_scatter.append(0, 0);
-                                    cur_scatter.pointsVisible = true;
-                                    continue;
-                                }
-                                var scatter = baselinePlotChart.createSeries(ChartView.SeriesTypeScatter, Constants.baselinePlot.legendLabels[idx] + "scatter", baselinePlotXAxis, baselinePlotYAxis);
-                                scatter.color = Constants.baselinePlot.colors[idx];
-                                scatter.markerSize = Constants.commonChart.solutionMarkerSize;
-                                scatter.useOpenGL = Globals.useOpenGL;
-                                scatters.push(scatter);
-                                cur_scatters.push(cur_scatter);
-                            }
-                        }
-                        var combined = [scatters, cur_scatters];
-                        baselinePlotPoints.fill_series(combined);
-                        for (var idx in baselinePlotPoints.cur_points) {
-                            if (baselinePlotPoints.cur_points[idx].length)
-                                cur_solution = baselinePlotPoints.cur_points[idx][0];
+                        baselinePlotPoints.fill_series([scatters, cur_scatters]);
+                        let point = BaselinePlotLoop.getCurSolution(baselinePlotPoints.cur_points);
+                        if (point)
+                            cur_solution = point;
 
-                        }
                         if (center_solution)
                             baselinePlotChart.centerToSolution();
 

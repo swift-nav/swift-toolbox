@@ -322,9 +322,9 @@ impl<'a, S: MessageSender> BaselineTab<'a, S> {
             self.table.insert(GPS_TIME, String::from(EMPTY_STR));
             self.table.insert(UTC_TIME, String::from(EMPTY_STR));
             self.table.insert(UTC_SRC, String::from(EMPTY_STR));
-            self.table.insert(N, String::from(EMPTY_STR));
-            self.table.insert(E, String::from(EMPTY_STR));
-            self.table.insert(D, String::from(EMPTY_STR));
+            self.table.insert(NORTH, String::from(EMPTY_STR));
+            self.table.insert(EAST, String::from(EMPTY_STR));
+            self.table.insert(DOWN, String::from(EMPTY_STR));
             self.table.insert(HORIZ_ACC, String::from(EMPTY_STR));
             self.table.insert(VERT_ACC, String::from(EMPTY_STR));
             self.table.insert(DIST, String::from(EMPTY_STR));
@@ -350,9 +350,9 @@ impl<'a, S: MessageSender> BaselineTab<'a, S> {
                 self.table.insert(UTC_TIME, String::from(EMPTY_STR));
                 self.table.insert(UTC_SRC, String::from(EMPTY_STR));
             }
-            self.table.insert(N, n.to_string());
-            self.table.insert(E, e.to_string());
-            self.table.insert(D, d.to_string());
+            self.table.insert(NORTH, n.to_string());
+            self.table.insert(EAST, e.to_string());
+            self.table.insert(DOWN, d.to_string());
             self.table.insert(HORIZ_ACC, h_accuracy.to_string());
             self.table.insert(VERT_ACC, v_accuracy.to_string());
             self.table.insert(DIST, format!("{:.3}", dist));
@@ -695,9 +695,9 @@ mod tests {
         assert_eq!(baseline_tab.table[GPS_TIME], String::from(EMPTY_STR));
         assert_eq!(baseline_tab.table[UTC_TIME], String::from(EMPTY_STR));
         assert_eq!(baseline_tab.table[UTC_SRC], String::from(EMPTY_STR));
-        assert_eq!(baseline_tab.table[N], String::from(EMPTY_STR));
-        assert_eq!(baseline_tab.table[E], String::from(EMPTY_STR));
-        assert_eq!(baseline_tab.table[D], String::from(EMPTY_STR));
+        assert_eq!(baseline_tab.table[NORTH], String::from(EMPTY_STR));
+        assert_eq!(baseline_tab.table[EAST], String::from(EMPTY_STR));
+        assert_eq!(baseline_tab.table[DOWN], String::from(EMPTY_STR));
         assert_eq!(baseline_tab.table[HORIZ_ACC], String::from(EMPTY_STR));
         assert_eq!(baseline_tab.table[VERT_ACC], String::from(EMPTY_STR));
         assert_eq!(baseline_tab.table[DIST], String::from(EMPTY_STR));
@@ -712,9 +712,9 @@ mod tests {
         assert_eq!(baseline_tab.table[GPS_TIME], String::from(EMPTY_STR));
         assert_eq!(baseline_tab.table[UTC_TIME], String::from(EMPTY_STR));
         assert_eq!(baseline_tab.table[UTC_SRC], String::from(EMPTY_STR));
-        assert_eq!(baseline_tab.table[N], String::from(EMPTY_STR));
-        assert_eq!(baseline_tab.table[E], String::from(EMPTY_STR));
-        assert_eq!(baseline_tab.table[D], String::from(EMPTY_STR));
+        assert_eq!(baseline_tab.table[NORTH], String::from(EMPTY_STR));
+        assert_eq!(baseline_tab.table[EAST], String::from(EMPTY_STR));
+        assert_eq!(baseline_tab.table[DOWN], String::from(EMPTY_STR));
         assert_eq!(baseline_tab.table[HORIZ_ACC], String::from(EMPTY_STR));
         assert_eq!(baseline_tab.table[VERT_ACC], String::from(EMPTY_STR));
         assert_eq!(baseline_tab.table[DIST], String::from(EMPTY_STR));
@@ -761,9 +761,9 @@ mod tests {
         assert_eq!(baseline_tab.table[UTC_TIME], String::from(EMPTY_STR));
         assert_eq!(baseline_tab.table[UTC_SRC], String::from(EMPTY_STR));
         assert_eq!(baseline_tab.table[SATS_USED], String::from(EMPTY_STR));
-        assert_eq!(baseline_tab.table[N], String::from(EMPTY_STR));
-        assert_eq!(baseline_tab.table[E], String::from(EMPTY_STR));
-        assert_eq!(baseline_tab.table[D], String::from(EMPTY_STR));
+        assert_eq!(baseline_tab.table[NORTH], String::from(EMPTY_STR));
+        assert_eq!(baseline_tab.table[EAST], String::from(EMPTY_STR));
+        assert_eq!(baseline_tab.table[DOWN], String::from(EMPTY_STR));
         assert_eq!(baseline_tab.table[HORIZ_ACC], String::from(EMPTY_STR));
         assert_eq!(baseline_tab.table[VERT_ACC], String::from(EMPTY_STR));
         assert_eq!(baseline_tab.table[DIST], String::from(EMPTY_STR));
@@ -778,9 +778,9 @@ mod tests {
         assert_ne!(baseline_tab.table[GPS_TIME], String::from(EMPTY_STR));
         assert_ne!(baseline_tab.table[UTC_TIME], String::from(EMPTY_STR));
         assert_ne!(baseline_tab.table[UTC_SRC], String::from(EMPTY_STR));
-        assert_ne!(baseline_tab.table[N], String::from(EMPTY_STR));
-        assert_ne!(baseline_tab.table[E], String::from(EMPTY_STR));
-        assert_ne!(baseline_tab.table[D], String::from(EMPTY_STR));
+        assert_ne!(baseline_tab.table[NORTH], String::from(EMPTY_STR));
+        assert_ne!(baseline_tab.table[EAST], String::from(EMPTY_STR));
+        assert_ne!(baseline_tab.table[DOWN], String::from(EMPTY_STR));
         assert_ne!(baseline_tab.table[HORIZ_ACC], String::from(EMPTY_STR));
         assert_ne!(baseline_tab.table[VERT_ACC], String::from(EMPTY_STR));
         assert_ne!(baseline_tab.table[DIST], String::from(EMPTY_STR));

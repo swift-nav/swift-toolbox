@@ -19,6 +19,7 @@
     <file>AdvancedTabComponents/OkStatus.qml</file>
     <file>BaselineTab.qml</file>
     <file>BaselineTabComponents/BaselinePlot.qml</file>
+    <file>BaselineTabComponents/BaselinePlotLoop.js</file>
     <file>BaselineTabComponents/BaselineTable.qml</file>
     <file>SolutionTab.qml</file>
     <file>SolutionTabComponents/SolutionPositionTab.qml</file>

@@ -71,9 +71,9 @@ pub(crate) const N_DGNSS: &str = "n_DGPS";
 pub(crate) const E_FLOAT: &str = "e_Float RTK";
 pub(crate) const E_FIXED: &str = "e_Fixed RTK";
 pub(crate) const E_DGNSS: &str = "e_DGPS";
-pub(crate) const N: &str = "N";
-pub(crate) const E: &str = "E";
-pub(crate) const D: &str = "D";
+pub(crate) const NORTH: &str = "N";
+pub(crate) const EAST: &str = "E";
+pub(crate) const DOWN: &str = "D";
 pub(crate) const DIST: &str = "Dist.";
 pub(crate) const FLAGS: &str = "Flags";
 pub(crate) const MODE: &str = "Mode";
@@ -82,8 +82,8 @@ pub(crate) const HEADING: &str = "Heading";
 pub const BASELINE_DATA_KEYS: &[&str] = &[N_FLOAT, N_FIXED, N_DGNSS, E_FLOAT, E_FIXED, E_DGNSS];
 
 pub const BASELINE_TABLE_KEYS: &[&str] = &[
-    GPS_WEEK, GPS_TOW, GPS_TIME, UTC_TIME, UTC_SRC, N, E, D, HORIZ_ACC, VERT_ACC, DIST, SATS_USED,
-    FLAGS, MODE, HEADING, CORR_AGE_S,
+    GPS_WEEK, GPS_TOW, GPS_TIME, UTC_TIME, UTC_SRC, NORTH, EAST, DOWN, HORIZ_ACC, VERT_ACC, DIST,
+    SATS_USED, FLAGS, MODE, HEADING, CORR_AGE_S,
 ];
 
 // Solution Table.

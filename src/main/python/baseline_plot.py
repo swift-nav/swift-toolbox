@@ -17,7 +17,7 @@ BASELINE_PLOT: Dict[str, Any] = {
 }
 
 
-class BaselinePlotPoints(QObject):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
+class BaselinePlotPoints(QObject):
 
     _points: List[List[QPointF]] = [[]]
     _cur_points: List[List[QPointF]] = [[]]

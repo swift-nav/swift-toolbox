@@ -16,7 +16,7 @@ impl LogLevel {
         match self {
             cc::LogLevel::DEBUG => LevelFilter::Debug,
             cc::LogLevel::INFO => LevelFilter::Info,
-            cc::LogLevel::WARNING => LevelFilter::Warn,
+            cc::LogLevel::NOTICE | cc::LogLevel::WARNING => LevelFilter::Warn,
             cc::LogLevel::ERROR => LevelFilter::Error,
         }
     }

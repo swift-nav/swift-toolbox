@@ -91,6 +91,8 @@ pub enum LogLevel {
     ERROR,
     #[strum(serialize = "WARNING")]
     WARNING,
+    #[strum(serialize = "NOTICE")]
+    NOTICE,
     #[strum(serialize = "INFO")]
     INFO,
     #[strum(serialize = "DEBUG")]

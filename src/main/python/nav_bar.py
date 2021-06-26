@@ -16,7 +16,7 @@ NAV_BAR: Dict[str, Any] = {
     Keys.PREVIOUS_HOSTS: [],
     Keys.PREVIOUS_PORTS: [],
     Keys.PREVIOUS_FILES: [],
-    Keys.LOG_LEVEL_LABELS: [LogLevel.ERROR, LogLevel.WARNING, LogLevel.INFO, LogLevel.DEBUG],
+    Keys.LOG_LEVEL_LABELS: [LogLevel.ERROR, LogLevel.WARNING, LogLevel.NOTICE, LogLevel.INFO, LogLevel.DEBUG],
     Keys.LOG_LEVEL: LogLevel.INFO,
 }
 

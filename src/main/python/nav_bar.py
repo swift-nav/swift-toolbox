@@ -16,7 +16,8 @@ NAV_BAR: Dict[str, Any] = {
     Keys.PREVIOUS_HOSTS: [],
     Keys.PREVIOUS_PORTS: [],
     Keys.PREVIOUS_FILES: [],
-    Keys.LOG_LEVEL_LABELS: [LogLevel.ERROR, LogLevel.WARNING, LogLevel.NOTICE, LogLevel.INFO, LogLevel.DEBUG],
+    Keys.LOG_LEVEL_LABELS: [LogLevel.ERROR, LogLevel.WARNING, LogLevel.INFO, LogLevel.DEBUG],
+    Keys.LOG_LEVEL: LogLevel.INFO,
 }
 
 
@@ -31,6 +32,7 @@ class NavBarData(QObject):  # pylint: disable=too-many-instance-attributes
     _previous_ports: List[str] = []
     _previous_files: List[str] = []
     _log_level_labels: List[str] = []
+    _log_level: str
 
     def get_log_level_labels(self) -> List[str]:
         return self._log_level_labels
@@ -39,6 +41,14 @@ class NavBarData(QObject):  # pylint: disable=too-many-instance-attributes
         self._log_level_labels = log_level_labels
 
     log_level_labels = Property(QTKeys.QVARIANTLIST, get_log_level_labels, set_log_level_labels)  # type: ignore
+
+    def get_log_level(self) -> str:
+        return self._log_level
+
+    def set_log_level(self, log_level: str) -> None:
+        self._log_level = log_level
+
+    log_level = Property(str, get_log_level, set_log_level)
 
     def get_available_ports(self) -> List[str]:
         return self._available_ports
@@ -127,4 +137,5 @@ class NavBarModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_previous_ports(NAV_BAR[Keys.PREVIOUS_PORTS])
         cp.set_previous_files(NAV_BAR[Keys.PREVIOUS_FILES])
         cp.set_log_level_labels(NAV_BAR[Keys.LOG_LEVEL_LABELS])
+        cp.set_log_level(NAV_BAR[Keys.LOG_LEVEL])
         return cp

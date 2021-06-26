@@ -305,7 +305,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
 name = "py2many"
-version = "0.1.0"
+version = "0.2.1"
 description = "Python to CLike language transpiler."
 category = "dev"
 optional = false
@@ -314,9 +314,9 @@ develop = false
 
 [package.source]
 type = "git"
-url = "https://github.com/john-michaelburke/py2many"
-reference = "console"
-resolved_reference = "8b7574ad46579405ebed8af386028518d9a692db"
+url = "https://github.com/adsharma/py2many.git"
+reference = "main"
+resolved_reference = "1f2a1f32c7917d51c080a7eafea03b01a169edc7"
 
 [[package]]
 name = "pycapnp"
@@ -504,7 +504,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.10"
-content-hash = "5aa8b9ba23d1a45e3914a28189cc664ac67f6500be4c469e873661886a0ff08f"
+content-hash = "def2e7676002d0fa998b096d2bb236fa2faabb2740d9b091f273f44ac7730785"
 
 [metadata.files]
 altgraph = [

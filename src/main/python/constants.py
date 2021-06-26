@@ -37,7 +37,6 @@ class CsvLogging(str, Enum):
 class LogLevel(str, Enum):
     ERROR = "ERROR"
     WARNING = "WARNING"
-    NOTICE = "NOTICE"
     INFO = "INFO"
     DEBUG = "DEBUG"
 
@@ -91,6 +90,7 @@ class Keys(str, Enum):
     ZEROVEL = "ZEROVEL"
     YMIN = "YMIN"
     YMAX = "YMAX"
+    LOG_LEVEL = "LOG_LEVEL"
 
 
 class ApplicationStates(str, Enum):

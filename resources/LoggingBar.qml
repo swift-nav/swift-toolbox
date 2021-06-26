@@ -36,7 +36,7 @@ Rectangle {
             ToolTip.text: !checked ? "On" : "Off"
             checkable: true
             visible: Globals.showCsvLog
-            onClicked: data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.currentText, logLevelButton.currentText], folderPathBar.editText)
+            onClicked: data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.currentText], folderPathBar.editText)
         }
 
         ComboBox {
@@ -47,7 +47,7 @@ Rectangle {
             model: sbp_logging_labels
             ToolTip.visible: hovered
             ToolTip.text: "SBP Log"
-            onActivated: data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.currentText, logLevelButton.currentText], folderPathBar.editText)
+            onActivated: data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.currentText], folderPathBar.editText)
 
             background: Rectangle {
                 border.width: 3
@@ -68,7 +68,7 @@ Rectangle {
                 var text = folderPathBar.currentText;
                 folderPathBar.currentIndex = -1;
                 folderPathBar.editText = text;
-                data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.currentText, logLevelButton.currentText], folderPathBar.editText);
+                data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.currentText], folderPathBar.editText);
             }
 
             Text {

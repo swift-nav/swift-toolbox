@@ -53,8 +53,8 @@ QtObject {
     }
 
     navBar: QtObject {
-        readonly property int connectionDropdownWidth: 70
-        readonly property int serialSelectionDropdownWidth: 90
+        readonly property int connectionDropdownWidth: 100
+        readonly property int serialSelectionDropdownWidth: 100
         readonly property int dropdownHeight: 40
         readonly property int buttonHeight: 40
         readonly property int buttonSvgHeight: 15
@@ -62,12 +62,12 @@ QtObject {
         readonly property int navBarMargin: 10
         readonly property int plotRefreshRateDropdownWidth: 50
         readonly property int serialDeviceBaudRateDropdownWidth: 90
-        readonly property int serialDeviceFlowControlDropdownWidth: 100
+        readonly property int serialDeviceFlowControlDropdownWidth: 130
         readonly property int serialDeviceRefreshWidth: 30
         readonly property int connectButtonWidth: 30
         readonly property int connectionPauseWidth: 30
         readonly property int folderButtonWidth: 30
-        readonly property int logLevelButtonWidth: 90
+        readonly property int logLevelButtonWidth: 110
         readonly property color placeholderTextColor: "#CDC9C9"
         readonly property int padding: 0
         readonly property string connectButtonPath: "images/fontawesome/power-off-solid.svg"

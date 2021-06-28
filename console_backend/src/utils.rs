@@ -113,6 +113,8 @@ pub fn refresh_navbar<P: MessageSender>(client_send: &mut P, shared_state: Share
         prevous_files.set(i as u32, filename);
     }
 
+    nav_bar_status.set_log_level(&shared_state.log_level().to_string());
+
     client_send.send_data(serialize_capnproto_builder(builder));
 }
 

@@ -25,7 +25,7 @@ pefile==2021.5.24; sys_platform == "win32" and python_version >= "3.5" and pytho
 pkgconfig==1.5.4; python_version >= "3.3" and python_version < "4.0"
 pluggy==0.13.1; python_version >= "3.5" and python_full_version < "3.0.0" or python_full_version >= "3.4.0" and python_version >= "3.5"
 psutil==5.8.0; (python_version >= "2.6" and python_full_version < "3.0.0") or (python_full_version >= "3.4.0")
-py2many @ git+https://github.com/john-michaelburke/py2many@console ; python_version >= "3.8"
+py2many @ git+https://github.com/adsharma/py2many.git@main ; python_version >= "3.8"
 py==1.10.0; python_version >= "3.5" and python_full_version < "3.0.0" or python_full_version >= "3.4.0" and python_version >= "3.5"
 pycapnp==1.1.0
 pyinstaller-hooks-contrib==2021.1; python_version >= "3.5"

@@ -1,8 +1,8 @@
 use capnp::message::Builder;
 
 use sbp::messages::{
-    navigation::{MsgAgeCorrections, MsgGPSTime, MsgUtcTime},
     orientation::MsgOrientEuler,
+    navigation::{MsgAgeCorrections, MsgGPSTime, MsgPosLLHCov, MsgUtcTime},
     system::{MsgInsStatus, MsgInsUpdates},
 };
 use std::{collections::HashMap, time::Instant};
@@ -226,6 +226,28 @@ impl<S: MessageSender> SolutionTab<S> {
             self.table.insert(ROLL_ACC, String::from(EMPTY_STR));
             self.table.insert(PITCH_ACC, String::from(EMPTY_STR));
             self.table.insert(YAW_ACC, String::from(EMPTY_STR));
+      }
+    }
+
+    /// Handler for POS LLH COV covariance messages.
+    ///
+    /// # Parameters
+    /// - `msg`: MsgPosLLHCov to extract data from.
+    pub fn handle_pos_llh_cov(&mut self, msg: MsgPosLLHCov) {
+        if msg.flags != 0 {
+            self.table.insert(COV_N_N, format!("{}", msg.cov_n_n));
+            self.table.insert(COV_N_E, format!("{}", msg.cov_n_e));
+            self.table.insert(COV_N_D, format!("{}", msg.cov_n_d));
+            self.table.insert(COV_E_E, format!("{}", msg.cov_e_e));
+            self.table.insert(COV_E_D, format!("{}", msg.cov_e_d));
+            self.table.insert(COV_D_D, format!("{}", msg.cov_d_d));
+        } else {
+            self.table.insert(COV_N_N, String::from(EMPTY_STR));
+            self.table.insert(COV_N_E, String::from(EMPTY_STR));
+            self.table.insert(COV_N_D, String::from(EMPTY_STR));
+            self.table.insert(COV_E_E, String::from(EMPTY_STR));
+            self.table.insert(COV_E_D, String::from(EMPTY_STR));
+            self.table.insert(COV_D_D, String::from(EMPTY_STR));
         }
     }
 

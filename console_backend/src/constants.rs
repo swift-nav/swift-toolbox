@@ -149,6 +149,13 @@ pub(crate) const YAW: &str = "Yaw";
 pub(crate) const ROLL_ACC: &str = "Roll Acc";
 pub(crate) const PITCH_ACC: &str = "Pitch Acc";
 pub(crate) const YAW_ACC: &str = "Yaw Acc";
+pub(crate) const COV_N_N: &str = "LLH Cov N-N";
+pub(crate) const COV_N_E: &str = "LLH Cov N-E";
+pub(crate) const COV_N_D: &str = "LLH Cov N-D";
+pub(crate) const COV_E_E: &str = "LLH Cov E-E";
+pub(crate) const COV_E_D: &str = "LLH Cov E-D";
+pub(crate) const COV_D_D: &str = "LLH Cov D-D";
+
 
 pub(crate) const SOLUTION_TABLE_KEYS: &[&str] = &[
     GPS_WEEK,
@@ -183,6 +190,12 @@ pub(crate) const SOLUTION_TABLE_KEYS: &[&str] = &[
     ROLL_ACC,
     PITCH_ACC,
     YAW_ACC,
+    COV_N_N,
+    COV_N_E,
+    COV_N_D,
+    COV_E_E,
+    COV_E_D,
+    COV_D_D,
 ];
 
 // Solution Velocity Tab constants.

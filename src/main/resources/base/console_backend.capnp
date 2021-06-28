@@ -75,6 +75,7 @@ struct NavBarStatus {
     availableRefreshRates @4 : List(UInt8);
     previousPorts @5: List(UInt16);
     previousFiles @6: List(Text);
+    logLevel @7: Text;
 }
 
 struct StatusBarStatus {

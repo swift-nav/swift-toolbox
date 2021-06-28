@@ -16,11 +16,10 @@ use std::{
 };
 
 use crate::cli_options::*;
-use crate::common_constants::LogLevel;
 use crate::console_backend_capnp as m;
 use crate::constants::LOG_WRITER_BUFFER_MESSAGE_COUNT;
 use crate::errors::*;
-use crate::log_panel::{splitable_log_formatter, LogPanelWriter};
+use crate::log_panel::{splitable_log_formatter, LogLevel, LogPanelWriter};
 use crate::output::{CsvLogging, SbpLogging};
 use crate::types::{ClientSender, FlowControl, ServerState, SharedState};
 use crate::utils::{refresh_loggingbar, refresh_navbar};
@@ -112,6 +111,12 @@ fn handle_cli(
     if let Some(folder) = opt.dirname {
         shared_state.set_logging_directory(PathBuf::from(folder));
     }
+    let log_level = if let Some(log_level_) = opt.log_level {
+        (*log_level_).clone()
+    } else {
+        LogLevel::INFO
+    };
+    shared_state.set_log_level(log_level);
     let mut shared_data = shared_state.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
     (*shared_data).logging_bar.csv_logging = CsvLogging::from(opt.csv_log);
     if let Some(sbp_log) = opt.sbp_log {
@@ -161,8 +166,7 @@ impl Server {
         };
         let shared_state = SharedState::new();
         let server_state = ServerState::new();
-        refresh_navbar(&mut client_send.clone(), shared_state.clone());
-        refresh_loggingbar(&mut client_send.clone(), shared_state.clone());
+
         let logger = Logger::builder()
             .buf_size(LOG_WRITER_BUFFER_MESSAGE_COUNT)
             .formatter(splitable_log_formatter)
@@ -171,7 +175,6 @@ impl Server {
             .unwrap();
 
         log::set_boxed_logger(Box::new(logger)).expect("Failed to set logger");
-        log::set_max_level(log::LevelFilter::Info);
 
         // Handle CLI Opts.
         handle_cli(
@@ -180,6 +183,8 @@ impl Server {
             client_send.clone(),
             shared_state.clone(),
         );
+        refresh_navbar(&mut client_send.clone(), shared_state.clone());
+        refresh_loggingbar(&mut client_send.clone(), shared_state.clone());
         thread::spawn(move || loop {
             let buf = server_recv.recv();
             if let Ok(buf) = buf {
@@ -316,14 +321,13 @@ impl Server {
                     }
                     m::message::LogLevelFront(Ok(cv_in)) => {
                         let shared_state_clone = shared_state.clone();
-                        let mut shared_data = shared_state_clone
-                            .lock()
-                            .expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
                         let log_level = cv_in
                             .get_log_level()
                             .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
-                        (*shared_data).log_panel.log_level =
+                        let log_level =
                             LogLevel::from_str(log_level).expect(CONVERT_TO_STR_FAILURE);
+                        shared_state_clone.set_log_level(log_level);
+                        refresh_navbar(&mut client_send.clone(), shared_state.clone());
                     }
                     m::message::SolutionVelocityStatusFront(Ok(cv_in)) => {
                         let unit = cv_in

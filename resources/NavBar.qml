@@ -57,11 +57,13 @@ Rectangle {
                     serialDeviceRefresh.visible = true;
                     serialDeviceBaudRate.visible = true;
                     serialDeviceFlowControl.visible = true;
+                    serialDeviceFill.visible = true;
                 } else {
                     serialDevice.visible = false;
                     serialDeviceRefresh.visible = false;
                     serialDeviceBaudRate.visible = false;
                     serialDeviceFlowControl.visible = false;
+                    serialDeviceFill.visible = false;
                 }
             }
 
@@ -162,6 +164,13 @@ Rectangle {
 
             }
 
+        }
+
+        Item {
+            id: serialDeviceFill
+
+            visible: false
+            Layout.fillWidth: true
         }
 
         Row {
@@ -354,6 +363,7 @@ Rectangle {
                 previous_ports = navBarData.previous_ports;
                 previous_files = navBarData.previous_files;
                 connectButton.checked = navBarData.connected;
+                logLevelButton.currentIndex = log_level_labels.indexOf(navBarData.log_level);
             }
         }
 

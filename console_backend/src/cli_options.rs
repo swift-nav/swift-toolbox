@@ -7,11 +7,33 @@ use std::{
 use strum::VariantNames;
 
 use crate::constants::{AVAILABLE_BAUDRATES, AVAILABLE_REFRESH_RATES};
+use crate::log_panel::LogLevel;
 use crate::types::FlowControl;
 use crate::{
     common_constants::{SbpLogging, Tabs},
     types::Connection,
 };
+
+#[derive(Debug)]
+pub struct CliLogLevel(LogLevel);
+
+impl Deref for CliLogLevel {
+    type Target = LogLevel;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl FromStr for CliLogLevel {
+    type Err = String;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        Ok(CliLogLevel(LogLevel::from_str(s).map_err(|_| {
+            format!("Must choose from available tabs {:?}", LogLevel::VARIANTS)
+        })?))
+    }
+}
 
 #[derive(Debug)]
 pub struct CliTabs(Tabs);
@@ -72,6 +94,10 @@ pub struct CliOptions {
     /// Enable SBP-JSON or SBP logging.
     #[clap(long = "sbp-log")]
     pub sbp_log: Option<CliSbpLogging>,
+
+    /// Set Console Log Level Filter. Default: INFO.
+    #[clap(long = "log-level")]
+    pub log_level: Option<CliLogLevel>,
 
     /// Set log directory.
     #[clap(long = "log-dirname")]

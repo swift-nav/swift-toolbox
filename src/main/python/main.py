@@ -287,6 +287,7 @@ def receive_messages(app_, backend, messages):
             NAV_BAR[Keys.PREVIOUS_HOSTS][:] = m.navBarStatus.previousHosts
             NAV_BAR[Keys.PREVIOUS_PORTS][:] = m.navBarStatus.previousPorts
             NAV_BAR[Keys.PREVIOUS_FILES][:] = m.navBarStatus.previousFiles
+            NAV_BAR[Keys.LOG_LEVEL] = m.navBarStatus.logLevel
         elif m.which == Message.Union.LoggingBarStatus:
             LOGGING_BAR[Keys.PREVIOUS_FOLDERS][:] = m.loggingBarStatus.previousFolders
             LOGGING_BAR[Keys.CSV_LOGGING] = m.loggingBarStatus.csvLogging
@@ -443,7 +444,6 @@ class DataModel(QObject):
         m.loggingBarFront = m.init(Message.Union.LoggingBarFront)
         m.loggingBarFront.csvLogging = buttons[0]
         m.loggingBarFront.sbpLogging = buttons[1]
-        m.loggingBarFront.logLevel = buttons[2]
         m.loggingBarFront.directory = directory
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)

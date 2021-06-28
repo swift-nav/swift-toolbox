@@ -1,6 +1,7 @@
-use crate::common_constants::{self as cc, LogLevel, SbpLogging};
+use crate::common_constants::{self as cc, SbpLogging};
 use crate::constants::*;
 use crate::errors::*;
+use crate::log_panel::LogLevel;
 use crate::output::CsvLogging;
 use crate::piksi_tools_constants::*;
 use crate::process_messages::process_messages;
@@ -354,6 +355,15 @@ impl SharedState {
             LOG_DIRECTORY.path()
         }
     }
+    pub fn set_log_level(&self, log_level: LogLevel) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).log_panel.log_level = log_level.clone();
+        log::set_max_level(log_level.level_filter());
+    }
+    pub fn log_level(&self) -> LogLevel {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).log_panel.log_level.clone()
+    }
     pub fn sbp_logging(&self) -> SbpLogging {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).logging_bar.sbp_logging.clone()
@@ -509,7 +519,7 @@ pub struct LogPanelState {
 impl LogPanelState {
     fn new() -> LogPanelState {
         LogPanelState {
-            log_level: LogLevel::DEBUG,
+            log_level: LogLevel::INFO,
         }
     }
 }

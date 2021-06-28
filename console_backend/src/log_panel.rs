@@ -2,12 +2,25 @@ use sbp::messages::logging::MsgLog;
 
 use capnp::message::Builder;
 
+use crate::common_constants as cc;
 use crate::types::*;
 use crate::utils::serialize_capnproto_builder;
 
 use async_logger::Writer;
 use chrono::Local;
-use log::{debug, error, info, warn, Record};
+use log::{debug, error, info, warn, LevelFilter, Record};
+
+pub type LogLevel = cc::LogLevel;
+impl LogLevel {
+    pub fn level_filter(&self) -> LevelFilter {
+        match self {
+            cc::LogLevel::DEBUG => LevelFilter::Debug,
+            cc::LogLevel::INFO => LevelFilter::Info,
+            cc::LogLevel::NOTICE | cc::LogLevel::WARNING => LevelFilter::Warn,
+            cc::LogLevel::ERROR => LevelFilter::Error,
+        }
+    }
+}
 
 // Custom formatting of `log::Record` to account for SbpLog values
 pub fn splitable_log_formatter(record: &Record) -> String {

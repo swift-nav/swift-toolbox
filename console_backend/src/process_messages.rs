@@ -117,6 +117,9 @@ pub fn process_messages<S>(
                 main.observation_tab
                     .handle_obs(ObservationMsg::MsgObsDepC(msg));
             }
+            SBP::MsgOrientEuler(msg) => {
+                main.solution_tab.handle_orientation_euler(msg);
+            }
             SBP::MsgOsr(msg) => {
                 main.observation_tab.handle_obs(ObservationMsg::MsgOsr(msg));
             }

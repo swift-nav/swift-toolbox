@@ -107,7 +107,7 @@ jobs:
         run: |
           cargo make backend-benches
         if: matrix.os == 'windows-2019'
-      
+
       - name: Run Backend Benchmarks
         run: |
           cargo make backend-benches
@@ -181,7 +181,7 @@ jobs:
       - name: Run Pip Install
         run: |
           cargo make pip-install-dev
-      
+
       - name: Run Format Check
         run: |
           cargo make format-check
@@ -312,7 +312,7 @@ jobs:
         run: |
           cargo make prod-installer
         if: matrix.os == 'windows-2019'
-  
+
       - name: Build ${{ runner.os }} Binaries.
         shell: bash
         run: |
@@ -375,7 +375,7 @@ jobs:
         run: |
           cd output
           7z x $(cat bench.filename) -aoa -o${{ matrix.os }}
-          
+
       - name: Run CPU Frontend Benchmark.
         shell: bash
         run: |
@@ -398,7 +398,7 @@ jobs:
           elif [ "$RUNNER_OS" == "Linux" ]; then
               python bench_runner.py --frontend_mem --executable=./swift_navigation_console
           fi
-          
+
 
   release:
     name: Create Release
@@ -446,4 +446,4 @@ jobs:
             macos/${{ env.MACOS_ARCHIVE }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+

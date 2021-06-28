@@ -2,6 +2,7 @@ use capnp::message::Builder;
 
 use sbp::messages::{
     navigation::{MsgAgeCorrections, MsgPosLLHCov, MsgUtcTime},
+    orientation::MsgOrientEuler,
     system::{MsgInsStatus, MsgInsUpdates},
 };
 use std::{collections::HashMap, time::Instant};
@@ -193,6 +194,38 @@ impl<S: MessageSender> SolutionTab<S> {
         if gps_time_fields.flags != 0 {
             self.week = Some(gps_time_fields.wn);
             self.nsec = Some(gps_time_fields.ns_residual);
+        }
+    }
+
+    /// Handler for Orientation / Attitude messages.
+    ///
+    /// # Parameters
+    /// - `msg`: MsgOrientEuler to extract data from.
+    pub fn handle_orientation_euler(&mut self, msg: MsgOrientEuler) {
+        if msg.flags != 0 {
+            self.table.insert(
+                ROLL,
+                format!("{: >6.2} deg", ((msg.roll as f64) * UDEG2DEG)),
+            );
+            self.table.insert(
+                PITCH,
+                format!("{: >6.2} deg", ((msg.pitch as f64) * UDEG2DEG)),
+            );
+            self.table
+                .insert(YAW, format!("{: >6.2} deg", ((msg.yaw as f64) * UDEG2DEG)));
+            self.table
+                .insert(ROLL_ACC, format!("{: >6.2} deg", msg.roll_accuracy));
+            self.table
+                .insert(PITCH_ACC, format!("{: >6.2} deg", msg.pitch_accuracy));
+            self.table
+                .insert(YAW_ACC, format!("{: >6.2} deg", msg.yaw_accuracy));
+        } else {
+            self.table.insert(ROLL, String::from(EMPTY_STR));
+            self.table.insert(PITCH, String::from(EMPTY_STR));
+            self.table.insert(YAW, String::from(EMPTY_STR));
+            self.table.insert(ROLL_ACC, String::from(EMPTY_STR));
+            self.table.insert(PITCH_ACC, String::from(EMPTY_STR));
+            self.table.insert(YAW_ACC, String::from(EMPTY_STR));
         }
     }
 

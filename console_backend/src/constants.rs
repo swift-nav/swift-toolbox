@@ -169,6 +169,12 @@ pub(crate) const HDOP: &str = "HDOP";
 pub(crate) const VDOP: &str = "VDOP";
 pub(crate) const DOPS_FLAGS: &str = "DOPS Flags";
 pub(crate) const INS_STATUS: &str = "INS Status";
+pub(crate) const ROLL: &str = "Roll";
+pub(crate) const PITCH: &str = "Pitch";
+pub(crate) const YAW: &str = "Yaw";
+pub(crate) const ROLL_ACC: &str = "Roll Acc";
+pub(crate) const PITCH_ACC: &str = "Pitch Acc";
+pub(crate) const YAW_ACC: &str = "Yaw Acc";
 pub(crate) const COV_N_N: &str = "LLH Cov N-N";
 pub(crate) const COV_N_E: &str = "LLH Cov N-E";
 pub(crate) const COV_N_D: &str = "LLH Cov N-D";
@@ -203,6 +209,12 @@ pub(crate) const SOLUTION_TABLE_KEYS: &[&str] = &[
     VDOP,
     DOPS_FLAGS,
     INS_STATUS,
+    ROLL,
+    PITCH,
+    YAW,
+    ROLL_ACC,
+    PITCH_ACC,
+    YAW_ACC,
     COV_N_N,
     COV_N_E,
     COV_N_D,
@@ -219,6 +231,7 @@ pub(crate) const MPH: &str = "mph";
 pub(crate) const KPH: &str = "kph";
 pub(crate) const MPS2MPH: f64 = 2.236934;
 pub(crate) const MPS2KPH: f64 = 3.600000;
+pub(crate) const UDEG2DEG: f64 = 0.0000001;
 
 // Status Bar constants.
 pub(crate) const UPDATE_TOLERANCE_SECONDS: f64 = 1.2;

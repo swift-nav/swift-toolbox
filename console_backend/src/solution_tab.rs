@@ -1,8 +1,8 @@
 use capnp::message::Builder;
 
 use sbp::messages::{
-    orientation::MsgOrientEuler,
     navigation::{MsgAgeCorrections, MsgGPSTime, MsgPosLLHCov, MsgUtcTime},
+    orientation::MsgOrientEuler,
     system::{MsgInsStatus, MsgInsUpdates},
 };
 use std::{collections::HashMap, time::Instant};
@@ -226,7 +226,7 @@ impl<S: MessageSender> SolutionTab<S> {
             self.table.insert(ROLL_ACC, String::from(EMPTY_STR));
             self.table.insert(PITCH_ACC, String::from(EMPTY_STR));
             self.table.insert(YAW_ACC, String::from(EMPTY_STR));
-      }
+        }
     }
 
     /// Handler for POS LLH COV covariance messages.

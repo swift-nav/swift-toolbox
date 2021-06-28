@@ -156,7 +156,6 @@ pub(crate) const COV_E_E: &str = "LLH Cov E-E";
 pub(crate) const COV_E_D: &str = "LLH Cov E-D";
 pub(crate) const COV_D_D: &str = "LLH Cov D-D";
 
-
 pub(crate) const SOLUTION_TABLE_KEYS: &[&str] = &[
     GPS_WEEK,
     GPS_TOW,

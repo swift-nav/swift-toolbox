@@ -536,8 +536,7 @@ impl<S: MessageSender> SolutionTab<S> {
     }
 
     pub fn clear_sln(&mut self) {
-        for (_, val) in &mut self.slns.iter_mut() {
-            let deque = val;
+        for (_, deque) in &mut self.slns.iter_mut() {
             deque.clear();
         }
     }
@@ -646,7 +645,7 @@ impl<S: MessageSender> SolutionTab<S> {
     /// - `exclude_mode`: The mode as a string not to update. Otherwise, None.
     fn _append_empty_sln_data(&mut self, exclude_mode: Option<String>) {
         for each_mode in self.mode_strings.iter() {
-            if exclude_mode.is_some() {
+            if exclude_mode == Some(each_mode.clone()) {
                 continue;
             }
             let lat_str = format!("lat_{}", each_mode);

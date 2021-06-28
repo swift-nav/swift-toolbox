@@ -146,6 +146,9 @@ pub(crate) const INS_STATUS: &str = "INS Status";
 pub(crate) const ROLL: &str = "Roll";
 pub(crate) const PITCH: &str = "Pitch";
 pub(crate) const YAW: &str = "Yaw";
+pub(crate) const ROLL_ACC: &str = "Roll Acc";
+pub(crate) const PITCH_ACC: &str = "Pitch Acc";
+pub(crate) const YAW_ACC: &str = "Yaw Acc";
 
 pub(crate) const SOLUTION_TABLE_KEYS: &[&str] = &[
     GPS_WEEK,
@@ -177,6 +180,9 @@ pub(crate) const SOLUTION_TABLE_KEYS: &[&str] = &[
     ROLL,
     PITCH,
     YAW,
+    ROLL_ACC,
+    PITCH_ACC,
+    YAW_ACC,
 ];
 
 // Solution Velocity Tab constants.
@@ -187,6 +193,7 @@ pub(crate) const MPH: &str = "mph";
 pub(crate) const KPH: &str = "kph";
 pub(crate) const MPS2MPH: f64 = 2.236934;
 pub(crate) const MPS2KPH: f64 = 3.600000;
+pub(crate) const UDEG2DEG: f64 = 0.0000001;
 
 // Status Bar constants.
 pub(crate) const UPDATE_TOLERANCE_SECONDS: f64 = 1.2;

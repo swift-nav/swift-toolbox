@@ -255,6 +255,18 @@ script = '''
 ${QT_APP}/Qt/bin/qmlformat -i $QML_FILES
 '''
 
+[tasks.qml-lint]
+env = { QT_APP = { script = ["conda run -n $CONDA_ENV python utils/echo-qt-dir.py"] } }
+script_runner = "@shell"
+script = '''
+set +e
+for filename in $QML_FILES; do
+  echo ==$filename==
+  ${QT_APP}/Qt/bin/qmllint -I ${QT_APP}/../PySide2/Qt/qml/ -I resources/ --check-unqualified $filename
+done
+exit 1
+'''
+
 [tasks.qml-format-check]
 dependencies = ["qml-format"]
 script_runner = "@shell"
@@ -344,7 +356,7 @@ dependencies = [
 ]
 
 [tasks.lint]
-dependencies = ["python-lint", "rust-lint", "format-check"]
+dependencies = ["qml-lint", "python-lint", "rust-lint", "format-check"]
 
 [tasks.types]
 dependencies = ["python-type-check", "rust-type-check"]

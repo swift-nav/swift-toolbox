@@ -18,6 +18,8 @@ from PySide2.QtCharts import QtCharts  # pylint: disable=unused-import
 
 from PySide2 import QtQml, QtCore
 
+from PySide2.QtGui import QFontDatabase
+
 from PySide2.QtQml import QQmlComponent, qmlRegisterType
 
 from constants import ApplicationStates, Keys, Tabs
@@ -472,6 +474,8 @@ if __name__ == "__main__":
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
     app = QApplication()
+    QFontDatabase.addApplicationFont(":/fonts/Roboto-Regular.ttf")
+    QFontDatabase.addApplicationFont(":/fonts/Roboto-Bold.ttf")
 
     qmlRegisterType(LogPanelData, "SwiftConsole", 1, 0, "LogPanelData")  # type: ignore
     qmlRegisterType(NavBarData, "SwiftConsole", 1, 0, "NavBarData")  # type: ignore

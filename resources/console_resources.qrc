@@ -1,6 +1,8 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
     <file>qtquickcontrols2.conf</file>
+    <file>fonts/Roboto-Regular.ttf</file>
+    <file>fonts/Roboto-Bold.ttf</file>
     <file>view.qml</file>
     <file>NavBar.qml</file>
     <file>LogPanel.qml</file>

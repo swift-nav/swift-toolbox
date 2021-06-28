@@ -143,6 +143,12 @@ pub(crate) const HDOP: &str = "HDOP";
 pub(crate) const VDOP: &str = "VDOP";
 pub(crate) const DOPS_FLAGS: &str = "DOPS Flags";
 pub(crate) const INS_STATUS: &str = "INS Status";
+pub(crate) const COV_N_N: &str = "LLH Cov N-N";
+pub(crate) const COV_N_E: &str = "LLH Cov N-E";
+pub(crate) const COV_N_D: &str = "LLH Cov N-D";
+pub(crate) const COV_E_E: &str = "LLH Cov E-E";
+pub(crate) const COV_E_D: &str = "LLH Cov E-D";
+pub(crate) const COV_D_D: &str = "LLH Cov D-D";
 
 pub(crate) const SOLUTION_TABLE_KEYS: &[&str] = &[
     GPS_WEEK,
@@ -171,6 +177,12 @@ pub(crate) const SOLUTION_TABLE_KEYS: &[&str] = &[
     VDOP,
     DOPS_FLAGS,
     INS_STATUS,
+    COV_N_N,
+    COV_N_E,
+    COV_N_D,
+    COV_E_E,
+    COV_E_D,
+    COV_D_D,
 ];
 
 // Solution Velocity Tab constants.

@@ -89,6 +89,19 @@ struct StatusBarStatus {
     solidConnection @7: Bool;
 }
 
+struct BaselinePlotStatus {
+    data @0 :List(List(Point));
+    nMin @1 :Float64;
+    nMax @2 :Float64;
+    eMin @3 :Float64;
+    eMax @4 :Float64;
+    curData @5 :List(List(Point));
+}
+
+struct BaselineTableStatus {
+    data @0 :List(KeyValPair);
+}
+
 struct ObservationTableRow {
     prn @0 :Text;
     pseudoRange @1 :Float64;
@@ -185,6 +198,12 @@ struct SolutionPositionStatusButtonFront {
     solutionPositionPause @3 :Bool;
 }
 
+struct BaselinePlotStatusButtonFront {
+    clear @0 :Bool;
+    pause @1 :Bool;
+    resetFilters @2 :Bool;
+}
+
 struct Status {
     text @0 :Text;
 }
@@ -217,5 +236,8 @@ struct Message {
         advancedInsStatus @23 :AdvancedInsStatus;
         fusionStatusFlagsStatus @24 :FusionStatusFlagsStatus;
         advancedMagnetometerStatus @25 :AdvancedMagnetometerStatus;
+        baselinePlotStatus @26 :BaselinePlotStatus;
+        baselineTableStatus @27 :BaselineTableStatus;
+        baselinePlotStatusButtonFront @28 :BaselinePlotStatusButtonFront;
     }
 }

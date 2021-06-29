@@ -1,7 +1,7 @@
 use capnp::message::Builder;
 
 use sbp::messages::{
-    navigation::{MsgAgeCorrections, MsgGPSTime, MsgPosLLHCov, MsgUtcTime},
+    navigation::{MsgAgeCorrections, MsgPosLLHCov, MsgUtcTime},
     orientation::MsgOrientEuler,
     system::{MsgInsStatus, MsgInsUpdates},
 };
@@ -9,11 +9,10 @@ use std::{collections::HashMap, time::Instant};
 
 use crate::constants::*;
 use crate::date_conv::*;
-use crate::output::CsvSerializer;
+use crate::output::{CsvSerializer, PosLLHLog, VelLog};
 use crate::piksi_tools_constants::EMPTY_STR;
 use crate::types::{
-    Deque, Dops, GnssModes, MessageSender, PosLLH, PosLLHLog, SharedState, UtcDateTime, VelLog,
-    VelNED,
+    Deque, Dops, GnssModes, GpsTime, MessageSender, PosLLH, SharedState, UtcDateTime, VelNED,
 };
 use crate::utils::*;
 
@@ -189,11 +188,12 @@ impl<S: MessageSender> SolutionTab<S> {
     /// Handler for GPS time messages.
     ///
     /// # Parameters
-    /// - `msg`: MsgGPSTime to extract data from.
-    pub fn handle_gps_time(&mut self, msg: MsgGPSTime) {
-        if msg.flags != 0 {
-            self.week = Some(msg.wn);
-            self.nsec = Some(msg.ns_residual);
+    /// - `msg`: GpsTime to extract data from.
+    pub fn handle_gps_time(&mut self, msg: GpsTime) {
+        let gps_time_fields = msg.fields();
+        if gps_time_fields.flags != 0 {
+            self.week = Some(gps_time_fields.wn);
+            self.nsec = Some(gps_time_fields.ns_residual);
         }
     }
 
@@ -536,8 +536,7 @@ impl<S: MessageSender> SolutionTab<S> {
     }
 
     pub fn clear_sln(&mut self) {
-        for (_, val) in &mut self.slns.iter_mut() {
-            let deque = val;
+        for (_, deque) in &mut self.slns.iter_mut() {
             deque.clear();
         }
     }
@@ -646,7 +645,7 @@ impl<S: MessageSender> SolutionTab<S> {
     /// - `exclude_mode`: The mode as a string not to update. Otherwise, None.
     fn _append_empty_sln_data(&mut self, exclude_mode: Option<String>) {
         for each_mode in self.mode_strings.iter() {
-            if exclude_mode.is_some() {
+            if exclude_mode == Some(each_mode.clone()) {
                 continue;
             }
             let lat_str = format!("lat_{}", each_mode);
@@ -789,7 +788,8 @@ mod tests {
     use crate::types::TestSender;
     use chrono::{TimeZone, Utc};
     use sbp::messages::navigation::{
-        MsgAgeCorrections, MsgDops, MsgDopsDepA, MsgPosLLH, MsgPosLLHDepA, MsgVelNED, MsgVelNEDDepA,
+        MsgAgeCorrections, MsgDops, MsgDopsDepA, MsgGPSTime, MsgPosLLH, MsgPosLLHDepA, MsgVelNED,
+        MsgVelNEDDepA,
     };
     use std::{thread::sleep, time::Duration};
 
@@ -872,7 +872,7 @@ mod tests {
         let old_nsec = 678_i32;
         solution_table.week = Some(old_wn);
         solution_table.nsec = Some(old_nsec);
-        solution_table.handle_gps_time(msg);
+        solution_table.handle_gps_time(GpsTime::MsgGpsTime(msg));
         assert_eq!(solution_table.week, Some(old_wn));
         assert_eq!(solution_table.nsec, Some(old_nsec));
 
@@ -884,7 +884,7 @@ mod tests {
             ns_residual,
             flags: good_flags,
         };
-        solution_table.handle_gps_time(msg);
+        solution_table.handle_gps_time(GpsTime::MsgGpsTime(msg));
         assert_eq!(solution_table.week, Some(wn));
         assert_eq!(solution_table.nsec, Some(ns_residual));
     }

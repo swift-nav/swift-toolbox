@@ -18,6 +18,7 @@ pub(crate) const LOG_WRITER_BUFFER_MESSAGE_COUNT: usize = 50;
 // Main Tab constants.
 pub(crate) const VEL_TIME_STR_FILEPATH: &str = "velocity_log_%Y%m%d-%H%M%S.csv";
 pub(crate) const POS_LLH_TIME_STR_FILEPATH: &str = "position_log_%Y%m%d-%H%M%S.csv";
+pub(crate) const BASELINE_TIME_STR_FILEPATH: &str = "baseline_log_%Y%m%d-%H%M%S.csv";
 pub(crate) const SBP_FILEPATH: &str = "swift-gnss-%Y%m%d-%H%M%S.sbp";
 pub(crate) const SBP_JSON_FILEPATH: &str = "swift-gnss-%Y%m%d-%H%M%S.sbp.json";
 pub(crate) const DEFAULT_LOG_DIRECTORY: &str = "SwiftNav";
@@ -60,6 +61,31 @@ pub(crate) const SHOW_LEGEND: &str = "Show Legend";
 // Advanced Magnetometer Tab.
 pub(crate) const MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER: f64 = 0.25;
 
+// Baseline Tab.
+pub(crate) const BASELINE_DIRECTION_MAX: f64 = f64::MAX;
+pub(crate) const BASELINE_DIRECTION_MIN: f64 = f64::MIN;
+
+pub(crate) const N_FLOAT: &str = "n_Float RTK";
+pub(crate) const N_FIXED: &str = "n_Fixed RTK";
+pub(crate) const N_DGNSS: &str = "n_DGPS";
+pub(crate) const E_FLOAT: &str = "e_Float RTK";
+pub(crate) const E_FIXED: &str = "e_Fixed RTK";
+pub(crate) const E_DGNSS: &str = "e_DGPS";
+pub(crate) const NORTH: &str = "N";
+pub(crate) const EAST: &str = "E";
+pub(crate) const DOWN: &str = "D";
+pub(crate) const DIST: &str = "Dist.";
+pub(crate) const FLAGS: &str = "Flags";
+pub(crate) const MODE: &str = "Mode";
+pub(crate) const HEADING: &str = "Heading";
+
+pub const BASELINE_DATA_KEYS: &[&str] = &[N_FLOAT, N_FIXED, N_DGNSS, E_FLOAT, E_FIXED, E_DGNSS];
+
+pub const BASELINE_TABLE_KEYS: &[&str] = &[
+    GPS_WEEK, GPS_TOW, GPS_TIME, UTC_TIME, UTC_SRC, NORTH, EAST, DOWN, HORIZ_ACC, VERT_ACC, DIST,
+    SATS_USED, FLAGS, MODE, HEADING, CORR_AGE_S,
+];
+
 // Solution Table.
 pub(crate) const PLOT_HISTORY_MAX: usize = 1000;
 pub(crate) const DILUTION_OF_PRECISION_UNITS: f64 = 0.01;
@@ -73,8 +99,8 @@ pub(crate) const METERS: &str = "meters";
 pub(crate) const NO_FIX_LABEL: &str = "No Fix";
 pub(crate) const SPP_LABEL: &str = "SPP";
 pub(crate) const DGNSS_LABEL: &str = "DGPS";
-pub(crate) const FLOAT_LABEL: &str = "RTK float";
-pub(crate) const FIXED_LABEL: &str = "RTK fixed";
+pub(crate) const FLOAT_LABEL: &str = "RTK Float";
+pub(crate) const FIXED_LABEL: &str = "RTK Fixed";
 pub(crate) const DR_LABEL: &str = "DR";
 pub(crate) const SBAS_LABEL: &str = "SBAS";
 

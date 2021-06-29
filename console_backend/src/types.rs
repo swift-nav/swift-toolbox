@@ -1,7 +1,6 @@
 use crate::common_constants::{self as cc, SbpLogging};
 use crate::constants::*;
 use crate::errors::*;
-use crate::formatters::*;
 use crate::log_panel::LogLevel;
 use crate::output::CsvLogging;
 use crate::piksi_tools_constants::*;
@@ -19,8 +18,8 @@ use sbp::codec::sbp::SbpEncoder;
 use sbp::messages::SBPMessage;
 use sbp::messages::{
     navigation::{
-        MsgBaselineNED, MsgBaselineNEDDepA, MsgDops, MsgDopsDepA, MsgPosLLH, MsgPosLLHDepA,
-        MsgVelNED, MsgVelNEDDepA,
+        MsgBaselineNED, MsgBaselineNEDDepA, MsgDops, MsgDopsDepA, MsgGPSTime, MsgGPSTimeDepA,
+        MsgPosLLH, MsgPosLLHDepA, MsgVelNED, MsgVelNEDDepA,
     },
     observation::{
         MsgObs, MsgObsDepB, MsgObsDepC, MsgOsr, PackedObsContent, PackedObsContentDepB,
@@ -444,14 +443,15 @@ impl Clone for SharedState {
 
 #[derive(Debug)]
 pub struct SharedStateInner {
-    pub status_bar: StatusBarState,
-    pub logging_bar: LoggingBarState,
-    pub log_panel: LogPanelState,
-    pub tracking_tab: TrackingTabState,
-    pub paused: bool,
-    pub connection_history: ConnectionHistory,
-    pub running: bool,
-    pub solution_tab: SolutionTabState,
+    pub(crate) status_bar: StatusBarState,
+    pub(crate) logging_bar: LoggingBarState,
+    pub(crate) log_panel: LogPanelState,
+    pub(crate) tracking_tab: TrackingTabState,
+    pub(crate) paused: bool,
+    pub(crate) connection_history: ConnectionHistory,
+    pub(crate) running: bool,
+    pub(crate) solution_tab: SolutionTabState,
+    pub(crate) baseline_tab: BaselineTabState,
 }
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
@@ -466,6 +466,7 @@ impl SharedStateInner {
             connection_history,
             running: false,
             solution_tab: SolutionTabState::new(),
+            baseline_tab: BaselineTabState::new(),
         }
     }
 }
@@ -545,6 +546,23 @@ impl TrackingSignalsTabState {
     fn new() -> TrackingSignalsTabState {
         TrackingSignalsTabState {
             check_visibility: vec![],
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct BaselineTabState {
+    pub(crate) clear: bool,
+    pub(crate) pause: bool,
+    pub(crate) reset: bool,
+}
+
+impl BaselineTabState {
+    fn new() -> BaselineTabState {
+        BaselineTabState {
+            clear: false,
+            pause: false,
+            reset: false,
         }
     }
 }
@@ -1653,6 +1671,33 @@ impl Dops {
     }
 }
 
+// Struct with shared fields for various GpsTime Message types.
+pub struct GpsTimeFields {
+    pub wn: u16,
+    pub ns_residual: i32,
+    pub flags: u8,
+}
+// Enum wrapping around various GpsTime Message types.
+#[derive(Debug)]
+pub enum GpsTime {
+    MsgGpsTime(MsgGPSTime),
+    MsgGpsTimeDepA(MsgGPSTimeDepA),
+}
+
+impl GpsTime {
+    pub fn fields(self) -> GpsTimeFields {
+        let (wn, ns_residual, flags) = match self {
+            GpsTime::MsgGpsTime(msg_) => (msg_.wn, msg_.ns_residual, msg_.flags),
+            GpsTime::MsgGpsTimeDepA(msg_) => (msg_.wn, msg_.ns_residual, msg_.flags),
+        };
+        GpsTimeFields {
+            wn,
+            ns_residual,
+            flags,
+        }
+    }
+}
+
 // Struct with shared fields for various VelNED Message types.
 #[allow(clippy::upper_case_acronyms)]
 pub struct VelNEDFields {
@@ -1698,6 +1743,8 @@ pub struct BaselineNEDFields {
     pub n: i32,
     pub e: i32,
     pub d: i32,
+    pub h_accuracy: u16,
+    pub v_accuracy: u16,
     pub n_sats: u8,
 }
 // Enum wrapping around various Baseline NED Message types.
@@ -1710,13 +1757,27 @@ pub enum BaselineNED {
 
 impl BaselineNED {
     pub fn fields(&self) -> BaselineNEDFields {
-        let (flags, tow, n, e, d, n_sats) = match self {
-            BaselineNED::MsgBaselineNED(msg) => {
-                (msg.flags, msg.tow as f64, msg.n, msg.e, msg.d, msg.n_sats)
-            }
-            BaselineNED::MsgBaselineNEDDepA(msg) => {
-                (1, msg.tow as f64, msg.n, msg.e, msg.d, msg.n_sats)
-            }
+        let (flags, tow, n, e, d, h_accuracy, v_accuracy, n_sats) = match self {
+            BaselineNED::MsgBaselineNED(msg) => (
+                msg.flags,
+                msg.tow as f64,
+                msg.n,
+                msg.e,
+                msg.d,
+                msg.h_accuracy,
+                msg.v_accuracy,
+                msg.n_sats,
+            ),
+            BaselineNED::MsgBaselineNEDDepA(msg) => (
+                1,
+                msg.tow as f64,
+                msg.n,
+                msg.e,
+                msg.d,
+                msg.h_accuracy,
+                msg.v_accuracy,
+                msg.n_sats,
+            ),
         };
         BaselineNEDFields {
             flags,
@@ -1724,6 +1785,8 @@ impl BaselineNED {
             n,
             e,
             d,
+            h_accuracy,
+            v_accuracy,
             n_sats,
         }
     }
@@ -1776,45 +1839,6 @@ impl std::str::FromStr for VelocityUnits {
             _ => panic!("unable to convert to VelocityUnits"),
         }
     }
-}
-
-#[derive(Serialize)]
-#[allow(clippy::upper_case_acronyms)]
-pub struct PosLLHLog {
-    pub pc_time: String,
-    pub gps_time: Option<String>,
-    #[serde(rename = "tow(sec)", with = "float_formatter_3")]
-    pub tow_s: Option<f64>,
-    #[serde(rename = "latitude(degrees)", with = "float_formatter_10")]
-    pub latitude_d: Option<f64>,
-    #[serde(rename = "longitude(degrees)", with = "float_formatter_10")]
-    pub longitude_d: Option<f64>,
-    #[serde(rename = "altitude(meters)", with = "float_formatter_4")]
-    pub altitude_m: Option<f64>,
-    #[serde(rename = "h_accuracy(meters)", with = "float_formatter_4")]
-    pub h_accuracy_m: Option<f64>,
-    #[serde(rename = "v_accuracy(meters)", with = "float_formatter_4")]
-    pub v_accuracy_m: Option<f64>,
-    pub n_sats: u8,
-    pub flags: u8,
-}
-
-#[derive(Serialize)]
-pub struct VelLog {
-    pub pc_time: String,
-    pub gps_time: Option<String>,
-    #[serde(rename = "tow(sec)", with = "float_formatter_3")]
-    pub tow_s: Option<f64>,
-    #[serde(rename = "north(m/s)", with = "float_formatter_6")]
-    pub north_mps: Option<f64>,
-    #[serde(rename = "east(m/s)", with = "float_formatter_6")]
-    pub east_mps: Option<f64>,
-    #[serde(rename = "down(m/s)", with = "float_formatter_6")]
-    pub down_mps: Option<f64>,
-    #[serde(rename = "speed(m/s)", with = "float_formatter_6")]
-    pub speed_mps: Option<f64>,
-    pub flags: u8,
-    pub num_signals: u8,
 }
 
 pub struct Connection {

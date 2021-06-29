@@ -153,7 +153,7 @@ Item {
         }
 
         Timer {
-            interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
+            interval: Utils.hzToMilliseconds(Constants.staticTableTimerIntervalRate)
             running: true
             repeat: true
             onTriggered: {

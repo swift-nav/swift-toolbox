@@ -17,14 +17,18 @@ QtObject {
     property QtObject loggingBar
     property QtObject commonChart
     property QtObject commonLegend
+    property QtObject commonTable
     property QtObject advancedIns
     property QtObject advancedMagnetometer
+    property QtObject baselinePlot
+    property QtObject baselineTable
     property QtObject solutionPosition
     property QtObject solutionTable
     property QtObject solutionVelocity
     property QtObject trackingSignals
     property QtObject observationTab
     readonly property int staticTimerIntervalRate: 5 // 5 Hz
+    readonly property int staticTableTimerIntervalRate: 10 // 10 Hz
     readonly property string monoSpaceFont: "Courier New"
     readonly property real smallPointSize: 7
     readonly property real mediumPointSize: 8
@@ -135,6 +139,32 @@ QtObject {
         readonly property int insStatusImageWidth: 15
     }
 
+    baselinePlot: QtObject {
+        readonly property int navBarMargin: 10
+        readonly property int navBarSpacing: 0
+        readonly property real navBarButtonWidth: 40
+        readonly property real resetFiltersButtonWidth: 100
+        readonly property string yAxisTitleText: "N (meters)"
+        readonly property string xAxisTitleText: "E (meters)"
+        readonly property var legendLabels: ["Base Position", "DGPS", "RTK Float", "RTK Fixed"]
+        readonly property var colors: ["#FF0000", "#00B3FF", "#BF00BF", "#FFA500"]
+    }
+
+    baselineTable: QtObject {
+        readonly property int defaultColumnWidth: 80
+        readonly property color borderColor: "#000000"
+        readonly property int borderWidth: 1
+        readonly property int headerTableDataTableSpacing: 0
+        readonly property int width: 300
+        readonly property int cellHeight: 20
+        readonly property int cellSpacing: 0
+        readonly property int surroundingMargin: 2
+        readonly property int innerMargin: 0
+        readonly property int leftPadding: 2
+        readonly property string leftColumnHeader: "Item"
+        readonly property string rightColumnHeader: "Value"
+    }
+
     solutionPosition: QtObject {
         readonly property int navBarMargin: 10
         readonly property int navBarSpacing: 0
@@ -206,6 +236,8 @@ QtObject {
         readonly property int tickPointSize: 10
         readonly property int buttonHeight: 40
         readonly property int unitDropdownWidth: 90
+        readonly property real zoomInMult: 1.1
+        readonly property real zoomOutMult: 0.9
     }
 
     trackingSignals: QtObject {

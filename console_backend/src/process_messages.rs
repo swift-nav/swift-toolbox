@@ -47,14 +47,22 @@ pub fn process_messages<S>(
         let mut attempt_delay = true;
         match message {
             SBP::MsgAgeCorrections(msg) => {
+                main.baseline_tab.handle_age_corrections(msg.clone());
                 main.solution_tab.handle_age_corrections(msg.clone());
                 main.status_bar.handle_age_corrections(msg);
             }
+            SBP::MsgBaselineHeading(msg) => {
+                main.baseline_tab.handle_baseline_heading(msg);
+            }
             SBP::MsgBaselineNED(msg) => {
+                main.baseline_tab
+                    .handle_baseline_ned(BaselineNED::MsgBaselineNED(msg.clone()));
                 main.status_bar
                     .handle_baseline_ned(BaselineNED::MsgBaselineNED(msg));
             }
             SBP::MsgBaselineNEDDepA(msg) => {
+                main.baseline_tab
+                    .handle_baseline_ned(BaselineNED::MsgBaselineNEDDepA(msg.clone()));
                 main.status_bar
                     .handle_baseline_ned(BaselineNED::MsgBaselineNEDDepA(msg));
             }
@@ -65,7 +73,15 @@ pub fn process_messages<S>(
                 main.solution_tab.handle_dops(Dops::MsgDopsDepA(msg));
             }
             SBP::MsgGPSTime(msg) => {
-                main.solution_tab.handle_gps_time(msg);
+                main.baseline_tab
+                    .handle_gps_time(GpsTime::MsgGpsTime(msg.clone()));
+                main.solution_tab.handle_gps_time(GpsTime::MsgGpsTime(msg));
+            }
+            SBP::MsgGPSTimeDepA(msg) => {
+                main.baseline_tab
+                    .handle_gps_time(GpsTime::MsgGpsTimeDepA(msg.clone()));
+                main.solution_tab
+                    .handle_gps_time(GpsTime::MsgGpsTimeDepA(msg));
             }
             SBP::MsgHeartbeat(_) => {
                 main.status_bar.handle_heartbeat();
@@ -149,6 +165,7 @@ pub fn process_messages<S>(
                 main.solution_tab.handle_vel_ned(VelNED::MsgVelNEDDepA(msg));
             }
             SBP::MsgUtcTime(msg) => {
+                main.baseline_tab.handle_utc_time(msg.clone());
                 main.solution_tab.handle_utc_time(msg);
             }
             SBP::MsgLog(msg) => handle_log_msg(msg),

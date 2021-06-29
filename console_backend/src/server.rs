@@ -365,6 +365,15 @@ impl Server {
                         (*shared_data).solution_tab.position_tab.pause =
                             cv_in.get_solution_position_pause();
                     }
+                    m::message::BaselinePlotStatusButtonFront(Ok(cv_in)) => {
+                        let shared_state_clone = shared_state.clone();
+                        let mut shared_data = shared_state_clone
+                            .lock()
+                            .expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+                        (*shared_data).baseline_tab.clear = cv_in.get_clear();
+                        (*shared_data).baseline_tab.pause = cv_in.get_pause();
+                        (*shared_data).baseline_tab.reset = cv_in.get_reset_filters();
+                    }
                     _ => {
                         eprintln!("unknown message from front-end");
                     }

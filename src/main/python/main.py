@@ -61,6 +61,18 @@ from fusion_status_flags import (
     FUSION_STATUS_FLAGS,
 )
 
+from baseline_plot import (
+    BaselinePlotModel,
+    BaselinePlotPoints,
+    BASELINE_PLOT,
+)
+
+from baseline_table import (
+    BaselineTableEntries,
+    BaselineTableModel,
+    BASELINE_TABLE,
+)
+
 from observation_tab import (
     ObservationData,
     ObservationModel,
@@ -207,6 +219,21 @@ def receive_messages(app_, backend, messages):
             SOLUTION_VELOCITY_TAB[Keys.MAX] = m.solutionVelocityStatus.max
             SOLUTION_VELOCITY_TAB[Keys.MIN] = m.solutionVelocityStatus.min
             SOLUTION_VELOCITY_TAB[Keys.AVAILABLE_UNITS][:] = m.solutionVelocityStatus.availableUnits
+        elif m.which == Message.Union.BaselinePlotStatus:
+            BASELINE_PLOT[Keys.POINTS][:] = [
+                [QPointF(point.x, point.y) for point in m.baselinePlotStatus.data[idx]]
+                for idx in range(len(m.baselinePlotStatus.data))
+            ]
+            BASELINE_PLOT[Keys.CUR_POINTS][:] = [
+                [QPointF(point.x, point.y) for point in m.baselinePlotStatus.curData[idx]]
+                for idx in range(len(m.baselinePlotStatus.curData))
+            ]
+            BASELINE_PLOT[Keys.N_MAX] = m.baselinePlotStatus.nMax
+            BASELINE_PLOT[Keys.N_MIN] = m.baselinePlotStatus.nMin
+            BASELINE_PLOT[Keys.E_MAX] = m.baselinePlotStatus.eMax
+            BASELINE_PLOT[Keys.E_MIN] = m.baselinePlotStatus.eMin
+        elif m.which == Message.Union.BaselineTableStatus:
+            BASELINE_TABLE[Keys.ENTRIES][:] = [[entry.key, entry.val] for entry in m.baselineTableStatus.data]
         elif m.which == Message.Union.AdvancedInsStatus:
             ADVANCED_INS_TAB[Keys.FIELDS_DATA][:] = m.advancedInsStatus.fieldsData
             ADVANCED_INS_TAB[Keys.POINTS][:] = [
@@ -401,6 +428,17 @@ class DataModel(QObject):
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
 
+    @Slot(list)  # type: ignore
+    def baseline_plot(self, buttons: list) -> None:
+        Message = self.messages.Message
+        m = Message()
+        m.baselinePlotStatusButtonFront = m.init(Message.Union.BaselinePlotStatusButtonFront)
+        m.baselinePlotStatusButtonFront.pause = buttons[0]
+        m.baselinePlotStatusButtonFront.clear = buttons[1]
+        m.baselinePlotStatusButtonFront.resetFilters = buttons[2]
+        buffer = m.to_bytes()
+        self.endpoint.send_message(buffer)
+
     @Slot(list, str)  # type: ignore
     def logging_bar(self, buttons, directory) -> None:
         Message = self.messages.Message
@@ -483,6 +521,8 @@ if __name__ == "__main__":
     qmlRegisterType(AdvancedInsPoints, "SwiftConsole", 1, 0, "AdvancedInsPoints")  # type: ignore
     qmlRegisterType(AdvancedMagnetometerPoints, "SwiftConsole", 1, 0, "AdvancedMagnetometerPoints")  # type: ignore
     qmlRegisterType(FusionStatusFlagsData, "SwiftConsole", 1, 0, "FusionStatusFlagsData")  # type: ignore
+    qmlRegisterType(BaselinePlotPoints, "SwiftConsole", 1, 0, "BaselinePlotPoints")  # type: ignore
+    qmlRegisterType(BaselineTableEntries, "SwiftConsole", 1, 0, "BaselineTableEntries")  # type: ignore
     qmlRegisterType(SolutionPositionPoints, "SwiftConsole", 1, 0, "SolutionPositionPoints")  # type: ignore
     qmlRegisterType(SolutionTableEntries, "SwiftConsole", 1, 0, "SolutionTableEntries")  # type: ignore
     qmlRegisterType(SolutionVelocityPoints, "SwiftConsole", 1, 0, "SolutionVelocityPoints")  # type: ignore
@@ -509,6 +549,8 @@ if __name__ == "__main__":
     advanced_ins_model = AdvancedInsModel()
     advanced_magnetometer_model = AdvancedMagnetometerModel()
     fusion_engine_flags_model = FusionStatusFlagsModel()
+    baseline_plot_model = BaselinePlotModel()
+    baseline_table_model = BaselineTableModel()
     solution_position_model = SolutionPositionModel()
     solution_table_model = SolutionTableModel()
     solution_velocity_model = SolutionVelocityModel()
@@ -523,6 +565,8 @@ if __name__ == "__main__":
     root_context.setContextProperty("advanced_ins_model", advanced_ins_model)
     root_context.setContextProperty("advanced_magnetometer_model", advanced_magnetometer_model)
     root_context.setContextProperty("fusion_engine_flags_model", fusion_engine_flags_model)
+    root_context.setContextProperty("baseline_plot_model", baseline_plot_model)
+    root_context.setContextProperty("baseline_table_model", baseline_table_model)
     root_context.setContextProperty("solution_position_model", solution_position_model)
     root_context.setContextProperty("solution_table_model", solution_table_model)
     root_context.setContextProperty("solution_velocity_model", solution_velocity_model)

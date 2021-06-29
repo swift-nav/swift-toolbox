@@ -177,7 +177,7 @@ pub enum Input {
 }
 
 impl Input {
-    pub fn into_conn(self) -> crate::types::Result<Connection> {
+    pub fn into_conn(self) -> Connection {
         match self {
             Input::Tcp { host, port } => Connection::tcp(host, port),
             Input::Serial {
@@ -185,7 +185,11 @@ impl Input {
                 baudrate,
                 flow_control,
             } => Connection::serial(serialport.to_string_lossy().into(), baudrate, flow_control),
-            Input::File { file_in } => Connection::file(file_in.to_string_lossy().into()),
+            Input::File { file_in } => Connection::file(
+                file_in.to_string_lossy().into(),
+                crate::types::RealtimeDelay::On,
+                /*close_when_done=*/ false,
+            ),
         }
     }
 }

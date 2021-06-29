@@ -5,8 +5,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 
 use async_logger_log::Logger;
-use log::warn;
-
+use log::error;
 use std::{
     io::{BufReader, Cursor},
     path::PathBuf,
@@ -21,7 +20,7 @@ use crate::constants::LOG_WRITER_BUFFER_MESSAGE_COUNT;
 use crate::errors::*;
 use crate::log_panel::{splitable_log_formatter, LogLevel, LogPanelWriter};
 use crate::output::{CsvLogging, SbpLogging};
-use crate::types::{ClientSender, FlowControl, ServerState, SharedState};
+use crate::types::{ClientSender, FlowControl, RealtimeDelay, ServerState, SharedState};
 use crate::utils::{refresh_loggingbar, refresh_navbar};
 
 /// The backend server
@@ -64,31 +63,15 @@ impl ServerEndpoint {
 /// - `server_state`: The Server state to start a specific connection.
 /// - `client_send`: Client Sender channel for communication from backend to frontend.
 /// - `shared_state`: The shared state for validating another connection is not already running.
-fn handle_cli(
-    opt: CliOptions,
-    server_state: ServerState,
-    client_send: ClientSender,
-    shared_state: SharedState,
-) {
+fn handle_cli(opt: CliOptions, server_state: &ServerState, shared_state: SharedState) {
     if let Some(opt_input) = opt.input {
         match opt_input {
             Input::Tcp { host, port } => {
-                if let Err(e) =
-                    server_state.connect_to_host(client_send, shared_state.clone(), host, port)
-                {
-                    warn!("failed to connect over tcp: {}", e);
-                }
+                server_state.connect_to_host(host, port);
             }
             Input::File { file_in } => {
                 let filename = file_in.display().to_string();
-                if let Err(e) = server_state.connect_to_file(
-                    client_send,
-                    shared_state.clone(),
-                    filename,
-                    opt.exit_after,
-                ) {
-                    warn!("failed to connect to file: {}", e);
-                }
+                server_state.connect_to_file(filename, RealtimeDelay::On, opt.exit_after);
             }
             Input::Serial {
                 serialport,
@@ -96,15 +79,7 @@ fn handle_cli(
                 flow_control,
             } => {
                 let serialport = serialport.display().to_string();
-                if let Err(e) = server_state.connect_to_serial(
-                    client_send,
-                    shared_state.clone(),
-                    serialport,
-                    baudrate,
-                    flow_control,
-                ) {
-                    warn!("failed to connect over serial: {}", e);
-                }
+                server_state.connect_to_serial(serialport, baudrate, flow_control);
             }
         }
     }
@@ -165,7 +140,7 @@ impl Server {
             inner: client_send_,
         };
         let shared_state = SharedState::new();
-        let server_state = ServerState::new();
+        let server_state = ServerState::new(client_send.clone(), shared_state.clone());
 
         let logger = Logger::builder()
             .buf_size(LOG_WRITER_BUFFER_MESSAGE_COUNT)
@@ -177,12 +152,7 @@ impl Server {
         log::set_boxed_logger(Box::new(logger)).expect("Failed to set logger");
 
         // Handle CLI Opts.
-        handle_cli(
-            opt,
-            server_state.clone(),
-            client_send.clone(),
-            shared_state.clone(),
-        );
+        handle_cli(opt, &server_state, shared_state.clone());
         refresh_navbar(&mut client_send.clone(), shared_state.clone());
         refresh_loggingbar(&mut client_send.clone(), shared_state.clone());
         thread::spawn(move || loop {
@@ -200,7 +170,7 @@ impl Server {
                 let message = match message.which() {
                     Ok(msg) => msg,
                     Err(e) => {
-                        eprintln!("error reading message: {}", e);
+                        error!("error reading message: {}", e);
                         continue;
                     }
                 };
@@ -215,11 +185,10 @@ impl Server {
                         let request = match request.which() {
                             Ok(msg) => msg,
                             Err(e) => {
-                                eprintln!("error reading message: {}", e);
+                                error!("error reading message: {}", e);
                                 continue;
                             }
                         };
-                        let server_state_clone = server_state.clone();
                         let shared_state_clone = shared_state.clone();
                         let client_send_clone = client_send.clone();
                         match request {
@@ -227,23 +196,18 @@ impl Server {
                                 refresh_navbar(&mut client_send_clone.clone(), shared_state_clone);
                             }
                             m::message::DisconnectRequest(Ok(_)) => {
-                                shared_state_clone.set_running(false, client_send_clone.clone());
-                                server_state_clone.connection_join();
-                                println!("Disconnected successfully.");
+                                server_state.disconnect(client_send_clone.clone());
                             }
                             m::message::FileRequest(Ok(req)) => {
                                 let filename = req
                                     .get_filename()
                                     .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
                                 let filename = filename.to_string();
-                                if let Err(e) = server_state_clone.connect_to_file(
-                                    client_send_clone,
-                                    shared_state_clone,
+                                server_state.connect_to_file(
                                     filename,
-                                    /*close_when_done = */ false,
-                                ) {
-                                    warn!("Failed to connect to file: {}", e);
-                                }
+                                    RealtimeDelay::On,
+                                    /*close_when_done*/ false,
+                                );
                             }
                             m::message::PauseRequest(Ok(_)) => {
                                 if shared_state_clone.is_paused() {
@@ -256,14 +220,7 @@ impl Server {
                                 let host =
                                     req.get_host().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
                                 let port = req.get_port();
-                                if let Err(e) = server_state_clone.connect_to_host(
-                                    client_send_clone,
-                                    shared_state_clone,
-                                    host.to_string(),
-                                    port,
-                                ) {
-                                    warn!("Failed to connect over tcp: {}", e);
-                                }
+                                server_state.connect_to_host(host.to_string(), port);
                             }
                             m::message::SerialRequest(Ok(req)) => {
                                 let device =
@@ -272,15 +229,7 @@ impl Server {
                                 let baudrate = req.get_baudrate();
                                 let flow = req.get_flow_control().unwrap();
                                 let flow = FlowControl::from_str(flow).unwrap();
-                                if let Err(e) = server_state_clone.connect_to_serial(
-                                    client_send_clone,
-                                    shared_state_clone,
-                                    device,
-                                    baudrate,
-                                    flow,
-                                ) {
-                                    warn!("Failed to connect over serial: {}", e);
-                                }
+                                server_state.connect_to_serial(device, baudrate, flow);
                             }
                             _ => println!("err"),
                         }
@@ -375,7 +324,7 @@ impl Server {
                         (*shared_data).baseline_tab.reset = cv_in.get_reset_filters();
                     }
                     _ => {
-                        eprintln!("unknown message from front-end");
+                        error!("unknown message from front-end");
                     }
                 }
             } else {

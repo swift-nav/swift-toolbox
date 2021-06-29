@@ -98,8 +98,12 @@ mod mem_bench_impl {
             };
             let shared_state = SharedState::new();
             shared_state.set_running(true, client_send.clone());
-            let conn = Connection::file(BENCH_FILEPATH.into()).unwrap();
-            process_messages::process_messages(conn, shared_state, client_send, RealtimeDelay::On);
+            let conn = Connection::file(
+                BENCH_FILEPATH.into(),
+                RealtimeDelay::On,
+                /*close_when_done=*/ true,
+            );
+            process_messages::process_messages(conn, shared_state, client_send).unwrap();
         }
         recv_thread.join().expect("join should succeed");
         mem_read_thread.join().expect("join should succeed");

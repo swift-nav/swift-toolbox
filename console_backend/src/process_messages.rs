@@ -10,21 +10,25 @@ use crate::constants::PAUSE_LOOP_SLEEP_DURATION_MS;
 use crate::log_panel::handle_log_msg;
 use crate::main_tab::*;
 use crate::types::*;
+use crate::utils::{close_frontend, refresh_navbar};
 
 pub fn process_messages<S>(
     conn: Connection,
     shared_state: SharedState,
-    client_send: S,
-    realtime_delay: RealtimeDelay,
-) where
+    mut client_send: S,
+) -> Result<()>
+where
     S: MessageSender,
 {
-    let (rdr, _) = conn.into_io();
-    let mut main = MainTab::new(shared_state.clone(), client_send);
+    let realtime_delay = conn.realtime_delay();
+    let (rdr, _) = conn.try_connect(Some(shared_state.clone()))?;
+    shared_state.set_running(true, client_send.clone());
+    shared_state.set_current_connection(conn.name());
+    refresh_navbar(&mut client_send.clone(), shared_state.clone());
+    let mut main = MainTab::new(shared_state.clone(), client_send.clone());
     let messages = sbp::iter_messages(rdr)
         .log_errors(log::Level::Debug)
         .with_rover_time();
-
     for (message, gps_time) in messages {
         if !shared_state.is_running() {
             if let Err(e) = main.end_csv_logging() {
@@ -183,4 +187,8 @@ pub fn process_messages<S>(
         }
         log::logger().flush();
     }
+    if conn.close_when_done() {
+        close_frontend(&mut client_send);
+    }
+    Ok(())
 }

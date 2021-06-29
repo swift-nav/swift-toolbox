@@ -61,8 +61,12 @@ fn run_process_messages(file_in_name: &str, failure: bool) {
             inner: client_send_,
         };
         shared_state.set_running(true, client_send.clone());
-        let conn = Connection::file(file_in_name.into()).unwrap();
-        process_messages::process_messages(conn, shared_state, client_send, RealtimeDelay::Off);
+        let conn = Connection::file(
+            file_in_name.into(),
+            RealtimeDelay::Off,
+            /*close_when_done=*/ true,
+        );
+        process_messages::process_messages(conn, shared_state, client_send).unwrap();
     }
     recv_thread.join().expect("join should succeed");
 }

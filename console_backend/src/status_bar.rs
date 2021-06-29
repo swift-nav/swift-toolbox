@@ -577,23 +577,24 @@ mod tests {
             flags,
         };
         let update_time = Instant::now();
-        sleep(Duration::from_millis(DELAY_BUFFER_MS));
         status_bar.handle_ins_status(msg);
-        let last_ins_status_receipt_time = {
+        sleep(Duration::from_millis(DELAY_BUFFER_MS));
+        let (last_ins_status_receipt_time, ins_status_flags) = {
             let shared_data = status_bar
                 .heartbeat_data
                 .lock()
                 .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
-            (*shared_data).last_ins_status_receipt_time
+            (
+                (*shared_data).last_ins_status_receipt_time,
+                (*shared_data).ins_status_flags,
+            )
         };
-        assert!(last_ins_status_receipt_time.unwrap() > update_time);
-        let ins_status_flags = {
-            let shared_data = status_bar
-                .heartbeat_data
-                .lock()
-                .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
-            (*shared_data).ins_status_flags
-        };
+        assert!(
+            last_ins_status_receipt_time.unwrap() > update_time,
+            "[Flaky] If this test fails 
+        consider rerunning as it is known to be flaky. 
+        More info found here: https://swift-nav.atlassian.net/browse/CPP-252"
+        );
         assert_eq!(ins_status_flags, flags);
     }
 

@@ -1,10 +1,10 @@
 use log::{debug, error};
-use sbp::sbp_tools::SBPTools;
+use sbp::sbp_tools::{ControlFlow, SBPTools};
 use sbp::{
     messages::{SBPMessage, SBP},
     serialize::SbpSerialize,
 };
-use std::{thread::sleep, time::Duration};
+use std::{io::ErrorKind, thread::sleep, time::Duration};
 
 use crate::constants::PAUSE_LOOP_SLEEP_DURATION_MS;
 use crate::log_panel::handle_log_msg;
@@ -20,14 +20,28 @@ pub fn process_messages<S>(
 where
     S: MessageSender,
 {
+    shared_state.set_running(true, client_send.clone());
     let realtime_delay = conn.realtime_delay();
     let (rdr, _) = conn.try_connect(Some(shared_state.clone()))?;
-    shared_state.set_running(true, client_send.clone());
     shared_state.set_current_connection(conn.name());
     refresh_navbar(&mut client_send.clone(), shared_state.clone());
     let mut main = MainTab::new(shared_state.clone(), client_send.clone());
     let messages = sbp::iter_messages(rdr)
-        .log_errors(log::Level::Debug)
+        .handle_errors(|e| {
+            debug!("{}", e);
+            match e {
+                sbp::Error::IoError(err) => {
+                    match (*err).kind() {
+                        ErrorKind::TimedOut => {
+                            shared_state.set_running(false, client_send.clone());
+                        }
+                        _ => {}
+                    }
+                    ControlFlow::Break
+                }
+                _ => ControlFlow::Continue,
+            }
+        })
         .with_rover_time();
     for (message, gps_time) in messages {
         if !shared_state.is_running() {

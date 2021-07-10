@@ -221,6 +221,9 @@ impl ServerState {
                     {
                         error!("unable to process messages, {}", e);
                     }
+                    if !shared_state.is_running() {
+                        conn = None;
+                    }
                     shared_state.set_running(false, client_send.clone());
                 }
             }
@@ -1864,6 +1867,7 @@ impl ConnectionType for TcpConnection {
         let socket = TcpConnection::socket_addrs(self.name.clone())?;
         let rdr =
             TcpStream::connect_timeout(&socket, Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))?;
+        rdr.set_read_timeout(Some(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS)))?;
         let wtr = rdr.try_clone()?;
         info!("Connected to tcp stream!");
         if let Some(shared_state_) = shared_state {

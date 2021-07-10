@@ -31,11 +31,8 @@ where
             debug!("{}", e);
             match e {
                 sbp::Error::IoError(err) => {
-                    match (*err).kind() {
-                        ErrorKind::TimedOut => {
-                            shared_state.set_running(false, client_send.clone());
-                        }
-                        _ => {}
+                    if (*err).kind() == ErrorKind::TimedOut {
+                        shared_state.set_running(false, client_send.clone());
                     }
                     ControlFlow::Break
                 }
@@ -202,6 +199,7 @@ where
         log::logger().flush();
     }
     if conn.close_when_done() {
+        shared_state.set_running(false, client_send.clone());
         close_frontend(&mut client_send);
     }
     Ok(())

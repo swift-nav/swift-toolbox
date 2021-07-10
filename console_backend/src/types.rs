@@ -121,7 +121,7 @@ impl<T: Clone> Deque<T> {
 pub trait MessageSender: Debug + Clone + Send {
     fn send_data(&mut self, msg_bytes: Vec<u8>);
 }
-
+use std::ops::Drop;
 #[derive(Debug, Clone)]
 pub struct ClientSender {
     pub inner: sync::mpsc::Sender<Vec<u8>>,
@@ -2037,15 +2037,15 @@ impl Connection {
 mod tests {
     use super::*;
     use serial_test::serial;
-    // use std::{
-    //     sync::mpsc,
-    //     thread::sleep,
-    //     time::{Duration, SystemTime},
-    // };
-    // const TEST_FILEPATH: &str = "./tests/data/piksi-relay-1min.sbp";
-    // const TEST_SHORT_FILEPATH: &str = "./tests/data/piksi-relay.sbp";
-    // const SBP_FILE_SHORT_DURATION_SEC: f64 = 27.1;
-    // const DELAY_BEFORE_CHECKING_APP_STARTED_IN_MS: u64 = 150;
+    use std::{
+        sync::mpsc,
+        thread::sleep,
+        time::{Duration, SystemTime},
+    };
+    const TEST_FILEPATH: &str = "./tests/data/piksi-relay-1min.sbp";
+    const TEST_SHORT_FILEPATH: &str = "./tests/data/piksi-relay.sbp";
+    const SBP_FILE_SHORT_DURATION_SEC: f64 = 27.1;
+    const DELAY_BEFORE_CHECKING_APP_STARTED_IN_MS: u64 = 150;
 
     pub mod data_directories {
         #![allow(dead_code)]
@@ -2183,136 +2183,132 @@ mod tests {
         restore_backup_file(bfilename);
     }
 
-    // fn receive_thread(client_recv: mpsc::Receiver<Vec<u8>>) -> JoinHandle<()> {
-    //     thread::spawn(move || {
-    //         let mut iter_count = 0;
+    fn receive_thread(client_recv: mpsc::Receiver<Vec<u8>>) -> JoinHandle<()> {
+        thread::spawn(move || {
+            let mut iter_count = 0;
 
-    //         loop {
-    //             if client_recv.recv().is_err() {
-    //                 break;
-    //             }
+            loop {
+                if client_recv.recv().is_err() {
+                    break;
+                }
 
-    //             iter_count += 1;
-    //         }
-    //         assert!(iter_count > 0);
-    //     })
-    // }
+                iter_count += 1;
+            }
+            assert!(iter_count > 0);
+        })
+    }
 
-    // #[test]
-    // #[serial]
-    // fn connect_to_file_test() {
-    //     let bfilename = filename();
-    //     backup_file(bfilename.clone());
-    //     let shared_state = SharedState::new();
-    //     let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
-    //     let client_send = ClientSender {
-    //         inner: client_send_,
-    //     };
-    //     let server_state = ServerState::new();
-    //     let filename = TEST_SHORT_FILEPATH.to_string();
-    //     receive_thread(client_receive);
-    //     assert!(!shared_state.is_running());
-    //     server_state
-    //         .connect_to_file(
-    //             client_send,
-    //             shared_state.clone(),
-    //             filename,
-    //             /*close_when_done = */ true,
-    //         )
-    //         .unwrap();
-    //     sleep(Duration::from_millis(
-    //         DELAY_BEFORE_CHECKING_APP_STARTED_IN_MS,
-    //     ));
-    //     assert!(shared_state.is_running());
-    //     sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
-    //     assert!(!shared_state.is_running());
-    //     restore_backup_file(bfilename);
-    // }
+    #[test]
+    #[serial]
+    fn connect_to_file_test() {
+        let bfilename = filename();
+        backup_file(bfilename.clone());
+        let shared_state = SharedState::new();
+        let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
+        let client_send = ClientSender {
+            inner: client_send_,
+        };
+        let server_state = ServerState::new(client_send, shared_state.clone());
+        let filename = TEST_SHORT_FILEPATH.to_string();
+        receive_thread(client_receive);
+        assert!(!shared_state.is_running());
+        server_state.connect_to_file(
+            filename,
+            RealtimeDelay::On,
+            /*close_when_done = */ true,
+        );
+        sleep(Duration::from_millis(
+            DELAY_BEFORE_CHECKING_APP_STARTED_IN_MS,
+        ));
+        assert!(shared_state.is_running());
+        sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
+        assert!(!shared_state.is_running());
+        restore_backup_file(bfilename);
+    }
 
-    // #[test]
-    // #[serial]
-    // fn pause_via_connect_to_file_test() {
-    //     let bfilename = filename();
-    //     backup_file(bfilename.clone());
-    //     let shared_state = SharedState::new();
-    //     let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
-    //     let client_send = ClientSender {
-    //         inner: client_send_,
-    //     };
-    //     let server_state = ServerState::new();
-    //     let filename = TEST_SHORT_FILEPATH.to_string();
-    //     receive_thread(client_receive);
-    //     assert!(!shared_state.is_running());
-    //     server_state
-    //         .connect_to_file(
-    //             client_send,
-    //             shared_state.clone(),
-    //             filename,
-    //             /*close_when_done = */ true,
-    //         )
-    //         .unwrap();
-    //     sleep(Duration::from_millis(
-    //         DELAY_BEFORE_CHECKING_APP_STARTED_IN_MS,
-    //     ));
-    //     assert!(shared_state.is_running());
-    //     shared_state.set_paused(true);
-    //     sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
-    //     assert!(shared_state.is_running());
-    //     shared_state.set_paused(false);
-    //     sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
-    //     assert!(!shared_state.is_running());
-    //     restore_backup_file(bfilename);
-    // }
+    #[test]
+    #[serial]
+    fn pause_via_connect_to_file_test() {
+        let bfilename = filename();
+        backup_file(bfilename.clone());
+        let shared_state = SharedState::new();
+        let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
+        let client_send = ClientSender {
+            inner: client_send_,
+        };
+        let server_state = ServerState::new(client_send, shared_state.clone());
+        let filename = TEST_SHORT_FILEPATH.to_string();
+        receive_thread(client_receive);
+        assert!(!shared_state.is_running());
+        server_state.connect_to_file(
+            filename,
+            RealtimeDelay::On,
+            /*close_when_done = */ true,
+        );
+        sleep(Duration::from_millis(
+            DELAY_BEFORE_CHECKING_APP_STARTED_IN_MS,
+        ));
+        assert!(shared_state.is_running());
+        shared_state.set_paused(true);
+        sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
+        assert!(shared_state.is_running());
+        shared_state.set_paused(false);
+        sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
+        assert!(!shared_state.is_running());
+        restore_backup_file(bfilename);
+        println!("done");
+    }
 
-    // #[test]
-    // #[serial]
-    // fn disconnect_via_connect_to_file_test() {
-    //     let bfilename = filename();
-    //     backup_file(bfilename.clone());
-    //     let shared_state = SharedState::new();
-    //     let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
-    //     let client_send = ClientSender {
-    //         inner: client_send_,
-    //     };
-    //     let server_state = ServerState::new();
-    //     let filename = TEST_FILEPATH.to_string();
-    //     let expected_duration = Duration::from_millis(100);
-    //     let handle = receive_thread(client_receive);
-    //     assert!(!shared_state.is_running());
-    //     {
-    //         server_state
-    //             .connect_to_file(
-    //                 client_send.clone(),
-    //                 shared_state.clone(),
-    //                 filename,
-    //                 /*close_when_done = */ true,
-    //             )
-    //             .unwrap();
-    //     }
+    #[test]
+    #[serial]
+    fn disconnect_via_connect_to_file_test() {
+        let bfilename = filename();
+        backup_file(bfilename.clone());
+        let shared_state = SharedState::new();
+        let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
+        let client_send = ClientSender {
+            inner: client_send_,
+        };
+        let server_state = ServerState::new(client_send.clone(), shared_state.clone());
+        let filename = TEST_FILEPATH.to_string();
+        let expected_duration = Duration::from_secs_f64(SERVER_STATE_CONNECTION_LOOP_TIMEOUT_SEC)
+            + Duration::from_millis(100);
+        let handle = receive_thread(client_receive);
+        assert!(!shared_state.is_running());
+        {
+            server_state.connect_to_file(
+                filename,
+                RealtimeDelay::On,
+                /*close_when_done = */ true,
+            );
+        }
 
-    //     sleep(Duration::from_millis(5));
-    //     assert!(shared_state.is_running());
-    //     let now = SystemTime::now();
-    //     sleep(Duration::from_millis(1));
-    //     shared_state.set_running(false, client_send);
-    //     sleep(Duration::from_millis(10));
-    //     assert!(handle.join().is_ok());
+        sleep(Duration::from_millis(5));
+        assert!(shared_state.is_running());
+        let now = SystemTime::now();
+        sleep(Duration::from_millis(1));
+        server_state.disconnect(client_send.clone());
+        sleep(Duration::from_millis(10));
+        assert!(!shared_state.is_running());
+        shared_state.stop_server_running();
+        drop(client_send);
+        assert!(handle.join().is_ok());
 
-    //     match now.elapsed() {
-    //         Ok(elapsed) => {
-    //             assert!(
-    //                 elapsed < expected_duration,
-    //                 "Time elapsed for disconnect test {:?}, expecting {:?}ms",
-    //                 elapsed,
-    //                 expected_duration
-    //             );
-    //         }
-    //         Err(e) => {
-    //             panic!("unknown error {}", e);
-    //         }
-    //     }
-    //     restore_backup_file(bfilename);
-    // }
+        match now.elapsed() {
+            Ok(elapsed) => {
+                assert!(
+                    elapsed < expected_duration,
+                    "Time elapsed for disconnect test {:?}, expecting {:?}ms",
+                    elapsed,
+                    expected_duration
+                );
+            }
+            Err(e) => {
+                panic!("unknown error {}", e);
+            }
+        }
+        restore_backup_file(bfilename);
+    }
 
     // TODO(johnmichael.burke@) [CPP-111] Need to implement unittest for TCPStream.
     // #[test]

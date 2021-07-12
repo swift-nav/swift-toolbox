@@ -492,7 +492,7 @@ impl SolutionVelocityTabState {
 }
 
 // Main Tab Types.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum RealtimeDelay {
     On,
     Off,

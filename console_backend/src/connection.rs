@@ -320,6 +320,7 @@ mod tests {
     use crate::test_common::{backup_file, filename, restore_backup_file};
     use serial_test::serial;
     use std::{
+        str::FromStr,
         sync::mpsc,
         thread::sleep,
         time::{Duration, SystemTime},
@@ -328,6 +329,43 @@ mod tests {
     const TEST_SHORT_FILEPATH: &str = "./tests/data/piksi-relay.sbp";
     const SBP_FILE_SHORT_DURATION_SEC: f64 = 27.1;
     const DELAY_BEFORE_CHECKING_APP_STARTED_IN_MS: u64 = 150;
+
+    #[test]
+    fn create_tcp() {
+        let host = String::from("0.0.0.0");
+        let port = 55555;
+        let conn = Connection::tcp(host.clone(), port);
+        assert_eq!(conn.name(), format!("{}:{}", host, port));
+        assert!(!conn.close_when_done());
+        assert_eq!(conn.realtime_delay(), RealtimeDelay::Off);
+    }
+
+    #[test]
+    fn create_file() {
+        let filepath = String::from(TEST_FILEPATH);
+        let realtime_delay_on = RealtimeDelay::On;
+        let realtime_delay_off = RealtimeDelay::Off;
+        let close_when_done_false = false;
+        let close_when_done_true = true;
+        let conn = Connection::file(filepath.clone(), realtime_delay_on, close_when_done_true);
+        assert_eq!(conn.name(), String::from("piksi-relay-1min.sbp"));
+        assert!(conn.close_when_done());
+        assert_eq!(conn.realtime_delay(), RealtimeDelay::On);
+        let conn = Connection::file(filepath, realtime_delay_off, close_when_done_false);
+        assert!(!conn.close_when_done());
+        assert_eq!(conn.realtime_delay(), RealtimeDelay::Off);
+    }
+
+    #[test]
+    fn create_serial() {
+        let device = String::from("/dev/ttyUSB0");
+        let baudrate = 115200;
+        let flow = FlowControl::from_str(FLOW_CONTROL_NONE).unwrap();
+        let conn = Connection::serial(device.clone(), baudrate, flow);
+        assert_eq!(conn.name(), format!("{} @{}", device, baudrate));
+        assert!(!conn.close_when_done());
+        assert_eq!(conn.realtime_delay(), RealtimeDelay::Off);
+    }
 
     fn receive_thread(client_recv: mpsc::Receiver<Vec<u8>>) -> JoinHandle<()> {
         thread::spawn(move || {

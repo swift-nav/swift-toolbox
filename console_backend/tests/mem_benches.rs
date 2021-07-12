@@ -12,8 +12,9 @@ mod mem_bench_impl {
     use sysinfo::{get_current_pid, ProcessExt, System, SystemExt};
 
     use console_backend::{
+        connection::Connection,
         process_messages,
-        types::{ClientSender, Connection, RealtimeDelay, SharedState},
+        types::{ClientSender, RealtimeDelay, SharedState},
     };
 
     const BENCH_FILEPATH: &str = "./tests/data/piksi-relay-1min.sbp";
@@ -98,8 +99,12 @@ mod mem_bench_impl {
             };
             let shared_state = SharedState::new();
             shared_state.set_running(true, client_send.clone());
-            let conn = Connection::file(BENCH_FILEPATH.into()).unwrap();
-            process_messages::process_messages(conn, shared_state, client_send, RealtimeDelay::On);
+            let conn = Connection::file(
+                BENCH_FILEPATH.into(),
+                RealtimeDelay::On,
+                /*close_when_done=*/ true,
+            );
+            process_messages::process_messages(conn, shared_state, client_send).unwrap();
         }
         recv_thread.join().expect("join should succeed");
         mem_read_thread.join().expect("join should succeed");

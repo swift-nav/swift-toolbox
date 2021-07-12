@@ -4,14 +4,14 @@ use crate::errors::*;
 use crate::log_panel::LogLevel;
 use crate::output::CsvLogging;
 use crate::piksi_tools_constants::*;
-use crate::process_messages::process_messages;
-use crate::utils::{close_frontend, mm_to_m, ms_to_sec, refresh_navbar, set_connected_frontend};
+
+use crate::utils::{mm_to_m, ms_to_sec, set_connected_frontend};
 use anyhow::{Context, Result as AHResult};
 use chrono::{DateTime, Utc};
 use directories::{ProjectDirs, UserDirs};
 use indexmap::set::IndexSet;
 use lazy_static::lazy_static;
-use log::{error, info};
+use log::error;
 use ordered_float::OrderedFloat;
 use sbp::codec::dencode::{FramedWrite, IterSinkExt};
 use sbp::codec::sbp::SbpEncoder;
@@ -36,19 +36,15 @@ use std::{
     fmt::Debug,
     fs,
     hash::Hash,
-    io,
-    net::TcpStream,
     ops::Deref,
     path::PathBuf,
     str::FromStr,
     sync::{
+        self,
         atomic::{AtomicBool, Ordering::*},
-        mpsc::Sender,
         Arc, Mutex,
     },
-    thread,
-    thread::JoinHandle,
-    time::{Duration, Instant},
+    time::Instant,
 };
 
 pub type Error = std::boxed::Box<dyn std::error::Error>;
@@ -121,7 +117,7 @@ pub trait MessageSender: Debug + Clone + Send {
 
 #[derive(Debug, Clone)]
 pub struct ClientSender {
-    pub inner: Sender<Vec<u8>>,
+    pub inner: sync::mpsc::Sender<Vec<u8>>,
 }
 impl MessageSender for ClientSender {
     fn send_data(&mut self, msg_bytes: Vec<u8>) {
@@ -169,147 +165,6 @@ impl Clone for ArcBool {
 }
 
 #[derive(Debug)]
-pub struct ServerState(Arc<Mutex<ServerStateInner>>);
-
-impl Deref for ServerState {
-    type Target = Mutex<ServerStateInner>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl Default for ServerState {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Clone for ServerState {
-    fn clone(&self) -> Self {
-        ServerState {
-            0: Arc::clone(&self.0),
-        }
-    }
-}
-
-impl ServerState {
-    pub fn new() -> ServerState {
-        ServerState(Arc::new(Mutex::new(ServerStateInner::default())))
-    }
-    pub fn new_connection(&self, new_thread: JoinHandle<()>) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).handler = Some(new_thread);
-    }
-    pub fn connection_join(&self) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        let handler = &mut (*shared_data).handler;
-        if let Some(handle) = handler.take() {
-            handle.join().unwrap();
-        }
-    }
-
-    /// Helper function for attempting to open a file and process SBP messages from it.
-    ///
-    /// # Parameters
-    /// - `client_send`: Client Sender channel for communication from backend to frontend.
-    /// - `shared_state`: The shared state for validating another connection is not already running.
-    /// - `filename`: The path to the filename to be read for SBP messages.
-    pub fn connect_to_file(
-        &self,
-        client_send: ClientSender,
-        shared_state: SharedState,
-        filename: String,
-        close_when_done: bool,
-    ) -> Result<()> {
-        let conn = Connection::file(filename.clone())?;
-        info!("Opened file successfully!");
-        shared_state.update_file_history(filename);
-        self.connect(
-            conn,
-            client_send,
-            shared_state,
-            RealtimeDelay::On,
-            close_when_done,
-        );
-        Ok(())
-    }
-
-    /// Helper function for attempting to open a tcp connection and process SBP messages from it.
-    ///
-    /// # Parameters
-    /// - `client_send`: Client Sender channel for communication from backend to frontend.
-    /// - `shared_state`: The shared state for validating another connection is not already running.
-    /// - `host`: The host portion of the TCP stream to open.
-    /// - `port`: The port to be used to open a TCP stream.
-    pub fn connect_to_host(
-        &self,
-        client_send: ClientSender,
-        shared_state: SharedState,
-        host: String,
-        port: u16,
-    ) -> Result<()> {
-        let conn = Connection::tcp(host.clone(), port)?;
-        info!("Connected to tcp stream!");
-        shared_state.update_tcp_history(host, port);
-        self.connect(conn, client_send, shared_state, RealtimeDelay::Off, false);
-        Ok(())
-    }
-
-    /// Helper function for attempting to open a serial port and process SBP messages from it.
-    ///
-    /// # Parameters
-    /// - `client_send`: Client Sender channel for communication from backend to frontend.
-    /// - `shared_state`: The shared state for validating another connection is not already running.
-    /// - `device`: The string path corresponding to the serial device to connect with.
-    /// - `baudrate`: The baudrate to use when communicating with the serial device.
-    /// - `flow`: The flow control mode to use when communicating with the serial device.
-    pub fn connect_to_serial(
-        &self,
-        client_send: ClientSender,
-        shared_state: SharedState,
-        device: String,
-        baudrate: u32,
-        flow: FlowControl,
-    ) -> Result<()> {
-        let conn = Connection::serial(device, baudrate, flow)?;
-        info!("Connected to serialport!");
-        self.connect(conn, client_send, shared_state, RealtimeDelay::Off, false);
-        Ok(())
-    }
-
-    fn connect(
-        &self,
-        conn: Connection,
-        mut client_send: ClientSender,
-        shared_state: SharedState,
-        delay: RealtimeDelay,
-        close_when_done: bool,
-    ) {
-        shared_state.set_current_connection(conn.name.clone());
-        shared_state.set_running(true, client_send.clone());
-        self.connection_join();
-        self.new_connection(thread::spawn(move || {
-            refresh_navbar(&mut client_send, shared_state.clone());
-            process_messages(conn, shared_state.clone(), client_send.clone(), delay);
-            if close_when_done {
-                close_frontend(&mut client_send);
-            }
-            shared_state.set_running(false, client_send);
-        }));
-    }
-}
-
-#[derive(Debug, Default)]
-pub struct ServerStateInner {
-    pub handler: Option<JoinHandle<()>>,
-}
-impl ServerStateInner {
-    pub fn new() -> ServerStateInner {
-        ServerStateInner { handler: None }
-    }
-}
-
-#[derive(Debug)]
 pub struct SharedState(Arc<Mutex<SharedStateInner>>);
 
 impl SharedState {
@@ -320,7 +175,10 @@ impl SharedState {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).running
     }
-    pub fn set_running(&self, set_to: bool, mut client_send: ClientSender) {
+    pub fn set_running<S>(&self, set_to: bool, mut client_send: S)
+    where
+        S: MessageSender,
+    {
         if set_to {
             set_connected_frontend(cc::ApplicationStates::CONNECTED, &mut client_send);
         } else {
@@ -329,6 +187,15 @@ impl SharedState {
         }
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).running = set_to;
+    }
+    pub fn is_server_running(&self) -> bool {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).server_running
+    }
+    pub fn stop_server_running(&self) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).running = false;
+        (*shared_data).server_running = false;
     }
     pub fn is_paused(&self) -> bool {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
@@ -450,6 +317,7 @@ pub struct SharedStateInner {
     pub(crate) paused: bool,
     pub(crate) connection_history: ConnectionHistory,
     pub(crate) running: bool,
+    pub(crate) server_running: bool,
     pub(crate) solution_tab: SolutionTabState,
     pub(crate) baseline_tab: BaselineTabState,
 }
@@ -465,6 +333,7 @@ impl SharedStateInner {
             paused: false,
             connection_history,
             running: false,
+            server_running: true,
             solution_tab: SolutionTabState::new(),
             baseline_tab: BaselineTabState::new(),
         }
@@ -623,6 +492,7 @@ impl SolutionVelocityTabState {
 }
 
 // Main Tab Types.
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum RealtimeDelay {
     On,
     Off,
@@ -815,7 +685,7 @@ impl ConnectionHistory {
 }
 
 // Enum wrapping around various Vel NED Message types.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FlowControl(SPFlowControl);
 
 impl FromStr for FlowControl {
@@ -1841,73 +1711,11 @@ impl std::str::FromStr for VelocityUnits {
     }
 }
 
-pub struct Connection {
-    pub name: String,
-    pub rdr: Box<dyn io::Read + Send>,
-    pub wtr: Box<dyn io::Write + Send>,
-}
-
-impl Connection {
-    pub fn tcp(host: String, port: u16) -> Result<Self> {
-        let name = format!("{}:{}", host, port);
-        let rdr = TcpStream::connect(&name)?;
-        let wtr = rdr.try_clone()?;
-        Ok(Self {
-            name,
-            rdr: Box::new(rdr),
-            wtr: Box::new(wtr),
-        })
-    }
-
-    pub fn serial(device: String, baudrate: u32, flow: FlowControl) -> Result<Self> {
-        let rdr = serialport::new(&device, baudrate)
-            .flow_control(*flow)
-            .timeout(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))
-            .open()?;
-        let wtr = rdr.try_clone()?;
-        Ok(Self {
-            name: device,
-            rdr: Box::new(rdr),
-            wtr: Box::new(wtr),
-        })
-    }
-
-    pub fn file(filename: String) -> Result<Self> {
-        let rdr = fs::File::open(&filename)?;
-        let wtr = io::sink();
-        Ok(Self {
-            name: filename,
-            rdr: Box::new(rdr),
-            wtr: Box::new(wtr),
-        })
-    }
-
-    pub fn into_io(self) -> (Box<dyn io::Read + Send>, Box<dyn io::Write + Send>) {
-        (self.rdr, self.wtr)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_common::{backup_file, data_directories, filename, restore_backup_file};
     use serial_test::serial;
-    use std::{
-        sync::mpsc,
-        thread::sleep,
-        time::{Duration, SystemTime},
-    };
-    const TEST_FILEPATH: &str = "./tests/data/piksi-relay-1min.sbp";
-    const TEST_SHORT_FILEPATH: &str = "./tests/data/piksi-relay.sbp";
-    const SBP_FILE_SHORT_DURATION_SEC: f64 = 27.1;
-    const DELAY_BEFORE_CHECKING_APP_STARTED_IN_MS: u64 = 150;
-
-    pub mod data_directories {
-        #![allow(dead_code)]
-        pub const LINUX: &str = ".local/share/swift_navigation_console";
-        pub const MACOS: &str =
-            "Library/Application Support/com.swift-nav.swift-nav.swift_navigation_console";
-        pub const WINDOWS: &str = "AppData\\Local\\swift-nav\\swift_navigation_console\\data";
-    }
 
     #[test]
     fn create_data_dir_test() {
@@ -1926,49 +1734,6 @@ mod tests {
         #[cfg(target_os = "windows")]
         {
             assert!(home_dir.join(data_directories::WINDOWS).exists());
-        }
-    }
-
-    fn filename() -> PathBuf {
-        let user_dirs = UserDirs::new().unwrap();
-        let home_dir = user_dirs.home_dir();
-        #[cfg(target_os = "linux")]
-        {
-            home_dir
-                .join(data_directories::LINUX)
-                .join(CONNECTION_HISTORY_FILENAME)
-        }
-
-        #[cfg(target_os = "macos")]
-        {
-            home_dir
-                .join(data_directories::MACOS)
-                .join(CONNECTION_HISTORY_FILENAME)
-        }
-        #[cfg(target_os = "windows")]
-        {
-            home_dir
-                .join(data_directories::WINDOWS)
-                .join(CONNECTION_HISTORY_FILENAME)
-        }
-    }
-
-    fn backup_file(filename: PathBuf) {
-        if filename.exists() {
-            let mut backup_filename = filename.clone();
-            backup_filename.set_extension("backup");
-            fs::rename(filename, backup_filename).unwrap();
-        }
-    }
-
-    fn restore_backup_file(filename: PathBuf) {
-        let mut backup_filename = filename.clone();
-        backup_filename.set_extension("backup");
-        if filename.exists() {
-            fs::remove_file(filename.clone()).unwrap();
-        }
-        if backup_filename.exists() {
-            fs::rename(backup_filename, filename).unwrap();
         }
     }
 
@@ -2036,145 +1801,4 @@ mod tests {
         assert_eq!(conn_history.files().len(), MAX_CONNECTION_HISTORY as usize);
         restore_backup_file(bfilename);
     }
-
-    fn receive_thread(client_recv: mpsc::Receiver<Vec<u8>>) -> JoinHandle<()> {
-        thread::spawn(move || {
-            let mut iter_count = 0;
-
-            loop {
-                if client_recv.recv().is_err() {
-                    break;
-                }
-
-                iter_count += 1;
-            }
-            assert!(iter_count > 0);
-        })
-    }
-
-    #[test]
-    #[serial]
-    fn connect_to_file_test() {
-        let bfilename = filename();
-        backup_file(bfilename.clone());
-        let shared_state = SharedState::new();
-        let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
-        let client_send = ClientSender {
-            inner: client_send_,
-        };
-        let server_state = ServerState::new();
-        let filename = TEST_SHORT_FILEPATH.to_string();
-        receive_thread(client_receive);
-        assert!(!shared_state.is_running());
-        server_state
-            .connect_to_file(
-                client_send,
-                shared_state.clone(),
-                filename,
-                /*close_when_done = */ true,
-            )
-            .unwrap();
-        sleep(Duration::from_millis(
-            DELAY_BEFORE_CHECKING_APP_STARTED_IN_MS,
-        ));
-        assert!(shared_state.is_running());
-        sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
-        assert!(!shared_state.is_running());
-        restore_backup_file(bfilename);
-    }
-
-    #[test]
-    #[serial]
-    fn pause_via_connect_to_file_test() {
-        let bfilename = filename();
-        backup_file(bfilename.clone());
-        let shared_state = SharedState::new();
-        let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
-        let client_send = ClientSender {
-            inner: client_send_,
-        };
-        let server_state = ServerState::new();
-        let filename = TEST_SHORT_FILEPATH.to_string();
-        receive_thread(client_receive);
-        assert!(!shared_state.is_running());
-        server_state
-            .connect_to_file(
-                client_send,
-                shared_state.clone(),
-                filename,
-                /*close_when_done = */ true,
-            )
-            .unwrap();
-        sleep(Duration::from_millis(
-            DELAY_BEFORE_CHECKING_APP_STARTED_IN_MS,
-        ));
-        assert!(shared_state.is_running());
-        shared_state.set_paused(true);
-        sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
-        assert!(shared_state.is_running());
-        shared_state.set_paused(false);
-        sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
-        assert!(!shared_state.is_running());
-        restore_backup_file(bfilename);
-    }
-
-    #[test]
-    #[serial]
-    fn disconnect_via_connect_to_file_test() {
-        let bfilename = filename();
-        backup_file(bfilename.clone());
-        let shared_state = SharedState::new();
-        let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
-        let client_send = ClientSender {
-            inner: client_send_,
-        };
-        let server_state = ServerState::new();
-        let filename = TEST_FILEPATH.to_string();
-        let expected_duration = Duration::from_millis(100);
-        let handle = receive_thread(client_receive);
-        assert!(!shared_state.is_running());
-        {
-            server_state
-                .connect_to_file(
-                    client_send.clone(),
-                    shared_state.clone(),
-                    filename,
-                    /*close_when_done = */ true,
-                )
-                .unwrap();
-        }
-
-        sleep(Duration::from_millis(5));
-        assert!(shared_state.is_running());
-        let now = SystemTime::now();
-        sleep(Duration::from_millis(1));
-        shared_state.set_running(false, client_send);
-        sleep(Duration::from_millis(10));
-        assert!(handle.join().is_ok());
-
-        match now.elapsed() {
-            Ok(elapsed) => {
-                assert!(
-                    elapsed < expected_duration,
-                    "Time elapsed for disconnect test {:?}, expecting {:?}ms",
-                    elapsed,
-                    expected_duration
-                );
-            }
-            Err(e) => {
-                panic!("unknown error {}", e);
-            }
-        }
-        restore_backup_file(bfilename);
-    }
-
-    // TODO(johnmichael.burke@) [CPP-111] Need to implement unittest for TCPStream.
-    // #[test]
-    // fn connect_to_host_test() {
-    // }
-
-    // TODO(johnmichael.burke@) [CPP-111] Need to implement unittest for serial.
-    // #[test]
-    // fn connect_to_serial_test() {
-    // }
 }

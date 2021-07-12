@@ -10,3 +10,7 @@ pub(crate) const GET_MUT_OBJECT_FAILURE: &str = "error trying to get mut object"
 pub(crate) const UNABLE_TO_STOP_TIMER_THREAD_FAILURE: &str = "unable to kill running timer thread";
 pub(crate) const UNABLE_TO_SEND_INS_UPDATE_FAILURE: &str = "unable to send an ins status update";
 pub(crate) const THREAD_JOIN_FAILURE: &str = "thread join failure";
+pub(crate) const TCP_CONNECTION_PARSING_FAILURE: &str =
+    "unable to parse the provided string for ip string";
+pub(crate) const SERVER_STATE_NEW_CONNECTION_FAILURE: &str = "server state new connection failure";
+pub(crate) const SERVER_STATE_DISCONNECT_FAILURE: &str = "server state disconnect failure";

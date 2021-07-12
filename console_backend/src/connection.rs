@@ -317,7 +317,7 @@ impl Drop for ConnectionState {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use directories::UserDirs;
+    use crate::test_common::{backup_file, filename, restore_backup_file};
     use serial_test::serial;
     use std::{
         sync::mpsc,
@@ -328,57 +328,6 @@ mod tests {
     const TEST_SHORT_FILEPATH: &str = "./tests/data/piksi-relay.sbp";
     const SBP_FILE_SHORT_DURATION_SEC: f64 = 27.1;
     const DELAY_BEFORE_CHECKING_APP_STARTED_IN_MS: u64 = 150;
-
-    pub mod data_directories {
-        #![allow(dead_code)]
-        pub const LINUX: &str = ".local/share/swift_navigation_console";
-        pub const MACOS: &str =
-            "Library/Application Support/com.swift-nav.swift-nav.swift_navigation_console";
-        pub const WINDOWS: &str = "AppData\\Local\\swift-nav\\swift_navigation_console\\data";
-    }
-
-    fn filename() -> PathBuf {
-        let user_dirs = UserDirs::new().unwrap();
-        let home_dir = user_dirs.home_dir();
-        #[cfg(target_os = "linux")]
-        {
-            home_dir
-                .join(data_directories::LINUX)
-                .join(CONNECTION_HISTORY_FILENAME)
-        }
-
-        #[cfg(target_os = "macos")]
-        {
-            home_dir
-                .join(data_directories::MACOS)
-                .join(CONNECTION_HISTORY_FILENAME)
-        }
-        #[cfg(target_os = "windows")]
-        {
-            home_dir
-                .join(data_directories::WINDOWS)
-                .join(CONNECTION_HISTORY_FILENAME)
-        }
-    }
-
-    fn backup_file(filename: PathBuf) {
-        if filename.exists() {
-            let mut backup_filename = filename.clone();
-            backup_filename.set_extension("backup");
-            fs::rename(filename, backup_filename).unwrap();
-        }
-    }
-
-    fn restore_backup_file(filename: PathBuf) {
-        let mut backup_filename = filename.clone();
-        backup_filename.set_extension("backup");
-        if filename.exists() {
-            fs::remove_file(filename.clone()).unwrap();
-        }
-        if backup_filename.exists() {
-            fs::rename(backup_filename, filename).unwrap();
-        }
-    }
 
     fn receive_thread(client_recv: mpsc::Receiver<Vec<u8>>) -> JoinHandle<()> {
         thread::spawn(move || {
@@ -453,7 +402,6 @@ mod tests {
         sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
         assert!(!shared_state.is_running());
         restore_backup_file(bfilename);
-        println!("done");
     }
 
     #[test]

@@ -247,14 +247,18 @@ hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'sw
 '''
 
 [tasks.qml-format]
-env = { QT_APP = { script = ["conda run -n $CONDA_ENV python utils/echo-qt-dir.py"] } }
+env = { QT_APP = { script = [
+  "conda run -n $CONDA_ENV python utils/echo-qt-dir.py",
+] } }
 script_runner = "@shell"
 script = '''
 ${QT_APP}/Qt/bin/qmlformat -i $QML_FILES
 '''
 
 [tasks.qml-lint]
-env = { QT_APP = { script = ["conda run -n $CONDA_ENV python utils/echo-qt-dir.py"] } }
+env = { QT_APP = { script = [
+  "conda run -n $CONDA_ENV python utils/echo-qt-dir.py",
+] } }
 script_runner = "@shell"
 script = '''
 ${QT_APP}/Qt/bin/qmllint -I ${QT_APP}/../PySide2/Qt/qml/ -I resources/ $QML_FILES

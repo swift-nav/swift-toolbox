@@ -12,8 +12,9 @@ mod mem_bench_impl {
     use sysinfo::{get_current_pid, ProcessExt, System, SystemExt};
 
     use console_backend::{
+        connection::Connection,
         process_messages,
-        types::{ClientSender, Connection, RealtimeDelay, SharedState},
+        types::{ClientSender, RealtimeDelay, SharedState},
     };
 
     const BENCH_FILEPATH: &str = "./tests/data/piksi-relay-1min.sbp";

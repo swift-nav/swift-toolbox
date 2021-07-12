@@ -11,7 +11,7 @@ use crate::log_panel::LogLevel;
 use crate::types::FlowControl;
 use crate::{
     common_constants::{SbpLogging, Tabs},
-    types::Connection,
+    connection::Connection,
 };
 
 #[derive(Debug)]

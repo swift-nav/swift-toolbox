@@ -7,6 +7,7 @@ pub mod console_backend_capnp {
 }
 pub mod broadcaster;
 pub mod common_constants;
+pub mod connection;
 pub mod constants;
 pub mod date_conv;
 pub mod errors;

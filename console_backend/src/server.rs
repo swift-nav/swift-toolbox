@@ -15,12 +15,13 @@ use std::{
 };
 
 use crate::cli_options::*;
+use crate::connection::ConnectionState;
 use crate::console_backend_capnp as m;
 use crate::constants::LOG_WRITER_BUFFER_MESSAGE_COUNT;
 use crate::errors::*;
 use crate::log_panel::{splitable_log_formatter, LogLevel, LogPanelWriter};
 use crate::output::{CsvLogging, SbpLogging};
-use crate::types::{ClientSender, FlowControl, RealtimeDelay, ServerState, SharedState};
+use crate::types::{ClientSender, FlowControl, RealtimeDelay, SharedState};
 use crate::utils::{refresh_loggingbar, refresh_navbar};
 
 /// The backend server
@@ -60,18 +61,18 @@ impl ServerEndpoint {
 ///
 /// # Parameters
 /// - `opt`: CLI Options to start specific connection type.
-/// - `server_state`: The Server state to start a specific connection.
+/// - `connection_state`: The Server state to start a specific connection.
 /// - `client_send`: Client Sender channel for communication from backend to frontend.
 /// - `shared_state`: The shared state for validating another connection is not already running.
-fn handle_cli(opt: CliOptions, server_state: &ServerState, shared_state: SharedState) {
+fn handle_cli(opt: CliOptions, connection_state: &ConnectionState, shared_state: SharedState) {
     if let Some(opt_input) = opt.input {
         match opt_input {
             Input::Tcp { host, port } => {
-                server_state.connect_to_host(host, port);
+                connection_state.connect_to_host(host, port);
             }
             Input::File { file_in } => {
                 let filename = file_in.display().to_string();
-                server_state.connect_to_file(filename, RealtimeDelay::On, opt.exit_after);
+                connection_state.connect_to_file(filename, RealtimeDelay::On, opt.exit_after);
             }
             Input::Serial {
                 serialport,
@@ -79,7 +80,7 @@ fn handle_cli(opt: CliOptions, server_state: &ServerState, shared_state: SharedS
                 flow_control,
             } => {
                 let serialport = serialport.display().to_string();
-                server_state.connect_to_serial(serialport, baudrate, flow_control);
+                connection_state.connect_to_serial(serialport, baudrate, flow_control);
             }
         }
     }
@@ -140,7 +141,7 @@ impl Server {
             inner: client_send_,
         };
         let shared_state = SharedState::new();
-        let server_state = ServerState::new(client_send.clone(), shared_state.clone());
+        let connection_state = ConnectionState::new(client_send.clone(), shared_state.clone());
 
         let logger = Logger::builder()
             .buf_size(LOG_WRITER_BUFFER_MESSAGE_COUNT)
@@ -152,7 +153,7 @@ impl Server {
         log::set_boxed_logger(Box::new(logger)).expect("Failed to set logger");
 
         // Handle CLI Opts.
-        handle_cli(opt, &server_state, shared_state.clone());
+        handle_cli(opt, &connection_state, shared_state.clone());
         refresh_navbar(&mut client_send.clone(), shared_state.clone());
         refresh_loggingbar(&mut client_send.clone(), shared_state.clone());
         thread::spawn(move || loop {
@@ -196,14 +197,14 @@ impl Server {
                                 refresh_navbar(&mut client_send_clone.clone(), shared_state_clone);
                             }
                             m::message::DisconnectRequest(Ok(_)) => {
-                                server_state.disconnect(client_send_clone.clone());
+                                connection_state.disconnect(client_send_clone.clone());
                             }
                             m::message::FileRequest(Ok(req)) => {
                                 let filename = req
                                     .get_filename()
                                     .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
                                 let filename = filename.to_string();
-                                server_state.connect_to_file(
+                                connection_state.connect_to_file(
                                     filename,
                                     RealtimeDelay::On,
                                     /*close_when_done*/ false,
@@ -220,7 +221,7 @@ impl Server {
                                 let host =
                                     req.get_host().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
                                 let port = req.get_port();
-                                server_state.connect_to_host(host.to_string(), port);
+                                connection_state.connect_to_host(host.to_string(), port);
                             }
                             m::message::SerialRequest(Ok(req)) => {
                                 let device =
@@ -229,7 +230,7 @@ impl Server {
                                 let baudrate = req.get_baudrate();
                                 let flow = req.get_flow_control().unwrap();
                                 let flow = FlowControl::from_str(flow).unwrap();
-                                server_state.connect_to_serial(device, baudrate, flow);
+                                connection_state.connect_to_serial(device, baudrate, flow);
                             }
                             _ => println!("err"),
                         }

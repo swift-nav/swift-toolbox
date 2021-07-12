@@ -6,6 +6,7 @@ use sbp::{
 };
 use std::{io::ErrorKind, thread::sleep, time::Duration};
 
+use crate::connection::Connection;
 use crate::constants::PAUSE_LOOP_SLEEP_DURATION_MS;
 use crate::log_panel::handle_log_msg;
 use crate::main_tab::*;

@@ -16,6 +16,7 @@ pub(crate) const PAUSE_LOOP_SLEEP_DURATION_MS: u64 = 100;
 pub(crate) const LOG_WRITER_BUFFER_MESSAGE_COUNT: usize = 50;
 
 // Main Tab constants.
+pub(crate) const WRITE_TO_DEVICE_SENDER_ID: u16 = 1337;
 pub(crate) const VEL_TIME_STR_FILEPATH: &str = "velocity_log_%Y%m%d-%H%M%S.csv";
 pub(crate) const POS_LLH_TIME_STR_FILEPATH: &str = "position_log_%Y%m%d-%H%M%S.csv";
 pub(crate) const BASELINE_TIME_STR_FILEPATH: &str = "baseline_log_%Y%m%d-%H%M%S.csv";

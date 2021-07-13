@@ -26,7 +26,7 @@ where
     let (rdr, _) = conn.try_connect(Some(shared_state.clone()))?;
     shared_state.set_current_connection(conn.name());
     refresh_navbar(&mut client_send.clone(), shared_state.clone());
-    let mut main = MainTab::new(shared_state.clone(), client_send.clone());
+    let mut main = MainTab::new(shared_state.clone(), client_send.clone(), conn.clone())?;
     let messages = sbp::iter_messages(rdr)
         .handle_errors(|e| {
             debug!("{}", e);

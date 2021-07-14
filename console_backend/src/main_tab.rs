@@ -1,13 +1,12 @@
 use chrono::Local;
 use log::{debug, error};
 use sbp::{messages::SBP, time::GpsTime};
-use std::{path::PathBuf, result::Result, thread::sleep, time::Instant};
+use std::{io::Write, path::PathBuf, result::Result, thread::sleep, time::Instant};
 
 use crate::advanced_ins_tab::AdvancedInsTab;
 use crate::advanced_magnetometer_tab::AdvancedMagnetometerTab;
 use crate::baseline_tab::BaselineTab;
 use crate::common_constants::SbpLogging;
-use crate::connection::Connection;
 use crate::constants::*;
 use crate::observation_tab::ObservationTab;
 use crate::output::*;
@@ -15,10 +14,10 @@ use crate::solution_tab::SolutionTab;
 use crate::solution_velocity_tab::SolutionVelocityTab;
 use crate::status_bar::StatusBar;
 use crate::tracking_signals_tab::TrackingSignalsTab;
-use crate::types::{self, *};
+use crate::types::*;
 use crate::utils::refresh_loggingbar;
 
-pub struct MainTab<'a, S: MessageSender> {
+pub struct MainTab<'a, S: MessageSender, W: Write> {
     logging_directory: PathBuf,
     last_csv_logging: CsvLogging,
     last_sbp_logging: SbpLogging,
@@ -29,7 +28,7 @@ pub struct MainTab<'a, S: MessageSender> {
     shared_state: SharedState,
     pub advanced_ins_tab: AdvancedInsTab<S>,
     pub advanced_magnetometer_tab: AdvancedMagnetometerTab<S>,
-    pub baseline_tab: BaselineTab<'a, S>,
+    pub baseline_tab: BaselineTab<'a, S, W>,
     pub tracking_signals_tab: TrackingSignalsTab<S>,
     pub solution_tab: SolutionTab<S>,
     pub observation_tab: ObservationTab<S>,
@@ -37,14 +36,13 @@ pub struct MainTab<'a, S: MessageSender> {
     pub status_bar: StatusBar<S>,
 }
 
-impl<'a, S: MessageSender> MainTab<'a, S> {
+impl<'a, S: MessageSender, W: Write> MainTab<'a, S, W> {
     pub fn new(
         shared_state: SharedState,
         client_sender: S,
-        conn: Connection,
-    ) -> types::Result<MainTab<'a, S>> {
-        let (_, baseline_tab_wtr) = conn.try_connect(Some(shared_state.clone()))?;
-        Ok(MainTab {
+        msg_sender: MsgSender<W>,
+    ) -> MainTab<'a, S, W> {
+        MainTab {
             logging_directory: shared_state.logging_directory(),
             last_csv_logging: CsvLogging::OFF,
             last_sbp_logging: SbpLogging::OFF,
@@ -58,11 +56,7 @@ impl<'a, S: MessageSender> MainTab<'a, S> {
                 shared_state.clone(),
                 client_sender.clone(),
             ),
-            baseline_tab: BaselineTab::new(
-                shared_state.clone(),
-                client_sender.clone(),
-                baseline_tab_wtr,
-            ),
+            baseline_tab: BaselineTab::new(shared_state.clone(), client_sender.clone(), msg_sender),
             tracking_signals_tab: TrackingSignalsTab::new(
                 shared_state.clone(),
                 client_sender.clone(),
@@ -74,7 +68,7 @@ impl<'a, S: MessageSender> MainTab<'a, S> {
                 client_sender.clone(),
             ),
             status_bar: StatusBar::new(shared_state, client_sender),
-        })
+        }
     }
 
     /// Calculate time since last epoch began and sleep for previous epoch time difference.
@@ -259,12 +253,10 @@ mod tests {
     use sbp::messages::navigation::{MsgBaselineNED, MsgPosLLH, MsgVelNED};
     use std::{
         fs::File,
-        io::{BufRead, BufReader},
+        io::{sink, BufRead, BufReader},
         time::Duration,
     };
     use tempfile::TempDir;
-
-    const TEST_FILEPATH: &str = "./tests/data/piksi-relay-1min.sbp";
 
     struct GpsTimeTests {
         pub zero_week: i16,
@@ -292,8 +284,9 @@ mod tests {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
         let gps_s = GpsTimeTests::new();
-        let conn = Connection::file(String::from(TEST_FILEPATH), RealtimeDelay::On, false);
-        let mut main = MainTab::new(shared_state, client_send, conn).unwrap();
+        let wtr = sink();
+        let msg_sender = MsgSender::new(wtr);
+        let mut main = MainTab::new(shared_state, client_send, msg_sender);
         let early_gps_time_good = GpsTime::new(gps_s.good_week, gps_s.early_gps_tow_good).unwrap();
         let later_gps_time_good = GpsTime::new(gps_s.good_week, gps_s.later_gps_tow_good);
         main.last_gps_time = Some(early_gps_time_good);
@@ -311,8 +304,9 @@ mod tests {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
         let gps_s = GpsTimeTests::new();
-        let conn = Connection::file(String::from(TEST_FILEPATH), RealtimeDelay::On, false);
-        let mut main = MainTab::new(shared_state, client_send, conn).unwrap();
+        let wtr = sink();
+        let msg_sender = MsgSender::new(wtr);
+        let mut main = MainTab::new(shared_state, client_send, msg_sender);
         let later_gps_time_good = GpsTime::new(gps_s.good_week, gps_s.later_gps_tow_good);
         let now = Instant::now();
         main.last_gps_update = Instant::now();
@@ -326,8 +320,9 @@ mod tests {
         let tmp_dir = tmp_dir.path().to_path_buf();
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let conn = Connection::file(String::from(TEST_FILEPATH), RealtimeDelay::On, false);
-        let mut main = MainTab::new(shared_state, client_send, conn).unwrap();
+        let wtr = sink();
+        let msg_sender = MsgSender::new(wtr);
+        let mut main = MainTab::new(shared_state, client_send, msg_sender);
         assert_eq!(main.last_csv_logging, CsvLogging::OFF);
         main.shared_state.set_csv_logging(CsvLogging::ON);
         main.shared_state.set_logging_directory(tmp_dir.clone());
@@ -459,8 +454,9 @@ mod tests {
         let tmp_dir = tmp_dir.path().to_path_buf();
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let conn = Connection::file(String::from(TEST_FILEPATH), RealtimeDelay::On, false);
-        let mut main = MainTab::new(shared_state, client_send, conn).unwrap();
+        let wtr = sink();
+        let msg_sender = MsgSender::new(wtr);
+        let mut main = MainTab::new(shared_state, client_send, msg_sender);
         assert_eq!(main.last_sbp_logging, SbpLogging::OFF);
         main.shared_state.set_sbp_logging(SbpLogging::SBP);
         main.shared_state.set_logging_directory(tmp_dir.clone());
@@ -550,8 +546,9 @@ mod tests {
         let tmp_dir = tmp_dir.path().to_path_buf();
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let conn = Connection::file(String::from(TEST_FILEPATH), RealtimeDelay::On, false);
-        let mut main = MainTab::new(shared_state, client_send, conn).unwrap();
+        let wtr = sink();
+        let msg_sender = MsgSender::new(wtr);
+        let mut main = MainTab::new(shared_state, client_send, msg_sender);
         assert_eq!(main.last_sbp_logging, SbpLogging::OFF);
         main.shared_state.set_sbp_logging(SbpLogging::SBP_JSON);
         main.shared_state.set_logging_directory(tmp_dir.clone());

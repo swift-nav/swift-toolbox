@@ -5,7 +5,6 @@ use sbp::messages::{
     navigation::{MsgAgeCorrections, MsgUtcTime},
     orientation::MsgBaselineHeading,
     piksi::MsgResetFilters,
-    SBPMessage,
 };
 use std::{collections::HashMap, io::Write};
 
@@ -14,7 +13,8 @@ use crate::date_conv::*;
 use crate::output::{BaselineLog, CsvSerializer};
 use crate::piksi_tools_constants::EMPTY_STR;
 use crate::types::{
-    BaselineNED, Deque, GnssModes, GpsTime, MessageSender, Result, SharedState, UtcDateTime,
+    BaselineNED, Deque, GnssModes, GpsTime, MessageSender, MsgSender, Result, SharedState,
+    UtcDateTime,
 };
 use crate::utils::*;
 
@@ -54,7 +54,7 @@ pub(crate) struct BaselineTabButtons {
 /// - `utc_time`: The stored monotonic Utc time.
 /// - `baseline_log_file`: The CsvSerializer corresponding to an open velocity log if any.
 /// - `week`: The stored week value from GPS Time messages.
-pub struct BaselineTab<'a, S: MessageSender> {
+pub struct BaselineTab<'a, S: MessageSender, W: Write> {
     age_corrections: Option<f64>,
     client_sender: S,
     heading: Option<f64>,
@@ -75,15 +75,15 @@ pub struct BaselineTab<'a, S: MessageSender> {
     utc_time: Option<UtcDateTime>,
     pub baseline_log_file: Option<CsvSerializer>,
     week: Option<u16>,
-    wtr: Box<dyn Write + Send>,
+    wtr: MsgSender<W>,
 }
 
-impl<'a, S: MessageSender> BaselineTab<'a, S> {
+impl<'a, S: MessageSender, W: Write> BaselineTab<'a, S, W> {
     pub fn new(
         shared_state: SharedState,
         client_sender: S,
-        wtr: Box<dyn Write + Send>,
-    ) -> BaselineTab<'a, S> {
+        wtr: MsgSender<W>,
+    ) -> BaselineTab<'a, S, W> {
         BaselineTab {
             age_corrections: None,
             client_sender,
@@ -406,8 +406,8 @@ impl<'a, S: MessageSender> BaselineTab<'a, S> {
             sender_id: Some(WRITE_TO_DEVICE_SENDER_ID),
             filter: 0,
         };
-        let buf = sbp::messages::SBP::from(msg).to_frame()?;
-        self.wtr.write_all(&buf)?;
+        let msg = sbp::messages::SBP::from(msg);
+        self.wtr.send(msg)?;
         Ok(())
     }
 
@@ -529,8 +529,8 @@ mod tests {
     fn handle_age_corrections_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let wtr = sink();
-        let mut baseline_tab = BaselineTab::new(shared_state, client_send, Box::new(wtr));
+        let wtr = MsgSender::new(sink());
+        let mut baseline_tab = BaselineTab::new(shared_state, client_send, wtr);
         assert!(baseline_tab.age_corrections.is_none());
         let msg = MsgAgeCorrections {
             sender_id: Some(1337),
@@ -556,7 +556,7 @@ mod tests {
     fn handle_gps_time_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let wtr = Box::new(sink());
+        let wtr = MsgSender::new(sink());
         let mut baseline_table = BaselineTab::new(shared_state, client_send, wtr);
         let wn = 0_u16;
         let ns_residual = 1337_i32;
@@ -593,7 +593,7 @@ mod tests {
     fn handle_utc_time_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let wtr = Box::new(sink());
+        let wtr = MsgSender::new(sink());
         let mut baseline_table = BaselineTab::new(shared_state, client_send, wtr);
         let year = 2020_u16;
         let month = 3_u8;
@@ -654,7 +654,7 @@ mod tests {
     fn handle_baseline_heading_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let wtr = Box::new(sink());
+        let wtr = MsgSender::new(sink());
         let mut baseline_tab = BaselineTab::new(shared_state, client_send, wtr);
         assert!(baseline_tab.heading.is_none());
         let heading = 1337;
@@ -686,7 +686,7 @@ mod tests {
     fn handle_baseline_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let wtr = Box::new(sink());
+        let wtr = MsgSender::new(sink());
         let mut baseline_tab = BaselineTab::new(shared_state, client_send, wtr);
         baseline_tab.utc_time = Some(utc_time(1_i32, 3_u32, 3_u32, 7_u32, 6_u32, 6_u32, 6_u32));
         baseline_tab.utc_source = Some(utc_source(0x02));
@@ -835,7 +835,7 @@ mod tests {
     fn check_state_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let wtr = Box::new(sink());
+        let wtr = MsgSender::new(sink());
         let baseline_tab = BaselineTab::new(shared_state, client_send, wtr);
         let buttons = baseline_tab.check_state();
         assert!(!buttons.clear);

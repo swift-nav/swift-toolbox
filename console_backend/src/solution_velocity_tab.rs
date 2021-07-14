@@ -6,7 +6,7 @@ use sbp::messages::navigation::MsgVelNED;
 use capnp::message::Builder;
 
 use crate::constants::{HORIZONTAL_COLOR, NUM_POINTS, VERTICAL_COLOR};
-use crate::types::{Deque, MessageSender, SharedState, VelocityUnits};
+use crate::types::{CapnProtoSender, Deque, SharedState, VelocityUnits};
 use crate::utils::serialize_capnproto_builder;
 /// SolutionVelocityTab struct.
 ///
@@ -22,7 +22,7 @@ use crate::utils::serialize_capnproto_builder;
 /// - `tow`: The GPS Time of Week.
 /// - `unit`: Currently displayed and converted to unit of measure.
 #[derive(Debug)]
-pub struct SolutionVelocityTab<'a, S: MessageSender> {
+pub struct SolutionVelocityTab<'a, S: CapnProtoSender> {
     pub available_units: Vec<&'a str>,
     pub client_sender: S,
     pub colors: Vec<String>,
@@ -35,7 +35,7 @@ pub struct SolutionVelocityTab<'a, S: MessageSender> {
     pub unit: VelocityUnits,
 }
 
-impl<'a, S: MessageSender> SolutionVelocityTab<'a, S> {
+impl<'a, S: CapnProtoSender> SolutionVelocityTab<'a, S> {
     pub fn new(shared_state: SharedState, client_sender: S) -> SolutionVelocityTab<'a, S> {
         SolutionVelocityTab {
             available_units: vec![

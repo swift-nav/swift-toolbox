@@ -111,7 +111,7 @@ impl<T: Clone> Deque<T> {
     }
 }
 
-pub trait MessageSender: Debug + Clone + Send {
+pub trait CapnProtoSender: Debug + Clone + Send {
     fn send_data(&mut self, msg_bytes: Vec<u8>);
 }
 
@@ -119,7 +119,7 @@ pub trait MessageSender: Debug + Clone + Send {
 pub struct ClientSender {
     pub inner: sync::mpsc::Sender<Vec<u8>>,
 }
-impl MessageSender for ClientSender {
+impl CapnProtoSender for ClientSender {
     fn send_data(&mut self, msg_bytes: Vec<u8>) {
         self.inner.send(msg_bytes).unwrap();
     }
@@ -129,7 +129,7 @@ impl MessageSender for ClientSender {
 pub struct TestSender {
     pub inner: Vec<Vec<u8>>,
 }
-impl MessageSender for TestSender {
+impl CapnProtoSender for TestSender {
     fn send_data(&mut self, msg: Vec<u8>) {
         self.inner.push(msg)
     }
@@ -177,7 +177,7 @@ impl SharedState {
     }
     pub fn set_running<S>(&self, set_to: bool, mut client_send: S)
     where
-        S: MessageSender,
+        S: CapnProtoSender,
     {
         if set_to {
             set_connected_frontend(cc::ApplicationStates::CONNECTED, &mut client_send);

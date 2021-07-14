@@ -13,7 +13,7 @@ use crate::date_conv::*;
 use crate::output::{BaselineLog, CsvSerializer};
 use crate::piksi_tools_constants::EMPTY_STR;
 use crate::types::{
-    BaselineNED, Deque, GnssModes, GpsTime, MessageSender, MsgSender, Result, SharedState,
+    BaselineNED, CapnProtoSender, Deque, GnssModes, GpsTime, MsgSender, Result, SharedState,
     UtcDateTime,
 };
 use crate::utils::*;
@@ -54,7 +54,7 @@ pub(crate) struct BaselineTabButtons {
 /// - `utc_time`: The stored monotonic Utc time.
 /// - `baseline_log_file`: The CsvSerializer corresponding to an open velocity log if any.
 /// - `week`: The stored week value from GPS Time messages.
-pub struct BaselineTab<'a, S: MessageSender, W: Write> {
+pub struct BaselineTab<'a, S: CapnProtoSender, W: Write> {
     age_corrections: Option<f64>,
     client_sender: S,
     heading: Option<f64>,
@@ -78,7 +78,7 @@ pub struct BaselineTab<'a, S: MessageSender, W: Write> {
     wtr: MsgSender<W>,
 }
 
-impl<'a, S: MessageSender, W: Write> BaselineTab<'a, S, W> {
+impl<'a, S: CapnProtoSender, W: Write> BaselineTab<'a, S, W> {
     pub fn new(
         shared_state: SharedState,
         client_sender: S,

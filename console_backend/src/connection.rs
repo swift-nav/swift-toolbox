@@ -293,7 +293,7 @@ impl ConnectionState {
     }
 
     /// Send disconnect signal to server state loop.
-    pub fn disconnect<S: MessageSender>(&self, client_send: S) {
+    pub fn disconnect<S: CapnProtoSender>(&self, client_send: S) {
         self.shared_state.set_running(false, client_send);
         if let Err(err) = self.sender.try_send(None) {
             error!("{}, {}", SERVER_STATE_DISCONNECT_FAILURE, err);

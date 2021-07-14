@@ -6,7 +6,7 @@ use capnp::message::Builder;
 use crate::constants::*;
 use crate::errors::GET_MUT_OBJECT_FAILURE;
 use crate::fusion_status_flags::FusionStatusFlags;
-use crate::types::{Deque, MessageSender, SharedState};
+use crate::types::{CapnProtoSender, Deque, SharedState};
 use crate::utils::serialize_capnproto_builder;
 
 /// AdvancedInsTab struct.
@@ -27,7 +27,7 @@ use crate::utils::serialize_capnproto_builder;
 /// - `gyro_z`: The stored historic Imu angular rate values along z axis.
 /// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
 #[derive(Debug)]
-pub struct AdvancedInsTab<S: MessageSender> {
+pub struct AdvancedInsTab<S: CapnProtoSender> {
     client_sender: S,
     pub fusion_engine_status_bar: FusionStatusFlags<S>,
     imu_conf: u8,
@@ -44,7 +44,7 @@ pub struct AdvancedInsTab<S: MessageSender> {
     shared_state: SharedState,
 }
 
-impl<S: MessageSender> AdvancedInsTab<S> {
+impl<S: CapnProtoSender> AdvancedInsTab<S> {
     pub fn new(shared_state: SharedState, client_sender: S) -> AdvancedInsTab<S> {
         let acc_fill_val = Some(0_f64);
         let gyro_fill_val = Some(0_f64);

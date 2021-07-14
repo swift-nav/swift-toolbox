@@ -453,27 +453,23 @@ impl SolutionTabState {
 
 #[derive(Debug)]
 pub struct SolutionPositionTabState {
-    pub center: bool,
     pub clear: bool,
     pub ins_status_flags: u32,
     pub last_ins_status_receipt_time: Instant,
     pub last_odo_update_time: Instant,
     pub pause: bool,
     pub unit: String,
-    pub zoom: bool,
 }
 
 impl SolutionPositionTabState {
     fn new() -> SolutionPositionTabState {
         SolutionPositionTabState {
-            center: false,
             clear: false,
             ins_status_flags: 0,
             last_ins_status_receipt_time: Instant::now(),
             last_odo_update_time: Instant::now(),
             pause: false,
             unit: String::from(DEGREES),
-            zoom: false,
         }
     }
 }

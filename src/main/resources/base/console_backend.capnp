@@ -122,14 +122,12 @@ struct ObservationStatus {
 
 struct SolutionPositionStatus {
     data @0 :List(List(Point));
-    labels @1 :List(Text);
-    colors @2 :List(Text);
-    latMin @3 :Float64;
-    latMax @4 :Float64;
-    lonMin @5 :Float64;
-    lonMax @6 :Float64;
-    curData @7 :List(List(Point));
-    availableUnits @8 : List(Text);
+    latMin @1 :Float64;
+    latMax @2 :Float64;
+    lonMin @3 :Float64;
+    lonMax @4 :Float64;
+    curData @5 :List(List(Point));
+    availableUnits @6 : List(Text);
 }
 
 struct SolutionVelocityStatus {

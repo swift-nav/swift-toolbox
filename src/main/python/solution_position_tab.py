@@ -11,8 +11,6 @@ SOLUTION_POSITION_TAB: Dict[str, Any] = {
     Keys.AVAILABLE_UNITS: [],
     Keys.CUR_POINTS: [],
     Keys.POINTS: [],
-    Keys.LABELS: [],
-    Keys.COLORS: [],
     Keys.LAT_MAX: 0,
     Keys.LAT_MIN: 0,
     Keys.LON_MAX: 0,
@@ -22,30 +20,13 @@ SOLUTION_POSITION_TAB: Dict[str, Any] = {
 
 class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
 
-    _colors: List[str] = []
-    _labels: List[str] = []
     _points: List[List[QPointF]] = [[]]
     _cur_points: List[List[QPointF]] = [[]]
-    _valid: bool = False
     _lat_min: float = 0.0
     _lat_max: float = 0.0
     _lon_min: float = 0.0
     _lon_max: float = 0.0
     _available_units: List[str] = []
-
-    def get_valid(self) -> bool:
-        """Getter for _valid.
-
-        Returns:
-            bool: Whether it is valid or not.
-        """
-        return self._valid
-
-    def set_valid(self, valid: bool) -> None:
-        """Setter for _valid."""
-        self._valid = valid
-
-    valid = Property(bool, get_valid, set_valid)
 
     def get_lat_min(self) -> float:
         """Getter for _lat_min."""
@@ -87,22 +68,6 @@ class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attr
 
     lon_max_ = Property(float, get_lon_max, set_lon_max)
 
-    def get_labels(self) -> List[str]:
-        return self._labels
-
-    def set_labels(self, labels) -> None:
-        self._labels = labels
-
-    labels = Property(QTKeys.QVARIANTLIST, get_labels, set_labels)  # type: ignore
-
-    def get_colors(self) -> List[str]:
-        return self._colors
-
-    def set_colors(self, colors) -> None:
-        self._colors = colors
-
-    colors = Property(QTKeys.QVARIANTLIST, get_colors, set_colors)  # type: ignore
-
     def get_points(self) -> List[List[QPointF]]:
         return self._points
 
@@ -143,8 +108,6 @@ class SolutionPositionModel(QObject):  # pylint: disable=too-few-public-methods
     def fill_console_points(self, cp: SolutionPositionPoints) -> SolutionPositionPoints:  # pylint:disable=no-self-use
         cp.set_points(SOLUTION_POSITION_TAB[Keys.POINTS])
         cp.set_cur_points(SOLUTION_POSITION_TAB[Keys.CUR_POINTS])
-        cp.set_labels(SOLUTION_POSITION_TAB[Keys.LABELS])
-        cp.set_colors(SOLUTION_POSITION_TAB[Keys.COLORS])
         cp.set_lat_max(SOLUTION_POSITION_TAB[Keys.LAT_MAX])
         cp.set_lat_min(SOLUTION_POSITION_TAB[Keys.LAT_MIN])
         cp.set_lon_max(SOLUTION_POSITION_TAB[Keys.LON_MAX])

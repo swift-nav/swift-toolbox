@@ -1,5 +1,5 @@
 import "../Constants"
-import "BaselinePlotLoop.js" as BaselinePlotLoop
+import "../SolutionPlotCommon/SolutionPlotLoop.js" as SolutionPlotLoop
 import QtCharts 2.15
 import QtQuick 2.15
 import QtQuick.Controls 2.12
@@ -50,12 +50,6 @@ Item {
                 id: baselineButtonGroup
 
                 exclusive: false
-            }
-
-            ButtonGroup {
-                id: baselineZoomButtonGroup
-
-                exclusive: true
             }
 
             RowLayout {
@@ -327,10 +321,10 @@ Item {
 
                         baselinePlotArea.visible = true;
                         if (!scatters.length || !cur_scatters.length)
-                            [scatters, cur_scatters] = BaselinePlotLoop.setupScatterSeries(baselinePlotChart, Constants, Globals, baselinePlotXAxis, baselinePlotYAxis);
+                            [scatters, cur_scatters, _lines] = SolutionPlotLoop.setupScatterSeries(baselinePlotChart, Constants, Globals, baselinePlotXAxis, baselinePlotYAxis, Constants.baselinePlot.legendLabels, Constants.baselinePlot.colors);
 
                         baselinePlotPoints.fill_series([scatters, cur_scatters]);
-                        let point = BaselinePlotLoop.getCurSolution(baselinePlotPoints.cur_points);
+                        let point = SolutionPlotLoop.getCurSolution(baselinePlotPoints.cur_points);
                         if (point)
                             cur_solution = point;
 

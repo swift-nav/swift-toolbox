@@ -306,10 +306,6 @@ impl Server {
                         let mut shared_data = shared_state_clone
                             .lock()
                             .expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-                        (*shared_data).solution_tab.position_tab.zoom =
-                            cv_in.get_solution_position_zoom();
-                        (*shared_data).solution_tab.position_tab.center =
-                            cv_in.get_solution_position_center();
                         (*shared_data).solution_tab.position_tab.clear =
                             cv_in.get_solution_position_clear();
                         (*shared_data).solution_tab.position_tab.pause =

@@ -1,4 +1,5 @@
 import "../Constants"
+import "../SolutionPlotCommon/SolutionPlotLoop.js" as SolutionPlotLoop
 import QtCharts 2.15
 import QtQuick 2.15
 import QtQuick.Controls 2.12
@@ -12,8 +13,17 @@ Item {
     property variant cur_scatters: []
     property variant scatters: []
     property variant lines: []
-    property variant labels: []
-    property variant colors: []
+    property real mouse_x: 0
+    property real mouse_y: 0
+    property real orig_lat_max: 0
+    property real orig_lat_min: 0
+    property real orig_lon_max: 0
+    property real orig_lon_min: 0
+    property real x_axis_half: 0
+    property real y_axis_half: 0
+    property variant cur_solution: null
+    property bool zoom_all: true
+    property bool center_solution: false
 
     width: parent.width
     height: parent.height
@@ -59,7 +69,7 @@ Item {
                     ToolTip.visible: hovered
                     ToolTip.text: "Pause"
                     checkable: true
-                    onClicked: data_model.solution_position([solutionButtonGroup.buttons[3].checked, solutionButtonGroup.buttons[2].pressed, solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].checked])
+                    onClicked: data_model.solution_position([solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].pressed])
                 }
 
                 Button {
@@ -71,33 +81,51 @@ Item {
                     text: " X "
                     ToolTip.visible: hovered
                     ToolTip.text: "Clear"
-                    onPressed: data_model.solution_position([solutionButtonGroup.buttons[3].checked, solutionButtonGroup.buttons[2].pressed, solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].checked])
+                    onPressed: data_model.solution_position([solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].pressed])
                 }
 
                 Button {
                     id: solutionZoomAllButton
 
-                    ButtonGroup.group: solutionButtonGroup
+                    onClicked: {
+                        if (checked) {
+                            zoom_all = true;
+                            solutionCenterButton.checked = false;
+                            center_solution = false;
+                            solutionPositionChart.resetChartZoom();
+                        } else {
+                            zoom_all = false;
+                        }
+                    }
                     Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
                     Layout.preferredHeight: Constants.commonChart.buttonHeight
                     text: "[ ]"
                     ToolTip.visible: hovered
                     ToolTip.text: "Zoom All"
                     checkable: true
-                    onClicked: data_model.solution_position([solutionButtonGroup.buttons[3].checked, solutionButtonGroup.buttons[2].pressed, solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].checked])
+                    checked: true
                 }
 
                 Button {
                     id: solutionCenterButton
 
-                    ButtonGroup.group: solutionButtonGroup
+                    onClicked: {
+                        if (checked) {
+                            solutionZoomAllButton.checked = false;
+                            y_axis_half = Utils.spanBetweenValues(solutionPositionXAxis.max, solutionPositionXAxis.min) / 2;
+                            x_axis_half = Utils.spanBetweenValues(solutionPositionYAxis.max, solutionPositionYAxis.min) / 2;
+                            center_solution = true;
+                            zoom_all = false;
+                        } else {
+                            center_solution = false;
+                        }
+                    }
                     Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
                     Layout.preferredHeight: Constants.commonChart.buttonHeight
                     text: "(><)"
                     ToolTip.visible: hovered
                     ToolTip.text: "Center On Solution"
                     checkable: true
-                    onClicked: data_model.solution_position([solutionButtonGroup.buttons[3].checked, solutionButtonGroup.buttons[2].pressed, solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].checked])
                 }
 
                 Text {
@@ -135,6 +163,38 @@ Item {
             ChartView {
                 id: solutionPositionChart
 
+                function resetChartZoom() {
+                    solutionPositionChart.zoomReset();
+                    solutionPositionXAxis.max = orig_lon_max;
+                    solutionPositionXAxis.min = orig_lon_min;
+                    solutionPositionYAxis.max = orig_lat_max;
+                    solutionPositionYAxis.min = orig_lat_min;
+                }
+
+                function centerToSolution() {
+                    solutionPositionChart.zoomReset();
+                    if (cur_scatters.length) {
+                        solutionPositionXAxis.max = cur_solution.x + x_axis_half;
+                        solutionPositionXAxis.min = cur_solution.x - x_axis_half;
+                        solutionPositionYAxis.max = cur_solution.y + y_axis_half;
+                        solutionPositionYAxis.min = cur_solution.y - y_axis_half;
+                    }
+                }
+
+                function chartZoomByDirection(delta) {
+                    if (delta > 0)
+                        solutionPositionChart.zoom(Constants.commonChart.zoomInMult);
+                    else
+                        solutionPositionChart.zoom(Constants.commonChart.zoomOutMult);
+                }
+
+                function stopZoomFeatures() {
+                    solutionCenterButton.checked = false;
+                    center_solution = false;
+                    solutionZoomAllButton.checked = false;
+                    zoom_all = false;
+                }
+
                 Layout.preferredWidth: parent.width
                 Layout.preferredHeight: parent.height - Constants.commonChart.heightOffset
                 Layout.alignment: Qt.AlignBottom
@@ -168,7 +228,7 @@ Item {
                         Repeater {
                             id: lineLegendRepeaterRows
 
-                            model: labels
+                            model: Constants.solutionPosition.legendLabels
 
                             Row {
                                 Text {
@@ -177,6 +237,7 @@ Item {
                                     text: "+ "
                                     font.pointSize: (Constants.mediumPointSize + Constants.commonLegend.markerPointSizeOffset)
                                     font.bold: true
+                                    color: Constants.solutionPosition.colors[index]
                                     anchors.verticalCenter: parent.verticalCenter
                                     anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                                 }
@@ -235,6 +296,39 @@ Item {
 
                 }
 
+                MouseArea {
+                    anchors.fill: solutionPositionChart
+                    onDoubleClicked: {
+                        solutionPositionChart.stopZoomFeatures();
+                        solutionZoomAllButton.checked = true;
+                        solutionPositionChart.resetChartZoom();
+                    }
+                    onWheel: {
+                        solutionPositionChart.stopZoomFeatures();
+                        solutionPositionChart.chartZoomByDirection(wheel.angleDelta.y);
+                    }
+                    onPositionChanged: {
+                        if (pressed) {
+                            solutionPositionChart.stopZoomFeatures();
+                            var current = solutionPositionChart.plotArea;
+                            var x_unit = Utils.spanBetweenValues(solutionPositionXAxis.max, solutionPositionXAxis.min) / current.width;
+                            var y_unit = Utils.spanBetweenValues(solutionPositionYAxis.max, solutionPositionYAxis.min) / current.height;
+                            var delta_x = (mouse_x - mouseX) * x_unit;
+                            var delta_y = (mouse_y - mouseY) * y_unit;
+                            solutionPositionXAxis.max += delta_x;
+                            solutionPositionXAxis.min += delta_x;
+                            solutionPositionYAxis.max -= delta_y;
+                            solutionPositionYAxis.min -= delta_y;
+                            mouse_x = mouseX;
+                            mouse_y = mouseY;
+                        }
+                    }
+                    onPressed: {
+                        mouse_x = mouseX;
+                        mouse_y = mouseY;
+                    }
+                }
+
                 Timer {
                     interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
                     running: true
@@ -248,50 +342,29 @@ Item {
                             return ;
 
                         solutionPositionArea.visible = true;
-                        var points = solutionPositionPoints.points;
-                        labels = solutionPositionPoints.labels;
-                        if (colors != solutionPositionPoints.colors)
-                            colors = solutionPositionPoints.colors;
-
-                        for (var idx in colors) {
-                            if (lineLegendRepeaterRows.itemAt(idx))
-                                lineLegendRepeaterRows.itemAt(idx).children[0].color = colors[idx];
-
-                        }
-                        if (labels != solutionPositionPoints.labels)
-                            labels = solutionPositionPoints.labels;
-
                         if (available_units != solutionPositionPoints.available_units)
                             available_units = solutionPositionPoints.available_units;
 
-                        if (!lines.length || !scatters.length || !cur_scatters.length) {
-                            for (var idx in labels) {
-                                var cur_scatter = solutionPositionChart.createSeries(ChartView.SeriesTypeScatter, labels[idx] + "cur-scatter", solutionPositionXAxis, solutionPositionYAxis);
-                                cur_scatter.color = colors[idx];
-                                cur_scatter.markerSize = Constants.commonChart.currentSolutionMarkerSize;
-                                var scatter = solutionPositionChart.createSeries(ChartView.SeriesTypeScatter, labels[idx] + "scatter", solutionPositionXAxis, solutionPositionYAxis);
-                                scatter.color = colors[idx];
-                                scatter.markerSize = Constants.commonChart.solutionMarkerSize;
-                                var line = solutionPositionChart.createSeries(ChartView.SeriesTypeLine, labels[idx], solutionPositionXAxis, solutionPositionYAxis);
-                                line.color = colors[idx];
-                                line.width = Constants.commonChart.solutionLineWidth;
-                                line.useOpenGL = Globals.useOpenGL;
-                                scatter.useOpenGL = Globals.useOpenGL;
-                                cur_scatter.useOpenGL = Globals.useOpenGL;
-                                lines.push(line);
-                                scatters.push(scatter);
-                                cur_scatters.push(cur_scatter);
-                            }
-                        }
+                        if (!lines.length || !scatters.length || !cur_scatters.length)
+                            [scatters, cur_scatters, lines] = SolutionPlotLoop.setupScatterSeries(solutionPositionChart, Constants, Globals, solutionPositionXAxis, solutionPositionYAxis, Constants.solutionPosition.legendLabels, Constants.solutionPosition.colors, false, true);
+
                         var combined = [lines, scatters, cur_scatters];
                         solutionPositionPoints.fill_series(combined);
-                        if (solutionPositionYAxis.min != solutionPositionPoints.lat_min_ || solutionPositionYAxis.max != solutionPositionPoints.lat_max_) {
-                            solutionPositionYAxis.min = solutionPositionPoints.lat_min_;
-                            solutionPositionYAxis.max = solutionPositionPoints.lat_max_;
-                        }
-                        if (solutionPositionXAxis.min != solutionPositionPoints.lon_min_ || solutionPositionXAxis.max != solutionPositionPoints.lon_max_) {
-                            solutionPositionXAxis.min = solutionPositionPoints.lon_min_;
-                            solutionPositionXAxis.max = solutionPositionPoints.lon_max_;
+                        let point = SolutionPlotLoop.getCurSolution(solutionPositionPoints.cur_points);
+                        if (point)
+                            cur_solution = point;
+
+                        if (center_solution)
+                            solutionPositionChart.centerToSolution();
+
+                        if (orig_lat_min != solutionPositionPoints.lat_min_ || orig_lat_max != solutionPositionPoints.lat_max_ || orig_lon_min != solutionPositionPoints.lon_min_ || orig_lon_max != solutionPositionPoints.lon_max_) {
+                            orig_lat_min = solutionPositionPoints.lat_min_;
+                            orig_lat_max = solutionPositionPoints.lat_max_;
+                            orig_lon_min = solutionPositionPoints.lon_min_;
+                            orig_lon_max = solutionPositionPoints.lon_max_;
+                            if (zoom_all)
+                                solutionPositionChart.resetChartZoom();
+
                         }
                     }
                 }

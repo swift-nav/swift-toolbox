@@ -21,11 +21,9 @@ use crate::utils::*;
 /// # Fields
 /// - `age_corrections`: Stored age corrections to be displayed in the table.
 /// - `available_units` - The available units of measure to send to frontend for selection.
-/// - `colors`: Stored rgb codes for frontend correspond to index of sv_labels.
 /// - `directory_name`: The directory path to use when creating vel/pos logs.
 /// - `ins_status_flags`: The stored ins status flags expected by other tabs.
 /// - `ins_used`: Indicates whether or not ins is currently used.
-/// - `labels`: The labels to show for the position tab modes.
 /// - `lats`: The stored latitude values for quickly extracting aggregate data.
 /// - `lngs`: The stored longitude values for quickly extracting aggregate data.
 /// - `last_ins_status_receipt_time`: The last ins status receipt monotonic time stored.
@@ -52,11 +50,9 @@ pub struct SolutionTab<S: MessageSender> {
     pub age_corrections: Option<f64>,
     pub available_units: [&'static str; 2],
     pub client_sender: S,
-    pub colors: Vec<String>,
     pub directory_name: Option<String>,
     pub ins_status_flags: u32,
     pub ins_used: bool,
-    pub labels: Vec<String>,
     pub lats: Deque<f64>,
     pub lngs: Deque<f64>,
     pub last_ins_status_receipt_time: Instant,
@@ -90,29 +86,9 @@ impl<S: MessageSender> SolutionTab<S> {
             age_corrections: None,
             available_units: [DEGREES, METERS],
             client_sender,
-            colors: {
-                vec![
-                    GnssModes::Spp.color(),
-                    GnssModes::Dgnss.color(),
-                    GnssModes::Float.color(),
-                    GnssModes::Fixed.color(),
-                    GnssModes::Dr.color(),
-                    GnssModes::Sbas.color(),
-                ]
-            },
             directory_name: None,
             ins_status_flags: 0,
             ins_used: false,
-            labels: {
-                vec![
-                    GnssModes::Spp.label(),
-                    GnssModes::Dgnss.label(),
-                    GnssModes::Float.label(),
-                    GnssModes::Fixed.label(),
-                    GnssModes::Dr.label(),
-                    GnssModes::Sbas.label(),
-                ]
-            },
             lats: Deque::with_size_limit(PLOT_HISTORY_MAX, /*fill_value=*/ None),
             lngs: Deque::with_size_limit(PLOT_HISTORY_MAX, /*fill_value=*/ None),
             last_ins_status_receipt_time: Instant::now(),
@@ -518,21 +494,19 @@ impl<S: MessageSender> SolutionTab<S> {
             self.table
                 .insert(CORR_AGE_S, format!("{}", age_corrections_));
         }
-        let (center, clear, pause, unit, zoom) = self.check_state();
-        self.solution_draw(center, clear, pause, unit, zoom);
+        let (clear, pause, unit) = self.check_state();
+        self.solution_draw(clear, pause, unit);
         self.send_solution_data();
         self.send_table_data();
     }
 
-    pub fn check_state(&self) -> (bool, bool, bool, String, bool) {
+    pub fn check_state(&self) -> (bool, bool, String) {
         let mut shared_data = self.shared_state.lock().unwrap();
-        let center = (*shared_data).solution_tab.position_tab.center;
         let clear = (*shared_data).solution_tab.position_tab.clear;
         (*shared_data).solution_tab.position_tab.clear = false;
         let pause = (*shared_data).solution_tab.position_tab.pause;
         let unit = (*shared_data).solution_tab.position_tab.unit.clone();
-        let zoom = (*shared_data).solution_tab.position_tab.zoom;
-        (center, clear, pause, unit, zoom)
+        (clear, pause, unit)
     }
 
     pub fn clear_sln(&mut self) {
@@ -550,19 +524,10 @@ impl<S: MessageSender> SolutionTab<S> {
     /// - Handle zoom feature.
     ///
     /// # Parameters
-    /// - `center`: Indicates to whether or not to center on the current solution on the frontend.
     /// - `clear`: Indicates whether to initiate a clearing of all solution data stored.
     /// - `pause`: Indicates whther or not to pause the plot updates.
     /// - `unit`: The current unit of measure to cast the data to.
-    /// - `zoom`: Indicates whether or not to zoom into the solution.
-    pub fn solution_draw(
-        &mut self,
-        _center: bool,
-        clear: bool,
-        pause: bool,
-        _unit: String,
-        _zoom: bool,
-    ) {
+    pub fn solution_draw(&mut self, clear: bool, pause: bool, _unit: String) {
         if clear {
             self.clear_sln();
         }
@@ -740,21 +705,6 @@ impl<S: MessageSender> SolutionTab<S> {
                 point_val.set_x(*x);
                 point_val.set_y(*y);
             }
-        }
-        let mut colors = solution_status
-            .reborrow()
-            .init_colors(self.colors.len() as u32);
-
-        for (i, color) in self.colors.iter().enumerate() {
-            colors.set(i as u32, color);
-        }
-
-        let mut labels = solution_status
-            .reborrow()
-            .init_labels(self.labels.len() as u32);
-
-        for (i, label) in self.labels.iter().enumerate() {
-            labels.set(i as u32, label);
         }
 
         self.client_sender

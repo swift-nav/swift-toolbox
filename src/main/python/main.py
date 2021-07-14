@@ -193,8 +193,6 @@ def receive_messages(app_, backend, messages):
                 NAV_BAR[Keys.CONNECTED] = False
 
         elif m.which == Message.Union.SolutionPositionStatus:
-            SOLUTION_POSITION_TAB[Keys.LABELS][:] = m.solutionPositionStatus.labels
-            SOLUTION_POSITION_TAB[Keys.COLORS][:] = m.solutionPositionStatus.colors
             SOLUTION_POSITION_TAB[Keys.POINTS][:] = [
                 [QPointF(point.x, point.y) for point in m.solutionPositionStatus.data[idx]]
                 for idx in range(len(m.solutionPositionStatus.data))
@@ -423,8 +421,6 @@ class DataModel(QObject):
         m.solutionPositionStatusButtonFront = m.init(Message.Union.SolutionPositionStatusButtonFront)
         m.solutionPositionStatusButtonFront.solutionPositionPause = buttons[0]
         m.solutionPositionStatusButtonFront.solutionPositionClear = buttons[1]
-        m.solutionPositionStatusButtonFront.solutionPositionZoom = buttons[2]
-        m.solutionPositionStatusButtonFront.solutionPositionCenter = buttons[3]
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
 

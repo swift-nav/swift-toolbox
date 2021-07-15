@@ -125,6 +125,14 @@ pub enum Keys {
     LON_MAX,
     #[strum(serialize = "LON_MIN")]
     LON_MIN,
+    #[strum(serialize = "N_MAX")]
+    N_MAX,
+    #[strum(serialize = "N_MIN")]
+    N_MIN,
+    #[strum(serialize = "E_MAX")]
+    E_MAX,
+    #[strum(serialize = "E_MIN")]
+    E_MIN,
     #[strum(serialize = "CUR_POINTS")]
     CUR_POINTS,
     #[strum(serialize = "AVAILABLE_PORTS")]

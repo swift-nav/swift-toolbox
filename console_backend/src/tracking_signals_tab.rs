@@ -37,7 +37,7 @@ use sbp::messages::tracking::{MeasurementState, TrackingChannelState};
 /// - `t_init`: Instant monotonic time used as starting reference time.
 /// - `time`: Vector of Monotic times stored.
 #[derive(Debug)]
-pub struct TrackingSignalsTab<S: MessageSender> {
+pub struct TrackingSignalsTab<S: CapnProtoSender> {
     pub at_least_one_track_received: bool,
     pub check_labels: [&'static str; 12],
     pub client_sender: S,
@@ -61,7 +61,7 @@ pub struct TrackingSignalsTab<S: MessageSender> {
     pub time: Deque<f64>,
 }
 
-impl<S: MessageSender> TrackingSignalsTab<S> {
+impl<S: CapnProtoSender> TrackingSignalsTab<S> {
     pub fn new(shared_state: SharedState, client_sender: S) -> TrackingSignalsTab<S> {
         TrackingSignalsTab {
             at_least_one_track_received: false,

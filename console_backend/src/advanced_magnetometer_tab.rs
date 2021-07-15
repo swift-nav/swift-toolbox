@@ -4,7 +4,7 @@ use capnp::message::Builder;
 
 use crate::constants::{MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER, NUM_POINTS};
 use crate::errors::GET_MUT_OBJECT_FAILURE;
-use crate::types::{Deque, MessageSender, SharedState};
+use crate::types::{CapnProtoSender, Deque, SharedState};
 use crate::utils::serialize_capnproto_builder;
 
 /// AdvancedMagnetometerTab struct.
@@ -18,7 +18,7 @@ use crate::utils::serialize_capnproto_builder;
 /// - `mag_z`: The stored historic Magnetometer values along z axis.
 /// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
 #[derive(Debug)]
-pub struct AdvancedMagnetometerTab<S: MessageSender> {
+pub struct AdvancedMagnetometerTab<S: CapnProtoSender> {
     client_sender: S,
     mag_x: Deque<f64>,
     mag_y: Deque<f64>,
@@ -28,7 +28,7 @@ pub struct AdvancedMagnetometerTab<S: MessageSender> {
     ymin: f64,
 }
 
-impl<S: MessageSender> AdvancedMagnetometerTab<S> {
+impl<S: CapnProtoSender> AdvancedMagnetometerTab<S> {
     pub fn new(shared_state: SharedState, client_sender: S) -> AdvancedMagnetometerTab<S> {
         let mag_fill_val = Some(0_f64);
         AdvancedMagnetometerTab {

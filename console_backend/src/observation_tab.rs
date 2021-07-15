@@ -118,14 +118,14 @@ impl Default for ObservationTable {
 }
 
 #[derive(Debug)]
-pub struct ObservationTab<S: MessageSender> {
+pub struct ObservationTab<S: CapnProtoSender> {
     pub client_sender: S,
     pub shared_state: SharedState,
     pub remote: ObservationTable,
     pub local: ObservationTable,
 }
 
-impl<S: MessageSender> ObservationTab<S> {
+impl<S: CapnProtoSender> ObservationTab<S> {
     pub fn new(shared_state: SharedState, client_sender: S) -> ObservationTab<S> {
         ObservationTab {
             client_sender,

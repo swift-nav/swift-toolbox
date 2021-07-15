@@ -9,11 +9,11 @@ use serialport::available_ports;
 
 use crate::constants::*;
 use crate::errors::*;
-use crate::types::{MessageSender, SignalCodes};
+use crate::types::{CapnProtoSender, SignalCodes};
 use crate::{common_constants as cc, types::SharedState};
 
 /// Send a CLOSE, or kill, signal to the frontend.
-pub fn close_frontend<P: MessageSender>(client_send: &mut P) {
+pub fn close_frontend<P: CapnProtoSender>(client_send: &mut P) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
     let mut status = msg.init_status();
@@ -23,7 +23,7 @@ pub fn close_frontend<P: MessageSender>(client_send: &mut P) {
 }
 
 /// Send a CONNECTED or DISCONNECTED, signal to the frontend.
-pub fn set_connected_frontend<P: MessageSender>(
+pub fn set_connected_frontend<P: CapnProtoSender>(
     app_state: cc::ApplicationStates,
     client_send: &mut P,
 ) {
@@ -34,7 +34,7 @@ pub fn set_connected_frontend<P: MessageSender>(
     client_send.send_data(serialize_capnproto_builder(builder));
 }
 
-pub fn refresh_navbar<P: MessageSender>(client_send: &mut P, shared_state: SharedState) {
+pub fn refresh_navbar<P: CapnProtoSender>(client_send: &mut P, shared_state: SharedState) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
@@ -124,7 +124,7 @@ pub fn serialize_capnproto_builder(builder: Builder<HeapAllocator>) -> Vec<u8> {
     msg_bytes
 }
 
-pub fn refresh_loggingbar<P: MessageSender>(client_send: &mut P, shared_state: SharedState) {
+pub fn refresh_loggingbar<P: CapnProtoSender>(client_send: &mut P, shared_state: SharedState) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 

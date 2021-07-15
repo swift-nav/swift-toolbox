@@ -77,17 +77,17 @@ pub fn handle_log_msg(msg: MsgLog) {
 }
 
 #[derive(Debug)]
-pub struct LogPanelWriter<S: MessageSender> {
+pub struct LogPanelWriter<S: CapnProtoSender> {
     pub client_sender: S,
 }
 
-impl<S: MessageSender> LogPanelWriter<S> {
+impl<S: CapnProtoSender> LogPanelWriter<S> {
     pub fn new(client_sender: S) -> LogPanelWriter<S> {
         LogPanelWriter { client_sender }
     }
 }
 
-impl<S: MessageSender> Writer<Box<String>> for LogPanelWriter<S> {
+impl<S: CapnProtoSender> Writer<Box<String>> for LogPanelWriter<S> {
     fn process_slice(&mut self, slice: &[Box<String>]) {
         if slice.is_empty() {
             return;

@@ -19,14 +19,15 @@ pub fn process_messages<S>(
     mut client_send: S,
 ) -> Result<()>
 where
-    S: MessageSender,
+    S: CapnProtoSender,
 {
     shared_state.set_running(true, client_send.clone());
     let realtime_delay = conn.realtime_delay();
-    let (rdr, _) = conn.try_connect(Some(shared_state.clone()))?;
+    let (rdr, wtr) = conn.try_connect(Some(shared_state.clone()))?;
+    let msg_sender = MsgSender::new(wtr);
     shared_state.set_current_connection(conn.name());
     refresh_navbar(&mut client_send.clone(), shared_state.clone());
-    let mut main = MainTab::new(shared_state.clone(), client_send.clone());
+    let mut main = MainTab::new(shared_state.clone(), client_send.clone(), msg_sender);
     let messages = sbp::iter_messages(rdr)
         .handle_errors(|e| {
             debug!("{}", e);

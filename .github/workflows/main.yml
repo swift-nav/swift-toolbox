@@ -12,6 +12,7 @@ env:
   PIP_CACHE_DIR: ~/.cache/pip
   RUST_CACHE_DIRS: "~/.cargo/registry\n~/.cargo/git\ntarget\n"
   LIBCLANG_PATH_WIN: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
+  CARGO_MAKE_VERSION: 0.35.0
 
 jobs:
 
@@ -81,7 +82,7 @@ jobs:
 
       - uses: davidB/rust-cargo-make@v1
         with:
-          version: '0.32.17'
+          version: ${{ env.CARGO_MAKE_VERSION }}
 
       - uses: conda-incubator/setup-miniconda@v2
         with:
@@ -153,7 +154,7 @@ jobs:
 
       - uses: davidB/rust-cargo-make@v1
         with:
-          version: '0.32.17'
+          version: ${{ env.CARGO_MAKE_VERSION }}
 
       - name: Install Dependencies.
         run: |
@@ -286,7 +287,7 @@ jobs:
 
       - uses: davidB/rust-cargo-make@v1
         with:
-          version: '0.32.17'
+          version: ${{ env.CARGO_MAKE_VERSION }}
 
       - uses: conda-incubator/setup-miniconda@v2
         with:

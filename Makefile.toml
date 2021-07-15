@@ -325,6 +325,9 @@ conda run -n $CONDA_ENV pylint --output-format=parseable $PYTHON_FILES
 '''
 
 [tasks.format-toml-check]
+# Note format-toml is part of cargo-make, and output make change depending
+# on the version of taplo-cli installed, and needs to be manually updated.
+# https://github.com/sagiegurari/cargo-make/issues/571
 dependencies = ["format-toml"]
 script_runner = "@shell"
 script = '''

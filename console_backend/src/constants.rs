@@ -8,6 +8,10 @@ pub(crate) const APPLICATION_ORGANIZATION: &str = "swift-nav";
 pub(crate) const APPLICATION_NAME: &str = "swift_navigation_console";
 // CLI constants.
 
+// Server constants.
+#[allow(dead_code)]
+pub(crate) const FETCH_MESSAGE_TIMEOUT_MS: u64 = 1;
+
 // Process Message constants.
 pub(crate) const PAUSE_LOOP_SLEEP_DURATION_MS: u64 = 100;
 

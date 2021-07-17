@@ -8,31 +8,35 @@ use async_logger_log::Logger;
 use log::error;
 use std::{
     io::{BufReader, Cursor},
+    ops::Drop,
     path::PathBuf,
     str::FromStr,
     sync::mpsc,
     thread,
+    time::Duration,
 };
 
 use crate::cli_options::*;
+use crate::common_constants::ApplicationStates;
 use crate::connection::ConnectionState;
 use crate::console_backend_capnp as m;
-use crate::constants::LOG_WRITER_BUFFER_MESSAGE_COUNT;
+use crate::constants::{FETCH_MESSAGE_TIMEOUT_MS, LOG_WRITER_BUFFER_MESSAGE_COUNT};
 use crate::errors::*;
 use crate::log_panel::{splitable_log_formatter, LogLevel, LogPanelWriter};
 use crate::output::{CsvLogging, SbpLogging};
-use crate::types::{ClientSender, FlowControl, RealtimeDelay, SharedState};
+use crate::types::{ArcBool, ClientSender, FlowControl, RealtimeDelay, SharedState};
 use crate::utils::{refresh_loggingbar, refresh_navbar};
-
-/// The backend server
-#[pyclass]
-struct Server {
-    client_recv: Option<mpsc::Receiver<Vec<u8>>>,
-}
 
 #[pyclass]
 struct ServerEndpoint {
     server_send: Option<mpsc::Sender<Vec<u8>>>,
+}
+impl Drop for ServerEndpoint {
+    fn drop(&mut self) {
+        if let Some(sender) = self.server_send.take() {
+            drop(sender);
+        }
+    }
 }
 
 #[pymethods]
@@ -101,11 +105,32 @@ fn handle_cli(opt: CliOptions, connection_state: &ConnectionState, shared_state:
     }
 }
 
+/// The backend server
+#[pyclass]
+struct Server {
+    client_recv: Option<mpsc::Receiver<Vec<u8>>>,
+    is_running: ArcBool,
+    handle: Option<thread::JoinHandle<()>>,
+}
+impl Drop for Server {
+    fn drop(&mut self) {
+        self.is_running.set(false);
+
+        if let Some(recv) = self.client_recv.take() {
+            drop(recv);
+        }
+    }
+}
+
 #[pymethods]
 impl Server {
     #[new]
     pub fn __new__() -> Self {
-        Server { client_recv: None }
+        Server {
+            client_recv: None,
+            is_running: ArcBool::new(),
+            handle: None,
+        }
     }
 
     #[text_signature = "($self, /)"]
@@ -113,11 +138,11 @@ impl Server {
         let result = py.allow_threads(move || {
             let client_recv = self.client_recv.as_ref();
             if let Some(client_recv) = client_recv {
-                let buf = client_recv.recv();
-                if let Ok(buf) = buf {
+                if let Ok(buf) =
+                    client_recv.recv_timeout(Duration::from_millis(FETCH_MESSAGE_TIMEOUT_MS))
+                {
                     Some(buf)
                 } else {
-                    println!("error receiving message: {:?}", buf);
                     None
                 }
             } else {
@@ -156,7 +181,12 @@ impl Server {
         handle_cli(opt, &connection_state, shared_state.clone());
         refresh_navbar(&mut client_send.clone(), shared_state.clone());
         refresh_loggingbar(&mut client_send.clone(), shared_state.clone());
-        thread::spawn(move || loop {
+        self.is_running.set(true);
+        let is_running = self.is_running.clone();
+        self.handle = Some(thread::spawn(move || loop {
+            if !is_running.get() {
+                break;
+            }
             let buf = server_recv.recv();
             if let Ok(buf) = buf {
                 let mut buf_reader = BufReader::new(Cursor::new(buf));
@@ -176,6 +206,19 @@ impl Server {
                     }
                 };
                 match message {
+                    m::message::Status(Ok(cv_in)) => {
+                        let status_req =
+                            cv_in.get_text().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
+                        match ApplicationStates::from_str(status_req) {
+                            Ok(ApplicationStates::CLOSE) => {
+                                let shared_state_clone = shared_state.clone();
+                                shared_state_clone.stop_server_running();
+                                is_running.set(false);
+                            }
+                            Ok(_) => {}
+                            Err(_) => {}
+                        }
+                    }
                     m::message::ConnectRequest(Ok(conn_req)) => {
                         let request = conn_req
                             .get_request()
@@ -328,7 +371,7 @@ impl Server {
                 println!("error: {:?}", buf);
                 break;
             }
-        });
+        }));
         Ok(server_endpoint)
     }
 }

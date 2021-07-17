@@ -120,6 +120,7 @@ CONSOLE_BACKEND_CAPNP_PATH = "console_backend.capnp"
 PIKSI_HOST = "piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com"
 PIKSI_PORT = 55555
 
+IS_RUNNING = True
 
 MAIN_INDEX = "MAIN_INDEX"
 SUB_INDEX = "SUB_INDEX"
@@ -180,13 +181,15 @@ capnp.remove_import_hook()  # pylint: disable=no-member
 
 
 def receive_messages(app_, backend, messages):
-    while True:
+    while IS_RUNNING:
         buffer = backend.fetch_message()
+        if buffer is None:
+            continue
         Message = messages.Message
         m = Message.from_bytes(buffer)
         if m.which == Message.Union.Status:
             if m.status.text == ApplicationStates.CLOSE:
-                return app_.quit()
+                break
             if m.status.text == ApplicationStates.CONNECTED:
                 NAV_BAR[Keys.CONNECTED] = True
             elif m.status.text == ApplicationStates.DISCONNECTED:
@@ -299,6 +302,8 @@ def receive_messages(app_, backend, messages):
         else:
             pass
 
+    app_.quit()
+
 
 class DataModel(QObject):
 
@@ -309,6 +314,14 @@ class DataModel(QObject):
         super().__init__()
         self.endpoint = endpoint
         self.messages = messages
+
+    def status(self, status: ApplicationStates):
+        Message = self.messages.Message
+        msg = Message()
+        msg.status = msg.init(Message.Union.Status)
+        msg.status.text = str(status)
+        buffer = msg.to_bytes()
+        self.endpoint.send_message(buffer)
 
     @Slot()  # type: ignore
     def connect(self) -> None:
@@ -584,8 +597,8 @@ if __name__ == "__main__":
     globals_main = globals_main.property("globals")  # type: ignore
 
     handle_cli_arguments(args_main, globals_main)
-
-    threading.Thread(
+    running_lock = threading.Lock()
+    recv_thread = threading.Thread(
         target=receive_messages,
         args=(
             app,
@@ -593,5 +606,11 @@ if __name__ == "__main__":
             messages_main,
         ),
         daemon=True,
-    ).start()
-    sys.exit(app.exec_())
+    )
+    recv_thread.start()
+    app.exec_()
+    data_model.status(ApplicationStates.CLOSE)
+    with running_lock:
+        IS_RUNNING = False
+    recv_thread.join()
+    sys.exit()

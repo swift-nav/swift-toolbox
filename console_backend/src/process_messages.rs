@@ -202,6 +202,7 @@ where
     }
     if conn.close_when_done() {
         shared_state.set_running(false, client_send.clone());
+        shared_state.stop_server_running();
         close_frontend(&mut client_send);
     }
     Ok(())

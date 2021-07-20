@@ -1,5 +1,6 @@
 pub mod advanced_ins_tab;
 pub mod advanced_magnetometer_tab;
+pub mod advanced_spectrum_analyzer_tab;
 pub mod baseline_tab;
 pub mod cli_options;
 pub mod console_backend_capnp {
@@ -11,6 +12,7 @@ pub mod connection;
 pub mod constants;
 pub mod date_conv;
 pub mod errors;
+pub mod fft_monitor;
 pub mod fileio;
 pub mod formatters;
 pub mod fusion_status_flags;

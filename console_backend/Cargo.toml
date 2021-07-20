@@ -38,6 +38,7 @@ serde_json = { version = "1" }
 crossbeam = "0.8.1"
 rand = "0.8.3"
 slotmap = "1.0.3"
+serde-pickle = { version = "0.6.2", optional = true }
 
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 serialport = "4.0.1"
@@ -63,7 +64,14 @@ name = "fileio"
 path = "src/bin/fileio.rs"
 bench = false
 
+[[bin]]
+name = "fft_monitor"
+path = "src/bin/fft_monitor.rs"
+bench = false
+required-features = ["fft"]
+
 [features]
 default = ["pyo3"]
 benches = []
 tests = []
+fft = ["serde-pickle"]

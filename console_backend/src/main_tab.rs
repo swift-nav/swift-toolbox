@@ -12,6 +12,7 @@ use crate::observation_tab::ObservationTab;
 use crate::output::*;
 use crate::solution_tab::SolutionTab;
 use crate::solution_velocity_tab::SolutionVelocityTab;
+use crate::advanced_spectrum_analyzer_tab::AdvancedSpectrumAnalyzerTab;
 use crate::status_bar::StatusBar;
 use crate::tracking_signals_tab::TrackingSignalsTab;
 use crate::types::*;
@@ -33,6 +34,7 @@ pub struct MainTab<'a, S: CapnProtoSender, W: Write> {
     pub solution_tab: SolutionTab<S>,
     pub observation_tab: ObservationTab<S>,
     pub solution_velocity_tab: SolutionVelocityTab<'a, S>,
+    pub advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTab<S>,
     pub status_bar: StatusBar<S>,
 }
 
@@ -64,6 +66,10 @@ impl<'a, S: CapnProtoSender, W: Write> MainTab<'a, S, W> {
             observation_tab: ObservationTab::new(shared_state.clone(), client_sender.clone()),
             solution_tab: SolutionTab::new(shared_state.clone(), client_sender.clone()),
             solution_velocity_tab: SolutionVelocityTab::new(
+                shared_state.clone(),
+                client_sender.clone(),
+            ),
+            advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTab::new(
                 shared_state.clone(),
                 client_sender.clone(),
             ),

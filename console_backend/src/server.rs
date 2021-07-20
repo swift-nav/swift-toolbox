@@ -349,6 +349,14 @@ impl Server {
                             (*shared_data).baseline_tab.pause = cv_in.get_pause();
                             (*shared_data).baseline_tab.reset = cv_in.get_reset_filters();
                         }
+                        m::message::AdvancedSpectrumAnalyzerStatusFront(Ok(cv_in)) => {
+                            let shared_state_clone = shared_state.clone();
+                            let mut shared_data = shared_state_clone
+                                .lock()
+                                .expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+                            (*shared_data).advanced_spectrum_analyzer_tab.channel_idx =
+                                cv_in.get_channel();
+                        }
                         _ => {
                             error!("unknown message from front-end");
                         }

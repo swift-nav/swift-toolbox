@@ -403,6 +403,7 @@ mod tests {
             DELAY_BEFORE_CHECKING_APP_STARTED_IN_MS,
         ));
         assert!(shared_state.is_running());
+        // TODO: [CPP-272] Reassess timing on pause unittest for Windows
         sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC + 1.0));
         assert!(!shared_state.is_running());
         restore_backup_file(bfilename);
@@ -433,6 +434,7 @@ mod tests {
         sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
         assert!(shared_state.is_running());
         shared_state.set_paused(false);
+        // TODO: [CPP-272] Reassess timing on pause unittest for Windows
         sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC + 1.0));
         assert!(!shared_state.is_running());
         restore_backup_file(bfilename);

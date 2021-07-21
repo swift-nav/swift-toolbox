@@ -389,9 +389,7 @@ mod tests {
         backup_file(bfilename.clone());
         let shared_state = SharedState::new();
         let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
-        let client_send = ClientSender {
-            inner: client_send_,
-        };
+        let client_send = ClientSender::new(client_send_);
         let connection_state = ConnectionState::new(client_send, shared_state.clone());
         let filename = TEST_SHORT_FILEPATH.to_string();
         receive_thread(client_receive);
@@ -405,7 +403,8 @@ mod tests {
             DELAY_BEFORE_CHECKING_APP_STARTED_IN_MS,
         ));
         assert!(shared_state.is_running());
-        sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
+        // TODO: [CPP-272] Reassess timing on pause unittest for Windows
+        sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC + 1.0));
         assert!(!shared_state.is_running());
         restore_backup_file(bfilename);
     }
@@ -417,9 +416,7 @@ mod tests {
         backup_file(bfilename.clone());
         let shared_state = SharedState::new();
         let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
-        let client_send = ClientSender {
-            inner: client_send_,
-        };
+        let client_send = ClientSender::new(client_send_);
         let connection_state = ConnectionState::new(client_send, shared_state.clone());
         let filename = TEST_SHORT_FILEPATH.to_string();
         receive_thread(client_receive);
@@ -437,7 +434,8 @@ mod tests {
         sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
         assert!(shared_state.is_running());
         shared_state.set_paused(false);
-        sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC));
+        // TODO: [CPP-272] Reassess timing on pause unittest for Windows
+        sleep(Duration::from_secs_f64(SBP_FILE_SHORT_DURATION_SEC + 1.0));
         assert!(!shared_state.is_running());
         restore_backup_file(bfilename);
     }
@@ -449,9 +447,7 @@ mod tests {
         backup_file(bfilename.clone());
         let shared_state = SharedState::new();
         let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
-        let client_send = ClientSender {
-            inner: client_send_,
-        };
+        let client_send = ClientSender::new(client_send_);
         let connection_state = ConnectionState::new(client_send.clone(), shared_state.clone());
         let filename = TEST_FILEPATH.to_string();
         let expected_duration = Duration::from_secs_f64(SERVER_STATE_CONNECTION_LOOP_TIMEOUT_SEC)

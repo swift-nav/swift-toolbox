@@ -182,6 +182,9 @@ capnp.remove_import_hook()  # pylint: disable=no-member
 def receive_messages(app_, backend, messages):
     while True:
         buffer = backend.fetch_message()
+        if not buffer:
+            print("terminating GUI loop", file=sys.stderr)
+            break
         Message = messages.Message
         m = Message.from_bytes(buffer)
         if m.which == Message.Union.Status:
@@ -585,7 +588,7 @@ if __name__ == "__main__":
 
     handle_cli_arguments(args_main, globals_main)
 
-    threading.Thread(
+    server_thread = threading.Thread(
         target=receive_messages,
         args=(
             app,
@@ -593,5 +596,12 @@ if __name__ == "__main__":
             messages_main,
         ),
         daemon=True,
-    ).start()
-    sys.exit(app.exec_())
+    )
+
+    server_thread.start()
+    app.exec_()
+
+    endpoint_main.shutdown()
+    server_thread.join()
+
+    sys.exit()

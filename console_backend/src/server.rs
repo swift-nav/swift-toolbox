@@ -11,8 +11,7 @@ use std::{
     path::PathBuf,
     str::FromStr,
     sync::mpsc,
-    thread,
-    time,
+    thread, time,
 };
 
 use crate::cli_options::*;
@@ -119,7 +118,10 @@ fn handle_cli(opt: CliOptions, connection_state: &ConnectionState, shared_state:
 impl Server {
     #[new]
     pub fn __new__() -> Self {
-        Server { client_recv: None, client_sender: None }
+        Server {
+            client_recv: None,
+            client_sender: None,
+        }
     }
 
     #[text_signature = "($self, /)"]
@@ -127,27 +129,25 @@ impl Server {
         let result = py.allow_threads(move || loop {
             if let Some(client_recv) = &self.client_recv {
                 match client_recv.recv_timeout(time::Duration::from_millis(1)) {
-                    Ok(buf) => {
-                        break Some(buf)
-                    }
+                    Ok(buf) => break Some(buf),
                     Err(err) => {
                         use std::sync::mpsc::RecvTimeoutError;
                         if matches!(err, RecvTimeoutError::Timeout) {
                             if self.client_sender.as_ref().unwrap().connected.get() {
-                                continue
+                                continue;
                             } else {
                                 eprintln!("shutting down");
-                                break None
+                                break None;
                             }
                         } else {
                             eprintln!("client recv disconnected");
-                            break None
+                            break None;
                         }
                     }
                 }
             } else {
                 eprintln!("no client receive endpoint");
-                break None
+                break None;
             }
         });
         result.map(|result| PyBytes::new(py, &result).into())

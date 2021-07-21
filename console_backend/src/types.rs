@@ -122,7 +122,10 @@ pub struct ClientSender {
 }
 impl ClientSender {
     pub fn new(inner: sync::mpsc::Sender<Vec<u8>>) -> Self {
-        Self { inner, connected: ArcBool::new_with(true) }
+        Self {
+            inner,
+            connected: ArcBool::new_with(true),
+        }
     }
 }
 impl CapnProtoSender for ClientSender {

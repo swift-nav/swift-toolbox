@@ -259,10 +259,15 @@ def receive_messages(app_, backend, messages):
             TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS][:] = m.trackingSignalsStatus.checkLabels
             TRACKING_SIGNALS_TAB[Keys.LABELS][:] = m.trackingSignalsStatus.labels
             TRACKING_SIGNALS_TAB[Keys.COLORS][:] = m.trackingSignalsStatus.colors
-            TRACKING_SIGNALS_TAB[Keys.POINTS][:] = [
-                [QPointF(point.x, point.y) for point in m.trackingSignalsStatus.data[idx]]
-                for idx in range(len(m.trackingSignalsStatus.data))
-            ]
+            for idx in range(len(m.trackingSignalsStatus.data)):
+                if idx >= len(TRACKING_SIGNALS_TAB[Keys.POINTS]):
+                    TRACKING_SIGNALS_TAB[Keys.POINTS].append([])
+                existing_points = TRACKING_SIGNALS_TAB[Keys.POINTS][idx]
+                new_points = m.trackingSignalsStatus.data[idx]
+                if len(existing_points) == len(new_points):
+                    existing_points.pop(0)
+                new_point = new_points[-1]
+                existing_points.append(QPointF(new_point.x, new_point.y))
             TRACKING_SIGNALS_TAB[Keys.XMIN_OFFSET] = m.trackingSignalsStatus.xminOffset
         elif m.which == Message.Union.ObservationStatus:
             if m.observationStatus.isRemote:

@@ -118,6 +118,12 @@ pub trait CapnProtoSender: Debug + Clone + Send {
 #[derive(Debug, Clone)]
 pub struct ClientSender {
     pub inner: sync::mpsc::Sender<Vec<u8>>,
+    pub connected: ArcBool,
+}
+impl ClientSender {
+    pub fn new(inner: sync::mpsc::Sender<Vec<u8>>) -> Self {
+        Self { inner, connected: ArcBool::new_with(true) }
+    }
 }
 impl CapnProtoSender for ClientSender {
     fn send_data(&mut self, msg_bytes: Vec<u8>) {
@@ -140,6 +146,9 @@ pub struct ArcBool(Arc<AtomicBool>);
 impl ArcBool {
     pub fn new() -> ArcBool {
         ArcBool(Arc::new(AtomicBool::new(false)))
+    }
+    pub fn new_with(value: bool) -> ArcBool {
+        ArcBool(Arc::new(AtomicBool::new(value)))
     }
     pub fn get(&self) -> bool {
         self.load(Acquire)

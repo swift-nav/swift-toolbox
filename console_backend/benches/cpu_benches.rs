@@ -58,9 +58,7 @@ fn run_process_messages(file_in_name: &str, failure: bool) {
             thread::sleep(time::Duration::from_millis(FAILURE_CASE_SLEEP_MILLIS));
         }
         let shared_state = SharedState::new();
-        let client_send = ClientSender {
-            inner: client_send_,
-        };
+        let client_send = ClientSender::new(client_send_);
         shared_state.set_running(true, client_send.clone());
         let conn = Connection::file(
             file_in_name.into(),

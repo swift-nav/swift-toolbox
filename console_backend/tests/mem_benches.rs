@@ -94,9 +94,7 @@ mod mem_bench_impl {
                 .send(client_recv)
                 .expect("sending client recv handle should succeed");
 
-            let client_send = ClientSender {
-                inner: client_send_,
-            };
+            let client_send = ClientSender::new(client_send_);
             let shared_state = SharedState::new();
             shared_state.set_running(true, client_send.clone());
             let conn = Connection::file(

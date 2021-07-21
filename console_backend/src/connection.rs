@@ -389,9 +389,7 @@ mod tests {
         backup_file(bfilename.clone());
         let shared_state = SharedState::new();
         let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
-        let client_send = ClientSender {
-            inner: client_send_,
-        };
+        let client_send = ClientSender::new(client_send_);
         let connection_state = ConnectionState::new(client_send, shared_state.clone());
         let filename = TEST_SHORT_FILEPATH.to_string();
         receive_thread(client_receive);
@@ -417,9 +415,7 @@ mod tests {
         backup_file(bfilename.clone());
         let shared_state = SharedState::new();
         let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
-        let client_send = ClientSender {
-            inner: client_send_,
-        };
+        let client_send = ClientSender::new(client_send_);
         let connection_state = ConnectionState::new(client_send, shared_state.clone());
         let filename = TEST_SHORT_FILEPATH.to_string();
         receive_thread(client_receive);
@@ -449,9 +445,7 @@ mod tests {
         backup_file(bfilename.clone());
         let shared_state = SharedState::new();
         let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
-        let client_send = ClientSender {
-            inner: client_send_,
-        };
+        let client_send = ClientSender::new(client_send_);
         let connection_state = ConnectionState::new(client_send.clone(), shared_state.clone());
         let filename = TEST_FILEPATH.to_string();
         let expected_duration = Duration::from_secs_f64(SERVER_STATE_CONNECTION_LOOP_TIMEOUT_SEC)

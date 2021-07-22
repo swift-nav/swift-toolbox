@@ -32,7 +32,7 @@ pub(crate) const NUM_INS_PLOT_ROWS: usize = 6;
 pub(crate) const NUM_INS_FIELDS: usize = 5;
 
 // Navbar constants.
-pub(crate) const AVAILABLE_REFRESH_RATES: [u8; 4] = [1, 5, 10, 25];
+pub(crate) const AVAILABLE_REFRESH_RATES: [u8; 5] = [1, 2, 5, 10, 25];
 pub(crate) const AVAILABLE_BAUDRATES: [u32; 6] = [57600, 115200, 230400, 460800, 921600, 1000000];
 pub(crate) const FLOW_CONTROL_NONE: &str = "None";
 pub(crate) const FLOW_CONTROL_SOFTWARE: &str = "Software XON/XOFF";

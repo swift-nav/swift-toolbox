@@ -17,7 +17,7 @@ chrono = { version = "0.4", features = ["serde"] }
 csv = "1"
 paste = "1"
 pyo3 = { version = "0.13", features = ["extension-module"], optional = true }
-sbp = { git = "https://github.com/swift-nav/libsbp.git", rev = "ce5e3d14ae4284c53982bc3fd79a2fa15976ff9f", features = [
+sbp = { git = "https://github.com/swift-nav/libsbp.git", rev = "83110eaca01c4fb1ec1500d578a1cbbaa2b8c788", features = [
   "json",
   "swiftnav-rs",
 ] }

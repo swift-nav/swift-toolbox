@@ -57,7 +57,7 @@ fn main() -> Result<()> {
     let run = move |rdr| {
         let messages = sbp::iter_messages(rdr).log_errors(log::Level::Debug);
         for msg in messages {
-            bc_source.send(&msg);
+            bc_source.send(&msg, None);
             if done_rx.try_recv().is_ok() {
                 break;
             }

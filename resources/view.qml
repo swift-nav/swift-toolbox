@@ -25,65 +25,11 @@ ApplicationWindow {
             Layout.rightMargin: Constants.margins
             Layout.alignment: Qt.AlignTop
 
-            ColumnLayout {
-                id: mainTabs
-
-                spacing: Constants.topLevelSpacing
+            MainTabs {
                 SplitView.fillHeight: true
                 SplitView.fillWidth: true
                 Layout.leftMargin: Constants.margins
                 Layout.rightMargin: Constants.margins
-
-                TabBar {
-                    id: tab
-
-                    Layout.fillWidth: true
-                    z: Constants.commonChart.zAboveCharts
-                    currentIndex: Globals.initialMainTabIndex
-                    contentHeight: Constants.tabBarHeight
-
-                    Repeater {
-                        model: ["Tracking", "Solution", "Baseline", "Observations", "Settings", "Update", "Advanced"]
-
-                        TabButton {
-                            text: modelData
-                            width: implicitWidth
-                        }
-
-                    }
-
-                }
-
-                StackLayout {
-                    Layout.fillHeight: true
-                    Layout.fillWidth: true
-                    currentIndex: tab.currentIndex
-
-                    TrackingTab {
-                    }
-
-                    SolutionTab {
-                    }
-
-                    BaselineTab {
-                    }
-
-                    ObservationTab {
-                    }
-
-                    Item {
-                        id: settingsTab
-                    }
-
-                    Item {
-                        id: updateTab
-                    }
-
-                    AdvancedTab {
-                    }
-
-                }
-
             }
 
             Rectangle {

@@ -4,6 +4,7 @@
     <file>fonts/Roboto-Regular.ttf</file>
     <file>fonts/Roboto-Bold.ttf</file>
     <file>view.qml</file>
+    <file>MainTabs.qml</file>
     <file>NavBar.qml</file>
     <file>LogPanel.qml</file>
     <file>LoggingBar.qml</file>

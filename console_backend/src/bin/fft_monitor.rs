@@ -49,7 +49,7 @@ fn main() -> Result<()> {
     let run = move |rdr| {
         let messages = sbp::iter_messages(rdr).log_errors(log::Level::Debug);
         for msg in messages {
-            bc_source.clone().send(&msg);
+            bc_source.clone().send(&msg, None);
             if done_rx.try_recv().is_ok() {
                 break;
             }
@@ -70,7 +70,7 @@ fn main() -> Result<()> {
             if n >= num_ffts as usize {
                 break;
             }
-            if let Ok(msg) = specan_msg.try_recv() {
+            if let Ok((msg, _)) = specan_msg.try_recv() {
                 if let Err(err) = fftmonitor.capture_fft(Specan::MsgSpecan(msg)) {
                     eprintln!("error capturing fft, {}", err);
                 }

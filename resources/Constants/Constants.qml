@@ -124,7 +124,7 @@ QtObject {
         readonly property int dropdownWidth: 100
         readonly property var dropdownModel: ["Channel 1", "Channel 2", "Channel 3", "Channel 4"]
         readonly property string dropdownLabel: "Channel Selection:"
-        readonly property string dropdownRowSuggestionText: "Enable with setting in \"System Monitor\" group."
+        readonly property string dropdownRowSuggestionText: "Enable in Settings Tab under the \"System Monitor\" group."
         readonly property int rowTextHeight: 30
         readonly property int rowTextMargins: 5
     }

@@ -25,7 +25,6 @@ Item {
 
         Text {
             text: Constants.advancedSpectrumAnalyzer.dropdownLabel
-            font.family: Constants.monoSpaceFont
             font.pointSize: Constants.largePointSize
             font.bold: true
             color: Constants.advancedSpectrumAnalyzer.titleColor
@@ -49,7 +48,6 @@ Item {
 
         Text {
             text: Constants.advancedSpectrumAnalyzer.dropdownRowSuggestionText
-            font.family: Constants.monoSpaceFont
             font.pointSize: Constants.largePointSize
             font.italic: true
             antialiasing: true

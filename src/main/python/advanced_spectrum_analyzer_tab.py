@@ -3,6 +3,7 @@
 
 from typing import Dict, List, Any
 
+from PySide2.QtCharts import QtCharts
 from PySide2.QtCore import Property, QObject, QPointF, Slot
 
 from constants import Keys, QTKeys
@@ -84,10 +85,9 @@ class AdvancedSpectrumAnalyzerPoints(QObject):
 
     points = Property(QTKeys.QVARIANTLIST, get_points, set_points)  # type: ignore
 
-    @Slot(list)  # type: ignore
+    @Slot(QtCharts.QXYSeries)  # type: ignore
     def fill_series(self, series):
-        for line in series:
-            line.replace(self._points)
+        series.replace(self._points)
 
 
 class AdvancedSpectrumAnalyzerModel(QObject):  # pylint: disable=too-few-public-methods

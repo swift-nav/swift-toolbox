@@ -8,7 +8,7 @@ import SwiftConsole 1.0
 Item {
     id: advancedSpectrumAnalyzerTab
 
-    property variant line: []
+    property variant line: null
 
     width: parent.width
     height: parent.height
@@ -100,13 +100,13 @@ Item {
                     if (!advancedSpectrumAnalyzerPoints.points.length)
                         return ;
 
-                    if (!line.length) {
+                    if (!line) {
                         var line_ = advancedSpectrumAnalyzerChart.createSeries(ChartView.SeriesTypeLine, 0, advancedSpectrumAnalyzerXAxis);
                         line_.color = Constants.advancedSpectrumAnalyzer.lineColors[0];
                         line_.width = Constants.commonChart.lineWidth;
                         line_.axisYRight = advancedSpectrumAnalyzerYAxis;
                         line_.useOpenGL = Globals.useOpenGL;
-                        line.push(line_);
+                        line = line_;
                     }
                     advancedSpectrumAnalyzerYAxis.min = advancedSpectrumAnalyzerPoints.ymin;
                     advancedSpectrumAnalyzerYAxis.max = advancedSpectrumAnalyzerPoints.ymax;

@@ -40,6 +40,7 @@ args = ["install-update", "taplo-cli", "cargo-make"]
 
 # Create 'test' alias
 [tasks.test]
+clear = true
 run_task = "tests"
 
 [tasks.poetry-export-dev]

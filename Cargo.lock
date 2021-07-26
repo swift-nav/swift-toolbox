@@ -1418,8 +1418,8 @@ dependencies = [
 
 [[package]]
 name = "sbp"
-version = "3.4.8-alpha"
-source = "git+https://github.com/swift-nav/libsbp.git?rev=ce5e3d14ae4284c53982bc3fd79a2fa15976ff9f#ce5e3d14ae4284c53982bc3fd79a2fa15976ff9f"
+version = "3.4.10-alpha"
+source = "git+https://github.com/swift-nav/libsbp.git?rev=83110eaca01c4fb1ec1500d578a1cbbaa2b8c788#83110eaca01c4fb1ec1500d578a1cbbaa2b8c788"
 dependencies = [
  "base64",
  "byteorder",

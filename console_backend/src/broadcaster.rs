@@ -6,8 +6,13 @@ use std::{
 };
 
 use crossbeam::channel;
-use sbp::messages::{ConcreteMessage, SBPMessage, SBP};
+use sbp::{
+    messages::{ConcreteMessage, SBPMessage, SBP},
+    time::{GpsTime, GpsTimeError},
+};
 use slotmap::HopSlotMap;
+
+type MaybeGpsTime = Option<Result<GpsTime, GpsTimeError>>;
 
 pub struct Broadcaster {
     channels: Arc<Mutex<HopSlotMap<KeyInner, Sender>>>,
@@ -22,12 +27,12 @@ impl Broadcaster {
         }
     }
 
-    pub fn send(&self, message: &SBP) {
+    pub fn send(&self, message: &SBP, gps_time: MaybeGpsTime) {
         let msg_type = message.get_message_type();
         let mut channels = self.channels.lock().expect(Self::CHANNELS_LOCK_FAILURE);
         channels.retain(|_, chan| {
             if chan.msg_types.iter().any(|ty| ty == &msg_type) {
-                chan.inner.send(message.clone()).is_ok()
+                chan.inner.send((message.clone(), gps_time.clone())).is_ok()
             } else {
                 true
             }
@@ -59,7 +64,7 @@ impl Broadcaster {
     }
 
     /// Wait once for a specific message. Returns an error if `dur` elapses.
-    pub fn wait<E>(&self, dur: Duration) -> Result<E, channel::RecvTimeoutError>
+    pub fn wait<E>(&self, dur: Duration) -> Result<(E, MaybeGpsTime), channel::RecvTimeoutError>
     where
         E: Event,
     {
@@ -84,13 +89,13 @@ impl Default for Broadcaster {
 
 /// A wrapper around a channel sender that knows what message types its receivers expect.
 struct Sender {
-    inner: channel::Sender<SBP>,
+    inner: channel::Sender<(SBP, MaybeGpsTime)>,
     msg_types: &'static [u16],
 }
 
 /// A wrapper around a channel receiver that converts to the appropriate event.
 pub struct Receiver<E> {
-    inner: channel::Receiver<SBP>,
+    inner: channel::Receiver<(SBP, MaybeGpsTime)>,
     marker: PhantomData<E>,
 }
 
@@ -107,27 +112,30 @@ impl<E> Receiver<E>
 where
     E: Event,
 {
-    pub fn recv(&self) -> Result<E, channel::RecvError> {
+    pub fn recv(&self) -> Result<(E, MaybeGpsTime), channel::RecvError> {
         let msg = self.inner.recv()?;
-        Ok(E::from_sbp(msg))
+        Ok((E::from_sbp(msg.0), msg.1))
     }
 
-    pub fn recv_timeout(&self, dur: Duration) -> Result<E, channel::RecvTimeoutError> {
+    pub fn recv_timeout(
+        &self,
+        dur: Duration,
+    ) -> Result<(E, MaybeGpsTime), channel::RecvTimeoutError> {
         let msg = self.inner.recv_timeout(dur)?;
-        Ok(E::from_sbp(msg))
+        Ok((E::from_sbp(msg.0), msg.1))
     }
 
-    pub fn try_recv(&self) -> Result<E, channel::TryRecvError> {
+    pub fn try_recv(&self) -> Result<(E, MaybeGpsTime), channel::TryRecvError> {
         let msg = self.inner.try_recv()?;
-        Ok(E::from_sbp(msg))
+        Ok((E::from_sbp(msg.0), msg.1))
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = E> + '_ {
-        self.inner.iter().map(E::from_sbp)
+    pub fn iter(&self) -> impl Iterator<Item = (E, MaybeGpsTime)> + '_ {
+        self.inner.iter().map(|msg| (E::from_sbp(msg.0), msg.1))
     }
 
-    pub fn try_iter(&self) -> impl Iterator<Item = E> + '_ {
-        self.inner.try_iter().map(E::from_sbp)
+    pub fn try_iter(&self) -> impl Iterator<Item = (E, MaybeGpsTime)> + '_ {
+        self.inner.try_iter().map(|msg| (E::from_sbp(msg.0), msg.1))
     }
 
     // other channel methods as needed
@@ -171,8 +179,8 @@ mod tests {
         let b = Broadcaster::new();
         let (msg_obs, _) = b.subscribe::<MsgObs>();
 
-        b.send(&make_msg_obs());
-        b.send(&make_msg_obs_dep_a());
+        b.send(&make_msg_obs(), None);
+        b.send(&make_msg_obs_dep_a(), None);
 
         assert!(msg_obs.try_recv().is_ok());
         assert!(msg_obs.try_recv().is_err());
@@ -184,8 +192,8 @@ mod tests {
         let (msg_obs1, _) = b.subscribe::<MsgObs>();
         let (msg_obs2, _) = b.subscribe::<MsgObs>();
 
-        b.send(&make_msg_obs());
-        b.send(&make_msg_obs());
+        b.send(&make_msg_obs(), None);
+        b.send(&make_msg_obs(), None);
 
         assert_eq!(msg_obs1.try_iter().count(), 2);
         assert_eq!(msg_obs2.try_iter().count(), 2);
@@ -198,13 +206,13 @@ mod tests {
         let (msg_obs1, key) = b.subscribe::<MsgObs>();
         let (msg_obs2, _) = b.subscribe::<MsgObs>();
 
-        b.send(&make_msg_obs());
+        b.send(&make_msg_obs(), None);
         assert_eq!(msg_obs1.try_iter().count(), 1);
         assert_eq!(msg_obs2.try_iter().count(), 1);
 
         b.unsubscribe(key);
 
-        b.send(&make_msg_obs());
+        b.send(&make_msg_obs(), None);
         assert_eq!(msg_obs1.try_iter().count(), 0);
         assert_eq!(msg_obs2.try_iter().count(), 1);
     }
@@ -226,9 +234,9 @@ mod tests {
 
             std::thread::sleep(Duration::from_secs(1));
 
-            b.send(&make_msg_obs());
-            b.send(&make_msg_obs_dep_a());
-            b.send(&make_msg_obs());
+            b.send(&make_msg_obs(), None);
+            b.send(&make_msg_obs_dep_a(), None);
+            b.send(&make_msg_obs(), None);
 
             // msg_obs.iter() goes forever if you don't drop the channel
             b.unsubscribe(key);
@@ -243,7 +251,7 @@ mod tests {
         scope(|s| {
             s.spawn(|_| {
                 std::thread::sleep(Duration::from_secs(1));
-                b.send(&make_msg_obs())
+                b.send(&make_msg_obs(), None)
             });
 
             assert!(b.wait::<MsgObs>(Duration::from_secs(2)).is_ok());
@@ -258,7 +266,7 @@ mod tests {
         scope(|s| {
             s.spawn(|_| {
                 std::thread::sleep(Duration::from_secs(2));
-                b.send(&make_msg_obs())
+                b.send(&make_msg_obs(), None)
             });
 
             assert!(b.wait::<MsgObs>(Duration::from_secs(1)).is_err());
@@ -273,8 +281,8 @@ mod tests {
         let (obs_msg, _) = b.subscribe::<ObsMsg>();
         let (msg_obs, _) = b.subscribe::<MsgObs>();
 
-        b.send(&make_msg_obs());
-        b.send(&make_msg_obs_dep_a());
+        b.send(&make_msg_obs(), None);
+        b.send(&make_msg_obs_dep_a(), None);
 
         // ObsMsg should accept both MsgObs and MsgObsDepA
         assert!(obs_msg.try_recv().is_ok());

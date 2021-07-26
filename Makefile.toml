@@ -26,6 +26,18 @@ init_task = "init"
 
 [tasks.init]
 
+[tasks.rustup-update]
+command = "rustup"
+args = ["update", "stable"]
+
+[tasks.cargo-make-deps-update]
+dependencies = ["rustup-update"]
+install_crate = { crate_name = "cargo-update", binary = "cargo-install-update", test_arg = [
+  "-V",
+], min_version = "7.0.1" }
+command = "cargo"
+args = ["install-update", "taplo-cli", "cargo-make"]
+
 # Create 'test' alias
 [tasks.test]
 run_task = "tests"
@@ -322,10 +334,10 @@ conda run -n $CONDA_ENV pylint --output-format=parseable $PYTHON_FILES
 '''
 
 [tasks.format-toml-check]
-# Note format-toml is part of cargo-make, and output make change depending
-# on the version of taplo-cli installed, and needs to be manually updated.
+# Note format-toml task is defined by cargo-make to use crate taplo-cli, but the version is
+# unspecified.  Task cargo-make-deps-update keeps the dev version in sync with CI.
 # https://github.com/sagiegurari/cargo-make/issues/571
-dependencies = ["format-toml"]
+dependencies = ["cargo-make-deps-update", "format-toml"]
 run_task = "check-git-diff"
 
 [tasks.format-all]
@@ -352,6 +364,7 @@ dependencies = ["python-type-check", "rust-type-check"]
 
 [tasks.check-all]
 dependencies = [
+  "cargo-make-deps-update",
   "poetry-export",
   "pip-install-dev",
   "generate-common-constants-rs",

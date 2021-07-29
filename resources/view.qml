@@ -13,71 +13,88 @@ ApplicationWindow {
         visible = true;
     }
 
-    ColumnLayout {
+    RowLayout {
         anchors.fill: parent
-        spacing: Constants.topLevelSpacing
 
-        SplitView {
-            orientation: Qt.Vertical
-            Layout.fillWidth: true
+        SideNavBar {
+            id: sideNavBar
+
             Layout.fillHeight: true
-            Layout.leftMargin: Constants.margins
-            Layout.rightMargin: Constants.margins
-            Layout.alignment: Qt.AlignTop
+            Layout.minimumWidth: Constants.sideNavBar.tabBarWidth
+        }
 
-            MainTabs {
-                SplitView.fillHeight: true
-                SplitView.fillWidth: true
+        ColumnLayout {
+            Layout.fillHeight: true
+            Layout.fillWidth: true
+            spacing: Constants.topLevelSpacing
+
+            SplitView {
+                orientation: Qt.Vertical
+                Layout.fillWidth: true
+                Layout.fillHeight: true
                 Layout.leftMargin: Constants.margins
                 Layout.rightMargin: Constants.margins
-            }
+                Layout.alignment: Qt.AlignTop
 
-            Rectangle {
-                id: consoleLog
+                MainTabs {
+                    id: mainTabs
 
-                SplitView.fillWidth: true
-                SplitView.preferredHeight: Constants.logPanelPreferredHeight
+                    property alias curIndex: sideNavBar.curIndex
 
-                LogPanel {
+                    SplitView.fillHeight: true
+                    SplitView.fillWidth: true
+                    Layout.leftMargin: Constants.margins
+                    Layout.rightMargin: Constants.margins
+                }
+
+                Rectangle {
+                    id: consoleLog
+
+                    SplitView.fillWidth: true
+                    SplitView.preferredHeight: Constants.logPanelPreferredHeight
+
+                    LogPanel {
+                    }
+
                 }
 
             }
 
-        }
+            Rectangle {
+                id: loggingBar
 
-        Rectangle {
-            id: loggingBar
+                Layout.fillWidth: true
+                Layout.preferredHeight: Constants.navBarPreferredHeight
+                z: Constants.commonChart.zAboveCharts
+                visible: false
 
-            Layout.fillWidth: true
-            Layout.preferredHeight: Constants.navBarPreferredHeight
-            z: Constants.commonChart.zAboveCharts
-            visible: false
+                LoggingBar {
+                }
 
-            LoggingBar {
             }
 
-        }
+            Rectangle {
+                id: navBar
 
-        Rectangle {
-            id: navBar
+                Layout.fillWidth: true
+                Layout.preferredHeight: Constants.navBarPreferredHeight
+                z: Constants.commonChart.zAboveCharts
 
-            Layout.fillWidth: true
-            Layout.preferredHeight: Constants.navBarPreferredHeight
-            z: Constants.commonChart.zAboveCharts
+                NavBar {
+                }
 
-            NavBar {
             }
 
-        }
+            Rectangle {
+                id: statusBar
 
-        Rectangle {
-            id: statusBar
+                Layout.fillWidth: true
+                Layout.preferredHeight: Constants.statusBarPreferredHeight
+                z: Constants.commonChart.zAboveCharts
 
-            Layout.fillWidth: true
-            Layout.preferredHeight: Constants.statusBarPreferredHeight
-            z: Constants.commonChart.zAboveCharts
+                StatusBar {
+                }
 
-            StatusBar {
             }
 
         }

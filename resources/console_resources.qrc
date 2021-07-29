@@ -5,6 +5,7 @@
     <file>fonts/Roboto-Bold.ttf</file>
     <file>view.qml</file>
     <file>MainTabs.qml</file>
+    <file>SideNavBar.qml</file>
     <file>NavBar.qml</file>
     <file>LogPanel.qml</file>
     <file>LoggingBar.qml</file>
@@ -35,6 +36,7 @@
     <file>ObservationTabComponents/ObservationTable.qml</file>
     <file>images/iconic/arrows_blue.png</file>
     <file>images/iconic/arrows_grey.png</file>
+    <file>images/fontawesome/bars-solid.svg</file>
     <file>images/fontawesome/play-solid.svg</file>
     <file>images/fontawesome/power-off-solid.svg</file>
     <file>images/fontawesome/pause-solid.svg</file>
@@ -43,5 +45,12 @@
     <file>images/fontawesome/square-solid.svg</file>
     <file>images/fontawesome/exclamation-triangle-solid.svg</file>
     <file>images/fontawesome/circle-solid.svg</file>
+    <file>images/fontawesome/satellite-solid.svg</file>
+    <file>images/fontawesome/map-marker-alt-solid.svg</file>
+    <file>images/fontawesome/braille-solid.svg</file>
+    <file>images/fontawesome/table-solid.svg</file>
+    <file>images/fontawesome/cogs-solid.svg</file>
+    <file>images/fontawesome/chevron-circle-up-solid.svg</file>
+    <file>images/fontawesome/lock-solid.svg</file>
 </qresource>
 </RCC>

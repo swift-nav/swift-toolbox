@@ -13,193 +13,197 @@ env:
   RUST_CACHE_DIRS: "~/.cargo/registry\n~/.cargo/git\ntarget\n"
   LIBCLANG_PATH_WIN: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
   CARGO_MAKE_VERSION: 0.35.0
+  CONDA_BASE_VERSION: "3.8"
 
 jobs:
 
-  backend_bench:
+  # backend_bench:
 
-    name: Backend Benchmarks
+  #   name: Backend Benchmarks
 
-    strategy:
-      matrix:
-        os:
-          - ubuntu-18.04
-          - macos-10.15
-          - windows-2019
+  #   strategy:
+  #     matrix:
+  #       os:
+  #         # - ubuntu-18.04
+  #         # - macos-10.15
+  #         - windows-2019
 
-    runs-on: ${{ matrix.os }}
+  #   runs-on: ${{ matrix.os }}
 
-    steps:
+  #   steps:
 
-      - name: Checkout source
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
-          ssh-key: ${{ secrets.SSH_KEY }}
-          ssh-strict: false
+  #     - name: Checkout source
+  #       uses: actions/checkout@v2
+  #       with:
+  #         submodules: recursive
+  #         ssh-key: ${{ secrets.SSH_KEY }}
+  #         ssh-strict: false
 
-      - uses: webfactory/ssh-agent@v0.5.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_KEY }}
+  #     - uses: webfactory/ssh-agent@v0.5.0
+  #       with:
+  #         ssh-private-key: ${{ secrets.SSH_KEY }}
 
-      - name: Run ssh-keyscan
-        run: ssh-keyscan github.com >> ~/.ssh/known_hosts
+  #     - name: Run ssh-keyscan
+  #       run: ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-      - name: Setup SSH for Windows Git LFS
-        run: |
-          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
-          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
-        if: matrix.os == 'windows-2019'
+  #     - name: Setup SSH for Windows Git LFS
+  #       run: |
+  #         & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
+  #         & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
+  #       if: matrix.os == 'windows-2019'
 
-      - name: Install ${{ runner.os }} Dependencies.
-        shell: bash
-        run: |
-          if [ "$RUNNER_OS" == "Linux" ]; then
-              sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
-          elif [ "$RUNNER_OS" == "macOS" ]; then
-              brew install capnp llvm
-          elif [ "$RUNNER_OS" == "Windows" ]; then
-              choco install -y capnproto
-          fi
+  #     - name: Install ${{ runner.os }} Dependencies.
+  #       shell: bash
+  #       run: |
+  #         if [ "$RUNNER_OS" == "Linux" ]; then
+  #             sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
+  #         elif [ "$RUNNER_OS" == "macOS" ]; then
+  #             brew install capnp llvm
+  #         elif [ "$RUNNER_OS" == "Windows" ]; then
+  #             choco install -y capnproto
+  #         fi
 
-      - name: Pull Git LFS objects
-        run: git lfs pull
-        env:
-          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
+  #     - name: Pull Git LFS objects
+  #       run: git lfs pull
+  #       env:
+  #         GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
 
-      - name: Install stable Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
+  #     - name: Install stable Rust
+  #       uses: actions-rs/toolchain@v1
+  #       with:
+  #         toolchain: stable
+  #         override: true
 
-      - name: Cache rust.
-        uses: actions/cache@v2
-        with:
-          path: |
-            ${{ env.RUST_CACHE_DIRS }}
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock', '**/console_backend.capnp') }}
+  #     - name: Cache rust.
+  #       uses: actions/cache@v2
+  #       with:
+  #         path: |
+  #           ${{ env.RUST_CACHE_DIRS }}
+  #         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock', '**/console_backend.capnp') }}
 
-      - uses: davidB/rust-cargo-make@v1
-        with:
-          version: ${{ env.CARGO_MAKE_VERSION }}
+  #     - uses: davidB/rust-cargo-make@v1
+  #       with:
+  #         version: ${{ env.CARGO_MAKE_VERSION }}
 
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          activate-environment: console_pp
-          environment-file: conda.yml
+  #     - uses: conda-incubator/setup-miniconda@v2
+  #       with:
+  #         activate-environment: console_pp
+  #         environment-file: conda.yml
+  #         # python-version: ${{ env.CONDA_BASE_VERSION }}
 
-      - name: Cache pip
-        uses: actions/cache@v2
-        with:
-          path: ${{ env.PIP_CACHE_DIR }}
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-            ${{ runner.os }}-
+  #     - name: Cache pip
+  #       uses: actions/cache@v2
+  #       with:
+  #         path: ${{ env.PIP_CACHE_DIR }}
+  #         key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
+  #         restore-keys: |
+  #           ${{ runner.os }}-pip-
+  #           ${{ runner.os }}-
 
-      - name: Run Pip Install
-        run: |
-          cargo make pip-install-dev
+  #     - name: Run Pip Install
+  #       run: |
+  #         cargo make pip-install-dev
 
-      - name: Run Backend Benchmarks (Windows)
-        env:
-          LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
-        run: |
-          cargo make backend-benches
-        if: matrix.os == 'windows-2019'
+  #     - name: Run Backend Benchmarks (Windows)
+  #       env:
+  #         LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
+  #       run: |
+  #         cargo make backend-benches
+  #       if: matrix.os == 'windows-2019'
 
-      - name: Run Backend Benchmarks
-        run: |
-          cargo make backend-benches
-        if: matrix.os != 'windows-2019'
+  #     - name: Run Backend Benchmarks
+  #       run: |
+  #         cargo make backend-benches
+  #       if: matrix.os != 'windows-2019'
 
-  checks:
+  # checks:
 
-    name: Code Quality Checks
+  #   name: Code Quality Checks
 
-    runs-on: ubuntu-18.04
+  #   runs-on: ubuntu-18.04
 
-    steps:
+  #   steps:
 
-      - name: Checkout source
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
-          ssh-key: ${{ secrets.SSH_KEY }}
-          ssh-strict: false
+  #     - name: Checkout source
+  #       uses: actions/checkout@v2
+  #       with:
+  #         submodules: recursive
+  #         ssh-key: ${{ secrets.SSH_KEY }}
+  #         ssh-strict: false
 
-      - uses: webfactory/ssh-agent@v0.5.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_KEY }}
+  #     - uses: webfactory/ssh-agent@v0.5.0
+  #       with:
+  #         ssh-private-key: ${{ secrets.SSH_KEY }}
 
-      - name: Pull Git LFS objects
-        run: git lfs pull
-        env:
-          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
+  #     - name: Pull Git LFS objects
+  #       run: git lfs pull
+  #       env:
+  #         GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
 
-      - name: Install stable Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          components: rustfmt, clippy
+  #     - name: Install stable Rust
+  #       uses: actions-rs/toolchain@v1
+  #       with:
+  #         toolchain: stable
+  #         override: true
+  #         components: rustfmt, clippy
 
-      - name: Cache rust.
-        uses: actions/cache@v2
-        with:
-          path: |
-            ${{ env.RUST_CACHE_DIRS }}
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+  #     - name: Cache rust.
+  #       uses: actions/cache@v2
+  #       with:
+  #         path: |
+  #           ${{ env.RUST_CACHE_DIRS }}
+  #         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - uses: davidB/rust-cargo-make@v1
-        with:
-          version: ${{ env.CARGO_MAKE_VERSION }}
+  #     - uses: davidB/rust-cargo-make@v1
+  #       with:
+  #         version: ${{ env.CARGO_MAKE_VERSION }}
 
-      - name: Install Dependencies.
-        run: |
-          sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
+  #     - name: Install Dependencies.
+  #       run: |
+  #         sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
 
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          activate-environment: console_pp
-          environment-file: conda.yml
+  #     - uses: conda-incubator/setup-miniconda@v2
+  #       with:
+  #         activate-environment: console_pp
+  #         environment-file: conda.yml
+  #         auto-activate-base: false
+  #         python-version: ${{ env.CONDA_BASE_VERSION }}
 
-      - name: Run Requirements Generation Check
-        run: |
-          cargo make poetry-export
-          git diff --exit-code
+  #     - name: Run Requirements Generation Check
+  #       run: |
+  #         cargo make poetry-export
+  #         git diff --exit-code
 
-      - name: Cache pip
-        uses: actions/cache@v2
-        with:
-          path: ${{ env.PIP_CACHE_DIR }}
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-            ${{ runner.os }}-
+  #     - name: Cache pip
+  #       uses: actions/cache@v2
+  #       with:
+  #         path: ${{ env.PIP_CACHE_DIR }}
+  #         key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
+  #         restore-keys: |
+  #           ${{ runner.os }}-pip-
+  #           ${{ runner.os }}-
 
-      - name: Run Checks
-        run: |
-          cargo make check-all
+  #     - name: Run Checks
+  #       run: |
+  #         cargo make check-all
 
-      - name: Run Tests
-        run: |
-          cargo make tests
+  #     - name: Run Tests
+  #       run: |
+  #         cargo make tests
 
   build:
 
     name: Build Binaries
 
-    needs:
-      - checks
-      - backend_bench
+    # needs:
+    #   # - checks
+    #   # - backend_bench
 
     strategy:
       matrix:
         os:
-          - ubuntu-18.04
-          - macos-10.15
+          # - ubuntu-18.04
+          # - macos-10.15
           - windows-2019
 
     runs-on: ${{ matrix.os }}
@@ -281,6 +285,16 @@ jobs:
         with:
           activate-environment: console_pp
           environment-file: conda.yml
+          python-version: ${{ env.CONDA_BASE_VERSION }}
+          auto-activate-base: false
+          # miniconda-version: 'py38_4.10.3'
+
+      - name: Build ${{ runner.os }} Binaries.
+        shell: bash
+        run: |
+          conda run -n console_pp python --version
+          exit
+        
 
       - name: Cache pip
         uses: actions/cache@v2
@@ -346,9 +360,9 @@ jobs:
     strategy:
       matrix:
         os:
-          - macOS
+          # - macOS
           - Windows
-          - Linux
+          # - Linux
     runs-on: [self-hosted, '${{ matrix.os }}']
     steps:
       - name: Remove previous build.

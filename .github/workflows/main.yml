@@ -13,6 +13,7 @@ env:
   RUST_CACHE_DIRS: "~/.cargo/registry\n~/.cargo/git\ntarget\n"
   LIBCLANG_PATH_WIN: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
   CARGO_MAKE_VERSION: 0.35.0
+  MINICONDA_VERSION: "py38_4.10.3"
 
 jobs:
 
@@ -88,6 +89,7 @@ jobs:
         with:
           activate-environment: console_pp
           environment-file: conda.yml
+          miniconda-version: ${{ env.MINICONDA_VERSION }}
 
       - name: Cache pip
         uses: actions/cache@v2
@@ -164,6 +166,7 @@ jobs:
         with:
           activate-environment: console_pp
           environment-file: conda.yml
+          miniconda-version: ${{ env.MINICONDA_VERSION }}
 
       - name: Run Requirements Generation Check
         run: |
@@ -281,6 +284,7 @@ jobs:
         with:
           activate-environment: console_pp
           environment-file: conda.yml
+          miniconda-version: ${{ env.MINICONDA_VERSION }}
 
       - name: Cache pip
         uses: actions/cache@v2

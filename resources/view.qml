@@ -13,7 +13,13 @@ ApplicationWindow {
         visible = true;
     }
 
+    MainDrawer {
+        id: mainDrawer
+    }
+
     RowLayout {
+        property alias drawer: mainDrawer.drawer
+
         anchors.fill: parent
 
         SideNavBar {

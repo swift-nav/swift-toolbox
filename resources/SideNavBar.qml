@@ -1,37 +1,37 @@
 import "Constants"
-import "Constants/utils.js" as Utils
 import QtQuick 2.5
 import QtQuick.Controls 2.3
 import SwiftConsole 1.0
 
 Rectangle {
     property alias curIndex: tab.currentIndex
+    property var drawer: parent.drawer
     property var tabModel: [{
-        "title": "Tracking",
+        "name": "Tracking",
         "tooltip": "Tracking",
         "source": Constants.sideNavBar.trackingPath
     }, {
-        "title": "Solution",
+        "name": "Solution",
         "tooltip": "Solution",
         "source": Constants.sideNavBar.solutionPath
     }, {
-        "title": "Baseline",
+        "name": "Baseline",
         "tooltip": "Baseline",
         "source": Constants.sideNavBar.baselinePath
     }, {
-        "title": "Obs ",
+        "name": "Obs ",
         "tooltip": "Observations",
         "source": Constants.sideNavBar.observationsPath
     }, {
-        "title": "Settings",
+        "name": "Settings",
         "tooltip": "Settings",
         "source": Constants.sideNavBar.settingsPath
     }, {
-        "title": "Update",
+        "name": "Update",
         "tooltip": "Update",
         "source": Constants.sideNavBar.updatePath
     }, {
-        "title": "Advanced",
+        "name": "Advanced",
         "tooltip": "Advanced",
         "source": Constants.sideNavBar.advancedPath
     }]
@@ -60,6 +60,7 @@ Rectangle {
             rightInset: Constants.sideNavBar.buttonInset
             leftInset: Constants.sideNavBar.buttonInset
             onClicked: {
+                drawer.open();
             }
         }
 
@@ -69,7 +70,7 @@ Rectangle {
             model: tabModel
 
             TabButton {
-                text: modelData.title
+                text: modelData.name
                 width: Constants.sideNavBar.tabBarWidth
                 anchors.horizontalCenter: parent.horizontalCenter
                 icon.source: modelData.source

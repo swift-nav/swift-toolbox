@@ -1,9 +1,5 @@
 import "Constants"
-// import QtCharts 2.2
 import QtQuick 2.5
-// import QtGraphicalEffects 1.15
-// import QtLocation 5.15
-// import QtQuick.Controls 2.5
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 

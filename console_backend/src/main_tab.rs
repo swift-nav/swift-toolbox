@@ -265,19 +265,16 @@ mod tests {
     use tempfile::TempDir;
 
     struct GpsTimeTests {
-        pub zero_week: i16,
         pub good_week: i16,
         pub early_gps_tow_good: f64,
         pub later_gps_tow_good: f64,
     }
     impl GpsTimeTests {
         fn new() -> GpsTimeTests {
-            let zero_week: i16 = 0;
             let good_week: i16 = 2000;
             let early_gps_tow_good: f64 = 5432.0;
             let later_gps_tow_good: f64 = 5433.0;
             GpsTimeTests {
-                zero_week,
                 good_week,
                 early_gps_tow_good,
                 later_gps_tow_good,

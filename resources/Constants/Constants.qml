@@ -7,6 +7,7 @@ QtObject {
     readonly property int width: 1050
     readonly property int height: 600
     readonly property real margins: 2
+    readonly property real tabBarWidth: 70
     readonly property real tabBarHeight: 40
     readonly property real topLevelSpacing: 0
     readonly property real logPanelPreferredHeight: 100
@@ -16,6 +17,7 @@ QtObject {
     property QtObject navBar
     property QtObject sideNavBar
     property QtObject loggingBar
+    property QtObject licensesPopup
     property QtObject commonChart
     property QtObject commonLegend
     property QtObject commonTable
@@ -54,6 +56,15 @@ QtObject {
         readonly property int tabBarSpacing: 10
         readonly property int buttonPadding: 0
         readonly property int buttonInset: 0
+    }
+
+    licensesPopup: QtObject {
+        readonly property real tabBarHeight: 40
+        readonly property real dialogPopupHeightPadding: 100
+        readonly property string robotoFontTabLabel: "Roboto Font"
+        readonly property string fontAwesomeIconsTabLabel: "Font Awesome Icons"
+        readonly property string robotoFontLicensePath: "../fonts/Roboto-LICENSE.txt"
+        readonly property string fontAwesomeIconsLicensePath: "../images/fontawesome/LICENSE.txt"
     }
 
     statusBar: QtObject {

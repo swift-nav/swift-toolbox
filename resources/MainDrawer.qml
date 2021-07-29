@@ -6,6 +6,7 @@ import SwiftConsole 1.0
 
 Item {
     property alias drawer: sideDrawer
+    property var stackView: parent.stackView
 
     Drawer {
         id: sideDrawer
@@ -29,6 +30,7 @@ Item {
                 text: model.name
                 onClicked: {
                     drawerItems.currentIndex = index;
+                    stackView.push(model.source);
                     sideDrawer.close();
                 }
             }
@@ -40,6 +42,7 @@ Item {
 
                 ListElement {
                     name: "License"
+                    source: "MainDrawerComponents/LicensesPopup.qml"
                 }
 
                 ListElement {

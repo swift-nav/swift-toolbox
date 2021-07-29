@@ -44,9 +44,7 @@ Rectangle {
         contentHeight: Constants.sideNavBar.tabBarHeight
         contentWidth: Constants.sideNavBar.tabBarWidth
         currentIndex: Globals.initialMainTabIndex + 1
-        spacing: Constants.sideNavBar.tabBarSpacing
         Component.onCompleted: {
-            tab.contentItem.orientation = ListView.Vertical;
             hamburger.checkable = false;
         }
 
@@ -84,6 +82,13 @@ Rectangle {
                 ToolTip.text: modelData.tooltip
             }
 
+        }
+
+        contentItem: ListView {
+            model: tab.contentModel
+            currentIndex: tab.currentIndex
+            spacing: Constants.sideNavBar.tabBarSpacing
+            orientation: ListView.Vertical
         }
 
     }

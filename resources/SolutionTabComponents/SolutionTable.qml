@@ -13,7 +13,6 @@ Item {
 
     width: parent.width
     height: parent.height
-    visible: false
 
     SolutionTableEntries {
         id: solutionTableEntries
@@ -160,11 +159,6 @@ Item {
                 if (!solutionTab.visible)
                     return ;
 
-                solution_table_model.fill_console_points(solutionTableEntries);
-                if (!solutionTableEntries.entries.length)
-                    return ;
-
-                solutionTable.visible = true;
                 if (solutionTableElementHeaders.model.rows.length == 0) {
                     var new_row = {
                     };
@@ -172,6 +166,16 @@ Item {
                     new_row[Constants.solutionTable.tableRightColumnHeader] = Constants.solutionTable.tableRightColumnHeader;
                     solutionTableElementHeaders.model.rows = [new_row];
                 }
+                var new_width = solutionTableArea.width - Constants.solutionTable.defaultColumnWidth;
+                if (columnWidths[1] != new_width) {
+                    columnWidths[1] = solutionTableArea.width - Constants.solutionTable.defaultColumnWidth;
+                    solutionTableElement.forceLayout();
+                    solutionTableElementHeaders.forceLayout();
+                }
+                solution_table_model.fill_console_points(solutionTableEntries);
+                if (!solutionTableEntries.entries.length)
+                    return ;
+
                 var entries = solutionTableEntries.entries;
                 var table_update = [];
                 for (var idx in entries) {
@@ -182,12 +186,6 @@ Item {
                     table_update.push(new_row);
                 }
                 solutionTableElement.model.rows = table_update;
-                var new_width = solutionTableArea.width - Constants.solutionTable.defaultColumnWidth;
-                if (columnWidths[1] != new_width) {
-                    columnWidths[1] = solutionTableArea.width - Constants.solutionTable.defaultColumnWidth;
-                    solutionTableElement.forceLayout();
-                    solutionTableElementHeaders.forceLayout();
-                }
             }
         }
 

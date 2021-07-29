@@ -12,7 +12,6 @@ Item {
 
     width: parent.width
     height: parent.height
-    visible: false
 
     BaselineTableEntries {
         id: baselineTableEntries
@@ -98,7 +97,6 @@ Item {
                 if (!baselineTableEntries.entries.length)
                     return ;
 
-                baselineTable.visible = true;
                 var entries = baselineTableEntries.entries;
                 for (var idx in entries) {
                     var new_row = {

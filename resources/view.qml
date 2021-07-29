@@ -13,14 +13,21 @@ ApplicationWindow {
         visible = true;
     }
 
-    MainDrawer {
-        id: mainDrawer
+    MainDialogView {
+        id: dialogStack
+
+        anchors.fill: parent
     }
 
     RowLayout {
         property alias drawer: mainDrawer.drawer
+        property alias stackView: dialogStack.dialogStack
 
         anchors.fill: parent
+
+        MainDrawer {
+            id: mainDrawer
+        }
 
         SideNavBar {
             id: sideNavBar

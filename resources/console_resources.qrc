@@ -1,10 +1,12 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
     <file>qtquickcontrols2.conf</file>
+    <file>fonts/Roboto-LICENSE.txt</file>
     <file>fonts/Roboto-Regular.ttf</file>
     <file>fonts/Roboto-Bold.ttf</file>
     <file>view.qml</file>
     <file>MainDrawer.qml</file>
+    <file>MainDialogView.qml</file>
     <file>MainTabs.qml</file>
     <file>SideNavBar.qml</file>
     <file>NavBar.qml</file>
@@ -37,8 +39,10 @@
     <file>ObservationTab.qml</file>
     <file>ObservationTabComponents/observation_tab.js</file>
     <file>ObservationTabComponents/ObservationTable.qml</file>
+    <file>MainDrawerComponents/LicensesPopup.qml</file>
     <file>images/iconic/arrows_blue.png</file>
     <file>images/iconic/arrows_grey.png</file>
+    <file>images/fontawesome/LICENSE.txt</file>
     <file>images/fontawesome/bars-solid.svg</file>
     <file>images/fontawesome/play-solid.svg</file>
     <file>images/fontawesome/power-off-solid.svg</file>

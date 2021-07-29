@@ -55,6 +55,12 @@ from advanced_magnetometer_tab import (
     ADVANCED_MAGNETOMETER_TAB,
 )
 
+from advanced_spectrum_analyzer_tab import (
+    AdvancedSpectrumAnalyzerModel,
+    AdvancedSpectrumAnalyzerPoints,
+    ADVANCED_SPECTRUM_ANALYZER_TAB,
+)
+
 from fusion_status_flags import (
     FusionStatusFlagsModel,
     FusionStatusFlagsData,
@@ -241,6 +247,15 @@ def receive_messages(app_, backend, messages):
                 [QPointF(point.x, point.y) for point in m.advancedInsStatus.data[idx]]
                 for idx in range(len(m.advancedInsStatus.data))
             ]
+        elif m.which == Message.Union.AdvancedSpectrumAnalyzerStatus:
+            ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.CHANNEL] = m.advancedSpectrumAnalyzerStatus.channel
+            ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.POINTS][:] = [
+                QPointF(point.x, point.y) for point in m.advancedSpectrumAnalyzerStatus.data
+            ]
+            ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.YMAX] = m.advancedSpectrumAnalyzerStatus.ymax
+            ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.YMIN] = m.advancedSpectrumAnalyzerStatus.ymin
+            ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.XMAX] = m.advancedSpectrumAnalyzerStatus.xmax
+            ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.XMIN] = m.advancedSpectrumAnalyzerStatus.xmin
         elif m.which == Message.Union.AdvancedMagnetometerStatus:
             ADVANCED_MAGNETOMETER_TAB[Keys.YMAX] = m.advancedMagnetometerStatus.ymax
             ADVANCED_MAGNETOMETER_TAB[Keys.YMIN] = m.advancedMagnetometerStatus.ymin
@@ -408,6 +423,15 @@ class DataModel(QObject):
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
 
+    @Slot(int)  # type: ignore
+    def advanced_spectrum_analyzer_channel(self, channel: int) -> None:
+        Message = self.messages.Message
+        m = Message()
+        m.advancedSpectrumAnalyzerStatusFront = m.init(Message.Union.AdvancedSpectrumAnalyzerStatusFront)
+        m.advancedSpectrumAnalyzerStatusFront.channel = channel
+        buffer = m.to_bytes()
+        self.endpoint.send_message(buffer)
+
     @Slot(str)  # type: ignore
     def solution_position_unit(self, unit: str) -> None:
         Message = self.messages.Message
@@ -519,6 +543,9 @@ if __name__ == "__main__":
     qmlRegisterType(LoggingBarData, "SwiftConsole", 1, 0, "LoggingBarData")  # type: ignore
     qmlRegisterType(AdvancedInsPoints, "SwiftConsole", 1, 0, "AdvancedInsPoints")  # type: ignore
     qmlRegisterType(AdvancedMagnetometerPoints, "SwiftConsole", 1, 0, "AdvancedMagnetometerPoints")  # type: ignore
+    qmlRegisterType(
+        AdvancedSpectrumAnalyzerPoints, "SwiftConsole", 1, 0, "AdvancedSpectrumAnalyzerPoints"  # type: ignore
+    )
     qmlRegisterType(FusionStatusFlagsData, "SwiftConsole", 1, 0, "FusionStatusFlagsData")  # type: ignore
     qmlRegisterType(BaselinePlotPoints, "SwiftConsole", 1, 0, "BaselinePlotPoints")  # type: ignore
     qmlRegisterType(BaselineTableEntries, "SwiftConsole", 1, 0, "BaselineTableEntries")  # type: ignore
@@ -547,6 +574,7 @@ if __name__ == "__main__":
     nav_bar_model = NavBarModel()
     advanced_ins_model = AdvancedInsModel()
     advanced_magnetometer_model = AdvancedMagnetometerModel()
+    advanced_spectrum_analyzer_model = AdvancedSpectrumAnalyzerModel()
     fusion_engine_flags_model = FusionStatusFlagsModel()
     baseline_plot_model = BaselinePlotModel()
     baseline_table_model = BaselineTableModel()
@@ -563,6 +591,7 @@ if __name__ == "__main__":
     root_context.setContextProperty("nav_bar_model", nav_bar_model)
     root_context.setContextProperty("advanced_ins_model", advanced_ins_model)
     root_context.setContextProperty("advanced_magnetometer_model", advanced_magnetometer_model)
+    root_context.setContextProperty("advanced_spectrum_analyzer_model", advanced_spectrum_analyzer_model)
     root_context.setContextProperty("fusion_engine_flags_model", fusion_engine_flags_model)
     root_context.setContextProperty("baseline_plot_model", baseline_plot_model)
     root_context.setContextProperty("baseline_table_model", baseline_table_model)

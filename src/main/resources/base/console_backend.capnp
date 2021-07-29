@@ -166,6 +166,15 @@ struct FusionStatusFlagsStatus {
     zerovel @5 :Text;
 }
 
+struct AdvancedSpectrumAnalyzerStatus {
+    ymin @0 :Float32;
+    ymax @1 :Float32;
+    xmin @2 :Float32;
+    xmax @3 :Float32;
+    data @4 :List(Point);
+    channel @5 : UInt16;
+}
+
 struct LoggingBarFront {
     csvLogging @0 :Bool;
     sbpLogging @1 :Text;
@@ -178,12 +187,20 @@ struct LoggingBarStatus {
     sbpLogging @2 :Text;
 }
 
+struct AdvancedSpectrumAnalyzerFront {
+    channel @0 :UInt16;
+}
+
 struct TrackingSignalsStatusFront {
     trackingSignalsCheckVisibility @0 :List(Text);
 }
 
 struct SolutionVelocityStatusFront {
     solutionVelocityUnit @0 :Text;
+}
+
+struct AdvancedSpectrumAnalyzerStatusFront {
+    channel @0 :UInt16;
 }
 
 struct SolutionPositionStatusUnitFront {
@@ -237,5 +254,7 @@ struct Message {
         baselinePlotStatus @26 :BaselinePlotStatus;
         baselineTableStatus @27 :BaselineTableStatus;
         baselinePlotStatusButtonFront @28 :BaselinePlotStatusButtonFront;
+        advancedSpectrumAnalyzerStatus @29:AdvancedSpectrumAnalyzerStatus;
+        advancedSpectrumAnalyzerStatusFront @30:AdvancedSpectrumAnalyzerStatusFront;
     }
 }

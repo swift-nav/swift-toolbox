@@ -21,6 +21,7 @@ QtObject {
     property QtObject commonTable
     property QtObject advancedIns
     property QtObject advancedMagnetometer
+    property QtObject advancedSpectrumAnalyzer
     property QtObject baselinePlot
     property QtObject baselineTable
     property QtObject solutionPosition
@@ -125,6 +126,25 @@ QtObject {
         readonly property int yAxisTickCount: 20
         readonly property int legendBottomMargin: 60
         readonly property int legendLeftMargin: 50
+    }
+
+    advancedSpectrumAnalyzer: QtObject {
+        readonly property string title: "Spectrum Analyzer"
+        readonly property color titleColor: "#00006E"
+        readonly property int titlePointSize: 14
+        readonly property var lineColors: ["#000000"]
+        readonly property int xAxisTickCount: 10
+        readonly property real yAxisTickCount: 2.5
+        readonly property string yAxisTitleText: "Amplitude (dB)"
+        readonly property string xAxisTitleText: "Frequency (MHz)"
+        readonly property int dropdownRowHeight: 35
+        readonly property int dropdownHeight: 35
+        readonly property int dropdownWidth: 100
+        readonly property var dropdownModel: ["Channel 1", "Channel 2", "Channel 3", "Channel 4"]
+        readonly property string dropdownLabel: "Channel Selection:"
+        readonly property string dropdownRowSuggestionText: "Enable in Settings Tab under the \"System Monitor\" group."
+        readonly property int rowTextHeight: 30
+        readonly property int rowTextMargins: 5
     }
 
     advancedIns: QtObject {

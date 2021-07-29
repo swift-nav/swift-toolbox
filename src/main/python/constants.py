@@ -96,6 +96,9 @@ class Keys(str, Enum):
     YMIN = "YMIN"
     YMAX = "YMAX"
     LOG_LEVEL = "LOG_LEVEL"
+    CHANNEL = "CHANNEL"
+    XMIN = "XMIN"
+    XMAX = "XMAX"
 
 
 class ApplicationStates(str, Enum):

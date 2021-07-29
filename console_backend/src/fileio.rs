@@ -115,7 +115,7 @@ where
                         pending.insert(sequence, request);
                     },
                     recv(res_rx) -> msg => {
-                        let msg = msg?;
+                        let (msg, _) = msg?;
                         let req = match pending.remove(&msg.sequence) {
                             Some(req) => req,
                             None => continue,
@@ -243,7 +243,7 @@ where
                         pending.insert(req_state.sequence, (req_state, req));
                     },
                     recv(res_rx) -> msg => {
-                        let msg = msg?;
+                        let (msg, _) = msg?;
                         if pending.remove(&msg.sequence).is_none() {
                             continue
                         }
@@ -284,7 +284,7 @@ where
                 dirname: path.clone().into(),
             }))?;
 
-            let reply = self
+            let (reply, _) = self
                 .broadcast
                 .wait::<MsgFileioReadDirResp>(READDIR_TIMEOUT)?;
 
@@ -341,7 +341,7 @@ where
             let config = self
                 .broadcast
                 .wait::<MsgFileioConfigResp>(CONFIG_REQ_TIMEOUT)
-                .map_or_else(|_| Default::default(), Into::into);
+                .map_or_else(|_| Default::default(), |(msg, _)| FileioConfig::new(msg));
 
             tx.send(true).unwrap();
 
@@ -487,9 +487,9 @@ struct FileioConfig {
     batch_size: u32,
 }
 
-impl From<MsgFileioConfigResp> for FileioConfig {
-    fn from(msg: MsgFileioConfigResp) -> Self {
-        FileioConfig {
+impl FileioConfig {
+    fn new(msg: MsgFileioConfigResp) -> Self {
+        Self {
             window_size: msg.window_size,
             batch_size: msg.batch_size,
         }

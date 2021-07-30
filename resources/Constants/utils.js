@@ -21,11 +21,11 @@ function listObject(object){
 }
 
 // Read text from file and store it into the "text" property of the "ele" object.
-function readTextFile(path, ele){
-    var req = new XMLHttpRequest;
+function readTextFile(path, elem){
+    var req = new XMLHttpRequest();
     req.onreadystatechange = function () {
         if(req.readyState === 4){
-            ele.text += req.responseText;
+            elem.text += req.responseText;
         }
     }
     req.open("GET", path);

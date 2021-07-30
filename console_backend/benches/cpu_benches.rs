@@ -28,10 +28,10 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     group.measurement_time(time::Duration::from_millis(BENCHMARK_TIME_LIMIT));
     group.sample_size(BENCHMARK_SAMPLE_SIZE);
     group.bench_function(BENCH_NAME_FAILURE, |b| {
-        b.iter(|| run_process_messages(&BENCH_FILEPATH, true))
+        b.iter(|| run_process_messages(BENCH_FILEPATH, true))
     });
     group.bench_function(BENCH_NAME_SUCCESS, |b| {
-        b.iter(|| run_process_messages(&BENCH_FILEPATH, false))
+        b.iter(|| run_process_messages(BENCH_FILEPATH, false))
     });
 }
 

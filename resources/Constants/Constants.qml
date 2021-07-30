@@ -7,14 +7,17 @@ QtObject {
     readonly property int width: 1050
     readonly property int height: 600
     readonly property real margins: 2
-    readonly property real tabBarHeight: 30
+    readonly property real tabBarWidth: 70
+    readonly property real tabBarHeight: 40
     readonly property real topLevelSpacing: 0
     readonly property real logPanelPreferredHeight: 100
     readonly property real navBarPreferredHeight: 50
     readonly property real statusBarPreferredHeight: 30
     property QtObject statusBar
     property QtObject navBar
+    property QtObject sideNavBar
     property QtObject loggingBar
+    property QtObject licensesPopup
     property QtObject commonChart
     property QtObject commonLegend
     property QtObject commonTable
@@ -37,6 +40,32 @@ QtObject {
     readonly property bool debugMode: false
     readonly property string materialRed: "crimson"
     readonly property string materialGrey: "dimgrey"
+
+    sideNavBar: QtObject {
+        readonly property int buttonSvgHeight: 15
+        readonly property string hamburgerPath: "images/fontawesome/bars-solid.svg"
+        readonly property string trackingPath: "images/fontawesome/satellite-solid.svg"
+        readonly property string solutionPath: "images/fontawesome/map-marker-alt-solid.svg"
+        readonly property string baselinePath: "images/fontawesome/braille-solid.svg"
+        readonly property string observationsPath: "images/fontawesome/table-solid.svg"
+        readonly property string settingsPath: "images/fontawesome/cogs-solid.svg"
+        readonly property string updatePath: "images/fontawesome/chevron-circle-up-solid.svg"
+        readonly property string advancedPath: "images/fontawesome/lock-solid.svg"
+        readonly property real tabBarHeight: 45
+        readonly property real tabBarWidth: 70
+        readonly property int tabBarSpacing: 10
+        readonly property int buttonPadding: 0
+        readonly property int buttonInset: 0
+    }
+
+    licensesPopup: QtObject {
+        readonly property real tabBarHeight: 40
+        readonly property real dialogPopupHeightPadding: 100
+        readonly property string robotoFontTabLabel: "Roboto Font"
+        readonly property string fontAwesomeIconsTabLabel: "Font Awesome Icons"
+        readonly property string robotoFontLicensePath: "../fonts/Roboto-LICENSE.txt"
+        readonly property string fontAwesomeIconsLicensePath: "../images/fontawesome/LICENSE.txt"
+    }
 
     statusBar: QtObject {
         readonly property int margin: 10

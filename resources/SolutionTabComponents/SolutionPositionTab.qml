@@ -130,8 +130,7 @@ Item {
 
                 Text {
                     text: "Display Units: "
-                    font.family: Constants.monoSpaceFont
-                    font.pointSize: Constants.mediumPointSize
+                    font.pointSize: Constants.largePointSize
                 }
 
                 ComboBox {

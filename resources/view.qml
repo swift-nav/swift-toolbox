@@ -13,73 +13,60 @@ ApplicationWindow {
         visible = true;
     }
 
-    ColumnLayout {
+    MainDialogView {
+        id: dialogStack
+
         anchors.fill: parent
-        spacing: Constants.topLevelSpacing
+    }
 
-        SplitView {
-            orientation: Qt.Vertical
-            Layout.fillWidth: true
+    RowLayout {
+        property alias drawer: mainDrawer.drawer
+        property alias stackView: dialogStack.dialogStack
+
+        anchors.fill: parent
+
+        MainDrawer {
+            id: mainDrawer
+        }
+
+        SideNavBar {
+            id: sideNavBar
+
             Layout.fillHeight: true
-            Layout.leftMargin: Constants.margins
-            Layout.rightMargin: Constants.margins
-            Layout.alignment: Qt.AlignTop
+            Layout.minimumWidth: Constants.sideNavBar.tabBarWidth
+        }
 
-            ColumnLayout {
-                id: mainTabs
+        ColumnLayout {
+            Layout.fillHeight: true
+            Layout.fillWidth: true
+            spacing: Constants.topLevelSpacing
 
-                spacing: Constants.topLevelSpacing
-                SplitView.fillHeight: true
-                SplitView.fillWidth: true
+            SplitView {
+                orientation: Qt.Vertical
+                Layout.fillWidth: true
+                Layout.fillHeight: true
                 Layout.leftMargin: Constants.margins
                 Layout.rightMargin: Constants.margins
+                Layout.alignment: Qt.AlignTop
 
-                TabBar {
-                    id: tab
+                MainTabs {
+                    id: mainTabs
 
-                    Layout.fillWidth: true
-                    z: Constants.commonChart.zAboveCharts
-                    currentIndex: Globals.initialMainTabIndex
-                    contentHeight: Constants.tabBarHeight
+                    property alias curIndex: sideNavBar.curIndex
 
-                    Repeater {
-                        model: ["Tracking", "Solution", "Baseline", "Observations", "Settings", "Update", "Advanced"]
-
-                        TabButton {
-                            text: modelData
-                            width: implicitWidth
-                        }
-
-                    }
-
+                    SplitView.fillHeight: true
+                    SplitView.fillWidth: true
+                    Layout.leftMargin: Constants.margins
+                    Layout.rightMargin: Constants.margins
                 }
 
-                StackLayout {
-                    Layout.fillHeight: true
-                    Layout.fillWidth: true
-                    currentIndex: tab.currentIndex
+                Rectangle {
+                    id: consoleLog
 
-                    TrackingTab {
-                    }
+                    SplitView.fillWidth: true
+                    SplitView.preferredHeight: Constants.logPanelPreferredHeight
 
-                    SolutionTab {
-                    }
-
-                    BaselineTab {
-                    }
-
-                    ObservationTab {
-                    }
-
-                    Item {
-                        id: settingsTab
-                    }
-
-                    Item {
-                        id: updateTab
-                    }
-
-                    AdvancedTab {
+                    LogPanel {
                     }
 
                 }
@@ -87,51 +74,40 @@ ApplicationWindow {
             }
 
             Rectangle {
-                id: consoleLog
+                id: loggingBar
 
-                SplitView.fillWidth: true
-                SplitView.preferredHeight: Constants.logPanelPreferredHeight
+                Layout.fillWidth: true
+                Layout.preferredHeight: Constants.navBarPreferredHeight
+                z: Constants.commonChart.zAboveCharts
+                visible: false
 
-                LogPanel {
+                LoggingBar {
                 }
 
             }
 
-        }
+            Rectangle {
+                id: navBar
 
-        Rectangle {
-            id: loggingBar
+                Layout.fillWidth: true
+                Layout.preferredHeight: Constants.navBarPreferredHeight
+                z: Constants.commonChart.zAboveCharts
 
-            Layout.fillWidth: true
-            Layout.preferredHeight: Constants.navBarPreferredHeight
-            z: Constants.commonChart.zAboveCharts
-            visible: false
+                NavBar {
+                }
 
-            LoggingBar {
             }
 
-        }
+            Rectangle {
+                id: statusBar
 
-        Rectangle {
-            id: navBar
+                Layout.fillWidth: true
+                Layout.preferredHeight: Constants.statusBarPreferredHeight
+                z: Constants.commonChart.zAboveCharts
 
-            Layout.fillWidth: true
-            Layout.preferredHeight: Constants.navBarPreferredHeight
-            z: Constants.commonChart.zAboveCharts
+                StatusBar {
+                }
 
-            NavBar {
-            }
-
-        }
-
-        Rectangle {
-            id: statusBar
-
-            Layout.fillWidth: true
-            Layout.preferredHeight: Constants.statusBarPreferredHeight
-            z: Constants.commonChart.zAboveCharts
-
-            StatusBar {
             }
 
         }

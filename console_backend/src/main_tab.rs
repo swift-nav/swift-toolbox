@@ -5,6 +5,7 @@ use std::{io::Write, path::PathBuf, result::Result, thread::sleep, time::Instant
 
 use crate::advanced_ins_tab::AdvancedInsTab;
 use crate::advanced_magnetometer_tab::AdvancedMagnetometerTab;
+use crate::advanced_spectrum_analyzer_tab::AdvancedSpectrumAnalyzerTab;
 use crate::baseline_tab::BaselineTab;
 use crate::common_constants::SbpLogging;
 use crate::constants::*;
@@ -33,6 +34,7 @@ pub struct MainTab<'a, S: CapnProtoSender, W: Write> {
     pub solution_tab: SolutionTab<S>,
     pub observation_tab: ObservationTab<S>,
     pub solution_velocity_tab: SolutionVelocityTab<'a, S>,
+    pub advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTab<S>,
     pub status_bar: StatusBar<S>,
 }
 
@@ -64,6 +66,10 @@ impl<'a, S: CapnProtoSender, W: Write> MainTab<'a, S, W> {
             observation_tab: ObservationTab::new(shared_state.clone(), client_sender.clone()),
             solution_tab: SolutionTab::new(shared_state.clone(), client_sender.clone()),
             solution_velocity_tab: SolutionVelocityTab::new(
+                shared_state.clone(),
+                client_sender.clone(),
+            ),
+            advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTab::new(
                 shared_state.clone(),
                 client_sender.clone(),
             ),
@@ -259,19 +265,16 @@ mod tests {
     use tempfile::TempDir;
 
     struct GpsTimeTests {
-        pub zero_week: i16,
         pub good_week: i16,
         pub early_gps_tow_good: f64,
         pub later_gps_tow_good: f64,
     }
     impl GpsTimeTests {
         fn new() -> GpsTimeTests {
-            let zero_week: i16 = 0;
             let good_week: i16 = 2000;
             let early_gps_tow_good: f64 = 5432.0;
             let later_gps_tow_good: f64 = 5433.0;
             GpsTimeTests {
-                zero_week,
                 good_week,
                 early_gps_tow_good,
                 later_gps_tow_good,

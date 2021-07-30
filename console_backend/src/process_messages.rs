@@ -42,6 +42,7 @@ where
             }
         })
         .with_rover_time();
+    let mut attempt_delay;
     for (message, gps_time) in messages {
         if !shared_state.is_running() {
             if let Err(e) = main.end_csv_logging() {
@@ -61,7 +62,7 @@ where
         main.serialize_sbp(&message);
         let msg_name = message.get_message_name();
         main.status_bar.add_bytes(message.sbp_size());
-        let mut attempt_delay = true;
+        attempt_delay = true;
         match message {
             SBP::MsgAgeCorrections(msg) => {
                 main.baseline_tab.handle_age_corrections(msg.clone());
@@ -168,6 +169,14 @@ where
             }
             SBP::MsgPosLLHCov(msg) => {
                 main.solution_tab.handle_pos_llh_cov(msg);
+            }
+            SBP::MsgSpecan(msg) => {
+                main.advanced_spectrum_analyzer_tab
+                    .handle_specan(Specan::MsgSpecan(msg));
+            }
+            SBP::MsgSpecanDep(msg) => {
+                main.advanced_spectrum_analyzer_tab
+                    .handle_specan(Specan::MsgSpecanDep(msg));
             }
             SBP::MsgTrackingState(msg) => {
                 main.tracking_signals_tab

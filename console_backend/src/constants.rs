@@ -62,6 +62,12 @@ pub(crate) const SHOW_LEGEND: &str = "Show Legend";
 // Advanced Magnetometer Tab.
 pub(crate) const MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER: f64 = 0.25;
 
+// Advanced Spectrum Analyzer Tab.
+pub const AMPLITUDES: &str = "amplitudes";
+pub const FREQUENCIES: &str = "frequencies";
+pub const CHANNELS: &[u16] = &[1, 2, 3, 4];
+pub const SIGNALS_TOTAL: usize = 512;
+
 // Baseline Tab.
 pub(crate) const BASELINE_DIRECTION_MAX: f64 = f64::MAX;
 pub(crate) const BASELINE_DIRECTION_MIN: f64 = f64::MIN;

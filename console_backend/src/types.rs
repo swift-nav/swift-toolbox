@@ -15,6 +15,7 @@ use log::error;
 use ordered_float::OrderedFloat;
 use sbp::codec::dencode::{FramedWrite, IterSinkExt};
 use sbp::codec::sbp::SbpEncoder;
+use sbp::messages::piksi::{MsgSpecan, MsgSpecanDep};
 use sbp::messages::SBPMessage;
 use sbp::messages::{
     navigation::{
@@ -332,6 +333,7 @@ pub struct SharedStateInner {
     pub(crate) server_running: bool,
     pub(crate) solution_tab: SolutionTabState,
     pub(crate) baseline_tab: BaselineTabState,
+    pub(crate) advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTabState,
 }
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
@@ -348,6 +350,7 @@ impl SharedStateInner {
             server_running: true,
             solution_tab: SolutionTabState::new(),
             baseline_tab: BaselineTabState::new(),
+            advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTabState::new(),
         }
     }
 }
@@ -496,6 +499,17 @@ impl SolutionVelocityTabState {
         SolutionVelocityTabState {
             unit: String::from(MPS),
         }
+    }
+}
+
+#[derive(Debug)]
+pub struct AdvancedSpectrumAnalyzerTabState {
+    pub channel_idx: u16,
+}
+
+impl AdvancedSpectrumAnalyzerTabState {
+    fn new() -> AdvancedSpectrumAnalyzerTabState {
+        AdvancedSpectrumAnalyzerTabState { channel_idx: 0 }
     }
 }
 
@@ -1572,6 +1586,75 @@ impl GpsTime {
             wn,
             ns_residual,
             flags,
+        }
+    }
+}
+
+// Struct with shared fields for various Specan Message types.
+pub struct SpecanFields {
+    pub wn: u16,
+    pub tow: u32,
+    pub ns_residual: i32,
+    pub amplitude_value: Vec<u8>,
+    pub freq_ref: f32,
+    pub freq_step: f32,
+    pub amplitude_ref: f32,
+    pub amplitude_unit: f32,
+    pub channel_tag: u16,
+}
+// Enum wrapping around various Specan Message types.
+#[derive(Debug)]
+pub enum Specan {
+    MsgSpecan(MsgSpecan),
+    MsgSpecanDep(MsgSpecanDep),
+}
+
+impl Specan {
+    pub fn fields(self) -> SpecanFields {
+        let (
+            wn,
+            tow,
+            ns_residual,
+            amplitude_value,
+            freq_ref,
+            freq_step,
+            amplitude_ref,
+            amplitude_unit,
+            channel_tag,
+        ) = match self {
+            Specan::MsgSpecan(msg_) => (
+                msg_.t.wn,
+                msg_.t.tow,
+                msg_.t.ns_residual,
+                msg_.amplitude_value,
+                msg_.freq_ref,
+                msg_.freq_step,
+                msg_.amplitude_ref,
+                msg_.amplitude_unit,
+                msg_.channel_tag,
+            ),
+            Specan::MsgSpecanDep(msg_) => (
+                msg_.t.wn,
+                msg_.t.tow,
+                /*msg_.t.ns_residual*/ 0,
+                msg_.amplitude_value,
+                msg_.freq_ref,
+                msg_.freq_step,
+                msg_.amplitude_ref,
+                msg_.amplitude_unit,
+                msg_.channel_tag,
+            ),
+        };
+        SpecanFields {
+            wn,
+            tow,
+            ns_residual,
+            amplitude_value,
+            freq_ref,
+            freq_step,
+            amplitude_ref,
+            amplitude_unit,
+            channel_tag,
         }
     }
 }

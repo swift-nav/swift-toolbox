@@ -207,6 +207,12 @@ pub enum Keys {
     YMAX,
     #[strum(serialize = "LOG_LEVEL")]
     LOG_LEVEL,
+    #[strum(serialize = "CHANNEL")]
+    CHANNEL,
+    #[strum(serialize = "XMIN")]
+    XMIN,
+    #[strum(serialize = "XMAX")]
+    XMAX,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]

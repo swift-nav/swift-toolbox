@@ -61,8 +61,7 @@ Item {
                 id: advancedNetworkingTab
             }
 
-            Item {
-                id: advancedSpectrumAnalyzerTab
+            AdvancedTabComponents.AdvancedSpectrumAnalyzerTab {
             }
 
         }

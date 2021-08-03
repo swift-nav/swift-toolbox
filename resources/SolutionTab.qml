@@ -23,7 +23,7 @@ Item {
         Rectangle {
             id: solutionTableArea
 
-            width: 200
+            width: Constants.solutionTable.width
 
             SolutionTabComponents.SolutionTable {
             }
@@ -61,8 +61,6 @@ Item {
                 width: parent.width
                 height: parent.height
                 anchors.top: solutionBar.bottom
-                Component.onCompleted: {
-                }
 
                 StackLayout {
                     id: solutionBarLayout

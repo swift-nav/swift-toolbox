@@ -31,6 +31,7 @@ QtObject {
     property QtObject solutionVelocity
     property QtObject trackingSignals
     property QtObject observationTab
+    property QtObject genericTable
     readonly property int staticTimerIntervalRate: 5 // 5 Hz
     readonly property int staticTableTimerIntervalRate: 10 // 10 Hz
     readonly property string monoSpaceFont: "Courier New"
@@ -56,6 +57,18 @@ QtObject {
         readonly property int tabBarSpacing: 10
         readonly property int buttonPadding: 0
         readonly property int buttonInset: 0
+    }
+
+    genericTable: QtObject {
+        readonly property int padding: 2
+        readonly property int mouseAreaResizeWidth: 10
+        readonly property int cellHeight: 25
+        readonly property string cellHighlightedColor: "crimson"
+        readonly property string cellColor: "ghostwhite"
+        readonly property string gradientColor: "gainsboro"
+        readonly property string borderColor: "gainsboro"
+        readonly property string fontFamily: "Roboto"
+        property var defaultColumns: ["Item", "Value"]
     }
 
     licensesPopup: QtObject {
@@ -225,6 +238,7 @@ QtObject {
     }
 
     solutionTable: QtObject {
+        readonly property int width: 220
         readonly property int defaultColumnWidth: 80
         readonly property color tableBorderColor: "#000000"
         readonly property int tableBorderWidth: 1
@@ -236,7 +250,7 @@ QtObject {
         readonly property int tableLeftPadding: 2
         readonly property string tableLeftColumnHeader: "Item"
         readonly property string tableRightColumnHeader: "Value"
-        readonly property int rtkNoteHeight: 40
+        readonly property int rtkNoteHeight: 65
         readonly property int rtkNoteMargins: 2
         readonly property int rtkNoteBorderWidth: 1
         readonly property string rtkNoteText: "It is necessary to enter the \"Surveyed Position\" settings for the base station in order to view the RTK Positions in this tab."

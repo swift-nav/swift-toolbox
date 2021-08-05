@@ -178,7 +178,7 @@ impl<S: CapnProtoSender> SolutionTab<S> {
     /// # Parameters
     /// - `msg`: MsgOrientEuler to extract data from.
     pub fn handle_angular_rate(&mut self, msg: MsgAngularRate) {
-        if msg.flags != 0 {
+        if (msg.flags & 0x03) != 0 {
             self.table.insert(
                 ANG_RATE_X_DEG_P_S,
                 format!("{: >6.2} deg", ((msg.x as f64) * UDEG2DEG)),
@@ -206,7 +206,7 @@ impl<S: CapnProtoSender> SolutionTab<S> {
     /// # Parameters
     /// - `msg`: MsgOrientEuler to extract data from.
     pub fn handle_orientation_euler(&mut self, msg: MsgOrientEuler) {
-        if msg.flags != 0 {
+        if (msg.flags & 0x07) != 0 {
             self.table.insert(
                 ROLL,
                 format!("{: >6.2} deg", ((msg.roll as f64) * UDEG2DEG)),

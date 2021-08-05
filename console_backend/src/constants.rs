@@ -176,6 +176,9 @@ pub(crate) const HDOP: &str = "HDOP";
 pub(crate) const VDOP: &str = "VDOP";
 pub(crate) const DOPS_FLAGS: &str = "DOPS Flags";
 pub(crate) const INS_STATUS: &str = "INS Status";
+pub(crate) const ANG_RATE_X_DEG_P_S: &str = "Ang. Rate X [°/s]";
+pub(crate) const ANG_RATE_Y_DEG_P_S: &str = "Ang. Rate Y [°/s]";
+pub(crate) const ANG_RATE_Z_DEG_P_S: &str = "Ang. Rate Z [°/s]";
 pub(crate) const ROLL: &str = "Roll";
 pub(crate) const PITCH: &str = "Pitch";
 pub(crate) const YAW: &str = "Yaw";
@@ -216,6 +219,9 @@ pub(crate) const SOLUTION_TABLE_KEYS: &[&str] = &[
     VDOP,
     DOPS_FLAGS,
     INS_STATUS,
+    ANG_RATE_X_DEG_P_S,
+    ANG_RATE_Y_DEG_P_S,
+    ANG_RATE_Z_DEG_P_S,
     ROLL,
     PITCH,
     YAW,

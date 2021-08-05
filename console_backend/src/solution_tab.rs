@@ -2,7 +2,7 @@ use capnp::message::Builder;
 
 use sbp::messages::{
     navigation::{MsgAgeCorrections, MsgPosLLHCov, MsgUtcTime},
-    orientation::MsgOrientEuler,
+    orientation::{MsgAngularRate, MsgOrientEuler},
     system::{MsgInsStatus, MsgInsUpdates},
 };
 use std::{collections::HashMap, time::Instant};
@@ -170,6 +170,34 @@ impl<S: CapnProtoSender> SolutionTab<S> {
         if gps_time_fields.flags != 0 {
             self.week = Some(gps_time_fields.wn);
             self.nsec = Some(gps_time_fields.ns_residual);
+        }
+    }
+
+    /// Handler for Angular Rate messages.
+    ///
+    /// # Parameters
+    /// - `msg`: MsgOrientEuler to extract data from.
+    pub fn handle_angular_rate(&mut self, msg: MsgAngularRate) {
+        if msg.flags != 0 {
+            self.table.insert(
+                ANG_RATE_X_DEG_P_S,
+                format!("{: >6.2} deg", ((msg.x as f64) * UDEG2DEG)),
+            );
+            self.table.insert(
+                ANG_RATE_Y_DEG_P_S,
+                format!("{: >6.2} deg", ((msg.y as f64) * UDEG2DEG)),
+            );
+            self.table.insert(
+                ANG_RATE_Z_DEG_P_S,
+                format!("{: >6.2} deg", ((msg.z as f64) * UDEG2DEG)),
+            );
+        } else {
+            self.table
+                .insert(ANG_RATE_X_DEG_P_S, String::from(EMPTY_STR));
+            self.table
+                .insert(ANG_RATE_Y_DEG_P_S, String::from(EMPTY_STR));
+            self.table
+                .insert(ANG_RATE_Z_DEG_P_S, String::from(EMPTY_STR));
         }
     }
 

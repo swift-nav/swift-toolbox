@@ -238,8 +238,8 @@ QtObject {
     }
 
     solutionTable: QtObject {
-        readonly property int width: 220
-        readonly property int defaultColumnWidth: 80
+        readonly property int width: 240
+        readonly property int defaultColumnWidth: 100
         readonly property color tableBorderColor: "#000000"
         readonly property int tableBorderWidth: 1
         readonly property int tableHeaderTableDataTableSpacing: 0

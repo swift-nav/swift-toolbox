@@ -69,6 +69,9 @@ where
                 main.solution_tab.handle_age_corrections(msg.clone());
                 main.status_bar.handle_age_corrections(msg);
             }
+            SBP::MsgAngularRate(msg) => {
+                main.solution_tab.handle_angular_rate(msg);
+            }
             SBP::MsgBaselineHeading(msg) => {
                 main.baseline_tab.handle_baseline_heading(msg);
             }

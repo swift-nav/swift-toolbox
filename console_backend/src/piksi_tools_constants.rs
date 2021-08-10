@@ -508,7 +508,7 @@ pub const SMOOTHPOSE: i32 = 0;
 pub const DR_RUNNER: i32 = 1;
 lazy_static! {
     pub static ref ins_type_dict: HashMap<i32, &'static str> =
-        [(SMOOTHPOSE, "SP"), (DR_RUNNER, "DR")]
+        [(SMOOTHPOSE, "SP-"), (DR_RUNNER, "")]
             .iter()
             .cloned()
             .collect::<HashMap<_, _>>();

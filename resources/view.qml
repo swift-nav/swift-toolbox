@@ -60,15 +60,9 @@ ApplicationWindow {
                     Layout.rightMargin: Constants.margins
                 }
 
-                Rectangle {
-                    id: consoleLog
-
+                LogPanel {
                     SplitView.fillWidth: true
                     SplitView.preferredHeight: Constants.logPanelPreferredHeight
-
-                    LogPanel {
-                    }
-
                 }
 
             }

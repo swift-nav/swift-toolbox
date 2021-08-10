@@ -1,14 +1,28 @@
+use async_logger_log::Logger;
 use sbp::messages::logging::MsgLog;
 
 use capnp::message::Builder;
 
 use crate::common_constants as cc;
+use crate::constants::LOG_WRITER_BUFFER_MESSAGE_COUNT;
+use crate::errors::CONSOLE_LOG_JSON_TO_STRING_FAILURE;
 use crate::types::*;
 use crate::utils::serialize_capnproto_builder;
 
 use async_logger::Writer;
 use chrono::Local;
 use log::{debug, error, info, warn, LevelFilter, Record};
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize)]
+struct ConsoleLogPacket {
+    level: String,
+    timestamp: String,
+    msg: String,
+}
+
+const DEVICE: &str = "DEVICE";
+const CONSOLE: &str = "CONSOLE";
 
 pub type LogLevel = cc::LogLevel;
 impl LogLevel {
@@ -24,13 +38,19 @@ impl LogLevel {
 
 // Custom formatting of `log::Record` to account for SbpLog values
 pub fn splitable_log_formatter(record: &Record) -> String {
-    // TODO (JV): CPP-117 Extract SbpLog timestamp and level from message
-    format!(
-        "{} {} {}",
-        Local::now().format("%Y-%m-%dT%H:%M:%S"),
-        record.level(),
-        record.args()
-    )
+    let level = if record.target() != DEVICE {
+        CONSOLE
+    } else {
+        record.level().as_str()
+    };
+    let timestamp = Local::now().format("%Y-%m-%dT%H:%M:%S");
+    let msg = record.args();
+    let msg_packet = ConsoleLogPacket {
+        level: level.to_string(),
+        timestamp: timestamp.to_string(),
+        msg: msg.to_string(),
+    };
+    serde_json::to_string(&msg_packet).expect(CONSOLE_LOG_JSON_TO_STRING_FAILURE)
 }
 
 enum SbpMsgLevel {
@@ -64,16 +84,27 @@ impl From<u8> for SbpMsgLevel {
 pub fn handle_log_msg(msg: MsgLog) {
     let text = msg.text.to_string();
     let level: SbpMsgLevel = SbpMsgLevel::from(msg.level);
-    // TODO(JV): CPP-117 Include log level and remote timestamp in text message
     match level {
         SbpMsgLevel::Emergency
         | SbpMsgLevel::Alert
         | SbpMsgLevel::Critical
-        | SbpMsgLevel::Error => error!("{}", text),
-        SbpMsgLevel::Warn | SbpMsgLevel::Notice => warn!("{}", text),
-        SbpMsgLevel::Info => info!("{}", text),
-        _ => debug!("{}", text),
+        | SbpMsgLevel::Error => error!(target: DEVICE, "{}", text),
+        SbpMsgLevel::Warn | SbpMsgLevel::Notice => warn!(target: DEVICE, "{}", text),
+        SbpMsgLevel::Info => info!(target: DEVICE, "{}", text),
+        _ => debug!(target: DEVICE, "{}", text),
     }
+}
+
+pub fn setup_logging(client_sender: ClientSender) {
+    let log_panel = LogPanelWriter::new(client_sender);
+    let logger = Logger::builder()
+        .buf_size(LOG_WRITER_BUFFER_MESSAGE_COUNT)
+        .formatter(splitable_log_formatter)
+        .writer(Box::new(log_panel))
+        .build()
+        .unwrap();
+
+    log::set_boxed_logger(Box::new(logger)).expect("Failed to set logger");
 }
 
 #[derive(Debug)]
@@ -102,7 +133,6 @@ impl<S: CapnProtoSender> Writer<Box<String>> for LogPanelWriter<S> {
         for (idx, item) in slice.iter().enumerate() {
             let mut entry = entries.reborrow().get(idx as u32);
 
-            //TODO: split line into timestamp, level and text
             entry.set_line(&**item);
         }
 

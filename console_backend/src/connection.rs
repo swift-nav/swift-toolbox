@@ -228,6 +228,7 @@ impl ConnectionState {
     ) -> JoinHandle<()> {
         thread::spawn(move || {
             let mut conn = None;
+            info!("Console started...");
             while shared_state.clone().is_server_running() {
                 if let Ok(conn_option) = receiver.recv_timeout(Duration::from_secs_f64(
                     SERVER_STATE_CONNECTION_LOOP_TIMEOUT_SEC,
@@ -253,6 +254,7 @@ impl ConnectionState {
                     }
                     shared_state.set_running(false, client_send.clone());
                 }
+                log::logger().flush();
             }
         })
     }

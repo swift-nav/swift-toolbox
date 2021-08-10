@@ -13,6 +13,7 @@ QtObject {
     readonly property real logPanelPreferredHeight: 100
     readonly property real navBarPreferredHeight: 50
     readonly property real statusBarPreferredHeight: 30
+    property QtObject logPanel
     property QtObject statusBar
     property QtObject navBar
     property QtObject sideNavBar
@@ -60,11 +61,12 @@ QtObject {
     }
 
     genericTable: QtObject {
+        readonly property int headerZOffset: 100
         readonly property int padding: 2
         readonly property int mouseAreaResizeWidth: 10
         readonly property int cellHeight: 25
         readonly property string cellHighlightedColor: "crimson"
-        readonly property string cellColor: "ghostwhite"
+        readonly property string cellColor: "white"
         readonly property string gradientColor: "gainsboro"
         readonly property string borderColor: "gainsboro"
         readonly property string fontFamily: "Roboto"
@@ -235,6 +237,16 @@ QtObject {
         readonly property string xAxisTitleText: "Longitude"
         readonly property var legendLabels: ["SPP", "DGPS", "RTK Float", "RTK Fixed", "DR", "SBAS"]
         readonly property var colors: ["#0000FF", "#00B3FF", "#BF00BF", "#FFA500", "#000000", "#00FF00"]
+    }
+
+    logPanel: QtObject {
+        readonly property int width: 220
+        readonly property variant defaultColumnWidthRatios: [0.15, 0.1, 0.75]
+        readonly property int maxRows: 200
+        readonly property int cellHeight: 20
+        readonly property string timestampHeader: "Host Timestamp"
+        readonly property string levelHeader: "Log Level"
+        readonly property string msgHeader: "Message"
     }
 
     solutionTable: QtObject {

@@ -167,14 +167,12 @@ fn backend_recv_thread(
                         }
                     }
                     m::message::TcpRequest(Ok(req)) => {
-                        let host =
-                            req.get_host().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
+                        let host = req.get_host().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
                         let port = req.get_port();
                         connection_state.connect_to_host(host.to_string(), port);
                     }
                     m::message::SerialRequest(Ok(req)) => {
-                        let device =
-                            req.get_device().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
+                        let device = req.get_device().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
                         let device = device.to_string();
                         let baudrate = req.get_baudrate();
                         let flow = req.get_flow_control().unwrap();

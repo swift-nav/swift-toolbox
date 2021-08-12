@@ -140,64 +140,46 @@ fn backend_recv_thread(
                         continue;
                     }
                 };
+                let shared_state_clone = shared_state.clone();
                 match message {
-                    m::message::ConnectRequest(Ok(conn_req)) => {
-                        let request = conn_req
-                            .get_request()
+                    m::message::SerialRefreshRequest(Ok(_)) => {
+                        refresh_navbar(&mut client_send_clone.clone(), shared_state_clone);
+                    }
+                    m::message::DisconnectRequest(Ok(_)) => {
+                        connection_state.disconnect(client_send_clone.clone());
+                    }
+                    m::message::FileRequest(Ok(req)) => {
+                        let filename = req
+                            .get_filename()
                             .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
-                        let request = request
-                            .get_as::<m::message::Reader>()
-                            .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
-                        let request = match request.which() {
-                            Ok(msg) => msg,
-                            Err(e) => {
-                                error!("error reading message: {}", e);
-                                continue;
-                            }
-                        };
-                        let shared_state_clone = shared_state.clone();
-                        match request {
-                            m::message::SerialRefreshRequest(Ok(_)) => {
-                                refresh_navbar(&mut client_send_clone.clone(), shared_state_clone);
-                            }
-                            m::message::DisconnectRequest(Ok(_)) => {
-                                connection_state.disconnect(client_send_clone.clone());
-                            }
-                            m::message::FileRequest(Ok(req)) => {
-                                let filename = req
-                                    .get_filename()
-                                    .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
-                                let filename = filename.to_string();
-                                connection_state.connect_to_file(
-                                    filename,
-                                    RealtimeDelay::On,
-                                    /*close_when_done*/ false,
-                                );
-                            }
-                            m::message::PauseRequest(Ok(_)) => {
-                                if shared_state_clone.is_paused() {
-                                    shared_state_clone.set_paused(false);
-                                } else {
-                                    shared_state_clone.set_paused(true);
-                                }
-                            }
-                            m::message::TcpRequest(Ok(req)) => {
-                                let host =
-                                    req.get_host().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
-                                let port = req.get_port();
-                                connection_state.connect_to_host(host.to_string(), port);
-                            }
-                            m::message::SerialRequest(Ok(req)) => {
-                                let device =
-                                    req.get_device().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
-                                let device = device.to_string();
-                                let baudrate = req.get_baudrate();
-                                let flow = req.get_flow_control().unwrap();
-                                let flow = FlowControl::from_str(flow).unwrap();
-                                connection_state.connect_to_serial(device, baudrate, flow);
-                            }
-                            _ => println!("err"),
+                        let filename = filename.to_string();
+                        connection_state.connect_to_file(
+                            filename,
+                            RealtimeDelay::On,
+                            /*close_when_done*/ false,
+                        );
+                    }
+                    m::message::PauseRequest(Ok(_)) => {
+                        if shared_state_clone.is_paused() {
+                            shared_state_clone.set_paused(false);
+                        } else {
+                            shared_state_clone.set_paused(true);
                         }
+                    }
+                    m::message::TcpRequest(Ok(req)) => {
+                        let host =
+                            req.get_host().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
+                        let port = req.get_port();
+                        connection_state.connect_to_host(host.to_string(), port);
+                    }
+                    m::message::SerialRequest(Ok(req)) => {
+                        let device =
+                            req.get_device().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
+                        let device = device.to_string();
+                        let baudrate = req.get_baudrate();
+                        let flow = req.get_flow_control().unwrap();
+                        let flow = FlowControl::from_str(flow).unwrap();
+                        connection_state.connect_to_serial(device, baudrate, flow);
                     }
                     m::message::TrackingSignalsStatusFront(Ok(cv_in)) => {
                         let check_visibility = cv_in

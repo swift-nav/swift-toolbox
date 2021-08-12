@@ -1,9 +1,5 @@
 @0xe7871c33e8243ee4;
 
-struct ConnectRequest(RequestType) {
-    request @0 :RequestType;
-}
-
 struct TcpRequest {
     host @0 :Text;
     port @1 :UInt16;
@@ -225,36 +221,35 @@ struct Status {
 
 struct Message {
     union {
-        connectRequest @0 :ConnectRequest;
-        solutionVelocityStatus @1 :SolutionVelocityStatus;
-        status @2 :Status;
-        trackingSignalsStatus @3 :TrackingSignalsStatus;
-        trackingSignalsStatusFront @4 :TrackingSignalsStatusFront;
-        solutionVelocityStatusFront @5 :SolutionVelocityStatusFront;
-        solutionTableStatus @6 :SolutionTableStatus;
-        solutionPositionStatus @7 :SolutionPositionStatus;
-        solutionPositionStatusButtonFront @8 :SolutionPositionStatusButtonFront;
-        solutionPositionStatusUnitFront @9 :SolutionPositionStatusUnitFront;
-        tcpRequest @10 :TcpRequest;
-        fileRequest @11 :FileRequest;
-        serialRequest @12 :SerialRequest;
-        pauseRequest @13 :PauseRequest;
-        disconnectRequest @14 :DisconnectRequest;
-        navBarStatus @15 :NavBarStatus;
-        serialRefreshRequest @16 :SerialRefreshRequest;
-        logAppend @17 :LogAppend;
-        observationStatus @18 :ObservationStatus;
-        statusBarStatus @19 :StatusBarStatus;
-        loggingBarFront @20 :LoggingBarFront;
-        loggingBarStatus @21 :LoggingBarStatus;
-        logLevelFront @22 :LogLevelFront;
-        advancedInsStatus @23 :AdvancedInsStatus;
-        fusionStatusFlagsStatus @24 :FusionStatusFlagsStatus;
-        advancedMagnetometerStatus @25 :AdvancedMagnetometerStatus;
-        baselinePlotStatus @26 :BaselinePlotStatus;
-        baselineTableStatus @27 :BaselineTableStatus;
-        baselinePlotStatusButtonFront @28 :BaselinePlotStatusButtonFront;
-        advancedSpectrumAnalyzerStatus @29:AdvancedSpectrumAnalyzerStatus;
-        advancedSpectrumAnalyzerStatusFront @30:AdvancedSpectrumAnalyzerStatusFront;
+        solutionVelocityStatus @0 :SolutionVelocityStatus;
+        status @1 :Status;
+        trackingSignalsStatus @2 :TrackingSignalsStatus;
+        trackingSignalsStatusFront @3 :TrackingSignalsStatusFront;
+        solutionVelocityStatusFront @4 :SolutionVelocityStatusFront;
+        solutionTableStatus @5 :SolutionTableStatus;
+        solutionPositionStatus @6 :SolutionPositionStatus;
+        solutionPositionStatusButtonFront @7 :SolutionPositionStatusButtonFront;
+        solutionPositionStatusUnitFront @8 :SolutionPositionStatusUnitFront;
+        tcpRequest @9 :TcpRequest;
+        fileRequest @10 :FileRequest;
+        serialRequest @11 :SerialRequest;
+        pauseRequest @12 :PauseRequest;
+        disconnectRequest @13 :DisconnectRequest;
+        navBarStatus @14 :NavBarStatus;
+        serialRefreshRequest @15 :SerialRefreshRequest;
+        logAppend @16 :LogAppend;
+        observationStatus @17 :ObservationStatus;
+        statusBarStatus @18 :StatusBarStatus;
+        loggingBarFront @19 :LoggingBarFront;
+        loggingBarStatus @20 :LoggingBarStatus;
+        logLevelFront @21 :LogLevelFront;
+        advancedInsStatus @22 :AdvancedInsStatus;
+        fusionStatusFlagsStatus @23 :FusionStatusFlagsStatus;
+        advancedMagnetometerStatus @24 :AdvancedMagnetometerStatus;
+        baselinePlotStatus @25 :BaselinePlotStatus;
+        baselineTableStatus @26 :BaselineTableStatus;
+        baselinePlotStatusButtonFront @27 :BaselinePlotStatusButtonFront;
+        advancedSpectrumAnalyzerStatus @28:AdvancedSpectrumAnalyzerStatus;
+        advancedSpectrumAnalyzerStatusFront @29:AdvancedSpectrumAnalyzerStatusFront;
     }
 }

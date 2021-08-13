@@ -39,6 +39,10 @@ crossbeam = "0.8.1"
 rand = "0.8.3"
 slotmap = "1.0.3"
 serde-pickle = { version = "0.6.2", optional = true }
+schemars = "0.8"
+cfg-if = "1.0"
+rmp = "0.8"
+rmp-serde = "0.15"
 
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 serialport = "4.0.1"
@@ -70,8 +74,14 @@ path = "src/bin/fft_monitor.rs"
 bench = false
 required-features = ["fft"]
 
+[[bin]]
+name = "console-jsonschema"
+path = "src/bin/console_jsonschema.rs"
+bench = false
+
 [features]
-default = ["pyo3"]
+default = ["python"]
+python = ["pyo3"]
 benches = []
 tests = []
 fft = ["serde-pickle"]

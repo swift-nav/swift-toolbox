@@ -41,7 +41,6 @@ use std::{
     path::PathBuf,
     str::FromStr,
     sync::{
-        self,
         atomic::{AtomicBool, Ordering::*},
         Arc, Mutex,
     },
@@ -118,11 +117,11 @@ pub trait CapnProtoSender: Debug + Clone + Send {
 
 #[derive(Debug, Clone)]
 pub struct ClientSender {
-    pub inner: sync::mpsc::Sender<Vec<u8>>,
+    pub inner: crossbeam::channel::Sender<Vec<u8>>,
     pub connected: ArcBool,
 }
 impl ClientSender {
-    pub fn new(inner: sync::mpsc::Sender<Vec<u8>>) -> Self {
+    pub fn new(inner: crossbeam::channel::Sender<Vec<u8>>) -> Self {
         Self {
             inner,
             connected: ArcBool::new_with(true),
@@ -532,8 +531,6 @@ pub struct Directory {
 }
 lazy_static! {
     pub static ref DATA_DIRECTORY: Directory = Directory::new_data_directory();
-}
-lazy_static! {
     pub static ref LOG_DIRECTORY: Directory = Directory::new_log_directory();
 }
 impl Directory {

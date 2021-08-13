@@ -1,9 +1,5 @@
 @0xe7871c33e8243ee4;
 
-struct ConnectRequest(RequestType) {
-    request @0 :RequestType;
-}
-
 struct TcpRequest {
     host @0 :Text;
     port @1 :UInt16;
@@ -225,7 +221,7 @@ struct Status {
 
 struct Message {
     union {
-        connectRequest @0 :ConnectRequest;
+        notUsed @0 :Text;
         solutionVelocityStatus @1 :SolutionVelocityStatus;
         status @2 :Status;
         trackingSignalsStatus @3 :TrackingSignalsStatus;

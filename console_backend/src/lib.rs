@@ -17,13 +17,12 @@ pub mod fileio;
 pub mod formatters;
 pub mod fusion_status_flags;
 pub mod log_panel;
+pub mod ipc;
 pub mod main_tab;
 pub mod observation_tab;
 pub mod output;
 pub mod piksi_tools_constants;
 pub mod process_messages;
-#[cfg(not(test))]
-#[cfg(all(not(feature = "benches"), not(feature = "tests"), feature = "pyo3"))]
 pub mod server;
 pub mod solution_tab;
 pub mod solution_velocity_tab;

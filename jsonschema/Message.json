@@ -1,0 +1,1228 @@
+﻿{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Message",
+  "type": "object",
+  "required": [
+    "inner",
+    "msg_type"
+  ],
+  "properties": {
+    "inner": {
+      "$ref": "#/definitions/MessageInner"
+    },
+    "msg_type": {
+      "$ref": "#/definitions/MessageType"
+    }
+  },
+  "definitions": {
+    "AdvancedInsStatus": {
+      "type": "object",
+      "required": [
+        "data",
+        "fields_data"
+      ],
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "fields_data": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      }
+    },
+    "AdvancedMagnetometerStatus": {
+      "type": "object",
+      "required": [
+        "data",
+        "ymax",
+        "ymin"
+      ],
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "ymax": {
+          "type": "number",
+          "format": "double"
+        },
+        "ymin": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "AdvancedSpectrumAnalyzerStatus": {
+      "type": "object",
+      "required": [
+        "channel",
+        "data",
+        "xmax",
+        "ymax",
+        "ymin"
+      ],
+      "properties": {
+        "channel": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Point"
+          }
+        },
+        "xmax": {
+          "type": "number",
+          "format": "float"
+        },
+        "ymax": {
+          "type": "number",
+          "format": "float"
+        },
+        "ymin": {
+          "type": "number",
+          "format": "float"
+        }
+      }
+    },
+    "AdvancedSpectrumAnalyzerStatusFront": {
+      "type": "object",
+      "required": [
+        "solution_velocity_units"
+      ],
+      "properties": {
+        "solution_velocity_units": {
+          "type": "string"
+        }
+      }
+    },
+    "BaselinePlotStatus": {
+      "type": "object",
+      "required": [
+        "cur_data",
+        "data",
+        "e_max",
+        "e_min",
+        "n_max",
+        "n_min"
+      ],
+      "properties": {
+        "cur_data": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Point"
+            }
+          }
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Point"
+            }
+          }
+        },
+        "e_max": {
+          "type": "number",
+          "format": "double"
+        },
+        "e_min": {
+          "type": "number",
+          "format": "double"
+        },
+        "n_max": {
+          "type": "number",
+          "format": "double"
+        },
+        "n_min": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "BaselinePlotStatusButtonFront": {
+      "type": "object",
+      "required": [
+        "clear",
+        "pause",
+        "reset_filters"
+      ],
+      "properties": {
+        "clear": {
+          "type": "boolean"
+        },
+        "pause": {
+          "type": "boolean"
+        },
+        "reset_filters": {
+          "type": "boolean"
+        }
+      }
+    },
+    "BaselineTableStatus": {
+      "type": "object",
+      "required": [
+        "data"
+      ],
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/KeyValuePair"
+          }
+        }
+      }
+    },
+    "DisconnectRequest": {
+      "type": "object",
+      "required": [
+        "disconnect"
+      ],
+      "properties": {
+        "disconnect": {
+          "type": "boolean"
+        }
+      }
+    },
+    "FileRequest": {
+      "type": "object",
+      "required": [
+        "filename"
+      ],
+      "properties": {
+        "filename": {
+          "type": "string"
+        }
+      }
+    },
+    "FusionStatusFlagsStatus": {
+      "type": "object",
+      "required": [
+        "gnsspos",
+        "gnssvel",
+        "nhc",
+        "speedd",
+        "wheelticks",
+        "zerovel"
+      ],
+      "properties": {
+        "gnsspos": {
+          "type": "string"
+        },
+        "gnssvel": {
+          "type": "string"
+        },
+        "nhc": {
+          "type": "string"
+        },
+        "speedd": {
+          "type": "string"
+        },
+        "wheelticks": {
+          "type": "string"
+        },
+        "zerovel": {
+          "type": "string"
+        }
+      }
+    },
+    "KeyValuePair": {
+      "type": "object",
+      "required": [
+        "key",
+        "pair"
+      ],
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "pair": {
+          "type": "string"
+        }
+      }
+    },
+    "LogAppend": {
+      "type": "object",
+      "required": [
+        "entries"
+      ],
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LogEntry"
+          }
+        }
+      }
+    },
+    "LogEntry": {
+      "type": "object",
+      "required": [
+        "level",
+        "line",
+        "timestamp"
+      ],
+      "properties": {
+        "level": {
+          "$ref": "#/definitions/LogLevel"
+        },
+        "line": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string"
+        }
+      }
+    },
+    "LogLevel": {
+      "type": "string",
+      "enum": [
+        "Error",
+        "Warn",
+        "Info",
+        "Debug",
+        "Trace"
+      ]
+    },
+    "LogLevelFront": {
+      "type": "object",
+      "required": [
+        "log_level"
+      ],
+      "properties": {
+        "log_level": {
+          "type": "string"
+        }
+      }
+    },
+    "LoggingBarFront": {
+      "type": "object",
+      "required": [
+        "csv_logging",
+        "directory",
+        "sbp_logging"
+      ],
+      "properties": {
+        "csv_logging": {
+          "type": "boolean"
+        },
+        "directory": {
+          "type": "string"
+        },
+        "sbp_logging": {
+          "type": "string"
+        }
+      }
+    },
+    "LoggingBarStatus": {
+      "type": "object",
+      "required": [
+        "csv_logging",
+        "previous_folders",
+        "sbp_logging"
+      ],
+      "properties": {
+        "csv_logging": {
+          "type": "boolean"
+        },
+        "previous_folders": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sbp_logging": {
+          "type": "string"
+        }
+      }
+    },
+    "MessageInner": {
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "TcpRequest"
+          ],
+          "properties": {
+            "TcpRequest": {
+              "$ref": "#/definitions/TcpRequest"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "FileRequest"
+          ],
+          "properties": {
+            "FileRequest": {
+              "$ref": "#/definitions/FileRequest"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "SerialRequest"
+          ],
+          "properties": {
+            "SerialRequest": {
+              "$ref": "#/definitions/SerialRequest"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "SerialRefreshRequest"
+          ],
+          "properties": {
+            "SerialRefreshRequest": {
+              "$ref": "#/definitions/SerialRefreshRequest"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "PauseRequest"
+          ],
+          "properties": {
+            "PauseRequest": {
+              "$ref": "#/definitions/PauseRequest"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "DisconnectRequest"
+          ],
+          "properties": {
+            "DisconnectRequest": {
+              "$ref": "#/definitions/DisconnectRequest"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "SolutionTableStatus"
+          ],
+          "properties": {
+            "SolutionTableStatus": {
+              "$ref": "#/definitions/SolutionTableStatus"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "NavBarStatus"
+          ],
+          "properties": {
+            "NavBarStatus": {
+              "$ref": "#/definitions/NavBarStatus"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "StatusBarStatus"
+          ],
+          "properties": {
+            "StatusBarStatus": {
+              "$ref": "#/definitions/StatusBarStatus"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "BaselinePlotStatus"
+          ],
+          "properties": {
+            "BaselinePlotStatus": {
+              "$ref": "#/definitions/BaselinePlotStatus"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "BaselineTableStatus"
+          ],
+          "properties": {
+            "BaselineTableStatus": {
+              "$ref": "#/definitions/BaselineTableStatus"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "ObservationStatus"
+          ],
+          "properties": {
+            "ObservationStatus": {
+              "$ref": "#/definitions/ObservationStatus"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "SolutionPositionStatus"
+          ],
+          "properties": {
+            "SolutionPositionStatus": {
+              "$ref": "#/definitions/SolutionPositionStatus"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "SolutionVelocityStatus"
+          ],
+          "properties": {
+            "SolutionVelocityStatus": {
+              "$ref": "#/definitions/SolutionVelocityStatus"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "TrackingSignalsStatus"
+          ],
+          "properties": {
+            "TrackingSignalsStatus": {
+              "$ref": "#/definitions/TrackingSignalsStatus"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "AdvancedInsStatus"
+          ],
+          "properties": {
+            "AdvancedInsStatus": {
+              "$ref": "#/definitions/AdvancedInsStatus"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "Status"
+          ],
+          "properties": {
+            "Status": {
+              "$ref": "#/definitions/Status"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "TrackingSignalsStatusFront"
+          ],
+          "properties": {
+            "TrackingSignalsStatusFront": {
+              "$ref": "#/definitions/TrackingSignalsStatusFront"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "SolutionVelocityStatusFront"
+          ],
+          "properties": {
+            "SolutionVelocityStatusFront": {
+              "$ref": "#/definitions/SolutionVelocityStatusFront"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "SolutionPositionStatusButtonFront"
+          ],
+          "properties": {
+            "SolutionPositionStatusButtonFront": {
+              "$ref": "#/definitions/SolutionPositionStatusButtonFront"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "SolutionPositionStatusUnitFront"
+          ],
+          "properties": {
+            "SolutionPositionStatusUnitFront": {
+              "$ref": "#/definitions/SolutionPositionStatusUnitFront"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "LogAppend"
+          ],
+          "properties": {
+            "LogAppend": {
+              "$ref": "#/definitions/LogAppend"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "LoggingBarFront"
+          ],
+          "properties": {
+            "LoggingBarFront": {
+              "$ref": "#/definitions/LoggingBarFront"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "LoggingBarStatus"
+          ],
+          "properties": {
+            "LoggingBarStatus": {
+              "$ref": "#/definitions/LoggingBarStatus"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "LogLevelFront"
+          ],
+          "properties": {
+            "LogLevelFront": {
+              "$ref": "#/definitions/LogLevelFront"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "FusionStatusFlagsStatus"
+          ],
+          "properties": {
+            "FusionStatusFlagsStatus": {
+              "$ref": "#/definitions/FusionStatusFlagsStatus"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "AdvancedMagnetometerStatus"
+          ],
+          "properties": {
+            "AdvancedMagnetometerStatus": {
+              "$ref": "#/definitions/AdvancedMagnetometerStatus"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "BaselinePlotStatusButtonFront"
+          ],
+          "properties": {
+            "BaselinePlotStatusButtonFront": {
+              "$ref": "#/definitions/BaselinePlotStatusButtonFront"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "AdvancedSpectrumAnalyzerStatus"
+          ],
+          "properties": {
+            "AdvancedSpectrumAnalyzerStatus": {
+              "$ref": "#/definitions/AdvancedSpectrumAnalyzerStatus"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "AdvancedSpectrumAnalyzerStatusFront"
+          ],
+          "properties": {
+            "AdvancedSpectrumAnalyzerStatusFront": {
+              "$ref": "#/definitions/AdvancedSpectrumAnalyzerStatusFront"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "MessageType": {
+      "type": "string",
+      "enum": [
+        "TcpRequest",
+        "FileRequest",
+        "SerialRequest",
+        "SerialRefreshRequest",
+        "PauseRequest",
+        "DisconnectRequest",
+        "SolutionTableStatus",
+        "NavBarStatus",
+        "StatusBarStatus",
+        "BaselinePlotStatus",
+        "BaselineTableStatus",
+        "ObservationStatus",
+        "SolutionPositionStatus",
+        "SolutionVelocityStatus",
+        "TrackingSignalsStatus",
+        "AdvancedInsStatus",
+        "Status",
+        "TrackingSignalsStatusFront",
+        "SolutionVelocityStatusFront",
+        "SolutionPositionStatusButtonFront",
+        "SolutionPositionStatusUnitFront",
+        "LogAppend",
+        "LoggingBarFront",
+        "LoggingBarStatus",
+        "LogLevelFront",
+        "FusionStatusFlagsStatus",
+        "AdvancedMagnetometerStatus",
+        "BaselinePlotStatusButtonFront",
+        "AdvancedSpectrumAnalyzerStatus",
+        "AdvancedSpectrumAnalyzerStatusFront"
+      ]
+    },
+    "NavBarStatus": {
+      "type": "object",
+      "required": [
+        "available_baudrates",
+        "available_flows",
+        "available_ports",
+        "available_refresh_rates",
+        "log_level",
+        "previous_files",
+        "previous_hosts",
+        "previous_ports"
+      ],
+      "properties": {
+        "available_baudrates": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          }
+        },
+        "available_flows": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "available_ports": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "available_refresh_rates": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8",
+            "minimum": 0.0
+          }
+        },
+        "log_level": {
+          "type": "string"
+        },
+        "previous_files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "previous_hosts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "previous_ports": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          }
+        }
+      }
+    },
+    "ObservationStatus": {
+      "type": "object",
+      "required": [
+        "is_remote",
+        "rows",
+        "tow",
+        "week"
+      ],
+      "properties": {
+        "is_remote": {
+          "type": "boolean"
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ObservationTableRow"
+          }
+        },
+        "tow": {
+          "type": "number",
+          "format": "double"
+        },
+        "week": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        }
+      }
+    },
+    "ObservationTableRow": {
+      "type": "object",
+      "required": [
+        "carrer_phase",
+        "cn0",
+        "computed_doppler",
+        "flags",
+        "lock",
+        "measured_doppler",
+        "prn",
+        "pseudo_range"
+      ],
+      "properties": {
+        "carrer_phase": {
+          "type": "number",
+          "format": "double"
+        },
+        "cn0": {
+          "type": "number",
+          "format": "double"
+        },
+        "computed_doppler": {
+          "type": "number",
+          "format": "double"
+        },
+        "flags": {
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0
+        },
+        "lock": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "measured_doppler": {
+          "type": "number",
+          "format": "double"
+        },
+        "prn": {
+          "type": "string"
+        },
+        "pseudo_range": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "PauseRequest": {
+      "type": "object",
+      "required": [
+        "pause"
+      ],
+      "properties": {
+        "pause": {
+          "type": "boolean"
+        }
+      }
+    },
+    "Point": {
+      "type": "object",
+      "required": [
+        "x",
+        "y"
+      ],
+      "properties": {
+        "x": {
+          "type": "number",
+          "format": "double"
+        },
+        "y": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "SerialRefreshRequest": {
+      "type": "object",
+      "required": [
+        "refresh"
+      ],
+      "properties": {
+        "refresh": {
+          "type": "boolean"
+        }
+      }
+    },
+    "SerialRequest": {
+      "type": "object",
+      "required": [
+        "baudrate",
+        "device",
+        "flow_control"
+      ],
+      "properties": {
+        "baudrate": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "device": {
+          "type": "string"
+        },
+        "flow_control": {
+          "type": "string"
+        }
+      }
+    },
+    "SolutionPositionStatus": {
+      "type": "object",
+      "required": [
+        "available_units",
+        "cur_data",
+        "data",
+        "lat_max",
+        "lat_min",
+        "lon_max",
+        "lon_min"
+      ],
+      "properties": {
+        "available_units": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "cur_data": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Point"
+            }
+          }
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Point"
+            }
+          }
+        },
+        "lat_max": {
+          "type": "number",
+          "format": "double"
+        },
+        "lat_min": {
+          "type": "number",
+          "format": "double"
+        },
+        "lon_max": {
+          "type": "number",
+          "format": "double"
+        },
+        "lon_min": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "SolutionPositionStatusButtonFront": {
+      "type": "object",
+      "required": [
+        "solution_position_center",
+        "solution_position_clear",
+        "solution_position_pause",
+        "solution_position_zoom"
+      ],
+      "properties": {
+        "solution_position_center": {
+          "type": "boolean"
+        },
+        "solution_position_clear": {
+          "type": "boolean"
+        },
+        "solution_position_pause": {
+          "type": "boolean"
+        },
+        "solution_position_zoom": {
+          "type": "boolean"
+        }
+      }
+    },
+    "SolutionPositionStatusUnitFront": {
+      "type": "object",
+      "required": [
+        "solution_position_unit"
+      ],
+      "properties": {
+        "solution_position_unit": {
+          "type": "string"
+        }
+      }
+    },
+    "SolutionTableStatus": {
+      "type": "object",
+      "required": [
+        "data"
+      ],
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/KeyValuePair"
+          }
+        }
+      }
+    },
+    "SolutionVelocityStatus": {
+      "type": "object",
+      "required": [
+        "available_units",
+        "colors",
+        "max",
+        "min"
+      ],
+      "properties": {
+        "available_units": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "colors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "max": {
+          "type": "number",
+          "format": "double"
+        },
+        "min": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "SolutionVelocityStatusFront": {
+      "type": "object",
+      "required": [
+        "solution_velocity_units"
+      ],
+      "properties": {
+        "solution_velocity_units": {
+          "type": "string"
+        }
+      }
+    },
+    "Status": {
+      "type": "object",
+      "required": [
+        "text"
+      ],
+      "properties": {
+        "text": {
+          "type": "string"
+        }
+      }
+    },
+    "StatusBarStatus": {
+      "type": "object",
+      "required": [
+        "corr_age",
+        "data_rate",
+        "ins",
+        "port",
+        "pos",
+        "rtk",
+        "sats",
+        "solid_connection"
+      ],
+      "properties": {
+        "corr_age": {
+          "type": "string"
+        },
+        "data_rate": {
+          "type": "string"
+        },
+        "ins": {
+          "type": "string"
+        },
+        "port": {
+          "type": "string"
+        },
+        "pos": {
+          "type": "string"
+        },
+        "rtk": {
+          "type": "string"
+        },
+        "sats": {
+          "type": "string"
+        },
+        "solid_connection": {
+          "type": "boolean"
+        }
+      }
+    },
+    "TcpRequest": {
+      "type": "object",
+      "required": [
+        "host",
+        "port"
+      ],
+      "properties": {
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "string"
+        }
+      }
+    },
+    "TrackingSignalsStatus": {
+      "type": "object",
+      "required": [
+        "check_labels",
+        "colors",
+        "data",
+        "labels",
+        "xmin_offset"
+      ],
+      "properties": {
+        "check_labels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "colors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Point"
+            }
+          }
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "xmin_offset": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "TrackingSignalsStatusFront": {
+      "type": "object",
+      "required": [
+        "tracking_signals_check_visibility"
+      ],
+      "properties": {
+        "tracking_signals_check_visibility": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,16 +1,17 @@
-use capnp::serialize;
+use cfg_if::cfg_if;
 use log::{error, info};
-use pyo3::exceptions;
-use pyo3::prelude::*;
-use pyo3::types::PyBytes;
+
+#[cfg(feature = "python")]
+use pyo3::{exceptions, prelude::*, types::PyBytes};
 
 use std::{
     io::{BufReader, Cursor},
     path::PathBuf,
     str::FromStr,
-    sync::mpsc,
     thread, time,
 };
+
+use crossbeam::channel;
 
 use crate::cli_options::*;
 use crate::connection::ConnectionState;
@@ -22,47 +23,76 @@ use crate::types::{ClientSender, FlowControl, RealtimeDelay, SharedState};
 use crate::utils::{refresh_loggingbar, refresh_navbar};
 
 /// The backend server
-#[pyclass]
-struct Server {
-    client_recv: Option<mpsc::Receiver<Vec<u8>>>,
+#[cfg_attr(feature = "python", pyclass)]
+pub struct Server {
+    client_recv: Option<channel::Receiver<Vec<u8>>>,
     client_sender: Option<ClientSender>,
 }
 
-#[pyclass]
-struct ServerEndpoint {
-    server_send: Option<mpsc::Sender<Vec<u8>>>,
+#[cfg_attr(feature = "python", pyclass)]
+pub struct ServerEndpoint {
+    server_send: Option<channel::Sender<Vec<u8>>>,
 }
 
-#[pymethods]
-impl ServerEndpoint {
-    #[new]
-    pub fn __new__() -> Self {
-        ServerEndpoint { server_send: None }
-    }
+cfg_if! {
+    if #[cfg(feature = "python")] {
+        #[pymethods]
+        impl ServerEndpoint {
+            #[new]
+            pub fn __new__() -> Self {
+                ServerEndpoint { server_send: None }
+            }
 
-    #[text_signature = "($self, bytes, /)"]
-    pub fn shutdown(&mut self) -> PyResult<()> {
-        if let Some(server_send) = self.server_send.take() {
-            drop(server_send);
-            Ok(())
-        } else {
-            Err(exceptions::PyRuntimeError::new_err(
-                "no server send endpoint",
-            ))
+            #[text_signature = "($self, bytes, /)"]
+            pub fn shutdown(&mut self) -> PyResult<()> {
+                if let Some(server_send) = self.server_send.take() {
+                    drop(server_send);
+                    Ok(())
+                } else {
+                    Err(exceptions::PyRuntimeError::new_err(
+                        "no server send endpoint",
+                    ))
+                }
+            }
+
+            #[text_signature = "($self, bytes, /)"]
+            pub fn send_message(&mut self, bytes: &PyBytes) -> PyResult<()> {
+                let byte_vec: Vec<u8> = bytes.extract().unwrap();
+                if let Some(server_send) = &self.server_send {
+                    server_send
+                        .send(byte_vec)
+                        .map_err(|e| exceptions::PyRuntimeError::new_err(format!("{}", e)))
+                } else {
+                    Err(exceptions::PyRuntimeError::new_err(
+                        "no server send endpoint",
+                    ))
+                }
+            }
         }
-    }
+    } else {
+        impl ServerEndpoint {
+            pub fn new() -> Self {
+                ServerEndpoint { server_send: None }
+            }
 
-    #[text_signature = "($self, bytes, /)"]
-    pub fn send_message(&mut self, bytes: &PyBytes) -> PyResult<()> {
-        let byte_vec: Vec<u8> = bytes.extract().unwrap();
-        if let Some(server_send) = &self.server_send {
-            server_send
-                .send(byte_vec)
-                .map_err(|e| exceptions::PyRuntimeError::new_err(format!("{}", e)))
-        } else {
-            Err(exceptions::PyRuntimeError::new_err(
-                "no server send endpoint",
-            ))
+            pub fn shutdown(&mut self) -> crate::types::Result<()> {
+                if let Some(server_send) = self.server_send.take() {
+                    drop(server_send);
+                    Ok(())
+                } else {
+                    Err("no server send endpoint".into())
+                }
+            }
+
+            pub fn send_message(&mut self, byte_vec: Vec<u8>) -> crate::types::Result<()> {
+                if let Some(server_send) = &self.server_send {
+                    server_send
+                        .send(byte_vec)
+                        .map_err(crate::types::Error::from)
+                } else {
+                    Err("no server send endpoint".into())
+                }
+            }
         }
     }
 }
@@ -112,10 +142,12 @@ fn handle_cli(opt: CliOptions, connection_state: &ConnectionState, shared_state:
     log::logger().flush();
 }
 
+use crate::ipc::{Message, self};
+
 fn backend_recv_thread(
     connection_state: ConnectionState,
     client_send: ClientSender,
-    server_recv: mpsc::Receiver<Vec<u8>>,
+    server_recv: channel::Receiver<Vec<u8>>,
     shared_state: SharedState,
 ) {
     thread::spawn(move || {
@@ -125,79 +157,57 @@ fn backend_recv_thread(
             let buf = server_recv.recv();
             if let Ok(buf) = buf {
                 let mut buf_reader = BufReader::new(Cursor::new(buf));
-                let message_reader = serialize::read_message(
-                    &mut buf_reader,
-                    ::capnp::message::ReaderOptions::new(),
-                )
-                .unwrap();
-                let message = message_reader
-                    .get_root::<m::message::Reader>()
-                    .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
-                let message = match message.which() {
+
+                let message: Message = match rmp_serde::from_read(&mut buf_reader) {
                     Ok(msg) => msg,
                     Err(e) => {
                         error!("error reading message: {}", e);
                         continue;
                     }
                 };
+
+                let shared_state_clone = shared_state.clone();
+
                 match message {
-                    m::message::ConnectRequest(Ok(conn_req)) => {
-                        let request = conn_req
-                            .get_request()
-                            .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
-                        let request = request
-                            .get_as::<m::message::Reader>()
-                            .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
-                        let request = match request.which() {
-                            Ok(msg) => msg,
-                            Err(e) => {
-                                error!("error reading message: {}", e);
-                                continue;
-                            }
-                        };
-                        let shared_state_clone = shared_state.clone();
-                        match request {
-                            m::message::SerialRefreshRequest(Ok(_)) => {
-                                refresh_navbar(&mut client_send_clone.clone(), shared_state_clone);
-                            }
-                            m::message::DisconnectRequest(Ok(_)) => {
-                                connection_state.disconnect(client_send_clone.clone());
-                            }
-                            m::message::FileRequest(Ok(req)) => {
-                                let filename = req
-                                    .get_filename()
-                                    .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
-                                let filename = filename.to_string();
-                                connection_state.connect_to_file(
-                                    filename,
-                                    RealtimeDelay::On,
-                                    /*close_when_done*/ false,
-                                );
-                            }
-                            m::message::PauseRequest(Ok(_)) => {
-                                if shared_state_clone.is_paused() {
-                                    shared_state_clone.set_paused(false);
-                                } else {
-                                    shared_state_clone.set_paused(true);
-                                }
-                            }
-                            m::message::TcpRequest(Ok(req)) => {
-                                let host =
-                                    req.get_host().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
-                                let port = req.get_port();
-                                connection_state.connect_to_host(host.to_string(), port);
-                            }
-                            m::message::SerialRequest(Ok(req)) => {
-                                let device =
-                                    req.get_device().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
-                                let device = device.to_string();
-                                let baudrate = req.get_baudrate();
-                                let flow = req.get_flow_control().unwrap();
-                                let flow = FlowControl::from_str(flow).unwrap();
-                                connection_state.connect_to_serial(device, baudrate, flow);
-                            }
-                            _ => println!("err"),
+
+                    Message::SerialRefreshRequest(_) => {
+                        refresh_navbar(&mut client_send_clone.clone(), shared_state_clone);
+                    }
+
+                    Message::DisconnectRequest(_) => {
+                        connection_state.disconnect(client_send_clone.clone());
+                    }
+
+                    Message::FileRequest(req) => {
+                        let filename = req.filename;
+                        connection_state.connect_to_file(
+                            filename,
+                            RealtimeDelay::On,
+                            /*close_when_done*/ false,
+                        );
+                    }
+                    /*
+                    m::message::PauseRequest(Ok(_)) => {
+                        if shared_state_clone.is_paused() {
+                            shared_state_clone.set_paused(false);
+                        } else {
+                            shared_state_clone.set_paused(true);
                         }
+                    }
+                    m::message::TcpRequest(Ok(req)) => {
+                        let host =
+                            req.get_host().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
+                        let port = req.get_port();
+                        connection_state.connect_to_host(host.to_string(), port);
+                    }
+                    m::message::SerialRequest(Ok(req)) => {
+                        let device =
+                            req.get_device().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
+                        let device = device.to_string();
+                        let baudrate = req.get_baudrate();
+                        let flow = req.get_flow_control().unwrap();
+                        let flow = FlowControl::from_str(flow).unwrap();
+                        connection_state.connect_to_serial(device, baudrate, flow);
                     }
                     m::message::TrackingSignalsStatusFront(Ok(cv_in)) => {
                         let check_visibility = cv_in
@@ -293,6 +303,7 @@ fn backend_recv_thread(
                         (*shared_data).advanced_spectrum_analyzer_tab.channel_idx =
                             cv_in.get_channel();
                     }
+                    */
                     _ => {
                         error!("unknown message from front-end");
                     }
@@ -306,68 +317,125 @@ fn backend_recv_thread(
     });
 }
 
-#[pymethods]
-impl Server {
-    #[new]
-    pub fn __new__() -> Self {
-        Server {
-            client_recv: None,
-            client_sender: None,
-        }
-    }
 
-    #[text_signature = "($self, /)"]
-    pub fn fetch_message(&mut self, py: Python) -> Option<PyObject> {
-        let result = py.allow_threads(move || loop {
-            if let Some(client_recv) = &self.client_recv {
-                match client_recv.recv_timeout(time::Duration::from_millis(1)) {
-                    Ok(buf) => break Some(buf),
-                    Err(err) => {
-                        use std::sync::mpsc::RecvTimeoutError;
-                        if matches!(err, RecvTimeoutError::Timeout) {
-                            if self.client_sender.as_ref().unwrap().connected.get() {
-                                continue;
-                            } else {
-                                eprintln!("shutting down");
-                                break None;
+cfg_if! {
+    if #[cfg(feature = "python")] {
+        #[pymethods]
+        impl Server {
+
+            #[new]
+            pub fn __new__() -> Self {
+                Server {
+                    client_recv: None,
+                    client_sender: None,
+                }
+            }
+
+            #[text_signature = "($self, /)"]
+            pub fn fetch_message(&mut self, py: Python) -> Option<PyObject> {
+                let result = py.allow_threads(move || loop {
+                    if let Some(client_recv) = &self.client_recv {
+                        match client_recv.recv_timeout(time::Duration::from_millis(1)) {
+                            Ok(buf) => break Some(buf),
+                            Err(err) => {
+                                use crossbeam::channel::RecvTimeoutError;
+                                if matches!(err, RecvTimeoutError::Timeout) {
+                                    if self.client_sender.as_ref().unwrap().connected.get() {
+                                        continue;
+                                    } else {
+                                        eprintln!("shutting down");
+                                        break None;
+                                    }
+                                } else {
+                                    eprintln!("client recv disconnected");
+                                    break None;
+                                }
                             }
-                        } else {
-                            eprintln!("client recv disconnected");
-                            break None;
+                        }
+                    } else {
+                        eprintln!("no client receive endpoint");
+                        break None;
+                    }
+                });
+                result.map(|result| PyBytes::new(py, &result).into())
+            }
+
+            #[text_signature = "($self, /)"]
+            pub fn start(&mut self) -> PyResult<ServerEndpoint> {
+                let (client_send_, client_recv) = channel::unbounded::<Vec<u8>>();
+                let (server_send, server_recv) = channel::unbounded::<Vec<u8>>();
+                let client_send = ClientSender::new(client_send_);
+                self.client_recv = Some(client_recv);
+                self.client_sender = Some(client_send.clone());
+                let server_endpoint = ServerEndpoint {
+                    server_send: Some(server_send),
+                };
+                setup_logging(client_send.clone());
+                let opt = CliOptions::from_filtered_cli();
+                let shared_state = SharedState::new();
+                let connection_state = ConnectionState::new(client_send.clone(), shared_state.clone());
+                // Handle CLI Opts.
+                handle_cli(opt, &connection_state, shared_state.clone());
+                refresh_navbar(&mut client_send.clone(), shared_state.clone());
+                refresh_loggingbar(&mut client_send.clone(), shared_state.clone());
+                backend_recv_thread(connection_state, client_send, server_recv, shared_state);
+                Ok(server_endpoint)
+            }
+        }
+    } else {
+        impl Server {
+            pub fn new() -> Self {
+                Server {
+                    client_recv: None,
+                    client_sender: None,
+                }
+            }
+            pub fn fetch_message(&self) -> crate::types::Result<Option<Vec<u8>>> {
+                if let Some(client_recv) = &self.client_recv {
+                    match client_recv.recv_timeout(time::Duration::from_millis(1)) {
+                        Ok(buf) => Ok(Some(buf)),
+                        Err(err) => {
+                            use crossbeam::channel::RecvTimeoutError;
+                            if matches!(err, RecvTimeoutError::Timeout) {
+                                if self.client_sender.as_ref().unwrap().connected.get() {
+                                    Ok(None)
+                                } else {
+                                    Err("shutting down".into())
+                                }
+                            } else {
+                                Err("client recv disconnected".into())
+                            }
                         }
                     }
+                } else {
+                    Err("no client receive endpoint".into())
                 }
-            } else {
-                eprintln!("no client receive endpoint");
-                break None;
             }
-        });
-        result.map(|result| PyBytes::new(py, &result).into())
-    }
-
-    #[text_signature = "($self, /)"]
-    pub fn start(&mut self) -> PyResult<ServerEndpoint> {
-        let (client_send_, client_recv) = mpsc::channel::<Vec<u8>>();
-        let (server_send, server_recv) = mpsc::channel::<Vec<u8>>();
-        let client_send = ClientSender::new(client_send_);
-        self.client_recv = Some(client_recv);
-        self.client_sender = Some(client_send.clone());
-        let server_endpoint = ServerEndpoint {
-            server_send: Some(server_send),
-        };
-        setup_logging(client_send.clone());
-        let opt = CliOptions::from_filtered_cli();
-        let shared_state = SharedState::new();
-        let connection_state = ConnectionState::new(client_send.clone(), shared_state.clone());
-        // Handle CLI Opts.
-        handle_cli(opt, &connection_state, shared_state.clone());
-        refresh_navbar(&mut client_send.clone(), shared_state.clone());
-        refresh_loggingbar(&mut client_send.clone(), shared_state.clone());
-        backend_recv_thread(connection_state, client_send, server_recv, shared_state);
-        Ok(server_endpoint)
+            pub fn start(&mut self) -> ServerEndpoint {
+                let (client_send_, client_recv) = channel::unbounded::<Vec<u8>>();
+                let (server_send, server_recv) = channel::unbounded::<Vec<u8>>();
+                let client_send = ClientSender::new(client_send_);
+                self.client_recv = Some(client_recv);
+                self.client_sender = Some(client_send.clone());
+                let server_endpoint = ServerEndpoint {
+                    server_send: Some(server_send),
+                };
+                setup_logging(client_send.clone());
+                let opt = CliOptions::from_filtered_cli();
+                let shared_state = SharedState::new();
+                let connection_state = ConnectionState::new(client_send.clone(), shared_state.clone());
+                // Handle CLI Opts.
+                handle_cli(opt, &connection_state, shared_state.clone());
+                refresh_navbar(&mut client_send.clone(), shared_state.clone());
+                refresh_loggingbar(&mut client_send.clone(), shared_state.clone());
+                backend_recv_thread(connection_state, client_send, server_recv, shared_state);
+                server_endpoint
+            }
+        }
     }
 }
 
+#[cfg(feature = "pyo3")]
 #[pymodule]
 pub fn server(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<Server>()?;

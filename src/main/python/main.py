@@ -336,11 +336,8 @@ class DataModel(QObject):
     def connect_file(self, filename: str) -> None:
         Message = self.messages.Message
         msg = Message()
-        msg.connectRequest = msg.init(Message.Union.ConnectRequest)
-        req = Message()
-        req.fileRequest = req.init(Message.Union.FileRequest)
-        req.fileRequest.filename = str(filename)
-        msg.connectRequest.request = req
+        msg.fileRequest = msg.init(Message.Union.FileRequest)
+        msg.fileRequest.filename = str(filename)
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
 
@@ -348,60 +345,45 @@ class DataModel(QObject):
     def connect_tcp(self, host: str, port: int) -> None:
         Message = self.messages.Message
         msg = Message()
-        msg.connectRequest = msg.init(Message.Union.ConnectRequest)
-        req = Message()
-        req.tcpRequest = req.init(Message.Union.TcpRequest)
-        req.tcpRequest.host = str(host)
-        req.tcpRequest.port = int(port)
-        msg.connectRequest.request = req
+        msg.tcpRequest = msg.init(Message.Union.TcpRequest)
+        msg.tcpRequest.host = str(host)
+        msg.tcpRequest.port = int(port)
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
 
     @Slot(str, int, str)  # type: ignore
     def connect_serial(self, device: str, baudrate: int, flow_control: str) -> None:
         Message = self.messages.Message
-        msg = Message()
-        msg.connectRequest = msg.init(Message.Union.ConnectRequest)
-        req = self.messages.Message()
-        req.serialRequest = req.init(Message.Union.SerialRequest)
-        req.serialRequest.device = str(device)
-        req.serialRequest.baudrate = int(baudrate)
-        req.serialRequest.flowControl = str(flow_control)
-        msg.connectRequest.request = req
+        msg = self.messages.Message()
+        msg.serialRequest = msg.init(Message.Union.SerialRequest)
+        msg.serialRequest.device = str(device)
+        msg.serialRequest.baudrate = int(baudrate)
+        msg.serialRequest.flowControl = str(flow_control)
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
 
     @Slot()  # type: ignore
     def disconnect(self) -> None:
         Message = self.messages.Message
-        msg = Message()
-        msg.connectRequest = msg.init(Message.Union.ConnectRequest)
-        req = self.messages.Message()
-        req.disconnectRequest = req.init(Message.Union.DisconnectRequest)
-        msg.connectRequest.request = req
+        msg = self.messages.Message()
+        msg.disconnectRequest = msg.init(Message.Union.DisconnectRequest)
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
 
     @Slot()  # type: ignore
     def serial_refresh(self) -> None:
         Message = self.messages.Message
-        msg = Message()
-        msg.connectRequest = msg.init(Message.Union.ConnectRequest)
-        req = self.messages.Message()
-        req.serialRefreshRequest = req.init(Message.Union.SerialRefreshRequest)
-        msg.connectRequest.request = req
+        msg = self.messages.Message()
+        msg.serialRefreshRequest = msg.init(Message.Union.SerialRefreshRequest)
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
 
     @Slot(bool)  # type: ignore
     def pause(self, pause_: bool) -> None:
         Message = self.messages.Message
-        msg = Message()
-        msg.connectRequest = msg.init(Message.Union.ConnectRequest)
-        req = self.messages.Message()
-        req.pauseRequest = req.init(Message.Union.PauseRequest)
-        req.pauseRequest.pause = pause_
-        msg.connectRequest.request = req
+        msg = self.messages.Message()
+        msg.pauseRequest = msg.init(Message.Union.PauseRequest)
+        msg.pauseRequest.pause = pause_
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
 

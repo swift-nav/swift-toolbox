@@ -1,13 +1,12 @@
 use log::error;
 use sbp::messages::imu::{MsgImuAux, MsgImuRaw};
 
-use capnp::message::Builder;
-
 use crate::constants::*;
 use crate::errors::GET_MUT_OBJECT_FAILURE;
 use crate::fusion_status_flags::FusionStatusFlags;
+use crate::ipc::{self, Point};
 use crate::types::{CapnProtoSender, Deque, SharedState};
-use crate::utils::serialize_capnproto_builder;
+use crate::utils::serialize_ipc_message;
 
 /// AdvancedInsTab struct.
 ///
@@ -133,13 +132,7 @@ impl<S: CapnProtoSender> AdvancedInsTab<S> {
 
     /// Package data into a message buffer and send to frontend.
     fn send_data(&mut self) {
-        let mut builder = Builder::new_default();
-        let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
-
-        let mut tab_status = msg.init_advanced_ins_status();
-
-        let mut tab_points = tab_status.reborrow().init_data(NUM_INS_PLOT_ROWS as u32);
-
+        let mut tab_status: ipc::AdvancedInsStatus = Default::default();
         let mut points_vec = vec![
             self.acc_x.get(),
             self.acc_y.get(),
@@ -148,13 +141,14 @@ impl<S: CapnProtoSender> AdvancedInsTab<S> {
             self.gyro_y.get(),
             self.gyro_z.get(),
         ];
+        let mut tab_points: Vec<Vec<Point>> = Default::default();
         for idx in 0..NUM_INS_PLOT_ROWS {
             let points = points_vec.get_mut(idx).expect(GET_MUT_OBJECT_FAILURE);
-            let mut point_val_idx = tab_points.reborrow().init(idx as u32, points.len() as u32);
+            let point_val_idx = tab_points.get_mut(idx).expect(GET_MUT_OBJECT_FAILURE);
             for idx in 0..NUM_POINTS {
-                let mut point_val = point_val_idx.reborrow().get(idx as u32);
-                point_val.set_x(idx as f64);
-                point_val.set_y(points[idx]);
+                let mut point_val = point_val_idx.get_mut(idx).expect(GET_MUT_OBJECT_FAILURE);
+                point_val.x = idx as f64;
+                point_val.y = points[idx];
             }
         }
         let fields_data = {
@@ -166,16 +160,12 @@ impl<S: CapnProtoSender> AdvancedInsTab<S> {
                 self.rms_acc_z,
             ]
         };
-        let mut fields_data_status = tab_status
-            .reborrow()
-            .init_fields_data(NUM_INS_FIELDS as u32);
-
         for (i, datur) in fields_data.iter().enumerate() {
-            fields_data_status.set(i as u32, *datur);
+            tab_status.fields_data[i] = *datur;
         }
-
+        let message = ipc::Message::AdvancedInsStatus(tab_status);
         self.client_sender
-            .send_data(serialize_capnproto_builder(builder));
+            .send_data(serialize_ipc_message(&message));
     }
 }
 

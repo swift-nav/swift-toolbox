@@ -1,19 +1,368 @@
 ﻿{
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Message",
-  "type": "object",
-  "required": [
-    "inner",
-    "msg_type"
-  ],
-  "properties": {
-    "inner": {
-      "$ref": "#/definitions/MessageInner"
+  "anyOf": [
+    {
+      "type": "object",
+      "required": [
+        "TcpRequest"
+      ],
+      "properties": {
+        "TcpRequest": {
+          "$ref": "#/definitions/TcpRequest"
+        }
+      },
+      "additionalProperties": false
     },
-    "msg_type": {
-      "$ref": "#/definitions/MessageType"
+    {
+      "type": "object",
+      "required": [
+        "FileRequest"
+      ],
+      "properties": {
+        "FileRequest": {
+          "$ref": "#/definitions/FileRequest"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "SerialRequest"
+      ],
+      "properties": {
+        "SerialRequest": {
+          "$ref": "#/definitions/SerialRequest"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "SerialRefreshRequest"
+      ],
+      "properties": {
+        "SerialRefreshRequest": {
+          "$ref": "#/definitions/SerialRefreshRequest"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "PauseRequest"
+      ],
+      "properties": {
+        "PauseRequest": {
+          "$ref": "#/definitions/PauseRequest"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "DisconnectRequest"
+      ],
+      "properties": {
+        "DisconnectRequest": {
+          "$ref": "#/definitions/DisconnectRequest"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "SolutionTableStatus"
+      ],
+      "properties": {
+        "SolutionTableStatus": {
+          "$ref": "#/definitions/SolutionTableStatus"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "NavBarStatus"
+      ],
+      "properties": {
+        "NavBarStatus": {
+          "$ref": "#/definitions/NavBarStatus"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "StatusBarStatus"
+      ],
+      "properties": {
+        "StatusBarStatus": {
+          "$ref": "#/definitions/StatusBarStatus"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "BaselinePlotStatus"
+      ],
+      "properties": {
+        "BaselinePlotStatus": {
+          "$ref": "#/definitions/BaselinePlotStatus"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "BaselineTableStatus"
+      ],
+      "properties": {
+        "BaselineTableStatus": {
+          "$ref": "#/definitions/BaselineTableStatus"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "ObservationStatus"
+      ],
+      "properties": {
+        "ObservationStatus": {
+          "$ref": "#/definitions/ObservationStatus"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "SolutionPositionStatus"
+      ],
+      "properties": {
+        "SolutionPositionStatus": {
+          "$ref": "#/definitions/SolutionPositionStatus"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "SolutionVelocityStatus"
+      ],
+      "properties": {
+        "SolutionVelocityStatus": {
+          "$ref": "#/definitions/SolutionVelocityStatus"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "TrackingSignalsStatus"
+      ],
+      "properties": {
+        "TrackingSignalsStatus": {
+          "$ref": "#/definitions/TrackingSignalsStatus"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "AdvancedInsStatus"
+      ],
+      "properties": {
+        "AdvancedInsStatus": {
+          "$ref": "#/definitions/AdvancedInsStatus"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "Status"
+      ],
+      "properties": {
+        "Status": {
+          "$ref": "#/definitions/Status"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "TrackingSignalsStatusFront"
+      ],
+      "properties": {
+        "TrackingSignalsStatusFront": {
+          "$ref": "#/definitions/TrackingSignalsStatusFront"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "SolutionVelocityStatusFront"
+      ],
+      "properties": {
+        "SolutionVelocityStatusFront": {
+          "$ref": "#/definitions/SolutionVelocityStatusFront"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "SolutionPositionStatusButtonFront"
+      ],
+      "properties": {
+        "SolutionPositionStatusButtonFront": {
+          "$ref": "#/definitions/SolutionPositionStatusButtonFront"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "SolutionPositionStatusUnitFront"
+      ],
+      "properties": {
+        "SolutionPositionStatusUnitFront": {
+          "$ref": "#/definitions/SolutionPositionStatusUnitFront"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "LogAppend"
+      ],
+      "properties": {
+        "LogAppend": {
+          "$ref": "#/definitions/LogAppend"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "LoggingBarFront"
+      ],
+      "properties": {
+        "LoggingBarFront": {
+          "$ref": "#/definitions/LoggingBarFront"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "LoggingBarStatus"
+      ],
+      "properties": {
+        "LoggingBarStatus": {
+          "$ref": "#/definitions/LoggingBarStatus"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "LogLevelFront"
+      ],
+      "properties": {
+        "LogLevelFront": {
+          "$ref": "#/definitions/LogLevelFront"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "FusionStatusFlagsStatus"
+      ],
+      "properties": {
+        "FusionStatusFlagsStatus": {
+          "$ref": "#/definitions/FusionStatusFlagsStatus"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "AdvancedMagnetometerStatus"
+      ],
+      "properties": {
+        "AdvancedMagnetometerStatus": {
+          "$ref": "#/definitions/AdvancedMagnetometerStatus"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "BaselinePlotStatusButtonFront"
+      ],
+      "properties": {
+        "BaselinePlotStatusButtonFront": {
+          "$ref": "#/definitions/BaselinePlotStatusButtonFront"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "AdvancedSpectrumAnalyzerStatus"
+      ],
+      "properties": {
+        "AdvancedSpectrumAnalyzerStatus": {
+          "$ref": "#/definitions/AdvancedSpectrumAnalyzerStatus"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "AdvancedSpectrumAnalyzerStatusFront"
+      ],
+      "properties": {
+        "AdvancedSpectrumAnalyzerStatusFront": {
+          "$ref": "#/definitions/AdvancedSpectrumAnalyzerStatusFront"
+        }
+      },
+      "additionalProperties": false
     }
-  },
+  ],
   "definitions": {
     "AdvancedInsStatus": {
       "type": "object",
@@ -105,11 +454,13 @@
     "AdvancedSpectrumAnalyzerStatusFront": {
       "type": "object",
       "required": [
-        "solution_velocity_units"
+        "channel"
       ],
       "properties": {
-        "solution_velocity_units": {
-          "type": "string"
+        "channel": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
         }
       }
     },
@@ -355,405 +706,6 @@
           "type": "string"
         }
       }
-    },
-    "MessageInner": {
-      "anyOf": [
-        {
-          "type": "object",
-          "required": [
-            "TcpRequest"
-          ],
-          "properties": {
-            "TcpRequest": {
-              "$ref": "#/definitions/TcpRequest"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "FileRequest"
-          ],
-          "properties": {
-            "FileRequest": {
-              "$ref": "#/definitions/FileRequest"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "SerialRequest"
-          ],
-          "properties": {
-            "SerialRequest": {
-              "$ref": "#/definitions/SerialRequest"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "SerialRefreshRequest"
-          ],
-          "properties": {
-            "SerialRefreshRequest": {
-              "$ref": "#/definitions/SerialRefreshRequest"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "PauseRequest"
-          ],
-          "properties": {
-            "PauseRequest": {
-              "$ref": "#/definitions/PauseRequest"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "DisconnectRequest"
-          ],
-          "properties": {
-            "DisconnectRequest": {
-              "$ref": "#/definitions/DisconnectRequest"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "SolutionTableStatus"
-          ],
-          "properties": {
-            "SolutionTableStatus": {
-              "$ref": "#/definitions/SolutionTableStatus"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "NavBarStatus"
-          ],
-          "properties": {
-            "NavBarStatus": {
-              "$ref": "#/definitions/NavBarStatus"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "StatusBarStatus"
-          ],
-          "properties": {
-            "StatusBarStatus": {
-              "$ref": "#/definitions/StatusBarStatus"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "BaselinePlotStatus"
-          ],
-          "properties": {
-            "BaselinePlotStatus": {
-              "$ref": "#/definitions/BaselinePlotStatus"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "BaselineTableStatus"
-          ],
-          "properties": {
-            "BaselineTableStatus": {
-              "$ref": "#/definitions/BaselineTableStatus"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "ObservationStatus"
-          ],
-          "properties": {
-            "ObservationStatus": {
-              "$ref": "#/definitions/ObservationStatus"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "SolutionPositionStatus"
-          ],
-          "properties": {
-            "SolutionPositionStatus": {
-              "$ref": "#/definitions/SolutionPositionStatus"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "SolutionVelocityStatus"
-          ],
-          "properties": {
-            "SolutionVelocityStatus": {
-              "$ref": "#/definitions/SolutionVelocityStatus"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "TrackingSignalsStatus"
-          ],
-          "properties": {
-            "TrackingSignalsStatus": {
-              "$ref": "#/definitions/TrackingSignalsStatus"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "AdvancedInsStatus"
-          ],
-          "properties": {
-            "AdvancedInsStatus": {
-              "$ref": "#/definitions/AdvancedInsStatus"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "Status"
-          ],
-          "properties": {
-            "Status": {
-              "$ref": "#/definitions/Status"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "TrackingSignalsStatusFront"
-          ],
-          "properties": {
-            "TrackingSignalsStatusFront": {
-              "$ref": "#/definitions/TrackingSignalsStatusFront"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "SolutionVelocityStatusFront"
-          ],
-          "properties": {
-            "SolutionVelocityStatusFront": {
-              "$ref": "#/definitions/SolutionVelocityStatusFront"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "SolutionPositionStatusButtonFront"
-          ],
-          "properties": {
-            "SolutionPositionStatusButtonFront": {
-              "$ref": "#/definitions/SolutionPositionStatusButtonFront"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "SolutionPositionStatusUnitFront"
-          ],
-          "properties": {
-            "SolutionPositionStatusUnitFront": {
-              "$ref": "#/definitions/SolutionPositionStatusUnitFront"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "LogAppend"
-          ],
-          "properties": {
-            "LogAppend": {
-              "$ref": "#/definitions/LogAppend"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "LoggingBarFront"
-          ],
-          "properties": {
-            "LoggingBarFront": {
-              "$ref": "#/definitions/LoggingBarFront"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "LoggingBarStatus"
-          ],
-          "properties": {
-            "LoggingBarStatus": {
-              "$ref": "#/definitions/LoggingBarStatus"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "LogLevelFront"
-          ],
-          "properties": {
-            "LogLevelFront": {
-              "$ref": "#/definitions/LogLevelFront"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "FusionStatusFlagsStatus"
-          ],
-          "properties": {
-            "FusionStatusFlagsStatus": {
-              "$ref": "#/definitions/FusionStatusFlagsStatus"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "AdvancedMagnetometerStatus"
-          ],
-          "properties": {
-            "AdvancedMagnetometerStatus": {
-              "$ref": "#/definitions/AdvancedMagnetometerStatus"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "BaselinePlotStatusButtonFront"
-          ],
-          "properties": {
-            "BaselinePlotStatusButtonFront": {
-              "$ref": "#/definitions/BaselinePlotStatusButtonFront"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "AdvancedSpectrumAnalyzerStatus"
-          ],
-          "properties": {
-            "AdvancedSpectrumAnalyzerStatus": {
-              "$ref": "#/definitions/AdvancedSpectrumAnalyzerStatus"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "AdvancedSpectrumAnalyzerStatusFront"
-          ],
-          "properties": {
-            "AdvancedSpectrumAnalyzerStatusFront": {
-              "$ref": "#/definitions/AdvancedSpectrumAnalyzerStatusFront"
-            }
-          },
-          "additionalProperties": false
-        }
-      ]
-    },
-    "MessageType": {
-      "type": "string",
-      "enum": [
-        "TcpRequest",
-        "FileRequest",
-        "SerialRequest",
-        "SerialRefreshRequest",
-        "PauseRequest",
-        "DisconnectRequest",
-        "SolutionTableStatus",
-        "NavBarStatus",
-        "StatusBarStatus",
-        "BaselinePlotStatus",
-        "BaselineTableStatus",
-        "ObservationStatus",
-        "SolutionPositionStatus",
-        "SolutionVelocityStatus",
-        "TrackingSignalsStatus",
-        "AdvancedInsStatus",
-        "Status",
-        "TrackingSignalsStatusFront",
-        "SolutionVelocityStatusFront",
-        "SolutionPositionStatusButtonFront",
-        "SolutionPositionStatusUnitFront",
-        "LogAppend",
-        "LoggingBarFront",
-        "LoggingBarStatus",
-        "LogLevelFront",
-        "FusionStatusFlagsStatus",
-        "AdvancedMagnetometerStatus",
-        "BaselinePlotStatusButtonFront",
-        "AdvancedSpectrumAnalyzerStatus",
-        "AdvancedSpectrumAnalyzerStatusFront"
-      ]
     },
     "NavBarStatus": {
       "type": "object",
@@ -1163,7 +1115,9 @@
           "type": "string"
         },
         "port": {
-          "type": "string"
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
         }
       }
     },

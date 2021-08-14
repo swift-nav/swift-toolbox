@@ -15,9 +15,9 @@ use crossbeam::channel;
 
 use crate::cli_options::*;
 use crate::connection::ConnectionState;
-use crate::console_backend_capnp as m;
 use crate::errors::*;
 use crate::log_panel::{setup_logging, LogLevel};
+use crate::ipc::Message;
 use crate::output::{CsvLogging, SbpLogging};
 use crate::types::{ClientSender, FlowControl, RealtimeDelay, SharedState};
 use crate::utils::{refresh_loggingbar, refresh_navbar};
@@ -142,8 +142,6 @@ fn handle_cli(opt: CliOptions, connection_state: &ConnectionState, shared_state:
     log::logger().flush();
 }
 
-use crate::ipc::{Message, self};
-
 fn backend_recv_thread(
     connection_state: ConnectionState,
     client_send: ClientSender,
@@ -157,7 +155,6 @@ fn backend_recv_thread(
             let buf = server_recv.recv();
             if let Ok(buf) = buf {
                 let mut buf_reader = BufReader::new(Cursor::new(buf));
-
                 let message: Message = match rmp_serde::from_read(&mut buf_reader) {
                     Ok(msg) => msg,
                     Err(e) => {
@@ -165,19 +162,14 @@ fn backend_recv_thread(
                         continue;
                     }
                 };
-
                 let shared_state_clone = shared_state.clone();
-
                 match message {
-
                     Message::SerialRefreshRequest(_) => {
                         refresh_navbar(&mut client_send_clone.clone(), shared_state_clone);
                     }
-
                     Message::DisconnectRequest(_) => {
                         connection_state.disconnect(client_send_clone.clone());
                     }
-
                     Message::FileRequest(req) => {
                         let filename = req.filename;
                         connection_state.connect_to_file(
@@ -186,37 +178,25 @@ fn backend_recv_thread(
                             /*close_when_done*/ false,
                         );
                     }
-                    /*
-                    m::message::PauseRequest(Ok(_)) => {
+                    Message::PauseRequest(_) => {
                         if shared_state_clone.is_paused() {
                             shared_state_clone.set_paused(false);
                         } else {
                             shared_state_clone.set_paused(true);
                         }
                     }
-                    m::message::TcpRequest(Ok(req)) => {
-                        let host =
-                            req.get_host().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
-                        let port = req.get_port();
-                        connection_state.connect_to_host(host.to_string(), port);
+                    Message::TcpRequest(req) => {
+                        connection_state.connect_to_host(req.host, req.port);
                     }
-                    m::message::SerialRequest(Ok(req)) => {
-                        let device =
-                            req.get_device().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
-                        let device = device.to_string();
-                        let baudrate = req.get_baudrate();
-                        let flow = req.get_flow_control().unwrap();
-                        let flow = FlowControl::from_str(flow).unwrap();
+                    Message::SerialRequest(req) => {
+                        let device = req.device;
+                        let baudrate = req.baudrate;
+                        let flow = req.flow_control;
+                        let flow = FlowControl::from_str(&flow).unwrap();
                         connection_state.connect_to_serial(device, baudrate, flow);
                     }
-                    m::message::TrackingSignalsStatusFront(Ok(cv_in)) => {
-                        let check_visibility = cv_in
-                            .get_tracking_signals_check_visibility()
-                            .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
-                        let check_visibility: Vec<String> = check_visibility
-                            .iter()
-                            .map(|x| String::from(x.unwrap()))
-                            .collect();
+                    Message::TrackingSignalsStatusFront(cv_in) => {
+                        let check_visibility = cv_in.tracking_signals_check_visibility;
                         let shared_state_clone = shared_state.clone();
                         {
                             let mut shared_data = shared_state_clone
@@ -226,84 +206,72 @@ fn backend_recv_thread(
                                 check_visibility;
                         }
                     }
-                    m::message::LoggingBarFront(Ok(cv_in)) => {
-                        let directory = cv_in
-                            .get_directory()
-                            .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
-                        shared_state.set_logging_directory(PathBuf::from(directory));
+                    Message::LoggingBarFront(cv_in) => {
+                        let directory = PathBuf::from(cv_in.directory);
+                        shared_state.set_logging_directory(directory);
                         let shared_state_clone = shared_state.clone();
                         let mut shared_data = shared_state_clone
                             .lock()
                             .expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-                        (*shared_data).logging_bar.csv_logging =
-                            CsvLogging::from(cv_in.get_csv_logging());
-                        let sbp_logging = cv_in
-                            .get_sbp_logging()
-                            .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
+                        (*shared_data).logging_bar.csv_logging = CsvLogging::from(cv_in.csv_logging);
+                        let sbp_logging = cv_in.sbp_logging;
                         (*shared_data).logging_bar.sbp_logging =
-                            SbpLogging::from_str(sbp_logging).expect(CONVERT_TO_STR_FAILURE);
+                            SbpLogging::from_str(&sbp_logging).expect(CONVERT_TO_STR_FAILURE);
                     }
-                    m::message::LogLevelFront(Ok(cv_in)) => {
+                    Message::LogLevelFront(cv_in) => {
                         let shared_state_clone = shared_state.clone();
-                        let log_level = cv_in
-                            .get_log_level()
-                            .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
+                        let log_level = cv_in.log_level;
                         let log_level =
-                            LogLevel::from_str(log_level).expect(CONVERT_TO_STR_FAILURE);
+                            LogLevel::from_str(&log_level).expect(CONVERT_TO_STR_FAILURE);
                         info!("Log Level: {}", log_level);
                         shared_state_clone.set_log_level(log_level);
                         refresh_navbar(&mut client_send.clone(), shared_state.clone());
                     }
-                    m::message::SolutionVelocityStatusFront(Ok(cv_in)) => {
-                        let unit = cv_in
-                            .get_solution_velocity_unit()
-                            .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
+                    Message::SolutionVelocityStatusFront(cv_in) => {
+                        let unit = cv_in.solution_velocity_units;
                         let shared_state_clone = shared_state.clone();
                         {
                             let mut shared_data = shared_state_clone
                                 .lock()
                                 .expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-                            (*shared_data).solution_tab.velocity_tab.unit = unit.to_string();
+                            (*shared_data).solution_tab.velocity_tab.unit = unit;
                         }
                     }
-                    m::message::SolutionPositionStatusUnitFront(Ok(cv_in)) => {
+                    Message::SolutionPositionStatusUnitFront(cv_in) => {
                         let shared_state_clone = shared_state.clone();
                         let mut shared_data = shared_state_clone
                             .lock()
                             .expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-                        let unit = cv_in
-                            .get_solution_position_unit()
-                            .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
-                        (*shared_data).solution_tab.position_tab.unit = unit.to_string();
+                        let unit = cv_in.solution_position_unit;
+                        (*shared_data).solution_tab.position_tab.unit = unit;
                     }
-                    m::message::SolutionPositionStatusButtonFront(Ok(cv_in)) => {
+                    Message::SolutionPositionStatusButtonFront(cv_in) => {
                         let shared_state_clone = shared_state.clone();
                         let mut shared_data = shared_state_clone
                             .lock()
                             .expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
                         (*shared_data).solution_tab.position_tab.clear =
-                            cv_in.get_solution_position_clear();
+                            cv_in.solution_position_clear;
                         (*shared_data).solution_tab.position_tab.pause =
-                            cv_in.get_solution_position_pause();
+                            cv_in.solution_position_pause;
                     }
-                    m::message::BaselinePlotStatusButtonFront(Ok(cv_in)) => {
+                    Message::BaselinePlotStatusButtonFront(cv_in) => {
                         let shared_state_clone = shared_state.clone();
                         let mut shared_data = shared_state_clone
                             .lock()
                             .expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-                        (*shared_data).baseline_tab.clear = cv_in.get_clear();
-                        (*shared_data).baseline_tab.pause = cv_in.get_pause();
-                        (*shared_data).baseline_tab.reset = cv_in.get_reset_filters();
+                        (*shared_data).baseline_tab.clear = cv_in.clear;
+                        (*shared_data).baseline_tab.pause = cv_in.pause;
+                        (*shared_data).baseline_tab.reset = cv_in.reset_filters;
                     }
-                    m::message::AdvancedSpectrumAnalyzerStatusFront(Ok(cv_in)) => {
+                    Message::AdvancedSpectrumAnalyzerStatusFront(cv_in) => {
                         let shared_state_clone = shared_state.clone();
                         let mut shared_data = shared_state_clone
                             .lock()
                             .expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
                         (*shared_data).advanced_spectrum_analyzer_tab.channel_idx =
-                            cv_in.get_channel();
+                            cv_in.channel;
                     }
-                    */
                     _ => {
                         error!("unknown message from front-end");
                     }

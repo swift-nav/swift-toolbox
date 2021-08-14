@@ -29,7 +29,6 @@ pub(crate) const NUM_POINTS: usize = 200;
 
 // Advanced Ins Tab constants.
 pub(crate) const NUM_INS_PLOT_ROWS: usize = 6;
-pub(crate) const NUM_INS_FIELDS: usize = 5;
 
 // Navbar constants.
 pub(crate) const AVAILABLE_REFRESH_RATES: [u8; 5] = [1, 2, 5, 10, 25];

@@ -1,11 +1,10 @@
 use sbp::messages::mag::MsgMagRaw;
 
-use capnp::message::Builder;
-
 use crate::constants::{MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER, NUM_POINTS};
 use crate::errors::GET_MUT_OBJECT_FAILURE;
+use crate::ipc;
 use crate::types::{CapnProtoSender, Deque, SharedState};
-use crate::utils::serialize_capnproto_builder;
+use crate::utils::serialize_ipc_message;
 
 /// AdvancedMagnetometerTab struct.
 ///
@@ -74,30 +73,22 @@ impl<S: CapnProtoSender> AdvancedMagnetometerTab<S> {
 
     /// Package data into a message buffer and send to frontend.
     fn send_data(&mut self) {
-        let mut builder = Builder::new_default();
-        let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
-
-        let mut tab_status = msg.init_advanced_magnetometer_status();
-
-        let mut points_vec = vec![self.mag_x.get(), self.mag_y.get(), self.mag_z.get()];
-
-        let mut tab_points = tab_status.reborrow().init_data(points_vec.len() as u32);
-
+        let mut tab_status: ipc::AdvancedMagnetometerStatus = Default::default();
+        let points_vec = vec![self.mag_x.get(), self.mag_y.get(), self.mag_z.get()];
         for idx in 0..points_vec.len() {
-            let points = points_vec.get_mut(idx).expect(GET_MUT_OBJECT_FAILURE);
-            let mut point_val_idx = tab_points.reborrow().init(idx as u32, points.len() as u32);
+            let points = points_vec[idx];
+            let point_val_idx = tab_status.data.get_mut(idx).expect(GET_MUT_OBJECT_FAILURE);
             for idx in 0..NUM_POINTS {
-                let mut point_val = point_val_idx.reborrow().get(idx as u32);
-                point_val.set_x(idx as f64);
-                point_val.set_y(points[idx]);
+                let mut point_val = point_val_idx.get_mut(idx).expect(GET_MUT_OBJECT_FAILURE);
+                point_val.x = idx as f64;
+                point_val.y = points[idx];
             }
         }
-
-        tab_status.set_ymin(self.ymin);
-        tab_status.set_ymax(self.ymax);
-
+        tab_status.ymin = self.ymin;
+        tab_status.ymax = self.ymax;
+        let message = ipc::Message::AdvancedMagnetometerStatus(tab_status);
         self.client_sender
-            .send_data(serialize_capnproto_builder(builder));
+            .send_data(serialize_ipc_message(&message));
     }
 }
 

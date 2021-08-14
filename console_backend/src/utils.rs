@@ -9,6 +9,7 @@ use serialport::available_ports;
 
 use crate::constants::*;
 use crate::errors::*;
+use crate::ipc;
 use crate::types::{CapnProtoSender, SignalCodes};
 use crate::{common_constants as cc, types::SharedState};
 
@@ -116,6 +117,10 @@ pub fn refresh_navbar<P: CapnProtoSender>(client_send: &mut P, shared_state: Sha
     nav_bar_status.set_log_level(&shared_state.log_level().to_string());
 
     client_send.send_data(serialize_capnproto_builder(builder));
+}
+
+pub fn serialize_ipc_message(msg: &ipc::Message) -> Vec<u8> {
+    rmp_serde::to_vec_named(msg).expect(CAP_N_PROTO_SERIALIZATION_FAILURE)
 }
 
 pub fn serialize_capnproto_builder(builder: Builder<HeapAllocator>) -> Vec<u8> {

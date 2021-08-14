@@ -183,10 +183,6 @@ struct LoggingBarStatus {
     sbpLogging @2 :Text;
 }
 
-struct AdvancedSpectrumAnalyzerFront {
-    channel @0 :UInt16;
-}
-
 struct TrackingSignalsStatusFront {
     trackingSignalsCheckVisibility @0 :List(Text);
 }
@@ -221,7 +217,6 @@ struct Status {
 
 struct Message {
     union {
-        notUsed @0 :Text;
         solutionVelocityStatus @1 :SolutionVelocityStatus;
         status @2 :Status;
         trackingSignalsStatus @3 :TrackingSignalsStatus;

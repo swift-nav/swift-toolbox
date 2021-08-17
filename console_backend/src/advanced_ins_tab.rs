@@ -5,7 +5,7 @@ use crate::constants::*;
 use crate::errors::GET_MUT_OBJECT_FAILURE;
 use crate::fusion_status_flags::FusionStatusFlags;
 use crate::ipc::{self, Point};
-use crate::types::{CapnProtoSender, Deque, SharedState};
+use crate::types::{IPC_KIND_MSGPACK, IpcSender, Deque, SharedState};
 use crate::utils::serialize_ipc_message;
 
 /// AdvancedInsTab struct.
@@ -26,7 +26,7 @@ use crate::utils::serialize_ipc_message;
 /// - `gyro_z`: The stored historic Imu angular rate values along z axis.
 /// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
 #[derive(Debug)]
-pub struct AdvancedInsTab<S: CapnProtoSender> {
+pub struct AdvancedInsTab<S: IpcSender> {
     client_sender: S,
     pub fusion_engine_status_bar: FusionStatusFlags<S>,
     imu_conf: u8,
@@ -43,7 +43,7 @@ pub struct AdvancedInsTab<S: CapnProtoSender> {
     shared_state: SharedState,
 }
 
-impl<S: CapnProtoSender> AdvancedInsTab<S> {
+impl<S: IpcSender> AdvancedInsTab<S> {
     pub fn new(shared_state: SharedState, client_sender: S) -> AdvancedInsTab<S> {
         let acc_fill_val = Some(0_f64);
         let gyro_fill_val = Some(0_f64);
@@ -165,7 +165,7 @@ impl<S: CapnProtoSender> AdvancedInsTab<S> {
         }
         let message = ipc::Message::AdvancedInsStatus(tab_status);
         self.client_sender
-            .send_data(serialize_ipc_message(&message));
+            .send_data(IPC_KIND_MSGPACK, serialize_ipc_message(&message));
     }
 }
 

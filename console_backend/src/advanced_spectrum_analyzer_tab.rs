@@ -3,7 +3,7 @@ use log::error;
 use crate::constants::{AMPLITUDES, CHANNELS, FREQUENCIES};
 use crate::errors::SHARED_STATE_LOCK_MUTEX_FAILURE;
 use crate::fft_monitor::FftMonitor;
-use crate::types::{CapnProtoSender, SharedState, Specan};
+use crate::types::{IPC_KIND_CAPNP, IpcSender, SharedState, Specan};
 use crate::utils::serialize_capnproto_builder;
 use capnp::message::Builder;
 
@@ -20,7 +20,7 @@ use capnp::message::Builder;
 /// - `most_recent_frequencies`: Stores the currently viewed channel's frequency values to be
 ///      sent to frontend.
 /// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
-pub struct AdvancedSpectrumAnalyzerTab<S: CapnProtoSender> {
+pub struct AdvancedSpectrumAnalyzerTab<S: IpcSender> {
     client_send: S,
     fft_monitor: FftMonitor,
     channel_idx: usize,
@@ -29,7 +29,7 @@ pub struct AdvancedSpectrumAnalyzerTab<S: CapnProtoSender> {
     shared_state: SharedState,
 }
 
-impl<S: CapnProtoSender> AdvancedSpectrumAnalyzerTab<S> {
+impl<S: IpcSender> AdvancedSpectrumAnalyzerTab<S> {
     pub fn new(shared_state: SharedState, client_send: S) -> AdvancedSpectrumAnalyzerTab<S> {
         let mut fft_monitor = FftMonitor::new();
         fft_monitor.enable_channel(None);
@@ -111,7 +111,7 @@ impl<S: CapnProtoSender> AdvancedSpectrumAnalyzerTab<S> {
         tab_status.set_xmax(xmax);
 
         self.client_send
-            .send_data(serialize_capnproto_builder(builder));
+            .send_data(IPC_KIND_CAPNP, serialize_capnproto_builder(builder));
     }
 }
 

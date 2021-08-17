@@ -6,22 +6,13 @@
 #
 #     result = message_from_dict(json.loads(json_string))
 
-from typing import List, Any, Optional, TypeVar, Callable, Type, cast
+from dataclasses import dataclass
+from typing import Any, List, Optional, TypeVar, Callable, Type, cast
 from enum import Enum
 
 
 T = TypeVar("T")
 EnumT = TypeVar("EnumT", bound=Enum)
-
-
-def from_list(f: Callable[[Any], T], x: Any) -> List[T]:
-    assert isinstance(x, list)
-    return [f(y) for y in x]
-
-
-def from_str(x: Any) -> str:
-    assert isinstance(x, str)
-    return x
 
 
 def from_float(x: Any) -> float:
@@ -34,9 +25,9 @@ def to_float(x: Any) -> float:
     return x
 
 
-def from_int(x: Any) -> int:
-    assert isinstance(x, int) and not isinstance(x, bool)
-    return x
+def from_list(f: Callable[[Any], T], x: Any) -> List[T]:
+    assert isinstance(x, list)
+    return [f(y) for y in x]
 
 
 def to_class(c: Type[T], x: Any) -> dict:
@@ -44,8 +35,18 @@ def to_class(c: Type[T], x: Any) -> dict:
     return cast(Any, x).to_dict()
 
 
+def from_int(x: Any) -> int:
+    assert isinstance(x, int) and not isinstance(x, bool)
+    return x
+
+
 def from_bool(x: Any) -> bool:
     assert isinstance(x, bool)
+    return x
+
+
+def from_str(x: Any) -> str:
+    assert isinstance(x, str)
     return x
 
 
@@ -68,61 +69,10 @@ def from_union(fs, x):
     assert False
 
 
-class AdvancedInsStatus:
-    data: List[List[str]]
-    fields_data: List[float]
-
-    def __init__(self, data: List[List[str]], fields_data: List[float]) -> None:
-        self.data = data
-        self.fields_data = fields_data
-
-    @staticmethod
-    def from_dict(obj: Any) -> 'AdvancedInsStatus':
-        assert isinstance(obj, dict)
-        data = from_list(lambda x: from_list(from_str, x), obj.get("data"))
-        fields_data = from_list(from_float, obj.get("fields_data"))
-        return AdvancedInsStatus(data, fields_data)
-
-    def to_dict(self) -> dict:
-        result: dict = {}
-        result["data"] = from_list(lambda x: from_list(from_str, x), self.data)
-        result["fields_data"] = from_list(to_float, self.fields_data)
-        return result
-
-
-class AdvancedMagnetometerStatus:
-    data: List[List[str]]
-    ymax: float
-    ymin: float
-
-    def __init__(self, data: List[List[str]], ymax: float, ymin: float) -> None:
-        self.data = data
-        self.ymax = ymax
-        self.ymin = ymin
-
-    @staticmethod
-    def from_dict(obj: Any) -> 'AdvancedMagnetometerStatus':
-        assert isinstance(obj, dict)
-        data = from_list(lambda x: from_list(from_str, x), obj.get("data"))
-        ymax = from_float(obj.get("ymax"))
-        ymin = from_float(obj.get("ymin"))
-        return AdvancedMagnetometerStatus(data, ymax, ymin)
-
-    def to_dict(self) -> dict:
-        result: dict = {}
-        result["data"] = from_list(lambda x: from_list(from_str, x), self.data)
-        result["ymax"] = to_float(self.ymax)
-        result["ymin"] = to_float(self.ymin)
-        return result
-
-
+@dataclass
 class Point:
     x: float
     y: float
-
-    def __init__(self, x: float, y: float) -> None:
-        self.x = x
-        self.y = y
 
     @staticmethod
     def from_dict(obj: Any) -> 'Point':
@@ -138,19 +88,54 @@ class Point:
         return result
 
 
+@dataclass
+class AdvancedInsStatus:
+    data: List[List[Point]]
+    fields_data: List[float]
+
+    @staticmethod
+    def from_dict(obj: Any) -> 'AdvancedInsStatus':
+        assert isinstance(obj, dict)
+        data = from_list(lambda x: from_list(Point.from_dict, x), obj.get("data"))
+        fields_data = from_list(from_float, obj.get("fields_data"))
+        return AdvancedInsStatus(data, fields_data)
+
+    def to_dict(self) -> dict:
+        result: dict = {}
+        result["data"] = from_list(lambda x: from_list(lambda x: to_class(Point, x), x), self.data)
+        result["fields_data"] = from_list(to_float, self.fields_data)
+        return result
+
+
+@dataclass
+class AdvancedMagnetometerStatus:
+    data: List[List[Point]]
+    ymax: float
+    ymin: float
+
+    @staticmethod
+    def from_dict(obj: Any) -> 'AdvancedMagnetometerStatus':
+        assert isinstance(obj, dict)
+        data = from_list(lambda x: from_list(Point.from_dict, x), obj.get("data"))
+        ymax = from_float(obj.get("ymax"))
+        ymin = from_float(obj.get("ymin"))
+        return AdvancedMagnetometerStatus(data, ymax, ymin)
+
+    def to_dict(self) -> dict:
+        result: dict = {}
+        result["data"] = from_list(lambda x: from_list(lambda x: to_class(Point, x), x), self.data)
+        result["ymax"] = to_float(self.ymax)
+        result["ymin"] = to_float(self.ymin)
+        return result
+
+
+@dataclass
 class AdvancedSpectrumAnalyzerStatus:
     channel: int
     data: List[Point]
     xmax: float
     ymax: float
     ymin: float
-
-    def __init__(self, channel: int, data: List[Point], xmax: float, ymax: float, ymin: float) -> None:
-        self.channel = channel
-        self.data = data
-        self.xmax = xmax
-        self.ymax = ymax
-        self.ymin = ymin
 
     @staticmethod
     def from_dict(obj: Any) -> 'AdvancedSpectrumAnalyzerStatus':
@@ -172,11 +157,9 @@ class AdvancedSpectrumAnalyzerStatus:
         return result
 
 
+@dataclass
 class AdvancedSpectrumAnalyzerStatusFront:
     channel: int
-
-    def __init__(self, channel: int) -> None:
-        self.channel = channel
 
     @staticmethod
     def from_dict(obj: Any) -> 'AdvancedSpectrumAnalyzerStatusFront':
@@ -190,6 +173,7 @@ class AdvancedSpectrumAnalyzerStatusFront:
         return result
 
 
+@dataclass
 class BaselinePlotStatus:
     cur_data: List[List[Point]]
     data: List[List[Point]]
@@ -197,14 +181,6 @@ class BaselinePlotStatus:
     e_min: float
     n_max: float
     n_min: float
-
-    def __init__(self, cur_data: List[List[Point]], data: List[List[Point]], e_max: float, e_min: float, n_max: float, n_min: float) -> None:
-        self.cur_data = cur_data
-        self.data = data
-        self.e_max = e_max
-        self.e_min = e_min
-        self.n_max = n_max
-        self.n_min = n_min
 
     @staticmethod
     def from_dict(obj: Any) -> 'BaselinePlotStatus':
@@ -228,15 +204,11 @@ class BaselinePlotStatus:
         return result
 
 
+@dataclass
 class BaselinePlotStatusButtonFront:
     clear: bool
     pause: bool
     reset_filters: bool
-
-    def __init__(self, clear: bool, pause: bool, reset_filters: bool) -> None:
-        self.clear = clear
-        self.pause = pause
-        self.reset_filters = reset_filters
 
     @staticmethod
     def from_dict(obj: Any) -> 'BaselinePlotStatusButtonFront':
@@ -254,13 +226,10 @@ class BaselinePlotStatusButtonFront:
         return result
 
 
+@dataclass
 class KeyValuePair:
     key: str
     pair: str
-
-    def __init__(self, key: str, pair: str) -> None:
-        self.key = key
-        self.pair = pair
 
     @staticmethod
     def from_dict(obj: Any) -> 'KeyValuePair':
@@ -276,11 +245,9 @@ class KeyValuePair:
         return result
 
 
+@dataclass
 class BaselineTableStatus:
     data: List[KeyValuePair]
-
-    def __init__(self, data: List[KeyValuePair]) -> None:
-        self.data = data
 
     @staticmethod
     def from_dict(obj: Any) -> 'BaselineTableStatus':
@@ -294,11 +261,9 @@ class BaselineTableStatus:
         return result
 
 
+@dataclass
 class DisconnectRequest:
     disconnect: bool
-
-    def __init__(self, disconnect: bool) -> None:
-        self.disconnect = disconnect
 
     @staticmethod
     def from_dict(obj: Any) -> 'DisconnectRequest':
@@ -312,11 +277,9 @@ class DisconnectRequest:
         return result
 
 
+@dataclass
 class FileRequest:
     filename: str
-
-    def __init__(self, filename: str) -> None:
-        self.filename = filename
 
     @staticmethod
     def from_dict(obj: Any) -> 'FileRequest':
@@ -330,6 +293,7 @@ class FileRequest:
         return result
 
 
+@dataclass
 class FusionStatusFlagsStatus:
     gnsspos: str
     gnssvel: str
@@ -337,14 +301,6 @@ class FusionStatusFlagsStatus:
     speedd: str
     wheelticks: str
     zerovel: str
-
-    def __init__(self, gnsspos: str, gnssvel: str, nhc: str, speedd: str, wheelticks: str, zerovel: str) -> None:
-        self.gnsspos = gnsspos
-        self.gnssvel = gnssvel
-        self.nhc = nhc
-        self.speedd = speedd
-        self.wheelticks = wheelticks
-        self.zerovel = zerovel
 
     @staticmethod
     def from_dict(obj: Any) -> 'FusionStatusFlagsStatus':
@@ -376,15 +332,11 @@ class LogLevel(Enum):
     WARN = "Warn"
 
 
+@dataclass
 class LogEntry:
     level: LogLevel
     line: str
     timestamp: str
-
-    def __init__(self, level: LogLevel, line: str, timestamp: str) -> None:
-        self.level = level
-        self.line = line
-        self.timestamp = timestamp
 
     @staticmethod
     def from_dict(obj: Any) -> 'LogEntry':
@@ -402,11 +354,9 @@ class LogEntry:
         return result
 
 
+@dataclass
 class LogAppend:
     entries: List[LogEntry]
-
-    def __init__(self, entries: List[LogEntry]) -> None:
-        self.entries = entries
 
     @staticmethod
     def from_dict(obj: Any) -> 'LogAppend':
@@ -420,11 +370,9 @@ class LogAppend:
         return result
 
 
+@dataclass
 class LogLevelFront:
     log_level: str
-
-    def __init__(self, log_level: str) -> None:
-        self.log_level = log_level
 
     @staticmethod
     def from_dict(obj: Any) -> 'LogLevelFront':
@@ -438,15 +386,11 @@ class LogLevelFront:
         return result
 
 
+@dataclass
 class LoggingBarFront:
     csv_logging: bool
     directory: str
     sbp_logging: str
-
-    def __init__(self, csv_logging: bool, directory: str, sbp_logging: str) -> None:
-        self.csv_logging = csv_logging
-        self.directory = directory
-        self.sbp_logging = sbp_logging
 
     @staticmethod
     def from_dict(obj: Any) -> 'LoggingBarFront':
@@ -464,15 +408,11 @@ class LoggingBarFront:
         return result
 
 
+@dataclass
 class LoggingBarStatus:
     csv_logging: bool
     previous_folders: List[str]
     sbp_logging: str
-
-    def __init__(self, csv_logging: bool, previous_folders: List[str], sbp_logging: str) -> None:
-        self.csv_logging = csv_logging
-        self.previous_folders = previous_folders
-        self.sbp_logging = sbp_logging
 
     @staticmethod
     def from_dict(obj: Any) -> 'LoggingBarStatus':
@@ -490,6 +430,7 @@ class LoggingBarStatus:
         return result
 
 
+@dataclass
 class NavBarStatus:
     available_baudrates: List[int]
     available_flows: List[str]
@@ -499,16 +440,6 @@ class NavBarStatus:
     previous_files: List[str]
     previous_hosts: List[str]
     previous_ports: List[int]
-
-    def __init__(self, available_baudrates: List[int], available_flows: List[str], available_ports: List[str], available_refresh_rates: List[int], log_level: str, previous_files: List[str], previous_hosts: List[str], previous_ports: List[int]) -> None:
-        self.available_baudrates = available_baudrates
-        self.available_flows = available_flows
-        self.available_ports = available_ports
-        self.available_refresh_rates = available_refresh_rates
-        self.log_level = log_level
-        self.previous_files = previous_files
-        self.previous_hosts = previous_hosts
-        self.previous_ports = previous_ports
 
     @staticmethod
     def from_dict(obj: Any) -> 'NavBarStatus':
@@ -536,6 +467,7 @@ class NavBarStatus:
         return result
 
 
+@dataclass
 class ObservationTableRow:
     carrer_phase: float
     cn0: float
@@ -545,16 +477,6 @@ class ObservationTableRow:
     measured_doppler: float
     prn: str
     pseudo_range: float
-
-    def __init__(self, carrer_phase: float, cn0: float, computed_doppler: float, flags: int, lock: int, measured_doppler: float, prn: str, pseudo_range: float) -> None:
-        self.carrer_phase = carrer_phase
-        self.cn0 = cn0
-        self.computed_doppler = computed_doppler
-        self.flags = flags
-        self.lock = lock
-        self.measured_doppler = measured_doppler
-        self.prn = prn
-        self.pseudo_range = pseudo_range
 
     @staticmethod
     def from_dict(obj: Any) -> 'ObservationTableRow':
@@ -582,17 +504,12 @@ class ObservationTableRow:
         return result
 
 
+@dataclass
 class ObservationStatus:
     is_remote: bool
     rows: List[ObservationTableRow]
     tow: float
     week: int
-
-    def __init__(self, is_remote: bool, rows: List[ObservationTableRow], tow: float, week: int) -> None:
-        self.is_remote = is_remote
-        self.rows = rows
-        self.tow = tow
-        self.week = week
 
     @staticmethod
     def from_dict(obj: Any) -> 'ObservationStatus':
@@ -612,11 +529,9 @@ class ObservationStatus:
         return result
 
 
+@dataclass
 class PauseRequest:
     pause: bool
-
-    def __init__(self, pause: bool) -> None:
-        self.pause = pause
 
     @staticmethod
     def from_dict(obj: Any) -> 'PauseRequest':
@@ -630,11 +545,9 @@ class PauseRequest:
         return result
 
 
+@dataclass
 class SerialRefreshRequest:
     refresh: bool
-
-    def __init__(self, refresh: bool) -> None:
-        self.refresh = refresh
 
     @staticmethod
     def from_dict(obj: Any) -> 'SerialRefreshRequest':
@@ -648,15 +561,11 @@ class SerialRefreshRequest:
         return result
 
 
+@dataclass
 class SerialRequest:
     baudrate: int
     device: str
     flow_control: str
-
-    def __init__(self, baudrate: int, device: str, flow_control: str) -> None:
-        self.baudrate = baudrate
-        self.device = device
-        self.flow_control = flow_control
 
     @staticmethod
     def from_dict(obj: Any) -> 'SerialRequest':
@@ -674,6 +583,7 @@ class SerialRequest:
         return result
 
 
+@dataclass
 class SolutionPositionStatus:
     available_units: List[str]
     cur_data: List[List[Point]]
@@ -682,15 +592,6 @@ class SolutionPositionStatus:
     lat_min: float
     lon_max: float
     lon_min: float
-
-    def __init__(self, available_units: List[str], cur_data: List[List[Point]], data: List[List[Point]], lat_max: float, lat_min: float, lon_max: float, lon_min: float) -> None:
-        self.available_units = available_units
-        self.cur_data = cur_data
-        self.data = data
-        self.lat_max = lat_max
-        self.lat_min = lat_min
-        self.lon_max = lon_max
-        self.lon_min = lon_min
 
     @staticmethod
     def from_dict(obj: Any) -> 'SolutionPositionStatus':
@@ -716,17 +617,12 @@ class SolutionPositionStatus:
         return result
 
 
+@dataclass
 class SolutionPositionStatusButtonFront:
     solution_position_center: bool
     solution_position_clear: bool
     solution_position_pause: bool
     solution_position_zoom: bool
-
-    def __init__(self, solution_position_center: bool, solution_position_clear: bool, solution_position_pause: bool, solution_position_zoom: bool) -> None:
-        self.solution_position_center = solution_position_center
-        self.solution_position_clear = solution_position_clear
-        self.solution_position_pause = solution_position_pause
-        self.solution_position_zoom = solution_position_zoom
 
     @staticmethod
     def from_dict(obj: Any) -> 'SolutionPositionStatusButtonFront':
@@ -746,11 +642,9 @@ class SolutionPositionStatusButtonFront:
         return result
 
 
+@dataclass
 class SolutionPositionStatusUnitFront:
     solution_position_unit: str
-
-    def __init__(self, solution_position_unit: str) -> None:
-        self.solution_position_unit = solution_position_unit
 
     @staticmethod
     def from_dict(obj: Any) -> 'SolutionPositionStatusUnitFront':
@@ -764,11 +658,9 @@ class SolutionPositionStatusUnitFront:
         return result
 
 
+@dataclass
 class SolutionTableStatus:
     data: List[KeyValuePair]
-
-    def __init__(self, data: List[KeyValuePair]) -> None:
-        self.data = data
 
     @staticmethod
     def from_dict(obj: Any) -> 'SolutionTableStatus':
@@ -782,17 +674,12 @@ class SolutionTableStatus:
         return result
 
 
+@dataclass
 class SolutionVelocityStatus:
     available_units: List[str]
     colors: List[str]
     max: float
     min: float
-
-    def __init__(self, available_units: List[str], colors: List[str], max: float, min: float) -> None:
-        self.available_units = available_units
-        self.colors = colors
-        self.max = max
-        self.min = min
 
     @staticmethod
     def from_dict(obj: Any) -> 'SolutionVelocityStatus':
@@ -812,11 +699,9 @@ class SolutionVelocityStatus:
         return result
 
 
+@dataclass
 class SolutionVelocityStatusFront:
     solution_velocity_units: str
-
-    def __init__(self, solution_velocity_units: str) -> None:
-        self.solution_velocity_units = solution_velocity_units
 
     @staticmethod
     def from_dict(obj: Any) -> 'SolutionVelocityStatusFront':
@@ -830,11 +715,9 @@ class SolutionVelocityStatusFront:
         return result
 
 
+@dataclass
 class Status:
     text: str
-
-    def __init__(self, text: str) -> None:
-        self.text = text
 
     @staticmethod
     def from_dict(obj: Any) -> 'Status':
@@ -848,6 +731,7 @@ class Status:
         return result
 
 
+@dataclass
 class StatusBarStatus:
     corr_age: str
     data_rate: str
@@ -857,16 +741,6 @@ class StatusBarStatus:
     rtk: str
     sats: str
     solid_connection: bool
-
-    def __init__(self, corr_age: str, data_rate: str, ins: str, port: str, pos: str, rtk: str, sats: str, solid_connection: bool) -> None:
-        self.corr_age = corr_age
-        self.data_rate = data_rate
-        self.ins = ins
-        self.port = port
-        self.pos = pos
-        self.rtk = rtk
-        self.sats = sats
-        self.solid_connection = solid_connection
 
     @staticmethod
     def from_dict(obj: Any) -> 'StatusBarStatus':
@@ -894,13 +768,10 @@ class StatusBarStatus:
         return result
 
 
+@dataclass
 class TCPRequest:
     host: str
     port: int
-
-    def __init__(self, host: str, port: int) -> None:
-        self.host = host
-        self.port = port
 
     @staticmethod
     def from_dict(obj: Any) -> 'TCPRequest':
@@ -916,19 +787,13 @@ class TCPRequest:
         return result
 
 
+@dataclass
 class TrackingSignalsStatus:
     check_labels: List[str]
     colors: List[str]
     data: List[List[Point]]
     labels: List[str]
     xmin_offset: float
-
-    def __init__(self, check_labels: List[str], colors: List[str], data: List[List[Point]], labels: List[str], xmin_offset: float) -> None:
-        self.check_labels = check_labels
-        self.colors = colors
-        self.data = data
-        self.labels = labels
-        self.xmin_offset = xmin_offset
 
     @staticmethod
     def from_dict(obj: Any) -> 'TrackingSignalsStatus':
@@ -950,11 +815,9 @@ class TrackingSignalsStatus:
         return result
 
 
+@dataclass
 class TrackingSignalsStatusFront:
     tracking_signals_check_visibility: List[str]
-
-    def __init__(self, tracking_signals_check_visibility: List[str]) -> None:
-        self.tracking_signals_check_visibility = tracking_signals_check_visibility
 
     @staticmethod
     def from_dict(obj: Any) -> 'TrackingSignalsStatusFront':
@@ -968,69 +831,38 @@ class TrackingSignalsStatusFront:
         return result
 
 
+@dataclass
 class Message:
-    tcp_request: Optional[TCPRequest]
-    file_request: Optional[FileRequest]
-    serial_request: Optional[SerialRequest]
-    serial_refresh_request: Optional[SerialRefreshRequest]
-    pause_request: Optional[PauseRequest]
-    disconnect_request: Optional[DisconnectRequest]
-    solution_table_status: Optional[SolutionTableStatus]
-    nav_bar_status: Optional[NavBarStatus]
-    status_bar_status: Optional[StatusBarStatus]
-    baseline_plot_status: Optional[BaselinePlotStatus]
-    baseline_table_status: Optional[BaselineTableStatus]
-    observation_status: Optional[ObservationStatus]
-    solution_position_status: Optional[SolutionPositionStatus]
-    solution_velocity_status: Optional[SolutionVelocityStatus]
-    tracking_signals_status: Optional[TrackingSignalsStatus]
-    advanced_ins_status: Optional[AdvancedInsStatus]
-    status: Optional[Status]
-    tracking_signals_status_front: Optional[TrackingSignalsStatusFront]
-    solution_velocity_status_front: Optional[SolutionVelocityStatusFront]
-    solution_position_status_button_front: Optional[SolutionPositionStatusButtonFront]
-    solution_position_status_unit_front: Optional[SolutionPositionStatusUnitFront]
-    log_append: Optional[LogAppend]
-    logging_bar_front: Optional[LoggingBarFront]
-    logging_bar_status: Optional[LoggingBarStatus]
-    log_level_front: Optional[LogLevelFront]
-    fusion_status_flags_status: Optional[FusionStatusFlagsStatus]
-    advanced_magnetometer_status: Optional[AdvancedMagnetometerStatus]
-    baseline_plot_status_button_front: Optional[BaselinePlotStatusButtonFront]
-    advanced_spectrum_analyzer_status: Optional[AdvancedSpectrumAnalyzerStatus]
-    advanced_spectrum_analyzer_status_front: Optional[AdvancedSpectrumAnalyzerStatusFront]
-
-    def __init__(self, tcp_request: Optional[TCPRequest], file_request: Optional[FileRequest], serial_request: Optional[SerialRequest], serial_refresh_request: Optional[SerialRefreshRequest], pause_request: Optional[PauseRequest], disconnect_request: Optional[DisconnectRequest], solution_table_status: Optional[SolutionTableStatus], nav_bar_status: Optional[NavBarStatus], status_bar_status: Optional[StatusBarStatus], baseline_plot_status: Optional[BaselinePlotStatus], baseline_table_status: Optional[BaselineTableStatus], observation_status: Optional[ObservationStatus], solution_position_status: Optional[SolutionPositionStatus], solution_velocity_status: Optional[SolutionVelocityStatus], tracking_signals_status: Optional[TrackingSignalsStatus], advanced_ins_status: Optional[AdvancedInsStatus], status: Optional[Status], tracking_signals_status_front: Optional[TrackingSignalsStatusFront], solution_velocity_status_front: Optional[SolutionVelocityStatusFront], solution_position_status_button_front: Optional[SolutionPositionStatusButtonFront], solution_position_status_unit_front: Optional[SolutionPositionStatusUnitFront], log_append: Optional[LogAppend], logging_bar_front: Optional[LoggingBarFront], logging_bar_status: Optional[LoggingBarStatus], log_level_front: Optional[LogLevelFront], fusion_status_flags_status: Optional[FusionStatusFlagsStatus], advanced_magnetometer_status: Optional[AdvancedMagnetometerStatus], baseline_plot_status_button_front: Optional[BaselinePlotStatusButtonFront], advanced_spectrum_analyzer_status: Optional[AdvancedSpectrumAnalyzerStatus], advanced_spectrum_analyzer_status_front: Optional[AdvancedSpectrumAnalyzerStatusFront]) -> None:
-        self.tcp_request = tcp_request
-        self.file_request = file_request
-        self.serial_request = serial_request
-        self.serial_refresh_request = serial_refresh_request
-        self.pause_request = pause_request
-        self.disconnect_request = disconnect_request
-        self.solution_table_status = solution_table_status
-        self.nav_bar_status = nav_bar_status
-        self.status_bar_status = status_bar_status
-        self.baseline_plot_status = baseline_plot_status
-        self.baseline_table_status = baseline_table_status
-        self.observation_status = observation_status
-        self.solution_position_status = solution_position_status
-        self.solution_velocity_status = solution_velocity_status
-        self.tracking_signals_status = tracking_signals_status
-        self.advanced_ins_status = advanced_ins_status
-        self.status = status
-        self.tracking_signals_status_front = tracking_signals_status_front
-        self.solution_velocity_status_front = solution_velocity_status_front
-        self.solution_position_status_button_front = solution_position_status_button_front
-        self.solution_position_status_unit_front = solution_position_status_unit_front
-        self.log_append = log_append
-        self.logging_bar_front = logging_bar_front
-        self.logging_bar_status = logging_bar_status
-        self.log_level_front = log_level_front
-        self.fusion_status_flags_status = fusion_status_flags_status
-        self.advanced_magnetometer_status = advanced_magnetometer_status
-        self.baseline_plot_status_button_front = baseline_plot_status_button_front
-        self.advanced_spectrum_analyzer_status = advanced_spectrum_analyzer_status
-        self.advanced_spectrum_analyzer_status_front = advanced_spectrum_analyzer_status_front
+    tcp_request: Optional[TCPRequest] = None
+    file_request: Optional[FileRequest] = None
+    serial_request: Optional[SerialRequest] = None
+    serial_refresh_request: Optional[SerialRefreshRequest] = None
+    pause_request: Optional[PauseRequest] = None
+    disconnect_request: Optional[DisconnectRequest] = None
+    solution_table_status: Optional[SolutionTableStatus] = None
+    nav_bar_status: Optional[NavBarStatus] = None
+    status_bar_status: Optional[StatusBarStatus] = None
+    baseline_plot_status: Optional[BaselinePlotStatus] = None
+    baseline_table_status: Optional[BaselineTableStatus] = None
+    observation_status: Optional[ObservationStatus] = None
+    solution_position_status: Optional[SolutionPositionStatus] = None
+    solution_velocity_status: Optional[SolutionVelocityStatus] = None
+    tracking_signals_status: Optional[TrackingSignalsStatus] = None
+    advanced_ins_status: Optional[AdvancedInsStatus] = None
+    status: Optional[Status] = None
+    tracking_signals_status_front: Optional[TrackingSignalsStatusFront] = None
+    solution_velocity_status_front: Optional[SolutionVelocityStatusFront] = None
+    solution_position_status_button_front: Optional[SolutionPositionStatusButtonFront] = None
+    solution_position_status_unit_front: Optional[SolutionPositionStatusUnitFront] = None
+    log_append: Optional[LogAppend] = None
+    logging_bar_front: Optional[LoggingBarFront] = None
+    logging_bar_status: Optional[LoggingBarStatus] = None
+    log_level_front: Optional[LogLevelFront] = None
+    fusion_status_flags_status: Optional[FusionStatusFlagsStatus] = None
+    advanced_magnetometer_status: Optional[AdvancedMagnetometerStatus] = None
+    baseline_plot_status_button_front: Optional[BaselinePlotStatusButtonFront] = None
+    advanced_spectrum_analyzer_status: Optional[AdvancedSpectrumAnalyzerStatus] = None
+    advanced_spectrum_analyzer_status_front: Optional[AdvancedSpectrumAnalyzerStatusFront] = None
 
     @staticmethod
     def from_dict(obj: Any) -> 'Message':

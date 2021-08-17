@@ -25,13 +25,13 @@ use crate::utils::{refresh_loggingbar, refresh_navbar};
 /// The backend server
 #[cfg_attr(feature = "python", pyclass)]
 pub struct Server {
-    client_recv: Option<channel::Receiver<Vec<u8>>>,
+    client_recv: Option<channel::Receiver<(u8, Vec<u8>)>>,
     client_sender: Option<ClientSender>,
 }
 
 #[cfg_attr(feature = "python", pyclass)]
 pub struct ServerEndpoint {
-    server_send: Option<channel::Sender<Vec<u8>>>,
+    server_send: Option<channel::Sender<(u8, Vec<u8>)>>,
 }
 
 cfg_if! {
@@ -43,7 +43,7 @@ cfg_if! {
                 ServerEndpoint { server_send: None }
             }
 
-            #[text_signature = "($self, bytes, /)"]
+            #[text_signature = "($self, /)"]
             pub fn shutdown(&mut self) -> PyResult<()> {
                 if let Some(server_send) = self.server_send.take() {
                     drop(server_send);
@@ -55,12 +55,13 @@ cfg_if! {
                 }
             }
 
-            #[text_signature = "($self, bytes, /)"]
-            pub fn send_message(&mut self, bytes: &PyBytes) -> PyResult<()> {
+            #[text_signature = "($self, kind, bytes, /)"]
+            pub fn send_message(&mut self, kind: &PyBytes, bytes: &PyBytes) -> PyResult<()> {
+                let kind_vec: Vec<u8> = kind.extract().unwrap();
                 let byte_vec: Vec<u8> = bytes.extract().unwrap();
                 if let Some(server_send) = &self.server_send {
                     server_send
-                        .send(byte_vec)
+                        .send((kind_vec[0], byte_vec))
                         .map_err(|e| exceptions::PyRuntimeError::new_err(format!("{}", e)))
                 } else {
                     Err(exceptions::PyRuntimeError::new_err(
@@ -74,7 +75,6 @@ cfg_if! {
             pub fn new() -> Self {
                 ServerEndpoint { server_send: None }
             }
-
             pub fn shutdown(&mut self) -> crate::types::Result<()> {
                 if let Some(server_send) = self.server_send.take() {
                     drop(server_send);
@@ -82,12 +82,9 @@ cfg_if! {
                 } else {
                     Err("no server send endpoint".into())
                 }
-            }
-
-            pub fn send_message(&mut self, byte_vec: Vec<u8>) -> crate::types::Result<()> {
                 if let Some(server_send) = &self.server_send {
                     server_send
-                        .send(byte_vec)
+                        .send((kind, byte_vec))
                         .map_err(crate::types::Error::from)
                 } else {
                     Err("no server send endpoint".into())
@@ -142,18 +139,145 @@ fn handle_cli(opt: CliOptions, connection_state: &ConnectionState, shared_state:
     log::logger().flush();
 }
 
+cfg_if! {
+    if #[cfg(feature = "python")] {
+        #[pymethods]
+        impl Server {
+
+            #[new]
+            pub fn __new__() -> Self {
+                Server {
+                    client_recv: None,
+                    client_sender: None,
+                }
+            }
+
+            #[text_signature = "($self, /)"]
+            pub fn fetch_message(&mut self, py: Python) -> Option<PyObject> {
+                let result = py.allow_threads(move || loop {
+                    if let Some(client_recv) = &self.client_recv {
+                        match client_recv.recv_timeout(time::Duration::from_millis(1)) {
+                            // TODO(msgpack): pass _kind to frontend
+                            Ok((_kind, buf)) => break Some(buf),
+                            Err(err) => {
+                                use crossbeam::channel::RecvTimeoutError;
+                                if matches!(err, RecvTimeoutError::Timeout) {
+                                    if self.client_sender.as_ref().unwrap().connected.get() {
+                                        continue;
+                                    } else {
+                                        eprintln!("shutting down");
+                                        break None;
+                                    }
+                                } else {
+                                    eprintln!("client recv disconnected");
+                                    break None;
+                                }
+                            }
+                        }
+                    } else {
+                        eprintln!("no client receive endpoint");
+                        break None;
+                    }
+                });
+                result.map(|result| PyBytes::new(py, &result).into())
+            }
+
+            #[text_signature = "($self, /)"]
+            pub fn start(&mut self) -> PyResult<ServerEndpoint> {
+                let (client_send_, client_recv) = channel::unbounded::<(u8, Vec<u8>)>();
+                let (server_send, server_recv) = channel::unbounded::<(u8, Vec<u8>)>();
+                let client_send = ClientSender::new(client_send_);
+                self.client_recv = Some(client_recv);
+                self.client_sender = Some(client_send.clone());
+                let server_endpoint = ServerEndpoint {
+                    server_send: Some(server_send),
+                };
+                setup_logging(client_send.clone());
+                let opt = CliOptions::from_filtered_cli();
+                let shared_state = SharedState::new();
+                let connection_state = ConnectionState::new(client_send.clone(), shared_state.clone());
+                // Handle CLI Opts.
+                handle_cli(opt, &connection_state, shared_state.clone());
+                refresh_navbar(&mut client_send.clone(), shared_state.clone());
+                refresh_loggingbar(&mut client_send.clone(), shared_state.clone());
+                backend_recv_thread(connection_state, client_send, server_recv, shared_state);
+                Ok(server_endpoint)
+            }
+        }
+    } else {
+        impl Server {
+            pub fn new() -> Self {
+                Server {
+                    client_recv: None,
+                    client_sender: None,
+                }
+            }
+            pub fn fetch_message(&self) -> crate::types::Result<Option<(u8, Vec<u8>)>> {
+                if let Some(client_recv) = &self.client_recv {
+                    match client_recv.recv_timeout(time::Duration::from_millis(1)) {
+                        Ok(buf) => Ok(Some(buf)),
+                        Err(err) => {
+                            use crossbeam::channel::RecvTimeoutError;
+                            if matches!(err, RecvTimeoutError::Timeout) {
+                                if self.client_sender.as_ref().unwrap().connected.get() {
+                                    Ok(None)
+                                } else {
+                                    Err("shutting down".into())
+                                }
+                            } else {
+                                Err("client recv disconnected".into())
+                            }
+                        }
+                    }
+                } else {
+                    Err("no client receive endpoint".into())
+                }
+            }
+            pub fn start(&mut self) -> ServerEndpoint {
+                let (client_send_, client_recv) = channel::unbounded::<(u8, Vec<u8>)>();
+                let (server_send, server_recv) = channel::unbounded::<(u8, Vec<u8>)>();
+                let client_send = ClientSender::new(client_send_);
+                self.client_recv = Some(client_recv);
+                self.client_sender = Some(client_send.clone());
+                let server_endpoint = ServerEndpoint {
+                    server_send: Some(server_send),
+                };
+                setup_logging(client_send.clone());
+                let opt = CliOptions::from_filtered_cli();
+                let shared_state = SharedState::new();
+                let connection_state = ConnectionState::new(client_send.clone(), shared_state.clone());
+                // Handle CLI Opts.
+                handle_cli(opt, &connection_state, shared_state.clone());
+                refresh_navbar(&mut client_send.clone(), shared_state.clone());
+                refresh_loggingbar(&mut client_send.clone(), shared_state.clone());
+                backend_recv_thread(connection_state, client_send, server_recv, shared_state);
+                server_endpoint
+            }
+        }
+    }
+}
+
+#[cfg(feature = "pyo3")]
+#[pymodule]
+pub fn server(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<Server>()?;
+    m.add_class::<ServerEndpoint>()?;
+    Ok(())
+}
+
 fn backend_recv_thread(
     connection_state: ConnectionState,
     client_send: ClientSender,
-    server_recv: channel::Receiver<Vec<u8>>,
+    server_recv: channel::Receiver<(u8, Vec<u8>)>,
     shared_state: SharedState,
 ) {
     thread::spawn(move || {
         let client_send_clone = client_send.clone();
         loop {
             log::logger().flush();
-            let buf = server_recv.recv();
-            if let Ok(buf) = buf {
+            let result = server_recv.recv();
+            if let Ok((kind, buf)) = result {
+                eprintln!("kind: {}, buf length: {}", kind, buf.len());
                 let mut buf_reader = BufReader::new(Cursor::new(buf));
                 let message: Message = match rmp_serde::from_read(&mut buf_reader) {
                     Ok(msg) => msg,
@@ -162,6 +286,7 @@ fn backend_recv_thread(
                         continue;
                     }
                 };
+                eprintln!("{:#?}", message);
                 let shared_state_clone = shared_state.clone();
                 match message {
                     Message::SerialRefreshRequest(_) => {
@@ -285,128 +410,3 @@ fn backend_recv_thread(
     });
 }
 
-
-cfg_if! {
-    if #[cfg(feature = "python")] {
-        #[pymethods]
-        impl Server {
-
-            #[new]
-            pub fn __new__() -> Self {
-                Server {
-                    client_recv: None,
-                    client_sender: None,
-                }
-            }
-
-            #[text_signature = "($self, /)"]
-            pub fn fetch_message(&mut self, py: Python) -> Option<PyObject> {
-                let result = py.allow_threads(move || loop {
-                    if let Some(client_recv) = &self.client_recv {
-                        match client_recv.recv_timeout(time::Duration::from_millis(1)) {
-                            Ok(buf) => break Some(buf),
-                            Err(err) => {
-                                use crossbeam::channel::RecvTimeoutError;
-                                if matches!(err, RecvTimeoutError::Timeout) {
-                                    if self.client_sender.as_ref().unwrap().connected.get() {
-                                        continue;
-                                    } else {
-                                        eprintln!("shutting down");
-                                        break None;
-                                    }
-                                } else {
-                                    eprintln!("client recv disconnected");
-                                    break None;
-                                }
-                            }
-                        }
-                    } else {
-                        eprintln!("no client receive endpoint");
-                        break None;
-                    }
-                });
-                result.map(|result| PyBytes::new(py, &result).into())
-            }
-
-            #[text_signature = "($self, /)"]
-            pub fn start(&mut self) -> PyResult<ServerEndpoint> {
-                let (client_send_, client_recv) = channel::unbounded::<Vec<u8>>();
-                let (server_send, server_recv) = channel::unbounded::<Vec<u8>>();
-                let client_send = ClientSender::new(client_send_);
-                self.client_recv = Some(client_recv);
-                self.client_sender = Some(client_send.clone());
-                let server_endpoint = ServerEndpoint {
-                    server_send: Some(server_send),
-                };
-                setup_logging(client_send.clone());
-                let opt = CliOptions::from_filtered_cli();
-                let shared_state = SharedState::new();
-                let connection_state = ConnectionState::new(client_send.clone(), shared_state.clone());
-                // Handle CLI Opts.
-                handle_cli(opt, &connection_state, shared_state.clone());
-                refresh_navbar(&mut client_send.clone(), shared_state.clone());
-                refresh_loggingbar(&mut client_send.clone(), shared_state.clone());
-                backend_recv_thread(connection_state, client_send, server_recv, shared_state);
-                Ok(server_endpoint)
-            }
-        }
-    } else {
-        impl Server {
-            pub fn new() -> Self {
-                Server {
-                    client_recv: None,
-                    client_sender: None,
-                }
-            }
-            pub fn fetch_message(&self) -> crate::types::Result<Option<Vec<u8>>> {
-                if let Some(client_recv) = &self.client_recv {
-                    match client_recv.recv_timeout(time::Duration::from_millis(1)) {
-                        Ok(buf) => Ok(Some(buf)),
-                        Err(err) => {
-                            use crossbeam::channel::RecvTimeoutError;
-                            if matches!(err, RecvTimeoutError::Timeout) {
-                                if self.client_sender.as_ref().unwrap().connected.get() {
-                                    Ok(None)
-                                } else {
-                                    Err("shutting down".into())
-                                }
-                            } else {
-                                Err("client recv disconnected".into())
-                            }
-                        }
-                    }
-                } else {
-                    Err("no client receive endpoint".into())
-                }
-            }
-            pub fn start(&mut self) -> ServerEndpoint {
-                let (client_send_, client_recv) = channel::unbounded::<Vec<u8>>();
-                let (server_send, server_recv) = channel::unbounded::<Vec<u8>>();
-                let client_send = ClientSender::new(client_send_);
-                self.client_recv = Some(client_recv);
-                self.client_sender = Some(client_send.clone());
-                let server_endpoint = ServerEndpoint {
-                    server_send: Some(server_send),
-                };
-                setup_logging(client_send.clone());
-                let opt = CliOptions::from_filtered_cli();
-                let shared_state = SharedState::new();
-                let connection_state = ConnectionState::new(client_send.clone(), shared_state.clone());
-                // Handle CLI Opts.
-                handle_cli(opt, &connection_state, shared_state.clone());
-                refresh_navbar(&mut client_send.clone(), shared_state.clone());
-                refresh_loggingbar(&mut client_send.clone(), shared_state.clone());
-                backend_recv_thread(connection_state, client_send, server_recv, shared_state);
-                server_endpoint
-            }
-        }
-    }
-}
-
-#[cfg(feature = "pyo3")]
-#[pymodule]
-pub fn server(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<Server>()?;
-    m.add_class::<ServerEndpoint>()?;
-    Ok(())
-}

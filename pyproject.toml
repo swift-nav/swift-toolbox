@@ -9,6 +9,9 @@ python = ">=3.9,<3.10"
 PySide2 = "^5.15.2"
 fbs = { git = "https://github.com/silverjam/fbs.git" }
 pycapnp = "^1.1.0"
+msgpack = "^1.0.2"
+msgpack-types = "^0.2.0"
+cbor2 = "^5.4.1"
 
 [tool.poetry.dev-dependencies]
 black = "^21.6b0"

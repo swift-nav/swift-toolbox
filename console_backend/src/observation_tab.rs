@@ -118,14 +118,14 @@ impl Default for ObservationTable {
 }
 
 #[derive(Debug)]
-pub struct ObservationTab<S: CapnProtoSender> {
+pub struct ObservationTab<S: IpcSender> {
     pub client_sender: S,
     pub shared_state: SharedState,
     pub remote: ObservationTable,
     pub local: ObservationTable,
 }
 
-impl<S: CapnProtoSender> ObservationTab<S> {
+impl<S: IpcSender> ObservationTab<S> {
     pub fn new(shared_state: SharedState, client_sender: S) -> ObservationTab<S> {
         ObservationTab {
             client_sender,
@@ -292,6 +292,6 @@ impl<S: CapnProtoSender> ObservationTab<S> {
         }
 
         self.client_sender
-            .send_data(serialize_capnproto_builder(builder));
+            .send_data(IPC_KIND_CAPNP, serialize_capnproto_builder(builder));
     }
 }

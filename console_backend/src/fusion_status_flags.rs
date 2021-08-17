@@ -15,7 +15,7 @@ use crate::errors::{
     UPDATE_STATUS_LOCK_MUTEX_FAILURE,
 };
 use crate::types::ArcBool;
-use crate::types::{CapnProtoSender, SharedState};
+use crate::types::{IPC_KIND_CAPNP, IpcSender, SharedState};
 use crate::utils::serialize_capnproto_builder;
 
 const STATUS_PERIOD: f64 = 1.0;
@@ -268,7 +268,7 @@ impl Drop for FusionStatusFlag {
 /// - `nhc`: Storage for the non-holonomic constraints model status.
 /// - `zerovel`: Storage for the zero velocity status.
 #[derive(Debug)]
-pub struct FusionStatusFlags<S: CapnProtoSender> {
+pub struct FusionStatusFlags<S: IpcSender> {
     client_sender: S,
     shared_state: SharedState,
     gnsspos: FusionStatusFlag,
@@ -279,7 +279,7 @@ pub struct FusionStatusFlags<S: CapnProtoSender> {
     zerovel: FusionStatusFlag,
 }
 
-impl<S: CapnProtoSender> FusionStatusFlags<S> {
+impl<S: IpcSender> FusionStatusFlags<S> {
     pub fn new(shared_state: SharedState, client_sender: S) -> FusionStatusFlags<S> {
         FusionStatusFlags {
             client_sender,
@@ -321,7 +321,7 @@ impl<S: CapnProtoSender> FusionStatusFlags<S> {
         tab_status.set_zerovel(&self.zerovel.status().to_string());
 
         self.client_sender
-            .send_data(serialize_capnproto_builder(builder));
+            .send_data(IPC_KIND_CAPNP, serialize_capnproto_builder(builder));
     }
 }
 

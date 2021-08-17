@@ -295,7 +295,7 @@ impl ConnectionState {
     }
 
     /// Send disconnect signal to server state loop.
-    pub fn disconnect<S: CapnProtoSender>(&self, client_send: S) {
+    pub fn disconnect<S: IpcSender>(&self, client_send: S) {
         self.shared_state.set_running(false, client_send);
         if let Err(err) = self.sender.try_send(None) {
             error!("{}, {}", SERVER_STATE_DISCONNECT_FAILURE, err);
@@ -368,7 +368,7 @@ mod tests {
         assert_eq!(conn.realtime_delay(), RealtimeDelay::Off);
     }
 
-    fn receive_thread(client_recv: crossbeam::channel::Receiver<Vec<u8>>) -> JoinHandle<()> {
+    fn receive_thread(client_recv: crossbeam::channel::Receiver<(u8, Vec<u8>)>) -> JoinHandle<()> {
         thread::spawn(move || {
             let mut iter_count = 0;
 
@@ -389,7 +389,7 @@ mod tests {
         let bfilename = filename();
         backup_file(bfilename.clone());
         let shared_state = SharedState::new();
-        let (client_send_, client_receive) = crossbeam::channel::unbounded::<Vec<u8>>();
+        let (client_send_, client_receive) = crossbeam::channel::unbounded::<(u8, Vec<u8>)>();
         let client_send = ClientSender::new(client_send_);
         let connection_state = ConnectionState::new(client_send, shared_state.clone());
         let filename = TEST_SHORT_FILEPATH.to_string();
@@ -416,7 +416,7 @@ mod tests {
         let bfilename = filename();
         backup_file(bfilename.clone());
         let shared_state = SharedState::new();
-        let (client_send_, client_receive) = crossbeam::channel::unbounded::<Vec<u8>>();
+        let (client_send_, client_receive) = crossbeam::channel::unbounded::<(u8, Vec<u8>)>();
         let client_send = ClientSender::new(client_send_);
         let connection_state = ConnectionState::new(client_send, shared_state.clone());
         let filename = TEST_SHORT_FILEPATH.to_string();
@@ -447,7 +447,7 @@ mod tests {
         let bfilename = filename();
         backup_file(bfilename.clone());
         let shared_state = SharedState::new();
-        let (client_send_, client_receive) = crossbeam::channel::unbounded::<Vec<u8>>();
+        let (client_send_, client_receive) = crossbeam::channel::unbounded::<(u8, Vec<u8>)>();
         let client_send = ClientSender::new(client_send_);
         let connection_state = ConnectionState::new(client_send.clone(), shared_state.clone());
         let filename = TEST_FILEPATH.to_string();

@@ -19,7 +19,7 @@ pub fn process_messages<S>(
     mut client_send: S,
 ) -> Result<()>
 where
-    S: CapnProtoSender,
+    S: IpcSender,
 {
     shared_state.set_running(true, client_send.clone());
     let realtime_delay = conn.realtime_delay();

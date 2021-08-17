@@ -4,14 +4,13 @@ use std::{
     time::{Duration, Instant},
 };
 
-use capnp::message::Builder;
-
 use log::warn;
 
 use crate::constants::*;
 use crate::piksi_tools_constants::*;
 use crate::types::*;
-use crate::utils::{serialize_capnproto_builder, signal_key_color, signal_key_label};
+use crate::ipc;
+use crate::utils::{serialize_ipc_message, signal_key_color, signal_key_label};
 use sbp::messages::tracking::{MeasurementState, TrackingChannelState};
 
 /// TrackingSignalsTab struct.
@@ -37,7 +36,7 @@ use sbp::messages::tracking::{MeasurementState, TrackingChannelState};
 /// - `t_init`: Instant monotonic time used as starting reference time.
 /// - `time`: Vector of Monotic times stored.
 #[derive(Debug)]
-pub struct TrackingSignalsTab<S: CapnProtoSender> {
+pub struct TrackingSignalsTab<S: IpcSender> {
     pub at_least_one_track_received: bool,
     pub check_labels: [&'static str; 12],
     pub client_sender: S,
@@ -61,7 +60,7 @@ pub struct TrackingSignalsTab<S: CapnProtoSender> {
     pub time: Deque<f64>,
 }
 
-impl<S: CapnProtoSender> TrackingSignalsTab<S> {
+impl<S: IpcSender> TrackingSignalsTab<S> {
     pub fn new(shared_state: SharedState, client_sender: S) -> TrackingSignalsTab<S> {
         TrackingSignalsTab {
             at_least_one_track_received: false,
@@ -373,51 +372,35 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
 
     /// Package data into a message buffer and send to frontend.
     fn send_data(&mut self) {
-        let mut builder = Builder::new_default();
-        let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
-
-        let mut tracking_signals_status = msg.init_tracking_signals_status();
-        let mut labels = tracking_signals_status
-            .reborrow()
-            .init_labels(self.sv_labels.len() as u32);
-
-        for (i, header) in self.sv_labels.iter().enumerate() {
-            labels.set(i as u32, header);
+        let mut tracking_signals_status: ipc::TrackingSignalsStatus = Default::default();
+        for header in self.sv_labels.iter().cloned() {
+            tracking_signals_status.labels.push(header);
         }
 
-        let mut colors = tracking_signals_status
-            .reborrow()
-            .init_colors(self.colors.len() as u32);
-
-        for (i, color) in self.colors.iter().enumerate() {
-            colors.set(i as u32, color);
+        for color in self.colors.iter().cloned() {
+            tracking_signals_status.colors.push(color);
         }
 
-        let mut tracking_points = tracking_signals_status
-            .reborrow()
-            .init_data(self.sv_labels.len() as u32);
-        {
-            for idx in 0..self.sv_labels.len() {
-                let points = self.sats.get_mut(idx).unwrap().get();
-                let mut point_val_idx = tracking_points
-                    .reborrow()
-                    .init(idx as u32, points.len() as u32);
-                for (i, (OrderedFloat(x), y)) in points.iter().enumerate() {
-                    let mut point_val = point_val_idx.reborrow().get(i as u32);
-                    point_val.set_x(*x);
-                    point_val.set_y(*y);
-                }
+        for idx in 0..self.sv_labels.len() {
+            let points = self.sats.get_mut(idx).unwrap().get();
+            let point_val_idx = &mut tracking_signals_status.data[idx];
+            for (i, (OrderedFloat(x), y)) in points.iter().enumerate() {
+                let mut point_val = point_val_idx.get_mut(i).unwrap();
+                point_val.x = *x;
+                point_val.y = *y;
             }
         }
-        tracking_signals_status.set_xmin_offset(self.chart_xmin_offset());
-        let mut tracking_checkbox_labels = tracking_signals_status
-            .reborrow()
-            .init_check_labels(self.check_labels.len() as u32);
-        for (i, label) in self.check_labels.iter().enumerate() {
-            tracking_checkbox_labels.set(i as u32, label);
+
+        tracking_signals_status.xmin_offset = self.chart_xmin_offset();
+
+        for label in self.check_labels.iter() {
+            tracking_signals_status.check_labels.push(label.to_string());
         }
+
+        let message = ipc::Message::TrackingSignalsStatus(tracking_signals_status);
+
         self.client_sender
-            .send_data(serialize_capnproto_builder(builder));
+            .send_data(IPC_KIND_MSGPACK, serialize_ipc_message(&message));
     }
 }
 

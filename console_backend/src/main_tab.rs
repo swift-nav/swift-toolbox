@@ -18,7 +18,7 @@ use crate::tracking_signals_tab::TrackingSignalsTab;
 use crate::types::*;
 use crate::utils::refresh_loggingbar;
 
-pub struct MainTab<'a, S: CapnProtoSender, W: Write> {
+pub struct MainTab<'a, S: IpcSender, W: Write> {
     logging_directory: PathBuf,
     last_csv_logging: CsvLogging,
     last_sbp_logging: SbpLogging,
@@ -38,7 +38,7 @@ pub struct MainTab<'a, S: CapnProtoSender, W: Write> {
     pub status_bar: StatusBar<S>,
 }
 
-impl<'a, S: CapnProtoSender, W: Write> MainTab<'a, S, W> {
+impl<'a, S: IpcSender, W: Write> MainTab<'a, S, W> {
     pub fn new(
         shared_state: SharedState,
         client_sender: S,

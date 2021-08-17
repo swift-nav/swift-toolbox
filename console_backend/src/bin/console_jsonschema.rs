@@ -10,7 +10,6 @@ fn main() -> Result<()> {
     let schema = schema_for!(Message);
     println!("{}", serde_json::to_string_pretty(&schema).unwrap());
 
-
     let msg = Message::FileRequest(
         ipc::FileRequest { filename: "test.txt".into() });
 

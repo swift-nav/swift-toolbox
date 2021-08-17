@@ -15,7 +15,7 @@ fn write_log_message(message: String) {
 }
 
 #[tauri::command]
-fn fetch_ipc_message(state: tauri::State<AppState>) -> Result<Option<Vec<u8>>, String> {
+fn fetch_ipc_message(state: tauri::State<AppState>) -> Result<Option<(u8, Vec<u8>)>, String> {
   state.server.fetch_message()
     .map_err(|e| format!("{}", e))
 }

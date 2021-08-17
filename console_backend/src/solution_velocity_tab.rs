@@ -6,7 +6,7 @@ use sbp::messages::navigation::MsgVelNED;
 use capnp::message::Builder;
 
 use crate::constants::{HORIZONTAL_COLOR, NUM_POINTS, VERTICAL_COLOR};
-use crate::types::{CapnProtoSender, Deque, SharedState, VelocityUnits};
+use crate::types::{IPC_KIND_CAPNP, IpcSender, Deque, SharedState, VelocityUnits};
 use crate::utils::serialize_capnproto_builder;
 /// SolutionVelocityTab struct.
 ///
@@ -22,7 +22,7 @@ use crate::utils::serialize_capnproto_builder;
 /// - `tow`: The GPS Time of Week.
 /// - `unit`: Currently displayed and converted to unit of measure.
 #[derive(Debug)]
-pub struct SolutionVelocityTab<'a, S: CapnProtoSender> {
+pub struct SolutionVelocityTab<'a, S: IpcSender> {
     pub available_units: Vec<&'a str>,
     pub client_sender: S,
     pub colors: Vec<String>,
@@ -35,7 +35,7 @@ pub struct SolutionVelocityTab<'a, S: CapnProtoSender> {
     pub unit: VelocityUnits,
 }
 
-impl<'a, S: CapnProtoSender> SolutionVelocityTab<'a, S> {
+impl<'a, S: IpcSender> SolutionVelocityTab<'a, S> {
     pub fn new(shared_state: SharedState, client_sender: S) -> SolutionVelocityTab<'a, S> {
         SolutionVelocityTab {
             available_units: vec![
@@ -161,7 +161,7 @@ impl<'a, S: CapnProtoSender> SolutionVelocityTab<'a, S> {
         }
 
         self.client_sender
-            .send_data(serialize_capnproto_builder(builder));
+            .send_data(IPC_KIND_CAPNP, serialize_capnproto_builder(builder));
     }
 }
 

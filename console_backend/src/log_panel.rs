@@ -108,17 +108,17 @@ pub fn setup_logging(client_sender: ClientSender) {
 }
 
 #[derive(Debug)]
-pub struct LogPanelWriter<S: CapnProtoSender> {
+pub struct LogPanelWriter<S: IpcSender> {
     pub client_sender: S,
 }
 
-impl<S: CapnProtoSender> LogPanelWriter<S> {
+impl<S: IpcSender> LogPanelWriter<S> {
     pub fn new(client_sender: S) -> LogPanelWriter<S> {
         LogPanelWriter { client_sender }
     }
 }
 
-impl<S: CapnProtoSender> Writer<Box<String>> for LogPanelWriter<S> {
+impl<S: IpcSender> Writer<Box<String>> for LogPanelWriter<S> {
     fn process_slice(&mut self, slice: &[Box<String>]) {
         if slice.is_empty() {
             return;
@@ -137,7 +137,7 @@ impl<S: CapnProtoSender> Writer<Box<String>> for LogPanelWriter<S> {
         }
 
         self.client_sender
-            .send_data(serialize_capnproto_builder(builder));
+            .send_data(IPC_KIND_CAPNP, serialize_capnproto_builder(builder));
     }
 
     fn flush(&mut self) {}

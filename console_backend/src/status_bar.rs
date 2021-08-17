@@ -17,7 +17,7 @@ use crate::errors::*;
 use crate::piksi_tools_constants::{
     ins_error_dict, ins_mode_dict, ins_type_dict, rtk_mode_dict, DR_MODE, EMPTY_STR, RTK_MODES,
 };
-use crate::types::{ArcBool, BaselineNED, CapnProtoSender, GnssModes, PosLLH, SharedState};
+use crate::types::{IPC_KIND_CAPNP, ArcBool, BaselineNED, IpcSender, GnssModes, PosLLH, SharedState};
 use crate::utils::{bytes_to_kb, decisec_to_sec, serialize_capnproto_builder};
 
 #[derive(Debug, Clone)]
@@ -53,7 +53,7 @@ impl StatusBarUpdate {
 /// - `heartbeat_handler`: The handler to store the running heartbeat thread.
 /// - `port`: The string corresponding to the current connection.
 #[derive(Debug)]
-pub struct StatusBar<S: CapnProtoSender> {
+pub struct StatusBar<S: IpcSender> {
     client_sender: S,
     shared_state: SharedState,
     heartbeat_data: Heartbeat,
@@ -61,7 +61,7 @@ pub struct StatusBar<S: CapnProtoSender> {
     heartbeat_handler: JoinHandle<()>,
     port: String,
 }
-impl<S: CapnProtoSender> StatusBar<S> {
+impl<S: IpcSender> StatusBar<S> {
     /// Create a new StatusBar.
     ///
     /// # Parameters:
@@ -142,7 +142,7 @@ impl<S: CapnProtoSender> StatusBar<S> {
         status_bar_status.set_solid_connection(sb_update.solid_connection);
 
         self.client_sender
-            .send_data(serialize_capnproto_builder(builder));
+            .send_data(IPC_KIND_CAPNP, serialize_capnproto_builder(builder));
     }
 
     pub fn handle_heartbeat(&mut self) {
@@ -262,7 +262,7 @@ impl<S: CapnProtoSender> StatusBar<S> {
     }
 }
 
-impl<S: CapnProtoSender> Drop for StatusBar<S> {
+impl<S: IpcSender> Drop for StatusBar<S> {
     fn drop(&mut self) {
         self.is_running.set(false);
     }

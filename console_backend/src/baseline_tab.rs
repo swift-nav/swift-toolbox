@@ -8,12 +8,12 @@ use sbp::messages::{
 };
 use std::{collections::HashMap, io::Write};
 
-use crate::constants::*;
+use crate::{constants::*, types::IPC_KIND_CAPNP};
 use crate::date_conv::*;
 use crate::output::{BaselineLog, CsvSerializer};
 use crate::piksi_tools_constants::EMPTY_STR;
 use crate::types::{
-    BaselineNED, CapnProtoSender, Deque, GnssModes, GpsTime, MsgSender, Result, SharedState,
+    BaselineNED, IpcSender, Deque, GnssModes, GpsTime, MsgSender, Result, SharedState,
     UtcDateTime,
 };
 use crate::utils::*;
@@ -54,7 +54,7 @@ pub(crate) struct BaselineTabButtons {
 /// - `utc_time`: The stored monotonic Utc time.
 /// - `baseline_log_file`: The CsvSerializer corresponding to an open velocity log if any.
 /// - `week`: The stored week value from GPS Time messages.
-pub struct BaselineTab<'a, S: CapnProtoSender, W: Write> {
+pub struct BaselineTab<'a, S: IpcSender, W: Write> {
     age_corrections: Option<f64>,
     client_sender: S,
     heading: Option<f64>,
@@ -78,7 +78,7 @@ pub struct BaselineTab<'a, S: CapnProtoSender, W: Write> {
     wtr: MsgSender<W>,
 }
 
-impl<'a, S: CapnProtoSender, W: Write> BaselineTab<'a, S, W> {
+impl<'a, S: IpcSender, W: Write> BaselineTab<'a, S, W> {
     pub fn new(
         shared_state: SharedState,
         client_sender: S,
@@ -494,7 +494,7 @@ impl<'a, S: CapnProtoSender, W: Write> BaselineTab<'a, S, W> {
         }
 
         self.client_sender
-            .send_data(serialize_capnproto_builder(builder));
+            .send_data(IPC_KIND_CAPNP, serialize_capnproto_builder(builder));
     }
 
     /// Package solution table data into a message buffer and send to frontend.
@@ -514,7 +514,7 @@ impl<'a, S: CapnProtoSender, W: Write> BaselineTab<'a, S, W> {
             }
         }
         self.client_sender
-            .send_data(serialize_capnproto_builder(builder));
+            .send_data(IPC_KIND_CAPNP, serialize_capnproto_builder(builder));
     }
 }
 

@@ -111,26 +111,29 @@ impl<T: Clone> Deque<T> {
     }
 }
 
-pub trait CapnProtoSender: Debug + Clone + Send {
-    fn send_data(&mut self, msg_bytes: Vec<u8>);
+pub const IPC_KIND_CAPNP: u8 = 0;
+pub const IPC_KIND_MSGPACK: u8 = 1;
+
+pub trait IpcSender: Debug + Clone + Send {
+    fn send_data(&mut self, kind: u8, msg_bytes: Vec<u8>);
 }
 
 #[derive(Debug, Clone)]
 pub struct ClientSender {
-    pub inner: crossbeam::channel::Sender<Vec<u8>>,
+    pub inner: crossbeam::channel::Sender<(u8, Vec<u8>)>,
     pub connected: ArcBool,
 }
 impl ClientSender {
-    pub fn new(inner: crossbeam::channel::Sender<Vec<u8>>) -> Self {
+    pub fn new(inner: crossbeam::channel::Sender<(u8, Vec<u8>)>) -> Self {
         Self {
             inner,
             connected: ArcBool::new_with(true),
         }
     }
 }
-impl CapnProtoSender for ClientSender {
-    fn send_data(&mut self, msg_bytes: Vec<u8>) {
-        self.inner.send(msg_bytes).unwrap();
+impl IpcSender for ClientSender {
+    fn send_data(&mut self, ipc_kind: u8, msg_bytes: Vec<u8>) {
+        self.inner.send((ipc_kind, msg_bytes)).unwrap();
     }
 }
 
@@ -138,8 +141,9 @@ impl CapnProtoSender for ClientSender {
 pub struct TestSender {
     pub inner: Vec<Vec<u8>>,
 }
-impl CapnProtoSender for TestSender {
-    fn send_data(&mut self, msg: Vec<u8>) {
+impl IpcSender for TestSender {
+    fn send_data(&mut self, _ipc_kind: u8, msg: Vec<u8>) {
+        // TODO(msgpack): look at _ipc_kind
         self.inner.push(msg)
     }
 }
@@ -189,7 +193,7 @@ impl SharedState {
     }
     pub fn set_running<S>(&self, set_to: bool, mut client_send: S)
     where
-        S: CapnProtoSender,
+        S: IpcSender,
     {
         if set_to {
             set_connected_frontend(cc::ApplicationStates::CONNECTED, &mut client_send);

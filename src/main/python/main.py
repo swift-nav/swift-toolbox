@@ -8,6 +8,7 @@ import threading
 from typing import List, Any
 
 import capnp  # type: ignore
+import msgpack
 
 from PySide2.QtWidgets import QApplication  # type: ignore
 
@@ -22,6 +23,7 @@ from PySide2.QtGui import QFontDatabase
 
 from PySide2.QtQml import QQmlComponent, qmlRegisterType
 
+import message as m
 from constants import ApplicationStates, Keys, Tabs
 
 from log_panel import (
@@ -181,6 +183,9 @@ TAB_LAYOUT = {
     },
 }
 
+IPC_KIND_CAPNP = bytes(b'\x00')
+IPC_KIND_MSGPACK = bytes(b'\x01')
+
 
 capnp.remove_import_hook()  # pylint: disable=no-member
 
@@ -339,17 +344,14 @@ class DataModel(QObject):
         msg.fileRequest = msg.init(Message.Union.FileRequest)
         msg.fileRequest.filename = str(filename)
         buffer = msg.to_bytes()
-        self.endpoint.send_message(buffer)
+        self.endpoint.send_message(IPC_KIND_CAPNP, buffer)
 
     @Slot(str, int)  # type: ignore
     def connect_tcp(self, host: str, port: int) -> None:
-        Message = self.messages.Message
-        msg = Message()
-        msg.tcpRequest = msg.init(Message.Union.TcpRequest)
-        msg.tcpRequest.host = str(host)
-        msg.tcpRequest.port = int(port)
-        buffer = msg.to_bytes()
-        self.endpoint.send_message(buffer)
+        msg = m.Message(tcp_request=m.TCPRequest(host, port))
+        d = msg.to_dict()
+        buffer = msgpack.dumps(d)
+        self.endpoint.send_message(IPC_KIND_MSGPACK, buffer)
 
     @Slot(str, int, str)  # type: ignore
     def connect_serial(self, device: str, baudrate: int, flow_control: str) -> None:
@@ -360,7 +362,7 @@ class DataModel(QObject):
         msg.serialRequest.baudrate = int(baudrate)
         msg.serialRequest.flowControl = str(flow_control)
         buffer = msg.to_bytes()
-        self.endpoint.send_message(buffer)
+        self.endpoint.send_message(IPC_KIND_CAPNP, buffer)
 
     @Slot()  # type: ignore
     def disconnect(self) -> None:
@@ -368,7 +370,7 @@ class DataModel(QObject):
         msg = self.messages.Message()
         msg.disconnectRequest = msg.init(Message.Union.DisconnectRequest)
         buffer = msg.to_bytes()
-        self.endpoint.send_message(buffer)
+        self.endpoint.send_message(IPC_KIND_CAPNP, buffer)
 
     @Slot()  # type: ignore
     def serial_refresh(self) -> None:
@@ -376,7 +378,7 @@ class DataModel(QObject):
         msg = self.messages.Message()
         msg.serialRefreshRequest = msg.init(Message.Union.SerialRefreshRequest)
         buffer = msg.to_bytes()
-        self.endpoint.send_message(buffer)
+        self.endpoint.send_message(IPC_KIND_CAPNP, buffer)
 
     @Slot(bool)  # type: ignore
     def pause(self, pause_: bool) -> None:
@@ -385,7 +387,7 @@ class DataModel(QObject):
         msg.pauseRequest = msg.init(Message.Union.PauseRequest)
         msg.pauseRequest.pause = pause_
         buffer = msg.to_bytes()
-        self.endpoint.send_message(buffer)
+        self.endpoint.send_message(IPC_KIND_CAPNP, buffer)
 
     @Slot(list)  # type: ignore
     def tracking_signals_check_visibility(self, checks: List[str]) -> None:
@@ -394,7 +396,7 @@ class DataModel(QObject):
         m.trackingSignalsStatusFront = m.init(Message.Union.TrackingSignalsStatusFront)
         m.trackingSignalsStatusFront.trackingSignalsCheckVisibility = checks
         buffer = m.to_bytes()
-        self.endpoint.send_message(buffer)
+        self.endpoint.send_message(IPC_KIND_CAPNP, buffer)
 
     @Slot(str)  # type: ignore
     def solution_velocity_unit(self, unit: str) -> None:
@@ -403,7 +405,7 @@ class DataModel(QObject):
         m.solutionVelocityStatusFront = m.init(Message.Union.SolutionVelocityStatusFront)
         m.solutionVelocityStatusFront.solutionVelocityUnit = unit
         buffer = m.to_bytes()
-        self.endpoint.send_message(buffer)
+        self.endpoint.send_message(IPC_KIND_CAPNP, buffer)
 
     @Slot(int)  # type: ignore
     def advanced_spectrum_analyzer_channel(self, channel: int) -> None:
@@ -412,7 +414,7 @@ class DataModel(QObject):
         m.advancedSpectrumAnalyzerStatusFront = m.init(Message.Union.AdvancedSpectrumAnalyzerStatusFront)
         m.advancedSpectrumAnalyzerStatusFront.channel = channel
         buffer = m.to_bytes()
-        self.endpoint.send_message(buffer)
+        self.endpoint.send_message(IPC_KIND_CAPNP, buffer)
 
     @Slot(str)  # type: ignore
     def solution_position_unit(self, unit: str) -> None:
@@ -421,7 +423,7 @@ class DataModel(QObject):
         m.solutionPositionStatusUnitFront = m.init(Message.Union.SolutionPositionStatusUnitFront)
         m.solutionPositionStatusUnitFront.solutionPositionUnit = unit
         buffer = m.to_bytes()
-        self.endpoint.send_message(buffer)
+        self.endpoint.send_message(IPC_KIND_CAPNP, buffer)
 
     @Slot(list)  # type: ignore
     def solution_position(self, buttons: list) -> None:
@@ -431,7 +433,7 @@ class DataModel(QObject):
         m.solutionPositionStatusButtonFront.solutionPositionPause = buttons[0]
         m.solutionPositionStatusButtonFront.solutionPositionClear = buttons[1]
         buffer = m.to_bytes()
-        self.endpoint.send_message(buffer)
+        self.endpoint.send_message(IPC_KIND_CAPNP, buffer)
 
     @Slot(list)  # type: ignore
     def baseline_plot(self, buttons: list) -> None:
@@ -442,7 +444,7 @@ class DataModel(QObject):
         m.baselinePlotStatusButtonFront.clear = buttons[1]
         m.baselinePlotStatusButtonFront.resetFilters = buttons[2]
         buffer = m.to_bytes()
-        self.endpoint.send_message(buffer)
+        self.endpoint.send_message(IPC_KIND_CAPNP, buffer)
 
     @Slot(list, str)  # type: ignore
     def logging_bar(self, buttons, directory) -> None:
@@ -453,7 +455,7 @@ class DataModel(QObject):
         m.loggingBarFront.sbpLogging = buttons[1]
         m.loggingBarFront.directory = directory
         buffer = m.to_bytes()
-        self.endpoint.send_message(buffer)
+        self.endpoint.send_message(IPC_KIND_CAPNP, buffer)
 
     @Slot(str)  # type: ignore
     def log_level(self, log_level) -> None:
@@ -462,7 +464,7 @@ class DataModel(QObject):
         m.logLevelFront = m.init(Message.Union.LogLevelFront)
         m.logLevelFront.logLevel = str(log_level)
         buffer = m.to_bytes()
-        self.endpoint.send_message(buffer)
+        self.endpoint.send_message(IPC_KIND_CAPNP, buffer)
 
 
 def is_frozen() -> bool:

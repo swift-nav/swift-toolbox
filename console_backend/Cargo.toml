@@ -41,8 +41,9 @@ slotmap = "1.0.3"
 serde-pickle = { version = "0.6.2", optional = true }
 schemars = "0.8"
 cfg-if = "1.0"
-rmp = "0.8"
-rmp-serde = "0.15"
+rmp-serde = { git = "https://github.com/3Hren/msgpack-rust.git", rev = "5bf2c24203ad422233cf35b7b7bfad9f7e811814" }
+rmpv = "0.4"
+ciborium = "0.1"
 
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 serialport = "4.0.1"
@@ -73,6 +74,11 @@ name = "fft_monitor"
 path = "src/bin/fft_monitor.rs"
 bench = false
 required-features = ["fft"]
+
+[[bin]]
+name = "msgw"
+path = "src/bin/msgw.rs"
+bench = false
 
 [[bin]]
 name = "console-jsonschema"

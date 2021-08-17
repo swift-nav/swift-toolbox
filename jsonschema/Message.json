@@ -376,7 +376,7 @@
           "items": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/definitions/Point"
             }
           }
         },
@@ -402,7 +402,7 @@
           "items": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/definitions/Point"
             }
           }
         },

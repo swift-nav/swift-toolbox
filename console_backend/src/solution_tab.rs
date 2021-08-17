@@ -12,7 +12,7 @@ use crate::date_conv::*;
 use crate::output::{CsvSerializer, PosLLHLog, VelLog};
 use crate::piksi_tools_constants::EMPTY_STR;
 use crate::types::{
-    CapnProtoSender, Deque, Dops, GnssModes, GpsTime, PosLLH, SharedState, UtcDateTime, VelNED,
+    IPC_KIND_CAPNP, IpcSender, Deque, Dops, GnssModes, GpsTime, PosLLH, SharedState, UtcDateTime, VelNED,
 };
 use crate::utils::*;
 
@@ -46,7 +46,7 @@ use crate::utils::*;
 /// - `vel_log_file`: The CsvSerializer corresponding to an open velocity log if any.
 /// - `week`: The stored week value from GPS Time messages.
 #[derive(Debug)]
-pub struct SolutionTab<S: CapnProtoSender> {
+pub struct SolutionTab<S: IpcSender> {
     pub age_corrections: Option<f64>,
     pub available_units: [&'static str; 2],
     pub client_sender: S,
@@ -80,7 +80,7 @@ pub struct SolutionTab<S: CapnProtoSender> {
     pub week: Option<u16>,
 }
 
-impl<S: CapnProtoSender> SolutionTab<S> {
+impl<S: IpcSender> SolutionTab<S> {
     pub fn new(shared_state: SharedState, client_sender: S) -> SolutionTab<S> {
         SolutionTab {
             age_corrections: None,
@@ -736,7 +736,7 @@ impl<S: CapnProtoSender> SolutionTab<S> {
         }
 
         self.client_sender
-            .send_data(serialize_capnproto_builder(builder));
+            .send_data(IPC_KIND_CAPNP, serialize_capnproto_builder(builder));
     }
 
     /// Package solution table data into a message buffer and send to frontend.
@@ -756,7 +756,7 @@ impl<S: CapnProtoSender> SolutionTab<S> {
             }
         }
         self.client_sender
-            .send_data(serialize_capnproto_builder(builder));
+            .send_data(IPC_KIND_CAPNP, serialize_capnproto_builder(builder));
     }
 }
 

@@ -8,11 +8,6 @@
 // match the expected interface, even if the JSON is valid.
 
 export interface Message {
-    inner:    MessageInner;
-    msg_type: MessageType;
-}
-
-export interface MessageInner {
     TcpRequest?:                          TcpRequest;
     FileRequest?:                         FileRequest;
     SerialRequest?:                       SerialRequest;
@@ -70,7 +65,7 @@ export interface Point {
 }
 
 export interface AdvancedSpectrumAnalyzerStatusFront {
-    solution_velocity_units: string;
+    channel: number;
 }
 
 export interface BaselinePlotStatus {
@@ -244,7 +239,7 @@ export interface StatusBarStatus {
 
 export interface TcpRequest {
     host: string;
-    port: string;
+    port: number;
 }
 
 export interface TrackingSignalsStatus {
@@ -257,39 +252,6 @@ export interface TrackingSignalsStatus {
 
 export interface TrackingSignalsStatusFront {
     tracking_signals_check_visibility: string[];
-}
-
-export enum MessageType {
-    AdvancedInsStatus = "AdvancedInsStatus",
-    AdvancedMagnetometerStatus = "AdvancedMagnetometerStatus",
-    AdvancedSpectrumAnalyzerStatus = "AdvancedSpectrumAnalyzerStatus",
-    AdvancedSpectrumAnalyzerStatusFront = "AdvancedSpectrumAnalyzerStatusFront",
-    BaselinePlotStatus = "BaselinePlotStatus",
-    BaselinePlotStatusButtonFront = "BaselinePlotStatusButtonFront",
-    BaselineTableStatus = "BaselineTableStatus",
-    DisconnectRequest = "DisconnectRequest",
-    FileRequest = "FileRequest",
-    FusionStatusFlagsStatus = "FusionStatusFlagsStatus",
-    LogAppend = "LogAppend",
-    LogLevelFront = "LogLevelFront",
-    LoggingBarFront = "LoggingBarFront",
-    LoggingBarStatus = "LoggingBarStatus",
-    NavBarStatus = "NavBarStatus",
-    ObservationStatus = "ObservationStatus",
-    PauseRequest = "PauseRequest",
-    SerialRefreshRequest = "SerialRefreshRequest",
-    SerialRequest = "SerialRequest",
-    SolutionPositionStatus = "SolutionPositionStatus",
-    SolutionPositionStatusButtonFront = "SolutionPositionStatusButtonFront",
-    SolutionPositionStatusUnitFront = "SolutionPositionStatusUnitFront",
-    SolutionTableStatus = "SolutionTableStatus",
-    SolutionVelocityStatus = "SolutionVelocityStatus",
-    SolutionVelocityStatusFront = "SolutionVelocityStatusFront",
-    Status = "Status",
-    StatusBarStatus = "StatusBarStatus",
-    TcpRequest = "TcpRequest",
-    TrackingSignalsStatus = "TrackingSignalsStatus",
-    TrackingSignalsStatusFront = "TrackingSignalsStatusFront",
 }
 
 // Converts JSON strings to/from your types
@@ -438,10 +400,6 @@ function r(name: string) {
 
 const typeMap: any = {
     "Message": o([
-        { json: "inner", js: "inner", typ: r("MessageInner") },
-        { json: "msg_type", js: "msg_type", typ: r("MessageType") },
-    ], "any"),
-    "MessageInner": o([
         { json: "TcpRequest", js: "TcpRequest", typ: u(undefined, r("TcpRequest")) },
         { json: "FileRequest", js: "FileRequest", typ: u(undefined, r("FileRequest")) },
         { json: "SerialRequest", js: "SerialRequest", typ: u(undefined, r("SerialRequest")) },
@@ -494,7 +452,7 @@ const typeMap: any = {
         { json: "y", js: "y", typ: 3.14 },
     ], "any"),
     "AdvancedSpectrumAnalyzerStatusFront": o([
-        { json: "solution_velocity_units", js: "solution_velocity_units", typ: "" },
+        { json: "channel", js: "channel", typ: 0 },
     ], "any"),
     "BaselinePlotStatus": o([
         { json: "cur_data", js: "cur_data", typ: a(a(r("Point"))) },
@@ -633,7 +591,7 @@ const typeMap: any = {
     ], "any"),
     "TcpRequest": o([
         { json: "host", js: "host", typ: "" },
-        { json: "port", js: "port", typ: "" },
+        { json: "port", js: "port", typ: 0 },
     ], "any"),
     "TrackingSignalsStatus": o([
         { json: "check_labels", js: "check_labels", typ: a("") },
@@ -651,37 +609,5 @@ const typeMap: any = {
         "Info",
         "Trace",
         "Warn",
-    ],
-    "MessageType": [
-        "AdvancedInsStatus",
-        "AdvancedMagnetometerStatus",
-        "AdvancedSpectrumAnalyzerStatus",
-        "AdvancedSpectrumAnalyzerStatusFront",
-        "BaselinePlotStatus",
-        "BaselinePlotStatusButtonFront",
-        "BaselineTableStatus",
-        "DisconnectRequest",
-        "FileRequest",
-        "FusionStatusFlagsStatus",
-        "LogAppend",
-        "LogLevelFront",
-        "LoggingBarFront",
-        "LoggingBarStatus",
-        "NavBarStatus",
-        "ObservationStatus",
-        "PauseRequest",
-        "SerialRefreshRequest",
-        "SerialRequest",
-        "SolutionPositionStatus",
-        "SolutionPositionStatusButtonFront",
-        "SolutionPositionStatusUnitFront",
-        "SolutionTableStatus",
-        "SolutionVelocityStatus",
-        "SolutionVelocityStatusFront",
-        "Status",
-        "StatusBarStatus",
-        "TcpRequest",
-        "TrackingSignalsStatus",
-        "TrackingSignalsStatusFront",
     ],
 };

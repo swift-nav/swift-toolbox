@@ -3,7 +3,7 @@ use sbp::messages::mag::MsgMagRaw;
 use crate::constants::{MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER, NUM_POINTS};
 use crate::errors::GET_MUT_OBJECT_FAILURE;
 use crate::ipc;
-use crate::types::{CapnProtoSender, Deque, SharedState};
+use crate::types::{Deque, IPC_KIND_MSGPACK, IpcSender, SharedState};
 use crate::utils::serialize_ipc_message;
 
 /// AdvancedMagnetometerTab struct.
@@ -17,7 +17,7 @@ use crate::utils::serialize_ipc_message;
 /// - `mag_z`: The stored historic Magnetometer values along z axis.
 /// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
 #[derive(Debug)]
-pub struct AdvancedMagnetometerTab<S: CapnProtoSender> {
+pub struct AdvancedMagnetometerTab<S: IpcSender> {
     client_sender: S,
     mag_x: Deque<f64>,
     mag_y: Deque<f64>,
@@ -27,7 +27,7 @@ pub struct AdvancedMagnetometerTab<S: CapnProtoSender> {
     ymin: f64,
 }
 
-impl<S: CapnProtoSender> AdvancedMagnetometerTab<S> {
+impl<S: IpcSender> AdvancedMagnetometerTab<S> {
     pub fn new(shared_state: SharedState, client_sender: S) -> AdvancedMagnetometerTab<S> {
         let mag_fill_val = Some(0_f64);
         AdvancedMagnetometerTab {
@@ -88,7 +88,7 @@ impl<S: CapnProtoSender> AdvancedMagnetometerTab<S> {
         tab_status.ymax = self.ymax;
         let message = ipc::Message::AdvancedMagnetometerStatus(tab_status);
         self.client_sender
-            .send_data(serialize_ipc_message(&message));
+            .send_data(IPC_KIND_MSGPACK, serialize_ipc_message(&message));
     }
 }
 

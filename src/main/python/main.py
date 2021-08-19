@@ -8,7 +8,7 @@ import threading
 from typing import List, Any
 
 import capnp  # type: ignore
-import msgpack
+import cbor2
 
 from PySide2.QtWidgets import QApplication  # type: ignore
 
@@ -23,7 +23,7 @@ from PySide2.QtGui import QFontDatabase
 
 from PySide2.QtQml import QQmlComponent, qmlRegisterType
 
-import message as m
+import message as ipc
 from constants import ApplicationStates, Keys, Tabs
 
 from log_panel import (
@@ -183,8 +183,8 @@ TAB_LAYOUT = {
     },
 }
 
-IPC_KIND_CAPNP = bytes(b'\x00')
-IPC_KIND_MSGPACK = bytes(b'\x01')
+IPC_KIND_CAPNP = 0
+IPC_KIND_CBOR = 1
 
 
 capnp.remove_import_hook()  # pylint: disable=no-member
@@ -192,135 +192,165 @@ capnp.remove_import_hook()  # pylint: disable=no-member
 
 def receive_messages(app_, backend, messages):
     while True:
-        buffer = backend.fetch_message()
-        if not buffer:
+        kb = backend.fetch_message()
+        if not kb:
             print("terminating GUI loop", file=sys.stderr)
             break
-        Message = messages.Message
-        m = Message.from_bytes(buffer)
-        if m.which == Message.Union.Status:
-            if m.status.text == ApplicationStates.CLOSE:
-                return app_.quit()
-            if m.status.text == ApplicationStates.CONNECTED:
-                NAV_BAR[Keys.CONNECTED] = True
-            elif m.status.text == ApplicationStates.DISCONNECTED:
-                NAV_BAR[Keys.CONNECTED] = False
+        (kind, buffer) = kb
+        if kind == IPC_KIND_CAPNP:
+            handle_capnp(app_, messages, buffer)
+        elif kind == IPC_KIND_CBOR:
+            handle_cbor(buffer)
 
-        elif m.which == Message.Union.SolutionPositionStatus:
-            SOLUTION_POSITION_TAB[Keys.POINTS][:] = [
-                [QPointF(point.x, point.y) for point in m.solutionPositionStatus.data[idx]]
-                for idx in range(len(m.solutionPositionStatus.data))
-            ]
-            SOLUTION_POSITION_TAB[Keys.CUR_POINTS][:] = [
-                [QPointF(point.x, point.y) for point in m.solutionPositionStatus.curData[idx]]
-                for idx in range(len(m.solutionPositionStatus.curData))
-            ]
-            SOLUTION_POSITION_TAB[Keys.LAT_MAX] = m.solutionPositionStatus.latMax
-            SOLUTION_POSITION_TAB[Keys.LAT_MIN] = m.solutionPositionStatus.latMin
-            SOLUTION_POSITION_TAB[Keys.LON_MAX] = m.solutionPositionStatus.lonMax
-            SOLUTION_POSITION_TAB[Keys.LON_MIN] = m.solutionPositionStatus.lonMin
-            SOLUTION_POSITION_TAB[Keys.AVAILABLE_UNITS][:] = m.solutionPositionStatus.availableUnits
-        elif m.which == Message.Union.SolutionTableStatus:
-            SOLUTION_TABLE[Keys.ENTRIES][:] = [[entry.key, entry.val] for entry in m.solutionTableStatus.data]
-        elif m.which == Message.Union.SolutionVelocityStatus:
-            SOLUTION_VELOCITY_TAB[Keys.COLORS][:] = m.solutionVelocityStatus.colors
-            SOLUTION_VELOCITY_TAB[Keys.POINTS][:] = [
-                [QPointF(point.x, point.y) for point in m.solutionVelocityStatus.data[idx]]
-                for idx in range(len(m.solutionVelocityStatus.data))
-            ]
-            SOLUTION_VELOCITY_TAB[Keys.MAX] = m.solutionVelocityStatus.max
-            SOLUTION_VELOCITY_TAB[Keys.MIN] = m.solutionVelocityStatus.min
-            SOLUTION_VELOCITY_TAB[Keys.AVAILABLE_UNITS][:] = m.solutionVelocityStatus.availableUnits
-        elif m.which == Message.Union.BaselinePlotStatus:
-            BASELINE_PLOT[Keys.POINTS][:] = [
-                [QPointF(point.x, point.y) for point in m.baselinePlotStatus.data[idx]]
-                for idx in range(len(m.baselinePlotStatus.data))
-            ]
-            BASELINE_PLOT[Keys.CUR_POINTS][:] = [
-                [QPointF(point.x, point.y) for point in m.baselinePlotStatus.curData[idx]]
-                for idx in range(len(m.baselinePlotStatus.curData))
-            ]
-            BASELINE_PLOT[Keys.N_MAX] = m.baselinePlotStatus.nMax
-            BASELINE_PLOT[Keys.N_MIN] = m.baselinePlotStatus.nMin
-            BASELINE_PLOT[Keys.E_MAX] = m.baselinePlotStatus.eMax
-            BASELINE_PLOT[Keys.E_MIN] = m.baselinePlotStatus.eMin
-        elif m.which == Message.Union.BaselineTableStatus:
-            BASELINE_TABLE[Keys.ENTRIES][:] = [[entry.key, entry.val] for entry in m.baselineTableStatus.data]
-        elif m.which == Message.Union.AdvancedInsStatus:
-            ADVANCED_INS_TAB[Keys.FIELDS_DATA][:] = m.advancedInsStatus.fieldsData
-            ADVANCED_INS_TAB[Keys.POINTS][:] = [
-                [QPointF(point.x, point.y) for point in m.advancedInsStatus.data[idx]]
-                for idx in range(len(m.advancedInsStatus.data))
-            ]
-        elif m.which == Message.Union.AdvancedSpectrumAnalyzerStatus:
-            ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.CHANNEL] = m.advancedSpectrumAnalyzerStatus.channel
-            ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.POINTS][:] = [
-                QPointF(point.x, point.y) for point in m.advancedSpectrumAnalyzerStatus.data
-            ]
-            ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.YMAX] = m.advancedSpectrumAnalyzerStatus.ymax
-            ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.YMIN] = m.advancedSpectrumAnalyzerStatus.ymin
-            ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.XMAX] = m.advancedSpectrumAnalyzerStatus.xmax
-            ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.XMIN] = m.advancedSpectrumAnalyzerStatus.xmin
-        elif m.which == Message.Union.AdvancedMagnetometerStatus:
-            ADVANCED_MAGNETOMETER_TAB[Keys.YMAX] = m.advancedMagnetometerStatus.ymax
-            ADVANCED_MAGNETOMETER_TAB[Keys.YMIN] = m.advancedMagnetometerStatus.ymin
-            ADVANCED_MAGNETOMETER_TAB[Keys.POINTS][:] = [
-                [QPointF(point.x, point.y) for point in m.advancedMagnetometerStatus.data[idx]]
-                for idx in range(len(m.advancedMagnetometerStatus.data))
-            ]
-        elif m.which == Message.Union.FusionStatusFlagsStatus:
-            FUSION_STATUS_FLAGS[Keys.GNSSPOS] = m.fusionStatusFlagsStatus.gnsspos
-            FUSION_STATUS_FLAGS[Keys.GNSSVEL] = m.fusionStatusFlagsStatus.gnssvel
-            FUSION_STATUS_FLAGS[Keys.WHEELTICKS] = m.fusionStatusFlagsStatus.wheelticks
-            FUSION_STATUS_FLAGS[Keys.SPEED] = m.fusionStatusFlagsStatus.speed
-            FUSION_STATUS_FLAGS[Keys.NHC] = m.fusionStatusFlagsStatus.nhc
-            FUSION_STATUS_FLAGS[Keys.ZEROVEL] = m.fusionStatusFlagsStatus.zerovel
-        elif m.which == Message.Union.TrackingSignalsStatus:
-            TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS][:] = m.trackingSignalsStatus.checkLabels
-            TRACKING_SIGNALS_TAB[Keys.LABELS][:] = m.trackingSignalsStatus.labels
-            TRACKING_SIGNALS_TAB[Keys.COLORS][:] = m.trackingSignalsStatus.colors
-            TRACKING_SIGNALS_TAB[Keys.POINTS][:] = [
-                [QPointF(point.x, point.y) for point in m.trackingSignalsStatus.data[idx]]
-                for idx in range(len(m.trackingSignalsStatus.data))
-            ]
-            TRACKING_SIGNALS_TAB[Keys.XMIN_OFFSET] = m.trackingSignalsStatus.xminOffset
-        elif m.which == Message.Union.ObservationStatus:
-            if m.observationStatus.isRemote:
-                REMOTE_OBSERVATION_TAB[Keys.TOW] = m.observationStatus.tow
-                REMOTE_OBSERVATION_TAB[Keys.WEEK] = m.observationStatus.week
-                REMOTE_OBSERVATION_TAB[Keys.ROWS][:] = obs_rows_to_json(m.observationStatus.rows)
-            else:
-                LOCAL_OBSERVATION_TAB[Keys.TOW] = m.observationStatus.tow
-                LOCAL_OBSERVATION_TAB[Keys.WEEK] = m.observationStatus.week
-                LOCAL_OBSERVATION_TAB[Keys.ROWS][:] = obs_rows_to_json(m.observationStatus.rows)
-        elif m.which == Message.Union.StatusBarStatus:
-            STATUS_BAR[Keys.PORT] = m.statusBarStatus.port
-            STATUS_BAR[Keys.POS] = m.statusBarStatus.pos
-            STATUS_BAR[Keys.RTK] = m.statusBarStatus.rtk
-            STATUS_BAR[Keys.SATS] = m.statusBarStatus.sats
-            STATUS_BAR[Keys.CORR_AGE] = m.statusBarStatus.corrAge
-            STATUS_BAR[Keys.INS] = m.statusBarStatus.ins
-            STATUS_BAR[Keys.DATA_RATE] = m.statusBarStatus.dataRate
-            STATUS_BAR[Keys.SOLID_CONNECTION] = m.statusBarStatus.solidConnection
-        elif m.which == Message.Union.NavBarStatus:
-            NAV_BAR[Keys.AVAILABLE_PORTS][:] = m.navBarStatus.availablePorts
-            NAV_BAR[Keys.AVAILABLE_BAUDRATES][:] = m.navBarStatus.availableBaudrates
-            NAV_BAR[Keys.AVAILABLE_FLOWS][:] = m.navBarStatus.availableFlows
-            NAV_BAR[Keys.AVAILABLE_REFRESH_RATES][:] = m.navBarStatus.availableRefreshRates
-            NAV_BAR[Keys.PREVIOUS_HOSTS][:] = m.navBarStatus.previousHosts
-            NAV_BAR[Keys.PREVIOUS_PORTS][:] = m.navBarStatus.previousPorts
-            NAV_BAR[Keys.PREVIOUS_FILES][:] = m.navBarStatus.previousFiles
-            NAV_BAR[Keys.LOG_LEVEL] = m.navBarStatus.logLevel
-        elif m.which == Message.Union.LoggingBarStatus:
-            LOGGING_BAR[Keys.PREVIOUS_FOLDERS][:] = m.loggingBarStatus.previousFolders
-            LOGGING_BAR[Keys.CSV_LOGGING] = m.loggingBarStatus.csvLogging
-            LOGGING_BAR[Keys.SBP_LOGGING] = m.loggingBarStatus.sbpLogging
-        elif m.which == Message.Union.LogAppend:
-            log_panel_lock.lock()
-            LOG_PANEL[Keys.ENTRIES] += [entry.line for entry in m.logAppend.entries]
-            log_panel_lock.unlock()
+
+def handle_cbor(buffer: bytes):
+    dict_msg = cbor2.loads(buffer)
+    m = ipc.Message.from_dict(dict_msg)
+    if m.tracking_signals_status != None:
+        TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS][:] = m.tracking_signals_status.check_labels
+        TRACKING_SIGNALS_TAB[Keys.LABELS][:] = m.tracking_signals_status.labels
+        TRACKING_SIGNALS_TAB[Keys.COLORS][:] = m.tracking_signals_status.colors
+        TRACKING_SIGNALS_TAB[Keys.POINTS][:] = [
+            [QPointF(point.x, point.y) for point in m.tracking_signals_status.data[idx]]
+            for idx in range(len(m.tracking_signals_status.data))
+        ]
+        TRACKING_SIGNALS_TAB[Keys.XMIN_OFFSET] = m.tracking_signals_status.xmin_offset
+
+
+def handle_capnp(app_, messages, buffer: bytes) -> None:
+    Message = messages.Message
+    m = Message.from_bytes(buffer)
+    if m.which == Message.Union.Status:
+        if m.status.text == ApplicationStates.CLOSE:
+            return app_.quit()
+        if m.status.text == ApplicationStates.CONNECTED:
+            NAV_BAR[Keys.CONNECTED] = True
+        elif m.status.text == ApplicationStates.DISCONNECTED:
+            NAV_BAR[Keys.CONNECTED] = False
+    elif m.which == Message.Union.SolutionPositionStatus:
+        SOLUTION_POSITION_TAB[Keys.POINTS][:] = [
+            [QPointF(point.x, point.y) for point in m.solutionPositionStatus.data[idx]]
+            for idx in range(len(m.solutionPositionStatus.data))
+        ]
+        SOLUTION_POSITION_TAB[Keys.CUR_POINTS][:] = [
+            [QPointF(point.x, point.y) for point in m.solutionPositionStatus.curData[idx]]
+            for idx in range(len(m.solutionPositionStatus.curData))
+        ]
+        SOLUTION_POSITION_TAB[Keys.LAT_MAX] = m.solutionPositionStatus.latMax
+        SOLUTION_POSITION_TAB[Keys.LAT_MIN] = m.solutionPositionStatus.latMin
+        SOLUTION_POSITION_TAB[Keys.LON_MAX] = m.solutionPositionStatus.lonMax
+        SOLUTION_POSITION_TAB[Keys.LON_MIN] = m.solutionPositionStatus.lonMin
+        SOLUTION_POSITION_TAB[Keys.AVAILABLE_UNITS][:] = m.solutionPositionStatus.availableUnits
+    elif m.which == Message.Union.SolutionTableStatus:
+        SOLUTION_TABLE[Keys.ENTRIES][:] = [[entry.key, entry.val] for entry in m.solutionTableStatus.data]
+    elif m.which == Message.Union.SolutionVelocityStatus:
+        SOLUTION_VELOCITY_TAB[Keys.COLORS][:] = m.solutionVelocityStatus.colors
+        SOLUTION_VELOCITY_TAB[Keys.POINTS][:] = [
+            [QPointF(point.x, point.y) for point in m.solutionVelocityStatus.data[idx]]
+            for idx in range(len(m.solutionVelocityStatus.data))
+        ]
+        SOLUTION_VELOCITY_TAB[Keys.MAX] = m.solutionVelocityStatus.max
+        SOLUTION_VELOCITY_TAB[Keys.MIN] = m.solutionVelocityStatus.min
+        SOLUTION_VELOCITY_TAB[Keys.AVAILABLE_UNITS][:] = m.solutionVelocityStatus.availableUnits
+    elif m.which == Message.Union.BaselinePlotStatus:
+        BASELINE_PLOT[Keys.POINTS][:] = [
+            [QPointF(point.x, point.y) for point in m.baselinePlotStatus.data[idx]]
+            for idx in range(len(m.baselinePlotStatus.data))
+        ]
+        BASELINE_PLOT[Keys.CUR_POINTS][:] = [
+            [QPointF(point.x, point.y) for point in m.baselinePlotStatus.curData[idx]]
+            for idx in range(len(m.baselinePlotStatus.curData))
+        ]
+        BASELINE_PLOT[Keys.N_MAX] = m.baselinePlotStatus.nMax
+        BASELINE_PLOT[Keys.N_MIN] = m.baselinePlotStatus.nMin
+        BASELINE_PLOT[Keys.E_MAX] = m.baselinePlotStatus.eMax
+        BASELINE_PLOT[Keys.E_MIN] = m.baselinePlotStatus.eMin
+    elif m.which == Message.Union.BaselineTableStatus:
+        BASELINE_TABLE[Keys.ENTRIES][:] = [[entry.key, entry.val] for entry in m.baselineTableStatus.data]
+    elif m.which == Message.Union.AdvancedInsStatus:
+        ADVANCED_INS_TAB[Keys.FIELDS_DATA][:] = m.advancedInsStatus.fieldsData
+        ADVANCED_INS_TAB[Keys.POINTS][:] = [
+            [QPointF(point.x, point.y) for point in m.advancedInsStatus.data[idx]]
+            for idx in range(len(m.advancedInsStatus.data))
+        ]
+    elif m.which == Message.Union.AdvancedSpectrumAnalyzerStatus:
+        ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.CHANNEL] = m.advancedSpectrumAnalyzerStatus.channel
+        ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.POINTS][:] = [
+            QPointF(point.x, point.y) for point in m.advancedSpectrumAnalyzerStatus.data
+        ]
+        ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.YMAX] = m.advancedSpectrumAnalyzerStatus.ymax
+        ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.YMIN] = m.advancedSpectrumAnalyzerStatus.ymin
+        ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.XMAX] = m.advancedSpectrumAnalyzerStatus.xmax
+        ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.XMIN] = m.advancedSpectrumAnalyzerStatus.xmin
+    elif m.which == Message.Union.AdvancedMagnetometerStatus:
+        ADVANCED_MAGNETOMETER_TAB[Keys.YMAX] = m.advancedMagnetometerStatus.ymax
+        ADVANCED_MAGNETOMETER_TAB[Keys.YMIN] = m.advancedMagnetometerStatus.ymin
+        ADVANCED_MAGNETOMETER_TAB[Keys.POINTS][:] = [
+            [QPointF(point.x, point.y) for point in m.advancedMagnetometerStatus.data[idx]]
+            for idx in range(len(m.advancedMagnetometerStatus.data))
+        ]
+    elif m.which == Message.Union.FusionStatusFlagsStatus:
+        FUSION_STATUS_FLAGS[Keys.GNSSPOS] = m.fusionStatusFlagsStatus.gnsspos
+        FUSION_STATUS_FLAGS[Keys.GNSSVEL] = m.fusionStatusFlagsStatus.gnssvel
+        FUSION_STATUS_FLAGS[Keys.WHEELTICKS] = m.fusionStatusFlagsStatus.wheelticks
+        FUSION_STATUS_FLAGS[Keys.SPEED] = m.fusionStatusFlagsStatus.speed
+        FUSION_STATUS_FLAGS[Keys.NHC] = m.fusionStatusFlagsStatus.nhc
+        FUSION_STATUS_FLAGS[Keys.ZEROVEL] = m.fusionStatusFlagsStatus.zerovel
+    elif m.which == Message.Union.TrackingSignalsStatus:
+        TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS][:] = m.trackingSignalsStatus.checkLabels
+        TRACKING_SIGNALS_TAB[Keys.LABELS][:] = m.trackingSignalsStatus.labels
+        TRACKING_SIGNALS_TAB[Keys.COLORS][:] = m.trackingSignalsStatus.colors
+        TRACKING_SIGNALS_TAB[Keys.POINTS][:] = [
+            [QPointF(point.x, point.y) for point in m.trackingSignalsStatus.data[idx]]
+            for idx in range(len(m.trackingSignalsStatus.data))
+        ]
+        TRACKING_SIGNALS_TAB[Keys.XMIN_OFFSET] = m.trackingSignalsStatus.xminOffset
+    elif m.which == Message.Union.ObservationStatus:
+        if m.observationStatus.isRemote:
+            REMOTE_OBSERVATION_TAB[Keys.TOW] = m.observationStatus.tow
+            REMOTE_OBSERVATION_TAB[Keys.WEEK] = m.observationStatus.week
+            REMOTE_OBSERVATION_TAB[Keys.ROWS][:] = obs_rows_to_json(m.observationStatus.rows)
         else:
-            pass
+            LOCAL_OBSERVATION_TAB[Keys.TOW] = m.observationStatus.tow
+            LOCAL_OBSERVATION_TAB[Keys.WEEK] = m.observationStatus.week
+            LOCAL_OBSERVATION_TAB[Keys.ROWS][:] = obs_rows_to_json(m.observationStatus.rows)
+    elif m.which == Message.Union.StatusBarStatus:
+        STATUS_BAR[Keys.PORT] = m.statusBarStatus.port
+        STATUS_BAR[Keys.POS] = m.statusBarStatus.pos
+        STATUS_BAR[Keys.RTK] = m.statusBarStatus.rtk
+        STATUS_BAR[Keys.SATS] = m.statusBarStatus.sats
+        STATUS_BAR[Keys.CORR_AGE] = m.statusBarStatus.corrAge
+        STATUS_BAR[Keys.INS] = m.statusBarStatus.ins
+        STATUS_BAR[Keys.DATA_RATE] = m.statusBarStatus.dataRate
+        STATUS_BAR[Keys.SOLID_CONNECTION] = m.statusBarStatus.solidConnection
+    elif m.which == Message.Union.NavBarStatus:
+        NAV_BAR[Keys.AVAILABLE_PORTS][:] = m.navBarStatus.availablePorts
+        NAV_BAR[Keys.AVAILABLE_BAUDRATES][:] = m.navBarStatus.availableBaudrates
+        NAV_BAR[Keys.AVAILABLE_FLOWS][:] = m.navBarStatus.availableFlows
+        NAV_BAR[Keys.AVAILABLE_REFRESH_RATES][:] = m.navBarStatus.availableRefreshRates
+        NAV_BAR[Keys.PREVIOUS_HOSTS][:] = m.navBarStatus.previousHosts
+        NAV_BAR[Keys.PREVIOUS_PORTS][:] = m.navBarStatus.previousPorts
+        NAV_BAR[Keys.PREVIOUS_FILES][:] = m.navBarStatus.previousFiles
+        NAV_BAR[Keys.LOG_LEVEL] = m.navBarStatus.logLevel
+    elif m.which == Message.Union.LoggingBarStatus:
+        LOGGING_BAR[Keys.PREVIOUS_FOLDERS][:] = m.loggingBarStatus.previousFolders
+        LOGGING_BAR[Keys.CSV_LOGGING] = m.loggingBarStatus.csvLogging
+        LOGGING_BAR[Keys.SBP_LOGGING] = m.loggingBarStatus.sbpLogging
+    elif m.which == Message.Union.LogAppend:
+        log_panel_lock.lock()
+        LOG_PANEL[Keys.ENTRIES] += [entry.line for entry in m.logAppend.entries]
+        log_panel_lock.unlock()
+    else:
+        print("unknown message")
+        pass
+
+
+def filter_none(d: dict) -> dict:
+    return {k:v for k,v in d.items() if v is not None}
+
+
+def cbor_dumps(msg: ipc.Message) -> bytes:
+    return cbor2.dumps(filter_none(msg.to_dict()))
 
 
 class DataModel(QObject):
@@ -348,10 +378,8 @@ class DataModel(QObject):
 
     @Slot(str, int)  # type: ignore
     def connect_tcp(self, host: str, port: int) -> None:
-        msg = m.Message(tcp_request=m.TCPRequest(host, port))
-        d = msg.to_dict()
-        buffer = msgpack.dumps(d)
-        self.endpoint.send_message(IPC_KIND_MSGPACK, buffer)
+        msg = ipc.Message(tcp_request=ipc.TCPRequest(host, port))
+        self.endpoint.send_message(IPC_KIND_CBOR, cbor_dumps(msg))
 
     @Slot(str, int, str)  # type: ignore
     def connect_serial(self, device: str, baudrate: int, flow_control: str) -> None:

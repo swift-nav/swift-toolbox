@@ -5,7 +5,7 @@ use crate::constants::*;
 use crate::errors::GET_MUT_OBJECT_FAILURE;
 use crate::fusion_status_flags::FusionStatusFlags;
 use crate::ipc::{self, Point};
-use crate::types::{IPC_KIND_MSGPACK, IpcSender, Deque, SharedState};
+use crate::types::{IPC_KIND_CBOR, IpcSender, Deque, SharedState};
 use crate::utils::serialize_ipc_message;
 
 /// AdvancedInsTab struct.
@@ -165,7 +165,7 @@ impl<S: IpcSender> AdvancedInsTab<S> {
         }
         let message = ipc::Message::AdvancedInsStatus(tab_status);
         self.client_sender
-            .send_data(IPC_KIND_MSGPACK, serialize_ipc_message(&message));
+            .send_data(IPC_KIND_CBOR, serialize_ipc_message(&message));
     }
 }
 

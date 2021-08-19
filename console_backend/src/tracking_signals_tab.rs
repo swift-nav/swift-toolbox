@@ -6,7 +6,7 @@ use std::{
 
 use log::warn;
 
-use crate::constants::*;
+use crate::{constants::*, ipc::Point};
 use crate::piksi_tools_constants::*;
 use crate::types::*;
 use crate::ipc;
@@ -382,13 +382,13 @@ impl<S: IpcSender> TrackingSignalsTab<S> {
         }
 
         for idx in 0..self.sv_labels.len() {
-            let points = self.sats.get_mut(idx).unwrap().get();
-            let point_val_idx = &mut tracking_signals_status.data[idx];
-            for (i, (OrderedFloat(x), y)) in points.iter().enumerate() {
-                let mut point_val = point_val_idx.get_mut(i).unwrap();
-                point_val.x = *x;
-                point_val.y = *y;
+            let points = self.sats[idx].get();
+            let mut point_val_idx: Vec<Point> = vec![]; 
+            for (OrderedFloat(x), y) in points.iter() {
+                let point_val = Point { x: *x, y: *y };
+                point_val_idx.push(point_val);
             }
+            tracking_signals_status.data.push(point_val_idx);
         }
 
         tracking_signals_status.xmin_offset = self.chart_xmin_offset();
@@ -400,7 +400,7 @@ impl<S: IpcSender> TrackingSignalsTab<S> {
         let message = ipc::Message::TrackingSignalsStatus(tracking_signals_status);
 
         self.client_sender
-            .send_data(IPC_KIND_MSGPACK, serialize_ipc_message(&message));
+            .send_data(IPC_KIND_CBOR, serialize_ipc_message(&message));
     }
 }
 

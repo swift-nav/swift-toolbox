@@ -434,16 +434,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ciborium"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "de6836a1b6197d8acdaac74a01af077a26aa6953d2e9251eef061c646b0d432c"
-dependencies = [
- "half",
- "serde",
-]
-
-[[package]]
 name = "clang-sys"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -583,7 +573,6 @@ dependencies = [
  "capnpc",
  "cfg-if 1.0.0",
  "chrono",
- "ciborium",
  "clap 3.0.0-beta.2",
  "criterion",
  "crossbeam",
@@ -599,12 +588,11 @@ dependencies = [
  "paste 1.0.5",
  "pyo3",
  "rand 0.8.4",
- "rmp-serde",
- "rmpv",
  "sbp",
  "schemars",
  "serde",
  "serde-pickle",
+ "serde_cbor",
  "serde_json",
  "serde_yaml",
  "serial_test",
@@ -2966,45 +2954,6 @@ dependencies = [
  "wasm-bindgen-futures",
  "web-sys",
  "winapi",
-]
-
-[[package]]
-name = "rmp"
-version = "0.8.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f55e5fa1446c4d5dd1f5daeed2a4fe193071771a2636274d0d7a3b082aa7ad6"
-dependencies = [
- "byteorder",
- "num-traits",
-]
-
-[[package]]
-name = "rmp"
-version = "0.8.10"
-source = "git+https://github.com/3Hren/msgpack-rust.git?rev=5bf2c24203ad422233cf35b7b7bfad9f7e811814#5bf2c24203ad422233cf35b7b7bfad9f7e811814"
-dependencies = [
- "byteorder",
- "num-traits",
-]
-
-[[package]]
-name = "rmp-serde"
-version = "0.15.5"
-source = "git+https://github.com/3Hren/msgpack-rust.git?rev=5bf2c24203ad422233cf35b7b7bfad9f7e811814#5bf2c24203ad422233cf35b7b7bfad9f7e811814"
-dependencies = [
- "byteorder",
- "rmp 0.8.10 (git+https://github.com/3Hren/msgpack-rust.git?rev=5bf2c24203ad422233cf35b7b7bfad9f7e811814)",
- "serde",
-]
-
-[[package]]
-name = "rmpv"
-version = "0.4.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c760afe11955e16121e36485b6b828326c3f0eaff1c31758d96dbeb5cf09fd5"
-dependencies = [
- "num-traits",
- "rmp 0.8.10 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

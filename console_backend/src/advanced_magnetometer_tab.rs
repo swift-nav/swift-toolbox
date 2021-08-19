@@ -3,7 +3,7 @@ use sbp::messages::mag::MsgMagRaw;
 use crate::constants::{MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER, NUM_POINTS};
 use crate::errors::GET_MUT_OBJECT_FAILURE;
 use crate::ipc;
-use crate::types::{Deque, IPC_KIND_MSGPACK, IpcSender, SharedState};
+use crate::types::{Deque, IPC_KIND_CBOR, IpcSender, SharedState};
 use crate::utils::serialize_ipc_message;
 
 /// AdvancedMagnetometerTab struct.
@@ -88,7 +88,7 @@ impl<S: IpcSender> AdvancedMagnetometerTab<S> {
         tab_status.ymax = self.ymax;
         let message = ipc::Message::AdvancedMagnetometerStatus(tab_status);
         self.client_sender
-            .send_data(IPC_KIND_MSGPACK, serialize_ipc_message(&message));
+            .send_data(IPC_KIND_CBOR, serialize_ipc_message(&message));
     }
 }
 

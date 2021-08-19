@@ -120,7 +120,7 @@ pub fn refresh_navbar<P: IpcSender>(client_send: &mut P, shared_state: SharedSta
 }
 
 pub fn serialize_ipc_message(msg: &ipc::Message) -> Vec<u8> {
-    rmp_serde::to_vec_named(msg).expect(CAP_N_PROTO_SERIALIZATION_FAILURE)
+    serde_cbor::to_vec(msg).expect(CAP_N_PROTO_SERIALIZATION_FAILURE)
 }
 
 pub fn serialize_capnproto_builder(builder: Builder<HeapAllocator>) -> Vec<u8> {

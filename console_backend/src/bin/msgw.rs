@@ -11,15 +11,15 @@ fn main() -> Result<()> {
         ipc::FileRequest { filename: "test.txt".into() });
 
     let mut buf: Vec<u8> = vec![];
-    let _ = ciborium::ser::into_writer( &msg, &mut buf)?;
+    let _ = serde_cbor::to_writer(&mut buf, &msg)?;
 
     let mut stdout = std::io::stdout();
 
     stdout.write_all(&buf[..])?;
     stdout.flush()?;
-
+    
     let mut cursor = Cursor::new(&buf);
-    let dec: Message = ciborium::de::from_reader(&mut cursor)?;
+    let dec: Message = serde_cbor::from_reader(&mut cursor)?;
 
     eprintln!("{:?}", dec);
 

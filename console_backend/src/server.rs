@@ -2,7 +2,7 @@ use cfg_if::cfg_if;
 use log::{error, info};
 
 #[cfg(feature = "python")]
-use pyo3::{exceptions, prelude::*, types::PyBytes};
+use pyo3::{exceptions, prelude::*, types::{PyBytes, PyInt}, IntoPy};
 
 use std::{
     io::{BufReader, Cursor},
@@ -19,7 +19,7 @@ use crate::errors::*;
 use crate::log_panel::{setup_logging, LogLevel};
 use crate::ipc::Message;
 use crate::output::{CsvLogging, SbpLogging};
-use crate::types::{ClientSender, FlowControl, RealtimeDelay, SharedState};
+use crate::types::{IPC_KIND_CAPNP, ClientSender, FlowControl, RealtimeDelay, SharedState};
 use crate::utils::{refresh_loggingbar, refresh_navbar};
 
 /// The backend server
@@ -56,12 +56,12 @@ cfg_if! {
             }
 
             #[text_signature = "($self, kind, bytes, /)"]
-            pub fn send_message(&mut self, kind: &PyBytes, bytes: &PyBytes) -> PyResult<()> {
-                let kind_vec: Vec<u8> = kind.extract().unwrap();
-                let byte_vec: Vec<u8> = bytes.extract().unwrap();
+            pub fn send_message(&mut self, kind: &PyInt, bytes: &PyBytes) -> PyResult<()> {
+                let kind: u8 = kind.extract().unwrap();
+                let bytes: Vec<u8> = bytes.extract().unwrap();
                 if let Some(server_send) = &self.server_send {
                     server_send
-                        .send((kind_vec[0], byte_vec))
+                        .send((kind, bytes))
                         .map_err(|e| exceptions::PyRuntimeError::new_err(format!("{}", e)))
                 } else {
                     Err(exceptions::PyRuntimeError::new_err(
@@ -157,8 +157,7 @@ cfg_if! {
                 let result = py.allow_threads(move || loop {
                     if let Some(client_recv) = &self.client_recv {
                         match client_recv.recv_timeout(time::Duration::from_millis(1)) {
-                            // TODO(msgpack): pass _kind to frontend
-                            Ok((_kind, buf)) => break Some(buf),
+                            Ok((kind, buf)) => break Some((kind, buf)),
                             Err(err) => {
                                 use crossbeam::channel::RecvTimeoutError;
                                 if matches!(err, RecvTimeoutError::Timeout) {
@@ -179,7 +178,7 @@ cfg_if! {
                         break None;
                     }
                 });
-                result.map(|result| PyBytes::new(py, &result).into())
+                result.map(|(kind, buf)| (kind, PyBytes::new(py, &buf)).into_py(py))
             }
 
             #[text_signature = "($self, /)"]
@@ -278,11 +277,22 @@ fn backend_recv_thread(
             let result = server_recv.recv();
             if let Ok((kind, buf)) = result {
                 eprintln!("kind: {}, buf length: {}", kind, buf.len());
-                let mut buf_reader = BufReader::new(Cursor::new(buf));
-                let message: Message = match rmp_serde::from_read(&mut buf_reader) {
-                    Ok(msg) => msg,
-                    Err(e) => {
-                        error!("error reading message: {}", e);
+                if kind == IPC_KIND_CAPNP {
+                    eprintln!("skipping capnproto message");
+                    continue;
+                }
+                let mut buf_reader = BufReader::new(Cursor::new(&buf));
+                let value: serde_json::Value = match serde_cbor::from_reader(&mut buf_reader) {
+                    Ok(value) => value,
+                    Err(error) => {
+                        error!("error reading message: {}", error);
+                        continue;
+                    }
+                };
+                let message: Message = match serde_json::from_value(value) {
+                    Ok(value) => value,
+                    Err(error) => {
+                        error!("error parsing message: {}", error);
                         continue;
                     }
                 };

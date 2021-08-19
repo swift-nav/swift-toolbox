@@ -112,7 +112,7 @@ impl<T: Clone> Deque<T> {
 }
 
 pub const IPC_KIND_CAPNP: u8 = 0;
-pub const IPC_KIND_MSGPACK: u8 = 1;
+pub const IPC_KIND_CBOR: u8 = 1;
 
 pub trait IpcSender: Debug + Clone + Send {
     fn send_data(&mut self, kind: u8, msg_bytes: Vec<u8>);

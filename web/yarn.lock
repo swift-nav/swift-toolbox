@@ -487,11 +487,6 @@
     "@types/yargs" "^16.0.0"
     chalk "^4.0.0"
 
-"@jprochazk/cbor@^0.4.9":
-  version "0.4.9"
-  resolved "https://registry.yarnpkg.com/@jprochazk/cbor/-/cbor-0.4.9.tgz#2f253f86f32b4e193fb4b8765a0a6f2cf989235a"
-  integrity sha512-FWNnkOtWrFOLXKG2nzOHR/EnCCGZZPvatAvWXDmkTDxgjj9JHDK3DkMUHcFCY3a9weylMCSO/nLOUM170NAO0Q==
-
 "@msgpack/msgpack@^2.7.0":
   version "2.7.0"
   resolved "https://registry.npmjs.org/@msgpack/msgpack/-/msgpack-2.7.0.tgz"
@@ -1310,26 +1305,6 @@ caw@^2.0.0, caw@^2.0.1:
     tunnel-agent "^0.6.0"
     url-to-options "^1.0.1"
 
-cbor-extract@^0.3.1:
-  version "0.3.1"
-  resolved "https://registry.yarnpkg.com/cbor-extract/-/cbor-extract-0.3.1.tgz#9ca01d4cb8ebca0c3dbd792577aa12dc1e4afea9"
-  integrity sha512-2lfwH5D0Hwad5GomV5rsd0e9jN14Lv/JeTCSyW7Z3q9yEyIkiKt0RD5keS3IwJjz852gy7LcHZP52T7b8QRbzg==
-  dependencies:
-    nan "^2.14.2"
-    node-gyp-build "^4.2.3"
-
-cbor-web@^8.0.1:
-  version "8.0.1"
-  resolved "https://registry.yarnpkg.com/cbor-web/-/cbor-web-8.0.1.tgz#0c2723d4b484e1dd1aa79de618f955c07c25fefd"
-  integrity sha512-9+HxS+B0VaIYMbBZ7g9WFlC0CbGObiMI+w6De0oZsWLh/m0iAjz0FFuByJeDgvUTJxe8JvesWSuGCwbd9vzFjg==
-
-cbor-x@^0.8.3:
-  version "0.8.3"
-  resolved "https://registry.yarnpkg.com/cbor-x/-/cbor-x-0.8.3.tgz#de932c2559e21a6a6dd532df279df0213759faae"
-  integrity sha512-tc/+0i31OpHEzPlztuhqpKF4dze/onFK6acJBiDDKLt5U3NY6snX0AVZinfl3PhMwJBy+0eYHEtBPBM8Wtr/cA==
-  optionalDependencies:
-    cbor-extract "^0.3.1"
-
 chalk@4.1.1:
   version "4.1.1"
   resolved "https://registry.npmjs.org/chalk/-/chalk-4.1.1.tgz"
@@ -1497,13 +1472,6 @@ color-name@^1.0.0, color-name@~1.1.4:
   version "1.1.4"
   resolved "https://registry.npmjs.org/color-name/-/color-name-1.1.4.tgz"
   integrity sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==
-
-color-parse@^1.4.2:
-  version "1.4.2"
-  resolved "https://registry.yarnpkg.com/color-parse/-/color-parse-1.4.2.tgz#78651f5d34df1a57f997643d86f7f87268ad4eb5"
-  integrity sha512-RI7s49/8yqDj3fECFZjUI1Yi0z/Gq1py43oNJivAIIDSyJiOZLfYCRQEgn8HEVAj++PcRe8AnL2XF0fRJ3BTnA==
-  dependencies:
-    color-name "^1.0.0"
 
 color-string@^1.6.0:
   version "1.6.0"
@@ -3785,11 +3753,6 @@ mute-stream@0.0.8:
   resolved "https://registry.npmjs.org/mute-stream/-/mute-stream-0.0.8.tgz"
   integrity sha512-nnbWWOkoWyUsTjKrhgD0dcz22mdkSnpYqbEjIm2nhwhuxlSkpywJmBo8h0ZqJdkp73mb90SssHkN4rsRaBAfAA==
 
-nan@^2.14.2:
-  version "2.15.0"
-  resolved "https://registry.yarnpkg.com/nan/-/nan-2.15.0.tgz#3f34a473ff18e15c1b5626b62903b5ad6e665fee"
-  integrity sha512-8ZtvEnA2c5aYCZYd1cvgdnU6cqwixRoYg70xPLWUws5ORTa/lnw+u4amixRS/Ac5U5mQVgp9pnlSUnbNWFaWZQ==
-
 napi-build-utils@^1.0.1:
   version "1.0.2"
   resolved "https://registry.npmjs.org/napi-build-utils/-/napi-build-utils-1.0.2.tgz"
@@ -3816,11 +3779,6 @@ node-addon-api@^3.2.0:
   version "3.2.1"
   resolved "https://registry.npmjs.org/node-addon-api/-/node-addon-api-3.2.1.tgz"
   integrity sha512-mmcei9JghVNDYydghQmeDX8KoAm0FAiYyIcUt/N4nhyAipB17pllZQDOJD2fotxABnt4Mdz+dKTO7eftLg4d0A==
-
-node-gyp-build@^4.2.3:
-  version "4.2.3"
-  resolved "https://registry.yarnpkg.com/node-gyp-build/-/node-gyp-build-4.2.3.tgz#ce6277f853835f718829efb47db20f3e4d9c4739"
-  integrity sha512-MN6ZpzmfNCRM+3t57PTJHgHyw/h4OWnZ6mR8P5j/uZtqQr46RRuDE/P+g3n0YR/AiYXeWixZZzaip77gdICfRg==
 
 node-int64@^0.4.0:
   version "0.4.0"

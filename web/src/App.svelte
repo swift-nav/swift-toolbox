@@ -9,7 +9,6 @@
 
 	import * as parseColor from 'parse-color';
 
-	//import { encode, decode } from "cbor-web";
 	import { serialize, deserialize } from "bson";
 
 	function sendLogMessage(msg: string) {

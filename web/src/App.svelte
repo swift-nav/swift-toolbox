@@ -122,12 +122,11 @@
 					if (poppedLines.length != 0) {
 						line = poppedLines.pop();
 						line.color = lineColor;
-						line.constY(-Infinity);
 					} else {
 						line = new WebglLine(lineColor, numX);
+						line.constY(undefined);
 					}
 
-					line.lineSpaceX(-1, 2/numX);
 					wglp.addLine(line);
 
 					const lruNode = lru.push(line);
@@ -142,18 +141,13 @@
 					maxX = Math.max(maxX, point.x);
 				}
 
-				console.log(`minX: ${minX}, maxX: ${maxX}`)
-
-				for (let i = numX - 1; i >= 0; i--) {
-					const pointIdx = numX - i;
-					if (pointIdx < points.length) {
-						let y = (points[pointIdx].y - 15) / 45;
-						line.setY(i, y);
-						let x = 1 - ((((points[pointIdx].x - minX) % (numX/2)) / (numX/4)));
-						line.setX(i, x);
-					} else {
-						line.setY(i, -Infinity);
-					}
+				let startIdx = numX - points.length;
+				for (let i = numX - 1; i >= startIdx; i--) {
+					const pidx = i - startIdx;
+					let y = (points[pidx].y - 15) / 45;
+					line.setY(i, y);
+					let x = 1 - ((((points[pidx].x - minX) % (numX/2)) / (numX/4)));
+					line.setX(i, x);
 				}
 			}
 

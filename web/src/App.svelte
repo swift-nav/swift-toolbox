@@ -9,7 +9,8 @@
 
 	import * as parseColor from 'parse-color';
 
-	import { encode, decode } from "cbor-web";
+	//import { encode, decode } from "cbor-web";
+	import { serialize, deserialize } from "bson";
 
 	function sendLogMessage(msg: string) {
 		invoke('write_log_message', { message: msg })
@@ -52,7 +53,7 @@
 		msg.TcpRequest = tcpConnect;
 
 		const obj = filterNull(Convert.messageToJson(msg));
-		const arr = new Uint8Array(encode(obj));
+		const arr = new Uint8Array(serialize(obj));
 
 		return Array.from(arr);
 	}
@@ -122,6 +123,7 @@
 					if (poppedLines.length != 0) {
 						line = poppedLines.pop();
 						line.color = lineColor;
+						line.constY(-Infinity);
 					} else {
 						line = new WebglLine(lineColor, numX);
 					}
@@ -171,7 +173,7 @@
 					const kind = ipc[0];
 					if (kind === 1) {
 						const buffer = new Uint8Array(ipc[1]);
-						const data = decode(buffer);
+						const data = deserialize(buffer);
 						const msg = Convert.toMessage(data);
 						if (msg.TrackingSignalsStatus !== undefined) {
 							trackingStatusUpdates.push(msg.TrackingSignalsStatus);

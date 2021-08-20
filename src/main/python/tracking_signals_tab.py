@@ -78,7 +78,7 @@ class TrackingSignalsPoints(QObject):
 class TrackingSignalsModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(TrackingSignalsPoints)  # type: ignore
     def fill_console_points(self, cp: TrackingSignalsPoints) -> TrackingSignalsPoints:  # pylint:disable=no-self-use
-        ep.set_points(TRACKING_SIGNALS_TAB[Keys.POINTS])
+        cp.set_points(TRACKING_SIGNALS_TAB[Keys.POINTS])
         cp.set_labels(TRACKING_SIGNALS_TAB[Keys.LABELS])
         cp.set_check_labels(TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS])
         cp.set_colors(TRACKING_SIGNALS_TAB[Keys.COLORS])

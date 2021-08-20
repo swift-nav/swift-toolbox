@@ -8,7 +8,7 @@ import threading
 from typing import List, Any
 
 import capnp  # type: ignore
-import cbor2
+import bson
 
 from PySide2.QtWidgets import QApplication  # type: ignore
 
@@ -204,7 +204,7 @@ def receive_messages(app_, backend, messages):
 
 
 def handle_cbor(buffer: bytes):
-    dict_msg = cbor2.loads(buffer)
+    dict_msg = bson.decode(buffer)
     m = ipc.Message.from_dict(dict_msg)
     if m.tracking_signals_status != None:
         TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS][:] = m.tracking_signals_status.check_labels
@@ -350,7 +350,7 @@ def filter_none(d: dict) -> dict:
 
 
 def cbor_dumps(msg: ipc.Message) -> bytes:
-    return cbor2.dumps(filter_none(msg.to_dict()))
+    return bson.encode(filter_none(msg.to_dict()))
 
 
 class DataModel(QObject):

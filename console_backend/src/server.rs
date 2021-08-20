@@ -287,7 +287,7 @@ fn backend_recv_thread(
                     continue;
                 }
                 let mut buf_reader = BufReader::new(Cursor::new(&buf));
-                let value: serde_json::Value = match serde_cbor::from_reader(&mut buf_reader) {
+                let value: serde_json::Value = match bson::from_reader(&mut buf_reader) {
                     Ok(value) => value,
                     Err(error) => {
                         error!("error reading message: {}", error);

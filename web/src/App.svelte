@@ -93,9 +93,9 @@
 		wglp.gScaleY = 2;
 		wglp.gOffsetY = -1;
 
-		const lru = new LruList<WebglLine>();
-		const lineMap = new Map<String, LruNode<WebglLine>>();
-		const poppedLines: WebglLine[] = [];
+		const lru = new LruList<[string, WebglLine]>();
+		const lineMap = new Map<string, LruNode<[string, WebglLine]>>();
+		const poppedLines = new Map<string, WebglLine>();
 
 		function update() {
 
@@ -119,22 +119,21 @@
 
 					let line: WebglLine;
 
-					if (poppedLines.length != 0) {
-						line = poppedLines.pop();
-						line.color = lineColor;
+					if (poppedLines.has(label)) {
+						line = poppedLines.get(label);
 					} else {
 						line = new WebglLine(lineColor, numX);
-						line.constY(undefined);
 					}
 
+					line.constY(undefined);
 					wglp.addLine(line);
 
-					const lruNode = lru.push(line);
+					const lruNode = lru.push([label, line]);
 					lineMap.set(label, lruNode);
 				}
 
 				const lruNode = lineMap.get(label);
-				const line = lru.access(lruNode);
+				const [_label, line] = lru.access(lruNode);
 
 				for (let point of points) {
 					minX = Math.min(minX, point.x);
@@ -154,7 +153,9 @@
 			if (trackingStatus.labels.length < lru.count) {
 				const count = lru.count - trackingStatus.labels.length;
 				const popped = lru.pop(count);
-				poppedLines.push(...popped);
+				for (let [label, line] of popped) {
+					poppedLines.set(label, line);
+				}
 			}
 		}
 

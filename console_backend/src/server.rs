@@ -72,9 +72,11 @@ cfg_if! {
         }
     } else {
         impl ServerEndpoint {
+
             pub fn new() -> Self {
                 ServerEndpoint { server_send: None }
             }
+
             pub fn shutdown(&mut self) -> crate::types::Result<()> {
                 if let Some(server_send) = self.server_send.take() {
                     drop(server_send);
@@ -82,10 +84,13 @@ cfg_if! {
                 } else {
                     Err("no server send endpoint".into())
                 }
+            }
+
+            pub fn send_message(&mut self, kind: u8, bytes: Vec<u8>) -> crate::types::Result<()> {
                 if let Some(server_send) = &self.server_send {
                     server_send
-                        .send((kind, byte_vec))
-                        .map_err(crate::types::Error::from)
+                        .send((kind, bytes))
+                        .map_err(|e| format!("{}", e).into())
                 } else {
                     Err("no server send endpoint".into())
                 }
@@ -214,7 +219,7 @@ cfg_if! {
             pub fn fetch_message(&self) -> crate::types::Result<Option<(u8, Vec<u8>)>> {
                 if let Some(client_recv) = &self.client_recv {
                     match client_recv.recv_timeout(time::Duration::from_millis(1)) {
-                        Ok(buf) => Ok(Some(buf)),
+                        Ok((kind, buf)) => Ok(Some((kind, buf))),
                         Err(err) => {
                             use crossbeam::channel::RecvTimeoutError;
                             if matches!(err, RecvTimeoutError::Timeout) {
@@ -321,7 +326,7 @@ fn backend_recv_thread(
                         }
                     }
                     Message::TcpRequest(req) => {
-                        connection_state.connect_to_host(req.host, req.port);
+                        connection_state.connect_to_host(req.host, req.port as u16);
                     }
                     Message::SerialRequest(req) => {
                         let device = req.device;
@@ -405,7 +410,7 @@ fn backend_recv_thread(
                             .lock()
                             .expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
                         (*shared_data).advanced_spectrum_analyzer_tab.channel_idx =
-                            cv_in.channel;
+                            cv_in.channel as u16;
                     }
                     _ => {
                         error!("unknown message from front-end");

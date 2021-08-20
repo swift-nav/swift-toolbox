@@ -4,7 +4,7 @@ use schemars::JsonSchema;
 #[derive(Deserialize, JsonSchema, Serialize, Default, Debug)]
 pub struct TcpRequest {
     pub host: String,
-    pub port: u16,
+    pub port: u32,
 }
 
 #[derive(Deserialize, JsonSchema, Serialize, Default, Debug)]
@@ -89,8 +89,8 @@ pub struct NavBarStatus {
     pub available_ports: Vec<String>,
     pub available_flows: Vec<String>,
     pub previous_hosts: Vec<String>,
-    pub available_refresh_rates: Vec<u8>,
-    pub previous_ports: Vec<u16>,
+    pub available_refresh_rates: Vec<u32>,
+    pub previous_ports: Vec<u32>,
     pub previous_files: Vec<String>,
     pub log_level: String,
 }
@@ -130,15 +130,15 @@ pub struct ObservationTableRow {
     pub cn0: f64,
     pub measured_doppler: f64,
     pub computed_doppler: f64,
-    pub lock: u16,
-    pub flags: u8,
+    pub lock: u32,
+    pub flags: u32,
 }
 
 #[derive(Deserialize, JsonSchema, Serialize, Default, Debug)]
 pub struct ObservationStatus {
     pub is_remote: bool,
     pub tow: f64,
-    pub week: u16,
+    pub week: u32,
     pub rows: Vec<ObservationTableRow>,
 }
  
@@ -195,11 +195,11 @@ pub struct FusionStatusFlagsStatus {
 
 #[derive(Deserialize, JsonSchema, Serialize, Default, Debug)]
 pub struct AdvancedSpectrumAnalyzerStatus {
-    pub ymin: f32,
-    pub ymax: f32,
-    pub xmax: f32,
+    pub ymin: f64,
+    pub ymax: f64,
+    pub xmax: f64,
     pub data: Vec<Point>,
-    pub channel: u16,
+    pub channel: u32,
 }
 
 #[derive(Deserialize, JsonSchema, Serialize, Default, Debug)]
@@ -228,7 +228,7 @@ pub struct SolutionVelocityStatusFront {
 
 #[derive(Deserialize, JsonSchema, Serialize, Default, Debug)]
 pub struct AdvancedSpectrumAnalyzerStatusFront {
-    pub channel: u16,
+    pub channel: u32,
 }
 
 #[derive(Deserialize, JsonSchema, Serialize, Default, Debug)]

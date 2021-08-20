@@ -1,37 +1,81 @@
 <script lang="ts">
 	import { invoke } from '@tauri-apps/api/tauri'
-	import { register, unregisterAll } from '@tauri-apps/api/globalShortcut'
+	import { register, unregister, unregisterAll } from '@tauri-apps/api/globalShortcut'
 	import { WebglPlot, WebglLine, ColorRGBA } from "webgl-plot"
 	import { onMount } from 'svelte'
 
-	function sendLogMessage() {
-		invoke('write_log_message', { message: "poop hello" })
+	import { Convert, Message, TcpRequest, TrackingSignalsStatus } from './Message';
+	import { LruList, LruNode } from './Lru';
+
+	import * as parseColor from 'parse-color';
+
+	import { encode, decode } from "cbor-web";
+
+	function sendLogMessage(msg: string) {
+		invoke('write_log_message', { message: msg })
 	}
 
 	async function fetchIpcMessage() {
-		const ipcMessage = await invoke('fetch_ipc_message')
-		console.log(ipcMessage)
+		return await invoke('fetch_ipc_message');
 	}
 
 	function onRightClick() {
 		invoke('write_log_message', { message: "right click disabled" })
-		return false
+		return true
 	}
 
 	function onReload() {
 		invoke('write_log_message', { message: "refresh disabled" })
-		return false
+		return true
 	}
 
 	function onPrint() {
 		invoke('write_log_message', { message: "print disabled" })
-		return false
+		return true
 	}
 
-	unregisterAll()
+	const PIKSI_HOST: string = "piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com";
+	const PIKSI_PORT: number = 55555;
 
-	register("CmdOrControl+R", onReload)
-	register("CmdOrControl+P", onPrint)
+	function filterNull(obj: object): object {
+		return Object.fromEntries(Object.entries(obj).filter(([_, v]) => v != undefined));
+	}
+
+	function createRequest(): Array<number>
+	{
+		const msg: Message = new Message();
+		const tcpConnect: TcpRequest = new TcpRequest();
+
+		tcpConnect.host = PIKSI_HOST;
+		tcpConnect.port = PIKSI_PORT;
+
+		msg.TcpRequest = tcpConnect;
+
+		const obj = filterNull(Convert.messageToJson(msg));
+		const arr = new Uint8Array(encode(obj));
+
+		return Array.from(arr);
+	}
+
+	function connectToRemote()
+	{
+		let buf = createRequest();
+		invoke('send_ipc_message', { buffer: buf })
+	}
+
+	if (performance.navigation.type == performance.navigation.TYPE_RELOAD) {
+		unregisterAll()
+	}
+
+	function onFocus() {
+		register("CmdOrControl+R", onReload)
+		register("CmdOrControl+P", onPrint)
+	}
+
+	function onBlur() {
+		unregister("CmdOrControl+R")
+		unregister("CmdOrControl+P")
+	}
 
 	onMount(async () => {
 
@@ -41,30 +85,100 @@
 		canvas.width = canvas.clientWidth * devicePixelRatio;
 		canvas.height = canvas.clientHeight * devicePixelRatio;
 
-		const numX = canvas.width;
-		const color = new ColorRGBA(Math.random(), Math.random(), Math.random(), 1);
-		const line = new WebglLine(color, numX);
 		const wglp = new WebglPlot(canvas);
+		let trackingStatusUpdates: TrackingSignalsStatus[] = [];
 
-		line.arrangeX();
-		wglp.addLine(line);
+		const numX = 200;
+
+		wglp.gScaleY = 2;
+		wglp.gOffsetY = -1;
+
+		const lru = new LruList<WebglLine>();
+		const lineMap = new Map<String, LruNode<WebglLine>>();
+		const poppedLines: WebglLine[] = [];
 
 		function update() {
 
-			const freq = 0.001;
-			const amp = 0.5;
-			const noise = 0.1;
+			let minX = Infinity;
+			let maxX = -Infinity;
 
-			for (let i = 0; i < line.numPoints; i++) {
-				const ySin = Math.sin(Math.PI * i * freq * Math.PI * 2);
-				const yNoise = Math.random() - 0.5;
-				line.setY(i, ySin * amp + yNoise * noise);
+			if (trackingStatusUpdates.length == 0) {
+				return;
+			}
+			const trackingStatus = trackingStatusUpdates.shift();
+			const lineCount = trackingStatus.data.length;
+			for (let idx = 0; idx < lineCount; idx++) {
+
+				const points = trackingStatus.data[idx];
+				const label = trackingStatus.labels[idx];
+
+				if (!lineMap.has(label)) {
+
+					const parsedColor = parseColor.default(trackingStatus.colors[idx])
+					const lineColor = new ColorRGBA(parsedColor.rgb[0]/256, parsedColor.rgb[1]/256, parsedColor.rgb[2]/256, 1);
+
+					let line: WebglLine;
+
+					if (poppedLines.length != 0) {
+						line = poppedLines.pop();
+						line.color = lineColor;
+					} else {
+						line = new WebglLine(lineColor, numX);
+					}
+
+					line.lineSpaceX(-1, 2/numX);
+					wglp.addLine(line);
+
+					const lruNode = lru.push(line);
+					lineMap.set(label, lruNode);
+				}
+
+				const lruNode = lineMap.get(label);
+				const line = lru.access(lruNode);
+
+				for (let point of points) {
+					minX = Math.min(minX, point.x);
+					maxX = Math.max(maxX, point.x);
+				}
+
+				console.log(`minX: ${minX}, maxX: ${maxX}`)
+
+				for (let i = numX - 1; i >= 0; i--) {
+					const pointIdx = numX - i;
+					if (pointIdx < points.length) {
+						let y = (points[pointIdx].y - 15) / 45;
+						line.setY(i, y);
+						let x = 1 - ((((points[pointIdx].x - minX) % (numX/2)) / (numX/4)));
+						line.setX(i, x);
+					} else {
+						line.setY(i, -Infinity);
+					}
+				}
+			}
+
+			if (trackingStatus.labels.length < lru.count) {
+				const count = lru.count - trackingStatus.labels.length;
+				const popped = lru.pop(count);
+				poppedLines.push(...popped);
 			}
 		}
 
 		function newFrame() {
   			update();
   			wglp.update();
+			fetchIpcMessage().then((ipc) => {
+				if (ipc !== null) {
+					const kind = ipc[0];
+					if (kind === 1) {
+						const buffer = new Uint8Array(ipc[1]);
+						const data = decode(buffer);
+						const msg = Convert.toMessage(data);
+						if (msg.TrackingSignalsStatus !== undefined) {
+							trackingStatusUpdates.push(msg.TrackingSignalsStatus);
+						}
+					}
+				}
+			});
   			requestAnimationFrame(newFrame);
 		}
 
@@ -72,11 +186,7 @@
 	});
 </script>
 
-<div>
-	<canvas style="width: 100%; height: 300px" id="my_canvas"></canvas>
-</div>
-
-<button on:click={sendLogMessage}>
+<button on:click={() => sendLogMessage("hello")}>
 	Send a log message
 </button>
 
@@ -84,4 +194,17 @@
 	Fetch an IPC message
 </button>
 
-<svelte:body on:contextmenu|preventDefault={onRightClick} />
+<button on:click={connectToRemote}>
+	Connect
+</button>
+
+<canvas style="width: 100%; height: 90%" id="my_canvas"></canvas>
+
+<svelte:window
+	on:focus={onFocus}
+	on:blur={onBlur}
+	/>
+
+<svelte:body
+	on:contextmenu|preventDefault={onRightClick}
+	/>

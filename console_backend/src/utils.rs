@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::vec;
 
 use capnp::message::Builder;
 use capnp::message::HeapAllocator;

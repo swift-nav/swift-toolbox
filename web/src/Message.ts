@@ -7,7 +7,7 @@
 // These functions will throw an error if the JSON doesn't
 // match the expected interface, even if the JSON is valid.
 
-export interface Message {
+export class Message {
     TcpRequest?:                          TcpRequest;
     FileRequest?:                         FileRequest;
     SerialRequest?:                       SerialRequest;
@@ -40,18 +40,23 @@ export interface Message {
     AdvancedSpectrumAnalyzerStatusFront?: AdvancedSpectrumAnalyzerStatusFront;
 }
 
-export interface AdvancedInsStatus {
-    data:        Array<string[]>;
+export class AdvancedInsStatus {
+    data:        Array<Point[]>;
     fields_data: number[];
 }
 
-export interface AdvancedMagnetometerStatus {
-    data: Array<string[]>;
+export class Point {
+    x: number;
+    y: number;
+}
+
+export class AdvancedMagnetometerStatus {
+    data: Array<Point[]>;
     ymax: number;
     ymin: number;
 }
 
-export interface AdvancedSpectrumAnalyzerStatus {
+export class AdvancedSpectrumAnalyzerStatus {
     channel: number;
     data:    Point[];
     xmax:    number;
@@ -59,16 +64,11 @@ export interface AdvancedSpectrumAnalyzerStatus {
     ymin:    number;
 }
 
-export interface Point {
-    x: number;
-    y: number;
-}
-
-export interface AdvancedSpectrumAnalyzerStatusFront {
+export class AdvancedSpectrumAnalyzerStatusFront {
     channel: number;
 }
 
-export interface BaselinePlotStatus {
+export class BaselinePlotStatus {
     cur_data: Array<Point[]>;
     data:     Array<Point[]>;
     e_max:    number;
@@ -77,30 +77,30 @@ export interface BaselinePlotStatus {
     n_min:    number;
 }
 
-export interface BaselinePlotStatusButtonFront {
+export class BaselinePlotStatusButtonFront {
     clear:         boolean;
     pause:         boolean;
     reset_filters: boolean;
 }
 
-export interface BaselineTableStatus {
+export class BaselineTableStatus {
     data: KeyValuePair[];
 }
 
-export interface KeyValuePair {
+export class KeyValuePair {
     key:  string;
     pair: string;
 }
 
-export interface DisconnectRequest {
+export class DisconnectRequest {
     disconnect: boolean;
 }
 
-export interface FileRequest {
+export class FileRequest {
     filename: string;
 }
 
-export interface FusionStatusFlagsStatus {
+export class FusionStatusFlagsStatus {
     gnsspos:    string;
     gnssvel:    string;
     nhc:        string;
@@ -109,11 +109,11 @@ export interface FusionStatusFlagsStatus {
     zerovel:    string;
 }
 
-export interface LogAppend {
+export class LogAppend {
     entries: LogEntry[];
 }
 
-export interface LogEntry {
+export class LogEntry {
     level:     LogLevel;
     line:      string;
     timestamp: string;
@@ -127,23 +127,23 @@ export enum LogLevel {
     Warn = "Warn",
 }
 
-export interface LogLevelFront {
+export class LogLevelFront {
     log_level: string;
 }
 
-export interface LoggingBarFront {
+export class LoggingBarFront {
     csv_logging: boolean;
     directory:   string;
     sbp_logging: string;
 }
 
-export interface LoggingBarStatus {
+export class LoggingBarStatus {
     csv_logging:      boolean;
     previous_folders: string[];
     sbp_logging:      string;
 }
 
-export interface NavBarStatus {
+export class NavBarStatus {
     available_baudrates:     number[];
     available_flows:         string[];
     available_ports:         string[];
@@ -154,14 +154,14 @@ export interface NavBarStatus {
     previous_ports:          number[];
 }
 
-export interface ObservationStatus {
+export class ObservationStatus {
     is_remote: boolean;
     rows:      ObservationTableRow[];
     tow:       number;
     week:      number;
 }
 
-export interface ObservationTableRow {
+export class ObservationTableRow {
     carrer_phase:     number;
     cn0:              number;
     computed_doppler: number;
@@ -172,21 +172,21 @@ export interface ObservationTableRow {
     pseudo_range:     number;
 }
 
-export interface PauseRequest {
+export class PauseRequest {
     pause: boolean;
 }
 
-export interface SerialRefreshRequest {
+export class SerialRefreshRequest {
     refresh: boolean;
 }
 
-export interface SerialRequest {
+export class SerialRequest {
     baudrate:     number;
     device:       string;
     flow_control: string;
 }
 
-export interface SolutionPositionStatus {
+export class SolutionPositionStatus {
     available_units: string[];
     cur_data:        Array<Point[]>;
     data:            Array<Point[]>;
@@ -196,37 +196,37 @@ export interface SolutionPositionStatus {
     lon_min:         number;
 }
 
-export interface SolutionPositionStatusButtonFront {
+export class SolutionPositionStatusButtonFront {
     solution_position_center: boolean;
     solution_position_clear:  boolean;
     solution_position_pause:  boolean;
     solution_position_zoom:   boolean;
 }
 
-export interface SolutionPositionStatusUnitFront {
+export class SolutionPositionStatusUnitFront {
     solution_position_unit: string;
 }
 
-export interface SolutionTableStatus {
+export class SolutionTableStatus {
     data: KeyValuePair[];
 }
 
-export interface SolutionVelocityStatus {
+export class SolutionVelocityStatus {
     available_units: string[];
     colors:          string[];
     max:             number;
     min:             number;
 }
 
-export interface SolutionVelocityStatusFront {
+export class SolutionVelocityStatusFront {
     solution_velocity_units: string;
 }
 
-export interface Status {
+export class Status {
     text: string;
 }
 
-export interface StatusBarStatus {
+export class StatusBarStatus {
     corr_age:         string;
     data_rate:        string;
     ins:              string;
@@ -237,12 +237,12 @@ export interface StatusBarStatus {
     solid_connection: boolean;
 }
 
-export interface TcpRequest {
+export class TcpRequest {
     host: string;
     port: number;
 }
 
-export interface TrackingSignalsStatus {
+export class TrackingSignalsStatus {
     check_labels: string[];
     colors:       string[];
     data:         Array<Point[]>;
@@ -250,19 +250,19 @@ export interface TrackingSignalsStatus {
     xmin_offset:  number;
 }
 
-export interface TrackingSignalsStatusFront {
+export class TrackingSignalsStatusFront {
     tracking_signals_check_visibility: string[];
 }
 
-// Converts JSON strings to/from your types
-// and asserts the results of JSON.parse at runtime
+// Converts JSON types to/from your types
+// and asserts the results at runtime
 export class Convert {
-    public static toMessage(json: string): Message {
-        return cast(JSON.parse(json), r("Message"));
+    public static toMessage(json: any): Message {
+        return cast(json, r("Message"));
     }
 
-    public static messageToJson(value: Message): string {
-        return JSON.stringify(uncast(value, r("Message")), null, 2);
+    public static messageToJson(value: Message): any {
+        return uncast(value, r("Message"));
     }
 }
 
@@ -432,11 +432,15 @@ const typeMap: any = {
         { json: "AdvancedSpectrumAnalyzerStatusFront", js: "AdvancedSpectrumAnalyzerStatusFront", typ: u(undefined, r("AdvancedSpectrumAnalyzerStatusFront")) },
     ], false),
     "AdvancedInsStatus": o([
-        { json: "data", js: "data", typ: a(a("")) },
+        { json: "data", js: "data", typ: a(a(r("Point"))) },
         { json: "fields_data", js: "fields_data", typ: a(3.14) },
     ], "any"),
+    "Point": o([
+        { json: "x", js: "x", typ: 3.14 },
+        { json: "y", js: "y", typ: 3.14 },
+    ], "any"),
     "AdvancedMagnetometerStatus": o([
-        { json: "data", js: "data", typ: a(a("")) },
+        { json: "data", js: "data", typ: a(a(r("Point"))) },
         { json: "ymax", js: "ymax", typ: 3.14 },
         { json: "ymin", js: "ymin", typ: 3.14 },
     ], "any"),
@@ -446,10 +450,6 @@ const typeMap: any = {
         { json: "xmax", js: "xmax", typ: 3.14 },
         { json: "ymax", js: "ymax", typ: 3.14 },
         { json: "ymin", js: "ymin", typ: 3.14 },
-    ], "any"),
-    "Point": o([
-        { json: "x", js: "x", typ: 3.14 },
-        { json: "y", js: "y", typ: 3.14 },
     ], "any"),
     "AdvancedSpectrumAnalyzerStatusFront": o([
         { json: "channel", js: "channel", typ: 0 },

@@ -434,6 +434,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "ciborium"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "de6836a1b6197d8acdaac74a01af077a26aa6953d2e9251eef061c646b0d432c"
+dependencies = [
+ "half",
+ "serde",
+]
+
+[[package]]
 name = "clang-sys"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -573,6 +583,7 @@ dependencies = [
  "capnpc",
  "cfg-if 1.0.0",
  "chrono",
+ "ciborium",
  "clap 3.0.0-beta.2",
  "criterion",
  "crossbeam",

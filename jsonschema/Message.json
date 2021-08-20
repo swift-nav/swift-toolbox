@@ -428,7 +428,7 @@
       "properties": {
         "channel": {
           "type": "integer",
-          "format": "uint16",
+          "format": "uint32",
           "minimum": 0.0
         },
         "data": {
@@ -439,15 +439,15 @@
         },
         "xmax": {
           "type": "number",
-          "format": "float"
+          "format": "double"
         },
         "ymax": {
           "type": "number",
-          "format": "float"
+          "format": "double"
         },
         "ymin": {
           "type": "number",
-          "format": "float"
+          "format": "double"
         }
       }
     },
@@ -459,7 +459,7 @@
       "properties": {
         "channel": {
           "type": "integer",
-          "format": "uint16",
+          "format": "uint32",
           "minimum": 0.0
         }
       }
@@ -744,7 +744,7 @@
           "type": "array",
           "items": {
             "type": "integer",
-            "format": "uint8",
+            "format": "uint32",
             "minimum": 0.0
           }
         },
@@ -767,7 +767,7 @@
           "type": "array",
           "items": {
             "type": "integer",
-            "format": "uint16",
+            "format": "uint32",
             "minimum": 0.0
           }
         }
@@ -797,7 +797,7 @@
         },
         "week": {
           "type": "integer",
-          "format": "uint16",
+          "format": "uint32",
           "minimum": 0.0
         }
       }
@@ -829,12 +829,12 @@
         },
         "flags": {
           "type": "integer",
-          "format": "uint8",
+          "format": "uint32",
           "minimum": 0.0
         },
         "lock": {
           "type": "integer",
-          "format": "uint16",
+          "format": "uint32",
           "minimum": 0.0
         },
         "measured_doppler": {
@@ -1116,7 +1116,7 @@
         },
         "port": {
           "type": "integer",
-          "format": "uint16",
+          "format": "uint32",
           "minimum": 0.0
         }
       }

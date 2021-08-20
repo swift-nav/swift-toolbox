@@ -15,20 +15,29 @@
     "@rollup/plugin-typescript": "^8.0.0",
     "@tauri-apps/cli": "^1.0.0-beta.6",
     "@tsconfig/svelte": "^2.0.0",
+    "@types/jest": "^27.0.1",
+    "jest": "^27.0.6",
     "rollup": "^2.3.4",
     "rollup-plugin-css-only": "^3.1.0",
     "rollup-plugin-livereload": "^2.0.0",
     "rollup-plugin-svelte": "^7.0.0",
     "rollup-plugin-terser": "^7.0.0",
+    "sirv-cli": "^1.0.0",
     "svelte": "^3.0.0",
     "svelte-check": "^2.0.0",
     "svelte-preprocess": "^4.0.0",
+    "ts-jest": "^27.0.5",
     "tslib": "^2.0.0",
-    "typescript": "^4.0.0"
+    "typescript": "^4.3.5"
   },
   "dependencies": {
+    "@jprochazk/cbor": "^0.4.9",
     "@tauri-apps/api": "^1.0.0-beta.5",
-    "sirv-cli": "^1.0.0",
+    "@types/parse-color": "^1.0.1",
+    "cbor-web": "^8.0.1",
+    "cbor-x": "^0.8.3",
+    "color-parse": "^1.4.2",
+    "parse-color": "^1.0.0",
     "webgl-plot": "danchitnis/webgl-plot"
   }
 }

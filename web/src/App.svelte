@@ -99,14 +99,17 @@
 
 		function update() {
 
-			let minX = Infinity;
-			let maxX = -Infinity;
-
 			if (trackingStatusUpdates.length == 0) {
 				return;
 			}
+
+			let minX = Infinity;
+			let maxX = -Infinity;
+			let maxLen = -Infinity;
+
 			const trackingStatus = trackingStatusUpdates.shift();
 			const lineCount = trackingStatus.data.length;
+
 			for (let idx = 0; idx < lineCount; idx++) {
 
 				const points = trackingStatus.data[idx];
@@ -135,18 +138,19 @@
 				const lruNode = lineMap.get(label);
 				const [_label, line] = lru.access(lruNode);
 
-				for (let point of points) {
-					minX = Math.min(minX, point.x);
-					maxX = Math.max(maxX, point.x);
-				}
+				minX = Math.min(minX, points[0].x);
+				maxX = Math.max(maxX, points[points.length-1].x);
+				maxLen = Math.max(maxLen, points.length);
 
 				let startIdx = numX - points.length;
+
 				for (let i = numX - 1; i >= startIdx; i--) {
-					const pidx = i - startIdx;
-					let y = (points[pidx].y - 15) / 45;
-					line.setY(i, y);
-					let x = 1 - ((((points[pidx].x - minX) % (numX/2)) / (numX/4)));
+					const pidx = numX - i - 1;
+					const y = (points[pidx].y - 15) / 45;
+					const offset = (numX - maxLen) / (numX/2);
+					const x = -1 + ((((points[pidx].x - minX) % (numX/2)) / (numX/4))) + offset;
 					line.setX(i, x);
+					line.setY(i, y);
 				}
 			}
 

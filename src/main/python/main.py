@@ -117,6 +117,12 @@ from tracking_signals_tab import (
     TRACKING_SIGNALS_TAB,
 )
 
+from update_tab import (
+    UPDATE_TAB,
+    UpdateTabData,
+    UpdateTabModel,
+)
+
 import console_resources  # type: ignore # pylint: disable=unused-import,import-error
 
 import console_backend.server  # type: ignore  # pylint: disable=import-error,no-name-in-module
@@ -310,6 +316,13 @@ def receive_messages(app_, backend, messages):
             LOGGING_BAR[Keys.PREVIOUS_FOLDERS][:] = m.loggingBarStatus.previousFolders
             LOGGING_BAR[Keys.CSV_LOGGING] = m.loggingBarStatus.csvLogging
             LOGGING_BAR[Keys.SBP_LOGGING] = m.loggingBarStatus.sbpLogging
+        elif m.which == Message.Union.UpdateTabStatus:
+            UPDATE_TAB[Keys.HARDWARE_REVISION] = m.updateTabStatus.hardwareRevision
+            UPDATE_TAB[Keys.FW_VERSION_CURRENT] = m.updateTabStatus.fwVersionCurrent
+            UPDATE_TAB[Keys.FW_VERSION_LATEST] = m.updateTabStatus.fwVersionLatest
+            UPDATE_TAB[Keys.FW_LOCAL_FILENAME] = m.updateTabStatus.fwLocalFilename
+            UPDATE_TAB[Keys.DIRECTORY] = m.updateTabStatus.directory
+            UPDATE_TAB[Keys.DOWNLOADING] = m.updateTabStatus.downloading
         elif m.which == Message.Union.LogAppend:
             log_panel_lock.lock()
             LOG_PANEL[Keys.ENTRIES] += [entry.line for entry in m.logAppend.entries]
@@ -441,6 +454,18 @@ class DataModel(QObject):
         m.baselinePlotStatusButtonFront.pause = buttons[0]
         m.baselinePlotStatusButtonFront.clear = buttons[1]
         m.baselinePlotStatusButtonFront.resetFilters = buttons[2]
+        buffer = m.to_bytes()
+        self.endpoint.send_message(buffer)
+
+    @Slot(list, str, str)  # type: ignore
+    def update_tab(self, buttons: list, local_filepath: str, download_directory: str) -> None:
+        Message = self.messages.Message
+        m = Message()
+        m.updateTabStatusFront = m.init(Message.Union.UpdateTabStatusFront)
+        m.updateTabStatusFront.localFilepath = local_filepath
+        m.updateTabStatusFront.downloadDirectory = download_directory
+        m.updateTabStatusFront.downloadLatestFirmware = buttons[0]
+        m.updateTabStatusFront.updateFirmware = buttons[1]
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
 

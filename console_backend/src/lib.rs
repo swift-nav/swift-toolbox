@@ -30,6 +30,8 @@ pub mod solution_velocity_tab;
 pub mod status_bar;
 pub mod tracking_signals_tab;
 pub mod types;
+pub mod update_downloader;
+pub mod update_tab;
 pub mod utils;
 
 use std::sync::Mutex;
@@ -39,7 +41,7 @@ use crate::{
     advanced_spectrum_analyzer_tab::AdvancedSpectrumAnalyzerTab, baseline_tab::BaselineTab,
     main_tab::MainTab, observation_tab::ObservationTab, solution_tab::SolutionTab,
     solution_velocity_tab::SolutionVelocityTab, status_bar::StatusBar,
-    tracking_signals_tab::TrackingSignalsTab,
+    tracking_signals_tab::TrackingSignalsTab, update_tab::UpdateTab,
 };
 
 struct Tabs<'link, S: types::CapnProtoSender> {
@@ -53,6 +55,7 @@ struct Tabs<'link, S: types::CapnProtoSender> {
     pub solution_velocity: Mutex<SolutionVelocityTab<S>>,
     pub advanced_spectrum_analyzer: Mutex<AdvancedSpectrumAnalyzerTab<S>>,
     pub status_bar: Mutex<StatusBar<S>>,
+    pub update: Mutex<UpdateTab<S>>,
     _link: broadcaster::Link<'link>,
 }
 
@@ -87,7 +90,8 @@ impl<'link, S: types::CapnProtoSender> Tabs<'link, S> {
                 client_sender.clone(),
             )
             .into(),
-            status_bar: StatusBar::new(shared_state, client_sender).into(),
+            status_bar: StatusBar::new(shared_state.clone(), client_sender.clone()).into(),
+            update: UpdateTab::new(shared_state.clone(), client_sender.clone()).into(),
             _link: link,
         }
     }

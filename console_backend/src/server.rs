@@ -19,7 +19,7 @@ use crate::console_backend_capnp as m;
 use crate::errors::*;
 use crate::log_panel::{setup_logging, LogLevel};
 use crate::output::{CsvLogging, SbpLogging};
-use crate::types::{ClientSender, FlowControl, RealtimeDelay, SharedState};
+use crate::types::{ClientSender, FlowControl, RealtimeDelay, SharedState, UpdateTabButtons};
 use crate::utils::{refresh_loggingbar, refresh_navbar};
 
 /// The backend server
@@ -273,6 +273,24 @@ fn backend_recv_thread(
                             .expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
                         (*shared_data).advanced_spectrum_analyzer_tab.channel_idx =
                             cv_in.get_channel();
+                    }
+                    m::message::UpdateTabStatusFront(Ok(cv_in)) => {
+                        let download_button = cv_in.get_download_latest_firmware();
+                        let update_button = cv_in.get_update_firmware();
+                        if download_button || update_button {
+                            let buttons = UpdateTabButtons {
+                                download_latest_firmware: download_button,
+                                update_firmware: update_button,
+                                send_file_to_device: false,
+                            };
+                            shared_state.set_update_buttons(buttons);
+                        }
+                        let shared_state_clone = shared_state.clone();
+                        let mut shared_data = shared_state_clone
+                            .lock()
+                            .expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+                        (*shared_data).update_tab.firmware_directory =
+                            PathBuf::from(cv_in.get_download_directory().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE))
                     }
                     _ => {
                         error!("unknown message from front-end");

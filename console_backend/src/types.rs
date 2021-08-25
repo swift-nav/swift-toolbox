@@ -360,6 +360,23 @@ impl SharedState {
         (*shared_data).baseline_tab.log_file = None;
         Ok(())
     }
+
+    pub fn firmware_directory(&self) -> PathBuf {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).update_tab.firmware_directory.clone()
+    }
+    pub fn set_firmware_directory(&self, directory: PathBuf) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).update_tab.firmware_directory = directory;
+    }
+    pub fn set_update_buttons(&self, buttons: UpdateTabButtons) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).update_tab.buttons = Some(buttons);
+    }
+    pub fn update_buttons(&mut self) -> Option<UpdateTabButtons>{
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).update_tab.buttons.take()
+    }
 }
 
 impl Deref for SharedState {
@@ -396,6 +413,7 @@ pub struct SharedStateInner {
     pub(crate) solution_tab: SolutionTabState,
     pub(crate) baseline_tab: BaselineTabState,
     pub(crate) advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTabState,
+    pub(crate) update_tab: UpdateTabState,
 }
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
@@ -413,12 +431,35 @@ impl SharedStateInner {
             solution_tab: SolutionTabState::new(),
             baseline_tab: BaselineTabState::new(),
             advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTabState::new(),
+            update_tab: UpdateTabState::new(),
         }
     }
 }
 impl Default for SharedStateInner {
     fn default() -> Self {
         SharedStateInner::new()
+    }
+}
+
+#[derive(Debug)]
+pub struct UpdateTabButtons {
+    pub download_latest_firmware: bool,
+    pub update_firmware: bool,
+    pub send_file_to_device: bool,
+}
+
+#[derive(Debug)]
+pub struct UpdateTabState {
+    pub firmware_directory: PathBuf,
+    pub buttons: Option<UpdateTabButtons>,
+}
+
+impl UpdateTabState {
+    fn new() -> UpdateTabState {
+        UpdateTabState {
+            buttons: None,
+            firmware_directory: LOG_DIRECTORY.path(),
+        }
     }
 }
 

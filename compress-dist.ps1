@@ -1,4 +1,5 @@
-tar -cvf .\py39-dist.tar .\py39-dist
-rm py39-dist.xz
-arc compress .\py39-dist.tar .\py39-dist.xz
-mv .\py39-dist.xz .\swift-console.txz
+tar -cvf ".\py39-dist.tar" ".\py39-dist"
+rm -ErrorAction SilentlyContinue "py39-dist.xz"
+arc compress ".\py39-dist.tar" ".\py39-dist.xz"
+rm -ErrorAction SilentlyContinue ".\swift-console.txz"
+mv ".\py39-dist.xz" ".\swift-console.txz"

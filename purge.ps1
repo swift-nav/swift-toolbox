@@ -8,6 +8,7 @@ fd -I --full-path '\\examples\\' | %{ rm -recurse -ErrorAction SilentlyContinue 
 ls -recurse -include __pycache__ | %{ rm -recurse $_ }
 
 ls -Recurse -Include *.pyc | %{ rm -ErrorAction SilentlyContinue $_ }
+ls -Recurse -Include *.pyi | %{ rm -ErrorAction SilentlyContinue $_ }
 ls -Recurse -Include *.pdb | %{ rm -ErrorAction SilentlyContinue $_ }
 
 rm -Recurse -ErrorAction SilentlyContinue tcl
@@ -23,6 +24,8 @@ rm .\DLLs\libssl*.dll
 rm .\DLLs\tcl*.dll
 rm .\DLLs\tk*.dll
 
+rm -Recurse -ErrorAction SilentlyContinue .\Lib\ensurepip
+
 # Purge Qt stuff
 pushd .\Lib\site-packages\PySide2
 
@@ -37,10 +40,15 @@ rm -Recurse .\translations\*
 rm -Recurse .\qml\QtWeb*
 rm -Recurse .\qml\QtBluetooth*
 rm -Recurse .\qml\QtNfc*
+rm -Recurse .\plugins\virtualkeyboard\*
+rm -Recurse .\plugins\sqldrivers\*
+rm -Recurse .\resources\*
 
 popd
 
 .\python -m pip uninstall -y pip setuptools wheel
 .\python -m compileall -b -f -o 1 -o 2 .
+
+ls -Recurse -Include *.py | %{ rm -ErrorAction SilentlyContinue $_ }
 
 popd

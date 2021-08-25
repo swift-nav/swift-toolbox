@@ -510,7 +510,7 @@ def main():
     parser.add_argument("--tab")
     parser.add_argument("--show-csv-log", action="store_true")
 
-    #args_main, _ = parser.parse_known_args()
+    args_main, _ = parser.parse_known_args()
 
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
@@ -595,7 +595,7 @@ def main():
     globals_main = component.create()
     globals_main = globals_main.property("globals")  # type: ignore
 
-    #handle_cli_arguments(args_main, globals_main)
+    handle_cli_arguments(args_main, globals_main)
 
     server_thread = threading.Thread(
         target=receive_messages,

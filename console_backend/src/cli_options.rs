@@ -129,19 +129,20 @@ impl CliOptions {
     /// - `filtered_args`: The filtered args parsed via CliOptions.
     pub fn from_filtered_cli() -> CliOptions {
         let args = std::env::args();
+        eprintln!("{:?}", args);
         let mut next_args = std::env::args().skip(1);
         let mut filtered_args: Vec<String> = vec![];
         for arg in args {
-            eprintln!("{:?}", arg);
             if let Some(n_arg) = next_args.next() {
-                if ((arg.ends_with("python") || arg.ends_with("python.exe"))
-                    && n_arg.ends_with(".py")) || arg.ends_with("swiftnav-console.exe")
+                if (arg.ends_with("python") || arg.ends_with("python.exe"))
+                    && (n_arg.ends_with(".py") || n_arg.ends_with("swiftnav-console.exe"))
                 {
                     continue;
                 }
             }
             filtered_args.push(arg);
         }
+        eprintln!("{:?}", filtered_args);
         CliOptions::parse_from(filtered_args)
     }
 }

@@ -2,11 +2,14 @@
 pushd py39-dist
 
 fd -I --full-path '\\test\\' | %{ rm -recurse -ErrorAction SilentlyContinue $_ }
+fd -I --full-path '\\tests\\' | %{ rm -recurse -ErrorAction SilentlyContinue $_ }
 fd -I --full-path '\\examples\\' | %{ rm -recurse -ErrorAction SilentlyContinue $_ }
-fd -I __pycache__ | %{ rm -recurse -ErrorAction SilentlyContinue $_ }
+
+ls -recurse -include __pycache__ | %{ rm -recurse $_ }
 
 ls -Recurse -Include *.pyc | %{ rm -ErrorAction SilentlyContinue $_ }
 ls -Recurse -Include *.pdb | %{ rm -ErrorAction SilentlyContinue $_ }
+
 rm -Recurse -ErrorAction SilentlyContinue tcl
 
 mv .\Scripts\swiftnav-console.exe .
@@ -38,5 +41,6 @@ rm -Recurse .\qml\QtNfc*
 popd
 
 .\python -m pip uninstall -y pip setuptools wheel
+.\python -m compileall -b -f -o 1 -o 2 .
 
 popd

@@ -7,7 +7,7 @@ from typing import Dict, List, Any
 
 from PySide2.QtCore import Property, QMutex, QObject, Slot
 
-from constants import Keys, QTKeys
+from .constants import Keys, QTKeys
 
 
 LOG_PANEL: Dict[str, Any] = {

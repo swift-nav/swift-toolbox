@@ -5,7 +5,7 @@ from typing import Dict, Any, List
 
 from PySide2.QtCore import Property, QObject, Slot
 
-from constants import Keys, QTKeys, SbpLogging
+from .constants import Keys, QTKeys, SbpLogging
 
 LOGGING_BAR: Dict[str, Any] = {
     Keys.PREVIOUS_FOLDERS: [],

@@ -5,7 +5,7 @@ from typing import Dict, List, Any
 
 from PySide2.QtCore import Property, QObject, QPointF, Slot
 
-from constants import Keys, QTKeys
+from .constants import Keys, QTKeys
 
 ADVANCED_MAGNETOMETER_TAB: Dict[str, Any] = {
     Keys.YMAX: float,

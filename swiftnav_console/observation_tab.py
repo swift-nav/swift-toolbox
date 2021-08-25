@@ -2,7 +2,7 @@ from typing import Dict, List, Any
 
 from PySide2.QtCore import Property, QObject, Slot
 
-from constants import Keys, QTKeys
+from .constants import Keys, QTKeys
 
 
 REMOTE_OBSERVATION_TAB: Dict[str, Any] = {

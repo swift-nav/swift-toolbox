@@ -336,11 +336,11 @@ impl Server {
             server_send: Some(server_send),
         };
         setup_logging(client_send.clone());
-        let opt = CliOptions::from_filtered_cli();
+        //let opt = CliOptions::from_filtered_cli();
         let shared_state = SharedState::new();
         let connection_state = ConnectionState::new(client_send.clone(), shared_state.clone());
         // Handle CLI Opts.
-        handle_cli(opt, &connection_state, shared_state.clone());
+        //handle_cli(opt, &connection_state, shared_state.clone());
         refresh_navbar(&mut client_send.clone(), shared_state.clone());
         refresh_loggingbar(&mut client_send.clone(), shared_state.clone());
         backend_recv_thread(connection_state, client_send, server_recv, shared_state);

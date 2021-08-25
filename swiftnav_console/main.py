@@ -11,8 +11,6 @@ import capnp  # type: ignore
 
 from PySide2.QtWidgets import QApplication  # type: ignore
 
-from fbs_runtime.application_context.PySide2 import ApplicationContext  # type: ignore  # pylint: disable=unused-import
-
 from PySide2.QtCore import QObject, QUrl, QPointF, Slot
 from PySide2.QtCharts import QtCharts  # pylint: disable=unused-import
 
@@ -22,64 +20,64 @@ from PySide2.QtGui import QFontDatabase
 
 from PySide2.QtQml import QQmlComponent, qmlRegisterType
 
-from constants import ApplicationStates, Keys, Tabs
+from .constants import ApplicationStates, Keys, Tabs
 
-from log_panel import (
+from .log_panel import (
     LOG_PANEL,
     log_panel_lock,
     LogPanelData,
     LogPanelModel,
 )
 
-from nav_bar import (
+from .nav_bar import (
     NAV_BAR,
     NavBarData,
     NavBarModel,
 )
 
-from logging_bar import (
+from .logging_bar import (
     LOGGING_BAR,
     LoggingBarData,
     LoggingBarModel,
 )
 
-from advanced_ins_tab import (
+from .advanced_ins_tab import (
     AdvancedInsModel,
     AdvancedInsPoints,
     ADVANCED_INS_TAB,
 )
 
-from advanced_magnetometer_tab import (
+from .advanced_magnetometer_tab import (
     AdvancedMagnetometerModel,
     AdvancedMagnetometerPoints,
     ADVANCED_MAGNETOMETER_TAB,
 )
 
-from advanced_spectrum_analyzer_tab import (
+from .advanced_spectrum_analyzer_tab import (
     AdvancedSpectrumAnalyzerModel,
     AdvancedSpectrumAnalyzerPoints,
     ADVANCED_SPECTRUM_ANALYZER_TAB,
 )
 
-from fusion_status_flags import (
+from .fusion_status_flags import (
     FusionStatusFlagsModel,
     FusionStatusFlagsData,
     FUSION_STATUS_FLAGS,
 )
 
-from baseline_plot import (
+from .baseline_plot import (
     BaselinePlotModel,
     BaselinePlotPoints,
     BASELINE_PLOT,
 )
 
-from baseline_table import (
+from .baseline_table import (
     BaselineTableEntries,
     BaselineTableModel,
     BASELINE_TABLE,
 )
 
-from observation_tab import (
+from .observation_tab import (
     ObservationData,
     ObservationModel,
     REMOTE_OBSERVATION_TAB,
@@ -87,37 +85,37 @@ from observation_tab import (
     obs_rows_to_json,
 )
 
-from solution_position_tab import (
+from .solution_position_tab import (
     SolutionPositionModel,
     SolutionPositionPoints,
     SOLUTION_POSITION_TAB,
 )
 
-from solution_table import (
+from .solution_table import (
     SolutionTableEntries,
     SolutionTableModel,
     SOLUTION_TABLE,
 )
 
-from solution_velocity_tab import (
+from .solution_velocity_tab import (
     SolutionVelocityModel,
     SolutionVelocityPoints,
     SOLUTION_VELOCITY_TAB,
 )
 
-from status_bar import (
+from .status_bar import (
     STATUS_BAR,
     StatusBarData,
     StatusBarModel,
 )
 
-from tracking_signals_tab import (
+from .tracking_signals_tab import (
     TrackingSignalsModel,
     TrackingSignalsPoints,
     TRACKING_SIGNALS_TAB,
 )
 
-import console_resources  # type: ignore # pylint: disable=unused-import,import-error
+from . import console_resources  # type: ignore # pylint: disable=unused-import,import-error
 
 import console_backend.server  # type: ignore  # pylint: disable=import-error,no-name-in-module
 
@@ -505,14 +503,14 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
         globals_.setProperty("showCsvLog", True)  # type: ignore
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(add_help=False, usage=argparse.SUPPRESS)
     parser.add_argument("--no-opengl", action="store_false")
     parser.add_argument("--refresh-rate")
     parser.add_argument("--tab")
     parser.add_argument("--show-csv-log", action="store_true")
 
-    args_main, _ = parser.parse_known_args()
+    #args_main, _ = parser.parse_known_args()
 
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
@@ -597,7 +595,7 @@ if __name__ == "__main__":
     globals_main = component.create()
     globals_main = globals_main.property("globals")  # type: ignore
 
-    handle_cli_arguments(args_main, globals_main)
+    #handle_cli_arguments(args_main, globals_main)
 
     server_thread = threading.Thread(
         target=receive_messages,
@@ -616,3 +614,7 @@ if __name__ == "__main__":
     server_thread.join()
 
     sys.exit()
+
+
+if __name__ == "__main__":
+    main()

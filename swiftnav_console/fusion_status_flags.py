@@ -5,7 +5,7 @@ from typing import Dict, Any
 
 from PySide2.QtCore import Property, QObject, Slot
 
-from constants import Keys, FusionStatus
+from .constants import Keys, FusionStatus
 
 FUSION_STATUS_FLAGS: Dict[str, Any] = {
     Keys.GNSSPOS: FusionStatus.UNKNOWN,

@@ -4,10 +4,12 @@ version = "0.0.0"
 description = ""
 authors = ["Swift Navigation <dev@swiftnav.com>"]
 
+[tool.poetry.scripts]
+swiftnav-console = "swiftnav_console.main:main"
+
 [tool.poetry.dependencies]
 python = ">=3.9,<3.10"
 PySide2 = "^5.15.2"
-fbs = { git = "https://github.com/silverjam/fbs.git" }
 pycapnp = "^1.1.0"
 
 [tool.poetry.dev-dependencies]
@@ -17,7 +19,6 @@ mypy = "^0.910"
 pylint = "^2.9.3"
 pytest = "^6.2.4"
 setuptools-rust = "^0.12.1"
-nuitka = "<=0.6.12.4"
 psutil = "5.8.0"
 qt5-applications = [{ version = "^5.15.2" }]
 py2many = ">=0.3"

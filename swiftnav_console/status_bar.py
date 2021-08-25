@@ -5,7 +5,7 @@ from typing import Dict, Any
 
 from PySide2.QtCore import Property, QObject, Slot
 
-from constants import Keys
+from .constants import Keys
 
 STATUS_BAR: Dict[str, Any] = {
     Keys.PORT: str,

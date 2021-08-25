@@ -5,7 +5,7 @@ from typing import Dict, List, Any
 
 from PySide2.QtCore import Property, QObject, Slot
 
-from constants import Keys, LogLevel, QTKeys
+from .constants import Keys, LogLevel, QTKeys
 
 NAV_BAR: Dict[str, Any] = {
     Keys.AVAILABLE_PORTS: [],

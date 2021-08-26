@@ -10,7 +10,7 @@ use sbp::messages::{
 
 use crate::constants::*;
 use crate::date_conv::*;
-use crate::output::{BaselineLog, CsvSerializer};
+use crate::output::BaselineLog;
 use crate::piksi_tools_constants::EMPTY_STR;
 use crate::types::{
     BaselineNED, CapnProtoSender, Deque, GnssModes, GpsTime, MsgSender, Result, SharedState,
@@ -52,7 +52,6 @@ pub(crate) struct BaselineTabButtons {
 /// - `table`: This stores all the key/value pairs to be displayed in the Baseline Table.
 /// - `utc_source`: The string equivalent for the source of the UTC updates.
 /// - `utc_time`: The stored monotonic Utc time.
-/// - `baseline_log_file`: The CsvSerializer corresponding to an open velocity log if any.
 /// - `week`: The stored week value from GPS Time messages.
 pub struct BaselineTab<'a, S: CapnProtoSender> {
     age_corrections: Option<f64>,
@@ -73,7 +72,6 @@ pub struct BaselineTab<'a, S: CapnProtoSender> {
     table: HashMap<&'a str, String>,
     utc_source: Option<String>,
     utc_time: Option<UtcDateTime>,
-    pub baseline_log_file: Option<CsvSerializer>,
     week: Option<u16>,
     wtr: MsgSender,
 }
@@ -118,7 +116,6 @@ impl<'a, S: CapnProtoSender> BaselineTab<'a, S> {
             },
             utc_source: None,
             utc_time: None,
-            baseline_log_file: None,
             week: None,
             wtr,
         }
@@ -290,22 +287,25 @@ impl<'a, S: CapnProtoSender> BaselineTab<'a, S> {
             }
         }
 
-        if let Some(baseline_file) = &mut self.baseline_log_file {
-            let pc_time = format!("{}:{:0>6.06}", tloc, secloc);
-            if let Err(err) = baseline_file.serialize(&BaselineLog {
-                pc_time,
-                gps_time,
-                tow_s: Some(tow),
-                north_m: Some(n),
-                east_m: Some(e),
-                down_m: Some(d),
-                h_accuracy_m: Some(h_accuracy),
-                v_accuracy_m: Some(v_accuracy),
-                distance_m: Some(dist),
-                flags: baseline_ned_fields.flags,
-                num_sats: baseline_ned_fields.n_sats,
-            }) {
-                eprintln!("Unable to to write to baseline log, error {}.", err);
+        {
+            let mut shared_data = self.shared_state.lock().unwrap();
+            if let Some(ref mut baseline_file) = (*shared_data).baseline_tab.log_file {
+                let pc_time = format!("{}:{:0>6.06}", tloc, secloc);
+                if let Err(err) = baseline_file.serialize(&BaselineLog {
+                    pc_time,
+                    gps_time,
+                    tow_s: Some(tow),
+                    north_m: Some(n),
+                    east_m: Some(e),
+                    down_m: Some(d),
+                    h_accuracy_m: Some(h_accuracy),
+                    v_accuracy_m: Some(v_accuracy),
+                    distance_m: Some(dist),
+                    flags: baseline_ned_fields.flags,
+                    num_sats: baseline_ned_fields.n_sats,
+                }) {
+                    eprintln!("Unable to to write to baseline log, error {}.", err);
+                }
             }
         }
 

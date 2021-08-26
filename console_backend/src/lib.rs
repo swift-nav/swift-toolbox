@@ -32,6 +32,69 @@ pub mod tracking_signals_tab;
 pub mod types;
 pub mod utils;
 
+use std::cell::RefCell;
+
+use crate::{
+    advanced_ins_tab::AdvancedInsTab, advanced_magnetometer_tab::AdvancedMagnetometerTab,
+    advanced_spectrum_analyzer_tab::AdvancedSpectrumAnalyzerTab, baseline_tab::BaselineTab,
+    main_tab::MainTab, observation_tab::ObservationTab, solution_tab::SolutionTab,
+    solution_velocity_tab::SolutionVelocityTab, status_bar::StatusBar,
+    tracking_signals_tab::TrackingSignalsTab,
+};
+
+struct Tabs<'a, S: types::CapnProtoSender> {
+    pub main_tab: RefCell<MainTab<S>>,
+    pub advanced_ins_tab: RefCell<AdvancedInsTab<S>>,
+    pub advanced_magnetometer_tab: RefCell<AdvancedMagnetometerTab<S>>,
+    pub baseline_tab: RefCell<BaselineTab<'a, S>>,
+    pub tracking_signals_tab: RefCell<TrackingSignalsTab<S>>,
+    pub solution_tab: RefCell<SolutionTab<S>>,
+    pub observation_tab: RefCell<ObservationTab<S>>,
+    pub solution_velocity_tab: RefCell<SolutionVelocityTab<'a, S>>,
+    pub advanced_spectrum_analyzer_tab: RefCell<AdvancedSpectrumAnalyzerTab<S>>,
+    pub status_bar: RefCell<StatusBar<S>>,
+}
+
+impl<'a, S: types::CapnProtoSender> Tabs<'a, S> {
+    fn new(
+        shared_state: types::SharedState,
+        client_sender: S,
+        msg_sender: types::MsgSender,
+    ) -> Self {
+        Self {
+            main_tab: MainTab::new(shared_state.clone(), client_sender.clone()).into(),
+            advanced_ins_tab: AdvancedInsTab::new(shared_state.clone(), client_sender.clone())
+                .into(),
+            advanced_magnetometer_tab: AdvancedMagnetometerTab::new(
+                shared_state.clone(),
+                client_sender.clone(),
+            )
+            .into(),
+            baseline_tab: BaselineTab::new(shared_state.clone(), client_sender.clone(), msg_sender)
+                .into(),
+            tracking_signals_tab: TrackingSignalsTab::new(
+                shared_state.clone(),
+                client_sender.clone(),
+            )
+            .into(),
+            observation_tab: ObservationTab::new(shared_state.clone(), client_sender.clone())
+                .into(),
+            solution_tab: SolutionTab::new(shared_state.clone(), client_sender.clone()).into(),
+            solution_velocity_tab: SolutionVelocityTab::new(
+                shared_state.clone(),
+                client_sender.clone(),
+            )
+            .into(),
+            advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTab::new(
+                shared_state.clone(),
+                client_sender.clone(),
+            )
+            .into(),
+            status_bar: StatusBar::new(shared_state.clone(), client_sender.clone()).into(),
+        }
+    }
+}
+
 #[cfg(test)]
 pub mod test_common {
     use crate::constants::*;

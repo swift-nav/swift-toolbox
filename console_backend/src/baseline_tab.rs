@@ -1,12 +1,12 @@
-use capnp::message::Builder;
+use std::collections::HashMap;
 
+use capnp::message::Builder;
 use log::error;
 use sbp::messages::{
     navigation::{MsgAgeCorrections, MsgUtcTime},
     orientation::MsgBaselineHeading,
     piksi::MsgResetFilters,
 };
-use std::{collections::HashMap, io::Write};
 
 use crate::constants::*;
 use crate::date_conv::*;
@@ -54,7 +54,7 @@ pub(crate) struct BaselineTabButtons {
 /// - `utc_time`: The stored monotonic Utc time.
 /// - `baseline_log_file`: The CsvSerializer corresponding to an open velocity log if any.
 /// - `week`: The stored week value from GPS Time messages.
-pub struct BaselineTab<'a, S: CapnProtoSender, W: Write> {
+pub struct BaselineTab<'a, S: CapnProtoSender> {
     age_corrections: Option<f64>,
     client_sender: S,
     heading: Option<f64>,
@@ -75,15 +75,11 @@ pub struct BaselineTab<'a, S: CapnProtoSender, W: Write> {
     utc_time: Option<UtcDateTime>,
     pub baseline_log_file: Option<CsvSerializer>,
     week: Option<u16>,
-    wtr: MsgSender<W>,
+    wtr: MsgSender,
 }
 
-impl<'a, S: CapnProtoSender, W: Write> BaselineTab<'a, S, W> {
-    pub fn new(
-        shared_state: SharedState,
-        client_sender: S,
-        wtr: MsgSender<W>,
-    ) -> BaselineTab<'a, S, W> {
+impl<'a, S: CapnProtoSender> BaselineTab<'a, S> {
+    pub fn new(shared_state: SharedState, client_sender: S, wtr: MsgSender) -> BaselineTab<'a, S> {
         BaselineTab {
             age_corrections: None,
             client_sender,

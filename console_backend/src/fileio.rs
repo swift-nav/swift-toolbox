@@ -35,17 +35,14 @@ const OFFSET_LEN: usize = 4;
 const NULL_SEP_LEN: usize = 1;
 const WRITE_REQ_OVERHEAD_LEN: usize = SEQUENCE_LEN + OFFSET_LEN + NULL_SEP_LEN;
 
-pub struct Fileio<W> {
+pub struct Fileio {
     broadcast: Broadcaster,
-    sender: MsgSender<W>,
+    sender: MsgSender,
     config: Option<FileioConfig>,
 }
 
-impl<W> Fileio<W>
-where
-    W: Write + Send,
-{
-    pub fn new(broadcast: Broadcaster, sender: MsgSender<W>) -> Self {
+impl Fileio {
+    pub fn new(broadcast: Broadcaster, sender: MsgSender) -> Self {
         Self {
             broadcast,
             sender,

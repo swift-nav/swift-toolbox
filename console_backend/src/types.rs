@@ -1,8 +1,9 @@
+use crate::broadcaster::Event;
 use crate::common_constants::{self as cc, SbpLogging};
 use crate::constants::*;
 use crate::errors::*;
 use crate::log_panel::LogLevel;
-use crate::output::CsvLogging;
+use crate::output::{CsvLogging, CsvSerializer};
 use crate::piksi_tools_constants::*;
 
 use crate::utils::{mm_to_m, ms_to_sec, set_connected_frontend};
@@ -16,7 +17,6 @@ use ordered_float::OrderedFloat;
 use sbp::codec::dencode::{FramedWrite, IterSinkExt};
 use sbp::codec::sbp::SbpEncoder;
 use sbp::messages::piksi::{MsgSpecan, MsgSpecanDep};
-use sbp::messages::SBPMessage;
 use sbp::messages::{
     navigation::{
         MsgBaselineNED, MsgBaselineNEDDepA, MsgDops, MsgDopsDepA, MsgGPSTime, MsgGPSTimeDepA,
@@ -28,8 +28,11 @@ use sbp::messages::{
     },
     SBP,
 };
+use sbp::messages::{ConcreteMessage, SBPMessage};
 use serde::{Deserialize, Serialize};
 use serialport::FlowControl as SPFlowControl;
+use std::io;
+use std::path::Path;
 use std::{
     cmp::{Eq, PartialEq},
     collections::HashMap,
@@ -53,18 +56,24 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub type UtcDateTime = DateTime<Utc>;
 
 /// Sends SBP messages to the connected device
-pub struct MsgSender<W> {
-    inner: Arc<Mutex<FramedWrite<W, SbpEncoder>>>,
+pub struct MsgSender {
+    inner: Arc<Mutex<FramedWrite<Box<dyn io::Write + Send>, SbpEncoder>>>,
 }
 
-impl<W: std::io::Write> MsgSender<W> {
+impl MsgSender {
     /// 42 is the conventional sender ID intended for messages sent from the host to the device
     const SENDER_ID: u16 = 42;
     const LOCK_FAILURE: &'static str = "failed to aquire sender lock";
 
-    pub fn new(wtr: W) -> Self {
+    pub fn new<W>(wtr: W) -> Self
+    where
+        W: io::Write + Send + 'static,
+    {
         Self {
-            inner: Arc::new(Mutex::new(FramedWrite::new(wtr, SbpEncoder::new()))),
+            inner: Arc::new(Mutex::new(FramedWrite::new(
+                Box::new(wtr),
+                SbpEncoder::new(),
+            ))),
         }
     }
 
@@ -76,7 +85,7 @@ impl<W: std::io::Write> MsgSender<W> {
     }
 }
 
-impl<W> Clone for MsgSender<W> {
+impl Clone for MsgSender {
     fn clone(&self) -> Self {
         MsgSender {
             inner: Arc::clone(&self.inner),
@@ -298,6 +307,60 @@ impl SharedState {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).connection_history.record_address(host, port);
     }
+    pub fn start_vel_log(&self, path: &Path) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).solution_tab.velocity_tab.log_file = match CsvSerializer::new(path) {
+            Ok(vel_csv) => Some(vel_csv),
+            Err(e) => {
+                error!("issue creating file, {:?}, error, {}", path, e);
+                None
+            }
+        }
+    }
+    pub fn end_vel_log(&self) -> Result<()> {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        if let Some(ref mut log) = (*shared_data).solution_tab.velocity_tab.log_file {
+            log.flush()?;
+        }
+        (*shared_data).solution_tab.velocity_tab.log_file = None;
+        Ok(())
+    }
+    pub fn start_pos_log(&self, path: &Path) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).solution_tab.position_tab.log_file = match CsvSerializer::new(path) {
+            Ok(vel_csv) => Some(vel_csv),
+            Err(e) => {
+                error!("issue creating file, {:?}, error, {}", path, e);
+                None
+            }
+        }
+    }
+    pub fn end_pos_log(&self) -> Result<()> {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        if let Some(ref mut log) = (*shared_data).solution_tab.position_tab.log_file {
+            log.flush()?;
+        }
+        (*shared_data).solution_tab.position_tab.log_file = None;
+        Ok(())
+    }
+    pub fn start_baseline_log(&self, path: &Path) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).baseline_tab.log_file = match CsvSerializer::new(path) {
+            Ok(vel_csv) => Some(vel_csv),
+            Err(e) => {
+                error!("issue creating file, {:?}, error, {}", path, e);
+                None
+            }
+        }
+    }
+    pub fn end_baseline_log(&self) -> Result<()> {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        if let Some(ref mut log) = (*shared_data).baseline_tab.log_file {
+            log.flush()?;
+        }
+        (*shared_data).baseline_tab.log_file = None;
+        Ok(())
+    }
 }
 
 impl Deref for SharedState {
@@ -439,6 +502,7 @@ pub struct BaselineTabState {
     pub(crate) clear: bool,
     pub(crate) pause: bool,
     pub(crate) reset: bool,
+    pub(crate) log_file: Option<CsvSerializer>,
 }
 
 impl BaselineTabState {
@@ -447,6 +511,7 @@ impl BaselineTabState {
             clear: false,
             pause: false,
             reset: false,
+            log_file: None,
         }
     }
 }
@@ -474,6 +539,7 @@ pub struct SolutionPositionTabState {
     pub last_odo_update_time: Instant,
     pub pause: bool,
     pub unit: String,
+    pub log_file: Option<CsvSerializer>,
 }
 
 impl SolutionPositionTabState {
@@ -485,6 +551,7 @@ impl SolutionPositionTabState {
             last_odo_update_time: Instant::now(),
             pause: false,
             unit: String::from(DEGREES),
+            log_file: None,
         }
     }
 }
@@ -492,12 +559,14 @@ impl SolutionPositionTabState {
 #[derive(Debug)]
 pub struct SolutionVelocityTabState {
     pub unit: String,
+    pub log_file: Option<CsvSerializer>,
 }
 
 impl SolutionVelocityTabState {
     fn new() -> SolutionVelocityTabState {
         SolutionVelocityTabState {
             unit: String::from(MPS),
+            log_file: None,
         }
     }
 }
@@ -1163,7 +1232,9 @@ pub struct ObservationMsgFields {
     pub states: Vec<Observations>,
     pub sender_id: Option<u16>,
 }
+
 // Enum wrapping around various Observation Message types.
+#[derive(Debug, Clone)]
 pub enum ObservationMsg {
     MsgObs(MsgObs),
     // MsgObsDepA(MsgObsDepA),
@@ -1171,6 +1242,7 @@ pub enum ObservationMsg {
     MsgObsDepC(MsgObsDepC),
     MsgOsr(MsgOsr),
 }
+
 impl ObservationMsg {
     pub fn fields(&self) -> ObservationMsgFields {
         let (n_obs, tow, wn, ns_residual, states, sender_id) = match &self {
@@ -1251,6 +1323,26 @@ impl ObservationMsg {
         }
     }
 }
+
+impl Event for ObservationMsg {
+    const MESSAGE_TYPES: &'static [u16] = &[
+        MsgObs::MESSAGE_TYPE,
+        MsgObsDepB::MESSAGE_TYPE,
+        MsgObsDepC::MESSAGE_TYPE,
+        MsgOsr::MESSAGE_TYPE,
+    ];
+
+    fn from_sbp(msg: SBP) -> Self {
+        match msg {
+            SBP::MsgObs(m) => ObservationMsg::MsgObs(m),
+            SBP::MsgObsDepB(m) => ObservationMsg::MsgObsDepB(m),
+            SBP::MsgObsDepC(m) => ObservationMsg::MsgObsDepC(m),
+            SBP::MsgOsr(m) => ObservationMsg::MsgOsr(m),
+            _ => unreachable!(),
+        }
+    }
+}
+
 // Struct with shared fields for various Observation Contents types.
 pub struct ObservationFields {
     pub is_deprecated_msg_type: bool,
@@ -1264,6 +1356,7 @@ pub struct ObservationFields {
     pub lock: u16,
     pub flags: u8,
 }
+
 // Enum wrapping around various Observation Contents observation types.
 pub enum Observations {
     PackedObsContent(PackedObsContent),
@@ -1272,6 +1365,7 @@ pub enum Observations {
     PackedObsContentDepC(PackedObsContentDepC),
     PackedOsrContent(PackedOsrContent),
 }
+
 impl Observations {
     pub fn fields(&self) -> ObservationFields {
         // DEP_B and DEP_A obs had different pseudorange scaling
@@ -1468,13 +1562,15 @@ pub struct PosLLHFields {
     pub height: f64,
     pub n_sats: u8,
 }
+
 // Enum wrapping around various PosLLH Message types.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum PosLLH {
     MsgPosLLH(MsgPosLLH),
     MsgPosLLHDepA(MsgPosLLHDepA),
 }
+
 impl PosLLH {
     pub fn fields(&self) -> PosLLHFields {
         match self {
@@ -1526,6 +1622,19 @@ impl PosLLH {
         }
     }
 }
+
+impl Event for PosLLH {
+    const MESSAGE_TYPES: &'static [u16] = &[MsgPosLLH::MESSAGE_TYPE, MsgPosLLHDepA::MESSAGE_TYPE];
+
+    fn from_sbp(msg: SBP) -> Self {
+        match msg {
+            SBP::MsgPosLLH(m) => PosLLH::MsgPosLLH(m),
+            SBP::MsgPosLLHDepA(m) => PosLLH::MsgPosLLHDepA(m),
+            _ => unreachable!(),
+        }
+    }
+}
+
 // Struct with shared fields for various Dops Message types.
 pub struct DopsFields {
     pub pdop: u16,
@@ -1536,7 +1645,7 @@ pub struct DopsFields {
     pub flags: u8,
 }
 // Enum wrapping around various Dops Message types.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Dops {
     MsgDops(MsgDops),
     MsgDopsDepA(MsgDopsDepA),
@@ -1563,6 +1672,18 @@ impl Dops {
     }
 }
 
+impl Event for Dops {
+    const MESSAGE_TYPES: &'static [u16] = &[MsgDops::MESSAGE_TYPE, MsgDopsDepA::MESSAGE_TYPE];
+
+    fn from_sbp(msg: SBP) -> Self {
+        match msg {
+            SBP::MsgDops(m) => Dops::MsgDops(m),
+            SBP::MsgDopsDepA(m) => Dops::MsgDopsDepA(m),
+            _ => unreachable!(),
+        }
+    }
+}
+
 // Struct with shared fields for various GpsTime Message types.
 pub struct GpsTimeFields {
     pub wn: u16,
@@ -1570,7 +1691,7 @@ pub struct GpsTimeFields {
     pub flags: u8,
 }
 // Enum wrapping around various GpsTime Message types.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum GpsTime {
     MsgGpsTime(MsgGPSTime),
     MsgGpsTimeDepA(MsgGPSTimeDepA),
@@ -1590,6 +1711,18 @@ impl GpsTime {
     }
 }
 
+impl Event for GpsTime {
+    const MESSAGE_TYPES: &'static [u16] = &[MsgGPSTime::MESSAGE_TYPE, MsgGPSTimeDepA::MESSAGE_TYPE];
+
+    fn from_sbp(msg: SBP) -> Self {
+        match msg {
+            SBP::MsgGPSTime(m) => GpsTime::MsgGpsTime(m),
+            SBP::MsgGPSTimeDepA(m) => GpsTime::MsgGpsTimeDepA(m),
+            _ => unreachable!(),
+        }
+    }
+}
+
 // Struct with shared fields for various Specan Message types.
 pub struct SpecanFields {
     pub wn: u16,
@@ -1602,8 +1735,9 @@ pub struct SpecanFields {
     pub amplitude_unit: f32,
     pub channel_tag: u16,
 }
+
 // Enum wrapping around various Specan Message types.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Specan {
     MsgSpecan(MsgSpecan),
     MsgSpecanDep(MsgSpecanDep),
@@ -1659,6 +1793,18 @@ impl Specan {
     }
 }
 
+impl Event for Specan {
+    const MESSAGE_TYPES: &'static [u16] = &[MsgSpecan::MESSAGE_TYPE, MsgSpecanDep::MESSAGE_TYPE];
+
+    fn from_sbp(msg: SBP) -> Self {
+        match msg {
+            SBP::MsgSpecan(m) => Specan::MsgSpecan(m),
+            SBP::MsgSpecanDep(m) => Specan::MsgSpecanDep(m),
+            _ => unreachable!(),
+        }
+    }
+}
+
 // Struct with shared fields for various VelNED Message types.
 #[allow(clippy::upper_case_acronyms)]
 pub struct VelNEDFields {
@@ -1669,8 +1815,9 @@ pub struct VelNEDFields {
     pub d: i32,
     pub n_sats: u8,
 }
+
 // Enum wrapping around various Vel NED Message types.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum VelNED {
     MsgVelNED(MsgVelNED),
@@ -1694,6 +1841,18 @@ impl VelNED {
     }
 }
 
+impl Event for VelNED {
+    const MESSAGE_TYPES: &'static [u16] = &[MsgVelNED::MESSAGE_TYPE, MsgVelNEDDepA::MESSAGE_TYPE];
+
+    fn from_sbp(msg: SBP) -> Self {
+        match msg {
+            SBP::MsgVelNED(m) => VelNED::MsgVelNED(m),
+            SBP::MsgVelNEDDepA(m) => VelNED::MsgVelNEDDepA(m),
+            _ => unreachable!(),
+        }
+    }
+}
+
 // Baseline Tab Types.
 
 // Struct with shared fields for various BaselineNED Message types.
@@ -1709,7 +1868,7 @@ pub struct BaselineNEDFields {
     pub n_sats: u8,
 }
 // Enum wrapping around various Baseline NED Message types.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum BaselineNED {
     MsgBaselineNED(MsgBaselineNED),
@@ -1755,6 +1914,21 @@ impl BaselineNED {
         match self {
             BaselineNED::MsgBaselineNED(MsgBaselineNED { flags, .. })
             | BaselineNED::MsgBaselineNEDDepA(MsgBaselineNEDDepA { flags, .. }) => *flags & 0x7,
+        }
+    }
+}
+
+impl Event for BaselineNED {
+    const MESSAGE_TYPES: &'static [u16] = &[
+        MsgBaselineNED::MESSAGE_TYPE,
+        MsgBaselineNEDDepA::MESSAGE_TYPE,
+    ];
+
+    fn from_sbp(msg: SBP) -> Self {
+        match msg {
+            SBP::MsgBaselineNED(m) => BaselineNED::MsgBaselineNED(m),
+            SBP::MsgBaselineNEDDepA(m) => BaselineNED::MsgBaselineNEDDepA(m),
+            _ => unreachable!(),
         }
     }
 }

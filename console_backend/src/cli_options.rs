@@ -134,7 +134,7 @@ impl CliOptions {
         let mut filtered_args: Vec<String> = vec![];
         for arg in args {
             if let Some(n_arg) = next_args.next() {
-                if (arg.ends_with("python") || arg.ends_with("python.exe"))
+                if (arg.ends_with("python") || arg.ends_with("python.exe") || arg.ends_with("pythonw.exe"))
                     && (n_arg.ends_with(".py") || n_arg.ends_with("swiftnav-console.exe"))
                 {
                     continue;

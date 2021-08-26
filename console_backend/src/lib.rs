@@ -43,15 +43,15 @@ use crate::{
 };
 
 struct Tabs<'a, S: types::CapnProtoSender> {
-    pub main_tab: RefCell<MainTab<S>>,
-    pub advanced_ins_tab: RefCell<AdvancedInsTab<S>>,
-    pub advanced_magnetometer_tab: RefCell<AdvancedMagnetometerTab<S>>,
-    pub baseline_tab: RefCell<BaselineTab<'a, S>>,
-    pub tracking_signals_tab: RefCell<TrackingSignalsTab<S>>,
-    pub solution_tab: RefCell<SolutionTab<S>>,
-    pub observation_tab: RefCell<ObservationTab<S>>,
-    pub solution_velocity_tab: RefCell<SolutionVelocityTab<'a, S>>,
-    pub advanced_spectrum_analyzer_tab: RefCell<AdvancedSpectrumAnalyzerTab<S>>,
+    pub main: RefCell<MainTab<S>>,
+    pub advanced_ins: RefCell<AdvancedInsTab<S>>,
+    pub advanced_magnetometer: RefCell<AdvancedMagnetometerTab<S>>,
+    pub baseline: RefCell<BaselineTab<'a, S>>,
+    pub tracking_signals: RefCell<TrackingSignalsTab<S>>,
+    pub solution: RefCell<SolutionTab<S>>,
+    pub observation: RefCell<ObservationTab<S>>,
+    pub solution_velocity: RefCell<SolutionVelocityTab<'a, S>>,
+    pub advanced_spectrum_analyzer: RefCell<AdvancedSpectrumAnalyzerTab<S>>,
     pub status_bar: RefCell<StatusBar<S>>,
 }
 
@@ -62,35 +62,30 @@ impl<'a, S: types::CapnProtoSender> Tabs<'a, S> {
         msg_sender: types::MsgSender,
     ) -> Self {
         Self {
-            main_tab: MainTab::new(shared_state.clone(), client_sender.clone()).into(),
-            advanced_ins_tab: AdvancedInsTab::new(shared_state.clone(), client_sender.clone())
+            main: MainTab::new(shared_state.clone(), client_sender.clone()).into(),
+            advanced_ins: AdvancedInsTab::new(shared_state.clone(), client_sender.clone()).into(),
+            advanced_magnetometer: AdvancedMagnetometerTab::new(
+                shared_state.clone(),
+                client_sender.clone(),
+            )
+            .into(),
+            baseline: BaselineTab::new(shared_state.clone(), client_sender.clone(), msg_sender)
                 .into(),
-            advanced_magnetometer_tab: AdvancedMagnetometerTab::new(
-                shared_state.clone(),
-                client_sender.clone(),
-            )
-            .into(),
-            baseline_tab: BaselineTab::new(shared_state.clone(), client_sender.clone(), msg_sender)
+            tracking_signals: TrackingSignalsTab::new(shared_state.clone(), client_sender.clone())
                 .into(),
-            tracking_signals_tab: TrackingSignalsTab::new(
+            observation: ObservationTab::new(shared_state.clone(), client_sender.clone()).into(),
+            solution: SolutionTab::new(shared_state.clone(), client_sender.clone()).into(),
+            solution_velocity: SolutionVelocityTab::new(
                 shared_state.clone(),
                 client_sender.clone(),
             )
             .into(),
-            observation_tab: ObservationTab::new(shared_state.clone(), client_sender.clone())
-                .into(),
-            solution_tab: SolutionTab::new(shared_state.clone(), client_sender.clone()).into(),
-            solution_velocity_tab: SolutionVelocityTab::new(
+            advanced_spectrum_analyzer: AdvancedSpectrumAnalyzerTab::new(
                 shared_state.clone(),
                 client_sender.clone(),
             )
             .into(),
-            advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTab::new(
-                shared_state.clone(),
-                client_sender.clone(),
-            )
-            .into(),
-            status_bar: StatusBar::new(shared_state.clone(), client_sender.clone()).into(),
+            status_bar: StatusBar::new(shared_state, client_sender).into(),
         }
     }
 }

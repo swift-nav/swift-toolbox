@@ -200,9 +200,8 @@ where
     E: Event,
 {
     fn run(&mut self, _event: E, time: MaybeGpsTime) {
-        match time {
-            Some(Ok(time)) => (self)(time),
-            _ => {}
+        if let Some(Ok(time)) = time {
+            (self)(time)
         }
     }
 }

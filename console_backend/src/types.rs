@@ -50,9 +50,8 @@ use std::{
     },
     time::Instant,
 };
-
-pub type Error = std::boxed::Box<dyn std::error::Error>;
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Error = anyhow::Error;
+pub type Result<T> = anyhow::Result<T>;
 pub type UtcDateTime = DateTime<Utc>;
 
 /// Sends SBP messages to the connected device
@@ -77,10 +76,10 @@ impl MsgSender {
         }
     }
 
-    pub fn send(&self, mut msg: SBP) -> sbp::Result<()> {
+    pub fn send(&self, mut msg: SBP) -> Result<()> {
         msg.set_sender_id(Self::SENDER_ID);
         let mut framed = self.inner.lock().expect(Self::LOCK_FAILURE);
-        framed.send(msg)?;
+        framed.send(msg).context("while sending a message")?;
         Ok(())
     }
 }

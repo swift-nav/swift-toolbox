@@ -32,7 +32,7 @@ pub mod tracking_signals_tab;
 pub mod types;
 pub mod utils;
 
-use std::cell::RefCell;
+use std::sync::Mutex;
 
 use crate::{
     advanced_ins_tab::AdvancedInsTab, advanced_magnetometer_tab::AdvancedMagnetometerTab,
@@ -43,16 +43,16 @@ use crate::{
 };
 
 struct Tabs<'a, S: types::CapnProtoSender> {
-    pub main: RefCell<MainTab<S>>,
-    pub advanced_ins: RefCell<AdvancedInsTab<S>>,
-    pub advanced_magnetometer: RefCell<AdvancedMagnetometerTab<S>>,
-    pub baseline: RefCell<BaselineTab<'a, S>>,
-    pub tracking_signals: RefCell<TrackingSignalsTab<S>>,
-    pub solution: RefCell<SolutionTab<S>>,
-    pub observation: RefCell<ObservationTab<S>>,
-    pub solution_velocity: RefCell<SolutionVelocityTab<'a, S>>,
-    pub advanced_spectrum_analyzer: RefCell<AdvancedSpectrumAnalyzerTab<S>>,
-    pub status_bar: RefCell<StatusBar<S>>,
+    pub main: Mutex<MainTab<S>>,
+    pub advanced_ins: Mutex<AdvancedInsTab<S>>,
+    pub advanced_magnetometer: Mutex<AdvancedMagnetometerTab<S>>,
+    pub baseline: Mutex<BaselineTab<'a, S>>,
+    pub tracking_signals: Mutex<TrackingSignalsTab<S>>,
+    pub solution: Mutex<SolutionTab<S>>,
+    pub observation: Mutex<ObservationTab<S>>,
+    pub solution_velocity: Mutex<SolutionVelocityTab<'a, S>>,
+    pub advanced_spectrum_analyzer: Mutex<AdvancedSpectrumAnalyzerTab<S>>,
+    pub status_bar: Mutex<StatusBar<S>>,
 }
 
 impl<'a, S: types::CapnProtoSender> Tabs<'a, S> {

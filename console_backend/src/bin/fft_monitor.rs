@@ -1,3 +1,4 @@
+use anyhow::Context;
 use clap::Clap;
 use crossbeam::{channel, scope};
 use sbp::{messages::piksi::MsgSpecan, sbp_tools::SBPTools};
@@ -60,7 +61,10 @@ fn main() -> Result<()> {
     println!("Writing to file: {}", &filename);
     let channel = opts.channel;
     let num_ffts = opts.num_ffts;
-    let (rdr, _) = opts.into_conn().try_connect(/*shared_state=*/ None)?;
+    let (rdr, _) = opts
+        .into_conn()
+        .try_connect(/*shared_state=*/ None)
+        .context("while connecting")?;
 
     scope(|s| {
         s.spawn(|_| run(rdr));

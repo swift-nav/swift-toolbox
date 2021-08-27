@@ -208,7 +208,7 @@ where
 }
 
 struct Callback<'a> {
-    func: Box<dyn FnMut(SBP, MaybeGpsTime) + 'a>,
+    func: Box<dyn FnMut(SBP, MaybeGpsTime) + Send + 'a>,
     msg_types: &'static [u16],
 }
 
@@ -241,7 +241,7 @@ impl<'a> Link<'a> {
 
     pub fn register_cb<H, E, K>(&mut self, mut handler: H) -> Key
     where
-        H: Handler<E, K> + 'a,
+        H: Handler<E, K> + Send + 'a,
         E: Event,
     {
         let mut cbs = self.callbacks.lock().expect(Self::CB_LOCK_FAILURE);

@@ -58,75 +58,91 @@ where
 
     link.register_cb(|msg: MsgAgeCorrections| {
         tabs.baseline
-            .borrow_mut()
+            .lock()
+            .unwrap()
             .handle_age_corrections(msg.clone());
         tabs.solution
-            .borrow_mut()
+            .lock()
+            .unwrap()
             .handle_age_corrections(msg.clone());
-        tabs.status_bar.borrow_mut().handle_age_corrections(msg);
+        tabs.status_bar.lock().unwrap().handle_age_corrections(msg);
     });
 
     link.register_cb(|msg: MsgAngularRate| {
-        tabs.solution.borrow_mut().handle_angular_rate(msg);
+        tabs.solution.lock().unwrap().handle_angular_rate(msg);
     });
 
     link.register_cb(|msg: MsgBaselineHeading| {
-        tabs.baseline.borrow_mut().handle_baseline_heading(msg);
+        tabs.baseline.lock().unwrap().handle_baseline_heading(msg);
     });
 
     link.register_cb(|msg: BaselineNED| {
-        tabs.baseline.borrow_mut().handle_baseline_ned(msg.clone());
-        tabs.status_bar.borrow_mut().handle_baseline_ned(msg);
+        tabs.baseline
+            .lock()
+            .unwrap()
+            .handle_baseline_ned(msg.clone());
+        tabs.status_bar.lock().unwrap().handle_baseline_ned(msg);
     });
 
     link.register_cb(|msg: Dops| {
-        tabs.solution.borrow_mut().handle_dops(msg);
+        tabs.solution.lock().unwrap().handle_dops(msg);
     });
 
     link.register_cb(|msg: GpsTime| {
-        tabs.baseline.borrow_mut().handle_gps_time(msg.clone());
-        tabs.solution.borrow_mut().handle_gps_time(msg);
+        tabs.baseline.lock().unwrap().handle_gps_time(msg.clone());
+        tabs.solution.lock().unwrap().handle_gps_time(msg);
     });
 
     link.register_cb(|_: MsgHeartbeat| {
-        tabs.status_bar.borrow_mut().handle_heartbeat();
+        tabs.status_bar.lock().unwrap().handle_heartbeat();
     });
 
     link.register_cb(|msg: MsgImuAux| {
-        tabs.advanced_ins.borrow_mut().handle_imu_aux(msg);
+        tabs.advanced_ins.lock().unwrap().handle_imu_aux(msg);
     });
 
     link.register_cb(|msg: MsgImuRaw| {
-        tabs.advanced_ins.borrow_mut().handle_imu_raw(msg);
+        tabs.advanced_ins.lock().unwrap().handle_imu_raw(msg);
     });
 
     link.register_cb(|msg: MsgInsStatus| {
-        tabs.solution.borrow_mut().handle_ins_status(msg.clone());
-        tabs.status_bar.borrow_mut().handle_ins_status(msg);
+        tabs.solution.lock().unwrap().handle_ins_status(msg.clone());
+        tabs.status_bar.lock().unwrap().handle_ins_status(msg);
     });
 
     link.register_cb(|msg: MsgInsUpdates| {
         tabs.advanced_ins
-            .borrow_mut()
+            .lock()
+            .unwrap()
             .fusion_engine_status_bar
             .handle_ins_updates(msg.clone());
-        tabs.solution.borrow_mut().handle_ins_updates(msg.clone());
-        tabs.status_bar.borrow_mut().handle_ins_updates(msg);
+        tabs.solution
+            .lock()
+            .unwrap()
+            .handle_ins_updates(msg.clone());
+        tabs.status_bar.lock().unwrap().handle_ins_updates(msg);
     });
 
     link.register_cb(|msg: MsgMagRaw| {
-        tabs.advanced_magnetometer.borrow_mut().handle_mag_raw(msg);
+        tabs.advanced_magnetometer
+            .lock()
+            .unwrap()
+            .handle_mag_raw(msg);
     });
 
     link.register_cb(|msg: MsgMeasurementState| {
         tabs.tracking_signals
-            .borrow_mut()
+            .lock()
+            .unwrap()
             .handle_msg_measurement_state(msg.states);
     });
 
     link.register_cb(|msg: ObservationMsg| {
-        tabs.tracking_signals.borrow_mut().handle_obs(msg.clone());
-        tabs.observation.borrow_mut().handle_obs(msg);
+        tabs.tracking_signals
+            .lock()
+            .unwrap()
+            .handle_obs(msg.clone());
+        tabs.observation.lock().unwrap().handle_obs(msg);
     });
 
     link.register_cb(|_: MsgObsDepA| {
@@ -134,52 +150,54 @@ where
     });
 
     link.register_cb(|msg: MsgOrientEuler| {
-        tabs.solution.borrow_mut().handle_orientation_euler(msg);
+        tabs.solution.lock().unwrap().handle_orientation_euler(msg);
     });
 
     link.register_cb(|msg: PosLLH| {
-        tabs.solution.borrow_mut().handle_pos_llh(msg.clone());
-        tabs.status_bar.borrow_mut().handle_pos_llh(msg);
+        tabs.solution.lock().unwrap().handle_pos_llh(msg.clone());
+        tabs.status_bar.lock().unwrap().handle_pos_llh(msg);
     });
 
     link.register_cb(|msg: MsgPosLLHCov| {
-        tabs.solution.borrow_mut().handle_pos_llh_cov(msg);
+        tabs.solution.lock().unwrap().handle_pos_llh_cov(msg);
     });
 
     link.register_cb(|msg: Specan| {
         tabs.advanced_spectrum_analyzer
-            .borrow_mut()
+            .lock()
+            .unwrap()
             .handle_specan(msg);
     });
 
     link.register_cb(|msg: MsgTrackingState| {
         tabs.tracking_signals
-            .borrow_mut()
+            .lock()
+            .unwrap()
             .handle_msg_tracking_state(msg.states);
     });
 
     link.register_cb(|msg: VelNED| {
-        tabs.solution.borrow_mut().handle_vel_ned(msg);
+        tabs.solution.lock().unwrap().handle_vel_ned(msg);
     });
 
     link.register_cb(|msg: MsgVelNED| {
         // why does this tab not take both VelNED messages?
-        tabs.solution_velocity.borrow_mut().handle_vel_ned(msg);
+        tabs.solution_velocity.lock().unwrap().handle_vel_ned(msg);
     });
 
     link.register_cb(|msg: MsgUtcTime| {
-        tabs.baseline.borrow_mut().handle_utc_time(msg.clone());
-        tabs.solution.borrow_mut().handle_utc_time(msg);
+        tabs.baseline.lock().unwrap().handle_utc_time(msg.clone());
+        tabs.solution.lock().unwrap().handle_utc_time(msg);
     });
 
     link.register_cb(handle_log_msg);
 
     for (message, gps_time) in messages {
         if !shared_state.is_running() {
-            if let Err(e) = tabs.main.borrow_mut().end_csv_logging() {
+            if let Err(e) = tabs.main.lock().unwrap().end_csv_logging() {
                 error!("Issue closing csv file, {}", e);
             }
-            tabs.main.borrow_mut().close_sbp();
+            tabs.main.lock().unwrap().close_sbp();
             break;
         }
         if shared_state.is_paused() {
@@ -190,12 +208,15 @@ where
                 sleep(Duration::from_millis(PAUSE_LOOP_SLEEP_DURATION_MS));
             }
         }
-        tabs.main.borrow_mut().serialize_sbp(&message);
-        tabs.status_bar.borrow_mut().add_bytes(message.sbp_size());
+        tabs.main.lock().unwrap().serialize_sbp(&message);
+        tabs.status_bar
+            .lock()
+            .unwrap()
+            .add_bytes(message.sbp_size());
         let sent = link.send(&message, gps_time.clone());
         if let RealtimeDelay::On = realtime_delay {
             if sent {
-                tabs.main.borrow_mut().realtime_delay(gps_time);
+                tabs.main.lock().unwrap().realtime_delay(gps_time);
             } else {
                 debug!(
                     "Message, {}, ignored for realtime delay.",

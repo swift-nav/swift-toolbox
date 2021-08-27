@@ -30,8 +30,8 @@ impl<'a, S: CapnProtoSender> MainTab<S> {
             sbp_logger: None,
             last_gps_time: None,
             last_gps_update: Instant::now(),
-            client_sender: client_sender.clone(),
-            shared_state: shared_state.clone(),
+            client_sender,
+            shared_state,
         }
     }
 

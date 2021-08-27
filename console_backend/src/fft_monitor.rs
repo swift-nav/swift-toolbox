@@ -1,5 +1,6 @@
 use crate::constants::{AMPLITUDES, CHANNELS, FREQUENCIES, SIGNALS_TOTAL};
 use crate::types::{Result, Specan};
+use anyhow::bail;
 use serde::Serialize;
 use std::{
     collections::HashMap,
@@ -111,7 +112,7 @@ impl FftMonitor {
                                 if let Some(freqs) = fft.get(FREQUENCIES) {
                                     if let Some(amps) = fft.get(AMPLITUDES) {
                                         if freqs.len() != amps.len() {
-                                            return Err(format!("Frequencies length does not match amplitudes length for {:?}", gps_time).into());
+                                            bail!("Frequencies length does not match amplitudes length for {:?}", gps_time);
                                         }
                                         if let Some(chan_ffts) = self.ffts.get_mut(&channel) {
                                             chan_ffts.append(&mut vec![fft]);

@@ -8,7 +8,7 @@ use crossbeam::{channel, scope};
 use sbp::sbp_tools::SBPTools;
 
 use console_backend::{
-    broadcaster::Broadcaster,
+    broadcaster::Link,
     cli_options::Input,
     fileio::Fileio,
     types::{MsgSender, Result},
@@ -49,15 +49,15 @@ pub enum Opts {
 }
 
 fn main() -> Result<()> {
-    let bc = Broadcaster::new();
+    let link = Link::new();
+    let link_source = link.clone();
 
     let (done_tx, done_rx) = channel::bounded(0);
 
-    let bc_source = bc.clone();
     let run = move |rdr| {
         let messages = sbp::iter_messages(rdr).log_errors(log::Level::Debug);
         for msg in messages {
-            bc_source.send(&msg, None);
+            link_source.send(&msg, None);
             if done_rx.try_recv().is_ok() {
                 break;
             }
@@ -74,7 +74,7 @@ fn main() -> Result<()> {
             let sender = MsgSender::new(wtr);
             scope(|s| {
                 s.spawn(|_| run(rdr));
-                let mut fileio = Fileio::new(bc, sender);
+                let mut fileio = Fileio::new(link, sender);
                 let data = fs::File::open(source)?;
                 fileio.overwrite(dest, data)?;
                 eprintln!("file written successfully.");
@@ -92,7 +92,7 @@ fn main() -> Result<()> {
             let sender = MsgSender::new(wtr);
             scope(|s| {
                 s.spawn(|_| run(rdr));
-                let mut fileio = Fileio::new(bc, sender);
+                let mut fileio = Fileio::new(link, sender);
                 let dest: Box<dyn Write> = match dest {
                     Some(path) => Box::new(fs::File::create(path)?),
                     None => Box::new(io::stdout()),
@@ -108,7 +108,7 @@ fn main() -> Result<()> {
             let sender = MsgSender::new(wtr);
             scope(|s| {
                 s.spawn(|_| run(rdr));
-                let mut fileio = Fileio::new(bc, sender);
+                let mut fileio = Fileio::new(link, sender);
                 let files = fileio.readdir(path)?;
                 eprintln!("{:#?}", files);
                 done_tx.send(true).unwrap();
@@ -121,7 +121,7 @@ fn main() -> Result<()> {
             let sender = MsgSender::new(wtr);
             scope(|s| {
                 s.spawn(|_| run(rdr));
-                let fileio = Fileio::new(bc, sender);
+                let fileio = Fileio::new(link, sender);
                 fileio.remove(path)?;
                 eprintln!("file deleted.");
                 done_tx.send(true).unwrap();

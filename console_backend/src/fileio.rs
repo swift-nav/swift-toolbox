@@ -4,6 +4,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use anyhow::{anyhow, bail};
 use crossbeam::{atomic::AtomicCell, channel, scope, select, utils::Backoff};
 use rand::Rng;
 use sbp::messages::{
@@ -16,7 +17,7 @@ use sbp::messages::{
 };
 
 use crate::{
-    broadcaster::Broadcaster,
+    broadcaster::Link,
     types::{MsgSender, Result},
 };
 
@@ -35,19 +36,16 @@ const OFFSET_LEN: usize = 4;
 const NULL_SEP_LEN: usize = 1;
 const WRITE_REQ_OVERHEAD_LEN: usize = SEQUENCE_LEN + OFFSET_LEN + NULL_SEP_LEN;
 
-pub struct Fileio<W> {
-    broadcast: Broadcaster,
-    sender: MsgSender<W>,
+pub struct Fileio<'a> {
+    link: Link<'a>,
+    sender: MsgSender,
     config: Option<FileioConfig>,
 }
 
-impl<W> Fileio<W>
-where
-    W: Write + Send,
-{
-    pub fn new(broadcast: Broadcaster, sender: MsgSender<W>) -> Self {
+impl<'a> Fileio<'a> {
+    pub fn new(link: Link<'a>, sender: MsgSender) -> Self {
         Self {
-            broadcast,
+            link,
             sender,
             config: None,
         }
@@ -98,14 +96,11 @@ where
                     open_requests.fetch_add(1);
                 }
 
-                sbp::Result::Ok(())
+                Result::Ok(())
             });
 
-            let (sub, key) = self.broadcast.subscribe::<MsgFileioReadResp>();
-            s.spawn(move |_| {
-                for res in sub.iter() {
-                    res_tx.send(res).unwrap();
-                }
+            let key = self.link.register_cb(move |msg: MsgFileioReadResp| {
+                res_tx.send(msg).unwrap();
             });
 
             loop {
@@ -115,7 +110,7 @@ where
                         pending.insert(sequence, request);
                     },
                     recv(res_rx) -> msg => {
-                        let (msg, _) = msg?;
+                        let msg = msg?;
                         let req = match pending.remove(&msg.sequence) {
                             Some(req) => req,
                             None => continue,
@@ -151,7 +146,7 @@ where
                 }
             }
 
-            self.broadcast.unsubscribe(key);
+            self.link.unregister_cb(key);
 
             Ok(())
         })
@@ -220,14 +215,11 @@ where
                     open_requests.fetch_add(1);
                 }
 
-                sbp::Result::Ok(())
+                Result::Ok(())
             });
 
-            let (sub, key) = self.broadcast.subscribe::<MsgFileioWriteResp>();
-            s.spawn(move |_| {
-                for res in sub.iter() {
-                    res_tx.send(res).unwrap();
-                }
+            let key = self.link.register_cb(move |msg: MsgFileioWriteResp| {
+                res_tx.send(msg).unwrap();
             });
 
             let mut pending: HashMap<u32, (WriteState, WriteReq)> = HashMap::new();
@@ -243,7 +235,7 @@ where
                         pending.insert(req_state.sequence, (req_state, req));
                     },
                     recv(res_rx) -> msg => {
-                        let (msg, _) = msg?;
+                        let msg = msg?;
                         if pending.remove(&msg.sequence).is_none() {
                             continue
                         }
@@ -263,7 +255,7 @@ where
                 }
             }
 
-            self.broadcast.unsubscribe(key);
+            self.link.unregister_cb(key);
 
             Result::Ok(())
         })
@@ -276,38 +268,54 @@ where
         let mut seq = new_sequence();
         let mut files = vec![];
 
+        let (tx, rx) = channel::unbounded();
+
+        let key = self.link.register_cb(move |msg: MsgFileioReadDirResp| {
+            tx.send(msg).unwrap();
+        });
+
+        self.sender.send(SBP::from(MsgFileioReadDirReq {
+            sender_id: None,
+            sequence: seq,
+            offset: files.len() as u32,
+            dirname: path.clone().into(),
+        }))?;
+
         loop {
-            self.sender.send(SBP::from(MsgFileioReadDirReq {
-                sender_id: None,
-                sequence: seq,
-                offset: files.len() as u32,
-                dirname: path.clone().into(),
-            }))?;
-
-            let (reply, _) = self
-                .broadcast
-                .wait::<MsgFileioReadDirResp>(READDIR_TIMEOUT)?;
-
-            if reply.sequence != seq {
-                return Err(format!(
-                    "MsgFileioReadDirResp didn't match request ({} vs {})",
-                    reply.sequence, seq
-                )
-                .into());
+            select! {
+                recv(rx) -> msg => {
+                    let msg = msg?;
+                    if msg.sequence != seq {
+                        self.link.unregister_cb(key);
+                        bail!(
+                            "MsgFileioReadDirResp didn't match request ({} vs {})",
+                            msg.sequence, seq
+                        );
+                    }
+                    let mut contents = msg.contents;
+                    if contents.is_empty() {
+                        self.link.unregister_cb(key);
+                        return Ok(files);
+                    }
+                    if contents[contents.len() - 1] == b'\0' {
+                        contents.remove(contents.len() - 1);
+                    }
+                    for f in contents.split(|b| b == &b'\0') {
+                        files.push(String::from_utf8_lossy(f).into_owned());
+                    }
+                    seq += 1;
+                    self.sender.send(SBP::from(MsgFileioReadDirReq {
+                        sender_id: None,
+                        sequence: seq,
+                        offset: files.len() as u32,
+                        dirname: path.clone().into(),
+                    }))?;
+                },
+                recv(channel::tick(READDIR_TIMEOUT)) -> _ => {
+                    self.link.unregister_cb(key);
+                    bail!("MsgFileioReadDirReq timed out");
+                }
             }
-
-            let mut contents = reply.contents;
-
-            if contents.is_empty() {
-                return Ok(files);
-            }
-            if contents[contents.len() - 1] == b'\0' {
-                contents.remove(contents.len() - 1);
-            }
-            for f in contents.split(|b| b == &b'\0') {
-                files.push(String::from_utf8_lossy(f).into_owned());
-            }
-            seq += 1;
         }
     }
 
@@ -325,12 +333,19 @@ where
         }
 
         let sequence = new_sequence();
-        let (tx, rx) = channel::bounded(0);
+        let (stop_tx, stop_rx) = channel::bounded(0);
+        let (tx, rx) = channel::bounded(1);
 
+        let key = self.link.register_cb(move |msg: MsgFileioConfigResp| {
+            tx.send(FileioConfig::new(msg)).unwrap();
+            stop_tx.send(true).unwrap();
+        });
+
+        let sender = &self.sender;
         let config = scope(|s| {
             s.spawn(|_| {
-                while rx.try_recv().is_err() {
-                    let _ = self.sender.send(SBP::from(MsgFileioConfigReq {
+                while stop_rx.try_recv().is_err() {
+                    let _ = sender.send(SBP::from(MsgFileioConfigReq {
                         sender_id: None,
                         sequence,
                     }));
@@ -338,16 +353,14 @@ where
                 }
             });
 
-            let config = self
-                .broadcast
-                .wait::<MsgFileioConfigResp>(CONFIG_REQ_TIMEOUT)
-                .map_or_else(|_| Default::default(), |(msg, _)| FileioConfig::new(msg));
-
-            tx.send(true).unwrap();
-
-            config
+            match rx.recv_timeout(CONFIG_REQ_TIMEOUT) {
+                Ok(config) => config,
+                Err(_) => Default::default(),
+            }
         })
         .unwrap();
+
+        self.link.unregister_cb(key);
 
         self.config = Some(config);
         self.config.clone().unwrap()
@@ -417,7 +430,7 @@ impl FileioRequest {
         self.sent_at = Instant::now();
 
         if self.retries >= MAX_RETRIES {
-            Err("fileio send message timeout".into())
+            Err(anyhow!("fileio send message timeout"))
         } else {
             Ok(())
         }

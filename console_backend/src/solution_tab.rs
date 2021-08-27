@@ -9,7 +9,7 @@ use std::{collections::HashMap, time::Instant};
 
 use crate::constants::*;
 use crate::date_conv::*;
-use crate::output::{CsvSerializer, PosLLHLog, VelLog};
+use crate::output::{PosLLHLog, VelLog};
 use crate::piksi_tools_constants::EMPTY_STR;
 use crate::types::{
     CapnProtoSender, Deque, Dops, GnssModes, GpsTime, PosLLH, SharedState, UtcDateTime, VelNED,
@@ -67,7 +67,6 @@ pub struct SolutionTab<S: CapnProtoSender> {
     pub modes: Deque<u8>,
     pub nsec: Option<i32>,
     pub pending_draw_modes: Vec<String>,
-    pub pos_log_file: Option<CsvSerializer>,
     pub shared_state: SharedState,
     pub sln_cur_data: Vec<Vec<(f64, f64)>>,
     pub sln_data: Vec<Vec<(f64, f64)>>,
@@ -76,7 +75,6 @@ pub struct SolutionTab<S: CapnProtoSender> {
     pub unit: &'static str,
     pub utc_source: Option<String>,
     pub utc_time: Option<UtcDateTime>,
-    pub vel_log_file: Option<CsvSerializer>,
     pub week: Option<u16>,
 }
 
@@ -110,7 +108,6 @@ impl<S: CapnProtoSender> SolutionTab<S> {
             ],
             nsec: Some(0),
             pending_draw_modes: vec![],
-            pos_log_file: None,
             shared_state,
             sln_cur_data: { vec![vec![]; NUM_GNSS_MODES as usize] },
             sln_data: { vec![vec![]; NUM_GNSS_MODES as usize] },
@@ -134,7 +131,6 @@ impl<S: CapnProtoSender> SolutionTab<S> {
             unit: DEGREES,
             utc_source: None,
             utc_time: None,
-            vel_log_file: None,
             week: None,
         }
     }
@@ -277,26 +273,29 @@ impl<S: CapnProtoSender> SolutionTab<S> {
 
         // TODO(johnmichael.burke@) https://swift-nav.atlassian.net/browse/CPP-95
         // Validate logging.
-        if let Some(vel_file) = &mut self.vel_log_file {
-            let mut gps_time = None;
-            if let Some(tgps) = tgps_ {
-                if let Some(secgps) = secgps_ {
-                    gps_time = Some(format!("{}:{:0>6.06}", tgps, secgps));
+        {
+            let mut shared_data = self.shared_state.lock().unwrap();
+            if let Some(ref mut vel_file) = (*shared_data).solution_tab.velocity_tab.log_file {
+                let mut gps_time = None;
+                if let Some(tgps) = tgps_ {
+                    if let Some(secgps) = secgps_ {
+                        gps_time = Some(format!("{}:{:0>6.06}", tgps, secgps));
+                    }
                 }
-            }
-            let pc_time = format!("{}:{:0>6.06}", tloc, secloc);
-            if let Err(err) = vel_file.serialize(&VelLog {
-                pc_time,
-                gps_time,
-                tow_s: Some(tow),
-                north_mps: Some(n),
-                east_mps: Some(e),
-                down_mps: Some(d),
-                speed_mps: Some(speed),
-                flags: vel_ned_fields.flags,
-                num_signals: vel_ned_fields.n_sats,
-            }) {
-                eprintln!("Unable to to write to vel log, error {}.", err);
+                let pc_time = format!("{}:{:0>6.06}", tloc, secloc);
+                if let Err(err) = vel_file.serialize(&VelLog {
+                    pc_time,
+                    gps_time,
+                    tow_s: Some(tow),
+                    north_mps: Some(n),
+                    east_mps: Some(e),
+                    down_mps: Some(d),
+                    speed_mps: Some(speed),
+                    flags: vel_ned_fields.flags,
+                    num_signals: vel_ned_fields.n_sats,
+                }) {
+                    eprintln!("Unable to to write to vel log, error {}.", err);
+                }
             }
         }
         self.table
@@ -451,21 +450,24 @@ impl<S: CapnProtoSender> SolutionTab<S> {
 
         // TODO(johnmichael.burke@) https://swift-nav.atlassian.net/browse/CPP-95
         // Validate logging.
-        if let Some(pos_file) = &mut self.pos_log_file {
-            let pc_time = format!("{}:{:>6.06}", tloc, secloc);
-            if let Err(err) = pos_file.serialize(&PosLLHLog {
-                pc_time,
-                gps_time,
-                tow_s: Some(tow),
-                latitude_d: Some(pos_llh_fields.lat),
-                longitude_d: Some(pos_llh_fields.lon),
-                altitude_m: Some(pos_llh_fields.height),
-                h_accuracy_m: Some(pos_llh_fields.h_accuracy),
-                v_accuracy_m: Some(pos_llh_fields.v_accuracy),
-                n_sats: pos_llh_fields.n_sats,
-                flags: pos_llh_fields.flags,
-            }) {
-                eprintln!("Unable to to write to pos llh log, error {}.", err);
+        {
+            let mut shared_data = self.shared_state.lock().unwrap();
+            if let Some(ref mut pos_file) = (*shared_data).solution_tab.position_tab.log_file {
+                let pc_time = format!("{}:{:>6.06}", tloc, secloc);
+                if let Err(err) = pos_file.serialize(&PosLLHLog {
+                    pc_time,
+                    gps_time,
+                    tow_s: Some(tow),
+                    latitude_d: Some(pos_llh_fields.lat),
+                    longitude_d: Some(pos_llh_fields.lon),
+                    altitude_m: Some(pos_llh_fields.height),
+                    h_accuracy_m: Some(pos_llh_fields.h_accuracy),
+                    v_accuracy_m: Some(pos_llh_fields.v_accuracy),
+                    n_sats: pos_llh_fields.n_sats,
+                    flags: pos_llh_fields.flags,
+                }) {
+                    eprintln!("Unable to to write to pos llh log, error {}.", err);
+                }
             }
         }
 

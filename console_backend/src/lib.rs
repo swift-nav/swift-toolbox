@@ -32,6 +32,64 @@ pub mod tracking_signals_tab;
 pub mod types;
 pub mod utils;
 
+use std::sync::Mutex;
+
+use crate::{
+    advanced_ins_tab::AdvancedInsTab, advanced_magnetometer_tab::AdvancedMagnetometerTab,
+    advanced_spectrum_analyzer_tab::AdvancedSpectrumAnalyzerTab, baseline_tab::BaselineTab,
+    main_tab::MainTab, observation_tab::ObservationTab, solution_tab::SolutionTab,
+    solution_velocity_tab::SolutionVelocityTab, status_bar::StatusBar,
+    tracking_signals_tab::TrackingSignalsTab,
+};
+
+struct Tabs<'a, S: types::CapnProtoSender> {
+    pub main: Mutex<MainTab<S>>,
+    pub advanced_ins: Mutex<AdvancedInsTab<S>>,
+    pub advanced_magnetometer: Mutex<AdvancedMagnetometerTab<S>>,
+    pub baseline: Mutex<BaselineTab<'a, S>>,
+    pub tracking_signals: Mutex<TrackingSignalsTab<S>>,
+    pub solution: Mutex<SolutionTab<S>>,
+    pub observation: Mutex<ObservationTab<S>>,
+    pub solution_velocity: Mutex<SolutionVelocityTab<'a, S>>,
+    pub advanced_spectrum_analyzer: Mutex<AdvancedSpectrumAnalyzerTab<S>>,
+    pub status_bar: Mutex<StatusBar<S>>,
+}
+
+impl<'a, S: types::CapnProtoSender> Tabs<'a, S> {
+    fn new(
+        shared_state: types::SharedState,
+        client_sender: S,
+        msg_sender: types::MsgSender,
+    ) -> Self {
+        Self {
+            main: MainTab::new(shared_state.clone(), client_sender.clone()).into(),
+            advanced_ins: AdvancedInsTab::new(shared_state.clone(), client_sender.clone()).into(),
+            advanced_magnetometer: AdvancedMagnetometerTab::new(
+                shared_state.clone(),
+                client_sender.clone(),
+            )
+            .into(),
+            baseline: BaselineTab::new(shared_state.clone(), client_sender.clone(), msg_sender)
+                .into(),
+            tracking_signals: TrackingSignalsTab::new(shared_state.clone(), client_sender.clone())
+                .into(),
+            observation: ObservationTab::new(shared_state.clone(), client_sender.clone()).into(),
+            solution: SolutionTab::new(shared_state.clone(), client_sender.clone()).into(),
+            solution_velocity: SolutionVelocityTab::new(
+                shared_state.clone(),
+                client_sender.clone(),
+            )
+            .into(),
+            advanced_spectrum_analyzer: AdvancedSpectrumAnalyzerTab::new(
+                shared_state.clone(),
+                client_sender.clone(),
+            )
+            .into(),
+            status_bar: StatusBar::new(shared_state, client_sender).into(),
+        }
+    }
+}
+
 #[cfg(test)]
 pub mod test_common {
     use crate::constants::*;

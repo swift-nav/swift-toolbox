@@ -10,7 +10,7 @@ use sbp::{
     messages::{ConcreteMessage, SBPMessage, SBP},
     time::{GpsTime, GpsTimeError},
 };
-use slotmap::HopSlotMap;
+use slotmap::{DenseSlotMap, HopSlotMap};
 
 type MaybeGpsTime = Option<Result<GpsTime, GpsTimeError>>;
 
@@ -164,6 +164,116 @@ where
     }
 }
 
+pub trait Handler<Event, Kind> {
+    fn run(&mut self, event: Event, time: MaybeGpsTime);
+}
+
+pub struct WithTime;
+
+impl<F, E> Handler<E, WithTime> for F
+where
+    F: FnMut(E, MaybeGpsTime),
+    E: Event,
+{
+    fn run(&mut self, event: E, time: MaybeGpsTime) {
+        (self)(event, time)
+    }
+}
+
+pub struct WithoutTime;
+
+impl<F, E> Handler<E, WithoutTime> for F
+where
+    F: FnMut(E),
+    E: Event,
+{
+    fn run(&mut self, event: E, _time: MaybeGpsTime) {
+        (self)(event)
+    }
+}
+
+pub struct OnlyTime;
+
+impl<F, E> Handler<E, OnlyTime> for F
+where
+    F: FnMut(GpsTime),
+    E: Event,
+{
+    fn run(&mut self, _event: E, time: MaybeGpsTime) {
+        if let Some(Ok(time)) = time {
+            (self)(time)
+        }
+    }
+}
+
+struct Callback<'a> {
+    func: Box<dyn FnMut(SBP, MaybeGpsTime) + Send + 'a>,
+    msg_types: &'static [u16],
+}
+
+pub struct Link<'a> {
+    callbacks: Arc<Mutex<DenseSlotMap<KeyInner, Callback<'a>>>>,
+}
+
+impl<'a> Link<'a> {
+    const CB_LOCK_FAILURE: &'static str = "failed to aquire lock on callbacks";
+
+    pub fn new() -> Self {
+        Self {
+            callbacks: Arc::new(Mutex::new(DenseSlotMap::with_key())),
+        }
+    }
+
+    pub fn send(&self, message: &SBP, gps_time: MaybeGpsTime) -> bool {
+        let msg_type = message.get_message_type();
+        let mut cbs = self.callbacks.lock().expect(Self::CB_LOCK_FAILURE);
+        let to_call = cbs
+            .values_mut()
+            .filter(|cb| cb.msg_types.is_empty() || cb.msg_types.iter().any(|ty| ty == &msg_type));
+        let mut called = false;
+        for cb in to_call {
+            (cb.func)(message.clone(), gps_time.clone());
+            called = true;
+        }
+        called
+    }
+
+    pub fn register_cb<H, E, K>(&mut self, mut handler: H) -> Key
+    where
+        H: Handler<E, K> + Send + 'a,
+        E: Event,
+    {
+        let mut cbs = self.callbacks.lock().expect(Self::CB_LOCK_FAILURE);
+        let inner = cbs.insert(Callback {
+            func: Box::new(move |msg, time| {
+                let event = E::from_sbp(msg);
+                handler.run(event, time)
+            }),
+            msg_types: E::MESSAGE_TYPES,
+        });
+        Key { inner }
+    }
+
+    pub fn unregister_cb(&self, key: Key) {
+        let mut cbs = self.callbacks.lock().expect(Self::CB_LOCK_FAILURE);
+        cbs.remove(key.inner);
+    }
+}
+
+impl Clone for Link<'_> {
+    fn clone(&self) -> Self {
+        Self {
+            callbacks: Arc::clone(&self.callbacks),
+        }
+    }
+}
+
+impl Default for Link<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crossbeam::scope;
@@ -173,6 +283,27 @@ mod tests {
     };
 
     use super::*;
+
+    struct Counter {
+        count: usize,
+    }
+
+    impl Counter {
+        fn obs(&mut self, _: MsgObs) {
+            self.count += 1;
+        }
+    }
+
+    #[test]
+    fn test_dispatcher() {
+        let mut d = Link::new();
+        let mut c = Counter { count: 0 };
+        d.register_cb(|obs| c.obs(obs));
+        d.send(&make_msg_obs(), None);
+        d.send(&make_msg_obs_dep_a(), None);
+        drop(d);
+        assert_eq!(c.count, 1);
+    }
 
     #[test]
     fn test_broadcaster() {

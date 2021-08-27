@@ -2,7 +2,7 @@ use crate::constants::*;
 use crate::errors::*;
 use crate::process_messages::process_messages;
 use crate::types::*;
-use chrono::{DateTime, Utc};
+use anyhow::anyhow;
 use crossbeam::channel::{unbounded, Receiver, Sender};
 use log::{error, info};
 use std::{
@@ -15,10 +15,6 @@ use std::{
     thread::JoinHandle,
     time::Duration,
 };
-
-pub type Error = std::boxed::Box<dyn std::error::Error>;
-pub type Result<T> = std::result::Result<T, Error>;
-pub type UtcDateTime = DateTime<Utc>;
 
 #[derive(Clone)]
 pub struct TcpConnection {
@@ -33,13 +29,11 @@ impl TcpConnection {
     }
     fn socket_addrs(name: String) -> Result<SocketAddr> {
         let socket = &mut name.to_socket_addrs()?;
-        let socket = if let Some(socket_) = socket.next() {
-            socket_
+        if let Some(s) = socket.next() {
+            Ok(s)
         } else {
-            let e: Box<dyn std::error::Error> = String::from(TCP_CONNECTION_PARSING_FAILURE).into();
-            return Err(e);
-        };
-        Ok(socket)
+            Err(anyhow!("{}", TCP_CONNECTION_PARSING_FAILURE))
+        }
     }
     fn name(&self) -> String {
         self.name.clone()

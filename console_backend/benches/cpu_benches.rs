@@ -1,11 +1,12 @@
 #![allow(unused_imports)]
 use criterion::{criterion_group, criterion_main, Criterion};
+use crossbeam::channel;
 use glob::glob;
 use sbp::sbp_tools::SBPTools;
 use std::{
     fs, io,
     path::Path,
-    sync::{mpsc, Arc, Mutex},
+    sync::{Arc, Mutex},
     thread, time,
 };
 
@@ -36,8 +37,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
 }
 
 fn run_process_messages(file_in_name: &str, failure: bool) {
-    use std::sync::mpsc::Receiver;
-    let (client_recv_tx, client_recv_rx) = mpsc::channel::<Receiver<Vec<u8>>>();
+    let (client_recv_tx, client_recv_rx) = channel::unbounded::<channel::Receiver<Vec<u8>>>();
     let recv_thread = thread::spawn(move || {
         let client_recv = client_recv_rx.recv().unwrap();
         let mut iter_count = 0;
@@ -50,7 +50,7 @@ fn run_process_messages(file_in_name: &str, failure: bool) {
         assert!(iter_count > 0);
     });
     {
-        let (client_send_, client_recv) = mpsc::channel::<Vec<u8>>();
+        let (client_send_, client_recv) = channel::unbounded::<Vec<u8>>();
         client_recv_tx
             .send(client_recv)
             .expect("sending client recv handle should succeed");

@@ -9,6 +9,7 @@ use crate::piksi_tools_constants::*;
 use crate::utils::{mm_to_m, ms_to_sec, set_connected_frontend};
 use anyhow::{Context, Result as AHResult};
 use chrono::{DateTime, Utc};
+use crossbeam::channel;
 use directories::{ProjectDirs, UserDirs};
 use indexmap::set::IndexSet;
 use lazy_static::lazy_static;
@@ -44,7 +45,6 @@ use std::{
     path::PathBuf,
     str::FromStr,
     sync::{
-        self,
         atomic::{AtomicBool, Ordering::*},
         Arc, Mutex,
     },
@@ -126,11 +126,11 @@ pub trait CapnProtoSender: Debug + Clone + Send {
 
 #[derive(Debug, Clone)]
 pub struct ClientSender {
-    pub inner: sync::mpsc::Sender<Vec<u8>>,
+    pub inner: channel::Sender<Vec<u8>>,
     pub connected: ArcBool,
 }
 impl ClientSender {
-    pub fn new(inner: sync::mpsc::Sender<Vec<u8>>) -> Self {
+    pub fn new(inner: channel::Sender<Vec<u8>>) -> Self {
         Self {
             inner,
             connected: ArcBool::new_with(true),

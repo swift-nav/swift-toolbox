@@ -1,11 +1,11 @@
 #[cfg(feature = "benches")]
 mod mem_bench_impl {
-
+    use crossbeam::channel;
     use ndarray::{ArrayView, Axis, Dim};
     use std::{
         error::Error,
         result::Result,
-        sync::{mpsc, Arc, Mutex},
+        sync::{Arc, Mutex},
         thread,
     };
 
@@ -49,8 +49,7 @@ mod mem_bench_impl {
     ///   - mean - std >= absolute_mean
     #[test]
     fn test_run_process_messages() {
-        use std::sync::mpsc::Receiver;
-        let (client_recv_tx, client_recv_rx) = mpsc::channel::<Receiver<Vec<u8>>>();
+        let (client_recv_tx, client_recv_rx) = channel::unbounded::<channel::Receiver<Vec<u8>>>();
         let pid = get_current_pid().unwrap();
         println!("PID: {}", pid);
         let is_running = Arc::new(Mutex::new(true));
@@ -89,7 +88,7 @@ mod mem_bench_impl {
         });
 
         {
-            let (client_send_, client_recv) = mpsc::channel::<Vec<u8>>();
+            let (client_send_, client_recv) = channel::unbounded::<Vec<u8>>();
             client_recv_tx
                 .send(client_recv)
                 .expect("sending client recv handle should succeed");

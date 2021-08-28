@@ -1,4 +1,5 @@
 use capnp::serialize;
+use crossbeam::channel;
 use log::{error, info};
 use pyo3::exceptions;
 use pyo3::prelude::*;
@@ -8,13 +9,13 @@ use std::{
     io::{BufReader, Cursor},
     path::PathBuf,
     str::FromStr,
-    sync::mpsc,
     thread, time,
 };
 
 use crate::cli_options::*;
 use crate::connection::ConnectionState;
 use crate::console_backend_capnp as m;
+
 use crate::errors::*;
 use crate::log_panel::{setup_logging, LogLevel};
 use crate::output::{CsvLogging, SbpLogging};
@@ -24,13 +25,13 @@ use crate::utils::{refresh_loggingbar, refresh_navbar};
 /// The backend server
 #[pyclass]
 struct Server {
-    client_recv: Option<mpsc::Receiver<Vec<u8>>>,
+    client_recv: Option<channel::Receiver<Vec<u8>>>,
     client_sender: Option<ClientSender>,
 }
 
 #[pyclass]
 struct ServerEndpoint {
-    server_send: Option<mpsc::Sender<Vec<u8>>>,
+    server_send: Option<channel::Sender<Vec<u8>>>,
 }
 
 #[pymethods]
@@ -115,7 +116,7 @@ fn handle_cli(opt: CliOptions, connection_state: &ConnectionState, shared_state:
 fn backend_recv_thread(
     connection_state: ConnectionState,
     client_send: ClientSender,
-    server_recv: mpsc::Receiver<Vec<u8>>,
+    server_recv: channel::Receiver<Vec<u8>>,
     shared_state: SharedState,
 ) {
     thread::spawn(move || {
@@ -303,7 +304,7 @@ impl Server {
                 match client_recv.recv_timeout(time::Duration::from_millis(1)) {
                     Ok(buf) => break Some(buf),
                     Err(err) => {
-                        use std::sync::mpsc::RecvTimeoutError;
+                        use channel::RecvTimeoutError;
                         if matches!(err, RecvTimeoutError::Timeout) {
                             if self.client_sender.as_ref().unwrap().connected.get() {
                                 continue;
@@ -327,8 +328,8 @@ impl Server {
 
     #[text_signature = "($self, /)"]
     pub fn start(&mut self) -> PyResult<ServerEndpoint> {
-        let (client_send_, client_recv) = mpsc::channel::<Vec<u8>>();
-        let (server_send, server_recv) = mpsc::channel::<Vec<u8>>();
+        let (client_send_, client_recv) = channel::unbounded::<Vec<u8>>();
+        let (server_send, server_recv) = channel::unbounded::<Vec<u8>>();
         let client_send = ClientSender::new(client_send_);
         self.client_recv = Some(client_recv);
         self.client_sender = Some(client_send.clone());

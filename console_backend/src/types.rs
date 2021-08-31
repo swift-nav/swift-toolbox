@@ -120,7 +120,7 @@ impl<T: Clone> Deque<T> {
     }
 }
 
-pub trait CapnProtoSender: Debug + Clone + Send {
+pub trait CapnProtoSender: Debug + Clone + Send + Sync + 'static {
     fn send_data(&mut self, msg_bytes: Vec<u8>);
 }
 
@@ -373,7 +373,7 @@ impl SharedState {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).update_tab.buttons = Some(buttons);
     }
-    pub fn update_buttons(&mut self) -> Option<UpdateTabButtons>{
+    pub fn update_buttons(&mut self) -> Option<UpdateTabButtons> {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).update_tab.buttons.take()
     }
@@ -450,6 +450,9 @@ pub struct UpdateTabButtons {
 
 #[derive(Debug)]
 pub struct UpdateTabState {
+    pub firmware_local_filepath: Option<PathBuf>,
+    pub fileio_local_filepath: Option<PathBuf>,
+    pub fileio_destination_filepath: Option<PathBuf>,
     pub firmware_directory: PathBuf,
     pub buttons: Option<UpdateTabButtons>,
 }
@@ -459,6 +462,9 @@ impl UpdateTabState {
         UpdateTabState {
             buttons: None,
             firmware_directory: LOG_DIRECTORY.path(),
+            firmware_local_filepath: None,
+            fileio_local_filepath: None,
+            fileio_destination_filepath: None,
         }
     }
 }

@@ -5,7 +5,7 @@ import os
 import sys
 import threading
 
-from typing import List, Any
+from typing import List, Any, Optional
 
 import capnp  # type: ignore
 
@@ -22,7 +22,7 @@ from PySide2.QtGui import QFontDatabase
 
 from PySide2.QtQml import QQmlComponent, qmlRegisterType
 
-from constants import ApplicationStates, Keys, Tabs
+from constants import ApplicationStates, Keys, Tabs, QTKeys
 
 from log_panel import (
     LOG_PANEL,
@@ -323,6 +323,8 @@ def receive_messages(app_, backend, messages):
             UPDATE_TAB[Keys.FW_LOCAL_FILENAME] = m.updateTabStatus.fwLocalFilename
             UPDATE_TAB[Keys.DIRECTORY] = m.updateTabStatus.directory
             UPDATE_TAB[Keys.DOWNLOADING] = m.updateTabStatus.downloading
+            UPDATE_TAB[Keys.UPGRADING] = m.updateTabStatus.upgrading
+            UPDATE_TAB[Keys.FW_TEXT] = m.updateTabStatus.fwText
         elif m.which == Message.Union.LogAppend:
             log_panel_lock.lock()
             LOG_PANEL[Keys.ENTRIES] += [entry.line for entry in m.logAppend.entries]
@@ -457,15 +459,40 @@ class DataModel(QObject):
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
 
-    @Slot(list, str, str)  # type: ignore
-    def update_tab(self, buttons: list, local_filepath: str, download_directory: str) -> None:
+    @Slot(list, QTKeys.QVARIANT, QTKeys.QVARIANT, QTKeys.QVARIANT, QTKeys.QVARIANT)  # type: ignore
+    def update_tab(
+        self,
+        buttons: list,
+        update_local_filepath: Optional[str],
+        download_directory: Optional[str],
+        fileio_local_filepath: Optional[str],
+        fileio_destination_filepath: Optional[str],
+    ) -> None:
         Message = self.messages.Message
         m = Message()
         m.updateTabStatusFront = m.init(Message.Union.UpdateTabStatusFront)
-        m.updateTabStatusFront.localFilepath = local_filepath
-        m.updateTabStatusFront.downloadDirectory = download_directory
+        if update_local_filepath is not None:
+            m.updateTabStatusFront.updateLocalFilepath.filepath = str(update_local_filepath)
+        else:
+            m.updateTabStatusFront.updateLocalFilepath.none = None
+
+        if download_directory is not None:
+            m.updateTabStatusFront.downloadDirectory.directory = str(download_directory)
+        else:
+            m.updateTabStatusFront.downloadDirectory.none = None
+        if fileio_local_filepath is not None:
+            m.updateTabStatusFront.fileioLocalFilepath.filepath = str(fileio_local_filepath)
+        else:
+            m.updateTabStatusFront.fileioLocalFilepath.none = None
+
+        if fileio_destination_filepath is not None:
+            m.updateTabStatusFront.fileioDestinationFilepath.filepath = str(fileio_destination_filepath)
+        else:
+            m.updateTabStatusFront.fileioDestinationFilepath.none = None
+
         m.updateTabStatusFront.downloadLatestFirmware = buttons[0]
         m.updateTabStatusFront.updateFirmware = buttons[1]
+        m.updateTabStatusFront.sendFileToDevice = buttons[2]
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
 
@@ -562,6 +589,7 @@ if __name__ == "__main__":
     qmlRegisterType(StatusBarData, "SwiftConsole", 1, 0, "StatusBarData")  # type: ignore
     qmlRegisterType(TrackingSignalsPoints, "SwiftConsole", 1, 0, "TrackingSignalsPoints")  # type: ignore
     qmlRegisterType(ObservationData, "SwiftConsole", 1, 0, "ObservationData")  # type: ignore
+    qmlRegisterType(UpdateTabData, "SwiftConsole", 1, 0, "UpdateTabData")  # type: ignore
 
     engine = QtQml.QQmlApplicationEngine()
 
@@ -593,6 +621,7 @@ if __name__ == "__main__":
     tracking_signals_model = TrackingSignalsModel()
     remote_observation_model = ObservationModel()
     local_observation_model = ObservationModel()
+    update_tab_model = UpdateTabModel()
     root_context = engine.rootContext()
     root_context.setContextProperty("log_panel_model", log_panel_model)
     root_context.setContextProperty("nav_bar_model", nav_bar_model)
@@ -610,6 +639,7 @@ if __name__ == "__main__":
     root_context.setContextProperty("tracking_signals_model", tracking_signals_model)
     root_context.setContextProperty("remote_observation_model", remote_observation_model)
     root_context.setContextProperty("local_observation_model", local_observation_model)
+    root_context.setContextProperty("update_tab_model", update_tab_model)
     root_context.setContextProperty("data_model", data_model)
 
     # Unfortunately it is not possible to access singletons directly using the PySide2 API.

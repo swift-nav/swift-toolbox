@@ -14,7 +14,10 @@ UPDATE_TAB: Dict[str, Any] = {
     Keys.FW_LOCAL_FILENAME: str,
     Keys.DIRECTORY: str,
     Keys.DOWNLOADING: bool,
+    Keys.UPGRADING: bool,
+    Keys.FW_TEXT: str,
 }
+
 
 class UpdateTabData(QObject):  # pylint: disable=too-many-instance-attributes
 
@@ -24,6 +27,8 @@ class UpdateTabData(QObject):  # pylint: disable=too-many-instance-attributes
     _fw_local_filename: str = ""
     _directory: str = ""
     _downloading: bool = False
+    _upgrading: bool = False
+    _fw_text: str = ""
 
     def get_hardware_revision(self) -> str:
         return self._hardware_revision
@@ -73,6 +78,22 @@ class UpdateTabData(QObject):  # pylint: disable=too-many-instance-attributes
 
     downloading = Property(bool, get_downloading, set_downloading)
 
+    def get_upgrading(self) -> bool:
+        return self._upgrading
+
+    def set_upgrading(self, upgrading: bool) -> None:
+        self._upgrading = upgrading
+
+    upgrading = Property(bool, get_upgrading, set_upgrading)
+
+    def get_fw_text(self) -> str:
+        return self._fw_text
+
+    def set_fw_text(self, fw_text: str) -> None:
+        self._fw_text = fw_text
+
+    fw_text = Property(str, get_fw_text, set_fw_text)
+
 
 class UpdateTabModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(UpdateTabData)  # type: ignore
@@ -83,4 +104,6 @@ class UpdateTabModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_fw_local_filename(UPDATE_TAB[Keys.FW_LOCAL_FILENAME])
         cp.set_directory(UPDATE_TAB[Keys.DIRECTORY])
         cp.set_downloading(UPDATE_TAB[Keys.DOWNLOADING])
+        cp.set_upgrading(UPDATE_TAB[Keys.UPGRADING])
+        cp.set_fw_text(UPDATE_TAB[Keys.FW_TEXT])
         return cp

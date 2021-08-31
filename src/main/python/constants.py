@@ -105,6 +105,8 @@ class Keys(str, Enum):
     FW_LOCAL_FILENAME = "FW_LOCAL_FILENAME"
     DIRECTORY = "DIRECTORY"
     DOWNLOADING = "DOWNLOADING"
+    UPGRADING = "UPGRADING"
+    FW_TEXT = "FW_TEXT"
 
 
 class ApplicationStates(str, Enum):
@@ -115,3 +117,4 @@ class ApplicationStates(str, Enum):
 
 class QTKeys(str, Enum):
     QVARIANTLIST = "QVariantList"
+    QVARIANT = "QVariant"

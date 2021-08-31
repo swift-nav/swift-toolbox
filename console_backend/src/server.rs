@@ -289,8 +289,56 @@ fn backend_recv_thread(
                         let mut shared_data = shared_state_clone
                             .lock()
                             .expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-                        (*shared_data).update_tab.firmware_directory =
-                            PathBuf::from(cv_in.get_download_directory().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE))
+                        match cv_in.get_download_directory().which() {
+                            Ok(m::update_tab_status_front::download_directory::Directory(
+                                Ok(directory),
+                            )) => {
+                                (*shared_data).update_tab.firmware_directory =
+                                                    PathBuf::from(directory);
+                            }
+                            Err(e) => {
+                                error!("{}", e);
+                            }
+                            _ => (),
+                        }
+                        match cv_in.get_update_local_filepath().which() {
+                            Ok(m::update_tab_status_front::update_local_filepath::Filepath(
+                                Ok(filepath),
+                            )) => {
+                                (*shared_data).update_tab.firmware_local_filepath =
+                                    Some(PathBuf::from(filepath));
+                            }
+                            Err(e) => {
+                                error!("{}", e);
+                            }
+                            _ => (),
+                        }
+                        match cv_in.get_fileio_local_filepath().which() {
+                            Ok(m::update_tab_status_front::fileio_local_filepath::Filepath(
+                                Ok(filepath),
+                            )) => {
+                                (*shared_data).update_tab.fileio_local_filepath =
+                                    Some(PathBuf::from(filepath));
+                            }
+                            Err(e) => {
+                                error!("{}", e);
+                            }
+                            _ => (),
+                        }
+                        match cv_in.get_fileio_destination_filepath().which() {
+                            Ok(
+                                m::update_tab_status_front::fileio_destination_filepath::Filepath(
+                                    Ok(filepath),
+                                ),
+                            ) => {
+                                (*shared_data).update_tab.fileio_destination_filepath =
+                                    Some(PathBuf::from(filepath));
+                            }
+                            Err(e) => {
+                                error!("{}", e);
+                            }
+                            _ => (),
+                        }
                     }
                     _ => {
                         error!("unknown message from front-end");

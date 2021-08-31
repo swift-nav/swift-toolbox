@@ -190,13 +190,30 @@ struct UpdateTabStatus {
     fwLocalFilename @3: Text;
     directory @4 : Text;
     downloading @5 : Bool;
+    upgrading @6 : Bool;
+    fwText @7: Text;
 }
 
 struct UpdateTabStatusFront {
-    localFilepath @0 :Text;
-    downloadDirectory @1 :Text;
-    downloadLatestFirmware @2 : Bool;
-    updateFirmware @3: Bool;
+    updateFirmware @0: Bool;
+    downloadLatestFirmware @1 : Bool;
+    sendFileToDevice @2: Bool;
+    updateLocalFilepath :union {
+        filepath @3 :Text;
+        none @4 :Void;
+    }
+    downloadDirectory :union {
+        directory @5 :Text;
+        none @6 :Void;
+    }
+    fileioLocalFilepath :union {
+        filepath @7 :Text;
+        none @8 :Void;
+    }
+    fileioDestinationFilepath :union {
+        filepath @9 :Text;
+        none @10 :Void;
+    }
 }
 
 struct TrackingSignalsStatusFront {

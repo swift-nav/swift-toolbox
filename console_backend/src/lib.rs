@@ -61,11 +61,13 @@ struct Tabs<'link, S: types::CapnProtoSender> {
 
 impl<'link, S: types::CapnProtoSender> Tabs<'link, S> {
     fn new(
+        link: broadcaster::Link<'a>,
         shared_state: types::SharedState,
         client_sender: S,
         msg_sender: types::MsgSender,
         link: broadcaster::Link<'link>,
     ) -> Self {
+        let file_io = fileio::Fileio::new(link, msg_sender.clone());
         Self {
             main: MainTab::new(shared_state.clone(), client_sender.clone()).into(),
             advanced_ins: AdvancedInsTab::new(shared_state.clone(), client_sender.clone()).into(),

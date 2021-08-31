@@ -29,8 +29,7 @@ Item {
             id: settingsTab
         }
 
-        Item {
-            id: updateTab
+        UpdateTab {
         }
 
         AdvancedTab {

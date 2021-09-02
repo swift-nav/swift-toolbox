@@ -22,8 +22,8 @@ use crate::utils::serialize_capnproto_builder;
 /// - `tow`: The GPS Time of Week.
 /// - `unit`: Currently displayed and converted to unit of measure.
 #[derive(Debug)]
-pub struct SolutionVelocityTab<'a, S: CapnProtoSender> {
-    pub available_units: Vec<&'a str>,
+pub struct SolutionVelocityTab<S: CapnProtoSender> {
+    pub available_units: Vec<&'static str>,
     pub client_sender: S,
     pub colors: Vec<String>,
     pub max: f64,
@@ -35,8 +35,8 @@ pub struct SolutionVelocityTab<'a, S: CapnProtoSender> {
     pub unit: VelocityUnits,
 }
 
-impl<'a, S: CapnProtoSender> SolutionVelocityTab<'a, S> {
-    pub fn new(shared_state: SharedState, client_sender: S) -> SolutionVelocityTab<'a, S> {
+impl<S: CapnProtoSender> SolutionVelocityTab<S> {
+    pub fn new(shared_state: SharedState, client_sender: S) -> SolutionVelocityTab<S> {
         SolutionVelocityTab {
             available_units: vec![
                 VelocityUnits::Mps.as_str(),

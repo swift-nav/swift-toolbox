@@ -1,11 +1,7 @@
-use std::{
-    convert::TryInto,
-    marker::PhantomData,
-    sync::{Arc, Mutex},
-    time::Duration,
-};
+use std::{convert::TryInto, marker::PhantomData, sync::Arc, time::Duration};
 
 use crossbeam::channel;
+use parking_lot::Mutex;
 use sbp::{
     messages::{ConcreteMessage, SBPMessage, SBP},
     time::{GpsTime, GpsTimeError},
@@ -19,8 +15,6 @@ pub struct Broadcaster {
 }
 
 impl Broadcaster {
-    const CHANNELS_LOCK_FAILURE: &'static str = "failed to aquire lock on channels";
-
     pub fn new() -> Self {
         Self {
             channels: Arc::new(Mutex::new(HopSlotMap::with_key())),
@@ -29,7 +23,7 @@ impl Broadcaster {
 
     pub fn send(&self, message: &SBP, gps_time: MaybeGpsTime) {
         let msg_type = message.get_message_type();
-        let mut channels = self.channels.lock().expect(Self::CHANNELS_LOCK_FAILURE);
+        let mut channels = self.channels.lock();
         channels.retain(|_, chan| {
             if chan.msg_types.iter().any(|ty| ty == &msg_type) {
                 chan.inner.send((message.clone(), gps_time.clone())).is_ok()
@@ -44,7 +38,7 @@ impl Broadcaster {
         E: Event,
     {
         let (tx, rx) = channel::unbounded();
-        let mut channels = self.channels.lock().expect(Self::CHANNELS_LOCK_FAILURE);
+        let mut channels = self.channels.lock();
         let key = channels.insert(Sender {
             inner: tx,
             msg_types: E::MESSAGE_TYPES,
@@ -59,7 +53,7 @@ impl Broadcaster {
     }
 
     pub fn unsubscribe(&self, key: Key) {
-        let mut channels = self.channels.lock().expect(Self::CHANNELS_LOCK_FAILURE);
+        let mut channels = self.channels.lock();
         channels.remove(key.inner);
     }
 
@@ -206,9 +200,62 @@ where
     }
 }
 
-struct Callback<'a> {
-    func: Box<dyn FnMut(SBP, MaybeGpsTime) + Send + 'a>,
-    msg_types: &'static [u16],
+enum Callback<'a> {
+    Id {
+        func: Box<dyn FnMut(SBP, MaybeGpsTime) + Send + 'a>,
+        msg_type: u16,
+    },
+    Event {
+        func: Box<dyn FnMut(SBP, MaybeGpsTime) + Send + 'a>,
+        msg_types: &'static [u16],
+    },
+}
+
+impl<'a> Callback<'a> {
+    fn run(&mut self, msg: SBP, time: MaybeGpsTime) {
+        match self {
+            Callback::Id { func, .. } | Callback::Event { func, .. } => (func)(msg, time),
+        }
+    }
+
+    fn should_run(&self, msg: u16) -> bool {
+        match self {
+            Callback::Id { msg_type, .. } => msg_type == &msg,
+            Callback::Event { msg_types, .. } => msg_types.contains(&msg),
+        }
+    }
+}
+
+pub fn with_link<'env, F>(f: F)
+where
+    F: FnOnce(&LinkSource<'env>),
+{
+    let source: LinkSource<'env> = LinkSource { link: Link::new() };
+    f(&source);
+}
+
+pub struct LinkSource<'env> {
+    link: Link<'env>,
+}
+
+impl<'env> LinkSource<'env> {
+    pub fn link<'scope>(&self) -> Link<'scope>
+    where
+        'env: 'scope,
+    {
+        let link: Link<'scope> = unsafe { std::mem::transmute(self.link.clone()) };
+        link
+    }
+
+    pub fn send(&self, message: &SBP, gps_time: MaybeGpsTime) -> bool {
+        self.link.send(message, gps_time)
+    }
+}
+
+impl<'env> Drop for LinkSource<'env> {
+    fn drop(&mut self) {
+        self.link.callbacks.lock().clear();
+    }
 }
 
 pub struct Link<'a> {
@@ -216,8 +263,6 @@ pub struct Link<'a> {
 }
 
 impl<'a> Link<'a> {
-    const CB_LOCK_FAILURE: &'static str = "failed to aquire lock on callbacks";
-
     pub fn new() -> Self {
         Self {
             callbacks: Arc::new(Mutex::new(DenseSlotMap::with_key())),
@@ -226,25 +271,35 @@ impl<'a> Link<'a> {
 
     pub fn send(&self, message: &SBP, gps_time: MaybeGpsTime) -> bool {
         let msg_type = message.get_message_type();
-        let mut cbs = self.callbacks.lock().expect(Self::CB_LOCK_FAILURE);
-        let to_call = cbs
-            .values_mut()
-            .filter(|cb| cb.msg_types.is_empty() || cb.msg_types.iter().any(|ty| ty == &msg_type));
+        let mut cbs = self.callbacks.lock();
+        let to_call = cbs.values_mut().filter(|cb| cb.should_run(msg_type));
         let mut called = false;
         for cb in to_call {
-            (cb.func)(message.clone(), gps_time.clone());
+            cb.run(message.clone(), gps_time.clone());
             called = true;
         }
         called
     }
 
-    pub fn register_cb<H, E, K>(&mut self, mut handler: H) -> Key
+    pub fn register_cb_by_id<H>(&self, id: u16, mut handler: H) -> Key
+    where
+        H: FnMut(SBP) + Send + 'a,
+    {
+        let mut cbs = self.callbacks.lock();
+        let inner = cbs.insert(Callback::Id {
+            func: Box::new(move |msg, _time| (handler)(msg)),
+            msg_type: id,
+        });
+        Key { inner }
+    }
+
+    pub fn register_cb<H, E, K>(&self, mut handler: H) -> Key
     where
         H: Handler<E, K> + Send + 'a,
         E: Event,
     {
-        let mut cbs = self.callbacks.lock().expect(Self::CB_LOCK_FAILURE);
-        let inner = cbs.insert(Callback {
+        let mut cbs = self.callbacks.lock();
+        let inner = cbs.insert(Callback::Event {
             func: Box::new(move |msg, time| {
                 let event = E::from_sbp(msg);
                 handler.run(event, time)
@@ -255,7 +310,7 @@ impl<'a> Link<'a> {
     }
 
     pub fn unregister_cb(&self, key: Key) {
-        let mut cbs = self.callbacks.lock().expect(Self::CB_LOCK_FAILURE);
+        let mut cbs = self.callbacks.lock();
         cbs.remove(key.inner);
     }
 }
@@ -268,7 +323,7 @@ impl Clone for Link<'_> {
     }
 }
 
-impl Default for Link<'_> {
+impl<'a> Default for Link<'a> {
     fn default() -> Self {
         Self::new()
     }
@@ -296,7 +351,7 @@ mod tests {
 
     #[test]
     fn test_dispatcher() {
-        let mut d = Link::new();
+        let d = Link::new();
         let mut c = Counter { count: 0 };
         d.register_cb(|obs| c.obs(obs));
         d.send(&make_msg_obs(), None);

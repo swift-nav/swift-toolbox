@@ -355,6 +355,7 @@ dependencies = [
  "logtest",
  "ndarray",
  "ordered-float",
+ "parking_lot",
  "paste 1.0.5",
  "pyo3",
  "rand",

@@ -54,7 +54,6 @@ struct Tabs<'link, S: types::CapnProtoSender> {
     pub advanced_spectrum_analyzer: Mutex<AdvancedSpectrumAnalyzerTab<S>>,
     pub status_bar: Mutex<StatusBar<S>>,
     _link: broadcaster::Link<'link>,
-    // pub settings_tab: Mutex<SettingsTab<'a, S>>,
 }
 
 impl<'link, S: types::CapnProtoSender> Tabs<'link, S> {

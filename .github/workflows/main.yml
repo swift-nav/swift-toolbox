@@ -60,7 +60,7 @@ jobs:
           elif [ "$RUNNER_OS" == "macOS" ]; then
               brew install capnp llvm
           elif [ "$RUNNER_OS" == "Windows" ]; then
-              choco install -y capnproto --version 0.8.0
+              choco install -y capnproto
           fi
 
       - name: Pull Git LFS objects
@@ -259,8 +259,7 @@ jobs:
           elif [ "$RUNNER_OS" == "macOS" ]; then
               brew install capnp llvm
           elif [ "$RUNNER_OS" == "Windows" ]; then
-              choco install capnproto --version 0.8.0
-              choco install nsis
+              choco install capnproto nsis
           fi
 
       - name: Install stable Rust

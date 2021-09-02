@@ -16,13 +16,13 @@ use sbp::{
     serialize::SbpSerialize,
 };
 
-use crate::broadcaster::with_link;
 use crate::connection::Connection;
 use crate::constants::PAUSE_LOOP_SLEEP_DURATION_MS;
-use crate::log_panel::handle_log_msg;
 use crate::types::*;
 use crate::utils::{close_frontend, refresh_navbar};
 use crate::Tabs;
+use crate::log_panel::handle_log_msg;
+use crate::broadcaster::with_link;
 
 pub fn process_messages<S>(
     conn: Connection,

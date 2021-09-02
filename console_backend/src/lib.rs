@@ -71,12 +71,8 @@ impl<'link, S: types::CapnProtoSender> Tabs<'link, S> {
                 client_sender.clone(),
             )
             .into(),
-            baseline: BaselineTab::new(
-                shared_state.clone(),
-                client_sender.clone(),
-                msg_sender.clone(),
-            )
-            .into(),
+            baseline: BaselineTab::new(shared_state.clone(), client_sender.clone(), msg_sender)
+                .into(),
             tracking_signals: TrackingSignalsTab::new(shared_state.clone(), client_sender.clone())
                 .into(),
             observation: ObservationTab::new(shared_state.clone(), client_sender.clone()).into(),
@@ -91,7 +87,7 @@ impl<'link, S: types::CapnProtoSender> Tabs<'link, S> {
                 client_sender.clone(),
             )
             .into(),
-            status_bar: StatusBar::new(shared_state.clone(), client_sender.clone()).into(),
+            status_bar: StatusBar::new(shared_state, client_sender).into(),
             _link: link,
         }
     }

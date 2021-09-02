@@ -6,6 +6,11 @@ import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
 Item {
+    property alias destinationText: destinationPathTextInput.text
+    property bool destinationTextEditing: false
+    property alias localText: localFileTextInput.text
+    property bool localTextEditing: false
+
     RowLayout {
         anchors.fill: parent
 
@@ -28,6 +33,7 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             border.width: Constants.advancedIns.textDataBarBorderWidth
+            clip: true
 
             TextInput {
                 id: localFileTextInput
@@ -40,7 +46,11 @@ Item {
                 anchors.fill: parent
                 anchors.leftMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
                 onTextEdited: {
-                    data_model.update_tab([false, false, false], null, null, text, null);
+                    localTextEditing = true;
+                }
+                onEditingFinished: {
+                    data_model.update_tab([false, false, false], null, null, text, null, null);
+                    localTextEditing = false;
                 }
             }
 
@@ -82,20 +92,20 @@ Item {
             selectExisting: true
             nameFilters: ["All Files (*)"]
             onAccepted: {
-                var filepath = Utils.fileUrlToString(fileDialog.file);
+                var filepath = Utils.fileUrlToString(fileDialog.fileUrl);
                 // Fix for fileUrlToString which removes file:/// prefix but leaves unix
                 // path without leading forward slash.
                 if (Qt.platform.os !== "windows")
                     filepath = "/" + filepath;
 
-                data_model.update_tab([false, false, false], null, null, filepath, null);
+                data_model.update_tab([false, false, false], null, null, filepath, null, null);
             }
             onRejected: {
             }
         }
 
         Rectangle {
-            Layout.preferredWidth: 100 //Constants.updateTab.hardwareVersionElementsLabelWidth
+            Layout.preferredWidth: Constants.updateTab.hardwareVersionElementsLabelWidth * 2
             Layout.fillHeight: true
 
             Text {
@@ -113,6 +123,7 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             border.width: Constants.advancedIns.textDataBarBorderWidth
+            clip: true
 
             TextInput {
                 id: destinationPathTextInput
@@ -125,7 +136,11 @@ Item {
                 anchors.fill: parent
                 anchors.leftMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
                 onTextEdited: {
-                    data_model.update_tab([false, false, false], null, null, null, text);
+                    destinationTextEditing = true;
+                }
+                onEditingFinished: {
+                    data_model.update_tab([false, false, false], null, null, null, text, null);
+                    destinationTextEditing = false;
                 }
             }
 

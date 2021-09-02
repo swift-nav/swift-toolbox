@@ -1,3 +1,4 @@
+use crate::update_tab::UpdateShared;
 use anyhow::bail;
 use log::debug;
 use serde::{Deserialize, Serialize};
@@ -6,7 +7,6 @@ use std::{
     io::prelude::*,
     path::{Path, PathBuf},
 };
-use crate::update_tab::UpdateShared;
 
 const INDEX_URL: &str =
     "https://s3-us-west-1.amazonaws.com/downloads.swiftnav.com/index_https.json";
@@ -69,7 +69,11 @@ impl UpdateDownloader {
         }
     }
 
-    pub fn download_multi_firmware(&mut self, directory: PathBuf, update_shared: Option<UpdateShared>) -> anyhow::Result<PathBuf> {
+    pub fn download_multi_firmware(
+        &mut self,
+        directory: PathBuf,
+        update_shared: Option<UpdateShared>,
+    ) -> anyhow::Result<PathBuf> {
         self.get_index_data()?;
         if let Some(index_data) = &self.index_data {
             let filepath_url = index_data.piksi_multi.fw.url.clone();
@@ -99,34 +103,44 @@ impl UpdateDownloader {
         if let Some(filename_) = filename {
             let filepath = Path::new(&directory).join(filename_);
             if !directory.exists() {
-                debug!("Creating directory: {:?}", directory);
+                let msg = format!("Creating directory: {:?}", directory);
+                debug!("{}", msg);
                 if let Some(update_shared) = update_shared.clone() {
-                    update_shared.fw_log_append(format!("Creating directory: {:?}", directory));
+                    update_shared.fw_log_append(msg);
                 }
                 create_dir_all(&directory)?;
             }
             if !filepath.exists() {
-                debug!("Downloading firmware file: {}", filepath_url);
+                let msg = format!("Downloading firmware file: {}", filepath_url);
+                debug!("{}", msg);
                 if let Some(update_shared) = update_shared.clone() {
-                    update_shared.fw_log_append(format!("Downloading firmware file: {}", filepath_url));
+                    update_shared.fw_log_append(msg);
                 }
                 let response = minreq::get(filepath_url).send()?;
                 let mut file = File::create(filepath.clone())?;
                 file.write_all(&response.into_bytes())?;
-                debug!("Downloaded firmware file to: {:?}", filepath);
+                let msg = format!("Downloaded firmware file to: {:?}", filepath);
+                debug!("{}", msg);
                 if let Some(update_shared) = update_shared {
-                    update_shared.fw_log_append(format!("Downloaded firmware file to: {:?}", filepath));
+                    update_shared.fw_log_append(msg);
                 }
             } else {
-                debug!("Firmware file already exists: {:?}", filepath);
+                let msg = format!("Firmware file already exists: {:?}", filepath);
+                debug!("{}", msg);
                 if let Some(update_shared) = update_shared {
-                    update_shared.fw_log_append(format!("Firmware file already exists: {:?}", filepath));
+                    update_shared.fw_log_append(msg);
                 }
             }
             Ok(filepath)
         } else {
             bail!("Unable to extract filename from index data url.");
         }
+    }
+}
+
+impl Default for UpdateDownloader {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -154,7 +168,9 @@ mod tests {
         let tmp_dir = TempDir::new().unwrap();
         let tmp_dir = tmp_dir.path().to_path_buf();
 
-        let filename = downloader.download_multi_firmware(tmp_dir.clone(), None).unwrap();
+        let filename = downloader
+            .download_multi_firmware(tmp_dir.clone(), None)
+            .unwrap();
         let pattern = tmp_dir.join("PiksiMulti-*");
         let found_filepath = glob(&pattern.to_string_lossy())
             .unwrap()

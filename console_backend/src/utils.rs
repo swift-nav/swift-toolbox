@@ -26,23 +26,29 @@ use crate::{common_constants as cc, types::SharedState};
 /// - `true` if the later_version is greater than the early version.
 /// - `false` if the later_version is not greater than the early version.
 pub fn compare_semvers(early_version: String, later_version: String) -> anyhow::Result<bool> {
-    let mut early_version_parts: Vec<String> = early_version.splitn(3, '.').map(|x| x.to_string()).collect();
-    let mut later_version_parts: Vec<String> = later_version.splitn(3, '.').map(|x| x.to_string()).collect();
+    let mut early_version_parts: Vec<String> = early_version
+        .splitn(3, '.')
+        .map(|x| x.to_string())
+        .collect();
+    let mut later_version_parts: Vec<String> = later_version
+        .splitn(3, '.')
+        .map(|x| x.to_string())
+        .collect();
     early_version_parts[0].retain(|x| x.is_numeric());
     later_version_parts[0].retain(|x| x.is_numeric());
     let early_major: i32 = early_version_parts[0].parse()?;
     let later_major: i32 = later_version_parts[0].parse()?;
-    if early_major > later_major {
-        return Ok(false);
-    } else if early_major < later_major {
-        return Ok(true);
+    match early_major.cmp(&later_major) {
+        std::cmp::Ordering::Less => return Ok(true),
+        std::cmp::Ordering::Greater => return Ok(false),
+        _ => (),
     }
     let early_minor: i32 = early_version_parts[1].parse()?;
     let later_minor: i32 = later_version_parts[1].parse()?;
-    if early_minor > later_minor {
-        return Ok(false);
-    } else if early_minor < later_minor {
-        return Ok(true);
+    match early_minor.cmp(&later_minor) {
+        std::cmp::Ordering::Less => return Ok(true),
+        std::cmp::Ordering::Greater => return Ok(false),
+        _ => (),
     }
     let early_patch: String = early_version_parts[2].clone();
     let later_patch: String = later_version_parts[2].clone();
@@ -50,7 +56,7 @@ pub fn compare_semvers(early_version: String, later_version: String) -> anyhow::
     let later_patch: Vec<&str> = later_patch.splitn(2, |x| !char::is_numeric(x)).collect();
     let early_patch_num: i32 = early_patch[0].parse()?;
     let later_patch_num: i32 = later_patch[0].parse()?;
-    if early_patch_num > later_patch_num || early_patch == later_patch{
+    if early_patch_num > later_patch_num || early_patch == later_patch {
         return Ok(false);
     }
 
@@ -522,12 +528,23 @@ mod tests {
         // assert!(!compare_semvers(String::from("1.0.0"), String::from("0.1.0")).unwrap());
         assert!(compare_semvers(String::from("2.5.6"), String::from("2.5.6-dev5432")).unwrap());
         assert!(compare_semvers(String::from("2.5.6-dev5432"), String::from("2.5.6")).unwrap());
-        assert!(compare_semvers(String::from("2.5.6-dev5432"), String::from("2.5.6-dev54321")).unwrap());
-        assert!(compare_semvers(String::from("2.5.6-dev5432"), String::from("2.5.6-dev12345")).unwrap());
+        assert!(compare_semvers(
+            String::from("2.5.6-dev5432"),
+            String::from("2.5.6-dev54321")
+        )
+        .unwrap());
+        assert!(compare_semvers(
+            String::from("2.5.6-dev5432"),
+            String::from("2.5.6-dev12345")
+        )
+        .unwrap());
         assert!(compare_semvers(String::from("2.5.6"), String::from("2.5.6.dev5432")).unwrap());
         assert!(compare_semvers(String::from("2.5.6.dev5432"), String::from("2.5.6")).unwrap());
-        assert!(compare_semvers(String::from("2.5.6.dev5432"), String::from("2.5.6.dev12345")).unwrap());
-
+        assert!(compare_semvers(
+            String::from("2.5.6.dev5432"),
+            String::from("2.5.6.dev12345")
+        )
+        .unwrap());
     }
 
     #[test]

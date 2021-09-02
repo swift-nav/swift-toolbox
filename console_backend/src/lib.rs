@@ -55,19 +55,17 @@ struct Tabs<'link, S: types::CapnProtoSender> {
     pub solution_velocity: Mutex<SolutionVelocityTab<S>>,
     pub advanced_spectrum_analyzer: Mutex<AdvancedSpectrumAnalyzerTab<S>>,
     pub status_bar: Mutex<StatusBar<S>>,
-    pub update: Mutex<UpdateTab<S>>,
+    pub _update: Mutex<UpdateTab<S>>,
     _link: broadcaster::Link<'link>,
 }
 
 impl<'link, S: types::CapnProtoSender> Tabs<'link, S> {
     fn new(
-        link: broadcaster::Link<'a>,
         shared_state: types::SharedState,
         client_sender: S,
         msg_sender: types::MsgSender,
         link: broadcaster::Link<'link>,
     ) -> Self {
-        let file_io = fileio::Fileio::new(link, msg_sender.clone());
         Self {
             main: MainTab::new(shared_state.clone(), client_sender.clone()).into(),
             advanced_ins: AdvancedInsTab::new(shared_state.clone(), client_sender.clone()).into(),
@@ -93,8 +91,9 @@ impl<'link, S: types::CapnProtoSender> Tabs<'link, S> {
             )
             .into(),
             status_bar: StatusBar::new(shared_state.clone(), client_sender.clone()).into(),
-            update: UpdateTab::new(shared_state.clone(), client_sender.clone()).into(),
+            _update: UpdateTab::new(shared_state, client_sender).into(),
             _link: link,
+            
         }
     }
 }

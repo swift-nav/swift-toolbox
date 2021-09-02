@@ -94,6 +94,7 @@ Item {
 
             TextArea {
                 id: fwLogTextArea
+
                 readOnly: true
                 selectByMouse: true
                 selectByKeyboard: true
@@ -123,6 +124,8 @@ Item {
             Layout.rightMargin: Constants.updateTab.innerMargins
 
             UpdateTabComponents.FileIOSelectLocalFileAndDestPath {
+                id: fileioSelect
+
                 anchors.fill: parent
             }
 
@@ -131,21 +134,31 @@ Item {
     }
 
     Timer {
-        
         interval: Utils.hzToMilliseconds(Constants.staticTableTimerIntervalRate)
         running: true
         repeat: true
         onTriggered: {
             if (!updateTab.visible)
                 return ;
+
             update_tab_model.fill_data(updateTabData);
             firmwareRevision.revision = updateTabData.hardware_revision;
             firmwareVersion.currentVersion = updateTabData.fw_version_current;
             firmwareVersion.latestVersion = updateTabData.fw_version_latest;
-            firmwareDownload.fwDirectory = updateTabData.directory;
+            if (!firmwareDownload.fwDirectoryEditing)
+                firmwareDownload.fwDirectory = updateTabData.directory;
+
             fwLogTextArea.text = updateTabData.fw_text;
             firmwareDownload.downloadButtonEnable = !updateTabData.downloading;
-            firmwareVersion.localFileText = updateTabData.fw_local_filename;
+            if (!firmwareVersion.localFileTextEditing)
+                firmwareVersion.localFileText = updateTabData.fw_local_filename;
+
+            if (!fileioSelect.destinationTextEditing)
+                fileioSelect.destinationText = updateTabData.fileio_destination_filepath;
+
+            if (!fileioSelect.localTextEditing)
+                fileioSelect.localText = updateTabData.fileio_local_filepath;
+
         }
     }
 

@@ -7,6 +7,8 @@ import SwiftConsole 1.0
 
 Item {
     property alias fwDirectory: directoryInput.text
+    property bool fwDirectoryEditing: false
+
     RowLayout {
         anchors.fill: parent
         spacing: Constants.updateTab.firmwareVersionColumnSpacing
@@ -30,6 +32,7 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             border.width: Constants.advancedIns.textDataBarBorderWidth
+            clip: true
 
             TextInput {
                 id: directoryInput
@@ -42,7 +45,11 @@ Item {
                 anchors.fill: parent
                 anchors.leftMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
                 onTextEdited: {
-                    data_model.update_tab([false, false, false], null, text, null, null);
+                    fwDirectoryEditing = true;
+                }
+                onEditingFinished: {
+                    data_model.update_tab([false, false, false], null, text, null, null, null);
+                    fwDirectoryEditing = false;
                 }
             }
 
@@ -88,7 +95,7 @@ Item {
                 if (Qt.platform.os !== "windows")
                     filepath = "/" + filepath;
 
-                data_model.update_tab([false, false, false], null, filepath, null, null);
+                data_model.update_tab([false, false, false], null, filepath, null, null, null);
             }
             onRejected: {
             }

@@ -16,6 +16,8 @@ UPDATE_TAB: Dict[str, Any] = {
     Keys.DOWNLOADING: bool,
     Keys.UPGRADING: bool,
     Keys.FW_TEXT: str,
+    Keys.FILEIO_LOCAL_FILEPATH: str,
+    Keys.FILEIO_DESTINATION_FILEPATH: str,
 }
 
 
@@ -29,6 +31,8 @@ class UpdateTabData(QObject):  # pylint: disable=too-many-instance-attributes
     _downloading: bool = False
     _upgrading: bool = False
     _fw_text: str = ""
+    _fileio_local_filepath: str = ""
+    _fileio_destination_filepath: str = ""
 
     def get_hardware_revision(self) -> str:
         return self._hardware_revision
@@ -94,6 +98,22 @@ class UpdateTabData(QObject):  # pylint: disable=too-many-instance-attributes
 
     fw_text = Property(str, get_fw_text, set_fw_text)
 
+    def get_fileio_local_filepath(self) -> str:
+        return self._fileio_local_filepath
+
+    def set_fileio_local_filepath(self, fileio_local_filepath: str) -> None:
+        self._fileio_local_filepath = fileio_local_filepath
+
+    fileio_local_filepath = Property(str, get_fileio_local_filepath, set_fileio_local_filepath)
+
+    def get_fileio_destination_filepath(self) -> str:
+        return self._fileio_destination_filepath
+
+    def set_fileio_destination_filepath(self, fileio_destination_filepath: str) -> None:
+        self._fileio_destination_filepath = fileio_destination_filepath
+
+    fileio_destination_filepath = Property(str, get_fileio_destination_filepath, set_fileio_destination_filepath)
+
 
 class UpdateTabModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(UpdateTabData)  # type: ignore
@@ -106,4 +126,6 @@ class UpdateTabModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_downloading(UPDATE_TAB[Keys.DOWNLOADING])
         cp.set_upgrading(UPDATE_TAB[Keys.UPGRADING])
         cp.set_fw_text(UPDATE_TAB[Keys.FW_TEXT])
+        cp.set_fileio_local_filepath(UPDATE_TAB[Keys.FILEIO_LOCAL_FILEPATH])
+        cp.set_fileio_destination_filepath(UPDATE_TAB[Keys.FILEIO_DESTINATION_FILEPATH])
         return cp

@@ -7,6 +7,8 @@ import QtQuick.Layouts 1.15
 Item {
     property alias fwDirectory: selectFirmwareDownloadDirectory.fwDirectory
     property alias downloadButtonEnable: downloadFirmwareButton.enabled
+    property alias fwDirectoryEditing: selectFirmwareDownloadDirectory.fwDirectoryEditing
+
     Rectangle {
         width: parent.width
         height: parent.height
@@ -20,6 +22,7 @@ Item {
 
             SelectFirmwareDownloadDirectory {
                 id: selectFirmwareDownloadDirectory
+
                 Layout.fillWidth: true
                 Layout.preferredHeight: Constants.updateTab.textHeight
                 Layout.leftMargin: Constants.updateTab.innerMargins
@@ -38,7 +41,7 @@ Item {
                 topInset: Constants.updateTab.buttonInset
                 bottomInset: Constants.updateTab.buttonInset
                 onClicked: {
-                    data_model.update_tab([true, false, false], null, null, null, null);
+                    data_model.update_tab([true, false, false], null, null, null, null, null);
                 }
 
                 Text {

@@ -192,6 +192,8 @@ struct UpdateTabStatus {
     downloading @5 : Bool;
     upgrading @6 : Bool;
     fwText @7: Text;
+    fileioDestinationFilepath @8: Text;
+    fileioLocalFilepath @9: Text;
 }
 
 struct UpdateTabStatusFront {
@@ -213,6 +215,10 @@ struct UpdateTabStatusFront {
     fileioDestinationFilepath :union {
         filepath @9 :Text;
         none @10 :Void;
+    }
+    updateLocalFilename :union {
+        filepath @11 :Text;
+        none @12 :Void;
     }
 }
 

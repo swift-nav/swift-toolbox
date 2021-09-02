@@ -325,6 +325,8 @@ def receive_messages(app_, backend, messages):
             UPDATE_TAB[Keys.DOWNLOADING] = m.updateTabStatus.downloading
             UPDATE_TAB[Keys.UPGRADING] = m.updateTabStatus.upgrading
             UPDATE_TAB[Keys.FW_TEXT] = m.updateTabStatus.fwText
+            UPDATE_TAB[Keys.FILEIO_LOCAL_FILEPATH] = m.updateTabStatus.fileioLocalFilepath
+            UPDATE_TAB[Keys.FILEIO_DESTINATION_FILEPATH] = m.updateTabStatus.fileioDestinationFilepath
         elif m.which == Message.Union.LogAppend:
             log_panel_lock.lock()
             LOG_PANEL[Keys.ENTRIES] += [entry.line for entry in m.logAppend.entries]
@@ -459,7 +461,7 @@ class DataModel(QObject):
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
 
-    @Slot(list, QTKeys.QVARIANT, QTKeys.QVARIANT, QTKeys.QVARIANT, QTKeys.QVARIANT)  # type: ignore
+    @Slot(list, QTKeys.QVARIANT, QTKeys.QVARIANT, QTKeys.QVARIANT, QTKeys.QVARIANT, QTKeys.QVARIANT)  # type: ignore
     def update_tab(
         self,
         buttons: list,
@@ -467,6 +469,7 @@ class DataModel(QObject):
         download_directory: Optional[str],
         fileio_local_filepath: Optional[str],
         fileio_destination_filepath: Optional[str],
+        update_local_filename: Optional[str],
     ) -> None:
         Message = self.messages.Message
         m = Message()
@@ -489,6 +492,11 @@ class DataModel(QObject):
             m.updateTabStatusFront.fileioDestinationFilepath.filepath = str(fileio_destination_filepath)
         else:
             m.updateTabStatusFront.fileioDestinationFilepath.none = None
+
+        if update_local_filename is not None:
+            m.updateTabStatusFront.updateLocalFilename.filepath = str(update_local_filename)
+        else:
+            m.updateTabStatusFront.updateLocalFilename.none = None
 
         m.updateTabStatusFront.downloadLatestFirmware = buttons[0]
         m.updateTabStatusFront.updateFirmware = buttons[1]

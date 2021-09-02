@@ -9,6 +9,7 @@ Item {
     property alias currentVersion: currentVersionText.text
     property alias latestVersion: latestVersionText.text
     property alias localFileText: selectLocalFile.localFileText
+    property alias localFileTextEditing: selectLocalFile.localFileTextEditing
 
     Rectangle {
         width: parent.width
@@ -106,6 +107,7 @@ Item {
 
             SelectLocalFile {
                 id: selectLocalFile
+
                 Layout.fillWidth: true
                 Layout.preferredHeight: Constants.updateTab.textHeight
                 Layout.leftMargin: Constants.updateTab.innerMargins
@@ -133,7 +135,7 @@ Item {
                     topInset: Constants.updateTab.buttonInset
                     bottomInset: Constants.updateTab.buttonInset
                     onClicked: {
-                        data_model.update_tab([true, false, false], null, null, null, null);
+                        data_model.update_tab([false, true, false], null, null, null, null, null);
                     }
 
                     Text {

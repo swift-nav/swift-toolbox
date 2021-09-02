@@ -6,6 +6,8 @@ import QtQuick.Layouts 1.15
 
 Item {
     property alias localFileText: localFileTextInput.text
+    property bool localFileTextEditing: false
+
     RowLayout {
         anchors.fill: parent
         spacing: Constants.updateTab.firmwareVersionColumnSpacing
@@ -29,6 +31,7 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             border.width: Constants.advancedIns.textDataBarBorderWidth
+            clip: true
 
             TextInput {
                 id: localFileTextInput
@@ -41,7 +44,11 @@ Item {
                 anchors.fill: parent
                 anchors.leftMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
                 onTextEdited: {
-                    data_model.update_tab([false, false, false], text, null, null, null);
+                    localFileTextEditing = true;
+                }
+                onEditingFinished: {
+                    data_model.update_tab([false, false, false], null, null, null, null, text);
+                    localFileTextEditing = false;
                 }
 
                 Text {
@@ -95,13 +102,14 @@ Item {
             selectExisting: true
             nameFilters: ["Binary Image Set (*.bin)"]
             onAccepted: {
-                var filepath = Utils.fileUrlToString(fileDialog.folder);
+                var filepath = Utils.fileUrlToString(fileDialog.fileUrl);
                 // Fix for fileUrlToString which removes file:/// prefix but leaves unix
                 // path without leading forward slash.
                 if (Qt.platform.os !== "windows")
                     filepath = "/" + filepath;
 
-                data_model.update_tab([false, false, false], filepath, null, null, null);
+                data_model.update_tab([false, false, false], filepath, null, null, null, null);
+                return ;
             }
             onRejected: {
             }

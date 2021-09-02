@@ -285,16 +285,11 @@ fn backend_recv_thread(
                             };
                             shared_state.set_update_buttons(buttons);
                         }
-                        let shared_state_clone = shared_state.clone();
-                        let mut shared_data = shared_state_clone
-                            .lock()
-                            .expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
                         match cv_in.get_download_directory().which() {
-                            Ok(m::update_tab_status_front::download_directory::Directory(
-                                Ok(directory),
-                            )) => {
-                                (*shared_data).update_tab.firmware_directory =
-                                                    PathBuf::from(directory);
+                            Ok(m::update_tab_status_front::download_directory::Directory(Ok(
+                                directory,
+                            ))) => {
+                                shared_state.set_firmware_directory(PathBuf::from(directory));
                             }
                             Err(e) => {
                                 error!("{}", e);
@@ -305,8 +300,20 @@ fn backend_recv_thread(
                             Ok(m::update_tab_status_front::update_local_filepath::Filepath(
                                 Ok(filepath),
                             )) => {
-                                (*shared_data).update_tab.firmware_local_filepath =
-                                    Some(PathBuf::from(filepath));
+                                println!("{}", filepath);
+                                shared_state.set_firmware_local_filepath(PathBuf::from(filepath));
+                            }
+                            Err(e) => {
+                                error!("{}", e);
+                            }
+                            _ => (),
+                        }
+                        match cv_in.get_update_local_filename().which() {
+                            Ok(m::update_tab_status_front::update_local_filename::Filepath(
+                                Ok(filepath),
+                            )) => {
+                                println!("{}", filepath);
+                                shared_state.set_firmware_local_filename(PathBuf::from(filepath));
                             }
                             Err(e) => {
                                 error!("{}", e);
@@ -317,8 +324,7 @@ fn backend_recv_thread(
                             Ok(m::update_tab_status_front::fileio_local_filepath::Filepath(
                                 Ok(filepath),
                             )) => {
-                                (*shared_data).update_tab.fileio_local_filepath =
-                                    Some(PathBuf::from(filepath));
+                                shared_state.set_fileio_local_filepath(PathBuf::from(filepath));
                             }
                             Err(e) => {
                                 error!("{}", e);
@@ -331,8 +337,8 @@ fn backend_recv_thread(
                                     Ok(filepath),
                                 ),
                             ) => {
-                                (*shared_data).update_tab.fileio_destination_filepath =
-                                    Some(PathBuf::from(filepath));
+                                shared_state
+                                    .set_fileio_destination_filepath(PathBuf::from(filepath));
                             }
                             Err(e) => {
                                 error!("{}", e);
@@ -405,6 +411,7 @@ impl Server {
         setup_logging(client_send.clone());
         let opt = CliOptions::from_filtered_cli();
         let shared_state = SharedState::new();
+
         let connection_state = ConnectionState::new(client_send.clone(), shared_state.clone());
         // Handle CLI Opts.
         handle_cli(opt, &connection_state, shared_state.clone());

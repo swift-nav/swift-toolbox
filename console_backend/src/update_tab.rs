@@ -1,15 +1,19 @@
 use anyhow::anyhow;
 use capnp::message::Builder;
+use crossbeam::thread;
 use log::{debug, error};
+use std::thread::sleep;
 use std::{
     fs::read,
     ops::Deref,
     path::PathBuf,
     sync::{Arc, Mutex},
-    thread::{self, JoinHandle},
 };
 
-use crate::{errors::{CONVERT_TO_STR_FAILURE, SHARED_STATE_LOCK_MUTEX_FAILURE, THREAD_JOIN_FAILURE}, fileio::Fileio};
+use crate::errors::{
+    CONVERT_TO_STR_FAILURE, CROSSBEAM_SCOPE_UNWRAP_FAILURE, SHARED_STATE_LOCK_MUTEX_FAILURE,
+    THREAD_JOIN_FAILURE,
+};
 use crate::types::{ArcBool, CapnProtoSender, SharedState};
 use crate::update_downloader::UpdateDownloader;
 use crate::utils::{compare_semvers, serialize_capnproto_builder};
@@ -18,26 +22,18 @@ use crate::utils::{compare_semvers, serialize_capnproto_builder};
 ///
 /// # Fields
 /// - `client_sender`: Client Sender channel for communication from backend to frontend.
+/// - `is_running`: ArcBool to indicate if the update tab is running.
 /// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
-pub struct UpdateTab<'a, S: CapnProtoSender> {
+/// - `update_shared`: The shared state for update tab.
+pub struct UpdateTab<S: CapnProtoSender> {
     client_sender: S,
     is_running: ArcBool,
     shared_state: SharedState,
     update_shared: UpdateShared,
-    fileio: Fileio<'a>,
-    handler: Option<thread::JoinHandle<()>>,
 }
 
-<<<<<<< HEAD
 impl<S: CapnProtoSender> UpdateTab<S> {
-    pub fn new(
-        shared_state: SharedState,
-        client_sender: S,
-    ) -> UpdateTab<S> {
-=======
-impl<'a, S: CapnProtoSender> UpdateTab<'a, S> {
-    pub fn new(shared_state: SharedState, client_sender: S, fileio: Fileio<'a>) -> UpdateTab<S> {
->>>>>>> Update Tab Frontend.
+    pub fn new(shared_state: SharedState, client_sender: S) -> UpdateTab<S> {
         let is_running = ArcBool::new_with(true);
         let update_shared = UpdateShared::new();
         let mut update_tab = UpdateTab {
@@ -45,67 +41,105 @@ impl<'a, S: CapnProtoSender> UpdateTab<'a, S> {
             is_running,
             shared_state,
             update_shared,
-            handler: None,
-            fileio,
         };
         update_tab.update_tab_thread();
         update_tab
-        
     }
 
     fn update_tab_thread(&mut self) {
-        let client_sender = self.client_sender.clone();
         let mut shared_state = self.shared_state.clone();
         let update_shared = self.update_shared.clone();
         let is_running = self.is_running.clone();
-        let mut update_downloader_thread: Option<JoinHandle<()>> = None;
-        let mut update_upgrader_thread: Option<JoinHandle<()>> = None;
-        self.handler = Some(thread::spawn(move || loop {
-            if !is_running.get() {
-                break;
-            }
-            // Check for button changes.
-            let directory = shared_state.firmware_directory();
-            if let Some(buttons) = shared_state.update_buttons() {
-                if buttons.download_latest_firmware && !update_shared.downloading() {
-                    if let Some(update_downloader_thread) = update_downloader_thread.take() {
-                        update_downloader_thread.join().expect(THREAD_JOIN_FAILURE);
-                    }
-                    update_downloader_thread = Some(UpdateTab::<S>::download_firmware(
-                        update_shared.clone(),
-                        directory.clone(),
-                    ));
-                }
-                if buttons.update_firmware && !update_shared.upgrading() {
-                    if let Some(update_upgrader_thread) = update_upgrader_thread.take() {
-                        update_upgrader_thread.join().expect(THREAD_JOIN_FAILURE);
-                    }
-                    update_upgrader_thread = Some(UpdateTab::<S>::upgrade_firmware(
-                        update_shared.clone(),
-                        directory.clone(),
-                    ));
-                }
-            }
-            UpdateTab::update_frontend(update_shared.clone(), client_sender.clone(), directory);
-            thread::sleep(std::time::Duration::from_millis(250));
-            log::logger().flush();
-            // Check for messages from MSG_LOG?
 
-            // Send update to frontend?
-        }));
+        thread::scope(|s| {
+            s.spawn(|inner_scope| {
+                let mut update_downloader_thread: Option<thread::ScopedJoinHandle<()>> = None;
+                let mut update_upgrader_thread: Option<thread::ScopedJoinHandle<()>> = None;
+                loop {
+                    if !is_running.get() {
+                        break;
+                    }
+                    // Check for path updates.
+                    if let Some(fw_dir) = shared_state.firmware_directory() {
+                        update_shared.set_firmware_directory(fw_dir.clone());
+                        update_shared.set_firmware_local_filepath(None);
+                    }
+                    if let Some(fw_local_filepath) = shared_state.firmware_local_filepath() {
+                        if let Some(parent_path) = fw_local_filepath.parent() {
+                            update_shared.set_firmware_directory(parent_path.to_path_buf());
+                        }
+                        update_shared.set_firmware_local_filepath(Some(fw_local_filepath.clone()));
+                    }
+                    if let Some(fw_local_filename) = shared_state.firmware_local_filename() {
+                        let fw_local_filepath =
+                            update_shared.firmware_directory().join(fw_local_filename);
+                        update_shared.set_firmware_local_filepath(Some(fw_local_filepath));
+                    }
+                    if let Some(fileio_local_filepath) = shared_state.fileio_local_filepath() {
+                        update_shared.set_fileio_local_filepath(Some(fileio_local_filepath));
+                    }
+                    if let Some(fileio_destination_filepath) =
+                        shared_state.fileio_destination_filepath()
+                    {
+                        update_shared
+                            .set_fileio_destination_filepath(Some(fileio_destination_filepath));
+                    }
+                    // Check for button changes.
+                    if let Some(buttons) = shared_state.update_buttons() {
+                        if buttons.download_latest_firmware && !update_shared.downloading() {
+                            if let Some(update_downloader_thread) = update_downloader_thread.take()
+                            {
+                                update_downloader_thread.join().expect(THREAD_JOIN_FAILURE);
+                            }
+                            update_downloader_thread = Some(inner_scope.spawn(|_| {
+                                self.download_firmware();
+                            }));
+                        }
+                        if buttons.update_firmware && !update_shared.upgrading() {
+                            if let Some(update_upgrader_thread) = update_upgrader_thread.take() {
+                                update_upgrader_thread.join().expect(THREAD_JOIN_FAILURE);
+                            }
+                            update_upgrader_thread = Some(inner_scope.spawn(|_| {
+                                self.upgrade_firmware();
+                            }));
+                        }
+                    }
+                    self.update_frontend();
+                    sleep(std::time::Duration::from_millis(250));
+                    log::logger().flush();
+                    // Check for messages from MSG_LOG?
+
+                    // Send update to frontend?
+                }
+            })
+            .join()
+            .expect(THREAD_JOIN_FAILURE);
+        })
+        .expect(CROSSBEAM_SCOPE_UNWRAP_FAILURE);
     }
 
     /// Package data into a message buffer and send to frontend.
-    fn update_frontend(mut update_shared: UpdateShared, mut client_sender: S, directory: PathBuf) {
+    fn update_frontend(&self) {
+        let mut client_sender = self.client_sender.clone();
         let mut builder = Builder::new_default();
+        let mut update_shared = self.update_shared.clone();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
         let packet = update_shared.packet();
         let mut status = msg.init_update_tab_status();
+
         status.set_hardware_revision("piksi_multi");
         status.set_fw_version_current("");
         status.set_fw_version_latest(&packet.latest_firmware_version);
         status.set_fw_local_filename(&packet.firmware_filename);
-        status.set_directory(&directory.to_string_lossy().to_string());
+        status
+            .set_fileio_local_filepath(&packet.fileio_local_filepath.to_string_lossy().to_string());
+        status.set_fileio_destination_filepath(
+            &packet
+                .fileio_destination_filepath
+                .to_string_lossy()
+                .to_string(),
+        );
+        status.set_directory(&packet.firmware_directory.to_string_lossy().to_string());
         status.set_downloading(packet.downloading);
         status.set_upgrading(packet.upgrading);
         status.set_fw_text(&packet.fw_log);
@@ -113,129 +147,104 @@ impl<'a, S: CapnProtoSender> UpdateTab<'a, S> {
         client_sender.send_data(serialize_capnproto_builder(builder));
     }
 
-    fn download_firmware(update_shared: UpdateShared, directory: PathBuf) -> JoinHandle<()> {
-        update_shared.set_downloading(true);
-        update_shared.fw_log_clear();
-        let mut update_downloader = update_shared.update_downloader();
-        std::thread::spawn(move || {
-            let filepath = match update_downloader.download_multi_firmware(directory.clone(), Some(update_shared.clone())) {
-                Ok(filepath_) => {
-                    Some(filepath_)
-                },
-                Err(e) => {
-                    error!("{}", e);
-                    None
-                }
-            };
-            update_shared.set_firmware_filepath(filepath);
-            update_shared.set_downloading(false);
-            log::logger().flush();
-        })
+    fn download_firmware(&self) {
+        let directory = self.update_shared.firmware_directory();
+        self.update_shared.set_downloading(true);
+        self.update_shared.fw_log_clear();
+        let update_shared = self.update_shared.clone();
+        let mut update_downloader = self.update_shared.update_downloader();
+        let filepath = match update_downloader
+            .download_multi_firmware(directory, Some(update_shared.clone()))
+        {
+            Ok(filepath_) => Some(filepath_),
+            Err(e) => {
+                error!("{}", e);
+                None
+            }
+        };
+        update_shared.set_firmware_local_filepath(filepath);
+        update_shared.set_downloading(false);
+        log::logger().flush();
     }
 
-    fn upgrade_firmware(update_shared: UpdateShared, directory: PathBuf) -> JoinHandle<()> {
-        update_shared.set_upgrading(true);
-        update_shared.fw_log_clear();
-        let mut update_downloader = update_shared.update_downloader();
-        std::thread::spawn(move || {
-            // TODO Get current version from settings.
-            // TODO Get serial number from settings.
-            // TODO Get firmware version from settings.
-            let current_version = String::from("v2.4.16");
-            let to_upgrade = match update_downloader.latest_firmware_version() {
-                Ok(latest_version) => {
-                    if !current_version.is_empty() {
-                        if let Ok(comp) = compare_semvers(current_version.clone(), latest_version.clone()) {
-                            update_shared.fw_log_append(format!("Latest firmware version, {}, is newer than current version, {}.", latest_version, current_version));
+    fn upgrade_firmware(&self) {
+        self.update_shared.set_upgrading(true);
+        self.update_shared.fw_log_clear();
+        let mut update_downloader = self.update_shared.update_downloader();
+        // let update_shared = self.update_shared.clone();
+        // TODO Get current version from settings.
+        // TODO Get serial number from settings.
+        // TODO Get firmware version from settings.
+        let current_version = String::from("v2.4.15");
+        let to_upgrade = match update_downloader.latest_firmware_version() {
+            Ok(latest_version) => {
+                if !current_version.is_empty() {
+                    match compare_semvers(current_version.clone(), latest_version.clone()) {
+                        Ok(comp) => {
+                            if comp {
+                                self.update_shared.fw_log_append(format!("Latest firmware version, {}, is newer than current version, {}.", latest_version, current_version));
+                            } else {
+                                self.update_shared.fw_log_append(format!("Latest firmware version, {}, is not newer than current version, {}.", latest_version, current_version));
+                            }
                             comp
-                        } else {
-                            update_shared.fw_log_append(format!("Latest firmware version, {}, deemed older than current version, {}.", latest_version, current_version));
+                        }
+                        Err(err) => {
+                            self.update_shared.fw_log_append(String::from(
+                                "Unable to compare latest versus current version.",
+                            ));
+                            self.update_shared.fw_log_append(err.to_string());
                             false
                         }
-                    } else {
-                        update_shared.fw_log_append(String::from("Current Version needed to compare Firmware before upgrade."));
-                        false
                     }
-                }
-                Err(err) => {
-                    update_shared.fw_log_append(String::from("Latest Version needed to compare Firmware before upgrade."));
-                    update_shared.fw_log_append(err.to_string());
+                } else {
+                    self.update_shared.fw_log_append(String::from(
+                        "Current Version needed to compare Firmware before upgrade.",
+                    ));
                     false
                 }
-            };
-            if to_upgrade {
-
             }
-            update_shared.set_upgrading(false);
-            log::logger().flush();
-        })
+            Err(err) => {
+                self.update_shared.fw_log_append(String::from(
+                    "Latest Version needed to compare Firmware before upgrade.",
+                ));
+                self.update_shared.fw_log_append(err.to_string());
+                false
+            }
+        };
+        if to_upgrade {
+            if let Err(err) = self.firmware_upgrade() {
+                self.update_shared.fw_log_append(err.to_string());
+            }
+        }
+        self.update_shared.set_upgrading(false);
+        log::logger().flush();
     }
 
-    fn firmware_upgrade(update_shared: UpdateShared) -> anyhow::Result<()> {
-        
-        if let Some(filepath) = update_shared.firmware_filepath() {
-            
-            update_shared.fw_log_append(format!("Reading firmware file from path, {}.", filepath.display()));
-            if !filepath.exists() || !filepath.is_file()  {
-                return Err(anyhow!("Firmware filepath is not a file or does not exist."));
+    fn firmware_upgrade(&self) -> anyhow::Result<()> {
+        if let Some(filepath) = self.update_shared.firmware_local_filepath() {
+            self.update_shared.fw_log_append(format!(
+                "Reading firmware file from path, {}.",
+                filepath.display()
+            ));
+            if !filepath.exists() || !filepath.is_file() {
+                return Err(anyhow!(
+                    "Firmware filepath is not a file or does not exist."
+                ));
             }
-            if let Ok(firmware_blob) = read(filepath.clone()) {
-                update_shared.fw_log_append(String::from("Transferring image to device."));
+            if let Ok(_firmware_blob) = read(filepath.clone()) {
+                self.update_shared
+                    .fw_log_append(String::from("Transferring image to device."));
             } else {
                 return Err(anyhow!("Failed to read firmware file, {:?}.", filepath));
             }
         }
         Ok(())
     }
-    /*
-    def manage_multi_firmware_update(self):
-        self.blob_size = float(len(self.stm_fw.blob))
-        self.pcent_complete = 0
-        # Set up progress dialog and transfer file to Piksi using SBP FileIO
-        self._clear_stream()
-        self._write("Transferring image to device...\n\n00.0 of {:2.1f} MB trasnferred".format(
-            self.blob_size * 1e-6))
-        try:
-            FileIO(self.link).write(
-                b"upgrade.image_set.bin",
-                self.stm_fw.blob,
-                progress_cb=self.file_transfer_progress_cb)
-        except Exception as e:
-            self._write("Failed to transfer image file to Piksi: %s\n" % e)
-            self._write("Upgrade Aborted.")
-            import traceback
-            print(traceback.format_exc())
-            return -1
-
-        self.stream.scrollback_write(
-            "Image transfer complete: {:2.1f} MB transferred.\n".format(self.blob_size * 1e-6))
-        # Setup up pulsed progress dialog and commit to flash
-        self._write("Committing file to Flash...\n")
-        self.link.add_callback(self.log_cb, SBP_MSG_LOG)
-        code = shell_command(
-            self.link,
-            b"upgrade_tool upgrade.image_set.bin",
-            200)
-        self.link.remove_callback(self.log_cb, SBP_MSG_LOG)
-
-        if code != 0:
-            self._write('Failed to perform upgrade (code = %d)' % code)
-            if code == -255:
-                self._write('Shell command timed out.  Please try again.')
-            return
-        self._write("Upgrade Complete.")
-        self._write('Resetting Piksi...')
-        self.link(MsgReset(flags=0))
-    */
-
 }
 
-impl<'a, S: CapnProtoSender> Drop for UpdateTab<'a, S> {
+impl<S: CapnProtoSender> Drop for UpdateTab<S> {
     fn drop(&mut self) {
         self.is_running.set(false);
-        if let Some(handle) = self.handler.take() {
-            handle.join().expect(THREAD_JOIN_FAILURE);
-        }
     }
 }
 pub struct FirmwareUpgradePaneLogger {
@@ -261,11 +270,19 @@ impl FirmwareUpgradePaneLogger {
         self.current_log.join("\n")
     }
 }
+impl Default for FirmwareUpgradePaneLogger {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
-pub struct UpdateSharedInner{
+pub struct UpdateSharedInner {
     downloading: bool,
     upgrading: bool,
-    firmware_filepath: Option<PathBuf>,
+    firmware_directory: PathBuf,
+    firmware_local_filepath: Option<PathBuf>,
+    fileio_destination_filepath: Option<PathBuf>,
+    fileio_local_filepath: Option<PathBuf>,
     update_downloader: UpdateDownloader,
     fw_logger: FirmwareUpgradePaneLogger,
 }
@@ -278,7 +295,10 @@ impl UpdateSharedInner {
         UpdateSharedInner {
             upgrading: false,
             downloading: false,
-            firmware_filepath: None,
+            firmware_directory: PathBuf::from(""),
+            firmware_local_filepath: None,
+            fileio_destination_filepath: None,
+            fileio_local_filepath: None,
             update_downloader,
             fw_logger: FirmwareUpgradePaneLogger::new(),
         }
@@ -289,17 +309,9 @@ impl Default for UpdateSharedInner {
         UpdateSharedInner::new()
     }
 }
-pub struct UpdateShared (Arc<Mutex<UpdateSharedInner>>);
+pub struct UpdateShared(Arc<Mutex<UpdateSharedInner>>);
 
-pub struct UpdatePacket {
-    latest_firmware_version: String,
-    downloading: bool,
-    upgrading: bool,
-    firmware_filename: String,
-    fw_log: String,
-}
-
-impl UpdateShared  {
+impl UpdateShared {
     pub fn new() -> UpdateShared {
         UpdateShared(Arc::new(Mutex::new(UpdateSharedInner::default())))
     }
@@ -320,13 +332,37 @@ impl UpdateShared  {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).upgrading = set_to;
     }
-    pub fn firmware_filepath(&self) -> Option<PathBuf> {
+    pub fn fileio_destination_filepath(&self) -> Option<PathBuf> {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).firmware_filepath.clone()
+        (*shared_data).fileio_destination_filepath.clone()
     }
-    pub fn set_firmware_filepath(&self, filepath: Option<PathBuf>) {
+    pub fn set_fileio_destination_filepath(&self, filepath: Option<PathBuf>) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).firmware_filepath = filepath;
+        (*shared_data).fileio_destination_filepath = filepath;
+    }
+    pub fn fileio_local_filepath(&self) -> Option<PathBuf> {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).fileio_local_filepath.clone()
+    }
+    pub fn set_fileio_local_filepath(&self, filepath: Option<PathBuf>) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).fileio_local_filepath = filepath;
+    }
+    pub fn firmware_local_filepath(&self) -> Option<PathBuf> {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).firmware_local_filepath.clone()
+    }
+    pub fn set_firmware_local_filepath(&self, filepath: Option<PathBuf>) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).firmware_local_filepath = filepath;
+    }
+    pub fn firmware_directory(&self) -> PathBuf {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).firmware_directory.clone()
+    }
+    pub fn set_firmware_directory(&self, directory: PathBuf) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).firmware_directory = directory;
     }
     pub fn update_downloader(&self) -> UpdateDownloader {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
@@ -334,7 +370,7 @@ impl UpdateShared  {
     }
     pub fn fw_log_append(&self, log: String) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        debug!("{}", log.clone());
+        debug!("{}", log);
         (*shared_data).fw_logger.log_append(log);
     }
     pub fn fw_log_replace_last(&self, log: String) {
@@ -360,24 +396,52 @@ impl UpdateShared  {
             };
         let downloading = (*shared_data).downloading;
         let upgrading = (*shared_data).upgrading;
-        let firmware_filename =
-            if let Some(firmware_filepath_) = (*shared_data).firmware_filepath.clone() {
-                firmware_filepath_
-                    .file_name()
-                    .expect(CONVERT_TO_STR_FAILURE)
-                    .to_string_lossy()
-                    .to_string()
+        let firmware_directory = (*shared_data).firmware_directory.clone();
+        let fileio_destination_filepath =
+            if let Some(filepath) = (*shared_data).fileio_destination_filepath.clone() {
+                filepath
             } else {
-                String::new()
+                PathBuf::from("")
             };
+        let fileio_local_filepath =
+            if let Some(filepath) = (*shared_data).fileio_local_filepath.clone() {
+                filepath
+            } else {
+                PathBuf::from("")
+            };
+        let firmware_filename = if let Some(firmware_local_filepath_) =
+            (*shared_data).firmware_local_filepath.clone()
+        {
+            firmware_local_filepath_
+                .file_name()
+                .expect(CONVERT_TO_STR_FAILURE)
+                .to_string_lossy()
+                .to_string()
+        } else {
+            String::new()
+        };
         UpdatePacket {
             latest_firmware_version,
             downloading,
             upgrading,
+            firmware_directory,
+            fileio_destination_filepath,
+            fileio_local_filepath,
             firmware_filename,
             fw_log,
         }
     }
+}
+
+pub struct UpdatePacket {
+    latest_firmware_version: String,
+    downloading: bool,
+    upgrading: bool,
+    firmware_filename: String,
+    firmware_directory: PathBuf,
+    fileio_destination_filepath: PathBuf,
+    fileio_local_filepath: PathBuf,
+    fw_log: String,
 }
 
 impl Deref for UpdateShared {

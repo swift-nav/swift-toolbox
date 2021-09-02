@@ -360,14 +360,45 @@ impl SharedState {
         (*shared_data).baseline_tab.log_file = None;
         Ok(())
     }
-
-    pub fn firmware_directory(&self) -> PathBuf {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).update_tab.firmware_directory.clone()
+    pub fn fileio_destination_filepath(&self) -> Option<PathBuf> {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).update_tab.fileio_destination_filepath.take()
+    }
+    pub fn set_fileio_destination_filepath(&self, directory: PathBuf) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).update_tab.fileio_destination_filepath = Some(directory);
+    }
+    pub fn fileio_local_filepath(&self) -> Option<PathBuf> {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).update_tab.fileio_local_filepath.take()
+    }
+    pub fn set_fileio_local_filepath(&self, directory: PathBuf) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).update_tab.fileio_local_filepath = Some(directory);
+    }
+    pub fn firmware_local_filename(&self) -> Option<PathBuf> {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).update_tab.firmware_local_filename.take()
+    }
+    pub fn set_firmware_local_filename(&self, directory: PathBuf) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).update_tab.firmware_local_filename = Some(directory);
+    }
+    pub fn firmware_local_filepath(&self) -> Option<PathBuf> {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).update_tab.firmware_local_filepath.take()
+    }
+    pub fn set_firmware_local_filepath(&self, directory: PathBuf) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).update_tab.firmware_local_filepath = Some(directory);
+    }
+    pub fn firmware_directory(&self) -> Option<PathBuf> {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).update_tab.firmware_directory.take()
     }
     pub fn set_firmware_directory(&self, directory: PathBuf) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).update_tab.firmware_directory = directory;
+        (*shared_data).update_tab.firmware_directory = Some(directory);
     }
     pub fn set_update_buttons(&self, buttons: UpdateTabButtons) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
@@ -451,9 +482,10 @@ pub struct UpdateTabButtons {
 #[derive(Debug)]
 pub struct UpdateTabState {
     pub firmware_local_filepath: Option<PathBuf>,
+    pub firmware_local_filename: Option<PathBuf>,
     pub fileio_local_filepath: Option<PathBuf>,
     pub fileio_destination_filepath: Option<PathBuf>,
-    pub firmware_directory: PathBuf,
+    pub firmware_directory: Option<PathBuf>,
     pub buttons: Option<UpdateTabButtons>,
 }
 
@@ -461,8 +493,9 @@ impl UpdateTabState {
     fn new() -> UpdateTabState {
         UpdateTabState {
             buttons: None,
-            firmware_directory: LOG_DIRECTORY.path(),
+            firmware_directory: Some(LOG_DIRECTORY.path()),
             firmware_local_filepath: None,
+            firmware_local_filename: None,
             fileio_local_filepath: None,
             fileio_destination_filepath: None,
         }

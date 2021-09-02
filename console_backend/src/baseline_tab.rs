@@ -53,7 +53,7 @@ pub(crate) struct BaselineTabButtons {
 /// - `utc_source`: The string equivalent for the source of the UTC updates.
 /// - `utc_time`: The stored monotonic Utc time.
 /// - `week`: The stored week value from GPS Time messages.
-pub struct BaselineTab<'a, S: CapnProtoSender> {
+pub struct BaselineTab<S: CapnProtoSender> {
     age_corrections: Option<f64>,
     client_sender: S,
     heading: Option<f64>,
@@ -68,16 +68,16 @@ pub struct BaselineTab<'a, S: CapnProtoSender> {
     shared_state: SharedState,
     sln_cur_data: Vec<Vec<(f64, f64)>>,
     sln_data: Vec<Vec<(f64, f64)>>,
-    slns: HashMap<&'a str, Deque<f64>>,
-    table: HashMap<&'a str, String>,
+    slns: HashMap<&'static str, Deque<f64>>,
+    table: HashMap<&'static str, String>,
     utc_source: Option<String>,
     utc_time: Option<UtcDateTime>,
     week: Option<u16>,
     wtr: MsgSender,
 }
 
-impl<'a, S: CapnProtoSender> BaselineTab<'a, S> {
-    pub fn new(shared_state: SharedState, client_sender: S, wtr: MsgSender) -> BaselineTab<'a, S> {
+impl<S: CapnProtoSender> BaselineTab<S> {
+    pub fn new(shared_state: SharedState, client_sender: S, wtr: MsgSender) -> BaselineTab<S> {
         BaselineTab {
             age_corrections: None,
             client_sender,

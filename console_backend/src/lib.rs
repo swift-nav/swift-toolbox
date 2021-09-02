@@ -42,24 +42,27 @@ use crate::{
     tracking_signals_tab::TrackingSignalsTab,
 };
 
-struct Tabs<'a, S: types::CapnProtoSender> {
+struct Tabs<'link, S: types::CapnProtoSender> {
     pub main: Mutex<MainTab<S>>,
     pub advanced_ins: Mutex<AdvancedInsTab<S>>,
     pub advanced_magnetometer: Mutex<AdvancedMagnetometerTab<S>>,
-    pub baseline: Mutex<BaselineTab<'a, S>>,
+    pub baseline: Mutex<BaselineTab<S>>,
     pub tracking_signals: Mutex<TrackingSignalsTab<S>>,
     pub solution: Mutex<SolutionTab<S>>,
     pub observation: Mutex<ObservationTab<S>>,
-    pub solution_velocity: Mutex<SolutionVelocityTab<'a, S>>,
+    pub solution_velocity: Mutex<SolutionVelocityTab<S>>,
     pub advanced_spectrum_analyzer: Mutex<AdvancedSpectrumAnalyzerTab<S>>,
     pub status_bar: Mutex<StatusBar<S>>,
+    _link: broadcaster::Link<'link>,
+    // pub settings_tab: Mutex<SettingsTab<'a, S>>,
 }
 
-impl<'a, S: types::CapnProtoSender> Tabs<'a, S> {
+impl<'link, S: types::CapnProtoSender> Tabs<'link, S> {
     fn new(
         shared_state: types::SharedState,
         client_sender: S,
         msg_sender: types::MsgSender,
+        link: broadcaster::Link<'link>,
     ) -> Self {
         Self {
             main: MainTab::new(shared_state.clone(), client_sender.clone()).into(),
@@ -69,8 +72,12 @@ impl<'a, S: types::CapnProtoSender> Tabs<'a, S> {
                 client_sender.clone(),
             )
             .into(),
-            baseline: BaselineTab::new(shared_state.clone(), client_sender.clone(), msg_sender)
-                .into(),
+            baseline: BaselineTab::new(
+                shared_state.clone(),
+                client_sender.clone(),
+                msg_sender.clone(),
+            )
+            .into(),
             tracking_signals: TrackingSignalsTab::new(shared_state.clone(), client_sender.clone())
                 .into(),
             observation: ObservationTab::new(shared_state.clone(), client_sender.clone()).into(),
@@ -85,7 +92,8 @@ impl<'a, S: types::CapnProtoSender> Tabs<'a, S> {
                 client_sender.clone(),
             )
             .into(),
-            status_bar: StatusBar::new(shared_state, client_sender).into(),
+            status_bar: StatusBar::new(shared_state.clone(), client_sender.clone()).into(),
+            _link: link,
         }
     }
 }

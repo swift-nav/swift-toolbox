@@ -323,6 +323,12 @@ impl Clone for Link<'_> {
     }
 }
 
+impl<'a> Default for Link<'a> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crossbeam::scope;

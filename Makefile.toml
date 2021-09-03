@@ -479,7 +479,7 @@ sys.exit(int(len(no_newline) > 0) if dry_run else 0)
 '''
 
 [tasks.newline-check]
-env = { "NLT_DRY_RUN" = "1" }
+env = { NLT_DRY_RUN = "1" }
 run_task = "newline-terminator"
 
 [tasks.newline-format]

@@ -27,12 +27,14 @@ QtObject {
     property QtObject advancedSpectrumAnalyzer
     property QtObject baselinePlot
     property QtObject baselineTable
+    property QtObject settingsTable
     property QtObject solutionPosition
     property QtObject solutionTable
     property QtObject solutionVelocity
     property QtObject trackingSignals
     property QtObject observationTab
     property QtObject genericTable
+    property QtObject icons
     readonly property int staticTimerIntervalRate: 5 // 5 Hz
     readonly property int staticTableTimerIntervalRate: 10 // 10 Hz
     readonly property string monoSpaceFont: "Courier New"
@@ -249,6 +251,21 @@ QtObject {
         readonly property string msgHeader: "Message"
     }
 
+    settingsTable: QtObject {
+        readonly property int width: 240
+        readonly property int defaultColumnWidth: 100
+        readonly property color tableBorderColor: "#000000"
+        readonly property int tableBorderWidth: 1
+        readonly property int tableHeaderTableDataTableSpacing: 0
+        readonly property int tableCellHeight: 20
+        readonly property int tableCellSpacing: 0
+        readonly property int tableSurroundingMargin: 2
+        readonly property int tableInnerMargin: 0
+        readonly property int tableLeftPadding: 2
+        readonly property string tableLeftColumnHeader: "Name"
+        readonly property string tableRightColumnHeader: "Value"
+    }
+
     solutionTable: QtObject {
         readonly property int width: 240
         readonly property int defaultColumnWidth: 100
@@ -336,6 +353,14 @@ QtObject {
     observationTab: QtObject {
         readonly property int titlePointSize: 14
         readonly property int titleAreaHight: 25
+    }
+
+    icons: QtObject {
+        readonly property string savePath: "images/fontawesome/floppy-o.svg"
+        readonly property string refreshPath: "images/fontawesome/refresh.svg"
+        readonly property string exportPath: "images/fontawesome/file-export.svg"
+        readonly property string importPath: "images/fontawesome/file-import.svg"
+        readonly property string warningPath: "images/fontawesome/exclamation-triangle.svg"
     }
 
 }

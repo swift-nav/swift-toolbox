@@ -16,13 +16,13 @@ use sbp::{
     serialize::SbpSerialize,
 };
 
+use crate::broadcaster::with_link;
 use crate::connection::Connection;
 use crate::constants::PAUSE_LOOP_SLEEP_DURATION_MS;
+use crate::log_panel::handle_log_msg;
 use crate::types::*;
 use crate::utils::{close_frontend, refresh_navbar};
 use crate::Tabs;
-use crate::log_panel::handle_log_msg;
-use crate::broadcaster::with_link;
 
 pub fn process_messages<S>(
     conn: Connection,
@@ -206,44 +206,52 @@ where
         let shared_state = shared_state.clone();
         let mut client_send = client_send.clone();
 
-        for (message, gps_time) in messages {
-            if !shared_state.is_running() {
-                if let Err(e) = tabs.main.lock().unwrap().end_csv_logging() {
-                    error!("Issue closing csv file, {}", e);
-                }
-                tabs.main.lock().unwrap().close_sbp();
-                break;
-            }
-            if shared_state.is_paused() {
-                loop {
-                    if !shared_state.is_paused() {
-                        break;
+        crossbeam::scope(|scope| {
+            scope.spawn(|_| loop {
+                tabs.settings_tab.lock().unwrap().tick();
+                sleep(Duration::from_millis(100));
+            });
+
+            for (message, gps_time) in messages {
+                if !shared_state.is_running() {
+                    if let Err(e) = tabs.main.lock().unwrap().end_csv_logging() {
+                        error!("Issue closing csv file, {}", e);
                     }
-                    sleep(Duration::from_millis(PAUSE_LOOP_SLEEP_DURATION_MS));
+                    tabs.main.lock().unwrap().close_sbp();
+                    break;
                 }
-            }
-            let sent = source.send(&message, gps_time.clone());
-            tabs.main.lock().unwrap().serialize_sbp(&message);
-            tabs.status_bar
-                .lock()
-                .unwrap()
-                .add_bytes(message.sbp_size());
-            if let RealtimeDelay::On = realtime_delay {
-                if sent {
-                    tabs.main.lock().unwrap().realtime_delay(gps_time);
-                } else {
-                    debug!(
-                        "Message, {}, ignored for realtime delay.",
-                        message.get_message_name()
-                    );
+                if shared_state.is_paused() {
+                    loop {
+                        if !shared_state.is_paused() {
+                            break;
+                        }
+                        sleep(Duration::from_millis(PAUSE_LOOP_SLEEP_DURATION_MS));
+                    }
                 }
+                let sent = source.send(&message, gps_time.clone());
+                tabs.main.lock().unwrap().serialize_sbp(&message);
+                tabs.status_bar
+                    .lock()
+                    .unwrap()
+                    .add_bytes(message.sbp_size());
+                if let RealtimeDelay::On = realtime_delay {
+                    if sent {
+                        tabs.main.lock().unwrap().realtime_delay(gps_time);
+                    } else {
+                        debug!(
+                            "Message, {}, ignored for realtime delay.",
+                            message.get_message_name()
+                        );
+                    }
+                }
+                log::logger().flush();
             }
-            log::logger().flush();
-        }
-        if conn.close_when_done() {
-            shared_state.set_running(false, client_send.clone());
-            close_frontend(&mut client_send);
-        }
+            if conn.close_when_done() {
+                shared_state.set_running(false, client_send.clone());
+                close_frontend(&mut client_send);
+            }
+        })
+        .unwrap();
     });
 
     Ok(())

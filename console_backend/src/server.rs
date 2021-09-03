@@ -19,6 +19,7 @@ use crate::console_backend_capnp as m;
 use crate::errors::*;
 use crate::log_panel::{setup_logging, LogLevel};
 use crate::output::{CsvLogging, SbpLogging};
+use crate::settings_tab;
 use crate::types::{ClientSender, FlowControl, RealtimeDelay, SharedState};
 use crate::utils::{refresh_loggingbar, refresh_navbar};
 
@@ -273,6 +274,28 @@ fn backend_recv_thread(
                             .expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
                         (*shared_data).advanced_spectrum_analyzer_tab.channel_idx =
                             cv_in.get_channel();
+                    }
+                    m::message::SettingsRefreshRequest(Ok(_)) => {
+                        shared_state_clone.set_settings_refresh(true);
+                    }
+                    m::message::SettingsExportRequest(Ok(path)) => {
+                        let path = path.get_path().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
+                        shared_state_clone.set_export_settings(Some(path.to_string()));
+                    }
+                    m::message::SettingsImportRequest(Ok(path)) => {
+                        let path = path.get_path().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
+                        shared_state_clone.set_import_settings(Some(path.to_string()));
+                    }
+                    m::message::SettingsSaveRequest(Ok(req)) => {
+                        let group = req.get_group().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
+                        let name = req.get_name().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
+                        let value = req.get_value().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
+                        let req = settings_tab::SaveRequest {
+                            group: group.to_string(),
+                            name: name.to_string(),
+                            value: value.to_string(),
+                        };
+                        shared_state_clone.set_save_setting(Some(req));
                     }
                     _ => {
                         error!("unknown message from front-end");

@@ -5,8 +5,9 @@ use crate::errors::*;
 use crate::log_panel::LogLevel;
 use crate::output::{CsvLogging, CsvSerializer};
 use crate::piksi_tools_constants::*;
-
+use crate::settings_tab;
 use crate::utils::{mm_to_m, ms_to_sec, set_connected_frontend};
+
 use anyhow::{Context, Result as AHResult};
 use chrono::{DateTime, Utc};
 use crossbeam::channel;
@@ -77,7 +78,9 @@ impl MsgSender {
     }
 
     pub fn send(&self, mut msg: SBP) -> Result<()> {
-        msg.set_sender_id(Self::SENDER_ID);
+        if msg.get_sender_id().is_none() {
+            msg.set_sender_id(Self::SENDER_ID);
+        }
         let mut framed = self.inner.lock().expect(Self::LOCK_FAILURE);
         framed.send(msg).context("while sending a message")?;
         Ok(())
@@ -120,7 +123,7 @@ impl<T: Clone> Deque<T> {
     }
 }
 
-pub trait CapnProtoSender: Debug + Clone + Send {
+pub trait CapnProtoSender: Debug + Clone + Send + 'static {
     fn send_data(&mut self, msg_bytes: Vec<u8>);
 }
 
@@ -360,6 +363,49 @@ impl SharedState {
         (*shared_data).baseline_tab.log_file = None;
         Ok(())
     }
+    pub fn settings_refresh(&self) -> bool {
+        self.lock()
+            .expect(SHARED_STATE_LOCK_MUTEX_FAILURE)
+            .settings_tab
+            .refresh
+    }
+    pub fn set_settings_refresh(&self, set_to: bool) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.settings_tab.refresh = set_to;
+    }
+    pub fn export_settings(&self) -> Option<String> {
+        self.lock()
+            .expect(SHARED_STATE_LOCK_MUTEX_FAILURE)
+            .settings_tab
+            .export
+            .clone()
+    }
+    pub fn set_export_settings(&self, path: Option<String>) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.settings_tab.export = path;
+    }
+    pub fn import_settings(&self) -> Option<String> {
+        self.lock()
+            .expect(SHARED_STATE_LOCK_MUTEX_FAILURE)
+            .settings_tab
+            .export
+            .clone()
+    }
+    pub fn set_import_settings(&self, path: Option<String>) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.settings_tab.import = path;
+    }
+    pub fn save_setting(&self) -> Option<settings_tab::SaveRequest> {
+        self.lock()
+            .expect(SHARED_STATE_LOCK_MUTEX_FAILURE)
+            .settings_tab
+            .save
+            .clone()
+    }
+    pub fn set_save_setting(&self, setting: Option<settings_tab::SaveRequest>) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.settings_tab.save = setting;
+    }
 }
 
 impl Deref for SharedState {
@@ -396,6 +442,7 @@ pub struct SharedStateInner {
     pub(crate) solution_tab: SolutionTabState,
     pub(crate) baseline_tab: BaselineTabState,
     pub(crate) advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTabState,
+    pub(crate) settings_tab: SettingsTabState,
 }
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
@@ -413,6 +460,7 @@ impl SharedStateInner {
             solution_tab: SolutionTabState::new(),
             baseline_tab: BaselineTabState::new(),
             advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTabState::new(),
+            settings_tab: SettingsTabState::new(),
         }
     }
 }
@@ -578,6 +626,25 @@ pub struct AdvancedSpectrumAnalyzerTabState {
 impl AdvancedSpectrumAnalyzerTabState {
     fn new() -> AdvancedSpectrumAnalyzerTabState {
         AdvancedSpectrumAnalyzerTabState { channel_idx: 0 }
+    }
+}
+
+#[derive(Debug)]
+pub struct SettingsTabState {
+    refresh: bool,
+    export: Option<String>,
+    import: Option<String>,
+    save: Option<settings_tab::SaveRequest>,
+}
+
+impl SettingsTabState {
+    fn new() -> Self {
+        Self {
+            refresh: true,
+            export: None,
+            import: None,
+            save: None,
+        }
     }
 }
 

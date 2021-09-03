@@ -25,8 +25,7 @@ Item {
         ObservationTab {
         }
 
-        Item {
-            id: settingsTab
+        SettingsTab {
         }
 
         Item {

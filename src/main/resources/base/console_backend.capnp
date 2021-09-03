@@ -58,6 +58,71 @@ struct SolutionTableStatus {
     data @0 :List(KeyValPair);
 }
 
+struct Setting {
+    name @0 :Text;
+    group @1 :Text;
+    type @2 :Text;
+    expert @3 :Bool;
+    readonly @4 :Bool;
+    description :union {
+        description @5 :Text;
+        noDescription @6 :Void;
+    }
+    defaultValue :union {
+        defaultValue @7 :Text;
+        noDefaultValue @8 :Void;
+    }
+    notes :union {
+        notes @9 :Text;
+        noNotes @10 :Void;
+    }
+    units :union {
+        units @11 :Text;
+        noUnits @12 :Void;
+    }
+    enumeratedPossibleValues :union {
+        enumeratedPossibleValues @13 :Text;
+        noEnumeratedPossibleValues @14 :Void;
+    }
+    digits :union {
+        digits @15 :Text;
+        noDigits @16 :Void;
+    }
+    valueOnDevice :union {
+        valueOnDevice @17 :Text;
+        noValueOnDevice @18 :Void;
+    }
+}
+
+struct SettingsRow {
+    union {
+        setting @0 :Setting;
+        group @1 :Text;
+    }
+}
+
+struct SettingsTableStatus {
+    data @0 :List(SettingsRow);
+}
+
+struct SettingsRefreshRequest {
+    refresh @0 :Void = void;
+}
+
+struct SettingsExportRequest {
+    path @0 :Text;
+}
+
+struct SettingsImportRequest {
+    path @0 :Text;
+}
+
+struct SettingsSaveRequest {
+    group @0 :Text;
+    name @1 :Text;
+    value @2 :Text;
+}
+
 struct Point {
     x @0 :Float64;
     y @1 :Float64;
@@ -245,7 +310,12 @@ struct Message {
         baselinePlotStatus @25 :BaselinePlotStatus;
         baselineTableStatus @26 :BaselineTableStatus;
         baselinePlotStatusButtonFront @27 :BaselinePlotStatusButtonFront;
-        advancedSpectrumAnalyzerStatus @28:AdvancedSpectrumAnalyzerStatus;
-        advancedSpectrumAnalyzerStatusFront @29:AdvancedSpectrumAnalyzerStatusFront;
+        advancedSpectrumAnalyzerStatus @28 :AdvancedSpectrumAnalyzerStatus;
+        advancedSpectrumAnalyzerStatusFront @29 :AdvancedSpectrumAnalyzerStatusFront;
+        settingsTableStatus @30 :SettingsTableStatus;
+        settingsRefreshRequest @31 :SettingsRefreshRequest;
+        settingsExportRequest @32 :SettingsExportRequest;
+        settingsImportRequest @33 :SettingsImportRequest;
+        settingsSaveRequest @34 :SettingsSaveRequest;
     }
 }

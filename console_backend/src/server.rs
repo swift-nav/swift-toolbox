@@ -300,7 +300,6 @@ fn backend_recv_thread(
                             Ok(m::update_tab_status_front::update_local_filepath::Filepath(
                                 Ok(filepath),
                             )) => {
-                                println!("{}", filepath);
                                 shared_state.set_firmware_local_filepath(PathBuf::from(filepath));
                             }
                             Err(e) => {
@@ -312,7 +311,6 @@ fn backend_recv_thread(
                             Ok(m::update_tab_status_front::update_local_filename::Filepath(
                                 Ok(filepath),
                             )) => {
-                                println!("{}", filepath);
                                 shared_state.set_firmware_local_filename(PathBuf::from(filepath));
                             }
                             Err(e) => {

@@ -10,6 +10,7 @@ Item {
     property alias latestVersion: latestVersionText.text
     property alias localFileText: selectLocalFile.localFileText
     property alias localFileTextEditing: selectLocalFile.localFileTextEditing
+    property alias upgradeButtonEnable: updateFirmwareButton.enabled
 
     Rectangle {
         width: parent.width

@@ -150,6 +150,7 @@ Item {
 
             fwLogTextArea.text = updateTabData.fw_text;
             firmwareDownload.downloadButtonEnable = !updateTabData.downloading;
+            firmwareVersion.upgradeButtonEnable = !updateTabData.upgrading;
             if (!firmwareVersion.localFileTextEditing)
                 firmwareVersion.localFileText = updateTabData.fw_local_filename;
 

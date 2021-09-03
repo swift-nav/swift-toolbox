@@ -519,13 +519,13 @@ mod tests {
 
     #[test]
     fn compare_semvers_test() {
-        // assert!(!compare_semvers(String::from("1.0.0"), String::from("1.0.0")).unwrap());
-        // assert!(compare_semvers(String::from("1.0.0"), String::from("1.0.1")).unwrap());
-        // assert!(compare_semvers(String::from("1.0.0"), String::from("1.1.0")).unwrap());
-        // assert!(compare_semvers(String::from("1.0.0"), String::from("2.0.0")).unwrap());
-        // assert!(!compare_semvers(String::from("1.0.0"), String::from("0.0.0")).unwrap());
-        // assert!(!compare_semvers(String::from("1.0.0"), String::from("0.0.1")).unwrap());
-        // assert!(!compare_semvers(String::from("1.0.0"), String::from("0.1.0")).unwrap());
+        assert!(!compare_semvers(String::from("1.0.0"), String::from("1.0.0")).unwrap());
+        assert!(compare_semvers(String::from("1.0.0"), String::from("1.0.1")).unwrap());
+        assert!(compare_semvers(String::from("1.0.0"), String::from("1.1.0")).unwrap());
+        assert!(compare_semvers(String::from("1.0.0"), String::from("2.0.0")).unwrap());
+        assert!(!compare_semvers(String::from("1.0.0"), String::from("0.0.0")).unwrap());
+        assert!(!compare_semvers(String::from("1.0.0"), String::from("0.0.1")).unwrap());
+        assert!(!compare_semvers(String::from("1.0.0"), String::from("0.1.0")).unwrap());
         assert!(compare_semvers(String::from("2.5.6"), String::from("2.5.6-dev5432")).unwrap());
         assert!(compare_semvers(String::from("2.5.6-dev5432"), String::from("2.5.6")).unwrap());
         assert!(compare_semvers(

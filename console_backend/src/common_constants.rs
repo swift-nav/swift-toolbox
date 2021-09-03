@@ -213,6 +213,26 @@ pub enum Keys {
     XMIN,
     #[strum(serialize = "XMAX")]
     XMAX,
+    #[strum(serialize = "HARDWARE_REVISION")]
+    HARDWARE_REVISION,
+    #[strum(serialize = "FW_VERSION_CURRENT")]
+    FW_VERSION_CURRENT,
+    #[strum(serialize = "FW_VERSION_LATEST")]
+    FW_VERSION_LATEST,
+    #[strum(serialize = "FW_LOCAL_FILENAME")]
+    FW_LOCAL_FILENAME,
+    #[strum(serialize = "DIRECTORY")]
+    DIRECTORY,
+    #[strum(serialize = "DOWNLOADING")]
+    DOWNLOADING,
+    #[strum(serialize = "UPGRADING")]
+    UPGRADING,
+    #[strum(serialize = "FW_TEXT")]
+    FW_TEXT,
+    #[strum(serialize = "FILEIO_LOCAL_FILEPATH")]
+    FILEIO_LOCAL_FILEPATH,
+    #[strum(serialize = "FILEIO_DESTINATION_FILEPATH")]
+    FILEIO_DESTINATION_FILEPATH,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
@@ -229,4 +249,6 @@ pub enum ApplicationStates {
 pub enum QTKeys {
     #[strum(serialize = "QVariantList")]
     QVARIANTLIST,
+    #[strum(serialize = "QVariant")]
+    QVARIANT,
 }

@@ -4,10 +4,12 @@ use log::{debug, error};
 use sbp::{
     messages::{
         imu::{MsgImuAux, MsgImuRaw},
+        logging::MsgLog,
         mag::MsgMagRaw,
         navigation::{MsgAgeCorrections, MsgPosLLHCov, MsgUtcTime, MsgVelNED},
         observation::MsgObsDepA,
         orientation::{MsgAngularRate, MsgBaselineHeading, MsgOrientEuler},
+        piksi::MsgCommandResp,
         system::{MsgHeartbeat, MsgInsStatus, MsgInsUpdates},
         tracking::{MsgMeasurementState, MsgTrackingState},
         SBPMessage,
@@ -21,6 +23,7 @@ use crate::connection::Connection;
 use crate::constants::PAUSE_LOOP_SLEEP_DURATION_MS;
 use crate::log_panel::handle_log_msg;
 use crate::types::*;
+use crate::update_tab;
 use crate::utils::{close_frontend, refresh_navbar};
 use crate::Tabs;
 
@@ -56,12 +59,11 @@ where
             })
             .with_rover_time()
     };
-
     with_link(|source| {
         let tabs = Tabs::new(
             shared_state.clone(),
             client_send.clone(),
-            msg_sender,
+            msg_sender.clone(),
             source.link(),
         );
 
@@ -85,6 +87,10 @@ where
 
         link.register_cb(|msg: MsgBaselineHeading| {
             tabs.baseline.lock().unwrap().handle_baseline_heading(msg);
+        });
+
+        link.register_cb(|msg: MsgCommandResp| {
+            tabs.update.lock().unwrap().handle_command_resp(msg);
         });
 
         link.register_cb(|msg: BaselineNED| {
@@ -201,49 +207,72 @@ where
             tabs.solution.lock().unwrap().handle_utc_time(msg);
         });
 
-        link.register_cb(handle_log_msg);
+        link.register_cb(|msg: MsgLog| {
+            tabs.update.lock().unwrap().handle_log_msg(msg.clone());
+            handle_log_msg(msg);
+        });
 
         let shared_state = shared_state.clone();
         let mut client_send = client_send.clone();
-
-        for (message, gps_time) in messages {
-            if !shared_state.is_running() {
-                if let Err(e) = tabs.main.lock().unwrap().end_csv_logging() {
-                    error!("Issue closing csv file, {}", e);
-                }
-                tabs.main.lock().unwrap().close_sbp();
-                break;
-            }
-            if shared_state.is_paused() {
-                loop {
-                    if !shared_state.is_paused() {
-                        break;
+        let update_shared = tabs.update.lock().unwrap().update_shared_clone();
+        let link_clone = source.link();
+        let client_send_clone = client_send.clone();
+        let update_tab_is_running = ArcBool::new_with(true);
+        crossbeam::scope(|scope| {
+            let handle = scope.spawn(|_| {
+                update_tab::update_tab_thread(
+                    update_tab_is_running.clone(),
+                    shared_state.clone(),
+                    update_shared,
+                    client_send_clone,
+                    link_clone,
+                    msg_sender.clone(),
+                );
+            });
+            for (message, gps_time) in messages {
+                if !shared_state.is_running() {
+                    if let Err(e) = tabs.main.lock().unwrap().end_csv_logging() {
+                        error!("Issue closing csv file, {}", e);
                     }
-                    sleep(Duration::from_millis(PAUSE_LOOP_SLEEP_DURATION_MS));
+                    tabs.main.lock().unwrap().close_sbp();
+                    break;
                 }
-            }
-            let sent = source.send(&message, gps_time.clone());
-            tabs.main.lock().unwrap().serialize_sbp(&message);
-            tabs.status_bar
-                .lock()
-                .unwrap()
-                .add_bytes(message.sbp_size());
-            if let RealtimeDelay::On = realtime_delay {
-                if sent {
-                    tabs.main.lock().unwrap().realtime_delay(gps_time);
-                } else {
-                    debug!(
-                        "Message, {}, ignored for realtime delay.",
-                        message.get_message_name()
-                    );
+                if shared_state.is_paused() {
+                    loop {
+                        if !shared_state.is_paused() {
+                            break;
+                        }
+                        sleep(Duration::from_millis(PAUSE_LOOP_SLEEP_DURATION_MS));
+                    }
                 }
+                let sent = source.send(&message, gps_time.clone());
+                tabs.main.lock().unwrap().serialize_sbp(&message);
+                tabs.status_bar
+                    .lock()
+                    .unwrap()
+                    .add_bytes(message.sbp_size());
+                if let RealtimeDelay::On = realtime_delay {
+                    if sent {
+                        tabs.main.lock().unwrap().realtime_delay(gps_time);
+                    } else {
+                        debug!(
+                            "Message, {}, ignored for realtime delay.",
+                            message.get_message_name()
+                        );
+                    }
+                }
+                log::logger().flush();
             }
-            log::logger().flush();
-        }
-        if conn.close_when_done() {
-            shared_state.set_running(false, client_send.clone());
-            close_frontend(&mut client_send);
-        }
+            if conn.close_when_done() {
+                shared_state.set_running(false, client_send.clone());
+                close_frontend(&mut client_send);
+            }
+            update_tab_is_running.set(false);
+            if let Err(err) = handle.join() {
+                error!("Error joining update tab, {:?}", err);
+            }
+        })
+        .unwrap();
     });
 
     Ok(())

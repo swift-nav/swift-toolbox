@@ -55,7 +55,7 @@ struct Tabs<'link, S: types::CapnProtoSender> {
     pub solution_velocity: Mutex<SolutionVelocityTab<S>>,
     pub advanced_spectrum_analyzer: Mutex<AdvancedSpectrumAnalyzerTab<S>>,
     pub status_bar: Mutex<StatusBar<S>>,
-    pub _update: Mutex<UpdateTab<S>>,
+    pub update: Mutex<UpdateTab>,
     _link: broadcaster::Link<'link>,
 }
 
@@ -90,10 +90,9 @@ impl<'link, S: types::CapnProtoSender> Tabs<'link, S> {
                 client_sender.clone(),
             )
             .into(),
-            status_bar: StatusBar::new(shared_state.clone(), client_sender.clone()).into(),
-            _update: UpdateTab::new(shared_state, client_sender).into(),
+            status_bar: StatusBar::new(shared_state, client_sender).into(),
+            update: UpdateTab::new().into(),
             _link: link,
-            
         }
     }
 }

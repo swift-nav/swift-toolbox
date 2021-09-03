@@ -28,6 +28,8 @@
     <file>AdvancedTabComponents/OkStatus.qml</file>
     <file>BaselineTab.qml</file>
     <file>BaselineTabComponents/BaselinePlot.qml</file>
+    <file>SettingsTab.qml</file>
+    <file>SettingsTabComponents/SettingsTable.qml</file>
     <file>SolutionPlotCommon/SolutionPlotLoop.js</file>
     <file>BaselineTabComponents/BaselineTable.qml</file>
     <file>SolutionTab.qml</file>
@@ -67,5 +69,10 @@
     <file>images/fontawesome/cogs-solid.svg</file>
     <file>images/fontawesome/chevron-circle-up-solid.svg</file>
     <file>images/fontawesome/lock-solid.svg</file>
+    <file>images/fontawesome/floppy-o.svg</file>
+    <file>images/fontawesome/refresh.svg</file>
+    <file>images/fontawesome/file-export.svg</file>
+    <file>images/fontawesome/file-import.svg</file>
+    <file>images/fontawesome/exclamation-triangle.svg</file>
 </qresource>
 </RCC>

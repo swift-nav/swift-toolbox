@@ -87,6 +87,13 @@ from observation_tab import (
     obs_rows_to_json,
 )
 
+from settings_table import (
+    SettingsTableEntries,
+    SettingsTableModel,
+    SETTINGS_TABLE,
+    settings_rows_to_json,
+)
+
 from solution_position_tab import (
     SolutionPositionModel,
     SolutionPositionPoints,
@@ -331,6 +338,8 @@ def receive_messages(app_, backend, messages):
             log_panel_lock.lock()
             LOG_PANEL[Keys.ENTRIES] += [entry.line for entry in m.logAppend.entries]
             log_panel_lock.unlock()
+        elif m.which == Message.Union.SettingsTableStatus:
+            SETTINGS_TABLE[Keys.ENTRIES][:] = settings_rows_to_json(m.settingsTableStatus.data)
         else:
             pass
 
@@ -392,6 +401,43 @@ class DataModel(QObject):
         Message = self.messages.Message
         msg = self.messages.Message()
         msg.serialRefreshRequest = msg.init(Message.Union.SerialRefreshRequest)
+        buffer = msg.to_bytes()
+        self.endpoint.send_message(buffer)
+
+    @Slot()  # type: ignore
+    def settings_refresh(self) -> None:
+        Message = self.messages.Message
+        msg = self.messages.Message()
+        msg.settingsRefreshRequest = msg.init(Message.Union.SettingsRefreshRequest)
+        buffer = msg.to_bytes()
+        self.endpoint.send_message(buffer)
+
+    @Slot(str)  # type: ignore
+    def settings_export_request(self, path: str) -> None:
+        Message = self.messages.Message
+        msg = self.messages.Message()
+        msg.settingsExportRequest = msg.init(Message.Union.SettingsExportRequest)
+        msg.settingsExportRequest.path = path
+        buffer = msg.to_bytes()
+        self.endpoint.send_message(buffer)
+
+    @Slot(str)  # type: ignore
+    def settings_import_request(self, path: str) -> None:
+        Message = self.messages.Message
+        msg = self.messages.Message()
+        msg.settingsImportRequest = msg.init(Message.Union.SettingsImportRequest)
+        msg.settingsImportRequest.path = path
+        buffer = msg.to_bytes()
+        self.endpoint.send_message(buffer)
+
+    @Slot(str, str, str)  # type: ignore
+    def settings_save_request(self, group: str, name: str, value: str) -> None:
+        Message = self.messages.Message
+        msg = self.messages.Message()
+        msg.settingsSaveRequest = msg.init(Message.Union.SettingsSaveRequest)
+        msg.settingsSaveRequest.group = group
+        msg.settingsSaveRequest.name = name
+        msg.settingsSaveRequest.value = value
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
 
@@ -591,6 +637,7 @@ if __name__ == "__main__":
     qmlRegisterType(FusionStatusFlagsData, "SwiftConsole", 1, 0, "FusionStatusFlagsData")  # type: ignore
     qmlRegisterType(BaselinePlotPoints, "SwiftConsole", 1, 0, "BaselinePlotPoints")  # type: ignore
     qmlRegisterType(BaselineTableEntries, "SwiftConsole", 1, 0, "BaselineTableEntries")  # type: ignore
+    qmlRegisterType(SettingsTableEntries, "SwiftConsole", 1, 0, "SettingsTableEntries")  # type: ignore
     qmlRegisterType(SolutionPositionPoints, "SwiftConsole", 1, 0, "SolutionPositionPoints")  # type: ignore
     qmlRegisterType(SolutionTableEntries, "SwiftConsole", 1, 0, "SolutionTableEntries")  # type: ignore
     qmlRegisterType(SolutionVelocityPoints, "SwiftConsole", 1, 0, "SolutionVelocityPoints")  # type: ignore
@@ -621,6 +668,7 @@ if __name__ == "__main__":
     fusion_engine_flags_model = FusionStatusFlagsModel()
     baseline_plot_model = BaselinePlotModel()
     baseline_table_model = BaselineTableModel()
+    settings_table_model = SettingsTableModel()
     solution_position_model = SolutionPositionModel()
     solution_table_model = SolutionTableModel()
     solution_velocity_model = SolutionVelocityModel()
@@ -639,6 +687,7 @@ if __name__ == "__main__":
     root_context.setContextProperty("fusion_engine_flags_model", fusion_engine_flags_model)
     root_context.setContextProperty("baseline_plot_model", baseline_plot_model)
     root_context.setContextProperty("baseline_table_model", baseline_table_model)
+    root_context.setContextProperty("settings_table_model", settings_table_model)
     root_context.setContextProperty("solution_position_model", solution_position_model)
     root_context.setContextProperty("solution_table_model", solution_table_model)
     root_context.setContextProperty("solution_velocity_model", solution_velocity_model)

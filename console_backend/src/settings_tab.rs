@@ -1,0 +1,849 @@
+use std::collections::HashSet;
+use std::fs;
+use std::io::Write;
+use std::path::PathBuf;
+
+use anyhow::anyhow;
+use capnp::message::Builder;
+use log::{debug, error};
+
+use crate::broadcaster::Link;
+use crate::types::{CapnProtoSender, MsgSender, Result, SharedState};
+use crate::utils::*;
+
+use client::Client;
+
+pub struct SettingsTab<'a, S> {
+    client_sender: S,
+    shared_state: SharedState,
+    settings: Vec<Setting>,
+    client: Client<'a>,
+    link: Link<'a>,
+    sender: MsgSender,
+}
+
+impl<'a, S: CapnProtoSender> SettingsTab<'a, S> {
+    pub fn new(
+        shared_state: SharedState,
+        client_sender: S,
+        msg_sender: MsgSender,
+        link: Link<'a>,
+    ) -> SettingsTab<'a, S> {
+        let mut settings: Vec<_> = libsettings::settings().iter().map(Setting::new).collect();
+        settings.sort_by(|a, b| {
+            if a.setting.group == b.setting.group {
+                a.setting.name.cmp(&b.setting.name)
+            } else {
+                a.setting.group.cmp(&b.setting.group)
+            }
+        });
+        SettingsTab {
+            settings,
+            client: Client::new(link.clone(), msg_sender.clone()),
+            client_sender,
+            shared_state,
+            link,
+            sender: msg_sender,
+        }
+    }
+
+    pub fn tick(&mut self) {
+        if self.shared_state.settings_refresh() {
+            self.refresh();
+            self.shared_state.set_settings_refresh(false);
+        }
+        if let Some(path) = self.shared_state.export_settings() {
+            if let Err(e) = self.export(path) {
+                error!("Issue exporting settings, {}", e);
+            };
+            self.shared_state.set_export_settings(None);
+        }
+        if let Some(path) = self.shared_state.import_settings() {
+            if let Err(e) = self.import(path) {
+                error!("Issue importing settings, {}", e);
+            };
+            self.shared_state.set_import_settings(None);
+        }
+        if let Some(req) = self.shared_state.save_setting() {
+            if let Err(e) = self.save(req) {
+                error!("Issue saving setting, {}", e);
+            };
+            self.shared_state.set_save_setting(None);
+        }
+    }
+
+    pub fn refresh(&mut self) {
+        self.read_all_settings();
+        self.send_table_data();
+    }
+
+    pub fn export(&self, path: String) -> Result<()> {
+        let mut f = {
+            let path = PathBuf::from(path.trim_start_matches("file://"));
+            if let Some(p) = path.parent() {
+                fs::create_dir_all(p)?;
+            }
+            fs::File::create(&path)?
+        };
+
+        let mut settings = self.valid_settings();
+        let groups = std::iter::from_fn(move || {
+            if settings.is_empty() {
+                return None;
+            } else if settings.len() == 1 {
+                return Some(vec![settings.remove(0)]);
+            }
+            let mut group = vec![settings.remove(0)];
+            let mut i = 0;
+            while i < settings.len() {
+                if &settings[i].0.group == &group[0].0.group {
+                    group.push(settings.remove(i));
+                }
+                i += 1;
+            }
+            Some(group)
+        });
+
+        for group in groups {
+            writeln!(&mut f, "[{}]", group[0].0.group)?;
+            for setting in group {
+                writeln!(&mut f, "{}={}", setting.0.name, setting.1)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn import(&mut self, _path: String) -> Result<()> {
+        Ok(())
+    }
+
+    pub fn save(&mut self, request: SaveRequest) -> Result<()> {
+        self.client = Client::new(self.link.clone(), self.sender.clone());
+
+        let current = self
+            .settings
+            .iter()
+            .find(|s| s.setting.group == request.group && s.setting.name == request.name)
+            .ok_or_else(|| {
+                anyhow!(
+                    "unknown setting: group: {} name: {}",
+                    request.group,
+                    request.name
+                )
+            })?;
+
+        if let Some(Ok(ref v)) = current.value {
+            if v.to_string() == request.value {
+                debug!("skipping write because setting has not changed");
+                return Ok(());
+            }
+        }
+
+        self.client
+            .write_setting(&request.group, &request.name, &request.value)?;
+
+        Ok(())
+    }
+
+    pub fn read_all_settings(&mut self) {
+        for setting in self.client.read_all() {
+            let position = self
+                .settings
+                .iter()
+                .position(|s| s.setting.name == setting.name && s.setting.group == setting.group);
+            if let Some(idx) = position {
+                self.settings[idx].value =
+                    Some(Ok(libsettings::SettingValue::String(setting.value)))
+            }
+        }
+    }
+
+    /// Package settings table data into a message buffer and send to frontend.
+    pub fn send_table_data(&mut self) {
+        let valid_settings = self.valid_settings();
+
+        let num_groups = valid_settings
+            .iter()
+            .map(|(s, _)| &s.group)
+            .collect::<HashSet<_>>()
+            .len();
+
+        let mut builder = Builder::new_default();
+        let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
+        let mut settings_table_status = msg.init_settings_table_status();
+        let mut table_entries = settings_table_status
+            .reborrow()
+            .init_data((valid_settings.iter().count() + num_groups) as u32);
+
+        let mut idx = 0;
+        let mut group = "";
+
+        for (setting, value) in valid_settings {
+            if &setting.group != group {
+                group = &setting.group;
+                let mut entry = table_entries.reborrow().get(idx as u32);
+                entry.set_group(group);
+                idx += 1;
+            }
+
+            let mut entry = table_entries.reborrow().get(idx as u32).init_setting();
+            entry.set_name(&setting.name);
+            entry.set_group(&setting.group);
+            entry.set_type(setting.kind.to_str());
+            entry.set_expert(setting.expert);
+            entry.set_readonly(setting.readonly);
+            {
+                let entry = entry.reborrow();
+                if let Some(ref description) = setting.description {
+                    entry.get_description().set_description(description);
+                } else {
+                    entry.get_description().set_no_description(());
+                }
+            }
+            {
+                let entry = entry.reborrow();
+                if let Some(ref default_value) = setting.default_value {
+                    entry.get_default_value().set_default_value(default_value);
+                } else {
+                    entry.get_default_value().set_no_default_value(());
+                }
+            }
+            {
+                let entry = entry.reborrow();
+                if let Some(ref notes) = setting.notes {
+                    entry.get_notes().set_notes(notes);
+                } else {
+                    entry.get_notes().set_no_notes(());
+                }
+            }
+            {
+                let entry = entry.reborrow();
+                if let Some(ref units) = setting.units {
+                    entry.get_units().set_units(units);
+                } else {
+                    entry.get_units().set_no_units(());
+                }
+            }
+            {
+                let entry = entry.reborrow();
+                if let Some(ref enumerated_possible_values) = setting.enumerated_possible_values {
+                    entry
+                        .get_enumerated_possible_values()
+                        .set_enumerated_possible_values(enumerated_possible_values);
+                } else {
+                    entry
+                        .get_enumerated_possible_values()
+                        .set_no_enumerated_possible_values(());
+                }
+            }
+            {
+                let entry = entry.reborrow();
+                if let Some(ref digits) = setting.digits {
+                    entry.get_digits().set_digits(digits);
+                } else {
+                    entry.get_digits().set_no_digits(());
+                }
+            }
+            {
+                let entry = entry.reborrow();
+                entry
+                    .get_value_on_device()
+                    .set_value_on_device(&value.to_string());
+            }
+            idx += 1;
+        }
+        self.client_sender
+            .send_data(serialize_capnproto_builder(builder));
+    }
+
+    fn valid_settings(&self) -> Vec<(&'static libsettings::Setting, &libsettings::SettingValue)> {
+        self.settings
+            .iter()
+            .filter_map(move |s| {
+                if let Some(Ok(ref value)) = s.value {
+                    Some((s.setting, value))
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct SaveRequest {
+    pub group: String,
+    pub name: String,
+    pub value: String,
+}
+
+/// A reference to a particular setting and its value if it has been fetched
+struct Setting {
+    setting: &'static libsettings::Setting,
+    value: Option<Result<libsettings::SettingValue>>,
+}
+
+impl Setting {
+    fn new(setting: &'static libsettings::Setting) -> Self {
+        Self {
+            setting,
+            value: None,
+        }
+    }
+}
+
+mod client {
+    use std::{
+        convert::TryInto,
+        ffi::{CStr, CString},
+        mem::ManuallyDrop,
+        os::raw::{c_char, c_void},
+        ptr, slice,
+        time::Duration,
+    };
+
+    use anyhow::anyhow;
+    use libsettings::{settings, SettingKind, SettingValue};
+    use libsettings_sys::{
+        sbp_msg_callback_t, sbp_msg_callbacks_node_t, settings_api_t, settings_create,
+        settings_read_bool, settings_read_by_idx, settings_read_float, settings_read_int,
+        settings_read_str, settings_t, settings_write_res_e_SETTINGS_WR_MODIFY_DISABLED,
+        settings_write_res_e_SETTINGS_WR_OK, settings_write_res_e_SETTINGS_WR_PARSE_FAILED,
+        settings_write_res_e_SETTINGS_WR_READ_ONLY,
+        settings_write_res_e_SETTINGS_WR_SERVICE_FAILED,
+        settings_write_res_e_SETTINGS_WR_SETTING_REJECTED,
+        settings_write_res_e_SETTINGS_WR_TIMEOUT, settings_write_res_e_SETTINGS_WR_VALUE_REJECTED,
+        settings_write_str,
+    };
+    use log::{debug, error};
+    use sbp::{
+        messages::{SBPMessage, SBP},
+        serialize::SbpSerialize,
+    };
+
+    use crate::{
+        broadcaster::{Key, Link},
+        types::{MsgSender, Result},
+    };
+
+    const SENDER_ID: u16 = 66;
+
+    #[derive(Debug)]
+    pub struct ReadByIdxResult {
+        pub group: String,
+        pub name: String,
+        pub value: String,
+        pub fmt_type: String,
+    }
+
+    pub struct Client<'a>(Box<ClientInner<'a>>);
+
+    impl<'a> Client<'a> {
+        pub fn new(link: Link<'a>, sender: MsgSender) -> Client<'a> {
+            let context = Context {
+                link,
+                sender,
+                callbacks: parking_lot::Mutex::new(Vec::new()),
+                event: Event::new(),
+                lock: Lock::new(),
+            };
+
+            let api = Box::new(settings_api_t {
+                ctx: ptr::null_mut(),
+                send: Some(send),
+                send_from: Some(send_from),
+                wait_init: Some(libsettings_wait_init),
+                wait: Some(libsettings_wait),
+                wait_deinit: None,
+                signal: Some(libsettings_signal),
+                wait_thd: Some(libsettings_wait_thd),
+                signal_thd: Some(libsettings_signal_thd),
+                lock: Some(libsettings_lock),
+                unlock: Some(libsettings_unlock),
+                register_cb: Some(register_cb),
+                unregister_cb: Some(unregister_cb),
+                log: None,
+                log_preformat: false,
+            });
+
+            let mut inner = Box::new(ClientInner {
+                context,
+                api: Box::into_raw(api),
+                ctx: ptr::null_mut(),
+                event: ptr::null_mut(),
+            });
+
+            inner.event = &mut inner.context.event as *mut Event as *mut _;
+
+            // Safety: inner.api was just created via Box::into_raw so it is
+            // properly aligned and non-null
+            unsafe {
+                (*inner.api).ctx = &mut inner.context as *mut Context as *mut _;
+            }
+
+            inner.ctx = unsafe { settings_create(SENDER_ID, inner.api) };
+            assert!(!inner.ctx.is_null());
+
+            Client(inner)
+        }
+
+        pub fn read_all(&mut self) -> Vec<ReadByIdxResult> {
+            const WORKERS: u16 = 1;
+
+            let read_one = |i| self.read_by_index(i);
+            let mut settings = Vec::new();
+            let mut idx = 0;
+
+            // TODO: probably should reuse the same worker threads each loop
+            'outer: loop {
+                let results = crossbeam::scope(|scope| {
+                    let handles = (0..WORKERS)
+                        .map(|i| scope.spawn(move |_| read_one(idx + i)))
+                        .collect::<Vec<_>>();
+                    handles
+                        .into_iter()
+                        .map(|h| h.join().unwrap())
+                        .collect::<Vec<_>>()
+                })
+                .unwrap();
+
+                for result in results {
+                    if let Ok(Some(result)) = result {
+                        settings.push(result);
+                    } else {
+                        break 'outer;
+                    }
+                }
+
+                idx += WORKERS;
+            }
+
+            debug!("settings count {}", settings.len());
+
+            settings
+        }
+
+        pub fn read_by_index(&self, idx: u16) -> Result<Option<ReadByIdxResult>> {
+            const BUF_SIZE: usize = 255;
+
+            let mut section = Vec::<c_char>::with_capacity(BUF_SIZE);
+            let mut name = Vec::<c_char>::with_capacity(BUF_SIZE);
+            let mut value = Vec::<c_char>::with_capacity(BUF_SIZE);
+            let mut fmt_type = Vec::<c_char>::with_capacity(BUF_SIZE);
+
+            let status = unsafe {
+                settings_read_by_idx(
+                    self.0.ctx,
+                    self.0.event as *mut _,
+                    idx,
+                    section.as_mut_ptr(),
+                    BUF_SIZE as u64,
+                    name.as_mut_ptr(),
+                    BUF_SIZE as u64,
+                    value.as_mut_ptr(),
+                    BUF_SIZE as u64,
+                    fmt_type.as_mut_ptr(),
+                    BUF_SIZE as u64,
+                )
+            };
+
+            if status < 0 {
+                return Err(anyhow!("settings read failed with status code {}", status));
+            }
+
+            if status > 0 {
+                return Ok(None);
+            }
+
+            let res = unsafe {
+                ReadByIdxResult {
+                    group: CStr::from_ptr(section.as_ptr())
+                        .to_string_lossy()
+                        .into_owned(),
+                    name: CStr::from_ptr(name.as_ptr()).to_string_lossy().into_owned(),
+                    value: CStr::from_ptr(value.as_ptr())
+                        .to_string_lossy()
+                        .into_owned(),
+                    fmt_type: CStr::from_ptr(fmt_type.as_ptr())
+                        .to_string_lossy()
+                        .into_owned(),
+                }
+            };
+
+            Ok(Some(res))
+        }
+
+        pub fn read_setting(&mut self, group: &str, name: &str) -> Result<SettingValue> {
+            let setting = settings()
+                .iter()
+                .find(|s| s.group == group && s.name == name)
+                .ok_or_else(|| anyhow!("setting not found"))?;
+
+            let c_group = CString::new(group.clone())?;
+            let c_name = CString::new(name.clone())?;
+
+            let (res, status) = match setting.kind {
+                SettingKind::Integer => unsafe {
+                    let mut value: i32 = 0;
+                    let status = settings_read_int(
+                        self.0.ctx,
+                        c_group.as_ptr(),
+                        c_name.as_ptr(),
+                        &mut value,
+                    );
+                    (SettingValue::Integer(value), status)
+                },
+                SettingKind::Boolean => unsafe {
+                    let mut value: bool = false;
+                    let status = settings_read_bool(
+                        self.0.ctx,
+                        c_group.as_ptr(),
+                        c_name.as_ptr(),
+                        &mut value,
+                    );
+                    (SettingValue::Boolean(value), status)
+                },
+                SettingKind::Float | SettingKind::Double => unsafe {
+                    let mut value: f32 = 0.0;
+                    let status = settings_read_float(
+                        self.0.ctx,
+                        c_group.as_ptr(),
+                        c_name.as_ptr(),
+                        &mut value,
+                    );
+                    (SettingValue::Float(value), status)
+                },
+                SettingKind::String | SettingKind::Enum | SettingKind::PackedBitfield => unsafe {
+                    let mut buf = Vec::<c_char>::with_capacity(1024);
+                    let status = settings_read_str(
+                        self.0.ctx,
+                        c_group.as_ptr(),
+                        c_name.as_ptr(),
+                        buf.as_mut_ptr(),
+                        buf.capacity().try_into().unwrap(),
+                    );
+                    (
+                        SettingValue::String(
+                            CStr::from_ptr(buf.as_ptr()).to_string_lossy().into_owned(),
+                        ),
+                        status,
+                    )
+                },
+            };
+
+            debug!("{} {} {:?} {}", setting.group, setting.name, res, status);
+
+            if status == 0 {
+                Ok(res)
+            } else {
+                Err(anyhow!("settings read failed with status code {}", status))
+            }
+        }
+
+        pub fn write_setting(&mut self, group: &str, name: &str, value: &str) -> Result<()> {
+            let group = CString::new(group)?;
+            let name = CString::new(name)?;
+            let value = CString::new(value)?;
+
+            let result = unsafe {
+                settings_write_str(
+                    self.0.ctx,
+                    self.0.event as *mut _,
+                    group.as_ptr(),
+                    name.as_ptr(),
+                    value.as_ptr(),
+                )
+            };
+
+            #[allow(non_upper_case_globals)]
+            match result {
+                settings_write_res_e_SETTINGS_WR_OK => Ok(()),
+                settings_write_res_e_SETTINGS_WR_VALUE_REJECTED => {
+                    Err(anyhow!("setting value invalid"))
+                }
+                settings_write_res_e_SETTINGS_WR_SETTING_REJECTED => {
+                    Err(anyhow!("setting does not exist"))
+                }
+                settings_write_res_e_SETTINGS_WR_PARSE_FAILED => {
+                    Err(anyhow!("could not parse setting value"))
+                }
+                settings_write_res_e_SETTINGS_WR_READ_ONLY => Err(anyhow!("setting is read only")),
+                settings_write_res_e_SETTINGS_WR_MODIFY_DISABLED => {
+                    Err(anyhow!("setting is not modifiable"))
+                }
+                settings_write_res_e_SETTINGS_WR_SERVICE_FAILED => {
+                    Err(anyhow!("system failure during setting"))
+                }
+                settings_write_res_e_SETTINGS_WR_TIMEOUT => {
+                    Err(anyhow!("request wasn't replied in time"))
+                }
+                other => Err(anyhow!("unknown settings write response: {}", other)),
+            }
+        }
+    }
+
+    struct ClientInner<'a> {
+        context: Context<'a>,
+        api: *mut settings_api_t,
+        ctx: *mut settings_t,
+        event: *mut Event,
+    }
+
+    impl Drop for ClientInner<'_> {
+        fn drop(&mut self) {
+            // Safety: These were created via Box::into_raw and are not
+            // freed by the c library. We don't need to free event because
+            // it is pointer to the event held inside context so it gets dropped
+            unsafe {
+                let _ = Box::from_raw(self.api);
+                let _ = Box::from_raw(self.ctx);
+            }
+        }
+    }
+
+    unsafe impl Send for ClientInner<'_> {}
+    unsafe impl Sync for ClientInner<'_> {}
+
+    #[repr(C)]
+    struct Context<'a> {
+        link: Link<'a>,
+        sender: MsgSender,
+        callbacks: parking_lot::Mutex<Vec<Callback>>,
+        event: Event,
+        lock: Lock,
+    }
+
+    impl<'a> Context<'a> {
+        fn callback_broker(&self, msg: SBP) {
+            eprintln!("locked? {:?}", msg);
+            eprintln!("locked? {}", self.callbacks.is_locked());
+            let mut callbacks = self.callbacks.lock();
+            let idx = match callbacks
+                .iter()
+                .position(|cb| cb.msg_type == msg.get_message_type())
+            {
+                Some(idx) => idx,
+                None => panic!(
+                    "callback not registered for message type {}",
+                    msg.get_message_type()
+                ),
+            };
+
+            let cb_data = &mut callbacks[idx];
+            let cb = cb_data.cb.expect("callback was None");
+            let cb_context = cb_data.cb_context;
+
+            let payload = {
+                let mut payload = Vec::with_capacity(255);
+                msg.append_to_sbp_buffer(&mut payload);
+                let mut payload = ManuallyDrop::new(payload);
+                payload.as_mut_ptr()
+            };
+
+            unsafe {
+                cb(
+                    msg.get_sender_id().unwrap_or(0),
+                    msg.sbp_size() as u8,
+                    payload,
+                    cb_context,
+                )
+            };
+        }
+    }
+
+    unsafe impl Send for Context<'_> {}
+    unsafe impl Sync for Context<'_> {}
+
+    struct Callback {
+        node: usize,
+        msg_type: u16,
+        cb: sbp_msg_callback_t,
+        cb_context: *mut c_void,
+        key: Key,
+    }
+
+    #[repr(C)]
+    struct Event {
+        condvar: parking_lot::Condvar,
+        lock: parking_lot::Mutex<bool>,
+    }
+
+    impl Event {
+        fn new() -> Self {
+            Self {
+                condvar: parking_lot::Condvar::new(),
+                lock: parking_lot::Mutex::new(false),
+            }
+        }
+
+        fn wait_timeout(&self, ms: i32) -> bool {
+            let mut started = self.lock.lock();
+            let result = self
+                .condvar
+                .wait_for(&mut started, Duration::from_millis(ms as u64));
+            if result.timed_out() {
+                false
+            } else {
+                true
+                // *started
+            }
+        }
+
+        fn set(&self) {
+            // let mut started = self.lock.lock();
+            // *started = true;
+            let notified = self.condvar.notify_one();
+            if !notified {
+                eprintln!("event set did not notify anything");
+            }
+        }
+    }
+
+    #[repr(C)]
+    struct Lock(parking_lot::Mutex<()>);
+
+    impl Lock {
+        fn new() -> Self {
+            Self(parking_lot::Mutex::new(()))
+        }
+
+        fn acquire(&self) {
+            std::mem::forget(self.0.lock());
+        }
+
+        fn release(&self) {
+            // Safety: Only called via libsettings_unlock after libsettings_lock was called
+            unsafe { self.0.force_unlock() }
+        }
+    }
+
+    #[no_mangle]
+    unsafe extern "C" fn register_cb(
+        ctx: *mut c_void,
+        msg_type: u16,
+        cb: sbp_msg_callback_t,
+        cb_context: *mut c_void,
+        node: *mut *mut sbp_msg_callbacks_node_t,
+    ) -> i32 {
+        let context: &mut Context = &mut *(ctx as *mut _);
+        let key = context
+            .link
+            .register_cb_by_id(msg_type, |msg: SBP| context.callback_broker(msg));
+        context.callbacks.lock().push(Callback {
+            node: node as usize,
+            msg_type,
+            cb,
+            cb_context,
+            key,
+        });
+        0
+    }
+
+    #[no_mangle]
+    unsafe extern "C" fn unregister_cb(
+        ctx: *mut c_void,
+        node: *mut *mut sbp_msg_callbacks_node_t,
+    ) -> i32 {
+        let context: &mut Context = &mut *(ctx as *mut _);
+        if (node as i32) != 0 {
+            let key = {
+                let mut cbs = context.callbacks.lock();
+                let idx = cbs.iter().position(|cb| cb.node == node as usize).unwrap();
+                cbs.remove(idx).key
+            };
+            context.link.unregister_cb(key);
+            0
+        } else {
+            -127
+        }
+    }
+
+    #[no_mangle]
+    unsafe extern "C" fn send(ctx: *mut c_void, msg_type: u16, len: u8, payload: *mut u8) -> i32 {
+        send_from(ctx, msg_type, len, payload, 0)
+    }
+
+    #[no_mangle]
+    unsafe extern "C" fn send_from(
+        ctx: *mut ::std::os::raw::c_void,
+        msg_type: u16,
+        len: u8,
+        payload: *mut u8,
+        sender_id: u16,
+    ) -> i32 {
+        let context: &mut Context = &mut *(ctx as *mut _);
+
+        let mut buf = slice::from_raw_parts(payload, len as usize);
+        let msg = match SBP::parse(msg_type, sender_id, &mut buf) {
+            Ok(msg) => msg,
+            Err(err) => {
+                error!("parse error: {}", err);
+                return -1;
+            }
+        };
+
+        if let Err(err) = context.sender.send(msg) {
+            error!("failed to send message: {}", err);
+            return -1;
+        };
+
+        0
+    }
+
+    #[no_mangle]
+    extern "C" fn libsettings_wait(ctx: *mut c_void, timeout_ms: i32) -> i32 {
+        assert!(timeout_ms > 0);
+        let context: &mut Context = unsafe { &mut *(ctx as *mut _) };
+        if context.event.wait_timeout(timeout_ms) {
+            0
+        } else {
+            -1
+        }
+    }
+
+    #[no_mangle]
+    extern "C" fn libsettings_wait_thd(event: *mut c_void, timeout_ms: i32) -> i32 {
+        assert!(timeout_ms > 0);
+        let event: &Event = unsafe { &*(event as *const _) };
+        if event.wait_timeout(timeout_ms) {
+            0
+        } else {
+            -1
+        }
+    }
+
+    #[no_mangle]
+    extern "C" fn libsettings_signal_thd(event: *mut c_void) {
+        let event: &Event = unsafe { &*(event as *const _) };
+        event.set();
+    }
+
+    #[no_mangle]
+    extern "C" fn libsettings_signal(ctx: *mut c_void) {
+        let context: &Context = unsafe { &*(ctx as *const _) };
+        context.event.set();
+    }
+
+    #[no_mangle]
+    extern "C" fn libsettings_lock(ctx: *mut c_void) {
+        let context: &mut Context = unsafe { &mut *(ctx as *mut _) };
+        context.lock.acquire();
+    }
+
+    #[no_mangle]
+    extern "C" fn libsettings_unlock(ctx: *mut c_void) {
+        let context: &mut Context = unsafe { &mut *(ctx as *mut _) };
+        context.lock.release();
+    }
+
+
+    #[no_mangle]
+    extern "C" fn libsettings_wait_init(ctx: *mut c_void) -> i32 {
+        let context: &mut Context = unsafe { &mut *(ctx as *mut _) };
+        context.event = Event::new();
+        0
+    }
+}
+
+

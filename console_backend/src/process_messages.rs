@@ -224,6 +224,10 @@ where
         let client_send_clone = client_send.clone();
         let (update_tab_tx, update_tab_rx) = tabs.update.lock().unwrap().clone_channel();
         crossbeam::scope(|scope| {
+            scope.spawn(|_| loop {
+                tabs.settings_tab.lock().unwrap().tick();
+                sleep(Duration::from_millis(100));
+            });
             let handle = scope.spawn(|_| {
                 update_tab::update_tab_thread(
                     update_tab_tx.clone(),
@@ -272,6 +276,7 @@ where
                 if let Err(err) = handle.join() {
                     error!("Error joining update tab, {:?}", err);
                 }
+                log::logger().flush();
             }
             if conn.close_when_done() {
                 shared_state.set_running(false, client_send.clone());

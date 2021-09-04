@@ -18,8 +18,6 @@ pub struct SettingsTab<'a, S> {
     shared_state: SharedState,
     settings: Vec<Setting>,
     client: Client<'a>,
-    link: Link<'a>,
-    sender: MsgSender,
 }
 
 impl<'a, S: CapnProtoSender> SettingsTab<'a, S> {
@@ -42,8 +40,6 @@ impl<'a, S: CapnProtoSender> SettingsTab<'a, S> {
             client: Client::new(link.clone(), msg_sender.clone()),
             client_sender,
             shared_state,
-            link,
-            sender: msg_sender,
         }
     }
 
@@ -118,9 +114,7 @@ impl<'a, S: CapnProtoSender> SettingsTab<'a, S> {
         Ok(())
     }
 
-    pub fn save(&mut self, request: SaveRequest) -> Result<()> {
-        self.client = Client::new(self.link.clone(), self.sender.clone());
-
+    pub fn save(&self, request: SaveRequest) -> Result<()> {
         let current = self
             .settings
             .iter()
@@ -297,7 +291,6 @@ mod client {
     use std::{
         convert::TryInto,
         ffi::{CStr, CString},
-        mem::ManuallyDrop,
         os::raw::{c_char, c_void},
         ptr, slice,
         time::Duration,
@@ -306,7 +299,7 @@ mod client {
     use anyhow::anyhow;
     use libsettings::{settings, SettingKind, SettingValue};
     use libsettings_sys::{
-        sbp_msg_callback_t, sbp_msg_callbacks_node_t, settings_api_t, settings_create,
+        sbp_msg_callback_t, sbp_msg_callbacks_node_t, settings_api_t, settings_create, settings_destroy,
         settings_read_bool, settings_read_by_idx, settings_read_float, settings_read_int,
         settings_read_str, settings_t, settings_write_res_e_SETTINGS_WR_MODIFY_DISABLED,
         settings_write_res_e_SETTINGS_WR_OK, settings_write_res_e_SETTINGS_WR_PARSE_FAILED,
@@ -353,7 +346,7 @@ mod client {
                 ctx: ptr::null_mut(),
                 send: Some(send),
                 send_from: Some(send_from),
-                wait_init: Some(libsettings_wait_init),
+                wait_init: None,
                 wait: Some(libsettings_wait),
                 wait_deinit: None,
                 signal: Some(libsettings_signal),
@@ -541,7 +534,7 @@ mod client {
             }
         }
 
-        pub fn write_setting(&mut self, group: &str, name: &str, value: &str) -> Result<()> {
+        pub fn write_setting(&self, group: &str, name: &str, value: &str) -> Result<()> {
             let group = CString::new(group)?;
             let name = CString::new(name)?;
             let value = CString::new(value)?;
@@ -597,7 +590,7 @@ mod client {
             // it is pointer to the event held inside context so it gets dropped
             unsafe {
                 let _ = Box::from_raw(self.api);
-                let _ = Box::from_raw(self.ctx);
+                settings_destroy(&mut self.ctx);
             }
         }
     }
@@ -616,8 +609,7 @@ mod client {
 
     impl<'a> Context<'a> {
         fn callback_broker(&self, msg: SBP) {
-            eprintln!("locked? {:?}", msg);
-            eprintln!("locked? {}", self.callbacks.is_locked());
+            eprintln!("SBP msg: {:?}", msg);
             let mut callbacks = self.callbacks.lock();
             let idx = match callbacks
                 .iter()
@@ -634,18 +626,15 @@ mod client {
             let cb = cb_data.cb.expect("callback was None");
             let cb_context = cb_data.cb_context;
 
-            let payload = {
-                let mut payload = Vec::with_capacity(255);
-                msg.append_to_sbp_buffer(&mut payload);
-                let mut payload = ManuallyDrop::new(payload);
-                payload.as_mut_ptr()
-            };
+            let mut payload = Vec::with_capacity(256);
+            msg.append_to_sbp_buffer(&mut payload);
+            let payload_ptr = payload.as_mut_ptr();
 
             unsafe {
                 cb(
                     msg.get_sender_id().unwrap_or(0),
                     msg.sbp_size() as u8,
-                    payload,
+                    payload_ptr,
                     cb_context,
                 )
             };
@@ -666,14 +655,14 @@ mod client {
     #[repr(C)]
     struct Event {
         condvar: parking_lot::Condvar,
-        lock: parking_lot::Mutex<bool>,
+        lock: parking_lot::Mutex<()>,
     }
 
     impl Event {
         fn new() -> Self {
             Self {
                 condvar: parking_lot::Condvar::new(),
-                lock: parking_lot::Mutex::new(false),
+                lock: parking_lot::Mutex::new(()),
             }
         }
 
@@ -686,13 +675,11 @@ mod client {
                 false
             } else {
                 true
-                // *started
             }
         }
 
         fn set(&self) {
-            // let mut started = self.lock.lock();
-            // *started = true;
+            let _ = self.lock.lock();
             let notified = self.condvar.notify_one();
             if !notified {
                 eprintln!("event set did not notify anything");
@@ -713,8 +700,7 @@ mod client {
         }
 
         fn release(&self) {
-            // Safety: Only called via libsettings_unlock after libsettings_lock was called
-            unsafe { self.0.force_unlock() }
+            unsafe { self.0.force_unlock() };
         }
     }
 
@@ -726,10 +712,13 @@ mod client {
         cb_context: *mut c_void,
         node: *mut *mut sbp_msg_callbacks_node_t,
     ) -> i32 {
+        let _do_not_crash: u8 = 42;
         let context: &mut Context = &mut *(ctx as *mut _);
         let key = context
             .link
-            .register_cb_by_id(msg_type, |msg: SBP| context.callback_broker(msg));
+            .register_cb_by_id(msg_type, |msg: SBP| {
+                context.callback_broker(msg)
+            });
         context.callbacks.lock().push(Callback {
             node: node as usize,
             msg_type,
@@ -773,7 +762,6 @@ mod client {
         sender_id: u16,
     ) -> i32 {
         let context: &mut Context = &mut *(ctx as *mut _);
-
         let mut buf = slice::from_raw_parts(payload, len as usize);
         let msg = match SBP::parse(msg_type, sender_id, &mut buf) {
             Ok(msg) => msg,
@@ -836,14 +824,4 @@ mod client {
         let context: &mut Context = unsafe { &mut *(ctx as *mut _) };
         context.lock.release();
     }
-
-
-    #[no_mangle]
-    extern "C" fn libsettings_wait_init(ctx: *mut c_void) -> i32 {
-        let context: &mut Context = unsafe { &mut *(ctx as *mut _) };
-        context.event = Event::new();
-        0
-    }
 }
-
-

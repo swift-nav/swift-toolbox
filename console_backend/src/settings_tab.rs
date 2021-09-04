@@ -337,7 +337,7 @@ mod client {
             let mut context = Box::new(Context {
                 link,
                 sender,
-                callbacks: parking_lot::Mutex::new(Vec::new()),
+                callbacks: Vec::new(),
                 event: Event::new(),
                 lock: Lock::new(),
             });
@@ -383,7 +383,7 @@ mod client {
         }
 
         pub fn read_all(&mut self) -> Vec<ReadByIdxResult> {
-            const WORKERS: u16 = 1;
+            const WORKERS: u16 = 10;
 
             let read_one = |i| self.read_by_index(i);
             let mut settings = Vec::new();
@@ -604,27 +604,30 @@ mod client {
     struct Context<'a> {
         link: Link<'a>,
         sender: MsgSender,
-        callbacks: parking_lot::Mutex<Vec<Callback>>,
+        callbacks: Vec<Callback>,
         event: Event,
         lock: Lock,
     }
 
     impl<'a> Context<'a> {
+
         fn callback_broker(&self, msg: SBP) {
-            eprintln!("SBP msg: {:?}", msg);
-            let mut callbacks = self.callbacks.lock();
-            let idx = match callbacks
-                .iter()
-                .position(|cb| cb.msg_type == msg.get_message_type())
-            {
-                Some(idx) => idx,
-                None => panic!(
-                    "callback not registered for message type {}",
-                    msg.get_message_type()
-                ),
+
+            let cb_data = {
+                let _guard = self.lock.lock();
+                let idx = match self.callbacks
+                    .iter()
+                    .position(|cb| cb.msg_type == msg.get_message_type())
+                {
+                    Some(idx) => idx,
+                    None => panic!(
+                        "callback not registered for message type {}",
+                        msg.get_message_type()
+                    ),
+                };
+                self.callbacks[idx]
             };
 
-            let cb_data = &mut callbacks[idx];
             let cb = cb_data.cb.expect("callback was None");
             let cb_context = cb_data.cb_context;
 
@@ -646,6 +649,7 @@ mod client {
     unsafe impl Send for Context<'_> {}
     unsafe impl Sync for Context<'_> {}
 
+    #[derive(Copy, Clone)]
     struct Callback {
         node: usize,
         msg_type: u16,
@@ -697,6 +701,10 @@ mod client {
             Self(parking_lot::Mutex::new(()))
         }
 
+        fn lock(&self) -> parking_lot::MutexGuard<()> {
+            self.0.lock()
+        }
+
         fn acquire(&self) {
             std::mem::forget(self.0.lock());
         }
@@ -720,6 +728,7 @@ mod client {
         node: *mut *mut sbp_msg_callbacks_node_t,
     ) -> i32 {
         let context: &mut Context = &mut *(ctx as *mut _);
+        let _guard = context.lock.lock();
         let ctx_ptr = CtxPtr(ctx);
         let key = context
             .link
@@ -727,7 +736,7 @@ mod client {
                 let context: &mut Context = &mut *(ctx_ptr.0 as *mut _);
                 context.callback_broker(msg)
             });
-        context.callbacks.lock().push(Callback {
+        context.callbacks.push(Callback {
             node: node as usize,
             msg_type,
             cb,
@@ -743,11 +752,11 @@ mod client {
         node: *mut *mut sbp_msg_callbacks_node_t,
     ) -> i32 {
         let context: &mut Context = &mut *(ctx as *mut _);
+        let _guard = context.lock.lock();
         if (node as i32) != 0 {
             let key = {
-                let mut cbs = context.callbacks.lock();
-                let idx = cbs.iter().position(|cb| cb.node == node as usize).unwrap();
-                cbs.remove(idx).key
+                let idx = context.callbacks.iter().position(|cb| cb.node == node as usize).unwrap();
+                context.callbacks.remove(idx).key
             };
             context.link.unregister_cb(key);
             0

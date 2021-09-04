@@ -239,12 +239,9 @@ pub struct LinkSource<'env> {
 }
 
 impl<'env> LinkSource<'env> {
-    pub fn link<'scope>(&self) -> Link<'scope>
-    where
-        'env: 'scope,
+    pub fn link(&self) -> Link<'env>
     {
-        let link: Link<'scope> = unsafe { std::mem::transmute(self.link.clone()) };
-        link
+        self.link.clone()
     }
 
     pub fn send(&self, message: &SBP, gps_time: MaybeGpsTime) -> bool {

@@ -57,148 +57,183 @@ where
             .with_rover_time()
     };
 
+    use std::sync::Arc;
+
     with_link(|source| {
-        let tabs = Tabs::new(
+        let tabs = Arc::new(Box::new(Tabs::new(
             shared_state.clone(),
             client_send.clone(),
             msg_sender,
             source.link(),
-        );
+        )));
 
         let link = source.link();
 
-        link.register_cb(|msg: MsgAgeCorrections| {
-            tabs.baseline
+        let tabs1 = tabs.clone();
+
+        link.register_cb(move |msg: MsgAgeCorrections| {
+            tabs1.baseline
                 .lock()
                 .unwrap()
                 .handle_age_corrections(msg.clone());
-            tabs.solution
+            tabs1.solution
                 .lock()
                 .unwrap()
                 .handle_age_corrections(msg.clone());
-            tabs.status_bar.lock().unwrap().handle_age_corrections(msg);
+            tabs1.status_bar.lock().unwrap().handle_age_corrections(msg);
         });
 
-        link.register_cb(|msg: MsgAngularRate| {
-            tabs.solution.lock().unwrap().handle_angular_rate(msg);
+        let tabs2 = tabs.clone();
+
+        link.register_cb(move |msg: MsgAngularRate| {
+            tabs2.solution.lock().unwrap().handle_angular_rate(msg);
         });
 
-        link.register_cb(|msg: MsgBaselineHeading| {
-            tabs.baseline.lock().unwrap().handle_baseline_heading(msg);
+        let tabs3 = tabs.clone();
+
+        link.register_cb(move |msg: MsgBaselineHeading| {
+            tabs3.baseline.lock().unwrap().handle_baseline_heading(msg);
         });
 
-        link.register_cb(|msg: BaselineNED| {
-            tabs.baseline
+        let tabs4 = tabs.clone();
+
+        link.register_cb(move |msg: BaselineNED| {
+            tabs4.clone().baseline
                 .lock()
                 .unwrap()
                 .handle_baseline_ned(msg.clone());
-            tabs.status_bar.lock().unwrap().handle_baseline_ned(msg);
+            tabs4.status_bar.lock().unwrap().handle_baseline_ned(msg);
         });
 
-        link.register_cb(|msg: Dops| {
-            tabs.solution.lock().unwrap().handle_dops(msg);
+        let tabs5 = tabs.clone();
+
+        link.register_cb(move |msg: Dops| {
+            tabs5.solution.lock().unwrap().handle_dops(msg);
         });
 
-        link.register_cb(|msg: GpsTime| {
-            tabs.baseline.lock().unwrap().handle_gps_time(msg.clone());
-            tabs.solution.lock().unwrap().handle_gps_time(msg);
+        let tabs6 = tabs.clone();
+
+        link.register_cb(move |msg: GpsTime| {
+            tabs6.baseline.lock().unwrap().handle_gps_time(msg.clone());
+            tabs6.solution.lock().unwrap().handle_gps_time(msg);
         });
 
-        link.register_cb(|_: MsgHeartbeat| {
-            tabs.status_bar.lock().unwrap().handle_heartbeat();
+        let tabs7 = tabs.clone();
+
+        link.register_cb(move |_: MsgHeartbeat| {
+            tabs7.status_bar.lock().unwrap().handle_heartbeat();
         });
 
-        link.register_cb(|msg: MsgImuAux| {
-            tabs.advanced_ins.lock().unwrap().handle_imu_aux(msg);
+        let tabs8 = tabs.clone();
+
+        link.register_cb(move |msg: MsgImuAux| {
+            tabs8.advanced_ins.lock().unwrap().handle_imu_aux(msg);
         });
 
-        link.register_cb(|msg: MsgImuRaw| {
-            tabs.advanced_ins.lock().unwrap().handle_imu_raw(msg);
+        let tabs9 = tabs.clone();
+
+        link.register_cb(move |msg: MsgImuRaw| {
+            tabs9.advanced_ins.lock().unwrap().handle_imu_raw(msg);
         });
 
-        link.register_cb(|msg: MsgInsStatus| {
-            tabs.solution.lock().unwrap().handle_ins_status(msg.clone());
-            tabs.status_bar.lock().unwrap().handle_ins_status(msg);
+        let tabs10 = tabs.clone();
+
+        link.register_cb(move |msg: MsgInsStatus| {
+            tabs10.solution.lock().unwrap().handle_ins_status(msg.clone());
+            tabs10.status_bar.lock().unwrap().handle_ins_status(msg);
         });
 
-        link.register_cb(|msg: MsgInsUpdates| {
-            tabs.advanced_ins
+        let tabs11 = tabs.clone();
+
+        link.register_cb(move |msg: MsgInsUpdates| {
+            tabs11.advanced_ins
                 .lock()
                 .unwrap()
                 .fusion_engine_status_bar
                 .handle_ins_updates(msg.clone());
-            tabs.solution
+            tabs11.solution
                 .lock()
                 .unwrap()
                 .handle_ins_updates(msg.clone());
-            tabs.status_bar.lock().unwrap().handle_ins_updates(msg);
+            tabs11.status_bar.lock().unwrap().handle_ins_updates(msg);
         });
 
-        link.register_cb(|msg: MsgMagRaw| {
-            tabs.advanced_magnetometer
+        let tabs12 = tabs.clone();
+        link.register_cb(move |msg: MsgMagRaw| {
+            tabs12.advanced_magnetometer
                 .lock()
                 .unwrap()
                 .handle_mag_raw(msg);
         });
 
-        link.register_cb(|msg: MsgMeasurementState| {
-            tabs.tracking_signals
+        let tabs13 = tabs.clone();
+        link.register_cb(move |msg: MsgMeasurementState| {
+            tabs13.tracking_signals
                 .lock()
                 .unwrap()
                 .handle_msg_measurement_state(msg.states);
         });
 
-        link.register_cb(|msg: ObservationMsg| {
-            tabs.tracking_signals
+        let tabs14 = tabs.clone();
+        link.register_cb(move |msg: ObservationMsg| {
+            tabs14.tracking_signals
                 .lock()
                 .unwrap()
                 .handle_obs(msg.clone());
-            tabs.observation.lock().unwrap().handle_obs(msg);
+            tabs14.observation.lock().unwrap().handle_obs(msg);
         });
 
         link.register_cb(|_: MsgObsDepA| {
             println!("The message type, MsgObsDepA, is not handled in the Tracking->SignalsPlot or Observation tab.");
         });
 
-        link.register_cb(|msg: MsgOrientEuler| {
-            tabs.solution.lock().unwrap().handle_orientation_euler(msg);
+        let tabs15 = tabs.clone();
+        link.register_cb(move |msg: MsgOrientEuler| {
+            tabs15.solution.lock().unwrap().handle_orientation_euler(msg);
         });
 
-        link.register_cb(|msg: PosLLH| {
-            tabs.solution.lock().unwrap().handle_pos_llh(msg.clone());
-            tabs.status_bar.lock().unwrap().handle_pos_llh(msg);
+        let tabs16 = tabs.clone();
+        link.register_cb(move |msg: PosLLH| {
+            tabs16.solution.lock().unwrap().handle_pos_llh(msg.clone());
+            tabs16.status_bar.lock().unwrap().handle_pos_llh(msg);
         });
 
-        link.register_cb(|msg: MsgPosLLHCov| {
-            tabs.solution.lock().unwrap().handle_pos_llh_cov(msg);
+        let tabs17 = tabs.clone();
+        link.register_cb(move |msg: MsgPosLLHCov| {
+            tabs17.solution.lock().unwrap().handle_pos_llh_cov(msg);
         });
 
-        link.register_cb(|msg: Specan| {
-            tabs.advanced_spectrum_analyzer
+        let tabs18 = tabs.clone();
+        link.register_cb(move |msg: Specan| {
+            tabs18.advanced_spectrum_analyzer
                 .lock()
                 .unwrap()
                 .handle_specan(msg);
         });
 
-        link.register_cb(|msg: MsgTrackingState| {
-            tabs.tracking_signals
+        let tabs19 = tabs.clone();
+        link.register_cb(move |msg: MsgTrackingState| {
+            tabs19.tracking_signals
                 .lock()
                 .unwrap()
                 .handle_msg_tracking_state(msg.states);
         });
 
-        link.register_cb(|msg: VelNED| {
-            tabs.solution.lock().unwrap().handle_vel_ned(msg);
+        let tabs20 = tabs.clone();
+        link.register_cb(move |msg: VelNED| {
+            tabs20.solution.lock().unwrap().handle_vel_ned(msg);
         });
 
-        link.register_cb(|msg: MsgVelNED| {
+        let tabs21 = tabs.clone();
+        link.register_cb(move |msg: MsgVelNED| {
             // why does this tab not take both VelNED messages?
-            tabs.solution_velocity.lock().unwrap().handle_vel_ned(msg);
+            tabs21.solution_velocity.lock().unwrap().handle_vel_ned(msg);
         });
 
-        link.register_cb(|msg: MsgUtcTime| {
-            tabs.baseline.lock().unwrap().handle_utc_time(msg.clone());
-            tabs.solution.lock().unwrap().handle_utc_time(msg);
+        let tabs22 = tabs.clone();
+        link.register_cb(move |msg: MsgUtcTime| {
+            tabs22.baseline.lock().unwrap().handle_utc_time(msg.clone());
+            tabs22.solution.lock().unwrap().handle_utc_time(msg);
         });
 
         link.register_cb(handle_log_msg);

@@ -334,13 +334,13 @@ mod client {
 
     impl<'a> Client<'a> {
         pub fn new(link: Link<'a>, sender: MsgSender) -> Client<'a> {
-            let context = Context {
+            let mut context = Box::new(Context {
                 link,
                 sender,
                 callbacks: parking_lot::Mutex::new(Vec::new()),
                 event: Event::new(),
                 lock: Lock::new(),
-            };
+            });
 
             let api = Box::new(settings_api_t {
                 ctx: ptr::null_mut(),
@@ -361,18 +361,19 @@ mod client {
             });
 
             let mut inner = Box::new(ClientInner {
-                context,
+                context: ptr::null_mut(),
                 api: Box::into_raw(api),
                 ctx: ptr::null_mut(),
                 event: ptr::null_mut(),
             });
 
-            inner.event = &mut inner.context.event as *mut Event as *mut _;
+            inner.event = &mut context.event as *mut Event as *mut _;
+            let context_raw = Box::into_raw(context);
 
             // Safety: inner.api was just created via Box::into_raw so it is
             // properly aligned and non-null
             unsafe {
-                (*inner.api).ctx = &mut inner.context as *mut Context as *mut _;
+                (*inner.api).ctx = context_raw as *mut c_void;
             }
 
             inner.ctx = unsafe { settings_create(SENDER_ID, inner.api) };
@@ -577,7 +578,7 @@ mod client {
     }
 
     struct ClientInner<'a> {
-        context: Context<'a>,
+        context: *mut Context<'a>,
         api: *mut settings_api_t,
         ctx: *mut settings_t,
         event: *mut Event,
@@ -589,6 +590,7 @@ mod client {
             // freed by the c library. We don't need to free event because
             // it is pointer to the event held inside context so it gets dropped
             unsafe {
+                let _ = Box::from_raw(self.context);
                 let _ = Box::from_raw(self.api);
                 settings_destroy(&mut self.ctx);
             }
@@ -704,6 +706,11 @@ mod client {
         }
     }
 
+    struct CtxPtr(*mut c_void);
+
+    unsafe impl Sync for CtxPtr { }
+    unsafe impl Send for CtxPtr { }
+
     #[no_mangle]
     unsafe extern "C" fn register_cb(
         ctx: *mut c_void,
@@ -712,11 +719,12 @@ mod client {
         cb_context: *mut c_void,
         node: *mut *mut sbp_msg_callbacks_node_t,
     ) -> i32 {
-        let _do_not_crash: u8 = 42;
         let context: &mut Context = &mut *(ctx as *mut _);
+        let ctx_ptr = CtxPtr(ctx);
         let key = context
             .link
-            .register_cb_by_id(msg_type, |msg: SBP| {
+            .register_cb_by_id(msg_type, move |msg: SBP| {
+                let context: &mut Context = &mut *(ctx_ptr.0 as *mut _);
                 context.callback_broker(msg)
             });
         context.callbacks.lock().push(Callback {

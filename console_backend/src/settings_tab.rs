@@ -334,12 +334,12 @@ mod client {
 
     impl<'a> Client<'a> {
         pub fn new(link: Link<'a>, sender: MsgSender) -> Client<'a> {
-            let mut context = Box::new(Context {
+            let context = Box::new(Context {
                 link,
                 sender,
                 callbacks: Vec::new(),
-                event: Event::new(),
                 lock: Lock::new(),
+                event: None,
             });
 
             let api = Box::new(settings_api_t {
@@ -364,10 +364,8 @@ mod client {
                 context: ptr::null_mut(),
                 api: Box::into_raw(api),
                 ctx: ptr::null_mut(),
-                event: ptr::null_mut(),
             });
 
-            inner.event = &mut context.event as *mut Event as *mut _;
             let context_raw = Box::into_raw(context);
 
             // Safety: inner.api was just created via Box::into_raw so it is
@@ -425,11 +423,12 @@ mod client {
             let mut name = Vec::<c_char>::with_capacity(BUF_SIZE);
             let mut value = Vec::<c_char>::with_capacity(BUF_SIZE);
             let mut fmt_type = Vec::<c_char>::with_capacity(BUF_SIZE);
+            let mut event = Event::new();
 
             let status = unsafe {
                 settings_read_by_idx(
                     self.0.ctx,
-                    self.0.event as *mut _,
+                    &mut event as *mut Event as *mut _,
                     idx,
                     section.as_mut_ptr(),
                     BUF_SIZE as u64,
@@ -539,11 +538,12 @@ mod client {
             let group = CString::new(group)?;
             let name = CString::new(name)?;
             let value = CString::new(value)?;
+            let mut event = Event::new();
 
             let result = unsafe {
                 settings_write_str(
                     self.0.ctx,
-                    self.0.event as *mut _,
+                    &mut event as *mut Event as *mut _,
                     group.as_ptr(),
                     name.as_ptr(),
                     value.as_ptr(),
@@ -581,7 +581,6 @@ mod client {
         context: *mut Context<'a>,
         api: *mut settings_api_t,
         ctx: *mut settings_t,
-        event: *mut Event,
     }
 
     impl Drop for ClientInner<'_> {
@@ -605,7 +604,7 @@ mod client {
         link: Link<'a>,
         sender: MsgSender,
         callbacks: Vec<Callback>,
-        event: Event,
+        event: Option<Event>,
         lock: Lock,
     }
 
@@ -686,9 +685,8 @@ mod client {
 
         fn set(&self) {
             let _ = self.lock.lock();
-            let notified = self.condvar.notify_one();
-            if !notified {
-                eprintln!("event set did not notify anything");
+            if !self.condvar.notify_one() {
+                 eprintln!("event set did not notify anything");
             }
         }
     }
@@ -800,7 +798,7 @@ mod client {
     extern "C" fn libsettings_wait(ctx: *mut c_void, timeout_ms: i32) -> i32 {
         assert!(timeout_ms > 0);
         let context: &mut Context = unsafe { &mut *(ctx as *mut _) };
-        if context.event.wait_timeout(timeout_ms) {
+        if context.event.as_ref().unwrap().wait_timeout(timeout_ms) {
             0
         } else {
             -1
@@ -827,7 +825,7 @@ mod client {
     #[no_mangle]
     extern "C" fn libsettings_signal(ctx: *mut c_void) {
         let context: &Context = unsafe { &*(ctx as *const _) };
-        context.event.set();
+        context.event.as_ref().unwrap().set();
     }
 
     #[no_mangle]
@@ -840,5 +838,12 @@ mod client {
     extern "C" fn libsettings_unlock(ctx: *mut c_void) {
         let context: &mut Context = unsafe { &mut *(ctx as *mut _) };
         context.lock.release();
+    }
+
+    #[no_mangle]
+    extern "C" fn libsettings_wait_init(ctx: *mut c_void) -> i32 {
+        let context: &mut Context = unsafe { &mut *(ctx as *mut _) };
+        context.event = Some(Event::new());
+        0
     }
 }

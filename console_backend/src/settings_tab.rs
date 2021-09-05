@@ -299,11 +299,11 @@ mod client {
     use anyhow::anyhow;
     use libsettings::{settings, SettingKind, SettingValue};
     use libsettings_sys::{
-        sbp_msg_callback_t, sbp_msg_callbacks_node_t, settings_api_t, settings_create, settings_destroy,
-        settings_read_bool, settings_read_by_idx, settings_read_float, settings_read_int,
-        settings_read_str, settings_t, settings_write_res_e_SETTINGS_WR_MODIFY_DISABLED,
-        settings_write_res_e_SETTINGS_WR_OK, settings_write_res_e_SETTINGS_WR_PARSE_FAILED,
-        settings_write_res_e_SETTINGS_WR_READ_ONLY,
+        sbp_msg_callback_t, sbp_msg_callbacks_node_t, settings_api_t, settings_create,
+        settings_destroy, settings_read_bool, settings_read_by_idx, settings_read_float,
+        settings_read_int, settings_read_str, settings_t,
+        settings_write_res_e_SETTINGS_WR_MODIFY_DISABLED, settings_write_res_e_SETTINGS_WR_OK,
+        settings_write_res_e_SETTINGS_WR_PARSE_FAILED, settings_write_res_e_SETTINGS_WR_READ_ONLY,
         settings_write_res_e_SETTINGS_WR_SERVICE_FAILED,
         settings_write_res_e_SETTINGS_WR_SETTING_REJECTED,
         settings_write_res_e_SETTINGS_WR_TIMEOUT, settings_write_res_e_SETTINGS_WR_VALUE_REJECTED,
@@ -609,12 +609,11 @@ mod client {
     }
 
     impl<'a> Context<'a> {
-
         fn callback_broker(&self, msg: SBP) {
-
             let cb_data = {
                 let _guard = self.lock.lock();
-                let idx = match self.callbacks
+                let idx = match self
+                    .callbacks
                     .iter()
                     .position(|cb| cb.msg_type == msg.get_message_type())
                 {
@@ -686,7 +685,7 @@ mod client {
         fn set(&self) {
             let _ = self.lock.lock();
             if !self.condvar.notify_one() {
-                 eprintln!("event set did not notify anything");
+                eprintln!("event set did not notify anything");
             }
         }
     }
@@ -714,8 +713,8 @@ mod client {
 
     struct CtxPtr(*mut c_void);
 
-    unsafe impl Sync for CtxPtr { }
-    unsafe impl Send for CtxPtr { }
+    unsafe impl Sync for CtxPtr {}
+    unsafe impl Send for CtxPtr {}
 
     #[no_mangle]
     unsafe extern "C" fn register_cb(
@@ -728,12 +727,10 @@ mod client {
         let context: &mut Context = &mut *(ctx as *mut _);
         let _guard = context.lock.lock();
         let ctx_ptr = CtxPtr(ctx);
-        let key = context
-            .link
-            .register_cb_by_id(msg_type, move |msg: SBP| {
-                let context: &mut Context = &mut *(ctx_ptr.0 as *mut _);
-                context.callback_broker(msg)
-            });
+        let key = context.link.register_cb_by_id(msg_type, move |msg: SBP| {
+            let context: &mut Context = &mut *(ctx_ptr.0 as *mut _);
+            context.callback_broker(msg)
+        });
         context.callbacks.push(Callback {
             node: node as usize,
             msg_type,
@@ -753,7 +750,11 @@ mod client {
         let _guard = context.lock.lock();
         if (node as i32) != 0 {
             let key = {
-                let idx = context.callbacks.iter().position(|cb| cb.node == node as usize).unwrap();
+                let idx = context
+                    .callbacks
+                    .iter()
+                    .position(|cb| cb.node == node as usize)
+                    .unwrap();
                 context.callbacks.remove(idx).key
             };
             context.link.unregister_cb(key);

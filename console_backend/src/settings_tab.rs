@@ -708,7 +708,7 @@ mod client {
 
         fn release(&self) {
             // Safety: Only called via libsettings_unlock after libsettings_lock was called
-            unsafe { self.0.force_unlock() };
+            unsafe { self.0.force_unlock() }
         }
     }
 

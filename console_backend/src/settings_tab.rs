@@ -346,7 +346,7 @@ mod client {
                 ctx: ptr::null_mut(),
                 send: Some(send),
                 send_from: Some(send_from),
-                wait_init: None,
+                wait_init: Some(libsettings_wait_init),
                 wait: Some(libsettings_wait),
                 wait_deinit: None,
                 signal: Some(libsettings_signal),

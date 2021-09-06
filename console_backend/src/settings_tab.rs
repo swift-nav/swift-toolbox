@@ -8,6 +8,7 @@ use ini::Ini;
 use libsettings::{SettingKind, SettingValue};
 use log::{debug, error, warn};
 use sbp::messages::piksi::MsgReset;
+use sbp::messages::settings::MsgSettingsSave;
 
 use crate::broadcaster::Link;
 use crate::types::{CapnProtoSender, Error, MsgSender, Result, SharedState};
@@ -155,13 +156,8 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
     }
 
     pub fn save(&self) -> Result<()> {
-        self.msg_sender.send(
-            MsgReset {
-                flags: 0,
-                sender_id: None,
-            }
-            .into(),
-        )?;
+        self.msg_sender
+            .send(MsgSettingsSave { sender_id: None }.into())?;
         Ok(())
     }
 
@@ -730,11 +726,7 @@ mod client {
                     write!(f, "setting {} in group {} is read only", name, group)
                 }
                 WriteError::ModifyDisabled { name, group } => {
-                    write!(
-                        f,
-                        "setting {} in group {} is not modifiable",
-                        name, group
-                    )
+                    write!(f, "setting {} in group {} is not modifiable", name, group)
                 }
                 WriteError::ServiceFailed => write!(f, "system failure during setting"),
                 WriteError::Timeout => write!(f, "request wasn't replied in time"),

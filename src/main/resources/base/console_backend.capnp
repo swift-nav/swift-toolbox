@@ -123,6 +123,10 @@ struct SettingsSaveRequest {
     value @2 :Text;
 }
 
+struct SettingsResetRequest {
+    reset @0 :Void = void;
+}
+
 struct Point {
     x @0 :Float64;
     y @1 :Float64;
@@ -317,5 +321,6 @@ struct Message {
         settingsExportRequest @32 :SettingsExportRequest;
         settingsImportRequest @33 :SettingsImportRequest;
         settingsSaveRequest @34 :SettingsSaveRequest;
+        settingsResetRequest @35 :SettingsResetRequest;
     }
 }

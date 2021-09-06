@@ -55,6 +55,15 @@ Item {
         onAccepted: data_model.settings_import_request(importDialog.fileUrl)
     }
 
+    MessageDialog {
+        id: resetDialog
+        title: "Reset to Factory Defaults?"
+        icon: StandardIcon.Warning
+        text: "This will erase all settings and then reset the device.\nAre you sure you want to reset to factory defaults?"
+        standardButtons: StandardButton.RestoreDefaults | StandardButton.No
+        onReset: data_model.settings_reset_request()
+    }
+
     RowLayout {
         anchors.fill: parent
 
@@ -105,6 +114,7 @@ Item {
                     icon.source: Constants.icons.warningPath
                     icon.width: 20
                     icon.height: 20
+                    onClicked: resetDialog.visible = true
                 }
             }
 

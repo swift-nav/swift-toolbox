@@ -278,6 +278,9 @@ fn backend_recv_thread(
                     m::message::SettingsRefreshRequest(Ok(_)) => {
                         shared_state_clone.set_settings_refresh(true);
                     }
+                    m::message::SettingsResetRequest(Ok(_)) => {
+                        shared_state_clone.set_settings_reset(true);
+                    }
                     m::message::SettingsExportRequest(Ok(path)) => {
                         let path = path.get_path().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
                         shared_state_clone.set_export_settings(Some(path.to_string()));

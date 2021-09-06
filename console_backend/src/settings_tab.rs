@@ -112,7 +112,7 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
             for (name, value) in prop.iter() {
                 if let Err(e) = self.write_setting(group.unwrap(), name, value) {
                     match e.downcast_ref::<client::WriteError>() {
-                        Some(client::WriteError::ReadOnly) => {}
+                        Some(client::WriteError::ReadOnly { .. }) => {}
                         _ => {
                             self.import_err(&e);
                             return Err(e);
@@ -623,50 +623,84 @@ mod client {
         }
 
         pub fn write_setting(&self, group: &str, name: &str, value: &str) -> Result<()> {
-            let group = CString::new(group)?;
-            let name = CString::new(name)?;
-            let value = CString::new(value)?;
+            let cgroup = CString::new(group)?;
+            let cname = CString::new(name)?;
+            let cvalue = CString::new(value)?;
             let mut event = Event::new();
 
             let result = unsafe {
                 settings_write_str(
                     self.0.ctx,
                     &mut event as *mut Event as *mut _,
-                    group.as_ptr(),
-                    name.as_ptr(),
-                    value.as_ptr(),
+                    cgroup.as_ptr(),
+                    cname.as_ptr(),
+                    cvalue.as_ptr(),
                 )
             };
 
             #[allow(non_upper_case_globals)]
             match result {
                 settings_write_res_e_SETTINGS_WR_OK => Ok(()),
-                code => Err(WriteError::from(code).into()),
+                code => Err(WriteError::new(code, group, name, value).into()),
             }
         }
     }
 
-    #[derive(Debug, Clone, Copy)]
+    #[derive(Debug, Clone)]
     pub enum WriteError {
-        ValueRejected,
-        SettingRejected,
-        ParseFailed,
-        ReadOnly,
-        ModifyDisabled,
+        ValueRejected {
+            name: String,
+            group: String,
+            value: String,
+        },
+        SettingRejected {
+            name: String,
+            group: String,
+        },
+        ParseFailed {
+            name: String,
+            group: String,
+            value: String,
+        },
+        ReadOnly {
+            name: String,
+            group: String,
+        },
+        ModifyDisabled {
+            name: String,
+            group: String,
+        },
         ServiceFailed,
         Timeout,
         Unknown(u32),
     }
 
-    impl From<u32> for WriteError {
-        fn from(n: u32) -> Self {
+    impl WriteError {
+        fn new(code: u32, name: &str, group: &str, value: &str) -> WriteError {
             #[allow(non_upper_case_globals)]
-            match n {
-                settings_write_res_e_SETTINGS_WR_VALUE_REJECTED => WriteError::ValueRejected,
-                settings_write_res_e_SETTINGS_WR_SETTING_REJECTED => WriteError::SettingRejected,
-                settings_write_res_e_SETTINGS_WR_PARSE_FAILED => WriteError::ParseFailed,
-                settings_write_res_e_SETTINGS_WR_READ_ONLY => WriteError::ReadOnly,
-                settings_write_res_e_SETTINGS_WR_MODIFY_DISABLED => WriteError::ModifyDisabled,
+            match code {
+                settings_write_res_e_SETTINGS_WR_VALUE_REJECTED => WriteError::ValueRejected {
+                    name: name.to_string(),
+                    group: group.to_string(),
+                    value: value.to_string(),
+                },
+                settings_write_res_e_SETTINGS_WR_SETTING_REJECTED => WriteError::SettingRejected {
+                    name: name.to_string(),
+                    group: group.to_string(),
+                },
+                settings_write_res_e_SETTINGS_WR_PARSE_FAILED => WriteError::ParseFailed {
+                    name: name.to_string(),
+                    group: group.to_string(),
+                    value: value.to_string(),
+                },
+                settings_write_res_e_SETTINGS_WR_READ_ONLY => WriteError::ReadOnly {
+                    name: name.to_string(),
+                    group: group.to_string(),
+                },
+                settings_write_res_e_SETTINGS_WR_MODIFY_DISABLED => WriteError::ModifyDisabled {
+                    name: name.to_string(),
+                    group: group.to_string(),
+                },
                 settings_write_res_e_SETTINGS_WR_SERVICE_FAILED => WriteError::ServiceFailed,
                 settings_write_res_e_SETTINGS_WR_TIMEOUT => WriteError::Timeout,
                 code => WriteError::Unknown(code),
@@ -677,11 +711,31 @@ mod client {
     impl std::fmt::Display for WriteError {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             match self {
-                WriteError::ValueRejected => write!(f, "setting value invalid"),
-                WriteError::SettingRejected => write!(f, "setting does not exist"),
-                WriteError::ParseFailed => write!(f, "could not parse setting value"),
-                WriteError::ReadOnly => write!(f, "setting is read only"),
-                WriteError::ModifyDisabled => write!(f, "setting is not modifiable"),
+                WriteError::ValueRejected { value, name, group } => write!(
+                    f,
+                    "setting value {} invalid for setting {} in group {}",
+                    value, name, group
+                ),
+                WriteError::SettingRejected { name, group } => {
+                    write!(f, "setting {} in group {} does not exist", name, group)
+                }
+                WriteError::ParseFailed { name, group, value } => {
+                    write!(
+                        f,
+                        "could not parse setting value {} for setting {} in group {}",
+                        value, name, group
+                    )
+                }
+                WriteError::ReadOnly { name, group } => {
+                    write!(f, "setting {} in group {} is read only", name, group)
+                }
+                WriteError::ModifyDisabled { name, group } => {
+                    write!(
+                        f,
+                        "setting {} in group {} is not modifiable",
+                        name, group
+                    )
+                }
                 WriteError::ServiceFailed => write!(f, "system failure during setting"),
                 WriteError::Timeout => write!(f, "request wasn't replied in time"),
                 WriteError::Unknown(code) => write!(f, "unknown settings write response: {}", code),

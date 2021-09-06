@@ -364,6 +364,9 @@ fn backend_recv_thread(
                     m::message::SettingsResetRequest(Ok(_)) => {
                         shared_state_clone.set_settings_reset(true);
                     }
+                    m::message::SettingsSaveRequest(Ok(_)) => {
+                        shared_state_clone.set_settings_save(true);
+                    }
                     m::message::SettingsExportRequest(Ok(path)) => {
                         let path = path.get_path().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
                         shared_state_clone.set_export_settings(Some(path.to_string()));
@@ -372,7 +375,7 @@ fn backend_recv_thread(
                         let path = path.get_path().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
                         shared_state_clone.set_import_settings(Some(path.to_string()));
                     }
-                    m::message::SettingsSaveRequest(Ok(req)) => {
+                    m::message::SettingsWriteRequest(Ok(req)) => {
                         let group = req.get_group().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
                         let name = req.get_name().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
                         let value = req.get_value().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
@@ -381,7 +384,7 @@ fn backend_recv_thread(
                             name: name.to_string(),
                             value: value.to_string(),
                         };
-                        shared_state_clone.set_save_setting(Some(req));
+                        shared_state_clone.set_write_setting(Some(req));
                     }
                     _ => {
                         error!("unknown message from front-end");

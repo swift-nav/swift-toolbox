@@ -5,6 +5,7 @@ import QtQuick.Controls 1.4
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Dialogs 1.3
+import SwiftConsole 1.0
 import "SettingsTabComponents" as SettingsTabComponents
 
 Item {
@@ -37,6 +38,26 @@ Item {
         return row[name] || "";
     }
 
+    SettingsTabData {
+        id: settingsTabData
+    }
+
+    Timer {
+        interval: Utils.hzToMilliseconds(Constants.staticTimerIntervalRate)
+        running: true
+        repeat: true
+        onTriggered: {
+            settings_tab_model.fill_data(settingsTabData);
+            if (settingsTabData.import_status == "success") {
+                importSuccess.visible = true
+                settings_tab_model.clear_import_status(settingsTabData)
+            } else if (settingsTabData.import_status == "failed") {
+                importFailure.visible = true
+                settings_tab_model.clear_import_status(settingsTabData)
+            }
+        }
+    }
+
     FileDialog {
         id: exportDialog
         defaultSuffix: "ini"
@@ -62,6 +83,21 @@ Item {
         text: "This will erase all settings and then reset the device.\nAre you sure you want to reset to factory defaults?"
         standardButtons: StandardButton.RestoreDefaults | StandardButton.No
         onReset: data_model.settings_reset_request()
+    }
+
+    MessageDialog {
+        id: importSuccess
+        title: "Successfully imported settings from file."
+        text: "Settings import from file complete.  Click OK to save the settings\nto the device's persistent storage."
+        standardButtons: StandardButton.Yes | StandardButton.No
+        onYes: data_model.settings_save_request()
+    }
+
+    MessageDialog {
+        id: importFailure
+        title: "Failed to import settings from file."
+        text: "Verify that config file is not overwriting active connection settings."
+        standardButtons: StandardButton.Ok
     }
 
     RowLayout {
@@ -176,7 +212,7 @@ Item {
                         font.family: Constants.genericTable.fontFamily
                         font.pointSize: Constants.largePointSize
                         Keys.onReturnPressed: {
-                            data_model.settings_save_request(
+                            data_model.settings_write_request(
                                 selectedRowField("group"),
                                 selectedRowField("name"),
                                 text
@@ -190,7 +226,7 @@ Item {
                         model: ["True", "False"]
                         currentIndex: model.indexOf(selectedRowField("valueOnDevice"))
                         onCurrentIndexChanged: {
-                            data_model.settings_save_request(
+                            data_model.settings_write_request(
                                 selectedRowField("group"),
                                 selectedRowField("name"),
                                 model[currentIndex]
@@ -204,7 +240,7 @@ Item {
                         model: selectedRowField("enumeratedPossibleValues").split(",")
                         currentIndex: model.indexOf(selectedRowField("valueOnDevice"))
                         onCurrentIndexChanged: {
-                            data_model.settings_save_request(
+                            data_model.settings_write_request(
                                 selectedRowField("group"),
                                 selectedRowField("name"),
                                 model[currentIndex]

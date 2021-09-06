@@ -145,7 +145,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0f8523b410d7187a43085e7e064416ea32ded16bd0a4e6fc025e21616d01258f"
 dependencies = [
  "bitflags",
- "cexpr",
+ "cexpr 0.4.0",
+ "clang-sys",
+ "clap 2.33.3",
+ "env_logger",
+ "lazy_static",
+ "lazycell",
+ "log",
+ "peeking_take_while",
+ "proc-macro2",
+ "quote",
+ "regex",
+ "rustc-hash",
+ "shlex",
+ "which",
+]
+
+[[package]]
+name = "bindgen"
+version = "0.59.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "453c49e5950bb0eb63bb3df640e31618846c89d5b7faa54040d76e98e0134375"
+dependencies = [
+ "bitflags",
+ "cexpr 0.5.0",
  "clang-sys",
  "clap 2.33.3",
  "env_logger",
@@ -246,6 +269,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f4aedb84272dbe89af497cf81375129abda4fc0a9e7c5d317498c15cc30c0d27"
 dependencies = [
  "nom 5.1.2",
+]
+
+[[package]]
+name = "cexpr"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "db507a7679252d2276ed0dd8113c6875ec56d3089f9225b2b42c30cc1f8e5c89"
+dependencies = [
+ "nom 6.1.2",
 ]
 
 [[package]]
@@ -849,10 +881,9 @@ dependencies = [
 [[package]]
 name = "libsettings"
 version = "0.1.0"
+source = "git+https://github.com/swift-nav/libsettings.git?branch=steve/rust-new#facd000421d57a177d2f9768158448242259e9b3"
 dependencies = [
  "lazy_static",
- "libc",
- "log",
  "serde",
  "serde_yaml",
 ]
@@ -860,7 +891,9 @@ dependencies = [
 [[package]]
 name = "libsettings-sys"
 version = "0.1.0"
+source = "git+https://github.com/swift-nav/libsettings.git?branch=steve/rust-new#facd000421d57a177d2f9768158448242259e9b3"
 dependencies = [
+ "bindgen 0.59.1",
  "cmake",
 ]
 
@@ -1461,6 +1494,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "rust-ini"
+version = "0.17.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "63471c4aa97a1cf8332a5f97709a79a4234698de6a1f5087faf66f2dae810e22"
+dependencies = [
+ "cfg-if 1.0.0",
+ "ordered-multimap",
+]
+
+[[package]]
 name = "rustc-demangle"
 version = "0.1.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1810,7 +1853,7 @@ name = "swiftnav-rs"
 version = "0.5.1"
 source = "git+https://github.com/swift-nav/swiftnav-rs?tag=v0.5.1#9ea7f56d8089c4416b7b5b237f22e79ea3460582"
 dependencies = [
- "bindgen",
+ "bindgen 0.58.1",
  "cmake",
 ]
 

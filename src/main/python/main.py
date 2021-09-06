@@ -327,7 +327,7 @@ def receive_messages(app_, backend, messages):
         elif m.which == Message.Union.SettingsTableStatus:
             SETTINGS_TABLE[Keys.ENTRIES][:] = settings_rows_to_json(m.settingsTableStatus.data)
         elif m.which == Message.Union.SettingsImportResponse:
-            SETTINGS_TAB[Keys.IMPORT_STATUS] = "success" if m.settingsImportResponse.success else "failed"
+            SETTINGS_TAB[Keys.IMPORT_STATUS] = m.settingsImportResponse.status
         else:
             pass
 

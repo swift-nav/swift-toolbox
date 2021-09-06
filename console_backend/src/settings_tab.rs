@@ -10,7 +10,7 @@ use log::{debug, error, warn};
 use sbp::messages::piksi::MsgReset;
 
 use crate::broadcaster::Link;
-use crate::types::{CapnProtoSender, MsgSender, Result, SharedState};
+use crate::types::{CapnProtoSender, Error, MsgSender, Result, SharedState};
 use crate::utils::*;
 
 use client::Client;
@@ -114,22 +114,31 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
                     match e.downcast_ref::<client::WriteError>() {
                         Some(client::WriteError::ReadOnly) => {}
                         _ => {
-                            dbg!(self.import_response(false));
+                            self.import_err(&e);
                             return Err(e);
                         }
                     }
                 }
             }
         }
-        dbg!(self.import_response(true));
+        self.import_success();
         Ok(())
     }
 
-    pub fn import_response(&mut self, success: bool) {
+    pub fn import_success(&mut self) {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
         let mut import_response = msg.init_settings_import_response();
-        import_response.set_success(success);
+        import_response.set_status("success");
+        self.client_sender
+            .send_data(serialize_capnproto_builder(builder));
+    }
+
+    pub fn import_err(&mut self, err: &Error) {
+        let mut builder = Builder::new_default();
+        let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
+        let mut import_response = msg.init_settings_import_response();
+        import_response.set_status(&err.to_string());
         self.client_sender
             .send_data(serialize_capnproto_builder(builder));
     }

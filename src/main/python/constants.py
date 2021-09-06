@@ -99,6 +99,7 @@ class Keys(str, Enum):
     CHANNEL = "CHANNEL"
     XMIN = "XMIN"
     XMAX = "XMAX"
+    IMPORT_STATUS = "IMPORT_STATUS"
 
 
 class ApplicationStates(str, Enum):

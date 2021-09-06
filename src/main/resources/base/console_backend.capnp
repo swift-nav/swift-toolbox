@@ -109,6 +109,10 @@ struct SettingsRefreshRequest {
     refresh @0 :Void = void;
 }
 
+struct SettingsSaveRequest {
+    save @0 :Void = void;
+}
+
 struct SettingsExportRequest {
     path @0 :Text;
 }
@@ -117,7 +121,11 @@ struct SettingsImportRequest {
     path @0 :Text;
 }
 
-struct SettingsSaveRequest {
+struct SettingsImportResponse {
+    success @0 :Bool;
+}
+
+struct SettingsWriteRequest {
     group @0 :Text;
     name @1 :Text;
     value @2 :Text;
@@ -320,7 +328,9 @@ struct Message {
         settingsRefreshRequest @31 :SettingsRefreshRequest;
         settingsExportRequest @32 :SettingsExportRequest;
         settingsImportRequest @33 :SettingsImportRequest;
-        settingsSaveRequest @34 :SettingsSaveRequest;
-        settingsResetRequest @35 :SettingsResetRequest;
+        settingsImportResponse @34 :SettingsImportResponse;
+        settingsWriteRequest @35 :SettingsWriteRequest;
+        settingsResetRequest @36 :SettingsResetRequest;
+        settingsSaveRequest @37 :SettingsSaveRequest;
     }
 }

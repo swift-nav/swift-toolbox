@@ -373,6 +373,16 @@ impl SharedState {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         shared_data.settings_tab.refresh = set_to;
     }
+    pub fn settings_save(&self) -> bool {
+        self.lock()
+            .expect(SHARED_STATE_LOCK_MUTEX_FAILURE)
+            .settings_tab
+            .save
+    }
+    pub fn set_settings_save(&self, set_to: bool) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.settings_tab.save = set_to;
+    }
     pub fn settings_reset(&self) -> bool {
         self.lock()
             .expect(SHARED_STATE_LOCK_MUTEX_FAILURE)
@@ -398,23 +408,23 @@ impl SharedState {
         self.lock()
             .expect(SHARED_STATE_LOCK_MUTEX_FAILURE)
             .settings_tab
-            .export
+            .import
             .clone()
     }
     pub fn set_import_settings(&self, path: Option<String>) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         shared_data.settings_tab.import = path;
     }
-    pub fn save_setting(&self) -> Option<settings_tab::SaveRequest> {
+    pub fn write_setting(&self) -> Option<settings_tab::SaveRequest> {
         self.lock()
             .expect(SHARED_STATE_LOCK_MUTEX_FAILURE)
             .settings_tab
-            .save
+            .write
             .clone()
     }
-    pub fn set_save_setting(&self, setting: Option<settings_tab::SaveRequest>) {
+    pub fn set_write_setting(&self, setting: Option<settings_tab::SaveRequest>) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        shared_data.settings_tab.save = setting;
+        shared_data.settings_tab.write = setting;
     }
 }
 
@@ -643,9 +653,10 @@ impl AdvancedSpectrumAnalyzerTabState {
 pub struct SettingsTabState {
     refresh: bool,
     reset: bool,
+    save: bool,
     export: Option<String>,
     import: Option<String>,
-    save: Option<settings_tab::SaveRequest>,
+    write: Option<settings_tab::SaveRequest>,
 }
 
 impl SettingsTabState {
@@ -653,9 +664,10 @@ impl SettingsTabState {
         Self {
             refresh: true,
             reset: false,
+            save: false,
             export: None,
             import: None,
-            save: None,
+            write: None,
         }
     }
 }

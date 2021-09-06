@@ -56,17 +56,23 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
             };
             self.shared_state.set_import_settings(None);
         }
-        if let Some(req) = self.shared_state.save_setting() {
-            if let Err(e) = self.save(&req.group, &req.name, &req.value) {
+        if let Some(req) = self.shared_state.write_setting() {
+            if let Err(e) = self.write_setting(&req.group, &req.name, &req.value) {
                 error!("Issue saving setting, {}", e);
             };
-            self.shared_state.set_save_setting(None);
+            self.shared_state.set_write_setting(None);
         }
         if self.shared_state.settings_reset() {
             if let Err(e) = self.reset() {
                 error!("Issue reseting setting, {}", e);
             };
             self.shared_state.set_settings_reset(false);
+        }
+        if self.shared_state.settings_save() {
+            if let Err(e) = self.save() {
+                error!("Issue reseting setting, {}", e);
+            };
+            self.shared_state.set_settings_save(false);
         }
     }
 
@@ -104,10 +110,28 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
         let conf = Ini::read_from(&mut f)?;
         for (group, prop) in conf.iter() {
             for (name, value) in prop.iter() {
-                self.save(group.unwrap(), name, value)?;
+                if let Err(e) = self.write_setting(group.unwrap(), name, value) {
+                    match e.downcast_ref::<client::WriteError>() {
+                        Some(client::WriteError::ReadOnly) => {}
+                        _ => {
+                            dbg!(self.import_response(false));
+                            return Err(e);
+                        }
+                    }
+                }
             }
         }
+        dbg!(self.import_response(true));
         Ok(())
+    }
+
+    pub fn import_response(&mut self, success: bool) {
+        let mut builder = Builder::new_default();
+        let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
+        let mut import_response = msg.init_settings_import_response();
+        import_response.set_success(success);
+        self.client_sender
+            .send_data(serialize_capnproto_builder(builder));
     }
 
     pub fn reset(&self) -> Result<()> {
@@ -121,7 +145,18 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
         Ok(())
     }
 
-    pub fn save(&mut self, group: &str, name: &str, value: &str) -> Result<()> {
+    pub fn save(&self) -> Result<()> {
+        self.msg_sender.send(
+            MsgReset {
+                flags: 0,
+                sender_id: None,
+            }
+            .into(),
+        )?;
+        Ok(())
+    }
+
+    pub fn write_setting(&mut self, group: &str, name: &str, value: &str) -> Result<()> {
         let setting = self.settings.get_mut(group, name)?;
 
         if let Some(ref v) = setting.value {
@@ -597,29 +632,55 @@ mod client {
             #[allow(non_upper_case_globals)]
             match result {
                 settings_write_res_e_SETTINGS_WR_OK => Ok(()),
-                settings_write_res_e_SETTINGS_WR_VALUE_REJECTED => {
-                    Err(anyhow!("setting value invalid"))
-                }
-                settings_write_res_e_SETTINGS_WR_SETTING_REJECTED => {
-                    Err(anyhow!("setting does not exist"))
-                }
-                settings_write_res_e_SETTINGS_WR_PARSE_FAILED => {
-                    Err(anyhow!("could not parse setting value"))
-                }
-                settings_write_res_e_SETTINGS_WR_READ_ONLY => Err(anyhow!("setting is read only")),
-                settings_write_res_e_SETTINGS_WR_MODIFY_DISABLED => {
-                    Err(anyhow!("setting is not modifiable"))
-                }
-                settings_write_res_e_SETTINGS_WR_SERVICE_FAILED => {
-                    Err(anyhow!("system failure during setting"))
-                }
-                settings_write_res_e_SETTINGS_WR_TIMEOUT => {
-                    Err(anyhow!("request wasn't replied in time"))
-                }
-                other => Err(anyhow!("unknown settings write response: {}", other)),
+                code => Err(WriteError::from(code).into()),
             }
         }
     }
+
+    #[derive(Debug, Clone, Copy)]
+    pub enum WriteError {
+        ValueRejected,
+        SettingRejected,
+        ParseFailed,
+        ReadOnly,
+        ModifyDisabled,
+        ServiceFailed,
+        Timeout,
+        Unknown(u32),
+    }
+
+    impl From<u32> for WriteError {
+        fn from(n: u32) -> Self {
+            #[allow(non_upper_case_globals)]
+            match n {
+                settings_write_res_e_SETTINGS_WR_VALUE_REJECTED => WriteError::ValueRejected,
+                settings_write_res_e_SETTINGS_WR_SETTING_REJECTED => WriteError::SettingRejected,
+                settings_write_res_e_SETTINGS_WR_PARSE_FAILED => WriteError::ParseFailed,
+                settings_write_res_e_SETTINGS_WR_READ_ONLY => WriteError::ReadOnly,
+                settings_write_res_e_SETTINGS_WR_MODIFY_DISABLED => WriteError::ModifyDisabled,
+                settings_write_res_e_SETTINGS_WR_SERVICE_FAILED => WriteError::ServiceFailed,
+                settings_write_res_e_SETTINGS_WR_TIMEOUT => WriteError::Timeout,
+                code => WriteError::Unknown(code),
+            }
+        }
+    }
+
+    impl std::fmt::Display for WriteError {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            match self {
+                WriteError::ValueRejected => write!(f, "setting value invalid"),
+                WriteError::SettingRejected => write!(f, "setting does not exist"),
+                WriteError::ParseFailed => write!(f, "could not parse setting value"),
+                WriteError::ReadOnly => write!(f, "setting is read only"),
+                WriteError::ModifyDisabled => write!(f, "setting is not modifiable"),
+                WriteError::ServiceFailed => write!(f, "system failure during setting"),
+                WriteError::Timeout => write!(f, "request wasn't replied in time"),
+                WriteError::Unknown(code) => write!(f, "unknown settings write response: {}", code),
+            }
+        }
+    }
+
+    impl std::error::Error for WriteError {}
 
     struct ClientInner<'a> {
         context: *mut Context<'a>,

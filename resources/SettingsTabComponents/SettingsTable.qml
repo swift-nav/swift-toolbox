@@ -9,40 +9,40 @@ import SwiftConsole 1.0
 Item {
     property variant columnWidths: [120, 200]
     property int selectedRow: -1
-    property var rowOffsets: ({})
+    property var rowOffsets: ({
+    })
     property bool showExpert: false
     property bool lastShowExpert: false
-
     property alias table: settingsTableEntries.entries
 
     function isHeader(entry) {
-        return !entry.hasOwnProperty("name")
+        return !entry.hasOwnProperty("name");
     }
 
     function groupHasNonExpertSetting(entries, entryIdx) {
         for (var idx = entryIdx + 1; idx < entries.length; idx++) {
-            if (isHeader(entries[idx])) {
-                return false
-            }
-            if (!entries[idx].expert) {
-                return true
-            }
+            if (isHeader(entries[idx]))
+                return false;
+
+            if (!entries[idx].expert)
+                return true;
+
         }
-        return false
+        return false;
     }
 
     function row(entry) {
         return {
             [Constants.settingsTable.tableLeftColumnHeader]: entry.name,
-            [Constants.settingsTable.tableRightColumnHeader]: entry.valueOnDevice || "---",
-        }
+            [Constants.settingsTable.tableRightColumnHeader]: entry.valueOnDevice || "---"
+        };
     }
 
     function headerRow(entry) {
         return {
             [Constants.settingsTable.tableLeftColumnHeader]: entry.group,
-            [Constants.settingsTable.tableRightColumnHeader]: "",
-        }
+            [Constants.settingsTable.tableRightColumnHeader]: ""
+        };
     }
 
     width: columnWidths[0] + columnWidths[1]
@@ -156,13 +156,13 @@ Item {
                     implicitWidth: tableView.columnWidthProvider(column)
                     border.color: Constants.genericTable.borderColor
                     color: {
-                        var item = tableView.model.getRow(row)
-                        if (item[Constants.settingsTable.tableRightColumnHeader] == "") {
+                        var item = tableView.model.getRow(row);
+                        if (item[Constants.settingsTable.tableRightColumnHeader] == "")
                             return Constants.genericTable.borderColor;
-                        }
-                        if (selectedRow == row) {
+
+                        if (selectedRow == row)
                             return Constants.genericTable.cellHighlightedColor;
-                        }
+
                         return Constants.genericTable.cellColor;
                     }
 
@@ -173,8 +173,8 @@ Item {
                         font.family: Constants.genericTable.fontFamily
                         font.pointSize: Constants.largePointSize
                         font.bold: {
-                            var item = tableView.model.getRow(row)
-                            return item[Constants.settingsTable.tableRightColumnHeader] == ""
+                            var item = tableView.model.getRow(row);
+                            return item[Constants.settingsTable.tableRightColumnHeader] == "";
                         }
                         text: model.display
                         elide: Text.ElideRight
@@ -187,15 +187,17 @@ Item {
                         height: parent.height
                         anchors.centerIn: parent
                         onPressed: {
-                            if (selectedRow == row) {
-                                selectedRow = -1
-                            } else {
-                                selectedRow = row
-                            }
+                            if (selectedRow == row)
+                                selectedRow = -1;
+                            else
+                                selectedRow = row;
                         }
                     }
+
                 }
+
             }
+
         }
 
         Timer {
@@ -204,43 +206,42 @@ Item {
             repeat: true
             onTriggered: {
                 settings_table_model.fill_console_points(settingsTableEntries);
-
                 var entries = settingsTableEntries.entries;
-                if (!entries.length) {
-                    return
-                }
+                if (!entries.length)
+                    return ;
 
                 if (lastShowExpert != showExpert) {
-                    tableView.model.clear()
-                    rowOffsets = {}
-                    lastShowExpert = showExpert
+                    tableView.model.clear();
+                    rowOffsets = {
+                    };
+                    lastShowExpert = showExpert;
                 }
-
-                var offset = 0
+                var offset = 0;
                 for (var idx = 0; idx < entries.length; idx++) {
-                    var entry = entries[idx]
-                    var new_row
+                    var entry = entries[idx];
+                    var new_row;
                     if (!isHeader(entry)) {
                         if (showExpert || entry.expert === false) {
-                            new_row = row(entry)
+                            new_row = row(entry);
                         } else {
-                            offset++
-                            continue
+                            offset++;
+                            continue;
                         }
                     } else {
                         if (showExpert || groupHasNonExpertSetting(entries, idx)) {
-                            new_row = headerRow(entry)
+                            new_row = headerRow(entry);
                         } else {
-                            offset++
-                            continue
+                            offset++;
+                            continue;
                         }
                     }
-                    rowOffsets[idx - offset] = idx
-                    tableView.model.setRow(idx - offset, new_row)
+                    rowOffsets[idx - offset] = idx;
+                    tableView.model.setRow(idx - offset, new_row);
                 }
-
-                tableView.forceLayout()
+                tableView.forceLayout();
             }
         }
+
     }
+
 }

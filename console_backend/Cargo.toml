@@ -45,6 +45,7 @@ regex = { version = "1.5.4" }
 semver = { version = "1" }
 libsettings = { git = "https://github.com/swift-nav/libsettings.git", branch = "steve/rust-new"}
 libsettings-sys = { git = "https://github.com/swift-nav/libsettings.git", branch = "steve/rust-new"}
+rust-ini = "0.17.0"
 
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 serialport = "4.0.1"

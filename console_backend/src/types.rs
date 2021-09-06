@@ -389,6 +389,16 @@ impl SharedState {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         shared_data.settings_tab.refresh = set_to;
     }
+    pub fn settings_reset(&self) -> bool {
+        self.lock()
+            .expect(SHARED_STATE_LOCK_MUTEX_FAILURE)
+            .settings_tab
+            .reset
+    }
+    pub fn set_settings_reset(&self, set_to: bool) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.settings_tab.reset = set_to;
+    }
     pub fn export_settings(&self) -> Option<String> {
         self.lock()
             .expect(SHARED_STATE_LOCK_MUTEX_FAILURE)
@@ -652,6 +662,7 @@ impl AdvancedSpectrumAnalyzerTabState {
 #[derive(Debug)]
 pub struct SettingsTabState {
     refresh: bool,
+    reset: bool,
     export: Option<String>,
     import: Option<String>,
     save: Option<settings_tab::SaveRequest>,
@@ -661,6 +672,7 @@ impl SettingsTabState {
     fn new() -> Self {
         Self {
             refresh: true,
+            reset: false,
             export: None,
             import: None,
             save: None,

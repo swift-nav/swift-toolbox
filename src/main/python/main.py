@@ -412,6 +412,14 @@ class DataModel(QObject):
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
 
+    @Slot()  # type: ignore
+    def settings_reset_request(self) -> None:
+        Message = self.messages.Message
+        msg = self.messages.Message()
+        msg.settingsResetRequest = msg.init(Message.Union.SettingsResetRequest)
+        buffer = msg.to_bytes()
+        self.endpoint.send_message(buffer)
+
     @Slot(str)  # type: ignore
     def settings_export_request(self, path: str) -> None:
         Message = self.messages.Message

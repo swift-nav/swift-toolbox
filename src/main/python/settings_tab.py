@@ -37,7 +37,7 @@ class SettingsTabModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_import_status(SETTINGS_TAB[Keys.IMPORT_STATUS])
         return cp
 
-    @Slot(SettingsTabData) # type: ignore
+    @Slot(SettingsTabData)  # type: ignore
     def clear_import_status(self, cp: SettingsTabData) -> SettingsTabData:  # pylint:disable=no-self-use
         SETTINGS_TAB[Keys.IMPORT_STATUS] = ""
         self.fill_data(cp)
@@ -71,6 +71,7 @@ def to_json(entry):
             return getattr(e, name)
         else:
             return False
+
     if entry.which() == "setting":
         return {
             "name": entry.setting.name,
@@ -87,7 +88,7 @@ def to_json(entry):
             "valueOnDevice": handle_null("valueOnDevice"),
         }
     else:
-        return { "group": entry.group }
+        return {"group": entry.group}
 
 
 def settings_rows_to_json(rows):

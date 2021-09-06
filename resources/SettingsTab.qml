@@ -3,40 +3,40 @@ import QtCharts 2.2
 import QtQuick 2.7
 import QtQuick.Controls 1.4
 import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.15
 import QtQuick.Dialogs 1.3
-import SwiftConsole 1.0
+import QtQuick.Layouts 1.15
 import "SettingsTabComponents" as SettingsTabComponents
+import SwiftConsole 1.0
 
 Item {
     id: settingsTab
 
-    width: parent.width
-    height: parent.height
-
     function selectedRow() {
         var rowIdx = settingsTable.selectedRow;
-        if (rowIdx < 0) {
-            return;
-        }
+        if (rowIdx < 0)
+            return ;
+
         return settingsTable.table[settingsTable.rowOffsets[rowIdx]];
     }
 
     function shouldShowField(name) {
         var row = selectedRow();
-        if (!row) {
+        if (!row)
             return false;
-        }
+
         return !!row[name];
     }
 
     function selectedRowField(name) {
         var row = selectedRow();
-        if (!row) {
+        if (!row)
             return "";
-        }
+
         return row[name] || "";
     }
+
+    width: parent.width
+    height: parent.height
 
     SettingsTabData {
         id: settingsTabData
@@ -50,18 +50,19 @@ Item {
             settings_tab_model.fill_data(settingsTabData);
             if (settingsTabData.import_status !== "") {
                 if (settingsTabData.import_status === "success") {
-                    importSuccess.visible = true
+                    importSuccess.visible = true;
                 } else {
-                    importFailure.text = "Error: " + settingsTabData.import_status
-                    importFailure.visible = true
+                    importFailure.text = "Error: " + settingsTabData.import_status;
+                    importFailure.visible = true;
                 }
-                settings_tab_model.clear_import_status(settingsTabData)
+                settings_tab_model.clear_import_status(settingsTabData);
             }
         }
     }
 
     FileDialog {
         id: exportDialog
+
         defaultSuffix: "ini"
         selectExisting: false
         nameFilters: ["*.ini"]
@@ -71,6 +72,7 @@ Item {
 
     FileDialog {
         id: importDialog
+
         defaultSuffix: "ini"
         selectExisting: true
         nameFilters: ["*.ini"]
@@ -80,6 +82,7 @@ Item {
 
     MessageDialog {
         id: resetDialog
+
         title: "Reset to Factory Defaults?"
         icon: StandardIcon.Warning
         text: "This will erase all settings and then reset the device.\nAre you sure you want to reset to factory defaults?"
@@ -89,6 +92,7 @@ Item {
 
     MessageDialog {
         id: importSuccess
+
         title: "Successfully imported settings from file."
         text: "Settings import from file complete.  Click OK to save the settings\nto the device's persistent storage."
         standardButtons: StandardButton.Yes | StandardButton.No
@@ -97,6 +101,7 @@ Item {
 
     MessageDialog {
         id: importFailure
+
         title: "Failed to import settings from file."
         standardButtons: StandardButton.Ok
     }
@@ -106,12 +111,14 @@ Item {
 
         Rectangle {
             id: leftPanel
+
             width: settingsTable.width
             Layout.fillHeight: true
 
             SettingsTabComponents.SettingsTable {
                 id: settingsTable
             }
+
         }
 
         ColumnLayout {
@@ -153,6 +160,7 @@ Item {
                     icon.height: 20
                     onClicked: resetDialog.visible = true
                 }
+
             }
 
             RowLayout {
@@ -170,10 +178,11 @@ Item {
                 CheckBox {
                     text: "Show Advance Settings"
                     onClicked: {
-                        settingsTable.showExpert = checked
-                        settingsTable.selectedRow = -1
+                        settingsTable.showExpert = checked;
+                        settingsTable.selectedRow = -1;
                     }
                 }
+
             }
 
             ToolSeparator {
@@ -182,19 +191,27 @@ Item {
             }
 
             ColumnLayout {
+                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                Layout.maximumWidth: parent.width
+
                 Component {
                     id: settingRowLabel
+
                     Label {
                         text: _title
                         font.family: Constants.genericTable.fontFamily
                         font.pointSize: Constants.largePointSize
                         font.bold: true
                     }
+
                 }
+
                 Component {
                     id: settingRowText
+
                     Row {
                         width: 550
+
                         Text {
                             text: selectedRowField(_fieldName)
                             width: parent.width
@@ -203,75 +220,80 @@ Item {
                             font.family: Constants.genericTable.fontFamily
                             font.pointSize: Constants.largePointSize
                         }
+
                     }
+
                 }
+
                 Component {
                     id: settingRowEditable
+
                     TextField {
                         text: selectedRowField(_fieldName)
                         wrapMode: Text.WordWrap
                         font.family: Constants.genericTable.fontFamily
                         font.pointSize: Constants.largePointSize
                         Keys.onReturnPressed: {
-                            data_model.settings_write_request(
-                                selectedRowField("group"),
-                                selectedRowField("name"),
-                                text
-                            )
+                            data_model.settings_write_request(selectedRowField("group"), selectedRowField("name"), text);
                         }
                     }
+
                 }
+
                 Component {
                     id: settingRowBool
+
                     ComboBox {
                         model: ["True", "False"]
                         currentIndex: model.indexOf(selectedRowField("valueOnDevice"))
                         onCurrentIndexChanged: {
-                            data_model.settings_write_request(
-                                selectedRowField("group"),
-                                selectedRowField("name"),
-                                model[currentIndex]
-                            )
+                            data_model.settings_write_request(selectedRowField("group"), selectedRowField("name"), model[currentIndex]);
                         }
                     }
+
                 }
+
                 Component {
                     id: settingRowEnum
+
                     ComboBox {
                         model: selectedRowField("enumeratedPossibleValues").split(",")
                         currentIndex: model.indexOf(selectedRowField("valueOnDevice"))
                         onCurrentIndexChanged: {
-                            data_model.settings_write_request(
-                                selectedRowField("group"),
-                                selectedRowField("name"),
-                                model[currentIndex]
-                            )
+                            data_model.settings_write_request(selectedRowField("group"), selectedRowField("name"), model[currentIndex]);
                         }
                     }
+
                 }
+
                 Component {
                     id: settingRow
+
                     RowLayout {
                         visible: shouldShowField(fieldName)
+
                         Loader {
                             property string _title: title
                             property string _fieldName: fieldName
+
                             sourceComponent: settingRowLabel
                         }
+
                         Loader {
                             property string _fieldName: fieldName
+
                             sourceComponent: component
                         }
-                    }
-                }
 
-                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-                Layout.maximumWidth: parent.width
+                    }
+
+                }
 
                 Loader {
                     property string title: "Name"
                     property string fieldName: "name"
                     property Component component: settingRowText
+
                     sourceComponent: settingRow
                 }
 
@@ -279,41 +301,59 @@ Item {
                     property string title: "Value"
                     property string fieldName: "valueOnDevice"
                     property Component component: {
-                        if (selectedRowField("readonly")) {
-                            return settingRowText
-                        }
-                        var ty = selectedRowField("type")
-                        if (ty === "boolean") {
-                            return settingRowBool
-                        } else if (ty === "enum") {
-                            return settingRowEnum
-                        } else {
-                            return settingRowEditable
-                        }
+                        if (selectedRowField("readonly"))
+                            return settingRowText;
+
+                        var ty = selectedRowField("type");
+                        if (ty === "boolean")
+                            return settingRowBool;
+                        else if (ty === "enum")
+                            return settingRowEnum;
+                        else
+                            return settingRowEditable;
                     }
+
                     sourceComponent: settingRow
                 }
 
                 Repeater {
-                    model: [
-                        { title: "Units", fieldName: "units" },
-                        { title: "Setting Type", fieldName: "type" },
-                        { title: "Default Value", fieldName: "defaultValue" },
-                        { title: "Description", fieldName: "description" },
-                        { title: "Notes", fieldName: "notes" },
-                    ].filter(el => shouldShowField(el.fieldName))
+                    model: [{
+                        "title": "Units",
+                        "fieldName": "units"
+                    }, {
+                        "title": "Setting Type",
+                        "fieldName": "type"
+                    }, {
+                        "title": "Default Value",
+                        "fieldName": "defaultValue"
+                    }, {
+                        "title": "Description",
+                        "fieldName": "description"
+                    }, {
+                        "title": "Notes",
+                        "fieldName": "notes"
+                    }].filter((el) => {
+                        return shouldShowField(el.fieldName);
+                    })
+
                     Loader {
                         property string title: modelData.title
                         property string fieldName: modelData.fieldName
                         property Component component: settingRowText
+
                         sourceComponent: settingRow
                     }
+
                 }
 
                 Item {
                     Layout.fillHeight: true
                 }
+
             }
+
         }
+
     }
+
 }

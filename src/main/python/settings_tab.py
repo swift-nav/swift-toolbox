@@ -86,8 +86,7 @@ def to_json(entry):
             "digits": handle_null("digits"),
             "valueOnDevice": handle_null("valueOnDevice"),
         }
-    else:
-        return {"group": entry.group}
+    return {"group": entry.group}
 
 
 def settings_rows_to_json(rows):

@@ -69,8 +69,7 @@ def to_json(entry):
         e = getattr(entry.setting, name)
         if e.which() == name:
             return getattr(e, name)
-        else:
-            return False
+        return False
 
     if entry.which() == "setting":
         return {

@@ -122,7 +122,7 @@ struct SettingsImportRequest {
 }
 
 struct SettingsImportResponse {
-    success @0 :Bool;
+    status @0 :Text;
 }
 
 struct SettingsWriteRequest {

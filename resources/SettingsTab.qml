@@ -48,11 +48,13 @@ Item {
         repeat: true
         onTriggered: {
             settings_tab_model.fill_data(settingsTabData);
-            if (settingsTabData.import_status == "success") {
-                importSuccess.visible = true
-                settings_tab_model.clear_import_status(settingsTabData)
-            } else if (settingsTabData.import_status == "failed") {
-                importFailure.visible = true
+            if (settingsTabData.import_status !== "") {
+                if (settingsTabData.import_status === "success") {
+                    importSuccess.visible = true
+                } else {
+                    importFailure.text = "Error: " + settingsTabData.import_status
+                    importFailure.visible = true
+                }
                 settings_tab_model.clear_import_status(settingsTabData)
             }
         }
@@ -96,7 +98,6 @@ Item {
     MessageDialog {
         id: importFailure
         title: "Failed to import settings from file."
-        text: "Verify that config file is not overwriting active connection settings."
         standardButtons: StandardButton.Ok
     }
 

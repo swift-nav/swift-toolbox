@@ -109,6 +109,7 @@ class Keys(str, Enum):
     FW_TEXT = "FW_TEXT"
     FILEIO_LOCAL_FILEPATH = "FILEIO_LOCAL_FILEPATH"
     FILEIO_DESTINATION_FILEPATH = "FILEIO_DESTINATION_FILEPATH"
+    TITLE = "TITLE"
 
 
 class ApplicationStates(str, Enum):

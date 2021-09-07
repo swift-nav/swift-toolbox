@@ -123,7 +123,7 @@ impl<T: Clone> Deque<T> {
     }
 }
 
-pub trait CapnProtoSender: Debug + Clone + Send + 'static {
+pub trait CapnProtoSender: Debug + Clone + Send + Sync + 'static {
     fn send_data(&mut self, msg_bytes: Vec<u8>);
 }
 
@@ -426,6 +426,54 @@ impl SharedState {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         shared_data.settings_tab.write = setting;
     }
+    pub fn fileio_destination_filepath(&self) -> Option<PathBuf> {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).update_tab.fileio_destination_filepath.take()
+    }
+    pub fn set_fileio_destination_filepath(&self, directory: PathBuf) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).update_tab.fileio_destination_filepath = Some(directory);
+    }
+    pub fn fileio_local_filepath(&self) -> Option<PathBuf> {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).update_tab.fileio_local_filepath.take()
+    }
+    pub fn set_fileio_local_filepath(&self, directory: PathBuf) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).update_tab.fileio_local_filepath = Some(directory);
+    }
+    pub fn firmware_local_filename(&self) -> Option<PathBuf> {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).update_tab.firmware_local_filename.take()
+    }
+    pub fn set_firmware_local_filename(&self, directory: PathBuf) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).update_tab.firmware_local_filename = Some(directory);
+    }
+    pub fn firmware_local_filepath(&self) -> Option<PathBuf> {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).update_tab.firmware_local_filepath.take()
+    }
+    pub fn set_firmware_local_filepath(&self, directory: PathBuf) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).update_tab.firmware_local_filepath = Some(directory);
+    }
+    pub fn firmware_directory(&self) -> Option<PathBuf> {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).update_tab.firmware_directory.take()
+    }
+    pub fn set_firmware_directory(&self, directory: PathBuf) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).update_tab.firmware_directory = Some(directory);
+    }
+    pub fn set_update_buttons(&self, buttons: UpdateTabButtons) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).update_tab.buttons = Some(buttons);
+    }
+    pub fn update_buttons(&mut self) -> Option<UpdateTabButtons> {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).update_tab.buttons.take()
+    }
 }
 
 impl Deref for SharedState {
@@ -463,6 +511,7 @@ pub struct SharedStateInner {
     pub(crate) baseline_tab: BaselineTabState,
     pub(crate) advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTabState,
     pub(crate) settings_tab: SettingsTabState,
+    pub(crate) update_tab: UpdateTabState,
 }
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
@@ -481,12 +530,43 @@ impl SharedStateInner {
             baseline_tab: BaselineTabState::new(),
             advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTabState::new(),
             settings_tab: SettingsTabState::new(),
+            update_tab: UpdateTabState::new(),
         }
     }
 }
 impl Default for SharedStateInner {
     fn default() -> Self {
         SharedStateInner::new()
+    }
+}
+
+#[derive(Debug)]
+pub struct UpdateTabButtons {
+    pub download_latest_firmware: bool,
+    pub update_firmware: bool,
+    pub send_file_to_device: bool,
+}
+
+#[derive(Debug)]
+pub struct UpdateTabState {
+    pub firmware_local_filepath: Option<PathBuf>,
+    pub firmware_local_filename: Option<PathBuf>,
+    pub fileio_local_filepath: Option<PathBuf>,
+    pub fileio_destination_filepath: Option<PathBuf>,
+    pub firmware_directory: Option<PathBuf>,
+    pub buttons: Option<UpdateTabButtons>,
+}
+
+impl UpdateTabState {
+    fn new() -> UpdateTabState {
+        UpdateTabState {
+            buttons: None,
+            firmware_directory: Some(LOG_DIRECTORY.path()),
+            firmware_local_filepath: None,
+            firmware_local_filename: None,
+            fileio_local_filepath: None,
+            fileio_destination_filepath: None,
+        }
     }
 }
 

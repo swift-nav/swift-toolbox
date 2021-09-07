@@ -28,8 +28,7 @@ Item {
         SettingsTab {
         }
 
-        Item {
-            id: updateTab
+        UpdateTab {
         }
 
         AdvancedTab {

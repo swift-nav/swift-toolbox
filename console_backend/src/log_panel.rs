@@ -44,11 +44,12 @@ pub fn splitable_log_formatter(record: &Record) -> String {
         record.level().as_str()
     };
     let timestamp = Local::now().format("%Y-%m-%dT%H:%M:%S");
-    let msg = record.args();
+    let mut msg = record.args().to_string();
+    msg.retain(|c| c != '\0');
     let msg_packet = ConsoleLogPacket {
         level: level.to_string(),
         timestamp: timestamp.to_string(),
-        msg: msg.to_string(),
+        msg,
     };
     serde_json::to_string(&msg_packet).expect(CONSOLE_LOG_JSON_TO_STRING_FAILURE)
 }

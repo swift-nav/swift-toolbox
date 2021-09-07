@@ -518,6 +518,6 @@ impl Default for FileioConfig {
     }
 }
 
-fn new_sequence() -> u32 {
+pub fn new_sequence() -> u32 {
     rand::thread_rng().gen_range(0..0xfffffff)
 }

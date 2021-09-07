@@ -332,7 +332,7 @@ def receive_messages(app_, backend, messages):
             pass
 
 
-class DataModel(QObject):
+class DataModel(QObject):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
 
     endpoint: console_backend.server.ServerEndpoint  # pylint: disable=no-member
     messages: Any

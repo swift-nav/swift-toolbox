@@ -177,7 +177,7 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
             setting.setting.kind,
             SettingKind::Float | SettingKind::Double
         ) {
-            let new_setting = self.client.read_setting(&group, &name)?;
+            let new_setting = self.client.read_setting(group, name)?;
             setting.value = Some(new_setting);
         } else {
             setting.value = Some(SettingValue::String(value.to_string()));
@@ -323,13 +323,7 @@ impl Settings {
         self.inner.values().fold(Vec::new(), |mut groups, group| {
             let group: Vec<_> = group
                 .values()
-                .filter_map(|setting| {
-                    if let Some(ref v) = setting.value {
-                        Some((setting.setting, v))
-                    } else {
-                        None
-                    }
-                })
+                .filter_map(|setting| setting.value.map(|v| (setting.setting, v)))
                 .collect();
             if !group.is_empty() {
                 groups.push(group);
@@ -474,6 +468,7 @@ mod client {
             // TODO: probably should reuse the same worker threads each loop
             'outer: loop {
                 let results = crossbeam::scope(|scope| {
+                    #[allow(needless-collect)]
                     let handles = (0..WORKERS)
                         .map(|i| scope.spawn(move |_| read_one(idx + i)))
                         .collect::<Vec<_>>();
@@ -557,8 +552,8 @@ mod client {
                 .find(|s| s.group == group && s.name == name)
                 .ok_or_else(|| anyhow!("setting not found"))?;
 
-            let c_group = CString::new(group.clone())?;
-            let c_name = CString::new(name.clone())?;
+            let c_group = CString::new(group)?;
+            let c_name = CString::new(name)?;
 
             let (res, status) = match setting.kind {
                 SettingKind::Integer => unsafe {
@@ -836,11 +831,7 @@ mod client {
             let result = self
                 .condvar
                 .wait_for(&mut started, Duration::from_millis(ms as u64));
-            if result.timed_out() {
-                false
-            } else {
-                true
-            }
+            !result.timed_out()
         }
 
         fn set(&self) {

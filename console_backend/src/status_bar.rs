@@ -71,7 +71,7 @@ impl<S: CapnProtoSender> StatusBar<S> {
     pub fn new(shared_state: SharedState, client_sender: S) -> StatusBar<S> {
         let heartbeat_data = Heartbeat::new();
         let is_running = ArcBool::new();
-        let version = String::from(env!("VERGEN_GIT_SEMVER"));
+        let version = String::from(include_str!("version.txt").trim());
         StatusBar {
             client_sender,
             shared_state: shared_state.clone(),

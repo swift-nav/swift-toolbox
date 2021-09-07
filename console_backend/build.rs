@@ -1,8 +1,6 @@
 extern crate capnpc;
-use anyhow::Result;
-use vergen::{vergen, Config};
 
-fn main() -> Result<()> {
+fn main() {
     let output_dir = std::env::var("OUT_DIR").unwrap();
 
     println!("cargo:rerun-if-changed=console_backend.capnp");
@@ -11,5 +9,4 @@ fn main() -> Result<()> {
         .output_path(output_dir)
         .run()
         .unwrap();
-    vergen(Config::default())
 }

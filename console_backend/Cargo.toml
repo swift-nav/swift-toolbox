@@ -57,8 +57,6 @@ serial_test = "0.5.1"
 
 [build-dependencies]
 capnpc = "0.14"
-vergen = { version = "5" }
-anyhow = { version = "1", features = ["backtrace"] }
 
 [lib]
 name = "console_backend"

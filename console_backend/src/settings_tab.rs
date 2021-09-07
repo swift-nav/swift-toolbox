@@ -366,13 +366,7 @@ impl Setting {
 }
 
 mod client {
-    use std::{
-        convert::TryInto,
-        ffi::{CStr, CString},
-        os::raw::{c_char, c_void},
-        ptr, slice,
-        time::Duration,
-    };
+    use std::{convert::TryInto, ffi::{CStr, CString}, os::raw::{c_char, c_ulong, c_void}, ptr, slice, time::Duration};
 
     use anyhow::anyhow;
     use libsettings::{settings, SettingKind, SettingValue};
@@ -510,13 +504,13 @@ mod client {
                     &mut event as *mut Event as *mut _,
                     idx,
                     section.as_mut_ptr(),
-                    BUF_SIZE as u64,
+                    BUF_SIZE as c_ulong,
                     name.as_mut_ptr(),
-                    BUF_SIZE as u64,
+                    BUF_SIZE as c_ulong,
                     value.as_mut_ptr(),
-                    BUF_SIZE as u64,
+                    BUF_SIZE as c_ulong,
                     fmt_type.as_mut_ptr(),
-                    BUF_SIZE as u64,
+                    BUF_SIZE as c_ulong,
                 )
             };
 

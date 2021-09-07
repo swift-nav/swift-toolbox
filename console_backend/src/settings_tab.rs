@@ -323,7 +323,7 @@ impl Settings {
         self.inner.values().fold(Vec::new(), |mut groups, group| {
             let group: Vec<_> = group
                 .values()
-                .filter_map(|setting| setting.value.map(|v| (setting.setting, v)))
+                .filter_map(|setting| setting.value.as_ref().map(|v| (setting.setting, v)))
                 .collect();
             if !group.is_empty() {
                 groups.push(group);
@@ -468,7 +468,7 @@ mod client {
             // TODO: probably should reuse the same worker threads each loop
             'outer: loop {
                 let results = crossbeam::scope(|scope| {
-                    #[allow(needless-collect)]
+                    #[allow(clippy::needless_collect)]
                     let handles = (0..WORKERS)
                         .map(|i| scope.spawn(move |_| read_one(idx + i)))
                         .collect::<Vec<_>>();

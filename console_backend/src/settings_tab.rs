@@ -366,7 +366,13 @@ impl Setting {
 }
 
 mod client {
-    use std::{convert::TryInto, ffi::{CStr, CString}, os::raw::{c_char, c_ulong, c_void}, ptr, slice, time::Duration};
+    use std::{
+        convert::TryInto,
+        ffi::{CStr, CString},
+        os::raw::{c_char, c_ulong, c_void},
+        ptr, slice,
+        time::Duration,
+    };
 
     use anyhow::anyhow;
     use libsettings::{settings, SettingKind, SettingValue};

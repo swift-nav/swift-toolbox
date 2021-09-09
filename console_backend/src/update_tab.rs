@@ -60,7 +60,7 @@ pub struct UpdateTab {
 }
 impl UpdateTab {
     pub fn new(shared_state: SharedState) -> UpdateTab {
-        let (sender, receiver) = unbounded();
+        let (sender, receiver) = channel::unbounded();
         shared_state.set_update_tab_sender(sender.clone());
         let update_shared = UpdateShared::new();
         update_shared.set_debug(shared_state.debug());

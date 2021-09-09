@@ -19,7 +19,8 @@ use crate::console_backend_capnp as m;
 use crate::errors::*;
 use crate::log_panel::{setup_logging, LogLevel};
 use crate::output::{CsvLogging, SbpLogging};
-use crate::types::{ClientSender, FlowControl, RealtimeDelay, SharedState, UpdateTabButtons};
+use crate::types::{ClientSender, FlowControl, RealtimeDelay, SharedState};
+use crate::update_tab::UpdateTabUpdate;
 use crate::utils::{refresh_loggingbar, refresh_navbar};
 
 /// The backend server
@@ -275,73 +276,85 @@ fn backend_recv_thread(
                             cv_in.get_channel();
                     }
                     m::message::UpdateTabStatusFront(Ok(cv_in)) => {
-                        let download_button = cv_in.get_download_latest_firmware();
-                        let update_button = cv_in.get_update_firmware();
-                        if download_button || update_button {
-                            let buttons = UpdateTabButtons {
-                                download_latest_firmware: download_button,
-                                update_firmware: update_button,
-                                send_file_to_device: false,
+                        if let Some(update_tab_sender) = shared_state.update_tab_sender() {
+                            let download_latest_firmware = cv_in.get_download_latest_firmware();
+                            let update_firmware = cv_in.get_update_firmware();
+                            let send_file_to_device = cv_in.get_send_file_to_device();
+                            let firmware_directory = match cv_in.get_download_directory().which() {
+                                Ok(m::update_tab_status_front::download_directory::Directory(
+                                    Ok(directory),
+                                )) => Some(PathBuf::from(directory)),
+                                Err(e) => {
+                                    error!("{}", e);
+                                    None
+                                }
+                                _ => None,
                             };
-                            shared_state.set_update_buttons(buttons);
-                        }
-                        match cv_in.get_download_directory().which() {
-                            Ok(m::update_tab_status_front::download_directory::Directory(Ok(
-                                directory,
-                            ))) => {
-                                shared_state.set_firmware_directory(PathBuf::from(directory));
-                            }
-                            Err(e) => {
-                                error!("{}", e);
-                            }
-                            _ => (),
-                        }
-                        match cv_in.get_update_local_filepath().which() {
-                            Ok(m::update_tab_status_front::update_local_filepath::Filepath(
-                                Ok(filepath),
-                            )) => {
-                                shared_state.set_firmware_local_filepath(PathBuf::from(filepath));
-                            }
-                            Err(e) => {
-                                error!("{}", e);
-                            }
-                            _ => (),
-                        }
-                        match cv_in.get_update_local_filename().which() {
-                            Ok(m::update_tab_status_front::update_local_filename::Filepath(
-                                Ok(filepath),
-                            )) => {
-                                shared_state.set_firmware_local_filename(PathBuf::from(filepath));
-                            }
-                            Err(e) => {
-                                error!("{}", e);
-                            }
-                            _ => (),
-                        }
-                        match cv_in.get_fileio_local_filepath().which() {
-                            Ok(m::update_tab_status_front::fileio_local_filepath::Filepath(
-                                Ok(filepath),
-                            )) => {
-                                shared_state.set_fileio_local_filepath(PathBuf::from(filepath));
-                            }
-                            Err(e) => {
-                                error!("{}", e);
-                            }
-                            _ => (),
-                        }
-                        match cv_in.get_fileio_destination_filepath().which() {
-                            Ok(
-                                m::update_tab_status_front::fileio_destination_filepath::Filepath(
-                                    Ok(filepath),
-                                ),
-                            ) => {
-                                shared_state
-                                    .set_fileio_destination_filepath(PathBuf::from(filepath));
-                            }
-                            Err(e) => {
-                                error!("{}", e);
-                            }
-                            _ => (),
+                            let firmware_local_filepath =
+                                match cv_in.get_update_local_filepath().which() {
+                                    Ok(
+                                        m::update_tab_status_front::update_local_filepath::Filepath(
+                                            Ok(filepath),
+                                        ),
+                                    ) => Some(PathBuf::from(filepath)),
+                                    Err(e) => {
+                                        error!("{}", e);
+                                        None
+                                    }
+                                    _ => None,
+                                };
+                            let firmware_local_filename =
+                                match cv_in.get_update_local_filename().which() {
+                                    Ok(
+                                        m::update_tab_status_front::update_local_filename::Filepath(
+                                            Ok(filepath),
+                                        ),
+                                    ) => Some(PathBuf::from(filepath)),
+                                    Err(e) => {
+                                        error!("{}", e);
+                                        None
+                                    }
+                                    _ => None,
+                                };
+                            let fileio_local_filepath =
+                                match cv_in.get_fileio_local_filepath().which() {
+                                    Ok(
+                                        m::update_tab_status_front::fileio_local_filepath::Filepath(
+                                            Ok(filepath),
+                                        ),
+                                    ) => Some(PathBuf::from(filepath)),
+                                    Err(e) => {
+                                        error!("{}", e);
+                                        None
+                                    }
+                                    _ => None,
+                                };
+                            let fileio_destination_filepath = match cv_in.get_fileio_destination_filepath().which() {
+                                Ok(
+                                    m::update_tab_status_front::fileio_destination_filepath::Filepath(
+                                        Ok(filepath),
+                                    ),
+                                ) => {
+                                    Some(PathBuf::from(filepath))
+                                }
+                                Err(e) => {
+                                    error!("{}", e);
+                                    None
+                                }
+                                _ => None,
+                            };
+                            update_tab_sender
+                                .send(Some(UpdateTabUpdate {
+                                    download_latest_firmware,
+                                    update_firmware,
+                                    send_file_to_device,
+                                    firmware_directory,
+                                    firmware_local_filepath,
+                                    firmware_local_filename,
+                                    fileio_local_filepath,
+                                    fileio_destination_filepath,
+                                }))
+                                .unwrap();
                         }
                     }
                     _ => {

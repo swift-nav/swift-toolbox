@@ -60,6 +60,7 @@ fn run_process_messages(file_in_name: &str, failure: bool) {
         let shared_state = SharedState::new();
         let client_send = ClientSender::new(client_send_);
         shared_state.set_running(true, client_send.clone());
+        shared_state.set_debug(true);
         let conn = Connection::file(
             file_in_name.into(),
             RealtimeDelay::Off,

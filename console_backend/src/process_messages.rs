@@ -21,6 +21,7 @@ use sbp::{
 use crate::broadcaster::with_link;
 use crate::connection::Connection;
 use crate::constants::PAUSE_LOOP_SLEEP_DURATION_MS;
+use crate::errors::UNABLE_TO_CLONE_UPDATE_SHARED;
 use crate::log_panel::handle_log_msg;
 use crate::types::*;
 use crate::update_tab;
@@ -214,15 +215,19 @@ where
 
         let shared_state = shared_state.clone();
         let mut client_send = client_send.clone();
-        let update_shared = tabs.update.lock().unwrap().update_shared_clone();
+        let update_shared = tabs
+            .update
+            .lock()
+            .expect(UNABLE_TO_CLONE_UPDATE_SHARED)
+            .update_shared_clone();
         let link_clone = source.link();
         let client_send_clone = client_send.clone();
-        let update_tab_is_running = ArcBool::new_with(true);
+        let (update_tab_sender, update_tab_recv) = tabs.update.lock().unwrap().channels_clone();
         crossbeam::scope(|scope| {
             let handle = scope.spawn(|_| {
                 update_tab::update_tab_thread(
-                    update_tab_is_running.clone(),
-                    shared_state.clone(),
+                    update_tab_sender.clone(),
+                    update_tab_recv,
                     update_shared,
                     client_send_clone,
                     link_clone,
@@ -263,13 +268,14 @@ where
                 }
                 log::logger().flush();
             }
+            if update_tab_sender.send(None).is_ok() {
+                if let Err(err) = handle.join() {
+                    error!("Error joining update tab, {:?}", err);
+                }
+            }
             if conn.close_when_done() {
                 shared_state.set_running(false, client_send.clone());
                 close_frontend(&mut client_send);
-            }
-            update_tab_is_running.set(false);
-            if let Err(err) = handle.join() {
-                error!("Error joining update tab, {:?}", err);
             }
         })
         .unwrap();

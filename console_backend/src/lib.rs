@@ -90,8 +90,8 @@ impl<'link, S: types::CapnProtoSender> Tabs<'link, S> {
                 client_sender.clone(),
             )
             .into(),
-            status_bar: StatusBar::new(shared_state, client_sender).into(),
-            update: UpdateTab::new().into(),
+            status_bar: StatusBar::new(shared_state.clone(), client_sender).into(),
+            update: UpdateTab::new(shared_state).into(),
             _link: link,
         }
     }

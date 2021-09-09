@@ -16,3 +16,4 @@ pub(crate) const SERVER_STATE_NEW_CONNECTION_FAILURE: &str = "server state new c
 pub(crate) const SERVER_STATE_DISCONNECT_FAILURE: &str = "server state disconnect failure";
 pub(crate) const CONSOLE_LOG_JSON_TO_STRING_FAILURE: &str = "unable to convert json to string";
 pub(crate) const CROSSBEAM_SCOPE_UNWRAP_FAILURE: &str = "unable to unwrap crossbeam scope";
+pub(crate) const UNABLE_TO_CLONE_UPDATE_SHARED: &str = "unable to clone update shared";

@@ -384,6 +384,7 @@ mod tests {
         let bfilename = filename();
         backup_file(bfilename.clone());
         let shared_state = SharedState::new();
+        shared_state.set_debug(true);
         let (client_send_, client_receive) = channel::unbounded::<Vec<u8>>();
         let client_send = ClientSender::new(client_send_);
         let connection_state = ConnectionState::new(client_send, shared_state.clone());
@@ -411,6 +412,7 @@ mod tests {
         let bfilename = filename();
         backup_file(bfilename.clone());
         let shared_state = SharedState::new();
+        shared_state.set_debug(true);
         let (client_send_, client_receive) = channel::unbounded::<Vec<u8>>();
         let client_send = ClientSender::new(client_send_);
         let connection_state = ConnectionState::new(client_send, shared_state.clone());
@@ -442,6 +444,7 @@ mod tests {
         let bfilename = filename();
         backup_file(bfilename.clone());
         let shared_state = SharedState::new();
+        shared_state.set_debug(true);
         let (client_send_, client_receive) = channel::unbounded::<Vec<u8>>();
         let client_send = ClientSender::new(client_send_);
         let connection_state = ConnectionState::new(client_send.clone(), shared_state.clone());

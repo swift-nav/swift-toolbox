@@ -6,10 +6,11 @@ use crate::log_panel::LogLevel;
 use crate::output::{CsvLogging, CsvSerializer};
 use crate::piksi_tools_constants::*;
 
+use crate::update_tab::UpdateTabUpdate;
 use crate::utils::{mm_to_m, ms_to_sec, set_connected_frontend};
 use anyhow::{Context, Result as AHResult};
 use chrono::{DateTime, Utc};
-use crossbeam::channel;
+use crossbeam::channel::{self, Sender};
 use directories::{ProjectDirs, UserDirs};
 use indexmap::set::IndexSet;
 use lazy_static::lazy_static;
@@ -120,7 +121,7 @@ impl<T: Clone> Deque<T> {
     }
 }
 
-pub trait CapnProtoSender: Debug + Clone + Send {
+pub trait CapnProtoSender: Debug + Clone + Send + Sync + 'static {
     fn send_data(&mut self, msg_bytes: Vec<u8>);
 }
 
@@ -225,6 +226,14 @@ impl SharedState {
     pub fn set_paused(&self, set_to: bool) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).paused = set_to;
+    }
+    pub fn debug(&self) -> bool {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).debug
+    }
+    pub fn set_debug(&self, set_to: bool) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).debug = set_to;
     }
     pub fn current_connection(&self) -> String {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
@@ -360,6 +369,14 @@ impl SharedState {
         (*shared_data).baseline_tab.log_file = None;
         Ok(())
     }
+    pub fn update_tab_sender(&self) -> Option<Sender<Option<UpdateTabUpdate>>> {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).update_tab_sender.clone()
+    }
+    pub fn set_update_tab_sender(&self, sender: Sender<Option<UpdateTabUpdate>>) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).update_tab_sender = Some(sender);
+    }
 }
 
 impl Deref for SharedState {
@@ -392,10 +409,12 @@ pub struct SharedStateInner {
     pub(crate) paused: bool,
     pub(crate) connection_history: ConnectionHistory,
     pub(crate) running: bool,
+    pub(crate) debug: bool,
     pub(crate) server_running: bool,
     pub(crate) solution_tab: SolutionTabState,
     pub(crate) baseline_tab: BaselineTabState,
     pub(crate) advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTabState,
+    pub(crate) update_tab_sender: Option<Sender<Option<UpdateTabUpdate>>>,
 }
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
@@ -407,12 +426,14 @@ impl SharedStateInner {
             log_panel: LogPanelState::new(),
             tracking_tab: TrackingTabState::new(),
             paused: false,
+            debug: false,
             connection_history,
             running: false,
             server_running: true,
             solution_tab: SolutionTabState::new(),
             baseline_tab: BaselineTabState::new(),
             advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTabState::new(),
+            update_tab_sender: None,
         }
     }
 }

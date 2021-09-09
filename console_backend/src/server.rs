@@ -20,6 +20,7 @@ use crate::errors::*;
 use crate::log_panel::{setup_logging, LogLevel};
 use crate::output::{CsvLogging, SbpLogging};
 use crate::types::{ClientSender, FlowControl, RealtimeDelay, SharedState};
+use crate::update_tab::UpdateTabUpdate;
 use crate::utils::{refresh_loggingbar, refresh_navbar};
 
 /// The backend server
@@ -274,6 +275,88 @@ fn backend_recv_thread(
                         (*shared_data).advanced_spectrum_analyzer_tab.channel_idx =
                             cv_in.get_channel();
                     }
+                    m::message::UpdateTabStatusFront(Ok(cv_in)) => {
+                        if let Some(update_tab_sender) = shared_state.update_tab_sender() {
+                            let download_latest_firmware = cv_in.get_download_latest_firmware();
+                            let update_firmware = cv_in.get_update_firmware();
+                            let send_file_to_device = cv_in.get_send_file_to_device();
+                            let firmware_directory = match cv_in.get_download_directory().which() {
+                                Ok(m::update_tab_status_front::download_directory::Directory(
+                                    Ok(directory),
+                                )) => Some(PathBuf::from(directory)),
+                                Err(e) => {
+                                    error!("{}", e);
+                                    None
+                                }
+                                _ => None,
+                            };
+                            let firmware_local_filepath =
+                                match cv_in.get_update_local_filepath().which() {
+                                    Ok(
+                                        m::update_tab_status_front::update_local_filepath::Filepath(
+                                            Ok(filepath),
+                                        ),
+                                    ) => Some(PathBuf::from(filepath)),
+                                    Err(e) => {
+                                        error!("{}", e);
+                                        None
+                                    }
+                                    _ => None,
+                                };
+                            let firmware_local_filename =
+                                match cv_in.get_update_local_filename().which() {
+                                    Ok(
+                                        m::update_tab_status_front::update_local_filename::Filepath(
+                                            Ok(filepath),
+                                        ),
+                                    ) => Some(PathBuf::from(filepath)),
+                                    Err(e) => {
+                                        error!("{}", e);
+                                        None
+                                    }
+                                    _ => None,
+                                };
+                            let fileio_local_filepath =
+                                match cv_in.get_fileio_local_filepath().which() {
+                                    Ok(
+                                        m::update_tab_status_front::fileio_local_filepath::Filepath(
+                                            Ok(filepath),
+                                        ),
+                                    ) => Some(PathBuf::from(filepath)),
+                                    Err(e) => {
+                                        error!("{}", e);
+                                        None
+                                    }
+                                    _ => None,
+                                };
+                            let fileio_destination_filepath = match cv_in.get_fileio_destination_filepath().which() {
+                                Ok(
+                                    m::update_tab_status_front::fileio_destination_filepath::Filepath(
+                                        Ok(filepath),
+                                    ),
+                                ) => {
+                                    Some(PathBuf::from(filepath))
+                                }
+                                Err(e) => {
+                                    error!("{}", e);
+                                    None
+                                }
+                                _ => None,
+                            };
+                            update_tab_sender
+                                .send(Some(UpdateTabUpdate {
+                                    download_latest_firmware,
+                                    update_firmware,
+                                    send_file_to_device,
+                                    firmware_directory,
+                                    firmware_local_filepath,
+                                    firmware_local_filename,
+                                    fileio_local_filepath,
+                                    fileio_destination_filepath,
+                                }))
+                                .unwrap();
+                        }
+                    }
                     _ => {
                         error!("unknown message from front-end");
                     }
@@ -339,6 +422,7 @@ impl Server {
         setup_logging(client_send.clone());
         let opt = CliOptions::from_filtered_cli();
         let shared_state = SharedState::new();
+
         let connection_state = ConnectionState::new(client_send.clone(), shared_state.clone());
         // Handle CLI Opts.
         handle_cli(opt, &connection_state, shared_state.clone());

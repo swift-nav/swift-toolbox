@@ -40,6 +40,9 @@ rand = "0.8.3"
 slotmap = "1.0.3"
 serde-pickle = { version = "0.6.2", optional = true }
 parking_lot = "0.11.1"
+minreq = { version = "2.4.2", features = ["https"] }
+regex = { version = "1.5.4" }
+semver = { version = "1" }
 
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 serialport = "4.0.1"

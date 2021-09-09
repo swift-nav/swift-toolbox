@@ -5,12 +5,37 @@ use capnp::message::HeapAllocator;
 use capnp::serialize;
 use indexmap::IndexSet;
 use log::warn;
+use semver::{Version, VersionReq}; //BuildMetadata, Prerelease,
 use serialport::available_ports;
 
 use crate::constants::*;
 use crate::errors::*;
 use crate::types::{CapnProtoSender, SignalCodes};
 use crate::{common_constants as cc, types::SharedState};
+
+/// Compare to semvar strings and return true if the later_version is greater than the early version.
+///
+/// Assumes that the versions are in the form of `MAJOR.MINOR.PATCH<DEV>`.
+/// Where `DEV` is optional and begins with any non numeric value.
+/// If the semver matches up to the DEV value, then it will return true if DEV does not match.
+///
+/// Arguments:
+/// - `early_version`: The early version string.
+/// - `later_version`: The later version string.
+///
+/// Returns:
+/// - `true` if the later_version is greater than the early version.
+/// - `false` if the later_version is not greater than the early version.
+pub fn compare_semvers(early_version: String, later_version: String) -> anyhow::Result<bool> {
+    if let Ok(req) = VersionReq::parse(&format!("<={}", early_version)) {
+        if let Ok(version) = Version::parse(&later_version) {
+            if req.matches(&version) {
+                return Ok(false);
+            }
+        }
+    }
+    Ok(true)
+}
 
 /// Send a CLOSE, or kill, signal to the frontend.
 pub fn close_frontend<P: CapnProtoSender>(client_send: &mut P) {
@@ -464,6 +489,31 @@ mod tests {
         assert!(float_eq(nano_to_micro_sec(1000000_f64), 1000_f64));
         assert!(float_eq(nano_to_micro_sec(0_f64), 0_f64));
         assert!(float_eq(nano_to_micro_sec(1337_f64), 1.337_f64));
+    }
+
+    #[test]
+    fn compare_semvers_test() {
+        assert!(!compare_semvers(String::from("1.0.0"), String::from("1.0.0")).unwrap());
+        assert!(compare_semvers(String::from("1.0.0"), String::from("1.0.1")).unwrap());
+        assert!(compare_semvers(String::from("1.0.0"), String::from("1.1.0")).unwrap());
+        assert!(compare_semvers(String::from("1.0.0"), String::from("2.0.0")).unwrap());
+        assert!(!compare_semvers(String::from("1.0.0"), String::from("0.0.0")).unwrap());
+        assert!(!compare_semvers(String::from("1.0.0"), String::from("0.0.1")).unwrap());
+        assert!(!compare_semvers(String::from("1.0.0"), String::from("0.1.0")).unwrap());
+        assert!(compare_semvers(String::from("2.5.6"), String::from("2.5.6-dev5432")).unwrap());
+        assert!(compare_semvers(String::from("2.5.6-dev5432"), String::from("2.5.6")).unwrap());
+        assert!(compare_semvers(
+            String::from("2.5.6-dev5432"),
+            String::from("2.5.6-dev54321")
+        )
+        .unwrap());
+        assert!(compare_semvers(String::from("2.5.6"), String::from("2.5.6.dev5432")).unwrap());
+        assert!(compare_semvers(String::from("2.5.6.dev5432"), String::from("2.5.6")).unwrap());
+        assert!(compare_semvers(
+            String::from("2.5.6.dev5432"),
+            String::from("2.5.6.dev12345")
+        )
+        .unwrap());
     }
 
     #[test]

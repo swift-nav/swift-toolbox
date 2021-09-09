@@ -183,6 +183,45 @@ struct LoggingBarStatus {
     sbpLogging @2 :Text;
 }
 
+struct UpdateTabStatus {
+    hardwareRevision @0 : Text;
+    fwVersionCurrent @1 : Text;
+    fwVersionLatest @2 : Text;
+    fwLocalFilename @3: Text;
+    directory @4 : Text;
+    downloading @5 : Bool;
+    upgrading @6 : Bool;
+    fwText @7: Text;
+    fileioDestinationFilepath @8: Text;
+    fileioLocalFilepath @9: Text;
+}
+
+struct UpdateTabStatusFront {
+    updateFirmware @0: Bool;
+    downloadLatestFirmware @1 : Bool;
+    sendFileToDevice @2: Bool;
+    updateLocalFilepath :union {
+        filepath @3 :Text;
+        none @4 :Void;
+    }
+    downloadDirectory :union {
+        directory @5 :Text;
+        none @6 :Void;
+    }
+    fileioLocalFilepath :union {
+        filepath @7 :Text;
+        none @8 :Void;
+    }
+    fileioDestinationFilepath :union {
+        filepath @9 :Text;
+        none @10 :Void;
+    }
+    updateLocalFilename :union {
+        filepath @11 :Text;
+        none @12 :Void;
+    }
+}
+
 struct TrackingSignalsStatusFront {
     trackingSignalsCheckVisibility @0 :List(Text);
 }
@@ -247,5 +286,7 @@ struct Message {
         baselinePlotStatusButtonFront @27 :BaselinePlotStatusButtonFront;
         advancedSpectrumAnalyzerStatus @28:AdvancedSpectrumAnalyzerStatus;
         advancedSpectrumAnalyzerStatusFront @29:AdvancedSpectrumAnalyzerStatusFront;
+        updateTabStatus @30:UpdateTabStatus;
+        updateTabStatusFront @31:UpdateTabStatusFront;
     }
 }

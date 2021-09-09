@@ -96,6 +96,7 @@ mod mem_bench_impl {
             let client_send = ClientSender::new(client_send_);
             let shared_state = SharedState::new();
             shared_state.set_running(true, client_send.clone());
+            shared_state.set_debug(true);
             let conn = Connection::file(
                 BENCH_FILEPATH.into(),
                 RealtimeDelay::On,

@@ -33,6 +33,7 @@ QtObject {
     property QtObject trackingSignals
     property QtObject observationTab
     property QtObject genericTable
+    property QtObject updateTab
     readonly property int staticTimerIntervalRate: 5 // 5 Hz
     readonly property int staticTableTimerIntervalRate: 10 // 10 Hz
     readonly property string monoSpaceFont: "Courier New"
@@ -58,6 +59,39 @@ QtObject {
         readonly property int tabBarSpacing: 10
         readonly property int buttonPadding: 0
         readonly property int buttonInset: 0
+    }
+
+    updateTab: QtObject {
+        readonly property int outerMargins: 10
+        readonly property int innerMargins: 10
+        readonly property int textHeight: 20
+        readonly property int labelTextAreaSpacing: 10
+        readonly property int hardwareRevisionLabelWidth: 100
+        readonly property int hardwareVersionElementsLabelWidth: 50
+        readonly property int firmwareVersionElementsLabelRightMargin: 5
+        readonly property string hardwareRevisionLabel: "Hardware Revision:"
+        readonly property string firmwareVersionCurrentLabel: "Current:"
+        readonly property string firmwareVersionLatestLabel: "Latest:"
+        readonly property string firmwareDownloadDirectoryLabel: "Directory:"
+        readonly property string firmwareVersionLocalFileLabel: "Local File:"
+        readonly property string fileioDestinationPathLabel: "Destination Path:"
+        readonly property string fileioLocalFileLabel: "Local File:"
+        readonly property string firmwareVersionTitle: "Firmware Version"
+        readonly property string firmwareDownloadTitle: "Firmware Download"
+        readonly property string firmwareUpgradeStatusTitle: "Firmware Upgrade Status"
+        readonly property string firmwareVersionLocalFilePlaceholderText: "Enter a local file path"
+        readonly property string fileioAndProductFeatureToolTitle: "File IO and product feature unlock tool"
+        readonly property string updateFirmwareButtonLabel: "Update Firmware"
+        readonly property string downloadLatestFirmwareButtonLabel: "Download Latest Firmware"
+        readonly property string fileioSendFileToDeviceButtonLabel: "Send File To Device"
+        readonly property string placeholderTextColor: "grey"
+        readonly property int borderWidth: 1
+        readonly property int firmwareVersionColumnSpacing: 0
+        readonly property int buttonInset: 0
+        readonly property int firmwareVersionLocalFileButtonSpacing: 5
+        readonly property int firmwareVersionLocalFileButtonWidth: 50
+        readonly property int fileioDestinationPathButtonWidth: 150
+        readonly property string dotDotDotLabel: "..."
     }
 
     genericTable: QtObject {

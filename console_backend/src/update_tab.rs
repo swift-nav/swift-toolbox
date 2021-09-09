@@ -70,7 +70,7 @@ impl UpdateTab {
             update_tab_context,
         }
     }
-    pub fn update_tab_context_clone(&self) -> UpdateTabContext {
+    pub fn clone_update_tab_context(&self) -> UpdateTabContext {
         self.update_tab_context.clone()
     }
     pub fn clone_channel(

@@ -371,11 +371,11 @@ impl SharedState {
     }
     pub fn update_tab_sender(&self) -> Option<Sender<Option<UpdateTabUpdate>>> {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).update_tab.sender.clone()
+        (*shared_data).update_tab_sender.clone()
     }
     pub fn set_update_tab_sender(&self, sender: Sender<Option<UpdateTabUpdate>>) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).update_tab.sender = Some(sender);
+        (*shared_data).update_tab_sender = Some(sender);
     }
 }
 
@@ -414,7 +414,7 @@ pub struct SharedStateInner {
     pub(crate) solution_tab: SolutionTabState,
     pub(crate) baseline_tab: BaselineTabState,
     pub(crate) advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTabState,
-    pub(crate) update_tab: UpdateTabState,
+    pub(crate) update_tab_sender: Option<Sender<Option<UpdateTabUpdate>>>,
 }
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
@@ -433,24 +433,13 @@ impl SharedStateInner {
             solution_tab: SolutionTabState::new(),
             baseline_tab: BaselineTabState::new(),
             advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTabState::new(),
-            update_tab: UpdateTabState::new(),
+            update_tab_sender: None,
         }
     }
 }
 impl Default for SharedStateInner {
     fn default() -> Self {
         SharedStateInner::new()
-    }
-}
-
-#[derive(Debug)]
-pub struct UpdateTabSender(Option<Sender<Option<UpdateTabUpdate>>>)
-    pub sender: Option<Sender<Option<UpdateTabUpdate>>>,
-}
-
-impl UpdateTabState {
-    fn new() -> UpdateTabState {
-        UpdateTabState { sender: None }
     }
 }
 

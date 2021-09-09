@@ -215,20 +215,20 @@ where
 
         let shared_state = shared_state.clone();
         let mut client_send = client_send.clone();
-        let update_shared = tabs
+        let update_tab_context = tabs
             .update
             .lock()
             .expect(UNABLE_TO_CLONE_UPDATE_SHARED)
-            .update_tab_context_clone();
+            .clone_update_tab_context();
         let link_clone = source.link();
         let client_send_clone = client_send.clone();
-        let (update_tab_sender, update_tab_recv) = tabs.update.lock().unwrap().clone_channel();
+        let (update_tab_tx, update_tab_rx) = tabs.update.lock().unwrap().clone_channel();
         crossbeam::scope(|scope| {
             let handle = scope.spawn(|_| {
                 update_tab::update_tab_thread(
-                    update_tab_sender.clone(),
-                    update_tab_recv,
-                    update_shared,
+                    update_tab_tx.clone(),
+                    update_tab_rx,
+                    update_tab_context,
                     client_send_clone,
                     link_clone,
                     msg_sender.clone(),
@@ -268,7 +268,7 @@ where
                 }
                 log::logger().flush();
             }
-            if update_tab_sender.send(None).is_ok() {
+            if update_tab_tx.send(None).is_ok() {
                 if let Err(err) = handle.join() {
                     error!("Error joining update tab, {:?}", err);
                 }

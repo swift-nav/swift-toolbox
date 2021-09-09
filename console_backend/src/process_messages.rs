@@ -220,6 +220,9 @@ where
         let update_tab_is_running = ArcBool::new_with(true);
         crossbeam::scope(|scope| {
             scope.spawn(|_| loop {
+                if !shared_state.is_running() {
+                    break;
+                }
                 tabs.settings_tab.lock().unwrap().tick();
                 sleep(Duration::from_millis(100));
             });

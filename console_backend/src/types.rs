@@ -444,7 +444,7 @@ impl Default for SharedStateInner {
 }
 
 #[derive(Debug)]
-pub struct UpdateTabState {
+pub struct UpdateTabSender(Option<Sender<Option<UpdateTabUpdate>>>)
     pub sender: Option<Sender<Option<UpdateTabUpdate>>>,
 }
 

@@ -445,6 +445,7 @@ mod client {
             });
 
             let context_raw = Box::into_raw(context);
+            inner.context = context_raw;
 
             // Safety: inner.api was just created via Box::into_raw so it is
             // properly aligned and non-null

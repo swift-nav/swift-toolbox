@@ -225,6 +225,9 @@ where
         let (update_tab_tx, update_tab_rx) = tabs.update.lock().unwrap().clone_channel();
         crossbeam::scope(|scope| {
             scope.spawn(|_| loop {
+                if !shared_state.is_running() {
+                    break;
+                }
                 tabs.settings_tab.lock().unwrap().tick();
                 sleep(Duration::from_millis(100));
             });

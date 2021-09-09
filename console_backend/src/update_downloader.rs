@@ -1,4 +1,4 @@
-use crate::update_tab::UpdateShared;
+use crate::update_tab::UpdateTabContext;
 use anyhow::bail;
 use log::debug;
 use serde::{Deserialize, Serialize};
@@ -72,7 +72,7 @@ impl UpdateDownloader {
     pub fn download_multi_firmware(
         &mut self,
         directory: PathBuf,
-        update_shared: Option<UpdateShared>,
+        update_shared: Option<UpdateTabContext>,
     ) -> anyhow::Result<PathBuf> {
         self.get_index_data()?;
         if let Some(index_data) = &self.index_data {
@@ -97,7 +97,7 @@ impl UpdateDownloader {
         &mut self,
         filepath_url: String,
         directory: PathBuf,
-        update_shared: Option<UpdateShared>,
+        update_shared: Option<UpdateTabContext>,
     ) -> anyhow::Result<PathBuf> {
         let filename = Path::new(&filepath_url).file_name();
         if let Some(filename_) = filename {
@@ -157,11 +157,13 @@ mod tests {
     use tempfile::TempDir;
 
     #[test]
+    #[ignore]
     fn fetch_index_data_test() {
         let index_data = fetch_index_data().unwrap().unwrap();
         assert!(index_data.piksi_multi.fw.url.contains("https"));
     }
     #[test]
+    #[ignore]
     fn download_multi_firmware_test() {
         let mut downloader = UpdateDownloader::new();
 

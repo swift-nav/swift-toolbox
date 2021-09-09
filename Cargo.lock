@@ -364,6 +364,7 @@ dependencies = [
  "rand",
  "regex",
  "sbp",
+ "semver 1.0.3",
  "serde",
  "serde-pickle",
  "serde_json",

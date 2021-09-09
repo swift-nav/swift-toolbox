@@ -1,7 +1,7 @@
 use anyhow::anyhow;
 use capnp::message::Builder;
 use crossbeam::{
-    channel::{after, select, unbounded, Receiver, Sender},
+    channel::{self, Receiver, Sender},
     thread,
 };
 use glob::glob;
@@ -52,7 +52,7 @@ const UPGRADE_WHITELIST: &[&str] = &[
 /// # Fields
 /// - `sender`: A sender to send messages to the update thread.
 /// - `receiver`: A receiver to receive messages from the update thread.
-/// - `update_shared`: The shared state for update tab.
+/// - `update_tab_context`: The shared state for update tab.
 pub struct UpdateTab {
     sender: Sender<Option<UpdateTabUpdate>>,
     receiver: Receiver<Option<UpdateTabUpdate>>,
@@ -62,16 +62,16 @@ impl UpdateTab {
     pub fn new(shared_state: SharedState) -> UpdateTab {
         let (sender, receiver) = channel::unbounded();
         shared_state.set_update_tab_sender(sender.clone());
-        let update_shared = UpdateShared::new();
-        update_shared.set_debug(shared_state.debug());
+        let update_tab_context = UpdateTabContext::new();
+        update_tab_context.set_debug(shared_state.debug());
         UpdateTab {
             sender,
             receiver,
-            update_shared,
+            update_tab_context,
         }
     }
-    pub fn update_shared_clone(&self) -> UpdateShared {
-        self.update_shared.clone()
+    pub fn update_tab_context_clone(&self) -> UpdateTabContext {
+        self.update_tab_context.clone()
     }
     pub fn clone_channel(
         &self,
@@ -82,7 +82,7 @@ impl UpdateTab {
         (self.sender.clone(), self.receiver.clone())
     }
     pub fn handle_log_msg(&self, msg: MsgLog) {
-        if self.update_shared.upgrading() {
+        if self.update_tab_context.upgrading() {
             for regex in UPGRADE_WHITELIST.iter() {
                 let text = msg.text.to_string();
                 if let Ok(reg) = Regex::new(regex) {
@@ -102,7 +102,7 @@ impl UpdateTab {
                             // If there is only one line, we show that
                             text[text.len() - 1]
                         };
-                        self.update_shared
+                        self.update_tab_context
                             .fw_log_replace_last(final_text.to_string());
                     }
                 }
@@ -111,12 +111,12 @@ impl UpdateTab {
     }
 
     pub fn handle_command_resp(&mut self, msg: MsgCommandResp) {
-        if self.update_shared.upgrading() {
-            if let Some(sequence) = self.update_shared.upgrade_sequence() {
+        if self.update_tab_context.upgrading() {
+            if let Some(sequence) = self.update_tab_context.upgrade_sequence() {
                 if sequence == msg.sequence {
-                    self.update_shared.set_upgrade_sequence(None);
-                    self.update_shared.set_upgrade_ret(Some(msg.code));
-                    self.update_shared.set_upgrading(false);
+                    self.update_tab_context.set_upgrade_sequence(None);
+                    self.update_tab_context.set_upgrade_ret(Some(msg.code));
+                    self.update_tab_context.set_upgrading(false);
                 }
             }
         }
@@ -139,7 +139,7 @@ pub fn check_for_firmware_local_filepath(directory: PathBuf) -> Option<PathBuf> 
 pub fn update_tab_thread<S: CapnProtoSender>(
     sender: Sender<Option<UpdateTabUpdate>>,
     receiver: Receiver<Option<UpdateTabUpdate>>,
-    update_shared: UpdateShared,
+    update_tab_context: UpdateTabContext,
     client_sender: S,
     link: Link<'_>,
     msg_sender: MsgSender,
@@ -149,13 +149,11 @@ pub fn update_tab_thread<S: CapnProtoSender>(
             .spawn(|inner_scope| {
                 let mut is_running = true;
                 sender.send(Some(UpdateTabUpdate::new())).unwrap();
-                let mut update_downloader_thread: Option<thread::ScopedJoinHandle<()>> = None;
-                let mut update_upgrader_thread: Option<thread::ScopedJoinHandle<()>> = None;
                 loop {
                     if !is_running {
                         break;
                     }
-                    select! {
+                    channel::select! {
                         recv(receiver) -> msg => {
                             match msg {
                                 Ok(res) => {
@@ -163,51 +161,43 @@ pub fn update_tab_thread<S: CapnProtoSender>(
                                         Some(update) => {
                                             // Check for path updates.
                                             if let Some(fw_dir) = update.firmware_directory {
-                                                update_shared.set_firmware_directory(fw_dir.clone());
-                                                update_shared
+                                                update_tab_context.set_firmware_directory(fw_dir.clone());
+                                                update_tab_context
                                                     .set_firmware_local_filepath(check_for_firmware_local_filepath(fw_dir));
                                             }
                                             if let Some(fw_local_filepath) = update.firmware_local_filepath {
                                                 if let Some(parent_path) = fw_local_filepath.parent() {
-                                                    update_shared.set_firmware_directory(parent_path.to_path_buf());
+                                                    update_tab_context.set_firmware_directory(parent_path.to_path_buf());
                                                 }
-                                                update_shared.set_firmware_local_filepath(Some(fw_local_filepath.clone()));
+                                                update_tab_context.set_firmware_local_filepath(Some(fw_local_filepath.clone()));
                                             }
                                             if let Some(fw_local_filename) = update.firmware_local_filename {
                                                 let fw_local_filepath =
-                                                    update_shared.firmware_directory().join(fw_local_filename);
-                                                update_shared.set_firmware_local_filepath(Some(fw_local_filepath));
+                                                    update_tab_context.firmware_directory().join(fw_local_filename);
+                                                update_tab_context.set_firmware_local_filepath(Some(fw_local_filepath));
                                             }
                                             if let Some(fileio_local_filepath) = update.fileio_local_filepath {
-                                                update_shared.set_fileio_local_filepath(Some(fileio_local_filepath));
+                                                update_tab_context.set_fileio_local_filepath(Some(fileio_local_filepath));
                                             }
                                             if let Some(fileio_destination_filepath) = update.fileio_destination_filepath {
-                                                update_shared
+                                                update_tab_context
                                                     .set_fileio_destination_filepath(Some(fileio_destination_filepath));
                                             }
                                             // Check for button changes.
-                                            if update.download_latest_firmware && !update_shared.downloading() {
-                                                if let Some(update_downloader_thread) = update_downloader_thread.take()
-                                                {
-                                                    update_downloader_thread.join().expect(THREAD_JOIN_FAILURE);
-                                                }
-                                                update_downloader_thread = Some(inner_scope.spawn(|_| {
-                                                    download_firmware(update_shared.clone());
-                                                }));
+                                            if update.download_latest_firmware && !update_tab_context.downloading() {
+                                                inner_scope.spawn(|_| {
+                                                    download_firmware(update_tab_context.clone());
+                                                });
                                             }
-                                            if update.update_firmware && !update_shared.upgrading() {
-                                                if let Some(update_upgrader_thread) = update_upgrader_thread.take() {
-                                                    update_upgrader_thread.join().expect(THREAD_JOIN_FAILURE);
-                                                }
-
-                                                update_upgrader_thread = Some(inner_scope.spawn(|_| {
+                                            if update.update_firmware && !update_tab_context.upgrading() {
+                                                inner_scope.spawn(|_| {
                                                     let mut fileio = Fileio::new(link.clone(), msg_sender.clone());
                                                     upgrade_firmware(
-                                                        update_shared.clone(),
+                                                        update_tab_context.clone(),
                                                         &mut fileio,
                                                         msg_sender.clone(),
                                                     );
-                                                }));
+                                                });
                                             }
                                         },
                                         None => {
@@ -220,10 +210,9 @@ pub fn update_tab_thread<S: CapnProtoSender>(
                                 }
                             }
                         },
-                        recv(after(Duration::from_millis(UPDATE_THREAD_SLEEP_MS))) -> _ => ()
+                        recv(channel::after(Duration::from_millis(UPDATE_THREAD_SLEEP_MS))) -> _ => ()
                     }
-                    update_frontend(client_sender.clone(), update_shared.clone());
-                    log::logger().flush();
+                    update_frontend(client_sender.clone(), update_tab_context.clone());
                 }
             })
             .join()
@@ -233,10 +222,13 @@ pub fn update_tab_thread<S: CapnProtoSender>(
 }
 
 /// Package data into a message buffer and send to frontend.
-fn update_frontend<S: CapnProtoSender>(mut client_sender: S, mut update_shared: UpdateShared) {
+fn update_frontend<S: CapnProtoSender>(
+    mut client_sender: S,
+    mut update_tab_context: UpdateTabContext,
+) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
-    let packet = update_shared.packet();
+    let packet = update_tab_context.packet();
     let mut status = msg.init_update_tab_status();
 
     status.set_hardware_revision("piksi_multi");
@@ -258,28 +250,33 @@ fn update_frontend<S: CapnProtoSender>(mut client_sender: S, mut update_shared: 
     client_sender.send_data(serialize_capnproto_builder(builder));
 }
 
-fn download_firmware(update_shared: UpdateShared) {
-    let directory = update_shared.firmware_directory();
-    update_shared.set_downloading(true);
-    update_shared.fw_log_clear();
-    let mut update_downloader = update_shared.update_downloader();
-    let filepath =
-        match update_downloader.download_multi_firmware(directory, Some(update_shared.clone())) {
-            Ok(filepath_) => Some(filepath_),
-            Err(e) => {
-                error!("{}", e);
-                None
-            }
-        };
-    update_shared.set_firmware_local_filepath(filepath);
-    update_shared.set_downloading(false);
+fn download_firmware(update_tab_context: UpdateTabContext) {
+    let directory = update_tab_context.firmware_directory();
+    update_tab_context.set_downloading(true);
+    update_tab_context.fw_log_clear();
+    let mut update_downloader = update_tab_context.update_downloader();
+    let filepath = match update_downloader
+        .download_multi_firmware(directory, Some(update_tab_context.clone()))
+    {
+        Ok(filepath_) => Some(filepath_),
+        Err(e) => {
+            error!("{}", e);
+            None
+        }
+    };
+    update_tab_context.set_firmware_local_filepath(filepath);
+    update_tab_context.set_downloading(false);
     log::logger().flush();
 }
 
-fn upgrade_firmware(update_shared: UpdateShared, fileio: &mut Fileio, msg_sender: MsgSender) {
-    update_shared.set_upgrading(true);
-    update_shared.fw_log_clear();
-    let mut update_downloader = update_shared.update_downloader();
+fn upgrade_firmware(
+    update_tab_context: UpdateTabContext,
+    fileio: &mut Fileio,
+    msg_sender: MsgSender,
+) {
+    update_tab_context.set_upgrading(true);
+    update_tab_context.fw_log_clear();
+    let mut update_downloader = update_tab_context.update_downloader();
     // TODO Get current version from settings.
     // TODO Get serial number from settings.
     // TODO Get firmware version from settings.
@@ -290,54 +287,54 @@ fn upgrade_firmware(update_shared: UpdateShared, fileio: &mut Fileio, msg_sender
                 match compare_semvers(current_version.clone(), latest_version.clone()) {
                     Ok(comp) => {
                         if comp {
-                            update_shared.fw_log_append(format!(
+                            update_tab_context.fw_log_append(format!(
                                 "Latest firmware version, {}, is newer than current version, {}.",
                                 latest_version, current_version
                             ));
                         } else {
-                            update_shared.fw_log_append(format!("Latest firmware version, {}, is not newer than current version, {}.", latest_version, current_version));
+                            update_tab_context.fw_log_append(format!("Latest firmware version, {}, is not newer than current version, {}.", latest_version, current_version));
                         }
                         comp
                     }
                     Err(err) => {
-                        update_shared.fw_log_append(String::from(
+                        update_tab_context.fw_log_append(String::from(
                             "Unable to compare latest versus current version.",
                         ));
-                        update_shared.fw_log_append(err.to_string());
+                        update_tab_context.fw_log_append(err.to_string());
                         false
                     }
                 }
             } else {
-                update_shared.fw_log_append(String::from(
+                update_tab_context.fw_log_append(String::from(
                     "Current Version needed to compare Firmware before upgrade.",
                 ));
                 false
             }
         }
         Err(err) => {
-            update_shared.fw_log_append(String::from(
+            update_tab_context.fw_log_append(String::from(
                 "Latest Version needed to compare Firmware before upgrade.",
             ));
-            update_shared.fw_log_append(err.to_string());
+            update_tab_context.fw_log_append(err.to_string());
             false
         }
     };
     if to_upgrade {
-        if let Err(err) = firmware_upgrade(update_shared.clone(), fileio, msg_sender) {
-            update_shared.fw_log_append(err.to_string());
+        if let Err(err) = firmware_upgrade(update_tab_context.clone(), fileio, msg_sender) {
+            update_tab_context.fw_log_append(err.to_string());
         }
     }
-    update_shared.set_upgrading(false);
+    update_tab_context.set_upgrading(false);
     log::logger().flush();
 }
 
 fn firmware_upgrade(
-    update_shared: UpdateShared,
+    update_tab_context: UpdateTabContext,
     fileio: &mut Fileio,
     msg_sender: MsgSender,
 ) -> anyhow::Result<()> {
-    if let Some(filepath) = update_shared.firmware_local_filepath() {
-        update_shared.fw_log_append(format!(
+    if let Some(filepath) = update_tab_context.firmware_local_filepath() {
+        update_tab_context.fw_log_append(format!(
             "Reading firmware file from path, {}.",
             filepath.display()
         ));
@@ -347,28 +344,28 @@ fn firmware_upgrade(
             ));
         }
         if let Ok(firmware_blob) = std::fs::File::open(filepath.clone()) {
-            update_shared.fw_log_append(String::from("Transferring image to device..."));
-            update_shared.fw_log_append(String::from(""));
+            update_tab_context.fw_log_append(String::from("Transferring image to device..."));
+            update_tab_context.fw_log_append(String::from(""));
             match fileio.overwrite(
                 String::from(UPGRADE_FIRMWARE_REMOTE_DESTINATION),
                 firmware_blob,
             ) {
                 Ok(_) => {
-                    update_shared.fw_log_append(String::from("Image transfer complete."));
+                    update_tab_context.fw_log_append(String::from("Image transfer complete."));
                 }
                 Err(err) => {
-                    update_shared.fw_log_append(String::from("Image transfer failed."));
-                    update_shared.fw_log_append(err.to_string());
+                    update_tab_context.fw_log_append(String::from("Image transfer failed."));
+                    update_tab_context.fw_log_append(err.to_string());
                     return Err(err);
                 }
             }
-            update_shared.fw_log_append(String::from("Committing image to flash..."));
-            update_shared.fw_log_append(String::from(""));
-            match firmware_upgrade_commit_to_flash(update_shared.clone(), msg_sender.clone()) {
+            update_tab_context.fw_log_append(String::from("Committing image to flash..."));
+            update_tab_context.fw_log_append(String::from(""));
+            match firmware_upgrade_commit_to_flash(update_tab_context.clone(), msg_sender.clone()) {
                 Ok(code) => {
                     if code == 0 {
-                        update_shared.fw_log_append(String::from("Upgrade Complete."));
-                        update_shared.fw_log_append(String::from("Resetting Piksi..."));
+                        update_tab_context.fw_log_append(String::from("Upgrade Complete."));
+                        update_tab_context.fw_log_append(String::from("Resetting Piksi..."));
                         let msg = MsgReset {
                             sender_id: None,
                             flags: 0,
@@ -376,10 +373,10 @@ fn firmware_upgrade(
                         let msg = sbp::messages::SBP::from(msg);
                         msg_sender.send(msg)?;
                     } else {
-                        update_shared.fw_log_append(String::from("Image transfer failed."))
+                        update_tab_context.fw_log_append(String::from("Image transfer failed."))
                     }
                 }
-                _ => update_shared.fw_log_append(String::from("Image transfer failed.")),
+                _ => update_tab_context.fw_log_append(String::from("Image transfer failed.")),
             }
         } else {
             return Err(anyhow!("Failed to read firmware file, {:?}.", filepath));
@@ -389,11 +386,11 @@ fn firmware_upgrade(
 }
 
 fn firmware_upgrade_commit_to_flash(
-    mut update_shared: UpdateShared,
+    mut update_tab_context: UpdateTabContext,
     msg_sender: MsgSender,
 ) -> anyhow::Result<i32> {
     let sequence = new_sequence();
-    update_shared.set_upgrade_sequence(Some(sequence));
+    update_tab_context.set_upgrade_sequence(Some(sequence));
     let msg = MsgCommandReq {
         sender_id: None,
         sequence,
@@ -406,13 +403,13 @@ fn firmware_upgrade_commit_to_flash(
     msg_sender.send(msg)?;
     let start_time = Instant::now();
     let timeout = Duration::from_secs(UPGRADE_FIRMWARE_TIMEOUT_SEC);
-    while update_shared.upgrading() && start_time.elapsed() < timeout {
+    while update_tab_context.upgrading() && start_time.elapsed() < timeout {
         std::thread::sleep(Duration::from_millis(100));
     }
-    let code = if let Some(ret_code) = update_shared.upgrade_ret() {
+    let code = if let Some(ret_code) = update_tab_context.upgrade_ret() {
         ret_code
     } else {
-        update_shared.fw_log_append(String::from("Upgrade process timed out."));
+        update_tab_context.fw_log_append(String::from("Upgrade process timed out."));
         -255
     };
     Ok(code)
@@ -474,7 +471,7 @@ impl Default for FirmwareUpgradePaneLogger {
     }
 }
 
-pub struct UpdateSharedInner {
+pub struct UpdateTabContextInner {
     upgrade_ret: Option<i32>,
     upgrade_sequence: Option<u32>,
     downloading: bool,
@@ -487,9 +484,9 @@ pub struct UpdateSharedInner {
     update_downloader: UpdateDownloader,
     fw_logger: FirmwareUpgradePaneLogger,
 }
-impl UpdateSharedInner {
-    pub fn new() -> UpdateSharedInner {
-        UpdateSharedInner {
+impl UpdateTabContextInner {
+    pub fn new() -> UpdateTabContextInner {
+        UpdateTabContextInner {
             upgrade_ret: None,
             upgrade_sequence: None,
             upgrading: false,
@@ -504,16 +501,16 @@ impl UpdateSharedInner {
         }
     }
 }
-impl Default for UpdateSharedInner {
+impl Default for UpdateTabContextInner {
     fn default() -> Self {
-        UpdateSharedInner::new()
+        UpdateTabContextInner::new()
     }
 }
-pub struct UpdateShared(Arc<Mutex<UpdateSharedInner>>);
+pub struct UpdateTabContext(Arc<Mutex<UpdateTabContextInner>>);
 
-impl UpdateShared {
-    pub fn new() -> UpdateShared {
-        UpdateShared(Arc::new(Mutex::new(UpdateSharedInner::default())))
+impl UpdateTabContext {
+    pub fn new() -> UpdateTabContext {
+        UpdateTabContext(Arc::new(Mutex::new(UpdateTabContextInner::default())))
     }
     pub fn debug(&self) -> bool {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
@@ -673,22 +670,22 @@ pub struct UpdatePacket {
     fw_log: String,
 }
 
-impl Deref for UpdateShared {
-    type Target = Mutex<UpdateSharedInner>;
+impl Deref for UpdateTabContext {
+    type Target = Mutex<UpdateTabContextInner>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl Default for UpdateShared {
+impl Default for UpdateTabContext {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Clone for UpdateShared {
+impl Clone for UpdateTabContext {
     fn clone(&self) -> Self {
-        UpdateShared {
+        UpdateTabContext {
             0: Arc::clone(&self.0),
         }
     }

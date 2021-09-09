@@ -219,10 +219,10 @@ where
             .update
             .lock()
             .expect(UNABLE_TO_CLONE_UPDATE_SHARED)
-            .update_shared_clone();
+            .update_tab_context_clone();
         let link_clone = source.link();
         let client_send_clone = client_send.clone();
-        let (update_tab_sender, update_tab_recv) = tabs.update.lock().unwrap().channels_clone();
+        let (update_tab_sender, update_tab_recv) = tabs.update.lock().unwrap().clone_channel();
         crossbeam::scope(|scope| {
             let handle = scope.spawn(|_| {
                 update_tab::update_tab_thread(

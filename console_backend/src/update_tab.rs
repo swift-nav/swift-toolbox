@@ -56,7 +56,7 @@ const UPGRADE_WHITELIST: &[&str] = &[
 pub struct UpdateTab {
     sender: Sender<Option<UpdateTabUpdate>>,
     receiver: Receiver<Option<UpdateTabUpdate>>,
-    update_shared: UpdateShared,
+    update_tab_context: UpdateTabContext,
 }
 impl UpdateTab {
     pub fn new(shared_state: SharedState) -> UpdateTab {

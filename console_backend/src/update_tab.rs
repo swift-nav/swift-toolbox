@@ -73,7 +73,7 @@ impl UpdateTab {
     pub fn update_shared_clone(&self) -> UpdateShared {
         self.update_shared.clone()
     }
-    pub fn channels_clone(
+    pub fn clone_channel(
         &self,
     ) -> (
         Sender<Option<UpdateTabUpdate>>,

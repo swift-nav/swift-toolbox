@@ -180,6 +180,9 @@ impl Connection {
             Connection::Tcp(_) | Connection::Serial(_) => RealtimeDelay::Off,
         }
     }
+    pub fn settings_enabled(&self) -> bool {
+        matches!(self, Connection::Tcp(_) | Connection::Serial(_))
+    }
     pub fn try_connect(
         &self,
         shared_state: Option<SharedState>,

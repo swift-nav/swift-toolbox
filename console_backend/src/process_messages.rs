@@ -37,6 +37,7 @@ where
     S: CapnProtoSender,
 {
     shared_state.set_running(true, client_send.clone());
+    shared_state.set_settings_refresh(conn.settings_enabled());
     let realtime_delay = conn.realtime_delay();
     let (rdr, wtr) = conn.try_connect(Some(shared_state.clone()))?;
     let msg_sender = MsgSender::new(wtr);

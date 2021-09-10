@@ -683,7 +683,7 @@ pub struct SettingsTabState {
 impl SettingsTabState {
     fn new() -> Self {
         Self {
-            refresh: true,
+            refresh: false,
             reset: false,
             save: false,
             export: None,

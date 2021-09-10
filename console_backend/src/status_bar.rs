@@ -60,6 +60,7 @@ pub struct StatusBar<S: CapnProtoSender> {
     is_running: ArcBool,
     heartbeat_handler: JoinHandle<()>,
     port: String,
+    version: String,
 }
 impl<S: CapnProtoSender> StatusBar<S> {
     /// Create a new StatusBar.
@@ -70,11 +71,13 @@ impl<S: CapnProtoSender> StatusBar<S> {
     pub fn new(shared_state: SharedState, client_sender: S) -> StatusBar<S> {
         let heartbeat_data = Heartbeat::new();
         let is_running = ArcBool::new();
+        let version = String::from(include_str!("version.txt").trim());
         StatusBar {
             client_sender,
             shared_state: shared_state.clone(),
             heartbeat_data: heartbeat_data.clone(),
             port: shared_state.current_connection(),
+            version,
             heartbeat_handler: StatusBar::<S>::heartbeat_thread(is_running.clone(), heartbeat_data),
             is_running,
         }
@@ -140,6 +143,10 @@ impl<S: CapnProtoSender> StatusBar<S> {
         status_bar_status.set_ins(&sb_update.ins_status);
         status_bar_status.set_data_rate(&sb_update.data_rate);
         status_bar_status.set_solid_connection(sb_update.solid_connection);
+        status_bar_status.set_title(&format!(
+            "{}(###) Swift Console {}",
+            self.port, self.version
+        ));
 
         self.client_sender
             .send_data(serialize_capnproto_builder(builder));

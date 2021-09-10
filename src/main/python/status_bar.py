@@ -16,6 +16,7 @@ STATUS_BAR: Dict[str, Any] = {
     Keys.INS: str,
     Keys.DATA_RATE: str,
     Keys.SOLID_CONNECTION: bool,
+    Keys.TITLE: str,
 }
 
 
@@ -29,6 +30,7 @@ class StatusBarData(QObject):  # pylint: disable=too-many-instance-attributes
     _ins: str = ""
     _data_rate: str = ""
     _solid_connection: bool = False
+    _title: str = ""
 
     def get_port(self) -> str:
         return self._port
@@ -94,6 +96,14 @@ class StatusBarData(QObject):  # pylint: disable=too-many-instance-attributes
 
     solid_connection = Property(bool, get_solid_connection, set_solid_connection)
 
+    def get_title(self) -> str:
+        return self._title
+
+    def set_title(self, title: str) -> None:
+        self._title = title
+
+    title = Property(str, get_title, set_title)
+
 
 class StatusBarModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(StatusBarData)  # type: ignore
@@ -106,4 +116,5 @@ class StatusBarModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_ins(STATUS_BAR[Keys.INS])
         cp.set_data_rate(STATUS_BAR[Keys.DATA_RATE])
         cp.set_solid_connection(STATUS_BAR[Keys.SOLID_CONNECTION])
+        cp.set_title(STATUS_BAR[Keys.TITLE])
         return cp

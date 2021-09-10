@@ -83,6 +83,7 @@ struct StatusBarStatus {
     ins @5: Text;
     dataRate @6: Text;
     solidConnection @7: Bool;
+    title @8: Text;
 }
 
 struct BaselinePlotStatus {

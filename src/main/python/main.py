@@ -303,6 +303,7 @@ def receive_messages(app_, backend, messages):
             STATUS_BAR[Keys.INS] = m.statusBarStatus.ins
             STATUS_BAR[Keys.DATA_RATE] = m.statusBarStatus.dataRate
             STATUS_BAR[Keys.SOLID_CONNECTION] = m.statusBarStatus.solidConnection
+            STATUS_BAR[Keys.TITLE] = m.statusBarStatus.title
         elif m.which == Message.Union.NavBarStatus:
             NAV_BAR[Keys.AVAILABLE_PORTS][:] = m.navBarStatus.availablePorts
             NAV_BAR[Keys.AVAILABLE_BAUDRATES][:] = m.navBarStatus.availableBaudrates

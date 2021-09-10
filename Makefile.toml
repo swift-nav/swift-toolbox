@@ -137,6 +137,7 @@ dependencies = [
   "copy-capnp",
   "generate-resources",
   "remove-egg-dist",
+  "store-version",
   "install-backend",
 ]
 run_task = "start-console"
@@ -146,9 +147,16 @@ dependencies = [
   "copy-capnp",
   "generate-resources",
   "remove-egg-dist",
+  "store-version",
   "prod-install-backend",
 ]
 run_task = "start-console"
+
+[tasks.store-version]
+script_runner = "@shell"
+script = '''
+echo $(git describe --tags) > console_backend/src/version.txt
+'''
 
 [tasks.install-backend]
 script_runner = "@shell"
@@ -184,6 +192,7 @@ mkdir -p target/swift_navigation_console/console_backend && cp -r console_backen
 
 [tasks.prod-freeze]
 dependencies = [
+  "store-version",
   "prod-freeze-no-copy",
   "remove-negligibles",
   "copy-console-backend-to-fbs",
@@ -215,7 +224,7 @@ bash src/main/fbs/windows-remove-negligibles.sh
 '''
 
 [tasks.prod-nuitka-build.linux]
-dependencies = ["copy-capnp", "generate-resources"]
+dependencies = ["copy-capnp", "store-version", "generate-resources"]
 script_runner = "@shell"
 script = '''
 conda run -n $CONDA_ENV pip install --force ./console_backend
@@ -223,7 +232,7 @@ conda run -n $CONDA_ENV bash src/main/nuitka/linux.sh
 '''
 
 [tasks.prod-nuitka-build.mac]
-dependencies = ["copy-capnp", "generate-resources"]
+dependencies = ["copy-capnp", "store-version", "generate-resources"]
 script_runner = "@shell"
 script = '''
 conda run -n $CONDA_ENV pip install --force ./console_backend
@@ -281,18 +290,18 @@ command = "cargo"
 args = ["fmt", "--", "--check"]
 
 [tasks.rust-lint]
-dependencies = ["copy-capnp"]
+dependencies = ["store-version", "copy-capnp"]
 command = "cargo"
 args = ["clippy", "--all-targets", "--", "--deny", "warnings"]
 
 [tasks.rust-tests]
-dependencies = ["copy-capnp"]
+dependencies = ["store-version", "copy-capnp"]
 command = "cargo"
 cwd = "console_backend"
 args = ["test", "--features", "tests", "--", "--nocapture"]
 
 [tasks.rust-type-check]
-dependencies = ["copy-capnp"]
+dependencies = ["store-version", "copy-capnp"]
 command = "cargo"
 args = ["check"]
 
@@ -394,6 +403,7 @@ args = [
 
 [tasks.backend-benches]
 dependencies = [
+  "store-version",
   "backend-cpu-bench",
   "backend-cpu-bench-validate",
   "backend-mem-bench",

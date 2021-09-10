@@ -279,7 +279,6 @@ where
                 if let Err(err) = handle.join() {
                     error!("Error joining update tab, {:?}", err);
                 }
-                log::logger().flush();
             }
             if conn.close_when_done() {
                 shared_state.set_running(false, client_send.clone());

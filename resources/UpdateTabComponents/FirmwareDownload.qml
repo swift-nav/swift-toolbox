@@ -41,7 +41,7 @@ Item {
                 topInset: Constants.updateTab.buttonInset
                 bottomInset: Constants.updateTab.buttonInset
                 onClicked: {
-                    data_model.update_tab([true, false, false], null, null, null, null, null);
+                    data_model.update_tab([true, false, false, false], null, null, null, null, null);
                 }
 
                 Text {

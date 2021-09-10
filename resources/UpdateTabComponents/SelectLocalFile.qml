@@ -47,7 +47,7 @@ Item {
                     localFileTextEditing = true;
                 }
                 onEditingFinished: {
-                    data_model.update_tab([false, false, false], null, null, null, null, text);
+                    data_model.update_tab([false, false, false, false], null, null, null, null, text);
                     localFileTextEditing = false;
                 }
 
@@ -103,8 +103,7 @@ Item {
             nameFilters: ["Binary Image Set (*.bin)"]
             onAccepted: {
                 var filepath = Utils.fileUrlToString(fileDialog.fileUrl);
-                data_model.update_tab([false, false, false], filepath, null, null, null, null);
-                return ;
+                data_model.update_tab([false, false, false, false], filepath, null, null, null, null);
             }
             onRejected: {
             }

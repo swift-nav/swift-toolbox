@@ -48,7 +48,7 @@ Item {
                     fwDirectoryEditing = true;
                 }
                 onEditingFinished: {
-                    data_model.update_tab([false, false, false], null, text, null, null, null);
+                    data_model.update_tab([false, false, false, false], null, text, null, null, null);
                     fwDirectoryEditing = false;
                 }
             }
@@ -90,7 +90,7 @@ Item {
             selectMultiple: false
             onAccepted: {
                 var filepath = Utils.fileUrlToString(fileDialog.folder);
-                data_model.update_tab([false, false, false], null, filepath, null, null, null);
+                data_model.update_tab([false, false, false, false], null, filepath, null, null, null);
             }
             onRejected: {
             }

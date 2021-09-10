@@ -11,6 +11,9 @@ use std::{
 const INDEX_URL: &str =
     "https://s3-us-west-1.amazonaws.com/downloads.swiftnav.com/index_https.json";
 
+const V2_LINK: &str =
+    "https://www.swiftnav.com/resource-files/Piksi%20Multi/v2.0.0/Firmware/PiksiMulti-v2.0.0.bin";
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 struct PiksiMultiDataConsole {
     version: String,
@@ -67,6 +70,15 @@ impl UpdateDownloader {
         } else {
             bail!("Unable to fetch latest console version.");
         }
+    }
+
+    pub fn download_multi_v2_firmware(
+        &mut self,
+        directory: PathBuf,
+        update_shared: Option<UpdateTabContext>,
+    ) -> anyhow::Result<PathBuf> {
+        let filepath_url = String::from(V2_LINK);
+        self.download_file_from_url(filepath_url, directory, update_shared)
     }
 
     pub fn download_multi_firmware(

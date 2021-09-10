@@ -22,12 +22,23 @@ use crate::{common_constants as cc, shared_state::SharedState};
 /// Arguments:
 /// - `early_version`: The early version string.
 /// - `later_version`: The later version string.
+/// - `less_than_or_equal`: If true, then check whether early version is less than or equal to later version.
+///   Otherwise, check whether early version is less than later version.
 ///
 /// Returns:
 /// - `true` if the later_version is greater than the early version.
 /// - `false` if the later_version is not greater than the early version.
-pub fn compare_semvers(early_version: String, later_version: String) -> anyhow::Result<bool> {
-    if let Ok(req) = VersionReq::parse(&format!("<={}", early_version)) {
+pub fn compare_semvers(
+    early_version: String,
+    later_version: String,
+    less_than_or_equal: bool,
+) -> anyhow::Result<bool> {
+    let early_version_num_split: Vec<&str> = early_version.splitn(2, char::is_numeric).collect();
+    let later_version_num_split: Vec<&str> = later_version.splitn(2, char::is_numeric).collect();
+    let early_version = early_version[early_version_num_split[0].len()..].to_string();
+    let later_version = later_version[later_version_num_split[0].len()..].to_string();
+    let operation = if less_than_or_equal { "<=" } else { "<" };
+    if let Ok(req) = VersionReq::parse(&format!("{}{}", operation, early_version)) {
         if let Ok(version) = Version::parse(&later_version) {
             if req.matches(&version) {
                 return Ok(false);
@@ -493,25 +504,38 @@ mod tests {
 
     #[test]
     fn compare_semvers_test() {
-        assert!(!compare_semvers(String::from("1.0.0"), String::from("1.0.0")).unwrap());
-        assert!(compare_semvers(String::from("1.0.0"), String::from("1.0.1")).unwrap());
-        assert!(compare_semvers(String::from("1.0.0"), String::from("1.1.0")).unwrap());
-        assert!(compare_semvers(String::from("1.0.0"), String::from("2.0.0")).unwrap());
-        assert!(!compare_semvers(String::from("1.0.0"), String::from("0.0.0")).unwrap());
-        assert!(!compare_semvers(String::from("1.0.0"), String::from("0.0.1")).unwrap());
-        assert!(!compare_semvers(String::from("1.0.0"), String::from("0.1.0")).unwrap());
-        assert!(compare_semvers(String::from("2.5.6"), String::from("2.5.6-dev5432")).unwrap());
-        assert!(compare_semvers(String::from("2.5.6-dev5432"), String::from("2.5.6")).unwrap());
+        assert!(!compare_semvers(String::from("2.0.0"), String::from("1.0.0"), false).unwrap());
+        assert!(compare_semvers(String::from("v2.0.0"), String::from("v2.0.0"), false).unwrap());
+        assert!(compare_semvers(String::from("v2.0.0"), String::from("v2.2.0"), false).unwrap());
+        assert!(!compare_semvers(String::from("1.0.0"), String::from("1.0.0"), true).unwrap());
+        assert!(compare_semvers(String::from("1.0.0"), String::from("1.0.1"), true).unwrap());
+        assert!(compare_semvers(String::from("1.0.0"), String::from("1.1.0"), true).unwrap());
+        assert!(compare_semvers(String::from("1.0.0"), String::from("2.0.0"), true).unwrap());
+        assert!(!compare_semvers(String::from("1.0.0"), String::from("0.0.0"), true).unwrap());
+        assert!(!compare_semvers(String::from("1.0.0"), String::from("0.0.1"), true).unwrap());
+        assert!(!compare_semvers(String::from("1.0.0"), String::from("0.1.0"), true).unwrap());
+        assert!(
+            compare_semvers(String::from("2.5.6"), String::from("2.5.6-dev5432"), true).unwrap()
+        );
+        assert!(
+            compare_semvers(String::from("2.5.6-dev5432"), String::from("2.5.6"), true).unwrap()
+        );
         assert!(compare_semvers(
             String::from("2.5.6-dev5432"),
-            String::from("2.5.6-dev54321")
+            String::from("2.5.6-dev54321"),
+            true
         )
         .unwrap());
-        assert!(compare_semvers(String::from("2.5.6"), String::from("2.5.6.dev5432")).unwrap());
-        assert!(compare_semvers(String::from("2.5.6.dev5432"), String::from("2.5.6")).unwrap());
+        assert!(
+            compare_semvers(String::from("2.5.6"), String::from("2.5.6.dev5432"), true).unwrap()
+        );
+        assert!(
+            compare_semvers(String::from("2.5.6.dev5432"), String::from("2.5.6"), true).unwrap()
+        );
         assert!(compare_semvers(
             String::from("2.5.6.dev5432"),
-            String::from("2.5.6.dev12345")
+            String::from("2.5.6.dev12345"),
+            true
         )
         .unwrap());
     }

@@ -11,6 +11,7 @@ Item {
     property alias localFileText: selectLocalFile.localFileText
     property alias localFileTextEditing: selectLocalFile.localFileTextEditing
     property alias upgradeButtonEnable: updateFirmwareButton.enabled
+    property bool isSerialConnected: false
 
     Rectangle {
         width: parent.width
@@ -136,7 +137,10 @@ Item {
                     topInset: Constants.updateTab.buttonInset
                     bottomInset: Constants.updateTab.buttonInset
                     onClicked: {
-                        data_model.update_tab([false, true, false], null, null, null, null, null);
+                        data_model.update_tab([false, true, false, false], null, null, null, null, null);
+                        if (isSerialConnected)
+                            dialog.open();
+
                     }
 
                     Text {

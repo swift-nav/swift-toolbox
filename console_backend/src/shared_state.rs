@@ -259,6 +259,34 @@ impl SharedState {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         shared_data.settings_tab.write = setting;
     }
+    pub fn console_version(&self) -> String {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).console_version.clone()
+    }
+    pub fn set_serial_number(&self, serial_number: String) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.serial_number = Some(serial_number);
+    }
+    pub fn serial_number(&self) -> Option<String> {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.serial_number.clone()
+    }
+    pub fn set_firmware_version(&self, firmware_version: String) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.firmware_version = Some(firmware_version);
+    }
+    pub fn firmware_version(&self) -> Option<String> {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.firmware_version.take()
+    }
+    pub fn dgnss_enabled(&self) -> bool {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.dgnss_enabled
+    }
+    pub fn set_dgnss_enabled(&self, dgnss_solution_mode: String) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.dgnss_enabled = dgnss_solution_mode != "No DGNSS";
+    }
 }
 
 impl Deref for SharedState {
@@ -298,6 +326,10 @@ pub struct SharedStateInner {
     pub(crate) advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTabState,
     pub(crate) update_tab_sender: Option<Sender<Option<UpdateTabUpdate>>>,
     pub(crate) settings_tab: SettingsTabState,
+    pub(crate) console_version: String,
+    pub(crate) serial_number: Option<String>,
+    pub(crate) firmware_version: Option<String>,
+    pub(crate) dgnss_enabled: bool,
 }
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
@@ -318,6 +350,10 @@ impl SharedStateInner {
             advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTabState::new(),
             update_tab_sender: None,
             settings_tab: SettingsTabState::new(),
+            console_version: String::from(include_str!("version.txt").trim()),
+            serial_number: None,
+            firmware_version: None,
+            dgnss_enabled: false,
         }
     }
 }

@@ -272,6 +272,12 @@ struct UpdateTabStatus {
     fwText @7: Text;
     fileioDestinationFilepath @8: Text;
     fileioLocalFilepath @9: Text;
+    fwOutdated @10: Bool;
+    fwV2Outdated @11: Bool;
+    serialPrompt @12: Bool;
+    consoleOutdated @13: Bool;
+    consoleVersionCurrent @14: Text;
+    consoleVersionLatest @15: Text;
 }
 
 struct UpdateTabStatusFront {
@@ -298,6 +304,7 @@ struct UpdateTabStatusFront {
         filepath @11 :Text;
         none @12 :Void;
     }
+    serialPromptConfirm @13: Bool;
 }
 
 struct TrackingSignalsStatusFront {

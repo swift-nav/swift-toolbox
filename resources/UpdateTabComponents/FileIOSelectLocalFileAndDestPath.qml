@@ -49,7 +49,7 @@ Item {
                     localTextEditing = true;
                 }
                 onEditingFinished: {
-                    data_model.update_tab([false, false, false], null, null, text, null, null);
+                    data_model.update_tab([false, false, false, false], null, null, text, null, null);
                     localTextEditing = false;
                 }
             }
@@ -93,7 +93,7 @@ Item {
             nameFilters: ["All Files (*)"]
             onAccepted: {
                 var filepath = Utils.fileUrlToString(fileDialog.fileUrl);
-                data_model.update_tab([false, false, false], null, null, filepath, null, null);
+                data_model.update_tab([false, false, false, false], null, null, filepath, null, null);
             }
             onRejected: {
             }
@@ -134,7 +134,7 @@ Item {
                     destinationTextEditing = true;
                 }
                 onEditingFinished: {
-                    data_model.update_tab([false, false, false], null, null, null, text, null);
+                    data_model.update_tab([false, false, false, false], null, null, null, text, null);
                     destinationTextEditing = false;
                 }
             }
@@ -154,7 +154,7 @@ Item {
             topInset: Constants.updateTab.buttonInset
             bottomInset: Constants.updateTab.buttonInset
             onClicked: {
-                data_model.update_tab([false, false, true], null, null, null, null);
+                data_model.update_tab([false, false, true, false], null, null, null, null, null);
             }
 
             Text {

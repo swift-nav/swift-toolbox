@@ -184,6 +184,9 @@ impl Connection {
     pub fn settings_enabled(&self) -> bool {
         matches!(self, Connection::Tcp(_) | Connection::Serial(_))
     }
+    pub fn is_serial(&self) -> bool {
+        matches!(self, Connection::Serial(_))
+    }
     pub fn try_connect(
         &self,
         shared_state: Option<SharedState>,

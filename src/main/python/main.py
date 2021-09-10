@@ -338,6 +338,12 @@ def receive_messages(app_, backend, messages):
             UPDATE_TAB[Keys.FW_TEXT] = m.updateTabStatus.fwText
             UPDATE_TAB[Keys.FILEIO_LOCAL_FILEPATH] = m.updateTabStatus.fileioLocalFilepath
             UPDATE_TAB[Keys.FILEIO_DESTINATION_FILEPATH] = m.updateTabStatus.fileioDestinationFilepath
+            UPDATE_TAB[Keys.FW_OUTDATED] = m.updateTabStatus.fwOutdated
+            UPDATE_TAB[Keys.FW_V2_OUTDATED] = m.updateTabStatus.fwV2Outdated
+            UPDATE_TAB[Keys.SERIAL_PROMPT] = m.updateTabStatus.serialPrompt
+            UPDATE_TAB[Keys.CONSOLE_OUTDATED] = m.updateTabStatus.consoleOutdated
+            UPDATE_TAB[Keys.CONSOLE_VERSION_CURRENT] = m.updateTabStatus.consoleVersionCurrent
+            UPDATE_TAB[Keys.CONSOLE_VERSION_LATEST] = m.updateTabStatus.consoleVersionLatest
         elif m.which == Message.Union.LogAppend:
             log_panel_lock.lock()
             LOG_PANEL[Keys.ENTRIES] += [entry.line for entry in m.logAppend.entries]
@@ -569,6 +575,7 @@ class DataModel(QObject):  # pylint: disable=too-many-instance-attributes,too-ma
         m.updateTabStatusFront.downloadLatestFirmware = buttons[0]
         m.updateTabStatusFront.updateFirmware = buttons[1]
         m.updateTabStatusFront.sendFileToDevice = buttons[2]
+        m.updateTabStatusFront.serialPromptConfirm = buttons[3]
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
 

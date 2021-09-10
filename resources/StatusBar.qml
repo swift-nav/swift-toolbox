@@ -189,31 +189,32 @@ Rectangle {
 
         }
 
-        Timer {
-            interval: Utils.hzToMilliseconds(Constants.staticTimerIntervalRate)
-            running: true
-            repeat: true
-            onTriggered: {
-                status_bar_model.fill_data(statusBarData);
-                if (statusBarData.port) {
-                    statusBarPort.text = statusBarData.port;
-                    statusBarPos.text = statusBarData.pos;
-                    statusBarRTK.text = statusBarData.rtk;
-                    statusBarSats.text = statusBarData.sats;
-                    statusBarCorrAge.text = statusBarData.corr_age;
-                    statusBarINS.text = statusBarData.ins;
-                    statusBarDataRate.text = statusBarData.data_rate;
-                    if (statusBarData.solid_connection) {
-                        statusBarGoodConnectionImage.visible = true;
-                        statusBarBadConnectionImage.visible = false;
-                    } else {
-                        statusBarGoodConnectionImage.visible = false;
-                        statusBarBadConnectionImage.visible = true;
-                    }
+    }
+
+    Timer {
+        interval: Utils.hzToMilliseconds(Constants.staticTimerIntervalRate)
+        running: true
+        repeat: true
+        onTriggered: {
+            status_bar_model.fill_data(statusBarData);
+            if (statusBarData.port) {
+                statusBarPort.text = statusBarData.port;
+                statusBarPos.text = statusBarData.pos;
+                statusBarRTK.text = statusBarData.rtk;
+                statusBarSats.text = statusBarData.sats;
+                statusBarCorrAge.text = statusBarData.corr_age;
+                statusBarINS.text = statusBarData.ins;
+                statusBarDataRate.text = statusBarData.data_rate;
+                parent.title = statusBarData.title;
+                if (statusBarData.solid_connection) {
+                    statusBarGoodConnectionImage.visible = true;
+                    statusBarBadConnectionImage.visible = false;
+                } else {
+                    statusBarGoodConnectionImage.visible = false;
+                    statusBarBadConnectionImage.visible = true;
                 }
             }
         }
-
     }
 
 }

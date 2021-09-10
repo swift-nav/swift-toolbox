@@ -4,4 +4,5 @@ dist/
 console_backend.capnp
 console_backend/*.pyd
 console_backend/*.so
+src/version.txt
 *.dist-info

@@ -233,6 +233,8 @@ pub enum Keys {
     FILEIO_LOCAL_FILEPATH,
     #[strum(serialize = "FILEIO_DESTINATION_FILEPATH")]
     FILEIO_DESTINATION_FILEPATH,
+    #[strum(serialize = "TITLE")]
+    TITLE,
     #[strum(serialize = "IMPORT_STATUS")]
     IMPORT_STATUS,
 }

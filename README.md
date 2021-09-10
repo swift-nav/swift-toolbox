@@ -22,7 +22,7 @@ conda activate console_pp
 pip install poetry
 ```
 
-Install cmake clang and capnp in your respective OS.
+Install cmake, clang, and capnp in your respective OS.
 
 ```
 # Windows - install with installer, or via chocolatey

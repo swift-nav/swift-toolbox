@@ -380,64 +380,35 @@ impl SharedState {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).update_tab_sender = Some(sender);
     }
-    pub fn settings_refresh(&self) -> bool {
+    pub fn settings_needs_update(&self) -> bool {
         self.lock()
             .expect(SHARED_STATE_LOCK_MUTEX_FAILURE)
             .settings_tab
-            .refresh
+            .needs_update()
+    }
+    pub fn take_settings_state(&self) -> SettingsTabState {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.settings_tab.take()
     }
     pub fn set_settings_refresh(&self, set_to: bool) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         shared_data.settings_tab.refresh = set_to;
     }
-    pub fn settings_save(&self) -> bool {
-        self.lock()
-            .expect(SHARED_STATE_LOCK_MUTEX_FAILURE)
-            .settings_tab
-            .save
-    }
     pub fn set_settings_save(&self, set_to: bool) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         shared_data.settings_tab.save = set_to;
-    }
-    pub fn settings_reset(&self) -> bool {
-        self.lock()
-            .expect(SHARED_STATE_LOCK_MUTEX_FAILURE)
-            .settings_tab
-            .reset
     }
     pub fn set_settings_reset(&self, set_to: bool) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         shared_data.settings_tab.reset = set_to;
     }
-    pub fn export_settings(&self) -> Option<String> {
-        self.lock()
-            .expect(SHARED_STATE_LOCK_MUTEX_FAILURE)
-            .settings_tab
-            .export
-            .clone()
-    }
     pub fn set_export_settings(&self, path: Option<String>) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         shared_data.settings_tab.export = path;
     }
-    pub fn import_settings(&self) -> Option<String> {
-        self.lock()
-            .expect(SHARED_STATE_LOCK_MUTEX_FAILURE)
-            .settings_tab
-            .import
-            .clone()
-    }
     pub fn set_import_settings(&self, path: Option<String>) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         shared_data.settings_tab.import = path;
-    }
-    pub fn write_setting(&self) -> Option<settings_tab::SaveRequest> {
-        self.lock()
-            .expect(SHARED_STATE_LOCK_MUTEX_FAILURE)
-            .settings_tab
-            .write
-            .clone()
     }
     pub fn set_write_setting(&self, setting: Option<settings_tab::SaveRequest>) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
@@ -670,26 +641,32 @@ impl AdvancedSpectrumAnalyzerTabState {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct SettingsTabState {
-    refresh: bool,
-    reset: bool,
-    save: bool,
-    export: Option<String>,
-    import: Option<String>,
-    write: Option<settings_tab::SaveRequest>,
+    pub refresh: bool,
+    pub reset: bool,
+    pub save: bool,
+    pub export: Option<String>,
+    pub import: Option<String>,
+    pub write: Option<settings_tab::SaveRequest>,
 }
 
 impl SettingsTabState {
     fn new() -> Self {
-        Self {
-            refresh: false,
-            reset: false,
-            save: false,
-            export: None,
-            import: None,
-            write: None,
-        }
+        Default::default()
+    }
+
+    fn take(&mut self) -> SettingsTabState {
+        std::mem::take(self)
+    }
+
+    fn needs_update(&self) -> bool {
+        self.refresh
+            || self.reset
+            || self.save
+            || self.export.is_some()
+            || self.import.is_some()
+            || self.write.is_some()
     }
 }
 

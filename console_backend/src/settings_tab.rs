@@ -44,39 +44,34 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
     }
 
     pub fn tick(&mut self) {
-        if self.shared_state.settings_refresh() {
+        let settings_state = self.shared_state.take_settings_state();
+        if settings_state.refresh {
             self.refresh();
-            self.shared_state.set_settings_refresh(false);
         }
-        if let Some(path) = self.shared_state.export_settings() {
+        if let Some(path) = settings_state.export {
             if let Err(e) = self.export(path) {
                 error!("Issue exporting settings, {}", e);
             };
-            self.shared_state.set_export_settings(None);
         }
-        if let Some(path) = self.shared_state.import_settings() {
+        if let Some(path) = settings_state.import {
             if let Err(e) = self.import(path) {
                 error!("Issue importing settings, {}", e);
             };
-            self.shared_state.set_import_settings(None);
         }
-        if let Some(req) = self.shared_state.write_setting() {
+        if let Some(req) = settings_state.write {
             if let Err(e) = self.write_setting(&req.group, &req.name, &req.value) {
                 error!("Issue writing setting, {}", e);
             };
-            self.shared_state.set_write_setting(None);
         }
-        if self.shared_state.settings_reset() {
+        if settings_state.reset {
             if let Err(e) = self.reset() {
                 error!("Issue resetting settings {}", e);
             };
-            self.shared_state.set_settings_reset(false);
         }
-        if self.shared_state.settings_save() {
+        if settings_state.save {
             if let Err(e) = self.save() {
                 error!("Issue saving settings, {}", e);
             };
-            self.shared_state.set_settings_save(false);
         }
     }
 

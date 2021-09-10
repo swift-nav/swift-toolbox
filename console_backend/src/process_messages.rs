@@ -1,5 +1,6 @@
 use std::{io::ErrorKind, thread::sleep, time::Duration};
 
+use crossbeam::sync::Parker;
 use log::{debug, error};
 use sbp::{
     messages::{
@@ -224,13 +225,16 @@ where
         let link_clone = source.link();
         let client_send_clone = client_send.clone();
         let (update_tab_tx, update_tab_rx) = tabs.update.lock().unwrap().clone_channel();
+        let settings_parker = Parker::new();
+        let settings_unparker = settings_parker.unparker().clone();
         crossbeam::scope(|scope| {
-            scope.spawn(|_| loop {
-                if !shared_state.is_running() {
-                    break;
+            let settings_tab = &tabs.settings_tab;
+            let settings_shared_state = shared_state.clone();
+            scope.spawn(move |_| {
+                while settings_shared_state.is_running() {
+                    settings_tab.lock().unwrap().tick();
+                    settings_parker.park();
                 }
-                tabs.settings_tab.lock().unwrap().tick();
-                sleep(Duration::from_millis(100));
             });
             let handle = scope.spawn(|_| {
                 update_tab::update_tab_thread(
@@ -243,6 +247,9 @@ where
                 );
             });
             for (message, gps_time) in messages {
+                if shared_state.settings_needs_update() {
+                    settings_unparker.unpark();
+                }
                 if !shared_state.is_running() {
                     if let Err(e) = tabs.main.lock().unwrap().end_csv_logging() {
                         error!("Issue closing csv file, {}", e);
@@ -285,6 +292,7 @@ where
                 shared_state.set_running(false, client_send.clone());
                 close_frontend(&mut client_send);
             }
+            settings_unparker.unpark();
         })
         .unwrap();
     });

@@ -30,6 +30,9 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
+    env:
+      CARGO_INCREMENTAL: 0
+
     steps:
 
       - name: Checkout source
@@ -68,19 +71,13 @@ jobs:
         env:
           GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
 
-      - name: Install stable Rust
-        uses: actions-rs/toolchain@v1
+      - uses: actions-rs/toolchain@v1
         with:
+          profile: minimal
           toolchain: stable
-          override: true
 
-      - name: Cache rust.
-        uses: actions/cache@v2
-        with:
-          path: |
-            ${{ env.RUST_CACHE_DIRS }}
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock', '**/console_backend.capnp') }}
-
+      - uses: Swatinem/rust-cache@v1
+      
       - uses: davidB/rust-cargo-make@v1
         with:
           version: ${{ env.CARGO_MAKE_VERSION }}
@@ -122,6 +119,9 @@ jobs:
 
     runs-on: ubuntu-18.04
 
+    env:
+      CARGO_INCREMENTAL: 0
+
     steps:
 
       - name: Checkout source
@@ -147,12 +147,7 @@ jobs:
           override: true
           components: rustfmt, clippy
 
-      - name: Cache rust.
-        uses: actions/cache@v2
-        with:
-          path: |
-            ${{ env.RUST_CACHE_DIRS }}
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: Swatinem/rust-cache@v1
 
       - uses: davidB/rust-cargo-make@v1
         with:
@@ -206,6 +201,9 @@ jobs:
           - windows-2019
 
     runs-on: ${{ matrix.os }}
+
+    env:
+      CARGO_INCREMENTAL: 0
 
     steps:
 
@@ -269,12 +267,7 @@ jobs:
           override: true
           components: rustfmt, clippy
 
-      - name: Cache rust.
-        uses: actions/cache@v2
-        with:
-          path: |
-            ${{ env.RUST_CACHE_DIRS }}
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: Swatinem/rust-cache@v1
 
       - uses: davidB/rust-cargo-make@v1
         with:

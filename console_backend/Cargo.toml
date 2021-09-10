@@ -5,6 +5,9 @@ version = "0.1.0"
 description = "A Python wrapper for the Rust console backend"
 edition = "2018"
 
+[profile.dev]
+debug = 0
+
 [dependencies]
 log = "0.4.14"
 async_logger_log = "0.2.0"

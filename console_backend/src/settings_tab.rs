@@ -59,19 +59,19 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
         }
         if let Some(req) = self.shared_state.write_setting() {
             if let Err(e) = self.write_setting(&req.group, &req.name, &req.value) {
-                error!("Issue saving setting, {}", e);
+                error!("Issue writing setting, {}", e);
             };
             self.shared_state.set_write_setting(None);
         }
         if self.shared_state.settings_reset() {
             if let Err(e) = self.reset() {
-                error!("Issue reseting setting, {}", e);
+                error!("Issue resetting settings {}", e);
             };
             self.shared_state.set_settings_reset(false);
         }
         if self.shared_state.settings_save() {
             if let Err(e) = self.save() {
-                error!("Issue reseting setting, {}", e);
+                error!("Issue saving settings, {}", e);
             };
             self.shared_state.set_settings_save(false);
         }

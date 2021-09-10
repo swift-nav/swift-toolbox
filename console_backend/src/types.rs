@@ -5,8 +5,8 @@ use crate::errors::*;
 use crate::log_panel::LogLevel;
 use crate::output::{CsvLogging, CsvSerializer};
 use crate::piksi_tools_constants::*;
-use crate::update_tab::UpdateTabUpdate;
 use crate::settings_tab;
+use crate::update_tab::UpdateTabUpdate;
 use crate::utils::{mm_to_m, ms_to_sec, set_connected_frontend};
 
 use anyhow::{Context, Result as AHResult};
@@ -379,6 +379,7 @@ impl SharedState {
     pub fn set_update_tab_sender(&self, sender: Sender<Option<UpdateTabUpdate>>) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).update_tab_sender = Some(sender);
+    }
     pub fn settings_refresh(&self) -> bool {
         self.lock()
             .expect(SHARED_STATE_LOCK_MUTEX_FAILURE)

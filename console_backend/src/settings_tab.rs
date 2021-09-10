@@ -187,6 +187,8 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
                 .set(group, name, SettingValue::String(value.to_string()))?;
         }
 
+        self.send_table_data();
+
         Ok(())
     }
 

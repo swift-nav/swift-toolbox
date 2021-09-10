@@ -247,9 +247,9 @@ Item {
                         model: ["True", "False"]
                         currentIndex: model.indexOf(selectedRowField("valueOnDevice"))
                         onCurrentIndexChanged: {
-                            if (selectedRowField("valueOnDevice") != model[currentIndex]) {
+                            if (selectedRowField("valueOnDevice") != model[currentIndex])
                                 data_model.settings_write_request(selectedRowField("group"), selectedRowField("name"), model[currentIndex]);
-                            }
+
                         }
                     }
 
@@ -262,9 +262,9 @@ Item {
                         model: selectedRowField("enumeratedPossibleValues").split(",")
                         currentIndex: model.indexOf(selectedRowField("valueOnDevice"))
                         onCurrentIndexChanged: {
-                            if (selectedRowField("valueOnDevice") != model[currentIndex]) {
+                            if (selectedRowField("valueOnDevice") != model[currentIndex])
                                 data_model.settings_write_request(selectedRowField("group"), selectedRowField("name"), model[currentIndex]);
-                            }
+
                         }
                     }
 

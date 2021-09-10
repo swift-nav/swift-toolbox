@@ -932,20 +932,20 @@ mod client {
     ) -> i32 {
         let context: &mut Context = &mut *(ctx as *mut _);
         let _guard = context.lock.lock();
-        if (node as i32) != 0 {
-            let key = {
-                let idx = context
-                    .callbacks
-                    .iter()
-                    .position(|cb| cb.node == node as usize)
-                    .unwrap();
-                context.callbacks.remove(idx).key
-            };
-            context.link.unregister_cb(key);
-            0
-        } else {
-            -127
+        if (node as i32) == 0 {
+            return -127;
         }
+        let idx = match context
+            .callbacks
+            .iter()
+            .position(|cb| cb.node == node as usize)
+        {
+            Some(idx) => idx,
+            None => return -127,
+        };
+        let key = context.callbacks.remove(idx).key;
+        context.link.unregister_cb(key);
+        0
     }
 
     #[no_mangle]

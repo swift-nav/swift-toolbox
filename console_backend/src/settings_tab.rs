@@ -459,6 +459,7 @@ mod client {
             Client(inner)
         }
 
+        #[allow(clippy::needless_collect)]
         pub fn read_all(&mut self) -> Vec<ReadByIdxResult> {
             const WORKERS: u16 = 10;
 
@@ -469,7 +470,6 @@ mod client {
             // TODO: probably should reuse the same worker threads each loop
             'outer: loop {
                 let results = crossbeam::scope(|scope| {
-                    #[allow(clippy::needless_collect)]
                     let handles = (0..WORKERS)
                         .map(|i| scope.spawn(move |_| read_one(idx + i)))
                         .collect::<Vec<_>>();

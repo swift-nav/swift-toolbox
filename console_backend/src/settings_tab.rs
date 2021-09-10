@@ -7,6 +7,7 @@ use capnp::message::Builder;
 use ini::Ini;
 use libsettings::{SettingKind, SettingValue};
 use log::{debug, error, warn};
+use parking_lot::{MappedMutexGuard, Mutex, MutexGuard};
 use sbp::messages::piksi::MsgReset;
 use sbp::messages::settings::MsgSettingsSave;
 
@@ -20,7 +21,8 @@ pub struct SettingsTab<'link, S> {
     client_sender: S,
     shared_state: SharedState,
     settings: Settings,
-    client: Client<'link>,
+    client: Mutex<Option<Client<'link>>>,
+    link: Link<'link>,
     msg_sender: MsgSender,
 }
 
@@ -33,9 +35,10 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
     ) -> SettingsTab<'link, S> {
         SettingsTab {
             settings: Settings::new(),
-            client: Client::new(link, msg_sender.clone()),
+            client: Mutex::new(None),
             client_sender,
             shared_state,
+            link,
             msg_sender,
         }
     }
@@ -162,7 +165,7 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
     }
 
     pub fn write_setting(&mut self, group: &str, name: &str, value: &str) -> Result<()> {
-        let setting = self.settings.get_mut(group, name)?;
+        let setting = self.settings.get(group, name)?;
 
         if let Some(ref v) = setting.value {
             if v.to_string() == value {
@@ -171,26 +174,33 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
             }
         }
 
-        self.client.write_setting(group, name, value)?;
+        self.client().write_setting(group, name, value)?;
 
         if matches!(
             setting.setting.kind,
             SettingKind::Float | SettingKind::Double
         ) {
-            let new_setting = self.client.read_setting(group, name)?;
-            setting.value = Some(new_setting);
+            let new_setting = self.client().read_setting(group, name)?;
+            self.settings.set(group, name, new_setting)?;
         } else {
-            setting.value = Some(SettingValue::String(value.to_string()));
+            self.settings
+                .set(group, name, SettingValue::String(value.to_string()))?;
         }
 
         Ok(())
     }
 
     pub fn read_all_settings(&mut self) {
-        for setting in self.client.read_all() {
-            let current = self.settings.get_mut(&setting.group, &setting.name);
-            if let Ok(current) = current {
-                current.value = Some(libsettings::SettingValue::String(setting.value))
+        let settings = self.client().read_all();
+        for setting in settings {
+            if self.settings.get(&setting.group, &setting.name).is_ok() {
+                self.settings
+                    .set(
+                        &setting.group,
+                        &setting.name,
+                        libsettings::SettingValue::String(setting.value),
+                    )
+                    .unwrap();
             } else {
                 warn!(
                     "No settings documentation entry or name: {} in group: {}",
@@ -291,6 +301,15 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
         self.client_sender
             .send_data(serialize_capnproto_builder(builder));
     }
+
+    fn client<'a>(&'a self) -> MappedMutexGuard<'a, Client<'link>> {
+        let mut client = self.client.lock();
+        if client.is_some() {
+            return MutexGuard::map(client, |c| c.as_mut().unwrap());
+        }
+        *client = Some(Client::new(self.link.clone(), self.msg_sender.clone()));
+        MutexGuard::map(client, |c| c.as_mut().unwrap())
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -332,12 +351,23 @@ impl Settings {
         })
     }
 
-    fn get_mut<'a, 'b>(&'a mut self, group: &'b str, name: &'b str) -> Result<&'a mut Setting> {
+    fn get<'a, 'b>(&'a self, group: &'b str, name: &'b str) -> Result<&'a Setting> {
         self.inner
+            .get(group)
+            .map(|g| g.get(name))
+            .flatten()
+            .ok_or_else(|| anyhow!("unknown setting: group: {} name: {}", group, name))
+    }
+
+    fn set<'a, 'b>(&'a mut self, group: &'b str, name: &'b str, value: SettingValue) -> Result<()> {
+        let setting = self
+            .inner
             .get_mut(group)
             .map(|g| g.get_mut(name))
             .flatten()
-            .ok_or_else(|| anyhow!("unknown setting: group: {} name: {}", group, name))
+            .ok_or_else(|| anyhow!("unknown setting: group: {} name: {}", group, name))?;
+        setting.value = Some(value);
+        Ok(())
     }
 }
 
@@ -460,7 +490,7 @@ mod client {
         }
 
         #[allow(clippy::needless_collect)]
-        pub fn read_all(&mut self) -> Vec<ReadByIdxResult> {
+        pub fn read_all(&self) -> Vec<ReadByIdxResult> {
             const WORKERS: u16 = 10;
 
             let read_one = |i| self.read_by_index(i);

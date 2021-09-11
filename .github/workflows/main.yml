@@ -14,6 +14,8 @@ env:
   LIBCLANG_PATH_WIN: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
   CARGO_MAKE_VERSION: 0.35.0
   MINICONDA_VERSION: "py38_4.10.3"
+  CARGO_INCREMENTAL: 0
+  RUSTFLAGS: "-C debuginfo=0"
 
 jobs:
 
@@ -29,9 +31,6 @@ jobs:
           - windows-2019
 
     runs-on: ${{ matrix.os }}
-
-    env:
-      CARGO_INCREMENTAL: 0
 
     steps:
 
@@ -119,9 +118,6 @@ jobs:
 
     runs-on: ubuntu-18.04
 
-    env:
-      CARGO_INCREMENTAL: 0
-
     steps:
 
       - name: Checkout source
@@ -201,9 +197,6 @@ jobs:
           - windows-2019
 
     runs-on: ${{ matrix.os }}
-
-    env:
-      CARGO_INCREMENTAL: 0
 
     steps:
 

@@ -391,7 +391,6 @@ dependencies = [
  "indexmap",
  "lazy_static",
  "libsettings",
- "libsettings-sys",
  "log",
  "logtest",
  "minreq",
@@ -871,9 +870,15 @@ dependencies = [
 [[package]]
 name = "libsettings"
 version = "0.1.0"
-source = "git+https://github.com/swift-nav/libsettings.git?branch=steve/rust-new#facd000421d57a177d2f9768158448242259e9b3"
+source = "git+https://github.com/swift-nav/libsettings.git?branch=steve/rust-new#210f7d2e1b4df913e063e764c0bc781a5b0d396d"
 dependencies = [
- "lazy_static",
+ "crossbeam-channel",
+ "crossbeam-utils",
+ "libsettings-sys",
+ "log",
+ "once_cell",
+ "parking_lot",
+ "sbp",
  "serde",
  "serde_yaml",
 ]
@@ -881,7 +886,7 @@ dependencies = [
 [[package]]
 name = "libsettings-sys"
 version = "0.1.0"
-source = "git+https://github.com/swift-nav/libsettings.git?branch=steve/rust-new#facd000421d57a177d2f9768158448242259e9b3"
+source = "git+https://github.com/swift-nav/libsettings.git?branch=steve/rust-new#210f7d2e1b4df913e063e764c0bc781a5b0d396d"
 dependencies = [
  "bindgen 0.59.1",
  "cmake",
@@ -1553,8 +1558,8 @@ dependencies = [
 
 [[package]]
 name = "sbp"
-version = "3.4.10-alpha"
-source = "git+https://github.com/swift-nav/libsbp.git?rev=83110eaca01c4fb1ec1500d578a1cbbaa2b8c788#83110eaca01c4fb1ec1500d578a1cbbaa2b8c788"
+version = "3.4.11-alpha"
+source = "git+https://github.com/swift-nav/libsbp.git?branch=steve/link#1a694f1e7922cab3f4a6730a13a3e9bc8844e8aa"
 dependencies = [
  "base64",
  "byteorder",
@@ -1565,6 +1570,7 @@ dependencies = [
  "nom 6.1.2",
  "serde",
  "serde_json",
+ "slotmap",
  "swiftnav-rs",
  "thiserror",
 ]

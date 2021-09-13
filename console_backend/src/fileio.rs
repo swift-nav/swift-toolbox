@@ -7,6 +7,7 @@ use std::{
 use anyhow::{anyhow, bail};
 use crossbeam::{atomic::AtomicCell, channel, scope, select, utils::Backoff};
 use rand::Rng;
+use sbp::link::Link;
 use sbp::messages::{
     file_io::{
         MsgFileioConfigReq, MsgFileioConfigResp, MsgFileioReadDirReq, MsgFileioReadDirResp,
@@ -16,10 +17,7 @@ use sbp::messages::{
     SBP,
 };
 
-use crate::{
-    broadcaster::Link,
-    types::{MsgSender, Result},
-};
+use crate::types::{MsgSender, Result};
 
 const MAX_RETRIES: usize = 20;
 
@@ -37,13 +35,13 @@ const NULL_SEP_LEN: usize = 1;
 const WRITE_REQ_OVERHEAD_LEN: usize = SEQUENCE_LEN + OFFSET_LEN + NULL_SEP_LEN;
 
 pub struct Fileio<'a> {
-    link: Link<'a>,
+    link: Link<'a, ()>,
     sender: MsgSender,
     config: Option<FileioConfig>,
 }
 
 impl<'a> Fileio<'a> {
-    pub fn new(link: Link<'a>, sender: MsgSender) -> Self {
+    pub fn new(link: Link<'a, ()>, sender: MsgSender) -> Self {
         Self {
             link,
             sender,
@@ -99,7 +97,7 @@ impl<'a> Fileio<'a> {
                 Result::Ok(())
             });
 
-            let key = self.link.register_cb(move |msg: MsgFileioReadResp| {
+            let key = self.link.register(move |msg: MsgFileioReadResp| {
                 res_tx.send(msg).unwrap();
             });
 
@@ -146,7 +144,7 @@ impl<'a> Fileio<'a> {
                 }
             }
 
-            self.link.unregister_cb(key);
+            self.link.unregister(key);
 
             Ok(())
         })
@@ -218,7 +216,7 @@ impl<'a> Fileio<'a> {
                 Result::Ok(())
             });
 
-            let key = self.link.register_cb(move |msg: MsgFileioWriteResp| {
+            let key = self.link.register(move |msg: MsgFileioWriteResp| {
                 res_tx.send(msg).unwrap();
             });
 
@@ -255,7 +253,7 @@ impl<'a> Fileio<'a> {
                 }
             }
 
-            self.link.unregister_cb(key);
+            self.link.unregister(key);
 
             Result::Ok(())
         })
@@ -270,7 +268,7 @@ impl<'a> Fileio<'a> {
 
         let (tx, rx) = channel::unbounded();
 
-        let key = self.link.register_cb(move |msg: MsgFileioReadDirResp| {
+        let key = self.link.register(move |msg: MsgFileioReadDirResp| {
             tx.send(msg).unwrap();
         });
 
@@ -286,7 +284,7 @@ impl<'a> Fileio<'a> {
                 recv(rx) -> msg => {
                     let msg = msg?;
                     if msg.sequence != seq {
-                        self.link.unregister_cb(key);
+                        self.link.unregister(key);
                         bail!(
                             "MsgFileioReadDirResp didn't match request ({} vs {})",
                             msg.sequence, seq
@@ -294,7 +292,7 @@ impl<'a> Fileio<'a> {
                     }
                     let mut contents = msg.contents;
                     if contents.is_empty() {
-                        self.link.unregister_cb(key);
+                        self.link.unregister(key);
                         return Ok(files);
                     }
                     if contents[contents.len() - 1] == b'\0' {
@@ -312,7 +310,7 @@ impl<'a> Fileio<'a> {
                     }))?;
                 },
                 recv(channel::tick(READDIR_TIMEOUT)) -> _ => {
-                    self.link.unregister_cb(key);
+                    self.link.unregister(key);
                     bail!("MsgFileioReadDirReq timed out");
                 }
             }
@@ -336,7 +334,7 @@ impl<'a> Fileio<'a> {
         let (stop_tx, stop_rx) = channel::bounded(0);
         let (tx, rx) = channel::bounded(1);
 
-        let key = self.link.register_cb(move |msg: MsgFileioConfigResp| {
+        let key = self.link.register(move |msg: MsgFileioConfigResp| {
             tx.send(FileioConfig::new(msg)).unwrap();
             stop_tx.send(true).unwrap();
         });
@@ -360,7 +358,7 @@ impl<'a> Fileio<'a> {
         })
         .unwrap();
 
-        self.link.unregister_cb(key);
+        self.link.unregister(key);
 
         self.config = Some(config);
         self.config.clone().unwrap()

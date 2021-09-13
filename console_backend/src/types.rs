@@ -1,4 +1,3 @@
-use crate::broadcaster::Event;
 use crate::common_constants::{self as cc, SbpLogging};
 use crate::constants::*;
 use crate::errors::*;
@@ -19,6 +18,7 @@ use log::error;
 use ordered_float::OrderedFloat;
 use sbp::codec::dencode::{FramedWrite, IterSinkExt};
 use sbp::codec::sbp::SbpEncoder;
+use sbp::link::Event;
 use sbp::messages::piksi::{MsgSpecan, MsgSpecanDep};
 use sbp::messages::{
     navigation::{

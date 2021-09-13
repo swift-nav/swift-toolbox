@@ -65,7 +65,7 @@ impl<'link, S: types::CapnProtoSender> Tabs<'link, S> {
         shared_state: types::SharedState,
         client_sender: S,
         msg_sender: types::MsgSender,
-        link: broadcaster::Link<'link>,
+        link: sbp::link::Link<'link, ()>,
     ) -> Self {
         Self {
             main: MainTab::new(shared_state.clone(), client_sender.clone()).into(),

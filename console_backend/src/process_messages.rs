@@ -262,7 +262,7 @@ where
                     sleep(Duration::from_millis(PAUSE_LOOP_SLEEP_DURATION_MS));
                 }
             }
-            let sent = source.send_state(&tabs, &message);
+            let sent = source.send_with_state(&tabs, &message);
             tabs.main.lock().unwrap().serialize_sbp(&message);
             tabs.status_bar
                 .lock()

@@ -133,31 +133,32 @@ Item {
                 Button {
                     text: "Save to Device"
                     icon.source: Constants.icons.savePath
-                    icon.width: 20
-                    icon.height: 20
+                    icon.width: Constants.settingsTab.buttonIconWidth
+                    icon.height: Constants.settingsTab.buttonIconHeight
+                    onClicked: data_model.settings_save_request()
                 }
 
                 Button {
                     text: "Export to file"
                     icon.source: Constants.icons.exportPath
-                    icon.width: 20
-                    icon.height: 20
+                    icon.width: Constants.settingsTab.buttonIconWidth
+                    icon.height: Constants.settingsTab.buttonIconHeight
                     onClicked: exportDialog.visible = true
                 }
 
                 Button {
                     text: "Import from File"
                     icon.source: Constants.icons.importPath
-                    icon.width: 20
-                    icon.height: 20
+                    icon.width: Constants.settingsTab.buttonIconWidth
+                    icon.height: Constants.settingsTab.buttonIconHeight
                     onClicked: importDialog.visible = true
                 }
 
                 Button {
                     text: "Reset to Defaults"
                     icon.source: Constants.icons.warningPath
-                    icon.width: 20
-                    icon.height: 20
+                    icon.width: Constants.settingsTab.buttonIconWidth
+                    icon.height: Constants.settingsTab.buttonIconHeight
                     onClicked: resetDialog.visible = true
                 }
 
@@ -170,8 +171,8 @@ Item {
                 Button {
                     text: "Refresh from device"
                     icon.source: Constants.icons.refreshPath
-                    icon.width: 20
-                    icon.height: 20
+                    icon.width: Constants.settingsTab.buttonIconWidth
+                    icon.height: Constants.settingsTab.buttonIconHeight
                     onClicked: data_model.settings_refresh()
                 }
 
@@ -210,7 +211,7 @@ Item {
                     id: settingRowText
 
                     Row {
-                        width: 550
+                        width: Constants.settingsTab.textSettingWidth
 
                         Text {
                             text: selectedRowField(_fieldName)

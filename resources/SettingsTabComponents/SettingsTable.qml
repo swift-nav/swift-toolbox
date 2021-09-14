@@ -217,7 +217,7 @@ Item {
                     lastShowExpert = showExpert;
                 }
                 var offset = 0;
-                for (var idx = 0; idx < entries.length; idx++) {
+                entries.forEach((entry, idx) => {
                     var entry = entries[idx];
                     var new_row;
                     if (!isHeader(entry)) {
@@ -225,19 +225,19 @@ Item {
                             new_row = row(entry);
                         } else {
                             offset++;
-                            continue;
+                            return;
                         }
                     } else {
                         if (showExpert || groupHasNonExpertSetting(entries, idx)) {
                             new_row = headerRow(entry);
                         } else {
                             offset++;
-                            continue;
+                            return;
                         }
                     }
                     rowOffsets[idx - offset] = idx;
                     tableView.model.setRow(idx - offset, new_row);
-                }
+                });
                 tableView.forceLayout();
             }
         }

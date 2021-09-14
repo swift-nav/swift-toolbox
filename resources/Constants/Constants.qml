@@ -27,6 +27,7 @@ QtObject {
     property QtObject advancedSpectrumAnalyzer
     property QtObject baselinePlot
     property QtObject baselineTable
+    property QtObject settingsTab
     property QtObject settingsTable
     property QtObject solutionPosition
     property QtObject solutionTable
@@ -283,6 +284,12 @@ QtObject {
         readonly property string timestampHeader: "Host Timestamp"
         readonly property string levelHeader: "Log Level"
         readonly property string msgHeader: "Message"
+    }
+
+    settingsTab: QtObject {
+        readonly property int textSettingWidth: 550
+        readonly property int buttonIconWidth: 20
+        readonly property int buttonIconHeight: 20
     }
 
     settingsTable: QtObject {

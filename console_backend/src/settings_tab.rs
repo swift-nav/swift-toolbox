@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::Path;
@@ -190,20 +191,44 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
                     continue;
                 }
             };
-            if self.settings.get(&setting.group, &setting.name).is_ok() {
-                self.settings
-                    .set(
-                        &setting.group,
-                        &setting.name,
-                        libsettings::SettingValue::String(setting.value),
-                    )
-                    .unwrap();
-            } else {
-                warn!(
-                    "No settings documentation entry or name: {} in group: {}",
-                    setting.name, setting.group
-                );
+
+            let current_setting = match self.settings.get_mut(&setting.group, &setting.name) {
+                Ok(setting) => setting,
+                Err(_) => {
+                    warn!(
+                        "No settings documentation entry or name: {} in group: {}",
+                        setting.name, setting.group
+                    );
+                    continue;
+                }
+            };
+
+            // update possible enum values with the possible values returned by the device
+            if !setting.fmt_type.is_empty() && current_setting.setting.kind == SettingKind::Enum {
+                let mut parts = setting.fmt_type.splitn(2, ':');
+                let ty = parts.next();
+                if !matches!(ty, Some("enum")) {
+                    warn!(
+                        "the type for setting {} in group {} was marked as enum but the device returned {:?}",
+                        setting.name, setting.group, ty,
+                    );
+                    continue;
+                }
+                let possible_values = match parts.next() {
+                    Some(possible_values) => possible_values,
+                    None => {
+                        warn!(
+                            "setting {} in group {} was marked as enum but had no enumerated_possible_values",
+                            setting.name, setting.group,
+                        );
+                        continue;
+                    }
+                };
+                current_setting.setting.to_mut().enumerated_possible_values =
+                    Some(possible_values.to_string());
             }
+
+            current_setting.value = Some(libsettings::SettingValue::String(setting.value));
         }
     }
 
@@ -342,7 +367,12 @@ impl Settings {
         self.inner.values().fold(Vec::new(), |mut groups, group| {
             let group: Vec<_> = group
                 .values()
-                .filter_map(|setting| setting.value.as_ref().map(|v| (setting.setting, v)))
+                .filter_map(|setting| {
+                    setting
+                        .value
+                        .as_ref()
+                        .map(|v| (setting.setting.as_ref(), v))
+                })
                 .collect();
             if !group.is_empty() {
                 groups.push(group);
@@ -355,6 +385,14 @@ impl Settings {
         self.inner
             .get(group)
             .map(|g| g.get(name))
+            .flatten()
+            .ok_or_else(|| anyhow!("unknown setting: group: {} name: {}", group, name))
+    }
+
+    fn get_mut<'a, 'b>(&'a mut self, group: &'b str, name: &'b str) -> Result<&'a mut Setting> {
+        self.inner
+            .get_mut(group)
+            .map(|g| g.get_mut(name))
             .flatten()
             .ok_or_else(|| anyhow!("unknown setting: group: {} name: {}", group, name))
     }
@@ -382,14 +420,14 @@ impl std::ops::Deref for Settings {
 /// A reference to a particular setting and its value if it has been fetched
 #[derive(Debug)]
 struct Setting {
-    setting: &'static libsettings::Setting,
+    setting: Cow<'static, libsettings::Setting>,
     value: Option<libsettings::SettingValue>,
 }
 
 impl Setting {
     fn new(setting: &'static libsettings::Setting) -> Self {
         Self {
-            setting,
+            setting: Cow::Borrowed(setting),
             value: None,
         }
     }

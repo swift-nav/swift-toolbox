@@ -216,22 +216,21 @@ Item {
                     lastShowExpert = showExpert;
                 }
                 var offset = 0;
-                entries.forEach((entry, idx) => {
-                    var entry = entries[idx];
+                entries.forEach((entry, idx, entries) => {
                     var new_row;
                     if (!isHeader(entry)) {
                         if (showExpert || entry.expert === false) {
                             new_row = row(entry);
                         } else {
                             offset++;
-                            return;
+                            return ;
                         }
                     } else {
                         if (showExpert || groupHasNonExpertSetting(entries, idx)) {
                             new_row = headerRow(entry);
                         } else {
                             offset++;
-                            return;
+                            return ;
                         }
                     }
                     rowOffsets[idx - offset] = idx;

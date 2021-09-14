@@ -7,7 +7,7 @@ import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
 Item {
-    property variant columnWidths: [120, 200]
+    property variant columnWidths: [Constants.settingsTable.maximumWidth * 0.4, Constants.settingsTable.maximumWidth * 0.6]
     property int selectedRow: -1
     property var rowOffsets: ({
     })

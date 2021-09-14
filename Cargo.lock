@@ -870,7 +870,7 @@ dependencies = [
 [[package]]
 name = "libsettings"
 version = "0.1.0"
-source = "git+https://github.com/swift-nav/libsettings.git?branch=steve/rust-new#8e6f94e8752621e2845652e1a370d44bf98b2839"
+source = "git+https://github.com/swift-nav/libsettings.git?rev=79c5a023dab189532de45fb806d4c295911caa0e#79c5a023dab189532de45fb806d4c295911caa0e"
 dependencies = [
  "crossbeam-channel",
  "crossbeam-utils",
@@ -886,7 +886,7 @@ dependencies = [
 [[package]]
 name = "libsettings-sys"
 version = "0.1.0"
-source = "git+https://github.com/swift-nav/libsettings.git?branch=steve/rust-new#8e6f94e8752621e2845652e1a370d44bf98b2839"
+source = "git+https://github.com/swift-nav/libsettings.git?rev=79c5a023dab189532de45fb806d4c295911caa0e#79c5a023dab189532de45fb806d4c295911caa0e"
 dependencies = [
  "bindgen 0.59.1",
  "cmake",
@@ -1559,7 +1559,7 @@ dependencies = [
 [[package]]
 name = "sbp"
 version = "3.4.11-alpha"
-source = "git+https://github.com/swift-nav/libsbp.git?branch=steve/link#4f83ba04c10cb074435af02bf3e8dc59804eaccb"
+source = "git+https://github.com/swift-nav/libsbp.git?rev=0f35aacf110a9dbe0b832e5feb415933cd0c7f6e#0f35aacf110a9dbe0b832e5feb415933cd0c7f6e"
 dependencies = [
  "base64",
  "byteorder",

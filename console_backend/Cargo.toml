@@ -17,11 +17,6 @@ chrono = { version = "0.4", features = ["serde"] }
 csv = "1"
 paste = "1"
 pyo3 = { version = "0.13", features = ["extension-module"], optional = true }
-sbp = { git = "https://github.com/swift-nav/libsbp.git", branch = "steve/link", features = [
-  "json",
-  "swiftnav-rs",
-  "link",
-] }
 serde = { version = "1.0.123", features = ["derive"] }
 tempfile = "3.2.0"
 ordered-float = "2.0"
@@ -44,8 +39,16 @@ parking_lot = "0.11.1"
 minreq = { version = "2.4.2", features = ["https"] }
 regex = { version = "1.5.4" }
 semver = { version = "1" }
-libsettings = { git = "https://github.com/swift-nav/libsettings.git", branch = "steve/rust-new" }
 rust-ini = "0.17.0"
+
+[dependencies.sbp]
+git = "https://github.com/swift-nav/libsbp.git"
+rev = "0f35aacf110a9dbe0b832e5feb415933cd0c7f6e"
+features = ["json", "swiftnav-rs", "link"]
+
+[dependencies.libsettings]
+git = "https://github.com/swift-nav/libsettings.git"
+rev = "79c5a023dab189532de45fb806d4c295911caa0e"
 
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 serialport = "4.0.1"

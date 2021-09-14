@@ -178,8 +178,7 @@ Item {
                         }
                         text: model.display
                         elide: Text.ElideRight
-                        topPadding: 4
-                        leftPadding: 2
+                        padding: Constants.genericTable.padding
                     }
 
                     MouseArea {

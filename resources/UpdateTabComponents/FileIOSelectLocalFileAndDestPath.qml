@@ -93,11 +93,6 @@ Item {
             nameFilters: ["All Files (*)"]
             onAccepted: {
                 var filepath = Utils.fileUrlToString(fileDialog.fileUrl);
-                // Fix for fileUrlToString which removes file:/// prefix but leaves unix
-                // path without leading forward slash.
-                if (Qt.platform.os !== "windows")
-                    filepath = "/" + filepath;
-
                 data_model.update_tab([false, false, false], null, null, filepath, null, null);
             }
             onRejected: {

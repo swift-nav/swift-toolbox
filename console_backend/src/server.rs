@@ -369,11 +369,11 @@ fn backend_recv_thread(
                     }
                     m::message::SettingsExportRequest(Ok(path)) => {
                         let path = path.get_path().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
-                        shared_state_clone.set_export_settings(Some(path.to_string()));
+                        shared_state_clone.set_export_settings(Some(PathBuf::from(path)));
                     }
                     m::message::SettingsImportRequest(Ok(path)) => {
                         let path = path.get_path().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
-                        shared_state_clone.set_import_settings(Some(path.to_string()));
+                        shared_state_clone.set_import_settings(Some(PathBuf::from(path)));
                     }
                     m::message::SettingsWriteRequest(Ok(req)) => {
                         let group = req.get_group().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);

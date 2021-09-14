@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 use std::fs;
-use std::path::PathBuf;
+use std::path::Path;
 
 use anyhow::anyhow;
 use capnp::message::Builder;
@@ -46,12 +46,12 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
         if settings_state.refresh {
             self.refresh();
         }
-        if let Some(path) = settings_state.export {
+        if let Some(ref path) = settings_state.export {
             if let Err(e) = self.export(path) {
                 error!("Issue exporting settings, {}", e);
             };
         }
-        if let Some(path) = settings_state.import {
+        if let Some(ref path) = settings_state.import {
             if let Err(e) = self.import(path) {
                 error!("Issue importing settings, {}", e);
             };
@@ -78,14 +78,8 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
         self.send_table_data();
     }
 
-    pub fn export(&self, path: String) -> Result<()> {
-        let mut f = {
-            let path = PathBuf::from(path.trim_start_matches("file://"));
-            if let Some(p) = path.parent() {
-                fs::create_dir_all(p)?;
-            }
-            fs::File::create(&path)?
-        };
+    pub fn export(&self, path: &Path) -> Result<()> {
+        let mut f = fs::File::create(path)?;
         let groups = self.settings.groups();
         let mut conf = Ini::new();
         for group in groups.iter() {
@@ -99,11 +93,8 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
         Ok(())
     }
 
-    pub fn import(&mut self, path: String) -> Result<()> {
-        let mut f = {
-            let path = PathBuf::from(path.trim_start_matches("file://"));
-            fs::File::open(&path)?
-        };
+    pub fn import(&mut self, path: &Path) -> Result<()> {
+        let mut f = fs::File::open(path)?;
         let conf = Ini::read_from(&mut f)?;
         for (group, prop) in conf.iter() {
             for (name, value) in prop.iter() {

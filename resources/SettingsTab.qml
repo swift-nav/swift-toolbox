@@ -67,7 +67,10 @@ Item {
         selectExisting: false
         nameFilters: ["*.ini"]
         folder: shortcuts.home
-        onAccepted: data_model.settings_export_request(exportDialog.fileUrl)
+        onAccepted: {
+            var filepath = Utils.fileUrlToString(exportDialog.fileUrl);
+            data_model.settings_export_request(filepath);
+        }
     }
 
     FileDialog {
@@ -77,7 +80,10 @@ Item {
         selectExisting: true
         nameFilters: ["*.ini"]
         folder: shortcuts.home
-        onAccepted: data_model.settings_import_request(importDialog.fileUrl)
+        onAccepted: {
+            var filepath = Utils.fileUrlToString(exportDialog.fileUrl);
+            data_model.settings_import_request(filepath);
+        }
     }
 
     MessageDialog {

@@ -402,11 +402,11 @@ impl SharedState {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         shared_data.settings_tab.reset = set_to;
     }
-    pub fn set_export_settings(&self, path: Option<String>) {
+    pub fn set_export_settings(&self, path: Option<PathBuf>) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         shared_data.settings_tab.export = path;
     }
-    pub fn set_import_settings(&self, path: Option<String>) {
+    pub fn set_import_settings(&self, path: Option<PathBuf>) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         shared_data.settings_tab.import = path;
     }
@@ -646,8 +646,8 @@ pub struct SettingsTabState {
     pub refresh: bool,
     pub reset: bool,
     pub save: bool,
-    pub export: Option<String>,
-    pub import: Option<String>,
+    pub export: Option<PathBuf>,
+    pub import: Option<PathBuf>,
     pub write: Option<settings_tab::SaveRequest>,
 }
 

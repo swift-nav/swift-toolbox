@@ -25,7 +25,8 @@ use crate::errors::{
     THREAD_JOIN_FAILURE,
 };
 use crate::fileio::{new_sequence, Fileio};
-use crate::types::{CapnProtoSender, MsgSender, SharedState, LOG_DIRECTORY};
+use crate::shared_state::{SharedState, LOG_DIRECTORY};
+use crate::types::{CapnProtoSender, MsgSender};
 use crate::update_downloader::UpdateDownloader;
 use crate::utils::{compare_semvers, serialize_capnproto_builder};
 

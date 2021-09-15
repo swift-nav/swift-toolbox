@@ -13,7 +13,8 @@ use sbp::link::Link;
 use sbp::messages::piksi::MsgReset;
 use sbp::messages::settings::MsgSettingsSave;
 
-use crate::types::{CapnProtoSender, Error, MsgSender, Result, SharedState};
+use crate::shared_state::SharedState;
+use crate::types::{CapnProtoSender, Error, MsgSender, Result};
 use crate::utils::*;
 
 pub struct SettingsTab<'link, S> {

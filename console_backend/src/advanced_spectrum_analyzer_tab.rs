@@ -3,7 +3,8 @@ use log::error;
 use crate::constants::{AMPLITUDES, CHANNELS, FREQUENCIES};
 use crate::errors::SHARED_STATE_LOCK_MUTEX_FAILURE;
 use crate::fft_monitor::FftMonitor;
-use crate::types::{CapnProtoSender, SharedState, Specan};
+use crate::shared_state::SharedState;
+use crate::types::{CapnProtoSender, Specan};
 use crate::utils::serialize_capnproto_builder;
 use capnp::message::Builder;
 

@@ -152,6 +152,10 @@ dependencies = [
 ]
 run_task = "start-console"
 
+[tasks.headless-run]
+command = "cargo"
+args = ["run", "--bin", "headless", "--no-default-features", "${@}"]
+
 [tasks.store-version]
 script_runner = "@shell"
 script = '''

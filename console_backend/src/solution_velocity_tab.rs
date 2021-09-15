@@ -6,7 +6,8 @@ use sbp::messages::navigation::MsgVelNED;
 use capnp::message::Builder;
 
 use crate::constants::{HORIZONTAL_COLOR, NUM_POINTS, VERTICAL_COLOR};
-use crate::types::{CapnProtoSender, Deque, SharedState, VelocityUnits};
+use crate::shared_state::SharedState;
+use crate::types::{CapnProtoSender, Deque, VelocityUnits};
 use crate::utils::serialize_capnproto_builder;
 /// SolutionVelocityTab struct.
 ///

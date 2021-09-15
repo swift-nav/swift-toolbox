@@ -26,6 +26,7 @@ pub mod process_messages;
 #[cfg(all(not(feature = "benches"), not(feature = "tests"), feature = "pyo3"))]
 pub mod server;
 pub mod settings_tab;
+pub mod shared_state;
 pub mod solution_tab;
 pub mod solution_velocity_tab;
 pub mod status_bar;
@@ -62,7 +63,7 @@ struct Tabs<'link, S: types::CapnProtoSender> {
 
 impl<'link, S: types::CapnProtoSender> Tabs<'link, S> {
     fn new(
-        shared_state: types::SharedState,
+        shared_state: shared_state::SharedState,
         client_sender: S,
         msg_sender: types::MsgSender,
         link: sbp::link::Link<'link, ()>,

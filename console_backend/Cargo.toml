@@ -80,6 +80,11 @@ path = "src/bin/fft_monitor.rs"
 bench = false
 required-features = ["fft"]
 
+[[bin]]
+name = "headless"
+path = "src/bin/headless.rs"
+bench = false
+
 [features]
 default = ["pyo3"]
 benches = []

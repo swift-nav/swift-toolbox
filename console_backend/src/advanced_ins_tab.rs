@@ -6,7 +6,8 @@ use capnp::message::Builder;
 use crate::constants::*;
 use crate::errors::GET_MUT_OBJECT_FAILURE;
 use crate::fusion_status_flags::FusionStatusFlags;
-use crate::types::{CapnProtoSender, Deque, SharedState};
+use crate::shared_state::SharedState;
+use crate::types::{CapnProtoSender, Deque};
 use crate::utils::serialize_capnproto_builder;
 
 /// AdvancedInsTab struct.

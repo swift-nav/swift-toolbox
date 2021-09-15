@@ -103,11 +103,6 @@ Item {
             nameFilters: ["Binary Image Set (*.bin)"]
             onAccepted: {
                 var filepath = Utils.fileUrlToString(fileDialog.fileUrl);
-                // Fix for fileUrlToString which removes file:/// prefix but leaves unix
-                // path without leading forward slash.
-                if (Qt.platform.os !== "windows")
-                    filepath = "/" + filepath;
-
                 data_model.update_tab([false, false, false], filepath, null, null, null, null);
                 return ;
             }

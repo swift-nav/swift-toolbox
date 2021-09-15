@@ -1,13 +1,13 @@
-use crate::broadcaster::Event;
 use crate::common_constants::{self as cc, SbpLogging};
 use crate::constants::*;
 use crate::errors::*;
 use crate::log_panel::LogLevel;
 use crate::output::{CsvLogging, CsvSerializer};
 use crate::piksi_tools_constants::*;
-
+use crate::settings_tab;
 use crate::update_tab::UpdateTabUpdate;
 use crate::utils::{mm_to_m, ms_to_sec, set_connected_frontend};
+
 use anyhow::{Context, Result as AHResult};
 use chrono::{DateTime, Utc};
 use crossbeam::channel::{self, Sender};
@@ -18,6 +18,7 @@ use log::error;
 use ordered_float::OrderedFloat;
 use sbp::codec::dencode::{FramedWrite, IterSinkExt};
 use sbp::codec::sbp::SbpEncoder;
+use sbp::link::Event;
 use sbp::messages::piksi::{MsgSpecan, MsgSpecanDep};
 use sbp::messages::{
     navigation::{
@@ -78,7 +79,9 @@ impl MsgSender {
     }
 
     pub fn send(&self, mut msg: SBP) -> Result<()> {
-        msg.set_sender_id(Self::SENDER_ID);
+        if msg.get_sender_id().is_none() {
+            msg.set_sender_id(Self::SENDER_ID);
+        }
         let mut framed = self.inner.lock().expect(Self::LOCK_FAILURE);
         framed.send(msg).context("while sending a message")?;
         Ok(())
@@ -377,6 +380,40 @@ impl SharedState {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).update_tab_sender = Some(sender);
     }
+    pub fn settings_needs_update(&self) -> bool {
+        self.lock()
+            .expect(SHARED_STATE_LOCK_MUTEX_FAILURE)
+            .settings_tab
+            .needs_update()
+    }
+    pub fn take_settings_state(&self) -> SettingsTabState {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.settings_tab.take()
+    }
+    pub fn set_settings_refresh(&self, set_to: bool) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.settings_tab.refresh = set_to;
+    }
+    pub fn set_settings_save(&self, set_to: bool) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.settings_tab.save = set_to;
+    }
+    pub fn set_settings_reset(&self, set_to: bool) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.settings_tab.reset = set_to;
+    }
+    pub fn set_export_settings(&self, path: Option<PathBuf>) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.settings_tab.export = path;
+    }
+    pub fn set_import_settings(&self, path: Option<PathBuf>) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.settings_tab.import = path;
+    }
+    pub fn set_write_setting(&self, setting: Option<settings_tab::SaveRequest>) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.settings_tab.write = setting;
+    }
 }
 
 impl Deref for SharedState {
@@ -415,6 +452,7 @@ pub struct SharedStateInner {
     pub(crate) baseline_tab: BaselineTabState,
     pub(crate) advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTabState,
     pub(crate) update_tab_sender: Option<Sender<Option<UpdateTabUpdate>>>,
+    pub(crate) settings_tab: SettingsTabState,
 }
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
@@ -434,6 +472,7 @@ impl SharedStateInner {
             baseline_tab: BaselineTabState::new(),
             advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTabState::new(),
             update_tab_sender: None,
+            settings_tab: SettingsTabState::new(),
         }
     }
 }
@@ -599,6 +638,35 @@ pub struct AdvancedSpectrumAnalyzerTabState {
 impl AdvancedSpectrumAnalyzerTabState {
     fn new() -> AdvancedSpectrumAnalyzerTabState {
         AdvancedSpectrumAnalyzerTabState { channel_idx: 0 }
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct SettingsTabState {
+    pub refresh: bool,
+    pub reset: bool,
+    pub save: bool,
+    pub export: Option<PathBuf>,
+    pub import: Option<PathBuf>,
+    pub write: Option<settings_tab::SaveRequest>,
+}
+
+impl SettingsTabState {
+    fn new() -> Self {
+        Default::default()
+    }
+
+    fn take(&mut self) -> SettingsTabState {
+        std::mem::take(self)
+    }
+
+    fn needs_update(&self) -> bool {
+        self.refresh
+            || self.reset
+            || self.save
+            || self.export.is_some()
+            || self.import.is_some()
+            || self.write.is_some()
     }
 }
 

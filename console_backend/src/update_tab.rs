@@ -7,6 +7,7 @@ use crossbeam::{
 use glob::glob;
 use log::{debug, error};
 use regex::Regex;
+use sbp::link::Link;
 use sbp::messages::{
     logging::MsgLog,
     piksi::{MsgCommandReq, MsgCommandResp, MsgReset},
@@ -19,7 +20,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crate::broadcaster::Link;
 use crate::errors::{
     CONVERT_TO_STR_FAILURE, CROSSBEAM_SCOPE_UNWRAP_FAILURE, SHARED_STATE_LOCK_MUTEX_FAILURE,
     THREAD_JOIN_FAILURE,
@@ -141,7 +141,7 @@ pub fn update_tab_thread<S: CapnProtoSender>(
     receiver: Receiver<Option<UpdateTabUpdate>>,
     update_tab_context: UpdateTabContext,
     client_sender: S,
-    link: Link<'_>,
+    link: Link<'_, ()>,
     msg_sender: MsgSender,
 ) {
     thread::scope(|scope| {

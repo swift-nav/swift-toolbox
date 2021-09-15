@@ -19,6 +19,7 @@ use crate::console_backend_capnp as m;
 use crate::errors::*;
 use crate::log_panel::{setup_logging, LogLevel};
 use crate::output::{CsvLogging, SbpLogging};
+use crate::settings_tab;
 use crate::types::{ClientSender, FlowControl, RealtimeDelay, SharedState};
 use crate::update_tab::UpdateTabUpdate;
 use crate::utils::{refresh_loggingbar, refresh_navbar};
@@ -356,6 +357,34 @@ fn backend_recv_thread(
                                 }))
                                 .unwrap();
                         }
+                    }
+                    m::message::SettingsRefreshRequest(Ok(_)) => {
+                        shared_state_clone.set_settings_refresh(true);
+                    }
+                    m::message::SettingsResetRequest(Ok(_)) => {
+                        shared_state_clone.set_settings_reset(true);
+                    }
+                    m::message::SettingsSaveRequest(Ok(_)) => {
+                        shared_state_clone.set_settings_save(true);
+                    }
+                    m::message::SettingsExportRequest(Ok(path)) => {
+                        let path = path.get_path().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
+                        shared_state_clone.set_export_settings(Some(PathBuf::from(path)));
+                    }
+                    m::message::SettingsImportRequest(Ok(path)) => {
+                        let path = path.get_path().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
+                        shared_state_clone.set_import_settings(Some(PathBuf::from(path)));
+                    }
+                    m::message::SettingsWriteRequest(Ok(req)) => {
+                        let group = req.get_group().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
+                        let name = req.get_name().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
+                        let value = req.get_value().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
+                        let req = settings_tab::SaveRequest {
+                            group: group.to_string(),
+                            name: name.to_string(),
+                            value: value.to_string(),
+                        };
+                        shared_state_clone.set_write_setting(Some(req));
                     }
                     _ => {
                         error!("unknown message from front-end");

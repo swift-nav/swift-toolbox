@@ -6,7 +6,10 @@ function hzToMilliseconds(hz) {
 }
 
 function fileUrlToString(url) {
-    return url.toString().replace("file:///", "")
+    var filepath = url.toString().replace("file:///", "");
+    if (Qt.platform.os !== "windows")
+        return "/" + filepath
+    return filepath
 }
 
 function spanBetweenValues(v1, v2){

@@ -25,6 +25,7 @@ pub mod process_messages;
 #[cfg(not(test))]
 #[cfg(all(not(feature = "benches"), not(feature = "tests"), feature = "pyo3"))]
 pub mod server;
+pub mod settings_tab;
 pub mod solution_tab;
 pub mod solution_velocity_tab;
 pub mod status_bar;
@@ -39,8 +40,8 @@ use std::sync::Mutex;
 use crate::{
     advanced_ins_tab::AdvancedInsTab, advanced_magnetometer_tab::AdvancedMagnetometerTab,
     advanced_spectrum_analyzer_tab::AdvancedSpectrumAnalyzerTab, baseline_tab::BaselineTab,
-    main_tab::MainTab, observation_tab::ObservationTab, solution_tab::SolutionTab,
-    solution_velocity_tab::SolutionVelocityTab, status_bar::StatusBar,
+    main_tab::MainTab, observation_tab::ObservationTab, settings_tab::SettingsTab,
+    solution_tab::SolutionTab, solution_velocity_tab::SolutionVelocityTab, status_bar::StatusBar,
     tracking_signals_tab::TrackingSignalsTab, update_tab::UpdateTab,
 };
 
@@ -56,7 +57,7 @@ struct Tabs<'link, S: types::CapnProtoSender> {
     pub advanced_spectrum_analyzer: Mutex<AdvancedSpectrumAnalyzerTab<S>>,
     pub status_bar: Mutex<StatusBar<S>>,
     pub update: Mutex<UpdateTab>,
-    _link: broadcaster::Link<'link>,
+    pub settings_tab: Mutex<SettingsTab<'link, S>>,
 }
 
 impl<'link, S: types::CapnProtoSender> Tabs<'link, S> {
@@ -64,7 +65,7 @@ impl<'link, S: types::CapnProtoSender> Tabs<'link, S> {
         shared_state: types::SharedState,
         client_sender: S,
         msg_sender: types::MsgSender,
-        link: broadcaster::Link<'link>,
+        link: sbp::link::Link<'link, ()>,
     ) -> Self {
         Self {
             main: MainTab::new(shared_state.clone(), client_sender.clone()).into(),
@@ -74,8 +75,12 @@ impl<'link, S: types::CapnProtoSender> Tabs<'link, S> {
                 client_sender.clone(),
             )
             .into(),
-            baseline: BaselineTab::new(shared_state.clone(), client_sender.clone(), msg_sender)
-                .into(),
+            baseline: BaselineTab::new(
+                shared_state.clone(),
+                client_sender.clone(),
+                msg_sender.clone(),
+            )
+            .into(),
             tracking_signals: TrackingSignalsTab::new(shared_state.clone(), client_sender.clone())
                 .into(),
             observation: ObservationTab::new(shared_state.clone(), client_sender.clone()).into(),
@@ -90,9 +95,9 @@ impl<'link, S: types::CapnProtoSender> Tabs<'link, S> {
                 client_sender.clone(),
             )
             .into(),
-            status_bar: StatusBar::new(shared_state.clone(), client_sender).into(),
-            update: UpdateTab::new(shared_state).into(),
-            _link: link,
+            status_bar: StatusBar::new(shared_state.clone(), client_sender.clone()).into(),
+            update: UpdateTab::new(shared_state.clone()).into(),
+            settings_tab: SettingsTab::new(shared_state, client_sender, msg_sender, link).into(),
         }
     }
 }

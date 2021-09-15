@@ -90,11 +90,6 @@ Item {
             selectMultiple: false
             onAccepted: {
                 var filepath = Utils.fileUrlToString(fileDialog.folder);
-                // Fix for fileUrlToString which removes file:/// prefix but leaves unix
-                // path without leading forward slash.
-                if (Qt.platform.os !== "windows")
-                    filepath = "/" + filepath;
-
                 data_model.update_tab([false, false, false], null, filepath, null, null, null);
             }
             onRejected: {

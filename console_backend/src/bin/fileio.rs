@@ -5,10 +5,9 @@ use std::{
 
 use clap::Clap;
 use crossbeam::{channel, scope};
-use sbp::sbp_tools::SBPTools;
+use sbp::{link::LinkSource, sbp_tools::SBPTools};
 
 use console_backend::{
-    broadcaster::Link,
     cli_options::Input,
     fileio::Fileio,
     types::{MsgSender, Result},
@@ -49,15 +48,15 @@ pub enum Opts {
 }
 
 fn main() -> Result<()> {
-    let link = Link::new();
-    let link_source = link.clone();
+    let source = LinkSource::new();
+    let link = source.link();
 
     let (done_tx, done_rx) = channel::bounded(0);
 
     let run = move |rdr| {
         let messages = sbp::iter_messages(rdr).log_errors(log::Level::Debug);
         for msg in messages {
-            link_source.send(&msg, None);
+            source.send(msg);
             if done_rx.try_recv().is_ok() {
                 break;
             }

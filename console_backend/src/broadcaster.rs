@@ -98,6 +98,7 @@ slotmap::new_key_type! {
 }
 
 /// Returned along with calls to `subscribe`. Used to unsubscribe to an event.
+#[derive(Copy, Clone)]
 pub struct Key {
     inner: KeyInner,
 }

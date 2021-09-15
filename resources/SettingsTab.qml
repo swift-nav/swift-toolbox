@@ -81,7 +81,7 @@ Item {
         nameFilters: ["*.ini"]
         folder: shortcuts.home
         onAccepted: {
-            var filepath = Utils.fileUrlToString(exportDialog.fileUrl);
+            var filepath = Utils.fileUrlToString(importDialog.fileUrl);
             data_model.settings_import_request(filepath);
         }
     }

@@ -7,11 +7,18 @@ import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
 Rectangle {
+    id: topLevel
     property alias name: innerText.text
     property alias model: innerTable.model
     property variant week: 0
     property variant tow: 0
     property variant columnWidths: [1, 1, 1, 1, 1, 1, 1, 1]
+    property bool remote: false
+    property bool populated: innerTable.model.row_count > 0
+
+    function update() {
+        innerTable.model.update()
+    }
 
     border.color: "#000000"
     border.width: 1
@@ -76,7 +83,7 @@ Rectangle {
             Text {
                 id: totalValue
 
-                text: innerTable.model.rows.length
+                text: innerTable.model.row_count
                 font: Constants.monoSpaceFont
             }
 
@@ -179,60 +186,20 @@ Rectangle {
         clip: true
         width: parent.width
         columnWidthProvider: function(column) {
-            return columnWidths[column];
+            return 120;// columnWidths[column];
         }
 
-        model: TableModel {
-            rows: Constants.debugMode ? ObsTabJS.obsSampleData : []
+        onHeightChanged: console.log("innerTable.height: " + height)
+        onWidthChanged: console.log("innerTable.width: " + width)
 
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.getObsCell(innerTable.model, modelIndex);
+        model: ObservationTableModel {
+            remote: topLevel.remote
+
+            onRow_countChanged: {
+                if (row_count > 0) {
+                    console.log("rowData[" + (row_count-1) + "]: " + model.rowData(row_count-1))
                 }
             }
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.getObsCell(innerTable.model, modelIndex);
-                }
-            }
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.getObsCell(innerTable.model, modelIndex);
-                }
-            }
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.getObsCell(innerTable.model, modelIndex);
-                }
-            }
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.getObsCell(innerTable.model, modelIndex);
-                }
-            }
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.getObsCell(innerTable.model, modelIndex);
-                }
-            }
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.getObsCell(innerTable.model, modelIndex);
-                }
-            }
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.getObsCell(innerTable.model, modelIndex);
-                }
-            }
-
         }
 
         delegate: DelegateChooser {

@@ -22,7 +22,7 @@ Item {
         orientation: Qt.Vertical
         width: parent.width
         height: parent.height
-        visible: false
+        visible: localTable.populated || remoteTable.populated
 
         Rectangle {
             SplitView.minimumHeight: Constants.observationTab.titleAreaHight
@@ -68,20 +68,8 @@ Item {
                 if (!observationTab.visible)
                     return ;
 
-                remote_observation_model.fill_data(observationData, true);
-                if (observationData.rows.length) {
-                    remoteTable.tow = observationData.tow;
-                    remoteTable.week = observationData.week;
-                    remoteTable.model.rows = observationData.rows;
-                    observationView.visible = true;
-                }
-                local_observation_model.fill_data(observationData, false);
-                if (observationData.rows.length) {
-                    localTable.tow = observationData.tow;
-                    localTable.week = observationData.week;
-                    localTable.model.rows = observationData.rows;
-                    observationView.visible = true;
-                }
+                remoteTable.update()
+                localTable.update()
             }
         }
 

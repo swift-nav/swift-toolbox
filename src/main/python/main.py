@@ -88,6 +88,7 @@ from baseline_table import (
 from observation_tab import (
     ObservationData,
     ObservationModel,
+    ObservationTableModel,
     REMOTE_OBSERVATION_TAB,
     LOCAL_OBSERVATION_TAB,
     obs_rows_to_json,
@@ -705,6 +706,7 @@ if __name__ == "__main__":
     qmlRegisterType(StatusBarData, "SwiftConsole", 1, 0, "StatusBarData")  # type: ignore
     qmlRegisterType(TrackingSignalsPoints, "SwiftConsole", 1, 0, "TrackingSignalsPoints")  # type: ignore
     qmlRegisterType(ObservationData, "SwiftConsole", 1, 0, "ObservationData")  # type: ignore
+    qmlRegisterType(ObservationTableModel, "SwiftConsole", 1, 0, "ObservationTableModel")  # type: ignore
     qmlRegisterType(UpdateTabData, "SwiftConsole", 1, 0, "UpdateTabData")  # type: ignore
 
     engine = QtQml.QQmlApplicationEngine()

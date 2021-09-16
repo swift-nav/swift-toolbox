@@ -44,7 +44,6 @@ class ObservationTableModel(QAbstractTableModel):
         self._remote = False
 
         self.col_names = None
-        # self._update_count = 0
 
     def set_tow(self, tow) -> None:
         """Setter for _tow."""
@@ -90,9 +89,6 @@ class ObservationTableModel(QAbstractTableModel):
     @Slot()
     def update(self) -> None:
         observation_tab = REMOTE_OBSERVATION_TAB if self._remote else LOCAL_OBSERVATION_TAB
-        # if self._update_count % 50 == 0:
-            # cols_str = " cols: " + ("N/A" if len(observation_tab[Keys.ROWS]) <= 0 else str(len(observation_tab[Keys.ROWS][0])))
-            # print("ObservationTableModel.update() called " + str(self._update_count) + " rows: " + str(len(observation_tab[Keys.ROWS])) + cols_str)
         if observation_tab[Keys.TOW] != self._tow:
             self.set_tow(observation_tab[Keys.TOW])
         if observation_tab[Keys.WEEK] != self._week:
@@ -121,7 +117,6 @@ class ObservationTableModel(QAbstractTableModel):
             self._rows.extend(rowsToInsert)
             self.endInsertRows()
             self.row_count_changed.emit(self.rowCount())
-        # self._update_count = self._update_count + 1
 
     # Intentionally do not provide a setter in the property - no setting from QML.
     week = Property(float, get_week, notify=week_changed)

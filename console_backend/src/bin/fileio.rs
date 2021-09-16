@@ -74,9 +74,16 @@ fn main() -> Result<()> {
             scope(|s| {
                 s.spawn(|_| run(rdr));
                 let mut fileio = Fileio::new(link, sender);
-                let data = fs::File::open(source)?;
-                fileio.overwrite(dest, data)?;
-                eprintln!("file written successfully.");
+                let file = fs::File::open(source)?;
+                let size = file.metadata()?.len() as usize;
+                let mut bytes_written = 0;
+                eprint!("\rWriting 0.0%...");
+                fileio.overwrite_with_progress(dest, file, |n| {
+                    bytes_written += n;
+                    let progress = (bytes_written as f64) / (size as f64) * 100.0;
+                    eprint!("\rWriting {:.2}%...", progress);
+                })?;
+                eprintln!("\nFile written successfully.");
                 done_tx.send(true).unwrap();
                 Result::Ok(())
             })
@@ -122,7 +129,7 @@ fn main() -> Result<()> {
                 s.spawn(|_| run(rdr));
                 let fileio = Fileio::new(link, sender);
                 fileio.remove(path)?;
-                eprintln!("file deleted.");
+                eprintln!("File deleted.");
                 done_tx.send(true).unwrap();
                 Result::Ok(())
             })

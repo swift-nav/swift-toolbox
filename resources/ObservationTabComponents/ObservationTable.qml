@@ -9,19 +9,20 @@ import SwiftConsole 1.0
 Rectangle {
     id: topLevel
     property alias name: innerText.text
-    property alias model: innerTable.model
-    property variant week: 0
-    property variant tow: 0
     property variant columnWidths: [1, 1, 1, 1, 1, 1, 1, 1]
-    property bool remote: false
-    property bool populated: innerTable.model.row_count > 0
+    property alias remote: observationTableModel.remote
+    property bool populated: observationTableModel.row_count > 0
 
     function update() {
-        innerTable.model.update()
+        observationTableModel.update()
     }
 
     border.color: "#000000"
     border.width: 1
+
+    ObservationTableModel {
+        id: observationTableModel
+    }
 
     Rectangle {
         id: innerTextArea
@@ -55,7 +56,7 @@ Rectangle {
             Text {
                 id: weekValue
 
-                text: week
+                text: observationTableModel.week
                 font: Constants.monoSpaceFont
             }
 
@@ -69,7 +70,7 @@ Rectangle {
             Text {
                 id: towValue
 
-                text: ObsTabJS.padFloat(tow, 2)
+                text: ObsTabJS.padFloat(observationTableModel.tow, 2)
                 font: Constants.monoSpaceFont
             }
 
@@ -83,7 +84,7 @@ Rectangle {
             Text {
                 id: totalValue
 
-                text: innerTable.model.row_count
+                text: observationTableModel.row_count
                 font: Constants.monoSpaceFont
             }
 
@@ -186,21 +187,13 @@ Rectangle {
         clip: true
         width: parent.width
         columnWidthProvider: function(column) {
-            return 120;// columnWidths[column];
+            return columnWidths[column];
         }
 
         onHeightChanged: console.log("innerTable.height: " + height)
         onWidthChanged: console.log("innerTable.width: " + width)
 
-        model: ObservationTableModel {
-            remote: topLevel.remote
-
-            onRow_countChanged: {
-                if (row_count > 0) {
-                    console.log("rowData[" + (row_count-1) + "]: " + model.rowData(row_count-1))
-                }
-            }
-        }
+        model: observationTableModel
 
         delegate: DelegateChooser {
             DelegateChoice {

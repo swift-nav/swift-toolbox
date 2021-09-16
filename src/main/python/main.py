@@ -86,8 +86,6 @@ from baseline_table import (
 )
 
 from observation_tab import (
-    ObservationData,
-    ObservationModel,
     ObservationTableModel,
     REMOTE_OBSERVATION_TAB,
     LOCAL_OBSERVATION_TAB,
@@ -705,7 +703,6 @@ if __name__ == "__main__":
     qmlRegisterType(SolutionVelocityPoints, "SwiftConsole", 1, 0, "SolutionVelocityPoints")  # type: ignore
     qmlRegisterType(StatusBarData, "SwiftConsole", 1, 0, "StatusBarData")  # type: ignore
     qmlRegisterType(TrackingSignalsPoints, "SwiftConsole", 1, 0, "TrackingSignalsPoints")  # type: ignore
-    qmlRegisterType(ObservationData, "SwiftConsole", 1, 0, "ObservationData")  # type: ignore
     qmlRegisterType(ObservationTableModel, "SwiftConsole", 1, 0, "ObservationTableModel")  # type: ignore
     qmlRegisterType(UpdateTabData, "SwiftConsole", 1, 0, "UpdateTabData")  # type: ignore
 
@@ -740,8 +737,6 @@ if __name__ == "__main__":
     status_bar_model = StatusBarModel()
     logging_bar_model = LoggingBarModel()
     tracking_signals_model = TrackingSignalsModel()
-    remote_observation_model = ObservationModel()
-    local_observation_model = ObservationModel()
     update_tab_model = UpdateTabModel()
     root_context = engine.rootContext()
     root_context.setContextProperty("log_panel_model", log_panel_model)
@@ -761,8 +756,6 @@ if __name__ == "__main__":
     root_context.setContextProperty("status_bar_model", status_bar_model)
     root_context.setContextProperty("logging_bar_model", logging_bar_model)
     root_context.setContextProperty("tracking_signals_model", tracking_signals_model)
-    root_context.setContextProperty("remote_observation_model", remote_observation_model)
-    root_context.setContextProperty("local_observation_model", local_observation_model)
     root_context.setContextProperty("update_tab_model", update_tab_model)
     root_context.setContextProperty("data_model", data_model)
 

@@ -43,6 +43,9 @@ class ObservationTableModel(QAbstractTableModel):
         self._rows = []
         self._remote = False
 
+        self.col_names = None
+        # self._update_count = 0
+
     def set_tow(self, tow) -> None:
         """Setter for _tow."""
         self._tow = tow
@@ -74,8 +77,7 @@ class ObservationTableModel(QAbstractTableModel):
         return len(ObservationTableModel.column_names)
 
     def data(self, index, role = Qt.DisplayRole):
-        print("ObservationTableModel.data(QModelIndex(" + index.row() + ", " + index.column() + "), role = " + role)
-        return self._rows[index.row()].values()[index.column()]
+        return self._rows[index.row()][self.col_names[index.column()]]
 
     @Slot(int, result=str)
     def rowData(self, rowIdx):
@@ -88,6 +90,9 @@ class ObservationTableModel(QAbstractTableModel):
     @Slot()
     def update(self) -> None:
         observation_tab = REMOTE_OBSERVATION_TAB if self._remote else LOCAL_OBSERVATION_TAB
+        # if self._update_count % 50 == 0:
+            # cols_str = " cols: " + ("N/A" if len(observation_tab[Keys.ROWS]) <= 0 else str(len(observation_tab[Keys.ROWS][0])))
+            # print("ObservationTableModel.update() called " + str(self._update_count) + " rows: " + str(len(observation_tab[Keys.ROWS])) + cols_str)
         if observation_tab[Keys.TOW] != self._tow:
             self.set_tow(observation_tab[Keys.TOW])
         if observation_tab[Keys.WEEK] != self._week:
@@ -95,6 +100,7 @@ class ObservationTableModel(QAbstractTableModel):
         # dicts are guaranteed to be in insertion order as of Python 3.7, so
         # no need to do key lookup
         # https://stackoverflow.com/questions/39980323/are-dictionaries-ordered-in-python-3-6
+        rowsToInsert = []
         for rowIdx in range(len(observation_tab[Keys.ROWS])):
             row = observation_tab[Keys.ROWS][rowIdx]
             for colIdx in range(len(row)):
@@ -103,69 +109,26 @@ class ObservationTableModel(QAbstractTableModel):
                     modelRow = self._rows[rowIdx]
                     if row[column] != modelRow[column]:
                         modelRow[column] = row[column]
-                        modelIdx = self.createIndex(rowIdx, colIdx)
+                        modelIdx = self.index(rowIdx, colIdx)
                         self.dataChanged.emit(modelIdx, modelIdx)  # pylint: disable=no-member
                 except IndexError:
-                    self._rows.append(deepcopy(row))
-                    modelIdxTopLeft = self.createIndex(rowIdx, 0)
-                    modelIdxBottomRight = self.createIndex(rowIdx, len(row))
-                    self.row_count_changed.emit(self.rowCount())
-                    self.dataChanged.emit(modelIdxTopLeft, modelIdxBottomRight)  # pylint: disable=no-member
+                    if self.col_names is None:
+                        self.col_names = list(row.keys())
+                    rowsToInsert.append(deepcopy(row))
+
+        if len(rowsToInsert) > 0:
+            self.beginInsertRows(QModelIndex(), len(self._rows), len(self._rows) + len(rowsToInsert)-1)
+            self._rows.extend(rowsToInsert)
+            self.endInsertRows()
+            self.row_count_changed.emit(self.rowCount())
+        # self._update_count = self._update_count + 1
 
     # Intentionally do not provide a setter in the property - no setting from QML.
     week = Property(float, get_week, notify=week_changed)
     tow = Property(float, get_tow, notify=tow_changed)
     row_count = Property(int, rowCount, notify=row_count_changed)
+    # Except this one - QML needs to specify if the model should be returning local data or remote data.
     remote = Property(bool, get_remote, set_remote, notify=remote_changed)
-
-
-class ObservationData(QObject):
-
-    _tow: float = 0.0
-    _week: int = 0
-    _rows: List[Any] = []
-
-    def set_week(self, week) -> None:
-        """Setter for _week."""
-        self._week = week
-
-    def get_week(self) -> int:
-        return self._week
-
-    week = Property(float, get_week, set_week)
-
-    def set_tow(self, tow) -> None:
-        """Setter for _tow."""
-        self._tow = tow
-
-    def get_tow(self) -> float:
-        return self._tow
-
-    tow = Property(float, get_tow, set_tow)
-
-    def get_rows(self) -> List[Any]:
-        """Getter for _rows."""
-        return self._rows
-
-    def set_rows(self, rows: List[Any]) -> None:
-        """Setter for _rows."""
-        self._rows = rows
-
-    rows = Property(QTKeys.QVARIANTLIST, get_rows, set_rows)  # type: ignore
-
-
-class ObservationModel(QObject):  # pylint: disable=too-few-public-methods
-    @Slot(ObservationData, bool)  # type: ignore
-    def fill_data(self, cp: ObservationData, is_remote: bool) -> ObservationData:  # pylint:disable=no-self-use
-        if is_remote:
-            cp.set_week(REMOTE_OBSERVATION_TAB[Keys.WEEK])
-            cp.set_tow(REMOTE_OBSERVATION_TAB[Keys.TOW])
-            cp.set_rows(REMOTE_OBSERVATION_TAB[Keys.ROWS])
-        else:
-            cp.set_week(LOCAL_OBSERVATION_TAB[Keys.WEEK])
-            cp.set_tow(LOCAL_OBSERVATION_TAB[Keys.TOW])
-            cp.set_rows(LOCAL_OBSERVATION_TAB[Keys.ROWS])
-        return cp
 
 
 def obs_rows_to_json(rows):

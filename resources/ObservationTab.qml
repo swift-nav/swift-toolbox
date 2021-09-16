@@ -11,10 +11,6 @@ Item {
     width: parent.width
     height: parent.height
 
-    ObservationData {
-        id: observationData
-    }
-
     SplitView {
         id: observationView
 
@@ -34,12 +30,9 @@ Item {
 
             ObservationTabComponents.ObservationTable {
                 id: localTable
-
+                anchors.fill: parent
                 name: "local"
-                width: parent.width
-                height: parent.height
             }
-
         }
 
         Rectangle {
@@ -52,16 +45,14 @@ Item {
 
             ObservationTabComponents.ObservationTable {
                 id: remoteTable
-
+                anchors.fill: parent
                 name: "remote"
-                width: parent.width
-                height: parent.height
+                remote: true
             }
-
         }
 
         Timer {
-            interval: Globals.currentRefreshRate
+            interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
             running: true
             repeat: true
             onTriggered: {
@@ -72,7 +63,5 @@ Item {
                 localTable.update()
             }
         }
-
     }
-
 }

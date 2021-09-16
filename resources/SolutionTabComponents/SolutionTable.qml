@@ -13,7 +13,8 @@ Item {
     property real mouse_x: 0
     property int selectedRow: -1
 
-    function syncColumnWidthsWithSplitView(oldcols) {
+    function syncColumnWidthsWithSplitView() {
+        var oldcols = columnWidths.slice()
         columnWidths[0] = Math.max(columnWidths[0], Constants.solutionTable.defaultColumnWidth);
         let column_width_sum = columnWidths[0] + columnWidths[1];
         if (column_width_sum != tableView.width) {
@@ -73,10 +74,9 @@ Item {
                         }
                         onPositionChanged: {
                             if (pressed) {
-                                let oldcols = columnWidths.slice();
                                 var delta_x = (mouseX - mouse_x);
                                 columnWidths[index] += delta_x;
-                                syncColumnWidthsWithSplitView(oldcols);
+                                syncColumnWidthsWithSplitView();
                             }
                         }
                     }
@@ -119,6 +119,7 @@ Item {
             TableView {
                 id: tableView
 
+                onWidthChanged: syncColumnWidthsWithSplitView()
                 columnSpacing: -1
                 rowSpacing: -1
                 columnWidthProvider: function(column) {
@@ -215,8 +216,6 @@ Item {
             running: true
             repeat: true
             onTriggered: {
-                let oldcols = columnWidths.slice();
-                syncColumnWidthsWithSplitView(oldcols);
                 if (!solutionTab.visible)
                     return ;
 

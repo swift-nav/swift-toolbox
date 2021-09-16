@@ -1,15 +1,3 @@
-// use crate::common_constants::{self as cc, SbpLogging};
-// use crate::constants::*;
-// use crate::errors::*;
-// use crate::log_panel::LogLevel;
-// use crate::output::{CsvLogging, CsvSerializer};
-// use crate::piksi_tools_constants::*;
-// use crate::settings_tab;
-// use crate::update_tab::UpdateTabUpdate;
-// use crate::utils::{mm_to_m, ms_to_sec, set_connected_frontend};
-
-// use anyhow::{Context, Result as AHResult};
-
 use crate::constants::{
     DGNSS, DGNSS_COLOR, DGNSS_LABEL, DR, DR_COLOR, DR_LABEL, FIXED, FIXED_COLOR, FIXED_LABEL,
     FLOAT, FLOAT_COLOR, FLOAT_LABEL, FLOW_CONTROL_HARDWARE, FLOW_CONTROL_NONE,

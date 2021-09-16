@@ -40,6 +40,7 @@ minreq = { version = "2.4.2", features = ["https"] }
 regex = { version = "1.5.4" }
 semver = { version = "1" }
 rust-ini = "0.17.0"
+snap = { version = "1", optional = true }
 
 [dependencies.sbp]
 git = "https://github.com/swift-nav/libsbp.git"
@@ -82,11 +83,13 @@ required-features = ["fft"]
 
 [[bin]]
 name = "headless-console"
-path = "src/bin/headless.rs"
+path = "src/bin/headless-console.rs"
 bench = false
+required-features = ["headless-console"]
 
 [features]
 default = ["pyo3"]
 benches = []
 tests = []
 fft = ["serde-pickle"]
+headless-console = ["snap"]

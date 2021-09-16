@@ -25,6 +25,7 @@ pub mod process_messages;
 #[cfg(not(test))]
 #[cfg(all(not(feature = "benches"), not(feature = "tests"), feature = "pyo3"))]
 pub mod server;
+pub mod server_recv_thread;
 pub mod settings_tab;
 pub mod shared_state;
 pub mod solution_tab;

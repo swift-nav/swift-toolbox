@@ -137,7 +137,7 @@ impl<S: CapnProtoSender> Writer<Box<String>> for LogPanelWriter<S> {
 
         for (idx, item) in slice.iter().enumerate() {
             if self.debug {
-                println!("{}", item);
+                eprintln!("{}", item);
             }
             let mut entry = entries.reborrow().get(idx as u32);
 

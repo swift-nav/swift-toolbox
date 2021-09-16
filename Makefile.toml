@@ -154,7 +154,15 @@ run_task = "start-console"
 
 [tasks.headless-run]
 command = "cargo"
-args = ["run", "--bin", "headless", "--no-default-features", "${@}"]
+args = [
+  "run",
+  "--bin",
+  "headless-console",
+  "--features",
+  "headless-console",
+  "--no-default-features",
+  "${@}",
+]
 
 [tasks.store-version]
 script_runner = "@shell"

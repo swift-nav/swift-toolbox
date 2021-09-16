@@ -9,7 +9,8 @@ use crate::cli_options::*;
 use crate::connection::ConnectionState;
 
 use crate::log_panel::setup_logging;
-use crate::shared_state::{backend_recv_thread, SharedState};
+use crate::server_recv_thread::server_recv_thread;
+use crate::shared_state::SharedState;
 use crate::types::ClientSender;
 use crate::utils::{refresh_loggingbar, refresh_navbar};
 
@@ -117,7 +118,7 @@ impl Server {
         handle_cli(opt, &connection_state, shared_state.clone());
         refresh_navbar(&mut client_send.clone(), shared_state.clone());
         refresh_loggingbar(&mut client_send.clone(), shared_state.clone());
-        backend_recv_thread(connection_state, client_send, server_recv, shared_state);
+        server_recv_thread(connection_state, client_send, server_recv, shared_state);
         Ok(server_endpoint)
     }
 }

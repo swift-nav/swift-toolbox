@@ -1,8 +1,6 @@
 use std::{
     collections::HashMap,
-    fs,
     io::{BufRead, BufReader, Read, Write},
-    path::Path,
     time::{Duration, Instant},
 };
 
@@ -157,6 +155,21 @@ impl<'a> Fileio<'a> {
     /// This operation is NOT atomic. If the write fails and `filename` existed, it is gone forever.
     /// For more context see: https://github.com/swift-nav/console_pp/pull/72#discussion_r654751414
     pub fn overwrite(&mut self, filename: String, data: impl Read) -> Result<()> {
+        self.overwrite_with_progress(filename, data, |_| ())
+    }
+
+    /// Deletes `filename` on the remote device (if it exists) and writes the contents of `data` to the file.
+    /// This operation is NOT atomic. If the write fails and `filename` existed, it is gone forever.
+    /// For more context see: https://github.com/swift-nav/console_pp/pull/72#discussion_r654751414
+    pub fn overwrite_with_progress<'b, F>(
+        &mut self,
+        filename: String,
+        data: impl Read,
+        mut on_progress: F,
+    ) -> Result<()>
+    where
+        F: FnMut(usize) + 'b,
+    {
         self.remove(filename.clone())?;
 
         let mut data = BufReader::new(data);
@@ -168,14 +181,22 @@ impl<'a> Fileio<'a> {
             if bytes_read == 0 {
                 break;
             }
-            state = self.write_slice(state, buf)?;
+            state = self.write_slice(state, buf, &mut on_progress)?;
             data.consume(bytes_read);
         }
 
         Ok(())
     }
 
-    fn write_slice(&mut self, mut state: WriteState, data: &[u8]) -> Result<WriteState> {
+    fn write_slice<'b, F>(
+        &mut self,
+        mut state: WriteState,
+        data: &[u8],
+        on_progress: &mut F,
+    ) -> Result<WriteState>
+    where
+        F: FnMut(usize) + 'b,
+    {
         let config = self.fetch_config();
 
         let (req_tx, req_rx) = channel::unbounded();
@@ -236,9 +257,11 @@ impl<'a> Fileio<'a> {
                     },
                     recv(res_rx) -> msg => {
                         let msg = msg?;
-                        if pending.remove(&msg.sequence).is_none() {
-                            continue
-                        }
+                        let req = match pending.remove(&msg.sequence) {
+                            Some((_, req)) => req,
+                            _ => continue,
+                        };
+                        on_progress(req.end_offset - req.offset);
                         open_requests.fetch_sub(1);
                         if last_sent && open_requests.load() == 0 {
                             break;
@@ -520,56 +543,4 @@ impl Default for FileioConfig {
 
 pub fn new_sequence() -> u32 {
     rand::thread_rng().gen_range(0..0xfffffff)
-}
-
-pub struct SizedReader<'a, R> {
-    inner: R,
-    size: u64,
-    bytes_read: u64,
-    on_update: Box<dyn FnMut(f64) + 'a>,
-}
-
-impl<'a, R> SizedReader<'a, R> {
-    pub fn new<F>(inner: R, size: u64, on_update: F) -> Self
-    where
-        F: FnMut(f64) + 'a,
-    {
-        Self {
-            inner,
-            size,
-            bytes_read: 0,
-            on_update: Box::new(on_update),
-        }
-    }
-
-    fn progress(&self) -> f64 {
-        self.bytes_read as f64 / self.size as f64
-    }
-}
-
-impl<'a> SizedReader<'a, fs::File> {
-    pub fn from_file<P, F>(path: P, on_update: F) -> Result<Self>
-    where
-        P: AsRef<Path>,
-        F: FnMut(f64) + 'a,
-    {
-        let file = fs::File::open(path)?;
-        let size = file.metadata()?.len();
-        Ok(Self::new(file, size, on_update))
-    }
-}
-
-impl<R> Read for SizedReader<'_, R>
-where
-    R: Read,
-{
-    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        let n = self.inner.read(buf)?;
-        self.bytes_read += n as u64;
-        if n != 0 {
-            let progress = self.progress();
-            (self.on_update)(progress);
-        }
-        Ok(n)
-    }
 }

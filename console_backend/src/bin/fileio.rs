@@ -9,7 +9,7 @@ use sbp::{link::LinkSource, sbp_tools::SBPTools};
 
 use console_backend::{
     cli_options::Input,
-    fileio::{Fileio, SizedReader},
+    fileio::Fileio,
     types::{MsgSender, Result},
 };
 
@@ -74,10 +74,15 @@ fn main() -> Result<()> {
             scope(|s| {
                 s.spawn(|_| run(rdr));
                 let mut fileio = Fileio::new(link, sender);
-                let data = SizedReader::from_file(source, |progress| {
-                    eprint!("\rWriting {:.2}%...", progress * 100.0);
+                let file = fs::File::open(source)?;
+                let size = file.metadata()?.len() as usize;
+                let mut bytes_written = 0;
+                eprint!("\rWriting 0.0%...");
+                fileio.overwrite_with_progress(dest, file, |n| {
+                    bytes_written += n;
+                    let progress = (bytes_written as f64) / (size as f64) * 100.0;
+                    eprint!("\rWriting {:.2}%...", progress);
                 })?;
-                fileio.overwrite(dest, data)?;
                 eprintln!("\nFile written successfully.");
                 done_tx.send(true).unwrap();
                 Result::Ok(())

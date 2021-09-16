@@ -81,7 +81,7 @@ bench = false
 required-features = ["fft"]
 
 [[bin]]
-name = "headless"
+name = "headless-console"
 path = "src/bin/headless.rs"
 bench = false
 

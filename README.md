@@ -22,17 +22,17 @@ conda activate console_pp
 pip install poetry
 ```
 
-Install capnp.
+Install cmake, clang, and capnp in your respective OS.
 
 ```
-# Windows
-choco install capnproto
+# Windows - install with installer, or via chocolatey
+choco install cmake llvm capnproto
 
 # Mac
-brew install capnp
+brew install cmake llvm capnp
 
 # Linux
-apt-get install capnproto
+apt-get install cmake libclang-dev capnproto
 ```
 
 Install development dependencies (On Windows make sure you're using Adminstrator shell).

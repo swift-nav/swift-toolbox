@@ -25,9 +25,6 @@ Item {
 
     }
 
-    width: parent.width
-    height: parent.height
-
     SolutionTableEntries {
         id: solutionTableEntries
     }
@@ -238,7 +235,5 @@ Item {
                 tableView.forceLayout();
             }
         }
-
     }
-
 }

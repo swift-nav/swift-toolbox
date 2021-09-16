@@ -1,6 +1,8 @@
 use std::{
     collections::HashMap,
+    fs,
     io::{BufRead, BufReader, Read, Write},
+    path::Path,
     time::{Duration, Instant},
 };
 
@@ -518,4 +520,56 @@ impl Default for FileioConfig {
 
 pub fn new_sequence() -> u32 {
     rand::thread_rng().gen_range(0..0xfffffff)
+}
+
+pub struct SizedReader<'a, R> {
+    inner: R,
+    size: u64,
+    bytes_read: u64,
+    on_update: Box<dyn FnMut(f64) + 'a>,
+}
+
+impl<'a, R> SizedReader<'a, R> {
+    pub fn new<F>(inner: R, size: u64, on_update: F) -> Self
+    where
+        F: FnMut(f64) + 'a,
+    {
+        Self {
+            inner,
+            size,
+            bytes_read: 0,
+            on_update: Box::new(on_update),
+        }
+    }
+
+    fn progress(&self) -> f64 {
+        self.bytes_read as f64 / self.size as f64
+    }
+}
+
+impl<'a> SizedReader<'a, fs::File> {
+    pub fn from_file<P, F>(path: P, on_update: F) -> Result<Self>
+    where
+        P: AsRef<Path>,
+        F: FnMut(f64) + 'a,
+    {
+        let file = fs::File::open(path)?;
+        let size = file.metadata()?.len();
+        Ok(Self::new(file, size, on_update))
+    }
+}
+
+impl<R> Read for SizedReader<'_, R>
+where
+    R: Read,
+{
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        let n = self.inner.read(buf)?;
+        self.bytes_read += n as u64;
+        if n != 0 {
+            let progress = self.progress();
+            (self.on_update)(progress);
+        }
+        Ok(n)
+    }
 }

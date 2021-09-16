@@ -9,7 +9,7 @@ use sbp::{link::LinkSource, sbp_tools::SBPTools};
 
 use console_backend::{
     cli_options::Input,
-    fileio::Fileio,
+    fileio::{Fileio, SizedReader},
     types::{MsgSender, Result},
 };
 
@@ -74,9 +74,11 @@ fn main() -> Result<()> {
             scope(|s| {
                 s.spawn(|_| run(rdr));
                 let mut fileio = Fileio::new(link, sender);
-                let data = fs::File::open(source)?;
+                let data = SizedReader::from_file(source, |progress| {
+                    eprint!("\rWriting {:.2}%...", progress * 100.0);
+                })?;
                 fileio.overwrite(dest, data)?;
-                eprintln!("file written successfully.");
+                eprintln!("\nFile written successfully.");
                 done_tx.send(true).unwrap();
                 Result::Ok(())
             })
@@ -122,7 +124,7 @@ fn main() -> Result<()> {
                 s.spawn(|_| run(rdr));
                 let fileio = Fileio::new(link, sender);
                 fileio.remove(path)?;
-                eprintln!("file deleted.");
+                eprintln!("File deleted.");
                 done_tx.send(true).unwrap();
                 Result::Ok(())
             })

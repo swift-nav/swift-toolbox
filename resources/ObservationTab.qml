@@ -30,9 +30,11 @@ Item {
 
             ObservationTabComponents.ObservationTable {
                 id: localTable
+
                 anchors.fill: parent
                 name: "local"
             }
+
         }
 
         Rectangle {
@@ -45,10 +47,12 @@ Item {
 
             ObservationTabComponents.ObservationTable {
                 id: remoteTable
+
                 anchors.fill: parent
                 name: "remote"
                 remote: true
             }
+
         }
 
         Timer {
@@ -59,9 +63,11 @@ Item {
                 if (!observationTab.visible)
                     return ;
 
-                remoteTable.update()
-                localTable.update()
+                remoteTable.update();
+                localTable.update();
             }
         }
+
     }
+
 }

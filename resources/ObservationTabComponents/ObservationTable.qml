@@ -8,13 +8,14 @@ import SwiftConsole 1.0
 
 Rectangle {
     id: topLevel
+
     property alias name: innerText.text
     property variant columnWidths: [1, 1, 1, 1, 1, 1, 1, 1]
     property alias remote: observationTableModel.remote
     property bool populated: observationTableModel.row_count > 0
 
     function update() {
-        observationTableModel.update()
+        observationTableModel.update();
     }
 
     border.color: "#000000"
@@ -189,10 +190,8 @@ Rectangle {
         columnWidthProvider: function(column) {
             return columnWidths[column];
         }
-
         onHeightChanged: console.log("innerTable.height: " + height)
         onWidthChanged: console.log("innerTable.width: " + width)
-
         model: observationTableModel
 
         delegate: DelegateChooser {

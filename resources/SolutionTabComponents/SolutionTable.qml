@@ -14,7 +14,7 @@ Item {
     property int selectedRow: -1
 
     function syncColumnWidthsWithSplitView() {
-        var oldcols = columnWidths.slice()
+        var oldcols = columnWidths.slice();
         columnWidths[0] = Math.max(columnWidths[0], Constants.solutionTable.defaultColumnWidth);
         let column_width_sum = columnWidths[0] + columnWidths[1];
         if (column_width_sum != tableView.width) {
@@ -234,5 +234,7 @@ Item {
                 tableView.forceLayout();
             }
         }
+
     }
+
 }

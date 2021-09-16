@@ -1,9 +1,9 @@
-from typing import Dict, List, Any
-
-from PySide2.QtCore import Property, QObject, Slot, Signal, QAbstractTableModel, Qt, QModelIndex
-
-from constants import Keys, QTKeys
+from typing import Dict, Any
 from copy import deepcopy
+
+from PySide2.QtCore import Property, Slot, Signal, QAbstractTableModel, Qt, QModelIndex
+
+from constants import Keys
 
 
 REMOTE_OBSERVATION_TAB: Dict[str, Any] = {
@@ -20,23 +20,23 @@ LOCAL_OBSERVATION_TAB: Dict[str, Any] = {
 
 
 class ObservationTableModel(QAbstractTableModel):
-    tow_changed = Signal(float, arguments=['tow'])
-    week_changed = Signal(int, arguments=['week'])
-    row_count_changed = Signal(int, arguments=['row_count'])
-    remote_changed = Signal(bool, arguments=['remote'])
+    tow_changed = Signal(float, arguments=["tow"])
+    week_changed = Signal(int, arguments=["week"])
+    row_count_changed = Signal(int, arguments=["row_count"])
+    remote_changed = Signal(bool, arguments=["remote"])
 
     column_names = [
-        'PRN',
-        'Pseudorange (m)',
-        'Carrier Phase (cycles)',
-        'C/N0 (dB-Hz)',
-        'Meas. Doppler (Hz)',
-        'Comp. Doppler (Hz)',
-        'Lock',
-        'Flags',
+        "PRN",
+        "Pseudorange (m)",
+        "Carrier Phase (cycles)",
+        "C/N0 (dB-Hz)",
+        "Meas. Doppler (Hz)",
+        "Comp. Doppler (Hz)",
+        "Lock",
+        "Flags",
     ]
 
-    def __init__(self, parent = None):
+    def __init__(self, parent=None):
         super().__init__(parent)
         self._tow = 0
         self._week = 0
@@ -69,21 +69,20 @@ class ObservationTableModel(QAbstractTableModel):
     def get_remote(self) -> bool:
         return self._remote
 
-    def rowCount(self, parent = QModelIndex()):
+    def rowCount(self, parent=QModelIndex()):  # pylint: disable=unused-argument
         return len(self._rows)
 
-    def columnCount(self, parent = QModelIndex()):
+    def columnCount(self, parent=QModelIndex()):  # pylint: disable=unused-argument
         return len(ObservationTableModel.column_names)
 
-    def data(self, index, role = Qt.DisplayRole):
+    def data(self, index, role=Qt.DisplayRole):  # pylint: disable=unused-argument
         return self._rows[index.row()][self.col_names[index.column()]]
 
     @Slot(int, result=str)
     def rowData(self, rowIdx):
         return str(self._rows[rowIdx].values())
 
-    def headerData(self, section, orientation, role = Qt.DisplayRole):
-        role  # pylint: disable=pointless-statement
+    def headerData(self, section, orientation, role=Qt.DisplayRole):  # pylint: disable=unused-argument
         return ObservationTableModel.column_names if orientation == Qt.Horizontal else section
 
     @Slot()
@@ -113,7 +112,7 @@ class ObservationTableModel(QAbstractTableModel):
                     rowsToInsert.append(deepcopy(row))
 
         if len(rowsToInsert) > 0:
-            self.beginInsertRows(QModelIndex(), len(self._rows), len(self._rows) + len(rowsToInsert)-1)
+            self.beginInsertRows(QModelIndex(), len(self._rows), len(self._rows) + len(rowsToInsert) - 1)
             self._rows.extend(rowsToInsert)
             self.endInsertRows()
             self.row_count_changed.emit(self.rowCount())

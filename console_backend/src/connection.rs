@@ -1,6 +1,7 @@
 use crate::constants::*;
 use crate::errors::*;
 use crate::process_messages::process_messages;
+use crate::shared_state::SharedState;
 use crate::types::*;
 use anyhow::anyhow;
 use crossbeam::channel::{unbounded, Receiver, Sender};

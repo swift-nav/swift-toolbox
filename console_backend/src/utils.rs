@@ -11,7 +11,7 @@ use serialport::available_ports;
 use crate::constants::*;
 use crate::errors::*;
 use crate::types::{CapnProtoSender, SignalCodes};
-use crate::{common_constants as cc, types::SharedState};
+use crate::{common_constants as cc, shared_state::SharedState};
 
 /// Compare to semvar strings and return true if the later_version is greater than the early version.
 ///

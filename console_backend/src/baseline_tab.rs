@@ -12,9 +12,9 @@ use crate::constants::*;
 use crate::date_conv::*;
 use crate::output::BaselineLog;
 use crate::piksi_tools_constants::EMPTY_STR;
+use crate::shared_state::SharedState;
 use crate::types::{
-    BaselineNED, CapnProtoSender, Deque, GnssModes, GpsTime, MsgSender, Result, SharedState,
-    UtcDateTime,
+    BaselineNED, CapnProtoSender, Deque, GnssModes, GpsTime, MsgSender, Result, UtcDateTime,
 };
 use crate::utils::*;
 

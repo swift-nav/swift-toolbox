@@ -11,9 +11,8 @@ use crate::constants::*;
 use crate::date_conv::*;
 use crate::output::{PosLLHLog, VelLog};
 use crate::piksi_tools_constants::EMPTY_STR;
-use crate::types::{
-    CapnProtoSender, Deque, Dops, GnssModes, GpsTime, PosLLH, SharedState, UtcDateTime, VelNED,
-};
+use crate::shared_state::SharedState;
+use crate::types::{CapnProtoSender, Deque, Dops, GnssModes, GpsTime, PosLLH, UtcDateTime, VelNED};
 use crate::utils::*;
 
 /// SolutionTab struct.

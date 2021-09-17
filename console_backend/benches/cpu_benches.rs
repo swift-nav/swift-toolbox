@@ -14,7 +14,8 @@ extern crate console_backend;
 use console_backend::{
     connection::Connection,
     process_messages,
-    types::{ClientSender, RealtimeDelay, SharedState},
+    shared_state::SharedState,
+    types::{ClientSender, RealtimeDelay},
 };
 
 const BENCH_FILEPATH: &str = "./tests/data/piksi-relay.sbp";

@@ -24,7 +24,11 @@ use crate::connection::Connection;
 use crate::constants::PAUSE_LOOP_SLEEP_DURATION_MS;
 use crate::errors::UNABLE_TO_CLONE_UPDATE_SHARED;
 use crate::log_panel::handle_log_msg;
-use crate::types::*;
+use crate::shared_state::SharedState;
+use crate::types::{
+    BaselineNED, CapnProtoSender, Dops, GpsTime, MsgSender, ObservationMsg, PosLLH, RealtimeDelay,
+    Result, Specan, VelNED,
+};
 use crate::update_tab;
 use crate::utils::{close_frontend, refresh_navbar};
 use crate::Tabs;

@@ -4,7 +4,8 @@ use capnp::message::Builder;
 
 use crate::constants::{MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER, NUM_POINTS};
 use crate::errors::GET_MUT_OBJECT_FAILURE;
-use crate::types::{CapnProtoSender, Deque, SharedState};
+use crate::shared_state::SharedState;
+use crate::types::{CapnProtoSender, Deque};
 use crate::utils::serialize_capnproto_builder;
 
 /// AdvancedMagnetometerTab struct.

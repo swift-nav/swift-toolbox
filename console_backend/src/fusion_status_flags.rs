@@ -14,8 +14,8 @@ use crate::errors::{
     THREAD_JOIN_FAILURE, UNABLE_TO_SEND_INS_UPDATE_FAILURE, UNABLE_TO_STOP_TIMER_THREAD_FAILURE,
     UPDATE_STATUS_LOCK_MUTEX_FAILURE,
 };
-use crate::types::ArcBool;
-use crate::types::{CapnProtoSender, SharedState};
+use crate::shared_state::SharedState;
+use crate::types::{ArcBool, CapnProtoSender};
 use crate::utils::serialize_capnproto_builder;
 
 const STATUS_PERIOD: f64 = 1.0;

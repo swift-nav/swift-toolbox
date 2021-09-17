@@ -298,6 +298,9 @@ pub fn server_recv_thread(
                         };
                         shared_state_clone.set_write_setting(Some(req));
                     }
+                    m::message::AdvancedSystemMonitorStatusFront(Ok(_)) => {
+                        shared_state_clone.set_reset_device(true);
+                    }
                     _ => {
                         error!("unknown message from front-end");
                     }

@@ -24,7 +24,9 @@ use ordered_float::OrderedFloat;
 use sbp::codec::dencode::{FramedWrite, IterSinkExt};
 use sbp::codec::sbp::SbpEncoder;
 use sbp::link::Event;
-use sbp::messages::piksi::{MsgSpecan, MsgSpecanDep};
+use sbp::messages::piksi::{
+    Latency, MsgSpecan, MsgSpecanDep, MsgUartState, MsgUartStateDepa, Period,
+};
 use sbp::messages::{
     navigation::{
         MsgBaselineNED, MsgBaselineNEDDepA, MsgDops, MsgDopsDepA, MsgGPSTime, MsgGPSTimeDepA,
@@ -194,6 +196,48 @@ impl Clone for ArcBool {
 pub enum RealtimeDelay {
     On,
     Off,
+}
+
+// Advanced System Monitor Types.
+// Struct with shared fields for various UartState Message types.
+pub struct UartStateFields {
+    pub latency: Latency,
+    pub obs_period: Option<Period>,
+}
+
+// Enum wrapping around various UartState Message types.
+#[derive(Debug, Clone)]
+#[allow(clippy::upper_case_acronyms)]
+pub enum UartState {
+    MsgUartState(MsgUartState),
+    MsgUartStateDepa(MsgUartStateDepa),
+}
+
+impl UartState {
+    pub fn fields(&self) -> UartStateFields {
+        let (latency, obs_period) = match self {
+            UartState::MsgUartState(msg) => (msg.latency.clone(), Some(msg.obs_period.clone())),
+
+            UartState::MsgUartStateDepa(msg) => (msg.latency.clone(), None),
+        };
+        UartStateFields {
+            latency,
+            obs_period,
+        }
+    }
+}
+
+impl Event for UartState {
+    const MESSAGE_TYPES: &'static [u16] =
+        &[MsgUartState::MESSAGE_TYPE, MsgUartStateDepa::MESSAGE_TYPE];
+
+    fn from_sbp(msg: SBP) -> Self {
+        match msg {
+            SBP::MsgUartState(m) => UartState::MsgUartState(m),
+            SBP::MsgUartStateDepa(m) => UartState::MsgUartStateDepa(m),
+            _ => unreachable!(),
+        }
+    }
 }
 
 // Enum wrapping around various Vel NED Message types.

@@ -11,8 +11,10 @@ use sbp::{
         navigation::{MsgAgeCorrections, MsgPosLLHCov, MsgUtcTime, MsgVelNED},
         observation::MsgObsDepA,
         orientation::{MsgAngularRate, MsgBaselineHeading, MsgOrientEuler},
-        piksi::MsgCommandResp,
-        system::{MsgHeartbeat, MsgInsStatus, MsgInsUpdates},
+        piksi::{MsgCommandResp, MsgDeviceMonitor, MsgThreadState},
+        system::{
+            MsgCsacTelemetry, MsgCsacTelemetryLabels, MsgHeartbeat, MsgInsStatus, MsgInsUpdates,
+        },
         tracking::{MsgMeasurementState, MsgTrackingState},
         SBPMessage,
     },
@@ -20,7 +22,6 @@ use sbp::{
     serialize::SbpSerialize,
 };
 
-use crate::connection::Connection;
 use crate::constants::PAUSE_LOOP_SLEEP_DURATION_MS;
 use crate::errors::UNABLE_TO_CLONE_UPDATE_SHARED;
 use crate::log_panel::handle_log_msg;
@@ -32,6 +33,7 @@ use crate::types::{
 use crate::update_tab;
 use crate::utils::{close_frontend, refresh_navbar};
 use crate::Tabs;
+use crate::{connection::Connection, types::UartState};
 
 pub fn process_messages<S>(
     conn: Connection,
@@ -100,6 +102,27 @@ where
         tabs.update.lock().unwrap().handle_command_resp(msg);
     });
 
+    link.register(|tabs: &Tabs<S>, msg: MsgCsacTelemetry| {
+        tabs.advanced_system_monitor
+            .lock()
+            .unwrap()
+            .handle_csac_telemetry(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: MsgCsacTelemetryLabels| {
+        tabs.advanced_system_monitor
+            .lock()
+            .unwrap()
+            .handle_csac_telemetry_labels(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: MsgDeviceMonitor| {
+        tabs.advanced_system_monitor
+            .lock()
+            .unwrap()
+            .handle_device_monitor(msg);
+    });
+
     link.register(|tabs: &Tabs<S>, msg: BaselineNED| {
         tabs.baseline
             .lock()
@@ -118,6 +141,10 @@ where
     });
 
     link.register(|tabs: &Tabs<S>, _: MsgHeartbeat| {
+        tabs.advanced_system_monitor
+            .lock()
+            .unwrap()
+            .handle_heartbeat();
         tabs.status_bar.lock().unwrap().handle_heartbeat();
     });
 
@@ -193,6 +220,13 @@ where
             .handle_specan(msg);
     });
 
+    link.register(|tabs: &Tabs<S>, msg: MsgThreadState| {
+        tabs.advanced_system_monitor
+            .lock()
+            .unwrap()
+            .handle_thread_state(msg);
+    });
+
     link.register(|tabs: &Tabs<S>, msg: MsgTrackingState| {
         tabs.tracking_signals
             .lock()
@@ -207,6 +241,13 @@ where
     link.register(|tabs: &Tabs<S>, msg: MsgVelNED| {
         // why does this tab not take both VelNED messages?
         tabs.solution_velocity.lock().unwrap().handle_vel_ned(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: UartState| {
+        tabs.advanced_system_monitor
+            .lock()
+            .unwrap()
+            .handle_uart_state(msg);
     });
 
     link.register(|tabs: &Tabs<S>, msg: MsgUtcTime| {

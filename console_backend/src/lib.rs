@@ -1,6 +1,7 @@
 pub mod advanced_ins_tab;
 pub mod advanced_magnetometer_tab;
 pub mod advanced_spectrum_analyzer_tab;
+pub mod advanced_system_monitor_tab;
 pub mod baseline_tab;
 pub mod cli_options;
 pub mod console_backend_capnp {
@@ -41,7 +42,8 @@ use std::sync::Mutex;
 
 use crate::{
     advanced_ins_tab::AdvancedInsTab, advanced_magnetometer_tab::AdvancedMagnetometerTab,
-    advanced_spectrum_analyzer_tab::AdvancedSpectrumAnalyzerTab, baseline_tab::BaselineTab,
+    advanced_spectrum_analyzer_tab::AdvancedSpectrumAnalyzerTab,
+    advanced_system_monitor_tab::AdvancedSystemMonitorTab, baseline_tab::BaselineTab,
     main_tab::MainTab, observation_tab::ObservationTab, settings_tab::SettingsTab,
     solution_tab::SolutionTab, solution_velocity_tab::SolutionVelocityTab, status_bar::StatusBar,
     tracking_signals_tab::TrackingSignalsTab, update_tab::UpdateTab,
@@ -51,6 +53,7 @@ struct Tabs<'link, S: types::CapnProtoSender> {
     pub main: Mutex<MainTab<S>>,
     pub advanced_ins: Mutex<AdvancedInsTab<S>>,
     pub advanced_magnetometer: Mutex<AdvancedMagnetometerTab<S>>,
+    pub advanced_system_monitor: Mutex<AdvancedSystemMonitorTab<S>>,
     pub baseline: Mutex<BaselineTab<S>>,
     pub tracking_signals: Mutex<TrackingSignalsTab<S>>,
     pub solution: Mutex<SolutionTab<S>>,
@@ -75,6 +78,12 @@ impl<'link, S: types::CapnProtoSender> Tabs<'link, S> {
             advanced_magnetometer: AdvancedMagnetometerTab::new(
                 shared_state.clone(),
                 client_sender.clone(),
+            )
+            .into(),
+            advanced_system_monitor: AdvancedSystemMonitorTab::new(
+                shared_state.clone(),
+                client_sender.clone(),
+                msg_sender.clone(),
             )
             .into(),
             baseline: BaselineTab::new(

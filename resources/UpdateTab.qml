@@ -20,7 +20,7 @@ Item {
         text += "to ensure proper behavior.\n\n";
         text += "Please visit support.swiftnav.com to ";
         text += "download the latest compatible version.\n\n";
-        text += "Current Hardware revision :\n\t";
+        text += "Current Console version :\n\t";
         text += currentVersion;
         text += "\nLast supported Console Version: \n\t";
         text += latestVersion;

@@ -95,11 +95,12 @@ QtObject {
         readonly property int firmwareVersionLocalFileButtonWidth: 50
         readonly property int fileioDestinationPathButtonWidth: 150
         readonly property string dotDotDotLabel: "..."
-        readonly property int popupHeight: 200
-        readonly property int consoleVersionPopupWidth: 400
-        readonly property int fwVersionPopupWidth: 200
-        readonly property int upgradeSerialDialogWidth: 400
-        readonly property int v2DownloadDialogWidth: 400
+        readonly property int popupLargeHeight: 275
+        readonly property int popupSmallHeight: 230
+        readonly property int consoleVersionDialogWidth: 450
+        readonly property int fwVersionDialogWidth: 300
+        readonly property int upgradeSerialDialogWidth: 450
+        readonly property int v2DownloadDialogWidth: 300
         readonly property int popupDelayMilliseconds: 3000
     }
 

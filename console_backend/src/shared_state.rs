@@ -263,14 +263,6 @@ impl SharedState {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).console_version.clone()
     }
-    pub fn set_serial_number(&self, serial_number: String) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        shared_data.serial_number = Some(serial_number);
-    }
-    pub fn serial_number(&self) -> Option<String> {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        shared_data.serial_number.clone()
-    }
     pub fn set_firmware_version(&self, firmware_version: String) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         shared_data.firmware_version = Some(firmware_version);
@@ -327,7 +319,6 @@ pub struct SharedStateInner {
     pub(crate) update_tab_sender: Option<Sender<Option<UpdateTabUpdate>>>,
     pub(crate) settings_tab: SettingsTabState,
     pub(crate) console_version: String,
-    pub(crate) serial_number: Option<String>,
     pub(crate) firmware_version: Option<String>,
     pub(crate) dgnss_enabled: bool,
 }
@@ -351,7 +342,6 @@ impl SharedStateInner {
             update_tab_sender: None,
             settings_tab: SettingsTabState::new(),
             console_version: String::from(include_str!("version.txt").trim()),
-            serial_number: None,
             firmware_version: None,
             dgnss_enabled: false,
         }

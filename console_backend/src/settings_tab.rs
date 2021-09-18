@@ -17,7 +17,6 @@ use crate::shared_state::SharedState;
 use crate::types::{CapnProtoSender, Error, MsgSender, Result};
 use crate::utils::*;
 
-const SERIAL_NUMBER_SETTING_KEY: &str = "serial_number";
 const FIRMWARE_VERSION_SETTING_KEY: &str = "firmware_version";
 const DGNSS_SOLUTION_MODE_SETTING_KEY: &str = "dgnss_solution_mode";
 
@@ -207,9 +206,6 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
                     continue;
                 }
             };
-            if SERIAL_NUMBER_SETTING_KEY == setting.name {
-                self.shared_state.set_serial_number(setting.clone().value);
-            }
             if FIRMWARE_VERSION_SETTING_KEY == setting.name {
                 self.shared_state
                     .set_firmware_version(setting.clone().value);

@@ -140,11 +140,7 @@ impl<S: CapnProtoSender> StatusBar<S> {
         } else {
             return;
         };
-        let serial_number = if let Some(sn) = self.shared_state.serial_number() {
-            sn
-        } else {
-            String::from(EMPTY_STR)
-        };
+
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
@@ -157,10 +153,7 @@ impl<S: CapnProtoSender> StatusBar<S> {
         status_bar_status.set_ins(&sb_update.ins_status);
         status_bar_status.set_data_rate(&sb_update.data_rate);
         status_bar_status.set_solid_connection(sb_update.solid_connection);
-        status_bar_status.set_title(&format!(
-            "{}(PK{}) Swift Console {}",
-            self.port, serial_number, self.version
-        ));
+        status_bar_status.set_title(&format!("{} Swift Console {}", self.port, self.version));
 
         self.client_sender
             .send_data(serialize_capnproto_builder(builder));

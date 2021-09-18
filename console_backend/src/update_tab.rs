@@ -570,14 +570,12 @@ fn firmware_upgrade_commit_to_flash(
 }
 
 fn send_file_to_device(update_tab_context: UpdateTabContext, fileio: &mut Fileio) {
-    // TODO (john-michaelburke) - [CPP-313] - Fix fileio hang on sending arbitrary file.
-    // For now we will not block other downloading and upgrading operations.
-    // update_tab_context.set_upgrading(true);
+    update_tab_context.set_upgrading(true);
     update_tab_context.fw_log_clear();
     if let Err(err) = send_file(update_tab_context.clone(), fileio) {
         update_tab_context.fw_log_append(err.to_string());
     }
-    // update_tab_context.set_upgrading(false);
+    update_tab_context.set_upgrading(false);
 }
 
 fn send_file(update_tab_context: UpdateTabContext, fileio: &mut Fileio) -> anyhow::Result<()> {
@@ -587,36 +585,36 @@ fn send_file(update_tab_context: UpdateTabContext, fileio: &mut Fileio) -> anyho
         if !filepath.exists() || !filepath.is_file() {
             return Err(anyhow!("Path provided is not a file or does not exist."));
         }
-        if let Some(destination_) = update_tab_context.fileio_destination_filepath() {
-            let destination = destination_.to_string_lossy();
-            if let Ok(file_blob) = std::fs::File::open(filepath.clone()) {
-                update_tab_context.fw_log_append(format!(
-                    "Transferring file to device location {}",
-                    destination.clone()
-                ));
-                update_tab_context.fw_log_append(String::from(""));
-                let size = file_blob.metadata()?.len() as usize;
-                let mut bytes_written = 0;
-                update_tab_context.fw_log_replace_last("Writing 0.0%...".to_string());
-                match fileio.overwrite_with_progress(destination.to_string(), file_blob, |n| {
-                    bytes_written += n;
-                    let progress = (bytes_written as f64) / (size as f64) * 100.0;
-                    update_tab_context.fw_log_replace_last(format!("Writing {:.2}%...", progress));
-                }) {
-                    Ok(_) => {
-                        update_tab_context.fw_log_append(String::from("File transfer complete."));
-                    }
-                    Err(err) => {
-                        update_tab_context.fw_log_append(String::from("File transfer failed."));
-                        update_tab_context.fw_log_append(err.to_string());
-                        return Err(err);
-                    }
-                }
-            } else {
-                return Err(anyhow!("Failed to read file, {:?}.", filepath));
+        let destination = String::from(
+            update_tab_context
+                .fileio_destination_filepath()
+                .ok_or_else(|| anyhow!("No destination filepath provided."))?
+                .to_string_lossy(),
+        );
+        let file_blob = std::fs::File::open(&filepath)
+            .map_err(|e| anyhow!("Failed to read file {}: {}", filepath.display(), e))?;
+
+        update_tab_context.fw_log_append(format!(
+            "Transferring file to device location {}",
+            destination
+        ));
+        update_tab_context.fw_log_append(String::from(""));
+        let size = file_blob.metadata()?.len() as usize;
+        let mut bytes_written = 0;
+        update_tab_context.fw_log_replace_last("Writing 0.0%...".to_string());
+        match fileio.overwrite_with_progress(destination, file_blob, |n| {
+            bytes_written += n;
+            let progress = (bytes_written as f64) / (size as f64) * 100.0;
+            update_tab_context.fw_log_replace_last(format!("Writing {:.2}%...", progress));
+        }) {
+            Ok(_) => {
+                update_tab_context.fw_log_append(String::from("File transfer complete."));
             }
-        } else {
-            return Err(anyhow!("No destination filepath provided."));
+            Err(err) => {
+                update_tab_context.fw_log_append(String::from("File transfer failed."));
+                update_tab_context.fw_log_append(err.to_string());
+                return Err(err);
+            }
         }
     }
     Ok(())
@@ -896,15 +894,17 @@ impl UpdateTabContext {
         let fw_log = self.fw_log();
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         let latest_firmware_version = if !(*shared_data).debug {
-            if let Ok(version) = (*shared_data).update_downloader.latest_firmware_version() {
-                version
-            } else {
-                String::from("")
-            }
+            (*shared_data)
+                .update_downloader
+                .latest_firmware_version()
+                .unwrap_or_default()
         } else {
             String::from("")
         };
-        let current_firmware_version = (*shared_data).current_firmware_version.clone().unwrap_or_default();
+        let current_firmware_version = (*shared_data)
+            .current_firmware_version
+            .clone()
+            .unwrap_or_default();
         let serial_prompt = (*shared_data).serial_prompt;
         let console_outdated = (*shared_data).console_outdated;
         let fw_outdated = (*shared_data).firmware_outdated;
@@ -912,18 +912,14 @@ impl UpdateTabContext {
         let downloading = (*shared_data).downloading;
         let upgrading = (*shared_data).upgrading;
         let firmware_directory = (*shared_data).firmware_directory.clone();
-        let fileio_destination_filepath =
-            if let Some(filepath) = (*shared_data).fileio_destination_filepath.clone() {
-                filepath
-            } else {
-                PathBuf::from("")
-            };
-        let fileio_local_filepath =
-            if let Some(filepath) = (*shared_data).fileio_local_filepath.clone() {
-                filepath
-            } else {
-                PathBuf::from("")
-            };
+        let fileio_destination_filepath = (*shared_data)
+            .fileio_destination_filepath
+            .clone()
+            .unwrap_or_default();
+        let fileio_local_filepath = (*shared_data)
+            .fileio_local_filepath
+            .clone()
+            .unwrap_or_default();
         let firmware_filename = if let Some(firmware_local_filepath_) =
             (*shared_data).firmware_local_filepath.clone()
         {
@@ -935,18 +931,14 @@ impl UpdateTabContext {
         } else {
             String::new()
         };
-        let console_version_current =
-            if let Some(version) = (*shared_data).current_console_version.clone() {
-                version
-            } else {
-                String::from("")
-            };
-        let console_version_latest =
-            if let Some(version) = (*shared_data).latest_console_version.clone() {
-                version
-            } else {
-                String::from("")
-            };
+        let console_version_current = (*shared_data)
+            .current_console_version
+            .clone()
+            .unwrap_or_default();
+        let console_version_latest = (*shared_data)
+            .latest_console_version
+            .clone()
+            .unwrap_or_default();
         UpdatePacket {
             current_firmware_version,
             latest_firmware_version,

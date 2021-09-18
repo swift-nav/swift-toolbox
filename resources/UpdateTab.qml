@@ -22,7 +22,7 @@ Item {
         text += "download the latest compatible version.\n\n";
         text += "Current Console version :\n\t";
         text += currentVersion;
-        text += "\nLast supported Console Version: \n\t";
+        text += "\nLastest supported Console version: \n\t";
         text += latestVersion;
         text += +"\n\n";
         return text;

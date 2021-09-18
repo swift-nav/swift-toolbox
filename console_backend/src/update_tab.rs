@@ -904,12 +904,7 @@ impl UpdateTabContext {
         } else {
             String::from("")
         };
-        let current_firmware_version =
-            if let Some(version) = (*shared_data).current_firmware_version.clone() {
-                version
-            } else {
-                String::from("")
-            };
+        let current_firmware_version = (*shared_data).current_firmware_version.clone().unwrap_or_default();
         let serial_prompt = (*shared_data).serial_prompt;
         let console_outdated = (*shared_data).console_outdated;
         let fw_outdated = (*shared_data).firmware_outdated;

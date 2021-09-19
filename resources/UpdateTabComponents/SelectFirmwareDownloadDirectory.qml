@@ -48,7 +48,16 @@ Item {
                     fwDirectoryEditing = true;
                 }
                 onEditingFinished: {
-                    data_model.update_tab([false, false, false, false], null, text, null, null, null);
+                    let downloadLatestFirmware = false;
+                    let updateFirmware = false;
+                    let sendFileToDevice = false;
+                    let serialPromptConfirm = false;
+                    let updateLocalFilepath = null;
+                    let downloadDirectory = text;
+                    let fileioLocalFilepath = null;
+                    let fileioDestinationFilepath = null;
+                    let updateLocalFilename = null;
+                    data_model.update_tab([downloadLatestFirmware, updateFirmware, sendFileToDevice, serialPromptConfirm], updateLocalFilepath, downloadDirectory, fileioLocalFilepath, fileioDestinationFilepath, updateLocalFilename);
                     fwDirectoryEditing = false;
                 }
             }
@@ -90,7 +99,16 @@ Item {
             selectMultiple: false
             onAccepted: {
                 var filepath = Utils.fileUrlToString(fileDialog.folder);
-                data_model.update_tab([false, false, false, false], null, filepath, null, null, null);
+                let downloadLatestFirmware = false;
+                let updateFirmware = false;
+                let sendFileToDevice = false;
+                let serialPromptConfirm = false;
+                let updateLocalFilepath = null;
+                let downloadDirectory = filepath;
+                let fileioLocalFilepath = null;
+                let fileioDestinationFilepath = null;
+                let updateLocalFilename = null;
+                data_model.update_tab([downloadLatestFirmware, updateFirmware, sendFileToDevice, serialPromptConfirm], updateLocalFilepath, downloadDirectory, fileioLocalFilepath, fileioDestinationFilepath, updateLocalFilename);
             }
             onRejected: {
             }

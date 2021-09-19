@@ -41,7 +41,16 @@ Item {
                 topInset: Constants.updateTab.buttonInset
                 bottomInset: Constants.updateTab.buttonInset
                 onClicked: {
-                    data_model.update_tab([true, false, false, false], null, null, null, null, null);
+                    let downloadLatestFirmware = true;
+                    let updateFirmware = false;
+                    let sendFileToDevice = false;
+                    let serialPromptConfirm = false;
+                    let updateLocalFilepath = null;
+                    let downloadDirectory = null;
+                    let fileioLocalFilepath = null;
+                    let fileioDestinationFilepath = null;
+                    let updateLocalFilename = null;
+                    data_model.update_tab([downloadLatestFirmware, updateFirmware, sendFileToDevice, serialPromptConfirm], updateLocalFilepath, downloadDirectory, fileioLocalFilepath, fileioDestinationFilepath, updateLocalFilename);
                 }
 
                 Text {

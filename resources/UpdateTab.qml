@@ -14,19 +14,41 @@ Item {
     property bool popupLock: false
 
     function consoleOutdatedDialogText(currentVersion, latestVersion) {
-        return ["Your console is out of date and may be incompatible with current firmware. We highly recommend upgrading to ensure proper behavior.\n", "Please visit support.swiftnav.com to download the latest version.\n", "Current Console version:", "\t" + currentVersion, "Latest Console version:", "\t" + latestVersion].join("\n");
+        let text = "";
+        text += "Your console is out of date and may be incompatible with current firmware. We highly recommend upgrading to ensure proper behavior.\n\n";
+        text += "Please visit support.swiftnav.com to download the latest version.\n\n";
+        text += "Current Console version:\n";
+        text += "\t" + currentVersion + "\n";
+        text += "Latest Console version:\n";
+        text += "\t" + latestVersion;
+        return text;
     }
 
     function upgradeSerialConfirmDialogText() {
-        return ["Upgrading your device via UART / RS232 may take up to 30 minutes.\n", "If the device you are upgrading has an accessible USB host port, it is recommended to instead follow the \'USB Flashdrive Upgrade Procedure\' that now appears in the Firmware upgrade status box.\n", "Are you sure you want to continue upgrading over serial?"].join("\n");
+        let text = "";
+        text += "Upgrading your device via UART / RS232 may take up to 30 minutes.\n\n";
+        text += "If the device you are upgrading has an accessible USB host port, it is recommended to instead follow the \
+        \'USB Flashdrive Upgrade Procedure\' that now appears in the Firmware upgrade status box.\n\n";
+        text += "Are you sure you want to continue upgrading over serial?\n";
+        return text;
     }
 
     function firmwareV2OutdatedDialogText() {
-        return ["Upgrading to firmware v2.1.0 or later requires that the device be running firmware v2.0.0 or later. Please upgrade to firmware version 2.0.0.\n", "Would you like to download firmware version v2.0.0 now?"].join("\n");
+        let text = "";
+        text += "Upgrading to firmware v2.1.0 or later requires that the device be running firmware v2.0.0 or later. \
+        Please upgrade to firmware version 2.0.0.\n\n";
+        text += "Would you like to download firmware version v2.0.0 now?\n";
+        return text;
     }
 
     function firmwareOutdatedDialogText(latestVersion) {
-        return ["New Piksi firmware available.\n", "Please use the Update tab to update.\n", "Newest Firmware Version:", "\t" + latestVersion].join("\n");
+        let text = "";
+        text += "New Piksi firmware available.\n\n";
+        text += "Please use the Update \
+        tab to update.\n\n";
+        text += "Newest Firmware Version:\n";
+        text += "\t" + latestVersion + "\n";
+        return text;
     }
 
     width: parent.width
@@ -168,12 +190,18 @@ Item {
         title: "Update to v2.0.0"
         standardButtons: Dialog.Ok | Dialog.Cancel
         onAccepted: {
-            data_model.update_tab([true, false, false, false], null, null, null, null, null);
+            let downloadLatestFirmware = true;
+            let updateFirmware = false;
+            let sendFileToDevice = false;
+            let serialPromptConfirm = false;
+            let updateLocalFilepath = null;
+            let downloadDirectory = null;
+            let fileioLocalFilepath = null;
+            let fileioDestinationFilepath = null;
+            let updateLocalFilename = null;
+            data_model.update_tab([downloadLatestFirmware, updateFirmware, sendFileToDevice, serialPromptConfirm], updateLocalFilepath, downloadDirectory, fileioLocalFilepath, fileioDestinationFilepath, updateLocalFilename);
         }
 
-        // Label {
-        //     text: firmwareV2OutdatedDialogText()
-        // }
         contentItem: Text {
             text: firmwareV2OutdatedDialogText()
             verticalAlignment: Qt.AlignVCenter
@@ -198,12 +226,18 @@ Item {
         title: "Update device over serial connection?"
         standardButtons: Dialog.Ok | Dialog.Cancel
         onAccepted: {
-            data_model.update_tab([false, true, false, true], null, null, null, null, null);
+            let downloadLatestFirmware = false;
+            let updateFirmware = true;
+            let sendFileToDevice = false;
+            let serialPromptConfirm = true;
+            let updateLocalFilepath = null;
+            let downloadDirectory = null;
+            let fileioLocalFilepath = null;
+            let fileioDestinationFilepath = null;
+            let updateLocalFilename = null;
+            data_model.update_tab([downloadLatestFirmware, updateFirmware, sendFileToDevice, serialPromptConfirm], updateLocalFilepath, downloadDirectory, fileioLocalFilepath, fileioDestinationFilepath, updateLocalFilename);
         }
 
-        // Label {
-        //     text: upgradeSerialConfirmDialogText()
-        // }
         contentItem: Text {
             text: upgradeSerialConfirmDialogText()
             verticalAlignment: Qt.AlignVCenter
@@ -217,9 +251,6 @@ Item {
     }
 
     Dialog {
-        //     // text: firmwareV2OutdatedDialogText()
-        // }
-
         id: consoleVersionDialog
 
         x: (parent.width - Constants.sideNavBar.tabBarWidth - Constants.updateTab.consoleVersionDialogWidth) / 2
@@ -242,13 +273,10 @@ Item {
             font.pointSize: Constants.largePointSize
             wrapMode: Text.Wrap
         }
-        // Label {
 
     }
 
     Dialog {
-        // }
-
         id: fwVersionDialog
 
         x: (parent.width - Constants.sideNavBar.tabBarWidth - Constants.updateTab.fwVersionDialogWidth) / 2
@@ -271,7 +299,6 @@ Item {
             font.pointSize: Constants.largePointSize
             wrapMode: Text.Wrap
         }
-        // Label {
 
     }
 

@@ -191,6 +191,7 @@ pub fn server_recv_thread(
                             let download_latest_firmware = cv_in.get_download_latest_firmware();
                             let update_firmware = cv_in.get_update_firmware();
                             let send_file_to_device = cv_in.get_send_file_to_device();
+                            let serial_prompt_confirm = cv_in.get_serial_prompt_confirm();
                             let firmware_directory = match cv_in.get_download_directory().which() {
                                 Ok(m::update_tab_status_front::download_directory::Directory(
                                     Ok(directory),
@@ -254,18 +255,19 @@ pub fn server_recv_thread(
                                 }
                                 _ => None,
                             };
-                            update_tab_sender
-                                .send(Some(UpdateTabUpdate {
-                                    download_latest_firmware,
-                                    update_firmware,
-                                    send_file_to_device,
-                                    firmware_directory,
-                                    firmware_local_filepath,
-                                    firmware_local_filename,
-                                    fileio_local_filepath,
-                                    fileio_destination_filepath,
-                                }))
-                                .unwrap();
+                            if let Err(err) = update_tab_sender.send(Some(UpdateTabUpdate {
+                                download_latest_firmware,
+                                update_firmware,
+                                send_file_to_device,
+                                firmware_directory,
+                                firmware_local_filepath,
+                                firmware_local_filename,
+                                fileio_local_filepath,
+                                fileio_destination_filepath,
+                                serial_prompt_confirm,
+                            })) {
+                                error!("{}", err);
+                            }
                         }
                     }
                     m::message::SettingsRefreshRequest(Ok(_)) => {

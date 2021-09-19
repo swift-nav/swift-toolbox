@@ -17,6 +17,7 @@ use sbp::messages::{
     SBP,
 };
 
+use crate::errors::FILEIO_CHANNEL_SEND_FAILURE;
 use crate::types::{MsgSender, Result};
 
 const MAX_RETRIES: usize = 20;
@@ -88,7 +89,9 @@ impl<'a> Fileio<'a> {
                         backoff.snooze();
                     }
                     send_msg(sequence, offset)?;
-                    req_tx.send((sequence, ReadReq::new(offset))).unwrap();
+                    req_tx
+                        .send((sequence, ReadReq::new(offset)))
+                        .expect(FILEIO_CHANNEL_SEND_FAILURE);
                     offset += READ_CHUNK_SIZE as u32;
                     sequence += 1;
                     open_requests.fetch_add(1);
@@ -98,7 +101,7 @@ impl<'a> Fileio<'a> {
             });
 
             let key = self.link.register(move |msg: MsgFileioReadResp| {
-                res_tx.send(msg).unwrap();
+                res_tx.send(msg).expect(FILEIO_CHANNEL_SEND_FAILURE);
             });
 
             loop {
@@ -127,7 +130,7 @@ impl<'a> Fileio<'a> {
                         open_requests.fetch_sub(1);
                         if !last_sent && bytes_read != READ_CHUNK_SIZE as usize {
                             last_sent = true;
-                            stop_req_tx.send(true).unwrap();
+                            stop_req_tx.send(true).expect(FILEIO_CHANNEL_SEND_FAILURE);
                         }
                         if last_sent && open_requests.load() == 0 {
                             break
@@ -230,7 +233,9 @@ impl<'a> Fileio<'a> {
                     let chunk_len = std::cmp::min(state.chunk_size, data_len - slice_offset);
                     let req = WriteReq::new(slice_offset, end_offset, chunk_len < state.chunk_size);
                     send_msg(&state, &req)?;
-                    req_tx.send((state.clone(), req)).unwrap();
+                    req_tx
+                        .send((state.clone(), req))
+                        .expect(FILEIO_CHANNEL_SEND_FAILURE);
                     state.update(chunk_len);
                     slice_offset += chunk_len;
                     open_requests.fetch_add(1);
@@ -240,7 +245,7 @@ impl<'a> Fileio<'a> {
             });
 
             let key = self.link.register(move |msg: MsgFileioWriteResp| {
-                res_tx.send(msg).unwrap();
+                res_tx.send(msg).expect(FILEIO_CHANNEL_SEND_FAILURE);
             });
 
             let mut pending: HashMap<u32, (WriteState, WriteReq)> = HashMap::new();
@@ -294,7 +299,7 @@ impl<'a> Fileio<'a> {
         let (tx, rx) = channel::unbounded();
 
         let key = self.link.register(move |msg: MsgFileioReadDirResp| {
-            tx.send(msg).unwrap();
+            tx.send(msg).expect(FILEIO_CHANNEL_SEND_FAILURE);
         });
 
         self.sender.send(SBP::from(MsgFileioReadDirReq {
@@ -358,10 +363,11 @@ impl<'a> Fileio<'a> {
         let sequence = new_sequence();
         let (stop_tx, stop_rx) = channel::bounded(0);
         let (tx, rx) = channel::bounded(1);
-
+        let stop_tx_clone = stop_tx.clone();
         let key = self.link.register(move |msg: MsgFileioConfigResp| {
-            tx.send(FileioConfig::new(msg)).unwrap();
-            stop_tx.send(true).unwrap();
+            tx.send(FileioConfig::new(msg))
+                .expect(FILEIO_CHANNEL_SEND_FAILURE);
+            stop_tx_clone.send(true).expect(FILEIO_CHANNEL_SEND_FAILURE);
         });
 
         let sender = &self.sender;
@@ -376,10 +382,12 @@ impl<'a> Fileio<'a> {
                 }
             });
 
-            match rx.recv_timeout(CONFIG_REQ_TIMEOUT) {
+            let res = match rx.recv_timeout(CONFIG_REQ_TIMEOUT) {
                 Ok(config) => config,
                 Err(_) => Default::default(),
-            }
+            };
+            stop_tx.send(true).expect(FILEIO_CHANNEL_SEND_FAILURE);
+            res
         })
         .unwrap();
 

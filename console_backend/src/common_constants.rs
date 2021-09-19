@@ -237,6 +237,18 @@ pub enum Keys {
     TITLE,
     #[strum(serialize = "IMPORT_STATUS")]
     IMPORT_STATUS,
+    #[strum(serialize = "FW_OUTDATED")]
+    FW_OUTDATED,
+    #[strum(serialize = "FW_V2_OUTDATED")]
+    FW_V2_OUTDATED,
+    #[strum(serialize = "SERIAL_PROMPT")]
+    SERIAL_PROMPT,
+    #[strum(serialize = "CONSOLE_OUTDATED")]
+    CONSOLE_OUTDATED,
+    #[strum(serialize = "CONSOLE_VERSION_CURRENT")]
+    CONSOLE_VERSION_CURRENT,
+    #[strum(serialize = "CONSOLE_VERSION_LATEST")]
+    CONSOLE_VERSION_LATEST,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]

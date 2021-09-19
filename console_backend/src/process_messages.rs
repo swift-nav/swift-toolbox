@@ -224,6 +224,7 @@ where
         .lock()
         .expect(UNABLE_TO_CLONE_UPDATE_SHARED)
         .clone_update_tab_context();
+    update_tab_context.set_serial_prompt(conn.is_serial());
     let client_send_clone = client_send.clone();
     let (update_tab_tx, update_tab_rx) = tabs.update.lock().unwrap().clone_channel();
     let settings_parker = Parker::new();
@@ -237,11 +238,12 @@ where
                 settings_parker.park();
             }
         });
-        let handle = scope.spawn(|_| {
+        scope.spawn(|_| {
             update_tab::update_tab_thread(
                 update_tab_tx.clone(),
                 update_tab_rx,
                 update_tab_context,
+                shared_state.clone(),
                 client_send_clone,
                 source.stateless_link(),
                 msg_sender.clone(),
@@ -284,10 +286,8 @@ where
             }
             log::logger().flush();
         }
-        if update_tab_tx.send(None).is_ok() {
-            if let Err(err) = handle.join() {
-                error!("Error joining update tab, {:?}", err);
-            }
+        if let Err(err) = update_tab_tx.send(None) {
+            error!("Issue stopping update tab: {}", err);
         }
         if conn.close_when_done() {
             shared_state.set_running(false, client_send.clone());

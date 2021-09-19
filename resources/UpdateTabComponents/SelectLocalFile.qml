@@ -47,7 +47,16 @@ Item {
                     localFileTextEditing = true;
                 }
                 onEditingFinished: {
-                    data_model.update_tab([false, false, false], null, null, null, null, text);
+                    let downloadLatestFirmware = false;
+                    let updateFirmware = false;
+                    let sendFileToDevice = false;
+                    let serialPromptConfirm = false;
+                    let updateLocalFilepath = null;
+                    let downloadDirectory = null;
+                    let fileioLocalFilepath = null;
+                    let fileioDestinationFilepath = null;
+                    let updateLocalFilename = text;
+                    data_model.update_tab([downloadLatestFirmware, updateFirmware, sendFileToDevice, serialPromptConfirm], updateLocalFilepath, downloadDirectory, fileioLocalFilepath, fileioDestinationFilepath, updateLocalFilename);
                     localFileTextEditing = false;
                 }
 
@@ -103,8 +112,16 @@ Item {
             nameFilters: ["Binary Image Set (*.bin)"]
             onAccepted: {
                 var filepath = Utils.fileUrlToString(fileDialog.fileUrl);
-                data_model.update_tab([false, false, false], filepath, null, null, null, null);
-                return ;
+                let downloadLatestFirmware = false;
+                let updateFirmware = false;
+                let sendFileToDevice = false;
+                let serialPromptConfirm = false;
+                let updateLocalFilepath = filepath;
+                let downloadDirectory = null;
+                let fileioLocalFilepath = null;
+                let fileioDestinationFilepath = null;
+                let updateLocalFilename = null;
+                data_model.update_tab([downloadLatestFirmware, updateFirmware, sendFileToDevice, serialPromptConfirm], updateLocalFilepath, downloadDirectory, fileioLocalFilepath, fileioDestinationFilepath, updateLocalFilename);
             }
             onRejected: {
             }

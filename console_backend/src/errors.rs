@@ -16,3 +16,5 @@ pub(crate) const SERVER_STATE_DISCONNECT_FAILURE: &str = "server state disconnec
 pub(crate) const CONSOLE_LOG_JSON_TO_STRING_FAILURE: &str = "unable to convert json to string";
 pub(crate) const CROSSBEAM_SCOPE_UNWRAP_FAILURE: &str = "unable to unwrap crossbeam scope";
 pub(crate) const UNABLE_TO_CLONE_UPDATE_SHARED: &str = "unable to clone update shared";
+pub(crate) const FILEIO_CHANNEL_SEND_FAILURE: &str =
+    "failure attempting to send via fileio channel";

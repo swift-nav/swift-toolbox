@@ -11,6 +11,7 @@ Item {
     property alias localFileText: selectLocalFile.localFileText
     property alias localFileTextEditing: selectLocalFile.localFileTextEditing
     property alias upgradeButtonEnable: updateFirmwareButton.enabled
+    property bool isSerialConnected: false
 
     Rectangle {
         width: parent.width
@@ -136,7 +137,19 @@ Item {
                     topInset: Constants.updateTab.buttonInset
                     bottomInset: Constants.updateTab.buttonInset
                     onClicked: {
-                        data_model.update_tab([false, true, false], null, null, null, null, null);
+                        let downloadLatestFirmware = false;
+                        let updateFirmware = true;
+                        let sendFileToDevice = false;
+                        let serialPromptConfirm = false;
+                        let updateLocalFilepath = null;
+                        let downloadDirectory = null;
+                        let fileioLocalFilepath = null;
+                        let fileioDestinationFilepath = null;
+                        let updateLocalFilename = null;
+                        data_model.update_tab([downloadLatestFirmware, updateFirmware, sendFileToDevice, serialPromptConfirm], updateLocalFilepath, downloadDirectory, fileioLocalFilepath, fileioDestinationFilepath, updateLocalFilename);
+                        if (isSerialConnected)
+                            dialog.open();
+
                     }
 
                     Text {

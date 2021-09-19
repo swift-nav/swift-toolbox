@@ -167,7 +167,7 @@ args = [
 [tasks.store-version]
 script_runner = "@shell"
 script = '''
-echo $(git describe --tags) > console_backend/src/version.txt
+git describe --tags --always > console_backend/src/version.txt
 '''
 
 [tasks.install-backend]

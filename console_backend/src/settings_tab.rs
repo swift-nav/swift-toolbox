@@ -17,6 +17,9 @@ use crate::shared_state::SharedState;
 use crate::types::{CapnProtoSender, Error, MsgSender, Result};
 use crate::utils::*;
 
+const FIRMWARE_VERSION_SETTING_KEY: &str = "firmware_version";
+const DGNSS_SOLUTION_MODE_SETTING_KEY: &str = "dgnss_solution_mode";
+
 pub struct SettingsTab<'link, S> {
     client_sender: S,
     shared_state: SharedState,
@@ -203,6 +206,13 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
                     continue;
                 }
             };
+            if FIRMWARE_VERSION_SETTING_KEY == setting.name {
+                self.shared_state
+                    .set_firmware_version(setting.clone().value);
+            }
+            if DGNSS_SOLUTION_MODE_SETTING_KEY == setting.name {
+                self.shared_state.set_dgnss_enabled(setting.clone().value);
+            }
 
             // update possible enum values with the possible values returned by the device
             if !setting.fmt_type.is_empty() && current_setting.setting.kind == SettingKind::Enum {

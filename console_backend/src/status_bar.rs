@@ -72,14 +72,18 @@ impl<S: CapnProtoSender> StatusBar<S> {
     pub fn new(shared_state: SharedState, client_sender: S) -> StatusBar<S> {
         let heartbeat_data = Heartbeat::new();
         let is_running = ArcBool::new();
-        let version = String::from(include_str!("version.txt").trim());
+        let version = shared_state.console_version();
         StatusBar {
             client_sender,
             shared_state: shared_state.clone(),
             heartbeat_data: heartbeat_data.clone(),
             port: shared_state.current_connection(),
             version,
-            heartbeat_handler: StatusBar::<S>::heartbeat_thread(is_running.clone(), heartbeat_data),
+            heartbeat_handler: StatusBar::<S>::heartbeat_thread(
+                is_running.clone(),
+                heartbeat_data,
+                shared_state,
+            ),
             is_running,
         }
     }
@@ -89,14 +93,19 @@ impl<S: CapnProtoSender> StatusBar<S> {
     /// # Parameters:
     /// - `client_send`: Client Sender channel for communication from backend to frontend.
     /// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
-    fn heartbeat_thread(is_running: ArcBool, heartbeat_data: Heartbeat) -> JoinHandle<()> {
+    fn heartbeat_thread(
+        is_running: ArcBool,
+        heartbeat_data: Heartbeat,
+        shared_state: SharedState,
+    ) -> JoinHandle<()> {
         is_running.set(true);
         let mut last_time = Instant::now();
         spawn(move || loop {
             if !is_running.get() {
                 break;
             }
-            heartbeat_data.heartbeat();
+            let dgnss_enabled = shared_state.dgnss_enabled();
+            heartbeat_data.heartbeat(dgnss_enabled);
             let new_time = Instant::now();
             let time_diff = (new_time - last_time).as_secs_f64();
             let delay_time = UPDATE_TOLERANCE_SECONDS - time_diff;
@@ -144,10 +153,7 @@ impl<S: CapnProtoSender> StatusBar<S> {
         status_bar_status.set_ins(&sb_update.ins_status);
         status_bar_status.set_data_rate(&sb_update.data_rate);
         status_bar_status.set_solid_connection(sb_update.solid_connection);
-        status_bar_status.set_title(&format!(
-            "{}(###) Swift Console {}",
-            self.port, self.version
-        ));
+        status_bar_status.set_title(&format!("{} Swift Console {}", self.port, self.version));
 
         self.client_sender
             .send_data(serialize_capnproto_builder(builder));
@@ -374,10 +380,11 @@ impl HeartbeatInner {
         }
     }
 
-    pub fn baseline_ned_update(&mut self) {
+    pub fn baseline_ned_update(&mut self, dgnss_enabled: bool) {
         if let Some(last_btime_update) = self.last_btime_update {
-            //TODO(@john-michaelburke) [CPP-172] Add missing dgnss_enabled logic.
-            if (self.current_time - last_btime_update).as_secs_f64() < UPDATE_TOLERANCE_SECONDS {
+            if dgnss_enabled
+                && (self.current_time - last_btime_update).as_secs_f64() < UPDATE_TOLERANCE_SECONDS
+            {
                 self.baseline_display_mode = if let Some(bsoln_mode) =
                     rtk_mode_dict.get(&(self.baseline_solution_mode as i32))
                 {
@@ -486,12 +493,12 @@ impl Heartbeat {
     pub fn new() -> Heartbeat {
         Heartbeat(Arc::new(Mutex::new(HeartbeatInner::default())))
     }
-    pub fn heartbeat(&self) {
+    pub fn heartbeat(&self, dgnss_enabled: bool) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         let good_heartbeat: bool = (*shared_data).check_heartbeat();
         if good_heartbeat {
             (*shared_data).pos_llh_update();
-            (*shared_data).baseline_ned_update();
+            (*shared_data).baseline_ned_update(dgnss_enabled);
             (*shared_data).ins_update();
             (*shared_data).age_of_corrections_update();
             (*shared_data).prepare_update_packet();

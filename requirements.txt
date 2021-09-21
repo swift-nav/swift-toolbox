@@ -1,10 +1,10 @@
-altgraph==0.17; sys_platform == "darwin" and python_version >= "3.5"
+altgraph==0.17.2; sys_platform == "darwin" and python_version >= "3.5"
 fbs @ git+https://github.com/silverjam/fbs.git@master
 future==0.18.2; sys_platform == "win32" and python_version >= "3.5" and python_full_version >= "3.6.0"
-macholib==1.14; sys_platform == "darwin" and python_version >= "3.5"
-pefile==2021.5.24; sys_platform == "win32" and python_version >= "3.5" and python_full_version >= "3.6.0"
+macholib==1.15.2; sys_platform == "darwin" and python_version >= "3.5"
+pefile==2021.9.3; sys_platform == "win32" and python_version >= "3.5" and python_full_version >= "3.6.0"
 pycapnp==1.1.0
-pyinstaller-hooks-contrib==2021.2; python_version >= "3.5"
+pyinstaller-hooks-contrib==2021.3; python_version >= "3.5"
 pyinstaller==4.2; python_version >= "3.5"
 pyside2==5.15.2; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.5.0" and python_version < "3.10")
 pywin32-ctypes==0.2.0; sys_platform == "win32" and python_version >= "3.5"

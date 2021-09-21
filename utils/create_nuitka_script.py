@@ -27,7 +27,7 @@ def create_nuitka_script():
             out += f"--include-data-file={CONDA_PREFIX}/{SITEPACK_DIR}{path}={path} "
 
     filename_prefix = SYS_PLATFORM_PREFIXS.get(sys.platform, "unknown")
-    with open(os.path.join(NUITKA_DIR, filename_prefix + FILENAME_POSTFIX), "w") as filo:
+    with open(os.path.join(NUITKA_DIR, filename_prefix + FILENAME_POSTFIX), "w", encoding="utf-8") as filo:
         filo.write(DEFAULT_NUITKA_COMMAND + out[: -len(" ")])
         filo.write("\n")
 

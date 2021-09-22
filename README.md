@@ -64,6 +64,24 @@ To build the installer:
 cargo make prod-installer
 ```
 
+## Running the benchmarks
+
+Prerequisites:
+
+- Windows
+  - NSIS - Nullsoft Scriptable Install System
+  - NSIS ShellExecAsUser plugin
+- All
+  - `cargo install hyperfine`
+
+To run the frontend benchmarks:
+
+```
+git lfs pull
+cargo make prod-installer
+cargo make frontend-cpu-bench
+```
+
 ## Contributing
 
 After making changes, run to tasks to ensure the code is ready for submission

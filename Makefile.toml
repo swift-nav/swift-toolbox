@@ -431,42 +431,42 @@ conda run -n $CONDA_ENV python utils/bench_runner.py --disk_usage
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=../../target/swift_navigation_console/swift_navigation_console && cd -
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${PWD}/../../target/swift_navigation_console/swift_navigation_console
 '''
 
 [tasks.frontend-cpu-bench.windows]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=../../target/swift_navigation_console/swift_navigation_console.exe && cd -
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${PWD}/target/swift_navigation_console/swift_navigation_console.exe
 '''
 
 [tasks.frontend-cpu-bench.mac]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=../../main.dist/main && cd -
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${PWD}/main.dist/main
 '''
 
 [tasks.frontend-mem-bench.linux]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=../../target/swift_navigation_console/swift_navigation_console && cd -
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${PWD}/target/swift_navigation_console/swift_navigation_console
 '''
 
 [tasks.frontend-mem-bench.windows]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=../../target/swift_navigation_console/swift_navigation_console.exe && cd -
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${PWD}/target/swift_navigation_console/swift_navigation_console.exe
 '''
 
 [tasks.frontend-mem-bench.mac]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=../../main.dist/main && cd -
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${PWD}/main.dist/main
 '''
 
 [tasks.newline-terminator]

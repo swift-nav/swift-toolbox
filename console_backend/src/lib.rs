@@ -47,8 +47,14 @@ use crate::{
     tracking_signals_tab::TrackingSignalsTab, update_tab::UpdateTab,
 };
 
+/*
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+*/
+
+#[global_allocator]
+static GLOBAL: tcmalloc::TCMalloc = tcmalloc::TCMalloc;
+
 
 struct Tabs<'link, S: types::CapnProtoSender> {
     pub main: Mutex<MainTab<S>>,

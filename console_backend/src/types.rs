@@ -233,8 +233,10 @@ impl Deref for FlowControl {
 pub type Cn0Dict = HashMap<(SignalCodes, i16), Deque<(OrderedFloat<f64>, f64)>>;
 pub type Cn0Age = HashMap<(SignalCodes, i16), f64>;
 
+use num_derive::FromPrimitive;
+
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Copy, Eq, Hash, Ord, PartialEq, PartialOrd, FromPrimitive)]
 pub enum SignalCodes {
     CodeGpsL1Ca = 0,
     CodeGpsL2Cm = 1,

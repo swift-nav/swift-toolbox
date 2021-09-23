@@ -41,7 +41,15 @@ regex = { version = "1.5.4" }
 semver = { version = "1" }
 rust-ini = "0.17.0"
 snap = { version = "1", optional = true }
-mimalloc = { version = "*", default-features = false }
+stackvec = "0.2"
+heapless = "0.7"
+hash32 = "0.2"
+hash32-derive = "0.1"
+#mimalloc = { version = "*", default-features = false }
+tcmalloc = { version = "*" }
+num = "0.4"
+num-derive = "0.3"
+num-traits = "0.2"
 
 [dependencies.sbp]
 git = "https://github.com/swift-nav/libsbp.git"

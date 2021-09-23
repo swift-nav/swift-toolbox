@@ -128,3 +128,9 @@ class ApplicationStates(str, Enum):
 class QTKeys(str, Enum):
     QVARIANTLIST = "QVariantList"
     QVARIANT = "QVariant"
+
+
+class ApplicationMetadata(str, Enum):
+    ORGANIZATION_NAME = "Swift Navigation"
+    ORGANIZATION_DOMAIN = "swiftnav.com"
+    APPLICATION_NAME = "console_pp"

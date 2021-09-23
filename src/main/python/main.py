@@ -22,7 +22,7 @@ from PySide2.QtGui import QFontDatabase
 
 from PySide2.QtQml import QQmlComponent, qmlRegisterType
 
-from constants import ApplicationStates, Keys, Tabs, QTKeys
+from constants import ApplicationMetadata, ApplicationStates, Keys, Tabs, QTKeys
 
 from log_panel import (
     LOG_PANEL,
@@ -651,7 +651,10 @@ if __name__ == "__main__":
 
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
-    app = QApplication()
+    app = QApplication(sys.argv)
+    app.setOrganizationName(ApplicationMetadata.ORGANIZATION_NAME)
+    app.setOrganizationDomain(ApplicationMetadata.ORGANIZATION_DOMAIN)
+    app.setApplicationName(ApplicationMetadata.APPLICATION_NAME)
     QFontDatabase.addApplicationFont(":/fonts/Roboto-Regular.ttf")
     QFontDatabase.addApplicationFont(":/fonts/Roboto-Bold.ttf")
 

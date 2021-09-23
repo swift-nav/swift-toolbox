@@ -41,6 +41,7 @@ regex = { version = "1.5.4" }
 semver = { version = "1" }
 rust-ini = "0.17.0"
 snap = { version = "1", optional = true }
+mimalloc = { version = "*", default-features = false }
 
 [dependencies.sbp]
 git = "https://github.com/swift-nav/libsbp.git"
@@ -54,13 +55,6 @@ rev = "79c5a023dab189532de45fb806d4c295911caa0e"
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 serialport = "4.0.1"
 
-[target.'cfg(not(target_env = "msvc"))'.dependencies]
-tikv-jemallocator = "0.4.0"
-
-[[bench]]
-name = "cpu_benches"
-harness = false
-
 [dev-dependencies]
 logtest = "2.0.0"
 serial_test = "0.5.1"
@@ -72,6 +66,10 @@ capnpc = "0.14"
 name = "console_backend"
 crate-type = ["cdylib", "lib"]
 bench = false
+
+[[bench]]
+name = "cpu_benches"
+harness = false
 
 [[bin]]
 name = "fileio"

@@ -44,12 +44,12 @@ snap = { version = "1", optional = true }
 
 [dependencies.sbp]
 git = "https://github.com/swift-nav/libsbp.git"
-rev = "0f35aacf110a9dbe0b832e5feb415933cd0c7f6e"
-features = ["json", "swiftnav-rs", "link"]
+rev = "a14a85123ac4e4a3b8830388cac72bc926799d17"
+features = ["json", "swiftnav", "link"]
 
 [dependencies.libsettings]
 git = "https://github.com/swift-nav/libsettings.git"
-rev = "79c5a023dab189532de45fb806d4c295911caa0e"
+rev = "ee2b62d1c7234d081c7ce7aa69ad718eba6d2b89"
 
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 serialport = "4.0.1"

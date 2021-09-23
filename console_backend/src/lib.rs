@@ -47,6 +47,13 @@ use crate::{
     tracking_signals_tab::TrackingSignalsTab, update_tab::UpdateTab,
 };
 
+#[cfg(not(target_env = "msvc"))]
+use tikv_jemallocator::Jemalloc;
+
+#[cfg(not(target_env = "msvc"))]
+#[global_allocator]
+static GLOBAL: Jemalloc = Jemalloc;
+
 struct Tabs<'link, S: types::CapnProtoSender> {
     pub main: Mutex<MainTab<S>>,
     pub advanced_ins: Mutex<AdvancedInsTab<S>>,

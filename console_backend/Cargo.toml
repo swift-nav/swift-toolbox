@@ -54,6 +54,9 @@ rev = "79c5a023dab189532de45fb806d4c295911caa0e"
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 serialport = "4.0.1"
 
+[target.'cfg(not(target_env = "msvc"))'.dependencies]
+tikv-jemallocator = "0.4.0"
+
 [[bench]]
 name = "cpu_benches"
 harness = false

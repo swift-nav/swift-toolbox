@@ -79,7 +79,7 @@ class ObservationTableModel(QAbstractTableModel):
         return self._rows[index.row()][self.col_names[index.column()]]
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):  # pylint: disable=unused-argument
-        return ObservationTableModel.column_names if orientation == Qt.Horizontal else section
+        return ObservationTableModel.column_names[section] if orientation == Qt.Horizontal else section
 
     @Slot()  # type: ignore
     def update(self) -> None:

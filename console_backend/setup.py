@@ -11,7 +11,7 @@ def get_py_version_cfgs():
     py3_min = 6
     out_cfg = []
     for minor in range(py3_min, version[1] + 1):
-        out_cfg.append("--cfg=Py_3_%d" % minor)
+        out_cfg.append(f"--cfg=Py_3_{minor}")
 
     if platform.python_implementation() == "PyPy":
         out_cfg.append("--cfg=PyPy")

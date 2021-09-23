@@ -1,11 +1,11 @@
 use ordered_float::OrderedFloat;
 use std::{
-    collections::{HashMap},
+    collections::HashMap,
     time::{Duration, Instant},
 };
 
 use capnp::message::Builder;
-use heapless;
+
 use log::warn;
 
 use crate::constants::{
@@ -20,22 +20,6 @@ use crate::shared_state::SharedState;
 use crate::types::{CapnProtoSender, Cn0Age, Cn0Dict, Deque, ObservationMsg, SignalCodes};
 use crate::utils::{serialize_capnproto_builder, signal_key_color, signal_key_label};
 use sbp::messages::tracking::{MeasurementState, TrackingChannelState};
-
-#[derive(hash32_derive::Hash32, Eq, PartialEq, Copy, Clone, Debug)]
-struct SvStateKey(u8, i16);
-
-impl std::convert::From<SvStateKey> for (SignalCodes, i16) {
-    fn from(val: SvStateKey) -> Self {
-        (num::FromPrimitive::from_u8(val.0).unwrap(), val.1)
-    }
-}
-
-impl std::convert::From<&(SignalCodes, i16)> for SvStateKey {
-    fn from(val: &(SignalCodes, i16)) -> Self {
-        SvStateKey(val.0 as u8, val.1)
-    }
-}
-
 
 /// TrackingSignalsTab struct.
 ///
@@ -155,10 +139,10 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
 
     /// Remove cn0 data if age is too old.
     pub fn clean_cn0(&mut self) {
-        let mut remove_vec: heapless::Vec<(SignalCodes, i16), 256> = Default::default();
+        let mut remove_vec: Vec<(SignalCodes, i16)> = Vec::new();
         for (key, _) in self.cn0_dict.iter_mut() {
             if self.cn0_age[key] < self.time.get()[0] {
-                remove_vec.push(*key).expect("no more space in remove vector");
+                remove_vec.push(*key);
             }
         }
         for key in remove_vec {
@@ -172,7 +156,7 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
         self.sv_labels.clear();
         self.colors.clear();
         self.sats.clear();
-        let mut temp_labels: heapless::Vec<(String, (SignalCodes, i16)), 256> = Default::default();
+        let mut temp_labels = Vec::new();
         let filters;
         {
             let shared_data = self.shared_state.lock().unwrap();
@@ -201,7 +185,7 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
                 label = format!("{} {}", label, lbl);
             }
 
-            temp_labels.push((label, *key)).expect("no more space in labels array");
+            temp_labels.push((label, *key));
         }
         temp_labels.sort_by(|x, y| (x.0).cmp(&(y.0)));
 
@@ -219,7 +203,7 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
     /// - `states`: All states contained within the measurementstate message.
     pub fn handle_msg_measurement_state(&mut self, states: Vec<MeasurementState>) {
         self.at_least_one_track_received = true;
-        let mut codes_that_came: heapless::FnvIndexSet<SvStateKey, 256> = Default::default();
+        let mut codes_that_came: Vec<(SignalCodes, i16)> = Vec::new();
         let t = (Instant::now()).duration_since(self.t_init).as_secs_f64();
         self.time.add(t);
         for (idx, state) in states.iter().enumerate() {
@@ -236,19 +220,18 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
                     self.glo_slot_dict.insert(sat, state.mesid.sat as i16);
                 }
             }
-            let key = SvStateKey(signal_code as u8, sat);
-            codes_that_came.insert(key).expect("no more space in codes_that_came");
+            let key = (signal_code, sat);
+            codes_that_came.push(key);
             if state.cn0 != 0 {
-                self.push_to_cn0_dict(key.into(), t, state.cn0 as f64 / 4.0);
-                self.push_to_cn0_age(key.into(), t);
+                self.push_to_cn0_dict(key, t, state.cn0 as f64 / 4.0);
+                self.push_to_cn0_age(key, t);
             }
             if !self.received_codes.contains(&signal_code) {
                 self.received_codes.push(signal_code);
             }
         }
         for (key, cn0_deque) in self.cn0_dict.iter_mut() {
-            let key: SvStateKey = key.into();
-            if !codes_that_came.contains(&key) {
+            if !codes_that_came.contains(key) {
                 cn0_deque.add((OrderedFloat(t), 0.0));
             }
         }
@@ -263,6 +246,7 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
     /// - `states`: All states contained within the trackingstate message.
     pub fn handle_msg_tracking_state(&mut self, states: Vec<TrackingChannelState>) {
         self.at_least_one_track_received = true;
+        let mut codes_that_came: Vec<(SignalCodes, i16)> = Vec::new();
         let t = (Instant::now()).duration_since(self.t_init).as_secs_f64();
         self.time.add(t);
         for state in states.iter() {
@@ -277,6 +261,7 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
                 self.glo_slot_dict.insert(sat, state.sid.sat as i16);
             }
             let key = (signal_code, sat);
+            codes_that_came.push(key);
             if state.cn0 != 0 {
                 self.push_to_cn0_dict(key, t, state.cn0 as f64 / 4.0);
                 self.push_to_cn0_age(key, t);
@@ -346,12 +331,12 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
             return;
         }
         self.last_obs_update_time = Instant::now();
-        let mut codes_that_came: heapless::FnvIndexSet<SvStateKey, 256> = Default::default();
+        let mut codes_that_came: Vec<(SignalCodes, i16)> = Vec::new();
         let t = (Instant::now()).duration_since(self.t_init).as_secs_f64();
         self.time.add(t);
         for (key, cn0) in obs_dict.iter() {
             let (signal_code, _) = *key;
-            codes_that_came.insert(key.into()).expect("no more space in codes_that_came");
+            codes_that_came.push(*key);
             if *cn0 > 0.0_f64 {
                 self.push_to_cn0_dict(*key, t, *cn0);
                 self.push_to_cn0_age(*key, t);
@@ -361,8 +346,7 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
             }
         }
         for (key, cn0_deque) in self.cn0_dict.iter_mut() {
-            let key: SvStateKey = key.into();
-            if !codes_that_came.contains(&key) {
+            if !codes_that_came.contains(key) {
                 cn0_deque.add((OrderedFloat(t), 0.0));
             }
         }

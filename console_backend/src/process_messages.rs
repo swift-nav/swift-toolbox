@@ -76,6 +76,7 @@ where
 
     let link = source.link();
 
+    /*
     link.register(|tabs: &Tabs<S>, msg: MsgAgeCorrections| {
         tabs.baseline
             .lock()
@@ -87,19 +88,27 @@ where
             .handle_age_corrections(msg.clone());
         tabs.status_bar.lock().unwrap().handle_age_corrections(msg);
     });
+    */
 
+    /*
     link.register(|tabs: &Tabs<S>, msg: MsgAngularRate| {
         tabs.solution.lock().unwrap().handle_angular_rate(msg);
     });
+    */
 
+    /*
     link.register(|tabs: &Tabs<S>, msg: MsgBaselineHeading| {
         tabs.baseline.lock().unwrap().handle_baseline_heading(msg);
     });
+    */
 
+    /*
     link.register(|tabs: &Tabs<S>, msg: MsgCommandResp| {
         tabs.update.lock().unwrap().handle_command_resp(msg);
     });
+    */
 
+    /*
     link.register(|tabs: &Tabs<S>, msg: BaselineNED| {
         tabs.baseline
             .lock()
@@ -107,20 +116,26 @@ where
             .handle_baseline_ned(msg.clone());
         tabs.status_bar.lock().unwrap().handle_baseline_ned(msg);
     });
+    */
 
+    /*
     link.register(|tabs: &Tabs<S>, msg: Dops| {
         tabs.solution.lock().unwrap().handle_dops(msg);
     });
+    */
 
+    /*
     link.register(|tabs: &Tabs<S>, msg: GpsTime| {
         tabs.baseline.lock().unwrap().handle_gps_time(msg.clone());
         tabs.solution.lock().unwrap().handle_gps_time(msg);
     });
+    */
 
     link.register(|tabs: &Tabs<S>, _: MsgHeartbeat| {
         tabs.status_bar.lock().unwrap().handle_heartbeat();
     });
 
+    /*
     link.register(|tabs: &Tabs<S>, msg: MsgImuAux| {
         tabs.advanced_ins.lock().unwrap().handle_imu_aux(msg);
     });
@@ -153,6 +168,7 @@ where
             .unwrap()
             .handle_mag_raw(msg);
     });
+    */
 
     link.register(|tabs: &Tabs<S>, msg: MsgMeasurementState| {
         tabs.tracking_signals
@@ -173,6 +189,7 @@ where
         println!("The message type, MsgObsDepA, is not handled in the Tracking->SignalsPlot or Observation tab.");
     });
 
+    /*
     link.register(|tabs: &Tabs<S>, msg: MsgOrientEuler| {
         tabs.solution.lock().unwrap().handle_orientation_euler(msg);
     });
@@ -192,6 +209,7 @@ where
             .unwrap()
             .handle_specan(msg);
     });
+    */
 
     link.register(|tabs: &Tabs<S>, msg: MsgTrackingState| {
         tabs.tracking_signals
@@ -200,6 +218,7 @@ where
             .handle_msg_tracking_state(msg.states);
     });
 
+    /*
     link.register(|tabs: &Tabs<S>, msg: VelNED| {
         tabs.solution.lock().unwrap().handle_vel_ned(msg);
     });
@@ -218,6 +237,7 @@ where
         tabs.update.lock().unwrap().handle_log_msg(msg.clone());
         handle_log_msg(msg);
     });
+    */
 
     let update_tab_context = tabs
         .update

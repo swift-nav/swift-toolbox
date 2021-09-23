@@ -120,7 +120,7 @@ Get-ChildItem .\console_backend -Recurse -Include @("*.egg-info", "*.dist-info")
 
 [tasks.start-console]
 private = true
-env = { LD_PRELOAD = "/lib/x86_64-linux-gnu/libtcmalloc.so" }
+#env = { LD_PRELOAD = "/lib/x86_64-linux-gnu/libtcmalloc.so" }
 command = "conda"
 args = [
   "run",

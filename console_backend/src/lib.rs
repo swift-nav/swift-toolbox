@@ -52,8 +52,10 @@ use crate::{
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 */
 
+/*
 #[global_allocator]
 static GLOBAL: tcmalloc::TCMalloc = tcmalloc::TCMalloc;
+*/
 
 
 struct Tabs<'link, S: types::CapnProtoSender> {

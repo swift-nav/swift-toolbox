@@ -61,6 +61,12 @@ from advanced_spectrum_analyzer_tab import (
     ADVANCED_SPECTRUM_ANALYZER_TAB,
 )
 
+from advanced_system_monitor_tab import (
+    AdvancedSystemMonitorModel,
+    AdvancedSystemMonitorData,
+    ADVANCED_SYSTEM_MONITOR_TAB,
+)
+
 from fusion_status_flags import (
     FusionStatusFlagsModel,
     FusionStatusFlagsData,
@@ -272,6 +278,22 @@ def receive_messages(app_, backend, messages):
             ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.YMIN] = m.advancedSpectrumAnalyzerStatus.ymin
             ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.XMAX] = m.advancedSpectrumAnalyzerStatus.xmax
             ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.XMIN] = m.advancedSpectrumAnalyzerStatus.xmin
+        elif m.which == Message.Union.AdvancedSystemMonitorStatus:
+            ADVANCED_SYSTEM_MONITOR_TAB[Keys.OBS_LATENCY][:] = [
+                [entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.obsLatency
+            ]
+            ADVANCED_SYSTEM_MONITOR_TAB[Keys.OBS_PERIOD][:] = [
+                [entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.obsPeriod
+            ]
+            ADVANCED_SYSTEM_MONITOR_TAB[Keys.THREADS_TABLE][:] = [
+                [entry.name, entry.cpu, entry.stackFree] for entry in m.advancedSystemMonitorStatus.threadsTable
+            ]
+            ADVANCED_SYSTEM_MONITOR_TAB[Keys.CSAC_TELEM_LIST][:] = [
+                [entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.csacTelemList
+            ]
+            ADVANCED_SYSTEM_MONITOR_TAB[Keys.CSAC_RECEIVED] = m.advancedSystemMonitorStatus.csacReceived
+            ADVANCED_SYSTEM_MONITOR_TAB[Keys.ZYNQ_TEMP] = m.advancedSystemMonitorStatus.zynqTemp
+            ADVANCED_SYSTEM_MONITOR_TAB[Keys.FE_TEMP] = m.advancedSystemMonitorStatus.feTemp
         elif m.which == Message.Union.AdvancedMagnetometerStatus:
             ADVANCED_MAGNETOMETER_TAB[Keys.YMAX] = m.advancedMagnetometerStatus.ymax
             ADVANCED_MAGNETOMETER_TAB[Keys.YMIN] = m.advancedMagnetometerStatus.ymin
@@ -469,6 +491,14 @@ class DataModel(QObject):  # pylint: disable=too-many-instance-attributes,too-ma
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
 
+    @Slot()  # type: ignore
+    def reset_device(self) -> None:
+        Message = self.messages.Message
+        msg = self.messages.Message()
+        msg.advancedSystemMonitorStatusFront = msg.init(Message.Union.AdvancedSystemMonitorStatusFront)
+        buffer = msg.to_bytes()
+        self.endpoint.send_message(buffer)
+
     @Slot(bool)  # type: ignore
     def pause(self, pause_: bool) -> None:
         Message = self.messages.Message
@@ -663,6 +693,7 @@ if __name__ == "__main__":
     qmlRegisterType(
         AdvancedSpectrumAnalyzerPoints, "SwiftConsole", 1, 0, "AdvancedSpectrumAnalyzerPoints"  # type: ignore
     )
+    qmlRegisterType(AdvancedSystemMonitorData, "SwiftConsole", 1, 0, "AdvancedSystemMonitorData")  # type: ignore
     qmlRegisterType(FusionStatusFlagsData, "SwiftConsole", 1, 0, "FusionStatusFlagsData")  # type: ignore
     qmlRegisterType(BaselinePlotPoints, "SwiftConsole", 1, 0, "BaselinePlotPoints")  # type: ignore
     qmlRegisterType(BaselineTableEntries, "SwiftConsole", 1, 0, "BaselineTableEntries")  # type: ignore
@@ -695,6 +726,7 @@ if __name__ == "__main__":
     advanced_ins_model = AdvancedInsModel()
     advanced_magnetometer_model = AdvancedMagnetometerModel()
     advanced_spectrum_analyzer_model = AdvancedSpectrumAnalyzerModel()
+    advanced_system_monitor_model = AdvancedSystemMonitorModel()
     fusion_engine_flags_model = FusionStatusFlagsModel()
     baseline_plot_model = BaselinePlotModel()
     baseline_table_model = BaselineTableModel()
@@ -715,6 +747,7 @@ if __name__ == "__main__":
     root_context.setContextProperty("advanced_ins_model", advanced_ins_model)
     root_context.setContextProperty("advanced_magnetometer_model", advanced_magnetometer_model)
     root_context.setContextProperty("advanced_spectrum_analyzer_model", advanced_spectrum_analyzer_model)
+    root_context.setContextProperty("advanced_system_monitor_model", advanced_system_monitor_model)
     root_context.setContextProperty("fusion_engine_flags_model", fusion_engine_flags_model)
     root_context.setContextProperty("baseline_plot_model", baseline_plot_model)
     root_context.setContextProperty("baseline_table_model", baseline_table_model)

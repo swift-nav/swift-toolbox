@@ -385,6 +385,28 @@ pub fn mdeg_to_deg(mdeg: f64) -> f64 {
     mdeg / 1.0e+3_f64
 }
 
+/// Normalize CPU usage from [0,1000] to [0,100].
+///
+/// # Parameters
+/// - `cpu`: The CPU usage value to be normalized.
+///
+/// # Returns
+/// - The normalized CPU usage value.
+pub fn normalize_cpu_usage(cpu: u16) -> f64 {
+    cpu as f64 / 10_f64
+}
+
+/// Convert centiCelsius to Celsius.
+///
+/// # Parameters
+/// - `cc`: Value in centiCelsius.
+///
+/// # Returns
+/// - Value in Celsius.
+pub fn cc_to_c(cc: i16) -> f64 {
+    cc as f64 / 1.0e+2_f64
+}
+
 pub fn compute_doppler(
     new_carrier_phase: f64,
     old_carrier_phase: f64,

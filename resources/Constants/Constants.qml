@@ -34,6 +34,7 @@ QtObject {
     property QtObject solutionVelocity
     property QtObject trackingSignals
     property QtObject observationTab
+    property QtObject systemMonitor
     property QtObject genericTable
     property QtObject updateTab
     property QtObject icons
@@ -104,9 +105,55 @@ QtObject {
         readonly property int popupDelayMilliseconds: 3000
     }
 
+    systemMonitor: QtObject {
+        readonly property var columnHeaders: ["Thread Name", "CPU %", "Stack Free"]
+        readonly property var metricColumnHeaders: ["Metric", "Value"]
+        readonly property string currLabel: "Curr"
+        readonly property string maxLabel: "Max"
+        readonly property string minLabel: "Min"
+        readonly property string avgLabel: "Avg"
+        readonly property string obsUnits: "ms"
+        readonly property int rows: 6
+        readonly property int columns: 6
+        readonly property int columnSpacing: 0
+        readonly property int rowSpacing: 10
+        readonly property int topRowSpan: 2
+        readonly property int bottomRowSpan: 4
+        readonly property int deviceMonitorColumnSpan: 1
+        readonly property int metricsMonitorColumnSpan: 3
+        readonly property int observationConnectionMonitorColumnSpan: 2
+        readonly property int resetButtonHeight: 50
+        readonly property int resetButtonWidth: 100
+        readonly property string resetButtonLabel: "Reset Device"
+        readonly property int resetButtonIconSideLength: 10
+        readonly property int obsTextMargins: 5
+        readonly property int textHeight: 20
+        readonly property string obsLatencyLabel: "Latency"
+        readonly property string obsPeriodLabel: "Period"
+        readonly property string zynqTempLabel: "Zynq CPU Temp"
+        readonly property string feTempLabel: "RF Frontend Temp"
+        readonly property string tempUnits: "C"
+        readonly property var defaultObs: {
+            "Curr": 0,
+            "Avg": 0,
+            "Min": 0,
+            "Max": 0
+        }
+        readonly property var defaultThreadsList: {
+            "Thread Name": "",
+            "CPU %": "",
+            "Stack Free": ""
+        }
+        readonly property var defaultMetricsList: {
+            "Metric": "",
+            "Value": ""
+        }
+    }
+
     genericTable: QtObject {
         readonly property int headerZOffset: 100
         readonly property int padding: 2
+        readonly property int borderWidth: 1
         readonly property int mouseAreaResizeWidth: 10
         readonly property int cellHeight: 25
         readonly property string cellHighlightedColor: "crimson"
@@ -400,6 +447,7 @@ QtObject {
         readonly property string exportPath: "images/fontawesome/file-export.svg"
         readonly property string importPath: "images/fontawesome/file-import.svg"
         readonly property string warningPath: "images/fontawesome/exclamation-triangle.svg"
+        readonly property string connectButtonPath: "images/fontawesome/power-off-solid.svg"
     }
 
 }

@@ -17,17 +17,9 @@ Item {
 
         anchors.fill: parent
         orientation: Qt.Horizontal
-        width: parent.width
-        height: parent.height
 
-        Rectangle {
-            id: solutionTableArea
-
+        SolutionTabComponents.SolutionTable {
             width: Constants.solutionTable.width
-
-            SolutionTabComponents.SolutionTable {
-            }
-
         }
 
         Rectangle {

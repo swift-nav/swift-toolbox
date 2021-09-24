@@ -282,3 +282,13 @@ pub enum QTKeys {
     #[strum(serialize = "QVariant")]
     QVARIANT,
 }
+
+#[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
+pub enum ApplicationMetadata {
+    #[strum(serialize = "Swift Navigation")]
+    ORGANIZATION_NAME,
+    #[strum(serialize = "swiftnav.com")]
+    ORGANIZATION_DOMAIN,
+    #[strum(serialize = "console_pp")]
+    APPLICATION_NAME,
+}

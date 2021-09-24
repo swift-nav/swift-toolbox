@@ -361,6 +361,7 @@ dependencies = [
  "libsettings",
  "log",
  "logtest",
+ "mimalloc",
  "minreq",
  "ndarray",
  "ordered-float",
@@ -837,9 +838,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "libmimalloc-sys"
+version = "0.1.22"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1d1b8479c593dba88c2741fc50b92e13dbabbbe0bd504d979f244ccc1a5b1c01"
+dependencies = [
+ "cc",
+]
+
+[[package]]
 name = "libsettings"
 version = "0.1.0"
-source = "git+https://github.com/swift-nav/libsettings.git?rev=ee2b62d1c7234d081c7ce7aa69ad718eba6d2b89#ee2b62d1c7234d081c7ce7aa69ad718eba6d2b89"
+source = "git+https://github.com/swift-nav/libsettings.git?branch=silverjam/consistent-heap-size#aaf2b35592eab209bce824d3336b23d56fbcffb5"
 dependencies = [
  "crossbeam-channel",
  "crossbeam-utils",
@@ -855,7 +865,7 @@ dependencies = [
 [[package]]
 name = "libsettings-sys"
 version = "0.1.0"
-source = "git+https://github.com/swift-nav/libsettings.git?rev=ee2b62d1c7234d081c7ce7aa69ad718eba6d2b89#ee2b62d1c7234d081c7ce7aa69ad718eba6d2b89"
+source = "git+https://github.com/swift-nav/libsettings.git?branch=silverjam/consistent-heap-size#aaf2b35592eab209bce824d3336b23d56fbcffb5"
 dependencies = [
  "bindgen",
  "cmake",
@@ -956,6 +966,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "59accc507f1338036a0477ef61afdae33cde60840f4dfe481319ce3ad116ddf9"
 dependencies = [
  "autocfg",
+]
+
+[[package]]
+name = "mimalloc"
+version = "0.1.26"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fb74897ce508e6c49156fd1476fc5922cbc6e75183c65e399c765a09122e5130"
+dependencies = [
+ "libmimalloc-sys",
 ]
 
 [[package]]
@@ -1518,7 +1537,7 @@ dependencies = [
 [[package]]
 name = "sbp"
 version = "3.4.11-alpha"
-source = "git+https://github.com/swift-nav/libsbp.git?rev=a14a85123ac4e4a3b8830388cac72bc926799d17#a14a85123ac4e4a3b8830388cac72bc926799d17"
+source = "git+https://github.com/swift-nav/libsbp.git?branch=silverjam/consistent-heap-size#64cafc3d685269875821e08164e14fdd5b4eeb25"
 dependencies = [
  "base64",
  "byteorder",

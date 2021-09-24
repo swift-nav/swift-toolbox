@@ -423,12 +423,14 @@ impl TrackingTabState {
 #[derive(Debug)]
 pub struct TrackingSignalsTabState {
     pub check_visibility: Vec<String>,
+    pub tracked_sv_labels: Vec<String>,
 }
 
 impl TrackingSignalsTabState {
     fn new() -> TrackingSignalsTabState {
         TrackingSignalsTabState {
             check_visibility: vec![],
+            tracked_sv_labels: vec![],
         }
     }
 }

@@ -49,6 +49,16 @@ struct LogAppend {
     entries @0 :List(LogEntry);
 }
 
+struct SkyPlotObs {
+    az @0 :UInt16;
+    el @1 :UInt16;
+}
+
+struct TrackingSkyPlotStatus {
+    sats @0 :List(List(SkyPlotObs));
+    labels @1 :List(List(Text));
+}
+
 struct KeyValPair {
     key @0 :Text;
     val @1 :Text;
@@ -410,5 +420,7 @@ struct Message {
         threadState @41 :ThreadState;
         uartState @42 :UartState;
         advancedSystemMonitorStatusFront @43 :AdvancedSystemMonitorStatusFront;
+        skyPlotObs @44 :SkyPlotObs;
+        trackingSkyPlotStatus @45 :TrackingSkyPlotStatus;
     }
 }

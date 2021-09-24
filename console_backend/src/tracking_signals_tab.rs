@@ -166,6 +166,7 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
                 .check_visibility
                 .clone();
         }
+        let mut tracked_sv_labels = vec![];
         for (key, _) in self.cn0_dict.iter_mut() {
             let (signal_code, _) = key;
             if let Some(filter) = signal_code.filters() {
@@ -173,7 +174,7 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
                     continue;
                 }
             }
-            let (code_lbl, freq_lbl, id_lbl) = signal_key_label(*key, &self.glo_slot_dict);
+            let (code_lbl, freq_lbl, id_lbl) = signal_key_label(*key, Some(&self.glo_slot_dict));
             let mut label = String::from("");
             if let Some(lbl) = code_lbl {
                 label = format!("{} {}", label, lbl);
@@ -182,6 +183,7 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
                 label = format!("{} {}", label, lbl);
             }
             if let Some(lbl) = id_lbl {
+                tracked_sv_labels.push(lbl.clone());
                 label = format!("{} {}", label, lbl);
             }
 
@@ -194,6 +196,8 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
             self.colors.push(String::from(signal_key_color(*key)));
             self.sats.push(self.cn0_dict[key].clone());
         }
+        let mut shared_data = self.shared_state.lock().unwrap();
+        (*shared_data).tracking_tab.signals_tab.tracked_sv_labels = tracked_sv_labels;
     }
 
     /// Handle MsgMeasurementState message states.

@@ -9,7 +9,7 @@ use sbp::{
         logging::MsgLog,
         mag::MsgMagRaw,
         navigation::{MsgAgeCorrections, MsgPosLLHCov, MsgUtcTime, MsgVelNED},
-        observation::MsgObsDepA,
+        observation::{MsgObsDepA, MsgSvAzEl},
         orientation::{MsgAngularRate, MsgBaselineHeading, MsgOrientEuler},
         piksi::{MsgCommandResp, MsgDeviceMonitor, MsgThreadState},
         system::{
@@ -218,6 +218,10 @@ where
             .lock()
             .unwrap()
             .handle_specan(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: MsgSvAzEl| {
+        tabs.tracking_sky_plot.lock().unwrap().handle_sv_az_el(msg);
     });
 
     link.register(|tabs: &Tabs<S>, msg: MsgThreadState| {

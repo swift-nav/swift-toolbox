@@ -15,7 +15,7 @@ macholib==1.15.2; sys_platform == "darwin" and python_version >= "3.5"
 mccabe==0.6.1; python_version >= "3.6" and python_version < "4.0"
 mypy-extensions==0.4.3; python_full_version >= "3.6.2" and python_version >= "3.5"
 mypy==0.910; python_version >= "3.5"
-nuitka==0.6.12.4
+nuitka==0.6.16.4
 packaging==20.9; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.4.0")
 parso==0.8.2; python_version >= "3.6"
 pathspec==0.9.0; python_full_version >= "3.6.2"
@@ -41,6 +41,6 @@ shiboken2==5.15.2; python_version >= "2.7" and python_full_version < "3.0.0" or 
 toml==0.10.2; python_version >= "3.6" and python_full_version < "3.0.0" and python_version < "4.0" or python_full_version >= "3.3.0" and python_version >= "3.6" and python_version < "4.0"
 tomli==1.2.1; python_version >= "3.6" and python_full_version >= "3.6.2"
 toposort==1.6; python_version >= "3.8"
-types-requests==2.25.7
+types-requests==2.25.8
 typing-extensions==3.10.0.2; python_full_version >= "3.6.2" and python_version >= "3.6" and python_version < "3.10"
 wrapt==1.12.1; python_version >= "3.6" and python_version < "4.0"

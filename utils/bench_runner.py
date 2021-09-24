@@ -38,7 +38,7 @@ INSTALLER_BENCHMARKS = {
         {
             NAME: "macOS Installer",
             FILE_PATH: "release-archive.filename",
-            EXPECTED: 95,
+            EXPECTED: 115,
             ERROR_MARGIN_FRAC: 0.05,
         },
     ],

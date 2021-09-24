@@ -56,6 +56,8 @@ pub struct ObservationTable {
     pub new_carrier_phase: HashMap<(i16, SignalCodes), f64>,
 }
 
+const MIN_CAPACITY: usize = 512;
+
 impl ObservationTable {
     pub fn new(is_remote: bool) -> ObservationTable {
         ObservationTable {
@@ -67,8 +69,8 @@ impl ObservationTable {
             prev_tow: 0.0,
             incoming_obs: BTreeMap::new(),
             rows: BTreeMap::new(),
-            old_carrier_phase: HashMap::new(),
-            new_carrier_phase: HashMap::new(),
+            old_carrier_phase: HashMap::with_capacity(MIN_CAPACITY),
+            new_carrier_phase: HashMap::with_capacity(MIN_CAPACITY),
         }
     }
     pub fn was_packet_dropped(&self, tow: f64, wn: u16, obs_total: u8, obs_count: u8) -> bool {

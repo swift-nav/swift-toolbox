@@ -35,6 +35,8 @@ const OFFSET_LEN: usize = 4;
 const NULL_SEP_LEN: usize = 1;
 const WRITE_REQ_OVERHEAD_LEN: usize = SEQUENCE_LEN + OFFSET_LEN + NULL_SEP_LEN;
 
+const MIN_CAPACITY: usize = 512;
+
 pub struct Fileio<'a> {
     link: Link<'a, ()>,
     sender: MsgSender,
@@ -75,8 +77,8 @@ impl<'a> Fileio<'a> {
         // sequence number of the request we need to write to `dest` next
         let mut current_sequence = sequence;
         // holds data while we wait for out of order requests
-        let mut data: HashMap<u32, Vec<u8>> = HashMap::new();
-        let mut pending: HashMap<u32, ReadReq> = HashMap::new();
+        let mut data: HashMap<u32, Vec<u8>> = HashMap::with_capacity(MIN_CAPACITY);
+        let mut pending: HashMap<u32, ReadReq> = HashMap::with_capacity(MIN_CAPACITY);
         let mut last_sent = false;
 
         scope(|s| {

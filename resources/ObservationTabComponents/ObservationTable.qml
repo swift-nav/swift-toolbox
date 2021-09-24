@@ -1,7 +1,8 @@
 import "../Constants"
+import "../TableComponents"
 import "./observation_tab.js" as ObsTabJS
 import Qt.labs.qmlmodels 1.0
-import QtQuick 2.14
+import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
@@ -12,7 +13,12 @@ Rectangle {
     property alias name: innerText.text
     property variant columnWidths: [1, 1, 1, 1, 1, 1, 1, 1]
     property alias remote: observationTableModel.remote
-    property bool populated: observationTableModel.row_count > 0
+    property bool populated: observationTableModel ? observationTableModel.row_count > 0 : false
+
+    property font tableFont: Qt.font({
+        family: Constants.monoSpaceFont,
+        pointSize: Constants.mediumPointSize
+    })
 
     function update() {
         observationTableModel.update();
@@ -57,7 +63,7 @@ Rectangle {
             Text {
                 id: weekValue
 
-                text: observationTableModel.week
+                text: observationTableModel ? observationTableModel.week : ""
                 font: Constants.monoSpaceFont
             }
 
@@ -71,7 +77,7 @@ Rectangle {
             Text {
                 id: towValue
 
-                text: ObsTabJS.padFloat(observationTableModel.tow, 2)
+                text: observationTableModel ? ObsTabJS.padFloat(observationTableModel.tow, 2) : ""
                 font: Constants.monoSpaceFont
             }
 
@@ -85,7 +91,7 @@ Rectangle {
             Text {
                 id: totalValue
 
-                text: observationTableModel.row_count
+                text: observationTableModel ? observationTableModel.row_count : ""
                 font: Constants.monoSpaceFont
             }
 
@@ -93,105 +99,61 @@ Rectangle {
 
     }
 
-    TableView {
-        // force comment inside
-
-        id: columnHeaderTable
-
-        interactive: false
+    Row {
+        id: header
         anchors.top: innerStats.bottom
-        height: 20
-        width: parent.width
-        columnSpacing: 1
-        rowSpacing: 1
-        clip: true
-        columnWidthProvider: function(column) {
-            return columnWidths[column];
+        width: innerTable.contentWidth
+        // height: 20
+        x: -innerTable.contentX
+        z: 1
+        spacing: 4
+        function relayout() {
+            headerRepeater.model = 0
+            headerRepeater.model = innerTable.model.columnCount()
         }
 
-        model: TableModel {
-            rows: [{
-            }] // empty row triggers the display methods
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.obsColNames[modelIndex.column];
+        Repeater {
+            id: headerRepeater
+            model: innerTable.model ? innerTable.model.columnCount() : 0
+            // Rectangle {
+            //     color: "Dark Grey"
+            //     width: myText.implicitWidth
+            //     height: myText.implicitHeight
+            //     Text {
+            //         id: myText
+            //         text: innerTable.model.headerData(index, Qt.Horizontal)
+            //     }
+            // }
+            SortableColumnHeading {
+                // height: 20
+                initialWidth: 100  // Math.min(600, innerTable.model.columnWidth(index, tableFont)); height: parent.height
+                reorderable: true
+                sortable: true
+                headerRelayoutProvider: header.relayout
+                table: innerTable
+                onSorting: {
+                    for (var i = 0; i < headerRepeater.model; ++i)
+                        if (i != index)
+                            headerRepeater.itemAt(i).clearSorting()
                 }
             }
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.obsColNames[modelIndex.column];
-                }
-            }
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.obsColNames[modelIndex.column];
-                }
-            }
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.obsColNames[modelIndex.column];
-                }
-            }
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.obsColNames[modelIndex.column];
-                }
-            }
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.obsColNames[modelIndex.column];
-                }
-            }
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.obsColNames[modelIndex.column];
-                }
-            }
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.obsColNames[modelIndex.column];
-                }
-            }
-
         }
-
-        delegate: Rectangle {
-            implicitHeight: 20
-            border.width: 1
-
-            Text {
-                text: display
-                anchors.centerIn: parent
-                font.pointSize: Constants.mediumPointSize
-                leftPadding: 2
-            }
-
-        }
-
     }
 
     TableView {
         id: innerTable
 
-        height: parent.height - innerStats.height - innerText.height - columnHeaderTable.height - 6
-        anchors.top: columnHeaderTable.bottom
-        columnSpacing: columnHeaderTable.columnSpacing
-        rowSpacing: columnHeaderTable.columnSpacing
+        height: parent.height - innerStats.height - innerText.height - header.height - 6
+        anchors.top: header.bottom
+        columnSpacing: 0
+        rowSpacing: 0
         clip: true
         width: parent.width
         columnWidthProvider: function(column) {
             return columnWidths[column];
         }
-        onHeightChanged: console.log("innerTable.height: " + height)
-        onWidthChanged: console.log("innerTable.width: " + width)
+        // onHeightChanged: console.log("innerTable.height: " + height)
+        // onWidthChanged: console.log("innerTable.width: " + width)
         model: observationTableModel
 
         delegate: DelegateChooser {
@@ -204,8 +166,7 @@ Rectangle {
 
                     Text {
                         text: display
-                        font.family: Constants.monoSpaceFont
-                        font.pointSize: Constants.mediumPointSize
+                        font: topLevel.tableFont
                         anchors.centerIn: parent
                         leftPadding: 2
                     }
@@ -223,8 +184,7 @@ Rectangle {
 
                     Text {
                         text: ObsTabJS.padFloat(display, 11)
-                        font.family: Constants.monoSpaceFont
-                        font.pointSize: Constants.mediumPointSize
+                        font: topLevel.tableFont
                         anchors.centerIn: parent
                         leftPadding: 2
                     }
@@ -242,8 +202,7 @@ Rectangle {
 
                     Text {
                         text: ObsTabJS.padFloat(display, 13)
-                        font.family: Constants.monoSpaceFont
-                        font.pointSize: Constants.mediumPointSize
+                        font: topLevel.tableFont
                         anchors.centerIn: parent
                         leftPadding: 2
                     }
@@ -261,8 +220,7 @@ Rectangle {
 
                     Text {
                         text: ObsTabJS.padFloat(display, 9)
-                        font.family: Constants.monoSpaceFont
-                        font.pointSize: Constants.mediumPointSize
+                        font: topLevel.tableFont
                         anchors.centerIn: parent
                         leftPadding: 2
                     }
@@ -280,8 +238,7 @@ Rectangle {
 
                     Text {
                         text: ObsTabJS.padFloat(display, 9)
-                        font.family: Constants.monoSpaceFont
-                        font.pointSize: Constants.mediumPointSize
+                        font: topLevel.tableFont
                         anchors.centerIn: parent
                         leftPadding: 2
                     }
@@ -299,8 +256,7 @@ Rectangle {
 
                     Text {
                         text: ObsTabJS.padFloat(display, 9)
-                        font.family: Constants.monoSpaceFont
-                        font.pointSize: Constants.mediumPointSize
+                        font: topLevel.tableFont
                         anchors.centerIn: parent
                         leftPadding: 2
                     }
@@ -318,8 +274,7 @@ Rectangle {
 
                     Text {
                         text: display
-                        font.family: Constants.monoSpaceFont
-                        font.pointSize: Constants.mediumPointSize
+                        font: topLevel.tableFont
                         anchors.centerIn: parent
                         leftPadding: 2
                     }
@@ -337,8 +292,7 @@ Rectangle {
 
                     Text {
                         text: ObsTabJS.showFlags(display)
-                        font.family: Constants.monoSpaceFont
-                        font.pointSize: Constants.mediumPointSize
+                        font: topLevel.tableFont
                         leftPadding: 2
                     }
 
@@ -355,7 +309,7 @@ Rectangle {
         running: true
         repeat: true
         onTriggered: {
-            if (!columnHeaderTable.visible)
+            if (!header.visible)
                 return ;
 
             var columnCount = ObsTabJS.obsColNames.length;
@@ -367,7 +321,7 @@ Rectangle {
             if (newColumnWidths[0] != columnWidths[0]) {
                 columnWidths = newColumnWidths;
                 innerTable.forceLayout();
-                columnHeaderTable.forceLayout();
+                header.forceLayout();
             }
         }
     }

@@ -80,5 +80,6 @@
     <file>images/fontawesome/file-export.svg</file>
     <file>images/fontawesome/file-import.svg</file>
     <file>images/fontawesome/exclamation-triangle.svg</file>
+    <file>TableComponents/SortableColumnHeading.qml</file>
 </qresource>
 </RCC>

@@ -1,5 +1,3 @@
-import QtQuick 2.15
-
 // Note: To use draggable features, your model must have the following:
 //   * Must be a QSortFilterProxyModel
 //   * Must have a method called reorderColumn(column, pos), where column is the index of the
@@ -15,7 +13,6 @@ import QtQuick 2.15
 //             headerRepeater.model = 0
 //             headerRepeater.model = table.model.columnCount()
 //         }
-
 // Note: To use sortable features, your model must have the following:
 //   * Must be a QSortFilterProxyModel
 //   * Must provide an implementation of the sort(column, sortOrder) method, where column is the
@@ -29,56 +26,101 @@ import QtQuick 2.15
 //                     headerRepeater.itemAt(i).clearSorting()
 //         }
 
+import QtQuick 2.15
+
 Rectangle {
     id: root
-    color: "Dark Grey"
+
     property int initialSortOrder: Qt.AscendingOrder
     property alias text: label.text
     property real initialWidth: 100
     property alias sortable: tap.enabled
     property alias reorderable: dragHandler.enabled
     property QtObject table: undefined
-    property var headerRelayoutProvider: function() {}
-    signal sorting
+    property var headerRelayoutProvider: function() {
+    }
+
+    signal sorting()
     signal dropped(real x)
+
+    function clearSorting() {
+        state = "";
+    }
+
+    function nextState() {
+        if (state == "")
+            state = (initialSortOrder == Qt.DescendingOrder ? "down" : "up");
+        else if (state == "up")
+            state = "down";
+        else
+            state = "up";
+        root.sorting();
+    }
+
+    color: "Dark Grey"
     implicitHeight: label.implicitHeight
     width: splitter.x + 6
     z: dragHandler.active ? 1 : 0
-
     onSortableChanged: {
-        if (sortable && typeof table.model.sort === "undefined") {
-            console.warn("SortableColumnHeading: Model does not support sorting, but sortable enabled.")
-        }
-    }
+        if (sortable && typeof table.model.sort === "undefined")
+            console.warn("SortableColumnHeading: Model does not support sorting, but sortable enabled.");
 
+    }
     onReorderableChanged: {
-        if (reorderable && typeof table.model.reorderColumn === "undefined") {
-            console.warn("SortableColumnHeading: Model does not support reordering columns, but reorderable enabled.")
-        }
-    }
+        if (reorderable && typeof table.model.reorderColumn === "undefined")
+            console.warn("SortableColumnHeading: Model does not support reordering columns, but reorderable enabled.");
 
+    }
     onDropped: (x) => {
         if (typeof table.model.reorderColumn !== "undefined") {
-            table.model.reorderColumn(index, x)
+            table.model.reorderColumn(index, x);
             if (typeof headerRelayoutProvider === "undefined")
-                console.warn("SortableColumnHeading: No headerRelayoutProvider specified. Undefined behavior when reordering headers.")
+                console.warn("SortableColumnHeading: No headerRelayoutProvider specified. Undefined behavior when reordering headers.");
             else
-                headerRelayoutProvider()
+                headerRelayoutProvider();
         }
     }
-
     onSorting: {
-        if (typeof table.model.sort !== "undefined") {
-            table.model.sort(index, state == "up" ? Qt.AscendingOrder : Qt.DescendingOrder)
-        }
-    }
+        if (typeof table.model.sort !== "undefined")
+            table.model.sort(index, state == "up" ? Qt.AscendingOrder : Qt.DescendingOrder);
 
-    function clearSorting() {
-        state = ""
     }
+    states: [
+        State {
+            name: "up"
+
+            PropertyChanges {
+                target: upDownIndicator
+                visible: true
+                rotation: 0
+            }
+
+            PropertyChanges {
+                target: root
+                color: "orange"
+            }
+
+        },
+        State {
+            name: "down"
+
+            PropertyChanges {
+                target: upDownIndicator
+                visible: true
+                rotation: 180
+            }
+
+            PropertyChanges {
+                target: root
+                color: "orange"
+            }
+
+        }
+    ]
 
     Text {
         id: label
+
         anchors.verticalCenter: parent.verticalCenter
         padding: 3
         x: 4
@@ -88,6 +130,7 @@ Rectangle {
 
     Text {
         id: upDownIndicator
+
         anchors.right: parent.right
         anchors.margins: 4
         anchors.verticalCenter: parent.verticalCenter
@@ -97,46 +140,38 @@ Rectangle {
 
     TapHandler {
         id: tap
+
         enabled: false
         onTapped: nextState()
     }
 
     Item {
         id: splitter
+
         x: root.initialWidth - 6
         width: 12
         height: parent.height + 10
+
         DragHandler {
             yAxis.enabled: false
-            onActiveChanged: if (!active) table.forceLayout()
+            onActiveChanged: {
+                if (!active)
+                    table.forceLayout();
+
+            }
         }
+
     }
 
     DragHandler {
         id: dragHandler
+
         enabled: false
-        onActiveChanged: if (!active) root.dropped(centroid.scenePosition.x)
+        onActiveChanged: {
+            if (!active)
+                root.dropped(centroid.scenePosition.x);
+
+        }
     }
 
-    function nextState() {
-        if (state == "")
-            state = (initialSortOrder == Qt.DescendingOrder ? "down" : "up")
-        else if (state == "up")
-            state = "down"
-        else
-            state = "up"
-        root.sorting()
-    }
-    states: [
-        State {
-            name: "up"
-            PropertyChanges { target: upDownIndicator; visible: true; rotation: 0 }
-            PropertyChanges { target: root; color: "orange" }
-        },
-        State {
-            name: "down"
-            PropertyChanges { target: upDownIndicator; visible: true; rotation: 180 }
-            PropertyChanges { target: root; color: "orange" }
-        }
-    ]
 }

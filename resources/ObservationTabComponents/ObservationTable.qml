@@ -1,7 +1,5 @@
 import "../Constants"
 import "../TableComponents"
-import "./observation_tab.js" as ObsTabJS
-import Qt.labs.qmlmodels 1.0
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
@@ -14,10 +12,9 @@ Rectangle {
     property variant columnWidths: [1, 1, 1, 1, 1, 1, 1, 1]
     property alias remote: observationTableModel.remote
     property bool populated: observationTableModel ? observationTableModel.row_count > 0 : false
-
     property font tableFont: Qt.font({
-        family: Constants.monoSpaceFont,
-        pointSize: Constants.mediumPointSize
+        "family": Constants.monoSpaceFont,
+        "pointSize": Constants.mediumPointSize
     })
 
     function update() {
@@ -77,7 +74,7 @@ Rectangle {
             Text {
                 id: towValue
 
-                text: observationTableModel ? ObsTabJS.padFloat(observationTableModel.tow, 2) : ""
+                text: observationTableModel ? observationTableModel.padFloat(observationTableModel.tow, 2) : ""
                 font: Constants.monoSpaceFont
             }
 
@@ -101,43 +98,25 @@ Rectangle {
 
     Row {
         id: header
+
         anchors.top: innerStats.bottom
         width: innerTable.contentWidth
-        // height: 20
         x: -innerTable.contentX
         z: 1
-        spacing: 4
-        function relayout() {
-            headerRepeater.model = 0
-            headerRepeater.model = innerTable.model.columnCount()
-        }
+        spacing: innerTable.columnSpacing
 
         Repeater {
             id: headerRepeater
-            model: innerTable.model ? innerTable.model.columnCount() : 0
-            // Rectangle {
-            //     color: "Dark Grey"
-            //     width: myText.implicitWidth
-            //     height: myText.implicitHeight
-            //     Text {
-            //         id: myText
-            //         text: innerTable.model.headerData(index, Qt.Horizontal)
-            //     }
-            // }
+
+            model: observationTableModel ? observationTableModel.columnCount() : 0
+
             SortableColumnHeading {
-                // height: 20
-                initialWidth: 100  // Math.min(600, innerTable.model.columnWidth(index, tableFont)); height: parent.height
-                reorderable: true
-                sortable: true
-                headerRelayoutProvider: header.relayout
+                initialWidth: 100 // Math.min(600, observationTableModel.columnWidth(index, tableFont)); height: parent.height
                 table: innerTable
-                onSorting: {
-                    for (var i = 0; i < headerRepeater.model; ++i)
-                        if (i != index)
-                            headerRepeater.itemAt(i).clearSorting()
-                }
             }
+
         }
+
     }
 
     TableView {
@@ -145,159 +124,85 @@ Rectangle {
 
         height: parent.height - innerStats.height - innerText.height - header.height - 6
         anchors.top: header.bottom
-        columnSpacing: 0
-        rowSpacing: 0
+        columnSpacing: 1
+        rowSpacing: 1
         clip: true
         width: parent.width
         columnWidthProvider: function(column) {
             return columnWidths[column];
         }
-        // onHeightChanged: console.log("innerTable.height: " + height)
-        // onWidthChanged: console.log("innerTable.width: " + width)
         model: observationTableModel
 
-        delegate: DelegateChooser {
-            DelegateChoice {
-                column: 0 // prn
+        delegate: Item {
+            implicitHeight: cellText.implicitHeight
 
-                delegate: Rectangle {
-                    implicitHeight: 20
-                    border.width: 1
+            Rectangle {
+                visible: row === 0
+                height: 1
+                color: "red"
 
-                    Text {
-                        text: display
-                        font: topLevel.tableFont
-                        anchors.centerIn: parent
-                        leftPadding: 2
-                    }
-
+                anchors {
+                    top: parent.top
+                    left: parent.left
+                    right: parent.right
+                    leftMargin: column === 0 ? 0 : -1 * (innerTable.columnSpacing + 1) / 2
+                    rightMargin: -1 * (innerTable.columnSpacing + 1) / 2
                 }
 
             }
 
-            DelegateChoice {
-                column: 1 // pseudoRange
+            Rectangle {
+                visible: column === 0
+                width: 1
+                color: "red"
 
-                delegate: Rectangle {
-                    implicitHeight: 20
-                    border.width: 1
-
-                    Text {
-                        text: ObsTabJS.padFloat(display, 11)
-                        font: topLevel.tableFont
-                        anchors.centerIn: parent
-                        leftPadding: 2
-                    }
-
+                anchors {
+                    top: parent.top
+                    bottom: parent.bottom
+                    left: parent.left
+                    topMargin: row === 0 ? 0 : -1 * (innerTable.rowSpacing + 1) / 2
+                    bottomMargin: -1 * (innerTable.rowSpacing + 1) / 2
                 }
 
             }
 
-            DelegateChoice {
-                column: 2 // carrierPhase
+            Rectangle {
+                height: 1
+                color: "red"
 
-                delegate: Rectangle {
-                    implicitHeight: 20
-                    border.width: 1
-
-                    Text {
-                        text: ObsTabJS.padFloat(display, 13)
-                        font: topLevel.tableFont
-                        anchors.centerIn: parent
-                        leftPadding: 2
-                    }
-
+                anchors {
+                    bottom: parent.bottom
+                    left: parent.left
+                    right: parent.right
+                    bottomMargin: -1 * (innerTable.rowSpacing + 1) / 2
+                    leftMargin: column === 0 ? 0 : -1 * (innerTable.columnSpacing + 1) / 2
+                    rightMargin: -1 * (innerTable.columnSpacing + 1) / 2
                 }
 
             }
 
-            DelegateChoice {
-                column: 3 // cn0
+            Rectangle {
+                width: 1
+                color: "red"
 
-                delegate: Rectangle {
-                    implicitHeight: 20
-                    border.width: 1
-
-                    Text {
-                        text: ObsTabJS.padFloat(display, 9)
-                        font: topLevel.tableFont
-                        anchors.centerIn: parent
-                        leftPadding: 2
-                    }
-
+                anchors {
+                    top: parent.top
+                    bottom: parent.bottom
+                    right: parent.right
+                    topMargin: row === 0 ? 0 : -1 * (innerTable.rowSpacing + 1) / 2
+                    bottomMargin: -1 * (innerTable.rowSpacing + 1) / 2
+                    rightMargin: -1 * (innerTable.columnSpacing + 1) / 2
                 }
 
             }
 
-            DelegateChoice {
-                column: 4 // measuredDoppler
+            Text {
+                id: cellText
 
-                delegate: Rectangle {
-                    implicitHeight: 20
-                    border.width: 1
-
-                    Text {
-                        text: ObsTabJS.padFloat(display, 9)
-                        font: topLevel.tableFont
-                        anchors.centerIn: parent
-                        leftPadding: 2
-                    }
-
-                }
-
-            }
-
-            DelegateChoice {
-                column: 5 // computedDoppler
-
-                delegate: Rectangle {
-                    implicitHeight: 20
-                    border.width: 1
-
-                    Text {
-                        text: ObsTabJS.padFloat(display, 9)
-                        font: topLevel.tableFont
-                        anchors.centerIn: parent
-                        leftPadding: 2
-                    }
-
-                }
-
-            }
-
-            DelegateChoice {
-                column: 6 // lock
-
-                delegate: Rectangle {
-                    implicitHeight: 20
-                    border.width: 1
-
-                    Text {
-                        text: display
-                        font: topLevel.tableFont
-                        anchors.centerIn: parent
-                        leftPadding: 2
-                    }
-
-                }
-
-            }
-
-            DelegateChoice {
-                column: 7 // flags
-
-                delegate: Rectangle {
-                    implicitHeight: 20
-                    border.width: 1
-
-                    Text {
-                        text: ObsTabJS.showFlags(display)
-                        font: topLevel.tableFont
-                        leftPadding: 2
-                    }
-
-                }
-
+                text: display
+                font: topLevel.tableFont
+                anchors.centerIn: parent
+                padding: 3
             }
 
         }
@@ -312,7 +217,7 @@ Rectangle {
             if (!header.visible)
                 return ;
 
-            var columnCount = ObsTabJS.obsColNames.length;
+            var columnCount = observationTableModel.columnCount();
             var equalWidth = parent.width / columnCount;
             var newColumnWidths = [];
             for (var i = 0; i < columnCount; i++) {

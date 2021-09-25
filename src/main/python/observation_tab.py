@@ -6,6 +6,35 @@ from PySide2.QtCore import Property, Slot, Signal, QAbstractTableModel, Qt, QMod
 from constants import Keys
 
 
+def localPadFloat(num, length, digits=2, allowNegative=True):
+    if not num:
+        return "--"
+    s = f"{num:.{digits}f}"
+    padLength = length if not allowNegative else length + 1
+    return f"{s:>{padLength}}"
+
+
+def showFlags(flags):
+    if not flags:
+        return "0x0000"
+    # flagStr = '0x' + flags.toString(16).padStart(4, '0') + ' =';
+    flagStr = f"0x{flags:0>4x} ="
+
+    # Bit 0 is Pseudorange valid
+    if flags & 0x01:
+        flagStr += " PR"
+    # Bit 1 is Carrier phase valid
+    if flags & 0x02:
+        flagStr += " CP"
+    # Bit 2 is Half-cycle ambiguity
+    if flags & 0x04:
+        flagStr += " 1/2C"
+    # Bit 3 is Measured Doppler Valid
+    if flags & 0x08:
+        flagStr += " MD"
+    return flagStr
+
+
 REMOTE_OBSERVATION_TAB: Dict[str, Any] = {
     Keys.TOW: 0,
     Keys.WEEK: 0,
@@ -25,15 +54,15 @@ class ObservationTableModel(QAbstractTableModel):
     row_count_changed = Signal(int, arguments="row_count")
     remote_changed = Signal(bool, arguments="remote")
 
-    column_names = [
-        "PRN",
-        "Pseudorange (m)",
-        "Carrier Phase (cycles)",
-        "C/N0 (dB-Hz)",
-        "Meas. Doppler (Hz)",
-        "Comp. Doppler (Hz)",
-        "Lock",
-        "Flags",
+    column_metadata = [
+        ("PRN", lambda columnValue: columnValue),
+        ("Pseudorange (m)", lambda columnValue: localPadFloat(columnValue, 11)),
+        ("Carrier Phase (cycles)", lambda columnValue: localPadFloat(columnValue, 13)),
+        ("C/N0 (dB-Hz)", lambda columnValue: localPadFloat(columnValue, 9)),
+        ("Meas. Doppler (Hz)", lambda columnValue: localPadFloat(columnValue, 9)),
+        ("Comp. Doppler (Hz)", lambda columnValue: localPadFloat(columnValue, 9)),
+        ("Lock", lambda columnValue: columnValue),
+        ("Flags", showFlags),
     ]
 
     def __init__(self, parent=None):
@@ -73,13 +102,15 @@ class ObservationTableModel(QAbstractTableModel):
         return len(self._rows)
 
     def columnCount(self, parent=QModelIndex()):  # pylint: disable=unused-argument
-        return len(ObservationTableModel.column_names)
+        return len(ObservationTableModel.column_metadata)
 
     def data(self, index, role=Qt.DisplayRole):  # pylint: disable=unused-argument
-        return self._rows[index.row()][self.col_names[index.column()]]
+        return ObservationTableModel.column_metadata[index.column()][1](
+            self._rows[index.row()][self.col_names[index.column()]]
+        )
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):  # pylint: disable=unused-argument
-        return ObservationTableModel.column_names[section] if orientation == Qt.Horizontal else section
+        return ObservationTableModel.column_metadata[section][0] if orientation == Qt.Horizontal else section
 
     @Slot()  # type: ignore
     def update(self) -> None:
@@ -112,6 +143,12 @@ class ObservationTableModel(QAbstractTableModel):
             self._rows.extend(rowsToInsert)
             self.endInsertRows()
             self.row_count_changed.emit(self.rowCount())  # type: ignore
+
+    @Slot(float, int, result=str)  # type: ignore
+    @Slot(float, int, int, result=str)  # type: ignore
+    @Slot(float, int, int, bool, result=str)  # type: ignore
+    def padFloat(self, num, length, digits=2, allowNegative=True):  # pylint: disable=no-self-use
+        return localPadFloat(num, length, digits, allowNegative)
 
     # Intentionally do not provide a setter in the property - no setting from QML.
     week = Property(float, get_week, notify=week_changed)  # type: ignore

@@ -20,7 +20,7 @@ from PySide2 import QtQml, QtCore
 
 from PySide2.QtGui import QFontDatabase
 
-from PySide2.QtQml import QQmlComponent, qmlRegisterType
+from PySide2.QtQml import QQmlComponent, qmlRegisterType, QQmlDebuggingEnabler
 
 from constants import ApplicationMetadata, ApplicationStates, Keys, Tabs, QTKeys
 
@@ -678,6 +678,8 @@ if __name__ == "__main__":
 
     args_main, _ = parser.parse_known_args()
 
+    # sys.argv.append("-qmljsdebugger=port:10002,block")
+    debug = QQmlDebuggingEnabler()
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
     app = QApplication(sys.argv)

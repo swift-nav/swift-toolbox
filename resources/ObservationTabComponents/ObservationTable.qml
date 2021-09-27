@@ -28,7 +28,7 @@ Rectangle {
         id: observationTableModel
     }
 
-    Rectangle {
+    Item {
         id: innerTextArea
 
         height: Constants.observationTab.titleAreaHight
@@ -48,6 +48,7 @@ Rectangle {
         anchors.top: innerTextArea.bottom
         border.width: 5
         height: 25
+        color: "transparent"
 
         RowLayout {
             Text {
@@ -128,6 +129,7 @@ Rectangle {
         rowSpacing: 1
         clip: true
         width: parent.width
+        boundsBehavior: Flickable.StopAtBounds
         columnWidthProvider: function(column) {
             return columnWidths[column];
         }
@@ -138,8 +140,6 @@ Rectangle {
             rowSpacing: innerTable.rowSpacing
             columnSpacing: innerTable.columnSpacing
         }
-
-        boundsBehavior: Flickable.StopAtBounds
 
     }
 

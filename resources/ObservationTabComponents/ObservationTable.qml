@@ -5,8 +5,8 @@ import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
-Rectangle {
-    id: topLevel
+ColumnLayout {
+    id: observationTable
 
     property alias name: innerText.text
     property alias remote: observationTableModel.remote
@@ -20,9 +20,6 @@ Rectangle {
         observationTableModel.update();
     }
 
-    border.color: "#000000"
-    border.width: 1
-
     ObservationTableModel {
         id: observationTableModel
 
@@ -35,92 +32,99 @@ Rectangle {
         }
     }
 
-    Item {
-        id: innerTextArea
+    Text {
+        id: innerText
 
         height: Constants.observationTab.titleAreaHight
-
-        Text {
-            id: innerText
-
-            padding: 5
-            font.pointSize: Constants.observationTab.titlePointSize
-        }
-
+        padding: 3
+        font.pointSize: Constants.observationTab.titlePointSize
     }
 
-    Rectangle {
+    RowLayout {
         id: innerStats
 
-        anchors.top: innerTextArea.bottom
-        border.width: 5
-        height: 25
-        color: "transparent"
+        property int textPadding: 3
+        spacing: 3
+        Text {
+            id: weekLabel
 
-        RowLayout {
-            Text {
-                id: weekLabel
+            text: "Week:"
+            padding: parent.textPadding
+            ToolTip.text: "GPS Week Number (since 1980)"
+        }
 
-                text: "Week:"
-                ToolTip.text: "GPS Week Number (since 1980)"
-            }
+        Text {
+            id: weekValue
 
-            Text {
-                id: weekValue
+            text: observationTableModel ? observationTableModel.week : ""
+            padding: parent.textPadding
+            font: Constants.monoSpaceFont
+        }
 
-                text: observationTableModel ? observationTableModel.week : ""
-                font: Constants.monoSpaceFont
-            }
+        Text {
+            id: towLabel
 
-            Text {
-                id: towLabel
+            text: "TOW:"
+            padding: parent.textPadding
+            ToolTip.text: "GPS milliseconds in week"
+        }
 
-                text: "TOW:"
-                ToolTip.text: "GPS milliseconds in week"
-            }
+        Text {
+            id: towValue
 
-            Text {
-                id: towValue
+            text: observationTableModel ? observationTableModel.padFloat(observationTableModel.tow, 2) : ""
+            padding: parent.textPadding
+            font: Constants.monoSpaceFont
+        }
 
-                text: observationTableModel ? observationTableModel.padFloat(observationTableModel.tow, 2) : ""
-                font: Constants.monoSpaceFont
-            }
+        Text {
+            id: totalLabel
 
-            Text {
-                id: totalLabel
+            text: "Total:"
+            padding: parent.textPadding
+            ToolTip.text: "Total observation count"
+        }
 
-                text: "Total:"
-                ToolTip.text: "Total observation count"
-            }
+        Text {
+            id: totalValue
 
-            Text {
-                id: totalValue
-
-                text: observationTableModel ? observationTableModel.row_count : ""
-                font: Constants.monoSpaceFont
-            }
-
+            text: observationTableModel ? observationTableModel.row_count : ""
+            padding: parent.textPadding
+            font: Constants.monoSpaceFont
         }
 
     }
 
-    Row {
-        id: header
+    Item {
+        // Layout.alignment: Qt.AlignHCenter
+        // Layout.fillWidth: true
+        Layout.leftMargin: 3
+        Layout.rightMargin: 3
+        implicitHeight: header.implicitHeight
+        implicitWidth: header.implicitWidth
+        clip: true
 
-        anchors.top: innerStats.bottom
-        width: innerTable.contentWidth
-        x: -innerTable.contentX
-        z: 1
-        spacing: innerTable.columnSpacing
+        Row {
+            id: header
 
-        Repeater {
-            id: headerRepeater
+            //Layout.leftMargin: 3
+            //Layout.rightMargin: 3
+            // Layout.alignment: Qt.AlignHCenter
+            width: innerTable.contentWidth
+            x: -innerTable.contentX
+            z: 1
+            spacing: innerTable.columnSpacing
 
-            model: observationTableModel ? observationTableModel.columnCount() : 0
+            Repeater {
+                id: headerRepeater
 
-            SortableColumnHeading {
-                initialWidth: Math.min(500, observationTableModel.columnWidth(index, tableFont))
-                table: innerTable
+                model: observationTableModel ? observationTableModel.columnCount() : 0
+
+                SortableColumnHeading {
+                    initialWidth: Math.min(500, observationTableModel.columnWidth(index, tableFont))
+                    table: innerTable
+                }
+
             }
 
         }
@@ -130,12 +134,24 @@ Rectangle {
     TableView {
         id: innerTable
 
-        height: parent.height - innerStats.height - innerText.height - header.height - 6
-        anchors.top: header.bottom
+        width: Math.min(header.width + 1, parent.width)
+        // Layout.fillWidth: true
+        // Layout.maximumWidth: header.width + 1
+        Layout.leftMargin: 3
+        Layout.rightMargin: 3
+        Layout.fillHeight: true
+        // Layout.alignment: Qt.AlignHCenter // x: header.x
         columnSpacing: 1
         rowSpacing: 1
         clip: true
-        width: parent.width
+        onWidthChanged: {
+            // Don't ask why this is needed. It's a hack.
+            // If you want to find out, just comment out this code.
+            if (width === 0) {
+                width = Qt.binding(function() { return Math.min(header.width + 1, observationTable.width); })
+                forceLayout()
+            }
+        }
         boundsBehavior: Flickable.StopAtBounds
         columnWidthProvider: function(column) {
             return headerRepeater.itemAt(column).width

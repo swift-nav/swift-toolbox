@@ -18,10 +18,6 @@ Rectangle {
 
     function update() {
         observationTableModel.update();
-        for(var col = 0; col < headerRepeater.count; col++) {
-            var initWidth = Math.min(500, observationTableModel.columnWidth(col, tableFont));
-            headerRepeater.itemAt(col).initialWidth = initWidth;
-        }
     }
 
     border.color: "#000000"
@@ -29,6 +25,14 @@ Rectangle {
 
     ObservationTableModel {
         id: observationTableModel
+
+        onDataPopulated: {
+            for(var col = 0; col < headerRepeater.count; col++) {
+                var initWidth = Math.min(500, observationTableModel.columnWidth(col, tableFont));
+                headerRepeater.itemAt(col).initialWidth = initWidth;
+            }
+            innerTable.forceLayout()
+        }
     }
 
     Item {

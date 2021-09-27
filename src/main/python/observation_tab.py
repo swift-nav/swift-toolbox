@@ -2,6 +2,7 @@ from typing import Dict, Any
 from copy import deepcopy
 
 from PySide2.QtCore import Property, Slot, Signal, QAbstractTableModel, Qt, QModelIndex
+from PySide2.QtGui import QFont, QFontMetrics, QGuiApplication
 
 from constants import Keys
 
@@ -71,8 +72,8 @@ class ObservationTableModel(QAbstractTableModel):
         self._week = 0
         self._rows = []
         self._remote = False
-
-        self.col_names = None
+        self._column_widths = [None] * len(ObservationTableModel.column_metadata)
+        self.json_col_names = None
 
     def set_tow(self, tow) -> None:
         """Setter for _tow."""
@@ -106,7 +107,7 @@ class ObservationTableModel(QAbstractTableModel):
 
     def data(self, index, role=Qt.DisplayRole):  # pylint: disable=unused-argument
         return ObservationTableModel.column_metadata[index.column()][1](
-            self._rows[index.row()][self.col_names[index.column()]]
+            self._rows[index.row()][self.json_col_names[index.column()]]
         )
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):  # pylint: disable=unused-argument
@@ -134,8 +135,8 @@ class ObservationTableModel(QAbstractTableModel):
                         modelIdx = self.index(rowIdx, colIdx)
                         self.dataChanged.emit(modelIdx, modelIdx)  # pylint: disable=no-member
                 except IndexError:
-                    if self.col_names is None:
-                        self.col_names = list(row.keys())
+                    if self.json_col_names is None:
+                        self.json_col_names = list(row.keys())
                     rowsToInsert.append(deepcopy(row))
 
         if len(rowsToInsert) > 0:
@@ -143,6 +144,19 @@ class ObservationTableModel(QAbstractTableModel):
             self._rows.extend(rowsToInsert)
             self.endInsertRows()
             self.row_count_changed.emit(self.rowCount())  # type: ignore
+
+    @Slot(int, result=int)
+    @Slot(int, QFont, result=int)
+    def columnWidth(self, column, font = None):
+        if not self._column_widths[column]:
+            defaultFontMetrics = QFontMetrics(QGuiApplication.font())
+            fm = defaultFontMetrics if font is None else QFontMetrics(font)
+            ret = fm.width(str(self.headerData(column, Qt.Horizontal)) + " ^") + 8
+            for rowIdx in range(len(self._rows)):
+                modelIdx = self.index(rowIdx, column)
+                ret = max(ret, fm.width(str(self.data(modelIdx))))
+            self._column_widths[column] = ret
+        return self._column_widths[column]
 
     @Slot(float, int, result=str)  # type: ignore
     @Slot(float, int, int, result=str)  # type: ignore

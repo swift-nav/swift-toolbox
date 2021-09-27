@@ -73,6 +73,7 @@ class ObservationTableModel(QAbstractTableModel):
         self._rows = []
         self._remote = False
         self._column_widths = [None] * len(ObservationTableModel.column_metadata)
+        self._column_widths_seen_data_all_columns = 0
         self.json_col_names = None
 
     def set_tow(self, tow) -> None:
@@ -145,17 +146,31 @@ class ObservationTableModel(QAbstractTableModel):
             self.endInsertRows()
             self.row_count_changed.emit(self.rowCount())  # type: ignore
 
-    @Slot(int, result=int)
-    @Slot(int, QFont, result=int)
-    def columnWidth(self, column, font = None):
-        if not self._column_widths[column]:
+    @Slot(int, result=int)  # type: ignore
+    @Slot(int, QFont, result=int)  # type: ignore
+    @Slot(int, QFont, QFont, result=int)  # type: ignore
+    def columnWidth(self, column, tableFont = None, headerFont = None):
+        if not self._column_widths[column] or self._column_widths_seen_data_all_columns < 8:
             defaultFontMetrics = QFontMetrics(QGuiApplication.font())
-            fm = defaultFontMetrics if font is None else QFontMetrics(font)
-            ret = fm.width(str(self.headerData(column, Qt.Horizontal)) + " ^") + 8
+            tfm = defaultFontMetrics if tableFont is None else QFontMetrics(tableFont)
+            hfm = defaultFontMetrics if headerFont is None else QFontMetrics(headerFont)
+            ret = hfm.width(str(self.headerData(column, Qt.Horizontal)) + " ^") + 8
+            maxString = str(self.headerData(column, Qt.Horizontal)) + " ^"  # Temporary - removeme.
+            maxStringRow = -1
             for rowIdx in range(len(self._rows)):
                 modelIdx = self.index(rowIdx, column)
-                ret = max(ret, fm.width(str(self.data(modelIdx))))
+                cellData = str(self.data(modelIdx))  # Temporary, move me into max below and removeme.
+                if tfm.width(cellData) >= ret:
+                    maxString = cellData
+                    maxStringRow = rowIdx
+                ret = max(ret, tfm.width(cellData))
             self._column_widths[column] = ret
+            if len(self._rows) > 0 and len(self._rows[-1]) == self.columnCount():
+                self._column_widths_seen_data_all_columns += 1
+            if maxStringRow >= 0:
+                print(f"Row with max ({maxStringRow}): {str(self._rows[maxStringRow])}")
+            print(f"Column width: {ret}, maxString: {maxString}")
+
         return self._column_widths[column]
 
     @Slot(float, int, result=str)  # type: ignore

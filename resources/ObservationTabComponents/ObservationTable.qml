@@ -18,6 +18,10 @@ Rectangle {
 
     function update() {
         observationTableModel.update();
+        for(var col = 0; col < headerRepeater.count; col++) {
+            var initWidth = Math.min(500, observationTableModel.columnWidth(col, tableFont));
+            headerRepeater.itemAt(col).initialWidth = initWidth;
+        }
     }
 
     border.color: "#000000"

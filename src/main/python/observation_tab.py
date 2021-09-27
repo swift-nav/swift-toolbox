@@ -54,6 +54,7 @@ class ObservationTableModel(QAbstractTableModel):
     week_changed = Signal(int, arguments="week")
     row_count_changed = Signal(int, arguments="row_count")
     remote_changed = Signal(bool, arguments="remote")
+    dataPopulated = Signal()
 
     column_metadata = [
         ("PRN", lambda columnValue: columnValue),
@@ -73,7 +74,8 @@ class ObservationTableModel(QAbstractTableModel):
         self._rows = []
         self._remote = False
         self._column_widths = [None] * len(ObservationTableModel.column_metadata)
-        self._column_widths_seen_data_all_columns = 0
+        self._columnWidth_calls = [0] * len(self._column_widths)
+        self._column_widths_seen_data_all_columns = False
         self.json_col_names = None
 
     def set_tow(self, tow) -> None:
@@ -146,31 +148,29 @@ class ObservationTableModel(QAbstractTableModel):
             self.endInsertRows()
             self.row_count_changed.emit(self.rowCount())  # type: ignore
 
+        if len(self._rows) > 0 and len(self._rows[-1]) == self.columnCount() and not self._column_widths_seen_data_all_columns:
+            self.dataPopulated.emit()  # type: ignore
+            self._column_widths_seen_data_all_columns = True
+
     @Slot(int, result=int)  # type: ignore
     @Slot(int, QFont, result=int)  # type: ignore
     @Slot(int, QFont, QFont, result=int)  # type: ignore
     def columnWidth(self, column, tableFont = None, headerFont = None):
-        if not self._column_widths[column] or self._column_widths_seen_data_all_columns < 8:
+        # Don't cache until the second call on a column because the first call to this per column
+        # is done before any data has come in, and columns are just sized to headers.
+        if not self._column_widths[column] or self._columnWidth_calls[column] < 2:
+            margin = 8
             defaultFontMetrics = QFontMetrics(QGuiApplication.font())
             tfm = defaultFontMetrics if tableFont is None else QFontMetrics(tableFont)
             hfm = defaultFontMetrics if headerFont is None else QFontMetrics(headerFont)
-            ret = hfm.width(str(self.headerData(column, Qt.Horizontal)) + " ^") + 8
-            maxString = str(self.headerData(column, Qt.Horizontal)) + " ^"  # Temporary - removeme.
-            maxStringRow = -1
+            ret = hfm.width(str(self.headerData(column, Qt.Horizontal)) + " ^") + margin
             for rowIdx in range(len(self._rows)):
                 modelIdx = self.index(rowIdx, column)
-                cellData = str(self.data(modelIdx))  # Temporary, move me into max below and removeme.
-                if tfm.width(cellData) >= ret:
-                    maxString = cellData
-                    maxStringRow = rowIdx
-                ret = max(ret, tfm.width(cellData))
+                cellData = str(self.data(modelIdx))
+                ret = max(ret, tfm.width(cellData) + margin)
             self._column_widths[column] = ret
-            if len(self._rows) > 0 and len(self._rows[-1]) == self.columnCount():
-                self._column_widths_seen_data_all_columns += 1
-            if maxStringRow >= 0:
-                print(f"Row with max ({maxStringRow}): {str(self._rows[maxStringRow])}")
-            print(f"Column width: {ret}, maxString: {maxString}")
 
+        self._columnWidth_calls[column] += 1
         return self._column_widths[column]
 
     @Slot(float, int, result=str)  # type: ignore

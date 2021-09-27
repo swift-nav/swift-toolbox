@@ -9,7 +9,6 @@ Rectangle {
     id: topLevel
 
     property alias name: innerText.text
-    property variant columnWidths: [1, 1, 1, 1, 1, 1, 1, 1]
     property alias remote: observationTableModel.remote
     property bool populated: observationTableModel ? observationTableModel.row_count > 0 : false
     property font tableFont: Qt.font({
@@ -112,7 +111,7 @@ Rectangle {
             model: observationTableModel ? observationTableModel.columnCount() : 0
 
             SortableColumnHeading {
-                initialWidth: 100 // Math.min(600, observationTableModel.columnWidth(index, tableFont)); height: parent.height
+                initialWidth: Math.min(500, observationTableModel.columnWidth(index, tableFont))
                 table: innerTable
             }
 
@@ -131,7 +130,7 @@ Rectangle {
         width: parent.width
         boundsBehavior: Flickable.StopAtBounds
         columnWidthProvider: function(column) {
-            return columnWidths[column];
+            return headerRepeater.itemAt(column).width
         }
         model: observationTableModel
 
@@ -141,28 +140,12 @@ Rectangle {
             columnSpacing: innerTable.columnSpacing
         }
 
-    }
-
-    Timer {
-        interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
-        running: true
-        repeat: true
-        onTriggered: {
-            if (!header.visible)
-                return ;
-
-            var columnCount = observationTableModel.columnCount();
-            var equalWidth = parent.width / columnCount;
-            var newColumnWidths = [];
-            for (var i = 0; i < columnCount; i++) {
-                newColumnWidths.push(equalWidth);
-            }
-            if (newColumnWidths[0] != columnWidths[0]) {
-                columnWidths = newColumnWidths;
-                innerTable.forceLayout();
-                header.forceLayout();
-            }
+        ScrollBar.horizontal: ScrollBar {
         }
+
+        ScrollBar.vertical: ScrollBar {
+        }
+
     }
 
 }

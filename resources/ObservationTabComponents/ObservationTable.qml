@@ -15,6 +15,7 @@ ColumnLayout {
         "family": Constants.monoSpaceFont,
         "pointSize": Constants.mediumPointSize
     })
+    spacing: 0
 
     function update() {
         observationTableModel.update();
@@ -34,6 +35,8 @@ ColumnLayout {
 
     Text {
         id: innerText
+        Layout.leftMargin: 10
+        Layout.bottomMargin: 5
 
         height: Constants.observationTab.titleAreaHight
         padding: 3
@@ -42,6 +45,7 @@ ColumnLayout {
 
     RowLayout {
         id: innerStats
+        Layout.leftMargin: 10
 
         property int textPadding: 3
         spacing: 3
@@ -98,8 +102,7 @@ ColumnLayout {
     Item {
         // Layout.alignment: Qt.AlignHCenter
         // Layout.fillWidth: true
-        Layout.leftMargin: 3
-        Layout.rightMargin: 3
+        Layout.leftMargin: 10
         implicitHeight: header.implicitHeight
         implicitWidth: header.implicitWidth
         clip: true
@@ -137,8 +140,8 @@ ColumnLayout {
         width: Math.min(header.width + 1, parent.width)
         // Layout.fillWidth: true
         // Layout.maximumWidth: header.width + 1
-        Layout.leftMargin: 3
-        Layout.rightMargin: 3
+        Layout.leftMargin: 10
+        Layout.bottomMargin: 10
         Layout.fillHeight: true
         // Layout.alignment: Qt.AlignHCenter // x: header.x
         columnSpacing: 1

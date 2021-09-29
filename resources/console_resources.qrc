@@ -80,5 +80,6 @@
     <file>images/fontawesome/exclamation-triangle.svg</file>
     <file>TableComponents/SortableColumnHeading.qml</file>
     <file>TableComponents/TableCellDelegate.qml</file>
+    <file>BaseComponents/SwiftGroupBox.qml</file>
 </qresource>
 </RCC>

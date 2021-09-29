@@ -8,7 +8,6 @@ import SwiftConsole 1.0
 ColumnLayout {
     id: observationTable
 
-    property alias name: innerText.text
     property alias remote: observationTableModel.remote
     property bool populated: observationTableModel ? observationTableModel.row_count > 0 : false
     property font tableFont: Qt.font({
@@ -34,19 +33,8 @@ ColumnLayout {
         }
     }
 
-    Text {
-        id: innerText
-        Layout.leftMargin: 10
-        Layout.bottomMargin: 5
-
-        height: Constants.observationTab.titleAreaHight
-        padding: 3
-        font.pointSize: Constants.observationTab.titlePointSize
-    }
-
     RowLayout {
         id: innerStats
-        Layout.leftMargin: 10
 
         property int textPadding: 3
         spacing: 3
@@ -63,7 +51,6 @@ ColumnLayout {
 
             text: observationTableModel ? observationTableModel.week : ""
             padding: parent.textPadding
-            font: Constants.monoSpaceFont
         }
 
         Text {
@@ -79,7 +66,6 @@ ColumnLayout {
 
             text: observationTableModel ? observationTableModel.padFloat(observationTableModel.tow, 2) : ""
             padding: parent.textPadding
-            font: Constants.monoSpaceFont
         }
 
         Text {
@@ -95,7 +81,6 @@ ColumnLayout {
 
             text: observationTableModel ? observationTableModel.row_count : ""
             padding: parent.textPadding
-            font: Constants.monoSpaceFont
         }
 
     }
@@ -103,7 +88,6 @@ ColumnLayout {
     Item {
         // Layout.alignment: Qt.AlignHCenter
         // Layout.fillWidth: true
-        Layout.leftMargin: 10
         implicitHeight: header.implicitHeight
         implicitWidth: header.implicitWidth
         clip: true
@@ -142,8 +126,6 @@ ColumnLayout {
         width: Math.min(header.width + 1, parent.width)
         // Layout.fillWidth: true
         // Layout.maximumWidth: header.width + 1
-        Layout.leftMargin: 10
-        Layout.bottomMargin: 10
         Layout.fillHeight: true
         // Layout.alignment: Qt.AlignHCenter // x: header.x
         columnSpacing: -1
@@ -174,6 +156,13 @@ ColumnLayout {
         ScrollBar.vertical: ScrollBar {
         }
 
+    }
+
+    Rectangle {
+        height: 1
+        width: innerTable.width - 1
+        color: "transparent"
+        border.color: Constants.genericTable.borderColor
     }
 
 }

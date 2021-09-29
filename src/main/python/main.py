@@ -132,6 +132,12 @@ from tracking_signals_tab import (
     TRACKING_SIGNALS_TAB,
 )
 
+from tracking_sky_plot_tab import (
+    TrackingSkyPlotModel,
+    TrackingSkyPlotPoints,
+    TRACKING_SKY_PLOT_TAB,
+)
+
 from update_tab import (
     UPDATE_TAB,
     UpdateTabData,
@@ -155,6 +161,10 @@ TAB_LAYOUT = {
     Tabs.TRACKING_SIGNALS: {
         MAIN_INDEX: 0,
         SUB_INDEX: 0,
+    },
+    Tabs.TRACKING_SKYPLOT: {
+        MAIN_INDEX: 0,
+        SUB_INDEX: 1,
     },
     Tabs.SOLUTION_POSITION: {
         MAIN_INDEX: 1,
@@ -316,6 +326,14 @@ def receive_messages(app_, backend, messages):
                 for idx in range(len(m.trackingSignalsStatus.data))
             ]
             TRACKING_SIGNALS_TAB[Keys.XMIN_OFFSET] = m.trackingSignalsStatus.xminOffset
+        elif m.which == Message.Union.TrackingSkyPlotStatus:
+            TRACKING_SKY_PLOT_TAB[Keys.SATS][:] = [
+                [QPointF(point.az, point.el) for point in m.trackingSkyPlotStatus.sats[idx]]
+                for idx in range(len(m.trackingSkyPlotStatus.sats))
+            ]
+            TRACKING_SKY_PLOT_TAB[Keys.LABELS][:] = [
+                list(m.trackingSkyPlotStatus.labels[idx]) for idx in range(len(m.trackingSkyPlotStatus.labels))
+            ]
         elif m.which == Message.Union.ObservationStatus:
             if m.observationStatus.isRemote:
                 REMOTE_OBSERVATION_TAB[Keys.TOW] = m.observationStatus.tow
@@ -706,6 +724,7 @@ if __name__ == "__main__":
     qmlRegisterType(SolutionVelocityPoints, "SwiftConsole", 1, 0, "SolutionVelocityPoints")  # type: ignore
     qmlRegisterType(StatusBarData, "SwiftConsole", 1, 0, "StatusBarData")  # type: ignore
     qmlRegisterType(TrackingSignalsPoints, "SwiftConsole", 1, 0, "TrackingSignalsPoints")  # type: ignore
+    qmlRegisterType(TrackingSkyPlotPoints, "SwiftConsole", 1, 0, "TrackingSkyPlotPoints")  # type: ignore
     qmlRegisterType(ObservationTableModel, "SwiftConsole", 1, 0, "ObservationTableModel")  # type: ignore
     qmlRegisterType(UpdateTabData, "SwiftConsole", 1, 0, "UpdateTabData")  # type: ignore
 
@@ -740,6 +759,7 @@ if __name__ == "__main__":
     status_bar_model = StatusBarModel()
     logging_bar_model = LoggingBarModel()
     tracking_signals_model = TrackingSignalsModel()
+    tracking_sky_plot_model = TrackingSkyPlotModel()
     update_tab_model = UpdateTabModel()
     root_context = engine.rootContext()
     root_context.setContextProperty("log_panel_model", log_panel_model)
@@ -759,6 +779,7 @@ if __name__ == "__main__":
     root_context.setContextProperty("status_bar_model", status_bar_model)
     root_context.setContextProperty("logging_bar_model", logging_bar_model)
     root_context.setContextProperty("tracking_signals_model", tracking_signals_model)
+    root_context.setContextProperty("tracking_sky_plot_model", tracking_sky_plot_model)
     root_context.setContextProperty("update_tab_model", update_tab_model)
     root_context.setContextProperty("data_model", data_model)
 

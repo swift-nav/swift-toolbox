@@ -38,8 +38,10 @@ QtObject {
     property QtObject genericTable
     property QtObject updateTab
     property QtObject icons
+    property QtObject trackingSkyPlot
     readonly property int staticTimerIntervalRate: 5 // 5 Hz
     readonly property int staticTableTimerIntervalRate: 10 // 10 Hz
+    readonly property int staticTimerSlowIntervalRate: 2 // 2 Hz
     readonly property string monoSpaceFont: "Courier New"
     readonly property real smallPointSize: 7
     readonly property real mediumPointSize: 8
@@ -418,6 +420,28 @@ QtObject {
         readonly property int unitDropdownWidth: 90
         readonly property real zoomInMult: 1.1
         readonly property real zoomOutMult: 0.9
+        readonly property string fontFamily: "Roboto"
+    }
+
+    trackingSkyPlot: QtObject {
+        readonly property int markerSize: 10
+        readonly property var scatterLabels: ["GPS", "GLONASS", "GALILEO", "BEIDOU", "QZSS", "SBAS"]
+        readonly property var colors: ["green", "red", "blue", "gold", "pink", "purple"]
+        readonly property int axisAngularMax: 360
+        readonly property int axisAngularMin: 0
+        readonly property int axisAngularTickCount: 13
+        readonly property int axisRadialMax: 90
+        readonly property int axisRadialMin: 0
+        readonly property int axisRadialTickCount: 5
+        readonly property int checkboxLabelWidth: 100
+        readonly property int checkboxLegendWidth: 150
+        readonly property int checkboxHeight: 50
+        readonly property int checkboxSpacing: 0
+        readonly property int checkboxMargins: 10
+        readonly property int legendTopMargin: 50
+        readonly property int legendRightMargin: 200
+        readonly property int directionLabelOffset: 30
+        readonly property int directionLabelFontSize: 16
     }
 
     trackingSignals: QtObject {

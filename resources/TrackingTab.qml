@@ -50,8 +50,7 @@ Item {
             TrackingTabComponents.TrackingSignalsTab {
             }
 
-            Item {
-                id: trackingSkyplotTab
+            TrackingTabComponents.TrackingSkyPlotTab {
             }
 
         }

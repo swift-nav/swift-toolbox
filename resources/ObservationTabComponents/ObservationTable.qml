@@ -11,25 +11,26 @@ ColumnLayout {
     property alias remote: observationTableModel.remote
     property bool populated: observationTableModel ? observationTableModel.row_count > 0 : false
     property font tableFont: Qt.font({
-        family: Constants.genericTable.fontFamily,
-        pointSize: Constants.largePointSize
+        "family": Constants.genericTable.fontFamily,
+        "pointSize": Constants.largePointSize
     })
-    spacing: 0
 
     function update() {
         observationTableModel.update();
     }
 
+    spacing: 0
+
     ObservationTableModel {
         id: observationTableModel
 
         onDataPopulated: {
-            for(var col = 0; col < headerRepeater.count; col++) {
-                var thisHeader = headerRepeater.itemAt(col)
+            for (var col = 0; col < headerRepeater.count; col++) {
+                var thisHeader = headerRepeater.itemAt(col);
                 var initWidth = Math.min(500, observationTableModel.columnWidth(col, tableFont, thisHeader.font));
                 thisHeader.initialWidth = initWidth;
             }
-            innerTable.forceLayout()
+            innerTable.forceLayout();
         }
     }
 
@@ -37,7 +38,9 @@ ColumnLayout {
         id: innerStats
 
         property int textPadding: 3
+
         spacing: 3
+
         Text {
             id: weekLabel
 
@@ -135,13 +138,15 @@ ColumnLayout {
             // Don't ask why this is needed. It's a hack.
             // If you want to find out, just comment out this code.
             if (width === 0) {
-                width = Qt.binding(function() { return Math.min(header.width + 1, observationTable.width); })
-                forceLayout()
+                width = Qt.binding(function() {
+                    return Math.min(header.width + 1, observationTable.width);
+                });
+                forceLayout();
             }
         }
         boundsBehavior: Flickable.StopAtBounds
         columnWidthProvider: function(column) {
-            return headerRepeater.itemAt(column).width
+            return headerRepeater.itemAt(column).width;
         }
         model: observationTableModel
 

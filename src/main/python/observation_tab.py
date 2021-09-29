@@ -50,6 +50,10 @@ LOCAL_OBSERVATION_TAB: Dict[str, Any] = {
 
 
 class ObservationTableModel(QAbstractTableModel):
+    # pylint: disable=too-many-instance-attributes
+    # Might want to move the column_widths logic into QML and use QML's
+    # FontMetrics, but for now this is ok.
+
     tow_changed = Signal(float, arguments="tow")
     week_changed = Signal(int, arguments="week")
     row_count_changed = Signal(int, arguments="row_count")
@@ -148,14 +152,18 @@ class ObservationTableModel(QAbstractTableModel):
             self.endInsertRows()
             self.row_count_changed.emit(self.rowCount())  # type: ignore
 
-        if len(self._rows) > 0 and len(self._rows[-1]) == self.columnCount() and not self._column_widths_seen_data_all_columns:
+        if (
+            len(self._rows) > 0
+            and len(self._rows[-1]) == self.columnCount()
+            and not self._column_widths_seen_data_all_columns
+        ):
             self.dataPopulated.emit()  # type: ignore
             self._column_widths_seen_data_all_columns = True
 
     @Slot(int, result=int)  # type: ignore
     @Slot(int, QFont, result=int)  # type: ignore
     @Slot(int, QFont, QFont, result=int)  # type: ignore
-    def columnWidth(self, column, tableFont = None, headerFont = None):
+    def columnWidth(self, column, tableFont=None, headerFont=None):
         # Don't cache until the second call on a column because the first call to this per column
         # is done before any data has come in, and columns are just sized to headers.
         if not self._column_widths[column] or self._columnWidth_calls[column] < 2:

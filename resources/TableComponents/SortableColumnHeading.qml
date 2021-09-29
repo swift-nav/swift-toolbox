@@ -42,12 +42,11 @@ Rectangle {
     property var headerRelayoutProvider: function() {
     }
     property font font: Qt.font({
-        family: Constants.genericTable.fontFamily,
+        "family": Constants.genericTable.fontFamily
     })
     property color gradientStartColor: Constants.genericTable.cellColor
     property color gradientStopColor: Constants.genericTable.gradientColor
     property color selectedCellColor: Constants.genericTable.selectedCellColor
-    border.color: Constants.genericTable.borderColor
 
     signal sorting()
     signal dropped(real x)
@@ -66,6 +65,7 @@ Rectangle {
         sortableColumnHeading.sorting();
     }
 
+    border.color: Constants.genericTable.borderColor
     implicitHeight: label.implicitHeight
     width: splitter.x + 6
     z: dragHandler.active ? 1 : 0
@@ -149,19 +149,6 @@ Rectangle {
         font: sortableColumnHeading.font
     }
 
-    gradient: Gradient {
-        GradientStop {
-            position: 0
-            color: sortableColumnHeading.gradientStartColor
-        }
-
-        GradientStop {
-            position: 1
-            color: sortableColumnHeading.gradientStopColor
-        }
-
-    }
-
     TapHandler {
         id: tap
 
@@ -173,7 +160,11 @@ Rectangle {
         id: splitter
 
         x: sortableColumnHeading.initialWidth - 6
-        onXChanged: if (x < 0) x = 0  // Prevent resizing cell smaller than 0
+        onXChanged: {
+            if (x < 0)
+                x = 0;
+
+        } // Prevent resizing cell smaller than 0
         width: 12
         height: parent.height + 10
 
@@ -183,6 +174,7 @@ Rectangle {
 
         DragHandler {
             id: splitDragHandler
+
             yAxis.enabled: false
             dragThreshold: 1
             onActiveChanged: {
@@ -203,6 +195,19 @@ Rectangle {
                 sortableColumnHeading.dropped(centroid.scenePosition.x);
 
         }
+    }
+
+    gradient: Gradient {
+        GradientStop {
+            position: 0
+            color: sortableColumnHeading.gradientStartColor
+        }
+
+        GradientStop {
+            position: 1
+            color: sortableColumnHeading.gradientStopColor
+        }
+
     }
 
 }

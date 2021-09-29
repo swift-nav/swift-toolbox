@@ -3,6 +3,7 @@ import QtQuick 2.15
 
 Rectangle {
     property alias font: cellText.font
+
     implicitHeight: cellText.implicitHeight
     border.color: Constants.genericTable.borderColor
     color: Constants.genericTable.cellColor

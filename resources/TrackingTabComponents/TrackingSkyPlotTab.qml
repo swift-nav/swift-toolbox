@@ -1,5 +1,5 @@
 import "../Constants"
-import QtCharts 2.2
+import QtCharts 2.15
 import QtQuick 2.15
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.15
@@ -9,7 +9,8 @@ Item {
     id: trackingSkyPlotTab
 
     property var series: []
-    property var checkVisibility: [false, true, true, true, true, true, true]
+    property bool labelsVisible: false
+    property var checkVisibility: [true, true, true, true, true, true]
 
     TrackingSkyPlotPoints {
         id: trackingSkyPlotPoints
@@ -26,36 +27,41 @@ Item {
             Layout.fillHeight: true
             legend.visible: false
             antialiasing: true
+            margins.bottom: Constants.trackingSkyPlot.directionLabelOffset
+            margins.left: 0
+            margins.right: 0
+            margins.top: Constants.trackingSkyPlot.directionLabelOffset
 
-            CategoryAxis {
-                id: compassAxis
+            Text {
+                text: "N"
+                font.family: Constants.commonChart.fontFamily
+                font.pointSize: Constants.trackingSkyPlot.directionLabelFontSize
+                x: trackingSkyPlotChart.plotArea.x + trackingSkyPlotChart.plotArea.width / 2 - Constants.trackingSkyPlot.directionLabelFontSize / 2
+                y: trackingSkyPlotChart.plotArea.y - Constants.trackingSkyPlot.directionLabelOffset
+            }
 
-                min: Constants.trackingSkyPlot.axisAngularMin
-                max: Constants.trackingSkyPlot.axisAngularMax
-                labelsColor: Constants.commonChart.labelsColor
-                labelsPosition: CategoryAxis.AxisLabelsPositionOnValue
-                startValue: Constants.trackingSkyPlot.axisAngularMin
+            Text {
+                text: "E"
+                font.family: Constants.commonChart.fontFamily
+                font.pointSize: Constants.trackingSkyPlot.directionLabelFontSize
+                x: trackingSkyPlotChart.plotArea.x + trackingSkyPlotChart.plotArea.width + Constants.trackingSkyPlot.directionLabelOffset / 3
+                y: trackingSkyPlotChart.plotArea.y + trackingSkyPlotChart.plotArea.height / 2 - 2 * Constants.trackingSkyPlot.directionLabelFontSize / 3
+            }
 
-                CategoryRange {
-                    label: "N"
-                    endValue: Constants.trackingSkyPlot.axisAngularMin
-                }
+            Text {
+                text: "S"
+                font.family: Constants.commonChart.fontFamily
+                font.pointSize: Constants.trackingSkyPlot.directionLabelFontSize
+                x: trackingSkyPlotChart.plotArea.x + trackingSkyPlotChart.plotArea.width / 2 - Constants.trackingSkyPlot.directionLabelFontSize / 2
+                y: trackingSkyPlotChart.plotArea.y + trackingSkyPlotChart.plotArea.height + Constants.trackingSkyPlot.directionLabelOffset / 5
+            }
 
-                CategoryRange {
-                    label: "E"
-                    endValue: Constants.trackingSkyPlot.axisAngularMax / 4
-                }
-
-                CategoryRange {
-                    label: "S"
-                    endValue: Constants.trackingSkyPlot.axisAngularMax / 2
-                }
-
-                CategoryRange {
-                    label: "W"
-                    endValue: 3 * Constants.trackingSkyPlot.axisAngularMax / 4
-                }
-
+            Text {
+                text: "W"
+                font.family: Constants.commonChart.fontFamily
+                font.pointSize: Constants.trackingSkyPlot.directionLabelFontSize
+                x: trackingSkyPlotChart.plotArea.x - Constants.trackingSkyPlot.directionLabelOffset
+                y: trackingSkyPlotChart.plotArea.y + trackingSkyPlotChart.plotArea.height / 2 - 2 * Constants.trackingSkyPlot.directionLabelFontSize / 3
             }
 
             ValueAxis {
@@ -79,6 +85,7 @@ Item {
                 min: Constants.trackingSkyPlot.axisRadialMin
                 max: Constants.trackingSkyPlot.axisRadialMax
                 tickCount: Constants.trackingSkyPlot.axisRadialTickCount
+                labelsVisible: true
                 labelsPosition: CategoryAxis.AxisLabelsPositionOnValue
                 labelsColor: Constants.commonChart.labelsColor
                 gridVisible: true
@@ -88,8 +95,13 @@ Item {
                 gridLineColor: Constants.commonChart.gridLineColor
 
                 CategoryRange {
-                    label: "0°"
+                    label: " "
                     endValue: Constants.trackingSkyPlot.axisRadialMax
+                }
+
+                CategoryRange {
+                    label: "0°"
+                    endValue: Constants.trackingSkyPlot.axisRadialMax - 0.1
                 }
 
                 CategoryRange {
@@ -109,13 +121,6 @@ Item {
 
             }
 
-            ScatterSeries {
-                id: series_none
-
-                axisAngular: compassAxis
-                axisRadial: axisRadial
-            }
-
             Rectangle {
                 id: legend
 
@@ -127,7 +132,7 @@ Item {
                 anchors.rightMargin: Constants.trackingSkyPlot.legendRightMargin
                 implicitHeight: lineLegendRepeater.height
                 width: lineLegendRepeater.width
-                visible: checkVisibility[0]
+                visible: false
 
                 Column {
                     id: lineLegendRepeater
@@ -201,8 +206,19 @@ Item {
                     height: Constants.trackingSkyPlot.checkboxHeight
                     width: Constants.trackingSkyPlot.checkboxLegendWidth
                     onClicked: {
-                        checkVisibility[0] = checked;
-                        legend.visible = checkVisibility[0];
+                        legend.visible = checked;
+                    }
+                }
+
+                CheckBox {
+                    checked: false
+                    text: "Show Labels"
+                    font.family: Constants.genericTable.fontFamily
+                    font.pointSize: Constants.largePointSize
+                    height: Constants.trackingSkyPlot.checkboxHeight
+                    width: Constants.trackingSkyPlot.checkboxLegendWidth
+                    onClicked: {
+                        labelsVisible = checked;
                     }
                 }
 
@@ -219,7 +235,7 @@ Item {
                         height: Constants.trackingSkyPlot.checkboxHeight
                         width: Constants.trackingSkyPlot.checkboxLabelWidth
                         onClicked: {
-                            checkVisibility[index + 1] = checked;
+                            checkVisibility[index] = checked;
                         }
                     }
 
@@ -232,7 +248,7 @@ Item {
     }
 
     Timer {
-        interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
+        interval: Utils.hzToMilliseconds(Constants.staticTimerSlowIntervalRate)
         running: true
         repeat: true
         onTriggered: {
@@ -254,17 +270,19 @@ Item {
             }
             trackingSkyPlotPoints.fill_series(series);
             let labels = trackingSkyPlotPoints.labels;
-            for (var idx in labels) {
-                var kdx = parseInt(idx) + 1;
-                if (!checkVisibility[kdx]) {
-                    series[idx].clear();
-                    continue;
-                }
-                for (var jdx in labels[idx]) {
-                    var pose = trackingSkyPlotChart.mapToPosition(series[idx].at(jdx), series[idx]);
-                    let qmlStr = "import QtQuick 2.15; Text {color: 'black'; text: '" + labels[idx][jdx] + "'; width: 20; height: 20; x: " + pose.x + "; y: " + pose.y + ";}";
-                    var obj = Qt.createQmlObject(qmlStr, trackingSkyPlotChart, labels[idx][jdx]);
-                    obj.destroy(Utils.hzToMilliseconds(Globals.currentRefreshRate));
+            if (labelsVisible) {
+                for (var idx in labels) {
+                    var kdx = parseInt(idx);
+                    if (!checkVisibility[kdx]) {
+                        series[idx].clear();
+                        continue;
+                    }
+                    for (var jdx in labels[idx]) {
+                        var pose = trackingSkyPlotChart.mapToPosition(series[idx].at(jdx), series[idx]);
+                        let qmlStr = "import QtQuick 2.15; Text {color: 'black'; text: '" + labels[idx][jdx] + "'; width: 20; height: 20; x: " + pose.x + "; y: " + pose.y + ";}";
+                        var obj = Qt.createQmlObject(qmlStr, trackingSkyPlotChart, labels[idx][jdx]);
+                        obj.destroy(Utils.hzToMilliseconds(Constants.staticTimerSlowIntervalRate));
+                    }
                 }
             }
         }

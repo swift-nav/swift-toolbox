@@ -162,6 +162,10 @@ TAB_LAYOUT = {
         MAIN_INDEX: 0,
         SUB_INDEX: 0,
     },
+    Tabs.TRACKING_SKYPLOT: {
+        MAIN_INDEX: 0,
+        SUB_INDEX: 1,
+    },
     Tabs.SOLUTION_POSITION: {
         MAIN_INDEX: 1,
         SUB_INDEX: 0,

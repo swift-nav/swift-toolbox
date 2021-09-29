@@ -1,5 +1,6 @@
 import "./Constants"
 import "ObservationTabComponents" as ObservationTabComponents
+import "BaseComponents"
 import QtQuick 2.5
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
@@ -20,37 +21,42 @@ Item {
         height: parent.height
         visible: localTable.populated || remoteTable.populated
 
-        Rectangle {
+        Item {
             SplitView.minimumHeight: Constants.observationTab.titleAreaHight
             SplitView.preferredHeight: 0.5 * parent.height
             width: parent.width
-            color: "lightblue"
-            border.color: "#333"
-            border.width: 1
-
-            ObservationTabComponents.ObservationTable {
-                id: localTable
-
+            SwiftGroupBox {
                 anchors.fill: parent
-                name: "local"
+                anchors.topMargin: 4
+                title: "Local"
+
+                ObservationTabComponents.ObservationTable {
+                    id: localTable
+
+                    anchors.fill: parent
+                }
+
             }
 
         }
 
-        Rectangle {
+        Item {
             SplitView.minimumHeight: Constants.observationTab.titleAreaHight
             SplitView.preferredHeight: 0.5 * parent.height
             Layout.fillHeight: true
             width: parent.width
-            border.color: "#000000"
-            border.width: 1
-
-            ObservationTabComponents.ObservationTable {
-                id: remoteTable
-
+            SwiftGroupBox {
                 anchors.fill: parent
-                name: "remote"
-                remote: true
+                anchors.topMargin: 4
+                title: "Remote"
+
+                ObservationTabComponents.ObservationTable {
+                    id: remoteTable
+
+                    anchors.fill: parent
+                    remote: true
+                }
+
             }
 
         }

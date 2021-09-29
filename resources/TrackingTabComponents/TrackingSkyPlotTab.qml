@@ -10,6 +10,7 @@ Item {
 
     property var series: []
     property bool labelsVisible: false
+    property bool polarChartWidthChanging: false
     property var checkVisibility: [true, true, true, true, true, true]
 
     TrackingSkyPlotPoints {
@@ -31,6 +32,12 @@ Item {
             margins.left: 0
             margins.right: 0
             margins.top: Constants.trackingSkyPlot.directionLabelOffset
+            onWidthChanged: {
+                polarChartWidthChanging = true;
+            }
+            onHeightChanged: {
+                polarChartWidthChanging = true;
+            }
 
             Text {
                 text: "N"
@@ -269,6 +276,10 @@ Item {
                 }
             }
             trackingSkyPlotPoints.fill_series(series);
+            if (polarChartWidthChanging) {
+                polarChartWidthChanging = false;
+                return ;
+            }
             let labels = trackingSkyPlotPoints.labels;
             if (labelsVisible) {
                 for (var idx in labels) {
@@ -279,7 +290,7 @@ Item {
                     }
                     for (var jdx in labels[idx]) {
                         var pose = trackingSkyPlotChart.mapToPosition(series[idx].at(jdx), series[idx]);
-                        let qmlStr = "import QtQuick 2.15; Text {color: 'black'; text: '" + labels[idx][jdx] + "'; width: 20; height: 20; x: " + pose.x + "; y: " + pose.y + ";}";
+                        let qmlStr = "import QtQuick 2.15; Text {color: 'black'; text: '" + labels[idx][jdx] + "'; visible: !polarChartWidthChanging; width: 20; height: 20; x: " + pose.x + "; y: " + pose.y + ";}";
                         var obj = Qt.createQmlObject(qmlStr, trackingSkyPlotChart, labels[idx][jdx]);
                         obj.destroy(Utils.hzToMilliseconds(Constants.staticTimerSlowIntervalRate));
                     }

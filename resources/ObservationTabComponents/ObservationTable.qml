@@ -25,10 +25,17 @@ ColumnLayout {
         id: observationTableModel
 
         onDataPopulated: {
-            for (var col = 0; col < headerRepeater.count; col++) {
-                var thisHeader = headerRepeater.itemAt(col);
-                var initWidth = Math.min(500, observationTableModel.columnWidth(col, tableFont, thisHeader.font));
-                thisHeader.initialWidth = initWidth;
+            var widthLeft = observationTable.width
+            var idealColumnWidths = []
+            var col
+            for (col = 0; col < headerRepeater.count; col++) {
+                var idealColumnWidth = Math.min(500, observationTableModel.columnWidth(col, tableFont, headerRepeater.itemAt(col).font));
+                idealColumnWidths.push(idealColumnWidth);
+                widthLeft -= idealColumnWidths[col];
+            }
+            var extraWidth = widthLeft / headerRepeater.count;
+            for (col = 0; col < headerRepeater.count; col++) {
+                headerRepeater.itemAt(col).initialWidth = idealColumnWidths[col] + extraWidth;
             }
             innerTable.forceLayout();
         }
@@ -89,18 +96,13 @@ ColumnLayout {
     }
 
     Item {
-        // Layout.alignment: Qt.AlignHCenter
-        // Layout.fillWidth: true
+        Layout.fillWidth: true
         implicitHeight: header.implicitHeight
-        implicitWidth: header.implicitWidth
         clip: true
 
         Row {
             id: header
 
-            //Layout.leftMargin: 3
-            //Layout.rightMargin: 3
-            // Layout.alignment: Qt.AlignHCenter
             width: innerTable.contentWidth
             x: -innerTable.contentX
             z: 1
@@ -127,10 +129,7 @@ ColumnLayout {
         id: innerTable
 
         width: Math.min(header.width + 1, parent.width)
-        // Layout.fillWidth: true
-        // Layout.maximumWidth: header.width + 1
         Layout.fillHeight: true
-        // Layout.alignment: Qt.AlignHCenter // x: header.x
         columnSpacing: -1
         rowSpacing: -1
         clip: true

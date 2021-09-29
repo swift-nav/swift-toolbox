@@ -243,6 +243,36 @@ struct AdvancedSystemMonitorStatus {
     csacReceived @6: Bool;
 }
 
+struct NetworkState {
+    interfaceName @0 :Text;
+    ipv4Address @1 :Text;
+    running @2 :Bool;
+    txUsage @3 :Text;
+    rxUsage @4 :Text;
+}
+
+struct AdvancedNetworkingStatus {
+    networkInfo @0 :List(NetworkState);
+    running @1 :Bool;
+    ipAddress @2 :Text;
+    port @3 :UInt16;
+}
+
+struct AdvancedNetworkingStatusFront {
+    refresh @0 :Bool;
+    start @1 :Bool;
+    stop @2 :Bool;
+    allMessages @3 :Bool;
+    ipv4Address :union {
+        address @4 :Text;
+        none @5 :Void = void;
+    }
+    port :union {
+        port @6 :UInt16;
+        none @7 :Void = void;
+    }
+}
+
 struct TrackingSignalsStatus {
     xminOffset @0 :Float64;
     labels @1 :List(Text);
@@ -422,5 +452,8 @@ struct Message {
         advancedSystemMonitorStatusFront @43 :AdvancedSystemMonitorStatusFront;
         skyPlotObs @44 :SkyPlotObs;
         trackingSkyPlotStatus @45 :TrackingSkyPlotStatus;
+        advancedNetworkingStatus @46 :AdvancedNetworkingStatus;
+        networkState @47: NetworkState;
+        advancedNetworkingStatusFront @48: AdvancedNetworkingStatusFront;
     }
 }

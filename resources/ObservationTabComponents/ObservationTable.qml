@@ -12,8 +12,8 @@ ColumnLayout {
     property alias remote: observationTableModel.remote
     property bool populated: observationTableModel ? observationTableModel.row_count > 0 : false
     property font tableFont: Qt.font({
-        "family": Constants.monoSpaceFont,
-        "pointSize": Constants.mediumPointSize
+        family: Constants.genericTable.fontFamily,
+        pointSize: Constants.largePointSize
     })
     spacing: 0
 
@@ -26,8 +26,9 @@ ColumnLayout {
 
         onDataPopulated: {
             for(var col = 0; col < headerRepeater.count; col++) {
-                var initWidth = Math.min(500, observationTableModel.columnWidth(col, tableFont));
-                headerRepeater.itemAt(col).initialWidth = initWidth;
+                var thisHeader = headerRepeater.itemAt(col)
+                var initWidth = Math.min(500, observationTableModel.columnWidth(col, tableFont, thisHeader.font));
+                thisHeader.initialWidth = initWidth;
             }
             innerTable.forceLayout()
         }
@@ -124,7 +125,8 @@ ColumnLayout {
                 model: observationTableModel ? observationTableModel.columnCount() : 0
 
                 SortableColumnHeading {
-                    initialWidth: Math.min(500, observationTableModel.columnWidth(index, tableFont))
+                    initialWidth: Math.min(500, observationTableModel.columnWidth(index, tableFont, font))
+                    height: Constants.genericTable.cellHeight
                     table: innerTable
                 }
 
@@ -144,8 +146,8 @@ ColumnLayout {
         Layout.bottomMargin: 10
         Layout.fillHeight: true
         // Layout.alignment: Qt.AlignHCenter // x: header.x
-        columnSpacing: 1
-        rowSpacing: 1
+        columnSpacing: -1
+        rowSpacing: -1
         clip: true
         onWidthChanged: {
             // Don't ask why this is needed. It's a hack.
@@ -162,9 +164,8 @@ ColumnLayout {
         model: observationTableModel
 
         delegate: TableCellDelegate {
+            implicitHeight: Constants.genericTable.cellHeight
             font: tableFont
-            rowSpacing: innerTable.rowSpacing
-            columnSpacing: innerTable.columnSpacing
         }
 
         ScrollBar.horizontal: ScrollBar {

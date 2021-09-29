@@ -26,19 +26,28 @@
 //                     headerRepeater.itemAt(i).clearSorting()
 //         }
 
+import "../Constants"
 import QtQuick 2.15
 
 Rectangle {
-    id: root
+    id: sortableColumnHeading
 
     property int initialSortOrder: Qt.AscendingOrder
     property alias text: label.text
     property real initialWidth: 100
+    property alias horizontalAlignment: label.horizontalAlignment
     property alias sortable: tap.enabled
     property alias reorderable: dragHandler.enabled
     property QtObject table: undefined
     property var headerRelayoutProvider: function() {
     }
+    property font font: Qt.font({
+        family: Constants.genericTable.fontFamily,
+    })
+    property color gradientStartColor: Constants.genericTable.cellColor
+    property color gradientStopColor: Constants.genericTable.gradientColor
+    property color selectedCellColor: Constants.genericTable.selectedCellColor
+    border.color: Constants.genericTable.borderColor
 
     signal sorting()
     signal dropped(real x)
@@ -54,10 +63,9 @@ Rectangle {
             state = "down";
         else
             state = "up";
-        root.sorting();
+        sortableColumnHeading.sorting();
     }
 
-    color: "Dark Grey"
     implicitHeight: label.implicitHeight
     width: splitter.x + 6
     z: dragHandler.active ? 1 : 0
@@ -96,8 +104,8 @@ Rectangle {
             }
 
             PropertyChanges {
-                target: root
-                color: "orange"
+                target: sortableColumnHeading
+                gradientStopColor: selectedCellColor
             }
 
         },
@@ -111,8 +119,8 @@ Rectangle {
             }
 
             PropertyChanges {
-                target: root
-                color: "orange"
+                target: sortableColumnHeading
+                gradientStopColor: selectedCellColor
             }
 
         }
@@ -121,11 +129,13 @@ Rectangle {
     Text {
         id: label
 
-        anchors.verticalCenter: parent.verticalCenter
-        padding: 3
-        x: 4
-        width: parent.width - 4
+        anchors.fill: parent
         text: (table && table.model) ? table.model.headerData(index, Qt.Horizontal) : ""
+        font: sortableColumnHeading.font
+        elide: Text.ElideMiddle
+        verticalAlignment: Text.AlignVCenter
+        horizontalAlignment: Text.AlignHCenter
+        padding: 3
     }
 
     Text {
@@ -134,8 +144,22 @@ Rectangle {
         anchors.right: parent.right
         anchors.margins: 4
         anchors.verticalCenter: parent.verticalCenter
-        text: "^"
         visible: false
+        text: "^"
+        font: sortableColumnHeading.font
+    }
+
+    gradient: Gradient {
+        GradientStop {
+            position: 0
+            color: sortableColumnHeading.gradientStartColor
+        }
+
+        GradientStop {
+            position: 1
+            color: sortableColumnHeading.gradientStopColor
+        }
+
     }
 
     TapHandler {
@@ -148,12 +172,19 @@ Rectangle {
     Item {
         id: splitter
 
-        x: root.initialWidth - 6
+        x: sortableColumnHeading.initialWidth - 6
+        onXChanged: if (x < 0) x = 0  // Prevent resizing cell smaller than 0
         width: 12
         height: parent.height + 10
 
+        HoverHandler {
+            cursorShape: Qt.SizeHorCursor
+        }
+
         DragHandler {
+            id: splitDragHandler
             yAxis.enabled: false
+            dragThreshold: 1
             onActiveChanged: {
                 if (!active)
                     table.forceLayout();
@@ -169,7 +200,7 @@ Rectangle {
         enabled: false
         onActiveChanged: {
             if (!active)
-                root.dropped(centroid.scenePosition.x);
+                sortableColumnHeading.dropped(centroid.scenePosition.x);
 
         }
     }

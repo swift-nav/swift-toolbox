@@ -47,8 +47,8 @@ QtObject {
     readonly property real mediumPointSize: 8
     readonly property real largePointSize: 9
     readonly property bool debugMode: false
-    readonly property string materialRed: "crimson"
-    readonly property string materialGrey: "dimgrey"
+    readonly property color materialRed: "crimson"
+    readonly property color materialGrey: "dimgrey"
 
     sideNavBar: QtObject {
         readonly property int buttonSvgHeight: 15
@@ -90,7 +90,7 @@ QtObject {
         readonly property string updateFirmwareButtonLabel: "Update Firmware"
         readonly property string downloadLatestFirmwareButtonLabel: "Download Latest Firmware"
         readonly property string fileioSendFileToDeviceButtonLabel: "Send File To Device"
-        readonly property string placeholderTextColor: "grey"
+        readonly property color placeholderTextColor: "grey"
         readonly property int borderWidth: 1
         readonly property int firmwareVersionColumnSpacing: 0
         readonly property int buttonInset: 0
@@ -159,9 +159,10 @@ QtObject {
         readonly property int mouseAreaResizeWidth: 10
         readonly property int cellHeight: 25
         readonly property string cellHighlightedColor: "crimson"
-        readonly property string cellColor: "white"
-        readonly property string gradientColor: "gainsboro"
-        readonly property string borderColor: "gainsboro"
+        readonly property color cellColor: "white"
+        readonly property color gradientColor: "gainsboro"
+        readonly property color selectedCellColor: "dark grey"
+        readonly property color borderColor: "gainsboro"
         readonly property string fontFamily: "Roboto"
         property var defaultColumns: ["Item", "Value"]
     }
@@ -288,11 +289,11 @@ QtObject {
         readonly property int textDataBarMargin: 2
         readonly property int textDataBarBorderWidth: 1
         readonly property string unknownStatusPath: "images/fontawesome/square-solid.svg"
-        readonly property string unknownStatusColor: "dimgrey"
+        readonly property color unknownStatusColor: "dimgrey"
         readonly property string warningStatusPath: "images/fontawesome/exclamation-triangle-solid.svg"
-        readonly property string warningStatusColor: "goldenrod"
+        readonly property color warningStatusColor: "goldenrod"
         readonly property string okStatusPath: "images/fontawesome/circle-solid.svg"
-        readonly property string okStatusColor: "green"
+        readonly property color okStatusColor: "green"
         readonly property int insStatusImageWidth: 15
     }
 

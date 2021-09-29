@@ -132,6 +132,12 @@ args = [
   "${@}",
 ]
 
+[tasks.qml-run]
+dependencies = [
+  "generate-resources",
+]
+run_task = "start-console"
+
 [tasks.run]
 dependencies = [
   "copy-capnp",

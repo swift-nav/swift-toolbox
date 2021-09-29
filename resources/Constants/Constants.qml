@@ -39,6 +39,7 @@ QtObject {
     property QtObject updateTab
     property QtObject icons
     property QtObject trackingSkyPlot
+    property QtObject networking
     readonly property int staticTimerIntervalRate: 5 // 5 Hz
     readonly property int staticTableTimerIntervalRate: 10 // 10 Hz
     readonly property int staticTimerSlowIntervalRate: 2 // 2 Hz
@@ -150,6 +151,23 @@ QtObject {
             "Metric": "",
             "Value": ""
         }
+    }
+
+    networking: QtObject {
+        readonly property var columnHeaders: ["Interface Name", "IPv4 Addr", "Running", "Tx Usage", "Rx Usage"]
+        // readonly property var defaultList: [" ", " ", " ", " ", " "]
+        readonly property var defaultList: {
+            "Interface Name": "",
+            "IPv4 Addr": "",
+            "Running": "",
+            "Tx Usage": "",
+            "Rx Usage": ""
+        }
+        
+        readonly property int refreshButtonHeight: 50
+        readonly property int refreshButtonWidth: 100
+        readonly property int refreshButtonIconSideLength: 10
+        readonly property string refreshButtonLabel: "Refresh Network\nStatus"
     }
 
     genericTable: QtObject {

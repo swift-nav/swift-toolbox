@@ -263,6 +263,12 @@ pub enum Keys {
     FE_TEMP,
     #[strum(serialize = "CSAC_RECEIVED")]
     CSAC_RECEIVED,
+    #[strum(serialize = "RUNNING")]
+    RUNNING,
+    #[strum(serialize = "NETWORK_INFO")]
+    NETWORK_INFO,
+    #[strum(serialize = "IP_ADDRESS")]
+    IP_ADDRESS,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]

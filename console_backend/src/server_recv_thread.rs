@@ -7,7 +7,7 @@ use crate::errors::{
 use crate::log_panel::LogLevel;
 use crate::output::CsvLogging;
 use crate::settings_tab;
-use crate::shared_state::SharedState;
+use crate::shared_state::{AdvancedNetworkingState, SharedState};
 use crate::types::{ClientSender, FlowControl, RealtimeDelay};
 use crate::update_tab::UpdateTabUpdate;
 use crate::utils::refresh_navbar;
@@ -300,6 +300,38 @@ pub fn server_recv_thread(
                     }
                     m::message::AdvancedSystemMonitorStatusFront(Ok(_)) => {
                         shared_state_clone.set_reset_device(true);
+                    }
+                    m::message::AdvancedNetworkingStatusFront(Ok(cv_in)) => {
+                        let refresh = cv_in.get_refresh();
+                        let start = cv_in.get_start();
+                        let stop = cv_in.get_stop();
+                        let all_messages = cv_in.get_all_messages();
+                        let ip_address = match cv_in.get_ipv4_address().which() {
+                            Ok(m::advanced_networking_status_front::ipv4_address::Address(Ok(
+                                address,
+                            ))) => Some(String::from(address)),
+                            Err(e) => {
+                                error!("{}", e);
+                                None
+                            }
+                            _ => None,
+                        };
+                        let port: Option<u16> = match cv_in.get_port().which() {
+                            Ok(m::advanced_networking_status_front::port::Port(port)) => Some(port),
+                            Err(e) => {
+                                error!("{}", e);
+                                None
+                            }
+                            _ => None,
+                        };
+                        shared_state_clone.set_advanced_networking_update(AdvancedNetworkingState {
+                            refresh,
+                            start,
+                            stop,
+                            all_messages,
+                            ip_address,
+                            port,
+                        })
                     }
                     _ => {
                         error!("unknown message from front-end");

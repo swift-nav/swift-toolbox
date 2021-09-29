@@ -124,6 +124,9 @@ class Keys(str, Enum):
     ZYNQ_TEMP = "ZYNQ_TEMP"
     FE_TEMP = "FE_TEMP"
     CSAC_RECEIVED = "CSAC_RECEIVED"
+    RUNNING = "RUNNING"
+    NETWORK_INFO = "NETWORK_INFO"
+    IP_ADDRESS = "IP_ADDRESS"
 
 
 class ApplicationStates(str, Enum):

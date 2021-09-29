@@ -62,11 +62,11 @@ class ObservationTableModel(QAbstractTableModel):
 
     column_metadata = [
         ("PRN", lambda columnValue: columnValue),
-        ("Pseudorange (m)", lambda columnValue: localPadFloat(columnValue, 11)),
-        ("Carrier Phase (cycles)", lambda columnValue: localPadFloat(columnValue, 13)),
-        ("C/N0 (dB-Hz)", lambda columnValue: localPadFloat(columnValue, 9)),
-        ("Meas. Doppler (Hz)", lambda columnValue: localPadFloat(columnValue, 9)),
-        ("Comp. Doppler (Hz)", lambda columnValue: localPadFloat(columnValue, 9)),
+        ("Pseudorange (m)", lambda columnValue: localPadFloat(columnValue, 1)),
+        ("Carrier Phase (cycles)", lambda columnValue: localPadFloat(columnValue, 1)),
+        ("C/N0 (dB-Hz)", lambda columnValue: localPadFloat(columnValue, 1)),
+        ("Meas. Doppler (Hz)", lambda columnValue: localPadFloat(columnValue, 1)),
+        ("Comp. Doppler (Hz)", lambda columnValue: localPadFloat(columnValue, 1)),
         ("Lock", lambda columnValue: columnValue),
         ("Flags", showFlags),
     ]

@@ -25,16 +25,15 @@ ColumnLayout {
         id: observationTableModel
 
         onDataPopulated: {
-            var widthLeft = observationTable.width
-            var idealColumnWidths = []
-            var col
-            for (col = 0; col < headerRepeater.count; col++) {
+            var widthLeft = observationTable.width;
+            var idealColumnWidths = [];
+            for (var col = 0; col < headerRepeater.count; col++) {
                 var idealColumnWidth = Math.min(500, observationTableModel.columnWidth(col, tableFont, headerRepeater.itemAt(col).font));
                 idealColumnWidths.push(idealColumnWidth);
                 widthLeft -= idealColumnWidths[col];
             }
             var extraWidth = widthLeft / headerRepeater.count;
-            for (col = 0; col < headerRepeater.count; col++) {
+            for (var col = 0; col < headerRepeater.count; col++) {
                 headerRepeater.itemAt(col).initialWidth = idealColumnWidths[col] + extraWidth;
             }
             innerTable.forceLayout();

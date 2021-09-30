@@ -304,16 +304,24 @@ jobs:
           cd ..
           echo "${OS_NAME}.zip" >bench-archive.filename;
           echo "BENCH_ARCHIVE=$(cat bench-archive.filename)" >>$GITHUB_ENV
-
-          RELEASE_ARCHIVE=$(find . -maxdepth 1 -iname "*.tar.xz")
+          RELEASE_ARCHIVE=$(find . -maxdepth 1 -iname "*.tar.xz" ! -iname "*-debug*")
+          DEBUG_ARCHIVE=$(find . -maxdepth 1 -iname "*-debug.tar.xz")
           echo $RELEASE_ARCHIVE >release-archive.filename
           echo "RELEASE_ARCHIVE=$(cat release-archive.filename)" >>$GITHUB_ENV
+          echo $DEBUG_ARCHIVE >debug-archive.filename
+          echo "DEBUG_ARCHIVE=$(cat debug-archive.filename)" >>$GITHUB_ENV
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ runner.os }}-artifacts
           path: |
             ${{ env.RELEASE_ARCHIVE }}
             release-archive.filename
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ runner.os }}-artifacts-debug
+          path: |
+            ${{ env.DEBUG_ARCHIVE }}
+            debug-archive.filename
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ runner.os }}-artifacts-bench

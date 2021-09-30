@@ -295,7 +295,6 @@ dependencies = ["build-entrypoint"]
 script_runner = "@duckscript"
 script = '''
 cp target/release/entrypoint py39-dist/bin/swiftnav-console
-exec --fail-on-error strip py39-dist/bin/swiftnav-console
 '''
 
 [tasks.build-dist-install-entrypoint.windows]
@@ -455,6 +454,18 @@ for file in ${files}
 end
 '''
 
+[tasks.strip-dist]
+script_runner = "@duckscript"
+script = '''
+exec --fail-on-error strip py39-dist/bin/swiftnav-console
+'''
+
+[tasks.strip-dist.windows]
+script_runner = "@duckscript"
+script = '''
+exec --fail-on-error strip.exe py39-dist/Scripts/swiftnav-console.exe
+'''
+
 [tasks.compress-dist]
 env = { ARCHIVE_NAME = "console_pp" }
 script_runner = "@duckscript"
@@ -464,8 +475,11 @@ date = trim ${output.stdout}
 output = exec --fail-on-error git describe --always --tags --dirty
 version = trim ${output.stdout}
 output_name = set "${ARCHIVE_NAME}-${version}-${BUILD_TRIPLET}-${date}"
+exec --fail-on-error tar -C "py39-dist" -cvf "${output_name}-debug.tar" .
+cm_run_task strip-dist
 exec --fail-on-error tar -C "py39-dist" -cvf "${output_name}.tar" .
 exec --fail-on-error rm -f "${output_name}.tar.xz"
+exec --fail-on-error xz -T 0 -e -9 "${output_name}-debug.tar"
 exec --fail-on-error xz -T 0 -e -9 "${output_name}.tar"
 '''
 

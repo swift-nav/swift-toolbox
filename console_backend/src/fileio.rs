@@ -173,6 +173,7 @@ impl<'a> Fileio<'a> {
     where
         F: FnMut(usize) + 'b,
     {
+        log::debug!("removing existing file: {}", filename);
         self.remove(filename.clone())?;
 
         let mut data = BufReader::new(data);

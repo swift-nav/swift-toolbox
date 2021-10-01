@@ -48,6 +48,8 @@ pub enum Opts {
 }
 
 fn main() -> Result<()> {
+    env_logger::init();
+
     let source = LinkSource::new();
     let link = source.link();
 

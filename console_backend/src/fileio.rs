@@ -47,7 +47,7 @@ impl<'a> Fileio<'a> {
     }
 
     pub fn read(&mut self, path: String, mut dest: impl Write) -> Result<()> {
-        let config = self.fetch_config();
+        let config = self.config_to_default();
 
         let sender = self.sender.clone();
         let send_msg = move |sequence, offset| {
@@ -223,6 +223,10 @@ impl<'a> Fileio<'a> {
         let data_len = data.len();
 
         scope(|s| {
+            let key = self.link.register(move |msg: MsgFileioWriteResp| {
+                res_tx.send(msg).expect(FILEIO_CHANNEL_SEND_FAILURE);
+            });
+
             s.spawn(|_| {
                 let backoff = Backoff::new();
                 let mut slice_offset = 0;
@@ -244,10 +248,6 @@ impl<'a> Fileio<'a> {
                 }
 
                 Result::Ok(())
-            });
-
-            let key = self.link.register(move |msg: MsgFileioWriteResp| {
-                res_tx.send(msg).expect(FILEIO_CHANNEL_SEND_FAILURE);
             });
 
             let mut pending: HashMap<u32, (WriteState, WriteReq)> = HashMap::new();
@@ -363,13 +363,18 @@ impl<'a> Fileio<'a> {
         Ok(())
     }
 
+    fn config_to_default(&mut self) -> FileioConfig {
+        self.config = Some(Default::default());
+        self.config.as_ref().unwrap().clone()
+    }
+
     fn fetch_config(&mut self) -> FileioConfig {
         if let Some(ref config) = self.config {
             return config.clone();
         }
 
         let sequence = new_sequence();
-        let (stop_tx, stop_rx) = channel::bounded(0);
+        let (stop_tx, stop_rx) = channel::bounded(1);
         let (tx, rx) = channel::bounded(1);
         let stop_tx_clone = stop_tx.clone();
         let key = self.link.register(move |msg: MsgFileioConfigResp| {
@@ -450,6 +455,7 @@ impl WriteState {
     }
 }
 
+#[derive(Debug)]
 struct FileioRequest {
     sent_at: Instant,
     retries: usize,
@@ -507,6 +513,7 @@ impl ReadReq {
     }
 }
 
+#[derive(Debug)]
 struct WriteReq {
     /// Offset start into current slice of data
     offset: usize,

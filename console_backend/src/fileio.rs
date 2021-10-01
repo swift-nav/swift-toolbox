@@ -372,6 +372,7 @@ impl<'a> Fileio<'a> {
 
         let sender = &self.sender;
         let config = scope(|s| {
+            log::debug!("sending fileio config request");
             s.spawn(|_| {
                 while stop_rx.try_recv().is_err() {
                     let _ = sender.send(SBP::from(MsgFileioConfigReq {
@@ -383,8 +384,14 @@ impl<'a> Fileio<'a> {
             });
 
             let res = match rx.recv_timeout(CONFIG_REQ_TIMEOUT) {
-                Ok(config) => config,
-                Err(_) => Default::default(),
+                Ok(config) => {
+                    log::debug!("fileio config response received");
+                    config
+                }
+                Err(_) => {
+                    log::debug!("fileio config response timeout");
+                    Default::default()
+                }
             };
             stop_tx.send(true).expect(FILEIO_CHANNEL_SEND_FAILURE);
             res

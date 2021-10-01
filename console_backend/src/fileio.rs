@@ -221,7 +221,6 @@ impl<'a> Fileio<'a> {
         let data_len = data.len();
 
         scope(|s| {
-
             let key = self.link.register(move |msg: MsgFileioWriteResp| {
                 res_tx.send(msg).expect(FILEIO_CHANNEL_SEND_FAILURE);
             });

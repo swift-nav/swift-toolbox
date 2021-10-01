@@ -439,7 +439,7 @@ mod tests {
     use super::*;
     use crate::types::TestSender;
     use sbp::messages::{
-        gnss::{CarrierPhase, GPSTime, GnssSignal},
+        gnss::{CarrierPhase, GnssSignal, GpsTime},
         observation::{Doppler, MsgObs, ObservationHeader, PackedObsContent},
     };
 
@@ -581,7 +581,7 @@ mod tests {
             sender_id: Some(5),
             obs: Vec::new(),
             header: ObservationHeader {
-                t: GPSTime {
+                t: GpsTime {
                     tow: 0,
                     ns_residual: 0,
                     wn: 1,
@@ -592,9 +592,9 @@ mod tests {
         let signal_code = 4;
         let sat = 25;
         obs_msg.obs.push(PackedObsContent {
-            P: 0_u32,
-            L: CarrierPhase { i: 0_i32, f: 0_u8 },
-            D: Doppler { i: 0_i16, f: 0_u8 },
+            p: 0_u32,
+            l: CarrierPhase { i: 0_i32, f: 0_u8 },
+            d: Doppler { i: 0_i16, f: 0_u8 },
             cn0: 5,
             lock: 0,
             flags: 1,

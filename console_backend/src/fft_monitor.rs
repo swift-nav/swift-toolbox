@@ -190,7 +190,7 @@ impl FftMonitor {
 mod tests {
     use super::*;
     use crate::constants::SIGNALS_TOTAL;
-    use sbp::messages::{gnss::GPSTime, piksi::MsgSpecan};
+    use sbp::messages::{gnss::GpsTime, piksi::MsgSpecan};
 
     #[test]
     fn get_frequencies_test() {
@@ -222,7 +222,7 @@ mod tests {
     fn get_specan_msg(channel_tag: u16, wn: u16, incomplete: bool) -> Specan {
         let tow = 10001;
         let ns_residual = 100011;
-        let t = GPSTime {
+        let t = GpsTime {
             tow,
             ns_residual,
             wn,

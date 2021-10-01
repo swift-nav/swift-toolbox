@@ -1,7 +1,7 @@
 use anyhow::Context;
 use clap::Clap;
 use crossbeam::{channel, scope};
-use sbp::{messages::piksi::MsgSpecan, sbp_tools::SBPTools};
+use sbp::messages::piksi::MsgSpecan;
 
 use console_backend::{
     broadcaster::Broadcaster, connection::Connection, fft_monitor::FftMonitor, types::Result,
@@ -38,6 +38,7 @@ impl CliFftMonitor {
 #[cfg(feature = "fft")]
 fn main() -> Result<()> {
     use console_backend::types::Specan;
+    use sbp::SbpIterExt;
     use serde_pickle::ser;
     use std::{fs::File, thread::sleep, time::Duration};
 

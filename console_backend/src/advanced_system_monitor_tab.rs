@@ -97,12 +97,11 @@ impl<S: CapnProtoSender> AdvancedSystemMonitorTab<S> {
     }
 
     pub fn handle_thread_state(&mut self, msg: MsgThreadState) {
-        let mut name = msg.name.to_string();
-        if name.is_empty() {
-            name = NO_NAME.to_string();
+        let name = if msg.name.as_bytes().iter().all(|b| b == &0) {
+            NO_NAME.to_string()
         } else {
-            name = name.trim_end_matches('\0').to_string();
-        }
+            msg.name.to_string().trim_end_matches('\0').to_string()
+        };
         let thread_state = ThreadStateFields {
             name,
             cpu: OrderedFloat::from(normalize_cpu_usage(msg.cpu)),
@@ -163,8 +162,7 @@ impl<S: CapnProtoSender> AdvancedSystemMonitorTab<S> {
             sender_id: Some(WRITE_TO_DEVICE_SENDER_ID),
             flags: 0,
         };
-        let msg = sbp::messages::SBP::from(msg);
-        self.wtr.send(msg)?;
+        self.wtr.send(msg.into())?;
         Ok(())
     }
 
@@ -432,37 +430,46 @@ mod tests {
         let client_send = TestSender { inner: Vec::new() };
         let wtr = MsgSender::new(sink());
         let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send, wtr);
-        let name1 = "mcdonald".to_string();
+        let name1 = thread_name("mcdonald");
         let msg1 = MsgThreadState {
             sender_id: Some(1337),
-            name: SbpString::from(name1.clone()),
+            name: name1.clone(),
             cpu: 66,
             stack_free: 13,
         };
         assert!(tab.threads.is_empty());
         tab.handle_thread_state(msg1);
         assert_eq!(tab.threads.len(), 1);
-        let name2 = NO_NAME.to_string();
+        let name2 = thread_name(NO_NAME);
         let msg2 = MsgThreadState {
             sender_id: Some(1337),
-            name: SbpString::from("".to_string()),
+            name: SbpString::new([0u8; 20]),
             cpu: 6,
             stack_free: 133,
         };
         tab.handle_thread_state(msg2);
         assert_eq!(tab.threads.len(), 2);
-        let name3 = "farm".to_string();
+        let name3 = thread_name("farm");
         let msg3 = MsgThreadState {
             sender_id: Some(1337),
-            name: SbpString::from(format!("{}\0\0\0\0\0", name3)),
+            name: name3.clone(),
             cpu: 667,
             stack_free: 133,
         };
         tab.handle_thread_state(msg3);
         assert_eq!(tab.threads.len(), 3);
-        assert_eq!(tab.threads[0].name, name1);
-        assert_eq!(tab.threads[1].name, name2);
-        assert_eq!(tab.threads[2].name, name3);
+        assert_eq!(
+            tab.threads[0].name,
+            name1.to_string().trim_end_matches('\0')
+        );
+        assert_eq!(
+            tab.threads[1].name,
+            name2.to_string().trim_end_matches('\0')
+        );
+        assert_eq!(
+            tab.threads[2].name,
+            name3.to_string().trim_end_matches('\0')
+        );
     }
 
     #[test]
@@ -474,26 +481,26 @@ mod tests {
         assert!(tab.threads_table_list.is_empty());
         tab.handle_heartbeat();
         assert!(tab.threads_table_list.is_empty());
-        let name1 = "mcdonald".to_string();
+        let name1 = thread_name("mcdonald");
         let msg1 = MsgThreadState {
             sender_id: Some(1337),
-            name: SbpString::from(name1.clone()),
+            name: name1.clone(),
             cpu: 66,
             stack_free: 13,
         };
         tab.handle_thread_state(msg1.clone());
-        let name2 = NO_NAME.to_string();
+        let name2 = thread_name(NO_NAME);
         let msg2 = MsgThreadState {
             sender_id: Some(1337),
-            name: SbpString::from("".to_string()),
+            name: SbpString::new([0u8; 20]),
             cpu: 6,
             stack_free: 133,
         };
         tab.handle_thread_state(msg2.clone());
-        let name3 = "farm".to_string();
+        let name3 = thread_name("farm");
         let msg3 = MsgThreadState {
             sender_id: Some(1337),
-            name: SbpString::from(format!("{}\0\0\0\0\0", name3)),
+            name: name3.clone(),
             cpu: 667,
             stack_free: 133,
         };
@@ -503,23 +510,37 @@ mod tests {
         tab.handle_heartbeat();
         assert!(tab.threads.is_empty());
         assert!(!tab.threads_table_list.is_empty());
-        assert_eq!(tab.threads_table_list[0].name, name3);
+        assert_eq!(
+            tab.threads_table_list[0].name,
+            name3.to_string().trim_end_matches('\0')
+        );
         assert_eq!(
             tab.threads_table_list[0].cpu,
             OrderedFloat(msg3.cpu as f64 / 10.0)
         );
         assert_eq!(tab.threads_table_list[0].stack_free, msg3.stack_free);
-        assert_eq!(tab.threads_table_list[1].name, name1);
+        assert_eq!(
+            tab.threads_table_list[1].name,
+            name1.to_string().trim_end_matches('\0')
+        );
         assert_eq!(
             tab.threads_table_list[1].cpu,
             OrderedFloat(msg1.cpu as f64 / 10.0)
         );
         assert_eq!(tab.threads_table_list[1].stack_free, msg1.stack_free);
-        assert_eq!(tab.threads_table_list[2].name, name2);
+        assert_eq!(
+            tab.threads_table_list[2].name,
+            name2.to_string().trim_end_matches('\0')
+        );
         assert_eq!(
             tab.threads_table_list[2].cpu,
             OrderedFloat(msg2.cpu as f64 / 10.0)
         );
         assert_eq!(tab.threads_table_list[2].stack_free, msg2.stack_free);
+    }
+    fn thread_name(name: &str) -> SbpString<[u8; 20], sbp::sbp_string::NullTerminated> {
+        let mut arr = [0u8; 20];
+        arr[0..name.len()].copy_from_slice(name.as_bytes());
+        SbpString::new(arr)
     }
 }

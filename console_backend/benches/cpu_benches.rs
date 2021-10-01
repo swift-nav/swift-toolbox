@@ -2,7 +2,7 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use crossbeam::channel;
 use glob::glob;
-use sbp::sbp_tools::SBPTools;
+use sbp::SbpIterExt;
 use std::{
     fs, io,
     path::Path,

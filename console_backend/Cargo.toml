@@ -40,6 +40,7 @@ minreq = { version = "2.4.2", features = ["https"] }
 regex = { version = "1.5.4" }
 semver = { version = "1" }
 rust-ini = "0.17.0"
+env_logger = { version = "0.9", optional = true }
 
 [dependencies.sbp]
 git = "https://github.com/swift-nav/libsbp.git"
@@ -73,6 +74,7 @@ bench = false
 name = "fileio"
 path = "src/bin/fileio.rs"
 bench = false
+required-features = ["env_logger"]
 
 [[bin]]
 name = "fft_monitor"

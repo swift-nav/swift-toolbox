@@ -446,7 +446,7 @@ impl WriteState {
     }
 
     fn filename(&self) -> String {
-        self.filename.clone().to_string()
+        self.filename.to_string()
     }
 
     fn update(&mut self, chunk_len: usize) {

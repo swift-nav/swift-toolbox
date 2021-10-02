@@ -100,17 +100,17 @@ jobs:
         run: |
           cargo make pip-install-dev
 
-#      - name: Run Backend Benchmarks (Windows)
-#        env:
-#          LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
-#        run: |
-#          cargo make backend-benches
-#        if: matrix.os == 'windows-2019'
-#
-#      - name: Run Backend Benchmarks
-#        run: |
-#          cargo make backend-benches
-#        if: matrix.os != 'windows-2019'
+      - name: Run Backend Benchmarks (Windows)
+        env:
+          LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
+        run: |
+          cargo make backend-benches
+        if: matrix.os == 'windows-2019'
+
+      - name: Run Backend Benchmarks
+        run: |
+          cargo make backend-benches
+        if: matrix.os != 'windows-2019'
 
   checks:
 

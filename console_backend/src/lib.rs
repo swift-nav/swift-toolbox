@@ -54,16 +54,6 @@ use crate::{
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-/*
-#[global_allocator]
-static GLOBAL: tcmalloc::TCMalloc = tcmalloc::TCMalloc;
-*/
-
-/*
-#[global_allocator]
-static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
-*/
-
 struct Tabs<'link, S: types::CapnProtoSender> {
     pub main: Mutex<MainTab<S>>,
     pub advanced_ins: Mutex<AdvancedInsTab<S>>,

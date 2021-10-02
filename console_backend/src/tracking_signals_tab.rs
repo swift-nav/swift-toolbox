@@ -21,8 +21,6 @@ use crate::types::{CapnProtoSender, Cn0Age, Cn0Dict, Deque, ObservationMsg, Sign
 use crate::utils::{serialize_capnproto_builder, signal_key_color, signal_key_label};
 use sbp::messages::tracking::{MeasurementState, TrackingChannelState};
 
-const MIN_CAPACITY: usize = 512;
-
 /// TrackingSignalsTab struct.
 ///
 /// # Fields:
@@ -89,22 +87,22 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
                 SBAS_L1_STR,
             ],
             client_sender,
-            cn0_dict: Cn0Dict::with_capacity(MIN_CAPACITY),
-            cn0_age: Cn0Age::with_capacity(MIN_CAPACITY),
-            colors: Vec::with_capacity(MIN_CAPACITY),
-            glo_fcn_dict: HashMap::with_capacity(MIN_CAPACITY),
-            glo_slot_dict: HashMap::with_capacity(MIN_CAPACITY),
+            cn0_dict: Cn0Dict::new(),
+            cn0_age: Cn0Age::new(),
+            colors: Vec::new(),
+            glo_fcn_dict: HashMap::new(),
+            glo_slot_dict: HashMap::new(),
             gps_tow: 0.0,
             gps_week: 0,
-            incoming_obs_cn0: HashMap::with_capacity(MIN_CAPACITY),
+            incoming_obs_cn0: HashMap::new(),
             last_obs_update_time: Instant::now(),
             last_update_time: Instant::now(),
             prev_obs_count: 0,
             prev_obs_total: 0,
-            received_codes: Vec::with_capacity(MIN_CAPACITY),
-            sats: Vec::with_capacity(MIN_CAPACITY),
+            received_codes: Vec::new(),
+            sats: Vec::new(),
             shared_state,
-            sv_labels: Vec::with_capacity(MIN_CAPACITY),
+            sv_labels: Vec::new(),
             t_init: Instant::now(),
             time: {
                 let mut time = Deque::with_size_limit(NUM_POINTS, /*fill_value=*/ None);
@@ -141,7 +139,7 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
 
     /// Remove cn0 data if age is too old.
     pub fn clean_cn0(&mut self) {
-        let mut remove_vec: Vec<(SignalCodes, i16)> = Vec::with_capacity(MIN_CAPACITY);
+        let mut remove_vec: Vec<(SignalCodes, i16)> = Vec::new();
         for (key, _) in self.cn0_dict.iter_mut() {
             if self.cn0_age[key] < self.time.get()[0] {
                 remove_vec.push(*key);
@@ -158,7 +156,7 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
         self.sv_labels.clear();
         self.colors.clear();
         self.sats.clear();
-        let mut temp_labels = Vec::with_capacity(MIN_CAPACITY);
+        let mut temp_labels = Vec::new();
         let filters;
         {
             let shared_data = self.shared_state.lock().unwrap();
@@ -209,7 +207,7 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
     /// - `states`: All states contained within the measurementstate message.
     pub fn handle_msg_measurement_state(&mut self, states: Vec<MeasurementState>) {
         self.at_least_one_track_received = true;
-        let mut codes_that_came: Vec<(SignalCodes, i16)> = Vec::with_capacity(MIN_CAPACITY);
+        let mut codes_that_came: Vec<(SignalCodes, i16)> = Vec::new();
         let t = (Instant::now()).duration_since(self.t_init).as_secs_f64();
         self.time.add(t);
         for (idx, state) in states.iter().enumerate() {
@@ -252,7 +250,7 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
     /// - `states`: All states contained within the trackingstate message.
     pub fn handle_msg_tracking_state(&mut self, states: Vec<TrackingChannelState>) {
         self.at_least_one_track_received = true;
-        let mut codes_that_came: Vec<(SignalCodes, i16)> = Vec::with_capacity(MIN_CAPACITY);
+        let mut codes_that_came: Vec<(SignalCodes, i16)> = Vec::new();
         let t = (Instant::now()).duration_since(self.t_init).as_secs_f64();
         self.time.add(t);
         for state in states.iter() {
@@ -337,7 +335,7 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
             return;
         }
         self.last_obs_update_time = Instant::now();
-        let mut codes_that_came: Vec<(SignalCodes, i16)> = Vec::with_capacity(MIN_CAPACITY);
+        let mut codes_that_came: Vec<(SignalCodes, i16)> = Vec::new();
         let t = (Instant::now()).duration_since(self.t_init).as_secs_f64();
         self.time.add(t);
         for (key, cn0) in obs_dict.iter() {

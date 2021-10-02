@@ -5,7 +5,7 @@ use std::{
 
 use clap::Clap;
 use crossbeam::{channel, scope};
-use sbp::{link::LinkSource, sbp_tools::SBPTools};
+use sbp::{link::LinkSource, SbpIterExt};
 
 use console_backend::{
     cli_options::Input,

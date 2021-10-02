@@ -2,7 +2,7 @@ use std::{path::PathBuf, result::Result, thread::sleep, time::Instant};
 
 use chrono::Local;
 use log::{debug, error};
-use sbp::{messages::SBP, time::GpsTime};
+use sbp::{time::GpsTime, Sbp};
 
 use crate::common_constants::SbpLogging;
 use crate::constants::{
@@ -134,7 +134,7 @@ impl<'a, S: CapnProtoSender> MainTab<S> {
         };
         self.shared_state.set_sbp_logging(logging);
     }
-    pub fn serialize_sbp(&mut self, msg: &SBP) {
+    pub fn serialize_sbp(&mut self, msg: &Sbp) {
         let csv_logging;
         let sbp_logging;
         let directory;
@@ -198,7 +198,7 @@ mod tests {
     use crate::types::{BaselineNED, MsgSender, PosLLH, TestSender, VelNED};
     use crate::utils::{mm_to_m, ms_to_sec};
     use glob::glob;
-    use sbp::messages::navigation::{MsgBaselineNED, MsgPosLLH, MsgVelNED};
+    use sbp::messages::navigation::{MsgBaselineNed, MsgPosLlh, MsgVelNed};
     use std::{
         fs::File,
         io::{sink, BufRead, BufReader},
@@ -280,7 +280,7 @@ mod tests {
         let tow = 1337;
         let sender_id = Some(1337);
 
-        let msg = MsgPosLLH {
+        let msg = MsgPosLlh {
             sender_id,
             tow,
             lat,
@@ -295,7 +295,7 @@ mod tests {
         let n = 1;
         let e = 2;
         let d = 3;
-        let msg_two = MsgVelNED {
+        let msg_two = MsgVelNed {
             sender_id,
             tow,
             n,
@@ -311,7 +311,7 @@ mod tests {
         let e_m3 = 5;
         let d_m3 = 6;
         let flags = 0x2;
-        let msg_three = MsgBaselineNED {
+        let msg_three = MsgBaselineNed {
             sender_id,
             tow,
             n,
@@ -324,15 +324,15 @@ mod tests {
         };
 
         {
-            main.serialize_sbp(&SBP::MsgPosLLH(msg.clone()));
-            solution_tab.handle_pos_llh(PosLLH::MsgPosLLH(msg));
-            main.serialize_sbp(&SBP::MsgVelNED(msg_two.clone()));
-            solution_tab.handle_vel_ned(VelNED::MsgVelNED(msg_two.clone()));
-            main.serialize_sbp(&SBP::MsgBaselineNED(msg_three.clone()));
-            baseline_tab.handle_baseline_ned(BaselineNED::MsgBaselineNED(msg_three));
+            main.serialize_sbp(&Sbp::MsgPosLlh(msg.clone()));
+            solution_tab.handle_pos_llh(PosLLH::MsgPosLlh(msg));
+            main.serialize_sbp(&Sbp::MsgVelNed(msg_two.clone()));
+            solution_tab.handle_vel_ned(VelNED::MsgVelNed(msg_two.clone()));
+            main.serialize_sbp(&Sbp::MsgBaselineNed(msg_three.clone()));
+            baseline_tab.handle_baseline_ned(BaselineNED::MsgBaselineNed(msg_three));
             assert_eq!(main.last_csv_logging, CsvLogging::ON);
             main.end_csv_logging().unwrap();
-            main.serialize_sbp(&SBP::MsgVelNED(msg_two));
+            main.serialize_sbp(&Sbp::MsgVelNed(msg_two));
             assert_eq!(main.last_csv_logging, CsvLogging::OFF);
         }
 
@@ -410,7 +410,7 @@ mod tests {
         let tow = 1337;
         let sender_id = Some(1337);
 
-        let msg_one = MsgPosLLH {
+        let msg_one = MsgPosLlh {
             sender_id,
             tow,
             lat,
@@ -425,7 +425,7 @@ mod tests {
         let n = 1;
         let e = 2;
         let d = 3;
-        let msg_two = MsgVelNED {
+        let msg_two = MsgVelNed {
             sender_id,
             tow,
             n,
@@ -438,11 +438,11 @@ mod tests {
         };
 
         {
-            main.serialize_sbp(&SBP::MsgPosLLH(msg_one.clone()));
-            main.serialize_sbp(&SBP::MsgVelNED(msg_two.clone()));
+            main.serialize_sbp(&Sbp::MsgPosLlh(msg_one.clone()));
+            main.serialize_sbp(&Sbp::MsgVelNed(msg_two.clone()));
             assert_eq!(main.last_sbp_logging, SbpLogging::SBP);
             main.close_sbp();
-            main.serialize_sbp(&SBP::MsgVelNED(msg_two.clone()));
+            main.serialize_sbp(&Sbp::MsgVelNed(msg_two.clone()));
             assert_eq!(main.last_sbp_logging, SbpLogging::OFF);
         }
 
@@ -456,7 +456,7 @@ mod tests {
         let mut messages = sbp::iter_messages(file_read);
         let msg = messages.next().unwrap().unwrap();
         match msg {
-            SBP::MsgPosLLH(msg) => {
+            Sbp::MsgPosLlh(msg) => {
                 assert_eq!(msg.sender_id, msg_one.sender_id);
                 assert_eq!(msg.flags, msg_one.flags);
                 assert_eq!(msg.tow, msg_one.tow);
@@ -468,7 +468,7 @@ mod tests {
         }
         let msg = messages.next().unwrap().unwrap();
         match msg {
-            SBP::MsgVelNED(msg) => {
+            Sbp::MsgVelNed(msg) => {
                 assert_eq!(msg.sender_id, msg_two.sender_id);
                 assert_eq!(msg.flags, msg_two.flags);
                 assert_eq!(msg.n, msg_two.n);
@@ -500,7 +500,7 @@ mod tests {
         let tow = 1337;
         let sender_id = Some(1337);
 
-        let msg_one = MsgPosLLH {
+        let msg_one = MsgPosLlh {
             sender_id,
             tow,
             lat,
@@ -515,7 +515,7 @@ mod tests {
         let n = 1;
         let e = 2;
         let d = 3;
-        let msg_two = MsgVelNED {
+        let msg_two = MsgVelNed {
             sender_id,
             tow,
             n,
@@ -528,11 +528,11 @@ mod tests {
         };
 
         {
-            main.serialize_sbp(&SBP::MsgPosLLH(msg_one));
-            main.serialize_sbp(&SBP::MsgVelNED(msg_two.clone()));
+            main.serialize_sbp(&Sbp::MsgPosLlh(msg_one));
+            main.serialize_sbp(&Sbp::MsgVelNed(msg_two.clone()));
             assert_eq!(main.last_sbp_logging, SbpLogging::SBP_JSON);
             main.close_sbp();
-            main.serialize_sbp(&SBP::MsgVelNED(msg_two));
+            main.serialize_sbp(&Sbp::MsgVelNed(msg_two));
             assert_eq!(main.last_sbp_logging, SbpLogging::OFF);
         }
 

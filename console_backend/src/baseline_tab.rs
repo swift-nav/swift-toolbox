@@ -251,10 +251,10 @@ impl<S: CapnProtoSender> BaselineTab<S> {
         }
     }
 
-    /// Handle MsgBaselineNED / MsgBaselineNEDDepA messages.
+    /// Handle MsgBaselineNed / MsgBaselineNedDepA messages.
     ///
     /// # Parameters
-    /// - `msg`: MsgBaselineNED / MsgBaselineNEDDepA to extract data from.
+    /// - `msg`: MsgBaselineNed / MsgBaselineNedDepA to extract data from.
     pub fn handle_baseline_ned(&mut self, msg: BaselineNED) {
         let baseline_ned_fields = msg.fields();
         let n = mm_to_m(baseline_ned_fields.n as f64);
@@ -402,8 +402,7 @@ impl<S: CapnProtoSender> BaselineTab<S> {
             sender_id: Some(WRITE_TO_DEVICE_SENDER_ID),
             filter: 0,
         };
-        let msg = sbp::messages::SBP::from(msg);
-        self.wtr.send(msg)?;
+        self.wtr.send(msg.into())?;
         Ok(())
     }
 
@@ -519,7 +518,7 @@ mod tests {
     use super::*;
     use crate::types::TestSender;
     use chrono::{TimeZone, Utc};
-    use sbp::messages::navigation::{MsgBaselineNED, MsgBaselineNEDDepA, MsgGPSTime};
+    use sbp::messages::navigation::{MsgBaselineNed, MsgBaselineNedDepA, MsgGpsTime};
     use std::io::sink;
     #[test]
     fn handle_age_corrections_test() {
@@ -557,7 +556,7 @@ mod tests {
         let wn = 0_u16;
         let ns_residual = 1337_i32;
         let bad_flags = 0_u8;
-        let msg = MsgGPSTime {
+        let msg = MsgGpsTime {
             sender_id: Some(1337),
             wn,
             tow: 0,
@@ -573,7 +572,7 @@ mod tests {
         assert_eq!(baseline_table.nsec, Some(old_nsec));
 
         let good_flags = 1_u8;
-        let msg = MsgGPSTime {
+        let msg = MsgGpsTime {
             sender_id: Some(1337),
             wn,
             tow: 0,
@@ -696,7 +695,7 @@ mod tests {
         let h_accuracy = 0;
         let v_accuracy = 0;
         let tow = 1337;
-        let msg = BaselineNED::MsgBaselineNED(MsgBaselineNED {
+        let msg = BaselineNED::MsgBaselineNed(MsgBaselineNed {
             sender_id: Some(1337),
             flags: bad_flags,
             n,
@@ -763,7 +762,7 @@ mod tests {
         baseline_tab.handle_age_corrections(msg);
 
         let good_flags = 0x02;
-        let msg = BaselineNED::MsgBaselineNED(MsgBaselineNED {
+        let msg = BaselineNED::MsgBaselineNed(MsgBaselineNed {
             sender_id: Some(1337),
             flags: good_flags,
             n,
@@ -812,7 +811,7 @@ mod tests {
 
         assert_eq!(baseline_tab.last_mode, 2);
 
-        let msg = BaselineNED::MsgBaselineNEDDepA(MsgBaselineNEDDepA {
+        let msg = BaselineNED::MsgBaselineNedDepA(MsgBaselineNedDepA {
             sender_id: Some(1337),
             flags: good_flags,
             n,

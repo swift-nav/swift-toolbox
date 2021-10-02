@@ -120,7 +120,7 @@ impl<S: CapnProtoSender> AdvancedSpectrumAnalyzerTab<S> {
 mod tests {
     use super::*;
     use crate::{constants::SIGNALS_TOTAL, types::TestSender};
-    use sbp::messages::{gnss::GPSTime, piksi::MsgSpecan};
+    use sbp::messages::{gnss::GpsTime, piksi::MsgSpecan};
 
     #[test]
     fn handle_specan_empty_amplitude_value_test() {
@@ -131,7 +131,7 @@ mod tests {
         let wn = 1000;
         let tow = 10001;
         let ns_residual = 100011;
-        let t = GPSTime {
+        let t = GpsTime {
             tow,
             ns_residual,
             wn,
@@ -167,7 +167,7 @@ mod tests {
         let wn = 1000;
         let tow = 10001;
         let ns_residual = 100011;
-        let t = GPSTime {
+        let t = GpsTime {
             tow,
             ns_residual,
             wn,

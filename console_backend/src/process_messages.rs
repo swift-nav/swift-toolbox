@@ -8,7 +8,7 @@ use sbp::{
         imu::{MsgImuAux, MsgImuRaw},
         logging::MsgLog,
         mag::MsgMagRaw,
-        navigation::{MsgAgeCorrections, MsgPosLLHCov, MsgUtcTime, MsgVelNED},
+        navigation::{MsgAgeCorrections, MsgPosLlhCov, MsgUtcTime, MsgVelNed},
         observation::{MsgObsDepA, MsgSvAzEl},
         orientation::{MsgAngularRate, MsgBaselineHeading, MsgOrientEuler},
         piksi::{MsgCommandResp, MsgDeviceMonitor, MsgThreadState},
@@ -16,10 +16,9 @@ use sbp::{
             MsgCsacTelemetry, MsgCsacTelemetryLabels, MsgHeartbeat, MsgInsStatus, MsgInsUpdates,
         },
         tracking::{MsgMeasurementState, MsgTrackingState},
-        SBPMessage,
     },
-    sbp_tools::{ControlFlow, SBPTools},
-    serialize::SbpSerialize,
+    sbp_iter_ext::{ControlFlow, SbpIterExt},
+    SbpMessage,
 };
 
 use crate::constants::PAUSE_LOOP_SLEEP_DURATION_MS;
@@ -57,7 +56,7 @@ where
             .handle_errors(move |e| {
                 debug!("{}", e);
                 match e {
-                    sbp::Error::IoError(err) => {
+                    sbp::DeserializeError::IoError(err) => {
                         if (*err).kind() == ErrorKind::TimedOut {
                             state.set_running(false, client.clone());
                         }
@@ -209,7 +208,7 @@ where
         tabs.status_bar.lock().unwrap().handle_pos_llh(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: MsgPosLLHCov| {
+    link.register(|tabs: &Tabs<S>, msg: MsgPosLlhCov| {
         tabs.solution.lock().unwrap().handle_pos_llh_cov(msg);
     });
 
@@ -242,7 +241,7 @@ where
         tabs.solution.lock().unwrap().handle_vel_ned(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: MsgVelNED| {
+    link.register(|tabs: &Tabs<S>, msg: MsgVelNed| {
         // why does this tab not take both VelNED messages?
         tabs.solution_velocity.lock().unwrap().handle_vel_ned(msg);
     });
@@ -318,14 +317,14 @@ where
             tabs.status_bar
                 .lock()
                 .unwrap()
-                .add_bytes(message.sbp_size());
+                .add_bytes(message.encoded_len());
             if let RealtimeDelay::On = realtime_delay {
                 if sent {
                     tabs.main.lock().unwrap().realtime_delay(gps_time);
                 } else {
                     debug!(
                         "Message, {}, ignored for realtime delay.",
-                        message.get_message_name()
+                        message.message_name()
                     );
                 }
             }

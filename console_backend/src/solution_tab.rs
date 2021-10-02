@@ -1,7 +1,7 @@
 use capnp::message::Builder;
 
 use sbp::messages::{
-    navigation::{MsgAgeCorrections, MsgPosLLHCov, MsgUtcTime},
+    navigation::{MsgAgeCorrections, MsgPosLlhCov, MsgUtcTime},
     orientation::{MsgAngularRate, MsgOrientEuler},
     system::{MsgInsStatus, MsgInsUpdates},
 };
@@ -231,8 +231,8 @@ impl<S: CapnProtoSender> SolutionTab<S> {
     /// Handler for POS LLH COV covariance messages.
     ///
     /// # Parameters
-    /// - `msg`: MsgPosLLHCov to extract data from.
-    pub fn handle_pos_llh_cov(&mut self, msg: MsgPosLLHCov) {
+    /// - `msg`: MsgPosLlhCov to extract data from.
+    pub fn handle_pos_llh_cov(&mut self, msg: MsgPosLlhCov) {
         if msg.flags != 0 {
             self.table.insert(COV_N_N, format!("{}", msg.cov_n_n));
             self.table.insert(COV_N_E, format!("{}", msg.cov_n_e));
@@ -253,7 +253,7 @@ impl<S: CapnProtoSender> SolutionTab<S> {
     /// Handle Vel NED / NEDDepA messages.
     ///
     /// # Parameters
-    /// - `msg`: VelNED wrapper around a MsgVelNED or MsgVELNEDDepA.
+    /// - `msg`: VelNED wrapper around a MsgVelNed or MsgVELNEDDepA.
     pub fn handle_vel_ned(&mut self, msg: VelNED) {
         let vel_ned_fields = msg.fields();
         let speed: f64 = mm_to_m(f64::sqrt(
@@ -767,8 +767,8 @@ mod tests {
     use crate::types::TestSender;
     use chrono::{TimeZone, Utc};
     use sbp::messages::navigation::{
-        MsgAgeCorrections, MsgDops, MsgDopsDepA, MsgGPSTime, MsgPosLLH, MsgPosLLHDepA, MsgVelNED,
-        MsgVelNEDDepA,
+        MsgAgeCorrections, MsgDops, MsgDopsDepA, MsgGpsTime, MsgPosLlh, MsgPosLlhDepA, MsgVelNed,
+        MsgVelNedDepA,
     };
     use std::{thread::sleep, time::Duration};
 
@@ -840,7 +840,7 @@ mod tests {
         let wn = 0_u16;
         let ns_residual = 1337_i32;
         let bad_flags = 0_u8;
-        let msg = MsgGPSTime {
+        let msg = MsgGpsTime {
             sender_id: Some(1337),
             wn,
             tow: 0,
@@ -856,7 +856,7 @@ mod tests {
         assert_eq!(solution_table.nsec, Some(old_nsec));
 
         let good_flags = 1_u8;
-        let msg = MsgGPSTime {
+        let msg = MsgGpsTime {
             sender_id: Some(1337),
             wn,
             tow: 0,
@@ -879,7 +879,7 @@ mod tests {
         let e = 2;
         let d = 3;
         let n_sats = 13;
-        let msg = VelNED::MsgVelNED(MsgVelNED {
+        let msg = VelNED::MsgVelNed(MsgVelNed {
             sender_id: Some(1337),
             flags: bad_flags,
             n,
@@ -902,7 +902,7 @@ mod tests {
         assert_eq!(solution_tab.table[VEL_N], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[VEL_E], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[VEL_D], String::from(EMPTY_STR));
-        let msg = VelNED::MsgVelNED(MsgVelNED {
+        let msg = VelNED::MsgVelNed(MsgVelNed {
             sender_id: Some(1337),
             flags: good_flags,
             n,
@@ -933,7 +933,7 @@ mod tests {
         let n = 3;
         let e = 2;
         let d = 1;
-        let msg = VelNED::MsgVelNEDDepA(MsgVelNEDDepA {
+        let msg = VelNED::MsgVelNedDepA(MsgVelNedDepA {
             sender_id: Some(1337),
             flags: good_flags,
             n,
@@ -1155,7 +1155,7 @@ mod tests {
         let h_accuracy = 0;
         let v_accuracy = 0;
         let tow = 1337;
-        let msg = PosLLH::MsgPosLLH(MsgPosLLH {
+        let msg = PosLLH::MsgPosLlh(MsgPosLlh {
             sender_id: Some(1337),
             flags: bad_flags,
             lat,
@@ -1194,7 +1194,7 @@ mod tests {
         assert_eq!(solution_tab.last_pos_mode, 0);
 
         let good_flags = 0x01;
-        let msg = PosLLH::MsgPosLLH(MsgPosLLH {
+        let msg = PosLLH::MsgPosLlh(MsgPosLlh {
             sender_id: Some(1337),
             flags: good_flags,
             lat,
@@ -1232,7 +1232,7 @@ mod tests {
 
         assert_eq!(solution_tab.last_pos_mode, 1);
 
-        let msg = PosLLH::MsgPosLLHDepA(MsgPosLLHDepA {
+        let msg = PosLLH::MsgPosLlhDepA(MsgPosLlhDepA {
             sender_id: Some(1337),
             flags: good_flags,
             lat,

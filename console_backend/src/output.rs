@@ -1,11 +1,6 @@
-use sbp::{
-    codec::{
-        dencode::{FramedWrite, IterSinkExt},
-        json::JsonEncoder,
-        sbp::SbpEncoder,
-    },
-    messages::SBP,
-};
+use sbp::json::JsonEncoder;
+use sbp::Sbp;
+use sbp::SbpEncoder;
 use serde::Serialize;
 use serde_json::ser::CompactFormatter;
 use std::{fs::File, path::Path};
@@ -32,20 +27,20 @@ impl CsvLogging {
 
 pub type SbpLogging = cc::SbpLogging;
 pub enum SbpLogger {
-    Sbp(FramedWrite<File, SbpEncoder>),
-    Json(FramedWrite<File, JsonEncoder<CompactFormatter>>),
+    Sbp(SbpEncoder<File>),
+    Json(JsonEncoder<File, CompactFormatter>),
 }
 impl SbpLogger {
     pub fn new_sbp<P: AsRef<Path>>(filepath: P) -> Result<SbpLogger> {
-        Ok(SbpLogger::Sbp(SbpEncoder::framed(File::create(filepath)?)))
+        Ok(SbpLogger::Sbp(SbpEncoder::new(File::create(filepath)?)))
     }
     pub fn new_sbp_json<P: AsRef<Path>>(filepath: P) -> Result<SbpLogger> {
-        Ok(SbpLogger::Json(JsonEncoder::framed(
+        Ok(SbpLogger::Json(JsonEncoder::new(
             File::create(filepath)?,
             CompactFormatter,
         )))
     }
-    pub fn serialize(&mut self, msg: &SBP) -> Result<()> {
+    pub fn serialize(&mut self, msg: &Sbp) -> Result<()> {
         match self {
             SbpLogger::Sbp(logger) => {
                 logger.send(msg)?;
@@ -201,7 +196,7 @@ mod tests {
             age: 0xFFFF,
             tow: 0,
         };
-        let msg_one_wrapped = SBP::MsgAgeCorrections(msg_one.clone());
+        let msg_one_wrapped = Sbp::MsgAgeCorrections(msg_one.clone());
         let msg_two = MsgInsUpdates {
             sender_id: Some(1337),
             gnsspos: 4,
@@ -212,7 +207,7 @@ mod tests {
             zerovel: 0,
             tow: 0,
         };
-        let msg_two_wrapped = SBP::MsgInsUpdates(msg_two.clone());
+        let msg_two_wrapped = Sbp::MsgInsUpdates(msg_two.clone());
         {
             let mut sbp_logger = SbpLogger::new_sbp(&filepath).unwrap();
             sbp_logger.serialize(&msg_one_wrapped).unwrap();
@@ -224,7 +219,7 @@ mod tests {
             let mut messages = sbp::iter_messages(file_read);
             let msg = messages.next().unwrap().unwrap();
             match msg {
-                SBP::MsgAgeCorrections(msg) => {
+                Sbp::MsgAgeCorrections(msg) => {
                     assert_eq!(msg.sender_id, msg_one.sender_id);
                     assert_eq!(msg.age, msg_one.age);
                     assert_eq!(msg.tow, msg_one.tow);
@@ -233,7 +228,7 @@ mod tests {
             }
             let msg = messages.next().unwrap().unwrap();
             match msg {
-                SBP::MsgInsUpdates(msg) => {
+                Sbp::MsgInsUpdates(msg) => {
                     assert_eq!(msg.sender_id, msg_two.sender_id);
                     assert_eq!(msg.gnsspos, msg_two.gnsspos);
                     assert_eq!(msg.gnssvel, msg_two.gnssvel);

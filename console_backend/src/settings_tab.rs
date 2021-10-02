@@ -6,12 +6,12 @@ use std::path::Path;
 use anyhow::anyhow;
 use capnp::message::Builder;
 use ini::Ini;
-use libsettings::{Client, SettingKind, SettingValue};
 use log::{debug, error, warn};
 use parking_lot::{MappedMutexGuard, Mutex, MutexGuard};
 use sbp::link::Link;
 use sbp::messages::piksi::MsgReset;
 use sbp::messages::settings::MsgSettingsSave;
+use sbp_settings::{Client, SettingKind, SettingValue};
 
 use crate::shared_state::SharedState;
 use crate::types::{CapnProtoSender, Error, MsgSender, Result};
@@ -104,9 +104,10 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
         for (group, prop) in conf.iter() {
             for (name, value) in prop.iter() {
                 if let Err(e) = self.write_setting(group.unwrap(), name, value) {
-                    match e.downcast_ref::<libsettings::Error<libsettings::WriteSettingError>>() {
-                        Some(libsettings::Error::Err(libsettings::WriteSettingError::ReadOnly)) => {
-                        }
+                    match e.downcast_ref::<sbp_settings::Error<sbp_settings::WriteSettingError>>() {
+                        Some(sbp_settings::Error::Err(
+                            sbp_settings::WriteSettingError::ReadOnly,
+                        )) => {}
                         _ => {
                             self.import_err(&e);
                             return Err(e);
@@ -239,7 +240,7 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
                     Some(possible_values.to_string());
             }
 
-            current_setting.value = Some(libsettings::SettingValue::String(setting.value));
+            current_setting.value = Some(sbp_settings::SettingValue::String(setting.value));
         }
     }
 
@@ -361,7 +362,7 @@ struct Settings {
 
 impl Settings {
     fn new() -> Self {
-        let mut settings: Vec<_> = libsettings::settings().iter().collect();
+        let mut settings: Vec<_> = sbp_settings::settings().iter().collect();
         settings.sort_by_key(|s| &s.group);
         Self {
             inner: settings
@@ -374,7 +375,7 @@ impl Settings {
         }
     }
 
-    fn groups(&self) -> Vec<Vec<(&libsettings::Setting, &SettingValue)>> {
+    fn groups(&self) -> Vec<Vec<(&sbp_settings::Setting, &SettingValue)>> {
         self.inner.values().fold(Vec::new(), |mut groups, group| {
             let group: Vec<_> = group
                 .values()
@@ -431,12 +432,12 @@ impl std::ops::Deref for Settings {
 /// A reference to a particular setting and its value if it has been fetched
 #[derive(Debug)]
 struct Setting {
-    setting: Cow<'static, libsettings::Setting>,
-    value: Option<libsettings::SettingValue>,
+    setting: Cow<'static, sbp_settings::Setting>,
+    value: Option<sbp_settings::SettingValue>,
 }
 
 impl Setting {
-    fn new(setting: &'static libsettings::Setting) -> Self {
+    fn new(setting: &'static sbp_settings::Setting) -> Self {
         Self {
             setting: Cow::Borrowed(setting),
             value: None,

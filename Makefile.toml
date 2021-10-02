@@ -119,7 +119,6 @@ Get-ChildItem .\console_backend -Recurse -Include @("*.egg-info", "*.dist-info")
 '''
 
 [tasks.start-console]
-private = true
 command = "conda"
 args = [
   "run",

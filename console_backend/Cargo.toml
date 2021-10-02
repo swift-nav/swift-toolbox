@@ -43,13 +43,10 @@ rust-ini = "0.17.0"
 sbp = { version = "3.4.11-beta", features = ["json", "link", "swiftnav"] }
 sbp-settings = "0.1.0"
 env_logger = { version = "0.9", optional = true }
+mimalloc = { version = "*", default-features = false }
 
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 serialport = "4.0.1"
-
-[[bench]]
-name = "cpu_benches"
-harness = false
 
 [dev-dependencies]
 logtest = "2.0.0"
@@ -62,6 +59,10 @@ capnpc = "0.14"
 name = "console_backend"
 crate-type = ["cdylib", "lib"]
 bench = false
+
+[[bench]]
+name = "cpu_benches"
+harness = false
 
 [[bin]]
 name = "fileio"

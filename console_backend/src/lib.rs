@@ -51,6 +51,9 @@ use crate::{
     update_tab::UpdateTab,
 };
 
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 struct Tabs<'link, S: types::CapnProtoSender> {
     pub main: Mutex<MainTab<S>>,
     pub advanced_ins: Mutex<AdvancedInsTab<S>>,

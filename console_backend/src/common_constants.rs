@@ -249,6 +249,20 @@ pub enum Keys {
     CONSOLE_VERSION_CURRENT,
     #[strum(serialize = "CONSOLE_VERSION_LATEST")]
     CONSOLE_VERSION_LATEST,
+    #[strum(serialize = "OBS_PERIOD")]
+    OBS_PERIOD,
+    #[strum(serialize = "OBS_LATENCY")]
+    OBS_LATENCY,
+    #[strum(serialize = "THREADS_TABLE")]
+    THREADS_TABLE,
+    #[strum(serialize = "CSAC_TELEM_LIST")]
+    CSAC_TELEM_LIST,
+    #[strum(serialize = "ZYNQ_TEMP")]
+    ZYNQ_TEMP,
+    #[strum(serialize = "FE_TEMP")]
+    FE_TEMP,
+    #[strum(serialize = "CSAC_RECEIVED")]
+    CSAC_RECEIVED,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
@@ -267,4 +281,14 @@ pub enum QTKeys {
     QVARIANTLIST,
     #[strum(serialize = "QVariant")]
     QVARIANT,
+}
+
+#[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
+pub enum ApplicationMetadata {
+    #[strum(serialize = "Swift Navigation")]
+    ORGANIZATION_NAME,
+    #[strum(serialize = "swiftnav.com")]
+    ORGANIZATION_DOMAIN,
+    #[strum(serialize = "console_pp")]
+    APPLICATION_NAME,
 }

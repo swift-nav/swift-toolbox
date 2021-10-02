@@ -8,13 +8,9 @@ use anyhow::{anyhow, bail};
 use crossbeam::{atomic::AtomicCell, channel, scope, select, utils::Backoff};
 use rand::Rng;
 use sbp::link::Link;
-use sbp::messages::{
-    file_io::{
-        MsgFileioConfigReq, MsgFileioConfigResp, MsgFileioReadDirReq, MsgFileioReadDirResp,
-        MsgFileioReadReq, MsgFileioReadResp, MsgFileioRemove, MsgFileioWriteReq,
-        MsgFileioWriteResp,
-    },
-    SBP,
+use sbp::messages::file_io::{
+    MsgFileioConfigReq, MsgFileioConfigResp, MsgFileioReadDirReq, MsgFileioReadDirResp,
+    MsgFileioReadReq, MsgFileioReadResp, MsgFileioRemove, MsgFileioWriteReq, MsgFileioWriteResp,
 };
 
 use crate::errors::FILEIO_CHANNEL_SEND_FAILURE;
@@ -53,17 +49,20 @@ impl<'a> Fileio<'a> {
     }
 
     pub fn read(&mut self, path: String, mut dest: impl Write) -> Result<()> {
-        let config = self.fetch_config();
+        let config = self.config_to_default();
 
         let sender = self.sender.clone();
         let send_msg = move |sequence, offset| {
-            sender.send(SBP::from(MsgFileioReadReq {
-                sender_id: None,
-                filename: path.clone().into(),
-                chunk_size: READ_CHUNK_SIZE as u8,
-                sequence,
-                offset,
-            }))
+            sender.send(
+                MsgFileioReadReq {
+                    sender_id: None,
+                    filename: path.clone().into(),
+                    chunk_size: READ_CHUNK_SIZE as u8,
+                    sequence,
+                    offset,
+                }
+                .into(),
+            )
         };
 
         let (stop_req_tx, stop_req_rx) = channel::bounded(0);
@@ -211,18 +210,25 @@ impl<'a> Fileio<'a> {
 
         let sender = self.sender.clone();
         let send_msg = |state: &WriteState, req: &WriteReq| {
-            sender.send(SBP::from(MsgFileioWriteReq {
-                sender_id: None,
-                sequence: state.sequence,
-                offset: state.offset as u32,
-                filename: state.filename(),
-                data: data[req.offset..req.end_offset].to_vec(),
-            }))
+            sender.send(
+                MsgFileioWriteReq {
+                    sender_id: None,
+                    sequence: state.sequence,
+                    offset: state.offset as u32,
+                    filename: state.filename().into(),
+                    data: data[req.offset..req.end_offset].to_vec(),
+                }
+                .into(),
+            )
         };
 
         let data_len = data.len();
 
         scope(|s| {
+            let key = self.link.register(move |msg: MsgFileioWriteResp| {
+                res_tx.send(msg).expect(FILEIO_CHANNEL_SEND_FAILURE);
+            });
+
             s.spawn(|_| {
                 let backoff = Backoff::new();
                 let mut slice_offset = 0;
@@ -244,10 +250,6 @@ impl<'a> Fileio<'a> {
                 }
 
                 Result::Ok(())
-            });
-
-            let key = self.link.register(move |msg: MsgFileioWriteResp| {
-                res_tx.send(msg).expect(FILEIO_CHANNEL_SEND_FAILURE);
             });
 
             let mut pending: HashMap<u32, (WriteState, WriteReq)> = HashMap::new();
@@ -304,12 +306,15 @@ impl<'a> Fileio<'a> {
             tx.send(msg).expect(FILEIO_CHANNEL_SEND_FAILURE);
         });
 
-        self.sender.send(SBP::from(MsgFileioReadDirReq {
-            sender_id: None,
-            sequence: seq,
-            offset: files.len() as u32,
-            dirname: path.clone().into(),
-        }))?;
+        self.sender.send(
+            MsgFileioReadDirReq {
+                sender_id: None,
+                sequence: seq,
+                offset: files.len() as u32,
+                dirname: path.clone().into(),
+            }
+            .into(),
+        )?;
 
         loop {
             select! {
@@ -334,12 +339,12 @@ impl<'a> Fileio<'a> {
                         files.push(String::from_utf8_lossy(f).into_owned());
                     }
                     seq += 1;
-                    self.sender.send(SBP::from(MsgFileioReadDirReq {
+                    self.sender.send(MsgFileioReadDirReq {
                         sender_id: None,
                         sequence: seq,
                         offset: files.len() as u32,
                         dirname: path.clone().into(),
-                    }))?;
+                    }.into())?;
                 },
                 recv(channel::tick(READDIR_TIMEOUT)) -> _ => {
                     self.link.unregister(key);
@@ -350,11 +355,19 @@ impl<'a> Fileio<'a> {
     }
 
     pub fn remove(&self, filename: String) -> Result<()> {
-        self.sender.send(SBP::from(MsgFileioRemove {
-            sender_id: None,
-            filename: filename.into(),
-        }))?;
+        self.sender.send(
+            MsgFileioRemove {
+                sender_id: None,
+                filename: filename.into(),
+            }
+            .into(),
+        )?;
         Ok(())
+    }
+
+    fn config_to_default(&mut self) -> FileioConfig {
+        self.config = Some(Default::default());
+        self.config.as_ref().unwrap().clone()
     }
 
     fn fetch_config(&mut self) -> FileioConfig {
@@ -363,7 +376,7 @@ impl<'a> Fileio<'a> {
         }
 
         let sequence = new_sequence();
-        let (stop_tx, stop_rx) = channel::bounded(0);
+        let (stop_tx, stop_rx) = channel::bounded(1);
         let (tx, rx) = channel::bounded(1);
         let stop_tx_clone = stop_tx.clone();
         let key = self.link.register(move |msg: MsgFileioConfigResp| {
@@ -376,10 +389,13 @@ impl<'a> Fileio<'a> {
         let config = scope(|s| {
             s.spawn(|_| {
                 while stop_rx.try_recv().is_err() {
-                    let _ = sender.send(SBP::from(MsgFileioConfigReq {
-                        sender_id: None,
-                        sequence,
-                    }));
+                    let _ = sender.send(
+                        MsgFileioConfigReq {
+                            sender_id: None,
+                            sequence,
+                        }
+                        .into(),
+                    );
                     std::thread::sleep(CONFIG_REQ_RETRY);
                 }
             });
@@ -431,8 +447,8 @@ impl WriteState {
         }
     }
 
-    fn filename(&self) -> sbp::SbpString {
-        self.filename.clone().into()
+    fn filename(&self) -> String {
+        self.filename.to_string()
     }
 
     fn update(&mut self, chunk_len: usize) {
@@ -441,6 +457,7 @@ impl WriteState {
     }
 }
 
+#[derive(Debug)]
 struct FileioRequest {
     sent_at: Instant,
     retries: usize,
@@ -498,6 +515,7 @@ impl ReadReq {
     }
 }
 
+#[derive(Debug)]
 struct WriteReq {
     /// Offset start into current slice of data
     offset: usize,

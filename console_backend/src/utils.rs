@@ -185,12 +185,14 @@ pub fn refresh_loggingbar<P: CapnProtoSender>(client_send: &mut P, shared_state:
 
 pub fn signal_key_label(
     key: (SignalCodes, i16),
-    extra: &HashMap<i16, i16>,
+    extra: Option<&HashMap<i16, i16>>,
 ) -> (Option<String>, Option<String>, Option<String>) {
     let (code, sat) = key;
     let code_lbl = Some(code.to_string());
     let mut freq_lbl = None;
     let id_lbl;
+    let default_extra = HashMap::new();
+    let extra = extra.unwrap_or(&default_extra);
 
     if code.code_is_glo() {
         let freq_lbl_ = format!("F+{:02}", sat);
@@ -385,6 +387,28 @@ pub fn mdeg_to_deg(mdeg: f64) -> f64 {
     mdeg / 1.0e+3_f64
 }
 
+/// Normalize CPU usage from [0,1000] to [0,100].
+///
+/// # Parameters
+/// - `cpu`: The CPU usage value to be normalized.
+///
+/// # Returns
+/// - The normalized CPU usage value.
+pub fn normalize_cpu_usage(cpu: u16) -> f64 {
+    cpu as f64 / 10_f64
+}
+
+/// Convert centiCelsius to Celsius.
+///
+/// # Parameters
+/// - `cc`: Value in centiCelsius.
+///
+/// # Returns
+/// - Value in Celsius.
+pub fn cc_to_c(cc: i16) -> f64 {
+    cc as f64 / 1.0e+2_f64
+}
+
 pub fn compute_doppler(
     new_carrier_phase: f64,
     old_carrier_phase: f64,
@@ -434,7 +458,7 @@ mod tests {
 
         let (code_lbl, freq_lbl, id_lbl) = signal_key_label(
             (SignalCodes::CodeGloL2P, SignalCodes::CodeGloL2P as i16),
-            &extra,
+            Some(&extra),
         );
         assert_eq!(code_lbl.unwrap(), GLO_L2P_STR);
         assert_eq!(freq_lbl.unwrap(), "F+30");
@@ -442,7 +466,7 @@ mod tests {
 
         let (code_lbl, freq_lbl, id_lbl) = signal_key_label(
             (SignalCodes::CodeGloL2Of, SignalCodes::CodeGloL2Of as i16),
-            &extra,
+            Some(&extra),
         );
         assert_eq!(code_lbl.unwrap(), GLO_L2OF_STR);
         assert_eq!(freq_lbl.unwrap(), "F+04");
@@ -450,7 +474,7 @@ mod tests {
 
         let (code_lbl, freq_lbl, id_lbl) = signal_key_label(
             (SignalCodes::CodeSbasL5Q, SignalCodes::CodeSbasL5Q as i16),
-            &extra,
+            Some(&extra),
         );
         assert_eq!(code_lbl.unwrap(), SBAS_L5Q_STR);
         assert_eq!(freq_lbl, None);
@@ -458,7 +482,7 @@ mod tests {
 
         let (code_lbl, freq_lbl, id_lbl) = signal_key_label(
             (SignalCodes::CodeBds3B5Q, SignalCodes::CodeBds3B5Q as i16),
-            &extra,
+            Some(&extra),
         );
         assert_eq!(code_lbl.unwrap(), BDS3_B5Q_STR);
         assert_eq!(freq_lbl, None);
@@ -466,7 +490,7 @@ mod tests {
 
         let (code_lbl, freq_lbl, id_lbl) = signal_key_label(
             (SignalCodes::CodeQzsL2Cx, SignalCodes::CodeQzsL2Cx as i16),
-            &extra,
+            Some(&extra),
         );
         assert_eq!(code_lbl.unwrap(), QZS_L2CX_STR);
         assert_eq!(freq_lbl, None);
@@ -474,7 +498,7 @@ mod tests {
 
         let (code_lbl, freq_lbl, id_lbl) = signal_key_label(
             (SignalCodes::CodeGalE8X, SignalCodes::CodeGalE8X as i16),
-            &extra,
+            Some(&extra),
         );
         assert_eq!(code_lbl.unwrap(), GAL_E8X_STR);
         assert_eq!(freq_lbl, None);

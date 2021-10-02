@@ -117,6 +117,13 @@ class Keys(str, Enum):
     CONSOLE_OUTDATED = "CONSOLE_OUTDATED"
     CONSOLE_VERSION_CURRENT = "CONSOLE_VERSION_CURRENT"
     CONSOLE_VERSION_LATEST = "CONSOLE_VERSION_LATEST"
+    OBS_PERIOD = "OBS_PERIOD"
+    OBS_LATENCY = "OBS_LATENCY"
+    THREADS_TABLE = "THREADS_TABLE"
+    CSAC_TELEM_LIST = "CSAC_TELEM_LIST"
+    ZYNQ_TEMP = "ZYNQ_TEMP"
+    FE_TEMP = "FE_TEMP"
+    CSAC_RECEIVED = "CSAC_RECEIVED"
 
 
 class ApplicationStates(str, Enum):
@@ -128,3 +135,9 @@ class ApplicationStates(str, Enum):
 class QTKeys(str, Enum):
     QVARIANTLIST = "QVariantList"
     QVARIANT = "QVariant"
+
+
+class ApplicationMetadata(str, Enum):
+    ORGANIZATION_NAME = "Swift Navigation"
+    ORGANIZATION_DOMAIN = "swiftnav.com"
+    APPLICATION_NAME = "console_pp"

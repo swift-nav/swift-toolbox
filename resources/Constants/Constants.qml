@@ -34,18 +34,21 @@ QtObject {
     property QtObject solutionVelocity
     property QtObject trackingSignals
     property QtObject observationTab
+    property QtObject systemMonitor
     property QtObject genericTable
     property QtObject updateTab
     property QtObject icons
+    property QtObject trackingSkyPlot
     readonly property int staticTimerIntervalRate: 5 // 5 Hz
     readonly property int staticTableTimerIntervalRate: 10 // 10 Hz
+    readonly property int staticTimerSlowIntervalRate: 2 // 2 Hz
     readonly property string monoSpaceFont: "Courier New"
     readonly property real smallPointSize: 7
     readonly property real mediumPointSize: 8
     readonly property real largePointSize: 9
     readonly property bool debugMode: false
-    readonly property string materialRed: "crimson"
-    readonly property string materialGrey: "dimgrey"
+    readonly property color materialRed: "crimson"
+    readonly property color materialGrey: "dimgrey"
 
     sideNavBar: QtObject {
         readonly property int buttonSvgHeight: 15
@@ -87,7 +90,7 @@ QtObject {
         readonly property string updateFirmwareButtonLabel: "Update Firmware"
         readonly property string downloadLatestFirmwareButtonLabel: "Download Latest Firmware"
         readonly property string fileioSendFileToDeviceButtonLabel: "Send File To Device"
-        readonly property string placeholderTextColor: "grey"
+        readonly property color placeholderTextColor: "grey"
         readonly property int borderWidth: 1
         readonly property int firmwareVersionColumnSpacing: 0
         readonly property int buttonInset: 0
@@ -104,15 +107,62 @@ QtObject {
         readonly property int popupDelayMilliseconds: 3000
     }
 
+    systemMonitor: QtObject {
+        readonly property var columnHeaders: ["Thread Name", "CPU %", "Stack Free"]
+        readonly property var metricColumnHeaders: ["Metric", "Value"]
+        readonly property string currLabel: "Curr"
+        readonly property string maxLabel: "Max"
+        readonly property string minLabel: "Min"
+        readonly property string avgLabel: "Avg"
+        readonly property string obsUnits: "ms"
+        readonly property int rows: 6
+        readonly property int columns: 6
+        readonly property int columnSpacing: 0
+        readonly property int rowSpacing: 10
+        readonly property int topRowSpan: 2
+        readonly property int bottomRowSpan: 4
+        readonly property int deviceMonitorColumnSpan: 1
+        readonly property int metricsMonitorColumnSpan: 3
+        readonly property int observationConnectionMonitorColumnSpan: 2
+        readonly property int resetButtonHeight: 50
+        readonly property int resetButtonWidth: 100
+        readonly property string resetButtonLabel: "Reset Device"
+        readonly property int resetButtonIconSideLength: 10
+        readonly property int obsTextMargins: 5
+        readonly property int textHeight: 20
+        readonly property string obsLatencyLabel: "Latency"
+        readonly property string obsPeriodLabel: "Period"
+        readonly property string zynqTempLabel: "Zynq CPU Temp"
+        readonly property string feTempLabel: "RF Frontend Temp"
+        readonly property string tempUnits: "C"
+        readonly property var defaultObs: {
+            "Curr": 0,
+            "Avg": 0,
+            "Min": 0,
+            "Max": 0
+        }
+        readonly property var defaultThreadsList: {
+            "Thread Name": "",
+            "CPU %": "",
+            "Stack Free": ""
+        }
+        readonly property var defaultMetricsList: {
+            "Metric": "",
+            "Value": ""
+        }
+    }
+
     genericTable: QtObject {
         readonly property int headerZOffset: 100
         readonly property int padding: 2
+        readonly property int borderWidth: 1
         readonly property int mouseAreaResizeWidth: 10
         readonly property int cellHeight: 25
         readonly property string cellHighlightedColor: "crimson"
-        readonly property string cellColor: "white"
-        readonly property string gradientColor: "gainsboro"
-        readonly property string borderColor: "gainsboro"
+        readonly property color cellColor: "white"
+        readonly property color gradientColor: "gainsboro"
+        readonly property color selectedCellColor: "dark grey"
+        readonly property color borderColor: "gainsboro"
         readonly property string fontFamily: "Roboto"
         property var defaultColumns: ["Item", "Value"]
     }
@@ -239,11 +289,11 @@ QtObject {
         readonly property int textDataBarMargin: 2
         readonly property int textDataBarBorderWidth: 1
         readonly property string unknownStatusPath: "images/fontawesome/square-solid.svg"
-        readonly property string unknownStatusColor: "dimgrey"
+        readonly property color unknownStatusColor: "dimgrey"
         readonly property string warningStatusPath: "images/fontawesome/exclamation-triangle-solid.svg"
-        readonly property string warningStatusColor: "goldenrod"
+        readonly property color warningStatusColor: "goldenrod"
         readonly property string okStatusPath: "images/fontawesome/circle-solid.svg"
-        readonly property string okStatusColor: "green"
+        readonly property color okStatusColor: "green"
         readonly property int insStatusImageWidth: 15
     }
 
@@ -371,6 +421,28 @@ QtObject {
         readonly property int unitDropdownWidth: 90
         readonly property real zoomInMult: 1.1
         readonly property real zoomOutMult: 0.9
+        readonly property string fontFamily: "Roboto"
+    }
+
+    trackingSkyPlot: QtObject {
+        readonly property int markerSize: 10
+        readonly property var scatterLabels: ["GPS", "GLONASS", "GALILEO", "BEIDOU", "QZSS", "SBAS"]
+        readonly property var colors: ["green", "red", "blue", "gold", "pink", "purple"]
+        readonly property int axisAngularMax: 360
+        readonly property int axisAngularMin: 0
+        readonly property int axisAngularTickCount: 13
+        readonly property int axisRadialMax: 90
+        readonly property int axisRadialMin: 0
+        readonly property int axisRadialTickCount: 5
+        readonly property int checkboxLabelWidth: 100
+        readonly property int checkboxLegendWidth: 150
+        readonly property int checkboxHeight: 50
+        readonly property int checkboxSpacing: 0
+        readonly property int checkboxMargins: 10
+        readonly property int legendTopMargin: 50
+        readonly property int legendRightMargin: 200
+        readonly property int directionLabelOffset: 30
+        readonly property int directionLabelFontSize: 16
     }
 
     trackingSignals: QtObject {
@@ -400,6 +472,7 @@ QtObject {
         readonly property string exportPath: "images/fontawesome/file-export.svg"
         readonly property string importPath: "images/fontawesome/file-import.svg"
         readonly property string warningPath: "images/fontawesome/exclamation-triangle.svg"
+        readonly property string connectButtonPath: "images/fontawesome/power-off-solid.svg"
     }
 
 }

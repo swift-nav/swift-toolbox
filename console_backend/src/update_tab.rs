@@ -524,8 +524,7 @@ fn firmware_upgrade(
                             sender_id: None,
                             flags: 0,
                         };
-                        let msg = sbp::messages::SBP::from(msg);
-                        msg_sender.send(msg)?;
+                        msg_sender.send(msg.into())?;
                     } else {
                         update_tab_context.fw_log_append(String::from("Image transfer failed."))
                     }
@@ -553,8 +552,7 @@ fn firmware_upgrade_commit_to_flash(
             UPGRADE_FIRMWARE_TOOL, UPGRADE_FIRMWARE_REMOTE_DESTINATION
         )),
     };
-    let msg = sbp::messages::SBP::from(msg);
-    msg_sender.send(msg)?;
+    msg_sender.send(msg.into())?;
     let start_time = Instant::now();
     let timeout = Duration::from_secs(UPGRADE_FIRMWARE_TIMEOUT_SEC);
     while update_tab_context.upgrading() && start_time.elapsed() < timeout {

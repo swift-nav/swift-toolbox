@@ -49,6 +49,16 @@ struct LogAppend {
     entries @0 :List(LogEntry);
 }
 
+struct SkyPlotObs {
+    az @0 :UInt16;
+    el @1 :UInt16;
+}
+
+struct TrackingSkyPlotStatus {
+    sats @0 :List(List(SkyPlotObs));
+    labels @1 :List(List(Text));
+}
+
 struct KeyValPair {
     key @0 :Text;
     val @1 :Text;
@@ -212,6 +222,27 @@ struct SolutionVelocityStatus {
     colors @4 :List(Text);
 }
 
+struct ThreadState {
+    name @0 :Text;
+    cpu @1 :Float64;
+    stackFree @2 :UInt32;
+}
+
+struct UartState {
+    key @0 :Text;
+    val @1 :Int32;
+}
+
+struct AdvancedSystemMonitorStatus {
+    obsLatency @0 :List(UartState);
+    obsPeriod @1 :List(UartState);
+    threadsTable @2 :List(ThreadState);
+    zynqTemp @3: Float64;
+    feTemp @4: Float64;
+    csacTelemList @5: List(KeyValPair);
+    csacReceived @6: Bool;
+}
+
 struct TrackingSignalsStatus {
     xminOffset @0 :Float64;
     labels @1 :List(Text);
@@ -319,6 +350,10 @@ struct AdvancedSpectrumAnalyzerStatusFront {
     channel @0 :UInt16;
 }
 
+struct AdvancedSystemMonitorStatusFront {
+    resetDevice @0 :Void = void;
+}
+
 struct SolutionPositionStatusUnitFront {
     solutionPositionUnit @0 :Text;
 }
@@ -381,5 +416,11 @@ struct Message {
         settingsWriteRequest @37 :SettingsWriteRequest;
         settingsResetRequest @38 :SettingsResetRequest;
         settingsSaveRequest @39 :SettingsSaveRequest;
+        advancedSystemMonitorStatus @40 :AdvancedSystemMonitorStatus;
+        threadState @41 :ThreadState;
+        uartState @42 :UartState;
+        advancedSystemMonitorStatusFront @43 :AdvancedSystemMonitorStatusFront;
+        skyPlotObs @44 :SkyPlotObs;
+        trackingSkyPlotStatus @45 :TrackingSkyPlotStatus;
     }
 }

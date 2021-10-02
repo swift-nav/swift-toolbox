@@ -11,4 +11,4 @@ rustflags = [
 ]
 
 [alias]
-fileio = "run --bin fileio --no-default-features --"
+fileio = "run --bin fileio --no-default-features --features env_logger --"

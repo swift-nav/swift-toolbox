@@ -20,9 +20,9 @@ from PySide2 import QtQml, QtCore
 
 from PySide2.QtGui import QFontDatabase
 
-from PySide2.QtQml import QQmlComponent, qmlRegisterType
+from PySide2.QtQml import QQmlComponent, qmlRegisterType, QQmlDebuggingEnabler
 
-from constants import ApplicationStates, Keys, Tabs, QTKeys
+from constants import ApplicationMetadata, ApplicationStates, Keys, Tabs, QTKeys
 
 from log_panel import (
     LOG_PANEL,
@@ -61,6 +61,12 @@ from advanced_spectrum_analyzer_tab import (
     ADVANCED_SPECTRUM_ANALYZER_TAB,
 )
 
+from advanced_system_monitor_tab import (
+    AdvancedSystemMonitorModel,
+    AdvancedSystemMonitorData,
+    ADVANCED_SYSTEM_MONITOR_TAB,
+)
+
 from fusion_status_flags import (
     FusionStatusFlagsModel,
     FusionStatusFlagsData,
@@ -80,8 +86,7 @@ from baseline_table import (
 )
 
 from observation_tab import (
-    ObservationData,
-    ObservationModel,
+    ObservationTableModel,
     REMOTE_OBSERVATION_TAB,
     LOCAL_OBSERVATION_TAB,
     obs_rows_to_json,
@@ -127,6 +132,12 @@ from tracking_signals_tab import (
     TRACKING_SIGNALS_TAB,
 )
 
+from tracking_sky_plot_tab import (
+    TrackingSkyPlotModel,
+    TrackingSkyPlotPoints,
+    TRACKING_SKY_PLOT_TAB,
+)
+
 from update_tab import (
     UPDATE_TAB,
     UpdateTabData,
@@ -150,6 +161,10 @@ TAB_LAYOUT = {
     Tabs.TRACKING_SIGNALS: {
         MAIN_INDEX: 0,
         SUB_INDEX: 0,
+    },
+    Tabs.TRACKING_SKYPLOT: {
+        MAIN_INDEX: 0,
+        SUB_INDEX: 1,
     },
     Tabs.SOLUTION_POSITION: {
         MAIN_INDEX: 1,
@@ -272,6 +287,22 @@ def receive_messages(app_, backend, messages):
             ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.YMIN] = m.advancedSpectrumAnalyzerStatus.ymin
             ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.XMAX] = m.advancedSpectrumAnalyzerStatus.xmax
             ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.XMIN] = m.advancedSpectrumAnalyzerStatus.xmin
+        elif m.which == Message.Union.AdvancedSystemMonitorStatus:
+            ADVANCED_SYSTEM_MONITOR_TAB[Keys.OBS_LATENCY][:] = [
+                [entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.obsLatency
+            ]
+            ADVANCED_SYSTEM_MONITOR_TAB[Keys.OBS_PERIOD][:] = [
+                [entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.obsPeriod
+            ]
+            ADVANCED_SYSTEM_MONITOR_TAB[Keys.THREADS_TABLE][:] = [
+                [entry.name, entry.cpu, entry.stackFree] for entry in m.advancedSystemMonitorStatus.threadsTable
+            ]
+            ADVANCED_SYSTEM_MONITOR_TAB[Keys.CSAC_TELEM_LIST][:] = [
+                [entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.csacTelemList
+            ]
+            ADVANCED_SYSTEM_MONITOR_TAB[Keys.CSAC_RECEIVED] = m.advancedSystemMonitorStatus.csacReceived
+            ADVANCED_SYSTEM_MONITOR_TAB[Keys.ZYNQ_TEMP] = m.advancedSystemMonitorStatus.zynqTemp
+            ADVANCED_SYSTEM_MONITOR_TAB[Keys.FE_TEMP] = m.advancedSystemMonitorStatus.feTemp
         elif m.which == Message.Union.AdvancedMagnetometerStatus:
             ADVANCED_MAGNETOMETER_TAB[Keys.YMAX] = m.advancedMagnetometerStatus.ymax
             ADVANCED_MAGNETOMETER_TAB[Keys.YMIN] = m.advancedMagnetometerStatus.ymin
@@ -295,6 +326,14 @@ def receive_messages(app_, backend, messages):
                 for idx in range(len(m.trackingSignalsStatus.data))
             ]
             TRACKING_SIGNALS_TAB[Keys.XMIN_OFFSET] = m.trackingSignalsStatus.xminOffset
+        elif m.which == Message.Union.TrackingSkyPlotStatus:
+            TRACKING_SKY_PLOT_TAB[Keys.SATS][:] = [
+                [QPointF(point.az, point.el) for point in m.trackingSkyPlotStatus.sats[idx]]
+                for idx in range(len(m.trackingSkyPlotStatus.sats))
+            ]
+            TRACKING_SKY_PLOT_TAB[Keys.LABELS][:] = [
+                list(m.trackingSkyPlotStatus.labels[idx]) for idx in range(len(m.trackingSkyPlotStatus.labels))
+            ]
         elif m.which == Message.Union.ObservationStatus:
             if m.observationStatus.isRemote:
                 REMOTE_OBSERVATION_TAB[Keys.TOW] = m.observationStatus.tow
@@ -466,6 +505,14 @@ class DataModel(QObject):  # pylint: disable=too-many-instance-attributes,too-ma
         msg.settingsWriteRequest.group = group
         msg.settingsWriteRequest.name = name
         msg.settingsWriteRequest.value = value
+        buffer = msg.to_bytes()
+        self.endpoint.send_message(buffer)
+
+    @Slot()  # type: ignore
+    def reset_device(self) -> None:
+        Message = self.messages.Message
+        msg = self.messages.Message()
+        msg.advancedSystemMonitorStatusFront = msg.init(Message.Union.AdvancedSystemMonitorStatusFront)
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
 
@@ -649,9 +696,14 @@ if __name__ == "__main__":
 
     args_main, _ = parser.parse_known_args()
 
+    # sys.argv.append("-qmljsdebugger=port:10002,block")
+    debug = QQmlDebuggingEnabler()
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
-    app = QApplication()
+    app = QApplication(sys.argv)
+    app.setOrganizationName(ApplicationMetadata.ORGANIZATION_NAME)
+    app.setOrganizationDomain(ApplicationMetadata.ORGANIZATION_DOMAIN)
+    app.setApplicationName(ApplicationMetadata.APPLICATION_NAME)
     QFontDatabase.addApplicationFont(":/fonts/Roboto-Regular.ttf")
     QFontDatabase.addApplicationFont(":/fonts/Roboto-Bold.ttf")
 
@@ -663,6 +715,7 @@ if __name__ == "__main__":
     qmlRegisterType(
         AdvancedSpectrumAnalyzerPoints, "SwiftConsole", 1, 0, "AdvancedSpectrumAnalyzerPoints"  # type: ignore
     )
+    qmlRegisterType(AdvancedSystemMonitorData, "SwiftConsole", 1, 0, "AdvancedSystemMonitorData")  # type: ignore
     qmlRegisterType(FusionStatusFlagsData, "SwiftConsole", 1, 0, "FusionStatusFlagsData")  # type: ignore
     qmlRegisterType(BaselinePlotPoints, "SwiftConsole", 1, 0, "BaselinePlotPoints")  # type: ignore
     qmlRegisterType(BaselineTableEntries, "SwiftConsole", 1, 0, "BaselineTableEntries")  # type: ignore
@@ -673,7 +726,8 @@ if __name__ == "__main__":
     qmlRegisterType(SolutionVelocityPoints, "SwiftConsole", 1, 0, "SolutionVelocityPoints")  # type: ignore
     qmlRegisterType(StatusBarData, "SwiftConsole", 1, 0, "StatusBarData")  # type: ignore
     qmlRegisterType(TrackingSignalsPoints, "SwiftConsole", 1, 0, "TrackingSignalsPoints")  # type: ignore
-    qmlRegisterType(ObservationData, "SwiftConsole", 1, 0, "ObservationData")  # type: ignore
+    qmlRegisterType(TrackingSkyPlotPoints, "SwiftConsole", 1, 0, "TrackingSkyPlotPoints")  # type: ignore
+    qmlRegisterType(ObservationTableModel, "SwiftConsole", 1, 0, "ObservationTableModel")  # type: ignore
     qmlRegisterType(UpdateTabData, "SwiftConsole", 1, 0, "UpdateTabData")  # type: ignore
 
     engine = QtQml.QQmlApplicationEngine()
@@ -695,6 +749,7 @@ if __name__ == "__main__":
     advanced_ins_model = AdvancedInsModel()
     advanced_magnetometer_model = AdvancedMagnetometerModel()
     advanced_spectrum_analyzer_model = AdvancedSpectrumAnalyzerModel()
+    advanced_system_monitor_model = AdvancedSystemMonitorModel()
     fusion_engine_flags_model = FusionStatusFlagsModel()
     baseline_plot_model = BaselinePlotModel()
     baseline_table_model = BaselineTableModel()
@@ -706,8 +761,7 @@ if __name__ == "__main__":
     status_bar_model = StatusBarModel()
     logging_bar_model = LoggingBarModel()
     tracking_signals_model = TrackingSignalsModel()
-    remote_observation_model = ObservationModel()
-    local_observation_model = ObservationModel()
+    tracking_sky_plot_model = TrackingSkyPlotModel()
     update_tab_model = UpdateTabModel()
     root_context = engine.rootContext()
     root_context.setContextProperty("log_panel_model", log_panel_model)
@@ -715,6 +769,7 @@ if __name__ == "__main__":
     root_context.setContextProperty("advanced_ins_model", advanced_ins_model)
     root_context.setContextProperty("advanced_magnetometer_model", advanced_magnetometer_model)
     root_context.setContextProperty("advanced_spectrum_analyzer_model", advanced_spectrum_analyzer_model)
+    root_context.setContextProperty("advanced_system_monitor_model", advanced_system_monitor_model)
     root_context.setContextProperty("fusion_engine_flags_model", fusion_engine_flags_model)
     root_context.setContextProperty("baseline_plot_model", baseline_plot_model)
     root_context.setContextProperty("baseline_table_model", baseline_table_model)
@@ -726,8 +781,7 @@ if __name__ == "__main__":
     root_context.setContextProperty("status_bar_model", status_bar_model)
     root_context.setContextProperty("logging_bar_model", logging_bar_model)
     root_context.setContextProperty("tracking_signals_model", tracking_signals_model)
-    root_context.setContextProperty("remote_observation_model", remote_observation_model)
-    root_context.setContextProperty("local_observation_model", local_observation_model)
+    root_context.setContextProperty("tracking_sky_plot_model", tracking_sky_plot_model)
     root_context.setContextProperty("update_tab_model", update_tab_model)
     root_context.setContextProperty("data_model", data_model)
 

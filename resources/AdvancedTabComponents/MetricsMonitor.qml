@@ -7,39 +7,33 @@ import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
 Item {
-    id: solutionTable
-
-    property variant columnWidths: [Constants.solutionTable.defaultColumnWidth, Constants.solutionTable.defaultColumnWidth]
+    property variant columnWidths: [width / 2, width / 2]
     property real mouse_x: 0
     property int selectedRow: -1
-
-    function syncColumnWidthsWithSplitView() {
-        var oldcols = columnWidths.slice();
-        columnWidths[0] = Math.max(columnWidths[0], Constants.solutionTable.defaultColumnWidth);
-        let column_width_sum = columnWidths[0] + columnWidths[1];
-        if (column_width_sum != tableView.width) {
-            let final_column_diff = tableView.width - column_width_sum;
-            columnWidths[1] += final_column_diff;
-        }
-        if (columnWidths != oldcols)
-            tableView.forceLayout();
-
-    }
-
-    SolutionTableEntries {
-        id: solutionTableEntries
-    }
+    property variant entries: []
+    property bool csacReceived: false
 
     ColumnLayout {
-        id: solutionTableRowLayout
+        anchors.fill: parent
+        anchors.margins: Constants.systemMonitor.obsTextMargins
+        visible: csacReceived
 
-        spacing: Constants.solutionTable.tableHeaderTableDataTableSpacing
-        width: parent.width
-        height: parent.height
-
-        Item {
-            Layout.fillHeight: true
+        Rectangle {
             Layout.fillWidth: true
+            Layout.preferredHeight: Constants.systemMonitor.textHeight
+
+            Text {
+                text: "Metrics"
+                font.family: Constants.genericTable.fontFamily
+                font.pointSize: Constants.largePointSize
+            }
+
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            clip: true
 
             HorizontalHeaderView {
                 id: horizontalHeader
@@ -74,9 +68,11 @@ Item {
                         }
                         onPositionChanged: {
                             if (pressed) {
+                                let oldcols = columnWidths.slice();
                                 var delta_x = (mouseX - mouse_x);
                                 columnWidths[index] += delta_x;
-                                syncColumnWidthsWithSplitView();
+                                columnWidths[(index + 1) % 2] -= delta_x;
+                                tableView.forceLayout();
                             }
                         }
                     }
@@ -98,28 +94,9 @@ Item {
 
             }
 
-            TextEdit {
-                id: textEdit
-
-                visible: false
-            }
-
-            Shortcut {
-                sequence: StandardKey.Copy
-                onActivated: {
-                    if (selectedRow != -1) {
-                        textEdit.text = JSON.stringify(tableView.model.getRow(selectedRow));
-                        textEdit.selectAll();
-                        textEdit.copy();
-                        selectedRow = -1;
-                    }
-                }
-            }
-
             TableView {
                 id: tableView
 
-                onWidthChanged: syncColumnWidthsWithSplitView()
                 columnSpacing: -1
                 rowSpacing: -1
                 columnWidthProvider: function(column) {
@@ -140,17 +117,14 @@ Item {
                 model: TableModel {
                     id: tableModel
 
-                    rows: [{
-                        "Item": "",
-                        "Value": ""
-                    }]
+                    rows: [Constants.systemMonitor.defaultMetricsList]
 
                     TableModelColumn {
-                        display: "Item"
+                        display: Constants.systemMonitor.metricColumnHeaders[0]
                     }
 
                     TableModelColumn {
-                        display: "Value"
+                        display: Constants.systemMonitor.metricColumnHeaders[1]
                     }
 
                 }
@@ -188,51 +162,24 @@ Item {
 
             }
 
-        }
+            Timer {
+                interval: Utils.hzToMilliseconds(Constants.staticTableTimerIntervalRate)
+                running: true
+                repeat: true
+                onTriggered: {
+                    if (!advancedTab.visible)
+                        return ;
 
-        Rectangle {
-            id: solutionRTKNote
-
-            Layout.minimumHeight: Constants.solutionTable.rtkNoteHeight
-            Layout.fillWidth: true
-            width: parent.width
-            Layout.alignment: Qt.AlignLeft | Qt.AlignBottom
-            border.width: Constants.solutionTable.rtkNoteBorderWidth
-            border.color: Constants.genericTable.borderColor
-
-            Text {
-                wrapMode: Text.Wrap
-                anchors.fill: parent
-                font.family: Constants.genericTable.fontFamily
-                font.pointSize: Constants.largePointSize
-                text: Constants.solutionTable.rtkNoteText
-                padding: Constants.solutionTable.rtkNoteMargins
-            }
-
-        }
-
-        Timer {
-            interval: Utils.hzToMilliseconds(Constants.staticTableTimerIntervalRate)
-            running: true
-            repeat: true
-            onTriggered: {
-                if (!solutionTab.visible)
-                    return ;
-
-                solution_table_model.fill_console_points(solutionTableEntries);
-                if (!solutionTableEntries.entries.length)
-                    return ;
-
-                var entries = solutionTableEntries.entries;
-                for (var idx in entries) {
-                    var new_row = {
-                    };
-                    new_row[Constants.solutionTable.tableLeftColumnHeader] = entries[idx][0];
-                    new_row[Constants.solutionTable.tableRightColumnHeader] = entries[idx][1];
-                    tableView.model.setRow(idx, new_row);
+                    for (var idx in entries) {
+                        var new_row = {
+                        };
+                        new_row[Constants.systemMonitor.metricColumnHeaders[0]] = entries[idx][0];
+                        new_row[Constants.systemMonitor.metricColumnHeaders[1]] = entries[idx][1];
+                        tableView.model.setRow(idx, new_row);
+                    }
                 }
-                tableView.forceLayout();
             }
+
         }
 
     }

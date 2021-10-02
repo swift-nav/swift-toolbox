@@ -1,4 +1,5 @@
 import "./Constants"
+import "BaseComponents"
 import "ObservationTabComponents" as ObservationTabComponents
 import QtQuick 2.5
 import QtQuick.Controls 2.15
@@ -11,10 +12,6 @@ Item {
     width: parent.width
     height: parent.height
 
-    ObservationData {
-        id: observationData
-    }
-
     SplitView {
         id: observationView
 
@@ -22,66 +19,60 @@ Item {
         orientation: Qt.Vertical
         width: parent.width
         height: parent.height
-        visible: false
+        visible: localTable.populated || remoteTable.populated
 
-        Rectangle {
+        Item {
             SplitView.minimumHeight: Constants.observationTab.titleAreaHight
             SplitView.preferredHeight: 0.5 * parent.height
             width: parent.width
-            color: "lightblue"
-            border.color: "#333"
-            border.width: 1
 
-            ObservationTabComponents.ObservationTable {
-                id: localTable
+            SwiftGroupBox {
+                anchors.fill: parent
+                anchors.topMargin: 4
+                title: "Local"
 
-                name: "local"
-                width: parent.width
-                height: parent.height
+                ObservationTabComponents.ObservationTable {
+                    id: localTable
+
+                    anchors.fill: parent
+                }
+
             }
 
         }
 
-        Rectangle {
+        Item {
             SplitView.minimumHeight: Constants.observationTab.titleAreaHight
             SplitView.preferredHeight: 0.5 * parent.height
             Layout.fillHeight: true
             width: parent.width
-            border.color: "#000000"
-            border.width: 1
 
-            ObservationTabComponents.ObservationTable {
-                id: remoteTable
+            SwiftGroupBox {
+                anchors.fill: parent
+                anchors.topMargin: 4
+                title: "Remote"
 
-                name: "remote"
-                width: parent.width
-                height: parent.height
+                ObservationTabComponents.ObservationTable {
+                    id: remoteTable
+
+                    anchors.fill: parent
+                    remote: true
+                }
+
             }
 
         }
 
         Timer {
-            interval: Globals.currentRefreshRate
+            interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
             running: true
             repeat: true
             onTriggered: {
                 if (!observationTab.visible)
                     return ;
 
-                remote_observation_model.fill_data(observationData, true);
-                if (observationData.rows.length) {
-                    remoteTable.tow = observationData.tow;
-                    remoteTable.week = observationData.week;
-                    remoteTable.model.rows = observationData.rows;
-                    observationView.visible = true;
-                }
-                local_observation_model.fill_data(observationData, false);
-                if (observationData.rows.length) {
-                    localTable.tow = observationData.tow;
-                    localTable.week = observationData.week;
-                    localTable.model.rows = observationData.rows;
-                    observationView.visible = true;
-                }
+                remoteTable.update();
+                localTable.update();
             }
         }
 

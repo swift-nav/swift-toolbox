@@ -17,7 +17,7 @@ mypy = "^0.910"
 pylint = "^2.9.3"
 pytest = "^6.2.4"
 setuptools-rust = "^0.12.1"
-nuitka = "<=0.6.12.4"
+nuitka = ">=0.6.16"
 psutil = "5.8.0"
 qt5-applications = [{ version = "^5.15.2" }]
 py2many = ">=0.3"

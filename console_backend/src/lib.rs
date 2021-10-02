@@ -1,6 +1,7 @@
 pub mod advanced_ins_tab;
 pub mod advanced_magnetometer_tab;
 pub mod advanced_spectrum_analyzer_tab;
+pub mod advanced_system_monitor_tab;
 pub mod baseline_tab;
 pub mod cli_options;
 pub mod console_backend_capnp {
@@ -32,6 +33,7 @@ pub mod solution_tab;
 pub mod solution_velocity_tab;
 pub mod status_bar;
 pub mod tracking_signals_tab;
+pub mod tracking_sky_plot_tab;
 pub mod types;
 pub mod update_downloader;
 pub mod update_tab;
@@ -41,10 +43,12 @@ use std::sync::Mutex;
 
 use crate::{
     advanced_ins_tab::AdvancedInsTab, advanced_magnetometer_tab::AdvancedMagnetometerTab,
-    advanced_spectrum_analyzer_tab::AdvancedSpectrumAnalyzerTab, baseline_tab::BaselineTab,
+    advanced_spectrum_analyzer_tab::AdvancedSpectrumAnalyzerTab,
+    advanced_system_monitor_tab::AdvancedSystemMonitorTab, baseline_tab::BaselineTab,
     main_tab::MainTab, observation_tab::ObservationTab, settings_tab::SettingsTab,
     solution_tab::SolutionTab, solution_velocity_tab::SolutionVelocityTab, status_bar::StatusBar,
-    tracking_signals_tab::TrackingSignalsTab, update_tab::UpdateTab,
+    tracking_signals_tab::TrackingSignalsTab, tracking_sky_plot_tab::TrackingSkyPlotTab,
+    update_tab::UpdateTab,
 };
 
 #[global_allocator]
@@ -64,8 +68,10 @@ struct Tabs<'link, S: types::CapnProtoSender> {
     pub main: Mutex<MainTab<S>>,
     pub advanced_ins: Mutex<AdvancedInsTab<S>>,
     pub advanced_magnetometer: Mutex<AdvancedMagnetometerTab<S>>,
+    pub advanced_system_monitor: Mutex<AdvancedSystemMonitorTab<S>>,
     pub baseline: Mutex<BaselineTab<S>>,
     pub tracking_signals: Mutex<TrackingSignalsTab<S>>,
+    pub tracking_sky_plot: Mutex<TrackingSkyPlotTab<S>>,
     pub solution: Mutex<SolutionTab<S>>,
     pub observation: Mutex<ObservationTab<S>>,
     pub solution_velocity: Mutex<SolutionVelocityTab<S>>,
@@ -90,6 +96,12 @@ impl<'link, S: types::CapnProtoSender> Tabs<'link, S> {
                 client_sender.clone(),
             )
             .into(),
+            advanced_system_monitor: AdvancedSystemMonitorTab::new(
+                shared_state.clone(),
+                client_sender.clone(),
+                msg_sender.clone(),
+            )
+            .into(),
             baseline: BaselineTab::new(
                 shared_state.clone(),
                 client_sender.clone(),
@@ -97,6 +109,8 @@ impl<'link, S: types::CapnProtoSender> Tabs<'link, S> {
             )
             .into(),
             tracking_signals: TrackingSignalsTab::new(shared_state.clone(), client_sender.clone())
+                .into(),
+            tracking_sky_plot: TrackingSkyPlotTab::new(client_sender.clone(), shared_state.clone())
                 .into(),
             observation: ObservationTab::new(shared_state.clone(), client_sender.clone()).into(),
             solution: SolutionTab::new(shared_state.clone(), client_sender.clone()).into(),

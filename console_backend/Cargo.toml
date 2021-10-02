@@ -40,19 +40,10 @@ minreq = { version = "2.4.2", features = ["https"] }
 regex = { version = "1.5.4" }
 semver = { version = "1" }
 rust-ini = "0.17.0"
-snap = { version = "1", optional = true }
+sbp = { version = "3.4.11-beta", features = ["json", "link", "swiftnav"] }
+sbp-settings = "0.1.0"
+env_logger = { version = "0.9", optional = true }
 mimalloc = { version = "*", default-features = false }
-#tcmalloc = { version = "*" }
-#jemallocator = { version = "0.3" }
-
-[dependencies.sbp]
-git = "https://github.com/swift-nav/libsbp.git"
-branch = "silverjam/consistent-heap-size"
-features = ["json", "swiftnav", "link"]
-
-[dependencies.libsettings]
-git = "https://github.com/swift-nav/libsettings.git"
-branch = "silverjam/consistent-heap-size"
 
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 serialport = "4.0.1"
@@ -77,6 +68,7 @@ harness = false
 name = "fileio"
 path = "src/bin/fileio.rs"
 bench = false
+required-features = ["env_logger"]
 
 [[bin]]
 name = "fft_monitor"
@@ -88,11 +80,9 @@ required-features = ["fft"]
 name = "headless-console"
 path = "src/bin/headless-console.rs"
 bench = false
-required-features = ["headless-console"]
 
 [features]
 default = ["pyo3"]
 benches = []
 tests = []
 fft = ["serde-pickle"]
-headless-console = ["snap"]

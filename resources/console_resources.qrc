@@ -18,6 +18,11 @@
     <file>Constants/qmldir</file>
     <file>Constants/utils.js</file>
     <file>AdvancedTab.qml</file>
+    <file>AdvancedTabComponents/AdvancedSystemMonitorTab.qml</file>
+    <file>AdvancedTabComponents/ThreadStateTable.qml</file>
+    <file>AdvancedTabComponents/DeviceMonitor.qml</file>
+    <file>AdvancedTabComponents/MetricsMonitor.qml</file>
+    <file>AdvancedTabComponents/ObservationConnectionMonitor.qml</file>
     <file>AdvancedTabComponents/AdvancedInsTab.qml</file>
     <file>AdvancedTabComponents/FusionStatusFlags.qml</file>
     <file>AdvancedTabComponents/AdvancedMagnetometerTab.qml</file>
@@ -38,8 +43,8 @@
     <file>SolutionTabComponents/SolutionVelocityTab.qml</file>
     <file>TrackingTab.qml</file>
     <file>TrackingTabComponents/TrackingSignalsTab.qml</file>
+    <file>TrackingTabComponents/TrackingSkyPlotTab.qml</file>
     <file>ObservationTab.qml</file>
-    <file>ObservationTabComponents/observation_tab.js</file>
     <file>ObservationTabComponents/ObservationTable.qml</file>
     <file>MainDrawerComponents/LicensesPopup.qml</file>
     <file>UpdateTab.qml</file>
@@ -74,5 +79,8 @@
     <file>images/fontawesome/file-export.svg</file>
     <file>images/fontawesome/file-import.svg</file>
     <file>images/fontawesome/exclamation-triangle.svg</file>
+    <file>TableComponents/SortableColumnHeading.qml</file>
+    <file>TableComponents/TableCellDelegate.qml</file>
+    <file>BaseComponents/SwiftGroupBox.qml</file>
 </qresource>
 </RCC>

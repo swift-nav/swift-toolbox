@@ -279,6 +279,10 @@ impl SharedState {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         shared_data.dgnss_enabled = dgnss_solution_mode != "No DGNSS";
     }
+    pub fn set_reset_device(&self, reset_device: bool) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.reset_device = reset_device;
+    }
 }
 
 impl Deref for SharedState {
@@ -321,6 +325,7 @@ pub struct SharedStateInner {
     pub(crate) console_version: String,
     pub(crate) firmware_version: Option<String>,
     pub(crate) dgnss_enabled: bool,
+    pub(crate) reset_device: bool,
 }
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
@@ -344,6 +349,7 @@ impl SharedStateInner {
             console_version: String::from(include_str!("version.txt").trim()),
             firmware_version: None,
             dgnss_enabled: false,
+            reset_device: false,
         }
     }
 }
@@ -417,12 +423,14 @@ impl TrackingTabState {
 #[derive(Debug)]
 pub struct TrackingSignalsTabState {
     pub check_visibility: Vec<String>,
+    pub tracked_sv_labels: Vec<String>,
 }
 
 impl TrackingSignalsTabState {
     fn new() -> TrackingSignalsTabState {
         TrackingSignalsTabState {
             check_visibility: vec![],
+            tracked_sv_labels: vec![],
         }
     }
 }

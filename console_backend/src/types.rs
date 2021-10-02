@@ -21,22 +21,20 @@ use anyhow::Context;
 use chrono::{DateTime, Utc};
 use crossbeam::channel;
 use ordered_float::OrderedFloat;
-use sbp::codec::dencode::{FramedWrite, IterSinkExt};
-use sbp::codec::sbp::SbpEncoder;
 use sbp::link::Event;
-use sbp::messages::piksi::{MsgSpecan, MsgSpecanDep};
 use sbp::messages::{
     navigation::{
-        MsgBaselineNED, MsgBaselineNEDDepA, MsgDops, MsgDopsDepA, MsgGPSTime, MsgGPSTimeDepA,
-        MsgPosLLH, MsgPosLLHDepA, MsgVelNED, MsgVelNEDDepA,
+        MsgBaselineNed, MsgBaselineNedDepA, MsgDops, MsgDopsDepA, MsgGpsTime, MsgGpsTimeDepA,
+        MsgPosLlh, MsgPosLlhDepA, MsgVelNed, MsgVelNedDepA,
     },
     observation::{
         MsgObs, MsgObsDepB, MsgObsDepC, MsgOsr, PackedObsContent, PackedObsContentDepB,
         PackedObsContentDepC, PackedOsrContent,
     },
-    SBP,
+    piksi::{Latency, MsgSpecan, MsgSpecanDep, MsgUartState, MsgUartStateDepa, Period},
+    ConcreteMessage,
 };
-use sbp::messages::{ConcreteMessage, SBPMessage};
+use sbp::{Sbp, SbpEncoder, SbpMessage};
 use serialport::FlowControl as SPFlowControl;
 use std::io;
 use std::{
@@ -56,9 +54,9 @@ pub type Error = anyhow::Error;
 pub type Result<T> = anyhow::Result<T>;
 pub type UtcDateTime = DateTime<Utc>;
 
-/// Sends SBP messages to the connected device
+/// Sends Sbp messages to the connected device
 pub struct MsgSender {
-    inner: Arc<Mutex<FramedWrite<Box<dyn io::Write + Send>, SbpEncoder>>>,
+    inner: Arc<Mutex<SbpEncoder<Box<dyn io::Write + Send>>>>,
 }
 
 impl MsgSender {
@@ -71,19 +69,16 @@ impl MsgSender {
         W: io::Write + Send + 'static,
     {
         Self {
-            inner: Arc::new(Mutex::new(FramedWrite::new(
-                Box::new(wtr),
-                SbpEncoder::new(),
-            ))),
+            inner: Arc::new(Mutex::new(SbpEncoder::new(Box::new(wtr)))),
         }
     }
 
-    pub fn send(&self, mut msg: SBP) -> Result<()> {
-        if msg.get_sender_id().is_none() {
+    pub fn send(&self, mut msg: Sbp) -> Result<()> {
+        if msg.sender_id().is_none() {
             msg.set_sender_id(Self::SENDER_ID);
         }
         let mut framed = self.inner.lock().expect(Self::LOCK_FAILURE);
-        framed.send(msg).context("while sending a message")?;
+        framed.send(&msg).context("while sending a message")?;
         Ok(())
     }
 }
@@ -194,6 +189,48 @@ impl Clone for ArcBool {
 pub enum RealtimeDelay {
     On,
     Off,
+}
+
+// Advanced System Monitor Types.
+// Struct with shared fields for various UartState Message types.
+pub struct UartStateFields {
+    pub latency: Latency,
+    pub obs_period: Option<Period>,
+}
+
+// Enum wrapping around various UartState Message types.
+#[derive(Debug, Clone)]
+#[allow(clippy::upper_case_acronyms)]
+pub enum UartState {
+    MsgUartState(MsgUartState),
+    MsgUartStateDepa(MsgUartStateDepa),
+}
+
+impl UartState {
+    pub fn fields(&self) -> UartStateFields {
+        let (latency, obs_period) = match self {
+            UartState::MsgUartState(msg) => (msg.latency.clone(), Some(msg.obs_period.clone())),
+
+            UartState::MsgUartStateDepa(msg) => (msg.latency.clone(), None),
+        };
+        UartStateFields {
+            latency,
+            obs_period,
+        }
+    }
+}
+
+impl Event for UartState {
+    const MESSAGE_TYPES: &'static [u16] =
+        &[MsgUartState::MESSAGE_TYPE, MsgUartStateDepa::MESSAGE_TYPE];
+
+    fn from_sbp(msg: Sbp) -> Self {
+        match msg {
+            Sbp::MsgUartState(m) => UartState::MsgUartState(m),
+            Sbp::MsgUartStateDepa(m) => UartState::MsgUartStateDepa(m),
+            _ => unreachable!(),
+        }
+    }
 }
 
 // Enum wrapping around various Vel NED Message types.
@@ -754,12 +791,12 @@ impl Event for ObservationMsg {
         MsgOsr::MESSAGE_TYPE,
     ];
 
-    fn from_sbp(msg: SBP) -> Self {
+    fn from_sbp(msg: Sbp) -> Self {
         match msg {
-            SBP::MsgObs(m) => ObservationMsg::MsgObs(m),
-            SBP::MsgObsDepB(m) => ObservationMsg::MsgObsDepB(m),
-            SBP::MsgObsDepC(m) => ObservationMsg::MsgObsDepC(m),
-            SBP::MsgOsr(m) => ObservationMsg::MsgOsr(m),
+            Sbp::MsgObs(m) => ObservationMsg::MsgObs(m),
+            Sbp::MsgObsDepB(m) => ObservationMsg::MsgObsDepB(m),
+            Sbp::MsgObsDepC(m) => ObservationMsg::MsgObsDepC(m),
+            Sbp::MsgOsr(m) => ObservationMsg::MsgOsr(m),
             _ => unreachable!(),
         }
     }
@@ -817,9 +854,9 @@ impl Observations {
                     true,
                     signal_code,
                     sat_,
-                    obs.P as f64 / divisor,
-                    obs.L.i,
-                    obs.L.f,
+                    obs.p as f64 / divisor,
+                    obs.l.i,
+                    obs.l.f,
                     obs.cn0 as f64,
                     0_f64, // obs.D
                     obs.lock,
@@ -836,9 +873,9 @@ impl Observations {
                     true,
                     signal_code,
                     sat_,
-                    obs.P as f64 / divisor,
-                    obs.L.i,
-                    obs.L.f,
+                    obs.p as f64 / divisor,
+                    obs.l.i,
+                    obs.l.f,
                     obs.cn0 as f64,
                     0_f64, // obs.D
                     obs.lock,
@@ -849,11 +886,11 @@ impl Observations {
                 false,
                 SignalCodes::from(obs.sid.code),
                 obs.sid.sat as i16,
-                obs.P as f64 / divisor,
-                obs.L.i,
-                obs.L.f,
+                obs.p as f64 / divisor,
+                obs.l.i,
+                obs.l.f,
                 obs.cn0 as f64,
-                obs.D.i as f64 + obs.D.f as f64 / ((1 << 8) as f64),
+                obs.d.i as f64 + obs.d.f as f64 / ((1 << 8) as f64),
                 obs.lock as u16,
                 obs.flags,
             ),
@@ -861,9 +898,9 @@ impl Observations {
                 false,
                 SignalCodes::from(obs.sid.code),
                 obs.sid.sat as i16,
-                obs.P as f64 / divisor,
-                obs.L.i,
-                obs.L.f,
+                obs.p as f64 / divisor,
+                obs.l.i,
+                obs.l.f,
                 0_f64, // cn0
                 0_f64, // obs.D
                 obs.lock as u16,
@@ -989,14 +1026,14 @@ pub struct PosLLHFields {
 #[derive(Debug, Clone)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum PosLLH {
-    MsgPosLLH(MsgPosLLH),
-    MsgPosLLHDepA(MsgPosLLHDepA),
+    MsgPosLlh(MsgPosLlh),
+    MsgPosLlhDepA(MsgPosLlhDepA),
 }
 
 impl PosLLH {
     pub fn fields(&self) -> PosLLHFields {
         match self {
-            PosLLH::MsgPosLLH(MsgPosLLH {
+            PosLLH::MsgPosLlh(MsgPosLlh {
                 flags,
                 h_accuracy,
                 v_accuracy,
@@ -1007,7 +1044,7 @@ impl PosLLH {
                 n_sats,
                 ..
             })
-            | PosLLH::MsgPosLLHDepA(MsgPosLLHDepA {
+            | PosLLH::MsgPosLlhDepA(MsgPosLlhDepA {
                 flags,
                 h_accuracy,
                 v_accuracy,
@@ -1031,8 +1068,8 @@ impl PosLLH {
     }
     pub fn mode(&self) -> u8 {
         match self {
-            PosLLH::MsgPosLLH(msg) => msg.flags & 0x7,
-            PosLLH::MsgPosLLHDepA(msg) => {
+            PosLLH::MsgPosLlh(msg) => msg.flags & 0x7,
+            PosLLH::MsgPosLlhDepA(msg) => {
                 let mode = msg.flags & 0x7;
                 match mode {
                     0 => 1,
@@ -1046,12 +1083,12 @@ impl PosLLH {
 }
 
 impl Event for PosLLH {
-    const MESSAGE_TYPES: &'static [u16] = &[MsgPosLLH::MESSAGE_TYPE, MsgPosLLHDepA::MESSAGE_TYPE];
+    const MESSAGE_TYPES: &'static [u16] = &[MsgPosLlh::MESSAGE_TYPE, MsgPosLlhDepA::MESSAGE_TYPE];
 
-    fn from_sbp(msg: SBP) -> Self {
+    fn from_sbp(msg: Sbp) -> Self {
         match msg {
-            SBP::MsgPosLLH(m) => PosLLH::MsgPosLLH(m),
-            SBP::MsgPosLLHDepA(m) => PosLLH::MsgPosLLHDepA(m),
+            Sbp::MsgPosLlh(m) => PosLLH::MsgPosLlh(m),
+            Sbp::MsgPosLlhDepA(m) => PosLLH::MsgPosLlhDepA(m),
             _ => unreachable!(),
         }
     }
@@ -1097,10 +1134,10 @@ impl Dops {
 impl Event for Dops {
     const MESSAGE_TYPES: &'static [u16] = &[MsgDops::MESSAGE_TYPE, MsgDopsDepA::MESSAGE_TYPE];
 
-    fn from_sbp(msg: SBP) -> Self {
+    fn from_sbp(msg: Sbp) -> Self {
         match msg {
-            SBP::MsgDops(m) => Dops::MsgDops(m),
-            SBP::MsgDopsDepA(m) => Dops::MsgDopsDepA(m),
+            Sbp::MsgDops(m) => Dops::MsgDops(m),
+            Sbp::MsgDopsDepA(m) => Dops::MsgDopsDepA(m),
             _ => unreachable!(),
         }
     }
@@ -1115,8 +1152,8 @@ pub struct GpsTimeFields {
 // Enum wrapping around various GpsTime Message types.
 #[derive(Debug, Clone)]
 pub enum GpsTime {
-    MsgGpsTime(MsgGPSTime),
-    MsgGpsTimeDepA(MsgGPSTimeDepA),
+    MsgGpsTime(MsgGpsTime),
+    MsgGpsTimeDepA(MsgGpsTimeDepA),
 }
 
 impl GpsTime {
@@ -1134,12 +1171,12 @@ impl GpsTime {
 }
 
 impl Event for GpsTime {
-    const MESSAGE_TYPES: &'static [u16] = &[MsgGPSTime::MESSAGE_TYPE, MsgGPSTimeDepA::MESSAGE_TYPE];
+    const MESSAGE_TYPES: &'static [u16] = &[MsgGpsTime::MESSAGE_TYPE, MsgGpsTimeDepA::MESSAGE_TYPE];
 
-    fn from_sbp(msg: SBP) -> Self {
+    fn from_sbp(msg: Sbp) -> Self {
         match msg {
-            SBP::MsgGPSTime(m) => GpsTime::MsgGpsTime(m),
-            SBP::MsgGPSTimeDepA(m) => GpsTime::MsgGpsTimeDepA(m),
+            Sbp::MsgGpsTime(m) => GpsTime::MsgGpsTime(m),
+            Sbp::MsgGpsTimeDepA(m) => GpsTime::MsgGpsTimeDepA(m),
             _ => unreachable!(),
         }
     }
@@ -1218,10 +1255,10 @@ impl Specan {
 impl Event for Specan {
     const MESSAGE_TYPES: &'static [u16] = &[MsgSpecan::MESSAGE_TYPE, MsgSpecanDep::MESSAGE_TYPE];
 
-    fn from_sbp(msg: SBP) -> Self {
+    fn from_sbp(msg: Sbp) -> Self {
         match msg {
-            SBP::MsgSpecan(m) => Specan::MsgSpecan(m),
-            SBP::MsgSpecanDep(m) => Specan::MsgSpecanDep(m),
+            Sbp::MsgSpecan(m) => Specan::MsgSpecan(m),
+            Sbp::MsgSpecanDep(m) => Specan::MsgSpecanDep(m),
             _ => unreachable!(),
         }
     }
@@ -1242,15 +1279,15 @@ pub struct VelNEDFields {
 #[derive(Debug, Clone)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum VelNED {
-    MsgVelNED(MsgVelNED),
-    MsgVelNEDDepA(MsgVelNEDDepA),
+    MsgVelNed(MsgVelNed),
+    MsgVelNedDepA(MsgVelNedDepA),
 }
 
 impl VelNED {
     pub fn fields(self) -> VelNEDFields {
         let (flags, tow, n, e, d, n_sats) = match self {
-            VelNED::MsgVelNED(msg) => (msg.flags, msg.tow as f64, msg.n, msg.e, msg.d, msg.n_sats),
-            VelNED::MsgVelNEDDepA(msg) => (1, msg.tow as f64, msg.n, msg.e, msg.d, msg.n_sats),
+            VelNED::MsgVelNed(msg) => (msg.flags, msg.tow as f64, msg.n, msg.e, msg.d, msg.n_sats),
+            VelNED::MsgVelNedDepA(msg) => (1, msg.tow as f64, msg.n, msg.e, msg.d, msg.n_sats),
         };
         VelNEDFields {
             flags,
@@ -1264,12 +1301,12 @@ impl VelNED {
 }
 
 impl Event for VelNED {
-    const MESSAGE_TYPES: &'static [u16] = &[MsgVelNED::MESSAGE_TYPE, MsgVelNEDDepA::MESSAGE_TYPE];
+    const MESSAGE_TYPES: &'static [u16] = &[MsgVelNed::MESSAGE_TYPE, MsgVelNedDepA::MESSAGE_TYPE];
 
-    fn from_sbp(msg: SBP) -> Self {
+    fn from_sbp(msg: Sbp) -> Self {
         match msg {
-            SBP::MsgVelNED(m) => VelNED::MsgVelNED(m),
-            SBP::MsgVelNEDDepA(m) => VelNED::MsgVelNEDDepA(m),
+            Sbp::MsgVelNed(m) => VelNED::MsgVelNed(m),
+            Sbp::MsgVelNedDepA(m) => VelNED::MsgVelNedDepA(m),
             _ => unreachable!(),
         }
     }
@@ -1293,14 +1330,14 @@ pub struct BaselineNEDFields {
 #[derive(Debug, Clone)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum BaselineNED {
-    MsgBaselineNED(MsgBaselineNED),
-    MsgBaselineNEDDepA(MsgBaselineNEDDepA),
+    MsgBaselineNed(MsgBaselineNed),
+    MsgBaselineNedDepA(MsgBaselineNedDepA),
 }
 
 impl BaselineNED {
     pub fn fields(&self) -> BaselineNEDFields {
         let (flags, tow, n, e, d, h_accuracy, v_accuracy, n_sats) = match self {
-            BaselineNED::MsgBaselineNED(msg) => (
+            BaselineNED::MsgBaselineNed(msg) => (
                 msg.flags,
                 msg.tow as f64,
                 msg.n,
@@ -1310,7 +1347,7 @@ impl BaselineNED {
                 msg.v_accuracy,
                 msg.n_sats,
             ),
-            BaselineNED::MsgBaselineNEDDepA(msg) => (
+            BaselineNED::MsgBaselineNedDepA(msg) => (
                 1,
                 msg.tow as f64,
                 msg.n,
@@ -1334,22 +1371,22 @@ impl BaselineNED {
     }
     pub fn mode(&self) -> u8 {
         match self {
-            BaselineNED::MsgBaselineNED(MsgBaselineNED { flags, .. })
-            | BaselineNED::MsgBaselineNEDDepA(MsgBaselineNEDDepA { flags, .. }) => *flags & 0x7,
+            BaselineNED::MsgBaselineNed(MsgBaselineNed { flags, .. })
+            | BaselineNED::MsgBaselineNedDepA(MsgBaselineNedDepA { flags, .. }) => *flags & 0x7,
         }
     }
 }
 
 impl Event for BaselineNED {
     const MESSAGE_TYPES: &'static [u16] = &[
-        MsgBaselineNED::MESSAGE_TYPE,
-        MsgBaselineNEDDepA::MESSAGE_TYPE,
+        MsgBaselineNed::MESSAGE_TYPE,
+        MsgBaselineNedDepA::MESSAGE_TYPE,
     ];
 
-    fn from_sbp(msg: SBP) -> Self {
+    fn from_sbp(msg: Sbp) -> Self {
         match msg {
-            SBP::MsgBaselineNED(m) => BaselineNED::MsgBaselineNED(m),
-            SBP::MsgBaselineNEDDepA(m) => BaselineNED::MsgBaselineNEDDepA(m),
+            Sbp::MsgBaselineNed(m) => BaselineNED::MsgBaselineNed(m),
+            Sbp::MsgBaselineNedDepA(m) => BaselineNED::MsgBaselineNedDepA(m),
             _ => unreachable!(),
         }
     }

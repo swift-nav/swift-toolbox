@@ -206,7 +206,7 @@ python-versions = "*"
 
 [[package]]
 name = "nuitka"
-version = "0.6.12.4"
+version = "0.6.16.4"
 description = "Python compiler with full language support and CPython compatibility"
 category = "dev"
 optional = false
@@ -478,7 +478,7 @@ python-versions = "*"
 
 [[package]]
 name = "types-requests"
-version = "2.25.7"
+version = "2.25.8"
 description = "Typing stubs for requests"
 category = "dev"
 optional = false
@@ -503,7 +503,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.10"
-content-hash = "68af0c9c587e901eba048ab813720be58ca271dd320582070f430b69d6fa8ede"
+content-hash = "ddbb4e27a26b7d5ebbb7df9e5578d59ccdae8e367dcfef34d3336a92842c45d6"
 
 [metadata.files]
 altgraph = [
@@ -612,7 +612,7 @@ mypy-extensions = [
     {file = "mypy_extensions-0.4.3.tar.gz", hash = "sha256:2d82818f5bb3e369420cb3c4060a7970edba416647068eb4c5343488a6c604a8"},
 ]
 nuitka = [
-    {file = "Nuitka-0.6.12.4.tar.gz", hash = "sha256:16e93238cdddc93c2362b00d9ab17c01a095bae3f3b58baf63a31ae7b7f4e61d"},
+    {file = "Nuitka-0.6.16.4.tar.gz", hash = "sha256:986d8c46a3db9f27e0d28817413715bdd9dfb6ad97770ba0d1b51b4b0a028538"},
 ]
 packaging = [
     {file = "packaging-20.9-py2.py3-none-any.whl", hash = "sha256:67714da7f7bc052e064859c05c595155bd1ee9f69f76557e21f051443c20947a"},
@@ -799,8 +799,8 @@ toposort = [
     {file = "toposort-1.6.tar.gz", hash = "sha256:a7428f56ef844f5055bb9e9e44b343983773ae6dce0fe5b101e08e27ffbd50ac"},
 ]
 types-requests = [
-    {file = "types-requests-2.25.7.tar.gz", hash = "sha256:4b279513a34b789bef75ce05bee5eb4ce934a892318388400f7511fbcdf56f87"},
-    {file = "types_requests-2.25.7-py3-none-any.whl", hash = "sha256:24bbe4682373ce0b1927f432b30ba1dcf46b66512fb6e848e72998c79797d040"},
+    {file = "types-requests-2.25.8.tar.gz", hash = "sha256:225ac2e86549b6ef3a8a44bf955f80b4955855704a15d2883d8445c8df637242"},
+    {file = "types_requests-2.25.8-py3-none-any.whl", hash = "sha256:26e90866bcd773d76b316de7e6bd6e24641f9e1653cf27241c533886600f6824"},
 ]
 typing-extensions = [
     {file = "typing_extensions-3.10.0.2-py2-none-any.whl", hash = "sha256:d8226d10bc02a29bcc81df19a26e56a9647f8b0a6d4a83924139f4a8b01f17b7"},

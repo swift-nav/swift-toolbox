@@ -1,168 +1,123 @@
 import "../Constants"
-import "./observation_tab.js" as ObsTabJS
-import Qt.labs.qmlmodels 1.0
-import QtQuick 2.14
+import "../TableComponents"
+import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
-Rectangle {
-    property alias name: innerText.text
-    property alias model: innerTable.model
-    property variant week: 0
-    property variant tow: 0
-    property variant columnWidths: [1, 1, 1, 1, 1, 1, 1, 1]
+ColumnLayout {
+    id: observationTable
 
-    border.color: "#000000"
-    border.width: 1
+    property alias remote: observationTableModel.remote
+    property bool populated: observationTableModel ? observationTableModel.row_count > 0 : false
+    property font tableFont: Qt.font({
+        "family": Constants.genericTable.fontFamily,
+        "pointSize": Constants.largePointSize
+    })
 
-    Rectangle {
-        id: innerTextArea
-
-        height: Constants.observationTab.titleAreaHight
-
-        Text {
-            id: innerText
-
-            padding: 5
-            font.pointSize: Constants.observationTab.titlePointSize
-        }
-
+    function update() {
+        observationTableModel.update();
     }
 
-    Rectangle {
+    spacing: 0
+
+    ObservationTableModel {
+        id: observationTableModel
+
+        onDataPopulated: {
+            var widthLeft = observationTable.width;
+            var idealColumnWidths = [];
+            for (var col = 0; col < headerRepeater.count; col++) {
+                var idealColumnWidth = Math.min(500, observationTableModel.columnWidth(col, tableFont, headerRepeater.itemAt(col).font));
+                idealColumnWidths.push(idealColumnWidth);
+                widthLeft -= idealColumnWidths[col];
+            }
+            var extraWidth = widthLeft / headerRepeater.count;
+            for (var col = 0; col < headerRepeater.count; col++) {
+                headerRepeater.itemAt(col).initialWidth = idealColumnWidths[col] + extraWidth;
+            }
+            innerTable.forceLayout();
+        }
+    }
+
+    RowLayout {
         id: innerStats
 
-        anchors.top: innerTextArea.bottom
-        border.width: 5
-        height: 25
+        property int textPadding: 3
 
-        RowLayout {
-            Text {
-                id: weekLabel
+        spacing: 3
 
-                text: "Week:"
-                ToolTip.text: "GPS Week Number (since 1980)"
-            }
+        Text {
+            id: weekLabel
 
-            Text {
-                id: weekValue
+            text: "Week:"
+            padding: parent.textPadding
+            ToolTip.text: "GPS Week Number (since 1980)"
+        }
 
-                text: week
-                font: Constants.monoSpaceFont
-            }
+        Text {
+            id: weekValue
 
-            Text {
-                id: towLabel
+            text: observationTableModel ? observationTableModel.week : ""
+            padding: parent.textPadding
+        }
 
-                text: "TOW:"
-                ToolTip.text: "GPS milliseconds in week"
-            }
+        Text {
+            id: towLabel
 
-            Text {
-                id: towValue
+            text: "TOW:"
+            padding: parent.textPadding
+            ToolTip.text: "GPS milliseconds in week"
+        }
 
-                text: ObsTabJS.padFloat(tow, 2)
-                font: Constants.monoSpaceFont
-            }
+        Text {
+            id: towValue
 
-            Text {
-                id: totalLabel
+            text: observationTableModel ? observationTableModel.padFloat(observationTableModel.tow, 2) : ""
+            padding: parent.textPadding
+        }
 
-                text: "Total:"
-                ToolTip.text: "Total observation count"
-            }
+        Text {
+            id: totalLabel
 
-            Text {
-                id: totalValue
+            text: "Total:"
+            padding: parent.textPadding
+            ToolTip.text: "Total observation count"
+        }
 
-                text: innerTable.model.rows.length
-                font: Constants.monoSpaceFont
-            }
+        Text {
+            id: totalValue
 
+            text: observationTableModel ? observationTableModel.row_count : ""
+            padding: parent.textPadding
         }
 
     }
 
-    TableView {
-        // force comment inside
-
-        id: columnHeaderTable
-
-        interactive: false
-        anchors.top: innerStats.bottom
-        height: 20
-        width: parent.width
-        columnSpacing: 1
-        rowSpacing: 1
+    Item {
+        Layout.fillWidth: true
+        implicitHeight: header.implicitHeight
         clip: true
-        columnWidthProvider: function(column) {
-            return columnWidths[column];
-        }
 
-        model: TableModel {
-            rows: [{
-            }] // empty row triggers the display methods
+        Row {
+            id: header
 
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.obsColNames[modelIndex.column];
+            width: innerTable.contentWidth
+            x: -innerTable.contentX
+            z: 1
+            spacing: innerTable.columnSpacing
+
+            Repeater {
+                id: headerRepeater
+
+                model: observationTableModel ? observationTableModel.columnCount() : 0
+
+                SortableColumnHeading {
+                    initialWidth: Math.min(500, observationTableModel.columnWidth(index, tableFont, font))
+                    height: Constants.genericTable.cellHeight
+                    table: innerTable
                 }
-            }
 
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.obsColNames[modelIndex.column];
-                }
-            }
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.obsColNames[modelIndex.column];
-                }
-            }
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.obsColNames[modelIndex.column];
-                }
-            }
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.obsColNames[modelIndex.column];
-                }
-            }
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.obsColNames[modelIndex.column];
-                }
-            }
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.obsColNames[modelIndex.column];
-                }
-            }
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.obsColNames[modelIndex.column];
-                }
-            }
-
-        }
-
-        delegate: Rectangle {
-            implicitHeight: 20
-            border.width: 1
-
-            Text {
-                text: display
-                anchors.centerIn: parent
-                font.pointSize: Constants.mediumPointSize
-                leftPadding: 2
             }
 
         }
@@ -172,245 +127,45 @@ Rectangle {
     TableView {
         id: innerTable
 
-        height: parent.height - innerStats.height - innerText.height - columnHeaderTable.height - 6
-        anchors.top: columnHeaderTable.bottom
-        columnSpacing: columnHeaderTable.columnSpacing
-        rowSpacing: columnHeaderTable.columnSpacing
+        width: Math.min(header.width + 1, parent.width)
+        Layout.fillHeight: true
+        columnSpacing: -1
+        rowSpacing: -1
         clip: true
-        width: parent.width
+        onWidthChanged: {
+            // Don't ask why this is needed. It's a hack.
+            // If you want to find out, just comment out this code.
+            if (width === 0) {
+                width = Qt.binding(function() {
+                    return Math.min(header.width + 1, observationTable.width);
+                });
+                forceLayout();
+            }
+        }
+        boundsBehavior: Flickable.StopAtBounds
         columnWidthProvider: function(column) {
-            return columnWidths[column];
+            return headerRepeater.itemAt(column).width;
+        }
+        model: observationTableModel
+
+        delegate: TableCellDelegate {
+            implicitHeight: Constants.genericTable.cellHeight
+            font: tableFont
         }
 
-        model: TableModel {
-            rows: Constants.debugMode ? ObsTabJS.obsSampleData : []
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.getObsCell(innerTable.model, modelIndex);
-                }
-            }
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.getObsCell(innerTable.model, modelIndex);
-                }
-            }
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.getObsCell(innerTable.model, modelIndex);
-                }
-            }
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.getObsCell(innerTable.model, modelIndex);
-                }
-            }
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.getObsCell(innerTable.model, modelIndex);
-                }
-            }
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.getObsCell(innerTable.model, modelIndex);
-                }
-            }
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.getObsCell(innerTable.model, modelIndex);
-                }
-            }
-
-            TableModelColumn {
-                display: function(modelIndex) {
-                    return ObsTabJS.getObsCell(innerTable.model, modelIndex);
-                }
-            }
-
+        ScrollBar.horizontal: ScrollBar {
         }
 
-        delegate: DelegateChooser {
-            DelegateChoice {
-                column: 0 // prn
-
-                delegate: Rectangle {
-                    implicitHeight: 20
-                    border.width: 1
-
-                    Text {
-                        text: display
-                        font.family: Constants.monoSpaceFont
-                        font.pointSize: Constants.mediumPointSize
-                        anchors.centerIn: parent
-                        leftPadding: 2
-                    }
-
-                }
-
-            }
-
-            DelegateChoice {
-                column: 1 // pseudoRange
-
-                delegate: Rectangle {
-                    implicitHeight: 20
-                    border.width: 1
-
-                    Text {
-                        text: ObsTabJS.padFloat(display, 11)
-                        font.family: Constants.monoSpaceFont
-                        font.pointSize: Constants.mediumPointSize
-                        anchors.centerIn: parent
-                        leftPadding: 2
-                    }
-
-                }
-
-            }
-
-            DelegateChoice {
-                column: 2 // carrierPhase
-
-                delegate: Rectangle {
-                    implicitHeight: 20
-                    border.width: 1
-
-                    Text {
-                        text: ObsTabJS.padFloat(display, 13)
-                        font.family: Constants.monoSpaceFont
-                        font.pointSize: Constants.mediumPointSize
-                        anchors.centerIn: parent
-                        leftPadding: 2
-                    }
-
-                }
-
-            }
-
-            DelegateChoice {
-                column: 3 // cn0
-
-                delegate: Rectangle {
-                    implicitHeight: 20
-                    border.width: 1
-
-                    Text {
-                        text: ObsTabJS.padFloat(display, 9)
-                        font.family: Constants.monoSpaceFont
-                        font.pointSize: Constants.mediumPointSize
-                        anchors.centerIn: parent
-                        leftPadding: 2
-                    }
-
-                }
-
-            }
-
-            DelegateChoice {
-                column: 4 // measuredDoppler
-
-                delegate: Rectangle {
-                    implicitHeight: 20
-                    border.width: 1
-
-                    Text {
-                        text: ObsTabJS.padFloat(display, 9)
-                        font.family: Constants.monoSpaceFont
-                        font.pointSize: Constants.mediumPointSize
-                        anchors.centerIn: parent
-                        leftPadding: 2
-                    }
-
-                }
-
-            }
-
-            DelegateChoice {
-                column: 5 // computedDoppler
-
-                delegate: Rectangle {
-                    implicitHeight: 20
-                    border.width: 1
-
-                    Text {
-                        text: ObsTabJS.padFloat(display, 9)
-                        font.family: Constants.monoSpaceFont
-                        font.pointSize: Constants.mediumPointSize
-                        anchors.centerIn: parent
-                        leftPadding: 2
-                    }
-
-                }
-
-            }
-
-            DelegateChoice {
-                column: 6 // lock
-
-                delegate: Rectangle {
-                    implicitHeight: 20
-                    border.width: 1
-
-                    Text {
-                        text: display
-                        font.family: Constants.monoSpaceFont
-                        font.pointSize: Constants.mediumPointSize
-                        anchors.centerIn: parent
-                        leftPadding: 2
-                    }
-
-                }
-
-            }
-
-            DelegateChoice {
-                column: 7 // flags
-
-                delegate: Rectangle {
-                    implicitHeight: 20
-                    border.width: 1
-
-                    Text {
-                        text: ObsTabJS.showFlags(display)
-                        font.family: Constants.monoSpaceFont
-                        font.pointSize: Constants.mediumPointSize
-                        leftPadding: 2
-                    }
-
-                }
-
-            }
-
+        ScrollBar.vertical: ScrollBar {
         }
 
     }
 
-    Timer {
-        interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
-        running: true
-        repeat: true
-        onTriggered: {
-            if (!columnHeaderTable.visible)
-                return ;
-
-            var columnCount = ObsTabJS.obsColNames.length;
-            var equalWidth = parent.width / columnCount;
-            var newColumnWidths = [];
-            for (var i = 0; i < columnCount; i++) {
-                newColumnWidths.push(equalWidth);
-            }
-            if (newColumnWidths[0] != columnWidths[0]) {
-                columnWidths = newColumnWidths;
-                innerTable.forceLayout();
-                columnHeaderTable.forceLayout();
-            }
-        }
+    Rectangle {
+        height: 1
+        width: innerTable.width - 1
+        color: "transparent"
+        border.color: Constants.genericTable.borderColor
     }
 
 }

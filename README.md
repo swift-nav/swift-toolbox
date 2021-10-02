@@ -37,7 +37,11 @@ apt-get install cmake libclang-dev capnproto
 
 Install development dependencies (On Windows make sure you're using Adminstrator shell).
 
+# For the below commands, we do not want to be in the console_pp conda environment.
+# Bad things will happen if you are.
+
 ```
+conda deactivate
 cargo make pip-install-dev
 git lfs pull
 ```

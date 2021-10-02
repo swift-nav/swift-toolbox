@@ -8,19 +8,19 @@ use sbp::{
         imu::{MsgImuAux, MsgImuRaw},
         logging::MsgLog,
         mag::MsgMagRaw,
-        navigation::{MsgAgeCorrections, MsgPosLLHCov, MsgUtcTime, MsgVelNED},
-        observation::MsgObsDepA,
+        navigation::{MsgAgeCorrections, MsgPosLlhCov, MsgUtcTime, MsgVelNed},
+        observation::{MsgObsDepA, MsgSvAzEl},
         orientation::{MsgAngularRate, MsgBaselineHeading, MsgOrientEuler},
-        piksi::MsgCommandResp,
-        system::{MsgHeartbeat, MsgInsStatus, MsgInsUpdates},
+        piksi::{MsgCommandResp, MsgDeviceMonitor, MsgThreadState},
+        system::{
+            MsgCsacTelemetry, MsgCsacTelemetryLabels, MsgHeartbeat, MsgInsStatus, MsgInsUpdates,
+        },
         tracking::{MsgMeasurementState, MsgTrackingState},
-        SBPMessage,
     },
-    sbp_tools::{ControlFlow, SBPTools},
-    serialize::SbpSerialize,
+    sbp_iter_ext::{ControlFlow, SbpIterExt},
+    SbpMessage,
 };
 
-use crate::connection::Connection;
 use crate::constants::PAUSE_LOOP_SLEEP_DURATION_MS;
 use crate::errors::UNABLE_TO_CLONE_UPDATE_SHARED;
 use crate::log_panel::handle_log_msg;
@@ -32,6 +32,7 @@ use crate::types::{
 use crate::update_tab;
 use crate::utils::{close_frontend, refresh_navbar};
 use crate::Tabs;
+use crate::{connection::Connection, types::UartState};
 
 pub fn process_messages<S>(
     conn: Connection,
@@ -55,7 +56,7 @@ where
             .handle_errors(move |e| {
                 debug!("{}", e);
                 match e {
-                    sbp::Error::IoError(err) => {
+                    sbp::DeserializeError::IoError(err) => {
                         if (*err).kind() == ErrorKind::TimedOut {
                             state.set_running(false, client.clone());
                         }
@@ -100,6 +101,27 @@ where
         tabs.update.lock().unwrap().handle_command_resp(msg);
     });
 
+    link.register(|tabs: &Tabs<S>, msg: MsgCsacTelemetry| {
+        tabs.advanced_system_monitor
+            .lock()
+            .unwrap()
+            .handle_csac_telemetry(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: MsgCsacTelemetryLabels| {
+        tabs.advanced_system_monitor
+            .lock()
+            .unwrap()
+            .handle_csac_telemetry_labels(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: MsgDeviceMonitor| {
+        tabs.advanced_system_monitor
+            .lock()
+            .unwrap()
+            .handle_device_monitor(msg);
+    });
+
     link.register(|tabs: &Tabs<S>, msg: BaselineNED| {
         tabs.baseline
             .lock()
@@ -118,6 +140,10 @@ where
     });
 
     link.register(|tabs: &Tabs<S>, _: MsgHeartbeat| {
+        tabs.advanced_system_monitor
+            .lock()
+            .unwrap()
+            .handle_heartbeat();
         tabs.status_bar.lock().unwrap().handle_heartbeat();
     });
 
@@ -182,7 +208,7 @@ where
         tabs.status_bar.lock().unwrap().handle_pos_llh(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: MsgPosLLHCov| {
+    link.register(|tabs: &Tabs<S>, msg: MsgPosLlhCov| {
         tabs.solution.lock().unwrap().handle_pos_llh_cov(msg);
     });
 
@@ -191,6 +217,17 @@ where
             .lock()
             .unwrap()
             .handle_specan(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: MsgSvAzEl| {
+        tabs.tracking_sky_plot.lock().unwrap().handle_sv_az_el(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: MsgThreadState| {
+        tabs.advanced_system_monitor
+            .lock()
+            .unwrap()
+            .handle_thread_state(msg);
     });
 
     link.register(|tabs: &Tabs<S>, msg: MsgTrackingState| {
@@ -204,9 +241,16 @@ where
         tabs.solution.lock().unwrap().handle_vel_ned(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: MsgVelNED| {
+    link.register(|tabs: &Tabs<S>, msg: MsgVelNed| {
         // why does this tab not take both VelNED messages?
         tabs.solution_velocity.lock().unwrap().handle_vel_ned(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: UartState| {
+        tabs.advanced_system_monitor
+            .lock()
+            .unwrap()
+            .handle_uart_state(msg);
     });
 
     link.register(|tabs: &Tabs<S>, msg: MsgUtcTime| {
@@ -273,14 +317,14 @@ where
             tabs.status_bar
                 .lock()
                 .unwrap()
-                .add_bytes(message.sbp_size());
+                .add_bytes(message.encoded_len());
             if let RealtimeDelay::On = realtime_delay {
                 if sent {
                     tabs.main.lock().unwrap().realtime_delay(gps_time);
                 } else {
                     debug!(
                         "Message, {}, ignored for realtime delay.",
-                        message.get_message_name()
+                        message.message_name()
                     );
                 }
             }

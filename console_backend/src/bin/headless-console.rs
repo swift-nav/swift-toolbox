@@ -10,8 +10,6 @@ use console_backend::{
     utils::{refresh_loggingbar, refresh_navbar},
 };
 use crossbeam::channel;
-use std::fs::File;
-use std::io::{prelude::*, BufWriter};
 
 fn main() -> Result<()> {
     let opt = CliOptions::from_filtered_cli();
@@ -38,24 +36,12 @@ Usage:
     refresh_loggingbar(&mut client_send.clone(), shared_state.clone());
     server_recv_thread(connection_state, client_send, server_recv, shared_state);
 
-    let local: DateTime<Local> = Local::now();
-    let mut filename = format!("headless-console-{}.data", local);
-    filename.retain(|c| !c.is_whitespace());
-    let file_out = File::create(filename)?;
-    let buf_out = BufWriter::new(file_out);
     let mut msg_count: usize = 0;
-    let mut file_out = snap::write::FrameEncoder::new(buf_out);
-    while let Ok(msg) = client_recv.recv() {
-        match file_out.write_all(&msg) {
-            Ok(_) => {
-                msg_count += 1;
-                if msg_count % 100 == 0 {
-                    println!("Messages received: {}", msg_count);
-                }
-            }
-            Err(err) => {
-                eprintln!("{}", err);
-            }
+    while client_recv.recv().is_ok() {
+        msg_count += 1;
+        if msg_count % 100 == 0 {
+            let local: DateTime<Local> = Local::now();
+            eprintln!("{} :: Messages received: {}", local, msg_count);
         }
     }
     Ok(())

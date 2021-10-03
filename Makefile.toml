@@ -19,6 +19,7 @@ echo QML_FILES=${qml_files}
 CONDA_ENV = "console_pp"
 REQUIREMENTS_FILE = "requirements.txt"
 REQUIREMENTS_DEV_FILE = "requirements-dev.txt"
+PYTHON_EXE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/standalone-py/python/install/bin/python3"
 
 [config]
 default_to_workspace = false
@@ -46,47 +47,47 @@ run_task = "tests"
 [tasks.poetry-export-dev]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV poetry export --dev -f $REQUIREMENTS_FILE --output $REQUIREMENTS_DEV_FILE --without-hashes
+$PYTHON_EXE -m poetry export --dev -f $REQUIREMENTS_FILE --output $REQUIREMENTS_DEV_FILE --without-hashes
 '''
 
 [tasks.poetry-export]
 dependencies = ["poetry-export-dev"]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV poetry export -f $REQUIREMENTS_FILE --output $REQUIREMENTS_FILE --without-hashes
+$PYTHON_EXE -m poetry export -f $REQUIREMENTS_FILE --output $REQUIREMENTS_FILE --without-hashes
 '''
 
 [tasks.pip-install-dev]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV pip install -r $REQUIREMENTS_DEV_FILE
+$PYTHON_EXE -m pip install -r $REQUIREMENTS_DEV_FILE
 '''
 
 [tasks.pip-install]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV pip install -r $REQUIREMENTS_FILE
+$PYTHON_EXE -m pip install -r $REQUIREMENTS_FILE
 '''
 
 [tasks.generate-common-constants-rs]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV --no-capture-output --live-stream py2many --rust=1 src/main/python/constants.py
-mv src/main/python/constants.rs console_backend/src/common_constants.rs
+$PYTHON_EXE -m py2many --rust=1 swiftnav_console/constants.py
+mv swiftnav_console/constants.rs console_backend/src/common_constants.rs
 '''
 
 [tasks.extract-piksi-constants-rs]
 dependencies = ["pip-install-dev"]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV --no-capture-output --live-stream python utils/extract_piksi_tools_constants.py > /tmp/piksi_tools_constants.py
-conda run -n $CONDA_ENV --no-capture-output --live-stream python -m py2many --rust=1 /tmp/piksi_tools_constants.py --outdir console_backend/src/
+$PYTHON_EXE utils/extract_piksi_tools_constants.py > /tmp/piksi_tools_constants.py
+$PYTHON_EXE -m py2many --rust=1 /tmp/piksi_tools_constants.py --outdir console_backend/src/
 '''
 
 [tasks.generate-resources]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV --no-capture-output --live-stream pyside2-rcc resources/console_resources.qrc -o src/main/python/console_resources.py
+pyside2-rcc resources/console_resources.qrc -o swiftnav_console/console_resources.py
 '''
 
 [tasks.check-capnp]
@@ -119,17 +120,10 @@ Get-ChildItem .\console_backend -Recurse -Include @("*.egg-info", "*.dist-info")
 '''
 
 [tasks.start-console]
-command = "conda"
-args = [
-  "run",
-  "-n",
-  "${CONDA_ENV}",
-  "--no-capture-output",
-  "--live-stream",
-  "python",
-  "src/main/python/main.py",
-  "${@}",
-]
+script_runner = "@shell"
+script = '''
+$PYTHON_EXE -m swiftnav_console.main -- ${@}
+'''
 
 [tasks.run]
 dependencies = [
@@ -171,20 +165,20 @@ git describe --tags --always > console_backend/src/version.txt
 [tasks.install-backend]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV pip install -e ./console_backend
+$PYTHON_EXE -m pip install -e ./console_backend
 '''
 
 [tasks.prod-install-backend]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV --no-capture-output --live-stream python -m pip install ./console_backend --upgrade --force ./console_backend -v
+$PYTHON_EXE -m pip install ./console_backend --upgrade --force ./console_backend -v
 '''
 
 [tasks.prod-freeze-no-copy]
 dependencies = ["copy-capnp", "generate-resources", "prod-install-backend"]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV fbs freeze
+$PYTHON_EXE -m fbs freeze
 '''
 
 [tasks.copy-console-backend-to-fbs.windows]
@@ -212,13 +206,13 @@ dependencies = [
 dependencies = ["prod-freeze"]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV fbs installer
+$PYTHON_EXE -m fbs installer
 '''
 
 [tasks.create-remove-negligibles-file]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV python utils/get_fbs_remove_list.py
+$PYTHON_EXE utils/get_fbs_remove_list.py
 '''
 
 [tasks.remove-negligibles.linux]
@@ -237,22 +231,22 @@ bash src/main/fbs/windows-remove-negligibles.sh
 dependencies = ["copy-capnp", "store-version", "generate-resources"]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV pip install --force ./console_backend
-conda run -n $CONDA_ENV bash src/main/nuitka/linux.sh
+$PYTHON_EXE -m pip install --force ./console_backend
+bash src/main/nuitka/linux.sh
 '''
 
 [tasks.prod-nuitka-build.mac]
 dependencies = ["copy-capnp", "store-version", "generate-resources"]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV pip install --force ./console_backend
-conda run -n $CONDA_ENV bash src/main/nuitka/mac.sh
+$PYTHON_EXE -m pip install --force ./console_backend
+$PYTHON_EXE bash src/main/nuitka/mac.sh
 '''
 
 [tasks.create-nuitka-script]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV python utils/create_nuitka_script.py
+$PYTHON_EXE utils/create_nuitka_script.py
 '''
 
 [tasks.prod-installer.mac]
@@ -263,13 +257,13 @@ mkdir -p main.app/Contents/MacOS main.app/Contents/Resources
 cp -r main.dist/* main.app/Contents/MacOS/
 iconutil --convert icns src/main/icons/Mac.iconset
 mv src/main/icons/Mac.icns main.app/Contents/Resources/SwiftNavConsole.icns
-conda run -n $CONDA_ENV python src/build/generate-mac-info-plist.py
+$PYTHON_EXE src/build/generate-mac-info-plist.py
 hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg' || (echo 'Failed to create Mac dmg. Retrying in 10s...' && sleep 10 && hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg' )
 '''
 
 [tasks.qml-format]
 env = { QT_APP = { script = [
-  "conda run -n $CONDA_ENV python utils/echo-qt-dir.py",
+  "$PYTHON_EXE utils/echo-qt-dir.py",
 ] } }
 script_runner = "@shell"
 script = '''
@@ -278,7 +272,7 @@ ${QT_APP}/Qt/bin/qmlformat -i $QML_FILES
 
 [tasks.qml-lint]
 env = { QT_APP = { script = [
-  "conda run -n $CONDA_ENV python utils/echo-qt-dir.py",
+  "$PYTHON_EXE utils/echo-qt-dir.py",
 ] } }
 script_runner = "@shell"
 script = '''
@@ -318,19 +312,19 @@ args = ["check"]
 [tasks.python-type-check]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV mypy $PYTHON_FILES
+$PYTHON_EXE -m mypy $PYTHON_FILES
 '''
 
 [tasks.python-format-check]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV black --check --diff $PYTHON_FILES
+$PYTHON_EXE -m black --check --diff $PYTHON_FILES
 '''
 
 [tasks.python-format-all]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV black $PYTHON_FILES
+$PYTHON_EXE -m black $PYTHON_FILES
 '''
 
 [tasks.python-format]
@@ -339,7 +333,7 @@ alias = "python-format-all"
 [tasks.python-lint]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV pylint --output-format=parseable $PYTHON_FILES
+$PYTHON_EXE -m pylint --output-format=parseable $PYTHON_FILES
 '''
 
 [tasks.format-toml-check]
@@ -395,7 +389,7 @@ args = ["bench", "--all-features", "--", "--verbose", "--noplot"]
 [tasks.backend-cpu-bench-validate]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV python utils/bench_runner.py --backend_cpu
+$PYTHON_EXE utils/bench_runner.py --backend_cpu
 '''
 
 [tasks.backend-mem-bench]
@@ -422,7 +416,7 @@ dependencies = [
 [tasks.disk-usage-bench]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV python utils/bench_runner.py --disk_usage
+$PYTHON_EXE utils/bench_runner.py --disk_usage
 '''
 
 [tasks.frontend-cpu-bench.linux]

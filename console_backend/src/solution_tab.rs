@@ -86,8 +86,8 @@ impl<S: CapnProtoSender> SolutionTab<S> {
             directory_name: None,
             ins_status_flags: 0,
             ins_used: false,
-            lats: Deque::with_size_limit(PLOT_HISTORY_MAX, /*fill_value=*/ None),
-            lngs: Deque::with_size_limit(PLOT_HISTORY_MAX, /*fill_value=*/ None),
+            lats: Deque::new(PLOT_HISTORY_MAX),
+            lngs: Deque::new(PLOT_HISTORY_MAX),
             last_ins_status_receipt_time: Instant::now(),
             last_pos_mode: 0,
             last_odo_update_time: Instant::now(),
@@ -96,7 +96,7 @@ impl<S: CapnProtoSender> SolutionTab<S> {
             lat_min: LAT_MIN,
             lon_max: LON_MAX,
             lon_min: LON_MIN,
-            modes: Deque::with_size_limit(PLOT_HISTORY_MAX, /*fill_value=*/ None),
+            modes: Deque::new(PLOT_HISTORY_MAX),
             mode_strings: vec![
                 GnssModes::Spp.to_string(),
                 GnssModes::Dgnss.to_string(),
@@ -113,12 +113,7 @@ impl<S: CapnProtoSender> SolutionTab<S> {
             slns: {
                 SOLUTION_DATA_KEYS
                     .iter()
-                    .map(|key| {
-                        (
-                            *key,
-                            Deque::with_size_limit(PLOT_HISTORY_MAX, /*fill_value=*/ None),
-                        )
-                    })
+                    .map(|key| (*key, Deque::new(PLOT_HISTORY_MAX)))
                     .collect()
             },
             table: {
@@ -511,9 +506,9 @@ impl<S: CapnProtoSender> SolutionTab<S> {
                 .insert(HORIZ_ACC, format!("{:.3}", pos_llh_fields.h_accuracy));
             self.table
                 .insert(VERT_ACC, format!("{:.3}", pos_llh_fields.v_accuracy));
-            self.lats.add(pos_llh_fields.lat);
-            self.lngs.add(pos_llh_fields.lon);
-            self.modes.add(self.last_pos_mode);
+            self.lats.push(pos_llh_fields.lat);
+            self.lngs.push(pos_llh_fields.lon);
+            self.modes.push(self.last_pos_mode);
         }
         self.table
             .insert(POS_FLAGS, format!("0x{:<03x}", pos_llh_fields.flags));
@@ -628,8 +623,8 @@ impl<S: CapnProtoSender> SolutionTab<S> {
         let lon_str = format!("lng_{}", mode_string);
         let lat_str = lat_str.as_str();
         let lon_str = lon_str.as_str();
-        self.slns.get_mut(lat_str).unwrap().add(lat);
-        self.slns.get_mut(lon_str).unwrap().add(lng);
+        self.slns.get_mut(lat_str).unwrap().push(lat);
+        self.slns.get_mut(lon_str).unwrap().push(lng);
         self._append_empty_sln_data(Some(mode_string));
     }
 
@@ -646,8 +641,8 @@ impl<S: CapnProtoSender> SolutionTab<S> {
             let lon_str = format!("lng_{}", each_mode);
             let lat_str = lat_str.as_str();
             let lon_str = lon_str.as_str();
-            self.slns.get_mut(lat_str).unwrap().add(f64::NAN);
-            self.slns.get_mut(lon_str).unwrap().add(f64::NAN);
+            self.slns.get_mut(lat_str).unwrap().push(f64::NAN);
+            self.slns.get_mut(lon_str).unwrap().push(f64::NAN);
         }
     }
 
@@ -658,34 +653,37 @@ impl<S: CapnProtoSender> SolutionTab<S> {
     /// - `update_current`: Indicating whether the current solution should be updated by
     /// this modes last lat/lon entry.
     fn _synchronize_plot_data_by_mode(&mut self, mode_string: &str, update_current: bool) {
+        let idx = match self.mode_strings.iter().position(|x| x == mode_string) {
+            Some(idx) => idx,
+            _ => return,
+        };
+
         let lat_string = format!("lat_{}", mode_string);
         let lat_string = lat_string.as_str();
         let lon_string = format!("lng_{}", mode_string);
         let lon_string = lon_string.as_str();
 
-        if let Some(idx) = self.mode_strings.iter().position(|x| *x == *mode_string) {
-            let lat_values = self.slns[&lat_string].get();
-            let lon_values = self.slns[&lon_string].get();
+        let lat_values = &self.slns[&lat_string];
+        let lon_values = &self.slns[&lon_string];
 
-            let mut new_sln: Vec<(f64, f64)> = vec![];
-            for jdx in 0..lat_values.len() {
-                if lat_values[jdx].is_nan() || lon_values[jdx].is_nan() {
-                    continue;
-                }
-                self.lat_min = f64::min(self.lat_min, lat_values[jdx]);
-                self.lat_max = f64::max(self.lat_max, lat_values[jdx]);
-                self.lon_min = f64::min(self.lon_min, lon_values[jdx]);
-                self.lon_max = f64::max(self.lon_max, lon_values[jdx]);
-                new_sln.push((lon_values[jdx], lat_values[jdx]));
+        let mut new_sln: Vec<(f64, f64)> = Vec::with_capacity(lat_values.len());
+        for jdx in 0..lat_values.len() {
+            if lat_values[jdx].is_nan() || lon_values[jdx].is_nan() {
+                continue;
             }
-            self.sln_data[idx] = new_sln;
+            self.lat_min = f64::min(self.lat_min, lat_values[jdx]);
+            self.lat_max = f64::max(self.lat_max, lat_values[jdx]);
+            self.lon_min = f64::min(self.lon_min, lon_values[jdx]);
+            self.lon_max = f64::max(self.lon_max, lon_values[jdx]);
+            new_sln.push((lon_values[jdx], lat_values[jdx]));
+        }
+        self.sln_data[idx] = new_sln;
 
-            if update_current {
-                if !self.sln_data[idx].is_empty() {
-                    self.sln_cur_data[idx] = vec![self.sln_data[idx][self.sln_data[idx].len() - 1]];
-                } else {
-                    self.sln_cur_data[idx].clear();
-                }
+        if update_current {
+            if !self.sln_data[idx].is_empty() {
+                self.sln_cur_data[idx] = vec![self.sln_data[idx][self.sln_data[idx].len() - 1]];
+            } else {
+                self.sln_cur_data[idx].clear();
             }
         }
     }

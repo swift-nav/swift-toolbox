@@ -3,10 +3,10 @@ use sbp::messages::mag::MsgMagRaw;
 use capnp::message::Builder;
 
 use crate::constants::{MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER, NUM_POINTS};
-use crate::errors::GET_MUT_OBJECT_FAILURE;
 use crate::shared_state::SharedState;
 use crate::types::{CapnProtoSender, Deque};
 use crate::utils::serialize_capnproto_builder;
+use crate::zip;
 
 /// AdvancedMagnetometerTab struct.
 ///
@@ -31,12 +31,11 @@ pub struct AdvancedMagnetometerTab<S: CapnProtoSender> {
 
 impl<S: CapnProtoSender> AdvancedMagnetometerTab<S> {
     pub fn new(shared_state: SharedState, client_sender: S) -> AdvancedMagnetometerTab<S> {
-        let mag_fill_val = Some(0_f64);
         AdvancedMagnetometerTab {
             client_sender,
-            mag_x: Deque::with_size_limit(NUM_POINTS, mag_fill_val),
-            mag_y: Deque::with_size_limit(NUM_POINTS, mag_fill_val),
-            mag_z: Deque::with_size_limit(NUM_POINTS, mag_fill_val),
+            mag_x: Deque::with_fill_value(NUM_POINTS, 0.),
+            mag_y: Deque::with_fill_value(NUM_POINTS, 0.),
+            mag_z: Deque::with_fill_value(NUM_POINTS, 0.),
             shared_state,
             ymax: f64::MIN,
             ymin: f64::MAX,
@@ -45,20 +44,14 @@ impl<S: CapnProtoSender> AdvancedMagnetometerTab<S> {
 
     /// Method for preparing magnetometer data and initiating sending to frontend.
     fn mag_set_data(&mut self) {
-        let mag_x = &mut self.mag_x.get();
-        let mag_y = &mut self.mag_y.get();
-        let mag_z = &mut self.mag_z.get();
-
-        let mut min_ = f64::MAX;
-        let mut max_ = f64::MIN;
-        for idx in 0..NUM_POINTS {
-            min_ = f64::min(mag_x[idx], f64::min(mag_y[idx], f64::min(mag_z[idx], min_)));
-            max_ = f64::max(mag_x[idx], f64::max(mag_y[idx], f64::max(mag_z[idx], max_)));
+        let mut min = f64::MAX;
+        let mut max = f64::MIN;
+        for (x, y, z) in zip!(&self.mag_x, &self.mag_y, &self.mag_z) {
+            min = min.min(*x).min(*y).min(*z);
+            max = max.max(*x).max(*y).max(*z);
         }
-        self.ymin = min_ - f64::abs(min_ * MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER);
-
-        self.ymax = max_ + f64::abs(max_ * MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER);
-
+        self.ymin = min - f64::abs(min * MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER);
+        self.ymax = max + f64::abs(max * MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER);
         self.send_data();
     }
 
@@ -67,9 +60,9 @@ impl<S: CapnProtoSender> AdvancedMagnetometerTab<S> {
     /// # Parameters
     /// - `msg`: MsgMagRaw to extract data from.
     pub fn handle_mag_raw(&mut self, msg: MsgMagRaw) {
-        self.mag_x.add(msg.mag_x as f64);
-        self.mag_y.add(msg.mag_y as f64);
-        self.mag_z.add(msg.mag_z as f64);
+        self.mag_x.push(msg.mag_x as f64);
+        self.mag_y.push(msg.mag_y as f64);
+        self.mag_z.push(msg.mag_z as f64);
         self.mag_set_data();
     }
 
@@ -77,20 +70,17 @@ impl<S: CapnProtoSender> AdvancedMagnetometerTab<S> {
     fn send_data(&mut self) {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
-
         let mut tab_status = msg.init_advanced_magnetometer_status();
 
-        let mut points_vec = vec![self.mag_x.get(), self.mag_y.get(), self.mag_z.get()];
+        let all_points = [self.mag_x.iter(), self.mag_y.iter(), self.mag_z.iter()];
+        let mut tab_points = tab_status.reborrow().init_data(all_points.len() as u32);
 
-        let mut tab_points = tab_status.reborrow().init_data(points_vec.len() as u32);
-
-        for idx in 0..points_vec.len() {
-            let points = points_vec.get_mut(idx).expect(GET_MUT_OBJECT_FAILURE);
-            let mut point_val_idx = tab_points.reborrow().init(idx as u32, points.len() as u32);
-            for idx in 0..NUM_POINTS {
+        for (idx, points) in IntoIterator::into_iter(all_points).enumerate() {
+            let mut point_val_idx = tab_points.reborrow().init(idx as u32, NUM_POINTS as u32);
+            for (idx, point) in points.enumerate() {
                 let mut point_val = point_val_idx.reborrow().get(idx as u32);
                 point_val.set_x(idx as f64);
-                point_val.set_y(points[idx]);
+                point_val.set_y(*point);
             }
         }
 
@@ -126,21 +116,15 @@ mod tests {
             mag_y,
             mag_z,
         };
-        let mag_xs = mag_tab.mag_x.get();
-        let mag_ys = mag_tab.mag_y.get();
-        let mag_zs = mag_tab.mag_z.get();
         for idx in 0..NUM_POINTS {
-            assert!(f64::abs(mag_xs[idx] - 0_f64) <= f64::EPSILON);
-            assert!(f64::abs(mag_ys[idx] - 0_f64) <= f64::EPSILON);
-            assert!(f64::abs(mag_zs[idx] - 0_f64) <= f64::EPSILON);
+            assert!(f64::abs(mag_tab.mag_x[idx] - 0_f64) <= f64::EPSILON);
+            assert!(f64::abs(mag_tab.mag_y[idx] - 0_f64) <= f64::EPSILON);
+            assert!(f64::abs(mag_tab.mag_z[idx] - 0_f64) <= f64::EPSILON);
         }
         mag_tab.handle_mag_raw(msg);
-        let mag_xs = mag_tab.mag_x.get();
-        let mag_ys = mag_tab.mag_y.get();
-        let mag_zs = mag_tab.mag_z.get();
-        assert!(f64::abs(mag_xs[NUM_POINTS - 1] - mag_x as f64) <= f64::EPSILON);
-        assert!(f64::abs(mag_ys[NUM_POINTS - 1] - mag_y as f64) <= f64::EPSILON);
-        assert!(f64::abs(mag_zs[NUM_POINTS - 1] - mag_z as f64) <= f64::EPSILON);
+        assert!(f64::abs(mag_tab.mag_x[NUM_POINTS - 1] - mag_x as f64) <= f64::EPSILON);
+        assert!(f64::abs(mag_tab.mag_y[NUM_POINTS - 1] - mag_y as f64) <= f64::EPSILON);
+        assert!(f64::abs(mag_tab.mag_z[NUM_POINTS - 1] - mag_z as f64) <= f64::EPSILON);
     }
 
     #[test]

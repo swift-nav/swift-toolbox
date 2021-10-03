@@ -105,9 +105,9 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
             sv_labels: Vec::new(),
             t_init: Instant::now(),
             time: {
-                let mut time = Deque::with_size_limit(NUM_POINTS, /*fill_value=*/ None);
+                let mut time = Deque::new(NUM_POINTS);
                 for x in (0..(NUM_POINTS as i32)).rev() {
-                    time.add((-x as f64) * (1.0 / TRK_RATE));
+                    time.push((-x as f64) * (1.0 / TRK_RATE));
                 }
                 time
             },
@@ -123,8 +123,8 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
         let cn0_deque = self
             .cn0_dict
             .entry(key)
-            .or_insert_with(|| Deque::with_size_limit(NUM_POINTS, /*fill_value=*/ None));
-        cn0_deque.add((OrderedFloat(t), cn0));
+            .or_insert_with(|| Deque::new(NUM_POINTS));
+        cn0_deque.push((OrderedFloat(t), cn0));
     }
     /// Push carrier-to-noise density age to cn0_age with key.
     ///
@@ -141,7 +141,7 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
     pub fn clean_cn0(&mut self) {
         let mut remove_vec: Vec<(SignalCodes, i16)> = Vec::new();
         for (key, _) in self.cn0_dict.iter_mut() {
-            if self.cn0_age[key] < self.time.get()[0] {
+            if self.cn0_age[key] < self.time[0] {
                 remove_vec.push(*key);
             }
         }
@@ -209,7 +209,7 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
         self.at_least_one_track_received = true;
         let mut codes_that_came: Vec<(SignalCodes, i16)> = Vec::new();
         let t = (Instant::now()).duration_since(self.t_init).as_secs_f64();
-        self.time.add(t);
+        self.time.push(t);
         for (idx, state) in states.iter().enumerate() {
             let mut sat = state.mesid.sat as i16;
             let signal_code = SignalCodes::from(state.mesid.code);
@@ -236,7 +236,7 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
         }
         for (key, cn0_deque) in self.cn0_dict.iter_mut() {
             if !codes_that_came.contains(key) {
-                cn0_deque.add((OrderedFloat(t), 0.0));
+                cn0_deque.push((OrderedFloat(t), 0.0));
             }
         }
         self.clean_cn0();
@@ -252,7 +252,7 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
         self.at_least_one_track_received = true;
         let mut codes_that_came: Vec<(SignalCodes, i16)> = Vec::new();
         let t = (Instant::now()).duration_since(self.t_init).as_secs_f64();
-        self.time.add(t);
+        self.time.push(t);
         for state in states.iter() {
             let mut sat = state.sid.sat as i16;
             let signal_code = SignalCodes::from(state.sid.code);
@@ -337,7 +337,7 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
         self.last_obs_update_time = Instant::now();
         let mut codes_that_came: Vec<(SignalCodes, i16)> = Vec::new();
         let t = (Instant::now()).duration_since(self.t_init).as_secs_f64();
-        self.time.add(t);
+        self.time.push(t);
         for (key, cn0) in obs_dict.iter() {
             let (signal_code, _) = *key;
             codes_that_came.push(*key);
@@ -351,7 +351,7 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
         }
         for (key, cn0_deque) in self.cn0_dict.iter_mut() {
             if !codes_that_came.contains(key) {
-                cn0_deque.add((OrderedFloat(t), 0.0));
+                cn0_deque.push((OrderedFloat(t), 0.0));
             }
         }
         self.clean_cn0();
@@ -409,7 +409,7 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
             .init_data(self.sv_labels.len() as u32);
         {
             for idx in 0..self.sv_labels.len() {
-                let points = self.sats.get_mut(idx).unwrap().get();
+                let points = &mut self.sats[idx];
                 let mut point_val_idx = tracking_points
                     .reborrow()
                     .init(idx as u32, points.len() as u32);
@@ -459,21 +459,21 @@ mod tests {
                 cn0_age = (NUM_POINTS - idx) as f64;
             }
             let t = (Instant::now()).duration_since(t_init).as_secs_f64();
-            tracking_signals_tab.time.add(t);
+            tracking_signals_tab.time.push(t);
             tracking_signals_tab.push_to_cn0_dict(key, t, idx as f64);
             tracking_signals_tab.push_to_cn0_age(key, cn0_age);
         }
-        assert_eq!(tracking_signals_tab.cn0_dict[&key].get().len(), NUM_POINTS);
+        assert_eq!(tracking_signals_tab.cn0_dict[&key].len(), NUM_POINTS);
         assert!(tracking_signals_tab.cn0_age[&key] - 1_f64 <= f64::EPSILON);
 
         let t = (Instant::now()).duration_since(t_init).as_secs_f64();
-        tracking_signals_tab.time.add(t);
+        tracking_signals_tab.time.push(t);
         let cn0 = 400.0;
-        assert!(tracking_signals_tab.cn0_dict[&key].get()[0].1 - 0_f64 <= f64::EPSILON);
+        assert!(tracking_signals_tab.cn0_dict[&key][0].1 - 0_f64 <= f64::EPSILON);
         tracking_signals_tab.push_to_cn0_dict(key, t, cn0);
 
-        assert_eq!(tracking_signals_tab.cn0_dict[&key].get().len(), NUM_POINTS);
-        assert!(tracking_signals_tab.cn0_dict[&key].get()[0].1 - 1_f64 <= f64::EPSILON);
+        assert_eq!(tracking_signals_tab.cn0_dict[&key].len(), NUM_POINTS);
+        assert!(tracking_signals_tab.cn0_dict[&key][0].1 - 1_f64 <= f64::EPSILON);
 
         tracking_signals_tab.clean_cn0();
         assert_eq!(tracking_signals_tab.cn0_dict.len(), 0);

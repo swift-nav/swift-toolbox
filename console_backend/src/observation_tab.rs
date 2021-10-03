@@ -3,7 +3,8 @@ use capnp::message::Builder;
 use log::warn;
 use std::collections::{BTreeMap, HashMap};
 
-use crate::types::*;
+use crate::shared_state::SharedState;
+use crate::types::{CapnProtoSender, ObservationMsg, SignalCodes};
 use crate::utils::{compute_doppler, sec_to_ns};
 
 use crate::utils::serialize_capnproto_builder;

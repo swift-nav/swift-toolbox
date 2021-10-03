@@ -38,7 +38,7 @@ INSTALLER_BENCHMARKS = {
         {
             NAME: "macOS Installer",
             FILE_PATH: "release-archive.filename",
-            EXPECTED: 95,
+            EXPECTED: 115,
             ERROR_MARGIN_FRAC: 0.05,
         },
     ],
@@ -211,7 +211,7 @@ def run_disk_usage_benchmark():
     benchmarks = INSTALLER_BENCHMARKS.get(os_, [])
     for bench in benchmarks:
         release_file = ""
-        with open(bench[FILE_PATH]) as archive_file:
+        with open(bench[FILE_PATH], "r", encoding="utf-8") as archive_file:
             release_file = archive_file.readline().rstrip()
 
         bench_command = DISK_USAGE_COMMAND(release_file)
@@ -238,7 +238,7 @@ def run_backend_cpu_validate_benchmarks():
     os_ = sys.platform
     benchmarks = BACKEND_CPU_BENCHMARKS.get(os_, [])
     for bench in benchmarks:
-        with open(bench[FILE_PATH]) as fileo:
+        with open(bench[FILE_PATH], "r", encoding="utf-8") as fileo:
             bench_result = json.load(fileo)
             bench_value = get_nested_key(bench_result, bench[KEY_LOCATION])
             assert bench_value is not None, f"Test:{bench[NAME]} retrieved bench value None."
@@ -270,7 +270,7 @@ def run_frontend_cpu_benchmark(executable: str):
             f'{BENCHMARK_COMMAND_ARGS(bench[FILE_PATH])}"'
         )
         subprocess.call(bench_command, shell=True)
-        with open(DEFAULT_JSON_FILEPATH) as fileo:
+        with open(DEFAULT_JSON_FILEPATH, "r", encoding="utf-8") as fileo:
             bench_result = json.load(fileo)
             bench_value = bench_result[RESULTS][0].get(bench[KEY_LOCATION], None)
             assert bench_value is not None, f"Test:{bench[NAME]} retrieved bench value None."

@@ -1,8 +1,9 @@
 use crate::constants::*;
 use crate::errors::*;
 use crate::process_messages::process_messages;
+use crate::shared_state::SharedState;
 use crate::types::*;
-use chrono::{DateTime, Utc};
+use anyhow::anyhow;
 use crossbeam::channel::{unbounded, Receiver, Sender};
 use log::{error, info};
 use std::{
@@ -15,10 +16,6 @@ use std::{
     thread::JoinHandle,
     time::Duration,
 };
-
-pub type Error = std::boxed::Box<dyn std::error::Error>;
-pub type Result<T> = std::result::Result<T, Error>;
-pub type UtcDateTime = DateTime<Utc>;
 
 #[derive(Clone)]
 pub struct TcpConnection {
@@ -33,13 +30,11 @@ impl TcpConnection {
     }
     fn socket_addrs(name: String) -> Result<SocketAddr> {
         let socket = &mut name.to_socket_addrs()?;
-        let socket = if let Some(socket_) = socket.next() {
-            socket_
+        if let Some(s) = socket.next() {
+            Ok(s)
         } else {
-            let e: Box<dyn std::error::Error> = String::from(TCP_CONNECTION_PARSING_FAILURE).into();
-            return Err(e);
-        };
-        Ok(socket)
+            Err(anyhow!("{}", TCP_CONNECTION_PARSING_FAILURE))
+        }
     }
     fn name(&self) -> String {
         self.name.clone()
@@ -186,6 +181,12 @@ impl Connection {
             Connection::Tcp(_) | Connection::Serial(_) => RealtimeDelay::Off,
         }
     }
+    pub fn settings_enabled(&self) -> bool {
+        matches!(self, Connection::Tcp(_) | Connection::Serial(_))
+    }
+    pub fn is_serial(&self) -> bool {
+        matches!(self, Connection::Serial(_))
+    }
     pub fn try_connect(
         &self,
         shared_state: Option<SharedState>,
@@ -320,10 +321,10 @@ impl Drop for ConnectionState {
 mod tests {
     use super::*;
     use crate::test_common::{backup_file, filename, restore_backup_file};
+    use crossbeam::channel;
     use serial_test::serial;
     use std::{
         str::FromStr,
-        sync::mpsc,
         thread::sleep,
         time::{Duration, SystemTime},
     };
@@ -369,7 +370,7 @@ mod tests {
         assert_eq!(conn.realtime_delay(), RealtimeDelay::Off);
     }
 
-    fn receive_thread(client_recv: mpsc::Receiver<Vec<u8>>) -> JoinHandle<()> {
+    fn receive_thread(client_recv: channel::Receiver<Vec<u8>>) -> JoinHandle<()> {
         thread::spawn(move || {
             let mut iter_count = 0;
 
@@ -390,7 +391,8 @@ mod tests {
         let bfilename = filename();
         backup_file(bfilename.clone());
         let shared_state = SharedState::new();
-        let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
+        shared_state.set_debug(true);
+        let (client_send_, client_receive) = channel::unbounded::<Vec<u8>>();
         let client_send = ClientSender::new(client_send_);
         let connection_state = ConnectionState::new(client_send, shared_state.clone());
         let filename = TEST_SHORT_FILEPATH.to_string();
@@ -417,7 +419,8 @@ mod tests {
         let bfilename = filename();
         backup_file(bfilename.clone());
         let shared_state = SharedState::new();
-        let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
+        shared_state.set_debug(true);
+        let (client_send_, client_receive) = channel::unbounded::<Vec<u8>>();
         let client_send = ClientSender::new(client_send_);
         let connection_state = ConnectionState::new(client_send, shared_state.clone());
         let filename = TEST_SHORT_FILEPATH.to_string();
@@ -448,7 +451,8 @@ mod tests {
         let bfilename = filename();
         backup_file(bfilename.clone());
         let shared_state = SharedState::new();
-        let (client_send_, client_receive) = mpsc::channel::<Vec<u8>>();
+        shared_state.set_debug(true);
+        let (client_send_, client_receive) = channel::unbounded::<Vec<u8>>();
         let client_send = ClientSender::new(client_send_);
         let connection_state = ConnectionState::new(client_send.clone(), shared_state.clone());
         let filename = TEST_FILEPATH.to_string();

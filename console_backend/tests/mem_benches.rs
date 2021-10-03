@@ -1,11 +1,11 @@
 #[cfg(feature = "benches")]
 mod mem_bench_impl {
-
+    use crossbeam::channel;
     use ndarray::{ArrayView, Axis, Dim};
     use std::{
         error::Error,
         result::Result,
-        sync::{mpsc, Arc, Mutex},
+        sync::{Arc, Mutex},
         thread,
     };
 
@@ -14,14 +14,15 @@ mod mem_bench_impl {
     use console_backend::{
         connection::Connection,
         process_messages,
-        types::{ClientSender, RealtimeDelay, SharedState},
+        shared_state::SharedState,
+        types::{ClientSender, RealtimeDelay},
     };
 
     const BENCH_FILEPATH: &str = "./tests/data/piksi-relay-1min.sbp";
     const MINIMUM_MEM_READINGS: usize = 20;
 
     const DIFF_THRESHOLD: f32 = 0.05;
-    const MAXIMUM_MEM_USAGE_KB: f32 = 150000.0;
+    const MAXIMUM_MEM_USAGE_KB: f32 = 220000.0;
     const ABSOLUTE_MINIMUM_MEM_USAGE: f32 = 1000.0;
     const MAXIMUM_STANDARD_DEV_RATE_OF_MAXIMUM_MEM: f32 = 0.4;
 
@@ -49,8 +50,7 @@ mod mem_bench_impl {
     ///   - mean - std >= absolute_mean
     #[test]
     fn test_run_process_messages() {
-        use std::sync::mpsc::Receiver;
-        let (client_recv_tx, client_recv_rx) = mpsc::channel::<Receiver<Vec<u8>>>();
+        let (client_recv_tx, client_recv_rx) = channel::unbounded::<channel::Receiver<Vec<u8>>>();
         let pid = get_current_pid().unwrap();
         println!("PID: {}", pid);
         let is_running = Arc::new(Mutex::new(true));
@@ -89,7 +89,7 @@ mod mem_bench_impl {
         });
 
         {
-            let (client_send_, client_recv) = mpsc::channel::<Vec<u8>>();
+            let (client_send_, client_recv) = channel::unbounded::<Vec<u8>>();
             client_recv_tx
                 .send(client_recv)
                 .expect("sending client recv handle should succeed");
@@ -97,6 +97,7 @@ mod mem_bench_impl {
             let client_send = ClientSender::new(client_send_);
             let shared_state = SharedState::new();
             shared_state.set_running(true, client_send.clone());
+            shared_state.set_debug(true);
             let conn = Connection::file(
                 BENCH_FILEPATH.into(),
                 RealtimeDelay::On,

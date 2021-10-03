@@ -47,8 +47,7 @@ Item {
             height: parent.height
             currentIndex: advancedBar.currentIndex
 
-            Item {
-                id: advancedSystemMonitorTab
+            AdvancedTabComponents.AdvancedSystemMonitorTab {
             }
 
             AdvancedTabComponents.AdvancedInsTab {

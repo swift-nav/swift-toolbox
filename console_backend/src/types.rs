@@ -1,82 +1,89 @@
-use crate::common_constants::{self as cc, SbpLogging};
-use crate::constants::*;
-use crate::errors::*;
-use crate::log_panel::LogLevel;
-use crate::output::CsvLogging;
-use crate::piksi_tools_constants::*;
+use crate::constants::{
+    DGNSS, DGNSS_COLOR, DGNSS_LABEL, DR, DR_COLOR, DR_LABEL, FIXED, FIXED_COLOR, FIXED_LABEL,
+    FLOAT, FLOAT_COLOR, FLOAT_LABEL, FLOW_CONTROL_HARDWARE, FLOW_CONTROL_NONE,
+    FLOW_CONTROL_SOFTWARE, KPH, MPH, MPS, MPS2KPH, MPS2MPH, NO_FIX, NO_FIX_COLOR, NO_FIX_LABEL,
+    RTK, SBAS, SBAS_COLOR, SBAS_LABEL, SPP, SPP_COLOR, SPP_LABEL,
+};
+use crate::piksi_tools_constants::{
+    BDS2_B1_STR, BDS2_B2_STR, BDS3_B1CI_STR, BDS3_B1CQ_STR, BDS3_B1CX_STR, BDS3_B3I_STR,
+    BDS3_B3Q_STR, BDS3_B3X_STR, BDS3_B5I_STR, BDS3_B5Q_STR, BDS3_B5X_STR, BDS3_B7I_STR,
+    BDS3_B7Q_STR, BDS3_B7X_STR, CODE_NOT_AVAILABLE, GAL_AUX_STR, GAL_E1B_STR, GAL_E1C_STR,
+    GAL_E1X_STR, GAL_E5I_STR, GAL_E5Q_STR, GAL_E5X_STR, GAL_E6B_STR, GAL_E6C_STR, GAL_E6X_STR,
+    GAL_E7I_STR, GAL_E7Q_STR, GAL_E7X_STR, GAL_E8I_STR, GAL_E8Q_STR, GAL_E8X_STR, GLO_L1OF_STR,
+    GLO_L1P_STR, GLO_L2OF_STR, GLO_L2P_STR, GPS_AUX_STR, GPS_L1CA_STR, GPS_L1P_STR, GPS_L2CL_STR,
+    GPS_L2CM_STR, GPS_L2CX_STR, GPS_L2P_STR, GPS_L5I_STR, GPS_L5Q_STR, GPS_L5X_STR, QZS_AUX_STR,
+    QZS_L1CA_STR, QZS_L2CL_STR, QZS_L2CM_STR, QZS_L2CX_STR, QZS_L5I_STR, QZS_L5Q_STR, QZS_L5X_STR,
+    SBAS_AUX_STR, SBAS_L1_STR, SBAS_L5I_STR, SBAS_L5Q_STR, SBAS_L5X_STR,
+};
 
-use crate::utils::{mm_to_m, ms_to_sec, set_connected_frontend};
-use anyhow::{Context, Result as AHResult};
+use crate::utils::{mm_to_m, ms_to_sec};
+use anyhow::Context;
 use chrono::{DateTime, Utc};
-use directories::{ProjectDirs, UserDirs};
-use indexmap::set::IndexSet;
-use lazy_static::lazy_static;
-use log::error;
+use crossbeam::channel;
 use ordered_float::OrderedFloat;
-use sbp::codec::dencode::{FramedWrite, IterSinkExt};
-use sbp::codec::sbp::SbpEncoder;
-use sbp::messages::piksi::{MsgSpecan, MsgSpecanDep};
-use sbp::messages::SBPMessage;
+use sbp::link::Event;
 use sbp::messages::{
     navigation::{
-        MsgBaselineNED, MsgBaselineNEDDepA, MsgDops, MsgDopsDepA, MsgGPSTime, MsgGPSTimeDepA,
-        MsgPosLLH, MsgPosLLHDepA, MsgVelNED, MsgVelNEDDepA,
+        MsgBaselineNed, MsgBaselineNedDepA, MsgDops, MsgDopsDepA, MsgGpsTime, MsgGpsTimeDepA,
+        MsgPosLlh, MsgPosLlhDepA, MsgVelNed, MsgVelNedDepA,
     },
     observation::{
         MsgObs, MsgObsDepB, MsgObsDepC, MsgOsr, PackedObsContent, PackedObsContentDepB,
         PackedObsContentDepC, PackedOsrContent,
     },
-    SBP,
+    piksi::{Latency, MsgSpecan, MsgSpecanDep, MsgUartState, MsgUartStateDepa, Period},
+    ConcreteMessage,
 };
-use serde::{Deserialize, Serialize};
+use sbp::{Sbp, SbpEncoder, SbpMessage};
 use serialport::FlowControl as SPFlowControl;
+use std::io;
 use std::{
     cmp::{Eq, PartialEq},
     collections::HashMap,
     fmt,
     fmt::Debug,
-    fs,
     hash::Hash,
     ops::Deref,
-    path::PathBuf,
     str::FromStr,
     sync::{
-        self,
         atomic::{AtomicBool, Ordering::*},
         Arc, Mutex,
     },
-    time::Instant,
 };
-
-pub type Error = std::boxed::Box<dyn std::error::Error>;
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Error = anyhow::Error;
+pub type Result<T> = anyhow::Result<T>;
 pub type UtcDateTime = DateTime<Utc>;
 
-/// Sends SBP messages to the connected device
-pub struct MsgSender<W> {
-    inner: Arc<Mutex<FramedWrite<W, SbpEncoder>>>,
+/// Sends Sbp messages to the connected device
+pub struct MsgSender {
+    inner: Arc<Mutex<SbpEncoder<Box<dyn io::Write + Send>>>>,
 }
 
-impl<W: std::io::Write> MsgSender<W> {
+impl MsgSender {
     /// 42 is the conventional sender ID intended for messages sent from the host to the device
     const SENDER_ID: u16 = 42;
     const LOCK_FAILURE: &'static str = "failed to aquire sender lock";
 
-    pub fn new(wtr: W) -> Self {
+    pub fn new<W>(wtr: W) -> Self
+    where
+        W: io::Write + Send + 'static,
+    {
         Self {
-            inner: Arc::new(Mutex::new(FramedWrite::new(wtr, SbpEncoder::new()))),
+            inner: Arc::new(Mutex::new(SbpEncoder::new(Box::new(wtr)))),
         }
     }
 
-    pub fn send(&self, mut msg: SBP) -> sbp::Result<()> {
-        msg.set_sender_id(Self::SENDER_ID);
+    pub fn send(&self, mut msg: Sbp) -> Result<()> {
+        if msg.sender_id().is_none() {
+            msg.set_sender_id(Self::SENDER_ID);
+        }
         let mut framed = self.inner.lock().expect(Self::LOCK_FAILURE);
-        framed.send(msg)?;
+        framed.send(&msg).context("while sending a message")?;
         Ok(())
     }
 }
 
-impl<W> Clone for MsgSender<W> {
+impl Clone for MsgSender {
     fn clone(&self) -> Self {
         MsgSender {
             inner: Arc::clone(&self.inner),
@@ -112,17 +119,17 @@ impl<T: Clone> Deque<T> {
     }
 }
 
-pub trait CapnProtoSender: Debug + Clone + Send {
+pub trait CapnProtoSender: Debug + Clone + Send + Sync + 'static {
     fn send_data(&mut self, msg_bytes: Vec<u8>);
 }
 
 #[derive(Debug, Clone)]
 pub struct ClientSender {
-    pub inner: sync::mpsc::Sender<Vec<u8>>,
+    pub inner: channel::Sender<Vec<u8>>,
     pub connected: ArcBool,
 }
 impl ClientSender {
-    pub fn new(inner: sync::mpsc::Sender<Vec<u8>>) -> Self {
+    pub fn new(inner: channel::Sender<Vec<u8>>) -> Self {
         Self {
             inner,
             connected: ArcBool::new_with(true),
@@ -177,342 +184,6 @@ impl Clone for ArcBool {
     }
 }
 
-#[derive(Debug)]
-pub struct SharedState(Arc<Mutex<SharedStateInner>>);
-
-impl SharedState {
-    pub fn new() -> SharedState {
-        SharedState(Arc::new(Mutex::new(SharedStateInner::default())))
-    }
-    pub fn is_running(&self) -> bool {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).running
-    }
-    pub fn set_running<S>(&self, set_to: bool, mut client_send: S)
-    where
-        S: CapnProtoSender,
-    {
-        if set_to {
-            set_connected_frontend(cc::ApplicationStates::CONNECTED, &mut client_send);
-        } else {
-            set_connected_frontend(cc::ApplicationStates::DISCONNECTED, &mut client_send);
-            self.set_current_connection(EMPTY_STR.to_string());
-        }
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).running = set_to;
-    }
-    pub fn is_server_running(&self) -> bool {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).server_running
-    }
-    pub fn stop_server_running(&self) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).running = false;
-        (*shared_data).server_running = false;
-    }
-    pub fn is_paused(&self) -> bool {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).paused
-    }
-    pub fn set_paused(&self, set_to: bool) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).paused = set_to;
-    }
-    pub fn current_connection(&self) -> String {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).status_bar.current_connection.clone()
-    }
-    pub fn set_current_connection(&self, current_connection: String) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).status_bar.current_connection = current_connection;
-    }
-    pub fn logging_directory(&self) -> PathBuf {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        let mut folders = (*shared_data).connection_history.folders();
-        if let Some(folder) = folders.pop() {
-            PathBuf::from(folder)
-        } else {
-            LOG_DIRECTORY.path()
-        }
-    }
-    pub fn set_log_level(&self, log_level: LogLevel) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).log_panel.log_level = log_level.clone();
-        log::set_max_level(log_level.level_filter());
-    }
-    pub fn log_level(&self) -> LogLevel {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).log_panel.log_level.clone()
-    }
-    pub fn sbp_logging(&self) -> SbpLogging {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).logging_bar.sbp_logging.clone()
-    }
-    pub fn csv_logging(&self) -> CsvLogging {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).logging_bar.csv_logging.clone()
-    }
-    pub fn set_logging_directory(&self, directory: PathBuf) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        let directory = if directory.starts_with("~/") {
-            if let Ok(dir) = directory.strip_prefix("~/") {
-                user_directory().join(dir)
-            } else {
-                directory
-            }
-        } else {
-            directory
-        };
-        (*shared_data).logging_bar.logging_directory = directory;
-    }
-    pub fn set_sbp_logging(&self, logging: SbpLogging) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).logging_bar.sbp_logging = logging;
-    }
-    pub fn set_csv_logging(&self, logging: CsvLogging) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).logging_bar.csv_logging = logging;
-    }
-    pub fn folder_history(&self) -> IndexSet<String> {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).connection_history.folders()
-    }
-    pub fn file_history(&self) -> IndexSet<String> {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).connection_history.files()
-    }
-    pub fn address_history(&self) -> IndexSet<Address> {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).connection_history.addresses()
-    }
-    pub fn update_folder_history(&self, folder: PathBuf) {
-        let folder = String::from(folder.to_str().expect(CONVERT_TO_STR_FAILURE));
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).connection_history.record_folder(folder);
-    }
-    pub fn update_file_history(&self, filename: String) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).connection_history.record_file(filename);
-    }
-    pub fn update_tcp_history(&self, host: String, port: u16) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).connection_history.record_address(host, port);
-    }
-}
-
-impl Deref for SharedState {
-    type Target = Mutex<SharedStateInner>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl Default for SharedState {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Clone for SharedState {
-    fn clone(&self) -> Self {
-        SharedState {
-            0: Arc::clone(&self.0),
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct SharedStateInner {
-    pub(crate) status_bar: StatusBarState,
-    pub(crate) logging_bar: LoggingBarState,
-    pub(crate) log_panel: LogPanelState,
-    pub(crate) tracking_tab: TrackingTabState,
-    pub(crate) paused: bool,
-    pub(crate) connection_history: ConnectionHistory,
-    pub(crate) running: bool,
-    pub(crate) server_running: bool,
-    pub(crate) solution_tab: SolutionTabState,
-    pub(crate) baseline_tab: BaselineTabState,
-    pub(crate) advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTabState,
-}
-impl SharedStateInner {
-    pub fn new() -> SharedStateInner {
-        let connection_history = ConnectionHistory::new();
-        let log_directory = connection_history.folders().pop();
-        SharedStateInner {
-            status_bar: StatusBarState::new(),
-            logging_bar: LoggingBarState::new(log_directory),
-            log_panel: LogPanelState::new(),
-            tracking_tab: TrackingTabState::new(),
-            paused: false,
-            connection_history,
-            running: false,
-            server_running: true,
-            solution_tab: SolutionTabState::new(),
-            baseline_tab: BaselineTabState::new(),
-            advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTabState::new(),
-        }
-    }
-}
-impl Default for SharedStateInner {
-    fn default() -> Self {
-        SharedStateInner::new()
-    }
-}
-
-#[derive(Debug)]
-pub struct StatusBarState {
-    pub current_connection: String,
-}
-
-impl StatusBarState {
-    fn new() -> StatusBarState {
-        StatusBarState {
-            current_connection: String::from(""),
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct LoggingBarState {
-    pub sbp_logging: SbpLogging,
-    pub csv_logging: CsvLogging,
-    pub logging_directory: PathBuf,
-}
-
-impl LoggingBarState {
-    fn new(log_directory: Option<String>) -> LoggingBarState {
-        let logging_directory = if let Some(dir) = log_directory {
-            PathBuf::from(dir)
-        } else {
-            LOG_DIRECTORY.path()
-        };
-        LoggingBarState {
-            sbp_logging: SbpLogging::OFF,
-            csv_logging: CsvLogging::OFF,
-            logging_directory,
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct LogPanelState {
-    pub log_level: LogLevel,
-}
-
-impl LogPanelState {
-    fn new() -> LogPanelState {
-        LogPanelState {
-            log_level: LogLevel::INFO,
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct TrackingTabState {
-    pub signals_tab: TrackingSignalsTabState,
-}
-
-impl TrackingTabState {
-    fn new() -> TrackingTabState {
-        TrackingTabState {
-            signals_tab: TrackingSignalsTabState::new(),
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct TrackingSignalsTabState {
-    pub check_visibility: Vec<String>,
-}
-
-impl TrackingSignalsTabState {
-    fn new() -> TrackingSignalsTabState {
-        TrackingSignalsTabState {
-            check_visibility: vec![],
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct BaselineTabState {
-    pub(crate) clear: bool,
-    pub(crate) pause: bool,
-    pub(crate) reset: bool,
-}
-
-impl BaselineTabState {
-    fn new() -> BaselineTabState {
-        BaselineTabState {
-            clear: false,
-            pause: false,
-            reset: false,
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct SolutionTabState {
-    pub position_tab: SolutionPositionTabState,
-    pub velocity_tab: SolutionVelocityTabState,
-}
-
-impl SolutionTabState {
-    fn new() -> SolutionTabState {
-        SolutionTabState {
-            position_tab: SolutionPositionTabState::new(),
-            velocity_tab: SolutionVelocityTabState::new(),
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct SolutionPositionTabState {
-    pub clear: bool,
-    pub ins_status_flags: u32,
-    pub last_ins_status_receipt_time: Instant,
-    pub last_odo_update_time: Instant,
-    pub pause: bool,
-    pub unit: String,
-}
-
-impl SolutionPositionTabState {
-    fn new() -> SolutionPositionTabState {
-        SolutionPositionTabState {
-            clear: false,
-            ins_status_flags: 0,
-            last_ins_status_receipt_time: Instant::now(),
-            last_odo_update_time: Instant::now(),
-            pause: false,
-            unit: String::from(DEGREES),
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct SolutionVelocityTabState {
-    pub unit: String,
-}
-
-impl SolutionVelocityTabState {
-    fn new() -> SolutionVelocityTabState {
-        SolutionVelocityTabState {
-            unit: String::from(MPS),
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct AdvancedSpectrumAnalyzerTabState {
-    pub channel_idx: u16,
-}
-
-impl AdvancedSpectrumAnalyzerTabState {
-    fn new() -> AdvancedSpectrumAnalyzerTabState {
-        AdvancedSpectrumAnalyzerTabState { channel_idx: 0 }
-    }
-}
-
 // Main Tab Types.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum RealtimeDelay {
@@ -520,189 +191,45 @@ pub enum RealtimeDelay {
     Off,
 }
 
-// Navbar Types.
+// Advanced System Monitor Types.
+// Struct with shared fields for various UartState Message types.
+pub struct UartStateFields {
+    pub latency: Latency,
+    pub obs_period: Option<Period>,
+}
 
-/// Directory struct for storing informating and helpers pertaining to project directory.
-///
-/// Taken from swift-cli/swift/src/types.rs.
-/// impl taken from swift-cli/swift/src/lib.rs.
-#[derive(Debug)]
-pub struct Directory {
-    path: PathBuf,
+// Enum wrapping around various UartState Message types.
+#[derive(Debug, Clone)]
+#[allow(clippy::upper_case_acronyms)]
+pub enum UartState {
+    MsgUartState(MsgUartState),
+    MsgUartStateDepa(MsgUartStateDepa),
 }
-lazy_static! {
-    pub static ref DATA_DIRECTORY: Directory = Directory::new_data_directory();
-}
-lazy_static! {
-    pub static ref LOG_DIRECTORY: Directory = Directory::new_log_directory();
-}
-impl Directory {
-    pub fn new_data_directory() -> Directory {
-        Directory {
-            path: create_data_dir().unwrap(),
+
+impl UartState {
+    pub fn fields(&self) -> UartStateFields {
+        let (latency, obs_period) = match self {
+            UartState::MsgUartState(msg) => (msg.latency.clone(), Some(msg.obs_period.clone())),
+
+            UartState::MsgUartStateDepa(msg) => (msg.latency.clone(), None),
+        };
+        UartStateFields {
+            latency,
+            obs_period,
         }
     }
+}
 
-    pub fn new_log_directory() -> Directory {
-        Directory {
-            path: user_directory().join(DEFAULT_LOG_DIRECTORY),
+impl Event for UartState {
+    const MESSAGE_TYPES: &'static [u16] =
+        &[MsgUartState::MESSAGE_TYPE, MsgUartStateDepa::MESSAGE_TYPE];
+
+    fn from_sbp(msg: Sbp) -> Self {
+        match msg {
+            Sbp::MsgUartState(m) => UartState::MsgUartState(m),
+            Sbp::MsgUartStateDepa(m) => UartState::MsgUartStateDepa(m),
+            _ => unreachable!(),
         }
-    }
-    /// Return a clone to the private path PathBuf.
-    pub fn path(&self) -> PathBuf {
-        self.path.clone()
-    }
-}
-impl Default for Directory {
-    fn default() -> Self {
-        Directory::new_data_directory()
-    }
-}
-
-/// Deduce data directory path and create folder.
-///
-/// Taken from swift-cli/swift/src/lib.rs.
-/// # Returns
-/// - `Ok`: The PathBuf for the data directory path.
-/// - `Err`: Issue deducing path or creating the data directory.
-fn create_data_dir() -> AHResult<PathBuf> {
-    let proj_dirs = ProjectDirs::from(
-        APPLICATION_QUALIFIER,
-        APPLICATION_ORGANIZATION,
-        APPLICATION_NAME,
-    )
-    .context("could not discover local project directory")?;
-    let path: PathBuf = ProjectDirs::data_local_dir(&proj_dirs).into();
-    fs::create_dir_all(path.clone())?;
-    Ok(path)
-}
-
-/// Create directory.
-///
-/// Taken from swift-cli/swift/src/lib.rs.
-/// # Returns
-/// - `Ok`: The PathBuf for the data directory path.
-/// - `Err`: Issue deducing path or creating the data directory.
-pub fn create_directory(directory: PathBuf) -> Result<PathBuf> {
-    fs::create_dir_all(&directory)?;
-    Ok(directory)
-}
-
-/// Get user directory.
-///
-/// # Returns
-/// - The PathBuf for the user directory path. Otherwise empty pathbuf.
-pub fn user_directory() -> PathBuf {
-    if let Some(user_dirs) = UserDirs::new() {
-        PathBuf::from(user_dirs.home_dir())
-    } else {
-        PathBuf::from("")
-    }
-}
-
-#[derive(Debug, Clone, Eq, Hash, PartialEq, Serialize, Deserialize)]
-pub struct Address {
-    pub host: String,
-    pub port: u16,
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct ConnectionHistory {
-    addresses: IndexSet<Address>,
-    files: IndexSet<String>,
-    folders: IndexSet<String>,
-}
-
-impl Default for ConnectionHistory {
-    fn default() -> Self {
-        ConnectionHistory::new()
-    }
-}
-
-impl ConnectionHistory {
-    /// Attempts to create a new ConnectionHistory from expected filepath otherwise empty.
-    pub fn new() -> ConnectionHistory {
-        let filename = DATA_DIRECTORY.path().join(CONNECTION_HISTORY_FILENAME);
-        if let Ok(file) = fs::File::open(&filename) {
-            if let Ok(conn_yaml) = serde_yaml::from_reader(file) {
-                return conn_yaml;
-            }
-        }
-        let mut folders = IndexSet::new();
-        if let Ok(default_path) = LOG_DIRECTORY.path().into_os_string().into_string() {
-            folders.insert(default_path);
-        }
-        ConnectionHistory {
-            addresses: IndexSet::new(),
-            files: IndexSet::new(),
-            folders,
-        }
-    }
-    /// Return the filename of the saved connection history file.
-    fn filename(&self) -> PathBuf {
-        DATA_DIRECTORY.path().join(CONNECTION_HISTORY_FILENAME)
-    }
-    /// Returns a clone of the private addresses vec.
-    pub fn addresses(&self) -> IndexSet<Address> {
-        self.addresses.clone()
-    }
-    /// Returns a clone of the private files vec.
-    pub fn files(&self) -> IndexSet<String> {
-        self.files.clone()
-    }
-    /// Returns a clone of the private folders vec.
-    pub fn folders(&self) -> IndexSet<String> {
-        self.folders.clone()
-    }
-    /// Attempt to add a new host and port if not the most recent entries.
-    ///
-    /// # Parameters
-    /// - `host`: The TCP host to add to the history.
-    /// - `port`: The TCP port to add to the history.
-    pub fn record_address(&mut self, host: String, port: u16) {
-        let address = Address { host, port };
-        self.addresses.shift_remove(&address);
-        self.addresses.insert(address);
-        let diff = i32::max(0, self.addresses.len() as i32 - MAX_CONNECTION_HISTORY);
-        self.addresses = self.addresses.split_off(diff as usize);
-
-        if let Err(e) = self.save() {
-            error!("Unable to save connection history, {}.", e);
-        }
-    }
-    /// Attempt to add a new filepath if not the most recent entry.
-    ///
-    /// # Parameters
-    /// - `filename`: The path to the file to add to history.
-    pub fn record_file(&mut self, filename: String) {
-        self.files.shift_remove(&filename);
-        self.files.insert(filename);
-        let diff = i32::max(0, self.files.len() as i32 - MAX_CONNECTION_HISTORY);
-        self.files = self.files.split_off(diff as usize);
-
-        if let Err(e) = self.save() {
-            error!("Unable to save connection history, {}.", e);
-        }
-    }
-    /// Attempt to add a new folder if not the most recent entry.
-    ///
-    /// # Parameters
-    /// - `folder`: The path to the folder to add to history.
-    pub fn record_folder(&mut self, folder: String) {
-        self.folders.shift_remove(&folder);
-        self.folders.insert(folder);
-        let diff = i32::max(0, self.folders.len() as i32 - MAX_CONNECTION_HISTORY);
-        self.folders = self.folders.split_off(diff as usize);
-
-        if let Err(e) = self.save() {
-            error!("Unable to save connection history, {}.", e);
-        }
-    }
-
-    /// Save the history to the expected filepath.
-    fn save(&self) -> Result<()> {
-        serde_yaml::to_writer(fs::File::create(&self.filename())?, self)?;
-        Ok(())
     }
 }
 
@@ -1148,6 +675,7 @@ impl fmt::Display for SignalCodes {
             SignalCodes::CodeQzsL5I => QZS_L5I_STR,
             SignalCodes::CodeQzsL5Q => QZS_L5Q_STR,
             SignalCodes::CodeQzsL5X => QZS_L5X_STR,
+            SignalCodes::CodeAuxQzs => QZS_AUX_STR,
             _ => CODE_NOT_AVAILABLE,
         };
         write!(f, "{}", sat_code_str)
@@ -1163,7 +691,9 @@ pub struct ObservationMsgFields {
     pub states: Vec<Observations>,
     pub sender_id: Option<u16>,
 }
+
 // Enum wrapping around various Observation Message types.
+#[derive(Debug, Clone)]
 pub enum ObservationMsg {
     MsgObs(MsgObs),
     // MsgObsDepA(MsgObsDepA),
@@ -1171,6 +701,7 @@ pub enum ObservationMsg {
     MsgObsDepC(MsgObsDepC),
     MsgOsr(MsgOsr),
 }
+
 impl ObservationMsg {
     pub fn fields(&self) -> ObservationMsgFields {
         let (n_obs, tow, wn, ns_residual, states, sender_id) = match &self {
@@ -1251,6 +782,26 @@ impl ObservationMsg {
         }
     }
 }
+
+impl Event for ObservationMsg {
+    const MESSAGE_TYPES: &'static [u16] = &[
+        MsgObs::MESSAGE_TYPE,
+        MsgObsDepB::MESSAGE_TYPE,
+        MsgObsDepC::MESSAGE_TYPE,
+        MsgOsr::MESSAGE_TYPE,
+    ];
+
+    fn from_sbp(msg: Sbp) -> Self {
+        match msg {
+            Sbp::MsgObs(m) => ObservationMsg::MsgObs(m),
+            Sbp::MsgObsDepB(m) => ObservationMsg::MsgObsDepB(m),
+            Sbp::MsgObsDepC(m) => ObservationMsg::MsgObsDepC(m),
+            Sbp::MsgOsr(m) => ObservationMsg::MsgOsr(m),
+            _ => unreachable!(),
+        }
+    }
+}
+
 // Struct with shared fields for various Observation Contents types.
 pub struct ObservationFields {
     pub is_deprecated_msg_type: bool,
@@ -1264,6 +815,7 @@ pub struct ObservationFields {
     pub lock: u16,
     pub flags: u8,
 }
+
 // Enum wrapping around various Observation Contents observation types.
 pub enum Observations {
     PackedObsContent(PackedObsContent),
@@ -1272,6 +824,7 @@ pub enum Observations {
     PackedObsContentDepC(PackedObsContentDepC),
     PackedOsrContent(PackedOsrContent),
 }
+
 impl Observations {
     pub fn fields(&self) -> ObservationFields {
         // DEP_B and DEP_A obs had different pseudorange scaling
@@ -1301,9 +854,9 @@ impl Observations {
                     true,
                     signal_code,
                     sat_,
-                    obs.P as f64 / divisor,
-                    obs.L.i,
-                    obs.L.f,
+                    obs.p as f64 / divisor,
+                    obs.l.i,
+                    obs.l.f,
                     obs.cn0 as f64,
                     0_f64, // obs.D
                     obs.lock,
@@ -1320,9 +873,9 @@ impl Observations {
                     true,
                     signal_code,
                     sat_,
-                    obs.P as f64 / divisor,
-                    obs.L.i,
-                    obs.L.f,
+                    obs.p as f64 / divisor,
+                    obs.l.i,
+                    obs.l.f,
                     obs.cn0 as f64,
                     0_f64, // obs.D
                     obs.lock,
@@ -1333,11 +886,11 @@ impl Observations {
                 false,
                 SignalCodes::from(obs.sid.code),
                 obs.sid.sat as i16,
-                obs.P as f64 / divisor,
-                obs.L.i,
-                obs.L.f,
+                obs.p as f64 / divisor,
+                obs.l.i,
+                obs.l.f,
                 obs.cn0 as f64,
-                obs.D.i as f64 + obs.D.f as f64 / ((1 << 8) as f64),
+                obs.d.i as f64 + obs.d.f as f64 / ((1 << 8) as f64),
                 obs.lock as u16,
                 obs.flags,
             ),
@@ -1345,9 +898,9 @@ impl Observations {
                 false,
                 SignalCodes::from(obs.sid.code),
                 obs.sid.sat as i16,
-                obs.P as f64 / divisor,
-                obs.L.i,
-                obs.L.f,
+                obs.p as f64 / divisor,
+                obs.l.i,
+                obs.l.f,
                 0_f64, // cn0
                 0_f64, // obs.D
                 obs.lock as u16,
@@ -1468,17 +1021,19 @@ pub struct PosLLHFields {
     pub height: f64,
     pub n_sats: u8,
 }
+
 // Enum wrapping around various PosLLH Message types.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum PosLLH {
-    MsgPosLLH(MsgPosLLH),
-    MsgPosLLHDepA(MsgPosLLHDepA),
+    MsgPosLlh(MsgPosLlh),
+    MsgPosLlhDepA(MsgPosLlhDepA),
 }
+
 impl PosLLH {
     pub fn fields(&self) -> PosLLHFields {
         match self {
-            PosLLH::MsgPosLLH(MsgPosLLH {
+            PosLLH::MsgPosLlh(MsgPosLlh {
                 flags,
                 h_accuracy,
                 v_accuracy,
@@ -1489,7 +1044,7 @@ impl PosLLH {
                 n_sats,
                 ..
             })
-            | PosLLH::MsgPosLLHDepA(MsgPosLLHDepA {
+            | PosLLH::MsgPosLlhDepA(MsgPosLlhDepA {
                 flags,
                 h_accuracy,
                 v_accuracy,
@@ -1513,8 +1068,8 @@ impl PosLLH {
     }
     pub fn mode(&self) -> u8 {
         match self {
-            PosLLH::MsgPosLLH(msg) => msg.flags & 0x7,
-            PosLLH::MsgPosLLHDepA(msg) => {
+            PosLLH::MsgPosLlh(msg) => msg.flags & 0x7,
+            PosLLH::MsgPosLlhDepA(msg) => {
                 let mode = msg.flags & 0x7;
                 match mode {
                     0 => 1,
@@ -1526,6 +1081,19 @@ impl PosLLH {
         }
     }
 }
+
+impl Event for PosLLH {
+    const MESSAGE_TYPES: &'static [u16] = &[MsgPosLlh::MESSAGE_TYPE, MsgPosLlhDepA::MESSAGE_TYPE];
+
+    fn from_sbp(msg: Sbp) -> Self {
+        match msg {
+            Sbp::MsgPosLlh(m) => PosLLH::MsgPosLlh(m),
+            Sbp::MsgPosLlhDepA(m) => PosLLH::MsgPosLlhDepA(m),
+            _ => unreachable!(),
+        }
+    }
+}
+
 // Struct with shared fields for various Dops Message types.
 pub struct DopsFields {
     pub pdop: u16,
@@ -1536,7 +1104,7 @@ pub struct DopsFields {
     pub flags: u8,
 }
 // Enum wrapping around various Dops Message types.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Dops {
     MsgDops(MsgDops),
     MsgDopsDepA(MsgDopsDepA),
@@ -1563,6 +1131,18 @@ impl Dops {
     }
 }
 
+impl Event for Dops {
+    const MESSAGE_TYPES: &'static [u16] = &[MsgDops::MESSAGE_TYPE, MsgDopsDepA::MESSAGE_TYPE];
+
+    fn from_sbp(msg: Sbp) -> Self {
+        match msg {
+            Sbp::MsgDops(m) => Dops::MsgDops(m),
+            Sbp::MsgDopsDepA(m) => Dops::MsgDopsDepA(m),
+            _ => unreachable!(),
+        }
+    }
+}
+
 // Struct with shared fields for various GpsTime Message types.
 pub struct GpsTimeFields {
     pub wn: u16,
@@ -1570,10 +1150,10 @@ pub struct GpsTimeFields {
     pub flags: u8,
 }
 // Enum wrapping around various GpsTime Message types.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum GpsTime {
-    MsgGpsTime(MsgGPSTime),
-    MsgGpsTimeDepA(MsgGPSTimeDepA),
+    MsgGpsTime(MsgGpsTime),
+    MsgGpsTimeDepA(MsgGpsTimeDepA),
 }
 
 impl GpsTime {
@@ -1590,6 +1170,18 @@ impl GpsTime {
     }
 }
 
+impl Event for GpsTime {
+    const MESSAGE_TYPES: &'static [u16] = &[MsgGpsTime::MESSAGE_TYPE, MsgGpsTimeDepA::MESSAGE_TYPE];
+
+    fn from_sbp(msg: Sbp) -> Self {
+        match msg {
+            Sbp::MsgGpsTime(m) => GpsTime::MsgGpsTime(m),
+            Sbp::MsgGpsTimeDepA(m) => GpsTime::MsgGpsTimeDepA(m),
+            _ => unreachable!(),
+        }
+    }
+}
+
 // Struct with shared fields for various Specan Message types.
 pub struct SpecanFields {
     pub wn: u16,
@@ -1602,8 +1194,9 @@ pub struct SpecanFields {
     pub amplitude_unit: f32,
     pub channel_tag: u16,
 }
+
 // Enum wrapping around various Specan Message types.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Specan {
     MsgSpecan(MsgSpecan),
     MsgSpecanDep(MsgSpecanDep),
@@ -1659,6 +1252,18 @@ impl Specan {
     }
 }
 
+impl Event for Specan {
+    const MESSAGE_TYPES: &'static [u16] = &[MsgSpecan::MESSAGE_TYPE, MsgSpecanDep::MESSAGE_TYPE];
+
+    fn from_sbp(msg: Sbp) -> Self {
+        match msg {
+            Sbp::MsgSpecan(m) => Specan::MsgSpecan(m),
+            Sbp::MsgSpecanDep(m) => Specan::MsgSpecanDep(m),
+            _ => unreachable!(),
+        }
+    }
+}
+
 // Struct with shared fields for various VelNED Message types.
 #[allow(clippy::upper_case_acronyms)]
 pub struct VelNEDFields {
@@ -1669,19 +1274,20 @@ pub struct VelNEDFields {
     pub d: i32,
     pub n_sats: u8,
 }
+
 // Enum wrapping around various Vel NED Message types.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum VelNED {
-    MsgVelNED(MsgVelNED),
-    MsgVelNEDDepA(MsgVelNEDDepA),
+    MsgVelNed(MsgVelNed),
+    MsgVelNedDepA(MsgVelNedDepA),
 }
 
 impl VelNED {
     pub fn fields(self) -> VelNEDFields {
         let (flags, tow, n, e, d, n_sats) = match self {
-            VelNED::MsgVelNED(msg) => (msg.flags, msg.tow as f64, msg.n, msg.e, msg.d, msg.n_sats),
-            VelNED::MsgVelNEDDepA(msg) => (1, msg.tow as f64, msg.n, msg.e, msg.d, msg.n_sats),
+            VelNED::MsgVelNed(msg) => (msg.flags, msg.tow as f64, msg.n, msg.e, msg.d, msg.n_sats),
+            VelNED::MsgVelNedDepA(msg) => (1, msg.tow as f64, msg.n, msg.e, msg.d, msg.n_sats),
         };
         VelNEDFields {
             flags,
@@ -1690,6 +1296,18 @@ impl VelNED {
             e,
             d,
             n_sats,
+        }
+    }
+}
+
+impl Event for VelNED {
+    const MESSAGE_TYPES: &'static [u16] = &[MsgVelNed::MESSAGE_TYPE, MsgVelNedDepA::MESSAGE_TYPE];
+
+    fn from_sbp(msg: Sbp) -> Self {
+        match msg {
+            Sbp::MsgVelNed(m) => VelNED::MsgVelNed(m),
+            Sbp::MsgVelNedDepA(m) => VelNED::MsgVelNedDepA(m),
+            _ => unreachable!(),
         }
     }
 }
@@ -1709,17 +1327,17 @@ pub struct BaselineNEDFields {
     pub n_sats: u8,
 }
 // Enum wrapping around various Baseline NED Message types.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum BaselineNED {
-    MsgBaselineNED(MsgBaselineNED),
-    MsgBaselineNEDDepA(MsgBaselineNEDDepA),
+    MsgBaselineNed(MsgBaselineNed),
+    MsgBaselineNedDepA(MsgBaselineNedDepA),
 }
 
 impl BaselineNED {
     pub fn fields(&self) -> BaselineNEDFields {
         let (flags, tow, n, e, d, h_accuracy, v_accuracy, n_sats) = match self {
-            BaselineNED::MsgBaselineNED(msg) => (
+            BaselineNED::MsgBaselineNed(msg) => (
                 msg.flags,
                 msg.tow as f64,
                 msg.n,
@@ -1729,7 +1347,7 @@ impl BaselineNED {
                 msg.v_accuracy,
                 msg.n_sats,
             ),
-            BaselineNED::MsgBaselineNEDDepA(msg) => (
+            BaselineNED::MsgBaselineNedDepA(msg) => (
                 1,
                 msg.tow as f64,
                 msg.n,
@@ -1753,8 +1371,23 @@ impl BaselineNED {
     }
     pub fn mode(&self) -> u8 {
         match self {
-            BaselineNED::MsgBaselineNED(MsgBaselineNED { flags, .. })
-            | BaselineNED::MsgBaselineNEDDepA(MsgBaselineNEDDepA { flags, .. }) => *flags & 0x7,
+            BaselineNED::MsgBaselineNed(MsgBaselineNed { flags, .. })
+            | BaselineNED::MsgBaselineNedDepA(MsgBaselineNedDepA { flags, .. }) => *flags & 0x7,
+        }
+    }
+}
+
+impl Event for BaselineNED {
+    const MESSAGE_TYPES: &'static [u16] = &[
+        MsgBaselineNed::MESSAGE_TYPE,
+        MsgBaselineNedDepA::MESSAGE_TYPE,
+    ];
+
+    fn from_sbp(msg: Sbp) -> Self {
+        match msg {
+            Sbp::MsgBaselineNed(m) => BaselineNED::MsgBaselineNed(m),
+            Sbp::MsgBaselineNedDepA(m) => BaselineNED::MsgBaselineNedDepA(m),
+            _ => unreachable!(),
         }
     }
 }
@@ -1799,97 +1432,5 @@ impl std::str::FromStr for VelocityUnits {
             KPH => Ok(VelocityUnits::Kph),
             _ => panic!("unable to convert to VelocityUnits"),
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::test_common::{backup_file, data_directories, filename, restore_backup_file};
-    use serial_test::serial;
-
-    #[test]
-    fn create_data_dir_test() {
-        create_data_dir().unwrap();
-        let user_dirs = UserDirs::new().unwrap();
-        let home_dir = user_dirs.home_dir();
-        #[cfg(target_os = "linux")]
-        {
-            assert!(home_dir.join(data_directories::LINUX).exists());
-        }
-
-        #[cfg(target_os = "macos")]
-        {
-            assert!(home_dir.join(data_directories::MACOS).exists());
-        }
-        #[cfg(target_os = "windows")]
-        {
-            assert!(home_dir.join(data_directories::WINDOWS).exists());
-        }
-    }
-
-    #[test]
-    #[serial]
-    fn connection_history_save_test() {
-        let bfilename = filename();
-        backup_file(bfilename.clone());
-        let conn_history = ConnectionHistory::new();
-        conn_history.save().unwrap();
-        assert!(bfilename.exists());
-        restore_backup_file(bfilename);
-    }
-
-    #[test]
-    #[serial]
-    fn connection_history_additions_test() {
-        let bfilename = filename();
-        backup_file(bfilename.clone());
-
-        let mut conn_history = ConnectionHistory::new();
-        let host1 = String::from("host1");
-        let host2 = String::from("host2");
-        let port = 100;
-
-        conn_history.record_address(host1.clone(), port);
-        let addresses = conn_history.addresses();
-        let addresses_len = addresses.len();
-        let first_addy = addresses.first().unwrap();
-        assert_eq!(host1, first_addy.host);
-        assert_eq!(port, first_addy.port);
-
-        conn_history.record_address(host2.clone(), port);
-        let addresses = conn_history.addresses();
-        let first_addy = addresses.first().unwrap();
-        let second_addy = addresses.get_index(1).unwrap();
-        assert_eq!(host1, first_addy.host);
-        assert_eq!(port, first_addy.port);
-        assert_eq!(host2, second_addy.host);
-        assert_eq!(port, second_addy.port);
-        assert_eq!(addresses_len + 1, addresses.len());
-
-        conn_history.record_address(host1.clone(), port);
-        let addresses = conn_history.addresses();
-        let first_addy = addresses.first().unwrap();
-        let second_addy = addresses.get_index(1).unwrap();
-        assert_eq!(host2, first_addy.host);
-        assert_eq!(port, first_addy.port);
-        assert_eq!(host1, second_addy.host);
-        assert_eq!(port, second_addy.port);
-        assert_eq!(addresses_len + 1, addresses.len());
-
-        let filename1 = String::from("filename1");
-        let filename2 = String::from("filename2");
-        conn_history.record_file(filename1.clone());
-        conn_history.record_file(filename2.clone());
-        conn_history.record_file(filename1.clone());
-        let files = conn_history.files();
-        assert_eq!(filename1, files[1]);
-        assert_eq!(filename2, files[0]);
-
-        for ele in 0..MAX_CONNECTION_HISTORY {
-            conn_history.record_file(ele.to_string());
-        }
-        assert_eq!(conn_history.files().len(), MAX_CONNECTION_HISTORY as usize);
-        restore_backup_file(bfilename);
     }
 }

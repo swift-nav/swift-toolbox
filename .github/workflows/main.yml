@@ -14,6 +14,8 @@ env:
   LIBCLANG_PATH_WIN: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
   CARGO_MAKE_VERSION: 0.35.0
   MINICONDA_VERSION: "py38_4.10.3"
+  CARGO_INCREMENTAL: 0
+  RUSTFLAGS: "-C debuginfo=0"
 
 jobs:
 
@@ -68,19 +70,13 @@ jobs:
         env:
           GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
 
-      - name: Install stable Rust
-        uses: actions-rs/toolchain@v1
+      - uses: actions-rs/toolchain@v1
         with:
+          profile: minimal
           toolchain: stable
-          override: true
 
-      - name: Cache rust.
-        uses: actions/cache@v2
-        with:
-          path: |
-            ${{ env.RUST_CACHE_DIRS }}
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock', '**/console_backend.capnp') }}
-
+      - uses: Swatinem/rust-cache@v1
+      
       - uses: davidB/rust-cargo-make@v1
         with:
           version: ${{ env.CARGO_MAKE_VERSION }}
@@ -147,12 +143,7 @@ jobs:
           override: true
           components: rustfmt, clippy
 
-      - name: Cache rust.
-        uses: actions/cache@v2
-        with:
-          path: |
-            ${{ env.RUST_CACHE_DIRS }}
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: Swatinem/rust-cache@v1
 
       - uses: davidB/rust-cargo-make@v1
         with:
@@ -269,12 +260,7 @@ jobs:
           override: true
           components: rustfmt, clippy
 
-      - name: Cache rust.
-        uses: actions/cache@v2
-        with:
-          path: |
-            ${{ env.RUST_CACHE_DIRS }}
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: Swatinem/rust-cache@v1
 
       - uses: davidB/rust-cargo-make@v1
         with:

@@ -6,7 +6,7 @@ use capnp::message::Builder;
 use crate::common_constants as cc;
 use crate::constants::LOG_WRITER_BUFFER_MESSAGE_COUNT;
 use crate::errors::CONSOLE_LOG_JSON_TO_STRING_FAILURE;
-use crate::types::*;
+use crate::types::{CapnProtoSender, ClientSender};
 use crate::utils::serialize_capnproto_builder;
 
 use async_logger::Writer;
@@ -44,11 +44,12 @@ pub fn splitable_log_formatter(record: &Record) -> String {
         record.level().as_str()
     };
     let timestamp = Local::now().format("%Y-%m-%dT%H:%M:%S");
-    let msg = record.args();
+    let mut msg = record.args().to_string();
+    msg.retain(|c| c != '\0');
     let msg_packet = ConsoleLogPacket {
         level: level.to_string(),
         timestamp: timestamp.to_string(),
-        msg: msg.to_string(),
+        msg,
     };
     serde_json::to_string(&msg_packet).expect(CONSOLE_LOG_JSON_TO_STRING_FAILURE)
 }
@@ -95,8 +96,8 @@ pub fn handle_log_msg(msg: MsgLog) {
     }
 }
 
-pub fn setup_logging(client_sender: ClientSender) {
-    let log_panel = LogPanelWriter::new(client_sender);
+pub fn setup_logging(client_sender: ClientSender, debug: bool) {
+    let log_panel = LogPanelWriter::new(client_sender, debug);
     let logger = Logger::builder()
         .buf_size(LOG_WRITER_BUFFER_MESSAGE_COUNT)
         .formatter(splitable_log_formatter)
@@ -110,11 +111,15 @@ pub fn setup_logging(client_sender: ClientSender) {
 #[derive(Debug)]
 pub struct LogPanelWriter<S: CapnProtoSender> {
     pub client_sender: S,
+    pub debug: bool,
 }
 
 impl<S: CapnProtoSender> LogPanelWriter<S> {
-    pub fn new(client_sender: S) -> LogPanelWriter<S> {
-        LogPanelWriter { client_sender }
+    pub fn new(client_sender: S, debug: bool) -> LogPanelWriter<S> {
+        LogPanelWriter {
+            client_sender,
+            debug,
+        }
     }
 }
 
@@ -131,6 +136,9 @@ impl<S: CapnProtoSender> Writer<Box<String>> for LogPanelWriter<S> {
         let mut entries = log_update.init_entries(slice.len() as u32);
 
         for (idx, item) in slice.iter().enumerate() {
+            if self.debug {
+                eprintln!("{}", item);
+            }
             let mut entry = entries.reborrow().get(idx as u32);
 
             entry.set_line(&**item);

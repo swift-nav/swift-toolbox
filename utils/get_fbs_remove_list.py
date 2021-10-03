@@ -21,7 +21,7 @@ def create_remove_negligibles_file():
                 continue
             out += f'rm -rf "{INSTALLER_DIR}/{path}" && '
     filename_prefix = SYS_PLATFORM_PREFIXS.get(sys.platform, "unknown")
-    with open(os.path.join(FBS_DIR, filename_prefix + FILENAME_POSTFIX), "w") as filo:
+    with open(os.path.join(FBS_DIR, filename_prefix + FILENAME_POSTFIX), "w", encoding="utf-8") as filo:
         filo.write(out[: -len("&& ")])
         filo.write("\n")
 

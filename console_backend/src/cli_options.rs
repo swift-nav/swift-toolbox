@@ -7,11 +7,14 @@ use std::{
 use strum::VariantNames;
 
 use crate::constants::{AVAILABLE_BAUDRATES, AVAILABLE_REFRESH_RATES};
+use crate::errors::{CONVERT_TO_STR_FAILURE, SHARED_STATE_LOCK_MUTEX_FAILURE};
 use crate::log_panel::LogLevel;
-use crate::types::FlowControl;
+use crate::output::CsvLogging;
+use crate::shared_state::SharedState;
+use crate::types::{FlowControl, RealtimeDelay};
 use crate::{
     common_constants::{SbpLogging, Tabs},
-    connection::Connection,
+    connection::{Connection, ConnectionState},
 };
 
 #[derive(Debug)]
@@ -234,4 +237,49 @@ fn is_baudrate(br: &str) -> Result<(), String> {
         "Must choose from available baudrates {:?}",
         AVAILABLE_BAUDRATES
     ))
+}
+
+/// Start connections based on CLI options.
+///
+/// # Parameters
+/// - `opt`: CLI Options to start specific connection type.
+/// - `connection_state`: The Server state to start a specific connection.
+/// - `client_send`: Client Sender channel for communication from backend to frontend.
+/// - `shared_state`: The shared state for validating another connection is not already running.
+pub fn handle_cli(opt: CliOptions, connection_state: &ConnectionState, shared_state: SharedState) {
+    if let Some(opt_input) = opt.input {
+        match opt_input {
+            Input::Tcp { host, port } => {
+                connection_state.connect_to_host(host, port);
+            }
+            Input::File { file_in } => {
+                let filename = file_in.display().to_string();
+                connection_state.connect_to_file(filename, RealtimeDelay::On, opt.exit_after);
+            }
+            Input::Serial {
+                serialport,
+                baudrate,
+                flow_control,
+            } => {
+                let serialport = serialport.display().to_string();
+                connection_state.connect_to_serial(serialport, baudrate, flow_control);
+            }
+        }
+    }
+    if let Some(folder) = opt.dirname {
+        shared_state.set_logging_directory(PathBuf::from(folder));
+    }
+    let log_level = if let Some(log_level_) = opt.log_level {
+        (*log_level_).clone()
+    } else {
+        LogLevel::INFO
+    };
+    shared_state.set_log_level(log_level);
+    let mut shared_data = shared_state.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+    (*shared_data).logging_bar.csv_logging = CsvLogging::from(opt.csv_log);
+    if let Some(sbp_log) = opt.sbp_log {
+        (*shared_data).logging_bar.sbp_logging =
+            SbpLogging::from_str(&sbp_log.to_string()).expect(CONVERT_TO_STR_FAILURE);
+    }
+    log::logger().flush();
 }

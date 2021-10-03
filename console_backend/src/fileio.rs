@@ -4,21 +4,17 @@ use std::{
     time::{Duration, Instant},
 };
 
+use anyhow::{anyhow, bail};
 use crossbeam::{atomic::AtomicCell, channel, scope, select, utils::Backoff};
 use rand::Rng;
-use sbp::messages::{
-    file_io::{
-        MsgFileioConfigReq, MsgFileioConfigResp, MsgFileioReadDirReq, MsgFileioReadDirResp,
-        MsgFileioReadReq, MsgFileioReadResp, MsgFileioRemove, MsgFileioWriteReq,
-        MsgFileioWriteResp,
-    },
-    SBP,
+use sbp::link::Link;
+use sbp::messages::file_io::{
+    MsgFileioConfigReq, MsgFileioConfigResp, MsgFileioReadDirReq, MsgFileioReadDirResp,
+    MsgFileioReadReq, MsgFileioReadResp, MsgFileioRemove, MsgFileioWriteReq, MsgFileioWriteResp,
 };
 
-use crate::{
-    broadcaster::Broadcaster,
-    types::{MsgSender, Result},
-};
+use crate::errors::FILEIO_CHANNEL_SEND_FAILURE;
+use crate::types::{MsgSender, Result};
 
 const MAX_RETRIES: usize = 20;
 
@@ -35,36 +31,36 @@ const OFFSET_LEN: usize = 4;
 const NULL_SEP_LEN: usize = 1;
 const WRITE_REQ_OVERHEAD_LEN: usize = SEQUENCE_LEN + OFFSET_LEN + NULL_SEP_LEN;
 
-pub struct Fileio<W> {
-    broadcast: Broadcaster,
-    sender: MsgSender<W>,
+pub struct Fileio<'a> {
+    link: Link<'a, ()>,
+    sender: MsgSender,
     config: Option<FileioConfig>,
 }
 
-impl<W> Fileio<W>
-where
-    W: Write + Send,
-{
-    pub fn new(broadcast: Broadcaster, sender: MsgSender<W>) -> Self {
+impl<'a> Fileio<'a> {
+    pub fn new(link: Link<'a, ()>, sender: MsgSender) -> Self {
         Self {
-            broadcast,
+            link,
             sender,
             config: None,
         }
     }
 
     pub fn read(&mut self, path: String, mut dest: impl Write) -> Result<()> {
-        let config = self.fetch_config();
+        let config = self.config_to_default();
 
         let sender = self.sender.clone();
         let send_msg = move |sequence, offset| {
-            sender.send(SBP::from(MsgFileioReadReq {
-                sender_id: None,
-                filename: path.clone().into(),
-                chunk_size: READ_CHUNK_SIZE as u8,
-                sequence,
-                offset,
-            }))
+            sender.send(
+                MsgFileioReadReq {
+                    sender_id: None,
+                    filename: path.clone().into(),
+                    chunk_size: READ_CHUNK_SIZE as u8,
+                    sequence,
+                    offset,
+                }
+                .into(),
+            )
         };
 
         let (stop_req_tx, stop_req_rx) = channel::bounded(0);
@@ -92,20 +88,19 @@ where
                         backoff.snooze();
                     }
                     send_msg(sequence, offset)?;
-                    req_tx.send((sequence, ReadReq::new(offset))).unwrap();
+                    req_tx
+                        .send((sequence, ReadReq::new(offset)))
+                        .expect(FILEIO_CHANNEL_SEND_FAILURE);
                     offset += READ_CHUNK_SIZE as u32;
                     sequence += 1;
                     open_requests.fetch_add(1);
                 }
 
-                sbp::Result::Ok(())
+                Result::Ok(())
             });
 
-            let (sub, key) = self.broadcast.subscribe::<MsgFileioReadResp>();
-            s.spawn(move |_| {
-                for res in sub.iter() {
-                    res_tx.send(res).unwrap();
-                }
+            let key = self.link.register(move |msg: MsgFileioReadResp| {
+                res_tx.send(msg).expect(FILEIO_CHANNEL_SEND_FAILURE);
             });
 
             loop {
@@ -115,7 +110,7 @@ where
                         pending.insert(sequence, request);
                     },
                     recv(res_rx) -> msg => {
-                        let (msg, _) = msg?;
+                        let msg = msg?;
                         let req = match pending.remove(&msg.sequence) {
                             Some(req) => req,
                             None => continue,
@@ -134,7 +129,7 @@ where
                         open_requests.fetch_sub(1);
                         if !last_sent && bytes_read != READ_CHUNK_SIZE as usize {
                             last_sent = true;
-                            stop_req_tx.send(true).unwrap();
+                            stop_req_tx.send(true).expect(FILEIO_CHANNEL_SEND_FAILURE);
                         }
                         if last_sent && open_requests.load() == 0 {
                             break
@@ -151,7 +146,7 @@ where
                 }
             }
 
-            self.broadcast.unsubscribe(key);
+            self.link.unregister(key);
 
             Ok(())
         })
@@ -162,6 +157,21 @@ where
     /// This operation is NOT atomic. If the write fails and `filename` existed, it is gone forever.
     /// For more context see: https://github.com/swift-nav/console_pp/pull/72#discussion_r654751414
     pub fn overwrite(&mut self, filename: String, data: impl Read) -> Result<()> {
+        self.overwrite_with_progress(filename, data, |_| ())
+    }
+
+    /// Deletes `filename` on the remote device (if it exists) and writes the contents of `data` to the file.
+    /// This operation is NOT atomic. If the write fails and `filename` existed, it is gone forever.
+    /// For more context see: https://github.com/swift-nav/console_pp/pull/72#discussion_r654751414
+    pub fn overwrite_with_progress<'b, F>(
+        &mut self,
+        filename: String,
+        data: impl Read,
+        mut on_progress: F,
+    ) -> Result<()>
+    where
+        F: FnMut(usize) + 'b,
+    {
         self.remove(filename.clone())?;
 
         let mut data = BufReader::new(data);
@@ -173,14 +183,22 @@ where
             if bytes_read == 0 {
                 break;
             }
-            state = self.write_slice(state, buf)?;
+            state = self.write_slice(state, buf, &mut on_progress)?;
             data.consume(bytes_read);
         }
 
         Ok(())
     }
 
-    fn write_slice(&mut self, mut state: WriteState, data: &[u8]) -> Result<WriteState> {
+    fn write_slice<'b, F>(
+        &mut self,
+        mut state: WriteState,
+        data: &[u8],
+        on_progress: &mut F,
+    ) -> Result<WriteState>
+    where
+        F: FnMut(usize) + 'b,
+    {
         let config = self.fetch_config();
 
         let (req_tx, req_rx) = channel::unbounded();
@@ -190,18 +208,25 @@ where
 
         let sender = self.sender.clone();
         let send_msg = |state: &WriteState, req: &WriteReq| {
-            sender.send(SBP::from(MsgFileioWriteReq {
-                sender_id: None,
-                sequence: state.sequence,
-                offset: state.offset as u32,
-                filename: state.filename(),
-                data: data[req.offset..req.end_offset].to_vec(),
-            }))
+            sender.send(
+                MsgFileioWriteReq {
+                    sender_id: None,
+                    sequence: state.sequence,
+                    offset: state.offset as u32,
+                    filename: state.filename().into(),
+                    data: data[req.offset..req.end_offset].to_vec(),
+                }
+                .into(),
+            )
         };
 
         let data_len = data.len();
 
         scope(|s| {
+            let key = self.link.register(move |msg: MsgFileioWriteResp| {
+                res_tx.send(msg).expect(FILEIO_CHANNEL_SEND_FAILURE);
+            });
+
             s.spawn(|_| {
                 let backoff = Backoff::new();
                 let mut slice_offset = 0;
@@ -214,20 +239,15 @@ where
                     let chunk_len = std::cmp::min(state.chunk_size, data_len - slice_offset);
                     let req = WriteReq::new(slice_offset, end_offset, chunk_len < state.chunk_size);
                     send_msg(&state, &req)?;
-                    req_tx.send((state.clone(), req)).unwrap();
+                    req_tx
+                        .send((state.clone(), req))
+                        .expect(FILEIO_CHANNEL_SEND_FAILURE);
                     state.update(chunk_len);
                     slice_offset += chunk_len;
                     open_requests.fetch_add(1);
                 }
 
-                sbp::Result::Ok(())
-            });
-
-            let (sub, key) = self.broadcast.subscribe::<MsgFileioWriteResp>();
-            s.spawn(move |_| {
-                for res in sub.iter() {
-                    res_tx.send(res).unwrap();
-                }
+                Result::Ok(())
             });
 
             let mut pending: HashMap<u32, (WriteState, WriteReq)> = HashMap::new();
@@ -243,10 +263,12 @@ where
                         pending.insert(req_state.sequence, (req_state, req));
                     },
                     recv(res_rx) -> msg => {
-                        let (msg, _) = msg?;
-                        if pending.remove(&msg.sequence).is_none() {
-                            continue
-                        }
+                        let msg = msg?;
+                        let req = match pending.remove(&msg.sequence) {
+                            Some((_, req)) => req,
+                            _ => continue,
+                        };
+                        on_progress(req.end_offset - req.offset);
                         open_requests.fetch_sub(1);
                         if last_sent && open_requests.load() == 0 {
                             break;
@@ -263,7 +285,7 @@ where
                 }
             }
 
-            self.broadcast.unsubscribe(key);
+            self.link.unregister(key);
 
             Result::Ok(())
         })
@@ -276,47 +298,74 @@ where
         let mut seq = new_sequence();
         let mut files = vec![];
 
-        loop {
-            self.sender.send(SBP::from(MsgFileioReadDirReq {
+        let (tx, rx) = channel::unbounded();
+
+        let key = self.link.register(move |msg: MsgFileioReadDirResp| {
+            tx.send(msg).expect(FILEIO_CHANNEL_SEND_FAILURE);
+        });
+
+        self.sender.send(
+            MsgFileioReadDirReq {
                 sender_id: None,
                 sequence: seq,
                 offset: files.len() as u32,
                 dirname: path.clone().into(),
-            }))?;
-
-            let (reply, _) = self
-                .broadcast
-                .wait::<MsgFileioReadDirResp>(READDIR_TIMEOUT)?;
-
-            if reply.sequence != seq {
-                return Err(format!(
-                    "MsgFileioReadDirResp didn't match request ({} vs {})",
-                    reply.sequence, seq
-                )
-                .into());
             }
+            .into(),
+        )?;
 
-            let mut contents = reply.contents;
-
-            if contents.is_empty() {
-                return Ok(files);
+        loop {
+            select! {
+                recv(rx) -> msg => {
+                    let msg = msg?;
+                    if msg.sequence != seq {
+                        self.link.unregister(key);
+                        bail!(
+                            "MsgFileioReadDirResp didn't match request ({} vs {})",
+                            msg.sequence, seq
+                        );
+                    }
+                    let mut contents = msg.contents;
+                    if contents.is_empty() {
+                        self.link.unregister(key);
+                        return Ok(files);
+                    }
+                    if contents[contents.len() - 1] == b'\0' {
+                        contents.remove(contents.len() - 1);
+                    }
+                    for f in contents.split(|b| b == &b'\0') {
+                        files.push(String::from_utf8_lossy(f).into_owned());
+                    }
+                    seq += 1;
+                    self.sender.send(MsgFileioReadDirReq {
+                        sender_id: None,
+                        sequence: seq,
+                        offset: files.len() as u32,
+                        dirname: path.clone().into(),
+                    }.into())?;
+                },
+                recv(channel::tick(READDIR_TIMEOUT)) -> _ => {
+                    self.link.unregister(key);
+                    bail!("MsgFileioReadDirReq timed out");
+                }
             }
-            if contents[contents.len() - 1] == b'\0' {
-                contents.remove(contents.len() - 1);
-            }
-            for f in contents.split(|b| b == &b'\0') {
-                files.push(String::from_utf8_lossy(f).into_owned());
-            }
-            seq += 1;
         }
     }
 
     pub fn remove(&self, filename: String) -> Result<()> {
-        self.sender.send(SBP::from(MsgFileioRemove {
-            sender_id: None,
-            filename: filename.into(),
-        }))?;
+        self.sender.send(
+            MsgFileioRemove {
+                sender_id: None,
+                filename: filename.into(),
+            }
+            .into(),
+        )?;
         Ok(())
+    }
+
+    fn config_to_default(&mut self) -> FileioConfig {
+        self.config = Some(Default::default());
+        self.config.as_ref().unwrap().clone()
     }
 
     fn fetch_config(&mut self) -> FileioConfig {
@@ -325,29 +374,40 @@ where
         }
 
         let sequence = new_sequence();
-        let (tx, rx) = channel::bounded(0);
+        let (stop_tx, stop_rx) = channel::bounded(1);
+        let (tx, rx) = channel::bounded(1);
+        let stop_tx_clone = stop_tx.clone();
+        let key = self.link.register(move |msg: MsgFileioConfigResp| {
+            tx.send(FileioConfig::new(msg))
+                .expect(FILEIO_CHANNEL_SEND_FAILURE);
+            stop_tx_clone.send(true).expect(FILEIO_CHANNEL_SEND_FAILURE);
+        });
 
+        let sender = &self.sender;
         let config = scope(|s| {
             s.spawn(|_| {
-                while rx.try_recv().is_err() {
-                    let _ = self.sender.send(SBP::from(MsgFileioConfigReq {
-                        sender_id: None,
-                        sequence,
-                    }));
+                while stop_rx.try_recv().is_err() {
+                    let _ = sender.send(
+                        MsgFileioConfigReq {
+                            sender_id: None,
+                            sequence,
+                        }
+                        .into(),
+                    );
                     std::thread::sleep(CONFIG_REQ_RETRY);
                 }
             });
 
-            let config = self
-                .broadcast
-                .wait::<MsgFileioConfigResp>(CONFIG_REQ_TIMEOUT)
-                .map_or_else(|_| Default::default(), |(msg, _)| FileioConfig::new(msg));
-
-            tx.send(true).unwrap();
-
-            config
+            let res = match rx.recv_timeout(CONFIG_REQ_TIMEOUT) {
+                Ok(config) => config,
+                Err(_) => Default::default(),
+            };
+            stop_tx.send(true).expect(FILEIO_CHANNEL_SEND_FAILURE);
+            res
         })
         .unwrap();
+
+        self.link.unregister(key);
 
         self.config = Some(config);
         self.config.clone().unwrap()
@@ -385,8 +445,8 @@ impl WriteState {
         }
     }
 
-    fn filename(&self) -> sbp::SbpString {
-        self.filename.clone().into()
+    fn filename(&self) -> String {
+        self.filename.to_string()
     }
 
     fn update(&mut self, chunk_len: usize) {
@@ -395,6 +455,7 @@ impl WriteState {
     }
 }
 
+#[derive(Debug)]
 struct FileioRequest {
     sent_at: Instant,
     retries: usize,
@@ -417,7 +478,7 @@ impl FileioRequest {
         self.sent_at = Instant::now();
 
         if self.retries >= MAX_RETRIES {
-            Err("fileio send message timeout".into())
+            Err(anyhow!("fileio send message timeout"))
         } else {
             Ok(())
         }
@@ -452,6 +513,7 @@ impl ReadReq {
     }
 }
 
+#[derive(Debug)]
 struct WriteReq {
     /// Offset start into current slice of data
     offset: usize,
@@ -505,6 +567,6 @@ impl Default for FileioConfig {
     }
 }
 
-fn new_sequence() -> u32 {
+pub fn new_sequence() -> u32 {
     rand::thread_rng().gen_range(0..0xfffffff)
 }

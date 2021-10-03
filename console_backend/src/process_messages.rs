@@ -1,17 +1,38 @@
-use log::{debug, error};
-use sbp::sbp_tools::{ControlFlow, SBPTools};
-use sbp::{
-    messages::{SBPMessage, SBP},
-    serialize::SbpSerialize,
-};
 use std::{io::ErrorKind, thread::sleep, time::Duration};
 
-use crate::connection::Connection;
+use crossbeam::sync::Parker;
+use log::{debug, error};
+use sbp::{
+    link::LinkSource,
+    messages::{
+        imu::{MsgImuAux, MsgImuRaw},
+        logging::MsgLog,
+        mag::MsgMagRaw,
+        navigation::{MsgAgeCorrections, MsgPosLlhCov, MsgUtcTime, MsgVelNed},
+        observation::{MsgObsDepA, MsgSvAzEl},
+        orientation::{MsgAngularRate, MsgBaselineHeading, MsgOrientEuler},
+        piksi::{MsgCommandResp, MsgDeviceMonitor, MsgThreadState},
+        system::{
+            MsgCsacTelemetry, MsgCsacTelemetryLabels, MsgHeartbeat, MsgInsStatus, MsgInsUpdates,
+        },
+        tracking::{MsgMeasurementState, MsgTrackingState},
+    },
+    sbp_iter_ext::{ControlFlow, SbpIterExt},
+    SbpMessage,
+};
+
 use crate::constants::PAUSE_LOOP_SLEEP_DURATION_MS;
+use crate::errors::UNABLE_TO_CLONE_UPDATE_SHARED;
 use crate::log_panel::handle_log_msg;
-use crate::main_tab::*;
-use crate::types::*;
+use crate::shared_state::SharedState;
+use crate::types::{
+    BaselineNED, CapnProtoSender, Dops, GpsTime, MsgSender, ObservationMsg, PosLLH, RealtimeDelay,
+    Result, Specan, VelNED,
+};
+use crate::update_tab;
 use crate::utils::{close_frontend, refresh_navbar};
+use crate::Tabs;
+use crate::{connection::Connection, types::UartState};
 
 pub fn process_messages<S>(
     conn: Connection,
@@ -22,199 +43,303 @@ where
     S: CapnProtoSender,
 {
     shared_state.set_running(true, client_send.clone());
+    shared_state.set_settings_refresh(conn.settings_enabled());
     let realtime_delay = conn.realtime_delay();
     let (rdr, wtr) = conn.try_connect(Some(shared_state.clone()))?;
     let msg_sender = MsgSender::new(wtr);
     shared_state.set_current_connection(conn.name());
     refresh_navbar(&mut client_send.clone(), shared_state.clone());
-    let mut main = MainTab::new(shared_state.clone(), client_send.clone(), msg_sender);
-    let messages = sbp::iter_messages(rdr)
-        .handle_errors(|e| {
-            debug!("{}", e);
-            match e {
-                sbp::Error::IoError(err) => {
-                    if (*err).kind() == ErrorKind::TimedOut {
-                        shared_state.set_running(false, client_send.clone());
+    let messages = {
+        let state = shared_state.clone();
+        let client = client_send.clone();
+        sbp::iter_messages(rdr)
+            .handle_errors(move |e| {
+                debug!("{}", e);
+                match e {
+                    sbp::DeserializeError::IoError(err) => {
+                        if (*err).kind() == ErrorKind::TimedOut {
+                            state.set_running(false, client.clone());
+                        }
+                        ControlFlow::Break
                     }
-                    ControlFlow::Break
+                    _ => ControlFlow::Continue,
                 }
-                _ => ControlFlow::Continue,
+            })
+            .with_rover_time()
+    };
+    let source: LinkSource<Tabs<S>> = LinkSource::new();
+    let tabs = Tabs::new(
+        shared_state.clone(),
+        client_send.clone(),
+        msg_sender.clone(),
+        source.stateless_link(),
+    );
+
+    let link = source.link();
+
+    link.register(|tabs: &Tabs<S>, msg: MsgAgeCorrections| {
+        tabs.baseline
+            .lock()
+            .unwrap()
+            .handle_age_corrections(msg.clone());
+        tabs.solution
+            .lock()
+            .unwrap()
+            .handle_age_corrections(msg.clone());
+        tabs.status_bar.lock().unwrap().handle_age_corrections(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: MsgAngularRate| {
+        tabs.solution.lock().unwrap().handle_angular_rate(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: MsgBaselineHeading| {
+        tabs.baseline.lock().unwrap().handle_baseline_heading(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: MsgCommandResp| {
+        tabs.update.lock().unwrap().handle_command_resp(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: MsgCsacTelemetry| {
+        tabs.advanced_system_monitor
+            .lock()
+            .unwrap()
+            .handle_csac_telemetry(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: MsgCsacTelemetryLabels| {
+        tabs.advanced_system_monitor
+            .lock()
+            .unwrap()
+            .handle_csac_telemetry_labels(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: MsgDeviceMonitor| {
+        tabs.advanced_system_monitor
+            .lock()
+            .unwrap()
+            .handle_device_monitor(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: BaselineNED| {
+        tabs.baseline
+            .lock()
+            .unwrap()
+            .handle_baseline_ned(msg.clone());
+        tabs.status_bar.lock().unwrap().handle_baseline_ned(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: Dops| {
+        tabs.solution.lock().unwrap().handle_dops(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: GpsTime| {
+        tabs.baseline.lock().unwrap().handle_gps_time(msg.clone());
+        tabs.solution.lock().unwrap().handle_gps_time(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, _: MsgHeartbeat| {
+        tabs.advanced_system_monitor
+            .lock()
+            .unwrap()
+            .handle_heartbeat();
+        tabs.status_bar.lock().unwrap().handle_heartbeat();
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: MsgImuAux| {
+        tabs.advanced_ins.lock().unwrap().handle_imu_aux(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: MsgImuRaw| {
+        tabs.advanced_ins.lock().unwrap().handle_imu_raw(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: MsgInsStatus| {
+        tabs.solution.lock().unwrap().handle_ins_status(msg.clone());
+        tabs.status_bar.lock().unwrap().handle_ins_status(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: MsgInsUpdates| {
+        tabs.advanced_ins
+            .lock()
+            .unwrap()
+            .fusion_engine_status_bar
+            .handle_ins_updates(msg.clone());
+        tabs.solution
+            .lock()
+            .unwrap()
+            .handle_ins_updates(msg.clone());
+        tabs.status_bar.lock().unwrap().handle_ins_updates(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: MsgMagRaw| {
+        tabs.advanced_magnetometer
+            .lock()
+            .unwrap()
+            .handle_mag_raw(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: MsgMeasurementState| {
+        tabs.tracking_signals
+            .lock()
+            .unwrap()
+            .handle_msg_measurement_state(msg.states);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: ObservationMsg| {
+        tabs.tracking_signals
+            .lock()
+            .unwrap()
+            .handle_obs(msg.clone());
+        tabs.observation.lock().unwrap().handle_obs(msg);
+    });
+
+    link.register(|_: MsgObsDepA| {
+        println!("The message type, MsgObsDepA, is not handled in the Tracking->SignalsPlot or Observation tab.");
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: MsgOrientEuler| {
+        tabs.solution.lock().unwrap().handle_orientation_euler(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: PosLLH| {
+        tabs.solution.lock().unwrap().handle_pos_llh(msg.clone());
+        tabs.status_bar.lock().unwrap().handle_pos_llh(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: MsgPosLlhCov| {
+        tabs.solution.lock().unwrap().handle_pos_llh_cov(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: Specan| {
+        tabs.advanced_spectrum_analyzer
+            .lock()
+            .unwrap()
+            .handle_specan(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: MsgSvAzEl| {
+        tabs.tracking_sky_plot.lock().unwrap().handle_sv_az_el(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: MsgThreadState| {
+        tabs.advanced_system_monitor
+            .lock()
+            .unwrap()
+            .handle_thread_state(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: MsgTrackingState| {
+        tabs.tracking_signals
+            .lock()
+            .unwrap()
+            .handle_msg_tracking_state(msg.states);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: VelNED| {
+        tabs.solution.lock().unwrap().handle_vel_ned(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: MsgVelNed| {
+        // why does this tab not take both VelNED messages?
+        tabs.solution_velocity.lock().unwrap().handle_vel_ned(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: UartState| {
+        tabs.advanced_system_monitor
+            .lock()
+            .unwrap()
+            .handle_uart_state(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: MsgUtcTime| {
+        tabs.baseline.lock().unwrap().handle_utc_time(msg.clone());
+        tabs.solution.lock().unwrap().handle_utc_time(msg);
+    });
+
+    link.register(|tabs: &Tabs<S>, msg: MsgLog| {
+        tabs.update.lock().unwrap().handle_log_msg(msg.clone());
+        handle_log_msg(msg);
+    });
+
+    let update_tab_context = tabs
+        .update
+        .lock()
+        .expect(UNABLE_TO_CLONE_UPDATE_SHARED)
+        .clone_update_tab_context();
+    update_tab_context.set_serial_prompt(conn.is_serial());
+    let client_send_clone = client_send.clone();
+    let (update_tab_tx, update_tab_rx) = tabs.update.lock().unwrap().clone_channel();
+    let settings_parker = Parker::new();
+    let settings_unparker = settings_parker.unparker().clone();
+    crossbeam::scope(|scope| {
+        let settings_tab = &tabs.settings_tab;
+        let settings_shared_state = shared_state.clone();
+        scope.spawn(move |_| {
+            while settings_shared_state.is_running() {
+                settings_tab.lock().unwrap().tick();
+                settings_parker.park();
             }
-        })
-        .with_rover_time();
-    let mut attempt_delay;
-    for (message, gps_time) in messages {
-        if !shared_state.is_running() {
-            if let Err(e) = main.end_csv_logging() {
-                error!("Issue closing csv file, {}", e);
+        });
+        scope.spawn(|_| {
+            update_tab::update_tab_thread(
+                update_tab_tx.clone(),
+                update_tab_rx,
+                update_tab_context,
+                shared_state.clone(),
+                client_send_clone,
+                source.stateless_link(),
+                msg_sender.clone(),
+            );
+        });
+        for (message, gps_time) in messages {
+            if shared_state.settings_needs_update() {
+                settings_unparker.unpark();
             }
-            main.close_sbp();
-            break;
-        }
-        if shared_state.is_paused() {
-            loop {
-                if !shared_state.is_paused() {
-                    break;
+            if !shared_state.is_running() {
+                if let Err(e) = tabs.main.lock().unwrap().end_csv_logging() {
+                    error!("Issue closing csv file, {}", e);
                 }
-                sleep(Duration::from_millis(PAUSE_LOOP_SLEEP_DURATION_MS));
+                tabs.main.lock().unwrap().close_sbp();
+                break;
             }
+            if shared_state.is_paused() {
+                loop {
+                    if !shared_state.is_paused() {
+                        break;
+                    }
+                    sleep(Duration::from_millis(PAUSE_LOOP_SLEEP_DURATION_MS));
+                }
+            }
+            let sent = source.send_with_state(&tabs, &message);
+            tabs.main.lock().unwrap().serialize_sbp(&message);
+            tabs.status_bar
+                .lock()
+                .unwrap()
+                .add_bytes(message.encoded_len());
+            if let RealtimeDelay::On = realtime_delay {
+                if sent {
+                    tabs.main.lock().unwrap().realtime_delay(gps_time);
+                } else {
+                    debug!(
+                        "Message, {}, ignored for realtime delay.",
+                        message.message_name()
+                    );
+                }
+            }
+            log::logger().flush();
         }
-        main.serialize_sbp(&message);
-        let msg_name = message.get_message_name();
-        main.status_bar.add_bytes(message.sbp_size());
-        attempt_delay = true;
-        match message {
-            SBP::MsgAgeCorrections(msg) => {
-                main.baseline_tab.handle_age_corrections(msg.clone());
-                main.solution_tab.handle_age_corrections(msg.clone());
-                main.status_bar.handle_age_corrections(msg);
-            }
-            SBP::MsgAngularRate(msg) => {
-                main.solution_tab.handle_angular_rate(msg);
-            }
-            SBP::MsgBaselineHeading(msg) => {
-                main.baseline_tab.handle_baseline_heading(msg);
-            }
-            SBP::MsgBaselineNED(msg) => {
-                main.baseline_tab
-                    .handle_baseline_ned(BaselineNED::MsgBaselineNED(msg.clone()));
-                main.status_bar
-                    .handle_baseline_ned(BaselineNED::MsgBaselineNED(msg));
-            }
-            SBP::MsgBaselineNEDDepA(msg) => {
-                main.baseline_tab
-                    .handle_baseline_ned(BaselineNED::MsgBaselineNEDDepA(msg.clone()));
-                main.status_bar
-                    .handle_baseline_ned(BaselineNED::MsgBaselineNEDDepA(msg));
-            }
-            SBP::MsgDops(msg) => {
-                main.solution_tab.handle_dops(Dops::MsgDops(msg));
-            }
-            SBP::MsgDopsDepA(msg) => {
-                main.solution_tab.handle_dops(Dops::MsgDopsDepA(msg));
-            }
-            SBP::MsgGPSTime(msg) => {
-                main.baseline_tab
-                    .handle_gps_time(GpsTime::MsgGpsTime(msg.clone()));
-                main.solution_tab.handle_gps_time(GpsTime::MsgGpsTime(msg));
-            }
-            SBP::MsgGPSTimeDepA(msg) => {
-                main.baseline_tab
-                    .handle_gps_time(GpsTime::MsgGpsTimeDepA(msg.clone()));
-                main.solution_tab
-                    .handle_gps_time(GpsTime::MsgGpsTimeDepA(msg));
-            }
-            SBP::MsgHeartbeat(_) => {
-                main.status_bar.handle_heartbeat();
-            }
-            SBP::MsgImuAux(msg) => {
-                main.advanced_ins_tab.handle_imu_aux(msg);
-            }
-            SBP::MsgImuRaw(msg) => {
-                main.advanced_ins_tab.handle_imu_raw(msg);
-            }
-            SBP::MsgInsStatus(msg) => {
-                main.solution_tab.handle_ins_status(msg.clone());
-                main.status_bar.handle_ins_status(msg);
-            }
-            SBP::MsgInsUpdates(msg) => {
-                main.advanced_ins_tab
-                    .fusion_engine_status_bar
-                    .handle_ins_updates(msg.clone());
-                main.solution_tab.handle_ins_updates(msg.clone());
-                main.status_bar.handle_ins_updates(msg);
-            }
-            SBP::MsgMagRaw(msg) => {
-                main.advanced_magnetometer_tab.handle_mag_raw(msg);
-            }
-            SBP::MsgMeasurementState(msg) => {
-                main.tracking_signals_tab
-                    .handle_msg_measurement_state(msg.states);
-            }
-            SBP::MsgObs(msg) => {
-                main.tracking_signals_tab
-                    .handle_obs(ObservationMsg::MsgObs(msg.clone()));
-                main.observation_tab.handle_obs(ObservationMsg::MsgObs(msg));
-            }
-            SBP::MsgObsDepA(_msg) => {
-                //CPP-85 Unhandled for tracking signals plot tab.
-                println!("The message type, MsgObsDepA, is not handled in the Tracking->SignalsPlot or Observation tab.");
-            }
-            SBP::MsgObsDepB(msg) => {
-                main.tracking_signals_tab
-                    .handle_obs(ObservationMsg::MsgObsDepB(msg.clone()));
-
-                main.observation_tab
-                    .handle_obs(ObservationMsg::MsgObsDepB(msg));
-            }
-            SBP::MsgObsDepC(msg) => {
-                main.tracking_signals_tab
-                    .handle_obs(ObservationMsg::MsgObsDepC(msg.clone()));
-
-                main.observation_tab
-                    .handle_obs(ObservationMsg::MsgObsDepC(msg));
-            }
-            SBP::MsgOrientEuler(msg) => {
-                main.solution_tab.handle_orientation_euler(msg);
-            }
-            SBP::MsgOsr(msg) => {
-                main.observation_tab.handle_obs(ObservationMsg::MsgOsr(msg));
-            }
-            SBP::MsgPosLLH(msg) => {
-                main.solution_tab
-                    .handle_pos_llh(PosLLH::MsgPosLLH(msg.clone()));
-                main.status_bar.handle_pos_llh(PosLLH::MsgPosLLH(msg));
-            }
-            SBP::MsgPosLLHDepA(msg) => {
-                main.solution_tab
-                    .handle_pos_llh(PosLLH::MsgPosLLHDepA(msg.clone()));
-                main.status_bar.handle_pos_llh(PosLLH::MsgPosLLHDepA(msg));
-            }
-            SBP::MsgPosLLHCov(msg) => {
-                main.solution_tab.handle_pos_llh_cov(msg);
-            }
-            SBP::MsgSpecan(msg) => {
-                main.advanced_spectrum_analyzer_tab
-                    .handle_specan(Specan::MsgSpecan(msg));
-            }
-            SBP::MsgSpecanDep(msg) => {
-                main.advanced_spectrum_analyzer_tab
-                    .handle_specan(Specan::MsgSpecanDep(msg));
-            }
-            SBP::MsgTrackingState(msg) => {
-                main.tracking_signals_tab
-                    .handle_msg_tracking_state(msg.states);
-            }
-            SBP::MsgVelNED(msg) => {
-                main.solution_tab
-                    .handle_vel_ned(VelNED::MsgVelNED(msg.clone()));
-                main.solution_velocity_tab.handle_vel_ned(msg);
-            }
-            SBP::MsgVelNEDDepA(msg) => {
-                main.solution_tab.handle_vel_ned(VelNED::MsgVelNEDDepA(msg));
-            }
-            SBP::MsgUtcTime(msg) => {
-                main.baseline_tab.handle_utc_time(msg.clone());
-                main.solution_tab.handle_utc_time(msg);
-            }
-            SBP::MsgLog(msg) => handle_log_msg(msg),
-
-            _ => {
-                attempt_delay = false;
-            }
+        if let Err(err) = update_tab_tx.send(None) {
+            error!("Issue stopping update tab: {}", err);
         }
-        if let RealtimeDelay::On = realtime_delay {
-            if attempt_delay {
-                main.realtime_delay(gps_time);
-            } else {
-                debug!("Message, {}, ignored for realtime delay.", msg_name);
-            }
+        if conn.close_when_done() {
+            shared_state.set_running(false, client_send.clone());
+            close_frontend(&mut client_send);
         }
-        log::logger().flush();
-    }
-    if conn.close_when_done() {
-        shared_state.set_running(false, client_send.clone());
-        close_frontend(&mut client_send);
-    }
+        settings_unparker.unpark();
+    })
+    .unwrap();
+
     Ok(())
 }

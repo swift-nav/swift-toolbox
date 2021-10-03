@@ -13,7 +13,7 @@ SYS_PLATFORM_PREFIXS = {"win32": "windows", "linux": "linux", "darwin": "mac"}
 DEFAULT_NUITKA_COMMAND = (
     "python -m nuitka ./src/main/python/main.py "
     "--include-data-file src/main/resources/base/console_backend.capnp=console_backend.capnp "
-    "--follow-imports --standalone --plugin-enable=qt-plugins "
+    "--follow-imports --standalone --enable-plugin=pyside2 "
 )
 
 
@@ -22,12 +22,12 @@ def create_nuitka_script():
     for root, _, files in os.walk(f"{CONDA_DIR}/{SITEPACK_DIR}PySide2/Qt", topdown=False):
         for name in files:
             path = os.path.relpath(os.path.join(root, name), f"{CONDA_DIR}/{SITEPACK_DIR}")
-            if [x in path for x in BLACKLIST]:
+            if any(x in path for x in BLACKLIST):
                 continue
             out += f"--include-data-file={CONDA_PREFIX}/{SITEPACK_DIR}{path}={path} "
 
     filename_prefix = SYS_PLATFORM_PREFIXS.get(sys.platform, "unknown")
-    with open(os.path.join(NUITKA_DIR, filename_prefix + FILENAME_POSTFIX), "w") as filo:
+    with open(os.path.join(NUITKA_DIR, filename_prefix + FILENAME_POSTFIX), "w", encoding="utf-8") as filo:
         filo.write(DEFAULT_NUITKA_COMMAND + out[: -len(" ")])
         filo.write("\n")
 

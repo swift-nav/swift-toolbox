@@ -1,7 +1,7 @@
 use capnp::message::Builder;
 
 use sbp::messages::{
-    navigation::{MsgAgeCorrections, MsgPosLLHCov, MsgUtcTime},
+    navigation::{MsgAgeCorrections, MsgPosLlhCov, MsgUtcTime},
     orientation::{MsgAngularRate, MsgOrientEuler},
     system::{MsgInsStatus, MsgInsUpdates},
 };
@@ -9,11 +9,10 @@ use std::{collections::HashMap, time::Instant};
 
 use crate::constants::*;
 use crate::date_conv::*;
-use crate::output::{CsvSerializer, PosLLHLog, VelLog};
+use crate::output::{PosLLHLog, VelLog};
 use crate::piksi_tools_constants::EMPTY_STR;
-use crate::types::{
-    CapnProtoSender, Deque, Dops, GnssModes, GpsTime, PosLLH, SharedState, UtcDateTime, VelNED,
-};
+use crate::shared_state::SharedState;
+use crate::types::{CapnProtoSender, Deque, Dops, GnssModes, GpsTime, PosLLH, UtcDateTime, VelNED};
 use crate::utils::*;
 
 /// SolutionTab struct.
@@ -67,7 +66,6 @@ pub struct SolutionTab<S: CapnProtoSender> {
     pub modes: Deque<u8>,
     pub nsec: Option<i32>,
     pub pending_draw_modes: Vec<String>,
-    pub pos_log_file: Option<CsvSerializer>,
     pub shared_state: SharedState,
     pub sln_cur_data: Vec<Vec<(f64, f64)>>,
     pub sln_data: Vec<Vec<(f64, f64)>>,
@@ -76,7 +74,6 @@ pub struct SolutionTab<S: CapnProtoSender> {
     pub unit: &'static str,
     pub utc_source: Option<String>,
     pub utc_time: Option<UtcDateTime>,
-    pub vel_log_file: Option<CsvSerializer>,
     pub week: Option<u16>,
 }
 
@@ -110,7 +107,6 @@ impl<S: CapnProtoSender> SolutionTab<S> {
             ],
             nsec: Some(0),
             pending_draw_modes: vec![],
-            pos_log_file: None,
             shared_state,
             sln_cur_data: { vec![vec![]; NUM_GNSS_MODES as usize] },
             sln_data: { vec![vec![]; NUM_GNSS_MODES as usize] },
@@ -134,7 +130,6 @@ impl<S: CapnProtoSender> SolutionTab<S> {
             unit: DEGREES,
             utc_source: None,
             utc_time: None,
-            vel_log_file: None,
             week: None,
         }
     }
@@ -236,8 +231,8 @@ impl<S: CapnProtoSender> SolutionTab<S> {
     /// Handler for POS LLH COV covariance messages.
     ///
     /// # Parameters
-    /// - `msg`: MsgPosLLHCov to extract data from.
-    pub fn handle_pos_llh_cov(&mut self, msg: MsgPosLLHCov) {
+    /// - `msg`: MsgPosLlhCov to extract data from.
+    pub fn handle_pos_llh_cov(&mut self, msg: MsgPosLlhCov) {
         if msg.flags != 0 {
             self.table.insert(COV_N_N, format!("{}", msg.cov_n_n));
             self.table.insert(COV_N_E, format!("{}", msg.cov_n_e));
@@ -258,7 +253,7 @@ impl<S: CapnProtoSender> SolutionTab<S> {
     /// Handle Vel NED / NEDDepA messages.
     ///
     /// # Parameters
-    /// - `msg`: VelNED wrapper around a MsgVelNED or MsgVELNEDDepA.
+    /// - `msg`: VelNED wrapper around a MsgVelNed or MsgVELNEDDepA.
     pub fn handle_vel_ned(&mut self, msg: VelNED) {
         let vel_ned_fields = msg.fields();
         let speed: f64 = mm_to_m(f64::sqrt(
@@ -277,26 +272,29 @@ impl<S: CapnProtoSender> SolutionTab<S> {
 
         // TODO(johnmichael.burke@) https://swift-nav.atlassian.net/browse/CPP-95
         // Validate logging.
-        if let Some(vel_file) = &mut self.vel_log_file {
-            let mut gps_time = None;
-            if let Some(tgps) = tgps_ {
-                if let Some(secgps) = secgps_ {
-                    gps_time = Some(format!("{}:{:0>6.06}", tgps, secgps));
+        {
+            let mut shared_data = self.shared_state.lock().unwrap();
+            if let Some(ref mut vel_file) = (*shared_data).solution_tab.velocity_tab.log_file {
+                let mut gps_time = None;
+                if let Some(tgps) = tgps_ {
+                    if let Some(secgps) = secgps_ {
+                        gps_time = Some(format!("{}:{:0>6.06}", tgps, secgps));
+                    }
                 }
-            }
-            let pc_time = format!("{}:{:0>6.06}", tloc, secloc);
-            if let Err(err) = vel_file.serialize(&VelLog {
-                pc_time,
-                gps_time,
-                tow_s: Some(tow),
-                north_mps: Some(n),
-                east_mps: Some(e),
-                down_mps: Some(d),
-                speed_mps: Some(speed),
-                flags: vel_ned_fields.flags,
-                num_signals: vel_ned_fields.n_sats,
-            }) {
-                eprintln!("Unable to to write to vel log, error {}.", err);
+                let pc_time = format!("{}:{:0>6.06}", tloc, secloc);
+                if let Err(err) = vel_file.serialize(&VelLog {
+                    pc_time,
+                    gps_time,
+                    tow_s: Some(tow),
+                    north_mps: Some(n),
+                    east_mps: Some(e),
+                    down_mps: Some(d),
+                    speed_mps: Some(speed),
+                    flags: vel_ned_fields.flags,
+                    num_signals: vel_ned_fields.n_sats,
+                }) {
+                    eprintln!("Unable to to write to vel log, error {}.", err);
+                }
             }
         }
         self.table
@@ -451,21 +449,24 @@ impl<S: CapnProtoSender> SolutionTab<S> {
 
         // TODO(johnmichael.burke@) https://swift-nav.atlassian.net/browse/CPP-95
         // Validate logging.
-        if let Some(pos_file) = &mut self.pos_log_file {
-            let pc_time = format!("{}:{:>6.06}", tloc, secloc);
-            if let Err(err) = pos_file.serialize(&PosLLHLog {
-                pc_time,
-                gps_time,
-                tow_s: Some(tow),
-                latitude_d: Some(pos_llh_fields.lat),
-                longitude_d: Some(pos_llh_fields.lon),
-                altitude_m: Some(pos_llh_fields.height),
-                h_accuracy_m: Some(pos_llh_fields.h_accuracy),
-                v_accuracy_m: Some(pos_llh_fields.v_accuracy),
-                n_sats: pos_llh_fields.n_sats,
-                flags: pos_llh_fields.flags,
-            }) {
-                eprintln!("Unable to to write to pos llh log, error {}.", err);
+        {
+            let mut shared_data = self.shared_state.lock().unwrap();
+            if let Some(ref mut pos_file) = (*shared_data).solution_tab.position_tab.log_file {
+                let pc_time = format!("{}:{:>6.06}", tloc, secloc);
+                if let Err(err) = pos_file.serialize(&PosLLHLog {
+                    pc_time,
+                    gps_time,
+                    tow_s: Some(tow),
+                    latitude_d: Some(pos_llh_fields.lat),
+                    longitude_d: Some(pos_llh_fields.lon),
+                    altitude_m: Some(pos_llh_fields.height),
+                    h_accuracy_m: Some(pos_llh_fields.h_accuracy),
+                    v_accuracy_m: Some(pos_llh_fields.v_accuracy),
+                    n_sats: pos_llh_fields.n_sats,
+                    flags: pos_llh_fields.flags,
+                }) {
+                    eprintln!("Unable to to write to pos llh log, error {}.", err);
+                }
             }
         }
 
@@ -766,8 +767,8 @@ mod tests {
     use crate::types::TestSender;
     use chrono::{TimeZone, Utc};
     use sbp::messages::navigation::{
-        MsgAgeCorrections, MsgDops, MsgDopsDepA, MsgGPSTime, MsgPosLLH, MsgPosLLHDepA, MsgVelNED,
-        MsgVelNEDDepA,
+        MsgAgeCorrections, MsgDops, MsgDopsDepA, MsgGpsTime, MsgPosLlh, MsgPosLlhDepA, MsgVelNed,
+        MsgVelNedDepA,
     };
     use std::{thread::sleep, time::Duration};
 
@@ -839,7 +840,7 @@ mod tests {
         let wn = 0_u16;
         let ns_residual = 1337_i32;
         let bad_flags = 0_u8;
-        let msg = MsgGPSTime {
+        let msg = MsgGpsTime {
             sender_id: Some(1337),
             wn,
             tow: 0,
@@ -855,7 +856,7 @@ mod tests {
         assert_eq!(solution_table.nsec, Some(old_nsec));
 
         let good_flags = 1_u8;
-        let msg = MsgGPSTime {
+        let msg = MsgGpsTime {
             sender_id: Some(1337),
             wn,
             tow: 0,
@@ -878,7 +879,7 @@ mod tests {
         let e = 2;
         let d = 3;
         let n_sats = 13;
-        let msg = VelNED::MsgVelNED(MsgVelNED {
+        let msg = VelNED::MsgVelNed(MsgVelNed {
             sender_id: Some(1337),
             flags: bad_flags,
             n,
@@ -901,7 +902,7 @@ mod tests {
         assert_eq!(solution_tab.table[VEL_N], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[VEL_E], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[VEL_D], String::from(EMPTY_STR));
-        let msg = VelNED::MsgVelNED(MsgVelNED {
+        let msg = VelNED::MsgVelNed(MsgVelNed {
             sender_id: Some(1337),
             flags: good_flags,
             n,
@@ -932,7 +933,7 @@ mod tests {
         let n = 3;
         let e = 2;
         let d = 1;
-        let msg = VelNED::MsgVelNEDDepA(MsgVelNEDDepA {
+        let msg = VelNED::MsgVelNedDepA(MsgVelNedDepA {
             sender_id: Some(1337),
             flags: good_flags,
             n,
@@ -1154,7 +1155,7 @@ mod tests {
         let h_accuracy = 0;
         let v_accuracy = 0;
         let tow = 1337;
-        let msg = PosLLH::MsgPosLLH(MsgPosLLH {
+        let msg = PosLLH::MsgPosLlh(MsgPosLlh {
             sender_id: Some(1337),
             flags: bad_flags,
             lat,
@@ -1193,7 +1194,7 @@ mod tests {
         assert_eq!(solution_tab.last_pos_mode, 0);
 
         let good_flags = 0x01;
-        let msg = PosLLH::MsgPosLLH(MsgPosLLH {
+        let msg = PosLLH::MsgPosLlh(MsgPosLlh {
             sender_id: Some(1337),
             flags: good_flags,
             lat,
@@ -1231,7 +1232,7 @@ mod tests {
 
         assert_eq!(solution_tab.last_pos_mode, 1);
 
-        let msg = PosLLH::MsgPosLLHDepA(MsgPosLLHDepA {
+        let msg = PosLLH::MsgPosLlhDepA(MsgPosLlhDepA {
             sender_id: Some(1337),
             flags: good_flags,
             lat,

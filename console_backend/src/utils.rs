@@ -5,12 +5,48 @@ use capnp::message::HeapAllocator;
 use capnp::serialize;
 use indexmap::IndexSet;
 use log::warn;
+use semver::{Version, VersionReq}; //BuildMetadata, Prerelease,
 use serialport::available_ports;
 
 use crate::constants::*;
 use crate::errors::*;
 use crate::types::{CapnProtoSender, SignalCodes};
-use crate::{common_constants as cc, types::SharedState};
+use crate::{common_constants as cc, shared_state::SharedState};
+
+/// Compare to semvar strings and return true if the later_version is greater than the early version.
+///
+/// Assumes that the versions are in the form of `MAJOR.MINOR.PATCH<DEV>`.
+/// Where `DEV` is optional and begins with any non numeric value.
+/// If the semver matches up to the DEV value, then it will return true if DEV does not match.
+///
+/// Arguments:
+/// - `early_version`: The early version string.
+/// - `later_version`: The later version string.
+/// - `less_than_or_equal`: If true, then check whether early version is less than or equal to later version.
+///   Otherwise, check whether early version is less than later version.
+///
+/// Returns:
+/// - `true` if the later_version is greater than the early version.
+/// - `false` if the later_version is not greater than the early version.
+pub fn compare_semvers(
+    early_version: String,
+    later_version: String,
+    less_than_or_equal: bool,
+) -> anyhow::Result<bool> {
+    let early_version_num_split: Vec<&str> = early_version.splitn(2, char::is_numeric).collect();
+    let later_version_num_split: Vec<&str> = later_version.splitn(2, char::is_numeric).collect();
+    let early_version = early_version[early_version_num_split[0].len()..].to_string();
+    let later_version = later_version[later_version_num_split[0].len()..].to_string();
+    let operation = if less_than_or_equal { "<=" } else { "<" };
+    if let Ok(req) = VersionReq::parse(&format!("{}{}", operation, early_version)) {
+        if let Ok(version) = Version::parse(&later_version) {
+            if req.matches(&version) {
+                return Ok(false);
+            }
+        }
+    }
+    Ok(true)
+}
 
 /// Send a CLOSE, or kill, signal to the frontend.
 pub fn close_frontend<P: CapnProtoSender>(client_send: &mut P) {
@@ -149,12 +185,14 @@ pub fn refresh_loggingbar<P: CapnProtoSender>(client_send: &mut P, shared_state:
 
 pub fn signal_key_label(
     key: (SignalCodes, i16),
-    extra: &HashMap<i16, i16>,
+    extra: Option<&HashMap<i16, i16>>,
 ) -> (Option<String>, Option<String>, Option<String>) {
     let (code, sat) = key;
     let code_lbl = Some(code.to_string());
     let mut freq_lbl = None;
     let id_lbl;
+    let default_extra = HashMap::new();
+    let extra = extra.unwrap_or(&default_extra);
 
     if code.code_is_glo() {
         let freq_lbl_ = format!("F+{:02}", sat);
@@ -349,6 +387,28 @@ pub fn mdeg_to_deg(mdeg: f64) -> f64 {
     mdeg / 1.0e+3_f64
 }
 
+/// Normalize CPU usage from [0,1000] to [0,100].
+///
+/// # Parameters
+/// - `cpu`: The CPU usage value to be normalized.
+///
+/// # Returns
+/// - The normalized CPU usage value.
+pub fn normalize_cpu_usage(cpu: u16) -> f64 {
+    cpu as f64 / 10_f64
+}
+
+/// Convert centiCelsius to Celsius.
+///
+/// # Parameters
+/// - `cc`: Value in centiCelsius.
+///
+/// # Returns
+/// - Value in Celsius.
+pub fn cc_to_c(cc: i16) -> f64 {
+    cc as f64 / 1.0e+2_f64
+}
+
 pub fn compute_doppler(
     new_carrier_phase: f64,
     old_carrier_phase: f64,
@@ -398,7 +458,7 @@ mod tests {
 
         let (code_lbl, freq_lbl, id_lbl) = signal_key_label(
             (SignalCodes::CodeGloL2P, SignalCodes::CodeGloL2P as i16),
-            &extra,
+            Some(&extra),
         );
         assert_eq!(code_lbl.unwrap(), GLO_L2P_STR);
         assert_eq!(freq_lbl.unwrap(), "F+30");
@@ -406,7 +466,7 @@ mod tests {
 
         let (code_lbl, freq_lbl, id_lbl) = signal_key_label(
             (SignalCodes::CodeGloL2Of, SignalCodes::CodeGloL2Of as i16),
-            &extra,
+            Some(&extra),
         );
         assert_eq!(code_lbl.unwrap(), GLO_L2OF_STR);
         assert_eq!(freq_lbl.unwrap(), "F+04");
@@ -414,7 +474,7 @@ mod tests {
 
         let (code_lbl, freq_lbl, id_lbl) = signal_key_label(
             (SignalCodes::CodeSbasL5Q, SignalCodes::CodeSbasL5Q as i16),
-            &extra,
+            Some(&extra),
         );
         assert_eq!(code_lbl.unwrap(), SBAS_L5Q_STR);
         assert_eq!(freq_lbl, None);
@@ -422,7 +482,7 @@ mod tests {
 
         let (code_lbl, freq_lbl, id_lbl) = signal_key_label(
             (SignalCodes::CodeBds3B5Q, SignalCodes::CodeBds3B5Q as i16),
-            &extra,
+            Some(&extra),
         );
         assert_eq!(code_lbl.unwrap(), BDS3_B5Q_STR);
         assert_eq!(freq_lbl, None);
@@ -430,7 +490,7 @@ mod tests {
 
         let (code_lbl, freq_lbl, id_lbl) = signal_key_label(
             (SignalCodes::CodeQzsL2Cx, SignalCodes::CodeQzsL2Cx as i16),
-            &extra,
+            Some(&extra),
         );
         assert_eq!(code_lbl.unwrap(), QZS_L2CX_STR);
         assert_eq!(freq_lbl, None);
@@ -438,7 +498,7 @@ mod tests {
 
         let (code_lbl, freq_lbl, id_lbl) = signal_key_label(
             (SignalCodes::CodeGalE8X, SignalCodes::CodeGalE8X as i16),
-            &extra,
+            Some(&extra),
         );
         assert_eq!(code_lbl.unwrap(), GAL_E8X_STR);
         assert_eq!(freq_lbl, None);
@@ -464,6 +524,44 @@ mod tests {
         assert!(float_eq(nano_to_micro_sec(1000000_f64), 1000_f64));
         assert!(float_eq(nano_to_micro_sec(0_f64), 0_f64));
         assert!(float_eq(nano_to_micro_sec(1337_f64), 1.337_f64));
+    }
+
+    #[test]
+    fn compare_semvers_test() {
+        assert!(!compare_semvers(String::from("2.0.0"), String::from("1.0.0"), false).unwrap());
+        assert!(compare_semvers(String::from("v2.0.0"), String::from("v2.0.0"), false).unwrap());
+        assert!(compare_semvers(String::from("v2.0.0"), String::from("v2.2.0"), false).unwrap());
+        assert!(!compare_semvers(String::from("1.0.0"), String::from("1.0.0"), true).unwrap());
+        assert!(compare_semvers(String::from("1.0.0"), String::from("1.0.1"), true).unwrap());
+        assert!(compare_semvers(String::from("1.0.0"), String::from("1.1.0"), true).unwrap());
+        assert!(compare_semvers(String::from("1.0.0"), String::from("2.0.0"), true).unwrap());
+        assert!(!compare_semvers(String::from("1.0.0"), String::from("0.0.0"), true).unwrap());
+        assert!(!compare_semvers(String::from("1.0.0"), String::from("0.0.1"), true).unwrap());
+        assert!(!compare_semvers(String::from("1.0.0"), String::from("0.1.0"), true).unwrap());
+        assert!(
+            compare_semvers(String::from("2.5.6"), String::from("2.5.6-dev5432"), true).unwrap()
+        );
+        assert!(
+            compare_semvers(String::from("2.5.6-dev5432"), String::from("2.5.6"), true).unwrap()
+        );
+        assert!(compare_semvers(
+            String::from("2.5.6-dev5432"),
+            String::from("2.5.6-dev54321"),
+            true
+        )
+        .unwrap());
+        assert!(
+            compare_semvers(String::from("2.5.6"), String::from("2.5.6.dev5432"), true).unwrap()
+        );
+        assert!(
+            compare_semvers(String::from("2.5.6.dev5432"), String::from("2.5.6"), true).unwrap()
+        );
+        assert!(compare_semvers(
+            String::from("2.5.6.dev5432"),
+            String::from("2.5.6.dev12345"),
+            true
+        )
+        .unwrap());
     }
 
     #[test]

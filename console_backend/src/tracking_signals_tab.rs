@@ -8,9 +8,16 @@ use capnp::message::Builder;
 
 use log::warn;
 
-use crate::constants::*;
-use crate::piksi_tools_constants::*;
-use crate::types::*;
+use crate::constants::{
+    CHART_XMIN_OFFSET_NO_TRACKING, CHART_XMIN_OFFSET_TRACKING, GLO_FCN_OFFSET, GLO_SLOT_SAT_MAX,
+    NUM_POINTS, SHOW_LEGEND, TRACKING_UPDATE_PERIOD, TRK_RATE,
+};
+use crate::piksi_tools_constants::{
+    BDS2_B1_STR, BDS2_B2_STR, GAL_E1B_STR, GAL_E7I_STR, GLO_L1OF_STR, GLO_L2OF_STR, GPS_L1CA_STR,
+    GPS_L2CM_STR, QZS_L1CA_STR, QZS_L2CM_STR, SBAS_L1_STR,
+};
+use crate::shared_state::SharedState;
+use crate::types::{CapnProtoSender, Cn0Age, Cn0Dict, Deque, ObservationMsg, SignalCodes};
 use crate::utils::{serialize_capnproto_builder, signal_key_color, signal_key_label};
 use sbp::messages::tracking::{MeasurementState, TrackingChannelState};
 
@@ -159,6 +166,7 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
                 .check_visibility
                 .clone();
         }
+        let mut tracked_sv_labels = vec![];
         for (key, _) in self.cn0_dict.iter_mut() {
             let (signal_code, _) = key;
             if let Some(filter) = signal_code.filters() {
@@ -166,7 +174,7 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
                     continue;
                 }
             }
-            let (code_lbl, freq_lbl, id_lbl) = signal_key_label(*key, &self.glo_slot_dict);
+            let (code_lbl, freq_lbl, id_lbl) = signal_key_label(*key, Some(&self.glo_slot_dict));
             let mut label = String::from("");
             if let Some(lbl) = code_lbl {
                 label = format!("{} {}", label, lbl);
@@ -175,6 +183,7 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
                 label = format!("{} {}", label, lbl);
             }
             if let Some(lbl) = id_lbl {
+                tracked_sv_labels.push(lbl.clone());
                 label = format!("{} {}", label, lbl);
             }
 
@@ -187,6 +196,8 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
             self.colors.push(String::from(signal_key_color(*key)));
             self.sats.push(self.cn0_dict[key].clone());
         }
+        let mut shared_data = self.shared_state.lock().unwrap();
+        (*shared_data).tracking_tab.signals_tab.tracked_sv_labels = tracked_sv_labels;
     }
 
     /// Handle MsgMeasurementState message states.
@@ -426,8 +437,9 @@ mod tests {
     use std::thread::sleep;
 
     use super::*;
+    use crate::types::TestSender;
     use sbp::messages::{
-        gnss::{CarrierPhase, GPSTime, GnssSignal},
+        gnss::{CarrierPhase, GnssSignal, GpsTime},
         observation::{Doppler, MsgObs, ObservationHeader, PackedObsContent},
     };
 
@@ -569,7 +581,7 @@ mod tests {
             sender_id: Some(5),
             obs: Vec::new(),
             header: ObservationHeader {
-                t: GPSTime {
+                t: GpsTime {
                     tow: 0,
                     ns_residual: 0,
                     wn: 1,
@@ -580,9 +592,9 @@ mod tests {
         let signal_code = 4;
         let sat = 25;
         obs_msg.obs.push(PackedObsContent {
-            P: 0_u32,
-            L: CarrierPhase { i: 0_i32, f: 0_u8 },
-            D: Doppler { i: 0_i16, f: 0_u8 },
+            p: 0_u32,
+            l: CarrierPhase { i: 0_i32, f: 0_u8 },
+            d: Doppler { i: 0_i16, f: 0_u8 },
             cn0: 5,
             lock: 0,
             flags: 1,

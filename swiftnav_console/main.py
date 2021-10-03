@@ -5,7 +5,7 @@ import os
 import sys
 import threading
 
-from typing import List, Any
+from typing import List, Any, Optional
 
 import capnp  # type: ignore
 
@@ -18,9 +18,9 @@ from PySide2 import QtQml, QtCore
 
 from PySide2.QtGui import QFontDatabase
 
-from PySide2.QtQml import QQmlComponent, qmlRegisterType
+from PySide2.QtQml import QQmlComponent, qmlRegisterType, QQmlDebuggingEnabler
 
-from .constants import ApplicationStates, Keys, Tabs
+from .constants import ApplicationMetadata, ApplicationStates, Keys, Tabs, QTKeys
 
 from .log_panel import (
     LOG_PANEL,
@@ -59,6 +59,12 @@ from .advanced_spectrum_analyzer_tab import (
     ADVANCED_SPECTRUM_ANALYZER_TAB,
 )
 
+from .advanced_system_monitor_tab import (
+    AdvancedSystemMonitorModel,
+    AdvancedSystemMonitorData,
+    ADVANCED_SYSTEM_MONITOR_TAB,
+)
+
 from .fusion_status_flags import (
     FusionStatusFlagsModel,
     FusionStatusFlagsData,
@@ -78,11 +84,20 @@ from .baseline_table import (
 )
 
 from .observation_tab import (
-    ObservationData,
-    ObservationModel,
+    ObservationTableModel,
     REMOTE_OBSERVATION_TAB,
     LOCAL_OBSERVATION_TAB,
     obs_rows_to_json,
+)
+
+from .settings_tab import (
+    SettingsTabModel,
+    SettingsTabData,
+    SettingsTableEntries,
+    SettingsTableModel,
+    SETTINGS_TAB,
+    SETTINGS_TABLE,
+    settings_rows_to_json,
 )
 
 from .solution_position_tab import (
@@ -115,7 +130,19 @@ from .tracking_signals_tab import (
     TRACKING_SIGNALS_TAB,
 )
 
-from . import console_resources  # type: ignore # pylint: disable=unused-import,import-error
+from .tracking_sky_plot_tab import (
+    TrackingSkyPlotModel,
+    TrackingSkyPlotPoints,
+    TRACKING_SKY_PLOT_TAB,
+)
+
+from .update_tab import (
+    UPDATE_TAB,
+    UpdateTabData,
+    UpdateTabModel,
+)
+
+import console_resources  # type: ignore # pylint: disable=unused-import,import-error
 
 import console_backend.server  # type: ignore  # pylint: disable=import-error,no-name-in-module
 
@@ -132,6 +159,10 @@ TAB_LAYOUT = {
     Tabs.TRACKING_SIGNALS: {
         MAIN_INDEX: 0,
         SUB_INDEX: 0,
+    },
+    Tabs.TRACKING_SKYPLOT: {
+        MAIN_INDEX: 0,
+        SUB_INDEX: 1,
     },
     Tabs.SOLUTION_POSITION: {
         MAIN_INDEX: 1,
@@ -254,6 +285,22 @@ def receive_messages(app_, backend, messages):
             ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.YMIN] = m.advancedSpectrumAnalyzerStatus.ymin
             ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.XMAX] = m.advancedSpectrumAnalyzerStatus.xmax
             ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.XMIN] = m.advancedSpectrumAnalyzerStatus.xmin
+        elif m.which == Message.Union.AdvancedSystemMonitorStatus:
+            ADVANCED_SYSTEM_MONITOR_TAB[Keys.OBS_LATENCY][:] = [
+                [entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.obsLatency
+            ]
+            ADVANCED_SYSTEM_MONITOR_TAB[Keys.OBS_PERIOD][:] = [
+                [entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.obsPeriod
+            ]
+            ADVANCED_SYSTEM_MONITOR_TAB[Keys.THREADS_TABLE][:] = [
+                [entry.name, entry.cpu, entry.stackFree] for entry in m.advancedSystemMonitorStatus.threadsTable
+            ]
+            ADVANCED_SYSTEM_MONITOR_TAB[Keys.CSAC_TELEM_LIST][:] = [
+                [entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.csacTelemList
+            ]
+            ADVANCED_SYSTEM_MONITOR_TAB[Keys.CSAC_RECEIVED] = m.advancedSystemMonitorStatus.csacReceived
+            ADVANCED_SYSTEM_MONITOR_TAB[Keys.ZYNQ_TEMP] = m.advancedSystemMonitorStatus.zynqTemp
+            ADVANCED_SYSTEM_MONITOR_TAB[Keys.FE_TEMP] = m.advancedSystemMonitorStatus.feTemp
         elif m.which == Message.Union.AdvancedMagnetometerStatus:
             ADVANCED_MAGNETOMETER_TAB[Keys.YMAX] = m.advancedMagnetometerStatus.ymax
             ADVANCED_MAGNETOMETER_TAB[Keys.YMIN] = m.advancedMagnetometerStatus.ymin
@@ -277,6 +324,14 @@ def receive_messages(app_, backend, messages):
                 for idx in range(len(m.trackingSignalsStatus.data))
             ]
             TRACKING_SIGNALS_TAB[Keys.XMIN_OFFSET] = m.trackingSignalsStatus.xminOffset
+        elif m.which == Message.Union.TrackingSkyPlotStatus:
+            TRACKING_SKY_PLOT_TAB[Keys.SATS][:] = [
+                [QPointF(point.az, point.el) for point in m.trackingSkyPlotStatus.sats[idx]]
+                for idx in range(len(m.trackingSkyPlotStatus.sats))
+            ]
+            TRACKING_SKY_PLOT_TAB[Keys.LABELS][:] = [
+                list(m.trackingSkyPlotStatus.labels[idx]) for idx in range(len(m.trackingSkyPlotStatus.labels))
+            ]
         elif m.which == Message.Union.ObservationStatus:
             if m.observationStatus.isRemote:
                 REMOTE_OBSERVATION_TAB[Keys.TOW] = m.observationStatus.tow
@@ -295,6 +350,7 @@ def receive_messages(app_, backend, messages):
             STATUS_BAR[Keys.INS] = m.statusBarStatus.ins
             STATUS_BAR[Keys.DATA_RATE] = m.statusBarStatus.dataRate
             STATUS_BAR[Keys.SOLID_CONNECTION] = m.statusBarStatus.solidConnection
+            STATUS_BAR[Keys.TITLE] = m.statusBarStatus.title
         elif m.which == Message.Union.NavBarStatus:
             NAV_BAR[Keys.AVAILABLE_PORTS][:] = m.navBarStatus.availablePorts
             NAV_BAR[Keys.AVAILABLE_BAUDRATES][:] = m.navBarStatus.availableBaudrates
@@ -308,15 +364,36 @@ def receive_messages(app_, backend, messages):
             LOGGING_BAR[Keys.PREVIOUS_FOLDERS][:] = m.loggingBarStatus.previousFolders
             LOGGING_BAR[Keys.CSV_LOGGING] = m.loggingBarStatus.csvLogging
             LOGGING_BAR[Keys.SBP_LOGGING] = m.loggingBarStatus.sbpLogging
+        elif m.which == Message.Union.UpdateTabStatus:
+            UPDATE_TAB[Keys.HARDWARE_REVISION] = m.updateTabStatus.hardwareRevision
+            UPDATE_TAB[Keys.FW_VERSION_CURRENT] = m.updateTabStatus.fwVersionCurrent
+            UPDATE_TAB[Keys.FW_VERSION_LATEST] = m.updateTabStatus.fwVersionLatest
+            UPDATE_TAB[Keys.FW_LOCAL_FILENAME] = m.updateTabStatus.fwLocalFilename
+            UPDATE_TAB[Keys.DIRECTORY] = m.updateTabStatus.directory
+            UPDATE_TAB[Keys.DOWNLOADING] = m.updateTabStatus.downloading
+            UPDATE_TAB[Keys.UPGRADING] = m.updateTabStatus.upgrading
+            UPDATE_TAB[Keys.FW_TEXT] = m.updateTabStatus.fwText
+            UPDATE_TAB[Keys.FILEIO_LOCAL_FILEPATH] = m.updateTabStatus.fileioLocalFilepath
+            UPDATE_TAB[Keys.FILEIO_DESTINATION_FILEPATH] = m.updateTabStatus.fileioDestinationFilepath
+            UPDATE_TAB[Keys.FW_OUTDATED] = m.updateTabStatus.fwOutdated
+            UPDATE_TAB[Keys.FW_V2_OUTDATED] = m.updateTabStatus.fwV2Outdated
+            UPDATE_TAB[Keys.SERIAL_PROMPT] = m.updateTabStatus.serialPrompt
+            UPDATE_TAB[Keys.CONSOLE_OUTDATED] = m.updateTabStatus.consoleOutdated
+            UPDATE_TAB[Keys.CONSOLE_VERSION_CURRENT] = m.updateTabStatus.consoleVersionCurrent
+            UPDATE_TAB[Keys.CONSOLE_VERSION_LATEST] = m.updateTabStatus.consoleVersionLatest
         elif m.which == Message.Union.LogAppend:
             log_panel_lock.lock()
             LOG_PANEL[Keys.ENTRIES] += [entry.line for entry in m.logAppend.entries]
             log_panel_lock.unlock()
+        elif m.which == Message.Union.SettingsTableStatus:
+            SETTINGS_TABLE[Keys.ENTRIES][:] = settings_rows_to_json(m.settingsTableStatus.data)
+        elif m.which == Message.Union.SettingsImportResponse:
+            SETTINGS_TAB[Keys.IMPORT_STATUS] = m.settingsImportResponse.status
         else:
             pass
 
 
-class DataModel(QObject):
+class DataModel(QObject):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
 
     endpoint: console_backend.server.ServerEndpoint  # pylint: disable=no-member
     messages: Any
@@ -373,6 +450,67 @@ class DataModel(QObject):
         Message = self.messages.Message
         msg = self.messages.Message()
         msg.serialRefreshRequest = msg.init(Message.Union.SerialRefreshRequest)
+        buffer = msg.to_bytes()
+        self.endpoint.send_message(buffer)
+
+    @Slot()  # type: ignore
+    def settings_refresh(self) -> None:
+        Message = self.messages.Message
+        msg = self.messages.Message()
+        msg.settingsRefreshRequest = msg.init(Message.Union.SettingsRefreshRequest)
+        buffer = msg.to_bytes()
+        self.endpoint.send_message(buffer)
+
+    @Slot()  # type: ignore
+    def settings_reset_request(self) -> None:
+        Message = self.messages.Message
+        msg = self.messages.Message()
+        msg.settingsResetRequest = msg.init(Message.Union.SettingsResetRequest)
+        buffer = msg.to_bytes()
+        self.endpoint.send_message(buffer)
+
+    @Slot()  # type: ignore
+    def settings_save_request(self) -> None:
+        Message = self.messages.Message
+        msg = self.messages.Message()
+        msg.settingsSaveRequest = msg.init(Message.Union.SettingsSaveRequest)
+        buffer = msg.to_bytes()
+        self.endpoint.send_message(buffer)
+
+    @Slot(str)  # type: ignore
+    def settings_export_request(self, path: str) -> None:
+        Message = self.messages.Message
+        msg = self.messages.Message()
+        msg.settingsExportRequest = msg.init(Message.Union.SettingsExportRequest)
+        msg.settingsExportRequest.path = path
+        buffer = msg.to_bytes()
+        self.endpoint.send_message(buffer)
+
+    @Slot(str)  # type: ignore
+    def settings_import_request(self, path: str) -> None:
+        Message = self.messages.Message
+        msg = self.messages.Message()
+        msg.settingsImportRequest = msg.init(Message.Union.SettingsImportRequest)
+        msg.settingsImportRequest.path = path
+        buffer = msg.to_bytes()
+        self.endpoint.send_message(buffer)
+
+    @Slot(str, str, str)  # type: ignore
+    def settings_write_request(self, group: str, name: str, value: str) -> None:
+        Message = self.messages.Message
+        msg = self.messages.Message()
+        msg.settingsWriteRequest = msg.init(Message.Union.SettingsWriteRequest)
+        msg.settingsWriteRequest.group = group
+        msg.settingsWriteRequest.name = name
+        msg.settingsWriteRequest.value = value
+        buffer = msg.to_bytes()
+        self.endpoint.send_message(buffer)
+
+    @Slot()  # type: ignore
+    def reset_device(self) -> None:
+        Message = self.messages.Message
+        msg = self.messages.Message()
+        msg.advancedSystemMonitorStatusFront = msg.init(Message.Union.AdvancedSystemMonitorStatusFront)
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
 
@@ -439,6 +577,50 @@ class DataModel(QObject):
         m.baselinePlotStatusButtonFront.pause = buttons[0]
         m.baselinePlotStatusButtonFront.clear = buttons[1]
         m.baselinePlotStatusButtonFront.resetFilters = buttons[2]
+        buffer = m.to_bytes()
+        self.endpoint.send_message(buffer)
+
+    @Slot(list, QTKeys.QVARIANT, QTKeys.QVARIANT, QTKeys.QVARIANT, QTKeys.QVARIANT, QTKeys.QVARIANT)  # type: ignore
+    def update_tab(
+        self,
+        buttons: list,
+        update_local_filepath: Optional[str],
+        download_directory: Optional[str],
+        fileio_local_filepath: Optional[str],
+        fileio_destination_filepath: Optional[str],
+        update_local_filename: Optional[str],
+    ) -> None:
+        Message = self.messages.Message
+        m = Message()
+        m.updateTabStatusFront = m.init(Message.Union.UpdateTabStatusFront)
+        if update_local_filepath is not None:
+            m.updateTabStatusFront.updateLocalFilepath.filepath = str(update_local_filepath)
+        else:
+            m.updateTabStatusFront.updateLocalFilepath.none = None
+
+        if download_directory is not None:
+            m.updateTabStatusFront.downloadDirectory.directory = str(download_directory)
+        else:
+            m.updateTabStatusFront.downloadDirectory.none = None
+        if fileio_local_filepath is not None:
+            m.updateTabStatusFront.fileioLocalFilepath.filepath = str(fileio_local_filepath)
+        else:
+            m.updateTabStatusFront.fileioLocalFilepath.none = None
+
+        if fileio_destination_filepath is not None:
+            m.updateTabStatusFront.fileioDestinationFilepath.filepath = str(fileio_destination_filepath)
+        else:
+            m.updateTabStatusFront.fileioDestinationFilepath.none = None
+
+        if update_local_filename is not None:
+            m.updateTabStatusFront.updateLocalFilename.filepath = str(update_local_filename)
+        else:
+            m.updateTabStatusFront.updateLocalFilename.none = None
+
+        m.updateTabStatusFront.downloadLatestFirmware = buttons[0]
+        m.updateTabStatusFront.updateFirmware = buttons[1]
+        m.updateTabStatusFront.sendFileToDevice = buttons[2]
+        m.updateTabStatusFront.serialPromptConfirm = buttons[3]
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
 
@@ -512,9 +694,14 @@ def main():
 
     args_main, _ = parser.parse_known_args()
 
+    # sys.argv.append("-qmljsdebugger=port:10002,block")
+    debug = QQmlDebuggingEnabler()
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
-    app = QApplication()
+    app = QApplication(sys.argv)
+    app.setOrganizationName(ApplicationMetadata.ORGANIZATION_NAME)
+    app.setOrganizationDomain(ApplicationMetadata.ORGANIZATION_DOMAIN)
+    app.setApplicationName(ApplicationMetadata.APPLICATION_NAME)
     QFontDatabase.addApplicationFont(":/fonts/Roboto-Regular.ttf")
     QFontDatabase.addApplicationFont(":/fonts/Roboto-Bold.ttf")
 
@@ -526,15 +713,20 @@ def main():
     qmlRegisterType(
         AdvancedSpectrumAnalyzerPoints, "SwiftConsole", 1, 0, "AdvancedSpectrumAnalyzerPoints"  # type: ignore
     )
+    qmlRegisterType(AdvancedSystemMonitorData, "SwiftConsole", 1, 0, "AdvancedSystemMonitorData")  # type: ignore
     qmlRegisterType(FusionStatusFlagsData, "SwiftConsole", 1, 0, "FusionStatusFlagsData")  # type: ignore
     qmlRegisterType(BaselinePlotPoints, "SwiftConsole", 1, 0, "BaselinePlotPoints")  # type: ignore
     qmlRegisterType(BaselineTableEntries, "SwiftConsole", 1, 0, "BaselineTableEntries")  # type: ignore
+    qmlRegisterType(SettingsTabData, "SwiftConsole", 1, 0, "SettingsTabData")  # type: ignore
+    qmlRegisterType(SettingsTableEntries, "SwiftConsole", 1, 0, "SettingsTableEntries")  # type: ignore
     qmlRegisterType(SolutionPositionPoints, "SwiftConsole", 1, 0, "SolutionPositionPoints")  # type: ignore
     qmlRegisterType(SolutionTableEntries, "SwiftConsole", 1, 0, "SolutionTableEntries")  # type: ignore
     qmlRegisterType(SolutionVelocityPoints, "SwiftConsole", 1, 0, "SolutionVelocityPoints")  # type: ignore
     qmlRegisterType(StatusBarData, "SwiftConsole", 1, 0, "StatusBarData")  # type: ignore
     qmlRegisterType(TrackingSignalsPoints, "SwiftConsole", 1, 0, "TrackingSignalsPoints")  # type: ignore
-    qmlRegisterType(ObservationData, "SwiftConsole", 1, 0, "ObservationData")  # type: ignore
+    qmlRegisterType(TrackingSkyPlotPoints, "SwiftConsole", 1, 0, "TrackingSkyPlotPoints")  # type: ignore
+    qmlRegisterType(ObservationTableModel, "SwiftConsole", 1, 0, "ObservationTableModel")  # type: ignore
+    qmlRegisterType(UpdateTabData, "SwiftConsole", 1, 0, "UpdateTabData")  # type: ignore
 
     engine = QtQml.QQmlApplicationEngine()
 
@@ -555,34 +747,40 @@ def main():
     advanced_ins_model = AdvancedInsModel()
     advanced_magnetometer_model = AdvancedMagnetometerModel()
     advanced_spectrum_analyzer_model = AdvancedSpectrumAnalyzerModel()
+    advanced_system_monitor_model = AdvancedSystemMonitorModel()
     fusion_engine_flags_model = FusionStatusFlagsModel()
     baseline_plot_model = BaselinePlotModel()
     baseline_table_model = BaselineTableModel()
+    settings_tab_model = SettingsTabModel()
+    settings_table_model = SettingsTableModel()
     solution_position_model = SolutionPositionModel()
     solution_table_model = SolutionTableModel()
     solution_velocity_model = SolutionVelocityModel()
     status_bar_model = StatusBarModel()
     logging_bar_model = LoggingBarModel()
     tracking_signals_model = TrackingSignalsModel()
-    remote_observation_model = ObservationModel()
-    local_observation_model = ObservationModel()
+    tracking_sky_plot_model = TrackingSkyPlotModel()
+    update_tab_model = UpdateTabModel()
     root_context = engine.rootContext()
     root_context.setContextProperty("log_panel_model", log_panel_model)
     root_context.setContextProperty("nav_bar_model", nav_bar_model)
     root_context.setContextProperty("advanced_ins_model", advanced_ins_model)
     root_context.setContextProperty("advanced_magnetometer_model", advanced_magnetometer_model)
     root_context.setContextProperty("advanced_spectrum_analyzer_model", advanced_spectrum_analyzer_model)
+    root_context.setContextProperty("advanced_system_monitor_model", advanced_system_monitor_model)
     root_context.setContextProperty("fusion_engine_flags_model", fusion_engine_flags_model)
     root_context.setContextProperty("baseline_plot_model", baseline_plot_model)
     root_context.setContextProperty("baseline_table_model", baseline_table_model)
+    root_context.setContextProperty("settings_tab_model", settings_tab_model)
+    root_context.setContextProperty("settings_table_model", settings_table_model)
     root_context.setContextProperty("solution_position_model", solution_position_model)
     root_context.setContextProperty("solution_table_model", solution_table_model)
     root_context.setContextProperty("solution_velocity_model", solution_velocity_model)
     root_context.setContextProperty("status_bar_model", status_bar_model)
     root_context.setContextProperty("logging_bar_model", logging_bar_model)
     root_context.setContextProperty("tracking_signals_model", tracking_signals_model)
-    root_context.setContextProperty("remote_observation_model", remote_observation_model)
-    root_context.setContextProperty("local_observation_model", local_observation_model)
+    root_context.setContextProperty("tracking_sky_plot_model", tracking_sky_plot_model)
+    root_context.setContextProperty("update_tab_model", update_tab_model)
     root_context.setContextProperty("data_model", data_model)
 
     # Unfortunately it is not possible to access singletons directly using the PySide2 API.

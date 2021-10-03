@@ -49,6 +49,16 @@ struct LogAppend {
     entries @0 :List(LogEntry);
 }
 
+struct SkyPlotObs {
+    az @0 :UInt16;
+    el @1 :UInt16;
+}
+
+struct TrackingSkyPlotStatus {
+    sats @0 :List(List(SkyPlotObs));
+    labels @1 :List(List(Text));
+}
+
 struct KeyValPair {
     key @0 :Text;
     val @1 :Text;
@@ -56,6 +66,83 @@ struct KeyValPair {
 
 struct SolutionTableStatus {
     data @0 :List(KeyValPair);
+}
+
+struct Setting {
+    name @0 :Text;
+    group @1 :Text;
+    type @2 :Text;
+    expert @3 :Bool;
+    readonly @4 :Bool;
+    description :union {
+        description @5 :Text;
+        noDescription @6 :Void;
+    }
+    defaultValue :union {
+        defaultValue @7 :Text;
+        noDefaultValue @8 :Void;
+    }
+    notes :union {
+        notes @9 :Text;
+        noNotes @10 :Void;
+    }
+    units :union {
+        units @11 :Text;
+        noUnits @12 :Void;
+    }
+    enumeratedPossibleValues :union {
+        enumeratedPossibleValues @13 :Text;
+        noEnumeratedPossibleValues @14 :Void;
+    }
+    digits :union {
+        digits @15 :Text;
+        noDigits @16 :Void;
+    }
+    valueOnDevice :union {
+        valueOnDevice @17 :Text;
+        noValueOnDevice @18 :Void;
+    }
+}
+
+struct SettingsRow {
+    union {
+        setting @0 :Setting;
+        group @1 :Text;
+    }
+}
+
+struct SettingsTableStatus {
+    data @0 :List(SettingsRow);
+}
+
+struct SettingsRefreshRequest {
+    refresh @0 :Void = void;
+}
+
+struct SettingsSaveRequest {
+    save @0 :Void = void;
+}
+
+struct SettingsExportRequest {
+    path @0 :Text;
+}
+
+struct SettingsImportRequest {
+    path @0 :Text;
+}
+
+struct SettingsImportResponse {
+    status @0 :Text;
+}
+
+struct SettingsWriteRequest {
+    group @0 :Text;
+    name @1 :Text;
+    value @2 :Text;
+}
+
+struct SettingsResetRequest {
+    reset @0 :Void = void;
 }
 
 struct Point {
@@ -83,6 +170,7 @@ struct StatusBarStatus {
     ins @5: Text;
     dataRate @6: Text;
     solidConnection @7: Bool;
+    title @8: Text;
 }
 
 struct BaselinePlotStatus {
@@ -134,6 +222,27 @@ struct SolutionVelocityStatus {
     colors @4 :List(Text);
 }
 
+struct ThreadState {
+    name @0 :Text;
+    cpu @1 :Float64;
+    stackFree @2 :UInt32;
+}
+
+struct UartState {
+    key @0 :Text;
+    val @1 :Int32;
+}
+
+struct AdvancedSystemMonitorStatus {
+    obsLatency @0 :List(UartState);
+    obsPeriod @1 :List(UartState);
+    threadsTable @2 :List(ThreadState);
+    zynqTemp @3: Float64;
+    feTemp @4: Float64;
+    csacTelemList @5: List(KeyValPair);
+    csacReceived @6: Bool;
+}
+
 struct TrackingSignalsStatus {
     xminOffset @0 :Float64;
     labels @1 :List(Text);
@@ -183,6 +292,52 @@ struct LoggingBarStatus {
     sbpLogging @2 :Text;
 }
 
+struct UpdateTabStatus {
+    hardwareRevision @0 : Text;
+    fwVersionCurrent @1 : Text;
+    fwVersionLatest @2 : Text;
+    fwLocalFilename @3: Text;
+    directory @4 : Text;
+    downloading @5 : Bool;
+    upgrading @6 : Bool;
+    fwText @7: Text;
+    fileioDestinationFilepath @8: Text;
+    fileioLocalFilepath @9: Text;
+    fwOutdated @10: Bool;
+    fwV2Outdated @11: Bool;
+    serialPrompt @12: Bool;
+    consoleOutdated @13: Bool;
+    consoleVersionCurrent @14: Text;
+    consoleVersionLatest @15: Text;
+}
+
+struct UpdateTabStatusFront {
+    updateFirmware @0: Bool;
+    downloadLatestFirmware @1 : Bool;
+    sendFileToDevice @2: Bool;
+    updateLocalFilepath :union {
+        filepath @3 :Text;
+        none @4 :Void;
+    }
+    downloadDirectory :union {
+        directory @5 :Text;
+        none @6 :Void;
+    }
+    fileioLocalFilepath :union {
+        filepath @7 :Text;
+        none @8 :Void;
+    }
+    fileioDestinationFilepath :union {
+        filepath @9 :Text;
+        none @10 :Void;
+    }
+    updateLocalFilename :union {
+        filepath @11 :Text;
+        none @12 :Void;
+    }
+    serialPromptConfirm @13: Bool;
+}
+
 struct TrackingSignalsStatusFront {
     trackingSignalsCheckVisibility @0 :List(Text);
 }
@@ -193,6 +348,10 @@ struct SolutionVelocityStatusFront {
 
 struct AdvancedSpectrumAnalyzerStatusFront {
     channel @0 :UInt16;
+}
+
+struct AdvancedSystemMonitorStatusFront {
+    resetDevice @0 :Void = void;
 }
 
 struct SolutionPositionStatusUnitFront {
@@ -247,5 +406,21 @@ struct Message {
         baselinePlotStatusButtonFront @27 :BaselinePlotStatusButtonFront;
         advancedSpectrumAnalyzerStatus @28:AdvancedSpectrumAnalyzerStatus;
         advancedSpectrumAnalyzerStatusFront @29:AdvancedSpectrumAnalyzerStatusFront;
+        updateTabStatus @30:UpdateTabStatus;
+        updateTabStatusFront @31:UpdateTabStatusFront;
+        settingsTableStatus @32 :SettingsTableStatus;
+        settingsRefreshRequest @33 :SettingsRefreshRequest;
+        settingsExportRequest @34 :SettingsExportRequest;
+        settingsImportRequest @35 :SettingsImportRequest;
+        settingsImportResponse @36 :SettingsImportResponse;
+        settingsWriteRequest @37 :SettingsWriteRequest;
+        settingsResetRequest @38 :SettingsResetRequest;
+        settingsSaveRequest @39 :SettingsSaveRequest;
+        advancedSystemMonitorStatus @40 :AdvancedSystemMonitorStatus;
+        threadState @41 :ThreadState;
+        uartState @42 :UartState;
+        advancedSystemMonitorStatusFront @43 :AdvancedSystemMonitorStatusFront;
+        skyPlotObs @44 :SkyPlotObs;
+        trackingSkyPlotStatus @45 :TrackingSkyPlotStatus;
     }
 }

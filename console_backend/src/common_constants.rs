@@ -213,6 +213,56 @@ pub enum Keys {
     XMIN,
     #[strum(serialize = "XMAX")]
     XMAX,
+    #[strum(serialize = "HARDWARE_REVISION")]
+    HARDWARE_REVISION,
+    #[strum(serialize = "FW_VERSION_CURRENT")]
+    FW_VERSION_CURRENT,
+    #[strum(serialize = "FW_VERSION_LATEST")]
+    FW_VERSION_LATEST,
+    #[strum(serialize = "FW_LOCAL_FILENAME")]
+    FW_LOCAL_FILENAME,
+    #[strum(serialize = "DIRECTORY")]
+    DIRECTORY,
+    #[strum(serialize = "DOWNLOADING")]
+    DOWNLOADING,
+    #[strum(serialize = "UPGRADING")]
+    UPGRADING,
+    #[strum(serialize = "FW_TEXT")]
+    FW_TEXT,
+    #[strum(serialize = "FILEIO_LOCAL_FILEPATH")]
+    FILEIO_LOCAL_FILEPATH,
+    #[strum(serialize = "FILEIO_DESTINATION_FILEPATH")]
+    FILEIO_DESTINATION_FILEPATH,
+    #[strum(serialize = "TITLE")]
+    TITLE,
+    #[strum(serialize = "IMPORT_STATUS")]
+    IMPORT_STATUS,
+    #[strum(serialize = "FW_OUTDATED")]
+    FW_OUTDATED,
+    #[strum(serialize = "FW_V2_OUTDATED")]
+    FW_V2_OUTDATED,
+    #[strum(serialize = "SERIAL_PROMPT")]
+    SERIAL_PROMPT,
+    #[strum(serialize = "CONSOLE_OUTDATED")]
+    CONSOLE_OUTDATED,
+    #[strum(serialize = "CONSOLE_VERSION_CURRENT")]
+    CONSOLE_VERSION_CURRENT,
+    #[strum(serialize = "CONSOLE_VERSION_LATEST")]
+    CONSOLE_VERSION_LATEST,
+    #[strum(serialize = "OBS_PERIOD")]
+    OBS_PERIOD,
+    #[strum(serialize = "OBS_LATENCY")]
+    OBS_LATENCY,
+    #[strum(serialize = "THREADS_TABLE")]
+    THREADS_TABLE,
+    #[strum(serialize = "CSAC_TELEM_LIST")]
+    CSAC_TELEM_LIST,
+    #[strum(serialize = "ZYNQ_TEMP")]
+    ZYNQ_TEMP,
+    #[strum(serialize = "FE_TEMP")]
+    FE_TEMP,
+    #[strum(serialize = "CSAC_RECEIVED")]
+    CSAC_RECEIVED,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
@@ -229,4 +279,16 @@ pub enum ApplicationStates {
 pub enum QTKeys {
     #[strum(serialize = "QVariantList")]
     QVARIANTLIST,
+    #[strum(serialize = "QVariant")]
+    QVARIANT,
+}
+
+#[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
+pub enum ApplicationMetadata {
+    #[strum(serialize = "Swift Navigation")]
+    ORGANIZATION_NAME,
+    #[strum(serialize = "swiftnav.com")]
+    ORGANIZATION_DOMAIN,
+    #[strum(serialize = "console_pp")]
+    APPLICATION_NAME,
 }

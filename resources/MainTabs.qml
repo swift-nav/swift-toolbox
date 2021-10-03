@@ -25,12 +25,10 @@ Item {
         ObservationTab {
         }
 
-        Item {
-            id: settingsTab
+        SettingsTab {
         }
 
-        Item {
-            id: updateTab
+        UpdateTab {
         }
 
         AdvancedTab {

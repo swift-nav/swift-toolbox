@@ -119,11 +119,6 @@ Rectangle {
             selectFolder: true
             onAccepted: {
                 var filepath = Utils.fileUrlToString(fileDialog.folder);
-                // Fix for fileUrlToString which removes file:/// prefix but leaves unix
-                // path without leading forward slash.
-                if (Qt.platform.os !== "windows")
-                    filepath = "/" + filepath;
-
                 folderPathBar.editText = filepath;
                 data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.currentText, logLevelButton.currentText], folderPathBar.editText);
             }

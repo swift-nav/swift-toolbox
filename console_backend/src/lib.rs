@@ -1,6 +1,7 @@
 pub mod advanced_ins_tab;
 pub mod advanced_magnetometer_tab;
 pub mod advanced_spectrum_analyzer_tab;
+pub mod advanced_system_monitor_tab;
 pub mod baseline_tab;
 pub mod cli_options;
 pub mod console_backend_capnp {
@@ -25,12 +26,100 @@ pub mod process_messages;
 #[cfg(not(test))]
 #[cfg(all(not(feature = "benches"), not(feature = "tests"), feature = "pyo3"))]
 pub mod server;
+pub mod server_recv_thread;
+pub mod settings_tab;
+pub mod shared_state;
 pub mod solution_tab;
 pub mod solution_velocity_tab;
 pub mod status_bar;
 pub mod tracking_signals_tab;
+pub mod tracking_sky_plot_tab;
 pub mod types;
+pub mod update_downloader;
+pub mod update_tab;
 pub mod utils;
+
+use std::sync::Mutex;
+
+use crate::{
+    advanced_ins_tab::AdvancedInsTab, advanced_magnetometer_tab::AdvancedMagnetometerTab,
+    advanced_spectrum_analyzer_tab::AdvancedSpectrumAnalyzerTab,
+    advanced_system_monitor_tab::AdvancedSystemMonitorTab, baseline_tab::BaselineTab,
+    main_tab::MainTab, observation_tab::ObservationTab, settings_tab::SettingsTab,
+    solution_tab::SolutionTab, solution_velocity_tab::SolutionVelocityTab, status_bar::StatusBar,
+    tracking_signals_tab::TrackingSignalsTab, tracking_sky_plot_tab::TrackingSkyPlotTab,
+    update_tab::UpdateTab,
+};
+
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
+struct Tabs<'link, S: types::CapnProtoSender> {
+    pub main: Mutex<MainTab<S>>,
+    pub advanced_ins: Mutex<AdvancedInsTab<S>>,
+    pub advanced_magnetometer: Mutex<AdvancedMagnetometerTab<S>>,
+    pub advanced_system_monitor: Mutex<AdvancedSystemMonitorTab<S>>,
+    pub baseline: Mutex<BaselineTab<S>>,
+    pub tracking_signals: Mutex<TrackingSignalsTab<S>>,
+    pub tracking_sky_plot: Mutex<TrackingSkyPlotTab<S>>,
+    pub solution: Mutex<SolutionTab<S>>,
+    pub observation: Mutex<ObservationTab<S>>,
+    pub solution_velocity: Mutex<SolutionVelocityTab<S>>,
+    pub advanced_spectrum_analyzer: Mutex<AdvancedSpectrumAnalyzerTab<S>>,
+    pub status_bar: Mutex<StatusBar<S>>,
+    pub update: Mutex<UpdateTab>,
+    pub settings_tab: Mutex<SettingsTab<'link, S>>,
+}
+
+impl<'link, S: types::CapnProtoSender> Tabs<'link, S> {
+    fn new(
+        shared_state: shared_state::SharedState,
+        client_sender: S,
+        msg_sender: types::MsgSender,
+        link: sbp::link::Link<'link, ()>,
+    ) -> Self {
+        Self {
+            main: MainTab::new(shared_state.clone(), client_sender.clone()).into(),
+            advanced_ins: AdvancedInsTab::new(shared_state.clone(), client_sender.clone()).into(),
+            advanced_magnetometer: AdvancedMagnetometerTab::new(
+                shared_state.clone(),
+                client_sender.clone(),
+            )
+            .into(),
+            advanced_system_monitor: AdvancedSystemMonitorTab::new(
+                shared_state.clone(),
+                client_sender.clone(),
+                msg_sender.clone(),
+            )
+            .into(),
+            baseline: BaselineTab::new(
+                shared_state.clone(),
+                client_sender.clone(),
+                msg_sender.clone(),
+            )
+            .into(),
+            tracking_signals: TrackingSignalsTab::new(shared_state.clone(), client_sender.clone())
+                .into(),
+            tracking_sky_plot: TrackingSkyPlotTab::new(client_sender.clone(), shared_state.clone())
+                .into(),
+            observation: ObservationTab::new(shared_state.clone(), client_sender.clone()).into(),
+            solution: SolutionTab::new(shared_state.clone(), client_sender.clone()).into(),
+            solution_velocity: SolutionVelocityTab::new(
+                shared_state.clone(),
+                client_sender.clone(),
+            )
+            .into(),
+            advanced_spectrum_analyzer: AdvancedSpectrumAnalyzerTab::new(
+                shared_state.clone(),
+                client_sender.clone(),
+            )
+            .into(),
+            status_bar: StatusBar::new(shared_state.clone(), client_sender.clone()).into(),
+            update: UpdateTab::new(shared_state.clone()).into(),
+            settings_tab: SettingsTab::new(shared_state, client_sender, msg_sender, link).into(),
+        }
+    }
+}
 
 #[cfg(test)]
 pub mod test_common {

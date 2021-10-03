@@ -6,6 +6,8 @@ import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
 ApplicationWindow {
+    id: main
+
     width: Constants.width
     height: Constants.height
     font.pointSize: Constants.mediumPointSize
@@ -100,6 +102,7 @@ ApplicationWindow {
                 z: Constants.commonChart.zAboveCharts
 
                 StatusBar {
+                    property alias title: main.title
                 }
 
             }

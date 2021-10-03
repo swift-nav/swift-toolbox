@@ -3,7 +3,8 @@ use log::error;
 use crate::constants::{AMPLITUDES, CHANNELS, FREQUENCIES};
 use crate::errors::SHARED_STATE_LOCK_MUTEX_FAILURE;
 use crate::fft_monitor::FftMonitor;
-use crate::types::{CapnProtoSender, SharedState, Specan};
+use crate::shared_state::SharedState;
+use crate::types::{CapnProtoSender, Specan};
 use crate::utils::serialize_capnproto_builder;
 use capnp::message::Builder;
 
@@ -119,7 +120,7 @@ impl<S: CapnProtoSender> AdvancedSpectrumAnalyzerTab<S> {
 mod tests {
     use super::*;
     use crate::{constants::SIGNALS_TOTAL, types::TestSender};
-    use sbp::messages::{gnss::GPSTime, piksi::MsgSpecan};
+    use sbp::messages::{gnss::GpsTime, piksi::MsgSpecan};
 
     #[test]
     fn handle_specan_empty_amplitude_value_test() {
@@ -130,7 +131,7 @@ mod tests {
         let wn = 1000;
         let tow = 10001;
         let ns_residual = 100011;
-        let t = GPSTime {
+        let t = GpsTime {
             tow,
             ns_residual,
             wn,
@@ -166,7 +167,7 @@ mod tests {
         let wn = 1000;
         let tow = 10001;
         let ns_residual = 100011;
-        let t = GPSTime {
+        let t = GpsTime {
             tow,
             ns_residual,
             wn,

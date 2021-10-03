@@ -1,20 +1,20 @@
-use capnp::message::Builder;
+use std::collections::HashMap;
 
+use capnp::message::Builder;
 use log::error;
 use sbp::messages::{
     navigation::{MsgAgeCorrections, MsgUtcTime},
     orientation::MsgBaselineHeading,
     piksi::MsgResetFilters,
 };
-use std::{collections::HashMap, io::Write};
 
 use crate::constants::*;
 use crate::date_conv::*;
-use crate::output::{BaselineLog, CsvSerializer};
+use crate::output::BaselineLog;
 use crate::piksi_tools_constants::EMPTY_STR;
+use crate::shared_state::SharedState;
 use crate::types::{
-    BaselineNED, CapnProtoSender, Deque, GnssModes, GpsTime, MsgSender, Result, SharedState,
-    UtcDateTime,
+    BaselineNED, CapnProtoSender, Deque, GnssModes, GpsTime, MsgSender, Result, UtcDateTime,
 };
 use crate::utils::*;
 
@@ -52,9 +52,8 @@ pub(crate) struct BaselineTabButtons {
 /// - `table`: This stores all the key/value pairs to be displayed in the Baseline Table.
 /// - `utc_source`: The string equivalent for the source of the UTC updates.
 /// - `utc_time`: The stored monotonic Utc time.
-/// - `baseline_log_file`: The CsvSerializer corresponding to an open velocity log if any.
 /// - `week`: The stored week value from GPS Time messages.
-pub struct BaselineTab<'a, S: CapnProtoSender, W: Write> {
+pub struct BaselineTab<S: CapnProtoSender> {
     age_corrections: Option<f64>,
     client_sender: S,
     heading: Option<f64>,
@@ -69,21 +68,16 @@ pub struct BaselineTab<'a, S: CapnProtoSender, W: Write> {
     shared_state: SharedState,
     sln_cur_data: Vec<Vec<(f64, f64)>>,
     sln_data: Vec<Vec<(f64, f64)>>,
-    slns: HashMap<&'a str, Deque<f64>>,
-    table: HashMap<&'a str, String>,
+    slns: HashMap<&'static str, Deque<f64>>,
+    table: HashMap<&'static str, String>,
     utc_source: Option<String>,
     utc_time: Option<UtcDateTime>,
-    pub baseline_log_file: Option<CsvSerializer>,
     week: Option<u16>,
-    wtr: MsgSender<W>,
+    wtr: MsgSender,
 }
 
-impl<'a, S: CapnProtoSender, W: Write> BaselineTab<'a, S, W> {
-    pub fn new(
-        shared_state: SharedState,
-        client_sender: S,
-        wtr: MsgSender<W>,
-    ) -> BaselineTab<'a, S, W> {
+impl<S: CapnProtoSender> BaselineTab<S> {
+    pub fn new(shared_state: SharedState, client_sender: S, wtr: MsgSender) -> BaselineTab<S> {
         BaselineTab {
             age_corrections: None,
             client_sender,
@@ -122,7 +116,6 @@ impl<'a, S: CapnProtoSender, W: Write> BaselineTab<'a, S, W> {
             },
             utc_source: None,
             utc_time: None,
-            baseline_log_file: None,
             week: None,
             wtr,
         }
@@ -258,10 +251,10 @@ impl<'a, S: CapnProtoSender, W: Write> BaselineTab<'a, S, W> {
         }
     }
 
-    /// Handle MsgBaselineNED / MsgBaselineNEDDepA messages.
+    /// Handle MsgBaselineNed / MsgBaselineNedDepA messages.
     ///
     /// # Parameters
-    /// - `msg`: MsgBaselineNED / MsgBaselineNEDDepA to extract data from.
+    /// - `msg`: MsgBaselineNed / MsgBaselineNedDepA to extract data from.
     pub fn handle_baseline_ned(&mut self, msg: BaselineNED) {
         let baseline_ned_fields = msg.fields();
         let n = mm_to_m(baseline_ned_fields.n as f64);
@@ -294,22 +287,25 @@ impl<'a, S: CapnProtoSender, W: Write> BaselineTab<'a, S, W> {
             }
         }
 
-        if let Some(baseline_file) = &mut self.baseline_log_file {
-            let pc_time = format!("{}:{:0>6.06}", tloc, secloc);
-            if let Err(err) = baseline_file.serialize(&BaselineLog {
-                pc_time,
-                gps_time,
-                tow_s: Some(tow),
-                north_m: Some(n),
-                east_m: Some(e),
-                down_m: Some(d),
-                h_accuracy_m: Some(h_accuracy),
-                v_accuracy_m: Some(v_accuracy),
-                distance_m: Some(dist),
-                flags: baseline_ned_fields.flags,
-                num_sats: baseline_ned_fields.n_sats,
-            }) {
-                eprintln!("Unable to to write to baseline log, error {}.", err);
+        {
+            let mut shared_data = self.shared_state.lock().unwrap();
+            if let Some(ref mut baseline_file) = (*shared_data).baseline_tab.log_file {
+                let pc_time = format!("{}:{:0>6.06}", tloc, secloc);
+                if let Err(err) = baseline_file.serialize(&BaselineLog {
+                    pc_time,
+                    gps_time,
+                    tow_s: Some(tow),
+                    north_m: Some(n),
+                    east_m: Some(e),
+                    down_m: Some(d),
+                    h_accuracy_m: Some(h_accuracy),
+                    v_accuracy_m: Some(v_accuracy),
+                    distance_m: Some(dist),
+                    flags: baseline_ned_fields.flags,
+                    num_sats: baseline_ned_fields.n_sats,
+                }) {
+                    eprintln!("Unable to to write to baseline log, error {}.", err);
+                }
             }
         }
 
@@ -406,8 +402,7 @@ impl<'a, S: CapnProtoSender, W: Write> BaselineTab<'a, S, W> {
             sender_id: Some(WRITE_TO_DEVICE_SENDER_ID),
             filter: 0,
         };
-        let msg = sbp::messages::SBP::from(msg);
-        self.wtr.send(msg)?;
+        self.wtr.send(msg.into())?;
         Ok(())
     }
 
@@ -523,7 +518,7 @@ mod tests {
     use super::*;
     use crate::types::TestSender;
     use chrono::{TimeZone, Utc};
-    use sbp::messages::navigation::{MsgBaselineNED, MsgBaselineNEDDepA, MsgGPSTime};
+    use sbp::messages::navigation::{MsgBaselineNed, MsgBaselineNedDepA, MsgGpsTime};
     use std::io::sink;
     #[test]
     fn handle_age_corrections_test() {
@@ -561,7 +556,7 @@ mod tests {
         let wn = 0_u16;
         let ns_residual = 1337_i32;
         let bad_flags = 0_u8;
-        let msg = MsgGPSTime {
+        let msg = MsgGpsTime {
             sender_id: Some(1337),
             wn,
             tow: 0,
@@ -577,7 +572,7 @@ mod tests {
         assert_eq!(baseline_table.nsec, Some(old_nsec));
 
         let good_flags = 1_u8;
-        let msg = MsgGPSTime {
+        let msg = MsgGpsTime {
             sender_id: Some(1337),
             wn,
             tow: 0,
@@ -700,7 +695,7 @@ mod tests {
         let h_accuracy = 0;
         let v_accuracy = 0;
         let tow = 1337;
-        let msg = BaselineNED::MsgBaselineNED(MsgBaselineNED {
+        let msg = BaselineNED::MsgBaselineNed(MsgBaselineNed {
             sender_id: Some(1337),
             flags: bad_flags,
             n,
@@ -767,7 +762,7 @@ mod tests {
         baseline_tab.handle_age_corrections(msg);
 
         let good_flags = 0x02;
-        let msg = BaselineNED::MsgBaselineNED(MsgBaselineNED {
+        let msg = BaselineNED::MsgBaselineNed(MsgBaselineNed {
             sender_id: Some(1337),
             flags: good_flags,
             n,
@@ -816,7 +811,7 @@ mod tests {
 
         assert_eq!(baseline_tab.last_mode, 2);
 
-        let msg = BaselineNED::MsgBaselineNEDDepA(MsgBaselineNEDDepA {
+        let msg = BaselineNED::MsgBaselineNedDepA(MsgBaselineNedDepA {
             sender_id: Some(1337),
             flags: good_flags,
             n,

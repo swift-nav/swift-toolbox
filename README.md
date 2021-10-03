@@ -22,22 +22,26 @@ conda activate console_pp
 pip install poetry
 ```
 
-Install capnp.
+Install cmake, clang, and capnp in your respective OS.
 
 ```
-# Windows
-choco install capnproto
+# Windows - install with installer, or via chocolatey
+choco install cmake llvm capnproto
 
 # Mac
-brew install capnp
+brew install cmake llvm capnp
 
 # Linux
-apt-get install capnproto
+apt-get install cmake libclang-dev capnproto
 ```
 
 Install development dependencies (On Windows make sure you're using Adminstrator shell).
 
+# For the below commands, we do not want to be in the console_pp conda environment.
+# Bad things will happen if you are.
+
 ```
+conda deactivate
 cargo make pip-install-dev
 git lfs pull
 ```
@@ -62,6 +66,24 @@ To build the installer:
 
 ```
 cargo make prod-installer
+```
+
+## Running the benchmarks
+
+Prerequisites:
+
+- Windows
+  - NSIS - Nullsoft Scriptable Install System
+  - NSIS ShellExecAsUser plugin
+- All
+  - `cargo install hyperfine`
+
+To run the frontend benchmarks:
+
+```
+git lfs pull
+cargo make prod-installer
+cargo make frontend-cpu-bench
 ```
 
 ## Contributing

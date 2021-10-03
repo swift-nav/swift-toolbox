@@ -1,14 +1,11 @@
-use std::{
-    convert::TryInto,
-    marker::PhantomData,
-    sync::{Arc, Mutex},
-    time::Duration,
-};
+use std::{marker::PhantomData, sync::Arc, time::Duration};
 
 use crossbeam::channel;
+use parking_lot::Mutex;
 use sbp::{
-    messages::{ConcreteMessage, SBPMessage, SBP},
+    link::Event,
     time::{GpsTime, GpsTimeError},
+    Sbp, SbpMessage,
 };
 use slotmap::HopSlotMap;
 
@@ -19,17 +16,15 @@ pub struct Broadcaster {
 }
 
 impl Broadcaster {
-    const CHANNELS_LOCK_FAILURE: &'static str = "failed to aquire lock on channels";
-
     pub fn new() -> Self {
         Self {
             channels: Arc::new(Mutex::new(HopSlotMap::with_key())),
         }
     }
 
-    pub fn send(&self, message: &SBP, gps_time: MaybeGpsTime) {
-        let msg_type = message.get_message_type();
-        let mut channels = self.channels.lock().expect(Self::CHANNELS_LOCK_FAILURE);
+    pub fn send(&self, message: &Sbp, gps_time: MaybeGpsTime) {
+        let msg_type = message.message_type();
+        let mut channels = self.channels.lock();
         channels.retain(|_, chan| {
             if chan.msg_types.iter().any(|ty| ty == &msg_type) {
                 chan.inner.send((message.clone(), gps_time.clone())).is_ok()
@@ -44,7 +39,7 @@ impl Broadcaster {
         E: Event,
     {
         let (tx, rx) = channel::unbounded();
-        let mut channels = self.channels.lock().expect(Self::CHANNELS_LOCK_FAILURE);
+        let mut channels = self.channels.lock();
         let key = channels.insert(Sender {
             inner: tx,
             msg_types: E::MESSAGE_TYPES,
@@ -59,7 +54,7 @@ impl Broadcaster {
     }
 
     pub fn unsubscribe(&self, key: Key) {
-        let mut channels = self.channels.lock().expect(Self::CHANNELS_LOCK_FAILURE);
+        let mut channels = self.channels.lock();
         channels.remove(key.inner);
     }
 
@@ -89,13 +84,13 @@ impl Default for Broadcaster {
 
 /// A wrapper around a channel sender that knows what message types its receivers expect.
 struct Sender {
-    inner: channel::Sender<(SBP, MaybeGpsTime)>,
+    inner: channel::Sender<(Sbp, MaybeGpsTime)>,
     msg_types: &'static [u16],
 }
 
 /// A wrapper around a channel receiver that converts to the appropriate event.
 pub struct Receiver<E> {
-    inner: channel::Receiver<(SBP, MaybeGpsTime)>,
+    inner: channel::Receiver<(Sbp, MaybeGpsTime)>,
     marker: PhantomData<E>,
 }
 
@@ -104,6 +99,7 @@ slotmap::new_key_type! {
 }
 
 /// Returned along with calls to `subscribe`. Used to unsubscribe to an event.
+#[derive(Copy, Clone)]
 pub struct Key {
     inner: KeyInner,
 }
@@ -141,35 +137,13 @@ where
     // other channel methods as needed
 }
 
-/// An event you can receive via a `Broadcaster`. It's implemented for all SBP
-/// message types, but could also be implemented for composite messages like `Observations`.
-pub trait Event {
-    /// The message types from which the event can be derived.
-    const MESSAGE_TYPES: &'static [u16];
-
-    /// Conversion from SBP. The message type of `msg` is guaranteed to be in
-    /// `Self::MESSAGE_TYPES`.
-    fn from_sbp(msg: SBP) -> Self;
-}
-
-// All concrete message types can be used as events.
-impl<T> Event for T
-where
-    T: ConcreteMessage,
-{
-    const MESSAGE_TYPES: &'static [u16] = &[T::MESSAGE_TYPE];
-
-    fn from_sbp(msg: SBP) -> Self {
-        msg.try_into().unwrap()
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use crossbeam::scope;
     use sbp::messages::{
         self,
         observation::{MsgObs, MsgObsDepA, ObservationHeader, ObservationHeaderDep},
+        ConcreteMessage,
     };
 
     use super::*;
@@ -302,20 +276,20 @@ mod tests {
     impl Event for ObsMsg {
         const MESSAGE_TYPES: &'static [u16] = &[MsgObs::MESSAGE_TYPE, MsgObsDepA::MESSAGE_TYPE];
 
-        fn from_sbp(msg: SBP) -> Self {
+        fn from_sbp(msg: Sbp) -> Self {
             match msg {
-                SBP::MsgObs(m) => ObsMsg::Obs(m),
-                SBP::MsgObsDepA(m) => ObsMsg::DepA(m),
+                Sbp::MsgObs(m) => ObsMsg::Obs(m),
+                Sbp::MsgObsDepA(m) => ObsMsg::DepA(m),
                 _ => unreachable!("wrong event keys"),
             }
         }
     }
 
-    fn make_msg_obs() -> SBP {
+    fn make_msg_obs() -> Sbp {
         MsgObs {
             sender_id: Some(1),
             header: ObservationHeader {
-                t: messages::gnss::GPSTime {
+                t: messages::gnss::GpsTime {
                     tow: 1,
                     ns_residual: 1,
                     wn: 1,
@@ -327,11 +301,11 @@ mod tests {
         .into()
     }
 
-    fn make_msg_obs_dep_a() -> SBP {
+    fn make_msg_obs_dep_a() -> Sbp {
         MsgObsDepA {
             sender_id: Some(1),
             header: ObservationHeaderDep {
-                t: messages::gnss::GPSTimeDep { tow: 1, wn: 1 },
+                t: messages::gnss::GpsTimeDep { tow: 1, wn: 1 },
                 n_obs: 1,
             },
             obs: vec![],

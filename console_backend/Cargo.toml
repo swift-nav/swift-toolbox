@@ -17,10 +17,6 @@ chrono = { version = "0.4", features = ["serde"] }
 csv = "1"
 paste = "1"
 pyo3 = { version = "0.13", features = ["extension-module"], optional = true }
-sbp = { git = "https://github.com/swift-nav/libsbp.git", rev = "83110eaca01c4fb1ec1500d578a1cbbaa2b8c788", features = [
-  "json",
-  "swiftnav-rs",
-] }
 serde = { version = "1.0.123", features = ["derive"] }
 tempfile = "3.2.0"
 ordered-float = "2.0"
@@ -39,13 +35,18 @@ crossbeam = "0.8.1"
 rand = "0.8.3"
 slotmap = "1.0.3"
 serde-pickle = { version = "0.6.2", optional = true }
+parking_lot = "0.11.1"
+minreq = { version = "2.4.2", features = ["https"] }
+regex = { version = "1.5.4" }
+semver = { version = "1" }
+rust-ini = "0.17.0"
+sbp = { version = "3.4.11-beta", features = ["json", "link", "swiftnav"] }
+sbp-settings = "0.1.0"
+env_logger = { version = "0.9", optional = true }
+mimalloc = { version = "*", default-features = false }
 
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 serialport = "4.0.1"
-
-[[bench]]
-name = "cpu_benches"
-harness = false
 
 [dev-dependencies]
 logtest = "2.0.0"
@@ -59,16 +60,26 @@ name = "console_backend"
 crate-type = ["cdylib", "lib"]
 bench = false
 
+[[bench]]
+name = "cpu_benches"
+harness = false
+
 [[bin]]
 name = "fileio"
 path = "src/bin/fileio.rs"
 bench = false
+required-features = ["env_logger"]
 
 [[bin]]
 name = "fft_monitor"
 path = "src/bin/fft_monitor.rs"
 bench = false
 required-features = ["fft"]
+
+[[bin]]
+name = "headless-console"
+path = "src/bin/headless-console.rs"
+bench = false
 
 [features]
 default = ["pyo3"]

@@ -1,24 +1,20 @@
+use std::{path::PathBuf, result::Result, thread::sleep, time::Instant};
+
 use chrono::Local;
 use log::{debug, error};
-use sbp::{messages::SBP, time::GpsTime};
-use std::{io::Write, path::PathBuf, result::Result, thread::sleep, time::Instant};
+use sbp::{time::GpsTime, Sbp};
 
-use crate::advanced_ins_tab::AdvancedInsTab;
-use crate::advanced_magnetometer_tab::AdvancedMagnetometerTab;
-use crate::advanced_spectrum_analyzer_tab::AdvancedSpectrumAnalyzerTab;
-use crate::baseline_tab::BaselineTab;
 use crate::common_constants::SbpLogging;
-use crate::constants::*;
-use crate::observation_tab::ObservationTab;
-use crate::output::*;
-use crate::solution_tab::SolutionTab;
-use crate::solution_velocity_tab::SolutionVelocityTab;
-use crate::status_bar::StatusBar;
-use crate::tracking_signals_tab::TrackingSignalsTab;
-use crate::types::*;
+use crate::constants::{
+    BASELINE_TIME_STR_FILEPATH, POS_LLH_TIME_STR_FILEPATH, SBP_FILEPATH, SBP_JSON_FILEPATH,
+    VEL_TIME_STR_FILEPATH,
+};
+use crate::output::{CsvLogging, SbpLogger};
+use crate::shared_state::{create_directory, SharedState};
+use crate::types::CapnProtoSender;
 use crate::utils::refresh_loggingbar;
 
-pub struct MainTab<'a, S: CapnProtoSender, W: Write> {
+pub struct MainTab<S: CapnProtoSender> {
     logging_directory: PathBuf,
     last_csv_logging: CsvLogging,
     last_sbp_logging: SbpLogging,
@@ -27,23 +23,10 @@ pub struct MainTab<'a, S: CapnProtoSender, W: Write> {
     last_gps_time: Option<GpsTime>,
     client_sender: S,
     shared_state: SharedState,
-    pub advanced_ins_tab: AdvancedInsTab<S>,
-    pub advanced_magnetometer_tab: AdvancedMagnetometerTab<S>,
-    pub baseline_tab: BaselineTab<'a, S, W>,
-    pub tracking_signals_tab: TrackingSignalsTab<S>,
-    pub solution_tab: SolutionTab<S>,
-    pub observation_tab: ObservationTab<S>,
-    pub solution_velocity_tab: SolutionVelocityTab<'a, S>,
-    pub advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTab<S>,
-    pub status_bar: StatusBar<S>,
 }
 
-impl<'a, S: CapnProtoSender, W: Write> MainTab<'a, S, W> {
-    pub fn new(
-        shared_state: SharedState,
-        client_sender: S,
-        msg_sender: MsgSender<W>,
-    ) -> MainTab<'a, S, W> {
+impl<'a, S: CapnProtoSender> MainTab<S> {
+    pub fn new(shared_state: SharedState, client_sender: S) -> MainTab<S> {
         MainTab {
             logging_directory: shared_state.logging_directory(),
             last_csv_logging: CsvLogging::OFF,
@@ -51,29 +34,8 @@ impl<'a, S: CapnProtoSender, W: Write> MainTab<'a, S, W> {
             sbp_logger: None,
             last_gps_time: None,
             last_gps_update: Instant::now(),
-            client_sender: client_sender.clone(),
-            shared_state: shared_state.clone(),
-            advanced_ins_tab: AdvancedInsTab::new(shared_state.clone(), client_sender.clone()),
-            advanced_magnetometer_tab: AdvancedMagnetometerTab::new(
-                shared_state.clone(),
-                client_sender.clone(),
-            ),
-            baseline_tab: BaselineTab::new(shared_state.clone(), client_sender.clone(), msg_sender),
-            tracking_signals_tab: TrackingSignalsTab::new(
-                shared_state.clone(),
-                client_sender.clone(),
-            ),
-            observation_tab: ObservationTab::new(shared_state.clone(), client_sender.clone()),
-            solution_tab: SolutionTab::new(shared_state.clone(), client_sender.clone()),
-            solution_velocity_tab: SolutionVelocityTab::new(
-                shared_state.clone(),
-                client_sender.clone(),
-            ),
-            advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTab::new(
-                shared_state.clone(),
-                client_sender.clone(),
-            ),
-            status_bar: StatusBar::new(shared_state, client_sender),
+            client_sender,
+            shared_state,
         }
     }
 
@@ -115,49 +77,27 @@ impl<'a, S: CapnProtoSender, W: Write> MainTab<'a, S, W> {
     /// - `logging`: The type of sbp logging to use; otherwise, None.
     pub fn init_csv_logging(&mut self) {
         let local_t = Local::now();
+
         let vel_log_file = local_t.format(VEL_TIME_STR_FILEPATH).to_string();
         let vel_log_file = self.logging_directory.join(vel_log_file);
-        self.solution_tab.vel_log_file = match CsvSerializer::new(&vel_log_file) {
-            Ok(vel_csv) => Some(vel_csv),
-            Err(e) => {
-                error!("issue creating file, {:?}, error, {}", vel_log_file, e);
-                None
-            }
-        };
+        self.shared_state.start_vel_log(&vel_log_file);
+
         let pos_log_file = local_t.format(POS_LLH_TIME_STR_FILEPATH).to_string();
         let pos_log_file = self.logging_directory.join(pos_log_file);
-        self.solution_tab.pos_log_file = match CsvSerializer::new(&pos_log_file) {
-            Ok(pos_csv) => Some(pos_csv),
-            Err(e) => {
-                error!("issue creating file, {:?}, error, {}", pos_log_file, e);
-                None
-            }
-        };
+        self.shared_state.start_pos_log(&pos_log_file);
+
         let baseline_log_file = local_t.format(BASELINE_TIME_STR_FILEPATH).to_string();
         let baseline_log_file = self.logging_directory.join(baseline_log_file);
-        self.baseline_tab.baseline_log_file = match CsvSerializer::new(&baseline_log_file) {
-            Ok(baseline_csv) => Some(baseline_csv),
-            Err(e) => {
-                error!("issue creating file, {:?}, error, {}", baseline_log_file, e);
-                None
-            }
-        };
+        self.shared_state.start_baseline_log(&baseline_log_file);
+
         self.shared_state.set_csv_logging(CsvLogging::ON);
     }
+
     pub fn end_csv_logging(&mut self) -> crate::types::Result<()> {
         self.shared_state.set_csv_logging(CsvLogging::OFF);
-        if let Some(vel_log) = &mut self.solution_tab.vel_log_file {
-            vel_log.flush()?;
-            self.solution_tab.vel_log_file = None;
-        }
-        if let Some(pos_log) = &mut self.solution_tab.pos_log_file {
-            pos_log.flush()?;
-            self.solution_tab.pos_log_file = None;
-        }
-        if let Some(baseline_log) = &mut self.baseline_tab.baseline_log_file {
-            baseline_log.flush()?;
-            self.baseline_tab.baseline_log_file = None;
-        }
+        self.shared_state.end_vel_log()?;
+        self.shared_state.end_pos_log()?;
+        self.shared_state.end_baseline_log()?;
         Ok(())
     }
 
@@ -194,7 +134,7 @@ impl<'a, S: CapnProtoSender, W: Write> MainTab<'a, S, W> {
         };
         self.shared_state.set_sbp_logging(logging);
     }
-    pub fn serialize_sbp(&mut self, msg: &SBP) {
+    pub fn serialize_sbp(&mut self, msg: &Sbp) {
         let csv_logging;
         let sbp_logging;
         let directory;
@@ -253,10 +193,12 @@ impl<'a, S: CapnProtoSender, W: Write> MainTab<'a, S, W> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{PosLLH, VelNED};
+    use crate::baseline_tab::BaselineTab;
+    use crate::solution_tab::SolutionTab;
+    use crate::types::{BaselineNED, MsgSender, PosLLH, TestSender, VelNED};
     use crate::utils::{mm_to_m, ms_to_sec};
     use glob::glob;
-    use sbp::messages::navigation::{MsgBaselineNED, MsgPosLLH, MsgVelNED};
+    use sbp::messages::navigation::{MsgBaselineNed, MsgPosLlh, MsgVelNed};
     use std::{
         fs::File,
         io::{sink, BufRead, BufReader},
@@ -287,9 +229,7 @@ mod tests {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
         let gps_s = GpsTimeTests::new();
-        let wtr = sink();
-        let msg_sender = MsgSender::new(wtr);
-        let mut main = MainTab::new(shared_state, client_send, msg_sender);
+        let mut main = MainTab::new(shared_state, client_send);
         let early_gps_time_good = GpsTime::new(gps_s.good_week, gps_s.early_gps_tow_good).unwrap();
         let later_gps_time_good = GpsTime::new(gps_s.good_week, gps_s.later_gps_tow_good);
         main.last_gps_time = Some(early_gps_time_good);
@@ -307,9 +247,7 @@ mod tests {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
         let gps_s = GpsTimeTests::new();
-        let wtr = sink();
-        let msg_sender = MsgSender::new(wtr);
-        let mut main = MainTab::new(shared_state, client_send, msg_sender);
+        let mut main = MainTab::new(shared_state, client_send);
         let later_gps_time_good = GpsTime::new(gps_s.good_week, gps_s.later_gps_tow_good);
         let now = Instant::now();
         main.last_gps_update = Instant::now();
@@ -325,7 +263,9 @@ mod tests {
         let client_send = TestSender { inner: Vec::new() };
         let wtr = sink();
         let msg_sender = MsgSender::new(wtr);
-        let mut main = MainTab::new(shared_state, client_send, msg_sender);
+        let mut main = MainTab::new(shared_state.clone(), client_send.clone());
+        let mut solution_tab = SolutionTab::new(shared_state.clone(), client_send.clone());
+        let mut baseline_tab = BaselineTab::new(shared_state, client_send, msg_sender);
         assert_eq!(main.last_csv_logging, CsvLogging::OFF);
         main.shared_state.set_csv_logging(CsvLogging::ON);
         main.shared_state.set_logging_directory(tmp_dir.clone());
@@ -340,7 +280,7 @@ mod tests {
         let tow = 1337;
         let sender_id = Some(1337);
 
-        let msg = MsgPosLLH {
+        let msg = MsgPosLlh {
             sender_id,
             tow,
             lat,
@@ -355,7 +295,7 @@ mod tests {
         let n = 1;
         let e = 2;
         let d = 3;
-        let msg_two = MsgVelNED {
+        let msg_two = MsgVelNed {
             sender_id,
             tow,
             n,
@@ -371,7 +311,7 @@ mod tests {
         let e_m3 = 5;
         let d_m3 = 6;
         let flags = 0x2;
-        let msg_three = MsgBaselineNED {
+        let msg_three = MsgBaselineNed {
             sender_id,
             tow,
             n,
@@ -384,17 +324,15 @@ mod tests {
         };
 
         {
-            main.serialize_sbp(&SBP::MsgPosLLH(msg.clone()));
-            main.solution_tab.handle_pos_llh(PosLLH::MsgPosLLH(msg));
-            main.serialize_sbp(&SBP::MsgVelNED(msg_two.clone()));
-            main.solution_tab
-                .handle_vel_ned(VelNED::MsgVelNED(msg_two.clone()));
-            main.serialize_sbp(&SBP::MsgBaselineNED(msg_three.clone()));
-            main.baseline_tab
-                .handle_baseline_ned(BaselineNED::MsgBaselineNED(msg_three));
+            main.serialize_sbp(&Sbp::MsgPosLlh(msg.clone()));
+            solution_tab.handle_pos_llh(PosLLH::MsgPosLlh(msg));
+            main.serialize_sbp(&Sbp::MsgVelNed(msg_two.clone()));
+            solution_tab.handle_vel_ned(VelNED::MsgVelNed(msg_two.clone()));
+            main.serialize_sbp(&Sbp::MsgBaselineNed(msg_three.clone()));
+            baseline_tab.handle_baseline_ned(BaselineNED::MsgBaselineNed(msg_three));
             assert_eq!(main.last_csv_logging, CsvLogging::ON);
             main.end_csv_logging().unwrap();
-            main.serialize_sbp(&SBP::MsgVelNED(msg_two));
+            main.serialize_sbp(&Sbp::MsgVelNed(msg_two));
             assert_eq!(main.last_csv_logging, CsvLogging::OFF);
         }
 
@@ -457,9 +395,7 @@ mod tests {
         let tmp_dir = tmp_dir.path().to_path_buf();
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let wtr = sink();
-        let msg_sender = MsgSender::new(wtr);
-        let mut main = MainTab::new(shared_state, client_send, msg_sender);
+        let mut main = MainTab::new(shared_state, client_send);
         assert_eq!(main.last_sbp_logging, SbpLogging::OFF);
         main.shared_state.set_sbp_logging(SbpLogging::SBP);
         main.shared_state.set_logging_directory(tmp_dir.clone());
@@ -474,7 +410,7 @@ mod tests {
         let tow = 1337;
         let sender_id = Some(1337);
 
-        let msg_one = MsgPosLLH {
+        let msg_one = MsgPosLlh {
             sender_id,
             tow,
             lat,
@@ -489,7 +425,7 @@ mod tests {
         let n = 1;
         let e = 2;
         let d = 3;
-        let msg_two = MsgVelNED {
+        let msg_two = MsgVelNed {
             sender_id,
             tow,
             n,
@@ -502,11 +438,11 @@ mod tests {
         };
 
         {
-            main.serialize_sbp(&SBP::MsgPosLLH(msg_one.clone()));
-            main.serialize_sbp(&SBP::MsgVelNED(msg_two.clone()));
+            main.serialize_sbp(&Sbp::MsgPosLlh(msg_one.clone()));
+            main.serialize_sbp(&Sbp::MsgVelNed(msg_two.clone()));
             assert_eq!(main.last_sbp_logging, SbpLogging::SBP);
             main.close_sbp();
-            main.serialize_sbp(&SBP::MsgVelNED(msg_two.clone()));
+            main.serialize_sbp(&Sbp::MsgVelNed(msg_two.clone()));
             assert_eq!(main.last_sbp_logging, SbpLogging::OFF);
         }
 
@@ -520,7 +456,7 @@ mod tests {
         let mut messages = sbp::iter_messages(file_read);
         let msg = messages.next().unwrap().unwrap();
         match msg {
-            SBP::MsgPosLLH(msg) => {
+            Sbp::MsgPosLlh(msg) => {
                 assert_eq!(msg.sender_id, msg_one.sender_id);
                 assert_eq!(msg.flags, msg_one.flags);
                 assert_eq!(msg.tow, msg_one.tow);
@@ -532,7 +468,7 @@ mod tests {
         }
         let msg = messages.next().unwrap().unwrap();
         match msg {
-            SBP::MsgVelNED(msg) => {
+            Sbp::MsgVelNed(msg) => {
                 assert_eq!(msg.sender_id, msg_two.sender_id);
                 assert_eq!(msg.flags, msg_two.flags);
                 assert_eq!(msg.n, msg_two.n);
@@ -549,9 +485,7 @@ mod tests {
         let tmp_dir = tmp_dir.path().to_path_buf();
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let wtr = sink();
-        let msg_sender = MsgSender::new(wtr);
-        let mut main = MainTab::new(shared_state, client_send, msg_sender);
+        let mut main = MainTab::new(shared_state, client_send);
         assert_eq!(main.last_sbp_logging, SbpLogging::OFF);
         main.shared_state.set_sbp_logging(SbpLogging::SBP_JSON);
         main.shared_state.set_logging_directory(tmp_dir.clone());
@@ -566,7 +500,7 @@ mod tests {
         let tow = 1337;
         let sender_id = Some(1337);
 
-        let msg_one = MsgPosLLH {
+        let msg_one = MsgPosLlh {
             sender_id,
             tow,
             lat,
@@ -581,7 +515,7 @@ mod tests {
         let n = 1;
         let e = 2;
         let d = 3;
-        let msg_two = MsgVelNED {
+        let msg_two = MsgVelNed {
             sender_id,
             tow,
             n,
@@ -594,11 +528,11 @@ mod tests {
         };
 
         {
-            main.serialize_sbp(&SBP::MsgPosLLH(msg_one));
-            main.serialize_sbp(&SBP::MsgVelNED(msg_two.clone()));
+            main.serialize_sbp(&Sbp::MsgPosLlh(msg_one));
+            main.serialize_sbp(&Sbp::MsgVelNed(msg_two.clone()));
             assert_eq!(main.last_sbp_logging, SbpLogging::SBP_JSON);
             main.close_sbp();
-            main.serialize_sbp(&SBP::MsgVelNED(msg_two));
+            main.serialize_sbp(&Sbp::MsgVelNed(msg_two));
             assert_eq!(main.last_sbp_logging, SbpLogging::OFF);
         }
 

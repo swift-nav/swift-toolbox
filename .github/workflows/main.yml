@@ -76,16 +76,10 @@ jobs:
           toolchain: stable
 
       - uses: Swatinem/rust-cache@v1
-      
+
       - uses: davidB/rust-cargo-make@v1
         with:
           version: ${{ env.CARGO_MAKE_VERSION }}
-
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          activate-environment: console_pp
-          environment-file: conda.yml
-          miniconda-version: ${{ env.MINICONDA_VERSION }}
 
       - name: Cache pip
         uses: actions/cache@v2
@@ -152,12 +146,6 @@ jobs:
       - name: Install Dependencies.
         run: |
           sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
-
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          activate-environment: console_pp
-          environment-file: conda.yml
-          miniconda-version: ${{ env.MINICONDA_VERSION }}
 
       - name: Run Requirements Generation Check
         run: |
@@ -265,12 +253,6 @@ jobs:
       - uses: davidB/rust-cargo-make@v1
         with:
           version: ${{ env.CARGO_MAKE_VERSION }}
-
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          activate-environment: console_pp
-          environment-file: conda.yml
-          miniconda-version: ${{ env.MINICONDA_VERSION }}
 
       - name: Cache pip
         uses: actions/cache@v2

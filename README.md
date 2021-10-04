@@ -111,9 +111,9 @@ We're using Qt 5.15.2 via PySide2 (the official Python bindings for Qt).  Made p
 
 QML (QtQuick Mark-up Language) is used to model the UI.
 
-### Python 3.9 (via Miniconda)
+### Python 3.9 Standalone Build
 
-Miniconda builds of Python provide a consistent (and reliable) build of Python across different platforms.  We use Python 3.9 (which requires PyInstaller 4.2).
+[python-build-standalone](https://github.com/indygreg/python-build-standalone) provides redistributable builds of Python for multiple enviroments. We use Python 3.9 (which requires PyInstaller 4.2).
 
 ### Poetry
 

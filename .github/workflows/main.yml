@@ -156,6 +156,10 @@ jobs:
             ${{ runner.os }}-pyproject-toml-
             ${{ runner.os }}-
 
+      - name: Set up python builder
+        run: |
+          cargo make setup-builder
+
       - name: Run Checks
         run: |
           cargo make check-all

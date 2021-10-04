@@ -20,6 +20,8 @@
 # If you're wondering how this is created, it is generated using
 # `scripts/generate.py` in https://github.com/pypa/get-pip.
 
+# pylint: skip-file
+
 import sys
 
 this_python = sys.version_info[:2]

@@ -142,7 +142,7 @@ from .update_tab import (
     UpdateTabModel,
 )
 
-import swiftnav_console.console_resources # type: ignore # pylint: disable=unused-import
+import swiftnav_console.console_resources  # type: ignore # pylint: disable=unused-import
 
 import console_backend.server  # type: ignore  # pylint: disable=import-error,no-name-in-module
 
@@ -668,7 +668,9 @@ def get_capnp_path() -> str:
     if is_frozen():
         path = os.path.join(d, CONSOLE_BACKEND_CAPNP_PATH)
     else:
-        path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "src/main/resources/base", CONSOLE_BACKEND_CAPNP_PATH)
+        path = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)), "src/main/resources/base", CONSOLE_BACKEND_CAPNP_PATH
+        )
     return path
 
 

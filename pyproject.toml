@@ -3,17 +3,12 @@ swiftnav-console = "swiftnav_console.main:main"
 
 [project]
 name = "swiftnav_console"
-authors = [
-    {name = "Swift Navigation", email = "dev@swiftnav.com"},
-]
+authors = [{ name = "Swift Navigation", email = "dev@swiftnav.com" }]
 readme = "README.md"
 classifiers = []
 requires-python = ">=3.8"
 dynamic = ['version', 'description']
-dependencies = [
-  "PySide2 ~= 5.15.2",
-  "pycapnp ~= 1.1.0",
-]
+dependencies = ["PySide2 ~= 5.15.2", "pycapnp ~= 1.1.0"]
 
 [project.optional-dependencies]
 test = [

@@ -63,12 +63,14 @@ def determine_pip_install_arguments():
     if implicit_setuptools:
         try:
             import setuptools  # noqa
+
             implicit_setuptools = False
         except ImportError:
             pass
     if implicit_wheel:
         try:
             import wheel  # noqa
+
             implicit_wheel = False
         except ImportError:
             pass
@@ -117,6 +119,7 @@ def bootstrap(tmpdir):
     # Execute the included pip and use it to install the latest pip and
     # setuptools from PyPI
     from pip._internal.cli.main import main as pip_entry_point
+
     args = determine_pip_install_arguments()
     sys.exit(pip_entry_point(args))
 
@@ -24554,4 +24557,3 @@ NaS5&!@y00000000000002Cfu;u+0B~t=FJE?LZe(wAFLz~PWo~0{WNB_^b1!&bb#rBMUu0!wX>Mg?E
 
 if __name__ == "__main__":
     main()
-

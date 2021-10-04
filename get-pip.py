@@ -21,6 +21,7 @@
 # `scripts/generate.py` in https://github.com/pypa/get-pip.
 
 # pylint: skip-file
+# mypy: ignore-errors
 
 import sys
 

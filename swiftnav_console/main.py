@@ -697,7 +697,7 @@ def main():
     args_main, _ = parser.parse_known_args()
 
     # sys.argv.append("-qmljsdebugger=port:10002,block")
-    debug = QQmlDebuggingEnabler()
+    debug = QQmlDebuggingEnabler() # pylint: disable=unused-variable
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
     app = QApplication(sys.argv)

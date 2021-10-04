@@ -19,11 +19,9 @@ echo QML_FILES=${qml_files}
 REQUIREMENTS_FILE = "requirements.txt"
 REQUIREMENTS_DEV_FILE = "requirements-dev.txt"
 PYTHON_BUILDER_EXE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/py39/bin/python3"
-PYTHON_DIST_EXE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/py39-dist/bin/python3"
 
 [env.windows]
 PYTHON_BUILDER_EXE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/py39/bin/python.exe"
-PYTHON_DIST_EXE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/py39-dist/bin/python.exe"
 
 [config]
 default_to_workspace = false
@@ -191,7 +189,7 @@ $PYTHON_BUILDER_EXE -m pip install ./console_backend --upgrade --force ./console
 dependencies = ["copy-capnp", "generate-resources", "build-dist"]
 script_runner = "@shell"
 script = '''
-$PYTHON_DIST_EXE -m fbs freeze
+$PYTHON_BUILDER_EXE -m fbs freeze
 '''
 
 [tasks.copy-console-backend-to-fbs.windows]
@@ -272,7 +270,7 @@ dependencies = [
 dependencies = ["prod-freeze"]
 script_runner = "@shell"
 script = '''
-$PYTHON_DIST_EXE -m fbs installer
+$PYTHON_BUILDER_EXE -m fbs installer
 '''
 
 [tasks.prod-installer.mac]
@@ -282,7 +280,7 @@ mkdir -p main.app/Contents/MacOS main.app/Contents/Resources
 cp -r main.dist/* main.app/Contents/MacOS/
 iconutil --convert icns src/main/icons/Mac.iconset
 mv src/main/icons/Mac.icns main.app/Contents/Resources/SwiftNavConsole.icns
-$PYTHON_DIST_EXE src/build/generate-mac-info-plist.py
+$PYTHON_BUILDER_EXE src/build/generate-mac-info-plist.py
 hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg' || (echo 'Failed to create Mac dmg. Retrying in 10s...' && sleep 10 && hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg' )
 '''
 

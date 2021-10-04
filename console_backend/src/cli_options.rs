@@ -141,7 +141,9 @@ impl CliOptions {
                     || arg.ends_with("python3")
                     || arg.ends_with("python.exe")
                     || arg.ends_with("pythonw.exe"))
-                    && (n_arg.ends_with(".py") || n_arg.ends_with("swiftnav-console.exe"))
+                    && (n_arg.ends_with(".py")
+                        || n_arg.ends_with("swiftnav-console.exe")
+                        || n_arg.ends_with("swiftnav-console"))
                 {
                     continue;
                 }

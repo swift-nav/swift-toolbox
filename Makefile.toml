@@ -180,6 +180,7 @@ cwd = "standalone-py"
 condition = { files_not_exist = [
   "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/standalone-py/python",
 ] }
+script_runner = "powershell"
 script = { file = "download.ps1" }
 
 [tasks.setup-builder]

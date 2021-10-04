@@ -81,14 +81,14 @@ jobs:
         with:
           version: ${{ env.CARGO_MAKE_VERSION }}
 
-      # - name: Cache pip
-      #   uses: actions/cache@v2
-      #   with:
-      #     path: ${{ env.PIP_CACHE_DIR }}
-      #     key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-pip-
-      #       ${{ runner.os }}-
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.PIP_CACHE_DIR }}
+          key: ${{ runner.os }}-pyproject-toml-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pyproject-toml-
+            ${{ runner.os }}-
 
       - name: Set up python builder
         run: |
@@ -147,14 +147,14 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
 
-      # - name: Cache pip
-      #   uses: actions/cache@v2
-      #   with:
-      #     path: ${{ env.PIP_CACHE_DIR }}
-      #     key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-pip-
-      #       ${{ runner.os }}-
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.PIP_CACHE_DIR }}
+          key: ${{ runner.os }}-pyproject-toml-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pyproject-toml-
+            ${{ runner.os }}-
 
       - name: Run Checks
         run: |
@@ -249,14 +249,14 @@ jobs:
         with:
           version: ${{ env.CARGO_MAKE_VERSION }}
 
-      # - name: Cache pip
-      #   uses: actions/cache@v2
-      #   with:
-      #     path: ${{ env.PIP_CACHE_DIR }}
-      #     key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-pip-
-      #       ${{ runner.os }}-
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.PIP_CACHE_DIR }}
+          key: ${{ runner.os }}-pyproject-toml-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pyproject-toml-
+            ${{ runner.os }}-
 
       - name: Set up python builder
         run: |

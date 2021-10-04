@@ -61,7 +61,15 @@ $PYTHON_BUILDER_EXE -m py2many --rust=1 /tmp/piksi_tools_constants.py --outdir c
 [tasks.generate-resources]
 script_runner = "@shell"
 script = '''
-pyside2-rcc resources/console_resources.qrc -o swiftnav_console/console_resources.py
+py39/bin/pyside2-rcc resources/console_resources.qrc -o swiftnav_console/console_resources.py
+echo "$(echo '# pylint: skip-file'; cat swiftnav_console/console_resources.py)" > swiftnav_console/console_resources.py
+'''
+
+[tasks.generate-resources.windows]
+script_runner = "@shell"
+script = '''
+py39/bin/pyside2-rcc.exe resources/console_resources.qrc -o swiftnav_console/console_resources.py
+echo "$(echo '# pylint: skip-file'; cat swiftnav_console/console_resources.py)" > swiftnav_console/console_resources.py
 '''
 
 [tasks.check-capnp]

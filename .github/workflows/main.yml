@@ -90,9 +90,9 @@ jobs:
       #       ${{ runner.os }}-pip-
       #       ${{ runner.os }}-
 
-      - name: Run Pip Install
+      - name: Set up python builder
         run: |
-          cargo make pip-install-dev
+          cargo make setup-builder
 
       - name: Run Backend Benchmarks (Windows)
         env:
@@ -258,9 +258,9 @@ jobs:
       #       ${{ runner.os }}-pip-
       #       ${{ runner.os }}-
 
-      - name: Run Pip Install
+      - name: Set up python builder
         run: |
-          cargo make pip-install-dev
+          cargo make setup-builder
 
       - name: Build ${{ runner.os }} Binaries.
         env:

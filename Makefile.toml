@@ -44,18 +44,6 @@ args = ["install-update", "taplo-cli", "cargo-make"]
 clear = true
 run_task = "tests"
 
-[tasks.pip-install-dev]
-script_runner = "@shell"
-script = '''
-$PYTHON_BUILDER_EXE -m pip install ".[test]"
-'''
-
-[tasks.pip-install]
-script_runner = "@shell"
-script = '''
-$PYTHON_BUILDER_EXE -m pip install .
-'''
-
 [tasks.generate-common-constants-rs]
 script_runner = "@shell"
 script = '''
@@ -64,7 +52,6 @@ mv swiftnav_console/constants.rs console_backend/src/common_constants.rs
 '''
 
 [tasks.extract-piksi-constants-rs]
-dependencies = ["pip-install-dev"]
 script_runner = "@shell"
 script = '''
 $PYTHON_BUILDER_EXE utils/extract_piksi_tools_constants.py > /tmp/piksi_tools_constants.py
@@ -381,7 +368,6 @@ dependencies = ["python-type-check", "rust-type-check"]
 [tasks.check-all]
 dependencies = [
   "cargo-make-deps-update",
-  "pip-install-dev",
   "generate-common-constants-rs",
   "extract-piksi-constants-rs",
   "format",

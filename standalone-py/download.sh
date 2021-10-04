@@ -15,5 +15,5 @@ esac
 
 wget $cpython_release -O py39.tar.zst
 
-zstd -d py39.tar.zst -o py39.tar
+zstd -f -d py39.tar.zst -o py39.tar
 tar -xvf py39.tar

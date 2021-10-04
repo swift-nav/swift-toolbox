@@ -16,10 +16,12 @@ echo QML_FILES=${qml_files}
 ] # Two proposed methods of simplifying path globbing # https://github.com/sagiegurari/cargo-make/issues/542 # https://github.com/sagiegurari/cargo-make/issues/543
 
 [env]
-CONDA_ENV = "console_pp"
 REQUIREMENTS_FILE = "requirements.txt"
 REQUIREMENTS_DEV_FILE = "requirements-dev.txt"
 PYTHON_EXE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/standalone-py/python/install/bin/python3"
+
+[env.windows]
+PYTHON_EXE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/standalone-py/python/install/bin/pythonw.exe"
 
 [config]
 default_to_workspace = false
@@ -194,6 +196,44 @@ script = '''
 mkdir -p target/swift_navigation_console/console_backend && cp -r console_backend/console_backend/* target/swift_navigation_console/console_backend/.
 '''
 
+[tasks.get-standalone-py]
+cwd = "standalone-py"
+script = { file = "download.sh" }
+
+[tasks.get-standalone-py.windows]
+cwd = "standalone-py"
+script = { file = "download.ps1" }
+
+[tasks.prep-dist]
+script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/prep-dist.sh", absolute_path = true }
+
+[tasks.prep-dist.windows]
+script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/prep-dist.ps1", absolute_path = true }
+
+[tasks.build-dist]
+script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/build-dist.sh", absolute_path = true }
+
+[tasks.build-dist.windows]
+script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/build-dist.ps1", absolute_path = true }
+
+[tasks.purge-dist]
+script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/purge-dist.sh", absolute_path = true }
+
+[tasks.purge-dist.windows]
+script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/purge-dist.ps1", absolute_path = true }
+
+[tasks.compress-dist]
+script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/compress-dist.sh", absolute_path = true }
+
+[tasks.compress-dist.windows]
+script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/compress-dist.ps1", absolute_path = true }
+
+[tasks.prep-builder]
+script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/prep-builder.sh", absolute_path = true }
+
+[tasks.prep-builder.windows]
+script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/prep-builder.ps1", absolute_path = true }
+
 [tasks.prod-freeze]
 dependencies = [
   "store-version",
@@ -227,30 +267,7 @@ script = '''
 bash src/main/fbs/windows-remove-negligibles.sh
 '''
 
-[tasks.prod-nuitka-build.linux]
-dependencies = ["copy-capnp", "store-version", "generate-resources"]
-script_runner = "@shell"
-script = '''
-$PYTHON_EXE -m pip install --force ./console_backend
-bash src/main/nuitka/linux.sh
-'''
-
-[tasks.prod-nuitka-build.mac]
-dependencies = ["copy-capnp", "store-version", "generate-resources"]
-script_runner = "@shell"
-script = '''
-$PYTHON_EXE -m pip install --force ./console_backend
-$PYTHON_EXE bash src/main/nuitka/mac.sh
-'''
-
-[tasks.create-nuitka-script]
-script_runner = "@shell"
-script = '''
-$PYTHON_EXE utils/create_nuitka_script.py
-'''
-
 [tasks.prod-installer.mac]
-dependencies = ["prod-nuitka-build"]
 script_runner = "@shell"
 script = '''
 mkdir -p main.app/Contents/MacOS main.app/Contents/Resources
@@ -262,18 +279,14 @@ hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'sw
 '''
 
 [tasks.qml-format]
-env = { QT_APP = { script = [
-  "$PYTHON_EXE utils/echo-qt-dir.py",
-] } }
+env = { QT_APP = { script = ["$PYTHON_EXE utils/echo-qt-dir.py"] } }
 script_runner = "@shell"
 script = '''
 ${QT_APP}/Qt/bin/qmlformat -i $QML_FILES
 '''
 
 [tasks.qml-lint]
-env = { QT_APP = { script = [
-  "$PYTHON_EXE utils/echo-qt-dir.py",
-] } }
+env = { QT_APP = { script = ["$PYTHON_EXE utils/echo-qt-dir.py"] } }
 script_runner = "@shell"
 script = '''
 ${QT_APP}/Qt/bin/qmllint -I ${QT_APP}/../PySide2/Qt/qml/ -I resources/ $QML_FILES

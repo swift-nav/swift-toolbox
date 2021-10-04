@@ -3,5 +3,5 @@ $cpython_release ="${base_url}/cpython-3.9.6-x86_64-pc-windows-msvc-shared-pgo-2
 
 Invoke-WebRequest -Uri $cpython_release -Outfile py39.tar.zst
 
-zstd -d py39.tar.zst -o py39.tar
+zstd -f -d py39.tar.zst -o py39.tar
 tar -xvf py39.tar

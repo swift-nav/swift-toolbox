@@ -35,3 +35,6 @@ build-backend = "flit_core.buildapi"
 
 [tool.black]
 line-length = 120
+
+[tool.mypy]
+exclude = "get-pip.py"

@@ -190,7 +190,7 @@ condition = { files_not_exist = [
 ] }
 script_runner = "powershell"
 script_extension = "ps1"
-script = '''.\download.ps1'''
+script = "download.ps1"
 
 [tasks.setup-builder]
 dependencies = ["get-standalone-py"]
@@ -198,7 +198,9 @@ script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/setup-build
 
 [tasks.setup-builder.windows]
 dependencies = ["get-standalone-py"]
-script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/setup-builder.ps1", absolute_path = true }
+script_runner = "powershell"
+script_extension = "ps1"
+script = "scripts/setup-builder.ps1"
 
 [tasks.prep-dist]
 dependencies = ["get-standalone-py"]
@@ -206,7 +208,9 @@ script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/prep-dist.s
 
 [tasks.prep-dist.windows]
 dependencies = ["get-standalone-py"]
-script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/prep-dist.ps1", absolute_path = true }
+script_runner = "powershell"
+script_extension = "ps1"
+script = "scripts/prep-dist.ps1"
 
 [tasks.build-dist]
 dependencies = ["prep-dist"]
@@ -214,19 +218,25 @@ script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/build-dist.
 
 [tasks.build-dist.windows]
 dependencies = ["prep-dist"]
-script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/build-dist.ps1", absolute_path = true }
+script_runner = "powershell"
+script_extension = "ps1"
+script = "scripts/build-dist.ps1"
 
 [tasks.purge-dist]
 script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/purge-dist.sh", absolute_path = true }
 
 [tasks.purge-dist.windows]
-script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/purge-dist.ps1", absolute_path = true }
+script_runner = "powershell"
+script_extension = "ps1"
+script = "scripts/purge-dist.ps1"
 
 [tasks.compress-dist]
 script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/compress-dist.sh", absolute_path = true }
 
 [tasks.compress-dist.windows]
-script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/compress-dist.ps1", absolute_path = true }
+script_runner = "powershell"
+script_extension = "ps1"
+script = "scripts/compress-dist.ps1"
 
 [tasks.create-dist]
 dependencies = ["build-dist", "purge-dist", "compress-dist"]

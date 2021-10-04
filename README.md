@@ -2,24 +2,14 @@
 
 ## Setup
 
-Install Rust: https://rustup.rs/ 
+Install Rust: https://rustup.rs/
 
 Install *cargo-make*: `cargo install --force cargo-make`.
 
-Download and install miniconda3:
-- https://docs.conda.io/en/latest/miniconda.html
-
-Create Python new environment:
+Set up standalone Python environment:
 
 ```
-conda env create -f conda.yml
-```
-
-Activate the environment and install poetry:
-
-```
-conda activate console_pp
-pip install poetry
+cargo make setup
 ```
 
 Install cmake, clang, and capnp in your respective OS.
@@ -33,17 +23,6 @@ brew install cmake llvm capnp
 
 # Linux
 apt-get install cmake libclang-dev capnproto
-```
-
-Install development dependencies (On Windows make sure you're using Adminstrator shell).
-
-# For the below commands, we do not want to be in the console_pp conda environment.
-# Bad things will happen if you are.
-
-```
-conda deactivate
-cargo make pip-install-dev
-git lfs pull
 ```
 
 ## Running
@@ -91,6 +70,9 @@ cargo make frontend-cpu-bench
 After making changes, run to tasks to ensure the code is ready for submission
 
 ```
+# fetch test data
+git lfs pull
+
 cargo make check-all
 cargo make tests
 ```

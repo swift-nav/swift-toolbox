@@ -58,7 +58,7 @@ jobs:
         shell: bash
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
-              sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
+              sudo apt-get update && sudo apt-get install -y capnproto libudev-dev pyside2-tools
           elif [ "$RUNNER_OS" == "macOS" ]; then
               brew install capnp llvm
           elif [ "$RUNNER_OS" == "Windows" ]; then
@@ -145,7 +145,7 @@ jobs:
 
       - name: Install Dependencies.
         run: |
-          sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
+          sudo apt-get update && sudo apt-get install -y capnproto libudev-dev pyside2-tools
 
       - name: Cache pip
         uses: actions/cache@v2
@@ -232,7 +232,8 @@ jobs:
                 ruby-dev \
                 rubygems \
                 build-essential \
-                libudev-dev
+                libudev-dev \
+                pyside2-tools
               sudo gem install --no-document fpm
           elif [ "$RUNNER_OS" == "macOS" ]; then
               brew install capnp llvm

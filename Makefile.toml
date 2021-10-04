@@ -29,6 +29,15 @@ init_task = "init"
 
 [tasks.init]
 
+[tasks.setup]
+dependencies = ["setup-builder", "install-poetry"]
+
+[tasks.install-poetry]
+script_runner = "@shell"
+script = '''
+$PYTHON_EXE -m pip install poetry
+'''
+
 [tasks.rustup-update]
 command = "rustup"
 args = ["update", "stable"]
@@ -210,13 +219,13 @@ condition = { files_not_exist = [
 ] }
 script = { file = "download.ps1" }
 
-[tasks.prep-builder]
+[tasks.setup-builder]
 dependencies = ["get-standalone-py"]
-script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/prep-builder.sh", absolute_path = true }
+script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/setup-builder.sh", absolute_path = true }
 
-[tasks.prep-builder.windows]
+[tasks.setup-builder.windows]
 dependencies = ["get-standalone-py"]
-script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/prep-builder.ps1", absolute_path = true }
+script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/setup-builder.ps1", absolute_path = true }
 
 [tasks.prep-dist]
 dependencies = ["get-standalone-py"]

@@ -18,10 +18,12 @@ echo QML_FILES=${qml_files}
 [env]
 REQUIREMENTS_FILE = "requirements.txt"
 REQUIREMENTS_DEV_FILE = "requirements-dev.txt"
-PYTHON_EXE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/py39/bin/python3"
+PYTHON_BUILDER_EXE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/py39/bin/python3"
+PYTHON_DIST_EXE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/py39-dist/bin/python3"
 
 [env.windows]
-PYTHON_EXE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/py39/bin/python.exe"
+PYTHON_BUILDER_EXE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/py39/bin/python.exe"
+PYTHON_DIST_EXE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/py39-dist/bin/python.exe"
 
 [config]
 default_to_workspace = false
@@ -35,7 +37,7 @@ dependencies = ["setup-builder", "install-poetry"]
 [tasks.install-poetry]
 script_runner = "@shell"
 script = '''
-$PYTHON_EXE -m pip install poetry
+$PYTHON_BUILDER_EXE -m pip install poetry
 '''
 
 [tasks.rustup-update]
@@ -58,32 +60,32 @@ run_task = "tests"
 [tasks.poetry-export-dev]
 script_runner = "@shell"
 script = '''
-$PYTHON_EXE -m poetry export --dev -f $REQUIREMENTS_FILE --output $REQUIREMENTS_DEV_FILE --without-hashes
+$PYTHON_BUILDER_EXE -m poetry export --dev -f $REQUIREMENTS_FILE --output $REQUIREMENTS_DEV_FILE --without-hashes
 '''
 
 [tasks.poetry-export]
 dependencies = ["poetry-export-dev"]
 script_runner = "@shell"
 script = '''
-$PYTHON_EXE -m poetry export -f $REQUIREMENTS_FILE --output $REQUIREMENTS_FILE --without-hashes
+$PYTHON_BUILDER_EXE -m poetry export -f $REQUIREMENTS_FILE --output $REQUIREMENTS_FILE --without-hashes
 '''
 
 [tasks.pip-install-dev]
 script_runner = "@shell"
 script = '''
-$PYTHON_EXE -m pip install -r $REQUIREMENTS_DEV_FILE
+$PYTHON_BUILDER_EXE -m pip install -r $REQUIREMENTS_DEV_FILE
 '''
 
 [tasks.pip-install]
 script_runner = "@shell"
 script = '''
-$PYTHON_EXE -m pip install -r $REQUIREMENTS_FILE
+$PYTHON_BUILDER_EXE -m pip install -r $REQUIREMENTS_FILE
 '''
 
 [tasks.generate-common-constants-rs]
 script_runner = "@shell"
 script = '''
-$PYTHON_EXE -m py2many --rust=1 swiftnav_console/constants.py
+$PYTHON_BUILDER_EXE -m py2many --rust=1 swiftnav_console/constants.py
 mv swiftnav_console/constants.rs console_backend/src/common_constants.rs
 '''
 
@@ -91,8 +93,8 @@ mv swiftnav_console/constants.rs console_backend/src/common_constants.rs
 dependencies = ["pip-install-dev"]
 script_runner = "@shell"
 script = '''
-$PYTHON_EXE utils/extract_piksi_tools_constants.py > /tmp/piksi_tools_constants.py
-$PYTHON_EXE -m py2many --rust=1 /tmp/piksi_tools_constants.py --outdir console_backend/src/
+$PYTHON_BUILDER_EXE utils/extract_piksi_tools_constants.py > /tmp/piksi_tools_constants.py
+$PYTHON_BUILDER_EXE -m py2many --rust=1 /tmp/piksi_tools_constants.py --outdir console_backend/src/
 '''
 
 [tasks.generate-resources]
@@ -133,7 +135,7 @@ Get-ChildItem .\console_backend -Recurse -Include @("*.egg-info", "*.dist-info")
 [tasks.start-console]
 script_runner = "@shell"
 script = '''
-$PYTHON_EXE -m swiftnav_console.main -- ${@}
+$PYTHON_BUILDER_EXE -m swiftnav_console.main -- ${@}
 '''
 
 [tasks.run]
@@ -176,20 +178,20 @@ git describe --tags --always > console_backend/src/version.txt
 [tasks.install-backend]
 script_runner = "@shell"
 script = '''
-$PYTHON_EXE -m pip install -e ./console_backend
+$PYTHON_BUILDER_EXE -m pip install -e ./console_backend
 '''
 
 [tasks.prod-install-backend]
 script_runner = "@shell"
 script = '''
-$PYTHON_EXE -m pip install ./console_backend --upgrade --force ./console_backend -v
+$PYTHON_BUILDER_EXE -m pip install ./console_backend --upgrade --force ./console_backend -v
 '''
 
 [tasks.prod-freeze-no-copy]
-dependencies = ["copy-capnp", "generate-resources", "prod-install-backend"]
+dependencies = ["copy-capnp", "generate-resources", "build-dist"]
 script_runner = "@shell"
 script = '''
-$PYTHON_EXE -m fbs freeze
+$PYTHON_DIST_EXE -m fbs freeze
 '''
 
 [tasks.copy-console-backend-to-fbs.windows]
@@ -236,9 +238,11 @@ dependencies = ["get-standalone-py"]
 script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/prep-dist.ps1", absolute_path = true }
 
 [tasks.build-dist]
+dependencies = ["prep-dist"]
 script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/build-dist.sh", absolute_path = true }
 
 [tasks.build-dist.windows]
+dependencies = ["prep-dist"]
 script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/build-dist.ps1", absolute_path = true }
 
 [tasks.purge-dist]
@@ -254,7 +258,7 @@ script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/compress-di
 script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/compress-dist.ps1", absolute_path = true }
 
 [tasks.create-dist]
-dependencies = ["prep-dist", "build-dist", "purge-dist", "compress-dist"]
+dependencies = ["build-dist", "purge-dist", "compress-dist"]
 
 [tasks.prod-freeze]
 dependencies = [
@@ -268,7 +272,7 @@ dependencies = [
 dependencies = ["prod-freeze"]
 script_runner = "@shell"
 script = '''
-$PYTHON_EXE -m fbs installer
+$PYTHON_DIST_EXE -m fbs installer
 '''
 
 [tasks.prod-installer.mac]
@@ -278,14 +282,14 @@ mkdir -p main.app/Contents/MacOS main.app/Contents/Resources
 cp -r main.dist/* main.app/Contents/MacOS/
 iconutil --convert icns src/main/icons/Mac.iconset
 mv src/main/icons/Mac.icns main.app/Contents/Resources/SwiftNavConsole.icns
-$PYTHON_EXE src/build/generate-mac-info-plist.py
+$PYTHON_DIST_EXE src/build/generate-mac-info-plist.py
 hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg' || (echo 'Failed to create Mac dmg. Retrying in 10s...' && sleep 10 && hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg' )
 '''
 
 [tasks.create-remove-negligibles-file]
 script_runner = "@shell"
 script = '''
-$PYTHON_EXE utils/get_fbs_remove_list.py
+$PYTHON_BUILDER_EXE utils/get_fbs_remove_list.py
 '''
 
 [tasks.remove-negligibles.linux]
@@ -301,14 +305,14 @@ bash src/main/fbs/windows-remove-negligibles.sh
 '''
 
 [tasks.qml-format]
-env = { QT_APP = { script = ["$PYTHON_EXE utils/echo-qt-dir.py"] } }
+env = { QT_APP = { script = ["$PYTHON_BUILDER_EXE utils/echo-qt-dir.py"] } }
 script_runner = "@shell"
 script = '''
 ${QT_APP}/Qt/bin/qmlformat -i $QML_FILES
 '''
 
 [tasks.qml-lint]
-env = { QT_APP = { script = ["$PYTHON_EXE utils/echo-qt-dir.py"] } }
+env = { QT_APP = { script = ["$PYTHON_BUILDER_EXE utils/echo-qt-dir.py"] } }
 script_runner = "@shell"
 script = '''
 ${QT_APP}/Qt/bin/qmllint -I ${QT_APP}/../PySide2/Qt/qml/ -I resources/ $QML_FILES
@@ -347,19 +351,19 @@ args = ["check"]
 [tasks.python-type-check]
 script_runner = "@shell"
 script = '''
-$PYTHON_EXE -m mypy $PYTHON_FILES
+$PYTHON_BUILDER_EXE -m mypy $PYTHON_FILES
 '''
 
 [tasks.python-format-check]
 script_runner = "@shell"
 script = '''
-$PYTHON_EXE -m black --check --diff $PYTHON_FILES
+$PYTHON_BUILDER_EXE -m black --check --diff $PYTHON_FILES
 '''
 
 [tasks.python-format-all]
 script_runner = "@shell"
 script = '''
-$PYTHON_EXE -m black $PYTHON_FILES
+$PYTHON_BUILDER_EXE -m black $PYTHON_FILES
 '''
 
 [tasks.python-format]
@@ -368,7 +372,7 @@ alias = "python-format-all"
 [tasks.python-lint]
 script_runner = "@shell"
 script = '''
-$PYTHON_EXE -m pylint --output-format=parseable $PYTHON_FILES
+$PYTHON_BUILDER_EXE -m pylint --output-format=parseable $PYTHON_FILES
 '''
 
 [tasks.format-toml-check]
@@ -424,7 +428,7 @@ args = ["bench", "--all-features", "--", "--verbose", "--noplot"]
 [tasks.backend-cpu-bench-validate]
 script_runner = "@shell"
 script = '''
-$PYTHON_EXE utils/bench_runner.py --backend_cpu
+$PYTHON_BUILDER_EXE utils/bench_runner.py --backend_cpu
 '''
 
 [tasks.backend-mem-bench]
@@ -451,7 +455,7 @@ dependencies = [
 [tasks.disk-usage-bench]
 script_runner = "@shell"
 script = '''
-$PYTHON_EXE utils/bench_runner.py --disk_usage
+$PYTHON_BUILDER_EXE utils/bench_runner.py --disk_usage
 '''
 
 [tasks.frontend-cpu-bench.linux]

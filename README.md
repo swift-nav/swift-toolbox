@@ -47,7 +47,7 @@ cargo make pip-install-dev
 git lfs pull
 ```
 
-# Building for macos
+# Troubleshooting building for macos
 
 The module used for generating rust bindings for native libraries; `rust-bindgen` 
 has been observed to fail to find system headers (i.e. `assert.h`, `math.h`) on 

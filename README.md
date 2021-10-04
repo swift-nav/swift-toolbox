@@ -29,7 +29,8 @@ Install cmake, clang, and capnp in your respective OS.
 choco install cmake llvm capnproto
 
 # Mac
-brew install cmake llvm capnp
+xcode-select install
+brew install cmake capnp
 
 # Linux
 apt-get install cmake libclang-dev capnproto
@@ -44,6 +45,17 @@ Install development dependencies (On Windows make sure you're using Adminstrator
 conda deactivate
 cargo make pip-install-dev
 git lfs pull
+```
+
+# Troubleshooting building for macos
+
+The module used for generating rust bindings for native libraries; `rust-bindgen` 
+has been observed to fail to find system headers (i.e. `assert.h`, `math.h`) on 
+newer versions of macos. Fortunately we can add include search paths to pass to 
+clang by setting an environment variable:
+
+```
+export BINDGEN_EXTRA_CLANG_ARGS=-I$(xcrun --show-sdk-path)/usr/include
 ```
 
 ## Running

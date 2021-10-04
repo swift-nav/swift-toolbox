@@ -20,6 +20,10 @@ from PySide2.QtGui import QFontDatabase
 
 from PySide2.QtQml import QQmlComponent, qmlRegisterType, QQmlDebuggingEnabler
 
+import swiftnav_console.console_resources  # type: ignore # pylint: disable=unused-import
+
+import console_backend.server  # type: ignore  # pylint: disable=import-error,no-name-in-module
+
 from .constants import ApplicationMetadata, ApplicationStates, Keys, Tabs, QTKeys
 
 from .log_panel import (
@@ -141,10 +145,6 @@ from .update_tab import (
     UpdateTabData,
     UpdateTabModel,
 )
-
-import swiftnav_console.console_resources  # type: ignore # pylint: disable=unused-import
-
-import console_backend.server  # type: ignore  # pylint: disable=import-error,no-name-in-module
 
 CONSOLE_BACKEND_CAPNP_PATH = "console_backend.capnp"
 

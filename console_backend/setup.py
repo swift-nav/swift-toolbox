@@ -1,5 +1,4 @@
 import sys
-import platform
 
 from setuptools import setup  # type: ignore
 from setuptools_rust import RustExtension  # type: ignore

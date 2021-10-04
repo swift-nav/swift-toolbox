@@ -24,5 +24,5 @@ esac
 ./py39-dist/bin/python3 -m pip install ./dist/swiftnav_console-0.1.0-py3-none-any.whl --force-reinstall
 
 if [ ! -d "./py39-dist/lib/site-packages/resources" ]; then
-	rsync -R ./src/main/resources/ ./py39-dist/lib/site-packages
+    rsync -R -r src/main/resources py39-dist/lib/python3.9/site-packages
 fi

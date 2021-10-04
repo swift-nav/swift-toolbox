@@ -407,7 +407,7 @@ args = ["bench", "--all-features", "--", "--verbose", "--noplot"]
 [tasks.backend-cpu-bench-validate]
 script_runner = "@shell"
 script = '''
-$PYTHON_BUILDER_EXE utils/bench_runner.py --backend_cpu
+${PYTHON_BUILDER_EXE} utils/bench_runner.py --backend_cpu
 '''
 
 [tasks.backend-mem-bench]

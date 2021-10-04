@@ -18,10 +18,10 @@ echo QML_FILES=${qml_files}
 [env]
 REQUIREMENTS_FILE = "requirements.txt"
 REQUIREMENTS_DEV_FILE = "requirements-dev.txt"
-PYTHON_EXE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/standalone-py/python/install/bin/python3"
+PYTHON_EXE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/py39/bin/python3"
 
 [env.windows]
-PYTHON_EXE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/standalone-py/python/install/bin/pythonw.exe"
+PYTHON_EXE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/py39/bin/python.exe"
 
 [config]
 default_to_workspace = false
@@ -198,16 +198,32 @@ mkdir -p target/swift_navigation_console/console_backend && cp -r console_backen
 
 [tasks.get-standalone-py]
 cwd = "standalone-py"
+condition = { files_not_exist = [
+  "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/standalone-py/python",
+] }
 script = { file = "download.sh" }
 
 [tasks.get-standalone-py.windows]
 cwd = "standalone-py"
+condition = { files_not_exist = [
+  "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/standalone-py/python",
+] }
 script = { file = "download.ps1" }
 
+[tasks.prep-builder]
+dependencies = ["get-standalone-py"]
+script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/prep-builder.sh", absolute_path = true }
+
+[tasks.prep-builder.windows]
+dependencies = ["get-standalone-py"]
+script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/prep-builder.ps1", absolute_path = true }
+
 [tasks.prep-dist]
+dependencies = ["get-standalone-py"]
 script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/prep-dist.sh", absolute_path = true }
 
 [tasks.prep-dist.windows]
+dependencies = ["get-standalone-py"]
 script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/prep-dist.ps1", absolute_path = true }
 
 [tasks.build-dist]
@@ -228,11 +244,8 @@ script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/compress-di
 [tasks.compress-dist.windows]
 script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/compress-dist.ps1", absolute_path = true }
 
-[tasks.prep-builder]
-script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/prep-builder.sh", absolute_path = true }
-
-[tasks.prep-builder.windows]
-script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/prep-builder.ps1", absolute_path = true }
+[tasks.create-dist]
+dependencies = ["prep-dist", "build-dist", "purge-dist", "compress-dist"]
 
 [tasks.prod-freeze]
 dependencies = [
@@ -247,6 +260,17 @@ dependencies = ["prod-freeze"]
 script_runner = "@shell"
 script = '''
 $PYTHON_EXE -m fbs installer
+'''
+
+[tasks.prod-installer.mac]
+script_runner = "@shell"
+script = '''
+mkdir -p main.app/Contents/MacOS main.app/Contents/Resources
+cp -r main.dist/* main.app/Contents/MacOS/
+iconutil --convert icns src/main/icons/Mac.iconset
+mv src/main/icons/Mac.icns main.app/Contents/Resources/SwiftNavConsole.icns
+$PYTHON_EXE src/build/generate-mac-info-plist.py
+hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg' || (echo 'Failed to create Mac dmg. Retrying in 10s...' && sleep 10 && hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg' )
 '''
 
 [tasks.create-remove-negligibles-file]
@@ -265,17 +289,6 @@ bash src/main/fbs/linux-remove-negligibles.sh
 dependencies = []
 script = '''
 bash src/main/fbs/windows-remove-negligibles.sh
-'''
-
-[tasks.prod-installer.mac]
-script_runner = "@shell"
-script = '''
-mkdir -p main.app/Contents/MacOS main.app/Contents/Resources
-cp -r main.dist/* main.app/Contents/MacOS/
-iconutil --convert icns src/main/icons/Mac.iconset
-mv src/main/icons/Mac.icns main.app/Contents/Resources/SwiftNavConsole.icns
-$PYTHON_EXE src/build/generate-mac-info-plist.py
-hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg' || (echo 'Failed to create Mac dmg. Retrying in 10s...' && sleep 10 && hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg' )
 '''
 
 [tasks.qml-format]

@@ -693,7 +693,7 @@ def main():
     parser.add_argument("--show-csv-log", action="store_true")
 
     args_main, _ = parser.parse_known_args()
-    print("AASDLKJASDKJH")
+
     # sys.argv.append("-qmljsdebugger=port:10002,block")
     debug = QQmlDebuggingEnabler()
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)

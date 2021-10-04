@@ -25,7 +25,7 @@ test = [
   "setuptools-rust ~= 0.12.1",
   "psutil ~= 5.8.0",
   "qt5-applications ~= 5.15.2",
-  "py2man >=0.3",
+  "py2many >=0.3",
   "types-requests ~= 2.25.0",
 ]
 

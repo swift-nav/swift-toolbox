@@ -16,8 +16,6 @@ echo QML_FILES=${qml_files}
 ] # Two proposed methods of simplifying path globbing # https://github.com/sagiegurari/cargo-make/issues/542 # https://github.com/sagiegurari/cargo-make/issues/543
 
 [env]
-REQUIREMENTS_FILE = "requirements.txt"
-REQUIREMENTS_DEV_FILE = "requirements-dev.txt"
 PYTHON_BUILDER_EXE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/py39/bin/python3"
 
 [env.windows]
@@ -28,15 +26,6 @@ default_to_workspace = false
 init_task = "init"
 
 [tasks.init]
-
-[tasks.setup]
-dependencies = ["setup-builder", "install-poetry"]
-
-[tasks.install-poetry]
-script_runner = "@shell"
-script = '''
-$PYTHON_BUILDER_EXE -m pip install poetry
-'''
 
 [tasks.rustup-update]
 command = "rustup"
@@ -55,29 +44,16 @@ args = ["install-update", "taplo-cli", "cargo-make"]
 clear = true
 run_task = "tests"
 
-[tasks.poetry-export-dev]
-script_runner = "@shell"
-script = '''
-$PYTHON_BUILDER_EXE -m poetry export --dev -f $REQUIREMENTS_FILE --output $REQUIREMENTS_DEV_FILE --without-hashes
-'''
-
-[tasks.poetry-export]
-dependencies = ["poetry-export-dev"]
-script_runner = "@shell"
-script = '''
-$PYTHON_BUILDER_EXE -m poetry export -f $REQUIREMENTS_FILE --output $REQUIREMENTS_FILE --without-hashes
-'''
-
 [tasks.pip-install-dev]
 script_runner = "@shell"
 script = '''
-$PYTHON_BUILDER_EXE -m pip install -r $REQUIREMENTS_DEV_FILE
+$PYTHON_BUILDER_EXE -m pip install ".[test]"
 '''
 
 [tasks.pip-install]
 script_runner = "@shell"
 script = '''
-$PYTHON_BUILDER_EXE -m pip install -r $REQUIREMENTS_FILE
+$PYTHON_BUILDER_EXE -m pip install .
 '''
 
 [tasks.generate-common-constants-rs]
@@ -405,7 +381,6 @@ dependencies = ["python-type-check", "rust-type-check"]
 [tasks.check-all]
 dependencies = [
   "cargo-make-deps-update",
-  "poetry-export",
   "pip-install-dev",
   "generate-common-constants-rs",
   "extract-piksi-constants-rs",

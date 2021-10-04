@@ -9,7 +9,7 @@ Install *cargo-make*: `cargo install --force cargo-make`.
 Set up standalone Python environment:
 
 ```
-cargo make setup
+cargo make setup-builder
 ```
 
 Install cmake, clang, and capnp in your respective OS.
@@ -114,10 +114,6 @@ QML (QtQuick Mark-up Language) is used to model the UI.
 ### Python 3.9 Standalone Build
 
 [python-build-standalone](https://github.com/indygreg/python-build-standalone) provides redistributable builds of Python for multiple enviroments. We use Python 3.9 (which requires PyInstaller 4.2).
-
-### Poetry
-
-Poetry is used to manage our Python environment: https://python-poetry.org/
 
 ## Design Philosophy
 

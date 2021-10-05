@@ -176,24 +176,6 @@ args = [
   "./console_backend",
 ]
 
-[tasks.prod-freeze-no-copy]
-dependencies = ["copy-capnp", "generate-resources", "build-dist"]
-command = "${PYTHON_EXE}"
-args = ["-m", "fbs", "freeze"]
-
-[tasks.copy-console-backend-to-fbs.windows]
-script_runner = "powershell"
-script_extension = "ps1"
-script = '''
-xcopy /E /Y /I .\console_backend\console_backend\server.cp38-win_amd64.pyd .\target\swift_navigation_console\console_backend\
-'''
-
-[tasks.copy-console-backend-to-fbs]
-script_runner = "@shell"
-script = '''
-mkdir -p target/swift_navigation_console/console_backend && cp -r console_backend/console_backend/* target/swift_navigation_console/console_backend/.
-'''
-
 [tasks.get-standalone-py]
 cwd = "standalone-py"
 condition = { files_not_exist = ["${WORKSPACE}/standalone-py/python"] }
@@ -252,18 +234,13 @@ script = "& ./scripts/compress-dist.ps1"
 [tasks.create-dist]
 dependencies = ["build-dist", "purge-dist", "compress-dist"]
 
-[tasks.prod-freeze]
+[tasks.prod-installer]
 dependencies = [
   "store-version",
-  "prod-freeze-no-copy",
-  "remove-negligibles",
-  "copy-console-backend-to-fbs",
+  "copy-capnp",
+  "generate-resources",
+  "build-dist",
 ]
-
-[tasks.prod-installer]
-dependencies = ["prod-freeze"]
-command = "${PYTHON_EXE}"
-args = ["-m", "fbs", "installer"]
 
 [tasks.prod-installer.mac]
 script_runner = "@shell"
@@ -274,22 +251,6 @@ iconutil --convert icns src/main/icons/Mac.iconset
 mv src/main/icons/Mac.icns main.app/Contents/Resources/SwiftNavConsole.icns
 ${PYTHON_EXE} src/build/generate-mac-info-plist.py
 hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg' || (echo 'Failed to create Mac dmg. Retrying in 10s...' && sleep 10 && hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg' )
-'''
-
-[tasks.create-remove-negligibles-file]
-command = "${PYTHON_EXE}"
-args = ["utils/get_fbs_remove_list.py"]
-
-[tasks.remove-negligibles.linux]
-dependencies = []
-script = '''
-bash src/main/fbs/linux-remove-negligibles.sh
-'''
-
-[tasks.remove-negligibles.windows]
-dependencies = []
-script = '''
-bash src/main/fbs/windows-remove-negligibles.sh
 '''
 
 [tasks.qml-format]

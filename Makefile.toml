@@ -194,7 +194,7 @@ script_runner = "powershell"
 script_extension = "ps1"
 script = '''
 Copy-Item -Recurse .\standalone-py\python\install py39
-.\py39\python ".\get-pip.py"
+.\py39\python ".\scripts\get-pip.py"
 .\py39\python -m pip install flit . ".[test]"
 '''
 
@@ -214,7 +214,7 @@ script_extension = "ps1"
 script = '''
 Remove-Item -Recurse -ErrorAction SilentlyContinue .\py39-dist
 Copy-Item -Recurse .\standalone-py\python\install .\py39-dist
-.\py39-dist\python .\get-pip.py
+.\py39-dist\python .\scripts\get-pip.py
 .\py39-dist\python -m pip install .
 '''
 

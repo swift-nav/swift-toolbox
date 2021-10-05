@@ -11,7 +11,7 @@ ls console_backend/dist
 
 case "$(uname -s)" in
 Darwin)
-    wheel="./console_backend/dist/console_backend-0.1.0-cp39-cp39-apple-darwin_x86_64.whl"
+    wheel="./console_backend/dist/console_backend-0.1.0-cp39-cp39-macosx_10_15_x86_64.whl"
     ;;
 Linux)
     wheel="./console_backend/dist/console_backend-0.1.0-cp39-cp39-linux_x86_64.whl"

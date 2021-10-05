@@ -182,8 +182,6 @@ condition = { files_not_exist = ["${WORKSPACE}/standalone-py/python"] }
 script = { file = "download.sh" }
 
 [tasks.get-standalone-py.windows]
-cwd = "standalone-py"
-condition = { files_not_exist = ["${WORKSPACE}/standalone-py/python"] }
 script_runner = "powershell"
 script_extension = "ps1"
 script = "& ./download.ps1"

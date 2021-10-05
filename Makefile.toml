@@ -234,7 +234,7 @@ dependencies = [
   "store-version",
   "copy-capnp",
   "generate-resources",
-  "build-dist",
+  "create-dist",
 ]
 
 [tasks.prod-installer.mac]

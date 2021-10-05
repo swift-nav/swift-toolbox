@@ -42,6 +42,7 @@ fi
 if [[ "$OS_NAME" == "Windows" ]]; then
     VERSION="$(git describe --always --tags)";
     BUILD_TRIPLET="x86_64-pc-windows-msvc";
+    ls target
     mv 'target/swift_navigation_consoleSetup.exe' "${archive_name}-${VERSION}-windows-${BUILD_TRIPLET}-${DATE}.exe";
     echo "${archive_name}-${VERSION}-windows-${BUILD_TRIPLET}-${DATE}.exe" >release-archive.filename;
 

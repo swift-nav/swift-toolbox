@@ -200,12 +200,23 @@ Copy-Item -Recurse .\standalone-py\python\install py39
 
 [tasks.prep-dist]
 dependencies = ["get-standalone-py"]
-script = { file = "${WORKSPACE}/scripts/prep-dist.sh", absolute_path = true }
+script = '''
+#!/usr/bin/env bash
+set -ex
+rm -rf ./py39-dist
+cp -r ./standalone-py/python/install ./py39-dist
+./py39-dist/bin/python3 -m pip install .
+'''
 
 [tasks.prep-dist.windows]
 script_runner = "powershell"
 script_extension = "ps1"
-script = "& ./scripts/prep-dist.ps1"
+script = '''
+Remove-Item -Recurse -ErrorAction SilentlyContinue .\py39-dist
+Copy-Item -Recurse .\standalone-py\python\install .\py39-dist
+.\py39-dist\python .\get-pip.py
+.\py39-dist\python -m pip install .
+'''
 
 [tasks.build-dist]
 dependencies = ["prep-dist"]
@@ -225,12 +236,22 @@ script_extension = "ps1"
 script = "& ./scripts/purge-dist.ps1"
 
 [tasks.compress-dist]
-script = { file = "${WORKSPACE}/scripts/compress-dist.sh", absolute_path = true }
+script= '''
+#!/usr/bin/env bash
+set -ex
+tar -cvf ./py39-dist.tar ./py39-dist
+rm -f ./py39-dist.tar.xz
+xz -e -9 ./py39-dist.tar
+'''
 
 [tasks.compress-dist.windows]
 script_runner = "powershell"
 script_extension = "ps1"
-script = "& ./scripts/compress-dist.ps1"
+script = '''
+tar -C ".\py39-dist" -cvf ".\py39-dist.tar" .
+Remove-Item -ErrorAction SilentlyContinue "py39-dist.tar.xz"
+xz -e -9 ".\py39-dist.tar"
+'''
 
 [tasks.create-dist]
 dependencies = ["build-dist", "purge-dist", "compress-dist"]

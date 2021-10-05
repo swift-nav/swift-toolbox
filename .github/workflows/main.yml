@@ -207,6 +207,8 @@ jobs:
         if: matrix.os == 'windows-2019'
 
       - name: Install ${{ runner.os }} Dependencies.
+        env:
+          FD_URL: https://github.com/sharkdp/fd/releases/download/v8.2.1/fd-v8.2.1-x86_64-unknown-linux-musl.tar.gz
         shell: bash
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
@@ -231,9 +233,13 @@ jobs:
                 ruby-dev \
                 rubygems \
                 build-essential \
-                libudev-dev \
-                fd-find
+                libudev-dev
               sudo gem install --no-document fpm
+              mkdir $GITHUB_WORKSPACE/bin
+              echo "::add-path::$GITHUB_WORKSPACE/bin"
+              wget "$FD_URL" -O fd.tar.gz
+              tar -xvzf fd.tar.gz -C $GITHUB_WORKSPACE/bin --strip-components 1
+
           elif [ "$RUNNER_OS" == "macOS" ]; then
               brew install capnp llvm fd
           elif [ "$RUNNER_OS" == "Windows" ]; then

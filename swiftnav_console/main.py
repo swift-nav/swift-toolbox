@@ -648,12 +648,11 @@ class DataModel(QObject):  # pylint: disable=too-many-instance-attributes,too-ma
 def is_frozen() -> bool:
     """Check whether the application is frozen.
 
-    FBS and nuitka agnostic.
-
     Returns:
         bool: Whether the application is frozen.
     """
-    return getattr(sys, "frozen", False) or "__compiled__" in globals()
+    p = os.path.join(os.path.dirname(sys.executable), "../.frozen")
+    return os.path.exists(p)
 
 
 def get_capnp_path() -> str:
@@ -666,7 +665,7 @@ def get_capnp_path() -> str:
     d = os.path.dirname(sys.executable)
     path = ""
     if is_frozen():
-        path = os.path.join(d, CONSOLE_BACKEND_CAPNP_PATH)
+        path = os.path.join(d, "../resources/base", CONSOLE_BACKEND_CAPNP_PATH)
     else:
         path = os.path.join(
             os.path.dirname(os.path.dirname(__file__)), "src/main/resources/base", CONSOLE_BACKEND_CAPNP_PATH

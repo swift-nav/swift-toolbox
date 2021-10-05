@@ -239,7 +239,6 @@ jobs:
               echo "::add-path::$GITHUB_WORKSPACE/bin"
               wget "$FD_URL" -O fd.tar.gz
               tar -xvzf fd.tar.gz -C $GITHUB_WORKSPACE/bin --strip-components 1
-
           elif [ "$RUNNER_OS" == "macOS" ]; then
               brew install capnp llvm fd
           elif [ "$RUNNER_OS" == "Windows" ]; then

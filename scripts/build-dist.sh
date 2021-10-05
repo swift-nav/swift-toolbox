@@ -2,7 +2,6 @@
 set -ex
 
 cd ./console_backend
-../py39-dist/bin/python3 -m pip install wheel
 ../py39/bin/python3 setup.py bdist_wheel
 cd ..
 
@@ -21,9 +20,12 @@ Linux)
     ;;
 esac
 
+./py39-dist/bin/python3 -m pip install wheel
 ./py39-dist/bin/python3 -m pip install $wheel --force-reinstall
 ./py39-dist/bin/python3 -m pip install ./dist/swiftnav_console-0.1.0-py3-none-any.whl --force-reinstall
 
-if [ ! -d "./py39-dist/lib/site-packages/resources" ]; then
-    rsync -R -r src/main/resources py39-dist/lib/python3.9/site-packages
+if [ ! -d "./py39-dist/resources" ]; then
+    cp -r src/main/resources py39-dist/
 fi
+
+touch ./py39-dist/.frozen

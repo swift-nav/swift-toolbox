@@ -3,12 +3,11 @@ use sbp::messages::imu::{MsgImuAux, MsgImuRaw};
 
 use capnp::message::Builder;
 
-use crate::constants::*;
-use crate::errors::GET_MUT_OBJECT_FAILURE;
 use crate::fusion_status_flags::FusionStatusFlags;
 use crate::shared_state::SharedState;
 use crate::types::{CapnProtoSender, Deque};
 use crate::utils::serialize_capnproto_builder;
+use crate::{constants::*, zip};
 
 /// AdvancedInsTab struct.
 ///
@@ -47,8 +46,6 @@ pub struct AdvancedInsTab<S: CapnProtoSender> {
 
 impl<S: CapnProtoSender> AdvancedInsTab<S> {
     pub fn new(shared_state: SharedState, client_sender: S) -> AdvancedInsTab<S> {
-        let acc_fill_val = Some(0_f64);
-        let gyro_fill_val = Some(0_f64);
         AdvancedInsTab {
             fusion_engine_status_bar: FusionStatusFlags::new(
                 shared_state.clone(),
@@ -60,36 +57,33 @@ impl<S: CapnProtoSender> AdvancedInsTab<S> {
             rms_acc_x: 0_f64,
             rms_acc_y: 0_f64,
             rms_acc_z: 0_f64,
-            acc_x: Deque::with_size_limit(NUM_POINTS, acc_fill_val),
-            acc_y: Deque::with_size_limit(NUM_POINTS, acc_fill_val),
-            acc_z: Deque::with_size_limit(NUM_POINTS, acc_fill_val),
-            gyro_x: Deque::with_size_limit(NUM_POINTS, gyro_fill_val),
-            gyro_y: Deque::with_size_limit(NUM_POINTS, gyro_fill_val),
-            gyro_z: Deque::with_size_limit(NUM_POINTS, gyro_fill_val),
+            acc_x: Deque::with_fill_value(NUM_POINTS, 0.),
+            acc_y: Deque::with_fill_value(NUM_POINTS, 0.),
+            acc_z: Deque::with_fill_value(NUM_POINTS, 0.),
+            gyro_x: Deque::with_fill_value(NUM_POINTS, 0.),
+            gyro_y: Deque::with_fill_value(NUM_POINTS, 0.),
+            gyro_z: Deque::with_fill_value(NUM_POINTS, 0.),
             shared_state,
         }
     }
 
     /// Method for preparing some rms_acc data and initiating sending of data to frontend.
     fn imu_set_data(&mut self) {
-        let acc_x = &mut self.acc_x.get();
-        let acc_y = &mut self.acc_y.get();
-        let acc_z = &mut self.acc_z.get();
         let acc_range = self.imu_conf & 0xF;
         let sig_figs = f64::powi(2_f64, acc_range as i32 + 1_i32) / f64::powi(2_f64, 15);
         let (rms_x, rms_y, rms_z) = {
             let mut squared_sum_x: f64 = 0_f64;
             let mut squared_sum_y: f64 = 0_f64;
             let mut squared_sum_z: f64 = 0_f64;
-            for idx in 0..NUM_POINTS {
-                squared_sum_x += f64::powi(acc_x[idx], 2);
-                squared_sum_y += f64::powi(acc_y[idx], 2);
-                squared_sum_z += f64::powi(acc_z[idx], 2);
+            for (x, y, z) in zip!(&self.acc_x, &self.acc_y, &self.acc_z) {
+                squared_sum_x += x.powi(2);
+                squared_sum_y += y.powi(2);
+                squared_sum_z += z.powi(2);
             }
             (
-                f64::sqrt(squared_sum_x / acc_x.len() as f64),
-                f64::sqrt(squared_sum_y / acc_y.len() as f64),
-                f64::sqrt(squared_sum_z / acc_z.len() as f64),
+                f64::sqrt(squared_sum_x / self.acc_x.len() as f64),
+                f64::sqrt(squared_sum_y / self.acc_y.len() as f64),
+                f64::sqrt(squared_sum_z / self.acc_z.len() as f64),
             )
         };
         self.rms_acc_x = sig_figs * rms_x;
@@ -123,12 +117,12 @@ impl<S: CapnProtoSender> AdvancedInsTab<S> {
     /// # Parameters
     /// - `msg`: MsgImuRaw to extract data from.
     pub fn handle_imu_raw(&mut self, msg: MsgImuRaw) {
-        self.acc_x.add(msg.acc_x as f64);
-        self.acc_y.add(msg.acc_y as f64);
-        self.acc_z.add(msg.acc_z as f64);
-        self.gyro_x.add(msg.gyr_x as f64);
-        self.gyro_y.add(msg.gyr_y as f64);
-        self.gyro_z.add(msg.gyr_z as f64);
+        self.acc_x.push(msg.acc_x as f64);
+        self.acc_y.push(msg.acc_y as f64);
+        self.acc_z.push(msg.acc_z as f64);
+        self.gyro_x.push(msg.gyr_x as f64);
+        self.gyro_y.push(msg.gyr_y as f64);
+        self.gyro_z.push(msg.gyr_z as f64);
         self.imu_set_data();
     }
 
@@ -141,21 +135,20 @@ impl<S: CapnProtoSender> AdvancedInsTab<S> {
 
         let mut tab_points = tab_status.reborrow().init_data(NUM_INS_PLOT_ROWS as u32);
 
-        let mut points_vec = vec![
-            self.acc_x.get(),
-            self.acc_y.get(),
-            self.acc_z.get(),
-            self.gyro_x.get(),
-            self.gyro_y.get(),
-            self.gyro_z.get(),
+        let all_points = [
+            self.acc_x.iter(),
+            self.acc_y.iter(),
+            self.acc_z.iter(),
+            self.gyro_x.iter(),
+            self.gyro_y.iter(),
+            self.gyro_z.iter(),
         ];
-        for idx in 0..NUM_INS_PLOT_ROWS {
-            let points = points_vec.get_mut(idx).expect(GET_MUT_OBJECT_FAILURE);
-            let mut point_val_idx = tab_points.reborrow().init(idx as u32, points.len() as u32);
-            for idx in 0..NUM_POINTS {
+        for (idx, points) in IntoIterator::into_iter(all_points).enumerate() {
+            let mut point_val_idx = tab_points.reborrow().init(idx as u32, NUM_POINTS as u32);
+            for (idx, point) in points.enumerate() {
                 let mut point_val = point_val_idx.reborrow().get(idx as u32);
                 point_val.set_x(idx as f64);
-                point_val.set_y(points[idx]);
+                point_val.set_y(*point);
             }
         }
         let fields_data = {
@@ -210,36 +203,24 @@ mod tests {
             gyr_y,
             gyr_z,
         };
-        let acc_xs = ins_tab.acc_x.get();
-        let acc_ys = ins_tab.acc_y.get();
-        let acc_zs = ins_tab.acc_z.get();
-        let gyro_xs = ins_tab.gyro_x.get();
-        let gyro_ys = ins_tab.gyro_y.get();
-        let gyro_zs = ins_tab.gyro_z.get();
         for idx in 0..NUM_POINTS {
-            assert!(f64::abs(acc_xs[idx] - 0_f64) <= f64::EPSILON);
-            assert!(f64::abs(acc_ys[idx] - 0_f64) <= f64::EPSILON);
-            assert!(f64::abs(acc_zs[idx] - 0_f64) <= f64::EPSILON);
-            assert!(f64::abs(gyro_xs[idx] - 0_f64) <= f64::EPSILON);
-            assert!(f64::abs(gyro_ys[idx] - 0_f64) <= f64::EPSILON);
-            assert!(f64::abs(gyro_zs[idx] - 0_f64) <= f64::EPSILON);
+            assert!(f64::abs(ins_tab.acc_x[idx] - 0_f64) <= f64::EPSILON);
+            assert!(f64::abs(ins_tab.acc_y[idx] - 0_f64) <= f64::EPSILON);
+            assert!(f64::abs(ins_tab.acc_z[idx] - 0_f64) <= f64::EPSILON);
+            assert!(f64::abs(ins_tab.gyro_x[idx] - 0_f64) <= f64::EPSILON);
+            assert!(f64::abs(ins_tab.gyro_y[idx] - 0_f64) <= f64::EPSILON);
+            assert!(f64::abs(ins_tab.gyro_z[idx] - 0_f64) <= f64::EPSILON);
         }
         assert!(f64::abs(ins_tab.rms_acc_x - 0_f64) <= f64::EPSILON);
         assert!(f64::abs(ins_tab.rms_acc_y - 0_f64) <= f64::EPSILON);
         assert!(f64::abs(ins_tab.rms_acc_z - 0_f64) <= f64::EPSILON);
         ins_tab.handle_imu_raw(msg);
-        let acc_xs = ins_tab.acc_x.get();
-        let acc_ys = ins_tab.acc_y.get();
-        let acc_zs = ins_tab.acc_z.get();
-        let gyro_xs = ins_tab.gyro_x.get();
-        let gyro_ys = ins_tab.gyro_y.get();
-        let gyro_zs = ins_tab.gyro_z.get();
-        assert!(f64::abs(acc_xs[NUM_POINTS - 1] - acc_x as f64) <= f64::EPSILON);
-        assert!(f64::abs(acc_ys[NUM_POINTS - 1] - acc_y as f64) <= f64::EPSILON);
-        assert!(f64::abs(acc_zs[NUM_POINTS - 1] - acc_z as f64) <= f64::EPSILON);
-        assert!(f64::abs(gyro_xs[NUM_POINTS - 1] - gyr_x as f64) <= f64::EPSILON);
-        assert!(f64::abs(gyro_ys[NUM_POINTS - 1] - gyr_y as f64) <= f64::EPSILON);
-        assert!(f64::abs(gyro_zs[NUM_POINTS - 1] - gyr_z as f64) <= f64::EPSILON);
+        assert!(f64::abs(ins_tab.acc_x[NUM_POINTS - 1] - acc_x as f64) <= f64::EPSILON);
+        assert!(f64::abs(ins_tab.acc_y[NUM_POINTS - 1] - acc_y as f64) <= f64::EPSILON);
+        assert!(f64::abs(ins_tab.acc_z[NUM_POINTS - 1] - acc_z as f64) <= f64::EPSILON);
+        assert!(f64::abs(ins_tab.gyro_x[NUM_POINTS - 1] - gyr_x as f64) <= f64::EPSILON);
+        assert!(f64::abs(ins_tab.gyro_y[NUM_POINTS - 1] - gyr_y as f64) <= f64::EPSILON);
+        assert!(f64::abs(ins_tab.gyro_z[NUM_POINTS - 1] - gyr_z as f64) <= f64::EPSILON);
         assert!(f64::abs(ins_tab.rms_acc_x - 0_f64) > f64::EPSILON);
         assert!(f64::abs(ins_tab.rms_acc_y - 0_f64) > f64::EPSILON);
         assert!(f64::abs(ins_tab.rms_acc_z - 0_f64) > f64::EPSILON);

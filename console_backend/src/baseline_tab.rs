@@ -8,7 +8,6 @@ use sbp::messages::{
     piksi::MsgResetFilters,
 };
 
-use crate::constants::*;
 use crate::date_conv::*;
 use crate::output::BaselineLog;
 use crate::piksi_tools_constants::EMPTY_STR;
@@ -17,6 +16,7 @@ use crate::types::{
     BaselineNED, CapnProtoSender, Deque, GnssModes, GpsTime, MsgSender, Result, UtcDateTime,
 };
 use crate::utils::*;
+use crate::{constants::*, zip};
 
 /// Baseline Tab Button Struct.
 ///
@@ -100,12 +100,7 @@ impl<S: CapnProtoSender> BaselineTab<S> {
             slns: {
                 BASELINE_DATA_KEYS
                     .iter()
-                    .map(|key| {
-                        (
-                            *key,
-                            Deque::with_size_limit(PLOT_HISTORY_MAX, /*fill_value=*/ None),
-                        )
-                    })
+                    .map(|key| (*key, Deque::new(PLOT_HISTORY_MAX)))
                     .collect()
             },
             table: {
@@ -128,30 +123,34 @@ impl<S: CapnProtoSender> BaselineTab<S> {
     /// - `update_current`: Indicating whether the current solution should be updated by
     /// this modes last n/e entry.
     fn _synchronize_plot_data_by_mode(&mut self, mode_string: &str, update_current: bool) {
+        let mode_idx = match self.mode_strings.iter().position(|x| *x == *mode_string) {
+            Some(idx) => idx,
+            _ => return,
+        };
+
         let n_string = format!("n_{}", mode_string);
         let e_string = format!("e_{}", mode_string);
+        let n_values = &self.slns[&*n_string];
+        let e_values = &self.slns[&*e_string];
 
-        if let Some(idx) = self.mode_strings.iter().position(|x| *x == *mode_string) {
-            let n_values = self.slns[&*n_string].get();
-            let e_values = self.slns[&*e_string].get();
-            let mut new_sln: Vec<(f64, f64)> = vec![];
-            for jdx in 0..n_values.len() {
-                if n_values[jdx].is_nan() || e_values[jdx].is_nan() {
-                    continue;
-                }
-                self.n_min = f64::min(self.n_min, n_values[jdx]);
-                self.n_max = f64::max(self.n_max, n_values[jdx]);
-                self.e_min = f64::min(self.e_min, e_values[jdx]);
-                self.e_max = f64::max(self.e_max, e_values[jdx]);
-                new_sln.push((e_values[jdx], n_values[jdx]));
+        let mut new_sln: Vec<(f64, f64)> = Vec::with_capacity(n_values.len());
+        for (n, e) in zip!(n_values, e_values) {
+            if n.is_nan() || e.is_nan() {
+                continue;
             }
-            self.sln_data[idx] = new_sln;
-            if update_current {
-                if !self.sln_data[idx].is_empty() {
-                    self.sln_cur_data[idx] = vec![self.sln_data[idx][self.sln_data[idx].len() - 1]];
-                } else {
-                    self.sln_cur_data[idx].clear();
-                }
+            self.n_min = n.min(self.n_min);
+            self.n_max = n.max(self.n_max);
+            self.e_min = e.min(self.e_min);
+            self.e_max = e.max(self.e_max);
+            new_sln.push((*e, *n));
+        }
+        self.sln_data[mode_idx] = new_sln;
+        if update_current {
+            if !self.sln_data[mode_idx].is_empty() {
+                self.sln_cur_data[mode_idx] =
+                    vec![self.sln_data[mode_idx][self.sln_data[mode_idx].len() - 1]];
+            } else {
+                self.sln_cur_data[mode_idx].clear();
             }
         }
     }
@@ -167,8 +166,8 @@ impl<S: CapnProtoSender> BaselineTab<S> {
             }
             let n_str = format!("n_{}", each_mode);
             let e_str = format!("e_{}", each_mode);
-            self.slns.get_mut(&*n_str).unwrap().add(f64::NAN);
-            self.slns.get_mut(&*e_str).unwrap().add(f64::NAN);
+            self.slns.get_mut(&*n_str).unwrap().push(f64::NAN);
+            self.slns.get_mut(&*e_str).unwrap().push(f64::NAN);
         }
     }
 
@@ -182,8 +181,8 @@ impl<S: CapnProtoSender> BaselineTab<S> {
     fn _update_sln_data_by_mode(&mut self, last_n: f64, last_e: f64, mode_string: String) {
         let n_str = format!("n_{}", mode_string);
         let e_str = format!("e_{}", mode_string);
-        self.slns.get_mut(&*n_str).unwrap().add(last_n);
-        self.slns.get_mut(&*e_str).unwrap().add(last_e);
+        self.slns.get_mut(&*n_str).unwrap().push(last_n);
+        self.slns.get_mut(&*e_str).unwrap().push(last_e);
         self._append_empty_sln_data(Some(mode_string));
     }
 

@@ -9,6 +9,7 @@ use crate::constants::{HORIZONTAL_COLOR, NUM_POINTS, VERTICAL_COLOR};
 use crate::shared_state::SharedState;
 use crate::types::{CapnProtoSender, Deque, VelocityUnits};
 use crate::utils::serialize_capnproto_builder;
+use crate::zip;
 /// SolutionVelocityTab struct.
 ///
 /// # Fields:
@@ -49,10 +50,7 @@ impl<S: CapnProtoSender> SolutionVelocityTab<S> {
             max: 0_f64,
             min: 0_f64,
             multiplier: VelocityUnits::Mps.get_multiplier(),
-            points: vec![
-                Deque::with_size_limit(NUM_POINTS, /*fill_value=*/ None),
-                Deque::with_size_limit(NUM_POINTS, /*fill_value=*/ None),
-            ],
+            points: vec![Deque::new(NUM_POINTS), Deque::new(NUM_POINTS)],
             shared_state,
             tow: 0_f64,
             unit: VelocityUnits::Mps,
@@ -61,23 +59,19 @@ impl<S: CapnProtoSender> SolutionVelocityTab<S> {
 
     fn convert_points(&mut self, new_unit: VelocityUnits) {
         let new_mult = new_unit.get_multiplier();
-        let mut points = vec![
-            Deque::with_size_limit(NUM_POINTS, /*fill_value=*/ None),
-            Deque::with_size_limit(NUM_POINTS, /*fill_value=*/ None),
-        ];
-        let hpoints = &mut self.points[0].get();
-        let vpoints = &mut self.points[1].get();
+        let mut hpoints: Deque<(f64, OrderedFloat<f64>)> = Deque::new(NUM_POINTS);
+        let mut vpoints: Deque<(f64, OrderedFloat<f64>)> = Deque::new(NUM_POINTS);
         let mult_conversion = new_mult / self.multiplier;
-        for idx in 0..hpoints.len() {
-            let mut hpoint = hpoints[idx];
+        for idx in 0..self.points[0].len() {
+            let mut hpoint = self.points[0][idx];
             *hpoint.1 *= mult_conversion;
-            let mut vpoint = vpoints[idx];
+            hpoints.push(hpoint);
+            let mut vpoint = self.points[1][idx];
             *vpoint.1 *= mult_conversion;
-            points[0].add(hpoint);
-            points[1].add(vpoint);
+            vpoints.push(vpoint);
         }
         self.multiplier = new_mult;
-        self.points = points;
+        self.points = vec![hpoints, vpoints];
         self.unit = new_unit;
     }
 
@@ -96,8 +90,8 @@ impl<S: CapnProtoSender> SolutionVelocityTab<S> {
 
         self.tow = msg.tow as f64 / 1000.0;
 
-        self.points[0].add((self.tow, OrderedFloat(h_vel * self.multiplier)));
-        self.points[1].add((self.tow, OrderedFloat(v_vel * self.multiplier)));
+        self.points[0].push((self.tow, OrderedFloat(h_vel * self.multiplier)));
+        self.points[1].push((self.tow, OrderedFloat(v_vel * self.multiplier)));
 
         let mut new_unit = self.unit.clone();
         {
@@ -110,16 +104,16 @@ impl<S: CapnProtoSender> SolutionVelocityTab<S> {
         if new_unit != self.unit {
             self.convert_points(new_unit);
         }
-        let hpoints = self.points[0].get();
-        let vpoints = self.points[1].get();
-        let mut min_ = *hpoints[0].1;
-        let mut max_ = *hpoints[0].1;
-        for idx in 0..hpoints.len() {
-            min_ = f64::min(*hpoints[idx].1, f64::min(*vpoints[idx].1, min_));
-            max_ = f64::max(*hpoints[idx].1, f64::max(*vpoints[idx].1, max_));
+        let hpoints = &self.points[0];
+        let vpoints = &self.points[1];
+        let mut min = *hpoints[0].1;
+        let mut max = *hpoints[0].1;
+        for (h, v) in zip!(hpoints, vpoints) {
+            min = f64::min(*h.1, f64::min(*v.1, min));
+            max = f64::max(*h.1, f64::max(*v.1, max));
         }
-        self.min = min_;
-        self.max = max_;
+        self.min = min;
+        self.max = max;
         self.send_data();
     }
 
@@ -136,7 +130,7 @@ impl<S: CapnProtoSender> SolutionVelocityTab<S> {
             .reborrow()
             .init_data(self.points.len() as u32);
         for idx in 0..self.points.len() {
-            let points = self.points.get_mut(idx).unwrap().get();
+            let points = &mut self.points[idx];
             let mut point_val_idx = velocity_points
                 .reborrow()
                 .init(idx as u32, points.len() as u32);
@@ -192,8 +186,8 @@ mod tests {
 
         solution_velocity_tab.handle_vel_ned(msg);
         assert_eq!(solution_velocity_tab.points.len(), 2);
-        let hpoints = solution_velocity_tab.points[0].get();
-        let vpoints = solution_velocity_tab.points[1].get();
+        let hpoints = &solution_velocity_tab.points[0];
+        let vpoints = &solution_velocity_tab.points[1];
         assert_eq!(hpoints.len(), 1);
         assert_eq!(vpoints.len(), 1);
         assert!((*hpoints[0].1 - 0.06627216610312357) <= f64::EPSILON);
@@ -210,8 +204,8 @@ mod tests {
             n_sats: 1,
         };
         solution_velocity_tab.handle_vel_ned(msg);
-        let hpoints = solution_velocity_tab.points[0].get();
-        let vpoints = solution_velocity_tab.points[1].get();
+        let hpoints = &solution_velocity_tab.points[0];
+        let vpoints = &solution_velocity_tab.points[1];
         assert_eq!(hpoints.len(), 2);
         assert_eq!(vpoints.len(), 2);
         assert!(f64::abs(*hpoints[1].1 - 0.13300375934536587) <= f64::EPSILON);
@@ -228,8 +222,8 @@ mod tests {
             n_sats: 1,
         };
         solution_velocity_tab.handle_vel_ned(msg);
-        let hpoints = solution_velocity_tab.points[0].get();
-        let vpoints = solution_velocity_tab.points[1].get();
+        let hpoints = &solution_velocity_tab.points[0];
+        let vpoints = &solution_velocity_tab.points[1];
         assert_eq!(hpoints.len(), 3);
         assert_eq!(vpoints.len(), 3);
         assert!(f64::abs(*hpoints[1].1 - solution_velocity_tab.max) <= f64::EPSILON);
@@ -267,36 +261,36 @@ mod tests {
             n_sats: 1,
         };
         solution_velocity_tab.handle_vel_ned(msg);
-        let hpoints = solution_velocity_tab.points[0].get().clone();
-        let vpoints = solution_velocity_tab.points[1].get().clone();
+        let hpoints = solution_velocity_tab.points[0].clone();
+        let vpoints = solution_velocity_tab.points[1].clone();
 
         let new_unit = VelocityUnits::Mps;
         solution_velocity_tab.convert_points(new_unit);
-        let new_hpoints = solution_velocity_tab.points[0].get();
-        let new_vpoints = solution_velocity_tab.points[1].get();
+        let new_hpoints = &solution_velocity_tab.points[0];
+        let new_vpoints = &solution_velocity_tab.points[1];
         for idx in 0..hpoints.len() {
             assert!(f64::abs(*hpoints[idx].1 - *new_hpoints[idx].1) <= f64::EPSILON);
             assert!(f64::abs(*vpoints[idx].1 - *new_vpoints[idx].1) <= f64::EPSILON);
         }
 
-        let hpoints = solution_velocity_tab.points[0].get().clone();
-        let vpoints = solution_velocity_tab.points[1].get().clone();
+        let hpoints = solution_velocity_tab.points[0].clone();
+        let vpoints = solution_velocity_tab.points[1].clone();
 
         let new_unit = VelocityUnits::Mph;
         solution_velocity_tab.convert_points(new_unit);
-        let new_hpoints = solution_velocity_tab.points[0].get();
-        let new_vpoints = solution_velocity_tab.points[1].get();
+        let new_hpoints = &solution_velocity_tab.points[0];
+        let new_vpoints = &solution_velocity_tab.points[1];
         for idx in 0..hpoints.len() {
             assert!(f64::abs((*hpoints[idx].1 * MPS2MPH) - *new_hpoints[idx].1) <= f64::EPSILON);
             assert!(f64::abs((*vpoints[idx].1 * MPS2MPH) - *new_vpoints[idx].1) <= f64::EPSILON);
         }
 
-        let hpoints = solution_velocity_tab.points[0].get().clone();
-        let vpoints = solution_velocity_tab.points[1].get().clone();
+        let hpoints = solution_velocity_tab.points[0].clone();
+        let vpoints = solution_velocity_tab.points[1].clone();
         let new_unit = VelocityUnits::Kph;
         solution_velocity_tab.convert_points(new_unit);
-        let new_hpoints = solution_velocity_tab.points[0].get();
-        let new_vpoints = solution_velocity_tab.points[1].get();
+        let new_hpoints = &solution_velocity_tab.points[0];
+        let new_vpoints = &solution_velocity_tab.points[1];
 
         for idx in 0..hpoints.len() {
             assert!(

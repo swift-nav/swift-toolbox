@@ -5,7 +5,7 @@ init_task = "init"
 [env]
 WORKSPACE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}"
 PYTHON_EXE = { source = "${CARGO_MAKE_RUST_TARGET_OS}", mapping = { linux = "${WORKSPACE}/py39/bin/python3", macos = "${WORKSPACE}/py39/bin/python3", windows = "${WORKSPACE}/py39/bin/python.exe" } }
-PYSIDE2_RCC_EXE = { source = "${CARGO_MAKE_RUST_TARGET_OS}", mapping = { linux = "${WORKSPACE}/py39/bin/pyside2-rcc", macos = "${WORKSPACE}/py39/bin/pyside2-rcc", windows = "${WORKSPACE}/py39/bin/rcc.exe" } }
+PYSIDE2_RCC_EXE = { source = "${CARGO_MAKE_RUST_TARGET_OS}", mapping = { linux = "${WORKSPACE}/py39/bin/pyside2-rcc", macos = "${WORKSPACE}/py39/bin/pyside2-rcc", windows = "${WORKSPACE}\\py39\\Lib\\site-packages\\PySide2\\rcc.exe" } }
 
 # Two proposed methods of simplifying path globbing # https://github.com/sagiegurari/cargo-make/issues/542 # https://github.com/sagiegurari/cargo-make/issues/543
 [tasks.set-qml-files]

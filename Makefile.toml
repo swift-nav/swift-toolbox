@@ -9,7 +9,7 @@ PYSIDE2_RCC_EXE = "${WORKSPACE}/py39/bin/pyside2-rcc"
 
 [env.windows]
 PYTHON_EXE = "${WORKSPACE}/py39/bin/python.exe"
-PYSIDE2_RCC_EXE = "${WORKSPACE}/py39/bin/pyside2-rcc.exe"
+PYSIDE2_RCC_EXE = "${WORKSPACE}/py39/bin/rcc.exe"
 
 # Two proposed methods of simplifying path globbing # https://github.com/sagiegurari/cargo-make/issues/542 # https://github.com/sagiegurari/cargo-make/issues/543
 [tasks.set-qml-files]

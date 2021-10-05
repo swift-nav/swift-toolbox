@@ -1,3 +1,6 @@
+#!/usr/bin/env bash
+set -ex
+
 base_url="https://github.com/indygreg/python-build-standalone/releases/download/20210724"
 
 case "$(uname -s)" in

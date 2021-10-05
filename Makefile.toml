@@ -4,7 +4,7 @@ init_task = "init"
 
 [env]
 WORKSPACE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}"
-PYTHON_EXE = { source = "${CARGO_MAKE_RUST_TARGET_OS}", mapping = { linux = "${WORKSPACE}/py39/bin/python3", macos = "${WORKSPACE}/py39/bin/python3", windows = "${WORKSPACE}/py39/bin/python.exe" } }
+PYTHON_EXE = { source = "${CARGO_MAKE_RUST_TARGET_OS}", mapping = { linux = "${WORKSPACE}/py39/bin/python3", macos = "${WORKSPACE}/py39/bin/python3", windows = "${WORKSPACE}\\py39\\python.exe" } }
 PYSIDE2_RCC_EXE = { source = "${CARGO_MAKE_RUST_TARGET_OS}", mapping = { linux = "${WORKSPACE}/py39/bin/pyside2-rcc", macos = "${WORKSPACE}/py39/bin/pyside2-rcc", windows = "${WORKSPACE}\\py39\\Lib\\site-packages\\PySide2\\rcc.exe" } }
 
 # Two proposed methods of simplifying path globbing # https://github.com/sagiegurari/cargo-make/issues/542 # https://github.com/sagiegurari/cargo-make/issues/543
@@ -64,19 +64,10 @@ ${PYTHON_EXE} -m py2many --rust=1 /tmp/piksi_tools_constants.py --outdir console
 '''
 
 [tasks.generate-resources]
-dependencies = ["printt", "run-rcc"]
+dependencies = ["run-rcc"]
 script_runner = "@shell"
 script = '''
 echo "$(echo '# pylint: skip-file'; cat swiftnav_console/console_resources.py)" > swiftnav_console/console_resources.py
-'''
-
-[tasks.printt]
-condition = { platforms = ["windows"] }
-cwd = "py39"
-script_extension = "ps1"
-script_runner = "powershell"
-script = '''
-Get-ChildItem -Recurse
 '''
 
 [tasks.run-rcc]

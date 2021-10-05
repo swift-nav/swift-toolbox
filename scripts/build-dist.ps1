@@ -8,5 +8,5 @@ Pop-Location
 .\py39-dist\python -m pip install .\dist\swiftnav_console-0.1.0-py3-none-any.whl --force-reinstall
 
 if (-not (Test-Path ".\py39-dist\lib\site-packages\resources")) {
-	Copy-Item -recurse .\src\main\resources .\py39-dist\Lib\site-packages
+	Copy-Item -recurse ./src/main/resources .\py39-dist\lib\site-packages
 }

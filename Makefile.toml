@@ -31,7 +31,6 @@ script = '''
 !include_files ./utils/glob.ds
 qml_files = glob_paths_excluding_target resources/**/*.qml
 set_env QML_FILES ${qml_files}
-echo QML_FILES=${qml_files}
 '''
 
 [tasks.set-python-files]
@@ -42,7 +41,6 @@ script = '''
 !include_files ./utils/glob.ds
 py_files = glob_paths_excluding_target ./**/*.py
 set_env PYTHON_FILES ${py_files}
-echo PYTHON_FILES=${py_files}
 '''
 
 [tasks.rustup-update]
@@ -184,12 +182,21 @@ script = "& ./download.ps1"
 
 [tasks.setup-builder]
 dependencies = ["get-standalone-py"]
-script = { file = "${WORKSPACE}/scripts/setup-builder.sh", absolute_path = true }
+script = '''
+#!/usr/bin/env bash
+set -ex
+cp -r ./standalone-py/python/install py39
+./py39/bin/python3 -m pip install flit . ".[test]"
+'''
 
 [tasks.setup-builder.windows]
 script_runner = "powershell"
 script_extension = "ps1"
-script = "& ./scripts/setup-builder.ps1"
+script = '''
+Copy-Item -Recurse .\standalone-py\python\install py39
+.\py39\python ".\get-pip.py"
+.\py39\python -m pip install flit . ".[test]"
+'''
 
 [tasks.prep-dist]
 dependencies = ["get-standalone-py"]

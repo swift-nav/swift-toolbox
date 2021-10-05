@@ -1,23 +1,26 @@
-env_scripts = [
-  '''
+env_scripts = ['''
 #!@duckscript
 os = os_family
 if eq ${os} windows
-  set_env PYTHON_EXE "${WORKSPACE}\\py39\\python.exe"
-  set_env PYSIDE2_RCC_EXE "${WORKSPACE}\\py39\\Lib\\site-packages\\PySide2\\rcc.exe"
+  set_env PYTHON "${WORKSPACE}\\py39\\python.exe"
+  set_env PYSIDE2_RCC "${WORKSPACE}\\py39\\Lib\\site-packages\\PySide2\\rcc.exe"
 else
-  set_env PYTHON_EXE "${WORKSPACE}/py39/bin/python3"
-  set_env PYSIDE2_RCC_EXE "${WORKSPACE}/py39/bin/pyside2-rcc"
+  set_env PYTHON "${WORKSPACE}/py39/bin/python3"
+  set_env PYSIDE2_RCC "${WORKSPACE}/py39/bin/pyside2-rcc"
 end
-''',
-]
+''']
 
 [config]
 default_to_workspace = false
 init_task = "init"
+skip_git_env_info = true
+skip_rust_env_info = true
+skip_crate_env_info = true
 
 [env]
 WORKSPACE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}"
+
+[tasks.init]
 
 # Two proposed methods of simplifying path globbing # https://github.com/sagiegurari/cargo-make/issues/542 # https://github.com/sagiegurari/cargo-make/issues/543
 [tasks.set-qml-files]
@@ -42,8 +45,6 @@ set_env PYTHON_FILES ${py_files}
 echo PYTHON_FILES=${py_files}
 '''
 
-[tasks.init]
-
 [tasks.rustup-update]
 command = "rustup"
 args = ["update", "stable"]
@@ -56,23 +57,18 @@ install_crate = { crate_name = "cargo-update", binary = "cargo-install-update", 
 command = "cargo"
 args = ["install-update", "taplo-cli", "cargo-make"]
 
-# Create 'test' alias
-[tasks.test]
-clear = true
-run_task = "tests"
-
 [tasks.generate-common-constants-rs]
 script_runner = "@shell"
 script = '''
-${PYTHON_EXE} -m py2many --rust=1 swiftnav_console/constants.py
+${PYTHON} -m py2many --rust=1 swiftnav_console/constants.py
 mv swiftnav_console/constants.rs console_backend/src/common_constants.rs
 '''
 
 [tasks.extract-piksi-constants-rs]
 script_runner = "@shell"
 script = '''
-${PYTHON_EXE} utils/extract_piksi_tools_constants.py > /tmp/piksi_tools_constants.py
-${PYTHON_EXE} -m py2many --rust=1 /tmp/piksi_tools_constants.py --outdir console_backend/src/
+${PYTHON} utils/extract_piksi_tools_constants.py > /tmp/piksi_tools_constants.py
+${PYTHON} -m py2many --rust=1 /tmp/piksi_tools_constants.py --outdir console_backend/src/
 '''
 
 [tasks.generate-resources]
@@ -83,7 +79,7 @@ echo "$(echo '# pylint: skip-file\n# fmt: off'; cat swiftnav_console/console_res
 '''
 
 [tasks.run-rcc]
-command = "${PYSIDE2_RCC_EXE}"
+command = "${PYSIDE2_RCC}"
 args = [
   "resources/console_resources.qrc",
   "-o",
@@ -120,7 +116,7 @@ Get-ChildItem .\console_backend -Recurse -Include @("*.egg-info", "*.dist-info")
 '''
 
 [tasks.start-console]
-command = "${PYTHON_EXE}"
+command = "${PYTHON}"
 args = ["-m", "swiftnav_console.main", "--", "${@}"]
 
 [tasks.run]
@@ -161,11 +157,11 @@ git describe --tags --always > console_backend/src/version.txt
 '''
 
 [tasks.install-backend]
-command = "${PYTHON_EXE}"
+command = "${PYTHON}"
 args = ["-m", "pip", "install", "-e", "./console_backend"]
 
 [tasks.prod-install-backend]
-command = "${PYTHON_EXE}"
+command = "${PYTHON}"
 args = [
   "-m",
   "pip",
@@ -234,6 +230,7 @@ dependencies = ["build-dist", "purge-dist", "compress-dist"]
 
 [tasks.prod-installer]
 dependencies = [
+  "setup-builder",
   "store-version",
   "copy-capnp",
   "generate-resources",
@@ -247,13 +244,13 @@ mkdir -p main.app/Contents/MacOS main.app/Contents/Resources
 cp -r main.dist/* main.app/Contents/MacOS/
 iconutil --convert icns src/main/icons/Mac.iconset
 mv src/main/icons/Mac.icns main.app/Contents/Resources/SwiftNavConsole.icns
-${PYTHON_EXE} src/build/generate-mac-info-plist.py
+${PYTHON} src/build/generate-mac-info-plist.py
 hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg' || (echo 'Failed to create Mac dmg. Retrying in 10s...' && sleep 10 && hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg' )
 '''
 
 [tasks.qml-format]
 dependencies = ["set-qml-files"]
-env = { QT_APP = { script = ["$PYTHON_EXE utils/echo-qt-dir.py"] } }
+env = { QT_APP = { script = ["$PYTHON utils/echo-qt-dir.py"] } }
 script_runner = "@shell"
 script = '''
 ${QT_APP}/Qt/bin/qmlformat -i ${QML_FILES}
@@ -261,7 +258,7 @@ ${QT_APP}/Qt/bin/qmlformat -i ${QML_FILES}
 
 [tasks.qml-lint]
 dependencies = ["set-qml-files"]
-env = { QT_APP = { script = ["$PYTHON_EXE utils/echo-qt-dir.py"] } }
+env = { QT_APP = { script = ["$PYTHON utils/echo-qt-dir.py"] } }
 script_runner = "@shell"
 script = '''
 ${QT_APP}/Qt/bin/qmllint -I ${QT_APP}/../PySide2/Qt/qml/ -I resources/ ${QML_FILES}
@@ -299,17 +296,17 @@ args = ["check"]
 
 [tasks.python-type-check]
 dependencies = ["set-python-files"]
-command = "${PYTHON_EXE}"
+command = "${PYTHON}"
 args = ["-m", "mypy", "@@split(PYTHON_FILES, )"]
 
 [tasks.python-format-check]
 dependencies = ["set-python-files"]
-command = "${PYTHON_EXE}"
+command = "${PYTHON}"
 args = ["-m", "black", "--check", "--diff", "@@split(PYTHON_FILES, )"]
 
 [tasks.python-format-all]
 dependencies = ["set-python-files"]
-command = "${PYTHON_EXE}"
+command = "${PYTHON}"
 args = ["-m", "black", "@@split(PYTHON_FILES, )"]
 
 [tasks.python-format]
@@ -317,7 +314,7 @@ alias = "python-format-all"
 
 [tasks.python-lint]
 dependencies = ["set-python-files"]
-command = "${PYTHON_EXE}"
+command = "${PYTHON}"
 args = ["-m", "pylint", "--output-format=parseable", "@@split(PYTHON_FILES, )"]
 
 [tasks.format-toml-check]
@@ -363,13 +360,18 @@ run_task = "check-git-diff"
 [tasks.tests]
 dependencies = ["rust-tests"]
 
+# Create 'test' alias
+[tasks.test]
+clear = true
+run_task = "tests"
+
 [tasks.backend-cpu-bench]
 dependencies = ["copy-capnp", "generate-resources"]
 command = "cargo"
 args = ["bench", "--all-features", "--", "--verbose", "--noplot"]
 
 [tasks.backend-cpu-bench-validate]
-command = "${PYTHON_EXE}"
+command = "${PYTHON}"
 args = ["utils/bench_runner.py", "--backend_cpu"]
 
 [tasks.backend-mem-bench]
@@ -394,7 +396,7 @@ dependencies = [
 ]
 
 [tasks.disk-usage-bench]
-command = "${PYTHON_EXE}"
+command = "${PYTHON}"
 args = ["utils/bench_runner.py", "--disk_usage"]
 
 [tasks.frontend-cpu-bench.linux]

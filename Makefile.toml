@@ -4,12 +4,8 @@ init_task = "init"
 
 [env]
 WORKSPACE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}"
-PYTHON_EXE = "${WORKSPACE}/py39/bin/python3"
-PYSIDE2_RCC_EXE = "${WORKSPACE}/py39/bin/pyside2-rcc"
-
-[env.windows]
-PYTHON_EXE = "${WORKSPACE}/py39/bin/python.exe"
-PYSIDE2_RCC_EXE = "${WORKSPACE}/py39/bin/rcc.exe"
+PYTHON_EXE = { source = "${CARGO_MAKE_RUST_TARGET_OS}", mapping = { linux = "${WORKSPACE}/py39/bin/python3", macos = "${WORKSPACE}/py39/bin/python3", windows = "${WORKSPACE}/py39/bin/python.exe" } }
+PYSIDE2_RCC_EXE = { source = "${CARGO_MAKE_RUST_TARGET_OS}", mapping = { linux = "${WORKSPACE}/py39/bin/pyside2-rcc", macos = "${WORKSPACE}/py39/bin/pyside2-rcc", windows = "${WORKSPACE}/py39/bin/rcc.exe" } }
 
 # Two proposed methods of simplifying path globbing # https://github.com/sagiegurari/cargo-make/issues/542 # https://github.com/sagiegurari/cargo-make/issues/543
 [tasks.set-qml-files]
@@ -68,10 +64,19 @@ ${PYTHON_EXE} -m py2many --rust=1 /tmp/piksi_tools_constants.py --outdir console
 '''
 
 [tasks.generate-resources]
-dependencies = ["run-rcc"]
+dependencies = ["printt", "run-rcc"]
 script_runner = "@shell"
 script = '''
 echo "$(echo '# pylint: skip-file'; cat swiftnav_console/console_resources.py)" > swiftnav_console/console_resources.py
+'''
+
+[tasks.printt]
+condition = { platforms = ["windows"] }
+cwd = "py39"
+script_extension = "ps1"
+script_runner = "powershell"
+script = '''
+Get-ChildItem -Recurse
 '''
 
 [tasks.run-rcc]
@@ -168,7 +173,6 @@ args = [
   "./console_backend",
 ]
 
-
 [tasks.prod-freeze-no-copy]
 dependencies = ["copy-capnp", "generate-resources", "build-dist"]
 command = "${PYTHON_EXE}"
@@ -197,37 +201,34 @@ cwd = "standalone-py"
 condition = { files_not_exist = ["${WORKSPACE}/standalone-py/python"] }
 script_runner = "powershell"
 script_extension = "ps1"
-script = "download.ps1"
+script = "& ./download.ps1"
 
 [tasks.setup-builder]
 dependencies = ["get-standalone-py"]
 script = { file = "${WORKSPACE}/scripts/setup-builder.sh", absolute_path = true }
 
 [tasks.setup-builder.windows]
-dependencies = ["get-standalone-py"]
 script_runner = "powershell"
 script_extension = "ps1"
-script = "scripts/setup-builder.ps1"
+script = "& ./scripts/setup-builder.ps1"
 
 [tasks.prep-dist]
 dependencies = ["get-standalone-py"]
 script = { file = "${WORKSPACE}/scripts/prep-dist.sh", absolute_path = true }
 
 [tasks.prep-dist.windows]
-dependencies = ["get-standalone-py"]
 script_runner = "powershell"
 script_extension = "ps1"
-script = "scripts/prep-dist.ps1"
+script = "& ./scripts/prep-dist.ps1"
 
 [tasks.build-dist]
 dependencies = ["prep-dist"]
 script = { file = "${WORKSPACE}/scripts/build-dist.sh", absolute_path = true }
 
 [tasks.build-dist.windows]
-dependencies = ["prep-dist"]
 script_runner = "powershell"
 script_extension = "ps1"
-script = "scripts/build-dist.ps1"
+script = "& ./scripts/build-dist.ps1"
 
 [tasks.purge-dist]
 script = { file = "${WORKSPACE}/scripts/purge-dist.sh", absolute_path = true }
@@ -235,7 +236,7 @@ script = { file = "${WORKSPACE}/scripts/purge-dist.sh", absolute_path = true }
 [tasks.purge-dist.windows]
 script_runner = "powershell"
 script_extension = "ps1"
-script = "scripts/purge-dist.ps1"
+script = "& ./scripts/purge-dist.ps1"
 
 [tasks.compress-dist]
 script = { file = "${WORKSPACE}/scripts/compress-dist.sh", absolute_path = true }
@@ -243,7 +244,7 @@ script = { file = "${WORKSPACE}/scripts/compress-dist.sh", absolute_path = true 
 [tasks.compress-dist.windows]
 script_runner = "powershell"
 script_extension = "ps1"
-script = "scripts/compress-dist.ps1"
+script = "& ./scripts/compress-dist.ps1"
 
 [tasks.create-dist]
 dependencies = ["build-dist", "purge-dist", "compress-dist"]

@@ -1,13 +1,16 @@
-env_scripts = ['''
+env_scripts = [
+  '''
 #!@duckscript
-if eq os_family windows
+os = os_family
+if eq ${os} windows
   set_env PYTHON_EXE "${WORKSPACE}\\py39\\python.exe"
   set_env PYSIDE2_RCC_EXE "${WORKSPACE}\\py39\\Lib\\site-packages\\PySide2\\rcc.exe"
 else
   set_env PYTHON_EXE "${WORKSPACE}/py39/bin/python3"
   set_env PYSIDE2_RCC_EXE "${WORKSPACE}/py39/bin/pyside2-rcc"
 end
-''']
+''',
+]
 
 [config]
 default_to_workspace = false

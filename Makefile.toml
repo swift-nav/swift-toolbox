@@ -1,29 +1,38 @@
-env_scripts = [
-  '''
-#!@duckscript
-!include_files ./utils/glob.ds
-
-py_files = glob_paths_excluding_target ./**/*.py
-
-set_env PYTHON_FILES ${py_files}
-echo PYTHON_FILES=${py_files}
-
-qml_files = glob_paths_excluding_target resources/**/*.qml
-
-set_env QML_FILES ${qml_files}
-echo QML_FILES=${qml_files}
-''',
-] # Two proposed methods of simplifying path globbing # https://github.com/sagiegurari/cargo-make/issues/542 # https://github.com/sagiegurari/cargo-make/issues/543
-
-[env]
-PYTHON_BUILDER_EXE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/py39/bin/python3"
-
-[env.windows]
-PYTHON_BUILDER_EXE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/py39/bin/python.exe"
-
 [config]
 default_to_workspace = false
 init_task = "init"
+
+[env]
+WORKSPACE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}"
+PYTHON_EXE = "${WORKSPACE}/py39/bin/python3"
+PYSIDE2_RCC_EXE = "${WORKSPACE}/py39/bin/pyside2-rcc"
+
+[env.windows]
+PYTHON_EXE = "${WORKSPACE}/py39/bin/python.exe"
+PYSIDE2_RCC_EXE = "${WORKSPACE}/py39/bin/pyside2-rcc.exe"
+
+# Two proposed methods of simplifying path globbing # https://github.com/sagiegurari/cargo-make/issues/542 # https://github.com/sagiegurari/cargo-make/issues/543
+[tasks.set-qml-files]
+private = true
+condition = { env_not_set = ["QML_FILES"] }
+script_runner = "@duckscript"
+script = '''
+!include_files ./utils/glob.ds
+qml_files = glob_paths_excluding_target resources/**/*.qml
+set_env QML_FILES ${qml_files}
+echo QML_FILES=${qml_files}
+'''
+
+[tasks.set-python-files]
+private = true
+condition = { env_not_set = ["PYTHON_FILES"] }
+script_runner = "@duckscript"
+script = '''
+!include_files ./utils/glob.ds
+py_files = glob_paths_excluding_target ./**/*.py
+set_env PYTHON_FILES ${py_files}
+echo PYTHON_FILES=${py_files}
+'''
 
 [tasks.init]
 
@@ -47,30 +56,31 @@ run_task = "tests"
 [tasks.generate-common-constants-rs]
 script_runner = "@shell"
 script = '''
-$PYTHON_BUILDER_EXE -m py2many --rust=1 swiftnav_console/constants.py
+${PYTHON_EXE} -m py2many --rust=1 swiftnav_console/constants.py
 mv swiftnav_console/constants.rs console_backend/src/common_constants.rs
 '''
 
 [tasks.extract-piksi-constants-rs]
 script_runner = "@shell"
 script = '''
-$PYTHON_BUILDER_EXE utils/extract_piksi_tools_constants.py > /tmp/piksi_tools_constants.py
-$PYTHON_BUILDER_EXE -m py2many --rust=1 /tmp/piksi_tools_constants.py --outdir console_backend/src/
+${PYTHON_EXE} utils/extract_piksi_tools_constants.py > /tmp/piksi_tools_constants.py
+${PYTHON_EXE} -m py2many --rust=1 /tmp/piksi_tools_constants.py --outdir console_backend/src/
 '''
 
 [tasks.generate-resources]
+dependencies = ["run-rcc"]
 script_runner = "@shell"
 script = '''
-py39/bin/pyside2-rcc resources/console_resources.qrc -o swiftnav_console/console_resources.py
 echo "$(echo '# pylint: skip-file'; cat swiftnav_console/console_resources.py)" > swiftnav_console/console_resources.py
 '''
 
-[tasks.generate-resources.windows]
-script_runner = "@shell"
-script = '''
-py39/bin/pyside2-rcc.exe resources/console_resources.qrc -o swiftnav_console/console_resources.py
-echo "$(echo '# pylint: skip-file'; cat swiftnav_console/console_resources.py)" > swiftnav_console/console_resources.py
-'''
+[tasks.run-rcc]
+command = "${PYSIDE2_RCC_EXE}"
+args = [
+  "resources/console_resources.qrc",
+  "-o",
+  "swiftnav_console/console_resources.py",
+]
 
 [tasks.check-capnp]
 script_runner = "@shell"
@@ -102,10 +112,8 @@ Get-ChildItem .\console_backend -Recurse -Include @("*.egg-info", "*.dist-info")
 '''
 
 [tasks.start-console]
-script_runner = "@shell"
-script = '''
-$PYTHON_BUILDER_EXE -m swiftnav_console.main -- ${@}
-'''
+command = "${PYTHON_EXE}"
+args = ["-m", "swiftnav_console.main", "--", "${@}"]
 
 [tasks.run]
 dependencies = [
@@ -145,23 +153,26 @@ git describe --tags --always > console_backend/src/version.txt
 '''
 
 [tasks.install-backend]
-script_runner = "@shell"
-script = '''
-$PYTHON_BUILDER_EXE -m pip install -e ./console_backend
-'''
+command = "${PYTHON_EXE}"
+args = ["-m", "pip", "install", "-e", "./console_backend"]
 
 [tasks.prod-install-backend]
-script_runner = "@shell"
-script = '''
-$PYTHON_BUILDER_EXE -m pip install ./console_backend --upgrade --force ./console_backend -v
-'''
+command = "${PYTHON_EXE}"
+args = [
+  "-m",
+  "pip",
+  "install",
+  "-v",
+  "--upgrade",
+  "--force",
+  "./console_backend",
+]
+
 
 [tasks.prod-freeze-no-copy]
 dependencies = ["copy-capnp", "generate-resources", "build-dist"]
-script_runner = "@shell"
-script = '''
-$PYTHON_BUILDER_EXE -m fbs freeze
-'''
+command = "${PYTHON_EXE}"
+args = ["-m", "fbs", "freeze"]
 
 [tasks.copy-console-backend-to-fbs.windows]
 script_runner = "powershell"
@@ -178,23 +189,19 @@ mkdir -p target/swift_navigation_console/console_backend && cp -r console_backen
 
 [tasks.get-standalone-py]
 cwd = "standalone-py"
-condition = { files_not_exist = [
-  "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/standalone-py/python",
-] }
+condition = { files_not_exist = ["${WORKSPACE}/standalone-py/python"] }
 script = { file = "download.sh" }
 
 [tasks.get-standalone-py.windows]
 cwd = "standalone-py"
-condition = { files_not_exist = [
-  "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/standalone-py/python",
-] }
+condition = { files_not_exist = ["${WORKSPACE}/standalone-py/python"] }
 script_runner = "powershell"
 script_extension = "ps1"
 script = "download.ps1"
 
 [tasks.setup-builder]
 dependencies = ["get-standalone-py"]
-script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/setup-builder.sh", absolute_path = true }
+script = { file = "${WORKSPACE}/scripts/setup-builder.sh", absolute_path = true }
 
 [tasks.setup-builder.windows]
 dependencies = ["get-standalone-py"]
@@ -204,7 +211,7 @@ script = "scripts/setup-builder.ps1"
 
 [tasks.prep-dist]
 dependencies = ["get-standalone-py"]
-script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/prep-dist.sh", absolute_path = true }
+script = { file = "${WORKSPACE}/scripts/prep-dist.sh", absolute_path = true }
 
 [tasks.prep-dist.windows]
 dependencies = ["get-standalone-py"]
@@ -214,7 +221,7 @@ script = "scripts/prep-dist.ps1"
 
 [tasks.build-dist]
 dependencies = ["prep-dist"]
-script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/build-dist.sh", absolute_path = true }
+script = { file = "${WORKSPACE}/scripts/build-dist.sh", absolute_path = true }
 
 [tasks.build-dist.windows]
 dependencies = ["prep-dist"]
@@ -223,7 +230,7 @@ script_extension = "ps1"
 script = "scripts/build-dist.ps1"
 
 [tasks.purge-dist]
-script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/purge-dist.sh", absolute_path = true }
+script = { file = "${WORKSPACE}/scripts/purge-dist.sh", absolute_path = true }
 
 [tasks.purge-dist.windows]
 script_runner = "powershell"
@@ -231,7 +238,7 @@ script_extension = "ps1"
 script = "scripts/purge-dist.ps1"
 
 [tasks.compress-dist]
-script = { file = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/scripts/compress-dist.sh", absolute_path = true }
+script = { file = "${WORKSPACE}/scripts/compress-dist.sh", absolute_path = true }
 
 [tasks.compress-dist.windows]
 script_runner = "powershell"
@@ -251,10 +258,8 @@ dependencies = [
 
 [tasks.prod-installer]
 dependencies = ["prod-freeze"]
-script_runner = "@shell"
-script = '''
-$PYTHON_BUILDER_EXE -m fbs installer
-'''
+command = "${PYTHON_EXE}"
+args = ["-m", "fbs", "installer"]
 
 [tasks.prod-installer.mac]
 script_runner = "@shell"
@@ -263,15 +268,13 @@ mkdir -p main.app/Contents/MacOS main.app/Contents/Resources
 cp -r main.dist/* main.app/Contents/MacOS/
 iconutil --convert icns src/main/icons/Mac.iconset
 mv src/main/icons/Mac.icns main.app/Contents/Resources/SwiftNavConsole.icns
-$PYTHON_BUILDER_EXE src/build/generate-mac-info-plist.py
+${PYTHON_EXE} src/build/generate-mac-info-plist.py
 hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg' || (echo 'Failed to create Mac dmg. Retrying in 10s...' && sleep 10 && hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg' )
 '''
 
 [tasks.create-remove-negligibles-file]
-script_runner = "@shell"
-script = '''
-$PYTHON_BUILDER_EXE utils/get_fbs_remove_list.py
-'''
+command = "${PYTHON_EXE}"
+args = ["utils/get_fbs_remove_list.py"]
 
 [tasks.remove-negligibles.linux]
 dependencies = []
@@ -286,17 +289,19 @@ bash src/main/fbs/windows-remove-negligibles.sh
 '''
 
 [tasks.qml-format]
-env = { QT_APP = { script = ["$PYTHON_BUILDER_EXE utils/echo-qt-dir.py"] } }
+dependencies = ["set-qml-files"]
+env = { QT_APP = { script = ["$PYTHON_EXE utils/echo-qt-dir.py"] } }
 script_runner = "@shell"
 script = '''
-${QT_APP}/Qt/bin/qmlformat -i $QML_FILES
+${QT_APP}/Qt/bin/qmlformat -i ${QML_FILES}
 '''
 
 [tasks.qml-lint]
-env = { QT_APP = { script = ["$PYTHON_BUILDER_EXE utils/echo-qt-dir.py"] } }
+dependencies = ["set-qml-files"]
+env = { QT_APP = { script = ["$PYTHON_EXE utils/echo-qt-dir.py"] } }
 script_runner = "@shell"
 script = '''
-${QT_APP}/Qt/bin/qmllint -I ${QT_APP}/../PySide2/Qt/qml/ -I resources/ $QML_FILES
+${QT_APP}/Qt/bin/qmllint -I ${QT_APP}/../PySide2/Qt/qml/ -I resources/ ${QML_FILES}
 '''
 
 [tasks.qml-format-check]
@@ -330,31 +335,27 @@ command = "cargo"
 args = ["check"]
 
 [tasks.python-type-check]
-script_runner = "@shell"
-script = '''
-$PYTHON_BUILDER_EXE -m mypy $PYTHON_FILES
-'''
+dependencies = ["set-python-files"]
+command = "${PYTHON_EXE}"
+args = ["-m", "mypy", "@@split(PYTHON_FILES, )"]
 
 [tasks.python-format-check]
-script_runner = "@shell"
-script = '''
-$PYTHON_BUILDER_EXE -m black --check --diff $PYTHON_FILES
-'''
+dependencies = ["set-python-files"]
+command = "${PYTHON_EXE}"
+args = ["-m", "black", "--check", "--diff", "@@split(PYTHON_FILES, )"]
 
 [tasks.python-format-all]
-script_runner = "@shell"
-script = '''
-$PYTHON_BUILDER_EXE -m black $PYTHON_FILES
-'''
+dependencies = ["set-python-files"]
+command = "${PYTHON_EXE}"
+args = ["-m", "black", "@@split(PYTHON_FILES, )"]
 
 [tasks.python-format]
 alias = "python-format-all"
 
 [tasks.python-lint]
-script_runner = "@shell"
-script = '''
-$PYTHON_BUILDER_EXE -m pylint --output-format=parseable $PYTHON_FILES
-'''
+dependencies = ["set-python-files"]
+command = "${PYTHON_EXE}"
+args = ["-m", "pylint", "--output-format=parseable", "@@split(PYTHON_FILES, )"]
 
 [tasks.format-toml-check]
 # Note format-toml task is defined by cargo-make to use crate taplo-cli, but the version is
@@ -405,10 +406,8 @@ command = "cargo"
 args = ["bench", "--all-features", "--", "--verbose", "--noplot"]
 
 [tasks.backend-cpu-bench-validate]
-script_runner = "@shell"
-script = '''
-${PYTHON_BUILDER_EXE} utils/bench_runner.py --backend_cpu
-'''
+command = "${PYTHON_EXE}"
+args = ["utils/bench_runner.py", "--backend_cpu"]
 
 [tasks.backend-mem-bench]
 dependencies = ["copy-capnp", "generate-resources"]
@@ -432,10 +431,8 @@ dependencies = [
 ]
 
 [tasks.disk-usage-bench]
-script_runner = "@shell"
-script = '''
-$PYTHON_BUILDER_EXE utils/bench_runner.py --disk_usage
-'''
+command = "${PYTHON_EXE}"
+args = ["utils/bench_runner.py", "--disk_usage"]
 
 [tasks.frontend-cpu-bench.linux]
 script_runner = "@shell"
@@ -518,6 +515,5 @@ run_task = "newline-terminator"
 run_task = "newline-terminator"
 
 [tasks.check-git-diff]
-script_runner = "@shell"
 command = "git"
 args = ["diff", "--exit-code"]

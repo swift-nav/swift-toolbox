@@ -88,16 +88,25 @@ Item {
                 Item {
                     Layout.fillHeight: true
                     Layout.fillWidth: true
+<<<<<<< HEAD
 
+=======
+>>>>>>> NetworkInfo table finally showing up.
                     NetworkInfo {
                         id: networkInfoTable
 
                         width: parent.width
                         height: parent.height
                     }
+<<<<<<< HEAD
 
                 }
 
+=======
+                }
+
+                
+>>>>>>> NetworkInfo table finally showing up.
                 Item {
                     Layout.preferredHeight: 50
                     Layout.fillWidth: true
@@ -167,7 +176,10 @@ Item {
 
             if (!advancedNetworkingData.network_info.length)
                 return ;
+<<<<<<< HEAD
 
+=======
+>>>>>>> NetworkInfo table finally showing up.
             networkInfoTable.entries = advancedNetworkingData.network_info;
         }
     }

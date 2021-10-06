@@ -163,9 +163,10 @@ ColumnLayout {
         running: true
         repeat: true
         onTriggered: {
-            if (!advancedTab.visible || !entries.length)
+            if (!advancedTab.visible || !entries.length) {
                 return ;
-
+            }
+            
             for (var idx in entries) {
                 var new_row = {
                 };
@@ -174,8 +175,10 @@ ColumnLayout {
                 new_row[Constants.networking.columnHeaders[2]] = entries[idx][2];
                 new_row[Constants.networking.columnHeaders[3]] = entries[idx][3];
                 new_row[Constants.networking.columnHeaders[4]] = entries[idx][4];
+
                 table.model.setRow(idx, new_row);
             }
+
         }
     }
 

@@ -94,7 +94,14 @@ ${PYTHON} -m py2many --rust=1 /tmp/piksi_tools_constants.py --outdir console_bac
 dependencies = ["run-rcc"]
 script_runner = "@shell"
 script = '''
-echo "$(echo '# pylint: skip-file\n# fmt: off'; cat swiftnav_console/console_resources.py)" > swiftnav_console/console_resources.py
+sed -i '1s/^/# pylint: skip-file\n/' swiftnav_console/console_resources.py
+sed -i '1s/^/# fmt: off\n/' swiftnav_console/console_resources.py
+'''
+
+[tasks.generate-resources.mac]
+script = '''
+sed -i "" '1s/^/# pylint: skip-file\n/' swiftnav_console/console_resources.py
+sed -i "" '1s/^/# fmt: off\n/' swiftnav_console/console_resources.py
 '''
 
 [tasks.run-rcc]

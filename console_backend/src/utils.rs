@@ -5,6 +5,7 @@ use capnp::message::HeapAllocator;
 use capnp::serialize;
 use indexmap::IndexSet;
 use log::warn;
+use sbp::SbpString;
 use semver::{Version, VersionReq}; //BuildMetadata, Prerelease,
 use serialport::available_ports;
 
@@ -46,6 +47,13 @@ pub fn compare_semvers(
         }
     }
     Ok(true)
+}
+
+/// Create a new SbpString of L size with T termination.
+pub fn fixed_sbp_string<T, const L: usize>(data: &str) -> SbpString<[u8; L], T> {
+    let mut arr = [0u8; L];
+    arr[0..data.len()].copy_from_slice(data.as_bytes());
+    SbpString::new(arr)
 }
 
 /// Send a CLOSE, or kill, signal to the frontend.

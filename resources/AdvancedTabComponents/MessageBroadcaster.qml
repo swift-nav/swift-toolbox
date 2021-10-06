@@ -15,21 +15,22 @@ Item {
     property alias ipAddressInputEnabled: ipAddressInput.enabled
     property alias portInputEnabled: portInput.enabled
     property bool messageTypeSelectionEnabled: true
-    implicitHeight: 150
+
+    implicitHeight: Constants.networking.messageBroadcasterHeight
 
     GridLayout {
         anchors.fill: parent
-        anchors.margins: 10
-        rows: 4
-        columns: 2
+        anchors.margins: Constants.networking.messageBroadcasterMargins
+        rows: Constants.networking.messageBroadcasterGridRows
+        columns: Constants.networking.messageBroadcasterGridColumns
 
         Item {
             Layout.fillHeight: true
             Layout.fillWidth: true
-            Layout.rowSpan: 1
-            Layout.preferredHeight: 1
-            Layout.columnSpan: 1
-            Layout.preferredWidth: 1
+            Layout.rowSpan: Constants.networking.messageBroadcasterGridElementLength
+            Layout.preferredHeight: Constants.networking.messageBroadcasterGridElementLength
+            Layout.columnSpan: Constants.networking.messageBroadcasterGridElementLength
+            Layout.preferredWidth: Constants.networking.messageBroadcasterGridElementLength
 
             Rectangle {
                 anchors.fill: parent
@@ -51,10 +52,10 @@ Item {
         Item {
             Layout.fillHeight: true
             Layout.fillWidth: true
-            Layout.rowSpan: 1
-            Layout.preferredHeight: 1
-            Layout.columnSpan: 1
-            Layout.preferredWidth: 1
+            Layout.rowSpan: Constants.networking.messageBroadcasterGridElementLength
+            Layout.preferredHeight: Constants.networking.messageBroadcasterGridElementLength
+            Layout.columnSpan: Constants.networking.messageBroadcasterGridElementLength
+            Layout.preferredWidth: Constants.networking.messageBroadcasterGridElementLength
 
             RowLayout {
                 anchors.centerIn: parent
@@ -95,10 +96,10 @@ Item {
         Item {
             Layout.fillHeight: true
             Layout.fillWidth: true
-            Layout.rowSpan: 1
-            Layout.preferredHeight: 1
-            Layout.columnSpan: 1
-            Layout.preferredWidth: 1
+            Layout.rowSpan: Constants.networking.messageBroadcasterGridElementLength
+            Layout.preferredHeight: Constants.networking.messageBroadcasterGridElementLength
+            Layout.columnSpan: Constants.networking.messageBroadcasterGridElementLength
+            Layout.preferredWidth: Constants.networking.messageBroadcasterGridElementLength
 
             Rectangle {
                 anchors.fill: parent
@@ -120,16 +121,16 @@ Item {
         Item {
             Layout.fillHeight: true
             Layout.fillWidth: true
-            Layout.rowSpan: 1
-            Layout.preferredHeight: 1
-            Layout.columnSpan: 1
-            Layout.preferredWidth: 1
+            Layout.rowSpan: Constants.networking.messageBroadcasterGridElementLength
+            Layout.preferredHeight: Constants.networking.messageBroadcasterGridElementLength
+            Layout.columnSpan: Constants.networking.messageBroadcasterGridElementLength
+            Layout.preferredWidth: Constants.networking.messageBroadcasterGridElementLength
 
             Rectangle {
                 anchors.right: parent.right
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                height: 20
+                height: Constants.networking.messageBroadcasterTextInputHeight
                 border.width: Constants.advancedIns.textDataBarBorderWidth
                 clip: true
 
@@ -165,10 +166,10 @@ Item {
         Item {
             Layout.fillHeight: true
             Layout.fillWidth: true
-            Layout.rowSpan: 1
-            Layout.preferredHeight: 1
-            Layout.columnSpan: 1
-            Layout.preferredWidth: 1
+            Layout.rowSpan: Constants.networking.messageBroadcasterGridElementLength
+            Layout.preferredHeight: Constants.networking.messageBroadcasterGridElementLength
+            Layout.columnSpan: Constants.networking.messageBroadcasterGridElementLength
+            Layout.preferredWidth: Constants.networking.messageBroadcasterGridElementLength
 
             Rectangle {
                 anchors.fill: parent
@@ -190,16 +191,16 @@ Item {
         Item {
             Layout.fillHeight: true
             Layout.fillWidth: true
-            Layout.rowSpan: 1
-            Layout.preferredHeight: 1
-            Layout.columnSpan: 1
-            Layout.preferredWidth: 1
+            Layout.rowSpan: Constants.networking.messageBroadcasterGridElementLength
+            Layout.preferredHeight: Constants.networking.messageBroadcasterGridElementLength
+            Layout.columnSpan: Constants.networking.messageBroadcasterGridElementLength
+            Layout.preferredWidth: Constants.networking.messageBroadcasterGridElementLength
 
             Rectangle {
                 anchors.right: parent.right
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                height: 20
+                height: Constants.networking.messageBroadcasterTextInputHeight
                 border.width: Constants.advancedIns.textDataBarBorderWidth
                 clip: true
 
@@ -228,8 +229,8 @@ Item {
                     }
 
                     validator: IntValidator {
-                        bottom: 0
-                        top: 65535
+                        bottom: Constants.networking.messageBroadcasterIntValidatorUInt16Min
+                        top: Constants.networking.messageBroadcasterIntValidatorUInt16Max
                     }
 
                 }
@@ -241,10 +242,10 @@ Item {
         RowLayout {
             Layout.fillHeight: true
             Layout.fillWidth: true
-            Layout.rowSpan: 1
-            Layout.preferredHeight: 1
-            Layout.columnSpan: 1
-            Layout.preferredWidth: 1
+            Layout.rowSpan: Constants.networking.messageBroadcasterGridElementLength
+            Layout.preferredHeight: Constants.networking.messageBroadcasterGridElementLength
+            Layout.columnSpan: Constants.networking.messageBroadcasterGridElementLength
+            Layout.preferredWidth: Constants.networking.messageBroadcasterGridElementLength
 
             Item {
                 Layout.fillHeight: true
@@ -259,7 +260,7 @@ Item {
                     id: startButton
 
                     width: parent.width
-                    height: 20
+                    height: Constants.networking.messageBroadcasterStartStopButtonHeight
                     topInset: Constants.updateTab.buttonInset
                     bottomInset: Constants.updateTab.buttonInset
                     onClicked: {
@@ -288,10 +289,10 @@ Item {
         RowLayout {
             Layout.fillHeight: true
             Layout.fillWidth: true
-            Layout.rowSpan: 1
-            Layout.preferredHeight: 1
-            Layout.columnSpan: 1
-            Layout.preferredWidth: 1
+            Layout.rowSpan: Constants.networking.messageBroadcasterGridElementLength
+            Layout.preferredHeight: Constants.networking.messageBroadcasterGridElementLength
+            Layout.columnSpan: Constants.networking.messageBroadcasterGridElementLength
+            Layout.preferredWidth: Constants.networking.messageBroadcasterGridElementLength
 
             Item {
                 Layout.fillHeight: true
@@ -302,7 +303,7 @@ Item {
 
                     enabled: false
                     width: parent.width
-                    height: 20
+                    height: Constants.networking.messageBroadcasterStartStopButtonHeight
                     topInset: Constants.updateTab.buttonInset
                     bottomInset: Constants.updateTab.buttonInset
                     onClicked: {

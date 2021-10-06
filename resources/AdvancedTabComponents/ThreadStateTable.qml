@@ -45,10 +45,13 @@ Item {
                 }
                 onPositionChanged: {
                     if (pressed) {
-                        let oldcols = columnWidths.slice();
                         var delta_x = (mouseX - mouse_x);
-                        columnWidths[index] += delta_x;
-                        columnWidths[(index + 1) % 3] -= delta_x;
+                        var next_idx = (index + 1) % 3;
+                        var min_width = tableView.width / 6;
+                        if (columnWidths[index] + delta_x > min_width && columnWidths[next_idx] - delta_x > min_width) {
+                            columnWidths[index] += delta_x;
+                            columnWidths[next_idx] -= delta_x;
+                        }
                         tableView.forceLayout();
                     }
                 }
@@ -84,6 +87,9 @@ Item {
         anchors.top: horizontalHeader.bottom
         width: parent.width
         height: parent.height - horizontalHeader.height
+        onWidthChanged: {
+            tableView.forceLayout();
+        }
 
         ScrollBar.horizontal: ScrollBar {
         }

@@ -453,7 +453,7 @@ struct Message {
         skyPlotObs @44 :SkyPlotObs;
         trackingSkyPlotStatus @45 :TrackingSkyPlotStatus;
         advancedNetworkingStatus @46 :AdvancedNetworkingStatus;
-        networkState @47: NetworkState;
-        advancedNetworkingStatusFront @48: AdvancedNetworkingStatusFront;
+        networkState @47 :NetworkState;
+        advancedNetworkingStatusFront @48 :AdvancedNetworkingStatusFront;
     }
 }

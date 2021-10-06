@@ -252,8 +252,10 @@ impl<S: CapnProtoSender> AdvancedSystemMonitorTab<S> {
 mod tests {
     use super::*;
     use crate::types::TestSender;
+    use crate::utils::fixed_sbp_string;
     use sbp::{
         messages::piksi::{Latency, MsgUartState, MsgUartStateDepa, Period, UARTChannel},
+        sbp_string::NullTerminated,
         SbpString,
     };
     use std::io::sink;
@@ -430,7 +432,7 @@ mod tests {
         let client_send = TestSender { inner: Vec::new() };
         let wtr = MsgSender::new(sink());
         let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send, wtr);
-        let name1 = thread_name("mcdonald");
+        let name1: SbpString<[u8; 20], NullTerminated> = fixed_sbp_string("mcdonald");
         let msg1 = MsgThreadState {
             sender_id: Some(1337),
             name: name1.clone(),
@@ -440,7 +442,7 @@ mod tests {
         assert!(tab.threads.is_empty());
         tab.handle_thread_state(msg1);
         assert_eq!(tab.threads.len(), 1);
-        let name2 = thread_name(NO_NAME);
+        let name2: SbpString<[u8; 20], NullTerminated> = fixed_sbp_string(NO_NAME);
         let msg2 = MsgThreadState {
             sender_id: Some(1337),
             name: SbpString::new([0u8; 20]),
@@ -449,7 +451,7 @@ mod tests {
         };
         tab.handle_thread_state(msg2);
         assert_eq!(tab.threads.len(), 2);
-        let name3 = thread_name("farm");
+        let name3: SbpString<[u8; 20], NullTerminated> = fixed_sbp_string("farm");
         let msg3 = MsgThreadState {
             sender_id: Some(1337),
             name: name3.clone(),
@@ -481,7 +483,7 @@ mod tests {
         assert!(tab.threads_table_list.is_empty());
         tab.handle_heartbeat();
         assert!(tab.threads_table_list.is_empty());
-        let name1 = thread_name("mcdonald");
+        let name1: SbpString<[u8; 20], NullTerminated> = fixed_sbp_string("mcdonald");
         let msg1 = MsgThreadState {
             sender_id: Some(1337),
             name: name1.clone(),
@@ -489,7 +491,7 @@ mod tests {
             stack_free: 13,
         };
         tab.handle_thread_state(msg1.clone());
-        let name2 = thread_name(NO_NAME);
+        let name2: SbpString<[u8; 20], NullTerminated> = fixed_sbp_string(NO_NAME);
         let msg2 = MsgThreadState {
             sender_id: Some(1337),
             name: SbpString::new([0u8; 20]),
@@ -497,7 +499,7 @@ mod tests {
             stack_free: 133,
         };
         tab.handle_thread_state(msg2.clone());
-        let name3 = thread_name("farm");
+        let name3: SbpString<[u8; 20], NullTerminated> = fixed_sbp_string("farm");
         let msg3 = MsgThreadState {
             sender_id: Some(1337),
             name: name3.clone(),
@@ -537,10 +539,5 @@ mod tests {
             OrderedFloat(msg2.cpu as f64 / 10.0)
         );
         assert_eq!(tab.threads_table_list[2].stack_free, msg2.stack_free);
-    }
-    fn thread_name(name: &str) -> SbpString<[u8; 20], sbp::sbp_string::NullTerminated> {
-        let mut arr = [0u8; 20];
-        arr[0..name.len()].copy_from_slice(name.as_bytes());
-        SbpString::new(arr)
     }
 }

@@ -115,9 +115,8 @@ Item {
             columnWidthProvider: function(column) {
                 return columnWidths[column];
             }
-
             onWidthChanged: {
-                tableView.forceLayout()
+                tableView.forceLayout();
             }
             reuseItems: true
             boundsBehavior: Flickable.StopAtBounds

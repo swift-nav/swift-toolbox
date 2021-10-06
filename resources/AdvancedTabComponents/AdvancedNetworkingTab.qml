@@ -12,16 +12,16 @@ Item {
     }
 
     ColumnLayout {
-
         anchors.fill: parent
-        spacing: 0
+        spacing: Constants.networking.layoutSpacing
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 0
+            spacing: Constants.networking.layoutSpacing
 
             MessageBroadcaster {
                 id: messageBroadcaster
+
                 Layout.alignment: Qt.AlignTop
                 Layout.preferredWidth: parent.width * 2 / 5
             }
@@ -33,8 +33,9 @@ Item {
 
                 Text {
                     id: udpStreamingLabel
+
                     anchors.fill: parent
-                    padding: 10
+                    padding: Constants.networking.udpStreamingParagraphPadding
                     clip: true
                     font.family: Constants.genericTable.fontFamily
                     font.pointSize: Constants.largePointSize
@@ -68,28 +69,29 @@ Item {
                 Item {
                     Layout.fillHeight: true
                     Layout.fillWidth: true
+
                     NetworkInfo {
                         id: networkInfoTable
 
                         width: parent.width
                         height: parent.height
                     }
+
                 }
 
-                
                 Item {
-                    Layout.preferredHeight: 50
+                    Layout.preferredHeight: Constants.networking.refreshButtonHeight
                     Layout.fillWidth: true
 
                     Button {
                         anchors.verticalCenter: parent.verticalCenter
-                        anchors.verticalCenterOffset: 10
+                        anchors.verticalCenterOffset: Constants.networking.refreshButtonVerticalOffset
                         width: Constants.networking.refreshButtonWidth
                         height: Constants.networking.refreshButtonHeight
                         ToolTip.visible: hovered
                         ToolTip.text: Constants.networking.refreshButtonLabel
                         text: Constants.networking.refreshButtonLabel
-                        icon.source: "../" + Constants.icons.connectButtonPath
+                        icon.source: Constants.icons.refreshPath
                         icon.width: Constants.networking.refreshButtonIconSideLength
                         icon.height: Constants.networking.refreshButtonIconSideLength
                         display: AbstractButton.TextUnderIcon
@@ -113,7 +115,7 @@ Item {
     }
 
     Timer {
-        interval: Utils.hzToMilliseconds(Constants.staticTableTimerIntervalRate)
+        interval: Utils.hzToMilliseconds(Constants.staticTimerSlowIntervalRate)
         running: true
         repeat: true
         onTriggered: {
@@ -142,6 +144,7 @@ Item {
 
             if (!advancedNetworkingData.network_info.length)
                 return ;
+
             networkInfoTable.entries = advancedNetworkingData.network_info;
         }
     }

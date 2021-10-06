@@ -8,7 +8,7 @@ use crate::log_panel::LogLevel;
 use crate::output::{CsvLogging, CsvSerializer};
 use crate::piksi_tools_constants::*;
 use crate::settings_tab;
-use crate::types::{ArcBool, CapnProtoSender};
+use crate::types::CapnProtoSender;
 use crate::update_tab::UpdateTabUpdate;
 use crate::utils::set_connected_frontend;
 use anyhow::{Context, Result as AHResult};

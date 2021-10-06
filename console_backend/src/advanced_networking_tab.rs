@@ -1,19 +1,14 @@
 use capnp::message::Builder;
 use log::error;
-use ordered_float::OrderedFloat;
-use sbp::messages::piksi::{
-    MsgDeviceMonitor, MsgNetworkStateReq, MsgNetworkStateResp, MsgReset, MsgThreadState,
-};
-use sbp::messages::system::{MsgCsacTelemetry, MsgCsacTelemetryLabels};
-use sbp::messages::{SBPMessage, SBP};
+use sbp::messages::piksi::{MsgNetworkStateReq, MsgNetworkStateResp};
+use sbp::{Sbp, SbpMessage};
 use std::collections::HashMap;
-use sysinfo::NetworkData;
 
 use std::net::UdpSocket;
 
 use crate::constants::WRITE_TO_DEVICE_SENDER_ID;
 use crate::shared_state::{AdvancedNetworkingState, SharedState};
-use crate::types::{CapnProtoSender, MsgSender, Result, UartState};
+use crate::types::{CapnProtoSender, MsgSender, Result};
 use crate::utils::{bytes_to_human_readable, serialize_capnproto_builder};
 
 const DEFAULT_UDP_LOCAL_ADDRESS: &str = "127.0.0.1";
@@ -42,8 +37,15 @@ struct NetworkState {
 ///
 /// # Fields:
 ///
+/// - `all_messages`: Whether or not to broadcast all messages over UDP or only the OBS_MSGS subset.
+/// - `client`: The current udp socket connected to for streaming messages, if any.
 /// - `client_send`: Client Sender channel for communication from backend to frontend.
+/// - `ip_ad`: The stored string IP address defaults to DEFAULT_UDP_ADDRESS.
+/// - `network_info`: The stored ip traffic received from the device.
+/// - `port`: The port to send packets over UDP defaults to DEFAULT_UDP_PORT.
+/// - `running`: Whether or not UDP streaming is happening, used to inform frontend.
 /// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
+/// - `wtr`: The MsgSender for sending NetworkState refresh requests to the device.
 pub struct AdvancedNetworkingTab<S: CapnProtoSender> {
     all_messages: bool,
     client: Option<UdpSocket>,
@@ -115,7 +117,7 @@ impl<S: CapnProtoSender> AdvancedNetworkingTab<S> {
         let msg = MsgNetworkStateReq {
             sender_id: Some(WRITE_TO_DEVICE_SENDER_ID),
         };
-        let msg = sbp::messages::SBP::from(msg);
+        let msg = sbp::messages::Sbp::from(msg);
         self.wtr.send(msg)?;
         Ok(())
     }
@@ -148,13 +150,13 @@ impl<S: CapnProtoSender> AdvancedNetworkingTab<S> {
         }
     }
 
-    pub fn handle_sbp(&mut self, msg: &SBP) {
+    pub fn handle_sbp(&mut self, msg: &Sbp) {
         self.check_update();
 
         if self.running {
             if let Some(client) = &mut self.client {
-                if self.all_messages || OBS_MSGS.contains(&msg.get_message_type()) {
-                    if let Ok(frame) = msg.to_frame() {
+                if self.all_messages || OBS_MSGS.contains(&msg.message_type()) {
+                    if let Ok(frame) = sbp::to_vec(msg) {
                         if let Err(err) = client.send(&frame) {
                             error!("Error sending to device: {}", err);
                         }
@@ -210,93 +212,113 @@ impl<S: CapnProtoSender> AdvancedNetworkingTab<S> {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use crate::types::TestSender;
-//     use sbp::{
-//         messages::piksi::{Latency, MsgUartState, MsgUartStateDepa, Period, UARTChannel},
-//         SbpString,
-//     };
-//     use std::io::sink;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::TestSender;
+    use crate::utils::fixed_sbp_string;
+    use sbp::{sbp_string::Unterminated, SbpString};
+    use std::io::sink;
 
-//     #[test]
-//     fn handle_uart_state_test() {
-//         let shared_state = SharedState::new();
-//         let client_send = TestSender { inner: Vec::new() };
-//         let wtr = MsgSender::new(sink());
-//         let mut tab = AdvancedNetworkingTab::new(shared_state, client_send, wtr);
-//         let sender_id = Some(1337);
-//         let uart_a = UARTChannel {
-//             tx_throughput: 0.0,
-//             rx_throughput: 0.0,
-//             crc_error_count: 0,
-//             io_error_count: 0,
-//             tx_buffer_level: 0,
-//             rx_buffer_level: 0,
-//         };
-//         let uart_b = uart_a.clone();
-//         let uart_ftdi = uart_a.clone();
-//         let avg = 4;
-//         let current = 3;
-//         let lmin = 2;
-//         let lmax = 1;
-//         let no_period = 0;
-//         let latency = Latency {
-//             avg,
-//             current,
-//             lmin,
-//             lmax,
-//         };
-//         tab.handle_uart_state(UartState::MsgUartStateDepa(MsgUartStateDepa {
-//             sender_id,
-//             uart_a: uart_a.clone(),
-//             uart_b: uart_b.clone(),
-//             uart_ftdi: uart_ftdi.clone(),
-//             latency,
-//         }));
-//         assert_eq!(*tab.obs_latency.get(&CURR.to_string()).unwrap(), current);
-//         assert_eq!(*tab.obs_latency.get(&AVG.to_string()).unwrap(), avg);
-//         assert_eq!(*tab.obs_latency.get(&MIN.to_string()).unwrap(), lmin);
-//         assert_eq!(*tab.obs_latency.get(&MAX.to_string()).unwrap(), lmax);
-//         assert_eq!(*tab.obs_period.get(&CURR.to_string()).unwrap(), no_period);
-//         assert_eq!(*tab.obs_period.get(&AVG.to_string()).unwrap(), no_period);
-//         assert_eq!(*tab.obs_period.get(&MIN.to_string()).unwrap(), no_period);
-//         assert_eq!(*tab.obs_period.get(&MAX.to_string()).unwrap(), no_period);
-//         let avg = 1;
-//         let current = 2;
-//         let lmin = 3;
-//         let lmax = 4;
-//         let pmin = 5;
-//         let pmax = 6;
-//         let latency = Latency {
-//             avg,
-//             current,
-//             lmin,
-//             lmax,
-//         };
-//         let obs_period = Period {
-//             pmin,
-//             pmax,
-//             avg,
-//             current,
-//         };
-//         tab.handle_uart_state(UartState::MsgUartState(MsgUartState {
-//             sender_id,
-//             uart_a,
-//             uart_b,
-//             uart_ftdi,
-//             latency,
-//             obs_period,
-//         }));
-//         assert_eq!(*tab.obs_latency.get(&CURR.to_string()).unwrap(), current);
-//         assert_eq!(*tab.obs_latency.get(&AVG.to_string()).unwrap(), avg);
-//         assert_eq!(*tab.obs_latency.get(&MIN.to_string()).unwrap(), lmin);
-//         assert_eq!(*tab.obs_latency.get(&MAX.to_string()).unwrap(), lmax);
-//         assert_eq!(*tab.obs_period.get(&CURR.to_string()).unwrap(), current);
-//         assert_eq!(*tab.obs_period.get(&AVG.to_string()).unwrap(), avg);
-//         assert_eq!(*tab.obs_period.get(&MIN.to_string()).unwrap(), pmin);
-//         assert_eq!(*tab.obs_period.get(&MAX.to_string()).unwrap(), pmax);
-//     }
+    #[test]
+    fn handle_network_state_resp_test() {
+        let shared_state = SharedState::new();
+        let client_send = TestSender { inner: Vec::new() };
+        let wtr = MsgSender::new(sink());
+        let mut tab = AdvancedNetworkingTab::new(shared_state, client_send, wtr);
+        let tx_bytes = 1;
+        let rx_bytes = 2;
+        let sender_id = Some(1337);
+        let interface_name_pre = "eth0";
+        let interface_name: SbpString<[u8; 16], Unterminated> =
+            fixed_sbp_string(interface_name_pre);
+        let ipv4_address = [127, 0, 0, 1];
+        let ipv4_mask_size = 0;
+        let ipv6_address = [1, 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        let ipv6_mask_size = 0;
+        let flags = 0b1000000;
+        let msg = MsgNetworkStateResp {
+            sender_id,
+            interface_name: interface_name.clone(),
+            ipv4_address,
+            ipv4_mask_size,
+            ipv6_address,
+            ipv6_mask_size,
+            tx_bytes,
+            rx_bytes,
+            flags,
+        };
 
-// }
+        assert!(tab.network_info.is_empty());
+        tab.handle_network_state_resp(msg);
+        assert_eq!(tab.network_info.len(), 1);
+        let entry = tab.network_info.get(interface_name_pre).unwrap();
+        assert_eq!(entry.ipv4_address, "127.0.0.1");
+        assert!(entry.running);
+        assert_eq!(entry.tx_usage, format!("  {}B", tx_bytes));
+        assert_eq!(entry.rx_usage, format!("  {}B", rx_bytes));
+        let bad_flags = 0b0100000;
+        let msg = MsgNetworkStateResp {
+            sender_id,
+            interface_name,
+            ipv4_address,
+            ipv4_mask_size,
+            ipv6_address,
+            ipv6_mask_size,
+            tx_bytes,
+            rx_bytes,
+            flags: bad_flags,
+        };
+
+        tab.handle_network_state_resp(msg);
+        assert_eq!(tab.network_info.len(), 1);
+        let entry = tab.network_info.get(interface_name_pre).unwrap();
+        assert!(!entry.running);
+
+        let interface_name_pre = "ppp0";
+        let interface_name: SbpString<[u8; 16], Unterminated> =
+            fixed_sbp_string(interface_name_pre);
+        let ipv4_address = [192, 168, 0, 1];
+        let msg = MsgNetworkStateResp {
+            sender_id,
+            interface_name,
+            ipv4_address,
+            ipv4_mask_size,
+            ipv6_address,
+            ipv6_mask_size,
+            tx_bytes,
+            rx_bytes,
+            flags,
+        };
+
+        tab.handle_network_state_resp(msg);
+        assert_eq!(tab.network_info.len(), 2);
+        let entry = tab.network_info.get(interface_name_pre).unwrap();
+        assert_eq!(entry.ipv4_address, "192.168.0.1");
+        assert!(entry.running);
+        assert_eq!(entry.tx_usage, PPP0_HACK_STR.to_string());
+        assert_eq!(entry.rx_usage, PPP0_HACK_STR.to_string());
+
+        tab.network_info.clear();
+        assert!(tab.network_info.is_empty());
+
+        ["lo", "sit0"].iter_mut().for_each(|interface_name_pre| {
+            let interface_name: SbpString<[u8; 16], Unterminated> =
+                fixed_sbp_string(interface_name_pre);
+            let msg = MsgNetworkStateResp {
+                sender_id,
+                interface_name,
+                ipv4_address,
+                ipv4_mask_size,
+                ipv6_address,
+                ipv6_mask_size,
+                tx_bytes,
+                rx_bytes,
+                flags,
+            };
+
+            tab.handle_network_state_resp(msg);
+            assert!(tab.network_info.is_empty());
+        });
+    }
+}

@@ -241,11 +241,27 @@ Rectangle {
 
             Layout.preferredWidth: Constants.navBar.connectionPauseWidth
             Layout.preferredHeight: Constants.navBar.buttonHeight
-            text: "| |"
             ToolTip.visible: hovered
             ToolTip.text: !checked ? "Pause" : "Unpause"
             checkable: true
             onClicked: data_model.pause(checked)
+
+            Image {
+                id: connectionPauseImage
+
+                anchors.centerIn: parent
+                width: Constants.navBar.buttonSvgHeight
+                height: Constants.navBar.buttonSvgHeight
+                source: Constants.icons.pauseButtonUrl
+                visible: false
+            }
+
+            ColorOverlay {
+                anchors.fill: connectionPauseImage
+                source: connectionPauseImage
+                color: !connectionPauseButton.checked ? "dimgrey" : "crimson"
+            }
+
         }
 
         Button {

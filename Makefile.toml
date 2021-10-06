@@ -336,15 +336,16 @@ end
 
 [tasks.compress-dist]
 env = { ARCHIVE_NAME = "console_pp" }
-script_runner = "@shell"
+script_runner = "@duckscript"
 script = '''
-set -e
-DATE="$(date '+%Y-%m-%d')"
-VERSION="$(git describe --always --tags --dirty)"
-OUTPUT_NAME="${ARCHIVE_NAME}-${VERSION}-${BUILD_TRIPLET}-${DATE}"
-tar -C "py39-dist" -cvf "${OUTPUT_NAME}.tar" .
-rm -f "${OUTPUT_NAME}.tar.xz"
-xz -e -9 "${OUTPUT_NAME}.tar"
+output = exec --fail-on-error date +%Y-%m-%d
+date = trim ${output.stdout}
+output = exec --fail-on-error git describe --always --tags --dirty
+version = trim ${output.stdout}
+output_name = set "${ARCHIVE_NAME}-${version}-${BUILD_TRIPLET}-${date}"
+exec --fail-on-error tar -C "py39-dist" -cvf "${output_name}.tar" .
+exec --fail-on-error rm -f "${output_name}.tar.xz"
+exec --fail-on-error xz -e -9 "${output_name}.tar"
 '''
 
 [tasks.create-dist]

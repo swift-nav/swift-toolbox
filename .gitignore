@@ -15,3 +15,4 @@ py39-dist/
 py39/
 dist/
 console_backend/tests/fileout.json
+get-pip.py

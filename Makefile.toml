@@ -214,7 +214,8 @@ mkdir py39
 cd standalone-py/python/install
 cp . ../../../py39
 cd ../../../
-exec --fail-on-error ${PYTHON} ./utils/get-pip.py
+wget -O ./get-pip.py https://bootstrap.pypa.io/get-pip.py
+exec --fail-on-error ${PYTHON} ./get-pip.py
 exec --fail-on-error ${PYTHON} -m pip install wheel flit . ".[test]"
 '''
 

@@ -2,7 +2,6 @@
 set -ex
 
 cd ./console_backend
-../py39/bin/python3 -m pip install wheel
 ../py39/bin/python3 setup.py bdist_wheel
 cd ..
 

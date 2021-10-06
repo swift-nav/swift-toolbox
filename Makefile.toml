@@ -5,10 +5,16 @@ if eq ${os} windows
   set_env PYTHON "${WORKSPACE}\\py39\\python.exe"
   set_env DIST_PYTHON "${WORKSPACE}\\py39-dist\\python"
   set_env PYSIDE2_RCC "${WORKSPACE}\\py39\\Lib\\site-packages\\PySide2\\rcc.exe"
+  set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-win_amd64.whl
 else
   set_env PYTHON "${WORKSPACE}/py39/bin/python3"
   set_env DIST_PYTHON "${WORKSPACE}/py39-dist/bin/python3"
   set_env PYSIDE2_RCC "${WORKSPACE}/py39/bin/pyside2-rcc"
+  if eq ${os} linux
+    set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-linux_x86_64.whl
+  else
+    set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-macosx_10_15_x86_64.whl
+  end
 end
 ''']
 
@@ -188,7 +194,7 @@ script = '''
 #!/usr/bin/env bash
 set -ex
 cp -r ./standalone-py/python/install py39
-./py39/bin/python3 -m pip install flit . ".[test]"
+./py39/bin/python3 -m pip install wheel flit . ".[test]"
 '''
 
 [tasks.setup-builder.windows]
@@ -197,7 +203,7 @@ script_extension = "ps1"
 script = '''
 Copy-Item -Recurse .\standalone-py\python\install py39
 .\py39\python ".\scripts\get-pip.py"
-.\py39\python -m pip install flit . ".[test]"
+.\py39\python -m pip install wheel flit . ".[test]"
 '''
 
 [tasks.prep-dist]
@@ -220,31 +226,58 @@ Copy-Item -Recurse .\standalone-py\python\install .\py39-dist
 .\py39-dist\python -m pip install .
 '''
 
+[tasks.dist-install-frontend-wheel]
+dependencies = ["build-frontend-wheel"]
+command = "${DIST_PYTHON}"
+args = [
+  "-m",
+  "pip",
+  "install",
+  "./dist/swiftnav_console-0.1.0-py3-none-any.whl",
+  "--force-reinstall",
+]
+
+[tasks.dist-install-backend-wheel]
+dependencies = ["build-backend-wheel"]
+command = "${DIST_PYTHON}"
+args = ["-m", "pip", "install", "console_backend/dist/${BACKEND_WHEEL}"]
+
+[tasks.build-frontend-wheel]
+command = "${PYTHON}"
+args = ["-m", "flit", "build"]
+
+[tasks.build-backend-wheel]
+cwd = "console_backend"
+command = "${PYTHON}"
+args = ["setup.py", "bdist_wheel"]
+
+[tasks.dist-copy-resources]
+script_runner = "@shell"
+script = '''
+cp -r src/main/resources py39-dist/
+'''
+
+[tasks.dist-freeze]
+script_runner = "@shell"
+script = '''
+touch ./py39-dist/.frozen
+'''
+
 [tasks.build-dist]
 dependencies = ["prep-dist"]
-script = { file = "${WORKSPACE}/scripts/build-dist.sh", absolute_path = true }
-
-[tasks.build-dist.windows]
-script_runner = "powershell"
-script_extension = "ps1"
-script = "& ./scripts/build-dist.ps1"
+run_task = [
+  { name = [
+    "dist-install-frontend-wheel",
+    "dist-install-backend-wheel",
+    "dist-copy-resources",
+    "dist-freeze",
+  ] },
+]
 
 [tasks.purge-dist]
 cwd = "py39-dist"
 script_runner = "@duckscript"
 script = '''
-os = os_family
-if eq ${os} windows
-  mv Scripts/swiftnav-console.exe .
-  rm -r Scripts
-  mv ./swiftnav-console.exe ./Scripts/swiftnav-console.exe
-else
-  rm -r ./share
-  mv bin/swiftnav-console .
-  rm -r bin
-  mv ./swiftnav-console ./bin/swiftnav-console
-end
-
 py_folders = array test tests examples __pycache__
 qt_folders = array plugins/virtualkeyboard lib/Tix8.4.3
 
@@ -273,6 +306,21 @@ files = glob_array "*.py"
 for file in ${files}
     echo ${file}
     rm ${file}
+end
+
+os = os_family
+if eq ${os} windows
+  mv ./Scripts/swiftnav-console.exe .
+  rm -r ./Scripts
+  mv ./swiftnav-console.exe ./Scripts/
+else
+  rm -r ./share
+
+  mv ./bin/swiftnav-console .
+  mv ./bin/python3 .
+  rm -r ./bin
+  mv ./swiftnav-console ./bin/
+  mv ./python3 ./bin/
 end
 '''
 

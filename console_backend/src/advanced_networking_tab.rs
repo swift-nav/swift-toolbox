@@ -14,9 +14,7 @@ use std::net::UdpSocket;
 use crate::constants::WRITE_TO_DEVICE_SENDER_ID;
 use crate::shared_state::{AdvancedNetworkingState, SharedState};
 use crate::types::{CapnProtoSender, MsgSender, Result, UartState};
-use crate::utils::{
-    bytes_to_human_readable, serialize_capnproto_builder,
-};
+use crate::utils::{bytes_to_human_readable, serialize_capnproto_builder};
 
 const DEFAULT_UDP_LOCAL_ADDRESS: &str = "127.0.0.1";
 const DEFAULT_UDP_LOCAL_PORT: u16 = 34254;
@@ -108,6 +106,7 @@ impl<S: CapnProtoSender> AdvancedNetworkingTab<S> {
                 rx_usage,
             },
         );
+        self.send_data();
     }
 
     /// Refresh Network State.
@@ -130,7 +129,6 @@ impl<S: CapnProtoSender> AdvancedNetworkingTab<S> {
             self.all_messages = update.all_messages;
             if let Some(ip_address) = update.ip_address {
                 self.ip_ad = ip_address;
-                
             }
             if let Some(port) = update.port {
                 self.port = port;

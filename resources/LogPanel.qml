@@ -12,15 +12,6 @@ Item {
     property int selectedRow: -1
     property bool forceLayoutLock: false
 
-    function syncColumnWidths() {
-        let column_width_sum = columnWidths[0] + columnWidths[1] + columnWidths[2];
-        if (column_width_sum != tableView.width) {
-            let final_column_diff = tableView.width - column_width_sum;
-            columnWidths[2] += final_column_diff;
-        }
-        tableView.forceLayout();
-    }
-
     width: parent.width
     height: parent.height
 
@@ -84,12 +75,14 @@ Item {
                     }
                     onPositionChanged: {
                         if (pressed) {
-                            if (index == 2)
-                                return ;
-
                             var delta_x = (mouseX - mouse_x);
-                            columnWidths[index] += delta_x;
-                            syncColumnWidths();
+                            var next_idx = (index + 1) % 3;
+                            var min_width = tableView.width / 10;
+                            if (columnWidths[index] + delta_x > min_width && columnWidths[next_idx] - delta_x > min_width) {
+                                columnWidths[index] += delta_x;
+                                columnWidths[next_idx] -= delta_x;
+                            }
+                            tableView.forceLayout();
                         }
                     }
                     onReleased: {
@@ -121,6 +114,9 @@ Item {
             rowSpacing: -1
             columnWidthProvider: function(column) {
                 return columnWidths[column];
+            }
+            onWidthChanged: {
+                tableView.forceLayout();
             }
             reuseItems: true
             boundsBehavior: Flickable.StopAtBounds
@@ -221,7 +217,6 @@ Item {
                     selectedRow += logPanelData.entries.length;
 
                 logPanelData.entries = [];
-                tableView.forceLayout();
             }
         }
 

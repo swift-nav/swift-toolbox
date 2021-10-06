@@ -155,7 +155,6 @@ QtObject {
 
     networking: QtObject {
         readonly property var columnHeaders: ["Interface Name", "IPv4 Addr", "Running", "Tx Usage", "Rx Usage"]
-        // readonly property var defaultList: [" ", " ", " ", " ", " "]
         readonly property var defaultList: {
             "Interface Name": "",
             "IPv4 Addr": "",
@@ -163,11 +162,10 @@ QtObject {
             "Tx Usage": "",
             "Rx Usage": ""
         }
-        
         readonly property int refreshButtonHeight: 50
-        readonly property int refreshButtonWidth: 100
+        readonly property int refreshButtonWidth: 200
         readonly property int refreshButtonIconSideLength: 10
-        readonly property string refreshButtonLabel: "Refresh Network\nStatus"
+        readonly property string refreshButtonLabel: "Refresh Network Status"
     }
 
     genericTable: QtObject {

@@ -577,10 +577,10 @@ class DataModel(QObject):  # pylint: disable=too-many-instance-attributes,too-ma
         m.advancedNetworkingStatusFront.allMessages = buttons[3]
         if ipv4_address is not None:
             m.advancedNetworkingStatusFront.ipv4Address.address = ipv4_address
-        else: 
+        else:
             m.advancedNetworkingStatusFront.ipv4Address.none = None
         if port is not None:
-            m.advancedNetworkingStatusFront.port.port = port
+            m.advancedNetworkingStatusFront.port.port = int(port)
         else:
             m.advancedNetworkingStatusFront.port.none = None
         buffer = m.to_bytes()

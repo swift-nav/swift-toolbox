@@ -31,6 +31,7 @@ Item {
 
             MessageBroadcaster {
                 id: messageBroadcaster
+
                 Layout.fillWidth: true
                 Layout.preferredHeight: 150
             }
@@ -73,20 +74,6 @@ Item {
 
         }
 
-        // NetworkInfo {
-        //     id: networkInfoTable
-
-        //     Layout.fillHeight: true
-        //     Layout.fillWidth: true
-        //     Layout.rowSpan: 1
-        //     Layout.preferredHeight: 1
-        //     Layout.columnSpan: 5
-        //     Layout.preferredWidth: 5
-            
-        //     // Layout.fillHeight: true
-        //     // Layout.fillWidth: true
-        // }
-
         GroupBox {
             Layout.fillHeight: true
             Layout.fillWidth: true
@@ -96,15 +83,21 @@ Item {
             Layout.preferredWidth: 5
 
             ColumnLayout {
-                width: parent.width
-                height: parent.width
+                anchors.fill: parent
 
-                NetworkInfo {
-                    id: networkInfoTable
-                    
+                Item {
                     Layout.fillHeight: true
                     Layout.fillWidth: true
+
+                    NetworkInfo {
+                        id: networkInfoTable
+
+                        width: parent.width
+                        height: parent.height
+                    }
+
                 }
+
                 Item {
                     Layout.preferredHeight: 50
                     Layout.fillWidth: true
@@ -122,7 +115,7 @@ Item {
                         icon.height: Constants.networking.refreshButtonIconSideLength
                         display: AbstractButton.TextUnderIcon
                         onClicked: {
-                            let refresh = false;
+                            let refresh = true;
                             let start = false;
                             let stop = false;
                             let allMessages = false;
@@ -151,17 +144,31 @@ Item {
         onTriggered: {
             if (!advancedTab.visible)
                 return ;
+
             advanced_networking_model.fill_console_points(advancedNetworkingData);
-            messageBroadcaster.ip_address = advancedNetworkingData.ip_address;
-            messageBroadcaster.port = advancedNetworkingData.port;
-            
+            if (advancedNetworkingData.running) {
+                messageBroadcaster.messageTypeSelectionEnabled = false;
+                messageBroadcaster.ipAddressInputEnabled = false;
+                messageBroadcaster.portInputEnabled = false;
+                messageBroadcaster.startEnabled = false;
+                messageBroadcaster.stopEnabled = true;
+            } else {
+                messageBroadcaster.messageTypeSelectionEnabled = true;
+                messageBroadcaster.ipAddressInputEnabled = true;
+                messageBroadcaster.portInputEnabled = true;
+                messageBroadcaster.startEnabled = true;
+                messageBroadcaster.stopEnabled = false;
+            }
+            if (!messageBroadcaster.ipAddressEditing)
+                messageBroadcaster.ip_address = advancedNetworkingData.ip_address;
+
+            if (!messageBroadcaster.portEditing)
+                messageBroadcaster.port = advancedNetworkingData.port;
+
             if (!advancedNetworkingData.network_info.length)
                 return ;
-            print(!advancedNetworkingData.network_info.length)
-            print(advancedNetworkingData.network_info)
+
             networkInfoTable.entries = advancedNetworkingData.network_info;
-            
-            
         }
     }
 

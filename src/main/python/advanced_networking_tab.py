@@ -8,7 +8,7 @@ from PySide2.QtCore import Property, QObject, Slot
 from constants import Keys, QTKeys
 
 ADVANCED_NETWORKING_TAB: Dict[str, Any] = {
-    Keys.NETWORK_INFO: [],#[" ", " ", " ", " ", " "],[" ", " ", " ", " ", " "]],
+    Keys.NETWORK_INFO: [],
     Keys.RUNNING: False,
     Keys.IP_ADDRESS: "127.0.0.1",
     Keys.PORT: 13320,
@@ -54,11 +54,11 @@ class AdvancedNetworkingData(QObject):
     def get_port(self) -> int:
         """Getter for _port."""
         return self._port
-    
+
     def set_port(self, port: int) -> None:
         """Setter for _port."""
         self._port = port
-    
+
     port = Property(int, get_port, set_port)
 
 

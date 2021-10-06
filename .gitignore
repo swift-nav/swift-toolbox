@@ -9,7 +9,7 @@ main.app/
 *.tar.xz
 *.tar
 .DS_Store
-src/main/python/console_resources.py
+swiftnav_console/console_resources.py
 *.*~
 py39-dist/
 py39/

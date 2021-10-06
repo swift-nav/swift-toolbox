@@ -439,6 +439,33 @@ pub fn bytes_to_kb(bytes: f64) -> f64 {
     bytes / 1024_f64
 }
 
+/// Attempts to format a float into a string such that the sign and decimal
+/// point are consistently aligned.
+///
+/// # Parameters:
+/// - `num`: The float to format
+/// - `width`: How wide the resulting string should be padded to (if it is
+///   shorter than it should be)
+/// - `precision`: The maximum number of digits expected before the decimal
+///   place. This informs how many digits of precision are permitted.
+///
+/// # Returns
+/// - The formatted string
+///
+/// # Examples
+/// - `format_fixed_decimal_and_sign(0.1, 8, 3)`:    `"   0.100"`
+/// - `format_fixed_decimal_and_sign(-320.6, 8, 3)`: `"-320.600"`
+pub fn format_fixed_decimal_and_sign(num: f32, width: usize, precision: usize) -> String {
+    let sign = if num < 0. { "-" } else { " " };
+    format!(
+        "{}{: >width$.prec$}",
+        sign,
+        num.abs(),
+        width = width - 1,
+        prec = precision
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -634,5 +661,23 @@ mod tests {
             ),
             -460.781249973179
         ));
+    }
+
+    #[test]
+    #[rustfmt::skip]
+    fn format_fixed_sign_test() {
+        #[rustfmt::skip]
+        assert_eq!(format_fixed_decimal_and_sign(0.1, 8, 3),    "   0.100");
+        assert_eq!(format_fixed_decimal_and_sign(20.0, 8, 3),   "  20.000");
+        assert_eq!(format_fixed_decimal_and_sign(100.0, 8, 3),  " 100.000");
+        assert_eq!(format_fixed_decimal_and_sign(-1.0, 8, 3),   "-  1.000");
+        assert_eq!(format_fixed_decimal_and_sign(-30.4, 8, 3),  "- 30.400");
+        assert_eq!(format_fixed_decimal_and_sign(-320.6, 8, 3), "-320.600");
+
+        assert_eq!(format_fixed_decimal_and_sign(0.1953421, 6, 1), "   0.2");
+        assert_eq!(format_fixed_decimal_and_sign(-200.1, 6, 1),    "-200.1");
+
+        assert_eq!(format_fixed_decimal_and_sign(0.1953421, 6, 8), "   0.2");
+        assert_eq!(format_fixed_decimal_and_sign(-200.1, 6, 8),    "-200.1");
     }
 }

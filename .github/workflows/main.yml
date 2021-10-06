@@ -207,8 +207,6 @@ jobs:
         if: matrix.os == 'windows-2019'
 
       - name: Install ${{ runner.os }} Dependencies.
-        env:
-          FD_URL: https://github.com/sharkdp/fd/releases/download/v8.2.1/fd-v8.2.1-x86_64-unknown-linux-musl.tar.gz
         shell: bash
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
@@ -235,14 +233,10 @@ jobs:
                 build-essential \
                 libudev-dev
               sudo gem install --no-document fpm
-              mkdir $GITHUB_WORKSPACE/bin
-              echo "::add-path::$GITHUB_WORKSPACE/bin"
-              wget "$FD_URL" -O fd.tar.gz
-              tar -xvzf fd.tar.gz -C $GITHUB_WORKSPACE/bin --strip-components 1
           elif [ "$RUNNER_OS" == "macOS" ]; then
-              brew install capnp llvm fd
+              brew install capnp llvm
           elif [ "$RUNNER_OS" == "Windows" ]; then
-              choco install capnproto nsis fd
+              choco install capnproto nsis
           fi
 
       - name: Install stable Rust
@@ -275,13 +269,13 @@ jobs:
         env:
           LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
         run: |
-          cargo make prod-installer
+          cargo make create-dist
         if: matrix.os == 'windows-2019'
 
       - name: Build ${{ runner.os }} Binaries.
         shell: bash
         run: |
-          cargo make prod-installer
+          cargo make create-dist
         if: matrix.os != 'windows-2019'
 
       - name: Pull Git LFS objects

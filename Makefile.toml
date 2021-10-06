@@ -6,16 +6,21 @@ if eq ${os} windows
   set_env DIST_PYTHON "${WORKSPACE}\\py39-dist\\python"
   set_env PYSIDE2_RCC "${WORKSPACE}\\py39\\Lib\\site-packages\\PySide2\\rcc.exe"
   set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-win_amd64.whl
+  set_env BUILD_TRIPLET="x86_64-pc-windows-msvc"
 elseif eq ${os} linux
   set_env PYTHON "${WORKSPACE}/py39/bin/python3"
   set_env DIST_PYTHON "${WORKSPACE}/py39-dist/bin/python3"
   set_env PYSIDE2_RCC "${WORKSPACE}/py39/bin/pyside2-rcc"
   set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-linux_x86_64.whl
+  output = exec --fail-on-error gcc -dumpmachine
+  set_env BUILD_TRIPLET ${output.stdout}
 else
   set_env PYTHON "${WORKSPACE}/py39/bin/python3"
   set_env DIST_PYTHON "${WORKSPACE}/py39-dist/bin/python3"
   set_env PYSIDE2_RCC "${WORKSPACE}/py39/bin/pyside2-rcc"
   set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-macosx_10_15_x86_64.whl
+  output = exec --fail-on-error gcc -dumpmachine
+  set_env BUILD_TRIPLET ${output.stdout}
 end
 ''']
 
@@ -199,7 +204,7 @@ script_extension = "ps1"
 script = "& ./download.ps1"
 
 [tasks.setup-builder]
-dependencies = ["get-standalone-py"]
+dependencies = ["get-standalone-py", "copy-capnp", "generate-resources"]
 script = '''
 #!/usr/bin/env bash
 set -ex
@@ -236,7 +241,7 @@ Copy-Item -Recurse .\standalone-py\python\install .\py39-dist
 .\py39-dist\python -m pip install .
 '''
 
-[tasks.dist-install-frontend-wheel]
+[tasks.build-dist-install-frontend-wheel]
 dependencies = ["build-frontend-wheel"]
 command = "${DIST_PYTHON}"
 args = [
@@ -247,18 +252,18 @@ args = [
   "--force-reinstall",
 ]
 
-[tasks.dist-install-backend-wheel]
+[tasks.build-dist-install-backend-wheel]
 dependencies = ["build-backend-wheel"]
 command = "${DIST_PYTHON}"
 args = ["-m", "pip", "install", "console_backend/dist/${BACKEND_WHEEL}"]
 
-[tasks.dist-copy-resources]
+[tasks.build-dist-copy-resources]
 script_runner = "@shell"
 script = '''
 cp -r src/main/resources py39-dist/
 '''
 
-[tasks.dist-freeze]
+[tasks.build-dist-freeze]
 script_runner = "@shell"
 script = '''
 touch ./py39-dist/.frozen
@@ -268,10 +273,10 @@ touch ./py39-dist/.frozen
 dependencies = ["prep-dist"]
 run_task = [
   { name = [
-    "dist-install-frontend-wheel",
-    "dist-install-backend-wheel",
-    "dist-copy-resources",
-    "dist-freeze",
+    "build-dist-install-frontend-wheel",
+    "build-dist-install-backend-wheel",
+    "build-dist-copy-resources",
+    "build-dist-freeze",
   ] },
 ]
 
@@ -329,26 +334,13 @@ end
 env = { ARCHIVE_NAME = "console_pp" }
 script_runner = "@shell"
 script = '''
-set -ex
+set -e
 DATE="$(date '+%Y-%m-%d')"
 VERSION="$(git describe --always --tags --dirty)"
-BUILD_TRIPLET="$(gcc -dumpmachine)"
 OUTPUT_NAME="${ARCHIVE_NAME}-${VERSION}-${BUILD_TRIPLET}-${DATE}"
-tar -cvf ./${OUTPUT_NAME}.tar ./py39-dist
-rm -f ./${OUTPUT_NAME}.tar.xz
-xz -e -9 ./${OUTPUT_NAME}.tar
-'''
-
-[tasks.compress-dist.windows]
-script = '''
-set -ex
-DATE="$(date '+%Y-%m-%d')"
-VERSION="$(git describe --always --tags)"
-BUILD_TRIPLET="x86_64-pc-windows-msvc"
-OUTPUT_NAME = "${ARCHIVE_NAME}-${VERSION}-windows-${BUILD_TRIPLET}-${DATE}"
-tar -C ".\py39-dist" -cvf ".\${OUTPUT_NAME}.tar" .
+tar -C "py39-dist" -cvf "${OUTPUT_NAME}.tar" .
 rm -f "${OUTPUT_NAME}.tar.xz"
-xz -e -9 ".\${OUTPUT_NAME}.tar"
+xz -e -9 "${OUTPUT_NAME}.tar"
 '''
 
 [tasks.create-dist]

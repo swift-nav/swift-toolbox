@@ -193,7 +193,15 @@ cwd = "console_backend"
 command = "${PYTHON}"
 args = ["setup.py", "bdist_wheel"]
 
+[tasks.get-get-pip]
+condition = { files_not_exist = ["${WORKSPACE}/get-pip.py"] }
+script_runner = "@duckscript"
+script = '''
+wget -O ./get-pip.py https://bootstrap.pypa.io/get-pip.py
+'''
+
 [tasks.get-standalone-py]
+dependencies = ["get-get-pip"]
 cwd = "standalone-py"
 condition = { files_not_exist = ["${WORKSPACE}/standalone-py/python"] }
 script = { file = "download.sh" }
@@ -214,7 +222,6 @@ mkdir py39
 cd standalone-py/python/install
 cp . ../../../py39
 cd ../../../
-wget -O ./get-pip.py https://bootstrap.pypa.io/get-pip.py
 exec --fail-on-error ${PYTHON} ./get-pip.py
 exec --fail-on-error ${PYTHON} -m pip install wheel flit . ".[test]"
 '''
@@ -233,6 +240,7 @@ mkdir py39-dist
 cd standalone-py/python/install/
 cp . ../../../py39-dist
 cd ../../..
+exec --fail-on-error ${DIST_PYTHON} ./get-pip.py
 exec --fail-on-error ${DIST_PYTHON} -m pip install .
 '''
 

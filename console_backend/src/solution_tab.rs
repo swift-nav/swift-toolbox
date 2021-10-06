@@ -229,12 +229,18 @@ impl<S: CapnProtoSender> SolutionTab<S> {
     /// - `msg`: MsgPosLlhCov to extract data from.
     pub fn handle_pos_llh_cov(&mut self, msg: MsgPosLlhCov) {
         if msg.flags != 0 {
-            self.table.insert(COV_N_N, format!("{}", msg.cov_n_n));
-            self.table.insert(COV_N_E, format!("{}", msg.cov_n_e));
-            self.table.insert(COV_N_D, format!("{}", msg.cov_n_d));
-            self.table.insert(COV_E_E, format!("{}", msg.cov_e_e));
-            self.table.insert(COV_E_D, format!("{}", msg.cov_e_d));
-            self.table.insert(COV_D_D, format!("{}", msg.cov_d_d));
+            self.table
+                .insert(COV_N_N, format_fixed_decimal_and_sign(msg.cov_n_n, 20, 15));
+            self.table
+                .insert(COV_N_E, format_fixed_decimal_and_sign(msg.cov_n_e, 20, 15));
+            self.table
+                .insert(COV_N_D, format_fixed_decimal_and_sign(msg.cov_n_d, 20, 15));
+            self.table
+                .insert(COV_E_E, format_fixed_decimal_and_sign(msg.cov_e_e, 20, 15));
+            self.table
+                .insert(COV_E_D, format_fixed_decimal_and_sign(msg.cov_e_d, 20, 15));
+            self.table
+                .insert(COV_D_D, format_fixed_decimal_and_sign(msg.cov_d_d, 20, 15));
         } else {
             self.table.insert(COV_N_N, String::from(EMPTY_STR));
             self.table.insert(COV_N_E, String::from(EMPTY_STR));

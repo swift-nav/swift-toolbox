@@ -204,41 +204,34 @@ script_extension = "ps1"
 script = "& ./download.ps1"
 
 [tasks.setup-builder]
-dependencies = ["get-standalone-py", "copy-capnp", "generate-resources"]
+dependencies = ["get-standalone-py"]
+script_runner = "@duckscript"
 script = '''
-#!/usr/bin/env bash
-set -ex
-cp -r ./standalone-py/python/install py39
-./py39/bin/python3 -m pip install wheel flit . ".[test]"
-'''
-
-[tasks.setup-builder.windows]
-script_runner = "powershell"
-script_extension = "ps1"
-script = '''
-Copy-Item -Recurse .\standalone-py\python\install py39
-.\py39\python ".\utils\get-pip.py"
-.\py39\python -m pip install wheel flit . ".[test]"
+if is_path_exists py39
+  rm -r py39
+end
+mkdir py39
+cd standalone-py/python/install
+cp . ../../../py39
+cd ../../../
+exec --fail-on-error ${PYTHON} ./utils/get-pip.py
+exec --fail-on-error ${PYTHON} -m pip install wheel flit . ".[test]"
 '''
 
 [tasks.prep-dist]
 dependencies = ["get-standalone-py"]
+script_runner = "@duckscript"
 script = '''
-#!/usr/bin/env bash
-set -ex
-rm -rf ./py39-dist
-cp -r ./standalone-py/python/install ./py39-dist
-./py39-dist/bin/python3 -m pip install .
-'''
-
-[tasks.prep-dist.windows]
-script_runner = "powershell"
-script_extension = "ps1"
-script = '''
-Remove-Item -Recurse -ErrorAction SilentlyContinue .\py39-dist
-Copy-Item -Recurse .\standalone-py\python\install .\py39-dist
-.\py39-dist\python .\utils\get-pip.py
-.\py39-dist\python -m pip install .
+cm_run_task generate-resources
+cm_run_task copy-capnp
+if is_path_exists py39-dist
+  rm -r py39-dist
+end
+mkdir py39-dist
+cd standalone-py/python/install/
+cp . ../../../py39-dist
+cd ../../..
+exec --fail-on-error ${DIST_PYTHON} -m pip install .
 '''
 
 [tasks.build-dist-install-frontend-wheel]
@@ -258,13 +251,13 @@ command = "${DIST_PYTHON}"
 args = ["-m", "pip", "install", "console_backend/dist/${BACKEND_WHEEL}"]
 
 [tasks.build-dist-copy-resources]
-script_runner = "@shell"
+script_runner = "@duckscript"
 script = '''
-cp -r src/main/resources py39-dist/
+cp src/main/resources py39-dist/
 '''
 
 [tasks.build-dist-freeze]
-script_runner = "@shell"
+script_runner = "@duckscript"
 script = '''
 touch ./py39-dist/.frozen
 '''

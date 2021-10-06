@@ -91,19 +91,6 @@ ${PYTHON} -m py2many --rust=1 /tmp/piksi_tools_constants.py --outdir console_bac
 '''
 
 [tasks.generate-resources]
-dependencies = ["run-rcc"]
-script_runner = "python"
-script_extension = "py"
-script = '''
-with open("swiftnav_console/console_resources.py", 'r+') as fp:
-  lines = fp.readlines()
-  lines.insert(0, "# pylint: skip-file\n")
-  lines.insert(0, "# fmt: off\n")
-  fp.seek(0)
-  fp.writelines(lines)
-'''
-
-[tasks.run-rcc]
 command = "${PYSIDE2_RCC}"
 args = [
   "resources/console_resources.qrc",
@@ -235,9 +222,9 @@ mkdir py39
 cd standalone-py/python/install
 cp . ../../../py39
 cd ../../../
-cm_run_task generate-resources
 exec --fail-on-error ${PYTHON} ./get-pip.py
 exec --fail-on-error ${PYTHON} -m pip install wheel flit . ".[test]"
+cm_run_task generate-resources
 '''
 
 [tasks.prep-dist]

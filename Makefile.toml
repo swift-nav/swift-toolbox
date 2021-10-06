@@ -445,7 +445,7 @@ run_task = [
     "rust-format",
     "newline-format",
     "format-toml",
-  ], parallel = true },
+  ] },
 ]
 
 [tasks.format]

@@ -1,9 +1,11 @@
-use clap::Clap;
 use std::{
     ops::{Deref, Not},
     path::PathBuf,
     str::FromStr,
 };
+
+use clap::Clap;
+use log::debug;
 use strum::VariantNames;
 
 use crate::constants::{AVAILABLE_BAUDRATES, AVAILABLE_REFRESH_RATES};
@@ -132,7 +134,7 @@ impl CliOptions {
     /// - `filtered_args`: The filtered args parsed via CliOptions.
     pub fn from_filtered_cli() -> CliOptions {
         let args = std::env::args();
-        eprintln!("{:?}", args);
+        debug!("args {:?}", args);
         let mut next_args = std::env::args().skip(1);
         let mut filtered_args: Vec<String> = vec![];
         for arg in args.filter(|a| !matches!(a.as_str(), "swiftnav_console.main" | "-m" | "--")) {
@@ -150,7 +152,7 @@ impl CliOptions {
             }
             filtered_args.push(arg);
         }
-        eprintln!("{:?}", filtered_args);
+        debug!("filtered_args: {:?}", filtered_args);
         CliOptions::parse_from(filtered_args)
     }
 }

@@ -6,15 +6,16 @@ if eq ${os} windows
   set_env DIST_PYTHON "${WORKSPACE}\\py39-dist\\python"
   set_env PYSIDE2_RCC "${WORKSPACE}\\py39\\Lib\\site-packages\\PySide2\\rcc.exe"
   set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-win_amd64.whl
+elseif eq ${os} linux
+  set_env PYTHON "${WORKSPACE}/py39/bin/python3"
+  set_env DIST_PYTHON "${WORKSPACE}/py39-dist/bin/python3"
+  set_env PYSIDE2_RCC "${WORKSPACE}/py39/bin/pyside2-rcc"
+  set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-linux_x86_64.whl
 else
   set_env PYTHON "${WORKSPACE}/py39/bin/python3"
   set_env DIST_PYTHON "${WORKSPACE}/py39-dist/bin/python3"
   set_env PYSIDE2_RCC "${WORKSPACE}/py39/bin/pyside2-rcc"
-  if eq ${os} linux
-    set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-linux_x86_64.whl
-  else
-    set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-macosx_10_15_x86_64.whl
-  end
+  set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-macosx_10_15_x86_64.whl
 end
 ''']
 
@@ -178,6 +179,15 @@ args = [
   "./console_backend",
 ]
 
+[tasks.build-frontend-wheel]
+command = "${PYTHON}"
+args = ["-m", "flit", "build"]
+
+[tasks.build-backend-wheel]
+cwd = "console_backend"
+command = "${PYTHON}"
+args = ["setup.py", "bdist_wheel"]
+
 [tasks.get-standalone-py]
 cwd = "standalone-py"
 condition = { files_not_exist = ["${WORKSPACE}/standalone-py/python"] }
@@ -202,7 +212,7 @@ script_runner = "powershell"
 script_extension = "ps1"
 script = '''
 Copy-Item -Recurse .\standalone-py\python\install py39
-.\py39\python ".\scripts\get-pip.py"
+.\py39\python ".\utils\get-pip.py"
 .\py39\python -m pip install wheel flit . ".[test]"
 '''
 
@@ -222,7 +232,7 @@ script_extension = "ps1"
 script = '''
 Remove-Item -Recurse -ErrorAction SilentlyContinue .\py39-dist
 Copy-Item -Recurse .\standalone-py\python\install .\py39-dist
-.\py39-dist\python .\scripts\get-pip.py
+.\py39-dist\python .\utils\get-pip.py
 .\py39-dist\python -m pip install .
 '''
 
@@ -241,15 +251,6 @@ args = [
 dependencies = ["build-backend-wheel"]
 command = "${DIST_PYTHON}"
 args = ["-m", "pip", "install", "console_backend/dist/${BACKEND_WHEEL}"]
-
-[tasks.build-frontend-wheel]
-command = "${PYTHON}"
-args = ["-m", "flit", "build"]
-
-[tasks.build-backend-wheel]
-cwd = "console_backend"
-command = "${PYTHON}"
-args = ["setup.py", "bdist_wheel"]
 
 [tasks.dist-copy-resources]
 script_runner = "@shell"

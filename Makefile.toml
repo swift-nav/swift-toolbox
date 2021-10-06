@@ -235,6 +235,7 @@ mkdir py39
 cd standalone-py/python/install
 cp . ../../../py39
 cd ../../../
+cm_run_task generate-resources
 exec --fail-on-error ${PYTHON} ./get-pip.py
 exec --fail-on-error ${PYTHON} -m pip install wheel flit . ".[test]"
 '''

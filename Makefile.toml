@@ -92,17 +92,15 @@ ${PYTHON} -m py2many --rust=1 /tmp/piksi_tools_constants.py --outdir console_bac
 
 [tasks.generate-resources]
 dependencies = ["run-rcc"]
-script_runner = "@shell"
+script_runner = "python"
+script_extension = "py"
 script = '''
-sed -i '1s/^/# pylint: skip-file\n/' swiftnav_console/console_resources.py
-sed -i '1s/^/# fmt: off\n/' swiftnav_console/console_resources.py
-'''
-
-# sed need "" after -i on mac for some reason
-[tasks.generate-resources.mac]
-script = '''
-sed -i "" '1s/^/# pylint: skip-file\n/' swiftnav_console/console_resources.py
-sed -i "" '1s/^/# fmt: off\n/' swiftnav_console/console_resources.py
+with open("swiftnav_console/console_resources.py", 'r+') as fp:
+  lines = fp.readlines()
+  lines.insert(0, "# pylint: skip-file\n")
+  lines.insert(0, "# fmt: off\n")
+  fp.seek(0)
+  fp.writelines(lines)
 '''
 
 [tasks.run-rcc]

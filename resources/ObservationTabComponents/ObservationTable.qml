@@ -12,7 +12,7 @@ Rectangle {
     property alias name: innerText.text
     property variant columnWidths: [1, 1, 1, 1, 1, 1, 1, 1]
     property alias remote: observationTableModel.remote
-    property bool populated: observationTableModel ? observationTableModel.row_count > 0 : false
+    property bool populated: observationTableModel.row_count > 0
 
     function update() {
         observationTableModel.update();
@@ -57,7 +57,7 @@ Rectangle {
             Text {
                 id: weekValue
 
-                text: observationTableModel ? observationTableModel.week : ""
+                text: observationTableModel.week
                 font: Constants.monoSpaceFont
             }
 
@@ -71,7 +71,7 @@ Rectangle {
             Text {
                 id: towValue
 
-                text: observationTableModel ? ObsTabJS.padFloat(observationTableModel.tow, 2) : ""
+                text: ObsTabJS.padFloat(observationTableModel.tow, 2)
                 font: Constants.monoSpaceFont
             }
 
@@ -85,7 +85,7 @@ Rectangle {
             Text {
                 id: totalValue
 
-                text: observationTableModel ? observationTableModel.row_count : ""
+                text: observationTableModel.row_count
                 font: Constants.monoSpaceFont
             }
 
@@ -190,6 +190,8 @@ Rectangle {
         columnWidthProvider: function(column) {
             return columnWidths[column];
         }
+        onHeightChanged: console.log("innerTable.height: " + height)
+        onWidthChanged: console.log("innerTable.width: " + width)
         model: observationTableModel
 
         delegate: DelegateChooser {

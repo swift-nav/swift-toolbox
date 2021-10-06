@@ -15,6 +15,7 @@ Item {
     property alias ipAddressInputEnabled: ipAddressInput.enabled
     property alias portInputEnabled: portInput.enabled
     property bool messageTypeSelectionEnabled: true
+    implicitHeight: 150
 
     GridLayout {
         anchors.fill: parent

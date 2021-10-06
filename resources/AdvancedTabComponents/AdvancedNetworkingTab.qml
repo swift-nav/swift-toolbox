@@ -1,5 +1,4 @@
 import "../Constants"
-import QtCharts 2.3
 import QtQuick 2.6
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
@@ -12,64 +11,48 @@ Item {
         id: advancedNetworkingData
     }
 
-    GridLayout {
-        id: gridLayout
+    ColumnLayout {
 
-        rows: 2
-        columns: 5
-        rowSpacing: 0
-        columnSpacing: 0
         anchors.fill: parent
+        spacing: 0
 
-        ColumnLayout {
-            Layout.fillHeight: true
+        RowLayout {
             Layout.fillWidth: true
-            Layout.rowSpan: 1
-            Layout.preferredHeight: 1
-            Layout.columnSpan: 2
-            Layout.preferredWidth: 2
+            spacing: 0
 
             MessageBroadcaster {
                 id: messageBroadcaster
-
-                Layout.fillWidth: true
-                Layout.preferredHeight: 150
+                Layout.alignment: Qt.AlignTop
+                Layout.preferredWidth: parent.width * 2 / 5
             }
 
-            Item {
-                Layout.fillHeight: true
+            Rectangle {
+                Layout.alignment: Qt.AlignTop
                 Layout.fillWidth: true
-            }
+                implicitHeight: udpStreamingLabel.implicitHeight
 
-        }
-
-        Rectangle {
-            Layout.fillHeight: true
-            Layout.fillWidth: true
-            Layout.rowSpan: 1
-            Layout.preferredHeight: 1
-            Layout.columnSpan: 3
-            Layout.preferredWidth: 3
-
-            Text {
-                anchors.fill: parent
-                anchors.margins: 10
-                clip: true
-                font.family: Constants.genericTable.fontFamily
-                font.pointSize: Constants.largePointSize
-                wrapMode: Text.Wrap
-                text: {
-                    let text = "";
-                    text += "UDP Streaming";
-                    text += "\n\nBroadcast SBP information received by ";
-                    text += "the console to other machines or processes over UDP. With the \'Observations\' ";
-                    text += "radio button selected, the console will broadcast the necessary information ";
-                    text += "for a rover Piksi to acheive an RTK solution. ";
-                    text += "\n\nThis can be used to stream observations to a remote Piksi through ";
-                    text += "aircraft telemetry via ground control software such as MAVProxy or ";
-                    text += "Mission Planner.";
-                    return text;
+                Text {
+                    id: udpStreamingLabel
+                    anchors.fill: parent
+                    padding: 10
+                    clip: true
+                    font.family: Constants.genericTable.fontFamily
+                    font.pointSize: Constants.largePointSize
+                    wrapMode: Text.Wrap
+                    text: {
+                        let text = "";
+                        text += "UDP Streaming";
+                        text += "\n\nBroadcast SBP information received by ";
+                        text += "the console to other machines or processes over UDP. With the \'Observations\' ";
+                        text += "radio button selected, the console will broadcast the necessary information ";
+                        text += "for a rover Piksi to acheive an RTK solution. ";
+                        text += "\n\nThis can be used to stream observations to a remote Piksi through ";
+                        text += "aircraft telemetry via ground control software such as MAVProxy or ";
+                        text += "Mission Planner.";
+                        return text;
+                    }
                 }
+
             }
 
         }
@@ -77,10 +60,7 @@ Item {
         GroupBox {
             Layout.fillHeight: true
             Layout.fillWidth: true
-            Layout.rowSpan: 1
-            Layout.preferredHeight: 1
-            Layout.columnSpan: 5
-            Layout.preferredWidth: 5
+            title: "Network"
 
             ColumnLayout {
                 anchors.fill: parent
@@ -88,25 +68,15 @@ Item {
                 Item {
                     Layout.fillHeight: true
                     Layout.fillWidth: true
-<<<<<<< HEAD
-
-=======
->>>>>>> NetworkInfo table finally showing up.
                     NetworkInfo {
                         id: networkInfoTable
 
                         width: parent.width
                         height: parent.height
                     }
-<<<<<<< HEAD
-
-                }
-
-=======
                 }
 
                 
->>>>>>> NetworkInfo table finally showing up.
                 Item {
                     Layout.preferredHeight: 50
                     Layout.fillWidth: true
@@ -136,10 +106,6 @@ Item {
 
                 }
 
-            }
-
-            label: Text {
-                text: "Network"
             }
 
         }
@@ -176,10 +142,6 @@ Item {
 
             if (!advancedNetworkingData.network_info.length)
                 return ;
-<<<<<<< HEAD
-
-=======
->>>>>>> NetworkInfo table finally showing up.
             networkInfoTable.entries = advancedNetworkingData.network_info;
         }
     }

@@ -17,7 +17,8 @@ elseif eq ${os} linux
   set_env PYSIDE2_RCC "${WORKSPACE}/py39/bin/pyside2-rcc"
   set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-linux_x86_64.whl
   output = exec --fail-on-error gcc -dumpmachine
-  set_env BUILD_TRIPLET ${output.stdout}
+  triplet = trim ${output.stdout}
+  set_env BUILD_TRIPLET ${triplet}
 else
   set_env STANDALONE_PY_URL "${STANDALONE_PY_BASE_URL}/cpython-3.9.6-x86_64-apple-darwin-lto-20210724T1424.tar.zst"
   set_env PYTHON "${WORKSPACE}/py39/bin/python3"
@@ -25,7 +26,8 @@ else
   set_env PYSIDE2_RCC "${WORKSPACE}/py39/bin/pyside2-rcc"
   set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-macosx_10_15_x86_64.whl
   output = exec --fail-on-error gcc -dumpmachine
-  set_env BUILD_TRIPLET ${output.stdout}
+  triplet = trim ${output.stdout}
+  set_env BUILD_TRIPLET ${triplet}
 end
 ''',
 ]
@@ -290,8 +292,8 @@ script_runner = "@duckscript"
 script = '''
 py_folders = array test tests examples __pycache__ demos
 qt_folders = array plugins/virtualkeyboard lib/Tix8.4.3 tcl/tix8.4.3
-
 all_folders = array_concat ${py_folders} ${qt_folders}
+
 for name in ${all_folders}
     folders = glob_array "**/${name}/"
     for folder in ${folders}
@@ -309,6 +311,29 @@ for ext in ${file_exts}
     end
 end
 
+os = os_family
+if eq ${os} windows
+    mv ./Scripts/swiftnav-console.exe .
+    rm -r ./Scripts
+    mv ./swiftnav-console.exe ./Scripts/
+    rm -r ./include
+    globs = array _test*.pyd libcrypto*.dll libssl*.dll tcl*.dll tk*.dll
+    for glob in ${globs}
+        files = glob_array **/Dlls/${glob}
+        for file in ${files}
+            echo ${file}
+            rm ${file}
+        end
+    end
+else
+    rm -r ./share
+    mv ./bin/swiftnav-console .
+    mv ./bin/python3 .
+    rm -r ./bin
+    mv ./swiftnav-console ./bin/
+    mv ./python3 ./bin/
+end
+
 exec --fail-on-error ${DIST_PYTHON} -m pip uninstall -y pip setuptools wheel
 exec --fail-on-error ${DIST_PYTHON} -m compileall -b -f -o 1 -o 2 .
 
@@ -316,21 +341,6 @@ files = glob_array "*.py"
 for file in ${files}
     echo ${file}
     rm ${file}
-end
-
-os = os_family
-if eq ${os} windows
-  mv ./Scripts/swiftnav-console.exe .
-  rm -r ./Scripts
-  mv ./swiftnav-console.exe ./Scripts/
-else
-  rm -r ./share
-
-  mv ./bin/swiftnav-console .
-  mv ./bin/python3 .
-  rm -r ./bin
-  mv ./swiftnav-console ./bin/
-  mv ./python3 ./bin/
 end
 '''
 

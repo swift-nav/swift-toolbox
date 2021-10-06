@@ -98,6 +98,7 @@ sed -i '1s/^/# pylint: skip-file\n/' swiftnav_console/console_resources.py
 sed -i '1s/^/# fmt: off\n/' swiftnav_console/console_resources.py
 '''
 
+# sed need "" after -i on mac for some reason
 [tasks.generate-resources.mac]
 script = '''
 sed -i "" '1s/^/# pylint: skip-file\n/' swiftnav_console/console_resources.py
@@ -224,11 +225,6 @@ wget -O py39.tar.zst ${STANDALONE_PY_URL}
 exec --fail-on-error zstd -f -d py39.tar.zst
 exec --fail-on-error tar -xvf py39.tar
 '''
-
-[tasks.get-standalone-py.windows]
-script_runner = "powershell"
-script_extension = "ps1"
-script = "& ./download.ps1"
 
 [tasks.setup-builder]
 dependencies = ["get-standalone-py"]

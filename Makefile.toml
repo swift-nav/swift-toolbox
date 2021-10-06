@@ -287,8 +287,8 @@ run_task = [
 cwd = "py39-dist"
 script_runner = "@duckscript"
 script = '''
-py_folders = array test tests examples __pycache__
-qt_folders = array plugins/virtualkeyboard lib/Tix8.4.3
+py_folders = array test tests examples __pycache__ demos
+qt_folders = array plugins/virtualkeyboard lib/Tix8.4.3 tcl/tix8.4.3
 
 all_folders = array_concat ${py_folders} ${qt_folders}
 for name in ${all_folders}

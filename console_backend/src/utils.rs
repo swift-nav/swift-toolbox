@@ -676,8 +676,5 @@ mod tests {
 
         assert_eq!(format_fixed_decimal_and_sign(0.1953421, 6, 1), "   0.2");
         assert_eq!(format_fixed_decimal_and_sign(-200.1, 6, 1),    "-200.1");
-
-        assert_eq!(format_fixed_decimal_and_sign(0.1953421, 6, 8), "   0.2");
-        assert_eq!(format_fixed_decimal_and_sign(-200.1, 6, 8),    "-200.1");
     }
 }

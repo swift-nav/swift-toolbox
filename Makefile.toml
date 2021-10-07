@@ -98,6 +98,8 @@ args = [
   "resources/console_resources.qrc",
   "-o",
   "swiftnav_console/console_resources.py",
+  "-g",
+  "python",
 ]
 
 [tasks.check-capnp]
@@ -233,7 +235,6 @@ cm_run_task generate-resources
 dependencies = ["get-standalone-py"]
 script_runner = "@duckscript"
 script = '''
-cm_run_task generate-resources
 cm_run_task copy-capnp
 cm_run_task store-version
 if is_path_exists py39-dist

@@ -370,7 +370,7 @@ version = trim ${output.stdout}
 output_name = set "${ARCHIVE_NAME}-${version}-${BUILD_TRIPLET}-${date}"
 exec --fail-on-error tar -C "py39-dist" -cvf "${output_name}.tar" .
 exec --fail-on-error rm -f "${output_name}.tar.xz"
-exec --fail-on-error xz -e -9 "${output_name}.tar"
+exec --fail-on-error xz -T 0 -e -9 "${output_name}.tar"
 '''
 
 [tasks.create-dist]

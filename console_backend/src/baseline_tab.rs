@@ -73,11 +73,11 @@ pub struct BaselineTab<S: CapnProtoSender> {
     utc_source: Option<String>,
     utc_time: Option<UtcDateTime>,
     week: Option<u16>,
-    wtr: MsgSender,
+    writer: MsgSender,
 }
 
 impl<S: CapnProtoSender> BaselineTab<S> {
-    pub fn new(shared_state: SharedState, client_sender: S, wtr: MsgSender) -> BaselineTab<S> {
+    pub fn new(shared_state: SharedState, client_sender: S, writer: MsgSender) -> BaselineTab<S> {
         BaselineTab {
             age_corrections: None,
             client_sender,
@@ -112,7 +112,7 @@ impl<S: CapnProtoSender> BaselineTab<S> {
             utc_source: None,
             utc_time: None,
             week: None,
-            wtr,
+            writer,
         }
     }
 
@@ -401,7 +401,7 @@ impl<S: CapnProtoSender> BaselineTab<S> {
             sender_id: Some(WRITE_TO_DEVICE_SENDER_ID),
             filter: 0,
         };
-        self.wtr.send(msg.into())?;
+        self.writer.send(msg.into())?;
         Ok(())
     }
 
@@ -523,8 +523,8 @@ mod tests {
     fn handle_age_corrections_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let wtr = MsgSender::new(sink());
-        let mut baseline_tab = BaselineTab::new(shared_state, client_send, wtr);
+        let writer = MsgSender::new(sink());
+        let mut baseline_tab = BaselineTab::new(shared_state, client_send, writer);
         assert!(baseline_tab.age_corrections.is_none());
         let msg = MsgAgeCorrections {
             sender_id: Some(1337),
@@ -550,8 +550,8 @@ mod tests {
     fn handle_gps_time_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let wtr = MsgSender::new(sink());
-        let mut baseline_table = BaselineTab::new(shared_state, client_send, wtr);
+        let writer = MsgSender::new(sink());
+        let mut baseline_table = BaselineTab::new(shared_state, client_send, writer);
         let wn = 0_u16;
         let ns_residual = 1337_i32;
         let bad_flags = 0_u8;
@@ -587,8 +587,8 @@ mod tests {
     fn handle_utc_time_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let wtr = MsgSender::new(sink());
-        let mut baseline_table = BaselineTab::new(shared_state, client_send, wtr);
+        let writer = MsgSender::new(sink());
+        let mut baseline_table = BaselineTab::new(shared_state, client_send, writer);
         let year = 2020_u16;
         let month = 3_u8;
         let day = 19_u8;
@@ -648,8 +648,8 @@ mod tests {
     fn handle_baseline_heading_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let wtr = MsgSender::new(sink());
-        let mut baseline_tab = BaselineTab::new(shared_state, client_send, wtr);
+        let writer = MsgSender::new(sink());
+        let mut baseline_tab = BaselineTab::new(shared_state, client_send, writer);
         assert!(baseline_tab.heading.is_none());
         let heading = 1337;
         let msg = MsgBaselineHeading {
@@ -680,8 +680,8 @@ mod tests {
     fn handle_baseline_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let wtr = MsgSender::new(sink());
-        let mut baseline_tab = BaselineTab::new(shared_state, client_send, wtr);
+        let writer = MsgSender::new(sink());
+        let mut baseline_tab = BaselineTab::new(shared_state, client_send, writer);
         baseline_tab.utc_time = Some(utc_time(1_i32, 3_u32, 3_u32, 7_u32, 6_u32, 6_u32, 6_u32));
         baseline_tab.utc_source = Some(utc_source(0x02));
         baseline_tab.nsec = Some(1337);
@@ -829,8 +829,8 @@ mod tests {
     fn check_state_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let wtr = MsgSender::new(sink());
-        let baseline_tab = BaselineTab::new(shared_state, client_send, wtr);
+        let writer = MsgSender::new(sink());
+        let baseline_tab = BaselineTab::new(shared_state, client_send, writer);
         let buttons = baseline_tab.check_state();
         assert!(!buttons.clear);
         assert!(!buttons.pause);

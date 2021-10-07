@@ -17,12 +17,12 @@ const DEFAULT_UDP_ADDRESS: &str = "127.0.0.1";
 const DEFAULT_UDP_PORT: u16 = 13320;
 const PPP0_HACK_STR: &str = "---";
 
-const OBS_MSGS: &[u16] = &[
-    67, /* MsgObsDepB */
-    68, /* MsgBasePosLLH */
-    72, /* MsgBasePosEcef */
-    73, /* MsgObsDepC */
-    74, /* MsgObs */
+const OBS_MSGS: &[&str] = &[
+    "MSG_OBS",
+    "MSG_OBS_DEP_B",
+    "MSG_OBS_DEP_C",
+    "MSG_BASE_POS_L_L_H",
+    "MSG_BASE_POS_ECEF",
 ];
 
 struct NetworkState {
@@ -45,7 +45,7 @@ struct NetworkState {
 /// - `port`: The port to send packets over UDP defaults to DEFAULT_UDP_PORT.
 /// - `running`: Whether or not UDP streaming is happening, used to inform frontend.
 /// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
-/// - `wtr`: The MsgSender for sending NetworkState refresh requests to the device.
+/// - `writer`: The MsgSender for sending NetworkState refresh requests to the device.
 pub struct AdvancedNetworkingTab<S: CapnProtoSender> {
     all_messages: bool,
     client: Option<UdpSocket>,
@@ -55,13 +55,13 @@ pub struct AdvancedNetworkingTab<S: CapnProtoSender> {
     port: u16,
     running: bool,
     shared_state: SharedState,
-    wtr: MsgSender,
+    writer: MsgSender,
 }
 impl<S: CapnProtoSender> AdvancedNetworkingTab<S> {
     pub fn new(
         shared_state: SharedState,
         client_sender: S,
-        wtr: MsgSender,
+        writer: MsgSender,
     ) -> AdvancedNetworkingTab<S> {
         let tab = AdvancedNetworkingTab {
             all_messages: false,
@@ -72,7 +72,7 @@ impl<S: CapnProtoSender> AdvancedNetworkingTab<S> {
             port: DEFAULT_UDP_PORT,
             running: false,
             shared_state: shared_state.clone(),
-            wtr,
+            writer,
         };
         shared_state.set_advanced_networking_update(AdvancedNetworkingState {
             refresh: true,
@@ -118,7 +118,7 @@ impl<S: CapnProtoSender> AdvancedNetworkingTab<S> {
             sender_id: Some(WRITE_TO_DEVICE_SENDER_ID),
         };
         let msg = sbp::messages::Sbp::from(msg);
-        self.wtr.send(msg)?;
+        self.writer.send(msg)?;
         Ok(())
     }
 
@@ -128,12 +128,14 @@ impl<S: CapnProtoSender> AdvancedNetworkingTab<S> {
                 self.stop_relay();
             }
 
-            self.all_messages = update.all_messages;
             if let Some(ip_address) = update.ip_address {
                 self.ip_ad = ip_address;
             }
             if let Some(port) = update.port {
                 self.port = port;
+            }
+            if let Some(all_messages) = update.all_messages {
+                self.all_messages = all_messages;
             }
 
             if update.start {
@@ -155,7 +157,7 @@ impl<S: CapnProtoSender> AdvancedNetworkingTab<S> {
 
         if self.running {
             if let Some(client) = &mut self.client {
-                if self.all_messages || OBS_MSGS.contains(&msg.message_type()) {
+                if self.all_messages || OBS_MSGS.contains(&msg.message_name()) {
                     if let Ok(frame) = sbp::to_vec(msg) {
                         if let Err(err) = client.send(&frame) {
                             error!("Error sending to device: {}", err);
@@ -224,8 +226,8 @@ mod tests {
     fn handle_network_state_resp_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let wtr = MsgSender::new(sink());
-        let mut tab = AdvancedNetworkingTab::new(shared_state, client_send, wtr);
+        let writer = MsgSender::new(sink());
+        let mut tab = AdvancedNetworkingTab::new(shared_state, client_send, writer);
         let tx_bytes = 1;
         let rx_bytes = 2;
         let sender_id = Some(1337);

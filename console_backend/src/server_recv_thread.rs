@@ -305,7 +305,6 @@ pub fn server_recv_thread(
                         let refresh = cv_in.get_refresh();
                         let start = cv_in.get_start();
                         let stop = cv_in.get_stop();
-                        let all_messages = cv_in.get_all_messages();
                         let ip_address = match cv_in.get_ipv4_address().which() {
                             Ok(m::advanced_networking_status_front::ipv4_address::Address(Ok(
                                 address,
@@ -318,6 +317,16 @@ pub fn server_recv_thread(
                         };
                         let port: Option<u16> = match cv_in.get_port().which() {
                             Ok(m::advanced_networking_status_front::port::Port(port)) => Some(port),
+                            Err(e) => {
+                                error!("{}", e);
+                                None
+                            }
+                            _ => None,
+                        };
+                        let all_messages: Option<bool> = match cv_in.get_all_messages().which() {
+                            Ok(m::advanced_networking_status_front::all_messages::Toggle(
+                                toggle,
+                            )) => Some(toggle),
                             Err(e) => {
                                 error!("{}", e);
                                 None

@@ -566,15 +566,20 @@ class DataModel(QObject):  # pylint: disable=too-many-instance-attributes,too-ma
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
 
-    @Slot(list, QTKeys.QVARIANT, QTKeys.QVARIANT)  # type: ignore
-    def advanced_networking(self, buttons: list, ipv4_address: Optional[str], port: Optional[int]) -> None:
+    @Slot(list, QTKeys.QVARIANT, QTKeys.QVARIANT, QTKeys.QVARIANT)  # type: ignore
+    def advanced_networking(
+        self, buttons: list, all_messages_toggle: Optional[bool], ipv4_address: Optional[str], port: Optional[int]
+    ) -> None:
         Message = self.messages.Message
         m = Message()
         m.advancedNetworkingStatusFront = m.init(Message.Union.AdvancedNetworkingStatusFront)
         m.advancedNetworkingStatusFront.refresh = buttons[0]
         m.advancedNetworkingStatusFront.start = buttons[1]
         m.advancedNetworkingStatusFront.stop = buttons[2]
-        m.advancedNetworkingStatusFront.allMessages = buttons[3]
+        if all_messages_toggle is not None:
+            m.advancedNetworkingStatusFront.allMessages.toggle = all_messages_toggle
+        else:
+            m.advancedNetworkingStatusFront.allMessages.none = None
         if ipv4_address is not None:
             m.advancedNetworkingStatusFront.ipv4Address.address = ipv4_address
         else:

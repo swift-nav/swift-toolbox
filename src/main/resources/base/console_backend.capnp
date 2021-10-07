@@ -262,14 +262,17 @@ struct AdvancedNetworkingStatusFront {
     refresh @0 :Bool;
     start @1 :Bool;
     stop @2 :Bool;
-    allMessages @3 :Bool;
+    allMessages :union {
+        toggle @3 :Bool;
+        none @4 :Void = void;
+    }
     ipv4Address :union {
-        address @4 :Text;
-        none @5 :Void = void;
+        address @5 :Text;
+        none @6 :Void = void;
     }
     port :union {
-        port @6 :UInt16;
-        none @7 :Void = void;
+        port @7 :UInt16;
+        none @8 :Void = void;
     }
 }
 

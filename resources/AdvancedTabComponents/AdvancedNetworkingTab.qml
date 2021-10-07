@@ -99,10 +99,10 @@ Item {
                             let refresh = true;
                             let start = false;
                             let stop = false;
-                            let allMessages = false;
+                            let allMessages = null;
                             let ipv4_address = null;
                             let port = null;
-                            data_model.advanced_networking([refresh, start, stop, allMessages], ipv4_address, port);
+                            data_model.advanced_networking([refresh, start, stop], allMessages, ipv4_address, port);
                         }
                     }
 

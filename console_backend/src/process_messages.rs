@@ -45,8 +45,8 @@ where
     shared_state.set_running(true, client_send.clone());
     shared_state.set_settings_refresh(conn.settings_enabled());
     let realtime_delay = conn.realtime_delay();
-    let (rdr, wtr) = conn.try_connect(Some(shared_state.clone()))?;
-    let msg_sender = MsgSender::new(wtr);
+    let (rdr, writer) = conn.try_connect(Some(shared_state.clone()))?;
+    let msg_sender = MsgSender::new(writer);
     shared_state.set_current_connection(conn.name());
     refresh_navbar(&mut client_send.clone(), shared_state.clone());
     let messages = {

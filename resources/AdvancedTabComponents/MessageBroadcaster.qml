@@ -71,7 +71,7 @@ Item {
                         let allMessages = false;
                         let ipv4_address = null;
                         let port = null;
-                        data_model.advanced_networking([refresh, start, stop, allMessages], ipv4_address, port);
+                        data_model.advanced_networking([refresh, start, stop], allMessages, ipv4_address, port);
                     }
                 }
 
@@ -85,7 +85,7 @@ Item {
                         let allMessages = true;
                         let ipv4_address = null;
                         let port = null;
-                        data_model.advanced_networking([refresh, start, stop, allMessages], ipv4_address, port);
+                        data_model.advanced_networking([refresh, start, stop], allMessages, ipv4_address, port);
                     }
                 }
 
@@ -151,10 +151,10 @@ Item {
                         let refresh = false;
                         let start = false;
                         let stop = false;
-                        let allMessages = false;
+                        let allMessages = null;
                         let ipv4_address = text;
                         let port = null;
-                        data_model.advanced_networking([refresh, start, stop, allMessages], ipv4_address, port);
+                        data_model.advanced_networking([refresh, start, stop], allMessages, ipv4_address, port);
                         ipAddressEditing = false;
                     }
                 }
@@ -221,10 +221,10 @@ Item {
                         let refresh = false;
                         let start = false;
                         let stop = false;
-                        let allMessages = false;
+                        let allMessages = null;
                         let ipv4_address = null;
                         let port = text;
-                        data_model.advanced_networking([refresh, start, stop, allMessages], ipv4_address, port);
+                        data_model.advanced_networking([refresh, start, stop], allMessages, ipv4_address, port);
                         portEditing = false;
                     }
 
@@ -267,10 +267,10 @@ Item {
                         let refresh = false;
                         let start = true;
                         let stop = false;
-                        let allMessages = false;
+                        let allMessages = null;
                         let ipv4_address = null;
                         let port = null;
-                        data_model.advanced_networking([refresh, start, stop, allMessages], ipv4_address, port);
+                        data_model.advanced_networking([refresh, start, stop], allMessages, ipv4_address, port);
                     }
 
                     Text {
@@ -310,10 +310,10 @@ Item {
                         let refresh = false;
                         let start = false;
                         let stop = true;
-                        let allMessages = false;
+                        let allMessages = null;
                         let ipv4_address = null;
                         let port = null;
-                        data_model.advanced_networking([refresh, start, stop, allMessages], ipv4_address, port);
+                        data_model.advanced_networking([refresh, start, stop], allMessages, ipv4_address, port);
                     }
 
                     Text {

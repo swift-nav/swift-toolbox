@@ -386,7 +386,7 @@ impl StatusBarState {
 pub struct AdvancedNetworkingState {
     pub ip_address: Option<String>,
     pub port: Option<u16>,
-    pub all_messages: bool,
+    pub all_messages: Option<bool>,
     pub refresh: bool,
     pub start: bool,
     pub stop: bool,

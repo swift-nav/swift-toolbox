@@ -295,9 +295,9 @@ run_task = [
 cwd = "py39-dist"
 script_runner = "@duckscript"
 script = '''
-py_folders = array test tests examples __pycache__ demos translations idlelib lib/tcl8 lib/tcl8.6 lib/tk8.6
+py_folders = array test tests examples __pycache__ demos translations idlelib lib/tcl8 lib/tcl8.6 lib/tk8.6 shiboken2/docs
 qt_folders = array plugins/virtualkeyboard plugins/sqldrivers lib/Tix8.4.3 tcl/tix8.4.3 Qt/resources PySide2/resources
-qml_folders = array qml/QtWeb* qml/QtBluetooth* qml/QtNfc* qml/QtGamepad qml/QtTest qml/QtQuick3D
+qml_folders = array qml/QtWeb* qml/QtBluetooth* qml/QtNfc* qml/QtGamepad qml/QtTest qml/QtQuick3D qml/Qt3D
 all_folders = array_concat ${py_folders} ${qt_folders} ${qml_folders}
 for name in ${all_folders}
     folders = glob_array **/${name}/

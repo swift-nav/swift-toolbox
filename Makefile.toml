@@ -340,6 +340,10 @@ if eq ${os} windows
             rm ${file}
         end
     end
+    qtbins = glob_array ./Lib/site-packages/PySide2/*.exe
+    for bin in ${qtbins}
+        rm ${bin}
+    end
 else
     mv ./bin/swiftnav-console .
     mv ./bin/python3 .
@@ -348,6 +352,14 @@ else
     mv ./python3 ./bin/
 
     rm -r ./share
+
+    bins = array rcc uic designer
+    for bin in ${bins}
+        files = glob_array ./**/PySide2/${bin}
+        for bin in ${qtbins}
+            rm ${bin}
+        end
+    end
 end
 
 exec --fail-on-error ${DIST_PYTHON} -m pip uninstall -y pip setuptools wheel

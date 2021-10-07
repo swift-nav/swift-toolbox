@@ -135,6 +135,10 @@ Get-ChildItem .\console_backend -Recurse -Include @("*.egg-info", "*.dist-info")
 command = "${PYTHON}"
 args = ["-m", "swiftnav_console.main", "--", "${@}"]
 
+[tasks.qml-run]
+dependencies = ["generate-resources"]
+run_task = "start-console"
+
 [tasks.run]
 dependencies = [
   "copy-capnp",

@@ -261,8 +261,8 @@ mod tests {
         let tmp_dir = tmp_dir.path().to_path_buf();
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let wtr = sink();
-        let msg_sender = MsgSender::new(wtr);
+        let writer = sink();
+        let msg_sender = MsgSender::new(writer);
         let mut main = MainTab::new(shared_state.clone(), client_send.clone());
         let mut solution_tab = SolutionTab::new(shared_state.clone(), client_send.clone());
         let mut baseline_tab = BaselineTab::new(shared_state, client_send, msg_sender);

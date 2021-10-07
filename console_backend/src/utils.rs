@@ -5,6 +5,7 @@ use capnp::message::HeapAllocator;
 use capnp::serialize;
 use indexmap::IndexSet;
 use log::warn;
+use sbp::SbpString;
 use semver::{Version, VersionReq}; //BuildMetadata, Prerelease,
 use serialport::available_ports;
 
@@ -46,6 +47,13 @@ pub fn compare_semvers(
         }
     }
     Ok(true)
+}
+
+/// Create a new SbpString of L size with T termination.
+pub fn fixed_sbp_string<T, const L: usize>(data: &str) -> SbpString<[u8; L], T> {
+    let mut arr = [0u8; L];
+    arr[0..data.len()].copy_from_slice(data.as_bytes());
+    SbpString::new(arr)
 }
 
 /// Send a CLOSE, or kill, signal to the frontend.
@@ -309,6 +317,28 @@ pub fn meters_per_deg(lat_deg: f64) -> (f64, f64) {
     (latlen, lonlen)
 }
 
+/// Convert bytes to the equivalent human readable format as a string.
+///
+/// - Modified based on https://stackoverflow.com/a/1094933
+///
+/// # Parameters
+///
+/// - `bytes`: The number of bytes to convert.
+/// # Result
+///
+/// - The number of bytes converted to a human readable string.
+pub fn bytes_to_human_readable(bytes: u128) -> String {
+    let mut bytes = bytes;
+    for unit in ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB"].iter() {
+        if bytes < 1024 {
+            return format!("{:3.1}{}", bytes, unit);
+        } else {
+            bytes /= 1024;
+        }
+    }
+    format!("{:.1}YB", bytes)
+}
+
 /// Nanoseconds to Microseconds
 ///
 /// # Parameters
@@ -439,6 +469,33 @@ pub fn bytes_to_kb(bytes: f64) -> f64 {
     bytes / 1024_f64
 }
 
+/// Attempts to format a float into a string such that the sign and decimal
+/// point are consistently aligned.
+///
+/// # Parameters:
+/// - `num`: The float to format
+/// - `width`: How wide the resulting string should be padded to (if it is
+///   shorter than it should be)
+/// - `precision`: The maximum number of digits expected before the decimal
+///   place. This informs how many digits of precision are permitted.
+///
+/// # Returns
+/// - The formatted string
+///
+/// # Examples
+/// - `format_fixed_decimal_and_sign(0.1, 8, 3)`:    `"   0.100"`
+/// - `format_fixed_decimal_and_sign(-320.6, 8, 3)`: `"-320.600"`
+pub fn format_fixed_decimal_and_sign(num: f32, width: usize, precision: usize) -> String {
+    let sign = if num < 0. { "-" } else { " " };
+    format!(
+        "{}{: >width$.prec$}",
+        sign,
+        num.abs(),
+        width = width - 1,
+        prec = precision
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -446,6 +503,27 @@ mod tests {
 
     fn float_eq(f1: f64, f2: f64) -> bool {
         f64::abs(f1 - f2) <= f64::EPSILON
+    }
+
+    #[test]
+    fn bytes_to_human_readable_test() {
+        ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB"]
+            .iter()
+            .enumerate()
+            .for_each(|(idx, &unit)| {
+                assert_eq!(
+                    bytes_to_human_readable(u128::pow(1024, idx as u32)),
+                    format!("{:3.1}{}", 1, unit)
+                );
+            });
+        assert_eq!(
+            bytes_to_human_readable(u128::pow(1024, 8)),
+            format!("{:.1}YB", 1)
+        );
+        assert_eq!(
+            bytes_to_human_readable(u128::pow(1024, 9)),
+            format!("{:.1}YB", 1024)
+        );
     }
 
     #[test]
@@ -634,5 +712,20 @@ mod tests {
             ),
             -460.781249973179
         ));
+    }
+
+    #[test]
+    #[rustfmt::skip]
+    fn format_fixed_sign_test() {
+        #[rustfmt::skip]
+        assert_eq!(format_fixed_decimal_and_sign(0.1, 8, 3),    "   0.100");
+        assert_eq!(format_fixed_decimal_and_sign(20.0, 8, 3),   "  20.000");
+        assert_eq!(format_fixed_decimal_and_sign(100.0, 8, 3),  " 100.000");
+        assert_eq!(format_fixed_decimal_and_sign(-1.0, 8, 3),   "-  1.000");
+        assert_eq!(format_fixed_decimal_and_sign(-30.4, 8, 3),  "- 30.400");
+        assert_eq!(format_fixed_decimal_and_sign(-320.6, 8, 3), "-320.600");
+
+        assert_eq!(format_fixed_decimal_and_sign(0.1953421, 6, 1), "   0.2");
+        assert_eq!(format_fixed_decimal_and_sign(-200.1, 6, 1),    "-200.1");
     }
 }

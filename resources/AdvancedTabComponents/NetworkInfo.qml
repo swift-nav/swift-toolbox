@@ -1,22 +1,25 @@
 import "../Constants"
 import Qt.labs.qmlmodels 1.0
-import QtCharts 2.2
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
-Item {
-    property variant columnWidths: [parent.width / 3, parent.width / 3, parent.width / 3]
+ColumnLayout {
+    property variant entries: []
+    property var columnWidths: [parent.width / 5, parent.width / 5, parent.width / 5, parent.width / 5, parent.width / 5]
     property real mouse_x: 0
     property int selectedRow: -1
-    property variant entries: []
+
+    spacing: Constants.networking.layoutSpacing
 
     HorizontalHeaderView {
         id: horizontalHeader
 
+        Layout.fillWidth: true
+        Layout.preferredHeight: Constants.genericTable.cellHeight
         interactive: false
-        syncView: tableView
+        syncView: table
         z: Constants.genericTable.headerZOffset
 
         delegate: Rectangle {
@@ -29,7 +32,7 @@ Item {
                 anchors.centerIn: parent
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
-                text: tableView.model.columns[index].display
+                text: table.model.columns[index].display
                 elide: Text.ElideRight
                 clip: true
                 font.family: Constants.genericTable.fontFamily
@@ -46,13 +49,13 @@ Item {
                 onPositionChanged: {
                     if (pressed) {
                         var delta_x = (mouseX - mouse_x);
-                        var next_idx = (index + 1) % 3;
-                        var min_width = tableView.width / 6;
+                        var next_idx = (index + 1) % 5;
+                        var min_width = table.width / 10;
                         if (columnWidths[index] + delta_x > min_width && columnWidths[next_idx] - delta_x > min_width) {
                             columnWidths[index] += delta_x;
                             columnWidths[next_idx] -= delta_x;
                         }
-                        tableView.forceLayout();
+                        table.forceLayout();
                     }
                 }
             }
@@ -75,7 +78,7 @@ Item {
     }
 
     TableView {
-        id: tableView
+        id: table
 
         columnSpacing: -1
         rowSpacing: -1
@@ -84,11 +87,10 @@ Item {
         }
         reuseItems: true
         boundsBehavior: Flickable.StopAtBounds
-        anchors.top: horizontalHeader.bottom
-        width: parent.width
-        height: parent.height - horizontalHeader.height
+        Layout.fillWidth: true
+        Layout.fillHeight: true
         onWidthChanged: {
-            tableView.forceLayout();
+            table.forceLayout();
         }
 
         ScrollBar.horizontal: ScrollBar {
@@ -98,27 +100,33 @@ Item {
         }
 
         model: TableModel {
-            id: tableModel
-
-            rows: [Constants.systemMonitor.defaultThreadsList]
+            rows: [Constants.networking.defaultList]
 
             TableModelColumn {
-                display: Constants.systemMonitor.columnHeaders[0]
+                display: Constants.networking.columnHeaders[0]
             }
 
             TableModelColumn {
-                display: Constants.systemMonitor.columnHeaders[1]
+                display: Constants.networking.columnHeaders[1]
             }
 
             TableModelColumn {
-                display: Constants.systemMonitor.columnHeaders[2]
+                display: Constants.networking.columnHeaders[2]
+            }
+
+            TableModelColumn {
+                display: Constants.networking.columnHeaders[3]
+            }
+
+            TableModelColumn {
+                display: Constants.networking.columnHeaders[4]
             }
 
         }
 
         delegate: Rectangle {
             implicitHeight: Constants.genericTable.cellHeight
-            implicitWidth: tableView.columnWidthProvider(column)
+            implicitWidth: table.columnWidthProvider(column)
             border.color: Constants.genericTable.borderColor
             color: row == selectedRow ? Constants.genericTable.cellHighlightedColor : Constants.genericTable.cellColor
 
@@ -154,16 +162,18 @@ Item {
         running: true
         repeat: true
         onTriggered: {
-            if (!advancedTab.visible)
+            if (!advancedTab.visible || !entries.length)
                 return ;
 
             for (var idx in entries) {
                 var new_row = {
                 };
-                new_row[Constants.systemMonitor.columnHeaders[0]] = entries[idx][0];
-                new_row[Constants.systemMonitor.columnHeaders[1]] = entries[idx][1];
-                new_row[Constants.systemMonitor.columnHeaders[2]] = entries[idx][2];
-                tableView.model.setRow(idx, new_row);
+                new_row[Constants.networking.columnHeaders[0]] = entries[idx][0];
+                new_row[Constants.networking.columnHeaders[1]] = entries[idx][1];
+                new_row[Constants.networking.columnHeaders[2]] = entries[idx][2];
+                new_row[Constants.networking.columnHeaders[3]] = entries[idx][3];
+                new_row[Constants.networking.columnHeaders[4]] = entries[idx][4];
+                table.model.setRow(idx, new_row);
             }
         }
     }

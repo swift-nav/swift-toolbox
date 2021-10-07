@@ -64,12 +64,12 @@ impl MsgSender {
     const SENDER_ID: u16 = 42;
     const LOCK_FAILURE: &'static str = "failed to aquire sender lock";
 
-    pub fn new<W>(wtr: W) -> Self
+    pub fn new<W>(writer: W) -> Self
     where
         W: io::Write + Send + 'static,
     {
         Self {
-            inner: Arc::new(Mutex::new(SbpEncoder::new(Box::new(wtr)))),
+            inner: Arc::new(Mutex::new(SbpEncoder::new(Box::new(writer)))),
         }
     }
 
@@ -91,32 +91,151 @@ impl Clone for MsgSender {
     }
 }
 
+type Iter<'a, T> = std::iter::Chain<std::slice::Iter<'a, T>, std::slice::Iter<'a, T>>;
+type IterMut<'a, T> = std::iter::Chain<std::slice::IterMut<'a, T>, std::slice::IterMut<'a, T>>;
+
 #[derive(Debug, Clone)]
 pub struct Deque<T> {
-    d: Vec<T>,
+    data: Vec<T>,
     capacity: usize,
+    // Index to where the next element will be placed.
+    index: usize,
 }
-impl<T: Clone> Deque<T> {
-    pub fn with_size_limit(capacity: usize, fill_value: Option<T>) -> Deque<T> {
-        let d = if let Some(val) = fill_value {
-            vec![val; capacity]
-        } else {
-            vec![]
-        };
-        Deque { d, capacity }
-    }
-    pub fn add(&mut self, ele: T) {
-        if self.d.len() == self.capacity {
-            self.d.remove(0);
+
+impl<T> Deque<T> {
+    pub fn new(capacity: usize) -> Deque<T> {
+        Deque {
+            data: Vec::with_capacity(capacity),
+            capacity,
+            index: 0,
         }
-        self.d.push(ele);
     }
-    pub fn get(&self) -> &Vec<T> {
-        &self.d
+
+    pub fn push(&mut self, value: T) {
+        if self.is_full() {
+            self.data[self.index] = value;
+        } else {
+            self.data.push(value);
+        }
+        self.index = (self.index + 1) % self.capacity();
     }
+
     pub fn clear(&mut self) {
-        self.d.clear();
+        self.data.clear();
+        self.index = 0;
     }
+
+    pub fn len(&self) -> usize {
+        self.data.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.data.len() == 0
+    }
+
+    pub fn capacity(&self) -> usize {
+        self.capacity
+    }
+
+    pub fn is_full(&self) -> bool {
+        self.capacity() == self.len()
+    }
+
+    /// Returns an iterator from the oldest values to the newest.
+    pub fn iter(&self) -> Iter<T> {
+        let (a, b) = self.data.split_at(self.index);
+        b.iter().chain(a.iter())
+    }
+
+    /// Returns a mutable iterator from the oldest values to the newest.
+    pub fn iter_mut(&mut self) -> IterMut<T> {
+        let (a, b) = self.data.split_at_mut(self.index);
+        b.iter_mut().chain(a.iter_mut())
+    }
+}
+
+impl<T: Clone> Deque<T> {
+    pub fn with_fill_value(capacity: usize, fill_value: T) -> Deque<T> {
+        Deque {
+            data: vec![fill_value; capacity],
+            capacity,
+            index: 0,
+        }
+    }
+}
+
+impl<T> std::ops::Index<usize> for Deque<T> {
+    type Output = T;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        let len = self.len();
+        assert!(index < len);
+        &self.data[(index + self.index) % len]
+    }
+}
+
+impl<T> std::ops::IndexMut<usize> for Deque<T> {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        let len = self.len();
+        assert!(index < len);
+        &mut self.data[(index + self.index) % len]
+    }
+}
+
+impl<'a, T> IntoIterator for &'a Deque<T> {
+    type Item = &'a T;
+    type IntoIter = Iter<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a mut Deque<T> {
+    type Item = &'a mut T;
+    type IntoIter = IterMut<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
+    }
+}
+
+#[macro_export]
+macro_rules! unzip {
+    ($p:pat => $tup:expr) => {
+        |$p| $tup
+    };
+    ($p:pat => ($($tup:tt)*) , $_iter:expr $(, $tail:expr)*) => {
+        $crate::unzip!(
+            ($p, b) => ($($tup)*, b) $(, $tail)*
+        )
+    };
+}
+
+// https://docs.rs/itertools/0.10.1/itertools/macro.izip.html
+#[macro_export]
+macro_rules! zip {
+    // one item
+    ($x:expr) => {
+        ::std::iter::IntoIterator::into_iter($x)
+    };
+
+    // two items and an optional trailing comma
+    ($x:expr, $y:expr $(,)*) => {
+        $crate::zip!($x)
+            .zip($crate::zip!($y))
+    };
+
+    // three or more items and an optional trailing comma
+    ($x:expr $(, $y:expr)* $(,)*) => {
+        $crate::zip!($x)
+            $(
+                .zip($y)
+            )*
+            .map(
+                $crate::unzip!(a => (a) $( , $y )*)
+            )
+    };
 }
 
 pub trait CapnProtoSender: Debug + Clone + Send + Sync + 'static {
@@ -1432,5 +1551,94 @@ impl std::str::FromStr for VelocityUnits {
             KPH => Ok(VelocityUnits::Kph),
             _ => panic!("unable to convert to VelocityUnits"),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_deque_index() {
+        let mut d = Deque::new(3);
+        d.push(0);
+        d.push(1);
+        d.push(2);
+        assert_eq!(d[0], 0);
+        assert_eq!(d[1], 1);
+        assert_eq!(d[2], 2);
+        d.push(3);
+        assert_eq!(d[0], 1);
+        assert_eq!(d[1], 2);
+        assert_eq!(d[2], 3);
+        d.push(4);
+        assert_eq!(d[0], 2);
+        assert_eq!(d[1], 3);
+        assert_eq!(d[2], 4);
+        d.push(5);
+        assert_eq!(d[0], 3);
+        assert_eq!(d[1], 4);
+        assert_eq!(d[2], 5);
+    }
+
+    #[test]
+    fn test_deque_iter() {
+        let mut d = Deque::new(3);
+        d.push(0);
+        d.push(1);
+        d.push(2);
+        {
+            let mut it = d.iter();
+            assert_eq!(it.next(), Some(&0));
+            assert_eq!(it.next(), Some(&1));
+            assert_eq!(it.next(), Some(&2));
+            assert!(it.next().is_none());
+        }
+        d.push(3);
+        {
+            let mut it = d.iter();
+            assert_eq!(it.next(), Some(&1));
+            assert_eq!(it.next(), Some(&2));
+            assert_eq!(it.next(), Some(&3));
+            assert!(it.next().is_none());
+        }
+        d.push(4);
+        {
+            let mut it = d.iter();
+            assert_eq!(it.next(), Some(&2));
+            assert_eq!(it.next(), Some(&3));
+            assert_eq!(it.next(), Some(&4));
+            assert!(it.next().is_none());
+        }
+        d.push(5);
+        {
+            let mut it = d.iter();
+            assert_eq!(it.next(), Some(&3));
+            assert_eq!(it.next(), Some(&4));
+            assert_eq!(it.next(), Some(&5));
+            assert!(it.next().is_none());
+        }
+    }
+
+    #[test]
+    fn test_zip() {
+        let x = Deque::with_fill_value(3, 0);
+        let y = Deque::with_fill_value(3, 1);
+        let z = Deque::with_fill_value(3, 2);
+        for (x, y, z) in zip!(&x, &y, &z) {
+            assert_eq!(*x, 0);
+            assert_eq!(*y, 1);
+            assert_eq!(*z, 2);
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_index_oob_panic() {
+        let mut d = Deque::new(3);
+        d.push(1);
+        d.push(2);
+        d.push(3);
+        let _ = d[3];
     }
 }

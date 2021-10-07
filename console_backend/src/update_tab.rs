@@ -443,22 +443,7 @@ fn upgrade_firmware(
     update_tab_context.set_upgrading(true);
     update_tab_context.fw_log_clear();
     let to_upgrade = match check_above_v2(update_tab_context.clone()) {
-        Ok(above_v2) => {
-            if !above_v2 {
-                true
-            } else {
-                match check_firmware_outdated(update_tab_context.clone()) {
-                    Ok(outdated) => outdated,
-                    Err(err) => {
-                        update_tab_context.fw_log_append(String::from(
-                            "Unable to compare latest and current version.",
-                        ));
-                        update_tab_context.fw_log_append(err.to_string());
-                        false
-                    }
-                }
-            }
-        }
+        Ok(_) => true,
         Err(_) => {
             update_tab_context.fw_log_append(String::from(
                 "Waiting on settings to load to get current version.",
@@ -1148,8 +1133,8 @@ mod tests {
             let (update_tab_tx, update_tab_rx) = update_tab.clone_channel();
             let source: LinkSource<()> = LinkSource::new();
             let link = source.link();
-            let wtr = sink();
-            let msg_sender = MsgSender::new(wtr);
+            let writer = sink();
+            let msg_sender = MsgSender::new(writer);
             crossbeam::scope(|scope| {
                 let handle = scope.spawn(|_| {
                     update_tab_thread(
@@ -1178,8 +1163,8 @@ mod tests {
             let (update_tab_tx, update_tab_rx) = update_tab.clone_channel();
             let source: LinkSource<()> = LinkSource::new();
             let link = source.link();
-            let wtr = sink();
-            let msg_sender = MsgSender::new(wtr);
+            let writer = sink();
+            let msg_sender = MsgSender::new(writer);
             let tmp_dir = TempDir::new().unwrap();
             let tmp_dir = tmp_dir.path().to_path_buf();
             ctx.set_firmware_directory(tmp_dir.clone());
@@ -1242,8 +1227,8 @@ mod tests {
             let (update_tab_tx, update_tab_rx) = update_tab.clone_channel();
             let source: LinkSource<()> = LinkSource::new();
             let link = source.link();
-            let wtr = sink();
-            let msg_sender = MsgSender::new(wtr);
+            let writer = sink();
+            let msg_sender = MsgSender::new(writer);
             let tmp_dir = TempDir::new().unwrap();
             let tmp_dir = tmp_dir.path().to_path_buf();
             crossbeam::scope(|scope| {

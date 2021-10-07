@@ -283,6 +283,14 @@ impl SharedState {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         shared_data.reset_device = reset_device;
     }
+    pub fn set_advanced_networking_update(&self, update: AdvancedNetworkingState) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.advanced_networking_update = Some(update);
+    }
+    pub fn advanced_networking_update(&self) -> Option<AdvancedNetworkingState> {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.advanced_networking_update.take()
+    }
 }
 
 impl Deref for SharedState {
@@ -326,6 +334,7 @@ pub struct SharedStateInner {
     pub(crate) firmware_version: Option<String>,
     pub(crate) dgnss_enabled: bool,
     pub(crate) reset_device: bool,
+    pub(crate) advanced_networking_update: Option<AdvancedNetworkingState>,
 }
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
@@ -350,6 +359,7 @@ impl SharedStateInner {
             firmware_version: None,
             dgnss_enabled: false,
             reset_device: false,
+            advanced_networking_update: None,
         }
     }
 }
@@ -370,6 +380,16 @@ impl StatusBarState {
             current_connection: String::from(""),
         }
     }
+}
+
+#[derive(Debug, Default)]
+pub struct AdvancedNetworkingState {
+    pub ip_address: Option<String>,
+    pub port: Option<u16>,
+    pub all_messages: Option<bool>,
+    pub refresh: bool,
+    pub start: bool,
+    pub stop: bool,
 }
 
 #[derive(Debug)]

@@ -47,12 +47,12 @@ impl TcpConnection {
         let rdr =
             TcpStream::connect_timeout(&socket, Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))?;
         rdr.set_read_timeout(Some(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS)))?;
-        let wtr = rdr.try_clone()?;
+        let writer = rdr.try_clone()?;
         info!("Connected to tcp stream!");
         if let Some(shared_state_) = shared_state {
             shared_state_.update_tcp_history(self.host, self.port);
         }
-        Ok((Box::new(rdr), Box::new(wtr)))
+        Ok((Box::new(rdr), Box::new(writer)))
     }
 }
 
@@ -83,9 +83,9 @@ impl SerialConnection {
             .flow_control(*self.flow)
             .timeout(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))
             .open()?;
-        let wtr = rdr.try_clone()?;
+        let writer = rdr.try_clone()?;
         info!("Opened serial port successfully!");
-        Ok((Box::new(rdr), Box::new(wtr)))
+        Ok((Box::new(rdr), Box::new(writer)))
     }
 }
 
@@ -131,12 +131,12 @@ impl FileConnection {
         shared_state: Option<SharedState>,
     ) -> Result<(Box<dyn io::Read + Send>, Box<dyn io::Write + Send>)> {
         let rdr = fs::File::open(&self.filepath)?;
-        let wtr = io::sink();
+        let writer = io::sink();
         info!("Opened file successfully!");
         if let Some(shared_state_) = shared_state {
             shared_state_.update_file_history(self.filepath.to_string_lossy().to_string());
         }
-        Ok((Box::new(rdr), Box::new(wtr)))
+        Ok((Box::new(rdr), Box::new(writer)))
     }
 }
 

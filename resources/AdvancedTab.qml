@@ -56,8 +56,7 @@ Item {
             AdvancedTabComponents.AdvancedMagnetometerTab {
             }
 
-            Item {
-                id: advancedNetworkingTab
+            AdvancedTabComponents.AdvancedNetworkingTab {
             }
 
             AdvancedTabComponents.AdvancedSpectrumAnalyzerTab {

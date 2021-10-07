@@ -40,7 +40,7 @@ struct ThreadStateFields {
 /// - `threads`: Vec of, ThreadStateFields, running threads on device containing cpu and memory metric values.
 /// - `threads_table_list`: Vec of ThreadStateFields, sent to frontend after heartbeat received.
 /// - `zynq_temp`: Zynq SoC temperature reading.
-/// - `wtr`: MsgSender for communication from backend to device.
+/// - `writer`: MsgSender for communication from backend to device.
 pub struct AdvancedSystemMonitorTab<S: CapnProtoSender> {
     client_sender: S,
     csac_received: bool,
@@ -54,13 +54,13 @@ pub struct AdvancedSystemMonitorTab<S: CapnProtoSender> {
     threads: Vec<ThreadStateFields>,
     threads_table_list: Vec<ThreadStateFields>,
     zynq_temp: f64,
-    wtr: MsgSender,
+    writer: MsgSender,
 }
 impl<S: CapnProtoSender> AdvancedSystemMonitorTab<S> {
     pub fn new(
         shared_state: SharedState,
         client_sender: S,
-        wtr: MsgSender,
+        writer: MsgSender,
     ) -> AdvancedSystemMonitorTab<S> {
         AdvancedSystemMonitorTab {
             client_sender,
@@ -85,7 +85,7 @@ impl<S: CapnProtoSender> AdvancedSystemMonitorTab<S> {
             threads: vec![],
             threads_table_list: vec![],
             zynq_temp: 0.0,
-            wtr,
+            writer,
         }
     }
 
@@ -162,7 +162,7 @@ impl<S: CapnProtoSender> AdvancedSystemMonitorTab<S> {
             sender_id: Some(WRITE_TO_DEVICE_SENDER_ID),
             flags: 0,
         };
-        self.wtr.send(msg.into())?;
+        self.writer.send(msg.into())?;
         Ok(())
     }
 
@@ -252,8 +252,10 @@ impl<S: CapnProtoSender> AdvancedSystemMonitorTab<S> {
 mod tests {
     use super::*;
     use crate::types::TestSender;
+    use crate::utils::fixed_sbp_string;
     use sbp::{
         messages::piksi::{Latency, MsgUartState, MsgUartStateDepa, Period, UARTChannel},
+        sbp_string::NullTerminated,
         SbpString,
     };
     use std::io::sink;
@@ -262,8 +264,8 @@ mod tests {
     fn handle_uart_state_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let wtr = MsgSender::new(sink());
-        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send, wtr);
+        let writer = MsgSender::new(sink());
+        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send, writer);
         let sender_id = Some(1337);
         let uart_a = UARTChannel {
             tx_throughput: 0.0,
@@ -341,16 +343,16 @@ mod tests {
     fn handle_reset_device_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let wtr = MsgSender::new(sink());
-        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send, wtr);
+        let writer = MsgSender::new(sink());
+        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send, writer);
         assert!(tab.reset_device().is_ok());
     }
     #[test]
     fn handle_csac_telemetry_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let wtr = MsgSender::new(sink());
-        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send, wtr);
+        let writer = MsgSender::new(sink());
+        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send, writer);
         let id = 13;
         let headers: Vec<String> = METRICS_OF_INTEREST.iter().map(|s| s.to_string()).collect();
         tab.headers = headers.clone();
@@ -384,8 +386,8 @@ mod tests {
     fn handle_csac_telemetry_labels_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let wtr = MsgSender::new(sink());
-        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send, wtr);
+        let writer = MsgSender::new(sink());
+        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send, writer);
         let id = 13;
         let headers_pre: Vec<String> = "mcdonald,had,a,farm"
             .split(',')
@@ -406,8 +408,8 @@ mod tests {
     fn handle_device_monitor_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let wtr = MsgSender::new(sink());
-        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send, wtr);
+        let writer = MsgSender::new(sink());
+        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send, writer);
         let cpu_temperature = 3333;
         let fe_temperature = 4444;
         let msg = MsgDeviceMonitor {
@@ -428,9 +430,9 @@ mod tests {
     fn handle_thread_state_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let wtr = MsgSender::new(sink());
-        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send, wtr);
-        let name1 = thread_name("mcdonald");
+        let writer = MsgSender::new(sink());
+        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send, writer);
+        let name1: SbpString<[u8; 20], NullTerminated> = fixed_sbp_string("mcdonald");
         let msg1 = MsgThreadState {
             sender_id: Some(1337),
             name: name1.clone(),
@@ -440,7 +442,7 @@ mod tests {
         assert!(tab.threads.is_empty());
         tab.handle_thread_state(msg1);
         assert_eq!(tab.threads.len(), 1);
-        let name2 = thread_name(NO_NAME);
+        let name2: SbpString<[u8; 20], NullTerminated> = fixed_sbp_string(NO_NAME);
         let msg2 = MsgThreadState {
             sender_id: Some(1337),
             name: SbpString::new([0u8; 20]),
@@ -449,7 +451,7 @@ mod tests {
         };
         tab.handle_thread_state(msg2);
         assert_eq!(tab.threads.len(), 2);
-        let name3 = thread_name("farm");
+        let name3: SbpString<[u8; 20], NullTerminated> = fixed_sbp_string("farm");
         let msg3 = MsgThreadState {
             sender_id: Some(1337),
             name: name3.clone(),
@@ -476,12 +478,12 @@ mod tests {
     fn handle_heartbeat_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let wtr = MsgSender::new(sink());
-        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send, wtr);
+        let writer = MsgSender::new(sink());
+        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send, writer);
         assert!(tab.threads_table_list.is_empty());
         tab.handle_heartbeat();
         assert!(tab.threads_table_list.is_empty());
-        let name1 = thread_name("mcdonald");
+        let name1: SbpString<[u8; 20], NullTerminated> = fixed_sbp_string("mcdonald");
         let msg1 = MsgThreadState {
             sender_id: Some(1337),
             name: name1.clone(),
@@ -489,7 +491,7 @@ mod tests {
             stack_free: 13,
         };
         tab.handle_thread_state(msg1.clone());
-        let name2 = thread_name(NO_NAME);
+        let name2: SbpString<[u8; 20], NullTerminated> = fixed_sbp_string(NO_NAME);
         let msg2 = MsgThreadState {
             sender_id: Some(1337),
             name: SbpString::new([0u8; 20]),
@@ -497,7 +499,7 @@ mod tests {
             stack_free: 133,
         };
         tab.handle_thread_state(msg2.clone());
-        let name3 = thread_name("farm");
+        let name3: SbpString<[u8; 20], NullTerminated> = fixed_sbp_string("farm");
         let msg3 = MsgThreadState {
             sender_id: Some(1337),
             name: name3.clone(),
@@ -537,10 +539,5 @@ mod tests {
             OrderedFloat(msg2.cpu as f64 / 10.0)
         );
         assert_eq!(tab.threads_table_list[2].stack_free, msg2.stack_free);
-    }
-    fn thread_name(name: &str) -> SbpString<[u8; 20], sbp::sbp_string::NullTerminated> {
-        let mut arr = [0u8; 20];
-        arr[0..name.len()].copy_from_slice(name.as_bytes());
-        SbpString::new(arr)
     }
 }

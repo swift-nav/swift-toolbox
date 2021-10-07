@@ -356,7 +356,7 @@ else
     bins = array rcc uic designer
     for bin in ${bins}
         files = glob_array ./**/PySide2/${bin}
-        for bin in ${qtbins}
+        for bin in ${files}
             rm ${bin}
         end
     end

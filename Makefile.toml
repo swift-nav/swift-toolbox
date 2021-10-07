@@ -311,12 +311,12 @@ for ext in ${file_exts}
     files = glob_array **/*.${ext}
     for file in ${files}
         if eq ${ext} png
-          is_qtquick = contains ${file} QtQuick
-          if not is_qtquick
-            rm ${file}
-          end
+            is_qtquick = contains ${file} QtQuick
+            if not is_qtquick
+                rm ${file}
+            end
         else
-          rm ${file}
+            rm ${file}
         end
     end
 end

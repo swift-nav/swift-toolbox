@@ -25,6 +25,7 @@ RESULTS = "results"
 # Installer Disk Usage Benchmark.
 DISK_USAGE_COMMAND = lambda file_path: f"du -ch {file_path} | grep total"
 
+INSTALLER_MAX_SIZE = 100
 INSTALLER_BENCHMARKS = {
     WINDOWS: [
         {
@@ -226,10 +227,9 @@ def run_disk_usage_benchmark():
             f"Test:{bench[NAME]} Bench Value:{disk_usage} not larger than "
             f"{bench[ERROR_MARGIN_FRAC]*bench[EXPECTED]}MB."
         )
-        assert disk_usage - bench[EXPECTED] <= bench[ERROR_MARGIN_FRAC] * bench[EXPECTED], (  # type: ignore
-            f"Test:{bench[NAME]} Bench Value:{disk_usage} not within "
-            f"{bench[ERROR_MARGIN_FRAC]} of {bench[EXPECTED]}."
-        )
+        assert (
+            disk_usage <= INSTALLER_MAX_SIZE
+        ), f"Test:{bench[NAME]} Bench Value:{disk_usage} not less than {INSTALLER_MAX_SIZE}"  # type: ignore
         print(f"PASS - {os_}:{bench[NAME]} MARGIN={disk_usage - bench[EXPECTED]}")
 
 

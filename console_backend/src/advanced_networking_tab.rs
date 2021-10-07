@@ -1,6 +1,10 @@
 use capnp::message::Builder;
 use log::error;
-use sbp::messages::piksi::{MsgNetworkStateReq, MsgNetworkStateResp};
+use sbp::messages::{
+    observation::{MsgBasePosEcef, MsgBasePosLlh, MsgObs, MsgObsDepA, MsgObsDepB, MsgObsDepC},
+    piksi::{MsgNetworkStateReq, MsgNetworkStateResp},
+    ConcreteMessage,
+};
 use sbp::{Sbp, SbpMessage};
 use std::collections::HashMap;
 
@@ -16,19 +20,13 @@ const DEFAULT_UDP_LOCAL_PORT: u16 = 34254;
 const DEFAULT_UDP_ADDRESS: &str = "127.0.0.1";
 const DEFAULT_UDP_PORT: u16 = 13320;
 const PPP0_HACK_STR: &str = "---";
-
-use sbp::messages::observation::{
-    MsgBasePosEcef, MsgBasePosLlh, MsgObs, MsgObsDepA, MsgObsDepB, MsgObsDepC,
-};
-use sbp::messages::ConcreteMessage;
-
 const OBS_MSGS: &[u16] = &[
-    <MsgObs as ConcreteMessage>::MESSAGE_TYPE,
-    <MsgObsDepA as ConcreteMessage>::MESSAGE_TYPE,
-    <MsgObsDepB as ConcreteMessage>::MESSAGE_TYPE,
-    <MsgObsDepC as ConcreteMessage>::MESSAGE_TYPE,
-    <MsgBasePosLlh as ConcreteMessage>::MESSAGE_TYPE,
-    <MsgBasePosEcef as ConcreteMessage>::MESSAGE_TYPE,
+    MsgObs::MESSAGE_TYPE,
+    MsgObsDepA::MESSAGE_TYPE,
+    MsgObsDepB::MESSAGE_TYPE,
+    MsgObsDepC::MESSAGE_TYPE,
+    MsgBasePosLlh::MESSAGE_TYPE,
+    MsgBasePosEcef::MESSAGE_TYPE,
 ];
 
 struct NetworkState {
@@ -40,27 +38,24 @@ struct NetworkState {
 }
 
 /// AdvancedNetworkingTab struct.
-///
-/// # Fields:
-///
-/// - `all_messages`: Whether or not to broadcast all messages over UDP or only the OBS_MSGS subset.
-/// - `client`: The current udp socket connected to for streaming messages, if any.
-/// - `client_send`: Client Sender channel for communication from backend to frontend.
-/// - `ip_ad`: The stored string IP address defaults to DEFAULT_UDP_ADDRESS.
-/// - `network_info`: The stored ip traffic received from the device.
-/// - `port`: The port to send packets over UDP defaults to DEFAULT_UDP_PORT.
-/// - `running`: Whether or not UDP streaming is happening, used to inform frontend.
-/// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
-/// - `writer`: The MsgSender for sending NetworkState refresh requests to the device.
 pub struct AdvancedNetworkingTab<S: CapnProtoSender> {
+    /// Whether or not to broadcast all messages over UDP or only the OBS_MSGS subset.
     all_messages: bool,
+    /// The current udp socket connected to for streaming messages, if any.
     client: Option<UdpSocket>,
+    /// Client Sender channel for communication from backend to frontend.
     client_sender: S,
+    /// The stored string IP address defaults to DEFAULT_UDP_ADDRESS.
     ip_ad: String,
+    /// The stored ip traffic received from the device.
     network_info: HashMap<String, NetworkState>,
+    /// The port to send packets over UDP defaults to DEFAULT_UDP_PORT.
     port: u16,
+    /// Whether or not UDP streaming is happening, used to inform frontend.
     running: bool,
+    /// The shared state for communicating between frontend/backend/other backend tabs.
     shared_state: SharedState,
+    /// The MsgSender for sending NetworkState refresh requests to the device.
     writer: MsgSender,
 }
 impl<S: CapnProtoSender> AdvancedNetworkingTab<S> {

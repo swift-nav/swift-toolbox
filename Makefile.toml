@@ -316,7 +316,7 @@ for ext in ${file_exts}
     end
 end
 
-libs = array Qt5Nfc Qt5Web QtWeb Qt5Pdf Qt5Designer Qt5DesignerComponents Qt5VirtualKeyboard Qt5Bluetooth Qt5Quick3D
+libs = array Qt3D Qt5Nfc Qt5Web QtWeb Qt5Pdf Qt5Designer Qt5DesignerComponents Qt5VirtualKeyboard Qt5Bluetooth Qt5Quick3D
 for lib in ${libs}
     files = glob_array ./**/*${lib}*
     for file in ${files}

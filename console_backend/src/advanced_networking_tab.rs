@@ -17,12 +17,16 @@ const DEFAULT_UDP_ADDRESS: &str = "127.0.0.1";
 const DEFAULT_UDP_PORT: u16 = 13320;
 const PPP0_HACK_STR: &str = "---";
 
-const OBS_MSGS: &[&str] = &[
-    "MSG_OBS",
-    "MSG_OBS_DEP_B",
-    "MSG_OBS_DEP_C",
-    "MSG_BASE_POS_L_L_H",
-    "MSG_BASE_POS_ECEF",
+use sbp::messages::ConcreteMessage;
+use sbp::messages::observation::{MsgObs, MsgObsDepA, MsgObsDepB, MsgObsDepC, MsgBasePosLlh, MsgBasePosEcef};
+
+const OBS_MSGS: &[u16] = &[
+    <MsgObs as ConcreteMessage>::MESSAGE_TYPE,
+    <MsgObsDepA as ConcreteMessage>::MESSAGE_TYPE,
+    <MsgObsDepB as ConcreteMessage>::MESSAGE_TYPE,
+    <MsgObsDepC as ConcreteMessage>::MESSAGE_TYPE,
+    <MsgBasePosLlh as ConcreteMessage>::MESSAGE_TYPE,
+    <MsgBasePosEcef as ConcreteMessage>::MESSAGE_TYPE,
 ];
 
 struct NetworkState {
@@ -157,7 +161,7 @@ impl<S: CapnProtoSender> AdvancedNetworkingTab<S> {
 
         if self.running {
             if let Some(client) = &mut self.client {
-                if self.all_messages || OBS_MSGS.contains(&msg.message_name()) {
+                if self.all_messages || OBS_MSGS.contains(&msg.message_type()) {
                     if let Ok(frame) = sbp::to_vec(msg) {
                         if let Err(err) = client.send(&frame) {
                             error!("Error sending to device: {}", err);

@@ -295,24 +295,29 @@ run_task = [
 cwd = "py39-dist"
 script_runner = "@duckscript"
 script = '''
-py_folders = array test tests examples __pycache__ demos translations idlelib lib/tcl8 lib/tcl8.6 lib/tk8.6 shiboken2/docs python3.9/ensurepip
+py_folders = array test tests examples __pycache__ demos translations idlelib lib/tcl8 lib/tcl8.6 lib/tk8.6 shiboken2/docs python3.9/ensurepip lib2to3 tkinter unittest
 qt_folders = array plugins/virtualkeyboard plugins/sqldrivers lib/Tix8.4.3 tcl/tix8.4.3 Qt/resources PySide2/resources
 qml_folders = array qml/QtWeb* qml/QtBluetooth* qml/QtNfc* qml/QtGamepad qml/QtTest qml/QtQuick3D qml/Qt3D qml/QtSensors qml/QtLocation qml/QtPositioning
 all_folders = array_concat ${py_folders} ${qt_folders} ${qml_folders}
 for name in ${all_folders}
     folders = glob_array **/${name}/
     for folder in ${folders}
-        echo ${folder}
         rm -r ${folder}
     end
 end
 
-file_exts = array pyc pyi pdb tcl gif
+file_exts = array pyc pyi pdb tcl gif png
 for ext in ${file_exts}
     files = glob_array **/*.${ext}
     for file in ${files}
-        echo ${file}
-        rm ${file}
+        if eq ${ext} png
+          is_qtquick = contains ${file} QtQuick
+          if not is_qtquick
+            rm ${file}
+          end
+        else
+          rm ${file}
+        end
     end
 end
 

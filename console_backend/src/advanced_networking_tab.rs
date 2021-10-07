@@ -23,12 +23,12 @@ use sbp::messages::observation::{
 use sbp::messages::ConcreteMessage;
 
 const OBS_MSGS: &[u16] = &[
-    <MsgObs as ConcreteMessage>::MESSAGE_TYPE,
-    <MsgObsDepA as ConcreteMessage>::MESSAGE_TYPE,
-    <MsgObsDepB as ConcreteMessage>::MESSAGE_TYPE,
-    <MsgObsDepC as ConcreteMessage>::MESSAGE_TYPE,
-    <MsgBasePosLlh as ConcreteMessage>::MESSAGE_TYPE,
-    <MsgBasePosEcef as ConcreteMessage>::MESSAGE_TYPE,
+    MsgObs::MESSAGE_TYPE,
+    MsgObsDepA::MESSAGE_TYPE,
+    MsgObsDepB::MESSAGE_TYPE,
+    MsgObsDepC::MESSAGE_TYPE,
+    MsgBasePosLlh::MESSAGE_TYPE,
+    MsgBasePosEcef::MESSAGE_TYPE,
 ];
 
 struct NetworkState {

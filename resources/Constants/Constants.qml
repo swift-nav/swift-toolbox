@@ -39,6 +39,7 @@ QtObject {
     property QtObject updateTab
     property QtObject icons
     property QtObject trackingSkyPlot
+    property QtObject networking
     readonly property int staticTimerIntervalRate: 5 // 5 Hz
     readonly property int staticTableTimerIntervalRate: 10 // 10 Hz
     readonly property int staticTimerSlowIntervalRate: 2 // 2 Hz
@@ -150,6 +151,33 @@ QtObject {
             "Metric": "",
             "Value": ""
         }
+    }
+
+    networking: QtObject {
+        readonly property var columnHeaders: ["Interface Name", "IPv4 Addr", "Running", "Tx Usage", "Rx Usage"]
+        readonly property var defaultList: {
+            "Interface Name": "",
+            "IPv4 Addr": "",
+            "Running": "",
+            "Tx Usage": "",
+            "Rx Usage": ""
+        }
+        readonly property int refreshButtonHeight: 50
+        readonly property int refreshButtonVerticalOffset: 10
+        readonly property int refreshButtonWidth: 200
+        readonly property int refreshButtonIconSideLength: 12
+        readonly property string refreshButtonLabel: "Refresh Network Status"
+        readonly property int messageBroadcasterHeight: 150
+        readonly property int layoutSpacing: 0
+        readonly property int udpStreamingParagraphPadding: 10
+        readonly property int messageBroadcasterMargins: 10
+        readonly property int messageBroadcasterGridRows: 4
+        readonly property int messageBroadcasterGridColumns: 2
+        readonly property int messageBroadcasterGridElementLength: 1
+        readonly property int messageBroadcasterStartStopButtonHeight: 20
+        readonly property int messageBroadcasterTextInputHeight: 20
+        readonly property int messageBroadcasterIntValidatorUInt16Min: 0
+        readonly property int messageBroadcasterIntValidatorUInt16Max: 65535
     }
 
     genericTable: QtObject {
@@ -468,7 +496,7 @@ QtObject {
 
     icons: QtObject {
         readonly property string savePath: "images/fontawesome/floppy-o.svg"
-        readonly property string refreshPath: "images/fontawesome/refresh.svg"
+        readonly property string refreshPath: "qrc:///images/fontawesome/refresh.svg"
         readonly property string exportPath: "images/fontawesome/file-export.svg"
         readonly property string importPath: "images/fontawesome/file-import.svg"
         readonly property string warningPath: "images/fontawesome/exclamation-triangle.svg"

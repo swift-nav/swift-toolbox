@@ -1133,8 +1133,8 @@ mod tests {
             let (update_tab_tx, update_tab_rx) = update_tab.clone_channel();
             let source: LinkSource<()> = LinkSource::new();
             let link = source.link();
-            let wtr = sink();
-            let msg_sender = MsgSender::new(wtr);
+            let writer = sink();
+            let msg_sender = MsgSender::new(writer);
             crossbeam::scope(|scope| {
                 let handle = scope.spawn(|_| {
                     update_tab_thread(
@@ -1163,8 +1163,8 @@ mod tests {
             let (update_tab_tx, update_tab_rx) = update_tab.clone_channel();
             let source: LinkSource<()> = LinkSource::new();
             let link = source.link();
-            let wtr = sink();
-            let msg_sender = MsgSender::new(wtr);
+            let writer = sink();
+            let msg_sender = MsgSender::new(writer);
             let tmp_dir = TempDir::new().unwrap();
             let tmp_dir = tmp_dir.path().to_path_buf();
             ctx.set_firmware_directory(tmp_dir.clone());
@@ -1227,8 +1227,8 @@ mod tests {
             let (update_tab_tx, update_tab_rx) = update_tab.clone_channel();
             let source: LinkSource<()> = LinkSource::new();
             let link = source.link();
-            let wtr = sink();
-            let msg_sender = MsgSender::new(wtr);
+            let writer = sink();
+            let msg_sender = MsgSender::new(writer);
             let tmp_dir = TempDir::new().unwrap();
             let tmp_dir = tmp_dir.path().to_path_buf();
             crossbeam::scope(|scope| {

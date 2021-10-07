@@ -5,6 +5,7 @@ use capnp::message::HeapAllocator;
 use capnp::serialize;
 use indexmap::IndexSet;
 use log::warn;
+use sbp::SbpString;
 use semver::{Version, VersionReq}; //BuildMetadata, Prerelease,
 use serialport::available_ports;
 
@@ -46,6 +47,13 @@ pub fn compare_semvers(
         }
     }
     Ok(true)
+}
+
+/// Create a new SbpString of L size with T termination.
+pub fn fixed_sbp_string<T, const L: usize>(data: &str) -> SbpString<[u8; L], T> {
+    let mut arr = [0u8; L];
+    arr[0..data.len()].copy_from_slice(data.as_bytes());
+    SbpString::new(arr)
 }
 
 /// Send a CLOSE, or kill, signal to the frontend.
@@ -309,6 +317,28 @@ pub fn meters_per_deg(lat_deg: f64) -> (f64, f64) {
     (latlen, lonlen)
 }
 
+/// Convert bytes to the equivalent human readable format as a string.
+///
+/// - Modified based on https://stackoverflow.com/a/1094933
+///
+/// # Parameters
+///
+/// - `bytes`: The number of bytes to convert.
+/// # Result
+///
+/// - The number of bytes converted to a human readable string.
+pub fn bytes_to_human_readable(bytes: u128) -> String {
+    let mut bytes = bytes;
+    for unit in ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB"].iter() {
+        if bytes < 1024 {
+            return format!("{:3.1}{}", bytes, unit);
+        } else {
+            bytes /= 1024;
+        }
+    }
+    format!("{:.1}YB", bytes)
+}
+
 /// Nanoseconds to Microseconds
 ///
 /// # Parameters
@@ -473,6 +503,27 @@ mod tests {
 
     fn float_eq(f1: f64, f2: f64) -> bool {
         f64::abs(f1 - f2) <= f64::EPSILON
+    }
+
+    #[test]
+    fn bytes_to_human_readable_test() {
+        ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB"]
+            .iter()
+            .enumerate()
+            .for_each(|(idx, &unit)| {
+                assert_eq!(
+                    bytes_to_human_readable(u128::pow(1024, idx as u32)),
+                    format!("{:3.1}{}", 1, unit)
+                );
+            });
+        assert_eq!(
+            bytes_to_human_readable(u128::pow(1024, 8)),
+            format!("{:.1}YB", 1)
+        );
+        assert_eq!(
+            bytes_to_human_readable(u128::pow(1024, 9)),
+            format!("{:.1}YB", 1024)
+        );
     }
 
     #[test]

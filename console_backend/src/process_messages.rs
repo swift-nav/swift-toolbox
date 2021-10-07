@@ -11,7 +11,7 @@ use sbp::{
         navigation::{MsgAgeCorrections, MsgPosLlhCov, MsgUtcTime, MsgVelNed},
         observation::{MsgObsDepA, MsgSvAzEl},
         orientation::{MsgAngularRate, MsgBaselineHeading, MsgOrientEuler},
-        piksi::{MsgCommandResp, MsgDeviceMonitor, MsgThreadState},
+        piksi::{MsgCommandResp, MsgDeviceMonitor, MsgNetworkStateResp, MsgThreadState},
         system::{
             MsgCsacTelemetry, MsgCsacTelemetryLabels, MsgHeartbeat, MsgInsStatus, MsgInsUpdates,
         },
@@ -45,8 +45,8 @@ where
     shared_state.set_running(true, client_send.clone());
     shared_state.set_settings_refresh(conn.settings_enabled());
     let realtime_delay = conn.realtime_delay();
-    let (rdr, wtr) = conn.try_connect(Some(shared_state.clone()))?;
-    let msg_sender = MsgSender::new(wtr);
+    let (rdr, writer) = conn.try_connect(Some(shared_state.clone()))?;
+    let msg_sender = MsgSender::new(writer);
     shared_state.set_current_connection(conn.name());
     refresh_navbar(&mut client_send.clone(), shared_state.clone());
     let messages = {
@@ -187,6 +187,13 @@ where
             .handle_msg_measurement_state(msg.states);
     });
 
+    link.register(|tabs: &Tabs<S>, msg: MsgNetworkStateResp| {
+        tabs.advanced_networking
+            .lock()
+            .unwrap()
+            .handle_network_state_resp(msg);
+    });
+
     link.register(|tabs: &Tabs<S>, msg: ObservationMsg| {
         tabs.tracking_signals
             .lock()
@@ -318,6 +325,10 @@ where
                 .lock()
                 .unwrap()
                 .add_bytes(message.encoded_len());
+            tabs.advanced_networking
+                .lock()
+                .unwrap()
+                .handle_sbp(&message);
             if let RealtimeDelay::On = realtime_delay {
                 if sent {
                     tabs.main.lock().unwrap().realtime_delay(gps_time);

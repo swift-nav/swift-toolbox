@@ -64,12 +64,12 @@ impl MsgSender {
     const SENDER_ID: u16 = 42;
     const LOCK_FAILURE: &'static str = "failed to aquire sender lock";
 
-    pub fn new<W>(wtr: W) -> Self
+    pub fn new<W>(writer: W) -> Self
     where
         W: io::Write + Send + 'static,
     {
         Self {
-            inner: Arc::new(Mutex::new(SbpEncoder::new(Box::new(wtr)))),
+            inner: Arc::new(Mutex::new(SbpEncoder::new(Box::new(writer)))),
         }
     }
 

@@ -55,6 +55,12 @@ from advanced_magnetometer_tab import (
     ADVANCED_MAGNETOMETER_TAB,
 )
 
+from advanced_networking_tab import (
+    AdvancedNetworkingModel,
+    AdvancedNetworkingData,
+    ADVANCED_NETWORKING_TAB,
+)
+
 from advanced_spectrum_analyzer_tab import (
     AdvancedSpectrumAnalyzerModel,
     AdvancedSpectrumAnalyzerPoints,
@@ -287,6 +293,14 @@ def receive_messages(app_, backend, messages):
             ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.YMIN] = m.advancedSpectrumAnalyzerStatus.ymin
             ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.XMAX] = m.advancedSpectrumAnalyzerStatus.xmax
             ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.XMIN] = m.advancedSpectrumAnalyzerStatus.xmin
+        elif m.which == Message.Union.AdvancedNetworkingStatus:
+            ADVANCED_NETWORKING_TAB[Keys.RUNNING] = m.advancedNetworkingStatus.running
+            ADVANCED_NETWORKING_TAB[Keys.IP_ADDRESS] = m.advancedNetworkingStatus.ipAddress
+            ADVANCED_NETWORKING_TAB[Keys.PORT] = m.advancedNetworkingStatus.port
+            ADVANCED_NETWORKING_TAB[Keys.NETWORK_INFO][:] = [
+                [entry.interfaceName, entry.ipv4Address, entry.running, entry.txUsage, entry.rxUsage]
+                for entry in m.advancedNetworkingStatus.networkInfo
+            ]
         elif m.which == Message.Union.AdvancedSystemMonitorStatus:
             ADVANCED_SYSTEM_MONITOR_TAB[Keys.OBS_LATENCY][:] = [
                 [entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.obsLatency
@@ -552,6 +566,31 @@ class DataModel(QObject):  # pylint: disable=too-many-instance-attributes,too-ma
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
 
+    @Slot(list, QTKeys.QVARIANT, QTKeys.QVARIANT, QTKeys.QVARIANT)  # type: ignore
+    def advanced_networking(
+        self, buttons: list, all_messages_toggle: Optional[bool], ipv4_address: Optional[str], port: Optional[int]
+    ) -> None:
+        Message = self.messages.Message
+        m = Message()
+        m.advancedNetworkingStatusFront = m.init(Message.Union.AdvancedNetworkingStatusFront)
+        m.advancedNetworkingStatusFront.refresh = buttons[0]
+        m.advancedNetworkingStatusFront.start = buttons[1]
+        m.advancedNetworkingStatusFront.stop = buttons[2]
+        if all_messages_toggle is not None:
+            m.advancedNetworkingStatusFront.allMessages.toggle = all_messages_toggle
+        else:
+            m.advancedNetworkingStatusFront.allMessages.none = None
+        if ipv4_address is not None:
+            m.advancedNetworkingStatusFront.ipv4Address.address = ipv4_address
+        else:
+            m.advancedNetworkingStatusFront.ipv4Address.none = None
+        if port is not None:
+            m.advancedNetworkingStatusFront.port.port = int(port)
+        else:
+            m.advancedNetworkingStatusFront.port.none = None
+        buffer = m.to_bytes()
+        self.endpoint.send_message(buffer)
+
     @Slot(str)  # type: ignore
     def solution_position_unit(self, unit: str) -> None:
         Message = self.messages.Message
@@ -712,6 +751,7 @@ if __name__ == "__main__":
     qmlRegisterType(LoggingBarData, "SwiftConsole", 1, 0, "LoggingBarData")  # type: ignore
     qmlRegisterType(AdvancedInsPoints, "SwiftConsole", 1, 0, "AdvancedInsPoints")  # type: ignore
     qmlRegisterType(AdvancedMagnetometerPoints, "SwiftConsole", 1, 0, "AdvancedMagnetometerPoints")  # type: ignore
+    qmlRegisterType(AdvancedNetworkingData, "SwiftConsole", 1, 0, "AdvancedNetworkingData")  # type: ignore
     qmlRegisterType(
         AdvancedSpectrumAnalyzerPoints, "SwiftConsole", 1, 0, "AdvancedSpectrumAnalyzerPoints"  # type: ignore
     )
@@ -748,6 +788,7 @@ if __name__ == "__main__":
     nav_bar_model = NavBarModel()
     advanced_ins_model = AdvancedInsModel()
     advanced_magnetometer_model = AdvancedMagnetometerModel()
+    advanced_networking_model = AdvancedNetworkingModel()
     advanced_spectrum_analyzer_model = AdvancedSpectrumAnalyzerModel()
     advanced_system_monitor_model = AdvancedSystemMonitorModel()
     fusion_engine_flags_model = FusionStatusFlagsModel()
@@ -768,6 +809,7 @@ if __name__ == "__main__":
     root_context.setContextProperty("nav_bar_model", nav_bar_model)
     root_context.setContextProperty("advanced_ins_model", advanced_ins_model)
     root_context.setContextProperty("advanced_magnetometer_model", advanced_magnetometer_model)
+    root_context.setContextProperty("advanced_networking_model", advanced_networking_model)
     root_context.setContextProperty("advanced_spectrum_analyzer_model", advanced_spectrum_analyzer_model)
     root_context.setContextProperty("advanced_system_monitor_model", advanced_system_monitor_model)
     root_context.setContextProperty("fusion_engine_flags_model", fusion_engine_flags_model)

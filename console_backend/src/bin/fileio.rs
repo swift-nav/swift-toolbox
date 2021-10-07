@@ -71,8 +71,8 @@ fn main() -> Result<()> {
             dest,
             input,
         } => {
-            let (rdr, wtr) = input.into_conn().try_connect(/*shared_state=*/ None)?;
-            let sender = MsgSender::new(wtr);
+            let (rdr, writer) = input.into_conn().try_connect(/*shared_state=*/ None)?;
+            let sender = MsgSender::new(writer);
             scope(|s| {
                 s.spawn(|_| run(rdr));
                 let mut fileio = Fileio::new(link, sender);
@@ -96,8 +96,8 @@ fn main() -> Result<()> {
             dest,
             input,
         } => {
-            let (rdr, wtr) = input.into_conn().try_connect(/*shared_state=*/ None)?;
-            let sender = MsgSender::new(wtr);
+            let (rdr, writer) = input.into_conn().try_connect(/*shared_state=*/ None)?;
+            let sender = MsgSender::new(writer);
             scope(|s| {
                 s.spawn(|_| run(rdr));
                 let mut fileio = Fileio::new(link, sender);
@@ -112,8 +112,8 @@ fn main() -> Result<()> {
             .unwrap()
         }
         Opts::List { path, input } => {
-            let (rdr, wtr) = input.into_conn().try_connect(/*shared_state=*/ None)?;
-            let sender = MsgSender::new(wtr);
+            let (rdr, writer) = input.into_conn().try_connect(/*shared_state=*/ None)?;
+            let sender = MsgSender::new(writer);
             scope(|s| {
                 s.spawn(|_| run(rdr));
                 let mut fileio = Fileio::new(link, sender);
@@ -125,8 +125,8 @@ fn main() -> Result<()> {
             .unwrap()
         }
         Opts::Delete { path, input } => {
-            let (rdr, wtr) = input.into_conn().try_connect(/*shared_state=*/ None)?;
-            let sender = MsgSender::new(wtr);
+            let (rdr, writer) = input.into_conn().try_connect(/*shared_state=*/ None)?;
+            let sender = MsgSender::new(writer);
             scope(|s| {
                 s.spawn(|_| run(rdr));
                 let fileio = Fileio::new(link, sender);

@@ -290,23 +290,28 @@ run_task = [
 cwd = "py39-dist"
 script_runner = "@duckscript"
 script = '''
-py_folders = array test tests examples __pycache__ demos
+py_folders = array test tests examples __pycache__ demos translations
 qt_folders = array plugins/virtualkeyboard lib/Tix8.4.3 tcl/tix8.4.3
 all_folders = array_concat ${py_folders} ${qt_folders}
-
 for name in ${all_folders}
-    folders = glob_array "**/${name}/"
+    folders = glob_array **/${name}/
     for folder in ${folders}
-        echo ${folder}
         rm -r ${folder}
     end
 end
 
 file_exts = array pyc pyi pdb tcl gif
 for ext in ${file_exts}
-    files = glob_array "**/*.${ext}"
+    files = glob_array **/*.${ext}
     for file in ${files}
-        echo ${file}
+        rm ${file}
+    end
+end
+
+libs = array Qt5WebEngineCore Qt5Pdf Qt5Designer Qt5DesignerComponents
+for lib in ${libs}
+    files = glob_array ./**/*${lib}.*
+    for file in ${files}
         rm ${file}
     end
 end
@@ -316,22 +321,24 @@ if eq ${os} windows
     mv ./Scripts/swiftnav-console.exe .
     rm -r ./Scripts
     mv ./swiftnav-console.exe ./Scripts/
+
     rm -r ./include
+
     globs = array _test*.pyd libcrypto*.dll libssl*.dll tcl*.dll tk*.dll
     for glob in ${globs}
         files = glob_array **/Dlls/${glob}
         for file in ${files}
-            echo ${file}
             rm ${file}
         end
     end
 else
-    rm -r ./share
     mv ./bin/swiftnav-console .
     mv ./bin/python3 .
     rm -r ./bin
     mv ./swiftnav-console ./bin/
     mv ./python3 ./bin/
+
+    rm -r ./share
 end
 
 exec --fail-on-error ${DIST_PYTHON} -m pip uninstall -y pip setuptools wheel
@@ -339,7 +346,6 @@ exec --fail-on-error ${DIST_PYTHON} -m compileall -b -f -o 1 -o 2 .
 
 files = glob_array "*.py"
 for file in ${files}
-    echo ${file}
     rm ${file}
 end
 '''

@@ -296,7 +296,7 @@ cwd = "py39-dist"
 script_runner = "@duckscript"
 script = '''
 py_folders = array test tests examples __pycache__ demos translations idlelib lib/tcl8 lib/tcl8.6 lib/tk8.6 shiboken2/docs python3.9/ensurepip lib2to3 tkinter unittest
-qt_folders = array plugins/virtualkeyboard plugins/sqldrivers lib/Tix8.4.3 tcl/tix8.4.3 Qt/resources PySide2/resources
+qt_folders = array plugins/geoservices plugins/virtualkeyboard plugins/sqldrivers lib/Tix8.4.3 tcl/tix8.4.3 Qt/resources PySide2/resources
 qml_folders = array qml/QtWeb* qml/QtBluetooth* qml/QtNfc* qml/QtGamepad qml/QtTest qml/QtQuick3D qml/Qt3D qml/QtSensors qml/QtLocation qml/QtPositioning
 all_folders = array_concat ${py_folders} ${qt_folders} ${qml_folders}
 for name in ${all_folders}
@@ -321,7 +321,7 @@ for ext in ${file_exts}
     end
 end
 
-libs = array QtSensors QtLocation QtPositioning Qt3D Qt53D Qt5Nfc Qt5Web QtWeb Qt5Pdf Qt5Designer Qt5DesignerComponents Qt5VirtualKeyboard Qt5Bluetooth Qt5Quick3D
+libs = array QtSensors QtLocation Qt5Location QtPositioning Qt3D Qt53D Qt5Nfc Qt5Web QtWeb Qt5Pdf Qt5Designer Qt5DesignerComponents Qt5VirtualKeyboard Qt5Bluetooth Qt5Quick3D
 for lib in ${libs}
     files = glob_array ./**/*${lib}*
     for file in ${files}

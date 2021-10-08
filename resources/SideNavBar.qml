@@ -103,6 +103,7 @@ Item {
                     text: modelData.name
                     width: Constants.sideNavBar.tabBarWidth
                     anchors.horizontalCenter: parent.horizontalCenter
+                    border: false
                     icon.source: modelData.source
                     icon.color: !enabled ? Qt.darker("white", 2) : down || checked || hovered ? Constants.swiftOrange : "white"
                     labelColor: !enabled ? Qt.darker("white", 2) : down || checked ? Constants.swiftOrange : "white"
@@ -138,6 +139,7 @@ Item {
 
             Layout.alignment: Qt.AlignBottom
             Layout.preferredWidth: Constants.sideNavBar.tabBarWidth
+            border: false
             icon.source: Constants.icons.lightningBoltPath
             icon.color: !enabled ? Constants.materialGrey : Constants.swiftOrange
             backgroundColor: hovered ? Qt.darker("white", 1.1) : "white"

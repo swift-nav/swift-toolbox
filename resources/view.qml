@@ -33,6 +33,7 @@ ApplicationWindow {
         property alias stackView: dialogStack.dialogStack
 
         anchors.fill: parent
+        spacing: 0
 
         SideNavBar {
             id: sideNavBar
@@ -76,8 +77,6 @@ ApplicationWindow {
                     orientation: Qt.Vertical
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    Layout.leftMargin: Constants.margins
-                    Layout.rightMargin: Constants.margins
                     Layout.alignment: Qt.AlignTop
 
                     MainTabs {

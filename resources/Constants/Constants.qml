@@ -6,7 +6,7 @@ pragma Singleton
 QtObject {
     readonly property real margins: 2
     readonly property real tabBarWidth: 70
-    readonly property real tabBarHeight: 40
+    readonly property real tabBarHeight: 45
     readonly property real topLevelSpacing: 0
     readonly property real logPanelPreferredHeight: 100
     readonly property int loggingBarPreferredHeight: 50

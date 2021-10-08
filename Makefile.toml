@@ -194,7 +194,7 @@ args = [
 
 [tasks.build-frontend-wheel]
 command = "${PYTHON}"
-args = ["-m", "flit", "build"]
+args = ["-m", "flit", "build", "--no-setup-py"]
 
 [tasks.build-backend-wheel]
 cwd = "console_backend"
@@ -249,7 +249,6 @@ cd standalone-py/python/install/
 cp . ../../../py39-dist
 cd ../../..
 exec --fail-on-error ${DIST_PYTHON} ./get-pip.py
-exec --fail-on-error ${DIST_PYTHON} -m pip install .
 '''
 
 [tasks.build-dist-install-frontend-wheel]
@@ -280,6 +279,17 @@ script = '''
 touch ./py39-dist/.frozen
 '''
 
+[tasks.build-dist-fix-shebang]
+command = "./utils/fix_shebang.py"
+condition = { platforms = ["linux", "mac"] }
+args = [
+  "-s",
+  "#!/usr/bin/env sh\n\"exec\" \"`dirname $0`/python3\" \"$0\" \"$@\"",
+  "py39-dist/bin/swiftnav-console",
+  "-o",
+  "py39-dist/bin",
+]
+
 [tasks.build-dist]
 dependencies = ["prep-dist"]
 run_task = [
@@ -288,6 +298,7 @@ run_task = [
     "build-dist-install-backend-wheel",
     "build-dist-copy-resources",
     "build-dist-freeze",
+    "build-dist-fix-shebang",
   ] },
 ]
 

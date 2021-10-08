@@ -287,6 +287,15 @@ jobs:
           OS_NAME: ${{ runner.os }}
         shell: bash
         run: |
+          mkdir bench
+          cp -r console_backend/tests/data bench
+          cp utils/bench_runner.py bench
+          cd bench
+          7z a -tzip "../$OS_NAME.zip" *;
+          cd ..
+          echo "${OS_NAME}.zip" >bench-archive.filename;
+          echo "BENCH_ARCHIVE=$(cat bench-archive.filename)" >>$GITHUB_ENV
+
           RELEASE_ARCHIVE=$(find . -maxdepth 1 -iname "*.tar.xz")
           echo $RELEASE_ARCHIVE >release-archive.filename
           echo "RELEASE_ARCHIVE=$(cat release-archive.filename)" >>$GITHUB_ENV
@@ -296,6 +305,12 @@ jobs:
           path: |
             ${{ env.RELEASE_ARCHIVE }}
             release-archive.filename
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ runner.os }}-artifacts-bench
+          path: |
+            ${{ env.BENCH_ARCHIVE }}
+            bench-archive.filename
       - name: ${{ runner.os }} Installer Size Benchmark.
         env:
           OS_NAME: ${{ runner.os }}
@@ -347,11 +362,19 @@ jobs:
           path: |
             console
 
+      - uses: actions/download-artifact@v2
+        with:
+          name: ${{ matrix.os }}-artifacts-bench
+          path: |
+            bench
+
       - name: Extract binary and data.
         run: |
           cd console
           tar xf $(cat release-archive.filename)
-          cp -r ../console_backend/tests/data .
+          ls -la
+          mv ../bench/${{ matrix.os }}.zip .
+          7z x ${{ matrix.os }}.zip -aoa
           ls -la
 
       - name: Run CPU Frontend Benchmark.

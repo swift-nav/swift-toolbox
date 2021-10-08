@@ -343,7 +343,7 @@ alias = "python-format-all"
 [tasks.python-lint]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV pylint --output-format=parseable $PYTHON_FILES
+conda run -n $CONDA_ENV pylint --extension-pkg-allow-list=console_backend --output-format=parseable $PYTHON_FILES
 '''
 
 [tasks.format-toml-check]

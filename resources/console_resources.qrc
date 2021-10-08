@@ -89,5 +89,10 @@
     <file>TableComponents/SortableColumnHeading.qml</file>
     <file>TableComponents/TableCellDelegate.qml</file>
     <file>BaseComponents/SwiftGroupBox.qml</file>
+    <file>Theme/qmldir</file>
+    <file>Theme/Theme.qml</file>
+    <file alias="SwiftNav/CheckBox.qml">styles/SwiftNav/CheckBox.qml</file>
+    <file alias="SwiftNav/TabBar.qml">styles/SwiftNav/TabBar.qml</file>
+    <file alias="SwiftNav/TabButton.qml">styles/SwiftNav/TabButton.qml</file>
 </qresource>
 </RCC>

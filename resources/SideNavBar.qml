@@ -3,7 +3,7 @@ import QtQuick 2.5
 import QtQuick.Controls 2.3
 import SwiftConsole 1.0
 
-Rectangle {
+Item {
     property alias curIndex: tab.currentIndex
     property var drawer: parent.drawer
     property var tabModel: [{
@@ -44,6 +44,9 @@ Rectangle {
         contentHeight: Constants.sideNavBar.tabBarHeight
         contentWidth: Constants.sideNavBar.tabBarWidth
         currentIndex: Globals.initialMainTabIndex + 1
+        background: Rectangle {
+            color: "#323F48"
+        }
         Component.onCompleted: {
             hamburger.checkable = false;
         }
@@ -54,6 +57,8 @@ Rectangle {
             width: Constants.sideNavBar.tabBarWidth
             anchors.horizontalCenter: parent.horizontalCenter
             icon.source: Constants.sideNavBar.hamburgerPath
+            icon.color: !enabled ? Qt.darker("white", 2) : down || checked ? "#F68121" : hovered ? Qt.darker("#F68121", 1.5) : "white"
+            backgroundColor: down || checked ? "white" : hovered ? Qt.darker("#323F48", 1.1) : "#323F48"
             display: AbstractButton.IconOnly
             rightInset: Constants.sideNavBar.buttonInset
             leftInset: Constants.sideNavBar.buttonInset
@@ -72,7 +77,9 @@ Rectangle {
                 width: Constants.sideNavBar.tabBarWidth
                 anchors.horizontalCenter: parent.horizontalCenter
                 icon.source: modelData.source
-                icon.color: checked ? Constants.swiftOrange : Constants.materialGrey
+                icon.color: !enabled ? Qt.darker("white", 2) : down || checked || hovered ? Constants.swiftOrange : "white"
+                labelColor: !enabled ? Qt.darker("white", 2) : down || checked ? "#323F48" : "white"
+                backgroundColor: down || checked ? "white" : hovered ? Qt.darker("#323F48", 1.1) : "#323F48"
                 display: AbstractButton.TextUnderIcon
                 font.pointSize: Constants.smallPointSize
                 padding: Constants.sideNavBar.buttonPadding

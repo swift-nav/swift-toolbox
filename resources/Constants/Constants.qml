@@ -48,7 +48,6 @@ QtObject {
     readonly property real mediumPointSize: 8
     readonly property real largePointSize: 9
     readonly property bool debugMode: false
-    readonly property color materialRed: "crimson"
     readonly property color materialGrey: "dimgrey"
     readonly property color swiftOrange: "#FF8300"
 

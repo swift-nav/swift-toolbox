@@ -40,10 +40,10 @@ minreq = { version = "2.4.2", features = ["https"] }
 regex = { version = "1.5.4" }
 semver = { version = "1" }
 rust-ini = "0.17.0"
-sbp = { version = "3.4.11-beta", features = ["json", "link", "swiftnav"] }
-sbp-settings = "0.1.0"
+sbp = { version = "4.0.1", features = ["json", "link", "swiftnav"] }
+sbp-settings = "0.1.1"
 env_logger = { version = "0.9", optional = true }
-mimalloc = { version = "*", default-features = false }
+mimalloc = { version = "0.1", default-features = false }
 
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 serialport = "4.0.1"

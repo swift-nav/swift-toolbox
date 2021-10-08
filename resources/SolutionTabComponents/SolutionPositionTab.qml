@@ -1,6 +1,7 @@
 import "../Constants"
 import "../SolutionPlotCommon/SolutionPlotLoop.js" as SolutionPlotLoop
 import QtCharts 2.15
+import QtGraphicalEffects 1.15
 import QtQuick 2.15
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.15
@@ -65,11 +66,27 @@ Item {
                     ButtonGroup.group: solutionButtonGroup
                     Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
                     Layout.preferredHeight: Constants.commonChart.buttonHeight
-                    text: "| |"
                     ToolTip.visible: hovered
                     ToolTip.text: "Pause"
                     checkable: true
                     onClicked: data_model.solution_position([solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].pressed])
+
+                    Image {
+                        id: solutionPauseImage
+
+                        anchors.centerIn: parent
+                        width: Constants.solutionPosition.buttonSvgHeight
+                        height: Constants.solutionPosition.buttonSvgHeight
+                        source: Constants.icons.pauseButtonUrl
+                        visible: false
+                    }
+
+                    ColorOverlay {
+                        anchors.fill: solutionPauseImage
+                        source: solutionPauseImage
+                        color: !solutionPauseButton.checked ? "dimgrey" : "crimson"
+                    }
+
                 }
 
                 Button {
@@ -78,10 +95,26 @@ Item {
                     ButtonGroup.group: solutionButtonGroup
                     Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
                     Layout.preferredHeight: Constants.commonChart.buttonHeight
-                    text: " X "
                     ToolTip.visible: hovered
                     ToolTip.text: "Clear"
                     onPressed: data_model.solution_position([solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].pressed])
+
+                    Image {
+                        id: solutionClearImage
+
+                        anchors.centerIn: parent
+                        width: Constants.solutionPosition.buttonSvgHeight
+                        height: Constants.solutionPosition.buttonSvgHeight
+                        source: Constants.icons.clearButtonUrl
+                        visible: false
+                    }
+
+                    ColorOverlay {
+                        anchors.fill: solutionClearImage
+                        source: solutionClearImage
+                        color: !solutionClearButton.checked ? "dimgrey" : "crimson"
+                    }
+
                 }
 
                 Button {
@@ -99,11 +132,27 @@ Item {
                     }
                     Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
                     Layout.preferredHeight: Constants.commonChart.buttonHeight
-                    text: "[ ]"
                     ToolTip.visible: hovered
                     ToolTip.text: "Zoom All"
                     checkable: true
                     checked: true
+
+                    Image {
+                        id: solutionZoomAllImage
+
+                        anchors.centerIn: parent
+                        width: Constants.solutionPosition.buttonSvgHeight
+                        height: Constants.solutionPosition.buttonSvgHeight
+                        source: Constants.icons.zoomAllButtonUrl
+                        visible: false
+                    }
+
+                    ColorOverlay {
+                        anchors.fill: solutionZoomAllImage
+                        source: solutionZoomAllImage
+                        color: !solutionZoomAllButton.checked ? "dimgrey" : "crimson"
+                    }
+
                 }
 
                 Button {
@@ -122,10 +171,26 @@ Item {
                     }
                     Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
                     Layout.preferredHeight: Constants.commonChart.buttonHeight
-                    text: "(><)"
                     ToolTip.visible: hovered
                     ToolTip.text: "Center On Solution"
                     checkable: true
+
+                    Image {
+                        id: centerButtonImage
+
+                        anchors.centerIn: parent
+                        width: Constants.solutionPosition.buttonSvgHeight
+                        height: Constants.solutionPosition.buttonSvgHeight
+                        source: Constants.icons.centerOnButtonUrl
+                        visible: false
+                    }
+
+                    ColorOverlay {
+                        anchors.fill: centerButtonImage
+                        source: centerButtonImage
+                        color: !solutionCenterButton.checked ? "dimgrey" : "crimson"
+                    }
+
                 }
 
                 Text {

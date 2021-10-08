@@ -1,6 +1,7 @@
 import "../Constants"
 import "../SolutionPlotCommon/SolutionPlotLoop.js" as SolutionPlotLoop
 import QtCharts 2.15
+import QtGraphicalEffects 1.15
 import QtQuick 2.15
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.15
@@ -62,11 +63,27 @@ Item {
                     ButtonGroup.group: baselineButtonGroup
                     Layout.preferredWidth: Constants.baselinePlot.navBarButtonWidth
                     Layout.preferredHeight: Constants.commonChart.buttonHeight
-                    text: "| |"
                     ToolTip.visible: hovered
                     ToolTip.text: "Pause"
                     checkable: true
                     onClicked: data_model.baseline_plot([baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].pressed, baselineButtonGroup.buttons[0].pressed])
+
+                    Image {
+                        id: baselinePauseImage
+
+                        anchors.centerIn: parent
+                        width: Constants.baselinePlot.buttonSvgHeight
+                        height: Constants.baselinePlot.buttonSvgHeight
+                        source: Constants.icons.pauseButtonUrl
+                        visible: false
+                    }
+
+                    ColorOverlay {
+                        anchors.fill: baselinePauseImage
+                        source: baselinePauseImage
+                        color: !baselinePauseButton.checked ? "dimgrey" : "crimson"
+                    }
+
                 }
 
                 Button {
@@ -76,9 +93,25 @@ Item {
                     ButtonGroup.group: baselineButtonGroup
                     Layout.preferredWidth: Constants.baselinePlot.navBarButtonWidth
                     Layout.preferredHeight: Constants.commonChart.buttonHeight
-                    text: " X "
                     ToolTip.visible: hovered
                     ToolTip.text: "Clear"
+
+                    Image {
+                        id: baselineClearImage
+
+                        anchors.centerIn: parent
+                        width: Constants.baselinePlot.buttonSvgHeight
+                        height: Constants.baselinePlot.buttonSvgHeight
+                        source: Constants.icons.clearButtonUrl
+                        visible: false
+                    }
+
+                    ColorOverlay {
+                        anchors.fill: baselineClearImage
+                        source: baselineClearImage
+                        color: !baselineClearButton.checked ? "dimgrey" : "crimson"
+                    }
+
                 }
 
                 Button {
@@ -96,11 +129,27 @@ Item {
                     }
                     Layout.preferredWidth: Constants.baselinePlot.navBarButtonWidth
                     Layout.preferredHeight: Constants.commonChart.buttonHeight
-                    text: "[ ]"
                     ToolTip.visible: hovered
                     ToolTip.text: "Zoom All"
                     checkable: true
                     checked: true
+
+                    Image {
+                        id: baselineZoomAllImage
+
+                        anchors.centerIn: parent
+                        width: Constants.baselinePlot.buttonSvgHeight
+                        height: Constants.baselinePlot.buttonSvgHeight
+                        source: Constants.icons.zoomAllButtonUrl
+                        visible: false
+                    }
+
+                    ColorOverlay {
+                        anchors.fill: baselineZoomAllImage
+                        source: baselineZoomAllImage
+                        color: !baselineZoomAllButton.checked ? "dimgrey" : "crimson"
+                    }
+
                 }
 
                 Button {
@@ -119,10 +168,26 @@ Item {
                     }
                     Layout.preferredWidth: Constants.baselinePlot.navBarButtonWidth
                     Layout.preferredHeight: Constants.commonChart.buttonHeight
-                    text: "(><)"
                     ToolTip.visible: hovered
                     ToolTip.text: "Center On Solution"
                     checkable: true
+
+                    Image {
+                        id: centerButtonImage
+
+                        anchors.centerIn: parent
+                        width: Constants.baselinePlot.buttonSvgHeight
+                        height: Constants.baselinePlot.buttonSvgHeight
+                        source: Constants.icons.centerOnButtonUrl
+                        visible: false
+                    }
+
+                    ColorOverlay {
+                        anchors.fill: centerButtonImage
+                        source: centerButtonImage
+                        color: !baselineCenterButton.checked ? "dimgrey" : "crimson"
+                    }
+
                 }
 
                 Button {

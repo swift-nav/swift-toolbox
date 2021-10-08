@@ -326,6 +326,7 @@ QtObject {
     }
 
     baselinePlot: QtObject {
+        readonly property int buttonSvgHeight: 15
         readonly property int navBarMargin: 10
         readonly property int navBarSpacing: 0
         readonly property real navBarButtonWidth: 40
@@ -352,6 +353,7 @@ QtObject {
     }
 
     solutionPosition: QtObject {
+        readonly property int buttonSvgHeight: 15
         readonly property int navBarMargin: 10
         readonly property int navBarSpacing: 0
         readonly property real navBarButtonProportionOfParent: 0.11
@@ -501,6 +503,10 @@ QtObject {
         readonly property string importPath: "images/fontawesome/file-import.svg"
         readonly property string warningPath: "images/fontawesome/exclamation-triangle.svg"
         readonly property string connectButtonPath: "images/fontawesome/power-off-solid.svg"
+        readonly property string pauseButtonUrl: "qrc:///pause.svg"
+        readonly property string centerOnButtonUrl: "qrc:///center-on.svg"
+        readonly property string clearButtonUrl: "qrc:///clear.svg"
+        readonly property string zoomAllButtonUrl: "qrc:///zoom-all.svg"
     }
 
 }

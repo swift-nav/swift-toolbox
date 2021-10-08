@@ -4,7 +4,7 @@ import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
-Rectangle {
+Item {
     property alias curIndex: tab.currentIndex
     property var tabModel: [{
         "name": "Tracking",
@@ -35,8 +35,6 @@ Rectangle {
         "tooltip": "Advanced",
         "source": Constants.sideNavBar.advancedPath
     }]
-
-    color: Constants.sideNavBar.backgroundColor
 
     ConnectionData {
         id: connectionData
@@ -83,6 +81,10 @@ Rectangle {
             contentHeight: Constants.sideNavBar.tabBarHeight
             contentWidth: Constants.sideNavBar.tabBarWidth
             currentIndex: Globals.initialMainTabIndex + 1
+            background: Rectangle {
+                color: "#323F48"
+            }
+
             Component.onCompleted: {
                 logo.checkable = false;
             }
@@ -102,7 +104,9 @@ Rectangle {
                     width: Constants.sideNavBar.tabBarWidth
                     anchors.horizontalCenter: parent.horizontalCenter
                     icon.source: modelData.source
-                    icon.color: checked ? Constants.swiftOrange : Constants.materialGrey
+                    icon.color: !enabled ? Qt.darker("white", 2) : down || checked || hovered ? Constants.swiftOrange : "white"
+                    labelColor: !enabled ? Qt.darker("white", 2) : down || checked ? Constants.swiftOrange : "white"
+                    backgroundColor: hovered ? Qt.darker("#323F48", 1.1) : "#323F48"
                     display: AbstractButton.TextUnderIcon
                     font.pointSize: Constants.smallPointSize
                     padding: Constants.sideNavBar.buttonPadding
@@ -135,7 +139,8 @@ Rectangle {
             Layout.alignment: Qt.AlignBottom
             Layout.preferredWidth: Constants.sideNavBar.tabBarWidth
             icon.source: Constants.icons.lightningBoltPath
-            icon.color: checked ? Constants.swiftOrange : Constants.materialGrey
+            icon.color: !enabled ? Constants.materialGrey : Constants.swiftOrange
+            backgroundColor: hovered ? Qt.darker("white", 1.1) : "white"
             checkable: false
             padding: Constants.sideNavBar.buttonPadding
             rightInset: Constants.sideNavBar.buttonInset

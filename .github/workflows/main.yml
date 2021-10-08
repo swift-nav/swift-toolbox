@@ -232,6 +232,7 @@ jobs:
                 rubygems \
                 build-essential \
                 libudev-dev
+              xz -V
               sudo gem install --no-document fpm
           elif [ "$RUNNER_OS" == "macOS" ]; then
               brew install capnp llvm

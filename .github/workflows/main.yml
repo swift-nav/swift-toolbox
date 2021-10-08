@@ -232,7 +232,6 @@ jobs:
                 rubygems \
                 build-essential \
                 libudev-dev
-              xz -V
               sudo gem install --no-document fpm
           elif [ "$RUNNER_OS" == "macOS" ]; then
               brew install capnp llvm
@@ -288,9 +287,18 @@ jobs:
           OS_NAME: ${{ runner.os }}
         shell: bash
         run: |
-          bash ./.github/ci-build.sh
-          echo "RELEASE_ARCHIVE=$(cat release-archive.filename)" >>$GITHUB_ENV
+          cp -r console_backend/tests/data target/swift_navigation_console
+          cp utils/bench_runner.py target/swift_navigation_console
+          cd target/swift_navigation_console
+          7z a -tzip "../../${OS_NAME}.zip" *
+          cd ../..
+
+          echo "${OS_NAME}.zip" >bench.filename
           echo "BENCH_ARCHIVE=$(cat bench.filename)" >>$GITHUB_ENV
+
+          RELEASE_ARCHIVE=$(find . -maxdepth 1 -iname "*.tar.xz")
+          echo $RELEASE_ARCHIVE >release-archive.filename
+          echo "RELEASE_ARCHIVE=$(cat release-archive.filename)" >>$GITHUB_ENV
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ runner.os }}-artifacts
@@ -334,16 +342,18 @@ jobs:
       - name: Extract binary and data.
         run: |
           cd output
+          ls -la
           7z x $(cat bench.filename) -aoa -o${{ matrix.os }}
 
       - name: Run CPU Frontend Benchmark.
         shell: bash
         run: |
           cd output/${{ matrix.os }}
+          ls -la
           if [ "$RUNNER_OS" == "Windows" ]; then
-              python bench_runner.py --frontend_cpu --executable=swift_navigation_console.exe
+              python bench_runner.py --frontend_cpu --executable=./swift_navigation_console.exe
           elif [ "$RUNNER_OS" == "macOS" ]; then
-              python bench_runner.py --frontend_cpu --executable=./main
+              python bench_runner.py --frontend_cpu --executable=./swift_navigation_console
           elif [ "$RUNNER_OS" == "Linux" ]; then
               python bench_runner.py --frontend_cpu --executable=./swift_navigation_console
           fi
@@ -352,9 +362,9 @@ jobs:
         run: |
           cd output/${{ matrix.os }}
           if [ "$RUNNER_OS" == "Windows" ]; then
-              python bench_runner.py --frontend_mem --executable=swift_navigation_console.exe
+              python bench_runner.py --frontend_mem --executable=./swift_navigation_console.exe
           elif [ "$RUNNER_OS" == "macOS" ]; then
-              python bench_runner.py --frontend_mem --executable=./main
+              python bench_runner.py --frontend_mem --executable=./swift_navigation_console
           elif [ "$RUNNER_OS" == "Linux" ]; then
               python bench_runner.py --frontend_mem --executable=./swift_navigation_console
           fi

@@ -40,12 +40,14 @@ import QtQuick.Controls 2.12
 import QtQuick.Controls.impl 2.12
 import QtQuick.Controls.Material 2.12
 import QtQuick.Controls.Material.impl 2.12
+import "../Constants"
+
 
 T.TabButton {
     id: control
 
-    property color labelColor: !control.enabled ? control.Material.hintTextColor : control.down || control.checked ? "white" : control.hovered ? Qt.darker("white", 1.5) : control.Material.foreground
-    property color backgroundColor: down || checked ? "#F68121" : hovered ? Qt.darker("#F68121", 1.5) : "white"
+    property color labelColor: !control.enabled ? control.Material.hintTextColor : control.down || control.checked ? "white" : "#C2C2C2"
+    property color backgroundColor: down || checked ? "#F68121" : hovered ? Qt.darker(control.Material.backgroundColor, 1.05) : control.Material.backgroundColor
     implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
                             implicitContentWidth + leftPadding + rightPadding)
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
@@ -54,9 +56,16 @@ T.TabButton {
     padding: 12
     spacing: 6
 
+    font: Qt.font({
+        "family": "Roboto",
+        "pointSize": Constants.largePointSize,
+        "bold" : true,
+        "capitalization": Font.MixedCase
+    })
+
     icon.width: 24
     icon.height: 24
-    icon.color: !enabled ? Material.hintTextColor : down || checked ? "#F68121" : hovered ? Qt.darker("#F68121", 1.5) : Material.foreground
+    icon.color: !enabled ? Material.hintTextColor : down || checked ? "#F68121" : hovered ? Qt.darker("#F68121", 1.5) : "#C2C2C2"
 
     contentItem: IconLabel {
         spacing: control.spacing
@@ -70,6 +79,8 @@ T.TabButton {
     }
 
     background: Rectangle {
+        border.width: 1
+        border.color: "#C2C2C2"
         implicitHeight: control.Material.touchTarget
 
         clip: true

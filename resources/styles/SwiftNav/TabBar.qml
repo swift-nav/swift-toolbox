@@ -11,7 +11,7 @@ T.TabBar {
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
                              contentHeight + topPadding + bottomPadding)
 
-    spacing: 1
+    spacing: -1
 
     contentItem: ListView {
         model: control.contentModel
@@ -33,21 +33,40 @@ T.TabBar {
         highlight: Item {
             z: 2
             Rectangle {
+                x: 1
                 height: 2
-                width: parent.width
+                width: parent.width - 2
                 y: control.position === T.TabBar.Footer ? 0 : parent.height - height
                 color: control.Material.accentColor
             }
         }
     }
 
-    background: Rectangle {
-        color: control.Material.backgroundColor
+    background: Item {
+        z: 2
+        Rectangle {
+            color: control.Material.backgroundColor
 
-        layer.enabled: control.Material.elevation > 0
-        layer.effect: ElevationEffect {
-            elevation: control.Material.elevation
-            fullWidth: true
+            layer.enabled: control.Material.elevation > 0
+            layer.effect: ElevationEffect {
+                elevation: control.Material.elevation
+                fullWidth: true
+            }
+        }
+
+        Rectangle {
+            z: 2
+            anchors.top: parent.top
+            width: parent.width
+            height: 1
+            color: "#C2C2C2"
+        }
+        Rectangle {
+            z: 2
+            anchors.bottom: parent.bottom
+            width: parent.width
+            height: 1
+            color: "#C2C2C2"
         }
     }
 }

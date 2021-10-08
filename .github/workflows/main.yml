@@ -282,20 +282,11 @@ jobs:
         run: git lfs pull
         env:
           GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
-      - name: Zip ${{ runner.os }} Binaries.
+      - name: Archive ${{ runner.os }} Binaries.
         env:
           OS_NAME: ${{ runner.os }}
         shell: bash
         run: |
-          cp -r console_backend/tests/data target/swift_navigation_console
-          cp utils/bench_runner.py target/swift_navigation_console
-          cd target/swift_navigation_console
-          7z a -tzip "../../${OS_NAME}.zip" *
-          cd ../..
-
-          echo "${OS_NAME}.zip" >bench.filename
-          echo "BENCH_ARCHIVE=$(cat bench.filename)" >>$GITHUB_ENV
-
           RELEASE_ARCHIVE=$(find . -maxdepth 1 -iname "*.tar.xz")
           echo $RELEASE_ARCHIVE >release-archive.filename
           echo "RELEASE_ARCHIVE=$(cat release-archive.filename)" >>$GITHUB_ENV
@@ -305,12 +296,6 @@ jobs:
           path: |
             ${{ env.RELEASE_ARCHIVE }}
             release-archive.filename
-      - uses: actions/upload-artifact@v2
-        with:
-          name: ${{ runner.os }}-artifacts-bench
-          path: |
-            ${{ env.BENCH_ARCHIVE }}
-            bench.filename
       - name: ${{ runner.os }} Installer Size Benchmark.
         env:
           OS_NAME: ${{ runner.os }}
@@ -334,39 +319,62 @@ jobs:
         shell: bash
         run: |
           rm -rf output
+
+      - name: Checkout source
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          ssh-key: ${{ secrets.SSH_KEY }}
+          ssh-strict: false
+
+      - uses: webfactory/ssh-agent@v0.5.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Run ssh-keyscan
+        run: ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      - name: Setup SSH for Windows Git LFS
+        run: |
+          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
+          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
+
+        if: matrix.os == 'windows-2019'
+
       - uses: actions/download-artifact@v2
         with:
-          name: ${{ matrix.os }}-artifacts-bench
+          name: ${{ matrix.os }}-artifacts
           path: |
-            output
+            console
+
       - name: Extract binary and data.
         run: |
-          cd output
+          cd console
+          tar xf $(cat release-archive.filename)
+          cp -r ../console_backend/tests/data .
           ls -la
-          7z x $(cat bench.filename) -aoa -o${{ matrix.os }}
 
       - name: Run CPU Frontend Benchmark.
         shell: bash
         run: |
-          cd output/${{ matrix.os }}
-          ls -la
+          cd console
           if [ "$RUNNER_OS" == "Windows" ]; then
-              python bench_runner.py --frontend_cpu --executable=./swift_navigation_console.exe
+              python ../utils/bench_runner.py --frontend_cpu --executable=./Scripts/swiftnav-console.exe
           elif [ "$RUNNER_OS" == "macOS" ]; then
-              python bench_runner.py --frontend_cpu --executable=./swift_navigation_console
+              python ../utils/bench_runner.py --frontend_cpu --executable=./bin/swiftnav-console
           elif [ "$RUNNER_OS" == "Linux" ]; then
-              python bench_runner.py --frontend_cpu --executable=./swift_navigation_console
+              python ../utils/bench_runner.py --frontend_cpu --executable=./bin/swiftnav-console
           fi
       - name: Run MEM Frontend Benchmark.
         shell: bash
         run: |
-          cd output/${{ matrix.os }}
+          cd console
           if [ "$RUNNER_OS" == "Windows" ]; then
-              python bench_runner.py --frontend_mem --executable=./swift_navigation_console.exe
+              python ../utils/bench_runner.py --frontend_mem --executable=./Scripts/swiftnav-console.exe
           elif [ "$RUNNER_OS" == "macOS" ]; then
-              python bench_runner.py --frontend_mem --executable=./swift_navigation_console
+              python ../utils/bench_runner.py --frontend_mem --executable=./bin/swiftnav-console
           elif [ "$RUNNER_OS" == "Linux" ]; then
-              python bench_runner.py --frontend_mem --executable=./swift_navigation_console
+              python ../utils/bench_runner.py --frontend_mem --executable=./bin/swiftnav-console
           fi
 
 

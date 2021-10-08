@@ -731,17 +731,18 @@ if __name__ == "__main__":
     qmlRegisterType(UpdateTabData, "SwiftConsole", 1, 0, "UpdateTabData")  # type: ignore
 
     engine = QtQml.QQmlApplicationEngine()
-    qml_object_created = False
-    def handle_qml_load_errors(obj, url):  # pylint: disable=unused-argument
-        global qml_object_created  # pylint: disable=global-statement
-        qml_object_created = obj is not None
-    engine.objectCreated.connect(handle_qml_load_errors)
+    qml_object_created = [False]
+
+    def handle_qml_load_errors(obj, _url):
+        qml_object_created[0] = obj is not None
+
+    engine.objectCreated.connect(handle_qml_load_errors)  # pylint: disable=no-member
 
     capnp_path = get_capnp_path()
 
     engine.addImportPath("PySide2")
     engine.load(QUrl("qrc:/view.qml"))
-    if not qml_object_created:
+    if not qml_object_created[0]:
         sys.exit(1)
 
     messages_main = capnp.load(capnp_path)  # pylint: disable=no-member

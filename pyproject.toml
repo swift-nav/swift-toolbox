@@ -1,6 +1,3 @@
-[project.gui-scripts]
-swiftnav-console = "swiftnav_console.main:main"
-
 [project]
 name = "swiftnav_console"
 authors = [{ name = "Swift Navigation", email = "dev@swiftnav.com" }]

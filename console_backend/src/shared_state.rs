@@ -1,13 +1,14 @@
 use crate::common_constants::{self as cc, SbpLogging};
 use crate::constants::{
     APPLICATION_NAME, APPLICATION_ORGANIZATION, APPLICATION_QUALIFIER, CONNECTION_HISTORY_FILENAME,
-    DEFAULT_LOG_DIRECTORY, DEGREES, MAX_CONNECTION_HISTORY, MPS,
+    DEFAULT_LOG_DIRECTORY, MAX_CONNECTION_HISTORY, MPS,
 };
 use crate::errors::{CONVERT_TO_STR_FAILURE, SHARED_STATE_LOCK_MUTEX_FAILURE};
 use crate::log_panel::LogLevel;
 use crate::output::{CsvLogging, CsvSerializer};
 use crate::piksi_tools_constants::*;
 use crate::settings_tab;
+use crate::solution_tab::LatLonUnits;
 use crate::types::CapnProtoSender;
 use crate::update_tab::UpdateTabUpdate;
 use crate::utils::set_connected_frontend;
@@ -496,7 +497,7 @@ pub struct SolutionPositionTabState {
     pub last_ins_status_receipt_time: Instant,
     pub last_odo_update_time: Instant,
     pub pause: bool,
-    pub unit: String,
+    pub unit: Option<LatLonUnits>,
     pub log_file: Option<CsvSerializer>,
 }
 
@@ -508,7 +509,7 @@ impl SolutionPositionTabState {
             last_ins_status_receipt_time: Instant::now(),
             last_odo_update_time: Instant::now(),
             pause: false,
-            unit: String::from(DEGREES),
+            unit: None,
             log_file: None,
         }
     }

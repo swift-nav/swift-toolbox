@@ -221,6 +221,7 @@ QtObject {
         readonly property string satsLabel: "Sats: "
         readonly property string corrAgeLabel: "Corr Age: "
         readonly property string insLabel: "INS: "
+        readonly property string antennaLabel: "Ant: "
         readonly property string defaultValue: "--"
     }
 

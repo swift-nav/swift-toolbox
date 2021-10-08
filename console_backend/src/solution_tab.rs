@@ -5,7 +5,7 @@ use sbp::messages::{
     orientation::{MsgAngularRate, MsgOrientEuler},
     system::{MsgInsStatus, MsgInsUpdates},
 };
-use std::{collections::HashMap, time::Instant};
+use std::{collections::HashMap, str::FromStr, time::Instant};
 
 use crate::constants::*;
 use crate::date_conv::*;
@@ -14,6 +14,60 @@ use crate::piksi_tools_constants::EMPTY_STR;
 use crate::shared_state::SharedState;
 use crate::types::{CapnProtoSender, Deque, Dops, GnssModes, GpsTime, PosLLH, UtcDateTime, VelNED};
 use crate::utils::*;
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum LatLonUnits {
+    Degrees,
+    Meters,
+}
+
+impl LatLonUnits {
+    /// Retrieve the velocity unit as string slice.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            LatLonUnits::Degrees => DEGREES,
+            LatLonUnits::Meters => METERS,
+        }
+    }
+    pub fn get_sig_figs(&self, mean_lat: f64) -> (f64, f64) {
+        match self {
+            LatLonUnits::Degrees => (1.0, 1.0),
+            LatLonUnits::Meters => LatLonUnits::meters_per_degree(mean_lat),
+        }
+    }
+    /// Convert latitude in degrees to latitude and longitude to meters multipliers.
+    ///
+    /// Taken from:
+    /// https://github.com/swift-nav/piksi_tools/blob/v3.1.0-release/piksi_tools/console/solution_view.py
+    fn meters_per_degree(lat: f64) -> (f64, f64) {
+        let m1 = 111132.92; // latitude calculation term 1
+        let m2 = -559.82; // latitude calculation term 2
+        let m3 = 1.175; // latitude calculation term 3
+        let m4 = -0.0023; // latitude calculation term 4
+        let p1 = 111412.84; // longitude calculation term 1
+        let p2 = -93.5; // longitude calculation term 2
+        let p3 = 0.118; // longitude calculation term 3
+        let latlen = m1
+            + (m2 * f64::cos(2.0 * f64::to_radians(lat)))
+            + (m3 * f64::cos(4.0 * f64::to_radians(lat)))
+            + (m4 * f64::cos(6.0 * f64::to_radians(lat)));
+        let longlen = (p1 * f64::cos(f64::to_radians(lat)))
+            + (p2 * f64::cos(3.0 * f64::to_radians(lat)))
+            + (p3 * f64::cos(5.0 * f64::to_radians(lat)));
+        (latlen, longlen)
+    }
+}
+impl FromStr for LatLonUnits {
+    type Err = String;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        match s {
+            DEGREES => Ok(LatLonUnits::Degrees),
+            METERS => Ok(LatLonUnits::Meters),
+            _ => Err(format!("Invalid LatLonUnits: {}", s)),
+        }
+    }
+}
 
 /// SolutionTab struct.
 ///
@@ -46,39 +100,45 @@ use crate::utils::*;
 /// - `week`: The stored week value from GPS Time messages.
 #[derive(Debug)]
 pub struct SolutionTab<S: CapnProtoSender> {
-    pub age_corrections: Option<f64>,
-    pub available_units: [&'static str; 2],
-    pub client_sender: S,
-    pub directory_name: Option<String>,
-    pub ins_status_flags: u32,
-    pub ins_used: bool,
-    pub lats: Deque<f64>,
-    pub lngs: Deque<f64>,
-    pub last_ins_status_receipt_time: Instant,
-    pub last_pos_mode: u8,
-    pub last_odo_update_time: Instant,
-    pub logging: bool,
-    pub lat_max: f64,
-    pub lat_min: f64,
-    pub lon_max: f64,
-    pub lon_min: f64,
-    pub mode_strings: Vec<String>,
-    pub modes: Deque<u8>,
-    pub nsec: Option<i32>,
-    pub pending_draw_modes: Vec<String>,
-    pub shared_state: SharedState,
-    pub sln_cur_data: Vec<Vec<(f64, f64)>>,
-    pub sln_data: Vec<Vec<(f64, f64)>>,
-    pub slns: HashMap<&'static str, Deque<f64>>,
-    pub table: HashMap<&'static str, String>,
-    pub unit: &'static str,
-    pub utc_source: Option<String>,
-    pub utc_time: Option<UtcDateTime>,
-    pub week: Option<u16>,
+    age_corrections: Option<f64>,
+    available_units: [&'static str; 2],
+    client_sender: S,
+    directory_name: Option<String>,
+    ins_status_flags: u32,
+    ins_used: bool,
+    lats: Deque<f64>,
+    lngs: Deque<f64>,
+    last_ins_status_receipt_time: Instant,
+    last_pos_mode: u8,
+    last_odo_update_time: Instant,
+    logging: bool,
+    lat_sf: f64,
+    lat_offset: f64,
+    lat_max: f64,
+    lat_min: f64,
+    lon_sf: f64,
+    lon_offset: f64,
+    lon_max: f64,
+    lon_min: f64,
+    mode_strings: Vec<String>,
+    modes: Deque<u8>,
+    nsec: Option<i32>,
+    pending_draw_modes: Vec<String>,
+    shared_state: SharedState,
+    sln_cur_data: Vec<Vec<(f64, f64)>>,
+    sln_data: Vec<Vec<(f64, f64)>>,
+    slns: HashMap<&'static str, Deque<f64>>,
+    table: HashMap<&'static str, String>,
+    unit: LatLonUnits,
+    utc_source: Option<String>,
+    utc_time: Option<UtcDateTime>,
+    week: Option<u16>,
 }
 
 impl<S: CapnProtoSender> SolutionTab<S> {
     pub fn new(shared_state: SharedState, client_sender: S) -> SolutionTab<S> {
+        let unit = LatLonUnits::Degrees;
+        let (lat_sf, lon_sf) = unit.get_sig_figs(0.0);
         SolutionTab {
             age_corrections: None,
             available_units: [DEGREES, METERS],
@@ -92,10 +152,14 @@ impl<S: CapnProtoSender> SolutionTab<S> {
             last_pos_mode: 0,
             last_odo_update_time: Instant::now(),
             logging: false,
-            lat_max: LAT_MAX,
-            lat_min: LAT_MIN,
-            lon_max: LON_MAX,
-            lon_min: LON_MIN,
+            lat_sf,
+            lat_offset: 0.0,
+            lat_max: f64::MAX,
+            lat_min: f64::MIN,
+            lon_sf,
+            lon_offset: 0.0,
+            lon_max: f64::MAX,
+            lon_min: f64::MIN,
             modes: Deque::new(PLOT_HISTORY_MAX),
             mode_strings: vec![
                 GnssModes::Spp.to_string(),
@@ -122,7 +186,7 @@ impl<S: CapnProtoSender> SolutionTab<S> {
                     .map(|key| (*key, String::from(EMPTY_STR)))
                     .collect()
             },
-            unit: DEGREES,
+            unit,
             utc_source: None,
             utc_time: None,
             week: None,
@@ -524,19 +588,27 @@ impl<S: CapnProtoSender> SolutionTab<S> {
             self.table
                 .insert(CORR_AGE_S, format!("{}", age_corrections_));
         }
-        let (clear, pause, unit) = self.check_state();
-        self.solution_draw(clear, pause, unit);
+        let (clear, pause) = self.check_state();
+        self.solution_draw(clear, pause);
         self.send_solution_data();
         self.send_table_data();
     }
 
-    pub fn check_state(&self) -> (bool, bool, String) {
-        let mut shared_data = self.shared_state.lock().unwrap();
-        let clear = (*shared_data).solution_tab.position_tab.clear;
-        (*shared_data).solution_tab.position_tab.clear = false;
-        let pause = (*shared_data).solution_tab.position_tab.pause;
-        let unit = (*shared_data).solution_tab.position_tab.unit.clone();
-        (clear, pause, unit)
+    pub fn check_state(&mut self) -> (bool, bool) {
+        let (clear, pause, new_unit) = {
+            let mut shared_data = self.shared_state.lock().unwrap();
+            let clear = (*shared_data).solution_tab.position_tab.clear;
+            (*shared_data).solution_tab.position_tab.clear = false;
+            let pause = (*shared_data).solution_tab.position_tab.pause;
+            let new_unit = (*shared_data).solution_tab.position_tab.unit.take();
+            (clear, pause, new_unit)
+        };
+        if let Some(unit) = new_unit {
+            if unit != self.unit {
+                self.convert_points(unit);
+            }
+        }
+        (clear, pause)
     }
 
     pub fn clear_sln(&mut self) {
@@ -547,17 +619,10 @@ impl<S: CapnProtoSender> SolutionTab<S> {
 
     /// Initiates preprocessing of solution data and handles frontend input.
     ///
-    /// TODO(johnmichael.burke@) https://swift-nav.atlassian.net/browse/CPP-95
-    /// Need to complete missing functionalities:
-    /// - Center on solution
-    /// - Change unit of measure
-    /// - Handle zoom feature.
-    ///
     /// # Parameters
     /// - `clear`: Indicates whether to initiate a clearing of all solution data stored.
     /// - `pause`: Indicates whther or not to pause the plot updates.
-    /// - `unit`: The current unit of measure to cast the data to.
-    pub fn solution_draw(&mut self, clear: bool, pause: bool, _unit: String) {
+    pub fn solution_draw(&mut self, clear: bool, pause: bool) {
         if clear {
             self.clear_sln();
         }
@@ -565,10 +630,10 @@ impl<S: CapnProtoSender> SolutionTab<S> {
             return;
         }
         let current_mode: Option<String> = if !self.pending_draw_modes.is_empty() {
-            self.lat_min = LAT_MAX;
-            self.lat_max = LAT_MIN;
-            self.lon_min = LON_MAX;
-            self.lon_max = LON_MIN;
+            self.lat_min = f64::MAX;
+            self.lat_max = f64::MIN;
+            self.lon_min = f64::MAX;
+            self.lon_max = f64::MIN;
             Some(self.pending_draw_modes[self.pending_draw_modes.len() - 1].clone())
         } else {
             None
@@ -612,18 +677,81 @@ impl<S: CapnProtoSender> SolutionTab<S> {
     //     let lons_mean = lons_sum/num_eles as f64;
     // }
 
+    fn convert_points(&mut self, unit: LatLonUnits) {
+        self.unit = unit;
+
+        let old_lat_sf = self.lat_sf;
+        let old_lon_sf = self.lon_sf;
+        let old_lat_offset = self.lat_offset;
+        let old_lon_offset = self.lon_offset;
+        let gnss_mode = GnssModes::from(self.last_pos_mode);
+        let mode_string = gnss_mode.to_string();
+
+        let (lat_offset, lat_sf, lon_offset, lon_sf) =
+            if matches!(&self.unit, &LatLonUnits::Degrees) {
+                (0.0, 1.0, 0.0, 1.0)
+            } else {
+                let lat_str = format!("lat_{}", mode_string);
+                let (lat_offset, lat_sf, lon_sf) = {
+                    if let Some(lats) = self.slns.get_mut(lat_str.as_str()) {
+                        let lats_counts = lats.iter().filter(|&x| !x.is_nan()).count();
+                        let lat_offset =
+                            lats.iter().fold(0.0, |acc, x| acc + x) / lats_counts as f64;
+                        let (lat_sf, lon_sf) = self.unit.get_sig_figs(lat_offset);
+                        (lat_offset, lat_sf, lon_sf)
+                    } else {
+                        (0.0, 1.0, 1.0)
+                    }
+                };
+
+                let lon_str = format!("lng_{}", mode_string);
+                let lon_offset = if let Some(lons) = self.slns.get_mut(lon_str.as_str()) {
+                    let lons_counts = lons.iter().filter(|&x| !x.is_nan()).count();
+                    lons.iter().fold(0.0, |acc, x| acc + x) / lons_counts as f64
+                } else {
+                    0.0
+                };
+
+                (lat_offset, lat_sf, lon_offset, lon_sf)
+            };
+        for mode in self.mode_strings.iter() {
+            let lat_str = format!("lat_{}", mode);
+            let lon_str = format!("lng_{}", mode);
+            if matches!(&self.unit, &LatLonUnits::Degrees) {
+                if let Some(lats) = self.slns.get_mut(lat_str.as_str()) {
+                    lats.iter_mut()
+                        .for_each(|x| *x = *x / old_lat_sf + old_lat_offset);
+                }
+                if let Some(lons) = self.slns.get_mut(lon_str.as_str()) {
+                    lons.iter_mut()
+                        .for_each(|x| *x = *x / old_lon_sf + old_lon_offset);
+                }
+            } else {
+                if let Some(lats) = self.slns.get_mut(lat_str.as_str()) {
+                    lats.iter_mut()
+                        .for_each(|x| *x = (*x - lat_offset) * lat_sf);
+                }
+                if let Some(lons) = self.slns.get_mut(lon_str.as_str()) {
+                    lons.iter_mut()
+                        .for_each(|x| *x = (*x - lon_offset) * lon_sf);
+                }
+            }
+        }
+        self.lat_sf = lat_sf;
+        self.lon_sf = lon_sf;
+        self.lat_offset = lat_offset;
+        self.lon_offset = lon_offset;
+    }
+
     /// Update a single mode's solution data for with lat and lon values.
-    ///
-    /// TODO(johnmichael.burke@) https://swift-nav.atlassian.net/browse/CPP-95
-    /// Need to implement offset and multiplier logic.
     ///
     /// # Parameters
     /// - `last_lat`: The latitude value to update solution data with.
     /// - `last_lon`: The longitude value to update solution data with.
     /// - `mode_string`: The mode associated with the update in string form.
     fn _update_sln_data_by_mode(&mut self, last_lat: f64, last_lng: f64, mode_string: String) {
-        let lat = last_lat; // - self.offset) * self.sf
-        let lng = last_lng; // - self.offset) * self.sf
+        let lat = (last_lat - self.lat_offset) * self.lat_sf;
+        let lng = (last_lng - self.lon_offset) * self.lon_sf;
 
         let lat_str = format!("lat_{}", mode_string);
         let lon_str = format!("lng_{}", mode_string);

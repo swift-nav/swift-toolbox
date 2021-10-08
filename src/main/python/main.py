@@ -358,7 +358,6 @@ def receive_messages(app_, backend, messages):
                 LOCAL_OBSERVATION_TAB[Keys.WEEK] = m.observationStatus.week
                 LOCAL_OBSERVATION_TAB[Keys.ROWS][:] = obs_rows_to_json(m.observationStatus.rows)
         elif m.which == Message.Union.StatusBarStatus:
-            STATUS_BAR[Keys.PORT] = m.statusBarStatus.port
             STATUS_BAR[Keys.POS] = m.statusBarStatus.pos
             STATUS_BAR[Keys.RTK] = m.statusBarStatus.rtk
             STATUS_BAR[Keys.SATS] = m.statusBarStatus.sats
@@ -367,6 +366,7 @@ def receive_messages(app_, backend, messages):
             STATUS_BAR[Keys.DATA_RATE] = m.statusBarStatus.dataRate
             STATUS_BAR[Keys.SOLID_CONNECTION] = m.statusBarStatus.solidConnection
             STATUS_BAR[Keys.TITLE] = m.statusBarStatus.title
+            STATUS_BAR[Keys.ANTENNA_STATUS] = m.statusBarStatus.antennaStatus
         elif m.which == Message.Union.NavBarStatus:
             NAV_BAR[Keys.AVAILABLE_PORTS][:] = m.navBarStatus.availablePorts
             NAV_BAR[Keys.AVAILABLE_BAUDRATES][:] = m.navBarStatus.availableBaudrates

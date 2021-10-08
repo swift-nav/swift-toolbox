@@ -8,7 +8,6 @@ from PySide2.QtCore import Property, QObject, Slot
 from constants import Keys
 
 STATUS_BAR: Dict[str, Any] = {
-    Keys.PORT: str,
     Keys.POS: str,
     Keys.RTK: str,
     Keys.SATS: str,
@@ -17,12 +16,12 @@ STATUS_BAR: Dict[str, Any] = {
     Keys.DATA_RATE: str,
     Keys.SOLID_CONNECTION: bool,
     Keys.TITLE: str,
+    Keys.ANTENNA_STATUS: str,
 }
 
 
 class StatusBarData(QObject):  # pylint: disable=too-many-instance-attributes
 
-    _port: str = ""
     _pos: str = ""
     _rtk: str = ""
     _sats: str = ""
@@ -31,14 +30,7 @@ class StatusBarData(QObject):  # pylint: disable=too-many-instance-attributes
     _data_rate: str = ""
     _solid_connection: bool = False
     _title: str = ""
-
-    def get_port(self) -> str:
-        return self._port
-
-    def set_port(self, port: str) -> None:
-        self._port = port
-
-    port = Property(str, get_port, set_port)
+    _antenna_status: str = ""
 
     def get_pos(self) -> str:
         return self._pos
@@ -104,11 +96,18 @@ class StatusBarData(QObject):  # pylint: disable=too-many-instance-attributes
 
     title = Property(str, get_title, set_title)
 
+    def get_antenna_status(self) -> str:
+        return self._antenna_status
+
+    def set_antenna_status(self, antenna_status: str) -> None:
+        self._antenna_status = antenna_status
+
+    antenna_status = Property(str, get_antenna_status, set_antenna_status)
+
 
 class StatusBarModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(StatusBarData)  # type: ignore
     def fill_data(self, cp: StatusBarData) -> StatusBarData:  # pylint:disable=no-self-use
-        cp.set_port(STATUS_BAR[Keys.PORT])
         cp.set_pos(STATUS_BAR[Keys.POS])
         cp.set_rtk(STATUS_BAR[Keys.RTK])
         cp.set_sats(STATUS_BAR[Keys.SATS])
@@ -117,4 +116,5 @@ class StatusBarModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_data_rate(STATUS_BAR[Keys.DATA_RATE])
         cp.set_solid_connection(STATUS_BAR[Keys.SOLID_CONNECTION])
         cp.set_title(STATUS_BAR[Keys.TITLE])
+        cp.set_antenna_status(STATUS_BAR[Keys.ANTENNA_STATUS])
         return cp

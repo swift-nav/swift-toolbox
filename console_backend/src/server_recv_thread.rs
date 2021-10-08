@@ -3,11 +3,13 @@ use crate::connection::ConnectionState;
 use crate::console_backend_capnp as m;
 use crate::errors::{
     CAP_N_PROTO_DESERIALIZATION_FAILURE, CONVERT_TO_STR_FAILURE, SHARED_STATE_LOCK_MUTEX_FAILURE,
+    SOLUTION_POSITION_UNIT_SELECTION_NOT_AVAILABLE,
 };
 use crate::log_panel::LogLevel;
 use crate::output::CsvLogging;
 use crate::settings_tab;
 use crate::shared_state::{AdvancedNetworkingState, SharedState};
+use crate::solution_tab::LatLonUnits;
 use crate::types::{ClientSender, FlowControl, RealtimeDelay};
 use crate::update_tab::UpdateTabUpdate;
 use crate::utils::refresh_navbar;
@@ -157,7 +159,10 @@ pub fn server_recv_thread(
                         let unit = cv_in
                             .get_solution_position_unit()
                             .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
-                        (*shared_data).solution_tab.position_tab.unit = unit.to_string();
+                        (*shared_data).solution_tab.position_tab.unit = Some(
+                            LatLonUnits::from_str(unit)
+                                .expect(SOLUTION_POSITION_UNIT_SELECTION_NOT_AVAILABLE),
+                        );
                     }
                     m::message::SolutionPositionStatusButtonFront(Ok(cv_in)) => {
                         let shared_state_clone = shared_state.clone();

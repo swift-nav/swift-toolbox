@@ -139,12 +139,12 @@ where
         tabs.solution.lock().unwrap().handle_gps_time(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, _: MsgHeartbeat| {
+    link.register(|tabs: &Tabs<S>, msg: MsgHeartbeat| {
         tabs.advanced_system_monitor
             .lock()
             .unwrap()
             .handle_heartbeat();
-        tabs.status_bar.lock().unwrap().handle_heartbeat();
+        tabs.status_bar.lock().unwrap().handle_heartbeat(msg);
     });
 
     link.register(|tabs: &Tabs<S>, msg: MsgImuAux| {

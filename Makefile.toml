@@ -265,8 +265,8 @@ exec --fail-on-error strip py39-dist/bin/swiftnav-console
 
 [tasks.build-dist-install-entrypoint.windows]
 script = '''
-cp target/release/entrypoint py39-dist/Scripts/swiftnav-console
-exec --fail-on-error strip py39-dist/Scripts/swiftnav-console
+mkdir py39-dist/Scripts
+cp target/release/entrypoint.exe py39-dist/Scripts/swiftnav-console.exe
 '''
 
 [tasks.build-dist-install-frontend-wheel]

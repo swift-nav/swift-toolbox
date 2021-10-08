@@ -251,9 +251,23 @@ cd ../../..
 exec --fail-on-error ${DIST_PYTHON} ./get-pip.py
 '''
 
-[tasks.build-dist-build-entrypoint]
+[tasks.build-entrypoint]
 command = "cargo"
 args = ["build", "--release", "--bin", "entrypoint"]
+
+[tasks.build-dist-install-entrypoint]
+dependencies = ["build-entrypoint"]
+script_runner = "@duckscript"
+script = '''
+cp target/release/entrypoint py39-dist/bin/swiftnav-console
+exec --fail-on-error strip py39-dist/bin/swiftnav-console
+'''
+
+[tasks.build-dist-install-entrypoint.windows]
+script = '''
+cp target/release/entrypoint py39-dist/Scripts/swiftnav-console
+exec --fail-on-error strip py39-dist/Scripts/swiftnav-console
+'''
 
 [tasks.build-dist-install-frontend-wheel]
 dependencies = ["build-frontend-wheel"]
@@ -275,7 +289,6 @@ args = ["-m", "pip", "install", "console_backend/dist/${BACKEND_WHEEL}"]
 script_runner = "@duckscript"
 script = '''
 cp src/main/resources py39-dist/
-cp target/release/entrypoint py39-dist/bin/swiftnav-console
 '''
 
 [tasks.build-dist-freeze]
@@ -290,7 +303,7 @@ run_task = [
   { name = [
     "build-dist-install-frontend-wheel",
     "build-dist-install-backend-wheel",
-    "build-dist-build-entrypoint",
+    "build-dist-install-entrypoint",
     "build-dist-copy-resources",
     "build-dist-freeze",
   ] },

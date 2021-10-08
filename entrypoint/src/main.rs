@@ -1,5 +1,4 @@
 use std::env;
-use std::os::unix::prelude::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -20,10 +19,21 @@ fn find_py(dir: &Path) -> PathBuf {
     }
 }
 
-fn main() -> Result<()> {
-    let me = env::current_exe()?;
-    let parent = me.parent().ok_or("no parent directory")?;
-    let py = find_py(parent);
+#[cfg(target_os = "windows")]
+fn start(py: &Path) -> Result<()> {
+    let mut child = Command::new(py)
+        .arg("-m")
+        .arg("swiftnav_console.main")
+        .arg("--")
+        .args(env::args().skip(1))
+        .spawn()?;
+    child.wait()?;
+    Ok(())
+}
+
+#[cfg(not(target_os = "windows"))]
+fn start(py: &Path) -> Result<()> {
+    use std::os::unix::prelude::CommandExt;
     let err = Command::new(py)
         .arg("-m")
         .arg("swiftnav_console.main")
@@ -31,4 +41,11 @@ fn main() -> Result<()> {
         .args(env::args().skip(1))
         .exec();
     Err(err.into())
+}
+
+fn main() -> Result<()> {
+    let me = env::current_exe()?;
+    let parent = me.parent().ok_or("no parent directory")?;
+    let py = find_py(parent);
+    start(&py)
 }

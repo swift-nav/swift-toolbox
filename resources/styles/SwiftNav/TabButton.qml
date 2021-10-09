@@ -79,8 +79,8 @@ T.TabButton {
     }
 
     background: Rectangle {
-        border.width: 1
-        border.color: "#C2C2C2"
+        // border.width: 1
+        // border.color: "#C2C2C2"
         implicitHeight: control.Material.touchTarget
 
         clip: true

@@ -65,6 +65,12 @@ Item {
             onClicked: {
                 drawer.open();
             }
+            Rectangle {
+                anchors.bottom: parent.bottom
+                height: 1
+                width: parent.width
+                color: "#C2C2C2"
+            }
         }
 
         Repeater {
@@ -87,6 +93,13 @@ Item {
                 leftInset: Constants.sideNavBar.buttonInset
                 ToolTip.visible: hovered
                 ToolTip.text: modelData.tooltip
+                Rectangle {
+                    anchors.top: parent.bottom
+                    anchors.topMargin: Constants.sideNavBar.tabBarSpacing / 2
+                    height: 1
+                    width: parent.width
+                    color: "#C2C2C2"
+                }
             }
 
         }

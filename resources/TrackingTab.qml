@@ -26,6 +26,12 @@ Item {
             TabButton {
                 text: modelData
                 width: implicitWidth
+                Rectangle {
+                    anchors.fill: parent
+                    color: "transparent"
+                    border.color: "#C2C2C2"
+                    border.width: 1
+                }
             }
 
         }

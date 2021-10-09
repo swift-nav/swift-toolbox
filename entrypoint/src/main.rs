@@ -6,7 +6,7 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[cfg(target_os = "windows")]
 fn find_py(dir: &Path) -> PathBuf {
-    dir.join("pythonw.exe")
+    dir.parent().expect("no parent dir").join("pythonw.exe")
 }
 
 #[cfg(not(target_os = "windows"))]

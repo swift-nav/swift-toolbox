@@ -349,7 +349,9 @@ jobs:
             bench
 
       - name: Extract binary and data.
+        shell: bash
         run: |
+          ls
           cd console
           tar xf $(cat release-archive.filename)
           ls -la

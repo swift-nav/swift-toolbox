@@ -490,6 +490,8 @@ QtObject {
         readonly property int checkBoxPreferredWidth: 100
         readonly property int snrThreshold: 15
         readonly property int yAxisMax: 60
+        readonly property int yAxisTickInterval: 10
+        readonly property int xAxisTickInterval: 10
     }
 
     observationTab: QtObject {

@@ -461,7 +461,7 @@ impl HeartbeatInner {
             if let Some(last_age_corr_time) = self.last_age_corr_receipt_time {
                 if (self.current_time - last_age_corr_time).as_secs_f64() < UPDATE_TOLERANCE_SECONDS
                 {
-                    self.age_of_corrections = format!("{} s", age_corr);
+                    self.age_of_corrections = format!("{:.1} s", age_corr);
                 }
             }
         }

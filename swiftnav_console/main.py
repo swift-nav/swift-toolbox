@@ -694,8 +694,7 @@ def is_frozen() -> bool:
     me = os.path.dirname(sys.executable)
     if platform.system() == "Windows":
         return os.path.exists(os.path.join(me, ".frozen"))
-    else:
-        return os.path.exists(os.path.join(me, "../.frozen"))
+    return os.path.exists(os.path.join(me, "../.frozen"))
 
 
 def get_capnp_path() -> str:

@@ -378,6 +378,8 @@ QtObject {
         readonly property int textSettingWidth: 550
         readonly property int buttonIconWidth: 20
         readonly property int buttonIconHeight: 20
+        readonly property string defaultImportExportRelativePathFromHome: "SwiftNav"
+        readonly property string defaultExportFileName: "config.ini"
     }
 
     settingsTable: QtObject {

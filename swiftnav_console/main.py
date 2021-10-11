@@ -1,6 +1,7 @@
 """Frontend module for the Swift Console.
 """
 import argparse
+import platform
 import os
 import sys
 import threading
@@ -690,8 +691,11 @@ def is_frozen() -> bool:
     Returns:
         bool: Whether the application is frozen.
     """
-    p = os.path.join(os.path.dirname(sys.executable), "../.frozen")
-    return os.path.exists(p)
+    me = os.path.dirname(sys.executable)
+    if platform.system() == "Windows":
+        return os.path.exists(os.path.join(me, ".frozen"))
+    else:
+        return os.path.exists(os.path.join(me, "../.frozen"))
 
 
 def get_capnp_path() -> str:
@@ -700,11 +704,13 @@ def get_capnp_path() -> str:
     Returns:
         str: The path to the capnp file.
     """
-
     d = os.path.dirname(sys.executable)
     path = ""
     if is_frozen():
-        path = os.path.join(d, "../resources/base", CONSOLE_BACKEND_CAPNP_PATH)
+        if platform.system() == "Windows":
+            path = os.path.join(d, "resources/base", CONSOLE_BACKEND_CAPNP_PATH)
+        else:
+            path = os.path.join(d, "../resources/base", CONSOLE_BACKEND_CAPNP_PATH)
     else:
         path = os.path.join(
             os.path.dirname(os.path.dirname(__file__)), "src/main/resources/base", CONSOLE_BACKEND_CAPNP_PATH

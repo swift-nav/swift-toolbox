@@ -7,4 +7,5 @@ QtObject {
     property int initialMainTabIndex: 0 // Tracking
     property int initialSubTabIndex: 0 // Signals
     property bool showCsvLog: false
+    property bool showFileio: false
 }

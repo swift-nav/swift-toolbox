@@ -152,6 +152,7 @@ Item {
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: Constants.updateTab.textHeight
+            visible: Globals.showFileio
 
             Text {
                 text: Constants.updateTab.fileioAndProductFeatureToolTitle
@@ -167,6 +168,7 @@ Item {
             Layout.fillWidth: true
             Layout.leftMargin: Constants.updateTab.innerMargins
             Layout.rightMargin: Constants.updateTab.innerMargins
+            visible: Globals.showFileio
 
             UpdateTabComponents.FileIOSelectLocalFileAndDestPath {
                 id: fileioSelect

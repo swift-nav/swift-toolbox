@@ -714,6 +714,8 @@ def get_capnp_path() -> str:
 
 
 def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
+    if args.show_fileio:
+        globals_.setProperty("showFileio", True)  # type: ignore
     if args.no_opengl:
         globals_.setProperty("useOpenGL", False)  # type: ignore
     if args.refresh_rate is not None:
@@ -728,6 +730,7 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(add_help=False, usage=argparse.SUPPRESS)
+    parser.add_argument("--show-fileio", action="store_true")
     parser.add_argument("--no-opengl", action="store_false")
     parser.add_argument("--refresh-rate")
     parser.add_argument("--tab")

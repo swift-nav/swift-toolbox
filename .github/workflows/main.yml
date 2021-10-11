@@ -351,13 +351,11 @@ jobs:
       - name: Extract binary and data.
         shell: bash
         run: |
-          ls
-          cd console
-          tar xf $(cat release-archive.filename)
-          ls -la
+          tar xvJf $(cat release-archive.filename)
+          echo "extracted release-archive"
           mv ../bench/${{ matrix.os }}.zip .
           7z x ${{ matrix.os }}.zip -aoa
-          ls -la
+          echo "extracted bench data"
 
       - name: Run CPU Frontend Benchmark.
         shell: bash

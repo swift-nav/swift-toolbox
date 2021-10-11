@@ -72,7 +72,7 @@ Rectangle {
                 width: Constants.sideNavBar.tabBarWidth
                 anchors.horizontalCenter: parent.horizontalCenter
                 icon.source: modelData.source
-                icon.color: checked ? Constants.materialRed : Constants.materialGrey
+                icon.color: checked ? Constants.swiftOrange : Constants.materialGrey
                 display: AbstractButton.TextUnderIcon
                 font.pointSize: Constants.smallPointSize
                 padding: Constants.sideNavBar.buttonPadding

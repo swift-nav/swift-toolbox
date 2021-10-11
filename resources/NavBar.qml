@@ -259,7 +259,7 @@ Rectangle {
             ColorOverlay {
                 anchors.fill: connectionPauseImage
                 source: connectionPauseImage
-                color: !connectionPauseButton.checked ? "dimgrey" : "crimson"
+                color: !connectionPauseButton.checked ? Constants.materialGrey : Constants.swiftOrange
             }
 
         }
@@ -306,7 +306,7 @@ Rectangle {
             ColorOverlay {
                 anchors.fill: navBarConnect
                 source: navBarConnect
-                color: !connectButton.checked ? "dimgrey" : "crimson"
+                color: !connectButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 antialiasing: true
             }
 
@@ -342,7 +342,7 @@ Rectangle {
             ColorOverlay {
                 anchors.fill: navBarFolder
                 source: navBarFolder
-                color: !folderBarButton.checked ? "dimgrey" : "crimson"
+                color: !folderBarButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 antialiasing: true
             }
 

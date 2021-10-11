@@ -351,6 +351,7 @@ jobs:
       - name: Extract binary and data.
         shell: bash
         run: |
+          cd console
           tar xvJf $(cat release-archive.filename)
           echo "extracted release-archive"
           mv ../bench/${{ matrix.os }}.zip .

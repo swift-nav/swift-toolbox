@@ -48,8 +48,8 @@ QtObject {
     readonly property real mediumPointSize: 8
     readonly property real largePointSize: 9
     readonly property bool debugMode: false
-    readonly property color materialRed: "crimson"
     readonly property color materialGrey: "dimgrey"
+    readonly property color swiftOrange: "#FF8300"
 
     sideNavBar: QtObject {
         readonly property int buttonSvgHeight: 15
@@ -186,7 +186,7 @@ QtObject {
         readonly property int borderWidth: 1
         readonly property int mouseAreaResizeWidth: 10
         readonly property int cellHeight: 25
-        readonly property string cellHighlightedColor: "crimson"
+        readonly property string cellHighlightedColor: swiftOrange
         readonly property color cellColor: "white"
         readonly property color gradientColor: "gainsboro"
         readonly property color selectedCellColor: "dark grey"

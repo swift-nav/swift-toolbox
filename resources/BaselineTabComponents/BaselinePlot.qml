@@ -81,7 +81,7 @@ Item {
                     ColorOverlay {
                         anchors.fill: baselinePauseImage
                         source: baselinePauseImage
-                        color: !baselinePauseButton.checked ? "dimgrey" : "crimson"
+                        color: !baselinePauseButton.checked ? Constants.materialGrey : Constants.swiftOrange
                     }
 
                 }
@@ -109,7 +109,7 @@ Item {
                     ColorOverlay {
                         anchors.fill: baselineClearImage
                         source: baselineClearImage
-                        color: !baselineClearButton.checked ? "dimgrey" : "crimson"
+                        color: !baselineClearButton.checked ? Constants.materialGrey : Constants.swiftOrange
                     }
 
                 }
@@ -147,7 +147,7 @@ Item {
                     ColorOverlay {
                         anchors.fill: baselineZoomAllImage
                         source: baselineZoomAllImage
-                        color: !baselineZoomAllButton.checked ? "dimgrey" : "crimson"
+                        color: !baselineZoomAllButton.checked ? Constants.materialGrey : Constants.swiftOrange
                     }
 
                 }
@@ -185,7 +185,7 @@ Item {
                     ColorOverlay {
                         anchors.fill: centerButtonImage
                         source: centerButtonImage
-                        color: !baselineCenterButton.checked ? "dimgrey" : "crimson"
+                        color: !baselineCenterButton.checked ? Constants.materialGrey : Constants.swiftOrange
                     }
 
                 }

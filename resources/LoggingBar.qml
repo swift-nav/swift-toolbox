@@ -51,7 +51,7 @@ Rectangle {
 
             background: Rectangle {
                 border.width: 3
-                border.color: sbpLoggingButton.currentIndex === 0 ? "dimgrey" : "crimson"
+                border.color: sbpLoggingButton.currentIndex === 0 ? Constants.materialGrey : Constants.swiftOrange
             }
 
         }

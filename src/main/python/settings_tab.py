@@ -41,8 +41,8 @@ class SettingsTabData(QObject):
         self._recommended_ins_settings = recommended_ins_settings
 
     recommended_ins_settings = Property(
-        QTKeys.QVARIANTLIST, get_recommended_ins_settings, set_recommended_ins_settings
-    )  # type: ignore
+        QTKeys.QVARIANTLIST, get_recommended_ins_settings, set_recommended_ins_settings  # type: ignore
+    )
 
     def set_new_ins_confirmation(self, new_ins_confirmation: bool) -> None:
         self._new_ins_confirmation = new_ins_confirmation

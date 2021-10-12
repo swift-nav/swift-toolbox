@@ -405,6 +405,12 @@ def receive_messages(app_, backend, messages):
             SETTINGS_TABLE[Keys.ENTRIES][:] = settings_rows_to_json(m.settingsTableStatus.data)
         elif m.which == Message.Union.SettingsImportResponse:
             SETTINGS_TAB[Keys.IMPORT_STATUS] = m.settingsImportResponse.status
+        elif m.which == Message.Union.InsSettingsChangeResponse:
+            SETTINGS_TAB[Keys.RECOMMENDED_INS_SETTINGS][:] = [
+                [entry.settingName, entry.currentValue, entry.recommendedValue]
+                for entry in m.insSettingsChangeResponse.recommendedSettings
+            ]
+            SETTINGS_TAB[Keys.NEW_INS_CONFIRMATON] = True
         else:
             pass
 
@@ -527,6 +533,14 @@ class DataModel(QObject):  # pylint: disable=too-many-instance-attributes,too-ma
         Message = self.messages.Message
         msg = self.messages.Message()
         msg.advancedSystemMonitorStatusFront = msg.init(Message.Union.AdvancedSystemMonitorStatusFront)
+        buffer = msg.to_bytes()
+        self.endpoint.send_message(buffer)
+
+    @Slot()  # type: ignore
+    def confirm_ins_change(self) -> None:
+        Message = self.messages.Message
+        msg = self.messages.Message()
+        msg.confirmInsChange = msg.init(Message.Union.ConfirmInsChange)
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
 

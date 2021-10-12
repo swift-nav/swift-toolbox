@@ -38,6 +38,7 @@
     <file>BaselineTabComponents/BaselinePlot.qml</file>
     <file>SettingsTab.qml</file>
     <file>SettingsTabComponents/SettingsTable.qml</file>
+    <file>SettingsTabComponents/InsSettingsPopup.qml</file>
     <file>SolutionPlotCommon/SolutionPlotLoop.js</file>
     <file>BaselineTabComponents/BaselineTable.qml</file>
     <file>SolutionTab.qml</file>

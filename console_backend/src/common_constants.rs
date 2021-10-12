@@ -269,6 +269,10 @@ pub enum Keys {
     NETWORK_INFO,
     #[strum(serialize = "IP_ADDRESS")]
     IP_ADDRESS,
+    #[strum(serialize = "RECOMMENDED_INS_SETTINGS")]
+    RECOMMENDED_INS_SETTINGS,
+    #[strum(serialize = "NEW_INS_CONFIRMATON")]
+    NEW_INS_CONFIRMATON,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]

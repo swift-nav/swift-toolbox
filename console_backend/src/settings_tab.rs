@@ -186,7 +186,10 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
             let recommended_settings = self.get_recommended_ins_setting_changes()?;
 
             for recommendation in recommended_settings {
-                self.write_setting(&recommendation.0, &recommendation.1, &recommendation.3)?;
+                // todo(DEVINFRA-570): Remove below line when libsettings-rs
+                // returns "True"/"False" for bools
+                let value = if &recommendation.3 == "true" { "True" } else {&recommendation.3};
+                self.write_setting(&recommendation.0, &recommendation.1, value)?;
             }
         }
 

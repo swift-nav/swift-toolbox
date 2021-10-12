@@ -512,7 +512,7 @@ QtObject {
 
     insSettingsPopup: QtObject {
         readonly property var columnHeaders: ["Name", "Current Value", "Recommended Value"]
-        readonly property int dialogWidth: 500
+        readonly property int dialogWidth: 550
         readonly property int columnSpacing: 10
         readonly property int tableHeight: 150
     }

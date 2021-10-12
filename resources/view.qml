@@ -33,6 +33,9 @@ ApplicationWindow {
             id: mainDrawer
         }
 
+        // ConnectionScreen {
+        // }
+
         SideNavBar {
             id: sideNavBar
 
@@ -40,9 +43,21 @@ ApplicationWindow {
             Layout.minimumWidth: Constants.sideNavBar.tabBarWidth
         }
 
-        ColumnLayout {
+        StackView {
+            id: stack
+            initialItem: mainView
+            // anchors.fill: parent
             Layout.fillHeight: true
             Layout.fillWidth: true
+
+            Component.onCompleted: stack.push("ConnectionScreen.qml")
+
+        }
+
+        ColumnLayout {
+            id: mainView
+            // Layout.fillHeight: true
+            // Layout.fillWidth: true
             spacing: Constants.topLevelSpacing
 
             SplitView {

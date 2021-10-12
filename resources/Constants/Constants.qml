@@ -511,6 +511,7 @@ QtObject {
         readonly property string centerOnButtonUrl: "qrc:///center-on.svg"
         readonly property string clearButtonUrl: "qrc:///clear.svg"
         readonly property string zoomAllButtonUrl: "qrc:///zoom-all.svg"
+        readonly property string splashScreenPath: "qrc:///images/icon.png"
     }
 
     insSettingsPopup: QtObject {

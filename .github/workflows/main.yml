@@ -25,8 +25,8 @@ jobs:
     strategy:
       matrix:
         os:
-          - ubuntu-18.04
-          - macos-10.15
+          # - ubuntu-18.04
+          # - macos-10.15
           - windows-2019
 
     runs-on: ${{ matrix.os }}
@@ -178,8 +178,8 @@ jobs:
     strategy:
       matrix:
         os:
-          - ubuntu-18.04
-          - macos-10.15
+          # - ubuntu-18.04
+          # - macos-10.15
           - windows-2019
 
     runs-on: ${{ matrix.os }}
@@ -325,9 +325,9 @@ jobs:
     strategy:
       matrix:
         os:
-          - macOS
+          # - macOS
           - Windows
-          - Linux
+          # - Linux
     runs-on: [self-hosted, '${{ matrix.os }}']
     steps:
       - name: Remove previous build.
@@ -352,9 +352,9 @@ jobs:
       - name: "Temp step to Set Path for Windows"
         if: matrix.os == 'Windows'
         run: |
-          echo "::add-path::C:\Program Files\Git\mingw64\bin"
-          echo "::add-path::C:\Program Files\Git\usr\bin"
-          echo "::add-path::C:\Program Files\Git\bin"
+          echo "C:\Program Files\Git\mingw64\bin" >> $GITHUB_PATH
+          echo "C:\Program Files\Git\usr\bin" >> $GITHUB_PATH
+          echo "C:\Program Files\Git\bin" >> $GITHUB_PATH
 
       - name: Extract binary and data.
         shell: bash

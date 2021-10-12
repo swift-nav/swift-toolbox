@@ -367,8 +367,12 @@ jobs:
           if [ "$RUNNER_OS" == "Windows" ]; then
               python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/console/Scripts/swiftnav-console.exe"
           elif [ "$RUNNER_OS" == "macOS" ]; then
+              chmod +x "${GITHUB_WORKSPACE}/console/bin/swiftnav-console"
+              chmod +x "${GITHUB_WORKSPACE}/console/bin/python3"
               python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/console/bin/swiftnav-console"
           elif [ "$RUNNER_OS" == "Linux" ]; then
+              chmod +x "${GITHUB_WORKSPACE}/console/bin/swiftnav-console"
+              chmod +x "${GITHUB_WORKSPACE}/console/bin/python3"
               python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/console/bin/swiftnav-console"
           fi
       - name: Run MEM Frontend Benchmark.
@@ -378,8 +382,12 @@ jobs:
           if [ "$RUNNER_OS" == "Windows" ]; then
               python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/console/Scripts/swiftnav-console.exe"
           elif [ "$RUNNER_OS" == "macOS" ]; then
+              chmod +x "${GITHUB_WORKSPACE}/console/bin/swiftnav-console"
+              chmod +x "${GITHUB_WORKSPACE}/console/bin/python3"
               python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/console/bin/swiftnav-console"
           elif [ "$RUNNER_OS" == "Linux" ]; then
+              chmod +x "${GITHUB_WORKSPACE}/console/bin/swiftnav-console"
+              chmod +x "${GITHUB_WORKSPACE}/console/bin/python3"
               python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/console/bin/swiftnav-console"
           fi
 

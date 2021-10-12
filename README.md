@@ -51,12 +51,10 @@ Or in "prod" mode (compiles a wheel for the backend):
 cargo make prod-run
 ```
 
-## Building the installer
-
-To build the installer:
+## Building the distribution
 
 ```
-cargo make prod-installer
+cargo make create-dist
 ```
 
 ## Running the benchmarks
@@ -99,21 +97,6 @@ Python extension.
 
 [pyo3]: https://docs.rs/pyo3/0.13.1/pyo3/
 [setuptools-rust]: https://github.com/PyO3/setuptools-rust
-
-### PyInstaller (fbs)
-
-PyInstaller (via [fbs]) is used to bundle the application and create an installer.
-Things that fbs trivially solves:
-
-- creating an installer: *fbs* uses [fpm] to create installers for unix/mac, it uses
-  makensis to create a windows installer.
-  - The Windows installer looks to be "decent", it doesn't seem to do a good job cleaning up old installations though: https://github.com/mherrmann/fbs/pull/29
-  - It would be ideal if it could use WiX instead of NSIS to generate an MSI: https://github.com/mherrmann/fbs/issues/8
-
-- managing resources: the fbs runtime handles packaging of application resources, particularly things like .capnp files and QML files
-
-[fbs]: https://build-system.fman.io/
-[fpm]: https://github.com/jordansissel/fpm
 
 ### PySide2
 

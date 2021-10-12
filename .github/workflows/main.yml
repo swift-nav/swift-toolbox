@@ -348,18 +348,12 @@ jobs:
           path: |
             bench
 
-      # Set Path workaround for https://github.com/actions/virtual-environments/issues/263
-      - name: "Temp step to Set Path for Windows"
-        if: matrix.os == 'Windows'
-        run: |
-          echo "C:\Program Files\Git\mingw64\bin" >> $GITHUB_PATH
-          echo "C:\Program Files\Git\usr\bin" >> $GITHUB_PATH
-          echo "C:\Program Files\Git\bin" >> $GITHUB_PATH
-
       - name: Extract binary and data.
         shell: bash
         run: |
           cd console
+          ls -a
+          cat release-archive.filename
           tar xvJf $(cat release-archive.filename)
           echo "extracted release-archive"
           mv ../bench/${{ matrix.os }}.zip .
@@ -369,6 +363,7 @@ jobs:
       - name: Run CPU Frontend Benchmark.
         shell: bash
         run: |
+          which tar
           cd console
           if [ "$RUNNER_OS" == "Windows" ]; then
               python ../utils/bench_runner.py --frontend_cpu --executable=./Scripts/swiftnav-console.exe

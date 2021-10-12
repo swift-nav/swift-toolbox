@@ -348,6 +348,14 @@ jobs:
           path: |
             bench
 
+      # Set Path workaround for https://github.com/actions/virtual-environments/issues/263
+      - name: "Temp step to Set Path for Windows"
+        if: matrix.os == 'Windows'
+        run: |
+          echo "::add-path::C:\Program Files\Git\mingw64\bin"
+          echo "::add-path::C:\Program Files\Git\usr\bin"
+          echo "::add-path::C:\Program Files\Git\bin"
+
       - name: Extract binary and data.
         shell: bash
         run: |

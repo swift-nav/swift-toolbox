@@ -352,9 +352,9 @@ jobs:
         shell: bash
         run: |
           cd console
-          ls -a
-          cat release-archive.filename
-          tar xvJf $(cat release-archive.filename)
+          archive=$(cat release-archive.filename)
+          7z x $archive -aoa
+          7z x ${archive%.xz} -aoa
           echo "extracted release-archive"
           mv ../bench/${{ matrix.os }}.zip .
           7z x ${{ matrix.os }}.zip -aoa

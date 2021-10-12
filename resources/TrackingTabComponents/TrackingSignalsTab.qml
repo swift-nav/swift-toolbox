@@ -1,5 +1,5 @@
 import "../Constants"
-import QtCharts 2.2
+import QtCharts 2.3
 import QtQuick 2.5
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.15
@@ -116,6 +116,9 @@ Item {
                 minorGridLineColor: Constants.commonChart.minorGridLineColor
                 gridLineColor: Constants.commonChart.gridLineColor
                 labelsColor: Constants.commonChart.labelsColor
+                tickType: ValueAxis.TicksDynamic
+                tickInterval: Constants.trackingSignals.xAxisTickInterval
+                labelFormat: "%d"
 
                 labelsFont {
                     pointSize: Constants.mediumPointSize
@@ -136,6 +139,9 @@ Item {
                 labelsColor: Constants.commonChart.labelsColor
                 max: Constants.trackingSignals.yAxisMax
                 min: Constants.trackingSignals.snrThreshold
+                tickType: ValueAxis.TicksDynamic
+                tickInterval: Constants.trackingSignals.yAxisTickInterval
+                labelFormat: "%d"
 
                 labelsFont {
                     pointSize: Constants.mediumPointSize

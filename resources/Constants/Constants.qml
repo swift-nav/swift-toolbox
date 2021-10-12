@@ -222,6 +222,7 @@ QtObject {
         readonly property string satsLabel: "Sats: "
         readonly property string corrAgeLabel: "Corr Age: "
         readonly property string insLabel: "INS: "
+        readonly property string antennaLabel: "Ant: "
         readonly property string defaultValue: "--"
     }
 
@@ -339,18 +340,18 @@ QtObject {
     }
 
     baselineTable: QtObject {
-        readonly property int defaultColumnWidth: 80
-        readonly property color borderColor: "#000000"
-        readonly property int borderWidth: 1
-        readonly property int headerTableDataTableSpacing: 0
-        readonly property int width: 300
-        readonly property int cellHeight: 20
-        readonly property int cellSpacing: 0
-        readonly property int surroundingMargin: 2
-        readonly property int innerMargin: 0
-        readonly property int leftPadding: 2
-        readonly property string leftColumnHeader: "Item"
-        readonly property string rightColumnHeader: "Value"
+        readonly property int width: 240
+        readonly property int defaultColumnWidth: 100
+        readonly property color tableBorderColor: "#000000"
+        readonly property int tableBorderWidth: 1
+        readonly property int tableHeaderTableDataTableSpacing: 0
+        readonly property int tableCellHeight: 20
+        readonly property int tableCellSpacing: 0
+        readonly property int tableSurroundingMargin: 2
+        readonly property int tableInnerMargin: 0
+        readonly property int tableLeftPadding: 2
+        readonly property string tableLeftColumnHeader: "Item"
+        readonly property string tableRightColumnHeader: "Value"
     }
 
     solutionPosition: QtObject {
@@ -378,6 +379,8 @@ QtObject {
         readonly property int textSettingWidth: 550
         readonly property int buttonIconWidth: 20
         readonly property int buttonIconHeight: 20
+        readonly property string defaultImportExportRelativePathFromHome: "SwiftNav"
+        readonly property string defaultExportFileName: "config.ini"
     }
 
     settingsTable: QtObject {
@@ -490,6 +493,8 @@ QtObject {
         readonly property int checkBoxPreferredWidth: 100
         readonly property int snrThreshold: 15
         readonly property int yAxisMax: 60
+        readonly property int yAxisTickInterval: 10
+        readonly property int xAxisTickInterval: 10
     }
 
     observationTab: QtObject {

@@ -2,7 +2,7 @@ use capnp::message::Builder;
 
 use sbp::messages::{
     navigation::MsgAgeCorrections,
-    system::{MsgInsStatus, MsgInsUpdates},
+    system::{MsgHeartbeat, MsgInsStatus, MsgInsUpdates},
 };
 
 use std::{
@@ -21,6 +21,34 @@ use crate::shared_state::SharedState;
 use crate::types::{ArcBool, BaselineNED, CapnProtoSender, GnssModes, PosLLH};
 use crate::utils::{bytes_to_kb, decisec_to_sec, serialize_capnproto_builder};
 
+enum AntennaStatus {
+    Short,
+    Ok,
+    Open,
+}
+impl From<u32> for AntennaStatus {
+    fn from(status: u32) -> Self {
+        if status & 0x40000000 != 0 {
+            AntennaStatus::Short
+        } else if status & 0x80000000 != 0 {
+            AntennaStatus::Ok
+        } else {
+            AntennaStatus::Open
+        }
+    }
+}
+impl AntennaStatus {
+    pub fn label(status: u32) -> String {
+        let ant = AntennaStatus::from(status);
+        let ant_slice = match ant {
+            AntennaStatus::Ok => "Ok",
+            AntennaStatus::Short => "Short",
+            AntennaStatus::Open => "Open",
+        };
+        String::from(ant_slice)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct StatusBarUpdate {
     age_of_corrections: String,
@@ -30,6 +58,7 @@ pub struct StatusBarUpdate {
     pos_mode: String,
     rtk_mode: String,
     solid_connection: bool,
+    ant_status: String,
 }
 impl StatusBarUpdate {
     pub fn connection_dropped() -> StatusBarUpdate {
@@ -41,6 +70,7 @@ impl StatusBarUpdate {
             pos_mode: String::from(EMPTY_STR),
             rtk_mode: String::from(EMPTY_STR),
             solid_connection: false,
+            ant_status: String::from(EMPTY_STR),
         }
     }
 }
@@ -145,7 +175,7 @@ impl<S: CapnProtoSender> StatusBar<S> {
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
         let mut status_bar_status = msg.init_status_bar_status();
-        status_bar_status.set_port(&self.port);
+        status_bar_status.set_antenna_status(&sb_update.ant_status);
         status_bar_status.set_pos(&sb_update.pos_mode);
         status_bar_status.set_rtk(&sb_update.rtk_mode);
         status_bar_status.set_sats(&sb_update.num_sats);
@@ -159,12 +189,13 @@ impl<S: CapnProtoSender> StatusBar<S> {
             .send_data(serialize_capnproto_builder(builder));
     }
 
-    pub fn handle_heartbeat(&mut self) {
+    pub fn handle_heartbeat(&mut self, msg: MsgHeartbeat) {
         let mut shared_data = self
             .heartbeat_data
             .lock()
             .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
         (*shared_data).heartbeat_count += 1;
+        (*shared_data).ant_status = AntennaStatus::label(msg.flags);
     }
 
     /// Handle PosLLH / PosLLHDepA messages.
@@ -286,6 +317,7 @@ impl<S: CapnProtoSender> Drop for StatusBar<S> {
 pub struct HeartbeatInner {
     age_of_corrections: String,
     age_corrections: Option<f64>,
+    ant_status: String,
     baseline_display_mode: String,
     baseline_solution_mode: u8,
     current_time: Instant,
@@ -315,6 +347,7 @@ impl HeartbeatInner {
         HeartbeatInner {
             age_of_corrections: String::from(EMPTY_STR),
             age_corrections: None,
+            ant_status: String::from(EMPTY_STR),
             baseline_display_mode: String::from(EMPTY_STR),
             baseline_solution_mode: 0,
             current_time: Instant::now(),
@@ -434,9 +467,9 @@ impl HeartbeatInner {
                 } else {
                     let ins_type_string =
                         if let Some(type_string) = ins_type_dict.get(&(ins_type as i32)) {
-                            type_string
+                            String::from(*type_string)
                         } else {
-                            UNKNOWN_ERROR_SHORT
+                            format!("{}-", UNKNOWN_ERROR_SHORT)
                         };
                     let ins_mode_string =
                         if let Some(mode_string) = ins_mode_dict.get(&(ins_mode as i32)) {
@@ -449,7 +482,7 @@ impl HeartbeatInner {
                         odo_str = ODO_POSTFIX;
                     }
                     self.ins_status_string =
-                        format!("{}-{}{}", ins_type_string, ins_mode_string, odo_str);
+                        format!("{}{}{}", ins_type_string, ins_mode_string, odo_str);
                 }
             }
         }
@@ -470,6 +503,7 @@ impl HeartbeatInner {
     pub fn prepare_update_packet(&mut self) {
         let sb_update = StatusBarUpdate {
             age_of_corrections: self.age_of_corrections.clone(),
+            ant_status: self.ant_status.clone(),
             data_rate: format!("{:.2} KB/s", self.data_rate),
             ins_status: self.ins_status_string.clone(),
             num_sats: self.llh_num_sats.to_string(),

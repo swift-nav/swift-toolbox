@@ -273,6 +273,8 @@ pub enum Keys {
     RECOMMENDED_INS_SETTINGS,
     #[strum(serialize = "NEW_INS_CONFIRMATON")]
     NEW_INS_CONFIRMATON,
+    #[strum(serialize = "ANTENNA_STATUS")]
+    ANTENNA_STATUS,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]

@@ -208,6 +208,11 @@ Item {
                             return ;
 
                         data_model.solution_position_unit(available_units[currentIndex]);
+                        zoom_all = true;
+                        solutionZoomAllButton.checked = true;
+                        solutionCenterButton.checked = false;
+                        center_solution = false;
+                        solutionPositionChart.resetChartZoom();
                     }
 
                     states: State {
@@ -327,7 +332,7 @@ Item {
                 ValueAxis {
                     id: solutionPositionXAxis
 
-                    titleText: Constants.solutionPosition.xAxisTitleText
+                    titleText: Constants.solutionPosition.xAxisTitleText + " (" + available_units[solutionPositionSelectedUnit.currentIndex] + ")"
                     gridVisible: true
                     lineVisible: true
                     minorGridVisible: true
@@ -345,7 +350,7 @@ Item {
                 ValueAxis {
                     id: solutionPositionYAxis
 
-                    titleText: Constants.solutionPosition.yAxisTitleText
+                    titleText: Constants.solutionPosition.yAxisTitleText + " (" + available_units[solutionPositionSelectedUnit.currentIndex] + ")"
                     gridVisible: true
                     lineVisible: true
                     minorGridVisible: true

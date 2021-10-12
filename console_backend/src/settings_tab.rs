@@ -3,10 +3,10 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::Path;
 
-use lazy_static::lazy_static;
 use anyhow::anyhow;
 use capnp::message::Builder;
 use ini::Ini;
+use lazy_static::lazy_static;
 use log::{debug, error, warn};
 use parking_lot::{MappedMutexGuard, Mutex, MutexGuard};
 use sbp::link::Link;
@@ -188,7 +188,11 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
             for recommendation in recommended_settings {
                 // todo(DEVINFRA-570): Remove below line when libsettings-rs
                 // returns "True"/"False" for bools
-                let value = if &recommendation.3 == "true" { "True" } else {&recommendation.3};
+                let value = if &recommendation.3 == "true" {
+                    "True"
+                } else {
+                    &recommendation.3
+                };
                 self.write_setting(&recommendation.0, &recommendation.1, value)?;
             }
         }
@@ -206,7 +210,7 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
 
         let mut recommended_changes = vec![];
 
-        for setting in RECOMMENDED_INS_SETTINGS.into_iter() {
+        for setting in RECOMMENDED_INS_SETTINGS.iter() {
             let value = client
                 .read_setting(setting.0, setting.1)
                 .ok_or_else(|| anyhow!("setting not found"))??;

@@ -59,7 +59,7 @@ Item {
             }
             if (settingsTabData.new_ins_confirmation) {
                 insSettingsPopup.settings = settingsTabData.recommended_ins_settings;
-                insSettingsPopup.isVisible = true;
+                insSettingsPopup.insPopup.open();
                 settings_tab_model.clear_new_ins_confirmation(settingsTabData);
             }
         }

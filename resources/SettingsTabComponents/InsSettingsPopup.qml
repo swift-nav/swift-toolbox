@@ -9,7 +9,7 @@ Item {
     property variant columnWidths: [layout.width / 3, layout.width / 3, layout.width / 3]
     property real mouse_x: 0
     property int selectedRow: -1
-    property variant isVisible: false
+    property alias insPopup: dialog
     property variant settings: []
 
     function settingsChangeConfirmText() {
@@ -40,14 +40,9 @@ Item {
         id: dialog
 
         parent: Overlay.overlay
-        visible: isVisible
         title: "Confirm Inertial Navigation Change?"
         onAccepted: {
             data_model.confirm_ins_change();
-            isVisible = false;
-        }
-        onRejected: {
-            isVisible = false;
         }
         standardButtons: Dialog.Ok | Dialog.Cancel
         width: Constants.insSettingsPopup.dialogWidth

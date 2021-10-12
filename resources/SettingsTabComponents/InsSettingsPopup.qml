@@ -14,7 +14,7 @@ Item {
 
     function settingsChangeConfirmText() {
         let text = "";
-        text += "In order for the \"Ins Output Mode\" setting to take effect, it is necessary to save the current settings to device";
+        text += "In order for the \"Ins Output Mode\" setting to take effect, it is necessary to save the current settings to device ";
         text += "flash and then power cycle your device.\n\n";
         if (settings.length > 0) {
             text += "Additionally, in order to enable INS output, it is necessary to enable and configure the IMU. ";

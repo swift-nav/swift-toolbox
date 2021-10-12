@@ -97,10 +97,6 @@ pub const BASELINE_TABLE_KEYS: &[&str] = &[
 pub(crate) const PLOT_HISTORY_MAX: usize = 1000;
 pub(crate) const DILUTION_OF_PRECISION_UNITS: f64 = 0.01;
 pub(crate) const NUM_GNSS_MODES: usize = 6;
-pub(crate) const LAT_MAX: f64 = 90_f64;
-pub(crate) const LAT_MIN: f64 = -90_f64;
-pub(crate) const LON_MAX: f64 = 180_f64;
-pub(crate) const LON_MIN: f64 = -180_f64;
 pub(crate) const DEGREES: &str = "degrees";
 pub(crate) const METERS: &str = "meters";
 pub(crate) const NO_FIX_LABEL: &str = "No Fix";
@@ -249,7 +245,7 @@ pub(crate) const UDEG2DEG: f64 = 0.0000001;
 // Status Bar constants.
 pub(crate) const UPDATE_TOLERANCE_SECONDS: f64 = 1.2;
 pub(crate) const UNKNOWN_ERROR: &str = "Unk Error";
-pub(crate) const UNKNOWN_ERROR_SHORT: &str = "unk";
+pub(crate) const UNKNOWN_ERROR_SHORT: &str = "Unk";
 pub(crate) const ODO_POSTFIX: &str = "+Odo";
 pub(crate) const INS_POSTFIX: &str = "+INS";
 

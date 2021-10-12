@@ -221,6 +221,7 @@ QtObject {
         readonly property string satsLabel: "Sats: "
         readonly property string corrAgeLabel: "Corr Age: "
         readonly property string insLabel: "INS: "
+        readonly property string antennaLabel: "Ant: "
         readonly property string defaultValue: "--"
     }
 
@@ -377,6 +378,8 @@ QtObject {
         readonly property int textSettingWidth: 550
         readonly property int buttonIconWidth: 20
         readonly property int buttonIconHeight: 20
+        readonly property string defaultImportExportRelativePathFromHome: "SwiftNav"
+        readonly property string defaultExportFileName: "config.ini"
     }
 
     settingsTable: QtObject {
@@ -489,6 +492,8 @@ QtObject {
         readonly property int checkBoxPreferredWidth: 100
         readonly property int snrThreshold: 15
         readonly property int yAxisMax: 60
+        readonly property int yAxisTickInterval: 10
+        readonly property int xAxisTickInterval: 10
     }
 
     observationTab: QtObject {

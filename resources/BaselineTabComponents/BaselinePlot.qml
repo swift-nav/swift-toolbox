@@ -385,6 +385,7 @@ Item {
                             return ;
 
                         baselinePlotArea.visible = true;
+                        let _lines = null;
                         if (!scatters.length || !cur_scatters.length)
                             [scatters, cur_scatters, _lines] = SolutionPlotLoop.setupScatterSeries(baselinePlotChart, Constants, Globals, baselinePlotXAxis, baselinePlotYAxis, Constants.baselinePlot.legendLabels, Constants.baselinePlot.colors);
 

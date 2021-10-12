@@ -338,18 +338,18 @@ QtObject {
     }
 
     baselineTable: QtObject {
-        readonly property int defaultColumnWidth: 80
-        readonly property color borderColor: "#000000"
-        readonly property int borderWidth: 1
-        readonly property int headerTableDataTableSpacing: 0
-        readonly property int width: 300
-        readonly property int cellHeight: 20
-        readonly property int cellSpacing: 0
-        readonly property int surroundingMargin: 2
-        readonly property int innerMargin: 0
-        readonly property int leftPadding: 2
-        readonly property string leftColumnHeader: "Item"
-        readonly property string rightColumnHeader: "Value"
+        readonly property int width: 240
+        readonly property int defaultColumnWidth: 100
+        readonly property color tableBorderColor: "#000000"
+        readonly property int tableBorderWidth: 1
+        readonly property int tableHeaderTableDataTableSpacing: 0
+        readonly property int tableCellHeight: 20
+        readonly property int tableCellSpacing: 0
+        readonly property int tableSurroundingMargin: 2
+        readonly property int tableInnerMargin: 0
+        readonly property int tableLeftPadding: 2
+        readonly property string tableLeftColumnHeader: "Item"
+        readonly property string tableRightColumnHeader: "Value"
     }
 
     solutionPosition: QtObject {

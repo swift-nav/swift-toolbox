@@ -3,6 +3,7 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::Path;
 
+use lazy_static::lazy_static;
 use anyhow::anyhow;
 use capnp::message::Builder;
 use ini::Ini;
@@ -19,6 +20,15 @@ use crate::utils::*;
 
 const FIRMWARE_VERSION_SETTING_KEY: &str = "firmware_version";
 const DGNSS_SOLUTION_MODE_SETTING_KEY: &str = "dgnss_solution_mode";
+
+lazy_static! {
+    static ref RECOMMENDED_INS_SETTINGS: [(&'static str, &'static str, SettingValue); 4] = [
+        ("imu", "imu_raw_output", SettingValue::Boolean(true)),
+        ("imu", "gyro_range", SettingValue::String("125".to_string())),
+        ("imu", "acc_range", SettingValue::String("8g".to_string())),
+        ("imu", "imu_rate", SettingValue::String("100".to_string())),
+    ];
+}
 
 pub struct SettingsTab<'link, S> {
     client_sender: S,
@@ -189,18 +199,11 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
     pub fn get_recommended_ins_setting_changes(
         &self,
     ) -> Result<Vec<(String, String, String, String)>> {
-        let recommended_settings: [(&str, &str, SettingValue); 4] = [
-            ("imu", "imu_raw_output", SettingValue::Boolean(true)),
-            ("imu", "gyro_range", SettingValue::String("125".to_string())),
-            ("imu", "acc_range", SettingValue::String("8g".to_string())),
-            ("imu", "imu_rate", SettingValue::String("100".to_string())),
-        ];
-
         let client = self.client();
 
         let mut recommended_changes = vec![];
 
-        for setting in recommended_settings {
+        for setting in RECOMMENDED_INS_SETTINGS.into_iter() {
             let value = client
                 .read_setting(setting.0, setting.1)
                 .ok_or_else(|| anyhow!("setting not found"))??;

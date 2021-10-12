@@ -109,6 +109,10 @@ pub struct CliOptions {
     pub dirname: Option<String>,
 
     // Frontend Options
+    /// Show Filio pane in Update tab.
+    #[clap(long = "show-fileio")]
+    pub show_fileio: bool,
+
     /// Don't use opengl in plots.
     #[clap(long = "no-opengl", parse(from_flag = Not::not))]
     pub no_opengl: bool,

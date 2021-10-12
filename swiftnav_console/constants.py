@@ -127,6 +127,7 @@ class Keys(str, Enum):
     RUNNING = "RUNNING"
     NETWORK_INFO = "NETWORK_INFO"
     IP_ADDRESS = "IP_ADDRESS"
+    ANTENNA_STATUS = "ANTENNA_STATUS"
 
 
 class ApplicationStates(str, Enum):

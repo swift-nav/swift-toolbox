@@ -1,4 +1,5 @@
 import "Constants"
+import Qt.labs.platform 1.1 as LabsPlatform
 import QtCharts 2.2
 import QtQuick 2.7
 import QtQuick.Controls 1.4
@@ -60,15 +61,20 @@ Item {
         }
     }
 
-    FileDialog {
+    LabsPlatform.FileDialog {
         id: exportDialog
 
         defaultSuffix: "ini"
-        selectExisting: false
         nameFilters: ["*.ini"]
-        folder: shortcuts.home
+        fileMode: LabsPlatform.FileDialog.SaveFile
+        currentFile: {
+            let text = LabsPlatform.StandardPaths.writableLocation(LabsPlatform.StandardPaths.HomeLocation);
+            text += "/" + Constants.settingsTab.defaultImportExportRelativePathFromHome;
+            text += "/" + Constants.settingsTab.defaultExportFileName;
+            return text;
+        }
         onAccepted: {
-            var filepath = Utils.fileUrlToString(exportDialog.fileUrl);
+            var filepath = Utils.fileUrlToString(exportDialog.file);
             data_model.settings_export_request(filepath);
         }
     }
@@ -79,7 +85,7 @@ Item {
         defaultSuffix: "ini"
         selectExisting: true
         nameFilters: ["*.ini"]
-        folder: shortcuts.home
+        folder: shortcuts.home + "/" + Constants.settingsTab.defaultImportExportRelativePathFromHome
         onAccepted: {
             var filepath = Utils.fileUrlToString(importDialog.fileUrl);
             data_model.settings_import_request(filepath);

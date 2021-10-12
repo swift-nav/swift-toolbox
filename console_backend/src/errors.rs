@@ -17,3 +17,5 @@ pub(crate) const CROSSBEAM_SCOPE_UNWRAP_FAILURE: &str = "unable to unwrap crossb
 pub(crate) const UNABLE_TO_CLONE_UPDATE_SHARED: &str = "unable to clone update shared";
 pub(crate) const FILEIO_CHANNEL_SEND_FAILURE: &str =
     "failure attempting to send via fileio channel";
+pub(crate) const SOLUTION_POSITION_UNIT_SELECTION_NOT_AVAILABLE: &str =
+    "solution position unit selection not available";

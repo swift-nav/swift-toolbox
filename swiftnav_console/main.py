@@ -357,7 +357,6 @@ def receive_messages(app_, backend, messages):
                 LOCAL_OBSERVATION_TAB[Keys.WEEK] = m.observationStatus.week
                 LOCAL_OBSERVATION_TAB[Keys.ROWS][:] = obs_rows_to_json(m.observationStatus.rows)
         elif m.which == Message.Union.StatusBarStatus:
-            STATUS_BAR[Keys.PORT] = m.statusBarStatus.port
             STATUS_BAR[Keys.POS] = m.statusBarStatus.pos
             STATUS_BAR[Keys.RTK] = m.statusBarStatus.rtk
             STATUS_BAR[Keys.SATS] = m.statusBarStatus.sats
@@ -366,6 +365,7 @@ def receive_messages(app_, backend, messages):
             STATUS_BAR[Keys.DATA_RATE] = m.statusBarStatus.dataRate
             STATUS_BAR[Keys.SOLID_CONNECTION] = m.statusBarStatus.solidConnection
             STATUS_BAR[Keys.TITLE] = m.statusBarStatus.title
+            STATUS_BAR[Keys.ANTENNA_STATUS] = m.statusBarStatus.antennaStatus
         elif m.which == Message.Union.NavBarStatus:
             NAV_BAR[Keys.AVAILABLE_PORTS][:] = m.navBarStatus.availablePorts
             NAV_BAR[Keys.AVAILABLE_BAUDRATES][:] = m.navBarStatus.availableBaudrates
@@ -718,6 +718,8 @@ def get_capnp_path() -> str:
 
 
 def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
+    if args.show_fileio:
+        globals_.setProperty("showFileio", True)  # type: ignore
     if args.no_opengl:
         globals_.setProperty("useOpenGL", False)  # type: ignore
     if args.refresh_rate is not None:
@@ -732,6 +734,7 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
 
 def main():
     parser = argparse.ArgumentParser(add_help=False, usage=argparse.SUPPRESS)
+    parser.add_argument("--show-fileio", action="store_true")
     parser.add_argument("--no-opengl", action="store_false")
     parser.add_argument("--refresh-rate")
     parser.add_argument("--tab")

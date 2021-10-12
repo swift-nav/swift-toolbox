@@ -162,7 +162,7 @@ struct NavBarStatus {
 }
 
 struct StatusBarStatus {
-    port @0 : Text;
+    antennaStatus @0 :Text;
     pos @1 : Text;
     rtk @2 : Text;
     sats @3: Text;

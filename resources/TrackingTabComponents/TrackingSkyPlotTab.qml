@@ -281,13 +281,13 @@ Item {
                 return ;
             }
             let labels = trackingSkyPlotPoints.labels;
-            if (labelsVisible) {
-                for (var idx in labels) {
-                    var kdx = parseInt(idx);
-                    if (!checkVisibility[kdx]) {
-                        series[idx].clear();
-                        continue;
-                    }
+            for (var idx in labels) {
+                var kdx = parseInt(idx);
+                if (!checkVisibility[kdx]) {
+                    series[idx].clear();
+                    continue;
+                }
+                if (labelsVisible) {
                     for (var jdx in labels[idx]) {
                         var pose = trackingSkyPlotChart.mapToPosition(series[idx].at(jdx), series[idx]);
                         let qmlStr = "import QtQuick 2.15; Text {color: 'black'; text: '" + labels[idx][jdx] + "'; visible: !polarChartWidthChanging; width: 20; height: 20; x: " + pose.x + "; y: " + pose.y + ";}";

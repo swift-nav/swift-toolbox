@@ -1,14 +1,30 @@
 import "../Constants"
 import Qt.labs.qmlmodels 1.0
 import QtCharts 2.2
-import QtQuick 2.14
-import QtQuick.Controls 1.4
-import QtQuick.Controls 2.12
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
 Item {
     id: baselineTable
+
+    property variant columnWidths: [Constants.baselineTable.defaultColumnWidth, Constants.baselineTable.defaultColumnWidth]
+    property real mouse_x: 0
+    property int selectedRow: -1
+
+    function syncColumnWidthsWithSplitView() {
+        var oldcols = columnWidths.slice();
+        columnWidths[0] = Math.max(columnWidths[0], Constants.baselineTable.defaultColumnWidth);
+        let column_width_sum = columnWidths[0] + columnWidths[1];
+        if (column_width_sum != tableView.width) {
+            let final_column_diff = tableView.width - column_width_sum;
+            columnWidths[1] += final_column_diff;
+        }
+        if (columnWidths != oldcols)
+            tableView.forceLayout();
+
+    }
 
     width: parent.width
     height: parent.height
@@ -17,66 +33,158 @@ Item {
         id: baselineTableEntries
     }
 
-    Rectangle {
-        id: baselineTableInner
+    ColumnLayout {
+        id: baselineTableRowLayout
 
-        border.color: Constants.baselineTable.borderColor
-        border.width: Constants.baselineTable.borderWidth
+        spacing: Constants.baselineTable.tableHeaderTableDataTableSpacing
         width: parent.width
         height: parent.height
 
-        ListModel {
-            id: tableModel
+        Item {
+            Layout.fillHeight: true
+            Layout.fillWidth: true
 
-            dynamicRoles: false
-        }
+            HorizontalHeaderView {
+                id: horizontalHeader
 
-        TableView {
-            id: tableViewInner
+                interactive: false
+                syncView: tableView
+                z: Constants.genericTable.headerZOffset
 
-            width: parent.width
-            height: parent.height
-            anchors.margins: Constants.baselineTable.surroundingMargin
-            clip: true
-            model: tableModel
+                delegate: Rectangle {
+                    implicitWidth: columnWidths[index]
+                    implicitHeight: Constants.genericTable.cellHeight
+                    border.color: Constants.genericTable.borderColor
 
-            TableViewColumn {
-                id: nonresizableColumn
-
-                role: Constants.baselineTable.leftColumnHeader
-                title: Constants.baselineTable.leftColumnHeader
-                width: parent.width / 2
-                horizontalAlignment: Text.AlignHCenter
-            }
-
-            TableViewColumn {
-                id: resizableColumn
-
-                role: Constants.baselineTable.rightColumnHeader
-                title: Constants.baselineTable.rightColumnHeader
-                width: parent.width / 2 - Constants.baselineTable.surroundingMargin
-                horizontalAlignment: Text.AlignHCenter
-            }
-
-            itemDelegate: Item {
-                Row {
-                    id: row
-
-                    width: parent.width
-
-                    Rectangle {
+                    Text {
                         width: parent.width
-                        implicitHeight: Constants.baselineTable.cellHeight
-                        border.width: Constants.baselineTable.borderWidth
+                        anchors.centerIn: parent
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        text: tableView.model.columns[index].display
+                        elide: Text.ElideRight
+                        clip: true
+                        font.family: Constants.genericTable.fontFamily
+                    }
 
-                        Text {
-                            width: parent.width
-                            text: styleData.value
-                            horizontalAlignment: Text.AlignLeft
-                            leftPadding: Constants.baselineTable.leftPadding
-                            font.pointSize: Constants.mediumPointSize
+                    MouseArea {
+                        width: Constants.genericTable.mouseAreaResizeWidth
+                        height: parent.height
+                        anchors.right: parent.right
+                        cursorShape: Qt.SizeHorCursor
+                        onPressed: {
+                            mouse_x = mouseX;
+                        }
+                        onPositionChanged: {
+                            if (pressed) {
+                                var delta_x = (mouseX - mouse_x);
+                                columnWidths[index] += delta_x;
+                                syncColumnWidthsWithSplitView();
+                            }
+                        }
+                    }
+
+                    gradient: Gradient {
+                        GradientStop {
+                            position: 0
+                            color: Constants.genericTable.cellColor
                         }
 
+                        GradientStop {
+                            position: 1
+                            color: Constants.genericTable.gradientColor
+                        }
+
+                    }
+
+                }
+
+            }
+
+            TextEdit {
+                id: textEdit
+
+                visible: false
+            }
+
+            Shortcut {
+                sequence: StandardKey.Copy
+                onActivated: {
+                    if (selectedRow != -1) {
+                        textEdit.text = JSON.stringify(tableView.model.getRow(selectedRow));
+                        textEdit.selectAll();
+                        textEdit.copy();
+                        selectedRow = -1;
+                    }
+                }
+            }
+
+            TableView {
+                id: tableView
+
+                onWidthChanged: syncColumnWidthsWithSplitView()
+                columnSpacing: -1
+                rowSpacing: -1
+                columnWidthProvider: function(column) {
+                    return columnWidths[column];
+                }
+                reuseItems: true
+                boundsBehavior: Flickable.StopAtBounds
+                anchors.top: horizontalHeader.bottom
+                width: parent.width
+                height: parent.height - horizontalHeader.height
+
+                ScrollBar.horizontal: ScrollBar {
+                }
+
+                ScrollBar.vertical: ScrollBar {
+                }
+
+                model: TableModel {
+                    id: tableModel
+
+                    rows: [{
+                        "Item": "",
+                        "Value": ""
+                    }]
+
+                    TableModelColumn {
+                        display: "Item"
+                    }
+
+                    TableModelColumn {
+                        display: "Value"
+                    }
+
+                }
+
+                delegate: Rectangle {
+                    implicitHeight: Constants.genericTable.cellHeight
+                    implicitWidth: tableView.columnWidthProvider(column)
+                    border.color: Constants.genericTable.borderColor
+                    color: row == selectedRow ? Constants.genericTable.cellHighlightedColor : Constants.genericTable.cellColor
+
+                    Text {
+                        width: parent.width
+                        horizontalAlignment: Text.AlignLeft
+                        clip: true
+                        font.family: Constants.genericTable.fontFamily
+                        font.pointSize: Constants.largePointSize
+                        text: model.display
+                        elide: Text.ElideRight
+                        padding: Constants.genericTable.padding
+                    }
+
+                    MouseArea {
+                        width: parent.width
+                        height: parent.height
+                        anchors.centerIn: parent
+                        onPressed: {
+                            if (selectedRow == row)
+                                selectedRow = -1;
+                            else
+                                selectedRow = row;
+                        }
                     }
 
                 }
@@ -101,10 +209,11 @@ Item {
                 for (var idx in entries) {
                     var new_row = {
                     };
-                    new_row[Constants.baselineTable.leftColumnHeader] = entries[idx][0];
-                    new_row[Constants.baselineTable.rightColumnHeader] = entries[idx][1];
-                    tableModel.set(idx, new_row);
+                    new_row[Constants.baselineTable.tableLeftColumnHeader] = entries[idx][0];
+                    new_row[Constants.baselineTable.tableRightColumnHeader] = entries[idx][1];
+                    tableView.model.setRow(idx, new_row);
                 }
+                tableView.forceLayout();
             }
         }
 

@@ -269,6 +269,8 @@ pub enum Keys {
     NETWORK_INFO,
     #[strum(serialize = "IP_ADDRESS")]
     IP_ADDRESS,
+    #[strum(serialize = "ANTENNA_STATUS")]
+    ANTENNA_STATUS,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]

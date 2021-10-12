@@ -365,23 +365,26 @@ jobs:
         run: |
           which tar
           cd console
+          ls -la
+          ls -la ..
+          ls -la ../utils
           if [ "$RUNNER_OS" == "Windows" ]; then
-              python ../utils/bench_runner.py --frontend_cpu --executable=./Scripts/swiftnav-console.exe
+              python ../utils/bench_runner.py --frontend_cpu --executable="Scripts/swiftnav-console.exe"
           elif [ "$RUNNER_OS" == "macOS" ]; then
-              python ../utils/bench_runner.py --frontend_cpu --executable=./bin/swiftnav-console
+              python ../utils/bench_runner.py --frontend_cpu --executable="bin/swiftnav-console"
           elif [ "$RUNNER_OS" == "Linux" ]; then
-              python ../utils/bench_runner.py --frontend_cpu --executable=./bin/swiftnav-console
+              python ../utils/bench_runner.py --frontend_cpu --executable="bin/swiftnav-console"
           fi
       - name: Run MEM Frontend Benchmark.
         shell: bash
         run: |
           cd console
           if [ "$RUNNER_OS" == "Windows" ]; then
-              python ../utils/bench_runner.py --frontend_mem --executable=./Scripts/swiftnav-console.exe
+              python ../utils/bench_runner.py --frontend_mem --executable="Scripts/swiftnav-console.exe"
           elif [ "$RUNNER_OS" == "macOS" ]; then
-              python ../utils/bench_runner.py --frontend_mem --executable=./bin/swiftnav-console
+              python ../utils/bench_runner.py --frontend_mem --executable="bin/swiftnav-console"
           elif [ "$RUNNER_OS" == "Linux" ]; then
-              python ../utils/bench_runner.py --frontend_mem --executable=./bin/swiftnav-console
+              python ../utils/bench_runner.py --frontend_mem --executable="bin/swiftnav-console"
           fi
 
 

@@ -24,27 +24,6 @@ Rectangle {
 
         RowLayout {
             Row {
-                id: statusBarRowPort
-
-                spacing: Constants.statusBar.innerKeyValSpacing
-
-                Text {
-                    text: Constants.statusBar.portLabel
-                    color: Constants.statusBar.keyTextColor
-                    font.pointSize: Constants.largePointSize
-                    font.bold: true
-                }
-
-                Text {
-                    id: statusBarPort
-
-                    text: Constants.statusBar.defaultValue
-                    font.pointSize: Constants.largePointSize
-                }
-
-            }
-
-            Row {
                 id: statusBarRowPos
 
                 spacing: Constants.statusBar.innerKeyValSpacing
@@ -80,6 +59,27 @@ Rectangle {
 
                 Text {
                     id: statusBarRTK
+
+                    text: Constants.statusBar.defaultValue
+                    font.pointSize: Constants.largePointSize
+                }
+
+            }
+
+            Row {
+                id: statusBarRowINS
+
+                spacing: Constants.statusBar.innerKeyValSpacing
+
+                Text {
+                    text: Constants.statusBar.insLabel
+                    color: Constants.statusBar.keyTextColor
+                    font.pointSize: Constants.largePointSize
+                    font.bold: true
+                }
+
+                Text {
+                    id: statusBarINS
 
                     text: Constants.statusBar.defaultValue
                     font.pointSize: Constants.largePointSize
@@ -130,19 +130,19 @@ Rectangle {
             }
 
             Row {
-                id: statusBarRowINS
+                id: statusBarRowAntenna
 
                 spacing: Constants.statusBar.innerKeyValSpacing
 
                 Text {
-                    text: Constants.statusBar.insLabel
+                    text: Constants.statusBar.antennaLabel
                     color: Constants.statusBar.keyTextColor
                     font.pointSize: Constants.largePointSize
                     font.bold: true
                 }
 
                 Text {
-                    id: statusBarINS
+                    id: statusBarAntenna
 
                     text: Constants.statusBar.defaultValue
                     font.pointSize: Constants.largePointSize
@@ -197,14 +197,14 @@ Rectangle {
         repeat: true
         onTriggered: {
             status_bar_model.fill_data(statusBarData);
-            if (statusBarData.port) {
-                statusBarPort.text = statusBarData.port;
+            if (statusBarData.title) {
                 statusBarPos.text = statusBarData.pos;
                 statusBarRTK.text = statusBarData.rtk;
                 statusBarSats.text = statusBarData.sats;
                 statusBarCorrAge.text = statusBarData.corr_age;
                 statusBarINS.text = statusBarData.ins;
                 statusBarDataRate.text = statusBarData.data_rate;
+                statusBarAntenna.text = statusBarData.antenna_status;
                 parent.title = statusBarData.title;
                 if (statusBarData.solid_connection) {
                     statusBarGoodConnectionImage.visible = true;

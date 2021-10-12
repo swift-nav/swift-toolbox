@@ -26,7 +26,7 @@ brew install cmake capnp
 apt-get install cmake libclang-dev capnproto
 ```
 
-# Troubleshooting building for macos
+### Troubleshooting building for macos
 
 The module used for generating rust bindings for native libraries; `rust-bindgen`
 has been observed to fail to find system headers (i.e. `assert.h`, `math.h`) on
@@ -71,7 +71,7 @@ To run the frontend benchmarks:
 
 ```
 git lfs pull
-cargo make prod-installer
+cargo make create-dist
 cargo make frontend-cpu-bench
 ```
 

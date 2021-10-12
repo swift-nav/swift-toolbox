@@ -16,14 +16,14 @@ Install cmake, clang, and capnp in your respective OS.
 
 ```
 # Windows - install with installer, or via chocolatey
-choco install cmake llvm capnproto
+choco install cmake llvm capnproto zstandard
 
 # Mac
 xcode-select install
-brew install cmake capnp
+brew install cmake capnp zstd
 
 # Linux
-apt-get install cmake libclang-dev capnproto
+apt-get install cmake libclang-dev capnproto zstd
 ```
 
 ### Troubleshooting building for macos

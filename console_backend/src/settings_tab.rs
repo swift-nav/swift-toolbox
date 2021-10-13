@@ -6,6 +6,7 @@ use std::path::Path;
 use anyhow::anyhow;
 use capnp::message::Builder;
 use ini::Ini;
+use lazy_static::lazy_static;
 use log::{debug, error, warn};
 use parking_lot::{MappedMutexGuard, Mutex, MutexGuard};
 use sbp::link::Link;
@@ -19,6 +20,15 @@ use crate::utils::*;
 
 const FIRMWARE_VERSION_SETTING_KEY: &str = "firmware_version";
 const DGNSS_SOLUTION_MODE_SETTING_KEY: &str = "dgnss_solution_mode";
+
+lazy_static! {
+    static ref RECOMMENDED_INS_SETTINGS: [(&'static str, &'static str, SettingValue); 4] = [
+        ("imu", "imu_raw_output", SettingValue::Boolean(true)),
+        ("imu", "gyro_range", SettingValue::String("125".to_string())),
+        ("imu", "acc_range", SettingValue::String("8g".to_string())),
+        ("imu", "imu_rate", SettingValue::String("100".to_string())),
+    ];
+}
 
 pub struct SettingsTab<'link, S> {
     client_sender: S,
@@ -67,13 +77,18 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
             };
         }
         if settings_state.reset {
-            if let Err(e) = self.reset() {
+            if let Err(e) = self.reset(true) {
                 error!("Issue resetting settings {}", e);
             };
         }
         if settings_state.save {
             if let Err(e) = self.save() {
                 error!("Issue saving settings, {}", e);
+            };
+        }
+        if settings_state.confirm_ins_change {
+            if let Err(e) = self.confirm_ins_change() {
+                error!("Issue confirming INS change, {}", e);
             };
         }
     }
@@ -138,10 +153,12 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
             .send_data(serialize_capnproto_builder(builder));
     }
 
-    pub fn reset(&self) -> Result<()> {
+    pub fn reset(&self, reset_settings: bool) -> Result<()> {
+        let flags = if reset_settings { 1 } else { 0 };
+
         self.msg_sender.send(
             MsgReset {
-                flags: 1,
+                flags,
                 sender_id: None,
             }
             .into(),
@@ -152,6 +169,87 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
     pub fn save(&self) -> Result<()> {
         self.msg_sender
             .send(MsgSettingsSave { sender_id: None }.into())?;
+        Ok(())
+    }
+
+    pub fn confirm_ins_change(&mut self) -> Result<()> {
+        let ins_mode = self
+            .settings
+            .get("ins", "output_mode")?
+            .value
+            .as_ref()
+            .ok_or_else(|| anyhow!("setting not found"))?;
+
+        let ins_on = ins_mode != &SettingValue::String("Disabled".to_string());
+
+        if ins_on {
+            let recommended_settings = self.get_recommended_ins_setting_changes()?;
+
+            for recommendation in recommended_settings {
+                // todo(DEVINFRA-570): Remove below line when libsettings-rs
+                // returns "True"/"False" for bools
+                let value = if &recommendation.3 == "true" {
+                    "True"
+                } else {
+                    &recommendation.3
+                };
+                self.write_setting(&recommendation.0, &recommendation.1, value)?;
+            }
+        }
+
+        self.save()?;
+        self.reset(false)?;
+
+        Ok(())
+    }
+
+    pub fn get_recommended_ins_setting_changes(
+        &self,
+    ) -> Result<Vec<(String, String, String, String)>> {
+        let client = self.client();
+
+        let mut recommended_changes = vec![];
+
+        for setting in RECOMMENDED_INS_SETTINGS.iter() {
+            let value = client
+                .read_setting(setting.0, setting.1)
+                .ok_or_else(|| anyhow!("setting not found"))??;
+            if value != setting.2 {
+                recommended_changes.push((
+                    setting.0.to_string(),
+                    setting.1.to_string(),
+                    value.to_string(),
+                    setting.2.to_string(),
+                ));
+            }
+        }
+
+        Ok(recommended_changes)
+    }
+
+    pub fn send_ins_change_response(&mut self, output_mode: &str) -> Result<()> {
+        let mut builder = Builder::new_default();
+        let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
+        let mut ins_resp = msg.init_ins_settings_change_response();
+
+        if output_mode != "Disabled" {
+            let recommendations = self.get_recommended_ins_setting_changes()?;
+            let mut recommended_entries = ins_resp
+                .reborrow()
+                .init_recommended_settings(recommendations.len() as u32);
+
+            for (i, recommendation) in recommendations.iter().enumerate() {
+                let mut entry = recommended_entries.reborrow().get(i as u32);
+                entry.set_setting_group(&recommendation.0);
+                entry.set_setting_name(&recommendation.1);
+                entry.set_current_value(&recommendation.2);
+                entry.set_recommended_value(&recommendation.3);
+            }
+        }
+
+        self.client_sender
+            .send_data(serialize_capnproto_builder(builder));
+
         Ok(())
     }
 
@@ -179,6 +277,10 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
         } else {
             self.settings
                 .set(group, name, SettingValue::String(value.to_string()))?;
+        }
+
+        if group == "ins" && name == "output_mode" {
+            self.send_ins_change_response(value)?;
         }
 
         self.send_table_data();

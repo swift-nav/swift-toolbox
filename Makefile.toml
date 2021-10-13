@@ -147,6 +147,19 @@ Get-ChildItem .\console_backend -Recurse -Include @("*.egg-info", "*.dist-info")
 command = "${PYTHON}"
 args = ["-m", "swiftnav_console.main", "${@}"]
 
+[tasks.start-console-gdb]
+command = "gdb"
+args = [
+  "-ex",
+  "run",
+  "--args",
+  "${PYTHON}",
+  "-m",
+  "swiftnav_console.main",
+  "--",
+  "${@}",
+]
+
 [tasks.qml-run]
 dependencies = ["generate-resources"]
 run_task = "start-console"
@@ -160,6 +173,16 @@ dependencies = [
   "install-backend",
 ]
 run_task = "start-console"
+
+[tasks.gdb-run]
+dependencies = [
+  "copy-capnp",
+  "generate-resources",
+  "remove-egg-dist",
+  "store-version",
+  "install-backend",
+]
+run_task = "start-console-gdb"
 
 [tasks.prod-run]
 dependencies = [

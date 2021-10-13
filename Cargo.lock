@@ -1504,9 +1504,9 @@ dependencies = [
 
 [[package]]
 name = "sbp"
-version = "4.0.1"
+version = "4.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c4742b3ac1a093612d594706181b54f0251ba9a0c322fa973e8335be9a2a46c2"
+checksum = "da261555e976f753231b2d01db5a3e1c944bf9f92152b96969b1b85ac0fb3f33"
 dependencies = [
  "base64",
  "bytes",
@@ -1521,9 +1521,9 @@ dependencies = [
 
 [[package]]
 name = "sbp-settings"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d0a4dd50bfa975750c6cee60e1168e76e70631aec1d5b8c8a0e4e782fe4a4c4"
+checksum = "52b61e692c1dfdbf437e0efd6596cdbd059818697177c866622d8a63fa9c1860"
 dependencies = [
  "bindgen",
  "cmake",

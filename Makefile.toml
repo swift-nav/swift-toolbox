@@ -1,30 +1,71 @@
 env_scripts = [
   '''
 #!@duckscript
-!include_files ./utils/glob.ds
-
-py_files = glob_paths_excluding_target ./**/*.py
-
-set_env PYTHON_FILES ${py_files}
-echo PYTHON_FILES=${py_files}
-
-qml_files = glob_paths_excluding_target resources/**/*.qml
-
-set_env QML_FILES ${qml_files}
-echo QML_FILES=${qml_files}
+# set os specific env vars
+os = os_family
+if eq ${os} windows
+  set_env STANDALONE_PY_URL "${STANDALONE_PY_BASE_URL}/cpython-3.9.6-x86_64-pc-windows-msvc-shared-pgo-20210724T1424.tar.zst"
+  set_env PYTHON "${WORKSPACE}\\py39\\python.exe"
+  set_env DIST_PYTHON "${WORKSPACE}\\py39-dist\\python"
+  set_env PYSIDE2_RCC "${WORKSPACE}\\py39\\Lib\\site-packages\\PySide2\\rcc.exe"
+  set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-win_amd64.whl
+  set_env BUILD_TRIPLET "x86_64-pc-windows-msvc"
+elseif eq ${os} linux
+  set_env STANDALONE_PY_URL "${STANDALONE_PY_BASE_URL}/cpython-3.9.6-x86_64-unknown-linux-gnu-lto-20210724T1424.tar.zst"
+  set_env PYTHON "${WORKSPACE}/py39/bin/python3"
+  set_env DIST_PYTHON "${WORKSPACE}/py39-dist/bin/python3"
+  set_env PYSIDE2_RCC "${WORKSPACE}/py39/bin/pyside2-rcc"
+  set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-linux_x86_64.whl
+  output = exec --fail-on-error gcc -dumpmachine
+  triplet = trim ${output.stdout}
+  set_env BUILD_TRIPLET ${triplet}
+else
+  set_env STANDALONE_PY_URL "${STANDALONE_PY_BASE_URL}/cpython-3.9.6-x86_64-apple-darwin-lto-20210724T1424.tar.zst"
+  set_env PYTHON "${WORKSPACE}/py39/bin/python3"
+  set_env DIST_PYTHON "${WORKSPACE}/py39-dist/bin/python3"
+  set_env PYSIDE2_RCC "${WORKSPACE}/py39/bin/pyside2-rcc"
+  set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-macosx_10_15_x86_64.whl
+  output = exec --fail-on-error gcc -dumpmachine
+  triplet = trim ${output.stdout}
+  set_env BUILD_TRIPLET ${triplet}
+end
 ''',
-] # Two proposed methods of simplifying path globbing # https://github.com/sagiegurari/cargo-make/issues/542 # https://github.com/sagiegurari/cargo-make/issues/543
-
-[env]
-CONDA_ENV = "console_pp"
-REQUIREMENTS_FILE = "requirements.txt"
-REQUIREMENTS_DEV_FILE = "requirements-dev.txt"
+]
 
 [config]
 default_to_workspace = false
 init_task = "init"
+skip_git_env_info = true
+skip_rust_env_info = true
+skip_crate_env_info = true
+
+[env]
+WORKSPACE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}"
+STANDALONE_PY_BASE_URL = "https://github.com/indygreg/python-build-standalone/releases/download/20210724"
+MACOSX_DEPLOYMENT_TARGET = "10.15"
 
 [tasks.init]
+
+# Two proposed methods of simplifying path globbing # https://github.com/sagiegurari/cargo-make/issues/542 # https://github.com/sagiegurari/cargo-make/issues/543
+[tasks.set-qml-files]
+private = true
+condition = { env_not_set = ["QML_FILES"] }
+script_runner = "@duckscript"
+script = '''
+!include_files ./utils/glob.ds
+qml_files = glob_paths_excluding_target resources/**/*.qml
+set_env QML_FILES ${qml_files}
+'''
+
+[tasks.set-python-files]
+private = true
+condition = { env_not_set = ["PYTHON_FILES"] }
+script_runner = "@duckscript"
+script = '''
+!include_files ./utils/glob.ds
+py_files = glob_paths_excluding_target ./**/*.py
+set_env PYTHON_FILES ${py_files}
+'''
 
 [tasks.rustup-update]
 command = "rustup"
@@ -38,56 +79,29 @@ install_crate = { crate_name = "cargo-update", binary = "cargo-install-update", 
 command = "cargo"
 args = ["install-update", "taplo-cli", "cargo-make"]
 
-# Create 'test' alias
-[tasks.test]
-clear = true
-run_task = "tests"
-
-[tasks.poetry-export-dev]
-script_runner = "@shell"
-script = '''
-conda run -n $CONDA_ENV poetry export --dev -f $REQUIREMENTS_FILE --output $REQUIREMENTS_DEV_FILE --without-hashes
-'''
-
-[tasks.poetry-export]
-dependencies = ["poetry-export-dev"]
-script_runner = "@shell"
-script = '''
-conda run -n $CONDA_ENV poetry export -f $REQUIREMENTS_FILE --output $REQUIREMENTS_FILE --without-hashes
-'''
-
-[tasks.pip-install-dev]
-script_runner = "@shell"
-script = '''
-conda run -n $CONDA_ENV pip install -r $REQUIREMENTS_DEV_FILE
-'''
-
-[tasks.pip-install]
-script_runner = "@shell"
-script = '''
-conda run -n $CONDA_ENV pip install -r $REQUIREMENTS_FILE
-'''
-
 [tasks.generate-common-constants-rs]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV --no-capture-output --live-stream py2many --rust=1 src/main/python/constants.py
-mv src/main/python/constants.rs console_backend/src/common_constants.rs
+${PYTHON} -m py2many --rust=1 swiftnav_console/constants.py
+mv swiftnav_console/constants.rs console_backend/src/common_constants.rs
 '''
 
 [tasks.extract-piksi-constants-rs]
-dependencies = ["pip-install-dev"]
 script_runner = "@shell"
 script = '''
-conda run -n $CONDA_ENV --no-capture-output --live-stream python utils/extract_piksi_tools_constants.py > /tmp/piksi_tools_constants.py
-conda run -n $CONDA_ENV --no-capture-output --live-stream python -m py2many --rust=1 /tmp/piksi_tools_constants.py --outdir console_backend/src/
+${PYTHON} utils/extract_piksi_tools_constants.py > /tmp/piksi_tools_constants.py
+${PYTHON} -m py2many --rust=1 /tmp/piksi_tools_constants.py --outdir console_backend/src/
 '''
 
 [tasks.generate-resources]
-script_runner = "@shell"
-script = '''
-conda run -n $CONDA_ENV --no-capture-output --live-stream pyside2-rcc resources/console_resources.qrc -o src/main/python/console_resources.py
-'''
+command = "${PYSIDE2_RCC}"
+args = [
+  "resources/console_resources.qrc",
+  "-o",
+  "swiftnav_console/console_resources.py",
+  "-g",
+  "python",
+]
 
 [tasks.check-capnp]
 script_runner = "@shell"
@@ -119,17 +133,8 @@ Get-ChildItem .\console_backend -Recurse -Include @("*.egg-info", "*.dist-info")
 '''
 
 [tasks.start-console]
-command = "conda"
-args = [
-  "run",
-  "-n",
-  "${CONDA_ENV}",
-  "--no-capture-output",
-  "--live-stream",
-  "python",
-  "src/main/python/main.py",
-  "${@}",
-]
+command = "${PYTHON}"
+args = ["-m", "swiftnav_console.main", "--", "${@}"]
 
 [tasks.qml-run]
 dependencies = ["generate-resources"]
@@ -173,120 +178,255 @@ git describe --tags --always > console_backend/src/version.txt
 '''
 
 [tasks.install-backend]
-script_runner = "@shell"
-script = '''
-conda run -n $CONDA_ENV pip install -e ./console_backend
-'''
+command = "${PYTHON}"
+args = ["-m", "pip", "install", "-e", "./console_backend"]
 
 [tasks.prod-install-backend]
-script_runner = "@shell"
-script = '''
-conda run -n $CONDA_ENV --no-capture-output --live-stream python -m pip install ./console_backend --upgrade --force ./console_backend -v
-'''
-
-[tasks.prod-freeze-no-copy]
-dependencies = ["copy-capnp", "generate-resources", "prod-install-backend"]
-script_runner = "@shell"
-script = '''
-conda run -n $CONDA_ENV fbs freeze
-'''
-
-[tasks.copy-console-backend-to-fbs.windows]
-script_runner = "powershell"
-script_extension = "ps1"
-script = '''
-xcopy /E /Y /I .\console_backend\console_backend\server.cp38-win_amd64.pyd .\target\swift_navigation_console\console_backend\
-'''
-
-[tasks.copy-console-backend-to-fbs]
-script_runner = "@shell"
-script = '''
-mkdir -p target/swift_navigation_console/console_backend && cp -r console_backend/console_backend/* target/swift_navigation_console/console_backend/.
-'''
-
-[tasks.prod-freeze]
-dependencies = [
-  "store-version",
-  "prod-freeze-no-copy",
-  "remove-negligibles",
-  "copy-console-backend-to-fbs",
+command = "${PYTHON}"
+args = [
+  "-m",
+  "pip",
+  "install",
+  "-v",
+  "--upgrade",
+  "--force",
+  "./console_backend",
 ]
 
-[tasks.prod-installer]
-dependencies = ["prod-freeze"]
-script_runner = "@shell"
+[tasks.build-frontend-wheel]
+command = "${PYTHON}"
+args = ["-m", "flit", "build", "--no-setup-py"]
+
+[tasks.build-backend-wheel]
+cwd = "console_backend"
+command = "${PYTHON}"
+args = ["setup.py", "bdist_wheel"]
+
+[tasks.get-get-pip]
+condition = { files_not_exist = ["${WORKSPACE}/get-pip.py"] }
+script_runner = "@duckscript"
 script = '''
-conda run -n $CONDA_ENV fbs installer
+wget -O ./get-pip.py https://bootstrap.pypa.io/get-pip.py
 '''
 
-[tasks.create-remove-negligibles-file]
-script_runner = "@shell"
+[tasks.get-standalone-py]
+dependencies = ["get-get-pip"]
+cwd = "standalone-py"
+condition = { files_not_exist = ["${WORKSPACE}/standalone-py/python"] }
+script_runner = "@duckscript"
 script = '''
-conda run -n $CONDA_ENV python utils/get_fbs_remove_list.py
+wget -O py39.tar.zst ${STANDALONE_PY_URL}
+exec --fail-on-error zstd -f -d py39.tar.zst
+exec --fail-on-error tar -xvf py39.tar
 '''
 
-[tasks.remove-negligibles.linux]
-dependencies = []
+[tasks.setup-builder]
+dependencies = ["get-standalone-py"]
+script_runner = "@duckscript"
 script = '''
-bash src/main/fbs/linux-remove-negligibles.sh
+if is_path_exists py39
+  rm -r py39
+end
+mkdir py39
+cd standalone-py/python/install
+cp . ../../../py39
+cd ../../../
+exec --fail-on-error ${PYTHON} ./get-pip.py
+exec --fail-on-error ${PYTHON} -m pip install wheel flit . ".[test]"
+cm_run_task generate-resources
 '''
 
-[tasks.remove-negligibles.windows]
-dependencies = []
+[tasks.prep-dist]
+dependencies = ["get-standalone-py"]
+script_runner = "@duckscript"
 script = '''
-bash src/main/fbs/windows-remove-negligibles.sh
+cm_run_task copy-capnp
+cm_run_task store-version
+if is_path_exists py39-dist
+  rm -r py39-dist
+end
+mkdir py39-dist
+cd standalone-py/python/install/
+cp . ../../../py39-dist
+cd ../../..
+exec --fail-on-error ${DIST_PYTHON} ./get-pip.py
 '''
 
-[tasks.prod-nuitka-build.linux]
-dependencies = ["copy-capnp", "store-version", "generate-resources"]
-script_runner = "@shell"
+[tasks.build-entrypoint]
+command = "cargo"
+args = ["build", "--release", "--bin", "entrypoint"]
+
+[tasks.build-dist-install-entrypoint]
+dependencies = ["build-entrypoint"]
+script_runner = "@duckscript"
 script = '''
-conda run -n $CONDA_ENV pip install --force ./console_backend
-conda run -n $CONDA_ENV bash src/main/nuitka/linux.sh
+cp target/release/entrypoint py39-dist/bin/swiftnav-console
+exec --fail-on-error strip py39-dist/bin/swiftnav-console
 '''
 
-[tasks.prod-nuitka-build.mac]
-dependencies = ["copy-capnp", "store-version", "generate-resources"]
-script_runner = "@shell"
+[tasks.build-dist-install-entrypoint.windows]
 script = '''
-conda run -n $CONDA_ENV pip install --force ./console_backend
-conda run -n $CONDA_ENV bash src/main/nuitka/mac.sh
+mkdir py39-dist/Scripts
+cp target/release/entrypoint.exe py39-dist/Scripts/swiftnav-console.exe
 '''
 
-[tasks.create-nuitka-script]
-script_runner = "@shell"
+[tasks.build-dist-install-frontend-wheel]
+dependencies = ["build-frontend-wheel"]
+command = "${DIST_PYTHON}"
+args = [
+  "-m",
+  "pip",
+  "install",
+  "./dist/swiftnav_console-0.1.0-py3-none-any.whl",
+  "--force-reinstall",
+]
+
+[tasks.build-dist-install-backend-wheel]
+dependencies = ["build-backend-wheel"]
+command = "${DIST_PYTHON}"
+args = ["-m", "pip", "install", "console_backend/dist/${BACKEND_WHEEL}"]
+
+[tasks.build-dist-copy-resources]
+script_runner = "@duckscript"
 script = '''
-conda run -n $CONDA_ENV python utils/create_nuitka_script.py
+cp src/main/resources py39-dist/
 '''
 
-[tasks.prod-installer.mac]
-dependencies = ["prod-nuitka-build"]
-script_runner = "@shell"
+[tasks.build-dist-freeze]
+script_runner = "@duckscript"
 script = '''
-mkdir -p main.app/Contents/MacOS main.app/Contents/Resources
-cp -r main.dist/* main.app/Contents/MacOS/
-iconutil --convert icns src/main/icons/Mac.iconset
-mv src/main/icons/Mac.icns main.app/Contents/Resources/SwiftNavConsole.icns
-conda run -n $CONDA_ENV python src/build/generate-mac-info-plist.py
-hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg' || (echo 'Failed to create Mac dmg. Retrying in 10s...' && sleep 10 && hdiutil create -volname SwiftNavConsole -srcfolder main.app -ov -format UDZO 'swift_navigation_console.dmg' )
+touch ./py39-dist/.frozen
 '''
+
+[tasks.build-dist]
+dependencies = ["prep-dist"]
+run_task = [
+  { name = [
+    "build-dist-install-frontend-wheel",
+    "build-dist-install-backend-wheel",
+    "build-dist-install-entrypoint",
+    "build-dist-copy-resources",
+    "build-dist-freeze",
+  ] },
+]
+
+[tasks.purge-dist]
+cwd = "py39-dist"
+script_runner = "@duckscript"
+script = '''
+py_folders = array test tests examples __pycache__ demos translations idlelib lib/tcl8 lib/tcl8.6 lib/tk8.6 shiboken2/docs ensurepip lib2to3 tkinter unittest
+qt_folders = array plugins/geoservices plugins/virtualkeyboard plugins/sqldrivers lib/Tix8.4.3 tcl/tix8.4.3 Qt/resources PySide2/resources
+qml_folders = array qml/QtWeb* qml/QtBluetooth* qml/QtNfc* qml/QtGamepad qml/QtTest qml/QtQuick3D qml/Qt3D qml/QtSensors qml/QtLocation qml/QtPositioning
+all_folders = array_concat ${py_folders} ${qt_folders} ${qml_folders}
+for name in ${all_folders}
+    folders = glob_array **/${name}/
+    for folder in ${folders}
+        rm -r ${folder}
+    end
+end
+
+file_exts = array pyc pyi pdb tcl gif png
+for ext in ${file_exts}
+    files = glob_array **/*.${ext}
+    for file in ${files}
+        if eq ${ext} png
+            is_qtquick = contains ${file} QtQuick
+            if not is_qtquick
+                rm ${file}
+            end
+        else
+            rm ${file}
+        end
+    end
+end
+
+libs = array QtSensors QtLocation Qt5Location QtPositioning Qt3D Qt53D Qt5Nfc Qt5Web QtWeb Qt5Pdf Qt5Designer Qt5DesignerComponents Qt5VirtualKeyboard Qt5Bluetooth Qt5Quick3D
+for lib in ${libs}
+    files = glob_array ./**/*${lib}*
+    for file in ${files}
+        echo ${file}
+        rm -r ${file}
+    end
+end
+
+os = os_family
+if eq ${os} windows
+    mv ./Scripts/swiftnav-console.exe .
+    rm -r ./Scripts
+    mv ./swiftnav-console.exe ./Scripts/
+
+    rm -r ./include
+    rm -r ./tcl
+
+    globs = array _test*.pyd libcrypto*.dll libssl*.dll tcl*.dll tk*.dll
+    for glob in ${globs}
+        files = glob_array ./DLLs/${glob}
+        for file in ${files}
+            rm ${file}
+        end
+    end
+    qtbins = glob_array ./Lib/site-packages/PySide2/*.exe
+    for bin in ${qtbins}
+        rm ${bin}
+    end
+else
+    mv ./bin/swiftnav-console .
+    mv ./bin/python3 .
+    rm -r ./bin
+    mv ./swiftnav-console ./bin/
+    mv ./python3 ./bin/
+
+    rm -r ./share
+
+    bins = array rcc uic designer
+    for bin in ${bins}
+        files = glob_array ./**/PySide2/${bin}
+        for bin in ${files}
+            rm ${bin}
+        end
+    end
+end
+
+exec --fail-on-error ${DIST_PYTHON} -m pip uninstall -y pip setuptools wheel
+exec --fail-on-error ${DIST_PYTHON} -m compileall -b -f -o 1 -o 2 .
+
+files = glob_array ./**/*.py
+for file in ${files}
+    rm ${file}
+end
+'''
+
+[tasks.compress-dist]
+env = { ARCHIVE_NAME = "console_pp" }
+script_runner = "@duckscript"
+script = '''
+output = exec --fail-on-error date +%Y-%m-%d
+date = trim ${output.stdout}
+output = exec --fail-on-error git describe --always --tags --dirty
+version = trim ${output.stdout}
+output_name = set "${ARCHIVE_NAME}-${version}-${BUILD_TRIPLET}-${date}"
+exec --fail-on-error tar -C "py39-dist" -cvf "${output_name}.tar" .
+exec --fail-on-error rm -f "${output_name}.tar.xz"
+exec --fail-on-error xz -T 0 -e -9 "${output_name}.tar"
+'''
+
+[tasks.create-dist]
+run_task = [{ name = ["build-dist", "purge-dist", "compress-dist"] }]
 
 [tasks.qml-format]
-env = { QT_APP = { script = [
-  "conda run -n $CONDA_ENV python utils/echo-qt-dir.py",
-] } }
+dependencies = ["set-qml-files"]
+env = { QT_APP = { script = ["$PYTHON utils/echo-qt-dir.py"] } }
 script_runner = "@shell"
 script = '''
-${QT_APP}/Qt/bin/qmlformat -i $QML_FILES
+${QT_APP}/Qt/bin/qmlformat -i ${QML_FILES}
 '''
 
 [tasks.qml-lint]
-env = { QT_APP = { script = [
-  "conda run -n $CONDA_ENV python utils/echo-qt-dir.py",
-] } }
+dependencies = ["set-qml-files"]
+env = { QT_APP = { script = ["$PYTHON utils/echo-qt-dir.py"] } }
 script_runner = "@shell"
 script = '''
-${QT_APP}/Qt/bin/qmllint -I ${QT_APP}/../PySide2/Qt/qml/ -I resources/ $QML_FILES
+${QT_APP}/Qt/bin/qmllint -I ${QT_APP}/../PySide2/Qt/qml/ -I resources/ ${QML_FILES}
 '''
 
 [tasks.qml-format-check]
@@ -320,31 +460,27 @@ command = "cargo"
 args = ["check"]
 
 [tasks.python-type-check]
-script_runner = "@shell"
-script = '''
-conda run -n $CONDA_ENV mypy $PYTHON_FILES
-'''
+dependencies = ["set-python-files"]
+command = "${PYTHON}"
+args = ["-m", "mypy", "@@split(PYTHON_FILES, )"]
 
 [tasks.python-format-check]
-script_runner = "@shell"
-script = '''
-conda run -n $CONDA_ENV black --check --diff $PYTHON_FILES
-'''
+dependencies = ["set-python-files"]
+command = "${PYTHON}"
+args = ["-m", "black", "--check", "--diff", "@@split(PYTHON_FILES, )"]
 
 [tasks.python-format-all]
-script_runner = "@shell"
-script = '''
-conda run -n $CONDA_ENV black $PYTHON_FILES
-'''
+dependencies = ["set-python-files"]
+command = "${PYTHON}"
+args = ["-m", "black", "@@split(PYTHON_FILES, )"]
 
 [tasks.python-format]
 alias = "python-format-all"
 
 [tasks.python-lint]
-script_runner = "@shell"
-script = '''
-conda run -n $CONDA_ENV pylint --extension-pkg-allow-list=console_backend --output-format=parseable $PYTHON_FILES
-'''
+dependencies = ["set-python-files"]
+command = "${PYTHON}"
+args = ["-m", "pylint", "--output-format=parseable", "@@split(PYTHON_FILES, )"]
 
 [tasks.format-toml-check]
 # Note format-toml task is defined by cargo-make to use crate taplo-cli, but the version is
@@ -354,12 +490,14 @@ dependencies = ["cargo-make-deps-update", "format-toml"]
 run_task = "check-git-diff"
 
 [tasks.format-all]
-dependencies = [
-  "python-format-all",
-  "qml-format",
-  "rust-format",
-  "newline-format",
-  "format-toml",
+run_task = [
+  { name = [
+    "python-format-all",
+    "qml-format",
+    "rust-format",
+    "newline-format",
+    "format-toml",
+  ] },
 ]
 
 [tasks.format]
@@ -378,8 +516,6 @@ dependencies = ["python-type-check", "rust-type-check"]
 [tasks.check-all]
 dependencies = [
   "cargo-make-deps-update",
-  "poetry-export",
-  "pip-install-dev",
   "generate-common-constants-rs",
   "extract-piksi-constants-rs",
   "format",
@@ -391,16 +527,19 @@ run_task = "check-git-diff"
 [tasks.tests]
 dependencies = ["rust-tests"]
 
+# Create 'test' alias
+[tasks.test]
+clear = true
+run_task = "tests"
+
 [tasks.backend-cpu-bench]
 dependencies = ["copy-capnp", "generate-resources"]
 command = "cargo"
 args = ["bench", "--all-features", "--", "--verbose", "--noplot"]
 
 [tasks.backend-cpu-bench-validate]
-script_runner = "@shell"
-script = '''
-conda run -n $CONDA_ENV python utils/bench_runner.py --backend_cpu
-'''
+command = "${PYTHON}"
+args = ["utils/bench_runner.py", "--backend_cpu"]
 
 [tasks.backend-mem-bench]
 dependencies = ["copy-capnp", "generate-resources"]
@@ -424,51 +563,49 @@ dependencies = [
 ]
 
 [tasks.disk-usage-bench]
-script_runner = "@shell"
-script = '''
-conda run -n $CONDA_ENV python utils/bench_runner.py --disk_usage
-'''
+command = "${PYTHON}"
+args = ["utils/bench_runner.py", "--disk_usage"]
 
 [tasks.frontend-cpu-bench.linux]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${PWD}/../../target/swift_navigation_console/swift_navigation_console
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/bin/swiftnav-console
 '''
 
 [tasks.frontend-cpu-bench.windows]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${PWD}/target/swift_navigation_console/swift_navigation_console.exe
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/Scripts/swiftnav-console.exe
 '''
 
 [tasks.frontend-cpu-bench.mac]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${PWD}/main.dist/main
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/bin/swiftnav-console
 '''
 
 [tasks.frontend-mem-bench.linux]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${PWD}/target/swift_navigation_console/swift_navigation_console
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/bin/swiftnav-console
 '''
 
 [tasks.frontend-mem-bench.windows]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${PWD}/target/swift_navigation_console/swift_navigation_console.exe
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/Scripts/swiftnav-console.exe
 '''
 
 [tasks.frontend-mem-bench.mac]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${PWD}/main.dist/main
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/bin/swiftnav-console
 '''
 
 [tasks.newline-terminator]
@@ -503,13 +640,12 @@ sys.exit(int(len(no_newline) > 0) if dry_run else 0)
 '''
 
 [tasks.newline-check]
-env = { "NLT_DRY_RUN" = "1" }
+env = { NLT_DRY_RUN = "1" }
 run_task = "newline-terminator"
 
 [tasks.newline-format]
 run_task = "newline-terminator"
 
 [tasks.check-git-diff]
-script_runner = "@shell"
 command = "git"
 args = ["diff", "--exit-code"]

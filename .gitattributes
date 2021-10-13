@@ -1,3 +1,1 @@
-src/main/fbs/* linguist-vendored
-src/main/nuitka/* linguist-vendored
 "console_backend/tests/data/*" filter=lfs diff=lfs merge=lfs -text

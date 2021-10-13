@@ -2,56 +2,35 @@
 
 ## Setup
 
-Install Rust: https://rustup.rs/ 
+Install Rust: https://rustup.rs/
 
 Install *cargo-make*: `cargo install --force cargo-make`.
 
-Download and install miniconda3:
-- https://docs.conda.io/en/latest/miniconda.html
-
-Create Python new environment:
+Set up standalone Python environment:
 
 ```
-conda env create -f conda.yml
-```
-
-Activate the environment and install poetry:
-
-```
-conda activate console_pp
-pip install poetry
+cargo make setup-builder
 ```
 
 Install cmake, clang, and capnp in your respective OS.
 
 ```
 # Windows - install with installer, or via chocolatey
-choco install cmake llvm capnproto
+choco install cmake llvm capnproto zstandard
 
 # Mac
 xcode-select install
-brew install cmake capnp
+brew install cmake capnp zstd
 
 # Linux
-apt-get install cmake libclang-dev capnproto
+apt-get install cmake libclang-dev capnproto zstd
 ```
 
-Install development dependencies (On Windows make sure you're using Adminstrator shell).
+### Troubleshooting building for macos
 
-# For the below commands, we do not want to be in the console_pp conda environment.
-# Bad things will happen if you are.
-
-```
-conda deactivate
-cargo make pip-install-dev
-git lfs pull
-```
-
-# Troubleshooting building for macos
-
-The module used for generating rust bindings for native libraries; `rust-bindgen` 
-has been observed to fail to find system headers (i.e. `assert.h`, `math.h`) on 
-newer versions of macos. Fortunately we can add include search paths to pass to 
+The module used for generating rust bindings for native libraries; `rust-bindgen`
+has been observed to fail to find system headers (i.e. `assert.h`, `math.h`) on
+newer versions of macos. Fortunately we can add include search paths to pass to
 clang by setting an environment variable:
 
 ```
@@ -72,12 +51,10 @@ Or in "prod" mode (compiles a wheel for the backend):
 cargo make prod-run
 ```
 
-## Building the installer
-
-To build the installer:
+## Building the distribution
 
 ```
-cargo make prod-installer
+cargo make create-dist
 ```
 
 ## Running the benchmarks
@@ -94,7 +71,7 @@ To run the frontend benchmarks:
 
 ```
 git lfs pull
-cargo make prod-installer
+cargo make create-dist
 cargo make frontend-cpu-bench
 ```
 
@@ -103,6 +80,9 @@ cargo make frontend-cpu-bench
 After making changes, run to tasks to ensure the code is ready for submission
 
 ```
+# fetch test data
+git lfs pull
+
 cargo make check-all
 cargo make tests
 ```
@@ -118,21 +98,6 @@ Python extension.
 [pyo3]: https://docs.rs/pyo3/0.13.1/pyo3/
 [setuptools-rust]: https://github.com/PyO3/setuptools-rust
 
-### PyInstaller (fbs)
-
-PyInstaller (via [fbs]) is used to bundle the application and create an installer.
-Things that fbs trivially solves:
-
-- creating an installer: *fbs* uses [fpm] to create installers for unix/mac, it uses
-  makensis to create a windows installer.
-  - The Windows installer looks to be "decent", it doesn't seem to do a good job cleaning up old installations though: https://github.com/mherrmann/fbs/pull/29
-  - It would be ideal if it could use WiX instead of NSIS to generate an MSI: https://github.com/mherrmann/fbs/issues/8
-
-- managing resources: the fbs runtime handles packaging of application resources, particularly things like .capnp files and QML files
-
-[fbs]: https://build-system.fman.io/
-[fpm]: https://github.com/jordansissel/fpm
-
 ### PySide2
 
 We're using Qt 5.15.2 via PySide2 (the official Python bindings for Qt).  Made possible via fork of fbs: https://github.com/silverjam/fbs
@@ -141,13 +106,9 @@ We're using Qt 5.15.2 via PySide2 (the official Python bindings for Qt).  Made p
 
 QML (QtQuick Mark-up Language) is used to model the UI.
 
-### Python 3.9 (via Miniconda)
+### Python 3.9 Standalone Build
 
-Miniconda builds of Python provide a consistent (and reliable) build of Python across different platforms.  We use Python 3.9 (which requires PyInstaller 4.2).
-
-### Poetry
-
-Poetry is used to manage our Python environment: https://python-poetry.org/
+[python-build-standalone](https://github.com/indygreg/python-build-standalone) provides redistributable builds of Python for multiple enviroments. We use Python 3.9 (which requires PyInstaller 4.2).
 
 ## Design Philosophy
 

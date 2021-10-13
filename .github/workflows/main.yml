@@ -13,7 +13,6 @@ env:
   RUST_CACHE_DIRS: "~/.cargo/registry\n~/.cargo/git\ntarget\n"
   LIBCLANG_PATH_WIN: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
   CARGO_MAKE_VERSION: 0.35.0
-  MINICONDA_VERSION: "py38_4.10.3"
   CARGO_INCREMENTAL: 0
   RUSTFLAGS: "-C debuginfo=0"
 
@@ -76,29 +75,23 @@ jobs:
           toolchain: stable
 
       - uses: Swatinem/rust-cache@v1
-      
+
       - uses: davidB/rust-cargo-make@v1
         with:
           version: ${{ env.CARGO_MAKE_VERSION }}
-
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          activate-environment: console_pp
-          environment-file: conda.yml
-          miniconda-version: ${{ env.MINICONDA_VERSION }}
 
       - name: Cache pip
         uses: actions/cache@v2
         with:
           path: ${{ env.PIP_CACHE_DIR }}
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
+          key: ${{ runner.os }}-pyproject-toml-${{ hashFiles('pyproject.toml') }}
           restore-keys: |
-            ${{ runner.os }}-pip-
+            ${{ runner.os }}-pyproject-toml-
             ${{ runner.os }}-
 
-      - name: Run Pip Install
+      - name: Set up python builder
         run: |
-          cargo make pip-install-dev
+          cargo make setup-builder
 
       - name: Run Backend Benchmarks (Windows)
         env:
@@ -153,25 +146,18 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
 
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          activate-environment: console_pp
-          environment-file: conda.yml
-          miniconda-version: ${{ env.MINICONDA_VERSION }}
-
-      - name: Run Requirements Generation Check
-        run: |
-          cargo make poetry-export
-          git diff --exit-code
-
       - name: Cache pip
         uses: actions/cache@v2
         with:
           path: ${{ env.PIP_CACHE_DIR }}
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
+          key: ${{ runner.os }}-pyproject-toml-${{ hashFiles('pyproject.toml') }}
           restore-keys: |
-            ${{ runner.os }}-pip-
+            ${{ runner.os }}-pyproject-toml-
             ${{ runner.os }}-
+
+      - name: Set up python builder
+        run: |
+          cargo make setup-builder
 
       - name: Run Checks
         run: |
@@ -266,56 +252,53 @@ jobs:
         with:
           version: ${{ env.CARGO_MAKE_VERSION }}
 
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          activate-environment: console_pp
-          environment-file: conda.yml
-          miniconda-version: ${{ env.MINICONDA_VERSION }}
-
       - name: Cache pip
         uses: actions/cache@v2
         with:
           path: ${{ env.PIP_CACHE_DIR }}
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
+          key: ${{ runner.os }}-pyproject-toml-${{ hashFiles('pyproject.toml') }}
           restore-keys: |
-            ${{ runner.os }}-pip-
+            ${{ runner.os }}-pyproject-toml-
             ${{ runner.os }}-
 
-      - name: Run Pip Install
+      - name: Set up python builder
         run: |
-          cargo make pip-install-dev
+          cargo make setup-builder
 
       - name: Build ${{ runner.os }} Binaries.
         env:
           LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
         run: |
-          cargo make prod-installer
+          cargo make create-dist
         if: matrix.os == 'windows-2019'
 
       - name: Build ${{ runner.os }} Binaries.
         shell: bash
         run: |
-          cargo make prod-installer
+          cargo make create-dist
         if: matrix.os != 'windows-2019'
 
       - name: Pull Git LFS objects
         run: git lfs pull
         env:
           GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
-      - name: Zip ${{ runner.os }} Binaries.
+      - name: Archive ${{ runner.os }} Binaries.
         env:
           OS_NAME: ${{ runner.os }}
         shell: bash
         run: |
-          bash ./.github/ci-build.sh
+          mkdir bench
+          cp -r console_backend/tests/data bench
+          cp utils/bench_runner.py bench
+          cd bench
+          7z a -tzip "../$OS_NAME.zip" *;
+          cd ..
+          echo "${OS_NAME}.zip" >bench-archive.filename;
+          echo "BENCH_ARCHIVE=$(cat bench-archive.filename)" >>$GITHUB_ENV
+
+          RELEASE_ARCHIVE=$(find . -maxdepth 1 -iname "*.tar.xz")
+          echo $RELEASE_ARCHIVE >release-archive.filename
           echo "RELEASE_ARCHIVE=$(cat release-archive.filename)" >>$GITHUB_ENV
-          echo "BENCH_ARCHIVE=$(cat bench.filename)" >>$GITHUB_ENV
-      - name: ${{ runner.os }} Installer Size Benchmark.
-        env:
-          OS_NAME: ${{ runner.os }}
-        shell: bash
-        run: |
-          cargo make disk-usage-bench
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ runner.os }}-artifacts
@@ -327,7 +310,13 @@ jobs:
           name: ${{ runner.os }}-artifacts-bench
           path: |
             ${{ env.BENCH_ARCHIVE }}
-            bench.filename
+            bench-archive.filename
+      - name: ${{ runner.os }} Installer Size Benchmark.
+        env:
+          OS_NAME: ${{ runner.os }}
+        shell: bash
+        run: |
+          cargo make disk-usage-bench
   frontend_bench:
     name: Run Frontend Benchmarks
     timeout-minutes: 30
@@ -344,38 +333,62 @@ jobs:
       - name: Remove previous build.
         shell: bash
         run: |
-          rm -rf output
+          rm -rf console
+          rm -rf bench
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: ${{ matrix.os }}-artifacts
+          path: |
+            console
+
       - uses: actions/download-artifact@v2
         with:
           name: ${{ matrix.os }}-artifacts-bench
           path: |
-            output
+            bench
+
       - name: Extract binary and data.
+        shell: bash
         run: |
-          cd output
-          7z x $(cat bench.filename) -aoa -o${{ matrix.os }}
+          cd console
+          archive=$(cat release-archive.filename)
+          7z x $archive -aoa
+          7z x ${archive%.xz} -aoa
+          echo "extracted release-archive"
+          mv ../bench/${{ matrix.os }}.zip .
+          7z x ${{ matrix.os }}.zip -aoa
+          echo "extracted bench data"
 
       - name: Run CPU Frontend Benchmark.
         shell: bash
         run: |
-          cd output/${{ matrix.os }}
+          cd console
           if [ "$RUNNER_OS" == "Windows" ]; then
-              python bench_runner.py --frontend_cpu --executable=swift_navigation_console.exe
+              python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/console/Scripts/swiftnav-console.exe"
           elif [ "$RUNNER_OS" == "macOS" ]; then
-              python bench_runner.py --frontend_cpu --executable=./main
+              chmod +x "${GITHUB_WORKSPACE}/console/bin/swiftnav-console"
+              chmod +x "${GITHUB_WORKSPACE}/console/bin/python3"
+              python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/console/bin/swiftnav-console"
           elif [ "$RUNNER_OS" == "Linux" ]; then
-              python bench_runner.py --frontend_cpu --executable=./swift_navigation_console
+              chmod +x "${GITHUB_WORKSPACE}/console/bin/swiftnav-console"
+              chmod +x "${GITHUB_WORKSPACE}/console/bin/python3"
+              python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/console/bin/swiftnav-console"
           fi
       - name: Run MEM Frontend Benchmark.
         shell: bash
         run: |
-          cd output/${{ matrix.os }}
+          cd console
           if [ "$RUNNER_OS" == "Windows" ]; then
-              python bench_runner.py --frontend_mem --executable=swift_navigation_console.exe
+              python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/console/Scripts/swiftnav-console.exe"
           elif [ "$RUNNER_OS" == "macOS" ]; then
-              python bench_runner.py --frontend_mem --executable=./main
+              chmod +x "${GITHUB_WORKSPACE}/console/bin/swiftnav-console"
+              chmod +x "${GITHUB_WORKSPACE}/console/bin/python3"
+              python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/console/bin/swiftnav-console"
           elif [ "$RUNNER_OS" == "Linux" ]; then
-              python bench_runner.py --frontend_mem --executable=./swift_navigation_console
+              chmod +x "${GITHUB_WORKSPACE}/console/bin/swiftnav-console"
+              chmod +x "${GITHUB_WORKSPACE}/console/bin/python3"
+              python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/console/bin/swiftnav-console"
           fi
 
 

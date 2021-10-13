@@ -1,7 +1,0 @@
-{
-    "app_name": "swift_navigation_console",
-    "author": "Swift Navigation, Inc.",
-    "main_module": "src/main/python/main.py",
-    "version": "0.0.0",
-    "hidden_imports": ["console_backend"]
-}

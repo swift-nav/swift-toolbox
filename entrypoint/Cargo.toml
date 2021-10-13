@@ -1,0 +1,14 @@
+[package]
+authors = ["Swift Navigation <dev@swift-nav.com>"]
+name = "entrypoint"
+version = "0.1.0"
+description = "Starts the console with the correct python installation"
+edition = "2018"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+[[bin]]
+name = "entrypoint"
+path = "src/main.rs"
+bench = false

@@ -30,7 +30,7 @@ use crate::types::{
     Result, Specan, VelNED,
 };
 use crate::update_tab;
-use crate::utils::{close_frontend, refresh_navbar};
+use crate::utils::{close_frontend, refresh_connection_frontend};
 use crate::Tabs;
 use crate::{connection::Connection, types::UartState};
 
@@ -48,7 +48,7 @@ where
     let (rdr, writer) = conn.try_connect(Some(shared_state.clone()))?;
     let msg_sender = MsgSender::new(writer);
     shared_state.set_current_connection(conn.name());
-    refresh_navbar(&mut client_send.clone(), shared_state.clone());
+    refresh_connection_frontend(&mut client_send.clone(), shared_state.clone());
     let messages = {
         let state = shared_state.clone();
         let client = client_send.clone();

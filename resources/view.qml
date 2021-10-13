@@ -33,9 +33,6 @@ ApplicationWindow {
             id: mainDrawer
         }
 
-        // ConnectionScreen {
-        // }
-
         SideNavBar {
             id: sideNavBar
 
@@ -45,19 +42,16 @@ ApplicationWindow {
 
         StackView {
             id: stack
+
             initialItem: mainView
-            // anchors.fill: parent
             Layout.fillHeight: true
             Layout.fillWidth: true
-
             Component.onCompleted: stack.push("ConnectionScreen.qml")
-
         }
 
         ColumnLayout {
             id: mainView
-            // Layout.fillHeight: true
-            // Layout.fillWidth: true
+
             spacing: Constants.topLevelSpacing
 
             SplitView {
@@ -78,35 +72,19 @@ ApplicationWindow {
                     Layout.leftMargin: Constants.margins
                     Layout.rightMargin: Constants.margins
                 }
-
-                LogPanel {
+                ColumnLayout {
                     SplitView.fillWidth: true
-                    SplitView.preferredHeight: Constants.logPanelPreferredHeight
-                }
-
-            }
-
-            Rectangle {
-                id: loggingBar
-
-                Layout.fillWidth: true
-                Layout.preferredHeight: Constants.navBarPreferredHeight
-                z: Constants.commonChart.zAboveCharts
-                visible: false
-
-                LoggingBar {
-                }
-
-            }
-
-            Rectangle {
-                id: navBar
-
-                Layout.fillWidth: true
-                Layout.preferredHeight: Constants.navBarPreferredHeight
-                z: Constants.commonChart.zAboveCharts
-
-                NavBar {
+                    SplitView.preferredHeight: Constants.logPanelPreferredHeight + Constants.loggingBarPreferredHeight
+                    SplitView.minimumHeight: Constants.loggingBarPreferredHeight
+                    spacing: Constants.topLevelSpacing
+                    LoggingBar {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: Constants.loggingBarPreferredHeight
+                    }
+                    LogPanel {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: Constants.logPanelPreferredHeight
+                    }
                 }
 
             }

@@ -9,11 +9,11 @@ QtObject {
     readonly property real tabBarHeight: 40
     readonly property real topLevelSpacing: 0
     readonly property real logPanelPreferredHeight: 100
-    readonly property real navBarPreferredHeight: 50
+    readonly property int loggingBarPreferredHeight: 50
     readonly property real statusBarPreferredHeight: 30
     property QtObject logPanel
     property QtObject statusBar
-    property QtObject navBar
+    property QtObject connection
     property QtObject sideNavBar
     property QtObject loggingBar
     property QtObject licensesPopup
@@ -224,14 +224,14 @@ QtObject {
         readonly property string defaultValue: "--"
     }
 
-    navBar: QtObject {
+    connection: QtObject {
         readonly property int connectionDropdownWidth: 100
         readonly property int serialSelectionDropdownWidth: 100
         readonly property int dropdownHeight: 40
         readonly property int buttonHeight: 40
         readonly property int buttonSvgHeight: 15
         readonly property int urlBarHeight: 25
-        readonly property int navBarMargin: 10
+        readonly property int connectionMargin: 10
         readonly property int plotRefreshRateDropdownWidth: 50
         readonly property int serialDeviceBaudRateDropdownWidth: 90
         readonly property int serialDeviceFlowControlDropdownWidth: 130
@@ -323,6 +323,7 @@ QtObject {
         readonly property string okStatusPath: "images/fontawesome/circle-solid.svg"
         readonly property color okStatusColor: "green"
         readonly property int insStatusImageWidth: 15
+        readonly property int urlBarHeight: 25
     }
 
     baselinePlot: QtObject {

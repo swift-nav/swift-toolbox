@@ -1,6 +1,7 @@
 import "Constants"
 import QtQuick 2.5
 import QtQuick.Controls 2.3
+import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
 Rectangle {
@@ -36,59 +37,98 @@ Rectangle {
         "source": Constants.sideNavBar.advancedPath
     }]
 
-    TabBar {
-        id: tab
+    ConnectionData {
+        id: connectionData
+    }
 
-        z: Constants.commonChart.zAboveCharts
-        height: parent.height
-        contentHeight: Constants.sideNavBar.tabBarHeight
-        contentWidth: Constants.sideNavBar.tabBarWidth
-        currentIndex: Globals.initialMainTabIndex + 1
-        Component.onCompleted: {
-            hamburger.checkable = false;
+    ColumnLayout {
+        anchors.fill: parent
+
+        TabBar {
+            id: tab
+
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            z: Constants.commonChart.zAboveCharts
+            height: parent.height
+            contentHeight: Constants.sideNavBar.tabBarHeight
+            contentWidth: Constants.sideNavBar.tabBarWidth
+            currentIndex: Globals.initialMainTabIndex + 1
+            Component.onCompleted: {
+                hamburger.checkable = false;
+            }
+
+            TabButton {
+                id: hamburger
+
+                width: Constants.sideNavBar.tabBarWidth
+                anchors.horizontalCenter: parent.horizontalCenter
+                icon.source: Constants.sideNavBar.hamburgerPath
+                display: AbstractButton.IconOnly
+                rightInset: Constants.sideNavBar.buttonInset
+                leftInset: Constants.sideNavBar.buttonInset
+                onClicked: {
+                    drawer.open();
+                }
+            }
+
+            Repeater {
+                id: repeater
+
+                model: tabModel
+
+                TabButton {
+                    text: modelData.name
+                    width: Constants.sideNavBar.tabBarWidth
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    icon.source: modelData.source
+                    icon.color: checked ? Constants.swiftOrange : Constants.materialGrey
+                    display: AbstractButton.TextUnderIcon
+                    font.pointSize: Constants.smallPointSize
+                    padding: Constants.sideNavBar.buttonPadding
+                    rightInset: Constants.sideNavBar.buttonInset
+                    leftInset: Constants.sideNavBar.buttonInset
+                    ToolTip.visible: hovered
+                    ToolTip.text: modelData.tooltip
+                }
+
+            }
+
+            contentItem: ListView {
+                model: tab.contentModel
+                currentIndex: tab.currentIndex
+                spacing: Constants.sideNavBar.tabBarSpacing
+                orientation: ListView.Vertical
+            }
+
         }
 
         TabButton {
-            id: hamburger
+            id: connectButton
 
-            width: Constants.sideNavBar.tabBarWidth
-            anchors.horizontalCenter: parent.horizontalCenter
-            icon.source: Constants.sideNavBar.hamburgerPath
-            display: AbstractButton.IconOnly
+            Layout.alignment: Qt.AlignBottom
+            Layout.preferredWidth: Constants.sideNavBar.tabBarWidth
+            icon.source: Constants.icons.connectButtonPath
+            icon.color: checked ? Constants.swiftOrange : Constants.materialGrey
+            checkable: false
+            padding: Constants.sideNavBar.buttonPadding
             rightInset: Constants.sideNavBar.buttonInset
             leftInset: Constants.sideNavBar.buttonInset
+            ToolTip.visible: hovered
+            ToolTip.text: "Connection Dialog"
             onClicked: {
-                drawer.open();
+                stack.push("ConnectionScreen.qml");
             }
         }
 
-        Repeater {
-            id: repeater
-
-            model: tabModel
-
-            TabButton {
-                text: modelData.name
-                width: Constants.sideNavBar.tabBarWidth
-                anchors.horizontalCenter: parent.horizontalCenter
-                icon.source: modelData.source
-                icon.color: checked ? Constants.swiftOrange : Constants.materialGrey
-                display: AbstractButton.TextUnderIcon
-                font.pointSize: Constants.smallPointSize
-                padding: Constants.sideNavBar.buttonPadding
-                rightInset: Constants.sideNavBar.buttonInset
-                leftInset: Constants.sideNavBar.buttonInset
-                ToolTip.visible: hovered
-                ToolTip.text: modelData.tooltip
+        Timer {
+            interval: Utils.hzToMilliseconds(Constants.staticTimerSlowIntervalRate)
+            running: true
+            repeat: true
+            onTriggered: {
+                connection_model.fill_data(connectionData);
+                connectButton.checked = connectionData.connected;
             }
-
-        }
-
-        contentItem: ListView {
-            model: tab.contentModel
-            currentIndex: tab.currentIndex
-            spacing: Constants.sideNavBar.tabBarSpacing
-            orientation: ListView.Vertical
         }
 
     }

@@ -1,13 +1,13 @@
-"""Nav Bar QObjects.
+"""Connection QObjects.
 """
 
 from typing import Dict, List, Any
 
 from PySide2.QtCore import Property, QObject, Slot
 
-from .constants import Keys, LogLevel, QTKeys
+from .constants import Keys, QTKeys #LogLevel
 
-NAV_BAR: Dict[str, Any] = {
+CONNECTION: Dict[str, Any] = {
     Keys.AVAILABLE_PORTS: [],
     Keys.AVAILABLE_BAUDRATES: [],
     Keys.AVAILABLE_FLOWS: [],
@@ -16,12 +16,12 @@ NAV_BAR: Dict[str, Any] = {
     Keys.PREVIOUS_HOSTS: [],
     Keys.PREVIOUS_PORTS: [],
     Keys.PREVIOUS_FILES: [],
-    Keys.LOG_LEVEL_LABELS: [LogLevel.ERROR, LogLevel.WARNING, LogLevel.NOTICE, LogLevel.INFO, LogLevel.DEBUG],
-    Keys.LOG_LEVEL: LogLevel.INFO,
+    # Keys.LOG_LEVEL_LABELS: [LogLevel.ERROR, LogLevel.WARNING, LogLevel.NOTICE, LogLevel.INFO, LogLevel.DEBUG],
+    # Keys.LOG_LEVEL: LogLevel.INFO,
 }
 
 
-class NavBarData(QObject):  # pylint: disable=too-many-instance-attributes
+class ConnectionData(QObject):  # pylint: disable=too-many-instance-attributes
 
     _available_ports: List[str] = []
     _available_baudrates: List[str] = []
@@ -31,24 +31,24 @@ class NavBarData(QObject):  # pylint: disable=too-many-instance-attributes
     _previous_hosts: List[str] = []
     _previous_ports: List[str] = []
     _previous_files: List[str] = []
-    _log_level_labels: List[str] = []
-    _log_level: str
+    # _log_level_labels: List[str] = []
+    # _log_level: str
 
-    def get_log_level_labels(self) -> List[str]:
-        return self._log_level_labels
+    # def get_log_level_labels(self) -> List[str]:
+    #     return self._log_level_labels
 
-    def set_log_level_labels(self, log_level_labels: List[str]) -> None:
-        self._log_level_labels = log_level_labels
+    # def set_log_level_labels(self, log_level_labels: List[str]) -> None:
+    #     self._log_level_labels = log_level_labels
 
-    log_level_labels = Property(QTKeys.QVARIANTLIST, get_log_level_labels, set_log_level_labels)  # type: ignore
+    # log_level_labels = Property(QTKeys.QVARIANTLIST, get_log_level_labels, set_log_level_labels)  # type: ignore
 
-    def get_log_level(self) -> str:
-        return self._log_level
+    # def get_log_level(self) -> str:
+    #     return self._log_level
 
-    def set_log_level(self, log_level: str) -> None:
-        self._log_level = log_level
+    # def set_log_level(self, log_level: str) -> None:
+    #     self._log_level = log_level
 
-    log_level = Property(str, get_log_level, set_log_level)
+    # log_level = Property(str, get_log_level, set_log_level)
 
     def get_available_ports(self) -> List[str]:
         return self._available_ports
@@ -76,15 +76,15 @@ class NavBarData(QObject):  # pylint: disable=too-many-instance-attributes
 
     available_flows = Property(QTKeys.QVARIANTLIST, get_available_flows, set_available_flows)  # type: ignore
 
-    def get_available_refresh_rates(self) -> List[str]:
-        return self._available_refresh_rates
+    # def get_available_refresh_rates(self) -> List[str]:
+    #     return self._available_refresh_rates
 
-    def set_available_refresh_rates(self, available_refresh_rates: List[str]) -> None:
-        self._available_refresh_rates = available_refresh_rates
+    # def set_available_refresh_rates(self, available_refresh_rates: List[str]) -> None:
+    #     self._available_refresh_rates = available_refresh_rates
 
-    available_refresh_rates = Property(
-        QTKeys.QVARIANTLIST, get_available_refresh_rates, set_available_refresh_rates  # type: ignore
-    )
+    # available_refresh_rates = Property(
+    #     QTKeys.QVARIANTLIST, get_available_refresh_rates, set_available_refresh_rates  # type: ignore
+    # )
 
     def get_connected(self) -> bool:
         """Getter for _connected.
@@ -125,17 +125,17 @@ class NavBarData(QObject):  # pylint: disable=too-many-instance-attributes
     previous_files = Property(QTKeys.QVARIANTLIST, get_previous_files, set_previous_files)  # type: ignore
 
 
-class NavBarModel(QObject):  # pylint: disable=too-few-public-methods
-    @Slot(NavBarData)  # type: ignore
-    def fill_data(self, cp: NavBarData) -> NavBarData:  # pylint:disable=no-self-use
-        cp.set_available_ports(NAV_BAR[Keys.AVAILABLE_PORTS])
-        cp.set_available_baudrates(NAV_BAR[Keys.AVAILABLE_BAUDRATES])
-        cp.set_available_flows(NAV_BAR[Keys.AVAILABLE_FLOWS])
-        cp.set_available_refresh_rates(NAV_BAR[Keys.AVAILABLE_REFRESH_RATES])
-        cp.set_connected(NAV_BAR[Keys.CONNECTED])
-        cp.set_previous_hosts(NAV_BAR[Keys.PREVIOUS_HOSTS])
-        cp.set_previous_ports(NAV_BAR[Keys.PREVIOUS_PORTS])
-        cp.set_previous_files(NAV_BAR[Keys.PREVIOUS_FILES])
-        cp.set_log_level_labels(NAV_BAR[Keys.LOG_LEVEL_LABELS])
-        cp.set_log_level(NAV_BAR[Keys.LOG_LEVEL])
+class ConnectionModel(QObject):  # pylint: disable=too-few-public-methods
+    @Slot(ConnectionData)  # type: ignore
+    def fill_data(self, cp: ConnectionData) -> ConnectionData:  # pylint:disable=no-self-use
+        cp.set_available_ports(CONNECTION[Keys.AVAILABLE_PORTS])
+        cp.set_available_baudrates(CONNECTION[Keys.AVAILABLE_BAUDRATES])
+        cp.set_available_flows(CONNECTION[Keys.AVAILABLE_FLOWS])
+        # cp.set_available_refresh_rates(CONNECTION[Keys.AVAILABLE_REFRESH_RATES])
+        cp.set_connected(CONNECTION[Keys.CONNECTED])
+        cp.set_previous_hosts(CONNECTION[Keys.PREVIOUS_HOSTS])
+        cp.set_previous_ports(CONNECTION[Keys.PREVIOUS_PORTS])
+        cp.set_previous_files(CONNECTION[Keys.PREVIOUS_FILES])
+        # cp.set_log_level_labels(CONNECTION[Keys.LOG_LEVEL_LABELS])
+        # cp.set_log_level(CONNECTION[Keys.LOG_LEVEL])
         return cp

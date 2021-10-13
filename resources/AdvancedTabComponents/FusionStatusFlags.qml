@@ -36,7 +36,7 @@ Item {
 
             visible: false
             Layout.fillWidth: true
-            Layout.preferredHeight: Constants.navBar.urlBarHeight
+            Layout.preferredHeight: Constants.advancedIns.urlBarHeight
             Layout.alignment: Qt.AlignBottom
 
             Text {

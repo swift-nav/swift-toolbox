@@ -78,11 +78,14 @@ pub fn set_connected_frontend<P: CapnProtoSender>(
     client_send.send_data(serialize_capnproto_builder(builder));
 }
 
-pub fn refresh_navbar<P: CapnProtoSender>(client_send: &mut P, shared_state: SharedState) {
+pub fn refresh_connection_frontend<P: CapnProtoSender>(
+    client_send: &mut P,
+    shared_state: SharedState,
+) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
-    let mut nav_bar_status = msg.init_nav_bar_status();
+    let mut connection_status = msg.init_connection_status();
     let mut ports: Vec<String> = vec![];
     if let Ok(ports_) = &mut available_ports() {
         // TODO(johnmichael.burke@) [CPP-114]Find solution to this hack for Linux serialport.
@@ -92,7 +95,7 @@ pub fn refresh_navbar<P: CapnProtoSender>(client_send: &mut P, shared_state: Sha
             .collect();
     }
 
-    let mut available_ports = nav_bar_status
+    let mut available_ports = connection_status
         .reborrow()
         .init_available_ports(ports.len() as u32);
 
@@ -100,7 +103,7 @@ pub fn refresh_navbar<P: CapnProtoSender>(client_send: &mut P, shared_state: Sha
         available_ports.set(i as u32, &(*serialportinfo));
     }
 
-    let mut available_baudrates = nav_bar_status
+    let mut available_baudrates = connection_status
         .reborrow()
         .init_available_baudrates(AVAILABLE_BAUDRATES.len() as u32);
 
@@ -108,7 +111,7 @@ pub fn refresh_navbar<P: CapnProtoSender>(client_send: &mut P, shared_state: Sha
         available_baudrates.set(i as u32, *baudrate);
     }
 
-    let mut available_flows = nav_bar_status
+    let mut available_flows = connection_status
         .reborrow()
         .init_available_flows(AVAILABLE_FLOWS.len() as u32);
 
@@ -116,7 +119,7 @@ pub fn refresh_navbar<P: CapnProtoSender>(client_send: &mut P, shared_state: Sha
         available_flows.set(i as u32, &flow.to_string());
     }
 
-    let mut available_refresh_rates = nav_bar_status
+    let mut available_refresh_rates = connection_status
         .reborrow()
         .init_available_refresh_rates(AVAILABLE_REFRESH_RATES.len() as u32);
 
@@ -132,7 +135,7 @@ pub fn refresh_navbar<P: CapnProtoSender>(client_send: &mut P, shared_state: Sha
         .rev()
         .collect();
     let ports: IndexSet<u16> = addresses.into_iter().map(|addy| addy.port).rev().collect();
-    let mut prevous_hosts = nav_bar_status
+    let mut prevous_hosts = connection_status
         .reborrow()
         .init_previous_hosts(hosts.len() as u32);
 
@@ -140,7 +143,7 @@ pub fn refresh_navbar<P: CapnProtoSender>(client_send: &mut P, shared_state: Sha
         prevous_hosts.set(i as u32, hosts);
     }
 
-    let mut prevous_ports = nav_bar_status
+    let mut prevous_ports = connection_status
         .reborrow()
         .init_previous_ports(ports.len() as u32);
 
@@ -149,7 +152,7 @@ pub fn refresh_navbar<P: CapnProtoSender>(client_send: &mut P, shared_state: Sha
     }
     let mut files = shared_state.file_history();
     files.reverse();
-    let mut prevous_files = nav_bar_status
+    let mut prevous_files = connection_status
         .reborrow()
         .init_previous_files(files.len() as u32);
 
@@ -157,7 +160,7 @@ pub fn refresh_navbar<P: CapnProtoSender>(client_send: &mut P, shared_state: Sha
         prevous_files.set(i as u32, filename);
     }
 
-    nav_bar_status.set_log_level(&shared_state.log_level().to_string());
+    // connection_status.set_log_level(&shared_state.log_level().to_string());
 
     client_send.send_data(serialize_capnproto_builder(builder));
 }

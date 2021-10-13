@@ -34,10 +34,10 @@ from .log_panel import (
     LogPanelModel,
 )
 
-from .nav_bar import (
-    NAV_BAR,
-    NavBarData,
-    NavBarModel,
+from .connection import (
+    CONNECTION,
+    ConnectionData,
+    ConnectionModel,
 )
 
 from .logging_bar import (
@@ -233,9 +233,9 @@ def receive_messages(app_, backend, messages):
             if m.status.text == ApplicationStates.CLOSE:
                 return app_.quit()
             if m.status.text == ApplicationStates.CONNECTED:
-                NAV_BAR[Keys.CONNECTED] = True
+                CONNECTION[Keys.CONNECTED] = True
             elif m.status.text == ApplicationStates.DISCONNECTED:
-                NAV_BAR[Keys.CONNECTED] = False
+                CONNECTION[Keys.CONNECTED] = False
 
         elif m.which == Message.Union.SolutionPositionStatus:
             SOLUTION_POSITION_TAB[Keys.POINTS][:] = [
@@ -366,15 +366,15 @@ def receive_messages(app_, backend, messages):
             STATUS_BAR[Keys.SOLID_CONNECTION] = m.statusBarStatus.solidConnection
             STATUS_BAR[Keys.TITLE] = m.statusBarStatus.title
             STATUS_BAR[Keys.ANTENNA_STATUS] = m.statusBarStatus.antennaStatus
-        elif m.which == Message.Union.NavBarStatus:
-            NAV_BAR[Keys.AVAILABLE_PORTS][:] = m.navBarStatus.availablePorts
-            NAV_BAR[Keys.AVAILABLE_BAUDRATES][:] = m.navBarStatus.availableBaudrates
-            NAV_BAR[Keys.AVAILABLE_FLOWS][:] = m.navBarStatus.availableFlows
-            NAV_BAR[Keys.AVAILABLE_REFRESH_RATES][:] = m.navBarStatus.availableRefreshRates
-            NAV_BAR[Keys.PREVIOUS_HOSTS][:] = m.navBarStatus.previousHosts
-            NAV_BAR[Keys.PREVIOUS_PORTS][:] = m.navBarStatus.previousPorts
-            NAV_BAR[Keys.PREVIOUS_FILES][:] = m.navBarStatus.previousFiles
-            NAV_BAR[Keys.LOG_LEVEL] = m.navBarStatus.logLevel
+        elif m.which == Message.Union.ConnectionStatus:
+            CONNECTION[Keys.AVAILABLE_PORTS][:] = m.connectionStatus.availablePorts
+            CONNECTION[Keys.AVAILABLE_BAUDRATES][:] = m.connectionStatus.availableBaudrates
+            CONNECTION[Keys.AVAILABLE_FLOWS][:] = m.connectionStatus.availableFlows
+            CONNECTION[Keys.AVAILABLE_REFRESH_RATES][:] = m.connectionStatus.availableRefreshRates
+            CONNECTION[Keys.PREVIOUS_HOSTS][:] = m.connectionStatus.previousHosts
+            CONNECTION[Keys.PREVIOUS_PORTS][:] = m.connectionStatus.previousPorts
+            CONNECTION[Keys.PREVIOUS_FILES][:] = m.connectionStatus.previousFiles
+            # CONNECTION[Keys.LOG_LEVEL] = m.connectionStatus.logLevel
         elif m.which == Message.Union.LoggingBarStatus:
             LOGGING_BAR[Keys.PREVIOUS_FOLDERS][:] = m.loggingBarStatus.previousFolders
             LOGGING_BAR[Keys.CSV_LOGGING] = m.loggingBarStatus.csvLogging
@@ -782,7 +782,7 @@ def main():
     QFontDatabase.addApplicationFont(":/fonts/Roboto-Bold.ttf")
 
     qmlRegisterType(LogPanelData, "SwiftConsole", 1, 0, "LogPanelData")  # type: ignore
-    qmlRegisterType(NavBarData, "SwiftConsole", 1, 0, "NavBarData")  # type: ignore
+    qmlRegisterType(ConnectionData, "SwiftConsole", 1, 0, "ConnectionData")  # type: ignore
     qmlRegisterType(LoggingBarData, "SwiftConsole", 1, 0, "LoggingBarData")  # type: ignore
     qmlRegisterType(AdvancedInsPoints, "SwiftConsole", 1, 0, "AdvancedInsPoints")  # type: ignore
     qmlRegisterType(AdvancedMagnetometerPoints, "SwiftConsole", 1, 0, "AdvancedMagnetometerPoints")  # type: ignore
@@ -827,7 +827,7 @@ def main():
 
     data_model = DataModel(endpoint_main, messages_main)
     log_panel_model = LogPanelModel()
-    nav_bar_model = NavBarModel()
+    connection_model = ConnectionModel()
     advanced_ins_model = AdvancedInsModel()
     advanced_magnetometer_model = AdvancedMagnetometerModel()
     advanced_networking_model = AdvancedNetworkingModel()
@@ -848,7 +848,7 @@ def main():
     update_tab_model = UpdateTabModel()
     root_context = engine.rootContext()
     root_context.setContextProperty("log_panel_model", log_panel_model)
-    root_context.setContextProperty("nav_bar_model", nav_bar_model)
+    root_context.setContextProperty("connection_model", connection_model)
     root_context.setContextProperty("advanced_ins_model", advanced_ins_model)
     root_context.setContextProperty("advanced_magnetometer_model", advanced_magnetometer_model)
     root_context.setContextProperty("advanced_networking_model", advanced_networking_model)

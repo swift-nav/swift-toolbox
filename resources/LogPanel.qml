@@ -39,6 +39,105 @@ Item {
                 }
             }
         }
+        Rectangle {
+            id: logLevelSelector
+            width: columnWidths[1]
+            height: 100
+            anchors.bottom: horizontalHeader.bottom
+            // anchors.right: logLevelButton.right
+            z: Constants.genericTable.headerZOffset + 1
+            clip: true
+            x: columnWidths[0]
+            visible: false
+
+            ListView {
+                id: logLevelListView
+
+                visible: true
+
+                anchors.fill: parent
+                focus: true
+                currentIndex: -1
+                spacing: 0
+
+                delegate: ItemDelegate {
+                    id: control
+                    width: columnWidths[1]
+                    height: logLevelSelector.height/5
+
+                    onClicked: {
+                        logLevelSelector.visible = false
+                    }
+
+                    contentItem: Text {
+                        text: modelData
+                        font.pointSize: Constants.mediumPointSize
+                        font.family: Constants.genericTable.fontFamily
+                        // color: logLevelListView.currentIndex == index ? Constants.swiftOrange : "black"
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    Component.onCompleted: {
+                        // control.highlight.color = "black"
+                    }
+
+                    // background: Rectangle {
+                    //     // implicitWidth: 100
+                    //     // implicitHeight: 40
+                    //     // opacity: enabled ? 1 : 0.3
+                    //     color: control.down ? "#dddedf" : "#eeeeee"
+
+                    //     Rectangle {
+                    //         width: parent.width
+                    //         height: 1
+                    //         color: control.down ? "#17a81a" : "#21be2b"
+                    //         anchors.bottom: parent.bottom
+                    //     }
+                    // }
+                }
+                
+
+                // delegate: ItemDelegate {
+                //     highlighted: ListView.isCurrentItem
+                //     // color: ListView.isCurrentItem ? "black" : "red"
+                //     highlight: Rectangle { color: Constants.materialGrey;}
+                //     width: columnWidths[1]
+                //     height: logLevelSelector.height/5
+                //     text: modelData
+                //     onClicked: {
+                //         // drawerItems.currentIndex = index;
+                //         print(index)
+                //         print(Utils.listObject(this))
+                //         // stackView.push(model.source);
+                //         // sideDrawer.close();
+                //     }
+                // }
+                // highlight: Rectangle { color: Constants.materialGrey;}
+                // Component.onCompleted: {
+                //     print(Utils.listObject(this))
+                // }
+                // delegate: Rectangle {
+                //     implicitWidth: columnWidths[1]
+                //     implicitHeight: Constants.genericTable.cellHeight
+                //     border.color: Constants.genericTable.borderColor
+
+                //     Text {
+                //         width: parent.width
+                //         anchors.centerIn: parent
+                //         horizontalAlignment: Text.AlignHCenter
+                //         verticalAlignment: Text.AlignVCenter
+                //         text: modelData
+                //         elide: Text.ElideRight
+                //         clip: true
+                //         font.family: Constants.genericTable.fontFamily
+                //     }
+                // }
+
+                model: ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+
+            }
+
+        }
+        
 
         HorizontalHeaderView {
             id: horizontalHeader
@@ -47,6 +146,7 @@ Item {
             syncView: tableView
             anchors.top: parent.top
             z: Constants.genericTable.headerZOffset
+            // Component.onCompleted
 
             delegate: Rectangle {
                 implicitWidth: columnWidths[index]
@@ -62,6 +162,67 @@ Item {
                     elide: Text.ElideRight
                     clip: true
                     font.family: Constants.genericTable.fontFamily
+                    Button {
+                        id: logLevelButton
+                        visible: index == 1
+                        anchors.fill: parent
+                        anchors.centerIn: parent
+                        icon.color: checked ? Constants.swiftOrange : Constants.materialGrey
+                        height: parent.height
+                        width: parent.width
+                        padding: 0
+                        bottomInset: -2
+                        checkable: true
+                        flat: true
+                        opacity: 0.5
+
+                        onClicked: {
+                            logLevelSelector.visible = !logLevelSelector.visible
+                        }
+
+                        // Component.onCompleted: {
+                        //     logLevelSelector.anchors.right = this.parent.right
+
+                        // }
+                    }
+                    
+
+                    // ComboBox {
+                    //     id: logLevelSelector
+                    //     implicitWidth: 20
+                    //     implicitHeight: 5
+                    //     visible: index == 1
+                    //     anchors.right: parent.right
+                    //     model: ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+
+                    //     states: State {
+                    //         when: logLevelSelector.down
+
+                    //         PropertyChanges {
+                    //             target: logLevelSelector
+                    //             width: parent.parent.width// * 1.1
+                    //             // Component.onCompleted: {
+                    //             //     this.children[0].x = 0
+                    //             //     this.contentItem.visible = false
+                    //             // }
+                    //         }
+                    //         PropertyChanges {
+                    //             target: logLevelSelector.children[0]
+                    //             x: 0
+                    //             // width: parent.parent.width// * 1.1
+                    //             // Component.onCompleted: {
+                    //             //     this.children[0].x = 0
+                    //             //     this.contentItem.visible = false
+                    //             // }
+                    //         }
+
+                    //     }
+                    //     Component.onCompleted: {
+                    //         print(Utils.listObject(this.children[0]))
+                    //         this.children[0].x = 0
+                    //         this.contentItem.visible = false
+                    //     }
+                    // }
                 }
 
                 MouseArea {

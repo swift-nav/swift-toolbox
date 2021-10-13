@@ -12,7 +12,7 @@ use crate::shared_state::{AdvancedNetworkingState, SharedState};
 use crate::solution_tab::LatLonUnits;
 use crate::types::{ClientSender, FlowControl, RealtimeDelay};
 use crate::update_tab::UpdateTabUpdate;
-use crate::utils::refresh_navbar;
+use crate::utils::refresh_connection_frontend;
 use capnp::serialize;
 use chrono::{DateTime, Utc};
 use crossbeam::channel;
@@ -58,7 +58,10 @@ pub fn server_recv_thread(
                 let shared_state_clone = shared_state.clone();
                 match message {
                     m::message::SerialRefreshRequest(Ok(_)) => {
-                        refresh_navbar(&mut client_send_clone.clone(), shared_state_clone);
+                        refresh_connection_frontend(
+                            &mut client_send_clone.clone(),
+                            shared_state_clone,
+                        );
                     }
                     m::message::DisconnectRequest(Ok(_)) => {
                         connection_state.disconnect(client_send_clone.clone());
@@ -137,7 +140,7 @@ pub fn server_recv_thread(
                             LogLevel::from_str(log_level).expect(CONVERT_TO_STR_FAILURE);
                         info!("Log Level: {}", log_level);
                         shared_state_clone.set_log_level(log_level);
-                        refresh_navbar(&mut client_send.clone(), shared_state.clone());
+                        // refresh_connection_frontend(&mut client_send.clone(), shared_state.clone());
                     }
                     m::message::SolutionVelocityStatusFront(Ok(cv_in)) => {
                         let unit = cv_in

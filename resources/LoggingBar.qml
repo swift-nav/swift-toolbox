@@ -11,7 +11,6 @@ Rectangle {
     property variant previous_folders: []
     property variant sbp_logging_labels: []
 
-    anchors.fill: parent
     border.width: Constants.statusBar.borderWidth
     border.color: Constants.statusBar.borderColor
 

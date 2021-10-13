@@ -12,7 +12,7 @@ use crate::log_panel::setup_logging;
 use crate::server_recv_thread::server_recv_thread;
 use crate::shared_state::SharedState;
 use crate::types::ClientSender;
-use crate::utils::{refresh_loggingbar, refresh_navbar};
+use crate::utils::{refresh_connection_frontend, refresh_loggingbar};
 
 /// The backend server
 #[pyclass]
@@ -116,7 +116,7 @@ impl Server {
         let connection_state = ConnectionState::new(client_send.clone(), shared_state.clone());
         // Handle CLI Opts.
         handle_cli(opt, &connection_state, shared_state.clone());
-        refresh_navbar(&mut client_send.clone(), shared_state.clone());
+        refresh_connection_frontend(&mut client_send.clone(), shared_state.clone());
         refresh_loggingbar(&mut client_send.clone(), shared_state.clone());
         server_recv_thread(connection_state, client_send, server_recv, shared_state);
         Ok(server_endpoint)

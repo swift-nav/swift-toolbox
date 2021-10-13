@@ -347,6 +347,9 @@ pub fn server_recv_thread(
                             port,
                         })
                     }
+                    m::message::ConfirmInsChange(Ok(_)) => {
+                        shared_state_clone.set_settings_confirm_ins_change(true);
+                    }
                     _ => {
                         error!("unknown message from front-end");
                     }

@@ -29,6 +29,7 @@ QtObject {
     property QtObject baselineTable
     property QtObject settingsTab
     property QtObject settingsTable
+    property QtObject insSettingsPopup
     property QtObject solutionPosition
     property QtObject solutionTable
     property QtObject solutionVelocity
@@ -512,6 +513,13 @@ QtObject {
         readonly property string centerOnButtonUrl: "qrc:///center-on.svg"
         readonly property string clearButtonUrl: "qrc:///clear.svg"
         readonly property string zoomAllButtonUrl: "qrc:///zoom-all.svg"
+    }
+
+    insSettingsPopup: QtObject {
+        readonly property var columnHeaders: ["Name", "Current Value", "Recommended Value"]
+        readonly property int dialogWidth: 550
+        readonly property int columnSpacing: 10
+        readonly property int tableHeight: 150
     }
 
 }

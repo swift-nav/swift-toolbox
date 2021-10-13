@@ -58,6 +58,11 @@ Item {
                 }
                 settings_tab_model.clear_import_status(settingsTabData);
             }
+            if (settingsTabData.new_ins_confirmation) {
+                insSettingsPopup.settings = settingsTabData.recommended_ins_settings;
+                insSettingsPopup.insPopup.open();
+                settings_tab_model.clear_new_ins_confirmation(settingsTabData);
+            }
         }
     }
 
@@ -109,6 +114,10 @@ Item {
         text: "Settings import from file complete.  Click OK to save the settings\nto the device's persistent storage."
         standardButtons: StandardButton.Yes | StandardButton.No
         onYes: data_model.settings_save_request()
+    }
+
+    SettingsTabComponents.InsSettingsPopup {
+        id: insSettingsPopup
     }
 
     MessageDialog {

@@ -407,6 +407,21 @@ struct Status {
     text @0 :Text;
 }
 
+struct RecommendedInsSettingsRow {
+    settingGroup @0 :Text;
+    settingName @1 :Text;
+    currentValue @2 :Text;
+    recommendedValue @3 :Text;
+}
+
+struct InsSettingsChangeResponse {
+    recommendedSettings @0 :List(RecommendedInsSettingsRow);
+}
+
+struct ConfirmInsChange {
+    confirm @0 :Void = void;
+}
+
 struct Message {
     union {
         solutionVelocityStatus @0 :SolutionVelocityStatus;
@@ -458,5 +473,7 @@ struct Message {
         advancedNetworkingStatus @46 :AdvancedNetworkingStatus;
         networkState @47 :NetworkState;
         advancedNetworkingStatusFront @48 :AdvancedNetworkingStatusFront;
+        insSettingsChangeResponse @49 : InsSettingsChangeResponse;
+        confirmInsChange @50 : ConfirmInsChange;
     }
 }

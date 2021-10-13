@@ -42,6 +42,7 @@ skip_crate_env_info = true
 [env]
 WORKSPACE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}"
 STANDALONE_PY_BASE_URL = "https://github.com/indygreg/python-build-standalone/releases/download/20210724"
+MACOSX_DEPLOYMENT_TARGET = "10.15"
 
 [tasks.init]
 

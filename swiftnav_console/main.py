@@ -698,6 +698,14 @@ class DataModel(QObject):  # pylint: disable=too-many-instance-attributes,too-ma
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
 
+    @Slot()  # type: ignore
+    def auto_survey_request(self) -> None:
+        Message = self.messages.Message
+        msg = self.messages.Message()
+        msg.autoSurveyRequest = msg.init(Message.Union.AutoSurveyRequest)
+        buffer = msg.to_bytes()
+        self.endpoint.send_message(buffer)
+
 
 def is_frozen() -> bool:
     """Check whether the application is frozen.

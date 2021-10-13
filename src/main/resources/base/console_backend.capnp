@@ -422,6 +422,10 @@ struct ConfirmInsChange {
     confirm @0 :Void = void;
 }
 
+struct AutoSurveyRequest {
+    request @0 :Void = void;
+}
+
 struct Message {
     union {
         solutionVelocityStatus @0 :SolutionVelocityStatus;
@@ -475,5 +479,6 @@ struct Message {
         advancedNetworkingStatusFront @48 :AdvancedNetworkingStatusFront;
         insSettingsChangeResponse @49 : InsSettingsChangeResponse;
         confirmInsChange @50 : ConfirmInsChange;
+        autoSurveyRequest @51 : AutoSurveyRequest;
     }
 }

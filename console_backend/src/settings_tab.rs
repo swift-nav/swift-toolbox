@@ -91,6 +91,12 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
                 error!("Issue confirming INS change, {}", e);
             };
         }
+
+        if settings_state.auto_survey_request {
+            if let Err(e) = self.auto_survey() {
+                error!("Issue running auto survey, {}", e);
+            };
+        }
     }
 
     pub fn refresh(&mut self) {
@@ -169,6 +175,29 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
     pub fn save(&self) -> Result<()> {
         self.msg_sender
             .send(MsgSettingsSave { sender_id: None }.into())?;
+        Ok(())
+    }
+
+    pub fn auto_survey(&mut self) -> Result<()> {
+        let (lat, lon, alt) = {
+            let shared_data = self.shared_state.lock().unwrap();
+            (
+                (*shared_data).auto_survey_data.lat,
+                (*shared_data).auto_survey_data.lon,
+                (*shared_data).auto_survey_data.alt,
+            )
+        };
+
+        match (lat, lon, alt) {
+            (Some(lat), Some(lon), Some(alt)) => {
+                self.write_setting("surveyed_position", "surveyed_lat", &lat.to_string())?;
+                self.write_setting("surveyed_position", "surveyed_lon", &lon.to_string())?;
+                self.write_setting("surveyed_position", "surveyed_alt", &alt.to_string())?;
+            }
+            _ => {
+                error!("Auto survey failed due to unknown lat, lon or alt")
+            }
+        }
         Ok(())
     }
 

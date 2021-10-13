@@ -36,6 +36,18 @@ Item {
         return row[name] || "";
     }
 
+    function autoSurveyDialogText() {
+        var text = "This will set the Surveyed Position section to the mean position of the last 1000 position solutions. ";
+        text += "The fields that will be auto-populated are: \n\n";
+        text += "Surveyed Lat\n";
+        text += "Surveyed Lon\n";
+        text += "Surveyed Alt\n\n";
+        text += "The surveyed position will be an approximate value. ";
+        text += "This may affect the relative accuracy of Piksi.\n\n";
+        text += "Are you sure you want to auto-populate the Surveyed Position section?";
+        return text;
+    }
+
     width: parent.width
     height: parent.height
 
@@ -116,6 +128,15 @@ Item {
         onYes: data_model.settings_save_request()
     }
 
+    MessageDialog {
+        id: autoSurveyDialog
+
+        title: "Auto populate surveyed position?"
+        text: autoSurveyDialogText()
+        standardButtons: StandardButton.Yes | StandardButton.No
+        onYes: data_model.auto_survey_request()
+    }
+
     SettingsTabComponents.InsSettingsPopup {
         id: insSettingsPopup
     }
@@ -181,6 +202,15 @@ Item {
                     icon.width: Constants.settingsTab.buttonIconWidth
                     icon.height: Constants.settingsTab.buttonIconHeight
                     onClicked: resetDialog.visible = true
+                }
+
+                Button {
+                    text: "Auto Survey"
+                    visible: selectedRowField("group") === "surveyed_position"
+                    icon.source: Constants.icons.centerOnButtonUrl
+                    icon.width: Constants.settingsTab.buttonIconWidth
+                    icon.height: Constants.settingsTab.buttonIconHeight
+                    onClicked: autoSurveyDialog.visible = true
                 }
 
             }

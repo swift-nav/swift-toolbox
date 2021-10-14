@@ -31,7 +31,7 @@ serde_yaml = "0.8.17"
 clap = "3.0.0-beta.2"
 indexmap = { version = "1.6.2", features = ["serde"] }
 serde_json = { version = "1" }
-crossbeam = "0.8.1"
+crossbeam = "0.8"
 rand = "0.8.3"
 slotmap = "1.0.3"
 serde-pickle = { version = "0.6.2", optional = true }

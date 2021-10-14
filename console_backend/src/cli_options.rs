@@ -128,6 +128,14 @@ pub struct CliOptions {
     /// Show CSV logging button.
     #[clap(long = "show-csv-log")]
     pub show_csv_log: bool,
+
+    /// Set the height of the main window.
+    #[clap(long)]
+    pub height: Option<u32>,
+
+    /// Set the width of the main window.
+    #[clap(long)]
+    pub width: Option<u32>,
 }
 
 impl CliOptions {

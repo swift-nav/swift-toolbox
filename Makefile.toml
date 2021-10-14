@@ -57,6 +57,17 @@ qml_files = glob_paths_excluding_target resources/**/*.qml
 set_env QML_FILES ${qml_files}
 '''
 
+[tasks.set-qml-app]
+private = true
+condition = { env_not_set = ["QT_APP"] }
+script_runner = "@duckscript"
+script = '''
+python = get_env PYTHON
+output = exec ${python} utils/echo-qt-dir.py
+qt_app = trim ${output.stdout}
+set_env QT_APP ${qt_app}
+'''
+
 [tasks.set-python-files]
 private = true
 condition = { env_not_set = ["PYTHON_FILES"] }
@@ -311,10 +322,12 @@ run_task = [
 ]
 
 [tasks.purge-dist]
+env = { PYTHONDONTWRITEBYTECODE = "1" }
 cwd = "py39-dist"
 script_runner = "@duckscript"
 script = '''
-py_folders = array test tests examples __pycache__ demos translations idlelib lib/tcl8 lib/tcl8.6 lib/tk8.6 shiboken2/docs ensurepip lib2to3 tkinter unittest
+
+py_folders = array test tests examples __pycache__ demos translations idlelib lib/tcl8 lib/tcl8.6 lib/tk8.6 shiboken2/docs ensurepip lib2to3 tkinter unittest include
 qt_folders = array plugins/geoservices plugins/virtualkeyboard plugins/sqldrivers lib/Tix8.4.3 tcl/tix8.4.3 Qt/resources PySide2/resources
 qml_folders = array qml/QtWeb* qml/QtBluetooth* qml/QtNfc* qml/QtGamepad qml/QtTest qml/QtQuick3D qml/Qt3D qml/QtSensors qml/QtLocation qml/QtPositioning
 all_folders = array_concat ${py_folders} ${qt_folders} ${qml_folders}
@@ -387,8 +400,31 @@ else
     end
 end
 
-exec --fail-on-error ${DIST_PYTHON} -m pip uninstall -y pip setuptools wheel
+exec --fail-on-error ${DIST_PYTHON} -m pip uninstall -y pip setuptools wheel flit
 exec --fail-on-error ${DIST_PYTHON} -m compileall -b -f -o 1 -o 2 .
+
+if eq ${os} windows
+    globs = array pyexpat.* sqlite3.* _ctypes_test.* _bz2.* _decimal.* _elementtree.* _multiprocessing.* _sqlite3.* _ssl.* _tkinter.* _uuid.* _zoneinfo.* _msi.* _test*.*
+    for glob in ${globs}
+        files = glob_array ./DLLs/${glob}
+        for file in ${files}
+            rm ${file}
+        end
+        files = glob_array ./libs/${glob}
+        for file in ${files}
+            rm ${file}
+        end
+    end
+endif
+
+py_internal_libs = array Lib/email Lib/distutils Lib/http Lib/multiprocessing Lib/msilib Lib/http Lib/dbm Lib/curses Lib/xml Lib/xmlrpc Lib/urllib Lib/ensurepip Lib/venv Lib/wsgiref Lib/lib2to3
+
+for name in ${py_internal_libs}
+    folders = glob_array **/${name}/
+    for folder in ${folders}
+        rm -r ${folder}
+    end
+end
 
 files = glob_array ./**/*.py
 for file in ${files}
@@ -414,19 +450,33 @@ exec --fail-on-error xz -T 0 -e -9 "${output_name}.tar"
 run_task = [{ name = ["build-dist", "purge-dist", "compress-dist"] }]
 
 [tasks.qml-format]
-dependencies = ["set-qml-files"]
-env = { QT_APP = { script = ["$PYTHON utils/echo-qt-dir.py"] } }
+dependencies = ["set-qml-files", "set-qml-app"]
 script_runner = "@shell"
 script = '''
 ${QT_APP}/Qt/bin/qmlformat -i ${QML_FILES}
 '''
 
+[tasks.qml-format.windows]
+dependencies = ["set-qml-files", "set-qml-app"]
+script_runner = "powershell"
+script_extension = "ps1"
+script = '''
+& ${env:QT_APP}\Qt\bin\qmlformat -i $(-split ${env:QML_FILES})
+'''
+
 [tasks.qml-lint]
-dependencies = ["set-qml-files"]
-env = { QT_APP = { script = ["$PYTHON utils/echo-qt-dir.py"] } }
+dependencies = ["set-qml-files", "set-qml-app"]
 script_runner = "@shell"
 script = '''
 ${QT_APP}/Qt/bin/qmllint -I ${QT_APP}/../PySide2/Qt/qml/ -I resources/ ${QML_FILES}
+'''
+
+[tasks.qml-lint.windows]
+dependencies = ["set-qml-files", "set-qml-app"]
+script_runner = "powershell"
+script_extension = "ps1"
+script = '''
+& ${env:QT_APP}\Qt\bin\qmllint -I ${env:QT_APP}\..\PySide2\Qt\qml -I resources $(-split ${env:QML_FILES})
 '''
 
 [tasks.qml-format-check]

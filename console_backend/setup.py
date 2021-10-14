@@ -7,11 +7,10 @@ from setuptools_rust import RustExtension  # type: ignore
 def get_py_version_cfgs():
     # For now each Cfg Py_3_X flag is interpreted as "at least 3.X"
     version = sys.version_info[0:2]
-    py3_min = 7
+    py3_min = 9
     out_cfg = []
     for minor in range(py3_min, version[1] + 1):
         out_cfg.append(f"--cfg=Py_3_{minor}")
-
     return out_cfg
 
 

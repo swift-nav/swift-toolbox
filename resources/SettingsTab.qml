@@ -37,7 +37,7 @@ Item {
     }
 
     function autoSurveyDialogText() {
-        var text = "This will set the Surveyed Position section to the mean position of the last 1000 position solutions. ";
+        var text = "This will set the Surveyed Position section to the mean position of up to the last 1000 position solutions. ";
         text += "The fields that will be auto-populated are: \n\n";
         text += "Surveyed Lat\n";
         text += "Surveyed Lon\n";

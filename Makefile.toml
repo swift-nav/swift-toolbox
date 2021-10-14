@@ -57,6 +57,17 @@ qml_files = glob_paths_excluding_target resources/**/*.qml
 set_env QML_FILES ${qml_files}
 '''
 
+[tasks.set-qml-app]
+private = true
+condition = { env_not_set = ["QT_APP"] }
+script_runner = "@duckscript"
+script = '''
+python = get_env PYTHON
+output = exec ${python} utils/echo-qt-dir.py
+qt_app = trim ${output.stdout}
+set_env QT_APP ${qt_app}
+'''
+
 [tasks.set-python-files]
 private = true
 condition = { env_not_set = ["PYTHON_FILES"] }
@@ -439,19 +450,33 @@ exec --fail-on-error xz -T 0 -e -9 "${output_name}.tar"
 run_task = [{ name = ["build-dist", "purge-dist", "compress-dist"] }]
 
 [tasks.qml-format]
-dependencies = ["set-qml-files"]
-env = { QT_APP = { script = ["$PYTHON utils/echo-qt-dir.py"] } }
+dependencies = ["set-qml-files", "set-qml-app"]
 script_runner = "@shell"
 script = '''
 ${QT_APP}/Qt/bin/qmlformat -i ${QML_FILES}
 '''
 
+[tasks.qml-format.windows]
+dependencies = ["set-qml-files", "set-qml-app"]
+script_runner = "powershell"
+script_extension = "ps1"
+script = '''
+& ${env:QT_APP}\Qt\bin\qmlformat -i $(-split ${env:QML_FILES})
+'''
+
 [tasks.qml-lint]
-dependencies = ["set-qml-files"]
-env = { QT_APP = { script = ["$PYTHON utils/echo-qt-dir.py"] } }
+dependencies = ["set-qml-files", "set-qml-app"]
 script_runner = "@shell"
 script = '''
 ${QT_APP}/Qt/bin/qmllint -I ${QT_APP}/../PySide2/Qt/qml/ -I resources/ ${QML_FILES}
+'''
+
+[tasks.qml-lint.windows]
+dependencies = ["set-qml-files", "set-qml-app"]
+script_runner = "powershell"
+script_extension = "ps1"
+script = '''
+& ${env:QT_APP}\Qt\bin\qmllint -I ${env:QT_APP}\..\PySide2\Qt\qml -I resources $(-split ${env:QML_FILES})
 '''
 
 [tasks.qml-format-check]

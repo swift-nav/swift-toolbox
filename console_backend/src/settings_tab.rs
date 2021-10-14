@@ -14,6 +14,7 @@ use sbp::messages::piksi::MsgReset;
 use sbp::messages::settings::MsgSettingsSave;
 use sbp_settings::{Client, SettingKind, SettingValue};
 
+use crate::errors::SHARED_STATE_LOCK_MUTEX_FAILURE;
 use crate::shared_state::SharedState;
 use crate::types::{CapnProtoSender, Error, MsgSender, Result};
 use crate::utils::*;
@@ -180,7 +181,10 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
 
     pub fn auto_survey(&mut self) -> Result<()> {
         let (lat, lon, alt) = {
-            let shared_data = self.shared_state.lock().unwrap();
+            let shared_data = self
+                .shared_state
+                .lock()
+                .expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
             (
                 (*shared_data).auto_survey_data.lat,
                 (*shared_data).auto_survey_data.lon,

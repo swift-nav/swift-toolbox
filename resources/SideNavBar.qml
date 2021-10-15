@@ -108,7 +108,7 @@ Rectangle {
 
             Layout.alignment: Qt.AlignBottom
             Layout.preferredWidth: Constants.sideNavBar.tabBarWidth
-            icon.source: Constants.icons.connectButtonPath
+            icon.source: Constants.icons.lightningBoltPath
             icon.color: checked ? Constants.swiftOrange : Constants.materialGrey
             checkable: false
             padding: Constants.sideNavBar.buttonPadding

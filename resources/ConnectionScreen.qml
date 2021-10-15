@@ -26,7 +26,7 @@ Item {
         anchors.centerIn: parent
 
         Image {
-            width: parent.height
+            width: parent.width
             height: parent.height
             source: Constants.icons.splashScreenPath
         }

@@ -160,8 +160,6 @@ pub fn refresh_connection_frontend<P: CapnProtoSender>(
         prevous_files.set(i as u32, filename);
     }
 
-    // connection_status.set_log_level(&shared_state.log_level().to_string());
-
     client_send.send_data(serialize_capnproto_builder(builder));
 }
 

@@ -205,7 +205,7 @@ Rectangle {
                 statusBarINS.text = statusBarData.ins;
                 statusBarDataRate.text = statusBarData.data_rate;
                 statusBarAntenna.text = statusBarData.antenna_status;
-                parent.title = statusBarData.title;
+                parent.title = "🔴🟡🟢" + statusBarData.title;
                 if (statusBarData.solid_connection) {
                     statusBarGoodConnectionImage.visible = true;
                     statusBarBadConnectionImage.visible = false;

@@ -186,6 +186,7 @@ QtObject {
         readonly property int mouseAreaResizeWidth: 10
         readonly property int cellHeight: 25
         readonly property string cellHighlightedColor: swiftOrange
+        readonly property color textColor: "black"
         readonly property color cellColor: "white"
         readonly property color gradientColor: "gainsboro"
         readonly property color selectedCellColor: "dark grey"
@@ -372,6 +373,15 @@ QtObject {
         readonly property string timestampHeader: "Host Timestamp"
         readonly property string levelHeader: "Log Level"
         readonly property string msgHeader: "Message"
+        readonly property int zAboveTable: 100
+        readonly property int pauseButtonRightMargin: 10
+        readonly property int pauseButtonWidth: 30
+        readonly property int pauseButtonPadding: 0
+        readonly property string pauseButtonTooltip: "Pause Log Panel"
+        readonly property string playButtonTooltip: "Resume Log Panel"
+        readonly property int logLevelMenuHeight: 100
+        readonly property int dropdownButtonPadding: 0
+        readonly property int dropdownButtonWidth: 20
     }
 
     settingsTab: QtObject {
@@ -512,7 +522,10 @@ QtObject {
         readonly property string centerOnButtonUrl: "qrc:///center-on.svg"
         readonly property string clearButtonUrl: "qrc:///clear.svg"
         readonly property string zoomAllButtonUrl: "qrc:///zoom-all.svg"
-        readonly property string splashScreenPath: "qrc:///images/icon.png"
+        readonly property string splashScreenPath: "qrc:///images/LogoBackground.jpg"
+        readonly property string lightningBoltPath: "qrc:///images/ConnectionIcon.svg"
+        readonly property string dropIndicatorPath: "qrc:/qt-project.org/imports/QtQuick/Controls.2/Material/images/drop-indicator.png"
+        readonly property string playPath: "qrc:///images/iconic/play.svg"
     }
 
     insSettingsPopup: QtObject {

@@ -47,6 +47,7 @@ struct LogEntry {
 
 struct LogAppend {
     entries @0 :List(LogEntry);
+    logLevel @1: Text;
 }
 
 struct SkyPlotObs {

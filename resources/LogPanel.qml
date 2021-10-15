@@ -11,6 +11,9 @@ Item {
     property real mouse_x: 0
     property int selectedRow: -1
     property bool forceLayoutLock: false
+    property variant logLevelLabels: []
+    property int logLevelIndex: 3
+    property bool consolePaused: false
 
     width: parent.width
     height: parent.height
@@ -39,105 +42,6 @@ Item {
                 }
             }
         }
-        Rectangle {
-            id: logLevelSelector
-            width: columnWidths[1]
-            height: 100
-            anchors.bottom: horizontalHeader.bottom
-            // anchors.right: logLevelButton.right
-            z: Constants.genericTable.headerZOffset + 1
-            clip: true
-            x: columnWidths[0]
-            visible: false
-
-            ListView {
-                id: logLevelListView
-
-                visible: true
-
-                anchors.fill: parent
-                focus: true
-                currentIndex: -1
-                spacing: 0
-
-                delegate: ItemDelegate {
-                    id: control
-                    width: columnWidths[1]
-                    height: logLevelSelector.height/5
-
-                    onClicked: {
-                        logLevelSelector.visible = false
-                    }
-
-                    contentItem: Text {
-                        text: modelData
-                        font.pointSize: Constants.mediumPointSize
-                        font.family: Constants.genericTable.fontFamily
-                        // color: logLevelListView.currentIndex == index ? Constants.swiftOrange : "black"
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    Component.onCompleted: {
-                        // control.highlight.color = "black"
-                    }
-
-                    // background: Rectangle {
-                    //     // implicitWidth: 100
-                    //     // implicitHeight: 40
-                    //     // opacity: enabled ? 1 : 0.3
-                    //     color: control.down ? "#dddedf" : "#eeeeee"
-
-                    //     Rectangle {
-                    //         width: parent.width
-                    //         height: 1
-                    //         color: control.down ? "#17a81a" : "#21be2b"
-                    //         anchors.bottom: parent.bottom
-                    //     }
-                    // }
-                }
-                
-
-                // delegate: ItemDelegate {
-                //     highlighted: ListView.isCurrentItem
-                //     // color: ListView.isCurrentItem ? "black" : "red"
-                //     highlight: Rectangle { color: Constants.materialGrey;}
-                //     width: columnWidths[1]
-                //     height: logLevelSelector.height/5
-                //     text: modelData
-                //     onClicked: {
-                //         // drawerItems.currentIndex = index;
-                //         print(index)
-                //         print(Utils.listObject(this))
-                //         // stackView.push(model.source);
-                //         // sideDrawer.close();
-                //     }
-                // }
-                // highlight: Rectangle { color: Constants.materialGrey;}
-                // Component.onCompleted: {
-                //     print(Utils.listObject(this))
-                // }
-                // delegate: Rectangle {
-                //     implicitWidth: columnWidths[1]
-                //     implicitHeight: Constants.genericTable.cellHeight
-                //     border.color: Constants.genericTable.borderColor
-
-                //     Text {
-                //         width: parent.width
-                //         anchors.centerIn: parent
-                //         horizontalAlignment: Text.AlignHCenter
-                //         verticalAlignment: Text.AlignVCenter
-                //         text: modelData
-                //         elide: Text.ElideRight
-                //         clip: true
-                //         font.family: Constants.genericTable.fontFamily
-                //     }
-                // }
-
-                model: ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-
-            }
-
-        }
-        
 
         HorizontalHeaderView {
             id: horizontalHeader
@@ -146,83 +50,80 @@ Item {
             syncView: tableView
             anchors.top: parent.top
             z: Constants.genericTable.headerZOffset
-            // Component.onCompleted
 
             delegate: Rectangle {
+                id: header
+
                 implicitWidth: columnWidths[index]
                 implicitHeight: Constants.genericTable.cellHeight
                 border.color: Constants.genericTable.borderColor
 
                 Text {
+                    id: headerText
+
                     width: parent.width
-                    anchors.centerIn: parent
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
+                    anchors.fill: parent
                     text: tableView.model.columns[index].display
                     elide: Text.ElideRight
                     clip: true
                     font.family: Constants.genericTable.fontFamily
+
                     Button {
-                        id: logLevelButton
                         visible: index == 1
-                        anchors.fill: parent
-                        anchors.centerIn: parent
+                        icon.source: Constants.icons.dropIndicatorPath
+                        anchors.right: headerText.right
                         icon.color: checked ? Constants.swiftOrange : Constants.materialGrey
                         height: parent.height
-                        width: parent.width
-                        padding: 0
-                        bottomInset: -2
-                        checkable: true
-                        flat: true
-                        opacity: 0.5
-
+                        width: Constants.logPanel.dropdownButtonWidth
+                        icon.width: Constants.logPanel.dropdownButtonWidth
+                        icon.height: parent.height
+                        padding: Constants.logPanel.dropdownButtonPadding
                         onClicked: {
-                            logLevelSelector.visible = !logLevelSelector.visible
+                            menu.open();
+                            menu.y = (parent.y - menu.height);
+                            menu.x = this.width - columnWidths[1];
+                            menu.width = columnWidths[1];
                         }
 
-                        // Component.onCompleted: {
-                        //     logLevelSelector.anchors.right = this.parent.right
+                        Menu {
+                            id: menu
 
-                        // }
+                            y: Constants.logPanel.logLevelMenuHeight
+                            onXChanged: {
+                                this.close();
+                            }
+
+                            Repeater {
+                                model: logLevelLabels
+
+                                MenuItem {
+                                    id: menuItem
+
+                                    onClicked: {
+                                        logLevelIndex = index;
+                                        data_model.log_level(modelData);
+                                    }
+
+                                    contentItem: Text {
+                                        text: modelData
+                                        color: logLevelIndex == index ? Constants.swiftOrange : Constants.genericTable.textColor
+                                        font.pointSize: Constants.mediumPointSize
+                                        font.family: Constants.genericTable.fontFamily
+                                    }
+
+                                }
+
+                            }
+
+                        }
+
+                        background: Item {
+                        }
+
                     }
-                    
 
-                    // ComboBox {
-                    //     id: logLevelSelector
-                    //     implicitWidth: 20
-                    //     implicitHeight: 5
-                    //     visible: index == 1
-                    //     anchors.right: parent.right
-                    //     model: ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-
-                    //     states: State {
-                    //         when: logLevelSelector.down
-
-                    //         PropertyChanges {
-                    //             target: logLevelSelector
-                    //             width: parent.parent.width// * 1.1
-                    //             // Component.onCompleted: {
-                    //             //     this.children[0].x = 0
-                    //             //     this.contentItem.visible = false
-                    //             // }
-                    //         }
-                    //         PropertyChanges {
-                    //             target: logLevelSelector.children[0]
-                    //             x: 0
-                    //             // width: parent.parent.width// * 1.1
-                    //             // Component.onCompleted: {
-                    //             //     this.children[0].x = 0
-                    //             //     this.contentItem.visible = false
-                    //             // }
-                    //         }
-
-                    //     }
-                    //     Component.onCompleted: {
-                    //         print(Utils.listObject(this.children[0]))
-                    //         this.children[0].x = 0
-                    //         this.contentItem.visible = false
-                    //     }
-                    // }
                 }
 
                 MouseArea {
@@ -284,6 +185,55 @@ Item {
             anchors.top: horizontalHeader.bottom
             width: parent.width
             height: parent.height - horizontalHeader.height
+
+            Item {
+                anchors.fill: parent
+                anchors.rightMargin: Constants.logPanel.pauseButtonRightMargin
+                z: Constants.logPanel.zAboveTable
+
+                RoundButton {
+                    id: baselinePauseButton
+
+                    visible: !consolePaused
+                    width: Constants.logPanel.pauseButtonWidth
+                    height: Constants.logPanel.pauseButtonWidth
+                    radius: Constants.logPanel.pauseButtonWidth / 3
+                    padding: Constants.logPanel.pauseButtonPadding
+                    icon.width: Constants.logPanel.pauseButtonWidth / 3
+                    icon.height: Constants.logPanel.pauseButtonWidth / 3
+                    icon.source: Constants.icons.pauseButtonUrl
+                    icon.color: Constants.materialGrey
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    ToolTip.visible: hovered
+                    ToolTip.text: Constants.logPanel.pauseButtonTooltip
+                    onClicked: {
+                        consolePaused = true;
+                    }
+                }
+
+                RoundButton {
+                    id: baselinePlayButton
+
+                    visible: consolePaused
+                    width: Constants.logPanel.pauseButtonWidth
+                    height: Constants.logPanel.pauseButtonWidth
+                    radius: Constants.logPanel.pauseButtonWidth / 3
+                    padding: Constants.logPanel.pauseButtonPadding
+                    icon.width: Constants.logPanel.pauseButtonWidth / 3
+                    icon.height: Constants.logPanel.pauseButtonWidth / 3
+                    icon.source: Constants.icons.playPath
+                    icon.color: Constants.swiftOrange
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    ToolTip.visible: hovered
+                    ToolTip.text: Constants.logPanel.playButtonTooltip
+                    onClicked: {
+                        consolePaused = false;
+                    }
+                }
+
+            }
 
             ScrollBar.horizontal: ScrollBar {
             }
@@ -362,6 +312,10 @@ Item {
                 if (forceLayoutLock)
                     return ;
 
+                if (!logLevelLabels.length)
+                    logLevelLabels = logPanelData.log_level_labels;
+
+                logLevelIndex = logLevelLabels.indexOf(logPanelData.log_level);
                 for (var idx in logPanelData.entries) {
                     var new_row = {
                     };
@@ -371,6 +325,9 @@ Item {
                     logEntries.unshift(new_row);
                 }
                 logEntries = logEntries.slice(0, Constants.logPanel.maxRows);
+                if (consolePaused)
+                    return ;
+
                 for (var idx in logEntries) {
                     tableView.model.setRow(idx, logEntries[idx]);
                 }

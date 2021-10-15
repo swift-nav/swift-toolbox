@@ -374,7 +374,6 @@ def receive_messages(app_, backend, messages):
             CONNECTION[Keys.PREVIOUS_HOSTS][:] = m.connectionStatus.previousHosts
             CONNECTION[Keys.PREVIOUS_PORTS][:] = m.connectionStatus.previousPorts
             CONNECTION[Keys.PREVIOUS_FILES][:] = m.connectionStatus.previousFiles
-            # CONNECTION[Keys.LOG_LEVEL] = m.connectionStatus.logLevel
         elif m.which == Message.Union.LoggingBarStatus:
             LOGGING_BAR[Keys.PREVIOUS_FOLDERS][:] = m.loggingBarStatus.previousFolders
             LOGGING_BAR[Keys.CSV_LOGGING] = m.loggingBarStatus.csvLogging
@@ -400,6 +399,7 @@ def receive_messages(app_, backend, messages):
             log_panel_lock.lock()
             LOG_PANEL[Keys.ENTRIES] += [entry.line for entry in m.logAppend.entries]
             log_panel_lock.unlock()
+            LOG_PANEL[Keys.LOG_LEVEL] = m.logAppend.logLevel
         elif m.which == Message.Union.SettingsTableStatus:
             SETTINGS_TABLE[Keys.ENTRIES][:] = settings_rows_to_json(m.settingsTableStatus.data)
         elif m.which == Message.Union.SettingsImportResponse:

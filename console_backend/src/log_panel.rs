@@ -6,6 +6,7 @@ use capnp::message::Builder;
 use crate::common_constants as cc;
 use crate::constants::LOG_WRITER_BUFFER_MESSAGE_COUNT;
 use crate::errors::CONSOLE_LOG_JSON_TO_STRING_FAILURE;
+use crate::shared_state::SharedState;
 use crate::types::{CapnProtoSender, ClientSender};
 use crate::utils::serialize_capnproto_builder;
 
@@ -96,8 +97,8 @@ pub fn handle_log_msg(msg: MsgLog) {
     }
 }
 
-pub fn setup_logging(client_sender: ClientSender, debug: bool) {
-    let log_panel = LogPanelWriter::new(client_sender, debug);
+pub fn setup_logging(client_sender: ClientSender, shared_state: SharedState, debug: bool) {
+    let log_panel = LogPanelWriter::new(client_sender, shared_state, debug);
     let logger = Logger::builder()
         .buf_size(LOG_WRITER_BUFFER_MESSAGE_COUNT)
         .formatter(splitable_log_formatter)
@@ -111,13 +112,15 @@ pub fn setup_logging(client_sender: ClientSender, debug: bool) {
 #[derive(Debug)]
 pub struct LogPanelWriter<S: CapnProtoSender> {
     pub client_sender: S,
+    shared_state: SharedState,
     pub debug: bool,
 }
 
 impl<S: CapnProtoSender> LogPanelWriter<S> {
-    pub fn new(client_sender: S, debug: bool) -> LogPanelWriter<S> {
+    pub fn new(client_sender: S, shared_state: SharedState, debug: bool) -> LogPanelWriter<S> {
         LogPanelWriter {
             client_sender,
+            shared_state,
             debug,
         }
     }
@@ -132,7 +135,8 @@ impl<S: CapnProtoSender> Writer<Box<String>> for LogPanelWriter<S> {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
-        let log_update = msg.init_log_append();
+        let mut log_update = msg.init_log_append();
+        log_update.set_log_level(&self.shared_state.log_level().to_string());
         let mut entries = log_update.init_entries(slice.len() as u32);
 
         for (idx, item) in slice.iter().enumerate() {

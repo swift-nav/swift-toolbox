@@ -72,19 +72,23 @@ ApplicationWindow {
                     Layout.leftMargin: Constants.margins
                     Layout.rightMargin: Constants.margins
                 }
+
                 ColumnLayout {
                     SplitView.fillWidth: true
                     SplitView.preferredHeight: Constants.logPanelPreferredHeight + Constants.loggingBarPreferredHeight
                     SplitView.minimumHeight: Constants.loggingBarPreferredHeight
                     spacing: Constants.topLevelSpacing
+
                     LoggingBar {
                         Layout.fillWidth: true
                         Layout.preferredHeight: Constants.loggingBarPreferredHeight
                     }
+
                     LogPanel {
                         Layout.fillWidth: true
                         Layout.preferredHeight: Constants.logPanelPreferredHeight
                     }
+
                 }
 
             }

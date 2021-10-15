@@ -109,10 +109,9 @@ impl Server {
         let server_endpoint = ServerEndpoint {
             server_send: Some(server_send),
         };
-        setup_logging(client_send.clone(), false);
-        let opt = CliOptions::from_filtered_cli();
         let shared_state = SharedState::new();
-
+        setup_logging(client_send.clone(), shared_state.clone(), false);
+        let opt = CliOptions::from_filtered_cli();
         let connection_state = ConnectionState::new(client_send.clone(), shared_state.clone());
         // Handle CLI Opts.
         handle_cli(opt, &connection_state, shared_state.clone());

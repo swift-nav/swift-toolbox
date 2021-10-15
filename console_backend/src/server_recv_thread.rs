@@ -140,7 +140,6 @@ pub fn server_recv_thread(
                             LogLevel::from_str(log_level).expect(CONVERT_TO_STR_FAILURE);
                         info!("Log Level: {}", log_level);
                         shared_state_clone.set_log_level(log_level);
-                        // refresh_connection_frontend(&mut client_send.clone(), shared_state.clone());
                     }
                     m::message::SolutionVelocityStatusFront(Ok(cv_in)) => {
                         let unit = cv_in

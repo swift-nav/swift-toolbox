@@ -108,6 +108,7 @@ pub struct SolutionTab<S: CapnProtoSender> {
     ins_used: bool,
     lats: Deque<f64>,
     lngs: Deque<f64>,
+    alts: Deque<f64>,
     last_ins_status_receipt_time: Instant,
     last_pos_mode: u8,
     last_odo_update_time: Instant,
@@ -148,6 +149,7 @@ impl<S: CapnProtoSender> SolutionTab<S> {
             ins_used: false,
             lats: Deque::new(PLOT_HISTORY_MAX),
             lngs: Deque::new(PLOT_HISTORY_MAX),
+            alts: Deque::new(PLOT_HISTORY_MAX),
             last_ins_status_receipt_time: Instant::now(),
             last_pos_mode: 0,
             last_odo_update_time: Instant::now(),
@@ -578,7 +580,17 @@ impl<S: CapnProtoSender> SolutionTab<S> {
                 .insert(VERT_ACC, format!("{:.3}", pos_llh_fields.v_accuracy));
             self.lats.push(pos_llh_fields.lat);
             self.lngs.push(pos_llh_fields.lon);
+            self.alts.push(pos_llh_fields.height);
             self.modes.push(self.last_pos_mode);
+
+            if self.shared_state.auto_survey_requested() {
+                let lat = self.lats.iter().sum::<f64>() as f64 / self.lats.len() as f64;
+                let lon = self.lngs.iter().sum::<f64>() as f64 / self.lngs.len() as f64;
+                let alt = self.alts.iter().sum::<f64>() as f64 / self.alts.len() as f64;
+
+                self.shared_state.set_auto_survey_result(lat, lon, alt);
+                self.shared_state.set_settings_auto_survey_request(true);
+            }
         }
         self.table
             .insert(POS_FLAGS, format!("0x{:<03x}", pos_llh_fields.flags));

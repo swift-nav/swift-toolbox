@@ -350,6 +350,12 @@ pub fn server_recv_thread(
                     m::message::ConfirmInsChange(Ok(_)) => {
                         shared_state_clone.set_settings_confirm_ins_change(true);
                     }
+                    m::message::AutoSurveyRequest(Ok(_)) => {
+                        let mut shared_data = shared_state_clone
+                            .lock()
+                            .expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+                        shared_data.auto_survey_data.requested = true;
+                    }
                     _ => {
                         error!("unknown message from front-end");
                     }

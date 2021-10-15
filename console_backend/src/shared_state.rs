@@ -252,6 +252,10 @@ impl SharedState {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         shared_data.settings_tab.confirm_ins_change = set_to;
     }
+    pub fn set_settings_auto_survey_request(&self, set_to: bool) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.settings_tab.auto_survey_request = set_to;
+    }
     pub fn set_export_settings(&self, path: Option<PathBuf>) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         shared_data.settings_tab.export = path;
@@ -295,6 +299,17 @@ impl SharedState {
     pub fn advanced_networking_update(&self) -> Option<AdvancedNetworkingState> {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         shared_data.advanced_networking_update.take()
+    }
+    pub fn auto_survey_requested(&self) -> bool {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).auto_survey_data.requested
+    }
+    pub fn set_auto_survey_result(&self, lat: f64, lon: f64, alt: f64) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).auto_survey_data.lat = Some(lat);
+        (*shared_data).auto_survey_data.lon = Some(lon);
+        (*shared_data).auto_survey_data.alt = Some(alt);
+        (*shared_data).auto_survey_data.requested = false;
     }
 }
 
@@ -340,6 +355,7 @@ pub struct SharedStateInner {
     pub(crate) dgnss_enabled: bool,
     pub(crate) reset_device: bool,
     pub(crate) advanced_networking_update: Option<AdvancedNetworkingState>,
+    pub(crate) auto_survey_data: AutoSurveyData,
 }
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
@@ -365,6 +381,7 @@ impl SharedStateInner {
             dgnss_enabled: false,
             reset_device: false,
             advanced_networking_update: None,
+            auto_survey_data: AutoSurveyData::new(),
         }
     }
 }
@@ -545,12 +562,32 @@ impl AdvancedSpectrumAnalyzerTabState {
     }
 }
 
+#[derive(Debug)]
+pub struct AutoSurveyData {
+    pub lat: Option<f64>,
+    pub lon: Option<f64>,
+    pub alt: Option<f64>,
+    pub requested: bool,
+}
+
+impl AutoSurveyData {
+    fn new() -> AutoSurveyData {
+        AutoSurveyData {
+            lat: None,
+            lon: None,
+            alt: None,
+            requested: false,
+        }
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct SettingsTabState {
     pub refresh: bool,
     pub reset: bool,
     pub save: bool,
     pub confirm_ins_change: bool,
+    pub auto_survey_request: bool,
     pub export: Option<PathBuf>,
     pub import: Option<PathBuf>,
     pub write: Option<settings_tab::SaveRequest>,
@@ -570,6 +607,7 @@ impl SettingsTabState {
             || self.reset
             || self.save
             || self.confirm_ins_change
+            || self.auto_survey_request
             || self.export.is_some()
             || self.import.is_some()
             || self.write.is_some()

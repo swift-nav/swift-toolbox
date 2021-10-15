@@ -14,6 +14,7 @@ use sbp::messages::piksi::MsgReset;
 use sbp::messages::settings::MsgSettingsSave;
 use sbp_settings::{Client, SettingKind, SettingValue};
 
+use crate::errors::SHARED_STATE_LOCK_MUTEX_FAILURE;
 use crate::shared_state::SharedState;
 use crate::types::{CapnProtoSender, Error, MsgSender, Result};
 use crate::utils::*;
@@ -89,6 +90,12 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
         if settings_state.confirm_ins_change {
             if let Err(e) = self.confirm_ins_change() {
                 error!("Issue confirming INS change, {}", e);
+            };
+        }
+
+        if settings_state.auto_survey_request {
+            if let Err(e) = self.auto_survey() {
+                error!("Issue running auto survey, {}", e);
             };
         }
     }
@@ -169,6 +176,32 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
     pub fn save(&self) -> Result<()> {
         self.msg_sender
             .send(MsgSettingsSave { sender_id: None }.into())?;
+        Ok(())
+    }
+
+    pub fn auto_survey(&mut self) -> Result<()> {
+        let (lat, lon, alt) = {
+            let shared_data = self
+                .shared_state
+                .lock()
+                .expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+            (
+                (*shared_data).auto_survey_data.lat,
+                (*shared_data).auto_survey_data.lon,
+                (*shared_data).auto_survey_data.alt,
+            )
+        };
+
+        match (lat, lon, alt) {
+            (Some(lat), Some(lon), Some(alt)) => {
+                self.write_setting("surveyed_position", "surveyed_lat", &lat.to_string())?;
+                self.write_setting("surveyed_position", "surveyed_lon", &lon.to_string())?;
+                self.write_setting("surveyed_position", "surveyed_alt", &alt.to_string())?;
+            }
+            _ => {
+                error!("Auto survey failed due to unknown lat, lon or alt")
+            }
+        }
         Ok(())
     }
 

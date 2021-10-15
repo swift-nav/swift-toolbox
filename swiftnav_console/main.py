@@ -752,15 +752,21 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
         globals_.setProperty("initialSubTabIndex", layout_idxs[SUB_INDEX])  # type: ignore
     if args.show_csv_log:
         globals_.setProperty("showCsvLog", True)  # type: ignore
+    if args.height:
+        globals_.setProperty("height", args.height)  # type: ignore
+    if args.width:
+        globals_.setProperty("width", args.width)  # type: ignore
 
 
 def main():
     parser = argparse.ArgumentParser(add_help=False, usage=argparse.SUPPRESS)
     parser.add_argument("--show-fileio", action="store_true")
     parser.add_argument("--no-opengl", action="store_false")
-    parser.add_argument("--refresh-rate")
+    parser.add_argument("--refresh-rate", type=int)
     parser.add_argument("--tab")
     parser.add_argument("--show-csv-log", action="store_true")
+    parser.add_argument("--height", type=int)
+    parser.add_argument("--width", type=int)
 
     args_main, _ = parser.parse_known_args()
 

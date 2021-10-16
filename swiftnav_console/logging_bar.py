@@ -10,17 +10,23 @@ from .constants import Keys, QTKeys, SbpLogging
 LOGGING_BAR: Dict[str, Any] = {
     Keys.PREVIOUS_FOLDERS: [],
     Keys.CSV_LOGGING: False,
-    Keys.SBP_LOGGING: SbpLogging.OFF,
-    Keys.SBP_LOGGING_LABELS: [SbpLogging.OFF, SbpLogging.SBP_JSON, SbpLogging.SBP],
+    Keys.SBP_LOGGING: False,
+    Keys.SBP_LOGGING_FORMAT: SbpLogging.SBP_JSON,
+    Keys.SBP_LOGGING_LABELS: [SbpLogging.SBP_JSON, SbpLogging.SBP],
+    Keys.RECORDING_DURATION_SEC: int,
+    Keys.RECORDING_SIZE: str,
 }
 
 
 class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
 
     _csv_logging: bool = False
-    _sbp_logging: str = SbpLogging.OFF
+    _sbp_logging: bool = False
+    _sbp_logging_format: str = SbpLogging.SBP_JSON
     _sbp_logging_labels: List[str] = []
     _previous_folders: List[str] = []
+    _recording_duration_sec: int = 0
+    _recording_size: str
 
     def get_csv_logging(self) -> bool:
         return self._csv_logging
@@ -30,13 +36,21 @@ class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
 
     csv_logging = Property(bool, get_csv_logging, set_csv_logging)
 
-    def get_sbp_logging(self) -> str:
+    def get_sbp_logging(self) -> bool:
         return self._sbp_logging
 
-    def set_sbp_logging(self, sbp_logging: str) -> None:
+    def set_sbp_logging(self, sbp_logging: bool) -> None:
         self._sbp_logging = sbp_logging
 
-    sbp_logging = Property(str, get_sbp_logging, set_sbp_logging)
+    sbp_logging = Property(bool, get_sbp_logging, set_sbp_logging)
+
+    def get_sbp_logging_format(self) -> str:
+        return self._sbp_logging_format
+
+    def set_sbp_logging_format(self, sbp_logging_format: str) -> None:
+        self._sbp_logging_format = sbp_logging_format
+
+    sbp_logging_format = Property(str, get_sbp_logging_format, set_sbp_logging_format)
 
     def get_sbp_logging_labels(self) -> List[str]:
         return self._sbp_logging_labels
@@ -54,12 +68,31 @@ class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
 
     previous_folders = Property(QTKeys.QVARIANTLIST, get_previous_folders, set_previous_folders)  # type: ignore
 
+    def get_recording_size(self) -> str:
+        return self._recording_size
+
+    def set_recording_size(self, recording_size: str) -> None:
+        self._recording_size = recording_size
+
+    recording_size = Property(str, get_recording_size, set_recording_size)
+
+    def get_recording_duration_sec(self) -> int:
+        return self._recording_duration_sec
+
+    def set_recording_duration_sec(self, recording_duration_sec: int) -> None:
+        self._recording_duration_sec = recording_duration_sec
+
+    recording_duration_sec = Property(int, get_recording_duration_sec, set_recording_duration_sec)  # type: ignore
+
 
 class LoggingBarModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(LoggingBarData)  # type: ignore
     def fill_data(self, cp: LoggingBarData) -> LoggingBarData:  # pylint:disable=no-self-use
         cp.set_csv_logging(LOGGING_BAR[Keys.CSV_LOGGING])
         cp.set_sbp_logging(LOGGING_BAR[Keys.SBP_LOGGING])
+        cp.set_sbp_logging_format(LOGGING_BAR[Keys.SBP_LOGGING_FORMAT])
         cp.set_sbp_logging_labels(LOGGING_BAR[Keys.SBP_LOGGING_LABELS])
         cp.set_previous_folders(LOGGING_BAR[Keys.PREVIOUS_FOLDERS])
+        cp.set_recording_size(LOGGING_BAR[Keys.RECORDING_SIZE])
+        cp.set_recording_duration_sec(LOGGING_BAR[Keys.RECORDING_DURATION_SEC])
         return cp

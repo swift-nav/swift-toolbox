@@ -5,6 +5,8 @@ import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
 Item {
+    property string name: Constants.connection.name
+    property alias connected: connectButton.checked
     property string tcp_ip: "TCP/IP"
     property string serial_usb: "Serial/USB"
     property string file: "File"
@@ -34,14 +36,12 @@ Item {
         Dialog {
             id: dialog
 
-            visible: true
+            visible: stack.connectionScreenVisible()
             implicitHeight: 3 * parent.height / 7
             implicitWidth: parent.width / 2
             anchors.centerIn: parent
             title: "Connect to device..."
-            onRejected: {
-                stack.pop();
-            }
+            closePolicy: Popup.NoAutoClose
 
             ColumnLayout {
                 anchors.fill: parent
@@ -237,7 +237,6 @@ Item {
                                 } else {
                                     data_model.connect_serial(serialDevice.currentText, serialDeviceBaudRate.currentText, serialDeviceFlowControl.currentText);
                                 }
-                                stack.pop();
                             }
                         }
                     }
@@ -264,6 +263,10 @@ Item {
                     previous_hosts = connectionData.previous_hosts;
                     previous_ports = connectionData.previous_ports;
                     previous_files = connectionData.previous_files;
+                    if (!stack.connected_at_least_once && stack.connectionScreenVisible() && connectionData.connected) {
+                        stack.mainView();
+                        stack.connected_at_least_once = true;
+                    }
                     connectButton.checked = connectionData.connected;
                 }
             }

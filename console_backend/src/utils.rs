@@ -177,7 +177,9 @@ pub fn refresh_loggingbar<P: CapnProtoSender>(client_send: &mut P, shared_state:
     let csv_logging = shared_state.csv_logging();
     logging_bar_status.set_csv_logging(csv_logging.to_bool());
     let sbp_logging = shared_state.sbp_logging();
-    logging_bar_status.set_sbp_logging(&sbp_logging.to_string());
+    logging_bar_status.set_sbp_logging(sbp_logging);
+    let sbp_logging_format = shared_state.sbp_logging_format();
+    logging_bar_status.set_sbp_logging_format(&sbp_logging_format.to_string());
 
     let mut folders = shared_state.folder_history();
     folders.reverse();

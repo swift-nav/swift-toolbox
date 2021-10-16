@@ -90,6 +90,13 @@ Rectangle {
                     leftInset: Constants.sideNavBar.buttonInset
                     ToolTip.visible: hovered
                     ToolTip.text: modelData.tooltip
+                    onClicked: {
+                        if (stack.connected_at_least_once) {
+                            if (stack.connectionScreenVisible())
+                                stack.mainView();
+
+                        }
+                    }
                 }
 
             }
@@ -117,7 +124,12 @@ Rectangle {
             ToolTip.visible: hovered
             ToolTip.text: "Connection Dialog"
             onClicked: {
-                stack.push("ConnectionScreen.qml");
+                if (stack.connected_at_least_once) {
+                    if (stack.connectionScreenVisible())
+                        stack.mainView();
+                    else if (stack.mainViewVisible())
+                        stack.connectionScreen();
+                }
             }
         }
 

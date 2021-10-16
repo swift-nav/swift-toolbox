@@ -40,68 +40,92 @@ ApplicationWindow {
             Layout.minimumWidth: Constants.sideNavBar.tabBarWidth
         }
 
-        StackView {
+        StackLayout {
             id: stack
 
-            initialItem: mainView
-            Layout.fillHeight: true
-            Layout.fillWidth: true
-            Component.onCompleted: stack.push("ConnectionScreen.qml")
-        }
+            property bool connected_at_least_once: false
 
-        ColumnLayout {
-            id: mainView
-
-            spacing: Constants.topLevelSpacing
-
-            SplitView {
-                orientation: Qt.Vertical
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                Layout.leftMargin: Constants.margins
-                Layout.rightMargin: Constants.margins
-                Layout.alignment: Qt.AlignTop
-
-                MainTabs {
-                    id: mainTabs
-
-                    property alias curIndex: sideNavBar.curIndex
-
-                    SplitView.fillHeight: true
-                    SplitView.fillWidth: true
-                    Layout.leftMargin: Constants.margins
-                    Layout.rightMargin: Constants.margins
-                }
-
-                ColumnLayout {
-                    SplitView.fillWidth: true
-                    SplitView.preferredHeight: Constants.logPanelPreferredHeight + Constants.loggingBarPreferredHeight
-                    SplitView.minimumHeight: Constants.loggingBarPreferredHeight
-                    spacing: Constants.topLevelSpacing
-
-                    LoggingBar {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: Constants.loggingBarPreferredHeight
-                    }
-
-                    LogPanel {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: Constants.logPanelPreferredHeight
-                    }
-
-                }
-
+            function connectionScreen() {
+                stack.currentIndex = 0;
             }
 
-            Rectangle {
-                id: statusBar
+            function connectionScreenVisible() {
+                return stack.currentIndex == 0;
+            }
 
-                Layout.fillWidth: true
-                Layout.preferredHeight: Constants.statusBarPreferredHeight
-                z: Constants.commonChart.zAboveCharts
+            function mainView() {
+                stack.currentIndex = 1;
+            }
 
-                StatusBar {
-                    property alias title: main.title
+            function mainViewVisible() {
+                return stack.currentIndex == 1;
+            }
+
+            currentIndex: 0
+            Layout.fillHeight: true
+            Layout.fillWidth: true
+
+            ConnectionScreen {
+            }
+
+            ColumnLayout {
+                id: mainView
+
+                spacing: Constants.topLevelSpacing
+
+                SplitView {
+                    orientation: Qt.Vertical
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    Layout.leftMargin: Constants.margins
+                    Layout.rightMargin: Constants.margins
+                    Layout.alignment: Qt.AlignTop
+
+                    MainTabs {
+                        id: mainTabs
+
+                        property alias curIndex: sideNavBar.curIndex
+
+                        SplitView.fillHeight: true
+                        SplitView.fillWidth: true
+                        Layout.leftMargin: Constants.margins
+                        Layout.rightMargin: Constants.margins
+                    }
+
+                    ColumnLayout {
+                        SplitView.fillWidth: true
+                        SplitView.preferredHeight: Constants.logPanelPreferredHeight + Constants.loggingBarPreferredHeight
+                        SplitView.minimumHeight: Constants.loggingBarPreferredHeight
+                        spacing: Constants.topLevelSpacing
+
+                        LoggingBar {
+                            id: loggingBar
+
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: Constants.loggingBarPreferredHeight
+                        }
+
+                        LogPanel {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                        }
+
+                    }
+
+                }
+
+                Rectangle {
+                    id: statusBar
+
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Constants.statusBarPreferredHeight
+                    z: Constants.commonChart.zAboveCharts
+
+                    StatusBar {
+                        property alias sbpRecording: loggingBar.sbpRecording
+                        property alias title: main.title
+                    }
+
                 }
 
             }

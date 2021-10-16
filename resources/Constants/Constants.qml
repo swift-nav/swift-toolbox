@@ -246,6 +246,8 @@ QtObject {
         readonly property string connectButtonPath: "images/fontawesome/power-off-solid.svg"
         readonly property string pauseButtonPath: "images/fontawesome/pause-solid.svg"
         readonly property string folderButtonPath: "images/fontawesome/folder-open-regular.svg"
+        readonly property string name: "connection"
+        readonly property string path: "qrc:///ConnectionScreen.qml"
     }
 
     loggingBar: QtObject {
@@ -261,6 +263,10 @@ QtObject {
         readonly property int folderPathBarHeight: 25
         readonly property color placeholderTextColor: "#CDC9C9"
         readonly property string folderButtonPath: "images/fontawesome/folder-solid.svg"
+        readonly property int recordingLabelWidth: 60
+        readonly property int recordingTimeLabelWidth: 60
+        readonly property int recordingDividerLabelWidth: 10
+        readonly property int recordingSizeLabelWidth: 40
     }
 
     advancedMagnetometer: QtObject {
@@ -526,6 +532,7 @@ QtObject {
         readonly property string lightningBoltPath: "qrc:///images/ConnectionIcon.svg"
         readonly property string dropIndicatorPath: "qrc:/qt-project.org/imports/QtQuick/Controls.2/Material/images/drop-indicator.png"
         readonly property string playPath: "qrc:///images/iconic/play.svg"
+        readonly property string solidCirclePath: "qrc:///images/fontawesome/circle-solid.svg"
     }
 
     insSettingsPopup: QtObject {

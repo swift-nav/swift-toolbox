@@ -1,10 +1,3 @@
-use std::{path::PathBuf, result::Result, thread::sleep, time::Instant};
-
-use chrono::Local;
-use log::{debug, error};
-use sbp::{time::GpsTime, Sbp};
-
-use crate::common_constants::SbpLogging;
 use crate::constants::{
     BASELINE_TIME_STR_FILEPATH, POS_LLH_TIME_STR_FILEPATH, SBP_FILEPATH, SBP_JSON_FILEPATH,
     VEL_TIME_STR_FILEPATH,
@@ -12,12 +5,85 @@ use crate::constants::{
 use crate::output::{CsvLogging, SbpLogger};
 use crate::shared_state::{create_directory, SharedState};
 use crate::types::CapnProtoSender;
-use crate::utils::refresh_loggingbar;
+use crate::utils::{bytes_to_human_readable, refresh_loggingbar, serialize_capnproto_builder};
+use crate::{
+    common_constants::SbpLogging,
+    errors::{CROSSBEAM_SCOPE_UNWRAP_FAILURE, THREAD_JOIN_FAILURE},
+    shared_state::SbpLoggingStatsState,
+};
+use capnp::message::Builder;
+use chrono::Local;
+use crossbeam::{channel::Receiver, thread};
+use log::{debug, error};
+use sbp::{time::GpsTime, Sbp};
+use std::{
+    path::PathBuf,
+    result::Result,
+    thread::sleep,
+    time::{Duration, Instant},
+};
+
+const LOGGING_STATS_UPDATE_INTERVAL_SEC: u64 = 500;
+
+pub fn logging_stats_thread<S: CapnProtoSender>(
+    receiver: Receiver<bool>,
+    shared_state: SharedState,
+    client_sender: S,
+) {
+    thread::scope(|scope| {
+        scope
+            .spawn(|_| {
+                let mut start_time = Instant::now();
+                let mut filepath = None;
+
+                loop {
+                    if receiver
+                        .recv_timeout(Duration::from_millis(LOGGING_STATS_UPDATE_INTERVAL_SEC))
+                        .is_ok()
+                    {
+                        break;
+                    }
+                    if let Some(mut new_update) = shared_state.sbp_logging_stats_state() {
+                        filepath = new_update.sbp_log_filepath.take();
+                        start_time = Instant::now();
+                    }
+                    if let Some(filepath_) = filepath.clone() {
+                        let file_size = std::fs::metadata(filepath_).unwrap().len();
+                        refresh_loggingbar_recording(
+                            &mut client_sender.clone(),
+                            file_size,
+                            start_time.elapsed().as_secs(),
+                        );
+                    } else {
+                        refresh_loggingbar_recording(&mut client_sender.clone(), 0, 0);
+                    }
+                }
+            })
+            .join()
+            .expect(THREAD_JOIN_FAILURE);
+    })
+    .expect(CROSSBEAM_SCOPE_UNWRAP_FAILURE);
+}
+
+pub fn refresh_loggingbar_recording<P: CapnProtoSender>(
+    client_send: &mut P,
+    size: u64,
+    duration: u64,
+) {
+    let mut builder = Builder::new_default();
+    let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
+
+    let mut logging_bar_status = msg.init_logging_bar_recording_status();
+    logging_bar_status.set_recording_duration_sec(duration);
+    logging_bar_status.set_recording_size(&bytes_to_human_readable(size as u128));
+    client_send.send_data(serialize_capnproto_builder(builder));
+}
 
 pub struct MainTab<S: CapnProtoSender> {
     logging_directory: PathBuf,
     last_csv_logging: CsvLogging,
-    last_sbp_logging: SbpLogging,
+    last_sbp_logging: bool,
+    last_sbp_logging_format: SbpLogging,
     sbp_logger: Option<SbpLogger>,
     last_gps_update: Instant,
     last_gps_time: Option<GpsTime>,
@@ -30,7 +96,8 @@ impl<'a, S: CapnProtoSender> MainTab<S> {
         MainTab {
             logging_directory: shared_state.logging_directory(),
             last_csv_logging: CsvLogging::OFF,
-            last_sbp_logging: SbpLogging::OFF,
+            last_sbp_logging: false,
+            last_sbp_logging_format: SbpLogging::SBP_JSON,
             sbp_logger: None,
             last_gps_time: None,
             last_gps_update: Instant::now(),
@@ -107,12 +174,17 @@ impl<'a, S: CapnProtoSender> MainTab<S> {
     /// - `logging`: The type of sbp logging to use; otherwise, None.
     pub fn init_sbp_logging(&mut self, logging: SbpLogging) {
         let local_t = Local::now();
+        let mut sbp_log_filepath = None;
         self.sbp_logger = match logging {
             SbpLogging::SBP => {
                 let sbp_log_file = local_t.format(SBP_FILEPATH).to_string();
                 let sbp_log_file = self.logging_directory.join(sbp_log_file);
-                match SbpLogger::new_sbp(&sbp_log_file) {
-                    Ok(logger) => Some(logger),
+
+                match SbpLogger::new_sbp(&sbp_log_file.clone()) {
+                    Ok(logger) => {
+                        sbp_log_filepath = Some(sbp_log_file);
+                        Some(logger)
+                    }
                     Err(e) => {
                         error!("issue creating file, {:?}, error, {}", sbp_log_file, e);
                         None
@@ -122,26 +194,35 @@ impl<'a, S: CapnProtoSender> MainTab<S> {
             SbpLogging::SBP_JSON => {
                 let sbp_json_log_file = local_t.format(SBP_JSON_FILEPATH).to_string();
                 let sbp_json_log_file = self.logging_directory.join(sbp_json_log_file);
-                match SbpLogger::new_sbp_json(&sbp_json_log_file) {
-                    Ok(logger) => Some(logger),
+                match SbpLogger::new_sbp_json(&sbp_json_log_file.clone()) {
+                    Ok(logger) => {
+                        sbp_log_filepath = Some(sbp_json_log_file);
+                        Some(logger)
+                    }
                     Err(e) => {
                         error!("issue creating file, {:?}, error, {}", sbp_json_log_file, e);
                         None
                     }
                 }
             }
-            _ => None,
         };
-        self.shared_state.set_sbp_logging(logging);
+        if self.sbp_logger.is_some() {
+            self.shared_state.set_sbp_logging(true);
+        }
+        self.shared_state.set_sbp_logging_format(logging);
+        self.shared_state
+            .set_sbp_logging_stats_state(SbpLoggingStatsState { sbp_log_filepath });
     }
     pub fn serialize_sbp(&mut self, msg: &Sbp) {
         let csv_logging;
         let sbp_logging;
+        let sbp_logging_format;
         let directory;
         {
             let shared_data = self.shared_state.lock().unwrap();
             csv_logging = (*shared_data).logging_bar.csv_logging.clone();
-            sbp_logging = (*shared_data).logging_bar.sbp_logging.clone();
+            sbp_logging = (*shared_data).logging_bar.sbp_logging;
+            sbp_logging_format = (*shared_data).logging_bar.sbp_logging_format.clone();
             directory = (*shared_data).logging_bar.logging_directory.clone();
         }
         self.logging_directory = self.shared_state.clone().logging_directory();
@@ -168,13 +249,15 @@ impl<'a, S: CapnProtoSender> MainTab<S> {
             self.last_csv_logging = csv_logging;
             refresh_loggingbar(&mut self.client_sender, self.shared_state.clone());
         }
-        if self.last_sbp_logging != sbp_logging {
+        if self.last_sbp_logging != sbp_logging
+            || self.last_sbp_logging_format != sbp_logging_format
+        {
             self.close_sbp();
-            if let SbpLogging::OFF = &sbp_logging {
-            } else {
-                self.init_sbp_logging(sbp_logging.clone());
+            if sbp_logging {
+                self.init_sbp_logging(sbp_logging_format.clone());
             }
             self.last_sbp_logging = sbp_logging;
+            self.last_sbp_logging_format = sbp_logging_format;
             refresh_loggingbar(&mut self.client_sender, self.shared_state.clone());
         }
 
@@ -185,8 +268,12 @@ impl<'a, S: CapnProtoSender> MainTab<S> {
         }
     }
     pub fn close_sbp(&mut self) {
-        self.shared_state.set_sbp_logging(SbpLogging::OFF);
+        self.shared_state.set_sbp_logging(false);
         self.sbp_logger = None;
+        self.shared_state
+            .set_sbp_logging_stats_state(SbpLoggingStatsState {
+                sbp_log_filepath: None,
+            });
     }
 }
 
@@ -396,8 +483,9 @@ mod tests {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
         let mut main = MainTab::new(shared_state, client_send);
-        assert_eq!(main.last_sbp_logging, SbpLogging::OFF);
-        main.shared_state.set_sbp_logging(SbpLogging::SBP);
+        assert!(!main.last_sbp_logging);
+        main.shared_state.set_sbp_logging_format(SbpLogging::SBP);
+        main.shared_state.set_sbp_logging(true);
         main.shared_state.set_logging_directory(tmp_dir.clone());
 
         let flags = 0x01;
@@ -440,10 +528,10 @@ mod tests {
         {
             main.serialize_sbp(&Sbp::MsgPosLlh(msg_one.clone()));
             main.serialize_sbp(&Sbp::MsgVelNed(msg_two.clone()));
-            assert_eq!(main.last_sbp_logging, SbpLogging::SBP);
+            assert_eq!(main.last_sbp_logging_format, SbpLogging::SBP);
             main.close_sbp();
             main.serialize_sbp(&Sbp::MsgVelNed(msg_two.clone()));
-            assert_eq!(main.last_sbp_logging, SbpLogging::OFF);
+            assert!(!main.last_sbp_logging);
         }
 
         let pattern = tmp_dir.join("swift-gnss-*.sbp");
@@ -486,8 +574,10 @@ mod tests {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
         let mut main = MainTab::new(shared_state, client_send);
-        assert_eq!(main.last_sbp_logging, SbpLogging::OFF);
-        main.shared_state.set_sbp_logging(SbpLogging::SBP_JSON);
+        assert!(!main.last_sbp_logging);
+        main.shared_state
+            .set_sbp_logging_format(SbpLogging::SBP_JSON);
+        main.shared_state.set_sbp_logging(true);
         main.shared_state.set_logging_directory(tmp_dir.clone());
 
         let flags = 0x01;
@@ -530,10 +620,10 @@ mod tests {
         {
             main.serialize_sbp(&Sbp::MsgPosLlh(msg_one));
             main.serialize_sbp(&Sbp::MsgVelNed(msg_two.clone()));
-            assert_eq!(main.last_sbp_logging, SbpLogging::SBP_JSON);
+            assert_eq!(main.last_sbp_logging_format, SbpLogging::SBP_JSON);
             main.close_sbp();
             main.serialize_sbp(&Sbp::MsgVelNed(msg_two));
-            assert_eq!(main.last_sbp_logging, SbpLogging::OFF);
+            assert!(!main.last_sbp_logging);
         }
 
         let pattern = tmp_dir.join("swift-gnss-*.sbp.json");

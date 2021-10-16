@@ -205,7 +205,11 @@ Rectangle {
                 statusBarINS.text = statusBarData.ins;
                 statusBarDataRate.text = statusBarData.data_rate;
                 statusBarAntenna.text = statusBarData.antenna_status;
-                parent.title = "🔴🟡🟢" + statusBarData.title;
+                let recordingPrefix = "🔴";
+                if (Qt.platform.os === "windows")
+                    recordingPrefix = "[L]";
+
+                parent.title = (parent.sbpRecording ? recordingPrefix : " ") + statusBarData.title;
                 if (statusBarData.solid_connection) {
                     statusBarGoodConnectionImage.visible = true;
                     statusBarBadConnectionImage.visible = false;

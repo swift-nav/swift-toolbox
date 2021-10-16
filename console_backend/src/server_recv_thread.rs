@@ -125,11 +125,12 @@ pub fn server_recv_thread(
                             .expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
                         (*shared_data).logging_bar.csv_logging =
                             CsvLogging::from(cv_in.get_csv_logging());
-                        let sbp_logging = cv_in
-                            .get_sbp_logging()
+                        (*shared_data).logging_bar.sbp_logging = cv_in.get_sbp_logging();
+                        let sbp_logging_format = cv_in
+                            .get_sbp_logging_format()
                             .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
-                        (*shared_data).logging_bar.sbp_logging =
-                            SbpLogging::from_str(sbp_logging).expect(CONVERT_TO_STR_FAILURE);
+                        (*shared_data).logging_bar.sbp_logging_format =
+                            SbpLogging::from_str(sbp_logging_format).expect(CONVERT_TO_STR_FAILURE);
                     }
                     m::message::LogLevelFront(Ok(cv_in)) => {
                         let shared_state_clone = shared_state.clone();

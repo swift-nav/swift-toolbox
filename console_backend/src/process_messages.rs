@@ -1,6 +1,6 @@
 use std::{io::ErrorKind, thread::sleep, time::Duration};
 
-use crossbeam::sync::Parker;
+use crossbeam::{channel, sync::Parker};
 use log::{debug, error};
 use sbp::{
     link::LinkSource,
@@ -21,7 +21,6 @@ use sbp::{
     SbpMessage,
 };
 
-use crate::constants::PAUSE_LOOP_SLEEP_DURATION_MS;
 use crate::errors::UNABLE_TO_CLONE_UPDATE_SHARED;
 use crate::log_panel::handle_log_msg;
 use crate::shared_state::SharedState;
@@ -33,6 +32,7 @@ use crate::update_tab;
 use crate::utils::{close_frontend, refresh_connection_frontend};
 use crate::Tabs;
 use crate::{connection::Connection, types::UartState};
+use crate::{constants::PAUSE_LOOP_SLEEP_DURATION_MS, main_tab};
 
 pub fn process_messages<S>(
     conn: Connection,
@@ -278,6 +278,8 @@ where
     update_tab_context.set_serial_prompt(conn.is_serial());
     let client_send_clone = client_send.clone();
     let (update_tab_tx, update_tab_rx) = tabs.update.lock().unwrap().clone_channel();
+    let (logging_stats_tx, logging_stats_rx): (channel::Sender<bool>, channel::Receiver<bool>) =
+        channel::unbounded();
     let settings_parker = Parker::new();
     let settings_unparker = settings_parker.unparker().clone();
     crossbeam::scope(|scope| {
@@ -299,6 +301,14 @@ where
                 source.stateless_link(),
                 msg_sender.clone(),
             );
+        });
+        let client_send_clone = client_send.clone();
+        scope.spawn(|_| {
+            main_tab::logging_stats_thread(
+                logging_stats_rx,
+                shared_state.clone(),
+                client_send_clone,
+            )
         });
         for (message, gps_time) in messages {
             if shared_state.settings_needs_update() {
@@ -343,6 +353,9 @@ where
         }
         if let Err(err) = update_tab_tx.send(None) {
             error!("Issue stopping update tab: {}", err);
+        }
+        if let Err(err) = logging_stats_tx.send(false) {
+            error!("Issue stopping logging stats thread: {}", err);
         }
         if conn.close_when_done() {
             shared_state.set_running(false, client_send.clone());

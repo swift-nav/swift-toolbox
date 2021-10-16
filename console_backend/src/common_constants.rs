@@ -69,8 +69,6 @@ pub enum FusionStatus {
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
 pub enum SbpLogging {
-    #[strum(serialize = "OFF")]
-    OFF,
     #[strum(serialize = "SBP_JSON")]
     SBP_JSON,
     #[strum(serialize = "SBP")]
@@ -179,6 +177,8 @@ pub enum Keys {
     PREVIOUS_FOLDERS,
     #[strum(serialize = "SBP_LOGGING")]
     SBP_LOGGING,
+    #[strum(serialize = "SBP_LOGGING_FORMAT")]
+    SBP_LOGGING_FORMAT,
     #[strum(serialize = "CSV_LOGGING")]
     CSV_LOGGING,
     #[strum(serialize = "SBP_LOGGING_LABELS")]

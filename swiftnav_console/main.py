@@ -378,6 +378,10 @@ def receive_messages(app_, backend, messages):
             LOGGING_BAR[Keys.PREVIOUS_FOLDERS][:] = m.loggingBarStatus.previousFolders
             LOGGING_BAR[Keys.CSV_LOGGING] = m.loggingBarStatus.csvLogging
             LOGGING_BAR[Keys.SBP_LOGGING] = m.loggingBarStatus.sbpLogging
+            LOGGING_BAR[Keys.SBP_LOGGING_FORMAT] = m.loggingBarStatus.sbpLoggingFormat
+        elif m.which == Message.Union.LoggingBarRecordingStatus:
+            LOGGING_BAR[Keys.RECORDING_DURATION_SEC] = m.loggingBarRecordingStatus.recordingDurationSec
+            LOGGING_BAR[Keys.RECORDING_SIZE] = m.loggingBarRecordingStatus.recordingSize
         elif m.which == Message.Union.UpdateTabStatus:
             UPDATE_TAB[Keys.HARDWARE_REVISION] = m.updateTabStatus.hardwareRevision
             UPDATE_TAB[Keys.FW_VERSION_CURRENT] = m.updateTabStatus.fwVersionCurrent
@@ -685,6 +689,7 @@ class DataModel(QObject):  # pylint: disable=too-many-instance-attributes,too-ma
         m.loggingBarFront = m.init(Message.Union.LoggingBarFront)
         m.loggingBarFront.csvLogging = buttons[0]
         m.loggingBarFront.sbpLogging = buttons[1]
+        m.loggingBarFront.sbpLoggingFormat = buttons[2]
         m.loggingBarFront.directory = directory
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)

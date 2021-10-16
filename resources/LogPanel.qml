@@ -69,6 +69,7 @@ Item {
                     elide: Text.ElideRight
                     clip: true
                     font.family: Constants.genericTable.fontFamily
+                    font.pointSize: Constants.largePointSize
 
                     Button {
                         visible: index == 1
@@ -81,10 +82,12 @@ Item {
                         icon.height: parent.height
                         padding: Constants.logPanel.dropdownButtonPadding
                         onClicked: {
-                            menu.open();
-                            menu.y = (parent.y - menu.height);
-                            menu.x = this.width - columnWidths[1];
-                            menu.width = columnWidths[1];
+                            if (!menu.visible) {
+                                menu.open();
+                                menu.y = (parent.y - menu.height);
+                                menu.x = width - columnWidths[1];
+                                menu.width = columnWidths[1];
+                            }
                         }
 
                         Menu {
@@ -101,7 +104,7 @@ Item {
                                 MenuItem {
                                     id: menuItem
 
-                                    onClicked: {
+                                    onTriggered: {
                                         logLevelIndex = index;
                                         data_model.log_level(modelData);
                                     }

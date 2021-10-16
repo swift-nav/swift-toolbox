@@ -315,14 +315,20 @@ struct AdvancedSpectrumAnalyzerStatus {
 
 struct LoggingBarFront {
     csvLogging @0 :Bool;
-    sbpLogging @1 :Text;
-    directory @2 :Text;
+    sbpLogging @1 :Bool;
+    sbpLoggingFormat @2 :Text;
+    directory @3 :Text;
 }
 
 struct LoggingBarStatus {
     previousFolders @0 : List(Text);
     csvLogging @1 :Bool;
-    sbpLogging @2 :Text;
+    sbpLogging @2 :Bool;
+    sbpLoggingFormat @3 :Text;
+}
+struct LoggingBarRecordingStatus {
+    recordingDurationSec @0 : UInt64;
+    recordingSize @1 :Text;
 }
 
 struct UpdateTabStatus {
@@ -480,5 +486,6 @@ struct Message {
         insSettingsChangeResponse @49 : InsSettingsChangeResponse;
         confirmInsChange @50 : ConfirmInsChange;
         autoSurveyRequest @51 : AutoSurveyRequest;
+        loggingBarRecordingStatus @52 : LoggingBarRecordingStatus;
     }
 }

@@ -2,12 +2,7 @@
 mod mem_bench_impl {
     use crossbeam::channel;
     use ndarray::{ArrayView, Axis, Dim};
-    use std::{
-        error::Error,
-        result::Result,
-        sync::{Arc, Mutex},
-        thread,
-    };
+    use std::{error::Error, result::Result, thread};
 
     use sysinfo::{get_current_pid, ProcessExt, System, SystemExt};
 
@@ -15,7 +10,7 @@ mod mem_bench_impl {
         connection::Connection,
         process_messages,
         shared_state::SharedState,
-        types::{ClientSender, RealtimeDelay},
+        types::{ArcBool, ClientSender, RealtimeDelay},
     };
 
     const BENCH_FILEPATH: &str = "./tests/data/piksi-relay-1min.sbp";
@@ -53,24 +48,24 @@ mod mem_bench_impl {
         let (client_recv_tx, client_recv_rx) = channel::unbounded::<channel::Receiver<Vec<u8>>>();
         let pid = get_current_pid().unwrap();
         println!("PID: {}", pid);
-        let is_running = Arc::new(Mutex::new(true));
-        let is_running_recv = Arc::clone(&is_running);
-        let is_running_mem = Arc::clone(&is_running);
-        let mem_read_thread = thread::spawn(move || {
-            let mut sys = System::new();
-            let mut mem_readings_kb: Vec<f32> = vec![];
-            let mut cpu_readings: Vec<f32> = vec![];
-            loop {
-                sys.refresh_process(pid);
-                let proc = sys.get_process(pid).unwrap();
-                mem_readings_kb.push(proc.memory() as f32);
-                cpu_readings.push(proc.cpu_usage());
-                let is_running_mem = is_running_mem.lock().unwrap();
-                if !*is_running_mem {
-                    break;
+        let is_running = ArcBool::new_with(true);
+        let mem_read_thread = thread::spawn({
+            let is_running = is_running.clone();
+            move || {
+                let mut sys = System::new();
+                let mut mem_readings_kb: Vec<f32> = vec![];
+                let mut cpu_readings: Vec<f32> = vec![];
+                loop {
+                    sys.refresh_process(pid);
+                    let proc = sys.get_process(pid).unwrap();
+                    mem_readings_kb.push(proc.memory() as f32);
+                    cpu_readings.push(proc.cpu_usage());
+                    if !is_running.get() {
+                        break;
+                    }
                 }
+                validate_memory_benchmark(&mem_readings_kb, &cpu_readings);
             }
-            validate_memory_benchmark(&mem_readings_kb, &cpu_readings);
         });
         let recv_thread = thread::spawn(move || {
             let client_recv = client_recv_rx.recv().unwrap();
@@ -84,8 +79,7 @@ mod mem_bench_impl {
                 iter_count += 1;
             }
             assert!(iter_count > 0);
-            let mut is_running_recv = is_running_recv.lock().unwrap();
-            *is_running_recv = false;
+            is_running.set(false);
         });
 
         {
@@ -96,7 +90,6 @@ mod mem_bench_impl {
 
             let client_send = ClientSender::new(client_send_);
             let shared_state = SharedState::new();
-            shared_state.set_running(true, client_send.clone());
             shared_state.set_debug(true);
             let conn = Connection::file(
                 BENCH_FILEPATH.into(),
@@ -115,8 +108,8 @@ mod mem_bench_impl {
     ///   - `mem_readings`: The vector containing all memory readings acquired during benchmark.
     ///   - `cpu_readings`: The vector containing all cpu percentage readings acquired during benchmark.
     fn validate_memory_benchmark(mem_readings: &[f32], cpu_readings: &[f32]) {
-        let mems = vec_1d_to_array(&mem_readings).unwrap();
-        let cpus = vec_1d_to_array(&cpu_readings).unwrap();
+        let mems = vec_1d_to_array(mem_readings).unwrap();
+        let cpus = vec_1d_to_array(cpu_readings).unwrap();
         assert!(
             mem_readings.len() >= MINIMUM_MEM_READINGS,
             "This benchmark requires {} samples to be collected for analysis and only {} samples were collected.",

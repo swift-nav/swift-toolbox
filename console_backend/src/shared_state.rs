@@ -718,13 +718,13 @@ pub struct Address {
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct SerialConfig {
     pub baud: u32,
-    #[serde(with = "FlowControlDef")]
+    #[serde(with = "FlowControlRemote")]
     pub flow: FlowControl,
 }
 
 #[derive(Serialize, Deserialize)]
 #[serde(remote = "FlowControl")]
-enum FlowControlDef {
+enum FlowControlRemote {
     #[serde(rename = "None")]
     None,
     #[serde(rename = "Software")]

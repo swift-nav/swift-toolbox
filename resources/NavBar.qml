@@ -49,9 +49,6 @@ Rectangle {
         ComboBox {
             id: navBarSourceSelection
 
-            Component.onCompleted: {
-                navBarSourceSelection.indicator.width = Constants.navBar.connectionDropdownWidth / 3;
-            }
             Layout.preferredWidth: Constants.navBar.connectionDropdownWidth
             Layout.preferredHeight: Constants.navBar.dropdownHeight
             model: sources
@@ -94,9 +91,6 @@ Rectangle {
         ComboBox {
             id: serialDevice
 
-            Component.onCompleted: {
-                serialDevice.indicator.width = Constants.navBar.serialSelectionDropdownWidth / 3;
-            }
             visible: false
             Layout.preferredHeight: Constants.navBar.dropdownHeight
             Layout.preferredWidth: Constants.navBar.serialSelectionDropdownWidth
@@ -123,18 +117,25 @@ Rectangle {
             visible: false
             Layout.preferredHeight: Constants.navBar.buttonHeight
             Layout.preferredWidth: Constants.navBar.serialDeviceRefreshWidth
-            text: "F5"
+            ToolTip.text: "Refresh"
             onClicked: {
                 data_model.serial_refresh();
             }
+
+            Image {
+                anchors.centerIn: parent
+                width: Constants.navBar.buttonSvgHeight
+                height: Constants.navBar.buttonSvgHeight
+                source: Constants.icons.refreshPath
+                smooth: true
+                antialiasing: true
+            }
+
         }
 
         ComboBox {
             id: serialDeviceBaudRate
 
-            Component.onCompleted: {
-                serialDeviceBaudRate.indicator.width = Constants.navBar.serialDeviceBaudRateDropdownWidth / 3;
-            }
             visible: false
             Layout.preferredHeight: Constants.navBar.dropdownHeight
             Layout.preferredWidth: Constants.navBar.serialDeviceBaudRateDropdownWidth
@@ -157,9 +158,6 @@ Rectangle {
         ComboBox {
             id: serialDeviceFlowControl
 
-            Component.onCompleted: {
-                serialDeviceFlowControl.indicator.width = Constants.navBar.serialDeviceFlowControlDropdownWidth / 3;
-            }
             visible: false
             Layout.preferredHeight: Constants.navBar.dropdownHeight
             Layout.preferredWidth: Constants.navBar.serialDeviceFlowControlDropdownWidth

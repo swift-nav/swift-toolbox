@@ -245,9 +245,9 @@ Rectangle {
             ToolTip.visible: hovered
             ToolTip.text: !checked ? "Pause" : "Unpause"
             checkable: true
-            checked: app_state == "PAUSED"
+            checked: false
             enabled: app_state == "PAUSED" || app_state == "CONNECTED"
-            onClicked: data_model.pause(checked)
+            onToggled: data_model.pause(checked)
 
             Image {
                 id: connectionPauseImage
@@ -383,8 +383,9 @@ Rectangle {
                 previous_hosts = navBarData.previous_hosts;
                 previous_ports = navBarData.previous_ports;
                 previous_files = navBarData.previous_files;
-                app_state = navBarData.app_state;
                 logLevelButton.currentIndex = log_level_labels.indexOf(navBarData.log_level);
+                app_state = navBarData.app_state;
+                connectionPauseButton.checked = app_state == "PAUSED";
             }
         }
 

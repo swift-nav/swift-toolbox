@@ -451,7 +451,7 @@ mod tests {
         let client_send = ClientSender::new(client_send_);
         let connection_state = ConnectionState::new(client_send.clone(), shared_state.clone());
         let filename = TEST_FILEPATH.to_string();
-        let expected_duration = SERVER_STATE_CONNECTION_LOOP_TIMEOUT + Duration::from_millis(100);
+        let expected_duration = Duration::from_secs(1);
         let handle = receive_thread(client_receive);
         assert!(!shared_state.app_state().is_running());
         {

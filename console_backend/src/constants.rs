@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 // 'Universal' constants
 
 pub(crate) const NANOSECONDS_PER_SECOND: f64 = 1.0e+9;
@@ -247,5 +245,3 @@ pub(crate) const UNKNOWN_ERROR: &str = "Unk Error";
 pub(crate) const UNKNOWN_ERROR_SHORT: &str = "Unk";
 pub(crate) const ODO_POSTFIX: &str = "+Odo";
 pub(crate) const INS_POSTFIX: &str = "+INS";
-
-pub(crate) const SERVER_STATE_CONNECTION_LOOP_TIMEOUT: Duration = Duration::from_secs(1);

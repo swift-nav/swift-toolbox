@@ -197,7 +197,7 @@ mod tests {
         let mut recv = watched.watch();
         let (s, r) = channel::bounded(0);
         thread::spawn(move || {
-            let v = recv.wait_while(|v| *v <= 2).unwrap();
+            let v = recv.wait_while(|v| *v < 2).unwrap();
             assert_eq!(v, 2);
             s.send(()).unwrap()
         });

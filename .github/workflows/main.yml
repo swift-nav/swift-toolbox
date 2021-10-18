@@ -93,6 +93,12 @@ jobs:
         run: |
           cargo make setup-builder
 
+      - name: Cache standalone py
+        uses: actions/cache@v2
+        with:
+          path: ./standalone-py
+          key: ${{ runner.os }}-py39
+
       - name: Run Backend Benchmarks (Windows)
         env:
           LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
@@ -158,6 +164,12 @@ jobs:
       - name: Set up python builder
         run: |
           cargo make setup-builder
+
+      - name: Cache standalone py
+        uses: actions/cache@v2
+        with:
+          path: ./standalone-py
+          key: ${{ runner.os }}-py39
 
       - name: Run Checks
         run: |
@@ -264,6 +276,12 @@ jobs:
       - name: Set up python builder
         run: |
           cargo make setup-builder
+
+      - name: Cache standalone py
+        uses: actions/cache@v2
+        with:
+          path: ./standalone-py
+          key: ${{ runner.os }}-py39
 
       - name: Build ${{ runner.os }} Binaries.
         env:

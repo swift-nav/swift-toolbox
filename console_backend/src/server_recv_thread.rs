@@ -1,5 +1,5 @@
 use crate::common_constants::{ApplicationState, SbpLogging};
-use crate::connection::ConnectionState;
+use crate::connection::ConnectionManager;
 use crate::console_backend_capnp as m;
 use crate::errors::{
     CAP_N_PROTO_DESERIALIZATION_FAILURE, CONVERT_TO_STR_FAILURE, SHARED_STATE_LOCK_MUTEX_FAILURE,
@@ -23,7 +23,7 @@ pub type Result<T> = anyhow::Result<T>;
 pub type UtcDateTime = DateTime<Utc>;
 
 pub fn server_recv_thread(
-    connection_state: ConnectionState,
+    connection_state: ConnectionManager,
     mut client_send: ClientSender,
     server_recv: channel::Receiver<Vec<u8>>,
     shared_state: SharedState,

@@ -202,19 +202,19 @@ impl Connection {
 }
 
 #[derive(Debug)]
-pub struct ConnectionState {
+pub struct ConnectionManager {
     conn: Watched<Option<Connection>>,
     handle: Option<JoinHandle<()>>,
 }
 
-impl ConnectionState {
-    pub fn new(client_send: ClientSender, shared_state: SharedState) -> ConnectionState {
+impl ConnectionManager {
+    pub fn new(client_send: ClientSender, shared_state: SharedState) -> ConnectionManager {
         let conn = Watched::new(None);
         let recv = conn.watch();
         let handle = Some(thread::spawn(move || {
             connection_thread(client_send, shared_state, recv)
         }));
-        ConnectionState { handle, conn }
+        ConnectionManager { handle, conn }
     }
 
     /// Helper function for attempting to open a file and process SBP messages from it.
@@ -258,7 +258,7 @@ impl ConnectionState {
     }
 }
 
-impl Drop for ConnectionState {
+impl Drop for ConnectionManager {
     fn drop(&mut self) {
         self.conn = Watched::new(None);
         if let Some(h) = self.handle.take() {
@@ -392,11 +392,11 @@ mod tests {
         shared_state.set_debug(true);
         let (client_send_, client_receive) = channel::unbounded::<Vec<u8>>();
         let client_send = ClientSender::new(client_send_);
-        let connection_state = ConnectionState::new(client_send, shared_state.clone());
+        let conn_manager = ConnectionManager::new(client_send, shared_state.clone());
         let filename = TEST_SHORT_FILEPATH.to_string();
         receive_thread(client_receive);
         assert!(!shared_state.app_state().is_running());
-        connection_state.connect_to_file(
+        conn_manager.connect_to_file(
             filename,
             RealtimeDelay::On,
             /*close_when_done = */ true,
@@ -418,11 +418,11 @@ mod tests {
         shared_state.set_debug(true);
         let (client_send_, client_receive) = channel::unbounded::<Vec<u8>>();
         let mut client_send = ClientSender::new(client_send_);
-        let connection_state = ConnectionState::new(client_send.clone(), shared_state.clone());
+        let conn_manager = ConnectionManager::new(client_send.clone(), shared_state.clone());
         let filename = TEST_SHORT_FILEPATH.to_string();
         receive_thread(client_receive);
         assert!(!shared_state.app_state().is_running());
-        connection_state.connect_to_file(
+        conn_manager.connect_to_file(
             filename,
             RealtimeDelay::On,
             /*close_when_done = */ true,
@@ -449,13 +449,13 @@ mod tests {
         shared_state.set_debug(true);
         let (client_send_, client_receive) = channel::unbounded::<Vec<u8>>();
         let client_send = ClientSender::new(client_send_);
-        let connection_state = ConnectionState::new(client_send.clone(), shared_state.clone());
+        let conn_manager = ConnectionManager::new(client_send.clone(), shared_state.clone());
         let filename = TEST_FILEPATH.to_string();
         let expected_duration = Duration::from_secs(1);
         let handle = receive_thread(client_receive);
         assert!(!shared_state.app_state().is_running());
         {
-            connection_state.connect_to_file(
+            conn_manager.connect_to_file(
                 filename,
                 RealtimeDelay::On,
                 /*close_when_done = */ true,
@@ -466,11 +466,11 @@ mod tests {
         assert!(shared_state.app_state().is_running());
         let now = SystemTime::now();
         sleep(Duration::from_millis(1));
-        connection_state.disconnect();
+        conn_manager.disconnect();
         sleep(Duration::from_millis(10));
         assert!(!shared_state.app_state().is_running());
         drop(client_send);
-        drop(connection_state);
+        drop(conn_manager);
         assert!(handle.join().is_ok());
 
         match now.elapsed() {

@@ -25,7 +25,7 @@ import swiftnav_console.console_resources  # type: ignore # pylint: disable=unus
 
 import console_backend.server  # type: ignore  # pylint: disable=import-error,no-name-in-module
 
-from .constants import ApplicationMetadata, ApplicationStates, Keys, Tabs, QTKeys
+from .constants import ApplicationMetadata, ApplicationState, Keys, Tabs, QTKeys
 
 from .log_panel import (
     LOG_PANEL,
@@ -230,12 +230,10 @@ def receive_messages(app_, backend, messages):
         Message = messages.Message
         m = Message.from_bytes(buffer)
         if m.which == Message.Union.Status:
-            if m.status.text == ApplicationStates.CLOSE:
+            app_state = ApplicationState(m.status.text)
+            if app_state == ApplicationState.CLOSING:
                 return app_.quit()
-            if m.status.text == ApplicationStates.CONNECTED:
-                NAV_BAR[Keys.CONNECTED] = True
-            elif m.status.text == ApplicationStates.DISCONNECTED:
-                NAV_BAR[Keys.CONNECTED] = False
+            NAV_BAR[Keys.APPLICATION_STATE] = app_state
 
         elif m.which == Message.Union.SolutionPositionStatus:
             SOLUTION_POSITION_TAB[Keys.POINTS][:] = [

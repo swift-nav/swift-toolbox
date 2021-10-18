@@ -18,6 +18,7 @@ Rectangle {
     property variant previous_ports: []
     property variant previous_files: []
     property variant log_level_labels: []
+    property string app_state: "DISCONNECTED"
 
     anchors.fill: parent
     border.width: Constants.statusBar.borderWidth
@@ -244,6 +245,8 @@ Rectangle {
             ToolTip.visible: hovered
             ToolTip.text: !checked ? "Pause" : "Unpause"
             checkable: true
+            checked: app_state == "PAUSED"
+            enabled: app_state == "PAUSED" || app_state == "CONNECTED"
             onClicked: data_model.pause(checked)
 
             Image {
@@ -270,6 +273,8 @@ Rectangle {
             Layout.preferredWidth: Constants.navBar.connectButtonWidth
             Layout.preferredHeight: Constants.navBar.buttonHeight
             checkable: true
+            checked: true
+            enabled: app_state == "DISCONNECTED" || app_state == "CONNECTED" || app_state == "PAUSED"
             ToolTip.visible: hovered
             ToolTip.text: !checked ? "Connect" : "Disconnect"
             onClicked: {
@@ -378,7 +383,7 @@ Rectangle {
                 previous_hosts = navBarData.previous_hosts;
                 previous_ports = navBarData.previous_ports;
                 previous_files = navBarData.previous_files;
-                connectButton.checked = navBarData.connected;
+                app_state = navBarData.app_state;
                 logLevelButton.currentIndex = log_level_labels.indexOf(navBarData.log_level);
             }
         }

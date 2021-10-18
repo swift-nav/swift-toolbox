@@ -9,10 +9,11 @@ use sbp::SbpString;
 use semver::{Version, VersionReq}; //BuildMetadata, Prerelease,
 use serialport::available_ports;
 
+use crate::common_constants::ApplicationState;
 use crate::constants::*;
 use crate::errors::*;
+use crate::shared_state::SharedState;
 use crate::types::{CapnProtoSender, SignalCodes};
-use crate::{common_constants as cc, shared_state::SharedState};
 
 /// Compare to semvar strings and return true if the later_version is greater than the early version.
 ///
@@ -56,21 +57,8 @@ pub fn fixed_sbp_string<T, const L: usize>(data: &str) -> SbpString<[u8; L], T> 
     SbpString::new(arr)
 }
 
-/// Send a CLOSE, or kill, signal to the frontend.
-pub fn close_frontend<P: CapnProtoSender>(client_send: &mut P) {
-    let mut builder = Builder::new_default();
-    let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
-    let mut status = msg.init_status();
-    let app_state = cc::ApplicationStates::CLOSE;
-    status.set_text(&app_state.to_string());
-    client_send.send_data(serialize_capnproto_builder(builder));
-}
-
-/// Send a CONNECTED or DISCONNECTED, signal to the frontend.
-pub fn set_connected_frontend<P: CapnProtoSender>(
-    app_state: cc::ApplicationStates,
-    client_send: &mut P,
-) {
+/// Notify the frontend of an [ApplicationState] change.
+pub fn send_app_state<P: CapnProtoSender>(app_state: ApplicationState, client_send: &mut P) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
     let mut status = msg.init_status();

@@ -525,7 +525,7 @@ args = ["clippy", "--all-targets", "--", "--deny", "warnings"]
 dependencies = ["store-version", "copy-capnp"]
 command = "cargo"
 cwd = "console_backend"
-args = ["test", "--features", "tests", "--", "--nocapture"]
+args = ["test", "--features", "tests", "${@}", "--", "--nocapture"]
 
 [tasks.rust-type-check]
 dependencies = ["store-version", "copy-capnp"]

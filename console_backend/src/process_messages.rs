@@ -1,6 +1,3 @@
-use std::{io::ErrorKind, thread::sleep, time::Duration};
-
-use crossbeam::sync::Parker;
 use log::{debug, error};
 use sbp::{
     link::LinkSource,
@@ -21,58 +18,47 @@ use sbp::{
     SbpMessage,
 };
 
-use crate::constants::PAUSE_LOOP_SLEEP_DURATION_MS;
-use crate::errors::UNABLE_TO_CLONE_UPDATE_SHARED;
-use crate::log_panel::handle_log_msg;
+use crate::common_constants::ApplicationState;
 use crate::shared_state::SharedState;
 use crate::types::{
     BaselineNED, CapnProtoSender, Dops, GpsTime, MsgSender, ObservationMsg, PosLLH, RealtimeDelay,
     Result, Specan, VelNED,
 };
 use crate::update_tab;
-use crate::utils::{close_frontend, refresh_navbar};
+use crate::utils::refresh_navbar;
 use crate::Tabs;
 use crate::{connection::Connection, types::UartState};
+use crate::{errors::UNABLE_TO_CLONE_UPDATE_SHARED, settings_tab};
+use crate::{log_panel::handle_log_msg, settings_tab::SettingsTab};
 
 pub fn process_messages<S>(
     conn: Connection,
     shared_state: SharedState,
-    mut client_send: S,
+    client_send: S,
 ) -> Result<()>
 where
     S: CapnProtoSender,
 {
-    shared_state.set_running(true, client_send.clone());
     shared_state.set_settings_refresh(conn.settings_enabled());
     let realtime_delay = conn.realtime_delay();
-    let (rdr, writer) = conn.try_connect(Some(shared_state.clone()))?;
+    let (reader, writer) = conn.try_connect(Some(shared_state.clone()))?;
     let msg_sender = MsgSender::new(writer);
     shared_state.set_current_connection(conn.name());
     refresh_navbar(&mut client_send.clone(), shared_state.clone());
-    let messages = {
-        let state = shared_state.clone();
-        let client = client_send.clone();
-        sbp::iter_messages(rdr)
-            .handle_errors(move |e| {
-                debug!("{}", e);
-                match e {
-                    sbp::DeserializeError::IoError(err) => {
-                        if (*err).kind() == ErrorKind::TimedOut {
-                            state.set_running(false, client.clone());
-                        }
-                        ControlFlow::Break
-                    }
-                    _ => ControlFlow::Continue,
-                }
-            })
-            .with_rover_time()
-    };
+    let messages = sbp::iter_messages(reader)
+        .handle_errors(move |e| {
+            debug!("{}", e);
+            match e {
+                sbp::DeserializeError::IoError(_) => ControlFlow::Break,
+                _ => ControlFlow::Continue,
+            }
+        })
+        .with_rover_time();
     let source: LinkSource<Tabs<S>> = LinkSource::new();
     let tabs = Tabs::new(
         shared_state.clone(),
         client_send.clone(),
         msg_sender.clone(),
-        source.stateless_link(),
     );
 
     let link = source.link();
@@ -276,48 +262,45 @@ where
         .expect(UNABLE_TO_CLONE_UPDATE_SHARED)
         .clone_update_tab_context();
     update_tab_context.set_serial_prompt(conn.is_serial());
-    let client_send_clone = client_send.clone();
     let (update_tab_tx, update_tab_rx) = tabs.update.lock().unwrap().clone_channel();
-    let settings_parker = Parker::new();
-    let settings_unparker = settings_parker.unparker().clone();
     crossbeam::scope(|scope| {
-        let settings_tab = &tabs.settings_tab;
-        let settings_shared_state = shared_state.clone();
-        scope.spawn(move |_| {
-            while settings_shared_state.is_running() {
-                settings_tab.lock().unwrap().tick();
-                settings_parker.park();
-            }
-        });
         scope.spawn(|_| {
             update_tab::update_tab_thread(
                 update_tab_tx.clone(),
                 update_tab_rx,
                 update_tab_context,
                 shared_state.clone(),
-                client_send_clone,
+                client_send.clone(),
                 source.stateless_link(),
                 msg_sender.clone(),
             );
         });
+        if conn.settings_enabled() {
+            let tab = SettingsTab::new(
+                shared_state.clone(),
+                client_send.clone(),
+                msg_sender.clone(),
+                source.stateless_link(),
+            );
+            let shared_state = shared_state.clone();
+            let mut app_state = shared_state.watch_app_state();
+            scope.spawn(move |scope| {
+                scope.spawn(move |_| settings_tab::settings_tab_thread(tab));
+                let _ = app_state.wait_while(ApplicationState::is_running);
+                shared_state.stop_settings_thd();
+            });
+        }
         for (message, gps_time) in messages {
-            if shared_state.settings_needs_update() {
-                settings_unparker.unpark();
+            if shared_state.app_state() == ApplicationState::PAUSED {
+                let mut app_state = shared_state.watch_app_state();
+                let _ = app_state.wait_while(ApplicationState::is_paused);
             }
-            if !shared_state.is_running() {
+            if !shared_state.app_state().is_running() {
                 if let Err(e) = tabs.main.lock().unwrap().end_csv_logging() {
                     error!("Issue closing csv file, {}", e);
                 }
                 tabs.main.lock().unwrap().close_sbp();
                 break;
-            }
-            if shared_state.is_paused() {
-                loop {
-                    if !shared_state.is_paused() {
-                        break;
-                    }
-                    sleep(Duration::from_millis(PAUSE_LOOP_SLEEP_DURATION_MS));
-                }
             }
             let sent = source.send_with_state(&tabs, &message);
             tabs.main.lock().unwrap().serialize_sbp(&message);
@@ -344,11 +327,7 @@ where
         if let Err(err) = update_tab_tx.send(None) {
             error!("Issue stopping update tab: {}", err);
         }
-        if conn.close_when_done() {
-            shared_state.set_running(false, client_send.clone());
-            close_frontend(&mut client_send);
-        }
-        settings_unparker.unpark();
+        shared_state.stop_settings_thd();
     })
     .unwrap();
 

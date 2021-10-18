@@ -71,7 +71,7 @@ class Keys(str, Enum):
     PREVIOUS_HOSTS = "PREVIOUS_HOSTS"
     PREVIOUS_PORTS = "PREVIOUS_PORTS"
     PREVIOUS_FILES = "PREVIOUS_FILES"
-    CONNECTED = "CONNECTED"
+    APPLICATION_STATE = "APPLICATION_STATE"
     PORT = "PORT"
     POS = "POS"
     RTK = "RTK"
@@ -132,10 +132,12 @@ class Keys(str, Enum):
     ANTENNA_STATUS = "ANTENNA_STATUS"
 
 
-class ApplicationStates(str, Enum):
-    CLOSE = "CLOSE"
-    CONNECTED = "CONNECTED"
+class ApplicationState(str, Enum):
+    CLOSING = "CLOSING"
     DISCONNECTED = "DISCONNECTED"
+    CONNECTED = "CONNECTED"
+    DISCONNECTING = "DISCONNECTING"
+    PAUSED = "PAUSED"
 
 
 class QTKeys(str, Enum):

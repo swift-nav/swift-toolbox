@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 // 'Universal' constants
 
 pub(crate) const NANOSECONDS_PER_SECOND: f64 = 1.0e+9;
@@ -7,9 +9,6 @@ pub(crate) const APPLICATION_QUALIFIER: &str = "com.swift-nav";
 pub(crate) const APPLICATION_ORGANIZATION: &str = "swift-nav";
 pub(crate) const APPLICATION_NAME: &str = "swift_navigation_console";
 // CLI constants.
-
-// Process Message constants.
-pub(crate) const PAUSE_LOOP_SLEEP_DURATION_MS: u64 = 100;
 
 // Logging constants
 #[allow(dead_code)]
@@ -249,4 +248,4 @@ pub(crate) const UNKNOWN_ERROR_SHORT: &str = "Unk";
 pub(crate) const ODO_POSTFIX: &str = "+Odo";
 pub(crate) const INS_POSTFIX: &str = "+INS";
 
-pub(crate) const SERVER_STATE_CONNECTION_LOOP_TIMEOUT_SEC: f64 = 1.0;
+pub(crate) const SERVER_STATE_CONNECTION_LOOP_TIMEOUT: Duration = Duration::from_secs(1);

@@ -18,6 +18,18 @@ Rectangle {
     property variant previous_ports: []
     property variant previous_files: []
     property variant log_level_labels: []
+    property variant previous_serial_configs: []
+    property variant last_used_serial_device: null
+
+    function restore_previous_serial_settings(device_name) {
+        const config = previous_serial_configs.find((element) => {
+            return element[0] === device_name;
+        });
+        if (config) {
+            serialDeviceBaudRate.currentIndex = available_baudrates.indexOf(config[1]);
+            serialDeviceFlowControl.currentIndex = available_flows.indexOf(config[2]);
+        }
+    }
 
     anchors.fill: parent
     border.width: Constants.statusBar.borderWidth
@@ -90,6 +102,7 @@ Rectangle {
             Layout.preferredWidth: Constants.navBar.serialSelectionDropdownWidth
             model: available_devices
             onActivated: {
+                restore_previous_serial_settings(available_devices[currentIndex]);
             }
 
             states: State {
@@ -378,8 +391,17 @@ Rectangle {
                 previous_hosts = navBarData.previous_hosts;
                 previous_ports = navBarData.previous_ports;
                 previous_files = navBarData.previous_files;
+                previous_serial_configs = navBarData.previous_serial_configs;
                 connectButton.checked = navBarData.connected;
                 logLevelButton.currentIndex = log_level_labels.indexOf(navBarData.log_level);
+                if (!last_used_serial_device && navBarData.last_used_serial_device) {
+                    // Set the default selected to the last used
+                    last_used_serial_device = navBarData.last_used_serial_device;
+                    serialDevice.currentIndex = available_devices.indexOf(last_used_serial_device);
+                    if (serialDevice.currentIndex != -1)
+                        restore_previous_serial_settings(available_devices[serialDevice.currentIndex]);
+
+                }
             }
         }
 

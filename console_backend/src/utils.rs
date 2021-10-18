@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::ops::Index;
 
 use capnp::message::Builder;
 use capnp::message::HeapAllocator;
@@ -14,6 +15,7 @@ use crate::errors::*;
 use crate::types::{CapnProtoSender, SignalCodes};
 use crate::{common_constants as cc, shared_state::SharedState};
 
+use log::error;
 /// Compare to semvar strings and return true if the later_version is greater than the early version.
 ///
 /// Assumes that the versions are in the form of `MAJOR.MINOR.PATCH<DEV>`.
@@ -90,6 +92,51 @@ pub fn refresh_navbar<P: CapnProtoSender>(client_send: &mut P, shared_state: Sha
             .iter_mut()
             .map(|x| x.port_name.replace("/sys/class/tty/", "/dev/"))
             .collect();
+    }
+
+    let (previous_serials, previous_configs) = shared_state.serial_history();
+
+    // Filter out previous devices that aren't currently connected
+    let filtered_previous: Vec<&String> = previous_serials
+        .iter()
+        .filter(|past_serial| ports.iter().any(|curr_serial| &curr_serial == past_serial))
+        .collect();
+
+    match filtered_previous.len() {
+        0 => {
+            nav_bar_status
+                .reborrow()
+                .get_last_serial_device()
+                .set_none(());
+        }
+        n => {
+            let last_device = filtered_previous.index(n - 1);
+            nav_bar_status
+                .reborrow()
+                .get_last_serial_device()
+                .set_port(last_device);
+        }
+    };
+
+    let mut previous_serial_configs = nav_bar_status
+        .reborrow()
+        .init_previous_serial_configs(previous_serials.len() as u32);
+
+    for (i, device) in filtered_previous.iter().enumerate() {
+        let mut entry = previous_serial_configs.reborrow().get(i as u32);
+        let config = previous_configs.get(&(*device).clone());
+
+        if let Some(config) = config {
+            entry.set_device(device);
+            entry.set_baudrate(config.baud);
+            entry.set_flow_control(
+                AVAILABLE_FLOWS
+                    .get(config.flow as usize)
+                    .expect("Unknown flow value"),
+            );
+        } else {
+            error!("Couldn't find config history for {:?}", config);
+        }
     }
 
     let mut available_ports = nav_bar_status

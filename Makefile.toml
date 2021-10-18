@@ -156,7 +156,6 @@ args = [
   "${PYTHON}",
   "-m",
   "swiftnav_console.main",
-  "--",
   "${@}",
 ]
 

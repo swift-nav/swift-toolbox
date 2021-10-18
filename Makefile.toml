@@ -148,7 +148,7 @@ command = "${PYTHON}"
 args = ["-m", "swiftnav_console.main", "${@}"]
 
 [tasks.start-console-gdb]
-command = "gdb"
+command = "rust-gdb"
 args = [
   "-ex",
   "run",

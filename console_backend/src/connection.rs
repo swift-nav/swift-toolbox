@@ -19,188 +19,6 @@ use std::{
     time::Duration,
 };
 
-#[derive(Debug, Clone)]
-pub struct TcpConnection {
-    name: String,
-    host: String,
-    port: u16,
-}
-impl TcpConnection {
-    fn new(host: String, port: u16) -> Self {
-        let name = format!("{}:{}", host, port);
-        Self { name, host, port }
-    }
-    fn socket_addrs(name: String) -> Result<SocketAddr> {
-        let socket = &mut name.to_socket_addrs()?;
-        if let Some(s) = socket.next() {
-            Ok(s)
-        } else {
-            Err(anyhow!("{}", TCP_CONNECTION_PARSING_FAILURE))
-        }
-    }
-    fn name(&self) -> String {
-        self.name.clone()
-    }
-    fn try_connect(
-        self,
-        shared_state: Option<SharedState>,
-    ) -> Result<(Box<dyn io::Read + Send>, Box<dyn io::Write + Send>)> {
-        let socket = TcpConnection::socket_addrs(self.name.clone())?;
-        let rdr =
-            TcpStream::connect_timeout(&socket, Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))?;
-        rdr.set_read_timeout(Some(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS)))?;
-        let writer = rdr.try_clone()?;
-        info!("Connected to tcp stream!");
-        if let Some(shared_state_) = shared_state {
-            shared_state_.update_tcp_history(self.host, self.port);
-        }
-        Ok((Box::new(rdr), Box::new(writer)))
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct SerialConnection {
-    pub name: String,
-    pub device: String,
-    pub baudrate: u32,
-    pub flow: FlowControl,
-}
-impl SerialConnection {
-    fn new(device: String, baudrate: u32, flow: FlowControl) -> Self {
-        Self {
-            name: format!("{} @{}", device, baudrate),
-            device,
-            baudrate,
-            flow,
-        }
-    }
-    fn name(&self) -> String {
-        self.name.clone()
-    }
-    fn try_connect(
-        self,
-        _shared_state: Option<SharedState>,
-    ) -> Result<(Box<dyn io::Read + Send>, Box<dyn io::Write + Send>)> {
-        let rdr = serialport::new(self.device, self.baudrate)
-            .flow_control(*self.flow)
-            .timeout(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))
-            .open()?;
-        let writer = rdr.try_clone()?;
-        info!("Opened serial port successfully!");
-        Ok((Box::new(rdr), Box::new(writer)))
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct FileConnection {
-    pub name: String,
-    pub filepath: PathBuf,
-    close_when_done: bool,
-    realtime_delay: RealtimeDelay,
-}
-impl FileConnection {
-    fn new<P: AsRef<Path>>(
-        filepath: P,
-        close_when_done: bool,
-        realtime_delay: RealtimeDelay,
-    ) -> Self {
-        let filepath = PathBuf::from(filepath.as_ref());
-        let name = if let Some(path) = filepath.file_name() {
-            path
-        } else {
-            filepath.as_os_str()
-        };
-        let name: &str = &*name.to_string_lossy();
-        Self {
-            name: String::from(name),
-            filepath,
-            close_when_done,
-            realtime_delay,
-        }
-    }
-
-    fn name(&self) -> String {
-        self.name.clone()
-    }
-    fn close_when_done(&self) -> bool {
-        self.close_when_done
-    }
-    fn realtime_delay(&self) -> RealtimeDelay {
-        self.realtime_delay
-    }
-    fn try_connect(
-        self,
-        shared_state: Option<SharedState>,
-    ) -> Result<(Box<dyn io::Read + Send>, Box<dyn io::Write + Send>)> {
-        let rdr = fs::File::open(&self.filepath)?;
-        let writer = io::sink();
-        info!("Opened file successfully!");
-        if let Some(shared_state_) = shared_state {
-            shared_state_.update_file_history(self.filepath.to_string_lossy().to_string());
-        }
-        Ok((Box::new(rdr), Box::new(writer)))
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum Connection {
-    Tcp(TcpConnection),
-    File(FileConnection),
-    Serial(SerialConnection),
-}
-impl Connection {
-    pub fn tcp(host: String, port: u16) -> Self {
-        Connection::Tcp(TcpConnection::new(host, port))
-    }
-
-    pub fn serial(device: String, baudrate: u32, flow: FlowControl) -> Self {
-        Connection::Serial(SerialConnection::new(device, baudrate, flow))
-    }
-
-    pub fn file(filename: String, realtime_delay: RealtimeDelay, close_when_done: bool) -> Self {
-        Connection::File(FileConnection::new(
-            filename,
-            close_when_done,
-            realtime_delay,
-        ))
-    }
-    pub fn close_when_done(&self) -> bool {
-        match self {
-            Connection::File(conn) => conn.close_when_done(),
-            Connection::Tcp(_) | Connection::Serial(_) => false,
-        }
-    }
-    pub fn name(&self) -> String {
-        match self {
-            Connection::Tcp(conn) => conn.name(),
-            Connection::File(conn) => conn.name(),
-            Connection::Serial(conn) => conn.name(),
-        }
-    }
-    pub fn realtime_delay(&self) -> RealtimeDelay {
-        match self {
-            Connection::File(conn) => conn.realtime_delay(),
-            Connection::Tcp(_) | Connection::Serial(_) => RealtimeDelay::Off,
-        }
-    }
-    pub fn settings_enabled(&self) -> bool {
-        matches!(self, Connection::Tcp(_) | Connection::Serial(_))
-    }
-    pub fn is_serial(&self) -> bool {
-        matches!(self, Connection::Serial(_))
-    }
-    pub fn try_connect(
-        &self,
-        shared_state: Option<SharedState>,
-    ) -> Result<(Box<dyn io::Read + Send>, Box<dyn io::Write + Send>)> {
-        match self {
-            Connection::Tcp(conn) => conn.clone().try_connect(shared_state),
-            Connection::File(conn) => conn.clone().try_connect(shared_state),
-            Connection::Serial(conn) => conn.clone().try_connect(shared_state),
-        }
-    }
-}
-
 #[derive(Debug)]
 pub struct ConnectionManager {
     conn: Watched<Option<Connection>>,
@@ -264,6 +82,206 @@ impl Drop for ConnectionManager {
         if let Some(h) = self.handle.take() {
             let _ = h.join();
         }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum Connection {
+    Tcp(TcpConnection),
+    Serial(SerialConnection),
+    File(FileConnection),
+}
+
+impl Connection {
+    pub fn tcp(host: String, port: u16) -> Self {
+        Connection::Tcp(TcpConnection::new(host, port))
+    }
+
+    pub fn serial(device: String, baudrate: u32, flow: FlowControl) -> Self {
+        Connection::Serial(SerialConnection::new(device, baudrate, flow))
+    }
+
+    pub fn file(filename: String, realtime_delay: RealtimeDelay, close_when_done: bool) -> Self {
+        Connection::File(FileConnection::new(
+            filename,
+            close_when_done,
+            realtime_delay,
+        ))
+    }
+
+    pub fn name(&self) -> String {
+        match self {
+            Connection::Tcp(conn) => conn.name(),
+            Connection::File(conn) => conn.name(),
+            Connection::Serial(conn) => conn.name(),
+        }
+    }
+
+    pub fn close_when_done(&self) -> bool {
+        match self {
+            Connection::File(conn) => conn.close_when_done(),
+            Connection::Tcp(_) | Connection::Serial(_) => false,
+        }
+    }
+
+    pub fn realtime_delay(&self) -> RealtimeDelay {
+        match self {
+            Connection::File(conn) => conn.realtime_delay(),
+            Connection::Tcp(_) | Connection::Serial(_) => RealtimeDelay::Off,
+        }
+    }
+
+    pub fn settings_enabled(&self) -> bool {
+        matches!(self, Connection::Tcp(_) | Connection::Serial(_))
+    }
+
+    pub fn is_serial(&self) -> bool {
+        matches!(self, Connection::Serial(_))
+    }
+
+    pub fn try_connect(
+        &self,
+        shared_state: Option<SharedState>,
+    ) -> Result<(Box<dyn io::Read + Send>, Box<dyn io::Write + Send>)> {
+        match self {
+            Connection::Tcp(conn) => conn.clone().try_connect(shared_state),
+            Connection::File(conn) => conn.clone().try_connect(shared_state),
+            Connection::Serial(conn) => conn.clone().try_connect(shared_state),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct TcpConnection {
+    name: String,
+    host: String,
+    port: u16,
+}
+
+impl TcpConnection {
+    fn new(host: String, port: u16) -> Self {
+        let name = format!("{}:{}", host, port);
+        Self { name, host, port }
+    }
+
+    fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    fn socket_addrs(name: String) -> Result<SocketAddr> {
+        let socket = &mut name.to_socket_addrs()?;
+        if let Some(s) = socket.next() {
+            Ok(s)
+        } else {
+            Err(anyhow!("{}", TCP_CONNECTION_PARSING_FAILURE))
+        }
+    }
+
+    fn try_connect(
+        self,
+        shared_state: Option<SharedState>,
+    ) -> Result<(Box<dyn io::Read + Send>, Box<dyn io::Write + Send>)> {
+        let socket = TcpConnection::socket_addrs(self.name.clone())?;
+        let rdr =
+            TcpStream::connect_timeout(&socket, Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))?;
+        rdr.set_read_timeout(Some(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS)))?;
+        let writer = rdr.try_clone()?;
+        info!("Connected to tcp stream!");
+        if let Some(shared_state_) = shared_state {
+            shared_state_.update_tcp_history(self.host, self.port);
+        }
+        Ok((Box::new(rdr), Box::new(writer)))
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct SerialConnection {
+    name: String,
+    device: String,
+    baudrate: u32,
+    flow: FlowControl,
+}
+
+impl SerialConnection {
+    fn new(device: String, baudrate: u32, flow: FlowControl) -> Self {
+        Self {
+            name: format!("{} @{}", device, baudrate),
+            device,
+            baudrate,
+            flow,
+        }
+    }
+
+    fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    fn try_connect(
+        self,
+        _shared_state: Option<SharedState>,
+    ) -> Result<(Box<dyn io::Read + Send>, Box<dyn io::Write + Send>)> {
+        let rdr = serialport::new(self.device, self.baudrate)
+            .flow_control(*self.flow)
+            .timeout(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))
+            .open()?;
+        let writer = rdr.try_clone()?;
+        info!("Opened serial port successfully!");
+        Ok((Box::new(rdr), Box::new(writer)))
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct FileConnection {
+    name: String,
+    filepath: PathBuf,
+    close_when_done: bool,
+    realtime_delay: RealtimeDelay,
+}
+
+impl FileConnection {
+    fn new<P: AsRef<Path>>(
+        filepath: P,
+        close_when_done: bool,
+        realtime_delay: RealtimeDelay,
+    ) -> Self {
+        let filepath = PathBuf::from(filepath.as_ref());
+        let name = if let Some(path) = filepath.file_name() {
+            path
+        } else {
+            filepath.as_os_str()
+        };
+        let name: &str = &*name.to_string_lossy();
+        Self {
+            name: String::from(name),
+            filepath,
+            close_when_done,
+            realtime_delay,
+        }
+    }
+
+    fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    fn close_when_done(&self) -> bool {
+        self.close_when_done
+    }
+
+    fn realtime_delay(&self) -> RealtimeDelay {
+        self.realtime_delay
+    }
+
+    fn try_connect(
+        self,
+        shared_state: Option<SharedState>,
+    ) -> Result<(Box<dyn io::Read + Send>, Box<dyn io::Write + Send>)> {
+        let rdr = fs::File::open(&self.filepath)?;
+        let writer = io::sink();
+        info!("Opened file successfully!");
+        if let Some(shared_state_) = shared_state {
+            shared_state_.update_file_history(self.filepath.to_string_lossy().to_string());
+        }
+        Ok((Box::new(rdr), Box::new(writer)))
     }
 }
 

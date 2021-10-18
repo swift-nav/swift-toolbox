@@ -265,7 +265,11 @@ fn is_baudrate(br: &str) -> Result<(), String> {
 /// - `connection_state`: The Server state to start a specific connection.
 /// - `client_send`: Client Sender channel for communication from backend to frontend.
 /// - `shared_state`: The shared state for validating another connection is not already running.
-pub fn handle_cli(opt: CliOptions, connection_state: &ConnectionManager, shared_state: SharedState) {
+pub fn handle_cli(
+    opt: CliOptions,
+    connection_state: &ConnectionManager,
+    shared_state: SharedState,
+) {
     if let Some(opt_input) = opt.input {
         match opt_input {
             Input::Tcp { host, port } => {

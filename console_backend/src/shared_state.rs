@@ -54,7 +54,6 @@ impl SharedState {
     where
         S: CapnProtoSender,
     {
-        eprintln!("SET APP STATE {}", set_to);
         {
             let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
             (*shared_data).app_state.send(set_to);

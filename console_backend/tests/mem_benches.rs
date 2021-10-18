@@ -2,15 +2,19 @@
 mod mem_bench_impl {
     use crossbeam::channel;
     use ndarray::{ArrayView, Axis, Dim};
-    use std::{error::Error, result::Result, thread};
+    use std::{
+        error::Error,
+        result::Result,
+        sync::{Arc, Mutex},
+        thread,
+    };
 
     use sysinfo::{get_current_pid, ProcessExt, System, SystemExt};
 
     use console_backend::{
-        connection::Connection,
-        process_messages,
+        connection::ConnectionState,
         shared_state::SharedState,
-        types::{ArcBool, ClientSender, RealtimeDelay},
+        types::{ClientSender, RealtimeDelay},
     };
 
     const BENCH_FILEPATH: &str = "./tests/data/piksi-relay-1min.sbp";
@@ -48,24 +52,24 @@ mod mem_bench_impl {
         let (client_recv_tx, client_recv_rx) = channel::unbounded::<channel::Receiver<Vec<u8>>>();
         let pid = get_current_pid().unwrap();
         println!("PID: {}", pid);
-        let is_running = ArcBool::new_with(true);
-        let mem_read_thread = thread::spawn({
-            let is_running = is_running.clone();
-            move || {
-                let mut sys = System::new();
-                let mut mem_readings_kb: Vec<f32> = vec![];
-                let mut cpu_readings: Vec<f32> = vec![];
-                loop {
-                    sys.refresh_process(pid);
-                    let proc = sys.get_process(pid).unwrap();
-                    mem_readings_kb.push(proc.memory() as f32);
-                    cpu_readings.push(proc.cpu_usage());
-                    if !is_running.get() {
-                        break;
-                    }
+        let is_running = Arc::new(Mutex::new(true));
+        let is_running_recv = Arc::clone(&is_running);
+        let is_running_mem = Arc::clone(&is_running);
+        let mem_read_thread = thread::spawn(move || {
+            let mut sys = System::new();
+            let mut mem_readings_kb: Vec<f32> = vec![];
+            let mut cpu_readings: Vec<f32> = vec![];
+            loop {
+                sys.refresh_process(pid);
+                let proc = sys.get_process(pid).unwrap();
+                mem_readings_kb.push(proc.memory() as f32);
+                cpu_readings.push(proc.cpu_usage());
+                let is_running_mem = is_running_mem.lock().unwrap();
+                if !*is_running_mem {
+                    break;
                 }
-                validate_memory_benchmark(&mem_readings_kb, &cpu_readings);
             }
+            validate_memory_benchmark(&mem_readings_kb, &cpu_readings);
         });
         let recv_thread = thread::spawn(move || {
             let client_recv = client_recv_rx.recv().unwrap();
@@ -79,7 +83,8 @@ mod mem_bench_impl {
                 iter_count += 1;
             }
             assert!(iter_count > 0);
-            is_running.set(false);
+            let mut is_running_recv = is_running_recv.lock().unwrap();
+            *is_running_recv = false;
         });
 
         {
@@ -91,12 +96,12 @@ mod mem_bench_impl {
             let client_send = ClientSender::new(client_send_);
             let shared_state = SharedState::new();
             shared_state.set_debug(true);
-            let conn = Connection::file(
+            let conn_state = ConnectionState::new(client_send, shared_state);
+            conn_state.connect_to_file(
                 BENCH_FILEPATH.into(),
                 RealtimeDelay::On,
                 /*close_when_done=*/ true,
             );
-            process_messages::process_messages(conn, shared_state, client_send).unwrap();
         }
         recv_thread.join().expect("join should succeed");
         mem_read_thread.join().expect("join should succeed");

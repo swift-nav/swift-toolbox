@@ -373,6 +373,12 @@ def receive_messages(app_, backend, messages):
             NAV_BAR[Keys.PREVIOUS_PORTS][:] = m.navBarStatus.previousPorts
             NAV_BAR[Keys.PREVIOUS_FILES][:] = m.navBarStatus.previousFiles
             NAV_BAR[Keys.LOG_LEVEL] = m.navBarStatus.logLevel
+            NAV_BAR[Keys.LAST_USED_SERIAL_DEVICE] = (
+                m.navBarStatus.lastSerialDevice.port if m.navBarStatus.lastSerialDevice.which() == "port" else None
+            )
+            NAV_BAR[Keys.PREVIOUS_SERIAL_CONFIGS][:] = [
+                [entry.device, entry.baudrate, entry.flowControl] for entry in m.navBarStatus.previousSerialConfigs
+            ]
         elif m.which == Message.Union.LoggingBarStatus:
             LOGGING_BAR[Keys.PREVIOUS_FOLDERS][:] = m.loggingBarStatus.previousFolders
             LOGGING_BAR[Keys.CSV_LOGGING] = m.loggingBarStatus.csvLogging

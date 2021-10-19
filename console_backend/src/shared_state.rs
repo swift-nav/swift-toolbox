@@ -18,9 +18,11 @@ use chrono::{DateTime, Utc};
 use crossbeam::channel::Sender;
 use directories::{ProjectDirs, UserDirs};
 use indexmap::set::IndexSet;
+use indexmap::IndexMap;
 use lazy_static::lazy_static;
 use log::error;
 use serde::{Deserialize, Serialize};
+use serialport::FlowControl;
 use std::path::Path;
 use std::{
     cmp::{Eq, PartialEq},
@@ -135,6 +137,10 @@ impl SharedState {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).connection_history.addresses()
     }
+    pub fn serial_history(&self) -> IndexMap<String, SerialConfig> {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).connection_history.serial_configs()
+    }
     pub fn update_folder_history(&self, folder: PathBuf) {
         let folder = String::from(folder.to_str().expect(CONVERT_TO_STR_FAILURE));
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
@@ -147,6 +153,12 @@ impl SharedState {
     pub fn update_tcp_history(&self, host: String, port: u16) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).connection_history.record_address(host, port);
+    }
+    pub fn update_serial_history(&self, device: String, baud: u32, flow: FlowControl) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data)
+            .connection_history
+            .record_serial(device, baud, flow);
     }
     pub fn start_vel_log(&self, path: &Path) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
@@ -695,11 +707,30 @@ pub struct Address {
     pub port: u16,
 }
 
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub struct SerialConfig {
+    pub baud: u32,
+    #[serde(with = "FlowControlRemote")]
+    pub flow: FlowControl,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(remote = "FlowControl")]
+enum FlowControlRemote {
+    #[serde(rename = "None")]
+    None,
+    #[serde(rename = "Software")]
+    Software,
+    #[serde(rename = "Hardware")]
+    Hardware,
+}
+
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct ConnectionHistory {
     addresses: IndexSet<Address>,
     files: IndexSet<String>,
     folders: IndexSet<String>,
+    serial_configs: IndexMap<String, SerialConfig>,
 }
 
 impl Default for ConnectionHistory {
@@ -725,6 +756,7 @@ impl ConnectionHistory {
             addresses: IndexSet::new(),
             files: IndexSet::new(),
             folders,
+            serial_configs: IndexMap::new(),
         }
     }
     /// Return the filename of the saved connection history file.
@@ -742,6 +774,10 @@ impl ConnectionHistory {
     /// Returns a clone of the private folders vec.
     pub fn folders(&self) -> IndexSet<String> {
         self.folders.clone()
+    }
+    /// Returns a clone of the previous serial configs, in order of last use.
+    pub fn serial_configs(&self) -> IndexMap<String, SerialConfig> {
+        self.serial_configs.clone()
     }
     /// Attempt to add a new host and port if not the most recent entries.
     ///
@@ -782,6 +818,24 @@ impl ConnectionHistory {
         self.folders.insert(folder);
         let diff = i32::max(0, self.folders.len() as i32 - MAX_CONNECTION_HISTORY);
         self.folders = self.folders.split_off(diff as usize);
+
+        if let Err(e) = self.save() {
+            error!("Unable to save connection history, {}.", e);
+        }
+    }
+
+    /// Attempt to add a new serial configuration if not the most recent entry.
+    ///
+    /// # Parameters
+    /// - `device`: The path to the serial device.
+    /// - `baud`: The chosen baud rate
+    /// - `flow`: The chosen flow control
+    pub fn record_serial(&mut self, device: String, baud: u32, flow: FlowControl) {
+        let serial = SerialConfig { baud, flow };
+        self.serial_configs.shift_remove(&device);
+        self.serial_configs.insert(device.clone(), serial);
+        let diff = i32::max(0, self.serial_configs.len() as i32 - MAX_CONNECTION_HISTORY);
+        self.serial_configs = self.serial_configs.split_off(diff as usize);
 
         if let Err(e) = self.save() {
             error!("Unable to save connection history, {}.", e);
@@ -883,6 +937,65 @@ mod tests {
             conn_history.record_file(ele.to_string());
         }
         assert_eq!(conn_history.files().len(), MAX_CONNECTION_HISTORY as usize);
+        restore_backup_file(bfilename);
+    }
+
+    #[test]
+    #[serial]
+    fn connection_history_serial_test() {
+        let bfilename = filename();
+        backup_file(bfilename.clone());
+
+        let mut conn_history = ConnectionHistory::new();
+
+        let configs = conn_history.serial_configs();
+        assert_eq!(configs.keys().len(), 0);
+
+        conn_history.record_serial("/dev/ttyUSB0".to_string(), 115200, FlowControl::Software);
+        conn_history.record_serial("/dev/ttyUSB0".to_string(), 115200, FlowControl::None);
+
+        let configs = conn_history.serial_configs();
+
+        // Should only store one serial record despite the settings changing
+        assert_eq!(configs.keys().len(), 1);
+
+        // Settings should be as recorded for the last change
+        let config = configs.get("/dev/ttyUSB0").unwrap();
+        assert_eq!(config.baud, 115200);
+        assert_eq!(config.flow, FlowControl::None);
+
+        conn_history.record_serial("/dev/ttyUSB1".to_string(), 115200, FlowControl::None);
+
+        // The most recent entry should be stored last
+        let configs = conn_history.serial_configs();
+        assert_eq!(configs.keys().len(), 2);
+        assert_eq!(configs.keys().nth(1).unwrap(), "/dev/ttyUSB1");
+
+        conn_history.record_serial("/dev/ttyUSB0".to_string(), 115200, FlowControl::None);
+
+        // But the most recent entry should be updated if a previous device is used again
+        let configs = conn_history.serial_configs();
+        assert_eq!(configs.keys().len(), 2);
+        assert_eq!(configs.keys().nth(1).unwrap(), "/dev/ttyUSB0");
+
+        let mut conn_history = ConnectionHistory::new();
+
+        for ele in 0..MAX_CONNECTION_HISTORY {
+            conn_history.record_serial(
+                format!("/dev/ttyUSB{:?}", ele),
+                9600,
+                FlowControl::Hardware,
+            );
+        }
+        let configs = conn_history.serial_configs();
+        configs.get("/dev/ttyUSB0").unwrap();
+
+        // Adding a new device should push out the oldest
+        conn_history.record_serial("/dev/mynewserial".to_string(), 115200, FlowControl::None);
+        let configs = conn_history.serial_configs();
+        let config = configs.get("/dev/ttyUSB0");
+        assert_eq!(config, None);
+
         restore_backup_file(bfilename);
     }
 }

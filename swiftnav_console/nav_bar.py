@@ -18,10 +18,12 @@ NAV_BAR: Dict[str, Any] = {
     Keys.PREVIOUS_FILES: [],
     Keys.LOG_LEVEL_LABELS: [LogLevel.ERROR, LogLevel.WARNING, LogLevel.NOTICE, LogLevel.INFO, LogLevel.DEBUG],
     Keys.LOG_LEVEL: LogLevel.INFO,
+    Keys.LAST_USED_SERIAL_DEVICE: None,
+    Keys.PREVIOUS_SERIAL_CONFIGS: [],
 }
 
 
-class NavBarData(QObject):  # pylint: disable=too-many-instance-attributes
+class NavBarData(QObject):  # pylint: disable=too-many-instance-attributes disable=too-many-public-methods
 
     _available_ports: List[str] = []
     _available_baudrates: List[str] = []
@@ -33,6 +35,8 @@ class NavBarData(QObject):  # pylint: disable=too-many-instance-attributes
     _previous_files: List[str] = []
     _log_level_labels: List[str] = []
     _log_level: str
+    _last_used_serial_device: str
+    _previous_serial_configs: List[List[Any]] = []
 
     def get_log_level_labels(self) -> List[str]:
         return self._log_level_labels
@@ -124,6 +128,24 @@ class NavBarData(QObject):  # pylint: disable=too-many-instance-attributes
 
     previous_files = Property(QTKeys.QVARIANTLIST, get_previous_files, set_previous_files)  # type: ignore
 
+    def get_last_used_serial_device(self) -> str:
+        return self._last_used_serial_device
+
+    def set_last_used_serial_device(self, last_used_serial_device: str) -> None:
+        self._last_used_serial_device = last_used_serial_device
+
+    last_used_serial_device = Property(str, get_last_used_serial_device, set_last_used_serial_device)  # type: ignore
+
+    def get_previous_serial_configs(self) -> List[List[Any]]:
+        return self._previous_serial_configs
+
+    def set_previous_serial_configs(self, previous_serial_configs: List[List[Any]]) -> None:
+        self._previous_serial_configs = previous_serial_configs
+
+    previous_serial_configs = Property(
+        QTKeys.QVARIANTLIST, get_previous_serial_configs, set_previous_serial_configs  # type: ignore
+    )
+
 
 class NavBarModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(NavBarData)  # type: ignore
@@ -138,4 +160,6 @@ class NavBarModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_previous_files(NAV_BAR[Keys.PREVIOUS_FILES])
         cp.set_log_level_labels(NAV_BAR[Keys.LOG_LEVEL_LABELS])
         cp.set_log_level(NAV_BAR[Keys.LOG_LEVEL])
+        cp.set_last_used_serial_device(NAV_BAR[Keys.LAST_USED_SERIAL_DEVICE])
+        cp.set_previous_serial_configs(NAV_BAR[Keys.PREVIOUS_SERIAL_CONFIGS])
         return cp

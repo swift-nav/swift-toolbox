@@ -155,6 +155,11 @@ struct NavBarStatus {
     previousPorts @5: List(UInt16);
     previousFiles @6: List(Text);
     logLevel @7: Text;
+    previousSerialConfigs @8: List(SerialRequest);
+    lastSerialDevice: union {
+        port @9 :Text;
+        none @10 :Void = void;
+    }
 }
 
 struct StatusBarStatus {

@@ -325,12 +325,17 @@ impl SerialConnection {
         self,
         _shared_state: Option<&SharedState>,
     ) -> Result<(Box<dyn io::Read + Send>, Box<dyn io::Write + Send>)> {
-        let rdr = serialport::new(self.device, self.baudrate)
+        let rdr = serialport::new(self.device.clone(), self.baudrate)
             .flow_control(*self.flow)
             .timeout(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))
             .open()?;
         let writer = rdr.try_clone()?;
         info!("Opened serial port successfully!");
+
+        if let Some(shared_state) = _shared_state {
+            shared_state.update_serial_history(self.device, self.baudrate, *self.flow);
+        }
+
         Ok((Box::new(rdr), Box::new(writer)))
     }
 }

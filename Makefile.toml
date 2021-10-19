@@ -236,7 +236,6 @@ command = "${PYTHON}"
 args = ["setup.py", "bdist_wheel"]
 
 [tasks.get-get-pip]
-condition = { files_not_exist = ["${WORKSPACE}/get-pip.py"] }
 script_runner = "@duckscript"
 script = '''
 wget -O ./get-pip.py https://bootstrap.pypa.io/get-pip.py
@@ -248,11 +247,7 @@ cwd = "standalone-py"
 condition = { files_not_exist = ["${WORKSPACE}/standalone-py/python"] }
 script_runner = "@duckscript"
 script = '''
-if is_empty $GITHUB_TOKEN
-  wget -O py39.tar.zst ${STANDALONE_PY_URL}
-else
-  exec --fail-on-error wget -q -O py39.tar.zst ${STANDALONE_PY_URL} --header "authorization: Bearer $GITHUB_TOKEN"
-end
+wget -O py39.tar.zst ${STANDALONE_PY_URL}
 exec --fail-on-error zstd -f -d py39.tar.zst
 exec --fail-on-error tar -xvf py39.tar
 '''
@@ -274,7 +269,6 @@ cm_run_task generate-resources
 '''
 
 [tasks.prep-dist]
-dependencies = ["get-standalone-py"]
 script_runner = "@duckscript"
 script = '''
 cm_run_task copy-capnp

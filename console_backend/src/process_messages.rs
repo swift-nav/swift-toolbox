@@ -14,12 +14,11 @@ use sbp::{
         },
         tracking::{MsgMeasurementState, MsgTrackingState},
     },
-    sbp_iter_ext::{ControlFlow, SbpIterExt},
-    SbpMessage,
+    SbpIterExt, SbpMessage,
 };
 
-use crate::common_constants::ApplicationState;
-use crate::shared_state::SharedState;
+use crate::shared_state::{ConnectionState, SharedState};
+use crate::types::UartState;
 use crate::types::{
     BaselineNED, CapnProtoSender, Dops, GpsTime, MsgSender, ObservationMsg, PosLLH, RealtimeDelay,
     Result, Specan, VelNED,
@@ -27,32 +26,22 @@ use crate::types::{
 use crate::update_tab;
 use crate::utils::refresh_navbar;
 use crate::Tabs;
-use crate::{connection::Connection, types::UartState};
 use crate::{errors::UNABLE_TO_CLONE_UPDATE_SHARED, settings_tab};
 use crate::{log_panel::handle_log_msg, settings_tab::SettingsTab};
 
-pub fn process_messages<S>(
-    conn: Connection,
-    shared_state: SharedState,
-    client_send: S,
-) -> Result<()>
+pub fn process_messages<S>(shared_state: SharedState, client_send: S) -> Result<()>
 where
     S: CapnProtoSender,
 {
-    shared_state.set_settings_refresh(conn.settings_enabled());
+    let mut conn_state = shared_state.watch_conn_state();
+    let conn = conn_state.get().into_connected().unwrap();
+    shared_state.set_current_connection(conn.name());
     let realtime_delay = conn.realtime_delay();
     let (reader, writer) = conn.try_connect(Some(shared_state.clone()))?;
     let msg_sender = MsgSender::new(writer);
-    shared_state.set_current_connection(conn.name());
     refresh_navbar(&mut client_send.clone(), shared_state.clone());
     let messages = sbp::iter_messages(reader)
-        .handle_errors(move |e| {
-            debug!("{}", e);
-            match e {
-                sbp::DeserializeError::IoError(_) => ControlFlow::Break,
-                _ => ControlFlow::Continue,
-            }
-        })
+        .log_errors(log::Level::Debug)
         .with_rover_time();
     let source: LinkSource<Tabs<S>> = LinkSource::new();
     let tabs = Tabs::new(
@@ -263,6 +252,14 @@ where
         .clone_update_tab_context();
     update_tab_context.set_serial_prompt(conn.is_serial());
     let (update_tab_tx, update_tab_rx) = tabs.update.lock().unwrap().clone_channel();
+    let settings_tab = conn.settings_enabled().then(|| {
+        SettingsTab::new(
+            shared_state.clone(),
+            client_send.clone(),
+            msg_sender.clone(),
+            source.stateless_link(),
+        )
+    });
     crossbeam::scope(|scope| {
         scope.spawn(|_| {
             update_tab::update_tab_thread(
@@ -276,26 +273,19 @@ where
             );
         });
         if conn.settings_enabled() {
-            let tab = SettingsTab::new(
-                shared_state.clone(),
-                client_send.clone(),
-                msg_sender.clone(),
-                source.stateless_link(),
-            );
-            let shared_state = shared_state.clone();
-            let mut app_state = shared_state.watch_app_state();
-            scope.spawn(move |scope| {
+            scope.spawn(|scope| {
+                let tab = settings_tab.as_ref().unwrap();
+                shared_state.set_settings_refresh(true);
                 scope.spawn(move |_| settings_tab::settings_tab_thread(tab));
-                let _ = app_state.wait_while(ApplicationState::is_running);
-                shared_state.stop_settings_thd();
+                let _ = shared_state
+                    .watch_conn_state()
+                    .wait_while(ConnectionState::is_connected);
+                tab.stop();
             });
         }
+
         for (message, gps_time) in messages {
-            if shared_state.app_state() == ApplicationState::PAUSED {
-                let mut app_state = shared_state.watch_app_state();
-                let _ = app_state.wait_while(ApplicationState::is_paused);
-            }
-            if !shared_state.app_state().is_running() {
+            if !conn_state.get().is_connected() {
                 if let Err(e) = tabs.main.lock().unwrap().end_csv_logging() {
                     error!("Issue closing csv file, {}", e);
                 }
@@ -327,7 +317,7 @@ where
         if let Err(err) = update_tab_tx.send(None) {
             error!("Issue stopping update tab: {}", err);
         }
-        shared_state.stop_settings_thd();
+        shared_state.reset_settings_state();
     })
     .unwrap();
 

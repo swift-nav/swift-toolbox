@@ -1,4 +1,4 @@
-use crate::common_constants::{ApplicationState, SbpLogging};
+use crate::common_constants::SbpLogging;
 use crate::connection::ConnectionManager;
 use crate::console_backend_capnp as m;
 use crate::errors::{
@@ -23,8 +23,8 @@ pub type Result<T> = anyhow::Result<T>;
 pub type UtcDateTime = DateTime<Utc>;
 
 pub fn server_recv_thread(
-    connection_state: ConnectionManager,
-    mut client_send: ClientSender,
+    conn_manager: ConnectionManager,
+    client_send: ClientSender,
     server_recv: channel::Receiver<Vec<u8>>,
     shared_state: SharedState,
 ) {
@@ -52,32 +52,23 @@ pub fn server_recv_thread(
                     refresh_navbar(&mut client_send.clone(), shared_state.clone());
                 }
                 m::message::DisconnectRequest(Ok(_)) => {
-                    connection_state.disconnect();
+                    conn_manager.disconnect();
                 }
                 m::message::FileRequest(Ok(req)) => {
                     let filename = req
                         .get_filename()
                         .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
                     let filename = filename.to_string();
-                    connection_state.connect_to_file(
+                    conn_manager.connect_to_file(
                         filename,
                         RealtimeDelay::On,
                         /*close_when_done*/ false,
                     );
                 }
-                m::message::PauseRequest(Ok(_)) => match shared_state.app_state() {
-                    ApplicationState::CONNECTED => {
-                        shared_state.set_app_state(ApplicationState::PAUSED, &mut client_send);
-                    }
-                    ApplicationState::PAUSED => {
-                        shared_state.set_app_state(ApplicationState::CONNECTED, &mut client_send);
-                    }
-                    _ => (),
-                },
                 m::message::TcpRequest(Ok(req)) => {
                     let host = req.get_host().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
                     let port = req.get_port();
-                    connection_state.connect_to_host(host.to_string(), port);
+                    conn_manager.connect_to_host(host.to_string(), port);
                 }
                 m::message::SerialRequest(Ok(req)) => {
                     let device = req.get_device().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
@@ -85,7 +76,7 @@ pub fn server_recv_thread(
                     let baudrate = req.get_baudrate();
                     let flow = req.get_flow_control().unwrap();
                     let flow = FlowControl::from_str(flow).unwrap();
-                    connection_state.connect_to_serial(device, baudrate, flow);
+                    conn_manager.connect_to_serial(device, baudrate, flow);
                 }
                 m::message::TrackingSignalsStatusFront(Ok(cv_in)) => {
                     let check_visibility = cv_in

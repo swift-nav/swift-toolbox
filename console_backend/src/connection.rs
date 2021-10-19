@@ -1,7 +1,7 @@
-use crate::common_constants::ApplicationState;
 use crate::constants::*;
 use crate::errors::*;
 use crate::process_messages::process_messages;
+use crate::shared_state::ConnectionState;
 use crate::shared_state::SharedState;
 use crate::types::*;
 use crate::watch::WatchReceiver;
@@ -304,32 +304,32 @@ fn connection_thread(
                     let mut client_send = client_send.clone();
                     let shared_state = shared_state.clone();
                     move || {
-                        shared_state.set_app_state(ApplicationState::CONNECTED, &mut client_send);
+                        shared_state
+                            .set_conn_state(ConnectionState::Connected(conn.clone()), &mut client_send);
                         if let Err(e) = process_messages(
-                            conn.clone(),
                             shared_state.clone(),
                             client_send.clone(),
                         ) {
                             error!("Unable to connect: {}", e);
                         }
                         if conn.close_when_done() {
-                            shared_state.set_app_state(ApplicationState::CLOSING, &mut client_send);
+                            shared_state.set_conn_state(ConnectionState::Closing, &mut client_send);
                         } else {
                             shared_state
-                                .set_app_state(ApplicationState::DISCONNECTED, &mut client_send);
+                                .set_conn_state(ConnectionState::Disconnected, &mut client_send);
                         }
                     }
                 }));
             }
             None => {
-                shared_state.set_app_state(ApplicationState::DISCONNECTING, &mut client_send);
+                shared_state.set_conn_state(ConnectionState::Disconnected, &mut client_send);
                 join(&mut pm_thd);
                 info!("Disconnected successfully.");
             }
         }
         log::logger().flush();
     }
-    shared_state.set_app_state(ApplicationState::CLOSING, &mut client_send);
+    shared_state.set_conn_state(ConnectionState::Closing, &mut client_send);
     join(&mut pm_thd);
 }
 
@@ -413,48 +413,17 @@ mod tests {
         let conn_manager = ConnectionManager::new(client_send, shared_state.clone());
         let filename = TEST_SHORT_FILEPATH.to_string();
         receive_thread(client_receive);
-        assert!(!shared_state.app_state().is_running());
+        assert!(!shared_state.conn_state().is_connected());
         conn_manager.connect_to_file(
             filename,
             RealtimeDelay::On,
             /*close_when_done = */ true,
         );
         sleep(DELAY_BEFORE_CHECKING_APP_STARTED);
-        assert!(shared_state.app_state().is_running());
+        assert!(shared_state.conn_state().is_connected());
         // TODO: [CPP-272] Reassess timing on pause unittest for Windows
         sleep(SBP_FILE_SHORT_DURATION + Duration::from_secs(1));
-        assert!(!shared_state.app_state().is_running());
-        restore_backup_file(bfilename);
-    }
-
-    #[test]
-    #[serial]
-    fn pause_via_connect_to_file_test() {
-        let bfilename = filename();
-        backup_file(bfilename.clone());
-        let shared_state = SharedState::new();
-        shared_state.set_debug(true);
-        let (client_send_, client_receive) = channel::unbounded::<Vec<u8>>();
-        let mut client_send = ClientSender::new(client_send_);
-        let conn_manager = ConnectionManager::new(client_send.clone(), shared_state.clone());
-        let filename = TEST_SHORT_FILEPATH.to_string();
-        receive_thread(client_receive);
-        assert!(!shared_state.app_state().is_running());
-        conn_manager.connect_to_file(
-            filename,
-            RealtimeDelay::On,
-            /*close_when_done = */ true,
-        );
-        sleep(DELAY_BEFORE_CHECKING_APP_STARTED);
-        assert!(shared_state.app_state().is_running());
-        shared_state.set_app_state(ApplicationState::PAUSED, &mut client_send);
-        sleep(SBP_FILE_SHORT_DURATION);
-        assert!(shared_state.app_state().is_running());
-        shared_state.set_app_state(ApplicationState::CONNECTED, &mut client_send);
-        // TODO: [CPP-272] Reassess timing on pause unittest for Windows
-        sleep(SBP_FILE_SHORT_DURATION + Duration::from_secs(1));
-        shared_state.app_state();
-        assert!(!shared_state.app_state().is_running());
+        assert!(!shared_state.conn_state().is_connected());
         restore_backup_file(bfilename);
     }
 
@@ -471,7 +440,7 @@ mod tests {
         let filename = TEST_FILEPATH.to_string();
         let expected_duration = Duration::from_secs(1);
         let handle = receive_thread(client_receive);
-        assert!(!shared_state.app_state().is_running());
+        assert!(!shared_state.conn_state().is_connected());
         {
             conn_manager.connect_to_file(
                 filename,
@@ -481,12 +450,12 @@ mod tests {
         }
 
         sleep(Duration::from_millis(5));
-        assert!(shared_state.app_state().is_running());
+        assert!(shared_state.conn_state().is_connected());
         let now = SystemTime::now();
         sleep(Duration::from_millis(1));
         conn_manager.disconnect();
         sleep(Duration::from_millis(10));
-        assert!(!shared_state.app_state().is_running());
+        assert!(!shared_state.conn_state().is_connected());
         drop(client_send);
         drop(conn_manager);
         assert!(handle.join().is_ok());

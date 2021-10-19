@@ -12,8 +12,8 @@ use std::{
 
 extern crate console_backend;
 use console_backend::{
-    common_constants::ApplicationState,
-    connection::Connection,
+    common_constants::ConnectionState,
+    connection::{Connection, ConnectionManager},
     process_messages,
     shared_state::SharedState,
     types::{ClientSender, RealtimeDelay},
@@ -62,12 +62,12 @@ fn run_process_messages(file_in_name: &str, failure: bool) {
         }
         let shared_state = SharedState::new();
         shared_state.set_debug(true);
-        let conn = Connection::file(
+        let conn_manager = ConnectionManager::new(client_send, shared_state);
+        conn_manager.connect_to_file(
             file_in_name.into(),
             RealtimeDelay::Off,
             /*close_when_done=*/ true,
         );
-        process_messages::process_messages(conn, shared_state, client_send).unwrap();
     }
     recv_thread.join().expect("join should succeed");
 }

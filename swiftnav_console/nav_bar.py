@@ -5,14 +5,14 @@ from typing import Dict, List, Any
 
 from PySide2.QtCore import Property, QObject, Slot
 
-from .constants import Keys, LogLevel, QTKeys, ApplicationState
+from .constants import Keys, LogLevel, QTKeys, ConnectionState
 
 NAV_BAR: Dict[str, Any] = {
     Keys.AVAILABLE_PORTS: [],
     Keys.AVAILABLE_BAUDRATES: [],
     Keys.AVAILABLE_FLOWS: [],
     Keys.AVAILABLE_REFRESH_RATES: [],
-    Keys.APPLICATION_STATE: ApplicationState.DISCONNECTED,
+    Keys.APPLICATION_STATE: ConnectionState.DISCONNECTED,
     Keys.PREVIOUS_HOSTS: [],
     Keys.PREVIOUS_PORTS: [],
     Keys.PREVIOUS_FILES: [],
@@ -27,7 +27,7 @@ class NavBarData(QObject):  # pylint: disable=too-many-instance-attributes
     _available_baudrates: List[str] = []
     _available_flows: List[str] = []
     _available_refresh_rates: List[str] = []
-    _app_state: ApplicationState = ApplicationState.DISCONNECTED
+    _app_state: ConnectionState = ConnectionState.DISCONNECTED
     _previous_hosts: List[str] = []
     _previous_ports: List[str] = []
     _previous_files: List[str] = []
@@ -86,15 +86,15 @@ class NavBarData(QObject):  # pylint: disable=too-many-instance-attributes
         QTKeys.QVARIANTLIST, get_available_refresh_rates, set_available_refresh_rates  # type: ignore
     )
 
-    def get_app_state(self) -> ApplicationState:
+    def get_app_state(self) -> ConnectionState:
         """Getter for _app_state.
 
         Returns:
-            ApplicationState: Whether a connection is live, disconnecting or disconnected.
+            ConnectionState: Whether a connection is live, disconnecting or disconnected.
         """
         return self._app_state
 
-    def set_app_state(self, app_state: ApplicationState) -> None:
+    def set_app_state(self, app_state: ConnectionState) -> None:
         """Setter for _app_state."""
         self._app_state = app_state
 

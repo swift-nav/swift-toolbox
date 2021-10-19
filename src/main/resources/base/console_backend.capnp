@@ -19,10 +19,6 @@ struct SerialRefreshRequest {
     refresh @0 :Void = void;
 }
 
-struct PauseRequest {
-    pause @0 :Bool;
-}
-
 struct DisconnectRequest {
     disconnect @0 :Void = void;
 }
@@ -440,45 +436,44 @@ struct Message {
         tcpRequest @9 :TcpRequest;
         fileRequest @10 :FileRequest;
         serialRequest @11 :SerialRequest;
-        pauseRequest @12 :PauseRequest;
-        disconnectRequest @13 :DisconnectRequest;
-        navBarStatus @14 :NavBarStatus;
-        serialRefreshRequest @15 :SerialRefreshRequest;
-        logAppend @16 :LogAppend;
-        observationStatus @17 :ObservationStatus;
-        statusBarStatus @18 :StatusBarStatus;
-        loggingBarFront @19 :LoggingBarFront;
-        loggingBarStatus @20 :LoggingBarStatus;
-        logLevelFront @21 :LogLevelFront;
-        advancedInsStatus @22 :AdvancedInsStatus;
-        fusionStatusFlagsStatus @23 :FusionStatusFlagsStatus;
-        advancedMagnetometerStatus @24 :AdvancedMagnetometerStatus;
-        baselinePlotStatus @25 :BaselinePlotStatus;
-        baselineTableStatus @26 :BaselineTableStatus;
-        baselinePlotStatusButtonFront @27 :BaselinePlotStatusButtonFront;
-        advancedSpectrumAnalyzerStatus @28:AdvancedSpectrumAnalyzerStatus;
-        advancedSpectrumAnalyzerStatusFront @29:AdvancedSpectrumAnalyzerStatusFront;
-        updateTabStatus @30:UpdateTabStatus;
-        updateTabStatusFront @31:UpdateTabStatusFront;
-        settingsTableStatus @32 :SettingsTableStatus;
-        settingsRefreshRequest @33 :SettingsRefreshRequest;
-        settingsExportRequest @34 :SettingsExportRequest;
-        settingsImportRequest @35 :SettingsImportRequest;
-        settingsImportResponse @36 :SettingsImportResponse;
-        settingsWriteRequest @37 :SettingsWriteRequest;
-        settingsResetRequest @38 :SettingsResetRequest;
-        settingsSaveRequest @39 :SettingsSaveRequest;
-        advancedSystemMonitorStatus @40 :AdvancedSystemMonitorStatus;
-        threadState @41 :ThreadState;
-        uartState @42 :UartState;
-        advancedSystemMonitorStatusFront @43 :AdvancedSystemMonitorStatusFront;
-        skyPlotObs @44 :SkyPlotObs;
-        trackingSkyPlotStatus @45 :TrackingSkyPlotStatus;
-        advancedNetworkingStatus @46 :AdvancedNetworkingStatus;
-        networkState @47 :NetworkState;
-        advancedNetworkingStatusFront @48 :AdvancedNetworkingStatusFront;
-        insSettingsChangeResponse @49 : InsSettingsChangeResponse;
-        confirmInsChange @50 : ConfirmInsChange;
-        autoSurveyRequest @51 : AutoSurveyRequest;
+        disconnectRequest @12 :DisconnectRequest;
+        navBarStatus @13 :NavBarStatus;
+        serialRefreshRequest @14 :SerialRefreshRequest;
+        logAppend @15 :LogAppend;
+        observationStatus @16 :ObservationStatus;
+        statusBarStatus @17 :StatusBarStatus;
+        loggingBarFront @18 :LoggingBarFront;
+        loggingBarStatus @19 :LoggingBarStatus;
+        logLevelFront @20 :LogLevelFront;
+        advancedInsStatus @21 :AdvancedInsStatus;
+        fusionStatusFlagsStatus @22 :FusionStatusFlagsStatus;
+        advancedMagnetometerStatus @23 :AdvancedMagnetometerStatus;
+        baselinePlotStatus @24 :BaselinePlotStatus;
+        baselineTableStatus @25 :BaselineTableStatus;
+        baselinePlotStatusButtonFront @26 :BaselinePlotStatusButtonFront;
+        advancedSpectrumAnalyzerStatus @27:AdvancedSpectrumAnalyzerStatus;
+        advancedSpectrumAnalyzerStatusFront @28:AdvancedSpectrumAnalyzerStatusFront;
+        updateTabStatus @29:UpdateTabStatus;
+        updateTabStatusFront @30:UpdateTabStatusFront;
+        settingsTableStatus @31 :SettingsTableStatus;
+        settingsRefreshRequest @32 :SettingsRefreshRequest;
+        settingsExportRequest @33 :SettingsExportRequest;
+        settingsImportRequest @34 :SettingsImportRequest;
+        settingsImportResponse @35 :SettingsImportResponse;
+        settingsWriteRequest @36 :SettingsWriteRequest;
+        settingsResetRequest @37 :SettingsResetRequest;
+        settingsSaveRequest @38 :SettingsSaveRequest;
+        advancedSystemMonitorStatus @39 :AdvancedSystemMonitorStatus;
+        threadState @40 :ThreadState;
+        uartState @41 :UartState;
+        advancedSystemMonitorStatusFront @42 :AdvancedSystemMonitorStatusFront;
+        skyPlotObs @43 :SkyPlotObs;
+        trackingSkyPlotStatus @44 :TrackingSkyPlotStatus;
+        advancedNetworkingStatus @45 :AdvancedNetworkingStatus;
+        networkState @46 :NetworkState;
+        advancedNetworkingStatusFront @47 :AdvancedNetworkingStatusFront;
+        insSettingsChangeResponse @48 : InsSettingsChangeResponse;
+        confirmInsChange @49 : ConfirmInsChange;
+        autoSurveyRequest @50 : AutoSurveyRequest;
     }
 }

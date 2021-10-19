@@ -132,12 +132,11 @@ class Keys(str, Enum):
     ANTENNA_STATUS = "ANTENNA_STATUS"
 
 
-class ApplicationState(str, Enum):
+class ConnectionState(str, Enum):
     CLOSING = "CLOSING"
     DISCONNECTED = "DISCONNECTED"
     CONNECTED = "CONNECTED"
     DISCONNECTING = "DISCONNECTING"
-    PAUSED = "PAUSED"
 
 
 class QTKeys(str, Enum):

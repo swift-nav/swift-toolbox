@@ -7,9 +7,8 @@ mod mem_bench_impl {
     use sysinfo::{get_current_pid, ProcessExt, System, SystemExt};
 
     use console_backend::{
-        common_constants::ApplicationState,
         connection::ConnectionManager,
-        shared_state::SharedState,
+        shared_state::{ConnectionState, SharedState},
         types::{ClientSender, RealtimeDelay},
     };
 
@@ -62,7 +61,7 @@ mod mem_bench_impl {
                 let proc = sys.get_process(pid).unwrap();
                 mem_readings_kb.push(proc.memory() as f32);
                 cpu_readings.push(proc.cpu_usage());
-                if !mem_read_state.app_state().is_running() {
+                if !mem_read_state.conn_state().is_connected() {
                     break;
                 }
             }
@@ -73,7 +72,7 @@ mod mem_bench_impl {
         let recv_thread = thread::spawn(move || {
             let mut iter_count = 0;
             loop {
-                if client_recv.recv().is_err() || !recv_state.app_state().is_running() {
+                if client_recv.recv().is_err() || !recv_state.conn_state().is_connected() {
                     break;
                 }
                 iter_count += 1;
@@ -90,8 +89,8 @@ mod mem_bench_impl {
         );
 
         let _ = shared_state
-            .watch_app_state()
-            .wait_while(ApplicationState::is_running);
+            .watch_conn_state()
+            .wait_while(ConnectionState::is_connected);
 
         recv_thread.join().expect("join should succeed");
         mem_read_thread.join().expect("join should succeed");

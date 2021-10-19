@@ -1,4 +1,5 @@
-use crate::common_constants::{ApplicationState, SbpLogging};
+use crate::common_constants::{self as cc, SbpLogging};
+use crate::connection::Connection;
 use crate::constants::{
     APPLICATION_NAME, APPLICATION_ORGANIZATION, APPLICATION_QUALIFIER, CONNECTION_HISTORY_FILENAME,
     DEFAULT_LOG_DIRECTORY, MAX_CONNECTION_HISTORY, MPS,
@@ -10,7 +11,7 @@ use crate::settings_tab;
 use crate::solution_tab::LatLonUnits;
 use crate::types::CapnProtoSender;
 use crate::update_tab::UpdateTabUpdate;
-use crate::utils::send_app_state;
+use crate::utils::send_conn_state;
 use crate::watch::{WatchReceiver, Watched};
 use anyhow::{Context, Result as AHResult};
 use chrono::{DateTime, Utc};
@@ -42,23 +43,23 @@ impl SharedState {
     pub fn new() -> SharedState {
         SharedState(Arc::new(Mutex::new(SharedStateInner::default())))
     }
-    pub fn app_state(&self) -> ApplicationState {
+    pub fn conn_state(&self) -> ConnectionState {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).app_state.get()
+        (*shared_data).conn.get()
     }
-    pub fn watch_app_state(&self) -> WatchReceiver<ApplicationState> {
+    pub fn watch_conn_state(&self) -> WatchReceiver<ConnectionState> {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).app_state.watch()
+        (*shared_data).conn.watch()
     }
-    pub fn set_app_state<S>(&self, set_to: ApplicationState, client_send: &mut S)
+    pub fn set_conn_state<S>(&self, set_to: ConnectionState, client_send: &mut S)
     where
         S: CapnProtoSender,
     {
         {
             let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-            (*shared_data).app_state.send(set_to);
+            (*shared_data).conn.send(set_to.clone());
         }
-        send_app_state(set_to, client_send);
+        send_conn_state(set_to, client_send);
     }
     pub fn debug(&self) -> bool {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
@@ -218,7 +219,7 @@ impl SharedState {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         shared_data.settings_tab.send(state);
     }
-    pub fn stop_settings_thd(&self) {
+    pub fn reset_settings_state(&self) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         shared_data.settings_tab = Watched::new(SettingsTabState::new());
     }
@@ -353,7 +354,7 @@ pub struct SharedStateInner {
     pub(crate) log_panel: LogPanelState,
     pub(crate) tracking_tab: TrackingTabState,
     pub(crate) connection_history: ConnectionHistory,
-    pub(crate) app_state: Watched<ApplicationState>,
+    pub(crate) conn: Watched<ConnectionState>,
     pub(crate) debug: bool,
     pub(crate) server_running: bool,
     pub(crate) solution_tab: SolutionTabState,
@@ -379,7 +380,7 @@ impl SharedStateInner {
             tracking_tab: TrackingTabState::new(),
             debug: false,
             connection_history,
-            app_state: Watched::new(ApplicationState::DISCONNECTED),
+            conn: Watched::new(ConnectionState::Disconnected),
             server_running: true,
             solution_tab: SolutionTabState::new(),
             baseline_tab: BaselineTabState::new(),
@@ -792,6 +793,43 @@ impl ConnectionHistory {
     fn save(&self) -> Result<()> {
         serde_yaml::to_writer(fs::File::create(&self.filename())?, self)?;
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum ConnectionState {
+    Closing,
+    Disconnected,
+    Connected(Connection),
+    Disconnecting,
+}
+
+impl ConnectionState {
+    /// Returns `true` if the connection state is [`Connected`].
+    ///
+    /// [`Connected`]: ConnectionState::Connected
+    pub fn is_connected(&self) -> bool {
+        matches!(self, Self::Connected(..))
+    }
+
+    pub fn into_connected(self) -> Option<Connection> {
+        if let Self::Connected(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+}
+
+impl std::fmt::Display for ConnectionState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use ConnectionState::*;
+        match self {
+            Closing => write!(f, "{}", cc::ConnectionState::CLOSING),
+            Disconnected => write!(f, "{}", cc::ConnectionState::DISCONNECTED),
+            Connected(_) => write!(f, "{}", cc::ConnectionState::CONNECTED),
+            Disconnecting => write!(f, "{}", cc::ConnectionState::DISCONNECTING),
+        }
     }
 }
 

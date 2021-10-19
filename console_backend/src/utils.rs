@@ -9,9 +9,9 @@ use sbp::SbpString;
 use semver::{Version, VersionReq}; //BuildMetadata, Prerelease,
 use serialport::available_ports;
 
-use crate::common_constants::ApplicationState;
 use crate::constants::*;
 use crate::errors::*;
+use crate::shared_state::ConnectionState;
 use crate::shared_state::SharedState;
 use crate::types::{CapnProtoSender, SignalCodes};
 
@@ -57,8 +57,8 @@ pub fn fixed_sbp_string<T, const L: usize>(data: &str) -> SbpString<[u8; L], T> 
     SbpString::new(arr)
 }
 
-/// Notify the frontend of an [ApplicationState] change.
-pub fn send_app_state<P: CapnProtoSender>(app_state: ApplicationState, client_send: &mut P) {
+/// Notify the frontend of an [ConnectionState] change.
+pub fn send_conn_state<P: CapnProtoSender>(app_state: ConnectionState, client_send: &mut P) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
     let mut status = msg.init_status();

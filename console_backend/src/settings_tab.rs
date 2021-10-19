@@ -32,14 +32,14 @@ lazy_static! {
     ];
 }
 
-pub fn settings_tab_thread<S: CapnProtoSender>(tab: SettingsTab<S>) {
+pub fn settings_tab_thread<S: CapnProtoSender>(tab: &SettingsTab<S>) {
     let mut recv = tab.shared_state.watch_settings_state();
     while let Ok(state) = recv.wait() {
-        if !tab.shared_state.app_state().is_running() {
+        if !tab.shared_state.conn_state().is_connected() {
             break;
         }
         tab.shared_state.set_settings_state(Default::default());
-        tick(&tab, state);
+        tick(tab, state);
     }
 }
 
@@ -92,6 +92,12 @@ pub struct SettingsTab<'link, S> {
     sbp_client: Client<'link>,
 }
 
+impl<S> Drop for SettingsTab<'_, S> {
+    fn drop(&mut self) {
+        self.shared_state.reset_settings_state();
+    }
+}
+
 impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
     pub fn new(
         shared_state: SharedState,
@@ -106,6 +112,10 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
             settings: Mutex::new(Settings::new()),
             sbp_client: Client::new(link, move |msg| msg_sender.send(msg).map_err(Into::into)),
         }
+    }
+
+    pub fn stop(&self) {
+        self.shared_state.reset_settings_state();
     }
 
     fn refresh(&self) {

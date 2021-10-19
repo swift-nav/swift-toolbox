@@ -1,4 +1,3 @@
-use crate::common_constants::ApplicationState;
 use crate::constants::{
     DGNSS, DGNSS_COLOR, DGNSS_LABEL, DR, DR_COLOR, DR_LABEL, FIXED, FIXED_COLOR, FIXED_LABEL,
     FLOAT, FLOAT_COLOR, FLOAT_LABEL, FLOW_CONTROL_HARDWARE, FLOW_CONTROL_NONE,
@@ -1556,19 +1555,6 @@ impl std::str::FromStr for VelocityUnits {
         }
     }
 }
-
-// Generated enum so we add things it here
-impl ApplicationState {
-    pub fn is_paused(&self) -> bool {
-        matches!(self, ApplicationState::PAUSED)
-    }
-
-    pub fn is_running(&self) -> bool {
-        matches!(self, ApplicationState::CONNECTED | ApplicationState::PAUSED)
-    }
-}
-
-impl Copy for ApplicationState {}
 
 #[cfg(test)]
 mod tests {

@@ -18,7 +18,7 @@ Rectangle {
     property variant previous_ports: []
     property variant previous_files: []
     property variant log_level_labels: []
-    property string app_state: "DISCONNECTED"
+    property string conn_state: "DISCONNECTED"
 
     anchors.fill: parent
     border.width: Constants.statusBar.borderWidth
@@ -238,43 +238,13 @@ Rectangle {
         }
 
         Button {
-            id: connectionPauseButton
-
-            Layout.preferredWidth: Constants.navBar.connectionPauseWidth
-            Layout.preferredHeight: Constants.navBar.buttonHeight
-            ToolTip.visible: hovered
-            ToolTip.text: !checked ? "Pause" : "Unpause"
-            checkable: true
-            checked: false
-            enabled: app_state == "PAUSED" || app_state == "CONNECTED"
-            onToggled: data_model.pause(checked)
-
-            Image {
-                id: connectionPauseImage
-
-                anchors.centerIn: parent
-                width: Constants.navBar.buttonSvgHeight
-                height: Constants.navBar.buttonSvgHeight
-                source: Constants.icons.pauseButtonUrl
-                visible: false
-            }
-
-            ColorOverlay {
-                anchors.fill: connectionPauseImage
-                source: connectionPauseImage
-                color: !connectionPauseButton.checked ? Constants.materialGrey : Constants.swiftOrange
-            }
-
-        }
-
-        Button {
             id: connectButton
 
             Layout.preferredWidth: Constants.navBar.connectButtonWidth
             Layout.preferredHeight: Constants.navBar.buttonHeight
             checkable: true
             checked: true
-            enabled: app_state == "DISCONNECTED" || app_state == "CONNECTED" || app_state == "PAUSED"
+            enabled: conn_state == "DISCONNECTED" || conn_state == "CONNECTED"
             ToolTip.visible: hovered
             ToolTip.text: !checked ? "Connect" : "Disconnect"
             onClicked: {
@@ -384,8 +354,7 @@ Rectangle {
                 previous_ports = navBarData.previous_ports;
                 previous_files = navBarData.previous_files;
                 logLevelButton.currentIndex = log_level_labels.indexOf(navBarData.log_level);
-                app_state = navBarData.app_state;
-                connectionPauseButton.checked = app_state == "PAUSED";
+                conn_state = navBarData.conn_state;
             }
         }
 

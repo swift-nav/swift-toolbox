@@ -11,7 +11,9 @@ ApplicationWindow {
 
     Material.accent: Constants.swiftOrange
     width: Globals.width
+    minimumWidth: Globals.minimumWidth
     height: Globals.height
+    minimumHeight: Globals.minimumHeight
     font.pointSize: Constants.mediumPointSize
     Component.onCompleted: {
         visible = true;

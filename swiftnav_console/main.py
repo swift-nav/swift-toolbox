@@ -759,9 +759,17 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
     if args.show_csv_log:
         globals_.setProperty("showCsvLog", True)  # type: ignore
     if args.height:
-        globals_.setProperty("height", args.height)  # type: ignore
+        min_height = globals_.property("minimumHeight")  # type: ignore
+        if args.height < min_height:
+            print(f"WARNING: --height value: {args.height}, is less than minimum: {min_height}. Input will be ignored.")
+        else:
+            globals_.setProperty("height", args.height)  # type: ignore
     if args.width:
-        globals_.setProperty("width", args.width)  # type: ignore
+        min_width = globals_.property("minimumWidth")  # type: ignore
+        if args.width < min_width:
+            print(f"WARNING: --width value: {args.width}, is less than minimum: {min_width}. Input will be ignored.")
+        else:
+            globals_.setProperty("width", args.width)  # type: ignore
 
 
 def main():

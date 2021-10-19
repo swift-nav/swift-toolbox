@@ -9,10 +9,11 @@ import SwiftConsole 1.0
 Item {
     id: trackingSignalsTab
 
-    property variant lines: []
-    property variant labels: []
-    property variant colors: []
-    property variant check_labels: []
+    // property variant lines: []
+    // property variant labels: []
+    // property variant colors: []
+    property alias all_series: trackingSignalsPoints.all_series
+    property alias check_labels: trackingSignalsPoints.check_labels
     property variant check_visibility: []
 
     width: parent.width
@@ -74,7 +75,7 @@ Item {
                     Repeater {
                         id: lineLegendRepeaterRows
 
-                        model: labels
+                        model: all_series
 
                         Row {
                             Component.onCompleted: {
@@ -88,6 +89,7 @@ Item {
                             Rectangle {
                                 id: marker
 
+                                color: model.color
                                 width: Constants.commonLegend.markerWidth
                                 height: Constants.commonLegend.markerHeight
                                 anchors.verticalCenter: parent.verticalCenter
@@ -96,7 +98,7 @@ Item {
                             Label {
                                 id: label
 
-                                text: modelData
+                                text: model.name
                                 font.pointSize: Constants.smallPointSize
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
@@ -162,41 +164,70 @@ Item {
                 repeat: true
                 onTriggered: {
                     if (!trackingTab.visible)
-                        return ;
+                        return;
 
-                    tracking_signals_model.fill_console_points(trackingSignalsPoints);
-                    if (!trackingSignalsPoints.points.length)
-                        return ;
-
-                    var points = trackingSignalsPoints.points;
-                    colors = trackingSignalsPoints.colors;
-                    labels = trackingSignalsPoints.labels;
-                    trackingSignalsChart.visible = true;
-                    check_labels = trackingSignalsPoints.check_labels;
-                    for (var idx in labels) {
-                        if (idx < lines.length) {
-                            if (labels[idx] != lines[idx][1]) {
-                                trackingSignalsChart.removeSeries(lines[idx][0]);
-                                var line = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, labels[idx], trackingSignalsXAxis);
-                                line.color = colors[idx];
-                                line.width = Constants.commonChart.lineWidth;
-                                line.axisYRight = trackingSignalsYAxis;
-                                line.useOpenGL = Globals.useOpenGL;
-                                lines[idx] = [line, labels[idx]];
-                            }
-                        } else {
-                            var line = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, labels[idx], trackingSignalsXAxis);
-                            line.color = colors[idx];
-                            line.width = Constants.commonChart.lineWidth;
-                            line.axisYRight = trackingSignalsYAxis;
-                            line.useOpenGL = Globals.useOpenGL;
-                            lines.push([line, labels[idx]]);
+                    if (trackingSignalsPoints.all_series.length < trackingSignalsPoints.num_labels) {
+                        for (var i = trackingSignalsPoints.all_series.length;
+                             i < trackingSignalsPoints.num_labels; i++) {
+                            var series = trackingSignalsChart.createSeries(
+                                ChartView.SeriesTypeLine, trackingSignalsPoints.getLabel(i),
+                                trackingSignalsXAxis)
+                            series.axisYRight = trackingSignalsYAxis
+                            series.width = Constants.commonChart.lineWidth
+                            // Color and useOpenGL will be set in Python with fill_all_series call.
+                            // series.color = sourceSeries.color
+                            // series.useOpenGL = sourceSeries.useOpenGL
+                            trackingSignalsPoints.addSeries(series)
                         }
                     }
-                    trackingSignalsPoints.fill_series(lines);
-                    var last = points[0][points[0].length - 1];
-                    trackingSignalsXAxis.min = last.x + trackingSignalsPoints.xmin_offset;
-                    trackingSignalsXAxis.max = last.x;
+                    trackingSignalsPoints.fill_all_series(Constants.commonChart.lineWidth,
+                        Globals.useOpenGL);
+                    // for (var series_idx in missing_series_indices) {
+                    //     console.log("Creating new series " + sourceSeries.name)
+                    //     var series = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine,
+                    //         sourceSeries.name, trackingSignalsXAxis)
+                    //     series.axisYRight = trackingSignalsYAxis
+                    //     series.color = sourceSeries.color
+                    //     series.width = Constants.commonChart.lineWidth
+                    //     series.useOpenGL = sourceSeries.useOpenGL
+                    // }
+                    // if (series_to_create.length > 0) {
+                    //     // Fill again to give all the newly created series' their data..
+                    //     // Could probably just skip this step, since a short time later, another 
+                    //     trackingSignalsPoints.fill_all_series(Constants.commonChart.lineWidth,
+                    //         trackingSignalsXAxis, trackingSignalsYAxis, Globals.useOpenGL);
+                    // }
+                    if (trackingSignalsPoints.all_series.length) {
+                        trackingSignalsChart.visible = true;
+                        trackingSignalsXAxis.min = trackingSignalsPoints.xaxis_min;  // last.x + trackingSignalsPoints.xmin_offset;
+                        trackingSignalsXAxis.max = trackingSignalsPoints.xaxis_max;  // last.x;
+                    }
+
+                    // var all_series = trackingSignalsPoints.all_series;
+                    // colors = trackingSignalsPoints.colors;
+                    // labels = trackingSignalsPoints.labels;
+                    // for (var idx in labels) {
+                    //     if (idx < lines.length) {
+                    //         if (labels[idx] != lines[idx][1]) {
+                    //             series = all_series[idx]
+                    //             var line = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, labels[idx], trackingSignalsXAxis);
+                    //             line.color = colors[idx];
+                    //             line.width = Constants.commonChart.lineWidth;
+                    //             line.axisYRight = trackingSignalsYAxis;
+                    //             line.useOpenGL = Globals.useOpenGL;
+                    //             // lines[idx] = [line, labels[idx]];
+                    //         }
+                    //     } else {
+                    //         var line = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, labels[idx], trackingSignalsXAxis);
+                    //         line.color = colors[idx];
+                    //         line.width = Constants.commonChart.lineWidth;
+                    //         line.axisYRight = trackingSignalsYAxis;
+                    //         line.useOpenGL = Globals.useOpenGL;
+                    //         // lines.push([line, labels[idx]]);
+                    //     }
+                    // }
+                    // trackingSignalsPoints.fill_series(lines);
+                    // var last = points[0][points[0].length - 1];
                 }
             }
 

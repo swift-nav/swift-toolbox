@@ -81,7 +81,7 @@ mod mem_bench_impl {
         });
 
         let client_send = ClientSender::new(client_send);
-        let conn_manager = ConnectionManager::new(client_send, shared_state);
+        let conn_manager = ConnectionManager::new(client_send.clone(), shared_state);
         conn_manager.connect_to_file(
             BENCH_FILEPATH.into(),
             RealtimeDelay::On,

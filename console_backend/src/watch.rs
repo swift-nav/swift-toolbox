@@ -70,6 +70,8 @@ impl<T> fmt::Debug for Watched<T> {
 
 impl<T> Drop for Watched<T> {
     fn drop(&mut self) {
+        // if we are the last sender close the channel so things calling
+        // `.wait()` will terminate
         self.shared.remove_sender();
         if self.shared.senders() == 0 {
             self.shared.close();

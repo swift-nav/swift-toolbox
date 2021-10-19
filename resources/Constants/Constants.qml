@@ -4,6 +4,8 @@ import QtQuick.Controls.Material 2.12
 pragma Singleton
 
 QtObject {
+    readonly property int minimumHeight: 600
+    readonly property int minimumWidth: 1050
     readonly property real margins: 2
     readonly property real tabBarWidth: 70
     readonly property real tabBarHeight: 40

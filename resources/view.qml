@@ -17,6 +17,18 @@ ApplicationWindow {
         visible = true;
     }
 
+    onWidthChanged: {
+        if (width < Constants.minimumWidth) {
+            width = Constants.minimumWidth;
+        }
+    }
+
+    onHeightChanged: {
+        if (height < Constants.minimumHeight) {
+            height = Constants.minimumHeight;
+        }
+    }
+
     MainDialogView {
         id: dialogStack
 

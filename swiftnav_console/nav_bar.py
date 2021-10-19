@@ -27,7 +27,7 @@ class NavBarData(QObject):  # pylint: disable=too-many-instance-attributes
     _available_baudrates: List[str] = []
     _available_flows: List[str] = []
     _available_refresh_rates: List[str] = []
-    _app_state: ConnectionState = ConnectionState.DISCONNECTED
+    _conn_state: ConnectionState = ConnectionState.DISCONNECTED
     _previous_hosts: List[str] = []
     _previous_ports: List[str] = []
     _previous_files: List[str] = []
@@ -86,19 +86,19 @@ class NavBarData(QObject):  # pylint: disable=too-many-instance-attributes
         QTKeys.QVARIANTLIST, get_available_refresh_rates, set_available_refresh_rates  # type: ignore
     )
 
-    def get_app_state(self) -> ConnectionState:
-        """Getter for _app_state.
+    def get_conn_state(self) -> ConnectionState:
+        """Getter for _conn_state.
 
         Returns:
             ConnectionState: Whether a connection is live, disconnecting or disconnected.
         """
-        return self._app_state
+        return self._conn_state
 
-    def set_app_state(self, app_state: ConnectionState) -> None:
-        """Setter for _app_state."""
-        self._app_state = app_state
+    def set_conn_state(self, conn_state: ConnectionState) -> None:
+        """Setter for _conn_state."""
+        self._conn_state = conn_state
 
-    app_state = Property(str, get_app_state, set_app_state)
+    conn_state = Property(str, get_conn_state, set_conn_state)
 
     def get_previous_hosts(self) -> List[str]:
         return self._previous_hosts
@@ -132,7 +132,7 @@ class NavBarModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_available_baudrates(NAV_BAR[Keys.AVAILABLE_BAUDRATES])
         cp.set_available_flows(NAV_BAR[Keys.AVAILABLE_FLOWS])
         cp.set_available_refresh_rates(NAV_BAR[Keys.AVAILABLE_REFRESH_RATES])
-        cp.set_app_state(NAV_BAR[Keys.APPLICATION_STATE])
+        cp.set_conn_state(NAV_BAR[Keys.APPLICATION_STATE])
         cp.set_previous_hosts(NAV_BAR[Keys.PREVIOUS_HOSTS])
         cp.set_previous_ports(NAV_BAR[Keys.PREVIOUS_PORTS])
         cp.set_previous_files(NAV_BAR[Keys.PREVIOUS_FILES])

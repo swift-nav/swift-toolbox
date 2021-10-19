@@ -355,6 +355,7 @@ Rectangle {
                 previous_files = navBarData.previous_files;
                 logLevelButton.currentIndex = log_level_labels.indexOf(navBarData.log_level);
                 conn_state = navBarData.conn_state;
+                connectButton.checked = conn_state == "CONNECTED";
             }
         }
 

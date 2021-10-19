@@ -1,10 +1,9 @@
+use crate::common_constants as cc;
 use crate::constants::*;
 use crate::errors::*;
-use crate::process_messages::process_messages;
-use crate::shared_state::ConnectionState;
+use crate::process_messages::{process_messages, Messages, StopToken};
 use crate::shared_state::SharedState;
 use crate::types::*;
-use crate::watch::WatchReceiver;
 use crate::watch::Watched;
 use anyhow::anyhow;
 use log::{error, info};
@@ -28,11 +27,11 @@ pub struct ConnectionManager {
 impl ConnectionManager {
     pub fn new(client_send: ClientSender, shared_state: SharedState) -> ConnectionManager {
         let conn = Watched::new(None);
-        let recv = conn.watch();
-        let handle = Some(thread::spawn(move || {
-            connection_thread(client_send, shared_state, recv)
+        let handle = Some(thread::spawn({
+            let conn = conn.clone();
+            move || ConnectionManager::start_thd(client_send, shared_state, conn)
         }));
-        ConnectionManager { handle, conn }
+        ConnectionManager { conn, handle }
     }
 
     /// Helper function for attempting to open a file and process SBP messages from it.
@@ -74,13 +73,119 @@ impl ConnectionManager {
     pub fn disconnect(&self) {
         self.conn.send(None);
     }
+
+    fn start_thd(
+        mut client_send: ClientSender,
+        shared_state: SharedState,
+        conn_info: Watched<Option<Connection>>,
+    ) {
+        let mut pm_thd: Option<JoinHandle<()>> = None;
+        let join = |thd: &mut Option<JoinHandle<()>>| {
+            if let Some(thd) = thd.take() {
+                thd.join().expect("process_messages thread panicked");
+            }
+        };
+        let mut recv = conn_info.watch();
+
+        info!("Console started...");
+
+        while let Ok(conn) = recv.wait() {
+            let conn = match conn {
+                Some(conn) => conn,
+                None => {
+                    shared_state.set_connection(ConnectionState::Disconnected, &mut client_send);
+                    join(&mut pm_thd);
+                    info!("Disconnected successfully.");
+                    log::logger().flush();
+                    continue;
+                }
+            };
+
+            let ((stop_token, messages), msg_sender) = match conn.try_connect(Some(&shared_state)) {
+                Ok((r, w)) => (Messages::new(r), MsgSender::new(w)),
+                Err(err) => {
+                    error!("Unable to connect: {}", err);
+                    log::logger().flush();
+                    continue;
+                }
+            };
+
+            let conn_watch = conn_info.clone();
+            let conn = conn.clone();
+            let shared_state = shared_state.clone();
+            let mut client_send = client_send.clone();
+
+            shared_state.set_connection(
+                ConnectionState::Connected {
+                    conn: conn.clone(),
+                    stop_token,
+                },
+                &mut client_send,
+            );
+
+            pm_thd = Some(thread::spawn(move || {
+                process_messages(
+                    messages,
+                    msg_sender,
+                    conn.clone(),
+                    shared_state,
+                    client_send,
+                );
+                if conn.close_when_done() {
+                    conn_watch.close();
+                }
+            }));
+        }
+
+        log::logger().flush();
+        shared_state.set_connection(ConnectionState::Closed, &mut client_send);
+        join(&mut pm_thd);
+    }
 }
 
 impl Drop for ConnectionManager {
     fn drop(&mut self) {
-        self.conn = Watched::new(None);
+        // breaks the `while let Ok(conn) ...` loop
+        self.conn.close();
         if let Some(h) = self.handle.take() {
             let _ = h.join();
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum ConnectionState {
+    /// App is shut down
+    Closed,
+
+    /// Running but disconnected
+    Disconnected,
+
+    /// Running and connected
+    Connected {
+        conn: Connection,
+        stop_token: StopToken,
+    },
+}
+
+impl ConnectionState {
+    pub fn is_disconnected(&self) -> bool {
+        matches!(self, Self::Disconnected)
+    }
+
+    pub fn is_connected(&self) -> bool {
+        matches!(self, Self::Connected { .. })
+    }
+}
+
+impl std::fmt::Display for ConnectionState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ConnectionState::Closed => write!(f, "{}", cc::ConnectionState::CLOSED),
+            ConnectionState::Disconnected => write!(f, "{}", cc::ConnectionState::DISCONNECTED),
+            ConnectionState::Connected { .. } => {
+                write!(f, "{}", cc::ConnectionState::CONNECTED)
+            }
         }
     }
 }
@@ -141,7 +246,7 @@ impl Connection {
 
     pub fn try_connect(
         &self,
-        shared_state: Option<SharedState>,
+        shared_state: Option<&SharedState>,
     ) -> Result<(Box<dyn io::Read + Send>, Box<dyn io::Write + Send>)> {
         match self {
             Connection::Tcp(conn) => conn.clone().try_connect(shared_state),
@@ -179,7 +284,7 @@ impl TcpConnection {
 
     fn try_connect(
         self,
-        shared_state: Option<SharedState>,
+        shared_state: Option<&SharedState>,
     ) -> Result<(Box<dyn io::Read + Send>, Box<dyn io::Write + Send>)> {
         let socket = TcpConnection::socket_addrs(self.name.clone())?;
         let rdr =
@@ -187,8 +292,8 @@ impl TcpConnection {
         rdr.set_read_timeout(Some(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS)))?;
         let writer = rdr.try_clone()?;
         info!("Connected to tcp stream!");
-        if let Some(shared_state_) = shared_state {
-            shared_state_.update_tcp_history(self.host, self.port);
+        if let Some(shared_state) = shared_state {
+            shared_state.update_tcp_history(self.host, self.port);
         }
         Ok((Box::new(rdr), Box::new(writer)))
     }
@@ -218,7 +323,7 @@ impl SerialConnection {
 
     fn try_connect(
         self,
-        _shared_state: Option<SharedState>,
+        _shared_state: Option<&SharedState>,
     ) -> Result<(Box<dyn io::Read + Send>, Box<dyn io::Write + Send>)> {
         let rdr = serialport::new(self.device, self.baudrate)
             .flow_control(*self.flow)
@@ -273,64 +378,16 @@ impl FileConnection {
 
     fn try_connect(
         self,
-        shared_state: Option<SharedState>,
+        shared_state: Option<&SharedState>,
     ) -> Result<(Box<dyn io::Read + Send>, Box<dyn io::Write + Send>)> {
         let rdr = fs::File::open(&self.filepath)?;
         let writer = io::sink();
         info!("Opened file successfully!");
-        if let Some(shared_state_) = shared_state {
-            shared_state_.update_file_history(self.filepath.to_string_lossy().to_string());
+        if let Some(shared_state) = shared_state {
+            shared_state.update_file_history(self.filepath.to_string_lossy().to_string());
         }
         Ok((Box::new(rdr), Box::new(writer)))
     }
-}
-
-fn connection_thread(
-    mut client_send: ClientSender,
-    shared_state: SharedState,
-    mut conn: WatchReceiver<Option<Connection>>,
-) {
-    let mut pm_thd: Option<JoinHandle<()>> = None;
-    let join = |thd: &mut Option<JoinHandle<()>>| {
-        if let Some(thd) = thd.take() {
-            thd.join().expect("process_messages thread panicked");
-        }
-    };
-    info!("Console started...");
-    while let Ok(conn) = conn.wait() {
-        match conn {
-            Some(conn) => {
-                pm_thd = Some(thread::spawn({
-                    let mut client_send = client_send.clone();
-                    let shared_state = shared_state.clone();
-                    move || {
-                        shared_state
-                            .set_conn_state(ConnectionState::Connected(conn.clone()), &mut client_send);
-                        if let Err(e) = process_messages(
-                            shared_state.clone(),
-                            client_send.clone(),
-                        ) {
-                            error!("Unable to connect: {}", e);
-                        }
-                        if conn.close_when_done() {
-                            shared_state.set_conn_state(ConnectionState::Closing, &mut client_send);
-                        } else {
-                            shared_state
-                                .set_conn_state(ConnectionState::Disconnected, &mut client_send);
-                        }
-                    }
-                }));
-            }
-            None => {
-                shared_state.set_conn_state(ConnectionState::Disconnected, &mut client_send);
-                join(&mut pm_thd);
-                info!("Disconnected successfully.");
-            }
-        }
-        log::logger().flush();
-    }
-    shared_state.set_conn_state(ConnectionState::Closing, &mut client_send);
-    join(&mut pm_thd);
 }
 
 #[cfg(test)]
@@ -347,7 +404,7 @@ mod tests {
     const TEST_FILEPATH: &str = "./tests/data/piksi-relay-1min.sbp";
     const TEST_SHORT_FILEPATH: &str = "./tests/data/piksi-relay.sbp";
     const SBP_FILE_SHORT_DURATION: Duration = Duration::from_millis(27100);
-    const DELAY_BEFORE_CHECKING_APP_STARTED: Duration = Duration::from_millis(150);
+    const DELAY_BEFORE_CHECKING_APP_STARTED: Duration = Duration::from_millis(1000);
 
     #[test]
     fn create_tcp() {
@@ -413,17 +470,18 @@ mod tests {
         let conn_manager = ConnectionManager::new(client_send, shared_state.clone());
         let filename = TEST_SHORT_FILEPATH.to_string();
         receive_thread(client_receive);
-        assert!(!shared_state.conn_state().is_connected());
+        assert!(!shared_state.connection().is_connected());
         conn_manager.connect_to_file(
             filename,
             RealtimeDelay::On,
             /*close_when_done = */ true,
         );
         sleep(DELAY_BEFORE_CHECKING_APP_STARTED);
-        assert!(shared_state.conn_state().is_connected());
+        assert!(shared_state.connection().is_connected());
         // TODO: [CPP-272] Reassess timing on pause unittest for Windows
         sleep(SBP_FILE_SHORT_DURATION + Duration::from_secs(1));
-        assert!(!shared_state.conn_state().is_connected());
+        drop(conn_manager);
+        assert!(!shared_state.connection().is_connected());
         restore_backup_file(bfilename);
     }
 
@@ -440,22 +498,19 @@ mod tests {
         let filename = TEST_FILEPATH.to_string();
         let expected_duration = Duration::from_secs(1);
         let handle = receive_thread(client_receive);
-        assert!(!shared_state.conn_state().is_connected());
-        {
-            conn_manager.connect_to_file(
-                filename,
-                RealtimeDelay::On,
-                /*close_when_done = */ true,
-            );
-        }
-
-        sleep(Duration::from_millis(5));
-        assert!(shared_state.conn_state().is_connected());
+        assert!(!shared_state.connection().is_connected());
+        conn_manager.connect_to_file(
+            filename,
+            RealtimeDelay::On,
+            /*close_when_done = */ true,
+        );
+        sleep(Duration::from_millis(50));
+        assert!(shared_state.connection().is_connected());
         let now = SystemTime::now();
         sleep(Duration::from_millis(1));
         conn_manager.disconnect();
         sleep(Duration::from_millis(10));
-        assert!(!shared_state.conn_state().is_connected());
+        assert!(!shared_state.connection().is_connected());
         drop(client_send);
         drop(conn_manager);
         assert!(handle.join().is_ok());

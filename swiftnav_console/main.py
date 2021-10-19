@@ -231,7 +231,7 @@ def receive_messages(app_, backend, messages):
         m = Message.from_bytes(buffer)
         if m.which == Message.Union.Status:
             app_state = ConnectionState(m.status.text)
-            if app_state == ConnectionState.CLOSING:
+            if app_state == ConnectionState.CLOSED:
                 return app_.quit()
             NAV_BAR[Keys.APPLICATION_STATE] = app_state
 

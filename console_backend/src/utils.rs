@@ -9,9 +9,9 @@ use sbp::SbpString;
 use semver::{Version, VersionReq}; //BuildMetadata, Prerelease,
 use serialport::available_ports;
 
+use crate::connection::ConnectionState;
 use crate::constants::*;
 use crate::errors::*;
-use crate::shared_state::ConnectionState;
 use crate::shared_state::SharedState;
 use crate::types::{CapnProtoSender, SignalCodes};
 

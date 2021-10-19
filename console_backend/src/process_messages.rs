@@ -1,3 +1,6 @@
+use std::{io, iter::FusedIterator, sync::Arc, thread};
+
+use crossbeam::channel::{Receiver, Sender};
 use log::{debug, error};
 use sbp::{
     link::LinkSource,
@@ -17,32 +20,29 @@ use sbp::{
     SbpIterExt, SbpMessage,
 };
 
-use crate::shared_state::{ConnectionState, SharedState};
 use crate::types::UartState;
 use crate::types::{
     BaselineNED, CapnProtoSender, Dops, GpsTime, MsgSender, ObservationMsg, PosLLH, RealtimeDelay,
-    Result, Specan, VelNED,
+    Specan, VelNED,
 };
 use crate::update_tab;
 use crate::utils::refresh_navbar;
 use crate::Tabs;
+use crate::{connection::Connection, shared_state::SharedState};
 use crate::{errors::UNABLE_TO_CLONE_UPDATE_SHARED, settings_tab};
 use crate::{log_panel::handle_log_msg, settings_tab::SettingsTab};
 
-pub fn process_messages<S>(shared_state: SharedState, client_send: S) -> Result<()>
-where
+pub fn process_messages<S>(
+    messages: Messages,
+    msg_sender: MsgSender,
+    conn: Connection,
+    shared_state: SharedState,
+    client_send: S,
+) where
     S: CapnProtoSender,
 {
-    let mut conn_state = shared_state.watch_conn_state();
-    let conn = conn_state.get().into_connected().unwrap();
-    shared_state.set_current_connection(conn.name());
-    let realtime_delay = conn.realtime_delay();
-    let (reader, writer) = conn.try_connect(Some(shared_state.clone()))?;
-    let msg_sender = MsgSender::new(writer);
     refresh_navbar(&mut client_send.clone(), shared_state.clone());
-    let messages = sbp::iter_messages(reader)
-        .log_errors(log::Level::Debug)
-        .with_rover_time();
+
     let source: LinkSource<Tabs<S>> = LinkSource::new();
     let tabs = Tabs::new(
         shared_state.clone(),
@@ -272,26 +272,16 @@ where
                 msg_sender.clone(),
             );
         });
+
         if conn.settings_enabled() {
-            scope.spawn(|scope| {
+            scope.spawn(|_| {
                 let tab = settings_tab.as_ref().unwrap();
                 shared_state.set_settings_refresh(true);
-                scope.spawn(move |_| settings_tab::settings_tab_thread(tab));
-                let _ = shared_state
-                    .watch_conn_state()
-                    .wait_while(ConnectionState::is_connected);
-                tab.stop();
+                settings_tab::start_thd(tab);
             });
         }
 
-        for (message, gps_time) in messages {
-            if !conn_state.get().is_connected() {
-                if let Err(e) = tabs.main.lock().unwrap().end_csv_logging() {
-                    error!("Issue closing csv file, {}", e);
-                }
-                tabs.main.lock().unwrap().close_sbp();
-                break;
-            }
+        for (message, gps_time) in messages.fuse() {
             let sent = source.send_with_state(&tabs, &message);
             tabs.main.lock().unwrap().serialize_sbp(&message);
             tabs.status_bar
@@ -302,7 +292,7 @@ where
                 .lock()
                 .unwrap()
                 .handle_sbp(&message);
-            if let RealtimeDelay::On = realtime_delay {
+            if let RealtimeDelay::On = conn.realtime_delay() {
                 if sent {
                     tabs.main.lock().unwrap().realtime_delay(gps_time);
                 } else {
@@ -314,12 +304,92 @@ where
             }
             log::logger().flush();
         }
+        if let Some(ref tab) = settings_tab {
+            tab.stop()
+        }
         if let Err(err) = update_tab_tx.send(None) {
             error!("Issue stopping update tab: {}", err);
         }
-        shared_state.reset_settings_state();
+        if let Err(e) = tabs.main.lock().unwrap().end_csv_logging() {
+            error!("Issue closing csv file, {}", e);
+        }
+        tabs.main.lock().unwrap().close_sbp();
     })
     .unwrap();
+}
 
-    Ok(())
+type Message = (
+    sbp::Sbp,
+    Option<std::result::Result<sbp::time::GpsTime, sbp::time::GpsTimeError>>,
+);
+
+/// Wrapper around the iterator of messages that enables other threads
+/// to stop the iterator.
+pub struct Messages {
+    messages: Receiver<Message>,
+    canceled: Receiver<()>,
+}
+
+impl Messages {
+    pub fn new<R>(reader: R) -> (StopToken, Self)
+    where
+        R: io::Read + Send + 'static,
+    {
+        let (sink, messages) = crossbeam::channel::bounded(100);
+        let (cancel, canceled) = crossbeam::channel::bounded(1);
+        thread::spawn(move || Messages::start_thd(reader, sink));
+        (StopToken(Arc::new(cancel)), Self { messages, canceled })
+    }
+
+    fn start_thd<R: io::Read>(reader: R, sink: Sender<Message>) {
+        for message in sbp::iter_messages(reader)
+            .log_errors(log::Level::Debug)
+            .with_rover_time()
+        {
+            // this will error after `Messages` is dropped which will
+            // stop this thread
+            if sink.send(message).is_err() {
+                break;
+            }
+        }
+    }
+}
+
+impl Iterator for Messages {
+    type Item = Message;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        crossbeam::select! {
+            recv(self.canceled) -> _ => None,
+            recv(self.messages) -> msg => msg.ok(),
+        }
+    }
+}
+
+impl FusedIterator for Messages {}
+
+/// Used to break the `process_messages` loop. Can be stopped manually
+/// or will automatically stop after all copies of this have been dropped.
+#[derive(Debug)]
+pub struct StopToken(Arc<Sender<()>>);
+
+impl StopToken {
+    pub fn stop(&self) {
+        let _ = self.0.try_send(());
+    }
+}
+
+impl Clone for StopToken {
+    fn clone(&self) -> Self {
+        Self(Arc::clone(&self.0))
+    }
+}
+
+impl Drop for StopToken {
+    fn drop(&mut self) {
+        // if this is the last one make sure we stop the thread
+        if Arc::strong_count(&self.0) == 1 {
+            self.stop();
+        }
+    }
 }

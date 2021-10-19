@@ -133,10 +133,9 @@ class Keys(str, Enum):
 
 
 class ConnectionState(str, Enum):
-    CLOSING = "CLOSING"
-    DISCONNECTED = "DISCONNECTED"
+    CLOSED = "CLOSED"
     CONNECTED = "CONNECTED"
-    DISCONNECTING = "DISCONNECTING"
+    DISCONNECTED = "DISCONNECTED"
 
 
 class QTKeys(str, Enum):

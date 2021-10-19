@@ -8,7 +8,7 @@ mod mem_bench_impl {
 
     use console_backend::{
         connection::ConnectionManager,
-        shared_state::{ConnectionState, SharedState},
+        shared_state::SharedState,
         types::{ClientSender, RealtimeDelay},
     };
 
@@ -61,7 +61,7 @@ mod mem_bench_impl {
                 let proc = sys.get_process(pid).unwrap();
                 mem_readings_kb.push(proc.memory() as f32);
                 cpu_readings.push(proc.cpu_usage());
-                if !mem_read_state.conn_state().is_connected() {
+                if !mem_read_state.connection().is_connected() {
                     break;
                 }
             }
@@ -72,7 +72,7 @@ mod mem_bench_impl {
         let recv_thread = thread::spawn(move || {
             let mut iter_count = 0;
             loop {
-                if client_recv.recv().is_err() || !recv_state.conn_state().is_connected() {
+                if client_recv.recv().is_err() || !recv_state.connection().is_connected() {
                     break;
                 }
                 iter_count += 1;
@@ -81,17 +81,13 @@ mod mem_bench_impl {
         });
 
         let client_send = ClientSender::new(client_send);
-        let conn_manager = ConnectionManager::new(client_send, shared_state.clone());
+        let conn_manager = ConnectionManager::new(client_send, shared_state);
         conn_manager.connect_to_file(
             BENCH_FILEPATH.into(),
             RealtimeDelay::On,
             /*close_when_done=*/ true,
         );
-
-        let _ = shared_state
-            .watch_conn_state()
-            .wait_while(ConnectionState::is_connected);
-
+        drop(conn_manager);
         recv_thread.join().expect("join should succeed");
         mem_read_thread.join().expect("join should succeed");
     }

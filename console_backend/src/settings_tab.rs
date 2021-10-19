@@ -32,12 +32,9 @@ lazy_static! {
     ];
 }
 
-pub fn settings_tab_thread<S: CapnProtoSender>(tab: &SettingsTab<S>) {
+pub fn start_thd<S: CapnProtoSender>(tab: &SettingsTab<S>) {
     let mut recv = tab.shared_state.watch_settings_state();
     while let Ok(state) = recv.wait() {
-        if !tab.shared_state.conn_state().is_connected() {
-            break;
-        }
         tab.shared_state.set_settings_state(Default::default());
         tick(tab, state);
     }
@@ -119,6 +116,7 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
     }
 
     fn refresh(&self) {
+        self.settings.lock().clear_values();
         self.read_all_settings();
         self.send_table_data();
     }
@@ -508,6 +506,14 @@ impl Settings {
                         .insert(&setting.name, Setting::new(setting));
                     settings
                 }),
+        }
+    }
+
+    fn clear_values(&mut self) {
+        for group in self.inner.values_mut() {
+            for setting in group.values_mut() {
+                setting.value = None;
+            }
         }
     }
 

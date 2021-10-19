@@ -279,14 +279,12 @@ pub enum Keys {
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
 pub enum ConnectionState {
-    #[strum(serialize = "CLOSING")]
-    CLOSING,
-    #[strum(serialize = "DISCONNECTED")]
-    DISCONNECTED,
+    #[strum(serialize = "CLOSED")]
+    CLOSED,
     #[strum(serialize = "CONNECTED")]
     CONNECTED,
-    #[strum(serialize = "DISCONNECTING")]
-    DISCONNECTING,
+    #[strum(serialize = "DISCONNECTED")]
+    DISCONNECTED,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]

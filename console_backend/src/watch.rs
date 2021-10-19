@@ -1,4 +1,6 @@
 use std::fmt;
+use std::sync::atomic::AtomicUsize;
+use std::sync::Weak;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc,
@@ -17,6 +19,7 @@ impl<T: Clone> Watched<T> {
                 lock: Mutex::new(Value { value, version: 1 }),
                 on_update: Condvar::new(),
                 closed: AtomicBool::new(false),
+                senders: AtomicUsize::new(1),
             }),
         }
     }
@@ -40,8 +43,21 @@ impl<T: Clone> Watched<T> {
             lock.version
         };
         WatchReceiver {
+            shared: Arc::downgrade(&self.shared),
+            last_seen: version.wrapping_sub(1),
+        }
+    }
+
+    pub fn close(&self) {
+        self.shared.close();
+    }
+}
+
+impl<T> Clone for Watched<T> {
+    fn clone(&self) -> Self {
+        self.shared.add_sender();
+        Self {
             shared: Arc::clone(&self.shared),
-            last_seen: version,
         }
     }
 }
@@ -54,40 +70,46 @@ impl<T> fmt::Debug for Watched<T> {
 
 impl<T> Drop for Watched<T> {
     fn drop(&mut self) {
-        self.shared.close();
+        self.shared.remove_sender();
+        if self.shared.senders() == 0 {
+            self.shared.close();
+        }
     }
 }
 
 pub struct WatchReceiver<T> {
-    shared: Arc<Shared<T>>,
+    shared: Weak<Shared<T>>,
     last_seen: u64,
 }
 
 impl<T: Clone> WatchReceiver<T> {
-    pub fn get(&mut self) -> T {
-        let lock = self.shared.lock.lock();
+    pub fn get(&mut self) -> Result<T, RecvError> {
+        let shared = self.shared.upgrade().ok_or(RecvError)?;
+        let lock = shared.lock.lock();
         self.last_seen = lock.version;
-        lock.value.clone()
+        Ok(lock.value.clone())
     }
 
-    pub fn get_if_new(&mut self) -> Option<T> {
-        let lock = self.shared.lock.lock();
-        if self.last_seen == lock.version {
+    pub fn get_if_new(&mut self) -> Result<Option<T>, RecvError> {
+        let shared = self.shared.upgrade().ok_or(RecvError)?;
+        let lock = shared.lock.lock();
+        Ok(if self.last_seen == lock.version {
             None
         } else {
             self.last_seen = lock.version;
             Some(lock.value.clone())
-        }
+        })
     }
 
     pub fn wait(&mut self) -> Result<T, RecvError> {
-        if self.shared.closed() {
+        let shared = self.shared.upgrade().ok_or(RecvError)?;
+        if shared.is_closed() {
             return Err(RecvError);
         }
-        let mut lock = self.shared.lock.lock();
+        let mut lock = shared.lock.lock();
         while lock.version == self.last_seen {
-            self.shared.on_update.wait(&mut lock);
-            if self.shared.closed() {
+            shared.on_update.wait(&mut lock);
+            if shared.is_closed() {
                 return Err(RecvError);
             }
         }
@@ -95,7 +117,10 @@ impl<T: Clone> WatchReceiver<T> {
         Ok(lock.value.clone())
     }
 
-    pub fn wait_while<F: FnMut(&T) -> bool>(&mut self, mut f: F) -> Result<T, RecvError> {
+    pub fn wait_while<F>(&mut self, mut f: F) -> Result<T, RecvError>
+    where
+        F: FnMut(&T) -> bool,
+    {
         loop {
             let v = self.wait()?;
             if !f(&v) {
@@ -108,7 +133,7 @@ impl<T: Clone> WatchReceiver<T> {
 impl<T> Clone for WatchReceiver<T> {
     fn clone(&self) -> WatchReceiver<T> {
         WatchReceiver {
-            shared: Arc::clone(&self.shared),
+            shared: Weak::clone(&self.shared),
             last_seen: self.last_seen,
         }
     }
@@ -118,16 +143,29 @@ struct Shared<T> {
     lock: Mutex<Value<T>>,
     on_update: Condvar,
     closed: AtomicBool,
+    senders: AtomicUsize,
 }
 
 impl<T> Shared<T> {
-    fn closed(&self) -> bool {
-        self.closed.load(Ordering::SeqCst)
-    }
-
     fn close(&self) {
         self.closed.store(true, Ordering::SeqCst);
         self.on_update.notify_all();
+    }
+
+    fn is_closed(&self) -> bool {
+        self.closed.load(Ordering::SeqCst)
+    }
+
+    fn senders(&self) -> usize {
+        self.senders.load(Ordering::SeqCst)
+    }
+
+    fn add_sender(&self) -> usize {
+        self.senders.fetch_add(1, Ordering::SeqCst)
+    }
+
+    fn remove_sender(&self) -> usize {
+        self.senders.fetch_sub(1, Ordering::SeqCst)
     }
 }
 
@@ -156,10 +194,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn starts_seen() {
+    fn starts_unseen() {
         let watched = Watched::new(0);
         let mut recv = watched.watch();
-        assert!(recv.get_if_new().is_none());
+        assert_eq!(recv.get_if_new().unwrap(), Some(0));
     }
 
     #[test]
@@ -168,7 +206,7 @@ mod tests {
         let mut recv = watched.watch();
 
         assert_eq!(watched.get(), 0);
-        assert_eq!(recv.get(), 0);
+        assert_eq!(recv.get().unwrap(), 0);
 
         watched.send(1);
         assert_eq!(watched.get(), 1);
@@ -187,7 +225,7 @@ mod tests {
         watched.send(3);
 
         let mut recv = recv_thread.join().unwrap();
-        assert_eq!(recv.get(), 3);
+        assert_eq!(recv.get().unwrap(), 3);
         assert_eq!(watched.get(), 3);
     }
 
@@ -218,6 +256,8 @@ mod tests {
     fn disconnect() {
         let watched = Watched::new(0);
         let mut recv = watched.watch();
+        // mark first as seen
+        let _ = recv.get();
         thread::spawn(move || {
             thread::sleep(Duration::from_secs(1));
             drop(watched);
@@ -232,15 +272,15 @@ mod tests {
         let mut recv2 = watched.watch();
 
         watched.send(1);
-        assert_eq!(recv1.get_if_new(), Some(1));
-        assert_eq!(recv2.get_if_new(), Some(1));
+        assert_eq!(recv1.get_if_new().unwrap(), Some(1));
+        assert_eq!(recv2.get_if_new().unwrap(), Some(1));
 
         watched.send(2);
-        assert_eq!(recv1.get_if_new(), Some(2));
+        assert_eq!(recv1.get_if_new().unwrap(), Some(2));
 
         watched.send(3);
-        assert_eq!(recv1.get_if_new(), Some(3));
-        assert_eq!(recv2.get_if_new(), Some(3));
+        assert_eq!(recv1.get_if_new().unwrap(), Some(3));
+        assert_eq!(recv2.get_if_new().unwrap(), Some(3));
 
         drop(watched);
         assert!(recv1.wait().is_err());
@@ -255,14 +295,14 @@ mod tests {
         watched.send(1);
 
         let mut recv2 = recv1.clone();
-        assert_eq!(recv2.get_if_new(), Some(1));
+        assert_eq!(recv2.get_if_new().unwrap(), Some(1));
 
         let mut recv3 = recv2.clone();
-        assert_eq!(recv3.get_if_new(), None);
-        assert_eq!(recv1.get_if_new(), Some(1));
+        assert_eq!(recv3.get_if_new().unwrap(), None);
+        assert_eq!(recv1.get_if_new().unwrap(), Some(1));
 
         watched.send(2);
-        assert_eq!(recv1.get_if_new(), Some(2));
-        assert_eq!(recv2.get_if_new(), Some(2));
+        assert_eq!(recv1.get_if_new().unwrap(), Some(2));
+        assert_eq!(recv2.get_if_new().unwrap(), Some(2));
     }
 }

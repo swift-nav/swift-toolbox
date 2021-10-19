@@ -1,5 +1,5 @@
-use crate::common_constants::{self as cc, SbpLogging};
-use crate::connection::Connection;
+use crate::common_constants::SbpLogging;
+use crate::connection::ConnectionState;
 use crate::constants::{
     APPLICATION_NAME, APPLICATION_ORGANIZATION, APPLICATION_QUALIFIER, CONNECTION_HISTORY_FILENAME,
     DEFAULT_LOG_DIRECTORY, MAX_CONNECTION_HISTORY, MPS,
@@ -43,23 +43,22 @@ impl SharedState {
     pub fn new() -> SharedState {
         SharedState(Arc::new(Mutex::new(SharedStateInner::default())))
     }
-    pub fn conn_state(&self) -> ConnectionState {
+    pub fn connection(&self) -> ConnectionState {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).conn.get()
+        (*shared_data).conn.clone()
     }
-    pub fn watch_conn_state(&self) -> WatchReceiver<ConnectionState> {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).conn.watch()
-    }
-    pub fn set_conn_state<S>(&self, set_to: ConnectionState, client_send: &mut S)
+    pub fn set_connection<S>(&self, conn: ConnectionState, client_send: &mut S)
     where
         S: CapnProtoSender,
     {
         {
-            let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-            (*shared_data).conn.send(set_to.clone());
+            let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+            if let ConnectionState::Connected { stop_token, .. } = &shared_data.conn {
+                stop_token.stop();
+            }
+            (*shared_data).conn = conn.clone();
         }
-        send_conn_state(set_to, client_send);
+        send_conn_state(conn, client_send);
     }
     pub fn debug(&self) -> bool {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
@@ -354,7 +353,7 @@ pub struct SharedStateInner {
     pub(crate) log_panel: LogPanelState,
     pub(crate) tracking_tab: TrackingTabState,
     pub(crate) connection_history: ConnectionHistory,
-    pub(crate) conn: Watched<ConnectionState>,
+    pub(crate) conn: ConnectionState,
     pub(crate) debug: bool,
     pub(crate) server_running: bool,
     pub(crate) solution_tab: SolutionTabState,
@@ -380,7 +379,7 @@ impl SharedStateInner {
             tracking_tab: TrackingTabState::new(),
             debug: false,
             connection_history,
-            conn: Watched::new(ConnectionState::Disconnected),
+            conn: ConnectionState::Disconnected,
             server_running: true,
             solution_tab: SolutionTabState::new(),
             baseline_tab: BaselineTabState::new(),
@@ -793,43 +792,6 @@ impl ConnectionHistory {
     fn save(&self) -> Result<()> {
         serde_yaml::to_writer(fs::File::create(&self.filename())?, self)?;
         Ok(())
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum ConnectionState {
-    Closing,
-    Disconnected,
-    Connected(Connection),
-    Disconnecting,
-}
-
-impl ConnectionState {
-    /// Returns `true` if the connection state is [`Connected`].
-    ///
-    /// [`Connected`]: ConnectionState::Connected
-    pub fn is_connected(&self) -> bool {
-        matches!(self, Self::Connected(..))
-    }
-
-    pub fn into_connected(self) -> Option<Connection> {
-        if let Self::Connected(v) = self {
-            Some(v)
-        } else {
-            None
-        }
-    }
-}
-
-impl std::fmt::Display for ConnectionState {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use ConnectionState::*;
-        match self {
-            Closing => write!(f, "{}", cc::ConnectionState::CLOSING),
-            Disconnected => write!(f, "{}", cc::ConnectionState::DISCONNECTED),
-            Connected(_) => write!(f, "{}", cc::ConnectionState::CONNECTED),
-            Disconnecting => write!(f, "{}", cc::ConnectionState::DISCONNECTING),
-        }
     }
 }
 

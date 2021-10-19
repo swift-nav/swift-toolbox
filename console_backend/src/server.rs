@@ -1,4 +1,5 @@
 use crossbeam::channel;
+use log::debug;
 use pyo3::exceptions;
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
@@ -82,17 +83,17 @@ impl Server {
                             if self.client_sender.as_ref().unwrap().connected.get() {
                                 continue;
                             } else {
-                                eprintln!("shutting down");
+                                debug!("shutting down");
                                 break None;
                             }
                         } else {
-                            eprintln!("client recv disconnected");
+                            debug!("client recv disconnected");
                             break None;
                         }
                     }
                 }
             } else {
-                eprintln!("no client receive endpoint");
+                debug!("no client receive endpoint");
                 break None;
             }
         });
@@ -110,7 +111,7 @@ impl Server {
             server_send: Some(server_send),
         };
         let shared_state = SharedState::new();
-        setup_logging(client_send.clone(), shared_state.clone(), false);
+        setup_logging(client_send.clone(), shared_state.clone());
         let opt = CliOptions::from_filtered_cli();
         if let Some(ref path) = opt.settings_yaml {
             sbp_settings::settings::load_from_path(path).expect("failed to load settings");

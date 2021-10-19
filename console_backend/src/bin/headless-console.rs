@@ -29,7 +29,7 @@ Usage:
     let (_server_send, server_recv) = channel::unbounded::<Vec<u8>>();
     let client_send = ClientSender::new(client_send_);
     let shared_state = SharedState::new();
-    setup_logging(client_send.clone(), shared_state.clone(), true);
+    setup_logging(client_send.clone(), shared_state.clone());
     let conn_manager = ConnectionManager::new(client_send.clone(), shared_state.clone());
     handle_cli(opt, &conn_manager, shared_state.clone());
     refresh_connection_frontend(&mut client_send.clone(), shared_state.clone());

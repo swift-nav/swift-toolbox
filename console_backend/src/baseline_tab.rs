@@ -303,7 +303,7 @@ impl<S: CapnProtoSender> BaselineTab<S> {
                     flags: baseline_ned_fields.flags,
                     num_sats: baseline_ned_fields.n_sats,
                 }) {
-                    eprintln!("Unable to to write to baseline log, error {}.", err);
+                    error!("Unable to to write to baseline log, error {}.", err);
                 }
             }
         }

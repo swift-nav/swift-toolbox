@@ -17,6 +17,7 @@ use chrono::{DateTime, Utc};
 use crossbeam::channel::Sender;
 use directories::{ProjectDirs, UserDirs};
 use indexmap::set::IndexSet;
+use indexmap::IndexMap;
 use lazy_static::lazy_static;
 use log::error;
 use serde::{Deserialize, Serialize};
@@ -35,7 +36,6 @@ use std::{
 pub type Error = anyhow::Error;
 pub type Result<T> = anyhow::Result<T>;
 pub type UtcDateTime = DateTime<Utc>;
-use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct SharedState(Arc<Mutex<SharedStateInner>>);
@@ -153,12 +153,9 @@ impl SharedState {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).connection_history.addresses()
     }
-    pub fn serial_history(&self) -> (IndexSet<String>, HashMap<String, SerialConfig>) {
+    pub fn serial_history(&self) -> IndexMap<String, SerialConfig> {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (
-            (*shared_data).connection_history.serials(),
-            (*shared_data).connection_history.serial_configs(),
-        )
+        (*shared_data).connection_history.serial_configs()
     }
     pub fn update_folder_history(&self, folder: PathBuf) {
         let folder = String::from(folder.to_str().expect(CONVERT_TO_STR_FAILURE));
@@ -738,8 +735,7 @@ pub struct ConnectionHistory {
     addresses: IndexSet<Address>,
     files: IndexSet<String>,
     folders: IndexSet<String>,
-    serial_configs: HashMap<String, SerialConfig>,
-    serials: IndexSet<String>,
+    serial_configs: IndexMap<String, SerialConfig>,
 }
 
 impl Default for ConnectionHistory {
@@ -765,8 +761,7 @@ impl ConnectionHistory {
             addresses: IndexSet::new(),
             files: IndexSet::new(),
             folders,
-            serial_configs: HashMap::new(),
-            serials: IndexSet::new(),
+            serial_configs: IndexMap::new(),
         }
     }
     /// Return the filename of the saved connection history file.
@@ -785,13 +780,9 @@ impl ConnectionHistory {
     pub fn folders(&self) -> IndexSet<String> {
         self.folders.clone()
     }
-    /// Returns a clone of the previous serial configs.
-    pub fn serial_configs(&self) -> HashMap<String, SerialConfig> {
+    /// Returns a clone of the previous serial configs, in order of last use.
+    pub fn serial_configs(&self) -> IndexMap<String, SerialConfig> {
         self.serial_configs.clone()
-    }
-    /// Returns a clone of the list of previously used serial devices.
-    pub fn serials(&self) -> IndexSet<String> {
-        self.serials.clone()
     }
     /// Attempt to add a new host and port if not the most recent entries.
     ///
@@ -845,18 +836,11 @@ impl ConnectionHistory {
     /// - `baud`: The chosen baud rate
     /// - `flow`: The chosen flow control
     pub fn record_serial(&mut self, device: String, baud: u32, flow: FlowControl) {
-        self.serials.shift_remove(&device);
-        self.serials.insert(device.clone());
-        let diff = i32::max(0, self.serials.len() as i32 - MAX_CONNECTION_HISTORY);
-        let split_serials = self.serials.split_off(diff as usize);
-
-        for old_serial in self.serials.clone() {
-            self.serial_configs.remove(&old_serial);
-        }
-
-        self.serials = split_serials;
         let serial = SerialConfig { baud, flow };
-        self.serial_configs.insert(device, serial);
+        self.serial_configs.shift_remove(&device);
+        self.serial_configs.insert(device.clone(), serial);
+        let diff = i32::max(0, self.serial_configs.len() as i32 - MAX_CONNECTION_HISTORY);
+        self.serial_configs = self.serial_configs.split_off(diff as usize);
 
         if let Err(e) = self.save() {
             error!("Unable to save connection history, {}.", e);
@@ -969,23 +953,35 @@ mod tests {
 
         let mut conn_history = ConnectionHistory::new();
 
-        let serials = conn_history.serials();
         let configs = conn_history.serial_configs();
-        assert_eq!(serials.len(), 0);
         assert_eq!(configs.keys().len(), 0);
 
         conn_history.record_serial("/dev/ttyUSB0".to_string(), 115200, FlowControl::Software);
         conn_history.record_serial("/dev/ttyUSB0".to_string(), 115200, FlowControl::None);
 
-        let serials = conn_history.serials();
         let configs = conn_history.serial_configs();
 
-        assert_eq!(serials.len(), 1);
+        // Should only store one serial record despite the settings changing
         assert_eq!(configs.keys().len(), 1);
 
+        // Settings should be as recorded for the last change
         let config = configs.get("/dev/ttyUSB0").unwrap();
         assert_eq!(config.baud, 115200);
         assert_eq!(config.flow, FlowControl::None);
+
+        conn_history.record_serial("/dev/ttyUSB1".to_string(), 115200, FlowControl::None);
+
+        // The most recent entry should be stored last
+        let configs = conn_history.serial_configs();
+        assert_eq!(configs.keys().len(), 2);
+        assert_eq!(configs.keys().nth(1).unwrap(), "/dev/ttyUSB1");
+
+        conn_history.record_serial("/dev/ttyUSB0".to_string(), 115200, FlowControl::None);
+
+        // But the most recent entry should be updated if a previous device is used again
+        let configs = conn_history.serial_configs();
+        assert_eq!(configs.keys().len(), 2);
+        assert_eq!(configs.keys().nth(1).unwrap(), "/dev/ttyUSB0");
 
         let mut conn_history = ConnectionHistory::new();
 
@@ -999,17 +995,11 @@ mod tests {
         let configs = conn_history.serial_configs();
         configs.get("/dev/ttyUSB0").unwrap();
 
-        // Adding a new one should push out the oldest
+        // Adding a new device should push out the oldest
         conn_history.record_serial("/dev/mynewserial".to_string(), 115200, FlowControl::None);
-
         let configs = conn_history.serial_configs();
-        let serials = conn_history.serials();
-
-        let serial = serials.iter().find(|&x| x == "/dev/ttyUSB0");
         let config = configs.get("/dev/ttyUSB0");
-
         assert_eq!(config, None);
-        assert_eq!(serial, None);
 
         restore_backup_file(bfilename);
     }

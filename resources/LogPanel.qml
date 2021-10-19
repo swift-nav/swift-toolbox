@@ -108,7 +108,7 @@ Item {
                 implicitHeight: Constants.genericTable.cellHeight
                 border.color: Constants.genericTable.borderColor
 
-                Text {
+                Label {
                     id: headerText
 
                     width: parent.width
@@ -277,7 +277,7 @@ Item {
                 implicitWidth: tableView.columnWidthProvider(column)
                 color: row == selectedRow ? Constants.genericTable.cellHighlightedColor : Constants.genericTable.cellColor
 
-                Text {
+                Label {
                     width: parent.width
                     horizontalAlignment: Text.AlignLeft
                     clip: true

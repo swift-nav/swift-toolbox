@@ -248,7 +248,11 @@ cwd = "standalone-py"
 condition = { files_not_exist = ["${WORKSPACE}/standalone-py/python"] }
 script_runner = "@duckscript"
 script = '''
-wget -O py39.tar.zst ${STANDALONE_PY_URL}
+if is_empty $GITHUB_TOKEN
+  wget -O py39.tar.zst ${STANDALONE_PY_URL}
+else
+  exec --fail-on-error wget -q -O py39.tar.zst ${STANDALONE_PY_URL} --header "authorization: Bearer $GITHUB_TOKEN"
+end
 exec --fail-on-error zstd -f -d py39.tar.zst
 exec --fail-on-error tar -xvf py39.tar
 '''

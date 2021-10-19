@@ -90,8 +90,11 @@ jobs:
             ${{ runner.os }}-
 
       - name: Set up python builder
+        shell: bash
         run: |
           cargo make setup-builder
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run Backend Benchmarks (Windows)
         env:
@@ -156,8 +159,11 @@ jobs:
             ${{ runner.os }}-
 
       - name: Set up python builder
+        shell: bash
         run: |
           cargo make setup-builder
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run Checks
         run: |
@@ -262,8 +268,11 @@ jobs:
             ${{ runner.os }}-
 
       - name: Set up python builder
+        shell: bash
         run: |
           cargo make setup-builder
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build ${{ runner.os }} Binaries.
         env:

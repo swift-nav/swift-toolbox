@@ -16,17 +16,15 @@ ApplicationWindow {
     Component.onCompleted: {
         visible = true;
     }
-
     onWidthChanged: {
-        if (width < Constants.minimumWidth) {
+        if (width < Constants.minimumWidth)
             width = Constants.minimumWidth;
-        }
-    }
 
+    }
     onHeightChanged: {
-        if (height < Constants.minimumHeight) {
+        if (height < Constants.minimumHeight)
             height = Constants.minimumHeight;
-        }
+
     }
 
     MainDialogView {

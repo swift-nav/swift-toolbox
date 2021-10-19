@@ -1,8 +1,10 @@
 use std::collections::HashMap;
+use std::ops::Index;
 
 use capnp::message::Builder;
 use capnp::message::HeapAllocator;
 use capnp::serialize;
+
 use indexmap::IndexSet;
 use log::warn;
 use sbp::SbpString;
@@ -11,6 +13,7 @@ use serialport::available_ports;
 
 use crate::constants::*;
 use crate::errors::*;
+use crate::shared_state::SerialConfig;
 use crate::types::{CapnProtoSender, SignalCodes};
 use crate::{common_constants as cc, shared_state::SharedState};
 
@@ -90,6 +93,46 @@ pub fn refresh_navbar<P: CapnProtoSender>(client_send: &mut P, shared_state: Sha
             .iter_mut()
             .map(|x| x.port_name.replace("/sys/class/tty/", "/dev/"))
             .collect();
+    }
+
+    let previous_configs = shared_state.serial_history();
+
+    // Filter out previous devices that aren't currently connected
+    let filtered_previous: Vec<(&String, &SerialConfig)> = previous_configs
+        .iter()
+        .filter(|(device, _)| ports.iter().any(|curr_serial| &curr_serial == device))
+        .collect();
+
+    match filtered_previous.len() {
+        0 => {
+            nav_bar_status
+                .reborrow()
+                .get_last_serial_device()
+                .set_none(());
+        }
+        n => {
+            let last_device = filtered_previous.index(n - 1).0;
+            nav_bar_status
+                .reborrow()
+                .get_last_serial_device()
+                .set_port(last_device);
+        }
+    };
+
+    let mut previous_serial_configs = nav_bar_status
+        .reborrow()
+        .init_previous_serial_configs(filtered_previous.len() as u32);
+
+    for (i, (device, config)) in filtered_previous.iter().enumerate() {
+        let mut entry = previous_serial_configs.reborrow().get(i as u32);
+
+        entry.set_device(device);
+        entry.set_baudrate(config.baud);
+        entry.set_flow_control(
+            AVAILABLE_FLOWS
+                .get(config.flow as usize)
+                .expect("Unknown flow value"),
+        );
     }
 
     let mut available_ports = nav_bar_status

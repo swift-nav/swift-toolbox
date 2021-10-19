@@ -225,8 +225,8 @@ QtObject {
     }
 
     navBar: QtObject {
-        readonly property int connectionDropdownWidth: 100
-        readonly property int serialSelectionDropdownWidth: 100
+        readonly property int connectionDropdownWidth: 120
+        readonly property int serialSelectionDropdownWidth: 200
         readonly property int dropdownHeight: 40
         readonly property int buttonHeight: 40
         readonly property int buttonSvgHeight: 15

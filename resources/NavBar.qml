@@ -18,6 +18,18 @@ Rectangle {
     property variant previous_ports: []
     property variant previous_files: []
     property variant log_level_labels: []
+    property variant previous_serial_configs: []
+    property variant last_used_serial_device: null
+
+    function restore_previous_serial_settings(device_name) {
+        const config = previous_serial_configs.find((element) => {
+            return element[0] === device_name;
+        });
+        if (config) {
+            serialDeviceBaudRate.currentIndex = available_baudrates.indexOf(config[1]);
+            serialDeviceFlowControl.currentIndex = available_flows.indexOf(config[2]);
+        }
+    }
 
     anchors.fill: parent
     border.width: Constants.statusBar.borderWidth
@@ -37,9 +49,6 @@ Rectangle {
         ComboBox {
             id: navBarSourceSelection
 
-            Component.onCompleted: {
-                navBarSourceSelection.indicator.width = Constants.navBar.connectionDropdownWidth / 3;
-            }
             Layout.preferredWidth: Constants.navBar.connectionDropdownWidth
             Layout.preferredHeight: Constants.navBar.dropdownHeight
             model: sources
@@ -82,14 +91,12 @@ Rectangle {
         ComboBox {
             id: serialDevice
 
-            Component.onCompleted: {
-                serialDevice.indicator.width = Constants.navBar.serialSelectionDropdownWidth / 3;
-            }
             visible: false
             Layout.preferredHeight: Constants.navBar.dropdownHeight
             Layout.preferredWidth: Constants.navBar.serialSelectionDropdownWidth
             model: available_devices
             onActivated: {
+                restore_previous_serial_settings(available_devices[currentIndex]);
             }
 
             states: State {
@@ -110,18 +117,25 @@ Rectangle {
             visible: false
             Layout.preferredHeight: Constants.navBar.buttonHeight
             Layout.preferredWidth: Constants.navBar.serialDeviceRefreshWidth
-            text: "F5"
+            ToolTip.text: "Refresh"
             onClicked: {
                 data_model.serial_refresh();
             }
+
+            Image {
+                anchors.centerIn: parent
+                width: Constants.navBar.buttonSvgHeight
+                height: Constants.navBar.buttonSvgHeight
+                source: Constants.icons.refreshPath
+                smooth: true
+                antialiasing: true
+            }
+
         }
 
         ComboBox {
             id: serialDeviceBaudRate
 
-            Component.onCompleted: {
-                serialDeviceBaudRate.indicator.width = Constants.navBar.serialDeviceBaudRateDropdownWidth / 3;
-            }
             visible: false
             Layout.preferredHeight: Constants.navBar.dropdownHeight
             Layout.preferredWidth: Constants.navBar.serialDeviceBaudRateDropdownWidth
@@ -144,9 +158,6 @@ Rectangle {
         ComboBox {
             id: serialDeviceFlowControl
 
-            Component.onCompleted: {
-                serialDeviceFlowControl.indicator.width = Constants.navBar.serialDeviceFlowControlDropdownWidth / 3;
-            }
             visible: false
             Layout.preferredHeight: Constants.navBar.dropdownHeight
             Layout.preferredWidth: Constants.navBar.serialDeviceFlowControlDropdownWidth
@@ -378,8 +389,17 @@ Rectangle {
                 previous_hosts = navBarData.previous_hosts;
                 previous_ports = navBarData.previous_ports;
                 previous_files = navBarData.previous_files;
+                previous_serial_configs = navBarData.previous_serial_configs;
                 connectButton.checked = navBarData.connected;
                 logLevelButton.currentIndex = log_level_labels.indexOf(navBarData.log_level);
+                if (!last_used_serial_device && navBarData.last_used_serial_device) {
+                    // Set the default selected to the last used
+                    last_used_serial_device = navBarData.last_used_serial_device;
+                    serialDevice.currentIndex = available_devices.indexOf(last_used_serial_device);
+                    if (serialDevice.currentIndex != -1)
+                        restore_previous_serial_settings(available_devices[serialDevice.currentIndex]);
+
+                }
             }
         }
 

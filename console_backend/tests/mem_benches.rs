@@ -87,6 +87,7 @@ mod mem_bench_impl {
             RealtimeDelay::On,
             /*close_when_done=*/ true,
         );
+        thread::sleep(std::time::Duration::from_secs(1));
         drop(conn_manager);
         recv_thread.join().expect("join should succeed");
         mem_read_thread.join().expect("join should succeed");

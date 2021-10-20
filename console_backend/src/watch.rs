@@ -16,7 +16,7 @@ impl<T: Clone> Watched<T> {
     pub fn new(value: T) -> Watched<T> {
         Watched {
             shared: Arc::new(Shared {
-                lock: Mutex::new(Value { value, version: 1 }),
+                data: Mutex::new(Value { value, version: 1 }),
                 on_update: Condvar::new(),
                 closed: AtomicBool::new(false),
                 senders: AtomicUsize::new(1),
@@ -25,22 +25,22 @@ impl<T: Clone> Watched<T> {
     }
 
     pub fn get(&self) -> T {
-        self.shared.lock.lock().value.clone()
+        self.shared.data.lock().value.clone()
     }
 
     pub fn send(&self, value: T) {
         {
-            let mut lock = self.shared.lock.lock();
-            lock.value = value;
-            lock.version = lock.version.wrapping_add(1);
+            let mut data = self.shared.data.lock();
+            data.value = value;
+            data.version = data.version.wrapping_add(1);
         }
         self.shared.on_update.notify_all();
     }
 
     pub fn watch(&self) -> WatchReceiver<T> {
         let version = {
-            let lock = self.shared.lock.lock();
-            lock.version
+            let data = self.shared.data.lock();
+            data.version
         };
         WatchReceiver {
             shared: Arc::downgrade(&self.shared),
@@ -55,10 +55,16 @@ impl<T: Clone> Watched<T> {
 
 impl<T> Clone for Watched<T> {
     fn clone(&self) -> Self {
-        self.shared.add_sender();
+        self.shared.senders.fetch_add(1, Ordering::SeqCst);
         Self {
             shared: Arc::clone(&self.shared),
         }
+    }
+}
+
+impl<T: Clone + Default> Default for Watched<T> {
+    fn default() -> Self {
+        Watched::new(Default::default())
     }
 }
 
@@ -72,8 +78,7 @@ impl<T> Drop for Watched<T> {
     fn drop(&mut self) {
         // if we are the last sender close the channel so things calling
         // `.wait()` will terminate
-        self.shared.remove_sender();
-        if self.shared.senders() == 0 {
+        if self.shared.senders.fetch_sub(1, Ordering::SeqCst) == 1 {
             self.shared.close();
         }
     }
@@ -86,49 +91,53 @@ pub struct WatchReceiver<T> {
 
 impl<T: Clone> WatchReceiver<T> {
     pub fn get(&mut self) -> Result<T, RecvError> {
-        let shared = self.shared.upgrade().ok_or(RecvError)?;
-        let lock = shared.lock.lock();
-        self.last_seen = lock.version;
-        Ok(lock.value.clone())
+        let shared = Shared::upgrade(&self.shared)?;
+        let data = shared.data.lock();
+        self.last_seen = data.version;
+        Ok(data.value.clone())
     }
 
     pub fn get_if_new(&mut self) -> Result<Option<T>, RecvError> {
-        let shared = self.shared.upgrade().ok_or(RecvError)?;
-        let lock = shared.lock.lock();
-        Ok(if self.last_seen == lock.version {
-            None
+        let shared = Shared::upgrade(&self.shared)?;
+        let data = shared.data.lock();
+        if self.last_seen == data.version {
+            Ok(None)
         } else {
-            self.last_seen = lock.version;
-            Some(lock.value.clone())
-        })
+            self.last_seen = data.version;
+            Ok(Some(data.value.clone()))
+        }
     }
 
     pub fn wait(&mut self) -> Result<T, RecvError> {
-        let shared = self.shared.upgrade().ok_or(RecvError)?;
-        if shared.is_closed() {
-            return Err(RecvError);
-        }
-        let mut lock = shared.lock.lock();
-        while lock.version == self.last_seen {
-            shared.on_update.wait(&mut lock);
+        let shared = Shared::upgrade(&self.shared)?;
+        let mut data = shared.data.lock();
+        while data.version == self.last_seen {
+            shared.on_update.wait(&mut data);
             if shared.is_closed() {
                 return Err(RecvError);
             }
         }
-        self.last_seen = lock.version;
-        Ok(lock.value.clone())
+        self.last_seen = data.version;
+        Ok(data.value.clone())
+    }
+
+    pub fn wait_until<F>(&mut self, mut f: F) -> Result<T, RecvError>
+    where
+        F: FnMut(&T) -> bool,
+    {
+        loop {
+            let v = self.wait()?;
+            if f(&v) {
+                return Ok(v);
+            }
+        }
     }
 
     pub fn wait_while<F>(&mut self, mut f: F) -> Result<T, RecvError>
     where
         F: FnMut(&T) -> bool,
     {
-        loop {
-            let v = self.wait()?;
-            if !f(&v) {
-                return Ok(v);
-            }
-        }
+        self.wait_until(|v| !f(v))
     }
 }
 
@@ -142,7 +151,7 @@ impl<T> Clone for WatchReceiver<T> {
 }
 
 struct Shared<T> {
-    lock: Mutex<Value<T>>,
+    data: Mutex<Value<T>>,
     on_update: Condvar,
     closed: AtomicBool,
     senders: AtomicUsize,
@@ -158,16 +167,13 @@ impl<T> Shared<T> {
         self.closed.load(Ordering::SeqCst)
     }
 
-    fn senders(&self) -> usize {
-        self.senders.load(Ordering::SeqCst)
-    }
-
-    fn add_sender(&self) -> usize {
-        self.senders.fetch_add(1, Ordering::SeqCst)
-    }
-
-    fn remove_sender(&self) -> usize {
-        self.senders.fetch_sub(1, Ordering::SeqCst)
+    fn upgrade(me: &Weak<Self>) -> Result<Arc<Self>, RecvError> {
+        let shared = me.upgrade().ok_or(RecvError)?;
+        if shared.is_closed() {
+            Err(RecvError)
+        } else {
+            Ok(shared)
+        }
     }
 }
 
@@ -255,16 +261,17 @@ mod tests {
     }
 
     #[test]
-    fn disconnect() {
+    fn disconnect_watch() {
         let watched = Watched::new(0);
         let mut recv = watched.watch();
         // mark first as seen
-        let _ = recv.get();
+        let _ = dbg!(recv.get());
         thread::spawn(move || {
             thread::sleep(Duration::from_secs(1));
             drop(watched);
+            eprintln!("here");
         });
-        assert!(recv.wait().is_err());
+        assert!(dbg!(recv.wait().is_err()));
     }
 
     #[test]

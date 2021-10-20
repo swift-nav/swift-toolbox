@@ -7,7 +7,7 @@ mod mem_bench_impl {
     use sysinfo::{get_current_pid, ProcessExt, System, SystemExt};
 
     use console_backend::{
-        connection::ConnectionManager,
+        connection::{ConnectionManager, ConnectionState},
         shared_state::SharedState,
         types::{ClientSender, RealtimeDelay},
     };
@@ -48,10 +48,10 @@ mod mem_bench_impl {
         println!("PID: {}", pid);
 
         let (client_send, client_recv) = channel::unbounded::<Vec<u8>>();
+        let (mem_stop_send, mem_stop_recv) = channel::bounded(1);
         let shared_state = SharedState::new();
         shared_state.set_debug(true);
 
-        let mem_read_state = shared_state.clone();
         let mem_read_thread = thread::spawn(move || {
             let mut sys = System::new();
             let mut mem_readings_kb: Vec<f32> = vec![];
@@ -61,7 +61,7 @@ mod mem_bench_impl {
                 let proc = sys.get_process(pid).unwrap();
                 mem_readings_kb.push(proc.memory() as f32);
                 cpu_readings.push(proc.cpu_usage());
-                if !mem_read_state.connection().is_connected() {
+                if mem_stop_recv.try_recv().is_ok() {
                     break;
                 }
             }
@@ -72,22 +72,30 @@ mod mem_bench_impl {
         let recv_thread = thread::spawn(move || {
             let mut iter_count = 0;
             loop {
-                if client_recv.recv().is_err() || !recv_state.connection().is_connected() {
+                if client_recv.recv().is_err() || recv_state.connection().is_disconnected() {
                     break;
                 }
                 iter_count += 1;
             }
             assert!(iter_count > 0);
+            mem_stop_send.send(()).unwrap();
         });
 
+        let mut conn_watch = shared_state.watch_connection();
         let client_send = ClientSender::new(client_send);
-        let conn_manager = ConnectionManager::new(client_send.clone(), shared_state);
+        let conn_manager = ConnectionManager::new(client_send, shared_state);
+
         conn_manager.connect_to_file(
             BENCH_FILEPATH.into(),
             RealtimeDelay::On,
             /*close_when_done=*/ true,
         );
-        thread::sleep(std::time::Duration::from_secs(1));
+        conn_watch
+            .wait_while(ConnectionState::is_disconnected)
+            .unwrap();
+        conn_watch
+            .wait_while(ConnectionState::is_connected)
+            .unwrap();
         drop(conn_manager);
         recv_thread.join().expect("join should succeed");
         mem_read_thread.join().expect("join should succeed");

@@ -47,18 +47,22 @@ impl SharedState {
     }
     pub fn connection(&self) -> ConnectionState {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).conn.clone()
+        (*shared_data).conn.get()
+    }
+    pub fn watch_connection(&self) -> WatchReceiver<ConnectionState> {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).conn.watch()
     }
     pub fn set_connection<S>(&self, conn: ConnectionState, client_send: &mut S)
     where
         S: CapnProtoSender,
     {
         {
-            let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-            if let ConnectionState::Connected { stop_token, .. } = &shared_data.conn {
+            let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+            if let ConnectionState::Connected { stop_token, .. } = shared_data.conn.get() {
                 stop_token.stop();
             }
-            (*shared_data).conn = conn.clone();
+            shared_data.conn.send(conn.clone());
         }
         send_conn_state(conn, client_send);
     }
@@ -365,7 +369,7 @@ pub struct SharedStateInner {
     pub(crate) log_panel: LogPanelState,
     pub(crate) tracking_tab: TrackingTabState,
     pub(crate) connection_history: ConnectionHistory,
-    pub(crate) conn: ConnectionState,
+    pub(crate) conn: Watched<ConnectionState>,
     pub(crate) debug: bool,
     pub(crate) server_running: bool,
     pub(crate) solution_tab: SolutionTabState,
@@ -391,7 +395,7 @@ impl SharedStateInner {
             tracking_tab: TrackingTabState::new(),
             debug: false,
             connection_history,
-            conn: ConnectionState::Disconnected,
+            conn: Watched::new(ConnectionState::Disconnected),
             server_running: true,
             solution_tab: SolutionTabState::new(),
             baseline_tab: BaselineTabState::new(),

@@ -375,7 +375,6 @@ Rectangle {
 
                 }
                 conn_state = navBarData.conn_state;
-                console.log(conn_state);
                 connectButton.checked = conn_state == "CONNECTED";
             }
         }

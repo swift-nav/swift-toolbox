@@ -46,10 +46,10 @@ from .logging_bar import (
     LoggingBarModel,
 )
 
-from .advanced_ins_tab import (
-    AdvancedInsModel,
-    AdvancedInsPoints,
-    ADVANCED_INS_TAB,
+from .advanced_imu_tab import (
+    AdvancedImuModel,
+    AdvancedImuPoints,
+    ADVANCED_IMU_TAB,
 )
 
 from .advanced_magnetometer_tab import (
@@ -199,7 +199,7 @@ TAB_LAYOUT = {
         MAIN_INDEX: 6,
         SUB_INDEX: 0,
     },
-    Tabs.ADVANCED_INS: {
+    Tabs.ADVANCED_IMU: {
         MAIN_INDEX: 6,
         SUB_INDEX: 1,
     },
@@ -276,8 +276,8 @@ def receive_messages(app_, backend, messages):
         elif m.which == Message.Union.BaselineTableStatus:
             BASELINE_TABLE[Keys.ENTRIES][:] = [[entry.key, entry.val] for entry in m.baselineTableStatus.data]
         elif m.which == Message.Union.AdvancedInsStatus:
-            ADVANCED_INS_TAB[Keys.FIELDS_DATA][:] = m.advancedInsStatus.fieldsData
-            ADVANCED_INS_TAB[Keys.POINTS][:] = [
+            ADVANCED_IMU_TAB[Keys.FIELDS_DATA][:] = m.advancedInsStatus.fieldsData
+            ADVANCED_IMU_TAB[Keys.POINTS][:] = [
                 [QPointF(point.x, point.y) for point in m.advancedInsStatus.data[idx]]
                 for idx in range(len(m.advancedInsStatus.data))
             ]
@@ -796,7 +796,7 @@ def main():
     qmlRegisterType(LogPanelData, "SwiftConsole", 1, 0, "LogPanelData")  # type: ignore
     qmlRegisterType(NavBarData, "SwiftConsole", 1, 0, "NavBarData")  # type: ignore
     qmlRegisterType(LoggingBarData, "SwiftConsole", 1, 0, "LoggingBarData")  # type: ignore
-    qmlRegisterType(AdvancedInsPoints, "SwiftConsole", 1, 0, "AdvancedInsPoints")  # type: ignore
+    qmlRegisterType(AdvancedImuPoints, "SwiftConsole", 1, 0, "AdvancedImuPoints")  # type: ignore
     qmlRegisterType(AdvancedMagnetometerPoints, "SwiftConsole", 1, 0, "AdvancedMagnetometerPoints")  # type: ignore
     qmlRegisterType(AdvancedNetworkingData, "SwiftConsole", 1, 0, "AdvancedNetworkingData")  # type: ignore
     qmlRegisterType(
@@ -840,7 +840,7 @@ def main():
     data_model = DataModel(endpoint_main, messages_main)
     log_panel_model = LogPanelModel()
     nav_bar_model = NavBarModel()
-    advanced_ins_model = AdvancedInsModel()
+    advanced_imu_model = AdvancedImuModel()
     advanced_magnetometer_model = AdvancedMagnetometerModel()
     advanced_networking_model = AdvancedNetworkingModel()
     advanced_spectrum_analyzer_model = AdvancedSpectrumAnalyzerModel()
@@ -861,7 +861,7 @@ def main():
     root_context = engine.rootContext()
     root_context.setContextProperty("log_panel_model", log_panel_model)
     root_context.setContextProperty("nav_bar_model", nav_bar_model)
-    root_context.setContextProperty("advanced_ins_model", advanced_ins_model)
+    root_context.setContextProperty("advanced_imu_model", advanced_imu_model)
     root_context.setContextProperty("advanced_magnetometer_model", advanced_magnetometer_model)
     root_context.setContextProperty("advanced_networking_model", advanced_networking_model)
     root_context.setContextProperty("advanced_spectrum_analyzer_model", advanced_spectrum_analyzer_model)

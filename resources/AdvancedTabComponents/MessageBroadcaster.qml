@@ -131,7 +131,7 @@ Item {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
                 height: Constants.networking.messageBroadcasterTextInputHeight
-                border.width: Constants.advancedIns.textDataBarBorderWidth
+                border.width: Constants.advancedImu.textDataBarBorderWidth
                 clip: true
 
                 TextInput {
@@ -201,7 +201,7 @@ Item {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
                 height: Constants.networking.messageBroadcasterTextInputHeight
-                border.width: Constants.advancedIns.textDataBarBorderWidth
+                border.width: Constants.advancedImu.textDataBarBorderWidth
                 clip: true
 
                 TextInput {

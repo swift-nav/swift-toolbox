@@ -12,7 +12,7 @@ NAV_BAR: Dict[str, Any] = {
     Keys.AVAILABLE_BAUDRATES: [],
     Keys.AVAILABLE_FLOWS: [],
     Keys.AVAILABLE_REFRESH_RATES: [],
-    Keys.APPLICATION_STATE: ConnectionState.DISCONNECTED,
+    Keys.CONNECTION_STATE: ConnectionState.DISCONNECTED,
     Keys.PREVIOUS_HOSTS: [],
     Keys.PREVIOUS_PORTS: [],
     Keys.PREVIOUS_FILES: [],
@@ -154,7 +154,7 @@ class NavBarModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_available_baudrates(NAV_BAR[Keys.AVAILABLE_BAUDRATES])
         cp.set_available_flows(NAV_BAR[Keys.AVAILABLE_FLOWS])
         cp.set_available_refresh_rates(NAV_BAR[Keys.AVAILABLE_REFRESH_RATES])
-        cp.set_conn_state(NAV_BAR[Keys.APPLICATION_STATE])
+        cp.set_conn_state(NAV_BAR[Keys.CONNECTION_STATE])
         cp.set_previous_hosts(NAV_BAR[Keys.PREVIOUS_HOSTS])
         cp.set_previous_ports(NAV_BAR[Keys.PREVIOUS_PORTS])
         cp.set_previous_files(NAV_BAR[Keys.PREVIOUS_FILES])

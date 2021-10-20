@@ -233,7 +233,7 @@ def receive_messages(app_, backend, messages):
             app_state = ConnectionState(m.status.text)
             if app_state == ConnectionState.CLOSED:
                 return app_.quit()
-            NAV_BAR[Keys.APPLICATION_STATE] = app_state
+            NAV_BAR[Keys.CONNECTION_STATE] = app_state
 
         elif m.which == Message.Union.SolutionPositionStatus:
             SOLUTION_POSITION_TAB[Keys.POINTS][:] = [

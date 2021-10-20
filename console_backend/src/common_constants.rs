@@ -157,8 +157,8 @@ pub enum Keys {
     PREVIOUS_PORTS,
     #[strum(serialize = "PREVIOUS_FILES")]
     PREVIOUS_FILES,
-    #[strum(serialize = "APPLICATION_STATE")]
-    APPLICATION_STATE,
+    #[strum(serialize = "CONNECTION_STATE")]
+    CONNECTION_STATE,
     #[strum(serialize = "PORT")]
     PORT,
     #[strum(serialize = "POS")]

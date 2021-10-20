@@ -131,7 +131,7 @@ impl<S: CapnProtoSender> AdvancedImuTab<S> {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
-        let mut tab_status = msg.init_advanced_ins_status();
+        let mut tab_status = msg.init_advanced_imu_status();
 
         let mut tab_points = tab_status.reborrow().init_data(NUM_INS_PLOT_ROWS as u32);
 

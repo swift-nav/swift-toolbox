@@ -285,7 +285,7 @@ struct TrackingSignalsStatus {
     checkLabels @4 :List(Text);
 }
 
-struct AdvancedInsStatus {
+struct AdvancedImuStatus {
     data @0 :List(List(Point));
     fieldsData @1 :List(Float64);
 }
@@ -450,7 +450,7 @@ struct Message {
         loggingBarFront @18 :LoggingBarFront;
         loggingBarStatus @19 :LoggingBarStatus;
         logLevelFront @20 :LogLevelFront;
-        advancedInsStatus @21 :AdvancedInsStatus;
+        advancedImuStatus @21 :AdvancedImuStatus;
         fusionStatusFlagsStatus @22 :FusionStatusFlagsStatus;
         advancedMagnetometerStatus @23 :AdvancedMagnetometerStatus;
         baselinePlotStatus @24 :BaselinePlotStatus;

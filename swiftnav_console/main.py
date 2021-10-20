@@ -275,11 +275,11 @@ def receive_messages(app_, backend, messages):
             BASELINE_PLOT[Keys.E_MIN] = m.baselinePlotStatus.eMin
         elif m.which == Message.Union.BaselineTableStatus:
             BASELINE_TABLE[Keys.ENTRIES][:] = [[entry.key, entry.val] for entry in m.baselineTableStatus.data]
-        elif m.which == Message.Union.AdvancedInsStatus:
-            ADVANCED_IMU_TAB[Keys.FIELDS_DATA][:] = m.advancedInsStatus.fieldsData
+        elif m.which == Message.Union.AdvancedImuStatus:
+            ADVANCED_IMU_TAB[Keys.FIELDS_DATA][:] = m.advancedImuStatus.fieldsData
             ADVANCED_IMU_TAB[Keys.POINTS][:] = [
-                [QPointF(point.x, point.y) for point in m.advancedInsStatus.data[idx]]
-                for idx in range(len(m.advancedInsStatus.data))
+                [QPointF(point.x, point.y) for point in m.advancedImuStatus.data[idx]]
+                for idx in range(len(m.advancedImuStatus.data))
             ]
         elif m.which == Message.Union.AdvancedSpectrumAnalyzerStatus:
             ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.CHANNEL] = m.advancedSpectrumAnalyzerStatus.channel

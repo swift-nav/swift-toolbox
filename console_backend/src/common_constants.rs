@@ -157,8 +157,8 @@ pub enum Keys {
     PREVIOUS_PORTS,
     #[strum(serialize = "PREVIOUS_FILES")]
     PREVIOUS_FILES,
-    #[strum(serialize = "CONNECTED")]
-    CONNECTED,
+    #[strum(serialize = "CONNECTION_STATE")]
+    CONNECTION_STATE,
     #[strum(serialize = "PORT")]
     PORT,
     #[strum(serialize = "POS")]
@@ -282,9 +282,9 @@ pub enum Keys {
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
-pub enum ApplicationStates {
-    #[strum(serialize = "CLOSE")]
-    CLOSE,
+pub enum ConnectionState {
+    #[strum(serialize = "CLOSED")]
+    CLOSED,
     #[strum(serialize = "CONNECTED")]
     CONNECTED,
     #[strum(serialize = "DISCONNECTED")]

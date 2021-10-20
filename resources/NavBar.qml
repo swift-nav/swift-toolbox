@@ -18,6 +18,7 @@ Rectangle {
     property variant previous_ports: []
     property variant previous_files: []
     property variant log_level_labels: []
+    property string conn_state: "DISCONNECTED"
     property variant previous_serial_configs: []
     property variant last_used_serial_device: null
 
@@ -248,39 +249,13 @@ Rectangle {
         }
 
         Button {
-            id: connectionPauseButton
-
-            Layout.preferredWidth: Constants.navBar.connectionPauseWidth
-            Layout.preferredHeight: Constants.navBar.buttonHeight
-            ToolTip.visible: hovered
-            ToolTip.text: !checked ? "Pause" : "Unpause"
-            checkable: true
-            onClicked: data_model.pause(checked)
-
-            Image {
-                id: connectionPauseImage
-
-                anchors.centerIn: parent
-                width: Constants.navBar.buttonSvgHeight
-                height: Constants.navBar.buttonSvgHeight
-                source: Constants.icons.pauseButtonUrl
-                visible: false
-            }
-
-            ColorOverlay {
-                anchors.fill: connectionPauseImage
-                source: connectionPauseImage
-                color: !connectionPauseButton.checked ? Constants.materialGrey : Constants.swiftOrange
-            }
-
-        }
-
-        Button {
             id: connectButton
 
             Layout.preferredWidth: Constants.navBar.connectButtonWidth
             Layout.preferredHeight: Constants.navBar.buttonHeight
             checkable: true
+            checked: true
+            enabled: conn_state == "DISCONNECTED" || conn_state == "CONNECTED"
             ToolTip.visible: hovered
             ToolTip.text: !checked ? "Connect" : "Disconnect"
             onClicked: {
@@ -390,7 +365,6 @@ Rectangle {
                 previous_ports = navBarData.previous_ports;
                 previous_files = navBarData.previous_files;
                 previous_serial_configs = navBarData.previous_serial_configs;
-                connectButton.checked = navBarData.connected;
                 logLevelButton.currentIndex = log_level_labels.indexOf(navBarData.log_level);
                 if (!last_used_serial_device && navBarData.last_used_serial_device) {
                     // Set the default selected to the last used
@@ -400,6 +374,8 @@ Rectangle {
                         restore_previous_serial_settings(available_devices[serialDevice.currentIndex]);
 
                 }
+                conn_state = navBarData.conn_state;
+                connectButton.checked = conn_state == "CONNECTED";
             }
         }
 

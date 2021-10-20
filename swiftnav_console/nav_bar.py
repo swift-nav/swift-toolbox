@@ -5,14 +5,14 @@ from typing import Dict, List, Any
 
 from PySide2.QtCore import Property, QObject, Slot
 
-from .constants import Keys, LogLevel, QTKeys
+from .constants import Keys, LogLevel, QTKeys, ConnectionState
 
 NAV_BAR: Dict[str, Any] = {
     Keys.AVAILABLE_PORTS: [],
     Keys.AVAILABLE_BAUDRATES: [],
     Keys.AVAILABLE_FLOWS: [],
     Keys.AVAILABLE_REFRESH_RATES: [],
-    Keys.CONNECTED: False,
+    Keys.CONNECTION_STATE: ConnectionState.DISCONNECTED,
     Keys.PREVIOUS_HOSTS: [],
     Keys.PREVIOUS_PORTS: [],
     Keys.PREVIOUS_FILES: [],
@@ -29,7 +29,7 @@ class NavBarData(QObject):  # pylint: disable=too-many-instance-attributes disab
     _available_baudrates: List[str] = []
     _available_flows: List[str] = []
     _available_refresh_rates: List[str] = []
-    _connected: bool = False
+    _conn_state: ConnectionState = ConnectionState.DISCONNECTED
     _previous_hosts: List[str] = []
     _previous_ports: List[str] = []
     _previous_files: List[str] = []
@@ -90,19 +90,19 @@ class NavBarData(QObject):  # pylint: disable=too-many-instance-attributes disab
         QTKeys.QVARIANTLIST, get_available_refresh_rates, set_available_refresh_rates  # type: ignore
     )
 
-    def get_connected(self) -> bool:
-        """Getter for _connected.
+    def get_conn_state(self) -> ConnectionState:
+        """Getter for _conn_state.
 
         Returns:
-            bool: Whether a connection is live or not.
+            ConnectionState: Whether a connection is live, disconnecting or disconnected.
         """
-        return self._connected
+        return self._conn_state
 
-    def set_connected(self, connected: bool) -> None:
-        """Setter for _connected."""
-        self._connected = connected
+    def set_conn_state(self, conn_state: ConnectionState) -> None:
+        """Setter for _conn_state."""
+        self._conn_state = conn_state
 
-    connected = Property(bool, get_connected, set_connected)
+    conn_state = Property(str, get_conn_state, set_conn_state)
 
     def get_previous_hosts(self) -> List[str]:
         return self._previous_hosts
@@ -154,7 +154,7 @@ class NavBarModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_available_baudrates(NAV_BAR[Keys.AVAILABLE_BAUDRATES])
         cp.set_available_flows(NAV_BAR[Keys.AVAILABLE_FLOWS])
         cp.set_available_refresh_rates(NAV_BAR[Keys.AVAILABLE_REFRESH_RATES])
-        cp.set_connected(NAV_BAR[Keys.CONNECTED])
+        cp.set_conn_state(NAV_BAR[Keys.CONNECTION_STATE])
         cp.set_previous_hosts(NAV_BAR[Keys.PREVIOUS_HOSTS])
         cp.set_previous_ports(NAV_BAR[Keys.PREVIOUS_PORTS])
         cp.set_previous_files(NAV_BAR[Keys.PREVIOUS_FILES])

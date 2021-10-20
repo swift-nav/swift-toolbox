@@ -1,6 +1,6 @@
-use std::{io::ErrorKind, thread::sleep, time::Duration};
+use std::{io, sync::Arc, thread};
 
-use crossbeam::sync::Parker;
+use crossbeam::channel::{Receiver, Sender};
 use log::{debug, error};
 use sbp::{
     link::LinkSource,
@@ -17,62 +17,37 @@ use sbp::{
         },
         tracking::{MsgMeasurementState, MsgTrackingState},
     },
-    sbp_iter_ext::{ControlFlow, SbpIterExt},
-    SbpMessage,
+    SbpIterExt, SbpMessage,
 };
 
-use crate::constants::PAUSE_LOOP_SLEEP_DURATION_MS;
-use crate::errors::UNABLE_TO_CLONE_UPDATE_SHARED;
-use crate::log_panel::handle_log_msg;
-use crate::shared_state::SharedState;
+use crate::types::UartState;
 use crate::types::{
     BaselineNED, CapnProtoSender, Dops, GpsTime, MsgSender, ObservationMsg, PosLLH, RealtimeDelay,
-    Result, Specan, VelNED,
+    Specan, VelNED,
 };
 use crate::update_tab;
-use crate::utils::{close_frontend, refresh_navbar};
+use crate::utils::refresh_navbar;
 use crate::Tabs;
-use crate::{connection::Connection, types::UartState};
+use crate::{connection::Connection, shared_state::SharedState};
+use crate::{errors::UNABLE_TO_CLONE_UPDATE_SHARED, settings_tab};
+use crate::{log_panel::handle_log_msg, settings_tab::SettingsTab};
 
 pub fn process_messages<S>(
+    messages: Messages,
+    msg_sender: MsgSender,
     conn: Connection,
     shared_state: SharedState,
-    mut client_send: S,
-) -> Result<()>
-where
+    client_send: S,
+) where
     S: CapnProtoSender,
 {
-    shared_state.set_running(true, client_send.clone());
-    shared_state.set_settings_refresh(conn.settings_enabled());
-    let realtime_delay = conn.realtime_delay();
-    let (rdr, writer) = conn.try_connect(Some(shared_state.clone()))?;
-    let msg_sender = MsgSender::new(writer);
-    shared_state.set_current_connection(conn.name());
     refresh_navbar(&mut client_send.clone(), shared_state.clone());
-    let messages = {
-        let state = shared_state.clone();
-        let client = client_send.clone();
-        sbp::iter_messages(rdr)
-            .handle_errors(move |e| {
-                debug!("{}", e);
-                match e {
-                    sbp::DeserializeError::IoError(err) => {
-                        if (*err).kind() == ErrorKind::TimedOut {
-                            state.set_running(false, client.clone());
-                        }
-                        ControlFlow::Break
-                    }
-                    _ => ControlFlow::Continue,
-                }
-            })
-            .with_rover_time()
-    };
+
     let source: LinkSource<Tabs<S>> = LinkSource::new();
     let tabs = Tabs::new(
         shared_state.clone(),
         client_send.clone(),
         msg_sender.clone(),
-        source.stateless_link(),
     );
 
     let link = source.link();
@@ -276,49 +251,37 @@ where
         .expect(UNABLE_TO_CLONE_UPDATE_SHARED)
         .clone_update_tab_context();
     update_tab_context.set_serial_prompt(conn.is_serial());
-    let client_send_clone = client_send.clone();
     let (update_tab_tx, update_tab_rx) = tabs.update.lock().unwrap().clone_channel();
-    let settings_parker = Parker::new();
-    let settings_unparker = settings_parker.unparker().clone();
+    let settings_tab = conn.settings_enabled().then(|| {
+        SettingsTab::new(
+            shared_state.clone(),
+            client_send.clone(),
+            msg_sender.clone(),
+            source.stateless_link(),
+        )
+    });
     crossbeam::scope(|scope| {
-        let settings_tab = &tabs.settings_tab;
-        let settings_shared_state = shared_state.clone();
-        scope.spawn(move |_| {
-            while settings_shared_state.is_running() {
-                settings_tab.lock().unwrap().tick();
-                settings_parker.park();
-            }
-        });
         scope.spawn(|_| {
             update_tab::update_tab_thread(
                 update_tab_tx.clone(),
                 update_tab_rx,
                 update_tab_context,
                 shared_state.clone(),
-                client_send_clone,
+                client_send.clone(),
                 source.stateless_link(),
                 msg_sender.clone(),
             );
         });
+
+        if conn.settings_enabled() {
+            scope.spawn(|_| {
+                let tab = settings_tab.as_ref().unwrap();
+                shared_state.set_settings_refresh(true);
+                settings_tab::start_thd(tab);
+            });
+        }
+
         for (message, gps_time) in messages {
-            if shared_state.settings_needs_update() {
-                settings_unparker.unpark();
-            }
-            if !shared_state.is_running() {
-                if let Err(e) = tabs.main.lock().unwrap().end_csv_logging() {
-                    error!("Issue closing csv file, {}", e);
-                }
-                tabs.main.lock().unwrap().close_sbp();
-                break;
-            }
-            if shared_state.is_paused() {
-                loop {
-                    if !shared_state.is_paused() {
-                        break;
-                    }
-                    sleep(Duration::from_millis(PAUSE_LOOP_SLEEP_DURATION_MS));
-                }
-            }
             let sent = source.send_with_state(&tabs, &message);
             tabs.main.lock().unwrap().serialize_sbp(&message);
             tabs.status_bar
@@ -329,7 +292,7 @@ where
                 .lock()
                 .unwrap()
                 .handle_sbp(&message);
-            if let RealtimeDelay::On = realtime_delay {
+            if let RealtimeDelay::On = conn.realtime_delay() {
                 if sent {
                     tabs.main.lock().unwrap().realtime_delay(gps_time);
                 } else {
@@ -341,16 +304,90 @@ where
             }
             log::logger().flush();
         }
+        if let Some(ref tab) = settings_tab {
+            tab.stop()
+        }
         if let Err(err) = update_tab_tx.send(None) {
             error!("Issue stopping update tab: {}", err);
         }
-        if conn.close_when_done() {
-            shared_state.set_running(false, client_send.clone());
-            close_frontend(&mut client_send);
+        if let Err(e) = tabs.main.lock().unwrap().end_csv_logging() {
+            error!("Issue closing csv file, {}", e);
         }
-        settings_unparker.unpark();
+        tabs.main.lock().unwrap().close_sbp();
     })
     .unwrap();
+}
 
-    Ok(())
+type Message = (
+    sbp::Sbp,
+    Option<std::result::Result<sbp::time::GpsTime, sbp::time::GpsTimeError>>,
+);
+
+/// Wrapper around the iterator of messages that enables other threads
+/// to stop the iterator.
+pub struct Messages {
+    messages: Receiver<Message>,
+    canceled: Receiver<()>,
+}
+
+impl Messages {
+    pub fn new<R>(reader: R) -> (StopToken, Self)
+    where
+        R: io::Read + Send + 'static,
+    {
+        let (sink, messages) = crossbeam::channel::bounded(100);
+        let (cancel, canceled) = crossbeam::channel::bounded(1);
+        thread::spawn(move || Messages::start_thd(reader, sink));
+        (StopToken(Arc::new(cancel)), Self { messages, canceled })
+    }
+
+    fn start_thd<R: io::Read>(reader: R, sink: Sender<Message>) {
+        for message in sbp::iter_messages(reader)
+            .log_errors(log::Level::Debug)
+            .with_rover_time()
+        {
+            // this will error after `Messages` is dropped which will
+            // stop this thread
+            if sink.send(message).is_err() {
+                break;
+            }
+        }
+    }
+}
+
+impl Iterator for Messages {
+    type Item = Message;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        crossbeam::select! {
+            recv(self.canceled) -> _ => None,
+            recv(self.messages) -> msg => msg.ok(),
+        }
+    }
+}
+
+/// Used to break the `process_messages` loop. Can be stopped manually
+/// or will automatically stop after all copies of this have been dropped.
+#[derive(Debug)]
+pub struct StopToken(Arc<Sender<()>>);
+
+impl StopToken {
+    pub fn stop(&self) {
+        let _ = self.0.try_send(());
+    }
+}
+
+impl Clone for StopToken {
+    fn clone(&self) -> Self {
+        Self(Arc::clone(&self.0))
+    }
+}
+
+impl Drop for StopToken {
+    fn drop(&mut self) {
+        // if this is the last one make sure we stop the thread
+        if Arc::strong_count(&self.0) == 1 {
+            self.stop();
+        }
+    }
 }

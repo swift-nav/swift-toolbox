@@ -147,6 +147,18 @@ Get-ChildItem .\console_backend -Recurse -Include @("*.egg-info", "*.dist-info")
 command = "${PYTHON}"
 args = ["-m", "swiftnav_console.main", "${@}"]
 
+[tasks.start-console-gdb]
+command = "rust-gdb"
+args = [
+  "-ex",
+  "run",
+  "--args",
+  "${PYTHON}",
+  "-m",
+  "swiftnav_console.main",
+  "${@}",
+]
+
 [tasks.qml-run]
 dependencies = ["generate-resources"]
 run_task = "start-console"
@@ -160,6 +172,16 @@ dependencies = [
   "install-backend",
 ]
 run_task = "start-console"
+
+[tasks.gdb-run]
+dependencies = [
+  "copy-capnp",
+  "generate-resources",
+  "remove-egg-dist",
+  "store-version",
+  "install-backend",
+]
+run_task = "start-console-gdb"
 
 [tasks.prod-run]
 dependencies = [
@@ -214,7 +236,6 @@ command = "${PYTHON}"
 args = ["setup.py", "bdist_wheel"]
 
 [tasks.get-get-pip]
-condition = { files_not_exist = ["${WORKSPACE}/get-pip.py"] }
 script_runner = "@duckscript"
 script = '''
 wget -O ./get-pip.py https://bootstrap.pypa.io/get-pip.py
@@ -248,7 +269,6 @@ cm_run_task generate-resources
 '''
 
 [tasks.prep-dist]
-dependencies = ["get-standalone-py"]
 script_runner = "@duckscript"
 script = '''
 cm_run_task copy-capnp
@@ -502,7 +522,7 @@ args = ["clippy", "--all-targets", "--", "--deny", "warnings"]
 dependencies = ["store-version", "copy-capnp"]
 command = "cargo"
 cwd = "console_backend"
-args = ["test", "--features", "tests", "--", "--nocapture"]
+args = ["test", "--features", "tests", "${@}", "--", "--nocapture"]
 
 [tasks.rust-type-check]
 dependencies = ["store-version", "copy-capnp"]

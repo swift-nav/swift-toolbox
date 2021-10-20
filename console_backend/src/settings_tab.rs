@@ -2,20 +2,21 @@ use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::Path;
+use std::time::Duration;
 
 use anyhow::anyhow;
 use capnp::message::Builder;
 use ini::Ini;
 use lazy_static::lazy_static;
 use log::{debug, error, warn};
-use parking_lot::{MappedMutexGuard, Mutex, MutexGuard};
+use parking_lot::Mutex;
 use sbp::link::Link;
 use sbp::messages::piksi::MsgReset;
 use sbp::messages::settings::MsgSettingsSave;
 use sbp_settings::{Client, SettingKind, SettingValue};
 
 use crate::errors::SHARED_STATE_LOCK_MUTEX_FAILURE;
-use crate::shared_state::SharedState;
+use crate::shared_state::{SettingsTabState, SharedState};
 use crate::types::{CapnProtoSender, Error, MsgSender, Result};
 use crate::utils::*;
 
@@ -31,13 +32,67 @@ lazy_static! {
     ];
 }
 
+pub fn start_thd<S: CapnProtoSender>(tab: &SettingsTab<S>) {
+    let mut recv = tab.shared_state.watch_settings_state();
+    while let Ok(state) = recv.wait() {
+        tab.shared_state.set_settings_state(Default::default());
+        tick(tab, state);
+    }
+}
+
+fn tick<S: CapnProtoSender>(settings_tab: &SettingsTab<S>, settings_state: SettingsTabState) {
+    if settings_state.refresh {
+        settings_tab.refresh();
+    }
+    if let Some(ref path) = settings_state.export {
+        if let Err(e) = settings_tab.export(path) {
+            error!("Issue exporting settings, {}", e);
+        };
+    }
+    if let Some(ref path) = settings_state.import {
+        if let Err(e) = settings_tab.import(path) {
+            error!("Issue importing settings, {}", e);
+        };
+    }
+    if let Some(req) = settings_state.write {
+        if let Err(e) = settings_tab.write_setting(&req.group, &req.name, &req.value) {
+            error!("Issue writing setting, {}", e);
+        };
+    }
+    if settings_state.reset {
+        if let Err(e) = settings_tab.reset(true) {
+            error!("Issue resetting settings {}", e);
+        };
+    }
+    if settings_state.save {
+        if let Err(e) = settings_tab.save() {
+            error!("Issue saving settings, {}", e);
+        };
+    }
+    if settings_state.confirm_ins_change {
+        if let Err(e) = settings_tab.confirm_ins_change() {
+            error!("Issue confirming INS change, {}", e);
+        };
+    }
+    if settings_state.auto_survey_request {
+        if let Err(e) = settings_tab.auto_survey() {
+            error!("Issue running auto survey, {}", e);
+        };
+    }
+}
+
 pub struct SettingsTab<'link, S> {
-    client_sender: S,
     shared_state: SharedState,
-    settings: Settings,
-    client: Mutex<Option<Client<'link>>>,
-    link: Link<'link, ()>,
+    client_sender: Mutex<S>,
     msg_sender: MsgSender,
+    settings: Mutex<Settings>,
+    sbp_client: Client<'link>,
+}
+
+impl<S> Drop for SettingsTab<'_, S> {
+    fn drop(&mut self) {
+        self.shared_state.reset_settings_state();
+    }
 }
 
 impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
@@ -48,66 +103,28 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
         link: Link<'link, ()>,
     ) -> SettingsTab<'link, S> {
         SettingsTab {
-            settings: Settings::new(),
-            client: Mutex::new(None),
-            client_sender,
             shared_state,
-            link,
-            msg_sender,
+            client_sender: Mutex::new(client_sender),
+            msg_sender: msg_sender.clone(),
+            settings: Mutex::new(Settings::new()),
+            sbp_client: Client::new(link, move |msg| msg_sender.send(msg).map_err(Into::into)),
         }
     }
 
-    pub fn tick(&mut self) {
-        let settings_state = self.shared_state.take_settings_state();
-        if settings_state.refresh {
-            self.refresh();
-        }
-        if let Some(ref path) = settings_state.export {
-            if let Err(e) = self.export(path) {
-                error!("Issue exporting settings, {}", e);
-            };
-        }
-        if let Some(ref path) = settings_state.import {
-            if let Err(e) = self.import(path) {
-                error!("Issue importing settings, {}", e);
-            };
-        }
-        if let Some(req) = settings_state.write {
-            if let Err(e) = self.write_setting(&req.group, &req.name, &req.value) {
-                error!("Issue writing setting, {}", e);
-            };
-        }
-        if settings_state.reset {
-            if let Err(e) = self.reset(true) {
-                error!("Issue resetting settings {}", e);
-            };
-        }
-        if settings_state.save {
-            if let Err(e) = self.save() {
-                error!("Issue saving settings, {}", e);
-            };
-        }
-        if settings_state.confirm_ins_change {
-            if let Err(e) = self.confirm_ins_change() {
-                error!("Issue confirming INS change, {}", e);
-            };
-        }
-
-        if settings_state.auto_survey_request {
-            if let Err(e) = self.auto_survey() {
-                error!("Issue running auto survey, {}", e);
-            };
-        }
+    pub fn stop(&self) {
+        self.shared_state.reset_settings_state();
     }
 
-    pub fn refresh(&mut self) {
+    fn refresh(&self) {
+        self.settings.lock().clear_values();
         self.read_all_settings();
         self.send_table_data();
     }
 
-    pub fn export(&self, path: &Path) -> Result<()> {
+    fn export(&self, path: &Path) -> Result<()> {
         let mut f = fs::File::create(path)?;
-        let groups = self.settings.groups();
+        let settings = self.settings.lock();
+        let groups = settings.groups();
         let mut conf = Ini::new();
         for group in groups.iter() {
             let mut section = conf.with_section(Some(&group[0].0.group));
@@ -120,7 +137,7 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
         Ok(())
     }
 
-    pub fn import(&mut self, path: &Path) -> Result<()> {
+    fn import(&self, path: &Path) -> Result<()> {
         let mut f = fs::File::open(path)?;
         let conf = Ini::read_from(&mut f)?;
         for (group, prop) in conf.iter() {
@@ -142,25 +159,27 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
         Ok(())
     }
 
-    pub fn import_success(&mut self) {
+    fn import_success(&self) {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
         let mut import_response = msg.init_settings_import_response();
         import_response.set_status("success");
         self.client_sender
+            .lock()
             .send_data(serialize_capnproto_builder(builder));
     }
 
-    pub fn import_err(&mut self, err: &Error) {
+    fn import_err(&self, err: &Error) {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
         let mut import_response = msg.init_settings_import_response();
         import_response.set_status(&err.to_string());
         self.client_sender
+            .lock()
             .send_data(serialize_capnproto_builder(builder));
     }
 
-    pub fn reset(&self, reset_settings: bool) -> Result<()> {
+    fn reset(&self, reset_settings: bool) -> Result<()> {
         let flags = if reset_settings { 1 } else { 0 };
 
         self.msg_sender.send(
@@ -173,13 +192,13 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
         Ok(())
     }
 
-    pub fn save(&self) -> Result<()> {
+    fn save(&self) -> Result<()> {
         self.msg_sender
             .send(MsgSettingsSave { sender_id: None }.into())?;
         Ok(())
     }
 
-    pub fn auto_survey(&mut self) -> Result<()> {
+    fn auto_survey(&self) -> Result<()> {
         let (lat, lon, alt) = {
             let shared_data = self
                 .shared_state
@@ -205,9 +224,9 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
         Ok(())
     }
 
-    pub fn confirm_ins_change(&mut self) -> Result<()> {
-        let ins_mode = self
-            .settings
+    fn confirm_ins_change(&self) -> Result<()> {
+        let settings = self.settings.lock();
+        let ins_mode = settings
             .get("ins", "output_mode")?
             .value
             .as_ref()
@@ -228,15 +247,12 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
         Ok(())
     }
 
-    pub fn get_recommended_ins_setting_changes(
-        &self,
-    ) -> Result<Vec<(String, String, String, String)>> {
-        let client = self.client();
-
+    fn get_recommended_ins_setting_changes(&self) -> Result<Vec<(String, String, String, String)>> {
         let mut recommended_changes = vec![];
 
         for setting in RECOMMENDED_INS_SETTINGS.iter() {
-            let value = client
+            let value = self
+                .sbp_client
                 .read_setting(setting.0, setting.1)
                 .ok_or_else(|| anyhow!("setting not found"))??;
             if value != setting.2 {
@@ -252,7 +268,7 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
         Ok(recommended_changes)
     }
 
-    pub fn send_ins_change_response(&mut self, output_mode: &str) -> Result<()> {
+    fn send_ins_change_response(&self, output_mode: &str) -> Result<()> {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
         let mut ins_resp = msg.init_ins_settings_change_response();
@@ -273,13 +289,15 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
         }
 
         self.client_sender
+            .lock()
             .send_data(serialize_capnproto_builder(builder));
 
         Ok(())
     }
 
-    pub fn write_setting(&mut self, group: &str, name: &str, value: &str) -> Result<()> {
-        let setting = self.settings.get(group, name)?;
+    fn write_setting(&self, group: &str, name: &str, value: &str) -> Result<()> {
+        let settings = self.settings.lock();
+        let setting = settings.get(group, name)?;
 
         if let Some(ref v) = setting.value {
             if v.to_string() == value {
@@ -288,19 +306,20 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
             }
         }
 
-        self.client().write_setting(group, name, value)?;
+        self.sbp_client.write_setting(group, name, value)?;
 
         if matches!(
             setting.setting.kind,
             SettingKind::Float | SettingKind::Double
         ) {
             let new_setting = self
-                .client()
+                .sbp_client
                 .read_setting(group, name)
                 .ok_or_else(|| anyhow!("settting not found"))??;
-            self.settings.set(group, name, new_setting)?;
+            self.settings.lock().set(group, name, new_setting)?;
         } else {
             self.settings
+                .lock()
                 .set(group, name, SettingValue::String(value.to_string()))?;
         }
 
@@ -313,18 +332,16 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
         Ok(())
     }
 
-    pub fn read_all_settings(&mut self) {
-        let results = self.client().read_all();
-        for result in results {
-            let setting = match result {
-                Ok(setting) => setting,
-                Err(e) => {
-                    error!("{}", e);
-                    continue;
-                }
-            };
+    fn read_all_settings(&self) {
+        const TIMEOUT: Duration = Duration::from_secs(15);
 
-            let current_setting = match self.settings.get_mut(&setting.group, &setting.name) {
+        let (settings, errors) = self.sbp_client.read_all_timeout(TIMEOUT);
+        for e in errors {
+            warn!("{}", e);
+        }
+        for setting in settings {
+            let mut settings = self.settings.lock();
+            let current_setting = match settings.get_mut(&setting.group, &setting.name) {
                 Ok(setting) => setting,
                 Err(_) => {
                     warn!(
@@ -372,8 +389,9 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
     }
 
     /// Package settings table data into a message buffer and send to frontend.
-    pub fn send_table_data(&mut self) {
-        let groups = self.settings.groups();
+    fn send_table_data(&self) {
+        let settings = self.settings.lock();
+        let groups = settings.groups();
         if groups.is_empty() {
             return;
         }
@@ -460,19 +478,8 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
             }
         }
         self.client_sender
+            .lock()
             .send_data(serialize_capnproto_builder(builder));
-    }
-
-    fn client<'a>(&'a self) -> MappedMutexGuard<'a, Client<'link>> {
-        let mut client = self.client.lock();
-        if client.is_some() {
-            return MutexGuard::map(client, |c| c.as_mut().unwrap());
-        }
-        let sender = self.msg_sender.clone();
-        *client = Some(Client::new(self.link.clone(), move |msg| {
-            sender.send(msg).map_err(Into::into)
-        }));
-        MutexGuard::map(client, |c| c.as_mut().unwrap())
     }
 }
 
@@ -499,6 +506,14 @@ impl Settings {
                         .insert(&setting.name, Setting::new(setting));
                     settings
                 }),
+        }
+    }
+
+    fn clear_values(&mut self) {
+        for group in self.inner.values_mut() {
+            for setting in group.values_mut() {
+                setting.value = None;
+            }
         }
     }
 

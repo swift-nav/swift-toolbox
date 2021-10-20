@@ -39,6 +39,7 @@ pub mod types;
 pub mod update_downloader;
 pub mod update_tab;
 pub mod utils;
+pub mod watch;
 
 use std::sync::Mutex;
 
@@ -47,8 +48,8 @@ use crate::{
     advanced_networking_tab::AdvancedNetworkingTab,
     advanced_spectrum_analyzer_tab::AdvancedSpectrumAnalyzerTab,
     advanced_system_monitor_tab::AdvancedSystemMonitorTab, baseline_tab::BaselineTab,
-    main_tab::MainTab, observation_tab::ObservationTab, settings_tab::SettingsTab,
-    solution_tab::SolutionTab, solution_velocity_tab::SolutionVelocityTab, status_bar::StatusBar,
+    main_tab::MainTab, observation_tab::ObservationTab, solution_tab::SolutionTab,
+    solution_velocity_tab::SolutionVelocityTab, status_bar::StatusBar,
     tracking_signals_tab::TrackingSignalsTab, tracking_sky_plot_tab::TrackingSkyPlotTab,
     update_tab::UpdateTab,
 };
@@ -56,7 +57,7 @@ use crate::{
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-struct Tabs<'link, S: types::CapnProtoSender> {
+struct Tabs<S: types::CapnProtoSender> {
     pub main: Mutex<MainTab<S>>,
     pub advanced_ins: Mutex<AdvancedInsTab<S>>,
     pub advanced_magnetometer: Mutex<AdvancedMagnetometerTab<S>>,
@@ -71,15 +72,13 @@ struct Tabs<'link, S: types::CapnProtoSender> {
     pub advanced_spectrum_analyzer: Mutex<AdvancedSpectrumAnalyzerTab<S>>,
     pub status_bar: Mutex<StatusBar<S>>,
     pub update: Mutex<UpdateTab>,
-    pub settings_tab: Mutex<SettingsTab<'link, S>>,
 }
 
-impl<'link, S: types::CapnProtoSender> Tabs<'link, S> {
+impl<S: types::CapnProtoSender> Tabs<S> {
     fn new(
         shared_state: shared_state::SharedState,
         client_sender: S,
         msg_sender: types::MsgSender,
-        link: sbp::link::Link<'link, ()>,
     ) -> Self {
         Self {
             main: MainTab::new(shared_state.clone(), client_sender.clone()).into(),
@@ -101,12 +100,8 @@ impl<'link, S: types::CapnProtoSender> Tabs<'link, S> {
                 msg_sender.clone(),
             )
             .into(),
-            baseline: BaselineTab::new(
-                shared_state.clone(),
-                client_sender.clone(),
-                msg_sender.clone(),
-            )
-            .into(),
+            baseline: BaselineTab::new(shared_state.clone(), client_sender.clone(), msg_sender)
+                .into(),
             tracking_signals: TrackingSignalsTab::new(shared_state.clone(), client_sender.clone())
                 .into(),
             tracking_sky_plot: TrackingSkyPlotTab::new(client_sender.clone(), shared_state.clone())
@@ -123,9 +118,8 @@ impl<'link, S: types::CapnProtoSender> Tabs<'link, S> {
                 client_sender.clone(),
             )
             .into(),
-            status_bar: StatusBar::new(shared_state.clone(), client_sender.clone()).into(),
-            update: UpdateTab::new(shared_state.clone()).into(),
-            settings_tab: SettingsTab::new(shared_state, client_sender, msg_sender, link).into(),
+            status_bar: StatusBar::new(shared_state.clone(), client_sender).into(),
+            update: UpdateTab::new(shared_state).into(),
         }
     }
 }

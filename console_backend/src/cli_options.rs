@@ -136,6 +136,10 @@ pub struct CliOptions {
     /// Set the width of the main window.
     #[clap(long)]
     pub width: Option<u32>,
+
+    /// Path to a yaml file containing known piski settings.
+    #[clap(long)]
+    pub settings_yaml: Option<PathBuf>,
 }
 
 impl CliOptions {

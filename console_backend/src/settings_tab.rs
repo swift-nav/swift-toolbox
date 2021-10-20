@@ -13,7 +13,7 @@ use parking_lot::Mutex;
 use sbp::link::Link;
 use sbp::messages::piksi::MsgReset;
 use sbp::messages::settings::MsgSettingsSave;
-use sbp_settings::{Client, SettingKind, SettingValue};
+use sbp_settings::{Client, Setting, SettingKind, SettingValue};
 
 use crate::errors::SHARED_STATE_LOCK_MUTEX_FAILURE;
 use crate::shared_state::{SettingsTabState, SharedState};
@@ -384,7 +384,7 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
                     Some(possible_values.to_string());
             }
 
-            current_setting.value = Some(sbp_settings::SettingValue::String(setting.value));
+            current_setting.value = Some(SettingValue::String(setting.value));
         }
     }
 
@@ -491,19 +491,19 @@ pub struct SaveRequest {
 }
 
 struct Settings {
-    inner: BTreeMap<&'static str, BTreeMap<&'static str, Setting>>,
+    inner: BTreeMap<&'static str, BTreeMap<&'static str, SettingsEntry>>,
 }
 
 impl Settings {
     fn new() -> Self {
-        let mut settings: Vec<_> = sbp_settings::settings().iter().collect();
+        let mut settings: Vec<_> = Setting::all().iter().collect();
         settings.sort_by_key(|s| &s.group);
         Self {
             inner: settings
                 .into_iter()
                 .fold(BTreeMap::new(), |mut settings, setting| {
                     (*settings.entry(&setting.group).or_default())
-                        .insert(&setting.name, Setting::new(setting));
+                        .insert(&setting.name, SettingsEntry::new(setting));
                     settings
                 }),
         }
@@ -517,7 +517,7 @@ impl Settings {
         }
     }
 
-    fn groups(&self) -> Vec<Vec<(&sbp_settings::Setting, &SettingValue)>> {
+    fn groups(&self) -> Vec<Vec<(&Setting, &SettingValue)>> {
         self.inner.values().fold(Vec::new(), |mut groups, group| {
             let group: Vec<_> = group
                 .values()
@@ -535,7 +535,7 @@ impl Settings {
         })
     }
 
-    fn get<'a, 'b>(&'a self, group: &'b str, name: &'b str) -> Result<&'a Setting> {
+    fn get<'a, 'b>(&'a self, group: &'b str, name: &'b str) -> Result<&'a SettingsEntry> {
         self.inner
             .get(group)
             .map(|g| g.get(name))
@@ -543,7 +543,11 @@ impl Settings {
             .ok_or_else(|| anyhow!("unknown setting: group: {} name: {}", group, name))
     }
 
-    fn get_mut<'a, 'b>(&'a mut self, group: &'b str, name: &'b str) -> Result<&'a mut Setting> {
+    fn get_mut<'a, 'b>(
+        &'a mut self,
+        group: &'b str,
+        name: &'b str,
+    ) -> Result<&'a mut SettingsEntry> {
         self.inner
             .get_mut(group)
             .map(|g| g.get_mut(name))
@@ -564,7 +568,7 @@ impl Settings {
 }
 
 impl std::ops::Deref for Settings {
-    type Target = BTreeMap<&'static str, BTreeMap<&'static str, Setting>>;
+    type Target = BTreeMap<&'static str, BTreeMap<&'static str, SettingsEntry>>;
 
     fn deref(&self) -> &Self::Target {
         &self.inner
@@ -573,13 +577,13 @@ impl std::ops::Deref for Settings {
 
 /// A reference to a particular setting and its value if it has been fetched
 #[derive(Debug)]
-struct Setting {
-    setting: Cow<'static, sbp_settings::Setting>,
-    value: Option<sbp_settings::SettingValue>,
+struct SettingsEntry {
+    setting: Cow<'static, Setting>,
+    value: Option<SettingValue>,
 }
 
-impl Setting {
-    fn new(setting: &'static sbp_settings::Setting) -> Self {
+impl SettingsEntry {
+    fn new(setting: &'static Setting) -> Self {
         Self {
             setting: Cow::Borrowed(setting),
             value: None,

@@ -5,30 +5,34 @@ from typing import Dict, List, Any
 
 from PySide2.QtCore import Property, QObject, Slot
 
-from .constants import Keys, QTKeys
+from .constants import Keys, QTKeys, ConnectionState
 
 CONNECTION: Dict[str, Any] = {
     Keys.AVAILABLE_PORTS: [],
     Keys.AVAILABLE_BAUDRATES: [],
     Keys.AVAILABLE_FLOWS: [],
     Keys.AVAILABLE_REFRESH_RATES: [],
-    Keys.CONNECTED: False,
+    Keys.CONNECTION_STATE: ConnectionState.DISCONNECTED,
     Keys.PREVIOUS_HOSTS: [],
     Keys.PREVIOUS_PORTS: [],
     Keys.PREVIOUS_FILES: [],
+    Keys.LAST_USED_SERIAL_DEVICE: None,
+    Keys.PREVIOUS_SERIAL_CONFIGS: [],
 }
 
 
-class ConnectionData(QObject):  # pylint: disable=too-many-instance-attributes
+class ConnectionData(QObject):  # pylint: disable=too-many-instance-attributes disable=too-many-public-methods
 
     _available_ports: List[str] = []
     _available_baudrates: List[str] = []
     _available_flows: List[str] = []
     _available_refresh_rates: List[str] = []
-    _connected: bool = False
+    _conn_state: ConnectionState = ConnectionState.DISCONNECTED
     _previous_hosts: List[str] = []
     _previous_ports: List[str] = []
     _previous_files: List[str] = []
+    _last_used_serial_device: str
+    _previous_serial_configs: List[List[Any]] = []
 
     def get_available_ports(self) -> List[str]:
         return self._available_ports
@@ -56,19 +60,19 @@ class ConnectionData(QObject):  # pylint: disable=too-many-instance-attributes
 
     available_flows = Property(QTKeys.QVARIANTLIST, get_available_flows, set_available_flows)  # type: ignore
 
-    def get_connected(self) -> bool:
-        """Getter for _connected.
+    def get_conn_state(self) -> ConnectionState:
+        """Getter for _conn_state.
 
         Returns:
-            bool: Whether a connection is live or not.
+            ConnectionState: Whether a connection is live, disconnecting or disconnected.
         """
-        return self._connected
+        return self._conn_state
 
-    def set_connected(self, connected: bool) -> None:
-        """Setter for _connected."""
-        self._connected = connected
+    def set_conn_state(self, conn_state: ConnectionState) -> None:
+        """Setter for _conn_state."""
+        self._conn_state = conn_state
 
-    connected = Property(bool, get_connected, set_connected)
+    conn_state = Property(str, get_conn_state, set_conn_state)
 
     def get_previous_hosts(self) -> List[str]:
         return self._previous_hosts
@@ -94,6 +98,24 @@ class ConnectionData(QObject):  # pylint: disable=too-many-instance-attributes
 
     previous_files = Property(QTKeys.QVARIANTLIST, get_previous_files, set_previous_files)  # type: ignore
 
+    def get_last_used_serial_device(self) -> str:
+        return self._last_used_serial_device
+
+    def set_last_used_serial_device(self, last_used_serial_device: str) -> None:
+        self._last_used_serial_device = last_used_serial_device
+
+    last_used_serial_device = Property(str, get_last_used_serial_device, set_last_used_serial_device)  # type: ignore
+
+    def get_previous_serial_configs(self) -> List[List[Any]]:
+        return self._previous_serial_configs
+
+    def set_previous_serial_configs(self, previous_serial_configs: List[List[Any]]) -> None:
+        self._previous_serial_configs = previous_serial_configs
+
+    previous_serial_configs = Property(
+        QTKeys.QVARIANTLIST, get_previous_serial_configs, set_previous_serial_configs  # type: ignore
+    )
+
 
 class ConnectionModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(ConnectionData)  # type: ignore
@@ -101,8 +123,10 @@ class ConnectionModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_available_ports(CONNECTION[Keys.AVAILABLE_PORTS])
         cp.set_available_baudrates(CONNECTION[Keys.AVAILABLE_BAUDRATES])
         cp.set_available_flows(CONNECTION[Keys.AVAILABLE_FLOWS])
-        cp.set_connected(CONNECTION[Keys.CONNECTED])
+        cp.set_conn_state(CONNECTION[Keys.CONNECTION_STATE])
         cp.set_previous_hosts(CONNECTION[Keys.PREVIOUS_HOSTS])
         cp.set_previous_ports(CONNECTION[Keys.PREVIOUS_PORTS])
         cp.set_previous_files(CONNECTION[Keys.PREVIOUS_FILES])
+        cp.set_last_used_serial_device(CONNECTION[Keys.LAST_USED_SERIAL_DEVICE])
+        cp.set_previous_serial_configs(CONNECTION[Keys.PREVIOUS_SERIAL_CONFIGS])
         return cp

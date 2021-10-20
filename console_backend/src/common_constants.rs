@@ -155,8 +155,8 @@ pub enum Keys {
     PREVIOUS_PORTS,
     #[strum(serialize = "PREVIOUS_FILES")]
     PREVIOUS_FILES,
-    #[strum(serialize = "CONNECTED")]
-    CONNECTED,
+    #[strum(serialize = "CONNECTION_STATE")]
+    CONNECTION_STATE,
     #[strum(serialize = "PORT")]
     PORT,
     #[strum(serialize = "POS")]
@@ -275,12 +275,20 @@ pub enum Keys {
     NEW_INS_CONFIRMATON,
     #[strum(serialize = "ANTENNA_STATUS")]
     ANTENNA_STATUS,
+    #[strum(serialize = "RECORDING_DURATION_SEC")]
+    RECORDING_DURATION_SEC,
+    #[strum(serialize = "RECORDING_SIZE")]
+    RECORDING_SIZE,
+    #[strum(serialize = "LAST_USED_SERIAL_DEVICE")]
+    LAST_USED_SERIAL_DEVICE,
+    #[strum(serialize = "PREVIOUS_SERIAL_CONFIGS")]
+    PREVIOUS_SERIAL_CONFIGS,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
-pub enum ApplicationStates {
-    #[strum(serialize = "CLOSE")]
-    CLOSE,
+pub enum ConnectionState {
+    #[strum(serialize = "CLOSED")]
+    CLOSED,
     #[strum(serialize = "CONNECTED")]
     CONNECTED,
     #[strum(serialize = "DISCONNECTED")]

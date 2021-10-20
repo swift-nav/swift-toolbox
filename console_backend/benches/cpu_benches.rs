@@ -12,7 +12,8 @@ use std::{
 
 extern crate console_backend;
 use console_backend::{
-    connection::Connection,
+    common_constants::ConnectionState,
+    connection::{Connection, ConnectionManager},
     process_messages,
     shared_state::SharedState,
     types::{ClientSender, RealtimeDelay},
@@ -51,7 +52,8 @@ fn run_process_messages(file_in_name: &str, failure: bool) {
         assert!(iter_count > 0);
     });
     {
-        let (client_send_, client_recv) = channel::unbounded::<Vec<u8>>();
+        let (client_send, client_recv) = channel::unbounded::<Vec<u8>>();
+        let client_send = ClientSender::new(client_send);
         client_recv_tx
             .send(client_recv)
             .expect("sending client recv handle should succeed");
@@ -59,15 +61,13 @@ fn run_process_messages(file_in_name: &str, failure: bool) {
             thread::sleep(time::Duration::from_millis(FAILURE_CASE_SLEEP_MILLIS));
         }
         let shared_state = SharedState::new();
-        let client_send = ClientSender::new(client_send_);
-        shared_state.set_running(true, client_send.clone());
         shared_state.set_debug(true);
-        let conn = Connection::file(
+        let conn_manager = ConnectionManager::new(client_send, shared_state);
+        conn_manager.connect_to_file(
             file_in_name.into(),
             RealtimeDelay::Off,
             /*close_when_done=*/ true,
         );
-        process_messages::process_messages(conn, shared_state, client_send).unwrap();
     }
     recv_thread.join().expect("join should succeed");
 }

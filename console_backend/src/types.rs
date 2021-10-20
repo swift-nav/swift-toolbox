@@ -257,7 +257,9 @@ impl ClientSender {
 }
 impl CapnProtoSender for ClientSender {
     fn send_data(&mut self, msg_bytes: Vec<u8>) {
-        self.inner.send(msg_bytes).unwrap();
+        if self.connected.get() {
+            let _ = self.inner.send(msg_bytes);
+        }
     }
 }
 

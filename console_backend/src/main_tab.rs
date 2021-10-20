@@ -274,6 +274,7 @@ impl<'a, S: CapnProtoSender> MainTab<S> {
             .set_sbp_logging_stats_state(SbpLoggingStatsState {
                 sbp_log_filepath: None,
             });
+        refresh_loggingbar(&mut self.client_sender, self.shared_state.clone());
     }
 }
 

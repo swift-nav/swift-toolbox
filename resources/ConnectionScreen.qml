@@ -5,8 +5,6 @@ import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
 Item {
-    property string name: Constants.connection.name
-    property alias connected: connectButton.checked
     property string tcp_ip: "TCP/IP"
     property string serial_usb: "Serial/USB"
     property string file: "File"
@@ -17,6 +15,18 @@ Item {
     property variant previous_hosts: []
     property variant previous_ports: []
     property variant previous_files: []
+    property variant previous_serial_configs: []
+    property variant last_used_serial_device: null
+
+    function restore_previous_serial_settings(device_name) {
+        const config = previous_serial_configs.find((element) => {
+            return element[0] === device_name;
+        });
+        if (config) {
+            serialDeviceBaudRate.currentIndex = available_baudrates.indexOf(config[1]);
+            serialDeviceFlowControl.currentIndex = available_flows.indexOf(config[2]);
+        }
+    }
 
     ConnectionData {
         id: connectionData
@@ -82,13 +92,13 @@ Item {
                     ComboBox {
                         id: serialDevice
 
-                        Component.onCompleted: {
-                            serialDevice.indicator.width = Constants.connection.serialSelectionDropdownWidth / 3;
-                        }
                         visible: serialRadio.checked
                         Layout.preferredHeight: Constants.connection.dropdownHeight
                         Layout.fillWidth: true
                         model: available_devices
+                        onActivated: {
+                            restore_previous_serial_settings(available_devices[currentIndex]);
+                        }
                     }
 
                     Button {
@@ -107,9 +117,6 @@ Item {
                     ComboBox {
                         id: serialDeviceBaudRate
 
-                        Component.onCompleted: {
-                            serialDeviceBaudRate.indicator.width = Constants.connection.serialDeviceBaudRateDropdownWidth / 3;
-                        }
                         visible: serialRadio.checked
                         Layout.preferredHeight: Constants.connection.dropdownHeight
                         Layout.preferredWidth: Constants.connection.serialDeviceBaudRateDropdownWidth
@@ -119,9 +126,6 @@ Item {
                     ComboBox {
                         id: serialDeviceFlowControl
 
-                        Component.onCompleted: {
-                            serialDeviceFlowControl.indicator.width = Constants.connection.serialDeviceFlowControlDropdownWidth / 3;
-                        }
                         visible: serialRadio.checked
                         Layout.preferredHeight: Constants.connection.dropdownHeight
                         Layout.preferredWidth: Constants.connection.serialDeviceFlowControlDropdownWidth
@@ -218,6 +222,8 @@ Item {
 
                         Layout.preferredWidth: parent.width / 4
                         checkable: true
+                        checked: Globals.conn_state == Constants.connection.connected
+                        enabled: Globals.conn_state == Constants.connection.disconnected || Globals.conn_state == Constants.connection.connected
                         ToolTip.visible: hovered
                         ToolTip.text: !checked ? "Connect" : "Disconnect"
                         text: !checked ? "Connect" : "Disconnect"
@@ -263,11 +269,21 @@ Item {
                     previous_hosts = connectionData.previous_hosts;
                     previous_ports = connectionData.previous_ports;
                     previous_files = connectionData.previous_files;
-                    if (!stack.connected_at_least_once && stack.connectionScreenVisible() && connectionData.connected) {
+                    previous_serial_configs = connectionData.previous_serial_configs;
+                    if (!last_used_serial_device && connectionData.last_used_serial_device) {
+                        // Set the default selected to the last used
+                        last_used_serial_device = connectionData.last_used_serial_device;
+                        serialDevice.currentIndex = available_devices.indexOf(last_used_serial_device);
+                        if (serialDevice.currentIndex != -1)
+                            restore_previous_serial_settings(available_devices[serialDevice.currentIndex]);
+
+                    }
+                    Globals.conn_state = connectionData.conn_state;
+                    let connected = Globals.conn_state == Constants.connection.connected;
+                    if (!stack.connected_at_least_once && stack.connectionScreenVisible() && connected) {
                         stack.mainView();
                         stack.connected_at_least_once = true;
                     }
-                    connectButton.checked = connectionData.connected;
                 }
             }
 

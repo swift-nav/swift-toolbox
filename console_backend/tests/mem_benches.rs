@@ -1,19 +1,13 @@
 #[cfg(feature = "benches")]
 mod mem_bench_impl {
+    use std::{error::Error, result::Result, thread};
+
     use crossbeam::channel;
     use ndarray::{ArrayView, Axis, Dim};
-    use std::{
-        error::Error,
-        result::Result,
-        sync::{Arc, Mutex},
-        thread,
-    };
-
     use sysinfo::{get_current_pid, ProcessExt, System, SystemExt};
 
     use console_backend::{
-        connection::Connection,
-        process_messages,
+        connection::{ConnectionManager, ConnectionState},
         shared_state::SharedState,
         types::{ClientSender, RealtimeDelay},
     };
@@ -50,12 +44,14 @@ mod mem_bench_impl {
     ///   - mean - std >= absolute_mean
     #[test]
     fn test_run_process_messages() {
-        let (client_recv_tx, client_recv_rx) = channel::unbounded::<channel::Receiver<Vec<u8>>>();
         let pid = get_current_pid().unwrap();
         println!("PID: {}", pid);
-        let is_running = Arc::new(Mutex::new(true));
-        let is_running_recv = Arc::clone(&is_running);
-        let is_running_mem = Arc::clone(&is_running);
+
+        let (client_send, client_recv) = channel::unbounded::<Vec<u8>>();
+        let (mem_stop_send, mem_stop_recv) = channel::bounded(1);
+        let shared_state = SharedState::new();
+        shared_state.set_debug(true);
+
         let mem_read_thread = thread::spawn(move || {
             let mut sys = System::new();
             let mut mem_readings_kb: Vec<f32> = vec![];
@@ -65,46 +61,42 @@ mod mem_bench_impl {
                 let proc = sys.get_process(pid).unwrap();
                 mem_readings_kb.push(proc.memory() as f32);
                 cpu_readings.push(proc.cpu_usage());
-                let is_running_mem = is_running_mem.lock().unwrap();
-                if !*is_running_mem {
+                if mem_stop_recv.try_recv().is_ok() {
                     break;
                 }
             }
             validate_memory_benchmark(&mem_readings_kb, &cpu_readings);
         });
-        let recv_thread = thread::spawn(move || {
-            let client_recv = client_recv_rx.recv().unwrap();
-            let mut iter_count = 0;
 
+        let recv_state = shared_state.clone();
+        let recv_thread = thread::spawn(move || {
+            let mut iter_count = 0;
             loop {
-                if client_recv.recv().is_err() {
+                if client_recv.recv().is_err() || recv_state.connection().is_disconnected() {
                     break;
                 }
-
                 iter_count += 1;
             }
             assert!(iter_count > 0);
-            let mut is_running_recv = is_running_recv.lock().unwrap();
-            *is_running_recv = false;
+            mem_stop_send.send(()).unwrap();
         });
 
-        {
-            let (client_send_, client_recv) = channel::unbounded::<Vec<u8>>();
-            client_recv_tx
-                .send(client_recv)
-                .expect("sending client recv handle should succeed");
+        let mut conn_watch = shared_state.watch_connection();
+        let client_send = ClientSender::new(client_send);
+        let conn_manager = ConnectionManager::new(client_send, shared_state);
 
-            let client_send = ClientSender::new(client_send_);
-            let shared_state = SharedState::new();
-            shared_state.set_running(true, client_send.clone());
-            shared_state.set_debug(true);
-            let conn = Connection::file(
-                BENCH_FILEPATH.into(),
-                RealtimeDelay::On,
-                /*close_when_done=*/ true,
-            );
-            process_messages::process_messages(conn, shared_state, client_send).unwrap();
-        }
+        conn_manager.connect_to_file(
+            BENCH_FILEPATH.into(),
+            RealtimeDelay::On,
+            /*close_when_done=*/ true,
+        );
+        conn_watch
+            .wait_while(ConnectionState::is_disconnected)
+            .unwrap();
+        conn_watch
+            .wait_while(ConnectionState::is_connected)
+            .unwrap();
+        drop(conn_manager);
         recv_thread.join().expect("join should succeed");
         mem_read_thread.join().expect("join should succeed");
     }
@@ -115,8 +107,8 @@ mod mem_bench_impl {
     ///   - `mem_readings`: The vector containing all memory readings acquired during benchmark.
     ///   - `cpu_readings`: The vector containing all cpu percentage readings acquired during benchmark.
     fn validate_memory_benchmark(mem_readings: &[f32], cpu_readings: &[f32]) {
-        let mems = vec_1d_to_array(&mem_readings).unwrap();
-        let cpus = vec_1d_to_array(&cpu_readings).unwrap();
+        let mems = vec_1d_to_array(mem_readings).unwrap();
+        let cpus = vec_1d_to_array(cpu_readings).unwrap();
         assert!(
             mem_readings.len() >= MINIMUM_MEM_READINGS,
             "This benchmark requires {} samples to be collected for analysis and only {} samples were collected.",

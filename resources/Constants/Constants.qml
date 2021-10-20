@@ -226,8 +226,8 @@ QtObject {
     }
 
     connection: QtObject {
-        readonly property int connectionDropdownWidth: 100
-        readonly property int serialSelectionDropdownWidth: 100
+        readonly property int connectionDropdownWidth: 120
+        readonly property int serialSelectionDropdownWidth: 200
         readonly property int dropdownHeight: 40
         readonly property int buttonHeight: 40
         readonly property int buttonSvgHeight: 15
@@ -246,8 +246,8 @@ QtObject {
         readonly property string connectButtonPath: "images/fontawesome/power-off-solid.svg"
         readonly property string pauseButtonPath: "images/fontawesome/pause-solid.svg"
         readonly property string folderButtonPath: "images/fontawesome/folder-open-regular.svg"
-        readonly property string name: "connection"
-        readonly property string path: "qrc:///ConnectionScreen.qml"
+        readonly property string connected: "CONNECTED"
+        readonly property string disconnected: "DISCONNECTED"
     }
 
     loggingBar: QtObject {

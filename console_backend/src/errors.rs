@@ -10,8 +10,6 @@ pub(crate) const UNABLE_TO_SEND_INS_UPDATE_FAILURE: &str = "unable to send an in
 pub(crate) const THREAD_JOIN_FAILURE: &str = "thread join failure";
 pub(crate) const TCP_CONNECTION_PARSING_FAILURE: &str =
     "unable to parse the provided string for ip string";
-pub(crate) const SERVER_STATE_NEW_CONNECTION_FAILURE: &str = "server state new connection failure";
-pub(crate) const SERVER_STATE_DISCONNECT_FAILURE: &str = "server state disconnect failure";
 pub(crate) const CONSOLE_LOG_JSON_TO_STRING_FAILURE: &str = "unable to convert json to string";
 pub(crate) const CROSSBEAM_SCOPE_UNWRAP_FAILURE: &str = "unable to unwrap crossbeam scope";
 pub(crate) const UNABLE_TO_CLONE_UPDATE_SHARED: &str = "unable to clone update shared";

@@ -1,18 +1,21 @@
 use std::collections::HashMap;
+use std::ops::Index;
 
 use capnp::message::Builder;
 use capnp::message::HeapAllocator;
 use capnp::serialize;
+
 use indexmap::IndexSet;
 use log::warn;
 use sbp::SbpString;
 use semver::{Version, VersionReq}; //BuildMetadata, Prerelease,
 use serialport::available_ports;
 
+use crate::connection::ConnectionState;
 use crate::constants::*;
 use crate::errors::*;
+use crate::shared_state::{SerialConfig, SharedState};
 use crate::types::{CapnProtoSender, SignalCodes};
-use crate::{common_constants as cc, shared_state::SharedState};
 
 /// Compare to semvar strings and return true if the later_version is greater than the early version.
 ///
@@ -56,21 +59,8 @@ pub fn fixed_sbp_string<T, const L: usize>(data: &str) -> SbpString<[u8; L], T> 
     SbpString::new(arr)
 }
 
-/// Send a CLOSE, or kill, signal to the frontend.
-pub fn close_frontend<P: CapnProtoSender>(client_send: &mut P) {
-    let mut builder = Builder::new_default();
-    let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
-    let mut status = msg.init_status();
-    let app_state = cc::ApplicationStates::CLOSE;
-    status.set_text(&app_state.to_string());
-    client_send.send_data(serialize_capnproto_builder(builder));
-}
-
-/// Send a CONNECTED or DISCONNECTED, signal to the frontend.
-pub fn set_connected_frontend<P: CapnProtoSender>(
-    app_state: cc::ApplicationStates,
-    client_send: &mut P,
-) {
+/// Notify the frontend of an [ConnectionState] change.
+pub fn send_conn_state<P: CapnProtoSender>(app_state: ConnectionState, client_send: &mut P) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
     let mut status = msg.init_status();
@@ -95,6 +85,46 @@ pub fn refresh_connection_frontend<P: CapnProtoSender>(
             .collect();
     }
 
+    let previous_configs = shared_state.serial_history();
+
+    // Filter out previous devices that aren't currently connected
+    let filtered_previous: Vec<(&String, &SerialConfig)> = previous_configs
+        .iter()
+        .filter(|(device, _)| ports.iter().any(|curr_serial| &curr_serial == device))
+        .collect();
+
+    match filtered_previous.len() {
+        0 => {
+            connection_status
+                .reborrow()
+                .get_last_serial_device()
+                .set_none(());
+        }
+        n => {
+            let last_device = filtered_previous.index(n - 1).0;
+            connection_status
+                .reborrow()
+                .get_last_serial_device()
+                .set_port(last_device);
+        }
+    };
+
+    let mut previous_serial_configs = connection_status
+        .reborrow()
+        .init_previous_serial_configs(filtered_previous.len() as u32);
+
+    for (i, (device, config)) in filtered_previous.iter().enumerate() {
+        let mut entry = previous_serial_configs.reborrow().get(i as u32);
+
+        entry.set_device(device);
+        entry.set_baudrate(config.baud);
+        entry.set_flow_control(
+            AVAILABLE_FLOWS
+                .get(config.flow as usize)
+                .expect("Unknown flow value"),
+        );
+    }
+
     let mut available_ports = connection_status
         .reborrow()
         .init_available_ports(ports.len() as u32);
@@ -117,14 +147,6 @@ pub fn refresh_connection_frontend<P: CapnProtoSender>(
 
     for (i, flow) in AVAILABLE_FLOWS.iter().enumerate() {
         available_flows.set(i as u32, &flow.to_string());
-    }
-
-    let mut available_refresh_rates = connection_status
-        .reborrow()
-        .init_available_refresh_rates(AVAILABLE_REFRESH_RATES.len() as u32);
-
-    for (i, rr) in AVAILABLE_REFRESH_RATES.iter().enumerate() {
-        available_refresh_rates.set(i as u32, *rr);
     }
 
     let addresses = shared_state.address_history();

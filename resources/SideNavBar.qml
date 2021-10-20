@@ -138,8 +138,7 @@ Rectangle {
             running: true
             repeat: true
             onTriggered: {
-                connection_model.fill_data(connectionData);
-                connectButton.checked = connectionData.connected;
+                connectButton.checked = Globals.conn_state == Constants.connection.connected;
             }
         }
 

@@ -6,7 +6,7 @@ use pyo3::types::PyBytes;
 use std::time;
 
 use crate::cli_options::*;
-use crate::connection::ConnectionState;
+use crate::connection::ConnectionManager;
 
 use crate::log_panel::setup_logging;
 use crate::server_recv_thread::server_recv_thread;
@@ -112,12 +112,15 @@ impl Server {
         let shared_state = SharedState::new();
         setup_logging(client_send.clone(), shared_state.clone(), false);
         let opt = CliOptions::from_filtered_cli();
-        let connection_state = ConnectionState::new(client_send.clone(), shared_state.clone());
+        if let Some(ref path) = opt.settings_yaml {
+            sbp_settings::settings::load_from_path(path).expect("failed to load settings");
+        }
+        let conn_manager = ConnectionManager::new(client_send.clone(), shared_state.clone());
         // Handle CLI Opts.
-        handle_cli(opt, &connection_state, shared_state.clone());
+        handle_cli(opt, &conn_manager, shared_state.clone());
         refresh_connection_frontend(&mut client_send.clone(), shared_state.clone());
         refresh_loggingbar(&mut client_send.clone(), shared_state.clone());
-        server_recv_thread(connection_state, client_send, server_recv, shared_state);
+        server_recv_thread(conn_manager, client_send, server_recv, shared_state);
         Ok(server_endpoint)
     }
 }

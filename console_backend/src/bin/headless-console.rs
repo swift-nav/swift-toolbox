@@ -2,7 +2,7 @@ use anyhow::Result;
 use chrono::prelude::*;
 use console_backend::{
     cli_options::{handle_cli, CliOptions},
-    connection::ConnectionState,
+    connection::ConnectionManager,
     log_panel::setup_logging,
     server_recv_thread::server_recv_thread,
     shared_state::SharedState,
@@ -30,11 +30,11 @@ Usage:
     let client_send = ClientSender::new(client_send_);
     let shared_state = SharedState::new();
     setup_logging(client_send.clone(), shared_state.clone(), true);
-    let connection_state = ConnectionState::new(client_send.clone(), shared_state.clone());
-    handle_cli(opt, &connection_state, shared_state.clone());
+    let conn_manager = ConnectionManager::new(client_send.clone(), shared_state.clone());
+    handle_cli(opt, &conn_manager, shared_state.clone());
     refresh_connection_frontend(&mut client_send.clone(), shared_state.clone());
     refresh_loggingbar(&mut client_send.clone(), shared_state.clone());
-    server_recv_thread(connection_state, client_send, server_recv, shared_state);
+    server_recv_thread(conn_manager, client_send, server_recv, shared_state);
 
     let mut msg_count: usize = 0;
     while client_recv.recv().is_ok() {

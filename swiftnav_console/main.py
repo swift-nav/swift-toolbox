@@ -25,7 +25,7 @@ import swiftnav_console.console_resources  # type: ignore # pylint: disable=unus
 
 import console_backend.server  # type: ignore  # pylint: disable=import-error,no-name-in-module
 
-from .constants import ApplicationMetadata, ApplicationStates, Keys, Tabs, QTKeys
+from .constants import ApplicationMetadata, ConnectionState, Keys, Tabs, QTKeys
 
 from .log_panel import (
     LOG_PANEL,
@@ -230,12 +230,10 @@ def receive_messages(app_, backend, messages):
         Message = messages.Message
         m = Message.from_bytes(buffer)
         if m.which == Message.Union.Status:
-            if m.status.text == ApplicationStates.CLOSE:
+            app_state = ConnectionState(m.status.text)
+            if app_state == ConnectionState.CLOSED:
                 return app_.quit()
-            if m.status.text == ApplicationStates.CONNECTED:
-                CONNECTION[Keys.CONNECTED] = True
-            elif m.status.text == ApplicationStates.DISCONNECTED:
-                CONNECTION[Keys.CONNECTED] = False
+            CONNECTION[Keys.CONNECTION_STATE] = app_state
 
         elif m.which == Message.Union.SolutionPositionStatus:
             SOLUTION_POSITION_TAB[Keys.POINTS][:] = [
@@ -370,10 +368,17 @@ def receive_messages(app_, backend, messages):
             CONNECTION[Keys.AVAILABLE_PORTS][:] = m.connectionStatus.availablePorts
             CONNECTION[Keys.AVAILABLE_BAUDRATES][:] = m.connectionStatus.availableBaudrates
             CONNECTION[Keys.AVAILABLE_FLOWS][:] = m.connectionStatus.availableFlows
-            CONNECTION[Keys.AVAILABLE_REFRESH_RATES][:] = m.connectionStatus.availableRefreshRates
             CONNECTION[Keys.PREVIOUS_HOSTS][:] = m.connectionStatus.previousHosts
             CONNECTION[Keys.PREVIOUS_PORTS][:] = m.connectionStatus.previousPorts
             CONNECTION[Keys.PREVIOUS_FILES][:] = m.connectionStatus.previousFiles
+            CONNECTION[Keys.LAST_USED_SERIAL_DEVICE] = (
+                m.connectionStatus.lastSerialDevice.port
+                if m.connectionStatus.lastSerialDevice.which() == "port"
+                else None
+            )
+            CONNECTION[Keys.PREVIOUS_SERIAL_CONFIGS][:] = [
+                [entry.device, entry.baudrate, entry.flowControl] for entry in m.connectionStatus.previousSerialConfigs
+            ]
         elif m.which == Message.Union.LoggingBarStatus:
             LOGGING_BAR[Keys.PREVIOUS_FOLDERS][:] = m.loggingBarStatus.previousFolders
             LOGGING_BAR[Keys.CSV_LOGGING] = m.loggingBarStatus.csvLogging
@@ -758,9 +763,17 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
     if args.show_csv_log:
         globals_.setProperty("showCsvLog", True)  # type: ignore
     if args.height:
-        globals_.setProperty("height", args.height)  # type: ignore
+        min_height = globals_.property("minimumHeight")  # type: ignore
+        if args.height < min_height:
+            print(f"WARNING: --height value: {args.height}, is less than minimum: {min_height}. Input will be ignored.")
+        else:
+            globals_.setProperty("height", args.height)  # type: ignore
     if args.width:
-        globals_.setProperty("width", args.width)  # type: ignore
+        min_width = globals_.property("minimumWidth")  # type: ignore
+        if args.width < min_width:
+            print(f"WARNING: --width value: {args.width}, is less than minimum: {min_width}. Input will be ignored.")
+        else:
+            globals_.setProperty("width", args.width)  # type: ignore
 
 
 def main():

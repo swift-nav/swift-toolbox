@@ -1,4 +1,5 @@
-use crate::common_constants::{self as cc, SbpLogging};
+use crate::common_constants::SbpLogging;
+use crate::connection::ConnectionState;
 use crate::constants::{
     APPLICATION_NAME, APPLICATION_ORGANIZATION, APPLICATION_QUALIFIER, CONNECTION_HISTORY_FILENAME,
     DEFAULT_LOG_DIRECTORY, MAX_CONNECTION_HISTORY, MPS,
@@ -6,20 +7,22 @@ use crate::constants::{
 use crate::errors::{CONVERT_TO_STR_FAILURE, SHARED_STATE_LOCK_MUTEX_FAILURE};
 use crate::log_panel::LogLevel;
 use crate::output::{CsvLogging, CsvSerializer};
-use crate::piksi_tools_constants::*;
 use crate::settings_tab;
 use crate::solution_tab::LatLonUnits;
 use crate::types::CapnProtoSender;
 use crate::update_tab::UpdateTabUpdate;
-use crate::utils::set_connected_frontend;
+use crate::utils::send_conn_state;
+use crate::watch::{WatchReceiver, Watched};
 use anyhow::{Context, Result as AHResult};
 use chrono::{DateTime, Utc};
 use crossbeam::channel::Sender;
 use directories::{ProjectDirs, UserDirs};
 use indexmap::set::IndexSet;
+use indexmap::IndexMap;
 use lazy_static::lazy_static;
 use log::error;
 use serde::{Deserialize, Serialize};
+use serialport::FlowControl;
 use std::path::Path;
 use std::{
     cmp::{Eq, PartialEq},
@@ -42,39 +45,26 @@ impl SharedState {
     pub fn new() -> SharedState {
         SharedState(Arc::new(Mutex::new(SharedStateInner::default())))
     }
-    pub fn is_running(&self) -> bool {
+    pub fn connection(&self) -> ConnectionState {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).running
+        (*shared_data).conn.get()
     }
-    pub fn set_running<S>(&self, set_to: bool, mut client_send: S)
+    pub fn watch_connection(&self) -> WatchReceiver<ConnectionState> {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).conn.watch()
+    }
+    pub fn set_connection<S>(&self, conn: ConnectionState, client_send: &mut S)
     where
         S: CapnProtoSender,
     {
-        if set_to {
-            set_connected_frontend(cc::ApplicationStates::CONNECTED, &mut client_send);
-        } else {
-            set_connected_frontend(cc::ApplicationStates::DISCONNECTED, &mut client_send);
-            self.set_current_connection(EMPTY_STR.to_string());
+        {
+            let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+            if let ConnectionState::Connected { stop_token, .. } = shared_data.conn.get() {
+                stop_token.stop();
+            }
+            shared_data.conn.send(conn.clone());
         }
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).running = set_to;
-    }
-    pub fn is_server_running(&self) -> bool {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).server_running
-    }
-    pub fn stop_server_running(&self) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).running = false;
-        (*shared_data).server_running = false;
-    }
-    pub fn is_paused(&self) -> bool {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).paused
-    }
-    pub fn set_paused(&self, set_to: bool) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).paused = set_to;
+        send_conn_state(conn, client_send);
     }
     pub fn debug(&self) -> bool {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
@@ -159,6 +149,10 @@ impl SharedState {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).connection_history.addresses()
     }
+    pub fn serial_history(&self) -> IndexMap<String, SerialConfig> {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).connection_history.serial_configs()
+    }
     pub fn update_folder_history(&self, folder: PathBuf) {
         let folder = String::from(folder.to_str().expect(CONVERT_TO_STR_FAILURE));
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
@@ -171,6 +165,12 @@ impl SharedState {
     pub fn update_tcp_history(&self, host: String, port: u16) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).connection_history.record_address(host, port);
+    }
+    pub fn update_serial_history(&self, device: String, baud: u32, flow: FlowControl) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data)
+            .connection_history
+            .record_serial(device, baud, flow);
     }
     pub fn start_vel_log(&self, path: &Path) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
@@ -234,47 +234,75 @@ impl SharedState {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).update_tab_sender = Some(sender);
     }
-    pub fn settings_needs_update(&self) -> bool {
-        self.lock()
-            .expect(SHARED_STATE_LOCK_MUTEX_FAILURE)
+    pub fn watch_settings_state(&self) -> WatchReceiver<SettingsTabState> {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.settings_tab.watch()
+    }
+    pub fn set_settings_state(&self, state: SettingsTabState) {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.settings_tab.send(state);
+    }
+    pub fn reset_settings_state(&self) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.settings_tab = Watched::new(SettingsTabState::new());
+    }
+    pub fn set_settings_refresh(&self, refresh: bool) {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        let data = shared_data.settings_tab.get();
+        shared_data
             .settings_tab
-            .needs_update()
+            .send(SettingsTabState { refresh, ..data });
     }
-    pub fn take_settings_state(&self) -> SettingsTabState {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        shared_data.settings_tab.take()
+    pub fn set_settings_save(&self, save: bool) {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        let data = shared_data.settings_tab.get();
+        shared_data
+            .settings_tab
+            .send(SettingsTabState { save, ..data });
     }
-    pub fn set_settings_refresh(&self, set_to: bool) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        shared_data.settings_tab.refresh = set_to;
+    pub fn set_settings_reset(&self, reset: bool) {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        let data = shared_data.settings_tab.get();
+        shared_data
+            .settings_tab
+            .send(SettingsTabState { reset, ..data });
     }
-    pub fn set_settings_save(&self, set_to: bool) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        shared_data.settings_tab.save = set_to;
+    pub fn set_settings_auto_survey_request(&self, auto_survey_request: bool) {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        let data = shared_data.settings_tab.get();
+        shared_data.settings_tab.send(SettingsTabState {
+            auto_survey_request,
+            ..data
+        });
     }
-    pub fn set_settings_reset(&self, set_to: bool) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        shared_data.settings_tab.reset = set_to;
+    pub fn set_settings_confirm_ins_change(&self, confirm_ins_change: bool) {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        let data = shared_data.settings_tab.get();
+        shared_data.settings_tab.send(SettingsTabState {
+            confirm_ins_change,
+            ..data
+        });
     }
-    pub fn set_settings_confirm_ins_change(&self, set_to: bool) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        shared_data.settings_tab.confirm_ins_change = set_to;
+    pub fn set_export_settings(&self, export: Option<PathBuf>) {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        let data = shared_data.settings_tab.get();
+        shared_data
+            .settings_tab
+            .send(SettingsTabState { export, ..data });
     }
-    pub fn set_settings_auto_survey_request(&self, set_to: bool) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        shared_data.settings_tab.auto_survey_request = set_to;
+    pub fn set_import_settings(&self, import: Option<PathBuf>) {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        let data = shared_data.settings_tab.get();
+        shared_data
+            .settings_tab
+            .send(SettingsTabState { import, ..data });
     }
-    pub fn set_export_settings(&self, path: Option<PathBuf>) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        shared_data.settings_tab.export = path;
-    }
-    pub fn set_import_settings(&self, path: Option<PathBuf>) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        shared_data.settings_tab.import = path;
-    }
-    pub fn set_write_setting(&self, setting: Option<settings_tab::SaveRequest>) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        shared_data.settings_tab.write = setting;
+    pub fn set_write_setting(&self, write: Option<settings_tab::SaveRequest>) {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        let data = shared_data.settings_tab.get();
+        shared_data
+            .settings_tab
+            .send(SettingsTabState { write, ..data });
     }
     pub fn console_version(&self) -> String {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
@@ -356,16 +384,15 @@ pub struct SharedStateInner {
     pub(crate) logging_bar: LoggingBarState,
     pub(crate) log_panel: LogPanelState,
     pub(crate) tracking_tab: TrackingTabState,
-    pub(crate) paused: bool,
     pub(crate) connection_history: ConnectionHistory,
-    pub(crate) running: bool,
+    pub(crate) conn: Watched<ConnectionState>,
     pub(crate) debug: bool,
     pub(crate) server_running: bool,
     pub(crate) solution_tab: SolutionTabState,
     pub(crate) baseline_tab: BaselineTabState,
     pub(crate) advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTabState,
     pub(crate) update_tab_sender: Option<Sender<Option<UpdateTabUpdate>>>,
-    pub(crate) settings_tab: SettingsTabState,
+    pub(crate) settings_tab: Watched<SettingsTabState>,
     pub(crate) console_version: String,
     pub(crate) firmware_version: Option<String>,
     pub(crate) dgnss_enabled: bool,
@@ -383,16 +410,15 @@ impl SharedStateInner {
             logging_bar: LoggingBarState::new(log_directory),
             log_panel: LogPanelState::new(),
             tracking_tab: TrackingTabState::new(),
-            paused: false,
             debug: false,
             connection_history,
-            running: false,
+            conn: Watched::new(ConnectionState::Disconnected),
             server_running: true,
             solution_tab: SolutionTabState::new(),
             baseline_tab: BaselineTabState::new(),
             advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTabState::new(),
             update_tab_sender: None,
-            settings_tab: SettingsTabState::new(),
+            settings_tab: Watched::new(SettingsTabState::new()),
             console_version: String::from(include_str!("version.txt").trim()),
             firmware_version: None,
             dgnss_enabled: false,
@@ -606,7 +632,7 @@ impl AutoSurveyData {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct SettingsTabState {
     pub refresh: bool,
     pub reset: bool,
@@ -621,21 +647,6 @@ pub struct SettingsTabState {
 impl SettingsTabState {
     fn new() -> Self {
         Default::default()
-    }
-
-    fn take(&mut self) -> SettingsTabState {
-        std::mem::take(self)
-    }
-
-    fn needs_update(&self) -> bool {
-        self.refresh
-            || self.reset
-            || self.save
-            || self.confirm_ins_change
-            || self.auto_survey_request
-            || self.export.is_some()
-            || self.import.is_some()
-            || self.write.is_some()
     }
 }
 
@@ -725,11 +736,30 @@ pub struct Address {
     pub port: u16,
 }
 
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub struct SerialConfig {
+    pub baud: u32,
+    #[serde(with = "FlowControlRemote")]
+    pub flow: FlowControl,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(remote = "FlowControl")]
+enum FlowControlRemote {
+    #[serde(rename = "None")]
+    None,
+    #[serde(rename = "Software")]
+    Software,
+    #[serde(rename = "Hardware")]
+    Hardware,
+}
+
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct ConnectionHistory {
     addresses: IndexSet<Address>,
     files: IndexSet<String>,
     folders: IndexSet<String>,
+    serial_configs: IndexMap<String, SerialConfig>,
 }
 
 impl Default for ConnectionHistory {
@@ -755,6 +785,7 @@ impl ConnectionHistory {
             addresses: IndexSet::new(),
             files: IndexSet::new(),
             folders,
+            serial_configs: IndexMap::new(),
         }
     }
     /// Return the filename of the saved connection history file.
@@ -772,6 +803,10 @@ impl ConnectionHistory {
     /// Returns a clone of the private folders vec.
     pub fn folders(&self) -> IndexSet<String> {
         self.folders.clone()
+    }
+    /// Returns a clone of the previous serial configs, in order of last use.
+    pub fn serial_configs(&self) -> IndexMap<String, SerialConfig> {
+        self.serial_configs.clone()
     }
     /// Attempt to add a new host and port if not the most recent entries.
     ///
@@ -812,6 +847,24 @@ impl ConnectionHistory {
         self.folders.insert(folder);
         let diff = i32::max(0, self.folders.len() as i32 - MAX_CONNECTION_HISTORY);
         self.folders = self.folders.split_off(diff as usize);
+
+        if let Err(e) = self.save() {
+            error!("Unable to save connection history, {}.", e);
+        }
+    }
+
+    /// Attempt to add a new serial configuration if not the most recent entry.
+    ///
+    /// # Parameters
+    /// - `device`: The path to the serial device.
+    /// - `baud`: The chosen baud rate
+    /// - `flow`: The chosen flow control
+    pub fn record_serial(&mut self, device: String, baud: u32, flow: FlowControl) {
+        let serial = SerialConfig { baud, flow };
+        self.serial_configs.shift_remove(&device);
+        self.serial_configs.insert(device.clone(), serial);
+        let diff = i32::max(0, self.serial_configs.len() as i32 - MAX_CONNECTION_HISTORY);
+        self.serial_configs = self.serial_configs.split_off(diff as usize);
 
         if let Err(e) = self.save() {
             error!("Unable to save connection history, {}.", e);
@@ -913,6 +966,65 @@ mod tests {
             conn_history.record_file(ele.to_string());
         }
         assert_eq!(conn_history.files().len(), MAX_CONNECTION_HISTORY as usize);
+        restore_backup_file(bfilename);
+    }
+
+    #[test]
+    #[serial]
+    fn connection_history_serial_test() {
+        let bfilename = filename();
+        backup_file(bfilename.clone());
+
+        let mut conn_history = ConnectionHistory::new();
+
+        let configs = conn_history.serial_configs();
+        assert_eq!(configs.keys().len(), 0);
+
+        conn_history.record_serial("/dev/ttyUSB0".to_string(), 115200, FlowControl::Software);
+        conn_history.record_serial("/dev/ttyUSB0".to_string(), 115200, FlowControl::None);
+
+        let configs = conn_history.serial_configs();
+
+        // Should only store one serial record despite the settings changing
+        assert_eq!(configs.keys().len(), 1);
+
+        // Settings should be as recorded for the last change
+        let config = configs.get("/dev/ttyUSB0").unwrap();
+        assert_eq!(config.baud, 115200);
+        assert_eq!(config.flow, FlowControl::None);
+
+        conn_history.record_serial("/dev/ttyUSB1".to_string(), 115200, FlowControl::None);
+
+        // The most recent entry should be stored last
+        let configs = conn_history.serial_configs();
+        assert_eq!(configs.keys().len(), 2);
+        assert_eq!(configs.keys().nth(1).unwrap(), "/dev/ttyUSB1");
+
+        conn_history.record_serial("/dev/ttyUSB0".to_string(), 115200, FlowControl::None);
+
+        // But the most recent entry should be updated if a previous device is used again
+        let configs = conn_history.serial_configs();
+        assert_eq!(configs.keys().len(), 2);
+        assert_eq!(configs.keys().nth(1).unwrap(), "/dev/ttyUSB0");
+
+        let mut conn_history = ConnectionHistory::new();
+
+        for ele in 0..MAX_CONNECTION_HISTORY {
+            conn_history.record_serial(
+                format!("/dev/ttyUSB{:?}", ele),
+                9600,
+                FlowControl::Hardware,
+            );
+        }
+        let configs = conn_history.serial_configs();
+        configs.get("/dev/ttyUSB0").unwrap();
+
+        // Adding a new device should push out the oldest
+        conn_history.record_serial("/dev/mynewserial".to_string(), 115200, FlowControl::None);
+        let configs = conn_history.serial_configs();
+        let config = configs.get("/dev/ttyUSB0");
+        assert_eq!(config, None);
+
         restore_backup_file(bfilename);
     }
 }

@@ -43,6 +43,56 @@ Item {
             }
         }
 
+        Item {
+            anchors.fill: parent
+            anchors.topMargin: Constants.genericTable.cellHeight
+            anchors.rightMargin: Constants.logPanel.pauseButtonRightMargin
+            z: Constants.logPanel.zAboveTable
+
+            RoundButton {
+                id: baselinePauseButton
+
+                visible: !consolePaused
+                width: Constants.logPanel.pauseButtonWidth
+                height: Constants.logPanel.pauseButtonWidth
+                radius: Constants.logPanel.pauseButtonWidth / 3
+                padding: Constants.logPanel.pauseButtonPadding
+                icon.width: Constants.logPanel.pauseButtonWidth / 3
+                icon.height: Constants.logPanel.pauseButtonWidth / 3
+                icon.source: Constants.icons.pauseButtonUrl
+                icon.color: Constants.materialGrey
+                anchors.right: parent.right
+                anchors.top: parent.top
+                ToolTip.visible: hovered
+                ToolTip.text: Constants.logPanel.pauseButtonTooltip
+                onClicked: {
+                    consolePaused = true;
+                }
+            }
+
+            RoundButton {
+                id: baselinePlayButton
+
+                visible: consolePaused
+                width: Constants.logPanel.pauseButtonWidth
+                height: Constants.logPanel.pauseButtonWidth
+                radius: Constants.logPanel.pauseButtonWidth / 3
+                padding: Constants.logPanel.pauseButtonPadding
+                icon.width: Constants.logPanel.pauseButtonWidth / 3
+                icon.height: Constants.logPanel.pauseButtonWidth / 3
+                icon.source: Constants.icons.playPath
+                icon.color: Constants.swiftOrange
+                anchors.right: parent.right
+                anchors.top: parent.top
+                ToolTip.visible: hovered
+                ToolTip.text: Constants.logPanel.playButtonTooltip
+                onClicked: {
+                    consolePaused = false;
+                }
+            }
+
+        }
+
         HorizontalHeaderView {
             id: horizontalHeader
 
@@ -188,55 +238,6 @@ Item {
             anchors.top: horizontalHeader.bottom
             width: parent.width
             height: parent.height - horizontalHeader.height
-
-            Item {
-                anchors.fill: parent
-                anchors.rightMargin: Constants.logPanel.pauseButtonRightMargin
-                z: Constants.logPanel.zAboveTable
-
-                RoundButton {
-                    id: baselinePauseButton
-
-                    visible: !consolePaused
-                    width: Constants.logPanel.pauseButtonWidth
-                    height: Constants.logPanel.pauseButtonWidth
-                    radius: Constants.logPanel.pauseButtonWidth / 3
-                    padding: Constants.logPanel.pauseButtonPadding
-                    icon.width: Constants.logPanel.pauseButtonWidth / 3
-                    icon.height: Constants.logPanel.pauseButtonWidth / 3
-                    icon.source: Constants.icons.pauseButtonUrl
-                    icon.color: Constants.materialGrey
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    ToolTip.visible: hovered
-                    ToolTip.text: Constants.logPanel.pauseButtonTooltip
-                    onClicked: {
-                        consolePaused = true;
-                    }
-                }
-
-                RoundButton {
-                    id: baselinePlayButton
-
-                    visible: consolePaused
-                    width: Constants.logPanel.pauseButtonWidth
-                    height: Constants.logPanel.pauseButtonWidth
-                    radius: Constants.logPanel.pauseButtonWidth / 3
-                    padding: Constants.logPanel.pauseButtonPadding
-                    icon.width: Constants.logPanel.pauseButtonWidth / 3
-                    icon.height: Constants.logPanel.pauseButtonWidth / 3
-                    icon.source: Constants.icons.playPath
-                    icon.color: Constants.swiftOrange
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    ToolTip.visible: hovered
-                    ToolTip.text: Constants.logPanel.playButtonTooltip
-                    onClicked: {
-                        consolePaused = false;
-                    }
-                }
-
-            }
 
             ScrollBar.horizontal: ScrollBar {
             }

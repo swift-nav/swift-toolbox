@@ -265,13 +265,12 @@ mod tests {
         let watched = Watched::new(0);
         let mut recv = watched.watch();
         // mark first as seen
-        let _ = dbg!(recv.get());
+        let _ = recv.get();
         thread::spawn(move || {
             thread::sleep(Duration::from_secs(1));
             drop(watched);
-            eprintln!("here");
         });
-        assert!(dbg!(recv.wait().is_err()));
+        assert!(recv.wait().is_err());
     }
 
     #[test]

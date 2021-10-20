@@ -1,4 +1,4 @@
-use std::{io, iter::FusedIterator, sync::Arc, thread};
+use std::{io, sync::Arc, thread};
 
 use crossbeam::channel::{Receiver, Sender};
 use log::{debug, error};
@@ -281,7 +281,7 @@ pub fn process_messages<S>(
             });
         }
 
-        for (message, gps_time) in messages.fuse() {
+        for (message, gps_time) in messages {
             let sent = source.send_with_state(&tabs, &message);
             tabs.main.lock().unwrap().serialize_sbp(&message);
             tabs.status_bar
@@ -365,8 +365,6 @@ impl Iterator for Messages {
         }
     }
 }
-
-impl FusedIterator for Messages {}
 
 /// Used to break the `process_messages` loop. Can be stopped manually
 /// or will automatically stop after all copies of this have been dropped.

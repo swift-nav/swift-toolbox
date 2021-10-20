@@ -262,22 +262,18 @@ fn is_baudrate(br: &str) -> Result<(), String> {
 ///
 /// # Parameters
 /// - `opt`: CLI Options to start specific connection type.
-/// - `connection_state`: The Server state to start a specific connection.
+/// - `conn_manager`: The Server state to start a specific connection.
 /// - `client_send`: Client Sender channel for communication from backend to frontend.
 /// - `shared_state`: The shared state for validating another connection is not already running.
-pub fn handle_cli(
-    opt: CliOptions,
-    connection_state: &ConnectionManager,
-    shared_state: SharedState,
-) {
+pub fn handle_cli(opt: CliOptions, conn_manager: &ConnectionManager, shared_state: SharedState) {
     if let Some(opt_input) = opt.input {
         match opt_input {
             Input::Tcp { host, port } => {
-                connection_state.connect_to_host(host, port);
+                conn_manager.connect_to_host(host, port);
             }
             Input::File { file_in } => {
                 let filename = file_in.display().to_string();
-                connection_state.connect_to_file(filename, RealtimeDelay::On, opt.exit_after);
+                conn_manager.connect_to_file(filename, RealtimeDelay::On, opt.exit_after);
             }
             Input::Serial {
                 serialport,
@@ -285,7 +281,7 @@ pub fn handle_cli(
                 flow_control,
             } => {
                 let serialport = serialport.display().to_string();
-                connection_state.connect_to_serial(serialport, baudrate, flow_control);
+                conn_manager.connect_to_serial(serialport, baudrate, flow_control);
             }
         }
     }

@@ -23,7 +23,7 @@
     <file>AdvancedTabComponents/DeviceMonitor.qml</file>
     <file>AdvancedTabComponents/MetricsMonitor.qml</file>
     <file>AdvancedTabComponents/ObservationConnectionMonitor.qml</file>
-    <file>AdvancedTabComponents/AdvancedInsTab.qml</file>
+    <file>AdvancedTabComponents/AdvancedImuTab.qml</file>
     <file>AdvancedTabComponents/AdvancedNetworkingTab.qml</file>
     <file>AdvancedTabComponents/NetworkInfo.qml</file>
     <file>AdvancedTabComponents/MessageBroadcaster.qml</file>

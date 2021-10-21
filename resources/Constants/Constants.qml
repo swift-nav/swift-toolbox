@@ -20,7 +20,7 @@ QtObject {
     property QtObject commonChart
     property QtObject commonLegend
     property QtObject commonTable
-    property QtObject advancedIns
+    property QtObject advancedImu
     property QtObject advancedMagnetometer
     property QtObject advancedSpectrumAnalyzer
     property QtObject baselinePlot
@@ -302,7 +302,7 @@ QtObject {
         readonly property int rowTextMargins: 5
     }
 
-    advancedIns: QtObject {
+    advancedImu: QtObject {
         readonly property string title: "Raw IMU Data"
         readonly property color titleColor: "#00006E"
         readonly property int titlePointSize: 14

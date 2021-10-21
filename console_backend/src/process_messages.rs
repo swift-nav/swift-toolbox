@@ -122,11 +122,11 @@ pub fn process_messages<S>(
     });
 
     link.register(|tabs: &Tabs<S>, msg: MsgImuAux| {
-        tabs.advanced_ins.lock().unwrap().handle_imu_aux(msg);
+        tabs.advanced_imu.lock().unwrap().handle_imu_aux(msg);
     });
 
     link.register(|tabs: &Tabs<S>, msg: MsgImuRaw| {
-        tabs.advanced_ins.lock().unwrap().handle_imu_raw(msg);
+        tabs.advanced_imu.lock().unwrap().handle_imu_raw(msg);
     });
 
     link.register(|tabs: &Tabs<S>, msg: MsgInsStatus| {
@@ -135,7 +135,7 @@ pub fn process_messages<S>(
     });
 
     link.register(|tabs: &Tabs<S>, msg: MsgInsUpdates| {
-        tabs.advanced_ins
+        tabs.advanced_imu
             .lock()
             .unwrap()
             .fusion_engine_status_bar

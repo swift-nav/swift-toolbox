@@ -6,7 +6,7 @@ import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
 Item {
-    id: advancedInsTab
+    id: advancedImuTab
 
     property variant lines: []
 
@@ -15,22 +15,22 @@ Item {
     Component.onCompleted: {
     }
 
-    AdvancedInsPoints {
-        id: advancedInsPoints
+    AdvancedImuPoints {
+        id: advancedImuPoints
     }
 
     ColumnLayout {
-        id: advancedInsArea
+        id: advancedImuArea
 
         width: parent.width
         height: parent.height
 
         ChartView {
-            id: advancedInsChart
+            id: advancedImuChart
 
             visible: false
-            title: Constants.advancedIns.title
-            titleColor: Constants.advancedIns.titleColor
+            title: Constants.advancedImu.title
+            titleColor: Constants.advancedImu.titleColor
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.alignment: Qt.AlignTop
@@ -42,7 +42,7 @@ Item {
             }
 
             titleFont {
-                pointSize: Constants.advancedIns.titlePointSize
+                pointSize: Constants.advancedImu.titlePointSize
                 bold: true
             }
 
@@ -53,10 +53,10 @@ Item {
                 width: lineLegendRepeater.width
                 border.color: Constants.commonLegend.borderColor
                 border.width: Constants.commonLegend.borderWidth
-                anchors.bottom: advancedInsChart.bottom
-                anchors.left: advancedInsChart.left
-                anchors.bottomMargin: Constants.advancedIns.legendBottomMargin
-                anchors.leftMargin: Constants.advancedIns.legendLeftMargin
+                anchors.bottom: advancedImuChart.bottom
+                anchors.left: advancedImuChart.left
+                anchors.bottomMargin: Constants.advancedImu.legendBottomMargin
+                anchors.leftMargin: Constants.advancedImu.legendLeftMargin
 
                 Column {
                     id: lineLegendRepeater
@@ -67,13 +67,13 @@ Item {
                     Repeater {
                         id: lineLegendRepeaterRows
 
-                        model: Constants.advancedIns.legendLabels
+                        model: Constants.advancedImu.legendLabels
 
                         Row {
                             Component.onCompleted: {
-                                for (var idx in Constants.advancedIns.lineColors) {
+                                for (var idx in Constants.advancedImu.lineColors) {
                                     if (lineLegendRepeaterRows.itemAt(idx))
-                                        lineLegendRepeaterRows.itemAt(idx).children[0].color = Constants.advancedIns.lineColors[idx];
+                                        lineLegendRepeaterRows.itemAt(idx).children[0].color = Constants.advancedImu.lineColors[idx];
 
                                 }
                             }
@@ -105,7 +105,7 @@ Item {
             }
 
             ValueAxis {
-                id: advancedInsXAxis
+                id: advancedImuXAxis
 
                 gridVisible: true
                 lineVisible: true
@@ -113,10 +113,10 @@ Item {
                 minorGridLineColor: Constants.commonChart.minorGridLineColor
                 gridLineColor: Constants.commonChart.gridLineColor
                 labelsColor: Constants.commonChart.labelsColor
-                tickInterval: Constants.advancedIns.xAxisTickCount
+                tickInterval: Constants.advancedImu.xAxisTickCount
                 tickType: ValueAxis.TicksDynamic
-                min: Constants.advancedIns.xAxisMin
-                max: Constants.advancedIns.xAxisMax
+                min: Constants.advancedImu.xAxisMin
+                max: Constants.advancedImu.xAxisMax
 
                 labelsFont {
                     pointSize: Constants.mediumPointSize
@@ -126,7 +126,7 @@ Item {
             }
 
             ValueAxis {
-                id: advancedInsYAxis
+                id: advancedImuYAxis
 
                 gridVisible: true
                 lineVisible: true
@@ -134,10 +134,10 @@ Item {
                 minorGridLineColor: Constants.commonChart.minorGridLineColor
                 gridLineColor: Constants.commonChart.gridLineColor
                 labelsColor: Constants.commonChart.labelsColor
-                tickInterval: Constants.advancedIns.yAxisTickCount
+                tickInterval: Constants.advancedImu.yAxisTickCount
                 tickType: ValueAxis.TicksDynamic
-                min: Constants.advancedIns.yAxisMin
-                max: Constants.advancedIns.yAxisMax
+                min: Constants.advancedImu.yAxisMin
+                max: Constants.advancedImu.yAxisMax
 
                 labelsFont {
                     pointSize: Constants.mediumPointSize
@@ -147,7 +147,7 @@ Item {
             }
 
             Timer {
-                id: advancedInsTimer
+                id: advancedImuTimer
 
                 interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
                 running: true
@@ -156,29 +156,29 @@ Item {
                     if (!advancedTab.visible)
                         return ;
 
-                    advancedInsChart.visible = true;
-                    advanced_ins_model.fill_console_points(advancedInsPoints);
-                    if (!advancedInsPoints.points.length)
+                    advancedImuChart.visible = true;
+                    advanced_imu_model.fill_console_points(advancedImuPoints);
+                    if (!advancedImuPoints.points.length)
                         return ;
 
-                    var points = advancedInsPoints.points;
+                    var points = advancedImuPoints.points;
                     textDataRow.visible = true;
                     if (!lines.length) {
-                        for (var idx in advancedInsPoints.points) {
-                            var line = advancedInsChart.createSeries(ChartView.SeriesTypeLine, idx, advancedInsXAxis);
-                            line.color = Constants.advancedIns.lineColors[idx];
+                        for (var idx in advancedImuPoints.points) {
+                            var line = advancedImuChart.createSeries(ChartView.SeriesTypeLine, idx, advancedImuXAxis);
+                            line.color = Constants.advancedImu.lineColors[idx];
                             line.width = Constants.commonChart.lineWidth;
-                            line.axisYRight = advancedInsYAxis;
+                            line.axisYRight = advancedImuYAxis;
                             line.useOpenGL = Globals.useOpenGL;
                             lines.push(line);
                         }
                     }
-                    imuTempText.text = `${advancedInsPoints.fields_data[0].toFixed(2)} C`;
-                    imuConfText.text = `0x${advancedInsPoints.fields_data[1].toString(16).padStart(2, "0")}`;
-                    rmsAccXText.text = `${advancedInsPoints.fields_data[2].toFixed(2)} g`;
-                    rmsAccYText.text = `${advancedInsPoints.fields_data[3].toFixed(2)} g`;
-                    rmsAccZText.text = `${advancedInsPoints.fields_data[4].toFixed(2)} g`;
-                    advancedInsPoints.fill_series(lines);
+                    imuTempText.text = `${advancedImuPoints.fields_data[0].toFixed(2)} C`;
+                    imuConfText.text = `0x${advancedImuPoints.fields_data[1].toString(16).padStart(2, "0")}`;
+                    rmsAccXText.text = `${advancedImuPoints.fields_data[2].toFixed(2)} g`;
+                    rmsAccYText.text = `${advancedImuPoints.fields_data[3].toFixed(2)} g`;
+                    rmsAccZText.text = `${advancedImuPoints.fields_data[4].toFixed(2)} g`;
+                    advancedImuPoints.fill_series(lines);
                 }
             }
 
@@ -189,119 +189,114 @@ Item {
 
             visible: false
             Layout.fillWidth: true
-            Layout.preferredHeight: Constants.advancedIns.urlBarHeight
+            Layout.preferredHeight: Constants.advancedImu.urlBarHeight
             Layout.alignment: Qt.AlignBottom
 
             Label {
-                text: Constants.advancedIns.textDataLabels[0]
-                Layout.preferredWidth: Constants.advancedIns.textDataLabelWidth
-                font.pointSize: Constants.mediumPointSize
+                text: Constants.advancedImu.textDataLabels[0]
+                Layout.preferredWidth: Constants.advancedImu.textDataLabelWidth
             }
 
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: Constants.advancedIns.textDataBarHeight
+                Layout.preferredHeight: Constants.advancedImu.textDataBarHeight
                 Layout.alignment: Qt.AlignVCenter
-                border.width: Constants.advancedIns.textDataBarBorderWidth
+                border.width: Constants.advancedImu.textDataBarBorderWidth
 
                 Label {
                     id: imuTempText
 
                     clip: true
                     anchors.fill: parent
-                    anchors.margins: Constants.advancedIns.textDataBarMargin
+                    anchors.margins: Constants.advancedImu.textDataBarMargin
                     font.pointSize: Constants.mediumPointSize
                 }
 
             }
 
             Label {
-                text: Constants.advancedIns.textDataLabels[1]
-                Layout.preferredWidth: Constants.advancedIns.textDataLabelWidth
-                font.pointSize: Constants.mediumPointSize
+                text: Constants.advancedImu.textDataLabels[1]
+                Layout.preferredWidth: Constants.advancedImu.textDataLabelWidth
             }
 
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: Constants.advancedIns.textDataBarHeight
+                Layout.preferredHeight: Constants.advancedImu.textDataBarHeight
                 Layout.alignment: Qt.AlignVCenter
-                border.width: Constants.advancedIns.textDataBarBorderWidth
+                border.width: Constants.advancedImu.textDataBarBorderWidth
 
                 Label {
                     id: imuConfText
 
                     clip: true
                     anchors.fill: parent
-                    anchors.margins: Constants.advancedIns.textDataBarMargin
+                    anchors.margins: Constants.advancedImu.textDataBarMargin
                     font.pointSize: Constants.mediumPointSize
                 }
 
             }
 
             Label {
-                text: Constants.advancedIns.textDataLabels[2]
-                Layout.preferredWidth: Constants.advancedIns.textDataLabelWidth
-                font.pointSize: Constants.mediumPointSize
+                text: Constants.advancedImu.textDataLabels[2]
+                Layout.preferredWidth: Constants.advancedImu.textDataLabelWidth
             }
 
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: Constants.advancedIns.textDataBarHeight
+                Layout.preferredHeight: Constants.advancedImu.textDataBarHeight
                 Layout.alignment: Qt.AlignVCenter
-                border.width: Constants.advancedIns.textDataBarBorderWidth
+                border.width: Constants.advancedImu.textDataBarBorderWidth
 
                 Label {
                     id: rmsAccXText
 
                     clip: true
                     anchors.fill: parent
-                    anchors.margins: Constants.advancedIns.textDataBarMargin
+                    anchors.margins: Constants.advancedImu.textDataBarMargin
                     font.pointSize: Constants.mediumPointSize
                 }
 
             }
 
             Label {
-                text: Constants.advancedIns.textDataLabels[3]
-                Layout.preferredWidth: Constants.advancedIns.textDataLabelWidth
-                font.pointSize: Constants.mediumPointSize
+                text: Constants.advancedImu.textDataLabels[3]
+                Layout.preferredWidth: Constants.advancedImu.textDataLabelWidth
             }
 
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: Constants.advancedIns.textDataBarHeight
+                Layout.preferredHeight: Constants.advancedImu.textDataBarHeight
                 Layout.alignment: Qt.AlignVCenter
-                border.width: Constants.advancedIns.textDataBarBorderWidth
+                border.width: Constants.advancedImu.textDataBarBorderWidth
 
                 Label {
                     id: rmsAccYText
 
                     clip: true
                     anchors.fill: parent
-                    anchors.margins: Constants.advancedIns.textDataBarMargin
+                    anchors.margins: Constants.advancedImu.textDataBarMargin
                     font.pointSize: Constants.mediumPointSize
                 }
 
             }
 
             Label {
-                text: Constants.advancedIns.textDataLabels[4]
-                Layout.preferredWidth: Constants.advancedIns.textDataLabelWidth
-                font.pointSize: Constants.mediumPointSize
+                text: Constants.advancedImu.textDataLabels[4]
+                Layout.preferredWidth: Constants.advancedImu.textDataLabelWidth
             }
 
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: Constants.advancedIns.textDataBarHeight
+                Layout.preferredHeight: Constants.advancedImu.textDataBarHeight
                 Layout.alignment: Qt.AlignVCenter
-                border.width: Constants.advancedIns.textDataBarBorderWidth
+                border.width: Constants.advancedImu.textDataBarBorderWidth
 
                 Label {
                     id: rmsAccZText
 
                     clip: true
                     anchors.fill: parent
-                    anchors.margins: Constants.advancedIns.textDataBarMargin
+                    anchors.margins: Constants.advancedImu.textDataBarMargin
                     font.pointSize: Constants.mediumPointSize
                 }
 
@@ -311,7 +306,7 @@ Item {
 
         FusionStatusFlags {
             Layout.fillWidth: true
-            Layout.preferredHeight: Constants.advancedIns.urlBarHeight
+            Layout.preferredHeight: Constants.advancedImu.urlBarHeight
             Layout.alignment: Qt.AlignBottom
         }
 

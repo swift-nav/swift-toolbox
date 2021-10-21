@@ -36,157 +36,151 @@ Item {
 
             visible: false
             Layout.fillWidth: true
-            Layout.preferredHeight: Constants.advancedIns.urlBarHeight
+            Layout.preferredHeight: Constants.advancedImu.urlBarHeight
             Layout.alignment: Qt.AlignBottom
 
             Label {
-                text: Constants.advancedIns.insStatusLabels[0]
-                font.pointSize: Constants.mediumPointSize
+                text: Constants.advancedImu.insStatusLabels[0]
             }
 
             UnknownStatus {
                 id: gnssposUnknown
 
-                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
             }
 
             WarningStatus {
                 id: gnssposWarning
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
             }
 
             OkStatus {
                 id: gnssposOk
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
             }
 
             Label {
-                text: Constants.advancedIns.insStatusLabels[1]
-                font.pointSize: Constants.mediumPointSize
+                text: Constants.advancedImu.insStatusLabels[1]
             }
 
             UnknownStatus {
                 id: gnssvelUnknown
 
-                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
             }
 
             WarningStatus {
                 id: gnssvelWarning
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
             }
 
             OkStatus {
                 id: gnssvelOk
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
             }
 
             Label {
-                text: Constants.advancedIns.insStatusLabels[2]
-                font.pointSize: Constants.mediumPointSize
+                text: Constants.advancedImu.insStatusLabels[2]
             }
 
             UnknownStatus {
                 id: wheelticksUnknown
 
-                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
             }
 
             WarningStatus {
                 id: wheelticksWarning
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
             }
 
             OkStatus {
                 id: wheelticksOk
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
             }
 
             Label {
-                text: Constants.advancedIns.insStatusLabels[3]
-                font.pointSize: Constants.mediumPointSize
+                text: Constants.advancedImu.insStatusLabels[3]
             }
 
             UnknownStatus {
                 id: speedUnknown
 
-                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
             }
 
             WarningStatus {
                 id: speedWarning
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
             }
 
             OkStatus {
                 id: speedOk
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
             }
 
             Label {
-                text: Constants.advancedIns.insStatusLabels[4]
-                font.pointSize: Constants.mediumPointSize
+                text: Constants.advancedImu.insStatusLabels[4]
             }
 
             UnknownStatus {
                 id: nhcUnknown
 
-                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
             }
 
             WarningStatus {
                 id: nhcWarning
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
             }
 
             OkStatus {
                 id: nhcOk
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
             }
 
             Label {
-                text: Constants.advancedIns.insStatusLabels[5]
-                font.pointSize: Constants.mediumPointSize
+                text: Constants.advancedImu.insStatusLabels[5]
             }
 
             UnknownStatus {
                 id: zerovelUnknown
 
-                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
             }
 
             WarningStatus {
                 id: zerovelWarning
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
             }
 
             OkStatus {
                 id: zerovelOk
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
+                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
             }
 
             Item {

@@ -1,12 +1,12 @@
-use std::fmt;
-use std::sync::atomic::AtomicUsize;
-use std::sync::Weak;
-use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    Arc,
+use std::{
+    fmt,
+    sync::{
+        atomic::{AtomicBool, AtomicUsize, Ordering},
+        Arc,
+    },
 };
 
-use parking_lot::{Condvar, Mutex};
+use parking_lot::{Condvar, MappedMutexGuard, Mutex, MutexGuard};
 
 pub struct Watched<T> {
     shared: Arc<Shared<T>>,
@@ -43,7 +43,7 @@ impl<T: Clone> Watched<T> {
             data.version
         };
         WatchReceiver {
-            shared: Arc::downgrade(&self.shared),
+            shared: Arc::clone(&self.shared),
             last_seen: version.wrapping_sub(1),
         }
     }
@@ -85,21 +85,25 @@ impl<T> Drop for Watched<T> {
 }
 
 pub struct WatchReceiver<T> {
-    shared: Weak<Shared<T>>,
+    shared: Arc<Shared<T>>,
     last_seen: u64,
 }
 
 impl<T: Clone> WatchReceiver<T> {
     pub fn get(&mut self) -> Result<T, RecvError> {
-        let shared = Shared::upgrade(&self.shared)?;
-        let data = shared.data.lock();
+        if self.shared.is_closed() {
+            return Err(RecvError);
+        }
+        let data = self.shared.data.lock();
         self.last_seen = data.version;
         Ok(data.value.clone())
     }
 
     pub fn get_if_new(&mut self) -> Result<Option<T>, RecvError> {
-        let shared = Shared::upgrade(&self.shared)?;
-        let data = shared.data.lock();
+        if self.shared.is_closed() {
+            return Err(RecvError);
+        }
+        let data = self.shared.data.lock();
         if self.last_seen == data.version {
             Ok(None)
         } else {
@@ -109,16 +113,13 @@ impl<T: Clone> WatchReceiver<T> {
     }
 
     pub fn wait(&mut self) -> Result<T, RecvError> {
-        let shared = Shared::upgrade(&self.shared)?;
-        let mut data = shared.data.lock();
-        while data.version == self.last_seen {
-            shared.on_update.wait(&mut data);
-            if shared.is_closed() {
-                return Err(RecvError);
-            }
-        }
-        self.last_seen = data.version;
+        let data = self.wait_inner()?;
         Ok(data.value.clone())
+    }
+
+    pub fn wait_mut(&mut self) -> Result<MappedMutexGuard<T>, RecvError> {
+        let data = self.wait_inner()?;
+        Ok(MutexGuard::map(data, |d| &mut d.value))
     }
 
     pub fn wait_until<F>(&mut self, mut f: F) -> Result<T, RecvError>
@@ -139,12 +140,27 @@ impl<T: Clone> WatchReceiver<T> {
     {
         self.wait_until(|v| !f(v))
     }
+
+    fn wait_inner(&mut self) -> Result<MutexGuard<Value<T>>, RecvError> {
+        if self.shared.is_closed() {
+            return Err(RecvError);
+        }
+        let mut data = self.shared.data.lock();
+        while data.version == self.last_seen {
+            self.shared.on_update.wait(&mut data);
+            if self.shared.is_closed() {
+                return Err(RecvError);
+            }
+        }
+        self.last_seen = data.version;
+        Ok(data)
+    }
 }
 
 impl<T> Clone for WatchReceiver<T> {
     fn clone(&self) -> WatchReceiver<T> {
         WatchReceiver {
-            shared: Weak::clone(&self.shared),
+            shared: Arc::clone(&self.shared),
             last_seen: self.last_seen,
         }
     }
@@ -165,15 +181,6 @@ impl<T> Shared<T> {
 
     fn is_closed(&self) -> bool {
         self.closed.load(Ordering::SeqCst)
-    }
-
-    fn upgrade(me: &Weak<Self>) -> Result<Arc<Self>, RecvError> {
-        let shared = me.upgrade().ok_or(RecvError)?;
-        if shared.is_closed() {
-            Err(RecvError)
-        } else {
-            Ok(shared)
-        }
     }
 }
 

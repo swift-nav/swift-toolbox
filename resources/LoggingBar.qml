@@ -59,11 +59,11 @@ Rectangle {
             ToolTip.visible: hovered
             ToolTip.text: !checked ? "Start Recording" : "Stop Recording"
             onClicked: {
-                data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText);
                 if (!checked) {
                     folderPathBar.currentIndex = -1;
                     folderPathBar.editText = folderPathBar.textAt(0);
                 }
+                data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText);
             }
             Component.onCompleted: {
                 this.background.children[0].visible = false;

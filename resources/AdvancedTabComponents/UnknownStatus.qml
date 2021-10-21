@@ -5,16 +5,16 @@ import QtQuick 2.5
 Item {
     Image {
         anchors.centerIn: parent
-        width: Constants.advancedIns.insStatusImageWidth
-        height: Constants.advancedIns.insStatusImageWidth
+        width: Constants.advancedImu.insStatusImageWidth
+        height: Constants.advancedImu.insStatusImageWidth
         smooth: true
-        source: "../" + Constants.advancedIns.unknownStatusPath
+        source: "../" + Constants.advancedImu.unknownStatusPath
         antialiasing: true
 
         ColorOverlay {
             anchors.fill: parent
             source: parent
-            color: Constants.advancedIns.unknownStatusColor
+            color: Constants.advancedImu.unknownStatusColor
             antialiasing: true
         }
 

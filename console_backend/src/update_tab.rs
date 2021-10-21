@@ -5,6 +5,7 @@ use crossbeam::{
     thread,
 };
 use glob::glob;
+use lazy_static::lazy_static;
 use log::{debug, error};
 use regex::Regex;
 use sbp::link::Link;
@@ -20,18 +21,24 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crate::errors::{
-    CONVERT_TO_STR_FAILURE, CROSSBEAM_SCOPE_UNWRAP_FAILURE, SHARED_STATE_LOCK_MUTEX_FAILURE,
-    THREAD_JOIN_FAILURE,
-};
 use crate::fileio::{new_sequence, Fileio};
 use crate::shared_state::{SharedState, LOG_DIRECTORY};
 use crate::types::{ArcBool, CapnProtoSender, MsgSender, Result};
 use crate::update_downloader::UpdateDownloader;
-use crate::utils::{compare_semvers, serialize_capnproto_builder};
+use crate::utils::serialize_capnproto_builder;
+use crate::{
+    errors::{
+        CONVERT_TO_STR_FAILURE, CROSSBEAM_SCOPE_UNWRAP_FAILURE, SHARED_STATE_LOCK_MUTEX_FAILURE,
+        THREAD_JOIN_FAILURE,
+    },
+    swift_version::SwiftVersion,
+};
 
 const HARDWARE_REVISION: &str = "piksi_multi";
 const FIRMWARE_V2_VERSION: &str = "v2.0.0";
+lazy_static! {
+    static ref FIRMWARE_V2: SwiftVersion = SwiftVersion::parse(FIRMWARE_V2_VERSION).unwrap();
+}
 const UPGRADE_FIRMWARE_REMOTE_DESTINATION: &str = "upgrade.image_set.bin";
 const UPGRADE_FIRMWARE_TOOL: &str = "upgrade_tool";
 const UPGRADE_FIRMWARE_TIMEOUT_SEC: u64 = 600;
@@ -342,11 +349,8 @@ fn download_firmware(update_tab_context: UpdateTabContext) {
 
 fn check_above_v2(update_tab_context: UpdateTabContext) -> Result<bool> {
     if let Some(current_version) = update_tab_context.current_firmware_version() {
-        let above_v2 = compare_semvers(
-            String::from(FIRMWARE_V2_VERSION),
-            current_version.clone(),
-            false,
-        )?;
+        let current = SwiftVersion::parse(&current_version)?;
+        let above_v2 = current > *FIRMWARE_V2;
         if !above_v2 {
             update_tab_context.fw_log_append(format!(
                 "Checkpoint firmware version, {}, is newer than current version, {}.",
@@ -364,7 +368,9 @@ fn check_firmware_outdated(update_tab_context: UpdateTabContext) -> Result<bool>
     let mut update_downloader = update_tab_context.update_downloader();
     let latest_version = update_downloader.latest_firmware_version()?;
     if let Some(current_version) = update_tab_context.current_firmware_version() {
-        let outdated = compare_semvers(current_version.clone(), latest_version.clone(), true)?;
+        let current = SwiftVersion::parse(&current_version)?;
+        let latest = SwiftVersion::parse(&latest_version)?;
+        let outdated = latest > current;
         if outdated {
             update_tab_context.fw_log_append(format!(
                 "Latest firmware version, {}, is newer than current version, {}.",
@@ -387,7 +393,9 @@ fn check_console_outdated(update_tab_context: UpdateTabContext) -> Result<bool> 
     let mut update_downloader = update_tab_context.update_downloader();
     let latest_version = update_downloader.latest_console_version()?;
     if let Some(current_version) = update_tab_context.current_console_version() {
-        let outdated = compare_semvers(current_version.clone(), latest_version.clone(), true)?;
+        let current = SwiftVersion::parse(&current_version)?;
+        let latest = SwiftVersion::parse(&latest_version)?;
+        let outdated = latest > current;
         if outdated {
             update_tab_context.fw_log_append(format!(
                 "Latest console version, {}, is newer than current version, {}.",
@@ -442,21 +450,34 @@ fn upgrade_firmware(
 ) {
     update_tab_context.set_upgrading(true);
     update_tab_context.fw_log_clear();
-    let to_upgrade = match check_above_v2(update_tab_context.clone()) {
-        Ok(_) => true,
-        Err(_) => {
-            update_tab_context.fw_log_append(String::from(
-                "Waiting on settings to load to get current version.",
-            ));
-            false
-        }
-    };
-    if to_upgrade {
-        if let Err(err) = firmware_upgrade(update_tab_context.clone(), fileio, msg_sender) {
-            update_tab_context.fw_log_append(err.to_string());
-        }
+    if let Err(err) = firmware_upgrade(update_tab_context.clone(), fileio, msg_sender) {
+        update_tab_context.fw_log_append(err.to_string());
     }
     update_tab_context.set_upgrading(false);
+}
+
+fn firmware_can_upgrade(current_version: &str, update_version: &str) -> anyhow::Result<()> {
+    let current = SwiftVersion::parse(current_version)
+        .map_err(|e| anyhow!("Failed to parse current firmware version: {:?}", e))?;
+
+    let update = SwiftVersion::parse(update_version)
+        .map_err(|e| anyhow!("Failed to parse new firmware version: {:?}", e))?;
+
+    if current.is_dev() || update.is_dev() {
+        return Ok(());
+    }
+
+    if current >= *FIRMWARE_V2 {
+        return Ok(());
+    }
+
+    if current < *FIRMWARE_V2 && update != *FIRMWARE_V2 && update > *FIRMWARE_V2 {
+        return Err(anyhow!(
+            "Upgrading to firmware v2.1.0 or later requires that the device be running firmware v2.0.0 or later."
+        ));
+    }
+
+    Ok(())
 }
 
 fn firmware_upgrade(
@@ -474,6 +495,18 @@ fn firmware_upgrade(
                 "Firmware filepath is not a file or does not exist."
             ));
         }
+        let update_filename = filepath
+            .file_name()
+            .ok_or_else(|| anyhow!("Could not get update filename!"))?
+            .to_str()
+            .ok_or_else(|| anyhow!("Could not convert update filename!"))?;
+
+        let current_filename = update_tab_context
+            .current_firmware_version()
+            .ok_or_else(|| anyhow!("Could not get current firmware name"))?;
+
+        firmware_can_upgrade(&current_filename, update_filename)?;
+
         if let Ok(firmware_blob) = std::fs::File::open(filepath.clone()) {
             update_tab_context.fw_log_append(String::from("Transferring image to device..."));
             update_tab_context.fw_log_append(String::from(""));

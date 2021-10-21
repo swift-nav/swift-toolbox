@@ -34,9 +34,10 @@ lazy_static! {
 
 pub fn start_thd<S: CapnProtoSender>(tab: &SettingsTab<S>) {
     let mut recv = tab.shared_state.watch_settings_state();
-    while let Ok(state) = recv.wait() {
-        tab.shared_state.set_settings_state(Default::default());
-        tick(tab, state);
+    while let Ok(mut state) = recv.wait_mut() {
+        let s = std::mem::take(&mut *state);
+        drop(state);
+        tick(tab, s);
     }
 }
 

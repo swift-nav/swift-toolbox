@@ -67,6 +67,7 @@ Rectangle {
                 display: AbstractButton.IconOnly
                 rightInset: Constants.sideNavBar.buttonInset
                 leftInset: Constants.sideNavBar.buttonInset
+                enabled: stack.mainViewVisible()
                 onClicked: {
                     drawer.open();
                 }
@@ -88,10 +89,11 @@ Rectangle {
                     padding: Constants.sideNavBar.buttonPadding
                     rightInset: Constants.sideNavBar.buttonInset
                     leftInset: Constants.sideNavBar.buttonInset
+                    enabled: Globals.conn_state == Constants.connection.connected
                     ToolTip.visible: hovered
                     ToolTip.text: modelData.tooltip
                     onClicked: {
-                        if (stack.connected_at_least_once) {
+                        if (Globals.conn_state == Constants.connection.connected) {
                             if (stack.connectionScreenVisible())
                                 stack.mainView();
 
@@ -123,8 +125,9 @@ Rectangle {
             leftInset: Constants.sideNavBar.buttonInset
             ToolTip.visible: hovered
             ToolTip.text: "Connection Dialog"
+            enabled: Globals.conn_state == Constants.connection.connected
             onClicked: {
-                if (stack.connected_at_least_once) {
+                if (Globals.conn_state == Constants.connection.connected) {
                     if (stack.connectionScreenVisible())
                         stack.mainView();
                     else if (stack.mainViewVisible())

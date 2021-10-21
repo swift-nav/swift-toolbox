@@ -11,6 +11,8 @@ Rectangle {
     property variant previous_folders: []
     property variant sbp_logging_labels: []
     property alias sbpRecording: sbpLoggingButton.checked
+    property string recordingFilename: ""
+    property string lastEdittedLogDirectoryText: ""
 
     function loggingDurationFormat(duration) {
         let hours = Math.floor(duration / 3600).toFixed(0).padStart(2, 0);
@@ -56,11 +58,16 @@ Rectangle {
             Layout.preferredHeight: Constants.loggingBar.buttonHeight
             ToolTip.visible: hovered
             ToolTip.text: !checked ? "Start Recording" : "Stop Recording"
-            onClicked: data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText)
-
-            background: Item {
+            onClicked: {
+                data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText);
+                if (!checked) {
+                    folderPathBar.currentIndex = -1;
+                    folderPathBar.editText = folderPathBar.textAt(0);
+                }
             }
-
+            Component.onCompleted: {
+                this.background.children[0].visible = false;
+            }
         }
 
         ComboBox {
@@ -74,59 +81,83 @@ Rectangle {
             onActivated: data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText)
         }
 
-        ComboBox {
-            id: folderPathBar
-
+        Item {
             Layout.fillWidth: true
-            Layout.preferredHeight: Constants.loggingBar.folderPathBarHeight
-            model: previous_folders
-            editable: true
-            selectTextByMouse: true
-            onActivated: {
-                var text = folderPathBar.currentText;
-                folderPathBar.currentIndex = -1;
-                folderPathBar.editText = text;
-                data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText);
+            Layout.fillHeight: true
+
+            MouseArea {
+                anchors.fill: parent
+                hoverEnabled: true
+
+                ToolTip {
+                    visible: parent.containsMouse && sbpLoggingButton.checked
+                    text: "Unable change logging directory while recording."
+                }
+
             }
 
-            Label {
-                anchors.fill: parent.contentItem
-                anchors.leftMargin: 4
-                verticalAlignment: Text.AlignVCenter
-                text: "Enter folder path"
-                color: Constants.loggingBar.placeholderTextColor
-                visible: !folderPathBar.editText
-            }
+            RowLayout {
+                anchors.fill: parent
 
-        }
+                ComboBox {
+                    id: folderPathBar
 
-        Button {
-            id: folderBarButton
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Constants.loggingBar.folderPathBarHeight
+                    model: previous_folders
+                    editable: true
+                    selectTextByMouse: true
+                    enabled: !sbpLoggingButton.checked
+                    onActivated: {
+                        var text = folderPathBar.currentText;
+                        folderPathBar.currentIndex = -1;
+                        folderPathBar.editText = text;
+                        data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText);
+                    }
 
-            Layout.preferredWidth: Constants.loggingBar.folderButtonWidth
-            Layout.preferredHeight: Constants.loggingBar.buttonHeight
-            ToolTip.visible: hovered
-            ToolTip.text: "File Browser"
-            onClicked: {
-                fileDialog.visible = !fileDialog.visible;
-            }
+                    Label {
+                        anchors.fill: parent.contentItem
+                        anchors.leftMargin: 4
+                        verticalAlignment: Text.AlignVCenter
+                        text: "Enter folder path"
+                        color: Constants.loggingBar.placeholderTextColor
+                        visible: !folderPathBar.editText
+                    }
 
-            Image {
-                id: loggingBarFolder
+                }
 
-                anchors.centerIn: parent
-                width: Constants.loggingBar.buttonSvgHeight
-                height: Constants.loggingBar.buttonSvgHeight
-                smooth: true
-                source: Constants.loggingBar.folderButtonPath
-                antialiasing: true
-            }
+                Button {
+                    id: folderBarButton
 
-            ColorOverlay {
-                anchors.fill: loggingBarFolder
-                source: loggingBarFolder
-                color: "dimgrey"
-                antialiasing: true
+                    Layout.preferredWidth: Constants.loggingBar.folderButtonWidth
+                    Layout.preferredHeight: Constants.loggingBar.buttonHeight
+                    ToolTip.visible: hovered
+                    ToolTip.text: "File Browser"
+                    enabled: !sbpLoggingButton.checked
+                    onClicked: {
+                        fileDialog.visible = !fileDialog.visible;
+                    }
+
+                    Image {
+                        id: loggingBarFolder
+
+                        anchors.centerIn: parent
+                        width: Constants.loggingBar.buttonSvgHeight
+                        height: Constants.loggingBar.buttonSvgHeight
+                        smooth: true
+                        source: Constants.loggingBar.folderButtonPath
+                        antialiasing: true
+                    }
+
+                    ColorOverlay {
+                        anchors.fill: loggingBarFolder
+                        source: loggingBarFolder
+                        color: "dimgrey"
+                        antialiasing: true
+                    }
+
+                }
+
             }
 
         }
@@ -216,6 +247,10 @@ Rectangle {
                 csvLoggingButton.checked = loggingBarData.csv_logging;
                 recordingTime.text = loggingDurationFormat(loggingBarData.recording_duration_sec);
                 recordingSize.text = loggingBarData.recording_size;
+                recordingFilename = loggingBarData.recording_filename;
+                if (sbpLoggingButton.checked)
+                    folderPathBar.editText = recordingFilename;
+
             }
         }
 

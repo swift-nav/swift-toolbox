@@ -283,6 +283,8 @@ pub enum Keys {
     LAST_USED_SERIAL_DEVICE,
     #[strum(serialize = "PREVIOUS_SERIAL_CONFIGS")]
     PREVIOUS_SERIAL_CONFIGS,
+    #[strum(serialize = "RECORDING_FILENAME")]
+    RECORDING_FILENAME,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]

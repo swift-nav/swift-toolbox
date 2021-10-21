@@ -387,6 +387,11 @@ def receive_messages(app_, backend, messages):
         elif m.which == Message.Union.LoggingBarRecordingStatus:
             LOGGING_BAR[Keys.RECORDING_DURATION_SEC] = m.loggingBarRecordingStatus.recordingDurationSec
             LOGGING_BAR[Keys.RECORDING_SIZE] = m.loggingBarRecordingStatus.recordingSize
+            LOGGING_BAR[Keys.RECORDING_FILENAME] = (
+                m.loggingBarRecordingStatus.recordingFilename.filename
+                if m.loggingBarRecordingStatus.recordingFilename.which() == "filename"
+                else ""
+            )
         elif m.which == Message.Union.UpdateTabStatus:
             UPDATE_TAB[Keys.HARDWARE_REVISION] = m.updateTabStatus.hardwareRevision
             UPDATE_TAB[Keys.FW_VERSION_CURRENT] = m.updateTabStatus.fwVersionCurrent

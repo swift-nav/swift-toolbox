@@ -45,8 +45,6 @@ ApplicationWindow {
         StackLayout {
             id: stack
 
-            property bool connected_at_least_once: false
-
             function connectionScreen() {
                 stack.currentIndex = 0;
             }

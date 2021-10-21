@@ -6,14 +6,10 @@ use crate::output::{CsvLogging, SbpLogger};
 use crate::shared_state::{create_directory, SharedState};
 use crate::types::CapnProtoSender;
 use crate::utils::{bytes_to_human_readable, refresh_loggingbar, serialize_capnproto_builder};
-use crate::{
-    common_constants::SbpLogging,
-    errors::{CROSSBEAM_SCOPE_UNWRAP_FAILURE, THREAD_JOIN_FAILURE},
-    shared_state::SbpLoggingStatsState,
-};
+use crate::{common_constants::SbpLogging, shared_state::SbpLoggingStatsState};
 use capnp::message::Builder;
 use chrono::Local;
-use crossbeam::{channel::Receiver, thread};
+use crossbeam::channel::Receiver;
 use log::{debug, error};
 use sbp::{time::GpsTime, Sbp};
 use std::{
@@ -45,14 +41,15 @@ pub fn logging_stats_thread<S: CapnProtoSender>(
             start_time = Instant::now();
         }
         if let Some(filepath_) = filepath.clone() {
-            let file_size = std::fs::metadata(filepath_).unwrap().len();
+            let file_size = std::fs::metadata(filepath_.clone()).unwrap().len();
             refresh_loggingbar_recording(
                 &mut client_sender.clone(),
                 file_size,
                 start_time.elapsed().as_secs(),
+                Some(filepath_.to_string_lossy().to_string()),
             );
         } else {
-            refresh_loggingbar_recording(&mut client_sender.clone(), 0, 0);
+            refresh_loggingbar_recording(&mut client_sender.clone(), 0, 0, None);
         }
     }
 }
@@ -61,6 +58,7 @@ pub fn refresh_loggingbar_recording<P: CapnProtoSender>(
     client_send: &mut P,
     size: u64,
     duration: u64,
+    filename: Option<String>,
 ) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
@@ -68,6 +66,17 @@ pub fn refresh_loggingbar_recording<P: CapnProtoSender>(
     let mut logging_bar_status = msg.init_logging_bar_recording_status();
     logging_bar_status.set_recording_duration_sec(duration);
     logging_bar_status.set_recording_size(&bytes_to_human_readable(size as u128));
+    if let Some(filename_) = filename {
+        logging_bar_status
+            .reborrow()
+            .get_recording_filename()
+            .set_filename(&filename_);
+    } else {
+        logging_bar_status
+            .reborrow()
+            .get_recording_filename()
+            .set_none(());
+    }
     client_send.send_data(serialize_capnproto_builder(builder));
 }
 

@@ -286,12 +286,11 @@ Item {
                             restore_previous_serial_settings(available_devices[serialDevice.currentIndex]);
 
                     }
-                    Globals.conn_state = connectionData.conn_state;
-                    let connected = Globals.conn_state == Constants.connection.connected;
-                    if (!stack.connected_at_least_once && stack.connectionScreenVisible() && connected) {
+                    let connected = connectionData.conn_state == Constants.connection.connected;
+                    if (Globals.conn_state == Constants.connection.disconnected && stack.connectionScreenVisible() && connected)
                         stack.mainView();
-                        stack.connected_at_least_once = true;
-                    }
+
+                    Globals.conn_state = connectionData.conn_state;
                 }
             }
 

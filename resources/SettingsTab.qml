@@ -251,8 +251,6 @@ Item {
 
                     Label {
                         text: _title
-                        font.family: Constants.genericTable.fontFamily
-                        font.pointSize: Constants.largePointSize
                         font.bold: true
                     }
 
@@ -264,13 +262,11 @@ Item {
                     Row {
                         width: Constants.settingsTab.textSettingWidth
 
-                        Text {
+                        Label {
                             text: selectedRowField(_fieldName)
                             width: parent.width
                             elide: Text.ElideRight
                             wrapMode: Text.WordWrap
-                            font.family: Constants.genericTable.fontFamily
-                            font.pointSize: Constants.largePointSize
                         }
 
                     }

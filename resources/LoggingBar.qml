@@ -89,7 +89,7 @@ Rectangle {
                 data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText);
             }
 
-            Text {
+            Label {
                 text: "Enter folder path"
                 color: Constants.loggingBar.placeholderTextColor
                 visible: !folderPathBar.editText

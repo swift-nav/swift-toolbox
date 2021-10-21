@@ -1,6 +1,5 @@
 import "./Constants"
 import Qt.labs.qmlmodels 1.0
-import QtCharts 2.2
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import SwiftConsole 1.0
@@ -159,11 +158,10 @@ Item {
                                         data_model.log_level(modelData);
                                     }
 
-                                    contentItem: Text {
+                                    contentItem: Label {
                                         text: modelData
                                         color: logLevelIndex == index ? Constants.swiftOrange : Constants.genericTable.textColor
                                         font.pointSize: Constants.mediumPointSize
-                                        font.family: Constants.genericTable.fontFamily
                                     }
 
                                 }

@@ -19,10 +19,8 @@ Item {
             Layout.fillHeight: true
             Layout.alignment: Qt.AlignBottom
 
-            Text {
+            Label {
                 text: Constants.updateTab.hardwareRevisionLabel
-                font.family: Constants.genericTable.fontFamily
-                font.pointSize: Constants.largePointSize
             }
 
         }
@@ -33,7 +31,7 @@ Item {
             Layout.alignment: Qt.AlignTop
             border.width: Constants.advancedIns.textDataBarBorderWidth
 
-            Text {
+            Label {
                 id: hardwareRevisionText
 
                 text: ""
@@ -41,8 +39,6 @@ Item {
                 anchors.fill: parent
                 color: Constants.updateTab.placeholderTextColor
                 anchors.margins: Constants.advancedIns.textDataBarMargin
-                font.pointSize: Constants.largePointSize
-                font.family: Constants.genericTable.fontFamily
             }
 
         }

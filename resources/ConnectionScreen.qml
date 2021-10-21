@@ -159,7 +159,7 @@ Item {
                         editable: true
                         selectTextByMouse: true
 
-                        Text {
+                        Label {
                             text: "Host"
                             color: Constants.connection.placeholderTextColor
                             visible: (!tcpUrlBar.editText)
@@ -176,7 +176,7 @@ Item {
                         editable: true
                         selectTextByMouse: true
 
-                        Text {
+                        Label {
                             text: "Port"
                             color: Constants.connection.placeholderTextColor
                             visible: !tcpPortBar.editText
@@ -195,7 +195,7 @@ Item {
                         editable: true
                         selectTextByMouse: true
 
-                        Text {
+                        Label {
                             text: "path/to/file"
                             color: Constants.connection.placeholderTextColor
                             visible: !fileUrlBar.editText

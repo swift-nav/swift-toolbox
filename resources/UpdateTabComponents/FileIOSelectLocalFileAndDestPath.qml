@@ -18,10 +18,8 @@ Item {
             Layout.preferredWidth: Constants.updateTab.hardwareVersionElementsLabelWidth
             Layout.fillHeight: true
 
-            Text {
+            Label {
                 text: Constants.updateTab.fileioLocalFileLabel
-                font.family: Constants.genericTable.fontFamily
-                font.pointSize: Constants.largePointSize
                 anchors.fill: parent
                 anchors.rightMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
                 horizontalAlignment: Text.AlignRight
@@ -81,11 +79,9 @@ Item {
                 fileDialog.visible = !fileDialog.visible;
             }
 
-            Text {
+            Label {
                 text: Constants.updateTab.dotDotDotLabel
                 anchors.centerIn: parent
-                font.pointSize: Constants.largePointSize
-                font.family: Constants.genericTable.fontFamily
             }
 
         }
@@ -121,10 +117,8 @@ Item {
             Layout.preferredWidth: Constants.updateTab.hardwareVersionElementsLabelWidth * 2
             Layout.fillHeight: true
 
-            Text {
+            Label {
                 text: Constants.updateTab.fileioDestinationPathLabel
-                font.family: Constants.genericTable.fontFamily
-                font.pointSize: Constants.largePointSize
                 anchors.fill: parent
                 anchors.rightMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
                 horizontalAlignment: Text.AlignRight
@@ -193,11 +187,9 @@ Item {
                 data_model.update_tab([downloadLatestFirmware, updateFirmware, sendFileToDevice, serialPromptConfirm], updateLocalFilepath, downloadDirectory, fileioLocalFilepath, fileioDestinationFilepath, updateLocalFilename);
             }
 
-            Text {
+            Label {
                 text: Constants.updateTab.fileioSendFileToDeviceButtonLabel
                 anchors.centerIn: parent
-                font.pointSize: Constants.largePointSize
-                font.family: Constants.genericTable.fontFamily
             }
 
         }

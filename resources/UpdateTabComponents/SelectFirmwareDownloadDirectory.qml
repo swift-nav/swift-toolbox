@@ -17,10 +17,8 @@ Item {
             Layout.preferredWidth: Constants.updateTab.hardwareVersionElementsLabelWidth
             Layout.fillHeight: true
 
-            Text {
+            Label {
                 text: Constants.updateTab.firmwareDownloadDirectoryLabel
-                font.family: Constants.genericTable.fontFamily
-                font.pointSize: Constants.largePointSize
                 anchors.fill: parent
                 anchors.rightMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
                 horizontalAlignment: Text.AlignRight
@@ -80,11 +78,9 @@ Item {
                 fileDialog.visible = !fileDialog.visible;
             }
 
-            Text {
+            Label {
                 text: Constants.updateTab.dotDotDotLabel
                 anchors.centerIn: parent
-                font.pointSize: Constants.largePointSize
-                font.family: Constants.genericTable.fontFamily
             }
 
         }

@@ -53,11 +53,9 @@ Item {
                     data_model.update_tab([downloadLatestFirmware, updateFirmware, sendFileToDevice, serialPromptConfirm], updateLocalFilepath, downloadDirectory, fileioLocalFilepath, fileioDestinationFilepath, updateLocalFilename);
                 }
 
-                Text {
+                Label {
                     text: Constants.updateTab.downloadLatestFirmwareButtonLabel
                     anchors.centerIn: parent
-                    font.pointSize: Constants.largePointSize
-                    font.family: Constants.genericTable.fontFamily
                 }
 
             }

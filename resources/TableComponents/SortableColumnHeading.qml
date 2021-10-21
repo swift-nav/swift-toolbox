@@ -140,7 +140,7 @@ Rectangle {
         padding: 3
     }
 
-    Text {
+    Label {
         id: upDownIndicator
 
         anchors.right: parent.right

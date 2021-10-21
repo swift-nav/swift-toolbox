@@ -17,10 +17,8 @@ Item {
             Layout.fillWidth: true
             Layout.preferredHeight: Constants.systemMonitor.textHeight
 
-            Text {
+            Label {
                 text: "Observation Connection Monitor"
-                font.family: Constants.genericTable.fontFamily
-                font.pointSize: Constants.largePointSize
             }
 
         }
@@ -43,10 +41,8 @@ Item {
                         Layout.fillWidth: true
                         Layout.preferredHeight: Constants.systemMonitor.textHeight
 
-                        Text {
+                        Label {
                             text: Constants.systemMonitor.obsLatencyLabel
-                            font.family: Constants.genericTable.fontFamily
-                            font.pointSize: Constants.largePointSize
                         }
 
                     }
@@ -60,31 +56,23 @@ Item {
                         ColumnLayout {
                             anchors.centerIn: parent
 
-                            Text {
+                            Label {
                                 text: Constants.systemMonitor.currLabel + ": " + obsLatency.Curr + Constants.systemMonitor.obsUnits
-                                font.family: Constants.genericTable.fontFamily
-                                font.pointSize: Constants.largePointSize
                                 horizontalAlignment: Text.AlignRight
                             }
 
-                            Text {
+                            Label {
                                 text: Constants.systemMonitor.avgLabel + ": " + obsLatency.Avg + Constants.systemMonitor.obsUnits
-                                font.family: Constants.genericTable.fontFamily
-                                font.pointSize: Constants.largePointSize
                                 horizontalAlignment: Text.AlignRight
                             }
 
-                            Text {
+                            Label {
                                 text: Constants.systemMonitor.minLabel + ": " + obsLatency.Min + Constants.systemMonitor.obsUnits
-                                font.family: Constants.genericTable.fontFamily
-                                font.pointSize: Constants.largePointSize
                                 horizontalAlignment: Text.AlignRight
                             }
 
-                            Text {
+                            Label {
                                 text: Constants.systemMonitor.maxLabel + ": " + obsLatency.Max + Constants.systemMonitor.obsUnits
-                                font.family: Constants.genericTable.fontFamily
-                                font.pointSize: Constants.largePointSize
                                 horizontalAlignment: Text.AlignRight
                             }
 
@@ -103,10 +91,8 @@ Item {
                         Layout.fillWidth: true
                         Layout.preferredHeight: Constants.systemMonitor.textHeight
 
-                        Text {
+                        Label {
                             text: Constants.systemMonitor.obsPeriodLabel
-                            font.family: Constants.genericTable.fontFamily
-                            font.pointSize: Constants.largePointSize
                         }
 
                     }
@@ -120,31 +106,23 @@ Item {
                         ColumnLayout {
                             anchors.centerIn: parent
 
-                            Text {
+                            Label {
                                 text: Constants.systemMonitor.currLabel + ": " + obsPeriod.Curr + Constants.systemMonitor.obsUnits
-                                font.family: Constants.genericTable.fontFamily
-                                font.pointSize: Constants.largePointSize
                                 horizontalAlignment: Text.AlignRight
                             }
 
-                            Text {
+                            Label {
                                 text: Constants.systemMonitor.avgLabel + ": " + obsPeriod.Avg + Constants.systemMonitor.obsUnits
-                                font.family: Constants.genericTable.fontFamily
-                                font.pointSize: Constants.largePointSize
                                 horizontalAlignment: Text.AlignRight
                             }
 
-                            Text {
+                            Label {
                                 text: Constants.systemMonitor.minLabel + ": " + obsPeriod.Min + Constants.systemMonitor.obsUnits
-                                font.family: Constants.genericTable.fontFamily
-                                font.pointSize: Constants.largePointSize
                                 horizontalAlignment: Text.AlignRight
                             }
 
-                            Text {
+                            Label {
                                 text: Constants.systemMonitor.maxLabel + ": " + obsPeriod.Max + Constants.systemMonitor.obsUnits
-                                font.family: Constants.genericTable.fontFamily
-                                font.pointSize: Constants.largePointSize
                                 horizontalAlignment: Text.AlignRight
                             }
 

@@ -86,7 +86,7 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                             }
 
-                            Text {
+                            Label {
                                 id: label
 
                                 text: modelData
@@ -192,7 +192,7 @@ Item {
             Layout.preferredHeight: Constants.advancedIns.urlBarHeight
             Layout.alignment: Qt.AlignBottom
 
-            Text {
+            Label {
                 text: Constants.advancedIns.textDataLabels[0]
                 Layout.preferredWidth: Constants.advancedIns.textDataLabelWidth
                 font.pointSize: Constants.mediumPointSize
@@ -204,7 +204,7 @@ Item {
                 Layout.alignment: Qt.AlignVCenter
                 border.width: Constants.advancedIns.textDataBarBorderWidth
 
-                Text {
+                Label {
                     id: imuTempText
 
                     clip: true
@@ -215,7 +215,7 @@ Item {
 
             }
 
-            Text {
+            Label {
                 text: Constants.advancedIns.textDataLabels[1]
                 Layout.preferredWidth: Constants.advancedIns.textDataLabelWidth
                 font.pointSize: Constants.mediumPointSize
@@ -227,7 +227,7 @@ Item {
                 Layout.alignment: Qt.AlignVCenter
                 border.width: Constants.advancedIns.textDataBarBorderWidth
 
-                Text {
+                Label {
                     id: imuConfText
 
                     clip: true
@@ -238,7 +238,7 @@ Item {
 
             }
 
-            Text {
+            Label {
                 text: Constants.advancedIns.textDataLabels[2]
                 Layout.preferredWidth: Constants.advancedIns.textDataLabelWidth
                 font.pointSize: Constants.mediumPointSize
@@ -250,7 +250,7 @@ Item {
                 Layout.alignment: Qt.AlignVCenter
                 border.width: Constants.advancedIns.textDataBarBorderWidth
 
-                Text {
+                Label {
                     id: rmsAccXText
 
                     clip: true
@@ -261,7 +261,7 @@ Item {
 
             }
 
-            Text {
+            Label {
                 text: Constants.advancedIns.textDataLabels[3]
                 Layout.preferredWidth: Constants.advancedIns.textDataLabelWidth
                 font.pointSize: Constants.mediumPointSize
@@ -273,7 +273,7 @@ Item {
                 Layout.alignment: Qt.AlignVCenter
                 border.width: Constants.advancedIns.textDataBarBorderWidth
 
-                Text {
+                Label {
                     id: rmsAccYText
 
                     clip: true
@@ -284,7 +284,7 @@ Item {
 
             }
 
-            Text {
+            Label {
                 text: Constants.advancedIns.textDataLabels[4]
                 Layout.preferredWidth: Constants.advancedIns.textDataLabelWidth
                 font.pointSize: Constants.mediumPointSize
@@ -296,7 +296,7 @@ Item {
                 Layout.alignment: Qt.AlignVCenter
                 border.width: Constants.advancedIns.textDataBarBorderWidth
 
-                Text {
+                Label {
                     id: rmsAccZText
 
                     clip: true

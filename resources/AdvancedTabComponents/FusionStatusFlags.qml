@@ -39,7 +39,7 @@ Item {
             Layout.preferredHeight: Constants.advancedIns.urlBarHeight
             Layout.alignment: Qt.AlignBottom
 
-            Text {
+            Label {
                 text: Constants.advancedIns.insStatusLabels[0]
                 font.pointSize: Constants.mediumPointSize
             }
@@ -64,7 +64,7 @@ Item {
                 Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
             }
 
-            Text {
+            Label {
                 text: Constants.advancedIns.insStatusLabels[1]
                 font.pointSize: Constants.mediumPointSize
             }
@@ -89,7 +89,7 @@ Item {
                 Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
             }
 
-            Text {
+            Label {
                 text: Constants.advancedIns.insStatusLabels[2]
                 font.pointSize: Constants.mediumPointSize
             }
@@ -114,7 +114,7 @@ Item {
                 Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
             }
 
-            Text {
+            Label {
                 text: Constants.advancedIns.insStatusLabels[3]
                 font.pointSize: Constants.mediumPointSize
             }
@@ -139,7 +139,7 @@ Item {
                 Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
             }
 
-            Text {
+            Label {
                 text: Constants.advancedIns.insStatusLabels[4]
                 font.pointSize: Constants.mediumPointSize
             }
@@ -164,7 +164,7 @@ Item {
                 Layout.preferredWidth: Constants.advancedIns.insStatusImageWidth
             }
 
-            Text {
+            Label {
                 text: Constants.advancedIns.insStatusLabels[5]
                 font.pointSize: Constants.mediumPointSize
             }

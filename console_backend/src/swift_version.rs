@@ -47,22 +47,22 @@ impl FromStr for SwiftVersion {
 
         let captured = VERSION_RE
             .captures(s)
-            .ok_or_else(|| anyhow!("Invalid version: {:?}", s))?;
+            .ok_or_else(|| anyhow!("Invalid version: {}", s))?;
         let marketing = captured
             .name("marketing")
-            .ok_or_else(|| anyhow!("Could not find marketing version for {:?}", s))?
+            .ok_or_else(|| anyhow!("Could not find marketing version for {}", s))?
             .as_str()
             .parse::<u64>()
             .map_err(|e| anyhow!(e.to_string()))?;
         let major = captured
             .name("major")
-            .ok_or_else(|| anyhow!("Could not find major version for {:?}", s))?
+            .ok_or_else(|| anyhow!("Could not find major version for {}", s))?
             .as_str()
             .parse::<u64>()
             .map_err(|e| anyhow!(e.to_string()))?;
         let minor = captured
             .name("minor")
-            .ok_or_else(|| anyhow!("Could not find minor version for {:?}", s))?
+            .ok_or_else(|| anyhow!("Could not find minor version for {}", s))?
             .as_str()
             .parse::<u64>()
             .map_err(|e| anyhow!(e.to_string()))?;
@@ -110,11 +110,11 @@ impl SwiftVersion {
 
         let captured = FILENAME_RE
             .captures(text)
-            .ok_or_else(|| anyhow!("Invalid filename {:?}", text))?;
+            .ok_or_else(|| anyhow!("Invalid filename {}", text))?;
 
         let version = captured
             .get(1)
-            .ok_or_else(|| anyhow!("Could not get version from filename {:?}", text))?
+            .ok_or_else(|| anyhow!("Could not get version from filename {}", text))?
             .as_str();
 
         SwiftVersion::parse(version)

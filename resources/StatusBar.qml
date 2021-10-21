@@ -28,18 +28,16 @@ Rectangle {
 
                 spacing: Constants.statusBar.innerKeyValSpacing
 
-                Text {
+                Label {
                     text: Constants.statusBar.posLabel
                     color: Constants.statusBar.keyTextColor
-                    font.pointSize: Constants.largePointSize
                     font.bold: true
                 }
 
-                Text {
+                Label {
                     id: statusBarPos
 
                     text: Constants.statusBar.defaultValue
-                    font.pointSize: Constants.largePointSize
                 }
 
             }
@@ -50,18 +48,16 @@ Rectangle {
                 Layout.alignment: Qt.AlignLeft
                 spacing: Constants.statusBar.innerKeyValSpacing
 
-                Text {
+                Label {
                     text: Constants.statusBar.rtkLabel
                     color: Constants.statusBar.keyTextColor
-                    font.pointSize: Constants.largePointSize
                     font.bold: true
                 }
 
-                Text {
+                Label {
                     id: statusBarRTK
 
                     text: Constants.statusBar.defaultValue
-                    font.pointSize: Constants.largePointSize
                 }
 
             }
@@ -71,18 +67,16 @@ Rectangle {
 
                 spacing: Constants.statusBar.innerKeyValSpacing
 
-                Text {
+                Label {
                     text: Constants.statusBar.insLabel
                     color: Constants.statusBar.keyTextColor
-                    font.pointSize: Constants.largePointSize
                     font.bold: true
                 }
 
-                Text {
+                Label {
                     id: statusBarINS
 
                     text: Constants.statusBar.defaultValue
-                    font.pointSize: Constants.largePointSize
                 }
 
             }
@@ -92,18 +86,16 @@ Rectangle {
 
                 spacing: Constants.statusBar.innerKeyValSpacing
 
-                Text {
+                Label {
                     text: Constants.statusBar.satsLabel
                     color: Constants.statusBar.keyTextColor
-                    font.pointSize: Constants.largePointSize
                     font.bold: true
                 }
 
-                Text {
+                Label {
                     id: statusBarSats
 
                     text: Constants.statusBar.defaultValue
-                    font.pointSize: Constants.largePointSize
                 }
 
             }
@@ -113,18 +105,16 @@ Rectangle {
 
                 spacing: Constants.statusBar.innerKeyValSpacing
 
-                Text {
+                Label {
                     text: Constants.statusBar.corrAgeLabel
                     color: Constants.statusBar.keyTextColor
-                    font.pointSize: Constants.largePointSize
                     font.bold: true
                 }
 
-                Text {
+                Label {
                     id: statusBarCorrAge
 
                     text: Constants.statusBar.defaultValue
-                    font.pointSize: Constants.largePointSize
                 }
 
             }
@@ -134,18 +124,16 @@ Rectangle {
 
                 spacing: Constants.statusBar.innerKeyValSpacing
 
-                Text {
+                Label {
                     text: Constants.statusBar.antennaLabel
                     color: Constants.statusBar.keyTextColor
-                    font.pointSize: Constants.largePointSize
                     font.bold: true
                 }
 
-                Text {
+                Label {
                     id: statusBarAntenna
 
                     text: Constants.statusBar.defaultValue
-                    font.pointSize: Constants.largePointSize
                 }
 
             }
@@ -159,11 +147,10 @@ Rectangle {
         RowLayout {
             Layout.alignment: Qt.AlignRight
 
-            Text {
+            Label {
                 id: statusBarDataRate
 
                 Layout.alignment: Qt.AlignRight
-                font.pointSize: Constants.largePointSize
                 font.bold: true
             }
 

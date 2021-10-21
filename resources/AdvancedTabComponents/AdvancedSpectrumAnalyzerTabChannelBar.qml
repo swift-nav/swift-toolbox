@@ -23,9 +23,8 @@ Item {
             Layout.preferredWidth: parent.width / 6
         }
 
-        Text {
+        Label {
             text: Constants.advancedSpectrumAnalyzer.dropdownLabel
-            font.pointSize: Constants.largePointSize
             font.bold: true
             color: Constants.advancedSpectrumAnalyzer.titleColor
             antialiasing: true
@@ -46,9 +45,8 @@ Item {
             Layout.fillWidth: true
         }
 
-        Text {
+        Label {
             text: Constants.advancedSpectrumAnalyzer.dropdownRowSuggestionText
-            font.pointSize: Constants.largePointSize
             font.italic: true
             antialiasing: true
         }

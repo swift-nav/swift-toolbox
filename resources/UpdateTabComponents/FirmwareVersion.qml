@@ -35,10 +35,8 @@ Item {
                     width: Constants.updateTab.hardwareVersionElementsLabelWidth
                     height: parent.height
 
-                    Text {
+                    Label {
                         text: Constants.updateTab.firmwareVersionCurrentLabel
-                        font.family: Constants.genericTable.fontFamily
-                        font.pointSize: Constants.largePointSize
                         anchors.fill: parent
                         anchors.rightMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
                         horizontalAlignment: Text.AlignRight
@@ -51,15 +49,13 @@ Item {
                     height: parent.height
                     border.width: Constants.advancedIns.textDataBarBorderWidth
 
-                    Text {
+                    Label {
                         id: currentVersionText
 
                         text: ""
                         clip: true
                         color: Constants.updateTab.placeholderTextColor
                         anchors.centerIn: parent
-                        font.pointSize: Constants.largePointSize
-                        font.family: Constants.genericTable.fontFamily
                     }
 
                 }
@@ -76,10 +72,8 @@ Item {
                     width: Constants.updateTab.hardwareVersionElementsLabelWidth
                     height: parent.height
 
-                    Text {
+                    Label {
                         text: Constants.updateTab.firmwareVersionLatestLabel
-                        font.family: Constants.genericTable.fontFamily
-                        font.pointSize: Constants.largePointSize
                         anchors.fill: parent
                         anchors.rightMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
                         horizontalAlignment: Text.AlignRight
@@ -92,15 +86,13 @@ Item {
                     height: parent.height
                     border.width: Constants.advancedIns.textDataBarBorderWidth
 
-                    Text {
+                    Label {
                         id: latestVersionText
 
                         text: ""
                         clip: true
                         color: Constants.updateTab.placeholderTextColor
                         anchors.centerIn: parent
-                        font.pointSize: Constants.largePointSize
-                        font.family: Constants.genericTable.fontFamily
                     }
 
                 }
@@ -152,11 +144,9 @@ Item {
 
                     }
 
-                    Text {
+                    Label {
                         text: Constants.updateTab.updateFirmwareButtonLabel
                         anchors.centerIn: parent
-                        font.pointSize: Constants.largePointSize
-                        font.family: Constants.genericTable.fontFamily
                     }
 
                 }

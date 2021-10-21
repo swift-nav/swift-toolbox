@@ -35,10 +35,8 @@ Item {
             Rectangle {
                 anchors.fill: parent
 
-                Text {
+                Label {
                     text: "Messages to broadcast:"
-                    font.family: Constants.genericTable.fontFamily
-                    font.pointSize: Constants.largePointSize
                     anchors.fill: parent
                     anchors.rightMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
                     horizontalAlignment: Text.AlignRight
@@ -104,10 +102,8 @@ Item {
             Rectangle {
                 anchors.fill: parent
 
-                Text {
+                Label {
                     text: "IP Address:"
-                    font.family: Constants.genericTable.fontFamily
-                    font.pointSize: Constants.largePointSize
                     anchors.fill: parent
                     anchors.rightMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
                     horizontalAlignment: Text.AlignRight
@@ -142,7 +138,9 @@ Item {
                     selectByMouse: true
                     font.pointSize: Constants.largePointSize
                     font.family: Constants.genericTable.fontFamily
-                    anchors.fill: parent
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
                     anchors.leftMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
                     onTextEdited: {
                         ipAddressEditing = true;
@@ -174,10 +172,8 @@ Item {
             Rectangle {
                 anchors.fill: parent
 
-                Text {
+                Label {
                     text: "Port:"
-                    font.family: Constants.genericTable.fontFamily
-                    font.pointSize: Constants.largePointSize
                     anchors.fill: parent
                     anchors.rightMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
                     horizontalAlignment: Text.AlignRight
@@ -212,7 +208,9 @@ Item {
                     selectByMouse: true
                     font.pointSize: Constants.largePointSize
                     font.family: Constants.genericTable.fontFamily
-                    anchors.fill: parent
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
                     anchors.leftMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
                     onTextEdited: {
                         portEditing = true;
@@ -273,11 +271,9 @@ Item {
                         data_model.advanced_networking([refresh, start, stop], allMessages, ipv4_address, port);
                     }
 
-                    Text {
+                    Label {
                         text: "Start"
                         anchors.centerIn: parent
-                        font.pointSize: Constants.largePointSize
-                        font.family: Constants.genericTable.fontFamily
                     }
 
                 }
@@ -316,11 +312,9 @@ Item {
                         data_model.advanced_networking([refresh, start, stop], allMessages, ipv4_address, port);
                     }
 
-                    Text {
+                    Label {
                         text: "Stop"
                         anchors.centerIn: parent
-                        font.pointSize: Constants.largePointSize
-                        font.family: Constants.genericTable.fontFamily
                     }
 
                 }

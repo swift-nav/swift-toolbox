@@ -1,6 +1,5 @@
 import "./Constants"
 import Qt.labs.qmlmodels 1.0
-import QtCharts 2.2
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import SwiftConsole 1.0
@@ -108,7 +107,7 @@ Item {
                 implicitHeight: Constants.genericTable.cellHeight
                 border.color: Constants.genericTable.borderColor
 
-                Text {
+                Label {
                     id: headerText
 
                     width: parent.width
@@ -159,11 +158,10 @@ Item {
                                         data_model.log_level(modelData);
                                     }
 
-                                    contentItem: Text {
+                                    contentItem: Label {
                                         text: modelData
                                         color: logLevelIndex == index ? Constants.swiftOrange : Constants.genericTable.textColor
                                         font.pointSize: Constants.mediumPointSize
-                                        font.family: Constants.genericTable.fontFamily
                                     }
 
                                 }
@@ -277,7 +275,7 @@ Item {
                 implicitWidth: tableView.columnWidthProvider(column)
                 color: row == selectedRow ? Constants.genericTable.cellHighlightedColor : Constants.genericTable.cellColor
 
-                Text {
+                Label {
                     width: parent.width
                     horizontalAlignment: Text.AlignLeft
                     clip: true

@@ -456,22 +456,16 @@ fn upgrade_firmware(
     update_tab_context.set_upgrading(false);
 }
 
-fn firmware_can_upgrade(current_version: &str, update_version: &str) -> anyhow::Result<()> {
-    let current = SwiftVersion::parse(current_version)
-        .map_err(|e| anyhow!("Failed to parse current firmware version: {:?}", e))?;
-
-    let update = SwiftVersion::parse(update_version)
-        .map_err(|e| anyhow!("Failed to parse new firmware version: {:?}", e))?;
-
+fn firmware_can_upgrade(current: &SwiftVersion, update: &SwiftVersion) -> anyhow::Result<()> {
     if current.is_dev() || update.is_dev() {
         return Ok(());
     }
 
-    if current >= *FIRMWARE_V2 {
+    if *current >= *FIRMWARE_V2 {
         return Ok(());
     }
 
-    if current < *FIRMWARE_V2 && update != *FIRMWARE_V2 && update > *FIRMWARE_V2 {
+    if *current < *FIRMWARE_V2 && *update != *FIRMWARE_V2 && *update > *FIRMWARE_V2 {
         return Err(anyhow!(
             "Upgrading to firmware v2.1.0 or later requires that the device be running firmware v2.0.0 or later."
         ));
@@ -501,11 +495,17 @@ fn firmware_upgrade(
             .to_str()
             .ok_or_else(|| anyhow!("Could not convert update filename!"))?;
 
-        let current_filename = update_tab_context
+        let current_version = update_tab_context
             .current_firmware_version()
             .ok_or_else(|| anyhow!("Could not get current firmware name"))?;
 
-        firmware_can_upgrade(&current_filename, update_filename)?;
+        let current = SwiftVersion::parse(&current_version)
+            .map_err(|e| anyhow!("Failed to parse current firmware version: {:?}", e))?;
+
+        let update = SwiftVersion::parse_filename(update_filename)
+            .map_err(|e| anyhow!("Failed to parse new firmware version: {:?}", e))?;
+
+        firmware_can_upgrade(&current, &update)?;
 
         if let Ok(firmware_blob) = std::fs::File::open(filepath.clone()) {
             update_tab_context.fw_log_append(String::from("Transferring image to device..."));

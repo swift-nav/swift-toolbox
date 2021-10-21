@@ -30,39 +30,31 @@ pub fn logging_stats_thread<S: CapnProtoSender>(
     shared_state: SharedState,
     client_sender: S,
 ) {
-    thread::scope(|scope| {
-        scope
-            .spawn(|_| {
-                let mut start_time = Instant::now();
-                let mut filepath = None;
+    let mut start_time = Instant::now();
+    let mut filepath = None;
 
-                loop {
-                    if receiver
-                        .recv_timeout(Duration::from_millis(LOGGING_STATS_UPDATE_INTERVAL_SEC))
-                        .is_ok()
-                    {
-                        break;
-                    }
-                    if let Some(mut new_update) = shared_state.sbp_logging_stats_state() {
-                        filepath = new_update.sbp_log_filepath.take();
-                        start_time = Instant::now();
-                    }
-                    if let Some(filepath_) = filepath.clone() {
-                        let file_size = std::fs::metadata(filepath_).unwrap().len();
-                        refresh_loggingbar_recording(
-                            &mut client_sender.clone(),
-                            file_size,
-                            start_time.elapsed().as_secs(),
-                        );
-                    } else {
-                        refresh_loggingbar_recording(&mut client_sender.clone(), 0, 0);
-                    }
-                }
-            })
-            .join()
-            .expect(THREAD_JOIN_FAILURE);
-    })
-    .expect(CROSSBEAM_SCOPE_UNWRAP_FAILURE);
+    loop {
+        if receiver
+            .recv_timeout(Duration::from_millis(LOGGING_STATS_UPDATE_INTERVAL_SEC))
+            .is_ok()
+        {
+            break;
+        }
+        if let Some(mut new_update) = shared_state.sbp_logging_stats_state() {
+            filepath = new_update.sbp_log_filepath.take();
+            start_time = Instant::now();
+        }
+        if let Some(filepath_) = filepath.clone() {
+            let file_size = std::fs::metadata(filepath_).unwrap().len();
+            refresh_loggingbar_recording(
+                &mut client_sender.clone(),
+                file_size,
+                start_time.elapsed().as_secs(),
+            );
+        } else {
+            refresh_loggingbar_recording(&mut client_sender.clone(), 0, 0);
+        }
+    }
 }
 
 pub fn refresh_loggingbar_recording<P: CapnProtoSender>(

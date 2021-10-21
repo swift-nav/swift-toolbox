@@ -53,19 +53,19 @@ impl FromStr for SwiftVersion {
             .ok_or_else(|| anyhow!("Could not find marketing version for {}", s))?
             .as_str()
             .parse::<u64>()
-            .map_err(|e| anyhow!(e.to_string()))?;
+            .map_err(|e| anyhow!("Could not parse marketing version: {}", e.to_string()))?;
         let major = captured
             .name("major")
             .ok_or_else(|| anyhow!("Could not find major version for {}", s))?
             .as_str()
             .parse::<u64>()
-            .map_err(|e| anyhow!(e.to_string()))?;
+            .map_err(|e| anyhow!("Could not parse major version: {}", e.to_string()))?;
         let minor = captured
             .name("minor")
             .ok_or_else(|| anyhow!("Could not find minor version for {}", s))?
             .as_str()
             .parse::<u64>()
-            .map_err(|e| anyhow!(e.to_string()))?;
+            .map_err(|e| anyhow!("Could not parse minor version: {}", e.to_string()))?;
 
         let namespace = captured.name("namespace");
         let dev = captured.name("dev");

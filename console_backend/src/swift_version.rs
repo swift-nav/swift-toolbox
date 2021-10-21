@@ -105,7 +105,7 @@ impl SwiftVersion {
     pub fn parse_filename(text: &str) -> Result<Self, anyhow::Error> {
         lazy_static! {
             static ref FILENAME_RE: Regex =
-                Regex::new(r".*-(v[0-9]*\.[0-9]*\.[0-9]*.*).bin$").unwrap();
+                Regex::new(r"PiksiMulti-(.*v[0-9]*\.[0-9]*\.[0-9]*.*).bin$").unwrap();
         }
 
         let captured = FILENAME_RE
@@ -199,8 +199,9 @@ mod tests {
         #[rustfmt::skip]
         let success_test_cases = [
             ("PiksiMulti-v2.1.0.bin", 2, 1, 0, "v", false),
-            ("PiksiMulti-INTERNAL-starling-v1.5.0-develop-2021082401-3.bin", 1, 5, 0, "v-develop-2021082401-3", true),
-            ("PiksiMulti-INTERNAL-v2.5.4.bin", 2, 5, 4, "v", false),
+            ("PiksiMulti-INTERNAL-starling-v1.5.0-develop-2021082401-3.bin", 1, 5, 0, "INTERNAL-starling-v-develop-2021082401-3", true),
+            ("PiksiMulti-INTERNAL-v2.5.4.bin", 2, 5, 4, "INTERNAL-v", true),
+            ("PiksiMulti-starling-v1.8.0.bin", 1, 8, 0, "starling-v", true),
         ];
 
         for (version_str, marketing, major, minor, dev, isdev) in success_test_cases {

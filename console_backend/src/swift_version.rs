@@ -23,6 +23,7 @@ pub struct SwiftVersion {
     marketing: u64,
     major: u64,
     minor: u64,
+    namespace: String,
     dev: String,
 }
 
@@ -70,9 +71,10 @@ impl FromStr for SwiftVersion {
         let namespace = captured.name("namespace");
         let dev = captured.name("dev");
         let mut dev_string = String::new();
+        let mut namespace_string = String::new();
 
         if let Some(namespace) = namespace {
-            dev_string += namespace.as_str();
+            namespace_string += namespace.as_str();
         }
 
         if let Some(dev) = dev {
@@ -83,17 +85,25 @@ impl FromStr for SwiftVersion {
             marketing,
             major,
             minor,
+            namespace: namespace_string,
             dev: dev_string,
         })
     }
 }
 
 impl SwiftVersion {
-    pub const fn new(marketing: u64, major: u64, minor: u64, dev: String) -> Self {
+    pub const fn new(
+        marketing: u64,
+        major: u64,
+        minor: u64,
+        namespace: String,
+        dev: String,
+    ) -> Self {
         SwiftVersion {
             marketing,
             major,
             minor,
+            namespace,
             dev,
         }
     }
@@ -121,16 +131,12 @@ impl SwiftVersion {
     }
 
     pub fn is_dev(&self) -> bool {
-        // A dev string of consisting of a single 'v' character is not
-        // considered to be a development version. Due to the way we parse
-        // strings (see module description above) the leading and trailing
-        // characters of the input string are combined in to this 'dev string'.
-        // Our tagging stragegy means that releases are tagged with a leading
-        // 'v' (for example v2.2.17) which in turn means a release tag will end
-        // up leaving a single 'v' character in this devstring property. We just
-        // ignore this special case and don't consider it to be a development
-        // version
-        (!self.dev.is_empty()) && (self.dev != "v")
+        // A namespace string of consisting of a single 'v' character is not
+        // considered to be a development version as release versions contain
+        // this namespace. All other namespaces (eg: INTERNAL-v or starling-v)
+        // are considered to be development versions, as are any versions with
+        // trailing development tags
+        !self.dev.is_empty() || (!self.namespace.is_empty() && self.namespace != "v")
     }
 }
 
@@ -176,20 +182,21 @@ mod tests {
     fn test_success_cases() {
         #[rustfmt::skip]
         let success_test_cases = [
-            ("v2.1.0", 2, 1, 0, "v", false),
-            ("v2.2.17-develop", 2, 2, 17, "v-develop", true),
-            ("v99.99.99-arbitrary-string", 99, 99, 99, "v-arbitrary-string", true),
-            ("v1.1.1 including some spaces", 1, 1, 1, "v including some spaces", true),
-            ("    v2.0.0", 2, 0, 0, "v", false),
-            ("1.2.3.4", 1, 2, 3, ".4", true)
+            ("v2.1.0", 2, 1, 0, "v", "", false),
+            ("v2.2.17-develop", 2, 2, 17, "v", "-develop", true),
+            ("v99.99.99-arbitrary-string", 99, 99, 99, "v", "-arbitrary-string", true),
+            ("v1.1.1 including some spaces", 1, 1, 1, "v", " including some spaces", true),
+            ("    v2.0.0", 2, 0, 0, "v", "", false),
+            ("1.2.3.4", 1, 2, 3, "", ".4", true)
         ];
 
-        for (version_str, marketing, major, minor, dev, isdev) in success_test_cases {
+        for (version_str, marketing, major, minor, namespace, dev, isdev) in success_test_cases {
             let ver = SwiftVersion::parse(version_str).unwrap();
             assert_eq!(ver.marketing, marketing);
             assert_eq!(ver.major, major);
             assert_eq!(ver.minor, minor);
             assert_eq!(ver.dev, dev);
+            assert_eq!(ver.namespace, namespace);
             assert_eq!(ver.is_dev(), isdev);
         }
     }
@@ -198,18 +205,19 @@ mod tests {
     fn test_filename_cases() {
         #[rustfmt::skip]
         let success_test_cases = [
-            ("PiksiMulti-v2.1.0.bin", 2, 1, 0, "v", false),
-            ("PiksiMulti-INTERNAL-starling-v1.5.0-develop-2021082401-3.bin", 1, 5, 0, "INTERNAL-starling-v-develop-2021082401-3", true),
-            ("PiksiMulti-INTERNAL-v2.5.4.bin", 2, 5, 4, "INTERNAL-v", true),
-            ("PiksiMulti-starling-v1.8.0.bin", 1, 8, 0, "starling-v", true),
+            ("PiksiMulti-v2.1.0.bin", 2, 1, 0, "v", "", false),
+            ("PiksiMulti-INTERNAL-starling-v1.5.0-develop-2021082401-3.bin", 1, 5, 0, "INTERNAL-starling-v", "-develop-2021082401-3", true),
+            ("PiksiMulti-INTERNAL-v2.5.4.bin", 2, 5, 4, "INTERNAL-v", "", true),
+            ("PiksiMulti-starling-v1.8.0.bin", 1, 8, 0, "starling-v", "", true),
         ];
 
-        for (version_str, marketing, major, minor, dev, isdev) in success_test_cases {
+        for (version_str, marketing, major, minor, namespace, dev, isdev) in success_test_cases {
             let ver = SwiftVersion::parse_filename(version_str).unwrap();
             assert_eq!(ver.marketing, marketing);
             assert_eq!(ver.major, major);
             assert_eq!(ver.minor, minor);
             assert_eq!(ver.dev, dev);
+            assert_eq!(ver.namespace, namespace);
             assert_eq!(ver.is_dev(), isdev);
         }
     }

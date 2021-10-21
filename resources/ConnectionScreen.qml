@@ -160,6 +160,9 @@ Item {
                         selectTextByMouse: true
 
                         Label {
+                            anchors.fill: parent.contentItem
+                            anchors.leftMargin: 4
+                            verticalAlignment: Text.AlignVCenter
                             text: "Host"
                             color: Constants.connection.placeholderTextColor
                             visible: (!tcpUrlBar.editText)
@@ -177,6 +180,9 @@ Item {
                         selectTextByMouse: true
 
                         Label {
+                            anchors.fill: parent.contentItem
+                            anchors.leftMargin: 4
+                            verticalAlignment: Text.AlignVCenter
                             text: "Port"
                             color: Constants.connection.placeholderTextColor
                             visible: !tcpPortBar.editText
@@ -190,12 +196,14 @@ Item {
                         visible: fileRadio.checked
                         Layout.alignment: Qt.AlignLeft
                         Layout.fillWidth: true
-                        Layout.preferredHeight: Constants.connection.urlBarHeight
                         model: previous_files
                         editable: true
                         selectTextByMouse: true
 
                         Label {
+                            anchors.fill: parent.contentItem
+                            anchors.leftMargin: 4
+                            verticalAlignment: Text.AlignVCenter
                             text: "path/to/file"
                             color: Constants.connection.placeholderTextColor
                             visible: !fileUrlBar.editText

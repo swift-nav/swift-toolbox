@@ -90,6 +90,9 @@ Rectangle {
             }
 
             Label {
+                anchors.fill: parent.contentItem
+                anchors.leftMargin: 4
+                verticalAlignment: Text.AlignVCenter
                 text: "Enter folder path"
                 color: Constants.loggingBar.placeholderTextColor
                 visible: !folderPathBar.editText

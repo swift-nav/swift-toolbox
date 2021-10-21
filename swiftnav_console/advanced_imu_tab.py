@@ -1,4 +1,4 @@
-"""Advanced Ins Tab QObjects.
+"""Advanced Imu Tab QObjects.
 """
 
 from typing import Dict, List, Any
@@ -7,13 +7,13 @@ from PySide2.QtCore import Property, QObject, QPointF, Slot
 
 from .constants import Keys, QTKeys
 
-ADVANCED_INS_TAB: Dict[str, Any] = {
+ADVANCED_IMU_TAB: Dict[str, Any] = {
     Keys.FIELDS_DATA: [],
     Keys.POINTS: [],
 }
 
 
-class AdvancedInsPoints(QObject):
+class AdvancedImuPoints(QObject):
 
     _points: List[List[QPointF]] = [[]]
     _fields_data: List[float] = []
@@ -42,9 +42,9 @@ class AdvancedInsPoints(QObject):
             series.replace(self._points[idx])
 
 
-class AdvancedInsModel(QObject):  # pylint: disable=too-few-public-methods
-    @Slot(AdvancedInsPoints)  # type: ignore
-    def fill_console_points(self, cp: AdvancedInsPoints) -> AdvancedInsPoints:  # pylint:disable=no-self-use
-        cp.set_points(ADVANCED_INS_TAB[Keys.POINTS])
-        cp.set_fields_data(ADVANCED_INS_TAB[Keys.FIELDS_DATA])
+class AdvancedImuModel(QObject):  # pylint: disable=too-few-public-methods
+    @Slot(AdvancedImuPoints)  # type: ignore
+    def fill_console_points(self, cp: AdvancedImuPoints) -> AdvancedImuPoints:  # pylint:disable=no-self-use
+        cp.set_points(ADVANCED_IMU_TAB[Keys.POINTS])
+        cp.set_fields_data(ADVANCED_IMU_TAB[Keys.FIELDS_DATA])
         return cp

@@ -49,7 +49,7 @@ Item {
                 Rectangle {
                     width: parent.width - Constants.updateTab.hardwareVersionElementsLabelWidth
                     height: parent.height
-                    border.width: Constants.advancedIns.textDataBarBorderWidth
+                    border.width: Constants.advancedImu.textDataBarBorderWidth
 
                     Text {
                         id: currentVersionText
@@ -90,7 +90,7 @@ Item {
                 Rectangle {
                     width: parent.width - Constants.updateTab.hardwareVersionElementsLabelWidth
                     height: parent.height
-                    border.width: Constants.advancedIns.textDataBarBorderWidth
+                    border.width: Constants.advancedImu.textDataBarBorderWidth
 
                     Text {
                         id: latestVersionText

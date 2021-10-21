@@ -31,7 +31,7 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.alignment: Qt.AlignTop
-            border.width: Constants.advancedIns.textDataBarBorderWidth
+            border.width: Constants.advancedImu.textDataBarBorderWidth
 
             Text {
                 id: hardwareRevisionText
@@ -40,7 +40,7 @@ Item {
                 clip: true
                 anchors.fill: parent
                 color: Constants.updateTab.placeholderTextColor
-                anchors.margins: Constants.advancedIns.textDataBarMargin
+                anchors.margins: Constants.advancedImu.textDataBarMargin
                 font.pointSize: Constants.largePointSize
                 font.family: Constants.genericTable.fontFamily
             }

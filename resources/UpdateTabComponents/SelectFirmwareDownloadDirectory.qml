@@ -31,7 +31,7 @@ Item {
         Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            border.width: Constants.advancedIns.textDataBarBorderWidth
+            border.width: Constants.advancedImu.textDataBarBorderWidth
             clip: true
 
             TextInput {

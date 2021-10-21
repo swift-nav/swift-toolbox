@@ -1,4 +1,4 @@
-pub mod advanced_ins_tab;
+pub mod advanced_imu_tab;
 pub mod advanced_magnetometer_tab;
 pub mod advanced_networking_tab;
 pub mod advanced_spectrum_analyzer_tab;
@@ -44,7 +44,7 @@ pub mod watch;
 use std::sync::Mutex;
 
 use crate::{
-    advanced_ins_tab::AdvancedInsTab, advanced_magnetometer_tab::AdvancedMagnetometerTab,
+    advanced_imu_tab::AdvancedImuTab, advanced_magnetometer_tab::AdvancedMagnetometerTab,
     advanced_networking_tab::AdvancedNetworkingTab,
     advanced_spectrum_analyzer_tab::AdvancedSpectrumAnalyzerTab,
     advanced_system_monitor_tab::AdvancedSystemMonitorTab, baseline_tab::BaselineTab,
@@ -59,7 +59,7 @@ static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 struct Tabs<S: types::CapnProtoSender> {
     pub main: Mutex<MainTab<S>>,
-    pub advanced_ins: Mutex<AdvancedInsTab<S>>,
+    pub advanced_imu: Mutex<AdvancedImuTab<S>>,
     pub advanced_magnetometer: Mutex<AdvancedMagnetometerTab<S>>,
     pub advanced_networking: Mutex<AdvancedNetworkingTab<S>>,
     pub advanced_system_monitor: Mutex<AdvancedSystemMonitorTab<S>>,
@@ -82,7 +82,7 @@ impl<S: types::CapnProtoSender> Tabs<S> {
     ) -> Self {
         Self {
             main: MainTab::new(shared_state.clone(), client_sender.clone()).into(),
-            advanced_ins: AdvancedInsTab::new(shared_state.clone(), client_sender.clone()).into(),
+            advanced_imu: AdvancedImuTab::new(shared_state.clone(), client_sender.clone()).into(),
             advanced_magnetometer: AdvancedMagnetometerTab::new(
                 shared_state.clone(),
                 client_sender.clone(),

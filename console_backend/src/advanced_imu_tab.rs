@@ -9,7 +9,7 @@ use crate::types::{CapnProtoSender, Deque};
 use crate::utils::serialize_capnproto_builder;
 use crate::{constants::*, zip};
 
-/// AdvancedInsTab struct.
+/// AdvancedImuTab struct.
 ///
 /// # Fields:
 ///
@@ -27,7 +27,7 @@ use crate::{constants::*, zip};
 /// - `gyro_z`: The stored historic Imu angular rate values along z axis.
 /// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
 #[derive(Debug)]
-pub struct AdvancedInsTab<S: CapnProtoSender> {
+pub struct AdvancedImuTab<S: CapnProtoSender> {
     client_sender: S,
     pub fusion_engine_status_bar: FusionStatusFlags<S>,
     imu_conf: u8,
@@ -44,9 +44,9 @@ pub struct AdvancedInsTab<S: CapnProtoSender> {
     shared_state: SharedState,
 }
 
-impl<S: CapnProtoSender> AdvancedInsTab<S> {
-    pub fn new(shared_state: SharedState, client_sender: S) -> AdvancedInsTab<S> {
-        AdvancedInsTab {
+impl<S: CapnProtoSender> AdvancedImuTab<S> {
+    pub fn new(shared_state: SharedState, client_sender: S) -> AdvancedImuTab<S> {
+        AdvancedImuTab {
             fusion_engine_status_bar: FusionStatusFlags::new(
                 shared_state.clone(),
                 client_sender.clone(),
@@ -131,7 +131,7 @@ impl<S: CapnProtoSender> AdvancedInsTab<S> {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
-        let mut tab_status = msg.init_advanced_ins_status();
+        let mut tab_status = msg.init_advanced_imu_status();
 
         let mut tab_points = tab_status.reborrow().init_data(NUM_INS_PLOT_ROWS as u32);
 
@@ -183,7 +183,7 @@ mod tests {
     fn handle_imu_raw_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let mut ins_tab = AdvancedInsTab::new(shared_state, client_send);
+        let mut ins_tab = AdvancedImuTab::new(shared_state, client_send);
         let tow = 1_u32;
         let tow_f = 1_u8;
         let acc_x = 2_i16;
@@ -230,7 +230,7 @@ mod tests {
     fn handle_imu_aux_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let mut ins_tab = AdvancedInsTab::new(shared_state.clone(), client_send.clone());
+        let mut ins_tab = AdvancedImuTab::new(shared_state.clone(), client_send.clone());
         let imu_type_a = 0_u8;
         let imu_type_b = 1_u8;
         let imu_type_unknown = 2_u8;
@@ -248,7 +248,7 @@ mod tests {
         assert!(f64::abs(ins_tab.imu_temp - 0_f64) <= f64::EPSILON);
         assert_ne!(ins_tab.imu_conf, imu_conf);
 
-        let mut ins_tab = AdvancedInsTab::new(shared_state.clone(), client_send.clone());
+        let mut ins_tab = AdvancedImuTab::new(shared_state.clone(), client_send.clone());
         let msg = MsgImuAux {
             sender_id: Some(1337),
             imu_type: imu_type_a,
@@ -261,7 +261,7 @@ mod tests {
         assert!(f64::abs(ins_tab.imu_temp - 23.390625_f64) <= f64::EPSILON);
         assert_eq!(ins_tab.imu_conf, imu_conf);
 
-        let mut ins_tab = AdvancedInsTab::new(shared_state, client_send);
+        let mut ins_tab = AdvancedImuTab::new(shared_state, client_send);
         let msg = MsgImuAux {
             sender_id: Some(1337),
             imu_type: imu_type_b,
@@ -279,7 +279,7 @@ mod tests {
     fn handle_imu_send_data_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender { inner: Vec::new() };
-        let mut ins_tab = AdvancedInsTab::new(shared_state, client_send);
+        let mut ins_tab = AdvancedImuTab::new(shared_state, client_send);
 
         assert!(f64::abs(ins_tab.rms_acc_x - 0_f64) <= f64::EPSILON);
         assert!(f64::abs(ins_tab.rms_acc_y - 0_f64) <= f64::EPSILON);

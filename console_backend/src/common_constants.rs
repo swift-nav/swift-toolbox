@@ -47,8 +47,8 @@ pub enum Tabs {
     UPDATE,
     #[strum(serialize = "ADVANCED_SYSTEM_MONITOR")]
     ADVANCED_SYSTEM_MONITOR,
-    #[strum(serialize = "ADVANCED_INS")]
-    ADVANCED_INS,
+    #[strum(serialize = "ADVANCED_IMU")]
+    ADVANCED_IMU,
     #[strum(serialize = "ADVANCED_MAGNETOMETER")]
     ADVANCED_MAGNETOMETER,
     #[strum(serialize = "ADVANCED_NETWORKING")]

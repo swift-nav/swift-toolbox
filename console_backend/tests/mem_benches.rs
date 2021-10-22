@@ -7,8 +7,8 @@ mod mem_bench_impl {
     use sysinfo::{get_current_pid, ProcessExt, System, SystemExt};
 
     use console_backend::{
-        connection::{ConnectionManager, ConnectionState},
-        shared_state::SharedState,
+        connection::ConnectionManager,
+        shared_state::{ConnectionState, SharedState},
         types::{ClientSender, RealtimeDelay},
     };
 

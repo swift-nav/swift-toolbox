@@ -11,10 +11,9 @@ use sbp::SbpString;
 use semver::{Version, VersionReq}; //BuildMetadata, Prerelease,
 use serialport::available_ports;
 
-use crate::connection::ConnectionState;
 use crate::constants::*;
 use crate::errors::*;
-use crate::shared_state::{SerialConfig, SharedState};
+use crate::shared_state::{ConnectionState, SerialConfig, SharedState};
 use crate::types::{CapnProtoSender, SignalCodes};
 
 /// Compare to semvar strings and return true if the later_version is greater than the early version.

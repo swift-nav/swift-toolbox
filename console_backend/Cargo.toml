@@ -40,7 +40,7 @@ minreq = { version = "2.4.2", features = ["https"] }
 regex = { version = "1.5.4" }
 semver = { version = "1" }
 rust-ini = "0.17.0"
-sbp = { version = "4.0.2", features = ["json", "link", "swiftnav"] }
+sbp = { version = "4.0.3", features = ["json", "link", "swiftnav"] }
 sbp-settings = "0.3"
 env_logger = { version = "0.9", optional = true }
 mimalloc = { version = "0.1", default-features = false }

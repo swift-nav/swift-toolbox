@@ -67,7 +67,7 @@ Rectangle {
                 display: AbstractButton.IconOnly
                 rightInset: Constants.sideNavBar.buttonInset
                 leftInset: Constants.sideNavBar.buttonInset
-                enabled: stack.mainViewVisible()
+                enabled: Globals.connected_at_least_once
                 onClicked: {
                     drawer.open();
                 }
@@ -89,15 +89,13 @@ Rectangle {
                     padding: Constants.sideNavBar.buttonPadding
                     rightInset: Constants.sideNavBar.buttonInset
                     leftInset: Constants.sideNavBar.buttonInset
-                    enabled: Globals.conn_state == Constants.connection.connected
+                    enabled: Globals.connected_at_least_once
                     ToolTip.visible: hovered
                     ToolTip.text: modelData.tooltip
                     onClicked: {
-                        if (Globals.conn_state == Constants.connection.connected) {
-                            if (stack.connectionScreenVisible())
-                                stack.mainView();
+                        if (stack.connectionScreenVisible())
+                            stack.mainView();
 
-                        }
                     }
                 }
 
@@ -125,14 +123,12 @@ Rectangle {
             leftInset: Constants.sideNavBar.buttonInset
             ToolTip.visible: hovered
             ToolTip.text: "Connection Dialog"
-            enabled: Globals.conn_state == Constants.connection.connected
+            enabled: Globals.connected_at_least_once
             onClicked: {
-                if (Globals.conn_state == Constants.connection.connected) {
-                    if (stack.connectionScreenVisible())
-                        stack.mainView();
-                    else if (stack.mainViewVisible())
-                        stack.connectionScreen();
-                }
+                if (stack.connectionScreenVisible())
+                    stack.mainView();
+                else if (stack.mainViewVisible())
+                    stack.connectionScreen();
             }
         }
 

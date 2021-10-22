@@ -51,7 +51,7 @@ Rectangle {
         Button {
             id: sbpLoggingButton
 
-            icon.source: Constants.icons.solidCirclePath
+            icon.source: checked ? Constants.icons.stopCirclePath : Constants.icons.solidCirclePath
             icon.color: checked ? Constants.swiftOrange : Constants.materialGrey
             checkable: true
             Layout.preferredWidth: Constants.loggingBar.buttonHeight
@@ -59,10 +59,6 @@ Rectangle {
             ToolTip.visible: hovered
             ToolTip.text: !checked ? "Start Recording" : "Stop Recording"
             onClicked: {
-                if (!checked) {
-                    folderPathBar.currentIndex = -1;
-                    folderPathBar.editText = folderPathBar.textAt(0);
-                }
                 data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText);
             }
             Component.onCompleted: {
@@ -97,7 +93,34 @@ Rectangle {
             }
 
             RowLayout {
+                // Rectangle {
+                //     Layout.fillWidth: true
+                //     Layout.preferredHeight: Constants.loggingBar.folderPathBarHeight
+                //     visible: sbpLoggingButton.checked
+                //     border.width: Constants.advancedImu.textDataBarBorderWidth
+                //     Label {
+                //         id: recordingFilenameText
+                //         text: ""
+                //         clip: true
+                //         anchors.fill: parent
+                //         color: Constants.updateTab.placeholderTextColor
+                //         anchors.margins: 5
+                //     }
+
                 anchors.fill: parent
+
+                // }
+                ComboBox {
+                    id: recordingFilenameText
+
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Constants.loggingBar.folderPathBarHeight
+                    model: previous_folders
+                    editable: true
+                    selectTextByMouse: true
+                    enabled: !sbpLoggingButton.checked
+                    visible: sbpLoggingButton.checked
+                }
 
                 ComboBox {
                     id: folderPathBar
@@ -108,6 +131,7 @@ Rectangle {
                     editable: true
                     selectTextByMouse: true
                     enabled: !sbpLoggingButton.checked
+                    visible: !sbpLoggingButton.checked
                     onActivated: {
                         var text = folderPathBar.currentText;
                         folderPathBar.currentIndex = -1;
@@ -247,10 +271,7 @@ Rectangle {
                 csvLoggingButton.checked = loggingBarData.csv_logging;
                 recordingTime.text = loggingDurationFormat(loggingBarData.recording_duration_sec);
                 recordingSize.text = loggingBarData.recording_size;
-                recordingFilename = loggingBarData.recording_filename;
-                if (sbpLoggingButton.checked)
-                    folderPathBar.editText = recordingFilename;
-
+                recordingFilenameText.editText = loggingBarData.recording_filename;
             }
         }
 

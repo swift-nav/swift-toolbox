@@ -100,6 +100,40 @@ Item {
             anchors.top: parent.top
             z: Constants.genericTable.headerZOffset
 
+            Menu {
+                id: menu
+
+                onAboutToShow: {
+                    menu.x = columnWidths[0];
+                    menu.width = columnWidths[1];
+                }
+                onHeightChanged: {
+                    menu.y = horizontalHeader.y - menu.height;
+                }
+
+                Repeater {
+                    model: logLevelLabels
+
+                    MenuItem {
+                        id: menuItem
+
+                        onTriggered: {
+                            logLevelIndex = index;
+                            data_model.log_level(modelData);
+                        }
+
+                        contentItem: Label {
+                            text: modelData
+                            color: logLevelIndex == index ? Constants.swiftOrange : Constants.genericTable.textColor
+                            font.pointSize: Constants.mediumPointSize
+                        }
+
+                    }
+
+                }
+
+            }
+
             delegate: Rectangle {
                 id: header
 
@@ -121,7 +155,10 @@ Item {
                     font.pointSize: Constants.largePointSize
 
                     Button {
+                        id: button
+
                         visible: index == 1
+                        enabled: !menu.visible
                         icon.source: Constants.icons.dropIndicatorPath
                         anchors.right: headerText.right
                         icon.color: checked ? Constants.swiftOrange : Constants.materialGrey
@@ -131,43 +168,7 @@ Item {
                         icon.height: parent.height
                         padding: Constants.logPanel.dropdownButtonPadding
                         onClicked: {
-                            if (!menu.visible) {
-                                menu.open();
-                                menu.y = (parent.y - menu.height);
-                                menu.x = width - columnWidths[1];
-                                menu.width = columnWidths[1];
-                            }
-                        }
-
-                        Menu {
-                            id: menu
-
-                            y: Constants.logPanel.logLevelMenuHeight
-                            onXChanged: {
-                                this.close();
-                            }
-
-                            Repeater {
-                                model: logLevelLabels
-
-                                MenuItem {
-                                    id: menuItem
-
-                                    onTriggered: {
-                                        logLevelIndex = index;
-                                        data_model.log_level(modelData);
-                                    }
-
-                                    contentItem: Label {
-                                        text: modelData
-                                        color: logLevelIndex == index ? Constants.swiftOrange : Constants.genericTable.textColor
-                                        font.pointSize: Constants.mediumPointSize
-                                    }
-
-                                }
-
-                            }
-
+                            menu.open();
                         }
 
                         background: Item {

@@ -533,6 +533,7 @@ QtObject {
         readonly property string dropIndicatorPath: "qrc:/qt-project.org/imports/QtQuick/Controls.2/Material/images/drop-indicator.png"
         readonly property string playPath: "qrc:///images/iconic/play.svg"
         readonly property string solidCirclePath: "qrc:///images/fontawesome/circle-solid.svg"
+        readonly property string stopCirclePath: "qrc:///images/fontawesome/stop-circle-regular.svg"
     }
 
     insSettingsPopup: QtObject {

@@ -16,7 +16,7 @@ use crate::utils::refresh_connection_frontend;
 use capnp::serialize;
 use chrono::{DateTime, Utc};
 use crossbeam::channel;
-use log::{error, info};
+use log::error;
 use std::{io::Cursor, path::PathBuf, str::FromStr, thread};
 pub type Error = anyhow::Error;
 pub type Result<T> = anyhow::Result<T>;
@@ -116,7 +116,6 @@ pub fn server_recv_thread(
                         .get_log_level()
                         .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
                     let log_level = LogLevel::from_str(log_level).expect(CONVERT_TO_STR_FAILURE);
-                    info!("Log Level: {}", log_level);
                     shared_state.set_log_level(log_level);
                 }
                 m::message::SolutionVelocityStatusFront(Ok(cv_in)) => {

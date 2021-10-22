@@ -13,4 +13,5 @@ Item {
         Layout.preferredHeight: Constants.navBar.urlBarHeight
         Layout.alignment: Qt.AlignCenter
     }
+
 }

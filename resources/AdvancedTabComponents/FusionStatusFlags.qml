@@ -32,10 +32,9 @@ Item {
         height: parent.height
 
         ColumnLayout {
-            spacing: 20
-
             id: insStatusRow
 
+            spacing: 20
             visible: false
             Layout.fillWidth: true
             Layout.preferredHeight: Constants.advancedImu.urlBarHeight

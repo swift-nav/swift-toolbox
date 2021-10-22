@@ -31,7 +31,9 @@ Item {
         width: parent.width
         height: parent.height
 
-        RowLayout {
+        ColumnLayout {
+            spacing: 20
+
             id: insStatusRow
 
             visible: false

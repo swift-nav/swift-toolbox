@@ -31,6 +31,7 @@
     <file>AdvancedTabComponents/AdvancedMagnetometerTab.qml</file>
     <file>AdvancedTabComponents/AdvancedSpectrumAnalyzerTab.qml</file>
     <file>AdvancedTabComponents/AdvancedSpectrumAnalyzerTabChannelBar.qml</file>
+    <file>AdvancedTabComponents/AdvancedInsTab.qml</file>
     <file>AdvancedTabComponents/UnknownStatus.qml</file>
     <file>AdvancedTabComponents/WarningStatus.qml</file>
     <file>AdvancedTabComponents/OkStatus.qml</file>

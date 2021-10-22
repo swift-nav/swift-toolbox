@@ -350,7 +350,7 @@ fn download_firmware(update_tab_context: UpdateTabContext) {
 fn check_above_v2(update_tab_context: UpdateTabContext) -> Result<bool> {
     if let Some(current_version) = update_tab_context.current_firmware_version() {
         let current = SwiftVersion::parse(&current_version)?;
-        let above_v2 = current > *FIRMWARE_V2;
+        let above_v2 = current.is_dev() || current > *FIRMWARE_V2;
         if !above_v2 {
             update_tab_context.fw_log_append(format!(
                 "Checkpoint firmware version, {}, is newer than current version, {}.",

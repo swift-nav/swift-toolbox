@@ -33,6 +33,7 @@ pub mod shared_state;
 pub mod solution_tab;
 pub mod solution_velocity_tab;
 pub mod status_bar;
+pub mod swift_version;
 pub mod tracking_signals_tab;
 pub mod tracking_sky_plot_tab;
 pub mod types;

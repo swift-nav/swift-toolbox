@@ -367,7 +367,6 @@ dependencies = [
  "rust-ini",
  "sbp",
  "sbp-settings",
- "semver 1.0.4",
  "serde",
  "serde-pickle",
  "serde_json",

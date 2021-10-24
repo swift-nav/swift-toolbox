@@ -106,47 +106,50 @@ fn conn_manager_thd(
     thread::spawn(move || {
         info!("Console started...");
         while let Ok(msg) = recv.wait() {
-            log::logger().flush();
-            let conn = match msg {
-                ConnectionManagerMsg::Connect(conn) => conn,
+            match msg {
+                ConnectionManagerMsg::Connect(conn) => {
+                    let (reader, writer) = match conn.try_connect(Some(&shared_state)) {
+                        Ok(rw) => rw,
+                        Err(e) => {
+                            error!("Unable to connect: {}", e);
+                            log::logger().flush();
+                            if conn.is_tcp() {
+                                manager_msg.send(ConnectionManagerMsg::Reconnect(conn))
+                            }
+                            continue;
+                        }
+                    };
+                    let (messages, stop_token) = Messages::from_reader(reader);
+                    let msg_sender = MsgSender::new(writer);
+                    shared_state.set_connection(
+                        ConnectionState::Connected {
+                            conn: conn.clone(),
+                            stop_token,
+                        },
+                        &mut client_send,
+                    );
+                    pm_thd = Some(process_messages_thd(
+                        messages,
+                        msg_sender,
+                        conn.clone(),
+                        shared_state.clone(),
+                        client_send.clone(),
+                        manager_msg.clone(),
+                    ));
+                }
                 ConnectionManagerMsg::Reconnect(conn) => {
                     join(&mut reconnect_thd);
                     reconnect_thd = Some(start_reconnect_thd(conn, manager_msg.clone()));
-                    continue;
                 }
                 ConnectionManagerMsg::Disconnect => {
                     info!("Disconnecting...");
+                    log::logger().flush();
                     shared_state.set_connection(ConnectionState::Disconnected, &mut client_send);
                     join(&mut pm_thd);
                     info!("Disconnected successfully.");
-                    continue;
                 }
             };
-            let ((messages, stop_token), msg_sender) = match conn.try_connect(Some(&shared_state)) {
-                Ok((r, w)) => (Messages::from_reader(r), MsgSender::new(w)),
-                Err(e) => {
-                    error!("Unable to connect: {}", e);
-                    if conn.is_tcp() {
-                        manager_msg.send(ConnectionManagerMsg::Reconnect(conn))
-                    }
-                    continue;
-                }
-            };
-            shared_state.set_connection(
-                ConnectionState::Connected {
-                    conn: conn.clone(),
-                    stop_token,
-                },
-                &mut client_send,
-            );
-            pm_thd = Some(process_messages_thd(
-                messages,
-                msg_sender,
-                conn.clone(),
-                shared_state.clone(),
-                client_send.clone(),
-                manager_msg.clone(),
-            ));
+            log::logger().flush();
         }
         shared_state.set_connection(ConnectionState::Closed, &mut client_send);
         join(&mut pm_thd);

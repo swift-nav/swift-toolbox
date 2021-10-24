@@ -131,8 +131,8 @@ class ObservationTableModel(QAbstractTableModel):
         # no need to do key lookup
         # https://stackoverflow.com/questions/39980323/are-dictionaries-ordered-in-python-3-6
         rowsToInsert = []
-        for rowIdx in range(len(observation_tab[Keys.ROWS])):
-            row = observation_tab[Keys.ROWS][rowIdx]
+        rowIdx = 0
+        for row in observation_tab[Keys.ROWS]:
             for colIdx in range(len(row)):
                 column = list(row)[colIdx]
                 try:
@@ -145,6 +145,15 @@ class ObservationTableModel(QAbstractTableModel):
                     if self.json_col_names is None:
                         self.json_col_names = list(row.keys())
                     rowsToInsert.append(deepcopy(row))
+
+            rowIdx += 1
+
+        # Remove old rows, if necessary
+        if len(self._rows) > rowIdx + 1 + len(rowsToInsert):
+            self.beginRemoveRows(QModelIndex(), rowIdx-len(rowsToInsert), len(self._rows)-1)
+            self._rows = self._rows[:rowIdx-len(rowsToInsert)]
+            self.endRemoveRows()
+            self.row_count_changed.emit(self.rowCount())  # type: ignore
 
         if len(rowsToInsert) > 0:
             self.beginInsertRows(QModelIndex(), len(self._rows), len(self._rows) + len(rowsToInsert) - 1)

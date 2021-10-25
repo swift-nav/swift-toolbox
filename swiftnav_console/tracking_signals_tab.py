@@ -3,7 +3,7 @@
 
 from typing import Dict, List, Any
 
-from PySide2.QtCore import Property, QObject, Slot
+from PySide2.QtCore import Property, QObject, Signal, Slot
 from PySide2.QtCharts import QtCharts
 
 from .constants import Keys, QTKeys
@@ -24,6 +24,7 @@ class TrackingSignalsPoints(QObject):
     _all_series: List[QtCharts.QXYSeries] = []
     _xaxis_min: float = 0.0
     _xaxis_max: float = 0.0
+    all_series_changed = Signal()
 
     # def get_xmin_offset(self) -> float:
     #     """Getter for _xmin_offset."""
@@ -60,7 +61,7 @@ class TrackingSignalsPoints(QObject):
     def get_all_series(self) -> List[QtCharts.QXYSeries]:
         return self._all_series
 
-    all_series = Property(QTKeys.QVARIANTLIST, get_all_series)  # type: ignore
+    all_series = Property(QTKeys.QVARIANTLIST, get_all_series, notify=all_series_changed)  # type: ignore
 
     @Slot(int)  # type: ignore
     def getLabel(self, index) -> str:
@@ -71,6 +72,7 @@ class TrackingSignalsPoints(QObject):
     def addSeries(self, series) -> None:
         """Add a QML created series to the all_series list"""
         self._all_series.append(series)
+        self.all_series_changed.emit()
 
     @Slot(float, bool)  # type: ignore
     def fill_all_series(self, line_width, useOpenGL) -> None:
@@ -95,6 +97,7 @@ class TrackingSignalsPoints(QObject):
                 pen.setWidthF(line_width)
                 series.setPen(pen)
                 series.setUseOpenGL(useOpenGL)
+                self.all_series_changed.emit()
             except IndexError:
                 # The current problem is that the series' that are being updated with the points are not the same series that are attached to the chart..
                 # Need to get the QML created charts added into the python _all_series list.

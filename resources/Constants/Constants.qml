@@ -500,8 +500,9 @@ QtObject {
         readonly property string title: "Tracking C/N0"
         readonly property color titleColor: "#00006E"
         readonly property int titlePointSize: 14
-        readonly property int legendBottomMargin: 85
-        readonly property int legendLeftMargin: 60
+        readonly property int legendTopMargin: 30
+        readonly property int legendBottomMargin: 75
+        readonly property int legendLeftMargin: 30
         readonly property int legendLabelPointSize: 6
         readonly property string yAxisTitleText: "dB-Hz"
         readonly property string xAxisTitleText: "seconds"

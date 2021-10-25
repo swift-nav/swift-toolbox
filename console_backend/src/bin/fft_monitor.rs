@@ -30,7 +30,7 @@ pub struct CliFftMonitor {
     output: String,
 }
 impl CliFftMonitor {
-    pub fn into_conn(self) -> Connection {
+    pub fn into_conn(self) -> Result<Connection> {
         Connection::tcp(self.host, self.port)
     }
 }
@@ -46,12 +46,11 @@ fn main() -> Result<()> {
 
     let (done_tx, done_rx) = channel::bounded(0);
 
-    let bc_source = bc.clone();
-    let (specan_msg, _) = bc_source.clone().subscribe::<MsgSpecan>();
+    let (specan_msg, _) = bc.subscribe::<MsgSpecan>();
     let run = move |rdr| {
         let messages = sbp::iter_messages(rdr).log_errors(log::Level::Debug);
         for msg in messages {
-            bc_source.clone().send(&msg, None);
+            bc.clone().send(&msg, None);
             if done_rx.try_recv().is_ok() {
                 break;
             }
@@ -63,7 +62,7 @@ fn main() -> Result<()> {
     let channel = opts.channel;
     let num_ffts = opts.num_ffts;
     let (rdr, _) = opts
-        .into_conn()
+        .into_conn()?
         .try_connect(/*shared_state=*/ None)
         .context("while connecting")?;
 

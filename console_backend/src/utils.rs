@@ -10,10 +10,9 @@ use log::warn;
 use sbp::SbpString;
 use serialport::available_ports;
 
-use crate::connection::ConnectionState;
 use crate::constants::*;
 use crate::errors::*;
-use crate::shared_state::{SerialConfig, SharedState};
+use crate::shared_state::{ConnectionState, SerialConfig, SharedState};
 use crate::types::{CapnProtoSender, SignalCodes};
 
 /// Create a new SbpString of L size with T termination.

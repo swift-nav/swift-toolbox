@@ -1,6 +1,5 @@
-use std::{io, sync::Arc, thread};
+use std::io;
 
-use crossbeam::channel::{Receiver, Sender};
 use log::{debug, error};
 use sbp::{
     link::LinkSource,
@@ -17,7 +16,7 @@ use sbp::{
         },
         tracking::{MsgMeasurementState, MsgTrackingState},
     },
-    SbpIterExt, SbpMessage,
+    SbpMessage,
 };
 
 use crate::types::UartState;
@@ -32,13 +31,16 @@ use crate::{connection::Connection, shared_state::SharedState};
 use crate::{errors::UNABLE_TO_CLONE_UPDATE_SHARED, settings_tab};
 use crate::{log_panel::handle_log_msg, settings_tab::SettingsTab};
 
+pub use messages::{Messages, StopToken};
+
 pub fn process_messages<S>(
-    messages: Messages,
+    mut messages: Messages,
     msg_sender: MsgSender,
     conn: Connection,
     shared_state: SharedState,
     client_send: S,
-) where
+) -> Result<(), io::Error>
+where
     S: CapnProtoSender,
 {
     refresh_navbar(&mut client_send.clone(), shared_state.clone());
@@ -281,7 +283,7 @@ pub fn process_messages<S>(
             });
         }
 
-        for (message, gps_time) in messages {
+        for (message, gps_time) in &mut messages {
             let sent = source.send_with_state(&tabs, &message);
             tabs.main.lock().unwrap().serialize_sbp(&message);
             tabs.status_bar
@@ -316,77 +318,146 @@ pub fn process_messages<S>(
         tabs.main.lock().unwrap().close_sbp();
     })
     .unwrap();
+
+    messages.take_err()
 }
 
-type Message = (
-    sbp::Sbp,
-    Option<std::result::Result<sbp::time::GpsTime, sbp::time::GpsTimeError>>,
-);
+mod messages {
+    use std::{fmt, io, sync::Arc, thread, time::Duration};
 
-/// Wrapper around the iterator of messages that enables other threads
-/// to stop the iterator.
-pub struct Messages {
-    messages: Receiver<Message>,
-    canceled: Receiver<()>,
-}
+    use crossbeam::channel::{self, Receiver, Sender};
+    use log::debug;
+    use sbp::{
+        time::{GpsTime, GpsTimeError},
+        DeserializeError, Sbp, SbpIterExt,
+    };
 
-impl Messages {
-    pub fn new<R>(reader: R) -> (StopToken, Self)
-    where
-        R: io::Read + Send + 'static,
-    {
-        let (sink, messages) = crossbeam::channel::bounded(100);
-        let (cancel, canceled) = crossbeam::channel::bounded(1);
-        thread::spawn(move || Messages::start_thd(reader, sink));
-        (StopToken(Arc::new(cancel)), Self { messages, canceled })
+    type MessageWithTimeIter = Box<dyn Iterator<Item = MessageWithTime> + Send>;
+
+    type MessageWithTime = (
+        Result<Sbp, DeserializeError>,
+        Option<Result<GpsTime, GpsTimeError>>,
+    );
+
+    pub struct Messages {
+        messages: Receiver<MessageWithTime>,
+        stop_recv: Receiver<()>,
+        err: Result<(), io::Error>,
     }
 
-    fn start_thd<R: io::Read>(reader: R, sink: Sender<Message>) {
-        for message in sbp::iter_messages(reader)
-            .log_errors(log::Level::Debug)
-            .with_rover_time()
+    impl Messages {
+        const TIMEOUT: Duration = Duration::from_secs(30);
+
+        pub fn new(inner: MessageWithTimeIter) -> (Self, StopToken) {
+            let (stop_token, stop_recv) = StopToken::new();
+            let messages = start_read_thd(inner);
+            (
+                Self {
+                    messages,
+                    stop_recv,
+                    err: Ok(()),
+                },
+                stop_token,
+            )
+        }
+
+        pub fn from_reader<R>(reader: R) -> (Self, StopToken)
+        where
+            R: io::Read + Send + 'static,
         {
-            // this will error after `Messages` is dropped which will
-            // stop this thread
-            if sink.send(message).is_err() {
-                break;
+            let messages = sbp::iter_messages(reader).with_rover_time();
+            Self::new(Box::new(messages))
+        }
+
+        pub fn take_err(&mut self) -> Result<(), io::Error> {
+            std::mem::replace(&mut self.err, Ok(()))
+        }
+    }
+
+    impl Iterator for Messages {
+        type Item = (Sbp, Option<Result<GpsTime, GpsTimeError>>);
+
+        fn next(&mut self) -> Option<Self::Item> {
+            crossbeam::select! {
+                recv(self.messages) -> msg => {
+                    match msg.ok()? {
+                        (Ok(msg), time) => Some((msg, time)),
+                        (Err(e), _) => match e {
+                            DeserializeError::IoError(e) => {
+                                self.err = Err(e);
+                                None
+                            }
+                            _ => {
+                                debug!("{}", e);
+                                self.next()
+                            }
+                        },
+                    }
+                }
+                recv(self.stop_recv) -> _ => None,
+                default(Self::TIMEOUT) => {
+                    self.err = Err(io::Error::new(io::ErrorKind::TimedOut, "timeout"));
+                    None
+                }
             }
         }
     }
-}
 
-impl Iterator for Messages {
-    type Item = Message;
+    fn start_read_thd(messages: MessageWithTimeIter) -> Receiver<MessageWithTime> {
+        let (tx, rx) = channel::bounded(1000);
+        thread::spawn(move || {
+            for message in messages {
+                if tx.send(message).is_err() {
+                    break;
+                }
+            }
+        });
+        rx
+    }
 
-    fn next(&mut self) -> Option<Self::Item> {
-        crossbeam::select! {
-            recv(self.canceled) -> _ => None,
-            recv(self.messages) -> msg => msg.ok(),
+    /// Used to stop the [Messages](super::Messages) iterator. This can be called manually,
+    /// but will automatically be called after all copies of this token have been dropped.
+    pub struct StopToken(Arc<Shared>);
+
+    impl StopToken {
+        fn new() -> (Self, Receiver<()>) {
+            let (send, recv) = channel::bounded(1);
+            (StopToken(Arc::new(Shared(send))), recv)
+        }
+
+        pub fn stop(&self) {
+            self.0.stop();
         }
     }
-}
 
-/// Used to break the `process_messages` loop. Can be stopped manually
-/// or will automatically stop after all copies of this have been dropped.
-#[derive(Debug)]
-pub struct StopToken(Arc<Sender<()>>);
-
-impl StopToken {
-    pub fn stop(&self) {
-        let _ = self.0.try_send(());
+    impl Clone for StopToken {
+        fn clone(&self) -> Self {
+            Self(Arc::clone(&self.0))
+        }
     }
-}
 
-impl Clone for StopToken {
-    fn clone(&self) -> Self {
-        Self(Arc::clone(&self.0))
+    impl fmt::Debug for StopToken {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            f.debug_tuple("StopToken").finish()
+        }
     }
-}
 
-impl Drop for StopToken {
-    fn drop(&mut self) {
-        // if this is the last one make sure we stop the thread
-        if Arc::strong_count(&self.0) == 1 {
+    // Wrapper type so can hook into the drop call that happens when the last Arc<Shared> is dropped.
+    // We could not use this and drop when the arc's strong count is 1, but the count might change
+    // between calling `Arc::strong_count` and `self.stop`
+    struct Shared(Sender<()>);
+
+    impl Shared {
+        fn stop(&self) {
+            // try_send to avoid blocking. We don't care about the error because that means either:
+            // 1. The reciever was dropped - meaning the message thread has already ended
+            // 2. The channel is full - meaning someone already called stop
+            let _ = self.0.try_send(());
+        }
+    }
+
+    impl Drop for Shared {
+        fn drop(&mut self) {
             self.stop();
         }
     }

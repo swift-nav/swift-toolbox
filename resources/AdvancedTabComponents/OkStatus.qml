@@ -28,7 +28,7 @@ Item {
 
         text: "OK"
         anchors.left: okStatusImage.right
-        anchors.leftMargin: 5
+        anchors.leftMargin: Constants.fusionStatusFlags.labelMargin
         anchors.verticalCenter: okStatusImage.verticalCenter
         Layout.preferredWidth: Constants.advancedImu.textDataLabelWidth
         font.pointSize: Constants.mediumPointSize

@@ -28,7 +28,7 @@ Item {
 
         text: "UNKNOWN"
         anchors.left: unknownStatusImage.right
-        anchors.leftMargin: 5
+        anchors.leftMargin: Constants.fusionStatusFlags.labelMargin
         anchors.verticalCenter: unknownStatusImage.verticalCenter
         Layout.preferredWidth: Constants.advancedImu.textDataLabelWidth
         font.pointSize: Constants.mediumPointSize

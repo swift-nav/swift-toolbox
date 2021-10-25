@@ -28,7 +28,7 @@ Item {
 
         text: "WARNING"
         anchors.left: warningStatusImage.right
-        anchors.leftMargin: 5
+        anchors.leftMargin: Constants.fusionStatusFlags.labelMargin
         anchors.verticalCenter: warningStatusImage.verticalCenter
         Layout.preferredWidth: Constants.advancedImu.textDataLabelWidth
         font.pointSize: Constants.mediumPointSize

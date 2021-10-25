@@ -34,7 +34,7 @@ Item {
         ColumnLayout {
             id: insStatusRow
 
-            spacing: 20
+            spacing: Constants.fusionStatusFlags.spacing
             visible: false
             Layout.fillWidth: true
             Layout.preferredHeight: Constants.advancedImu.urlBarHeight

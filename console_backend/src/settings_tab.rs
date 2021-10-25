@@ -301,31 +301,30 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
     }
 
     fn write_setting(&self, group: &str, name: &str, value: &str) -> Result<()> {
-        let settings = self.settings.lock();
-        let setting = settings.get(group, name)?;
+        {
+            let mut settings = self.settings.lock();
+            let setting = settings.get(group, name)?;
 
-        if let Some(ref v) = setting.value {
-            if v.to_string() == value {
-                debug!("skipping write because setting has not changed");
-                return Ok(());
+            if let Some(ref v) = setting.value {
+                if v.to_string() == value {
+                    debug!("skipping write because setting has not changed");
+                    return Ok(());
+                }
             }
-        }
 
-        self.sbp_client.write_setting(group, name, value)?;
-
-        if matches!(
-            setting.setting.kind,
-            SettingKind::Float | SettingKind::Double
-        ) {
-            let new_setting = self
-                .sbp_client
-                .read_setting(group, name)
-                .ok_or_else(|| anyhow!("settting not found"))??;
-            self.settings.lock().set(group, name, new_setting)?;
-        } else {
-            self.settings
-                .lock()
-                .set(group, name, SettingValue::String(value.to_string()))?;
+            self.sbp_client.write_setting(group, name, value)?;
+            if matches!(
+                setting.setting.kind,
+                SettingKind::Float | SettingKind::Double
+            ) {
+                let new_setting = self
+                    .sbp_client
+                    .read_setting(group, name)
+                    .ok_or_else(|| anyhow!("settting not found"))??;
+                settings.set(group, name, new_setting)?;
+            } else {
+                settings.set(group, name, SettingValue::String(value.to_string()))?;
+            }
         }
 
         if group == "ins" && name == "output_mode" {

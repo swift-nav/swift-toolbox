@@ -174,8 +174,10 @@ Item {
                     }
 
                     delegate: Row {
-                        padding: 4
-                        Component.onCompleted: {
+                        padding: 1
+                        leftPadding: 4
+                        rightPadding: leftPadding
+                        onImplicitWidthChanged: {
                             if (gridView.cellWidth < implicitWidth)
                                 gridView.cellWidth = implicitWidth;
 

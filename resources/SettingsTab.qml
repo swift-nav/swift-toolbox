@@ -12,24 +12,12 @@ import SwiftConsole 1.0
 Item {
     id: settingsTab
 
-    property var floatValidator
-    property var intValidator
-    property var stringValidator
-
     function selectedRow() {
-        var rowIdx = settingsTable.selectedRow;
+        var rowIdx = settingsTable.selectedRowIdx;
         if (rowIdx < 0)
             return ;
 
         return settingsTable.table[settingsTable.rowOffsets[rowIdx]];
-    }
-
-    function shouldShowField(name) {
-        var row = selectedRow();
-        if (!row)
-            return false;
-
-        return !!row[name];
     }
 
     function selectedRowField(name) {
@@ -163,6 +151,12 @@ Item {
 
             SettingsTabComponents.SettingsTable {
                 id: settingsTable
+
+                onSelectedRowIdxChanged: {
+                    if (!!selectedRow())
+                        settingsPane.selectedRow = selectedRow();
+
+                }
             }
 
         }
@@ -235,7 +229,7 @@ Item {
                     text: "Show Advance Settings"
                     onClicked: {
                         settingsTable.showExpert = checked;
-                        settingsTable.selectedRow = -1;
+                        settingsTable.selectedRowIdx = -1;
                     }
                 }
 
@@ -246,202 +240,25 @@ Item {
                 Layout.fillWidth: true
             }
 
-            ColumnLayout {
+            RowLayout {
                 Layout.alignment: Qt.AlignLeft | Qt.AlignTop
                 Layout.maximumWidth: parent.width
-
-                Component {
-                    id: settingRowLabel
-
-                    Label {
-                        text: _title
-                        font.family: Constants.genericTable.fontFamily
-                        font.pointSize: Constants.largePointSize
-                        font.bold: true
-                    }
-
+                visible: {
+                    var row = selectedRow();
+                    if (row && row.hasOwnProperty("valueOnDevice"))
+                        return true;
+                    else
+                        return false;
                 }
 
-                Component {
-                    id: settingRowText
-
-                    Row {
-                        width: Constants.settingsTab.textSettingWidth
-
-                        Text {
-                            text: selectedRowField(_fieldName)
-                            width: parent.width
-                            elide: Text.ElideRight
-                            wrapMode: Text.WordWrap
-                            font.family: Constants.genericTable.fontFamily
-                            font.pointSize: Constants.largePointSize
-                        }
-
-                    }
-
-                }
-
-                Component {
-                    id: settingRowEditable
-
-                    TextField {
-                        id: textField
-
-                        // these are properties because the selected row will have changed before
-                        // the onDestruction event has triggered
-                        property string settingGroup: selectedRowField("group")
-                        property string settingName: selectedRowField("name")
-                        property string settingType: selectedRowField("type")
-
-                        text: selectedRowField(_fieldName)
-                        wrapMode: Text.WordWrap
-                        font.family: Constants.genericTable.fontFamily
-                        font.pointSize: Constants.largePointSize
-                        onEditingFinished: {
-                            data_model.settings_write_request(settingGroup, settingName, text);
-                        }
-                        Component.onDestruction: {
-                            data_model.settings_write_request(settingGroup, settingName, text);
-                        }
-                        validator: {
-                            if (settingType === "integer")
-                                return intValidator;
-                            else if (settingType === "float" || settingType === "double")
-                                return floatValidator;
-                            else
-                                return stringValidator;
-                        }
-                    }
-
-                }
-
-                Component {
-                    id: settingRowBool
-
-                    ComboBox {
-                        model: ["True", "False"]
-                        currentIndex: model.indexOf(selectedRowField("valueOnDevice"))
-                        onCurrentIndexChanged: {
-                            if (selectedRowField("valueOnDevice") != model[currentIndex])
-                                data_model.settings_write_request(selectedRowField("group"), selectedRowField("name"), model[currentIndex]);
-
-                        }
-                    }
-
-                }
-
-                Component {
-                    id: settingRowEnum
-
-                    ComboBox {
-                        model: selectedRowField("enumeratedPossibleValues").split(",")
-                        currentIndex: model.indexOf(selectedRowField("valueOnDevice"))
-                        onCurrentIndexChanged: {
-                            if (selectedRowField("valueOnDevice") != model[currentIndex])
-                                data_model.settings_write_request(selectedRowField("group"), selectedRowField("name"), model[currentIndex]);
-
-                        }
-                    }
-
-                }
-
-                Component {
-                    id: settingRow
-
-                    RowLayout {
-                        visible: shouldShowField(fieldName)
-
-                        Loader {
-                            property string _title: title
-                            property string _fieldName: fieldName
-
-                            sourceComponent: settingRowLabel
-                        }
-
-                        Loader {
-                            property string _fieldName: fieldName
-
-                            sourceComponent: component
-                        }
-
-                    }
-
-                }
-
-                Loader {
-                    property string title: "Name"
-                    property string fieldName: "name"
-                    property Component component: settingRowText
-
-                    sourceComponent: settingRow
-                }
-
-                Loader {
-                    property string title: "Value"
-                    property string fieldName: "valueOnDevice"
-                    property Component component: {
-                        if (selectedRowField("readonly"))
-                            return settingRowText;
-
-                        var ty = selectedRowField("type");
-                        if (ty === "boolean")
-                            return settingRowBool;
-                        else if (ty === "enum")
-                            return settingRowEnum;
-                        else
-                            return settingRowEditable;
-                    }
-
-                    sourceComponent: settingRow
-                }
-
-                Repeater {
-                    model: [{
-                        "title": "Units",
-                        "fieldName": "units"
-                    }, {
-                        "title": "Setting Type",
-                        "fieldName": "type"
-                    }, {
-                        "title": "Default Value",
-                        "fieldName": "defaultValue"
-                    }, {
-                        "title": "Description",
-                        "fieldName": "description"
-                    }, {
-                        "title": "Notes",
-                        "fieldName": "notes"
-                    }].filter((el) => {
-                        return shouldShowField(el.fieldName);
-                    })
-
-                    Loader {
-                        property string title: modelData.title
-                        property string fieldName: modelData.fieldName
-                        property Component component: settingRowText
-
-                        sourceComponent: settingRow
-                    }
-
-                }
-
-                Item {
-                    Layout.fillHeight: true
+                SettingsTabComponents.SettingsPane {
+                    id: settingsPane
                 }
 
             }
 
         }
 
-    }
-
-    floatValidator: DoubleValidator {
-    }
-
-    intValidator: IntValidator {
-    }
-
-    stringValidator: RegExpValidator {
     }
 
 }

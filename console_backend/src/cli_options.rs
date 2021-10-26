@@ -90,7 +90,7 @@ pub struct CliOptions {
 
     /// Log messages to terminal.
     #[clap(long = "log-stderr")]
-    pub log_to_std: bool,
+    pub log_stderr: bool,
 
     /// Exit when connection closes.
     #[clap(long = "exit-after")]

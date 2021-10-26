@@ -26,32 +26,22 @@ class TrackingSignalsPoints(QObject):
     _xaxis_max: float = 0.0
     all_series_changed = Signal()
 
-    # def get_xmin_offset(self) -> float:
-    #     """Getter for _xmin_offset."""
-    #     return self._xmin_offset
-
-    # def set_xmin_offset(self, xmin_offset_: float) -> None:
-    #     """Setter for _xmin_offset."""
-    #     self._xmin_offset = xmin_offset_
-
-    # xmin_offset = Property(float, get_xmin_offset, set_xmin_offset)
-
-    def get_num_labels(self) -> int:
+    def get_num_labels(self) -> int:  # pylint:disable=no-self-use
         return len(TRACKING_SIGNALS_TAB[Keys.LABELS])
 
-    num_labels = Property(int, get_num_labels)
+    num_labels = Property(int, get_num_labels)  # type: ignore
 
     def get_xaxis_min(self) -> float:
         """Getter for _xaxis_min."""
         return self._xaxis_min
 
-    xaxis_min = Property(float, get_xaxis_min)
+    xaxis_min = Property(float, get_xaxis_min)  # type: ignore
 
     def get_xaxis_max(self) -> float:
         """Getter for _xaxis_max."""
         return self._xaxis_max
 
-    xaxis_max = Property(float, get_xaxis_max)
+    xaxis_max = Property(float, get_xaxis_max)  # type: ignore
 
     def get_check_labels(self) -> List[str]:
         return self._check_labels
@@ -64,7 +54,7 @@ class TrackingSignalsPoints(QObject):
     all_series = Property(QTKeys.QVARIANTLIST, get_all_series, notify=all_series_changed)  # type: ignore
 
     @Slot(int)  # type: ignore
-    def getLabel(self, index) -> str:
+    def getLabel(self, index) -> str:  # pylint:disable=no-self-use
         """Getter for one of the TRACKING_SIGNALS_TAB[Keys.LABELS]."""
         return TRACKING_SIGNALS_TAB[Keys.LABELS][index]
 
@@ -72,14 +62,13 @@ class TrackingSignalsPoints(QObject):
     def addSeries(self, series) -> None:
         """Add a QML created series to the all_series list"""
         self._all_series.append(series)
-        self.all_series_changed.emit()
+        self.all_series_changed.emit()  # type: ignore
 
     @Slot(float, bool)  # type: ignore
     def fill_all_series(self, line_width, useOpenGL) -> None:
         points_for_all_series = TRACKING_SIGNALS_TAB[Keys.POINTS]
-        # missing_series_indices: List[int] = [] # need to pass up the name too...
         if len(points_for_all_series) == 0:
-            return  # missing_series_indices
+            return
 
         labels = TRACKING_SIGNALS_TAB[Keys.LABELS]
         colors = TRACKING_SIGNALS_TAB[Keys.COLORS]
@@ -97,28 +86,12 @@ class TrackingSignalsPoints(QObject):
                 pen.setWidthF(line_width)
                 series.setPen(pen)
                 series.setUseOpenGL(useOpenGL)
-                self.all_series_changed.emit()
+                self.all_series_changed.emit()  # type: ignore
             except IndexError:
-                # The current problem is that the series' that are being updated with the points are not the same series that are attached to the chart..
-                # Need to get the QML created charts added into the python _all_series list.
-                # Probably want to return a sparse array or a dictionary mapping missing series index and series data to create.
-                # Though it might be enough to just shoot back a list of indices that need series' created - and a generic series can be created for those,
-                # which will be updated with real properties and data on the next timer fire.
-                print(f"fill_all_series IndexError for idx {idx}")
-                # Need to build up a return value that tells QML which series' to create.
-                # missing_series_indices.append(idx)
-                # series = QtCharts.QLineSeries()
-                # return_series.append(series)
-                # series.append(series_points)
-                # self._all_series.append(series)
-        return  # missing_series_indices
-
-    # @Slot(list)  # type: ignore
-    # def fill_series(self, series_list):
-    #     for idx, series_and_key in enumerate(series_list):
-    #         series, _ = series_and_key
-    #         if idx < len(self._points):
-    #             series.replace(self._points[idx])
+                # This is ok - QML will create these series, and call addSeries, and these will be
+                # updated in the next timer fire/update.
+                pass
+        return
 
 
 class TrackingSignalsModel(QObject):  # pylint: disable=too-few-public-methods

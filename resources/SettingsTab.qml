@@ -277,12 +277,22 @@ Item {
                     id: settingRowEditable
 
                     TextField {
+                        id: textField
+
+                        // these are properties because the selected row will have changed before
+                        // the onDestruction event has triggered
+                        property string settingGroup: selectedRowField("group")
+                        property string settingName: selectedRowField("name")
+
                         text: selectedRowField(_fieldName)
                         wrapMode: Text.WordWrap
                         font.family: Constants.genericTable.fontFamily
                         font.pointSize: Constants.largePointSize
-                        Keys.onReturnPressed: {
-                            data_model.settings_write_request(selectedRowField("group"), selectedRowField("name"), text);
+                        onEditingFinished: {
+                            data_model.settings_write_request(settingGroup, settingName, text);
+                        }
+                        Component.onDestruction: {
+                            data_model.settings_write_request(settingGroup, settingName, text);
                         }
                     }
 

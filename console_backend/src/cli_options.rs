@@ -5,7 +5,7 @@ use std::{
 };
 
 use clap::Clap;
-use log::debug;
+use log::{debug, error};
 use strum::VariantNames;
 
 use crate::constants::{AVAILABLE_BAUDRATES, AVAILABLE_REFRESH_RATES};
@@ -205,19 +205,23 @@ pub enum Input {
 }
 
 impl Input {
-    pub fn into_conn(self) -> Connection {
+    pub fn into_conn(self) -> crate::types::Result<Connection> {
         match self {
-            Input::Tcp { host, port } => Connection::tcp(host, port),
+            Input::Tcp { host, port } => Ok(Connection::tcp(host, port)?),
             Input::Serial {
                 serialport,
                 baudrate,
                 flow_control,
-            } => Connection::serial(serialport.to_string_lossy().into(), baudrate, flow_control),
-            Input::File { file_in } => Connection::file(
+            } => Ok(Connection::serial(
+                serialport.to_string_lossy().into(),
+                baudrate,
+                flow_control,
+            )),
+            Input::File { file_in } => Ok(Connection::file(
                 file_in.to_string_lossy().into(),
                 crate::types::RealtimeDelay::On,
                 /*close_when_done=*/ false,
-            ),
+            )),
         }
     }
 }
@@ -273,7 +277,9 @@ pub fn handle_cli(opt: CliOptions, conn_manager: &ConnectionManager, shared_stat
     if let Some(opt_input) = opt.input {
         match opt_input {
             Input::Tcp { host, port } => {
-                conn_manager.connect_to_host(host, port);
+                if let Err(e) = conn_manager.connect_to_host(host, port) {
+                    error!("Failed to establish tcp connection: {}", e);
+                };
             }
             Input::File { file_in } => {
                 let filename = file_in.display().to_string();

@@ -68,7 +68,9 @@ pub fn server_recv_thread(
                 m::message::TcpRequest(Ok(req)) => {
                     let host = req.get_host().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
                     let port = req.get_port();
-                    conn_manager.connect_to_host(host.to_string(), port);
+                    if let Err(e) = conn_manager.connect_to_host(host.to_string(), port) {
+                        error!("Failed to establish tcp connection: {}", e);
+                    };
                 }
                 m::message::SerialRequest(Ok(req)) => {
                     let device = req.get_device().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);

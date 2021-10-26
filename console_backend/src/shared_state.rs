@@ -1,5 +1,5 @@
-use crate::common_constants::SbpLogging;
-use crate::connection::ConnectionState;
+use crate::common_constants::{self as cc, SbpLogging};
+use crate::connection::Connection;
 use crate::constants::{
     APPLICATION_NAME, APPLICATION_ORGANIZATION, APPLICATION_QUALIFIER, CONNECTION_HISTORY_FILENAME,
     DEFAULT_LOG_DIRECTORY, MAX_CONNECTION_HISTORY, MPS,
@@ -7,6 +7,7 @@ use crate::constants::{
 use crate::errors::{CONVERT_TO_STR_FAILURE, SHARED_STATE_LOCK_MUTEX_FAILURE};
 use crate::log_panel::LogLevel;
 use crate::output::{CsvLogging, CsvSerializer};
+use crate::process_messages::StopToken;
 use crate::settings_tab;
 use crate::solution_tab::LatLonUnits;
 use crate::types::CapnProtoSender;
@@ -875,6 +876,47 @@ impl ConnectionHistory {
     fn save(&self) -> Result<()> {
         serde_yaml::to_writer(fs::File::create(&self.filename())?, self)?;
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum ConnectionState {
+    /// App is shut down
+    Closed,
+
+    /// Running but disconnected
+    Disconnected,
+
+    /// Running and connected
+    Connected {
+        conn: Connection,
+        stop_token: StopToken,
+    },
+}
+
+impl ConnectionState {
+    pub fn is_closed(&self) -> bool {
+        matches!(self, Self::Closed)
+    }
+
+    pub fn is_disconnected(&self) -> bool {
+        matches!(self, Self::Disconnected)
+    }
+
+    pub fn is_connected(&self) -> bool {
+        matches!(self, Self::Connected { .. })
+    }
+}
+
+impl std::fmt::Display for ConnectionState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ConnectionState::Closed => write!(f, "{}", cc::ConnectionState::CLOSED),
+            ConnectionState::Disconnected => write!(f, "{}", cc::ConnectionState::DISCONNECTED),
+            ConnectionState::Connected { .. } => {
+                write!(f, "{}", cc::ConnectionState::CONNECTED)
+            }
+        }
     }
 }
 

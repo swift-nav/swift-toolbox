@@ -367,7 +367,6 @@ dependencies = [
  "rust-ini",
  "sbp",
  "sbp-settings",
- "semver 1.0.4",
  "serde",
  "serde-pickle",
  "serde_json",
@@ -1508,9 +1507,9 @@ dependencies = [
 
 [[package]]
 name = "sbp"
-version = "4.0.2"
+version = "4.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da261555e976f753231b2d01db5a3e1c944bf9f92152b96969b1b85ac0fb3f33"
+checksum = "fd1edead25a72f8567918328cb397ee60a05a95057151451e044f8f6410675ff"
 dependencies = [
  "base64",
  "bytes",

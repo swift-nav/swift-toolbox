@@ -94,6 +94,35 @@ ColumnLayout {
 
     }
 
+    RowLayout {
+        spacing: 3
+
+        ObservationFilterColumn {
+            codes: observationTableModel ? observationTableModel.gps_codes : 0
+        }
+
+        ObservationFilterColumn {
+            codes: observationTableModel ? observationTableModel.glo_codes : 0
+        }
+
+        ObservationFilterColumn {
+            codes: observationTableModel ? observationTableModel.bds_codes : 0
+        }
+
+        ObservationFilterColumn {
+            codes: observationTableModel ? observationTableModel.gal_codes : 0
+        }
+
+        ObservationFilterColumn {
+            codes: observationTableModel ? observationTableModel.qzs_codes : 0
+        }
+
+        ObservationFilterColumn {
+            codes: observationTableModel ? observationTableModel.sbas_codes : 0
+        }
+
+    }
+
     Item {
         Layout.fillWidth: true
         implicitHeight: header.implicitHeight

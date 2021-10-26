@@ -50,6 +50,7 @@
     <file>TrackingTabComponents/TrackingSkyPlotTab.qml</file>
     <file>ObservationTab.qml</file>
     <file>ObservationTabComponents/ObservationTable.qml</file>
+    <file>ObservationTabComponents/ObservationFilterColumn.qml</file>
     <file>MainDrawerComponents/LicensesPopup.qml</file>
     <file>UpdateTab.qml</file>
     <file>UpdateTabComponents/FirmwareVersionAndDownloadLabels.qml</file>

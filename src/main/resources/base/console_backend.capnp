@@ -188,7 +188,7 @@ struct BaselineTableStatus {
 }
 
 struct ObservationTableRow {
-    prn @0 :Text;
+    code @0 :Text;
     pseudoRange @1 :Float64;
     carrierPhase @2 :Float64;
     cn0 @3 :Float64;
@@ -196,6 +196,7 @@ struct ObservationTableRow {
     computedDoppler @5 :Float64;
     lock @6 :UInt16;
     flags @7 :UInt8;
+    sat @8: Int16;
 }
 
 struct ObservationStatus {

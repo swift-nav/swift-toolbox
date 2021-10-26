@@ -89,7 +89,7 @@ pub struct CliOptions {
     pub input: Option<Input>,
 
     /// Log messages to terminal.
-    #[clap(long = "log-to-std")]
+    #[clap(long = "log-stderr")]
     pub log_to_std: bool,
 
     /// Exit when connection closes.

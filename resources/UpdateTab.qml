@@ -122,10 +122,8 @@ Item {
             Layout.fillWidth: true
             Layout.preferredHeight: Constants.updateTab.textHeight
 
-            Text {
+            Label {
                 text: Constants.updateTab.firmwareUpgradeStatusTitle
-                font.family: Constants.genericTable.fontFamily
-                font.pointSize: Constants.largePointSize
             }
 
         }
@@ -154,10 +152,8 @@ Item {
             Layout.preferredHeight: Constants.updateTab.textHeight
             visible: Globals.showFileio
 
-            Text {
+            Label {
                 text: Constants.updateTab.fileioAndProductFeatureToolTitle
-                font.family: Constants.genericTable.fontFamily
-                font.pointSize: Constants.largePointSize
             }
 
         }
@@ -204,13 +200,11 @@ Item {
             data_model.update_tab([downloadLatestFirmware, updateFirmware, sendFileToDevice, serialPromptConfirm], updateLocalFilepath, downloadDirectory, fileioLocalFilepath, fileioDestinationFilepath, updateLocalFilename);
         }
 
-        contentItem: Text {
+        contentItem: Label {
             text: firmwareV2OutdatedDialogText()
             verticalAlignment: Qt.AlignVCenter
             elide: Text.ElideRight
             clip: true
-            font.family: Constants.genericTable.fontFamily
-            font.pointSize: Constants.largePointSize
             wrapMode: Text.Wrap
         }
 
@@ -240,13 +234,11 @@ Item {
             data_model.update_tab([downloadLatestFirmware, updateFirmware, sendFileToDevice, serialPromptConfirm], updateLocalFilepath, downloadDirectory, fileioLocalFilepath, fileioDestinationFilepath, updateLocalFilename);
         }
 
-        contentItem: Text {
+        contentItem: Label {
             text: upgradeSerialConfirmDialogText()
             verticalAlignment: Qt.AlignVCenter
             elide: Text.ElideRight
             clip: true
-            font.family: Constants.genericTable.fontFamily
-            font.pointSize: Constants.largePointSize
             wrapMode: Text.Wrap
         }
 
@@ -267,12 +259,10 @@ Item {
             popupLock = false;
         }
 
-        contentItem: Text {
+        contentItem: Label {
             verticalAlignment: Qt.AlignVCenter
             elide: Text.ElideRight
             clip: true
-            font.family: Constants.genericTable.fontFamily
-            font.pointSize: Constants.largePointSize
             wrapMode: Text.Wrap
         }
 
@@ -293,12 +283,10 @@ Item {
             popupLock = false;
         }
 
-        contentItem: Text {
+        contentItem: Label {
             verticalAlignment: Qt.AlignVCenter
             elide: Text.ElideRight
             clip: true
-            font.family: Constants.genericTable.fontFamily
-            font.pointSize: Constants.largePointSize
             wrapMode: Text.Wrap
         }
 

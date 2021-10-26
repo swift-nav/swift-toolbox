@@ -47,7 +47,7 @@ ColumnLayout {
 
         spacing: 3
 
-        Text {
+        Label {
             id: weekLabel
 
             text: "Week:"
@@ -55,14 +55,14 @@ ColumnLayout {
             ToolTip.text: "GPS Week Number (since 1980)"
         }
 
-        Text {
+        Label {
             id: weekValue
 
             text: observationTableModel ? observationTableModel.week : ""
             padding: parent.textPadding
         }
 
-        Text {
+        Label {
             id: towLabel
 
             text: "TOW:"
@@ -70,14 +70,14 @@ ColumnLayout {
             ToolTip.text: "GPS milliseconds in week"
         }
 
-        Text {
+        Label {
             id: towValue
 
             text: observationTableModel ? observationTableModel.padFloat(observationTableModel.tow, 2) : ""
             padding: parent.textPadding
         }
 
-        Text {
+        Label {
             id: totalLabel
 
             text: "Total:"
@@ -85,7 +85,7 @@ ColumnLayout {
             ToolTip.text: "Total observation count"
         }
 
-        Text {
+        Label {
             id: totalValue
 
             text: observationTableModel ? observationTableModel.row_count : ""

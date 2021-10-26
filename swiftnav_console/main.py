@@ -34,10 +34,10 @@ from .log_panel import (
     LogPanelModel,
 )
 
-from .nav_bar import (
-    NAV_BAR,
-    NavBarData,
-    NavBarModel,
+from .connection import (
+    CONNECTION,
+    ConnectionData,
+    ConnectionModel,
 )
 
 from .logging_bar import (
@@ -233,7 +233,7 @@ def receive_messages(app_, backend, messages):
             app_state = ConnectionState(m.status.text)
             if app_state == ConnectionState.CLOSED:
                 return app_.quit()
-            NAV_BAR[Keys.CONNECTION_STATE] = app_state
+            CONNECTION[Keys.CONNECTION_STATE] = app_state
 
         elif m.which == Message.Union.SolutionPositionStatus:
             SOLUTION_POSITION_TAB[Keys.POINTS][:] = [
@@ -364,25 +364,34 @@ def receive_messages(app_, backend, messages):
             STATUS_BAR[Keys.SOLID_CONNECTION] = m.statusBarStatus.solidConnection
             STATUS_BAR[Keys.TITLE] = m.statusBarStatus.title
             STATUS_BAR[Keys.ANTENNA_STATUS] = m.statusBarStatus.antennaStatus
-        elif m.which == Message.Union.NavBarStatus:
-            NAV_BAR[Keys.AVAILABLE_PORTS][:] = m.navBarStatus.availablePorts
-            NAV_BAR[Keys.AVAILABLE_BAUDRATES][:] = m.navBarStatus.availableBaudrates
-            NAV_BAR[Keys.AVAILABLE_FLOWS][:] = m.navBarStatus.availableFlows
-            NAV_BAR[Keys.AVAILABLE_REFRESH_RATES][:] = m.navBarStatus.availableRefreshRates
-            NAV_BAR[Keys.PREVIOUS_HOSTS][:] = m.navBarStatus.previousHosts
-            NAV_BAR[Keys.PREVIOUS_PORTS][:] = m.navBarStatus.previousPorts
-            NAV_BAR[Keys.PREVIOUS_FILES][:] = m.navBarStatus.previousFiles
-            NAV_BAR[Keys.LOG_LEVEL] = m.navBarStatus.logLevel
-            NAV_BAR[Keys.LAST_USED_SERIAL_DEVICE] = (
-                m.navBarStatus.lastSerialDevice.port if m.navBarStatus.lastSerialDevice.which() == "port" else None
+        elif m.which == Message.Union.ConnectionStatus:
+            CONNECTION[Keys.AVAILABLE_PORTS][:] = m.connectionStatus.availablePorts
+            CONNECTION[Keys.AVAILABLE_BAUDRATES][:] = m.connectionStatus.availableBaudrates
+            CONNECTION[Keys.AVAILABLE_FLOWS][:] = m.connectionStatus.availableFlows
+            CONNECTION[Keys.PREVIOUS_HOSTS][:] = m.connectionStatus.previousHosts
+            CONNECTION[Keys.PREVIOUS_PORTS][:] = m.connectionStatus.previousPorts
+            CONNECTION[Keys.PREVIOUS_FILES][:] = m.connectionStatus.previousFiles
+            CONNECTION[Keys.LAST_USED_SERIAL_DEVICE] = (
+                m.connectionStatus.lastSerialDevice.port
+                if m.connectionStatus.lastSerialDevice.which() == "port"
+                else None
             )
-            NAV_BAR[Keys.PREVIOUS_SERIAL_CONFIGS][:] = [
-                [entry.device, entry.baudrate, entry.flowControl] for entry in m.navBarStatus.previousSerialConfigs
+            CONNECTION[Keys.PREVIOUS_SERIAL_CONFIGS][:] = [
+                [entry.device, entry.baudrate, entry.flowControl] for entry in m.connectionStatus.previousSerialConfigs
             ]
         elif m.which == Message.Union.LoggingBarStatus:
             LOGGING_BAR[Keys.PREVIOUS_FOLDERS][:] = m.loggingBarStatus.previousFolders
             LOGGING_BAR[Keys.CSV_LOGGING] = m.loggingBarStatus.csvLogging
             LOGGING_BAR[Keys.SBP_LOGGING] = m.loggingBarStatus.sbpLogging
+            LOGGING_BAR[Keys.SBP_LOGGING_FORMAT] = m.loggingBarStatus.sbpLoggingFormat
+        elif m.which == Message.Union.LoggingBarRecordingStatus:
+            LOGGING_BAR[Keys.RECORDING_DURATION_SEC] = m.loggingBarRecordingStatus.recordingDurationSec
+            LOGGING_BAR[Keys.RECORDING_SIZE] = m.loggingBarRecordingStatus.recordingSize
+            LOGGING_BAR[Keys.RECORDING_FILENAME] = (
+                m.loggingBarRecordingStatus.recordingFilename.filename
+                if m.loggingBarRecordingStatus.recordingFilename.which() == "filename"
+                else ""
+            )
         elif m.which == Message.Union.UpdateTabStatus:
             UPDATE_TAB[Keys.HARDWARE_REVISION] = m.updateTabStatus.hardwareRevision
             UPDATE_TAB[Keys.FW_VERSION_CURRENT] = m.updateTabStatus.fwVersionCurrent
@@ -404,6 +413,7 @@ def receive_messages(app_, backend, messages):
             log_panel_lock.lock()
             LOG_PANEL[Keys.ENTRIES] += [entry.line for entry in m.logAppend.entries]
             log_panel_lock.unlock()
+            LOG_PANEL[Keys.LOG_LEVEL] = m.logAppend.logLevel
         elif m.which == Message.Union.SettingsTableStatus:
             SETTINGS_TABLE[Keys.ENTRIES][:] = settings_rows_to_json(m.settingsTableStatus.data)
         elif m.which == Message.Union.SettingsImportResponse:
@@ -689,6 +699,7 @@ class DataModel(QObject):  # pylint: disable=too-many-instance-attributes,too-ma
         m.loggingBarFront = m.init(Message.Union.LoggingBarFront)
         m.loggingBarFront.csvLogging = buttons[0]
         m.loggingBarFront.sbpLogging = buttons[1]
+        m.loggingBarFront.sbpLoggingFormat = buttons[2]
         m.loggingBarFront.directory = directory
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
@@ -794,7 +805,7 @@ def main():
     QFontDatabase.addApplicationFont(":/fonts/Roboto-Bold.ttf")
 
     qmlRegisterType(LogPanelData, "SwiftConsole", 1, 0, "LogPanelData")  # type: ignore
-    qmlRegisterType(NavBarData, "SwiftConsole", 1, 0, "NavBarData")  # type: ignore
+    qmlRegisterType(ConnectionData, "SwiftConsole", 1, 0, "ConnectionData")  # type: ignore
     qmlRegisterType(LoggingBarData, "SwiftConsole", 1, 0, "LoggingBarData")  # type: ignore
     qmlRegisterType(AdvancedImuPoints, "SwiftConsole", 1, 0, "AdvancedImuPoints")  # type: ignore
     qmlRegisterType(AdvancedMagnetometerPoints, "SwiftConsole", 1, 0, "AdvancedMagnetometerPoints")  # type: ignore
@@ -839,7 +850,7 @@ def main():
 
     data_model = DataModel(endpoint_main, messages_main)
     log_panel_model = LogPanelModel()
-    nav_bar_model = NavBarModel()
+    connection_model = ConnectionModel()
     advanced_imu_model = AdvancedImuModel()
     advanced_magnetometer_model = AdvancedMagnetometerModel()
     advanced_networking_model = AdvancedNetworkingModel()
@@ -860,7 +871,7 @@ def main():
     update_tab_model = UpdateTabModel()
     root_context = engine.rootContext()
     root_context.setContextProperty("log_panel_model", log_panel_model)
-    root_context.setContextProperty("nav_bar_model", nav_bar_model)
+    root_context.setContextProperty("connection_model", connection_model)
     root_context.setContextProperty("advanced_imu_model", advanced_imu_model)
     root_context.setContextProperty("advanced_magnetometer_model", advanced_magnetometer_model)
     root_context.setContextProperty("advanced_networking_model", advanced_networking_model)

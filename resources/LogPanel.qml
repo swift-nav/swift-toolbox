@@ -1,6 +1,5 @@
 import "./Constants"
 import Qt.labs.qmlmodels 1.0
-import QtCharts 2.2
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import SwiftConsole 1.0
@@ -11,6 +10,9 @@ Item {
     property real mouse_x: 0
     property int selectedRow: -1
     property bool forceLayoutLock: false
+    property variant logLevelLabels: []
+    property int logLevelIndex: 3
+    property bool consolePaused: false
 
     width: parent.width
     height: parent.height
@@ -40,6 +42,56 @@ Item {
             }
         }
 
+        Item {
+            anchors.fill: parent
+            anchors.topMargin: Constants.genericTable.cellHeight
+            anchors.rightMargin: Constants.logPanel.pauseButtonRightMargin
+            z: Constants.logPanel.zAboveTable
+
+            RoundButton {
+                id: baselinePauseButton
+
+                visible: !consolePaused
+                width: Constants.logPanel.pauseButtonWidth
+                height: Constants.logPanel.pauseButtonWidth
+                radius: Constants.logPanel.pauseButtonWidth / 3
+                padding: Constants.logPanel.pauseButtonPadding
+                icon.width: Constants.logPanel.pauseButtonWidth / 3
+                icon.height: Constants.logPanel.pauseButtonWidth / 3
+                icon.source: Constants.icons.pauseButtonUrl
+                icon.color: Constants.materialGrey
+                anchors.right: parent.right
+                anchors.top: parent.top
+                ToolTip.visible: hovered
+                ToolTip.text: Constants.logPanel.pauseButtonTooltip
+                onClicked: {
+                    consolePaused = true;
+                }
+            }
+
+            RoundButton {
+                id: baselinePlayButton
+
+                visible: consolePaused
+                width: Constants.logPanel.pauseButtonWidth
+                height: Constants.logPanel.pauseButtonWidth
+                radius: Constants.logPanel.pauseButtonWidth / 3
+                padding: Constants.logPanel.pauseButtonPadding
+                icon.width: Constants.logPanel.pauseButtonWidth / 3
+                icon.height: Constants.logPanel.pauseButtonWidth / 3
+                icon.source: Constants.icons.playPath
+                icon.color: Constants.swiftOrange
+                anchors.right: parent.right
+                anchors.top: parent.top
+                ToolTip.visible: hovered
+                ToolTip.text: Constants.logPanel.playButtonTooltip
+                onClicked: {
+                    consolePaused = false;
+                }
+            }
+
+        }
+
         HorizontalHeaderView {
             id: horizontalHeader
 
@@ -48,20 +100,82 @@ Item {
             anchors.top: parent.top
             z: Constants.genericTable.headerZOffset
 
+            Menu {
+                id: menu
+
+                onAboutToShow: {
+                    menu.x = columnWidths[0];
+                    menu.width = columnWidths[1];
+                }
+                onHeightChanged: {
+                    menu.y = horizontalHeader.y - menu.height;
+                }
+
+                Repeater {
+                    model: logLevelLabels
+
+                    MenuItem {
+                        id: menuItem
+
+                        onTriggered: {
+                            logLevelIndex = index;
+                            data_model.log_level(modelData);
+                        }
+
+                        contentItem: Label {
+                            text: modelData
+                            color: logLevelIndex == index ? Constants.swiftOrange : Constants.genericTable.textColor
+                            font.pointSize: Constants.mediumPointSize
+                        }
+
+                    }
+
+                }
+
+            }
+
             delegate: Rectangle {
+                id: header
+
                 implicitWidth: columnWidths[index]
                 implicitHeight: Constants.genericTable.cellHeight
                 border.color: Constants.genericTable.borderColor
 
-                Text {
+                Label {
+                    id: headerText
+
                     width: parent.width
-                    anchors.centerIn: parent
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
+                    anchors.fill: parent
                     text: tableView.model.columns[index].display
                     elide: Text.ElideRight
                     clip: true
                     font.family: Constants.genericTable.fontFamily
+                    font.pointSize: Constants.largePointSize
+
+                    Button {
+                        id: button
+
+                        visible: index == 1
+                        enabled: !menu.visible
+                        icon.source: Constants.icons.dropIndicatorPath
+                        anchors.right: headerText.right
+                        icon.color: checked ? Constants.swiftOrange : Constants.materialGrey
+                        height: parent.height
+                        width: Constants.logPanel.dropdownButtonWidth
+                        icon.width: Constants.logPanel.dropdownButtonWidth
+                        icon.height: parent.height
+                        padding: Constants.logPanel.dropdownButtonPadding
+                        onClicked: {
+                            menu.open();
+                        }
+
+                        background: Item {
+                        }
+
+                    }
+
                 }
 
                 MouseArea {
@@ -162,7 +276,7 @@ Item {
                 implicitWidth: tableView.columnWidthProvider(column)
                 color: row == selectedRow ? Constants.genericTable.cellHighlightedColor : Constants.genericTable.cellColor
 
-                Text {
+                Label {
                     width: parent.width
                     horizontalAlignment: Text.AlignLeft
                     clip: true
@@ -201,6 +315,10 @@ Item {
                 if (forceLayoutLock)
                     return ;
 
+                if (!logLevelLabels.length)
+                    logLevelLabels = logPanelData.log_level_labels;
+
+                logLevelIndex = logLevelLabels.indexOf(logPanelData.log_level);
                 for (var idx in logPanelData.entries) {
                     var new_row = {
                     };
@@ -210,6 +328,9 @@ Item {
                     logEntries.unshift(new_row);
                 }
                 logEntries = logEntries.slice(0, Constants.logPanel.maxRows);
+                if (consolePaused)
+                    return ;
+
                 for (var idx in logEntries) {
                     tableView.model.setRow(idx, logEntries[idx]);
                 }

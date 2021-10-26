@@ -43,6 +43,7 @@ struct LogEntry {
 
 struct LogAppend {
     entries @0 :List(LogEntry);
+    logLevel @1: Text;
 }
 
 struct SkyPlotObs {
@@ -146,19 +147,17 @@ struct Point {
     y @1 :Float64;
 }
 
-struct NavBarStatus {
+struct ConnectionStatus {
     availableBaudrates @0 : List(UInt32);
     availablePorts @1 : List(Text);
     availableFlows @2 : List(Text);
     previousHosts @3: List(Text);
-    availableRefreshRates @4 : List(UInt8);
-    previousPorts @5: List(UInt16);
-    previousFiles @6: List(Text);
-    logLevel @7: Text;
-    previousSerialConfigs @8: List(SerialRequest);
+    previousPorts @4: List(UInt16);
+    previousFiles @5: List(Text);
+    previousSerialConfigs @6: List(SerialRequest);
     lastSerialDevice: union {
-        port @9 :Text;
-        none @10 :Void = void;
+        port @7 :Text;
+        none @8 :Void = void;
     }
 }
 
@@ -316,14 +315,24 @@ struct AdvancedSpectrumAnalyzerStatus {
 
 struct LoggingBarFront {
     csvLogging @0 :Bool;
-    sbpLogging @1 :Text;
-    directory @2 :Text;
+    sbpLogging @1 :Bool;
+    sbpLoggingFormat @2 :Text;
+    directory @3 :Text;
 }
 
 struct LoggingBarStatus {
     previousFolders @0 : List(Text);
     csvLogging @1 :Bool;
-    sbpLogging @2 :Text;
+    sbpLogging @2 :Bool;
+    sbpLoggingFormat @3 :Text;
+}
+struct LoggingBarRecordingStatus {
+    recordingDurationSec @0 : UInt64;
+    recordingSize @1 :Text;
+    recordingFilename :union {
+        filename @2 :Text;
+        none @3 :Void = void;
+    }
 }
 
 struct UpdateTabStatus {
@@ -442,7 +451,7 @@ struct Message {
         fileRequest @10 :FileRequest;
         serialRequest @11 :SerialRequest;
         disconnectRequest @12 :DisconnectRequest;
-        navBarStatus @13 :NavBarStatus;
+        connectionStatus @13 :ConnectionStatus;
         serialRefreshRequest @14 :SerialRefreshRequest;
         logAppend @15 :LogAppend;
         observationStatus @16 :ObservationStatus;
@@ -480,5 +489,6 @@ struct Message {
         insSettingsChangeResponse @48 : InsSettingsChangeResponse;
         confirmInsChange @49 : ConfirmInsChange;
         autoSurveyRequest @50 : AutoSurveyRequest;
+        loggingBarRecordingStatus @51 : LoggingBarRecordingStatus;
     }
 }

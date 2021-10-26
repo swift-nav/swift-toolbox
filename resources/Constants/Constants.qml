@@ -9,11 +9,11 @@ QtObject {
     readonly property real tabBarHeight: 40
     readonly property real topLevelSpacing: 0
     readonly property real logPanelPreferredHeight: 100
-    readonly property real navBarPreferredHeight: 50
+    readonly property int loggingBarPreferredHeight: 50
     readonly property real statusBarPreferredHeight: 30
     property QtObject logPanel
     property QtObject statusBar
-    property QtObject navBar
+    property QtObject connection
     property QtObject sideNavBar
     property QtObject loggingBar
     property QtObject licensesPopup
@@ -186,6 +186,7 @@ QtObject {
         readonly property int mouseAreaResizeWidth: 10
         readonly property int cellHeight: 25
         readonly property string cellHighlightedColor: swiftOrange
+        readonly property color textColor: "black"
         readonly property color cellColor: "white"
         readonly property color gradientColor: "gainsboro"
         readonly property color selectedCellColor: "dark grey"
@@ -224,14 +225,14 @@ QtObject {
         readonly property string defaultValue: "--"
     }
 
-    navBar: QtObject {
+    connection: QtObject {
         readonly property int connectionDropdownWidth: 120
         readonly property int serialSelectionDropdownWidth: 200
         readonly property int dropdownHeight: 40
         readonly property int buttonHeight: 40
         readonly property int buttonSvgHeight: 15
         readonly property int urlBarHeight: 25
-        readonly property int navBarMargin: 10
+        readonly property int connectionMargin: 10
         readonly property int plotRefreshRateDropdownWidth: 50
         readonly property int serialDeviceBaudRateDropdownWidth: 90
         readonly property int serialDeviceFlowControlDropdownWidth: 130
@@ -245,6 +246,8 @@ QtObject {
         readonly property string connectButtonPath: "images/fontawesome/power-off-solid.svg"
         readonly property string pauseButtonPath: "images/fontawesome/pause-solid.svg"
         readonly property string folderButtonPath: "images/fontawesome/folder-open-regular.svg"
+        readonly property string connected: "CONNECTED"
+        readonly property string disconnected: "DISCONNECTED"
     }
 
     loggingBar: QtObject {
@@ -260,6 +263,10 @@ QtObject {
         readonly property int folderPathBarHeight: 25
         readonly property color placeholderTextColor: "#CDC9C9"
         readonly property string folderButtonPath: "images/fontawesome/folder-solid.svg"
+        readonly property int recordingLabelWidth: 60
+        readonly property int recordingTimeLabelWidth: 60
+        readonly property int recordingDividerLabelWidth: 10
+        readonly property int recordingSizeLabelWidth: 40
     }
 
     advancedMagnetometer: QtObject {
@@ -323,6 +330,7 @@ QtObject {
         readonly property string okStatusPath: "images/fontawesome/circle-solid.svg"
         readonly property color okStatusColor: "green"
         readonly property int insStatusImageWidth: 15
+        readonly property int urlBarHeight: 25
     }
 
     baselinePlot: QtObject {
@@ -371,6 +379,15 @@ QtObject {
         readonly property string timestampHeader: "Host Timestamp"
         readonly property string levelHeader: "Log Level"
         readonly property string msgHeader: "Message"
+        readonly property int zAboveTable: 100
+        readonly property int pauseButtonRightMargin: 10
+        readonly property int pauseButtonWidth: 30
+        readonly property int pauseButtonPadding: 0
+        readonly property string pauseButtonTooltip: "Pause Log Panel"
+        readonly property string playButtonTooltip: "Resume Log Panel"
+        readonly property int logLevelMenuHeight: 100
+        readonly property int dropdownButtonPadding: 0
+        readonly property int dropdownButtonWidth: 20
     }
 
     settingsTab: QtObject {
@@ -511,6 +528,12 @@ QtObject {
         readonly property string centerOnButtonUrl: "qrc:///center-on.svg"
         readonly property string clearButtonUrl: "qrc:///clear.svg"
         readonly property string zoomAllButtonUrl: "qrc:///zoom-all.svg"
+        readonly property string splashScreenPath: "qrc:///images/LogoBackground.jpg"
+        readonly property string lightningBoltPath: "qrc:///images/ConnectionIcon.svg"
+        readonly property string dropIndicatorPath: "qrc:/qt-project.org/imports/QtQuick/Controls.2/Material/images/drop-indicator.png"
+        readonly property string playPath: "qrc:///images/iconic/play.svg"
+        readonly property string solidCirclePath: "qrc:///images/fontawesome/circle-solid.svg"
+        readonly property string squareSolidPath: "qrc:///images/fontawesome/square-solid.svg"
     }
 
     insSettingsPopup: QtObject {

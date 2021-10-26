@@ -274,7 +274,7 @@ Item {
                             model: Constants.baselinePlot.legendLabels
 
                             Row {
-                                Text {
+                                Label {
                                     id: marker
 
                                     text: "+ "
@@ -285,7 +285,7 @@ Item {
                                     anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                                 }
 
-                                Text {
+                                Label {
                                     id: label
 
                                     text: modelData

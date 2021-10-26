@@ -57,13 +57,11 @@ Item {
             width: parent.width
             spacing: Constants.insSettingsPopup.columnSpacing
 
-            Text {
+            Label {
                 text: settingsChangeConfirmText()
                 verticalAlignment: Qt.AlignVCenter
                 elide: Text.ElideRight
                 clip: true
-                font.family: Constants.genericTable.fontFamily
-                font.pointSize: Constants.largePointSize
                 wrapMode: Text.Wrap
                 width: parent.width
             }
@@ -86,7 +84,7 @@ Item {
                         implicitHeight: Constants.genericTable.cellHeight
                         border.color: Constants.genericTable.borderColor
 
-                        Text {
+                        Label {
                             width: parent.width
                             anchors.centerIn: parent
                             horizontalAlignment: Text.AlignHCenter
@@ -95,6 +93,7 @@ Item {
                             elide: Text.ElideRight
                             clip: true
                             font.family: Constants.genericTable.fontFamily
+                            font.pointSize: Constants.largePointSize
                         }
 
                         MouseArea {
@@ -177,7 +176,7 @@ Item {
                         border.color: Constants.genericTable.borderColor
                         color: row == selectedRow ? Constants.genericTable.cellHighlightedColor : Constants.genericTable.cellColor
 
-                        Text {
+                        Label {
                             width: parent.width
                             horizontalAlignment: Text.AlignLeft
                             clip: true
@@ -206,13 +205,11 @@ Item {
 
             }
 
-            Text {
+            Label {
                 text: settingBottomText()
                 verticalAlignment: Qt.AlignVCenter
                 elide: Text.ElideRight
                 clip: true
-                font.family: Constants.genericTable.fontFamily
-                font.pointSize: Constants.largePointSize
                 wrapMode: Text.Wrap
                 width: parent.width
             }

@@ -12,7 +12,7 @@ use crate::log_panel::setup_logging;
 use crate::server_recv_thread::server_recv_thread;
 use crate::shared_state::SharedState;
 use crate::types::ClientSender;
-use crate::utils::{refresh_loggingbar, refresh_navbar};
+use crate::utils::{refresh_connection_frontend, refresh_loggingbar};
 
 /// The backend server
 #[pyclass]
@@ -109,17 +109,16 @@ impl Server {
         let server_endpoint = ServerEndpoint {
             server_send: Some(server_send),
         };
-        setup_logging(client_send.clone(), false);
+        let shared_state = SharedState::new();
+        setup_logging(client_send.clone(), shared_state.clone(), false);
         let opt = CliOptions::from_filtered_cli();
         if let Some(ref path) = opt.settings_yaml {
             sbp_settings::settings::load_from_path(path).expect("failed to load settings");
         }
-        let shared_state = SharedState::new();
-
         let conn_manager = ConnectionManager::new(client_send.clone(), shared_state.clone());
         // Handle CLI Opts.
         handle_cli(opt, &conn_manager, shared_state.clone());
-        refresh_navbar(&mut client_send.clone(), shared_state.clone());
+        refresh_connection_frontend(&mut client_send.clone(), shared_state.clone());
         refresh_loggingbar(&mut client_send.clone(), shared_state.clone());
         server_recv_thread(conn_manager, client_send, server_recv, shared_state);
         Ok(server_endpoint)

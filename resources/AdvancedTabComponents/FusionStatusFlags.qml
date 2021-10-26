@@ -36,12 +36,11 @@ Item {
 
             visible: false
             Layout.fillWidth: true
-            Layout.preferredHeight: Constants.navBar.urlBarHeight
+            Layout.preferredHeight: Constants.advancedImu.urlBarHeight
             Layout.alignment: Qt.AlignBottom
 
-            Text {
+            Label {
                 text: Constants.advancedImu.insStatusLabels[0]
-                font.pointSize: Constants.mediumPointSize
             }
 
             UnknownStatus {
@@ -64,9 +63,8 @@ Item {
                 Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
             }
 
-            Text {
+            Label {
                 text: Constants.advancedImu.insStatusLabels[1]
-                font.pointSize: Constants.mediumPointSize
             }
 
             UnknownStatus {
@@ -89,9 +87,8 @@ Item {
                 Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
             }
 
-            Text {
+            Label {
                 text: Constants.advancedImu.insStatusLabels[2]
-                font.pointSize: Constants.mediumPointSize
             }
 
             UnknownStatus {
@@ -114,9 +111,8 @@ Item {
                 Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
             }
 
-            Text {
+            Label {
                 text: Constants.advancedImu.insStatusLabels[3]
-                font.pointSize: Constants.mediumPointSize
             }
 
             UnknownStatus {
@@ -139,9 +135,8 @@ Item {
                 Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
             }
 
-            Text {
+            Label {
                 text: Constants.advancedImu.insStatusLabels[4]
-                font.pointSize: Constants.mediumPointSize
             }
 
             UnknownStatus {
@@ -164,9 +159,8 @@ Item {
                 Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
             }
 
-            Text {
+            Label {
                 text: Constants.advancedImu.insStatusLabels[5]
-                font.pointSize: Constants.mediumPointSize
             }
 
             UnknownStatus {

@@ -28,6 +28,7 @@
 
 import "../Constants"
 import QtQuick 2.15
+import QtQuick.Controls 2.15
 
 Rectangle {
     id: sortableColumnHeading
@@ -42,7 +43,8 @@ Rectangle {
     property var headerRelayoutProvider: function() {
     }
     property font font: Qt.font({
-        "family": Constants.genericTable.fontFamily
+        "family": Constants.genericTable.fontFamily,
+        "pointSize": Constants.largePointSize
     })
     property color gradientStartColor: Constants.genericTable.cellColor
     property color gradientStopColor: Constants.genericTable.gradientColor
@@ -126,7 +128,7 @@ Rectangle {
         }
     ]
 
-    Text {
+    Label {
         id: label
 
         anchors.fill: parent
@@ -138,7 +140,7 @@ Rectangle {
         padding: 3
     }
 
-    Text {
+    Label {
         id: upDownIndicator
 
         anchors.right: parent.right

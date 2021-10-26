@@ -1,7 +1,7 @@
 import "../Constants"
 import QtCharts 2.15
 import QtQuick 2.15
-import QtQuick.Controls 2.12
+import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
@@ -39,7 +39,7 @@ Item {
                 polarChartWidthChanging = true;
             }
 
-            Text {
+            Label {
                 text: "N"
                 font.family: Constants.commonChart.fontFamily
                 font.pointSize: Constants.trackingSkyPlot.directionLabelFontSize
@@ -47,7 +47,7 @@ Item {
                 y: trackingSkyPlotChart.plotArea.y - Constants.trackingSkyPlot.directionLabelOffset
             }
 
-            Text {
+            Label {
                 text: "E"
                 font.family: Constants.commonChart.fontFamily
                 font.pointSize: Constants.trackingSkyPlot.directionLabelFontSize
@@ -55,7 +55,7 @@ Item {
                 y: trackingSkyPlotChart.plotArea.y + trackingSkyPlotChart.plotArea.height / 2 - 2 * Constants.trackingSkyPlot.directionLabelFontSize / 3
             }
 
-            Text {
+            Label {
                 text: "S"
                 font.family: Constants.commonChart.fontFamily
                 font.pointSize: Constants.trackingSkyPlot.directionLabelFontSize
@@ -63,7 +63,7 @@ Item {
                 y: trackingSkyPlotChart.plotArea.y + trackingSkyPlotChart.plotArea.height + Constants.trackingSkyPlot.directionLabelOffset / 5
             }
 
-            Text {
+            Label {
                 text: "W"
                 font.family: Constants.commonChart.fontFamily
                 font.pointSize: Constants.trackingSkyPlot.directionLabelFontSize
@@ -153,7 +153,7 @@ Item {
                         model: Constants.trackingSkyPlot.scatterLabels
 
                         Row {
-                            Text {
+                            Label {
                                 id: marker
 
                                 text: "●"
@@ -163,7 +163,7 @@ Item {
                                 color: Constants.trackingSkyPlot.colors[index]
                             }
 
-                            Text {
+                            Label {
                                 id: label
 
                                 text: modelData
@@ -190,11 +190,9 @@ Item {
             Layout.rightMargin: Constants.trackingSkyPlot.checkboxMargins
             spacing: Constants.trackingSkyPlot.checkboxSpacing
 
-            Text {
+            Label {
                 Layout.fillWidth: true
                 text: "Enabled with SBP message MSG_SV_AZ_EL (0x0097 | 151), * indicates satellite is being tracked"
-                font.family: Constants.genericTable.fontFamily
-                font.pointSize: Constants.largePointSize
             }
 
             Row {
@@ -290,7 +288,7 @@ Item {
                 if (labelsVisible) {
                     for (var jdx in labels[idx]) {
                         var pose = trackingSkyPlotChart.mapToPosition(series[idx].at(jdx), series[idx]);
-                        let qmlStr = "import QtQuick 2.15; Text {color: 'black'; text: '" + labels[idx][jdx] + "'; visible: !polarChartWidthChanging; width: 20; height: 20; x: " + pose.x + "; y: " + pose.y + ";}";
+                        let qmlStr = "import QtQuick.Controls 2.15; Label {color: 'black'; text: '" + labels[idx][jdx] + "'; visible: !polarChartWidthChanging; width: 20; height: 20; x: " + pose.x + "; y: " + pose.y + ";}";
                         var obj = Qt.createQmlObject(qmlStr, trackingSkyPlotChart, labels[idx][jdx]);
                         obj.destroy(Utils.hzToMilliseconds(Constants.staticTimerSlowIntervalRate));
                     }

@@ -13,10 +13,8 @@ Item {
             Layout.preferredWidth: parent.width / 2
             Layout.fillHeight: true
 
-            Text {
+            Label {
                 text: Constants.updateTab.firmwareVersionTitle
-                font.family: Constants.genericTable.fontFamily
-                font.pointSize: Constants.largePointSize
             }
 
         }
@@ -25,10 +23,8 @@ Item {
             Layout.preferredWidth: parent.width / 2
             Layout.fillHeight: true
 
-            Text {
+            Label {
                 text: Constants.updateTab.firmwareDownloadTitle
-                font.family: Constants.genericTable.fontFamily
-                font.pointSize: Constants.largePointSize
             }
 
         }

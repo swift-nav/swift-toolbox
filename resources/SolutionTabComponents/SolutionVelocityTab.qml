@@ -109,7 +109,7 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
 
-                                Text {
+                                Label {
                                     id: label
 
                                     text: modelData

@@ -56,7 +56,7 @@ Item {
                     implicitHeight: Constants.genericTable.cellHeight
                     border.color: Constants.genericTable.borderColor
 
-                    Text {
+                    Label {
                         width: parent.width
                         anchors.centerIn: parent
                         horizontalAlignment: Text.AlignHCenter
@@ -65,6 +65,7 @@ Item {
                         elide: Text.ElideRight
                         clip: true
                         font.family: Constants.genericTable.fontFamily
+                        font.pointSize: Constants.largePointSize
                     }
 
                     MouseArea {
@@ -164,7 +165,7 @@ Item {
                     border.color: Constants.genericTable.borderColor
                     color: row == selectedRow ? Constants.genericTable.cellHighlightedColor : Constants.genericTable.cellColor
 
-                    Text {
+                    Label {
                         width: parent.width
                         horizontalAlignment: Text.AlignLeft
                         clip: true

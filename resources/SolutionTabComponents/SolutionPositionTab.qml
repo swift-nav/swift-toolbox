@@ -193,9 +193,8 @@ Item {
 
                 }
 
-                Text {
+                Label {
                     text: "Display Units: "
-                    font.pointSize: Constants.largePointSize
                 }
 
                 ComboBox {
@@ -300,7 +299,7 @@ Item {
                             model: Constants.solutionPosition.legendLabels
 
                             Row {
-                                Text {
+                                Label {
                                     id: marker
 
                                     text: "+ "
@@ -311,7 +310,7 @@ Item {
                                     anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                                 }
 
-                                Text {
+                                Label {
                                     id: label
 
                                     text: modelData

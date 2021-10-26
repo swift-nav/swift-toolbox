@@ -12,6 +12,10 @@ import SwiftConsole 1.0
 Item {
     id: settingsTab
 
+    property var floatValidator
+    property var intValidator
+    property var stringValidator
+
     function selectedRow() {
         var rowIdx = settingsTable.selectedRow;
         if (rowIdx < 0)
@@ -287,6 +291,7 @@ Item {
                         // the onDestruction event has triggered
                         property string settingGroup: selectedRowField("group")
                         property string settingName: selectedRowField("name")
+                        property string settingType: selectedRowField("type")
 
                         text: selectedRowField(_fieldName)
                         wrapMode: Text.WordWrap
@@ -297,6 +302,14 @@ Item {
                         }
                         Component.onDestruction: {
                             data_model.settings_write_request(settingGroup, settingName, text);
+                        }
+                        validator: {
+                            if (settingType === "integer")
+                                return intValidator;
+                            else if (settingType === "float" || settingType === "double")
+                                return floatValidator;
+                            else
+                                return stringValidator;
                         }
                     }
 
@@ -420,6 +433,15 @@ Item {
 
         }
 
+    }
+
+    floatValidator: DoubleValidator {
+    }
+
+    intValidator: IntValidator {
+    }
+
+    stringValidator: RegExpValidator {
     }
 
 }

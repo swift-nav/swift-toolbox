@@ -29,6 +29,7 @@ Item {
     GridLayout {
         columns: 2
         rowSpacing: 4
+        width: parent.width
 
         Loader {
             property string _title: "Name"
@@ -53,8 +54,11 @@ Item {
         }
 
         Loader {
+            id: valOnDevice
+
             property string _fieldName: "valueOnDevice"
 
+            Layout.fillWidth: false
             sourceComponent: {
                 if (selectedRowField("readonly"))
                     return settingRowText;
@@ -67,6 +71,25 @@ Item {
                 else
                     return settingRowEditable;
             }
+            states: [
+                State {
+                    name: "long text field"
+                    when: {
+                        if (valOnDevice.item instanceof TextField) {
+                            var textLen = valOnDevice.item.font.pointSize * valOnDevice.item.length;
+                            return (textLen >= 150);
+                        } else {
+                            return false;
+                        }
+                    }
+
+                    PropertyChanges {
+                        target: valOnDevice
+                        Layout.fillWidth: true
+                    }
+
+                }
+            ]
         }
 
         Loader {
@@ -189,7 +212,7 @@ Item {
             property string settingType: selectedRowField("type")
 
             text: selectedRowField(_fieldName)
-            wrapMode: Text.WordWrap
+            wrapMode: Text.Wrap
             font.family: Constants.genericTable.fontFamily
             font.pointSize: Constants.largePointSize
             onEditingFinished: {

@@ -88,6 +88,10 @@ pub struct CliOptions {
     #[clap(subcommand)]
     pub input: Option<Input>,
 
+    /// Log messages to terminal.
+    #[clap(long = "log-stderr")]
+    pub log_stderr: bool,
+
     /// Exit when connection closes.
     #[clap(long = "exit-after")]
     pub exit_after: bool,
@@ -150,7 +154,7 @@ impl CliOptions {
     /// - `filtered_args`: The filtered args parsed via CliOptions.
     pub fn from_filtered_cli() -> CliOptions {
         let args = std::env::args();
-        debug!("args {:?}", args);
+        eprintln!("args {:?}", args);
         let mut next_args = std::env::args().skip(1);
         let mut filtered_args: Vec<String> = vec![];
         for arg in args.filter(|a| !matches!(a.as_str(), "swiftnav_console.main" | "-m" | "--")) {
@@ -168,7 +172,7 @@ impl CliOptions {
             }
             filtered_args.push(arg);
         }
-        debug!("filtered_args: {:?}", filtered_args);
+        debug!("filtered_args: {:?}", &filtered_args[1..]);
         CliOptions::parse_from(filtered_args)
     }
 }
@@ -306,6 +310,7 @@ pub fn handle_cli(opt: CliOptions, conn_manager: &ConnectionManager, shared_stat
     shared_state.set_log_level(log_level);
     let mut shared_data = shared_state.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
     (*shared_data).logging_bar.csv_logging = CsvLogging::from(opt.csv_log);
+    (*shared_data).log_to_std.set(opt.log_stderr);
     if let Some(sbp_log) = opt.sbp_log {
         (*shared_data).logging_bar.sbp_logging_format =
             SbpLogging::from_str(&sbp_log.to_string()).expect(CONVERT_TO_STR_FAILURE);

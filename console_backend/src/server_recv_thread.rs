@@ -16,7 +16,7 @@ use crate::utils::refresh_connection_frontend;
 use capnp::serialize;
 use chrono::{DateTime, Utc};
 use crossbeam::channel;
-use log::error;
+use log::{debug, error};
 use std::{io::Cursor, path::PathBuf, str::FromStr, thread};
 pub type Error = anyhow::Error;
 pub type Result<T> = anyhow::Result<T>;
@@ -334,7 +334,7 @@ pub fn server_recv_thread(
                 }
             }
         }
-        eprintln!("client recv loop shutdown");
+        debug!("client recv loop shutdown");
         client_send.connected.set(false);
     });
 }

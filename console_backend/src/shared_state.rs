@@ -10,7 +10,7 @@ use crate::output::{CsvLogging, CsvSerializer};
 use crate::process_messages::StopToken;
 use crate::settings_tab;
 use crate::solution_tab::LatLonUnits;
-use crate::types::CapnProtoSender;
+use crate::types::{ArcBool, CapnProtoSender};
 use crate::update_tab::UpdateTabUpdate;
 use crate::utils::send_conn_state;
 use crate::watch::{WatchReceiver, Watched};
@@ -356,6 +356,10 @@ impl SharedState {
         (*shared_data).auto_survey_data.alt = Some(alt);
         (*shared_data).auto_survey_data.requested = false;
     }
+    pub fn log_to_std(&self) -> ArcBool {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).log_to_std.clone()
+    }
 }
 
 impl Deref for SharedState {
@@ -401,6 +405,7 @@ pub struct SharedStateInner {
     pub(crate) advanced_networking_update: Option<AdvancedNetworkingState>,
     pub(crate) auto_survey_data: AutoSurveyData,
     pub(crate) sbp_logging_stats_state: Option<SbpLoggingStatsState>,
+    pub(crate) log_to_std: ArcBool,
 }
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
@@ -427,6 +432,7 @@ impl SharedStateInner {
             advanced_networking_update: None,
             auto_survey_data: AutoSurveyData::new(),
             sbp_logging_stats_state: None,
+            log_to_std: ArcBool::new_with(true),
         }
     }
 }

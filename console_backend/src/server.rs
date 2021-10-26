@@ -110,7 +110,7 @@ impl Server {
             server_send: Some(server_send),
         };
         let shared_state = SharedState::new();
-        setup_logging(client_send.clone(), shared_state.clone(), false);
+        setup_logging(client_send.clone(), shared_state.clone());
         let opt = CliOptions::from_filtered_cli();
         if let Some(ref path) = opt.settings_yaml {
             sbp_settings::settings::load_from_path(path).expect("failed to load settings");

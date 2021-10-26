@@ -180,7 +180,7 @@ where
     });
 
     link.register(|_: MsgObsDepA| {
-        println!("The message type, MsgObsDepA, is not handled in the Tracking->SignalsPlot or Observation tab.");
+        debug!("The message type, MsgObsDepA, is not handled in the Tracking->SignalsPlot or Observation tab.");
     });
 
     link.register(|tabs: &Tabs<S>, msg: MsgOrientEuler| {

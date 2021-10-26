@@ -339,6 +339,8 @@ QtObject {
         readonly property int navBarSpacing: 0
         readonly property real navBarButtonWidth: 40
         readonly property real resetFiltersButtonWidth: 100
+        readonly property int axesDefaultMin: 0
+        readonly property int axesDefaultMax: 1
         readonly property string yAxisTitleText: "N (meters)"
         readonly property string xAxisTitleText: "E (meters)"
         readonly property var legendLabels: ["Base Position", "DGPS", "RTK Float", "RTK Fixed"]

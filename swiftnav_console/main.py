@@ -557,15 +557,6 @@ class DataModel(QObject):  # pylint: disable=too-many-instance-attributes,too-ma
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
 
-    @Slot(bool)  # type: ignore
-    def pause(self, pause_: bool) -> None:
-        Message = self.messages.Message
-        msg = self.messages.Message()
-        msg.pauseRequest = msg.init(Message.Union.PauseRequest)
-        msg.pauseRequest.pause = pause_
-        buffer = msg.to_bytes()
-        self.endpoint.send_message(buffer)
-
     @Slot(list)  # type: ignore
     def tracking_signals_check_visibility(self, checks: List[str]) -> None:
         Message = self.messages.Message

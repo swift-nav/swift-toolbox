@@ -310,7 +310,7 @@ pub fn handle_cli(opt: CliOptions, conn_manager: &ConnectionManager, shared_stat
     shared_state.set_log_level(log_level);
     let mut shared_data = shared_state.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
     (*shared_data).logging_bar.csv_logging = CsvLogging::from(opt.csv_log);
-    (*shared_data).log_to_std.set(opt.log_to_std);
+    (*shared_data).log_to_std.set(opt.log_stderr);
     if let Some(sbp_log) = opt.sbp_log {
         (*shared_data).logging_bar.sbp_logging_format =
             SbpLogging::from_str(&sbp_log.to_string()).expect(CONVERT_TO_STR_FAILURE);

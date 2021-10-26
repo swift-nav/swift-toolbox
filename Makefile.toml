@@ -91,17 +91,20 @@ command = "cargo"
 args = ["install-update", "taplo-cli", "cargo-make"]
 
 [tasks.generate-common-constants-rs]
-script_runner = "@shell"
+script_runner = "@duckscript"
 script = '''
-${PYTHON} -m py2many --rust=1 swiftnav_console/constants.py
+python = get_env PYTHON
+exec ${python} -m py2many --rust=1 swiftnav_console/constants.py
 mv swiftnav_console/constants.rs console_backend/src/common_constants.rs
 '''
 
 [tasks.extract-piksi-constants-rs]
-script_runner = "@shell"
+script_runner = "@duckscript"
 script = '''
-${PYTHON} utils/extract_piksi_tools_constants.py > /tmp/piksi_tools_constants.py
-${PYTHON} -m py2many --rust=1 /tmp/piksi_tools_constants.py --outdir console_backend/src/
+python = get_env PYTHON
+output = exec --fail-on-error ${python} utils/extract_piksi_tools_constants.py
+writefile /tmp/piksi_tools_constants.py ${output.stdout}
+exec --fail-on-error ${python} -m py2many --rust=1 /tmp/piksi_tools_constants.py --outdir console_backend/src/
 '''
 
 [tasks.generate-resources]

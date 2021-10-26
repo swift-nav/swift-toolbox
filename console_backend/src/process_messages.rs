@@ -40,6 +40,7 @@ pub fn process_messages<S>(
 ) where
     S: CapnProtoSender,
 {
+    shared_state.set_current_connection(conn.name());
     refresh_connection_frontend(&mut client_send.clone(), shared_state.clone());
 
     let source: LinkSource<Tabs<S>> = LinkSource::new();

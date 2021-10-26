@@ -51,7 +51,7 @@ Rectangle {
         Button {
             id: sbpLoggingButton
 
-            icon.source: checked ? Constants.icons.stopCirclePath : Constants.icons.solidCirclePath
+            icon.source: checked ? Constants.icons.squareSolidPath : Constants.icons.solidCirclePath
             icon.color: checked ? Constants.swiftOrange : Constants.materialGrey
             checkable: true
             Layout.preferredWidth: Constants.loggingBar.buttonHeight
@@ -66,17 +66,6 @@ Rectangle {
             }
         }
 
-        ComboBox {
-            id: sbpLoggingFormat
-
-            Layout.preferredWidth: Constants.loggingBar.sbpLoggingButtonWidth
-            Layout.preferredHeight: Constants.loggingBar.buttonHeight
-            model: sbp_logging_labels
-            ToolTip.visible: hovered
-            ToolTip.text: "SBP Log Format"
-            onActivated: data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText)
-        }
-
         Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -87,29 +76,26 @@ Rectangle {
 
                 ToolTip {
                     visible: parent.containsMouse && sbpLoggingButton.checked
-                    text: "Unable change logging directory while recording."
+                    text: "Currently logging, stop logging to adjust."
                 }
 
             }
 
             RowLayout {
-                // Rectangle {
-                //     Layout.fillWidth: true
-                //     Layout.preferredHeight: Constants.loggingBar.folderPathBarHeight
-                //     visible: sbpLoggingButton.checked
-                //     border.width: Constants.advancedImu.textDataBarBorderWidth
-                //     Label {
-                //         id: recordingFilenameText
-                //         text: ""
-                //         clip: true
-                //         anchors.fill: parent
-                //         color: Constants.updateTab.placeholderTextColor
-                //         anchors.margins: 5
-                //     }
-
                 anchors.fill: parent
 
-                // }
+                ComboBox {
+                    id: sbpLoggingFormat
+
+                    enabled: !sbpLoggingButton.checked
+                    Layout.preferredWidth: Constants.loggingBar.sbpLoggingButtonWidth
+                    Layout.preferredHeight: Constants.loggingBar.buttonHeight
+                    model: sbp_logging_labels
+                    ToolTip.visible: hovered
+                    ToolTip.text: "SBP Log Format"
+                    onActivated: data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText)
+                }
+
                 ComboBox {
                     id: recordingFilenameText
 
@@ -176,7 +162,7 @@ Rectangle {
                     ColorOverlay {
                         anchors.fill: loggingBarFolder
                         source: loggingBarFolder
-                        color: "dimgrey"
+                        color: Constants.materialGrey
                         antialiasing: true
                     }
 

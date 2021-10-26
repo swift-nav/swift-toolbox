@@ -369,8 +369,8 @@ QtObject {
         readonly property real navBarButtonProportionOfParent: 0.11
         readonly property string yAxisTitleText: "Latitude"
         readonly property string xAxisTitleText: "Longitude"
-        readonly property var legendLabels: ["SPP", "DGPS", "RTK Float", "RTK Fixed", "DR", "SBAS"]
-        readonly property var colors: ["#0000FF", "#00B3FF", "#BF00BF", "#FFA500", "#000000", "#00FF00"]
+        readonly property var legendLabels: ["SPP", "SBAS", "DGPS", "RTK Float", "RTK Fixed", "DR"]
+        readonly property var colors: ["#0000FF", "#008000", "#00B3FF", "#BF00BF", "#FFA500", "#000000"]
     }
 
     logPanel: QtObject {

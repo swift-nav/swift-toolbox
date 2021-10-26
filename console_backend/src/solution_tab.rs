@@ -165,11 +165,11 @@ impl<S: CapnProtoSender> SolutionTab<S> {
             modes: Deque::new(PLOT_HISTORY_MAX),
             mode_strings: vec![
                 GnssModes::Spp.to_string(),
+                GnssModes::Sbas.to_string(),
                 GnssModes::Dgnss.to_string(),
                 GnssModes::Float.to_string(),
                 GnssModes::Fixed.to_string(),
                 GnssModes::Dr.to_string(),
-                GnssModes::Sbas.to_string(),
             ],
             nsec: Some(0),
             pending_draw_modes: vec![],

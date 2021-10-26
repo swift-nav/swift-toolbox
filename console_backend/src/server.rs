@@ -1,5 +1,4 @@
 use crossbeam::channel;
-use log::debug;
 use pyo3::exceptions;
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
@@ -83,17 +82,17 @@ impl Server {
                             if self.client_sender.as_ref().unwrap().connected.get() {
                                 continue;
                             } else {
-                                debug!("shutting down");
+                                eprintln!("shutting down");
                                 break None;
                             }
                         } else {
-                            debug!("client recv disconnected");
+                            eprintln!("client recv disconnected");
                             break None;
                         }
                     }
                 }
             } else {
-                debug!("no client receive endpoint");
+                eprintln!("no client receive endpoint");
                 break None;
             }
         });

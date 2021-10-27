@@ -7,7 +7,7 @@ Item {
     Image {
         id: unknownStatusImage
 
-        anchors.centerIn: parent
+        anchors.verticalCenter: parent.verticalCenter
         width: Constants.advancedImu.insStatusImageWidth
         height: Constants.advancedImu.insStatusImageWidth
         smooth: true
@@ -30,7 +30,6 @@ Item {
         anchors.left: unknownStatusImage.right
         anchors.leftMargin: Constants.fusionStatusFlags.labelMargin
         anchors.verticalCenter: unknownStatusImage.verticalCenter
-        Layout.preferredWidth: Constants.advancedImu.textDataLabelWidth
         font.pointSize: Constants.mediumPointSize
     }
 

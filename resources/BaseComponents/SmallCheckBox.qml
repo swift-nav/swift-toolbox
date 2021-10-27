@@ -43,4 +43,9 @@ T.CheckBox {
         verticalAlignment: Text.AlignVCenter
     }
 
+    Component.onCompleted: {
+        // changes size of inner checkmark
+        control.indicator.children[0].height = 10
+        control.indicator.children[0].width= 10
+    }
 }

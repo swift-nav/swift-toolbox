@@ -1,7 +1,9 @@
+import "../BaseComponents"
 import "../Constants"
 import QtCharts 2.3
-import QtQuick 2.5
+import QtQuick 2.6
 import QtQuick.Controls 2.15
+import QtQuick.Controls.Styles 1.4
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
@@ -23,21 +25,24 @@ Item {
         id: trackingSignalsPoints
     }
 
-    Rectangle {
+    ColumnLayout {
         id: trackingSignalsArea
 
         width: parent.width
         height: parent.height
+        spacing: 0
 
         ChartView {
             id: trackingSignalsChart
 
+            Layout.bottomMargin: -(Constants.margins * 2)
+            Layout.fillHeight: true
+            Layout.fillWidth: true
             visible: false
             title: Constants.trackingSignals.title
             titleColor: Constants.trackingSignals.titleColor
             width: parent.width
             height: parent.height - trackingSignalsCheckboxes.height
-            anchors.top: parent.top
             backgroundColor: Constants.commonChart.backgroundColor
             plotAreaColor: Constants.commonChart.areaColor
             legend.visible: false
@@ -204,40 +209,37 @@ Item {
             flow: GridLayout.TopToBottom
             columns: Math.floor(parent.width / Constants.trackingSignals.checkBoxPreferredWidth)
             rows: Math.ceil(check_labels.length / trackingSignalsCheckboxes.columns)
-            anchors.horizontalCenter: trackingSignalsChart.horizontalCenter
-            anchors.top: trackingSignalsChart.bottom
+            rowSpacing: 0
+            Layout.margins: 0
+            Layout.alignment: Qt.AlignHCenter
 
             Repeater {
                 id: trackingSignalsCheckbox
 
                 model: check_labels
 
-                Column {
+                SmallCheckBox {
+                    Layout.margins: 0
                     Layout.rowSpan: index === 0 ? trackingSignalsCheckboxes.rows : 1
-
-                    CheckBox {
-                        checked: true
-                        text: modelData
-                        verticalPadding: Constants.trackingSignals.checkBoxVerticalPadding
-                        onClicked: {
-                            check_visibility[index] = checked;
-                            if (index == 0) {
-                                lineLegend.visible = !lineLegend.visible;
-                                return ;
-                            }
-                            var labels_not_visible = [];
-                            for (var idx in check_visibility) {
-                                if (!check_visibility[idx])
-                                    labels_not_visible.push(check_labels[idx]);
-
-                            }
-                            data_model.tracking_signals_check_visibility(labels_not_visible);
+                    checked: true
+                    text: modelData
+                    onClicked: {
+                        check_visibility[index] = checked;
+                        if (index == 0) {
+                            lineLegend.visible = !lineLegend.visible;
+                            return ;
                         }
-                        Component.onCompleted: {
-                            check_visibility.push(checked);
+                        var labels_not_visible = [];
+                        for (var idx in check_visibility) {
+                            if (!check_visibility[idx])
+                                labels_not_visible.push(check_labels[idx]);
+
                         }
+                        data_model.tracking_signals_check_visibility(labels_not_visible);
                     }
-
+                    Component.onCompleted: {
+                        check_visibility.push(checked);
+                    }
                 }
 
             }

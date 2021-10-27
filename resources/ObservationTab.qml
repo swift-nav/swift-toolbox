@@ -19,7 +19,7 @@ Item {
         orientation: Qt.Vertical
         width: parent.width
         height: parent.height
-        visible: localTable.populated || remoteTable.populated
+        visible: true //localTable.populated || remoteTable.populated
 
         Item {
             SplitView.minimumHeight: Constants.observationTab.titleAreaHight

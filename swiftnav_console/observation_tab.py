@@ -3,7 +3,6 @@ from copy import deepcopy
 from collections import namedtuple
 
 from PySide2.QtCore import Property, Slot, Signal, QAbstractTableModel, Qt, QModelIndex
-from PySide2.QtGui import QFont, QFontMetrics, QGuiApplication
 
 from .constants import Keys, QTKeys
 
@@ -91,7 +90,6 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
         self._remote = False
         self._column_widths = [None] * len(ObservationTableModel.column_metadata)
         self._columnWidth_calls = [0] * len(self._column_widths)
-        self._column_widths_seen_data_all_columns = False
         self.json_col_names = None
         self._total_rows = 0
         self._code_filters = set()
@@ -222,34 +220,8 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
             self.endInsertRows()
             self.row_count_changed.emit(self.rowCount())  # type: ignore
 
-        if (
-            len(self._rows) > 0
-            and len(self._rows[-1]) == self.columnCount()
-            and not self._column_widths_seen_data_all_columns
-        ):
+        if len(self._rows) > 0 and len(self._rows[-1]) == self.columnCount():
             self.dataPopulated.emit()  # type: ignore
-            self._column_widths_seen_data_all_columns = True
-
-    @Slot(int, result=int)  # type: ignore
-    @Slot(int, QFont, result=int)  # type: ignore
-    @Slot(int, QFont, QFont, result=int)  # type: ignore
-    def columnWidth(self, column, tableFont=None, headerFont=None):
-        # Don't cache until the second call on a column because the first call to this per column
-        # is done before any data has come in, and columns are just sized to headers.
-        if not self._column_widths[column] or self._columnWidth_calls[column] < 2:
-            margin = 8
-            defaultFontMetrics = QFontMetrics(QGuiApplication.font())
-            tfm = defaultFontMetrics if tableFont is None else QFontMetrics(tableFont)
-            hfm = defaultFontMetrics if headerFont is None else QFontMetrics(headerFont)
-            ret = hfm.width(str(self.headerData(column, Qt.Horizontal)) + " ^") + margin
-            for rowIdx in range(len(self._rows)):
-                modelIdx = self.index(rowIdx, column)
-                cellData = str(self.data(modelIdx))
-                ret = max(ret, tfm.width(cellData) + margin)
-            self._column_widths[column] = ret
-
-        self._columnWidth_calls[column] += 1
-        return self._column_widths[column]
 
     @Slot(float, int, result=str)  # type: ignore
     @Slot(float, int, int, result=str)  # type: ignore

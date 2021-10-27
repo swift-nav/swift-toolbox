@@ -25,20 +25,13 @@ Item {
         id: fusionStatusFlagsData
     }
 
-    ColumnLayout {
-        id: fusionStatusFlagsArea
+    GroupBox {
+        title: "Fusion Status"
 
-        width: parent.width
-        height: parent.height
-
-        ColumnLayout {
+        GridLayout {
             id: insStatusRow
 
-            spacing: Constants.fusionStatusFlags.spacing
-            visible: false
-            Layout.fillWidth: true
-            Layout.preferredHeight: Constants.advancedImu.urlBarHeight
-            Layout.alignment: Qt.AlignBottom
+            columns: 2
 
             Label {
                 text: Constants.advancedImu.insStatusLabels[0]

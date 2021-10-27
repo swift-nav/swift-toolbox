@@ -27,7 +27,7 @@ ColumnLayout {
                 observationTableModel.filter_prn(modelData, !checked);
                 observationTableModel.update();
             }
-            text: modelData + ": " + observationTableModel.get_code_count(modelData)
+            text: modelData + ": " + observationTableModel.codes.filter(x => x === modelData).length
         }
 
     }

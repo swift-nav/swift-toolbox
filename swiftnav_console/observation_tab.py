@@ -97,13 +97,12 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
         self._code_filters = set()
         self._codes = set()
 
+    def get_codes(self) -> List[List[str]]:
+        observation_tab = REMOTE_OBSERVATION_TAB if self._remote else LOCAL_OBSERVATION_TAB
+        return [entry["prn"].code for entry in observation_tab[Keys.ROWS]]
+
     def get_codes_by_prefix(self, prefix) -> List[List[str]]:
         return sorted([code for code in self._codes if code.startswith(prefix)])
-
-    @Slot(str, result=int)  # type: ignore
-    def get_code_count(self, code) -> int:
-        observation_tab = REMOTE_OBSERVATION_TAB if self._remote else LOCAL_OBSERVATION_TAB
-        return sum(entry["prn"].code == code for entry in observation_tab[Keys.ROWS])
 
     def get_gps_codes(self) -> List[List[str]]:
         return self.get_codes_by_prefix("GPS")
@@ -270,6 +269,7 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
     gal_codes = Property(QTKeys.QVARIANTLIST, get_gal_codes, notify=codes_changed)  # type: ignore
     qzs_codes = Property(QTKeys.QVARIANTLIST, get_qzs_codes, notify=codes_changed)  # type: ignore
     sbas_codes = Property(QTKeys.QVARIANTLIST, get_sbas_codes, notify=codes_changed)  # type: ignore
+    codes = Property(QTKeys.QVARIANTLIST, get_codes, notify=codes_changed)
 
 
 def obs_rows_to_json(rows):

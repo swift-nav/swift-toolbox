@@ -2,6 +2,7 @@ import QtQuick 2.6
 pragma Singleton
 
 QtObject {
+    property string consoleVersion: "0.0.0"
     property int currentRefreshRate: 5 // 5 Hz
     property bool useOpenGL: true
     property int initialMainTabIndex: 0 // Tracking

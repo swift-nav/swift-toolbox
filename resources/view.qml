@@ -25,15 +25,16 @@ ApplicationWindow {
         anchors.fill: parent
     }
 
+    LogoPopup {
+        id: logoPopup
+
+        anchors.fill: parent
+    }
+
     RowLayout {
-        property alias drawer: mainDrawer.drawer
         property alias stackView: dialogStack.dialogStack
 
         anchors.fill: parent
-
-        MainDrawer {
-            id: mainDrawer
-        }
 
         SideNavBar {
             id: sideNavBar
@@ -85,6 +86,7 @@ ApplicationWindow {
                         id: mainTabs
 
                         property alias curIndex: sideNavBar.curIndex
+                        property alias logoPopup: logoPopup
 
                         SplitView.fillHeight: true
                         SplitView.fillWidth: true

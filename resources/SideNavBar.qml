@@ -6,7 +6,6 @@ import SwiftConsole 1.0
 
 Rectangle {
     property alias curIndex: tab.currentIndex
-    property var drawer: parent.drawer
     property var tabModel: [{
         "name": "Tracking",
         "tooltip": "Tracking",
@@ -44,6 +43,32 @@ Rectangle {
     ColumnLayout {
         anchors.fill: parent
 
+        Button {
+            id: logo
+
+            Layout.fillWidth: true
+            Layout.preferredHeight: Constants.sideNavBar.tabBarHeight
+            padding: Constants.sideNavBar.buttonPadding
+            icon.source: Constants.icons.swiftLogoPath
+            icon.color: "transparent"
+            onClicked: {
+                logoPopup.open();
+            }
+
+            background: Item {
+            }
+
+        }
+
+        Rectangle {
+            color: Constants.materialGrey
+            Layout.alignment: Qt.AlignHCenter
+            Layout.preferredHeight: Constants.sideNavBar.separatorHeight
+            Layout.fillWidth: true
+            Layout.rightMargin: Constants.sideNavBar.separatorMargin
+            Layout.leftMargin: Constants.sideNavBar.separatorMargin
+        }
+
         TabBar {
             id: tab
 
@@ -55,22 +80,12 @@ Rectangle {
             contentWidth: Constants.sideNavBar.tabBarWidth
             currentIndex: Globals.initialMainTabIndex + 1
             Component.onCompleted: {
-                hamburger.checkable = false;
+                logo.checkable = false;
             }
 
             TabButton {
-                id: hamburger
-
-                width: Constants.sideNavBar.tabBarWidth
-                anchors.horizontalCenter: parent.horizontalCenter
-                icon.source: Constants.sideNavBar.hamburgerPath
-                display: AbstractButton.IconOnly
-                rightInset: Constants.sideNavBar.buttonInset
-                leftInset: Constants.sideNavBar.buttonInset
-                enabled: Globals.connected_at_least_once
-                onClicked: {
-                    drawer.open();
-                }
+                enabled: false
+                height: 0
             }
 
             Repeater {

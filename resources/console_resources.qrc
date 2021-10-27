@@ -5,7 +5,6 @@
     <file>fonts/Roboto-Regular.ttf</file>
     <file>fonts/Roboto-Bold.ttf</file>
     <file>view.qml</file>
-    <file>MainDrawer.qml</file>
     <file>MainDialogView.qml</file>
     <file>MainTabs.qml</file>
     <file>SideNavBar.qml</file>
@@ -53,7 +52,9 @@
     <file>ObservationTab.qml</file>
     <file>ObservationTabComponents/ObservationTable.qml</file>
     <file>ObservationTabComponents/ObservationFilterColumn.qml</file>
-    <file>MainDrawerComponents/LicensesPopup.qml</file>
+    <file>LogoPopupComponents/Licenses.qml</file>
+    <file>LogoPopupComponents/AboutMe.qml</file>
+    <file>LogoPopup.qml</file>
     <file>UpdateTab.qml</file>
     <file>UpdateTabComponents/FirmwareVersionAndDownloadLabels.qml</file>
     <file>UpdateTabComponents/FirmwareRevision.qml</file>
@@ -92,6 +93,7 @@
     <file>images/fontawesome/file-export.svg</file>
     <file>images/fontawesome/file-import.svg</file>
     <file>images/fontawesome/exclamation-triangle.svg</file>
+    <file>images/icon.png</file>
     <file>TableComponents/SortableColumnHeading.qml</file>
     <file>TableComponents/TableCellDelegate.qml</file>
     <file>BaseComponents/SmallCheckBox.qml</file>

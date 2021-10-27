@@ -40,21 +40,21 @@ Item {
             UnknownStatus {
                 id: gnssposUnknown
 
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             WarningStatus {
                 id: gnssposWarning
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             OkStatus {
                 id: gnssposOk
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             Label {
@@ -64,21 +64,21 @@ Item {
             UnknownStatus {
                 id: gnssvelUnknown
 
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             WarningStatus {
                 id: gnssvelWarning
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             OkStatus {
                 id: gnssvelOk
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             Label {
@@ -88,21 +88,21 @@ Item {
             UnknownStatus {
                 id: wheelticksUnknown
 
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             WarningStatus {
                 id: wheelticksWarning
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             OkStatus {
                 id: wheelticksOk
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             Label {
@@ -112,21 +112,21 @@ Item {
             UnknownStatus {
                 id: speedUnknown
 
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             WarningStatus {
                 id: speedWarning
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             OkStatus {
                 id: speedOk
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             Label {
@@ -136,21 +136,21 @@ Item {
             UnknownStatus {
                 id: nhcUnknown
 
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             WarningStatus {
                 id: nhcWarning
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             OkStatus {
                 id: nhcOk
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             Label {
@@ -160,21 +160,21 @@ Item {
             UnknownStatus {
                 id: zerovelUnknown
 
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             WarningStatus {
                 id: zerovelWarning
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             OkStatus {
                 id: zerovelOk
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             Item {

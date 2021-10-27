@@ -182,6 +182,7 @@ QtObject {
 
     fusionStatusFlags: QtObject {
         readonly property int spacing: 20
+        readonly property int fusionStatusWidth: 100
         readonly property int labelMargin: 5
     }
 

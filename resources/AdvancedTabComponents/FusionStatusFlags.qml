@@ -16,8 +16,7 @@ Item {
     property string last_nhc: "UNKNOWN"
     property string last_zerovel: "UNKNOWN"
 
-    width: parent.width
-    height: parent.height
+    Layout.alignment: Qt.AlignCenter
     Component.onCompleted: {
     }
 
@@ -26,7 +25,11 @@ Item {
     }
 
     GroupBox {
-        title: "Fusion Status"
+
+         label: Label {
+             text: "Fusion Status"
+             font.pointSize: 14
+         }
 
         GridLayout {
             id: insStatusRow

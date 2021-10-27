@@ -78,7 +78,7 @@ impl FromStr for LatLonUnits {
 /// - `ins_status_flags`: The stored ins status flags expected by other tabs.
 /// - `ins_used`: Indicates whether or not ins is currently used.
 /// - `lats`: The stored latitude values for quickly extracting aggregate data.
-/// - `lngs`: The stored longitude values for quickly extracting aggregate data.
+/// - `lons`: The stored longitude values for quickly extracting aggregate data.
 /// - `last_ins_status_receipt_time`: The last ins status receipt monotonic time stored.
 /// - `last_pos_mode`: The most recent gnss mode stored.
 /// - `last_odo_update_time`: The last odo update monotonic time stored.
@@ -107,7 +107,7 @@ pub struct SolutionTab<S: CapnProtoSender> {
     ins_status_flags: u32,
     ins_used: bool,
     lats: Deque<f64>,
-    lngs: Deque<f64>,
+    lons: Deque<f64>,
     alts: Deque<f64>,
     last_ins_status_receipt_time: Instant,
     last_pos_mode: u8,
@@ -148,7 +148,7 @@ impl<S: CapnProtoSender> SolutionTab<S> {
             ins_status_flags: 0,
             ins_used: false,
             lats: Deque::new(PLOT_HISTORY_MAX),
-            lngs: Deque::new(PLOT_HISTORY_MAX),
+            lons: Deque::new(PLOT_HISTORY_MAX),
             alts: Deque::new(PLOT_HISTORY_MAX),
             last_ins_status_receipt_time: Instant::now(),
             last_pos_mode: 0,
@@ -545,7 +545,7 @@ impl<S: CapnProtoSender> SolutionTab<S> {
             self.table.insert(UTC_SRC, String::from(EMPTY_STR));
             self.table.insert(SATS_USED, String::from(EMPTY_STR));
             self.table.insert(LAT, String::from(EMPTY_STR));
-            self.table.insert(LNG, String::from(EMPTY_STR));
+            self.table.insert(LON, String::from(EMPTY_STR));
             self.table.insert(HEIGHT, String::from(EMPTY_STR));
             self.table.insert(HORIZ_ACC, String::from(EMPTY_STR));
             self.table.insert(VERT_ACC, String::from(EMPTY_STR));
@@ -571,7 +571,7 @@ impl<S: CapnProtoSender> SolutionTab<S> {
             self.table
                 .insert(LAT, format!("{:.12}", pos_llh_fields.lat));
             self.table
-                .insert(LNG, format!("{:.12}", pos_llh_fields.lon));
+                .insert(LON, format!("{:.12}", pos_llh_fields.lon));
             self.table
                 .insert(HEIGHT, format!("{:.3}", pos_llh_fields.height));
             self.table
@@ -579,13 +579,13 @@ impl<S: CapnProtoSender> SolutionTab<S> {
             self.table
                 .insert(VERT_ACC, format!("{:.3}", pos_llh_fields.v_accuracy));
             self.lats.push(pos_llh_fields.lat);
-            self.lngs.push(pos_llh_fields.lon);
+            self.lons.push(pos_llh_fields.lon);
             self.alts.push(pos_llh_fields.height);
             self.modes.push(self.last_pos_mode);
 
             if self.shared_state.auto_survey_requested() {
                 let lat = self.lats.iter().sum::<f64>() as f64 / self.lats.len() as f64;
-                let lon = self.lngs.iter().sum::<f64>() as f64 / self.lngs.len() as f64;
+                let lon = self.lons.iter().sum::<f64>() as f64 / self.lons.len() as f64;
                 let alt = self.alts.iter().sum::<f64>() as f64 / self.alts.len() as f64;
 
                 self.shared_state.set_auto_survey_result(lat, lon, alt);
@@ -672,7 +672,7 @@ impl<S: CapnProtoSender> SolutionTab<S> {
     // pub fn _display_units_changed(&mut self) {
     //
     //     let lats = self.lats.get();
-    //     let lons = self.lngs.get();
+    //     let lons = self.lons.get();
     //     let modes = self.modes.get();
     //     let mut lats_sum: f64 = 0.0;
     //     let mut lons_sum: f64 = 0.0;
@@ -716,7 +716,7 @@ impl<S: CapnProtoSender> SolutionTab<S> {
                     }
                 };
 
-                let lon_str = format!("lng_{}", mode_string);
+                let lon_str = format!("lon_{}", mode_string);
                 let lon_offset = if let Some(lons) = self.slns.get_mut(lon_str.as_str()) {
                     let lons_counts = lons.iter().filter(|&x| !x.is_nan()).count();
                     lons.iter().fold(0.0, |acc, x| acc + x) / lons_counts as f64
@@ -728,7 +728,7 @@ impl<S: CapnProtoSender> SolutionTab<S> {
             };
         for mode in self.mode_strings.iter() {
             let lat_str = format!("lat_{}", mode);
-            let lon_str = format!("lng_{}", mode);
+            let lon_str = format!("lon_{}", mode);
             if matches!(&self.unit, &LatLonUnits::Degrees) {
                 if let Some(lats) = self.slns.get_mut(lat_str.as_str()) {
                     lats.iter_mut()
@@ -761,16 +761,16 @@ impl<S: CapnProtoSender> SolutionTab<S> {
     /// - `last_lat`: The latitude value to update solution data with.
     /// - `last_lon`: The longitude value to update solution data with.
     /// - `mode_string`: The mode associated with the update in string form.
-    fn _update_sln_data_by_mode(&mut self, last_lat: f64, last_lng: f64, mode_string: String) {
+    fn _update_sln_data_by_mode(&mut self, last_lat: f64, last_lon: f64, mode_string: String) {
         let lat = (last_lat - self.lat_offset) * self.lat_sf;
-        let lng = (last_lng - self.lon_offset) * self.lon_sf;
+        let lon = (last_lon - self.lon_offset) * self.lon_sf;
 
         let lat_str = format!("lat_{}", mode_string);
-        let lon_str = format!("lng_{}", mode_string);
+        let lon_str = format!("lon_{}", mode_string);
         let lat_str = lat_str.as_str();
         let lon_str = lon_str.as_str();
         self.slns.get_mut(lat_str).unwrap().push(lat);
-        self.slns.get_mut(lon_str).unwrap().push(lng);
+        self.slns.get_mut(lon_str).unwrap().push(lon);
         self._append_empty_sln_data(Some(mode_string));
     }
 
@@ -784,7 +784,7 @@ impl<S: CapnProtoSender> SolutionTab<S> {
                 continue;
             }
             let lat_str = format!("lat_{}", each_mode);
-            let lon_str = format!("lng_{}", each_mode);
+            let lon_str = format!("lon_{}", each_mode);
             let lat_str = lat_str.as_str();
             let lon_str = lon_str.as_str();
             self.slns.get_mut(lat_str).unwrap().push(f64::NAN);
@@ -806,7 +806,7 @@ impl<S: CapnProtoSender> SolutionTab<S> {
 
         let lat_string = format!("lat_{}", mode_string);
         let lat_string = lat_string.as_str();
-        let lon_string = format!("lng_{}", mode_string);
+        let lon_string = format!("lon_{}", mode_string);
         let lon_string = lon_string.as_str();
 
         let lat_values = &self.slns[&lat_string];
@@ -1319,7 +1319,7 @@ mod tests {
         assert_eq!(solution_tab.table[UTC_SRC], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[SATS_USED], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[LAT], String::from(EMPTY_STR));
-        assert_eq!(solution_tab.table[LNG], String::from(EMPTY_STR));
+        assert_eq!(solution_tab.table[LON], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[HEIGHT], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[HORIZ_ACC], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[VERT_ACC], String::from(EMPTY_STR));
@@ -1331,7 +1331,7 @@ mod tests {
         assert_eq!(solution_tab.table[UTC_SRC], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[SATS_USED], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[LAT], String::from(EMPTY_STR));
-        assert_eq!(solution_tab.table[LNG], String::from(EMPTY_STR));
+        assert_eq!(solution_tab.table[LON], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[HEIGHT], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[HORIZ_ACC], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[VERT_ACC], String::from(EMPTY_STR));
@@ -1356,7 +1356,7 @@ mod tests {
         assert_eq!(solution_tab.table[UTC_SRC], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[SATS_USED], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[LAT], String::from(EMPTY_STR));
-        assert_eq!(solution_tab.table[LNG], String::from(EMPTY_STR));
+        assert_eq!(solution_tab.table[LON], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[HEIGHT], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[HORIZ_ACC], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[VERT_ACC], String::from(EMPTY_STR));
@@ -1368,7 +1368,7 @@ mod tests {
         assert_ne!(solution_tab.table[UTC_SRC], String::from(EMPTY_STR));
         assert_ne!(solution_tab.table[SATS_USED], String::from(EMPTY_STR));
         assert_ne!(solution_tab.table[LAT], String::from(EMPTY_STR));
-        assert_ne!(solution_tab.table[LNG], String::from(EMPTY_STR));
+        assert_ne!(solution_tab.table[LON], String::from(EMPTY_STR));
         assert_ne!(solution_tab.table[HEIGHT], String::from(EMPTY_STR));
         assert_ne!(solution_tab.table[HORIZ_ACC], String::from(EMPTY_STR));
         assert_ne!(solution_tab.table[VERT_ACC], String::from(EMPTY_STR));

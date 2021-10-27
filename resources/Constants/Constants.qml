@@ -450,7 +450,7 @@ QtObject {
         readonly property int padding: 10
         readonly property int spacing: 5
         readonly property int verticalCenterOffset: -1
-        readonly property color borderColor: "#000000"
+        readonly property color borderColor: "#7F7F7F"
         readonly property int borderWidth: 1
     }
 

@@ -56,8 +56,6 @@ Item {
 
                 visible: false
                 radius: 5
-                border.color: Constants.commonLegend.borderColor
-                border.width: Constants.commonLegend.borderWidth
                 x: Constants.trackingSignals.legendTopMargin
                 y: Constants.trackingSignals.legendLeftMargin
                 height: openedHeight
@@ -128,6 +126,15 @@ Item {
 
                     }
                 ]
+
+                Rectangle {
+                    anchors.fill: parent
+                    z: 2
+                    color: "transparent"
+                    radius: parent.radius
+                    border.color: Constants.commonLegend.borderColor
+                    border.width: Constants.commonLegend.borderWidth
+                }
 
                 Rectangle {
                     id: legendHideBar

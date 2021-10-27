@@ -201,6 +201,7 @@ Item {
         GridLayout {
             id: trackingSignalsCheckboxes
 
+            flow: GridLayout.TopToBottom
             columns: Math.floor(parent.width / Constants.trackingSignals.checkBoxPreferredWidth)
             rows: Math.ceil(check_labels.length / trackingSignalsCheckboxes.columns)
             anchors.horizontalCenter: trackingSignalsChart.horizontalCenter
@@ -213,6 +214,7 @@ Item {
 
                 Column {
                     Layout.rowSpan: index === 0 ? trackingSignalsCheckboxes.rows : 1
+
                     CheckBox {
                         checked: true
                         text: modelData

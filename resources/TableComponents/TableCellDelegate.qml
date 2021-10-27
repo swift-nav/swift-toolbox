@@ -1,5 +1,6 @@
 import "../Constants"
 import QtQuick 2.15
+import QtQuick.Controls 2.15
 
 Rectangle {
     property alias font: cellText.font
@@ -8,7 +9,7 @@ Rectangle {
     border.color: Constants.genericTable.borderColor
     color: Constants.genericTable.cellColor
 
-    Text {
+    Label {
         id: cellText
 
         anchors.fill: parent

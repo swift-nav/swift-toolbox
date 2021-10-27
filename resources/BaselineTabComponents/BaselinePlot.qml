@@ -274,7 +274,7 @@ Item {
                             model: Constants.baselinePlot.legendLabels
 
                             Row {
-                                Text {
+                                Label {
                                     id: marker
 
                                     text: "+ "
@@ -285,7 +285,7 @@ Item {
                                     anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                                 }
 
-                                Text {
+                                Label {
                                     id: label
 
                                     text: modelData
@@ -397,11 +397,36 @@ Item {
                         if (center_solution)
                             baselinePlotChart.centerToSolution();
 
-                        if (orig_n_min != baselinePlotPoints.n_min || orig_n_max != baselinePlotPoints.n_max || orig_e_min != baselinePlotPoints.e_min || orig_e_max != baselinePlotPoints.e_max) {
-                            orig_n_min = baselinePlotPoints.n_min;
-                            orig_n_max = baselinePlotPoints.n_max;
-                            orig_e_min = baselinePlotPoints.e_min;
-                            orig_e_max = baselinePlotPoints.e_max;
+                        let hasData = false;
+                        for (let idx in baselinePlotPoints.points) {
+                            if (baselinePlotPoints.points[idx].length > 0) {
+                                hasData = true;
+                                break;
+                            }
+                        }
+                        let new_n_min = Constants.baselinePlot.axesDefaultMin;
+                        let new_n_max = Constants.baselinePlot.axesDefaultMax;
+                        let new_e_min = Constants.baselinePlot.axesDefaultMin;
+                        let new_e_max = Constants.baselinePlot.axesDefaultMax;
+                        baselineZoomAllButton.enabled = hasData;
+                        baselineCenterButton.enabled = hasData;
+                        if (hasData) {
+                            new_n_min = baselinePlotPoints.n_min;
+                            new_n_max = baselinePlotPoints.n_max;
+                            new_e_min = baselinePlotPoints.e_min;
+                            new_e_max = baselinePlotPoints.e_max;
+                        } else {
+                            zoom_all = true;
+                            center_solution = false;
+                            baselineZoomAllButton.checked = true;
+                            baselineCenterButton.checked = false;
+                            baselinePlotChart.resetChartZoom();
+                        }
+                        if (orig_n_min != new_n_min || orig_n_max != new_n_max || orig_e_min != new_e_min || orig_e_max != new_e_max) {
+                            orig_n_min = new_n_min;
+                            orig_n_max = new_n_max;
+                            orig_e_min = new_e_min;
+                            orig_e_max = new_e_max;
                             if (zoom_all)
                                 baselinePlotChart.resetChartZoom();
 

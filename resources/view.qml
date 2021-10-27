@@ -42,71 +42,90 @@ ApplicationWindow {
             Layout.minimumWidth: Constants.sideNavBar.tabBarWidth
         }
 
-        ColumnLayout {
+        StackLayout {
+            id: stack
+
+            function connectionScreen() {
+                stack.currentIndex = 0;
+            }
+
+            function connectionScreenVisible() {
+                return stack.currentIndex == 0;
+            }
+
+            function mainView() {
+                stack.currentIndex = 1;
+            }
+
+            function mainViewVisible() {
+                return stack.currentIndex == 1;
+            }
+
+            currentIndex: 0
             Layout.fillHeight: true
             Layout.fillWidth: true
-            spacing: Constants.topLevelSpacing
 
-            SplitView {
-                orientation: Qt.Vertical
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                Layout.leftMargin: Constants.margins
-                Layout.rightMargin: Constants.margins
-                Layout.alignment: Qt.AlignTop
+            ConnectionScreen {
+            }
 
-                MainTabs {
-                    id: mainTabs
+            ColumnLayout {
+                id: mainView
 
-                    property alias curIndex: sideNavBar.curIndex
+                spacing: Constants.topLevelSpacing
 
-                    SplitView.fillHeight: true
-                    SplitView.fillWidth: true
+                SplitView {
+                    orientation: Qt.Vertical
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
                     Layout.leftMargin: Constants.margins
                     Layout.rightMargin: Constants.margins
+                    Layout.alignment: Qt.AlignTop
+
+                    MainTabs {
+                        id: mainTabs
+
+                        property alias curIndex: sideNavBar.curIndex
+
+                        SplitView.fillHeight: true
+                        SplitView.fillWidth: true
+                        Layout.leftMargin: Constants.margins
+                        Layout.rightMargin: Constants.margins
+                    }
+
+                    ColumnLayout {
+                        SplitView.fillWidth: true
+                        SplitView.preferredHeight: Constants.logPanelPreferredHeight + Constants.loggingBarPreferredHeight
+                        SplitView.minimumHeight: Constants.loggingBarPreferredHeight
+                        spacing: Constants.topLevelSpacing
+
+                        LoggingBar {
+                            id: loggingBar
+
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: Constants.loggingBarPreferredHeight
+                        }
+
+                        LogPanel {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                        }
+
+                    }
+
                 }
 
-                LogPanel {
-                    SplitView.fillWidth: true
-                    SplitView.preferredHeight: Constants.logPanelPreferredHeight
-                }
+                Rectangle {
+                    id: statusBar
 
-            }
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Constants.statusBarPreferredHeight
+                    z: Constants.commonChart.zAboveCharts
 
-            Rectangle {
-                id: loggingBar
+                    StatusBar {
+                        property alias sbpRecording: loggingBar.sbpRecording
+                        property alias title: main.title
+                    }
 
-                Layout.fillWidth: true
-                Layout.preferredHeight: Constants.navBarPreferredHeight
-                z: Constants.commonChart.zAboveCharts
-                visible: false
-
-                LoggingBar {
-                }
-
-            }
-
-            Rectangle {
-                id: navBar
-
-                Layout.fillWidth: true
-                Layout.preferredHeight: Constants.navBarPreferredHeight
-                z: Constants.commonChart.zAboveCharts
-
-                NavBar {
-                }
-
-            }
-
-            Rectangle {
-                id: statusBar
-
-                Layout.fillWidth: true
-                Layout.preferredHeight: Constants.statusBarPreferredHeight
-                z: Constants.commonChart.zAboveCharts
-
-                StatusBar {
-                    property alias title: main.title
                 }
 
             }

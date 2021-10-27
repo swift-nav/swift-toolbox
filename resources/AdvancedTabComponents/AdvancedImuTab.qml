@@ -86,7 +86,7 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                             }
 
-                            Text {
+                            Label {
                                 id: label
 
                                 text: modelData
@@ -189,13 +189,12 @@ Item {
 
             visible: false
             Layout.fillWidth: true
-            Layout.preferredHeight: Constants.navBar.urlBarHeight
+            Layout.preferredHeight: Constants.advancedImu.urlBarHeight
             Layout.alignment: Qt.AlignBottom
 
-            Text {
+            Label {
                 text: Constants.advancedImu.textDataLabels[0]
                 Layout.preferredWidth: Constants.advancedImu.textDataLabelWidth
-                font.pointSize: Constants.mediumPointSize
             }
 
             Rectangle {
@@ -204,7 +203,7 @@ Item {
                 Layout.alignment: Qt.AlignVCenter
                 border.width: Constants.advancedImu.textDataBarBorderWidth
 
-                Text {
+                Label {
                     id: imuTempText
 
                     clip: true
@@ -215,10 +214,9 @@ Item {
 
             }
 
-            Text {
+            Label {
                 text: Constants.advancedImu.textDataLabels[1]
                 Layout.preferredWidth: Constants.advancedImu.textDataLabelWidth
-                font.pointSize: Constants.mediumPointSize
             }
 
             Rectangle {
@@ -227,7 +225,7 @@ Item {
                 Layout.alignment: Qt.AlignVCenter
                 border.width: Constants.advancedImu.textDataBarBorderWidth
 
-                Text {
+                Label {
                     id: imuConfText
 
                     clip: true
@@ -238,10 +236,9 @@ Item {
 
             }
 
-            Text {
+            Label {
                 text: Constants.advancedImu.textDataLabels[2]
                 Layout.preferredWidth: Constants.advancedImu.textDataLabelWidth
-                font.pointSize: Constants.mediumPointSize
             }
 
             Rectangle {
@@ -250,7 +247,7 @@ Item {
                 Layout.alignment: Qt.AlignVCenter
                 border.width: Constants.advancedImu.textDataBarBorderWidth
 
-                Text {
+                Label {
                     id: rmsAccXText
 
                     clip: true
@@ -261,10 +258,9 @@ Item {
 
             }
 
-            Text {
+            Label {
                 text: Constants.advancedImu.textDataLabels[3]
                 Layout.preferredWidth: Constants.advancedImu.textDataLabelWidth
-                font.pointSize: Constants.mediumPointSize
             }
 
             Rectangle {
@@ -273,7 +269,7 @@ Item {
                 Layout.alignment: Qt.AlignVCenter
                 border.width: Constants.advancedImu.textDataBarBorderWidth
 
-                Text {
+                Label {
                     id: rmsAccYText
 
                     clip: true
@@ -284,10 +280,9 @@ Item {
 
             }
 
-            Text {
+            Label {
                 text: Constants.advancedImu.textDataLabels[4]
                 Layout.preferredWidth: Constants.advancedImu.textDataLabelWidth
-                font.pointSize: Constants.mediumPointSize
             }
 
             Rectangle {
@@ -296,7 +291,7 @@ Item {
                 Layout.alignment: Qt.AlignVCenter
                 border.width: Constants.advancedImu.textDataBarBorderWidth
 
-                Text {
+                Label {
                     id: rmsAccZText
 
                     clip: true
@@ -311,7 +306,7 @@ Item {
 
         FusionStatusFlags {
             Layout.fillWidth: true
-            Layout.preferredHeight: Constants.navBar.urlBarHeight
+            Layout.preferredHeight: Constants.advancedImu.urlBarHeight
             Layout.alignment: Qt.AlignBottom
         }
 

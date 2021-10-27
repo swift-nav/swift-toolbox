@@ -8,7 +8,7 @@ import SwiftConsole 1.0
 
 Item {
     property variant columnWidths: [Constants.settingsTable.maximumWidth * 0.4, Constants.settingsTable.maximumWidth * 0.6]
-    property int selectedRow: -1
+    property int selectedRowIdx: -1
     property var rowOffsets: ({
     })
     property bool showExpert: false
@@ -72,7 +72,7 @@ Item {
                     implicitHeight: Constants.genericTable.cellHeight
                     border.color: Constants.genericTable.borderColor
 
-                    Text {
+                    Label {
                         width: parent.width
                         anchors.centerIn: parent
                         horizontalAlignment: Text.AlignHCenter
@@ -81,6 +81,7 @@ Item {
                         elide: Text.ElideRight
                         clip: true
                         font.family: Constants.genericTable.fontFamily
+                        font.pointSize: Constants.largePointSize
                     }
 
                     gradient: Gradient {
@@ -109,11 +110,11 @@ Item {
             Shortcut {
                 sequence: StandardKey.Copy
                 onActivated: {
-                    if (selectedRow != -1) {
-                        textEdit.text = JSON.stringify(tableView.model.getRow(selectedRow));
+                    if (selectedRowIdx != -1) {
+                        textEdit.text = JSON.stringify(tableView.model.getRow(selectedRowIdx));
                         textEdit.selectAll();
                         textEdit.copy();
-                        selectedRow = -1;
+                        selectedRowIdx = -1;
                     }
                 }
             }
@@ -160,13 +161,13 @@ Item {
                         if (item[Constants.settingsTable.tableRightColumnHeader] == "")
                             return Constants.genericTable.borderColor;
 
-                        if (selectedRow == row)
+                        if (selectedRowIdx == row)
                             return Constants.genericTable.cellHighlightedColor;
 
                         return Constants.genericTable.cellColor;
                     }
 
-                    Text {
+                    Label {
                         width: parent.width
                         horizontalAlignment: Text.AlignLeft
                         clip: true
@@ -186,10 +187,10 @@ Item {
                         height: parent.height
                         anchors.centerIn: parent
                         onPressed: {
-                            if (selectedRow == row)
-                                selectedRow = -1;
+                            if (selectedRowIdx == row)
+                                selectedRowIdx = -1;
                             else
-                                selectedRow = row;
+                                selectedRowIdx = row;
                         }
                     }
 

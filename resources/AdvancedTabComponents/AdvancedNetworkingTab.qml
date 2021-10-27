@@ -31,14 +31,12 @@ Item {
                 Layout.fillWidth: true
                 implicitHeight: udpStreamingLabel.implicitHeight
 
-                Text {
+                Label {
                     id: udpStreamingLabel
 
                     anchors.fill: parent
                     padding: Constants.networking.udpStreamingParagraphPadding
                     clip: true
-                    font.family: Constants.genericTable.fontFamily
-                    font.pointSize: Constants.largePointSize
                     wrapMode: Text.Wrap
                     text: {
                         let text = "";

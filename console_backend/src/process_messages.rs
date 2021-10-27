@@ -1,5 +1,4 @@
-use std::io;
-
+use crossbeam::channel::{bounded, Receiver, Sender};
 use log::{debug, error};
 use sbp::{
     link::LinkSource,
@@ -18,18 +17,18 @@ use sbp::{
     },
     SbpMessage,
 };
+use std::io;
 
-use crate::types::UartState;
 use crate::types::{
     BaselineNED, CapnProtoSender, Dops, GpsTime, MsgSender, ObservationMsg, PosLLH, RealtimeDelay,
-    Specan, VelNED,
+    Specan, UartState, VelNED,
 };
-use crate::update_tab;
-use crate::utils::refresh_navbar;
+use crate::utils::refresh_connection_frontend;
 use crate::Tabs;
 use crate::{connection::Connection, shared_state::SharedState};
 use crate::{errors::UNABLE_TO_CLONE_UPDATE_SHARED, settings_tab};
 use crate::{log_panel::handle_log_msg, settings_tab::SettingsTab};
+use crate::{main_tab, update_tab};
 
 pub use messages::{Messages, StopToken};
 
@@ -43,7 +42,8 @@ pub fn process_messages<S>(
 where
     S: CapnProtoSender,
 {
-    refresh_navbar(&mut client_send.clone(), shared_state.clone());
+    shared_state.set_current_connection(conn.name());
+    refresh_connection_frontend(&mut client_send.clone(), shared_state.clone());
 
     let source: LinkSource<Tabs<S>> = LinkSource::new();
     let tabs = Tabs::new(
@@ -180,7 +180,7 @@ where
     });
 
     link.register(|_: MsgObsDepA| {
-        println!("The message type, MsgObsDepA, is not handled in the Tracking->SignalsPlot or Observation tab.");
+        debug!("The message type, MsgObsDepA, is not handled in the Tracking->SignalsPlot or Observation tab.");
     });
 
     link.register(|tabs: &Tabs<S>, msg: MsgOrientEuler| {
@@ -254,6 +254,7 @@ where
         .clone_update_tab_context();
     update_tab_context.set_serial_prompt(conn.is_serial());
     let (update_tab_tx, update_tab_rx) = tabs.update.lock().unwrap().clone_channel();
+    let (logging_stats_tx, logging_stats_rx): (Sender<bool>, Receiver<bool>) = bounded(1);
     let settings_tab = conn.settings_enabled().then(|| {
         SettingsTab::new(
             shared_state.clone(),
@@ -273,6 +274,13 @@ where
                 source.stateless_link(),
                 msg_sender.clone(),
             );
+        });
+        scope.spawn(|_| {
+            main_tab::logging_stats_thread(
+                logging_stats_rx,
+                shared_state.clone(),
+                client_send.clone(),
+            )
         });
 
         if conn.settings_enabled() {
@@ -311,6 +319,9 @@ where
         }
         if let Err(err) = update_tab_tx.send(None) {
             error!("Issue stopping update tab: {}", err);
+        }
+        if let Err(err) = logging_stats_tx.send(false) {
+            error!("Issue stopping logging stats thread: {}", err);
         }
         if let Err(e) = tabs.main.lock().unwrap().end_csv_logging() {
             error!("Issue closing csv file, {}", e);

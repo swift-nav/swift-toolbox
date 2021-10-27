@@ -9,7 +9,6 @@
     <file>MainDialogView.qml</file>
     <file>MainTabs.qml</file>
     <file>SideNavBar.qml</file>
-    <file>NavBar.qml</file>
     <file>LogPanel.qml</file>
     <file>LoggingBar.qml</file>
     <file>StatusBar.qml</file>
@@ -18,6 +17,7 @@
     <file>Constants/qmldir</file>
     <file>Constants/utils.js</file>
     <file>AdvancedTab.qml</file>
+    <file>ConnectionScreen.qml</file>
     <file>AdvancedTabComponents/AdvancedSystemMonitorTab.qml</file>
     <file>AdvancedTabComponents/ThreadStateTable.qml</file>
     <file>AdvancedTabComponents/DeviceMonitor.qml</file>
@@ -38,6 +38,7 @@
     <file>BaselineTabComponents/BaselinePlot.qml</file>
     <file>SettingsTab.qml</file>
     <file>SettingsTabComponents/SettingsTable.qml</file>
+    <file>SettingsTabComponents/SettingsPane.qml</file>
     <file>SettingsTabComponents/InsSettingsPopup.qml</file>
     <file>SolutionPlotCommon/SolutionPlotLoop.js</file>
     <file>BaselineTabComponents/BaselineTable.qml</file>
@@ -62,6 +63,7 @@
     <file>UpdateTabComponents/FirmwareVersion.qml</file>
     <file>images/iconic/arrows_blue.png</file>
     <file>images/iconic/arrows_grey.png</file>
+    <file>images/iconic/play.svg</file>
     <file>images/fontawesome/LICENSE.txt</file>
     <file>images/fontawesome/bars-solid.svg</file>
     <file>images/fontawesome/play-solid.svg</file>
@@ -70,6 +72,8 @@
     <file alias="center-on.svg">images/fontawesome/crosshairs-solid.svg</file>
     <file alias="clear.svg">images/fontawesome/eraser-solid.svg</file>
     <file alias="zoom-all.svg">images/fontawesome/expand-solid.svg</file>
+    <file>images/ConnectionIcon.svg</file>
+    <file>images/LogoBackground.jpg</file>
     <file>images/fontawesome/folder-open-regular.svg</file>
     <file>images/fontawesome/folder-solid.svg</file>
     <file>images/fontawesome/square-solid.svg</file>

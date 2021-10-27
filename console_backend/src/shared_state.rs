@@ -10,7 +10,7 @@ use crate::output::{CsvLogging, CsvSerializer};
 use crate::process_messages::StopToken;
 use crate::settings_tab;
 use crate::solution_tab::LatLonUnits;
-use crate::types::CapnProtoSender;
+use crate::types::{ArcBool, CapnProtoSender};
 use crate::update_tab::UpdateTabUpdate;
 use crate::utils::send_conn_state;
 use crate::watch::{WatchReceiver, Watched};
@@ -101,9 +101,13 @@ impl SharedState {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).log_panel.log_level.clone()
     }
-    pub fn sbp_logging(&self) -> SbpLogging {
+    pub fn sbp_logging(&self) -> bool {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).logging_bar.sbp_logging.clone()
+        (*shared_data).logging_bar.sbp_logging
+    }
+    pub fn sbp_logging_format(&self) -> SbpLogging {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).logging_bar.sbp_logging_format.clone()
     }
     pub fn csv_logging(&self) -> CsvLogging {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
@@ -122,9 +126,13 @@ impl SharedState {
         };
         (*shared_data).logging_bar.logging_directory = directory;
     }
-    pub fn set_sbp_logging(&self, logging: SbpLogging) {
+    pub fn set_sbp_logging(&self, running: bool) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).logging_bar.sbp_logging = logging;
+        (*shared_data).logging_bar.sbp_logging = running;
+    }
+    pub fn set_sbp_logging_format(&self, logging: SbpLogging) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).logging_bar.sbp_logging_format = logging;
     }
     pub fn set_csv_logging(&self, logging: CsvLogging) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
@@ -329,6 +337,14 @@ impl SharedState {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         shared_data.advanced_networking_update.take()
     }
+    pub fn set_sbp_logging_stats_state(&self, update: SbpLoggingStatsState) {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.sbp_logging_stats_state = Some(update);
+    }
+    pub fn sbp_logging_stats_state(&self) -> Option<SbpLoggingStatsState> {
+        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        shared_data.sbp_logging_stats_state.take()
+    }
     pub fn auto_survey_requested(&self) -> bool {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).auto_survey_data.requested
@@ -339,6 +355,10 @@ impl SharedState {
         (*shared_data).auto_survey_data.lon = Some(lon);
         (*shared_data).auto_survey_data.alt = Some(alt);
         (*shared_data).auto_survey_data.requested = false;
+    }
+    pub fn log_to_std(&self) -> ArcBool {
+        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        (*shared_data).log_to_std.clone()
     }
 }
 
@@ -384,6 +404,8 @@ pub struct SharedStateInner {
     pub(crate) reset_device: bool,
     pub(crate) advanced_networking_update: Option<AdvancedNetworkingState>,
     pub(crate) auto_survey_data: AutoSurveyData,
+    pub(crate) sbp_logging_stats_state: Option<SbpLoggingStatsState>,
+    pub(crate) log_to_std: ArcBool,
 }
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
@@ -409,6 +431,8 @@ impl SharedStateInner {
             reset_device: false,
             advanced_networking_update: None,
             auto_survey_data: AutoSurveyData::new(),
+            sbp_logging_stats_state: None,
+            log_to_std: ArcBool::new_with(true),
         }
     }
 }
@@ -432,6 +456,11 @@ impl StatusBarState {
 }
 
 #[derive(Debug, Default)]
+pub struct SbpLoggingStatsState {
+    pub sbp_log_filepath: Option<PathBuf>,
+}
+
+#[derive(Debug, Default)]
 pub struct AdvancedNetworkingState {
     pub ip_address: Option<String>,
     pub port: Option<u16>,
@@ -443,7 +472,8 @@ pub struct AdvancedNetworkingState {
 
 #[derive(Debug)]
 pub struct LoggingBarState {
-    pub sbp_logging: SbpLogging,
+    pub sbp_logging: bool,
+    pub sbp_logging_format: SbpLogging,
     pub csv_logging: CsvLogging,
     pub logging_directory: PathBuf,
 }
@@ -456,7 +486,8 @@ impl LoggingBarState {
             LOG_DIRECTORY.path()
         };
         LoggingBarState {
-            sbp_logging: SbpLogging::OFF,
+            sbp_logging: false,
+            sbp_logging_format: SbpLogging::SBP_JSON,
             csv_logging: CsvLogging::OFF,
             logging_directory,
         }

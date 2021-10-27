@@ -1,5 +1,5 @@
 use capnp::message::Builder;
-
+use log::error;
 use sbp::messages::{
     navigation::{MsgAgeCorrections, MsgPosLlhCov, MsgUtcTime},
     orientation::{MsgAngularRate, MsgOrientEuler},
@@ -165,11 +165,11 @@ impl<S: CapnProtoSender> SolutionTab<S> {
             modes: Deque::new(PLOT_HISTORY_MAX),
             mode_strings: vec![
                 GnssModes::Spp.to_string(),
+                GnssModes::Sbas.to_string(),
                 GnssModes::Dgnss.to_string(),
                 GnssModes::Float.to_string(),
                 GnssModes::Fixed.to_string(),
                 GnssModes::Dr.to_string(),
-                GnssModes::Sbas.to_string(),
             ],
             nsec: Some(0),
             pending_draw_modes: vec![],
@@ -360,7 +360,7 @@ impl<S: CapnProtoSender> SolutionTab<S> {
                     flags: vel_ned_fields.flags,
                     num_signals: vel_ned_fields.n_sats,
                 }) {
-                    eprintln!("Unable to to write to vel log, error {}.", err);
+                    error!("Unable to to write to vel log, error {}.", err);
                 }
             }
         }
@@ -532,7 +532,7 @@ impl<S: CapnProtoSender> SolutionTab<S> {
                     n_sats: pos_llh_fields.n_sats,
                     flags: pos_llh_fields.flags,
                 }) {
-                    eprintln!("Unable to to write to pos llh log, error {}.", err);
+                    error!("Unable to to write to pos llh log, error {}.", err);
                 }
             }
         }

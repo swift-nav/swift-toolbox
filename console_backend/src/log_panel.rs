@@ -6,7 +6,8 @@ use capnp::message::Builder;
 use crate::common_constants as cc;
 use crate::constants::LOG_WRITER_BUFFER_MESSAGE_COUNT;
 use crate::errors::CONSOLE_LOG_JSON_TO_STRING_FAILURE;
-use crate::types::{CapnProtoSender, ClientSender};
+use crate::shared_state::SharedState;
+use crate::types::{ArcBool, CapnProtoSender, ClientSender};
 use crate::utils::serialize_capnproto_builder;
 
 use async_logger::Writer;
@@ -43,7 +44,7 @@ pub fn splitable_log_formatter(record: &Record) -> String {
     } else {
         record.level().as_str()
     };
-    let timestamp = Local::now().format("%Y-%m-%dT%H:%M:%S");
+    let timestamp = Local::now().format("%b %d %Y %H:%M:%S");
     let mut msg = record.args().to_string();
     msg.retain(|c| c != '\0');
     let msg_packet = ConsoleLogPacket {
@@ -96,8 +97,8 @@ pub fn handle_log_msg(msg: MsgLog) {
     }
 }
 
-pub fn setup_logging(client_sender: ClientSender, debug: bool) {
-    let log_panel = LogPanelWriter::new(client_sender, debug);
+pub fn setup_logging(client_sender: ClientSender, shared_state: SharedState) {
+    let log_panel = LogPanelWriter::new(client_sender, shared_state);
     let logger = Logger::builder()
         .buf_size(LOG_WRITER_BUFFER_MESSAGE_COUNT)
         .formatter(splitable_log_formatter)
@@ -106,19 +107,22 @@ pub fn setup_logging(client_sender: ClientSender, debug: bool) {
         .unwrap();
 
     log::set_boxed_logger(Box::new(logger)).expect("Failed to set logger");
+    log::set_max_level(LevelFilter::Debug);
 }
 
 #[derive(Debug)]
 pub struct LogPanelWriter<S: CapnProtoSender> {
     pub client_sender: S,
-    pub debug: bool,
+    shared_state: SharedState,
+    pub log_to_std: ArcBool,
 }
 
 impl<S: CapnProtoSender> LogPanelWriter<S> {
-    pub fn new(client_sender: S, debug: bool) -> LogPanelWriter<S> {
+    pub fn new(client_sender: S, shared_state: SharedState) -> LogPanelWriter<S> {
         LogPanelWriter {
             client_sender,
-            debug,
+            log_to_std: shared_state.log_to_std(),
+            shared_state,
         }
     }
 }
@@ -132,16 +136,19 @@ impl<S: CapnProtoSender> Writer<Box<String>> for LogPanelWriter<S> {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
-        let log_update = msg.init_log_append();
+        let mut log_update = msg.init_log_append();
+        log_update.set_log_level(&self.shared_state.log_level().to_string());
         let mut entries = log_update.init_entries(slice.len() as u32);
 
         for (idx, item) in slice.iter().enumerate() {
-            if self.debug {
-                eprintln!("{}", item);
+            let packet: ConsoleLogPacket =
+                serde_json::from_str(item).expect(CONSOLE_LOG_JSON_TO_STRING_FAILURE);
+            if self.log_to_std.get() {
+                eprintln!("{}\t{}\t{}", packet.timestamp, packet.level, packet.msg);
             }
             let mut entry = entries.reborrow().get(idx as u32);
 
-            entry.set_line(&**item);
+            entry.set_line(item);
         }
 
         self.client_sender

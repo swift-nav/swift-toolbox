@@ -17,10 +17,8 @@ Item {
             Layout.fillWidth: true
             Layout.preferredHeight: Constants.systemMonitor.textHeight
 
-            Text {
+            Label {
                 text: "Device Monitor"
-                font.family: Constants.genericTable.fontFamily
-                font.pointSize: Constants.largePointSize
             }
 
         }
@@ -40,12 +38,10 @@ Item {
                     Layout.preferredHeight: Constants.systemMonitor.textHeight
                     Layout.alignment: Qt.AlignRight
 
-                    Text {
+                    Label {
                         anchors.fill: parent
                         anchors.margins: Constants.systemMonitor.obsTextMargins
                         text: Constants.systemMonitor.zynqTempLabel + ": " + zynqTemp.toFixed(1) + Constants.systemMonitor.tempUnits
-                        font.family: Constants.genericTable.fontFamily
-                        font.pointSize: Constants.largePointSize
                         horizontalAlignment: Text.AlignRight
                     }
 
@@ -55,12 +51,10 @@ Item {
                     Layout.fillWidth: true
                     Layout.preferredHeight: Constants.systemMonitor.textHeight
 
-                    Text {
+                    Label {
                         anchors.fill: parent
                         anchors.margins: Constants.systemMonitor.obsTextMargins
                         text: Constants.systemMonitor.feTempLabel + ": " + feTemp.toFixed(1) + Constants.systemMonitor.tempUnits
-                        font.family: Constants.genericTable.fontFamily
-                        font.pointSize: Constants.largePointSize
                         horizontalAlignment: Text.AlignRight
                     }
 

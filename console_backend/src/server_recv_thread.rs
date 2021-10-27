@@ -12,11 +12,11 @@ use crate::shared_state::{AdvancedNetworkingState, SharedState};
 use crate::solution_tab::LatLonUnits;
 use crate::types::{ClientSender, FlowControl, RealtimeDelay};
 use crate::update_tab::UpdateTabUpdate;
-use crate::utils::refresh_navbar;
+use crate::utils::refresh_connection_frontend;
 use capnp::serialize;
 use chrono::{DateTime, Utc};
 use crossbeam::channel;
-use log::{error, info};
+use log::{debug, error};
 use std::{io::Cursor, path::PathBuf, str::FromStr, thread};
 pub type Error = anyhow::Error;
 pub type Result<T> = anyhow::Result<T>;
@@ -49,7 +49,7 @@ pub fn server_recv_thread(
             };
             match message {
                 m::message::SerialRefreshRequest(Ok(_)) => {
-                    refresh_navbar(&mut client_send.clone(), shared_state.clone());
+                    refresh_connection_frontend(&mut client_send.clone(), shared_state.clone());
                 }
                 m::message::DisconnectRequest(Ok(_)) => {
                     conn_manager.disconnect();
@@ -105,11 +105,12 @@ pub fn server_recv_thread(
                         shared_state.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
                     (*shared_data).logging_bar.csv_logging =
                         CsvLogging::from(cv_in.get_csv_logging());
-                    let sbp_logging = cv_in
-                        .get_sbp_logging()
+                    (*shared_data).logging_bar.sbp_logging = cv_in.get_sbp_logging();
+                    let sbp_logging_format = cv_in
+                        .get_sbp_logging_format()
                         .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
-                    (*shared_data).logging_bar.sbp_logging =
-                        SbpLogging::from_str(sbp_logging).expect(CONVERT_TO_STR_FAILURE);
+                    (*shared_data).logging_bar.sbp_logging_format =
+                        SbpLogging::from_str(sbp_logging_format).expect(CONVERT_TO_STR_FAILURE);
                 }
                 m::message::LogLevelFront(Ok(cv_in)) => {
                     let shared_state = shared_state.clone();
@@ -117,9 +118,7 @@ pub fn server_recv_thread(
                         .get_log_level()
                         .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
                     let log_level = LogLevel::from_str(log_level).expect(CONVERT_TO_STR_FAILURE);
-                    info!("Log Level: {}", log_level);
                     shared_state.set_log_level(log_level);
-                    refresh_navbar(&mut client_send.clone(), shared_state.clone());
                 }
                 m::message::SolutionVelocityStatusFront(Ok(cv_in)) => {
                     let unit = cv_in
@@ -335,7 +334,7 @@ pub fn server_recv_thread(
                 }
             }
         }
-        eprintln!("client recv loop shutdown");
+        debug!("client recv loop shutdown");
         client_send.connected.set(false);
     });
 }

@@ -205,4 +205,11 @@ ColumnLayout {
 
     }
 
+    Rectangle {
+        height: 1
+        width: innerTable.width - 1
+        color: "transparent"
+        border.color: Constants.genericTable.borderColor
+    }
+
 }

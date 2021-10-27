@@ -15,7 +15,7 @@ ColumnLayout {
         "pointSize": Constants.largePointSize
     })
     property variant avgWidth: parent.width / 8
-    property variant columnWidths: [parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8]
+    property variant columnWidths: [parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 16, 3 * parent.width / 16]
     property variant columnNames: ["PRN", "Pseudorange (m)", "Carrier Phase (cycles)", "C/N0 (dB-Hz)", "Meas. Doppler (Hz)", "Comp. Doppler (Hz)", "Lock", "Flags"]
     property real mouse_x: 0
 
@@ -112,55 +112,61 @@ ColumnLayout {
 
     }
 
-    Item {
-        id: headerItem
+    HorizontalHeaderView {
+        id: horizontalHeader
 
-        Layout.fillWidth: true
-        implicitHeight: header.implicitHeight
-        clip: true
+        interactive: false
+        syncView: innerTable
+        z: Constants.genericTable.headerZOffset
 
-        Row {
-            id: header
+        delegate: Rectangle {
+            implicitWidth: columnWidths[index]
+            implicitHeight: Constants.genericTable.cellHeight
+            border.color: Constants.genericTable.borderColor
 
-            Layout.fillWidth: true
-            x: -innerTable.contentX
-            z: 1
-            spacing: innerTable.columnSpacing
+            Label {
+                width: parent.width
+                anchors.centerIn: parent
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                text: columnNames[index]
+                elide: Text.ElideRight
+                clip: true
+                font.family: Constants.genericTable.fontFamily
+                font.pointSize: Constants.largePointSize
+            }
 
-            Repeater {
-                id: headerRepeater
-
-                model: observationTableModel ? observationTableModel.columnCount() : 0
-
-                Rectangle {
-                    implicitWidth: columnWidths[index]
-                    implicitHeight: Constants.genericTable.cellHeight
-                    border.color: Constants.genericTable.borderColor
-
-                    Text {
-                        width: parent.width
-                        anchors.centerIn: parent
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        text: columnNames[index]
-                        elide: Text.ElideRight
-                        clip: true
-                        font.family: Constants.genericTable.fontFamily
-                    }
-
-                    gradient: Gradient {
-                        GradientStop {
-                            position: 0
-                            color: Constants.genericTable.cellColor
+            MouseArea {
+                width: Constants.genericTable.mouseAreaResizeWidth
+                height: parent.height
+                anchors.right: parent.right
+                cursorShape: Qt.SizeHorCursor
+                onPressed: {
+                    mouse_x = mouseX;
+                }
+                onPositionChanged: {
+                    if (pressed) {
+                        var delta_x = (mouseX - mouse_x);
+                        var next_idx = (index + 1) % 8;
+                        var min_width = innerTable.width / 12;
+                        if (columnWidths[index] + delta_x > min_width && columnWidths[next_idx] - delta_x > min_width) {
+                            columnWidths[index] += delta_x;
+                            columnWidths[next_idx] -= delta_x;
                         }
-
-                        GradientStop {
-                            position: 1
-                            color: Constants.genericTable.gradientColor
-                        }
-
+                        innerTable.forceLayout();
                     }
+                }
+            }
 
+            gradient: Gradient {
+                GradientStop {
+                    position: 0
+                    color: Constants.genericTable.cellColor
+                }
+
+                GradientStop {
+                    position: 1
+                    color: Constants.genericTable.gradientColor
                 }
 
             }
@@ -169,47 +175,32 @@ ColumnLayout {
 
     }
 
-    Rectangle {
-        id: tableRect
+    TableView {
+        id: innerTable
 
-        height: 2000 // This is the only way I've been able to make it grow to take up the whole space
         Layout.fillHeight: true
-        width: observationTable.width
         Layout.fillWidth: true
-        color: "white"
-        border.color: "#dcdcdc"
-        border.width: 1
+        columnSpacing: -1
+        rowSpacing: -1
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        columnWidthProvider: function(column) {
+            return columnWidths[column];
+        }
+        onWidthChanged: {
+            forceLayout();
+        }
+        model: observationTableModel
 
-        TableView {
-            id: innerTable
+        delegate: TableCellDelegate {
+            implicitHeight: Constants.genericTable.cellHeight
+            font: tableFont
+        }
 
-            anchors.top: tableRect.top
-            Layout.fillHeight: true
-            Layout.fillWidth: true
-            width: observationTable.width
-            height: tableRect.height
-            rowSpacing: -1
-            clip: true
-            boundsBehavior: Flickable.StopAtBounds
-            columnWidthProvider: function(column) {
-                return columnWidths[column];
-            }
-            onWidthChanged: {
-                forceLayout();
-            }
-            model: observationTableModel
+        ScrollBar.horizontal: ScrollBar {
+        }
 
-            delegate: TableCellDelegate {
-                implicitHeight: Constants.genericTable.cellHeight
-                font: tableFont
-            }
-
-            ScrollBar.horizontal: ScrollBar {
-            }
-
-            ScrollBar.vertical: ScrollBar {
-            }
-
+        ScrollBar.vertical: ScrollBar {
         }
 
     }

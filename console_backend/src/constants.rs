@@ -121,21 +121,21 @@ pub(crate) const DR_COLOR: &str = "#000000";
 pub(crate) const SBAS_COLOR: &str = "#00FF00";
 
 pub(crate) const LAT_SPP: &str = "lat_SPP";
-pub(crate) const LNG_SPP: &str = "lng_SPP";
+pub(crate) const LON_SPP: &str = "lon_SPP";
 pub(crate) const LAT_DGNSS: &str = "lat_DGPS";
-pub(crate) const LNG_DGNSS: &str = "lng_DGPS";
+pub(crate) const LON_DGNSS: &str = "lon_DGPS";
 pub(crate) const LAT_FLOAT: &str = "lat_Float RTK";
-pub(crate) const LNG_FLOAT: &str = "lng_Float RTK";
+pub(crate) const LON_FLOAT: &str = "lon_Float RTK";
 pub(crate) const LAT_FIXED: &str = "lat_Fixed RTK";
-pub(crate) const LNG_FIXED: &str = "lng_Fixed RTK";
+pub(crate) const LON_FIXED: &str = "lon_Fixed RTK";
 pub(crate) const LAT_DR: &str = "lat_Dead Reckoning";
-pub(crate) const LNG_DR: &str = "lng_Dead Reckoning";
+pub(crate) const LON_DR: &str = "lon_Dead Reckoning";
 pub(crate) const LAT_SBAS: &str = "lat_SBAS";
-pub(crate) const LNG_SBAS: &str = "lng_SBAS";
+pub(crate) const LON_SBAS: &str = "lon_SBAS";
 
 pub(crate) const SOLUTION_DATA_KEYS: &[&str] = &[
-    LAT_SPP, LNG_SPP, LAT_DGNSS, LNG_DGNSS, LAT_FLOAT, LNG_FLOAT, LAT_FIXED, LNG_FIXED, LAT_DR,
-    LNG_DR, LAT_SBAS, LNG_SBAS,
+    LAT_SPP, LON_SPP, LAT_DGNSS, LON_DGNSS, LAT_FLOAT, LON_FLOAT, LAT_FIXED, LON_FIXED, LAT_DR,
+    LON_DR, LAT_SBAS, LON_SBAS,
 ];
 
 pub(crate) const FACTORY_DEFAULT: &str = "Factory Default";
@@ -150,7 +150,7 @@ pub(crate) const UTC_TIME: &str = "UTC Time";
 pub(crate) const UTC_SRC: &str = "UTC Src";
 pub(crate) const SATS_USED: &str = "Sats Used";
 pub(crate) const LAT: &str = "Lat";
-pub(crate) const LNG: &str = "Lng";
+pub(crate) const LON: &str = "Lon";
 pub(crate) const HEIGHT: &str = "Height";
 pub(crate) const HORIZ_ACC: &str = "Horiz Acc";
 pub(crate) const VERT_ACC: &str = "Vert Acc";
@@ -193,7 +193,7 @@ pub(crate) const SOLUTION_TABLE_KEYS: &[&str] = &[
     UTC_SRC,
     SATS_USED,
     LAT,
-    LNG,
+    LON,
     HEIGHT,
     HORIZ_ACC,
     VERT_ACC,

@@ -506,7 +506,6 @@ QtObject {
         readonly property string yAxisTitleText: "dB-Hz"
         readonly property string xAxisTitleText: "seconds"
         readonly property int xAxisMinOffsetFromMaxSeconds: 100
-        readonly property int checkBoxVerticalPadding: 0
         readonly property int checkBoxPreferredWidth: 100
         readonly property int snrThreshold: 15
         readonly property int yAxisMax: 60

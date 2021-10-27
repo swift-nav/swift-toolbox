@@ -25,12 +25,6 @@ Item {
     }
 
     GroupBox {
-
-         label: Label {
-             text: "Fusion Status"
-             font.pointSize: 14
-         }
-
         GridLayout {
             id: insStatusRow
 
@@ -38,6 +32,7 @@ Item {
 
             Label {
                 text: Constants.advancedImu.insStatusLabels[0]
+                font.pointSize: 12
             }
 
             UnknownStatus {
@@ -62,6 +57,7 @@ Item {
 
             Label {
                 text: Constants.advancedImu.insStatusLabels[1]
+                font.pointSize: 12
             }
 
             UnknownStatus {
@@ -86,6 +82,7 @@ Item {
 
             Label {
                 text: Constants.advancedImu.insStatusLabels[2]
+                font.pointSize: 12
             }
 
             UnknownStatus {
@@ -110,6 +107,7 @@ Item {
 
             Label {
                 text: Constants.advancedImu.insStatusLabels[3]
+                font.pointSize: 12
             }
 
             UnknownStatus {
@@ -134,6 +132,7 @@ Item {
 
             Label {
                 text: Constants.advancedImu.insStatusLabels[4]
+                font.pointSize: 12
             }
 
             UnknownStatus {
@@ -158,6 +157,7 @@ Item {
 
             Label {
                 text: Constants.advancedImu.insStatusLabels[5]
+                font.pointSize: 12
             }
 
             UnknownStatus {
@@ -302,6 +302,11 @@ Item {
                 }
             }
 
+        }
+
+        label: Label {
+            text: "Fusion Status"
+            font.pointSize: 14
         }
 
     }

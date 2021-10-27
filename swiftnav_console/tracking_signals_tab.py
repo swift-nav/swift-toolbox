@@ -20,33 +20,38 @@ TRACKING_SIGNALS_TAB: Dict[str, Any] = {
 
 class TrackingSignalsPoints(QObject):
 
-    _check_labels: List[str] = []
-    _all_series: List[QtCharts.QXYSeries] = []
+    _num_labels: int = 0
     _xaxis_min: float = 0.0
     _xaxis_max: float = 0.0
+    _check_labels: List[str] = []
+    _all_series: List[QtCharts.QXYSeries] = []
+    num_labels_changed = Signal(int, arguments="num_labels")
+    xaxis_min_changed = Signal()
+    xaxis_max_changed = Signal()
+    check_labels_changed = Signal()
     all_series_changed = Signal()
 
     def get_num_labels(self) -> int:  # pylint:disable=no-self-use
         return len(TRACKING_SIGNALS_TAB[Keys.LABELS])
 
-    num_labels = Property(int, get_num_labels)  # type: ignore
+    num_labels = Property(int, get_num_labels, notify=num_labels_changed)  # type: ignore
 
     def get_xaxis_min(self) -> float:
         """Getter for _xaxis_min."""
         return self._xaxis_min
 
-    xaxis_min = Property(float, get_xaxis_min)  # type: ignore
+    xaxis_min = Property(float, get_xaxis_min, notify=xaxis_min_changed)  # type: ignore
 
     def get_xaxis_max(self) -> float:
         """Getter for _xaxis_max."""
         return self._xaxis_max
 
-    xaxis_max = Property(float, get_xaxis_max)  # type: ignore
+    xaxis_max = Property(float, get_xaxis_max, notify=xaxis_max_changed)  # type: ignore
 
     def get_check_labels(self) -> List[str]:
         return self._check_labels
 
-    check_labels = Property(QTKeys.QVARIANTLIST, get_check_labels)  # type: ignore
+    check_labels = Property(QTKeys.QVARIANTLIST, get_check_labels, notify=check_labels_changed)  # type: ignore
 
     def get_all_series(self) -> List[QtCharts.QXYSeries]:
         return self._all_series
@@ -66,6 +71,10 @@ class TrackingSignalsPoints(QObject):
 
     @Slot(float, bool)  # type: ignore
     def fill_all_series(self, line_width, useOpenGL) -> None:
+        cur_num_labels = len(TRACKING_SIGNALS_TAB[Keys.LABELS])
+        if self._num_labels != cur_num_labels:
+            self._num_labels = cur_num_labels
+            self.num_labels_changed.emit(cur_num_labels)  # type: ignore
         points_for_all_series = TRACKING_SIGNALS_TAB[Keys.POINTS]
         if len(points_for_all_series) == 0:
             return
@@ -73,8 +82,11 @@ class TrackingSignalsPoints(QObject):
         labels = TRACKING_SIGNALS_TAB[Keys.LABELS]
         colors = TRACKING_SIGNALS_TAB[Keys.COLORS]
         self._check_labels = TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS]
+        self.check_labels_changed.emit()  # type: ignore
         self._xaxis_min = points_for_all_series[0][-1].x() + TRACKING_SIGNALS_TAB[Keys.XMIN_OFFSET]
+        self.xaxis_min_changed.emit()  # type: ignore
         self._xaxis_max = points_for_all_series[0][-1].x()
+        self.xaxis_max_changed.emit()  # type: ignore
         for idx, series_points in enumerate(points_for_all_series):
             series = None
             try:

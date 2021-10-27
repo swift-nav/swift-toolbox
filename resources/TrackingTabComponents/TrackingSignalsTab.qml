@@ -25,9 +25,7 @@ Item {
     ColumnLayout {
         id: trackingSignalsArea
 
-        width: parent.width
-        height: parent.height
-        spacing: 0
+        anchors.fill: parent
 
         ChartView {
             id: trackingSignalsChart
@@ -38,8 +36,6 @@ Item {
             visible: false
             title: Constants.trackingSignals.title
             titleColor: Constants.trackingSignals.titleColor
-            //width: parent.width
-            //height: parent.height - trackingSignalsCheckboxes.height
             backgroundColor: Constants.commonChart.backgroundColor
             plotAreaColor: Constants.commonChart.areaColor
             legend.visible: false

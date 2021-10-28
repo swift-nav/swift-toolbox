@@ -19,7 +19,7 @@ Item {
         contentHeight: Constants.tabBarHeight
 
         Repeater {
-            model: ["System Monitor", "IMU", "Magnetometer", "Networking", "Spectrum Analyzer"]
+            model: ["System Monitor", "IMU", "Magnetometer", "Networking", "Spectrum Analyzer", "INS"]
 
             TabButton {
                 text: modelData
@@ -60,6 +60,9 @@ Item {
             }
 
             AdvancedTabComponents.AdvancedSpectrumAnalyzerTab {
+            }
+
+            AdvancedTabComponents.AdvancedInsTab {
             }
 
         }

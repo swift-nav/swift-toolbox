@@ -304,12 +304,6 @@ Item {
 
         }
 
-        FusionStatusFlags {
-            Layout.fillWidth: true
-            Layout.preferredHeight: Constants.advancedImu.urlBarHeight
-            Layout.alignment: Qt.AlignBottom
-        }
-
     }
 
 }

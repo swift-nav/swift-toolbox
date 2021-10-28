@@ -1,10 +1,13 @@
 import "../Constants"
 import QtGraphicalEffects 1.15
 import QtQuick 2.5
+import QtQuick.Layouts 1.15
 
 Item {
     Image {
-        anchors.centerIn: parent
+        id: warningStatusImage
+
+        anchors.verticalCenter: parent.verticalCenter
         width: Constants.advancedImu.insStatusImageWidth
         height: Constants.advancedImu.insStatusImageWidth
         smooth: true
@@ -18,6 +21,16 @@ Item {
             antialiasing: true
         }
 
+    }
+
+    Text {
+        id: label
+
+        text: "WARNING"
+        anchors.left: warningStatusImage.right
+        anchors.leftMargin: Constants.fusionStatusFlags.labelMargin
+        anchors.verticalCenter: warningStatusImage.verticalCenter
+        font.pointSize: Constants.mediumPointSize
     }
 
 }

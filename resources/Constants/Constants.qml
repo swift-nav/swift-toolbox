@@ -39,6 +39,7 @@ QtObject {
     property QtObject icons
     property QtObject trackingSkyPlot
     property QtObject networking
+    property QtObject fusionStatusFlags
     readonly property int staticTimerIntervalRate: 5 // 5 Hz
     readonly property int staticTableTimerIntervalRate: 10 // 10 Hz
     readonly property int staticTimerSlowIntervalRate: 2 // 2 Hz
@@ -177,6 +178,15 @@ QtObject {
         readonly property int messageBroadcasterTextInputHeight: 20
         readonly property int messageBroadcasterIntValidatorUInt16Min: 0
         readonly property int messageBroadcasterIntValidatorUInt16Max: 65535
+    }
+
+    fusionStatusFlags: QtObject {
+        readonly property int spacing: 20
+        readonly property int fusionStatusWidth: 80
+        readonly property int labelMargin: 5
+        readonly property int labelFontSize: 14
+        readonly property int titleFontSize: 16
+        readonly property string title: "Fusion Status"
     }
 
     genericTable: QtObject {

@@ -16,8 +16,6 @@ Item {
     property string last_nhc: "UNKNOWN"
     property string last_zerovel: "UNKNOWN"
 
-    width: parent.width
-    height: parent.height
     Component.onCompleted: {
     }
 
@@ -25,162 +23,162 @@ Item {
         id: fusionStatusFlagsData
     }
 
-    ColumnLayout {
-        id: fusionStatusFlagsArea
+    GroupBox {
+        anchors.centerIn: parent
 
-        width: parent.width
-        height: parent.height
+        GridLayout {
+            id: fusionStatusFlagsArea
 
-        RowLayout {
-            id: insStatusRow
-
-            visible: false
-            Layout.fillWidth: true
-            Layout.preferredHeight: Constants.advancedImu.urlBarHeight
-            Layout.alignment: Qt.AlignBottom
+            columns: 2
 
             Label {
                 text: Constants.advancedImu.insStatusLabels[0]
+                font.pointSize: Constants.fusionStatusFlags.labelFontSize
             }
 
             UnknownStatus {
                 id: gnssposUnknown
 
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             WarningStatus {
                 id: gnssposWarning
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             OkStatus {
                 id: gnssposOk
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             Label {
                 text: Constants.advancedImu.insStatusLabels[1]
+                font.pointSize: Constants.fusionStatusFlags.labelFontSize
             }
 
             UnknownStatus {
                 id: gnssvelUnknown
 
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             WarningStatus {
                 id: gnssvelWarning
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             OkStatus {
                 id: gnssvelOk
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             Label {
                 text: Constants.advancedImu.insStatusLabels[2]
+                font.pointSize: Constants.fusionStatusFlags.labelFontSize
             }
 
             UnknownStatus {
                 id: wheelticksUnknown
 
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             WarningStatus {
                 id: wheelticksWarning
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             OkStatus {
                 id: wheelticksOk
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             Label {
                 text: Constants.advancedImu.insStatusLabels[3]
+                font.pointSize: Constants.fusionStatusFlags.labelFontSize
             }
 
             UnknownStatus {
                 id: speedUnknown
 
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             WarningStatus {
                 id: speedWarning
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             OkStatus {
                 id: speedOk
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             Label {
                 text: Constants.advancedImu.insStatusLabels[4]
+                font.pointSize: Constants.fusionStatusFlags.labelFontSize
             }
 
             UnknownStatus {
                 id: nhcUnknown
 
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             WarningStatus {
                 id: nhcWarning
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             OkStatus {
                 id: nhcOk
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             Label {
                 text: Constants.advancedImu.insStatusLabels[5]
+                font.pointSize: Constants.fusionStatusFlags.labelFontSize
             }
 
             UnknownStatus {
                 id: zerovelUnknown
 
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             WarningStatus {
                 id: zerovelWarning
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             OkStatus {
                 id: zerovelOk
 
                 visible: false
-                Layout.preferredWidth: Constants.advancedImu.insStatusImageWidth
+                Layout.preferredWidth: Constants.fusionStatusFlags.fusionStatusWidth
             }
 
             Item {
@@ -199,7 +197,7 @@ Item {
                     if (!fusionStatusFlagsData.gnsspos)
                         return ;
 
-                    insStatusRow.visible = true;
+                    fusionStatusFlagsArea.visible = true;
                     var gnsspos = fusionStatusFlagsData.gnsspos;
                     if (gnsspos != last_gnsspos) {
                         if (gnsspos == "UNKNOWN") {
@@ -305,6 +303,11 @@ Item {
                 }
             }
 
+        }
+
+        label: Label {
+            text: Constants.fusionStatusFlags.title
+            font.pointSize: Constants.fusionStatusFlags.titleFontSize
         }
 
     }

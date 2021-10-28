@@ -11,7 +11,8 @@ use crate::utils::serialize_capnproto_builder;
 
 #[derive(Clone, Debug)]
 pub struct ObservationTableRow {
-    pub prn: String,
+    pub sat: i16,
+    pub code: String,
     pub pseudo_range: f64,     // (m)
     pub carrier_phase: f64,    // (cycles)
     pub cn0: f64,              // (dB-Hz)
@@ -24,7 +25,8 @@ pub struct ObservationTableRow {
 impl ObservationTableRow {
     pub fn new() -> ObservationTableRow {
         ObservationTableRow {
-            prn: "".to_string(),
+            sat: 0,
+            code: "".to_string(),
             pseudo_range: 0.0,
             carrier_phase: 0.0,
             cn0: 0.0,
@@ -94,6 +96,7 @@ impl ObservationTable {
         self.old_carrier_phase = self.new_carrier_phase.clone();
         self.incoming_obs.clear();
         self.new_carrier_phase.clear();
+        self.rows.clear();
     }
 
     pub fn obs_check(&mut self, tow: f64, wn: u16, obs_total: u8, obs_count: u8) -> bool {
@@ -222,7 +225,8 @@ impl<S: CapnProtoSender> ObservationTab<S> {
             };
 
             let mut row = ObservationTableRow::new();
-            row.prn = format!("{} ({})", obs_fields.sat, obs_fields.code).to_string();
+            row.code = format!("{}", obs_fields.code);
+            row.sat = obs_fields.sat;
             row.pseudo_range = obs_fields.pseudo_range;
             row.carrier_phase = obs_fields.carrier_phase;
             row.cn0 = obs_fields.cn0 / 4.0;
@@ -282,7 +286,8 @@ impl<S: CapnProtoSender> ObservationTab<S> {
         for (idx, (_key, row)) in table.rows.iter().enumerate() {
             let mut list_item = rows.reborrow().get(idx as u32);
 
-            list_item.set_prn(&row.prn);
+            list_item.set_sat(row.sat);
+            list_item.set_code(&row.code);
             list_item.set_pseudo_range(row.pseudo_range);
             list_item.set_carrier_phase(row.carrier_phase);
             list_item.set_cn0(row.cn0);

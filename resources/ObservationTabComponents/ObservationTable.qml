@@ -14,30 +14,25 @@ ColumnLayout {
         "family": Constants.genericTable.fontFamily,
         "pointSize": Constants.largePointSize
     })
+    property variant avgWidth: parent.width / 8
+    property variant columnWidths: [parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 16, 3 * parent.width / 16]
+    property variant columnNames: ["PRN", "Pseudorange (m)", "Carrier Phase (cycles)", "C/N0 (dB-Hz)", "Meas. Doppler (Hz)", "Comp. Doppler (Hz)", "Lock", "Flags"]
+    property real mouse_x: 0
 
     function update() {
         observationTableModel.update();
     }
 
     spacing: 0
+    onWidthChanged: {
+        innerTable.forceLayout();
+    }
+    onHeightChanged: {
+        innerTable.forceLayout();
+    }
 
     ObservationTableModel {
         id: observationTableModel
-
-        onDataPopulated: {
-            var widthLeft = observationTable.width;
-            var idealColumnWidths = [];
-            for (var col = 0; col < headerRepeater.count; col++) {
-                var idealColumnWidth = Math.min(500, observationTableModel.columnWidth(col, tableFont, headerRepeater.itemAt(col).font));
-                idealColumnWidths.push(idealColumnWidth);
-                widthLeft -= idealColumnWidths[col];
-            }
-            var extraWidth = widthLeft / headerRepeater.count;
-            for (var col = 0; col < headerRepeater.count; col++) {
-                headerRepeater.itemAt(col).initialWidth = idealColumnWidths[col] + extraWidth;
-            }
-            innerTable.forceLayout();
-        }
     }
 
     RowLayout {
@@ -94,28 +89,90 @@ ColumnLayout {
 
     }
 
-    Item {
-        Layout.fillWidth: true
-        implicitHeight: header.implicitHeight
-        clip: true
+    RowLayout {
+        spacing: 3
 
-        Row {
-            id: header
+        ObservationFilterColumn {
+            codes: observationTableModel ? observationTableModel.gps_codes : 0
+        }
 
-            width: innerTable.contentWidth
-            x: -innerTable.contentX
-            z: 1
-            spacing: innerTable.columnSpacing
+        ObservationFilterColumn {
+            codes: observationTableModel ? observationTableModel.glo_codes : 0
+        }
 
-            Repeater {
-                id: headerRepeater
+        ObservationFilterColumn {
+            codes: observationTableModel ? observationTableModel.bds_codes : 0
+        }
 
-                model: observationTableModel ? observationTableModel.columnCount() : 0
+        ObservationFilterColumn {
+            codes: observationTableModel ? observationTableModel.gal_codes : 0
+        }
 
-                SortableColumnHeading {
-                    initialWidth: Math.min(500, observationTableModel.columnWidth(index, tableFont, font))
-                    height: Constants.genericTable.cellHeight
-                    table: innerTable
+        ObservationFilterColumn {
+            codes: observationTableModel ? observationTableModel.qzs_codes : 0
+        }
+
+        ObservationFilterColumn {
+            codes: observationTableModel ? observationTableModel.sbas_codes : 0
+        }
+
+    }
+
+    HorizontalHeaderView {
+        id: horizontalHeader
+
+        interactive: false
+        syncView: innerTable
+        z: Constants.genericTable.headerZOffset
+
+        delegate: Rectangle {
+            implicitWidth: columnWidths[index]
+            implicitHeight: Constants.genericTable.cellHeight
+            border.color: Constants.genericTable.borderColor
+
+            Label {
+                width: parent.width
+                anchors.centerIn: parent
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                text: columnNames[index]
+                elide: Text.ElideRight
+                clip: true
+                font.family: Constants.genericTable.fontFamily
+                font.pointSize: Constants.largePointSize
+            }
+
+            MouseArea {
+                width: Constants.genericTable.mouseAreaResizeWidth
+                height: parent.height
+                anchors.right: parent.right
+                cursorShape: Qt.SizeHorCursor
+                onPressed: {
+                    mouse_x = mouseX;
+                }
+                onPositionChanged: {
+                    if (pressed) {
+                        var delta_x = (mouseX - mouse_x);
+                        var next_idx = (index + 1) % 8;
+                        var min_width = observationTable.width / 12;
+                        if (columnWidths[index] + delta_x > min_width && columnWidths[next_idx] - delta_x > min_width) {
+                            columnWidths[index] += delta_x;
+                            columnWidths[next_idx] -= delta_x;
+                        }
+                        innerTable.forceLayout();
+                    }
+                }
+            }
+
+            gradient: Gradient {
+                GradientStop {
+                    position: 0
+                    color: Constants.genericTable.cellColor
+                }
+
+                GradientStop {
+                    position: 1
+                    color: Constants.genericTable.gradientColor
                 }
 
             }
@@ -127,24 +184,14 @@ ColumnLayout {
     TableView {
         id: innerTable
 
-        width: Math.min(header.width + 1, parent.width)
         Layout.fillHeight: true
+        Layout.fillWidth: true
         columnSpacing: -1
         rowSpacing: -1
         clip: true
-        onWidthChanged: {
-            // Don't ask why this is needed. It's a hack.
-            // If you want to find out, just comment out this code.
-            if (width === 0) {
-                width = Qt.binding(function() {
-                    return Math.min(header.width + 1, observationTable.width);
-                });
-                forceLayout();
-            }
-        }
         boundsBehavior: Flickable.StopAtBounds
         columnWidthProvider: function(column) {
-            return headerRepeater.itemAt(column).width;
+            return columnWidths[column];
         }
         model: observationTableModel
 

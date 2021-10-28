@@ -43,6 +43,7 @@ QtObject {
     readonly property int staticTableTimerIntervalRate: 10 // 10 Hz
     readonly property int staticTimerSlowIntervalRate: 2 // 2 Hz
     readonly property string monoSpaceFont: "Courier New"
+    readonly property string fontFamily: "Roboto"
     readonly property real smallPointSize: 7
     readonly property real mediumPointSize: 8
     readonly property real largePointSize: 9
@@ -501,9 +502,11 @@ QtObject {
         readonly property color titleColor: "#00006E"
         readonly property int titlePointSize: 14
         readonly property int legendTopMargin: 30
-        readonly property int legendBottomMargin: 75
+        readonly property int legendBottomMargin: 74
         readonly property int legendLeftMargin: 30
         readonly property int legendLabelPointSize: 6
+        readonly property string legendCellTextSample: "XXX XXXX X+NN XNN"
+        readonly property int legendShadeSpeed: 350
         readonly property string yAxisTitleText: "dB-Hz"
         readonly property string xAxisTitleText: "seconds"
         readonly property int xAxisMinOffsetFromMaxSeconds: 100

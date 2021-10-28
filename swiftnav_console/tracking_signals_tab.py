@@ -25,11 +25,13 @@ class TrackingSignalsPoints(QObject):
     _xaxis_max: float = 0.0
     _check_labels: List[str] = []
     _all_series: List[QtCharts.QXYSeries] = []
+    _enabled_series: List[QtCharts.QXYSeries] = []
     num_labels_changed = Signal(int, arguments="num_labels")
     xaxis_min_changed = Signal()
     xaxis_max_changed = Signal()
     check_labels_changed = Signal()
     all_series_changed = Signal()
+    enabled_series_changed = Signal()
 
     def get_num_labels(self) -> int:  # pylint:disable=no-self-use
         return len(TRACKING_SIGNALS_TAB[Keys.LABELS])
@@ -57,6 +59,11 @@ class TrackingSignalsPoints(QObject):
         return self._all_series
 
     all_series = Property(QTKeys.QVARIANTLIST, get_all_series, notify=all_series_changed)  # type: ignore
+
+    def get_enabled_series(self) -> List[QtCharts.QXYSeries]:
+        return self._enabled_series
+
+    enabled_series = Property(QTKeys.QVARIANTLIST, get_enabled_series, notify=enabled_series_changed)  # type: ignore
 
     @Slot(int)  # type: ignore
     def getLabel(self, index) -> str:  # pylint:disable=no-self-use
@@ -87,6 +94,8 @@ class TrackingSignalsPoints(QObject):
         self.xaxis_min_changed.emit()  # type: ignore
         self._xaxis_max = points_for_all_series[0][-1].x()
         self.xaxis_max_changed.emit()  # type: ignore
+        series_changed = False
+        enabled_series = []
         for idx, series_points in enumerate(points_for_all_series):
             series = None
             try:
@@ -98,11 +107,22 @@ class TrackingSignalsPoints(QObject):
                 pen.setWidthF(line_width)
                 series.setPen(pen)
                 series.setUseOpenGL(useOpenGL)
-                self.all_series_changed.emit()  # type: ignore
+                series_changed = True
+
+                if len(series_points) > 0:
+                    enabled_series.append(series)
             except IndexError:
                 # This is ok - QML will create these series, and call addSeries, and these will be
                 # updated in the next timer fire/update.
                 pass
+
+        if series_changed:
+            self.all_series_changed.emit()  # type: ignore
+
+        if enabled_series != self._enabled_series:
+            self._enabled_series = enabled_series
+            self.enabled_series_changed.emit()  # type: ignore
+
         return
 
 

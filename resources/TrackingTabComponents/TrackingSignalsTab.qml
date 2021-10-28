@@ -2,7 +2,7 @@ import "../BaseComponents"
 import "../Constants"
 import QtCharts 2.3
 import QtQuick 2.15
-import QtQuick.Controls 2.12
+import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
@@ -10,6 +10,7 @@ Item {
     id: trackingSignalsTab
 
     property alias all_series: trackingSignalsPoints.all_series
+    property alias enabled_series: trackingSignalsPoints.enabled_series
     property alias check_labels: trackingSignalsPoints.check_labels
     property variant check_visibility: []
 
@@ -51,14 +52,18 @@ Item {
             Rectangle {
                 id: lineLegend
 
-                property int openedHeight: parent.height - Constants.trackingSignals.legendTopMargin - Constants.trackingSignals.legendBottomMargin
-                property int openCloseSpeed: 350
+                property int maximumHeight: parent.height - Constants.trackingSignals.legendTopMargin - Constants.trackingSignals.legendBottomMargin
+                property int openedHeight: gridView.count < maxCellsPerColumn ? gridView.cellHeight * gridView.count : maximumHeight
+                property int openCloseSpeed: Constants.trackingSignals.legendShadeSpeed
+                property int maxCellsPerColumn: maximumHeight / gridView.cellHeight  // floor/truncation is desired.
 
-                visible: false
+                visible: gridView.count > 0
                 radius: 5
                 x: Constants.trackingSignals.legendTopMargin
                 y: Constants.trackingSignals.legendLeftMargin
                 height: openedHeight
+                // Size to two cols if there are cells for 2+ cols.
+                width: gridView.cellWidth * (gridView.count <= maxCellsPerColumn ? 1 : 2)
                 state: "opened"
                 states: [
                     State {
@@ -167,30 +172,23 @@ Item {
                     anchors.right: parent.right
                     anchors.bottom: parent.bottom
                     clip: true
-                    model: all_series
+                    model: enabled_series
                     flow: GridView.FlowTopToBottom
-                    cellWidth: 10
-                    cellHeight: 10
+                    cellWidth: Constants.commonLegend.markerWidth + legendTextMetrics.width + 4
+                    cellHeight: legendTextMetrics.height + 2
                     boundsBehavior: Flickable.StopAtBounds
-                    onCellWidthChanged: {
-                        lineLegend.width = cellWidth * 2;
+
+                    TextMetrics {
+                        id: legendTextMetrics
+                        font.family: Constants.fontFamily
+                        font.pointSize: Constants.smallPointSize
+                        text: Constants.trackingSignals.legendCellTextSample
                     }
 
                     delegate: Row {
                         padding: 1
                         leftPadding: 4
                         rightPadding: leftPadding
-                        onImplicitWidthChanged: {
-                            if (gridView.cellWidth < implicitWidth)
-                                gridView.cellWidth = implicitWidth;
-
-                            if (gridView.cellHeight < implicitHeight)
-                                gridView.cellHeight = implicitHeight;
-
-                            if (lineLegend.visible != true && gridView.cellWidth > 50)
-                                lineLegend.visible = true;
-
-                        }
 
                         Rectangle {
                             id: marker
@@ -205,7 +203,7 @@ Item {
                             id: label
 
                             text: modelData.name
-                            font.pointSize: Constants.smallPointSize
+                            font: legendTextMetrics.font
                             anchors.verticalCenter: parent.verticalCenter
                             anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                         }

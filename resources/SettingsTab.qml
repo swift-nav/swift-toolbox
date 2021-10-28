@@ -226,7 +226,7 @@ Item {
                 }
 
                 CheckBox {
-                    text: "Show Advance Settings"
+                    text: "Show Advanced Settings"
                     onClicked: {
                         settingsTable.showExpert = checked;
                         settingsTable.selectedRowIdx = -1;

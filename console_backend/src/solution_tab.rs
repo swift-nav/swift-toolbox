@@ -595,7 +595,10 @@ impl<S: CapnProtoSender> SolutionTab<S> {
         self.table
             .insert(POS_FLAGS, format!("0x{:<03x}", pos_llh_fields.flags));
         self.table.insert(INS_USED, self.ins_used.to_string());
-        self.table.insert(POS_FIX_MODE, self.ins_used.to_string());
+        self.table.insert(
+            POS_FIX_MODE,
+            GnssModes::from(self.last_pos_mode).to_string(),
+        );
         if let Some(age_corrections_) = self.age_corrections {
             self.table
                 .insert(CORR_AGE_S, format!("{}", age_corrections_));

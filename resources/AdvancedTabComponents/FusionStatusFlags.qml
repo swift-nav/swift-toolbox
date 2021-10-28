@@ -27,7 +27,7 @@ Item {
         anchors.centerIn: parent
 
         GridLayout {
-            id: insStatusRow
+            id: fusionStatusFlagsArea
 
             columns: 2
 
@@ -197,7 +197,7 @@ Item {
                     if (!fusionStatusFlagsData.gnsspos)
                         return ;
 
-                    insStatusRow.visible = true;
+                    fusionStatusFlagsArea.visible = true;
                     var gnsspos = fusionStatusFlagsData.gnsspos;
                     if (gnsspos != last_gnsspos) {
                         if (gnsspos == "UNKNOWN") {
@@ -306,8 +306,8 @@ Item {
         }
 
         label: Label {
-            text: "Fusion Status"
-            font.pointSize: 14
+            text: Constants.fusionStatusFlags.title
+            font.pointSize: Constants.fusionStatusFlags.titleFontSize
         }
 
     }

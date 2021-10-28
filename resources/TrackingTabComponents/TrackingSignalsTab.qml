@@ -1,6 +1,6 @@
 import "../BaseComponents"
 import "../Constants"
-import QtCharts 2.3
+import QtCharts 2.15
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
@@ -12,12 +12,8 @@ Item {
     property alias all_series: trackingSignalsPoints.all_series
     property alias enabled_series: trackingSignalsPoints.enabled_series
     property alias check_labels: trackingSignalsPoints.check_labels
+    property alias num_labels: trackingSignalsPoints.num_labels
     property variant check_visibility: []
-
-    width: parent.width
-    height: parent.height
-    Component.onCompleted: {
-    }
 
     TrackingSignalsPoints {
         id: trackingSignalsPoints
@@ -37,7 +33,7 @@ Item {
             visible: false
             title: Constants.trackingSignals.title
             titleColor: Constants.trackingSignals.titleColor
-            backgroundColor: Constants.commonChart.backgroundColor
+            // backgroundColor: Constants.commonChart.backgroundColor
             plotAreaColor: Constants.commonChart.areaColor
             legend.visible: false
             antialiasing: true
@@ -133,6 +129,7 @@ Item {
                 ]
 
                 Rectangle {
+                    // This rectangle ensures that the border of the legend is painted nicely.
                     anchors.fill: parent
                     z: 2
                     color: "transparent"
@@ -141,75 +138,74 @@ Item {
                     border.width: Constants.commonLegend.borderWidth
                 }
 
-                Rectangle {
-                    id: legendHideBar
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: 0
+                    Rectangle {
+                        id: legendHideBar
 
-                    color: "dark grey"
-                    anchors.top: parent.top
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.topMargin: 1
-                    height: 10
-                    radius: lineLegend.radius
+                        Layout.fillWidth: true
+                        color: Constants.trackingSignals.legendShadeColor
+                        height: Constants.trackingSignals.legendShadeHeight
+                        radius: lineLegend.radius
 
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: {
-                            lineLegend.state = lineLegend.state == "opened" ? "closed" : "opened";
-                        }
-                        cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
-                        drag.target: lineLegend
-                        hoverEnabled: true
-                    }
-
-                }
-
-                GridView {
-                    id: gridView
-
-                    anchors.top: legendHideBar.bottom
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.bottom: parent.bottom
-                    clip: true
-                    model: enabled_series
-                    flow: GridView.FlowTopToBottom
-                    cellWidth: Constants.commonLegend.markerWidth + legendTextMetrics.width + 4
-                    cellHeight: legendTextMetrics.height + 2
-                    boundsBehavior: Flickable.StopAtBounds
-
-                    TextMetrics {
-                        id: legendTextMetrics
-                        font.family: Constants.fontFamily
-                        font.pointSize: Constants.smallPointSize
-                        text: Constants.trackingSignals.legendCellTextSample
-                    }
-
-                    delegate: Row {
-                        padding: 1
-                        leftPadding: 4
-                        rightPadding: leftPadding
-
-                        Rectangle {
-                            id: marker
-
-                            color: modelData.color
-                            width: Constants.commonLegend.markerWidth
-                            height: Constants.commonLegend.markerHeight
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-
-                        Label {
-                            id: label
-
-                            text: modelData.name
-                            font: legendTextMetrics.font
-                            anchors.verticalCenter: parent.verticalCenter
-                            anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                lineLegend.state = lineLegend.state == "opened" ? "closed" : "opened";
+                            }
+                            cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                            //drag.target: lineLegend
+                            hoverEnabled: true
                         }
 
                     }
 
+                    GridView {
+                        id: gridView
+
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        clip: true
+                        model: enabled_series
+                        flow: GridView.FlowTopToBottom
+                        cellWidth: Constants.commonLegend.markerWidth + legendTextMetrics.width + 4
+                        cellHeight: legendTextMetrics.height + 2
+                        boundsBehavior: Flickable.StopAtBounds
+
+                        TextMetrics {
+                            id: legendTextMetrics
+                            font.family: Constants.fontFamily
+                            font.pointSize: Constants.smallPointSize
+                            text: Constants.trackingSignals.legendCellTextSample
+                        }
+
+                        delegate: Row {
+                            padding: 1
+                            leftPadding: 4
+                            rightPadding: leftPadding
+
+                            Rectangle {
+                                id: marker
+
+                                color: modelData.color
+                                width: Constants.commonLegend.markerWidth
+                                height: Constants.commonLegend.markerHeight
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+
+                            Label {
+                                id: label
+
+                                text: modelData.name
+                                font: legendTextMetrics.font
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
+                            }
+
+                        }
+
+                    }
                 }
 
             }
@@ -268,8 +264,8 @@ Item {
                     if (!trackingTab.visible)
                         return ;
 
-                    if (trackingSignalsPoints.all_series.length < trackingSignalsPoints.num_labels) {
-                        for (var i = trackingSignalsPoints.all_series.length; i < trackingSignalsPoints.num_labels; i++) {
+                    if (all_series.length < num_labels) {
+                        for (var i = all_series.length; i < num_labels; i++) {
                             var series = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, trackingSignalsPoints.getLabel(i), trackingSignalsXAxis);
                             series.axisYRight = trackingSignalsYAxis;
                             series.width = Constants.commonChart.lineWidth;
@@ -280,7 +276,7 @@ Item {
                         }
                     }
                     trackingSignalsPoints.fill_all_series(Constants.commonChart.lineWidth, Globals.useOpenGL);
-                    if (trackingSignalsPoints.all_series.length) {
+                    if (all_series.length) {
                         trackingSignalsChart.visible = true;
                         trackingSignalsXAxis.min = trackingSignalsPoints.xaxis_min;
                         trackingSignalsXAxis.max = trackingSignalsPoints.xaxis_max;

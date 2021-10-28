@@ -464,7 +464,7 @@ QtObject {
         readonly property real solutionMarkerSize: 5
         readonly property real solutionLineWidth: 0.5
         readonly property color backgroundColor: "#CDC9C9"
-        readonly property color areaColor: "#FFFFFF"
+        readonly property color areaColor: "#F0F0F0"
         readonly property color minorGridLineColor: "#CDC9C9"
         readonly property color gridLineColor: "#CDC9C9"
         readonly property color labelsColor: "#000000"
@@ -499,13 +499,15 @@ QtObject {
 
     trackingSignals: QtObject {
         readonly property string title: "Tracking C/N0"
-        readonly property color titleColor: "#00006E"
+        readonly property color titleColor: Qt.darker(swiftOrange, 1.1)
         readonly property int titlePointSize: 14
         readonly property int legendTopMargin: 30
         readonly property int legendBottomMargin: 74
         readonly property int legendLeftMargin: 30
         readonly property int legendLabelPointSize: 6
         readonly property string legendCellTextSample: "XXX XXXX X+NN XNN"
+        readonly property int legendShadeHeight: 10
+        readonly property color legendShadeColor: Qt.lighter(swiftOrange, 1.5)
         readonly property int legendShadeSpeed: 350
         readonly property string yAxisTitleText: "dB-Hz"
         readonly property string xAxisTitleText: "seconds"

@@ -16,7 +16,6 @@ Item {
     property string last_nhc: "UNKNOWN"
     property string last_zerovel: "UNKNOWN"
 
-    Layout.alignment: Qt.AlignCenter
     Component.onCompleted: {
     }
 

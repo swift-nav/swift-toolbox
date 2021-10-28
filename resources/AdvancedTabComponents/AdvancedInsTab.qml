@@ -8,10 +8,15 @@ import SwiftConsole 1.0
 Item {
     id: advancedInsTab
 
-    FusionStatusFlags {
-        Layout.fillWidth: true
-        Layout.preferredHeight: Constants.navBar.urlBarHeight
-        Layout.alignment: Qt.AlignCenter
+    width: parent.width
+    height: parent.height
+
+    ColumnLayout {
+        anchors.centerIn: parent
+
+        FusionStatusFlags {
+        }
+
     }
 
 }

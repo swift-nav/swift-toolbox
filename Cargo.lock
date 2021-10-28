@@ -373,7 +373,6 @@ dependencies = [
  "serde_yaml",
  "serial_test",
  "serialport",
- "slotmap",
  "strum",
  "strum_macros",
  "sysinfo",

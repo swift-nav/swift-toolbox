@@ -24,6 +24,12 @@ ColumnLayout {
     }
 
     spacing: 0
+    onWidthChanged: {
+        innerTable.forceLayout();
+    }
+    onHeightChanged: {
+        innerTable.forceLayout();
+    }
 
     ObservationTableModel {
         id: observationTableModel
@@ -148,7 +154,7 @@ ColumnLayout {
                     if (pressed) {
                         var delta_x = (mouseX - mouse_x);
                         var next_idx = (index + 1) % 8;
-                        var min_width = innerTable.width / 12;
+                        var min_width = observationTable.width / 12;
                         if (columnWidths[index] + delta_x > min_width && columnWidths[next_idx] - delta_x > min_width) {
                             columnWidths[index] += delta_x;
                             columnWidths[next_idx] -= delta_x;
@@ -186,9 +192,6 @@ ColumnLayout {
         boundsBehavior: Flickable.StopAtBounds
         columnWidthProvider: function(column) {
             return columnWidths[column];
-        }
-        onWidthChanged: {
-            forceLayout();
         }
         model: observationTableModel
 

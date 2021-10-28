@@ -24,7 +24,6 @@ Item {
     }
 
     GroupBox {
-
         anchors.centerIn: parent
 
         GridLayout {

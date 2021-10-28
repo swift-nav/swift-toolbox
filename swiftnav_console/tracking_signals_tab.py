@@ -3,7 +3,8 @@
 
 from typing import Dict, List, Any
 
-from PySide2.QtCore import Property, QObject, QPointF, Slot
+from PySide2.QtCore import Property, QObject, Signal, Slot
+from PySide2.QtCharts import QtCharts
 
 from .constants import Keys, QTKeys
 
@@ -19,66 +20,116 @@ TRACKING_SIGNALS_TAB: Dict[str, Any] = {
 
 class TrackingSignalsPoints(QObject):
 
-    _colors: List[str] = []
+    _num_labels: int = 0
+    _xaxis_min: float = 0.0
+    _xaxis_max: float = 0.0
     _check_labels: List[str] = []
-    _labels: List[str] = []
-    _points: List[List[QPointF]] = [[]]
-    _xmin_offset: float = 0.0
+    _all_series: List[QtCharts.QXYSeries] = []
+    _enabled_series: List[QtCharts.QXYSeries] = []
+    num_labels_changed = Signal(int, arguments="num_labels")
+    xaxis_min_changed = Signal()
+    xaxis_max_changed = Signal()
+    check_labels_changed = Signal()
+    all_series_changed = Signal()
+    enabled_series_changed = Signal()
 
-    def get_xmin_offset(self) -> float:
-        """Getter for _xmin_offset."""
-        return self._xmin_offset
+    def get_num_labels(self) -> int:  # pylint:disable=no-self-use
+        return len(TRACKING_SIGNALS_TAB[Keys.LABELS])
 
-    def set_xmin_offset(self, xmin_offset_: float) -> None:
-        """Setter for _xmin_offset."""
-        self._xmin_offset = xmin_offset_
+    num_labels = Property(int, get_num_labels, notify=num_labels_changed)  # type: ignore
 
-    xmin_offset = Property(float, get_xmin_offset, set_xmin_offset)
+    def get_xaxis_min(self) -> float:
+        """Getter for _xaxis_min."""
+        return self._xaxis_min
+
+    xaxis_min = Property(float, get_xaxis_min, notify=xaxis_min_changed)  # type: ignore
+
+    def get_xaxis_max(self) -> float:
+        """Getter for _xaxis_max."""
+        return self._xaxis_max
+
+    xaxis_max = Property(float, get_xaxis_max, notify=xaxis_max_changed)  # type: ignore
 
     def get_check_labels(self) -> List[str]:
         return self._check_labels
 
-    def set_check_labels(self, check_labels) -> None:
-        self._check_labels = check_labels
+    check_labels = Property(QTKeys.QVARIANTLIST, get_check_labels, notify=check_labels_changed)  # type: ignore
 
-    check_labels = Property(QTKeys.QVARIANTLIST, get_check_labels, set_check_labels)  # type: ignore
+    def get_all_series(self) -> List[QtCharts.QXYSeries]:
+        return self._all_series
 
-    def get_labels(self) -> List[str]:
-        return self._labels
+    all_series = Property(QTKeys.QVARIANTLIST, get_all_series, notify=all_series_changed)  # type: ignore
 
-    def set_labels(self, labels) -> None:
-        self._labels = labels
+    def get_enabled_series(self) -> List[QtCharts.QXYSeries]:
+        return self._enabled_series
 
-    labels = Property(QTKeys.QVARIANTLIST, get_labels, set_labels)  # type: ignore
+    enabled_series = Property(QTKeys.QVARIANTLIST, get_enabled_series, notify=enabled_series_changed)  # type: ignore
 
-    def get_colors(self) -> List[str]:
-        return self._colors
+    @Slot(int)  # type: ignore
+    def getLabel(self, index) -> str:  # pylint:disable=no-self-use
+        """Getter for one of the TRACKING_SIGNALS_TAB[Keys.LABELS]."""
+        return TRACKING_SIGNALS_TAB[Keys.LABELS][index]
 
-    def set_colors(self, colors) -> None:
-        self._colors = colors
+    @Slot(QtCharts.QAbstractSeries)  # type: ignore
+    def addSeries(self, series) -> None:
+        """Add a QML created series to the all_series list"""
+        self._all_series.append(series)
+        self.all_series_changed.emit()  # type: ignore
 
-    colors = Property(QTKeys.QVARIANTLIST, get_colors, set_colors)  # type: ignore
+    @Slot(float, bool)  # type: ignore
+    def fill_all_series(self, line_width, useOpenGL) -> None:
+        cur_num_labels = len(TRACKING_SIGNALS_TAB[Keys.LABELS])
+        if self._num_labels != cur_num_labels:
+            self._num_labels = cur_num_labels
+            self.num_labels_changed.emit(cur_num_labels)  # type: ignore
+        points_for_all_series = TRACKING_SIGNALS_TAB[Keys.POINTS]
+        if len(points_for_all_series) == 0:
+            return
 
-    def get_points(self) -> List[List[QPointF]]:
-        return self._points
+        labels = TRACKING_SIGNALS_TAB[Keys.LABELS]
+        colors = TRACKING_SIGNALS_TAB[Keys.COLORS]
+        self._check_labels = TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS]
+        self.check_labels_changed.emit()  # type: ignore
+        self._xaxis_min = points_for_all_series[0][-1].x() + TRACKING_SIGNALS_TAB[Keys.XMIN_OFFSET]
+        self.xaxis_min_changed.emit()  # type: ignore
+        self._xaxis_max = points_for_all_series[0][-1].x()
+        self.xaxis_max_changed.emit()  # type: ignore
+        series_changed = False
+        enabled_series = []
+        for idx, series_points in enumerate(points_for_all_series):
+            series = None
+            try:
+                series = self._all_series[idx]
+                series.replace(series_points)
+                series.setName(labels[idx])
+                series.setColor(colors[idx])
+                pen = series.pen()
+                pen.setWidthF(line_width)
+                series.setPen(pen)
+                series.setUseOpenGL(useOpenGL)
+                series_changed = True
 
-    def set_points(self, points) -> None:
-        self._points = points
+                if len(series_points) > 0:
+                    enabled_series.append(series)
+            except IndexError:
+                # This is ok - QML will create these series, and call addSeries, and these will be
+                # updated in the next timer fire/update.
+                pass
 
-    points = Property(QTKeys.QVARIANTLIST, get_points, set_points)  # type: ignore
+        if series_changed:
+            self.all_series_changed.emit()  # type: ignore
 
-    @Slot(list)  # type: ignore
-    def fill_series(self, series_list):
-        for idx, series_and_key in enumerate(series_list):
-            series, _ = series_and_key
-            if idx < len(self._points):
-                series.replace(self._points[idx])
+        if enabled_series != self._enabled_series:
+            self._enabled_series = enabled_series
+            self.enabled_series_changed.emit()  # type: ignore
+
+        return
 
 
 class TrackingSignalsModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(TrackingSignalsPoints)  # type: ignore
     def fill_console_points(self, cp: TrackingSignalsPoints) -> TrackingSignalsPoints:  # pylint:disable=no-self-use
-        cp.set_points(TRACKING_SIGNALS_TAB[Keys.POINTS])
+        cp.fill_all_series(TRACKING_SIGNALS_TAB[Keys.POINTS])
         cp.set_labels(TRACKING_SIGNALS_TAB[Keys.LABELS])
         cp.set_check_labels(TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS])
         cp.set_colors(TRACKING_SIGNALS_TAB[Keys.COLORS])

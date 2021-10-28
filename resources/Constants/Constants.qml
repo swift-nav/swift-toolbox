@@ -44,6 +44,8 @@ QtObject {
     readonly property int staticTableTimerIntervalRate: 10 // 10 Hz
     readonly property int staticTimerSlowIntervalRate: 2 // 2 Hz
     readonly property string monoSpaceFont: "Courier New"
+    readonly property string fontFamily: "Roboto"
+    readonly property real xSmallPointSize: 6
     readonly property real smallPointSize: 7
     readonly property real mediumPointSize: 8
     readonly property real largePointSize: 9
@@ -460,7 +462,7 @@ QtObject {
         readonly property int padding: 10
         readonly property int spacing: 5
         readonly property int verticalCenterOffset: -1
-        readonly property color borderColor: "#000000"
+        readonly property color borderColor: "#7F7F7F"
         readonly property int borderWidth: 1
     }
 
@@ -473,7 +475,7 @@ QtObject {
         readonly property real solutionMarkerSize: 5
         readonly property real solutionLineWidth: 0.5
         readonly property color backgroundColor: "#CDC9C9"
-        readonly property color areaColor: "#FFFFFF"
+        readonly property color areaColor: "#F0F0F0"
         readonly property color minorGridLineColor: "#CDC9C9"
         readonly property color gridLineColor: "#CDC9C9"
         readonly property color labelsColor: "#000000"
@@ -508,11 +510,16 @@ QtObject {
 
     trackingSignals: QtObject {
         readonly property string title: "Tracking C/N0"
-        readonly property color titleColor: "#00006E"
+        readonly property color titleColor: Qt.darker(swiftOrange, 1.1)
         readonly property int titlePointSize: 14
-        readonly property int legendBottomMargin: 85
-        readonly property int legendLeftMargin: 60
+        readonly property int legendTopMargin: 30
+        readonly property int legendBottomMargin: 74
+        readonly property int legendLeftMargin: 30
         readonly property int legendLabelPointSize: 6
+        readonly property string legendCellTextSample: "XXX XXXX X+NN XNN"
+        readonly property int legendShadeHeight: 10
+        readonly property color legendShadeColor: Qt.lighter(swiftOrange, 1.5)
+        readonly property int legendShadeSpeed: 350
         readonly property string yAxisTitleText: "dB-Hz"
         readonly property string xAxisTitleText: "seconds"
         readonly property int xAxisMinOffsetFromMaxSeconds: 100

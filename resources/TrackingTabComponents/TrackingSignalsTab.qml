@@ -1,7 +1,7 @@
 import "../BaseComponents"
 import "../Constants"
-import QtCharts 2.3
-import QtQuick 2.6
+import QtCharts 2.15
+import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
@@ -9,16 +9,11 @@ import SwiftConsole 1.0
 Item {
     id: trackingSignalsTab
 
-    property variant lines: []
-    property variant labels: []
-    property variant colors: []
-    property variant check_labels: []
+    property alias all_series: trackingSignalsPoints.all_series
+    property alias enabled_series: trackingSignalsPoints.enabled_series
+    property alias check_labels: trackingSignalsPoints.check_labels
+    property alias num_labels: trackingSignalsPoints.num_labels
     property variant check_visibility: []
-
-    width: parent.width
-    height: parent.height
-    Component.onCompleted: {
-    }
 
     TrackingSignalsPoints {
         id: trackingSignalsPoints
@@ -27,9 +22,7 @@ Item {
     ColumnLayout {
         id: trackingSignalsArea
 
-        width: parent.width
-        height: parent.height
-        spacing: 0
+        anchors.fill: parent
 
         ChartView {
             id: trackingSignalsChart
@@ -40,9 +33,7 @@ Item {
             visible: false
             title: Constants.trackingSignals.title
             titleColor: Constants.trackingSignals.titleColor
-            width: parent.width
-            height: parent.height - trackingSignalsCheckboxes.height
-            backgroundColor: Constants.commonChart.backgroundColor
+            // backgroundColor: Constants.commonChart.backgroundColor
             plotAreaColor: Constants.commonChart.areaColor
             legend.visible: false
             antialiasing: true
@@ -57,37 +48,149 @@ Item {
             Rectangle {
                 id: lineLegend
 
-                border.color: Constants.commonLegend.borderColor
-                border.width: Constants.commonLegend.borderWidth
-                anchors.bottom: trackingSignalsChart.bottom
-                anchors.left: trackingSignalsChart.left
-                anchors.bottomMargin: Constants.trackingSignals.legendBottomMargin
-                anchors.leftMargin: Constants.trackingSignals.legendLeftMargin
-                implicitHeight: lineLegendRepeater.height
-                width: lineLegendRepeater.width
+                property int maximumHeight: parent.height - Constants.trackingSignals.legendTopMargin - Constants.trackingSignals.legendBottomMargin
+                property int openedHeight: gridView.count < maxCellsPerColumn ? gridView.cellHeight * gridView.count : maximumHeight
+                property int openCloseSpeed: Constants.trackingSignals.legendShadeSpeed
+                property int maxCellsPerColumn: maximumHeight / gridView.cellHeight // floor/truncation is desired.
 
-                Column {
-                    id: lineLegendRepeater
+                visible: gridView.count > 0
+                radius: 5
+                x: Constants.trackingSignals.legendTopMargin
+                y: Constants.trackingSignals.legendLeftMargin
+                height: openedHeight
+                // Size to two cols if there are cells for 2+ cols.
+                width: gridView.cellWidth * (gridView.count <= maxCellsPerColumn ? 1 : 2)
+                state: "opened"
+                states: [
+                    State {
+                        name: "opened"
 
-                    anchors.bottom: lineLegend.bottom
+                        PropertyChanges {
+                            target: lineLegend
+                            height: lineLegend.openedHeight
+                        }
 
-                    Repeater {
-                        id: lineLegendRepeaterRows
+                        PropertyChanges {
+                            target: gridView
+                            visible: true
+                        }
 
-                        model: labels
+                    },
+                    State {
+                        name: "closed"
 
-                        Row {
-                            Component.onCompleted: {
-                                for (var idx in colors) {
-                                    if (lineLegendRepeaterRows.itemAt(idx))
-                                        lineLegendRepeaterRows.itemAt(idx).children[0].color = colors[idx];
+                        PropertyChanges {
+                            target: lineLegend
+                            height: legendHideBar.height + 2
+                        }
 
-                                }
+                        PropertyChanges {
+                            target: gridView
+                            visible: false
+                        }
+
+                    }
+                ]
+                transitions: [
+                    Transition {
+                        to: "closed"
+
+                        // reversible property should be what we want here instead of duplicating this,
+                        // but it doesn't seem to work right in this situation.
+                        SequentialAnimation {
+                            SmoothedAnimation {
+                                property: "height"
+                                duration: lineLegend.openCloseSpeed
                             }
+
+                            PropertyAction {
+                                property: "visible"
+                            }
+
+                        }
+
+                    },
+                    Transition {
+                        to: "opened"
+
+                        SequentialAnimation {
+                            PropertyAction {
+                                property: "visible"
+                            }
+
+                            SmoothedAnimation {
+                                property: "height"
+                                duration: lineLegend.openCloseSpeed
+                            }
+
+                        }
+
+                    }
+                ]
+
+                Rectangle {
+                    // This rectangle ensures that the border of the legend is painted nicely.
+                    anchors.fill: parent
+                    z: 2
+                    color: "transparent"
+                    radius: parent.radius
+                    border.color: Constants.commonLegend.borderColor
+                    border.width: Constants.commonLegend.borderWidth
+                }
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: 0
+
+                    Rectangle {
+                        id: legendHideBar
+
+                        Layout.fillWidth: true
+                        color: Constants.trackingSignals.legendShadeColor
+                        height: Constants.trackingSignals.legendShadeHeight
+                        radius: lineLegend.radius
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                lineLegend.state = lineLegend.state == "opened" ? "closed" : "opened";
+                            }
+                            cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                            //drag.target: lineLegend
+                            hoverEnabled: true
+                        }
+
+                    }
+
+                    GridView {
+                        id: gridView
+
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        clip: true
+                        model: enabled_series
+                        flow: GridView.FlowTopToBottom
+                        cellWidth: Constants.commonLegend.markerWidth + legendTextMetrics.width + 4
+                        cellHeight: legendTextMetrics.height + 2
+                        boundsBehavior: Flickable.StopAtBounds
+
+                        TextMetrics {
+                            id: legendTextMetrics
+
+                            font.family: Constants.fontFamily
+                            font.pointSize: Constants.xSmallPointSize
+                            text: Constants.trackingSignals.legendCellTextSample
+                        }
+
+                        delegate: Row {
+                            padding: 1
+                            leftPadding: 4
+                            rightPadding: leftPadding
 
                             Rectangle {
                                 id: marker
 
+                                color: modelData.color
                                 width: Constants.commonLegend.markerWidth
                                 height: Constants.commonLegend.markerHeight
                                 anchors.verticalCenter: parent.verticalCenter
@@ -96,8 +199,8 @@ Item {
                             Label {
                                 id: label
 
-                                text: modelData
-                                font.pointSize: Constants.smallPointSize
+                                text: modelData.name
+                                font: legendTextMetrics.font
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                             }
@@ -164,39 +267,23 @@ Item {
                     if (!trackingTab.visible)
                         return ;
 
-                    tracking_signals_model.fill_console_points(trackingSignalsPoints);
-                    if (!trackingSignalsPoints.points.length)
-                        return ;
-
-                    var points = trackingSignalsPoints.points;
-                    colors = trackingSignalsPoints.colors;
-                    labels = trackingSignalsPoints.labels;
-                    trackingSignalsChart.visible = true;
-                    check_labels = trackingSignalsPoints.check_labels;
-                    for (var idx in labels) {
-                        if (idx < lines.length) {
-                            if (labels[idx] != lines[idx][1]) {
-                                trackingSignalsChart.removeSeries(lines[idx][0]);
-                                var line = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, labels[idx], trackingSignalsXAxis);
-                                line.color = colors[idx];
-                                line.width = Constants.commonChart.lineWidth;
-                                line.axisYRight = trackingSignalsYAxis;
-                                line.useOpenGL = Globals.useOpenGL;
-                                lines[idx] = [line, labels[idx]];
-                            }
-                        } else {
-                            var line = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, labels[idx], trackingSignalsXAxis);
-                            line.color = colors[idx];
-                            line.width = Constants.commonChart.lineWidth;
-                            line.axisYRight = trackingSignalsYAxis;
-                            line.useOpenGL = Globals.useOpenGL;
-                            lines.push([line, labels[idx]]);
+                    if (all_series.length < num_labels) {
+                        for (var i = all_series.length; i < num_labels; i++) {
+                            var series = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, trackingSignalsPoints.getLabel(i), trackingSignalsXAxis);
+                            series.axisYRight = trackingSignalsYAxis;
+                            series.width = Constants.commonChart.lineWidth;
+                            // Color and useOpenGL will be set in Python with fill_all_series call.
+                            // series.color = sourceSeries.color
+                            // series.useOpenGL = sourceSeries.useOpenGL
+                            trackingSignalsPoints.addSeries(series);
                         }
                     }
-                    trackingSignalsPoints.fill_series(lines);
-                    var last = points[0][points[0].length - 1];
-                    trackingSignalsXAxis.min = last.x + trackingSignalsPoints.xmin_offset;
-                    trackingSignalsXAxis.max = last.x;
+                    trackingSignalsPoints.fill_all_series(Constants.commonChart.lineWidth, Globals.useOpenGL);
+                    if (all_series.length) {
+                        trackingSignalsChart.visible = true;
+                        trackingSignalsXAxis.min = trackingSignalsPoints.xaxis_min;
+                        trackingSignalsXAxis.max = trackingSignalsPoints.xaxis_max;
+                    }
                 }
             }
 

@@ -10,9 +10,10 @@ use std::collections::HashMap;
 
 use std::net::UdpSocket;
 
+use crate::client_sender::BoxedClientSender;
 use crate::constants::WRITE_TO_DEVICE_SENDER_ID;
 use crate::shared_state::{AdvancedNetworkingState, SharedState};
-use crate::types::{CapnProtoSender, MsgSender, Result};
+use crate::types::{MsgSender, Result};
 use crate::utils::{bytes_to_human_readable, serialize_capnproto_builder};
 
 const DEFAULT_UDP_LOCAL_ADDRESS: &str = "127.0.0.1";
@@ -38,13 +39,13 @@ struct NetworkState {
 }
 
 /// AdvancedNetworkingTab struct.
-pub struct AdvancedNetworkingTab<S: CapnProtoSender> {
+pub struct AdvancedNetworkingTab {
     /// Whether or not to broadcast all messages over UDP or only the OBS_MSGS subset.
     all_messages: bool,
     /// The current udp socket connected to for streaming messages, if any.
     client: Option<UdpSocket>,
     /// Client Sender channel for communication from backend to frontend.
-    client_sender: S,
+    client_sender: BoxedClientSender,
     /// The stored string IP address defaults to DEFAULT_UDP_ADDRESS.
     ip_ad: String,
     /// The stored ip traffic received from the device.
@@ -58,12 +59,12 @@ pub struct AdvancedNetworkingTab<S: CapnProtoSender> {
     /// The MsgSender for sending NetworkState refresh requests to the device.
     writer: MsgSender,
 }
-impl<S: CapnProtoSender> AdvancedNetworkingTab<S> {
+impl AdvancedNetworkingTab {
     pub fn new(
         shared_state: SharedState,
-        client_sender: S,
+        client_sender: BoxedClientSender,
         writer: MsgSender,
-    ) -> AdvancedNetworkingTab<S> {
+    ) -> AdvancedNetworkingTab {
         let tab = AdvancedNetworkingTab {
             all_messages: false,
             client: None,
@@ -218,7 +219,7 @@ impl<S: CapnProtoSender> AdvancedNetworkingTab<S> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::TestSender;
+    use crate::client_sender::TestSender;
     use crate::utils::fixed_sbp_string;
     use sbp::{sbp_string::Unterminated, SbpString};
     use std::io::sink;
@@ -226,7 +227,7 @@ mod tests {
     #[test]
     fn handle_network_state_resp_test() {
         let shared_state = SharedState::new();
-        let client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender::boxed();
         let writer = MsgSender::new(sink());
         let mut tab = AdvancedNetworkingTab::new(shared_state, client_send, writer);
         let tx_bytes = 1;

@@ -1,12 +1,3 @@
-use crate::constants::*;
-use crate::errors::*;
-use crate::process_messages::{process_messages, Messages};
-use crate::shared_state::ConnectionState;
-use crate::shared_state::SharedState;
-use crate::types::*;
-use crate::watch::Watched;
-use anyhow::anyhow;
-use log::{error, info};
 use std::{
     fmt::Debug,
     fs, io,
@@ -18,6 +9,18 @@ use std::{
     time::Duration,
 };
 
+use anyhow::anyhow;
+use log::{error, info};
+
+use crate::client_sender::BoxedClientSender;
+use crate::constants::*;
+use crate::errors::*;
+use crate::process_messages::{process_messages, Messages};
+use crate::shared_state::ConnectionState;
+use crate::shared_state::SharedState;
+use crate::types::*;
+use crate::watch::Watched;
+
 #[derive(Debug)]
 pub struct ConnectionManager {
     msg: Watched<ConnectionManagerMsg>,
@@ -25,9 +28,9 @@ pub struct ConnectionManager {
 }
 
 impl ConnectionManager {
-    pub fn new(client_send: ClientSender, shared_state: SharedState) -> ConnectionManager {
+    pub fn new(client_sender: BoxedClientSender, shared_state: SharedState) -> ConnectionManager {
         let msg = Watched::new(ConnectionManagerMsg::Disconnect);
-        let handle = Some(conn_manager_thd(client_send, shared_state, msg.clone()));
+        let handle = Some(conn_manager_thd(client_sender, shared_state, msg.clone()));
         ConnectionManager { msg, handle }
     }
 
@@ -91,7 +94,7 @@ enum ConnectionManagerMsg {
 }
 
 fn conn_manager_thd(
-    mut client_send: ClientSender,
+    mut client_sender: BoxedClientSender,
     shared_state: SharedState,
     manager_msg: Watched<ConnectionManagerMsg>,
 ) -> JoinHandle<()> {
@@ -126,14 +129,14 @@ fn conn_manager_thd(
                             conn: conn.clone(),
                             stop_token,
                         },
-                        &mut client_send,
+                        &mut client_sender,
                     );
                     pm_thd = Some(process_messages_thd(
                         messages,
                         msg_sender,
                         conn.clone(),
                         shared_state.clone(),
-                        client_send.clone(),
+                        client_sender.clone(),
                         manager_msg.clone(),
                     ));
                 }
@@ -144,14 +147,14 @@ fn conn_manager_thd(
                 ConnectionManagerMsg::Disconnect => {
                     info!("Disconnecting...");
                     log::logger().flush();
-                    shared_state.set_connection(ConnectionState::Disconnected, &mut client_send);
+                    shared_state.set_connection(ConnectionState::Disconnected, &mut client_sender);
                     join(&mut pm_thd);
                     info!("Disconnected successfully.");
                 }
             };
             log::logger().flush();
         }
-        shared_state.set_connection(ConnectionState::Closed, &mut client_send);
+        shared_state.set_connection(ConnectionState::Closed, &mut client_sender);
         join(&mut pm_thd);
         join(&mut reconnect_thd);
     })
@@ -176,7 +179,7 @@ fn process_messages_thd(
     msg_sender: MsgSender,
     conn: Connection,
     shared_state: SharedState,
-    client_send: ClientSender,
+    client_sender: BoxedClientSender,
     manager_msg: Watched<ConnectionManagerMsg>,
 ) -> JoinHandle<()> {
     thread::spawn(move || {
@@ -185,7 +188,7 @@ fn process_messages_thd(
             msg_sender,
             conn.clone(),
             shared_state,
-            client_send,
+            client_sender,
         );
         if conn.close_when_done() {
             manager_msg.close();
@@ -420,7 +423,10 @@ impl FileConnection {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_common::{backup_file, filename, restore_backup_file};
+    use crate::{
+        client_sender::ChannelSender,
+        test_common::{backup_file, filename, restore_backup_file},
+    };
     use crossbeam::channel;
     use serial_test::serial;
     use std::{
@@ -492,9 +498,9 @@ mod tests {
         backup_file(bfilename.clone());
         let shared_state = SharedState::new();
         shared_state.set_debug(true);
-        let (client_send_, client_receive) = channel::unbounded::<Vec<u8>>();
-        let client_send = ClientSender::new(client_send_);
-        let conn_manager = ConnectionManager::new(client_send, shared_state.clone());
+        let (client_sender_, client_receive) = channel::unbounded::<Vec<u8>>();
+        let client_sender = ChannelSender::boxed(client_sender_);
+        let conn_manager = ConnectionManager::new(client_sender, shared_state.clone());
         let filename = TEST_SHORT_FILEPATH.to_string();
         receive_thread(client_receive);
         assert!(!shared_state.connection().is_connected());
@@ -519,9 +525,9 @@ mod tests {
         backup_file(bfilename.clone());
         let shared_state = SharedState::new();
         shared_state.set_debug(true);
-        let (client_send_, client_receive) = channel::unbounded::<Vec<u8>>();
-        let client_send = ClientSender::new(client_send_);
-        let conn_manager = ConnectionManager::new(client_send.clone(), shared_state.clone());
+        let (client_sender_, client_receive) = channel::unbounded::<Vec<u8>>();
+        let client_sender = ChannelSender::boxed(client_sender_);
+        let conn_manager = ConnectionManager::new(client_sender.clone(), shared_state.clone());
         let filename = TEST_FILEPATH.to_string();
         let expected_duration = Duration::from_secs(1);
         let handle = receive_thread(client_receive);
@@ -538,7 +544,7 @@ mod tests {
         conn_manager.disconnect();
         sleep(Duration::from_millis(10));
         assert!(!shared_state.connection().is_connected());
-        drop(client_send);
+        drop(client_sender);
         drop(conn_manager);
         assert!(handle.join().is_ok());
 

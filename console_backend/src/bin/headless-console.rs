@@ -2,11 +2,11 @@ use anyhow::Result;
 use chrono::prelude::*;
 use console_backend::{
     cli_options::{handle_cli, CliOptions},
+    client_sender::ChannelSender,
     connection::ConnectionManager,
     log_panel::setup_logging,
     server_recv_thread::server_recv_thread,
     shared_state::SharedState,
-    types::ClientSender,
     utils::{refresh_connection_frontend, refresh_loggingbar},
 };
 use crossbeam::channel;
@@ -27,7 +27,7 @@ Usage:
     }
     let (client_send_, client_recv) = channel::unbounded::<Vec<u8>>();
     let (_server_send, server_recv) = channel::unbounded::<Vec<u8>>();
-    let client_send = ClientSender::new(client_send_);
+    let client_send = ChannelSender::boxed(client_send_);
     let shared_state = SharedState::new();
     setup_logging(client_send.clone(), shared_state.clone());
     let conn_manager = ConnectionManager::new(client_send.clone(), shared_state.clone());

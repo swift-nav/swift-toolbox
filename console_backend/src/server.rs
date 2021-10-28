@@ -8,17 +8,17 @@ use std::time;
 use crate::cli_options::*;
 use crate::connection::ConnectionManager;
 
+use crate::client_sender::{BoxedClientSender, ChannelSender};
 use crate::log_panel::setup_logging;
 use crate::server_recv_thread::server_recv_thread;
 use crate::shared_state::SharedState;
-use crate::types::ClientSender;
 use crate::utils::{refresh_connection_frontend, refresh_loggingbar};
 
 /// The backend server
 #[pyclass]
 struct Server {
     client_recv: Option<channel::Receiver<Vec<u8>>>,
-    client_sender: Option<ClientSender>,
+    client_sender: Option<BoxedClientSender>,
 }
 
 #[pyclass]
@@ -79,7 +79,7 @@ impl Server {
                     Err(err) => {
                         use channel::RecvTimeoutError;
                         if matches!(err, RecvTimeoutError::Timeout) {
-                            if self.client_sender.as_ref().unwrap().connected.get() {
+                            if self.client_sender.as_ref().unwrap().connected() {
                                 continue;
                             } else {
                                 eprintln!("shutting down");
@@ -101,9 +101,9 @@ impl Server {
 
     #[text_signature = "($self, /)"]
     pub fn start(&mut self) -> PyResult<ServerEndpoint> {
-        let (client_send_, client_recv) = channel::unbounded::<Vec<u8>>();
-        let (server_send, server_recv) = channel::unbounded::<Vec<u8>>();
-        let client_send = ClientSender::new(client_send_);
+        let (client_send, client_recv) = channel::unbounded();
+        let (server_send, server_recv) = channel::unbounded();
+        let client_send = ChannelSender::boxed(client_send);
         self.client_recv = Some(client_recv);
         self.client_sender = Some(client_send.clone());
         let server_endpoint = ServerEndpoint {

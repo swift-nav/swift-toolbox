@@ -1,17 +1,3 @@
-use crate::constants::{
-    BASELINE_TIME_STR_FILEPATH, POS_LLH_TIME_STR_FILEPATH, SBP_FILEPATH, SBP_JSON_FILEPATH,
-    VEL_TIME_STR_FILEPATH,
-};
-use crate::output::{CsvLogging, SbpLogger};
-use crate::shared_state::{create_directory, SharedState};
-use crate::types::CapnProtoSender;
-use crate::utils::{bytes_to_human_readable, refresh_loggingbar, serialize_capnproto_builder};
-use crate::{common_constants::SbpLogging, shared_state::SbpLoggingStatsState};
-use capnp::message::Builder;
-use chrono::Local;
-use crossbeam::channel::Receiver;
-use log::{debug, error};
-use sbp::{time::GpsTime, Sbp};
 use std::{
     path::PathBuf,
     result::Result,
@@ -19,12 +5,28 @@ use std::{
     time::{Duration, Instant},
 };
 
+use capnp::message::Builder;
+use chrono::Local;
+use crossbeam::channel::Receiver;
+use log::{debug, error};
+use sbp::{time::GpsTime, Sbp};
+
+use crate::client_sender::BoxedClientSender;
+use crate::constants::{
+    BASELINE_TIME_STR_FILEPATH, POS_LLH_TIME_STR_FILEPATH, SBP_FILEPATH, SBP_JSON_FILEPATH,
+    VEL_TIME_STR_FILEPATH,
+};
+use crate::output::{CsvLogging, SbpLogger};
+use crate::shared_state::{create_directory, SharedState};
+use crate::utils::{bytes_to_human_readable, refresh_loggingbar, serialize_capnproto_builder};
+use crate::{common_constants::SbpLogging, shared_state::SbpLoggingStatsState};
+
 const LOGGING_STATS_UPDATE_INTERVAL_SEC: u64 = 500;
 
-pub fn logging_stats_thread<S: CapnProtoSender>(
+pub fn logging_stats_thread(
     receiver: Receiver<bool>,
     shared_state: SharedState,
-    client_sender: S,
+    client_sender: BoxedClientSender,
 ) {
     let mut start_time = Instant::now();
     let mut filepath = None;
@@ -54,8 +56,8 @@ pub fn logging_stats_thread<S: CapnProtoSender>(
     }
 }
 
-pub fn refresh_loggingbar_recording<P: CapnProtoSender>(
-    client_send: &mut P,
+pub fn refresh_loggingbar_recording(
+    client_sender: &mut BoxedClientSender,
     size: u64,
     duration: u64,
     filename: Option<String>,
@@ -77,10 +79,10 @@ pub fn refresh_loggingbar_recording<P: CapnProtoSender>(
             .get_recording_filename()
             .set_none(());
     }
-    client_send.send_data(serialize_capnproto_builder(builder));
+    client_sender.send_data(serialize_capnproto_builder(builder));
 }
 
-pub struct MainTab<S: CapnProtoSender> {
+pub struct MainTab {
     logging_directory: PathBuf,
     last_csv_logging: CsvLogging,
     last_sbp_logging: bool,
@@ -88,12 +90,12 @@ pub struct MainTab<S: CapnProtoSender> {
     sbp_logger: Option<SbpLogger>,
     last_gps_update: Instant,
     last_gps_time: Option<GpsTime>,
-    client_sender: S,
+    client_sender: BoxedClientSender,
     shared_state: SharedState,
 }
 
-impl<'a, S: CapnProtoSender> MainTab<S> {
-    pub fn new(shared_state: SharedState, client_sender: S) -> MainTab<S> {
+impl MainTab {
+    pub fn new(shared_state: SharedState, client_sender: BoxedClientSender) -> MainTab {
         MainTab {
             logging_directory: shared_state.logging_directory(),
             last_csv_logging: CsvLogging::OFF,
@@ -283,8 +285,9 @@ impl<'a, S: CapnProtoSender> MainTab<S> {
 mod tests {
     use super::*;
     use crate::baseline_tab::BaselineTab;
+    use crate::client_sender::TestSender;
     use crate::solution_tab::SolutionTab;
-    use crate::types::{BaselineNED, MsgSender, PosLLH, TestSender, VelNED};
+    use crate::types::{BaselineNED, MsgSender, PosLLH, VelNED};
     use crate::utils::{mm_to_m, ms_to_sec};
     use glob::glob;
     use sbp::messages::navigation::{MsgBaselineNed, MsgPosLlh, MsgVelNed};
@@ -316,7 +319,7 @@ mod tests {
     #[test]
     fn realtime_delay_full_test() {
         let shared_state = SharedState::new();
-        let client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender::boxed();
         let gps_s = GpsTimeTests::new();
         let mut main = MainTab::new(shared_state, client_send);
         let early_gps_time_good = GpsTime::new(gps_s.good_week, gps_s.early_gps_tow_good).unwrap();
@@ -334,7 +337,7 @@ mod tests {
     #[test]
     fn realtime_delay_no_last_test() {
         let shared_state = SharedState::new();
-        let client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender::boxed();
         let gps_s = GpsTimeTests::new();
         let mut main = MainTab::new(shared_state, client_send);
         let later_gps_time_good = GpsTime::new(gps_s.good_week, gps_s.later_gps_tow_good);
@@ -349,7 +352,7 @@ mod tests {
         let tmp_dir = TempDir::new().unwrap();
         let tmp_dir = tmp_dir.path().to_path_buf();
         let shared_state = SharedState::new();
-        let client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender::boxed();
         let writer = sink();
         let msg_sender = MsgSender::new(writer);
         let mut main = MainTab::new(shared_state.clone(), client_send.clone());
@@ -483,7 +486,7 @@ mod tests {
         let tmp_dir = TempDir::new().unwrap();
         let tmp_dir = tmp_dir.path().to_path_buf();
         let shared_state = SharedState::new();
-        let client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender::boxed();
         let mut main = MainTab::new(shared_state, client_send);
         assert!(!main.last_sbp_logging);
         main.shared_state.set_sbp_logging_format(SbpLogging::SBP);
@@ -574,7 +577,7 @@ mod tests {
         let tmp_dir = TempDir::new().unwrap();
         let tmp_dir = tmp_dir.path().to_path_buf();
         let shared_state = SharedState::new();
-        let client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender::boxed();
         let mut main = MainTab::new(shared_state, client_send);
         assert!(!main.last_sbp_logging);
         main.shared_state

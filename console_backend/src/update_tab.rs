@@ -21,18 +21,17 @@ use std::{
     time::{Duration, Instant},
 };
 
+use crate::client_sender::BoxedClientSender;
+use crate::errors::{
+    CONVERT_TO_STR_FAILURE, CROSSBEAM_SCOPE_UNWRAP_FAILURE, SHARED_STATE_LOCK_MUTEX_FAILURE,
+    THREAD_JOIN_FAILURE,
+};
 use crate::fileio::{new_sequence, Fileio};
 use crate::shared_state::{SharedState, LOG_DIRECTORY};
-use crate::types::{ArcBool, CapnProtoSender, MsgSender, Result};
+use crate::swift_version::SwiftVersion;
+use crate::types::{ArcBool, MsgSender, Result};
 use crate::update_downloader::UpdateDownloader;
 use crate::utils::serialize_capnproto_builder;
-use crate::{
-    errors::{
-        CONVERT_TO_STR_FAILURE, CROSSBEAM_SCOPE_UNWRAP_FAILURE, SHARED_STATE_LOCK_MUTEX_FAILURE,
-        THREAD_JOIN_FAILURE,
-    },
-    swift_version::SwiftVersion,
-};
 
 const HARDWARE_REVISION: &str = "piksi_multi";
 const FIRMWARE_V2_VERSION: &str = "v2.0.0";
@@ -148,12 +147,12 @@ pub fn check_for_firmware_local_filepath(directory: PathBuf) -> Option<PathBuf> 
     }
 }
 
-pub fn update_tab_thread<S: CapnProtoSender>(
+pub fn update_tab_thread(
     sender: Sender<Option<UpdateTabUpdate>>,
     receiver: Receiver<Option<UpdateTabUpdate>>,
     update_tab_context: UpdateTabContext,
     shared_state: SharedState,
-    client_sender: S,
+    client_sender: BoxedClientSender,
     link: Link<'_, ()>,
     msg_sender: MsgSender,
 ) {
@@ -265,10 +264,7 @@ fn wait_for_device_settings(
 }
 
 /// Package data into a message buffer and send to frontend.
-fn update_frontend<S: CapnProtoSender>(
-    mut client_sender: S,
-    mut update_tab_context: UpdateTabContext,
-) {
+fn update_frontend(mut client_sender: BoxedClientSender, mut update_tab_context: UpdateTabContext) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
     let packet = update_tab_context.packet();
@@ -1151,7 +1147,7 @@ mod tests {
     }
     mod update_thread {
         use super::*;
-        use crate::types::TestSender;
+        use crate::client_sender::TestSender;
         use glob::glob;
         use sbp::link::LinkSource;
         use std::io::sink;
@@ -1162,7 +1158,7 @@ mod tests {
             let shared_state = SharedState::new();
             let update_tab = UpdateTab::new(shared_state.clone());
             let ctx = update_tab.clone_update_tab_context();
-            let client_send = TestSender { inner: Vec::new() };
+            let client_send = TestSender::boxed();
             let (update_tab_tx, update_tab_rx) = update_tab.clone_channel();
             let source: LinkSource<()> = LinkSource::new();
             let link = source.link();
@@ -1192,7 +1188,7 @@ mod tests {
             let shared_state = SharedState::new();
             let update_tab = UpdateTab::new(shared_state.clone());
             let ctx = update_tab.clone_update_tab_context();
-            let client_send = TestSender { inner: Vec::new() };
+            let client_send = TestSender::boxed();
             let (update_tab_tx, update_tab_rx) = update_tab.clone_channel();
             let source: LinkSource<()> = LinkSource::new();
             let link = source.link();
@@ -1256,7 +1252,7 @@ mod tests {
             let shared_state = SharedState::new();
             let update_tab = UpdateTab::new(shared_state.clone());
             let ctx = update_tab.clone_update_tab_context();
-            let client_send = TestSender { inner: Vec::new() };
+            let client_send = TestSender::boxed();
             let (update_tab_tx, update_tab_rx) = update_tab.clone_channel();
             let source: LinkSource<()> = LinkSource::new();
             let link = source.link();

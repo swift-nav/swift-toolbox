@@ -7,12 +7,13 @@ use sbp::messages::{
 };
 use std::{collections::HashMap, str::FromStr, time::Instant};
 
+use crate::client_sender::BoxedClientSender;
 use crate::constants::*;
 use crate::date_conv::*;
 use crate::output::{PosLLHLog, VelLog};
 use crate::piksi_tools_constants::EMPTY_STR;
 use crate::shared_state::SharedState;
-use crate::types::{CapnProtoSender, Deque, Dops, GnssModes, GpsTime, PosLLH, UtcDateTime, VelNED};
+use crate::types::{Deque, Dops, GnssModes, GpsTime, PosLLH, UtcDateTime, VelNED};
 use crate::utils::*;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -99,10 +100,10 @@ impl FromStr for LatLonUnits {
 /// - `vel_log_file`: The CsvSerializer corresponding to an open velocity log if any.
 /// - `week`: The stored week value from GPS Time messages.
 #[derive(Debug)]
-pub struct SolutionTab<S: CapnProtoSender> {
+pub struct SolutionTab {
     age_corrections: Option<f64>,
     available_units: [&'static str; 2],
-    client_sender: S,
+    client_sender: BoxedClientSender,
     directory_name: Option<String>,
     ins_status_flags: u32,
     ins_used: bool,
@@ -136,8 +137,8 @@ pub struct SolutionTab<S: CapnProtoSender> {
     week: Option<u16>,
 }
 
-impl<S: CapnProtoSender> SolutionTab<S> {
-    pub fn new(shared_state: SharedState, client_sender: S) -> SolutionTab<S> {
+impl SolutionTab {
+    pub fn new(shared_state: SharedState, client_sender: BoxedClientSender) -> SolutionTab {
         let unit = LatLonUnits::Degrees;
         let (lat_sf, lon_sf) = unit.get_sig_figs(0.0);
         SolutionTab {
@@ -911,7 +912,7 @@ impl<S: CapnProtoSender> SolutionTab<S> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::TestSender;
+    use crate::client_sender::TestSender;
     use chrono::{TimeZone, Utc};
     use sbp::messages::navigation::{
         MsgAgeCorrections, MsgDops, MsgDopsDepA, MsgGpsTime, MsgPosLlh, MsgPosLlhDepA, MsgVelNed,
@@ -922,7 +923,7 @@ mod tests {
     #[test]
     fn handle_utc_time_test() {
         let shared_state = SharedState::new();
-        let client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender::boxed();
         let mut solution_table = SolutionTab::new(shared_state, client_send);
         let year = 2020_u16;
         let month = 3_u8;
@@ -982,7 +983,7 @@ mod tests {
     #[test]
     fn handle_gps_time_test() {
         let shared_state = SharedState::new();
-        let client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender::boxed();
         let mut solution_table = SolutionTab::new(shared_state, client_send);
         let wn = 0_u16;
         let ns_residual = 1337_i32;
@@ -1018,7 +1019,7 @@ mod tests {
     #[test]
     fn handle_vel_ned_test() {
         let shared_state = SharedState::new();
-        let client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender::boxed();
         let mut solution_tab = SolutionTab::new(shared_state, client_send);
         let good_flags = 0x07;
         let bad_flags = 0xF0;
@@ -1110,7 +1111,7 @@ mod tests {
     #[test]
     fn handle_ins_status_test() {
         let shared_state = SharedState::new();
-        let client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender::boxed();
         let mut solution_tab = SolutionTab::new(shared_state, client_send);
         let flags = 0xf0_u32;
         let msg = MsgInsStatus {
@@ -1126,7 +1127,7 @@ mod tests {
     #[test]
     fn handle_ins_updates_test() {
         let shared_state = SharedState::new();
-        let client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender::boxed();
         let mut solution_tab = SolutionTab::new(shared_state, client_send);
         let msg = MsgInsUpdates {
             sender_id: Some(1337),
@@ -1165,7 +1166,7 @@ mod tests {
     #[test]
     fn handle_dops_test() {
         let shared_state = SharedState::new();
-        let client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender::boxed();
         let mut solution_tab = SolutionTab::new(shared_state, client_send);
         let pdop = 1;
         let gdop = 2;
@@ -1262,7 +1263,7 @@ mod tests {
     #[test]
     fn handle_age_corrections_test() {
         let shared_state = SharedState::new();
-        let client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender::boxed();
         let mut solution_tab = SolutionTab::new(shared_state, client_send);
         assert!(solution_tab.age_corrections.is_none());
         let msg = MsgAgeCorrections {
@@ -1288,7 +1289,7 @@ mod tests {
     #[test]
     fn handle_pos_llh_test() {
         let shared_state = SharedState::new();
-        let client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender::boxed();
         let mut solution_tab = SolutionTab::new(shared_state, client_send);
         solution_tab.utc_time = Some(utc_time(1_i32, 3_u32, 3_u32, 7_u32, 6_u32, 6_u32, 6_u32));
         solution_tab.utc_source = Some(utc_source(0x02));

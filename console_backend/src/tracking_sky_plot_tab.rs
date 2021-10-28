@@ -1,11 +1,12 @@
 use capnp::message::Builder;
 use sbp::messages::observation::MsgSvAzEl;
 
+use crate::client_sender::BoxedClientSender;
 use crate::piksi_tools_constants::{
     code_is_bds, code_is_galileo, code_is_glo, code_is_gps, code_is_qzss, code_is_sbas,
 };
 use crate::shared_state::SharedState;
-use crate::types::{CapnProtoSender, SignalCodes};
+use crate::types::SignalCodes;
 use crate::utils::{serialize_capnproto_builder, signal_key_label};
 
 /// SkyPlotObs struct.
@@ -30,14 +31,14 @@ struct SkyPlotObs {
 /// - `client_send`: Client Sender channel for communication from backend to frontend.
 /// - `sats`: Storage for Satellite SkyPlotObs to be sent to frontend.
 /// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
-pub struct TrackingSkyPlotTab<S: CapnProtoSender> {
-    client_sender: S,
+pub struct TrackingSkyPlotTab {
+    client_sender: BoxedClientSender,
     sats: Vec<Vec<SkyPlotObs>>,
     shared_state: SharedState,
 }
 
-impl<S: CapnProtoSender> TrackingSkyPlotTab<S> {
-    pub fn new(client_sender: S, shared_state: SharedState) -> TrackingSkyPlotTab<S> {
+impl TrackingSkyPlotTab {
+    pub fn new(client_sender: BoxedClientSender, shared_state: SharedState) -> TrackingSkyPlotTab {
         TrackingSkyPlotTab {
             client_sender,
             sats: (0_i32..6_i32).map(|_| Vec::new()).collect(),
@@ -137,12 +138,12 @@ mod tests {
     use sbp::messages::{gnss::GnssSignal, observation::SvAzEl};
 
     use super::*;
-    use crate::types::TestSender;
+    use crate::client_sender::TestSender;
 
     #[test]
     fn handle_sv_az_el_test() {
         let shared_state = SharedState::new();
-        let client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender::boxed();
         let mut tab = TrackingSkyPlotTab::new(client_send, shared_state.clone());
         let az = 45;
         let el = 40;

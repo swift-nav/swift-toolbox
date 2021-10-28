@@ -3,11 +3,12 @@ use sbp::messages::logging::MsgLog;
 
 use capnp::message::Builder;
 
+use crate::client_sender::BoxedClientSender;
 use crate::common_constants as cc;
 use crate::constants::LOG_WRITER_BUFFER_MESSAGE_COUNT;
 use crate::errors::CONSOLE_LOG_JSON_TO_STRING_FAILURE;
 use crate::shared_state::SharedState;
-use crate::types::{ArcBool, CapnProtoSender, ClientSender};
+use crate::types::ArcBool;
 use crate::utils::serialize_capnproto_builder;
 
 use async_logger::Writer;
@@ -97,7 +98,7 @@ pub fn handle_log_msg(msg: MsgLog) {
     }
 }
 
-pub fn setup_logging(client_sender: ClientSender, shared_state: SharedState) {
+pub fn setup_logging(client_sender: BoxedClientSender, shared_state: SharedState) {
     let log_panel = LogPanelWriter::new(client_sender, shared_state);
     let logger = Logger::builder()
         .buf_size(LOG_WRITER_BUFFER_MESSAGE_COUNT)
@@ -111,14 +112,14 @@ pub fn setup_logging(client_sender: ClientSender, shared_state: SharedState) {
 }
 
 #[derive(Debug)]
-pub struct LogPanelWriter<S: CapnProtoSender> {
-    pub client_sender: S,
+pub struct LogPanelWriter {
+    pub client_sender: BoxedClientSender,
     shared_state: SharedState,
     pub log_to_std: ArcBool,
 }
 
-impl<S: CapnProtoSender> LogPanelWriter<S> {
-    pub fn new(client_sender: S, shared_state: SharedState) -> LogPanelWriter<S> {
+impl LogPanelWriter {
+    pub fn new(client_sender: BoxedClientSender, shared_state: SharedState) -> LogPanelWriter {
         LogPanelWriter {
             client_sender,
             log_to_std: shared_state.log_to_std(),
@@ -127,7 +128,7 @@ impl<S: CapnProtoSender> LogPanelWriter<S> {
     }
 }
 
-impl<S: CapnProtoSender> Writer<Box<String>> for LogPanelWriter<S> {
+impl Writer<Box<String>> for LogPanelWriter {
     fn process_slice(&mut self, slice: &[Box<String>]) {
         if slice.is_empty() {
             return;

@@ -9,13 +9,14 @@ use std::{
     time::Duration,
 };
 
+use crate::client_sender::BoxedClientSender;
 use crate::common_constants as cc;
 use crate::errors::{
     THREAD_JOIN_FAILURE, UNABLE_TO_SEND_INS_UPDATE_FAILURE, UNABLE_TO_STOP_TIMER_THREAD_FAILURE,
     UPDATE_STATUS_LOCK_MUTEX_FAILURE,
 };
 use crate::shared_state::SharedState;
-use crate::types::{ArcBool, CapnProtoSender};
+use crate::types::ArcBool;
 use crate::utils::serialize_capnproto_builder;
 
 const STATUS_PERIOD: f64 = 1.0;
@@ -268,8 +269,8 @@ impl Drop for FusionStatusFlag {
 /// - `nhc`: Storage for the non-holonomic constraints model status.
 /// - `zerovel`: Storage for the zero velocity status.
 #[derive(Debug)]
-pub struct FusionStatusFlags<S: CapnProtoSender> {
-    client_sender: S,
+pub struct FusionStatusFlags {
+    client_sender: BoxedClientSender,
     shared_state: SharedState,
     gnsspos: FusionStatusFlag,
     gnssvel: FusionStatusFlag,
@@ -279,8 +280,8 @@ pub struct FusionStatusFlags<S: CapnProtoSender> {
     zerovel: FusionStatusFlag,
 }
 
-impl<S: CapnProtoSender> FusionStatusFlags<S> {
-    pub fn new(shared_state: SharedState, client_sender: S) -> FusionStatusFlags<S> {
+impl FusionStatusFlags {
+    pub fn new(shared_state: SharedState, client_sender: BoxedClientSender) -> FusionStatusFlags {
         FusionStatusFlags {
             client_sender,
             shared_state,

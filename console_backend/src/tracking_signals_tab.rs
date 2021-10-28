@@ -1,13 +1,14 @@
-use ordered_float::OrderedFloat;
 use std::{
     collections::HashMap,
     time::{Duration, Instant},
 };
 
 use capnp::message::Builder;
-
 use log::warn;
+use ordered_float::OrderedFloat;
+use sbp::messages::tracking::{MeasurementState, TrackingChannelState};
 
+use crate::client_sender::BoxedClientSender;
 use crate::constants::{
     CHART_XMIN_OFFSET_NO_TRACKING, CHART_XMIN_OFFSET_TRACKING, GLO_FCN_OFFSET, GLO_SLOT_SAT_MAX,
     NUM_POINTS, SHOW_LEGEND, TRACKING_UPDATE_PERIOD, TRK_RATE,
@@ -17,9 +18,8 @@ use crate::piksi_tools_constants::{
     GPS_L2CM_STR, QZS_L1CA_STR, QZS_L2CM_STR, SBAS_L1_STR,
 };
 use crate::shared_state::SharedState;
-use crate::types::{CapnProtoSender, Cn0Age, Cn0Dict, Deque, ObservationMsg, SignalCodes};
+use crate::types::{Cn0Age, Cn0Dict, Deque, ObservationMsg, SignalCodes};
 use crate::utils::{serialize_capnproto_builder, signal_key_color, signal_key_label};
-use sbp::messages::tracking::{MeasurementState, TrackingChannelState};
 
 /// TrackingSignalsTab struct.
 ///
@@ -44,10 +44,10 @@ use sbp::messages::tracking::{MeasurementState, TrackingChannelState};
 /// - `t_init`: Instant monotonic time used as starting reference time.
 /// - `time`: Vector of Monotic times stored.
 #[derive(Debug)]
-pub struct TrackingSignalsTab<S: CapnProtoSender> {
+pub struct TrackingSignalsTab {
     pub at_least_one_track_received: bool,
     pub check_labels: [&'static str; 12],
-    pub client_sender: S,
+    pub client_sender: BoxedClientSender,
     pub cn0_age: Cn0Age,
     pub cn0_dict: Cn0Dict,
     pub colors: Vec<String>,
@@ -68,8 +68,8 @@ pub struct TrackingSignalsTab<S: CapnProtoSender> {
     pub time: Deque<f64>,
 }
 
-impl<S: CapnProtoSender> TrackingSignalsTab<S> {
-    pub fn new(shared_state: SharedState, client_sender: S) -> TrackingSignalsTab<S> {
+impl TrackingSignalsTab {
+    pub fn new(shared_state: SharedState, client_sender: BoxedClientSender) -> TrackingSignalsTab {
         TrackingSignalsTab {
             at_least_one_track_received: false,
             check_labels: [
@@ -437,7 +437,7 @@ mod tests {
     use std::thread::sleep;
 
     use super::*;
-    use crate::types::TestSender;
+    use crate::client_sender::TestSender;
     use sbp::messages::{
         gnss::{CarrierPhase, GnssSignal, GpsTime},
         observation::{Doppler, MsgObs, ObservationHeader, PackedObsContent},
@@ -446,7 +446,7 @@ mod tests {
     #[test]
     fn cn0_age_and_cn0_dict_test() {
         let shared_state = SharedState::new();
-        let client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender::boxed();
         let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state, client_send);
         let t_init = tracking_signals_tab.t_init;
         let signal_code = SignalCodes::from(4_u8);
@@ -482,7 +482,7 @@ mod tests {
     #[test]
     fn handle_msg_measurement_state_test() {
         let shared_state = SharedState::new();
-        let client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender::boxed();
         let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state, client_send);
 
         let mut states: Vec<MeasurementState> = Vec::new();
@@ -527,7 +527,7 @@ mod tests {
     #[test]
     fn handle_msg_tracking_state_test() {
         let shared_state = SharedState::new();
-        let client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender::boxed();
         let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state, client_send);
 
         let mut states: Vec<TrackingChannelState> = Vec::new();
@@ -575,7 +575,7 @@ mod tests {
     #[test]
     fn handle_msg_obs_test() {
         let shared_state = SharedState::new();
-        let client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender::boxed();
         let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state, client_send);
         let mut obs_msg = MsgObs {
             sender_id: Some(5),
@@ -612,7 +612,7 @@ mod tests {
     #[test]
     fn update_plot_test() {
         let shared_state = SharedState::new();
-        let client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender::boxed();
         let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state, client_send);
         let t = (Instant::now())
             .duration_since(tracking_signals_tab.t_init)

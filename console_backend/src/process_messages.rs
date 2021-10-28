@@ -19,9 +19,10 @@ use sbp::{
 };
 use std::io;
 
+use crate::client_sender::BoxedClientSender;
 use crate::types::{
-    BaselineNED, CapnProtoSender, Dops, GpsTime, MsgSender, ObservationMsg, PosLLH, RealtimeDelay,
-    Specan, UartState, VelNED,
+    BaselineNED, Dops, GpsTime, MsgSender, ObservationMsg, PosLLH, RealtimeDelay, Specan,
+    UartState, VelNED,
 };
 use crate::utils::refresh_connection_frontend;
 use crate::Tabs;
@@ -32,29 +33,26 @@ use crate::{main_tab, update_tab};
 
 pub use messages::{Messages, StopToken};
 
-pub fn process_messages<S>(
+pub fn process_messages(
     mut messages: Messages,
     msg_sender: MsgSender,
     conn: Connection,
     shared_state: SharedState,
-    client_send: S,
-) -> Result<(), io::Error>
-where
-    S: CapnProtoSender,
-{
+    mut client_sender: BoxedClientSender,
+) -> Result<(), io::Error> {
     shared_state.set_current_connection(conn.name());
-    refresh_connection_frontend(&mut client_send.clone(), shared_state.clone());
+    refresh_connection_frontend(&mut client_sender, shared_state.clone());
 
-    let source: LinkSource<Tabs<S>> = LinkSource::new();
+    let source: LinkSource<Tabs> = LinkSource::new();
     let tabs = Tabs::new(
         shared_state.clone(),
-        client_send.clone(),
+        client_sender.clone(),
         msg_sender.clone(),
     );
 
     let link = source.link();
 
-    link.register(|tabs: &Tabs<S>, msg: MsgAgeCorrections| {
+    link.register(|tabs: &Tabs, msg: MsgAgeCorrections| {
         tabs.baseline
             .lock()
             .unwrap()
@@ -66,40 +64,40 @@ where
         tabs.status_bar.lock().unwrap().handle_age_corrections(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: MsgAngularRate| {
+    link.register(|tabs: &Tabs, msg: MsgAngularRate| {
         tabs.solution.lock().unwrap().handle_angular_rate(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: MsgBaselineHeading| {
+    link.register(|tabs: &Tabs, msg: MsgBaselineHeading| {
         tabs.baseline.lock().unwrap().handle_baseline_heading(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: MsgCommandResp| {
+    link.register(|tabs: &Tabs, msg: MsgCommandResp| {
         tabs.update.lock().unwrap().handle_command_resp(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: MsgCsacTelemetry| {
+    link.register(|tabs: &Tabs, msg: MsgCsacTelemetry| {
         tabs.advanced_system_monitor
             .lock()
             .unwrap()
             .handle_csac_telemetry(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: MsgCsacTelemetryLabels| {
+    link.register(|tabs: &Tabs, msg: MsgCsacTelemetryLabels| {
         tabs.advanced_system_monitor
             .lock()
             .unwrap()
             .handle_csac_telemetry_labels(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: MsgDeviceMonitor| {
+    link.register(|tabs: &Tabs, msg: MsgDeviceMonitor| {
         tabs.advanced_system_monitor
             .lock()
             .unwrap()
             .handle_device_monitor(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: BaselineNED| {
+    link.register(|tabs: &Tabs, msg: BaselineNED| {
         tabs.baseline
             .lock()
             .unwrap()
@@ -107,16 +105,16 @@ where
         tabs.status_bar.lock().unwrap().handle_baseline_ned(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: Dops| {
+    link.register(|tabs: &Tabs, msg: Dops| {
         tabs.solution.lock().unwrap().handle_dops(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: GpsTime| {
+    link.register(|tabs: &Tabs, msg: GpsTime| {
         tabs.baseline.lock().unwrap().handle_gps_time(msg.clone());
         tabs.solution.lock().unwrap().handle_gps_time(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: MsgHeartbeat| {
+    link.register(|tabs: &Tabs, msg: MsgHeartbeat| {
         tabs.advanced_system_monitor
             .lock()
             .unwrap()
@@ -124,20 +122,20 @@ where
         tabs.status_bar.lock().unwrap().handle_heartbeat(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: MsgImuAux| {
+    link.register(|tabs: &Tabs, msg: MsgImuAux| {
         tabs.advanced_imu.lock().unwrap().handle_imu_aux(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: MsgImuRaw| {
+    link.register(|tabs: &Tabs, msg: MsgImuRaw| {
         tabs.advanced_imu.lock().unwrap().handle_imu_raw(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: MsgInsStatus| {
+    link.register(|tabs: &Tabs, msg: MsgInsStatus| {
         tabs.solution.lock().unwrap().handle_ins_status(msg.clone());
         tabs.status_bar.lock().unwrap().handle_ins_status(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: MsgInsUpdates| {
+    link.register(|tabs: &Tabs, msg: MsgInsUpdates| {
         tabs.advanced_imu
             .lock()
             .unwrap()
@@ -150,28 +148,28 @@ where
         tabs.status_bar.lock().unwrap().handle_ins_updates(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: MsgMagRaw| {
+    link.register(|tabs: &Tabs, msg: MsgMagRaw| {
         tabs.advanced_magnetometer
             .lock()
             .unwrap()
             .handle_mag_raw(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: MsgMeasurementState| {
+    link.register(|tabs: &Tabs, msg: MsgMeasurementState| {
         tabs.tracking_signals
             .lock()
             .unwrap()
             .handle_msg_measurement_state(msg.states);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: MsgNetworkStateResp| {
+    link.register(|tabs: &Tabs, msg: MsgNetworkStateResp| {
         tabs.advanced_networking
             .lock()
             .unwrap()
             .handle_network_state_resp(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: ObservationMsg| {
+    link.register(|tabs: &Tabs, msg: ObservationMsg| {
         tabs.tracking_signals
             .lock()
             .unwrap()
@@ -183,66 +181,66 @@ where
         debug!("The message type, MsgObsDepA, is not handled in the Tracking->SignalsPlot or Observation tab.");
     });
 
-    link.register(|tabs: &Tabs<S>, msg: MsgOrientEuler| {
+    link.register(|tabs: &Tabs, msg: MsgOrientEuler| {
         tabs.solution.lock().unwrap().handle_orientation_euler(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: PosLLH| {
+    link.register(|tabs: &Tabs, msg: PosLLH| {
         tabs.solution.lock().unwrap().handle_pos_llh(msg.clone());
         tabs.status_bar.lock().unwrap().handle_pos_llh(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: MsgPosLlhCov| {
+    link.register(|tabs: &Tabs, msg: MsgPosLlhCov| {
         tabs.solution.lock().unwrap().handle_pos_llh_cov(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: Specan| {
+    link.register(|tabs: &Tabs, msg: Specan| {
         tabs.advanced_spectrum_analyzer
             .lock()
             .unwrap()
             .handle_specan(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: MsgSvAzEl| {
+    link.register(|tabs: &Tabs, msg: MsgSvAzEl| {
         tabs.tracking_sky_plot.lock().unwrap().handle_sv_az_el(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: MsgThreadState| {
+    link.register(|tabs: &Tabs, msg: MsgThreadState| {
         tabs.advanced_system_monitor
             .lock()
             .unwrap()
             .handle_thread_state(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: MsgTrackingState| {
+    link.register(|tabs: &Tabs, msg: MsgTrackingState| {
         tabs.tracking_signals
             .lock()
             .unwrap()
             .handle_msg_tracking_state(msg.states);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: VelNED| {
+    link.register(|tabs: &Tabs, msg: VelNED| {
         tabs.solution.lock().unwrap().handle_vel_ned(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: MsgVelNed| {
+    link.register(|tabs: &Tabs, msg: MsgVelNed| {
         // why does this tab not take both VelNED messages?
         tabs.solution_velocity.lock().unwrap().handle_vel_ned(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: UartState| {
+    link.register(|tabs: &Tabs, msg: UartState| {
         tabs.advanced_system_monitor
             .lock()
             .unwrap()
             .handle_uart_state(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: MsgUtcTime| {
+    link.register(|tabs: &Tabs, msg: MsgUtcTime| {
         tabs.baseline.lock().unwrap().handle_utc_time(msg.clone());
         tabs.solution.lock().unwrap().handle_utc_time(msg);
     });
 
-    link.register(|tabs: &Tabs<S>, msg: MsgLog| {
+    link.register(|tabs: &Tabs, msg: MsgLog| {
         tabs.update.lock().unwrap().handle_log_msg(msg.clone());
         handle_log_msg(msg);
     });
@@ -258,7 +256,7 @@ where
     let settings_tab = conn.settings_enabled().then(|| {
         SettingsTab::new(
             shared_state.clone(),
-            client_send.clone(),
+            client_sender.clone(),
             msg_sender.clone(),
             source.stateless_link(),
         )
@@ -270,7 +268,7 @@ where
                 update_tab_rx,
                 update_tab_context,
                 shared_state.clone(),
-                client_send.clone(),
+                client_sender.clone(),
                 source.stateless_link(),
                 msg_sender.clone(),
             );
@@ -279,7 +277,7 @@ where
             main_tab::logging_stats_thread(
                 logging_stats_rx,
                 shared_state.clone(),
-                client_send.clone(),
+                client_sender.clone(),
             )
         });
 

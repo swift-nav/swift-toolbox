@@ -12,13 +12,14 @@ use std::{
     time::{Duration, Instant},
 };
 
+use crate::client_sender::BoxedClientSender;
 use crate::constants::*;
 use crate::errors::*;
 use crate::piksi_tools_constants::{
     ins_error_dict, ins_mode_dict, ins_type_dict, rtk_mode_dict, DR_MODE, EMPTY_STR, RTK_MODES,
 };
 use crate::shared_state::SharedState;
-use crate::types::{ArcBool, BaselineNED, CapnProtoSender, GnssModes, PosLLH};
+use crate::types::{ArcBool, BaselineNED, GnssModes, PosLLH};
 use crate::utils::{bytes_to_kb, decisec_to_sec, serialize_capnproto_builder};
 
 enum AntennaStatus {
@@ -84,8 +85,8 @@ impl StatusBarUpdate {
 /// - `heartbeat_handler`: The handler to store the running heartbeat thread.
 /// - `port`: The string corresponding to the current connection.
 #[derive(Debug)]
-pub struct StatusBar<S: CapnProtoSender> {
-    client_sender: S,
+pub struct StatusBar {
+    client_sender: BoxedClientSender,
     shared_state: SharedState,
     heartbeat_data: Heartbeat,
     is_running: ArcBool,
@@ -93,13 +94,13 @@ pub struct StatusBar<S: CapnProtoSender> {
     port: String,
     version: String,
 }
-impl<S: CapnProtoSender> StatusBar<S> {
+impl StatusBar {
     /// Create a new StatusBar.
     ///
     /// # Parameters:
     /// - `client_send`: Client Sender channel for communication from backend to frontend.
     /// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
-    pub fn new(shared_state: SharedState, client_sender: S) -> StatusBar<S> {
+    pub fn new(shared_state: SharedState, client_sender: BoxedClientSender) -> StatusBar {
         let heartbeat_data = Heartbeat::new();
         let is_running = ArcBool::new();
         let version = shared_state.console_version();
@@ -109,7 +110,7 @@ impl<S: CapnProtoSender> StatusBar<S> {
             heartbeat_data: heartbeat_data.clone(),
             port: shared_state.current_connection(),
             version,
-            heartbeat_handler: StatusBar::<S>::heartbeat_thread(
+            heartbeat_handler: StatusBar::heartbeat_thread(
                 is_running.clone(),
                 heartbeat_data,
                 shared_state,
@@ -307,7 +308,7 @@ impl<S: CapnProtoSender> StatusBar<S> {
     }
 }
 
-impl<S: CapnProtoSender> Drop for StatusBar<S> {
+impl Drop for StatusBar {
     fn drop(&mut self) {
         self.is_running.set(false);
     }
@@ -564,13 +565,13 @@ impl Clone for Heartbeat {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::TestSender;
+    use crate::client_sender::TestSender;
     const DELAY_BUFFER_MS: u64 = 10;
 
     #[test]
     fn handle_age_corrections_test() {
         let shared_state = SharedState::new();
-        let client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender::boxed();
         let mut status_bar = StatusBar::new(shared_state, client_send);
         let age_corrections = {
             let shared_data = status_bar
@@ -618,7 +619,7 @@ mod tests {
     #[test]
     fn handle_ins_status_test() {
         let shared_state = SharedState::new();
-        let client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender::boxed();
         let mut status_bar = StatusBar::new(shared_state, client_send);
         let flags = 0xf0_u32;
         let msg = MsgInsStatus {
@@ -640,8 +641,8 @@ mod tests {
         };
         assert!(
             last_ins_status_receipt_time.unwrap() > update_time,
-            "[Flaky] If this test fails 
-        consider rerunning as it is known to be flaky. 
+            "[Flaky] If this test fails
+        consider rerunning as it is known to be flaky.
         More info found here: https://swift-nav.atlassian.net/browse/CPP-252"
         );
         assert_eq!(ins_status_flags, flags);
@@ -650,7 +651,7 @@ mod tests {
     #[test]
     fn handle_ins_updates_test() {
         let shared_state = SharedState::new();
-        let client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender::boxed();
         let mut status_bar = StatusBar::new(shared_state, client_send);
         let msg = MsgInsUpdates {
             sender_id: Some(1337),

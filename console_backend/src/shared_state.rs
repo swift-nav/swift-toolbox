@@ -1,3 +1,26 @@
+use std::{
+    cmp::{Eq, PartialEq},
+    fmt::Debug,
+    fs,
+    hash::Hash,
+    ops::Deref,
+    path::{Path, PathBuf},
+    sync::{Arc, Mutex},
+    time::Instant,
+};
+
+use anyhow::{Context, Result as AHResult};
+use chrono::{DateTime, Utc};
+use crossbeam::channel::Sender;
+use directories::{ProjectDirs, UserDirs};
+use indexmap::set::IndexSet;
+use indexmap::IndexMap;
+use lazy_static::lazy_static;
+use log::error;
+use serde::{Deserialize, Serialize};
+use serialport::FlowControl;
+
+use crate::client_sender::BoxedClientSender;
 use crate::common_constants::{self as cc, SbpLogging};
 use crate::connection::Connection;
 use crate::constants::{
@@ -10,31 +33,11 @@ use crate::output::{CsvLogging, CsvSerializer};
 use crate::process_messages::StopToken;
 use crate::settings_tab;
 use crate::solution_tab::LatLonUnits;
-use crate::types::{ArcBool, CapnProtoSender};
+use crate::types::ArcBool;
 use crate::update_tab::UpdateTabUpdate;
 use crate::utils::send_conn_state;
 use crate::watch::{WatchReceiver, Watched};
-use anyhow::{Context, Result as AHResult};
-use chrono::{DateTime, Utc};
-use crossbeam::channel::Sender;
-use directories::{ProjectDirs, UserDirs};
-use indexmap::set::IndexSet;
-use indexmap::IndexMap;
-use lazy_static::lazy_static;
-use log::error;
-use serde::{Deserialize, Serialize};
-use serialport::FlowControl;
-use std::path::Path;
-use std::{
-    cmp::{Eq, PartialEq},
-    fmt::Debug,
-    fs,
-    hash::Hash,
-    ops::Deref,
-    path::PathBuf,
-    sync::{Arc, Mutex},
-    time::Instant,
-};
+
 pub type Error = anyhow::Error;
 pub type Result<T> = anyhow::Result<T>;
 pub type UtcDateTime = DateTime<Utc>;
@@ -54,10 +57,7 @@ impl SharedState {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).conn.watch()
     }
-    pub fn set_connection<S>(&self, conn: ConnectionState, client_send: &mut S)
-    where
-        S: CapnProtoSender,
-    {
+    pub fn set_connection(&self, conn: ConnectionState, client_sender: &mut BoxedClientSender) {
         {
             let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
             if let ConnectionState::Connected { stop_token, .. } = shared_data.conn.get() {
@@ -65,7 +65,7 @@ impl SharedState {
             }
             shared_data.conn.send(conn.clone());
         }
-        send_conn_state(conn, client_send);
+        send_conn_state(conn, client_sender);
     }
     pub fn debug(&self) -> bool {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
@@ -869,7 +869,7 @@ impl ConnectionHistory {
     pub fn record_serial(&mut self, device: String, baud: u32, flow: FlowControl) {
         let serial = SerialConfig { baud, flow };
         self.serial_configs.shift_remove(&device);
-        self.serial_configs.insert(device.clone(), serial);
+        self.serial_configs.insert(device, serial);
         let diff = i32::max(0, self.serial_configs.len() as i32 - MAX_CONNECTION_HISTORY);
         self.serial_configs = self.serial_configs.split_off(diff as usize);
 

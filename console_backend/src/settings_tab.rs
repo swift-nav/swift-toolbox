@@ -121,7 +121,7 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
     }
 
     fn refresh(&self) {
-        self.settings.lock().clear_values();
+        (*self.settings.lock()) = Settings::new();
         self.read_all_settings();
         self.send_table_data();
     }
@@ -396,9 +396,6 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
     fn send_table_data(&self) {
         let settings = self.settings.lock();
         let groups = settings.groups();
-        if groups.is_empty() {
-            return;
-        }
         let num_settings: usize = groups.iter().map(|group| group.len()).sum();
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
@@ -510,14 +507,6 @@ impl Settings {
                         .insert(&setting.name, SettingsEntry::new(setting));
                     settings
                 }),
-        }
-    }
-
-    fn clear_values(&mut self) {
-        for group in self.inner.values_mut() {
-            for setting in group.values_mut() {
-                setting.value = None;
-            }
         }
     }
 

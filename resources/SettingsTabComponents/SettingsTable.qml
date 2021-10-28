@@ -207,9 +207,11 @@ Item {
             onTriggered: {
                 settings_table_model.fill_console_points(settingsTableEntries);
                 var entries = settingsTableEntries.entries;
-                if (!entries.length)
+                if (!entries.length) {
+                    tableView.model.clear();
+                    tableView.forceLayout();
                     return ;
-
+                }
                 if (lastShowExpert != showExpert) {
                     tableView.model.clear();
                     rowOffsets = {

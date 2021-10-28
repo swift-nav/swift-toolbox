@@ -184,6 +184,7 @@ QtObject {
         readonly property int spacing: 20
         readonly property int fusionStatusWidth: 80
         readonly property int labelMargin: 5
+        readonly property int labelFontSize: 12
     }
 
     genericTable: QtObject {

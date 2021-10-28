@@ -24,6 +24,9 @@ Item {
     }
 
     GroupBox {
+
+        anchors.centerIn: parent
+
         GridLayout {
             id: insStatusRow
 
@@ -31,7 +34,7 @@ Item {
 
             Label {
                 text: Constants.advancedImu.insStatusLabels[0]
-                font.pointSize: 12
+                font.pointSize: Constants.fusionStatusFlags.labelFontSize
             }
 
             UnknownStatus {
@@ -56,7 +59,7 @@ Item {
 
             Label {
                 text: Constants.advancedImu.insStatusLabels[1]
-                font.pointSize: 12
+                font.pointSize: Constants.fusionStatusFlags.labelFontSize
             }
 
             UnknownStatus {
@@ -81,7 +84,7 @@ Item {
 
             Label {
                 text: Constants.advancedImu.insStatusLabels[2]
-                font.pointSize: 12
+                font.pointSize: Constants.fusionStatusFlags.labelFontSize
             }
 
             UnknownStatus {
@@ -106,7 +109,7 @@ Item {
 
             Label {
                 text: Constants.advancedImu.insStatusLabels[3]
-                font.pointSize: 12
+                font.pointSize: Constants.fusionStatusFlags.labelFontSize
             }
 
             UnknownStatus {
@@ -131,7 +134,7 @@ Item {
 
             Label {
                 text: Constants.advancedImu.insStatusLabels[4]
-                font.pointSize: 12
+                font.pointSize: Constants.fusionStatusFlags.labelFontSize
             }
 
             UnknownStatus {
@@ -156,7 +159,7 @@ Item {
 
             Label {
                 text: Constants.advancedImu.insStatusLabels[5]
-                font.pointSize: 12
+                font.pointSize: Constants.fusionStatusFlags.labelFontSize
             }
 
             UnknownStatus {

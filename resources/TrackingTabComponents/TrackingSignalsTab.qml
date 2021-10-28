@@ -51,7 +51,7 @@ Item {
                 property int maximumHeight: parent.height - Constants.trackingSignals.legendTopMargin - Constants.trackingSignals.legendBottomMargin
                 property int openedHeight: gridView.count < maxCellsPerColumn ? gridView.cellHeight * gridView.count : maximumHeight
                 property int openCloseSpeed: Constants.trackingSignals.legendShadeSpeed
-                property int maxCellsPerColumn: maximumHeight / gridView.cellHeight  // floor/truncation is desired.
+                property int maxCellsPerColumn: maximumHeight / gridView.cellHeight // floor/truncation is desired.
 
                 visible: gridView.count > 0
                 radius: 5
@@ -141,6 +141,7 @@ Item {
                 ColumnLayout {
                     anchors.fill: parent
                     spacing: 0
+
                     Rectangle {
                         id: legendHideBar
 
@@ -175,6 +176,7 @@ Item {
 
                         TextMetrics {
                             id: legendTextMetrics
+
                             font.family: Constants.fontFamily
                             font.pointSize: Constants.smallPointSize
                             text: Constants.trackingSignals.legendCellTextSample
@@ -206,6 +208,7 @@ Item {
                         }
 
                     }
+
                 }
 
             }

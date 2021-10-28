@@ -178,7 +178,7 @@ Item {
                             id: legendTextMetrics
 
                             font.family: Constants.fontFamily
-                            font.pointSize: Constants.smallPointSize
+                            font.pointSize: Constants.xSmallPointSize
                             text: Constants.trackingSignals.legendCellTextSample
                         }
 

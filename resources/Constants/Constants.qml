@@ -44,6 +44,7 @@ QtObject {
     readonly property int staticTimerSlowIntervalRate: 2 // 2 Hz
     readonly property string monoSpaceFont: "Courier New"
     readonly property string fontFamily: "Roboto"
+    readonly property real xSmallPointSize: 6
     readonly property real smallPointSize: 7
     readonly property real mediumPointSize: 8
     readonly property real largePointSize: 9

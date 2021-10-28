@@ -122,6 +122,7 @@ impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
 
     fn refresh(&self) {
         (*self.settings.lock()) = Settings::new();
+        self.send_table_data();
         self.read_all_settings();
         self.send_table_data();
     }

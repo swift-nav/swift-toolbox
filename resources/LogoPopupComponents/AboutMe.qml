@@ -43,7 +43,7 @@ ColumnLayout {
 
     Label {
         Layout.alignment: Qt.AlignHCenter
-        text: "<a href='" + Constants.logoPopup.aboutMe.website + "'>Visit Swift Navigation website</a>"
+        text: "Learn more at the <a href='" + Constants.logoPopup.aboutMe.website + "'>Swift Navigation website</a>"
         font.pointSize: Constants.logoPopup.aboutMe.secondaryPointSize
         onLinkActivated: {
             Qt.openUrlExternally(Constants.logoPopup.aboutMe.website);

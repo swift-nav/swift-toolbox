@@ -23,27 +23,27 @@ Item {
         id: trackingSignalsArea
 
         anchors.fill: parent
+        spacing: 0
 
         ChartView {
             id: trackingSignalsChart
 
-            Layout.bottomMargin: -(Constants.margins * 2)
             Layout.fillHeight: true
             Layout.fillWidth: true
             visible: false
+            margins {
+                top: 0
+                bottom: 0
+                left: 0
+                right: 0
+            }
             title: Constants.trackingSignals.title
+            titleFont.family: Constants.fontFamily
+            titleFont.pointSize: Constants.trackingSignals.titlePointSize
             titleColor: Constants.trackingSignals.titleColor
-            // backgroundColor: Constants.commonChart.backgroundColor
             plotAreaColor: Constants.commonChart.areaColor
             legend.visible: false
             antialiasing: true
-            Component.onCompleted: {
-            }
-
-            titleFont {
-                pointSize: Constants.trackingSignals.titlePointSize
-                bold: true
-            }
 
             Rectangle {
                 id: lineLegend
@@ -55,8 +55,8 @@ Item {
 
                 visible: gridView.count > 0
                 radius: 5
-                x: Constants.trackingSignals.legendTopMargin
-                y: Constants.trackingSignals.legendLeftMargin
+                x: Constants.trackingSignals.legendLeftMargin
+                y: Constants.trackingSignals.legendTopMargin
                 height: openedHeight
                 // Size to two cols if there are cells for 2+ cols.
                 width: gridView.cellWidth * (gridView.count <= maxCellsPerColumn ? 1 : 2)
@@ -227,10 +227,9 @@ Item {
                 tickInterval: Constants.trackingSignals.xAxisTickInterval
                 labelFormat: "%d"
 
-                labelsFont {
-                    pointSize: Constants.mediumPointSize
-                    bold: true
-                }
+                titleFont.family: Constants.fontFamily
+                labelsFont.family: Constants.fontFamily
+                labelsFont.pointSize: Constants.mediumPointSize
 
             }
 
@@ -250,10 +249,9 @@ Item {
                 tickInterval: Constants.trackingSignals.yAxisTickInterval
                 labelFormat: "%d"
 
-                labelsFont {
-                    pointSize: Constants.mediumPointSize
-                    bold: true
-                }
+                titleFont.family: Constants.fontFamily
+                labelsFont.family: Constants.fontFamily
+                labelsFont.pointSize: Constants.mediumPointSize
 
             }
 

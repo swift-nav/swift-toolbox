@@ -269,6 +269,7 @@ Item {
                         return ;
 
                     if (!available_baudrates.length || !available_flows.length) {
+                        Globals.consoleVersion = connectionData.console_version;
                         available_baudrates = connectionData.available_baudrates;
                         serialDeviceBaudRate.currentIndex = 1;
                         available_flows = connectionData.available_flows;

@@ -285,6 +285,8 @@ pub enum Keys {
     PREVIOUS_SERIAL_CONFIGS,
     #[strum(serialize = "RECORDING_FILENAME")]
     RECORDING_FILENAME,
+    #[strum(serialize = "CONSOLE_VERSION")]
+    CONSOLE_VERSION,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]

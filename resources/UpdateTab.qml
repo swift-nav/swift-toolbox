@@ -317,7 +317,6 @@ Item {
             update_tab_model.fill_data(updateTabData);
             if (updateTabData.console_version_latest) {
                 if (!consoleVersionDialogAlready) {
-                    Globals.consoleVersion = updateTabData.console_version_current;
                     if (updateTabData.console_outdated && !popupLock) {
                         popupLock = true;
                         consoleVersionDialog.contentItem.text = consoleOutdatedDialogText(updateTabData.console_version_current, updateTabData.console_version_latest);

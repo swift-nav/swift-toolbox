@@ -53,6 +53,8 @@ Rectangle {
             padding: Constants.sideNavBar.buttonPadding
             icon.source: Constants.icons.swiftLogoPath
             icon.color: "transparent"
+            ToolTip.visible: hovered
+            ToolTip.text: "About this application"
             onClicked: {
                 logoPopup.open();
             }

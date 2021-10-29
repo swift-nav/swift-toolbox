@@ -159,6 +159,7 @@ struct ConnectionStatus {
         port @7 :Text;
         none @8 :Void = void;
     }
+    consoleVersion @9: Text;
 }
 
 struct StatusBarStatus {

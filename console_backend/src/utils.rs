@@ -39,6 +39,7 @@ pub fn refresh_connection_frontend<P: CapnProtoSender>(
     let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
     let mut connection_status = msg.init_connection_status();
+    connection_status.set_console_version(&shared_state.console_version());
     let mut ports: Vec<String> = vec![];
     if let Ok(ports_) = &mut available_ports() {
         // TODO(johnmichael.burke@) [CPP-114]Find solution to this hack for Linux serialport.

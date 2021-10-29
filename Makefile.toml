@@ -555,7 +555,7 @@ dependencies = ["set-python-files"]
 command = "${PYTHON}"
 args = ["-m", "pylint", "--output-format=parseable", "@@split(PYTHON_FILES, )"]
 
-[tasks.format-toml-check]
+[tasks.toml-format-check]
 # Note format-toml task is defined by cargo-make to use crate taplo-cli, but the version is
 # unspecified.  Task cargo-make-deps-update keeps the dev version in sync with CI.
 # https://github.com/sagiegurari/cargo-make/issues/571
@@ -577,7 +577,7 @@ run_task = [
 alias = "format-all"
 
 [tasks.format-check]
-dependencies = ["python-format-check", "rust-format-check", "newline-check", "qml-format-check"]
+dependencies = ["python-format-check", "rust-format-check", "newline-check", "qml-format-check", "toml-format-check"]
 run_task = "check-git-diff"
 
 [tasks.lint]

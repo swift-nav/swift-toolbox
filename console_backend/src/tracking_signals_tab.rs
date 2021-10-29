@@ -10,7 +10,7 @@ use log::warn;
 
 use crate::constants::{
     CHART_XMIN_OFFSET_NO_TRACKING, CHART_XMIN_OFFSET_TRACKING, GLO_FCN_OFFSET, GLO_SLOT_SAT_MAX,
-    NUM_POINTS, SHOW_LEGEND, TRACKING_UPDATE_PERIOD, TRK_RATE,
+    NUM_POINTS, TRACKING_UPDATE_PERIOD, TRK_RATE,
 };
 use crate::piksi_tools_constants::{
     BDS2_B1_STR, BDS2_B2_STR, GAL_E1B_STR, GAL_E7I_STR, GLO_L1OF_STR, GLO_L2OF_STR, GPS_L1CA_STR,
@@ -46,7 +46,7 @@ use sbp::messages::tracking::{MeasurementState, TrackingChannelState};
 #[derive(Debug)]
 pub struct TrackingSignalsTab<S: CapnProtoSender> {
     pub at_least_one_track_received: bool,
-    pub check_labels: [&'static str; 12],
+    pub check_labels: [&'static str; 11],
     pub client_sender: S,
     pub cn0_age: Cn0Age,
     pub cn0_dict: Cn0Dict,
@@ -73,7 +73,6 @@ impl<S: CapnProtoSender> TrackingSignalsTab<S> {
         TrackingSignalsTab {
             at_least_one_track_received: false,
             check_labels: [
-                SHOW_LEGEND,
                 GPS_L1CA_STR,
                 GPS_L2CM_STR,
                 GLO_L1OF_STR,

@@ -48,11 +48,13 @@ Item {
             currentIndex: trackingBar.currentIndex
 
             TrackingTabComponents.TrackingSignalsTab {
-                anchors.fill: parent
+                Layout.fillWidth: true
+                Layout.fillHeight: true
             }
 
             TrackingTabComponents.TrackingSkyPlotTab {
-                anchors.fill: parent
+                Layout.fillWidth: true
+                Layout.fillHeight: true
             }
 
         }

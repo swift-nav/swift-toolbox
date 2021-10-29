@@ -273,8 +273,6 @@ Item {
                             series.axisYRight = trackingSignalsYAxis;
                             series.width = Constants.commonChart.lineWidth;
                             // Color and useOpenGL will be set in Python with fill_all_series call.
-                            // series.color = sourceSeries.color
-                            // series.useOpenGL = sourceSeries.useOpenGL
                             trackingSignalsPoints.addSeries(series);
                         }
                     }

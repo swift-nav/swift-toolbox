@@ -136,7 +136,6 @@ from .status_bar import (
 )
 
 from .tracking_signals_tab import (
-    TrackingSignalsModel,
     TrackingSignalsPoints,
     TRACKING_SIGNALS_TAB,
 )
@@ -857,7 +856,6 @@ def main():
     solution_velocity_model = SolutionVelocityModel()
     status_bar_model = StatusBarModel()
     logging_bar_model = LoggingBarModel()
-    tracking_signals_model = TrackingSignalsModel()
     tracking_sky_plot_model = TrackingSkyPlotModel()
     update_tab_model = UpdateTabModel()
     root_context = engine.rootContext()
@@ -878,7 +876,6 @@ def main():
     root_context.setContextProperty("solution_velocity_model", solution_velocity_model)
     root_context.setContextProperty("status_bar_model", status_bar_model)
     root_context.setContextProperty("logging_bar_model", logging_bar_model)
-    root_context.setContextProperty("tracking_signals_model", tracking_signals_model)
     root_context.setContextProperty("tracking_sky_plot_model", tracking_sky_plot_model)
     root_context.setContextProperty("update_tab_model", update_tab_model)
     root_context.setContextProperty("data_model", data_model)

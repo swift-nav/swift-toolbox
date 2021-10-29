@@ -30,7 +30,7 @@ Item {
                 Layout.preferredHeight: Constants.tabBarHeight
 
                 Repeater {
-                    model: ["About Me", "Licenses"]
+                    model: ["About", "Licenses"]
 
                     TabButton {
                         text: modelData

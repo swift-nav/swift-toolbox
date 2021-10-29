@@ -577,7 +577,7 @@ run_task = [
 alias = "format-all"
 
 [tasks.format-check]
-dependencies = ["python-format-check", "rust-format-check", "newline-check"]
+dependencies = ["python-format-check", "rust-format-check", "newline-check", "qml-format-check"]
 run_task = "check-git-diff"
 
 [tasks.lint]

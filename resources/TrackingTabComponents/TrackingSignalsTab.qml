@@ -31,12 +31,6 @@ Item {
             Layout.fillHeight: true
             Layout.fillWidth: true
             visible: false
-            margins {
-                top: 0
-                bottom: 0
-                left: 0
-                right: 0
-            }
             title: Constants.trackingSignals.title
             titleFont.family: Constants.fontFamily
             titleFont.pointSize: Constants.trackingSignals.titlePointSize
@@ -44,6 +38,13 @@ Item {
             plotAreaColor: Constants.commonChart.areaColor
             legend.visible: false
             antialiasing: true
+
+            margins {
+                top: 0
+                bottom: 0
+                left: 0
+                right: 0
+            }
 
             Rectangle {
                 id: lineLegend
@@ -226,11 +227,9 @@ Item {
                 tickType: ValueAxis.TicksDynamic
                 tickInterval: Constants.trackingSignals.xAxisTickInterval
                 labelFormat: "%d"
-
                 titleFont.family: Constants.fontFamily
                 labelsFont.family: Constants.fontFamily
                 labelsFont.pointSize: Constants.mediumPointSize
-
             }
 
             ValueAxis {
@@ -248,11 +247,9 @@ Item {
                 tickType: ValueAxis.TicksDynamic
                 tickInterval: Constants.trackingSignals.yAxisTickInterval
                 labelFormat: "%d"
-
                 titleFont.family: Constants.fontFamily
                 labelsFont.family: Constants.fontFamily
                 labelsFont.pointSize: Constants.mediumPointSize
-
             }
 
             Timer {
@@ -287,6 +284,7 @@ Item {
 
         GridLayout {
             id: trackingSignalsCheckboxes
+
             property int numChecked: trackingSignalsCbRepeater.count
 
             flow: GridLayout.TopToBottom
@@ -298,26 +296,23 @@ Item {
 
             SmallCheckBox {
                 id: toggleAllCheckBox
+
                 Layout.margins: 0
                 Layout.rowSpan: parent.rows == 0 ? 1 : parent.rows
                 tristate: true
-                checkState: (parent.numChecked == trackingSignalsCbRepeater.count ? Qt.Checked :
-                    parent.numChecked > 0 ? Qt.PartiallyChecked : Qt.Unchecked)
+                checkState: (parent.numChecked == trackingSignalsCbRepeater.count ? Qt.Checked : parent.numChecked > 0 ? Qt.PartiallyChecked : Qt.Unchecked)
                 text: "Toggle All"
-
                 onClicked: {
-                    var curCheckState = checkState
+                    var curCheckState = checkState;
                     for (var i = 0; i < trackingSignalsCbRepeater.count; i++) {
                         var cb = trackingSignalsCbRepeater.itemAt(i);
-                        if ((curCheckState == Qt.Checked && !cb.checked) ||
-                            (curCheckState != Qt.Checked && cb.checked)) {
-                            cb.toggle()
-                        }
+                        if ((curCheckState == Qt.Checked && !cb.checked) || (curCheckState != Qt.Checked && cb.checked))
+                            cb.toggle();
+
                     }
                 }
-
-                nextCheckState: function () {
-                    return (checkState == Qt.Checked) ? Qt.Unchecked : Qt.Checked
+                nextCheckState: function() {
+                    return (checkState == Qt.Checked) ? Qt.Unchecked : Qt.Checked;
                 }
             }
 
@@ -332,7 +327,7 @@ Item {
                     checked: true
                     text: modelData
                     onCheckedChanged: {
-                        trackingSignalsCheckboxes.numChecked += checked ? 1 : -1
+                        trackingSignalsCheckboxes.numChecked += checked ? 1 : -1;
                         check_visibility[index] = checked;
                         var labels_not_visible = [];
                         for (var idx in check_visibility) {

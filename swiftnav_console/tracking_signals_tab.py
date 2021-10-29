@@ -135,5 +135,3 @@ class TrackingSignalsPoints(QObject):
         if enabled_series != self._enabled_series:
             self._enabled_series = enabled_series
             self.enabled_series_changed.emit()  # type: ignore
-
-        return

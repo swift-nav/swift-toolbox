@@ -27,7 +27,9 @@ ColumnLayout {
 
                 readOnly: true
                 activeFocusOnPress: false
-                horizontalAlignment: TextEdit.AlignHCenter
+                horizontalAlignment: TextEdit.AlignJustify
+                selectByKeyboard: true
+                selectByMouse: true
             }
 
         }
@@ -40,7 +42,9 @@ ColumnLayout {
 
                 readOnly: true
                 activeFocusOnPress: false
-                horizontalAlignment: TextEdit.AlignHCenter
+                horizontalAlignment: TextEdit.AlignJustify
+                selectByKeyboard: true
+                selectByMouse: true
             }
 
         }

@@ -533,10 +533,10 @@ QtObject {
     trackingSignals: QtObject {
         readonly property string title: "Tracking C/N0"
         readonly property color titleColor: Qt.darker(swiftOrange, 1.1)
-        readonly property int titlePointSize: 14
-        readonly property int legendTopMargin: 30
+        readonly property int titlePointSize: largePointSize
+        readonly property int legendTopMargin: 12
         readonly property int legendBottomMargin: 74
-        readonly property int legendLeftMargin: 30
+        readonly property int legendLeftMargin: 18
         readonly property int legendLabelPointSize: 6
         readonly property string legendCellTextSample: "XXX XXXX X+NN XNN"
         readonly property int legendShadeHeight: 10

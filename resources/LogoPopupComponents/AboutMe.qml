@@ -34,7 +34,7 @@ ColumnLayout {
         readonly property string website: Constants.logoPopup.aboutMe.supportWebsite
 
         Layout.alignment: Qt.AlignHCenter
-        text: "Contact Swift Navigation: <a href='" + website + "'>" + website + "</a>"
+        text: "Find help at the Swift Navigation <a href='" + website + "'>support portal</a>"
         font.pointSize: Constants.logoPopup.aboutMe.secondaryPointSize
         onLinkActivated: {
             Qt.openUrlExternally(website);

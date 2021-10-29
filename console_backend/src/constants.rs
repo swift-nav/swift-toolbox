@@ -54,8 +54,6 @@ pub(crate) const TRACKING_UPDATE_PERIOD: f64 = 0.2;
 pub(crate) const CHART_XMIN_OFFSET_NO_TRACKING: f64 = -45.0;
 pub(crate) const CHART_XMIN_OFFSET_TRACKING: f64 = -95.0;
 
-pub(crate) const SHOW_LEGEND: &str = "Show Legend";
-
 // Advanced Magnetometer Tab.
 pub(crate) const MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER: f64 = 0.25;
 

@@ -287,6 +287,7 @@ Item {
 
         GridLayout {
             id: trackingSignalsCheckboxes
+            property int numChecked: trackingSignalsCbRepeater.count
 
             flow: GridLayout.TopToBottom
             columns: Math.floor(parent.width / Constants.trackingSignals.checkBoxPreferredWidth)
@@ -295,8 +296,33 @@ Item {
             Layout.margins: 0
             Layout.alignment: Qt.AlignHCenter
 
+            SmallCheckBox {
+                id: toggleAllCheckBox
+                Layout.margins: 0
+                Layout.rowSpan: parent.rows == 0 ? 1 : parent.rows
+                tristate: true
+                checkState: (parent.numChecked == trackingSignalsCbRepeater.count ? Qt.Checked :
+                    parent.numChecked > 0 ? Qt.PartiallyChecked : Qt.Unchecked)
+                text: "Toggle All"
+
+                onClicked: {
+                    var curCheckState = checkState
+                    for (var i = 0; i < trackingSignalsCbRepeater.count; i++) {
+                        var cb = trackingSignalsCbRepeater.itemAt(i);
+                        if ((curCheckState == Qt.Checked && !cb.checked) ||
+                            (curCheckState != Qt.Checked && cb.checked)) {
+                            cb.toggle()
+                        }
+                    }
+                }
+
+                nextCheckState: function () {
+                    return (checkState == Qt.Checked) ? Qt.Unchecked : Qt.Checked
+                }
+            }
+
             Repeater {
-                id: trackingSignalsCheckbox
+                id: trackingSignalsCbRepeater
 
                 model: check_labels
 
@@ -305,12 +331,9 @@ Item {
                     Layout.rowSpan: index === 0 ? trackingSignalsCheckboxes.rows : 1
                     checked: true
                     text: modelData
-                    onClicked: {
+                    onCheckedChanged: {
+                        trackingSignalsCheckboxes.numChecked += checked ? 1 : -1
                         check_visibility[index] = checked;
-                        if (index == 0) {
-                            lineLegend.visible = !lineLegend.visible;
-                            return ;
-                        }
                         var labels_not_visible = [];
                         for (var idx in check_visibility) {
                             if (!check_visibility[idx])

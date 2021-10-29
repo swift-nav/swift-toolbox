@@ -16,7 +16,6 @@ QtObject {
     property QtObject connection
     property QtObject sideNavBar
     property QtObject loggingBar
-    property QtObject licensesPopup
     property QtObject commonChart
     property QtObject commonLegend
     property QtObject commonTable
@@ -40,6 +39,7 @@ QtObject {
     property QtObject trackingSkyPlot
     property QtObject networking
     property QtObject fusionStatusFlags
+    property QtObject logoPopup
     readonly property int staticTimerIntervalRate: 5 // 5 Hz
     readonly property int staticTableTimerIntervalRate: 10 // 10 Hz
     readonly property int staticTimerSlowIntervalRate: 2 // 2 Hz
@@ -52,6 +52,34 @@ QtObject {
     readonly property bool debugMode: false
     readonly property color materialGrey: "dimgrey"
     readonly property color swiftOrange: "#FF8300"
+
+    logoPopup: QtObject {
+        readonly property int heightPadding: 120
+        readonly property int buttonWidth: 30
+        readonly property int buttonRightMargin: 15
+        readonly property int buttonTopMargin: 10
+        property QtObject licenses
+        property QtObject aboutMe
+
+        licenses: QtObject {
+            readonly property int dropdownHeight: 40
+            readonly property string robotoFontTabLabel: "Roboto Font"
+            readonly property string fontAwesomeIconsTabLabel: "Font Awesome Icons"
+            readonly property string robotoFontLicensePath: "qrc:///fonts/Roboto-LICENSE.txt"
+            readonly property string fontAwesomeIconsLicensePath: "qrc:///images/fontawesome/LICENSE.txt"
+        }
+
+        aboutMe: QtObject {
+            readonly property int logoWidth: 200
+            readonly property int bottomPadding: 20
+            readonly property string supportWebsite: "https://swiftnav.com/support"
+            readonly property string website: "https://www.swiftnav.com"
+            readonly property string copyrightText: "Copyright © 2011-2022 Swift Navigation Inc."
+            readonly property int titlePointSize: 14
+            readonly property int secondaryPointSize: 10
+        }
+
+    }
 
     sideNavBar: QtObject {
         readonly property int buttonSvgHeight: 15
@@ -68,6 +96,9 @@ QtObject {
         readonly property int tabBarSpacing: 10
         readonly property int buttonPadding: 0
         readonly property int buttonInset: 0
+        readonly property int separatorMargin: 10
+        readonly property int separatorHeight: 1
+        readonly property color backgroundColor: "#fafafa"
     }
 
     updateTab: QtObject {
@@ -205,15 +236,6 @@ QtObject {
         readonly property color borderColor: "gainsboro"
         readonly property string fontFamily: "Roboto"
         property var defaultColumns: ["Item", "Value"]
-    }
-
-    licensesPopup: QtObject {
-        readonly property real tabBarHeight: 40
-        readonly property real dialogPopupHeightPadding: 100
-        readonly property string robotoFontTabLabel: "Roboto Font"
-        readonly property string fontAwesomeIconsTabLabel: "Font Awesome Icons"
-        readonly property string robotoFontLicensePath: "../fonts/Roboto-LICENSE.txt"
-        readonly property string fontAwesomeIconsLicensePath: "../images/fontawesome/LICENSE.txt"
     }
 
     statusBar: QtObject {
@@ -552,6 +574,7 @@ QtObject {
         readonly property string playPath: "qrc:///images/iconic/play.svg"
         readonly property string solidCirclePath: "qrc:///images/fontawesome/circle-solid.svg"
         readonly property string squareSolidPath: "qrc:///images/fontawesome/square-solid.svg"
+        readonly property string swiftLogoPath: "qrc:///images/icon.png"
     }
 
     insSettingsPopup: QtObject {

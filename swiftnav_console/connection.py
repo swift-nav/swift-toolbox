@@ -18,6 +18,7 @@ CONNECTION: Dict[str, Any] = {
     Keys.PREVIOUS_FILES: [],
     Keys.LAST_USED_SERIAL_DEVICE: None,
     Keys.PREVIOUS_SERIAL_CONFIGS: [],
+    Keys.CONSOLE_VERSION: str,
 }
 
 
@@ -33,6 +34,7 @@ class ConnectionData(QObject):  # pylint: disable=too-many-instance-attributes d
     _previous_files: List[str] = []
     _last_used_serial_device: str
     _previous_serial_configs: List[List[Any]] = []
+    _console_version: str = ""
 
     def get_available_ports(self) -> List[str]:
         return self._available_ports
@@ -116,6 +118,14 @@ class ConnectionData(QObject):  # pylint: disable=too-many-instance-attributes d
         QTKeys.QVARIANTLIST, get_previous_serial_configs, set_previous_serial_configs  # type: ignore
     )
 
+    def get_console_version(self) -> str:
+        return self._console_version
+
+    def set_console_version(self, console_version: str) -> None:
+        self._console_version = console_version
+
+    console_version = Property(str, get_console_version, set_console_version)
+
 
 class ConnectionModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(ConnectionData)  # type: ignore
@@ -129,4 +139,5 @@ class ConnectionModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_previous_files(CONNECTION[Keys.PREVIOUS_FILES])
         cp.set_last_used_serial_device(CONNECTION[Keys.LAST_USED_SERIAL_DEVICE])
         cp.set_previous_serial_configs(CONNECTION[Keys.PREVIOUS_SERIAL_CONFIGS])
+        cp.set_console_version(CONNECTION[Keys.CONSOLE_VERSION])
         return cp

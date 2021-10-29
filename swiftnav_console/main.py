@@ -379,6 +379,7 @@ def receive_messages(app_, backend, messages):
             CONNECTION[Keys.PREVIOUS_SERIAL_CONFIGS][:] = [
                 [entry.device, entry.baudrate, entry.flowControl] for entry in m.connectionStatus.previousSerialConfigs
             ]
+            CONNECTION[Keys.CONSOLE_VERSION] = m.connectionStatus.consoleVersion
         elif m.which == Message.Union.LoggingBarStatus:
             LOGGING_BAR[Keys.PREVIOUS_FOLDERS][:] = m.loggingBarStatus.previousFolders
             LOGGING_BAR[Keys.CSV_LOGGING] = m.loggingBarStatus.csvLogging

@@ -15,9 +15,10 @@ use sbp::messages::piksi::MsgReset;
 use sbp::messages::settings::MsgSettingsSave;
 use sbp_settings::{Client, Setting, SettingKind, SettingValue};
 
+use crate::client_sender::BoxedClientSender;
 use crate::errors::SHARED_STATE_LOCK_MUTEX_FAILURE;
 use crate::shared_state::{SettingsTabState, SharedState};
-use crate::types::{CapnProtoSender, Error, MsgSender, Result};
+use crate::types::{Error, MsgSender, Result};
 use crate::utils::*;
 
 const FIRMWARE_VERSION_SETTING_KEY: &str = "firmware_version";
@@ -32,7 +33,7 @@ lazy_static! {
     ];
 }
 
-pub fn start_thd<S: CapnProtoSender>(tab: &SettingsTab<S>) {
+pub fn start_thd(tab: &SettingsTab) {
     let mut recv = tab.shared_state.watch_settings_state();
     while let Ok(mut guard) = recv.wait_mut() {
         let state = &mut *guard;
@@ -45,7 +46,7 @@ pub fn start_thd<S: CapnProtoSender>(tab: &SettingsTab<S>) {
     }
 }
 
-fn tick<S: CapnProtoSender>(settings_tab: &SettingsTab<S>, settings_state: SettingsTabState) {
+fn tick(settings_tab: &SettingsTab, settings_state: SettingsTabState) {
     if settings_state.refresh {
         settings_tab.refresh();
     }
@@ -86,27 +87,27 @@ fn tick<S: CapnProtoSender>(settings_tab: &SettingsTab<S>, settings_state: Setti
     }
 }
 
-pub struct SettingsTab<'link, S> {
+pub struct SettingsTab<'link> {
     shared_state: SharedState,
-    client_sender: Mutex<S>,
+    client_sender: Mutex<BoxedClientSender>,
     msg_sender: MsgSender,
     settings: Mutex<Settings>,
     sbp_client: Client<'link>,
 }
 
-impl<S> Drop for SettingsTab<'_, S> {
+impl Drop for SettingsTab<'_> {
     fn drop(&mut self) {
         self.shared_state.reset_settings_state();
     }
 }
 
-impl<'link, S: CapnProtoSender> SettingsTab<'link, S> {
+impl<'link> SettingsTab<'link> {
     pub fn new(
         shared_state: SharedState,
-        client_sender: S,
+        client_sender: BoxedClientSender,
         msg_sender: MsgSender,
         link: Link<'link, ()>,
-    ) -> SettingsTab<'link, S> {
+    ) -> SettingsTab<'link> {
         SettingsTab {
             shared_state,
             client_sender: Mutex::new(client_sender),

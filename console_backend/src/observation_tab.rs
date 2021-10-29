@@ -3,11 +3,10 @@ use capnp::message::Builder;
 use log::warn;
 use std::collections::{BTreeMap, HashMap};
 
+use crate::client_sender::BoxedClientSender;
 use crate::shared_state::SharedState;
-use crate::types::{CapnProtoSender, ObservationMsg, SignalCodes};
-use crate::utils::{compute_doppler, sec_to_ns};
-
-use crate::utils::serialize_capnproto_builder;
+use crate::types::{ObservationMsg, SignalCodes};
+use crate::utils::{compute_doppler, sec_to_ns, serialize_capnproto_builder};
 
 #[derive(Clone, Debug)]
 pub struct ObservationTableRow {
@@ -122,15 +121,15 @@ impl Default for ObservationTable {
 }
 
 #[derive(Debug)]
-pub struct ObservationTab<S: CapnProtoSender> {
-    pub client_sender: S,
+pub struct ObservationTab {
+    pub client_sender: BoxedClientSender,
     pub shared_state: SharedState,
     pub remote: ObservationTable,
     pub local: ObservationTable,
 }
 
-impl<S: CapnProtoSender> ObservationTab<S> {
-    pub fn new(shared_state: SharedState, client_sender: S) -> ObservationTab<S> {
+impl ObservationTab {
+    pub fn new(shared_state: SharedState, client_sender: BoxedClientSender) -> ObservationTab {
         ObservationTab {
             client_sender,
             shared_state,

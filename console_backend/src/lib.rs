@@ -9,6 +9,7 @@ pub mod console_backend_capnp {
     include!(concat!(env!("OUT_DIR"), "/console_backend_capnp.rs"));
 }
 pub mod broadcaster;
+pub mod client_sender;
 pub mod common_constants;
 pub mod connection;
 pub mod constants;
@@ -58,27 +59,27 @@ use crate::{
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-struct Tabs<S: types::CapnProtoSender> {
-    pub main: Mutex<MainTab<S>>,
-    pub advanced_imu: Mutex<AdvancedImuTab<S>>,
-    pub advanced_magnetometer: Mutex<AdvancedMagnetometerTab<S>>,
-    pub advanced_networking: Mutex<AdvancedNetworkingTab<S>>,
-    pub advanced_system_monitor: Mutex<AdvancedSystemMonitorTab<S>>,
-    pub baseline: Mutex<BaselineTab<S>>,
-    pub tracking_signals: Mutex<TrackingSignalsTab<S>>,
-    pub tracking_sky_plot: Mutex<TrackingSkyPlotTab<S>>,
-    pub solution: Mutex<SolutionTab<S>>,
-    pub observation: Mutex<ObservationTab<S>>,
-    pub solution_velocity: Mutex<SolutionVelocityTab<S>>,
-    pub advanced_spectrum_analyzer: Mutex<AdvancedSpectrumAnalyzerTab<S>>,
-    pub status_bar: Mutex<StatusBar<S>>,
+struct Tabs {
+    pub main: Mutex<MainTab>,
+    pub advanced_imu: Mutex<AdvancedImuTab>,
+    pub advanced_magnetometer: Mutex<AdvancedMagnetometerTab>,
+    pub advanced_networking: Mutex<AdvancedNetworkingTab>,
+    pub advanced_system_monitor: Mutex<AdvancedSystemMonitorTab>,
+    pub baseline: Mutex<BaselineTab>,
+    pub tracking_signals: Mutex<TrackingSignalsTab>,
+    pub tracking_sky_plot: Mutex<TrackingSkyPlotTab>,
+    pub solution: Mutex<SolutionTab>,
+    pub observation: Mutex<ObservationTab>,
+    pub solution_velocity: Mutex<SolutionVelocityTab>,
+    pub advanced_spectrum_analyzer: Mutex<AdvancedSpectrumAnalyzerTab>,
+    pub status_bar: Mutex<StatusBar>,
     pub update: Mutex<UpdateTab>,
 }
 
-impl<S: types::CapnProtoSender> Tabs<S> {
+impl Tabs {
     fn new(
         shared_state: shared_state::SharedState,
-        client_sender: S,
+        client_sender: client_sender::BoxedClientSender,
         msg_sender: types::MsgSender,
     ) -> Self {
         Self {

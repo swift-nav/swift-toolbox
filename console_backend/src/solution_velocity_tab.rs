@@ -1,15 +1,16 @@
-use ordered_float::OrderedFloat;
 use std::str::FromStr;
 
+use capnp::message::Builder;
+use ordered_float::OrderedFloat;
 use sbp::messages::navigation::MsgVelNed;
 
-use capnp::message::Builder;
-
+use crate::client_sender::BoxedClientSender;
 use crate::constants::{HORIZONTAL_COLOR, NUM_POINTS, VERTICAL_COLOR};
 use crate::shared_state::SharedState;
-use crate::types::{CapnProtoSender, Deque, VelocityUnits};
+use crate::types::{Deque, VelocityUnits};
 use crate::utils::serialize_capnproto_builder;
 use crate::zip;
+
 /// SolutionVelocityTab struct.
 ///
 /// # Fields:
@@ -24,9 +25,9 @@ use crate::zip;
 /// - `tow`: The GPS Time of Week.
 /// - `unit`: Currently displayed and converted to unit of measure.
 #[derive(Debug)]
-pub struct SolutionVelocityTab<S: CapnProtoSender> {
+pub struct SolutionVelocityTab {
     pub available_units: Vec<&'static str>,
-    pub client_sender: S,
+    pub client_sender: BoxedClientSender,
     pub colors: Vec<String>,
     pub max: f64,
     pub min: f64,
@@ -37,8 +38,8 @@ pub struct SolutionVelocityTab<S: CapnProtoSender> {
     pub unit: VelocityUnits,
 }
 
-impl<S: CapnProtoSender> SolutionVelocityTab<S> {
-    pub fn new(shared_state: SharedState, client_sender: S) -> SolutionVelocityTab<S> {
+impl SolutionVelocityTab {
+    pub fn new(shared_state: SharedState, client_sender: BoxedClientSender) -> SolutionVelocityTab {
         SolutionVelocityTab {
             available_units: vec![
                 VelocityUnits::Mps.as_str(),
@@ -163,13 +164,13 @@ impl<S: CapnProtoSender> SolutionVelocityTab<S> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::client_sender::TestSender;
     use crate::constants::{MPS2KPH, MPS2MPH};
-    use crate::types::TestSender;
 
     #[test]
     fn handle_vel_ned_test() {
         let shared_state = SharedState::new();
-        let client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender::boxed();
         let mut solution_velocity_tab = SolutionVelocityTab::new(shared_state, client_send);
 
         let msg: MsgVelNed = MsgVelNed {
@@ -233,7 +234,7 @@ mod tests {
     #[test]
     fn test_convert_points() {
         let shared_state = SharedState::new();
-        let client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender::boxed();
         let mut solution_velocity_tab = SolutionVelocityTab::new(shared_state, client_send);
 
         let mut msg: MsgVelNed = MsgVelNed {

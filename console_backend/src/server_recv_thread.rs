@@ -1,3 +1,11 @@
+use std::{io::Cursor, path::PathBuf, str::FromStr, thread};
+
+use capnp::serialize;
+use chrono::{DateTime, Utc};
+use crossbeam::channel;
+use log::{debug, error};
+
+use crate::client_sender::BoxedClientSender;
 use crate::common_constants::SbpLogging;
 use crate::connection::ConnectionManager;
 use crate::console_backend_capnp as m;
@@ -10,21 +18,17 @@ use crate::output::CsvLogging;
 use crate::settings_tab;
 use crate::shared_state::{AdvancedNetworkingState, SharedState};
 use crate::solution_tab::LatLonUnits;
-use crate::types::{ClientSender, FlowControl, RealtimeDelay};
+use crate::types::{FlowControl, RealtimeDelay};
 use crate::update_tab::UpdateTabUpdate;
 use crate::utils::refresh_connection_frontend;
-use capnp::serialize;
-use chrono::{DateTime, Utc};
-use crossbeam::channel;
-use log::{debug, error};
-use std::{io::Cursor, path::PathBuf, str::FromStr, thread};
+
 pub type Error = anyhow::Error;
 pub type Result<T> = anyhow::Result<T>;
 pub type UtcDateTime = DateTime<Utc>;
 
 pub fn server_recv_thread(
     conn_manager: ConnectionManager,
-    client_send: ClientSender,
+    mut client_sender: BoxedClientSender,
     server_recv: channel::Receiver<Vec<u8>>,
     shared_state: SharedState,
 ) {
@@ -49,7 +53,7 @@ pub fn server_recv_thread(
             };
             match message {
                 m::message::SerialRefreshRequest(Ok(_)) => {
-                    refresh_connection_frontend(&mut client_send.clone(), shared_state.clone());
+                    refresh_connection_frontend(&mut client_sender, shared_state.clone());
                 }
                 m::message::DisconnectRequest(Ok(_)) => {
                     conn_manager.disconnect();
@@ -335,6 +339,6 @@ pub fn server_recv_thread(
             }
         }
         debug!("client recv loop shutdown");
-        client_send.connected.set(false);
+        client_sender.set_connected(false);
     });
 }

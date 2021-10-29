@@ -19,7 +19,6 @@ use crate::piksi_tools_constants::{
 use crate::utils::{mm_to_m, ms_to_sec};
 use anyhow::Context;
 use chrono::{DateTime, Utc};
-use crossbeam::channel;
 use ordered_float::OrderedFloat;
 use sbp::link::Event;
 use sbp::messages::{
@@ -236,41 +235,6 @@ macro_rules! zip {
                 $crate::unzip!(a => (a) $( , $y )*)
             )
     };
-}
-
-pub trait CapnProtoSender: Debug + Clone + Send + Sync + 'static {
-    fn send_data(&mut self, msg_bytes: Vec<u8>);
-}
-
-#[derive(Debug, Clone)]
-pub struct ClientSender {
-    pub inner: channel::Sender<Vec<u8>>,
-    pub connected: ArcBool,
-}
-impl ClientSender {
-    pub fn new(inner: channel::Sender<Vec<u8>>) -> Self {
-        Self {
-            inner,
-            connected: ArcBool::new_with(true),
-        }
-    }
-}
-impl CapnProtoSender for ClientSender {
-    fn send_data(&mut self, msg_bytes: Vec<u8>) {
-        if self.connected.get() {
-            let _ = self.inner.send(msg_bytes);
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct TestSender {
-    pub inner: Vec<Vec<u8>>,
-}
-impl CapnProtoSender for TestSender {
-    fn send_data(&mut self, msg: Vec<u8>) {
-        self.inner.push(msg)
-    }
 }
 
 #[derive(Debug, Default)]

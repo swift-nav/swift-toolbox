@@ -7,9 +7,10 @@ mod mem_bench_impl {
     use sysinfo::{get_current_pid, ProcessExt, System, SystemExt};
 
     use console_backend::{
+        client_sender::ChannelSender,
         connection::ConnectionManager,
         shared_state::{ConnectionState, SharedState},
-        types::{ClientSender, RealtimeDelay},
+        types::RealtimeDelay,
     };
 
     const BENCH_FILEPATH: &str = "./tests/data/piksi-relay-1min.sbp";
@@ -82,7 +83,7 @@ mod mem_bench_impl {
         });
 
         let mut conn_watch = shared_state.watch_connection();
-        let client_send = ClientSender::new(client_send);
+        let client_send = ChannelSender::boxed(client_send);
         let conn_manager = ConnectionManager::new(client_send, shared_state);
 
         conn_manager.connect_to_file(

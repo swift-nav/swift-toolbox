@@ -1,12 +1,13 @@
+use capnp::message::Builder;
 use log::error;
 
+use crate::client_sender::BoxedClientSender;
 use crate::constants::{AMPLITUDES, CHANNELS, FREQUENCIES};
 use crate::errors::SHARED_STATE_LOCK_MUTEX_FAILURE;
 use crate::fft_monitor::FftMonitor;
 use crate::shared_state::SharedState;
-use crate::types::{CapnProtoSender, Specan};
+use crate::types::Specan;
 use crate::utils::serialize_capnproto_builder;
-use capnp::message::Builder;
 
 /// AdvancedSpectrumAnalyzerTab struct.
 ///
@@ -21,8 +22,8 @@ use capnp::message::Builder;
 /// - `most_recent_frequencies`: Stores the currently viewed channel's frequency values to be
 ///      sent to frontend.
 /// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
-pub struct AdvancedSpectrumAnalyzerTab<S: CapnProtoSender> {
-    client_send: S,
+pub struct AdvancedSpectrumAnalyzerTab {
+    client_sender: BoxedClientSender,
     fft_monitor: FftMonitor,
     channel_idx: usize,
     most_recent_amplitudes: Vec<f32>,
@@ -30,13 +31,16 @@ pub struct AdvancedSpectrumAnalyzerTab<S: CapnProtoSender> {
     shared_state: SharedState,
 }
 
-impl<S: CapnProtoSender> AdvancedSpectrumAnalyzerTab<S> {
-    pub fn new(shared_state: SharedState, client_send: S) -> AdvancedSpectrumAnalyzerTab<S> {
+impl AdvancedSpectrumAnalyzerTab {
+    pub fn new(
+        shared_state: SharedState,
+        client_sender: BoxedClientSender,
+    ) -> AdvancedSpectrumAnalyzerTab {
         let mut fft_monitor = FftMonitor::new();
         fft_monitor.enable_channel(None);
         AdvancedSpectrumAnalyzerTab {
             fft_monitor,
-            client_send,
+            client_sender,
             channel_idx: 0,
             most_recent_amplitudes: vec![],
             most_recent_frequencies: vec![],
@@ -111,7 +115,7 @@ impl<S: CapnProtoSender> AdvancedSpectrumAnalyzerTab<S> {
         tab_status.set_xmin(xmin);
         tab_status.set_xmax(xmax);
 
-        self.client_send
+        self.client_sender
             .send_data(serialize_capnproto_builder(builder));
     }
 }
@@ -119,13 +123,13 @@ impl<S: CapnProtoSender> AdvancedSpectrumAnalyzerTab<S> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{constants::SIGNALS_TOTAL, types::TestSender};
+    use crate::{client_sender::TestSender, constants::SIGNALS_TOTAL};
     use sbp::messages::{gnss::GpsTime, piksi::MsgSpecan};
 
     #[test]
     fn handle_specan_empty_amplitude_value_test() {
         let shared_state = SharedState::new();
-        let client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender::boxed();
         let mut tab = AdvancedSpectrumAnalyzerTab::new(shared_state, client_send);
         let channel_tag = 2;
         let wn = 1000;
@@ -161,7 +165,7 @@ mod tests {
     #[test]
     fn handle_specan_test() {
         let shared_state = SharedState::new();
-        let client_send = TestSender { inner: Vec::new() };
+        let client_send = TestSender::boxed();
         let mut tab = AdvancedSpectrumAnalyzerTab::new(shared_state, client_send);
         let channel_tag = 1;
         let wn = 1000;

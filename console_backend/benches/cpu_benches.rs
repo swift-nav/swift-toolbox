@@ -12,11 +12,12 @@ use std::{
 
 extern crate console_backend;
 use console_backend::{
+    client_sender::ChannelSender,
     common_constants::ConnectionState,
     connection::{Connection, ConnectionManager},
     process_messages,
     shared_state::SharedState,
-    types::{ClientSender, RealtimeDelay},
+    types::RealtimeDelay,
 };
 
 const BENCH_FILEPATH: &str = "./tests/data/piksi-relay.sbp";
@@ -53,7 +54,7 @@ fn run_process_messages(file_in_name: &str, failure: bool) {
     });
     {
         let (client_send, client_recv) = channel::unbounded::<Vec<u8>>();
-        let client_send = ClientSender::new(client_send);
+        let client_send = ChannelSender::boxed(client_send);
         client_recv_tx
             .send(client_recv)
             .expect("sending client recv handle should succeed");

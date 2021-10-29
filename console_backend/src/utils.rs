@@ -10,10 +10,11 @@ use log::warn;
 use sbp::SbpString;
 use serialport::available_ports;
 
+use crate::client_sender::BoxedClientSender;
 use crate::constants::*;
 use crate::errors::*;
 use crate::shared_state::{ConnectionState, SerialConfig, SharedState};
-use crate::types::{CapnProtoSender, SignalCodes};
+use crate::types::SignalCodes;
 
 /// Create a new SbpString of L size with T termination.
 pub fn fixed_sbp_string<T, const L: usize>(data: &str) -> SbpString<[u8; L], T> {
@@ -23,16 +24,16 @@ pub fn fixed_sbp_string<T, const L: usize>(data: &str) -> SbpString<[u8; L], T> 
 }
 
 /// Notify the frontend of an [ConnectionState] change.
-pub fn send_conn_state<P: CapnProtoSender>(app_state: ConnectionState, client_send: &mut P) {
+pub fn send_conn_state(app_state: ConnectionState, client_sender: &mut BoxedClientSender) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
     let mut status = msg.init_status();
     status.set_text(&app_state.to_string());
-    client_send.send_data(serialize_capnproto_builder(builder));
+    client_sender.send_data(serialize_capnproto_builder(builder));
 }
 
-pub fn refresh_connection_frontend<P: CapnProtoSender>(
-    client_send: &mut P,
+pub fn refresh_connection_frontend(
+    client_sender: &mut BoxedClientSender,
     shared_state: SharedState,
 ) {
     let mut builder = Builder::new_default();
@@ -145,7 +146,7 @@ pub fn refresh_connection_frontend<P: CapnProtoSender>(
         prevous_files.set(i as u32, filename);
     }
 
-    client_send.send_data(serialize_capnproto_builder(builder));
+    client_sender.send_data(serialize_capnproto_builder(builder));
 }
 
 pub fn serialize_capnproto_builder(builder: Builder<HeapAllocator>) -> Vec<u8> {
@@ -154,7 +155,7 @@ pub fn serialize_capnproto_builder(builder: Builder<HeapAllocator>) -> Vec<u8> {
     msg_bytes
 }
 
-pub fn refresh_loggingbar<P: CapnProtoSender>(client_send: &mut P, shared_state: SharedState) {
+pub fn refresh_loggingbar(client_sender: &mut BoxedClientSender, shared_state: SharedState) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
@@ -176,7 +177,7 @@ pub fn refresh_loggingbar<P: CapnProtoSender>(client_send: &mut P, shared_state:
         prevous_folders.set(i as u32, folder);
     }
 
-    client_send.send_data(serialize_capnproto_builder(builder));
+    client_sender.send_data(serialize_capnproto_builder(builder));
 }
 
 pub fn signal_key_label(

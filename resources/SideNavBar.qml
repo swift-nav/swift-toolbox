@@ -36,6 +36,8 @@ Rectangle {
         "source": Constants.sideNavBar.advancedPath
     }]
 
+    color: Constants.sideNavBar.backgroundColor
+
     ConnectionData {
         id: connectionData
     }

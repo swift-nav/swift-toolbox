@@ -98,6 +98,7 @@ QtObject {
         readonly property int buttonInset: 0
         readonly property int separatorMargin: 10
         readonly property int separatorHeight: 1
+        readonly property color backgroundColor: "#fafafa"
     }
 
     updateTab: QtObject {

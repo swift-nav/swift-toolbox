@@ -12,6 +12,7 @@ Rectangle {
     property int maxCellsPerColumn: Math.floor((maximumHeight - gridView.cellHeight) / gridView.cellHeight)
     property string cellTextSample: cellTextSampleDefault
     readonly property string cellTextSampleDefault: "12345"
+    property alias model: gridView.model
 
     visible: gridView.count > 0
     radius: 5
@@ -143,7 +144,6 @@ Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
-            model: enabled_series
             flow: GridView.FlowTopToBottom
             cellWidth: Constants.commonLegend.markerWidth + legendTextMetrics.width + 4
             cellHeight: legendTextMetrics.height + 2

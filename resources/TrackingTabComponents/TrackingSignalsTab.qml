@@ -53,6 +53,7 @@ Item {
                 y: Constants.trackingSignals.legendTopMargin
                 maximumHeight: parent.height - Constants.trackingSignals.legendTopMargin - Constants.trackingSignals.legendBottomMargin
                 cellTextSample: Constants.trackingSignals.legendCellTextSample
+                model: enabled_series
             }
 
             ValueAxis {

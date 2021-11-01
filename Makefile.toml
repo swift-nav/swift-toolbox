@@ -301,6 +301,7 @@ cp target/release/entrypoint py39-dist/bin/swiftnav-console
 script = '''
 mkdir py39-dist/Scripts
 cp target/release/entrypoint.exe py39-dist/Scripts/swiftnav-console.exe
+cp target/release/entrypoint.pdb py39-dist/Scripts/swiftnav-console.pdb
 '''
 
 [tasks.build-dist-install-frontend-wheel]
@@ -360,7 +361,7 @@ for name in ${all_folders}
     end
 end
 
-file_exts = array pyc pyi pdb tcl gif png
+file_exts = array pyc pyi tcl gif png
 for ext in ${file_exts}
     files = glob_array **/*.${ext}
     for file in ${files}
@@ -387,8 +388,10 @@ end
 os = os_family
 if eq ${os} windows
     mv ./Scripts/swiftnav-console.exe .
+    mv ./Scripts/swiftnav-console.pdb .
     rm -r ./Scripts
     mv ./swiftnav-console.exe ./Scripts/
+    mv ./swiftnav-console.pdb ./Scripts/
 
     rm -r ./include
     rm -r ./tcl
@@ -454,6 +457,16 @@ for file in ${files}
 end
 '''
 
+[tasks.strip-dist-pdb.windows]
+cwd = "py39-dist"
+script_runner = "@duckscript"
+script = '''
+files = glob_array **/*.pdb
+for file in ${files}
+    rm ${file}
+end
+'''
+
 [tasks.strip-dist]
 script_runner = "@duckscript"
 script = '''
@@ -463,6 +476,7 @@ exec --fail-on-error strip py39-dist/bin/swiftnav-console
 [tasks.strip-dist.windows]
 script_runner = "@duckscript"
 script = '''
+cm_run_task strip-dist-pdb
 exec --fail-on-error strip.exe py39-dist/Scripts/swiftnav-console.exe
 '''
 

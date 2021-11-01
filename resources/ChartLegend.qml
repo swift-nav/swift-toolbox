@@ -20,6 +20,11 @@ Rectangle {
     // Size to two cols if there are cells for 2+ cols.
     width: gridView.cellWidth * (gridView.count <= maxCellsPerColumn ? 1 : 2) + 1
     state: "opened"
+    Component.onCompleted: {
+        if (cellTextSample == cellTextSampleDefault)
+            console.log("warning: default cellTextSample used in ChartLegend");
+
+    }
     states: [
         State {
             name: "opened"
@@ -86,12 +91,6 @@ Rectangle {
 
         }
     ]
-
-    Component.onCompleted: {
-        if (cellTextSample == cellTextSampleDefault) {
-            console.log("warning: default cellTextSample used in ChartLegend");
-        }
-    }
 
     Rectangle {
         // This rectangle ensures that the border of the legend is painted nicely.

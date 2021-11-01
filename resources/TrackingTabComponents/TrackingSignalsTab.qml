@@ -1,6 +1,6 @@
+import ".."
 import "../BaseComponents"
 import "../Constants"
-import ".."
 import QtCharts 2.15
 import QtQuick 2.15
 import QtQuick.Controls 2.15

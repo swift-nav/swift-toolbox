@@ -50,9 +50,9 @@ Item {
                 id: lineLegend
 
                 property int maximumHeight: parent.height - Constants.trackingSignals.legendTopMargin - Constants.trackingSignals.legendBottomMargin
-                property int openedHeight: gridView.count < maxCellsPerColumn ? gridView.cellHeight * gridView.count : maximumHeight
+                property int openedHeight: gridView.count < maxCellsPerColumn ? gridView.cellHeight * (gridView.count + 1) : maximumHeight
                 property int openCloseSpeed: Constants.trackingSignals.legendShadeSpeed
-                property int maxCellsPerColumn: maximumHeight / gridView.cellHeight // floor/truncation is desired.
+                property int maxCellsPerColumn: Math.floor((maximumHeight-gridView.cellHeight) / gridView.cellHeight)
 
                 visible: gridView.count > 0
                 radius: 5
@@ -60,7 +60,7 @@ Item {
                 y: Constants.trackingSignals.legendTopMargin
                 height: openedHeight
                 // Size to two cols if there are cells for 2+ cols.
-                width: gridView.cellWidth * (gridView.count <= maxCellsPerColumn ? 1 : 2)
+                width: gridView.cellWidth * (gridView.count <= maxCellsPerColumn ? 1 : 2) + 1
                 state: "opened"
                 states: [
                     State {

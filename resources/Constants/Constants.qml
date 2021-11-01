@@ -535,7 +535,7 @@ QtObject {
         readonly property color titleColor: Qt.darker(swiftOrange, 1.1)
         readonly property int titlePointSize: largePointSize
         readonly property int legendTopMargin: 12
-        readonly property int legendBottomMargin: 74
+        readonly property int legendBottomMargin: 72
         readonly property int legendLeftMargin: 18
         readonly property int legendLabelPointSize: 6
         readonly property string legendCellTextSample: "XXX XXXX X+NN XNN"

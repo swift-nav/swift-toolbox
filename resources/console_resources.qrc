@@ -98,5 +98,6 @@
     <file>TableComponents/TableCellDelegate.qml</file>
     <file>BaseComponents/SmallCheckBox.qml</file>
     <file>BaseComponents/SwiftGroupBox.qml</file>
+    <file>ChartLegend.qml</file>
 </qresource>
 </RCC>

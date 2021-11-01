@@ -1,3 +1,4 @@
+import ".."
 import "../BaseComponents"
 import "../Constants"
 import QtCharts 2.15
@@ -23,194 +24,36 @@ Item {
         id: trackingSignalsArea
 
         anchors.fill: parent
+        spacing: 0
 
         ChartView {
             id: trackingSignalsChart
 
-            Layout.bottomMargin: -(Constants.margins * 2)
             Layout.fillHeight: true
             Layout.fillWidth: true
             visible: false
             title: Constants.trackingSignals.title
+            titleFont.family: Constants.fontFamily
+            titleFont.pointSize: Constants.trackingSignals.titlePointSize
+            titleFont.bold: true
             titleColor: Constants.trackingSignals.titleColor
-            // backgroundColor: Constants.commonChart.backgroundColor
             plotAreaColor: Constants.commonChart.areaColor
             legend.visible: false
             antialiasing: true
-            Component.onCompleted: {
+
+            margins {
+                top: 0
+                bottom: 0
+                left: 0
+                right: 0
             }
 
-            titleFont {
-                pointSize: Constants.trackingSignals.titlePointSize
-                bold: true
-            }
-
-            Rectangle {
-                id: lineLegend
-
-                property int maximumHeight: parent.height - Constants.trackingSignals.legendTopMargin - Constants.trackingSignals.legendBottomMargin
-                property int openedHeight: gridView.count < maxCellsPerColumn ? gridView.cellHeight * gridView.count : maximumHeight
-                property int openCloseSpeed: Constants.trackingSignals.legendShadeSpeed
-                property int maxCellsPerColumn: maximumHeight / gridView.cellHeight // floor/truncation is desired.
-
-                visible: gridView.count > 0
-                radius: 5
-                x: Constants.trackingSignals.legendTopMargin
-                y: Constants.trackingSignals.legendLeftMargin
-                height: openedHeight
-                // Size to two cols if there are cells for 2+ cols.
-                width: gridView.cellWidth * (gridView.count <= maxCellsPerColumn ? 1 : 2)
-                state: "opened"
-                states: [
-                    State {
-                        name: "opened"
-
-                        PropertyChanges {
-                            target: lineLegend
-                            height: lineLegend.openedHeight
-                        }
-
-                        PropertyChanges {
-                            target: gridView
-                            visible: true
-                        }
-
-                    },
-                    State {
-                        name: "closed"
-
-                        PropertyChanges {
-                            target: lineLegend
-                            height: legendHideBar.height + 2
-                        }
-
-                        PropertyChanges {
-                            target: gridView
-                            visible: false
-                        }
-
-                    }
-                ]
-                transitions: [
-                    Transition {
-                        to: "closed"
-
-                        // reversible property should be what we want here instead of duplicating this,
-                        // but it doesn't seem to work right in this situation.
-                        SequentialAnimation {
-                            SmoothedAnimation {
-                                property: "height"
-                                duration: lineLegend.openCloseSpeed
-                            }
-
-                            PropertyAction {
-                                property: "visible"
-                            }
-
-                        }
-
-                    },
-                    Transition {
-                        to: "opened"
-
-                        SequentialAnimation {
-                            PropertyAction {
-                                property: "visible"
-                            }
-
-                            SmoothedAnimation {
-                                property: "height"
-                                duration: lineLegend.openCloseSpeed
-                            }
-
-                        }
-
-                    }
-                ]
-
-                Rectangle {
-                    // This rectangle ensures that the border of the legend is painted nicely.
-                    anchors.fill: parent
-                    z: 2
-                    color: "transparent"
-                    radius: parent.radius
-                    border.color: Constants.commonLegend.borderColor
-                    border.width: Constants.commonLegend.borderWidth
-                }
-
-                ColumnLayout {
-                    anchors.fill: parent
-                    spacing: 0
-
-                    Rectangle {
-                        id: legendHideBar
-
-                        Layout.fillWidth: true
-                        color: Constants.trackingSignals.legendShadeColor
-                        height: Constants.trackingSignals.legendShadeHeight
-                        radius: lineLegend.radius
-
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                lineLegend.state = lineLegend.state == "opened" ? "closed" : "opened";
-                            }
-                            cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
-                            //drag.target: lineLegend
-                            hoverEnabled: true
-                        }
-
-                    }
-
-                    GridView {
-                        id: gridView
-
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        clip: true
-                        model: enabled_series
-                        flow: GridView.FlowTopToBottom
-                        cellWidth: Constants.commonLegend.markerWidth + legendTextMetrics.width + 4
-                        cellHeight: legendTextMetrics.height + 2
-                        boundsBehavior: Flickable.StopAtBounds
-
-                        TextMetrics {
-                            id: legendTextMetrics
-
-                            font.family: Constants.fontFamily
-                            font.pointSize: Constants.xSmallPointSize
-                            text: Constants.trackingSignals.legendCellTextSample
-                        }
-
-                        delegate: Row {
-                            padding: 1
-                            leftPadding: 4
-                            rightPadding: leftPadding
-
-                            Rectangle {
-                                id: marker
-
-                                color: modelData.color
-                                width: Constants.commonLegend.markerWidth
-                                height: Constants.commonLegend.markerHeight
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-
-                            Label {
-                                id: label
-
-                                text: modelData.name
-                                font: legendTextMetrics.font
-                                anchors.verticalCenter: parent.verticalCenter
-                                anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
-                            }
-
-                        }
-
-                    }
-
-                }
-
+            ChartLegend {
+                x: Constants.trackingSignals.legendLeftMargin
+                y: Constants.trackingSignals.legendTopMargin
+                maximumHeight: parent.height - Constants.trackingSignals.legendTopMargin - Constants.trackingSignals.legendBottomMargin
+                cellTextSample: Constants.trackingSignals.legendCellTextSample
+                model: enabled_series
             }
 
             ValueAxis {
@@ -226,12 +69,10 @@ Item {
                 tickType: ValueAxis.TicksDynamic
                 tickInterval: Constants.trackingSignals.xAxisTickInterval
                 labelFormat: "%d"
-
-                labelsFont {
-                    pointSize: Constants.mediumPointSize
-                    bold: true
-                }
-
+                titleFont.family: Constants.fontFamily
+                titleFont.pointSize: Constants.smallPointSize
+                labelsFont.family: Constants.fontFamily
+                labelsFont.pointSize: Constants.xSmallPointSize
             }
 
             ValueAxis {
@@ -249,12 +90,10 @@ Item {
                 tickType: ValueAxis.TicksDynamic
                 tickInterval: Constants.trackingSignals.yAxisTickInterval
                 labelFormat: "%d"
-
-                labelsFont {
-                    pointSize: Constants.mediumPointSize
-                    bold: true
-                }
-
+                titleFont.family: Constants.fontFamily
+                titleFont.pointSize: Constants.smallPointSize
+                labelsFont.family: Constants.fontFamily
+                labelsFont.pointSize: Constants.xSmallPointSize
             }
 
             Timer {
@@ -273,8 +112,6 @@ Item {
                             series.axisYRight = trackingSignalsYAxis;
                             series.width = Constants.commonChart.lineWidth;
                             // Color and useOpenGL will be set in Python with fill_all_series call.
-                            // series.color = sourceSeries.color
-                            // series.useOpenGL = sourceSeries.useOpenGL
                             trackingSignalsPoints.addSeries(series);
                         }
                     }
@@ -292,6 +129,8 @@ Item {
         GridLayout {
             id: trackingSignalsCheckboxes
 
+            property int numChecked: trackingSignalsCbRepeater.count
+
             flow: GridLayout.TopToBottom
             columns: Math.floor(parent.width / Constants.trackingSignals.checkBoxPreferredWidth)
             rows: Math.ceil(check_labels.length / trackingSignalsCheckboxes.columns)
@@ -299,8 +138,30 @@ Item {
             Layout.margins: 0
             Layout.alignment: Qt.AlignHCenter
 
+            SmallCheckBox {
+                id: toggleAllCheckBox
+
+                Layout.margins: 0
+                Layout.rowSpan: parent.rows == 0 ? 1 : parent.rows
+                tristate: true
+                checkState: (parent.numChecked == trackingSignalsCbRepeater.count ? Qt.Checked : parent.numChecked > 0 ? Qt.PartiallyChecked : Qt.Unchecked)
+                text: "Toggle All"
+                onClicked: {
+                    var curCheckState = checkState;
+                    for (var i = 0; i < trackingSignalsCbRepeater.count; i++) {
+                        var cb = trackingSignalsCbRepeater.itemAt(i);
+                        if ((curCheckState == Qt.Checked && !cb.checked) || (curCheckState != Qt.Checked && cb.checked))
+                            cb.toggle();
+
+                    }
+                }
+                nextCheckState: function() {
+                    return (checkState == Qt.Checked) ? Qt.Unchecked : Qt.Checked;
+                }
+            }
+
             Repeater {
-                id: trackingSignalsCheckbox
+                id: trackingSignalsCbRepeater
 
                 model: check_labels
 
@@ -309,12 +170,9 @@ Item {
                     Layout.rowSpan: index === 0 ? trackingSignalsCheckboxes.rows : 1
                     checked: true
                     text: modelData
-                    onClicked: {
+                    onCheckedChanged: {
+                        trackingSignalsCheckboxes.numChecked += checked ? 1 : -1;
                         check_visibility[index] = checked;
-                        if (index == 0) {
-                            lineLegend.visible = !lineLegend.visible;
-                            return ;
-                        }
                         var labels_not_visible = [];
                         for (var idx in check_visibility) {
                             if (!check_visibility[idx])

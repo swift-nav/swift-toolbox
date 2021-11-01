@@ -83,23 +83,30 @@ class TrackingSignalsPoints(QObject):
             self._num_labels = cur_num_labels
             self.num_labels_changed.emit(cur_num_labels)  # type: ignore
         points_for_all_series = TRACKING_SIGNALS_TAB[Keys.POINTS]
-        if len(points_for_all_series) == 0:
-            return
 
         labels = TRACKING_SIGNALS_TAB[Keys.LABELS]
         colors = TRACKING_SIGNALS_TAB[Keys.COLORS]
-        self._check_labels = TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS]
-        self.check_labels_changed.emit()  # type: ignore
-        self._xaxis_min = points_for_all_series[0][-1].x() + TRACKING_SIGNALS_TAB[Keys.XMIN_OFFSET]
-        self.xaxis_min_changed.emit()  # type: ignore
-        self._xaxis_max = points_for_all_series[0][-1].x()
-        self.xaxis_max_changed.emit()  # type: ignore
+        if self._check_labels != TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS]:
+            self._check_labels = TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS]
+            self.check_labels_changed.emit()  # type: ignore
+
+        if len(points_for_all_series) != 0:
+            xaxis_min = points_for_all_series[0][-1].x() + TRACKING_SIGNALS_TAB[Keys.XMIN_OFFSET]
+            if self._xaxis_min != xaxis_min:
+                self._xaxis_min = xaxis_min
+                self.xaxis_min_changed.emit()  # type: ignore
+            xaxis_max = points_for_all_series[0][-1].x()
+            if self._xaxis_max != xaxis_max:
+                self._xaxis_max = xaxis_max
+                self.xaxis_max_changed.emit()  # type: ignore
+
         series_changed = False
         enabled_series = []
         for idx, series_points in enumerate(points_for_all_series):
             series = None
             try:
                 series = self._all_series[idx]
+                series.clear()
                 series.replace(series_points)
                 series.setName(labels[idx])
                 series.setColor(colors[idx])
@@ -116,22 +123,15 @@ class TrackingSignalsPoints(QObject):
                 # updated in the next timer fire/update.
                 pass
 
+        disabled_seriess = set(self._all_series) - set(enabled_series)
+        for disabled_series in disabled_seriess:
+            if disabled_series.count() > 0:
+                series_changed = True
+                disabled_series.clear()
+
         if series_changed:
             self.all_series_changed.emit()  # type: ignore
 
         if enabled_series != self._enabled_series:
             self._enabled_series = enabled_series
             self.enabled_series_changed.emit()  # type: ignore
-
-        return
-
-
-class TrackingSignalsModel(QObject):  # pylint: disable=too-few-public-methods
-    @Slot(TrackingSignalsPoints)  # type: ignore
-    def fill_console_points(self, cp: TrackingSignalsPoints) -> TrackingSignalsPoints:  # pylint:disable=no-self-use
-        cp.fill_all_series(TRACKING_SIGNALS_TAB[Keys.POINTS])
-        cp.set_labels(TRACKING_SIGNALS_TAB[Keys.LABELS])
-        cp.set_check_labels(TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS])
-        cp.set_colors(TRACKING_SIGNALS_TAB[Keys.COLORS])
-        cp.set_xmin_offset(TRACKING_SIGNALS_TAB[Keys.XMIN_OFFSET])
-        return cp

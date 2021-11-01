@@ -1523,9 +1523,9 @@ dependencies = [
 
 [[package]]
 name = "sbp-settings"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f13cb39dcec176cbc5f1676cb0faf3d14e753ae5a506304a5267345a751312a0"
+checksum = "ad2affc9a3b36ee5a8400cd478b86f99d8a95dafb0ff2d413bf3c17273becc79"
 dependencies = [
  "bindgen",
  "cmake",

@@ -145,9 +145,9 @@ Item {
                     acceptedButtons: Qt.NoButton
                     onWheel: (wheelEvent) => {
                         if (wheelEvent.angleDelta.y > 0)
-                            legendScrollBar.increase();
-                        else
                             legendScrollBar.decrease();
+                        else
+                            legendScrollBar.increase();
                     }
                 }
 

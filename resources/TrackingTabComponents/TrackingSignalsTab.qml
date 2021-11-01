@@ -34,6 +34,7 @@ Item {
             title: Constants.trackingSignals.title
             titleFont.family: Constants.fontFamily
             titleFont.pointSize: Constants.trackingSignals.titlePointSize
+            titleFont.bold: true
             titleColor: Constants.trackingSignals.titleColor
             plotAreaColor: Constants.commonChart.areaColor
             legend.visible: false
@@ -231,8 +232,9 @@ Item {
                 tickInterval: Constants.trackingSignals.xAxisTickInterval
                 labelFormat: "%d"
                 titleFont.family: Constants.fontFamily
+                titleFont.pointSize: Constants.smallPointSize
                 labelsFont.family: Constants.fontFamily
-                labelsFont.pointSize: Constants.mediumPointSize
+                labelsFont.pointSize: Constants.xSmallPointSize
             }
 
             ValueAxis {
@@ -251,8 +253,9 @@ Item {
                 tickInterval: Constants.trackingSignals.yAxisTickInterval
                 labelFormat: "%d"
                 titleFont.family: Constants.fontFamily
+                titleFont.pointSize: Constants.smallPointSize
                 labelsFont.family: Constants.fontFamily
-                labelsFont.pointSize: Constants.mediumPointSize
+                labelsFont.pointSize: Constants.xSmallPointSize
             }
 
             Timer {

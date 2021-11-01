@@ -52,7 +52,7 @@ Item {
                 property int maximumHeight: parent.height - Constants.trackingSignals.legendTopMargin - Constants.trackingSignals.legendBottomMargin
                 property int openedHeight: gridView.count < maxCellsPerColumn ? gridView.cellHeight * (gridView.count + 1) : maximumHeight
                 property int openCloseSpeed: Constants.trackingSignals.legendShadeSpeed
-                property int maxCellsPerColumn: Math.floor((maximumHeight-gridView.cellHeight) / gridView.cellHeight)
+                property int maxCellsPerColumn: Math.floor((maximumHeight - gridView.cellHeight) / gridView.cellHeight)
 
                 visible: gridView.count > 0
                 radius: 5
@@ -181,6 +181,9 @@ Item {
                             font.family: Constants.fontFamily
                             font.pointSize: Constants.xSmallPointSize
                             text: Constants.trackingSignals.legendCellTextSample
+                        }
+
+                        ScrollBar.horizontal: ScrollBar {
                         }
 
                         delegate: Row {

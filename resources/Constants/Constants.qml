@@ -486,6 +486,9 @@ QtObject {
         readonly property int verticalCenterOffset: -1
         readonly property color borderColor: "#7F7F7F"
         readonly property int borderWidth: 1
+        readonly property int shadeHeight: 10
+        readonly property color shadeColor: Qt.lighter(swiftOrange, 1.5)
+        readonly property int shadeSpeed: 350
     }
 
     commonChart: QtObject {
@@ -539,9 +542,6 @@ QtObject {
         readonly property int legendLeftMargin: 18
         readonly property int legendLabelPointSize: 6
         readonly property string legendCellTextSample: "XXX XXXX X+NN XNN"
-        readonly property int legendShadeHeight: 10
-        readonly property color legendShadeColor: Qt.lighter(swiftOrange, 1.5)
-        readonly property int legendShadeSpeed: 350
         readonly property string yAxisTitleText: "dB-Hz"
         readonly property string xAxisTitleText: "seconds"
         readonly property int xAxisMinOffsetFromMaxSeconds: 100

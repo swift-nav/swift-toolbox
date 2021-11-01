@@ -140,6 +140,17 @@ Item {
                     border.width: Constants.commonLegend.borderWidth
                 }
 
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.NoButton
+                    onWheel: (wheelEvent) => {
+                        if (wheelEvent.angleDelta.y > 0)
+                            legendScrollBar.increase();
+                        else
+                            legendScrollBar.decrease();
+                    }
+                }
+
                 ColumnLayout {
                     anchors.fill: parent
                     spacing: 0
@@ -185,6 +196,7 @@ Item {
                         }
 
                         ScrollBar.horizontal: ScrollBar {
+                            id: legendScrollBar
                         }
 
                         delegate: Row {

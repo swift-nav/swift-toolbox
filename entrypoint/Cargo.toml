@@ -1,6 +1,6 @@
 [package]
 authors = ["Swift Navigation <dev@swift-nav.com>"]
-name = "entrypoint"
+name = "console"
 version = "0.1.0"
 description = "Starts the console with the correct python installation"
 edition = "2018"
@@ -9,6 +9,6 @@ edition = "2018"
 [dependencies]
 
 [[bin]]
-name = "entrypoint"
+name = "console"
 path = "src/main.rs"
 bench = false

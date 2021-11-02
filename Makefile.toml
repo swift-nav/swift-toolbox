@@ -286,22 +286,23 @@ cd ../../..
 exec --fail-on-error ${DIST_PYTHON} ./get-pip.py
 '''
 
-[tasks.build-entrypoint]
+[tasks.build-console]
 command = "cargo"
-args = ["build", "--release", "--bin", "entrypoint"]
+args = ["build", "--release", "--bin", "console"]
 
-[tasks.build-dist-install-entrypoint]
-dependencies = ["build-entrypoint"]
+[tasks.build-dist-install-console]
+dependencies = ["build-console"]
 script_runner = "@duckscript"
 script = '''
-cp target/release/entrypoint py39-dist/bin/swiftnav-console
+cp target/release/console py39-dist/bin/console
 '''
 
-[tasks.build-dist-install-entrypoint.windows]
+[tasks.build-dist-install-console.windows]
 script = '''
 mkdir py39-dist/Scripts
-cp target/release/entrypoint.exe py39-dist/Scripts/swiftnav-console.exe
-cp target/release/entrypoint.pdb py39-dist/Scripts/swiftnav-console.pdb
+cp target/release/console.exe py39-dist/Scripts/console.exe
+cp target/release/console.pdb py39-dist/Scripts/console.pdb
+cp target/x86_64-pc-windows-msvc/release/console_backend.pdb py39-dist/Lib/site-packages/console_backend/console_backend.pdb
 '''
 
 [tasks.build-dist-install-frontend-wheel]
@@ -338,7 +339,7 @@ run_task = [
   { name = [
     "build-dist-install-frontend-wheel",
     "build-dist-install-backend-wheel",
-    "build-dist-install-entrypoint",
+    "build-dist-install-console",
     "build-dist-copy-resources",
     "build-dist-freeze",
   ] },
@@ -387,11 +388,11 @@ end
 
 os = os_family
 if eq ${os} windows
-    mv ./Scripts/swiftnav-console.exe .
-    mv ./Scripts/swiftnav-console.pdb .
+    mv ./Scripts/console.exe .
+    mv ./Scripts/console.pdb .
     rm -r ./Scripts
-    mv ./swiftnav-console.exe ./Scripts/
-    mv ./swiftnav-console.pdb ./Scripts/
+    mv ./console.exe ./Scripts/
+    mv ./console.pdb ./Scripts/
 
     rm -r ./include
     rm -r ./tcl
@@ -408,10 +409,10 @@ if eq ${os} windows
         rm ${bin}
     end
 else
-    mv ./bin/swiftnav-console .
+    mv ./bin/console .
     mv ./bin/python3 .
     rm -r ./bin
-    mv ./swiftnav-console ./bin/
+    mv ./console ./bin/
     mv ./python3 ./bin/
 
     rm -r ./share
@@ -470,14 +471,14 @@ end
 [tasks.strip-dist]
 script_runner = "@duckscript"
 script = '''
-exec --fail-on-error strip py39-dist/bin/swiftnav-console
+exec --fail-on-error strip py39-dist/bin/console
 '''
 
 [tasks.strip-dist.windows]
 script_runner = "@duckscript"
 script = '''
 cm_run_task strip-dist-pdb
-exec --fail-on-error strip.exe py39-dist/Scripts/swiftnav-console.exe
+exec --fail-on-error strip.exe py39-dist/Scripts/console.exe
 '''
 
 [tasks.compress-dist]
@@ -671,42 +672,42 @@ args = ["utils/bench_runner.py", "--disk_usage"]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/bin/swiftnav-console
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/bin/console
 '''
 
 [tasks.frontend-cpu-bench.windows]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/Scripts/swiftnav-console.exe
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/Scripts/console.exe
 '''
 
 [tasks.frontend-cpu-bench.mac]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/bin/swiftnav-console
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/bin/console
 '''
 
 [tasks.frontend-mem-bench.linux]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/bin/swiftnav-console
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/bin/console
 '''
 
 [tasks.frontend-mem-bench.windows]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/Scripts/swiftnav-console.exe
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/Scripts/console.exe
 '''
 
 [tasks.frontend-mem-bench.mac]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/bin/swiftnav-console
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/bin/console
 '''
 
 [tasks.newline-terminator]

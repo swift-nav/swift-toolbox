@@ -46,6 +46,12 @@ mimalloc = { version = "0.1", default-features = false }
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 serialport = "4.0.1"
 
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { version = ">=0.24", features = [
+  "Win32_System_Console",
+  "Win32_Foundation",
+] }
+
 [dev-dependencies]
 logtest = "2.0.0"
 serial_test = "0.5.1"

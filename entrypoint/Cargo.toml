@@ -12,3 +12,9 @@ edition = "2018"
 name = "console"
 path = "src/main.rs"
 bench = false
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { version = ">=0.24", features = [
+  "Win32_System_Console",
+  "Win32_Foundation",
+] }

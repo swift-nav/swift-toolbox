@@ -4,14 +4,14 @@ env_scripts = [
 # set os specific env vars
 os = os_family
 if eq ${os} windows
-  set_env STANDALONE_PY_URL "${STANDALONE_PY_BASE_URL}/cpython-3.9.6-x86_64-pc-windows-msvc-shared-pgo-20210724T1424.tar.zst"
+  set_env STANDALONE_PY_URL "${STANDALONE_PY_BASE_URL}/cpython-3.9.7-x86_64-pc-windows-msvc-shared-pgo-20211017T1616.tar.zst"
   set_env PYTHON "${WORKSPACE}\\py39\\python.exe"
   set_env DIST_PYTHON "${WORKSPACE}\\py39-dist\\python"
   set_env PYSIDE2_RCC "${WORKSPACE}\\py39\\Lib\\site-packages\\PySide2\\rcc.exe"
   set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-win_amd64.whl
   set_env BUILD_TRIPLET "x86_64-pc-windows-msvc"
 elseif eq ${os} linux
-  set_env STANDALONE_PY_URL "${STANDALONE_PY_BASE_URL}/cpython-3.9.6-x86_64-unknown-linux-gnu-lto-20210724T1424.tar.zst"
+  set_env STANDALONE_PY_URL "${STANDALONE_PY_BASE_URL}/cpython-3.9.7-x86_64-unknown-linux-gnu-lto-20211017T1616.tar.zst"
   set_env PYTHON "${WORKSPACE}/py39/bin/python3"
   set_env DIST_PYTHON "${WORKSPACE}/py39-dist/bin/python3"
   set_env PYSIDE2_RCC "${WORKSPACE}/py39/bin/pyside2-rcc"
@@ -20,7 +20,7 @@ elseif eq ${os} linux
   triplet = trim ${output.stdout}
   set_env BUILD_TRIPLET ${triplet}
 else
-  set_env STANDALONE_PY_URL "${STANDALONE_PY_BASE_URL}/cpython-3.9.6-x86_64-apple-darwin-lto-20210724T1424.tar.zst"
+  set_env STANDALONE_PY_URL "${STANDALONE_PY_BASE_URL}/cpython-3.9.7-x86_64-apple-darwin-lto-20211017T1616.tar.zst"
   set_env PYTHON "${WORKSPACE}/py39/bin/python3"
   set_env DIST_PYTHON "${WORKSPACE}/py39-dist/bin/python3"
   set_env PYSIDE2_RCC "${WORKSPACE}/py39/bin/pyside2-rcc"
@@ -41,7 +41,7 @@ skip_crate_env_info = true
 
 [env]
 WORKSPACE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}"
-STANDALONE_PY_BASE_URL = "https://github.com/indygreg/python-build-standalone/releases/download/20210724"
+STANDALONE_PY_BASE_URL = "https://github.com/indygreg/python-build-standalone/releases/download/20211017"
 MACOSX_DEPLOYMENT_TARGET = "10.15"
 
 [tasks.init]

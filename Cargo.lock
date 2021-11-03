@@ -335,6 +335,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "console"
+version = "0.1.0"
+dependencies = [
+ "windows",
+]
+
+[[package]]
 name = "console-backend"
 version = "0.1.0"
 dependencies = [
@@ -377,6 +384,7 @@ dependencies = [
  "strum_macros",
  "sysinfo",
  "tempfile",
+ "windows",
 ]
 
 [[package]]
@@ -594,10 +602,6 @@ name = "either"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
-
-[[package]]
-name = "entrypoint"
-version = "0.1.0"
 
 [[package]]
 name = "env_logger"
@@ -2150,6 +2154,42 @@ name = "winapi-x86_64-pc-windows-gnu"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
+
+[[package]]
+name = "windows"
+version = "0.24.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a9f39345ae0c8ab072c0ac7fe8a8b411636aa34f89be19ddd0d9226544f13944"
+dependencies = [
+ "windows_i686_gnu",
+ "windows_i686_msvc",
+ "windows_x86_64_gnu",
+ "windows_x86_64_msvc",
+]
+
+[[package]]
+name = "windows_i686_gnu"
+version = "0.24.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c0866510a3eca9aed73a077490bbbf03e5eaac4e1fd70849d89539e5830501fd"
+
+[[package]]
+name = "windows_i686_msvc"
+version = "0.24.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bf0ffed56b7e9369a29078d2ab3aaeceea48eb58999d2cff3aa2494a275b95c6"
+
+[[package]]
+name = "windows_x86_64_gnu"
+version = "0.24.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "384a173630588044205a2993b6864a2f56e5a8c1e7668c07b93ec18cf4888dc4"
+
+[[package]]
+name = "windows_x86_64_msvc"
+version = "0.24.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9bd8f062d8ca5446358159d79a90be12c543b3a965c847c8f3eedf14b321d399"
 
 [[package]]
 name = "wyz"

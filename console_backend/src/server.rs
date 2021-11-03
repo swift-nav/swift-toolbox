@@ -14,6 +14,16 @@ use crate::server_recv_thread::server_recv_thread;
 use crate::shared_state::SharedState;
 use crate::utils::{refresh_connection_frontend, refresh_loggingbar};
 
+pub(crate) fn attach_console() {
+    #[cfg(target_os = "windows")]
+    {
+        use windows::Win32::System::Console::AttachConsole;
+        unsafe {
+            AttachConsole(u32::MAX).as_bool();
+        }
+    }
+}
+
 /// The backend server
 #[pyclass]
 struct Server {
@@ -101,6 +111,7 @@ impl Server {
 
     #[text_signature = "($self, /)"]
     pub fn start(&mut self) -> PyResult<ServerEndpoint> {
+        attach_console();
         let (client_send, client_recv) = channel::unbounded();
         let (server_send, server_recv) = channel::unbounded();
         let client_send = ChannelSender::boxed(client_send);

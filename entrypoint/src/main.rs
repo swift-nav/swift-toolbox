@@ -1,8 +1,19 @@
+#![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
 use std::env;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
+pub(crate) fn attach_console() {
+    #[cfg(target_os = "windows")]
+    {
+        use windows::Win32::System::Console::AttachConsole;
+        unsafe {
+            AttachConsole(u32::MAX).as_bool();
+        }
+    }
+}
 
 #[cfg(target_os = "windows")]
 fn find_py(dir: &Path) -> PathBuf {
@@ -47,5 +58,6 @@ fn main() -> Result<()> {
     let me = env::current_exe()?;
     let parent = me.parent().ok_or("no parent directory")?;
     let py = find_py(parent);
+    attach_console();
     start(&py)
 }

@@ -40,7 +40,6 @@ pub fn process_messages(
     shared_state: SharedState,
     mut client_sender: BoxedClientSender,
 ) -> Result<(), io::Error> {
-    shared_state.set_current_connection(conn.name());
     refresh_connection_frontend(&mut client_sender, shared_state.clone());
 
     let source: LinkSource<Tabs> = LinkSource::new();

@@ -75,14 +75,6 @@ impl SharedState {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).debug = set_to;
     }
-    pub fn current_connection(&self) -> String {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).status_bar.current_connection.clone()
-    }
-    pub fn set_current_connection(&self, current_connection: String) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).status_bar.current_connection = current_connection;
-    }
     pub fn logging_directory(&self) -> PathBuf {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         let mut folders = (*shared_data).connection_history.folders();
@@ -385,7 +377,6 @@ impl Clone for SharedState {
 
 #[derive(Debug)]
 pub struct SharedStateInner {
-    pub(crate) status_bar: StatusBarState,
     pub(crate) logging_bar: LoggingBarState,
     pub(crate) log_panel: LogPanelState,
     pub(crate) tracking_tab: TrackingTabState,
@@ -412,7 +403,6 @@ impl SharedStateInner {
         let connection_history = ConnectionHistory::new();
         let log_directory = connection_history.folders().pop();
         SharedStateInner {
-            status_bar: StatusBarState::new(),
             logging_bar: LoggingBarState::new(log_directory),
             log_panel: LogPanelState::new(),
             tracking_tab: TrackingTabState::new(),
@@ -439,19 +429,6 @@ impl SharedStateInner {
 impl Default for SharedStateInner {
     fn default() -> Self {
         SharedStateInner::new()
-    }
-}
-
-#[derive(Debug)]
-pub struct StatusBarState {
-    pub current_connection: String,
-}
-
-impl StatusBarState {
-    fn new() -> StatusBarState {
-        StatusBarState {
-            current_connection: String::from(""),
-        }
     }
 }
 
@@ -911,6 +888,14 @@ impl ConnectionState {
 
     pub fn is_connected(&self) -> bool {
         matches!(self, Self::Connected { .. })
+    }
+
+    pub fn name(&self) -> String {
+        match self {
+            ConnectionState::Closed => "closed".into(),
+            ConnectionState::Disconnected => "disconnected".into(),
+            ConnectionState::Connected { conn, .. } => conn.name(),
+        }
     }
 }
 

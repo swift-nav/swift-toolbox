@@ -54,208 +54,7 @@ pub fn process_messages(
             msg_sender.clone(),
         )
     };
-
-    let link = source.link();
-
-    link.register(|tabs: &Tabs, msg: MsgAgeCorrections| {
-        tabs.baseline
-            .lock()
-            .unwrap()
-            .handle_age_corrections(msg.clone());
-        tabs.solution
-            .lock()
-            .unwrap()
-            .handle_age_corrections(msg.clone());
-        tabs.status_bar.lock().unwrap().handle_age_corrections(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: MsgAngularRate| {
-        tabs.solution.lock().unwrap().handle_angular_rate(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: MsgBaselineHeading| {
-        tabs.baseline.lock().unwrap().handle_baseline_heading(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: MsgCommandResp| {
-        tabs.update.lock().unwrap().handle_command_resp(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: MsgCsacTelemetry| {
-        tabs.advanced_system_monitor
-            .lock()
-            .unwrap()
-            .handle_csac_telemetry(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: MsgCsacTelemetryLabels| {
-        tabs.advanced_system_monitor
-            .lock()
-            .unwrap()
-            .handle_csac_telemetry_labels(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: MsgDeviceMonitor| {
-        tabs.advanced_system_monitor
-            .lock()
-            .unwrap()
-            .handle_device_monitor(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: BaselineNED| {
-        tabs.baseline
-            .lock()
-            .unwrap()
-            .handle_baseline_ned(msg.clone());
-        tabs.status_bar.lock().unwrap().handle_baseline_ned(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: Dops| {
-        tabs.solution.lock().unwrap().handle_dops(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: GpsTime| {
-        tabs.baseline.lock().unwrap().handle_gps_time(msg.clone());
-        tabs.solution.lock().unwrap().handle_gps_time(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: MsgHeartbeat| {
-        tabs.advanced_system_monitor
-            .lock()
-            .unwrap()
-            .handle_heartbeat();
-        tabs.status_bar.lock().unwrap().handle_heartbeat(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: MsgImuAux| {
-        tabs.advanced_imu.lock().unwrap().handle_imu_aux(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: MsgImuRaw| {
-        tabs.advanced_imu.lock().unwrap().handle_imu_raw(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: MsgInsStatus| {
-        tabs.solution.lock().unwrap().handle_ins_status(msg.clone());
-        tabs.status_bar.lock().unwrap().handle_ins_status(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: MsgInsUpdates| {
-        tabs.advanced_imu
-            .lock()
-            .unwrap()
-            .fusion_engine_status_bar
-            .handle_ins_updates(msg.clone());
-        tabs.solution
-            .lock()
-            .unwrap()
-            .handle_ins_updates(msg.clone());
-        tabs.status_bar.lock().unwrap().handle_ins_updates(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: MsgMagRaw| {
-        tabs.advanced_magnetometer
-            .lock()
-            .unwrap()
-            .handle_mag_raw(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: MsgMeasurementState| {
-        tabs.tracking_signals
-            .lock()
-            .unwrap()
-            .handle_msg_measurement_state(msg.states);
-    });
-
-    link.register(|tabs: &Tabs, msg: MsgNetworkStateResp| {
-        tabs.advanced_networking
-            .lock()
-            .unwrap()
-            .handle_network_state_resp(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: ObservationMsg| {
-        tabs.tracking_signals
-            .lock()
-            .unwrap()
-            .handle_obs(msg.clone());
-        tabs.observation.lock().unwrap().handle_obs(msg);
-    });
-
-    link.register(|_: MsgObsDepA| {
-        debug!("The message type, MsgObsDepA, is not handled in the Tracking->SignalsPlot or Observation tab.");
-    });
-
-    link.register(|tabs: &Tabs, msg: MsgOrientEuler| {
-        tabs.solution.lock().unwrap().handle_orientation_euler(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: PosLLH| {
-        tabs.solution.lock().unwrap().handle_pos_llh(msg.clone());
-        tabs.status_bar.lock().unwrap().handle_pos_llh(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: MsgPosLlhCov| {
-        tabs.solution.lock().unwrap().handle_pos_llh_cov(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: Specan| {
-        tabs.advanced_spectrum_analyzer
-            .lock()
-            .unwrap()
-            .handle_specan(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: MsgSvAzEl| {
-        tabs.tracking_sky_plot.lock().unwrap().handle_sv_az_el(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: MsgThreadState| {
-        tabs.advanced_system_monitor
-            .lock()
-            .unwrap()
-            .handle_thread_state(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: MsgTrackingState| {
-        tabs.tracking_signals
-            .lock()
-            .unwrap()
-            .handle_msg_tracking_state(msg.states);
-    });
-
-    link.register(|tabs: &Tabs, msg: VelNED| {
-        tabs.solution.lock().unwrap().handle_vel_ned(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: MsgVelNed| {
-        // why does this tab not take both VelNED messages?
-        tabs.solution_velocity.lock().unwrap().handle_vel_ned(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: UartState| {
-        tabs.advanced_system_monitor
-            .lock()
-            .unwrap()
-            .handle_uart_state(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: MsgUtcTime| {
-        tabs.baseline.lock().unwrap().handle_utc_time(msg.clone());
-        tabs.solution.lock().unwrap().handle_utc_time(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: MsgLog| {
-        tabs.update.lock().unwrap().handle_log_msg(msg.clone());
-        handle_log_msg(msg);
-    });
-
-    link.register(|tabs: &Tabs, msg: Sbp| {
-        tabs.main.lock().unwrap().serialize_sbp(&msg);
-        tabs.status_bar.lock().unwrap().add_bytes(msg.encoded_len());
-        tabs.advanced_networking.lock().unwrap().handle_sbp(&msg);
-    });
-
+    register_events(source.link());
     let update_tab_context = tabs
         .update
         .lock()
@@ -312,6 +111,175 @@ pub fn process_messages(
     .unwrap();
 
     messages.take_err()
+}
+
+fn register_events(link: sbp::link::Link<Tabs>) {
+    link.register(|tabs: &Tabs, msg: MsgAgeCorrections| {
+        tabs.baseline
+            .lock()
+            .unwrap()
+            .handle_age_corrections(msg.clone());
+        tabs.solution
+            .lock()
+            .unwrap()
+            .handle_age_corrections(msg.clone());
+        tabs.status_bar.lock().unwrap().handle_age_corrections(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgAngularRate| {
+        tabs.solution.lock().unwrap().handle_angular_rate(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgBaselineHeading| {
+        tabs.baseline.lock().unwrap().handle_baseline_heading(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgCommandResp| {
+        tabs.update.lock().unwrap().handle_command_resp(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgCsacTelemetry| {
+        tabs.advanced_system_monitor
+            .lock()
+            .unwrap()
+            .handle_csac_telemetry(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgCsacTelemetryLabels| {
+        tabs.advanced_system_monitor
+            .lock()
+            .unwrap()
+            .handle_csac_telemetry_labels(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgDeviceMonitor| {
+        tabs.advanced_system_monitor
+            .lock()
+            .unwrap()
+            .handle_device_monitor(msg);
+    });
+    link.register(|tabs: &Tabs, msg: BaselineNED| {
+        tabs.baseline
+            .lock()
+            .unwrap()
+            .handle_baseline_ned(msg.clone());
+        tabs.status_bar.lock().unwrap().handle_baseline_ned(msg);
+    });
+    link.register(|tabs: &Tabs, msg: Dops| {
+        tabs.solution.lock().unwrap().handle_dops(msg);
+    });
+    link.register(|tabs: &Tabs, msg: GpsTime| {
+        tabs.baseline.lock().unwrap().handle_gps_time(msg.clone());
+        tabs.solution.lock().unwrap().handle_gps_time(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgHeartbeat| {
+        tabs.advanced_system_monitor
+            .lock()
+            .unwrap()
+            .handle_heartbeat();
+        tabs.status_bar.lock().unwrap().handle_heartbeat(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgImuAux| {
+        tabs.advanced_imu.lock().unwrap().handle_imu_aux(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgImuRaw| {
+        tabs.advanced_imu.lock().unwrap().handle_imu_raw(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgInsStatus| {
+        tabs.solution.lock().unwrap().handle_ins_status(msg.clone());
+        tabs.status_bar.lock().unwrap().handle_ins_status(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgInsUpdates| {
+        tabs.advanced_imu
+            .lock()
+            .unwrap()
+            .fusion_engine_status_bar
+            .handle_ins_updates(msg.clone());
+        tabs.solution
+            .lock()
+            .unwrap()
+            .handle_ins_updates(msg.clone());
+        tabs.status_bar.lock().unwrap().handle_ins_updates(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgMagRaw| {
+        tabs.advanced_magnetometer
+            .lock()
+            .unwrap()
+            .handle_mag_raw(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgMeasurementState| {
+        tabs.tracking_signals
+            .lock()
+            .unwrap()
+            .handle_msg_measurement_state(msg.states);
+    });
+    link.register(|tabs: &Tabs, msg: MsgNetworkStateResp| {
+        tabs.advanced_networking
+            .lock()
+            .unwrap()
+            .handle_network_state_resp(msg);
+    });
+    link.register(|tabs: &Tabs, msg: ObservationMsg| {
+        tabs.tracking_signals
+            .lock()
+            .unwrap()
+            .handle_obs(msg.clone());
+        tabs.observation.lock().unwrap().handle_obs(msg);
+    });
+    link.register(|_: MsgObsDepA| {
+        debug!("The message type, MsgObsDepA, is not handled in the Tracking->SignalsPlot or Observation tab.");
+    });
+    link.register(|tabs: &Tabs, msg: MsgOrientEuler| {
+        tabs.solution.lock().unwrap().handle_orientation_euler(msg);
+    });
+    link.register(|tabs: &Tabs, msg: PosLLH| {
+        tabs.solution.lock().unwrap().handle_pos_llh(msg.clone());
+        tabs.status_bar.lock().unwrap().handle_pos_llh(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgPosLlhCov| {
+        tabs.solution.lock().unwrap().handle_pos_llh_cov(msg);
+    });
+    link.register(|tabs: &Tabs, msg: Specan| {
+        tabs.advanced_spectrum_analyzer
+            .lock()
+            .unwrap()
+            .handle_specan(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgSvAzEl| {
+        tabs.tracking_sky_plot.lock().unwrap().handle_sv_az_el(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgThreadState| {
+        tabs.advanced_system_monitor
+            .lock()
+            .unwrap()
+            .handle_thread_state(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgTrackingState| {
+        tabs.tracking_signals
+            .lock()
+            .unwrap()
+            .handle_msg_tracking_state(msg.states);
+    });
+    link.register(|tabs: &Tabs, msg: VelNED| {
+        tabs.solution.lock().unwrap().handle_vel_ned(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgVelNed| {
+        // why does this tab not take both VelNED messages?
+        tabs.solution_velocity.lock().unwrap().handle_vel_ned(msg);
+    });
+    link.register(|tabs: &Tabs, msg: UartState| {
+        tabs.advanced_system_monitor
+            .lock()
+            .unwrap()
+            .handle_uart_state(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgUtcTime| {
+        tabs.baseline.lock().unwrap().handle_utc_time(msg.clone());
+        tabs.solution.lock().unwrap().handle_utc_time(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgLog| {
+        tabs.update.lock().unwrap().handle_log_msg(msg.clone());
+        handle_log_msg(msg);
+    });
+    link.register(|tabs: &Tabs, msg: Sbp| {
+        tabs.main.lock().unwrap().serialize_sbp(&msg);
+        tabs.status_bar.lock().unwrap().add_bytes(msg.encoded_len());
+        tabs.advanced_networking.lock().unwrap().handle_sbp(&msg);
+    });
 }
 
 mod messages {

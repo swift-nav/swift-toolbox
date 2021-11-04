@@ -1,3 +1,5 @@
+use std::io;
+
 use crossbeam::channel::{bounded, Receiver, Sender};
 use log::{debug, error};
 use sbp::{
@@ -15,14 +17,12 @@ use sbp::{
         },
         tracking::{MsgMeasurementState, MsgTrackingState},
     },
-    SbpMessage,
+    Sbp, SbpMessage,
 };
-use std::io;
 
 use crate::client_sender::BoxedClientSender;
 use crate::types::{
-    BaselineNED, Dops, GpsTime, MsgSender, ObservationMsg, PosLLH, RealtimeDelay, Specan,
-    UartState, VelNED,
+    BaselineNED, Dops, GpsTime, MsgSender, ObservationMsg, PosLLH, Specan, UartState, VelNED,
 };
 use crate::utils::refresh_connection_frontend;
 use crate::Tabs;
@@ -245,6 +245,12 @@ pub fn process_messages(
         handle_log_msg(msg);
     });
 
+    link.register(|tabs: &Tabs, msg: Sbp| {
+        tabs.main.lock().unwrap().serialize_sbp(&msg);
+        tabs.status_bar.lock().unwrap().add_bytes(msg.encoded_len());
+        tabs.advanced_networking.lock().unwrap().handle_sbp(&msg);
+    });
+
     let update_tab_context = tabs
         .update
         .lock()
@@ -288,28 +294,8 @@ pub fn process_messages(
                 settings_tab::start_thd(tab);
             });
         }
-
-        for (message, gps_time) in &mut messages {
-            let sent = source.send_with_state(&tabs, &message);
-            tabs.main.lock().unwrap().serialize_sbp(&message);
-            tabs.status_bar
-                .lock()
-                .unwrap()
-                .add_bytes(message.encoded_len());
-            tabs.advanced_networking
-                .lock()
-                .unwrap()
-                .handle_sbp(&message);
-            if let RealtimeDelay::On = conn.realtime_delay() {
-                if sent {
-                    tabs.main.lock().unwrap().realtime_delay(gps_time);
-                } else {
-                    debug!(
-                        "Message, {}, ignored for realtime delay.",
-                        message.message_name()
-                    );
-                }
-            }
+        for (message, _) in &mut messages {
+            source.send_with_state(&tabs, &message);
             log::logger().flush();
         }
         if let Some(ref tab) = settings_tab {
@@ -332,7 +318,12 @@ pub fn process_messages(
 }
 
 mod messages {
-    use std::{fmt, io, sync::Arc, thread, time::Duration};
+    use std::{
+        fmt, io,
+        sync::Arc,
+        thread,
+        time::{Duration, Instant},
+    };
 
     use crossbeam::channel::{self, Receiver, Sender};
     use log::debug;
@@ -357,7 +348,28 @@ mod messages {
     impl Messages {
         const TIMEOUT: Duration = Duration::from_secs(30);
 
-        pub fn new(inner: MessageWithTimeIter) -> (Self, StopToken) {
+        pub fn new<R>(reader: R) -> (Self, StopToken)
+        where
+            R: io::Read + Send + 'static,
+        {
+            let messages = sbp::iter_messages(reader).with_rover_time();
+            Self::from_boxed(Box::new(messages))
+        }
+
+        pub fn with_realtime_delay<R>(reader: R) -> (Self, StopToken)
+        where
+            R: io::Read + Send + 'static,
+        {
+            let messages = sbp::iter_messages(reader).with_rover_time();
+            let messages = Box::new(RealtimeIter::new(messages));
+            Self::from_boxed(messages)
+        }
+
+        pub fn take_err(&mut self) -> Result<(), io::Error> {
+            std::mem::replace(&mut self.err, Ok(()))
+        }
+
+        fn from_boxed(inner: MessageWithTimeIter) -> (Self, StopToken) {
             let (stop_token, stop_recv) = StopToken::new();
             let messages = start_read_thd(inner);
             (
@@ -368,18 +380,6 @@ mod messages {
                 },
                 stop_token,
             )
-        }
-
-        pub fn from_reader<R>(reader: R) -> (Self, StopToken)
-        where
-            R: io::Read + Send + 'static,
-        {
-            let messages = sbp::iter_messages(reader).with_rover_time();
-            Self::new(Box::new(messages))
-        }
-
-        pub fn take_err(&mut self) -> Result<(), io::Error> {
-            std::mem::replace(&mut self.err, Ok(()))
         }
     }
 
@@ -422,6 +422,52 @@ mod messages {
             }
         });
         rx
+    }
+
+    struct RealtimeIter<M> {
+        messages: M,
+        last_time: Option<GpsTime>,
+        updated_at: Instant,
+    }
+
+    impl<M> RealtimeIter<M> {
+        fn new(messages: M) -> Self {
+            Self {
+                messages,
+                last_time: None,
+                updated_at: Instant::now(),
+            }
+        }
+    }
+
+    impl<M> Iterator for RealtimeIter<M>
+    where
+        M: Iterator<Item = MessageWithTime>,
+    {
+        type Item = M::Item;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            let msg = self.messages.next()?;
+            match (self.last_time, &msg.1) {
+                (Some(last_time), Some(Ok(time))) if &last_time < time => {
+                    let diff = *time - last_time;
+                    let elapsed = self.updated_at.elapsed();
+                    if diff > elapsed {
+                        let sleep_dur = diff - elapsed;
+                        debug!("Realtime delay sleeping for {:?}", sleep_dur);
+                        thread::sleep(sleep_dur);
+                    }
+                    self.last_time = Some(*time);
+                    self.updated_at = Instant::now();
+                }
+                (None, Some(Ok(time))) => {
+                    self.last_time = Some(*time);
+                    self.updated_at = Instant::now();
+                }
+                _ => (),
+            };
+            Some(msg)
+        }
     }
 
     /// Used to stop the [Messages](super::Messages) iterator. This can be called manually,
@@ -468,6 +514,80 @@ mod messages {
     impl Drop for Shared {
         fn drop(&mut self) {
             self.stop();
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use std::io::Cursor;
+        use std::time::Duration;
+
+        use sbp::messages::logging::MsgLog;
+        use sbp::messages::navigation::MsgGpsTime;
+
+        use super::*;
+
+        // wiggle room for timing the delay
+        const JIFFY: Duration = Duration::from_millis(1);
+
+        fn msg_gps_time(tow: u32) -> Sbp {
+            MsgGpsTime {
+                sender_id: Some(0),
+                wn: 1,
+                tow,
+                ns_residual: 1,
+                flags: 1,
+            }
+            .into()
+        }
+
+        // any message without time would do
+        fn msg_log() -> Sbp {
+            MsgLog {
+                sender_id: Some(0),
+                level: 1,
+                text: String::from("hello").into(),
+            }
+            .into()
+        }
+
+        #[test]
+        fn realtime_delay() {
+            let mut data = Vec::new();
+            sbp::to_writer(&mut data, &msg_log()).unwrap();
+            sbp::to_writer(&mut data, &msg_gps_time(1000)).unwrap();
+            sbp::to_writer(&mut data, &msg_log()).unwrap();
+            sbp::to_writer(&mut data, &msg_gps_time(2000)).unwrap(); // one second from the last MsgGpsTime
+            let (messages, _token) = Messages::with_realtime_delay(Cursor::new(data));
+            let start = Instant::now();
+            assert_eq!(messages.count(), 4);
+            assert!(start.elapsed() - Duration::from_secs(1) < JIFFY);
+        }
+
+        #[test]
+        fn no_realtime_delay() {
+            let mut data = Vec::new();
+            sbp::to_writer(&mut data, &msg_log()).unwrap();
+            sbp::to_writer(&mut data, &msg_gps_time(1000)).unwrap();
+            sbp::to_writer(&mut data, &msg_log()).unwrap();
+            sbp::to_writer(&mut data, &msg_gps_time(2000)).unwrap();
+            let (messages, _token) = Messages::new(Cursor::new(data));
+            let start = Instant::now();
+            assert_eq!(messages.count(), 4);
+            assert!(start.elapsed() < JIFFY);
+        }
+
+        #[test]
+        fn realtime_delay_no_last_time() {
+            let mut data = Vec::new();
+            sbp::to_writer(&mut data, &msg_log()).unwrap();
+            sbp::to_writer(&mut data, &msg_gps_time(1000)).unwrap();
+            sbp::to_writer(&mut data, &msg_log()).unwrap();
+            let (messages, _token) = Messages::with_realtime_delay(Cursor::new(data));
+            let start = Instant::now();
+            assert_eq!(messages.count(), 3);
+            // only one message with time so no delay should have been added
+            assert!(start.elapsed() < JIFFY);
         }
     }
 }

@@ -1,15 +1,13 @@
 use std::{
     path::PathBuf,
-    result::Result,
-    thread::sleep,
     time::{Duration, Instant},
 };
 
 use capnp::message::Builder;
 use chrono::Local;
 use crossbeam::channel::Receiver;
-use log::{debug, error};
-use sbp::{time::GpsTime, Sbp};
+use log::error;
+use sbp::Sbp;
 
 use crate::client_sender::BoxedClientSender;
 use crate::constants::{
@@ -88,8 +86,6 @@ pub struct MainTab {
     last_sbp_logging: bool,
     last_sbp_logging_format: SbpLogging,
     sbp_logger: Option<SbpLogger>,
-    last_gps_update: Instant,
-    last_gps_time: Option<GpsTime>,
     client_sender: BoxedClientSender,
     shared_state: SharedState,
 }
@@ -102,37 +98,8 @@ impl MainTab {
             last_sbp_logging: false,
             last_sbp_logging_format: SbpLogging::SBP_JSON,
             sbp_logger: None,
-            last_gps_time: None,
-            last_gps_update: Instant::now(),
             client_sender,
             shared_state,
-        }
-    }
-
-    /// Calculate time since last epoch began and sleep for previous epoch time difference.
-    ///
-    /// # Parameters
-    /// - `gps_time`: The GpsTime corresponding to a message.
-    pub fn realtime_delay<T>(&mut self, gps_time: Option<Result<GpsTime, T>>) {
-        if let Some(Ok(g_time)) = gps_time {
-            if let Some(l_time) = self.last_gps_time {
-                if l_time < g_time {
-                    let diff = g_time - l_time;
-                    let elapsed = self.last_gps_update.elapsed();
-                    if diff > elapsed {
-                        let sleep_duration = diff - elapsed;
-                        debug!(
-                            "Realtime delay encounterred. Sleeping for {:?}.",
-                            sleep_duration
-                        );
-                        sleep(sleep_duration);
-                    }
-                    self.last_gps_update = Instant::now();
-                    self.last_gps_time = Some(g_time);
-                }
-            } else {
-                self.last_gps_time = Some(g_time);
-            }
         }
     }
 
@@ -294,58 +261,8 @@ mod tests {
     use std::{
         fs::File,
         io::{sink, BufRead, BufReader},
-        time::Duration,
     };
     use tempfile::TempDir;
-
-    struct GpsTimeTests {
-        pub good_week: i16,
-        pub early_gps_tow_good: f64,
-        pub later_gps_tow_good: f64,
-    }
-    impl GpsTimeTests {
-        fn new() -> GpsTimeTests {
-            let good_week: i16 = 2000;
-            let early_gps_tow_good: f64 = 5432.0;
-            let later_gps_tow_good: f64 = 5433.0;
-            GpsTimeTests {
-                good_week,
-                early_gps_tow_good,
-                later_gps_tow_good,
-            }
-        }
-    }
-
-    #[test]
-    fn realtime_delay_full_test() {
-        let shared_state = SharedState::new();
-        let client_send = TestSender::boxed();
-        let gps_s = GpsTimeTests::new();
-        let mut main = MainTab::new(shared_state, client_send);
-        let early_gps_time_good = GpsTime::new(gps_s.good_week, gps_s.early_gps_tow_good).unwrap();
-        let later_gps_time_good = GpsTime::new(gps_s.good_week, gps_s.later_gps_tow_good);
-        main.last_gps_time = Some(early_gps_time_good);
-        let now = Instant::now();
-        main.last_gps_update = Instant::now();
-        main.realtime_delay(Some(later_gps_time_good));
-        assert!(
-            now.elapsed()
-                > Duration::from_secs_f64(gps_s.later_gps_tow_good - gps_s.early_gps_tow_good)
-        );
-    }
-
-    #[test]
-    fn realtime_delay_no_last_test() {
-        let shared_state = SharedState::new();
-        let client_send = TestSender::boxed();
-        let gps_s = GpsTimeTests::new();
-        let mut main = MainTab::new(shared_state, client_send);
-        let later_gps_time_good = GpsTime::new(gps_s.good_week, gps_s.later_gps_tow_good);
-        let now = Instant::now();
-        main.last_gps_update = Instant::now();
-        main.realtime_delay(Some(later_gps_time_good));
-        assert!(now.elapsed() < Duration::from_millis(5));
-    }
 
     #[test]
     fn csv_logging_test() {

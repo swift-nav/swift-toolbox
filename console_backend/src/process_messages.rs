@@ -21,6 +21,7 @@ use sbp::{
 };
 
 use crate::client_sender::BoxedClientSender;
+use crate::log_panel::handle_log_msg;
 use crate::types::{
     BaselineNED, Dops, GpsTime, MsgSender, ObservationMsg, PosLLH, Specan, UartState, VelNED,
 };
@@ -28,7 +29,6 @@ use crate::utils::refresh_connection_frontend;
 use crate::Tabs;
 use crate::{connection::Connection, shared_state::SharedState};
 use crate::{errors::UNABLE_TO_CLONE_UPDATE_SHARED, settings_tab};
-use crate::{log_panel::handle_log_msg, settings_tab::SettingsTab};
 use crate::{main_tab, update_tab};
 
 pub use messages::{Messages, StopToken};
@@ -44,11 +44,20 @@ pub fn process_messages(
     refresh_connection_frontend(&mut client_sender, shared_state.clone());
 
     let source: LinkSource<Tabs> = LinkSource::new();
-    let tabs = Tabs::new(
-        shared_state.clone(),
-        client_sender.clone(),
-        msg_sender.clone(),
-    );
+    let tabs = if conn.settings_enabled() {
+        Tabs::with_settings(
+            shared_state.clone(),
+            client_sender.clone(),
+            msg_sender.clone(),
+            source.stateless_link(),
+        )
+    } else {
+        Tabs::new(
+            shared_state.clone(),
+            client_sender.clone(),
+            msg_sender.clone(),
+        )
+    };
 
     let link = source.link();
 
@@ -259,14 +268,6 @@ pub fn process_messages(
     update_tab_context.set_serial_prompt(conn.is_serial());
     let (update_tab_tx, update_tab_rx) = tabs.update.lock().unwrap().clone_channel();
     let (logging_stats_tx, logging_stats_rx): (Sender<bool>, Receiver<bool>) = bounded(1);
-    let settings_tab = conn.settings_enabled().then(|| {
-        SettingsTab::new(
-            shared_state.clone(),
-            client_sender.clone(),
-            msg_sender.clone(),
-            source.stateless_link(),
-        )
-    });
     crossbeam::scope(|scope| {
         scope.spawn(|_| {
             update_tab::update_tab_thread(
@@ -289,7 +290,7 @@ pub fn process_messages(
 
         if conn.settings_enabled() {
             scope.spawn(|_| {
-                let tab = settings_tab.as_ref().unwrap();
+                let tab = tabs.settings.as_ref().unwrap();
                 shared_state.set_settings_refresh(true);
                 settings_tab::start_thd(tab);
             });
@@ -298,7 +299,7 @@ pub fn process_messages(
             source.send_with_state(&tabs, &message);
             log::logger().flush();
         }
-        if let Some(ref tab) = settings_tab {
+        if let Some(ref tab) = tabs.settings {
             tab.stop()
         }
         if let Err(err) = update_tab_tx.send(None) {

@@ -246,11 +246,11 @@ jobs:
               choco install capnproto nsis
           fi
 
-      - name: Set up LLVM
-        uses: egor-tensin/setup-clang@v1
-        with:
-          version: 13
-          platform: x64
+#      - name: Set up LLVM
+#        uses: egor-tensin/setup-clang@v1
+#        with:
+#          version: 13
+#          platform: x64
 
       # - name: Show gcc path
       #   shell: bash
@@ -293,8 +293,6 @@ jobs:
           cargo make setup-builder
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CC: /usr/bin/clang-13
-          CXX: /usr/bin/clang++-13
 
       # - name: Build ${{ runner.os }} Binaries.
       #   env:
@@ -305,9 +303,6 @@ jobs:
 
       - name: Build ${{ runner.os }} Binaries.
         shell: bash
-        env:
-          CC: /usr/bin/clang-13
-          CXX: /usr/bin/clang++-13
         run: |
           cargo make create-dist
         if: matrix.os != 'windows-2019'

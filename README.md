@@ -75,6 +75,17 @@ cargo make create-dist
 cargo make frontend-cpu-bench
 ```
 
+## QML Debugging
+
+In order to enable QML debugging, add this block to the main.py file.
+QML debugging does not entirely work currently for this project and
+still needs to be flushed out. See https://swift-nav.atlassian.net/browse/CPP-400
+```
+from PySide2.QtQml import QQmlDebuggingEnabler
+
+sys.argv.append("-qmljsdebugger=port:10002,block")
+debug = QQmlDebuggingEnabler()  # pylint: disable=unused-variable
+```
 ## Contributing
 
 After making changes, run to tasks to ensure the code is ready for submission

@@ -19,7 +19,7 @@ from PySide2 import QtQml, QtCore
 
 from PySide2.QtGui import QFontDatabase
 
-from PySide2.QtQml import QQmlComponent, qmlRegisterType, QQmlDebuggingEnabler
+from PySide2.QtQml import QQmlComponent, qmlRegisterType
 
 import swiftnav_console.console_resources  # type: ignore # pylint: disable=unused-import
 
@@ -784,9 +784,6 @@ def main():
 
     args_main, _ = parser.parse_known_args()
 
-    if not is_frozen():
-        # sys.argv.append("-qmljsdebugger=port:10002,block")
-        debug = QQmlDebuggingEnabler()  # pylint: disable=unused-variable
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
     app = QApplication(sys.argv)

@@ -25,7 +25,6 @@ use crate::log_panel::handle_log_msg;
 use crate::types::{
     BaselineNED, Dops, GpsTime, MsgSender, ObservationMsg, PosLLH, Specan, UartState, VelNED,
 };
-use crate::utils::refresh_connection_frontend;
 use crate::Tabs;
 use crate::{connection::Connection, shared_state::SharedState};
 use crate::{errors::UNABLE_TO_CLONE_UPDATE_SHARED, settings_tab};
@@ -38,10 +37,8 @@ pub fn process_messages(
     msg_sender: MsgSender,
     conn: Connection,
     shared_state: SharedState,
-    mut client_sender: BoxedClientSender,
+    client_sender: BoxedClientSender,
 ) -> Result<(), io::Error> {
-    refresh_connection_frontend(&mut client_sender, shared_state.clone());
-
     let source: LinkSource<Tabs> = LinkSource::new();
     let tabs = if conn.settings_enabled() {
         Tabs::with_settings(

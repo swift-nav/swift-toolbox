@@ -12,7 +12,6 @@ use std::{
 use anyhow::anyhow;
 use log::{error, info};
 
-use crate::client_sender::BoxedClientSender;
 use crate::constants::*;
 use crate::errors::*;
 use crate::process_messages::{process_messages, Messages};
@@ -20,6 +19,7 @@ use crate::shared_state::ConnectionState;
 use crate::shared_state::SharedState;
 use crate::types::*;
 use crate::watch::Watched;
+use crate::{client_sender::BoxedClientSender, utils::refresh_connection_frontend};
 
 #[derive(Debug)]
 pub struct ConnectionManager {
@@ -135,6 +135,7 @@ fn conn_manager_thd(
                         },
                         &mut client_sender,
                     );
+                    refresh_connection_frontend(&mut client_sender, shared_state.clone());
                     pm_thd = Some(process_messages_thd(
                         messages,
                         msg_sender,

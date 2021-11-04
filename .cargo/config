@@ -10,5 +10,10 @@ rustflags = [
   "-C", "link-arg=dynamic_lookup",
 ]
 
+[target.x86_64-unknown-linux-gnu]
+rustflags = [
+  "-C", "link-arg=-fuse-ld=lld"
+]
+
 [alias]
 fileio = "run --bin fileio --no-default-features --features env_logger --"

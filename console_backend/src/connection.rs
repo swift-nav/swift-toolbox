@@ -122,7 +122,11 @@ fn conn_manager_thd(
                             continue;
                         }
                     };
-                    let (messages, stop_token) = Messages::from_reader(reader);
+                    let (messages, stop_token) = if conn.realtime_delay() == RealtimeDelay::On {
+                        Messages::with_realtime_delay(reader)
+                    } else {
+                        Messages::new(reader)
+                    };
                     let msg_sender = MsgSender::new(writer);
                     shared_state.set_connection(
                         ConnectionState::Connected {

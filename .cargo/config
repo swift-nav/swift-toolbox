@@ -2,18 +2,23 @@
 rustflags = [
   "-C", "link-arg=-undefined",
   "-C", "link-arg=dynamic_lookup",
+  "-C", "link-args=-Wl,-rpath,@loader_path/lib",
 ]
 
 [target.aarch64-apple-darwin]
 rustflags = [
   "-C", "link-arg=-undefined",
   "-C", "link-arg=dynamic_lookup",
+  "-C", "link-args=-Wl,-rpath,@loader_path/lib",
 ]
 
 [target.x86_64-unknown-linux-gnu]
 rustflags = [
-  "-C", "link-arg=-fuse-ld=lld"
+  "-C", "link-args=-Wl,-rpath,$ORIGIN/lib",
 ]
+
+[build]
+rustflags = ["-C", "link-arg=-fuse-ld=lld"]
 
 [alias]
 fileio = "run --bin fileio --no-default-features --features env_logger --"

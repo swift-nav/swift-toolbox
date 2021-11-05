@@ -197,6 +197,7 @@ jobs:
         shell: powershell
         run: |
           & where.exe strip.exe
+          choco list --localonly
           exit 1
         if: matrix.os == 'windows-2019'
 

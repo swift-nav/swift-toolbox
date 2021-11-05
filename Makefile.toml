@@ -255,6 +255,14 @@ script = '''
 writefile pyo3_config.txt "implementation=CPython\nversion=3.9\nshared=true\nabi3=false\nlib_name=python3.9\nlib_dir=${WORKSPACE}/standalone-py/python/install/lib\nexecutable=${WORKSPACE}/standalone-py/python/install/bin/python3.9\npointer_width=64\nbuild_flags=WITH_THREAD\nsuppress_build_script_link_lines=false\n"
 '''
 
+[tasks.write-pyo3-config.windows]
+script_runner = "@duckscript"
+cwd = "standalone-py"
+condition = { files_not_exist = ["${PYO3_CONFIG_FILE}"] }
+script = '''
+writefile pyo3_config.txt "implementation=CPython\nversion=3.9\nshared=true\nabi3=false\nlib_name=python39\nlib_dir=${WORKSPACE}\\standalone-py\\python\\install\\libs\nexecutable=${WORKSPACE}\\standalone-py\\python\\install\\python.exe\npointer_width=64\nbuild_flags=WITH_THREAD\nsuppress_build_script_link_lines=false\n"
+'''
+
 [tasks.get-standalone-py]
 dependencies = ["get-get-pip", "write-pyo3-config"]
 cwd = "standalone-py"
@@ -429,12 +437,6 @@ exec --fail-on-error ${DIST_PYTHON} -m pip uninstall -y pip setuptools wheel fli
 exec --fail-on-error ${DIST_PYTHON} -m compileall -b -f -o 1 -o 2 .
 
 if eq ${os} windows
-    rm ./python.exe
-else
-    rm -r ./bin
-end
-
-if eq ${os} windows
     globs = array pyexpat.* sqlite3.* _ctypes_test.* _bz2.* _decimal.* _elementtree.* _multiprocessing.* _sqlite3.* _ssl.* _tkinter.* _uuid.* _zoneinfo.* _msi.* _test*.*
     for glob in ${globs}
         files = glob_array ./DLLs/${glob}
@@ -477,21 +479,25 @@ script_runner = "@duckscript"
 script = '''
 files = glob_array **/*.pdb
 for file in ${files}
-    rm ${file}
+    echo "Removing ${file}..."
+    rm -f ${file}
 end
 '''
 
 [tasks.strip-dist]
 script_runner = "@duckscript"
 script = '''
-exec --fail-on-error strip py39-dist/console
+exec --fail-on-error strip ./py39-dist/console
+rm -r ./py39-dist/bin
 '''
 
 [tasks.strip-dist.windows]
 script_runner = "@duckscript"
 script = '''
 cm_run_task strip-dist-pdb
-exec --fail-on-error strip.exe py39-dist/console.exe
+exec --fail-on-error strip.exe ./py39-dist/console.exe
+rm ./py39-dist/python.exe
+rm ./py39-dist/pythonw.exe
 '''
 
 [tasks.compress-dist]

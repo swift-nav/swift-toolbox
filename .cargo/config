@@ -15,10 +15,8 @@ rustflags = [
 [target.x86_64-unknown-linux-gnu]
 rustflags = [
   "-C", "link-args=-Wl,-rpath,$ORIGIN/lib",
+  "-C", "link-arg=-fuse-ld=lld",
 ]
-
-[build]
-rustflags = ["-C", "link-arg=-fuse-ld=lld"]
 
 [alias]
 fileio = "run --bin fileio --no-default-features --features env_logger --"

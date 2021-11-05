@@ -287,6 +287,14 @@ jobs:
           cargo make create-dist
         if: matrix.os != 'windows-2019'
 
+      - name: Create ${{ runner.os }} Installers.
+        shell: bash
+        run: |
+          cargo make dist-to-installer
+          INSTALLER_ARCHIVE=$(find installers\Windows\. -maxdepth 1 -iname "*.exe")
+          echo "INSTALLER_ARCHIVE=$INSTALLER_ARCHIVE" >>$GITHUB_ENV
+        if: matrix.os == 'windows-2019'
+
       - name: Pull Git LFS objects
         run: git lfs pull
         env:
@@ -316,6 +324,11 @@ jobs:
           path: |
             ${{ env.RELEASE_ARCHIVE }}
             release-archive.filename
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ runner.os }}-artifacts
+          path: |
+            ${{ env.INSTALLER_ARCHIVE }}
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ runner.os }}-artifacts-debug

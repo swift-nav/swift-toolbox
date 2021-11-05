@@ -524,6 +524,14 @@ exec --fail-on-error xz -T 0 -e -9 "${output_name}.tar"
 [tasks.create-dist]
 run_task = [{ name = ["build-dist", "purge-dist", "compress-dist"] }]
 
+[tasks.dist-to-installer]
+
+[tasks.dist-to-installer.windows]
+script_runner = "@shell"
+script = '''
+makensis /V4  .\installers\windows\Installer.nsi
+'''
+
 [tasks.qml-format]
 dependencies = ["set-qml-files", "set-qml-app"]
 script_runner = "@shell"

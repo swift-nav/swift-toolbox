@@ -362,8 +362,8 @@ jobs:
     strategy:
       matrix:
         os:
-          - macOS
-          - Windows
+#          - macOS
+#          - Windows
           - Linux
     runs-on: [self-hosted, '${{ matrix.os }}']
     steps:

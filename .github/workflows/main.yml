@@ -291,9 +291,9 @@ jobs:
         shell: bash
         run: |
           cargo make dist-to-installer
-          INSTALLER_ARCHIVE=$(find installers\Windows\. -maxdepth 1 -iname "*.exe")
+          INSTALLER_ARCHIVE=$(find installers/Windows -maxdepth 1 -iname "*.exe")
           echo "INSTALLER_ARCHIVE=$INSTALLER_ARCHIVE" >>$GITHUB_ENV
-        if: matrix.os == 'windows-2019'
+        if: matrix.os == 'windows-2019' && github.event_name == 'push' && contains(github.ref, 'refs/tags')
 
       - name: Pull Git LFS objects
         run: git lfs pull
@@ -326,9 +326,10 @@ jobs:
             release-archive.filename
       - uses: actions/upload-artifact@v2
         with:
-          name: ${{ runner.os }}-artifacts
+          name: ${{ runner.os }}-installer
           path: |
             ${{ env.INSTALLER_ARCHIVE }}
+        if: matrix.os == 'windows-2019' && github.event_name == 'push' && contains(github.ref, 'refs/tags')
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ runner.os }}-artifacts-debug

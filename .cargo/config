@@ -2,20 +2,20 @@
 rustflags = [
   "-C", "link-arg=-undefined",
   "-C", "link-arg=dynamic_lookup",
-  "-C", "link-args=-Wl,-rpath,@loader_path/lib",
+  "-C", "link-arg=-Wl,-rpath,@loader_path/lib",
 ]
 
 [target.aarch64-apple-darwin]
 rustflags = [
   "-C", "link-arg=-undefined",
   "-C", "link-arg=dynamic_lookup",
-  "-C", "link-args=-Wl,-rpath,@loader_path/lib",
+  "-C", "link-arg=-Wl,-rpath,@loader_path/lib",
 ]
 
 [target.x86_64-unknown-linux-gnu]
 rustflags = [
-  "-C", "link-args=-Wl,-rpath,$ORIGIN/lib",
   "-C", "link-arg=-fuse-ld=lld",
+  "-C", "link-arg=-Wl,-rpath,$ORIGIN/lib",
 ]
 
 [alias]

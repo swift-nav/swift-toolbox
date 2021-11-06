@@ -246,6 +246,12 @@ jobs:
               choco install capnproto nsis
           fi
 
+      - name: Set up Clang
+        uses: egor-tensin/setup-clang@v1
+        with:
+          version: 13
+          platform: x64
+
       - name: Install stable Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -253,20 +259,20 @@ jobs:
           override: true
           components: rustfmt, clippy
 
-      - uses: Swatinem/rust-cache@v1
+#      - uses: Swatinem/rust-cache@v1
 
       - uses: davidB/rust-cargo-make@v1
         with:
           version: ${{ env.CARGO_MAKE_VERSION }}
 
-      - name: Cache pip
-        uses: actions/cache@v2
-        with:
-          path: ${{ env.PIP_CACHE_DIR }}
-          key: ${{ runner.os }}-pyproject-toml-${{ hashFiles('pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-pyproject-toml-
-            ${{ runner.os }}-
+#      - name: Cache pip
+#        uses: actions/cache@v2
+#        with:
+#          path: ${{ env.PIP_CACHE_DIR }}
+#          key: ${{ runner.os }}-pyproject-toml-${{ hashFiles('pyproject.toml') }}
+#          restore-keys: |
+#            ${{ runner.os }}-pyproject-toml-
+#            ${{ runner.os }}-
 
       - name: Set up python builder
         shell: bash
@@ -274,12 +280,6 @@ jobs:
           cargo make setup-builder
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Clang
-        uses: egor-tensin/setup-clang@v1
-        with:
-          version: 13
-          platform: x64
 
       - name: Build ${{ runner.os }} Binaries.
         env:

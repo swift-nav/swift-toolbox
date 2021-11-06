@@ -314,6 +314,10 @@ dependencies = ["build-console"]
 script_runner = "@duckscript"
 script = '''
 cp target/release/console py39-dist/console
+os = os_family
+if eq ${os} mac
+  exec --fail-on-error install_name_tool -change /install/lib/libpython3.9.dylib @executable_path/lib/libpython3.9.dylib py39-dist/console
+end
 '''
 
 [tasks.build-dist-install-console.windows]

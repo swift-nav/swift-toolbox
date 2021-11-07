@@ -186,7 +186,7 @@ jobs:
         os:
         - ubuntu-20.04
         - ubuntu-18.04
-#        - macos-10.15
+        - macos-10.15
         - windows-2019
 
     runs-on: ${{ matrix.os }}
@@ -259,20 +259,20 @@ jobs:
           override: true
           components: rustfmt, clippy
 
-#      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v1
 
       - uses: davidB/rust-cargo-make@v1
         with:
           version: ${{ env.CARGO_MAKE_VERSION }}
 
-#      - name: Cache pip
-#        uses: actions/cache@v2
-#        with:
-#          path: ${{ env.PIP_CACHE_DIR }}
-#          key: ${{ runner.os }}-pyproject-toml-${{ hashFiles('pyproject.toml') }}
-#          restore-keys: |
-#            ${{ runner.os }}-pyproject-toml-
-#            ${{ runner.os }}-
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.PIP_CACHE_DIR }}
+          key: ${{ runner.os }}-pyproject-toml-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pyproject-toml-
+            ${{ runner.os }}-
 
       - name: Set up python builder
         shell: bash
@@ -350,7 +350,7 @@ jobs:
     strategy:
       matrix:
         os:
-#          - macOS
+          - macOS
           - Windows
           - Linux
     runs-on: [self-hosted, '${{ matrix.os }}']

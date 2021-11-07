@@ -3,7 +3,6 @@
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 use pyo3::prelude::*;
-use pyo3::types::IntoPyDict;
 
 fn attach_console() {
     #[cfg(target_os = "windows")]
@@ -16,7 +15,6 @@ fn attach_console() {
 }
 
 fn main() -> Result<()> {
-
     attach_console();
 
     let current_exe = std::env::current_exe()?;
@@ -27,17 +25,10 @@ fn main() -> Result<()> {
     std::env::set_var("PYTHONHOME", parent);
     std::env::set_var("PYTHONDONTWRITEBYTECODE", "1");
 
-    Python::with_gil(|py| {
+    let exit_code = Python::with_gil(|py| {
+        let snav = py.import("swiftnav_console.main")?;
+        snav.call_method("main", (), None)?.extract::<i32>()
+    })?;
 
-        let locals = [
-            ("sys", py.import("sys")?),
-            ("snav", py.import("swiftnav_console.main")?)
-        ].into_py_dict(py);
-
-        let code = "snav.main()";
-
-        py.eval(code, None, Some(locals)).unwrap();
-
-        Ok(())
-    })
+    std::process::exit(exit_code);
 }

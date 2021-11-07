@@ -837,7 +837,7 @@ def main():
     engine.addImportPath("PySide2")
     engine.load(QUrl("qrc:/view.qml"))
     if not qml_object_created[0]:
-        sys.exit(1)
+        return 1
 
     messages_main = capnp.load(capnp_path)  # pylint: disable=no-member
 
@@ -914,8 +914,8 @@ def main():
     endpoint_main.shutdown()
     server_thread.join()
 
-    sys.exit()
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

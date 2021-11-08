@@ -9,21 +9,20 @@
 !searchparse /file "..\..\console_backend\src\version.txt" `` VER_MAJOR `.` VER_MINOR `.` VER_PATCH_UNFILTERED ``
 !searchparse /noerrors "${VER_PATCH_UNFILTERED}" `` VER_PATCH `-`
 !define VERSION "${VER_MAJOR}.${VER_MINOR}.${VER_PATCH}.0"
-!define app_title "Swift Navigation Console"
-!define app_name "swift_navigation_console"
+!define app_name "Swift Navigation Console"
 !define app_executable "console.exe"
 !define installer_dir "py39-dist"
-!define author "Swift Navigation"
+!define company_name "Swift Navigation"
 
 !define UNINST_KEY \
   "Software\Microsoft\Windows\CurrentVersion\Uninstall\${app_name}"
 
 VIProductVersion "${VERSION}"
-VIAddVersionKey "ProductName" "${app_title}"
+VIAddVersionKey "ProductName" "${app_name}"
 VIAddVersionKey "FileVersion" "${VERSION}"
 VIAddVersionKey "ProductVersion" "${VERSION}"
-VIAddVersionKey "LegalCopyright" "(C) ${author}"
-VIAddVersionKey "FileDescription" "${app_title}"
+VIAddVersionKey "LegalCopyright" "(C) ${company_name}"
+VIAddVersionKey "FileDescription" "${app_name}"
 
 ;--------------------------------
 ;Init
@@ -43,7 +42,7 @@ FunctionEnd
 ;--------------------------------
 ;General
 
-  Name "${app_title}"
+  Name "${app_name}"
   OutFile "${app_name}-${VERSION}.exe"
 
 ;--------------------------------
@@ -54,7 +53,7 @@ FunctionEnd
 ;--------------------------------
 ;Pages
 
-  !define MUI_WELCOMEPAGE_TEXT "This wizard will guide you through the installation of ${app_title}.$\r$\n$\r$\n$\r$\nClick Next to continue."
+  !define MUI_WELCOMEPAGE_TEXT "This wizard will guide you through the installation of ${app_name}.$\r$\n$\r$\n$\r$\nClick Next to continue."
   !insertmacro MUI_PAGE_WELCOME
   !insertmacro MUI_PAGE_DIRECTORY
   !insertmacro MUI_PAGE_INSTFILES
@@ -84,7 +83,7 @@ Section
   CreateShortCut "$DESKTOP\${app_name}.lnk" "$InstDir\Scripts\${app_executable}"
   CreateShortCut "$SMPROGRAMS\${app_name}.lnk" "$InstDir\Scripts\${app_executable}"
   WriteRegStr SHCTX "${UNINST_KEY}" "DisplayName" "${app_name}"
-  WriteRegStr SHCTX "${UNINST_KEY}" "Publisher" "${author}"
+  WriteRegStr SHCTX "${UNINST_KEY}" "Publisher" "${company_name}"
   WriteRegStr SHCTX "${UNINST_KEY}" "DisplayIcon" "$InstDir\uninstall.exe"
   ${GetSize} "$InstDir" "/S=0K" $0 $1 $2
   IntFmt $0 "0x%08X" $0

@@ -529,7 +529,7 @@ run_task = [{ name = ["build-dist", "purge-dist", "compress-dist"] }]
 [tasks.dist-to-installer.windows]
 script_runner = "@shell"
 script = '''
-makensis /V4  .\installers\windows\Installer.nsi
+makensis /V4  .\installers\Windows\Installer.nsi
 '''
 
 [tasks.qml-format]

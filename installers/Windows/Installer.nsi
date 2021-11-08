@@ -39,11 +39,20 @@ Function .onInit
   !insertmacro MULTIUSER_INIT
   ; Do not use InstallDir at all so we can detect empty $InstDir!
   ${If} $InstDir == "" ; /D not used
+<<<<<<< HEAD
     ${If} $MultiUser.InstallMode == "AllUsers"
       StrCpy $InstDir "$PROGRAMFILES64\${company_name}\${app_name}"
     ${Else}
         StrCpy $InstDir "$LOCALAPPDATA\${company_name}\${app_name}"
     ${EndIf}
+=======
+      StrCpy $InstDir "$LOCALAPPDATA\${company_name}\${app_name}"
+      RMDir /r "$InstDir"
+      Delete "$DESKTOP\${app_name}.lnk"
+      Delete "$SMPROGRAMS\${app_name}.lnk"
+      DeleteRegKey /ifempty SHCTX "Software\${app_name}"
+      DeleteRegKey SHCTX "${UNINST_KEY}"
+>>>>>>> Update installers/Windows/Installer.nsi
   ${EndIf}
   
 FunctionEnd

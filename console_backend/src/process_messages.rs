@@ -528,7 +528,7 @@ mod messages {
         use super::*;
 
         // wiggle room for timing the delay
-        const JIFFY: Duration = Duration::from_millis(1);
+        const JIFFY: Duration = Duration::from_millis(2);
 
         fn msg_gps_time(tow: u32) -> Sbp {
             MsgGpsTime {

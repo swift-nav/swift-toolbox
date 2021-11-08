@@ -31,7 +31,7 @@ VIAddVersionKey "FileDescription" "${app_title}"
 Function .onInit
   ; Do not use InstallDir at all so we can detect empty $InstDir!
   ${If} $InstDir == "" ; /D not used
-      StrCpy $InstDir "$LOCALAPPDATA\${app_name}"
+      StrCpy $InstDir "$LOCALAPPDATA\${company_name}\${app_name}"
       RMDir /r "$InstDir"
       Delete "$DESKTOP\${app_name}.lnk"
       Delete "$SMPROGRAMS\${app_name}.lnk"

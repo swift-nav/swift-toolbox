@@ -1,7 +1,6 @@
 """Frontend module for the Swift Console.
 """
 import argparse
-import platform
 import os
 import sys
 import threading
@@ -729,8 +728,7 @@ def get_app_dir() -> str:
     var_frozen = os.environ.get("SWIFTNAV_CONSOLE_FROZEN", "")
     if var_frozen != "":
         return var_frozen
-    else:
-        return os.path.dirname(sys.executable)
+    return os.path.dirname(sys.executable)
 
 
 def get_capnp_path() -> str:
@@ -766,13 +764,19 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
     if args.height:
         min_height = globals_.property("minimumHeight")  # type: ignore
         if args.height < min_height:
-            print(f"WARNING: --height value: {args.height}, is less than minimum: {min_height}. Input will be ignored.", file=sys.stderr)
+            print(
+                f"WARNING: --height value: {args.height}, is less than minimum: {min_height}. Input will be ignored.",
+                file=sys.stderr,
+            )
         else:
             globals_.setProperty("height", args.height)  # type: ignore
     if args.width:
         min_width = globals_.property("minimumWidth")  # type: ignore
         if args.width < min_width:
-            print(f"WARNING: --width value: {args.width}, is less than minimum: {min_width}. Input will be ignored.", file=sys.stderr)
+            print(
+                f"WARNING: --width value: {args.width}, is less than minimum: {min_width}. Input will be ignored.",
+                file=sys.stderr,
+            )
         else:
             globals_.setProperty("width", args.width)  # type: ignore
 

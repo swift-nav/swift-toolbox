@@ -18,173 +18,172 @@ env:
 
 jobs:
 
-  # backend_bench:
+  backend_bench:
 
-  #   name: Backend Benchmarks
+    name: Backend Benchmarks
 
-  #   strategy:
-  #     matrix:
-  #       os:
-  #         - ubuntu-18.04
-  #         - macos-10.15
-  #         - windows-2019
+    strategy:
+      matrix:
+        os:
+          - ubuntu-18.04
+          - macos-10.15
+          - windows-2019
 
-  #   runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
 
-  #   steps:
+    steps:
 
-  #     - name: Checkout source
-  #       uses: actions/checkout@v2
-  #       with:
-  #         submodules: recursive
-  #         ssh-key: ${{ secrets.SSH_KEY }}
-  #         ssh-strict: false
+      - name: Checkout source
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          ssh-key: ${{ secrets.SSH_KEY }}
+          ssh-strict: false
 
-  #     - uses: webfactory/ssh-agent@v0.5.0
-  #       with:
-  #         ssh-private-key: ${{ secrets.SSH_KEY }}
+      - uses: webfactory/ssh-agent@v0.5.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
 
-  #     - name: Run ssh-keyscan
-  #       run: ssh-keyscan github.com >> ~/.ssh/known_hosts
+      - name: Run ssh-keyscan
+        run: ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-  #     - name: Setup SSH for Windows Git LFS
-  #       run: |
-  #         & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
-  #         & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
-  #       if: matrix.os == 'windows-2019'
+      - name: Setup SSH for Windows Git LFS
+        run: |
+          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
+          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
+        if: matrix.os == 'windows-2019'
 
-  #     - name: Install ${{ runner.os }} Dependencies.
-  #       shell: bash
-  #       run: |
-  #         if [ "$RUNNER_OS" == "Linux" ]; then
-  #             sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
-  #         elif [ "$RUNNER_OS" == "macOS" ]; then
-  #             brew install capnp llvm
-  #         elif [ "$RUNNER_OS" == "Windows" ]; then
-  #             choco install -y capnproto
-  #         fi
+      - name: Install ${{ runner.os }} Dependencies.
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+              sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+              brew install capnp llvm
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+              choco install -y capnproto
+          fi
 
-  #     - name: Pull Git LFS objects
-  #       run: git lfs pull
-  #       env:
-  #         GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
+      - name: Pull Git LFS objects
+        run: git lfs pull
+        env:
+          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
 
-  #     - uses: actions-rs/toolchain@v1
-  #       with:
-  #         profile: minimal
-  #         toolchain: stable
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
 
-  #     - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v1
 
-  #     - uses: davidB/rust-cargo-make@v1
-  #       with:
-  #         version: ${{ env.CARGO_MAKE_VERSION }}
+      - uses: davidB/rust-cargo-make@v1
+        with:
+          version: ${{ env.CARGO_MAKE_VERSION }}
 
-  #     - name: Cache pip
-  #       uses: actions/cache@v2
-  #       with:
-  #         path: ${{ env.PIP_CACHE_DIR }}
-  #         key: ${{ runner.os }}-pyproject-toml-${{ hashFiles('pyproject.toml') }}
-  #         restore-keys: |
-  #           ${{ runner.os }}-pyproject-toml-
-  #           ${{ runner.os }}-
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.PIP_CACHE_DIR }}
+          key: ${{ runner.os }}-pyproject-toml-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pyproject-toml-
+            ${{ runner.os }}-
 
-  #     - name: Set up python builder
-  #       shell: bash
-  #       run: |
-  #         cargo make setup-builder
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up python builder
+        shell: bash
+        run: |
+          cargo make setup-builder
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  #     - name: Run Backend Benchmarks (Windows)
-  #       env:
-  #         LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
-  #       run: |
-  #         cargo make backend-benches
-  #       if: matrix.os == 'windows-2019'
+      - name: Run Backend Benchmarks (Windows)
+        env:
+          LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
+        run: |
+          cargo make backend-benches
+        if: matrix.os == 'windows-2019'
 
-  #     - name: Run Backend Benchmarks
-  #       run: |
-  #         cargo make backend-benches
-  #       if: matrix.os != 'windows-2019'
+      - name: Run Backend Benchmarks
+        run: |
+          cargo make backend-benches
+        if: matrix.os != 'windows-2019'
 
-  # checks:
+  checks:
 
-  #   name: Code Quality Checks
+    name: Code Quality Checks
 
-  #   runs-on: ubuntu-18.04
+    runs-on: ubuntu-18.04
 
-  #   steps:
+    steps:
 
-  #     - name: Checkout source
-  #       uses: actions/checkout@v2
-  #       with:
-  #         submodules: recursive
-  #         ssh-key: ${{ secrets.SSH_KEY }}
-  #         ssh-strict: false
+      - name: Checkout source
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          ssh-key: ${{ secrets.SSH_KEY }}
+          ssh-strict: false
 
-  #     - uses: webfactory/ssh-agent@v0.5.0
-  #       with:
-  #         ssh-private-key: ${{ secrets.SSH_KEY }}
+      - uses: webfactory/ssh-agent@v0.5.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
 
-  #     - name: Pull Git LFS objects
-  #       run: git lfs pull
-  #       env:
-  #         GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
+      - name: Pull Git LFS objects
+        run: git lfs pull
+        env:
+          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
 
-  #     - name: Install stable Rust
-  #       uses: actions-rs/toolchain@v1
-  #       with:
-  #         toolchain: stable
-  #         override: true
-  #         components: rustfmt, clippy
+      - name: Install stable Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
 
-  #     - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v1
 
-  #     - uses: davidB/rust-cargo-make@v1
-  #       with:
-  #         version: ${{ env.CARGO_MAKE_VERSION }}
+      - uses: davidB/rust-cargo-make@v1
+        with:
+          version: ${{ env.CARGO_MAKE_VERSION }}
 
-  #     - name: Install Dependencies.
-  #       run: |
-  #         sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
+      - name: Install Dependencies.
+        run: |
+          sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
 
-  #     - name: Cache pip
-  #       uses: actions/cache@v2
-  #       with:
-  #         path: ${{ env.PIP_CACHE_DIR }}
-  #         key: ${{ runner.os }}-pyproject-toml-${{ hashFiles('pyproject.toml') }}
-  #         restore-keys: |
-  #           ${{ runner.os }}-pyproject-toml-
-  #           ${{ runner.os }}-
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.PIP_CACHE_DIR }}
+          key: ${{ runner.os }}-pyproject-toml-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pyproject-toml-
+            ${{ runner.os }}-
 
-  #     - name: Set up python builder
-  #       shell: bash
-  #       run: |
-  #         cargo make setup-builder
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up python builder
+        shell: bash
+        run: |
+          cargo make setup-builder
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  #     - name: Run Checks
-  #       run: |
-  #         cargo make check-all
+      - name: Run Checks
+        run: |
+          cargo make check-all
 
-  #     - name: Run Tests
-  #       run: |
-  #         cargo make tests
+      - name: Run Tests
+        run: |
+          cargo make tests
 
   build:
 
     name: Build Binaries
 
-    # needs:
-    #   - checks
-    #   - backend_bench
+    needs:
+      - checks
+      - backend_bench
 
     strategy:
       matrix:
         os:
-        - ubuntu-20.04
         - ubuntu-18.04
         - macos-10.15
         - windows-2019
@@ -245,12 +244,6 @@ jobs:
           elif [ "$RUNNER_OS" == "Windows" ]; then
               choco install capnproto nsis
           fi
-
-#      - name: Set up Clang
-#        uses: egor-tensin/setup-clang@v1
-#        with:
-#          version: 13
-#          platform: x64
 
       - name: Install stable Rust
         uses: actions-rs/toolchain@v1
@@ -459,4 +452,3 @@ jobs:
             macos/${{ env.MACOS_ARCHIVE }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-

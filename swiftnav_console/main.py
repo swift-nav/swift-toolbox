@@ -1,7 +1,6 @@
 """Frontend module for the Swift Console.
 """
 import argparse
-import platform
 import os
 import sys
 import threading
@@ -720,9 +719,16 @@ def is_frozen() -> bool:
         bool: Whether the application is frozen.
     """
     me = os.path.dirname(sys.executable)
-    if platform.system() == "Windows":
-        return os.path.exists(os.path.join(me, ".frozen"))
-    return os.path.exists(os.path.join(me, "../.frozen"))
+    var_frozen = os.environ.get("SWIFTNAV_CONSOLE_FROZEN", "") != ""
+    path_frozen = os.path.exists(os.path.join(me, ".frozen"))
+    return var_frozen or path_frozen
+
+
+def get_app_dir() -> str:
+    var_frozen = os.environ.get("SWIFTNAV_CONSOLE_FROZEN", "")
+    if var_frozen != "":
+        return var_frozen
+    return os.path.dirname(sys.executable)
 
 
 def get_capnp_path() -> str:
@@ -731,13 +737,10 @@ def get_capnp_path() -> str:
     Returns:
         str: The path to the capnp file.
     """
-    d = os.path.dirname(sys.executable)
+    d = get_app_dir()
     path = ""
     if is_frozen():
-        if platform.system() == "Windows":
-            path = os.path.join(d, "resources/base", CONSOLE_BACKEND_CAPNP_PATH)
-        else:
-            path = os.path.join(d, "../resources/base", CONSOLE_BACKEND_CAPNP_PATH)
+        path = os.path.join(d, "resources/base", CONSOLE_BACKEND_CAPNP_PATH)
     else:
         path = os.path.join(
             os.path.dirname(os.path.dirname(__file__)), "src/main/resources/base", CONSOLE_BACKEND_CAPNP_PATH
@@ -761,13 +764,19 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
     if args.height:
         min_height = globals_.property("minimumHeight")  # type: ignore
         if args.height < min_height:
-            print(f"WARNING: --height value: {args.height}, is less than minimum: {min_height}. Input will be ignored.")
+            print(
+                f"WARNING: --height value: {args.height}, is less than minimum: {min_height}. Input will be ignored.",
+                file=sys.stderr,
+            )
         else:
             globals_.setProperty("height", args.height)  # type: ignore
     if args.width:
         min_width = globals_.property("minimumWidth")  # type: ignore
         if args.width < min_width:
-            print(f"WARNING: --width value: {args.width}, is less than minimum: {min_width}. Input will be ignored.")
+            print(
+                f"WARNING: --width value: {args.width}, is less than minimum: {min_width}. Input will be ignored.",
+                file=sys.stderr,
+            )
         else:
             globals_.setProperty("width", args.width)  # type: ignore
 
@@ -830,7 +839,7 @@ def main():
     engine.addImportPath("PySide2")
     engine.load(QUrl("qrc:/view.qml"))
     if not qml_object_created[0]:
-        sys.exit(1)
+        return 1
 
     messages_main = capnp.load(capnp_path)  # pylint: disable=no-member
 
@@ -907,8 +916,8 @@ def main():
     endpoint_main.shutdown()
     server_thread.join()
 
-    sys.exit()
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

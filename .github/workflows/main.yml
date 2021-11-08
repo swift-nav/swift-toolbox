@@ -184,9 +184,9 @@ jobs:
     strategy:
       matrix:
         os:
-          - ubuntu-18.04
-          - macos-10.15
-          - windows-2019
+        - ubuntu-18.04
+        - macos-10.15
+        - windows-2019
 
     runs-on: ${{ matrix.os }}
 
@@ -334,6 +334,7 @@ jobs:
         shell: bash
         run: |
           cargo make disk-usage-bench
+
   frontend_bench:
     name: Run Frontend Benchmarks
     timeout-minutes: 30
@@ -382,32 +383,28 @@ jobs:
         run: |
           cd console
           if [ "$RUNNER_OS" == "Windows" ]; then
-              python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/console/Scripts/console.exe"
-          elif [ "$RUNNER_OS" == "macOS" ]; then
-              chmod +x "${GITHUB_WORKSPACE}/console/bin/console"
-              chmod +x "${GITHUB_WORKSPACE}/console/bin/python3"
-              python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/console/bin/console"
-          elif [ "$RUNNER_OS" == "Linux" ]; then
-              chmod +x "${GITHUB_WORKSPACE}/console/bin/console"
-              chmod +x "${GITHUB_WORKSPACE}/console/bin/python3"
-              python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/console/bin/console"
+              python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/console/console.exe"
+          elif [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
+              chmod +x "${GITHUB_WORKSPACE}/console/console"
+              python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/console/console"
+          else
+              echo "Invalid platform"
+              exit 1
           fi
+
       - name: Run MEM Frontend Benchmark.
         shell: bash
         run: |
           cd console
           if [ "$RUNNER_OS" == "Windows" ]; then
-              python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/console/Scripts/console.exe"
-          elif [ "$RUNNER_OS" == "macOS" ]; then
-              chmod +x "${GITHUB_WORKSPACE}/console/bin/console"
-              chmod +x "${GITHUB_WORKSPACE}/console/bin/python3"
-              python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/console/bin/console"
-          elif [ "$RUNNER_OS" == "Linux" ]; then
-              chmod +x "${GITHUB_WORKSPACE}/console/bin/console"
-              chmod +x "${GITHUB_WORKSPACE}/console/bin/python3"
-              python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/console/bin/console"
+              python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/console/console.exe"
+          elif [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
+              chmod +x "${GITHUB_WORKSPACE}/console/console"
+              python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/console/console"
+          else
+              echo "Invalid platform"
+              exit 1
           fi
-
 
   release:
     name: Create Release
@@ -455,4 +452,3 @@ jobs:
             macos/${{ env.MACOS_ARCHIVE }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-

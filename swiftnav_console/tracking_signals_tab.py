@@ -76,8 +76,8 @@ class TrackingSignalsPoints(QObject):
         self._all_series.append(series)
         self.all_series_changed.emit()  # type: ignore
 
-    @Slot(float, bool)  # type: ignore
-    def fill_all_series(self, line_width, useOpenGL) -> None:
+    @Slot()  # type: ignore
+    def fill_all_series(self) -> None:
         cur_num_labels = len(TRACKING_SIGNALS_TAB[Keys.LABELS])
         if self._num_labels != cur_num_labels:
             self._num_labels = cur_num_labels
@@ -110,10 +110,6 @@ class TrackingSignalsPoints(QObject):
                 series.replace(series_points)
                 series.setName(labels[idx])
                 series.setColor(colors[idx])
-                pen = series.pen()
-                pen.setWidthF(line_width)
-                series.setPen(pen)
-                series.setUseOpenGL(useOpenGL)
                 series_changed = True
 
                 if len(series_points) > 0:

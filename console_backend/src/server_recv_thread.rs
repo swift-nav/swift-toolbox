@@ -53,7 +53,7 @@ pub fn server_recv_thread(
             };
             match message {
                 m::message::SerialRefreshRequest(Ok(_)) => {
-                    refresh_connection_frontend(&client_sender, shared_state.clone());
+                    refresh_connection_frontend(&client_sender, &shared_state);
                 }
                 m::message::DisconnectRequest(Ok(_)) => {
                     conn_manager.disconnect();

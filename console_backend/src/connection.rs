@@ -135,7 +135,7 @@ fn conn_manager_thd(
                         },
                         &client_sender,
                     );
-                    refresh_connection_frontend(&client_sender, shared_state.clone());
+                    refresh_connection_frontend(&client_sender, &shared_state);
                     pm_thd = Some(process_messages_thd(
                         messages,
                         msg_sender,

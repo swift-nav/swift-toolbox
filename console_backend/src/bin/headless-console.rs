@@ -32,8 +32,8 @@ Usage:
     setup_logging(client_send.clone(), shared_state.clone());
     let conn_manager = ConnectionManager::new(client_send.clone(), shared_state.clone());
     handle_cli(opt, &conn_manager, shared_state.clone());
-    refresh_connection_frontend(&client_send, shared_state.clone());
-    refresh_loggingbar(&client_send, shared_state.clone());
+    refresh_connection_frontend(&client_send, &shared_state);
+    refresh_loggingbar(&client_send, &shared_state);
     server_recv_thread(conn_manager, client_send, server_recv, shared_state);
 
     let mut msg_count: usize = 0;

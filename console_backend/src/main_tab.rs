@@ -206,7 +206,7 @@ impl MainTab {
                 self.shared_state.update_folder_history(directory.clone());
                 self.logging_directory = directory;
             }
-            refresh_loggingbar(&self.client_sender, self.shared_state.clone());
+            refresh_loggingbar(&self.client_sender, &self.shared_state);
         }
 
         if self.last_csv_logging != csv_logging {
@@ -217,7 +217,7 @@ impl MainTab {
                 self.init_csv_logging();
             }
             self.last_csv_logging = csv_logging;
-            refresh_loggingbar(&self.client_sender, self.shared_state.clone());
+            refresh_loggingbar(&self.client_sender, &self.shared_state);
         }
         if self.last_sbp_logging != sbp_logging
             || self.last_sbp_logging_format != sbp_logging_format
@@ -228,7 +228,7 @@ impl MainTab {
             }
             self.last_sbp_logging = sbp_logging;
             self.last_sbp_logging_format = sbp_logging_format;
-            refresh_loggingbar(&self.client_sender, self.shared_state.clone());
+            refresh_loggingbar(&self.client_sender, &self.shared_state);
         }
 
         if let Some(sbp_logger) = &mut self.sbp_logger {
@@ -244,7 +244,7 @@ impl MainTab {
             .set_sbp_logging_stats_state(SbpLoggingStatsState {
                 sbp_log_filepath: None,
             });
-        refresh_loggingbar(&self.client_sender, self.shared_state.clone());
+        refresh_loggingbar(&self.client_sender, &self.shared_state);
     }
 }
 

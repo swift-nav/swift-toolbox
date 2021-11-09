@@ -34,7 +34,7 @@ pub fn send_conn_state(app_state: ConnectionState, client_sender: &BoxedClientSe
 
 pub fn refresh_connection_frontend(
     client_sender: &BoxedClientSender,
-    shared_state: SharedState,
+    shared_state: &SharedState,
 ) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
@@ -156,7 +156,7 @@ pub fn serialize_capnproto_builder(builder: Builder<HeapAllocator>) -> Vec<u8> {
     msg_bytes
 }
 
-pub fn refresh_loggingbar(client_sender: &BoxedClientSender, shared_state: SharedState) {
+pub fn refresh_loggingbar(client_sender: &BoxedClientSender, shared_state: &SharedState) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 

@@ -32,10 +32,7 @@ pub fn send_conn_state(app_state: ConnectionState, client_sender: &BoxedClientSe
     client_sender.send_data(serialize_capnproto_builder(builder));
 }
 
-pub fn refresh_connection_frontend(
-    client_sender: &BoxedClientSender,
-    shared_state: &SharedState,
-) {
+pub fn refresh_connection_frontend(client_sender: &BoxedClientSender, shared_state: &SharedState) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 

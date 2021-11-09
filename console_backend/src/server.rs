@@ -129,8 +129,8 @@ impl Server {
         let conn_manager = ConnectionManager::new(client_send.clone(), shared_state.clone());
         // Handle CLI Opts.
         handle_cli(opt, &conn_manager, shared_state.clone());
-        refresh_connection_frontend(&mut client_send.clone(), &shared_state);
-        refresh_loggingbar(&mut client_send.clone(), &shared_state);
+        refresh_connection_frontend(&client_send, &shared_state);
+        refresh_loggingbar(&client_send, &shared_state);
         server_recv_thread(conn_manager, client_send, server_recv, shared_state);
         Ok(server_endpoint)
     }

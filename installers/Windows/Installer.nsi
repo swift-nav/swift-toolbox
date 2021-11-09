@@ -80,8 +80,8 @@ Section
   File /r "..\..\${installer_dir}\*"
   WriteRegStr SHCTX "Software\${app_name}" "" $InstDir
   WriteUninstaller "$InstDir\uninstall.exe"
-  CreateShortCut "$DESKTOP\${app_name}.lnk" "$InstDir\Scripts\${app_executable}"
-  CreateShortCut "$SMPROGRAMS\${app_name}.lnk" "$InstDir\Scripts\${app_executable}"
+  CreateShortCut "$DESKTOP\${app_name}.lnk" "$InstDir\${app_executable}"
+  CreateShortCut "$SMPROGRAMS\${app_name}.lnk" "$InstDir\${app_executable}"
   WriteRegStr SHCTX "${UNINST_KEY}" "DisplayName" "${app_name}"
   WriteRegStr SHCTX "${UNINST_KEY}" "Publisher" "${company_name}"
   WriteRegStr SHCTX "${UNINST_KEY}" "DisplayIcon" "$InstDir\uninstall.exe"
@@ -105,5 +105,5 @@ Section "Uninstall"
 SectionEnd
 
 Function LaunchAsNonAdmin
-  Exec '"$WINDIR\explorer.exe" "$InstDir\Scripts\${app_executable}"'
+  Exec '"$WINDIR\explorer.exe" "$InstDir\${app_executable}"'
 FunctionEnd

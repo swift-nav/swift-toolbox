@@ -505,7 +505,7 @@ rm ./py39-dist/pythonw.exe
 '''
 
 [tasks.compress-dist]
-env = { ARCHIVE_NAME = "console_pp" }
+env = { ARCHIVE_NAME = "swift-toolbox" }
 script_runner = "@duckscript"
 script = '''
 output = exec --fail-on-error date +%Y-%m-%d

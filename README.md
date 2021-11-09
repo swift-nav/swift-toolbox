@@ -157,7 +157,7 @@ To this end the prototype attempts to impose these constraints:
 + Minimal dependencies in Python: only Qt (PySide2) and Capnproto (pycapnp)
 + All other necessary external libraries should be include via Rust libraries
 
-[ui-javascript]: https://github.com/swift-nav/console_pp/blob/main/src/main/resources/base/view.qml#L57
+[ui-javascript]: https://github.com/swift-nav/swift-toolbox/blob/main/src/main/resources/base/view.qml#L57
 
 ### QML - a path to mobile
 

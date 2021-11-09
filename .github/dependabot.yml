@@ -1,0 +1,43 @@
+version: 2
+updates:
+- package-ecosystem: cargo
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "13:00"
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: redis
+    versions:
+    - ">= 0.18.a, < 0.19"
+  - dependency-name: redis
+    versions:
+    - ">= 0.19.a, < 0.20"
+  - dependency-name: redis
+    versions:
+    - ">= 0.20.a, < 0.21"
+  - dependency-name: tokio
+    versions:
+    - ">= 0.3.a, < 0.4"
+  - dependency-name: uuid
+    versions:
+    - ">= 0.8.a, < 0.9"
+  - dependency-name: vergen
+    versions:
+    - ">= 4.a, < 5"
+  - dependency-name: vergen
+    versions:
+    - ">= 5.a, < 6"
+  - dependency-name: regex
+    versions:
+    - 1.4.4
+  - dependency-name: serde
+    versions:
+    - 1.0.124
+  - dependency-name: once_cell
+    versions:
+    - 1.7.0
+    - 1.7.1
+  - dependency-name: serde_json
+    versions:
+    - 1.0.63

@@ -5,7 +5,7 @@ readme = "README.md"
 classifiers = []
 requires-python = ">=3.8"
 dynamic = ['version', 'description']
-dependencies = ["PySide2 ~= 5.15.2", "pycapnp ~= 1.1.0"]
+dependencies = ["PySide6 ~= 6.2.1", "pycapnp ~= 1.1.0"]
 
 [project.optional-dependencies]
 test = [
@@ -16,7 +16,7 @@ test = [
   "pytest ~= 6.2.4",
   "setuptools-rust ~= 0.12.1",
   "psutil ~= 5.8.0",
-  "qt5-applications ~= 5.15.2",
+  "qt6-applications ~= 6.1",
   "py2many >=0.3",
   "types-requests ~= 2.25.0",
 ]

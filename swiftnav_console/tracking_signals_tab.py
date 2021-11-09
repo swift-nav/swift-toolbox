@@ -3,8 +3,8 @@
 
 from typing import Dict, List, Any
 
-from PySide2.QtCore import Property, QObject, Signal, Slot
-from PySide2.QtCharts import QtCharts
+from PySide6.QtCore import Property, QObject, Signal, Slot
+from PySide6 import QtCharts
 
 from .constants import Keys, QTKeys
 

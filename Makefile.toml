@@ -7,7 +7,7 @@ if eq ${os} windows
   set_env STANDALONE_PY_URL "${STANDALONE_PY_BASE_URL}/cpython-3.9.7-x86_64-pc-windows-msvc-shared-pgo-20211017T1616.tar.zst"
   set_env PYTHON "${WORKSPACE}\\py39\\python.exe"
   set_env DIST_PYTHON "${WORKSPACE}\\py39-dist\\python"
-  set_env PYSIDE2_RCC "${WORKSPACE}\\py39\\Lib\\site-packages\\PySide2\\rcc.exe"
+  set_env PYSIDE_RCC "${WORKSPACE}\\py39\\Lib\\site-packages\\PySide6\\rcc.exe"
   set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-win_amd64.whl
   set_env BUILD_TRIPLET "x86_64-pc-windows-msvc"
   set_env PYO3_CONFIG_FILE "${WORKSPACE}\\standalone-py\\pyo3_config.txt"
@@ -15,7 +15,7 @@ elseif eq ${os} linux
   set_env STANDALONE_PY_URL "${STANDALONE_PY_BASE_URL}/cpython-3.9.7-x86_64-unknown-linux-gnu-lto-20211017T1616.tar.zst"
   set_env PYTHON "${WORKSPACE}/py39/bin/python3"
   set_env DIST_PYTHON "${WORKSPACE}/py39-dist/bin/python3"
-  set_env PYSIDE2_RCC "${WORKSPACE}/py39/bin/pyside2-rcc"
+  set_env PYSIDE_RCC "${WORKSPACE}/py39/bin/pyside6-rcc"
   set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-linux_x86_64.whl
   set_env PYO3_CONFIG_FILE "${WORKSPACE}/standalone-py/pyo3_config.txt"
   output = exec --fail-on-error gcc -dumpmachine
@@ -25,7 +25,7 @@ else
   set_env STANDALONE_PY_URL "${STANDALONE_PY_BASE_URL}/cpython-3.9.7-x86_64-apple-darwin-lto-20211017T1616.tar.zst"
   set_env PYTHON "${WORKSPACE}/py39/bin/python3"
   set_env DIST_PYTHON "${WORKSPACE}/py39-dist/bin/python3"
-  set_env PYSIDE2_RCC "${WORKSPACE}/py39/bin/pyside2-rcc"
+  set_env PYSIDE_RCC "${WORKSPACE}/py39/bin/pyside6-rcc"
   set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-macosx_10_15_x86_64.whl
   set_env PYO3_CONFIG_FILE "${WORKSPACE}/standalone-py/pyo3_config.txt"
   output = exec --fail-on-error gcc -dumpmachine
@@ -111,7 +111,7 @@ exec --fail-on-error ${python} -m py2many --rust=1 /tmp/piksi_tools_constants.py
 '''
 
 [tasks.generate-resources]
-command = "${PYSIDE2_RCC}"
+command = "${PYSIDE_RCC}"
 args = [
   "resources/console_resources.qrc",
   "-o",
@@ -373,7 +373,7 @@ cwd = "py39-dist"
 script_runner = "@duckscript"
 script = '''
 py_folders = array test tests examples __pycache__ demos turtledemo translations idlelib lib/tcl8 lib/tcl8.6 lib/tk8.6 shiboken2/docs ensurepip lib2to3 tkinter unittest include
-qt_folders = array plugins/geoservices plugins/virtualkeyboard plugins/sqldrivers lib/Tix8.4.3 tcl/tix8.4.3 Qt/resources PySide2/resources
+qt_folders = array plugins/geoservices plugins/virtualkeyboard plugins/sqldrivers lib/Tix8.4.3 tcl/tix8.4.3 Qt/resources PySide6/resources
 qml_folders = array qml/QtWeb* qml/QtBluetooth* qml/QtNfc* qml/QtGamepad qml/QtTest qml/QtQuick3D qml/Qt3D qml/QtSensors qml/QtLocation qml/QtPositioning
 all_folders = array_concat ${py_folders} ${qt_folders} ${qml_folders}
 for name in ${all_folders}
@@ -398,7 +398,7 @@ for ext in ${file_exts}
     end
 end
 
-libs = array QtSensors QtLocation Qt5Location QtPositioning Qt3D Qt53D Qt5Nfc Qt5Web QtWeb Qt5Pdf Qt5Designer Qt5DesignerComponents Qt5VirtualKeyboard Qt5Bluetooth Qt5Quick3D
+libs = array QtSensors QtLocation Qt6Location QtPositioning Qt3D Qt63D Qt6Nfc Qt6Web QtWeb Qt6Pdf Qt6Designer Qt6DesignerComponents Qt6VirtualKeyboard Qt6Bluetooth Qt6Quick3D
 for lib in ${libs}
     files = glob_array ./**/*${lib}*
     for file in ${files}
@@ -421,7 +421,7 @@ if eq ${os} windows
             rm ${file}
         end
     end
-    qtbins = glob_array ./Lib/site-packages/PySide2/*.exe
+    qtbins = glob_array ./Lib/site-packages/PySide6/*.exe
     for bin in ${qtbins}
         rm ${bin}
     end
@@ -430,7 +430,7 @@ else
 
     bins = array rcc uic designer
     for bin in ${bins}
-        files = glob_array ./**/PySide2/${bin}
+        files = glob_array ./**/PySide6/${bin}
         for bin in ${files}
             rm ${bin}
         end
@@ -543,7 +543,7 @@ script = '''
 dependencies = ["set-qml-files", "set-qml-app"]
 script_runner = "@shell"
 script = '''
-${QT_APP}/Qt/bin/qmllint -I ${QT_APP}/../PySide2/Qt/qml/ -I resources/ ${QML_FILES}
+${QT_APP}/Qt/bin/qmllint -I ${QT_APP}/../PySide6/Qt/qml/ -I resources/ ${QML_FILES}
 '''
 
 [tasks.qml-lint.windows]
@@ -551,7 +551,7 @@ dependencies = ["set-qml-files", "set-qml-app"]
 script_runner = "powershell"
 script_extension = "ps1"
 script = '''
-& ${env:QT_APP}\Qt\bin\qmllint -I ${env:QT_APP}\..\PySide2\Qt\qml -I resources $(-split ${env:QML_FILES})
+& ${env:QT_APP}\Qt\bin\qmllint -I ${env:QT_APP}\..\PySide6\Qt\qml -I resources $(-split ${env:QML_FILES})
 '''
 
 [tasks.qml-format-check]

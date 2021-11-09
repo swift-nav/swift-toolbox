@@ -155,14 +155,14 @@ impl<'a> Fileio<'a> {
 
     /// Deletes `filename` on the remote device (if it exists) and writes the contents of `data` to the file.
     /// This operation is NOT atomic. If the write fails and `filename` existed, it is gone forever.
-    /// For more context see: https://github.com/swift-nav/console_pp/pull/72#discussion_r654751414
+    /// For more context see: https://github.com/swift-nav/swift-toolbox/pull/72#discussion_r654751414
     pub fn overwrite(&mut self, filename: String, data: impl Read) -> Result<()> {
         self.overwrite_with_progress(filename, data, |_| ())
     }
 
     /// Deletes `filename` on the remote device (if it exists) and writes the contents of `data` to the file.
     /// This operation is NOT atomic. If the write fails and `filename` existed, it is gone forever.
-    /// For more context see: https://github.com/swift-nav/console_pp/pull/72#discussion_r654751414
+    /// For more context see: https://github.com/swift-nav/swift-toolbox/pull/72#discussion_r654751414
     pub fn overwrite_with_progress<'b, F>(
         &mut self,
         filename: String,

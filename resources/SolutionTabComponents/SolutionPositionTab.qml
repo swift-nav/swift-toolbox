@@ -1,7 +1,6 @@
 import "../Constants"
 import "../SolutionPlotCommon/SolutionPlotLoop.js" as SolutionPlotLoop
-import QtCharts 2.15
-import QtGraphicalEffects 1.15
+import QtCharts 2.3
 import QtQuick 2.15
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.15
@@ -80,12 +79,13 @@ Item {
                         source: Constants.icons.pauseButtonUrl
                         visible: false
                     }
-
+/*
                     ColorOverlay {
                         anchors.fill: solutionPauseImage
                         source: solutionPauseImage
                         color: !solutionPauseButton.checked ? Constants.materialGrey : Constants.swiftOrange
                     }
+*/
 
                 }
 
@@ -109,12 +109,13 @@ Item {
                         visible: false
                     }
 
+/*
                     ColorOverlay {
                         anchors.fill: solutionClearImage
                         source: solutionClearImage
                         color: !solutionClearButton.checked ? Constants.materialGrey : Constants.swiftOrange
                     }
-
+*/
                 }
 
                 Button {
@@ -146,12 +147,13 @@ Item {
                         source: Constants.icons.zoomAllButtonUrl
                         visible: false
                     }
-
+/*
                     ColorOverlay {
                         anchors.fill: solutionZoomAllImage
                         source: solutionZoomAllImage
                         color: !solutionZoomAllButton.checked ? Constants.materialGrey : Constants.swiftOrange
                     }
+*/
 
                 }
 
@@ -184,13 +186,13 @@ Item {
                         source: Constants.icons.centerOnButtonUrl
                         visible: false
                     }
-
+/*
                     ColorOverlay {
                         anchors.fill: centerButtonImage
                         source: centerButtonImage
                         color: !solutionCenterButton.checked ? Constants.materialGrey : Constants.swiftOrange
                     }
-
+*/
                 }
 
                 Label {

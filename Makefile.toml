@@ -373,7 +373,7 @@ cwd = "py310-dist"
 script_runner = "@duckscript"
 script = '''
 py_folders = array test tests examples __pycache__ demos turtledemo translations idlelib lib/tcl8 lib/tcl8.6 lib/tk8.6 shiboken2/docs ensurepip lib2to3 tkinter unittest include
-qt_folders = array plugins/geoservices plugins/virtualkeyboard plugins/sqldrivers lib/Tix8.4.3 tcl/tix8.4.3 Qt/resources PySide2/resources
+qt_folders = array plugins/geoservices plugins/virtualkeyboard plugins/sqldrivers lib/Tix8.4.3 tcl/tix8.4.3 Qt/resources PySide6/resources
 qml_folders = array qml/QtWeb* qml/QtBluetooth* qml/QtNfc* qml/QtGamepad qml/QtTest qml/QtQuick3D qml/Qt3D qml/QtSensors qml/QtLocation qml/QtPositioning
 all_folders = array_concat ${py_folders} ${qt_folders} ${qml_folders}
 for name in ${all_folders}
@@ -398,7 +398,7 @@ for ext in ${file_exts}
     end
 end
 
-libs = array QtSensors QtLocation Qt5Location QtPositioning Qt3D Qt53D Qt5Nfc Qt5Web QtWeb Qt5Pdf Qt5Designer Qt5DesignerComponents Qt5VirtualKeyboard Qt5Bluetooth Qt5Quick3D
+libs = array QtSensors QtLocation Qt6Location QtPositioning Qt3D Qt63D Qt6Nfc Qt6Web QtWeb Qt6Pdf Qt6Designer Qt6DesignerComponents Qt6VirtualKeyboard Qt6Bluetooth Qt6Quick3D
 for lib in ${libs}
     files = glob_array ./**/*${lib}*
     for file in ${files}
@@ -421,7 +421,7 @@ if eq ${os} windows
             rm ${file}
         end
     end
-    qtbins = glob_array ./Lib/site-packages/PySide2/*.exe
+    qtbins = glob_array ./Lib/site-packages/PySide6/*.exe
     for bin in ${qtbins}
         rm ${bin}
     end
@@ -430,7 +430,7 @@ else
 
     bins = array rcc uic designer
     for bin in ${bins}
-        files = glob_array ./**/PySide2/${bin}
+        files = glob_array ./**/PySide6/${bin}
         for bin in ${files}
             rm ${bin}
         end
@@ -505,7 +505,7 @@ rm ./py310-dist/pythonw.exe
 '''
 
 [tasks.compress-dist]
-env = { ARCHIVE_NAME = "console_pp" }
+env = { ARCHIVE_NAME = "swift-toolbox" }
 script_runner = "@duckscript"
 script = '''
 output = exec --fail-on-error date +%Y-%m-%d
@@ -543,7 +543,7 @@ script = '''
 dependencies = ["set-qml-files", "set-qml-app"]
 script_runner = "@shell"
 script = '''
-${QT_APP}/Qt/bin/qmllint -I ${QT_APP}/../PySide2/Qt/qml/ -I resources/ ${QML_FILES}
+${QT_APP}/Qt/bin/qmllint -I ${QT_APP}/../PySide6/Qt/qml/ -I resources/ ${QML_FILES}
 '''
 
 [tasks.qml-lint.windows]
@@ -551,7 +551,7 @@ dependencies = ["set-qml-files", "set-qml-app"]
 script_runner = "powershell"
 script_extension = "ps1"
 script = '''
-& ${env:QT_APP}\Qt\bin\qmllint -I ${env:QT_APP}\..\PySide2\Qt\qml -I resources $(-split ${env:QML_FILES})
+& ${env:QT_APP}\Qt\bin\qmllint -I ${env:QT_APP}\..\PySide6\Qt\qml -I resources $(-split ${env:QML_FILES})
 '''
 
 [tasks.qml-format-check]

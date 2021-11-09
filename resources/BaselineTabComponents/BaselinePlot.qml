@@ -1,7 +1,7 @@
 import "../Constants"
 import "../SolutionPlotCommon/SolutionPlotLoop.js" as SolutionPlotLoop
-import QtCharts 2.15
-import QtGraphicalEffects 1.15
+import QtCharts 2.3
+//import QtGraphicalEffects 1.15
 import QtQuick 2.15
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.15
@@ -77,13 +77,13 @@ Item {
                         source: Constants.icons.pauseButtonUrl
                         visible: false
                     }
-
+/*
                     ColorOverlay {
                         anchors.fill: baselinePauseImage
                         source: baselinePauseImage
                         color: !baselinePauseButton.checked ? Constants.materialGrey : Constants.swiftOrange
                     }
-
+*/
                 }
 
                 Button {
@@ -105,13 +105,13 @@ Item {
                         source: Constants.icons.clearButtonUrl
                         visible: false
                     }
-
+/*
                     ColorOverlay {
                         anchors.fill: baselineClearImage
                         source: baselineClearImage
                         color: !baselineClearButton.checked ? Constants.materialGrey : Constants.swiftOrange
                     }
-
+*/
                 }
 
                 Button {
@@ -143,13 +143,13 @@ Item {
                         source: Constants.icons.zoomAllButtonUrl
                         visible: false
                     }
-
+/*
                     ColorOverlay {
                         anchors.fill: baselineZoomAllImage
                         source: baselineZoomAllImage
                         color: !baselineZoomAllButton.checked ? Constants.materialGrey : Constants.swiftOrange
                     }
-
+*/
                 }
 
                 Button {
@@ -181,13 +181,13 @@ Item {
                         source: Constants.icons.centerOnButtonUrl
                         visible: false
                     }
-
+/*
                     ColorOverlay {
                         anchors.fill: centerButtonImage
                         source: centerButtonImage
                         color: !baselineCenterButton.checked ? Constants.materialGrey : Constants.swiftOrange
                     }
-
+*/
                 }
 
                 Button {

@@ -1,10 +1,10 @@
 import "Constants"
-import QtCharts 2.2
-import QtGraphicalEffects 1.15
+import QtCharts 2.3
+//import QtGraphicalEffects 1.15
 import QtQuick 2.5
 import QtQuick.Controls 2.2
-import QtQuick.Dialogs 1.0
 import QtQuick.Layouts 1.15
+import Qt.labs.platform 1.1 as QtLabsPlatform
 import SwiftConsole 1.0
 
 Rectangle {
@@ -158,27 +158,27 @@ Rectangle {
                         source: Constants.loggingBar.folderButtonPath
                         antialiasing: true
                     }
-
+/*
                     ColorOverlay {
                         anchors.fill: loggingBarFolder
                         source: loggingBarFolder
                         color: Constants.materialGrey
                         antialiasing: true
                     }
-
+*/
                 }
 
             }
 
         }
 
-        FileDialog {
+        QtLabsPlatform.FileDialog {
             id: fileDialog
 
             visible: false
             title: "Please choose a folder."
             folder: shortcuts.home
-            selectFolder: true
+//            selectFolder: true
             onAccepted: {
                 var filepath = Utils.fileUrlToString(fileDialog.folder);
                 folderPathBar.editText = filepath;

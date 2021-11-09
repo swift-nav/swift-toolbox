@@ -1,4 +1,4 @@
-# Console++ Prototype
+# Swift Toolbox 🧰
 
 ## Setup
 
@@ -75,6 +75,17 @@ cargo make create-dist
 cargo make frontend-cpu-bench
 ```
 
+## QML Debugging
+
+In order to enable QML debugging, add this block to the main.py file.
+QML debugging does not entirely work currently for this project and
+still needs to be flushed out. See https://swift-nav.atlassian.net/browse/CPP-400
+```
+from PySide2.QtQml import QQmlDebuggingEnabler
+
+sys.argv.append("-qmljsdebugger=port:10002,block")
+debug = QQmlDebuggingEnabler()  # pylint: disable=unused-variable
+```
 ## Contributing
 
 After making changes, run to tasks to ensure the code is ready for submission
@@ -146,7 +157,7 @@ To this end the prototype attempts to impose these constraints:
 + Minimal dependencies in Python: only Qt (PySide2) and Capnproto (pycapnp)
 + All other necessary external libraries should be include via Rust libraries
 
-[ui-javascript]: https://github.com/swift-nav/console_pp/blob/main/src/main/resources/base/view.qml#L57
+[ui-javascript]: https://github.com/swift-nav/swift-toolbox/blob/main/src/main/resources/base/view.qml#L57
 
 ### QML - a path to mobile
 

@@ -4,27 +4,30 @@ env_scripts = [
 # set os specific env vars
 os = os_family
 if eq ${os} windows
-  set_env STANDALONE_PY_URL "${STANDALONE_PY_BASE_URL}/cpython-3.9.6-x86_64-pc-windows-msvc-shared-pgo-20210724T1424.tar.zst"
+  set_env STANDALONE_PY_URL "${STANDALONE_PY_BASE_URL}/cpython-3.9.7-x86_64-pc-windows-msvc-shared-pgo-20211017T1616.tar.zst"
   set_env PYTHON "${WORKSPACE}\\py39\\python.exe"
   set_env DIST_PYTHON "${WORKSPACE}\\py39-dist\\python"
   set_env PYSIDE2_RCC "${WORKSPACE}\\py39\\Lib\\site-packages\\PySide2\\rcc.exe"
   set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-win_amd64.whl
   set_env BUILD_TRIPLET "x86_64-pc-windows-msvc"
+  set_env PYO3_CONFIG_FILE "${WORKSPACE}\\standalone-py\\pyo3_config.txt"
 elseif eq ${os} linux
-  set_env STANDALONE_PY_URL "${STANDALONE_PY_BASE_URL}/cpython-3.9.6-x86_64-unknown-linux-gnu-lto-20210724T1424.tar.zst"
+  set_env STANDALONE_PY_URL "${STANDALONE_PY_BASE_URL}/cpython-3.9.7-x86_64-unknown-linux-gnu-lto-20211017T1616.tar.zst"
   set_env PYTHON "${WORKSPACE}/py39/bin/python3"
   set_env DIST_PYTHON "${WORKSPACE}/py39-dist/bin/python3"
   set_env PYSIDE2_RCC "${WORKSPACE}/py39/bin/pyside2-rcc"
   set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-linux_x86_64.whl
+  set_env PYO3_CONFIG_FILE "${WORKSPACE}/standalone-py/pyo3_config.txt"
   output = exec --fail-on-error gcc -dumpmachine
   triplet = trim ${output.stdout}
   set_env BUILD_TRIPLET ${triplet}
 else
-  set_env STANDALONE_PY_URL "${STANDALONE_PY_BASE_URL}/cpython-3.9.6-x86_64-apple-darwin-lto-20210724T1424.tar.zst"
+  set_env STANDALONE_PY_URL "${STANDALONE_PY_BASE_URL}/cpython-3.9.7-x86_64-apple-darwin-lto-20211017T1616.tar.zst"
   set_env PYTHON "${WORKSPACE}/py39/bin/python3"
   set_env DIST_PYTHON "${WORKSPACE}/py39-dist/bin/python3"
   set_env PYSIDE2_RCC "${WORKSPACE}/py39/bin/pyside2-rcc"
   set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-macosx_10_15_x86_64.whl
+  set_env PYO3_CONFIG_FILE "${WORKSPACE}/standalone-py/pyo3_config.txt"
   output = exec --fail-on-error gcc -dumpmachine
   triplet = trim ${output.stdout}
   set_env BUILD_TRIPLET ${triplet}
@@ -41,7 +44,7 @@ skip_crate_env_info = true
 
 [env]
 WORKSPACE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}"
-STANDALONE_PY_BASE_URL = "https://github.com/indygreg/python-build-standalone/releases/download/20210724"
+STANDALONE_PY_BASE_URL = "https://github.com/indygreg/python-build-standalone/releases/download/20211017"
 MACOSX_DEPLOYMENT_TARGET = "10.15"
 
 [tasks.init]
@@ -244,8 +247,24 @@ script = '''
 wget -O ./get-pip.py https://bootstrap.pypa.io/get-pip.py
 '''
 
+[tasks.write-pyo3-config]
+script_runner = "@duckscript"
+cwd = "standalone-py"
+condition = { files_not_exist = ["${PYO3_CONFIG_FILE}"] }
+script = '''
+writefile pyo3_config.txt "implementation=CPython\nversion=3.9\nshared=true\nabi3=false\nlib_name=python3.9\nlib_dir=${WORKSPACE}/standalone-py/python/install/lib\nexecutable=${WORKSPACE}/standalone-py/python/install/bin/python3.9\npointer_width=64\nbuild_flags=WITH_THREAD\nsuppress_build_script_link_lines=false\n"
+'''
+
+[tasks.write-pyo3-config.windows]
+script_runner = "@duckscript"
+cwd = "standalone-py"
+condition = { files_not_exist = ["${PYO3_CONFIG_FILE}"] }
+script = '''
+writefile pyo3_config.txt "implementation=CPython\nversion=3.9\nshared=true\nabi3=false\nlib_name=python39\nlib_dir=${WORKSPACE}\\standalone-py\\python\\install\\libs\nexecutable=${WORKSPACE}\\standalone-py\\python\\install\\python.exe\npointer_width=64\nbuild_flags=WITH_THREAD\nsuppress_build_script_link_lines=false\n"
+'''
+
 [tasks.get-standalone-py]
-dependencies = ["get-get-pip"]
+dependencies = ["get-get-pip", "write-pyo3-config"]
 cwd = "standalone-py"
 condition = { files_not_exist = ["${WORKSPACE}/standalone-py/python"] }
 script_runner = "@duckscript"
@@ -288,20 +307,23 @@ exec --fail-on-error ${DIST_PYTHON} ./get-pip.py
 
 [tasks.build-console]
 command = "cargo"
-args = ["build", "--release", "--bin", "console"]
+args = ["build", "--release", "-vv", "--bin", "console"]
 
 [tasks.build-dist-install-console]
 dependencies = ["build-console"]
 script_runner = "@duckscript"
 script = '''
-cp target/release/console py39-dist/bin/console
+cp target/release/console py39-dist/console
+os = os_family
+if eq ${os} mac
+  exec --fail-on-error install_name_tool -change /install/lib/libpython3.9.dylib @executable_path/lib/libpython3.9.dylib py39-dist/console
+end
 '''
 
 [tasks.build-dist-install-console.windows]
 script = '''
-mkdir py39-dist/Scripts
-cp target/release/console.exe py39-dist/Scripts/console.exe
-cp target/release/console.pdb py39-dist/Scripts/console.pdb
+cp target/release/console.exe py39-dist/console.exe
+cp target/release/console.pdb py39-dist/console.pdb
 cp target/x86_64-pc-windows-msvc/release/console_backend.pdb py39-dist/Lib/site-packages/console_backend/console_backend.pdb
 '''
 
@@ -350,8 +372,7 @@ env = { PYTHONDONTWRITEBYTECODE = "1" }
 cwd = "py39-dist"
 script_runner = "@duckscript"
 script = '''
-
-py_folders = array test tests examples __pycache__ demos translations idlelib lib/tcl8 lib/tcl8.6 lib/tk8.6 shiboken2/docs ensurepip lib2to3 tkinter unittest include
+py_folders = array test tests examples __pycache__ demos turtledemo translations idlelib lib/tcl8 lib/tcl8.6 lib/tk8.6 shiboken2/docs ensurepip lib2to3 tkinter unittest include
 qt_folders = array plugins/geoservices plugins/virtualkeyboard plugins/sqldrivers lib/Tix8.4.3 tcl/tix8.4.3 Qt/resources PySide2/resources
 qml_folders = array qml/QtWeb* qml/QtBluetooth* qml/QtNfc* qml/QtGamepad qml/QtTest qml/QtQuick3D qml/Qt3D qml/QtSensors qml/QtLocation qml/QtPositioning
 all_folders = array_concat ${py_folders} ${qt_folders} ${qml_folders}
@@ -388,11 +409,7 @@ end
 
 os = os_family
 if eq ${os} windows
-    mv ./Scripts/console.exe .
-    mv ./Scripts/console.pdb .
     rm -r ./Scripts
-    mv ./console.exe ./Scripts/
-    mv ./console.pdb ./Scripts/
 
     rm -r ./include
     rm -r ./tcl
@@ -409,12 +426,6 @@ if eq ${os} windows
         rm ${bin}
     end
 else
-    mv ./bin/console .
-    mv ./bin/python3 .
-    rm -r ./bin
-    mv ./console ./bin/
-    mv ./python3 ./bin/
-
     rm -r ./share
 
     bins = array rcc uic designer
@@ -437,6 +448,14 @@ if eq ${os} windows
             rm ${file}
         end
         files = glob_array ./libs/${glob}
+        for file in ${files}
+            rm ${file}
+        end
+    end
+else
+    globs = array *.a
+    for glob in ${globs}
+        files = glob_array ./lib/**/${glob}
         for file in ${files}
             rm ${file}
         end
@@ -464,25 +483,29 @@ script_runner = "@duckscript"
 script = '''
 files = glob_array **/*.pdb
 for file in ${files}
-    rm ${file}
+    echo "Removing ${file}..."
+    rm -f ${file}
 end
 '''
 
 [tasks.strip-dist]
 script_runner = "@duckscript"
 script = '''
-exec --fail-on-error strip py39-dist/bin/console
+exec --fail-on-error strip ./py39-dist/console
+rm -r ./py39-dist/bin
 '''
 
 [tasks.strip-dist.windows]
 script_runner = "@duckscript"
 script = '''
 cm_run_task strip-dist-pdb
-exec --fail-on-error strip.exe py39-dist/Scripts/console.exe
+exec --fail-on-error strip.exe ./py39-dist/console.exe
+rm ./py39-dist/python.exe
+rm ./py39-dist/pythonw.exe
 '''
 
 [tasks.compress-dist]
-env = { ARCHIVE_NAME = "console_pp" }
+env = { ARCHIVE_NAME = "swift-toolbox" }
 script_runner = "@duckscript"
 script = '''
 output = exec --fail-on-error date +%Y-%m-%d
@@ -678,42 +701,42 @@ args = ["utils/bench_runner.py", "--disk_usage"]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/bin/console
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/console
 '''
 
 [tasks.frontend-cpu-bench.windows]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/Scripts/console.exe
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/console.exe
 '''
 
 [tasks.frontend-cpu-bench.mac]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/bin/console
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/console
 '''
 
 [tasks.frontend-mem-bench.linux]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/bin/console
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/console
 '''
 
 [tasks.frontend-mem-bench.windows]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/Scripts/console.exe
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/console.exe
 '''
 
 [tasks.frontend-mem-bench.mac]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/bin/console
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/console
 '''
 
 [tasks.newline-terminator]

@@ -36,7 +36,6 @@ pub fn logging_stats_thread(
             if let Some(mut new_update) = shared_state.sbp_logging_stats_state() {
                 filepath = new_update.sbp_log_filepath.take();
                 start_time = Instant::now();
-                eprintln!("{:?} {:?}", filepath, start_time);
             }
             if let Some(ref path) = filepath.clone() {
                 let file_size = std::fs::metadata(path).unwrap().len();
@@ -197,7 +196,6 @@ impl MainTab {
         self.logging_directory = self.shared_state.clone().logging_directory();
 
         if self.logging_directory != directory {
-            eprintln!("{:?} {:?}", directory, self.logging_directory);
             if let Err(e) = create_directory(directory.clone()) {
                 error!("Issue creating directory {}.", e);
                 self.shared_state

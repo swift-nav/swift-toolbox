@@ -28,7 +28,7 @@ pub type UtcDateTime = DateTime<Utc>;
 
 pub fn server_recv_thread(
     conn_manager: ConnectionManager,
-    mut client_sender: BoxedClientSender,
+    client_sender: BoxedClientSender,
     server_recv: channel::Receiver<Vec<u8>>,
     shared_state: SharedState,
 ) {
@@ -53,7 +53,7 @@ pub fn server_recv_thread(
             };
             match message {
                 m::message::SerialRefreshRequest(Ok(_)) => {
-                    refresh_connection_frontend(&mut client_sender, shared_state.clone());
+                    refresh_connection_frontend(&client_sender, shared_state.clone());
                 }
                 m::message::DisconnectRequest(Ok(_)) => {
                     conn_manager.disconnect();

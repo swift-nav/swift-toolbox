@@ -94,7 +94,7 @@ enum ConnectionManagerMsg {
 }
 
 fn conn_manager_thd(
-    mut client_sender: BoxedClientSender,
+    client_sender: BoxedClientSender,
     shared_state: SharedState,
     manager_msg: Watched<ConnectionManagerMsg>,
 ) -> JoinHandle<()> {
@@ -133,9 +133,9 @@ fn conn_manager_thd(
                             conn: conn.clone(),
                             stop_token,
                         },
-                        &mut client_sender,
+                        &client_sender,
                     );
-                    refresh_connection_frontend(&mut client_sender, shared_state.clone());
+                    refresh_connection_frontend(&client_sender, shared_state.clone());
                     pm_thd = Some(process_messages_thd(
                         messages,
                         msg_sender,
@@ -152,14 +152,14 @@ fn conn_manager_thd(
                 ConnectionManagerMsg::Disconnect => {
                     info!("Disconnecting...");
                     log::logger().flush();
-                    shared_state.set_connection(ConnectionState::Disconnected, &mut client_sender);
+                    shared_state.set_connection(ConnectionState::Disconnected, &client_sender);
                     join(&mut pm_thd);
                     info!("Disconnected successfully.");
                 }
             };
             log::logger().flush();
         }
-        shared_state.set_connection(ConnectionState::Closed, &mut client_sender);
+        shared_state.set_connection(ConnectionState::Closed, &client_sender);
         join(&mut pm_thd);
         join(&mut reconnect_thd);
     })

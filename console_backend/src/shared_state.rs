@@ -57,7 +57,7 @@ impl SharedState {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         (*shared_data).conn.watch()
     }
-    pub fn set_connection(&self, conn: ConnectionState, client_sender: &mut BoxedClientSender) {
+    pub fn set_connection(&self, conn: ConnectionState, client_sender: &BoxedClientSender) {
         {
             let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
             if let ConnectionState::Connected { stop_token, .. } = shared_data.conn.get() {

@@ -43,19 +43,19 @@ pub fn logging_stats_thread(
         if let Some(filepath_) = filepath.clone() {
             let file_size = std::fs::metadata(filepath_.clone()).unwrap().len();
             refresh_loggingbar_recording(
-                &mut client_sender.clone(),
+                &client_sender,
                 file_size,
                 start_time.elapsed().as_secs(),
                 Some(filepath_.to_string_lossy().to_string()),
             );
         } else {
-            refresh_loggingbar_recording(&mut client_sender.clone(), 0, 0, None);
+            refresh_loggingbar_recording(&client_sender, 0, 0, None);
         }
     }
 }
 
 pub fn refresh_loggingbar_recording(
-    client_sender: &mut BoxedClientSender,
+    client_sender: &BoxedClientSender,
     size: u64,
     duration: u64,
     filename: Option<String>,
@@ -206,7 +206,7 @@ impl MainTab {
                 self.shared_state.update_folder_history(directory.clone());
                 self.logging_directory = directory;
             }
-            refresh_loggingbar(&mut self.client_sender, self.shared_state.clone());
+            refresh_loggingbar(&self.client_sender, self.shared_state.clone());
         }
 
         if self.last_csv_logging != csv_logging {
@@ -217,7 +217,7 @@ impl MainTab {
                 self.init_csv_logging();
             }
             self.last_csv_logging = csv_logging;
-            refresh_loggingbar(&mut self.client_sender, self.shared_state.clone());
+            refresh_loggingbar(&self.client_sender, self.shared_state.clone());
         }
         if self.last_sbp_logging != sbp_logging
             || self.last_sbp_logging_format != sbp_logging_format
@@ -228,7 +228,7 @@ impl MainTab {
             }
             self.last_sbp_logging = sbp_logging;
             self.last_sbp_logging_format = sbp_logging_format;
-            refresh_loggingbar(&mut self.client_sender, self.shared_state.clone());
+            refresh_loggingbar(&self.client_sender, self.shared_state.clone());
         }
 
         if let Some(sbp_logger) = &mut self.sbp_logger {
@@ -244,7 +244,7 @@ impl MainTab {
             .set_sbp_logging_stats_state(SbpLoggingStatsState {
                 sbp_log_filepath: None,
             });
-        refresh_loggingbar(&mut self.client_sender, self.shared_state.clone());
+        refresh_loggingbar(&self.client_sender, self.shared_state.clone());
     }
 }
 

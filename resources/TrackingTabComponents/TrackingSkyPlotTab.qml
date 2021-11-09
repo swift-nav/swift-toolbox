@@ -1,3 +1,4 @@
+import "../BaseComponents"
 import "../Constants"
 import QtCharts 2.15
 import QtQuick 2.15
@@ -140,7 +141,7 @@ Item {
                 anchors.rightMargin: Constants.trackingSkyPlot.legendRightMargin
                 implicitHeight: lineLegendRepeater.height
                 width: lineLegendRepeater.width
-                visible: false
+                visible: showLegendCheckBox.checked
 
                 Column {
                     id: lineLegendRepeater
@@ -184,47 +185,30 @@ Item {
         }
 
         ColumnLayout {
-            Layout.fillWidth: true
-            Layout.preferredHeight: Constants.trackingSkyPlot.checkboxHeight
-            Layout.alignment: Qt.AlignBottom
-            Layout.leftMargin: Constants.trackingSkyPlot.checkboxMargins
-            Layout.rightMargin: Constants.trackingSkyPlot.checkboxMargins
+            Layout.alignment: Qt.AlignHCenter
             spacing: Constants.trackingSkyPlot.checkboxSpacing
 
             Label {
-                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignHCenter
                 text: "Enabled with SBP message MSG_SV_AZ_EL (0x0097 | 151), * indicates satellite is being tracked"
             }
 
             Row {
-                id: trackingSignalsCheckboxes
-
-                Layout.fillWidth: true
                 Layout.preferredHeight: Constants.trackingSkyPlot.checkboxHeight
-                Layout.alignment: Qt.AlignBottom
                 spacing: Constants.trackingSkyPlot.checkboxSpacing
 
-                CheckBox {
+                SmallCheckBox {
+                    id: showLegendCheckBox
                     checked: false
                     text: "Show Legend"
-                    font.family: Constants.genericTable.fontFamily
-                    font.pointSize: Constants.largePointSize
-                    height: Constants.trackingSkyPlot.checkboxHeight
-                    width: Constants.trackingSkyPlot.checkboxLegendWidth
-                    onClicked: {
-                        legend.visible = checked;
-                    }
                 }
 
-                CheckBox {
+                SmallCheckBox {
+                    id: labelsVisibleCheckBox
                     checked: false
                     text: "Show Labels"
-                    font.family: Constants.genericTable.fontFamily
-                    font.pointSize: Constants.largePointSize
-                    height: Constants.trackingSkyPlot.checkboxHeight
-                    width: Constants.trackingSkyPlot.checkboxLegendWidth
-                    onClicked: {
-                        labelsVisible = checked;
+                    onCheckedChanged: {
+                        updateTimer.restart();
                     }
                 }
 
@@ -233,15 +217,12 @@ Item {
 
                     model: Constants.trackingSkyPlot.scatterLabels
 
-                    CheckBox {
+                    SmallCheckBox {
                         checked: true
-                        text: modelData
-                        font.family: Constants.genericTable.fontFamily
-                        font.pointSize: Constants.largePointSize
-                        height: Constants.trackingSkyPlot.checkboxHeight
-                        width: Constants.trackingSkyPlot.checkboxLabelWidth
-                        onClicked: {
+                        text: modelData.name
+                        onCheckedChanged: {
                             checkVisibility[index] = checked;
+                            updateTimer.restart();
                         }
                     }
 
@@ -254,9 +235,11 @@ Item {
     }
 
     Timer {
+        id: updateTimer
         interval: Utils.hzToMilliseconds(Constants.staticTimerSlowIntervalRate)
         running: true
         repeat: true
+        triggeredOnStart: true
         onTriggered: {
             if (!trackingTab.visible)
                 return ;

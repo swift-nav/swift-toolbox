@@ -526,7 +526,7 @@ QtObject {
         readonly property int checkboxLabelWidth: 100
         readonly property int checkboxLegendWidth: 150
         readonly property int checkboxHeight: 50
-        readonly property int checkboxSpacing: 0
+        readonly property int checkboxSpacing: 5
         readonly property int checkboxMargins: 10
         readonly property int legendTopMargin: 50
         readonly property int legendRightMargin: 200

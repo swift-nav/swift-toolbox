@@ -24,6 +24,8 @@ VIAddVersionKey "ProductVersion" "${VERSION}"
 VIAddVersionKey "LegalCopyright" "(C) ${company_name}"
 VIAddVersionKey "FileDescription" "${app_name}"
 
+RequestExecutionLevel user
+
 ;--------------------------------
 ;Init
 

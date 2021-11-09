@@ -9,10 +9,10 @@ import SwiftConsole 1.0
 Item {
     id: trackingSkyPlotTab
 
+    property alias all_series: trackingSkyPlotPoints.all_series
     property var series: []
-    property bool labelsVisible: false
+    property bool labelsVisible: labelsVisibleCheckBox.checked
     property bool polarChartWidthChanging: false
-    property var checkVisibility: [true, true, true, true, true, true]
 
     TrackingSkyPlotPoints {
         id: trackingSkyPlotPoints
@@ -21,6 +21,7 @@ Item {
     ColumnLayout {
         anchors.fill: parent
         spacing: Constants.trackingSkyPlot.checkboxSpacing
+        visible: all_series.length > 0
 
         PolarChartView {
             id: trackingSkyPlotChart
@@ -152,9 +153,10 @@ Item {
                     Repeater {
                         id: lineLegendRepeaterRows
 
-                        model: Constants.trackingSkyPlot.scatterLabels
+                        model: all_series
 
                         Row {
+                            visible: modelData.visible
                             Label {
                                 id: marker
 
@@ -168,7 +170,7 @@ Item {
                             Label {
                                 id: label
 
-                                text: modelData
+                                text: modelData.name
                                 font.pointSize: Constants.smallPointSize
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
@@ -213,15 +215,13 @@ Item {
                 }
 
                 Repeater {
-                    id: trackingSignalsCheckbox
-
-                    model: Constants.trackingSkyPlot.scatterLabels
+                    model: all_series
 
                     SmallCheckBox {
                         checked: true
                         text: modelData.name
                         onCheckedChanged: {
-                            checkVisibility[index] = checked;
+                            modelData.visible = checked;
                             updateTimer.restart();
                         }
                     }
@@ -241,38 +241,34 @@ Item {
         repeat: true
         triggeredOnStart: true
         onTriggered: {
-            if (!trackingTab.visible)
-                return ;
+            if (!trackingSkyPlotTab.visible)
+                return;
 
-            tracking_sky_plot_model.fill_console_points(trackingSkyPlotPoints);
-            if (!trackingSkyPlotPoints.sats.length)
-                return ;
-
-            if (!series.length) {
-                for (var idx in Constants.trackingSkyPlot.scatterLabels) {
-                    var scatter = trackingSkyPlotChart.createSeries(ChartView.SeriesTypeScatter, Constants.trackingSkyPlot.scatterLabels[idx], axisAngular, axisRadial);
-                    scatter.color = Constants.trackingSkyPlot.colors[idx];
-                    scatter.markerSize = Constants.trackingSkyPlot.markerSize;
-                    scatter.useOpenGL = Globals.useOpenGL;
-                    series.push(scatter);
+            let labels = trackingSkyPlotPoints.labels;
+            if (all_series.length < labels.length) {
+                for (var i = all_series.length; i < labels.length; i++) {
+                    var series = trackingSkyPlotChart.createSeries(ChartView.SeriesTypeScatter, Constants.trackingSkyPlot.scatterLabels[i], axisAngular, axisRadial);
+                    series.color = Constants.trackingSkyPlot.colors[i];
+                    series.markerSize = Constants.trackingSkyPlot.markerSize;
+                    series.useOpenGL = Globals.useOpenGL;
+                    trackingSkyPlotPoints.addSeries(series);
                 }
             }
-            trackingSkyPlotPoints.fill_series(series);
+            trackingSkyPlotPoints.fill_all_series();
+
             if (polarChartWidthChanging) {
                 polarChartWidthChanging = false;
                 return ;
             }
-            let labels = trackingSkyPlotPoints.labels;
+
             for (var idx in labels) {
-                var kdx = parseInt(idx);
-                if (!checkVisibility[kdx]) {
-                    series[idx].clear();
+                if (!all_series[idx].visible) {
                     continue;
                 }
                 if (labelsVisible) {
                     for (var jdx in labels[idx]) {
-                        var pose = trackingSkyPlotChart.mapToPosition(series[idx].at(jdx), series[idx]);
-                        let qmlStr = "import QtQuick.Controls 2.15; Label {color: 'black'; text: '" + labels[idx][jdx] + "'; visible: !polarChartWidthChanging; width: 20; height: 20; x: " + pose.x + "; y: " + pose.y + ";}";
+                        var pose = trackingSkyPlotChart.mapToPosition(all_series[idx].at(jdx), all_series[idx]);
+                        let qmlStr = "import QtQuick.Controls 2.15; Label {color: 'black'; text: '" + labels[idx][jdx] + "'; visible: (!polarChartWidthChanging && labelsVisible && all_series[" + idx + "].visible); width: 20; height: 20; x: " + pose.x + "; y: " + pose.y + ";}";
                         var obj = Qt.createQmlObject(qmlStr, trackingSkyPlotChart, labels[idx][jdx]);
                         obj.destroy(Utils.hzToMilliseconds(Constants.staticTimerSlowIntervalRate));
                     }

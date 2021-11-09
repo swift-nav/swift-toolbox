@@ -1,15 +1,14 @@
 use std::{
     path::PathBuf,
+    thread::JoinHandle,
     time::{Duration, Instant},
 };
 
 use capnp::message::Builder;
 use chrono::Local;
-use crossbeam::channel::Receiver;
 use log::error;
 use sbp::Sbp;
 
-use crate::client_sender::BoxedClientSender;
 use crate::constants::{
     BASELINE_TIME_STR_FILEPATH, POS_LLH_TIME_STR_FILEPATH, SBP_FILEPATH, SBP_JSON_FILEPATH,
     VEL_TIME_STR_FILEPATH,
@@ -17,41 +16,42 @@ use crate::constants::{
 use crate::output::{CsvLogging, SbpLogger};
 use crate::shared_state::{create_directory, SharedState};
 use crate::utils::{bytes_to_human_readable, refresh_loggingbar, serialize_capnproto_builder};
+use crate::{client_sender::BoxedClientSender, shared_state::ConnectionState};
 use crate::{common_constants::SbpLogging, shared_state::SbpLoggingStatsState};
 
-const LOGGING_STATS_UPDATE_INTERVAL_SEC: u64 = 500;
+const LOGGING_STATS_UPDATE_INTERVAL: Duration = Duration::from_millis(500);
 
 pub fn logging_stats_thread(
-    receiver: Receiver<bool>,
     shared_state: SharedState,
     client_sender: BoxedClientSender,
-) {
-    let mut start_time = Instant::now();
-    let mut filepath = None;
-
-    loop {
-        if receiver
-            .recv_timeout(Duration::from_millis(LOGGING_STATS_UPDATE_INTERVAL_SEC))
-            .is_ok()
-        {
-            break;
+) -> JoinHandle<()> {
+    std::thread::spawn(move || {
+        let mut recv = shared_state.watch_connection();
+        let mut start_time = Instant::now();
+        let mut filepath = None;
+        loop {
+            if matches!(recv.get(), Err(_) | Ok(ConnectionState::Closed)) {
+                break;
+            }
+            if let Some(mut new_update) = shared_state.sbp_logging_stats_state() {
+                filepath = new_update.sbp_log_filepath.take();
+                start_time = Instant::now();
+                eprintln!("{:?} {:?}", filepath, start_time);
+            }
+            if let Some(ref path) = filepath.clone() {
+                let file_size = std::fs::metadata(path).unwrap().len();
+                refresh_loggingbar_recording(
+                    &client_sender,
+                    file_size,
+                    start_time.elapsed().as_secs(),
+                    Some(path.to_string_lossy().to_string()),
+                );
+            } else {
+                refresh_loggingbar_recording(&client_sender, 0, 0, None);
+            }
+            std::thread::sleep(LOGGING_STATS_UPDATE_INTERVAL);
         }
-        if let Some(mut new_update) = shared_state.sbp_logging_stats_state() {
-            filepath = new_update.sbp_log_filepath.take();
-            start_time = Instant::now();
-        }
-        if let Some(filepath_) = filepath.clone() {
-            let file_size = std::fs::metadata(filepath_.clone()).unwrap().len();
-            refresh_loggingbar_recording(
-                &client_sender,
-                file_size,
-                start_time.elapsed().as_secs(),
-                Some(filepath_.to_string_lossy().to_string()),
-            );
-        } else {
-            refresh_loggingbar_recording(&client_sender, 0, 0, None);
-        }
-    }
+    })
 }
 
 pub fn refresh_loggingbar_recording(
@@ -85,7 +85,6 @@ pub struct MainTab {
     last_csv_logging: CsvLogging,
     last_sbp_logging: bool,
     last_sbp_logging_format: SbpLogging,
-    sbp_logger: Option<SbpLogger>,
     client_sender: BoxedClientSender,
     shared_state: SharedState,
 }
@@ -94,10 +93,9 @@ impl MainTab {
     pub fn new(shared_state: SharedState, client_sender: BoxedClientSender) -> MainTab {
         MainTab {
             logging_directory: shared_state.logging_directory(),
-            last_csv_logging: CsvLogging::OFF,
-            last_sbp_logging: false,
-            last_sbp_logging_format: SbpLogging::SBP_JSON,
-            sbp_logger: None,
+            last_csv_logging: shared_state.csv_logging(),
+            last_sbp_logging: shared_state.sbp_logging(),
+            last_sbp_logging_format: shared_state.sbp_logging_format(),
             client_sender,
             shared_state,
         }
@@ -145,7 +143,7 @@ impl MainTab {
     pub fn init_sbp_logging(&mut self, logging: SbpLogging) {
         let local_t = Local::now();
         let mut sbp_log_filepath = None;
-        self.sbp_logger = match logging {
+        let sbp_logger = match logging {
             SbpLogging::SBP => {
                 let sbp_log_file = local_t.format(SBP_FILEPATH).to_string();
                 let sbp_log_file = self.logging_directory.join(sbp_log_file);
@@ -176,7 +174,8 @@ impl MainTab {
                 }
             }
         };
-        if self.sbp_logger.is_some() {
+        self.shared_state.set_sbp_logger(sbp_logger);
+        if self.shared_state.sbp_logger().is_some() {
             self.shared_state.set_sbp_logging(true);
         }
         self.shared_state.set_sbp_logging_format(logging);
@@ -189,7 +188,7 @@ impl MainTab {
         let sbp_logging_format;
         let directory;
         {
-            let shared_data = self.shared_state.lock().unwrap();
+            let shared_data = self.shared_state.lock();
             csv_logging = (*shared_data).logging_bar.csv_logging.clone();
             sbp_logging = (*shared_data).logging_bar.sbp_logging;
             sbp_logging_format = (*shared_data).logging_bar.sbp_logging_format.clone();
@@ -198,6 +197,7 @@ impl MainTab {
         self.logging_directory = self.shared_state.clone().logging_directory();
 
         if self.logging_directory != directory {
+            eprintln!("{:?} {:?}", directory, self.logging_directory);
             if let Err(e) = create_directory(directory.clone()) {
                 error!("Issue creating directory {}.", e);
                 self.shared_state
@@ -231,7 +231,7 @@ impl MainTab {
             refresh_loggingbar(&self.client_sender, &self.shared_state);
         }
 
-        if let Some(sbp_logger) = &mut self.sbp_logger {
+        if let Some(ref mut sbp_logger) = *self.shared_state.sbp_logger() {
             if let Err(e) = sbp_logger.serialize(msg) {
                 error!("error, {}, unable to log sbp msg, {:?}", e, msg);
             }
@@ -239,7 +239,7 @@ impl MainTab {
     }
     pub fn close_sbp(&mut self) {
         self.shared_state.set_sbp_logging(false);
-        self.sbp_logger = None;
+        self.shared_state.set_sbp_logger(None);
         self.shared_state
             .set_sbp_logging_stats_state(SbpLoggingStatsState {
                 sbp_log_filepath: None,

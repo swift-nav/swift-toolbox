@@ -16,7 +16,6 @@ use sbp::messages::settings::MsgSettingsSave;
 use sbp_settings::{Client, Setting, SettingKind, SettingValue};
 
 use crate::client_sender::BoxedClientSender;
-use crate::errors::SHARED_STATE_LOCK_MUTEX_FAILURE;
 use crate::shared_state::{SettingsTabState, SharedState};
 use crate::types::{Error, MsgSender, Result};
 use crate::utils::*;
@@ -207,14 +206,11 @@ impl<'link> SettingsTab<'link> {
 
     fn auto_survey(&self) -> Result<()> {
         let (lat, lon, alt) = {
-            let shared_data = self
-                .shared_state
-                .lock()
-                .expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+            let shared_data = self.shared_state.lock();
             (
-                (*shared_data).auto_survey_data.lat,
-                (*shared_data).auto_survey_data.lon,
-                (*shared_data).auto_survey_data.alt,
+                shared_data.auto_survey_data.lat,
+                shared_data.auto_survey_data.lon,
+                shared_data.auto_survey_data.alt,
             )
         };
 

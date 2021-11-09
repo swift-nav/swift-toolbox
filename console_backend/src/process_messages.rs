@@ -1,6 +1,5 @@
 use std::io;
 
-use crossbeam::channel::{bounded, Receiver, Sender};
 use log::{debug, error};
 use sbp::{
     link::LinkSource,
@@ -25,10 +24,10 @@ use crate::log_panel::handle_log_msg;
 use crate::types::{
     BaselineNED, Dops, GpsTime, MsgSender, ObservationMsg, PosLLH, Specan, UartState, VelNED,
 };
+use crate::update_tab;
 use crate::Tabs;
 use crate::{connection::Connection, shared_state::SharedState};
 use crate::{errors::UNABLE_TO_CLONE_UPDATE_SHARED, settings_tab};
-use crate::{main_tab, update_tab};
 
 pub use messages::{Messages, StopToken};
 
@@ -62,7 +61,6 @@ pub fn process_messages(
         .clone_update_tab_context();
     update_tab_context.set_serial_prompt(conn.is_serial());
     let (update_tab_tx, update_tab_rx) = tabs.update.lock().unwrap().clone_channel();
-    let (logging_stats_tx, logging_stats_rx): (Sender<bool>, Receiver<bool>) = bounded(1);
     crossbeam::scope(|scope| {
         scope.spawn(|_| {
             update_tab::update_tab_thread(
@@ -75,14 +73,6 @@ pub fn process_messages(
                 msg_sender.clone(),
             );
         });
-        scope.spawn(|_| {
-            main_tab::logging_stats_thread(
-                logging_stats_rx,
-                shared_state.clone(),
-                client_sender.clone(),
-            )
-        });
-
         if conn.settings_enabled() {
             scope.spawn(|_| {
                 let tab = tabs.settings.as_ref().unwrap();
@@ -100,13 +90,6 @@ pub fn process_messages(
         if let Err(err) = update_tab_tx.send(None) {
             error!("Issue stopping update tab: {}", err);
         }
-        if let Err(err) = logging_stats_tx.send(false) {
-            error!("Issue stopping logging stats thread: {}", err);
-        }
-        if let Err(e) = tabs.main.lock().unwrap().end_csv_logging() {
-            error!("Issue closing csv file, {}", e);
-        }
-        tabs.main.lock().unwrap().close_sbp();
     })
     .unwrap();
 

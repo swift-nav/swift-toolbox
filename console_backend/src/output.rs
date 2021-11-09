@@ -26,10 +26,13 @@ impl CsvLogging {
 }
 
 pub type SbpLogging = cc::SbpLogging;
+
+#[derive(Debug)]
 pub enum SbpLogger {
     Sbp(SbpEncoder<File>),
     Json(JsonEncoder<File, CompactFormatter>),
 }
+
 impl SbpLogger {
     pub fn new_sbp<P: AsRef<Path>>(filepath: P) -> Result<SbpLogger> {
         Ok(SbpLogger::Sbp(SbpEncoder::new(File::create(filepath)?)))

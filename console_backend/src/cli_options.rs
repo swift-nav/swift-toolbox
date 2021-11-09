@@ -9,7 +9,7 @@ use log::{debug, error};
 use strum::VariantNames;
 
 use crate::constants::{AVAILABLE_BAUDRATES, AVAILABLE_REFRESH_RATES};
-use crate::errors::{CONVERT_TO_STR_FAILURE, SHARED_STATE_LOCK_MUTEX_FAILURE};
+use crate::errors::CONVERT_TO_STR_FAILURE;
 use crate::log_panel::LogLevel;
 use crate::output::CsvLogging;
 use crate::shared_state::SharedState;
@@ -308,7 +308,7 @@ pub fn handle_cli(opt: CliOptions, conn_manager: &ConnectionManager, shared_stat
         LogLevel::INFO
     };
     shared_state.set_log_level(log_level);
-    let mut shared_data = shared_state.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+    let mut shared_data = shared_state.lock();
     (*shared_data).logging_bar.csv_logging = CsvLogging::from(opt.csv_log);
     (*shared_data).log_to_std.set(opt.log_stderr);
     if let Some(sbp_log) = opt.sbp_log {

@@ -9,16 +9,16 @@ from typing import List, Any, Optional
 
 import capnp  # type: ignore
 
-from PySide2.QtWidgets import QApplication  # type: ignore
+from PySide6.QtWidgets import QApplication  # type: ignore
 
-from PySide2.QtCore import QObject, QUrl, QPointF, Slot
-from PySide2.QtCharts import QtCharts  # pylint: disable=unused-import
+from PySide6.QtCore import QObject, QUrl, QPointF, Slot
+from PySide6 import QtCharts  # pylint: disable=unused-import
 
-from PySide2 import QtQml, QtCore
+from PySide6 import QtQml, QtCore
 
-from PySide2.QtGui import QFontDatabase
+from PySide6.QtGui import QFontDatabase
 
-from PySide2.QtQml import QQmlComponent, qmlRegisterType
+from PySide6.QtQml import QQmlComponent, qmlRegisterType
 
 import swiftnav_console.console_resources  # type: ignore # pylint: disable=unused-import
 
@@ -836,7 +836,7 @@ def main():
 
     capnp_path = get_capnp_path()
 
-    engine.addImportPath("PySide2")
+    engine.addImportPath("PySide6")
     engine.load(QUrl("qrc:/view.qml"))
     if not qml_object_created[0]:
         return 1
@@ -888,7 +888,7 @@ def main():
     root_context.setContextProperty("update_tab_model", update_tab_model)
     root_context.setContextProperty("data_model", data_model)
 
-    # Unfortunately it is not possible to access singletons directly using the PySide2 API.
+    # Unfortunately it is not possible to access singletons directly using the PySide6 API.
     # This approach stores the globals somwhere that can be grabbed and manipulated.
     component = QQmlComponent(engine)
     component.setData(

@@ -1,10 +1,9 @@
 import "Constants"
 import Qt.labs.platform 1.1 as LabsPlatform
-import QtCharts 2.2
+import QtCharts 2.3
 import QtQuick 2.7
-import QtQuick.Controls 1.4
-import QtQuick.Controls 2.15
-import QtQuick.Dialogs 1.3
+import QtQuick.Controls
+import QtQuick.Dialogs as QtQuick_Dialogs
 import QtQuick.Layouts 1.15
 import "SettingsTabComponents" as SettingsTabComponents
 import SwiftConsole 1.0
@@ -88,56 +87,56 @@ Item {
         }
     }
 
-    FileDialog {
+    QtQuick_Dialogs.FileDialog {
         id: importDialog
 
         defaultSuffix: "ini"
-        selectExisting: true
+//        selectExisting: true
         nameFilters: ["*.ini"]
-        folder: shortcuts.home + "/" + Constants.settingsTab.defaultImportExportRelativePathFromHome
+        currentFolder: shortcuts.home + "/" + Constants.settingsTab.defaultImportExportRelativePathFromHome
         onAccepted: {
             var filepath = Utils.fileUrlToString(importDialog.fileUrl);
             data_model.settings_import_request(filepath);
         }
     }
 
-    MessageDialog {
+    LabsPlatform.MessageDialog {
         id: resetDialog
 
         title: "Reset to Factory Defaults?"
-        icon: StandardIcon.Warning
+//        icon: StandardIcon.Warning
         text: "This will erase all settings and then reset the device.\nAre you sure you want to reset to factory defaults?"
-        standardButtons: StandardButton.RestoreDefaults | StandardButton.No
-        onReset: data_model.settings_reset_request()
+        buttons: StandardButton.RestoreDefaults | StandardButton.No
+        onResetClicked: data_model.settings_reset_request()
     }
 
-    MessageDialog {
+    LabsPlatform.MessageDialog {
         id: importSuccess
 
         title: "Successfully imported settings from file."
         text: "Settings import from file complete.  Click OK to save the settings\nto the device's persistent storage."
-        standardButtons: StandardButton.Yes | StandardButton.No
-        onYes: data_model.settings_save_request()
+        buttons: StandardButton.Yes | StandardButton.No
+        onYesClicked: data_model.settings_save_request()
     }
 
-    MessageDialog {
+    LabsPlatform.MessageDialog {
         id: autoSurveyDialog
 
         title: "Auto populate surveyed position?"
         text: autoSurveyDialogText()
-        standardButtons: StandardButton.Yes | StandardButton.No
-        onYes: data_model.auto_survey_request()
+        buttons: StandardButton.Yes | StandardButton.No
+        onYesClicked: data_model.auto_survey_request()
     }
 
     SettingsTabComponents.InsSettingsPopup {
         id: insSettingsPopup
     }
 
-    MessageDialog {
+    LabsPlatform.MessageDialog {
         id: importFailure
 
         title: "Failed to import settings from file."
-        standardButtons: StandardButton.Ok
+        buttons: StandardButton.Ok
     }
 
     RowLayout {

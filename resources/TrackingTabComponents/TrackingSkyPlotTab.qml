@@ -133,6 +133,7 @@ Item {
 
                 border.color: Constants.commonLegend.borderColor
                 border.width: Constants.commonLegend.borderWidth
+                radius: Constants.commonLegend.borderRadius
                 anchors.top: trackingSkyPlotChart.top
                 anchors.right: trackingSkyPlotChart.right
                 anchors.topMargin: Constants.trackingSkyPlot.legendTopMargin

@@ -1,7 +1,7 @@
 use std::{fs::File, thread::sleep, time::Duration};
 
 use anyhow::Context;
-use clap::Clap;
+use clap::Parser;
 use crossbeam::{channel, scope};
 use parking_lot::Mutex;
 use sbp::messages::piksi::MsgSpecan;
@@ -14,7 +14,7 @@ use console_backend::{
     types::{Result, Specan},
 };
 
-#[derive(Clap, Debug)]
+#[derive(Parser, Debug)]
 #[clap(name = "FFT Monitor Example")]
 pub struct CliFftMonitor {
     /// The TCP host to connect to.

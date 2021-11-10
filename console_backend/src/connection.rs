@@ -12,15 +12,15 @@ use std::{
 use anyhow::anyhow;
 use log::{error, info};
 
+use crate::client_sender::BoxedClientSender;
 use crate::constants::*;
 use crate::errors::*;
 use crate::main_tab::logging_stats_thread;
 use crate::process_messages::{process_messages, Messages};
-use crate::shared_state::ConnectionState;
-use crate::shared_state::SharedState;
+use crate::shared_state::{ConnectionState, SharedState};
 use crate::types::*;
+use crate::utils::{refresh_connection_frontend, refresh_loggingbar};
 use crate::watch::Watched;
-use crate::{client_sender::BoxedClientSender, utils::refresh_connection_frontend};
 
 #[derive(Debug)]
 pub struct ConnectionManager {
@@ -157,6 +157,8 @@ fn conn_manager_thd(
                 ConnectionManagerMsg::Disconnect => {
                     info!("Disconnecting...");
                     log::logger().flush();
+                    shared_state.reset_logging();
+                    refresh_loggingbar(&client_sender, &shared_state);
                     shared_state.set_connection(ConnectionState::Disconnected, &client_sender);
                     join(&mut pm_thd);
                     info!("Disconnected successfully.");

@@ -87,6 +87,16 @@ impl SharedState {
     pub fn log_level(&self) -> LogLevel {
         self.lock().log_panel.log_level.clone()
     }
+    pub fn reset_logging(&self) {
+        let mut guard = self.lock();
+        guard.logging_bar.sbp_logging = false;
+        guard.logging_bar.sbp_logging_format = SbpLogging::SBP_JSON;
+        guard.logging_bar.sbp_logger = None;
+        guard.logging_bar.csv_logging = CsvLogging::OFF;
+        guard.sbp_logging_stats_state = Some(SbpLoggingStatsState {
+            sbp_log_filepath: None,
+        });
+    }
     pub fn sbp_logging(&self) -> bool {
         self.lock().logging_bar.sbp_logging
     }

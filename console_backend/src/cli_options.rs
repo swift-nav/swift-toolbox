@@ -84,6 +84,7 @@ impl FromStr for CliSbpLogging {
 
 #[derive(Clap, Debug)]
 #[clap(name = "swift_navigation_console", about = "Swift Navigation Console.")]
+#[clap(override_usage = "swiftnav-console [FLAGS] [OPTIONS] [SUBCOMMANDS]")]
 pub struct CliOptions {
     #[clap(subcommand)]
     pub input: Option<Input>,

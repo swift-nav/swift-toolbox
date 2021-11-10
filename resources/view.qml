@@ -15,9 +15,7 @@ ApplicationWindow {
     height: Globals.height
     minimumHeight: Globals.minimumHeight
     font.pointSize: Constants.mediumPointSize
-    Component.onCompleted: {
-        visible = true;
-    }
+    visible: true
 
     MainDialogView {
         id: dialogStack

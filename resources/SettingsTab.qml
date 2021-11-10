@@ -92,7 +92,7 @@ Item {
         defaultSuffix: "ini"
 //        selectExisting: true
         nameFilters: ["*.ini"]
-        currentFolder: shortcuts.home + "/" + Constants.settingsTab.defaultImportExportRelativePathFromHome
+        currentFolder: LP.StandardPaths.standardLocations(LP.StandardPaths.HomeLocation)[0] + "/" + Constants.settingsTab.defaultImportExportRelativePathFromHome
         onAccepted: {
             var filepath = Utils.fileUrlToString(importDialog.fileUrl);
             data_model.settings_import_request(filepath);
@@ -104,7 +104,7 @@ Item {
 
         title: "Reset to Factory Defaults?"
         text: "This will erase all settings and then reset the device.\nAre you sure you want to reset to factory defaults?"
-        buttons: StandardButton.RestoreDefaults | StandardButton.No
+        buttons: LP.MessageDialog.RestoreDefaults | LP.MessageDialog.No
         onResetClicked: data_model.settings_reset_request()
     }
 
@@ -113,7 +113,7 @@ Item {
 
         title: "Successfully imported settings from file."
         text: "Settings import from file complete.  Click OK to save the settings\nto the device's persistent storage."
-        buttons: StandardButton.Yes | StandardButton.No
+        buttons: LP.MessageDialog.Yes | LP.MessageDialog.No
         onYesClicked: data_model.settings_save_request()
     }
 
@@ -122,7 +122,7 @@ Item {
 
         title: "Auto populate surveyed position?"
         text: autoSurveyDialogText()
-        buttons: StandardButton.Yes | StandardButton.No
+        buttons: LP.MessageDialog.Yes | LP.MessageDialog.No
         onYesClicked: data_model.auto_survey_request()
     }
 
@@ -134,7 +134,7 @@ Item {
         id: importFailure
 
         title: "Failed to import settings from file."
-        buttons: StandardButton.Ok
+        buttons: LP.MessageDialog.Ok
     }
 
     RowLayout {

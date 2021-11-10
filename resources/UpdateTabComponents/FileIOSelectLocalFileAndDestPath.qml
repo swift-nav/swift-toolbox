@@ -92,7 +92,7 @@ Item {
 
             visible: false
             title: "Please choose a file."
-            folder: shortcuts.home
+            folder: LP.StandardPaths.standardLocations(LP.StandardPaths.HomeLocation)[0]
 //            selectFolder: false
 //            selectMultiple: false
 //            selectExisting: true

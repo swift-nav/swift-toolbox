@@ -167,7 +167,7 @@ Rectangle {
 
             visible: false
             title: "Please choose a folder."
-            folder: shortcuts.home
+            folder: LP.StandardPaths.standardLocations(LP.StandardPaths.HomeLocation)[0]
 //            selectFolder: true
             onAccepted: {
                 var filepath = Utils.fileUrlToString(fileDialog.folder);

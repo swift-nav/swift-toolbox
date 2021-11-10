@@ -566,7 +566,7 @@ QtObject {
         readonly property string zoomAllButtonUrl: "qrc:///zoom-all.svg"
         readonly property string splashScreenPath: "qrc:///images/LogoBackground.jpg"
         readonly property string lightningBoltPath: "qrc:///images/ConnectionIcon.svg"
-        readonly property string dropIndicatorPath: "qrc:/qt-project.org/imports/QtQuick/Controls.2/Material/images/drop-indicator.png"
+        readonly property string dropIndicatorPath: "qrc:/qt-project.org/imports/QtQuick/Controls/Material/images/drop-indicator.png"
         readonly property string playPath: "qrc:///images/iconic/play.svg"
         readonly property string solidCirclePath: "qrc:///images/fontawesome/circle-solid.svg"
         readonly property string squareSolidPath: "qrc:///images/fontawesome/square-solid.svg"

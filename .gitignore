@@ -11,6 +11,8 @@ main.app/
 .DS_Store
 swiftnav_console/console_resources.py
 *.*~
+py39-dist/
+py39/
 py310-dist/
 py310/
 dist/

@@ -275,6 +275,7 @@ exec --fail-on-error tar -xvf py310.tar
 '''
 
 [tasks.setup-builder]
+env = { CMAKE_GENERATOR = "Visual Studio 16 2019", CMAKE_GENERATOR_PLATFORM = "x64" }
 dependencies = ["get-standalone-py"]
 script_runner = "@duckscript"
 script = '''
@@ -286,7 +287,7 @@ cd standalone-py/python/install
 cp . ../../../py310
 cd ../../../
 exec --fail-on-error ${PYTHON} ./get-pip.py
-exec --fail-on-error ${PYTHON} -m pip install wheel flit . ".[test]"
+exec --fail-on-error ${PYTHON} -m pip install -vv wheel flit . ".[test]"
 cm_run_task generate-resources
 '''
 

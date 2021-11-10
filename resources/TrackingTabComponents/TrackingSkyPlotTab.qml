@@ -157,6 +157,7 @@ Item {
 
                         Row {
                             visible: modelData.visible
+
                             Label {
                                 id: marker
 
@@ -201,12 +202,14 @@ Item {
 
                 SmallCheckBox {
                     id: showLegendCheckBox
+
                     checked: false
                     text: "Show Legend"
                 }
 
                 SmallCheckBox {
                     id: labelsVisibleCheckBox
+
                     checked: false
                     text: "Show Labels"
                     onCheckedChanged: {
@@ -236,13 +239,14 @@ Item {
 
     Timer {
         id: updateTimer
+
         interval: Utils.hzToMilliseconds(Constants.staticTimerSlowIntervalRate)
         running: true
         repeat: true
         triggeredOnStart: true
         onTriggered: {
             if (!trackingSkyPlotTab.visible)
-                return;
+                return ;
 
             let labels = trackingSkyPlotPoints.labels;
             if (all_series.length < labels.length) {
@@ -255,16 +259,14 @@ Item {
                 }
             }
             trackingSkyPlotPoints.fill_all_series();
-
             if (polarChartWidthChanging) {
                 polarChartWidthChanging = false;
                 return ;
             }
-
             for (var idx in labels) {
-                if (!all_series[idx].visible) {
+                if (!all_series[idx].visible)
                     continue;
-                }
+
                 if (labelsVisible) {
                     for (var jdx in labels[idx]) {
                         var pose = trackingSkyPlotChart.mapToPosition(all_series[idx].at(jdx), all_series[idx]);

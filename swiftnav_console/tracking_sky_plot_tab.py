@@ -3,7 +3,7 @@
 
 from typing import Dict, List, Any
 
-from PySide2.QtCore import Property, QObject, QPointF, Slot, Signal
+from PySide2.QtCore import Property, QObject, Slot, Signal
 from PySide2.QtCharts import QtCharts
 
 from .constants import Keys, QTKeys
@@ -22,7 +22,7 @@ class TrackingSkyPlotPoints(QObject):
     labels_changed = Signal()
     all_series_changed = Signal()
 
-    def get_labels(self) -> List[List[str]]:
+    def get_labels(self) -> List[List[str]]:  # pylint:disable=no-self-use
         return TRACKING_SKY_PLOT_TAB[Keys.LABELS]
 
     labels = Property(list, get_labels, notify=labels_changed)  # type: ignore

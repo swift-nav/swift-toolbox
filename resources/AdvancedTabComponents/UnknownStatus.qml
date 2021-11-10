@@ -10,7 +10,7 @@ Item {
         width: Constants.advancedImu.insStatusImageWidth
         height: Constants.advancedImu.insStatusImageWidth
         smooth: true
-        source: "../" + Constants.advancedImu.unknownStatusPath
+        source: Constants.advancedImu.unknownStatusPath
         antialiasing: true
     }
 

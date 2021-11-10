@@ -142,7 +142,7 @@ Item {
             ToolTip.visible: hovered
             ToolTip.text: Constants.systemMonitor.resetButtonLabel
             text: Constants.systemMonitor.resetButtonLabel
-            icon.source: "../" + Constants.icons.connectButtonPath
+            icon.source: Constants.icons.connectButtonPath
             icon.width: Constants.systemMonitor.resetButtonIconSideLength
             icon.height: Constants.systemMonitor.resetButtonIconSideLength
             display: AbstractButton.TextUnderIcon

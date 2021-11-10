@@ -27,7 +27,7 @@ sysinfo = "0.16.4"
 serialport = { version = "4.0.1", default-features = false }
 directories = "3"
 anyhow = { version = "1", features = ["backtrace"] }
-serde_yaml = "0.8.17"
+serde_yaml = "0.8.21"
 clap = "3.0.0-beta.2"
 indexmap = { version = "1.6.2", features = ["serde"] }
 serde_json = { version = "1" }

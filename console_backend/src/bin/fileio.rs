@@ -3,7 +3,7 @@ use std::{
     io::{self, Write},
 };
 
-use clap::Clap;
+use clap::Parser;
 use crossbeam::{channel, scope};
 use sbp::{link::LinkSource, SbpIterExt};
 
@@ -13,7 +13,7 @@ use console_backend::{
     types::{MsgSender, Result},
 };
 
-#[derive(Clap, Debug)]
+#[derive(Parser, Debug)]
 #[clap(about = "Fileio operations.")]
 pub enum Opts {
     /// Write a file from local source to remote destination dest.

@@ -23,7 +23,7 @@ ordered-float = "2.0"
 ndarray = "0.15.3"
 glob = "0.3.0"
 criterion = "0.3.4"
-sysinfo = "0.16.4"
+sysinfo = "0.20.3"
 serialport = { version = "4.0.1", default-features = false }
 directories = "3"
 anyhow = { version = "1", features = ["backtrace"] }

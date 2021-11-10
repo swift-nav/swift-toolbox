@@ -296,11 +296,11 @@ impl SharedState {
         self.lock().auto_survey_data.requested
     }
     pub fn set_auto_survey_result(&self, lat: f64, lon: f64, alt: f64) {
-        let mut data = self.lock();
-        data.auto_survey_data.lat = Some(lat);
-        data.auto_survey_data.lon = Some(lon);
-        data.auto_survey_data.alt = Some(alt);
-        data.auto_survey_data.requested = false;
+        let mut guard = self.lock();
+        guard.auto_survey_data.lat = Some(lat);
+        guard.auto_survey_data.lon = Some(lon);
+        guard.auto_survey_data.alt = Some(alt);
+        guard.auto_survey_data.requested = false;
     }
     pub fn log_to_std(&self) -> ArcBool {
         self.lock().log_to_std.clone()

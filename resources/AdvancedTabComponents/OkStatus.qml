@@ -14,14 +14,13 @@ Item {
         antialiasing: true
     }
 
-    Text {
+    Label {
         id: label
 
         text: "OK"
         anchors.left: okStatusImage.right
         anchors.leftMargin: Constants.fusionStatusFlags.labelMargin
         anchors.verticalCenter: okStatusImage.verticalCenter
-        font.pointSize: Constants.mediumPointSize
     }
 
 }

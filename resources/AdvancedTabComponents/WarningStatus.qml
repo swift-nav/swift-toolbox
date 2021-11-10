@@ -14,14 +14,13 @@ Item {
         antialiasing: true
     }
 
-    Text {
+    Label {
         id: label
 
         text: "WARNING"
         anchors.left: warningStatusImage.right
         anchors.leftMargin: Constants.fusionStatusFlags.labelMargin
         anchors.verticalCenter: warningStatusImage.verticalCenter
-        font.pointSize: Constants.mediumPointSize
     }
 
 }

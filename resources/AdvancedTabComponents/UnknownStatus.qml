@@ -14,14 +14,13 @@ Item {
         antialiasing: true
     }
 
-    Text {
+    Label {
         id: label
 
         text: "UNKNOWN"
         anchors.left: unknownStatusImage.right
         anchors.leftMargin: Constants.fusionStatusFlags.labelMargin
         anchors.verticalCenter: unknownStatusImage.verticalCenter
-        font.pointSize: Constants.mediumPointSize
     }
 
 }

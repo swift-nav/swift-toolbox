@@ -1,12 +1,11 @@
 import "Constants"
-import Qt.labs.platform 1.1 as LabsPlatform
-import QtCharts 2.3
-import QtQuick 2.7
+import Qt.labs.platform 1.1 as LP
+import QtQuick
 import QtQuick.Controls
-import QtQuick.Dialogs as QtQuick_Dialogs
-import QtQuick.Layouts 1.15
+import QtQuick.Dialogs
+import QtQuick.Layouts
 import "SettingsTabComponents" as SettingsTabComponents
-import SwiftConsole 1.0
+import SwiftConsole
 
 Item {
     id: settingsTab
@@ -69,14 +68,14 @@ Item {
         }
     }
 
-    LabsPlatform.FileDialog {
+    LP.FileDialog {
         id: exportDialog
 
         defaultSuffix: "ini"
         nameFilters: ["*.ini"]
-        fileMode: LabsPlatform.FileDialog.SaveFile
+        fileMode: LP.FileDialog.SaveFile
         currentFile: {
-            let text = LabsPlatform.StandardPaths.writableLocation(LabsPlatform.StandardPaths.HomeLocation);
+            let text = LP.StandardPaths.writableLocation(LP.StandardPaths.HomeLocation);
             text += "/" + Constants.settingsTab.defaultImportExportRelativePathFromHome;
             text += "/" + Constants.settingsTab.defaultExportFileName;
             return text;
@@ -87,7 +86,7 @@ Item {
         }
     }
 
-    QtQuick_Dialogs.FileDialog {
+    FileDialog {
         id: importDialog
 
         defaultSuffix: "ini"
@@ -100,17 +99,16 @@ Item {
         }
     }
 
-    LabsPlatform.MessageDialog {
+    LP.MessageDialog {
         id: resetDialog
 
         title: "Reset to Factory Defaults?"
-//        icon: StandardIcon.Warning
         text: "This will erase all settings and then reset the device.\nAre you sure you want to reset to factory defaults?"
         buttons: StandardButton.RestoreDefaults | StandardButton.No
         onResetClicked: data_model.settings_reset_request()
     }
 
-    LabsPlatform.MessageDialog {
+    LP.MessageDialog {
         id: importSuccess
 
         title: "Successfully imported settings from file."
@@ -119,7 +117,7 @@ Item {
         onYesClicked: data_model.settings_save_request()
     }
 
-    LabsPlatform.MessageDialog {
+    LP.MessageDialog {
         id: autoSurveyDialog
 
         title: "Auto populate surveyed position?"
@@ -132,7 +130,7 @@ Item {
         id: insSettingsPopup
     }
 
-    LabsPlatform.MessageDialog {
+    LP.MessageDialog {
         id: importFailure
 
         title: "Failed to import settings from file."

@@ -1,8 +1,8 @@
 // This is the source to QtQuick2's Material CheckBox with some changes to make it smaller
-import QtQuick 2.12
-import QtQuick.Controls.Material 2.12
-import QtQuick.Controls.Material.impl 2.12
-import QtQuick.Controls.impl 2.12
+import QtQuick
+import QtQuick.Controls.Material
+import QtQuick.Controls.Material.impl
+import QtQuick.Controls.impl
 import QtQuick.Templates 2.12 as T
 
 T.CheckBox {

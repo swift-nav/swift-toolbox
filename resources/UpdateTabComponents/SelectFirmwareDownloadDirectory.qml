@@ -1,9 +1,9 @@
 import "../Constants"
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.15
-import SwiftConsole 1.0
-import Qt.labs.platform 1.1 as QtLabsPlatform
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import SwiftConsole
+import Qt.labs.platform 1.1 as LP
 
 Item {
     property alias fwDirectory: directoryInput.text
@@ -85,7 +85,7 @@ Item {
 
         }
 
-        QtLabsPlatform.FileDialog {
+        LP.FileDialog {
             id: fileDialog
 
             visible: false

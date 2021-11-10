@@ -1,7 +1,7 @@
 import "Constants"
-import QtQuick 2.5
-import QtQuick.Layouts 1.15
-import SwiftConsole 1.0
+import QtQuick
+import QtQuick.Layouts
+import SwiftConsole
 
 Item {
     StackLayout {

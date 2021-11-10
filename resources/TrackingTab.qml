@@ -1,8 +1,7 @@
 import "Constants"
-import QtCharts 2.3
-import QtQuick 2.5
-import QtQuick.Controls 2.12
-import QtQuick.Layouts 1.15
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 import "TrackingTabComponents" as TrackingTabComponents
 
 Item {

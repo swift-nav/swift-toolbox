@@ -1,11 +1,9 @@
 import "Constants"
-import QtCharts 2.3
-//import QtGraphicalEffects 1.15
-import QtQuick 2.5
-import QtQuick.Controls 2.2
-import QtQuick.Layouts 1.15
-import Qt.labs.platform 1.1 as QtLabsPlatform
-import SwiftConsole 1.0
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import Qt.labs.platform 1.1 as LP
+import SwiftConsole
 
 Rectangle {
     property variant previous_folders: []
@@ -158,21 +156,13 @@ Rectangle {
                         source: Constants.loggingBar.folderButtonPath
                         antialiasing: true
                     }
-/*
-                    ColorOverlay {
-                        anchors.fill: loggingBarFolder
-                        source: loggingBarFolder
-                        color: Constants.materialGrey
-                        antialiasing: true
-                    }
-*/
                 }
 
             }
 
         }
 
-        QtLabsPlatform.FileDialog {
+        LP.FileDialog {
             id: fileDialog
 
             visible: false

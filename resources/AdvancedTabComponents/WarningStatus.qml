@@ -1,7 +1,6 @@
 import "../Constants"
-//import QtGraphicalEffects 1.15
-import QtQuick 2.5
-import QtQuick.Layouts 1.15
+import QtQuick
+import QtQuick.Controls
 
 Item {
     Image {
@@ -13,14 +12,6 @@ Item {
         smooth: true
         source: "../" + Constants.advancedImu.warningStatusPath
         antialiasing: true
-/*
-        ColorOverlay {
-            anchors.fill: parent
-            source: parent
-            color: Constants.advancedImu.warningStatusColor
-            antialiasing: true
-        }
-*/
     }
 
     Text {

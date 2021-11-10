@@ -1,6 +1,5 @@
-import QtQml 2.15
-import QtQuick 2.6
-import QtQuick.Controls.Material 2.12
+import QtQml
+import QtQuick
 pragma Singleton
 
 QtObject {

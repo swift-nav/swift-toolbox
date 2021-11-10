@@ -1,9 +1,9 @@
 import "../Constants"
-import Qt.labs.qmlmodels 1.0
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.15
-import SwiftConsole 1.0
+import Qt.labs.qmlmodels
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import SwiftConsole
 
 Item {
     property variant columnWidths: [layout.width / 3, layout.width / 3, layout.width / 3]

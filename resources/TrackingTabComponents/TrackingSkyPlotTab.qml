@@ -197,7 +197,6 @@ Item {
             }
 
             Row {
-                Layout.preferredHeight: Constants.trackingSkyPlot.checkboxHeight
                 spacing: Constants.trackingSkyPlot.checkboxSpacing
 
                 SmallCheckBox {

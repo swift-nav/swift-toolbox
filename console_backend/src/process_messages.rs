@@ -20,14 +20,16 @@ use sbp::{
 };
 
 use crate::client_sender::BoxedClientSender;
+use crate::connection::Connection;
+use crate::errors::{PROCESS_MESSAGES_FAILURE, UNABLE_TO_CLONE_UPDATE_SHARED};
 use crate::log_panel::handle_log_msg;
+use crate::settings_tab;
+use crate::shared_state::SharedState;
 use crate::types::{
     BaselineNED, Dops, GpsTime, MsgSender, ObservationMsg, PosLLH, Specan, UartState, VelNED,
 };
 use crate::update_tab;
 use crate::Tabs;
-use crate::{connection::Connection, shared_state::SharedState};
-use crate::{errors::UNABLE_TO_CLONE_UPDATE_SHARED, settings_tab};
 
 pub use messages::{Messages, StopToken};
 
@@ -91,7 +93,7 @@ pub fn process_messages(
             error!("Issue stopping update tab: {}", err);
         }
     })
-    .unwrap();
+    .expect(PROCESS_MESSAGES_FAILURE);
 
     messages.take_err()
 }

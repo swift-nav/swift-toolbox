@@ -1,7 +1,7 @@
 import "../Constants"
 import QtGraphicalEffects 1.15
 import QtQuick 2.5
-import QtQuick.Layouts 1.15
+import QtQuick.Controls 2.15
 
 Item {
     Image {
@@ -23,14 +23,13 @@ Item {
 
     }
 
-    Text {
+    Label {
         id: label
 
         text: "UNKNOWN"
         anchors.left: unknownStatusImage.right
         anchors.leftMargin: Constants.fusionStatusFlags.labelMargin
         anchors.verticalCenter: unknownStatusImage.verticalCenter
-        font.pointSize: Constants.mediumPointSize
     }
 
 }

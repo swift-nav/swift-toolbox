@@ -11,7 +11,7 @@ Item {
         width: Constants.advancedImu.insStatusImageWidth
         height: Constants.advancedImu.insStatusImageWidth
         smooth: true
-        source: "../" + Constants.advancedImu.okStatusPath
+        source: Constants.advancedImu.okStatusPath
         antialiasing: true
 
         ColorOverlay {

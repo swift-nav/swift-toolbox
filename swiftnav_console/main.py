@@ -911,7 +911,7 @@ def main():
     )
 
     server_thread.start()
-    app.exec_()
+    app.exec()
 
     endpoint_main.shutdown()
     server_thread.join()

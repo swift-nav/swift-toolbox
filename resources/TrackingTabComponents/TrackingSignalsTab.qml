@@ -31,7 +31,7 @@ Item {
 
             Layout.fillHeight: true
             Layout.fillWidth: true
-            visible: false
+            visible: all_series.length > 0
             title: Constants.trackingSignals.title
             titleFont.family: Constants.fontFamily
             titleFont.pointSize: Constants.trackingSignals.titlePointSize
@@ -102,8 +102,9 @@ Item {
                 interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
                 running: true
                 repeat: true
+                triggeredOnStart: true
                 onTriggered: {
-                    if (!trackingTab.visible)
+                    if (!trackingSignalsTab.visible)
                         return ;
 
                     if (all_series.length < num_labels) {
@@ -111,11 +112,12 @@ Item {
                             var series = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, trackingSignalsPoints.getLabel(i), trackingSignalsXAxis);
                             series.axisYRight = trackingSignalsYAxis;
                             series.width = Constants.commonChart.lineWidth;
-                            // Color and useOpenGL will be set in Python with fill_all_series call.
+                            series.useOpenGL = Globals.useOpenGL;
+                            // Color will be set in Python with fill_all_series call.
                             trackingSignalsPoints.addSeries(series);
                         }
                     }
-                    trackingSignalsPoints.fill_all_series(Constants.commonChart.lineWidth, Globals.useOpenGL);
+                    trackingSignalsPoints.fill_all_series();
                     if (all_series.length) {
                         trackingSignalsChart.visible = true;
                         trackingSignalsXAxis.min = trackingSignalsPoints.xaxis_min;

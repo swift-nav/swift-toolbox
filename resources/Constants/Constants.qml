@@ -486,6 +486,7 @@ QtObject {
         readonly property int verticalCenterOffset: -1
         readonly property color borderColor: "#7F7F7F"
         readonly property int borderWidth: 1
+        readonly property int borderRadius: 5
         readonly property int shadeHeight: 10
         readonly property color shadeColor: Qt.lighter(swiftOrange, 1.5)
         readonly property int shadeSpeed: 350
@@ -522,11 +523,7 @@ QtObject {
         readonly property int axisRadialMax: 90
         readonly property int axisRadialMin: 0
         readonly property int axisRadialTickCount: 5
-        readonly property int checkboxLabelWidth: 100
-        readonly property int checkboxLegendWidth: 150
-        readonly property int checkboxHeight: 50
-        readonly property int checkboxSpacing: 0
-        readonly property int checkboxMargins: 10
+        readonly property int checkboxSpacing: 5
         readonly property int legendTopMargin: 50
         readonly property int legendRightMargin: 200
         readonly property int directionLabelOffset: 30

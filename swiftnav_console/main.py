@@ -16,7 +16,7 @@ from PySide2.QtCharts import QtCharts  # pylint: disable=unused-import
 
 from PySide2 import QtQml, QtCore
 
-from PySide2.QtGui import QFontDatabase
+from PySide2.QtGui import QFontDatabase, QIcon
 
 from PySide2.QtQml import QQmlComponent, qmlRegisterType
 
@@ -795,6 +795,7 @@ def main():
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon(":/images/icon.ico"))
     app.setOrganizationName(ApplicationMetadata.ORGANIZATION_NAME)
     app.setOrganizationDomain(ApplicationMetadata.ORGANIZATION_DOMAIN)
     app.setApplicationName(ApplicationMetadata.APPLICATION_NAME)

@@ -4,10 +4,11 @@ name = "console"
 version = "0.1.0"
 description = "Starts the console with the correct python installation"
 edition = "2018"
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-pyo3 = { version = "0.15", features = ["auto-initialize"] }
+pyo3 = { version = "0.15", features = [
+  "auto-initialize",
+], default-features = false }
 
 [[bin]]
 name = "console"

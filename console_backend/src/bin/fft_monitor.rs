@@ -6,7 +6,7 @@ use crossbeam::{channel, scope};
 use parking_lot::Mutex;
 use sbp::messages::piksi::MsgSpecan;
 use sbp::{link::LinkSource, SbpIterExt};
-use serde_pickle::ser;
+use serde_pickle::{ser, SerOptions};
 
 use console_backend::{
     connection::Connection,
@@ -85,7 +85,7 @@ fn main() -> Result<()> {
         }
         if let Some(fft) = fftmonitor.lock().get_ffts(channel) {
             let mut file = File::create(filename)?;
-            ser::to_writer(&mut file, &fft, false)?;
+            ser::to_writer(&mut file, &fft, SerOptions::new().proto_v2())?;
         }
         println!("File written successfully.");
         done_tx.send(true).unwrap();

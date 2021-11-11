@@ -1026,9 +1026,9 @@ dependencies = [
 
 [[package]]
 name = "num-bigint"
-version = "0.3.3"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f6f7833f2cbf2360a6cfd58cd41a53aa7a90bd4c202f5b1c7dd2ed73c57b2c3"
+checksum = "f93ab6289c7b344a8a9f60f88d80aa20032336fe78da341afc91c8a2341fc75f"
 dependencies = [
  "autocfg",
  "num-integer",
@@ -1644,9 +1644,9 @@ dependencies = [
 
 [[package]]
 name = "serde-pickle"
-version = "0.6.3"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b88454094f5ba5b2149722f41e42395b39556632c3abb068540c0b04d27017a"
+checksum = "47b0d075918cbf8475cedcae8e85844f437e2a7c70d54a2f405fab29bb6b2536"
 dependencies = [
  "byteorder",
  "iter-read",

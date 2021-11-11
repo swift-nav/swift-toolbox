@@ -17,10 +17,11 @@ use indexmap::set::IndexSet;
 use indexmap::IndexMap;
 use lazy_static::lazy_static;
 use log::error;
-use parking_lot::{MappedMutexGuard, Mutex, MutexGuard};
+use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use serialport::FlowControl;
 
+use crate::client_sender::BoxedClientSender;
 use crate::common_constants::{self as cc, SbpLogging};
 use crate::connection::Connection;
 use crate::constants::{
@@ -37,7 +38,6 @@ use crate::types::ArcBool;
 use crate::update_tab::UpdateTabUpdate;
 use crate::utils::send_conn_state;
 use crate::watch::{WatchReceiver, Watched};
-use crate::{client_sender::BoxedClientSender, output::SbpLogger};
 
 pub type Error = anyhow::Error;
 pub type Result<T> = anyhow::Result<T>;
@@ -91,7 +91,6 @@ impl SharedState {
         let mut guard = self.lock();
         guard.logging_bar.sbp_logging = false;
         guard.logging_bar.sbp_logging_format = SbpLogging::SBP_JSON;
-        guard.logging_bar.sbp_logger = None;
         guard.logging_bar.csv_logging = CsvLogging::OFF;
         guard.sbp_logging_stats_state = Some(SbpLoggingStatsState {
             sbp_log_filepath: None,
@@ -108,13 +107,6 @@ impl SharedState {
     }
     pub fn set_sbp_logging_format(&self, logging: SbpLogging) {
         self.lock().logging_bar.sbp_logging_format = logging;
-    }
-    pub fn sbp_logger(&self) -> MappedMutexGuard<Option<SbpLogger>> {
-        let guard = self.lock();
-        MutexGuard::map(guard, |g| &mut g.logging_bar.sbp_logger)
-    }
-    pub fn set_sbp_logger(&self, sbp_logger: Option<SbpLogger>) {
-        self.lock().logging_bar.sbp_logger = sbp_logger;
     }
     pub fn csv_logging(&self) -> CsvLogging {
         self.lock().logging_bar.csv_logging.clone()
@@ -300,7 +292,7 @@ impl SharedState {
         self.lock().sbp_logging_stats_state = Some(update);
     }
     pub fn sbp_logging_stats_state(&self) -> Option<SbpLoggingStatsState> {
-        self.lock().sbp_logging_stats_state.take()
+        self.lock().sbp_logging_stats_state.clone()
     }
     pub fn auto_survey_requested(&self) -> bool {
         self.lock().auto_survey_data.requested
@@ -395,7 +387,7 @@ impl Default for SharedStateInner {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct SbpLoggingStatsState {
     pub sbp_log_filepath: Option<PathBuf>,
 }
@@ -413,7 +405,6 @@ pub struct AdvancedNetworkingState {
 #[derive(Debug)]
 pub struct LoggingBarState {
     pub sbp_logging: bool,
-    pub sbp_logger: Option<SbpLogger>,
     pub sbp_logging_format: SbpLogging,
     pub csv_logging: CsvLogging,
     pub logging_directory: PathBuf,
@@ -429,7 +420,6 @@ impl LoggingBarState {
         LoggingBarState {
             sbp_logging: false,
             sbp_logging_format: SbpLogging::SBP_JSON,
-            sbp_logger: None,
             csv_logging: CsvLogging::OFF,
             logging_directory,
         }

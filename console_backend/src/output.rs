@@ -1,9 +1,10 @@
+use std::fs::{File, OpenOptions};
+use std::path::Path;
+
 use sbp::json::JsonEncoder;
-use sbp::Sbp;
-use sbp::SbpEncoder;
+use sbp::{Sbp, SbpEncoder};
 use serde::Serialize;
 use serde_json::ser::CompactFormatter;
-use std::{fs::File, path::Path};
 
 use crate::common_constants as cc;
 use crate::formatters::*;
@@ -37,9 +38,20 @@ impl SbpLogger {
     pub fn new_sbp<P: AsRef<Path>>(filepath: P) -> Result<SbpLogger> {
         Ok(SbpLogger::Sbp(SbpEncoder::new(File::create(filepath)?)))
     }
+    pub fn open_sbp<P: AsRef<Path>>(filepath: P) -> Result<SbpLogger> {
+        Ok(SbpLogger::Sbp(SbpEncoder::new(
+            OpenOptions::new().append(true).open(filepath)?,
+        )))
+    }
     pub fn new_sbp_json<P: AsRef<Path>>(filepath: P) -> Result<SbpLogger> {
         Ok(SbpLogger::Json(JsonEncoder::new(
             File::create(filepath)?,
+            CompactFormatter,
+        )))
+    }
+    pub fn open_sbp_json<P: AsRef<Path>>(filepath: P) -> Result<SbpLogger> {
+        Ok(SbpLogger::Json(JsonEncoder::new(
+            OpenOptions::new().append(true).open(filepath)?,
             CompactFormatter,
         )))
     }

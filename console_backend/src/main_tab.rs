@@ -34,8 +34,10 @@ pub fn logging_stats_thread(
                 break;
             }
             if let Some(mut new_update) = shared_state.sbp_logging_stats_state() {
-                filepath = new_update.sbp_log_filepath.take();
-                start_time = Instant::now();
+                if new_update.sbp_log_filepath != filepath {
+                    filepath = new_update.sbp_log_filepath.take();
+                    start_time = Instant::now();
+                }
             }
             if let Some(ref path) = filepath.clone() {
                 let file_size = std::fs::metadata(path).unwrap().len();
@@ -81,6 +83,7 @@ pub fn refresh_loggingbar_recording(
 
 pub struct MainTab {
     logging_directory: PathBuf,
+    sbp_logger: Option<SbpLogger>,
     last_csv_logging: CsvLogging,
     last_sbp_logging: bool,
     last_sbp_logging_format: SbpLogging,
@@ -90,11 +93,22 @@ pub struct MainTab {
 
 impl MainTab {
     pub fn new(shared_state: SharedState, client_sender: BoxedClientSender) -> MainTab {
+        let sbp_logging_format = shared_state.sbp_logging_format();
+        // reopen an existing log if we disconnected
+        let sbp_logger = shared_state
+            .sbp_logging_stats_state()
+            .and_then(|s| s.sbp_log_filepath)
+            .map(|path| match sbp_logging_format {
+                SbpLogging::SBP_JSON => SbpLogger::open_sbp_json(path).ok(),
+                SbpLogging::SBP => SbpLogger::open_sbp(path).ok(),
+            })
+            .flatten();
         MainTab {
             logging_directory: shared_state.logging_directory(),
+            sbp_logger,
             last_csv_logging: shared_state.csv_logging(),
             last_sbp_logging: shared_state.sbp_logging(),
-            last_sbp_logging_format: shared_state.sbp_logging_format(),
+            last_sbp_logging_format: sbp_logging_format,
             client_sender,
             shared_state,
         }
@@ -142,7 +156,7 @@ impl MainTab {
     pub fn init_sbp_logging(&mut self, logging: SbpLogging) {
         let local_t = Local::now();
         let mut sbp_log_filepath = None;
-        let sbp_logger = match logging {
+        self.sbp_logger = match logging {
             SbpLogging::SBP => {
                 let sbp_log_file = local_t.format(SBP_FILEPATH).to_string();
                 let sbp_log_file = self.logging_directory.join(sbp_log_file);
@@ -173,8 +187,7 @@ impl MainTab {
                 }
             }
         };
-        self.shared_state.set_sbp_logger(sbp_logger);
-        if self.shared_state.sbp_logger().is_some() {
+        if self.sbp_logger.is_some() {
             self.shared_state.set_sbp_logging(true);
         }
         self.shared_state.set_sbp_logging_format(logging);
@@ -229,15 +242,15 @@ impl MainTab {
             refresh_loggingbar(&self.client_sender, &self.shared_state);
         }
 
-        if let Some(ref mut sbp_logger) = *self.shared_state.sbp_logger() {
+        if let Some(ref mut sbp_logger) = self.sbp_logger {
             if let Err(e) = sbp_logger.serialize(msg) {
                 error!("error, {}, unable to log sbp msg, {:?}", e, msg);
             }
         }
     }
     pub fn close_sbp(&mut self) {
+        self.sbp_logger = None;
         self.shared_state.set_sbp_logging(false);
-        self.shared_state.set_sbp_logger(None);
         self.shared_state
             .set_sbp_logging_stats_state(SbpLoggingStatsState {
                 sbp_log_filepath: None,

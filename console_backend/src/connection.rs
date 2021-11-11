@@ -15,7 +15,6 @@ use log::{error, info};
 use crate::client_sender::BoxedClientSender;
 use crate::constants::*;
 use crate::errors::*;
-use crate::main_tab::logging_stats_thread;
 use crate::process_messages::{process_messages, Messages};
 use crate::shared_state::{ConnectionState, SharedState};
 use crate::types::*;
@@ -106,10 +105,6 @@ fn conn_manager_thd(
     };
     let mut reconnect_thd: Option<JoinHandle<()>> = None;
     let mut pm_thd: Option<JoinHandle<()>> = None;
-    let mut logging_stats_thd: Option<JoinHandle<()>> = Some(logging_stats_thread(
-        shared_state.clone(),
-        client_sender.clone(),
-    ));
     let mut recv = manager_msg.watch();
     thread::spawn(move || {
         info!("Console started...");
@@ -169,7 +164,6 @@ fn conn_manager_thd(
         shared_state.set_connection(ConnectionState::Closed, &client_sender);
         join(&mut pm_thd);
         join(&mut reconnect_thd);
-        join(&mut logging_stats_thd);
     })
 }
 

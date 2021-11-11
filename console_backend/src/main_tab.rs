@@ -83,10 +83,10 @@ pub fn refresh_loggingbar_recording(
 
 pub struct MainTab {
     logging_directory: PathBuf,
-    sbp_logger: Option<SbpLogger>,
     last_csv_logging: CsvLogging,
     last_sbp_logging: bool,
     last_sbp_logging_format: SbpLogging,
+    sbp_logger: Option<SbpLogger>,
     client_sender: BoxedClientSender,
     shared_state: SharedState,
 }
@@ -105,10 +105,10 @@ impl MainTab {
             .flatten();
         MainTab {
             logging_directory: shared_state.logging_directory(),
-            sbp_logger,
             last_csv_logging: shared_state.csv_logging(),
             last_sbp_logging: shared_state.sbp_logging(),
             last_sbp_logging_format: sbp_logging_format,
+            sbp_logger,
             client_sender,
             shared_state,
         }
@@ -188,7 +188,8 @@ impl MainTab {
             }
         };
         if self.sbp_logger.is_some() {
-            self.shared_state.set_sbp_logging(true);
+            self.shared_state
+                .set_sbp_logging(true, self.client_sender.clone());
         }
         self.shared_state.set_sbp_logging_format(logging);
         self.shared_state
@@ -250,7 +251,8 @@ impl MainTab {
     }
     pub fn close_sbp(&mut self) {
         self.sbp_logger = None;
-        self.shared_state.set_sbp_logging(false);
+        self.shared_state
+            .set_sbp_logging(false, self.client_sender.clone());
         self.shared_state
             .set_sbp_logging_stats_state(SbpLoggingStatsState {
                 sbp_log_filepath: None,
@@ -415,10 +417,10 @@ mod tests {
         let tmp_dir = tmp_dir.path().to_path_buf();
         let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut main = MainTab::new(shared_state, client_send);
+        let mut main = MainTab::new(shared_state, client_send.clone());
         assert!(!main.last_sbp_logging);
         main.shared_state.set_sbp_logging_format(SbpLogging::SBP);
-        main.shared_state.set_sbp_logging(true);
+        main.shared_state.set_sbp_logging(true, client_send);
         main.shared_state.set_logging_directory(tmp_dir.clone());
 
         let flags = 0x01;
@@ -506,11 +508,11 @@ mod tests {
         let tmp_dir = tmp_dir.path().to_path_buf();
         let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut main = MainTab::new(shared_state, client_send);
+        let mut main = MainTab::new(shared_state, client_send.clone());
         assert!(!main.last_sbp_logging);
         main.shared_state
             .set_sbp_logging_format(SbpLogging::SBP_JSON);
-        main.shared_state.set_sbp_logging(true);
+        main.shared_state.set_sbp_logging(true, client_send);
         main.shared_state.set_logging_directory(tmp_dir.clone());
 
         let flags = 0x01;

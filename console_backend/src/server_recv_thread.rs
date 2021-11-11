@@ -105,7 +105,7 @@ pub fn server_recv_thread(
                     shared_state.set_logging_directory(PathBuf::from(directory));
                     shared_state.lock().logging_bar.csv_logging =
                         CsvLogging::from(cv_in.get_csv_logging());
-                    shared_state.set_sbp_logging(cv_in.get_sbp_logging());
+                    shared_state.set_sbp_logging(cv_in.get_sbp_logging(), client_sender.clone());
                     let sbp_logging_format = cv_in
                         .get_sbp_logging_format()
                         .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);

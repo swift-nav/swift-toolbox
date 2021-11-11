@@ -4,7 +4,7 @@ use std::{
     str::FromStr,
 };
 
-use clap::Clap;
+use clap::Parser;
 use log::{debug, error};
 use strum::VariantNames;
 
@@ -82,7 +82,7 @@ impl FromStr for CliSbpLogging {
     }
 }
 
-#[derive(Clap, Debug)]
+#[derive(Parser)]
 #[clap(name = "swift_navigation_console", about = "Swift Navigation Console.")]
 pub struct CliOptions {
     #[clap(subcommand)]
@@ -177,7 +177,7 @@ impl CliOptions {
     }
 }
 
-#[derive(Clap, Debug)]
+#[derive(Parser, Debug)]
 #[clap(about = "Input type and corresponding options.")]
 pub enum Input {
     Tcp {

@@ -11,23 +11,26 @@ if eq ${os} windows
   set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-win_amd64.whl
   set_env BUILD_TRIPLET "x86_64-pc-windows-msvc"
   set_env PYO3_CONFIG_FILE "${WORKSPACE}\\standalone-py\\pyo3_config.txt"
+  set_env CONSOLE_PYO3_CONFIG_FILE "${WORKSPACE}\\standalone-py\\pyo3_config.txt"
 elseif eq ${os} linux
-  set_env STANDALONE_PY_URL "${STANDALONE_PY_BASE_URL}/cpython-3.9.7-x86_64-unknown-linux-gnu-lto-20211017T1616.tar.zst"
+  set_env STANDALONE_PY_URL "${STANDALONE_PY_BASE_URL}/cpython-3.9.7-x86_64-unknown-linux-gnu-pgo+lto-20211017T1616.tar.zst"
   set_env PYTHON "${WORKSPACE}/py39/bin/python3"
   set_env DIST_PYTHON "${WORKSPACE}/py39-dist/bin/python3"
   set_env PYSIDE2_RCC "${WORKSPACE}/py39/bin/pyside2-rcc"
   set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-linux_x86_64.whl
   set_env PYO3_CONFIG_FILE "${WORKSPACE}/standalone-py/pyo3_config.txt"
+  set_env CONSOLE_PYO3_CONFIG_FILE "${WORKSPACE}/standalone-py/pyo3_config_console.txt"
   output = exec --fail-on-error gcc -dumpmachine
   triplet = trim ${output.stdout}
   set_env BUILD_TRIPLET ${triplet}
 else
-  set_env STANDALONE_PY_URL "${STANDALONE_PY_BASE_URL}/cpython-3.9.7-x86_64-apple-darwin-lto-20211017T1616.tar.zst"
+  set_env STANDALONE_PY_URL "${STANDALONE_PY_BASE_URL}/cpython-3.9.7-x86_64-apple-darwin-pgo+lto-20211017T1616.tar.zst"
   set_env PYTHON "${WORKSPACE}/py39/bin/python3"
   set_env DIST_PYTHON "${WORKSPACE}/py39-dist/bin/python3"
   set_env PYSIDE2_RCC "${WORKSPACE}/py39/bin/pyside2-rcc"
   set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-macosx_10_15_x86_64.whl
   set_env PYO3_CONFIG_FILE "${WORKSPACE}/standalone-py/pyo3_config.txt"
+  set_env CONSOLE_PYO3_CONFIG_FILE "${WORKSPACE}/standalone-py/pyo3_config_console.txt"
   output = exec --fail-on-error gcc -dumpmachine
   triplet = trim ${output.stdout}
   set_env BUILD_TRIPLET ${triplet}
@@ -239,7 +242,7 @@ args = ["-m", "flit", "build", "--no-setup-py"]
 [tasks.build-backend-wheel]
 cwd = "console_backend"
 command = "${PYTHON}"
-args = ["setup.py", "bdist_wheel"]
+args = ["setup.py", "-vv", "bdist_wheel"]
 
 [tasks.get-get-pip]
 script_runner = "@duckscript"
@@ -247,12 +250,24 @@ script = '''
 wget -O ./get-pip.py https://bootstrap.pypa.io/get-pip.py
 '''
 
+[tasks.write-pyo3-config-console]
+script_runner = "@duckscript"
+cwd = "standalone-py"
+condition = { files_not_exist = ["${CONSOLE_PYO3_CONFIG_FILE}"] }
+script = '''
+writefile pyo3_config_console.txt "implementation=CPython\nversion=3.9\nshared=true\nabi3=false\nlib_name=python3.9\nlib_dir=${WORKSPACE}/standalone-py/python/install/lib\nexecutable=${WORKSPACE}/standalone-py/python/install/bin/python3.9\npointer_width=64\nbuild_flags=WITH_THREAD\nsuppress_build_script_link_lines=false\nextra_build_script_line=cargo:rustc-link-lib=python3.9\nextra_build_script_line=cargo:rustc-link-search=${WORKSPACE}/standalone-py/python/install/lib\n"
+'''
+
+[tasks.write-pyo3-config-console.windows]
+script_runner = "@duckscript"
+script = ""
+
 [tasks.write-pyo3-config]
 script_runner = "@duckscript"
 cwd = "standalone-py"
 condition = { files_not_exist = ["${PYO3_CONFIG_FILE}"] }
 script = '''
-writefile pyo3_config.txt "implementation=CPython\nversion=3.9\nshared=true\nabi3=false\nlib_name=python3.9\nlib_dir=${WORKSPACE}/standalone-py/python/install/lib\nexecutable=${WORKSPACE}/standalone-py/python/install/bin/python3.9\npointer_width=64\nbuild_flags=WITH_THREAD\nsuppress_build_script_link_lines=false\n"
+writefile pyo3_config.txt "implementation=CPython\nversion=3.9\nshared=true\nabi3=false\nlib_name=python3.9\nlib_dir=${WORKSPACE}/standalone-py/python/install/lib\nexecutable=${WORKSPACE}/standalone-py/python/install/bin/python3.9\npointer_width=64\nbuild_flags=WITH_THREAD\nsuppress_build_script_link_lines=false\nextra_build_script_line=\n"
 '''
 
 [tasks.write-pyo3-config.windows]
@@ -260,7 +275,7 @@ script_runner = "@duckscript"
 cwd = "standalone-py"
 condition = { files_not_exist = ["${PYO3_CONFIG_FILE}"] }
 script = '''
-writefile pyo3_config.txt "implementation=CPython\nversion=3.9\nshared=true\nabi3=false\nlib_name=python39\nlib_dir=${WORKSPACE}\\standalone-py\\python\\install\\libs\nexecutable=${WORKSPACE}\\standalone-py\\python\\install\\python.exe\npointer_width=64\nbuild_flags=WITH_THREAD\nsuppress_build_script_link_lines=false\n"
+writefile pyo3_config.txt "implementation=CPython\nversion=3.9\nshared=true\nabi3=false\nlib_name=python39\nlib_dir=${WORKSPACE}\\standalone-py\\python\\install\\libs\nexecutable=${WORKSPACE}\\standalone-py\\python\\install\\python.exe\npointer_width=64\nbuild_flags=WITH_THREAD\nsuppress_build_script_link_lines=false\nextra_build_script_line=\n"
 '''
 
 [tasks.get-standalone-py]
@@ -305,9 +320,18 @@ cd ../../..
 exec --fail-on-error ${DIST_PYTHON} ./get-pip.py
 '''
 
-[tasks.build-console]
+[tasks.call-build-console-bin]
+private = true
 command = "cargo"
 args = ["build", "--release", "-vv", "--bin", "console"]
+
+[tasks.build-console]
+env = { PYO3_CONFIG_FILE = "${CONSOLE_PYO3_CONFIG_FILE}" }
+dependencies = ["write-pyo3-config-console"]
+run_task = "call-build-console-bin"
+
+[tasks.build-console.windows]
+dependencies = ["call-build-console-bin"]
 
 [tasks.build-dist-install-console]
 dependencies = ["build-console"]
@@ -523,6 +547,14 @@ exec --fail-on-error xz -T 0 -e -9 "${output_name}.tar"
 
 [tasks.create-dist]
 run_task = [{ name = ["build-dist", "purge-dist", "compress-dist"] }]
+
+[tasks.dist-to-installer]
+
+[tasks.dist-to-installer.windows]
+script_runner = "@shell"
+script = '''
+makensis /V4  .\installers\Windows\Installer.nsi
+'''
 
 [tasks.qml-format]
 dependencies = ["set-qml-files", "set-qml-app"]

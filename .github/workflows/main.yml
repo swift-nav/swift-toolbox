@@ -75,6 +75,8 @@ jobs:
           toolchain: stable
 
       - uses: Swatinem/rust-cache@v1
+        with:
+          key: ${{ secrets.CACHE_VERSION }}
 
       - uses: davidB/rust-cargo-make@v1
         with:
@@ -84,10 +86,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ env.PIP_CACHE_DIR }}
-          key: ${{ runner.os }}-pyproject-toml-${{ hashFiles('pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-pyproject-toml-
-            ${{ runner.os }}-
+          key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
 
       - name: Set up python builder
         shell: bash
@@ -140,6 +139,8 @@ jobs:
           components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v1
+        with:
+          key: ${{ secrets.CACHE_VERSION }}
 
       - uses: davidB/rust-cargo-make@v1
         with:
@@ -153,10 +154,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ env.PIP_CACHE_DIR }}
-          key: ${{ runner.os }}-pyproject-toml-${{ hashFiles('pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-pyproject-toml-
-            ${{ runner.os }}-
+          key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
 
       - name: Set up python builder
         shell: bash
@@ -253,6 +251,8 @@ jobs:
           components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v1
+        with:
+          key: ${{ secrets.CACHE_VERSION }}
 
       - uses: davidB/rust-cargo-make@v1
         with:
@@ -262,10 +262,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ env.PIP_CACHE_DIR }}
-          key: ${{ runner.os }}-pyproject-toml-${{ hashFiles('pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-pyproject-toml-
-            ${{ runner.os }}-
+          key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
 
       - name: Set up python builder
         shell: bash
@@ -286,6 +283,14 @@ jobs:
         run: |
           cargo make create-dist
         if: matrix.os != 'windows-2019'
+
+      - name: Create ${{ runner.os }} Installers.
+        shell: bash
+        run: |
+          cargo make dist-to-installer
+          INSTALLER_ARCHIVE=$(find installers/Windows -maxdepth 1 -iname "*.exe")
+          echo "INSTALLER_ARCHIVE=$INSTALLER_ARCHIVE" >>$GITHUB_ENV
+        if: matrix.os == 'windows-2019' && github.event_name == 'push' && contains(github.ref, 'refs/tags')
 
       - name: Pull Git LFS objects
         run: git lfs pull
@@ -316,6 +321,12 @@ jobs:
           path: |
             ${{ env.RELEASE_ARCHIVE }}
             release-archive.filename
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ runner.os }}-installer
+          path: |
+            ${{ env.INSTALLER_ARCHIVE }}
+        if: matrix.os == 'windows-2019' && github.event_name == 'push' && contains(github.ref, 'refs/tags')
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ runner.os }}-artifacts-debug

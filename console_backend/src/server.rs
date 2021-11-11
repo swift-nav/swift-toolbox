@@ -43,7 +43,7 @@ impl ServerEndpoint {
         ServerEndpoint { server_send: None }
     }
 
-    #[text_signature = "($self, bytes, /)"]
+    #[pyo3(text_signature = "($self, bytes, /)")]
     pub fn shutdown(&mut self) -> PyResult<()> {
         if let Some(server_send) = self.server_send.take() {
             drop(server_send);
@@ -55,7 +55,7 @@ impl ServerEndpoint {
         }
     }
 
-    #[text_signature = "($self, bytes, /)"]
+    #[pyo3(text_signature = "($self, bytes, /)")]
     pub fn send_message(&mut self, bytes: &PyBytes) -> PyResult<()> {
         let byte_vec: Vec<u8> = bytes.extract().unwrap();
         if let Some(server_send) = &self.server_send {
@@ -80,7 +80,7 @@ impl Server {
         }
     }
 
-    #[text_signature = "($self, /)"]
+    #[pyo3(text_signature = "($self, /)")]
     pub fn fetch_message(&mut self, py: Python) -> Option<PyObject> {
         let result = py.allow_threads(move || loop {
             if let Some(client_recv) = &self.client_recv {
@@ -109,7 +109,7 @@ impl Server {
         result.map(|result| PyBytes::new(py, &result).into())
     }
 
-    #[text_signature = "($self, /)"]
+    #[pyo3(text_signature = "($self, /)")]
     pub fn start(&mut self) -> PyResult<ServerEndpoint> {
         attach_console();
         let (client_send, client_recv) = channel::unbounded();

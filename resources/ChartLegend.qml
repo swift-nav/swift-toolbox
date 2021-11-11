@@ -15,7 +15,7 @@ Rectangle {
     property alias model: gridView.model
 
     visible: gridView.count > 0
-    radius: 5
+    radius: Constants.commonLegend.borderRadius
     height: openedHeight
     // Size to two cols if there are cells for 2+ cols.
     width: gridView.cellWidth * (gridView.count <= maxCellsPerColumn ? 1 : 2) + 1

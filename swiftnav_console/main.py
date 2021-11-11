@@ -16,7 +16,7 @@ from PySide2.QtCharts import QtCharts  # pylint: disable=unused-import
 
 from PySide2 import QtQml, QtCore
 
-from PySide2.QtGui import QFontDatabase
+from PySide2.QtGui import QFontDatabase, QIcon
 
 from PySide2.QtQml import QQmlComponent, qmlRegisterType
 
@@ -140,7 +140,6 @@ from .tracking_signals_tab import (
 )
 
 from .tracking_sky_plot_tab import (
-    TrackingSkyPlotModel,
     TrackingSkyPlotPoints,
     TRACKING_SKY_PLOT_TAB,
 )
@@ -796,6 +795,7 @@ def main():
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon(":/images/icon.ico"))
     app.setOrganizationName(ApplicationMetadata.ORGANIZATION_NAME)
     app.setOrganizationDomain(ApplicationMetadata.ORGANIZATION_DOMAIN)
     app.setApplicationName(ApplicationMetadata.APPLICATION_NAME)
@@ -864,7 +864,6 @@ def main():
     solution_velocity_model = SolutionVelocityModel()
     status_bar_model = StatusBarModel()
     logging_bar_model = LoggingBarModel()
-    tracking_sky_plot_model = TrackingSkyPlotModel()
     update_tab_model = UpdateTabModel()
     root_context = engine.rootContext()
     root_context.setContextProperty("log_panel_model", log_panel_model)
@@ -884,7 +883,6 @@ def main():
     root_context.setContextProperty("solution_velocity_model", solution_velocity_model)
     root_context.setContextProperty("status_bar_model", status_bar_model)
     root_context.setContextProperty("logging_bar_model", logging_bar_model)
-    root_context.setContextProperty("tracking_sky_plot_model", tracking_sky_plot_model)
     root_context.setContextProperty("update_tab_model", update_tab_model)
     root_context.setContextProperty("data_model", data_model)
 

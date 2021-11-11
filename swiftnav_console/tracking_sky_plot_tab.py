@@ -3,7 +3,8 @@
 
 from typing import Dict, List, Any
 
-from PySide2.QtCore import Property, QObject, QPointF, Slot
+from PySide2.QtCore import Property, QObject, Slot, Signal
+from PySide2.QtCharts import QtCharts
 
 from .constants import Keys, QTKeys
 
@@ -16,34 +17,36 @@ TRACKING_SKY_PLOT_TAB: Dict[str, Any] = {
 
 class TrackingSkyPlotPoints(QObject):
 
-    _sats: List[List[QPointF]] = []
     _labels: List[List[str]] = []
+    _all_series: List[QtCharts.QXYSeries] = []
+    labels_changed = Signal()
+    all_series_changed = Signal()
 
-    def get_sats(self) -> List[List[QPointF]]:
-        return self._sats
+    def get_labels(self) -> List[List[str]]:  # pylint:disable=no-self-use
+        return TRACKING_SKY_PLOT_TAB[Keys.LABELS]
 
-    def set_sats(self, sats) -> None:
-        self._sats = sats
+    labels = Property(list, get_labels, notify=labels_changed)  # type: ignore
 
-    sats = Property(QTKeys.QVARIANTLIST, get_sats, set_sats)  # type: ignore
+    def get_all_series(self) -> List[QtCharts.QXYSeries]:
+        return self._all_series
 
-    def get_labels(self) -> List[List[str]]:
-        return self._labels
+    all_series = Property(QTKeys.QVARIANTLIST, get_all_series, notify=all_series_changed)  # type: ignore
 
-    def set_labels(self, labels) -> None:
-        self._labels = labels
+    @Slot(QtCharts.QAbstractSeries)  # type: ignore
+    def addSeries(self, series) -> None:
+        """Add a QML created series to the all_series list"""
+        self._all_series.append(series)
+        self.all_series_changed.emit()  # type: ignore
 
-    labels = Property(list, get_labels, set_labels)
+    @Slot()  # type: ignore
+    def fill_all_series(self) -> None:
+        series_changed = False
+        for idx, series_points in enumerate(TRACKING_SKY_PLOT_TAB[Keys.SATS]):
+            series = self._all_series[idx]
+            if series.isVisible():
+                series.clear()
+                series.replace(series_points)
+                series_changed = True
 
-    @Slot(list)  # type: ignore
-    def fill_series(self, series_list):
-        for idx, series in enumerate(series_list):
-            series.replace(self._sats[idx])
-
-
-class TrackingSkyPlotModel(QObject):  # pylint: disable=too-few-public-methods
-    @Slot(TrackingSkyPlotPoints)  # type: ignore
-    def fill_console_points(self, cp: TrackingSkyPlotPoints) -> TrackingSkyPlotPoints:  # pylint:disable=no-self-use
-        cp.set_sats(TRACKING_SKY_PLOT_TAB[Keys.SATS])
-        cp.set_labels(TRACKING_SKY_PLOT_TAB[Keys.LABELS])
-        return cp
+        if series_changed:
+            self.all_series_changed.emit()  # type: ignore

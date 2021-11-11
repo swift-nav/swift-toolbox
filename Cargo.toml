@@ -1,5 +1,6 @@
 [workspace]
 members = ["console_backend", "entrypoint"]
+resolver = "2"
 
 [profile.release]
 lto = true

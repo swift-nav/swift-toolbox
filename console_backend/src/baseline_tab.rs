@@ -290,7 +290,7 @@ impl BaselineTab {
         }
 
         {
-            let mut shared_data = self.shared_state.lock().unwrap();
+            let mut shared_data = self.shared_state.lock();
             if let Some(ref mut baseline_file) = (*shared_data).baseline_tab.log_file {
                 let pc_time = format!("{}:{:0>6.06}", tloc, secloc);
                 if let Err(err) = baseline_file.serialize(&BaselineLog {
@@ -385,7 +385,7 @@ impl BaselineTab {
     }
 
     fn check_state(&self) -> BaselineTabButtons {
-        let mut shared_data = self.shared_state.lock().unwrap();
+        let mut shared_data = self.shared_state.lock();
         let clear = (*shared_data).baseline_tab.clear;
         (*shared_data).baseline_tab.clear = false;
         let pause = (*shared_data).baseline_tab.pause;
@@ -839,7 +839,7 @@ mod tests {
         assert!(!buttons.pause);
         assert!(!buttons.reset);
         {
-            let mut shared_data = baseline_tab.shared_state.lock().unwrap();
+            let mut shared_data = baseline_tab.shared_state.lock();
             (*shared_data).baseline_tab.clear = true;
             (*shared_data).baseline_tab.pause = true;
             (*shared_data).baseline_tab.reset = true;

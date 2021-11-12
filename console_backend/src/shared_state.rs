@@ -5,7 +5,8 @@ use std::{
     hash::Hash,
     ops::Deref,
     path::{Path, PathBuf},
-    sync::{Arc, Mutex},
+    sync::Arc,
+    thread::JoinHandle,
     time::Instant,
 };
 
@@ -17,17 +18,17 @@ use indexmap::set::IndexSet;
 use indexmap::IndexMap;
 use lazy_static::lazy_static;
 use log::error;
+use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use serialport::FlowControl;
 
-use crate::client_sender::BoxedClientSender;
 use crate::common_constants::{self as cc, SbpLogging};
 use crate::connection::Connection;
 use crate::constants::{
     APPLICATION_NAME, APPLICATION_ORGANIZATION, APPLICATION_QUALIFIER, CONNECTION_HISTORY_FILENAME,
     DEFAULT_LOG_DIRECTORY, MAX_CONNECTION_HISTORY, MPS,
 };
-use crate::errors::{CONVERT_TO_STR_FAILURE, SHARED_STATE_LOCK_MUTEX_FAILURE};
+use crate::errors::CONVERT_TO_STR_FAILURE;
 use crate::log_panel::LogLevel;
 use crate::output::{CsvLogging, CsvSerializer};
 use crate::process_messages::StopToken;
@@ -37,6 +38,7 @@ use crate::types::ArcBool;
 use crate::update_tab::UpdateTabUpdate;
 use crate::utils::send_conn_state;
 use crate::watch::{WatchReceiver, Watched};
+use crate::{client_sender::BoxedClientSender, main_tab::logging_stats_thread};
 
 pub type Error = anyhow::Error;
 pub type Result<T> = anyhow::Result<T>;
@@ -50,16 +52,14 @@ impl SharedState {
         SharedState(Arc::new(Mutex::new(SharedStateInner::default())))
     }
     pub fn connection(&self) -> ConnectionState {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).conn.get()
+        self.lock().conn.get()
     }
     pub fn watch_connection(&self) -> WatchReceiver<ConnectionState> {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).conn.watch()
+        self.lock().conn.watch()
     }
-    pub fn set_connection(&self, conn: ConnectionState, client_sender: &mut BoxedClientSender) {
+    pub fn set_connection(&self, conn: ConnectionState, client_sender: &BoxedClientSender) {
         {
-            let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+            let shared_data = self.lock();
             if let ConnectionState::Connected { stop_token, .. } = shared_data.conn.get() {
                 stop_token.stop();
             }
@@ -68,24 +68,13 @@ impl SharedState {
         send_conn_state(conn, client_sender);
     }
     pub fn debug(&self) -> bool {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).debug
+        self.lock().debug
     }
     pub fn set_debug(&self, set_to: bool) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).debug = set_to;
-    }
-    pub fn current_connection(&self) -> String {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).status_bar.current_connection.clone()
-    }
-    pub fn set_current_connection(&self, current_connection: String) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).status_bar.current_connection = current_connection;
+        self.lock().debug = set_to;
     }
     pub fn logging_directory(&self) -> PathBuf {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        let mut folders = (*shared_data).connection_history.folders();
+        let mut folders = self.lock().connection_history.folders();
         if let Some(folder) = folders.pop() {
             PathBuf::from(folder)
         } else {
@@ -93,28 +82,42 @@ impl SharedState {
         }
     }
     pub fn set_log_level(&self, log_level: LogLevel) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).log_panel.log_level = log_level.clone();
+        self.lock().log_panel.log_level = log_level.clone();
         log::set_max_level(log_level.level_filter());
     }
     pub fn log_level(&self) -> LogLevel {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).log_panel.log_level.clone()
+        self.lock().log_panel.log_level.clone()
+    }
+    pub fn reset_logging(&self) {
+        let mut guard = self.lock();
+        guard.logging_bar.sbp_logging = false;
+        guard.logging_bar.sbp_logging_format = SbpLogging::SBP_JSON;
+        guard.logging_bar.csv_logging = CsvLogging::OFF;
+        guard.sbp_logging_stats_state = Some(SbpLoggingStatsState {
+            sbp_log_filepath: None,
+        });
     }
     pub fn sbp_logging(&self) -> bool {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).logging_bar.sbp_logging
+        self.lock().logging_bar.sbp_logging
+    }
+    pub fn set_sbp_logging(&self, running: bool, client_sender: BoxedClientSender) {
+        let mut guard = self.lock();
+        guard.logging_bar.sbp_logging = running;
+        if running && guard.logging_bar.handle.is_none() {
+            let handle = logging_stats_thread(self.clone(), client_sender);
+            guard.logging_bar.handle = Some(handle);
+        }
     }
     pub fn sbp_logging_format(&self) -> SbpLogging {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).logging_bar.sbp_logging_format.clone()
+        self.lock().logging_bar.sbp_logging_format.clone()
+    }
+    pub fn set_sbp_logging_format(&self, logging: SbpLogging) {
+        self.lock().logging_bar.sbp_logging_format = logging;
     }
     pub fn csv_logging(&self) -> CsvLogging {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).logging_bar.csv_logging.clone()
+        self.lock().logging_bar.csv_logging.clone()
     }
     pub fn set_logging_directory(&self, directory: PathBuf) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         let directory = if directory.starts_with("~/") {
             if let Ok(dir) = directory.strip_prefix("~/") {
                 user_directory().join(dir)
@@ -124,58 +127,40 @@ impl SharedState {
         } else {
             directory
         };
-        (*shared_data).logging_bar.logging_directory = directory;
-    }
-    pub fn set_sbp_logging(&self, running: bool) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).logging_bar.sbp_logging = running;
-    }
-    pub fn set_sbp_logging_format(&self, logging: SbpLogging) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).logging_bar.sbp_logging_format = logging;
+        self.lock().logging_bar.logging_directory = directory;
     }
     pub fn set_csv_logging(&self, logging: CsvLogging) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).logging_bar.csv_logging = logging;
+        self.lock().logging_bar.csv_logging = logging;
     }
     pub fn folder_history(&self) -> IndexSet<String> {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).connection_history.folders()
+        self.lock().connection_history.folders()
     }
     pub fn file_history(&self) -> IndexSet<String> {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).connection_history.files()
+        self.lock().connection_history.files()
     }
     pub fn address_history(&self) -> IndexSet<Address> {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).connection_history.addresses()
+        self.lock().connection_history.addresses()
     }
     pub fn serial_history(&self) -> IndexMap<String, SerialConfig> {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).connection_history.serial_configs()
+        self.lock().connection_history.serial_configs()
     }
     pub fn update_folder_history(&self, folder: PathBuf) {
         let folder = String::from(folder.to_str().expect(CONVERT_TO_STR_FAILURE));
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).connection_history.record_folder(folder);
+        self.lock().connection_history.record_folder(folder);
     }
     pub fn update_file_history(&self, filename: String) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).connection_history.record_file(filename);
+        self.lock().connection_history.record_file(filename);
     }
     pub fn update_tcp_history(&self, host: String, port: u16) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).connection_history.record_address(host, port);
+        self.lock().connection_history.record_address(host, port);
     }
     pub fn update_serial_history(&self, device: String, baud: u32, flow: FlowControl) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data)
+        self.lock()
             .connection_history
             .record_serial(device, baud, flow);
     }
     pub fn start_vel_log(&self, path: &Path) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).solution_tab.velocity_tab.log_file = match CsvSerializer::new(path) {
+        self.lock().solution_tab.velocity_tab.log_file = match CsvSerializer::new(path) {
             Ok(vel_csv) => Some(vel_csv),
             Err(e) => {
                 error!("issue creating file, {:?}, error, {}", path, e);
@@ -184,16 +169,14 @@ impl SharedState {
         }
     }
     pub fn end_vel_log(&self) -> Result<()> {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        if let Some(ref mut log) = (*shared_data).solution_tab.velocity_tab.log_file {
+        if let Some(ref mut log) = self.lock().solution_tab.velocity_tab.log_file {
             log.flush()?;
         }
-        (*shared_data).solution_tab.velocity_tab.log_file = None;
+        self.lock().solution_tab.velocity_tab.log_file = None;
         Ok(())
     }
     pub fn start_pos_log(&self, path: &Path) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).solution_tab.position_tab.log_file = match CsvSerializer::new(path) {
+        self.lock().solution_tab.position_tab.log_file = match CsvSerializer::new(path) {
             Ok(vel_csv) => Some(vel_csv),
             Err(e) => {
                 error!("issue creating file, {:?}, error, {}", path, e);
@@ -202,16 +185,14 @@ impl SharedState {
         }
     }
     pub fn end_pos_log(&self) -> Result<()> {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        if let Some(ref mut log) = (*shared_data).solution_tab.position_tab.log_file {
+        if let Some(ref mut log) = self.lock().solution_tab.position_tab.log_file {
             log.flush()?;
         }
-        (*shared_data).solution_tab.position_tab.log_file = None;
+        self.lock().solution_tab.position_tab.log_file = None;
         Ok(())
     }
     pub fn start_baseline_log(&self, path: &Path) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).baseline_tab.log_file = match CsvSerializer::new(path) {
+        self.lock().baseline_tab.log_file = match CsvSerializer::new(path) {
             Ok(vel_csv) => Some(vel_csv),
             Err(e) => {
                 error!("issue creating file, {:?}, error, {}", path, e);
@@ -220,145 +201,117 @@ impl SharedState {
         }
     }
     pub fn end_baseline_log(&self) -> Result<()> {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        if let Some(ref mut log) = (*shared_data).baseline_tab.log_file {
+        if let Some(ref mut log) = self.lock().baseline_tab.log_file {
             log.flush()?;
         }
-        (*shared_data).baseline_tab.log_file = None;
+        self.lock().baseline_tab.log_file = None;
         Ok(())
     }
     pub fn update_tab_sender(&self) -> Option<Sender<Option<UpdateTabUpdate>>> {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).update_tab_sender.clone()
+        self.lock().update_tab_sender.clone()
     }
     pub fn set_update_tab_sender(&self, sender: Sender<Option<UpdateTabUpdate>>) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).update_tab_sender = Some(sender);
+        self.lock().update_tab_sender = Some(sender);
     }
     pub fn watch_settings_state(&self) -> WatchReceiver<SettingsTabState> {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        shared_data.settings_tab.watch()
+        self.lock().settings_tab.watch()
     }
     pub fn set_settings_state(&self, state: SettingsTabState) {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        shared_data.settings_tab.send(state);
+        self.lock().settings_tab.send(state);
     }
     pub fn reset_settings_state(&self) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        shared_data.settings_tab = Watched::new(SettingsTabState::new());
+        self.lock().settings_tab = Watched::new(SettingsTabState::new());
     }
     pub fn set_settings_refresh(&self, refresh: bool) {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        let data = shared_data.settings_tab.get();
-        shared_data
+        let guard = self.lock();
+        let data = guard.settings_tab.get();
+        guard
             .settings_tab
             .send(SettingsTabState { refresh, ..data });
     }
     pub fn set_settings_save(&self, save: bool) {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        let data = shared_data.settings_tab.get();
-        shared_data
-            .settings_tab
-            .send(SettingsTabState { save, ..data });
+        let guard = self.lock();
+        let data = guard.settings_tab.get();
+        guard.settings_tab.send(SettingsTabState { save, ..data });
     }
     pub fn set_settings_reset(&self, reset: bool) {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        let data = shared_data.settings_tab.get();
-        shared_data
-            .settings_tab
-            .send(SettingsTabState { reset, ..data });
+        let guard = self.lock();
+        let data = guard.settings_tab.get();
+        guard.settings_tab.send(SettingsTabState { reset, ..data });
     }
     pub fn set_settings_auto_survey_request(&self, auto_survey_request: bool) {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        let data = shared_data.settings_tab.get();
-        shared_data.settings_tab.send(SettingsTabState {
+        let guard = self.lock();
+        let data = guard.settings_tab.get();
+        guard.settings_tab.send(SettingsTabState {
             auto_survey_request,
             ..data
         });
     }
     pub fn set_settings_confirm_ins_change(&self, confirm_ins_change: bool) {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        let data = shared_data.settings_tab.get();
-        shared_data.settings_tab.send(SettingsTabState {
+        let guard = self.lock();
+        let data = guard.settings_tab.get();
+        guard.settings_tab.send(SettingsTabState {
             confirm_ins_change,
             ..data
         });
     }
     pub fn set_export_settings(&self, export: Option<PathBuf>) {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        let data = shared_data.settings_tab.get();
-        shared_data
-            .settings_tab
-            .send(SettingsTabState { export, ..data });
+        let guard = self.lock();
+        let data = guard.settings_tab.get();
+        guard.settings_tab.send(SettingsTabState { export, ..data });
     }
     pub fn set_import_settings(&self, import: Option<PathBuf>) {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        let data = shared_data.settings_tab.get();
-        shared_data
-            .settings_tab
-            .send(SettingsTabState { import, ..data });
+        let guard = self.lock();
+        let data = guard.settings_tab.get();
+        guard.settings_tab.send(SettingsTabState { import, ..data });
     }
     pub fn set_write_setting(&self, write: Option<settings_tab::SaveRequest>) {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        let data = shared_data.settings_tab.get();
-        shared_data
-            .settings_tab
-            .send(SettingsTabState { write, ..data });
+        let guard = self.lock();
+        let data = guard.settings_tab.get();
+        guard.settings_tab.send(SettingsTabState { write, ..data });
     }
     pub fn console_version(&self) -> String {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).console_version.clone()
+        self.lock().console_version.clone()
     }
     pub fn set_firmware_version(&self, firmware_version: String) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        shared_data.firmware_version = Some(firmware_version);
+        self.lock().firmware_version = Some(firmware_version);
     }
     pub fn firmware_version(&self) -> Option<String> {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        shared_data.firmware_version.take()
+        self.lock().firmware_version.take()
     }
     pub fn dgnss_enabled(&self) -> bool {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        shared_data.dgnss_enabled
+        self.lock().dgnss_enabled
     }
     pub fn set_dgnss_enabled(&self, dgnss_solution_mode: String) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        shared_data.dgnss_enabled = dgnss_solution_mode != "No DGNSS";
+        self.lock().dgnss_enabled = dgnss_solution_mode != "No DGNSS";
     }
     pub fn set_reset_device(&self, reset_device: bool) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        shared_data.reset_device = reset_device;
+        self.lock().reset_device = reset_device;
     }
     pub fn set_advanced_networking_update(&self, update: AdvancedNetworkingState) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        shared_data.advanced_networking_update = Some(update);
+        self.lock().advanced_networking_update = Some(update);
     }
     pub fn advanced_networking_update(&self) -> Option<AdvancedNetworkingState> {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        shared_data.advanced_networking_update.take()
+        self.lock().advanced_networking_update.take()
     }
     pub fn set_sbp_logging_stats_state(&self, update: SbpLoggingStatsState) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        shared_data.sbp_logging_stats_state = Some(update);
+        self.lock().sbp_logging_stats_state = Some(update);
     }
     pub fn sbp_logging_stats_state(&self) -> Option<SbpLoggingStatsState> {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        shared_data.sbp_logging_stats_state.take()
+        self.lock().sbp_logging_stats_state.clone()
     }
     pub fn auto_survey_requested(&self) -> bool {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).auto_survey_data.requested
+        self.lock().auto_survey_data.requested
     }
     pub fn set_auto_survey_result(&self, lat: f64, lon: f64, alt: f64) {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).auto_survey_data.lat = Some(lat);
-        (*shared_data).auto_survey_data.lon = Some(lon);
-        (*shared_data).auto_survey_data.alt = Some(alt);
-        (*shared_data).auto_survey_data.requested = false;
+        let mut guard = self.lock();
+        guard.auto_survey_data.lat = Some(lat);
+        guard.auto_survey_data.lon = Some(lon);
+        guard.auto_survey_data.alt = Some(alt);
+        guard.auto_survey_data.requested = false;
     }
     pub fn log_to_std(&self) -> ArcBool {
-        let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).log_to_std.clone()
+        self.lock().log_to_std.clone()
     }
 }
 
@@ -385,7 +338,6 @@ impl Clone for SharedState {
 
 #[derive(Debug)]
 pub struct SharedStateInner {
-    pub(crate) status_bar: StatusBarState,
     pub(crate) logging_bar: LoggingBarState,
     pub(crate) log_panel: LogPanelState,
     pub(crate) tracking_tab: TrackingTabState,
@@ -412,7 +364,6 @@ impl SharedStateInner {
         let connection_history = ConnectionHistory::new();
         let log_directory = connection_history.folders().pop();
         SharedStateInner {
-            status_bar: StatusBarState::new(),
             logging_bar: LoggingBarState::new(log_directory),
             log_panel: LogPanelState::new(),
             tracking_tab: TrackingTabState::new(),
@@ -442,20 +393,7 @@ impl Default for SharedStateInner {
     }
 }
 
-#[derive(Debug)]
-pub struct StatusBarState {
-    pub current_connection: String,
-}
-
-impl StatusBarState {
-    fn new() -> StatusBarState {
-        StatusBarState {
-            current_connection: String::from(""),
-        }
-    }
-}
-
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct SbpLoggingStatsState {
     pub sbp_log_filepath: Option<PathBuf>,
 }
@@ -476,6 +414,7 @@ pub struct LoggingBarState {
     pub sbp_logging_format: SbpLogging,
     pub csv_logging: CsvLogging,
     pub logging_directory: PathBuf,
+    pub handle: Option<JoinHandle<()>>,
 }
 
 impl LoggingBarState {
@@ -490,6 +429,7 @@ impl LoggingBarState {
             sbp_logging_format: SbpLogging::SBP_JSON,
             csv_logging: CsvLogging::OFF,
             logging_directory,
+            handle: None,
         }
     }
 }
@@ -911,6 +851,14 @@ impl ConnectionState {
 
     pub fn is_connected(&self) -> bool {
         matches!(self, Self::Connected { .. })
+    }
+
+    pub fn name(&self) -> String {
+        match self {
+            ConnectionState::Closed => "closed".into(),
+            ConnectionState::Disconnected => "disconnected".into(),
+            ConnectionState::Connected { conn, .. } => conn.name(),
+        }
     }
 }
 

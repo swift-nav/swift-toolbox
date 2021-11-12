@@ -341,7 +341,7 @@ impl SolutionTab {
         // TODO(johnmichael.burke@) https://swift-nav.atlassian.net/browse/CPP-95
         // Validate logging.
         {
-            let mut shared_data = self.shared_state.lock().unwrap();
+            let mut shared_data = self.shared_state.lock();
             if let Some(ref mut vel_file) = (*shared_data).solution_tab.velocity_tab.log_file {
                 let mut gps_time = None;
                 if let Some(tgps) = tgps_ {
@@ -386,8 +386,8 @@ impl SolutionTab {
         let tic = msg.wheelticks;
         if ((tic & 0xF0) >> 4) > (tic & 0x0F) {
             self.last_odo_update_time = Instant::now();
-            let mut shared_data = self.shared_state.lock().unwrap();
-            (*shared_data)
+            self.shared_state
+                .lock()
                 .solution_tab
                 .position_tab
                 .last_odo_update_time = self.last_odo_update_time;
@@ -401,7 +401,7 @@ impl SolutionTab {
     pub fn handle_ins_status(&mut self, msg: MsgInsStatus) {
         self.ins_status_flags = msg.flags;
         self.last_ins_status_receipt_time = Instant::now();
-        let mut shared_data = self.shared_state.lock().unwrap();
+        let mut shared_data = self.shared_state.lock();
         (*shared_data).solution_tab.position_tab.ins_status_flags = msg.flags;
         (*shared_data)
             .solution_tab
@@ -518,7 +518,7 @@ impl SolutionTab {
         // TODO(johnmichael.burke@) https://swift-nav.atlassian.net/browse/CPP-95
         // Validate logging.
         {
-            let mut shared_data = self.shared_state.lock().unwrap();
+            let mut shared_data = self.shared_state.lock();
             if let Some(ref mut pos_file) = (*shared_data).solution_tab.position_tab.log_file {
                 let pc_time = format!("{}:{:>6.06}", tloc, secloc);
                 if let Err(err) = pos_file.serialize(&PosLLHLog {
@@ -612,7 +612,7 @@ impl SolutionTab {
 
     pub fn check_state(&mut self) -> (bool, bool) {
         let (clear, pause, new_unit) = {
-            let mut shared_data = self.shared_state.lock().unwrap();
+            let mut shared_data = self.shared_state.lock();
             let clear = (*shared_data).solution_tab.position_tab.clear;
             (*shared_data).solution_tab.position_tab.clear = false;
             let pause = (*shared_data).solution_tab.position_tab.pause;

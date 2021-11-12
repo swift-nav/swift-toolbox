@@ -49,8 +49,8 @@ use crate::{
     advanced_networking_tab::AdvancedNetworkingTab,
     advanced_spectrum_analyzer_tab::AdvancedSpectrumAnalyzerTab,
     advanced_system_monitor_tab::AdvancedSystemMonitorTab, baseline_tab::BaselineTab,
-    main_tab::MainTab, observation_tab::ObservationTab, solution_tab::SolutionTab,
-    solution_velocity_tab::SolutionVelocityTab, status_bar::StatusBar,
+    main_tab::MainTab, observation_tab::ObservationTab, settings_tab::SettingsTab,
+    solution_tab::SolutionTab, solution_velocity_tab::SolutionVelocityTab, status_bar::StatusBar,
     tracking_signals_tab::TrackingSignalsTab, tracking_sky_plot_tab::TrackingSkyPlotTab,
     update_tab::UpdateTab,
 };
@@ -58,7 +58,7 @@ use crate::{
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-struct Tabs {
+struct Tabs<'link> {
     pub main: Mutex<MainTab>,
     pub advanced_imu: Mutex<AdvancedImuTab>,
     pub advanced_magnetometer: Mutex<AdvancedMagnetometerTab>,
@@ -73,9 +73,10 @@ struct Tabs {
     pub advanced_spectrum_analyzer: Mutex<AdvancedSpectrumAnalyzerTab>,
     pub status_bar: Mutex<StatusBar>,
     pub update: Mutex<UpdateTab>,
+    pub settings: Option<SettingsTab<'link>>,
 }
 
-impl Tabs {
+impl<'link> Tabs<'link> {
     fn new(
         shared_state: shared_state::SharedState,
         client_sender: client_sender::BoxedClientSender,
@@ -121,7 +122,28 @@ impl Tabs {
             .into(),
             status_bar: StatusBar::new(shared_state.clone(), client_sender).into(),
             update: UpdateTab::new(shared_state).into(),
+            settings: None,
         }
+    }
+
+    fn with_settings(
+        shared_state: shared_state::SharedState,
+        client_sender: client_sender::BoxedClientSender,
+        msg_sender: types::MsgSender,
+        link: sbp::link::Link<'link, ()>,
+    ) -> Self {
+        let mut tabs = Self::new(
+            shared_state.clone(),
+            client_sender.clone(),
+            msg_sender.clone(),
+        );
+        tabs.settings = Some(SettingsTab::new(
+            shared_state,
+            client_sender,
+            msg_sender,
+            link,
+        ));
+        tabs
     }
 }
 

@@ -57,14 +57,13 @@ impl TrackingSkyPlotTab {
     /// - `msg`: The message to update set of points with.
     pub fn handle_sv_az_el(&mut self, msg: MsgSvAzEl) {
         self.clear_sats();
-        let svs_tracked = {
-            let shared_data = self.shared_state.lock().unwrap();
-            (*shared_data)
-                .tracking_tab
-                .signals_tab
-                .tracked_sv_labels
-                .clone()
-        };
+        let svs_tracked = self
+            .shared_state
+            .lock()
+            .tracking_tab
+            .signals_tab
+            .tracked_sv_labels
+            .clone();
         msg.azel.iter().for_each(|azel| {
             let key = (SignalCodes::from(azel.sid.code), azel.sid.sat as i16);
             if let Some(mut label) = signal_key_label(key, None).2 {
@@ -181,10 +180,11 @@ mod tests {
         };
         assert!(tab.sats[4].is_empty());
         let label = "J 35".to_string();
-        {
-            let mut shared_data = shared_state.lock().unwrap();
-            (*shared_data).tracking_tab.signals_tab.tracked_sv_labels = vec![label.clone()];
-        }
+        shared_state
+            .lock()
+            .tracking_tab
+            .signals_tab
+            .tracked_sv_labels = vec![label.clone()];
         tab.handle_sv_az_el(msg);
         assert_eq!(tab.sats[4].len(), 1);
         assert_eq!(tab.sats[4][0].az, 30 * 2);

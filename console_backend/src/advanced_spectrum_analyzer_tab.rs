@@ -3,7 +3,6 @@ use log::error;
 
 use crate::client_sender::BoxedClientSender;
 use crate::constants::{AMPLITUDES, CHANNELS, FREQUENCIES};
-use crate::errors::SHARED_STATE_LOCK_MUTEX_FAILURE;
 use crate::fft_monitor::FftMonitor;
 use crate::shared_state::SharedState;
 use crate::types::Specan;
@@ -58,10 +57,7 @@ impl AdvancedSpectrumAnalyzerTab {
             return;
         }
         {
-            let shared_data = self
-                .shared_state
-                .lock()
-                .expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+            let shared_data = self.shared_state.lock();
             self.channel_idx = (*shared_data).advanced_spectrum_analyzer_tab.channel_idx as usize;
         }
         let channel = CHANNELS[self.channel_idx];

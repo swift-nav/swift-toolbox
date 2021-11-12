@@ -81,6 +81,8 @@ Item {
             contentHeight: Constants.sideNavBar.tabBarHeight
             contentWidth: Constants.sideNavBar.tabBarWidth
             currentIndex: Globals.initialMainTabIndex + 1
+            spacing: Constants.sideNavBar.tabBarSpacing
+            orientation: ListView.Vertical
             background: Rectangle {
                 color: "#323F48"
             }
@@ -123,13 +125,6 @@ Item {
                     }
                 }
 
-            }
-
-            contentItem: ListView {
-                model: tab.contentModel
-                currentIndex: tab.currentIndex
-                spacing: Constants.sideNavBar.tabBarSpacing
-                orientation: ListView.Vertical
             }
 
         }

@@ -6,6 +6,8 @@ import QtQuick.Controls.Material.impl 2.12
 T.TabBar {
     id: control
 
+    property var orientation: ListView.Horizontal
+
     implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
                             contentWidth + leftPadding + rightPadding)
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
@@ -18,7 +20,7 @@ T.TabBar {
         currentIndex: control.currentIndex
 
         spacing: control.spacing
-        orientation: ListView.Horizontal
+        orientation: control.orientation
         boundsBehavior: Flickable.StopAtBounds
         flickableDirection: Flickable.AutoFlickIfNeeded
         snapMode: ListView.SnapToItem

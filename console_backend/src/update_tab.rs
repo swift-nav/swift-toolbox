@@ -264,7 +264,7 @@ fn wait_for_device_settings(
 }
 
 /// Package data into a message buffer and send to frontend.
-fn update_frontend(mut client_sender: BoxedClientSender, mut update_tab_context: UpdateTabContext) {
+fn update_frontend(client_sender: BoxedClientSender, mut update_tab_context: UpdateTabContext) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
     let packet = update_tab_context.packet();

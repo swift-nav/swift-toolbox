@@ -188,7 +188,7 @@ impl AdvancedSystemMonitorTab {
     /// Package data into a message buffer and send to frontend.
     fn send_data(&mut self) {
         let reset_device = {
-            let mut shared_data = self.shared_state.lock().unwrap();
+            let mut shared_data = self.shared_state.lock();
             std::mem::take(&mut (*shared_data).reset_device)
         };
         if reset_device {

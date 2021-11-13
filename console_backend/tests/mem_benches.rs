@@ -59,7 +59,7 @@ mod mem_bench_impl {
             let mut cpu_readings: Vec<f32> = vec![];
             loop {
                 sys.refresh_process(pid);
-                let proc = sys.get_process(pid).unwrap();
+                let proc = sys.process(pid).unwrap();
                 mem_readings_kb.push(proc.memory() as f32);
                 cpu_readings.push(proc.cpu_usage());
                 if mem_stop_recv.try_recv().is_ok() {

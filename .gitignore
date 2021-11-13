@@ -19,3 +19,4 @@ get-pip.py
 .*.sw?
 installers/Windows/*.exe
 installers/Linux/*.deb
+installers/Windows/NSIS/

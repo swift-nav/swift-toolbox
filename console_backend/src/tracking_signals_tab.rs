@@ -156,15 +156,13 @@ impl TrackingSignalsTab {
         self.colors.clear();
         self.sats.clear();
         let mut temp_labels = Vec::new();
-        let filters;
-        {
-            let shared_data = self.shared_state.lock().unwrap();
-            filters = (*shared_data)
-                .tracking_tab
-                .signals_tab
-                .check_visibility
-                .clone();
-        }
+        let filters = self
+            .shared_state
+            .lock()
+            .tracking_tab
+            .signals_tab
+            .check_visibility
+            .clone();
         let mut tracked_sv_labels = vec![];
         for (key, _) in self.cn0_dict.iter_mut() {
             let (signal_code, _) = key;
@@ -195,8 +193,11 @@ impl TrackingSignalsTab {
             self.colors.push(String::from(signal_key_color(*key)));
             self.sats.push(self.cn0_dict[key].clone());
         }
-        let mut shared_data = self.shared_state.lock().unwrap();
-        (*shared_data).tracking_tab.signals_tab.tracked_sv_labels = tracked_sv_labels;
+        self.shared_state
+            .lock()
+            .tracking_tab
+            .signals_tab
+            .tracked_sv_labels = tracked_sv_labels;
     }
 
     /// Handle MsgMeasurementState message states.
@@ -630,11 +631,12 @@ mod tests {
             tracking_signals_tab.sv_labels,
             vec![" BDS2 B1 I C08", " GPS L1CA G06", " SBAS L1 S  7"]
         );
-        {
-            let mut shared_data = tracking_signals_tab.shared_state.lock().unwrap();
-            (*shared_data).tracking_tab.signals_tab.check_visibility =
-                vec![String::from(BDS2_B1_STR)];
-        }
+        tracking_signals_tab
+            .shared_state
+            .lock()
+            .tracking_tab
+            .signals_tab
+            .check_visibility = vec![String::from(BDS2_B1_STR)];
         tracking_signals_tab.update_plot();
         assert_eq!(tracking_signals_tab.sv_labels.len(), 2);
         assert_eq!(tracking_signals_tab.colors.len(), 2);

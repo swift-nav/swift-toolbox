@@ -24,7 +24,7 @@ pub fn fixed_sbp_string<T, const L: usize>(data: &str) -> SbpString<[u8; L], T> 
 }
 
 /// Notify the frontend of an [ConnectionState] change.
-pub fn send_conn_state(app_state: ConnectionState, client_sender: &mut BoxedClientSender) {
+pub fn send_conn_state(app_state: ConnectionState, client_sender: &BoxedClientSender) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
     let mut status = msg.init_status();
@@ -32,10 +32,7 @@ pub fn send_conn_state(app_state: ConnectionState, client_sender: &mut BoxedClie
     client_sender.send_data(serialize_capnproto_builder(builder));
 }
 
-pub fn refresh_connection_frontend(
-    client_sender: &mut BoxedClientSender,
-    shared_state: SharedState,
-) {
+pub fn refresh_connection_frontend(client_sender: &BoxedClientSender, shared_state: &SharedState) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
@@ -156,7 +153,7 @@ pub fn serialize_capnproto_builder(builder: Builder<HeapAllocator>) -> Vec<u8> {
     msg_bytes
 }
 
-pub fn refresh_loggingbar(client_sender: &mut BoxedClientSender, shared_state: SharedState) {
+pub fn refresh_loggingbar(client_sender: &BoxedClientSender, shared_state: &SharedState) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 

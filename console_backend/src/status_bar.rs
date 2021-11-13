@@ -108,7 +108,7 @@ impl StatusBar {
             client_sender,
             shared_state: shared_state.clone(),
             heartbeat_data: heartbeat_data.clone(),
-            port: shared_state.current_connection(),
+            port: shared_state.connection().name(),
             version,
             heartbeat_handler: StatusBar::heartbeat_thread(
                 is_running.clone(),

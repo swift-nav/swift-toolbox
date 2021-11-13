@@ -96,9 +96,14 @@ impl SolutionVelocityTab {
 
         let mut new_unit = self.unit.clone();
         {
-            let shared_data = self.shared_state.lock().unwrap();
-            let new_unit_ = (*shared_data).solution_tab.velocity_tab.unit.as_str();
-            if let Ok(unit) = VelocityUnits::from_str(new_unit_) {
+            if let Ok(unit) = VelocityUnits::from_str(
+                self.shared_state
+                    .lock()
+                    .solution_tab
+                    .velocity_tab
+                    .unit
+                    .as_str(),
+            ) {
                 new_unit = unit;
             }
         }

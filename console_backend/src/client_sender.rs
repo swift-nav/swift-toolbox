@@ -1,13 +1,15 @@
 use std::fmt;
+use std::sync::Arc;
 
 use crossbeam::channel::Sender;
+use parking_lot::Mutex;
 
 use crate::types::ArcBool;
 
 pub type BoxedClientSender = Box<dyn ClientSender + 'static>;
 
 pub trait ClientSender: ClientSenderClone {
-    fn send_data(&mut self, msg_bytes: Vec<u8>);
+    fn send_data(&self, msg_bytes: Vec<u8>);
     fn connected(&self) -> bool;
     fn set_connected(&self, connected: bool);
 }
@@ -52,7 +54,7 @@ impl ChannelSender {
 }
 
 impl ClientSender for ChannelSender {
-    fn send_data(&mut self, msg_bytes: Vec<u8>) {
+    fn send_data(&self, msg_bytes: Vec<u8>) {
         if self.connected.get() {
             let _ = self.inner.send(msg_bytes);
         }
@@ -67,22 +69,31 @@ impl ClientSender for ChannelSender {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct TestSender {
-    inner: Vec<Vec<u8>>,
+    inner: Arc<Mutex<Vec<Vec<u8>>>>,
     connected: ArcBool,
 }
 
 impl TestSender {
     pub fn new() -> Self {
         Self {
-            inner: Vec::new(),
+            inner: Arc::new(Mutex::new(Vec::new())),
             connected: ArcBool::new_with(true),
         }
     }
 
     pub fn boxed() -> BoxedClientSender {
         Box::new(Self::new())
+    }
+}
+
+impl Clone for TestSender {
+    fn clone(&self) -> Self {
+        Self {
+            inner: Arc::clone(&self.inner),
+            connected: self.connected.clone(),
+        }
     }
 }
 
@@ -93,8 +104,8 @@ impl Default for TestSender {
 }
 
 impl ClientSender for TestSender {
-    fn send_data(&mut self, msg: Vec<u8>) {
-        self.inner.push(msg)
+    fn send_data(&self, msg: Vec<u8>) {
+        self.inner.lock().push(msg)
     }
 
     fn connected(&self) -> bool {

@@ -296,9 +296,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "3.0.0-beta.4"
+version = "3.0.0-beta.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fcd70aa5597dbc42f7217a543f9ef2768b2ef823ba29036072d30e1d88e98406"
+checksum = "feff3878564edb93745d58cf63e17b63f24142506e7a20c87a5521ed7bfb1d63"
 dependencies = [
  "atty",
  "bitflags",
@@ -309,14 +309,14 @@ dependencies = [
  "strsim 0.10.0",
  "termcolor",
  "textwrap 0.14.2",
- "vec_map",
+ "unicase",
 ]
 
 [[package]]
 name = "clap_derive"
-version = "3.0.0-beta.4"
+version = "3.0.0-beta.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b5bb0d655624a0b8770d1c178fb8ffcb1f91cc722cb08f451e3dc72465421ac"
+checksum = "8b15c6b4f786ffb6192ffe65a36855bc1fc2444bcd0945ae16748dcd6ed7d0d3"
 dependencies = [
  "heck",
  "proc-macro-error",
@@ -338,7 +338,7 @@ dependencies = [
 name = "console"
 version = "0.1.0"
 dependencies = [
- "pyo3 0.14.5",
+ "pyo3",
  "windows",
  "winres",
 ]
@@ -353,7 +353,7 @@ dependencies = [
  "capnp",
  "capnpc",
  "chrono",
- "clap 3.0.0-beta.4",
+ "clap 3.0.0-beta.5",
  "criterion",
  "crossbeam",
  "csv",
@@ -370,7 +370,7 @@ dependencies = [
  "ordered-float",
  "parking_lot",
  "paste 1.0.6",
- "pyo3 0.13.2",
+ "pyo3",
  "rand",
  "regex",
  "rust-ini",
@@ -554,9 +554,9 @@ dependencies = [
 
 [[package]]
 name = "directories"
-version = "3.0.2"
+version = "4.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e69600ff1703123957937708eb27f7a564e48885c537782722ed0ba3189ce1d7"
+checksum = "f51c5d4ddabd36886dd3e1438cb358cdcb0d7c499cb99cb4ac2e38e18b5cb210"
 dependencies = [
  "dirs-sys",
 ]
@@ -586,12 +586,6 @@ checksum = "68df3f2b690c1b86e65ef7830956aededf3cb0a16f898f79b9a6f421a7b6211b"
 dependencies = [
  "rand",
 ]
-
-[[package]]
-name = "doc-comment"
-version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fea41bba32d969b513997752735605054bc0dfa92b4c56bf1189f2e174be7a10"
 
 [[package]]
 name = "dtoa"
@@ -646,17 +640,6 @@ dependencies = [
  "cfg-if 1.0.0",
  "libc",
  "wasi",
-]
-
-[[package]]
-name = "ghost"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a5bcf1bbeab73aa4cf2fde60a846858dc036163c7c33bec309f8d17de785479"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
@@ -760,28 +743,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "inventory"
-version = "0.1.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f0f7efb804ec95e33db9ad49e4252f049e37e8b0a4652e3cd61f7999f2eff7f"
-dependencies = [
- "ctor",
- "ghost",
- "inventory-impl",
-]
-
-[[package]]
-name = "inventory-impl"
-version = "0.1.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "75c094e94816723ab936484666968f5b58060492e880f3c8d00489a1e244fa51"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "iter-read"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -825,9 +786,9 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
 name = "libc"
-version = "0.2.102"
+version = "0.2.107"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2a5ac8f984bfcf3a823267e5fde638acc3325f6496633a5da6bb6eb2171e103"
+checksum = "fbe5e23404da5b4f555ef85ebed98fb4083e55a00c317800bc2a50ede9f3d219"
 
 [[package]]
 name = "libloading"
@@ -1026,9 +987,9 @@ dependencies = [
 
 [[package]]
 name = "num-bigint"
-version = "0.3.3"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f6f7833f2cbf2360a6cfd58cd41a53aa7a90bd4c202f5b1c7dd2ed73c57b2c3"
+checksum = "f93ab6289c7b344a8a9f60f88d80aa20032336fe78da341afc91c8a2341fc75f"
 dependencies = [
  "autocfg",
  "num-integer",
@@ -1112,9 +1073,12 @@ dependencies = [
 
 [[package]]
 name = "os_str_bytes"
-version = "3.1.0"
+version = "4.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6acbef58a60fe69ab50510a55bc8cdd4d6cf2283d27ad338f54cb52747a9cf2d"
+checksum = "addaa943333a514159c80c97ff4a93306530d965d27e139188283cd13e06a799"
+dependencies = [
+ "memchr",
+]
 
 [[package]]
 name = "parking_lot"
@@ -1253,26 +1217,9 @@ dependencies = [
 
 [[package]]
 name = "pyo3"
-version = "0.13.2"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4837b8e8e18a102c23f79d1e9a110b597ea3b684c95e874eb1ad88f8683109c3"
-dependencies = [
- "cfg-if 1.0.0",
- "ctor",
- "indoc",
- "inventory",
- "libc",
- "parking_lot",
- "paste 0.1.18",
- "pyo3-macros 0.13.2",
- "unindent",
-]
-
-[[package]]
-name = "pyo3"
-version = "0.14.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35100f9347670a566a67aa623369293703322bb9db77d99d7df7313b575ae0c8"
+checksum = "64664505ce285a59b8b7e940fbe54ad65b1758a0810eddc5bc26df6f6ec8c557"
 dependencies = [
  "cfg-if 1.0.0",
  "indoc",
@@ -1280,57 +1227,35 @@ dependencies = [
  "parking_lot",
  "paste 0.1.18",
  "pyo3-build-config",
- "pyo3-macros 0.14.5",
+ "pyo3-macros",
  "unindent",
 ]
 
 [[package]]
 name = "pyo3-build-config"
-version = "0.14.5"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d12961738cacbd7f91b7c43bc25cfeeaa2698ad07a04b3be0aa88b950865738f"
+checksum = "5f1e4a72de84cdcd69f62211b62f62753d0c11b7b5715f3467f3754dab22a7ca"
 dependencies = [
  "once_cell",
 ]
 
 [[package]]
 name = "pyo3-macros"
-version = "0.13.2"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a47f2c300ceec3e58064fd5f8f5b61230f2ffd64bde4970c81fdd0563a2db1bb"
+checksum = "244f21d0a3887a9c02018b94e3b78d693dc7eca5c56839b7796a499cc364deb4"
 dependencies = [
- "pyo3-macros-backend 0.13.2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "pyo3-macros"
-version = "0.14.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc0bc5215d704824dfddddc03f93cb572e1155c68b6761c37005e1c288808ea8"
-dependencies = [
- "pyo3-macros-backend 0.14.5",
+ "pyo3-macros-backend",
  "quote",
  "syn",
 ]
 
 [[package]]
 name = "pyo3-macros-backend"
-version = "0.13.2"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "87b097e5d84fcbe3e167f400fbedd657820a375b034c78bd852050749a575d66"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "pyo3-macros-backend"
-version = "0.14.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71623fc593224afaab918aa3afcaf86ed2f43d34f6afde7f3922608f253240df"
+checksum = "b3d3d18ac41d05199bb82645d56e39f8c8b4909a0137c6f2640f03685b29f672"
 dependencies = [
  "proc-macro2",
  "pyo3-build-config",
@@ -1641,9 +1566,9 @@ dependencies = [
 
 [[package]]
 name = "serde-pickle"
-version = "0.6.3"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b88454094f5ba5b2149722f41e42395b39556632c3abb068540c0b04d27017a"
+checksum = "47b0d075918cbf8475cedcae8e85844f437e2a7c70d54a2f405fab29bb6b2536"
 dependencies = [
  "byteorder",
  "iter-read",
@@ -1888,13 +1813,12 @@ dependencies = [
 
 [[package]]
 name = "sysinfo"
-version = "0.16.5"
+version = "0.21.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "567e910ef0207be81a4e1bb0491e9a8d9866cf45b20fe1a52c03d347da9ea51b"
+checksum = "fb6c2c4a6ca462f07ca89841a2618dca6e405304d19ae238997e64915d89f513"
 dependencies = [
  "cfg-if 1.0.0",
  "core-foundation-sys",
- "doc-comment",
  "libc",
  "ntapi",
  "once_cell",
@@ -2014,6 +1938,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a31142970826733df8241ef35dc040ef98c679ab14d7c3e54d827099b3acecaa"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "unicase"
+version = "2.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "50f37be617794602aabbeee0be4f259dc1778fabe05e2d67ee8f79326d5cb4f6"
+dependencies = [
+ "version_check",
 ]
 
 [[package]]
@@ -2216,9 +2149,9 @@ checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 
 [[package]]
 name = "windows"
-version = "0.25.0"
+version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e46c474738425c090573ecf5472d54ee5f78132e6195d0bbfcc2aabc0ed29f37"
+checksum = "347cdcaae1addebdff584aea1f9fbc0426dedbe1315f1dcf30c7a9876401cd25"
 dependencies = [
  "windows_aarch64_msvc",
  "windows_i686_gnu",
@@ -2229,33 +2162,33 @@ dependencies = [
 
 [[package]]
 name = "windows_aarch64_msvc"
-version = "0.25.0"
+version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3022d174000fcaeb6f95933fb04171ea0e21b9289ac57fe4400bfa148e41df79"
+checksum = "f7758986b022add546ae53ccad31f4852ce6bd2e2c2d3cc2b1d7d06dea0b90da"
 
 [[package]]
 name = "windows_i686_gnu"
-version = "0.25.0"
+version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "03b1584eebf06654708eab4301152032c13c1e47f4a754ffc93c733f10993e85"
+checksum = "29261214caab8e589f61031ba1ccd5c3c25e61db2118a3aec4459f58ff798726"
 
 [[package]]
 name = "windows_i686_msvc"
-version = "0.25.0"
+version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f49df16591e9ad429997ec57d462b0cc45168f639d03489e8c2e933ea9c389d7"
+checksum = "43984fb3b944743142112ae926e7adeccb60f35bb81d43114f4d0fe2871f60ba"
 
 [[package]]
 name = "windows_x86_64_gnu"
-version = "0.25.0"
+version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2cb06177184100374f97d5e7261ee0b6adefa8ee32e38f87518ca22b519bb80e"
+checksum = "2a80fc90e1ad19769e596a3f58d0776319059e21cac9069a5a2a791362ce7190"
 
 [[package]]
 name = "windows_x86_64_msvc"
-version = "0.25.0"
+version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3c27bcbb33ddbed3569e36c14775c99f72b97c72ce49f81d128637fb48a061f"
+checksum = "dc24ddac19a0cf02ad2b32d8897f202fc1a13ef285e2d4774e6610783cc8398f"
 
 [[package]]
 name = "winres"

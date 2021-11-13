@@ -1,8 +1,11 @@
 ; This file was adapted from:
 ; https://github.com/mherrmann/fbs/blob/master/fbs/_defaults/src/installer/windows/Installer.nsi
+Unicode true
+!include "x64.nsh"
 !include MUI2.nsh
 !include FileFunc.nsh
 !include LogicLib.nsh
+!addplugindir "NSIS\Plugins\x86-unicode"
 !define MUI_ICON "..\..\resources\images\icon.ico"
 !define MUI_UNICON "..\..\resources\images\icon.ico"
 
@@ -15,6 +18,9 @@
 !define installer_dir "py39-dist"
 !define company_name "Swift Navigation"
 
+!define vc_redist_url "https://aka.ms/vs/17/release/vc_redist.x64.exe"
+
+ManifestDPIAware true
 
 
 !define UNINST_KEY \
@@ -36,6 +42,12 @@ VIAddVersionKey "FileDescription" "${app_name}"
 ;Init
 
 Function .onInit
+  ${IfNot} ${RunningX64}
+    MessageBox MB_OK "This program must be run on an x64 machine."
+    Abort
+  ${EndIf}
+  SetRegView 64
+  ${DisableX64FSRedirection}
   !insertmacro MULTIUSER_INIT
   ; Do not use InstallDir at all so we can detect empty $InstDir!
   ${If} $InstDir == "" ; /D not used
@@ -86,6 +98,30 @@ FunctionEnd
 Section
   SetOutPath "$InstDir"
   Call Uninstall
+  
+  ReadRegStr $0 HKLM "SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64" "Version"
+  ReadRegStr $1 HKLM "SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64" "Installed"
+  ${If} $1 != "1"
+    DetailPrint "Microsoft Visual C++ redistributable is not installed."
+    inetc::get "${vc_redist_url}" $InstDir\vcredist.exe /END
+    Pop $3
+    DetailPrint "Download completed (return code: $3)."
+    DetailPrint "Installing..."
+    ExecWait '"$InstDir\vcredist.exe" /q /norestart'
+    ReadRegStr $1 HKLM "SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64" "Installed"
+    ${If} $1 != "1"
+      DetailPrint "Failed to install redistributable for Microsoft Visual C++!"
+      MessageBox MB_YESNO "Installation of redistributable for Microsoft Visual C++ was unsuccessful! Please verify that an Internet connection is available.$\n$\nAlternately, the redistributable can be manually installed by downloading:$\n${vc_redist_url}$\n$\nAttempt download now?" IDYES true IDNO false
+      true:
+        ExecShell open "${vc_redist_url}"
+      false:
+      Quit
+    ${EndIf}
+    DetailPrint "Done"
+  ${Else}
+    DetailPrint "VC++ Redistributable found, version $0 !"
+  ${EndIf}
+  
   File /r "..\..\${installer_dir}\*"
   WriteRegStr SHCTX "Software\${app_name}" "" $InstDir
   WriteUninstaller "$InstDir\uninstall.exe"

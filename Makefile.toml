@@ -543,7 +543,7 @@ cp installers/Linux/$APP_DIR_NAME.desktop $TMP_DIR/$USR_DIR/$APPS_DIR/
 mkdir -p $TMP_DIR/$USR_DIR/$ICONS_DIR
 cp -r installers/Linux/hicolor/ $TMP_DIR/$USR_DIR/$ICONS_DIR/
 
-fpm -t deb -s dir -v $(cat console_backend/src/version.txt) --debug --verbose -C $TMP_DIR -f -n $APP_DIR_NAME $OPT_DIR $USR_DIR
+fpm -t deb -s dir --depends libxcb-xinerama0 -v $(cat console_backend/src/version.txt) --debug --verbose -C $TMP_DIR -f -n $APP_DIR_NAME $OPT_DIR $USR_DIR
 mv *.deb installers/Linux/
 '''
 

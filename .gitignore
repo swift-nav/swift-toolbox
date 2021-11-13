@@ -18,3 +18,4 @@ console_backend/tests/fileout.json
 get-pip.py
 .*.sw?
 installers/Windows/*.exe
+installers/Windows/NSIS/

@@ -550,7 +550,19 @@ run_task = [{ name = ["build-dist", "purge-dist", "compress-dist"] }]
 
 [tasks.dist-to-installer]
 
+[tasks.install-nsis-plugin]
+script_runner = "@duckscript"
+script = '''
+filepath = set installers/Windows/NSIS/Inetc.zip
+if not is_path_exists ${filepath}
+  mkdir installers/Windows/NSIS
+  wget -O ${filepath} https://nsis.sourceforge.io/mediawiki/images/c/c9/Inetc.zip
+  exec --fail-on-error unzip -d installers/Windows/NSIS installers/Windows/NSIS/Inetc.zip
+end
+'''
+
 [tasks.dist-to-installer.windows]
+dependencies = ["install-nsis-plugin"]
 script_runner = "@shell"
 script = '''
 makensis /V4  .\installers\Windows\Installer.nsi

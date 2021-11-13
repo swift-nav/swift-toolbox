@@ -103,7 +103,7 @@ Section
   ReadRegStr $1 HKLM "SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64" "Installed"
   ${If} $1 != "1"
     DetailPrint "Microsoft Visual C++ redistributable is not installed."
-    inetc::get /WEAKSECURITY "${vc_redist_url}" $InstDir\vcredist.exe /END
+    inetc::get "${vc_redist_url}" $InstDir\vcredist.exe /END
     Pop $3
     DetailPrint "Download completed (return code: $3)."
     DetailPrint "Installing..."

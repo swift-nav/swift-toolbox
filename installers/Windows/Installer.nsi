@@ -111,7 +111,7 @@ Section
     ReadRegStr $1 HKLM "SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64" "Installed"
     ${If} $1 != "1"
       DetailPrint "Failed to install redistributable for Microsoft Visual C++!"
-      MessageBox MB_YESNO "VC++ Redistributable installation unsuccessful! Check for no internet connectivity.$\n$\nAlternatively, you can manually install then rerun this installer:$\n${vc_redist_url}$\n$\nAttempt download now?"  IDYES true IDNO false
+      MessageBox MB_YESNO "Installation of redistributable for Microsoft Visual C++ was unsuccessful! Please verify that an Internet connection is available.$\n$\nAlternately, the redistributable can be manually installed by downloading:$\n${vc_redist_url}$\n$\nAttempt download now?" IDYES true IDNO false
       true:
         ExecShell open "${vc_redist_url}"
       false:

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Swift Navigation Console
+Type=Application
+Exec=/opt/swift-navigation-console/console
+Terminal=false
+NoDisplay=false
+Categories=Science
+Version=1.2
+Icon=swift-navigation-console

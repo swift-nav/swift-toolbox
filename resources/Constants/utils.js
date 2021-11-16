@@ -34,3 +34,11 @@ function readTextFile(path, elem){
     req.open("GET", path);
     req.send();
 }
+
+// Dump all properties in a QML item (or any javascript object).
+function listProperty(item)
+{
+    for (var p in item)
+        if (typeof item[p] != "function")
+            console.log(p + ": " + item[p]);
+}

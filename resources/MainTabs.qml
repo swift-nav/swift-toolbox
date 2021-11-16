@@ -4,14 +4,11 @@ import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
 Item {
+    property alias currentIndex: stackLayout.currentIndex
     StackLayout {
         id: stackLayout
 
         anchors.fill: parent
-        currentIndex: parent.curIndex
-
-        Item {
-        }
 
         TrackingTab {
         }

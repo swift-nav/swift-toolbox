@@ -1,11 +1,12 @@
+import "SideNavBarComponents"
 import "Constants"
-import QtQuick 2.5
-import QtQuick.Controls 2.3
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
 Item {
-    property alias curIndex: tab.currentIndex
+    property alias currentIndex: navButtons.currentIndex
     property var tabModel: [{
         "name": "Tracking",
         "tooltip": "Tracking",
@@ -51,6 +52,11 @@ Item {
             padding: Constants.sideNavBar.buttonPadding
             icon.source: Constants.icons.swiftLogoPath
             icon.color: "transparent"
+            icon.width: 32
+            icon.height: 32
+            checkable: false
+            ToolTip.delay: 1000
+            ToolTip.timeout: 5000
             ToolTip.visible: hovered
             ToolTip.text: "About this application"
             onClicked: {
@@ -63,7 +69,7 @@ Item {
         }
 
         Rectangle {
-            color: Constants.materialGrey
+            color: Constants.swiftLightGrey
             Layout.alignment: Qt.AlignHCenter
             Layout.preferredHeight: Constants.sideNavBar.separatorHeight
             Layout.fillWidth: true
@@ -71,62 +77,48 @@ Item {
             Layout.leftMargin: Constants.sideNavBar.separatorMargin
         }
 
-        TabBar {
-            id: tab
-
+        Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            z: Constants.commonChart.zAboveCharts
-            height: parent.height
-            contentHeight: Constants.sideNavBar.tabBarHeight
-            contentWidth: Constants.sideNavBar.tabBarWidth
-            currentIndex: Globals.initialMainTabIndex + 1
-            spacing: Constants.sideNavBar.tabBarSpacing
-            orientation: ListView.Vertical
-            background: Rectangle {
-                color: "#323F48"
-            }
+            color: Constants.swiftGrey
 
-            Component.onCompleted: {
-                logo.checkable = false;
-            }
-
-            TabButton {
-                enabled: false
-                height: 0
-            }
-
-            Repeater {
-                id: repeater
-
-                model: tabModel
-
-                TabButton {
-                    text: modelData.name
-                    width: Constants.sideNavBar.tabBarWidth
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    border: false
-                    icon.source: modelData.source
-                    icon.color: !enabled ? Qt.darker("white", 2) : down || checked || hovered ? Constants.swiftOrange : "white"
-                    labelColor: !enabled ? Qt.darker("white", 2) : down || checked ? Constants.swiftOrange : "white"
-                    backgroundColor: hovered ? Qt.darker("#323F48", 1.1) : "#323F48"
-                    display: AbstractButton.TextUnderIcon
-                    font.pointSize: Constants.smallPointSize
-                    padding: Constants.sideNavBar.buttonPadding
-                    rightInset: Constants.sideNavBar.buttonInset
-                    leftInset: Constants.sideNavBar.buttonInset
-                    enabled: Globals.connected_at_least_once
-                    ToolTip.visible: hovered
-                    ToolTip.text: modelData.tooltip
-                    onClicked: {
-                        if (stack.connectionScreenVisible())
-                            stack.mainView();
-
-                    }
+            ButtonGroup {
+                id: navButtonGroup
+                buttons: navButtons.children
+                onCheckedButtonChanged: {
+                    for (var idx = 0; idx < buttons.length && buttons[idx] != checkedButton; idx++);
+                    navButtons.currentIndex = idx;
                 }
 
             }
 
+            ListView {
+                id: navButtons
+                anchors.fill: parent
+
+                model: tabModel
+                currentIndex: Globals.initialMainTabIndex
+
+                highlightMoveDuration: 200
+                highlightResizeDuration: 0
+                highlightFollowsCurrentItem: true
+                highlight: Item {
+                    // TODO: This is an odd z order which depends on the Z order of some things in the buttons, refactor.
+                    z: 6
+                    Rectangle {
+                        height: 2
+                        width: parent.width
+                        y: parent.height - height
+                        color: Constants.swiftOrange
+                    }
+
+                }
+
+                delegate: SideNavButton {
+                    buttonGroup: navButtonGroup
+                }
+
+            }
         }
 
         TabButton {

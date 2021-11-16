@@ -82,13 +82,11 @@ ApplicationWindow {
                     MainTabs {
                         id: mainTabs
 
-                        property alias curIndex: sideNavBar.curIndex
-                        property alias logoPopup: logoPopup
-
                         SplitView.fillHeight: true
                         SplitView.fillWidth: true
                         Layout.leftMargin: Constants.margins
                         Layout.rightMargin: Constants.margins
+                        currentIndex: sideNavBar.currentIndex
                     }
 
                     ColumnLayout {

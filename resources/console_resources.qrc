@@ -8,6 +8,7 @@
     <file>MainDialogView.qml</file>
     <file>MainTabs.qml</file>
     <file>SideNavBar.qml</file>
+    <file>SideNavBarComponents/SideNavButton.qml</file>
     <file>LogPanel.qml</file>
     <file>LoggingBar.qml</file>
     <file>StatusBar.qml</file>

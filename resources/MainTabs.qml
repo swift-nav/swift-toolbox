@@ -5,6 +5,7 @@ import SwiftConsole 1.0
 
 Item {
     property alias currentIndex: stackLayout.currentIndex
+
     StackLayout {
         id: stackLayout
 

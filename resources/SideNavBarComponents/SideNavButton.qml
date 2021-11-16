@@ -12,6 +12,7 @@ Button {
 
     property QtObject buttonGroup
     property QtObject view: ListView.view
+
     ButtonGroup.group: buttonGroup
     width: view.width
     height: implicitHeight < width ? width : implicitHeight
@@ -26,12 +27,10 @@ Button {
     icon.source: modelData.source
     icon.width: 22
     icon.height: 22
-    icon.color: control.checked || control.highlighted ? Constants.swiftOrange :
-                control.flat && !control.down ? (control.visualFocus ? Constants.swiftOrange : control.palette.windowText) : "white"
+    icon.color: control.checked || control.highlighted ? Constants.swiftOrange : control.flat && !control.down ? (control.visualFocus ? Constants.swiftOrange : control.palette.windowText) : "white"
     font.pointSize: Constants.smallPointSize
     font.capitalization: Font.MixedCase
     font.letterSpacing: -1
-
     // No idea why the insets are set, but they need to be 0 so there are no gaps between buttons.
     topInset: 0
     bottomInset: 0
@@ -42,6 +41,9 @@ Button {
     // Spacing controls the spacing between the icon and the text. Default is 6, we reduce this to
     // 3 to match the new style mockups.
     spacing: 3
+    Component.onCompleted: {
+        console.assert(buttonGroup != undefined, "No buttonGroup assigned to SideNavButton! Undesired behavior will result.");
+    }
 
     contentItem: IconLabel {
         spacing: control.spacing
@@ -50,16 +52,14 @@ Button {
         icon: control.icon
         text: control.text
         font: control.font
-        color: control.checked || control.highlighted ? control.palette.dark :
-            control.flat && !control.down ? (control.visualFocus ? Constants.swiftOrange : control.palette.windowText) : "white"
+        color: control.checked || control.highlighted ? control.palette.dark : control.flat && !control.down ? (control.visualFocus ? Constants.swiftOrange : control.palette.windowText) : "white"
     }
 
     background: Rectangle {
         implicitWidth: 100
         implicitHeight: 40
         visible: !control.flat || control.down || control.checked || control.highlighted
-        color: Color.blend(control.checked || control.highlighted ? "white" : Constants.swiftGrey,
-                                                                    control.palette.mid, control.down ? 0.5 : 0.0)
+        color: Color.blend(control.checked || control.highlighted ? "white" : Constants.swiftGrey, control.palette.mid, control.down ? 0.5 : 0)
         border.color: Constants.swiftOrange
         border.width: control.visualFocus ? 1 : 0
 
@@ -69,12 +69,12 @@ Button {
             anchors.bottom: parent.bottom
             height: 1
             color: "white"
-            visible: !control.visualFocus &&
-                        !(control.view.itemAtIndex(index+1) != null ? control.view.itemAtIndex(index+1).visualFocus : false)
+            visible: !control.visualFocus && !(control.view.itemAtIndex(index + 1) != null ? control.view.itemAtIndex(index + 1).visualFocus : false)
         }
 
         Repeater {
             model: 2
+
             Rectangle {
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
@@ -84,10 +84,9 @@ Button {
                 color: Constants.swiftGrey
                 visible: !control.visualFocus && (control.checked || control.highlighted)
             }
+
         }
+
     }
 
-    Component.onCompleted: {
-        console.assert(buttonGroup != undefined, "No buttonGroup assigned to SideNavButton! Undesired behavior will result.")
-    }
 }

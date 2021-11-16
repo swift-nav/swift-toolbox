@@ -1,8 +1,8 @@
-import "SideNavBarComponents"
 import "Constants"
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import "SideNavBarComponents"
 import SwiftConsole 1.0
 
 Item {
@@ -84,27 +84,28 @@ Item {
 
             ButtonGroup {
                 id: navButtonGroup
+
                 buttons: navButtons.children
                 onCheckedButtonChanged: {
                     for (var idx = 0; idx < buttons.length && buttons[idx] != checkedButton; idx++);
                     navButtons.currentIndex = idx;
                 }
-
             }
 
             ListView {
                 id: navButtons
-                anchors.fill: parent
 
+                anchors.fill: parent
                 model: tabModel
                 currentIndex: Globals.initialMainTabIndex
-
                 highlightMoveDuration: 200
                 highlightResizeDuration: 0
                 highlightFollowsCurrentItem: true
+
                 highlight: Item {
                     // TODO: This is an odd z order which depends on the Z order of some things in the buttons, refactor.
                     z: 6
+
                     Rectangle {
                         height: 2
                         width: parent.width
@@ -119,6 +120,7 @@ Item {
                 }
 
             }
+
         }
 
         TabButton {

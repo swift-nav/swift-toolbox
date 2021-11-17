@@ -34,13 +34,13 @@
 **
 ****************************************************************************/
 
+import "../Constants"
 import QtQuick 2.12
-import QtQuick.Templates 2.12 as T
 import QtQuick.Controls 2.12
-import QtQuick.Controls.impl 2.12
 import QtQuick.Controls.Material 2.12
 import QtQuick.Controls.Material.impl 2.12
-import "../Constants"
+import QtQuick.Controls.impl 2.12
+import QtQuick.Templates 2.12 as T
 
 T.TabButton {
     id: control
@@ -48,21 +48,17 @@ T.TabButton {
     property color labelColor: !control.enabled ? control.Material.hintTextColor : control.down || control.checked ? "white" : Constants.tabButtonUnselectedTextColor
     property color backgroundColor: down || checked ? Constants.swiftGrey : hovered ? Qt.darker(Constants.swiftControlBackground, 1.1) : Constants.swiftControlBackground
     property bool border: true
-    implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
-                            implicitContentWidth + leftPadding + rightPadding)
-    implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
-                             implicitContentHeight + topPadding + bottomPadding)
 
+    implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset, implicitContentWidth + leftPadding + rightPadding)
+    implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset, implicitContentHeight + topPadding + bottomPadding)
     padding: 12
     spacing: 6
-
     font: Qt.font({
         "family": "Roboto",
         "pointSize": Constants.largePointSize,
-        "bold" : true,
+        "bold": true,
         "capitalization": Font.MixedCase
     })
-
     icon.width: 24
     icon.height: 24
     icon.color: !enabled ? Material.hintTextColor : down || checked ? "white" : Constants.tabButtonUnselectedTextColor
@@ -71,7 +67,6 @@ T.TabButton {
         spacing: control.spacing
         mirrored: control.mirrored
         display: control.display
-
         icon: control.icon
         text: control.text
         font: control.font
@@ -82,17 +77,8 @@ T.TabButton {
         border.width: control.border ? 1 : 0
         border.color: "#C2C2C2"
         implicitHeight: control.Material.touchTarget
-
         clip: true
         color: backgroundColor
     }
-    // background: Ripple {
-    //     implicitHeight: control.Material.touchTarget
 
-    //     clip: true
-    //     pressed: control.pressed
-    //     anchor: control
-    //     active: control.down || control.checked || control.visualFocus || control.hovered
-    //     color: backgroundColor
-    // }
 }

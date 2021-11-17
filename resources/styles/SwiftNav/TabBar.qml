@@ -1,30 +1,25 @@
 import QtQuick 2.12
-import QtQuick.Templates 2.12 as T
 import QtQuick.Controls.Material 2.12
 import QtQuick.Controls.Material.impl 2.12
+import QtQuick.Templates 2.12 as T
 
 T.TabBar {
     id: control
 
     property var orientation: ListView.Horizontal
 
-    implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
-                            contentWidth + leftPadding + rightPadding)
-    implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
-                             contentHeight + topPadding + bottomPadding)
-
+    implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset, contentWidth + leftPadding + rightPadding)
+    implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset, contentHeight + topPadding + bottomPadding)
     spacing: -1
 
     contentItem: ListView {
         model: control.contentModel
         currentIndex: control.currentIndex
-
         spacing: control.spacing
         orientation: control.orientation
         boundsBehavior: Flickable.StopAtBounds
         flickableDirection: Flickable.AutoFlickIfNeeded
         snapMode: ListView.SnapToItem
-
         highlightMoveDuration: 250
         highlightResizeDuration: 0
         highlightFollowsCurrentItem: true
@@ -34,6 +29,7 @@ T.TabBar {
 
         highlight: Item {
             z: 2
+
             Rectangle {
                 x: 1
                 height: 2
@@ -41,19 +37,22 @@ T.TabBar {
                 y: control.position === T.TabBar.Footer ? 0 : parent.height - height
                 color: control.Material.accentColor
             }
+
         }
+
     }
 
     background: Item {
         Rectangle {
             anchors.fill: parent
             color: "white"
-
             layer.enabled: control.Material.elevation > 0
+
             layer.effect: ElevationEffect {
                 elevation: control.Material.elevation
                 fullWidth: true
             }
+
         }
 
         Rectangle {
@@ -63,6 +62,7 @@ T.TabBar {
             height: 1
             color: "#C2C2C2"
         }
+
         Rectangle {
             z: 2
             anchors.bottom: parent.bottom
@@ -70,5 +70,7 @@ T.TabBar {
             height: 1
             color: "#C2C2C2"
         }
+
     }
+
 }

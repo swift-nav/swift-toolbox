@@ -45,8 +45,8 @@ import "../Constants"
 T.TabButton {
     id: control
 
-    property color labelColor: !control.enabled ? control.Material.hintTextColor : control.down || control.checked ? "white" : "#C2C2C2"
-    property color backgroundColor: down || checked ? Constants.swiftOrange : hovered ? Qt.darker("white", 1.1) : "white"
+    property color labelColor: !control.enabled ? control.Material.hintTextColor : control.down || control.checked ? "white" : Constants.tabButtonUnselectedTextColor
+    property color backgroundColor: down || checked ? Constants.swiftGrey : hovered ? Qt.darker(Constants.swiftControlBackground, 1.1) : Constants.swiftControlBackground
     property bool border: true
     implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
                             implicitContentWidth + leftPadding + rightPadding)
@@ -65,7 +65,7 @@ T.TabButton {
 
     icon.width: 24
     icon.height: 24
-    icon.color: !enabled ? Material.hintTextColor : down || checked ? Constants.swiftOrange : "#C2C2C2"
+    icon.color: !enabled ? Material.hintTextColor : down || checked ? "white" : Constants.tabButtonUnselectedTextColor
 
     contentItem: IconLabel {
         spacing: control.spacing

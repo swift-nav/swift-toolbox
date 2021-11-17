@@ -52,6 +52,8 @@ QtObject {
     readonly property bool debugMode: false
     readonly property color swiftGrey: "#323F48"
     readonly property color swiftLightGrey: "#3C464F"
+    readonly property color swiftControlBackground: "#ECECEC"
+    readonly property color tabButtonUnselectedTextColor: "#767676"
     readonly property color materialGrey: "dimgrey"
     readonly property color swiftOrange: "#FF8300"
 

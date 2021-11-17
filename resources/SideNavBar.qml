@@ -6,7 +6,10 @@ import "SideNavBarComponents"
 import SwiftConsole 1.0
 
 Item {
+    id: top
+
     property alias currentIndex: navButtons.currentIndex
+    property bool enabled: true
     property var tabModel: [{
         "name": "Tracking",
         "tooltip": "Tracking",
@@ -44,39 +47,6 @@ Item {
     ColumnLayout {
         anchors.fill: parent
 
-        Button {
-            id: logo
-
-            Layout.fillWidth: true
-            Layout.preferredHeight: Constants.sideNavBar.tabBarHeight
-            padding: Constants.sideNavBar.buttonPadding
-            icon.source: Constants.icons.swiftLogoPath
-            icon.color: "transparent"
-            icon.width: 32
-            icon.height: 32
-            checkable: false
-            ToolTip.delay: 1000
-            ToolTip.timeout: 5000
-            ToolTip.visible: hovered
-            ToolTip.text: "About this application"
-            onClicked: {
-                logoPopup.open();
-            }
-
-            background: Item {
-            }
-
-        }
-
-        Rectangle {
-            color: Constants.swiftLightGrey
-            Layout.alignment: Qt.AlignHCenter
-            Layout.preferredHeight: Constants.sideNavBar.separatorHeight
-            Layout.fillWidth: true
-            Layout.rightMargin: Constants.sideNavBar.separatorMargin
-            Layout.leftMargin: Constants.sideNavBar.separatorMargin
-        }
-
         Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -98,9 +68,13 @@ Item {
                 anchors.fill: parent
                 model: tabModel
                 currentIndex: Globals.initialMainTabIndex
+                enabled: top.enabled
                 highlightMoveDuration: 200
                 highlightResizeDuration: 0
                 highlightFollowsCurrentItem: true
+                Component.onCompleted: {
+                    currentItem.checked = true;
+                }
 
                 highlight: Item {
                     // TODO: This is an odd z order which depends on the Z order of some things in the buttons, refactor.

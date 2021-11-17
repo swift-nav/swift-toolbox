@@ -40,6 +40,7 @@ ApplicationWindow {
 
             Layout.fillHeight: true
             Layout.minimumWidth: Constants.sideNavBar.tabBarWidth
+            enabled: stack.currentIndex != 0
         }
 
         StackLayout {

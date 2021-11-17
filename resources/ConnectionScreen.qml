@@ -33,14 +33,19 @@ Item {
     }
 
     Rectangle {
-        width: parent.width
-        height: parent.height
-        anchors.centerIn: parent
+        anchors.fill: parent
 
         Image {
             width: parent.width
             height: parent.height
             source: Constants.icons.splashScreenPath
+        }
+
+        Rectangle {
+            anchors.left: parent.left
+            height: parent.height
+            width: 1
+            color: "white"
         }
 
         Dialog {

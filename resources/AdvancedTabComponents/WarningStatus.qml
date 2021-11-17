@@ -1,7 +1,7 @@
 import "../Constants"
 import QtGraphicalEffects 1.15
 import QtQuick 2.5
-import QtQuick.Layouts 1.15
+import QtQuick.Controls 2.15
 
 Item {
     Image {
@@ -11,7 +11,7 @@ Item {
         width: Constants.advancedImu.insStatusImageWidth
         height: Constants.advancedImu.insStatusImageWidth
         smooth: true
-        source: "../" + Constants.advancedImu.warningStatusPath
+        source: Constants.advancedImu.warningStatusPath
         antialiasing: true
 
         ColorOverlay {
@@ -23,14 +23,13 @@ Item {
 
     }
 
-    Text {
+    Label {
         id: label
 
         text: "WARNING"
         anchors.left: warningStatusImage.right
         anchors.leftMargin: Constants.fusionStatusFlags.labelMargin
         anchors.verticalCenter: warningStatusImage.verticalCenter
-        font.pointSize: Constants.mediumPointSize
     }
 
 }

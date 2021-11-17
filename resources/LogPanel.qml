@@ -31,7 +31,7 @@ Item {
         }
 
         Shortcut {
-            sequence: StandardKey.Copy
+            sequences: [StandardKey.Copy]
             onActivated: {
                 if (selectedRow != -1) {
                     textEdit.text = JSON.stringify(tableView.model.getRow(selectedRow));

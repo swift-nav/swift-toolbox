@@ -4,6 +4,7 @@ use std::{
     net::{SocketAddr, TcpStream, ToSocketAddrs},
     ops::Drop,
     path::{Path, PathBuf},
+    sync::Arc,
     thread,
     thread::JoinHandle,
     time::Duration,
@@ -11,6 +12,7 @@ use std::{
 
 use anyhow::anyhow;
 use log::{error, info};
+use sbp::link::LinkSource;
 
 use crate::client_sender::BoxedClientSender;
 use crate::constants::*;
@@ -20,18 +22,24 @@ use crate::shared_state::{ConnectionState, SharedState};
 use crate::types::*;
 use crate::utils::{refresh_connection_frontend, refresh_loggingbar};
 use crate::watch::Watched;
+use crate::Tabs;
 
 #[derive(Debug)]
-pub struct ConnectionManager {
+pub struct ConnectionManager<'l> {
     msg: Watched<ConnectionManagerMsg>,
+    tabs: Watched<Option<Arc<Tabs<'l>>>>,
     handle: Option<JoinHandle<()>>,
 }
 
-impl ConnectionManager {
-    pub fn new(client_sender: BoxedClientSender, shared_state: SharedState) -> ConnectionManager {
+impl ConnectionManager<'_> {
+    pub fn new(client_sender: BoxedClientSender, shared_state: SharedState) -> Self {
         let msg = Watched::new(ConnectionManagerMsg::Disconnect);
         let handle = Some(conn_manager_thd(client_sender, shared_state, msg.clone()));
-        ConnectionManager { msg, handle }
+        ConnectionManager {
+            msg,
+            tabs: Watched::new(None),
+            handle,
+        }
     }
 
     /// Helper function for attempting to open a file and process SBP messages from it.
@@ -76,7 +84,7 @@ impl ConnectionManager {
     }
 }
 
-impl Drop for ConnectionManager {
+impl Drop for ConnectionManager<'_> {
     fn drop(&mut self) {
         // breaks the `while let Ok(conn) ...` loop
         self.msg.close();
@@ -110,6 +118,7 @@ fn conn_manager_thd(
         info!("Console started...");
         while let Ok(msg) = recv.wait() {
             match msg {
+                ConnectionManagerMsg::Connected(tabs) => {}
                 ConnectionManagerMsg::Connect(conn) => {
                     let (reader, writer) = match conn.try_connect(Some(&shared_state)) {
                         Ok(rw) => rw,
@@ -136,14 +145,15 @@ fn conn_manager_thd(
                         &client_sender,
                     );
                     refresh_connection_frontend(&client_sender, &shared_state);
-                    pm_thd = Some(process_messages_thd(
+                    let (tabs, h) = process_messages_thd(
                         messages,
                         msg_sender,
                         conn.clone(),
                         shared_state.clone(),
                         client_sender.clone(),
                         manager_msg.clone(),
-                    ));
+                    );
+                    pm_thd = Some(h);
                 }
                 ConnectionManagerMsg::Reconnect(conn) => {
                     join(&mut reconnect_thd);
@@ -188,25 +198,46 @@ fn process_messages_thd(
     shared_state: SharedState,
     client_sender: BoxedClientSender,
     manager_msg: Watched<ConnectionManagerMsg>,
-) -> JoinHandle<()> {
-    thread::spawn(move || {
-        let res = process_messages(
-            messages,
-            msg_sender,
-            conn.clone(),
-            shared_state,
-            client_sender,
-        );
-        if conn.close_when_done() {
-            manager_msg.close();
-        }
-        if let Err(e) = res {
-            error!("Connection error: {}", e);
-            if conn.is_tcp() {
-                manager_msg.send(ConnectionManagerMsg::Reconnect(conn))
+) -> (Arc<Tabs<'static>>, JoinHandle<()>) {
+    let source = LinkSource::new();
+    let tabs = if conn.settings_enabled() {
+        Arc::new(Tabs::with_settings(
+            shared_state.clone(),
+            client_sender.clone(),
+            msg_sender.clone(),
+            source.stateless_link(),
+        ))
+    } else {
+        Arc::new(Tabs::new(
+            shared_state.clone(),
+            client_sender.clone(),
+            msg_sender.clone(),
+        ))
+    };
+    let h = thread::spawn({
+        let tabs = Arc::clone(&tabs);
+        move || {
+            let res = process_messages(
+                tabs,
+                source,
+                messages,
+                msg_sender,
+                conn.clone(),
+                shared_state,
+                client_sender,
+            );
+            if conn.close_when_done() {
+                manager_msg.close();
+            }
+            if let Err(e) = res {
+                error!("Connection error: {}", e);
+                if conn.is_tcp() {
+                    manager_msg.send(ConnectionManagerMsg::Reconnect(conn))
+                }
             }
         }
-    })
+    });
+    (tabs, h)
 }
 
 #[derive(Debug, Clone)]

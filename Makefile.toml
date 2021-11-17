@@ -213,6 +213,18 @@ args = [
   "${@}",
 ]
 
+[tasks.tui-run]
+command = "cargo"
+args = [
+  "run",
+  "--bin",
+  "tui",
+  "--features",
+  "tui",
+  "--no-default-features",
+  "${@}",
+]
+
 [tasks.store-version]
 script_runner = "@shell"
 script = '''

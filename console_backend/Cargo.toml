@@ -46,6 +46,13 @@ sbp-settings = "0.4"
 env_logger = { version = "0.9", optional = true }
 mimalloc = { version = "0.1", default-features = false }
 
+# Optional deps
+tui = { version = "0.16.0", default-features = false, features = [
+    "crossterm",
+], optional = true }
+crossterm = { version = "0.22.1", optional = true }
+tabwriter = { version = "1.2.1", optional = true }
+
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 serialport = "4.0.1"
 
@@ -88,8 +95,14 @@ name = "headless-console"
 path = "src/bin/headless-console.rs"
 bench = false
 
+[[bin]]
+name = "tui"
+path = "src/bin/tui/bin.rs"
+bench = false
+
 [features]
 default = ["pyo3"]
 benches = []
 tests = []
 fft = ["serde-pickle"]
+tui2 = ["tui", "crossterm", "tabwriter", "env_logger"]

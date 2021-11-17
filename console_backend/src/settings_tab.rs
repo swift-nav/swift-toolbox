@@ -9,7 +9,7 @@ use capnp::message::Builder;
 use ini::Ini;
 use lazy_static::lazy_static;
 use log::{debug, error, warn};
-use parking_lot::Mutex;
+use parking_lot::{Mutex, MutexGuard};
 use sbp::link::Link;
 use sbp::messages::piksi::MsgReset;
 use sbp::messages::settings::MsgSettingsSave;
@@ -120,6 +120,10 @@ impl<'link> SettingsTab<'link> {
         self.shared_state.reset_settings_state();
     }
 
+    pub fn settings(&self) -> MutexGuard<Settings> {
+        self.settings.lock()
+    }
+
     fn refresh(&self) {
         (*self.settings.lock()) = Settings::new();
         self.send_table_data();
@@ -228,7 +232,7 @@ impl<'link> SettingsTab<'link> {
     }
 
     fn confirm_ins_change(&self) -> Result<()> {
-        let settings = self.settings.lock();
+        let settings = self.settings();
         let ins_mode = settings
             .get("ins", "output_mode")?
             .value
@@ -489,7 +493,8 @@ pub struct SaveRequest {
     pub value: String,
 }
 
-struct Settings {
+#[derive(Debug, Clone, PartialEq)]
+pub struct Settings {
     inner: BTreeMap<&'static str, BTreeMap<&'static str, SettingsEntry>>,
 }
 
@@ -508,7 +513,7 @@ impl Settings {
         }
     }
 
-    fn groups(&self) -> Vec<Vec<(&Setting, &SettingValue)>> {
+    pub fn groups(&self) -> Vec<Vec<(&Setting, &SettingValue)>> {
         self.inner.values().fold(Vec::new(), |mut groups, group| {
             let group: Vec<_> = group
                 .values()
@@ -526,7 +531,7 @@ impl Settings {
         })
     }
 
-    fn get<'a, 'b>(&'a self, group: &'b str, name: &'b str) -> Result<&'a SettingsEntry> {
+    pub fn get<'a, 'b>(&'a self, group: &'b str, name: &'b str) -> Result<&'a SettingsEntry> {
         self.inner
             .get(group)
             .map(|g| g.get(name))
@@ -567,10 +572,10 @@ impl std::ops::Deref for Settings {
 }
 
 /// A reference to a particular setting and its value if it has been fetched
-#[derive(Debug)]
-struct SettingsEntry {
-    setting: Cow<'static, Setting>,
-    value: Option<SettingValue>,
+#[derive(Debug, Clone, PartialEq)]
+pub struct SettingsEntry {
+    pub setting: Cow<'static, Setting>,
+    pub value: Option<SettingValue>,
 }
 
 impl SettingsEntry {

@@ -1,4 +1,4 @@
-use std::io;
+use std::{io, sync::Arc};
 
 use log::{debug, error};
 use sbp::{
@@ -33,28 +33,15 @@ use crate::Tabs;
 
 pub use messages::{Messages, StopToken};
 
-pub fn process_messages(
+pub fn process_messages<'link>(
+    tabs: Arc<Tabs<'link>>,
+    source: LinkSource<'link, Tabs<'link>>,
     mut messages: Messages,
     msg_sender: MsgSender,
     conn: Connection,
     shared_state: SharedState,
     client_sender: BoxedClientSender,
 ) -> Result<(), io::Error> {
-    let source: LinkSource<Tabs> = LinkSource::new();
-    let tabs = if conn.settings_enabled() {
-        Tabs::with_settings(
-            shared_state.clone(),
-            client_sender.clone(),
-            msg_sender.clone(),
-            source.stateless_link(),
-        )
-    } else {
-        Tabs::new(
-            shared_state.clone(),
-            client_sender.clone(),
-            msg_sender.clone(),
-        )
-    };
     register_events(source.link());
     let update_tab_context = tabs
         .update

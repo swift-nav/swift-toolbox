@@ -6,7 +6,7 @@ pragma Singleton
 QtObject {
     readonly property real margins: 2
     readonly property real tabBarWidth: 70
-    readonly property real tabBarHeight: 40
+    readonly property real tabBarHeight: 45
     readonly property real topLevelSpacing: 0
     readonly property real logPanelPreferredHeight: 100
     readonly property int loggingBarPreferredHeight: 50
@@ -50,6 +50,10 @@ QtObject {
     readonly property real mediumPointSize: 8
     readonly property real largePointSize: 9
     readonly property bool debugMode: false
+    readonly property color swiftGrey: "#323F48"
+    readonly property color swiftLightGrey: "#3C464F"
+    readonly property color swiftControlBackground: "#ECECEC"
+    readonly property color tabButtonUnselectedTextColor: "#767676"
     readonly property color materialGrey: "dimgrey"
     readonly property color swiftOrange: "#FF8300"
 
@@ -92,8 +96,7 @@ QtObject {
         readonly property string updatePath: "qrc:///images/fontawesome/chevron-circle-up-solid.svg"
         readonly property string advancedPath: "qrc:///images/fontawesome/lock-solid.svg"
         readonly property real tabBarHeight: 45
-        readonly property real tabBarWidth: 70
-        readonly property int tabBarSpacing: 10
+        readonly property real tabBarWidth: 50
         readonly property int buttonPadding: 0
         readonly property int buttonInset: 0
         readonly property int separatorMargin: 10

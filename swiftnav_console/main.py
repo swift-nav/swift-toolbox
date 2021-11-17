@@ -837,6 +837,7 @@ def main():
     capnp_path = get_capnp_path()
 
     engine.addImportPath("PySide2")
+    engine.addImportPath(":/")
     engine.load(QUrl("qrc:/view.qml"))
     if not qml_object_created[0]:
         return 1

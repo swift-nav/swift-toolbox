@@ -14,6 +14,8 @@ Item {
     TabBar {
         id: trackingBar
 
+        anchors.left: parent.left
+        anchors.right: parent.right
         z: Constants.commonChart.zAboveCharts
         currentIndex: Globals.initialMainTabIndex == 0 ? Globals.initialSubTabIndex : 0
         contentHeight: Constants.tabBarHeight

@@ -33,12 +33,14 @@ ApplicationWindow {
         property alias stackView: dialogStack.dialogStack
 
         anchors.fill: parent
+        spacing: 0
 
         SideNavBar {
             id: sideNavBar
 
             Layout.fillHeight: true
             Layout.minimumWidth: Constants.sideNavBar.tabBarWidth
+            enabled: stack.currentIndex != 0
         }
 
         StackLayout {
@@ -76,20 +78,16 @@ ApplicationWindow {
                     orientation: Qt.Vertical
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    Layout.leftMargin: Constants.margins
-                    Layout.rightMargin: Constants.margins
                     Layout.alignment: Qt.AlignTop
 
                     MainTabs {
                         id: mainTabs
 
-                        property alias curIndex: sideNavBar.curIndex
-                        property alias logoPopup: logoPopup
-
                         SplitView.fillHeight: true
                         SplitView.fillWidth: true
                         Layout.leftMargin: Constants.margins
                         Layout.rightMargin: Constants.margins
+                        currentIndex: sideNavBar.currentIndex
                     }
 
                     ColumnLayout {

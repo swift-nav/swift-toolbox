@@ -103,6 +103,7 @@
     <file>ChartLegend.qml</file>
     <file alias="SwiftNav/TabBar.qml">styles/SwiftNav/TabBar.qml</file>
     <file alias="SwiftNav/TabButton.qml">styles/SwiftNav/TabButton.qml</file>
-    <file>Tab.qml</file>
+    <file>MainTab.qml</file>
+    <file>TabInfoBar.qml</file>
 </qresource>
 </RCC>

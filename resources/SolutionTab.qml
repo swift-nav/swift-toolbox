@@ -1,16 +1,12 @@
 import "Constants"
 import QtCharts 2.2
 import QtQuick 2.5
-import QtQuick.Controls 2.12
-import QtQuick.Controls 1.4
+import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import "SolutionTabComponents" as SolutionTabComponents
 
-Item {
+MainTab {
     id: solutionTab
-
-    width: parent.width
-    height: parent.height
 
     SplitView {
         id: solutionSplitView

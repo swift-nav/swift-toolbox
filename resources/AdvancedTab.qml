@@ -5,11 +5,8 @@ import QtQuick 2.5
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.15
 
-Item {
+MainTab {
     id: advancedTab
-
-    width: parent.width
-    height: parent.height
 
     TabBar {
         id: advancedBar

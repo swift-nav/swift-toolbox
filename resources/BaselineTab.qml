@@ -5,11 +5,8 @@ import QtQuick 2.5
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 
-Item {
+MainTab {
     id: baselineTab
-
-    width: parent.width
-    height: parent.height
 
     SplitView {
         id: baselineSplitView

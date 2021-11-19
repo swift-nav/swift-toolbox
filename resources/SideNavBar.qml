@@ -40,6 +40,10 @@ Item {
         "source": Constants.sideNavBar.advancedPath
     }]
 
+    function clickButton(index) {
+        navButtons.itemAtIndex(index).toggle();
+    }
+
     ConnectionData {
         id: connectionData
     }
@@ -67,14 +71,11 @@ Item {
 
                 anchors.fill: parent
                 model: tabModel
-                currentIndex: Globals.initialMainTabIndex
+                currentIndex: -1
                 enabled: top.enabled
                 highlightMoveDuration: 200
                 highlightResizeDuration: 0
                 highlightFollowsCurrentItem: true
-                Component.onCompleted: {
-                    currentItem.checked = true;
-                }
 
                 highlight: Item {
                     // TODO: This is an odd z order which depends on the Z order of some things in the buttons, refactor.

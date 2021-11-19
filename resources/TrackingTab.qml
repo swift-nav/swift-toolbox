@@ -1,66 +1,30 @@
 import "Constants"
 import QtCharts 2.2
 import QtQuick 2.5
-import QtQuick.Controls 2.12
+import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import "TrackingTabComponents" as TrackingTabComponents
 
-Tab {
+MainTab {
     id: trackingTab
 
-    width: parent.width
-    height: parent.height
-    tabNames: ["Signals", "Sky Plot"]
-    curTabIndex: Globals.initialMainTabIndex == 0 ? Globals.initialSubTabIndex : 0
+    subTabNames: ["Signals", "Sky Plot"]
+    curSubTabIndex: Globals.initialMainTabIndex == 0 ? Globals.initialSubTabIndex : 0
 
-    TabBar {
-        id: trackingBar
+    StackLayout {
+        id: trackingBarLayout
 
-        anchors.left: parent.left
-        anchors.right: parent.right
-        z: Constants.commonChart.zAboveCharts
-        currentIndex: curTabIndex
-        contentHeight: Constants.tabBarHeight
+        anchors.fill: parent
+        currentIndex: curSubTabIndex
 
-        Repeater {
-            model: tabNames
-
-            TabButton {
-                text: modelData
-                width: implicitWidth
-            }
-
+        TrackingTabComponents.TrackingSignalsTab {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
         }
 
-    }
-
-    Rectangle {
-        id: trackingTabBackground
-
-        width: parent.width
-        height: parent.height
-        anchors.top: trackingBar.bottom
-        anchors.bottom: trackingTab.bottom
-        Component.onCompleted: {
-        }
-
-        StackLayout {
-            id: trackingBarLayout
-
-            width: parent.width
-            height: parent.height
-            currentIndex: trackingBar.currentIndex
-
-            TrackingTabComponents.TrackingSignalsTab {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-            }
-
-            TrackingTabComponents.TrackingSkyPlotTab {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-            }
-
+        TrackingTabComponents.TrackingSkyPlotTab {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
         }
 
     }

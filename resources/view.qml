@@ -29,99 +29,117 @@ ApplicationWindow {
         anchors.fill: parent
     }
 
-    RowLayout {
-        property alias stackView: dialogStack.dialogStack
-
+    ColumnLayout {
         anchors.fill: parent
         spacing: 0
 
-        SideNavBar {
-            id: sideNavBar
+        TabInfoBar {
+            id: tabInfoBar
 
-            Layout.fillHeight: true
-            Layout.minimumWidth: Constants.sideNavBar.tabBarWidth
-            enabled: stack.currentIndex != 0
+            Layout.fillWidth: true
+            subTabNames: mainTabs.subTabNames
         }
 
-        StackLayout {
-            id: stack
+        RowLayout {
+            property alias stackView: dialogStack.dialogStack
 
-            function connectionScreen() {
-                stack.currentIndex = 0;
-            }
-
-            function connectionScreenVisible() {
-                return stack.currentIndex == 0;
-            }
-
-            function mainView() {
-                stack.currentIndex = 1;
-            }
-
-            function mainViewVisible() {
-                return stack.currentIndex == 1;
-            }
-
-            currentIndex: 0
-            Layout.fillHeight: true
             Layout.fillWidth: true
+            Layout.fillHeight: true
+            spacing: 0
 
-            ConnectionScreen {
+            SideNavBar {
+                id: sideNavBar
+
+                Layout.fillHeight: true
+                Layout.minimumWidth: Constants.sideNavBar.tabBarWidth
+                enabled: stack.currentIndex != 0
             }
 
-            ColumnLayout {
-                id: mainView
+            StackLayout {
+                id: stack
 
-                spacing: Constants.topLevelSpacing
-
-                SplitView {
-                    orientation: Qt.Vertical
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    Layout.alignment: Qt.AlignTop
-
-                    MainTabs {
-                        id: mainTabs
-
-                        SplitView.fillHeight: true
-                        SplitView.fillWidth: true
-                        Layout.leftMargin: Constants.margins
-                        Layout.rightMargin: Constants.margins
-                        currentIndex: sideNavBar.currentIndex
-                    }
-
-                    ColumnLayout {
-                        SplitView.fillWidth: true
-                        SplitView.preferredHeight: Constants.logPanelPreferredHeight + Constants.loggingBarPreferredHeight
-                        SplitView.minimumHeight: Constants.loggingBarPreferredHeight
-                        spacing: Constants.topLevelSpacing
-
-                        LoggingBar {
-                            id: loggingBar
-
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: Constants.loggingBarPreferredHeight
-                        }
-
-                        LogPanel {
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                        }
-
-                    }
-
+                function connectionScreen() {
+                    stack.currentIndex = 0;
                 }
 
-                Rectangle {
-                    id: statusBar
+                function connectionScreenVisible() {
+                    return stack.currentIndex == 0;
+                }
 
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: Constants.statusBarPreferredHeight
-                    z: Constants.commonChart.zAboveCharts
+                function mainView() {
+                    if (sideNavBar.currentIndex < 0)
+                        sideNavBar.clickButton(Globals.initialMainTabIndex);
 
-                    StatusBar {
-                        property alias sbpRecording: loggingBar.sbpRecording
-                        property alias title: main.title
+                    stack.currentIndex = 1;
+                }
+
+                function mainViewVisible() {
+                    return stack.currentIndex == 1;
+                }
+
+                currentIndex: 0
+                Layout.fillHeight: true
+                Layout.fillWidth: true
+
+                ConnectionScreen {
+                }
+
+                ColumnLayout {
+                    id: mainView
+
+                    spacing: Constants.topLevelSpacing
+
+                    SplitView {
+                        orientation: Qt.Vertical
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        Layout.alignment: Qt.AlignTop
+
+                        MainTabs {
+                            id: mainTabs
+
+                            curSubTabIndex: tabInfoBar.curSubTabIndex
+                            SplitView.fillHeight: true
+                            SplitView.fillWidth: true
+                            Layout.leftMargin: Constants.margins
+                            Layout.rightMargin: Constants.margins
+                            currentIndex: sideNavBar.currentIndex
+                        }
+
+                        ColumnLayout {
+                            SplitView.fillWidth: true
+                            SplitView.preferredHeight: Constants.logPanelPreferredHeight + Constants.loggingBarPreferredHeight
+                            SplitView.minimumHeight: Constants.loggingBarPreferredHeight
+                            spacing: Constants.topLevelSpacing
+
+                            LoggingBar {
+                                id: loggingBar
+
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: Constants.loggingBarPreferredHeight
+                            }
+
+                            LogPanel {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                            }
+
+                        }
+
+                    }
+
+                    Rectangle {
+                        id: statusBar
+
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: Constants.statusBarPreferredHeight
+                        z: Constants.commonChart.zAboveCharts
+
+                        StatusBar {
+                            property alias sbpRecording: loggingBar.sbpRecording
+                            property alias title: main.title
+                        }
+
                     }
 
                 }

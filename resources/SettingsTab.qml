@@ -1,15 +1,13 @@
 import "Constants"
 import Qt.labs.platform 1.1 as LabsPlatform
-import QtCharts 2.2
-import QtQuick 2.7
-import QtQuick.Controls 1.4
+import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Dialogs 1.3
 import QtQuick.Layouts 1.15
 import "SettingsTabComponents" as SettingsTabComponents
 import SwiftConsole 1.0
 
-Item {
+MainTab {
     id: settingsTab
 
     function selectedRow() {
@@ -39,9 +37,6 @@ Item {
         text += "Are you sure you want to auto-populate the Surveyed Position section?";
         return text;
     }
-
-    width: parent.width
-    height: parent.height
 
     SettingsTabData {
         id: settingsTabData

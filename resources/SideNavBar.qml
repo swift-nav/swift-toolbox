@@ -78,7 +78,7 @@ Item {
 
                 highlight: Item {
                     // TODO: This is an odd z order which depends on the Z order of some things in the buttons, refactor.
-                    z: 6
+                    z: 11
 
                     Rectangle {
                         height: 2

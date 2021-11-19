@@ -5,11 +5,13 @@ import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.15
 import "TrackingTabComponents" as TrackingTabComponents
 
-Item {
+Tab {
     id: trackingTab
 
     width: parent.width
     height: parent.height
+    tabNames: ["Signals", "Sky Plot"]
+    curTabIndex: Globals.initialMainTabIndex == 0 ? Globals.initialSubTabIndex : 0
 
     TabBar {
         id: trackingBar
@@ -17,11 +19,11 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         z: Constants.commonChart.zAboveCharts
-        currentIndex: Globals.initialMainTabIndex == 0 ? Globals.initialSubTabIndex : 0
+        currentIndex: curTabIndex
         contentHeight: Constants.tabBarHeight
 
         Repeater {
-            model: ["Signals", "Sky Plot"]
+            model: tabNames
 
             TabButton {
                 text: modelData

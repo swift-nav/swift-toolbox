@@ -6,13 +6,15 @@ use std::time::Duration;
 
 use anyhow::anyhow;
 use capnp::message::Builder;
+use crossbeam::channel::{self, Sender};
 use ini::Ini;
 use lazy_static::lazy_static;
 use log::{debug, error, warn};
 use parking_lot::Mutex;
-use sbp::link::Link;
+use sbp::link::LinkSource;
 use sbp::messages::piksi::MsgReset;
 use sbp::messages::settings::MsgSettingsSave;
+use sbp::Sbp;
 use sbp_settings::{Client, Setting, SettingKind, SettingValue};
 
 use crate::client_sender::BoxedClientSender;
@@ -86,34 +88,50 @@ fn tick(settings_tab: &SettingsTab, settings_state: SettingsTabState) {
     }
 }
 
-pub struct SettingsTab<'link> {
+pub struct SettingsTab {
     shared_state: SharedState,
     client_sender: Mutex<BoxedClientSender>,
     msg_sender: MsgSender,
     settings: Mutex<Settings>,
-    sbp_client: Client<'link>,
+    sbp_client: Client<'static>,
+    messages: Sender<Sbp>,
 }
 
-impl Drop for SettingsTab<'_> {
+impl Drop for SettingsTab {
     fn drop(&mut self) {
         self.shared_state.reset_settings_state();
     }
 }
 
-impl<'link> SettingsTab<'link> {
+impl SettingsTab {
     pub fn new(
         shared_state: SharedState,
         client_sender: BoxedClientSender,
         msg_sender: MsgSender,
-        link: Link<'link, ()>,
-    ) -> SettingsTab<'link> {
+    ) -> Self {
+        let source = LinkSource::new();
+        let link = source.link();
+        let (send, recv) = channel::unbounded();
+        // this thread will join when `SettingsTab` is dropped, because the channel will disconnect
+        std::thread::spawn(move || {
+            for msg in recv.iter() {
+                source.send(&msg);
+            }
+        });
         SettingsTab {
             shared_state,
             client_sender: Mutex::new(client_sender),
             msg_sender: msg_sender.clone(),
             settings: Mutex::new(Settings::new()),
             sbp_client: Client::new(link, move |msg| msg_sender.send(msg).map_err(Into::into)),
+            messages: send,
         }
+    }
+
+    pub fn handle_msg(&self, msg: Sbp) {
+        if let Err(_) = self.messages.send(msg) {
+            warn!("could not forward message to the settings tab");
+        };
     }
 
     pub fn stop(&self) {

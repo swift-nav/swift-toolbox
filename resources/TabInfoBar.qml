@@ -59,11 +59,13 @@ Rectangle {
 
         TabBar {
             id: tabBar
+            visible: tabBarRepeater.count > 0
 
             Layout.fillWidth: false
             spacing: 1
 
             Repeater {
+                id: tabBarRepeater
                 model: subTabNames
 
                 TabButton {
@@ -118,7 +120,7 @@ Rectangle {
             height: rowLayout.height
             width: 1
             color: "#C2C2C2"
-            x: tabBar.x + (tabButton ? tabButton.x - 1 : tabBar.width)
+            x: tabBar.count > 0 ? tabBar.x + (tabButton ? tabButton.x - 1 : tabBar.width) : tabBar.x
         }
 
     }

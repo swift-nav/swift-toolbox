@@ -5,6 +5,8 @@ import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
 Rectangle {
+    id: tabInfoBar
+
     property string tabName: "Tracking"
     property var subTabNames: ["Hello World", "Foo Bar", "Quux Quuux"]
     property alias curSubTabIndex: tabBar.currentIndex
@@ -80,7 +82,7 @@ Rectangle {
 
     // Add in single-line separators between the items.
     Repeater {
-        model: tabBar.count + 1
+        model: tabInfoBar.tabName.length > 0 ? tabBar.count + 1 : 0
 
         Rectangle {
             property var tabButton: tabBar.itemAt(index)

@@ -72,6 +72,7 @@
     <file>images/fontawesome/bars-solid.svg</file>
     <file>images/fontawesome/play-solid.svg</file>
     <file>images/fontawesome/power-off-solid.svg</file>
+    <file>images/fontawesome/info-circle-solid.svg</file>
     <file alias="pause.svg">images/iconic/media-pause.svg</file>
     <file alias="center-on.svg">images/fontawesome/crosshairs-solid.svg</file>
     <file alias="clear.svg">images/fontawesome/eraser-solid.svg</file>

@@ -38,14 +38,13 @@ Rectangle {
     RowLayout {
         id: rowLayout
 
-        anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
+        anchors.fill: parent
         spacing: 0
 
         Label {
             id: tabLabel
 
+            Layout.fillWidth: false
             padding: 8
             leftPadding: 13
             rightPadding: 13
@@ -61,7 +60,7 @@ Rectangle {
         TabBar {
             id: tabBar
 
-            Layout.fillHeight: true
+            Layout.fillWidth: false
             spacing: 1
 
             Repeater {
@@ -76,6 +75,35 @@ Rectangle {
 
             }
 
+        }
+
+        Item {
+            implicitHeight: tabBar.implicitHeight
+            Layout.fillWidth: true
+        }
+
+        Label {
+            Layout.fillWidth: false
+            text: "Swift"
+        }
+
+        Label {
+            Layout.fillWidth: false
+            padding: 8
+            leftPadding: 13
+            rightPadding: 13
+            text: "Console"
+            font.family: "Roboto Condensed"
+            font.capitalization: Font.AllUppercase
+            // font.letterSpacing: 1
+            font.pointSize: 18
+        }
+
+        Image {
+            Layout.fillWidth: false
+            source: Constants.infoPath
+            sourceSize.width: 20
+            sourceSize.height: 20
         }
 
     }

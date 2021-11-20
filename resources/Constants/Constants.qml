@@ -49,6 +49,9 @@ QtObject {
     readonly property real smallPointSize: 7
     readonly property real mediumPointSize: 8
     readonly property real largePointSize: 9
+
+    readonly property string infoPath: "qrc:///images/fontawesome/info-circle-solid.svg"
+
     readonly property bool debugMode: false
     readonly property color swiftGrey: "#323F48"
     readonly property color swiftLightGrey: "#3C464F"

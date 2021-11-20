@@ -801,6 +801,8 @@ def main():
     app.setApplicationName(ApplicationMetadata.APPLICATION_NAME)
     QFontDatabase.addApplicationFont(":/fonts/Roboto-Regular.ttf")
     QFontDatabase.addApplicationFont(":/fonts/Roboto-Bold.ttf")
+    QFontDatabase.addApplicationFont(":/fonts/RobotoCondensed-Regular.ttf")
+    # We specifically *don't* want the RobotoCondensed-Bold.ttf font so we get the right look when bolded.
 
     qmlRegisterType(LogPanelData, "SwiftConsole", 1, 0, "LogPanelData")  # type: ignore
     qmlRegisterType(ConnectionData, "SwiftConsole", 1, 0, "ConnectionData")  # type: ignore

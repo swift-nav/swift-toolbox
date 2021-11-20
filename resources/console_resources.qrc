@@ -4,6 +4,7 @@
     <file>fonts/Roboto-LICENSE.txt</file>
     <file>fonts/Roboto-Regular.ttf</file>
     <file>fonts/Roboto-Bold.ttf</file>
+    <file>fonts/RobotoCondensed-Regular.ttf</file>
     <file>view.qml</file>
     <file>MainDialogView.qml</file>
     <file>MainTabs.qml</file>

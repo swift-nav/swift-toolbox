@@ -10,7 +10,6 @@ T.TabBar {
 
     implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset, contentWidth + leftPadding + rightPadding)
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset, contentHeight + topPadding + bottomPadding)
-    spacing: -1
 
     contentItem: ListView {
         model: control.contentModel
@@ -31,9 +30,8 @@ T.TabBar {
             z: 2
 
             Rectangle {
-                x: 1
                 height: 2
-                width: parent.width - 2
+                width: parent.width
                 y: control.position === T.TabBar.Footer ? 0 : parent.height - height
                 color: control.Material.accentColor
             }
@@ -53,22 +51,6 @@ T.TabBar {
                 fullWidth: true
             }
 
-        }
-
-        Rectangle {
-            z: 2
-            anchors.top: parent.top
-            width: parent.width
-            height: 1
-            color: "#C2C2C2"
-        }
-
-        Rectangle {
-            z: 2
-            anchors.bottom: parent.bottom
-            width: parent.width
-            height: 1
-            color: "#C2C2C2"
         }
 
     }

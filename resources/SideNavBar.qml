@@ -9,6 +9,7 @@ Item {
     id: top
 
     property alias currentIndex: navButtons.currentIndex
+    property string currentTabName: top.currentIndex < 0 ? "" : tabModel[top.currentIndex].tooltip
     property bool enabled: true
     property var tabModel: [{
         "name": "Tracking",

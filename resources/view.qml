@@ -37,6 +37,7 @@ ApplicationWindow {
             id: tabInfoBar
 
             Layout.fillWidth: true
+            tabName: sideNavBar.currentTabName
             subTabNames: mainTabs.subTabNames
         }
 

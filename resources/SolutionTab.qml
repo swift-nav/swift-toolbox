@@ -15,14 +15,12 @@ MainTab {
         orientation: Qt.Horizontal
 
         SolutionTabComponents.SolutionTable {
-            width: Constants.solutionTable.width
         }
 
         Rectangle {
             id: solutionPlots
 
             Layout.minimumWidth: 200
-            Layout.fillWidth: true
 
             TabBar {
                 id: solutionBar

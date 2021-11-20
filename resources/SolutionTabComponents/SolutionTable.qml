@@ -12,6 +12,7 @@ Item {
     property variant columnWidths: [Constants.solutionTable.defaultColumnWidth, Constants.solutionTable.defaultColumnWidth]
     property real mouse_x: 0
     property int selectedRow: -1
+    implicitWidth: Constants.solutionTable.width
 
     function syncColumnWidthsWithSplitView() {
         var oldcols = columnWidths.slice();

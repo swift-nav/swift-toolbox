@@ -51,6 +51,7 @@ Item {
 
     ColumnLayout {
         anchors.fill: parent
+        spacing: 0
 
         Rectangle {
             Layout.fillWidth: true
@@ -106,8 +107,9 @@ Item {
             Layout.preferredWidth: Constants.sideNavBar.tabBarWidth
             border: false
             icon.source: Constants.icons.lightningBoltPath
-            icon.color: !enabled ? Constants.materialGrey : Constants.swiftOrange
-            backgroundColor: hovered ? Qt.darker("white", 1.1) : "white"
+            icon.color: enabled ? "white" : Constants.swiftControlBackground
+            gradientStartColor: hovered ? Qt.darker(Constants.swiftGrey, 1.1) : Constants.swiftGrey
+            backgroundColor: hovered ? Qt.darker(Constants.swiftGrey, 1.1) : Constants.swiftGrey
             checkable: false
             padding: Constants.sideNavBar.buttonPadding
             rightInset: Constants.sideNavBar.buttonInset

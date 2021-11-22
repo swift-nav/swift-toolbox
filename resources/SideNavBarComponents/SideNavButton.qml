@@ -19,15 +19,12 @@ Button {
     z: visualFocus ? 10 : control.checked || control.highlighted ? 5 : 1
     display: AbstractButton.TextUnderIcon
     checkable: true
-    text: modelData.name
-    ToolTip.text: modelData.tooltip
-    ToolTip.delay: 1000
-    ToolTip.timeout: 5000
-    ToolTip.visible: ToolTip.text.length != 0 && hovered
-    icon.source: modelData.source
     icon.width: 22
     icon.height: 22
     icon.color: control.checked || control.highlighted ? Qt.darker(Constants.swiftOrange, control.enabled ? 1 : 1.4) : control.flat && !control.down ? (control.visualFocus ? Constants.swiftOrange : control.palette.windowText) : Qt.darker("white", control.enabled ? 1 : 1.4)
+    ToolTip.delay: 1000
+    ToolTip.timeout: 5000
+    ToolTip.visible: ToolTip.text.length != 0 && hovered
     font.pointSize: Constants.smallPointSize
     font.capitalization: Font.MixedCase
     font.letterSpacing: -1

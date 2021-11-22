@@ -93,6 +93,9 @@ Item {
                 }
 
                 delegate: SideNavButton {
+                    text: modelData.name
+                    icon.source: modelData.source
+                    ToolTip.text: modelData.tooltip
                     buttonGroup: navButtonGroup
                 }
 

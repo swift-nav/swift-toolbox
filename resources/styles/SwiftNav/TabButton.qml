@@ -46,6 +46,7 @@ T.TabButton {
     id: control
 
     property color labelColor: !control.enabled ? control.Material.hintTextColor : control.down || control.checked ? "white" : Constants.tabButtonUnselectedTextColor
+    property color gradientStartColor: down || checked ? Qt.lighter(Constants.swiftGrey, 1.7) : hovered ? Qt.lighter(Constants.swiftControlBackground, 1.1) : "white"
     property color backgroundColor: down || checked ? Constants.swiftGrey : hovered ? Qt.darker(Constants.swiftControlBackground, 1.1) : Constants.swiftControlBackground
     property bool border: true
 
@@ -79,6 +80,20 @@ T.TabButton {
         implicitHeight: control.Material.touchTarget
         clip: true
         color: backgroundColor
+
+        gradient: Gradient {
+            GradientStop {
+                position: 0
+                color: gradientStartColor
+            }
+
+            GradientStop {
+                position: 1
+                color: backgroundColor
+            }
+
+        }
+
     }
 
 }

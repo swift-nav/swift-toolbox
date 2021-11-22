@@ -13,7 +13,6 @@ Rectangle {
 
     implicitHeight: rowLayout.implicitHeight
     implicitWidth: rowLayout.implicitWidth
-    color: Constants.swiftControlBackground
 
     // Top grey line separating the bar from the window title area
     Rectangle {
@@ -59,13 +58,14 @@ Rectangle {
 
         TabBar {
             id: tabBar
-            visible: tabBarRepeater.count > 0
 
+            visible: tabBarRepeater.count > 0
             Layout.fillWidth: false
             spacing: 1
 
             Repeater {
                 id: tabBarRepeater
+
                 model: subTabNames
 
                 TabButton {
@@ -121,6 +121,19 @@ Rectangle {
             width: 1
             color: "#C2C2C2"
             x: tabBar.count > 0 ? tabBar.x + (tabButton ? tabButton.x - 1 : tabBar.width) : tabLabel.x + tabLabel.width
+        }
+
+    }
+
+    gradient: Gradient {
+        GradientStop {
+            position: 0
+            color: "white"
+        }
+
+        GradientStop {
+            position: 1
+            color: Constants.swiftControlBackground
         }
 
     }

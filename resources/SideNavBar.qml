@@ -107,7 +107,7 @@ Item {
             Layout.preferredWidth: Constants.sideNavBar.tabBarWidth
             border: false
             icon.source: Constants.icons.lightningBoltPath
-            icon.color: enabled ? "white" : Constants.swiftControlBackground
+            icon.color: Qt.darker("white", enabled ? 1 : 1.4)
             gradientStartColor: hovered ? Qt.darker(Constants.swiftGrey, 1.1) : Constants.swiftGrey
             backgroundColor: hovered ? Qt.darker(Constants.swiftGrey, 1.1) : Constants.swiftGrey
             checkable: false

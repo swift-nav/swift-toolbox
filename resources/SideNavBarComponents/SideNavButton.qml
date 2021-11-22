@@ -27,7 +27,7 @@ Button {
     icon.source: modelData.source
     icon.width: 22
     icon.height: 22
-    icon.color: control.checked || control.highlighted ? Qt.darker(Constants.swiftOrange, control.enabled ? 1 : 1.5) : control.flat && !control.down ? (control.visualFocus ? Constants.swiftOrange : control.palette.windowText) : Qt.darker("white", control.enabled ? 1 : 1.5)
+    icon.color: control.checked || control.highlighted ? Qt.darker(Constants.swiftOrange, control.enabled ? 1 : 1.4) : control.flat && !control.down ? (control.visualFocus ? Constants.swiftOrange : control.palette.windowText) : Qt.darker("white", control.enabled ? 1 : 1.4)
     font.pointSize: Constants.smallPointSize
     font.capitalization: Font.MixedCase
     font.letterSpacing: -1
@@ -52,14 +52,14 @@ Button {
         icon: control.icon
         text: control.text
         font: control.font
-        color: control.checked || control.highlighted ? Qt.darker(control.palette.dark, control.enabled ? 1 : 1.5) : control.flat && !control.down ? (control.visualFocus ? Constants.swiftOrange : control.palette.windowText) : Qt.darker("white", control.enabled ? 1 : 1.5)
+        color: control.checked || control.highlighted ? Qt.darker(control.palette.dark, control.enabled ? 1 : 1.5) : control.flat && !control.down ? (control.visualFocus ? Constants.swiftOrange : control.palette.windowText) : Qt.darker("white", control.enabled ? 1 : 1.4)
     }
 
     background: Rectangle {
         implicitWidth: 100
         implicitHeight: 40
         visible: !control.flat || control.down || control.checked || control.highlighted
-        color: Color.blend(control.checked || control.highlighted ? Qt.darker("white", control.enabled ? 1 : 1.5) : Constants.swiftGrey, control.palette.mid, control.down ? 0.5 : 0)
+        color: Color.blend(control.checked || control.highlighted ? Qt.darker("white", control.enabled ? 1 : 1.4) : Constants.swiftGrey, control.palette.mid, control.down ? 0.5 : 0)
         border.color: Constants.swiftOrange
         border.width: control.visualFocus ? 1 : 0
 
@@ -68,7 +68,7 @@ Button {
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             height: 1
-            color: Qt.darker("white", control.enabled ? 1 : 1.5)
+            color: Qt.darker("white", control.enabled ? 1 : 1.4)
             visible: !control.visualFocus && !(control.view.itemAtIndex(index + 1) != null ? control.view.itemAtIndex(index + 1).visualFocus : false)
         }
 

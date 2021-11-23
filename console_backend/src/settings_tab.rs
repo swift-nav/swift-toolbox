@@ -335,7 +335,7 @@ impl SettingsTab {
                 .sbp_client
                 .lock()
                 .read_setting(group, name)?
-                .ok_or_else(|| anyhow!("settting not found"))?;
+                .ok_or_else(|| anyhow!("setting not found"))?;
             self.settings.lock().insert(setting);
         } else {
             self.settings.lock().insert(setting);

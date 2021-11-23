@@ -9,13 +9,13 @@ use capnp::message::Builder;
 use crossbeam::channel::{self, Sender};
 use ini::Ini;
 use lazy_static::lazy_static;
-use log::{debug, error, warn};
+use log::{error, warn};
 use parking_lot::Mutex;
 use sbp::link::LinkSource;
 use sbp::messages::piksi::MsgReset;
 use sbp::messages::settings::MsgSettingsSave;
 use sbp::Sbp;
-use sbp_settings::{Client, Context, ReadResp, Setting, SettingKind, SettingValue};
+use sbp_settings::{Client, Context, Setting, SettingKind, SettingValue};
 
 use crate::client_sender::BoxedClientSender;
 use crate::shared_state::{SettingsTabState, SharedState};
@@ -93,7 +93,7 @@ pub struct SettingsTab {
     client_sender: BoxedClientSender,
     msg_sender: MsgSender,
     settings: Mutex<Settings>,
-    sbp_client: Client<'static>,
+    sbp_client: Mutex<Client<'static>>,
     send: Sender<Sbp>,
 }
 
@@ -125,9 +125,9 @@ impl SettingsTab {
             client_sender,
             msg_sender: msg_sender.clone(),
             settings: Mutex::new(Settings::new()),
-            sbp_client: Client::with_link(link.clone(), move |msg| {
+            sbp_client: Mutex::new(Client::with_link(link.clone(), move |msg| {
                 msg_sender.send(msg).map_err(Into::into)
-            }),
+            })),
             send,
         }
     }
@@ -171,8 +171,8 @@ impl SettingsTab {
         for (group, prop) in conf.iter() {
             for (name, value) in prop.iter() {
                 if let Err(e) = self.write_setting(group.unwrap(), name, value) {
-                    match e.downcast_ref::<sbp_settings::Error<sbp_settings::WriteSettingError>>() {
-                        Some(sbp_settings::Error::Err(
+                    match e.downcast_ref::<sbp_settings::Error>() {
+                        Some(sbp_settings::Error::WriteError(
                             sbp_settings::WriteSettingError::ReadOnly,
                         )) => {}
                         _ => {
@@ -248,25 +248,22 @@ impl SettingsTab {
     }
 
     fn confirm_ins_change(&self) -> Result<()> {
-        let settings = self.settings.lock();
-        let ins_mode = settings
+        let ins_mode = self
+            .settings
+            .lock()
             .get("ins", "output_mode")?
             .value
-            .as_ref()
+            .clone()
             .ok_or_else(|| anyhow!("setting not found"))?;
-
-        let ins_on = ins_mode != &SettingValue::String("Disabled".to_string());
-
+        let ins_on = ins_mode != SettingValue::String("Disabled".to_string());
         if ins_on {
             let recommended_settings = self.get_recommended_ins_setting_changes()?;
             for recommendation in recommended_settings {
                 self.write_setting(&recommendation.0, &recommendation.1, &recommendation.3)?;
             }
         }
-
         self.save()?;
         self.reset(false)?;
-
         Ok(())
     }
 
@@ -276,6 +273,7 @@ impl SettingsTab {
         for setting in RECOMMENDED_INS_SETTINGS.iter() {
             let value = self
                 .sbp_client
+                .lock()
                 .read_setting(setting.0, setting.1)?
                 .ok_or_else(|| anyhow!("setting not found"))?
                 .value;
@@ -320,37 +318,32 @@ impl SettingsTab {
 
     fn write_setting(&self, group: &str, name: &str, value: &str) -> Result<()> {
         {
-            let mut settings = self.settings.lock();
-            let setting = settings.get(group, name)?;
-
-            if let Some(ref v) = setting.value {
-                if v.to_string() == value {
-                    debug!("skipping write because setting has not changed");
+            let settings = self.settings.lock();
+            if let Ok(e) = settings.get(group, name) {
+                let current = e.value.as_ref().map(|v| v.to_string());
+                if current.as_deref() == Some(value) {
                     return Ok(());
                 }
             }
-
-            self.sbp_client.write_setting(group, name, value)?;
-            if matches!(
-                setting.setting.kind,
-                SettingKind::Float | SettingKind::Double
-            ) {
-                let new_setting = self
-                    .sbp_client
-                    .read_setting(group, name)?
-                    .ok_or_else(|| anyhow!("settting not found"))?;
-                settings.set(group, name, new_setting.value.unwrap())?;
-            } else {
-                settings.set(group, name, SettingValue::String(value.to_string()))?;
-            }
         }
-
+        let setting = self.sbp_client.lock().write_setting(group, name, value)?;
+        if matches!(
+            setting.setting.kind,
+            SettingKind::Float | SettingKind::Double
+        ) {
+            let setting = self
+                .sbp_client
+                .lock()
+                .read_setting(group, name)?
+                .ok_or_else(|| anyhow!("settting not found"))?;
+            self.settings.lock().insert(setting);
+        } else {
+            self.settings.lock().insert(setting);
+        }
         if group == "ins" && name == "output_mode" {
             self.send_ins_change_response(value)?;
         }
-
         self.send_table_data();
-
         Ok(())
     }
 
@@ -358,31 +351,20 @@ impl SettingsTab {
         const TIMEOUT: Duration = Duration::from_secs(15);
 
         let (ctx, _handle) = Context::with_timeout(TIMEOUT);
-        let (settings, errors) = self.sbp_client.read_all_ctx(ctx);
+        let (settings, errors) = self.sbp_client.lock().read_all_ctx(ctx);
         for e in errors {
             warn!("{}", e);
         }
-        for ReadResp { entry, value } in settings {
-            let mut settings = self.settings.lock();
-            let current_setting = match settings.get_mut(&entry.group, &entry.name) {
-                Ok(setting) => setting,
-                Err(_) => {
-                    warn!(
-                        "No settings documentation entry or name: {} in group: {}",
-                        entry.name, entry.group
-                    );
-                    continue;
-                }
-            };
-            if let Some(ref value) = value {
-                if FIRMWARE_VERSION_SETTING_KEY == entry.name {
+        for entry in settings {
+            if let Some(ref value) = entry.value {
+                if FIRMWARE_VERSION_SETTING_KEY == entry.setting.name {
                     self.shared_state.set_firmware_version(value.to_string());
                 }
-                if DGNSS_SOLUTION_MODE_SETTING_KEY == entry.name {
+                if DGNSS_SOLUTION_MODE_SETTING_KEY == entry.setting.name {
                     self.shared_state.set_dgnss_enabled(value.to_string());
                 }
             }
-            current_setting.value = value;
+            self.settings.lock().insert(entry);
         }
     }
 
@@ -485,7 +467,7 @@ pub struct SaveRequest {
 }
 
 struct Settings {
-    inner: BTreeMap<&'static str, BTreeMap<&'static str, SettingsEntry>>,
+    inner: BTreeMap<String, BTreeMap<String, SettingsEntry>>,
 }
 
 impl Settings {
@@ -496,8 +478,8 @@ impl Settings {
             inner: settings
                 .into_iter()
                 .fold(BTreeMap::new(), |mut settings, setting| {
-                    (*settings.entry(&setting.group).or_default())
-                        .insert(&setting.name, SettingsEntry::new(setting));
+                    (*settings.entry(setting.group.clone()).or_default())
+                        .insert(setting.name.clone(), SettingsEntry::new(setting));
                     settings
                 }),
         }
@@ -529,35 +511,17 @@ impl Settings {
             .ok_or_else(|| anyhow!("unknown setting: group: {} name: {}", group, name))
     }
 
-    fn get_mut<'a, 'b>(
-        &'a mut self,
-        group: &'b str,
-        name: &'b str,
-    ) -> Result<&'a mut SettingsEntry> {
+    fn insert(&mut self, entry: sbp_settings::Entry) {
         self.inner
-            .get_mut(group)
-            .map(|g| g.get_mut(name))
-            .flatten()
-            .ok_or_else(|| anyhow!("unknown setting: group: {} name: {}", group, name))
-    }
-
-    fn set<'a, 'b>(&'a mut self, group: &'b str, name: &'b str, value: SettingValue) -> Result<()> {
-        let setting = self
-            .inner
-            .get_mut(group)
-            .map(|g| g.get_mut(name))
-            .flatten()
-            .ok_or_else(|| anyhow!("unknown setting: group: {} name: {}", group, name))?;
-        setting.value = Some(value);
-        Ok(())
-    }
-}
-
-impl std::ops::Deref for Settings {
-    type Target = BTreeMap<&'static str, BTreeMap<&'static str, SettingsEntry>>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.inner
+            .entry(entry.setting.group.clone())
+            .or_default()
+            .insert(
+                entry.setting.name.clone(),
+                SettingsEntry {
+                    setting: entry.setting,
+                    value: entry.value,
+                },
+            );
     }
 }
 

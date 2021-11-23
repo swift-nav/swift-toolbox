@@ -1489,7 +1489,7 @@ dependencies = [
 [[package]]
 name = "sbp-settings"
 version = "0.4.0"
-source = "git+https://github.com/swift-nav/libsettings-rs?branch=steve/riir#68d7808898fd09cea15846af6068013f3fbaf013"
+source = "git+https://github.com/swift-nav/libsettings-rs?branch=steve/riir#4a31915d96b6a073ecca00d885896a82fcb6af30"
 dependencies = [
  "crossbeam-channel",
  "crossbeam-utils",

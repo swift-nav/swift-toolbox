@@ -15,7 +15,7 @@ use sbp::link::LinkSource;
 use sbp::messages::piksi::MsgReset;
 use sbp::messages::settings::MsgSettingsSave;
 use sbp::Sbp;
-use sbp_settings::{Client, Setting, SettingKind, SettingValue};
+use sbp_settings::{Client, Context, ReadResp, Setting, SettingKind, SettingValue};
 
 use crate::client_sender::BoxedClientSender;
 use crate::shared_state::{SettingsTabState, SharedState};
@@ -90,11 +90,11 @@ fn tick(settings_tab: &SettingsTab, settings_state: SettingsTabState) {
 
 pub struct SettingsTab {
     shared_state: SharedState,
-    client_sender: Mutex<BoxedClientSender>,
+    client_sender: BoxedClientSender,
     msg_sender: MsgSender,
     settings: Mutex<Settings>,
     sbp_client: Client<'static>,
-    messages: Sender<Sbp>,
+    send: Sender<Sbp>,
 }
 
 impl Drop for SettingsTab {
@@ -112,24 +112,28 @@ impl SettingsTab {
         let source = LinkSource::new();
         let link = source.link();
         let (send, recv) = channel::unbounded();
+
         // this thread will join when `SettingsTab` is dropped, because the channel will disconnect
         std::thread::spawn(move || {
             for msg in recv.iter() {
                 source.send(&msg);
             }
         });
+
         SettingsTab {
             shared_state,
-            client_sender: Mutex::new(client_sender),
+            client_sender,
             msg_sender: msg_sender.clone(),
             settings: Mutex::new(Settings::new()),
-            sbp_client: Client::new(link, move |msg| msg_sender.send(msg).map_err(Into::into)),
-            messages: send,
+            sbp_client: Client::with_link(link.clone(), move |msg| {
+                msg_sender.send(msg).map_err(Into::into)
+            }),
+            send,
         }
     }
 
     pub fn handle_msg(&self, msg: Sbp) {
-        if let Err(_) = self.messages.send(msg) {
+        if self.send.send(msg).is_err() {
             warn!("could not forward message to the settings tab");
         };
     }
@@ -189,7 +193,6 @@ impl SettingsTab {
         let mut import_response = msg.init_settings_import_response();
         import_response.set_status("success");
         self.client_sender
-            .lock()
             .send_data(serialize_capnproto_builder(builder));
     }
 
@@ -199,7 +202,6 @@ impl SettingsTab {
         let mut import_response = msg.init_settings_import_response();
         import_response.set_status(&err.to_string());
         self.client_sender
-            .lock()
             .send_data(serialize_capnproto_builder(builder));
     }
 
@@ -274,13 +276,14 @@ impl SettingsTab {
         for setting in RECOMMENDED_INS_SETTINGS.iter() {
             let value = self
                 .sbp_client
-                .read_setting(setting.0, setting.1)
-                .ok_or_else(|| anyhow!("setting not found"))??;
-            if value != setting.2 {
+                .read_setting(setting.0, setting.1)?
+                .ok_or_else(|| anyhow!("setting not found"))?
+                .value;
+            if value.as_ref() != Some(&setting.2) {
                 recommended_changes.push((
                     setting.0.to_string(),
                     setting.1.to_string(),
-                    value.to_string(),
+                    value.map_or_else(String::new, |v| v.to_string()),
                     setting.2.to_string(),
                 ));
             }
@@ -310,7 +313,6 @@ impl SettingsTab {
         }
 
         self.client_sender
-            .lock()
             .send_data(serialize_capnproto_builder(builder));
 
         Ok(())
@@ -335,9 +337,9 @@ impl SettingsTab {
             ) {
                 let new_setting = self
                     .sbp_client
-                    .read_setting(group, name)
-                    .ok_or_else(|| anyhow!("settting not found"))??;
-                settings.set(group, name, new_setting)?;
+                    .read_setting(group, name)?
+                    .ok_or_else(|| anyhow!("settting not found"))?;
+                settings.set(group, name, new_setting.value.unwrap())?;
             } else {
                 settings.set(group, name, SettingValue::String(value.to_string()))?;
             }
@@ -355,56 +357,32 @@ impl SettingsTab {
     fn read_all_settings(&self) {
         const TIMEOUT: Duration = Duration::from_secs(15);
 
-        let (settings, errors) = self.sbp_client.read_all_timeout(TIMEOUT);
+        let (ctx, _handle) = Context::with_timeout(TIMEOUT);
+        let (settings, errors) = self.sbp_client.read_all_ctx(ctx);
         for e in errors {
             warn!("{}", e);
         }
-        for setting in settings {
+        for ReadResp { entry, value } in settings {
             let mut settings = self.settings.lock();
-            let current_setting = match settings.get_mut(&setting.group, &setting.name) {
+            let current_setting = match settings.get_mut(&entry.group, &entry.name) {
                 Ok(setting) => setting,
                 Err(_) => {
                     warn!(
                         "No settings documentation entry or name: {} in group: {}",
-                        setting.name, setting.group
+                        entry.name, entry.group
                     );
                     continue;
                 }
             };
-            if FIRMWARE_VERSION_SETTING_KEY == setting.name {
-                self.shared_state
-                    .set_firmware_version(setting.clone().value);
-            }
-            if DGNSS_SOLUTION_MODE_SETTING_KEY == setting.name {
-                self.shared_state.set_dgnss_enabled(setting.clone().value);
-            }
-
-            // update possible enum values with the possible values returned by the device
-            if !setting.fmt_type.is_empty() && current_setting.setting.kind == SettingKind::Enum {
-                let mut parts = setting.fmt_type.splitn(2, ':');
-                let ty = parts.next();
-                if !matches!(ty, Some("enum")) {
-                    warn!(
-                        "the type for setting {} in group {} was marked as enum but the device returned {:?}",
-                        setting.name, setting.group, ty,
-                    );
-                    continue;
+            if let Some(ref value) = value {
+                if FIRMWARE_VERSION_SETTING_KEY == entry.name {
+                    self.shared_state.set_firmware_version(value.to_string());
                 }
-                let possible_values = match parts.next() {
-                    Some(possible_values) => possible_values,
-                    None => {
-                        warn!(
-                            "setting {} in group {} was marked as enum but had no enumerated_possible_values",
-                            setting.name, setting.group,
-                        );
-                        continue;
-                    }
-                };
-                current_setting.setting.to_mut().enumerated_possible_values =
-                    Some(possible_values.to_string());
+                if DGNSS_SOLUTION_MODE_SETTING_KEY == entry.name {
+                    self.shared_state.set_dgnss_enabled(value.to_string());
+                }
             }
-
-            current_setting.value = Some(SettingValue::String(setting.value));
+            current_setting.value = value;
         }
     }
 
@@ -495,7 +473,6 @@ impl SettingsTab {
             }
         }
         self.client_sender
-            .lock()
             .send_data(serialize_capnproto_builder(builder));
     }
 }

@@ -18,13 +18,9 @@ MainTab {
         currentIndex: curSubTabIndex
 
         TrackingTabComponents.TrackingSignalsTab {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
         }
 
         TrackingTabComponents.TrackingSkyPlotTab {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
         }
 
     }

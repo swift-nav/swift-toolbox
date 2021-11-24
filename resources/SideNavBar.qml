@@ -24,7 +24,7 @@ Item {
         "tooltip": "Baseline",
         "source": Constants.sideNavBar.baselinePath
     }, {
-        "name": "Obs ",
+        "name": "Observations",
         "tooltip": "Observations",
         "source": Constants.sideNavBar.observationsPath
     }, {
@@ -97,6 +97,7 @@ Item {
                     icon.source: modelData.source
                     ToolTip.text: modelData.tooltip
                     buttonGroup: navButtonGroup
+                    height: Constants.sideNavBar.tabBarHeight
                 }
 
             }
@@ -108,7 +109,7 @@ Item {
 
             Layout.alignment: Qt.AlignBottom
             Layout.fillWidth: true
-            Layout.minimumHeight: width
+            height: Constants.sideNavBar.tabBarHeight
             text: "Connection"
             icon.source: Constants.icons.lightningBoltPath
             ToolTip.text: "Connection Dialog"
@@ -129,7 +130,7 @@ Item {
 
             Layout.alignment: Qt.AlignBottom
             Layout.fillWidth: true
-            Layout.minimumHeight: width
+            height: Constants.sideNavBar.tabBarHeight
             enabled: top.enabled
             color: Constants.sideNavBar.backgroundColor
             state: "bad"

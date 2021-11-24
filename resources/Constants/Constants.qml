@@ -96,8 +96,8 @@ QtObject {
         readonly property string settingsPath: "qrc:///images/fontawesome/cogs-solid.svg"
         readonly property string updatePath: "qrc:///images/fontawesome/chevron-circle-up-solid.svg"
         readonly property string advancedPath: "qrc:///images/fontawesome/lock-solid.svg"
-        readonly property real tabBarHeight: 45
-        readonly property real tabBarWidth: 50
+        readonly property real tabBarHeight: 48
+        readonly property real tabBarWidth: 62
         readonly property int buttonPadding: 0
         readonly property int buttonInset: 0
         readonly property int separatorMargin: 10

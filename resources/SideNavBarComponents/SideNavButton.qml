@@ -16,7 +16,6 @@ Button {
 
     ButtonGroup.group: buttonGroup
     width: view ? view.width : 0
-    height: implicitHeight < width ? width : implicitHeight
     z: visualFocus ? 10 : control.checked || control.highlighted ? 5 : 1
     display: AbstractButton.TextUnderIcon
     checkable: true
@@ -28,7 +27,7 @@ Button {
     ToolTip.visible: ToolTip.text.length != 0 && hovered
     font.pointSize: Constants.smallPointSize
     font.capitalization: Font.MixedCase
-    font.letterSpacing: -1
+    font.letterSpacing: 0
     // No idea why the insets are set, but they need to be 0 so there are no gaps between buttons.
     topInset: 0
     bottomInset: 0

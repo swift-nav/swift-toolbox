@@ -313,6 +313,9 @@ impl SharedState {
     pub fn log_to_std(&self) -> ArcBool {
         self.lock().log_to_std.clone()
     }
+    pub fn set_log_to_std(&self, log_to_std: bool) {
+        self.lock().log_to_std.set(log_to_std);
+    }
 }
 
 impl Deref for SharedState {
@@ -383,7 +386,7 @@ impl SharedStateInner {
             advanced_networking_update: None,
             auto_survey_data: AutoSurveyData::new(),
             sbp_logging_stats_state: None,
-            log_to_std: ArcBool::new_with(true),
+            log_to_std: ArcBool::new_with(false),
         }
     }
 }

@@ -14,7 +14,6 @@ use anyhow::anyhow;
 use log::{error, info};
 use sbp::link::LinkSource;
 
-use crate::client_sender::BoxedClientSender;
 use crate::constants::*;
 use crate::errors::*;
 use crate::process_messages::{process_messages, Messages};
@@ -23,23 +22,27 @@ use crate::types::*;
 use crate::utils::{refresh_connection_frontend, refresh_loggingbar};
 use crate::watch::Watched;
 use crate::Tabs;
+use crate::{client_sender::BoxedClientSender, watch::WatchReceiver};
 
-#[derive(Debug)]
-pub struct ConnectionManager<'l> {
+pub struct ConnectionManager {
     msg: Watched<ConnectionManagerMsg>,
-    tabs: Watched<Option<Arc<Tabs<'l>>>>,
+    tabs: WatchReceiver<Option<Arc<Tabs<'static>>>>,
     handle: Option<JoinHandle<()>>,
 }
 
-impl ConnectionManager<'_> {
+impl ConnectionManager {
     pub fn new(client_sender: BoxedClientSender, shared_state: SharedState) -> Self {
         let msg = Watched::new(ConnectionManagerMsg::Disconnect);
-        let handle = Some(conn_manager_thd(client_sender, shared_state, msg.clone()));
+        let (tabs, handle) = conn_manager_thd(client_sender, shared_state, msg.clone());
         ConnectionManager {
             msg,
-            tabs: Watched::new(None),
-            handle,
+            tabs,
+            handle: Some(handle),
         }
+    }
+
+    pub fn wait_for_connection(&mut self) -> Arc<Tabs<'static>> {
+        self.tabs.wait_until(Option::is_some).unwrap().unwrap()
     }
 
     /// Helper function for attempting to open a file and process SBP messages from it.
@@ -84,7 +87,13 @@ impl ConnectionManager<'_> {
     }
 }
 
-impl Drop for ConnectionManager<'_> {
+impl Debug for ConnectionManager {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ConnectionManager").finish()
+    }
+}
+
+impl Drop for ConnectionManager {
     fn drop(&mut self) {
         // breaks the `while let Ok(conn) ...` loop
         self.msg.close();
@@ -105,7 +114,7 @@ fn conn_manager_thd(
     client_sender: BoxedClientSender,
     shared_state: SharedState,
     manager_msg: Watched<ConnectionManagerMsg>,
-) -> JoinHandle<()> {
+) -> (WatchReceiver<Option<Arc<Tabs<'static>>>>, JoinHandle<()>) {
     let join = |thd: &mut Option<JoinHandle<()>>| {
         if let Some(thd) = thd.take() {
             thd.join().expect("process_messages thread panicked");
@@ -114,11 +123,12 @@ fn conn_manager_thd(
     let mut reconnect_thd: Option<JoinHandle<()>> = None;
     let mut pm_thd: Option<JoinHandle<()>> = None;
     let mut recv = manager_msg.watch();
-    thread::spawn(move || {
+    let tabs_watch = Watched::new(None);
+    let tabs_recv = tabs_watch.watch();
+    let h = thread::spawn(move || {
         info!("Console started...");
         while let Ok(msg) = recv.wait() {
             match msg {
-                ConnectionManagerMsg::Connected(tabs) => {}
                 ConnectionManagerMsg::Connect(conn) => {
                     let (reader, writer) = match conn.try_connect(Some(&shared_state)) {
                         Ok(rw) => rw,
@@ -153,6 +163,7 @@ fn conn_manager_thd(
                         client_sender.clone(),
                         manager_msg.clone(),
                     );
+                    tabs_watch.send(Some(tabs));
                     pm_thd = Some(h);
                 }
                 ConnectionManagerMsg::Reconnect(conn) => {
@@ -174,7 +185,8 @@ fn conn_manager_thd(
         shared_state.set_connection(ConnectionState::Closed, &client_sender);
         join(&mut pm_thd);
         join(&mut reconnect_thd);
-    })
+    });
+    (tabs_recv, h)
 }
 
 fn start_reconnect_thd(

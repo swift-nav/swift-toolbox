@@ -40,26 +40,27 @@ impl<'a> App<'a> {
 
     pub fn handle_event(&mut self, event: Event) -> Result<()> {
         if event == Event::Tick {
-            eprintln!("1");
-            let settings = &*self.settings_tab.settings();
-            eprintln!("2");
-            if settings != self.settings_view.settings() {
-                eprintln!("3");
-                let settings = self.settings_tab.settings().clone();
-                eprintln!("4");
+            // eprintln!("1");
+            let settings = self.settings_tab.settings();
+            // eprintln!("2");
+            if &settings != self.settings_view.settings() {
+                // eprintln!("3");;
+                // eprintln!("4");
                 self.settings_view.reset(settings);
-                eprintln!("5");
+                // eprintln!("5");
             }
-            eprintln!("4");
+            // eprintln!("4");
             return Ok(());
         }
         match self.mode {
             InputMode::Normal => match event {
                 Event::Input(KeyCode::Char('r')) => self.terminal.clear()?, // TODO: remove
                 Event::Input(KeyCode::Char('q')) => bail!("quit"),
+                Event::Input(KeyCode::Char('e')) => self.shared_state.set_settings_refresh(true), // TODO: remove
+
                 // Event::Input(KeyCode::Esc) => self.mode = InputMode::Command,
                 Event::Input(KeyCode::Esc) => {
-                    self.command.readline()?;
+                    self.mode = InputMode::Command;
                 }
                 Event::Input(KeyCode::Up) => self.settings_view.previous(),
                 Event::Input(KeyCode::Down) => self.settings_view.next(),
@@ -68,19 +69,19 @@ impl<'a> App<'a> {
                 _ => {}
             },
             InputMode::Command => match event {
-                // Event::Input(KeyCode::Enter) => {
-                //     self.exec(self.settings_view.selected(), self.settings_tab)?;
-                //     self.command.clear();
-                // }
-                // Event::Input(KeyCode::Char(c)) => {
-                //     self.command.push(c);
-                // }
-                // Event::Input(KeyCode::Backspace) => {
-                //     self.command.pop();
-                // }
-                // Event::Input(KeyCode::Esc) => {
-                //     self.mode = InputMode::Normal;
-                // }
+                Event::Input(KeyCode::Enter) => {
+                    self.exec(self.settings_view.selected(), self.settings_tab)?;
+                    self.command.clear();
+                }
+                Event::Input(KeyCode::Char(c)) => {
+                    self.command.push(c);
+                }
+                Event::Input(KeyCode::Backspace) => {
+                    self.command.pop();
+                }
+                Event::Input(KeyCode::Esc) => {
+                    self.mode = InputMode::Normal;
+                }
                 _ => {}
             },
         };

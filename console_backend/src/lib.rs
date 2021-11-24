@@ -58,7 +58,7 @@ use crate::{
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-struct Tabs<'link> {
+pub struct Tabs<'link> {
     pub main: Mutex<MainTab>,
     pub advanced_imu: Mutex<AdvancedImuTab>,
     pub advanced_magnetometer: Mutex<AdvancedMagnetometerTab>,

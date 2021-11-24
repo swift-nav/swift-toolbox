@@ -120,8 +120,8 @@ impl<'link> SettingsTab<'link> {
         self.shared_state.reset_settings_state();
     }
 
-    pub fn settings(&self) -> Settings {
-        self.settings.lock().clone()
+    pub fn settings(&self) -> MutexGuard<Settings> {
+        self.settings.lock()
     }
 
     fn refresh(&self) {

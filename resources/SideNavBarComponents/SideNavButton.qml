@@ -12,9 +12,10 @@ Button {
 
     property QtObject buttonGroup
     property QtObject view: ListView.view
+    property bool separator: true
 
     ButtonGroup.group: buttonGroup
-    width: view.width
+    width: view ? view.width : 0
     height: implicitHeight < width ? width : implicitHeight
     z: visualFocus ? 10 : control.checked || control.highlighted ? 5 : 1
     display: AbstractButton.TextUnderIcon
@@ -56,7 +57,7 @@ Button {
         implicitWidth: 100
         implicitHeight: 40
         visible: !control.flat || control.down || control.checked || control.highlighted
-        color: Color.blend(control.checked || control.highlighted ? Qt.darker("white", control.enabled ? 1 : 1.4) : Constants.swiftGrey, control.palette.mid, control.down ? 0.5 : 0)
+        color: Color.blend(control.checked || control.highlighted ? Qt.darker("white", control.enabled ? 1 : 1.4) : Constants.sideNavBar.backgroundColor, control.palette.mid, control.down ? 0.5 : 0)
         border.color: Constants.swiftOrange
         border.width: control.visualFocus ? 1 : 0
 
@@ -66,7 +67,7 @@ Button {
             anchors.bottom: parent.bottom
             height: 1
             color: Qt.darker("white", control.enabled ? 1 : 1.4)
-            visible: !control.visualFocus && !(control.view.itemAtIndex(index + 1) != null ? control.view.itemAtIndex(index + 1).visualFocus : false)
+            visible: control.separator && !control.visualFocus && !(control.view && control.view.itemAtIndex(index + 1) ? control.view.itemAtIndex(index + 1).visualFocus : false)
         }
 
         Repeater {

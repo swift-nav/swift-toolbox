@@ -56,7 +56,7 @@ Item {
         Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            color: Constants.swiftGrey
+            color: Constants.sideNavBar.backgroundColor
 
             ButtonGroup {
                 id: navButtonGroup
@@ -103,22 +103,16 @@ Item {
 
         }
 
-        TabButton {
+        SideNavButton {
             id: connectButton
 
             Layout.alignment: Qt.AlignBottom
-            Layout.preferredWidth: Constants.sideNavBar.tabBarWidth
-            border: false
+            Layout.fillWidth: true
+            Layout.minimumHeight: width
+            text: "Connection"
             icon.source: Constants.icons.lightningBoltPath
-            icon.color: Qt.darker("white", enabled ? 1 : 1.4)
-            gradientStartColor: hovered ? Qt.darker(Constants.swiftGrey, 1.1) : Constants.swiftGrey
-            backgroundColor: hovered ? Qt.darker(Constants.swiftGrey, 1.1) : Constants.swiftGrey
-            checkable: false
-            padding: Constants.sideNavBar.buttonPadding
-            rightInset: Constants.sideNavBar.buttonInset
-            leftInset: Constants.sideNavBar.buttonInset
-            ToolTip.visible: hovered
             ToolTip.text: "Connection Dialog"
+            checkable: false
             enabled: Globals.connected_at_least_once
             onClicked: {
                 if (stack.connectionScreenVisible())
@@ -128,13 +122,81 @@ Item {
             }
         }
 
-        Timer {
-            interval: Utils.hzToMilliseconds(Constants.staticTimerSlowIntervalRate)
-            running: true
-            repeat: true
-            onTriggered: {
-                connectButton.checked = Globals.conn_state == Constants.connection.connected;
+        Rectangle {
+            id: connectionStatusIndicator
+
+            property real speed: 0
+
+            Layout.alignment: Qt.AlignBottom
+            Layout.fillWidth: true
+            Layout.minimumHeight: width
+            enabled: top.enabled
+            color: Constants.sideNavBar.backgroundColor
+            state: "bad"
+            states: [
+                State {
+                    name: "good"
+
+                    PropertyChanges {
+                        target: connectionStatusCircle
+                        color: Constants.sideNavBar.statusGoodColor
+                    }
+
+                },
+                State {
+                    name: "ok"
+
+                    PropertyChanges {
+                        target: connectionStatusCircle
+                        color: Constants.sideNavBar.statusOkColor
+                    }
+
+                },
+                State {
+                    name: "bad"
+
+                    PropertyChanges {
+                        target: connectionStatusCircle
+                        color: Constants.sideNavBar.statusBadColor
+                    }
+
+                }
+            ]
+
+            Column {
+                anchors.centerIn: parent
+                spacing: 2
+
+                Label {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    bottomPadding: 0
+                    bottomInset: 0
+                    text: connectionStatusIndicator.speed + " KB/s"
+                    font.pointSize: Constants.smallPointSize
+                    font.letterSpacing: -1
+                    color: Qt.darker("white", enabled ? 1 : 1.4)
+                }
+
+                Rectangle {
+                    id: connectionStatusCircle
+
+                    property int diameter: 15
+
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: diameter
+                    height: diameter
+                    radius: diameter / 2
+
+                    Behavior on color {
+                        ColorAnimation {
+                        }
+
+                    }
+
+                }
+
             }
+
         }
 
     }

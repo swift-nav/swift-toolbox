@@ -8,6 +8,9 @@ import "SolutionTabComponents" as SolutionTabComponents
 MainTab {
     id: solutionTab
 
+    subTabNames: ["Position", "Velocity"]
+    curSubTabIndex: Globals.initialMainTabIndex == 1 ? Globals.initialSubTabIndex : 0
+
     SplitView {
         id: solutionSplitView
 
@@ -15,54 +18,21 @@ MainTab {
         orientation: Qt.Horizontal
 
         SolutionTabComponents.SolutionTable {
+            SplitView.minimumWidth: 240
         }
 
-        Rectangle {
-            id: solutionPlots
+        StackLayout {
+            id: solutionBarLayout
 
-            Layout.minimumWidth: 200
+            SplitView.minimumWidth: 410
+            SplitView.fillWidth: true
+            SplitView.fillHeight: true
+            currentIndex: curSubTabIndex
 
-            TabBar {
-                id: solutionBar
-
-                currentIndex: Globals.initialMainTabIndex == 1 ? Globals.initialSubTabIndex : 0
-                z: Constants.commonChart.zAboveCharts
-                contentHeight: Constants.tabBarHeight
-
-                Repeater {
-                    model: ["Position", "Velocity"]
-
-                    TabButton {
-                        text: modelData
-                        width: implicitWidth
-                    }
-
-                }
-
+            SolutionTabComponents.SolutionPositionTab {
             }
 
-            Rectangle {
-                id: solutionTabBackground
-
-                width: parent.width
-                height: parent.height
-                anchors.top: solutionBar.bottom
-
-                StackLayout {
-                    id: solutionBarLayout
-
-                    width: parent.width
-                    height: parent.height
-                    currentIndex: solutionBar.currentIndex
-
-                    SolutionTabComponents.SolutionPositionTab {
-                    }
-
-                    SolutionTabComponents.SolutionVelocityTab {
-                    }
-
-                }
-
+            SolutionTabComponents.SolutionVelocityTab {
             }
 
         }

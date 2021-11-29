@@ -173,7 +173,7 @@ impl SettingsTab {
                 if let Err(e) = self.write_setting(group.unwrap(), name, value) {
                     match e.downcast_ref::<sbp_settings::Error>() {
                         Some(sbp_settings::Error::WriteError(
-                            sbp_settings::WriteSettingError::ReadOnly,
+                            sbp_settings::error::WriteError::ReadOnly,
                         )) => {}
                         _ => {
                             self.import_err(&e);

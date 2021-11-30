@@ -79,21 +79,29 @@ Rectangle {
 
         }
 
+        // Spacer item
         Item {
             implicitHeight: tabBar.implicitHeight
             Layout.fillWidth: true
         }
 
         Label {
-            Layout.fillWidth: false
+            rightPadding: 6
             text: "Swift"
         }
 
+        Rectangle {
+            Layout.fillHeight: true
+            Layout.topMargin: 8
+            Layout.bottomMargin: 8
+            width: 1
+            color: "#C2C2C2"
+            Layout.alignment: Qt.AlignVCenter
+        }
+
         Label {
-            Layout.fillWidth: false
-            padding: 8
-            leftPadding: 13
-            rightPadding: 13
+            leftPadding: 6
+            rightPadding: 6
             text: "Console"
             font.family: "Roboto Condensed"
             font.capitalization: Font.AllUppercase
@@ -101,11 +109,28 @@ Rectangle {
             font.pointSize: 18
         }
 
-        Image {
-            Layout.fillWidth: false
-            source: Constants.infoPath
-            sourceSize.width: 20
-            sourceSize.height: 20
+        Rectangle {
+            Layout.fillHeight: true
+            Layout.topMargin: 8
+            Layout.bottomMargin: 8
+            width: 1
+            color: "#C2C2C2"
+            Layout.alignment: Qt.AlignVCenter
+        }
+
+        Item {
+            implicitWidth: infoImage.implicitWidth + 12
+            implicitHeight: infoImage.implicitHeight
+
+            Image {
+                id: infoImage
+
+                anchors.centerIn: parent
+                source: Constants.infoPath
+                sourceSize.width: 20
+                sourceSize.height: 20
+            }
+
         }
 
     }

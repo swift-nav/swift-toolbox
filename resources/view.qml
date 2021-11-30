@@ -159,6 +159,14 @@ ApplicationWindow {
             onClicked: parent.state = parent.state == "opened" ? "closed" : "opened"
         }
 
+        MouseArea {
+            anchors.fill: parent
+            hoverEnabled: true
+            acceptedButtons: Qt.NoButton
+            onEntered: parent.cancelAutoClose()
+            onExited: parent.closeAfterDelaySubtabless()
+        }
+
     }
 
     Rectangle {

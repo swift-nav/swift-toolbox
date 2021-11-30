@@ -98,7 +98,7 @@ ApplicationWindow {
                     target: tabInfoBar
                     properties: "y"
                     duration: 1000
-                    easing.type: Easing.OutElastic
+                    easing.type: Easing.OutQuad
                 }
 
             },
@@ -109,8 +109,8 @@ ApplicationWindow {
                 NumberAnimation {
                     target: tabInfoBar
                     properties: "y"
-                    duration: 1000
-                    easing.type: Easing.OutElastic
+                    duration: 350
+                    easing.type: Easing.OutQuad
                 }
 
             }

@@ -82,6 +82,7 @@ ApplicationWindow {
         tabName: sideNavBar.currentTabName
         subTabNames: mainTabs.subTabNames
         state: "opened"
+        onAboutClicked: logoPopup.open()
         // When the tab name changes, make sure this item is shown.
         // If there is no subtabs, then close it after some time.
         onTabNameChanged: {

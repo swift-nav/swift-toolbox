@@ -12,6 +12,8 @@ Rectangle {
     property alias curSubTabIndex: tabBar.currentIndex
     property int rhsItemSpacing: 15
 
+    signal aboutClicked()
+
     implicitHeight: rowLayout.implicitHeight
     implicitWidth: rowLayout.implicitWidth
 
@@ -144,6 +146,7 @@ Rectangle {
                 icon.height: 20
                 icon.color: Constants.swiftLightGrey
                 padding: rhsItemSpacing / 3
+                onClicked: tabInfoBar.aboutClicked()
             }
 
         }

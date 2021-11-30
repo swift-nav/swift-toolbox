@@ -10,6 +10,7 @@ Rectangle {
     property string tabName: "Tracking"
     property var subTabNames: ["Hello World", "Foo Bar", "Quux Quuux"]
     property alias curSubTabIndex: tabBar.currentIndex
+    property int rhsItemSpacing: 15
 
     implicitHeight: rowLayout.implicitHeight
     implicitWidth: rowLayout.implicitWidth
@@ -52,7 +53,7 @@ Rectangle {
             font.family: "Roboto Condensed"
             font.capitalization: Font.AllUppercase
             font.letterSpacing: 1
-            font.pointSize: 18
+            font.pointSize: 20
             font.bold: true // Could also try playing with font.weight
         }
 
@@ -69,9 +70,11 @@ Rectangle {
                 model: subTabNames
 
                 TabButton {
+                    width: implicitWidth
+                    topPadding: 16
+                    bottomPadding: 16
                     rightInset: -0.5
                     text: modelData
-                    width: implicitWidth
                     border: false
                 }
 
@@ -85,50 +88,60 @@ Rectangle {
             Layout.fillWidth: true
         }
 
-        Label {
-            rightPadding: 6
-            text: "Swift"
+        Item {
+            implicitWidth: children[0].implicitWidth + rhsItemSpacing
+            Layout.fillHeight: true
+            Image {
+                anchors.top: parent.top
+                anchors.topMargin: 7
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 7
+                source: Constants.icons.swiftLogoWidePath
+                fillMode: Image.PreserveAspectFit
+            }
         }
 
         Rectangle {
             Layout.fillHeight: true
-            Layout.topMargin: 8
-            Layout.bottomMargin: 8
+            Layout.topMargin: 7
+            Layout.bottomMargin: 7
             width: 1
             color: "#C2C2C2"
             Layout.alignment: Qt.AlignVCenter
         }
 
         Label {
-            leftPadding: 6
-            rightPadding: 6
+            leftPadding: rhsItemSpacing
+            rightPadding: rhsItemSpacing
             text: "Console"
+            color: Constants.swiftLightGrey
             font.family: "Roboto Condensed"
             font.capitalization: Font.AllUppercase
-            // font.letterSpacing: 1
-            font.pointSize: 18
+            font.letterSpacing: 2
+            font.pointSize: 20
         }
 
         Rectangle {
             Layout.fillHeight: true
-            Layout.topMargin: 8
-            Layout.bottomMargin: 8
+            Layout.topMargin: 7
+            Layout.bottomMargin: 7
             width: 1
             color: "#C2C2C2"
             Layout.alignment: Qt.AlignVCenter
         }
 
         Item {
-            implicitWidth: infoImage.implicitWidth + 12
-            implicitHeight: infoImage.implicitHeight
+            implicitWidth: children[0].implicitWidth + rhsItemSpacing * 4 / 3
+            Layout.fillHeight: true
 
-            Image {
-                id: infoImage
-
+            RoundButton {
                 anchors.centerIn: parent
-                source: Constants.infoPath
-                sourceSize.width: 20
-                sourceSize.height: 20
+                flat: true
+                icon.source: Constants.infoPath
+                icon.width: 20
+                icon.height: 20
+                icon.color: Constants.swiftLightGrey
+                padding: rhsItemSpacing / 3
             }
 
         }

@@ -576,6 +576,7 @@ QtObject {
         readonly property string solidCirclePath: "qrc:///images/fontawesome/circle-solid.svg"
         readonly property string squareSolidPath: "qrc:///images/fontawesome/square-solid.svg"
         readonly property string swiftLogoPath: "qrc:///images/icon.png"
+        readonly property string swiftLogoWidePath: "qrc:///images/swiftLogoWide.svg"
     }
 
     insSettingsPopup: QtObject {

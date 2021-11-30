@@ -58,6 +58,8 @@ ApplicationWindow {
             state = "opened";
             if (tabName.length > 0 && subTabNames.length == 0)
                 tabInfoBarCloseTimer.restart();
+            else
+                tabInfoBarCloseTimer.stop();
 
         }
         states: [

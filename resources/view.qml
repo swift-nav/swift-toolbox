@@ -32,10 +32,11 @@ ApplicationWindow {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        height: 10
+        z: 1
+        height: 30
         visible: tabInfoBar.state == "closed"
         hoverEnabled: true
-        z: 1
+        acceptedButtons: Qt.NoButton
         onPositionChanged: tabInfoBarOpenTimer.restart()
         onExited: tabInfoBarOpenTimer.stop()
 
@@ -62,6 +63,17 @@ ApplicationWindow {
             state = "closed";
         }
 
+        function cancelAutoClose() {
+            tabInfoBarCloseTimer.stop();
+        }
+
+        function closeAfterDelaySubtabless() {
+            if (tabName.length > 0 && subTabNames.length == 0)
+                tabInfoBarCloseTimer.restart();
+            else
+                cancelAutoClose();
+        }
+
         // We explicitly do not anchor in the vertical, so the item can
         // be slid up "under" the window.
         anchors.left: parent.left
@@ -74,10 +86,7 @@ ApplicationWindow {
         // If there is no subtabs, then close it after some time.
         onTabNameChanged: {
             open();
-            if (tabName.length > 0 && subTabNames.length == 0)
-                tabInfoBarCloseTimer.restart();
-            else
-                tabInfoBarCloseTimer.stop();
+            closeAfterDelaySubtabless();
         }
         states: [
             // The opened state sets the y position so the item is
@@ -145,8 +154,8 @@ ApplicationWindow {
         // This captures any clicks outside of the buttons, and toggles
         // the state from opened to closed or vice versa.
         MouseArea {
-            z: -1
             anchors.fill: parent
+            z: -1
             onClicked: parent.state = parent.state == "opened" ? "closed" : "opened"
         }
 

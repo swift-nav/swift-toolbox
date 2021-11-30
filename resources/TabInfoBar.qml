@@ -91,6 +91,7 @@ Rectangle {
         Item {
             implicitWidth: children[0].implicitWidth + rhsItemSpacing
             Layout.fillHeight: true
+
             Image {
                 anchors.top: parent.top
                 anchors.topMargin: 7
@@ -99,6 +100,7 @@ Rectangle {
                 source: Constants.icons.swiftLogoWidePath
                 fillMode: Image.PreserveAspectFit
             }
+
         }
 
         Rectangle {

@@ -36,18 +36,31 @@ ApplicationWindow {
         visible: tabInfoBar.state == "closed"
         hoverEnabled: true
         z: 1
-        onPositionChanged: tabInfoBarOpenTimer.restart();
+        onPositionChanged: tabInfoBarOpenTimer.restart()
         onExited: tabInfoBarOpenTimer.stop()
 
         Timer {
             id: tabInfoBarOpenTimer
+
             interval: 200
             onTriggered: tabInfoBar.open()
         }
+
     }
 
     TabInfoBar {
         id: tabInfoBar
+
+        property int openDuration: 1000
+        property int closeDuration: 350
+
+        function open() {
+            state = "opened";
+        }
+
+        function close() {
+            state = "closed";
+        }
 
         // We explicitly do not anchor in the vertical, so the item can
         // be slid up "under" the window.
@@ -56,17 +69,7 @@ ApplicationWindow {
         z: 2
         tabName: sideNavBar.currentTabName
         subTabNames: mainTabs.subTabNames
-        property int openDuration: 1000
-        property int closeDuration: 350
         state: "opened"
-
-        function open() {
-            state = "opened"
-        }
-        function close() {
-            state = "closed"
-        }
-
         // When the tab name changes, make sure this item is shown.
         // If there is no subtabs, then close it after some time.
         onTabNameChanged: {
@@ -75,7 +78,6 @@ ApplicationWindow {
                 tabInfoBarCloseTimer.restart();
             else
                 tabInfoBarCloseTimer.stop();
-
         }
         states: [
             // The opened state sets the y position so the item is
@@ -149,6 +151,7 @@ ApplicationWindow {
         }
 
     }
+
     Rectangle {
         anchors.right: parent.right
         anchors.rightMargin: 5
@@ -161,6 +164,7 @@ ApplicationWindow {
 
         Text {
             id: tabInfoBarOpenText
+
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 3
@@ -170,8 +174,9 @@ ApplicationWindow {
 
         MouseArea {
             anchors.fill: parent
-            onPressed: tabInfoBar.open();
+            onClicked: tabInfoBar.open()
         }
+
     }
 
     RowLayout {

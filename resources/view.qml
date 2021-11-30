@@ -1,8 +1,7 @@
 import "Constants"
-import QtCharts 2.2
-import QtQuick 2.5
+import QtQuick 2.15
 import QtQuick.Controls 2.15
-import QtQuick.Controls.Material 2.12
+import QtQuick.Controls.Material 2.15
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
@@ -29,16 +28,110 @@ ApplicationWindow {
         anchors.fill: parent
     }
 
+    MouseArea {
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: 10
+        visible: tabInfoBar.state == "closed"
+        hoverEnabled: true
+        z: 1
+        onEntered: {
+            console.log("entered mousearea");
+            tabInfoBar.state = "opened";
+        }
+    }
+
     TabInfoBar {
         id: tabInfoBar
 
-        anchors.left: parent.left
-        anchors.right: parent.right
         // We explicitly do not anchor in the vertical, so the item can
         // be slid up "under" the window.
-
+        anchors.left: parent.left
+        anchors.right: parent.right
         tabName: sideNavBar.currentTabName
         subTabNames: mainTabs.subTabNames
+        state: "opened"
+        // When the tab name changes, make sure this item is shown.
+        // If there is no subtabs, then close it after some time.
+        onTabNameChanged: {
+            state = "opened";
+            if (tabName.length > 0 && subTabNames.length == 0)
+                tabInfoBarCloseTimer.restart();
+
+        }
+        states: [
+            // The opened state sets the y position so the item is
+            // positioned so it's top is right at the top of the parent
+            // item.
+            State {
+                name: "opened"
+
+                PropertyChanges {
+                    target: tabInfoBar
+                    y: 0
+                }
+
+            },
+            // The closed state sets the y position so the item is
+            // positioned so it's bottom is right at the top of the
+            // parent item, and all but one pixel height of the item is
+            // hidden. One pixel is still shown so there is a border
+            // line at the top of the view.
+            State {
+                name: "closed"
+
+                PropertyChanges {
+                    target: tabInfoBar
+                    y: -height + 1
+                }
+
+            }
+        ]
+        // Make the opened/closed state transitions smooth.
+        transitions: [
+            Transition {
+                from: "opened"
+                to: "closed"
+
+                NumberAnimation {
+                    target: tabInfoBar
+                    properties: "y"
+                    duration: 1000
+                    easing.type: Easing.OutElastic
+                }
+
+            },
+            Transition {
+                from: "closed"
+                to: "opened"
+
+                NumberAnimation {
+                    target: tabInfoBar
+                    properties: "y"
+                    duration: 1000
+                    easing.type: Easing.OutElastic
+                }
+
+            }
+        ]
+
+        Timer {
+            id: tabInfoBarCloseTimer
+
+            interval: 3000
+            running: false
+            onTriggered: parent.state = "closed"
+        }
+
+        // This captures any clicks outside of the buttons, and toggles
+        // the state from opened to closed or vice versa.
+        MouseArea {
+            z: -1
+            anchors.fill: parent
+            onClicked: parent.state = parent.state == "opened" ? "closed" : "opened"
+        }
+
     }
 
     RowLayout {

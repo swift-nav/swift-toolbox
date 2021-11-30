@@ -42,7 +42,7 @@ ApplicationWindow {
         Timer {
             id: tabInfoBarOpenTimer
             interval: 200
-            onTriggered: tabInfoBar.state = "opened"
+            onTriggered: tabInfoBar.open()
         }
     }
 
@@ -53,13 +53,24 @@ ApplicationWindow {
         // be slid up "under" the window.
         anchors.left: parent.left
         anchors.right: parent.right
+        z: 2
         tabName: sideNavBar.currentTabName
         subTabNames: mainTabs.subTabNames
+        property int openDuration: 1000
+        property int closeDuration: 350
         state: "opened"
+
+        function open() {
+            state = "opened"
+        }
+        function close() {
+            state = "closed"
+        }
+
         // When the tab name changes, make sure this item is shown.
         // If there is no subtabs, then close it after some time.
         onTabNameChanged: {
-            state = "opened";
+            open();
             if (tabName.length > 0 && subTabNames.length == 0)
                 tabInfoBarCloseTimer.restart();
             else
@@ -103,7 +114,7 @@ ApplicationWindow {
                 NumberAnimation {
                     target: tabInfoBar
                     properties: "y"
-                    duration: 1000
+                    duration: tabInfoBar.closeDuration
                     easing.type: Easing.OutQuad
                 }
 
@@ -115,7 +126,7 @@ ApplicationWindow {
                 NumberAnimation {
                     target: tabInfoBar
                     properties: "y"
-                    duration: 350
+                    duration: tabInfoBar.openDuration
                     easing.type: Easing.OutQuad
                 }
 
@@ -126,7 +137,7 @@ ApplicationWindow {
             id: tabInfoBarCloseTimer
 
             interval: 3000
-            onTriggered: parent.state = "closed"
+            onTriggered: parent.close()
         }
 
         // This captures any clicks outside of the buttons, and toggles
@@ -137,6 +148,30 @@ ApplicationWindow {
             onClicked: parent.state = parent.state == "opened" ? "closed" : "opened"
         }
 
+    }
+    Rectangle {
+        anchors.right: parent.right
+        anchors.rightMargin: 5
+        y: -3
+        z: 1
+        implicitHeight: tabInfoBarOpenText.implicitHeight + 9
+        implicitWidth: 30
+        color: Constants.swiftControlBackground
+        radius: 3
+
+        Text {
+            id: tabInfoBarOpenText
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 3
+            text: "▼"
+            color: Constants.swiftLightGrey
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            onPressed: tabInfoBar.open();
+        }
     }
 
     RowLayout {

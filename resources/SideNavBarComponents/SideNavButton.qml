@@ -13,6 +13,7 @@ Button {
     property QtObject buttonGroup
     property QtObject view: ListView.view
     property bool separator: true
+    property bool silenceButtonGroupWarning: false
 
     ButtonGroup.group: buttonGroup
     width: view ? view.width : 0
@@ -39,7 +40,9 @@ Button {
     // 3 to match the new style mockups.
     spacing: 3
     Component.onCompleted: {
-        console.assert(buttonGroup != undefined, "No buttonGroup assigned to SideNavButton! Undesired behavior will result.");
+        if (!silenceButtonGroupWarning)
+            console.assert(buttonGroup != undefined, "No buttonGroup assigned to SideNavButton! Undesired behavior will result.");
+
     }
 
     contentItem: IconLabel {

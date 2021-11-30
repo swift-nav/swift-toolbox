@@ -115,6 +115,7 @@ Item {
             ToolTip.text: "Connection Dialog"
             checkable: false
             enabled: Globals.connected_at_least_once
+            silenceButtonGroupWarning: true
             onClicked: {
                 if (stack.connectionScreenVisible())
                     stack.mainView();

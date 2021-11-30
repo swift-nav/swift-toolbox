@@ -36,9 +36,13 @@ ApplicationWindow {
         visible: tabInfoBar.state == "closed"
         hoverEnabled: true
         z: 1
-        onEntered: {
-            console.log("entered mousearea");
-            tabInfoBar.state = "opened";
+        onPositionChanged: tabInfoBarOpenTimer.restart();
+        onExited: tabInfoBarOpenTimer.stop()
+
+        Timer {
+            id: tabInfoBarOpenTimer
+            interval: 200
+            onTriggered: tabInfoBar.state = "opened"
         }
     }
 
@@ -122,7 +126,6 @@ ApplicationWindow {
             id: tabInfoBarCloseTimer
 
             interval: 3000
-            running: false
             onTriggered: parent.state = "closed"
         }
 

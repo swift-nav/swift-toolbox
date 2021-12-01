@@ -46,7 +46,6 @@ pub fn process_messages(
             shared_state.clone(),
             client_sender.clone(),
             msg_sender.clone(),
-            source.stateless_link(),
         )
     } else {
         Tabs::new(
@@ -84,6 +83,9 @@ pub fn process_messages(
         }
         for (message, _) in &mut messages {
             source.send_with_state(&tabs, &message);
+            if let Some(ref tab) = tabs.settings {
+                tab.handle_msg(message);
+            }
             log::logger().flush();
         }
         if let Some(ref tab) = tabs.settings {

@@ -1508,12 +1508,10 @@ dependencies = [
 
 [[package]]
 name = "sbp-settings"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ad2affc9a3b36ee5a8400cd478b86f99d8a95dafb0ff2d413bf3c17273becc79"
+checksum = "dafc7b9002c270b4add37abc18dacd8503d2b931dc0c0484d3513f8e9b832fbc"
 dependencies = [
- "bindgen",
- "cmake",
  "crossbeam-channel",
  "crossbeam-utils",
  "log",

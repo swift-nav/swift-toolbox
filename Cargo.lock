@@ -142,7 +142,7 @@ dependencies = [
  "cexpr",
  "clang-sys",
  "clap 2.33.3",
- "env_logger",
+ "env_logger 0.8.4",
  "lazy_static",
  "lazycell",
  "log",
@@ -358,6 +358,7 @@ dependencies = [
  "crossbeam",
  "csv",
  "directories",
+ "env_logger 0.9.0",
  "glob",
  "indexmap",
  "lazy_static",
@@ -603,6 +604,19 @@ name = "env_logger"
 version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a19187fea3ac7e84da7dacf48de0c45d63c6a76f9490dae389aead16c243fce3"
+dependencies = [
+ "atty",
+ "humantime",
+ "log",
+ "regex",
+ "termcolor",
+]
+
+[[package]]
+name = "env_logger"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b2cf0344971ee6c64c31be0d530793fba457d322dfec2810c453d0ef228f9c3"
 dependencies = [
  "atty",
  "humantime",
@@ -1488,8 +1502,9 @@ dependencies = [
 
 [[package]]
 name = "sbp-settings"
-version = "0.4.0"
-source = "git+https://github.com/swift-nav/libsettings-rs?branch=steve/riir#6c7ed8c308c10923bcf00ddf34b7cd911ddace13"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dafc7b9002c270b4add37abc18dacd8503d2b931dc0c0484d3513f8e9b832fbc"
 dependencies = [
  "crossbeam-channel",
  "crossbeam-utils",

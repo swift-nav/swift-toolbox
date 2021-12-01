@@ -9,7 +9,6 @@ import SwiftConsole 1.0
 Item {
     property variant columnWidths: [parent.width / 3, parent.width / 3, parent.width / 3]
     property real mouse_x: 0
-    property int selectedRow: -1
     property variant entries: []
 
     HorizontalHeaderView {
@@ -78,6 +77,11 @@ Item {
     TableView {
         id: tableView
 
+        property int selectedRow: -1
+
+        Component.onCompleted: {
+            Globals.tablesWithHighlights.push(this);
+        }
         columnSpacing: -1
         rowSpacing: -1
         columnWidthProvider: function(column) {
@@ -121,7 +125,7 @@ Item {
             implicitHeight: Constants.genericTable.cellHeight
             implicitWidth: tableView.columnWidthProvider(column)
             border.color: Constants.genericTable.borderColor
-            color: row == selectedRow ? Constants.genericTable.cellHighlightedColor : Constants.genericTable.cellColor
+            color: row == tableView.selectedRow ? Constants.genericTable.cellHighlightedColor : Constants.genericTable.cellColor
 
             Label {
                 width: parent.width
@@ -139,11 +143,13 @@ Item {
                 height: parent.height
                 anchors.centerIn: parent
                 onPressed: {
-                    if (selectedRow == row) {
-                        selectedRow = -1;
+                    Globals.clearHighlightedRows();
+                    tableView.focus = true;
+                    if (tableView.selectedRow == row) {
+                        tableView.selectedRow = -1;
                     } else {
-                        selectedRow = row;
-                        Globals.copyClipboard = JSON.stringify(tableView.model.getRow(selectedRow));
+                        tableView.selectedRow = row;
+                        Globals.copyClipboard = JSON.stringify(tableView.model.getRow(tableView.selectedRow));
                     }
                 }
             }

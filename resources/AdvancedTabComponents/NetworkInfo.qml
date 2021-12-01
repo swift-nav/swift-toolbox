@@ -9,7 +9,6 @@ ColumnLayout {
     property variant entries: []
     property var columnWidths: [parent.width / 5, parent.width / 5, parent.width / 5, parent.width / 5, parent.width / 5]
     property real mouse_x: 0
-    property int selectedRow: -1
 
     spacing: Constants.networking.layoutSpacing
 
@@ -19,7 +18,7 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.preferredHeight: Constants.genericTable.cellHeight
         interactive: false
-        syncView: table
+        syncView: tableView
         z: Constants.genericTable.headerZOffset
 
         delegate: Rectangle {
@@ -32,7 +31,7 @@ ColumnLayout {
                 anchors.centerIn: parent
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
-                text: table.model.columns[index].display
+                text: tableView.model.columns[index].display
                 elide: Text.ElideRight
                 clip: true
                 font.family: Constants.genericTable.fontFamily
@@ -51,12 +50,12 @@ ColumnLayout {
                     if (pressed) {
                         var delta_x = (mouseX - mouse_x);
                         var next_idx = (index + 1) % 5;
-                        var min_width = table.width / 10;
+                        var min_width = tableView.width / 10;
                         if (columnWidths[index] + delta_x > min_width && columnWidths[next_idx] - delta_x > min_width) {
                             columnWidths[index] += delta_x;
                             columnWidths[next_idx] -= delta_x;
                         }
-                        table.forceLayout();
+                        tableView.forceLayout();
                     }
                 }
             }
@@ -79,8 +78,13 @@ ColumnLayout {
     }
 
     TableView {
-        id: table
+        id: tableView
 
+        property int selectedRow: -1
+
+        Component.onCompleted: {
+            Globals.tablesWithHighlights.push(this);
+        }
         columnSpacing: -1
         rowSpacing: -1
         columnWidthProvider: function(column) {
@@ -91,7 +95,7 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.fillHeight: true
         onWidthChanged: {
-            table.forceLayout();
+            tableView.forceLayout();
         }
 
         ScrollBar.horizontal: ScrollBar {
@@ -127,9 +131,9 @@ ColumnLayout {
 
         delegate: Rectangle {
             implicitHeight: Constants.genericTable.cellHeight
-            implicitWidth: table.columnWidthProvider(column)
+            implicitWidth: tableView.columnWidthProvider(column)
             border.color: Constants.genericTable.borderColor
-            color: row == selectedRow ? Constants.genericTable.cellHighlightedColor : Constants.genericTable.cellColor
+            color: row == tableView.selectedRow ? Constants.genericTable.cellHighlightedColor : Constants.genericTable.cellColor
 
             Label {
                 width: parent.width
@@ -147,11 +151,13 @@ ColumnLayout {
                 height: parent.height
                 anchors.centerIn: parent
                 onPressed: {
-                    if (selectedRow == row) {
-                        selectedRow = -1;
+                    Globals.clearHighlightedRows();
+                    tableView.focus = true;
+                    if (tableView.selectedRow == row) {
+                        tableView.selectedRow = -1;
                     } else {
-                        selectedRow = row;
-                        Globals.copyClipboard = JSON.stringify(table.model.getRow(selectedRow));
+                        tableView.selectedRow = row;
+                        Globals.copyClipboard = JSON.stringify(tableView.model.getRow(tableView.selectedRow));
                     }
                 }
             }
@@ -176,7 +182,7 @@ ColumnLayout {
                 new_row[Constants.networking.columnHeaders[2]] = entries[idx][2];
                 new_row[Constants.networking.columnHeaders[3]] = entries[idx][3];
                 new_row[Constants.networking.columnHeaders[4]] = entries[idx][4];
-                table.model.setRow(idx, new_row);
+                tableView.model.setRow(idx, new_row);
             }
         }
     }

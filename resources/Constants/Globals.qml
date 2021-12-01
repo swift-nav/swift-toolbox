@@ -16,4 +16,12 @@ QtObject {
     property string conn_state: Constants.connection.disconnected
     property bool connected_at_least_once: false
     property string copyClipboard: ""
+    property var tablesWithHighlights: []
+
+    function clearHighlightedRows() {
+        for (var i in tablesWithHighlights) {
+            tablesWithHighlights[i].selectedRow = -1;
+        }
+    }
+
 }

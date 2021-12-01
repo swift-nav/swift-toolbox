@@ -8,7 +8,6 @@ Item {
     property var logEntries: []
     property variant columnWidths: [parent.width * Constants.logPanel.defaultColumnWidthRatios[0], parent.width * Constants.logPanel.defaultColumnWidthRatios[1], parent.width * Constants.logPanel.defaultColumnWidthRatios[2]]
     property real mouse_x: 0
-    property int selectedRow: -1
     property bool forceLayoutLock: false
     property variant logLevelLabels: []
     property int logLevelIndex: 3
@@ -206,6 +205,11 @@ Item {
         TableView {
             id: tableView
 
+            property int selectedRow: -1
+
+            Component.onCompleted: {
+                Globals.tablesWithHighlights.push(this);
+            }
             columnSpacing: -1
             rowSpacing: -1
             columnWidthProvider: function(column) {
@@ -256,7 +260,7 @@ Item {
             delegate: Rectangle {
                 implicitHeight: Constants.logPanel.cellHeight
                 implicitWidth: tableView.columnWidthProvider(column)
-                color: row == selectedRow ? Constants.genericTable.cellHighlightedColor : Constants.genericTable.cellColor
+                color: row == tableView.selectedRow ? Constants.genericTable.cellHighlightedColor : Constants.genericTable.cellColor
 
                 Label {
                     width: parent.width
@@ -274,11 +278,13 @@ Item {
                     height: parent.height
                     anchors.centerIn: parent
                     onPressed: {
-                        if (selectedRow == row) {
-                            selectedRow = -1;
+                        Globals.clearHighlightedRows();
+                        tableView.focus = true;
+                        if (tableView.selectedRow == row) {
+                            tableView.selectedRow = -1;
                         } else {
-                            selectedRow = row;
-                            Globals.copyClipboard = JSON.stringify(tableView.model.getRow(selectedRow));
+                            tableView.selectedRow = row;
+                            Globals.copyClipboard = JSON.stringify(tableView.model.getRow(tableView.selectedRow));
                         }
                     }
                 }
@@ -318,8 +324,8 @@ Item {
                 for (var idx in logEntries) {
                     tableView.model.setRow(idx, logEntries[idx]);
                 }
-                if (logPanelData.entries.length && selectedRow != -1)
-                    selectedRow += logPanelData.entries.length;
+                if (logPanelData.entries.length && tableView.selectedRow != -1)
+                    tableView.selectedRow += logPanelData.entries.length;
 
                 logPanelData.entries = [];
             }

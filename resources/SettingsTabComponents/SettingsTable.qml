@@ -8,7 +8,7 @@ import SwiftConsole 1.0
 
 Item {
     property variant columnWidths: [Constants.settingsTable.maximumWidth * 0.4, Constants.settingsTable.maximumWidth * 0.6]
-    property int selectedRowIdx: -1
+    property alias selectedRowIdx: tableView.selectedRow
     property var rowOffsets: ({
     })
     property bool showExpert: false
@@ -104,6 +104,11 @@ Item {
             TableView {
                 id: tableView
 
+                property int selectedRow: -1
+
+                Component.onCompleted: {
+                    Globals.tablesWithHighlights.push(this);
+                }
                 columnSpacing: -1
                 rowSpacing: -1
                 columnWidthProvider: function(column) {
@@ -143,7 +148,7 @@ Item {
                         if (item[Constants.settingsTable.tableRightColumnHeader] == "")
                             return Constants.genericTable.borderColor;
 
-                        if (selectedRowIdx == row)
+                        if (tableView.selectedRow == row)
                             return Constants.genericTable.cellHighlightedColor;
 
                         return Constants.genericTable.cellColor;
@@ -169,11 +174,13 @@ Item {
                         height: parent.height
                         anchors.centerIn: parent
                         onPressed: {
-                            if (selectedRowIdx == row) {
-                                selectedRowIdx = -1;
+                            Globals.clearHighlightedRows();
+                            tableView.focus = true;
+                            if (tableView.selectedRow == row) {
+                                tableView.selectedRow = -1;
                             } else {
-                                selectedRowIdx = row;
-                                Globals.copyClipboard = JSON.stringify(tableView.model.getRow(selectedRowIdx));
+                                tableView.selectedRow = row;
+                                Globals.copyClipboard = JSON.stringify(tableView.model.getRow(tableView.selectedRow));
                             }
                         }
                     }

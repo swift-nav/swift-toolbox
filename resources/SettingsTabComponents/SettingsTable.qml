@@ -101,24 +101,6 @@ Item {
 
             }
 
-            TextEdit {
-                id: textEdit
-
-                visible: false
-            }
-
-            Shortcut {
-                sequences: [StandardKey.Copy]
-                onActivated: {
-                    if (selectedRowIdx != -1) {
-                        textEdit.text = JSON.stringify(tableView.model.getRow(selectedRowIdx));
-                        textEdit.selectAll();
-                        textEdit.copy();
-                        selectedRowIdx = -1;
-                    }
-                }
-            }
-
             TableView {
                 id: tableView
 
@@ -187,10 +169,12 @@ Item {
                         height: parent.height
                         anchors.centerIn: parent
                         onPressed: {
-                            if (selectedRowIdx == row)
+                            if (selectedRowIdx == row) {
                                 selectedRowIdx = -1;
-                            else
+                            } else {
                                 selectedRowIdx = row;
+                                Globals.copyClipboard = JSON.stringify(tableView.model.getRow(selectedRowIdx));
+                            }
                         }
                     }
 

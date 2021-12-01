@@ -16,6 +16,21 @@ ApplicationWindow {
     font.pointSize: Constants.mediumPointSize
     visible: true
 
+    TextEdit {
+        id: textEdit
+
+        visible: false
+        text: Globals.copyClipboard
+    }
+
+    Shortcut {
+        sequences: [StandardKey.Copy]
+        onActivated: {
+            textEdit.selectAll();
+            textEdit.copy();
+        }
+    }
+
     MainDialogView {
         id: dialogStack
 

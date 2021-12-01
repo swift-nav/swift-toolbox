@@ -104,7 +104,7 @@ pub struct CliOptions {
     #[clap(long = "sbp-log")]
     pub sbp_log: Option<CliSbpLogging>,
 
-    /// Set Console Log Level Filter. Default: INFO.
+    /// Set Console Log Level Filter. Default: WARNING.
     #[clap(long = "log-level")]
     pub log_level: Option<CliLogLevel>,
 
@@ -305,7 +305,7 @@ pub fn handle_cli(opt: CliOptions, conn_manager: &ConnectionManager, shared_stat
     let log_level = if let Some(log_level_) = opt.log_level {
         (*log_level_).clone()
     } else {
-        LogLevel::INFO
+        LogLevel::WARNING
     };
     shared_state.set_log_level(log_level);
     let mut shared_data = shared_state.lock();

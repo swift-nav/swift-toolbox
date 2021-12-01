@@ -147,10 +147,12 @@ ColumnLayout {
                 height: parent.height
                 anchors.centerIn: parent
                 onPressed: {
-                    if (selectedRow == row)
+                    if (selectedRow == row) {
                         selectedRow = -1;
-                    else
+                    } else {
                         selectedRow = row;
+                        Globals.copyClipboard = JSON.stringify(table.model.getRow(selectedRow));
+                    }
                 }
             }
 

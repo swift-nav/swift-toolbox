@@ -442,7 +442,7 @@ pub struct LogPanelState {
 impl LogPanelState {
     fn new() -> LogPanelState {
         LogPanelState {
-            log_level: LogLevel::INFO,
+            log_level: LogLevel::WARNING,
         }
     }
 }

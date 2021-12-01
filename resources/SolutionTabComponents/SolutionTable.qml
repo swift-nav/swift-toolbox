@@ -26,6 +26,8 @@ Item {
 
     }
 
+    implicitWidth: Constants.solutionTable.width
+
     SolutionTableEntries {
         id: solutionTableEntries
     }

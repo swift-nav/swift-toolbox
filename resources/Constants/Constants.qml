@@ -49,10 +49,11 @@ QtObject {
     readonly property real smallPointSize: 7
     readonly property real mediumPointSize: 8
     readonly property real largePointSize: 9
+    readonly property string infoPath: "qrc:///images/fontawesome/info-circle-solid.svg"
     readonly property bool debugMode: false
     readonly property color swiftGrey: "#323F48"
     readonly property color swiftLightGrey: "#3C464F"
-    readonly property color swiftControlBackground: "#ECECEC"
+    readonly property color swiftControlBackground: "#E0E0E0"
     readonly property color tabButtonUnselectedTextColor: "#767676"
     readonly property color materialGrey: "dimgrey"
     readonly property color swiftOrange: "#FF8300"
@@ -95,13 +96,16 @@ QtObject {
         readonly property string settingsPath: "qrc:///images/fontawesome/cogs-solid.svg"
         readonly property string updatePath: "qrc:///images/fontawesome/chevron-circle-up-solid.svg"
         readonly property string advancedPath: "qrc:///images/fontawesome/lock-solid.svg"
-        readonly property real tabBarHeight: 45
-        readonly property real tabBarWidth: 50
+        readonly property real tabBarHeight: 48
+        readonly property real tabBarWidth: 62
         readonly property int buttonPadding: 0
         readonly property int buttonInset: 0
         readonly property int separatorMargin: 10
         readonly property int separatorHeight: 1
-        readonly property color backgroundColor: "#fafafa"
+        readonly property color backgroundColor: swiftGrey
+        readonly property color statusGoodColor: "#07DD01"
+        readonly property color statusOkColor: "yellow"
+        readonly property color statusBadColor: "red"
     }
 
     updateTab: QtObject {
@@ -572,6 +576,7 @@ QtObject {
         readonly property string solidCirclePath: "qrc:///images/fontawesome/circle-solid.svg"
         readonly property string squareSolidPath: "qrc:///images/fontawesome/square-solid.svg"
         readonly property string swiftLogoPath: "qrc:///images/icon.png"
+        readonly property string swiftLogoWidePath: "qrc:///images/swiftLogoWide.svg"
     }
 
     insSettingsPopup: QtObject {

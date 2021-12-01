@@ -1,16 +1,15 @@
 import "Constants"
 import QtCharts 2.2
 import QtQuick 2.5
-import QtQuick.Controls 2.12
-import QtQuick.Controls 1.4
+import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import "SolutionTabComponents" as SolutionTabComponents
 
-Item {
+MainTab {
     id: solutionTab
 
-    width: parent.width
-    height: parent.height
+    subTabNames: ["Position", "Velocity"]
+    curSubTabIndex: Globals.initialMainTabIndex == 1 ? Globals.initialSubTabIndex : 0
 
     SplitView {
         id: solutionSplitView
@@ -19,56 +18,21 @@ Item {
         orientation: Qt.Horizontal
 
         SolutionTabComponents.SolutionTable {
-            width: Constants.solutionTable.width
+            SplitView.minimumWidth: 240
         }
 
-        Rectangle {
-            id: solutionPlots
+        StackLayout {
+            id: solutionBarLayout
 
-            Layout.minimumWidth: 200
-            Layout.fillWidth: true
+            SplitView.minimumWidth: 410
+            SplitView.fillWidth: true
+            SplitView.fillHeight: true
+            currentIndex: curSubTabIndex
 
-            TabBar {
-                id: solutionBar
-
-                currentIndex: Globals.initialMainTabIndex == 1 ? Globals.initialSubTabIndex : 0
-                z: Constants.commonChart.zAboveCharts
-                contentHeight: Constants.tabBarHeight
-
-                Repeater {
-                    model: ["Position", "Velocity"]
-
-                    TabButton {
-                        text: modelData
-                        width: implicitWidth
-                    }
-
-                }
-
+            SolutionTabComponents.SolutionPositionTab {
             }
 
-            Rectangle {
-                id: solutionTabBackground
-
-                width: parent.width
-                height: parent.height
-                anchors.top: solutionBar.bottom
-
-                StackLayout {
-                    id: solutionBarLayout
-
-                    width: parent.width
-                    height: parent.height
-                    currentIndex: solutionBar.currentIndex
-
-                    SolutionTabComponents.SolutionPositionTab {
-                    }
-
-                    SolutionTabComponents.SolutionVelocityTab {
-                    }
-
-                }
-
+            SolutionTabComponents.SolutionVelocityTab {
             }
 
         }

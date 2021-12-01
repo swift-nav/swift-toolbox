@@ -5,7 +5,7 @@ import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 import "UpdateTabComponents" as UpdateTabComponents
 
-Item {
+MainTab {
     id: updateTab
 
     property bool consoleVersionDialogAlready: false
@@ -50,9 +50,6 @@ Item {
         text += "\t" + latestVersion + "\n";
         return text;
     }
-
-    width: parent.width
-    height: parent.height
 
     UpdateTabData {
         id: updateTabData

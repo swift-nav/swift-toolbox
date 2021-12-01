@@ -6,11 +6,8 @@ import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
-Item {
+MainTab {
     id: observationTab
-
-    width: parent.width
-    height: parent.height
 
     SplitView {
         id: observationView

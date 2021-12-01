@@ -12,25 +12,23 @@ Button {
 
     property QtObject buttonGroup
     property QtObject view: ListView.view
+    property bool separator: true
+    property bool silenceButtonGroupWarning: false
 
     ButtonGroup.group: buttonGroup
-    width: view.width
-    height: implicitHeight < width ? width : implicitHeight
+    width: view ? view.width : 0
     z: visualFocus ? 10 : control.checked || control.highlighted ? 5 : 1
     display: AbstractButton.TextUnderIcon
     checkable: true
-    text: modelData.name
-    ToolTip.text: modelData.tooltip
+    icon.width: 22
+    icon.height: 22
+    icon.color: control.checked || control.highlighted ? Qt.darker(Constants.swiftOrange, control.enabled ? 1 : 1.4) : control.flat && !control.down ? (control.visualFocus ? Constants.swiftOrange : control.palette.windowText) : Qt.darker("white", control.enabled ? 1 : 1.4)
     ToolTip.delay: 1000
     ToolTip.timeout: 5000
     ToolTip.visible: ToolTip.text.length != 0 && hovered
-    icon.source: modelData.source
-    icon.width: 22
-    icon.height: 22
-    icon.color: control.checked || control.highlighted ? Qt.darker(Constants.swiftOrange, control.enabled ? 1 : 1.5) : control.flat && !control.down ? (control.visualFocus ? Constants.swiftOrange : control.palette.windowText) : Qt.darker("white", control.enabled ? 1 : 1.5)
     font.pointSize: Constants.smallPointSize
     font.capitalization: Font.MixedCase
-    font.letterSpacing: -1
+    font.letterSpacing: 0
     // No idea why the insets are set, but they need to be 0 so there are no gaps between buttons.
     topInset: 0
     bottomInset: 0
@@ -42,7 +40,9 @@ Button {
     // 3 to match the new style mockups.
     spacing: 3
     Component.onCompleted: {
-        console.assert(buttonGroup != undefined, "No buttonGroup assigned to SideNavButton! Undesired behavior will result.");
+        if (!silenceButtonGroupWarning)
+            console.assert(buttonGroup != undefined, "No buttonGroup assigned to SideNavButton! Undesired behavior will result.");
+
     }
 
     contentItem: IconLabel {
@@ -52,14 +52,14 @@ Button {
         icon: control.icon
         text: control.text
         font: control.font
-        color: control.checked || control.highlighted ? Qt.darker(control.palette.dark, control.enabled ? 1 : 1.5) : control.flat && !control.down ? (control.visualFocus ? Constants.swiftOrange : control.palette.windowText) : Qt.darker("white", control.enabled ? 1 : 1.5)
+        color: control.checked || control.highlighted ? Qt.darker(control.palette.dark, control.enabled ? 1 : 1.5) : control.flat && !control.down ? (control.visualFocus ? Constants.swiftOrange : control.palette.windowText) : Qt.darker("white", control.enabled ? 1 : 1.4)
     }
 
     background: Rectangle {
         implicitWidth: 100
         implicitHeight: 40
         visible: !control.flat || control.down || control.checked || control.highlighted
-        color: Color.blend(control.checked || control.highlighted ? Qt.darker("white", control.enabled ? 1 : 1.5) : Constants.swiftGrey, control.palette.mid, control.down ? 0.5 : 0)
+        color: Color.blend(control.checked || control.highlighted ? Qt.darker("white", control.enabled ? 1 : 1.4) : Constants.sideNavBar.backgroundColor, control.palette.mid, control.down ? 0.5 : 0)
         border.color: Constants.swiftOrange
         border.width: control.visualFocus ? 1 : 0
 
@@ -68,8 +68,8 @@ Button {
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             height: 1
-            color: Qt.darker("white", control.enabled ? 1 : 1.5)
-            visible: !control.visualFocus && !(control.view.itemAtIndex(index + 1) != null ? control.view.itemAtIndex(index + 1).visualFocus : false)
+            color: Qt.darker("white", control.enabled ? 1 : 1.4)
+            visible: control.separator && !control.visualFocus && !(control.view && control.view.itemAtIndex(index + 1) ? control.view.itemAtIndex(index + 1).visualFocus : false)
         }
 
         Repeater {

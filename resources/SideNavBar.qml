@@ -9,6 +9,7 @@ Item {
     id: top
 
     property alias currentIndex: navButtons.currentIndex
+    property string currentTabName: top.currentIndex < 0 ? "" : tabModel[top.currentIndex].tooltip
     property bool enabled: true
     property var tabModel: [{
         "name": "Tracking",
@@ -23,7 +24,7 @@ Item {
         "tooltip": "Baseline",
         "source": Constants.sideNavBar.baselinePath
     }, {
-        "name": "Obs ",
+        "name": "Observations",
         "tooltip": "Observations",
         "source": Constants.sideNavBar.observationsPath
     }, {
@@ -40,17 +41,22 @@ Item {
         "source": Constants.sideNavBar.advancedPath
     }]
 
+    function clickButton(index) {
+        navButtons.itemAtIndex(index).toggle();
+    }
+
     ConnectionData {
         id: connectionData
     }
 
     ColumnLayout {
         anchors.fill: parent
+        spacing: 0
 
         Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            color: Constants.swiftGrey
+            color: Constants.sideNavBar.backgroundColor
 
             ButtonGroup {
                 id: navButtonGroup
@@ -67,18 +73,15 @@ Item {
 
                 anchors.fill: parent
                 model: tabModel
-                currentIndex: Globals.initialMainTabIndex
+                currentIndex: -1
                 enabled: top.enabled
                 highlightMoveDuration: 200
                 highlightResizeDuration: 0
                 highlightFollowsCurrentItem: true
-                Component.onCompleted: {
-                    currentItem.checked = true;
-                }
 
                 highlight: Item {
                     // TODO: This is an odd z order which depends on the Z order of some things in the buttons, refactor.
-                    z: 6
+                    z: 11
 
                     Rectangle {
                         height: 2
@@ -90,29 +93,29 @@ Item {
                 }
 
                 delegate: SideNavButton {
+                    text: modelData.name
+                    icon.source: modelData.source
+                    ToolTip.text: modelData.tooltip
                     buttonGroup: navButtonGroup
+                    height: Constants.sideNavBar.tabBarHeight
                 }
 
             }
 
         }
 
-        TabButton {
+        SideNavButton {
             id: connectButton
 
             Layout.alignment: Qt.AlignBottom
-            Layout.preferredWidth: Constants.sideNavBar.tabBarWidth
-            border: false
+            Layout.fillWidth: true
+            height: Constants.sideNavBar.tabBarHeight
+            text: "Connection"
             icon.source: Constants.icons.lightningBoltPath
-            icon.color: !enabled ? Constants.materialGrey : Constants.swiftOrange
-            backgroundColor: hovered ? Qt.darker("white", 1.1) : "white"
-            checkable: false
-            padding: Constants.sideNavBar.buttonPadding
-            rightInset: Constants.sideNavBar.buttonInset
-            leftInset: Constants.sideNavBar.buttonInset
-            ToolTip.visible: hovered
             ToolTip.text: "Connection Dialog"
+            checkable: false
             enabled: Globals.connected_at_least_once
+            silenceButtonGroupWarning: true
             onClicked: {
                 if (stack.connectionScreenVisible())
                     stack.mainView();
@@ -121,13 +124,81 @@ Item {
             }
         }
 
-        Timer {
-            interval: Utils.hzToMilliseconds(Constants.staticTimerSlowIntervalRate)
-            running: true
-            repeat: true
-            onTriggered: {
-                connectButton.checked = Globals.conn_state == Constants.connection.connected;
+        Rectangle {
+            id: connectionStatusIndicator
+
+            property real speed: 0
+
+            Layout.alignment: Qt.AlignBottom
+            Layout.fillWidth: true
+            height: Constants.sideNavBar.tabBarHeight
+            enabled: top.enabled
+            color: Constants.sideNavBar.backgroundColor
+            state: "bad"
+            states: [
+                State {
+                    name: "good"
+
+                    PropertyChanges {
+                        target: connectionStatusCircle
+                        color: Constants.sideNavBar.statusGoodColor
+                    }
+
+                },
+                State {
+                    name: "ok"
+
+                    PropertyChanges {
+                        target: connectionStatusCircle
+                        color: Constants.sideNavBar.statusOkColor
+                    }
+
+                },
+                State {
+                    name: "bad"
+
+                    PropertyChanges {
+                        target: connectionStatusCircle
+                        color: Constants.sideNavBar.statusBadColor
+                    }
+
+                }
+            ]
+
+            Column {
+                anchors.centerIn: parent
+                spacing: 2
+
+                Label {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    bottomPadding: 0
+                    bottomInset: 0
+                    text: connectionStatusIndicator.speed + " KB/s"
+                    font.pointSize: Constants.smallPointSize
+                    font.letterSpacing: -1
+                    color: Qt.darker("white", enabled ? 1 : 1.4)
+                }
+
+                Rectangle {
+                    id: connectionStatusCircle
+
+                    property int diameter: 15
+
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: diameter
+                    height: diameter
+                    radius: diameter / 2
+
+                    Behavior on color {
+                        ColorAnimation {
+                        }
+
+                    }
+
+                }
+
             }
+
         }
 
     }

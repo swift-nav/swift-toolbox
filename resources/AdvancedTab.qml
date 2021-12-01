@@ -5,66 +5,34 @@ import QtQuick 2.5
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.15
 
-Item {
+MainTab {
     id: advancedTab
 
-    width: parent.width
-    height: parent.height
+    subTabNames: ["System Monitor", "IMU", "Magnetometer", "Networking", "Spectrum Analyzer", "INS"]
+    curSubTabIndex: Globals.initialMainTabIndex == 6 ? Globals.initialSubTabIndex : 0
 
-    TabBar {
-        id: advancedBar
+    StackLayout {
+        id: advancedBarLayout
 
-        z: Constants.commonChart.zAboveCharts
-        currentIndex: Globals.initialMainTabIndex == 6 ? Globals.initialSubTabIndex : 0
-        contentHeight: Constants.tabBarHeight
+        anchors.fill: parent
+        currentIndex: curSubTabIndex
 
-        Repeater {
-            model: ["System Monitor", "IMU", "Magnetometer", "Networking", "Spectrum Analyzer", "INS"]
-
-            TabButton {
-                text: modelData
-                width: implicitWidth
-            }
-
+        AdvancedTabComponents.AdvancedSystemMonitorTab {
         }
 
-    }
-
-    Rectangle {
-        id: advancedTabBackground
-
-        width: parent.width
-        height: parent.height
-        anchors.top: advancedBar.bottom
-        anchors.bottom: advancedTab.bottom
-        Component.onCompleted: {
+        AdvancedTabComponents.AdvancedImuTab {
         }
 
-        StackLayout {
-            id: advancedBarLayout
+        AdvancedTabComponents.AdvancedMagnetometerTab {
+        }
 
-            width: parent.width
-            height: parent.height
-            currentIndex: advancedBar.currentIndex
+        AdvancedTabComponents.AdvancedNetworkingTab {
+        }
 
-            AdvancedTabComponents.AdvancedSystemMonitorTab {
-            }
+        AdvancedTabComponents.AdvancedSpectrumAnalyzerTab {
+        }
 
-            AdvancedTabComponents.AdvancedImuTab {
-            }
-
-            AdvancedTabComponents.AdvancedMagnetometerTab {
-            }
-
-            AdvancedTabComponents.AdvancedNetworkingTab {
-            }
-
-            AdvancedTabComponents.AdvancedSpectrumAnalyzerTab {
-            }
-
-            AdvancedTabComponents.AdvancedInsTab {
-            }
-
+        AdvancedTabComponents.AdvancedInsTab {
         }
 
     }

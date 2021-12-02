@@ -1,4 +1,5 @@
 import "./Constants"
+import "./TableComponents"
 import Qt.labs.qmlmodels 1.0
 import QtQuick 2.15
 import QtQuick.Controls 2.15
@@ -202,33 +203,15 @@ Item {
 
         }
 
-        TableView {
+        SwiftTableView {
             id: tableView
 
-            property int selectedRow: -1
-
-            Component.onCompleted: {
-                Globals.tablesWithHighlights.push(this);
-            }
-            columnSpacing: -1
-            rowSpacing: -1
-            columnWidthProvider: function(column) {
-                return columnWidths[column];
-            }
-            onWidthChanged: {
-                tableView.forceLayout();
-            }
-            reuseItems: true
-            boundsBehavior: Flickable.StopAtBounds
             anchors.top: horizontalHeader.bottom
-            width: parent.width
-            height: parent.height - horizontalHeader.height
-
-            ScrollBar.horizontal: ScrollBar {
-            }
-
-            ScrollBar.vertical: ScrollBar {
-            }
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            columnWidths: parent.parent.columnWidths
+            delegateBorderWidth: Constants.logPanel.delegateBorderWidth
 
             model: TableModel {
                 id: tableModel
@@ -253,40 +236,6 @@ Item {
 
                 TableModelColumn {
                     display: Constants.logPanel.msgHeader
-                }
-
-            }
-
-            delegate: Rectangle {
-                implicitHeight: Constants.logPanel.cellHeight
-                implicitWidth: tableView.columnWidthProvider(column)
-                color: row == tableView.selectedRow ? Constants.genericTable.cellHighlightedColor : Constants.genericTable.cellColor
-
-                Label {
-                    width: parent.width
-                    horizontalAlignment: Text.AlignLeft
-                    clip: true
-                    font.family: Constants.genericTable.fontFamily
-                    font.pointSize: Constants.largePointSize
-                    text: model.display
-                    elide: Text.ElideRight
-                    padding: Constants.genericTable.padding
-                }
-
-                MouseArea {
-                    width: parent.width
-                    height: parent.height
-                    anchors.centerIn: parent
-                    onPressed: {
-                        Globals.clearHighlightedRows();
-                        tableView.focus = true;
-                        if (tableView.selectedRow == row) {
-                            tableView.selectedRow = -1;
-                        } else {
-                            tableView.selectedRow = row;
-                            Globals.copyClipboard = JSON.stringify(tableView.model.getRow(tableView.selectedRow));
-                        }
-                    }
                 }
 
             }

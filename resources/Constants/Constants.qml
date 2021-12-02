@@ -428,6 +428,7 @@ QtObject {
         readonly property int logLevelMenuHeight: 100
         readonly property int dropdownButtonPadding: 0
         readonly property int dropdownButtonWidth: 20
+        readonly property int delegateBorderWidth: 0
     }
 
     settingsTab: QtObject {
@@ -442,6 +443,7 @@ QtObject {
         readonly property string tableLeftColumnHeader: "Name"
         readonly property string tableRightColumnHeader: "Value"
         readonly property int maximumWidth: 300
+        readonly property int layoutSpacing: 0
     }
 
     solutionTable: QtObject {

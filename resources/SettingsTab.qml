@@ -135,17 +135,24 @@ MainTab {
         standardButtons: StandardButton.Ok
     }
 
-    RowLayout {
+    SplitView {
         anchors.fill: parent
+        orientation: Qt.Horizontal
+        width: parent.width
+        height: parent.height
 
         Rectangle {
-            id: leftPanel
-
-            width: settingsTable.width
-            Layout.fillHeight: true
+            SplitView.minimumWidth: Constants.settingsTable.maximumWidth
+            SplitView.fillHeight: true
 
             SettingsTabComponents.SettingsTable {
                 id: settingsTable
+
+                anchors.fill: parent
+                // anchors.centerIn: parent
+                // width: parent.width
+                // height: parent.height
+                
 
                 onSelectedRowIdxChanged: {
                     if (!!selectedRow())
@@ -153,12 +160,11 @@ MainTab {
 
                 }
             }
-
         }
+        
 
         ColumnLayout {
-            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-            Layout.maximumWidth: parent.width - leftPanel.width
+            SplitView.fillWidth: true
             spacing: 3
 
             RowLayout {

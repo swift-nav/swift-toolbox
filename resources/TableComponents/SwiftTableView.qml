@@ -8,6 +8,10 @@ TableView {
 
     property variant columnWidths: []
     property int selectedRow: -1
+    property int _currentSelectedIndex: -1
+    property int currentSelectedIndex: Globals.currentSelectedTable == this ? _currentSelectedIndex : -1
+    property int delegateBorderWidth: Constants.genericTable.borderWidth
+    property color delegateBorderColor: Constants.genericTable.borderColor
 
     columnSpacing: -1
     rowSpacing: -1
@@ -18,10 +22,12 @@ TableView {
     boundsBehavior: Flickable.StopAtBounds
     Component.onCompleted: {
         console.assert(columnWidths.length == model.columnCount, "length of columnWidths does not match column count.");
-        Globals.tablesWithHighlights.push(this);
     }
     onWidthChanged: {
         tableView.forceLayout();
+    }
+    onFocusChanged: {
+        _currentSelectedIndex = -1;
     }
 
     ScrollBar.horizontal: ScrollBar {
@@ -33,8 +39,9 @@ TableView {
     delegate: Rectangle {
         implicitHeight: Constants.genericTable.cellHeight
         implicitWidth: tableView.columnWidthProvider(column)
-        border.color: Constants.genericTable.borderColor
-        color: row == tableView.selectedRow ? Constants.genericTable.cellHighlightedColor : Constants.genericTable.cellColor
+        border.color: delegateBorderColor
+        border.width: delegateBorderWidth
+        color: row == currentSelectedIndex ? Constants.genericTable.cellHighlightedColor : Constants.genericTable.cellColor
 
         Label {
             width: parent.width
@@ -52,13 +59,14 @@ TableView {
             height: parent.height
             anchors.centerIn: parent
             onPressed: {
-                Globals.clearHighlightedRows();
                 tableView.focus = true;
-                if (tableView.selectedRow == row) {
-                    tableView.selectedRow = -1;
+                if (_currentSelectedIndex == row) {
+                    Globals.currentSelectedTable = null;
+                    _currentSelectedIndex = -1;
                 } else {
-                    tableView.selectedRow = row;
-                    Globals.copyClipboard = JSON.stringify(tableView.model.getRow(tableView.selectedRow));
+                    Globals.currentSelectedTable = tableView;
+                    _currentSelectedIndex = row;
+                    Globals.copyClipboard = JSON.stringify(tableView.model.getRow(_currentSelectedIndex));
                 }
             }
         }

@@ -28,7 +28,7 @@ ApplicationWindow {
         onActivated: {
             textEdit.selectAll();
             textEdit.copy();
-            Globals.clearHighlightedRows();
+            Globals.currentSelectedTable = null;
         }
     }
 

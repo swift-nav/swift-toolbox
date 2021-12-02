@@ -1,4 +1,5 @@
 import "../Constants"
+import "../TableComponents"
 import Qt.labs.qmlmodels 1.0
 import QtCharts 2.2
 import QtQuick 2.15
@@ -53,138 +54,77 @@ Item {
     }
 
     ColumnLayout {
+        // Item {
+        //     Layout.fillHeight: true
+        //     Layout.fillWidth: true
+
         width: parent.width
         height: parent.height
+        spacing: Constants.settingsTable.layoutSpacing
 
-        Item {
-            Layout.fillHeight: true
+        HorizontalHeaderView {
+            // clip: true
+            // clip: true
+            // z: 100
+
+            id: horizontalHeader
+
+            interactive: false
+            syncView: tableView
             Layout.fillWidth: true
+            Layout.minimumHeight: Constants.genericTable.cellHeight
+            z: 100
 
-            HorizontalHeaderView {
-                id: horizontalHeader
+            delegate: Rectangle {
+                implicitWidth: columnWidths[index]
+                implicitHeight: Constants.genericTable.cellHeight
+                border.color: Constants.genericTable.borderColor
 
-                interactive: false
-                syncView: tableView
-                z: Constants.genericTable.headerZOffset
+                Label {
+                    width: parent.width
+                    anchors.centerIn: parent
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: tableView.model.columns[index].display
+                    elide: Text.ElideRight
+                    // clip: true
+                    font.family: Constants.genericTable.fontFamily
+                    font.pointSize: Constants.largePointSize
+                }
 
-                delegate: Rectangle {
-                    implicitWidth: columnWidths[index]
-                    implicitHeight: Constants.genericTable.cellHeight
-                    border.color: Constants.genericTable.borderColor
-
-                    Label {
-                        width: parent.width
-                        anchors.centerIn: parent
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        text: tableView.model.columns[index].display
-                        elide: Text.ElideRight
-                        clip: true
-                        font.family: Constants.genericTable.fontFamily
-                        font.pointSize: Constants.largePointSize
+                gradient: Gradient {
+                    GradientStop {
+                        position: 0
+                        color: Constants.genericTable.cellColor
                     }
 
-                    gradient: Gradient {
-                        GradientStop {
-                            position: 0
-                            color: Constants.genericTable.cellColor
-                        }
-
-                        GradientStop {
-                            position: 1
-                            color: Constants.genericTable.gradientColor
-                        }
-
+                    GradientStop {
+                        position: 1
+                        color: Constants.genericTable.gradientColor
                     }
 
                 }
 
             }
 
-            TableView {
-                id: tableView
+        }
 
-                property int selectedRow: -1
+        SwiftTableView {
+            id: tableView
 
-                Component.onCompleted: {
-                    Globals.tablesWithHighlights.push(this);
-                }
-                columnSpacing: -1
-                rowSpacing: -1
-                columnWidthProvider: function(column) {
-                    return columnWidths[column];
-                }
-                reuseItems: true
-                boundsBehavior: Flickable.StopAtBounds
-                anchors.top: horizontalHeader.bottom
-                width: parent.width
-                height: parent.height - horizontalHeader.height
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            columnWidths: parent.parent.columnWidths
 
-                ScrollBar.horizontal: ScrollBar {
+            model: TableModel {
+                id: tableModel
+
+                TableModelColumn {
+                    display: "Name"
                 }
 
-                ScrollBar.vertical: ScrollBar {
-                }
-
-                model: TableModel {
-                    id: tableModel
-
-                    TableModelColumn {
-                        display: "Name"
-                    }
-
-                    TableModelColumn {
-                        display: "Value"
-                    }
-
-                }
-
-                delegate: Rectangle {
-                    implicitHeight: Constants.genericTable.cellHeight
-                    implicitWidth: tableView.columnWidthProvider(column)
-                    border.color: Constants.genericTable.borderColor
-                    color: {
-                        var item = tableView.model.getRow(row);
-                        if (item[Constants.settingsTable.tableRightColumnHeader] == "")
-                            return Constants.genericTable.borderColor;
-
-                        if (tableView.selectedRow == row)
-                            return Constants.genericTable.cellHighlightedColor;
-
-                        return Constants.genericTable.cellColor;
-                    }
-
-                    Label {
-                        width: parent.width
-                        horizontalAlignment: Text.AlignLeft
-                        clip: true
-                        font.family: Constants.genericTable.fontFamily
-                        font.pointSize: Constants.largePointSize
-                        font.bold: {
-                            var item = tableView.model.getRow(row);
-                            return item[Constants.settingsTable.tableRightColumnHeader] == "";
-                        }
-                        text: model.display
-                        elide: Text.ElideRight
-                        padding: Constants.genericTable.padding
-                    }
-
-                    MouseArea {
-                        width: parent.width
-                        height: parent.height
-                        anchors.centerIn: parent
-                        onPressed: {
-                            Globals.clearHighlightedRows();
-                            tableView.focus = true;
-                            if (tableView.selectedRow == row) {
-                                tableView.selectedRow = -1;
-                            } else {
-                                tableView.selectedRow = row;
-                                Globals.copyClipboard = JSON.stringify(tableView.model.getRow(tableView.selectedRow));
-                            }
-                        }
-                    }
-
+                TableModelColumn {
+                    display: "Value"
                 }
 
             }

@@ -17,6 +17,7 @@ QtObject {
     property bool connected_at_least_once: false
     property string copyClipboard: ""
     property var tablesWithHighlights: []
+    property var currentSelectedTable: null
 
     function clearHighlightedRows() {
         for (var i in tablesWithHighlights) {

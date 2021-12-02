@@ -1,4 +1,5 @@
 import "../Constants"
+import "../TableComponents"
 import Qt.labs.qmlmodels 1.0
 import QtQuick 2.15
 import QtQuick.Controls 2.15
@@ -6,7 +7,6 @@ import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
 Item {
-    property variant columnWidths: [layout.width / 3, layout.width / 3, layout.width / 3]
     property real mouse_x: 0
     property alias insPopup: dialog
     property variant settings: []
@@ -66,6 +66,8 @@ Item {
             }
 
             ColumnLayout {
+                property variant columnWidths: [layout.width / 3, layout.width / 3, layout.width / 3]
+
                 spacing: 0
                 width: parent.width
                 height: Constants.insSettingsPopup.tableHeight
@@ -131,29 +133,12 @@ Item {
 
                 }
 
-                TableView {
+                SwiftTableView {
                     id: tableView
 
-                    property int selectedRow: -1
-
-                    Component.onCompleted: {
-                        Globals.tablesWithHighlights.push(this);
-                    }
-                    columnSpacing: -1
-                    rowSpacing: -1
-                    columnWidthProvider: function(column) {
-                        return columnWidths[column];
-                    }
-                    reuseItems: true
-                    boundsBehavior: Flickable.StopAtBounds
-                    height: parent.height - horizontalHeader.height
-                    width: parent.width
-
-                    ScrollBar.horizontal: ScrollBar {
-                    }
-
-                    ScrollBar.vertical: ScrollBar {
-                    }
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    columnWidths: parent.columnWidths
 
                     model: TableModel {
                         id: tableModel
@@ -170,41 +155,6 @@ Item {
 
                         TableModelColumn {
                             display: Constants.insSettingsPopup.columnHeaders[2]
-                        }
-
-                    }
-
-                    delegate: Rectangle {
-                        implicitHeight: Constants.genericTable.cellHeight
-                        implicitWidth: tableView.columnWidthProvider(column)
-                        border.color: Constants.genericTable.borderColor
-                        color: row == tableView.selectedRow ? Constants.genericTable.cellHighlightedColor : Constants.genericTable.cellColor
-
-                        Label {
-                            width: parent.width
-                            horizontalAlignment: Text.AlignLeft
-                            clip: true
-                            font.family: Constants.genericTable.fontFamily
-                            font.pointSize: Constants.largePointSize
-                            text: model.display
-                            elide: Text.ElideRight
-                            padding: Constants.genericTable.padding
-                        }
-
-                        MouseArea {
-                            width: parent.width
-                            height: parent.height
-                            anchors.centerIn: parent
-                            onPressed: {
-                                Globals.clearHighlightedRows();
-                                tableView.focus = true;
-                                if (tableView.selectedRow == row) {
-                                    tableView.selectedRow = -1;
-                                } else {
-                                    tableView.selectedRow = row;
-                                    Globals.copyClipboard = JSON.stringify(tableView.model.getRow(tableView.selectedRow));
-                                }
-                            }
                         }
 
                     }

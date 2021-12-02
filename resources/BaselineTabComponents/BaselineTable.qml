@@ -1,4 +1,5 @@
 import "../Constants"
+import "../TableComponents"
 import Qt.labs.qmlmodels 1.0
 import QtCharts 2.2
 import QtQuick 2.15
@@ -39,145 +40,88 @@ Item {
         width: parent.width
         height: parent.height
 
-        Item {
-            Layout.fillHeight: true
+        HorizontalHeaderView {
+            id: horizontalHeader
+
             Layout.fillWidth: true
+            Layout.preferredHeight: Constants.genericTable.cellHeight
+            interactive: false
+            syncView: tableView
 
-            HorizontalHeaderView {
-                id: horizontalHeader
+            delegate: Rectangle {
+                implicitWidth: columnWidths[index]
+                implicitHeight: Constants.genericTable.cellHeight
+                border.color: Constants.genericTable.borderColor
+                clip: true
 
-                interactive: false
-                syncView: tableView
-                z: Constants.genericTable.headerZOffset
+                Label {
+                    width: parent.width
+                    anchors.centerIn: parent
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: tableView.model.columns[index].display
+                    elide: Text.ElideRight
+                    clip: true
+                    font.family: Constants.genericTable.fontFamily
+                    font.pointSize: Constants.largePointSize
+                }
 
-                delegate: Rectangle {
-                    implicitWidth: columnWidths[index]
-                    implicitHeight: Constants.genericTable.cellHeight
-                    border.color: Constants.genericTable.borderColor
-
-                    Label {
-                        width: parent.width
-                        anchors.centerIn: parent
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        text: tableView.model.columns[index].display
-                        elide: Text.ElideRight
-                        clip: true
-                        font.family: Constants.genericTable.fontFamily
-                        font.pointSize: Constants.largePointSize
+                MouseArea {
+                    width: Constants.genericTable.mouseAreaResizeWidth
+                    height: parent.height
+                    anchors.right: parent.right
+                    cursorShape: Qt.SizeHorCursor
+                    onPressed: {
+                        mouse_x = mouseX;
                     }
-
-                    MouseArea {
-                        width: Constants.genericTable.mouseAreaResizeWidth
-                        height: parent.height
-                        anchors.right: parent.right
-                        cursorShape: Qt.SizeHorCursor
-                        onPressed: {
-                            mouse_x = mouseX;
-                        }
-                        onPositionChanged: {
-                            if (pressed) {
-                                var delta_x = (mouseX - mouse_x);
-                                columnWidths[index] += delta_x;
-                                syncColumnWidthsWithSplitView();
-                            }
+                    onPositionChanged: {
+                        if (pressed) {
+                            var delta_x = (mouseX - mouse_x);
+                            columnWidths[index] += delta_x;
+                            syncColumnWidthsWithSplitView();
                         }
                     }
+                }
 
-                    gradient: Gradient {
-                        GradientStop {
-                            position: 0
-                            color: Constants.genericTable.cellColor
-                        }
+                gradient: Gradient {
+                    GradientStop {
+                        position: 0
+                        color: Constants.genericTable.cellColor
+                    }
 
-                        GradientStop {
-                            position: 1
-                            color: Constants.genericTable.gradientColor
-                        }
-
+                    GradientStop {
+                        position: 1
+                        color: Constants.genericTable.gradientColor
                     }
 
                 }
 
             }
 
-            TableView {
-                id: tableView
+        }
 
-                property int selectedRow: -1
+        SwiftTableView {
+            id: tableView
 
-                Component.onCompleted: {
-                    Globals.tablesWithHighlights.push(this);
-                }
-                onWidthChanged: syncColumnWidthsWithSplitView()
-                columnSpacing: -1
-                rowSpacing: -1
-                columnWidthProvider: function(column) {
-                    return columnWidths[column];
-                }
-                reuseItems: true
-                boundsBehavior: Flickable.StopAtBounds
-                anchors.top: horizontalHeader.bottom
-                width: parent.width
-                height: parent.height - horizontalHeader.height
+            onWidthChanged: syncColumnWidthsWithSplitView()
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            columnWidths: parent.parent.columnWidths
 
-                ScrollBar.horizontal: ScrollBar {
-                }
+            model: TableModel {
+                id: tableModel
 
-                ScrollBar.vertical: ScrollBar {
+                rows: [{
+                    "Item": "",
+                    "Value": ""
+                }]
+
+                TableModelColumn {
+                    display: "Item"
                 }
 
-                model: TableModel {
-                    id: tableModel
-
-                    rows: [{
-                        "Item": "",
-                        "Value": ""
-                    }]
-
-                    TableModelColumn {
-                        display: "Item"
-                    }
-
-                    TableModelColumn {
-                        display: "Value"
-                    }
-
-                }
-
-                delegate: Rectangle {
-                    implicitHeight: Constants.genericTable.cellHeight
-                    implicitWidth: tableView.columnWidthProvider(column)
-                    border.color: Constants.genericTable.borderColor
-                    color: row == tableView.selectedRow ? Constants.genericTable.cellHighlightedColor : Constants.genericTable.cellColor
-
-                    Label {
-                        width: parent.width
-                        horizontalAlignment: Text.AlignLeft
-                        clip: true
-                        font.family: Constants.genericTable.fontFamily
-                        font.pointSize: Constants.largePointSize
-                        text: model.display
-                        elide: Text.ElideRight
-                        padding: Constants.genericTable.padding
-                    }
-
-                    MouseArea {
-                        width: parent.width
-                        height: parent.height
-                        anchors.centerIn: parent
-                        onPressed: {
-                            Globals.clearHighlightedRows();
-                            tableView.focus = true;
-                            if (tableView.selectedRow == row) {
-                                tableView.selectedRow = -1;
-                            } else {
-                                tableView.selectedRow = row;
-                                Globals.copyClipboard = JSON.stringify(tableView.model.getRow(tableView.selectedRow));
-                            }
-                        }
-                    }
-
+                TableModelColumn {
+                    display: "Value"
                 }
 
             }

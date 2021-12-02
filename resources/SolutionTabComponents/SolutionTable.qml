@@ -59,7 +59,6 @@ Item {
                     verticalAlignment: Text.AlignVCenter
                     text: tableView.model.columns[index].display
                     elide: Text.ElideRight
-                    clip: true
                     font.family: Constants.genericTable.fontFamily
                     font.pointSize: Constants.largePointSize
                 }

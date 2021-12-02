@@ -13,6 +13,7 @@ TableView {
     property int delegateBorderWidth: Constants.genericTable.borderWidth
     property color delegateBorderColor: Constants.genericTable.borderColor
 
+    clip: true
     columnSpacing: -1
     rowSpacing: -1
     columnWidthProvider: function(column) {

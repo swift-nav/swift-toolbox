@@ -59,7 +59,7 @@ TableView {
             width: parent.width
             height: parent.height
             anchors.centerIn: parent
-            onPressed: {
+            onClicked: {
                 tableView.focus = true;
                 if (_currentSelectedIndex == row) {
                     Globals.currentSelectedTable = null;

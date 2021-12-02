@@ -15,7 +15,6 @@ use crate::errors::{
     THREAD_JOIN_FAILURE, UNABLE_TO_SEND_INS_UPDATE_FAILURE, UNABLE_TO_STOP_TIMER_THREAD_FAILURE,
     UPDATE_STATUS_LOCK_MUTEX_FAILURE,
 };
-use crate::shared_state::SharedState;
 use crate::types::ArcBool;
 use crate::utils::serialize_capnproto_builder;
 
@@ -261,7 +260,6 @@ impl Drop for FusionStatusFlag {
 /// # Fields:
 ///
 /// - `client_send`: Client Sender channel for communication from backend to frontend.
-/// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
 /// - `gnsspos`: Storage for the GNSS Position status.
 /// - `gnssvel`: Storage for the GNSS Velocity status.
 /// - `wheelticks`: Storage for the wheel ticks status.
@@ -271,7 +269,6 @@ impl Drop for FusionStatusFlag {
 #[derive(Debug)]
 pub struct FusionStatusFlags {
     client_sender: BoxedClientSender,
-    shared_state: SharedState,
     gnsspos: FusionStatusFlag,
     gnssvel: FusionStatusFlag,
     wheelticks: FusionStatusFlag,
@@ -281,10 +278,9 @@ pub struct FusionStatusFlags {
 }
 
 impl FusionStatusFlags {
-    pub fn new(shared_state: SharedState, client_sender: BoxedClientSender) -> FusionStatusFlags {
+    pub fn new(client_sender: BoxedClientSender) -> FusionStatusFlags {
         FusionStatusFlags {
             client_sender,
-            shared_state,
             gnsspos: FusionStatusFlag::new(),
             gnssvel: FusionStatusFlag::new(),
             wheelticks: FusionStatusFlag::new(),

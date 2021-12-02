@@ -84,12 +84,8 @@ impl Tabs {
     ) -> Self {
         Self {
             main: MainTab::new(shared_state.clone(), client_sender.clone()).into(),
-            advanced_imu: AdvancedImuTab::new(shared_state.clone(), client_sender.clone()).into(),
-            advanced_magnetometer: AdvancedMagnetometerTab::new(
-                shared_state.clone(),
-                client_sender.clone(),
-            )
-            .into(),
+            advanced_imu: AdvancedImuTab::new(client_sender.clone()).into(),
+            advanced_magnetometer: AdvancedMagnetometerTab::new(client_sender.clone()).into(),
             advanced_networking: AdvancedNetworkingTab::new(
                 shared_state.clone(),
                 client_sender.clone(),

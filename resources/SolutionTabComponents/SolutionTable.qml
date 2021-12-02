@@ -45,7 +45,6 @@ Item {
             interactive: false
             syncView: tableView
             Layout.fillWidth: true
-            Layout.preferredHeight: Constants.genericTable.cellHeight
 
             delegate: Rectangle {
                 implicitWidth: columnWidths[index]

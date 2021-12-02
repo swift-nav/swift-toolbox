@@ -24,7 +24,7 @@ class FusionStatus(str, Enum):
 
 
 class SbpLogging(str, Enum):
-    SBP_JSON = "SBP_JSON"
+    SBP_JSON = "SBP-JSON"
     SBP = "SBP"
 
 

@@ -5,7 +5,6 @@ use capnp::message::Builder;
 
 use crate::client_sender::BoxedClientSender;
 use crate::fusion_status_flags::FusionStatusFlags;
-use crate::shared_state::SharedState;
 use crate::types::Deque;
 use crate::utils::serialize_capnproto_builder;
 use crate::{constants::*, zip};
@@ -26,7 +25,6 @@ use crate::{constants::*, zip};
 /// - `gyro_x`: The stored historic Imu angular rate values along x axis.
 /// - `gyro_y`: The stored historic Imu angular rate values along y axis.
 /// - `gyro_z`: The stored historic Imu angular rate values along z axis.
-/// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
 #[derive(Debug)]
 pub struct AdvancedImuTab {
     client_sender: BoxedClientSender,
@@ -42,16 +40,12 @@ pub struct AdvancedImuTab {
     gyro_x: Deque<f64>,
     gyro_y: Deque<f64>,
     gyro_z: Deque<f64>,
-    shared_state: SharedState,
 }
 
 impl AdvancedImuTab {
-    pub fn new(shared_state: SharedState, client_sender: BoxedClientSender) -> AdvancedImuTab {
+    pub fn new(client_sender: BoxedClientSender) -> AdvancedImuTab {
         AdvancedImuTab {
-            fusion_engine_status_bar: FusionStatusFlags::new(
-                shared_state.clone(),
-                client_sender.clone(),
-            ),
+            fusion_engine_status_bar: FusionStatusFlags::new(client_sender.clone()),
             client_sender,
             imu_conf: 0_u8,
             imu_temp: 0_f64,
@@ -64,7 +58,6 @@ impl AdvancedImuTab {
             gyro_x: Deque::with_fill_value(NUM_POINTS, 0.),
             gyro_y: Deque::with_fill_value(NUM_POINTS, 0.),
             gyro_z: Deque::with_fill_value(NUM_POINTS, 0.),
-            shared_state,
         }
     }
 
@@ -182,9 +175,8 @@ mod tests {
 
     #[test]
     fn handle_imu_raw_test() {
-        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut ins_tab = AdvancedImuTab::new(shared_state, client_send);
+        let mut ins_tab = AdvancedImuTab::new(client_send);
         let tow = 1_u32;
         let tow_f = 1_u8;
         let acc_x = 2_i16;
@@ -229,9 +221,8 @@ mod tests {
 
     #[test]
     fn handle_imu_aux_test() {
-        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut ins_tab = AdvancedImuTab::new(shared_state.clone(), client_send.clone());
+        let mut ins_tab = AdvancedImuTab::new(client_send.clone());
         let imu_type_a = 0_u8;
         let imu_type_b = 1_u8;
         let imu_type_unknown = 2_u8;
@@ -249,7 +240,7 @@ mod tests {
         assert!(f64::abs(ins_tab.imu_temp - 0_f64) <= f64::EPSILON);
         assert_ne!(ins_tab.imu_conf, imu_conf);
 
-        let mut ins_tab = AdvancedImuTab::new(shared_state.clone(), client_send.clone());
+        let mut ins_tab = AdvancedImuTab::new(client_send.clone());
         let msg = MsgImuAux {
             sender_id: Some(1337),
             imu_type: imu_type_a,
@@ -262,7 +253,7 @@ mod tests {
         assert!(f64::abs(ins_tab.imu_temp - 23.390625_f64) <= f64::EPSILON);
         assert_eq!(ins_tab.imu_conf, imu_conf);
 
-        let mut ins_tab = AdvancedImuTab::new(shared_state, client_send);
+        let mut ins_tab = AdvancedImuTab::new(client_send);
         let msg = MsgImuAux {
             sender_id: Some(1337),
             imu_type: imu_type_b,
@@ -278,9 +269,8 @@ mod tests {
 
     #[test]
     fn handle_imu_send_data_test() {
-        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut ins_tab = AdvancedImuTab::new(shared_state, client_send);
+        let mut ins_tab = AdvancedImuTab::new(client_send);
 
         assert!(f64::abs(ins_tab.rms_acc_x - 0_f64) <= f64::EPSILON);
         assert!(f64::abs(ins_tab.rms_acc_y - 0_f64) <= f64::EPSILON);

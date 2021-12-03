@@ -75,7 +75,6 @@ impl FromStr for LatLonUnits {
 /// # Fields
 /// - `age_corrections`: Stored age corrections to be displayed in the table.
 /// - `available_units` - The available units of measure to send to frontend for selection.
-/// - `directory_name`: The directory path to use when creating vel/pos logs.
 /// - `ins_status_flags`: The stored ins status flags expected by other tabs.
 /// - `ins_used`: Indicates whether or not ins is currently used.
 /// - `lats`: The stored latitude values for quickly extracting aggregate data.
@@ -83,7 +82,6 @@ impl FromStr for LatLonUnits {
 /// - `last_ins_status_receipt_time`: The last ins status receipt monotonic time stored.
 /// - `last_pos_mode`: The most recent gnss mode stored.
 /// - `last_odo_update_time`: The last odo update monotonic time stored.
-/// - `logging`: Indicates whether or not to log PosLLH/VelNED data to csvs.
 /// - `mode_strings`: The available modes in string formm to store updates for.
 /// - `modes`: The stored mode values used for quickly extracting aggregate data.
 /// - `nsec`: The stored nanosecond value from GPS Time messages.
@@ -104,7 +102,6 @@ pub struct SolutionTab {
     age_corrections: Option<f64>,
     available_units: [&'static str; 2],
     client_sender: BoxedClientSender,
-    directory_name: Option<String>,
     ins_status_flags: u32,
     ins_used: bool,
     lats: Deque<f64>,
@@ -113,7 +110,6 @@ pub struct SolutionTab {
     last_ins_status_receipt_time: Instant,
     last_pos_mode: u8,
     last_odo_update_time: Instant,
-    logging: bool,
     lat_sf: f64,
     lat_offset: f64,
     lat_max: f64,
@@ -145,7 +141,6 @@ impl SolutionTab {
             age_corrections: None,
             available_units: [DEGREES, METERS],
             client_sender,
-            directory_name: None,
             ins_status_flags: 0,
             ins_used: false,
             lats: Deque::new(PLOT_HISTORY_MAX),
@@ -154,7 +149,6 @@ impl SolutionTab {
             last_ins_status_receipt_time: Instant::now(),
             last_pos_mode: 0,
             last_odo_update_time: Instant::now(),
-            logging: false,
             lat_sf,
             lat_offset: 0.0,
             lat_max: f64::MAX,

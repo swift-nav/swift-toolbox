@@ -58,7 +58,7 @@ use crate::{
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-struct Tabs<'link> {
+struct Tabs {
     pub main: Mutex<MainTab>,
     pub advanced_imu: Mutex<AdvancedImuTab>,
     pub advanced_magnetometer: Mutex<AdvancedMagnetometerTab>,
@@ -73,10 +73,10 @@ struct Tabs<'link> {
     pub advanced_spectrum_analyzer: Mutex<AdvancedSpectrumAnalyzerTab>,
     pub status_bar: Mutex<StatusBar>,
     pub update: Mutex<UpdateTab>,
-    pub settings: Option<SettingsTab<'link>>,
+    pub settings: Option<SettingsTab>,
 }
 
-impl<'link> Tabs<'link> {
+impl Tabs {
     fn new(
         shared_state: shared_state::SharedState,
         client_sender: client_sender::BoxedClientSender,
@@ -84,12 +84,8 @@ impl<'link> Tabs<'link> {
     ) -> Self {
         Self {
             main: MainTab::new(shared_state.clone(), client_sender.clone()).into(),
-            advanced_imu: AdvancedImuTab::new(shared_state.clone(), client_sender.clone()).into(),
-            advanced_magnetometer: AdvancedMagnetometerTab::new(
-                shared_state.clone(),
-                client_sender.clone(),
-            )
-            .into(),
+            advanced_imu: AdvancedImuTab::new(client_sender.clone()).into(),
+            advanced_magnetometer: AdvancedMagnetometerTab::new(client_sender.clone()).into(),
             advanced_networking: AdvancedNetworkingTab::new(
                 shared_state.clone(),
                 client_sender.clone(),
@@ -130,19 +126,13 @@ impl<'link> Tabs<'link> {
         shared_state: shared_state::SharedState,
         client_sender: client_sender::BoxedClientSender,
         msg_sender: types::MsgSender,
-        link: sbp::link::Link<'link, ()>,
     ) -> Self {
         let mut tabs = Self::new(
             shared_state.clone(),
             client_sender.clone(),
             msg_sender.clone(),
         );
-        tabs.settings = Some(SettingsTab::new(
-            shared_state,
-            client_sender,
-            msg_sender,
-            link,
-        ));
+        tabs.settings = Some(SettingsTab::new(shared_state, client_sender, msg_sender));
         tabs
     }
 }

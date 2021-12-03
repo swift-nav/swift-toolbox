@@ -8,4 +8,4 @@
 
 ### Backend threads diagram
 
-[![backend-thds](./imgs/export/backend-thds-diagram.png)](https://drive.google.com/file/d/1Jn7S5VWLniMTsRJhd19REdngneNeIjIw/view?usp=sharing)
+[![backend-thds](./imgs/export/console-backend-thds.png)](https://drive.google.com/file/d/1Jn7S5VWLniMTsRJhd19REdngneNeIjIw/view?usp=sharing)

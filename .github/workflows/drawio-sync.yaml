@@ -2,7 +2,7 @@ name: Sync draw.io diagrams
 on:
   push:
     branches:
-      - "steve/draw-sync"
+      - "main"
     paths:
       - "docs/imgs/*.drawio"
       - .github/workflows/drawio-sync.yaml

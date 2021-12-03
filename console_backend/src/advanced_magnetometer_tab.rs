@@ -4,7 +4,6 @@ use capnp::message::Builder;
 
 use crate::client_sender::BoxedClientSender;
 use crate::constants::{MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER, NUM_POINTS};
-use crate::shared_state::SharedState;
 use crate::types::Deque;
 use crate::utils::serialize_capnproto_builder;
 use crate::zip;
@@ -18,29 +17,23 @@ use crate::zip;
 /// - `mag_x`: The stored historic Magnetometer values along x axis.
 /// - `mag_y`: The stored historic Magnetometer values along y axis.
 /// - `mag_z`: The stored historic Magnetometer values along z axis.
-/// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
 #[derive(Debug)]
 pub struct AdvancedMagnetometerTab {
     client_sender: BoxedClientSender,
     mag_x: Deque<f64>,
     mag_y: Deque<f64>,
     mag_z: Deque<f64>,
-    shared_state: SharedState,
     ymax: f64,
     ymin: f64,
 }
 
 impl AdvancedMagnetometerTab {
-    pub fn new(
-        shared_state: SharedState,
-        client_sender: BoxedClientSender,
-    ) -> AdvancedMagnetometerTab {
+    pub fn new(client_sender: BoxedClientSender) -> AdvancedMagnetometerTab {
         AdvancedMagnetometerTab {
             client_sender,
             mag_x: Deque::with_fill_value(NUM_POINTS, 0.),
             mag_y: Deque::with_fill_value(NUM_POINTS, 0.),
             mag_z: Deque::with_fill_value(NUM_POINTS, 0.),
-            shared_state,
             ymax: f64::MIN,
             ymin: f64::MAX,
         }
@@ -104,9 +97,8 @@ mod tests {
 
     #[test]
     fn hangle_mag_raw_test() {
-        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut mag_tab = AdvancedMagnetometerTab::new(shared_state, client_send);
+        let mut mag_tab = AdvancedMagnetometerTab::new(client_send);
         let tow = 1_u32;
         let tow_f = 1_u8;
         let mag_x = 2_i16;
@@ -133,9 +125,8 @@ mod tests {
 
     #[test]
     fn handle_imu_send_data_test() {
-        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut mag_tab = AdvancedMagnetometerTab::new(shared_state, client_send);
+        let mut mag_tab = AdvancedMagnetometerTab::new(client_send);
         assert!(f64::abs(mag_tab.ymin - f64::MAX) <= f64::EPSILON);
         assert!(f64::abs(mag_tab.ymax - f64::MIN) <= f64::EPSILON);
 

@@ -546,24 +546,20 @@ impl WriteReq {
 #[derive(Debug, Clone)]
 struct FileioConfig {
     window_size: u32,
-    batch_size: u32,
+    // batch_size -> TODO Investigate slow upgrades: https://swift-nav.atlassian.net/browse/CPP-472
 }
 
 impl FileioConfig {
     fn new(msg: MsgFileioConfigResp) -> Self {
         Self {
             window_size: msg.window_size,
-            batch_size: msg.batch_size,
         }
     }
 }
 
 impl Default for FileioConfig {
     fn default() -> Self {
-        FileioConfig {
-            window_size: 100,
-            batch_size: 1,
-        }
+        FileioConfig { window_size: 100 }
     }
 }
 

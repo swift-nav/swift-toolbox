@@ -87,9 +87,9 @@ impl StatusBarUpdate {
 #[derive(Debug)]
 pub struct StatusBar {
     client_sender: BoxedClientSender,
-    shared_state: SharedState,
     heartbeat_data: Heartbeat,
     is_running: ArcBool,
+    #[allow(dead_code)]
     heartbeat_handler: JoinHandle<()>,
     port: String,
     version: String,
@@ -106,7 +106,6 @@ impl StatusBar {
         let version = shared_state.console_version();
         StatusBar {
             client_sender,
-            shared_state: shared_state.clone(),
             heartbeat_data: heartbeat_data.clone(),
             port: shared_state.connection().name(),
             version,

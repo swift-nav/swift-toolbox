@@ -13,6 +13,7 @@ TableView {
     property int delegateBorderWidth: Constants.genericTable.borderWidth
     property color delegateBorderColor: Constants.genericTable.borderColor
 
+    clip: true
     columnSpacing: -1
     rowSpacing: -1
     columnWidthProvider: function(column) {
@@ -20,7 +21,6 @@ TableView {
     }
     reuseItems: true
     boundsBehavior: Flickable.StopAtBounds
-    clip: true
     Component.onCompleted: {
         console.assert(columnWidths.length == model.columnCount, "length of columnWidths does not match column count.");
     }
@@ -60,7 +60,7 @@ TableView {
             width: parent.width
             height: parent.height
             anchors.centerIn: parent
-            onPressed: {
+            onClicked: {
                 tableView.focus = true;
                 if (_currentSelectedIndex == row) {
                     Globals.currentSelectedTable = null;

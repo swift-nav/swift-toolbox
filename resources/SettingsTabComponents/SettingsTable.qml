@@ -8,15 +8,13 @@ import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
 Rectangle {
-    
     property alias selectedRowIdx: tableView._currentSelectedIndex
     property var rowOffsets: ({
     })
     property bool showExpert: false
     property bool lastShowExpert: false
     property alias table: settingsTableEntries.entries
-
-    
+    property real mouse_x: 0
 
     function isHeader(entry) {
         return !entry.hasOwnProperty("name");
@@ -48,26 +46,22 @@ Rectangle {
         };
     }
 
-    
-
-    anchors.fill: parent
-    width: parent.width
-    height: parent.height
-
+    onWidthChanged: {
+        tableView.forceLayout();
+    }
 
     SettingsTableEntries {
         id: settingsTableEntries
     }
 
     ColumnLayout {
-        
-        anchors.fill: parent
+        property variant columnWidths: [parent.width * 0.4, parent.width * 0.6]
+
         width: parent.width
         height: parent.height
         spacing: Constants.settingsTable.layoutSpacing
 
         HorizontalHeaderView {
-
             id: horizontalHeader
 
             interactive: false
@@ -89,22 +83,28 @@ Rectangle {
                     font.family: Constants.genericTable.fontFamily
                     font.pointSize: Constants.largePointSize
                 }
-                // MouseArea {
-                //     width: Constants.genericTable.mouseAreaResizeWidth
-                //     height: parent.height
-                //     anchors.right: parent.right
-                //     cursorShape: Qt.SizeHorCursor
-                //     onPressed: {
-                //         mouse_x = mouseX;
-                //     }
-                //     onPositionChanged: {
-                //         if (pressed) {
-                //             var delta_x = (mouseX - mouse_x);
-                //             columnWidths[index] += delta_x;
-                //             syncColumnWidthsWithSplitView();
-                //         }
-                //     }
-                // }
+
+                MouseArea {
+                    width: Constants.genericTable.mouseAreaResizeWidth
+                    height: parent.height
+                    anchors.right: parent.right
+                    cursorShape: Qt.SizeHorCursor
+                    onPressed: {
+                        mouse_x = mouseX;
+                    }
+                    onPositionChanged: {
+                        if (pressed) {
+                            var delta_x = (mouseX - mouse_x);
+                            var next_idx = (index + 1) % 2;
+                            var min_width = tableView.width / 4;
+                            if (tableView.columnWidths[index] + delta_x > min_width && tableView.columnWidths[next_idx] - delta_x > min_width) {
+                                tableView.columnWidths[index] += delta_x;
+                                tableView.columnWidths[next_idx] -= delta_x;
+                            }
+                            tableView.forceLayout();
+                        }
+                    }
+                }
 
                 gradient: Gradient {
                     GradientStop {
@@ -126,27 +126,10 @@ Rectangle {
         SwiftTableView {
             id: tableView
 
-            // function syncColumnWidthsWithSplitView() {
-            //     var oldcols = columnWidths.slice();
-            //     columnWidths[0] = Math.max(columnWidths[0], Constants.baselineTable.defaultColumnWidth);
-            //     let column_width_sum = columnWidths[0] + columnWidths[1];
-            //     if (column_width_sum != tableView.width) {
-            //         let final_column_diff = tableView.width - column_width_sum;
-            //         columnWidths[1] += final_column_diff;
-            //     }
-            //     if (columnWidths != oldcols)
-            //         tableView.forceLayout();
-
-            // }
-            onWidthChanged: {
-                print(this.x, this.y, this.width, this.height)
-
-                print(parent.width)
-                columnWidths = [parent.width * 0.4, parent.width * 0.6]
+            onVisibleChanged: {
+                tableView.model.clear();
             }
-
-            columnWidths: [parent.width * 0.4, parent.width * 0.6]
-
+            columnWidths: parent.columnWidths
             Layout.fillWidth: true
             Layout.fillHeight: true
 
@@ -212,7 +195,7 @@ Rectangle {
                         } else {
                             Globals.currentSelectedTable = tableView;
                             tableView._currentSelectedIndex = row;
-                            Globals.copyClipboard = JSON.stringify(tableView.model.getRow(_currentSelectedIndex));
+                            Globals.copyClipboard = JSON.stringify(tableView.model.getRow(tableView._currentSelectedIndex));
                         }
                     }
                 }
@@ -226,7 +209,6 @@ Rectangle {
             running: true
             repeat: true
             onTriggered: {
-                // print(tableView.columnWidths)
                 settings_table_model.fill_console_points(settingsTableEntries);
                 var entries = settingsTableEntries.entries;
                 if (!entries.length) {

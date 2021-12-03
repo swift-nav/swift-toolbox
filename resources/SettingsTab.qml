@@ -141,41 +141,31 @@ MainTab {
         width: parent.width
         height: parent.height
 
-        Rectangle {
+        SettingsTabComponents.SettingsTable {
+            id: settingsTable
+
             SplitView.minimumWidth: Constants.settingsTable.maximumWidth
-            SplitView.fillHeight: true
+            onSelectedRowIdxChanged: {
+                if (!!selectedRow())
+                    settingsPane.selectedRow = selectedRow();
 
-            SettingsTabComponents.SettingsTable {
-                id: settingsTable
-
-                anchors.fill: parent
-                // anchors.centerIn: parent
-                // width: parent.width
-                // height: parent.height
-                
-
-                onSelectedRowIdxChanged: {
-                    if (!!selectedRow())
-                        settingsPane.selectedRow = selectedRow();
-
-                }
             }
         }
-        
 
         ColumnLayout {
             SplitView.fillWidth: true
             spacing: 3
 
             RowLayout {
-                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-                Layout.preferredHeight: 50
+                Layout.fillWidth: true
 
                 Button {
                     text: "Save to Device"
                     icon.source: Constants.icons.savePath
                     icon.width: Constants.settingsTab.buttonIconWidth
                     icon.height: Constants.settingsTab.buttonIconHeight
+                    display: AbstractButton.TextUnderIcon
+                    flat: true
                     onClicked: data_model.settings_save_request()
                 }
 
@@ -184,6 +174,8 @@ MainTab {
                     icon.source: Constants.icons.exportPath
                     icon.width: Constants.settingsTab.buttonIconWidth
                     icon.height: Constants.settingsTab.buttonIconHeight
+                    display: AbstractButton.TextUnderIcon
+                    flat: true
                     onClicked: exportDialog.visible = true
                 }
 
@@ -192,6 +184,8 @@ MainTab {
                     icon.source: Constants.icons.importPath
                     icon.width: Constants.settingsTab.buttonIconWidth
                     icon.height: Constants.settingsTab.buttonIconHeight
+                    display: AbstractButton.TextUnderIcon
+                    flat: true
                     onClicked: importDialog.visible = true
                 }
 
@@ -200,6 +194,8 @@ MainTab {
                     icon.source: Constants.icons.warningPath
                     icon.width: Constants.settingsTab.buttonIconWidth
                     icon.height: Constants.settingsTab.buttonIconHeight
+                    display: AbstractButton.TextUnderIcon
+                    flat: true
                     onClicked: resetDialog.visible = true
                 }
 
@@ -209,20 +205,23 @@ MainTab {
                     icon.source: Constants.icons.centerOnButtonUrl
                     icon.width: Constants.settingsTab.buttonIconWidth
                     icon.height: Constants.settingsTab.buttonIconHeight
+                    display: AbstractButton.TextUnderIcon
+                    flat: true
                     onClicked: autoSurveyDialog.visible = true
                 }
 
             }
 
             RowLayout {
-                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-                Layout.preferredHeight: 50
+                Layout.fillWidth: true
 
                 Button {
                     text: "Refresh from device"
                     icon.source: Constants.icons.refreshPath
                     icon.width: Constants.settingsTab.buttonIconWidth
                     icon.height: Constants.settingsTab.buttonIconHeight
+                    display: AbstractButton.TextUnderIcon
+                    flat: true
                     onClicked: data_model.settings_refresh()
                 }
 
@@ -243,7 +242,6 @@ MainTab {
 
             RowLayout {
                 Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-                Layout.maximumWidth: parent.width
                 visible: {
                     var row = selectedRow();
                     if (row && row.hasOwnProperty("valueOnDevice"))
@@ -256,6 +254,11 @@ MainTab {
                     id: settingsPane
                 }
 
+            }
+
+            Item {
+                Layout.fillHeight: true
+                Layout.fillWidth: true
             }
 
         }

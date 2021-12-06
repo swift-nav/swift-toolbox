@@ -1,0 +1,83 @@
+name: Code Quality Checks.
+
+on:
+  push:
+    branches:
+      - 'main'
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+*'
+  pull_request:
+
+env:
+  PIP_CACHE_DIR: ~/.cache/pip
+  RUST_CACHE_DIRS: "~/.cargo/registry\n~/.cargo/git\ntarget\n"
+  LIBCLANG_PATH_WIN: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
+  CARGO_MAKE_VERSION: 0.35.0
+  CARGO_INCREMENTAL: 0
+  RUSTFLAGS: "-C debuginfo=0"
+
+jobs:
+
+  checks:
+
+    name: Code Quality Checks
+
+    runs-on: ubuntu-18.04
+
+    steps:
+
+      - name: Checkout source
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          ssh-key: ${{ secrets.SSH_KEY }}
+          ssh-strict: false
+
+      - uses: webfactory/ssh-agent@v0.5.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Pull Git LFS objects
+        run: git lfs pull
+        env:
+          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
+
+      - name: Install stable Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v1
+        with:
+          key: ${{ secrets.CACHE_VERSION }}
+
+      - uses: davidB/rust-cargo-make@v1
+        with:
+          version: ${{ env.CARGO_MAKE_VERSION }}
+
+      - name: Install Dependencies.
+        run: |
+          sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
+
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.PIP_CACHE_DIR }}
+          key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
+
+      - name: Set up python builder
+        shell: bash
+        run: |
+          cargo make setup-builder
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Checks
+        run: |
+          cargo make check-all
+
+      - name: Run Tests
+        run: |
+          cargo make tests

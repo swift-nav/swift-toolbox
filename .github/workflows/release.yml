@@ -1,0 +1,72 @@
+name: Create Release.
+
+on:
+  workflow_run:
+    workflows: [Frontend Benchmarks.]
+    types: [completed]
+
+on:
+  push:
+    branches:
+      - 'main'
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+*'
+  pull_request:
+
+if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
+env:
+  PIP_CACHE_DIR: ~/.cache/pip
+  RUST_CACHE_DIRS: "~/.cargo/registry\n~/.cargo/git\ntarget\n"
+  LIBCLANG_PATH_WIN: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
+  CARGO_MAKE_VERSION: 0.35.0
+  CARGO_INCREMENTAL: 0
+  RUSTFLAGS: "-C debuginfo=0"
+
+jobs:
+
+  release:
+    name: Create Release
+    needs:
+      - frontend_bench
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Store git tag and date vars.
+        run: |
+          DATE="$(date '+%Y-%m-%d')";
+          echo "DATE=${DATE}" >> $GITHUB_ENV
+          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+      - name: Pull Windows Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: Windows-artifacts
+          path: |
+            windows
+      - name: Pull Linux Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: Linux-artifacts
+          path: |
+            linux
+      - name: Pull macOS Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: macOS-artifacts
+          path: |
+            macos
+      - name: Store Env Vars
+        shell: bash
+        run: |
+          echo "WINDOWS_ARCHIVE=$(cat windows/release-archive.filename)" >>$GITHUB_ENV
+          echo "LINUX_ARCHIVE=$(cat linux/release-archive.filename)" >>$GITHUB_ENV
+          echo "MACOS_ARCHIVE=$(cat macos/release-archive.filename)" >>$GITHUB_ENV
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: "${{ env.VERSION }}-${{ env.DATE }}"
+          files: |
+            windows/${{ env.WINDOWS_ARCHIVE }}
+            linux/${{ env.LINUX_ARCHIVE }}
+            macos/${{ env.MACOS_ARCHIVE }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

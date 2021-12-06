@@ -1,0 +1,88 @@
+name: Frontend Benchmarks.
+
+on:
+  workflow_run:
+    workflows: [Build Distribution and Installers.]
+    types: [completed]
+
+env:
+  PIP_CACHE_DIR: ~/.cache/pip
+  RUST_CACHE_DIRS: "~/.cargo/registry\n~/.cargo/git\ntarget\n"
+  LIBCLANG_PATH_WIN: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
+  CARGO_MAKE_VERSION: 0.35.0
+  CARGO_INCREMENTAL: 0
+  RUSTFLAGS: "-C debuginfo=0"
+
+jobs:
+
+  frontend_bench:
+    name: Run Frontend Benchmarks
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        os:
+          - macOS
+          - Windows
+          - Linux
+    runs-on: [self-hosted, '${{ matrix.os }}']
+
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Remove previous build.
+        shell: bash
+        run: |
+          rm -rf console
+          rm -rf bench
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: ${{ matrix.os }}-artifacts
+          path: |
+            console
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: ${{ matrix.os }}-artifacts-bench
+          path: |
+            bench
+
+      - name: Extract binary and data.
+        shell: bash
+        run: |
+          cd console
+          archive=$(cat release-archive.filename)
+          7z x $archive -aoa
+          7z x ${archive%.xz} -aoa
+          echo "extracted release-archive"
+          mv ../bench/${{ matrix.os }}.zip .
+          7z x ${{ matrix.os }}.zip -aoa
+          echo "extracted bench data"
+
+      - name: Run CPU Frontend Benchmark.
+        shell: bash
+        run: |
+          cd console
+          if [ "$RUNNER_OS" == "Windows" ]; then
+              python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/console/console.exe"
+          elif [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
+              chmod +x "${GITHUB_WORKSPACE}/console/console"
+              python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/console/console"
+          else
+              echo "Invalid platform"
+              exit 1
+          fi
+
+      - name: Run MEM Frontend Benchmark.
+        shell: bash
+        run: |
+          cd console
+          if [ "$RUNNER_OS" == "Windows" ]; then
+              python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/console/console.exe"
+          elif [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
+              chmod +x "${GITHUB_WORKSPACE}/console/console"
+              python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/console/console"
+          else
+              echo "Invalid platform"
+              exit 1
+          fi

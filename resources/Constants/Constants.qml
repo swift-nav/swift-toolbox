@@ -292,6 +292,7 @@ QtObject {
 
     loggingBar: QtObject {
         readonly property int buttonHeight: 40
+        readonly property real buttonHeightRatio: 2/3
         readonly property int buttonSvgHeight: 15
         readonly property int urlBarHeight: 25
         readonly property int loggingBarMargin: 10
@@ -307,6 +308,10 @@ QtObject {
         readonly property int recordingTimeLabelWidth: 60
         readonly property int recordingDividerLabelWidth: 10
         readonly property int recordingSizeLabelWidth: 40
+        readonly property font comboBoxFont: Qt.font({
+            "family": fontFamily,
+            "pointSize": smallPointSize
+        })
     }
 
     advancedMagnetometer: QtObject {
@@ -597,6 +602,7 @@ QtObject {
         readonly property string squareSolidPath: "qrc:///images/fontawesome/square-solid.svg"
         readonly property string swiftLogoPath: "qrc:///images/icon.png"
         readonly property string swiftLogoWidePath: "qrc:///images/swiftLogoWide.svg"
+        readonly property string folderPath: "qrc:///images/fontawesome/folder-regular.svg"
     }
 
     insSettingsPopup: QtObject {

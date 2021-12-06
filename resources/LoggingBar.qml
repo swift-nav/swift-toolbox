@@ -1,4 +1,5 @@
 import "Constants"
+import "BaseComponents"
 import QtCharts 2.2
 import QtGraphicalEffects 1.15
 import QtQuick 2.5
@@ -21,8 +22,9 @@ Rectangle {
         return hours + ":" + minutes + ":" + seconds + " s";
     }
 
-    border.width: Constants.statusBar.borderWidth
-    border.color: Constants.statusBar.borderColor
+    // border.width: Constants.statusBar.borderWidth
+    // border.color: Constants.statusBar.borderColor
+    color: Constants.swiftControlBackground
 
     LoggingBarData {
         id: loggingBarData
@@ -34,12 +36,14 @@ Rectangle {
         anchors.fill: parent
         anchors.leftMargin: Constants.loggingBar.loggingBarMargin
         anchors.rightMargin: Constants.loggingBar.loggingBarMargin * 2
+        property real preferredButtonHeight: height * Constants.loggingBar.buttonHeightRatio
 
-        Button {
+        SwiftButton {
             id: csvLoggingButton
 
             Layout.preferredWidth: Constants.loggingBar.csvLoggingButtonWidth
-            Layout.preferredHeight: Constants.loggingBar.buttonHeight
+            Layout.preferredHeight: parent.preferredButtonHeight
+            color: Constants.swiftControlBackground
             text: "CSV Log"
             ToolTip.visible: hovered
             ToolTip.text: !checked ? "On" : "Off"
@@ -48,14 +52,15 @@ Rectangle {
             onClicked: data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText)
         }
 
-        Button {
+        SwiftButton {
             id: sbpLoggingButton
 
+            color: Constants.swiftControlBackground
             icon.source: checked ? Constants.icons.squareSolidPath : Constants.icons.solidCirclePath
-            icon.color: checked ? Constants.swiftOrange : Constants.materialGrey
+            icon.color: checked ? "red" : Constants.materialGrey
             checkable: true
-            Layout.preferredWidth: Constants.loggingBar.buttonHeight
-            Layout.preferredHeight: Constants.loggingBar.buttonHeight
+            Layout.preferredWidth: parent.preferredButtonHeight
+            Layout.preferredHeight: parent.preferredButtonHeight
             ToolTip.visible: hovered
             ToolTip.text: !checked ? "Start Recording" : "Stop Recording"
             onClicked: {
@@ -88,8 +93,9 @@ Rectangle {
                     id: sbpLoggingFormat
 
                     enabled: !sbpLoggingButton.checked
+                    font: Constants.loggingBar.comboBoxFont
                     Layout.preferredWidth: Constants.loggingBar.sbpLoggingButtonWidth
-                    Layout.preferredHeight: Constants.loggingBar.buttonHeight
+                    Layout.preferredHeight: loggingBarRowLayout.preferredButtonHeight
                     model: sbp_logging_labels
                     ToolTip.visible: hovered
                     ToolTip.text: "SBP Log Format"
@@ -100,7 +106,7 @@ Rectangle {
                     id: recordingFilenameText
 
                     Layout.fillWidth: true
-                    Layout.preferredHeight: Constants.loggingBar.folderPathBarHeight
+                    Layout.preferredHeight: loggingBarRowLayout.preferredButtonHeight
                     model: previous_folders
                     editable: true
                     selectTextByMouse: true
@@ -112,7 +118,7 @@ Rectangle {
                     id: folderPathBar
 
                     Layout.fillWidth: true
-                    Layout.preferredHeight: Constants.loggingBar.folderPathBarHeight
+                    Layout.preferredHeight: loggingBarRowLayout.preferredButtonHeight
                     model: previous_folders
                     editable: true
                     selectTextByMouse: true
@@ -136,35 +142,37 @@ Rectangle {
 
                 }
 
-                Button {
+                SwiftButton {
                     id: folderBarButton
 
                     Layout.preferredWidth: Constants.loggingBar.folderButtonWidth
-                    Layout.preferredHeight: Constants.loggingBar.buttonHeight
+                    Layout.preferredHeight: loggingBarRowLayout.preferredButtonHeight
                     ToolTip.visible: hovered
                     ToolTip.text: "File Browser"
                     enabled: !sbpLoggingButton.checked
+                    padding: 9
+                    icon.source: Constants.icons.folderPath
                     onClicked: {
                         fileDialog.visible = !fileDialog.visible;
                     }
 
-                    Image {
-                        id: loggingBarFolder
+                    // Image {
+                    //     id: loggingBarFolder
 
-                        anchors.centerIn: parent
-                        width: Constants.loggingBar.buttonSvgHeight
-                        height: Constants.loggingBar.buttonSvgHeight
-                        smooth: true
-                        source: Constants.loggingBar.folderButtonPath
-                        antialiasing: true
-                    }
+                    //     anchors.centerIn: parent
+                    //     width: Constants.loggingBar.buttonSvgHeight
+                    //     height: Constants.loggingBar.buttonSvgHeight
+                    //     smooth: true
+                    //     source: Constants.loggingBar.folderButtonPath
+                    //     antialiasing: true
+                    // }
 
-                    ColorOverlay {
-                        anchors.fill: loggingBarFolder
-                        source: loggingBarFolder
-                        color: Constants.materialGrey
-                        antialiasing: true
-                    }
+                    // ColorOverlay {
+                    //     anchors.fill: loggingBarFolder
+                    //     source: loggingBarFolder
+                    //     color: Constants.materialGrey
+                    //     antialiasing: true
+                    // }
 
                 }
 

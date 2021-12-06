@@ -4,6 +4,7 @@ import QtQuick.Controls.Material 2.12
 import QtQuick.Controls.Material.impl 2.12
 import QtQuick.Controls.impl 2.12
 import QtQuick.Templates 2.12 as T
+import "../Constants"
 
 T.CheckBox {
     id: control
@@ -11,6 +12,12 @@ T.CheckBox {
     spacing: 2
     implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset, implicitContentWidth + leftPadding + rightPadding)
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset, implicitContentHeight + topPadding + bottomPadding, implicitIndicatorHeight + topPadding + bottomPadding)
+    font: Qt.font({
+        "family": Constants.fontFamily,
+        "pointSize": Constants.xSmallPointSize,
+        "bold": true
+    })
+
     Component.onCompleted: {
         // changes size of inner checkmark
         control.indicator.children[0].height = 10;

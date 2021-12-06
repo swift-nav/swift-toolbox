@@ -33,9 +33,7 @@ Item {
             Layout.fillWidth: true
             visible: all_series.length > 0
             title: Constants.trackingSignals.title
-            titleFont.family: Constants.fontFamily
-            titleFont.pointSize: Constants.trackingSignals.titlePointSize
-            titleFont.bold: true
+            titleFont: Constants.trackingSignals.titleFont
             titleColor: Constants.trackingSignals.titleColor
             plotAreaColor: Constants.commonChart.areaColor
             legend.visible: false
@@ -69,10 +67,8 @@ Item {
                 tickType: ValueAxis.TicksDynamic
                 tickInterval: Constants.trackingSignals.xAxisTickInterval
                 labelFormat: "%d"
-                titleFont.family: Constants.fontFamily
-                titleFont.pointSize: Constants.smallPointSize
-                labelsFont.family: Constants.fontFamily
-                labelsFont.pointSize: Constants.xSmallPointSize
+                titleFont: Constants.trackingSignals.axisTitleFont
+                labelsFont: Constants.trackingSignals.axisLabelsFont
             }
 
             ValueAxis {
@@ -90,10 +86,8 @@ Item {
                 tickType: ValueAxis.TicksDynamic
                 tickInterval: Constants.trackingSignals.yAxisTickInterval
                 labelFormat: "%d"
-                titleFont.family: Constants.fontFamily
-                titleFont.pointSize: Constants.smallPointSize
-                labelsFont.family: Constants.fontFamily
-                labelsFont.pointSize: Constants.xSmallPointSize
+                titleFont: Constants.trackingSignals.axisTitleFont
+                labelsFont: Constants.trackingSignals.axisLabelsFont
             }
 
             Timer {

@@ -44,11 +44,13 @@ QtObject {
     readonly property int staticTableTimerIntervalRate: 10 // 10 Hz
     readonly property int staticTimerSlowIntervalRate: 2 // 2 Hz
     readonly property string monoSpaceFont: "Courier New"
-    readonly property string fontFamily: "Roboto"
+    readonly property string fontFamily: "Roboto Condensed"
     readonly property real xSmallPointSize: 6
     readonly property real smallPointSize: 7
     readonly property real mediumPointSize: 8
     readonly property real largePointSize: 9
+    readonly property real xlPointSize: 12
+    readonly property real xxlPointSize: 14
     readonly property string infoPath: "qrc:///images/fontawesome/info-circle-solid.svg"
     readonly property bool debugMode: false
     readonly property color swiftGrey: "#323F48"
@@ -509,6 +511,8 @@ QtObject {
         readonly property color minorGridLineColor: "#CDC9C9"
         readonly property color gridLineColor: "#CDC9C9"
         readonly property color labelsColor: "#000000"
+        readonly property int titlePointSize: largePointSize
+        readonly property int axisLabelsPointSize: smallPointSize
         readonly property int tickPointSize: 10
         readonly property int buttonHeight: 40
         readonly property int unitDropdownWidth: 90
@@ -536,8 +540,12 @@ QtObject {
 
     trackingSignals: QtObject {
         readonly property string title: "Tracking C/N0"
-        readonly property color titleColor: Qt.darker(swiftOrange, 1.1)
-        readonly property int titlePointSize: largePointSize
+        readonly property color titleColor: swiftGrey
+        readonly property font titleFont: Qt.font({
+            "family": fontFamily,
+            "pointSize": xlPointSize,
+            "bold": true
+        })
         readonly property int legendTopMargin: 12
         readonly property int legendBottomMargin: 72
         readonly property int legendLeftMargin: 18
@@ -545,6 +553,18 @@ QtObject {
         readonly property string legendCellTextSample: "XXX XXXX X+NN XNN"
         readonly property string yAxisTitleText: "dB-Hz"
         readonly property string xAxisTitleText: "seconds"
+        readonly property font axisTitleFont: Qt.font({
+            "family": fontFamily,
+            "pointSize": Constants.mediumPointSize,
+            "bold": true,
+            "letterSpacing": 2,
+            "capitalization": Font.AllUppercase
+        })
+        readonly property font axisLabelsFont: Qt.font({
+            "family": fontFamily,
+            "pointSize": commonChart.axisLabelsPointSize,
+            "bold": true
+        })
         readonly property int xAxisMinOffsetFromMaxSeconds: 100
         readonly property int checkBoxPreferredWidth: 100
         readonly property int snrThreshold: 15

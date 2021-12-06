@@ -21,7 +21,7 @@ jobs:
         with:
           format: png
           remove-page-suffix: true
-          transparent: true
+          transparent: false
 
       - name: Get author and committer info from HEAD commit
         uses: rlespinasse/git-commit-data-action@v1.x

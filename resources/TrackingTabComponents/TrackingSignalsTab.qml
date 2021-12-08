@@ -126,9 +126,10 @@ Item {
             id: trackingSignalsCheckboxes
 
             property int numChecked: trackingSignalsCbRepeater.count
+            property real maxCheckboxImplicitWidth: 0
 
             flow: GridLayout.TopToBottom
-            columns: Math.floor(parent.width / Constants.trackingSignals.checkBoxPreferredWidth)
+            columns: Math.floor(parent.width / maxCheckboxImplicitWidth)
             rows: Math.ceil(check_labels.length / trackingSignalsCheckboxes.columns)
             rowSpacing: 0
             Layout.margins: 0
@@ -150,6 +151,11 @@ Item {
                             cb.toggle();
 
                     }
+                }
+                Component.onCompleted: {
+                    if (implicitWidth > parent.maxCheckboxImplicitWidth)
+                        parent.maxCheckboxImplicitWidth = implicitWidth;
+
                 }
                 nextCheckState: function() {
                     return (checkState == Qt.Checked) ? Qt.Unchecked : Qt.Checked;
@@ -179,6 +185,9 @@ Item {
                     }
                     Component.onCompleted: {
                         check_visibility.push(checked);
+                        if (implicitWidth > trackingSignalsCheckboxes.maxCheckboxImplicitWidth)
+                            trackingSignalsCheckboxes.maxCheckboxImplicitWidth = implicitWidth;
+
                     }
                 }
 

@@ -487,7 +487,6 @@ QtObject {
         readonly property int chartBottomMargin: 30
         readonly property int legendBottomMargin: 120
         readonly property int legendLeftMargin: 80
-        readonly property int legendLabelPointSize: 9
     }
 
     commonLegend: QtObject {
@@ -561,7 +560,6 @@ QtObject {
         readonly property int legendTopMargin: 12
         readonly property int legendBottomMargin: 72
         readonly property int legendLeftMargin: 18
-        readonly property int legendLabelPointSize: 6
         readonly property string legendCellTextSample: "XXX XXXX X+NN XNN"
         readonly property string yAxisTitleText: "dB-Hz"
         readonly property string xAxisTitleText: "seconds"
@@ -577,8 +575,6 @@ QtObject {
             "pointSize": commonChart.axisLabelsPointSize,
             "bold": true
         })
-        readonly property int xAxisMinOffsetFromMaxSeconds: 100
-        readonly property int checkBoxPreferredWidth: 100
         readonly property int snrThreshold: 15
         readonly property int yAxisMax: 60
         readonly property int yAxisTickInterval: 10

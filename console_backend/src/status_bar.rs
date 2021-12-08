@@ -1,5 +1,6 @@
 use capnp::message::Builder;
 
+use crossbeam::channel::{self, select, Receiver, Sender};
 use sbp::messages::{
     navigation::MsgAgeCorrections,
     system::{MsgHeartbeat, MsgInsStatus, MsgInsUpdates},
@@ -8,7 +9,7 @@ use sbp::messages::{
 use std::{
     ops::Deref,
     sync::{Arc, Mutex},
-    thread::{sleep, spawn, JoinHandle},
+    thread::{spawn, JoinHandle},
     time::{Duration, Instant},
 };
 
@@ -19,7 +20,7 @@ use crate::piksi_tools_constants::{
     ins_error_dict, ins_mode_dict, ins_type_dict, rtk_mode_dict, DR_MODE, EMPTY_STR, RTK_MODES,
 };
 use crate::shared_state::SharedState;
-use crate::types::{ArcBool, BaselineNED, GnssModes, PosLLH};
+use crate::types::{BaselineNED, GnssModes, PosLLH};
 use crate::utils::{bytes_to_kb, decisec_to_sec, serialize_capnproto_builder};
 
 enum AntennaStatus {
@@ -52,98 +53,88 @@ impl AntennaStatus {
 
 #[derive(Debug, Clone)]
 pub struct StatusBarUpdate {
-    age_of_corrections: String,
-    data_rate: String,
+    age_of_corrections: f64,
+    data_rate: f64,
     ins_status: String,
-    num_sats: String,
+    num_sats: u8,
     pos_mode: String,
     rtk_mode: String,
     solid_connection: bool,
     ant_status: String,
+    port: String,
+    version: String,
 }
 impl StatusBarUpdate {
-    pub fn connection_dropped() -> StatusBarUpdate {
+    pub fn new() -> StatusBarUpdate {
         StatusBarUpdate {
-            age_of_corrections: String::from(EMPTY_STR),
-            data_rate: String::from(EMPTY_STR),
+            age_of_corrections: 0.0,
+            data_rate: 0.0,
             ins_status: String::from(EMPTY_STR),
-            num_sats: String::from(EMPTY_STR),
+            num_sats: 0,
             pos_mode: String::from(EMPTY_STR),
             rtk_mode: String::from(EMPTY_STR),
             solid_connection: false,
             ant_status: String::from(EMPTY_STR),
+            port: String::from(""),
+            version: String::from(""),
         }
+    }
+}
+impl Default for StatusBarUpdate {
+    fn default() -> Self {
+        StatusBarUpdate::new()
     }
 }
 
 /// StatusBar struct.
 ///
 /// # Fields:
-/// - `client_send`: Client Sender channel for communication from backend to frontend.
-/// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
 /// - `heartbeat_data`: The shared object for storing and accessing relevant status bar data.
-/// - `heartbeat_handler`: The handler to store the running heartbeat thread.
-/// - `port`: The string corresponding to the current connection.
 #[derive(Debug)]
 pub struct StatusBar {
-    client_sender: BoxedClientSender,
     heartbeat_data: Heartbeat,
-    is_running: ArcBool,
-    #[allow(dead_code)]
-    heartbeat_handler: JoinHandle<()>,
-    port: String,
-    version: String,
 }
 impl StatusBar {
     /// Create a new StatusBar.
     ///
     /// # Parameters:
-    /// - `client_send`: Client Sender channel for communication from backend to frontend.
     /// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
-    pub fn new(shared_state: SharedState, client_sender: BoxedClientSender) -> StatusBar {
-        let heartbeat_data = Heartbeat::new();
-        let is_running = ArcBool::new();
-        let version = shared_state.console_version();
-        StatusBar {
-            client_sender,
-            heartbeat_data: heartbeat_data.clone(),
-            port: shared_state.connection().name(),
-            version,
-            heartbeat_handler: StatusBar::heartbeat_thread(
-                is_running.clone(),
-                heartbeat_data,
-                shared_state,
-            ),
-            is_running,
-        }
+    pub fn new(shared_state: SharedState) -> StatusBar {
+        let heartbeat_data = shared_state.heartbeat_data();
+        heartbeat_data.set_port(shared_state.connection().name());
+        StatusBar { heartbeat_data }
     }
 
     /// Thread for handling the consistently repeating heartbeat.
     ///
     /// # Parameters:
-    /// - `client_send`: Client Sender channel for communication from backend to frontend.
+    /// - `client_sender`: Client Sender channel for communication from backend to frontend.
     /// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
-    fn heartbeat_thread(
-        is_running: ArcBool,
-        heartbeat_data: Heartbeat,
+    pub fn heartbeat_thread(
+        client_sender: BoxedClientSender,
         shared_state: SharedState,
-    ) -> JoinHandle<()> {
-        is_running.set(true);
-        let mut last_time = Instant::now();
-        spawn(move || loop {
-            if !is_running.get() {
-                break;
-            }
-            let dgnss_enabled = shared_state.dgnss_enabled();
-            heartbeat_data.heartbeat(dgnss_enabled);
-            let new_time = Instant::now();
-            let time_diff = (new_time - last_time).as_secs_f64();
-            let delay_time = UPDATE_TOLERANCE_SECONDS - time_diff;
-            if delay_time > 0_f64 && is_running.get() {
-                sleep(Duration::from_secs_f64(delay_time));
-            }
-            last_time = Instant::now();
-        })
+    ) -> (Sender<bool>, JoinHandle<()>) {
+        let (tx, rx): (Sender<bool>, Receiver<bool>) = channel::bounded(1);
+        let heartbeat_data = shared_state.heartbeat_data();
+
+        let mut delay_time = UPDATE_TOLERANCE_SECONDS;
+        (
+            tx,
+            spawn(move || loop {
+                select! {
+                    recv(channel::after(Duration::from_secs_f64(delay_time))) -> _ => {
+                        let last_time = Instant::now();
+                        let sb_update = heartbeat_data.heartbeat();
+                        StatusBar::send_data(client_sender.clone(), sb_update);
+                        let new_time = Instant::now();
+                        let time_diff = (new_time - last_time).as_secs_f64();
+                        delay_time = UPDATE_TOLERANCE_SECONDS - time_diff;
+                        delay_time = delay_time.max(0.001); // Add buffer if delay is negative.
+                    }
+                    recv(rx) -> _ => break,
+                }
+            }),
+        )
     }
 
     pub fn add_bytes(&mut self, bytes: usize) {
@@ -155,22 +146,11 @@ impl StatusBar {
     }
 
     /// Package data into a message buffer and send to frontend.
-    fn send_data(&mut self) {
-        let sb_update;
-        {
-            let mut shared_data = self
-                .heartbeat_data
-                .lock()
-                .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
-            sb_update = (*shared_data).new_update.clone();
-            (*shared_data).new_update = None;
-        }
-        let sb_update = if let Some(sb_update_) = sb_update {
-            sb_update_
-        } else {
-            return;
-        };
-
+    ///
+    /// # Parameters:
+    /// - `client_sender`: Client Sender channel for communication from backend to frontend.
+    /// - `sb_update`: Optional update packet to send to frontend.
+    pub fn send_data(client_sender: BoxedClientSender, sb_update: StatusBarUpdate) {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
@@ -178,15 +158,16 @@ impl StatusBar {
         status_bar_status.set_antenna_status(&sb_update.ant_status);
         status_bar_status.set_pos(&sb_update.pos_mode);
         status_bar_status.set_rtk(&sb_update.rtk_mode);
-        status_bar_status.set_sats(&sb_update.num_sats);
-        status_bar_status.set_corr_age(&sb_update.age_of_corrections);
+        status_bar_status.set_sats(sb_update.num_sats);
+        status_bar_status.set_corr_age(sb_update.age_of_corrections);
         status_bar_status.set_ins(&sb_update.ins_status);
-        status_bar_status.set_data_rate(&sb_update.data_rate);
+        status_bar_status.set_data_rate(sb_update.data_rate);
         status_bar_status.set_solid_connection(sb_update.solid_connection);
-        status_bar_status.set_title(&format!("{} Swift Console {}", self.port, self.version));
-
-        self.client_sender
-            .send_data(serialize_capnproto_builder(builder));
+        status_bar_status.set_title(&format!(
+            "{} Swift Console {}",
+            sb_update.port, sb_update.version
+        ));
+        client_sender.send_data(serialize_capnproto_builder(builder));
     }
 
     pub fn handle_heartbeat(&mut self, msg: MsgHeartbeat) {
@@ -226,8 +207,6 @@ impl StatusBar {
             }
             (*shared_data).ins_used = ins_used;
         }
-
-        self.send_data();
     }
 
     /// Handle BaselineNED and BaselineNEDDepA messages.
@@ -246,7 +225,6 @@ impl StatusBar {
             (*shared_data).baseline_solution_mode = baseline_solution_mode;
             (*shared_data).last_btime_update = last_btime_update;
         }
-        self.send_data();
     }
 
     /// Handle INS Updates messages.
@@ -263,7 +241,6 @@ impl StatusBar {
                 .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
             (*shared_data).last_odo_update_time = Some(last_odo_update_time);
         }
-        self.send_data();
     }
 
     /// Handle INS Status messages.
@@ -281,7 +258,6 @@ impl StatusBar {
             (*shared_data).ins_status_flags = ins_status_flags;
             (*shared_data).last_ins_status_receipt_time = last_ins_status_receipt_time;
         }
-        self.send_data();
     }
 
     /// Handle Age Corrections messages.
@@ -303,25 +279,19 @@ impl StatusBar {
             (*shared_data).age_corrections = age_corrections;
             (*shared_data).last_age_corr_receipt_time = Some(Instant::now());
         }
-        self.send_data();
-    }
-}
-
-impl Drop for StatusBar {
-    fn drop(&mut self) {
-        self.is_running.set(false);
     }
 }
 
 #[derive(Debug)]
 pub struct HeartbeatInner {
-    age_of_corrections: String,
+    age_of_corrections: f64,
     age_corrections: Option<f64>,
     ant_status: String,
     baseline_display_mode: String,
     baseline_solution_mode: u8,
     current_time: Instant,
     data_rate: f64,
+    dgnss_enabled: bool,
     heartbeat_count: usize,
     ins_status_flags: u32,
     ins_status_string: String,
@@ -336,22 +306,24 @@ pub struct HeartbeatInner {
     llh_is_rtk: bool,
     llh_num_sats: u8,
     llh_solution_mode: u8,
-    new_update: Option<StatusBarUpdate>,
+    port: String,
     solid_connection: bool,
     total_bytes_read: usize,
     last_bytes_read: usize,
     last_time_bytes_read: Instant,
+    version: String,
 }
 impl HeartbeatInner {
     pub fn new() -> HeartbeatInner {
         HeartbeatInner {
-            age_of_corrections: String::from(EMPTY_STR),
+            age_of_corrections: 0.0,
             age_corrections: None,
             ant_status: String::from(EMPTY_STR),
             baseline_display_mode: String::from(EMPTY_STR),
             baseline_solution_mode: 0,
             current_time: Instant::now(),
             data_rate: 0.0,
+            dgnss_enabled: false,
             heartbeat_count: 0,
             ins_status_flags: 0,
             ins_status_string: String::from(EMPTY_STR),
@@ -366,11 +338,12 @@ impl HeartbeatInner {
             llh_is_rtk: false,
             llh_num_sats: 0,
             llh_solution_mode: 0,
-            new_update: None,
+            port: String::from(""),
             solid_connection: false,
             total_bytes_read: 0,
             last_bytes_read: 0,
             last_time_bytes_read: Instant::now(),
+            version: String::from(""),
         }
     }
 
@@ -379,7 +352,6 @@ impl HeartbeatInner {
             && self.heartbeat_count != 0)
             || (self.data_rate <= f64::EPSILON)
         {
-            self.new_update = Some(StatusBarUpdate::connection_dropped());
             false
         } else {
             self.current_time = Instant::now();
@@ -387,7 +359,6 @@ impl HeartbeatInner {
         };
         self.last_heartbeat_count = self.heartbeat_count;
         self.data_rate_update();
-
         self.solid_connection
     }
 
@@ -413,9 +384,9 @@ impl HeartbeatInner {
         }
     }
 
-    pub fn baseline_ned_update(&mut self, dgnss_enabled: bool) {
+    pub fn baseline_ned_update(&mut self) {
         if let Some(last_btime_update) = self.last_btime_update {
-            if dgnss_enabled
+            if self.dgnss_enabled
                 && (self.current_time - last_btime_update).as_secs_f64() < UPDATE_TOLERANCE_SECONDS
             {
                 self.baseline_display_mode = if let Some(bsoln_mode) =
@@ -489,29 +460,41 @@ impl HeartbeatInner {
     }
 
     pub fn age_of_corrections_update(&mut self) {
-        self.age_of_corrections = String::from(EMPTY_STR);
+        self.age_of_corrections = 0.0;
         if let Some(age_corr) = self.age_corrections {
             if let Some(last_age_corr_time) = self.last_age_corr_receipt_time {
                 if (self.current_time - last_age_corr_time).as_secs_f64() < UPDATE_TOLERANCE_SECONDS
                 {
-                    self.age_of_corrections = format!("{:.1} s", age_corr);
+                    self.age_of_corrections = age_corr;
                 }
             }
         }
     }
 
-    pub fn prepare_update_packet(&mut self) {
-        let sb_update = StatusBarUpdate {
-            age_of_corrections: self.age_of_corrections.clone(),
-            ant_status: self.ant_status.clone(),
-            data_rate: format!("{:.2} KB/s", self.data_rate),
-            ins_status: self.ins_status_string.clone(),
-            num_sats: self.llh_num_sats.to_string(),
-            pos_mode: self.llh_display_mode.clone(),
-            rtk_mode: self.baseline_display_mode.clone(),
-            solid_connection: self.solid_connection,
-        };
-        self.new_update = Some(sb_update);
+    pub fn prepare_update_packet(&mut self, good_heartbeat: bool) -> StatusBarUpdate {
+        if good_heartbeat {
+            StatusBarUpdate {
+                age_of_corrections: self.age_of_corrections,
+                ant_status: self.ant_status.clone(),
+                data_rate: self.data_rate,
+                ins_status: self.ins_status_string.clone(),
+                num_sats: self.llh_num_sats,
+                pos_mode: self.llh_display_mode.clone(),
+                rtk_mode: self.baseline_display_mode.clone(),
+                solid_connection: self.solid_connection,
+                port: self.port.clone(),
+                version: self.version.clone(),
+            }
+        } else {
+            self.llh_num_sats = 0;
+            StatusBarUpdate {
+                solid_connection: self.solid_connection,
+                ant_status: self.ant_status.clone(),
+                num_sats: self.llh_num_sats,
+                version: self.version.clone(),
+                ..Default::default()
+            }
+        }
     }
 }
 impl Default for HeartbeatInner {
@@ -527,16 +510,27 @@ impl Heartbeat {
     pub fn new() -> Heartbeat {
         Heartbeat(Arc::new(Mutex::new(HeartbeatInner::default())))
     }
-    pub fn heartbeat(&self, dgnss_enabled: bool) {
+    pub fn heartbeat(&self) -> StatusBarUpdate {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         let good_heartbeat: bool = (*shared_data).check_heartbeat();
         if good_heartbeat {
             (*shared_data).pos_llh_update();
-            (*shared_data).baseline_ned_update(dgnss_enabled);
+            (*shared_data).baseline_ned_update();
             (*shared_data).ins_update();
             (*shared_data).age_of_corrections_update();
-            (*shared_data).prepare_update_packet();
         }
+        (*shared_data).prepare_update_packet(good_heartbeat)
+    }
+    pub fn set_dgnss_enabled(&self, dgnss_enabled: bool) {
+        self.lock()
+            .expect(SHARED_STATE_LOCK_MUTEX_FAILURE)
+            .dgnss_enabled = dgnss_enabled;
+    }
+    pub fn set_version(&self, version: String) {
+        self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE).version = version;
+    }
+    pub fn set_port(&self, port: String) {
+        self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE).port = port;
     }
 }
 
@@ -565,13 +559,52 @@ impl Clone for Heartbeat {
 mod tests {
     use super::*;
     use crate::client_sender::TestSender;
+    use std::{
+        thread::{sleep, spawn},
+        time::Duration,
+    };
     const DELAY_BUFFER_MS: u64 = 10;
+
+    #[test]
+    fn status_bar_thread_test() {
+        let shared_state = SharedState::new();
+        let client_send = TestSender::boxed();
+        let (tx, status_thd): (Sender<bool>, JoinHandle<()>) =
+            StatusBar::heartbeat_thread(client_send, shared_state.clone());
+        spawn(move || {
+            let heartbeat_data = shared_state.heartbeat_data();
+            {
+                let hb = heartbeat_data.lock().unwrap();
+                assert!(!(*hb).solid_connection);
+            }
+            (0..3).for_each(|_| {
+                {
+                    let mut hb = heartbeat_data.lock().unwrap();
+                    hb.heartbeat_count += 1;
+                    hb.total_bytes_read += 1337;
+                }
+                sleep(Duration::from_secs_f64(UPDATE_TOLERANCE_SECONDS));
+            });
+            {
+                let hb = heartbeat_data.lock().unwrap();
+                assert!((*hb).solid_connection);
+            }
+            sleep(Duration::from_secs_f64(UPDATE_TOLERANCE_SECONDS));
+            {
+                let hb = heartbeat_data.lock().unwrap();
+                assert!(!(*hb).solid_connection);
+            }
+        })
+        .join()
+        .unwrap();
+        tx.send(false).unwrap();
+        status_thd.join().unwrap();
+    }
 
     #[test]
     fn handle_age_corrections_test() {
         let shared_state = SharedState::new();
-        let client_send = TestSender::boxed();
-        let mut status_bar = StatusBar::new(shared_state, client_send);
+        let mut status_bar = StatusBar::new(shared_state);
         let age_corrections = {
             let shared_data = status_bar
                 .heartbeat_data
@@ -618,8 +651,7 @@ mod tests {
     #[test]
     fn handle_ins_status_test() {
         let shared_state = SharedState::new();
-        let client_send = TestSender::boxed();
-        let mut status_bar = StatusBar::new(shared_state, client_send);
+        let mut status_bar = StatusBar::new(shared_state);
         let flags = 0xf0_u32;
         let msg = MsgInsStatus {
             sender_id: Some(1337),
@@ -650,8 +682,7 @@ mod tests {
     #[test]
     fn handle_ins_updates_test() {
         let shared_state = SharedState::new();
-        let client_send = TestSender::boxed();
-        let mut status_bar = StatusBar::new(shared_state, client_send);
+        let mut status_bar = StatusBar::new(shared_state);
         let msg = MsgInsUpdates {
             sender_id: Some(1337),
             gnsspos: 0,

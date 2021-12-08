@@ -22,7 +22,6 @@ use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use serialport::FlowControl;
 
-use crate::common_constants::{self as cc, SbpLogging};
 use crate::connection::Connection;
 use crate::constants::{
     APPLICATION_NAME, APPLICATION_ORGANIZATION, APPLICATION_QUALIFIER, CONNECTION_HISTORY_FILENAME,
@@ -39,6 +38,10 @@ use crate::update_tab::UpdateTabUpdate;
 use crate::utils::send_conn_state;
 use crate::watch::{WatchReceiver, Watched};
 use crate::{client_sender::BoxedClientSender, main_tab::logging_stats_thread};
+use crate::{
+    common_constants::{self as cc, SbpLogging},
+    status_bar::Heartbeat,
+};
 
 pub type Error = anyhow::Error;
 pub type Result<T> = anyhow::Result<T>;
@@ -279,11 +282,10 @@ impl SharedState {
     pub fn firmware_version(&self) -> Option<String> {
         self.lock().firmware_version.take()
     }
-    pub fn dgnss_enabled(&self) -> bool {
-        self.lock().dgnss_enabled
-    }
     pub fn set_dgnss_enabled(&self, dgnss_solution_mode: String) {
-        self.lock().dgnss_enabled = dgnss_solution_mode != "No DGNSS";
+        self.lock()
+            .heartbeat_data
+            .set_dgnss_enabled(dgnss_solution_mode != "No DGNSS");
     }
     pub fn set_reset_device(&self, reset_device: bool) {
         self.lock().reset_device = reset_device;
@@ -312,6 +314,9 @@ impl SharedState {
     }
     pub fn log_to_std(&self) -> ArcBool {
         self.lock().log_to_std.clone()
+    }
+    pub fn heartbeat_data(&self) -> Heartbeat {
+        self.lock().heartbeat_data.clone()
     }
 }
 
@@ -351,17 +356,20 @@ pub struct SharedStateInner {
     pub(crate) settings_tab: Watched<SettingsTabState>,
     pub(crate) console_version: String,
     pub(crate) firmware_version: Option<String>,
-    pub(crate) dgnss_enabled: bool,
     pub(crate) reset_device: bool,
     pub(crate) advanced_networking_update: Option<AdvancedNetworkingState>,
     pub(crate) auto_survey_data: AutoSurveyData,
     pub(crate) sbp_logging_stats_state: Option<SbpLoggingStatsState>,
     pub(crate) log_to_std: ArcBool,
+    pub(crate) heartbeat_data: Heartbeat,
 }
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
         let connection_history = ConnectionHistory::new();
         let log_directory = connection_history.folders().pop();
+        let console_version = String::from(include_str!("version.txt").trim());
+        let heartbeat_data = Heartbeat::new();
+        heartbeat_data.set_version(console_version.clone());
         SharedStateInner {
             logging_bar: LoggingBarState::new(log_directory),
             log_panel: LogPanelState::new(),
@@ -374,14 +382,14 @@ impl SharedStateInner {
             advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTabState::new(),
             update_tab_sender: None,
             settings_tab: Watched::new(SettingsTabState::new()),
-            console_version: String::from(include_str!("version.txt").trim()),
+            console_version,
             firmware_version: None,
-            dgnss_enabled: false,
             reset_device: false,
             advanced_networking_update: None,
             auto_survey_data: AutoSurveyData::new(),
             sbp_logging_stats_state: None,
             log_to_std: ArcBool::new_with(true),
+            heartbeat_data,
         }
     }
 }

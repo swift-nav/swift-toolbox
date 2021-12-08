@@ -10,6 +10,7 @@ use std::{
 };
 
 use anyhow::anyhow;
+use crossbeam::channel::Sender;
 use log::{error, info};
 
 use crate::client_sender::BoxedClientSender;
@@ -17,6 +18,7 @@ use crate::constants::*;
 use crate::errors::*;
 use crate::process_messages::{process_messages, Messages};
 use crate::shared_state::{ConnectionState, SharedState};
+use crate::status_bar::StatusBar;
 use crate::types::*;
 use crate::utils::{refresh_connection_frontend, refresh_loggingbar};
 use crate::watch::Watched;
@@ -103,6 +105,9 @@ fn conn_manager_thd(
             thd.join().expect("process_messages thread panicked");
         }
     };
+    let (tx, status_thd): (Sender<bool>, JoinHandle<()>) =
+        StatusBar::heartbeat_thread(client_sender.clone(), shared_state.clone());
+    let mut status_thd = Some(status_thd);
     let mut reconnect_thd: Option<JoinHandle<()>> = None;
     let mut pm_thd: Option<JoinHandle<()>> = None;
     let mut recv = manager_msg.watch();
@@ -162,6 +167,9 @@ fn conn_manager_thd(
             log::logger().flush();
         }
         shared_state.set_connection(ConnectionState::Closed, &client_sender);
+        tx.send(false)
+            .expect("panicking sending stop message to status bar");
+        join(&mut status_thd);
         join(&mut pm_thd);
         join(&mut reconnect_thd);
     })

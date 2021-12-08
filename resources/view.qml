@@ -297,6 +297,8 @@ ApplicationWindow {
                     StatusBar {
                         property alias sbpRecording: loggingBar.sbpRecording
                         property alias title: main.title
+                        property alias solidConnection: sideNavBar.solidConnection
+                        property alias dataRate: sideNavBar.dataRate
                     }
 
                 }

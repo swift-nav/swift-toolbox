@@ -42,3 +42,15 @@ function listProperty(item)
         if (typeof item[p] != "function")
             console.log(p + ": " + item[p]);
 }
+
+// Helper function to pad before and after decimal of a float.
+function padFloat(num, before, after) {
+    let new_num = num.toFixed(after).toString();
+
+    let padstart_len = before;
+    if (after > 0) {
+        padstart_len += 1 + after // Add one for the decimal.
+    }    
+    let pad_num = new_num.padStart(padstart_len, "0");
+    return pad_num;
+}

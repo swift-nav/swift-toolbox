@@ -556,8 +556,24 @@ script = '''
 exec --fail-on-error iconutil --convert icns ./installers/macOS/desktop-icon.iconset --output ./installers/macOS/icon.icns
 '''
 
+[tasks.dist-to-installer-env]
+[tasks.dist-to-installer-env.mac]
+script_runner = "@duckscript"
+script = '''
+set_env FINAL_DIR "installers/macOS"
+set_env TMP_DIR "target/installer"
+set_env CONTENTS_MACOS_DIR "MacOS"
+set_env CONTENTS_RESOURCES_DIR "Resources"
+set_env APP_FILE_PREFIX "Swift-Navigation-Console"
+set_env APP_ORIGINAL_NAME "console"
+set_env VERSION_PATH "console_backend/src/version.txt"
+set_env INFO_PLIST_PATH "installers/macOS/Info.plist"
+set_env ICNS_PATH "installers/macOS/icon.icns"
+set_env BACKGROUND_PATH "resources/images/LogoBackground.jpg"
+'''
+
 [tasks.dist-to-installer.mac]
-env = { TMP_DIR = "target/installer", CONTENTS_MACOS_DIR = "MacOS", CONTENTS_RESOURCES_DIR = "Resources", APP_FILE_PREFIX = "Swift-Navigation-Console", APP_ORIGINAL_NAME = "console", VERSION_PATH = "console_backend/src/version.txt", INFO_PLIST_PATH = "installers/macOS/Info.plist", ICNS_PATH = "installers/macOS/icon.icns", BACKGROUND_PATH = "resources/images/LogoBackground.jpg", FINAL_DIR = "installers/macOS" }
+dependencies = ["dist-to-installer-env"]
 script_runner = "@duckscript"
 script = '''
 final_dir = get_env FINAL_DIR
@@ -597,8 +613,19 @@ cp ${icns_path} ./${contents_resources_dir}/${app_file_prefix}.icns
 exec --fail-on-error create-dmg --volname "${app_file_prefix}-Installer" --volicon "${icns_path}" --background "${background_path}" --hdiutil-verbose --window-pos 200 120 --window-size 800 400 --icon-size 100 --icon "${app_dir_name}" 200 190 --hide-extension "${app_dir_name}" --app-drop-link 600 185 "${dmg_path}" "${tmp_dir}"
 '''
 
+[tasks.dist-to-installer-env.linux]
+script_runner = "@duckscript"
+script = '''
+set_env TMP_DIR "target/installer"
+set_env OPT_DIR "opt"
+set_env USR_DIR "usr"
+set_env APP_DIR_NAME "swift-navigation-console"
+set_env APPS_DIR "share/applications"
+set_env ICONS_DIR "share/icons/hicolor"
+'''
+
 [tasks.dist-to-installer.linux]
-env = { TMP_DIR = "target/installer", OPT_DIR = "opt", USR_DIR = "usr", APP_DIR_NAME = "swift-navigation-console", APPS_DIR = "share/applications", ICONS_DIR = "share/icons/hicolor" }
+dependencies = ["dist-to-installer-env"]
 script_runner = "@shell"
 script = '''
 

@@ -296,7 +296,6 @@ jobs:
               mv installers/macOS/*.dmg .
               INSTALLER_ARCHIVE=$(find . -maxdepth 1 -iname "*.dmg")
           fi
-          echo "INSTALLER_ARCHIVE=$INSTALLER_ARCHIVE" >>$GITHUB_ENV
           echo $INSTALLER_ARCHIVE >installer-archive.filename
           echo "INSTALLER_ARCHIVE=$(cat installer-archive.filename)" >>$GITHUB_ENV
         if: github.event_name == 'push' && contains(github.ref, 'refs/tags')

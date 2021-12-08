@@ -119,7 +119,7 @@ Rectangle {
             rightPadding: rhsItemSpacing
             text: "Console"
             color: Constants.swiftLightGrey
-            font.family: "Roboto Condensed"
+            font.family: Constants.lightFontFamily
             font.capitalization: Font.AllUppercase
             font.letterSpacing: 2
             font.pointSize: 20

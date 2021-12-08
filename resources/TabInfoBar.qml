@@ -23,7 +23,7 @@ Rectangle {
         anchors.right: parent.right
         anchors.top: parent.top
         height: 1
-        color: "#C2C2C2"
+        color: Constants.spacerColor
         z: 2
     }
 
@@ -33,7 +33,7 @@ Rectangle {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         height: 1
-        color: "#C2C2C2"
+        color: Constants.spacerColor
         z: 2
     }
 
@@ -51,12 +51,8 @@ Rectangle {
             leftPadding: 13
             rightPadding: 13
             text: tabName
-            color: Constants.swiftOrange
-            font.family: "Roboto Condensed"
-            font.capitalization: Font.AllUppercase
-            font.letterSpacing: 1
-            font.pointSize: 20
-            font.bold: true // Could also try playing with font.weight
+            color: Constants.tabInfoBar.tabLabelColor
+            font: Constants.tabInfoBar.tabLabelFont
         }
 
         TabBar {
@@ -110,19 +106,16 @@ Rectangle {
             Layout.topMargin: 7
             Layout.bottomMargin: 7
             width: 1
-            color: "#C2C2C2"
+            color: Constants.spacerColor
             Layout.alignment: Qt.AlignVCenter
         }
 
         Label {
             leftPadding: rhsItemSpacing
             rightPadding: rhsItemSpacing
-            text: "Console"
-            color: Constants.swiftLightGrey
-            font.family: Constants.lightFontFamily
-            font.capitalization: Font.AllUppercase
-            font.letterSpacing: 2
-            font.pointSize: 20
+            text: Constants.tabInfoBar.appName
+            color: Constants.tabInfoBar.appNameColor
+            font: Constants.tabInfoBar.appNameFont
         }
 
         Rectangle {
@@ -130,7 +123,7 @@ Rectangle {
             Layout.topMargin: 7
             Layout.bottomMargin: 7
             width: 1
-            color: "#C2C2C2"
+            color: Constants.spacerColor
             Layout.alignment: Qt.AlignVCenter
         }
 
@@ -141,10 +134,10 @@ Rectangle {
             RoundButton {
                 anchors.centerIn: parent
                 flat: true
-                icon.source: Constants.infoPath
+                icon.source: Constants.tabInfoBar.infoButtonIconPath
                 icon.width: 20
                 icon.height: 20
-                icon.color: Constants.swiftLightGrey
+                icon.color: Constants.tabInfoBar.infoButtonIconColor
                 padding: rhsItemSpacing / 3
                 onClicked: tabInfoBar.aboutClicked()
             }
@@ -162,7 +155,7 @@ Rectangle {
 
             height: rowLayout.height
             width: 1
-            color: "#C2C2C2"
+            color: Constants.spacerColor
             x: tabBar.count > 0 ? tabBar.x + (tabButton ? tabButton.x - 1 : tabBar.width) : tabLabel.x + tabLabel.width
         }
 

@@ -11,6 +11,7 @@ QtObject {
     readonly property real logPanelPreferredHeight: 100
     readonly property int loggingBarPreferredHeight: 50
     readonly property real statusBarPreferredHeight: 30
+    property QtObject tabInfoBar
     property QtObject logPanel
     property QtObject statusBar
     property QtObject connection
@@ -53,7 +54,6 @@ QtObject {
     readonly property real largePointSize: 9
     readonly property real xlPointSize: 12
     readonly property real xxlPointSize: 14
-    readonly property string infoPath: "qrc:///images/fontawesome/info-circle-solid.svg"
     readonly property bool debugMode: false
     readonly property color swiftGrey: "#323F48"
     readonly property color swiftLightGrey: "#3C464F"
@@ -65,6 +65,28 @@ QtObject {
 
     robotoCondensedLightFont: FontLoader {
         source: "qrc:///fonts/RobotoCondensed-Light.ttf"
+    }
+
+    tabInfoBar: QtObject {
+        readonly property bool autoClose: false
+        readonly property color tabLabelColor: swiftOrange
+        readonly property font tabLabelFont: Qt.font({
+            "family": "Roboto Condensed",
+            "pointSize": 20,
+            "bold": true,
+            "letterSpacing": 1,
+            "capitalization": Font.AllUppercase
+        })
+        readonly property string appName: "Console"
+        readonly property color appNameColor: swiftLightGrey
+        readonly property font appNameFont: Qt.font({
+            "family": robotoCondensedLightFont.name,
+            "pointSize": 20,
+            "letterSpacing": 2,
+            "capitalization": Font.AllUppercase
+        })
+        readonly property string infoButtonIconPath: "qrc:///images/fontawesome/info-circle-solid.svg"
+        readonly property color infoButtonIconColor: swiftLightGrey
     }
 
     logoPopup: QtObject {

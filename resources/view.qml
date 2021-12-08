@@ -54,6 +54,7 @@ ApplicationWindow {
 
         property int openDuration: 1000
         property int closeDuration: 350
+        property bool autoClose: Constants.tabInfoBar.autoClose
 
         function open() {
             state = "opened";

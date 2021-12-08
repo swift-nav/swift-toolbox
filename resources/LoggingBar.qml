@@ -1,5 +1,5 @@
-import "Constants"
 import "BaseComponents"
+import "Constants"
 import QtCharts 2.2
 import QtGraphicalEffects 1.15
 import QtQuick 2.5
@@ -33,10 +33,11 @@ Rectangle {
     RowLayout {
         id: loggingBarRowLayout
 
+        property real preferredButtonHeight: height * Constants.loggingBar.buttonHeightRatio
+
         anchors.fill: parent
         anchors.leftMargin: Constants.loggingBar.loggingBarMargin
         anchors.rightMargin: Constants.loggingBar.loggingBarMargin * 2
-        property real preferredButtonHeight: height * Constants.loggingBar.buttonHeightRatio
 
         SwiftButton {
             id: csvLoggingButton
@@ -71,6 +72,62 @@ Rectangle {
             }
         }
 
+        RowLayout {
+            property int spacerMargin: 5
+            property color spacerColor: Constants.spacerColor
+
+            Layout.preferredHeight: Constants.loggingBar.buttonHeight
+
+            Label {
+                text: "Recording"
+                Layout.alignment: Qt.AlignVCenter
+                Layout.topMargin: 6
+                font.pointSize: Constants.mediumPointSize
+                font.family: Constants.fontFamily
+                font.capitalization: Font.AllUppercase
+                font.bold: true
+            }
+
+            Label {
+                id: recordingTime
+
+                Layout.minimumWidth: 100
+                Layout.alignment: Qt.AlignHCenter
+                horizontalAlignment: Text.AlignHCenter
+                font.pointSize: Constants.xxlPointSize
+                font.family: Constants.lightFontFamily
+            }
+
+            Rectangle {
+                Layout.fillHeight: true
+                Layout.topMargin: parent.spacerMargin
+                Layout.bottomMargin: parent.spacerMargin
+                Layout.alignment: Qt.AlignVCenter
+                width: 1
+                color: parent.spacerColor
+            }
+
+            Label {
+                id: recordingSize
+
+                Layout.minimumWidth: 100
+                Layout.alignment: Qt.AlignHCenter
+                horizontalAlignment: Text.AlignHCenter
+                font.pointSize: Constants.xxlPointSize
+                font.family: Constants.lightFontFamily
+            }
+
+            Rectangle {
+                Layout.fillHeight: true
+                Layout.topMargin: parent.spacerMargin
+                Layout.bottomMargin: parent.spacerMargin
+                Layout.alignment: Qt.AlignVCenter
+                width: 1
+                color: parent.spacerColor
+            }
+
+        }
+
         Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -92,10 +149,10 @@ Rectangle {
                 ComboBox {
                     id: sbpLoggingFormat
 
-                    enabled: !sbpLoggingButton.checked
-                    font: Constants.loggingBar.comboBoxFont
                     Layout.preferredWidth: Constants.loggingBar.sbpLoggingButtonWidth
                     Layout.preferredHeight: loggingBarRowLayout.preferredButtonHeight
+                    enabled: !sbpLoggingButton.checked
+                    font: Constants.loggingBar.comboBoxFont
                     model: sbp_logging_labels
                     ToolTip.visible: hovered
                     ToolTip.text: "SBP Log Format"
@@ -107,10 +164,11 @@ Rectangle {
 
                     Layout.fillWidth: true
                     Layout.preferredHeight: loggingBarRowLayout.preferredButtonHeight
+                    enabled: !sbpLoggingButton.checked
+                    font: Constants.loggingBar.comboBoxFont
                     model: previous_folders
                     editable: true
                     selectTextByMouse: true
-                    enabled: !sbpLoggingButton.checked
                     visible: sbpLoggingButton.checked
                 }
 
@@ -119,10 +177,11 @@ Rectangle {
 
                     Layout.fillWidth: true
                     Layout.preferredHeight: loggingBarRowLayout.preferredButtonHeight
+                    enabled: !sbpLoggingButton.checked
+                    font: Constants.loggingBar.comboBoxFont
                     model: previous_folders
                     editable: true
                     selectTextByMouse: true
-                    enabled: !sbpLoggingButton.checked
                     visible: !sbpLoggingButton.checked
                     onActivated: {
                         var text = folderPathBar.currentText;
@@ -155,25 +214,6 @@ Rectangle {
                     onClicked: {
                         fileDialog.visible = !fileDialog.visible;
                     }
-
-                    // Image {
-                    //     id: loggingBarFolder
-
-                    //     anchors.centerIn: parent
-                    //     width: Constants.loggingBar.buttonSvgHeight
-                    //     height: Constants.loggingBar.buttonSvgHeight
-                    //     smooth: true
-                    //     source: Constants.loggingBar.folderButtonPath
-                    //     antialiasing: true
-                    // }
-
-                    // ColorOverlay {
-                    //     anchors.fill: loggingBarFolder
-                    //     source: loggingBarFolder
-                    //     color: Constants.materialGrey
-                    //     antialiasing: true
-                    // }
-
                 }
 
             }
@@ -196,61 +236,23 @@ Rectangle {
             }
         }
 
-        Rectangle {
-            Layout.preferredWidth: Constants.loggingBar.recordingLabelWidth
-            Layout.preferredHeight: Constants.loggingBar.buttonHeight
-
-            Label {
-                anchors.centerIn: parent
-                text: "Recording:"
-                font.pointSize: Constants.largePointSize
-                font.family: Constants.genericTable.fontFamily
-            }
-
-        }
-
-        Rectangle {
-            Layout.preferredWidth: Constants.loggingBar.recordingTimeLabelWidth
-            Layout.preferredHeight: Constants.loggingBar.buttonHeight
-
-            Label {
-                id: recordingTime
-
-                anchors.centerIn: parent
-                font.pointSize: Constants.largePointSize
-                font.family: Constants.genericTable.fontFamily
-            }
-
-        }
-
-        Rectangle {
-            Layout.preferredWidth: Constants.loggingBar.recordingDividerLabelWidth
-            Layout.preferredHeight: Constants.loggingBar.buttonHeight
-
-            Label {
-                anchors.centerIn: parent
-                text: "|"
-                font.pointSize: Constants.largePointSize
-                font.family: Constants.genericTable.fontFamily
-            }
-
-        }
-
-        Rectangle {
-            Layout.preferredWidth: Constants.loggingBar.recordingSizeLabelWidth
-            Layout.preferredHeight: Constants.loggingBar.buttonHeight
-
-            Label {
-                id: recordingSize
-
-                anchors.centerIn: parent
-                font.pointSize: Constants.largePointSize
-                font.family: Constants.genericTable.fontFamily
-            }
-
-        }
-
         Timer {
+            property bool mockTime: false
+            property bool mockSize: false
+            property int mockRecordingTime: 0
+            property real mockRecordingSize: 0
+
+            function bytesToString(bytes, decimals = 2) {
+                if (bytes === 0)
+                    return '0 Bytes';
+
+                const k = 1000;
+                const dm = decimals < 0 ? 0 : decimals;
+                const sizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return (bytes / Math.pow(k, i)).toFixed(dm) + ' ' + sizes[i];
+            }
+
             interval: Utils.hzToMilliseconds(Constants.staticTimerIntervalRate)
             running: true
             repeat: true
@@ -263,9 +265,22 @@ Rectangle {
                 sbpLoggingButton.checked = loggingBarData.sbp_logging;
                 sbpLoggingFormat.currentIndex = sbp_logging_labels.indexOf(loggingBarData.sbp_logging_format);
                 csvLoggingButton.checked = loggingBarData.csv_logging;
-                recordingTime.text = loggingDurationFormat(loggingBarData.recording_duration_sec);
-                recordingSize.text = loggingBarData.recording_size;
                 recordingFilenameText.editText = loggingBarData.recording_filename;
+                if (mockTime) {
+                    mockRecordingTime += interval;
+                    recordingTime.text = loggingDurationFormat(mockRecordingTime / 1000);
+                } else {
+                    recordingTime.text = loggingDurationFormat(loggingBarData.recording_duration_sec);
+                }
+                if (mockSize) {
+                    mockRecordingSize += 15.15;
+                    recordingSize.text = bytesToString(mockRecordingSize);
+                } else {
+                    if (loggingBarData.recording_size.length > 0)
+                        recordingSize.text = loggingBarData.recording_size;
+                    else
+                        recordingSize.text = "0.00 MiB";
+                }
             }
         }
 

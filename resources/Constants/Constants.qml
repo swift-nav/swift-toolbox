@@ -45,6 +45,8 @@ QtObject {
     readonly property int staticTimerSlowIntervalRate: 2 // 2 Hz
     readonly property string monoSpaceFont: "Courier New"
     readonly property string fontFamily: "Roboto Condensed"
+    property FontLoader robotoCondensedLightFont
+    readonly property string lightFontFamily: robotoCondensedLightFont.name
     readonly property real xSmallPointSize: 6
     readonly property real smallPointSize: 7
     readonly property real mediumPointSize: 8
@@ -59,6 +61,11 @@ QtObject {
     readonly property color tabButtonUnselectedTextColor: "#767676"
     readonly property color materialGrey: "dimgrey"
     readonly property color swiftOrange: "#FF8300"
+    readonly property color spacerColor: "#C2C2C2"
+
+    robotoCondensedLightFont: FontLoader {
+        source: "qrc:///fonts/RobotoCondensed-Light.ttf"
+    }
 
     logoPopup: QtObject {
         readonly property int heightPadding: 120
@@ -292,7 +299,7 @@ QtObject {
 
     loggingBar: QtObject {
         readonly property int buttonHeight: 40
-        readonly property real buttonHeightRatio: 2/3
+        readonly property real buttonHeightRatio: 2 / 3
         readonly property int buttonSvgHeight: 15
         readonly property int urlBarHeight: 25
         readonly property int loggingBarMargin: 10
@@ -310,7 +317,7 @@ QtObject {
         readonly property int recordingSizeLabelWidth: 40
         readonly property font comboBoxFont: Qt.font({
             "family": fontFamily,
-            "pointSize": smallPointSize
+            "pointSize": mediumPointSize
         })
     }
 

@@ -101,8 +101,8 @@ QtObject {
             readonly property int dropdownHeight: 40
             readonly property string robotoFontTabLabel: "Roboto Font"
             readonly property string fontAwesomeIconsTabLabel: "Font Awesome Icons"
-            readonly property string robotoFontLicensePath: "qrc:///fonts/Roboto-LICENSE.txt"
-            readonly property string fontAwesomeIconsLicensePath: "qrc:///images/fontawesome/LICENSE.txt"
+            readonly property string robotoFontLicensePath: ":/fonts/Roboto-LICENSE.txt"
+            readonly property string fontAwesomeIconsLicensePath: ":/images/fontawesome/LICENSE.txt"
         }
 
         aboutMe: QtObject {

@@ -23,18 +23,6 @@ function listObject(object){
     }
 }
 
-// Read text from file and store it into the "text" property of the "ele" object.
-function readTextFile(path, elem){
-    var req = new XMLHttpRequest();
-    req.onreadystatechange = function () {
-        if(req.readyState === 4){
-            elem.text += req.responseText;
-        }
-    }
-    req.open("GET", path);
-    req.send();
-}
-
 // Dump all properties in a QML item (or any javascript object).
 function listProperty(item)
 {

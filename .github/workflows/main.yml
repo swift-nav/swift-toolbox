@@ -238,7 +238,7 @@ jobs:
                 libudev-dev
               sudo gem install --no-document fpm
           elif [ "$RUNNER_OS" == "macOS" ]; then
-              brew install capnp llvm
+              brew install capnp llvm create-dmg
           elif [ "$RUNNER_OS" == "Windows" ]; then
               choco install capnproto nsis
           fi
@@ -292,9 +292,13 @@ jobs:
               INSTALLER_ARCHIVE=$(find installers/Linux -maxdepth 1 -iname "*.deb")
           elif [ "$RUNNER_OS" == "Windows" ]; then
               INSTALLER_ARCHIVE=$(find installers/Windows -maxdepth 1 -iname "*.exe")
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+              mv installers/macOS/*.dmg .
+              INSTALLER_ARCHIVE=$(find . -maxdepth 1 -iname "*.dmg")
           fi
-          echo "INSTALLER_ARCHIVE=$INSTALLER_ARCHIVE" >>$GITHUB_ENV
-        if: matrix.os != 'macos-10.15' && github.event_name == 'push' && contains(github.ref, 'refs/tags')
+          echo $INSTALLER_ARCHIVE >installer-archive.filename
+          echo "INSTALLER_ARCHIVE=$(cat installer-archive.filename)" >>$GITHUB_ENV
+        if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
 
       - name: Pull Git LFS objects
         run: git lfs pull
@@ -330,7 +334,8 @@ jobs:
           name: ${{ runner.os }}-installer
           path: |
             ${{ env.INSTALLER_ARCHIVE }}
-        if: matrix.os != 'macos-10.15' && github.event_name == 'push' && contains(github.ref, 'refs/tags')
+            installer-archive.filename
+        if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ runner.os }}-artifacts-debug
@@ -436,27 +441,27 @@ jobs:
       - name: Pull Windows Artifacts
         uses: actions/download-artifact@v2
         with:
-          name: Windows-artifacts
+          name: Windows-installer
           path: |
             windows
       - name: Pull Linux Artifacts
         uses: actions/download-artifact@v2
         with:
-          name: Linux-artifacts
+          name: Linux-installer
           path: |
             linux
       - name: Pull macOS Artifacts
         uses: actions/download-artifact@v2
         with:
-          name: macOS-artifacts
+          name: macOS-installer
           path: |
             macos
       - name: Store Env Vars
         shell: bash
         run: |
-          echo "WINDOWS_ARCHIVE=$(cat windows/release-archive.filename)" >>$GITHUB_ENV
-          echo "LINUX_ARCHIVE=$(cat linux/release-archive.filename)" >>$GITHUB_ENV
-          echo "MACOS_ARCHIVE=$(cat macos/release-archive.filename)" >>$GITHUB_ENV
+          echo "WINDOWS_ARCHIVE=$(cat windows/installer-archive.filename)" >>$GITHUB_ENV
+          echo "LINUX_ARCHIVE=$(cat linux/installer-archive.filename)" >>$GITHUB_ENV
+          echo "MACOS_ARCHIVE=$(cat macos/installer-archive.filename)" >>$GITHUB_ENV
       - name: Release
         uses: softprops/action-gh-release@v1
         with:

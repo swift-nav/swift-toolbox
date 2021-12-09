@@ -162,20 +162,41 @@ ApplicationWindow {
         implicitWidth: 20
         color: Constants.swiftControlBackground
         radius: 3
+        clip: true
+
+        MouseArea {
+            anchors.fill: parent
+            hoverEnabled: true
+            onClicked: tabInfoBar.open()
+            onEntered: openArrowAnimation.start()
+            onExited: {
+                if (openArrowAnimation.running) {
+                    openArrowAnimation.stop();
+                    openArrow.y = openArrowAnimation.startingPropertyValue;
+                }
+            }
+        }
+
+        PositionLoopAnimation {
+            id: openArrowAnimation
+            target: openArrow
+            property: "y"
+            startingPropertyValue: 0
+            totalDuration: 700
+            reverse: true
+        }
 
         Text {
             id: openArrow
 
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 3
+            y: (parent.height - height) - 3
             text: "▼"
             color: Constants.swiftLightGrey
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            onClicked: tabInfoBar.open()
+            onYChanged: {
+                if (!openArrowAnimation.running)
+                    openArrowAnimation.startingPropertyValue = y
+            }
         }
 
     }

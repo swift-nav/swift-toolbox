@@ -192,41 +192,18 @@ Rectangle {
                 onEntered: closeArrowAnimation.start()
                 onExited: {
                     if (closeArrowAnimation.running) {
-                        // closeArrowAnimation.stop();
-                        // closeArrowAnimation.totalDuration = 200;
-                        // closeArrowAnimation.start();
                         closeArrowAnimation.stop();
-                        closeArrow.y = closeArrowAnimation.startingY;
+                        closeArrow.y = closeArrowAnimation.startingPropertyValue;
                     }
                 }
             }
 
-            SequentialAnimation {
+            PositionLoopAnimation {
                 id: closeArrowAnimation
-                property Item target: closeArrow
-                property string property: "y"
-                property real startingY: 0
-                property real totalDuration: 700
-                NumberAnimation {
-                    target: closeArrowAnimation.target
-                    property: closeArrowAnimation.property
-                    duration: closeArrowAnimation.totalDuration / 2
-                    easing.type: Easing.InQuad
-                    to: 0
-                }
-                PropertyAction {
-                    target: closeArrowAnimation.target
-                    property: closeArrowAnimation.property
-                    value: closeRect.height
-                }
-                NumberAnimation {
-                    target: closeArrowAnimation.target
-                    property: closeArrowAnimation.property
-                    duration: closeArrowAnimation.totalDuration / 2
-                    onDurationChanged: console.log("last anim duration changed: " + duration)
-                    easing.type: Easing.OutQuad
-                    to: closeArrowAnimation.startingY
-                }
+                target: closeArrow
+                property: "y"
+                startingPropertyValue: 0
+                totalDuration: 700
             }
 
             Text {
@@ -237,7 +214,7 @@ Rectangle {
                 color: Constants.swiftLightGrey
                 onYChanged: {
                     if (!closeArrowAnimation.running)
-                        closeArrowAnimation.startingY = y
+                        closeArrowAnimation.startingPropertyValue = y
                 }
             }
 

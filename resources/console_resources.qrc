@@ -117,5 +117,6 @@
     <file alias="SwiftNav/ComboBox.qml">styles/SwiftNav/ComboBox.qml</file>
     <file>MainTab.qml</file>
     <file>TabInfoBar.qml</file>
+    <file>PositionLoopAnimation.qml</file>
 </qresource>
 </RCC>

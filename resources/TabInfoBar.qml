@@ -175,13 +175,11 @@ Rectangle {
 
         }
 
-        Rectangle {
+        Item {
             id: closeRect
             Layout.fillHeight: true
             Layout.rightMargin: 5
             implicitWidth: 20
-            color: Constants.swiftControlBackground
-            radius: 3
             clip: true
 
             MouseArea {

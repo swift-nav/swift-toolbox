@@ -13,9 +13,40 @@ Rectangle {
     property int rhsItemSpacing: 15
 
     signal aboutClicked()
+    signal entered()
+    signal exited()
+
+    function open() {
+        state = "opened";
+    }
+
+    function close() {
+        state = "closed";
+    }
 
     implicitHeight: rowLayout.implicitHeight
     implicitWidth: rowLayout.implicitWidth
+    state: "opened"
+    // When the tab name changes, make sure this item is shown.
+    onTabNameChanged: {
+        open();
+    }
+
+    // This captures any clicks outside of the buttons, and toggles
+    // the state from opened to closed or vice versa.
+    MouseArea {
+        anchors.fill: parent
+        z: -1
+        onClicked: parent.state = parent.state == "opened" ? "closed" : "opened"
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        hoverEnabled: true
+        acceptedButtons: Qt.NoButton
+        onEntered: parent.entered();
+        onExited: parent.exited();
+    }
 
     // Top grey line separating the bar from the window title area
     Rectangle {
@@ -140,6 +171,75 @@ Rectangle {
                 icon.color: Constants.tabInfoBar.infoButtonIconColor
                 padding: rhsItemSpacing / 3
                 onClicked: tabInfoBar.aboutClicked()
+            }
+
+        }
+
+        Rectangle {
+            id: closeRect
+            Layout.fillHeight: true
+            Layout.rightMargin: 5
+            // implicitHeight: tabInfoBarOpenText.implicitHeight + 9
+            implicitWidth: 30
+            color: Constants.swiftControlBackground
+            radius: 3
+            clip: true
+
+            MouseArea {
+                id: closeMouseArea
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: Qt.NoButton
+                onEntered: closeArrowAnimation.start()
+                onExited: {
+                    if (closeArrowAnimation.running) {
+                        // closeArrowAnimation.stop();
+                        // closeArrowAnimation.totalDuration = 200;
+                        // closeArrowAnimation.start();
+                        closeArrowAnimation.stop();
+                        closeArrow.y = closeArrowAnimation.startingY;
+                    }
+                }
+            }
+
+            SequentialAnimation {
+                id: closeArrowAnimation
+                property Item target: closeArrow
+                property string property: "y"
+                property real startingY: 0
+                property real totalDuration: 700
+                NumberAnimation {
+                    target: closeArrowAnimation.target
+                    property: closeArrowAnimation.property
+                    duration: closeArrowAnimation.totalDuration / 2
+                    easing.type: Easing.InQuad
+                    to: 0
+                }
+                PropertyAction {
+                    target: closeArrowAnimation.target
+                    property: closeArrowAnimation.property
+                    value: closeRect.height
+                }
+                NumberAnimation {
+                    target: closeArrowAnimation.target
+                    property: closeArrowAnimation.property
+                    duration: closeArrowAnimation.totalDuration / 2
+                    onDurationChanged: console.log("last anim duration changed: " + duration)
+                    easing.type: Easing.OutQuad
+                    to: closeArrowAnimation.startingY
+                }
+            }
+
+            Text {
+                id: closeArrow
+                anchors.horizontalCenter: parent.horizontalCenter
+                y: (parent.height - height) / 2
+                text: "▲"
+                color: Constants.swiftLightGrey
+                onYChanged: {
+                    if (!closeArrowAnimation.running)
+                        closeArrowAnimation.startingY = y
+                }
             }
 
         }

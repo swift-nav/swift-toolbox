@@ -56,14 +56,6 @@ ApplicationWindow {
         property int closeDuration: 350
         property bool autoClose: Constants.tabInfoBar.autoClose
 
-        function open() {
-            state = "opened";
-        }
-
-        function close() {
-            state = "closed";
-        }
-
         function cancelAutoClose() {
             tabInfoBarCloseTimer.stop();
         }
@@ -82,13 +74,17 @@ ApplicationWindow {
         z: 2
         tabName: sideNavBar.currentTabName
         subTabNames: mainTabs.subTabNames
-        state: "opened"
         onAboutClicked: logoPopup.open()
-        // When the tab name changes, make sure this item is shown.
         // If there is no subtabs, then close it after some time.
         onTabNameChanged: {
-            open();
-            closeAfterDelaySubtabless();
+            if (autoClose) {
+                closeAfterDelaySubtabless();
+            }
+        }
+        onEntered: cancelAutoClose()
+        onExited: {
+            if (autoClose)
+                closeAfterDelaySubtabless();
         }
         states: [
             // The opened state sets the y position so the item is
@@ -151,22 +147,6 @@ ApplicationWindow {
 
             interval: 3000
             onTriggered: parent.close()
-        }
-
-        // This captures any clicks outside of the buttons, and toggles
-        // the state from opened to closed or vice versa.
-        MouseArea {
-            anchors.fill: parent
-            z: -1
-            onClicked: parent.state = parent.state == "opened" ? "closed" : "opened"
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            hoverEnabled: true
-            acceptedButtons: Qt.NoButton
-            onEntered: parent.cancelAutoClose()
-            onExited: parent.closeAfterDelaySubtabless()
         }
 
     }

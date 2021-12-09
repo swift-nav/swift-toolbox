@@ -179,8 +179,7 @@ Rectangle {
             id: closeRect
             Layout.fillHeight: true
             Layout.rightMargin: 5
-            // implicitHeight: tabInfoBarOpenText.implicitHeight + 9
-            implicitWidth: 30
+            implicitWidth: 20
             color: Constants.swiftControlBackground
             radius: 3
             clip: true

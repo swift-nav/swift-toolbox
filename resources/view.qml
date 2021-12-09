@@ -32,6 +32,7 @@ ApplicationWindow {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
+        anchors.rightMargin: parent.width - openRect.x + openRect.anchors.rightMargin
         z: 1
         height: 30
         visible: tabInfoBar.state == "closed"
@@ -152,17 +153,18 @@ ApplicationWindow {
     }
 
     Rectangle {
+        id: openRect
         anchors.right: parent.right
         anchors.rightMargin: 5
         y: -3
         z: 1
-        implicitHeight: tabInfoBarOpenText.implicitHeight + 9
-        implicitWidth: 30
+        implicitHeight: openArrow.implicitHeight + 9
+        implicitWidth: 20
         color: Constants.swiftControlBackground
         radius: 3
 
         Text {
-            id: tabInfoBarOpenText
+            id: openArrow
 
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom

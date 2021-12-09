@@ -80,6 +80,7 @@ Rectangle {
 
             Label {
                 text: "Recording"
+                visible: false
                 Layout.alignment: Qt.AlignVCenter
                 Layout.topMargin: 6
                 font.pointSize: Constants.mediumPointSize

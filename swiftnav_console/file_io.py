@@ -56,19 +56,5 @@ class FileIO(QObject):
             return ""
         return fileContent
 
-    @Slot(bool)
-    def write(self, data):
-        if not self._source:
-            return False
-
-        file = QFile(self._source)
-        if not file.open(QFile.WriteOnly | QFile.Truncate):
-            return False
-
-        out = QTextStream(file)
-        out << data
-        file.close()
-        return True
-
     source = Property(str, get_source, set_source, notify=source_changed)  # type: ignore
     text = Property(str, get_text, notify=text_changed)  # type: ignore

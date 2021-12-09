@@ -44,8 +44,8 @@ Rectangle {
         anchors.fill: parent
         hoverEnabled: true
         acceptedButtons: Qt.NoButton
-        onEntered: parent.entered();
-        onExited: parent.exited();
+        onEntered: parent.entered()
+        onExited: parent.exited()
     }
 
     // Top grey line separating the bar from the window title area
@@ -177,6 +177,7 @@ Rectangle {
 
         Item {
             id: closeRect
+
             Layout.fillHeight: true
             Layout.rightMargin: 5
             implicitWidth: 20
@@ -184,6 +185,7 @@ Rectangle {
 
             MouseArea {
                 id: closeMouseArea
+
                 anchors.fill: parent
                 hoverEnabled: true
                 acceptedButtons: Qt.NoButton
@@ -198,6 +200,7 @@ Rectangle {
 
             PositionLoopAnimation {
                 id: closeArrowAnimation
+
                 target: closeArrow
                 property: "y"
                 startingPropertyValue: 0
@@ -206,13 +209,15 @@ Rectangle {
 
             Text {
                 id: closeArrow
+
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: (parent.height - height) / 2
                 text: "▲"
                 color: Constants.swiftLightGrey
                 onYChanged: {
                     if (!closeArrowAnimation.running)
-                        closeArrowAnimation.startingPropertyValue = y
+                        closeArrowAnimation.startingPropertyValue = y;
+
                 }
             }
 

@@ -78,14 +78,15 @@ ApplicationWindow {
         onAboutClicked: logoPopup.open()
         // If there is no subtabs, then close it after some time.
         onTabNameChanged: {
-            if (autoClose) {
+            if (autoClose)
                 closeAfterDelaySubtabless();
-            }
+
         }
         onEntered: cancelAutoClose()
         onExited: {
             if (autoClose)
                 closeAfterDelaySubtabless();
+
         }
         states: [
             // The opened state sets the y position so the item is
@@ -154,6 +155,7 @@ ApplicationWindow {
 
     Rectangle {
         id: openRect
+
         anchors.right: parent.right
         anchors.rightMargin: 5
         y: -3
@@ -179,6 +181,7 @@ ApplicationWindow {
 
         PositionLoopAnimation {
             id: openArrowAnimation
+
             target: openArrow
             property: "y"
             startingPropertyValue: 0
@@ -195,7 +198,8 @@ ApplicationWindow {
             color: Constants.swiftLightGrey
             onYChanged: {
                 if (!openArrowAnimation.running)
-                    openArrowAnimation.startingPropertyValue = y
+                    openArrowAnimation.startingPropertyValue = y;
+
             }
         }
 

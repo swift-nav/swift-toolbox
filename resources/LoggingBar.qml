@@ -22,8 +22,6 @@ Rectangle {
         return hours + ":" + minutes + ":" + seconds + " s";
     }
 
-    // border.width: Constants.statusBar.borderWidth
-    // border.color: Constants.statusBar.borderColor
     color: Constants.swiftControlBackground
 
     LoggingBarData {

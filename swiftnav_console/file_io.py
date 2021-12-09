@@ -1,6 +1,7 @@
 from PySide2.QtCore import Property, Slot, Signal, QObject, QFile, QIODevice, QTextStream
 import swiftnav_console.console_resources  # type: ignore # pylint: disable=unused-import
 
+
 class FileIO(QObject):
     source_changed = Signal(str, arguments="source")
     text_changed = Signal()

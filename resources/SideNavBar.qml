@@ -104,12 +104,19 @@ Item {
 
         }
 
+        Rectangle {
+            Layout.alignment: Qt.AlignBottom
+            Layout.fillWidth: true
+            height: 1
+            color: Qt.darker("white", connectButton.enabled ? 1 : 1.4)
+        }
+
         SideNavButton {
             id: connectButton
 
             Layout.alignment: Qt.AlignBottom
             Layout.fillWidth: true
-            height: Constants.sideNavBar.tabBarHeight
+            implicitHeight: Constants.sideNavBar.tabBarHeight
             text: "Connection"
             icon.source: Constants.icons.lightningBoltPath
             ToolTip.text: "Connection Dialog"
@@ -131,7 +138,7 @@ Item {
 
             Layout.alignment: Qt.AlignBottom
             Layout.fillWidth: true
-            height: Constants.sideNavBar.tabBarHeight
+            implicitHeight: Constants.sideNavBar.tabBarHeight
             enabled: top.enabled
             color: Constants.sideNavBar.backgroundColor
             state: "bad"

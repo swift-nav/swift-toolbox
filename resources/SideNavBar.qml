@@ -10,6 +10,8 @@ Item {
 
     property alias currentIndex: navButtons.currentIndex
     property string currentTabName: top.currentIndex < 0 ? "" : tabModel[top.currentIndex].tooltip
+    property bool solidConnection: false
+    property real dataRate: 0
     property bool enabled: true
     property var tabModel: [{
         "name": "Tracking",
@@ -134,14 +136,12 @@ Item {
         Rectangle {
             id: connectionStatusIndicator
 
-            property real speed: 0
-
             Layout.alignment: Qt.AlignBottom
             Layout.fillWidth: true
             implicitHeight: Constants.sideNavBar.tabBarHeight
             enabled: top.enabled
             color: Constants.sideNavBar.backgroundColor
-            state: "bad"
+            state: (solidConnection && dataRate > 0) ? "good" : solidConnection ? "ok" : "bad"
             states: [
                 State {
                     name: "good"
@@ -180,7 +180,7 @@ Item {
                     anchors.horizontalCenter: parent.horizontalCenter
                     bottomPadding: 0
                     bottomInset: 0
-                    text: connectionStatusIndicator.speed + " KB/s"
+                    text: dataRate.toFixed(2) + " KB/s"
                     font.pointSize: Constants.smallPointSize
                     font.letterSpacing: -1
                     color: Qt.darker("white", enabled ? 1 : 1.4)

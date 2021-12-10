@@ -10,10 +10,10 @@ from .constants import Keys
 STATUS_BAR: Dict[str, Any] = {
     Keys.POS: str,
     Keys.RTK: str,
-    Keys.SATS: str,
-    Keys.CORR_AGE: str,
+    Keys.SATS: int,
+    Keys.CORR_AGE: float,
     Keys.INS: str,
-    Keys.DATA_RATE: str,
+    Keys.DATA_RATE: float,
     Keys.SOLID_CONNECTION: bool,
     Keys.TITLE: str,
     Keys.ANTENNA_STATUS: str,
@@ -24,10 +24,10 @@ class StatusBarData(QObject):  # pylint: disable=too-many-instance-attributes
 
     _pos: str = ""
     _rtk: str = ""
-    _sats: str = ""
-    _corr_age: str = ""
+    _sats: int = 0
+    _corr_age: float = 0.0
     _ins: str = ""
-    _data_rate: str = ""
+    _data_rate: float = 0.0
     _solid_connection: bool = False
     _title: str = ""
     _antenna_status: str = ""
@@ -48,21 +48,21 @@ class StatusBarData(QObject):  # pylint: disable=too-many-instance-attributes
 
     rtk = Property(str, get_rtk, set_rtk)
 
-    def get_sats(self) -> str:
+    def get_sats(self) -> int:
         return self._sats
 
-    def set_sats(self, sats: str) -> None:
+    def set_sats(self, sats: int) -> None:
         self._sats = sats
 
-    sats = Property(str, get_sats, set_sats)
+    sats = Property(int, get_sats, set_sats)
 
-    def get_corr_age(self) -> str:
+    def get_corr_age(self) -> float:
         return self._corr_age
 
-    def set_corr_age(self, corr_age: str) -> None:
+    def set_corr_age(self, corr_age: float) -> None:
         self._corr_age = corr_age
 
-    corr_age = Property(str, get_corr_age, set_corr_age)
+    corr_age = Property(float, get_corr_age, set_corr_age)
 
     def get_ins(self) -> str:
         return self._ins
@@ -72,13 +72,13 @@ class StatusBarData(QObject):  # pylint: disable=too-many-instance-attributes
 
     ins = Property(str, get_ins, set_ins)
 
-    def get_data_rate(self) -> str:
+    def get_data_rate(self) -> float:
         return self._data_rate
 
-    def set_data_rate(self, data_rate: str) -> None:
+    def set_data_rate(self, data_rate: float) -> None:
         self._data_rate = data_rate
 
-    data_rate = Property(str, get_data_rate, set_data_rate)
+    data_rate = Property(float, get_data_rate, set_data_rate)
 
     def get_solid_connection(self) -> bool:
         return self._solid_connection

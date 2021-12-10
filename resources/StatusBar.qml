@@ -6,6 +6,8 @@ import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
 Rectangle {
+    readonly property string emptyString: "--"
+
     anchors.fill: parent
     border.width: Constants.statusBar.borderWidth
     border.color: Constants.statusBar.borderColor
@@ -144,38 +146,6 @@ Rectangle {
             Layout.fillWidth: true
         }
 
-        RowLayout {
-            Layout.alignment: Qt.AlignRight
-
-            Label {
-                id: statusBarDataRate
-
-                Layout.alignment: Qt.AlignRight
-                font.bold: true
-            }
-
-            Image {
-                id: statusBarGoodConnectionImage
-
-                visible: false
-                width: Constants.statusBar.arrowsSideLength
-                height: Constants.statusBar.arrowsSideLength
-                Layout.alignment: Qt.AlignRight
-                source: Constants.statusBar.arrowsBluePath
-            }
-
-            Image {
-                id: statusBarBadConnectionImage
-
-                visible: true
-                width: Constants.statusBar.arrowsSideLength
-                height: Constants.statusBar.arrowsSideLength
-                Layout.alignment: Qt.AlignRight
-                source: Constants.statusBar.arrowsGreyPath
-            }
-
-        }
-
     }
 
     Timer {
@@ -187,19 +157,19 @@ Rectangle {
             if (statusBarData.title) {
                 statusBarPos.text = statusBarData.pos;
                 statusBarRTK.text = statusBarData.rtk;
-                statusBarSats.text = statusBarData.sats;
-                statusBarCorrAge.text = statusBarData.corr_age;
+                if (!statusBarData.solid_connection)
+                    statusBarSats.text = emptyString;
+                else
+                    statusBarSats.text = statusBarData.sats;
+                if (statusBarData.corr_age == 0)
+                    statusBarCorrAge.text = emptyString;
+                else
+                    statusBarCorrAge.text = Utils.padFloat(statusBarData.corr_age, 1, 1) + " s";
                 statusBarINS.text = statusBarData.ins;
-                statusBarDataRate.text = statusBarData.data_rate;
+                parent.dataRate = statusBarData.data_rate;
+                parent.solidConnection = statusBarData.solid_connection;
                 statusBarAntenna.text = statusBarData.antenna_status;
                 parent.title = (parent.sbpRecording ? "[L] " : "     ") + statusBarData.title;
-                if (statusBarData.solid_connection) {
-                    statusBarGoodConnectionImage.visible = true;
-                    statusBarBadConnectionImage.visible = false;
-                } else {
-                    statusBarGoodConnectionImage.visible = false;
-                    statusBarBadConnectionImage.visible = true;
-                }
             }
         }
     }

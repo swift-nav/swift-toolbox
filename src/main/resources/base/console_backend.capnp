@@ -166,10 +166,10 @@ struct StatusBarStatus {
     antennaStatus @0 :Text;
     pos @1 : Text;
     rtk @2 : Text;
-    sats @3: Text;
-    corrAge @4 : Text;
+    sats @3: UInt8;
+    corrAge @4 : Float64;
     ins @5: Text;
-    dataRate @6: Text;
+    dataRate @6: Float64;
     solidConnection @7: Bool;
     title @8: Text;
 }

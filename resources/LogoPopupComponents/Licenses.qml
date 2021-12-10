@@ -2,6 +2,7 @@ import "../Constants"
 import QtQuick 2.5
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import SwiftConsole 1.0
 
 ColumnLayout {
     ComboBox {
@@ -25,11 +26,23 @@ ColumnLayout {
             TextArea {
                 id: robotoFontTextArea
 
+                text: robotoFileIO.text
                 readOnly: true
                 activeFocusOnPress: false
                 horizontalAlignment: TextEdit.AlignJustify
                 selectByKeyboard: true
                 selectByMouse: true
+
+                FileIO {
+                    id: robotoFileIO
+
+                    source: Constants.logoPopup.licenses.robotoFontLicensePath
+                    onError: (msg) => {
+                        console.log("Roboto Font License file read error: " + msg);
+                        robotoFontTextArea.text = msg;
+                    }
+                }
+
             }
 
         }
@@ -40,25 +53,27 @@ ColumnLayout {
             TextArea {
                 id: fontAwesomeTextArea
 
+                text: fontAwesomeFileIO.text
                 readOnly: true
                 activeFocusOnPress: false
                 horizontalAlignment: TextEdit.AlignJustify
                 selectByKeyboard: true
                 selectByMouse: true
+
+                FileIO {
+                    id: fontAwesomeFileIO
+
+                    source: Constants.logoPopup.licenses.fontAwesomeIconsLicensePath
+                    onError: (msg) => {
+                        console.log("Font Awesome License file read error: " + msg);
+                        fontAwesomeTextArea.text = msg;
+                    }
+                }
+
             }
 
         }
 
-    }
-
-    Timer {
-        interval: 1
-        running: true
-        repeat: false
-        onTriggered: {
-            Utils.readTextFile(Constants.logoPopup.licenses.robotoFontLicensePath, robotoFontTextArea);
-            Utils.readTextFile(Constants.logoPopup.licenses.fontAwesomeIconsLicensePath, fontAwesomeTextArea);
-        }
     }
 
 }

@@ -32,6 +32,7 @@ ApplicationWindow {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
+        anchors.rightMargin: parent.width - openRect.x + openRect.anchors.rightMargin
         z: 1
         height: 30
         visible: tabInfoBar.state == "closed"
@@ -54,14 +55,7 @@ ApplicationWindow {
 
         property int openDuration: 1000
         property int closeDuration: 350
-
-        function open() {
-            state = "opened";
-        }
-
-        function close() {
-            state = "closed";
-        }
+        property bool autoClose: Constants.tabInfoBar.autoClose
 
         function cancelAutoClose() {
             tabInfoBarCloseTimer.stop();
@@ -81,13 +75,18 @@ ApplicationWindow {
         z: 2
         tabName: sideNavBar.currentTabName
         subTabNames: mainTabs.subTabNames
-        state: "opened"
         onAboutClicked: logoPopup.open()
-        // When the tab name changes, make sure this item is shown.
         // If there is no subtabs, then close it after some time.
         onTabNameChanged: {
-            open();
-            closeAfterDelaySubtabless();
+            if (autoClose)
+                closeAfterDelaySubtabless();
+
+        }
+        onEntered: cancelAutoClose()
+        onExited: {
+            if (autoClose)
+                closeAfterDelaySubtabless();
+
         }
         states: [
             // The opened state sets the y position so the item is
@@ -152,47 +151,56 @@ ApplicationWindow {
             onTriggered: parent.close()
         }
 
-        // This captures any clicks outside of the buttons, and toggles
-        // the state from opened to closed or vice versa.
-        MouseArea {
-            anchors.fill: parent
-            z: -1
-            onClicked: parent.state = parent.state == "opened" ? "closed" : "opened"
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            hoverEnabled: true
-            acceptedButtons: Qt.NoButton
-            onEntered: parent.cancelAutoClose()
-            onExited: parent.closeAfterDelaySubtabless()
-        }
-
     }
 
     Rectangle {
+        id: openRect
+
         anchors.right: parent.right
         anchors.rightMargin: 5
         y: -3
         z: 1
-        implicitHeight: tabInfoBarOpenText.implicitHeight + 9
-        implicitWidth: 30
+        implicitHeight: openArrow.implicitHeight + 9
+        implicitWidth: 20
         color: Constants.swiftControlBackground
         radius: 3
-
-        Text {
-            id: tabInfoBarOpenText
-
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 3
-            text: "▼"
-            color: Constants.swiftLightGrey
-        }
+        clip: true
 
         MouseArea {
             anchors.fill: parent
+            hoverEnabled: true
             onClicked: tabInfoBar.open()
+            onEntered: openArrowAnimation.start()
+            onExited: {
+                if (openArrowAnimation.running) {
+                    openArrowAnimation.stop();
+                    openArrow.y = openArrowAnimation.startingPropertyValue;
+                }
+            }
+        }
+
+        PositionLoopAnimation {
+            id: openArrowAnimation
+
+            target: openArrow
+            property: "y"
+            startingPropertyValue: 0
+            totalDuration: 700
+            reverse: true
+        }
+
+        Text {
+            id: openArrow
+
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: (parent.height - height) - 3
+            text: "▼"
+            color: Constants.swiftLightGrey
+            onYChanged: {
+                if (!openArrowAnimation.running)
+                    openArrowAnimation.startingPropertyValue = y;
+
+            }
         }
 
     }

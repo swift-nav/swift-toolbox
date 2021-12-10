@@ -5,6 +5,11 @@
     <file>fonts/Roboto-Regular.ttf</file>
     <file>fonts/Roboto-Bold.ttf</file>
     <file>fonts/RobotoCondensed-Regular.ttf</file>
+    <file>fonts/RobotoCondensed-Italic.ttf</file>
+    <file>fonts/RobotoCondensed-Bold.ttf</file>
+    <file>fonts/RobotoCondensed-BoldItalic.ttf</file>
+    <file>fonts/RobotoCondensed-Light.ttf</file>
+    <file>fonts/RobotoCondensed-LightItalic.ttf</file>
     <file>view.qml</file>
     <file>MainDialogView.qml</file>
     <file>MainTabs.qml</file>
@@ -97,17 +102,21 @@
     <file>images/fontawesome/file-export.svg</file>
     <file>images/fontawesome/file-import.svg</file>
     <file>images/fontawesome/exclamation-triangle.svg</file>
+    <file>images/fontawesome/folder-regular.svg</file>
     <file>images/icon.png</file>
     <file>images/icon.ico</file>
     <file>TableComponents/SortableColumnHeading.qml</file>
     <file>TableComponents/TableCellDelegate.qml</file>
     <file>BaseComponents/SmallCheckBox.qml</file>
     <file>BaseComponents/SwiftGroupBox.qml</file>
+    <file>BaseComponents/SwiftButton.qml</file>
     <file>ChartLegend.qml</file>
     <file alias="SwiftNav/TabBar.qml">styles/SwiftNav/TabBar.qml</file>
     <file alias="SwiftNav/TabButton.qml">styles/SwiftNav/TabButton.qml</file>
     <file alias="SwiftNav/RoundButton.qml">styles/SwiftNav/RoundButton.qml</file>
+    <file alias="SwiftNav/ComboBox.qml">styles/SwiftNav/ComboBox.qml</file>
     <file>MainTab.qml</file>
     <file>TabInfoBar.qml</file>
+    <file>PositionLoopAnimation.qml</file>
 </qresource>
 </RCC>

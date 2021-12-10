@@ -17,7 +17,7 @@ MainTab {
         height: parent.height
 
         Rectangle {
-            SplitView.minimumWidth: Constants.baselineTable.width
+            SplitView.minimumWidth: Constants.baselineTable.minimumWidth
             SplitView.fillHeight: true
 
             BaselineTabComponents.BaselineTable {
@@ -26,6 +26,7 @@ MainTab {
         }
 
         BaselineTabComponents.BaselinePlot {
+            SplitView.minimumWidth: Constants.baselinePlot.minimumWidth
             SplitView.fillWidth: true
             SplitView.fillHeight: true
         }

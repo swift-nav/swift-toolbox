@@ -103,6 +103,7 @@
     <file>images/fontawesome/file-import.svg</file>
     <file>images/fontawesome/exclamation-triangle.svg</file>
     <file>images/fontawesome/folder-regular.svg</file>
+    <file>images/iconic/x.svg</file>
     <file>images/icon.png</file>
     <file>images/icon.ico</file>
     <file>TableComponents/SortableColumnHeading.qml</file>

@@ -178,6 +178,32 @@ pub fn refresh_loggingbar(client_sender: &BoxedClientSender, shared_state: &Shar
     client_sender.send_data(serialize_capnproto_builder(builder));
 }
 
+pub fn refresh_loggingbar_recording(
+    client_sender: &BoxedClientSender,
+    size: u64,
+    duration: u64,
+    filename: Option<String>,
+) {
+    let mut builder = Builder::new_default();
+    let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
+
+    let mut logging_bar_status = msg.init_logging_bar_recording_status();
+    logging_bar_status.set_recording_duration_sec(duration);
+    logging_bar_status.set_recording_size(size);
+    if let Some(filename_) = filename {
+        logging_bar_status
+            .reborrow()
+            .get_recording_filename()
+            .set_filename(&filename_);
+    } else {
+        logging_bar_status
+            .reborrow()
+            .get_recording_filename()
+            .set_none(());
+    }
+    client_sender.send_data(serialize_capnproto_builder(builder));
+}
+
 pub fn signal_key_label(
     key: (SignalCodes, i16),
     extra: Option<&HashMap<i16, i16>>,

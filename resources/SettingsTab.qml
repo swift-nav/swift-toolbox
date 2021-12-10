@@ -153,7 +153,7 @@ MainTab {
         ColumnLayout {
             SplitView.fillWidth: true
             SplitView.fillHeight: true
-            SplitView.minimumWidth: parent.width * 0.55 //Constants.settingsTable.minimumWidth
+            SplitView.minimumWidth: parent.width * 0.55
             spacing: 3
 
             RowLayout {

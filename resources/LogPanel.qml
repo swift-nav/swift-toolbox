@@ -1,9 +1,10 @@
-import "./Constants"
-import "./TableComponents"
+import "BaseComponents"
+import "Constants"
 import Qt.labs.qmlmodels 1.0
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import SwiftConsole 1.0
+import "TableComponents"
 
 Item {
     property var logEntries: []
@@ -30,13 +31,43 @@ Item {
             anchors.rightMargin: Constants.logPanel.pauseButtonRightMargin
             z: Constants.logPanel.zAboveTable
 
-            RoundButton {
-                id: baselinePauseButton
+            SwiftButton {
+                width: Constants.logPanel.pauseButtonWidth
+                height: Constants.logPanel.pauseButtonWidth
+                padding: Constants.logPanel.pauseButtonPadding
+                icon.width: Constants.logPanel.pauseButtonWidth / 3
+                icon.height: Constants.logPanel.pauseButtonWidth / 3
+                icon.source: Constants.icons.xPath
+                icon.color: Constants.materialGrey
+                anchors.right: parent.right
+                anchors.top: parent.top
+                ToolTip.visible: hovered
+                ToolTip.text: Constants.logPanel.clearButtonTooltip
+                onClicked: {
+                    tableView.model.clear();
+                    var new_row = {
+                    };
+                    new_row[Constants.logPanel.timestampHeader] = "";
+                    new_row[Constants.logPanel.levelHeader] = "";
+                    new_row[Constants.logPanel.msgHeader] = "";
+                    logEntries = [new_row];
+                    tableView.model.setRow(0, new_row);
+                    tableView.forceLayout();
+                }
+            }
 
+        }
+
+        Item {
+            anchors.fill: parent
+            anchors.topMargin: Constants.genericTable.cellHeight * 2
+            anchors.rightMargin: Constants.logPanel.pauseButtonRightMargin
+            z: Constants.logPanel.zAboveTable
+
+            SwiftButton {
                 visible: !consolePaused
                 width: Constants.logPanel.pauseButtonWidth
                 height: Constants.logPanel.pauseButtonWidth
-                radius: Constants.logPanel.pauseButtonWidth / 3
                 padding: Constants.logPanel.pauseButtonPadding
                 icon.width: Constants.logPanel.pauseButtonWidth / 3
                 icon.height: Constants.logPanel.pauseButtonWidth / 3
@@ -51,13 +82,10 @@ Item {
                 }
             }
 
-            RoundButton {
-                id: baselinePlayButton
-
+            SwiftButton {
                 visible: consolePaused
                 width: Constants.logPanel.pauseButtonWidth
                 height: Constants.logPanel.pauseButtonWidth
-                radius: Constants.logPanel.pauseButtonWidth / 3
                 padding: Constants.logPanel.pauseButtonPadding
                 icon.width: Constants.logPanel.pauseButtonWidth / 3
                 icon.height: Constants.logPanel.pauseButtonWidth / 3

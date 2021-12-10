@@ -408,6 +408,7 @@ QtObject {
     }
 
     baselinePlot: QtObject {
+        readonly property int minimumWidth: 410
         readonly property int buttonSvgHeight: 15
         readonly property int navBarMargin: 10
         readonly property int navBarSpacing: 0
@@ -422,7 +423,7 @@ QtObject {
     }
 
     baselineTable: QtObject {
-        readonly property int width: 240
+        readonly property int minimumWidth: 240
         readonly property int defaultColumnWidth: 100
         readonly property color tableBorderColor: "#000000"
         readonly property int tableBorderWidth: 1
@@ -437,6 +438,7 @@ QtObject {
     }
 
     solutionPosition: QtObject {
+        readonly property int minimumWidth: 410
         readonly property int buttonSvgHeight: 15
         readonly property int navBarMargin: 10
         readonly property int navBarSpacing: 0
@@ -461,6 +463,7 @@ QtObject {
         readonly property int pauseButtonPadding: 0
         readonly property string pauseButtonTooltip: "Pause Log Panel"
         readonly property string playButtonTooltip: "Resume Log Panel"
+        readonly property string clearButtonTooltip: "Clear Log Panel"
         readonly property int logLevelMenuHeight: 100
         readonly property int dropdownButtonPadding: 0
         readonly property int dropdownButtonWidth: 20
@@ -483,7 +486,7 @@ QtObject {
     }
 
     solutionTable: QtObject {
-        readonly property int width: 240
+        readonly property int minimumWidth: 240
         readonly property int defaultColumnWidth: 100
         readonly property color tableBorderColor: "#000000"
         readonly property int tableBorderWidth: 1
@@ -630,6 +633,7 @@ QtObject {
         readonly property string swiftLogoPath: "qrc:/images/icon.png"
         readonly property string swiftLogoWidePath: "qrc:/images/swiftLogoWide.svg"
         readonly property string folderPath: "qrc:/images/fontawesome/folder-regular.svg"
+        readonly property string xPath: "qrc:/images/iconic/x.svg"
     }
 
     insSettingsPopup: QtObject {

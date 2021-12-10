@@ -12,7 +12,7 @@ Item {
 
     property real mouse_x: 0
 
-    implicitWidth: Constants.solutionTable.width
+    implicitWidth: Constants.solutionTable.minimumWidth
 
     SolutionTableEntries {
         id: solutionTableEntries

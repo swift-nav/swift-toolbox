@@ -23,7 +23,7 @@ use crate::{
     types::{MsgSender, Result},
 };
 
-const MAX_RETRIES: usize = 10;
+const MAX_RETRIES: usize = 20;
 
 const READDIR_TIMEOUT: Duration = Duration::from_secs(5);
 const CONFIG_REQ_RETRY: Duration = Duration::from_millis(100);

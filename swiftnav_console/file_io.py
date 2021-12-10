@@ -15,7 +15,7 @@ class FileIO(QObject):
     def get_source(self):
         return self._source
 
-    @Slot(str)
+    @Slot(str)  # type: ignore
     def set_source(self, source):
         self._source = source
         self.source_changed.emit(source)  # type: ignore
@@ -25,7 +25,7 @@ class FileIO(QObject):
         except IOError as e:
             print(e)
 
-    @Slot()
+    @Slot()  # type: ignore
     def get_text(self):
         return self._text
 
@@ -33,7 +33,7 @@ class FileIO(QObject):
         self._text = text
         self.text_changed.emit()  # type: ignore
 
-    @Slot()
+    @Slot()  # type: ignore
     def read(self):
         if not self._source:
             self.error.emit("source is empty")

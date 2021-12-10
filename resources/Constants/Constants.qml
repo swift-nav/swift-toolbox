@@ -461,6 +461,7 @@ QtObject {
         readonly property int pauseButtonPadding: 0
         readonly property string pauseButtonTooltip: "Pause Log Panel"
         readonly property string playButtonTooltip: "Resume Log Panel"
+        readonly property string clearButtonTooltip: "Clear Log Panel"
         readonly property int logLevelMenuHeight: 100
         readonly property int dropdownButtonPadding: 0
         readonly property int dropdownButtonWidth: 20
@@ -628,6 +629,7 @@ QtObject {
         readonly property string swiftLogoPath: "qrc:/images/icon.png"
         readonly property string swiftLogoWidePath: "qrc:/images/swiftLogoWide.svg"
         readonly property string folderPath: "qrc:/images/fontawesome/folder-regular.svg"
+        readonly property string xPath: "qrc:/images/iconic/x.svg"
     }
 
     insSettingsPopup: QtObject {

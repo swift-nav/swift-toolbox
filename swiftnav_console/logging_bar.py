@@ -14,7 +14,7 @@ LOGGING_BAR: Dict[str, Any] = {
     Keys.SBP_LOGGING_FORMAT: SbpLogging.SBP_JSON,
     Keys.SBP_LOGGING_LABELS: [SbpLogging.SBP_JSON, SbpLogging.SBP],
     Keys.RECORDING_DURATION_SEC: int,
-    Keys.RECORDING_SIZE: str,
+    Keys.RECORDING_SIZE: int,
     Keys.RECORDING_FILENAME: str,
 }
 
@@ -27,7 +27,7 @@ class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
     _sbp_logging_labels: List[str] = []
     _previous_folders: List[str] = []
     _recording_duration_sec: int = 0
-    _recording_size: str
+    _recording_size: int = 0
     _recording_filename: str = ""
 
     def get_csv_logging(self) -> bool:

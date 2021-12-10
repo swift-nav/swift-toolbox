@@ -116,7 +116,7 @@ impl Tabs {
                 client_sender.clone(),
             )
             .into(),
-            status_bar: StatusBar::new(shared_state.clone(), client_sender).into(),
+            status_bar: StatusBar::new(shared_state.clone()).into(),
             update: UpdateTab::new(shared_state).into(),
             settings: None,
         }

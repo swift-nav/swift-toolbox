@@ -20,7 +20,7 @@ choco install cmake llvm capnproto zstandard
 
 # Mac
 xcode-select install
-brew install cmake capnp zstd
+brew install cmake capnp zstd create-dmg
 
 # Linux
 apt-get install cmake libclang-dev capnproto zstd
@@ -51,10 +51,13 @@ Or in "prod" mode (compiles a wheel for the backend):
 cargo make prod-run
 ```
 
-## Building the distribution
+## Building the distribution (and optionally create installer)
 
 ```
 cargo make create-dist
+
+# In order to create an installer:
+cargo make dist-to-installer
 ```
 
 ## Running the benchmarks

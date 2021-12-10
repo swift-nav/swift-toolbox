@@ -13,9 +13,40 @@ Rectangle {
     property int rhsItemSpacing: 15
 
     signal aboutClicked()
+    signal entered()
+    signal exited()
+
+    function open() {
+        state = "opened";
+    }
+
+    function close() {
+        state = "closed";
+    }
 
     implicitHeight: rowLayout.implicitHeight
     implicitWidth: rowLayout.implicitWidth
+    state: "opened"
+    // When the tab name changes, make sure this item is shown.
+    onTabNameChanged: {
+        open();
+    }
+
+    // This captures any clicks outside of the buttons, and toggles
+    // the state from opened to closed or vice versa.
+    MouseArea {
+        anchors.fill: parent
+        z: -1
+        onClicked: parent.state = parent.state == "opened" ? "closed" : "opened"
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        hoverEnabled: true
+        acceptedButtons: Qt.NoButton
+        onEntered: parent.entered()
+        onExited: parent.exited()
+    }
 
     // Top grey line separating the bar from the window title area
     Rectangle {
@@ -23,7 +54,7 @@ Rectangle {
         anchors.right: parent.right
         anchors.top: parent.top
         height: 1
-        color: "#C2C2C2"
+        color: Constants.spacerColor
         z: 2
     }
 
@@ -33,7 +64,7 @@ Rectangle {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         height: 1
-        color: "#C2C2C2"
+        color: Constants.spacerColor
         z: 2
     }
 
@@ -51,12 +82,8 @@ Rectangle {
             leftPadding: 13
             rightPadding: 13
             text: tabName
-            color: Constants.swiftOrange
-            font.family: "Roboto Condensed"
-            font.capitalization: Font.AllUppercase
-            font.letterSpacing: 1
-            font.pointSize: 20
-            font.bold: true // Could also try playing with font.weight
+            color: Constants.tabInfoBar.tabLabelColor
+            font: Constants.tabInfoBar.tabLabelFont
         }
 
         TabBar {
@@ -110,19 +137,16 @@ Rectangle {
             Layout.topMargin: 7
             Layout.bottomMargin: 7
             width: 1
-            color: "#C2C2C2"
+            color: Constants.spacerColor
             Layout.alignment: Qt.AlignVCenter
         }
 
         Label {
             leftPadding: rhsItemSpacing
             rightPadding: rhsItemSpacing
-            text: "Console"
-            color: Constants.swiftLightGrey
-            font.family: "Roboto Condensed"
-            font.capitalization: Font.AllUppercase
-            font.letterSpacing: 2
-            font.pointSize: 20
+            text: Constants.tabInfoBar.appName
+            color: Constants.tabInfoBar.appNameColor
+            font: Constants.tabInfoBar.appNameFont
         }
 
         Rectangle {
@@ -130,7 +154,7 @@ Rectangle {
             Layout.topMargin: 7
             Layout.bottomMargin: 7
             width: 1
-            color: "#C2C2C2"
+            color: Constants.spacerColor
             Layout.alignment: Qt.AlignVCenter
         }
 
@@ -141,12 +165,60 @@ Rectangle {
             RoundButton {
                 anchors.centerIn: parent
                 flat: true
-                icon.source: Constants.infoPath
+                icon.source: Constants.tabInfoBar.infoButtonIconPath
                 icon.width: 20
                 icon.height: 20
-                icon.color: Constants.swiftLightGrey
+                icon.color: Constants.tabInfoBar.infoButtonIconColor
                 padding: rhsItemSpacing / 3
                 onClicked: tabInfoBar.aboutClicked()
+            }
+
+        }
+
+        Item {
+            id: closeRect
+
+            Layout.fillHeight: true
+            Layout.rightMargin: 5
+            implicitWidth: 20
+            clip: true
+
+            MouseArea {
+                id: closeMouseArea
+
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: Qt.NoButton
+                onEntered: closeArrowAnimation.start()
+                onExited: {
+                    if (closeArrowAnimation.running) {
+                        closeArrowAnimation.stop();
+                        closeArrow.y = closeArrowAnimation.startingPropertyValue;
+                    }
+                }
+            }
+
+            PositionLoopAnimation {
+                id: closeArrowAnimation
+
+                target: closeArrow
+                property: "y"
+                startingPropertyValue: 0
+                totalDuration: 700
+            }
+
+            Text {
+                id: closeArrow
+
+                anchors.horizontalCenter: parent.horizontalCenter
+                y: (parent.height - height) / 2
+                text: "▲"
+                color: Constants.swiftLightGrey
+                onYChanged: {
+                    if (!closeArrowAnimation.running)
+                        closeArrowAnimation.startingPropertyValue = y;
+
+                }
             }
 
         }
@@ -162,7 +234,7 @@ Rectangle {
 
             height: rowLayout.height
             width: 1
-            color: "#C2C2C2"
+            color: Constants.spacerColor
             x: tabBar.count > 0 ? tabBar.x + (tabButton ? tabButton.x - 1 : tabBar.width) : tabLabel.x + tabLabel.width
         }
 

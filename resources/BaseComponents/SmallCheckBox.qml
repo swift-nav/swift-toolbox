@@ -1,3 +1,4 @@
+import "../Constants"
 // This is the source to QtQuick2's Material CheckBox with some changes to make it smaller
 import QtQuick 2.12
 import QtQuick.Controls.Material 2.12
@@ -11,6 +12,11 @@ T.CheckBox {
     spacing: 2
     implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset, implicitContentWidth + leftPadding + rightPadding)
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset, implicitContentHeight + topPadding + bottomPadding, implicitIndicatorHeight + topPadding + bottomPadding)
+    font: Qt.font({
+        "family": Constants.fontFamily,
+        "pointSize": Constants.xSmallPointSize,
+        "bold": true
+    })
     Component.onCompleted: {
         // changes size of inner checkmark
         control.indicator.children[0].height = 10;

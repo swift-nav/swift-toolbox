@@ -150,6 +150,8 @@ from .update_tab import (
     UpdateTabModel,
 )
 
+from .file_io import FileIO
+
 CONSOLE_BACKEND_CAPNP_PATH = "console_backend.capnp"
 
 PIKSI_HOST = "piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com"
@@ -827,6 +829,7 @@ def main():
     qmlRegisterType(TrackingSkyPlotPoints, "SwiftConsole", 1, 0, "TrackingSkyPlotPoints")  # type: ignore
     qmlRegisterType(ObservationTableModel, "SwiftConsole", 1, 0, "ObservationTableModel")  # type: ignore
     qmlRegisterType(UpdateTabData, "SwiftConsole", 1, 0, "UpdateTabData")  # type: ignore
+    qmlRegisterType(FileIO, "SwiftConsole", 1, 0, "FileIO")  # type: ignore
 
     engine = QtQml.QQmlApplicationEngine()
     qml_object_created = [False]

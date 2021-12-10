@@ -20,18 +20,18 @@ pyo3 = { version = "0.15", features = [
   "extension-module",
   "macros",
 ], default-features = false, optional = true }
-serde = { version = "1.0.123", features = ["derive"] }
+serde = { version = "1.0.131", features = ["derive"] }
 tempfile = "3.2.0"
 ordered-float = "2.0"
 ndarray = "0.15.4"
 glob = "0.3.0"
 criterion = "0.3.4"
-sysinfo = "0.21.1"
+sysinfo = "0.21.2"
 serialport = { version = "4.0.1", default-features = false }
 directories = "4"
 anyhow = { version = "1", features = ["backtrace"] }
 serde_yaml = "0.8.21"
-clap = "3.0.0-beta.5"
+clap = { version = "3.0.0-rc.3", features = ["derive"] }
 indexmap = { version = "1.6.2", features = ["serde"] }
 serde_json = { version = "1" }
 crossbeam = "0.8"

@@ -11,6 +11,7 @@ QtObject {
     readonly property real logPanelPreferredHeight: 100
     readonly property int loggingBarPreferredHeight: 50
     readonly property real statusBarPreferredHeight: 30
+    property QtObject tabInfoBar
     property QtObject logPanel
     property QtObject statusBar
     property QtObject connection
@@ -44,12 +45,15 @@ QtObject {
     readonly property int staticTableTimerIntervalRate: 10 // 10 Hz
     readonly property int staticTimerSlowIntervalRate: 2 // 2 Hz
     readonly property string monoSpaceFont: "Courier New"
-    readonly property string fontFamily: "Roboto"
+    readonly property string fontFamily: "Roboto Condensed"
+    property FontLoader robotoCondensedLightFont
+    readonly property string lightFontFamily: robotoCondensedLightFont.name
     readonly property real xSmallPointSize: 6
     readonly property real smallPointSize: 7
     readonly property real mediumPointSize: 8
     readonly property real largePointSize: 9
-    readonly property string infoPath: "qrc:///images/fontawesome/info-circle-solid.svg"
+    readonly property real xlPointSize: 12
+    readonly property real xxlPointSize: 14
     readonly property bool debugMode: false
     readonly property color swiftGrey: "#323F48"
     readonly property color swiftLightGrey: "#3C464F"
@@ -57,6 +61,33 @@ QtObject {
     readonly property color tabButtonUnselectedTextColor: "#767676"
     readonly property color materialGrey: "dimgrey"
     readonly property color swiftOrange: "#FF8300"
+    readonly property color spacerColor: "#C2C2C2"
+
+    robotoCondensedLightFont: FontLoader {
+        source: "qrc:/fonts/RobotoCondensed-Light.ttf"
+    }
+
+    tabInfoBar: QtObject {
+        readonly property bool autoClose: false
+        readonly property color tabLabelColor: swiftOrange
+        readonly property font tabLabelFont: Qt.font({
+            "family": "Roboto Condensed",
+            "pointSize": 20,
+            "bold": true,
+            "letterSpacing": 1,
+            "capitalization": Font.AllUppercase
+        })
+        readonly property string appName: "Console"
+        readonly property color appNameColor: swiftLightGrey
+        readonly property font appNameFont: Qt.font({
+            "family": robotoCondensedLightFont.name,
+            "pointSize": 20,
+            "letterSpacing": 2,
+            "capitalization": Font.AllUppercase
+        })
+        readonly property string infoButtonIconPath: "qrc:/images/fontawesome/info-circle-solid.svg"
+        readonly property color infoButtonIconColor: swiftLightGrey
+    }
 
     logoPopup: QtObject {
         readonly property int heightPadding: 120
@@ -70,8 +101,8 @@ QtObject {
             readonly property int dropdownHeight: 40
             readonly property string robotoFontTabLabel: "Roboto Font"
             readonly property string fontAwesomeIconsTabLabel: "Font Awesome Icons"
-            readonly property string robotoFontLicensePath: "qrc:///fonts/Roboto-LICENSE.txt"
-            readonly property string fontAwesomeIconsLicensePath: "qrc:///images/fontawesome/LICENSE.txt"
+            readonly property string robotoFontLicensePath: ":/fonts/Roboto-LICENSE.txt"
+            readonly property string fontAwesomeIconsLicensePath: ":/images/fontawesome/LICENSE.txt"
         }
 
         aboutMe: QtObject {
@@ -88,14 +119,14 @@ QtObject {
 
     sideNavBar: QtObject {
         readonly property int buttonSvgHeight: 15
-        readonly property string hamburgerPath: "qrc:///images/fontawesome/bars-solid.svg"
-        readonly property string trackingPath: "qrc:///images/fontawesome/satellite-solid.svg"
-        readonly property string solutionPath: "qrc:///images/fontawesome/map-marker-alt-solid.svg"
-        readonly property string baselinePath: "qrc:///images/fontawesome/braille-solid.svg"
-        readonly property string observationsPath: "qrc:///images/fontawesome/table-solid.svg"
-        readonly property string settingsPath: "qrc:///images/fontawesome/cogs-solid.svg"
-        readonly property string updatePath: "qrc:///images/fontawesome/chevron-circle-up-solid.svg"
-        readonly property string advancedPath: "qrc:///images/fontawesome/lock-solid.svg"
+        readonly property string hamburgerPath: "qrc:/images/fontawesome/bars-solid.svg"
+        readonly property string trackingPath: "qrc:/images/fontawesome/satellite-solid.svg"
+        readonly property string solutionPath: "qrc:/images/fontawesome/map-marker-alt-solid.svg"
+        readonly property string baselinePath: "qrc:/images/fontawesome/braille-solid.svg"
+        readonly property string observationsPath: "qrc:/images/fontawesome/table-solid.svg"
+        readonly property string settingsPath: "qrc:/images/fontawesome/cogs-solid.svg"
+        readonly property string updatePath: "qrc:/images/fontawesome/chevron-circle-up-solid.svg"
+        readonly property string advancedPath: "qrc:/images/fontawesome/lock-solid.svg"
         readonly property real tabBarHeight: 48
         readonly property real tabBarWidth: 62
         readonly property int buttonPadding: 0
@@ -254,8 +285,8 @@ QtObject {
         readonly property real smallKeyWidthRatio: 0.05
         readonly property int innerKeyValSpacing: 5
         readonly property int arrowsSideLength: 15
-        readonly property string arrowsBluePath: "qrc:///images/iconic/arrows_blue.png"
-        readonly property string arrowsGreyPath: "qrc:///images/iconic/arrows_grey.png"
+        readonly property string arrowsBluePath: "qrc:/images/iconic/arrows_blue.png"
+        readonly property string arrowsGreyPath: "qrc:/images/iconic/arrows_grey.png"
         readonly property string portLabel: "Port: "
         readonly property string posLabel: "Pos: "
         readonly property string rtkLabel: "RTK: "
@@ -290,6 +321,7 @@ QtObject {
 
     loggingBar: QtObject {
         readonly property int buttonHeight: 40
+        readonly property real buttonHeightRatio: 2 / 3
         readonly property int buttonSvgHeight: 15
         readonly property int urlBarHeight: 25
         readonly property int loggingBarMargin: 10
@@ -300,11 +332,15 @@ QtObject {
         readonly property int directoryBarTextMargin: 10
         readonly property int folderPathBarHeight: 25
         readonly property color placeholderTextColor: "#CDC9C9"
-        readonly property string folderButtonPath: "qrc:///images/fontawesome/folder-solid.svg"
+        readonly property string folderButtonPath: "qrc:/images/fontawesome/folder-solid.svg"
         readonly property int recordingLabelWidth: 60
         readonly property int recordingTimeLabelWidth: 60
         readonly property int recordingDividerLabelWidth: 10
         readonly property int recordingSizeLabelWidth: 40
+        readonly property font comboBoxFont: Qt.font({
+            "family": fontFamily,
+            "pointSize": mediumPointSize
+        })
     }
 
     advancedMagnetometer: QtObject {
@@ -361,11 +397,11 @@ QtObject {
         readonly property int textDataBarHeight: 20
         readonly property int textDataBarMargin: 2
         readonly property int textDataBarBorderWidth: 1
-        readonly property string unknownStatusPath: "qrc:///images/fontawesome/square-solid.svg"
+        readonly property string unknownStatusPath: "qrc:/images/fontawesome/square-solid.svg"
         readonly property color unknownStatusColor: "dimgrey"
-        readonly property string warningStatusPath: "qrc:///images/fontawesome/exclamation-triangle-solid.svg"
+        readonly property string warningStatusPath: "qrc:/images/fontawesome/exclamation-triangle-solid.svg"
         readonly property color warningStatusColor: "goldenrod"
-        readonly property string okStatusPath: "qrc:///images/fontawesome/circle-solid.svg"
+        readonly property string okStatusPath: "qrc:/images/fontawesome/circle-solid.svg"
         readonly property color okStatusColor: "green"
         readonly property int insStatusImageWidth: 15
         readonly property int urlBarHeight: 25
@@ -475,7 +511,6 @@ QtObject {
         readonly property int chartBottomMargin: 30
         readonly property int legendBottomMargin: 120
         readonly property int legendLeftMargin: 80
-        readonly property int legendLabelPointSize: 9
     }
 
     commonLegend: QtObject {
@@ -511,6 +546,8 @@ QtObject {
         readonly property color minorGridLineColor: "#CDC9C9"
         readonly property color gridLineColor: "#CDC9C9"
         readonly property color labelsColor: "#000000"
+        readonly property int titlePointSize: largePointSize
+        readonly property int axisLabelsPointSize: smallPointSize
         readonly property int tickPointSize: 10
         readonly property int buttonHeight: 40
         readonly property int unitDropdownWidth: 90
@@ -538,17 +575,30 @@ QtObject {
 
     trackingSignals: QtObject {
         readonly property string title: "Tracking C/N0"
-        readonly property color titleColor: Qt.darker(swiftOrange, 1.1)
-        readonly property int titlePointSize: largePointSize
+        readonly property color titleColor: swiftGrey
+        readonly property font titleFont: Qt.font({
+            "family": fontFamily,
+            "pointSize": xlPointSize,
+            "bold": true
+        })
         readonly property int legendTopMargin: 12
         readonly property int legendBottomMargin: 72
         readonly property int legendLeftMargin: 18
-        readonly property int legendLabelPointSize: 6
         readonly property string legendCellTextSample: "XXX XXXX X+NN XNN"
         readonly property string yAxisTitleText: "dB-Hz"
         readonly property string xAxisTitleText: "seconds"
-        readonly property int xAxisMinOffsetFromMaxSeconds: 100
-        readonly property int checkBoxPreferredWidth: 100
+        readonly property font axisTitleFont: Qt.font({
+            "family": fontFamily,
+            "pointSize": Constants.mediumPointSize,
+            "bold": true,
+            "letterSpacing": 2,
+            "capitalization": Font.AllUppercase
+        })
+        readonly property font axisLabelsFont: Qt.font({
+            "family": fontFamily,
+            "pointSize": commonChart.axisLabelsPointSize,
+            "bold": true
+        })
         readonly property int snrThreshold: 15
         readonly property int yAxisMax: 60
         readonly property int yAxisTickInterval: 10
@@ -561,24 +611,25 @@ QtObject {
     }
 
     icons: QtObject {
-        readonly property string savePath: "qrc:///images/fontawesome/floppy-o.svg"
-        readonly property string refreshPath: "qrc:///images/fontawesome/refresh.svg"
-        readonly property string exportPath: "qrc:///images/fontawesome/file-export.svg"
-        readonly property string importPath: "qrc:///images/fontawesome/file-import.svg"
-        readonly property string warningPath: "qrc:///images/fontawesome/exclamation-triangle.svg"
-        readonly property string connectButtonPath: "qrc:///images/fontawesome/power-off-solid.svg"
-        readonly property string pauseButtonUrl: "qrc:///pause.svg"
-        readonly property string centerOnButtonUrl: "qrc:///center-on.svg"
-        readonly property string clearButtonUrl: "qrc:///clear.svg"
-        readonly property string zoomAllButtonUrl: "qrc:///zoom-all.svg"
-        readonly property string splashScreenPath: "qrc:///images/LogoBackground.jpg"
-        readonly property string lightningBoltPath: "qrc:///images/ConnectionIcon.svg"
+        readonly property string savePath: "qrc:/images/fontawesome/floppy-o.svg"
+        readonly property string refreshPath: "qrc:/images/fontawesome/refresh.svg"
+        readonly property string exportPath: "qrc:/images/fontawesome/file-export.svg"
+        readonly property string importPath: "qrc:/images/fontawesome/file-import.svg"
+        readonly property string warningPath: "qrc:/images/fontawesome/exclamation-triangle.svg"
+        readonly property string connectButtonPath: "qrc:/images/fontawesome/power-off-solid.svg"
+        readonly property string pauseButtonUrl: "qrc:/pause.svg"
+        readonly property string centerOnButtonUrl: "qrc:/center-on.svg"
+        readonly property string clearButtonUrl: "qrc:/clear.svg"
+        readonly property string zoomAllButtonUrl: "qrc:/zoom-all.svg"
+        readonly property string splashScreenPath: "qrc:/images/LogoBackground.jpg"
+        readonly property string lightningBoltPath: "qrc:/images/ConnectionIcon.svg"
         readonly property string dropIndicatorPath: "qrc:/qt-project.org/imports/QtQuick/Controls.2/Material/images/drop-indicator.png"
-        readonly property string playPath: "qrc:///images/iconic/play.svg"
-        readonly property string solidCirclePath: "qrc:///images/fontawesome/circle-solid.svg"
-        readonly property string squareSolidPath: "qrc:///images/fontawesome/square-solid.svg"
-        readonly property string swiftLogoPath: "qrc:///images/icon.png"
-        readonly property string swiftLogoWidePath: "qrc:///images/swiftLogoWide.svg"
+        readonly property string playPath: "qrc:/images/iconic/play.svg"
+        readonly property string solidCirclePath: "qrc:/images/fontawesome/circle-solid.svg"
+        readonly property string squareSolidPath: "qrc:/images/fontawesome/square-solid.svg"
+        readonly property string swiftLogoPath: "qrc:/images/icon.png"
+        readonly property string swiftLogoWidePath: "qrc:/images/swiftLogoWide.svg"
+        readonly property string folderPath: "qrc:/images/fontawesome/folder-regular.svg"
     }
 
     insSettingsPopup: QtObject {

@@ -58,7 +58,7 @@ impl Fileio {
         let key = self.link.register(move |msg: MsgFileioReadResp| {
             let _ = tx.send(msg);
         });
-        self.sender.send(
+        if let Err(err) = self.sender.send(
             MsgFileioReadReq {
                 sender_id: None,
                 filename: path.clone().into(),
@@ -67,7 +67,10 @@ impl Fileio {
                 offset,
             }
             .into(),
-        )?;
+        ) {
+            self.link.unregister(key);
+            return Err(err);
+        };
         for msg in rx.iter() {
             if let Err(err) = dest.write_all(&msg.contents) {
                 self.link.unregister(key);
@@ -379,7 +382,7 @@ where
     // forwards messages from the link to the main select loop
     let (res_tx, res_rx) = channel::unbounded();
     // the request generating thread sends requests to the request making thread over this channel
-    let (req_tx, req_rx) = channel::bounded(1);
+    let (req_tx, req_rx) = channel::bounded(config.batch_size);
     let key = link.register(move |msg: MsgFileioWriteResp| {
         let _ = res_tx.send(msg);
     });

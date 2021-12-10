@@ -10,7 +10,6 @@ import SwiftConsole 1.0
 Item {
     id: baselineTable
 
-    property variant columnWidths: [Constants.baselineTable.defaultColumnWidth, Constants.baselineTable.defaultColumnWidth]
     property real mouse_x: 0
 
     function syncColumnWidthsWithSplitView() {
@@ -36,6 +35,8 @@ Item {
     ColumnLayout {
         id: baselineTableRowLayout
 
+        property variant columnWidths: [parent.width * 0.4, parent.width * 0.6]
+
         spacing: Constants.baselineTable.tableHeaderTableDataTableSpacing
         width: parent.width
         height: parent.height
@@ -45,9 +46,10 @@ Item {
 
             interactive: false
             syncView: tableView
+            Layout.fillWidth: true
 
             delegate: Rectangle {
-                implicitWidth: columnWidths[index]
+                implicitWidth: tableView.columnWidths[index]
                 implicitHeight: Constants.genericTable.cellHeight
                 border.color: Constants.genericTable.borderColor
 
@@ -68,14 +70,21 @@ Item {
                     height: parent.height
                     anchors.right: parent.right
                     cursorShape: Qt.SizeHorCursor
+                    enabled: index == 0
+                    visible: index == 0
                     onPressed: {
                         mouse_x = mouseX;
                     }
                     onPositionChanged: {
                         if (pressed) {
                             var delta_x = (mouseX - mouse_x);
-                            columnWidths[index] += delta_x;
-                            syncColumnWidthsWithSplitView();
+                            var next_idx = (index + 1) % 2;
+                            var min_width = tableView.width / 4;
+                            if (tableView.columnWidths[index] + delta_x > min_width && tableView.columnWidths[next_idx] - delta_x > min_width) {
+                                tableView.columnWidths[index] += delta_x;
+                                tableView.columnWidths[next_idx] -= delta_x;
+                            }
+                            tableView.forceLayout();
                         }
                     }
                 }
@@ -100,10 +109,9 @@ Item {
         SwiftTableView {
             id: tableView
 
-            onWidthChanged: syncColumnWidthsWithSplitView()
             Layout.fillWidth: true
             Layout.fillHeight: true
-            columnWidths: parent.parent.columnWidths
+            columnWidths: parent.columnWidths
 
             model: TableModel {
                 id: tableModel

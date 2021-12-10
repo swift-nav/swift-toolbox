@@ -46,10 +46,6 @@ Rectangle {
         };
     }
 
-    onWidthChanged: {
-        tableView.forceLayout();
-    }
-
     SettingsTableEntries {
         id: settingsTableEntries
     }
@@ -66,6 +62,7 @@ Rectangle {
 
             interactive: false
             syncView: tableView
+            Layout.fillWidth: true
 
             delegate: Rectangle {
                 implicitWidth: tableView.columnWidths[index]
@@ -89,6 +86,8 @@ Rectangle {
                     height: parent.height
                     anchors.right: parent.right
                     cursorShape: Qt.SizeHorCursor
+                    enabled: index == 0
+                    visible: index == 0
                     onPressed: {
                         mouse_x = mouseX;
                     }
@@ -132,6 +131,7 @@ Rectangle {
             columnWidths: parent.columnWidths
             Layout.fillWidth: true
             Layout.fillHeight: true
+            stayFocused: true
 
             model: TableModel {
                 id: tableModel

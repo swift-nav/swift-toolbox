@@ -10,21 +10,7 @@ import SwiftConsole 1.0
 Item {
     id: solutionTable
 
-    property variant columnWidths: [Constants.solutionTable.defaultColumnWidth, Constants.solutionTable.defaultColumnWidth]
     property real mouse_x: 0
-
-    function syncColumnWidthsWithSplitView() {
-        var oldcols = columnWidths.slice();
-        columnWidths[0] = Math.max(columnWidths[0], Constants.solutionTable.defaultColumnWidth);
-        let column_width_sum = columnWidths[0] + columnWidths[1];
-        if (column_width_sum != tableView.width) {
-            let final_column_diff = tableView.width - column_width_sum;
-            columnWidths[1] += final_column_diff;
-        }
-        if (columnWidths != oldcols)
-            tableView.forceLayout();
-
-    }
 
     implicitWidth: Constants.solutionTable.width
 
@@ -34,6 +20,8 @@ Item {
 
     ColumnLayout {
         id: solutionTableRowLayout
+
+        property variant columnWidths: [parent.width * 0.4, parent.width * 0.6]
 
         spacing: Constants.solutionTable.tableHeaderTableDataTableSpacing
         width: parent.width
@@ -45,10 +33,9 @@ Item {
             interactive: false
             syncView: tableView
             Layout.fillWidth: true
-            Layout.preferredHeight: Constants.genericTable.cellHeight
 
             delegate: Rectangle {
-                implicitWidth: columnWidths[index]
+                implicitWidth: tableView.columnWidths[index]
                 implicitHeight: Constants.genericTable.cellHeight
                 border.color: Constants.genericTable.borderColor
 
@@ -68,14 +55,21 @@ Item {
                     height: parent.height
                     anchors.right: parent.right
                     cursorShape: Qt.SizeHorCursor
+                    enabled: index == 0
+                    visible: index == 0
                     onPressed: {
                         mouse_x = mouseX;
                     }
                     onPositionChanged: {
                         if (pressed) {
                             var delta_x = (mouseX - mouse_x);
-                            columnWidths[index] += delta_x;
-                            syncColumnWidthsWithSplitView();
+                            var next_idx = (index + 1) % 2;
+                            var min_width = tableView.width / 4;
+                            if (tableView.columnWidths[index] + delta_x > min_width && tableView.columnWidths[next_idx] - delta_x > min_width) {
+                                tableView.columnWidths[index] += delta_x;
+                                tableView.columnWidths[next_idx] -= delta_x;
+                            }
+                            tableView.forceLayout();
                         }
                     }
                 }
@@ -102,8 +96,7 @@ Item {
 
             Layout.fillWidth: true
             Layout.fillHeight: true
-            columnWidths: parent.parent.columnWidths
-            onWidthChanged: syncColumnWidthsWithSplitView()
+            columnWidths: parent.columnWidths
 
             model: TableModel {
                 id: tableModel

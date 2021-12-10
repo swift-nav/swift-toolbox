@@ -9,7 +9,8 @@ TableView {
     property variant columnWidths: []
     property int selectedRow: -1
     property int _currentSelectedIndex: -1
-    property int currentSelectedIndex: Globals.currentSelectedTable == this ? _currentSelectedIndex : -1
+    property bool stayFocused: false
+    property int currentSelectedIndex: (!stayFocused && Globals.currentSelectedTable == this) ? _currentSelectedIndex : -1
     property int delegateBorderWidth: Constants.genericTable.borderWidth
     property color delegateBorderColor: Constants.genericTable.borderColor
 
@@ -28,7 +29,9 @@ TableView {
         tableView.forceLayout();
     }
     onFocusChanged: {
-        _currentSelectedIndex = -1;
+        if (!stayFocused)
+            _currentSelectedIndex = -1;
+
     }
 
     ScrollBar.horizontal: ScrollBar {

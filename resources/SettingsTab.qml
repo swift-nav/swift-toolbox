@@ -138,13 +138,11 @@ MainTab {
     SplitView {
         anchors.fill: parent
         orientation: Qt.Horizontal
-        width: parent.width
-        height: parent.height
 
         SettingsTabComponents.SettingsTable {
             id: settingsTable
 
-            SplitView.minimumWidth: Constants.settingsTable.maximumWidth
+            SplitView.minimumWidth: Constants.settingsTable.minimumWidth
             onSelectedRowIdxChanged: {
                 if (!!selectedRow())
                     settingsPane.selectedRow = selectedRow();
@@ -154,6 +152,8 @@ MainTab {
 
         ColumnLayout {
             SplitView.fillWidth: true
+            SplitView.fillHeight: true
+            SplitView.minimumWidth: parent.width * 0.55 //Constants.settingsTable.minimumWidth
             spacing: 3
 
             RowLayout {

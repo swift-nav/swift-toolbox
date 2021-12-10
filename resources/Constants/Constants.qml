@@ -478,7 +478,7 @@ QtObject {
     settingsTable: QtObject {
         readonly property string tableLeftColumnHeader: "Name"
         readonly property string tableRightColumnHeader: "Value"
-        readonly property int maximumWidth: 300
+        readonly property int minimumWidth: 300
         readonly property int layoutSpacing: 0
     }
 

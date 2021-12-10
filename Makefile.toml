@@ -879,11 +879,13 @@ cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --
 '''
 
 [tasks.newline-terminator]
+env = { EXCLUSION_PATTERNS = [".png", "docs", "resources/images"] }
 private = true
 script_runner = "python"
 script_extension = "py"
 script = '''
 import os
+import re
 import sys
 import subprocess
 def raises_exc(func):
@@ -900,6 +902,9 @@ try_open_text = lambda fn: lambda: (open(fn, "ta"), open(fn, "tr").read(4096))
 valid_file = lambda fn: os.path.getsize(fn) > 0 and not raises_exc(try_open_text(fn))
 no_trailing_lf = lambda fn: valid_file(fn) and not has_newline(fn)
 all_files = subprocess.check_output(["git", "ls-files"]).decode('utf8').splitlines()
+exclusion_substrings = os.environ.get("EXCLUSION_PATTERNS")
+exclusion_substrings = exclusion_substrings.split(";")
+all_files = [x for x in all_files if not any([re.match(".*"+y, x) for y in exclusion_substrings])]
 no_newline = list(map(append_newline, filter(no_trailing_lf, all_files)))
 footer = "*********************************************\n"
 err = "ERROR: " if dry_run else "Fixing "

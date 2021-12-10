@@ -330,7 +330,7 @@ struct LoggingBarStatus {
 }
 struct LoggingBarRecordingStatus {
     recordingDurationSec @0 : UInt64;
-    recordingSize @1 :Text;
+    recordingSize @1 :UInt64;
     recordingFilename :union {
         filename @2 :Text;
         none @3 :Void = void;

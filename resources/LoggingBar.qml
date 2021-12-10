@@ -19,7 +19,7 @@ Rectangle {
         let hours = Math.floor(duration / 3600).toFixed(0).padStart(2, 0);
         let minutes = Math.floor(duration / 60).toFixed(0).padStart(2, 0);
         let seconds = (duration % 60).toFixed(0).padStart(2, 0);
-        return hours + ":" + minutes + ":" + seconds + " s";
+        return hours + ":" + minutes + ":" + seconds;
     }
 
     color: Constants.swiftControlBackground
@@ -275,8 +275,8 @@ Rectangle {
                     mockRecordingSize += 15.15;
                     recordingSize.text = bytesToString(mockRecordingSize);
                 } else {
-                    if (loggingBarData.recording_size.length > 0)
-                        recordingSize.text = loggingBarData.recording_size;
+                    if (loggingBarData.recording_size > 0)
+                        recordingSize.text = bytesToString(loggingBarData.recording_size);
                     else
                         recordingSize.text = "0.00 MiB";
                 }

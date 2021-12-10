@@ -70,13 +70,13 @@ class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
 
     previous_folders = Property(QTKeys.QVARIANTLIST, get_previous_folders, set_previous_folders)  # type: ignore
 
-    def get_recording_size(self) -> str:
+    def get_recording_size(self) -> int:
         return self._recording_size
 
-    def set_recording_size(self, recording_size: str) -> None:
+    def set_recording_size(self, recording_size: int) -> None:
         self._recording_size = recording_size
 
-    recording_size = Property(str, get_recording_size, set_recording_size)
+    recording_size = Property(int, get_recording_size, set_recording_size)
 
     def get_recording_duration_sec(self) -> int:
         return self._recording_duration_sec

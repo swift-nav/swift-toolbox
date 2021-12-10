@@ -4,7 +4,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-use capnp::message::Builder;
 use chrono::Local;
 use log::error;
 use sbp::Sbp;
@@ -15,7 +14,7 @@ use crate::constants::{
 };
 use crate::output::{CsvLogging, SbpLogger};
 use crate::shared_state::{create_directory, SharedState};
-use crate::utils::{bytes_to_human_readable, refresh_loggingbar, serialize_capnproto_builder};
+use crate::utils::{refresh_loggingbar, refresh_loggingbar_recording};
 use crate::{client_sender::BoxedClientSender, shared_state::ConnectionState};
 use crate::{common_constants::SbpLogging, shared_state::SbpLoggingStatsState};
 
@@ -53,32 +52,6 @@ pub fn logging_stats_thread(
             std::thread::sleep(LOGGING_STATS_UPDATE_INTERVAL);
         }
     })
-}
-
-pub fn refresh_loggingbar_recording(
-    client_sender: &BoxedClientSender,
-    size: u64,
-    duration: u64,
-    filename: Option<String>,
-) {
-    let mut builder = Builder::new_default();
-    let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
-
-    let mut logging_bar_status = msg.init_logging_bar_recording_status();
-    logging_bar_status.set_recording_duration_sec(duration);
-    logging_bar_status.set_recording_size(&bytes_to_human_readable(size as u128));
-    if let Some(filename_) = filename {
-        logging_bar_status
-            .reborrow()
-            .get_recording_filename()
-            .set_filename(&filename_);
-    } else {
-        logging_bar_status
-            .reborrow()
-            .get_recording_filename()
-            .set_none(());
-    }
-    client_sender.send_data(serialize_capnproto_builder(builder));
 }
 
 pub struct MainTab {

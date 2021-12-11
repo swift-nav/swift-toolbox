@@ -13,7 +13,7 @@ from .constants import Keys, LogLevel, QTKeys
 LOG_PANEL: Dict[str, Any] = {
     Keys.ENTRIES: [],
     Keys.LOG_LEVEL_LABELS: [LogLevel.ERROR, LogLevel.WARNING, LogLevel.NOTICE, LogLevel.INFO, LogLevel.DEBUG],
-    Keys.LOG_LEVEL: LogLevel.INFO,
+    Keys.LOG_LEVEL: LogLevel.WARNING,
 }
 log_panel_lock = QMutex()
 

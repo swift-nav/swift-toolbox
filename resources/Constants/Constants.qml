@@ -408,6 +408,7 @@ QtObject {
     }
 
     baselinePlot: QtObject {
+        readonly property int minimumWidth: 410
         readonly property int buttonSvgHeight: 15
         readonly property int navBarMargin: 10
         readonly property int navBarSpacing: 0
@@ -422,7 +423,7 @@ QtObject {
     }
 
     baselineTable: QtObject {
-        readonly property int width: 240
+        readonly property int minimumWidth: 240
         readonly property int defaultColumnWidth: 100
         readonly property color tableBorderColor: "#000000"
         readonly property int tableBorderWidth: 1
@@ -437,6 +438,7 @@ QtObject {
     }
 
     solutionPosition: QtObject {
+        readonly property int minimumWidth: 410
         readonly property int buttonSvgHeight: 15
         readonly property int navBarMargin: 10
         readonly property int navBarSpacing: 0
@@ -465,6 +467,7 @@ QtObject {
         readonly property int logLevelMenuHeight: 100
         readonly property int dropdownButtonPadding: 0
         readonly property int dropdownButtonWidth: 20
+        readonly property int delegateBorderWidth: 0
     }
 
     settingsTab: QtObject {
@@ -478,11 +481,12 @@ QtObject {
     settingsTable: QtObject {
         readonly property string tableLeftColumnHeader: "Name"
         readonly property string tableRightColumnHeader: "Value"
-        readonly property int maximumWidth: 300
+        readonly property int minimumWidth: 300
+        readonly property int layoutSpacing: 0
     }
 
     solutionTable: QtObject {
-        readonly property int width: 240
+        readonly property int minimumWidth: 240
         readonly property int defaultColumnWidth: 100
         readonly property color tableBorderColor: "#000000"
         readonly property int tableBorderWidth: 1

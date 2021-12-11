@@ -1,4 +1,5 @@
 import "../Constants"
+import "../TableComponents"
 import Qt.labs.qmlmodels 1.0
 import QtCharts 2.2
 import QtQuick 2.15
@@ -6,14 +7,14 @@ import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
-Item {
-    property variant columnWidths: [Constants.settingsTable.maximumWidth * 0.4, Constants.settingsTable.maximumWidth * 0.6]
-    property int selectedRowIdx: -1
+Rectangle {
+    property alias selectedRowIdx: tableView._currentSelectedIndex
     property var rowOffsets: ({
     })
     property bool showExpert: false
     property bool lastShowExpert: false
     property alias table: settingsTableEntries.entries
+    property real mouse_x: 0
 
     function isHeader(entry) {
         return !entry.hasOwnProperty("name");
@@ -45,155 +46,158 @@ Item {
         };
     }
 
-    width: columnWidths[0] + columnWidths[1]
-    height: parent.height
-
     SettingsTableEntries {
         id: settingsTableEntries
     }
 
     ColumnLayout {
+        property variant columnWidths: [parent.width * 0.4, parent.width * 0.6]
+
         width: parent.width
         height: parent.height
+        spacing: Constants.settingsTable.layoutSpacing
 
-        Item {
-            Layout.fillHeight: true
+        HorizontalHeaderView {
+            id: horizontalHeader
+
+            interactive: false
+            syncView: tableView
             Layout.fillWidth: true
 
-            HorizontalHeaderView {
-                id: horizontalHeader
+            delegate: Rectangle {
+                implicitWidth: tableView.columnWidths[index]
+                implicitHeight: Constants.genericTable.cellHeight
+                border.color: Constants.genericTable.borderColor
 
-                interactive: false
-                syncView: tableView
-                z: Constants.genericTable.headerZOffset
+                Label {
+                    width: parent.width
+                    anchors.centerIn: parent
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: tableView.model.columns[index].display
+                    elide: Text.ElideRight
+                    clip: true
+                    font.family: Constants.genericTable.fontFamily
+                    font.pointSize: Constants.largePointSize
+                }
 
-                delegate: Rectangle {
-                    implicitWidth: columnWidths[index]
-                    implicitHeight: Constants.genericTable.cellHeight
-                    border.color: Constants.genericTable.borderColor
-
-                    Label {
-                        width: parent.width
-                        anchors.centerIn: parent
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        text: tableView.model.columns[index].display
-                        elide: Text.ElideRight
-                        clip: true
-                        font.family: Constants.genericTable.fontFamily
-                        font.pointSize: Constants.largePointSize
+                MouseArea {
+                    width: Constants.genericTable.mouseAreaResizeWidth
+                    height: parent.height
+                    anchors.right: parent.right
+                    cursorShape: Qt.SizeHorCursor
+                    enabled: index == 0
+                    visible: index == 0
+                    onPressed: {
+                        mouse_x = mouseX;
                     }
-
-                    gradient: Gradient {
-                        GradientStop {
-                            position: 0
-                            color: Constants.genericTable.cellColor
+                    onPositionChanged: {
+                        if (pressed) {
+                            var delta_x = (mouseX - mouse_x);
+                            var next_idx = (index + 1) % 2;
+                            var min_width = tableView.width / 4;
+                            if (tableView.columnWidths[index] + delta_x > min_width && tableView.columnWidths[next_idx] - delta_x > min_width) {
+                                tableView.columnWidths[index] += delta_x;
+                                tableView.columnWidths[next_idx] -= delta_x;
+                            }
+                            tableView.forceLayout();
                         }
+                    }
+                }
 
-                        GradientStop {
-                            position: 1
-                            color: Constants.genericTable.gradientColor
-                        }
+                gradient: Gradient {
+                    GradientStop {
+                        position: 0
+                        color: Constants.genericTable.cellColor
+                    }
 
+                    GradientStop {
+                        position: 1
+                        color: Constants.genericTable.gradientColor
                     }
 
                 }
 
             }
 
-            TextEdit {
-                id: textEdit
+        }
 
-                visible: false
+        SwiftTableView {
+            id: tableView
+
+            onVisibleChanged: {
+                tableView.model.clear();
+            }
+            columnWidths: parent.columnWidths
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            stayFocused: true
+
+            model: TableModel {
+                id: tableModel
+
+                rows: [{
+                    "Name": "",
+                    "Value": ""
+                }]
+
+                TableModelColumn {
+                    display: "Name"
+                }
+
+                TableModelColumn {
+                    display: "Value"
+                }
+
             }
 
-            Shortcut {
-                sequences: [StandardKey.Copy]
-                onActivated: {
-                    if (selectedRowIdx != -1) {
-                        textEdit.text = JSON.stringify(tableView.model.getRow(selectedRowIdx));
-                        textEdit.selectAll();
-                        textEdit.copy();
-                        selectedRowIdx = -1;
-                    }
-                }
-            }
+            delegate: Rectangle {
+                implicitHeight: Constants.genericTable.cellHeight
+                implicitWidth: tableView.columnWidthProvider(column)
+                border.color: tableView.delegateBorderColor
+                border.width: tableView.delegateBorderWidth
+                color: {
+                    var item = tableView.model.getRow(row);
+                    if (item[Constants.settingsTable.tableRightColumnHeader] == "")
+                        return Constants.genericTable.borderColor;
 
-            TableView {
-                id: tableView
+                    if (selectedRowIdx == row)
+                        return Constants.genericTable.cellHighlightedColor;
 
-                columnSpacing: -1
-                rowSpacing: -1
-                columnWidthProvider: function(column) {
-                    return columnWidths[column];
-                }
-                reuseItems: true
-                boundsBehavior: Flickable.StopAtBounds
-                anchors.top: horizontalHeader.bottom
-                width: parent.width
-                height: parent.height - horizontalHeader.height
-
-                ScrollBar.horizontal: ScrollBar {
+                    return Constants.genericTable.cellColor;
                 }
 
-                ScrollBar.vertical: ScrollBar {
-                }
-
-                model: TableModel {
-                    id: tableModel
-
-                    TableModelColumn {
-                        display: "Name"
-                    }
-
-                    TableModelColumn {
-                        display: "Value"
-                    }
-
-                }
-
-                delegate: Rectangle {
-                    implicitHeight: Constants.genericTable.cellHeight
-                    implicitWidth: tableView.columnWidthProvider(column)
-                    border.color: Constants.genericTable.borderColor
-                    color: {
+                Label {
+                    width: parent.width
+                    horizontalAlignment: Text.AlignLeft
+                    verticalAlignment: Text.AlignVCenter
+                    clip: true
+                    font.family: Constants.genericTable.fontFamily
+                    font.pointSize: Constants.largePointSize
+                    font.bold: {
                         var item = tableView.model.getRow(row);
-                        if (item[Constants.settingsTable.tableRightColumnHeader] == "")
-                            return Constants.genericTable.borderColor;
-
-                        if (selectedRowIdx == row)
-                            return Constants.genericTable.cellHighlightedColor;
-
-                        return Constants.genericTable.cellColor;
+                        return item[Constants.settingsTable.tableRightColumnHeader] == "";
                     }
+                    text: model.display
+                    elide: Text.ElideRight
+                    padding: Constants.genericTable.padding
+                }
 
-                    Label {
-                        width: parent.width
-                        horizontalAlignment: Text.AlignLeft
-                        clip: true
-                        font.family: Constants.genericTable.fontFamily
-                        font.pointSize: Constants.largePointSize
-                        font.bold: {
-                            var item = tableView.model.getRow(row);
-                            return item[Constants.settingsTable.tableRightColumnHeader] == "";
-                        }
-                        text: model.display
-                        elide: Text.ElideRight
-                        padding: Constants.genericTable.padding
-                    }
-
-                    MouseArea {
-                        width: parent.width
-                        height: parent.height
-                        anchors.centerIn: parent
-                        onPressed: {
-                            if (selectedRowIdx == row)
-                                selectedRowIdx = -1;
-                            else
-                                selectedRowIdx = row;
+                MouseArea {
+                    width: parent.width
+                    height: parent.height
+                    anchors.centerIn: parent
+                    onPressed: {
+                        tableView.focus = true;
+                        if (tableView._currentSelectedIndex == row) {
+                            Globals.currentSelectedTable = null;
+                            tableView._currentSelectedIndex = -1;
+                        } else {
+                            Globals.currentSelectedTable = tableView;
+                            tableView._currentSelectedIndex = row;
+                            Globals.copyClipboard = JSON.stringify(tableView.model.getRow(tableView._currentSelectedIndex));
                         }
                     }
-
                 }
 
             }

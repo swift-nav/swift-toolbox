@@ -18,13 +18,13 @@ MainTab {
         orientation: Qt.Horizontal
 
         SolutionTabComponents.SolutionTable {
-            SplitView.minimumWidth: 240
+            SplitView.minimumWidth: Constants.solutionTable.minimumWidth
         }
 
         StackLayout {
             id: solutionBarLayout
 
-            SplitView.minimumWidth: 410
+            SplitView.minimumWidth: Constants.solutionPosition.minimumWidth
             SplitView.fillWidth: true
             SplitView.fillHeight: true
             currentIndex: curSubTabIndex

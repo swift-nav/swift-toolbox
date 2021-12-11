@@ -215,6 +215,7 @@ Item {
             wrapMode: Text.Wrap
             font.family: Constants.genericTable.fontFamily
             font.pointSize: Constants.largePointSize
+            selectByMouse: true
             onEditingFinished: {
                 data_model.settings_write_request(settingGroup, settingName, text);
             }

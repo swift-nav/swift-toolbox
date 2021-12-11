@@ -4,12 +4,12 @@ import Qt.labs.qmlmodels 1.0
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import SwiftConsole 1.0
+import "TableComponents"
 
 Item {
     property var logEntries: []
     property variant columnWidths: [parent.width * Constants.logPanel.defaultColumnWidthRatios[0], parent.width * Constants.logPanel.defaultColumnWidthRatios[1], parent.width * Constants.logPanel.defaultColumnWidthRatios[2]]
     property real mouse_x: 0
-    property int selectedRow: -1
     property bool forceLayoutLock: false
     property variant logLevelLabels: []
     property int logLevelIndex: 3
@@ -24,24 +24,6 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-
-        TextEdit {
-            id: textEdit
-
-            visible: false
-        }
-
-        Shortcut {
-            sequences: [StandardKey.Copy]
-            onActivated: {
-                if (selectedRow != -1) {
-                    textEdit.text = JSON.stringify(tableView.model.getRow(selectedRow));
-                    textEdit.selectAll();
-                    textEdit.copy();
-                    selectedRow = -1;
-                }
-            }
-        }
 
         Item {
             anchors.fill: parent
@@ -249,28 +231,15 @@ Item {
 
         }
 
-        TableView {
+        SwiftTableView {
             id: tableView
 
-            columnSpacing: -1
-            rowSpacing: -1
-            columnWidthProvider: function(column) {
-                return columnWidths[column];
-            }
-            onWidthChanged: {
-                tableView.forceLayout();
-            }
-            reuseItems: true
-            boundsBehavior: Flickable.StopAtBounds
             anchors.top: horizontalHeader.bottom
-            width: parent.width
-            height: parent.height - horizontalHeader.height
-
-            ScrollBar.horizontal: ScrollBar {
-            }
-
-            ScrollBar.vertical: ScrollBar {
-            }
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            columnWidths: parent.parent.columnWidths
+            delegateBorderWidth: Constants.logPanel.delegateBorderWidth
 
             model: TableModel {
                 id: tableModel
@@ -295,36 +264,6 @@ Item {
 
                 TableModelColumn {
                     display: Constants.logPanel.msgHeader
-                }
-
-            }
-
-            delegate: Rectangle {
-                implicitHeight: Constants.logPanel.cellHeight
-                implicitWidth: tableView.columnWidthProvider(column)
-                color: row == selectedRow ? Constants.genericTable.cellHighlightedColor : Constants.genericTable.cellColor
-
-                Label {
-                    width: parent.width
-                    horizontalAlignment: Text.AlignLeft
-                    clip: true
-                    font.family: Constants.genericTable.fontFamily
-                    font.pointSize: Constants.largePointSize
-                    text: model.display
-                    elide: Text.ElideRight
-                    padding: Constants.genericTable.padding
-                }
-
-                MouseArea {
-                    width: parent.width
-                    height: parent.height
-                    anchors.centerIn: parent
-                    onPressed: {
-                        if (selectedRow == row)
-                            selectedRow = -1;
-                        else
-                            selectedRow = row;
-                    }
                 }
 
             }
@@ -362,8 +301,8 @@ Item {
                 for (var idx in logEntries) {
                     tableView.model.setRow(idx, logEntries[idx]);
                 }
-                if (logPanelData.entries.length && selectedRow != -1)
-                    selectedRow += logPanelData.entries.length;
+                if (logPanelData.entries.length && tableView.selectedRow != -1)
+                    tableView.selectedRow += logPanelData.entries.length;
 
                 logPanelData.entries = [];
             }

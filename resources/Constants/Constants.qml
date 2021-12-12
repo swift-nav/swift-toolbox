@@ -99,6 +99,7 @@ QtObject {
 
         licenses: QtObject {
             readonly property int dropdownHeight: 40
+            readonly property string fontFamily: "Roboto"
             readonly property string robotoFontTabLabel: "Roboto Font"
             readonly property string fontAwesomeIconsTabLabel: "Font Awesome Icons"
             readonly property string robotoFontLicensePath: ":/fonts/Roboto-LICENSE.txt"

@@ -11,6 +11,7 @@ ColumnLayout {
         Layout.preferredHeight: Constants.logoPopup.licenses.dropdownHeight
         Layout.preferredWidth: parent.width / 2
         Layout.alignment: Qt.AlignHCenter
+        font.family: Constants.logoPopup.licenses.fontFamily
         model: [Constants.logoPopup.licenses.robotoFontTabLabel, Constants.logoPopup.licenses.fontAwesomeIconsTabLabel]
     }
 
@@ -22,8 +23,9 @@ ColumnLayout {
 
         ScrollView {
             ScrollBar.vertical.policy: ScrollBar.AlwaysOn
+            clip: true
 
-            TextArea {
+            TextEdit {
                 id: robotoFontTextArea
 
                 text: robotoFileIO.text
@@ -32,6 +34,8 @@ ColumnLayout {
                 horizontalAlignment: TextEdit.AlignJustify
                 selectByKeyboard: true
                 selectByMouse: true
+                font.family: Constants.logoPopup.licenses.fontFamily
+                font.pointSize: Constants.largePointSize
 
                 FileIO {
                     id: robotoFileIO
@@ -49,8 +53,9 @@ ColumnLayout {
 
         ScrollView {
             ScrollBar.vertical.policy: ScrollBar.AlwaysOn
+            clip: true
 
-            TextArea {
+            TextEdit {
                 id: fontAwesomeTextArea
 
                 text: fontAwesomeFileIO.text
@@ -59,6 +64,8 @@ ColumnLayout {
                 horizontalAlignment: TextEdit.AlignJustify
                 selectByKeyboard: true
                 selectByMouse: true
+                font.family: Constants.logoPopup.licenses.fontFamily
+                font.pointSize: Constants.largePointSize
 
                 FileIO {
                     id: fontAwesomeFileIO

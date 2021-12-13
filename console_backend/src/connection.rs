@@ -1,7 +1,8 @@
 use std::{
     fmt::Debug,
-    fs, io,
-    net::{SocketAddr, TcpStream, ToSocketAddrs},
+    fs,
+    io::{self, ErrorKind},
+    net::{TcpStream, ToSocketAddrs},
     ops::Drop,
     path::{Path, PathBuf},
     thread,
@@ -9,13 +10,11 @@ use std::{
     time::Duration,
 };
 
-use anyhow::anyhow;
 use crossbeam::channel::Sender;
 use log::{error, info};
 
 use crate::client_sender::BoxedClientSender;
 use crate::constants::*;
-use crate::errors::*;
 use crate::process_messages::{process_messages, Messages};
 use crate::shared_state::{ConnectionState, SharedState};
 use crate::status_bar::StatusBar;
@@ -293,42 +292,51 @@ pub struct TcpConnection {
     name: String,
     host: String,
     port: u16,
-    socket_addrs: SocketAddr,
 }
 
 impl TcpConnection {
     fn new(host: String, port: u16) -> Result<Self> {
         let name = format!("{}:{}", host, port);
-        let socket_addrs = TcpConnection::socket_addrs(&name)?;
-        Ok(Self {
-            name,
-            host,
-            port,
-            socket_addrs,
-        })
+        Ok(Self { name, host, port })
     }
 
     fn name(&self) -> String {
         self.name.clone()
     }
 
-    fn socket_addrs(name: &str) -> Result<SocketAddr> {
-        let mut socket = name.to_socket_addrs()?;
-        if let Some(s) = socket.next() {
-            Ok(s)
-        } else {
-            Err(anyhow!("{}", TCP_CONNECTION_PARSING_FAILURE))
+    fn open_connection(&self) -> io::Result<TcpStream> {
+        let addresses = self.name.to_socket_addrs()?;
+
+        let mut errors = vec![];
+
+        for address in addresses {
+            info!("Attempting to connect to resolved address {:?}", address);
+            match TcpStream::connect_timeout(
+                &address,
+                Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS),
+            ) {
+                Ok(stream) => return Ok(stream),
+                Err(err) => {
+                    info!(
+                        "Error connecting to resolved address {:?}: {:?}",
+                        address, err
+                    );
+                    errors.push(err);
+                }
+            }
         }
+
+        Err(io::Error::new(
+            ErrorKind::ConnectionRefused,
+            format!("Could not connect to {:?}", self.name),
+        ))
     }
 
     fn try_connect(
         self,
         shared_state: Option<&SharedState>,
     ) -> io::Result<(Box<dyn io::Read + Send>, Box<dyn io::Write + Send>)> {
-        let rdr = TcpStream::connect_timeout(
-            &self.socket_addrs,
-            Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS),
-        )?;
+        let rdr = self.open_connection()?;
         rdr.set_read_timeout(Some(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS)))?;
         let writer = rdr.try_clone()?;
         info!("Connected to tcp stream!");

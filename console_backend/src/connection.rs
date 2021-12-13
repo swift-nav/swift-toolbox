@@ -328,7 +328,7 @@ impl TcpConnection {
 
         Err(io::Error::new(
             ErrorKind::ConnectionRefused,
-            format!("Could not connect to {:?}", self.name),
+            format!("Could not connect to {:?}: {:#?}", self.name, errors),
         ))
     }
 

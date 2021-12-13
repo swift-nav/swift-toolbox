@@ -8,8 +8,6 @@ pub const CONVERT_TO_STR_FAILURE: &str = "error converting to str";
 pub(crate) const UNABLE_TO_STOP_TIMER_THREAD_FAILURE: &str = "unable to kill running timer thread";
 pub(crate) const UNABLE_TO_SEND_INS_UPDATE_FAILURE: &str = "unable to send an ins status update";
 pub(crate) const THREAD_JOIN_FAILURE: &str = "thread join failure";
-pub(crate) const TCP_CONNECTION_PARSING_FAILURE: &str =
-    "unable to parse the provided string for ip string";
 pub(crate) const CONSOLE_LOG_JSON_TO_STRING_FAILURE: &str = "unable to convert json to string";
 pub(crate) const CROSSBEAM_SCOPE_UNWRAP_FAILURE: &str = "unable to unwrap crossbeam scope";
 pub(crate) const UNABLE_TO_CLONE_UPDATE_SHARED: &str = "unable to clone update shared";

@@ -79,13 +79,13 @@ fn main() -> Result<()> {
                 let file = fs::File::open(source)?;
                 let size = file.metadata()?.len() as usize;
                 let mut bytes_written = 0;
-                eprint!("\rWriting 0.0%...");
+                print!("\rWriting 0.0%...");
                 fileio.overwrite_with_progress(dest, file, |n| {
                     bytes_written += n;
                     let progress = (bytes_written as f64) / (size as f64) * 100.0;
-                    eprint!("\rWriting {:.2}%...", progress);
+                    print!("\rWriting {:.2}%...", progress);
                 })?;
-                eprintln!("\nFile written successfully.");
+                println!("\nFile written successfully ({} bytes).", bytes_written);
                 done_tx.send(true).unwrap();
                 Result::Ok(())
             })
@@ -101,7 +101,7 @@ fn main() -> Result<()> {
             scope(|s| {
                 s.spawn(|_| run(rdr));
                 let mut fileio = Fileio::new(link, sender);
-                let dest: Box<dyn Write> = match dest {
+                let dest: Box<dyn Write + Send> = match dest {
                     Some(path) => Box::new(fs::File::create(path)?),
                     None => Box::new(io::stdout()),
                 };

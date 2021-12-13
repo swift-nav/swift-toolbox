@@ -153,7 +153,7 @@ pub fn update_tab_thread(
     update_tab_context: UpdateTabContext,
     shared_state: SharedState,
     client_sender: BoxedClientSender,
-    link: Link<'_, ()>,
+    link: Link<'static, ()>,
     msg_sender: MsgSender,
 ) {
     let is_running = ArcBool::new_with(true);

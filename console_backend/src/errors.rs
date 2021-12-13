@@ -18,3 +18,4 @@ pub(crate) const FILEIO_CHANNEL_SEND_FAILURE: &str =
 pub(crate) const SOLUTION_POSITION_UNIT_SELECTION_NOT_AVAILABLE: &str =
     "solution position unit selection not available";
 pub(crate) const PROCESS_MESSAGES_FAILURE: &str = "process_messages thread panicked";
+pub(crate) const THREAD_START_FAILURE: &str = "failed to start a new thread";

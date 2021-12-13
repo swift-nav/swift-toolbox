@@ -5,7 +5,11 @@ use std::{
 };
 
 use anyhow::{anyhow, bail};
-use crossbeam::{channel, scope, select, sync::Parker};
+use crossbeam::{
+    channel::{self, Receiver, Sender},
+    scope, select,
+    sync::Parker,
+};
 use log::{debug, error, trace};
 use parking_lot::Mutex;
 use rand::Rng;
@@ -350,7 +354,7 @@ fn with_repeater<F, G>(
     sender: &MsgSender,
     link: &Link<'static, ()>,
     config: FileioConfig,
-    mut req_gen: F,
+    req_gen: F,
     mut cb: G,
 ) -> Result<()>
 where
@@ -359,20 +363,6 @@ where
 {
     // maps sequences -> pending requests
     let pending_map = Mutex::new(BTreeMap::new());
-    let window_available = || {
-        let range = {
-            let guard = pending_map.lock();
-            let mut seqs = guard.keys();
-            seqs.next().copied().zip(seqs.next_back().copied())
-        };
-        match range {
-            Some((oldest, newest)) => {
-                // will a new batch fit in the window size
-                (newest - oldest) + config.batch_size as u32 <= config.window_size as u32
-            }
-            None => true,
-        }
-    };
     // each sequence gets sent to this channel. the timeout thread pulls from
     // it and checks the timeouts in order. On a retry the sequence gets pushed
     // back onto the queue
@@ -400,107 +390,35 @@ where
             .builder()
             .name("request-generator".into())
             .spawn(move |_| {
-                let sequence = new_sequence();
-                for seq in sequence.. {
-                    let msg = req_gen(seq);
-                    let exit = msg.as_ref().map_or(true, Option::is_none);
-                    if req_tx.send(msg).is_err() || exit {
-                        break;
-                    }
-                }
-                debug!("request-generator thread finished");
+                req_generator_thd(req_gen, req_tx);
             })
             .expect(THREAD_START_FAILURE);
         scope
             .builder()
             .name("request-maker".into())
             .spawn(move |_| {
-                let mut batch = Vec::with_capacity(config.batch_size);
-                let send_batch = move |batch: &mut Vec<MsgFileioWriteReq>| -> bool {
-                    for req in batch.drain(..config.batch_size.min(batch.len())) {
-                        match sender.send(req.clone().into()) {
-                            Ok(_) => {
-                                let req = PendingReq::new(req);
-                                let seq = req.message.sequence;
-                                pending_map.lock().insert(seq, req);
-                                let _ = pending_queue_tx.send(Some(seq));
-                            }
-                            Err(err) => {
-                                let _ = err_tx.send(err);
-                                return false;
-                            }
-                        }
-                    }
-                    true
-                };
-                for req in req_rx {
-                    let req = match req {
-                        Ok(Some(req)) => req,
-                        Err(err) => {
-                            let _ = err_tx.send(err);
-                            break;
-                        }
-                        _ => break,
-                    };
-                    batch.push(req);
-                    if batch.len() < config.batch_size {
-                        continue;
-                    }
-                    while !window_available() {
-                        send_parker.park();
-                    }
-                    if !send_batch(&mut batch) {
-                        break;
-                    }
-                    trace!("batch sent");
-                }
-                debug!("flushing remaining messages");
-                while !batch.is_empty() {
-                    while !window_available() {
-                        send_parker.park();
-                    }
-                    if !send_batch(&mut batch) {
-                        break;
-                    }
-                }
-                debug!("request-maker thread finished");
+                req_maker_thd(
+                    config,
+                    sender,
+                    pending_map,
+                    pending_queue_tx,
+                    err_tx,
+                    req_rx,
+                    send_parker,
+                );
             })
             .expect(THREAD_START_FAILURE);
         scope
             .builder()
             .name("timeout".into())
             .spawn(move |_| {
-                for seq in pending_queue_rx.iter() {
-                    let seq = match seq {
-                        Some(seq) => seq,
-                        None => break,
-                    };
-                    let elapsed = match pending_map.lock().get(&seq) {
-                        Some(req) => req.sent_at.elapsed(),
-                        None => continue,
-                    };
-                    if elapsed < FILE_IO_TIMEOUT {
-                        std::thread::sleep(FILE_IO_TIMEOUT - elapsed);
-                    }
-                    let mut guard = pending_map.lock();
-                    if let Some(req) = guard.get_mut(&seq) {
-                        req.retries += 1;
-                        trace!("retry {} times {}", req.message.sequence, req.retries);
-                        if req.retries >= MAX_RETRIES {
-                            let _ = err_tx.send(anyhow!("fileio timeout"));
-                        }
-                        req.sent_at = Instant::now();
-                        let msg = req.message.clone();
-                        let seq = msg.sequence;
-                        drop(guard);
-                        if let Err(err) = sender.send(msg.into()) {
-                            let _ = err_tx.send(err);
-                            break;
-                        };
-                        let _ = pending_queue_tx.send(Some(seq));
-                    }
-                }
-                debug!("timeout thread finished");
+                timeout_thd(
+                    pending_queue_rx,
+                    pending_map,
+                    err_tx,
+                    sender,
+                    pending_queue_tx,
+                );
             })
             .expect(THREAD_START_FAILURE);
         loop {
@@ -529,6 +447,135 @@ where
     .expect(CROSSBEAM_SCOPE_UNWRAP_FAILURE);
     link.unregister(key);
     result
+}
+
+fn req_generator_thd<F: FnMut(u32) -> Result<Option<MsgFileioWriteReq>> + Send>(
+    mut req_gen: F,
+    req_tx: Sender<Result<Option<MsgFileioWriteReq>>>,
+) {
+    let sequence = new_sequence();
+    for seq in sequence.. {
+        let msg = req_gen(seq);
+        let exit = msg.as_ref().map_or(true, Option::is_none);
+        if req_tx.send(msg).is_err() || exit {
+            break;
+        }
+    }
+    debug!("request-generator thread finished");
+}
+fn req_maker_thd(
+    config: FileioConfig,
+    sender: &MsgSender,
+    pending_map: &Mutex<BTreeMap<u32, PendingReq>>,
+    pending_queue_tx: &Sender<Option<u32>>,
+    err_tx: &Sender<anyhow::Error>,
+    req_rx: Receiver<Result<Option<MsgFileioWriteReq>>>,
+    send_parker: Parker,
+) {
+    let mut batch = Vec::with_capacity(config.batch_size);
+    let send_batch = move |batch: &mut Vec<MsgFileioWriteReq>| -> bool {
+        for req in batch.drain(..config.batch_size.min(batch.len())) {
+            match sender.send(req.clone().into()) {
+                Ok(_) => {
+                    let req = PendingReq::new(req);
+                    let seq = req.message.sequence;
+                    pending_map.lock().insert(seq, req);
+                    let _ = pending_queue_tx.send(Some(seq));
+                }
+                Err(err) => {
+                    let _ = err_tx.send(err);
+                    return false;
+                }
+            }
+        }
+        true
+    };
+    for req in req_rx {
+        let req = match req {
+            Ok(Some(req)) => req,
+            Err(err) => {
+                let _ = err_tx.send(err);
+                break;
+            }
+            _ => break,
+        };
+        batch.push(req);
+        if batch.len() < config.batch_size {
+            continue;
+        }
+        while !window_available(pending_map, config) {
+            send_parker.park();
+        }
+        if !send_batch(&mut batch) {
+            break;
+        }
+        trace!("batch sent");
+    }
+    debug!("flushing remaining messages");
+    while !batch.is_empty() {
+        while !window_available(pending_map, config) {
+            send_parker.park();
+        }
+        if !send_batch(&mut batch) {
+            break;
+        }
+    }
+    debug!("request-maker thread finished");
+}
+
+fn timeout_thd(
+    pending_queue_rx: &Receiver<Option<u32>>,
+    pending_map: &Mutex<BTreeMap<u32, PendingReq>>,
+    err_tx: &Sender<anyhow::Error>,
+    sender: &MsgSender,
+    pending_queue_tx: &Sender<Option<u32>>,
+) {
+    for seq in pending_queue_rx.iter() {
+        let seq = match seq {
+            Some(seq) => seq,
+            None => break,
+        };
+        let elapsed = match pending_map.lock().get(&seq) {
+            Some(req) => req.sent_at.elapsed(),
+            None => continue,
+        };
+        if elapsed < FILE_IO_TIMEOUT {
+            std::thread::sleep(FILE_IO_TIMEOUT - elapsed);
+        }
+        let mut guard = pending_map.lock();
+        if let Some(req) = guard.get_mut(&seq) {
+            req.retries += 1;
+            trace!("retry {} times {}", req.message.sequence, req.retries);
+            if req.retries >= MAX_RETRIES {
+                let _ = err_tx.send(anyhow!("fileio timeout"));
+            }
+            req.sent_at = Instant::now();
+            let msg = req.message.clone();
+            let seq = msg.sequence;
+            drop(guard);
+            if let Err(err) = sender.send(msg.into()) {
+                let _ = err_tx.send(err);
+                break;
+            };
+            let _ = pending_queue_tx.send(Some(seq));
+        }
+    }
+    debug!("timeout thread finished");
+}
+
+fn window_available(pending_map: &Mutex<BTreeMap<u32, PendingReq>>, config: FileioConfig) -> bool {
+    let range = {
+        let guard = pending_map.lock();
+        let mut seqs = guard.keys();
+        seqs.next().copied().zip(seqs.next_back().copied())
+    };
+    match range {
+        Some((oldest, newest)) => {
+            // will a new batch fit in the window size
+            (newest - oldest) + config.batch_size as u32 <= config.window_size as u32
+        }
+        None => true,
+    }
 }
 
 #[derive(Debug, Clone)]

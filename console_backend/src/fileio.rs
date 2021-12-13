@@ -10,7 +10,7 @@ use crossbeam::{
     scope, select,
     sync::Parker,
 };
-use log::{debug, error, trace};
+use log::{debug, trace};
 use parking_lot::Mutex;
 use rand::Rng;
 use sbp::{
@@ -195,7 +195,7 @@ impl Fileio {
                     let chunk_size = match chunk_sizes.lock().remove(&msg.sequence) {
                         Some(chunk_size) => chunk_size,
                         None => {
-                            error!("unexpected message {:?}", msg);
+                            debug!("unexpected message {:?}", msg);
                             return;
                         }
                     };

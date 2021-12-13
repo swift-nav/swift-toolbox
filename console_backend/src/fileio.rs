@@ -125,7 +125,7 @@ impl Fileio {
     {
         self.remove(filename.clone())?;
         let config = self.fetch_config();
-        let (tx, rx) = channel::bounded(1);
+        let (tx, rx) = channel::bounded(config.batch_size);
         let chunk_sizes = Mutex::new(HashMap::with_capacity(config.window_size));
         let mut data = BufReader::new(data);
         let mut offset = 0;

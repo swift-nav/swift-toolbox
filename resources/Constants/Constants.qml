@@ -509,7 +509,7 @@ QtObject {
         readonly property int xAxisLabelsAngle: 45
         readonly property string xAxisTitleText: "GPS Time of Week"
         readonly property int xAxisMinOffsetFromMaxSeconds: 20
-        readonly property int unitDropdownWidth: 50
+        readonly property int unitDropdownWidth: 75
         readonly property int chartHeightOffset: 0
         readonly property int chartBottomMargin: 30
         readonly property int legendBottomMargin: 120

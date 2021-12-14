@@ -193,6 +193,8 @@ Item {
                     height: parent.height
                     anchors.right: parent.right
                     cursorShape: Qt.SizeHorCursor
+                    enabled: index != 2
+                    visible: index != 2
                     onPressed: {
                         mouse_x = mouseX;
                         forceLayoutLock = true;

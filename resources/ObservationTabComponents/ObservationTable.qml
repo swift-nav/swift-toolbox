@@ -147,6 +147,8 @@ ColumnLayout {
                 height: parent.height
                 anchors.right: parent.right
                 cursorShape: Qt.SizeHorCursor
+                enabled: index !== (columnNames.length - 1)
+                visible: index !== (columnNames.length - 1)
                 onPressed: {
                     mouse_x = mouseX;
                 }

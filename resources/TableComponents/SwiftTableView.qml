@@ -38,6 +38,7 @@ TableView {
     }
 
     ScrollBar.vertical: ScrollBar {
+        policy: ScrollBar.AlwaysOn
     }
 
     delegate: Rectangle {

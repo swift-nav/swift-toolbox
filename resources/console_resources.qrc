@@ -70,8 +70,6 @@
     <file>UpdateTabComponents/FileIOSelectLocalFileAndDestPath.qml</file>
     <file>UpdateTabComponents/FirmwareDownload.qml</file>
     <file>UpdateTabComponents/FirmwareVersion.qml</file>
-    <file>images/iconic/arrows_blue.png</file>
-    <file>images/iconic/arrows_grey.png</file>
     <file>images/iconic/play.svg</file>
     <file>images/fontawesome/LICENSE.txt</file>
     <file>images/fontawesome/bars-solid.svg</file>

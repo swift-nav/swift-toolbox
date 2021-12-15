@@ -278,23 +278,22 @@ QtObject {
     }
 
     statusBar: QtObject {
-        readonly property int margin: 10
-        readonly property int spacing: 10
-        readonly property color borderColor: "#CDC9C9"
-        readonly property int borderWidth: 1
-        readonly property color keyTextColor: "#00006E"
-        readonly property real smallKeyWidthRatio: 0.05
-        readonly property int innerKeyValSpacing: 5
-        readonly property int arrowsSideLength: 15
-        readonly property string arrowsBluePath: "qrc:/images/iconic/arrows_blue.png"
-        readonly property string arrowsGreyPath: "qrc:/images/iconic/arrows_grey.png"
-        readonly property string portLabel: "Port: "
-        readonly property string posLabel: "Pos: "
-        readonly property string rtkLabel: "RTK: "
-        readonly property string satsLabel: "Sats: "
-        readonly property string corrAgeLabel: "Corr Age: "
-        readonly property string insLabel: "INS: "
-        readonly property string antennaLabel: "Ant: "
+        readonly property int verticalPadding: 6
+        readonly property int leftMargin: 15
+        readonly property int spacing: 20
+        readonly property color borderColor: "black"
+        readonly property int borderWidth: 0
+        readonly property color textColor: "white"
+        readonly property int textPointSize: largePointSize + 1
+        readonly property int keyValueSpacing: 5
+        readonly property int valueMinimumWidth: 25
+        readonly property string portLabel: "Port:"
+        readonly property string posLabel: "Position:"
+        readonly property string rtkLabel: "RTK:"
+        readonly property string satsLabel: "Sats:"
+        readonly property string corrAgeLabel: "Correction Age:"
+        readonly property string insLabel: "INS:"
+        readonly property string antennaLabel: "Antenna:"
         readonly property string defaultValue: "--"
     }
 

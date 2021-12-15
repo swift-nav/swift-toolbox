@@ -15,6 +15,7 @@ ApplicationWindow {
     minimumHeight: Globals.minimumHeight
     font.pointSize: Constants.mediumPointSize
     visible: true
+    title: (loggingBar.sbpRecording ? "[L] " : "     ") + statusBar.title
 
     TextEdit {
         id: textEdit
@@ -237,6 +238,8 @@ ApplicationWindow {
             Layout.fillHeight: true
             Layout.minimumWidth: Constants.sideNavBar.tabBarWidth
             enabled: stack.currentIndex != 0
+            dataRate: statusBar.dataRate
+            solidConnection: statusBar.solidConnection
         }
 
         StackLayout {
@@ -312,26 +315,14 @@ ApplicationWindow {
 
                 }
 
-                Rectangle {
-                    id: statusBar
-
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: Constants.statusBarPreferredHeight
-                    z: Constants.commonChart.zAboveCharts
-
-                    StatusBar {
-                        property alias sbpRecording: loggingBar.sbpRecording
-                        property alias title: main.title
-                        property alias solidConnection: sideNavBar.solidConnection
-                        property alias dataRate: sideNavBar.dataRate
-                    }
-
-                }
-
             }
 
         }
 
+    }
+
+    footer: StatusBar {
+        id: statusBar
     }
 
 }

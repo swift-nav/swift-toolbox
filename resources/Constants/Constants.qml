@@ -4,10 +4,10 @@ import QtQuick.Controls.Material 2.12
 pragma Singleton
 
 QtObject {
-    readonly property real margins: 2
     readonly property real tabBarWidth: 70
     readonly property real tabBarHeight: 45
     readonly property real topLevelSpacing: 0
+    property QtObject mainTabs
     property QtObject tabInfoBar
     property QtObject logPanel
     property QtObject statusBar
@@ -62,6 +62,11 @@ QtObject {
 
     robotoCondensedLightFont: FontLoader {
         source: "qrc:/fonts/RobotoCondensed-Light.ttf"
+    }
+
+    mainTabs: QtObject {
+        readonly property int horizontalMargins: 15
+        readonly property int verticalMargins: 4
     }
 
     tabInfoBar: QtObject {

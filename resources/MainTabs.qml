@@ -14,6 +14,10 @@ Item {
         id: stackLayout
 
         anchors.fill: parent
+        anchors.leftMargin: Constants.mainTabs.horizontalMargins
+        anchors.rightMargin: Constants.mainTabs.horizontalMargins
+        anchors.topMargin: Constants.mainTabs.verticalMargins
+        anchors.bottomMargin: Constants.mainTabs.verticalMargins
 
         TrackingTab {
             curSubTabIndex: mainTabs.curSubTabIndex

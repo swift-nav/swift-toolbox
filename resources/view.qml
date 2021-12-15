@@ -287,9 +287,6 @@ ApplicationWindow {
 
                         curSubTabIndex: tabInfoBar.curSubTabIndex
                         SplitView.fillHeight: true
-                        SplitView.fillWidth: true
-                        Layout.leftMargin: Constants.margins
-                        Layout.rightMargin: Constants.margins
                         currentIndex: sideNavBar.currentIndex
                     }
 

@@ -510,7 +510,6 @@ QtObject {
         readonly property int xAxisMinOffsetFromMaxSeconds: 20
         readonly property int unitDropdownWidth: 75
         readonly property int chartHeightOffset: 0
-        readonly property int chartBottomMargin: 30
         readonly property int legendBottomMargin: 120
         readonly property int legendLeftMargin: 80
     }

@@ -59,6 +59,7 @@ Item {
                 id: solutionVelocityChart
 
                 Layout.alignment: Qt.AlignBottom
+                Layout.bottomMargin: Constants.commonChart.margin
                 Layout.bottomMargin: Constants.solutionVelocity.chartBottomMargin
                 Layout.fillHeight: true
                 Layout.fillWidth: true

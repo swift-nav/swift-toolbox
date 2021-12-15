@@ -18,8 +18,7 @@ MainTab {
         height: parent.height
         visible: true
 
-        Item {
-            SplitView.minimumHeight: Constants.observationTab.titleAreaHight
+        Rectangle {
             SplitView.preferredHeight: 0.5 * parent.height
             width: parent.width
 
@@ -38,9 +37,7 @@ MainTab {
 
         }
 
-        Item {
-            SplitView.minimumHeight: Constants.observationTab.titleAreaHight
-            SplitView.preferredHeight: 0.5 * parent.height
+        Rectangle {
             Layout.fillHeight: true
             width: parent.width
 

@@ -365,7 +365,8 @@ impl BaselineTab {
                 self.table.insert(HEADING, heading_.to_string());
             }
             if let Some(age_corrections_) = self.age_corrections {
-                self.table.insert(CORR_AGE_S, age_corrections_.to_string());
+                self.table
+                    .insert(CORR_AGE_S, format!("{:.1}", age_corrections_));
             }
         }
 

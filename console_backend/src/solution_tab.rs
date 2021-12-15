@@ -563,10 +563,8 @@ impl SolutionTab {
             }
             self.table
                 .insert(SATS_USED, pos_llh_fields.n_sats.to_string());
-            self.table
-                .insert(LAT, format!("{:.12}", pos_llh_fields.lat));
-            self.table
-                .insert(LON, format!("{:.12}", pos_llh_fields.lon));
+            self.table.insert(LAT, format!("{:.9}", pos_llh_fields.lat));
+            self.table.insert(LON, format!("{:.9}", pos_llh_fields.lon));
             self.table
                 .insert(HEIGHT, format!("{:.3}", pos_llh_fields.height));
             self.table
@@ -596,7 +594,7 @@ impl SolutionTab {
         );
         if let Some(age_corrections_) = self.age_corrections {
             self.table
-                .insert(CORR_AGE_S, format!("{}", age_corrections_));
+                .insert(CORR_AGE_S, format!("{:.1}", age_corrections_));
         }
         let (clear, pause) = self.check_state();
         self.solution_draw(clear, pause);

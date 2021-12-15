@@ -79,7 +79,7 @@ pub(crate) const DOWN: &str = "D [m]";
 pub(crate) const DIST: &str = "Dist [m]";
 pub(crate) const FLAGS: &str = "Flags";
 pub(crate) const MODE: &str = "Mode";
-pub(crate) const HEADING: &str = "Heading [^]";
+pub(crate) const HEADING: &str = "Heading [°]";
 
 pub const BASELINE_DATA_KEYS: &[&str] = &[N_FLOAT, N_FIXED, N_DGNSS, E_FLOAT, E_FIXED, E_DGNSS];
 

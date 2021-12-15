@@ -8,9 +8,6 @@ QtObject {
     readonly property real tabBarWidth: 70
     readonly property real tabBarHeight: 45
     readonly property real topLevelSpacing: 0
-    readonly property real logPanelPreferredHeight: 100
-    readonly property int loggingBarPreferredHeight: 50
-    readonly property real statusBarPreferredHeight: 30
     property QtObject tabInfoBar
     property QtObject logPanel
     property QtObject statusBar
@@ -320,6 +317,7 @@ QtObject {
     }
 
     loggingBar: QtObject {
+        readonly property int preferredHeight: 50
         readonly property int buttonHeight: 40
         readonly property real buttonHeightRatio: 2 / 3
         readonly property int buttonSvgHeight: 15
@@ -450,6 +448,7 @@ QtObject {
     }
 
     logPanel: QtObject {
+        readonly property int preferredHeight: 100
         readonly property int width: 220
         readonly property variant defaultColumnWidthRatios: [0.15, 0.1, 0.75]
         readonly property int maxRows: 200

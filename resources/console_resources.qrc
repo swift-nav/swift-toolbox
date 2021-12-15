@@ -117,6 +117,7 @@
     <file alias="SwiftNav/TabButton.qml">styles/SwiftNav/TabButton.qml</file>
     <file alias="SwiftNav/RoundButton.qml">styles/SwiftNav/RoundButton.qml</file>
     <file alias="SwiftNav/ComboBox.qml">styles/SwiftNav/ComboBox.qml</file>
+    <file alias="SwiftNav/Label.qml">styles/SwiftNav/Label.qml</file>
     <file>MainTab.qml</file>
     <file>TabInfoBar.qml</file>
     <file>PositionLoopAnimation.qml</file>

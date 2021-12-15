@@ -129,7 +129,6 @@ Item {
                 ValueAxis {
                     id: solutionVelocityXAxis
 
-                    labelsAngle: Constants.solutionVelocity.xAxisLabelsAngle
                     titleText: Constants.solutionVelocity.xAxisTitleText
                     gridVisible: true
                     lineVisible: true

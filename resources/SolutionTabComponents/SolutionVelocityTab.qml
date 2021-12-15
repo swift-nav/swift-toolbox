@@ -60,7 +60,6 @@ Item {
 
                 Layout.alignment: Qt.AlignBottom
                 Layout.bottomMargin: Constants.commonChart.margin
-                Layout.bottomMargin: Constants.solutionVelocity.chartBottomMargin
                 Layout.fillHeight: true
                 Layout.fillWidth: true
                 backgroundColor: Constants.commonChart.backgroundColor

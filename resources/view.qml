@@ -315,14 +315,16 @@ ApplicationWindow {
 
                 }
 
+                StatusBar {
+                    id: statusBar
+
+                    Layout.fillWidth: true
+                }
+
             }
 
         }
 
-    }
-
-    footer: StatusBar {
-        id: statusBar
     }
 
 }

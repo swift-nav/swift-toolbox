@@ -147,6 +147,10 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
     def get_week(self) -> int:
         return self._week
 
+    # @Slot(int)  # type: ignore
+    # def getRow(self, row) -> str:
+    #     return self._rows[row]
+
     def set_remote(self, remote) -> None:
         """Setter for _remote."""
         self._remote = remote
@@ -161,6 +165,10 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
 
     def rowCount(self, parent=QModelIndex()):  # pylint: disable=unused-argument
         return len(self._rows)
+
+    @Slot(int, result="QVariant")
+    def getRow(self, index) -> "QVariant":
+        return self._rows[index]
 
     def columnCount(self, parent=QModelIndex()):  # pylint: disable=unused-argument
         return len(ObservationTableModel.column_metadata)

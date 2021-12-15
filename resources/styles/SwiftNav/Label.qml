@@ -36,15 +36,14 @@
 
 import "../Constants"
 import QtQuick 2.12
-import QtQuick.Controls 2.12
-import QtQuick.Controls.impl 2.12
 import QtQuick.Templates 2.12 as T
+import QtQuick.Controls.Material 2.12
 
 T.Label {
     id: control
 
-    color: control.palette.windowText
-    linkColor: control.palette.link
+    color: enabled ? Material.foreground : Material.hintTextColor
+    linkColor: Material.accentColor
     font: Qt.font({
         "family": Constants.fontFamily,
         "pointSize": Constants.largePointSize

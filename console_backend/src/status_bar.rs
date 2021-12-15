@@ -589,7 +589,7 @@ mod tests {
                 let hb = heartbeat_data.lock().unwrap();
                 assert!((*hb).solid_connection);
             }
-            sleep(Duration::from_secs_f64(UPDATE_TOLERANCE_SECONDS));
+            sleep(Duration::from_secs_f64(2.0 * UPDATE_TOLERANCE_SECONDS));
             {
                 let hb = heartbeat_data.lock().unwrap();
                 assert!(!(*hb).solid_connection);

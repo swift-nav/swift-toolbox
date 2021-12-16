@@ -175,10 +175,6 @@ jobs:
 
     name: Build Binaries
 
-    needs:
-      - checks
-      - backend_bench
-
     strategy:
       matrix:
         os:

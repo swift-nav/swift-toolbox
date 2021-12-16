@@ -299,6 +299,7 @@ jobs:
       - name: Build ${{ runner.os }} fileio binary.
         run: |
           cargo build --bin fileio --features="env_logger" --release
+          if: matrix.os == 'windows-2019'
 
       - name: Pull Git LFS objects
         run: git lfs pull

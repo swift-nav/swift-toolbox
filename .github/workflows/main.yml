@@ -267,10 +267,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build ${{ runner.os }} fileio binary.
-        run: |
-          cargo build --bin fileio --features="env_logger" --release
-
       - name: Build ${{ runner.os }} Binaries.
         env:
           LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
@@ -299,6 +295,10 @@ jobs:
           echo $INSTALLER_ARCHIVE >installer-archive.filename
           echo "INSTALLER_ARCHIVE=$(cat installer-archive.filename)" >>$GITHUB_ENV
         if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
+
+      - name: Build ${{ runner.os }} fileio binary.
+        run: |
+          cargo build --bin fileio --features="env_logger" --release
 
       - name: Pull Git LFS objects
         run: git lfs pull

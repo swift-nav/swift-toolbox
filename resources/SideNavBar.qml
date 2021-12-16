@@ -77,7 +77,7 @@ Item {
                 model: tabModel
                 currentIndex: -1
                 enabled: top.enabled
-                highlightMoveDuration: 200
+                highlightMoveDuration: 100
                 highlightResizeDuration: 0
                 highlightFollowsCurrentItem: true
 

@@ -180,7 +180,7 @@ Item {
                     anchors.horizontalCenter: parent.horizontalCenter
                     bottomPadding: 0
                     bottomInset: 0
-                    text: dataRate.toFixed(2) + " KB/s"
+                    text: dataRate.toFixed(2) + "  KB/s"
                     font.pointSize: Constants.smallPointSize
                     font.letterSpacing: -1
                     color: Qt.darker("white", enabled ? 1 : 1.4)

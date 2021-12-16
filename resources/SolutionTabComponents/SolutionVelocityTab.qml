@@ -59,7 +59,7 @@ Item {
                 id: solutionVelocityChart
 
                 Layout.alignment: Qt.AlignBottom
-                Layout.bottomMargin: Constants.solutionVelocity.chartBottomMargin
+                Layout.bottomMargin: Constants.commonChart.margin
                 Layout.fillHeight: true
                 Layout.fillWidth: true
                 backgroundColor: Constants.commonChart.backgroundColor
@@ -129,7 +129,6 @@ Item {
                 ValueAxis {
                     id: solutionVelocityXAxis
 
-                    labelsAngle: Constants.solutionVelocity.xAxisLabelsAngle
                     titleText: Constants.solutionVelocity.xAxisTitleText
                     gridVisible: true
                     lineVisible: true

@@ -147,10 +147,6 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
     def get_week(self) -> int:
         return self._week
 
-    # @Slot(int)  # type: ignore
-    # def getRow(self, row) -> str:
-    #     return self._rows[row]
-
     def set_remote(self, remote) -> None:
         """Setter for _remote."""
         self._remote = remote

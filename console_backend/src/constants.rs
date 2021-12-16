@@ -170,12 +170,9 @@ pub(crate) const INS_STATUS: &str = "INS Status";
 pub(crate) const ANG_RATE_X_DEG_P_S: &str = "Ang. Rate X [°/s]";
 pub(crate) const ANG_RATE_Y_DEG_P_S: &str = "Ang. Rate Y [°/s]";
 pub(crate) const ANG_RATE_Z_DEG_P_S: &str = "Ang. Rate Z [°/s]";
-pub(crate) const ROLL: &str = "Roll [°]";
-pub(crate) const PITCH: &str = "Pitch [°]";
-pub(crate) const YAW: &str = "Yaw [°]";
-pub(crate) const ROLL_ACC: &str = "Roll Acc [°]";
-pub(crate) const PITCH_ACC: &str = "Pitch Acc [°]";
-pub(crate) const YAW_ACC: &str = "Yaw Acc [°]";
+pub(crate) const ROLL: &str = "Roll (Accuracy) [°]";
+pub(crate) const PITCH: &str = "Pitch (Accuracy) [°]";
+pub(crate) const YAW: &str = "Yaw (Accuracy) [°]";
 pub(crate) const COV_N_N: &str = "LLH Cov N-N [m^2]";
 pub(crate) const COV_N_E: &str = "LLH Cov N-E [m^2]";
 pub(crate) const COV_N_D: &str = "LLH Cov N-D [m^2]";
@@ -216,9 +213,6 @@ pub(crate) const SOLUTION_TABLE_KEYS: &[&str] = &[
     ROLL,
     PITCH,
     YAW,
-    ROLL_ACC,
-    PITCH_ACC,
-    YAW_ACC,
     COV_N_N,
     COV_N_E,
     COV_N_D,

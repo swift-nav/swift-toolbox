@@ -269,8 +269,7 @@ jobs:
 
       - name: Build ${{ runner.os }} fileio binary.
         run: |
-          cd console_backend
-          cargo build --bin fileio --features="env_logger"
+          cargo build --bin fileio --features="env_logger" --release
 
       - name: Build ${{ runner.os }} Binaries.
         env:

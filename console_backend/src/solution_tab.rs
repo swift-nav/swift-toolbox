@@ -258,22 +258,18 @@ impl SolutionTab {
     /// - `msg`: MsgOrientEuler to extract data from.
     pub fn handle_orientation_euler(&mut self, msg: MsgOrientEuler) {
         if (msg.flags & 0x07) != 0 {
-            self.table.insert(
-                ROLL,
-                format!("{: >6.2} deg", ((msg.roll as f64) * UDEG2DEG)),
-            );
-            self.table.insert(
-                PITCH,
-                format!("{: >6.2} deg", ((msg.pitch as f64) * UDEG2DEG)),
-            );
             self.table
-                .insert(YAW, format!("{: >6.2} deg", ((msg.yaw as f64) * UDEG2DEG)));
+                .insert(ROLL, format!("{:>6.2}", (msg.roll as f64) * UDEG2DEG));
             self.table
-                .insert(ROLL_ACC, format!("{: >6.2} deg", msg.roll_accuracy));
+                .insert(PITCH, format!("{:>6.2}", (msg.pitch as f64) * UDEG2DEG));
             self.table
-                .insert(PITCH_ACC, format!("{: >6.2} deg", msg.pitch_accuracy));
+                .insert(YAW, format!("{:>6.2}", (msg.yaw as f64) * UDEG2DEG));
             self.table
-                .insert(YAW_ACC, format!("{: >6.2} deg", msg.yaw_accuracy));
+                .insert(ROLL_ACC, format!("{:>6.2}", msg.roll_accuracy));
+            self.table
+                .insert(PITCH_ACC, format!("{:>6.2}", msg.pitch_accuracy));
+            self.table
+                .insert(YAW_ACC, format!("{:>6.2}", msg.yaw_accuracy));
         } else {
             self.table.insert(ROLL, String::from(EMPTY_STR));
             self.table.insert(PITCH, String::from(EMPTY_STR));

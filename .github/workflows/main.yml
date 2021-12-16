@@ -299,6 +299,8 @@ jobs:
       - name: Build ${{ runner.os }} fileio binary.
         run: |
           cargo build --bin fileio --features="env_logger" --release
+        env:
+          LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
         if: matrix.os == 'windows-2019'
 
       - name: Pull Git LFS objects

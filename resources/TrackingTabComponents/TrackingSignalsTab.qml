@@ -111,12 +111,18 @@ Item {
                             trackingSignalsPoints.addSeries(series);
                         }
                     }
+
+                    var series = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, "", trackingSignalsXAxis);
+                    series.axisYRight = trackingSignalsYAxis;
+                    series.width = Constants.commonChart.lineWidth;
+                    series.useOpenGL = Globals.useOpenGL;
+                    trackingSignalsPoints.addSeries(series);
+
                     trackingSignalsPoints.fill_all_series();
-                    if (all_series.length) {
-                        trackingSignalsChart.visible = true;
-                        trackingSignalsXAxis.min = trackingSignalsPoints.xaxis_min;
-                        trackingSignalsXAxis.max = trackingSignalsPoints.xaxis_max;
-                    }
+
+                    trackingSignalsChart.visible = true;
+                    trackingSignalsXAxis.min = trackingSignalsPoints.xaxis_min;
+                    trackingSignalsXAxis.max = trackingSignalsPoints.xaxis_max;
                 }
             }
 

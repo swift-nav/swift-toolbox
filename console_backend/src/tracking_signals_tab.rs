@@ -406,7 +406,7 @@ impl TrackingSignalsTab {
 
         let mut tracking_points = tracking_signals_status
             .reborrow()
-            .init_data(self.sv_labels.len() as u32);
+            .init_data(self.sv_labels.len() as u32 + 1);
         {
             for idx in 0..self.sv_labels.len() {
                 let points = &mut self.sats[idx];
@@ -418,6 +418,14 @@ impl TrackingSignalsTab {
                     point_val.set_x(*x);
                     point_val.set_y(*y);
                 }
+            }
+            let mut point_val_idx = tracking_points
+                .reborrow()
+                .init(self.sv_labels.len() as u32, self.time.len() as u32);
+            for (i, t) in self.time.iter().enumerate() {
+                let mut point_val = point_val_idx.reborrow().get(i as u32);
+                point_val.set_x(*t);
+                point_val.set_y(0.);
             }
         }
         tracking_signals_status.set_xmin_offset(self.chart_xmin_offset());

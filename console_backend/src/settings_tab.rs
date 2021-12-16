@@ -1,5 +1,4 @@
 use std::borrow::Cow;
-use std::collections::BTreeMap;
 use std::fs;
 use std::path::Path;
 use std::time::Duration;
@@ -7,6 +6,7 @@ use std::time::Duration;
 use anyhow::anyhow;
 use capnp::message::Builder;
 use crossbeam::channel::{self, Sender};
+use indexmap::IndexMap;
 use ini::Ini;
 use lazy_static::lazy_static;
 use log::{error, warn};
@@ -467,17 +467,15 @@ pub struct SaveRequest {
 }
 
 struct Settings {
-    inner: BTreeMap<String, BTreeMap<String, SettingsEntry>>,
+    inner: IndexMap<String, IndexMap<String, SettingsEntry>>,
 }
 
 impl Settings {
     fn new() -> Self {
-        let mut settings: Vec<_> = Setting::all().iter().collect();
-        settings.sort_by_key(|s| &s.group);
         Self {
-            inner: settings
-                .into_iter()
-                .fold(BTreeMap::new(), |mut settings, setting| {
+            inner: Setting::all()
+                .iter()
+                .fold(IndexMap::new(), |mut settings, setting| {
                     (*settings.entry(setting.group.clone()).or_default())
                         .insert(setting.name.clone(), SettingsEntry::new(setting));
                     settings

@@ -271,6 +271,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Build ${{ runner.os }} fileio binary.
+        run: |
+          cd console_backend
+          cargo build --bin fileio --features="env_logger"
+
       - name: Build ${{ runner.os }} Binaries.
         env:
           LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
@@ -329,6 +334,13 @@ jobs:
           path: |
             ${{ env.RELEASE_ARCHIVE }}
             release-archive.filename
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ runner.os }}-fileio
+          path: |
+            ./target/release/fileio.exe
+          if: matrix.os == 'windows-2019'
+
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ runner.os }}-installer

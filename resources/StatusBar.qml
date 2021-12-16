@@ -9,7 +9,7 @@ Rectangle {
     property string position: Constants.statusBar.defaultValue
     property string rtk: Constants.statusBar.defaultValue
     property string ins: Constants.statusBar.defaultValue
-    property int sattelites: -1
+    property int satellites: -1
     property real correctionAge: -1
     property string antennaStatus: Constants.statusBar.defaultValue
     property real dataRate: 0
@@ -46,7 +46,7 @@ Rectangle {
                 "valueText": ins
             }, {
                 "labelText": Constants.statusBar.satsLabel,
-                "valueText": sattelites < 0 ? Constants.statusBar.defaultValue : sattelites
+                "valueText": satellites < 0 ? Constants.statusBar.defaultValue : satellites
             }, {
                 "labelText": Constants.statusBar.corrAgeLabel,
                 "valueText": correctionAge <= 0 ? Constants.statusBar.defaultValue : Utils.padFloat(correctionAge, 1, 1) + " s"
@@ -94,7 +94,7 @@ Rectangle {
                 position = statusBarData.pos;
                 rtk = statusBarData.rtk;
                 ins = statusBarData.ins;
-                sattelites = statusBarData.solid_connection ? statusBarData.sats : -1;
+                satellites = statusBarData.solid_connection ? statusBarData.sats : -1;
                 correctionAge = statusBarData.corr_age;
                 antennaStatus = statusBarData.antenna_status;
                 dataRate = statusBarData.data_rate;

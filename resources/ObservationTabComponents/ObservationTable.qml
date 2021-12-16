@@ -10,10 +10,6 @@ ColumnLayout {
 
     property alias remote: observationTableModel.remote
     property bool populated: observationTableModel ? observationTableModel.row_count > 0 : false
-    property font tableFont: Qt.font({
-        "family": Constants.genericTable.fontFamily,
-        "pointSize": Constants.largePointSize
-    })
     property variant avgWidth: parent.width / 8
     property variant columnWidths: [parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 16, 3 * parent.width / 16]
     property variant columnNames: ["PRN", "Pseudorange (m)", "Carrier Phase (cycles)", "C/N0 (dB-Hz)", "Meas. Doppler (Hz)", "Comp. Doppler (Hz)", "Lock", "Flags"]
@@ -147,6 +143,8 @@ ColumnLayout {
                 height: parent.height
                 anchors.right: parent.right
                 cursorShape: Qt.SizeHorCursor
+                enabled: index !== (columnNames.length - 1)
+                visible: index !== (columnNames.length - 1)
                 onPressed: {
                     mouse_x = mouseX;
                 }
@@ -181,31 +179,13 @@ ColumnLayout {
 
     }
 
-    TableView {
+    SwiftTableView {
         id: innerTable
 
         Layout.fillHeight: true
         Layout.fillWidth: true
-        columnSpacing: -1
-        rowSpacing: -1
-        clip: true
-        boundsBehavior: Flickable.StopAtBounds
-        columnWidthProvider: function(column) {
-            return columnWidths[column];
-        }
+        columnWidths: parent.columnWidths
         model: observationTableModel
-
-        delegate: TableCellDelegate {
-            implicitHeight: Constants.genericTable.cellHeight
-            font: tableFont
-        }
-
-        ScrollBar.horizontal: ScrollBar {
-        }
-
-        ScrollBar.vertical: ScrollBar {
-        }
-
     }
 
     Rectangle {

@@ -35,12 +35,14 @@ Rectangle {
     // This captures any clicks outside of the buttons, and toggles
     // the state from opened to closed or vice versa.
     MouseArea {
+        enabled: false
         anchors.fill: parent
         z: -1
         onClicked: parent.state = parent.state == "opened" ? "closed" : "opened"
     }
 
     MouseArea {
+        enabled: false
         anchors.fill: parent
         hoverEnabled: true
         acceptedButtons: Qt.NoButton
@@ -188,7 +190,6 @@ Rectangle {
 
                 anchors.fill: parent
                 hoverEnabled: true
-                acceptedButtons: Qt.NoButton
                 onEntered: closeArrowAnimation.start()
                 onExited: {
                     if (closeArrowAnimation.running) {
@@ -196,6 +197,7 @@ Rectangle {
                         closeArrow.y = closeArrowAnimation.startingPropertyValue;
                     }
                 }
+                onClicked: tabInfoBar.state = tabInfoBar.state == "opened" ? "closed" : "opened"
             }
 
             PositionLoopAnimation {

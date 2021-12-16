@@ -162,6 +162,10 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
     def rowCount(self, parent=QModelIndex()):  # pylint: disable=unused-argument
         return len(self._rows)
 
+    @Slot(int, result=QTKeys.QVARIANT)  # type: ignore
+    def getRow(self, index) -> QTKeys.QVARIANT:  # type: ignore
+        return self._rows[index]
+
     def columnCount(self, parent=QModelIndex()):  # pylint: disable=unused-argument
         return len(ObservationTableModel.column_metadata)
 

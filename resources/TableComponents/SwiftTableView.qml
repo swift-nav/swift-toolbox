@@ -13,6 +13,10 @@ TableView {
     property int currentSelectedIndex: (!stayFocused && Globals.currentSelectedTable == this) ? _currentSelectedIndex : -1
     property int delegateBorderWidth: Constants.genericTable.borderWidth
     property color delegateBorderColor: Constants.genericTable.borderColor
+    property font tableFont: Qt.font({
+        "family": Constants.genericTable.fontFamily,
+        "pointSize": Constants.largePointSize
+    })
 
     clip: true
     columnSpacing: -1
@@ -23,7 +27,6 @@ TableView {
     reuseItems: true
     boundsBehavior: Flickable.StopAtBounds
     Component.onCompleted: {
-        console.assert(columnWidths.length == model.columnCount, "length of columnWidths does not match column count.");
     }
     onWidthChanged: {
         tableView.forceLayout();
@@ -38,6 +41,7 @@ TableView {
     }
 
     ScrollBar.vertical: ScrollBar {
+        policy: ScrollBar.AlwaysOn
     }
 
     delegate: Rectangle {
@@ -53,8 +57,7 @@ TableView {
             horizontalAlignment: Text.AlignLeft
             verticalAlignment: Text.AlignVCenter
             clip: true
-            font.family: Constants.genericTable.fontFamily
-            font.pointSize: Constants.largePointSize
+            font: tableFont
             text: model.display
             elide: Text.ElideRight
             padding: Constants.genericTable.padding

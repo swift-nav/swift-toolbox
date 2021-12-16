@@ -49,6 +49,7 @@ TableView {
 
         Label {
             width: parent.width
+            height: parent.height
             horizontalAlignment: Text.AlignLeft
             verticalAlignment: Text.AlignVCenter
             clip: true

@@ -509,6 +509,11 @@ pub fn format_fixed_decimal_and_sign(num: f32, width: usize, precision: usize) -
     )
 }
 
+/// Formats bools with uppercase T's and F's
+pub fn format_bool(b: bool) -> String {
+    if b { "True" } else { "False" }.into()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

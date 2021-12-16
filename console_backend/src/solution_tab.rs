@@ -260,27 +260,32 @@ impl SolutionTab {
         if (msg.flags & 0x07) != 0 {
             self.table.insert(
                 ROLL,
-                format!("{: >6.2} deg", ((msg.roll as f64) * UDEG2DEG)),
+                format!(
+                    "{:.2} ({:.1})",
+                    (msg.roll as f64) * UDEG2DEG,
+                    msg.roll_accuracy
+                ),
             );
             self.table.insert(
                 PITCH,
-                format!("{: >6.2} deg", ((msg.pitch as f64) * UDEG2DEG)),
+                format!(
+                    "{:.2} ({:.1})",
+                    (msg.pitch as f64) * UDEG2DEG,
+                    msg.pitch_accuracy
+                ),
             );
-            self.table
-                .insert(YAW, format!("{: >6.2} deg", ((msg.yaw as f64) * UDEG2DEG)));
-            self.table
-                .insert(ROLL_ACC, format!("{: >6.2} deg", msg.roll_accuracy));
-            self.table
-                .insert(PITCH_ACC, format!("{: >6.2} deg", msg.pitch_accuracy));
-            self.table
-                .insert(YAW_ACC, format!("{: >6.2} deg", msg.yaw_accuracy));
+            self.table.insert(
+                YAW,
+                format!(
+                    "{:.2} ({:.1})",
+                    (msg.yaw as f64) * UDEG2DEG,
+                    msg.yaw_accuracy
+                ),
+            );
         } else {
             self.table.insert(ROLL, String::from(EMPTY_STR));
             self.table.insert(PITCH, String::from(EMPTY_STR));
             self.table.insert(YAW, String::from(EMPTY_STR));
-            self.table.insert(ROLL_ACC, String::from(EMPTY_STR));
-            self.table.insert(PITCH_ACC, String::from(EMPTY_STR));
-            self.table.insert(YAW_ACC, String::from(EMPTY_STR));
         }
     }
 
@@ -587,7 +592,7 @@ impl SolutionTab {
         }
         self.table
             .insert(POS_FLAGS, format!("0x{:<03x}", pos_llh_fields.flags));
-        self.table.insert(INS_USED, self.ins_used.to_string());
+        self.table.insert(INS_USED, format_bool(self.ins_used));
         self.table.insert(
             POS_FIX_MODE,
             GnssModes::from(self.last_pos_mode).to_string(),

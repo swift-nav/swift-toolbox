@@ -304,6 +304,7 @@ ApplicationWindow {
 
                         LogPanel {
                             id: logPanel
+
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                         }

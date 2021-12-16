@@ -16,8 +16,8 @@ Rectangle {
     property bool solidConnection: false
     property string title: ""
     property int verticalPadding: Constants.statusBar.verticalPadding
-    color: Constants.swiftOrange
 
+    color: Constants.swiftOrange
     border.width: Constants.statusBar.borderWidth
     border.color: Constants.statusBar.borderColor
     implicitWidth: rowLayout.implicitWidth
@@ -33,30 +33,26 @@ Rectangle {
         anchors.left: parent.left
         anchors.leftMargin: Constants.statusBar.leftMargin
         spacing: Constants.statusBar.spacing
+
         Repeater {
             model: [{
-                labelText: Constants.statusBar.posLabel,
-                valueText: position
-            },
-            {
-                labelText: Constants.statusBar.rtkLabel,
-                valueText: rtk
-            },
-            {
-                labelText: Constants.statusBar.insLabel,
-                valueText: ins
-            },
-            {
-                labelText: Constants.statusBar.satsLabel,
-                valueText: sattelites < 0 ? Constants.statusBar.defaultValue : sattelites
-            },
-            {
-                labelText: Constants.statusBar.corrAgeLabel,
-                valueText: correctionAge <= 0 ? Constants.statusBar.defaultValue : Utils.padFloat(correctionAge, 1, 1) + " s"
-            },
-            {
-                labelText: Constants.statusBar.antennaLabel,
-                valueText: antennaStatus
+                "labelText": Constants.statusBar.posLabel,
+                "valueText": position
+            }, {
+                "labelText": Constants.statusBar.rtkLabel,
+                "valueText": rtk
+            }, {
+                "labelText": Constants.statusBar.insLabel,
+                "valueText": ins
+            }, {
+                "labelText": Constants.statusBar.satsLabel,
+                "valueText": sattelites < 0 ? Constants.statusBar.defaultValue : sattelites
+            }, {
+                "labelText": Constants.statusBar.corrAgeLabel,
+                "valueText": correctionAge <= 0 ? Constants.statusBar.defaultValue : Utils.padFloat(correctionAge, 1, 1) + " s"
+            }, {
+                "labelText": Constants.statusBar.antennaLabel,
+                "valueText": antennaStatus
             }]
 
             RowLayout {

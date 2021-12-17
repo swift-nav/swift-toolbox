@@ -12,8 +12,6 @@ Item {
 
     width: parent.width
     height: parent.height
-    Component.onCompleted: {
-    }
 
     AdvancedSpectrumAnalyzerPoints {
         id: advancedSpectrumAnalyzerPoints
@@ -30,20 +28,14 @@ Item {
 
             visible: false
             title: Constants.advancedSpectrumAnalyzer.title
-            titleColor: Constants.advancedSpectrumAnalyzer.titleColor
+            titleColor: Constants.commonChart.titleColor
             width: parent.width
             height: parent.height - Constants.advancedSpectrumAnalyzer.dropdownRowHeight
-            backgroundColor: Constants.commonChart.backgroundColor
             plotAreaColor: Constants.commonChart.areaColor
+            backgroundColor: "transparent"
             legend.visible: false
             antialiasing: true
-            Component.onCompleted: {
-            }
-
-            titleFont {
-                pointSize: Constants.advancedSpectrumAnalyzer.titlePointSize
-                bold: true
-            }
+            titleFont: Constants.commonChart.titleFont
 
             ValueAxis {
                 id: advancedSpectrumAnalyzerXAxis
@@ -57,11 +49,8 @@ Item {
                 labelsColor: Constants.commonChart.labelsColor
                 tickInterval: Constants.advancedSpectrumAnalyzer.xAxisTickCount
                 tickType: ValueAxis.TicksDynamic
-
-                labelsFont {
-                    pointSize: Constants.mediumPointSize
-                    bold: true
-                }
+                titleFont: Constants.commonChart.axisTitleFont
+                labelsFont: Constants.commonChart.axisLabelsFont
 
             }
 
@@ -77,11 +66,8 @@ Item {
                 labelsColor: Constants.commonChart.labelsColor
                 tickInterval: Constants.advancedSpectrumAnalyzer.yAxisTickCount
                 tickType: ValueAxis.TicksDynamic
-
-                labelsFont {
-                    pointSize: Constants.mediumPointSize
-                    bold: true
-                }
+                titleFont: Constants.commonChart.axisTitleFont
+                labelsFont: Constants.commonChart.axisLabelsFont
 
             }
 

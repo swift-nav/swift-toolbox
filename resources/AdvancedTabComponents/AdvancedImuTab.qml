@@ -12,8 +12,6 @@ Item {
 
     width: parent.width
     height: parent.height
-    Component.onCompleted: {
-    }
 
     AdvancedImuPoints {
         id: advancedImuPoints
@@ -30,21 +28,15 @@ Item {
 
             visible: false
             title: Constants.advancedImu.title
-            titleColor: Constants.advancedImu.titleColor
+            titleColor: Constants.commonChart.titleColor
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.alignment: Qt.AlignTop
-            backgroundColor: Constants.commonChart.backgroundColor
             plotAreaColor: Constants.commonChart.areaColor
+            backgroundColor: "transparent"
             legend.visible: false
             antialiasing: true
-            Component.onCompleted: {
-            }
-
-            titleFont {
-                pointSize: Constants.advancedImu.titlePointSize
-                bold: true
-            }
+            titleFont: Constants.commonChart.titleFont
 
             Rectangle {
                 id: lineLegend
@@ -117,11 +109,8 @@ Item {
                 tickType: ValueAxis.TicksDynamic
                 min: Constants.advancedImu.xAxisMin
                 max: Constants.advancedImu.xAxisMax
-
-                labelsFont {
-                    pointSize: Constants.mediumPointSize
-                    bold: true
-                }
+                titleFont: Constants.commonChart.axisTitleFont
+                labelsFont: Constants.commonChart.axisLabelsFont
 
             }
 
@@ -138,11 +127,8 @@ Item {
                 tickType: ValueAxis.TicksDynamic
                 min: Constants.advancedImu.yAxisMin
                 max: Constants.advancedImu.yAxisMax
-
-                labelsFont {
-                    pointSize: Constants.mediumPointSize
-                    bold: true
-                }
+                titleFont: Constants.commonChart.axisTitleFont
+                labelsFont: Constants.commonChart.axisLabelsFont
 
             }
 

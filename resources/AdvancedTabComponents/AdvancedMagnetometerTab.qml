@@ -9,11 +9,8 @@ Item {
     id: advancedMagnetometerTab
 
     property variant lines: []
-
     width: parent.width
     height: parent.height
-    Component.onCompleted: {
-    }
 
     AdvancedMagnetometerPoints {
         id: advancedMagnetometerPoints
@@ -30,21 +27,15 @@ Item {
 
             visible: false
             title: Constants.advancedMagnetometer.title
-            titleColor: Constants.advancedMagnetometer.titleColor
+            titleColor: Constants.commonChart.titleColor
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.alignment: Qt.AlignTop
-            backgroundColor: Constants.commonChart.backgroundColor
             plotAreaColor: Constants.commonChart.areaColor
+            backgroundColor: "transparent"
             legend.visible: false
             antialiasing: true
-            Component.onCompleted: {
-            }
-
-            titleFont {
-                pointSize: Constants.advancedMagnetometer.titlePointSize
-                bold: true
-            }
+            titleFont: Constants.commonChart.titleFont
 
             Rectangle {
                 id: lineLegend
@@ -118,11 +109,8 @@ Item {
                 max: Constants.advancedMagnetometer.xAxisMax
                 tickInterval: Constants.advancedMagnetometer.xAxisTickCount
                 tickType: ValueAxis.TicksDynamic
-
-                labelsFont {
-                    pointSize: Constants.mediumPointSize
-                    bold: true
-                }
+                titleFont: Constants.commonChart.axisTitleFont
+                labelsFont: Constants.commonChart.axisLabelsFont
 
             }
 
@@ -137,11 +125,8 @@ Item {
                 labelsColor: Constants.commonChart.labelsColor
                 tickInterval: Constants.advancedMagnetometer.yAxisTickCount
                 tickType: ValueAxis.TicksDynamic
-
-                labelsFont {
-                    pointSize: Constants.mediumPointSize
-                    bold: true
-                }
+                titleFont: Constants.commonChart.axisTitleFont
+                labelsFont: Constants.commonChart.axisLabelsFont
 
             }
 

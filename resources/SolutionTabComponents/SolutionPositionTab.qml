@@ -268,8 +268,8 @@ Item {
                 Layout.alignment: Qt.AlignBottom
                 Layout.bottomMargin: Constants.commonChart.margin
                 Layout.fillHeight: true
-                backgroundColor: Constants.commonChart.backgroundColor
                 plotAreaColor: Constants.commonChart.areaColor
+                backgroundColor: "transparent"
                 legend.visible: false
                 antialiasing: true
                 Component.onCompleted: {
@@ -338,11 +338,8 @@ Item {
                     minorGridLineColor: Constants.commonChart.minorGridLineColor
                     gridLineColor: Constants.commonChart.gridLineColor
                     labelsColor: Constants.commonChart.labelsColor
-
-                    labelsFont {
-                        pointSize: Constants.mediumPointSize
-                        bold: true
-                    }
+                    titleFont: Constants.commonChart.axisTitleFont
+                    labelsFont: Constants.commonChart.axisLabelsFont
 
                 }
 
@@ -356,11 +353,8 @@ Item {
                     minorGridLineColor: Constants.commonChart.minorGridLineColor
                     gridLineColor: Constants.commonChart.gridLineColor
                     labelsColor: Constants.commonChart.labelsColor
-
-                    labelsFont {
-                        pointSize: Constants.mediumPointSize
-                        bold: true
-                    }
+                    titleFont: Constants.commonChart.axisTitleFont
+                    labelsFont: Constants.commonChart.axisLabelsFont
 
                 }
 

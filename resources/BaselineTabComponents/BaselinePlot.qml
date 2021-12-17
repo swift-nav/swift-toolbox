@@ -27,8 +27,6 @@ Item {
 
     width: parent.width
     height: parent.height
-    Component.onCompleted: {
-    }
 
     BaselinePlotPoints {
         id: baselinePlotPoints
@@ -243,12 +241,10 @@ Item {
                 Layout.preferredHeight: parent.height - Constants.commonChart.heightOffset
                 Layout.alignment: Qt.AlignBottom
                 Layout.fillHeight: true
-                backgroundColor: Constants.commonChart.backgroundColor
                 plotAreaColor: Constants.commonChart.areaColor
+                backgroundColor: "transparent"
                 legend.visible: false
                 antialiasing: true
-                Component.onCompleted: {
-                }
 
                 Rectangle {
                     id: lineLegend

@@ -348,8 +348,6 @@ QtObject {
 
     advancedMagnetometer: QtObject {
         readonly property string title: "Raw Magnetometer Data"
-        readonly property color titleColor: "#00006E"
-        readonly property int titlePointSize: 14
         readonly property var legendLabels: ["Mag. X (uT)", "Mag. Y (uT)", "Mag. Z (uT)"]
         readonly property var lineColors: ["#66c2a5", "#fc8d62", "#8da0cb"]
         readonly property int xAxisMax: 200
@@ -362,8 +360,6 @@ QtObject {
 
     advancedSpectrumAnalyzer: QtObject {
         readonly property string title: "Spectrum Analyzer"
-        readonly property color titleColor: "#00006E"
-        readonly property int titlePointSize: 14
         readonly property var lineColors: ["#000000"]
         readonly property int xAxisTickCount: 10
         readonly property real yAxisTickCount: 2.5
@@ -381,8 +377,6 @@ QtObject {
 
     advancedImu: QtObject {
         readonly property string title: "Raw IMU Data"
-        readonly property color titleColor: "#00006E"
-        readonly property int titlePointSize: 14
         readonly property var textDataLabels: ["Imu temp:", "Imu conf:", "Rms acc x:", "Rms acc y:", "Rms acc z:"]
         readonly property var insStatusLabels: ["GNSS Pos:", "GNSS Vel:", "Wheelticks:", "Wheelspeed:", "nhc:", "Static Detection:"]
         readonly property var legendLabels: ["Accn. X", "Accn. Y", "Accn. Z", "Gyro X", "Gyro Y", "Gyro Z"]
@@ -551,14 +545,29 @@ QtObject {
         readonly property color minorGridLineColor: "#CDC9C9"
         readonly property color gridLineColor: "#CDC9C9"
         readonly property color labelsColor: "#000000"
-        readonly property int titlePointSize: largePointSize
-        readonly property int axisLabelsPointSize: smallPointSize
+        readonly property font titleFont: Qt.font({
+            "family": fontFamily,
+            "pointSize": xlPointSize,
+            "bold": true
+        })
+        readonly property color titleColor: swiftGrey
+        readonly property font axisTitleFont: Qt.font({
+            "family": fontFamily,
+            "pointSize": mediumPointSize,
+            "bold": true,
+            "letterSpacing": 2,
+            "capitalization": Font.AllUppercase
+        })
+        readonly property font axisLabelsFont: Qt.font({
+            "family": fontFamily,
+            "pointSize": smallPointSize,
+            "bold": true
+        })
         readonly property int tickPointSize: 10
         readonly property int buttonHeight: 40
         readonly property int unitDropdownWidth: 90
         readonly property real zoomInMult: 1.1
         readonly property real zoomOutMult: 0.9
-        readonly property string fontFamily: "Roboto"
     }
 
     trackingSkyPlot: QtObject {
@@ -580,30 +589,12 @@ QtObject {
 
     trackingSignals: QtObject {
         readonly property string title: "Tracking C/N0"
-        readonly property color titleColor: swiftGrey
-        readonly property font titleFont: Qt.font({
-            "family": fontFamily,
-            "pointSize": xlPointSize,
-            "bold": true
-        })
         readonly property int legendTopMargin: 12
         readonly property int legendBottomMargin: 72
         readonly property int legendLeftMargin: 18
         readonly property string legendCellTextSample: "XXX XXXX X+NN XNN"
         readonly property string yAxisTitleText: "dB-Hz"
         readonly property string xAxisTitleText: "seconds"
-        readonly property font axisTitleFont: Qt.font({
-            "family": fontFamily,
-            "pointSize": Constants.mediumPointSize,
-            "bold": true,
-            "letterSpacing": 2,
-            "capitalization": Font.AllUppercase
-        })
-        readonly property font axisLabelsFont: Qt.font({
-            "family": fontFamily,
-            "pointSize": commonChart.axisLabelsPointSize,
-            "bold": true
-        })
         readonly property int snrThreshold: 15
         readonly property int yAxisMax: 60
         readonly property int yAxisTickInterval: 10
@@ -611,7 +602,6 @@ QtObject {
     }
 
     observationTab: QtObject {
-        readonly property int titlePointSize: 14
         readonly property int titleAreaHight: 25
     }
 

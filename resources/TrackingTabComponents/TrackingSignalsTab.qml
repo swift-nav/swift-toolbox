@@ -33,9 +33,10 @@ Item {
             Layout.fillWidth: true
             visible: all_series.length > 0
             title: Constants.trackingSignals.title
-            titleFont: Constants.trackingSignals.titleFont
-            titleColor: Constants.trackingSignals.titleColor
+            titleFont: Constants.commonChart.titleFont
+            titleColor: Constants.commonChart.titleColor
             plotAreaColor: Constants.commonChart.areaColor
+            backgroundColor: "transparent"
             legend.visible: false
             antialiasing: true
 
@@ -67,8 +68,8 @@ Item {
                 tickType: ValueAxis.TicksDynamic
                 tickInterval: Constants.trackingSignals.xAxisTickInterval
                 labelFormat: "%d"
-                titleFont: Constants.trackingSignals.axisTitleFont
-                labelsFont: Constants.trackingSignals.axisLabelsFont
+                titleFont: Constants.commonChart.axisTitleFont
+                labelsFont: Constants.commonChart.axisLabelsFont
             }
 
             ValueAxis {
@@ -86,8 +87,8 @@ Item {
                 tickType: ValueAxis.TicksDynamic
                 tickInterval: Constants.trackingSignals.yAxisTickInterval
                 labelFormat: "%d"
-                titleFont: Constants.trackingSignals.axisTitleFont
-                labelsFont: Constants.trackingSignals.axisLabelsFont
+                titleFont: Constants.commonChart.axisTitleFont
+                labelsFont: Constants.commonChart.axisLabelsFont
             }
 
             Timer {

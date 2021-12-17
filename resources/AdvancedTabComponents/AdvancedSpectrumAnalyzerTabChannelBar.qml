@@ -26,7 +26,7 @@ Item {
         Label {
             text: Constants.advancedSpectrumAnalyzer.dropdownLabel
             font.bold: true
-            color: Constants.advancedSpectrumAnalyzer.titleColor
+            color: Constants.commonChart.titleColor
             antialiasing: true
         }
 

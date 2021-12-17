@@ -30,6 +30,7 @@ Item {
             Layout.fillHeight: true
             legend.visible: false
             antialiasing: true
+            backgroundColor: "transparent"
             margins.bottom: Constants.trackingSkyPlot.directionLabelOffset
             margins.left: 0
             margins.right: 0
@@ -43,7 +44,7 @@ Item {
 
             Label {
                 text: "N"
-                font.family: Constants.commonChart.fontFamily
+                font.family: Constants.fontFamily
                 font.pointSize: Constants.trackingSkyPlot.directionLabelFontSize
                 x: trackingSkyPlotChart.plotArea.x + trackingSkyPlotChart.plotArea.width / 2 - Constants.trackingSkyPlot.directionLabelFontSize / 2
                 y: trackingSkyPlotChart.plotArea.y - Constants.trackingSkyPlot.directionLabelOffset
@@ -51,7 +52,7 @@ Item {
 
             Label {
                 text: "E"
-                font.family: Constants.commonChart.fontFamily
+                font.family: Constants.fontFamily
                 font.pointSize: Constants.trackingSkyPlot.directionLabelFontSize
                 x: trackingSkyPlotChart.plotArea.x + trackingSkyPlotChart.plotArea.width + Constants.trackingSkyPlot.directionLabelOffset / 3
                 y: trackingSkyPlotChart.plotArea.y + trackingSkyPlotChart.plotArea.height / 2 - 2 * Constants.trackingSkyPlot.directionLabelFontSize / 3
@@ -59,7 +60,7 @@ Item {
 
             Label {
                 text: "S"
-                font.family: Constants.commonChart.fontFamily
+                font.family: Constants.fontFamily
                 font.pointSize: Constants.trackingSkyPlot.directionLabelFontSize
                 x: trackingSkyPlotChart.plotArea.x + trackingSkyPlotChart.plotArea.width / 2 - Constants.trackingSkyPlot.directionLabelFontSize / 2
                 y: trackingSkyPlotChart.plotArea.y + trackingSkyPlotChart.plotArea.height + Constants.trackingSkyPlot.directionLabelOffset / 5
@@ -67,7 +68,7 @@ Item {
 
             Label {
                 text: "W"
-                font.family: Constants.commonChart.fontFamily
+                font.family: Constants.fontFamily
                 font.pointSize: Constants.trackingSkyPlot.directionLabelFontSize
                 x: trackingSkyPlotChart.plotArea.x - Constants.trackingSkyPlot.directionLabelOffset
                 y: trackingSkyPlotChart.plotArea.y + trackingSkyPlotChart.plotArea.height / 2 - 2 * Constants.trackingSkyPlot.directionLabelFontSize / 3

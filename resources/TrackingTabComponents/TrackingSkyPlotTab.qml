@@ -44,15 +44,26 @@ Item {
 
             Label {
                 text: "N"
-                font.family: Constants.fontFamily
                 font.pointSize: Constants.trackingSkyPlot.directionLabelFontSize
                 x: trackingSkyPlotChart.plotArea.x + trackingSkyPlotChart.plotArea.width / 2 - Constants.trackingSkyPlot.directionLabelFontSize / 2
                 y: trackingSkyPlotChart.plotArea.y - Constants.trackingSkyPlot.directionLabelOffset
             }
 
             Label {
+                // This label just for testing whether Label is honoring the font it has set.
+                // set it visible to test Label font. If this label is entirely ontop of the other
+                // N label such that you cannot tell there are two N labels, then Label is not
+                // honoring the font set in the label.
+                visible: false
+                text: "N"
+                font.family: "Roboto"
+                font.pointSize: Constants.trackingSkyPlot.directionLabelFontSize
+                x: trackingSkyPlotChart.plotArea.x + trackingSkyPlotChart.plotArea.width / 2 - width / 2
+                y: trackingSkyPlotChart.plotArea.y - Constants.trackingSkyPlot.directionLabelOffset
+            }
+
+            Label {
                 text: "E"
-                font.family: Constants.fontFamily
                 font.pointSize: Constants.trackingSkyPlot.directionLabelFontSize
                 x: trackingSkyPlotChart.plotArea.x + trackingSkyPlotChart.plotArea.width + Constants.trackingSkyPlot.directionLabelOffset / 3
                 y: trackingSkyPlotChart.plotArea.y + trackingSkyPlotChart.plotArea.height / 2 - 2 * Constants.trackingSkyPlot.directionLabelFontSize / 3
@@ -60,7 +71,6 @@ Item {
 
             Label {
                 text: "S"
-                font.family: Constants.fontFamily
                 font.pointSize: Constants.trackingSkyPlot.directionLabelFontSize
                 x: trackingSkyPlotChart.plotArea.x + trackingSkyPlotChart.plotArea.width / 2 - Constants.trackingSkyPlot.directionLabelFontSize / 2
                 y: trackingSkyPlotChart.plotArea.y + trackingSkyPlotChart.plotArea.height + Constants.trackingSkyPlot.directionLabelOffset / 5
@@ -68,7 +78,6 @@ Item {
 
             Label {
                 text: "W"
-                font.family: Constants.fontFamily
                 font.pointSize: Constants.trackingSkyPlot.directionLabelFontSize
                 x: trackingSkyPlotChart.plotArea.x - Constants.trackingSkyPlot.directionLabelOffset
                 y: trackingSkyPlotChart.plotArea.y + trackingSkyPlotChart.plotArea.height / 2 - 2 * Constants.trackingSkyPlot.directionLabelFontSize / 3

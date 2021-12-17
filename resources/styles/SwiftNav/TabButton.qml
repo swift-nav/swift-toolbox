@@ -54,12 +54,12 @@ T.TabButton {
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset, implicitContentHeight + topPadding + bottomPadding)
     padding: 12
     spacing: 6
-    font: Qt.font({
-        "family": "Roboto",
-        "pointSize": Constants.largePointSize,
-        "bold": true,
-        "capitalization": Font.MixedCase
-    })
+    font {
+        family: "Roboto"
+        pointSize: Constants.largePointSize
+        bold: true
+        capitalization: Font.MixedCase
+    }
     icon.width: 24
     icon.height: 24
     icon.color: !enabled ? Material.hintTextColor : down || checked ? "white" : Constants.tabButtonUnselectedTextColor

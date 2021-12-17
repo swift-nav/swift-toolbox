@@ -182,7 +182,7 @@ Item {
                     bottomInset: 0
                     text: dataRate.toFixed(2) + "  KB/s"
                     font.pointSize: Constants.smallPointSize
-                    font.letterSpacing: -1
+                    font.bold: true
                     color: Qt.darker("white", enabled ? 1 : 1.4)
                 }
 

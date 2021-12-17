@@ -11,9 +11,6 @@ Item {
 
     property variant lines: []
 
-    width: parent.width
-    height: parent.height
-
     AdvancedImuPoints {
         id: advancedImuPoints
     }
@@ -21,18 +18,24 @@ Item {
     ColumnLayout {
         id: advancedImuArea
 
-        width: parent.width
-        height: parent.height
+        anchors.fill: parent
+        visible: false
 
         ChartView {
             id: advancedImuChart
 
-            visible: false
-            title: Constants.advancedImu.title
-            titleColor: Constants.commonChart.titleColor
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.alignment: Qt.AlignTop
+            margins {
+                top: 0
+                bottom: 0
+                left: 0
+                right: 0
+            }
+            visible: false
+            title: Constants.advancedImu.title
+            titleColor: Constants.commonChart.titleColor
             plotAreaColor: Constants.commonChart.areaColor
             backgroundColor: "transparent"
             legend.visible: false
@@ -124,16 +127,15 @@ Item {
                 running: true
                 repeat: true
                 onTriggered: {
-                    if (!advancedTab.visible)
+                    if (!advancedImuTab.visible)
                         return ;
 
-                    advancedImuChart.visible = true;
                     advanced_imu_model.fill_console_points(advancedImuPoints);
                     if (!advancedImuPoints.points.length)
                         return ;
 
                     var points = advancedImuPoints.points;
-                    textDataRow.visible = true;
+                    advancedImuArea.visible = true;
                     if (!lines.length) {
                         for (var idx in advancedImuPoints.points) {
                             var line = advancedImuChart.createSeries(ChartView.SeriesTypeLine, idx, advancedImuXAxis);

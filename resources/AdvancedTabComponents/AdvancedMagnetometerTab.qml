@@ -10,8 +10,6 @@ Item {
     id: advancedMagnetometerTab
 
     property variant lines: []
-    width: parent.width
-    height: parent.height
 
     AdvancedMagnetometerPoints {
         id: advancedMagnetometerPoints
@@ -20,18 +18,23 @@ Item {
     ColumnLayout {
         id: advancedMagnetometerArea
 
-        width: parent.width
-        height: parent.height
+        anchors.fill: parent
+        visible: false
 
         ChartView {
             id: advancedMagnetometerChart
 
-            visible: false
-            title: Constants.advancedMagnetometer.title
-            titleColor: Constants.commonChart.titleColor
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.alignment: Qt.AlignTop
+            margins {
+                top: 0
+                bottom: 0
+                left: 0
+                right: 0
+            }
+            title: Constants.advancedMagnetometer.title
+            titleColor: Constants.commonChart.titleColor
             plotAreaColor: Constants.commonChart.areaColor
             backgroundColor: "transparent"
             legend.visible: false
@@ -122,10 +125,9 @@ Item {
                 running: true
                 repeat: true
                 onTriggered: {
-                    if (!advancedTab.visible)
+                    if (!advancedMagnetometerTab.visible)
                         return ;
 
-                    advancedMagnetometerChart.visible = true;
                     advanced_magnetometer_model.fill_console_points(advancedMagnetometerPoints);
                     if (!advancedMagnetometerPoints.points.length)
                         return ;
@@ -141,6 +143,7 @@ Item {
                             lines.push(line);
                         }
                     }
+                    advancedMagnetometerArea.visible = true;
                     advancedMagnetometerYAxis.min = advancedMagnetometerPoints.ymin;
                     advancedMagnetometerYAxis.max = advancedMagnetometerPoints.ymax;
                     advancedMagnetometerPoints.fill_series(lines);

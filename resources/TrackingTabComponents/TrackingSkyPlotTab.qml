@@ -31,10 +31,12 @@ Item {
             legend.visible: false
             antialiasing: true
             backgroundColor: "transparent"
-            margins.bottom: Constants.trackingSkyPlot.directionLabelOffset
-            margins.left: 0
-            margins.right: 0
-            margins.top: Constants.trackingSkyPlot.directionLabelOffset
+            margins {
+                bottom: Constants.trackingSkyPlot.directionLabelOffset
+                left: 0
+                right: 0
+                top: Constants.trackingSkyPlot.directionLabelOffset
+            }
             onWidthChanged: {
                 polarChartWidthChanging = true;
             }

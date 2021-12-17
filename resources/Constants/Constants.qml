@@ -65,7 +65,7 @@ QtObject {
     }
 
     mainTabs: QtObject {
-        readonly property int horizontalMargins: 15
+        readonly property int horizontalMargins: 4
         readonly property int verticalMargins: 4
     }
 
@@ -443,6 +443,7 @@ QtObject {
         readonly property string yAxisTitleText: "Latitude"
         readonly property string xAxisTitleText: "Longitude"
         readonly property var legendLabels: ["SPP", "SBAS", "DGPS", "RTK Float", "RTK Fixed", "DR"]
+        readonly property int legendLabelSpacing: 4
         readonly property var colors: ["#0000FF", "#008000", "#00B3FF", "#BF00BF", "#FFA500", "#000000"]
     }
 
@@ -510,6 +511,7 @@ QtObject {
         readonly property int chartHeightOffset: 0
         readonly property int legendBottomMargin: 120
         readonly property int legendLeftMargin: 80
+        readonly property int legendLabelSpacing: 4
     }
 
     commonLegend: QtObject {
@@ -536,7 +538,6 @@ QtObject {
         readonly property int zAboveCharts: 100
         readonly property int lineWidth: 1
         readonly property int heightOffset: 50
-        readonly property int margin: 20
         readonly property real currentSolutionMarkerSize: 12
         readonly property real solutionMarkerSize: 5
         readonly property real solutionLineWidth: 0.5

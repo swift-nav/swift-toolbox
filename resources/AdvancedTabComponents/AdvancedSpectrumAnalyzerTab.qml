@@ -11,9 +11,6 @@ Item {
 
     property variant line: null
 
-    width: parent.width
-    height: parent.height
-
     AdvancedSpectrumAnalyzerPoints {
         id: advancedSpectrumAnalyzerPoints
     }
@@ -21,17 +18,22 @@ Item {
     ColumnLayout {
         id: advancedSpectrumAnalyzerArea
 
-        width: parent.width
-        height: parent.height
+        anchors.fill: parent
+        visible: false
 
         ChartView {
             id: advancedSpectrumAnalyzerChart
 
-            visible: false
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            margins {
+                top: 0
+                bottom: 0
+                left: 0
+                right: 0
+            }
             title: Constants.advancedSpectrumAnalyzer.title
             titleColor: Constants.commonChart.titleColor
-            width: parent.width
-            height: parent.height - Constants.advancedSpectrumAnalyzer.dropdownRowHeight
             plotAreaColor: Constants.commonChart.areaColor
             backgroundColor: "transparent"
             legend.visible: false
@@ -63,10 +65,9 @@ Item {
                 running: true
                 repeat: true
                 onTriggered: {
-                    if (!advancedTab.visible)
+                    if (!advancedSpectrumAnalyzerTab.visible)
                         return ;
 
-                    advancedSpectrumAnalyzerChart.visible = true;
                     advanced_spectrum_analyzer_model.fill_console_points(advancedSpectrumAnalyzerPoints);
                     if (!advancedSpectrumAnalyzerPoints.points.length)
                         return ;
@@ -79,6 +80,7 @@ Item {
                         line_.useOpenGL = Globals.useOpenGL;
                         line = line_;
                     }
+                    advancedSpectrumAnalyzerArea.visible = true;
                     advancedSpectrumAnalyzerYAxis.min = advancedSpectrumAnalyzerPoints.ymin;
                     advancedSpectrumAnalyzerYAxis.max = advancedSpectrumAnalyzerPoints.ymax;
                     advancedSpectrumAnalyzerXAxis.min = advancedSpectrumAnalyzerPoints.xmin;

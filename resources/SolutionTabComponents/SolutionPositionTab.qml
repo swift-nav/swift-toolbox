@@ -27,300 +27,290 @@ Item {
     property bool zoom_all: true
     property bool center_solution: false
 
-    width: parent.width
-    height: parent.height
-    Component.onCompleted: {
-    }
-
     SolutionPositionPoints {
         id: solutionPositionPoints
     }
 
-    Rectangle {
+    ColumnLayout {
         id: solutionPositionArea
 
-        width: parent.width
-        height: parent.height
+        anchors.fill: parent
         visible: false
+        spacing: Constants.solutionPosition.navBarSpacing
 
-        ColumnLayout {
-            id: solutionPositionAreaRowLayout
+        ButtonGroup {
+            id: solutionButtonGroup
 
-            anchors.fill: parent
-            width: parent.width
-            height: parent.height
-            spacing: Constants.solutionPosition.navBarSpacing
+            exclusive: false
+        }
 
-            ButtonGroup {
-                id: solutionButtonGroup
+        RowLayout {
+            Layout.alignment: Qt.AlignLeft
+            Layout.leftMargin: Constants.solutionPosition.navBarMargin
 
-                exclusive: false
+            Button {
+                id: solutionPauseButton
+
+                ButtonGroup.group: solutionButtonGroup
+                Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
+                Layout.preferredHeight: Constants.commonChart.buttonHeight
+                ToolTip.visible: hovered
+                ToolTip.text: "Pause"
+                checkable: true
+                onClicked: data_model.solution_position([solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].pressed])
+
+                Image {
+                    id: solutionPauseImage
+
+                    anchors.centerIn: parent
+                    width: Constants.solutionPosition.buttonSvgHeight
+                    height: Constants.solutionPosition.buttonSvgHeight
+                    source: Constants.icons.pauseButtonUrl
+                    visible: false
+                }
+
+                ColorOverlay {
+                    anchors.fill: solutionPauseImage
+                    source: solutionPauseImage
+                    color: !solutionPauseButton.checked ? Constants.materialGrey : Constants.swiftOrange
+                }
+
             }
 
-            RowLayout {
-                Layout.alignment: Qt.AlignLeft
-                Layout.leftMargin: Constants.solutionPosition.navBarMargin
+            Button {
+                id: solutionClearButton
 
-                Button {
-                    id: solutionPauseButton
+                ButtonGroup.group: solutionButtonGroup
+                Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
+                Layout.preferredHeight: Constants.commonChart.buttonHeight
+                ToolTip.visible: hovered
+                ToolTip.text: "Clear"
+                onPressed: data_model.solution_position([solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].pressed])
 
-                    ButtonGroup.group: solutionButtonGroup
-                    Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
-                    Layout.preferredHeight: Constants.commonChart.buttonHeight
-                    ToolTip.visible: hovered
-                    ToolTip.text: "Pause"
-                    checkable: true
-                    onClicked: data_model.solution_position([solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].pressed])
+                Image {
+                    id: solutionClearImage
 
-                    Image {
-                        id: solutionPauseImage
-
-                        anchors.centerIn: parent
-                        width: Constants.solutionPosition.buttonSvgHeight
-                        height: Constants.solutionPosition.buttonSvgHeight
-                        source: Constants.icons.pauseButtonUrl
-                        visible: false
-                    }
-
-                    ColorOverlay {
-                        anchors.fill: solutionPauseImage
-                        source: solutionPauseImage
-                        color: !solutionPauseButton.checked ? Constants.materialGrey : Constants.swiftOrange
-                    }
-
+                    anchors.centerIn: parent
+                    width: Constants.solutionPosition.buttonSvgHeight
+                    height: Constants.solutionPosition.buttonSvgHeight
+                    source: Constants.icons.clearButtonUrl
+                    visible: false
                 }
 
-                Button {
-                    id: solutionClearButton
-
-                    ButtonGroup.group: solutionButtonGroup
-                    Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
-                    Layout.preferredHeight: Constants.commonChart.buttonHeight
-                    ToolTip.visible: hovered
-                    ToolTip.text: "Clear"
-                    onPressed: data_model.solution_position([solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].pressed])
-
-                    Image {
-                        id: solutionClearImage
-
-                        anchors.centerIn: parent
-                        width: Constants.solutionPosition.buttonSvgHeight
-                        height: Constants.solutionPosition.buttonSvgHeight
-                        source: Constants.icons.clearButtonUrl
-                        visible: false
-                    }
-
-                    ColorOverlay {
-                        anchors.fill: solutionClearImage
-                        source: solutionClearImage
-                        color: !solutionClearButton.checked ? Constants.materialGrey : Constants.swiftOrange
-                    }
-
+                ColorOverlay {
+                    anchors.fill: solutionClearImage
+                    source: solutionClearImage
+                    color: !solutionClearButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 }
 
-                Button {
-                    id: solutionZoomAllButton
+            }
 
-                    onClicked: {
-                        if (checked) {
-                            zoom_all = true;
-                            solutionCenterButton.checked = false;
-                            center_solution = false;
-                            solutionPositionChart.resetChartZoom();
-                        } else {
-                            zoom_all = false;
-                        }
-                    }
-                    Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
-                    Layout.preferredHeight: Constants.commonChart.buttonHeight
-                    ToolTip.visible: hovered
-                    ToolTip.text: "Zoom All"
-                    checkable: true
-                    checked: true
+            Button {
+                id: solutionZoomAllButton
 
-                    Image {
-                        id: solutionZoomAllImage
-
-                        anchors.centerIn: parent
-                        width: Constants.solutionPosition.buttonSvgHeight
-                        height: Constants.solutionPosition.buttonSvgHeight
-                        source: Constants.icons.zoomAllButtonUrl
-                        visible: false
-                    }
-
-                    ColorOverlay {
-                        anchors.fill: solutionZoomAllImage
-                        source: solutionZoomAllImage
-                        color: !solutionZoomAllButton.checked ? Constants.materialGrey : Constants.swiftOrange
-                    }
-
-                }
-
-                Button {
-                    id: solutionCenterButton
-
-                    onClicked: {
-                        if (checked) {
-                            solutionZoomAllButton.checked = false;
-                            y_axis_half = Utils.spanBetweenValues(solutionPositionXAxis.max, solutionPositionXAxis.min) / 2;
-                            x_axis_half = Utils.spanBetweenValues(solutionPositionYAxis.max, solutionPositionYAxis.min) / 2;
-                            center_solution = true;
-                            zoom_all = false;
-                        } else {
-                            center_solution = false;
-                        }
-                    }
-                    Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
-                    Layout.preferredHeight: Constants.commonChart.buttonHeight
-                    ToolTip.visible: hovered
-                    ToolTip.text: "Center On Solution"
-                    checkable: true
-
-                    Image {
-                        id: centerButtonImage
-
-                        anchors.centerIn: parent
-                        width: Constants.solutionPosition.buttonSvgHeight
-                        height: Constants.solutionPosition.buttonSvgHeight
-                        source: Constants.icons.centerOnButtonUrl
-                        visible: false
-                    }
-
-                    ColorOverlay {
-                        anchors.fill: centerButtonImage
-                        source: centerButtonImage
-                        color: !solutionCenterButton.checked ? Constants.materialGrey : Constants.swiftOrange
-                    }
-
-                }
-
-                Label {
-                    text: "Display Units: "
-                }
-
-                ComboBox {
-                    id: solutionPositionSelectedUnit
-
-                    model: available_units
-                    Layout.preferredWidth: Constants.commonChart.unitDropdownWidth
-                    onCurrentIndexChanged: {
-                        if (!available_units)
-                            return ;
-
-                        data_model.solution_position_unit(available_units[currentIndex]);
+                onClicked: {
+                    if (checked) {
                         zoom_all = true;
-                        solutionZoomAllButton.checked = true;
                         solutionCenterButton.checked = false;
                         center_solution = false;
                         solutionPositionChart.resetChartZoom();
+                    } else {
+                        zoom_all = false;
                     }
+                }
+                Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
+                Layout.preferredHeight: Constants.commonChart.buttonHeight
+                ToolTip.visible: hovered
+                ToolTip.text: "Zoom All"
+                checkable: true
+                checked: true
 
-                    states: State {
-                        when: solutionPositionSelectedUnit.down
+                Image {
+                    id: solutionZoomAllImage
 
-                        PropertyChanges {
-                            target: solutionPositionSelectedUnit
-                            width: Constants.commonChart.unitDropdownWidth * 1.5
-                        }
+                    anchors.centerIn: parent
+                    width: Constants.solutionPosition.buttonSvgHeight
+                    height: Constants.solutionPosition.buttonSvgHeight
+                    source: Constants.icons.zoomAllButtonUrl
+                    visible: false
+                }
 
+                ColorOverlay {
+                    anchors.fill: solutionZoomAllImage
+                    source: solutionZoomAllImage
+                    color: !solutionZoomAllButton.checked ? Constants.materialGrey : Constants.swiftOrange
+                }
+
+            }
+
+            Button {
+                id: solutionCenterButton
+
+                onClicked: {
+                    if (checked) {
+                        solutionZoomAllButton.checked = false;
+                        y_axis_half = Utils.spanBetweenValues(solutionPositionXAxis.max, solutionPositionXAxis.min) / 2;
+                        x_axis_half = Utils.spanBetweenValues(solutionPositionYAxis.max, solutionPositionYAxis.min) / 2;
+                        center_solution = true;
+                        zoom_all = false;
+                    } else {
+                        center_solution = false;
+                    }
+                }
+                Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
+                Layout.preferredHeight: Constants.commonChart.buttonHeight
+                ToolTip.visible: hovered
+                ToolTip.text: "Center On Solution"
+                checkable: true
+
+                Image {
+                    id: centerButtonImage
+
+                    anchors.centerIn: parent
+                    width: Constants.solutionPosition.buttonSvgHeight
+                    height: Constants.solutionPosition.buttonSvgHeight
+                    source: Constants.icons.centerOnButtonUrl
+                    visible: false
+                }
+
+                ColorOverlay {
+                    anchors.fill: centerButtonImage
+                    source: centerButtonImage
+                    color: !solutionCenterButton.checked ? Constants.materialGrey : Constants.swiftOrange
+                }
+
+            }
+
+            Label {
+                text: "Display Units: "
+            }
+
+            ComboBox {
+                id: solutionPositionSelectedUnit
+
+                model: available_units
+                Layout.preferredWidth: Constants.commonChart.unitDropdownWidth
+                onCurrentIndexChanged: {
+                    if (!available_units)
+                        return ;
+
+                    data_model.solution_position_unit(available_units[currentIndex]);
+                    zoom_all = true;
+                    solutionZoomAllButton.checked = true;
+                    solutionCenterButton.checked = false;
+                    center_solution = false;
+                    solutionPositionChart.resetChartZoom();
+                }
+
+                states: State {
+                    when: solutionPositionSelectedUnit.down
+
+                    PropertyChanges {
+                        target: solutionPositionSelectedUnit
+                        width: Constants.commonChart.unitDropdownWidth * 1.5
                     }
 
                 }
 
             }
 
-            ChartView {
-                id: solutionPositionChart
+        }
 
-                function resetChartZoom() {
-                    solutionPositionChart.zoomReset();
-                    solutionPositionXAxis.max = orig_lon_max;
-                    solutionPositionXAxis.min = orig_lon_min;
-                    solutionPositionYAxis.max = orig_lat_max;
-                    solutionPositionYAxis.min = orig_lat_min;
+        ChartView {
+            id: solutionPositionChart
+
+            function resetChartZoom() {
+                solutionPositionChart.zoomReset();
+                solutionPositionXAxis.max = orig_lon_max;
+                solutionPositionXAxis.min = orig_lon_min;
+                solutionPositionYAxis.max = orig_lat_max;
+                solutionPositionYAxis.min = orig_lat_min;
+            }
+
+            function centerToSolution() {
+                solutionPositionChart.zoomReset();
+                if (cur_scatters.length) {
+                    solutionPositionXAxis.max = cur_solution.x + x_axis_half;
+                    solutionPositionXAxis.min = cur_solution.x - x_axis_half;
+                    solutionPositionYAxis.max = cur_solution.y + y_axis_half;
+                    solutionPositionYAxis.min = cur_solution.y - y_axis_half;
                 }
+            }
 
-                function centerToSolution() {
-                    solutionPositionChart.zoomReset();
-                    if (cur_scatters.length) {
-                        solutionPositionXAxis.max = cur_solution.x + x_axis_half;
-                        solutionPositionXAxis.min = cur_solution.x - x_axis_half;
-                        solutionPositionYAxis.max = cur_solution.y + y_axis_half;
-                        solutionPositionYAxis.min = cur_solution.y - y_axis_half;
-                    }
-                }
+            function chartZoomByDirection(delta) {
+                if (delta > 0)
+                    solutionPositionChart.zoom(Constants.commonChart.zoomInMult);
+                else
+                    solutionPositionChart.zoom(Constants.commonChart.zoomOutMult);
+            }
 
-                function chartZoomByDirection(delta) {
-                    if (delta > 0)
-                        solutionPositionChart.zoom(Constants.commonChart.zoomInMult);
-                    else
-                        solutionPositionChart.zoom(Constants.commonChart.zoomOutMult);
-                }
+            function stopZoomFeatures() {
+                solutionCenterButton.checked = false;
+                center_solution = false;
+                solutionZoomAllButton.checked = false;
+                zoom_all = false;
+            }
 
-                function stopZoomFeatures() {
-                    solutionCenterButton.checked = false;
-                    center_solution = false;
-                    solutionZoomAllButton.checked = false;
-                    zoom_all = false;
-                }
+            Layout.preferredWidth: parent.width
+            Layout.preferredHeight: parent.height - Constants.commonChart.heightOffset
+            Layout.alignment: Qt.AlignBottom
+            Layout.fillHeight: true
 
-                Layout.preferredWidth: parent.width
-                Layout.preferredHeight: parent.height - Constants.commonChart.heightOffset
-                Layout.alignment: Qt.AlignBottom
-                Layout.bottomMargin: Constants.commonChart.margin
-                Layout.fillHeight: true
-                plotAreaColor: Constants.commonChart.areaColor
-                backgroundColor: "transparent"
-                legend.visible: false
-                antialiasing: true
-                Component.onCompleted: {
-                }
+            margins {
+                top: 0
+                bottom: 0
+                left: 0
+                right: 0
+            }
 
-                Rectangle {
-                    id: lineLegend
+            plotAreaColor: Constants.commonChart.areaColor
+            backgroundColor: "transparent"
+            legend.visible: false
+            antialiasing: true
 
-                    border.color: Constants.commonLegend.borderColor
-                    border.width: Constants.commonLegend.borderWidth
-                    anchors.top: solutionPositionChart.top
-                    anchors.right: solutionPositionChart.right
-                    anchors.topMargin: Constants.commonLegend.topMargin
-                    anchors.rightMargin: Constants.commonLegend.rightMargin
-                    implicitHeight: lineLegendRepeater.height
-                    width: lineLegendRepeater.width
+            Rectangle {
+                id: lineLegend
 
-                    Column {
-                        id: lineLegendRepeater
+                border.color: Constants.commonLegend.borderColor
+                border.width: Constants.commonLegend.borderWidth
+                anchors.top: solutionPositionChart.top
+                anchors.right: solutionPositionChart.right
+                anchors.topMargin: Constants.commonLegend.topMargin
+                anchors.rightMargin: Constants.commonLegend.rightMargin
+                implicitHeight: lineLegendRepeater.height
+                width: lineLegendRepeater.width
 
-                        padding: Constants.commonLegend.padding
-                        anchors.bottom: lineLegend.bottom
+                Column {
+                    id: lineLegendRepeater
 
-                        Repeater {
-                            id: lineLegendRepeaterRows
+                    padding: Constants.commonLegend.padding
+                    anchors.bottom: lineLegend.bottom
 
-                            model: Constants.solutionPosition.legendLabels
+                    Repeater {
+                        id: lineLegendRepeaterRows
 
-                            Row {
-                                Label {
-                                    id: marker
+                        model: Constants.solutionPosition.legendLabels
 
-                                    text: "+ "
-                                    font.pointSize: (Constants.mediumPointSize + Constants.commonLegend.markerPointSizeOffset)
-                                    font.bold: true
-                                    color: Constants.solutionPosition.colors[index]
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
-                                }
+                        Row {
+                            spacing: Constants.solutionPosition.legendLabelSpacing
+                            Label {
+                                id: marker
 
-                                Label {
-                                    id: label
+                                text: "+"
+                                font.pointSize: (Constants.mediumPointSize + Constants.commonLegend.markerPointSizeOffset)
+                                font.bold: true
+                                color: Constants.solutionPosition.colors[index]
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
+                            }
 
-                                    text: modelData
-                                    font.pointSize: Constants.mediumPointSize
-                                    font.bold: true
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
-                                }
+                            Label {
+                                id: label
 
+                                text: modelData
+                                font.pointSize: Constants.mediumPointSize
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                             }
 
                         }
@@ -329,93 +319,93 @@ Item {
 
                 }
 
-                SwiftValueAxis {
-                    id: solutionPositionXAxis
+            }
 
-                    titleText: Constants.solutionPosition.xAxisTitleText + " (" + available_units[solutionPositionSelectedUnit.currentIndex] + ")"
+            SwiftValueAxis {
+                id: solutionPositionXAxis
 
+                titleText: Constants.solutionPosition.xAxisTitleText + " (" + available_units[solutionPositionSelectedUnit.currentIndex] + ")"
+
+            }
+
+            SwiftValueAxis {
+                id: solutionPositionYAxis
+
+                titleText: Constants.solutionPosition.yAxisTitleText + " (" + available_units[solutionPositionSelectedUnit.currentIndex] + ")"
+
+            }
+
+            MouseArea {
+                anchors.fill: solutionPositionChart
+                onDoubleClicked: {
+                    solutionPositionChart.stopZoomFeatures();
+                    solutionZoomAllButton.checked = true;
+                    solutionPositionChart.resetChartZoom();
                 }
-
-                SwiftValueAxis {
-                    id: solutionPositionYAxis
-
-                    titleText: Constants.solutionPosition.yAxisTitleText + " (" + available_units[solutionPositionSelectedUnit.currentIndex] + ")"
-
+                onWheel: {
+                    solutionPositionChart.stopZoomFeatures();
+                    solutionPositionChart.chartZoomByDirection(wheel.angleDelta.y);
                 }
-
-                MouseArea {
-                    anchors.fill: solutionPositionChart
-                    onDoubleClicked: {
+                onPositionChanged: {
+                    if (pressed) {
                         solutionPositionChart.stopZoomFeatures();
-                        solutionZoomAllButton.checked = true;
-                        solutionPositionChart.resetChartZoom();
-                    }
-                    onWheel: {
-                        solutionPositionChart.stopZoomFeatures();
-                        solutionPositionChart.chartZoomByDirection(wheel.angleDelta.y);
-                    }
-                    onPositionChanged: {
-                        if (pressed) {
-                            solutionPositionChart.stopZoomFeatures();
-                            var current = solutionPositionChart.plotArea;
-                            var x_unit = Utils.spanBetweenValues(solutionPositionXAxis.max, solutionPositionXAxis.min) / current.width;
-                            var y_unit = Utils.spanBetweenValues(solutionPositionYAxis.max, solutionPositionYAxis.min) / current.height;
-                            var delta_x = (mouse_x - mouseX) * x_unit;
-                            var delta_y = (mouse_y - mouseY) * y_unit;
-                            solutionPositionXAxis.max += delta_x;
-                            solutionPositionXAxis.min += delta_x;
-                            solutionPositionYAxis.max -= delta_y;
-                            solutionPositionYAxis.min -= delta_y;
-                            mouse_x = mouseX;
-                            mouse_y = mouseY;
-                        }
-                    }
-                    onPressed: {
+                        var current = solutionPositionChart.plotArea;
+                        var x_unit = Utils.spanBetweenValues(solutionPositionXAxis.max, solutionPositionXAxis.min) / current.width;
+                        var y_unit = Utils.spanBetweenValues(solutionPositionYAxis.max, solutionPositionYAxis.min) / current.height;
+                        var delta_x = (mouse_x - mouseX) * x_unit;
+                        var delta_y = (mouse_y - mouseY) * y_unit;
+                        solutionPositionXAxis.max += delta_x;
+                        solutionPositionXAxis.min += delta_x;
+                        solutionPositionYAxis.max -= delta_y;
+                        solutionPositionYAxis.min -= delta_y;
                         mouse_x = mouseX;
                         mouse_y = mouseY;
                     }
                 }
+                onPressed: {
+                    mouse_x = mouseX;
+                    mouse_y = mouseY;
+                }
+            }
 
-                Timer {
-                    interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
-                    running: true
-                    repeat: true
-                    onTriggered: {
-                        if (!solutionTab.visible)
-                            return ;
+            Timer {
+                interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
+                running: true
+                repeat: true
+                onTriggered: {
+                    if (!solutionPositionTab.visible)
+                        return ;
 
-                        solution_position_model.fill_console_points(solutionPositionPoints);
-                        if (!solutionPositionPoints.points.length)
-                            return ;
+                    solution_position_model.fill_console_points(solutionPositionPoints);
+                    if (!solutionPositionPoints.points.length)
+                        return ;
 
-                        solutionPositionArea.visible = true;
-                        if (available_units != solutionPositionPoints.available_units)
-                            available_units = solutionPositionPoints.available_units;
+                    solutionPositionArea.visible = true;
+                    if (available_units != solutionPositionPoints.available_units)
+                        available_units = solutionPositionPoints.available_units;
 
-                        if (!lines.length || !scatters.length || !cur_scatters.length)
-                            [scatters, cur_scatters, lines] = SolutionPlotLoop.setupScatterSeries(solutionPositionChart, Constants, Globals, solutionPositionXAxis, solutionPositionYAxis, Constants.solutionPosition.legendLabels, Constants.solutionPosition.colors, false, true);
+                    if (!lines.length || !scatters.length || !cur_scatters.length)
+                        [scatters, cur_scatters, lines] = SolutionPlotLoop.setupScatterSeries(solutionPositionChart, Constants, Globals, solutionPositionXAxis, solutionPositionYAxis, Constants.solutionPosition.legendLabels, Constants.solutionPosition.colors, false, true);
 
-                        var combined = [lines, scatters, cur_scatters];
-                        solutionPositionPoints.fill_series(combined);
-                        let point = SolutionPlotLoop.getCurSolution(solutionPositionPoints.cur_points);
-                        if (point)
-                            cur_solution = point;
+                    var combined = [lines, scatters, cur_scatters];
+                    solutionPositionPoints.fill_series(combined);
+                    let point = SolutionPlotLoop.getCurSolution(solutionPositionPoints.cur_points);
+                    if (point)
+                        cur_solution = point;
 
-                        if (center_solution)
-                            solutionPositionChart.centerToSolution();
+                    if (center_solution)
+                        solutionPositionChart.centerToSolution();
 
-                        if (orig_lat_min != solutionPositionPoints.lat_min_ || orig_lat_max != solutionPositionPoints.lat_max_ || orig_lon_min != solutionPositionPoints.lon_min_ || orig_lon_max != solutionPositionPoints.lon_max_) {
-                            orig_lat_min = solutionPositionPoints.lat_min_;
-                            orig_lat_max = solutionPositionPoints.lat_max_;
-                            orig_lon_min = solutionPositionPoints.lon_min_;
-                            orig_lon_max = solutionPositionPoints.lon_max_;
-                            if (zoom_all)
-                                solutionPositionChart.resetChartZoom();
+                    if (orig_lat_min != solutionPositionPoints.lat_min_ || orig_lat_max != solutionPositionPoints.lat_max_ || orig_lon_min != solutionPositionPoints.lon_min_ || orig_lon_max != solutionPositionPoints.lon_max_) {
+                        orig_lat_min = solutionPositionPoints.lat_min_;
+                        orig_lat_max = solutionPositionPoints.lat_max_;
+                        orig_lon_min = solutionPositionPoints.lon_min_;
+                        orig_lon_max = solutionPositionPoints.lon_max_;
+                        if (zoom_all)
+                            solutionPositionChart.resetChartZoom();
 
-                        }
                     }
                 }
-
             }
 
         }

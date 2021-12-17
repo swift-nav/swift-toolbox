@@ -1,5 +1,6 @@
 import "../Constants"
 import "../TableComponents"
+import "../BaseComponents"
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
@@ -16,7 +17,7 @@ ColumnLayout {
     Repeater {
         model: codes
 
-        CheckBox {
+        SmallCheckBox {
             indicator.width: 15
             indicator.height: 15
             spacing: 2

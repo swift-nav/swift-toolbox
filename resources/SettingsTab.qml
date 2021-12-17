@@ -1,4 +1,5 @@
 import "Constants"
+import "BaseComponents"
 import Qt.labs.platform 1.1 as LabsPlatform
 import QtQuick 2.15
 import QtQuick.Controls 2.15
@@ -216,6 +217,7 @@ MainTab {
                 Layout.fillWidth: true
 
                 Button {
+                    id: refreshButton
                     text: "Refresh from device"
                     icon.source: Constants.icons.refreshPath
                     icon.width: Constants.settingsTab.buttonIconWidth
@@ -225,8 +227,12 @@ MainTab {
                     onClicked: data_model.settings_refresh()
                 }
 
-                CheckBox {
+                SmallCheckBox {
+                    Layout.alignment: Qt.AlignBottom
+                    bottomPadding: refreshButton.bottomPadding
                     text: "Show Advanced Settings"
+                    font.pointSize: refreshButton.font.pointSize
+                    font.bold: false
                     onClicked: {
                         settingsTable.showExpert = checked;
                         settingsTable.selectedRowIdx = -1;

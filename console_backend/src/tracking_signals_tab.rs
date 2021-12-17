@@ -404,9 +404,9 @@ impl TrackingSignalsTab {
             colors.set(i as u32, color);
         }
 
-        let mut tracking_points = tracking_signals_status
-            .reborrow()
-            .init_data(self.sv_labels.len() as u32);
+        // +1 for the invisible series we always plot
+        let num_series = self.sv_labels.len() as u32 + 1;
+        let mut tracking_points = tracking_signals_status.reborrow().init_data(num_series);
         {
             for idx in 0..self.sv_labels.len() {
                 let points = &mut self.sats[idx];
@@ -418,6 +418,16 @@ impl TrackingSignalsTab {
                     point_val.set_x(*x);
                     point_val.set_y(*y);
                 }
+            }
+            // Send a set of points that plots the time we received each update.
+            // This way the tracking signals plot always moves even if no sats are selected.
+            let mut point_val_idx = tracking_points
+                .reborrow()
+                .init(num_series - 1, self.time.len() as u32);
+            for (i, t) in self.time.iter().enumerate() {
+                let mut point_val = point_val_idx.reborrow().get(i as u32);
+                point_val.set_x(*t);
+                point_val.set_y(0.);
             }
         }
         tracking_signals_status.set_xmin_offset(self.chart_xmin_offset());

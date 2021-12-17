@@ -1,9 +1,10 @@
+import "../BaseComponents"
 import "../Constants"
 import "../SolutionPlotCommon/SolutionPlotLoop.js" as SolutionPlotLoop
 import QtCharts 2.15
 import QtGraphicalEffects 1.15
 import QtQuick 2.15
-import QtQuick.Controls 2.12
+import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
@@ -25,276 +26,268 @@ Item {
     property bool zoom_all: true
     property bool center_solution: false
 
-    width: parent.width
-    height: parent.height
-    Component.onCompleted: {
-    }
-
     BaselinePlotPoints {
         id: baselinePlotPoints
     }
 
-    Rectangle {
+    ColumnLayout {
         id: baselinePlotArea
 
-        width: parent.width
-        height: parent.height
+        anchors.fill: parent
         visible: false
+        spacing: Constants.baselinePlot.navBarSpacing
 
-        ColumnLayout {
-            id: baselinePlotAreaRowLayout
+        ButtonGroup {
+            id: baselineButtonGroup
 
-            anchors.fill: parent
-            spacing: Constants.baselinePlot.navBarSpacing
+            exclusive: false
+        }
 
-            ButtonGroup {
-                id: baselineButtonGroup
+        RowLayout {
+            Layout.alignment: Qt.AlignLeft
+            Layout.leftMargin: Constants.baselinePlot.navBarMargin
 
-                exclusive: false
-            }
+            Button {
+                id: baselinePauseButton
 
-            RowLayout {
-                Layout.alignment: Qt.AlignLeft
-                Layout.leftMargin: Constants.baselinePlot.navBarMargin
+                ButtonGroup.group: baselineButtonGroup
+                Layout.preferredWidth: Constants.baselinePlot.navBarButtonWidth
+                Layout.preferredHeight: Constants.commonChart.buttonHeight
+                ToolTip.visible: hovered
+                ToolTip.text: "Pause"
+                checkable: true
+                onClicked: data_model.baseline_plot([baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].pressed, baselineButtonGroup.buttons[0].pressed])
 
-                Button {
-                    id: baselinePauseButton
+                Image {
+                    id: baselinePauseImage
 
-                    ButtonGroup.group: baselineButtonGroup
-                    Layout.preferredWidth: Constants.baselinePlot.navBarButtonWidth
-                    Layout.preferredHeight: Constants.commonChart.buttonHeight
-                    ToolTip.visible: hovered
-                    ToolTip.text: "Pause"
-                    checkable: true
-                    onClicked: data_model.baseline_plot([baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].pressed, baselineButtonGroup.buttons[0].pressed])
-
-                    Image {
-                        id: baselinePauseImage
-
-                        anchors.centerIn: parent
-                        width: Constants.baselinePlot.buttonSvgHeight
-                        height: Constants.baselinePlot.buttonSvgHeight
-                        source: Constants.icons.pauseButtonUrl
-                        visible: false
-                    }
-
-                    ColorOverlay {
-                        anchors.fill: baselinePauseImage
-                        source: baselinePauseImage
-                        color: !baselinePauseButton.checked ? Constants.materialGrey : Constants.swiftOrange
-                    }
-
+                    anchors.centerIn: parent
+                    width: Constants.baselinePlot.buttonSvgHeight
+                    height: Constants.baselinePlot.buttonSvgHeight
+                    source: Constants.icons.pauseButtonUrl
+                    visible: false
                 }
 
-                Button {
-                    id: baselineClearButton
-
-                    onPressed: data_model.baseline_plot([baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].pressed, baselineButtonGroup.buttons[0].pressed])
-                    ButtonGroup.group: baselineButtonGroup
-                    Layout.preferredWidth: Constants.baselinePlot.navBarButtonWidth
-                    Layout.preferredHeight: Constants.commonChart.buttonHeight
-                    ToolTip.visible: hovered
-                    ToolTip.text: "Clear"
-
-                    Image {
-                        id: baselineClearImage
-
-                        anchors.centerIn: parent
-                        width: Constants.baselinePlot.buttonSvgHeight
-                        height: Constants.baselinePlot.buttonSvgHeight
-                        source: Constants.icons.clearButtonUrl
-                        visible: false
-                    }
-
-                    ColorOverlay {
-                        anchors.fill: baselineClearImage
-                        source: baselineClearImage
-                        color: !baselineClearButton.checked ? Constants.materialGrey : Constants.swiftOrange
-                    }
-
-                }
-
-                Button {
-                    id: baselineZoomAllButton
-
-                    onClicked: {
-                        if (checked) {
-                            zoom_all = true;
-                            baselineCenterButton.checked = false;
-                            center_solution = false;
-                            baselinePlotChart.resetChartZoom();
-                        } else {
-                            zoom_all = false;
-                        }
-                    }
-                    Layout.preferredWidth: Constants.baselinePlot.navBarButtonWidth
-                    Layout.preferredHeight: Constants.commonChart.buttonHeight
-                    ToolTip.visible: hovered
-                    ToolTip.text: "Zoom All"
-                    checkable: true
-                    checked: true
-
-                    Image {
-                        id: baselineZoomAllImage
-
-                        anchors.centerIn: parent
-                        width: Constants.baselinePlot.buttonSvgHeight
-                        height: Constants.baselinePlot.buttonSvgHeight
-                        source: Constants.icons.zoomAllButtonUrl
-                        visible: false
-                    }
-
-                    ColorOverlay {
-                        anchors.fill: baselineZoomAllImage
-                        source: baselineZoomAllImage
-                        color: !baselineZoomAllButton.checked ? Constants.materialGrey : Constants.swiftOrange
-                    }
-
-                }
-
-                Button {
-                    id: baselineCenterButton
-
-                    onClicked: {
-                        if (checked) {
-                            baselineZoomAllButton.checked = false;
-                            y_axis_half = Utils.spanBetweenValues(baselinePlotXAxis.max, baselinePlotXAxis.min) / 2;
-                            x_axis_half = Utils.spanBetweenValues(baselinePlotYAxis.max, baselinePlotYAxis.min) / 2;
-                            center_solution = true;
-                            zoom_all = false;
-                        } else {
-                            center_solution = false;
-                        }
-                    }
-                    Layout.preferredWidth: Constants.baselinePlot.navBarButtonWidth
-                    Layout.preferredHeight: Constants.commonChart.buttonHeight
-                    ToolTip.visible: hovered
-                    ToolTip.text: "Center On Solution"
-                    checkable: true
-
-                    Image {
-                        id: centerButtonImage
-
-                        anchors.centerIn: parent
-                        width: Constants.baselinePlot.buttonSvgHeight
-                        height: Constants.baselinePlot.buttonSvgHeight
-                        source: Constants.icons.centerOnButtonUrl
-                        visible: false
-                    }
-
-                    ColorOverlay {
-                        anchors.fill: centerButtonImage
-                        source: centerButtonImage
-                        color: !baselineCenterButton.checked ? Constants.materialGrey : Constants.swiftOrange
-                    }
-
-                }
-
-                Button {
-                    id: baselineResetFiltersButton
-
-                    onPressed: data_model.baseline_plot([baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].pressed, baselineButtonGroup.buttons[0].pressed])
-                    ButtonGroup.group: baselineButtonGroup
-                    Layout.preferredWidth: Constants.baselinePlot.resetFiltersButtonWidth
-                    Layout.preferredHeight: Constants.commonChart.buttonHeight
-                    text: "Reset Filters"
-                    ToolTip.visible: hovered
-                    ToolTip.text: "Reset Filters"
+                ColorOverlay {
+                    anchors.fill: baselinePauseImage
+                    source: baselinePauseImage
+                    color: !baselinePauseButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 }
 
             }
 
-            ChartView {
-                id: baselinePlotChart
+            Button {
+                id: baselineClearButton
 
-                function resetChartZoom() {
-                    baselinePlotChart.zoomReset();
-                    baselinePlotXAxis.max = orig_e_max;
-                    baselinePlotXAxis.min = orig_e_min;
-                    baselinePlotYAxis.max = orig_n_max;
-                    baselinePlotYAxis.min = orig_n_min;
+                onPressed: data_model.baseline_plot([baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].pressed, baselineButtonGroup.buttons[0].pressed])
+                ButtonGroup.group: baselineButtonGroup
+                Layout.preferredWidth: Constants.baselinePlot.navBarButtonWidth
+                Layout.preferredHeight: Constants.commonChart.buttonHeight
+                ToolTip.visible: hovered
+                ToolTip.text: "Clear"
+
+                Image {
+                    id: baselineClearImage
+
+                    anchors.centerIn: parent
+                    width: Constants.baselinePlot.buttonSvgHeight
+                    height: Constants.baselinePlot.buttonSvgHeight
+                    source: Constants.icons.clearButtonUrl
+                    visible: false
                 }
 
-                function centerToSolution() {
-                    baselinePlotChart.zoomReset();
-                    if (cur_scatters.length) {
-                        baselinePlotXAxis.max = cur_solution.x + x_axis_half;
-                        baselinePlotXAxis.min = cur_solution.x - x_axis_half;
-                        baselinePlotYAxis.max = cur_solution.y + y_axis_half;
-                        baselinePlotYAxis.min = cur_solution.y - y_axis_half;
+                ColorOverlay {
+                    anchors.fill: baselineClearImage
+                    source: baselineClearImage
+                    color: !baselineClearButton.checked ? Constants.materialGrey : Constants.swiftOrange
+                }
+
+            }
+
+            Button {
+                id: baselineZoomAllButton
+
+                onClicked: {
+                    if (checked) {
+                        zoom_all = true;
+                        baselineCenterButton.checked = false;
+                        center_solution = false;
+                        baselinePlotChart.resetChartZoom();
+                    } else {
+                        zoom_all = false;
                     }
                 }
+                Layout.preferredWidth: Constants.baselinePlot.navBarButtonWidth
+                Layout.preferredHeight: Constants.commonChart.buttonHeight
+                ToolTip.visible: hovered
+                ToolTip.text: "Zoom All"
+                checkable: true
+                checked: true
 
-                function chartZoomByDirection(delta) {
-                    if (delta > 0)
-                        baselinePlotChart.zoom(Constants.commonChart.zoomInMult);
-                    else
-                        baselinePlotChart.zoom(Constants.commonChart.zoomOutMult);
+                Image {
+                    id: baselineZoomAllImage
+
+                    anchors.centerIn: parent
+                    width: Constants.baselinePlot.buttonSvgHeight
+                    height: Constants.baselinePlot.buttonSvgHeight
+                    source: Constants.icons.zoomAllButtonUrl
+                    visible: false
                 }
 
-                function stopZoomFeatures() {
-                    baselineCenterButton.checked = false;
-                    center_solution = false;
-                    baselineZoomAllButton.checked = false;
-                    zoom_all = false;
+                ColorOverlay {
+                    anchors.fill: baselineZoomAllImage
+                    source: baselineZoomAllImage
+                    color: !baselineZoomAllButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 }
 
-                Layout.preferredWidth: parent.width
-                Layout.preferredHeight: parent.height - Constants.commonChart.heightOffset
-                Layout.alignment: Qt.AlignBottom
-                Layout.fillHeight: true
-                backgroundColor: Constants.commonChart.backgroundColor
-                plotAreaColor: Constants.commonChart.areaColor
-                legend.visible: false
-                antialiasing: true
-                Component.onCompleted: {
+            }
+
+            Button {
+                id: baselineCenterButton
+
+                onClicked: {
+                    if (checked) {
+                        baselineZoomAllButton.checked = false;
+                        y_axis_half = Utils.spanBetweenValues(baselinePlotXAxis.max, baselinePlotXAxis.min) / 2;
+                        x_axis_half = Utils.spanBetweenValues(baselinePlotYAxis.max, baselinePlotYAxis.min) / 2;
+                        center_solution = true;
+                        zoom_all = false;
+                    } else {
+                        center_solution = false;
+                    }
+                }
+                Layout.preferredWidth: Constants.baselinePlot.navBarButtonWidth
+                Layout.preferredHeight: Constants.commonChart.buttonHeight
+                ToolTip.visible: hovered
+                ToolTip.text: "Center On Solution"
+                checkable: true
+
+                Image {
+                    id: centerButtonImage
+
+                    anchors.centerIn: parent
+                    width: Constants.baselinePlot.buttonSvgHeight
+                    height: Constants.baselinePlot.buttonSvgHeight
+                    source: Constants.icons.centerOnButtonUrl
+                    visible: false
                 }
 
-                Rectangle {
-                    id: lineLegend
+                ColorOverlay {
+                    anchors.fill: centerButtonImage
+                    source: centerButtonImage
+                    color: !baselineCenterButton.checked ? Constants.materialGrey : Constants.swiftOrange
+                }
 
-                    border.color: Constants.commonLegend.borderColor
-                    border.width: Constants.commonLegend.borderWidth
-                    anchors.top: baselinePlotChart.top
-                    anchors.right: baselinePlotChart.right
-                    anchors.topMargin: Constants.commonLegend.topMargin
-                    anchors.rightMargin: Constants.commonLegend.rightMargin
-                    implicitHeight: lineLegendRepeater.height
-                    width: lineLegendRepeater.width
+            }
 
-                    Column {
-                        id: lineLegendRepeater
+            Button {
+                id: baselineResetFiltersButton
 
-                        padding: Constants.commonLegend.padding
-                        anchors.bottom: lineLegend.bottom
+                onPressed: data_model.baseline_plot([baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].pressed, baselineButtonGroup.buttons[0].pressed])
+                ButtonGroup.group: baselineButtonGroup
+                Layout.preferredWidth: Constants.baselinePlot.resetFiltersButtonWidth
+                Layout.preferredHeight: Constants.commonChart.buttonHeight
+                text: "Reset Filters"
+                ToolTip.visible: hovered
+                ToolTip.text: "Reset Filters"
+            }
 
-                        Repeater {
-                            id: lineLegendRepeaterRows
+        }
 
-                            model: Constants.baselinePlot.legendLabels
+        ChartView {
+            id: baselinePlotChart
 
-                            Row {
-                                Label {
-                                    id: marker
+            function resetChartZoom() {
+                baselinePlotChart.zoomReset();
+                baselinePlotXAxis.max = orig_e_max;
+                baselinePlotXAxis.min = orig_e_min;
+                baselinePlotYAxis.max = orig_n_max;
+                baselinePlotYAxis.min = orig_n_min;
+            }
 
-                                    text: "+ "
-                                    font.pointSize: (Constants.mediumPointSize + Constants.commonLegend.markerPointSizeOffset)
-                                    font.bold: true
-                                    color: Constants.baselinePlot.colors[index]
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
-                                }
+            function centerToSolution() {
+                baselinePlotChart.zoomReset();
+                if (cur_scatters.length) {
+                    baselinePlotXAxis.max = cur_solution.x + x_axis_half;
+                    baselinePlotXAxis.min = cur_solution.x - x_axis_half;
+                    baselinePlotYAxis.max = cur_solution.y + y_axis_half;
+                    baselinePlotYAxis.min = cur_solution.y - y_axis_half;
+                }
+            }
 
-                                Label {
-                                    id: label
+            function chartZoomByDirection(delta) {
+                if (delta > 0)
+                    baselinePlotChart.zoom(Constants.commonChart.zoomInMult);
+                else
+                    baselinePlotChart.zoom(Constants.commonChart.zoomOutMult);
+            }
 
-                                    text: modelData
-                                    font.pointSize: Constants.mediumPointSize
-                                    font.bold: true
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
-                                }
+            function stopZoomFeatures() {
+                baselineCenterButton.checked = false;
+                center_solution = false;
+                baselineZoomAllButton.checked = false;
+                zoom_all = false;
+            }
 
+            Layout.preferredWidth: parent.width
+            Layout.preferredHeight: parent.height - Constants.commonChart.heightOffset
+            Layout.alignment: Qt.AlignBottom
+            Layout.fillHeight: true
+            plotAreaColor: Constants.commonChart.areaColor
+            backgroundColor: "transparent"
+            legend.visible: false
+            antialiasing: true
+
+            margins {
+                top: 0
+                bottom: 0
+                left: 0
+                right: 0
+            }
+
+            Rectangle {
+                id: lineLegend
+
+                border.color: Constants.commonLegend.borderColor
+                border.width: Constants.commonLegend.borderWidth
+                anchors.top: baselinePlotChart.top
+                anchors.right: baselinePlotChart.right
+                anchors.topMargin: Constants.commonLegend.topMargin
+                anchors.rightMargin: Constants.commonLegend.rightMargin
+                implicitHeight: lineLegendRepeater.height
+                width: lineLegendRepeater.width
+
+                Column {
+                    id: lineLegendRepeater
+
+                    padding: Constants.commonLegend.padding
+                    anchors.bottom: lineLegend.bottom
+
+                    Repeater {
+                        id: lineLegendRepeaterRows
+
+                        model: Constants.baselinePlot.legendLabels
+
+                        Row {
+                            Label {
+                                id: marker
+
+                                text: "+ "
+                                font.pointSize: (Constants.mediumPointSize + Constants.commonLegend.markerPointSizeOffset)
+                                font.bold: true
+                                color: Constants.baselinePlot.colors[index]
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
+                            }
+
+                            Label {
+                                id: label
+
+                                text: modelData
+                                font.pointSize: Constants.mediumPointSize
+                                font.bold: true
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                             }
 
                         }
@@ -303,137 +296,113 @@ Item {
 
                 }
 
-                ValueAxis {
-                    id: baselinePlotXAxis
+            }
 
-                    titleText: Constants.baselinePlot.xAxisTitleText
-                    gridVisible: true
-                    lineVisible: true
-                    minorGridVisible: true
-                    minorGridLineColor: Constants.commonChart.minorGridLineColor
-                    gridLineColor: Constants.commonChart.gridLineColor
-                    labelsColor: Constants.commonChart.labelsColor
+            SwiftValueAxis {
+                id: baselinePlotXAxis
 
-                    labelsFont {
-                        pointSize: Constants.mediumPointSize
-                        bold: true
-                    }
+                titleText: Constants.baselinePlot.xAxisTitleText
+            }
 
+            SwiftValueAxis {
+                id: baselinePlotYAxis
+
+                titleText: Constants.baselinePlot.yAxisTitleText
+            }
+
+            MouseArea {
+                anchors.fill: baselinePlotChart
+                onDoubleClicked: {
+                    baselinePlotChart.stopZoomFeatures();
+                    baselineZoomAllButton.checked = true;
+                    baselinePlotChart.resetChartZoom();
                 }
-
-                ValueAxis {
-                    id: baselinePlotYAxis
-
-                    titleText: Constants.baselinePlot.yAxisTitleText
-                    gridVisible: true
-                    lineVisible: true
-                    minorGridVisible: true
-                    minorGridLineColor: Constants.commonChart.minorGridLineColor
-                    gridLineColor: Constants.commonChart.gridLineColor
-                    labelsColor: Constants.commonChart.labelsColor
-
-                    labelsFont {
-                        pointSize: Constants.mediumPointSize
-                        bold: true
-                    }
-
+                onWheel: {
+                    baselinePlotChart.stopZoomFeatures();
+                    baselinePlotChart.chartZoomByDirection(wheel.angleDelta.y);
                 }
-
-                MouseArea {
-                    anchors.fill: baselinePlotChart
-                    onDoubleClicked: {
+                onPositionChanged: {
+                    if (pressed) {
                         baselinePlotChart.stopZoomFeatures();
-                        baselineZoomAllButton.checked = true;
-                        baselinePlotChart.resetChartZoom();
-                    }
-                    onWheel: {
-                        baselinePlotChart.stopZoomFeatures();
-                        baselinePlotChart.chartZoomByDirection(wheel.angleDelta.y);
-                    }
-                    onPositionChanged: {
-                        if (pressed) {
-                            baselinePlotChart.stopZoomFeatures();
-                            var current = baselinePlotChart.plotArea;
-                            var x_unit = Utils.spanBetweenValues(baselinePlotXAxis.max, baselinePlotXAxis.min) / current.width;
-                            var y_unit = Utils.spanBetweenValues(baselinePlotYAxis.max, baselinePlotYAxis.min) / current.height;
-                            var delta_x = (mouse_x - mouseX) * x_unit;
-                            var delta_y = (mouse_y - mouseY) * y_unit;
-                            baselinePlotXAxis.max += delta_x;
-                            baselinePlotXAxis.min += delta_x;
-                            baselinePlotYAxis.max -= delta_y;
-                            baselinePlotYAxis.min -= delta_y;
-                            mouse_x = mouseX;
-                            mouse_y = mouseY;
-                        }
-                    }
-                    onPressed: {
+                        var current = baselinePlotChart.plotArea;
+                        var x_unit = Utils.spanBetweenValues(baselinePlotXAxis.max, baselinePlotXAxis.min) / current.width;
+                        var y_unit = Utils.spanBetweenValues(baselinePlotYAxis.max, baselinePlotYAxis.min) / current.height;
+                        var delta_x = (mouse_x - mouseX) * x_unit;
+                        var delta_y = (mouse_y - mouseY) * y_unit;
+                        baselinePlotXAxis.max += delta_x;
+                        baselinePlotXAxis.min += delta_x;
+                        baselinePlotYAxis.max -= delta_y;
+                        baselinePlotYAxis.min -= delta_y;
                         mouse_x = mouseX;
                         mouse_y = mouseY;
                     }
                 }
+                onPressed: {
+                    mouse_x = mouseX;
+                    mouse_y = mouseY;
+                }
+            }
 
-                Timer {
-                    interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
-                    running: true
-                    repeat: true
-                    onTriggered: {
-                        if (!baselineTab.visible)
-                            return ;
+            Timer {
+                interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
+                running: true
+                repeat: true
+                onTriggered: {
+                    if (!baselinePlot.visible)
+                        return ;
 
-                        baseline_plot_model.fill_console_points(baselinePlotPoints);
-                        if (!baselinePlotPoints.points.length)
-                            return ;
+                    baseline_plot_model.fill_console_points(baselinePlotPoints);
+                    if (!baselinePlotPoints.points.length)
+                        return ;
 
-                        baselinePlotArea.visible = true;
-                        let _lines = null;
-                        if (!scatters.length || !cur_scatters.length)
-                            [scatters, cur_scatters, _lines] = SolutionPlotLoop.setupScatterSeries(baselinePlotChart, Constants, Globals, baselinePlotXAxis, baselinePlotYAxis, Constants.baselinePlot.legendLabels, Constants.baselinePlot.colors);
+                    baselinePlotArea.visible = true;
+                    let _lines = null;
+                    if (!scatters.length || !cur_scatters.length)
+                        [scatters, cur_scatters, _lines] = SolutionPlotLoop.setupScatterSeries(baselinePlotChart, Constants, Globals, baselinePlotXAxis, baselinePlotYAxis, Constants.baselinePlot.legendLabels, Constants.baselinePlot.colors);
 
-                        baselinePlotPoints.fill_series([scatters, cur_scatters]);
-                        let point = SolutionPlotLoop.getCurSolution(baselinePlotPoints.cur_points);
-                        if (point)
-                            cur_solution = point;
+                    baselinePlotPoints.fill_series([scatters, cur_scatters]);
+                    let point = SolutionPlotLoop.getCurSolution(baselinePlotPoints.cur_points);
+                    if (point)
+                        cur_solution = point;
 
-                        if (center_solution)
-                            baselinePlotChart.centerToSolution();
+                    if (center_solution)
+                        baselinePlotChart.centerToSolution();
 
-                        let hasData = false;
-                        for (let idx in baselinePlotPoints.points) {
-                            if (baselinePlotPoints.points[idx].length > 0) {
-                                hasData = true;
-                                break;
-                            }
-                        }
-                        let new_n_min = Constants.baselinePlot.axesDefaultMin;
-                        let new_n_max = Constants.baselinePlot.axesDefaultMax;
-                        let new_e_min = Constants.baselinePlot.axesDefaultMin;
-                        let new_e_max = Constants.baselinePlot.axesDefaultMax;
-                        baselineZoomAllButton.enabled = hasData;
-                        baselineCenterButton.enabled = hasData;
-                        if (hasData) {
-                            new_n_min = baselinePlotPoints.n_min;
-                            new_n_max = baselinePlotPoints.n_max;
-                            new_e_min = baselinePlotPoints.e_min;
-                            new_e_max = baselinePlotPoints.e_max;
-                        } else {
-                            zoom_all = true;
-                            center_solution = false;
-                            baselineZoomAllButton.checked = true;
-                            baselineCenterButton.checked = false;
-                            baselinePlotChart.resetChartZoom();
-                        }
-                        if (orig_n_min != new_n_min || orig_n_max != new_n_max || orig_e_min != new_e_min || orig_e_max != new_e_max) {
-                            orig_n_min = new_n_min;
-                            orig_n_max = new_n_max;
-                            orig_e_min = new_e_min;
-                            orig_e_max = new_e_max;
-                            if (zoom_all)
-                                baselinePlotChart.resetChartZoom();
-
+                    let hasData = false;
+                    for (let idx in baselinePlotPoints.points) {
+                        if (baselinePlotPoints.points[idx].length > 0) {
+                            hasData = true;
+                            break;
                         }
                     }
-                }
+                    let new_n_min = Constants.baselinePlot.axesDefaultMin;
+                    let new_n_max = Constants.baselinePlot.axesDefaultMax;
+                    let new_e_min = Constants.baselinePlot.axesDefaultMin;
+                    let new_e_max = Constants.baselinePlot.axesDefaultMax;
+                    baselineZoomAllButton.enabled = hasData;
+                    baselineCenterButton.enabled = hasData;
+                    if (hasData) {
+                        new_n_min = baselinePlotPoints.n_min;
+                        new_n_max = baselinePlotPoints.n_max;
+                        new_e_min = baselinePlotPoints.e_min;
+                        new_e_max = baselinePlotPoints.e_max;
+                    } else {
+                        zoom_all = true;
+                        center_solution = false;
+                        baselineZoomAllButton.checked = true;
+                        baselineCenterButton.checked = false;
+                        baselinePlotChart.resetChartZoom();
+                    }
+                    if (orig_n_min != new_n_min || orig_n_max != new_n_max || orig_e_min != new_e_min || orig_e_max != new_e_max) {
+                        orig_n_min = new_n_min;
+                        orig_n_max = new_n_max;
+                        orig_e_min = new_e_min;
+                        orig_e_max = new_e_max;
+                        if (zoom_all)
+                            baselinePlotChart.resetChartZoom();
 
+                    }
+                }
             }
 
         }

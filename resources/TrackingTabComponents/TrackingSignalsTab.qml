@@ -33,9 +33,10 @@ Item {
             Layout.fillWidth: true
             visible: all_series.length > 0
             title: Constants.trackingSignals.title
-            titleFont: Constants.trackingSignals.titleFont
-            titleColor: Constants.trackingSignals.titleColor
+            titleFont: Constants.commonChart.titleFont
+            titleColor: Constants.commonChart.titleColor
             plotAreaColor: Constants.commonChart.areaColor
+            backgroundColor: "transparent"
             legend.visible: false
             antialiasing: true
 
@@ -54,40 +55,24 @@ Item {
                 model: enabled_series
             }
 
-            ValueAxis {
+            SwiftValueAxis {
                 id: trackingSignalsXAxis
 
                 titleText: Constants.trackingSignals.xAxisTitleText
-                gridVisible: true
-                lineVisible: true
-                minorGridVisible: true
-                minorGridLineColor: Constants.commonChart.minorGridLineColor
-                gridLineColor: Constants.commonChart.gridLineColor
-                labelsColor: Constants.commonChart.labelsColor
                 tickType: ValueAxis.TicksDynamic
                 tickInterval: Constants.trackingSignals.xAxisTickInterval
                 labelFormat: "%d"
-                titleFont: Constants.trackingSignals.axisTitleFont
-                labelsFont: Constants.trackingSignals.axisLabelsFont
             }
 
-            ValueAxis {
+            SwiftValueAxis {
                 id: trackingSignalsYAxis
 
                 titleText: Constants.trackingSignals.yAxisTitleText
-                gridVisible: true
-                lineVisible: true
-                minorGridVisible: true
-                minorGridLineColor: Constants.commonChart.minorGridLineColor
-                gridLineColor: Constants.commonChart.gridLineColor
-                labelsColor: Constants.commonChart.labelsColor
                 max: Constants.trackingSignals.yAxisMax
                 min: Constants.trackingSignals.snrThreshold
                 tickType: ValueAxis.TicksDynamic
                 tickInterval: Constants.trackingSignals.yAxisTickInterval
                 labelFormat: "%d"
-                titleFont: Constants.trackingSignals.axisTitleFont
-                labelsFont: Constants.trackingSignals.axisLabelsFont
             }
 
             Timer {

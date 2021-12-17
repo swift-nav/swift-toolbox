@@ -14,6 +14,7 @@ Item {
     property variant logLevelLabels: []
     property int logLevelIndex: 3
     property bool consolePaused: false
+    property int preferredHeight: Constants.logPanel.preferredHeight
 
     width: parent.width
     height: parent.height

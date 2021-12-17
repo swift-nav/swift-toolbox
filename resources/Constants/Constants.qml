@@ -4,13 +4,10 @@ import QtQuick.Controls.Material 2.12
 pragma Singleton
 
 QtObject {
-    readonly property real margins: 2
     readonly property real tabBarWidth: 70
     readonly property real tabBarHeight: 45
     readonly property real topLevelSpacing: 0
-    readonly property real logPanelPreferredHeight: 100
-    readonly property int loggingBarPreferredHeight: 50
-    readonly property real statusBarPreferredHeight: 30
+    property QtObject mainTabs
     property QtObject tabInfoBar
     property QtObject logPanel
     property QtObject statusBar
@@ -67,6 +64,11 @@ QtObject {
         source: "qrc:/fonts/RobotoCondensed-Light.ttf"
     }
 
+    mainTabs: QtObject {
+        readonly property int horizontalMargins: 4
+        readonly property int verticalMargins: 4
+    }
+
     tabInfoBar: QtObject {
         readonly property bool autoClose: false
         readonly property color tabLabelColor: swiftOrange
@@ -99,6 +101,7 @@ QtObject {
 
         licenses: QtObject {
             readonly property int dropdownHeight: 40
+            readonly property string fontFamily: "Roboto"
             readonly property string robotoFontTabLabel: "Roboto Font"
             readonly property string fontAwesomeIconsTabLabel: "Font Awesome Icons"
             readonly property string robotoFontLicensePath: ":/fonts/Roboto-LICENSE.txt"
@@ -272,28 +275,27 @@ QtObject {
         readonly property color gradientColor: "gainsboro"
         readonly property color selectedCellColor: "dark grey"
         readonly property color borderColor: "gainsboro"
-        readonly property string fontFamily: "Roboto"
+        readonly property string fontFamily: "Roboto Condensed"
         property var defaultColumns: ["Item", "Value"]
     }
 
     statusBar: QtObject {
-        readonly property int margin: 10
-        readonly property int spacing: 10
-        readonly property color borderColor: "#CDC9C9"
-        readonly property int borderWidth: 1
-        readonly property color keyTextColor: "#00006E"
-        readonly property real smallKeyWidthRatio: 0.05
-        readonly property int innerKeyValSpacing: 5
-        readonly property int arrowsSideLength: 15
-        readonly property string arrowsBluePath: "qrc:/images/iconic/arrows_blue.png"
-        readonly property string arrowsGreyPath: "qrc:/images/iconic/arrows_grey.png"
-        readonly property string portLabel: "Port: "
-        readonly property string posLabel: "Pos: "
-        readonly property string rtkLabel: "RTK: "
-        readonly property string satsLabel: "Sats: "
-        readonly property string corrAgeLabel: "Corr Age: "
-        readonly property string insLabel: "INS: "
-        readonly property string antennaLabel: "Ant: "
+        readonly property int verticalPadding: 6
+        readonly property int leftMargin: 15
+        readonly property int spacing: 20
+        readonly property color borderColor: "black"
+        readonly property int borderWidth: 0
+        readonly property color textColor: "white"
+        readonly property int textPointSize: largePointSize + 1
+        readonly property int keyValueSpacing: 5
+        readonly property int valueMinimumWidth: 25
+        readonly property string portLabel: "Port:"
+        readonly property string posLabel: "Position:"
+        readonly property string rtkLabel: "RTK:"
+        readonly property string satsLabel: "Sats:"
+        readonly property string corrAgeLabel: "Correction Age:"
+        readonly property string insLabel: "INS:"
+        readonly property string antennaLabel: "Antenna:"
         readonly property string defaultValue: "--"
     }
 
@@ -320,6 +322,7 @@ QtObject {
     }
 
     loggingBar: QtObject {
+        readonly property int preferredHeight: 50
         readonly property int buttonHeight: 40
         readonly property real buttonHeightRatio: 2 / 3
         readonly property int buttonSvgHeight: 15
@@ -345,8 +348,6 @@ QtObject {
 
     advancedMagnetometer: QtObject {
         readonly property string title: "Raw Magnetometer Data"
-        readonly property color titleColor: "#00006E"
-        readonly property int titlePointSize: 14
         readonly property var legendLabels: ["Mag. X (uT)", "Mag. Y (uT)", "Mag. Z (uT)"]
         readonly property var lineColors: ["#66c2a5", "#fc8d62", "#8da0cb"]
         readonly property int xAxisMax: 200
@@ -359,8 +360,6 @@ QtObject {
 
     advancedSpectrumAnalyzer: QtObject {
         readonly property string title: "Spectrum Analyzer"
-        readonly property color titleColor: "#00006E"
-        readonly property int titlePointSize: 14
         readonly property var lineColors: ["#000000"]
         readonly property int xAxisTickCount: 10
         readonly property real yAxisTickCount: 2.5
@@ -378,8 +377,6 @@ QtObject {
 
     advancedImu: QtObject {
         readonly property string title: "Raw IMU Data"
-        readonly property color titleColor: "#00006E"
-        readonly property int titlePointSize: 14
         readonly property var textDataLabels: ["Imu temp:", "Imu conf:", "Rms acc x:", "Rms acc y:", "Rms acc z:"]
         readonly property var insStatusLabels: ["GNSS Pos:", "GNSS Vel:", "Wheelticks:", "Wheelspeed:", "nhc:", "Static Detection:"]
         readonly property var legendLabels: ["Accn. X", "Accn. Y", "Accn. Z", "Gyro X", "Gyro Y", "Gyro Z"]
@@ -446,10 +443,12 @@ QtObject {
         readonly property string yAxisTitleText: "Latitude"
         readonly property string xAxisTitleText: "Longitude"
         readonly property var legendLabels: ["SPP", "SBAS", "DGPS", "RTK Float", "RTK Fixed", "DR"]
+        readonly property int legendLabelSpacing: 4
         readonly property var colors: ["#0000FF", "#008000", "#00B3FF", "#BF00BF", "#FFA500", "#000000"]
     }
 
     logPanel: QtObject {
+        readonly property int preferredHeight: 100
         readonly property int width: 220
         readonly property variant defaultColumnWidthRatios: [0.15, 0.1, 0.75]
         readonly property int maxRows: 200
@@ -512,6 +511,7 @@ QtObject {
         readonly property int chartHeightOffset: 0
         readonly property int legendBottomMargin: 120
         readonly property int legendLeftMargin: 80
+        readonly property int legendLabelSpacing: 4
     }
 
     commonLegend: QtObject {
@@ -538,7 +538,6 @@ QtObject {
         readonly property int zAboveCharts: 100
         readonly property int lineWidth: 1
         readonly property int heightOffset: 50
-        readonly property int margin: 20
         readonly property real currentSolutionMarkerSize: 12
         readonly property real solutionMarkerSize: 5
         readonly property real solutionLineWidth: 0.5
@@ -547,14 +546,29 @@ QtObject {
         readonly property color minorGridLineColor: "#CDC9C9"
         readonly property color gridLineColor: "#CDC9C9"
         readonly property color labelsColor: "#000000"
-        readonly property int titlePointSize: largePointSize
-        readonly property int axisLabelsPointSize: smallPointSize
+        readonly property font titleFont: Qt.font({
+            "family": fontFamily,
+            "pointSize": xlPointSize,
+            "bold": true
+        })
+        readonly property color titleColor: swiftGrey
+        readonly property font axisTitleFont: Qt.font({
+            "family": fontFamily,
+            "pointSize": mediumPointSize,
+            "bold": true,
+            "letterSpacing": 2,
+            "capitalization": Font.AllUppercase
+        })
+        readonly property font axisLabelsFont: Qt.font({
+            "family": fontFamily,
+            "pointSize": smallPointSize,
+            "bold": true
+        })
         readonly property int tickPointSize: 10
         readonly property int buttonHeight: 40
         readonly property int unitDropdownWidth: 90
         readonly property real zoomInMult: 1.1
         readonly property real zoomOutMult: 0.9
-        readonly property string fontFamily: "Roboto"
     }
 
     trackingSkyPlot: QtObject {
@@ -571,35 +585,17 @@ QtObject {
         readonly property int legendTopMargin: 50
         readonly property int legendRightMargin: 200
         readonly property int directionLabelOffset: 30
-        readonly property int directionLabelFontSize: 16
+        readonly property int directionLabelFontSize: 14
     }
 
     trackingSignals: QtObject {
         readonly property string title: "Tracking C/N0"
-        readonly property color titleColor: swiftGrey
-        readonly property font titleFont: Qt.font({
-            "family": fontFamily,
-            "pointSize": xlPointSize,
-            "bold": true
-        })
         readonly property int legendTopMargin: 12
         readonly property int legendBottomMargin: 72
         readonly property int legendLeftMargin: 18
         readonly property string legendCellTextSample: "XXX XXXX X+NN XNN"
         readonly property string yAxisTitleText: "dB-Hz"
         readonly property string xAxisTitleText: "seconds"
-        readonly property font axisTitleFont: Qt.font({
-            "family": fontFamily,
-            "pointSize": Constants.mediumPointSize,
-            "bold": true,
-            "letterSpacing": 2,
-            "capitalization": Font.AllUppercase
-        })
-        readonly property font axisLabelsFont: Qt.font({
-            "family": fontFamily,
-            "pointSize": commonChart.axisLabelsPointSize,
-            "bold": true
-        })
         readonly property int snrThreshold: 15
         readonly property int yAxisMax: 60
         readonly property int yAxisTickInterval: 10
@@ -607,7 +603,6 @@ QtObject {
     }
 
     observationTab: QtObject {
-        readonly property int titlePointSize: 14
         readonly property int titleAreaHight: 25
     }
 

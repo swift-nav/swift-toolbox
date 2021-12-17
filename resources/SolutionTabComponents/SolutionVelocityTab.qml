@@ -1,7 +1,8 @@
+import "../BaseComponents"
 import "../Constants"
-import QtCharts 2.2
-import QtQuick 2.6
-import QtQuick.Controls 2.12
+import QtCharts 2.15
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
@@ -14,110 +15,100 @@ Item {
     property variant available_units: []
     property variant unit: ""
 
-    width: parent.width
-    height: parent.height
-    Component.onCompleted: {
-    }
-
     SolutionVelocityPoints {
         id: solutionVelocityPoints
     }
 
-    Rectangle {
+    ColumnLayout {
         id: solutionVelocityArea
 
-        width: parent.width
-        height: parent.height
+        anchors.fill: parent
         visible: false
+        spacing: 0
 
-        ColumnLayout {
-            id: solutionVelocityAreaRowLayout
+        ComboBox {
+            id: solutionVelocitySelectedUnit
 
-            anchors.fill: parent
-            width: parent.width
-            height: parent.height
-            spacing: 0
+            Component.onCompleted: {
+                solutionVelocitySelectedUnit.indicator.width = Constants.solutionVelocity.unitDropdownWidth / 3;
+            }
+            Layout.alignment: Qt.AlignCenter | Qt.AlignTop
+            Layout.preferredWidth: Constants.solutionVelocity.unitDropdownWidth
+            model: available_units
+            onCurrentIndexChanged: {
+                if (!available_units)
+                    return ;
 
-            ComboBox {
-                id: solutionVelocitySelectedUnit
+                data_model.solution_velocity_unit(available_units[currentIndex]);
+            }
+        }
 
-                Component.onCompleted: {
-                    solutionVelocitySelectedUnit.indicator.width = Constants.solutionVelocity.unitDropdownWidth / 3;
-                }
-                Layout.alignment: Qt.AlignCenter | Qt.AlignTop
-                Layout.preferredWidth: Constants.solutionVelocity.unitDropdownWidth
-                model: available_units
-                onCurrentIndexChanged: {
-                    if (!available_units)
-                        return ;
+        ChartView {
+            id: solutionVelocityChart
 
-                    data_model.solution_velocity_unit(available_units[currentIndex]);
-                }
+            Layout.alignment: Qt.AlignBottom
+            Layout.fillHeight: true
+            Layout.fillWidth: true
+            plotAreaColor: Constants.commonChart.areaColor
+            backgroundColor: "transparent"
+            legend.visible: false
+            antialiasing: true
+
+            margins {
+                top: 0
+                bottom: 0
+                left: 0
+                right: 0
             }
 
-            ChartView {
-                id: solutionVelocityChart
+            Rectangle {
+                id: lineLegend
 
-                Layout.alignment: Qt.AlignBottom
-                Layout.bottomMargin: Constants.commonChart.margin
-                Layout.fillHeight: true
-                Layout.fillWidth: true
-                backgroundColor: Constants.commonChart.backgroundColor
-                plotAreaColor: Constants.commonChart.areaColor
-                legend.visible: false
-                antialiasing: true
-                Component.onCompleted: {
-                }
+                border.color: Constants.commonLegend.borderColor
+                border.width: Constants.commonLegend.borderWidth
+                anchors.bottom: solutionVelocityChart.bottom
+                anchors.left: solutionVelocityChart.left
+                anchors.bottomMargin: Constants.solutionVelocity.legendBottomMargin
+                anchors.leftMargin: Constants.solutionVelocity.legendLeftMargin
+                implicitHeight: lineLegendRepeater.height
+                width: lineLegendRepeater.width
 
-                Rectangle {
-                    id: lineLegend
+                Column {
+                    id: lineLegendRepeater
 
-                    border.color: Constants.commonLegend.borderColor
-                    border.width: Constants.commonLegend.borderWidth
-                    anchors.bottom: solutionVelocityChart.bottom
-                    anchors.left: solutionVelocityChart.left
-                    anchors.bottomMargin: Constants.solutionVelocity.legendBottomMargin
-                    anchors.leftMargin: Constants.solutionVelocity.legendLeftMargin
-                    implicitHeight: lineLegendRepeater.height
-                    width: lineLegendRepeater.width
+                    padding: Constants.commonLegend.padding
+                    anchors.bottom: lineLegend.bottom
 
-                    Column {
-                        id: lineLegendRepeater
+                    Repeater {
+                        id: lineLegendRepeaterRows
 
-                        padding: Constants.commonLegend.padding
-                        anchors.bottom: lineLegend.bottom
+                        model: Constants.solutionVelocity.labels
 
-                        Repeater {
-                            id: lineLegendRepeaterRows
+                        Row {
+                            spacing: Constants.solutionVelocity.legendLabelSpacing
+                            Component.onCompleted: {
+                                for (var idx in colors) {
+                                    if (lineLegendRepeaterRows.itemAt(idx))
+                                        lineLegendRepeaterRows.itemAt(idx).children[0].color = colors[idx];
 
-                            model: Constants.solutionVelocity.labels
-
-                            Row {
-                                Component.onCompleted: {
-                                    for (var idx in colors) {
-                                        if (lineLegendRepeaterRows.itemAt(idx))
-                                            lineLegendRepeaterRows.itemAt(idx).children[0].color = colors[idx];
-
-                                    }
                                 }
+                            }
 
-                                Rectangle {
-                                    id: marker
+                            Rectangle {
+                                id: marker
 
-                                    width: Constants.commonLegend.markerWidth
-                                    height: Constants.commonLegend.markerHeight
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
+                                width: Constants.commonLegend.markerWidth
+                                height: Constants.commonLegend.markerHeight
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
 
-                                Label {
-                                    id: label
+                            Label {
+                                id: label
 
-                                    text: modelData
-                                    font.pointSize: Constants.mediumPointSize
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
-                                }
-
+                                text: modelData
+                                font.pointSize: Constants.mediumPointSize
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                             }
 
                         }
@@ -126,88 +117,64 @@ Item {
 
                 }
 
-                ValueAxis {
-                    id: solutionVelocityXAxis
+            }
 
-                    titleText: Constants.solutionVelocity.xAxisTitleText
-                    gridVisible: true
-                    lineVisible: true
-                    minorGridVisible: true
-                    minorGridLineColor: Constants.commonChart.minorGridLineColor
-                    gridLineColor: Constants.commonChart.gridLineColor
-                    labelsColor: Constants.commonChart.labelsColor
+            SwiftValueAxis {
+                id: solutionVelocityXAxis
 
-                    labelsFont {
-                        pointSize: Constants.mediumPointSize
-                        bold: true
-                    }
+                titleText: Constants.solutionVelocity.xAxisTitleText
+            }
 
-                }
+            SwiftValueAxis {
+                id: solutionVelocityYAxis
 
-                ValueAxis {
-                    id: solutionVelocityYAxis
+                titleText: solutionVelocitySelectedUnit.currentText
+            }
 
-                    titleText: solutionVelocitySelectedUnit.currentText
-                    gridVisible: true
-                    lineVisible: true
-                    minorGridVisible: true
-                    minorGridLineColor: Constants.commonChart.minorGridLineColor
-                    gridLineColor: Constants.commonChart.gridLineColor
-                    labelsColor: Constants.commonChart.labelsColor
+            Timer {
+                interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
+                running: true
+                repeat: true
+                onTriggered: {
+                    if (!solutionVelocityTab.visible)
+                        return ;
 
-                    labelsFont {
-                        pointSize: Constants.mediumPointSize
-                        bold: true
-                    }
+                    solution_velocity_model.fill_console_points(solutionVelocityPoints);
+                    if (!solutionVelocityPoints.points.length)
+                        return ;
 
-                }
+                    solutionVelocityArea.visible = true;
+                    var points = solutionVelocityPoints.points;
+                    if (colors != solutionVelocityPoints.colors) {
+                        colors = solutionVelocityPoints.colors;
+                        for (var idx in colors) {
+                            if (lineLegendRepeaterRows.itemAt(idx))
+                                lineLegendRepeaterRows.itemAt(idx).children[0].color = colors[idx];
 
-                Timer {
-                    interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
-                    running: true
-                    repeat: true
-                    onTriggered: {
-                        if (!solutionTab.visible)
-                            return ;
-
-                        solution_velocity_model.fill_console_points(solutionVelocityPoints);
-                        if (!solutionVelocityPoints.points.length)
-                            return ;
-
-                        solutionVelocityArea.visible = true;
-                        var points = solutionVelocityPoints.points;
-                        if (colors != solutionVelocityPoints.colors) {
-                            colors = solutionVelocityPoints.colors;
-                            for (var idx in colors) {
-                                if (lineLegendRepeaterRows.itemAt(idx))
-                                    lineLegendRepeaterRows.itemAt(idx).children[0].color = colors[idx];
-
-                            }
-                        }
-                        if (available_units != solutionVelocityPoints.available_units)
-                            available_units = solutionVelocityPoints.available_units;
-
-                        if (!lines.length) {
-                            for (var idx in labels) {
-                                var line = solutionVelocityChart.createSeries(ChartView.SeriesTypeLine, Constants.solutionVelocity.labels[idx], solutionVelocityXAxis);
-                                line.color = colors[idx];
-                                line.width = Constants.commonChart.lineWidth;
-                                line.axisYRight = solutionVelocityYAxis;
-                                line.useOpenGL = Globals.useOpenGL;
-                                lines.push(line);
-                            }
-                        }
-                        solutionVelocityPoints.fill_series(lines);
-                        var last = points[0][points[0].length - 1];
-                        solutionVelocityXAxis.min = last.x - Constants.solutionVelocity.xAxisMinOffsetFromMaxSeconds;
-                        solutionVelocityXAxis.max = last.x;
-                        if (solutionVelocityYAxis.min != solutionVelocityPoints.min_ || solutionVelocityYAxis.max != solutionVelocityPoints.max_) {
-                            solutionVelocityYAxis.min = solutionVelocityPoints.min_;
-                            solutionVelocityYAxis.max = solutionVelocityPoints.max_;
                         }
                     }
-                }
+                    if (available_units != solutionVelocityPoints.available_units)
+                        available_units = solutionVelocityPoints.available_units;
 
+                    if (!lines.length) {
+                        for (var idx in labels) {
+                            var line = solutionVelocityChart.createSeries(ChartView.SeriesTypeLine, Constants.solutionVelocity.labels[idx], solutionVelocityXAxis);
+                            line.color = colors[idx];
+                            line.width = Constants.commonChart.lineWidth;
+                            line.axisYRight = solutionVelocityYAxis;
+                            line.useOpenGL = Globals.useOpenGL;
+                            lines.push(line);
+                        }
+                    }
+                    solutionVelocityPoints.fill_series(lines);
+                    var last = points[0][points[0].length - 1];
+                    solutionVelocityXAxis.min = last.x - Constants.solutionVelocity.xAxisMinOffsetFromMaxSeconds;
+                    solutionVelocityXAxis.max = last.x;
+                    if (solutionVelocityYAxis.min != solutionVelocityPoints.min_ || solutionVelocityYAxis.max != solutionVelocityPoints.max_) {
+                        solutionVelocityYAxis.min = solutionVelocityPoints.min_;
+                        solutionVelocityYAxis.max = solutionVelocityPoints.max_;
+                    }
+                }
             }
 
         }

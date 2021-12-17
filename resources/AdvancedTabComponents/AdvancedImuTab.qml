@@ -1,7 +1,8 @@
+import "../BaseComponents"
 import "../Constants"
-import QtCharts 2.3
-import QtQuick 2.6
-import QtQuick.Controls 2.12
+import QtCharts 2.15
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
@@ -10,11 +11,6 @@ Item {
 
     property variant lines: []
 
-    width: parent.width
-    height: parent.height
-    Component.onCompleted: {
-    }
-
     AdvancedImuPoints {
         id: advancedImuPoints
     }
@@ -22,28 +18,29 @@ Item {
     ColumnLayout {
         id: advancedImuArea
 
-        width: parent.width
-        height: parent.height
+        anchors.fill: parent
+        visible: false
 
         ChartView {
             id: advancedImuChart
 
-            visible: false
-            title: Constants.advancedImu.title
-            titleColor: Constants.advancedImu.titleColor
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.alignment: Qt.AlignTop
-            backgroundColor: Constants.commonChart.backgroundColor
+            visible: false
+            title: Constants.advancedImu.title
+            titleColor: Constants.commonChart.titleColor
             plotAreaColor: Constants.commonChart.areaColor
+            backgroundColor: "transparent"
             legend.visible: false
             antialiasing: true
-            Component.onCompleted: {
-            }
+            titleFont: Constants.commonChart.titleFont
 
-            titleFont {
-                pointSize: Constants.advancedImu.titlePointSize
-                bold: true
+            margins {
+                top: 0
+                bottom: 0
+                left: 0
+                right: 0
             }
 
             Rectangle {
@@ -104,46 +101,22 @@ Item {
 
             }
 
-            ValueAxis {
+            SwiftValueAxis {
                 id: advancedImuXAxis
 
-                gridVisible: true
-                lineVisible: true
-                minorGridVisible: true
-                minorGridLineColor: Constants.commonChart.minorGridLineColor
-                gridLineColor: Constants.commonChart.gridLineColor
-                labelsColor: Constants.commonChart.labelsColor
                 tickInterval: Constants.advancedImu.xAxisTickCount
                 tickType: ValueAxis.TicksDynamic
                 min: Constants.advancedImu.xAxisMin
                 max: Constants.advancedImu.xAxisMax
-
-                labelsFont {
-                    pointSize: Constants.mediumPointSize
-                    bold: true
-                }
-
             }
 
-            ValueAxis {
+            SwiftValueAxis {
                 id: advancedImuYAxis
 
-                gridVisible: true
-                lineVisible: true
-                minorGridVisible: true
-                minorGridLineColor: Constants.commonChart.minorGridLineColor
-                gridLineColor: Constants.commonChart.gridLineColor
-                labelsColor: Constants.commonChart.labelsColor
                 tickInterval: Constants.advancedImu.yAxisTickCount
                 tickType: ValueAxis.TicksDynamic
                 min: Constants.advancedImu.yAxisMin
                 max: Constants.advancedImu.yAxisMax
-
-                labelsFont {
-                    pointSize: Constants.mediumPointSize
-                    bold: true
-                }
-
             }
 
             Timer {
@@ -153,16 +126,15 @@ Item {
                 running: true
                 repeat: true
                 onTriggered: {
-                    if (!advancedTab.visible)
+                    if (!advancedImuTab.visible)
                         return ;
 
-                    advancedImuChart.visible = true;
                     advanced_imu_model.fill_console_points(advancedImuPoints);
                     if (!advancedImuPoints.points.length)
                         return ;
 
                     var points = advancedImuPoints.points;
-                    textDataRow.visible = true;
+                    advancedImuArea.visible = true;
                     if (!lines.length) {
                         for (var idx in advancedImuPoints.points) {
                             var line = advancedImuChart.createSeries(ChartView.SeriesTypeLine, idx, advancedImuXAxis);

@@ -1,7 +1,8 @@
+import "../BaseComponents"
 import "../Constants"
-import QtCharts 2.3
-import QtQuick 2.6
-import QtQuick.Controls 2.12
+import QtCharts 2.15
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
@@ -10,11 +11,6 @@ Item {
 
     property variant line: null
 
-    width: parent.width
-    height: parent.height
-    Component.onCompleted: {
-    }
-
     AdvancedSpectrumAnalyzerPoints {
         id: advancedSpectrumAnalyzerPoints
     }
@@ -22,67 +18,43 @@ Item {
     ColumnLayout {
         id: advancedSpectrumAnalyzerArea
 
-        width: parent.width
-        height: parent.height
+        anchors.fill: parent
+        visible: false
 
         ChartView {
             id: advancedSpectrumAnalyzerChart
 
-            visible: false
+            Layout.fillWidth: true
+            Layout.fillHeight: true
             title: Constants.advancedSpectrumAnalyzer.title
-            titleColor: Constants.advancedSpectrumAnalyzer.titleColor
-            width: parent.width
-            height: parent.height - Constants.advancedSpectrumAnalyzer.dropdownRowHeight
-            backgroundColor: Constants.commonChart.backgroundColor
+            titleColor: Constants.commonChart.titleColor
             plotAreaColor: Constants.commonChart.areaColor
+            backgroundColor: "transparent"
             legend.visible: false
             antialiasing: true
-            Component.onCompleted: {
+            titleFont: Constants.commonChart.titleFont
+
+            margins {
+                top: 0
+                bottom: 0
+                left: 0
+                right: 0
             }
 
-            titleFont {
-                pointSize: Constants.advancedSpectrumAnalyzer.titlePointSize
-                bold: true
-            }
-
-            ValueAxis {
+            SwiftValueAxis {
                 id: advancedSpectrumAnalyzerXAxis
 
-                gridVisible: true
-                lineVisible: true
-                minorGridVisible: true
                 titleText: Constants.advancedSpectrumAnalyzer.xAxisTitleText
-                minorGridLineColor: Constants.commonChart.minorGridLineColor
-                gridLineColor: Constants.commonChart.gridLineColor
-                labelsColor: Constants.commonChart.labelsColor
                 tickInterval: Constants.advancedSpectrumAnalyzer.xAxisTickCount
                 tickType: ValueAxis.TicksDynamic
-
-                labelsFont {
-                    pointSize: Constants.mediumPointSize
-                    bold: true
-                }
-
             }
 
-            ValueAxis {
+            SwiftValueAxis {
                 id: advancedSpectrumAnalyzerYAxis
 
-                gridVisible: true
-                lineVisible: true
-                minorGridVisible: true
                 titleText: Constants.advancedSpectrumAnalyzer.yAxisTitleText
-                minorGridLineColor: Constants.commonChart.minorGridLineColor
-                gridLineColor: Constants.commonChart.gridLineColor
-                labelsColor: Constants.commonChart.labelsColor
                 tickInterval: Constants.advancedSpectrumAnalyzer.yAxisTickCount
                 tickType: ValueAxis.TicksDynamic
-
-                labelsFont {
-                    pointSize: Constants.mediumPointSize
-                    bold: true
-                }
-
             }
 
             Timer {
@@ -92,10 +64,9 @@ Item {
                 running: true
                 repeat: true
                 onTriggered: {
-                    if (!advancedTab.visible)
+                    if (!advancedSpectrumAnalyzerTab.visible)
                         return ;
 
-                    advancedSpectrumAnalyzerChart.visible = true;
                     advanced_spectrum_analyzer_model.fill_console_points(advancedSpectrumAnalyzerPoints);
                     if (!advancedSpectrumAnalyzerPoints.points.length)
                         return ;
@@ -108,6 +79,7 @@ Item {
                         line_.useOpenGL = Globals.useOpenGL;
                         line = line_;
                     }
+                    advancedSpectrumAnalyzerArea.visible = true;
                     advancedSpectrumAnalyzerYAxis.min = advancedSpectrumAnalyzerPoints.ymin;
                     advancedSpectrumAnalyzerYAxis.max = advancedSpectrumAnalyzerPoints.ymax;
                     advancedSpectrumAnalyzerXAxis.min = advancedSpectrumAnalyzerPoints.xmin;

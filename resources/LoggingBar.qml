@@ -14,6 +14,7 @@ Rectangle {
     property alias sbpRecording: sbpLoggingButton.checked
     property string recordingFilename: ""
     property string lastEdittedLogDirectoryText: ""
+    property int preferredHeight: Constants.loggingBar.preferredHeight
 
     function loggingDurationFormat(duration) {
         let hours = Math.floor(duration / 3600).toFixed(0).padStart(2, 0);

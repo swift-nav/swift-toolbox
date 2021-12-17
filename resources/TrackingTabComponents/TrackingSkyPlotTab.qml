@@ -30,10 +30,7 @@ Item {
             Layout.fillHeight: true
             legend.visible: false
             antialiasing: true
-            margins.bottom: Constants.trackingSkyPlot.directionLabelOffset
-            margins.left: 0
-            margins.right: 0
-            margins.top: Constants.trackingSkyPlot.directionLabelOffset
+            backgroundColor: "transparent"
             onWidthChanged: {
                 polarChartWidthChanging = true;
             }
@@ -41,67 +38,75 @@ Item {
                 polarChartWidthChanging = true;
             }
 
+            margins {
+                bottom: Constants.trackingSkyPlot.directionLabelOffset
+                left: 0
+                right: 0
+                top: Constants.trackingSkyPlot.directionLabelOffset
+            }
+
             Label {
                 text: "N"
-                font.family: Constants.commonChart.fontFamily
                 font.pointSize: Constants.trackingSkyPlot.directionLabelFontSize
+                font.bold: true
                 x: trackingSkyPlotChart.plotArea.x + trackingSkyPlotChart.plotArea.width / 2 - Constants.trackingSkyPlot.directionLabelFontSize / 2
                 y: trackingSkyPlotChart.plotArea.y - Constants.trackingSkyPlot.directionLabelOffset
             }
 
             Label {
-                text: "E"
-                font.family: Constants.commonChart.fontFamily
+                // This label just for testing whether Label is honoring the font it has set.
+                // set it visible to test Label font. If this label is entirely ontop of the other
+                // N label such that you cannot tell there are two N labels, then Label is not
+                // honoring the font set in the label.
+                visible: false
+                text: "N"
+                font.family: "Roboto"
                 font.pointSize: Constants.trackingSkyPlot.directionLabelFontSize
+                font.bold: true
+                x: trackingSkyPlotChart.plotArea.x + trackingSkyPlotChart.plotArea.width / 2 - width / 2
+                y: trackingSkyPlotChart.plotArea.y - Constants.trackingSkyPlot.directionLabelOffset
+            }
+
+            Label {
+                text: "E"
+                font.pointSize: Constants.trackingSkyPlot.directionLabelFontSize
+                font.bold: true
                 x: trackingSkyPlotChart.plotArea.x + trackingSkyPlotChart.plotArea.width + Constants.trackingSkyPlot.directionLabelOffset / 3
-                y: trackingSkyPlotChart.plotArea.y + trackingSkyPlotChart.plotArea.height / 2 - 2 * Constants.trackingSkyPlot.directionLabelFontSize / 3
+                y: trackingSkyPlotChart.plotArea.y + trackingSkyPlotChart.plotArea.height / 2 - height / 2
             }
 
             Label {
                 text: "S"
-                font.family: Constants.commonChart.fontFamily
                 font.pointSize: Constants.trackingSkyPlot.directionLabelFontSize
-                x: trackingSkyPlotChart.plotArea.x + trackingSkyPlotChart.plotArea.width / 2 - Constants.trackingSkyPlot.directionLabelFontSize / 2
+                font.bold: true
+                x: trackingSkyPlotChart.plotArea.x + trackingSkyPlotChart.plotArea.width / 2 - width / 2
                 y: trackingSkyPlotChart.plotArea.y + trackingSkyPlotChart.plotArea.height + Constants.trackingSkyPlot.directionLabelOffset / 5
             }
 
             Label {
                 text: "W"
-                font.family: Constants.commonChart.fontFamily
                 font.pointSize: Constants.trackingSkyPlot.directionLabelFontSize
+                font.bold: true
                 x: trackingSkyPlotChart.plotArea.x - Constants.trackingSkyPlot.directionLabelOffset
-                y: trackingSkyPlotChart.plotArea.y + trackingSkyPlotChart.plotArea.height / 2 - 2 * Constants.trackingSkyPlot.directionLabelFontSize / 3
+                y: trackingSkyPlotChart.plotArea.y + trackingSkyPlotChart.plotArea.height / 2 - height / 2
             }
 
-            ValueAxis {
+            SwiftValueAxis {
                 id: axisAngular
 
                 min: Constants.trackingSkyPlot.axisAngularMin
                 max: Constants.trackingSkyPlot.axisAngularMax
                 tickCount: Constants.trackingSkyPlot.axisAngularTickCount
                 labelsVisible: false
-                gridVisible: true
-                lineVisible: true
-                minorGridVisible: true
-                minorGridLineColor: Constants.commonChart.minorGridLineColor
-                gridLineColor: Constants.commonChart.gridLineColor
             }
 
-            CategoryAxis {
+            SwiftCategoryAxis {
                 id: axisRadial
 
                 labelFormat: "%d°"
                 min: Constants.trackingSkyPlot.axisRadialMin
                 max: Constants.trackingSkyPlot.axisRadialMax
                 tickCount: Constants.trackingSkyPlot.axisRadialTickCount
-                labelsVisible: true
-                labelsPosition: CategoryAxis.AxisLabelsPositionOnValue
-                labelsColor: Constants.commonChart.labelsColor
-                gridVisible: true
-                lineVisible: true
-                minorGridVisible: true
-                minorGridLineColor: Constants.commonChart.minorGridLineColor
-                gridLineColor: Constants.commonChart.gridLineColor
 
                 CategoryRange {
                     label: " "
@@ -187,47 +192,42 @@ Item {
 
         }
 
-        ColumnLayout {
+        Label {
+            Layout.alignment: Qt.AlignHCenter
+            text: "Enabled with SBP message MSG_SV_AZ_EL (0x0097 | 151), * indicates satellite is being tracked"
+        }
+
+        Row {
             Layout.alignment: Qt.AlignHCenter
             spacing: Constants.trackingSkyPlot.checkboxSpacing
 
-            Label {
-                Layout.alignment: Qt.AlignHCenter
-                text: "Enabled with SBP message MSG_SV_AZ_EL (0x0097 | 151), * indicates satellite is being tracked"
+            SmallCheckBox {
+                id: showLegendCheckBox
+
+                checked: false
+                text: "Show Legend"
             }
 
-            Row {
-                spacing: Constants.trackingSkyPlot.checkboxSpacing
+            SmallCheckBox {
+                id: labelsVisibleCheckBox
 
-                SmallCheckBox {
-                    id: showLegendCheckBox
-
-                    checked: false
-                    text: "Show Legend"
+                checked: false
+                text: "Show Labels"
+                onCheckedChanged: {
+                    updateTimer.restart();
                 }
+            }
+
+            Repeater {
+                model: all_series
 
                 SmallCheckBox {
-                    id: labelsVisibleCheckBox
-
-                    checked: false
-                    text: "Show Labels"
+                    checked: true
+                    text: modelData.name
                     onCheckedChanged: {
+                        modelData.visible = checked;
                         updateTimer.restart();
                     }
-                }
-
-                Repeater {
-                    model: all_series
-
-                    SmallCheckBox {
-                        checked: true
-                        text: modelData.name
-                        onCheckedChanged: {
-                            modelData.visible = checked;
-                            updateTimer.restart();
-                        }
-                    }
-
                 }
 
             }

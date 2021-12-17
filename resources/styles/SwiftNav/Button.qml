@@ -42,27 +42,25 @@ import QtQuick.Controls.Material.impl 2.12
 import QtQuick.Controls.impl 2.12
 import QtQuick.Templates 2.12 as T
 
-T.TabButton {
+T.Button {
     id: control
-
-    property color labelColor: !control.enabled ? control.Material.hintTextColor : control.down || control.checked ? "white" : Constants.tabButtonUnselectedTextColor
-    property color gradientStartColor: down || checked ? Qt.lighter(Constants.swiftGrey, 1.7) : hovered ? Qt.lighter(Constants.swiftControlBackground, 1.1) : "white"
-    property color backgroundColor: down || checked ? Constants.swiftGrey : hovered ? Qt.darker(Constants.swiftControlBackground, 1.1) : Constants.swiftControlBackground
-    property bool border: true
 
     implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset, implicitContentWidth + leftPadding + rightPadding)
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset, implicitContentHeight + topPadding + bottomPadding)
+    topInset: 6
+    bottomInset: 6
     padding: 12
+    horizontalPadding: padding - 4
     spacing: 6
     icon.width: 24
     icon.height: 24
-    icon.color: !enabled ? Material.hintTextColor : down || checked ? "white" : Constants.tabButtonUnselectedTextColor
+    icon.color: !enabled ? Material.hintTextColor : flat && highlighted ? Material.accentColor : highlighted ? Material.primaryHighlightedTextColor : Material.foreground
+    Material.elevation: flat ? control.down || control.hovered ? 2 : 0 : control.down ? 8 : 2
+    Material.background: flat ? "transparent" : undefined
 
     font {
-        family: "Roboto"
+        family: Constants.fontFamily
         pointSize: Constants.largePointSize
-        bold: true
-        capitalization: Font.MixedCase
     }
 
     contentItem: IconLabel {
@@ -72,27 +70,42 @@ T.TabButton {
         icon: control.icon
         text: control.text
         font: control.font
-        color: control.labelColor
+        color: !control.enabled ? control.Material.hintTextColor : control.flat && control.highlighted ? control.Material.accentColor : control.highlighted ? control.Material.primaryHighlightedTextColor : control.Material.foreground
     }
 
     background: Rectangle {
-        border.width: control.border ? 1 : 0
-        border.color: "#C2C2C2"
-        implicitHeight: control.Material.touchTarget
-        clip: true
-        color: backgroundColor
+        implicitWidth: 64
+        implicitHeight: control.Material.buttonHeight
+        radius: 2
+        color: !control.enabled ? control.Material.buttonDisabledColor : control.highlighted ? control.Material.highlightedButtonColor : control.Material.buttonColor
+        // The layer is disabled when the button color is transparent so you can do
+        // Material.background: "transparent" and get a proper flat button without needing
+        // to set Material.elevation as well
+        layer.enabled: control.enabled && control.Material.buttonColor.a > 0
 
-        gradient: Gradient {
-            GradientStop {
-                position: 0
-                color: gradientStartColor
-            }
+        PaddedRectangle {
+            y: parent.height - 4
+            width: parent.width
+            height: 4
+            radius: 2
+            topPadding: -2
+            clip: true
+            visible: control.checkable && (!control.highlighted || control.flat)
+            color: control.checked && control.enabled ? control.Material.accentColor : control.Material.secondaryTextColor
+        }
 
-            GradientStop {
-                position: 1
-                color: backgroundColor
-            }
+        Ripple {
+            clipRadius: 2
+            width: parent.width
+            height: parent.height
+            pressed: control.pressed
+            anchor: control
+            active: control.down || control.visualFocus || control.hovered
+            color: control.flat && control.highlighted ? control.Material.highlightedRippleColor : control.Material.rippleColor
+        }
 
+        layer.effect: ElevationEffect {
+            elevation: control.Material.elevation
         }
 
     }

@@ -6,144 +6,80 @@ import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
 Rectangle {
-    readonly property string emptyString: "--"
+    property string position: Constants.statusBar.defaultValue
+    property string rtk: Constants.statusBar.defaultValue
+    property string ins: Constants.statusBar.defaultValue
+    property int satellites: -1
+    property real correctionAge: -1
+    property string antennaStatus: Constants.statusBar.defaultValue
+    property real dataRate: 0
+    property bool solidConnection: false
+    property string title: ""
+    property int verticalPadding: Constants.statusBar.verticalPadding
 
-    anchors.fill: parent
+    color: Constants.swiftOrange
     border.width: Constants.statusBar.borderWidth
     border.color: Constants.statusBar.borderColor
+    implicitWidth: rowLayout.implicitWidth
+    implicitHeight: rowLayout.implicitHeight
 
     StatusBarData {
         id: statusBarData
     }
 
     RowLayout {
-        id: statusBarRowLayout
+        id: rowLayout
 
-        anchors.fill: parent
-        anchors.leftMargin: Constants.statusBar.margin
-        anchors.rightMargin: Constants.statusBar.margin
+        anchors.left: parent.left
+        anchors.leftMargin: Constants.statusBar.leftMargin
         spacing: Constants.statusBar.spacing
 
-        RowLayout {
-            Row {
-                id: statusBarRowPos
+        Repeater {
+            model: [{
+                "labelText": Constants.statusBar.posLabel,
+                "valueText": position
+            }, {
+                "labelText": Constants.statusBar.rtkLabel,
+                "valueText": rtk
+            }, {
+                "labelText": Constants.statusBar.insLabel,
+                "valueText": ins
+            }, {
+                "labelText": Constants.statusBar.satsLabel,
+                "valueText": satellites < 0 ? Constants.statusBar.defaultValue : satellites
+            }, {
+                "labelText": Constants.statusBar.corrAgeLabel,
+                "valueText": correctionAge <= 0 ? Constants.statusBar.defaultValue : Utils.padFloat(correctionAge, 1, 1) + " s"
+            }, {
+                "labelText": Constants.statusBar.antennaLabel,
+                "valueText": antennaStatus
+            }]
 
-                spacing: Constants.statusBar.innerKeyValSpacing
+            RowLayout {
+                spacing: Constants.statusBar.keyValueSpacing
 
                 Label {
-                    text: Constants.statusBar.posLabel
-                    color: Constants.statusBar.keyTextColor
-                    font.bold: true
+                    topPadding: Constants.statusBar.verticalPadding
+                    bottomPadding: Constants.statusBar.verticalPadding
+                    text: modelData.labelText
+                    color: Constants.statusBar.textColor
+                    font.pointSize: Constants.statusBar.textPointSize
                 }
 
                 Label {
                     id: statusBarPos
 
-                    text: Constants.statusBar.defaultValue
-                }
-
-            }
-
-            Row {
-                id: statusBarRowRTK
-
-                Layout.alignment: Qt.AlignLeft
-                spacing: Constants.statusBar.innerKeyValSpacing
-
-                Label {
-                    text: Constants.statusBar.rtkLabel
-                    color: Constants.statusBar.keyTextColor
+                    Layout.minimumWidth: Constants.statusBar.valueMinimumWidth
+                    topPadding: Constants.statusBar.verticalPadding
+                    bottomPadding: Constants.statusBar.verticalPadding
+                    text: modelData.valueText
+                    color: Constants.statusBar.textColor
+                    font.pointSize: Constants.statusBar.textPointSize
                     font.bold: true
                 }
 
-                Label {
-                    id: statusBarRTK
-
-                    text: Constants.statusBar.defaultValue
-                }
-
             }
 
-            Row {
-                id: statusBarRowINS
-
-                spacing: Constants.statusBar.innerKeyValSpacing
-
-                Label {
-                    text: Constants.statusBar.insLabel
-                    color: Constants.statusBar.keyTextColor
-                    font.bold: true
-                }
-
-                Label {
-                    id: statusBarINS
-
-                    text: Constants.statusBar.defaultValue
-                }
-
-            }
-
-            Row {
-                id: statusBarRowSats
-
-                spacing: Constants.statusBar.innerKeyValSpacing
-
-                Label {
-                    text: Constants.statusBar.satsLabel
-                    color: Constants.statusBar.keyTextColor
-                    font.bold: true
-                }
-
-                Label {
-                    id: statusBarSats
-
-                    text: Constants.statusBar.defaultValue
-                }
-
-            }
-
-            Row {
-                id: statusBarRowCorrAge
-
-                spacing: Constants.statusBar.innerKeyValSpacing
-
-                Label {
-                    text: Constants.statusBar.corrAgeLabel
-                    color: Constants.statusBar.keyTextColor
-                    font.bold: true
-                }
-
-                Label {
-                    id: statusBarCorrAge
-
-                    text: Constants.statusBar.defaultValue
-                }
-
-            }
-
-            Row {
-                id: statusBarRowAntenna
-
-                spacing: Constants.statusBar.innerKeyValSpacing
-
-                Label {
-                    text: Constants.statusBar.antennaLabel
-                    color: Constants.statusBar.keyTextColor
-                    font.bold: true
-                }
-
-                Label {
-                    id: statusBarAntenna
-
-                    text: Constants.statusBar.defaultValue
-                }
-
-            }
-
-        }
-
-        Rectangle {
-            Layout.fillWidth: true
         }
 
     }
@@ -155,21 +91,15 @@ Rectangle {
         onTriggered: {
             status_bar_model.fill_data(statusBarData);
             if (statusBarData.title) {
-                statusBarPos.text = statusBarData.pos;
-                statusBarRTK.text = statusBarData.rtk;
-                if (!statusBarData.solid_connection)
-                    statusBarSats.text = emptyString;
-                else
-                    statusBarSats.text = statusBarData.sats;
-                if (statusBarData.corr_age == 0)
-                    statusBarCorrAge.text = emptyString;
-                else
-                    statusBarCorrAge.text = Utils.padFloat(statusBarData.corr_age, 1, 1) + " s";
-                statusBarINS.text = statusBarData.ins;
-                parent.dataRate = statusBarData.data_rate;
-                parent.solidConnection = statusBarData.solid_connection;
-                statusBarAntenna.text = statusBarData.antenna_status;
-                parent.title = (parent.sbpRecording ? "[L] " : "     ") + statusBarData.title;
+                position = statusBarData.pos;
+                rtk = statusBarData.rtk;
+                ins = statusBarData.ins;
+                satellites = statusBarData.solid_connection ? statusBarData.sats : -1;
+                correctionAge = statusBarData.corr_age;
+                antennaStatus = statusBarData.antenna_status;
+                dataRate = statusBarData.data_rate;
+                solidConnection = statusBarData.solid_connection;
+                title = statusBarData.title;
             }
         }
     }

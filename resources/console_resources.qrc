@@ -70,8 +70,6 @@
     <file>UpdateTabComponents/FileIOSelectLocalFileAndDestPath.qml</file>
     <file>UpdateTabComponents/FirmwareDownload.qml</file>
     <file>UpdateTabComponents/FirmwareVersion.qml</file>
-    <file>images/iconic/arrows_blue.png</file>
-    <file>images/iconic/arrows_grey.png</file>
     <file>images/iconic/play.svg</file>
     <file>images/fontawesome/LICENSE.txt</file>
     <file>images/fontawesome/bars-solid.svg</file>
@@ -112,11 +110,15 @@
     <file>BaseComponents/SmallCheckBox.qml</file>
     <file>BaseComponents/SwiftGroupBox.qml</file>
     <file>BaseComponents/SwiftButton.qml</file>
+    <file>BaseComponents/SwiftValueAxis.qml</file>
+    <file>BaseComponents/SwiftCategoryAxis.qml</file>
     <file>ChartLegend.qml</file>
     <file alias="SwiftNav/TabBar.qml">styles/SwiftNav/TabBar.qml</file>
     <file alias="SwiftNav/TabButton.qml">styles/SwiftNav/TabButton.qml</file>
     <file alias="SwiftNav/RoundButton.qml">styles/SwiftNav/RoundButton.qml</file>
     <file alias="SwiftNav/ComboBox.qml">styles/SwiftNav/ComboBox.qml</file>
+    <file alias="SwiftNav/Label.qml">styles/SwiftNav/Label.qml</file>
+    <file alias="SwiftNav/Button.qml">styles/SwiftNav/Button.qml</file>
     <file>MainTab.qml</file>
     <file>TabInfoBar.qml</file>
     <file>PositionLoopAnimation.qml</file>

@@ -15,6 +15,7 @@ ApplicationWindow {
     minimumHeight: Globals.minimumHeight
     font.pointSize: Constants.mediumPointSize
     visible: true
+    title: (loggingBar.sbpRecording ? "[L] " : "     ") + statusBar.title
 
     TextEdit {
         id: textEdit
@@ -237,6 +238,8 @@ ApplicationWindow {
             Layout.fillHeight: true
             Layout.minimumWidth: Constants.sideNavBar.tabBarWidth
             enabled: stack.currentIndex != 0
+            dataRate: statusBar.dataRate
+            solidConnection: statusBar.solidConnection
         }
 
         StackLayout {
@@ -284,26 +287,24 @@ ApplicationWindow {
 
                         curSubTabIndex: tabInfoBar.curSubTabIndex
                         SplitView.fillHeight: true
-                        SplitView.fillWidth: true
-                        Layout.leftMargin: Constants.margins
-                        Layout.rightMargin: Constants.margins
                         currentIndex: sideNavBar.currentIndex
                     }
 
                     ColumnLayout {
-                        SplitView.fillWidth: true
-                        SplitView.preferredHeight: Constants.logPanelPreferredHeight + Constants.loggingBarPreferredHeight
-                        SplitView.minimumHeight: Constants.loggingBarPreferredHeight
+                        SplitView.preferredHeight: loggingBar.preferredHeight + logPanel.preferredHeight
+                        SplitView.minimumHeight: loggingBar.preferredHeight
                         spacing: Constants.topLevelSpacing
 
                         LoggingBar {
                             id: loggingBar
 
                             Layout.fillWidth: true
-                            Layout.preferredHeight: Constants.loggingBarPreferredHeight
+                            Layout.preferredHeight: preferredHeight
                         }
 
                         LogPanel {
+                            id: logPanel
+
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                         }
@@ -312,20 +313,10 @@ ApplicationWindow {
 
                 }
 
-                Rectangle {
+                StatusBar {
                     id: statusBar
 
                     Layout.fillWidth: true
-                    Layout.preferredHeight: Constants.statusBarPreferredHeight
-                    z: Constants.commonChart.zAboveCharts
-
-                    StatusBar {
-                        property alias sbpRecording: loggingBar.sbpRecording
-                        property alias title: main.title
-                        property alias solidConnection: sideNavBar.solidConnection
-                        property alias dataRate: sideNavBar.dataRate
-                    }
-
                 }
 
             }

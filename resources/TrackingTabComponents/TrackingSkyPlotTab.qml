@@ -1,5 +1,5 @@
-import "../BaseComponents"
 import "../Constants"
+import "../BaseComponents"
 import QtCharts 2.15
 import QtQuick 2.15
 import QtQuick.Controls 2.15
@@ -74,35 +74,22 @@ Item {
                 y: trackingSkyPlotChart.plotArea.y + trackingSkyPlotChart.plotArea.height / 2 - 2 * Constants.trackingSkyPlot.directionLabelFontSize / 3
             }
 
-            ValueAxis {
+            SwiftValueAxis {
                 id: axisAngular
 
                 min: Constants.trackingSkyPlot.axisAngularMin
                 max: Constants.trackingSkyPlot.axisAngularMax
                 tickCount: Constants.trackingSkyPlot.axisAngularTickCount
                 labelsVisible: false
-                gridVisible: true
-                lineVisible: true
-                minorGridVisible: true
-                minorGridLineColor: Constants.commonChart.minorGridLineColor
-                gridLineColor: Constants.commonChart.gridLineColor
             }
 
-            CategoryAxis {
+            SwiftCategoryAxis {
                 id: axisRadial
 
                 labelFormat: "%d°"
                 min: Constants.trackingSkyPlot.axisRadialMin
                 max: Constants.trackingSkyPlot.axisRadialMax
                 tickCount: Constants.trackingSkyPlot.axisRadialTickCount
-                labelsVisible: true
-                labelsPosition: CategoryAxis.AxisLabelsPositionOnValue
-                labelsColor: Constants.commonChart.labelsColor
-                gridVisible: true
-                lineVisible: true
-                minorGridVisible: true
-                minorGridLineColor: Constants.commonChart.minorGridLineColor
-                gridLineColor: Constants.commonChart.gridLineColor
 
                 CategoryRange {
                     label: " "

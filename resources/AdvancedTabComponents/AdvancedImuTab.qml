@@ -1,7 +1,8 @@
 import "../Constants"
-import QtCharts 2.3
-import QtQuick 2.6
-import QtQuick.Controls 2.12
+import "../BaseComponents"
+import QtCharts 2.15
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
@@ -96,39 +97,23 @@ Item {
 
             }
 
-            ValueAxis {
+            SwiftValueAxis {
                 id: advancedImuXAxis
 
-                gridVisible: true
-                lineVisible: true
-                minorGridVisible: true
-                minorGridLineColor: Constants.commonChart.minorGridLineColor
-                gridLineColor: Constants.commonChart.gridLineColor
-                labelsColor: Constants.commonChart.labelsColor
                 tickInterval: Constants.advancedImu.xAxisTickCount
                 tickType: ValueAxis.TicksDynamic
                 min: Constants.advancedImu.xAxisMin
                 max: Constants.advancedImu.xAxisMax
-                titleFont: Constants.commonChart.axisTitleFont
-                labelsFont: Constants.commonChart.axisLabelsFont
 
             }
 
-            ValueAxis {
+            SwiftValueAxis {
                 id: advancedImuYAxis
 
-                gridVisible: true
-                lineVisible: true
-                minorGridVisible: true
-                minorGridLineColor: Constants.commonChart.minorGridLineColor
-                gridLineColor: Constants.commonChart.gridLineColor
-                labelsColor: Constants.commonChart.labelsColor
                 tickInterval: Constants.advancedImu.yAxisTickCount
                 tickType: ValueAxis.TicksDynamic
                 min: Constants.advancedImu.yAxisMin
                 max: Constants.advancedImu.yAxisMax
-                titleFont: Constants.commonChart.axisTitleFont
-                labelsFont: Constants.commonChart.axisLabelsFont
 
             }
 

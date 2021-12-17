@@ -1,7 +1,8 @@
 import "../Constants"
-import QtCharts 2.3
-import QtQuick 2.6
-import QtQuick.Controls 2.12
+import "../BaseComponents"
+import QtCharts 2.15
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
@@ -96,37 +97,21 @@ Item {
 
             }
 
-            ValueAxis {
+            SwiftValueAxis {
                 id: advancedMagnetometerXAxis
 
-                gridVisible: true
-                lineVisible: true
-                minorGridVisible: true
-                minorGridLineColor: Constants.commonChart.minorGridLineColor
-                gridLineColor: Constants.commonChart.gridLineColor
-                labelsColor: Constants.commonChart.labelsColor
                 min: Constants.advancedMagnetometer.xAxisMin
                 max: Constants.advancedMagnetometer.xAxisMax
                 tickInterval: Constants.advancedMagnetometer.xAxisTickCount
                 tickType: ValueAxis.TicksDynamic
-                titleFont: Constants.commonChart.axisTitleFont
-                labelsFont: Constants.commonChart.axisLabelsFont
 
             }
 
-            ValueAxis {
+            SwiftValueAxis {
                 id: advancedMagnetometerYAxis
 
-                gridVisible: true
-                lineVisible: true
-                minorGridVisible: true
-                minorGridLineColor: Constants.commonChart.minorGridLineColor
-                gridLineColor: Constants.commonChart.gridLineColor
-                labelsColor: Constants.commonChart.labelsColor
                 tickInterval: Constants.advancedMagnetometer.yAxisTickCount
                 tickType: ValueAxis.TicksDynamic
-                titleFont: Constants.commonChart.axisTitleFont
-                labelsFont: Constants.commonChart.axisLabelsFont
 
             }
 

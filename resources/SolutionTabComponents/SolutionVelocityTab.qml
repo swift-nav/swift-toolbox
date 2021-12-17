@@ -1,8 +1,9 @@
 import "../Constants"
-import QtCharts 2.2
-import QtQuick 2.6
-import QtQuick.Controls 2.12
+import "../BaseComponents"
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import QtCharts 2.15
 import SwiftConsole 1.0
 
 Item {
@@ -122,33 +123,17 @@ Item {
 
                 }
 
-                ValueAxis {
+                SwiftValueAxis {
                     id: solutionVelocityXAxis
 
                     titleText: Constants.solutionVelocity.xAxisTitleText
-                    gridVisible: true
-                    lineVisible: true
-                    minorGridVisible: true
-                    minorGridLineColor: Constants.commonChart.minorGridLineColor
-                    gridLineColor: Constants.commonChart.gridLineColor
-                    labelsColor: Constants.commonChart.labelsColor
-                    titleFont: Constants.commonChart.axisTitleFont
-                    labelsFont: Constants.commonChart.axisLabelsFont
 
                 }
 
-                ValueAxis {
+                SwiftValueAxis {
                     id: solutionVelocityYAxis
 
                     titleText: solutionVelocitySelectedUnit.currentText
-                    gridVisible: true
-                    lineVisible: true
-                    minorGridVisible: true
-                    minorGridLineColor: Constants.commonChart.minorGridLineColor
-                    gridLineColor: Constants.commonChart.gridLineColor
-                    labelsColor: Constants.commonChart.labelsColor
-                    titleFont: Constants.commonChart.axisTitleFont
-                    labelsFont: Constants.commonChart.axisLabelsFont
 
                 }
 

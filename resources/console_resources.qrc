@@ -110,6 +110,8 @@
     <file>BaseComponents/SmallCheckBox.qml</file>
     <file>BaseComponents/SwiftGroupBox.qml</file>
     <file>BaseComponents/SwiftButton.qml</file>
+    <file>BaseComponents/SwiftValueAxis.qml</file>
+    <file>BaseComponents/SwiftCategoryAxis.qml</file>
     <file>ChartLegend.qml</file>
     <file alias="SwiftNav/TabBar.qml">styles/SwiftNav/TabBar.qml</file>
     <file alias="SwiftNav/TabButton.qml">styles/SwiftNav/TabButton.qml</file>

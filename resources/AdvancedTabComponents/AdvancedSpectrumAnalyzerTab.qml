@@ -1,7 +1,8 @@
 import "../Constants"
-import QtCharts 2.3
-import QtQuick 2.6
-import QtQuick.Controls 2.12
+import "../BaseComponents"
+import QtCharts 2.15
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
@@ -37,37 +38,21 @@ Item {
             antialiasing: true
             titleFont: Constants.commonChart.titleFont
 
-            ValueAxis {
+            SwiftValueAxis {
                 id: advancedSpectrumAnalyzerXAxis
 
-                gridVisible: true
-                lineVisible: true
-                minorGridVisible: true
                 titleText: Constants.advancedSpectrumAnalyzer.xAxisTitleText
-                minorGridLineColor: Constants.commonChart.minorGridLineColor
-                gridLineColor: Constants.commonChart.gridLineColor
-                labelsColor: Constants.commonChart.labelsColor
                 tickInterval: Constants.advancedSpectrumAnalyzer.xAxisTickCount
                 tickType: ValueAxis.TicksDynamic
-                titleFont: Constants.commonChart.axisTitleFont
-                labelsFont: Constants.commonChart.axisLabelsFont
 
             }
 
-            ValueAxis {
+            SwiftValueAxis {
                 id: advancedSpectrumAnalyzerYAxis
 
-                gridVisible: true
-                lineVisible: true
-                minorGridVisible: true
                 titleText: Constants.advancedSpectrumAnalyzer.yAxisTitleText
-                minorGridLineColor: Constants.commonChart.minorGridLineColor
-                gridLineColor: Constants.commonChart.gridLineColor
-                labelsColor: Constants.commonChart.labelsColor
                 tickInterval: Constants.advancedSpectrumAnalyzer.yAxisTickCount
                 tickType: ValueAxis.TicksDynamic
-                titleFont: Constants.commonChart.axisTitleFont
-                labelsFont: Constants.commonChart.axisLabelsFont
 
             }
 

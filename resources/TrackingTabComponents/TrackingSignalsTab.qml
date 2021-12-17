@@ -1,6 +1,6 @@
 import ".."
-import "../BaseComponents"
 import "../Constants"
+import "../BaseComponents"
 import QtCharts 2.15
 import QtQuick 2.15
 import QtQuick.Controls 2.15
@@ -55,40 +55,24 @@ Item {
                 model: enabled_series
             }
 
-            ValueAxis {
+            SwiftValueAxis {
                 id: trackingSignalsXAxis
 
                 titleText: Constants.trackingSignals.xAxisTitleText
-                gridVisible: true
-                lineVisible: true
-                minorGridVisible: true
-                minorGridLineColor: Constants.commonChart.minorGridLineColor
-                gridLineColor: Constants.commonChart.gridLineColor
-                labelsColor: Constants.commonChart.labelsColor
                 tickType: ValueAxis.TicksDynamic
                 tickInterval: Constants.trackingSignals.xAxisTickInterval
                 labelFormat: "%d"
-                titleFont: Constants.commonChart.axisTitleFont
-                labelsFont: Constants.commonChart.axisLabelsFont
             }
 
-            ValueAxis {
+            SwiftValueAxis {
                 id: trackingSignalsYAxis
 
                 titleText: Constants.trackingSignals.yAxisTitleText
-                gridVisible: true
-                lineVisible: true
-                minorGridVisible: true
-                minorGridLineColor: Constants.commonChart.minorGridLineColor
-                gridLineColor: Constants.commonChart.gridLineColor
-                labelsColor: Constants.commonChart.labelsColor
                 max: Constants.trackingSignals.yAxisMax
                 min: Constants.trackingSignals.snrThreshold
                 tickType: ValueAxis.TicksDynamic
                 tickInterval: Constants.trackingSignals.yAxisTickInterval
                 labelFormat: "%d"
-                titleFont: Constants.commonChart.axisTitleFont
-                labelsFont: Constants.commonChart.axisLabelsFont
             }
 
             Timer {

@@ -1,9 +1,10 @@
 import "../Constants"
+import "../BaseComponents"
 import "../SolutionPlotCommon/SolutionPlotLoop.js" as SolutionPlotLoop
 import QtCharts 2.15
 import QtGraphicalEffects 1.15
 import QtQuick 2.15
-import QtQuick.Controls 2.12
+import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
@@ -328,33 +329,17 @@ Item {
 
                 }
 
-                ValueAxis {
+                SwiftValueAxis {
                     id: solutionPositionXAxis
 
                     titleText: Constants.solutionPosition.xAxisTitleText + " (" + available_units[solutionPositionSelectedUnit.currentIndex] + ")"
-                    gridVisible: true
-                    lineVisible: true
-                    minorGridVisible: true
-                    minorGridLineColor: Constants.commonChart.minorGridLineColor
-                    gridLineColor: Constants.commonChart.gridLineColor
-                    labelsColor: Constants.commonChart.labelsColor
-                    titleFont: Constants.commonChart.axisTitleFont
-                    labelsFont: Constants.commonChart.axisLabelsFont
 
                 }
 
-                ValueAxis {
+                SwiftValueAxis {
                     id: solutionPositionYAxis
 
                     titleText: Constants.solutionPosition.yAxisTitleText + " (" + available_units[solutionPositionSelectedUnit.currentIndex] + ")"
-                    gridVisible: true
-                    lineVisible: true
-                    minorGridVisible: true
-                    minorGridLineColor: Constants.commonChart.minorGridLineColor
-                    gridLineColor: Constants.commonChart.gridLineColor
-                    labelsColor: Constants.commonChart.labelsColor
-                    titleFont: Constants.commonChart.axisTitleFont
-                    labelsFont: Constants.commonChart.axisLabelsFont
 
                 }
 

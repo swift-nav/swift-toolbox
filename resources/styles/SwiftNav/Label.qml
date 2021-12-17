@@ -44,8 +44,10 @@ T.Label {
 
     color: enabled ? Material.foreground : Material.hintTextColor
     linkColor: Material.accentColor
+
     font {
         family: Constants.fontFamily
         pointSize: Constants.largePointSize
     }
+
 }

@@ -1,5 +1,5 @@
-import "../Constants"
 import "../BaseComponents"
+import "../Constants"
 import "../SolutionPlotCommon/SolutionPlotLoop.js" as SolutionPlotLoop
 import QtCharts 2.15
 import QtGraphicalEffects 1.15
@@ -255,6 +255,10 @@ Item {
             Layout.preferredHeight: parent.height - Constants.commonChart.heightOffset
             Layout.alignment: Qt.AlignBottom
             Layout.fillHeight: true
+            plotAreaColor: Constants.commonChart.areaColor
+            backgroundColor: "transparent"
+            legend.visible: false
+            antialiasing: true
 
             margins {
                 top: 0
@@ -262,11 +266,6 @@ Item {
                 left: 0
                 right: 0
             }
-
-            plotAreaColor: Constants.commonChart.areaColor
-            backgroundColor: "transparent"
-            legend.visible: false
-            antialiasing: true
 
             Rectangle {
                 id: lineLegend
@@ -293,6 +292,7 @@ Item {
 
                         Row {
                             spacing: Constants.solutionPosition.legendLabelSpacing
+
                             Label {
                                 id: marker
 
@@ -325,14 +325,12 @@ Item {
                 id: solutionPositionXAxis
 
                 titleText: Constants.solutionPosition.xAxisTitleText + " (" + available_units[solutionPositionSelectedUnit.currentIndex] + ")"
-
             }
 
             SwiftValueAxis {
                 id: solutionPositionYAxis
 
                 titleText: Constants.solutionPosition.yAxisTitleText + " (" + available_units[solutionPositionSelectedUnit.currentIndex] + ")"
-
             }
 
             MouseArea {

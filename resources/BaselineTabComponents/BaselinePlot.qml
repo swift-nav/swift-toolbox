@@ -1,5 +1,5 @@
-import "../Constants"
 import "../BaseComponents"
+import "../Constants"
 import "../SolutionPlotCommon/SolutionPlotLoop.js" as SolutionPlotLoop
 import QtCharts 2.15
 import QtGraphicalEffects 1.15
@@ -302,14 +302,12 @@ Item {
                 id: baselinePlotXAxis
 
                 titleText: Constants.baselinePlot.xAxisTitleText
-
             }
 
             SwiftValueAxis {
                 id: baselinePlotYAxis
 
                 titleText: Constants.baselinePlot.yAxisTitleText
-
             }
 
             MouseArea {

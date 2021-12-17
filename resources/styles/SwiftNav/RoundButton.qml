@@ -50,6 +50,7 @@ T.RoundButton {
     icon.width: 24
     icon.height: 24
     icon.color: control.checked || control.highlighted ? control.palette.brightText : control.flat && !control.down ? (control.visualFocus ? control.palette.highlight : control.palette.windowText) : control.palette.buttonText
+
     font {
         family: Constants.fontFamily
         pointSize: Constants.largePointSize

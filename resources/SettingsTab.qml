@@ -1,5 +1,5 @@
-import "Constants"
 import "BaseComponents"
+import "Constants"
 import Qt.labs.platform 1.1 as LabsPlatform
 import QtQuick 2.15
 import QtQuick.Controls 2.15
@@ -218,6 +218,7 @@ MainTab {
 
                 Button {
                     id: refreshButton
+
                     text: "Refresh from device"
                     icon.source: Constants.icons.refreshPath
                     icon.width: Constants.settingsTab.buttonIconWidth

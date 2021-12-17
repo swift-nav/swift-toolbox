@@ -12,5 +12,4 @@ CategoryAxis {
     labelsColor: Constants.commonChart.labelsColor
     titleFont: Constants.commonChart.axisTitleFont
     labelsFont: Constants.commonChart.axisLabelsFont
-
 }

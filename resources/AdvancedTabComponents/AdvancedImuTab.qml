@@ -1,5 +1,5 @@
-import "../Constants"
 import "../BaseComponents"
+import "../Constants"
 import QtCharts 2.15
 import QtQuick 2.15
 import QtQuick.Controls 2.15
@@ -27,12 +27,6 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.alignment: Qt.AlignTop
-            margins {
-                top: 0
-                bottom: 0
-                left: 0
-                right: 0
-            }
             visible: false
             title: Constants.advancedImu.title
             titleColor: Constants.commonChart.titleColor
@@ -41,6 +35,13 @@ Item {
             legend.visible: false
             antialiasing: true
             titleFont: Constants.commonChart.titleFont
+
+            margins {
+                top: 0
+                bottom: 0
+                left: 0
+                right: 0
+            }
 
             Rectangle {
                 id: lineLegend
@@ -107,7 +108,6 @@ Item {
                 tickType: ValueAxis.TicksDynamic
                 min: Constants.advancedImu.xAxisMin
                 max: Constants.advancedImu.xAxisMax
-
             }
 
             SwiftValueAxis {
@@ -117,7 +117,6 @@ Item {
                 tickType: ValueAxis.TicksDynamic
                 min: Constants.advancedImu.yAxisMin
                 max: Constants.advancedImu.yAxisMax
-
             }
 
             Timer {

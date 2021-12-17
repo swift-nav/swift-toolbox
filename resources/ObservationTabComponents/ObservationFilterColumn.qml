@@ -1,6 +1,6 @@
+import "../BaseComponents"
 import "../Constants"
 import "../TableComponents"
-import "../BaseComponents"
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15

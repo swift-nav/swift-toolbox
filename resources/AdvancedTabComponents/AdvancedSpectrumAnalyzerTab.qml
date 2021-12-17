@@ -1,5 +1,5 @@
-import "../Constants"
 import "../BaseComponents"
+import "../Constants"
 import QtCharts 2.15
 import QtQuick 2.15
 import QtQuick.Controls 2.15
@@ -26,12 +26,6 @@ Item {
 
             Layout.fillWidth: true
             Layout.fillHeight: true
-            margins {
-                top: 0
-                bottom: 0
-                left: 0
-                right: 0
-            }
             title: Constants.advancedSpectrumAnalyzer.title
             titleColor: Constants.commonChart.titleColor
             plotAreaColor: Constants.commonChart.areaColor
@@ -40,13 +34,19 @@ Item {
             antialiasing: true
             titleFont: Constants.commonChart.titleFont
 
+            margins {
+                top: 0
+                bottom: 0
+                left: 0
+                right: 0
+            }
+
             SwiftValueAxis {
                 id: advancedSpectrumAnalyzerXAxis
 
                 titleText: Constants.advancedSpectrumAnalyzer.xAxisTitleText
                 tickInterval: Constants.advancedSpectrumAnalyzer.xAxisTickCount
                 tickType: ValueAxis.TicksDynamic
-
             }
 
             SwiftValueAxis {
@@ -55,7 +55,6 @@ Item {
                 titleText: Constants.advancedSpectrumAnalyzer.yAxisTitleText
                 tickInterval: Constants.advancedSpectrumAnalyzer.yAxisTickCount
                 tickType: ValueAxis.TicksDynamic
-
             }
 
             Timer {

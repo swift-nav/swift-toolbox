@@ -1,5 +1,5 @@
-import "../Constants"
 import "../BaseComponents"
+import "../Constants"
 import QtCharts 2.15
 import QtQuick 2.15
 import QtQuick.Controls 2.15
@@ -31,17 +31,18 @@ Item {
             legend.visible: false
             antialiasing: true
             backgroundColor: "transparent"
-            margins {
-                bottom: Constants.trackingSkyPlot.directionLabelOffset
-                left: 0
-                right: 0
-                top: Constants.trackingSkyPlot.directionLabelOffset
-            }
             onWidthChanged: {
                 polarChartWidthChanging = true;
             }
             onHeightChanged: {
                 polarChartWidthChanging = true;
+            }
+
+            margins {
+                bottom: Constants.trackingSkyPlot.directionLabelOffset
+                left: 0
+                right: 0
+                top: Constants.trackingSkyPlot.directionLabelOffset
             }
 
             Label {

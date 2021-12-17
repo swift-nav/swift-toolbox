@@ -275,7 +275,7 @@ QtObject {
         readonly property color gradientColor: "gainsboro"
         readonly property color selectedCellColor: "dark grey"
         readonly property color borderColor: "gainsboro"
-        readonly property string fontFamily: "Roboto"
+        readonly property string fontFamily: "Roboto Condensed"
         property var defaultColumns: ["Item", "Value"]
     }
 

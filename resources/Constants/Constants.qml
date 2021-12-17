@@ -147,6 +147,7 @@ QtObject {
         readonly property int hardwareRevisionLabelWidth: 100
         readonly property int hardwareVersionElementsLabelWidth: 50
         readonly property int firmwareVersionElementsLabelRightMargin: 5
+        readonly property int firmwareVersionElementsLabelTopMargin: 2
         readonly property string hardwareRevisionLabel: "Hardware Revision:"
         readonly property string firmwareVersionCurrentLabel: "Current:"
         readonly property string firmwareVersionLatestLabel: "Latest:"
@@ -481,7 +482,7 @@ QtObject {
     settingsTable: QtObject {
         readonly property string tableLeftColumnHeader: "Name"
         readonly property string tableRightColumnHeader: "Value"
-        readonly property int minimumWidth: 300
+        readonly property int minimumWidth: 350
         readonly property int layoutSpacing: 0
     }
 

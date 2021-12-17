@@ -6,8 +6,8 @@ import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
 Item {
-    property alias currentVersion: currentVersionText.text
-    property alias latestVersion: latestVersionText.text
+    property string currentVersion: ""
+    property string latestVersion: ""
     property alias localFileText: selectLocalFile.localFileText
     property alias localFileTextEditing: selectLocalFile.localFileTextEditing
     property alias upgradeButtonEnable: updateFirmwareButton.enabled
@@ -21,6 +21,9 @@ Item {
 
         ColumnLayout {
             anchors.fill: parent
+            anchors.topMargin: Constants.updateTab.innerMargins
+            anchors.leftMargin: Constants.updateTab.innerMargins
+            anchors.rightMargin: Constants.updateTab.innerMargins
             width: parent.width
             height: parent.height
             spacing: Constants.updateTab.firmwareVersionColumnSpacing
@@ -40,6 +43,8 @@ Item {
                         anchors.fill: parent
                         anchors.rightMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
                         horizontalAlignment: Text.AlignRight
+                        font.family: Constants.genericTable.fontFamily
+                        font.pointSize: Constants.largePointSize
                     }
 
                 }
@@ -50,12 +55,13 @@ Item {
                     border.width: Constants.advancedImu.textDataBarBorderWidth
 
                     Label {
-                        id: currentVersionText
-
-                        text: ""
+                        text: currentVersion ? currentVersion : "Waiting for Piksi to send settings..."
                         clip: true
                         color: Constants.updateTab.placeholderTextColor
-                        anchors.centerIn: parent
+                        anchors.fill: parent
+                        anchors.margins: Constants.advancedImu.textDataBarMargin
+                        font.family: Constants.genericTable.fontFamily
+                        font.pointSize: Constants.largePointSize
                     }
 
                 }
@@ -77,6 +83,8 @@ Item {
                         anchors.fill: parent
                         anchors.rightMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
                         horizontalAlignment: Text.AlignRight
+                        font.family: Constants.genericTable.fontFamily
+                        font.pointSize: Constants.largePointSize
                     }
 
                 }
@@ -87,12 +95,15 @@ Item {
                     border.width: Constants.advancedImu.textDataBarBorderWidth
 
                     Label {
-                        id: latestVersionText
+                        // id: latestVersion
 
-                        text: ""
+                        text: latestVersion ? latestVersion : "Download latest firmware info..."
                         clip: true
                         color: Constants.updateTab.placeholderTextColor
-                        anchors.centerIn: parent
+                        anchors.fill: parent
+                        anchors.margins: Constants.advancedImu.textDataBarMargin
+                        font.family: Constants.genericTable.fontFamily
+                        font.pointSize: Constants.largePointSize
                     }
 
                 }
@@ -147,6 +158,8 @@ Item {
                     Label {
                         text: Constants.updateTab.updateFirmwareButtonLabel
                         anchors.centerIn: parent
+                        font.family: Constants.genericTable.fontFamily
+                        font.pointSize: Constants.largePointSize
                     }
 
                 }

@@ -21,6 +21,8 @@ Item {
 
             Label {
                 text: Constants.updateTab.hardwareRevisionLabel
+                font.family: Constants.genericTable.fontFamily
+                font.pointSize: Constants.largePointSize
             }
 
         }
@@ -39,6 +41,8 @@ Item {
                 anchors.fill: parent
                 color: Constants.updateTab.placeholderTextColor
                 anchors.margins: Constants.advancedImu.textDataBarMargin
+                font.family: Constants.genericTable.fontFamily
+                font.pointSize: Constants.largePointSize
             }
 
         }

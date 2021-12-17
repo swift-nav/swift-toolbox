@@ -15,6 +15,8 @@ Item {
 
             Label {
                 text: Constants.updateTab.firmwareVersionTitle
+                font.family: Constants.genericTable.fontFamily
+                font.pointSize: Constants.largePointSize
             }
 
         }
@@ -25,6 +27,8 @@ Item {
 
             Label {
                 text: Constants.updateTab.firmwareDownloadTitle
+                font.family: Constants.genericTable.fontFamily
+                font.pointSize: Constants.largePointSize
             }
 
         }

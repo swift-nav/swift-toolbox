@@ -51,7 +51,7 @@ Rectangle {
     }
 
     ColumnLayout {
-        property variant columnWidths: [parent.width * 0.4, parent.width * 0.6]
+        property variant columnWidths: [parent.width * 0.46, parent.width * 0.54]
 
         width: parent.width
         height: parent.height
@@ -174,7 +174,14 @@ Rectangle {
                     verticalAlignment: Text.AlignVCenter
                     clip: true
                     font.family: Constants.genericTable.fontFamily
-                    font.pointSize: Constants.largePointSize
+                    font.pointSize: {
+                        var item = tableView.model.getRow(row);
+                        let pointSize = Constants.largePointSize;
+                        if (item[Constants.settingsTable.tableRightColumnHeader] == "")
+                            pointSize = Constants.xlPointSize;
+
+                        return pointSize;
+                    }
                     font.bold: {
                         var item = tableView.model.getRow(row);
                         return item[Constants.settingsTable.tableRightColumnHeader] == "";

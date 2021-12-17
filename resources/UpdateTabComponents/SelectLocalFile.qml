@@ -21,6 +21,8 @@ Item {
                 anchors.fill: parent
                 anchors.rightMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
                 horizontalAlignment: Text.AlignRight
+                font.family: Constants.genericTable.fontFamily
+                font.pointSize: Constants.largePointSize
             }
 
         }
@@ -41,6 +43,8 @@ Item {
                 font.family: Constants.genericTable.fontFamily
                 anchors.fill: parent
                 anchors.leftMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.topMargin: Constants.updateTab.firmwareVersionElementsLabelTopMargin
                 onTextEdited: {
                     localFileTextEditing = true;
                 }
@@ -65,6 +69,8 @@ Item {
                     anchors.fill: parent
                     anchors.leftMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
                     anchors.centerIn: parent
+                    font.family: Constants.genericTable.fontFamily
+                    font.pointSize: Constants.largePointSize
                 }
 
             }
@@ -90,6 +96,8 @@ Item {
             Label {
                 text: Constants.updateTab.dotDotDotLabel
                 anchors.centerIn: parent
+                font.family: Constants.genericTable.fontFamily
+                font.pointSize: Constants.largePointSize
             }
 
         }

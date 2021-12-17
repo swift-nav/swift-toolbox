@@ -23,6 +23,8 @@ Item {
                 anchors.fill: parent
                 anchors.rightMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
                 horizontalAlignment: Text.AlignRight
+                font.family: Constants.genericTable.fontFamily
+                font.pointSize: Constants.largePointSize
             }
 
         }
@@ -42,7 +44,9 @@ Item {
                 font.pointSize: Constants.largePointSize
                 font.family: Constants.genericTable.fontFamily
                 anchors.fill: parent
+                anchors.verticalCenter: parent.verticalCenter
                 anchors.leftMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
+                anchors.topMargin: Constants.updateTab.firmwareVersionElementsLabelTopMargin
                 onTextEdited: {
                     localTextEditing = true;
                 }
@@ -82,6 +86,8 @@ Item {
             Label {
                 text: Constants.updateTab.dotDotDotLabel
                 anchors.centerIn: parent
+                font.family: Constants.genericTable.fontFamily
+                font.pointSize: Constants.largePointSize
             }
 
         }
@@ -122,6 +128,8 @@ Item {
                 anchors.fill: parent
                 anchors.rightMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
                 horizontalAlignment: Text.AlignRight
+                font.family: Constants.genericTable.fontFamily
+                font.pointSize: Constants.largePointSize
             }
 
         }
@@ -142,6 +150,8 @@ Item {
                 font.family: Constants.genericTable.fontFamily
                 anchors.fill: parent
                 anchors.leftMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.topMargin: Constants.updateTab.firmwareVersionElementsLabelTopMargin
                 onTextEdited: {
                     destinationTextEditing = true;
                 }
@@ -190,6 +200,8 @@ Item {
             Label {
                 text: Constants.updateTab.fileioSendFileToDeviceButtonLabel
                 anchors.centerIn: parent
+                font.family: Constants.genericTable.fontFamily
+                font.pointSize: Constants.largePointSize
             }
 
         }

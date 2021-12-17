@@ -419,7 +419,7 @@ impl TrackingSignalsTab {
                     point_val.set_y(*y);
                 }
             }
-            // Sent a set of points that plots the time we received each update.
+            // Send a set of points that plots the time we received each update.
             // This way the tracking signals plot always moves even if no sats are selected.
             let mut point_val_idx = tracking_points
                 .reborrow()

@@ -49,8 +49,8 @@ QtObject {
     readonly property real smallPointSize: Qt.platform.os == "osx" ? 9 : 7
     readonly property real mediumPointSize: Qt.platform.os == "osx" ? 10 : 8
     readonly property real largePointSize: Qt.platform.os == "osx" ? 11 : 9
-    readonly property real xlPointSize: 12
-    readonly property real xxlPointSize: 14
+    readonly property real xlPointSize: Qt.platform.os == "osx" ? 14 : 12
+    readonly property real xxlPointSize: Qt.platform.os == "osx" ? 16 : 14
     readonly property bool debugMode: false
     readonly property color swiftGrey: "#323F48"
     readonly property color swiftLightGrey: "#3C464F"
@@ -480,7 +480,7 @@ QtObject {
     settingsTable: QtObject {
         readonly property string tableLeftColumnHeader: "Name"
         readonly property string tableRightColumnHeader: "Value"
-        readonly property int minimumWidth: 300
+        readonly property int minimumWidth: 320
         readonly property int layoutSpacing: 0
     }
 

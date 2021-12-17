@@ -46,12 +46,17 @@ Rectangle {
         };
     }
 
+    function isHeaderRow(row) {
+        var item = tableView.model.getRow(row);
+        return (item[Constants.settingsTable.tableRightColumnHeader] == "");
+    }
+
     SettingsTableEntries {
         id: settingsTableEntries
     }
 
     ColumnLayout {
-        property variant columnWidths: [parent.width * 0.4, parent.width * 0.6]
+        property variant columnWidths: [parent.width * 0.45, parent.width * 0.55]
 
         width: parent.width
         height: parent.height
@@ -156,16 +161,7 @@ Rectangle {
                 implicitWidth: tableView.columnWidthProvider(column)
                 border.color: tableView.delegateBorderColor
                 border.width: tableView.delegateBorderWidth
-                color: {
-                    var item = tableView.model.getRow(row);
-                    if (item[Constants.settingsTable.tableRightColumnHeader] == "")
-                        return Constants.genericTable.borderColor;
-
-                    if (selectedRowIdx == row)
-                        return Constants.genericTable.cellHighlightedColor;
-
-                    return Constants.genericTable.cellColor;
-                }
+                color: isHeaderRow(row) ? Constants.genericTable.borderColor : selectedRowIdx == row ? Constants.genericTable.cellHighlightedColor : Constants.genericTable.cellColor
 
                 Label {
                     width: parent.width
@@ -174,11 +170,8 @@ Rectangle {
                     verticalAlignment: Text.AlignVCenter
                     clip: true
                     font.family: Constants.genericTable.fontFamily
-                    font.pointSize: Constants.largePointSize
-                    font.bold: {
-                        var item = tableView.model.getRow(row);
-                        return item[Constants.settingsTable.tableRightColumnHeader] == "";
-                    }
+                    font.pointSize: isHeaderRow(row) ? Constants.xlPointSize : Constants.largePointSize
+                    font.bold: isHeaderRow(row)
                     text: model.display
                     elide: Text.ElideRight
                     padding: Constants.genericTable.padding

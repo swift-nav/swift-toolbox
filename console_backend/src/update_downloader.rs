@@ -1,6 +1,6 @@
 use crate::update_tab::UpdateTabContext;
 use anyhow::bail;
-use log::debug;
+use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use std::{
     fs::{create_dir_all, File},
@@ -48,10 +48,15 @@ struct IndexData {
 #[derive(Clone)]
 pub struct UpdateDownloader {
     index_data: Option<IndexData>,
+    client: Client,
 }
 impl UpdateDownloader {
     pub fn new() -> UpdateDownloader {
-        UpdateDownloader { index_data: None }
+        let client = Client::new();
+        UpdateDownloader {
+            index_data: None,
+            client,
+        }
     }
 
     pub fn latest_firmware_version(&mut self) -> anyhow::Result<String> {
@@ -97,12 +102,18 @@ impl UpdateDownloader {
 
     pub fn get_index_data(&mut self) -> anyhow::Result<()> {
         if self.index_data.is_none() {
-            self.index_data = match fetch_index_data() {
+            self.index_data = match self.fetch_index_data() {
                 Ok(data) => data,
                 Err(err) => bail!("Unable to get index data: {}", err),
             };
         }
         Ok(())
+    }
+
+    fn fetch_index_data(&mut self) -> anyhow::Result<Option<IndexData>> {
+        let response = self.client.get(INDEX_URL).send()?;
+        let index_data: IndexData = serde_json::from_str(&response.text()?)?;
+        Ok(Some(index_data))
     }
 
     fn download_file_from_url(
@@ -111,37 +122,35 @@ impl UpdateDownloader {
         directory: PathBuf,
         update_shared: Option<UpdateTabContext>,
     ) -> anyhow::Result<PathBuf> {
+        let pathbuf_to_unix_filepath =
+            |path: PathBuf| PathBuf::from(path.to_string_lossy().replace("\\", "/"));
         let filename = Path::new(&filepath_url).file_name();
         if let Some(filename_) = filename {
             let filepath = Path::new(&directory).join(filename_);
             if !directory.exists() {
-                let msg = format!("Creating directory: {:?}", directory);
-                debug!("{}", msg);
+                let msg = format!(
+                    "Creating directory: {:?}",
+                    pathbuf_to_unix_filepath(directory.clone())
+                );
                 if let Some(update_shared) = update_shared.clone() {
                     update_shared.fw_log_append(msg);
                 }
                 create_dir_all(&directory)?;
             }
-            if !filepath.exists() {
-                let msg = format!("Downloading firmware file: {}", filepath_url);
-                debug!("{}", msg);
-                if let Some(update_shared) = update_shared.clone() {
-                    update_shared.fw_log_append(msg);
-                }
-                let response = minreq::get(filepath_url).send()?;
-                let mut file = File::create(filepath.clone())?;
-                file.write_all(&response.into_bytes())?;
-                let msg = format!("Downloaded firmware file to: {:?}", filepath);
-                debug!("{}", msg);
-                if let Some(update_shared) = update_shared {
-                    update_shared.fw_log_append(msg);
-                }
-            } else {
-                let msg = format!("Firmware file already exists: {:?}", filepath);
-                debug!("{}", msg);
-                if let Some(update_shared) = update_shared {
-                    update_shared.fw_log_append(msg);
-                }
+            let msg = format!("Downloading firmware file: {:?}", filename_);
+            if let Some(update_shared) = update_shared.clone() {
+                update_shared.fw_log_append(msg);
+            }
+
+            let response = self.client.get(filepath_url).send()?;
+            let mut file = File::create(filepath.clone())?;
+            file.write_all(&response.bytes()?)?;
+            let msg = format!(
+                "Downloaded firmware file to: {:?}",
+                pathbuf_to_unix_filepath(filepath.clone())
+            );
+            if let Some(update_shared) = update_shared {
+                update_shared.fw_log_append(msg);
             }
             Ok(filepath)
         } else {
@@ -156,12 +165,6 @@ impl Default for UpdateDownloader {
     }
 }
 
-fn fetch_index_data() -> anyhow::Result<Option<IndexData>> {
-    let response = minreq::get(INDEX_URL).send()?;
-    let index_data: IndexData = serde_json::from_str(response.as_str()?)?;
-    Ok(Some(index_data))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -171,7 +174,8 @@ mod tests {
     #[test]
     #[ignore]
     fn fetch_index_data_test() {
-        let index_data = fetch_index_data().unwrap().unwrap();
+        let mut downloader = UpdateDownloader::new();
+        let index_data = downloader.fetch_index_data().unwrap().unwrap();
         assert!(index_data.piksi_multi.fw.url.contains("https"));
     }
     #[test]

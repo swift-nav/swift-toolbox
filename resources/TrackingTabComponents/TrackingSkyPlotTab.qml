@@ -45,6 +45,7 @@ Item {
             Label {
                 text: "N"
                 font.pointSize: Constants.trackingSkyPlot.directionLabelFontSize
+                font.bold: true
                 x: trackingSkyPlotChart.plotArea.x + trackingSkyPlotChart.plotArea.width / 2 - Constants.trackingSkyPlot.directionLabelFontSize / 2
                 y: trackingSkyPlotChart.plotArea.y - Constants.trackingSkyPlot.directionLabelOffset
             }
@@ -58,6 +59,7 @@ Item {
                 text: "N"
                 font.family: "Roboto"
                 font.pointSize: Constants.trackingSkyPlot.directionLabelFontSize
+                font.bold: true
                 x: trackingSkyPlotChart.plotArea.x + trackingSkyPlotChart.plotArea.width / 2 - width / 2
                 y: trackingSkyPlotChart.plotArea.y - Constants.trackingSkyPlot.directionLabelOffset
             }
@@ -65,22 +67,25 @@ Item {
             Label {
                 text: "E"
                 font.pointSize: Constants.trackingSkyPlot.directionLabelFontSize
+                font.bold: true
                 x: trackingSkyPlotChart.plotArea.x + trackingSkyPlotChart.plotArea.width + Constants.trackingSkyPlot.directionLabelOffset / 3
-                y: trackingSkyPlotChart.plotArea.y + trackingSkyPlotChart.plotArea.height / 2 - 2 * Constants.trackingSkyPlot.directionLabelFontSize / 3
+                y: trackingSkyPlotChart.plotArea.y + trackingSkyPlotChart.plotArea.height / 2 - height / 2
             }
 
             Label {
                 text: "S"
                 font.pointSize: Constants.trackingSkyPlot.directionLabelFontSize
-                x: trackingSkyPlotChart.plotArea.x + trackingSkyPlotChart.plotArea.width / 2 - Constants.trackingSkyPlot.directionLabelFontSize / 2
+                font.bold: true
+                x: trackingSkyPlotChart.plotArea.x + trackingSkyPlotChart.plotArea.width / 2 - width / 2
                 y: trackingSkyPlotChart.plotArea.y + trackingSkyPlotChart.plotArea.height + Constants.trackingSkyPlot.directionLabelOffset / 5
             }
 
             Label {
                 text: "W"
                 font.pointSize: Constants.trackingSkyPlot.directionLabelFontSize
+                font.bold: true
                 x: trackingSkyPlotChart.plotArea.x - Constants.trackingSkyPlot.directionLabelOffset
-                y: trackingSkyPlotChart.plotArea.y + trackingSkyPlotChart.plotArea.height / 2 - 2 * Constants.trackingSkyPlot.directionLabelFontSize / 3
+                y: trackingSkyPlotChart.plotArea.y + trackingSkyPlotChart.plotArea.height / 2 - height / 2
             }
 
             SwiftValueAxis {
@@ -184,47 +189,42 @@ Item {
 
         }
 
-        ColumnLayout {
+        Label {
+            Layout.alignment: Qt.AlignHCenter
+            text: "Enabled with SBP message MSG_SV_AZ_EL (0x0097 | 151), * indicates satellite is being tracked"
+        }
+
+        Row {
             Layout.alignment: Qt.AlignHCenter
             spacing: Constants.trackingSkyPlot.checkboxSpacing
 
-            Label {
-                Layout.alignment: Qt.AlignHCenter
-                text: "Enabled with SBP message MSG_SV_AZ_EL (0x0097 | 151), * indicates satellite is being tracked"
+            SmallCheckBox {
+                id: showLegendCheckBox
+
+                checked: false
+                text: "Show Legend"
             }
 
-            Row {
-                spacing: Constants.trackingSkyPlot.checkboxSpacing
+            SmallCheckBox {
+                id: labelsVisibleCheckBox
 
-                SmallCheckBox {
-                    id: showLegendCheckBox
-
-                    checked: false
-                    text: "Show Legend"
+                checked: false
+                text: "Show Labels"
+                onCheckedChanged: {
+                    updateTimer.restart();
                 }
+            }
+
+            Repeater {
+                model: all_series
 
                 SmallCheckBox {
-                    id: labelsVisibleCheckBox
-
-                    checked: false
-                    text: "Show Labels"
+                    checked: true
+                    text: modelData.name
                     onCheckedChanged: {
+                        modelData.visible = checked;
                         updateTimer.restart();
                     }
-                }
-
-                Repeater {
-                    model: all_series
-
-                    SmallCheckBox {
-                        checked: true
-                        text: modelData.name
-                        onCheckedChanged: {
-                            modelData.visible = checked;
-                            updateTimer.restart();
-                        }
-                    }
-
                 }
 
             }

@@ -584,7 +584,7 @@ QtObject {
         readonly property int legendTopMargin: 50
         readonly property int legendRightMargin: 200
         readonly property int directionLabelOffset: 30
-        readonly property int directionLabelFontSize: 16
+        readonly property int directionLabelFontSize: 14
     }
 
     trackingSignals: QtObject {

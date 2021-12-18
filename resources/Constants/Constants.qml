@@ -17,6 +17,7 @@ QtObject {
     property QtObject commonChart
     property QtObject commonLegend
     property QtObject commonTable
+    property QtObject commonTextBox
     property QtObject advancedImu
     property QtObject advancedMagnetometer
     property QtObject advancedSpectrumAnalyzer
@@ -512,6 +513,17 @@ QtObject {
         readonly property int legendBottomMargin: 120
         readonly property int legendLeftMargin: 80
         readonly property int legendLabelSpacing: 4
+    }
+
+    commonTextBox: QtObject {
+        readonly property int leftMargin: 5
+        readonly property int rightMargin: 5
+        readonly property int topMargin: 2
+        readonly property int bottomMargin: 2
+        readonly property int borderWidth: 1
+        readonly property color borderColor: "#000000"
+        readonly property color textColor: "#000000"
+        readonly property color placeholderTextColor: "#000000"
     }
 
     commonLegend: QtObject {

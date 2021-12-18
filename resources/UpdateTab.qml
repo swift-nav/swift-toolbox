@@ -57,8 +57,6 @@ MainTab {
 
     ColumnLayout {
         anchors.fill: parent
-        width: parent.width
-        height: parent.height
         anchors.margins: Constants.updateTab.outerMargins
 
         Rectangle {
@@ -132,7 +130,7 @@ MainTab {
             Layout.rightMargin: Constants.updateTab.innerMargins
             Layout.bottomMargin: Constants.updateTab.innerMargins
 
-            TextArea {
+            TextEdit {
                 id: fwLogTextArea
 
                 readOnly: true
@@ -140,6 +138,8 @@ MainTab {
                 selectByKeyboard: true
                 cursorVisible: true
                 activeFocusOnPress: false
+                font.family: Constants.fontFamily
+                font.pointSize: Constants.largePointSize
             }
 
         }

@@ -1,6 +1,6 @@
 use crate::update_tab::UpdateTabContext;
 use anyhow::bail;
-use reqwest::blocking::Client;
+use curl::easy::Easy as Curl;
 use serde::{Deserialize, Serialize};
 use std::{
     fs::{create_dir_all, File},
@@ -106,9 +106,25 @@ impl UpdateDownloader {
     }
 
     fn fetch_index_data(&mut self) -> anyhow::Result<Option<IndexData>> {
-        let client = Client::new();
-        let response = client.get(INDEX_URL).send()?;
-        let index_data: IndexData = serde_json::from_str(&response.text()?)?;
+        let buffer = {
+            let mut buffer = Vec::new();
+            let mut curl = Curl::new();
+            curl.url(INDEX_URL)
+                .expect("failed to set URL for cURL library call");
+            {
+                let mut download = curl.transfer();
+                download
+                    .write_function(|data| {
+                        buffer.extend_from_slice(data);
+                        Ok(data.len())
+                    })
+                    .expect("unable to configure download callback function");
+                download.perform()?;
+            }
+            buffer
+        };
+        let response_text = std::str::from_utf8(&buffer)?;
+        let index_data: IndexData = serde_json::from_str(response_text)?;
         Ok(Some(index_data))
     }
 
@@ -137,10 +153,21 @@ impl UpdateDownloader {
             if let Some(update_shared) = update_shared.clone() {
                 update_shared.fw_log_append(msg);
             }
-            let client = Client::new();
-            let response = client.get(filepath_url).send()?;
             let mut file = File::create(filepath.clone())?;
-            file.write_all(&response.bytes()?)?;
+            let mut curl = Curl::new();
+            curl.url(&filepath_url)
+                .expect("failed to set URL for cURL library call");
+            let mut download = curl.transfer();
+            download
+                .write_function(|data| {
+                    if file.write_all(data).is_err() {
+                        Ok(0)
+                    } else {
+                        Ok(data.len())
+                    }
+                })
+                .expect("unable to configure download callback function");
+            download.perform()?;
             let msg = format!(
                 "Downloaded firmware file to: {:?}",
                 pathbuf_to_unix_filepath(filepath.clone())

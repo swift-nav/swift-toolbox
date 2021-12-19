@@ -44,7 +44,7 @@ sbp = { version = "4.1.1", features = ["json", "link", "swiftnav"] }
 sbp-settings = "0.6.0"
 env_logger = { version = "0.9", optional = true }
 mimalloc = { version = "0.1", default-features = false }
-reqwest = { version = "0.11", features = ["blocking"] }
+curl = { version = "0.4", features = ["ssl", "static-curl"] }
 
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 serialport = "4.0.1"

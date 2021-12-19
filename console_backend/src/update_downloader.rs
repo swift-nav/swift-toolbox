@@ -48,15 +48,10 @@ struct IndexData {
 #[derive(Clone)]
 pub struct UpdateDownloader {
     index_data: Option<IndexData>,
-    client: Client,
 }
 impl UpdateDownloader {
     pub fn new() -> UpdateDownloader {
-        let client = Client::new();
-        UpdateDownloader {
-            index_data: None,
-            client,
-        }
+        UpdateDownloader { index_data: None }
     }
 
     pub fn latest_firmware_version(&mut self) -> anyhow::Result<String> {
@@ -111,7 +106,8 @@ impl UpdateDownloader {
     }
 
     fn fetch_index_data(&mut self) -> anyhow::Result<Option<IndexData>> {
-        let response = self.client.get(INDEX_URL).send()?;
+        let client = Client::new();
+        let response = client.get(INDEX_URL).send()?;
         let index_data: IndexData = serde_json::from_str(&response.text()?)?;
         Ok(Some(index_data))
     }
@@ -141,8 +137,8 @@ impl UpdateDownloader {
             if let Some(update_shared) = update_shared.clone() {
                 update_shared.fw_log_append(msg);
             }
-
-            let response = self.client.get(filepath_url).send()?;
+            let client = Client::new();
+            let response = client.get(filepath_url).send()?;
             let mut file = File::create(filepath.clone())?;
             file.write_all(&response.bytes()?)?;
             let msg = format!(

@@ -164,7 +164,7 @@ FRONTEND_MEM_BENCHMARKS: Dict[str, List[Dict[str, Any]]] = {
             FILE_PATH: "data/piksi-relay-5sec.sbp",
             MAXIMUM_MEAN_MB: 300,
             MAXIMUM_RATE_OF_MAX_MEAN: 0.05,
-            MAXIMUM_RATE_OF_MAX_STD: 0.3,
+            MAXIMUM_RATE_OF_MAX_STD: 0.4,
         },
     ],
     MACOS: [

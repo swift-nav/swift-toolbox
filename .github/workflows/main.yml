@@ -25,11 +25,11 @@ jobs:
     strategy:
       matrix:
         os:
-        - {name: ubuntu-18.04, exe_suffix: "" }
-        - {name: macos-10.15, exe_suffix: "" }
-        - {name: windows-2019, exe_suffix: ".exe" }
+        - ubuntu-18.04
+        - macos-10.15
+        - windows-2019
 
-    runs-on: ${{ matrix.os.name }}
+    runs-on: ${{ matrix.os }}
 
     steps:
 
@@ -178,9 +178,9 @@ jobs:
     strategy:
       matrix:
         os:
-        - ubuntu-18.04
-        - macos-10.15
-        - windows-2019
+        - {name: ubuntu-18.04, exe_suffix: "" }
+        - {name: macos-10.15, exe_suffix: "" }
+        - {name: windows-2019, exe_suffix: ".exe" }
 
     runs-on: ${{ matrix.os.name }}
 
@@ -380,7 +380,7 @@ jobs:
           - macOS
           - Windows
           - Linux
-    runs-on: [self-hosted, '${{ matrix.os.name }}']
+    runs-on: [self-hosted, '${{ matrix.os }}']
     steps:
       - name: Remove previous build.
         shell: bash
@@ -390,13 +390,13 @@ jobs:
 
       - uses: actions/download-artifact@v2
         with:
-          name: ${{ matrix.os.name }}-artifacts
+          name: ${{ matrix.os }}-artifacts
           path: |
             console
 
       - uses: actions/download-artifact@v2
         with:
-          name: ${{ matrix.os.name }}-artifacts-bench
+          name: ${{ matrix.os }}-artifacts-bench
           path: |
             bench
 
@@ -408,8 +408,8 @@ jobs:
           7z x $archive -aoa
           7z x ${archive%.xz} -aoa
           echo "extracted release-archive"
-          mv ../bench/${{ matrix.os.name }}.zip .
-          7z x ${{ matrix.os.name }}.zip -aoa
+          mv ../bench/${{ matrix.os }}.zip .
+          7z x ${{ matrix.os }}.zip -aoa
           echo "extracted bench data"
 
       - name: Run CPU Frontend Benchmark.

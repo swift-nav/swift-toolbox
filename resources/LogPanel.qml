@@ -8,7 +8,6 @@ import "TableComponents"
 
 Item {
     property var logEntries: []
-    property variant columnWidths: [parent.width * Constants.logPanel.defaultColumnWidthRatios[0], parent.width * Constants.logPanel.defaultColumnWidthRatios[1], parent.width * Constants.logPanel.defaultColumnWidthRatios[2]]
     property real mouse_x: 0
     property bool forceLayoutLock: false
     property variant logLevelLabels: []
@@ -16,15 +15,13 @@ Item {
     property bool consolePaused: false
     property int preferredHeight: Constants.logPanel.preferredHeight
 
-    width: parent.width
-    height: parent.height
-
     LogPanelData {
         id: logPanelData
     }
 
     Rectangle {
         anchors.fill: parent
+        property var columnWidths: [parent.width * Constants.logPanel.defaultColumnWidthRatios[0], parent.width * Constants.logPanel.defaultColumnWidthRatios[1], parent.width * Constants.logPanel.defaultColumnWidthRatios[2]]
 
         Item {
             anchors.fill: parent
@@ -115,8 +112,8 @@ Item {
                 id: menu
 
                 onAboutToShow: {
-                    menu.x = columnWidths[0];
-                    menu.width = columnWidths[1];
+                    menu.x = tableView.columnWidths[0];
+                    menu.width = tableView.columnWidths[1];
                 }
                 onHeightChanged: {
                     menu.y = horizontalHeader.y - menu.height;
@@ -148,7 +145,7 @@ Item {
             delegate: Rectangle {
                 id: header
 
-                implicitWidth: columnWidths[index]
+                implicitWidth: tableView.columnWidths[index]
                 implicitHeight: Constants.genericTable.cellHeight
                 border.color: Constants.genericTable.borderColor
 
@@ -205,9 +202,9 @@ Item {
                             var delta_x = (mouseX - mouse_x);
                             var next_idx = (index + 1) % 3;
                             var min_width = tableView.width / 10;
-                            if (columnWidths[index] + delta_x > min_width && columnWidths[next_idx] - delta_x > min_width) {
-                                columnWidths[index] += delta_x;
-                                columnWidths[next_idx] -= delta_x;
+                            if (tableView.columnWidths[index] + delta_x > min_width && tableView.columnWidths[next_idx] - delta_x > min_width) {
+                                tableView.columnWidths[index] += delta_x;
+                                tableView.columnWidths[next_idx] -= delta_x;
                             }
                             tableView.forceLayout();
                         }
@@ -241,20 +238,19 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            columnWidths: parent.parent.columnWidths
+            columnWidths: parent.columnWidths
             delegateBorderWidth: Constants.logPanel.delegateBorderWidth
+
+            // onWidthChanged: {
+            //     let rows = tableView.model.rows;
+            //     tableView.model.clear();
+            //     tableView.model.rows = rows;
+            //     tableView.forceLayout();
+            // }
 
             model: TableModel {
                 id: tableModel
 
-                Component.onCompleted: {
-                    let row_init = {
-                    };
-                    row_init[Constants.logPanel.timestampHeader] = "";
-                    row_init[Constants.logPanel.levelHeader] = "";
-                    row_init[Constants.logPanel.msgHeader] = "";
-                    tableView.model.setRow(0, row_init);
-                }
                 rows: []
 
                 TableModelColumn {

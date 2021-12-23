@@ -20,8 +20,9 @@ Item {
     }
 
     Rectangle {
-        anchors.fill: parent
         property var columnWidths: [parent.width * Constants.logPanel.defaultColumnWidthRatios[0], parent.width * Constants.logPanel.defaultColumnWidthRatios[1], parent.width * Constants.logPanel.defaultColumnWidthRatios[2]]
+
+        anchors.fill: parent
 
         Item {
             anchors.fill: parent

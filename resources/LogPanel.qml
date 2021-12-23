@@ -241,13 +241,6 @@ Item {
             columnWidths: parent.columnWidths
             delegateBorderWidth: Constants.logPanel.delegateBorderWidth
 
-            // onWidthChanged: {
-            //     let rows = tableView.model.rows;
-            //     tableView.model.clear();
-            //     tableView.model.rows = rows;
-            //     tableView.forceLayout();
-            // }
-
             model: TableModel {
                 id: tableModel
 
@@ -271,7 +264,7 @@ Item {
 
         Timer {
             interval: Globals.currentRefreshRate
-            running: true
+            running: parent.visible
             repeat: true
             onTriggered: {
                 log_panel_model.fill_data(logPanelData);

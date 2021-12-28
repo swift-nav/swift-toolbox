@@ -16,6 +16,7 @@ ApplicationWindow {
     font.pointSize: Constants.mediumPointSize
     visible: true
     title: (loggingBar.sbpRecording ? "[L] " : "     ") + statusBar.title
+    color: Constants.swiftWhite
 
     TextEdit {
         id: textEdit
@@ -323,6 +324,16 @@ ApplicationWindow {
 
         }
 
+    }
+
+    Rectangle {
+        z: -1
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: -1
+        height: 2
+        color: Constants.swiftGrey
     }
 
 }

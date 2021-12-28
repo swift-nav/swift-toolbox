@@ -52,6 +52,7 @@ QtObject {
     readonly property real xlPointSize: Qt.platform.os == "osx" ? 14 : 12
     readonly property real xxlPointSize: Qt.platform.os == "osx" ? 16 : 14
     readonly property bool debugMode: false
+    readonly property color swiftWhite: "#FFFFFF"
     readonly property color swiftGrey: "#323F48"
     readonly property color swiftLightGrey: "#3C464F"
     readonly property color swiftControlBackground: "#E0E0E0"

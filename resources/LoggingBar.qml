@@ -41,7 +41,6 @@ Rectangle {
         SwiftButton {
             id: csvLoggingButton
 
-            Layout.preferredWidth: Constants.loggingBar.csvLoggingButtonWidth
             Layout.preferredHeight: parent.preferredButtonHeight
             color: Constants.swiftControlBackground
             text: "CSV Log"
@@ -59,15 +58,13 @@ Rectangle {
             icon.source: checked ? Constants.icons.squareSolidPath : Constants.icons.solidCirclePath
             icon.color: checked ? "red" : Constants.materialGrey
             checkable: true
+            showAccent: false
             Layout.preferredWidth: parent.preferredButtonHeight
             Layout.preferredHeight: parent.preferredButtonHeight
             ToolTip.visible: hovered
             ToolTip.text: !checked ? "Start Recording" : "Stop Recording"
             onClicked: {
                 data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText);
-            }
-            Component.onCompleted: {
-                this.background.children[0].visible = false;
             }
         }
 

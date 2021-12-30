@@ -12,6 +12,7 @@ T.Button {
     property color disabledColor: control.Material.buttonDisabledColor
     property color highlightedColor: control.Material.highlightedButtonColor
     property color color: control.Material.buttonColor
+    property bool showAccent: true
 
     implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset, implicitContentWidth + leftPadding + rightPadding)
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset, implicitContentHeight + topPadding + bottomPadding)
@@ -53,9 +54,9 @@ T.Button {
             radius: 2
             topPadding: -2
             clip: true
-            visible: control.checkable && (!control.highlighted || control.flat)
+            visible: showAccent && control.checkable && (!control.highlighted || control.flat)
             // color: control.checked && control.enabled ? control.Material.accentColor : control.Material.secondaryTextColor
-            color: control.checked && control.enabled ? (control.invertColor ? control.Material.accentColor : control.Material.secondaryTextColor) : (control.invertColor ? control.Material.secondaryTextColor : control.Material.accentColor)
+            color: control.checked && control.enabled ? (control.invertColor ? control.Material.secondaryTextColor : control.Material.accentColor) : (control.invertColor ? control.Material.accentColor : control.Material.secondaryTextColor)
         }
 
         Ripple {

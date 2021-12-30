@@ -3,6 +3,7 @@
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 use pyo3::prelude::*;
+use pyo3::types::PyTuple;
 
 fn attach_console() {
     #[cfg(target_os = "windows")]
@@ -24,10 +25,11 @@ fn main() -> Result<()> {
 
     std::env::set_var("PYTHONHOME", parent);
     std::env::set_var("PYTHONDONTWRITEBYTECODE", "1");
-
+    let args: Vec<_> = std::env::args().collect();
     let exit_code = Python::with_gil(|py| {
+        let args = PyTuple::new(py, args);
         let snav = py.import("swiftnav_console.main")?;
-        snav.call_method("main", (), None)?.extract::<i32>()
+        snav.call_method("main", (args,), None)?.extract::<i32>()
     })?;
 
     std::process::exit(exit_code);

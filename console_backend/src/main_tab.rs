@@ -76,10 +76,29 @@ impl MainTab {
                 SbpLogging::SBP => SbpLogger::open_sbp(path).ok(),
             })
             .flatten();
+        let last_sbp_logging = if sbp_logger.is_none() && shared_state.sbp_logging() {
+            false
+        } else {
+            shared_state.sbp_logging()
+        };
+        let csv_logging_live = {
+            shared_state
+                .lock()
+                .solution_tab
+                .velocity_tab
+                .log_file
+                .is_some()
+        };
+        let last_csv_logging =
+            if !csv_logging_live && matches!(shared_state.csv_logging(), CsvLogging::ON) {
+                CsvLogging::OFF
+            } else {
+                shared_state.csv_logging()
+            };
         MainTab {
             logging_directory: shared_state.logging_directory(),
-            last_csv_logging: shared_state.csv_logging(),
-            last_sbp_logging: shared_state.sbp_logging(),
+            last_csv_logging,
+            last_sbp_logging,
             last_sbp_logging_format: sbp_logging_format,
             sbp_logger,
             client_sender,

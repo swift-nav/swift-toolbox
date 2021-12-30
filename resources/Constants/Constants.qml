@@ -483,6 +483,7 @@ QtObject {
         readonly property string tableRightColumnHeader: "Value"
         readonly property int minimumWidth: 320
         readonly property int layoutSpacing: 0
+        readonly property int settingEditTimeoutMilliseconds: 1000
     }
 
     solutionTable: QtObject {

@@ -199,6 +199,31 @@ Item {
 
     }
 
+    Timer {
+        id: textFieldTimer
+
+        property string settingGroup: ""
+        property string settingName: ""
+        property string settingText: ""
+
+        function startTimer(group, name, text) {
+            textFieldTimer.stop();
+            if (text === "")
+                return ;
+
+            settingGroup = group;
+            settingName = name;
+            settingText = text;
+            textFieldTimer.start();
+        }
+
+        interval: Constants.settingsTable.settingEditTimeoutMilliseconds
+        repeat: false
+        onTriggered: {
+            data_model.settings_write_request(settingGroup, settingName, settingText);
+        }
+    }
+
     Component {
         id: settingRowEditable
 
@@ -216,10 +241,11 @@ Item {
             font.family: Constants.genericTable.fontFamily
             font.pointSize: Constants.largePointSize
             selectByMouse: true
-            onEditingFinished: {
-                data_model.settings_write_request(settingGroup, settingName, text);
+            onTextChanged: {
+                textFieldTimer.startTimer(settingGroup, settingName, text);
             }
-            Component.onDestruction: {
+            onEditingFinished: {
+                textFieldTimer.stop();
                 data_model.settings_write_request(settingGroup, settingName, text);
             }
             validator: {

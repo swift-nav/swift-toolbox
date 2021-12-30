@@ -219,9 +219,6 @@ Item {
             onEditingFinished: {
                 data_model.settings_write_request(settingGroup, settingName, text);
             }
-            Component.onDestruction: {
-                data_model.settings_write_request(settingGroup, settingName, text);
-            }
             validator: {
                 if (settingType === "integer")
                     return intValidator;

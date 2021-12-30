@@ -148,13 +148,10 @@ impl BaselineTab {
             new_sln.push((*e, *n));
         }
         self.sln_data[mode_idx] = new_sln;
-        if update_current {
-            if !self.sln_data[mode_idx].is_empty() {
-                self.sln_cur_data[mode_idx] =
-                    vec![self.sln_data[mode_idx][self.sln_data[mode_idx].len() - 1]];
-            } else {
-                self.sln_cur_data[mode_idx].clear();
-            }
+        self.sln_cur_data[mode_idx].clear();
+        if update_current && !self.sln_data[mode_idx].is_empty() {
+            self.sln_cur_data[mode_idx] =
+                vec![self.sln_data[mode_idx][self.sln_data[mode_idx].len() - 1]];
         }
     }
 

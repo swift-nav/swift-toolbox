@@ -664,32 +664,6 @@ impl SolutionTab {
         }
     }
 
-    // TODO(johnmichael.burke@) https://swift-nav.atlassian.net/browse/CPP-95
-    // pub fn rescale_for_units_change() {
-    //
-    // }
-
-    // TODO(johnmichael.burke@) https://swift-nav.atlassian.net/browse/CPP-95
-    // pub fn _display_units_changed(&mut self) {
-    //
-    //     let lats = self.lats.get();
-    //     let lons = self.lons.get();
-    //     let modes = self.modes.get();
-    //     let mut lats_sum: f64 = 0.0;
-    //     let mut lons_sum: f64 = 0.0;
-    //     let mut num_eles: usize = 0;
-    //     for (idx, lat) in lats.iter().enumerate() {
-    //         if modes[idx] == 0 {
-    //             continue;
-    //         }
-    //         lats_sum += lat;
-    //         lons_sum += lons[idx];
-    //         num_eles += 1;
-    //     }
-    //     let lats_mean = lats_sum/num_eles as f64;
-    //     let lons_mean = lons_sum/num_eles as f64;
-    // }
-
     fn convert_points(&mut self, unit: LatLonUnits) {
         self.unit = unit;
 
@@ -825,13 +799,9 @@ impl SolutionTab {
             new_sln.push((lon_values[jdx], lat_values[jdx]));
         }
         self.sln_data[idx] = new_sln;
-
-        if update_current {
-            if !self.sln_data[idx].is_empty() {
-                self.sln_cur_data[idx] = vec![self.sln_data[idx][self.sln_data[idx].len() - 1]];
-            } else {
-                self.sln_cur_data[idx].clear();
-            }
+        self.sln_cur_data[idx].clear();
+        if update_current && !self.sln_data[idx].is_empty() {
+            self.sln_cur_data[idx] = vec![self.sln_data[idx][self.sln_data[idx].len() - 1]];
         }
     }
 

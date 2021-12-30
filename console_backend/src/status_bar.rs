@@ -100,7 +100,8 @@ impl StatusBar {
     /// # Parameters:
     /// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
     pub fn new(shared_state: SharedState) -> StatusBar {
-        let heartbeat_data = shared_state.heartbeat_data();
+        let mut heartbeat_data = shared_state.heartbeat_data();
+        heartbeat_data.reset();
         heartbeat_data.set_port(shared_state.connection().name());
         StatusBar { heartbeat_data }
     }
@@ -511,7 +512,7 @@ impl Heartbeat {
         Heartbeat(Arc::new(Mutex::new(HeartbeatInner::default())))
     }
     pub fn heartbeat(&self) -> StatusBarUpdate {
-        let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
+        let mut shared_data = self.lock().expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
         let good_heartbeat: bool = (*shared_data).check_heartbeat();
         if good_heartbeat {
             (*shared_data).pos_llh_update();
@@ -523,14 +524,18 @@ impl Heartbeat {
     }
     pub fn set_dgnss_enabled(&self, dgnss_enabled: bool) {
         self.lock()
-            .expect(SHARED_STATE_LOCK_MUTEX_FAILURE)
+            .expect(HEARTBEAT_LOCK_MUTEX_FAILURE)
             .dgnss_enabled = dgnss_enabled;
     }
     pub fn set_version(&self, version: String) {
-        self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE).version = version;
+        self.lock().expect(HEARTBEAT_LOCK_MUTEX_FAILURE).version = version;
     }
     pub fn set_port(&self, port: String) {
-        self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE).port = port;
+        self.lock().expect(HEARTBEAT_LOCK_MUTEX_FAILURE).port = port;
+    }
+    pub fn reset(&mut self) {
+        let mut shared_data = self.lock().expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
+        std::mem::take(&mut *shared_data);
     }
 }
 

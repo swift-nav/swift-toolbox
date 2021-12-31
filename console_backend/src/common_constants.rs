@@ -289,6 +289,8 @@ pub enum Keys {
     CONSOLE_VERSION,
     #[strum(serialize = "CONNECTION_MESSAGE")]
     CONNECTION_MESSAGE,
+    #[strum(serialize = "NOTIFICATION")]
+    NOTIFICATION,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]

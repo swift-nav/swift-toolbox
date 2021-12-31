@@ -63,7 +63,7 @@ fn tick(settings_tab: &SettingsTab, settings_state: SettingsTabState) {
     }
     if let Some(req) = settings_state.write {
         if let Err(e) = settings_tab.write_setting(&req.group, &req.name, &req.value) {
-            error!("Issue writing setting, {}", e);
+            settings_tab.send_notification(format!("Issue writing setting, {}", e));
         };
     }
     if settings_state.reset {
@@ -314,6 +314,17 @@ impl SettingsTab {
             .send_data(serialize_capnproto_builder(builder));
 
         Ok(())
+    }
+
+    fn send_notification(&self, message: String) {
+        error!("{}", message);
+        let mut builder = Builder::new_default();
+        let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
+        let mut status = msg.init_settings_notification();
+        status.set_message(&message);
+
+        self.client_sender
+            .send_data(serialize_capnproto_builder(builder));
     }
 
     fn write_setting(&self, group: &str, name: &str, value: &str) -> Result<()> {

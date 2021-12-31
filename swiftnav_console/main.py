@@ -421,6 +421,8 @@ def receive_messages(app_, backend, messages):
             SETTINGS_TABLE[Keys.ENTRIES][:] = settings_rows_to_json(m.settingsTableStatus.data)
         elif m.which == Message.Union.SettingsImportResponse:
             SETTINGS_TAB[Keys.IMPORT_STATUS] = m.settingsImportResponse.status
+        elif m.which == Message.Union.SettingsNotification:
+            SETTINGS_TAB[Keys.NOTIFICATION] = m.settingsNotification.message
         elif m.which == Message.Union.InsSettingsChangeResponse:
             SETTINGS_TAB[Keys.RECOMMENDED_INS_SETTINGS][:] = [
                 [entry.settingName, entry.currentValue, entry.recommendedValue]

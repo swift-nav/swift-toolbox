@@ -51,6 +51,39 @@ Rectangle {
         return (item[Constants.settingsTable.tableRightColumnHeader] == "");
     }
 
+    Keys.onUpPressed: {
+        let cellDecrease = 1;
+        let new_row = selectedRowIdx - 1;
+        if (new_row > -1 && isHeaderRow(new_row)) {
+            cellDecrease += 1;
+            new_row -= 1;
+        }
+        selectedRowIdx = (new_row <= -1) ? (tableView.rows - 1) : new_row;
+        if (selectedRowIdx == tableView.rows - 1) {
+            tableView.verticalScrollBar.position = 1 - tableView.verticalScrollBar.size;
+        } else {
+            let proposed_position = tableView.verticalScrollBar.position - cellDecrease / tableView.rows;
+            let min_position = 0;
+            tableView.verticalScrollBar.position = Math.max(proposed_position, min_position);
+        }
+    }
+    Keys.onDownPressed: {
+        let cellIncrease = 1;
+        let new_row = selectedRowIdx + 1;
+        if (new_row < tableView.rows && isHeaderRow(new_row)) {
+            cellIncrease += 1;
+            new_row += 1;
+        }
+        selectedRowIdx = (new_row >= (tableView.rows)) ? 1 : new_row;
+        if (selectedRowIdx == 1) {
+            tableView.verticalScrollBar.position = 0;
+        } else {
+            let proposed_position = tableView.verticalScrollBar.position + cellIncrease / tableView.rows;
+            let max_position = 1 - tableView.verticalScrollBar.size;
+            tableView.verticalScrollBar.position = Math.min(proposed_position, max_position);
+        }
+    }
+
     SettingsTableEntries {
         id: settingsTableEntries
     }

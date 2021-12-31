@@ -6,6 +6,8 @@ import SwiftConsole 1.0
 TableView {
     id: tableView
 
+    property alias horizontalScrollBar: _horizontalScrollBar
+    property alias verticalScrollBar: _verticalScrollBar
     property variant columnWidths: []
     property int selectedRow: -1
     property int _currentSelectedIndex: -1
@@ -38,9 +40,12 @@ TableView {
     }
 
     ScrollBar.horizontal: ScrollBar {
+        id: _horizontalScrollBar
     }
 
     ScrollBar.vertical: ScrollBar {
+        id: _verticalScrollBar
+
         policy: ScrollBar.AlwaysOn
     }
 

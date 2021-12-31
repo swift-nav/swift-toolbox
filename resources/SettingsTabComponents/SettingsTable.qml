@@ -51,6 +51,12 @@ Rectangle {
         return (item[Constants.settingsTable.tableRightColumnHeader] == "");
     }
 
+    onVisibleChanged: {
+        if (visible && selectedRowIdx == -1) {
+            selectedRowIdx = 1;
+            tableView.focus = true;
+        }
+    }
     Keys.onUpPressed: {
         let cellDecrease = 1;
         let new_row = selectedRowIdx - 1;

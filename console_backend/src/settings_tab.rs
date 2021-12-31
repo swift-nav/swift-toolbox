@@ -63,7 +63,7 @@ fn tick(settings_tab: &SettingsTab, settings_state: SettingsTabState) {
     }
     if let Some(req) = settings_state.write {
         if let Err(e) = settings_tab.write_setting(&req.group, &req.name, &req.value) {
-            settings_tab.send_notification(format!("Issue writing setting, {}", e));
+            settings_tab.send_notification(format!("Issue writing setting {}, {}", &req.name, e));
         };
     }
     if settings_state.reset {

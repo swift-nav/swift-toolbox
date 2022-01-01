@@ -534,8 +534,7 @@ impl Heartbeat {
         self.lock().expect(HEARTBEAT_LOCK_MUTEX_FAILURE).port = port;
     }
     pub fn reset(&mut self) {
-        let mut shared_data = self.lock().expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
-        std::mem::take(&mut *shared_data);
+        *self.lock().expect(HEARTBEAT_LOCK_MUTEX_FAILURE) = HeartbeatInner::new();
     }
 }
 

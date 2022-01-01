@@ -206,6 +206,7 @@ Rectangle {
                 settings_table_model.fill_console_points(settingsTableEntries);
                 var entries = settingsTableEntries.entries;
                 if (!entries.length) {
+                    selectedRowIdx = -1;
                     tableView.model.clear();
                     tableView.forceLayout();
                     return ;

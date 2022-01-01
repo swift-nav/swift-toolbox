@@ -49,7 +49,7 @@ Rectangle {
             anchors.right: parent.right
             anchors.top: parent.top
             anchors.leftMargin: 5
-            anchors.rightMargin: 5
+            anchors.rightMargin: 2 * scrollBar.width
 
             Loader {
                 property string _title: "Name"
@@ -236,8 +236,7 @@ Rectangle {
                 visible: !!selectedRowField(_fieldName)
                 Layout.columnSpan: 1
                 Layout.rowSpan: parent.rows - 7
-                // Layout.fillHeight: true
-                Layout.preferredHeight: parent.height - 7 * parent.smallRowHeight
+                Layout.preferredHeight: Math.max(1, parent.height - 7 * parent.smallRowHeight)
                 Layout.preferredWidth: parent.colWidthLabel
                 sourceComponent: settingRowLabel
             }
@@ -250,7 +249,7 @@ Rectangle {
                 visible: !!selectedRowField(_fieldName)
                 Layout.columnSpan: parent.columns - 1
                 Layout.rowSpan: parent.rows - 8
-                Layout.preferredHeight: parent.height - 8 * parent.smallRowHeight
+                Layout.preferredHeight: Math.max(1, parent.height - 8 * parent.smallRowHeight)
                 Layout.preferredWidth: parent.colWidthField
                 sourceComponent: settingRowText
             }
@@ -266,6 +265,12 @@ Rectangle {
                 sourceComponent: emptyRow
             }
 
+        }
+
+        ScrollBar.vertical: ScrollBar {
+            id: scrollBar
+
+            policy: ScrollBar.AlwaysOn
         }
 
     }

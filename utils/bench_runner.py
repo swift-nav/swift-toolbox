@@ -114,7 +114,9 @@ BACKEND_CPU_BENCHMARKS = {
 # Frontend CPU Benchmarks.
 DEFAULT_JSON_FILEPATH = "fileout.json"
 BENCHMARK_COMMAND_ARGS = lambda file_path: f" --exit-after file {file_path}"
-HYPERFINE_COMMAND = lambda file_out: f"hyperfine --warmup 1 --runs 5 --show-output --export-json {file_out} "
+HYPERFINE_COMMAND = (
+    lambda file_out: f'hyperfine --warmup 1 --runs 5 --cleanup "sleep 1" --show-output --export-json {file_out} '
+)
 
 FRONTEND_CPU_BENCHMARKS = {
     WINDOWS: [

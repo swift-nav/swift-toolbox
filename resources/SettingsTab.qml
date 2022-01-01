@@ -3,6 +3,7 @@ import "Constants"
 import Qt.labs.platform 1.1 as LabsPlatform
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import QtQuick.Controls.Material 2.12
 import QtQuick.Dialogs 1.3
 import QtQuick.Layouts 1.15
 import "SettingsTabComponents" as SettingsTabComponents
@@ -138,6 +139,7 @@ MainTab {
 
     SplitView {
         anchors.fill: parent
+        anchors.margins: 5
         orientation: Qt.Horizontal
 
         SettingsTabComponents.SettingsTable {
@@ -152,16 +154,26 @@ MainTab {
         }
 
         ColumnLayout {
-            SplitView.fillWidth: true
-            SplitView.fillHeight: true
             SplitView.minimumWidth: parent.width * 0.55
-            spacing: 3
+            spacing: 0
 
-            RowLayout {
+            GridLayout {
+                property int colWidth: Math.max(0, ((parent.width / (columns)) - columnSpacing * (columns)))
+                property int buttonPadding: 3
+
                 Layout.fillWidth: true
+                rowSpacing: 0
+                columnSpacing: 2
+                columns: 5
+                rows: 2
 
                 Button {
-                    text: "Save to Device"
+                    Layout.columnSpan: 1
+                    Layout.rowSpan: 1
+                    Layout.preferredWidth: parent.colWidth
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    padding: parent.buttonPadding
+                    text: "Save to\nDevice"
                     icon.source: Constants.icons.savePath
                     icon.width: Constants.settingsTab.buttonIconWidth
                     icon.height: Constants.settingsTab.buttonIconHeight
@@ -171,7 +183,12 @@ MainTab {
                 }
 
                 Button {
-                    text: "Export to file"
+                    Layout.columnSpan: 1
+                    Layout.rowSpan: 1
+                    Layout.preferredWidth: parent.colWidth
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    padding: parent.buttonPadding
+                    text: "Export to\nfile"
                     icon.source: Constants.icons.exportPath
                     icon.width: Constants.settingsTab.buttonIconWidth
                     icon.height: Constants.settingsTab.buttonIconHeight
@@ -181,7 +198,12 @@ MainTab {
                 }
 
                 Button {
-                    text: "Import from File"
+                    Layout.columnSpan: 1
+                    Layout.rowSpan: 1
+                    Layout.preferredWidth: parent.colWidth
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    padding: parent.buttonPadding
+                    text: "Import from\nFile"
                     icon.source: Constants.icons.importPath
                     icon.width: Constants.settingsTab.buttonIconWidth
                     icon.height: Constants.settingsTab.buttonIconHeight
@@ -191,7 +213,12 @@ MainTab {
                 }
 
                 Button {
-                    text: "Reset to Defaults"
+                    Layout.columnSpan: 1
+                    Layout.rowSpan: 1
+                    Layout.preferredWidth: parent.colWidth
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    padding: parent.buttonPadding
+                    text: "Reset to\nDefaults"
                     icon.source: Constants.icons.warningPath
                     icon.width: Constants.settingsTab.buttonIconWidth
                     icon.height: Constants.settingsTab.buttonIconHeight
@@ -201,25 +228,42 @@ MainTab {
                 }
 
                 Button {
-                    text: "Auto Survey"
-                    visible: selectedRowField("group") === "surveyed_position"
+                    id: autoSurveyButton
+
+                    property bool buttonEnabled: (selectedRowField("group") === "surveyed_position")
+
+                    Layout.columnSpan: 1
+                    Layout.rowSpan: 1
+                    Layout.preferredWidth: parent.colWidth
+                    Layout.preferredHeight: refreshButton.height
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    ToolTip.text: "Select element under \'surveyed_position\' group to enable."
+                    ToolTip.visible: !buttonEnabled && hovered
+                    background.visible: buttonEnabled
+                    padding: parent.buttonPadding
+                    text: "Auto Survey\n"
+                    opacity: buttonEnabled ? 1 : 0.5
                     icon.source: Constants.icons.centerOnButtonUrl
                     icon.width: Constants.settingsTab.buttonIconWidth
                     icon.height: Constants.settingsTab.buttonIconHeight
                     display: AbstractButton.TextUnderIcon
                     flat: true
-                    onClicked: autoSurveyDialog.visible = true
+                    onClicked: {
+                        if (buttonEnabled)
+                            autoSurveyDialog.visible = true;
+
+                    }
                 }
-
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
 
                 Button {
                     id: refreshButton
 
-                    text: "Refresh from device"
+                    Layout.columnSpan: 1
+                    Layout.rowSpan: 1
+                    Layout.preferredWidth: parent.colWidth
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    padding: parent.buttonPadding
+                    text: "Refresh from\ndevice"
                     icon.source: Constants.icons.refreshPath
                     icon.width: Constants.settingsTab.buttonIconWidth
                     icon.height: Constants.settingsTab.buttonIconHeight
@@ -229,10 +273,15 @@ MainTab {
                 }
 
                 SmallCheckBox {
-                    Layout.alignment: Qt.AlignBottom
+                    Layout.columnSpan: 1
+                    Layout.rowSpan: 1
+                    Layout.preferredWidth: parent.colWidth
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    padding: parent.buttonPadding
                     bottomPadding: refreshButton.bottomPadding
-                    text: "Show Advanced Settings"
+                    text: "SHOW ADVANCED SETTINGS"
                     font.pointSize: refreshButton.font.pointSize
+                    font.family: Constants.fontFamily
                     font.bold: false
                     onClicked: {
                         settingsTable.showExpert = checked;
@@ -247,25 +296,26 @@ MainTab {
                 Layout.fillWidth: true
             }
 
-            RowLayout {
+            SettingsTabComponents.SettingsPane {
+                id: settingsPane
+
+                Layout.rightMargin: 10
+                Layout.fillHeight: true
+                Layout.fillWidth: true
                 Layout.alignment: Qt.AlignLeft | Qt.AlignTop
                 visible: {
-                    var row = selectedRow();
+                    var row = settingsTab.selectedRow();
                     if (row && row.hasOwnProperty("valueOnDevice"))
                         return true;
                     else
                         return false;
                 }
-
-                SettingsTabComponents.SettingsPane {
-                    id: settingsPane
-                }
-
             }
 
             Item {
-                Layout.fillHeight: true
                 Layout.fillWidth: true
+                Layout.fillHeight: true
+                visible: !settingsPane.visible
             }
 
         }

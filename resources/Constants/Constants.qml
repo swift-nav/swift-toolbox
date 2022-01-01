@@ -474,6 +474,8 @@ QtObject {
         readonly property int textSettingWidth: 550
         readonly property int buttonIconWidth: 20
         readonly property int buttonIconHeight: 20
+        readonly property int paneSmallRowHeight: 15
+        readonly property int paneScrollBufferHeight: 100
         readonly property string defaultImportExportRelativePathFromHome: "SwiftNav"
         readonly property string defaultExportFileName: "config.ini"
     }

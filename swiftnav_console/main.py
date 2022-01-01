@@ -232,6 +232,8 @@ def receive_messages(app_, backend, messages):
             app_state = ConnectionState(m.status.text)
             if app_state == ConnectionState.CLOSED:
                 return app_.quit()
+            if app_state == ConnectionState.DISCONNECTED:
+                SETTINGS_TABLE[Keys.ENTRIES] = []
             CONNECTION[Keys.CONNECTION_STATE] = app_state
 
         elif m.which == Message.Union.SolutionPositionStatus:

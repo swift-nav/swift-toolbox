@@ -8,12 +8,15 @@ use clap::Parser;
 use log::{debug, error};
 use strum::VariantNames;
 
-use crate::constants::{AVAILABLE_BAUDRATES, AVAILABLE_REFRESH_RATES};
 use crate::errors::CONVERT_TO_STR_FAILURE;
 use crate::log_panel::LogLevel;
 use crate::output::CsvLogging;
 use crate::shared_state::SharedState;
 use crate::types::{FlowControl, RealtimeDelay};
+use crate::{
+    client_sender::BoxedClientSender,
+    constants::{AVAILABLE_BAUDRATES, AVAILABLE_REFRESH_RATES},
+};
 use crate::{
     common_constants::{SbpLogging, Tabs},
     connection::{Connection, ConnectionManager},
@@ -275,9 +278,14 @@ fn is_baudrate(br: &str) -> Result<(), String> {
 /// # Parameters
 /// - `opt`: CLI Options to start specific connection type.
 /// - `conn_manager`: The Server state to start a specific connection.
-/// - `client_send`: Client Sender channel for communication from backend to frontend.
 /// - `shared_state`: The shared state for validating another connection is not already running.
-pub fn handle_cli(opt: CliOptions, conn_manager: &ConnectionManager, shared_state: SharedState) {
+/// - `client_sender`: Client Sender channel for communication from backend to frontend.
+pub fn handle_cli(
+    opt: CliOptions,
+    conn_manager: &ConnectionManager,
+    shared_state: SharedState,
+    client_sender: &BoxedClientSender,
+) {
     if let Some(opt_input) = opt.input {
         match opt_input {
             Input::Tcp { host, port } => {
@@ -308,13 +316,13 @@ pub fn handle_cli(opt: CliOptions, conn_manager: &ConnectionManager, shared_stat
         LogLevel::WARNING
     };
     shared_state.set_log_level(log_level);
-    let mut shared_data = shared_state.lock();
-    (*shared_data).logging_bar.csv_logging = CsvLogging::from(opt.csv_log);
-    (*shared_data).log_to_std.set(opt.log_stderr);
+    shared_state.lock().logging_bar.csv_logging = CsvLogging::from(opt.csv_log);
+    shared_state.lock().log_to_std.set(opt.log_stderr);
     if let Some(sbp_log) = opt.sbp_log {
-        (*shared_data).logging_bar.sbp_logging_format =
-            SbpLogging::from_str(&sbp_log.to_string()).expect(CONVERT_TO_STR_FAILURE);
-        (*shared_data).logging_bar.sbp_logging = true;
+        shared_state.set_sbp_logging(true, client_sender.clone());
+        shared_state.set_sbp_logging_format(
+            SbpLogging::from_str(&sbp_log.to_string()).expect(CONVERT_TO_STR_FAILURE),
+        );
     }
     log::logger().flush();
 }

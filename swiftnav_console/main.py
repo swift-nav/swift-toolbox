@@ -5,7 +5,7 @@ import os
 import sys
 import threading
 
-from typing import List, Any, Optional
+from typing import List, Any, Optional, Tuple
 
 import capnp  # type: ignore
 
@@ -784,7 +784,7 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
             globals_.setProperty("width", args.width)  # type: ignore
 
 
-def main():
+def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     parser = argparse.ArgumentParser(add_help=False, usage=argparse.SUPPRESS)
     parser.add_argument("--show-fileio", action="store_true")
     parser.add_argument("--no-opengl", action="store_false")
@@ -795,6 +795,8 @@ def main():
     parser.add_argument("--width", type=int)
 
     args_main, _ = parser.parse_known_args()
+    if passed_args is not None:
+        args_main, _ = parser.parse_known_args(passed_args)
 
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)

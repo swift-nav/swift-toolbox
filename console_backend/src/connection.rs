@@ -156,7 +156,9 @@ fn conn_manager_thd(
                 ConnectionManagerMsg::Disconnect => {
                     info!("Disconnecting...");
                     log::logger().flush();
-                    shared_state.reset_logging();
+                    if !matches!(shared_state.connection(), ConnectionState::Disconnected) {
+                        shared_state.reset_logging();
+                    }
                     refresh_loggingbar(&client_sender, &shared_state);
                     shared_state.set_connection(ConnectionState::Disconnected, &client_sender);
                     join(&mut pm_thd);

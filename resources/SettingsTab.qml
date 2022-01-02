@@ -283,8 +283,12 @@ MainTab {
                     font.family: Constants.fontFamily
                     font.bold: false
                     onClicked: {
-                        settingsTable.showExpert = checked;
-                        settingsTable.selectedRowIdx = -1;
+                        if (this.enabled) {
+                            this.enabled = false;
+                            settingsTable.showExpert = checked;
+                            settingsTable.selectedRowIdx = -1;
+                            this.enabled = true;
+                        }
                     }
                 }
 

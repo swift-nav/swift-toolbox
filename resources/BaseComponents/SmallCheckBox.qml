@@ -53,6 +53,8 @@ T.CheckBox {
         color: control.enabled ? control.Material.foreground : control.Material.hintTextColor
         elide: Text.ElideRight
         verticalAlignment: Text.AlignVCenter
+        horizontalAlignment: Text.AlignHCenter
+        wrapMode: Text.WordWrap
     }
 
 }

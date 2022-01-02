@@ -4,7 +4,7 @@ import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
-Item {
+Rectangle {
     id: settingsPane
 
     property var selectedRow
@@ -26,148 +26,260 @@ Item {
         return selectedRow[name] || "";
     }
 
-    GridLayout {
-        columns: 2
-        rowSpacing: 4
-        width: parent.width
+    clip: true
 
-        Loader {
-            property string _title: "Name"
-            property string _fieldName: "name"
+    Flickable {
+        anchors.fill: parent
+        contentHeight: grid.height
 
-            Layout.alignment: Qt.AlignRight
-            sourceComponent: settingRowLabel
-        }
+        GridLayout {
+            id: grid
 
-        Loader {
-            property string _fieldName: "name"
+            property int colWidth: this.width / columns
+            property int colWidthLabel: colWidth
+            property int colWidthField: this.width - colWidth
+            property int smallRowHeight: Constants.settingsTab.paneSmallRowHeight
+            property int labelColumnWidth: this.width
 
-            sourceComponent: settingRowText
-        }
+            columns: 7
+            rows: 12
+            rowSpacing: 1
+            height: parent.parent.height + Constants.settingsTab.paneScrollBufferHeight
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.leftMargin: 5
+            anchors.rightMargin: 2 * scrollBar.width
 
-        Loader {
-            property string _title: "Value"
-            property string _fieldName: "valueOnDevice"
+            Loader {
+                property string _title: "Name"
+                property string _fieldName: "name"
 
-            Layout.alignment: Qt.AlignRight
-            sourceComponent: settingRowLabel
-        }
-
-        Loader {
-            id: valOnDevice
-
-            property string _fieldName: "valueOnDevice"
-
-            Layout.fillWidth: false
-            sourceComponent: {
-                if (selectedRowField("readonly"))
-                    return settingRowText;
-
-                var ty = selectedRowField("type");
-                if (ty === "boolean")
-                    return settingRowBool;
-                else if (ty === "enum")
-                    return settingRowEnum;
-                else
-                    return settingRowEditable;
+                Layout.rowSpan: 1
+                Layout.columnSpan: 1
+                Layout.preferredWidth: parent.colWidthLabel
+                Layout.preferredHeight: parent.smallRowHeight
+                sourceComponent: settingRowLabel
             }
-            states: [
-                State {
-                    name: "long text field"
-                    when: {
-                        if (valOnDevice.item instanceof TextField) {
-                            var textLen = valOnDevice.item.font.pointSize * valOnDevice.item.length;
-                            return (textLen >= 150);
-                        } else {
-                            return false;
-                        }
-                    }
 
-                    PropertyChanges {
-                        target: valOnDevice
-                        Layout.fillWidth: true
-                    }
+            Loader {
+                property string _fieldName: "name"
 
+                sourceComponent: settingRowText
+                Layout.rowSpan: 1
+                Layout.columnSpan: parent.columns - 1
+                Layout.preferredWidth: parent.colWidthField
+                Layout.preferredHeight: parent.smallRowHeight
+            }
+
+            Loader {
+                property string _title: "Value"
+                property string _fieldName: "valueOnDevice"
+
+                Layout.rowSpan: 1
+                Layout.columnSpan: 1
+                Layout.preferredWidth: parent.colWidthLabel
+                Layout.preferredHeight: parent.smallRowHeight
+                sourceComponent: settingRowLabel
+            }
+
+            Loader {
+                id: valOnDevice
+
+                property string _fieldName: "valueOnDevice"
+
+                Layout.rowSpan: 1
+                Layout.columnSpan: parent.columns - 1
+                Layout.preferredWidth: parent.colWidthField
+                Layout.preferredHeight: parent.smallRowHeight
+                Layout.alignment: Qt.AlignVCenter
+                sourceComponent: {
+                    if (selectedRowField("readonly"))
+                        return settingRowText;
+
+                    var ty = selectedRowField("type");
+                    if (ty === "boolean")
+                        return settingRowBool;
+                    else if (ty === "enum")
+                        return settingRowEnum;
+                    else
+                        return settingRowEditable;
                 }
-            ]
+                states: [
+                    State {
+                        name: "longTextField"
+                        when: valOnDevice.item instanceof TextField
+
+                        PropertyChanges {
+                            target: valOnDevice
+                            Layout.preferredHeight: 3 * parent.smallRowHeight
+                        }
+
+                    },
+                    State {
+                        name: "enumOrBool"
+                        when: valOnDevice.item instanceof ComboBox
+
+                        PropertyChanges {
+                            target: valOnDevice
+                            Layout.preferredHeight: 2 * parent.smallRowHeight
+                        }
+
+                    },
+                    State {
+                        name: "label"
+                        when: valOnDevice.item instanceof Rectangle
+
+                        PropertyChanges {
+                            target: valOnDevice
+                            Layout.preferredHeight: parent.smallRowHeight
+                        }
+
+                    }
+                ]
+            }
+
+            Loader {
+                property string _title: "Units"
+                property string _fieldName: "units"
+
+                visible: !!selectedRowField(_fieldName)
+                Layout.rowSpan: 1
+                Layout.columnSpan: 1
+                Layout.preferredWidth: parent.colWidthLabel
+                Layout.preferredHeight: parent.smallRowHeight
+                sourceComponent: settingRowLabel
+            }
+
+            Loader {
+                property string _fieldName: "units"
+
+                visible: !!selectedRowField(_fieldName)
+                sourceComponent: settingRowText
+                Layout.rowSpan: 1
+                Layout.columnSpan: parent.columns - 1
+                Layout.preferredWidth: parent.colWidthField
+                Layout.preferredHeight: parent.smallRowHeight
+            }
+
+            Loader {
+                property string _title: "Setting Type"
+                property string _fieldName: "type"
+
+                visible: !!selectedRowField(_fieldName)
+                Layout.rowSpan: 1
+                Layout.columnSpan: 1
+                Layout.preferredWidth: parent.colWidthLabel
+                Layout.preferredHeight: parent.smallRowHeight
+                sourceComponent: settingRowLabel
+            }
+
+            Loader {
+                property string _fieldName: "type"
+
+                visible: !!selectedRowField(_fieldName)
+                sourceComponent: settingRowText
+                Layout.rowSpan: 1
+                Layout.columnSpan: parent.columns - 1
+                Layout.preferredWidth: parent.colWidthField
+                Layout.preferredHeight: parent.smallRowHeight
+            }
+
+            Loader {
+                property string _title: "Default Value"
+                property string _fieldName: "defaultValue"
+
+                Layout.rowSpan: 2
+                Layout.columnSpan: 1
+                Layout.preferredWidth: parent.colWidthLabel
+                Layout.preferredHeight: parent.smallRowHeight
+                sourceComponent: settingRowLabel
+            }
+
+            Loader {
+                property string _fieldName: "defaultValue"
+
+                sourceComponent: settingRowText
+                Layout.rowSpan: 2
+                Layout.columnSpan: parent.columns - 1
+                Layout.preferredWidth: parent.colWidthField
+                Layout.preferredHeight: parent.smallRowHeight
+            }
+
+            Loader {
+                property string _title: "Description"
+                property string _fieldName: "description"
+
+                visible: !!selectedRowField(_fieldName)
+                Layout.rowSpan: 2
+                Layout.columnSpan: 1
+                Layout.preferredWidth: parent.colWidthLabel
+                Layout.preferredHeight: parent.smallRowHeight
+                sourceComponent: settingRowLabel
+            }
+
+            Loader {
+                property string _fieldName: "description"
+
+                visible: !!selectedRowField(_fieldName)
+                Layout.rowSpan: 2
+                Layout.columnSpan: parent.columns - 1
+                Layout.preferredWidth: parent.colWidthField
+                Layout.preferredHeight: parent.smallRowHeight
+                sourceComponent: settingRowText
+            }
+
+            Loader {
+                property string _title: "Notes"
+                property string _fieldName: "notes"
+
+                visible: !!selectedRowField(_fieldName)
+                Layout.columnSpan: 1
+                Layout.rowSpan: parent.rows - 7
+                Layout.preferredHeight: Math.max(1, parent.height - 7 * parent.smallRowHeight)
+                Layout.preferredWidth: parent.colWidthLabel
+                sourceComponent: settingRowLabel
+            }
+
+            Loader {
+                id: notes
+
+                property string _fieldName: "notes"
+
+                visible: !!selectedRowField(_fieldName)
+                Layout.columnSpan: parent.columns - 1
+                Layout.rowSpan: parent.rows - 8
+                Layout.preferredHeight: Math.max(1, parent.height - 8 * parent.smallRowHeight)
+                Layout.preferredWidth: parent.colWidthField
+                sourceComponent: settingRowText
+            }
+
+            Loader {
+                property string _fieldName: "notes"
+
+                visible: !notes.visible
+                Layout.columnSpan: parent.columns
+                Layout.rowSpan: parent.rows - 8
+                Layout.fillHeight: true
+                Layout.fillWidth: true
+                sourceComponent: emptyRow
+            }
+
         }
 
-        Loader {
-            property string _title: "Units"
-            property string _fieldName: "units"
+        ScrollBar.vertical: ScrollBar {
+            id: scrollBar
 
-            visible: !!selectedRowField(_fieldName)
-            Layout.alignment: Qt.AlignRight
-            sourceComponent: settingRowLabel
+            policy: ScrollBar.AlwaysOn
         }
 
-        Loader {
-            property string _fieldName: "units"
+    }
 
-            visible: !!selectedRowField(_fieldName)
-            sourceComponent: settingRowText
-        }
+    Component {
+        id: emptyRow
 
-        Loader {
-            property string _title: "Setting Type"
-            property string _fieldName: "type"
-
-            visible: !!selectedRowField(_fieldName)
-            Layout.alignment: Qt.AlignRight
-            sourceComponent: settingRowLabel
-        }
-
-        Loader {
-            property string _fieldName: "type"
-
-            visible: !!selectedRowField(_fieldName)
-            sourceComponent: settingRowText
-        }
-
-        Loader {
-            property string _title: "Default Value"
-            property string _fieldName: "defaultValue"
-
-            Layout.alignment: Qt.AlignRight
-            sourceComponent: settingRowLabel
-        }
-
-        Loader {
-            property string _fieldName: "defaultValue"
-
-            sourceComponent: settingRowText
-        }
-
-        Loader {
-            property string _title: "Description"
-            property string _fieldName: "description"
-
-            visible: !!selectedRowField(_fieldName)
-            Layout.alignment: Qt.AlignRight
-            sourceComponent: settingRowLabel
-        }
-
-        Loader {
-            property string _fieldName: "description"
-
-            visible: !!selectedRowField(_fieldName)
-            sourceComponent: settingRowText
-        }
-
-        Loader {
-            property string _title: "Notes"
-            property string _fieldName: "notes"
-
-            visible: !!selectedRowField(_fieldName)
-            Layout.alignment: Qt.AlignRight
-            sourceComponent: settingRowLabel
-        }
-
-        Loader {
-            property string _fieldName: "notes"
-
-            visible: !!selectedRowField(_fieldName)
-            sourceComponent: settingRowText
+        Rectangle {
+            anchors.fill: parent
         }
 
     }
@@ -178,6 +290,7 @@ Item {
         Label {
             text: _title + ":"
             font.bold: true
+            horizontalAlignment: Text.AlignRight
         }
 
     }
@@ -185,13 +298,12 @@ Item {
     Component {
         id: settingRowText
 
-        Row {
-            width: Constants.settingsTab.textSettingWidth
+        Rectangle {
+            anchors.fill: parent
 
             Label {
                 text: selectedRowField(_fieldName)
-                width: parent.width
-                elide: Text.ElideRight
+                anchors.fill: parent
                 wrapMode: Text.WordWrap
             }
 
@@ -241,6 +353,8 @@ Item {
             font.family: Constants.genericTable.fontFamily
             font.pointSize: Constants.largePointSize
             selectByMouse: true
+            anchors.centerIn: parent
+            anchors.verticalCenterOffset: 5
             onTextChanged: {
                 textFieldTimer.startTimer(settingGroup, settingName, text);
             }

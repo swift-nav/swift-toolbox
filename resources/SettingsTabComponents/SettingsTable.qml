@@ -58,8 +58,7 @@ Rectangle {
     ColumnLayout {
         property variant columnWidths: [parent.width * 0.45, parent.width * 0.55]
 
-        width: parent.width
-        height: parent.height
+        anchors.fill: parent
         spacing: Constants.settingsTable.layoutSpacing
 
         HorizontalHeaderView {
@@ -200,7 +199,7 @@ Rectangle {
 
         Timer {
             interval: Utils.hzToMilliseconds(Constants.staticTableTimerIntervalRate)
-            running: true
+            running: parent.visible
             repeat: true
             onTriggered: {
                 settings_table_model.fill_console_points(settingsTableEntries);

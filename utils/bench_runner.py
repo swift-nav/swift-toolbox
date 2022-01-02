@@ -2,6 +2,7 @@ import argparse
 import json
 import subprocess
 import sys
+import time
 from multiprocessing.pool import ThreadPool
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -162,7 +163,7 @@ FRONTEND_MEM_BENCHMARKS: Dict[str, List[Dict[str, Any]]] = {
         {
             NAME: "piksi-relay-5sec",
             FILE_PATH: "data/piksi-relay-5sec.sbp",
-            MAXIMUM_MEAN_MB: 300,
+            MAXIMUM_MEAN_MB: 350,
             MAXIMUM_RATE_OF_MAX_MEAN: 0.05,
             MAXIMUM_RATE_OF_MAX_STD: 0.4,
         },
@@ -294,6 +295,7 @@ def collect_memory_readings(pid: str) -> List[float]:
     """
     memory_readings = []
     proc = psutil.Process(pid)
+    time.sleep(1)  # Give the process time to start up.
     try:
         while proc.status() != psutil.STATUS_ZOMBIE:
             total_mem_usage = 0

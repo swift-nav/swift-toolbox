@@ -1,6 +1,7 @@
 """Tracking Signals Tab QObjects.
 """
 
+from threading import Lock
 from typing import Dict, List, Any
 
 from PySide2.QtCore import Property, QObject, Signal, Slot
@@ -16,6 +17,7 @@ TRACKING_SIGNALS_TAB: Dict[str, Any] = {
     Keys.COLORS: [],
     Keys.XMIN_OFFSET: 0,
 }
+TRACKING_SIGNALS_TAB_LOCK: Lock = Lock()
 
 
 class TrackingSignalsPoints(QObject):
@@ -34,7 +36,8 @@ class TrackingSignalsPoints(QObject):
     enabled_series_changed = Signal()
 
     def get_num_labels(self) -> int:  # pylint:disable=no-self-use
-        return len(TRACKING_SIGNALS_TAB[Keys.LABELS])
+        with TRACKING_SIGNALS_TAB_LOCK:
+            return len(TRACKING_SIGNALS_TAB[Keys.LABELS])
 
     num_labels = Property(int, get_num_labels, notify=num_labels_changed)  # type: ignore
 
@@ -78,20 +81,23 @@ class TrackingSignalsPoints(QObject):
 
     @Slot()  # type: ignore
     def fill_all_series(self) -> None:
-        cur_num_labels = len(TRACKING_SIGNALS_TAB[Keys.LABELS])
+        with TRACKING_SIGNALS_TAB_LOCK:
+            cur_num_labels = len(TRACKING_SIGNALS_TAB[Keys.LABELS])
+            labels = TRACKING_SIGNALS_TAB[Keys.LABELS]
+            colors = TRACKING_SIGNALS_TAB[Keys.COLORS]
+            points_for_all_series = TRACKING_SIGNALS_TAB[Keys.POINTS]
+            check_labels = TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS]
+            xmin_offset = TRACKING_SIGNALS_TAB[Keys.XMIN_OFFSET]
         if self._num_labels != cur_num_labels:
             self._num_labels = cur_num_labels
             self.num_labels_changed.emit(cur_num_labels)  # type: ignore
-        points_for_all_series = TRACKING_SIGNALS_TAB[Keys.POINTS]
 
-        labels = TRACKING_SIGNALS_TAB[Keys.LABELS]
-        colors = TRACKING_SIGNALS_TAB[Keys.COLORS]
-        if self._check_labels != TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS]:
-            self._check_labels = TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS]
+        if self._check_labels != check_labels:
+            self._check_labels = check_labels
             self.check_labels_changed.emit()  # type: ignore
 
         if len(points_for_all_series) != 0:
-            xaxis_min = points_for_all_series[0][-1].x() + TRACKING_SIGNALS_TAB[Keys.XMIN_OFFSET]
+            xaxis_min = points_for_all_series[0][-1].x() + xmin_offset
             if self._xaxis_min != xaxis_min:
                 self._xaxis_min = xaxis_min
                 self.xaxis_min_changed.emit()  # type: ignore

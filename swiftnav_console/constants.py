@@ -136,12 +136,19 @@ class Keys(str, Enum):
     PREVIOUS_SERIAL_CONFIGS = "PREVIOUS_SERIAL_CONFIGS"
     RECORDING_FILENAME = "RECORDING_FILENAME"
     CONSOLE_VERSION = "CONSOLE_VERSION"
+    PREVIOUS_CONNECTION_TYPE = "PREVIOUS_CONNECTION_TYPE"
 
 
 class ConnectionState(str, Enum):
     CLOSED = "CLOSED"
     CONNECTED = "CONNECTED"
     DISCONNECTED = "DISCONNECTED"
+
+
+class ConnectionType(str, Enum):
+    TCP = "TCP"
+    File = "File"
+    Serial = "Serial"
 
 
 class QTKeys(str, Enum):

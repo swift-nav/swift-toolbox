@@ -8,6 +8,7 @@ use capnp::serialize;
 use indexmap::IndexSet;
 use log::warn;
 use sbp::SbpString;
+use serde_variant::to_variant_name;
 use serialport::available_ports;
 
 use crate::client_sender::BoxedClientSender;
@@ -143,6 +144,9 @@ pub fn refresh_connection_frontend(client_sender: &BoxedClientSender, shared_sta
     for (i, filename) in files.iter().enumerate() {
         prevous_files.set(i as u32, filename);
     }
+
+    let prev_conn_type = to_variant_name(&shared_state.connection_type_history()).unwrap();
+    connection_status.set_previous_connection_type(prev_conn_type);
 
     client_sender.send_data(serialize_capnproto_builder(builder));
 }

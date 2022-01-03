@@ -5,7 +5,7 @@ from typing import Dict, List, Any
 
 from PySide2.QtCore import Property, QObject, Slot
 
-from .constants import Keys, QTKeys, ConnectionState
+from .constants import Keys, QTKeys, ConnectionState, ConnectionType
 
 CONNECTION: Dict[str, Any] = {
     Keys.AVAILABLE_PORTS: [],
@@ -19,6 +19,7 @@ CONNECTION: Dict[str, Any] = {
     Keys.LAST_USED_SERIAL_DEVICE: None,
     Keys.PREVIOUS_SERIAL_CONFIGS: [],
     Keys.CONSOLE_VERSION: str,
+    Keys.PREVIOUS_CONNECTION_TYPE: "",
 }
 
 
@@ -35,6 +36,7 @@ class ConnectionData(QObject):  # pylint: disable=too-many-instance-attributes d
     _last_used_serial_device: str
     _previous_serial_configs: List[List[Any]] = []
     _console_version: str = ""
+    _previous_connection_type: ConnectionType = ConnectionType.Serial
 
     def get_available_ports(self) -> List[str]:
         return self._available_ports
@@ -126,6 +128,14 @@ class ConnectionData(QObject):  # pylint: disable=too-many-instance-attributes d
 
     console_version = Property(str, get_console_version, set_console_version)
 
+    def get_previous_connection_type(self) -> ConnectionType:
+        return self._previous_connection_type
+
+    def set_previous_connection_type(self, previous_connection_type: ConnectionType) -> None:
+        self._previous_connection_type = previous_connection_type
+
+    previous_connection_type = Property(str, get_previous_connection_type, set_previous_connection_type)
+
 
 class ConnectionModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(ConnectionData)  # type: ignore
@@ -140,4 +150,5 @@ class ConnectionModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_last_used_serial_device(CONNECTION[Keys.LAST_USED_SERIAL_DEVICE])
         cp.set_previous_serial_configs(CONNECTION[Keys.PREVIOUS_SERIAL_CONFIGS])
         cp.set_console_version(CONNECTION[Keys.CONSOLE_VERSION])
+        cp.set_previous_connection_type(CONNECTION[Keys.PREVIOUS_CONNECTION_TYPE])
         return cp

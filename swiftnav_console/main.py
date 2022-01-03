@@ -4,6 +4,7 @@ import argparse
 import os
 import sys
 import threading
+import time
 
 from typing import List, Any, Optional, Tuple
 
@@ -221,7 +222,10 @@ capnp.remove_import_hook()  # pylint: disable=no-member
 
 
 def receive_messages(app_, backend, messages):
+    start = time.time()
     while True:
+        if time.time() - start > 10:
+            return app_.quit()
         buffer = backend.fetch_message()
         if not buffer:
             print("terminating GUI loop", file=sys.stderr)

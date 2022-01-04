@@ -142,6 +142,10 @@ struct SettingsResetRequest {
     reset @0 :Void = void;
 }
 
+struct SettingsNotification {
+    message @0 :Text;
+}
+
 struct Point {
     x @0 :Float64;
     y @1 :Float64;
@@ -497,5 +501,6 @@ struct Message {
         autoSurveyRequest @50 : AutoSurveyRequest;
         loggingBarRecordingStatus @51 : LoggingBarRecordingStatus;
         connectionNotification @52 : ConnectionNotification;
+        settingsNotification @53 : SettingsNotification;
     }
 }

@@ -359,8 +359,10 @@ Rectangle {
                 textFieldTimer.startTimer(settingGroup, settingName, text);
             }
             onEditingFinished: {
-                textFieldTimer.stop();
-                data_model.settings_write_request(settingGroup, settingName, text);
+                if (textFieldTimer.running) {
+                    textFieldTimer.stop();
+                    data_model.settings_write_request(settingGroup, settingName, text);
+                }
             }
             validator: {
                 if (settingType === "integer")

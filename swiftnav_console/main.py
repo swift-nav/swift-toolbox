@@ -235,7 +235,8 @@ def receive_messages(app_, backend, messages):
             if app_state == ConnectionState.DISCONNECTED:
                 SETTINGS_TABLE[Keys.ENTRIES] = []
             CONNECTION[Keys.CONNECTION_STATE] = app_state
-
+        elif m.which == Message.Union.ConnectionNotification:
+            CONNECTION[Keys.CONNECTION_MESSAGE] = m.connectionNotification.message
         elif m.which == Message.Union.SolutionPositionStatus:
             SOLUTION_POSITION_TAB[Keys.POINTS][:] = [
                 [QPointF(point.x, point.y) for point in m.solutionPositionStatus.data[idx]]

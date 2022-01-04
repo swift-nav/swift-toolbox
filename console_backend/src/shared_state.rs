@@ -844,6 +844,9 @@ pub enum ConnectionState {
         conn: Connection,
         stop_token: StopToken,
     },
+
+    /// Attempting to connect
+    Connecting,
 }
 
 impl ConnectionState {
@@ -859,10 +862,15 @@ impl ConnectionState {
         matches!(self, Self::Connected { .. })
     }
 
+    pub fn is_connecting(&self) -> bool {
+        matches!(self, Self::Connecting)
+    }
+
     pub fn name(&self) -> String {
         match self {
             ConnectionState::Closed => "closed".into(),
             ConnectionState::Disconnected => "disconnected".into(),
+            ConnectionState::Connecting => "connecting".into(),
             ConnectionState::Connected { conn, .. } => conn.name(),
         }
     }
@@ -873,6 +881,7 @@ impl std::fmt::Display for ConnectionState {
         match self {
             ConnectionState::Closed => write!(f, "{}", cc::ConnectionState::CLOSED),
             ConnectionState::Disconnected => write!(f, "{}", cc::ConnectionState::DISCONNECTED),
+            ConnectionState::Connecting => write!(f, "{}", cc::ConnectionState::CONNECTING),
             ConnectionState::Connected { .. } => {
                 write!(f, "{}", cc::ConnectionState::CONNECTED)
             }

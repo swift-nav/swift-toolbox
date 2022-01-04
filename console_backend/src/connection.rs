@@ -19,7 +19,7 @@ use crate::process_messages::{process_messages, Messages};
 use crate::shared_state::{ConnectionState, SharedState};
 use crate::status_bar::StatusBar;
 use crate::types::*;
-use crate::utils::{refresh_connection_frontend, refresh_loggingbar};
+use crate::utils::{refresh_connection_frontend, refresh_loggingbar, send_conn_notification};
 use crate::watch::Watched;
 
 #[derive(Debug)]
@@ -115,13 +115,36 @@ fn conn_manager_thd(
         while let Ok(msg) = recv.wait() {
             match msg {
                 ConnectionManagerMsg::Connect(conn) => {
+                    shared_state.set_connection(ConnectionState::Connecting, &client_sender);
                     let (reader, writer) = match conn.try_connect(Some(&shared_state)) {
                         Ok(rw) => rw,
                         Err(e) => {
-                            error!("Unable to connect: {}", e);
+                            let (reconnect, message) = match e.kind() {
+                                ErrorKind::ConnectionRefused => {
+                                    (true, String::from("Connection refused. Reconnecting..."))
+                                }
+                                ErrorKind::ConnectionReset => {
+                                    (true, String::from("Connection reset. Reconnecting..."))
+                                }
+                                ErrorKind::TimedOut => {
+                                    (true, String::from("Connection timed out. Reconnecting..."))
+                                }
+                                ErrorKind::NotConnected => {
+                                    (true, String::from("Not connected. Reconnecting..."))
+                                }
+                                _ => (false, format!("Unable to connect: {}", e)),
+                            };
+                            error!("{}", message);
                             log::logger().flush();
-                            if conn.is_tcp() {
-                                manager_msg.send(ConnectionManagerMsg::Reconnect(conn))
+                            send_conn_notification(&client_sender, message.clone());
+                            if !conn.is_file() {
+                                if reconnect {
+                                    manager_msg.send(ConnectionManagerMsg::Reconnect(conn))
+                                } else {
+                                    manager_msg.send(ConnectionManagerMsg::Disconnect)
+                                }
+                            } else {
+                                manager_msg.send(ConnectionManagerMsg::Disconnect)
                             }
                             continue;
                         }
@@ -151,6 +174,7 @@ fn conn_manager_thd(
                 }
                 ConnectionManagerMsg::Reconnect(conn) => {
                     join(&mut reconnect_thd);
+                    shared_state.set_connection(ConnectionState::Connecting, &client_sender);
                     reconnect_thd = Some(start_reconnect_thd(conn, manager_msg.clone()));
                 }
                 ConnectionManagerMsg::Disconnect => {
@@ -161,6 +185,7 @@ fn conn_manager_thd(
                     }
                     refresh_loggingbar(&client_sender, &shared_state);
                     shared_state.set_connection(ConnectionState::Disconnected, &client_sender);
+                    refresh_connection_frontend(&client_sender, &shared_state);
                     join(&mut pm_thd);
                     info!("Disconnected successfully.");
                 }
@@ -203,16 +228,20 @@ fn process_messages_thd(
             messages,
             msg_sender,
             conn.clone(),
-            shared_state,
+            shared_state.clone(),
             client_sender,
         );
-        if conn.close_when_done() {
-            manager_msg.close();
-        }
-        if let Err(e) = res {
-            error!("Connection error: {}", e);
-            if conn.is_tcp() {
-                manager_msg.send(ConnectionManagerMsg::Reconnect(conn))
+        if conn.is_file() {
+            manager_msg.send(ConnectionManagerMsg::Disconnect);
+            if conn.close_when_done() {
+                manager_msg.close();
+            }
+        } else {
+            if let Err(e) = res {
+                error!("Connection error: {}", e);
+            }
+            if !matches!(shared_state.connection(), ConnectionState::Disconnected) {
+                manager_msg.send(ConnectionManagerMsg::Reconnect(conn));
             }
         }
     })
@@ -267,6 +296,10 @@ impl Connection {
 
     pub fn settings_enabled(&self) -> bool {
         matches!(self, Connection::Tcp(_) | Connection::Serial(_))
+    }
+
+    pub fn is_file(&self) -> bool {
+        matches!(self, Connection::File(_))
     }
 
     pub fn is_serial(&self) -> bool {

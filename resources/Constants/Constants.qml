@@ -318,8 +318,11 @@ QtObject {
         readonly property int logLevelButtonWidth: 110
         readonly property color placeholderTextColor: "#CDC9C9"
         readonly property int padding: 0
-        readonly property string connected: "CONNECTED"
-        readonly property string disconnected: "DISCONNECTED"
+        readonly property string connected: "connected"
+        readonly property string connecting: "connecting"
+        readonly property string disconnected: "disconnected"
+        readonly property string disconnecting: "disconnecting"
+        readonly property int warningTimerLockedInterval: 7000
     }
 
     loggingBar: QtObject {

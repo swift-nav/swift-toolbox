@@ -1,6 +1,7 @@
 import "Constants"
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import QtQuick.Dialogs 1.3 as Dialogs
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
@@ -17,6 +18,8 @@ Item {
     property variant previous_files: []
     property variant previous_serial_configs: []
     property variant last_used_serial_device: null
+    property string connMessage: ""
+    property bool warningTimerRecentlyUsed: false
 
     function restore_previous_serial_settings(device_name) {
         const config = previous_serial_configs.find((element) => {
@@ -33,7 +36,12 @@ Item {
     }
 
     Rectangle {
+        id: dialogRect
+
         anchors.fill: parent
+        Keys.onReturnPressed: {
+            connectButton.clicked();
+        }
 
         Image {
             width: parent.width
@@ -57,6 +65,11 @@ Item {
             anchors.centerIn: parent
             title: "Connect to device..."
             closePolicy: Popup.NoAutoClose
+            onVisibleChanged: {
+                if (visible)
+                    dialogRect.forceActiveFocus();
+
+            }
 
             ColumnLayout {
                 anchors.fill: parent
@@ -70,18 +83,21 @@ Item {
 
                         checked: true
                         text: tcp_ip
+                        onToggled: dialogRect.forceActiveFocus()
                     }
 
                     RadioButton {
                         id: serialRadio
 
                         text: serial_usb
+                        onToggled: dialogRect.forceActiveFocus()
                     }
 
                     RadioButton {
                         id: fileRadio
 
                         text: file
+                        onToggled: dialogRect.forceActiveFocus()
                     }
 
                     Item {
@@ -103,6 +119,9 @@ Item {
                         model: available_devices
                         onActivated: {
                             restore_previous_serial_settings(available_devices[currentIndex]);
+                        }
+                        Keys.onReturnPressed: {
+                            connectButton.clicked();
                         }
                     }
 
@@ -126,6 +145,9 @@ Item {
                         Layout.preferredHeight: Constants.connection.dropdownHeight
                         Layout.preferredWidth: Constants.connection.serialDeviceBaudRateDropdownWidth
                         model: available_baudrates
+                        Keys.onReturnPressed: {
+                            connectButton.clicked();
+                        }
                     }
 
                     ComboBox {
@@ -135,6 +157,9 @@ Item {
                         Layout.preferredHeight: Constants.connection.dropdownHeight
                         Layout.preferredWidth: Constants.connection.serialDeviceFlowControlDropdownWidth
                         model: available_flows
+                        Keys.onReturnPressed: {
+                            connectButton.clicked();
+                        }
 
                         states: State {
                             when: serialDeviceFlowControl.down
@@ -163,6 +188,9 @@ Item {
                         model: previous_hosts
                         editable: true
                         selectTextByMouse: true
+                        onAccepted: {
+                            connectButton.clicked();
+                        }
 
                         Label {
                             anchors.fill: parent.contentItem
@@ -183,6 +211,9 @@ Item {
                         model: previous_ports
                         editable: true
                         selectTextByMouse: true
+                        onAccepted: {
+                            connectButton.clicked();
+                        }
 
                         Label {
                             anchors.fill: parent.contentItem
@@ -204,6 +235,9 @@ Item {
                         model: previous_files
                         editable: true
                         selectTextByMouse: true
+                        onAccepted: {
+                            connectButton.clicked();
+                        }
 
                         Label {
                             anchors.fill: parent.contentItem
@@ -233,17 +267,19 @@ Item {
                     Button {
                         id: connectButton
 
+                        property string tooltipText: "Connect"
+
                         Layout.preferredWidth: parent.width / 4
                         checkable: true
-                        checked: Globals.conn_state == Constants.connection.connected
-                        enabled: Globals.conn_state == Constants.connection.disconnected || Globals.conn_state == Constants.connection.connected
+                        state: Constants.connection.disconnected
                         ToolTip.visible: hovered
-                        ToolTip.text: !checked ? "Connect" : "Disconnect"
-                        text: !checked ? "Connect" : "Disconnect"
+                        ToolTip.text: tooltipText
                         onClicked: {
-                            if (!checked) {
+                            if (connectButton.state == Constants.connection.connected || connectButton.state == Constants.connection.connecting) {
+                                connectButton.state = Constants.connection.disconnecting;
                                 data_model.disconnect();
-                            } else {
+                            } else if (connectButton.state == Constants.connection.disconnected) {
+                                connectButton.state = Constants.connection.connecting;
                                 if (tcpRadio.checked) {
                                     if (tcpUrlBar.editText && tcpPortBar.editText)
                                         data_model.connect_tcp(tcpUrlBar.editText, tcpPortBar.editText);
@@ -258,6 +294,56 @@ Item {
                                 }
                             }
                         }
+                        states: [
+                            State {
+                                name: Constants.connection.connecting
+
+                                PropertyChanges {
+                                    target: connectButton
+                                    enabled: true
+                                    checked: true
+                                    text: "Connecting"
+                                    tooltipText: "Disconnect"
+                                }
+
+                            },
+                            State {
+                                name: Constants.connection.connected
+
+                                PropertyChanges {
+                                    target: connectButton
+                                    enabled: true
+                                    checked: true
+                                    text: "Disconnect"
+                                    tooltipText: "Disconnect"
+                                }
+
+                            },
+                            State {
+                                name: Constants.connection.disconnecting
+
+                                PropertyChanges {
+                                    target: connectButton
+                                    enabled: false
+                                    checked: false
+                                    text: "Disconnecting"
+                                    tooltipText: "Disconnecting"
+                                }
+
+                            },
+                            State {
+                                name: Constants.connection.disconnected
+
+                                PropertyChanges {
+                                    target: connectButton
+                                    enabled: true
+                                    checked: false
+                                    text: "Connect"
+                                    tooltipText: "Connect"
+                                }
+
+                            }
+                        ]
                     }
 
                 }
@@ -292,8 +378,12 @@ Item {
                             restore_previous_serial_settings(available_devices[serialDevice.currentIndex]);
 
                     }
-                    let connected = connectionData.conn_state == Constants.connection.connected;
-                    if (Globals.conn_state == Constants.connection.disconnected && stack.connectionScreenVisible() && connected) {
+                    if (connectionData.connection_message !== "") {
+                        connMessage = connectionData.connection_message;
+                        warningTimer.startTimer();
+                    }
+                    connectButton.state = connectionData.conn_state.toLowerCase();
+                    if (!Globals.connected_at_least_once && connectionData.conn_state == Constants.connection.connected.toUpperCase()) {
                         stack.mainView();
                         Globals.connected_at_least_once = true;
                     }
@@ -301,6 +391,33 @@ Item {
                 }
             }
 
+        }
+
+        Timer {
+            id: warningTimer
+
+            function startTimer() {
+                if (!warningTimerRecentlyUsed) {
+                    warningTimerRecentlyUsed = true;
+                    connectionMessage.visible = true;
+                    warningTimer.start();
+                }
+            }
+
+            interval: Constants.connection.warningTimerLockedInterval
+            repeat: false
+            onTriggered: {
+                warningTimerRecentlyUsed = false;
+            }
+        }
+
+        Dialogs.MessageDialog {
+            id: connectionMessage
+
+            title: "Connection Message"
+            text: connMessage
+            icon: Dialogs.StandardIcon.Warning
+            standardButtons: Dialogs.StandardButton.Cancel
         }
 
     }

@@ -81,6 +81,12 @@ impl BaselineTab {
         client_sender: BoxedClientSender,
         writer: MsgSender,
     ) -> BaselineTab {
+        let mut mode_strings = vec![
+            GnssModes::Dgnss.to_string(),
+            GnssModes::Float.to_string(),
+            GnssModes::Fixed.to_string(),
+        ];
+        mode_strings.reserve_exact(mode_strings.len());
         BaselineTab {
             age_corrections: None,
             client_sender,
@@ -90,16 +96,20 @@ impl BaselineTab {
             n_min: BASELINE_DIRECTION_MIN,
             e_max: BASELINE_DIRECTION_MAX,
             e_min: BASELINE_DIRECTION_MIN,
-            mode_strings: vec![
-                GnssModes::Dgnss.to_string(),
-                GnssModes::Float.to_string(),
-                GnssModes::Fixed.to_string(),
-            ],
+            pending_draw_modes: Vec::with_capacity(mode_strings.len()),
+            mode_strings,
             nsec: Some(0),
-            pending_draw_modes: vec![],
             shared_state,
-            sln_cur_data: { vec![vec![]; NUM_GNSS_MODES as usize] },
-            sln_data: { vec![vec![]; NUM_GNSS_MODES as usize] },
+            sln_cur_data: {
+                let mut data = vec![Vec::with_capacity(1); NUM_GNSS_MODES as usize];
+                data.reserve_exact(NUM_GNSS_MODES as usize);
+                data
+            },
+            sln_data: {
+                let mut data = vec![Vec::with_capacity(PLOT_HISTORY_MAX); NUM_GNSS_MODES as usize];
+                data.reserve_exact(NUM_GNSS_MODES as usize);
+                data
+            },
             slns: {
                 BASELINE_DATA_KEYS
                     .iter()
@@ -136,7 +146,7 @@ impl BaselineTab {
         let n_values = &self.slns[&*n_string];
         let e_values = &self.slns[&*e_string];
 
-        let mut new_sln: Vec<(f64, f64)> = Vec::with_capacity(n_values.len());
+        self.sln_data[mode_idx].clear();
         for (n, e) in zip!(n_values, e_values) {
             if n.is_nan() || e.is_nan() {
                 continue;
@@ -145,16 +155,12 @@ impl BaselineTab {
             self.n_max = n.max(self.n_max);
             self.e_min = e.min(self.e_min);
             self.e_max = e.max(self.e_max);
-            new_sln.push((*e, *n));
+            self.sln_data[mode_idx].push((*e, *n));
         }
-        self.sln_data[mode_idx] = new_sln;
-        if update_current {
-            if !self.sln_data[mode_idx].is_empty() {
-                self.sln_cur_data[mode_idx] =
-                    vec![self.sln_data[mode_idx][self.sln_data[mode_idx].len() - 1]];
-            } else {
-                self.sln_cur_data[mode_idx].clear();
-            }
+        self.sln_cur_data[mode_idx].clear();
+        if update_current && !self.sln_data[mode_idx].is_empty() {
+            self.sln_cur_data[mode_idx]
+                .push(self.sln_data[mode_idx][self.sln_data[mode_idx].len() - 1]);
         }
     }
 

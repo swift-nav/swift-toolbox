@@ -137,6 +137,15 @@ impl SolutionTab {
     pub fn new(shared_state: SharedState, client_sender: BoxedClientSender) -> SolutionTab {
         let unit = LatLonUnits::Degrees;
         let (lat_sf, lon_sf) = unit.get_sig_figs(0.0);
+        let mut mode_strings = vec![
+            GnssModes::Spp.to_string(),
+            GnssModes::Sbas.to_string(),
+            GnssModes::Dgnss.to_string(),
+            GnssModes::Float.to_string(),
+            GnssModes::Fixed.to_string(),
+            GnssModes::Dr.to_string(),
+        ];
+        mode_strings.reserve_exact(mode_strings.len());
         SolutionTab {
             age_corrections: None,
             available_units: [DEGREES, METERS],
@@ -158,19 +167,20 @@ impl SolutionTab {
             lon_max: f64::MAX,
             lon_min: f64::MIN,
             modes: Deque::new(PLOT_HISTORY_MAX),
-            mode_strings: vec![
-                GnssModes::Spp.to_string(),
-                GnssModes::Sbas.to_string(),
-                GnssModes::Dgnss.to_string(),
-                GnssModes::Float.to_string(),
-                GnssModes::Fixed.to_string(),
-                GnssModes::Dr.to_string(),
-            ],
+            pending_draw_modes: Vec::with_capacity(mode_strings.len()),
+            mode_strings,
             nsec: Some(0),
-            pending_draw_modes: vec![],
             shared_state,
-            sln_cur_data: { vec![vec![]; NUM_GNSS_MODES as usize] },
-            sln_data: { vec![vec![]; NUM_GNSS_MODES as usize] },
+            sln_cur_data: {
+                let mut data = vec![Vec::with_capacity(1); NUM_GNSS_MODES as usize];
+                data.reserve_exact(NUM_GNSS_MODES as usize);
+                data
+            },
+            sln_data: {
+                let mut data = vec![Vec::with_capacity(PLOT_HISTORY_MAX); NUM_GNSS_MODES as usize];
+                data.reserve_exact(NUM_GNSS_MODES as usize);
+                data
+            },
             slns: {
                 SOLUTION_DATA_KEYS
                     .iter()
@@ -787,7 +797,7 @@ impl SolutionTab {
         let lat_values = &self.slns[&lat_string];
         let lon_values = &self.slns[&lon_string];
 
-        let mut new_sln: Vec<(f64, f64)> = Vec::with_capacity(lat_values.len());
+        self.sln_data[idx].clear();
         for jdx in 0..lat_values.len() {
             if lat_values[jdx].is_nan() || lon_values[jdx].is_nan() {
                 continue;
@@ -796,12 +806,11 @@ impl SolutionTab {
             self.lat_max = f64::max(self.lat_max, lat_values[jdx]);
             self.lon_min = f64::min(self.lon_min, lon_values[jdx]);
             self.lon_max = f64::max(self.lon_max, lon_values[jdx]);
-            new_sln.push((lon_values[jdx], lat_values[jdx]));
+            self.sln_data[idx].push((lon_values[jdx], lat_values[jdx]));
         }
-        self.sln_data[idx] = new_sln;
         self.sln_cur_data[idx].clear();
         if update_current && !self.sln_data[idx].is_empty() {
-            self.sln_cur_data[idx] = vec![self.sln_data[idx][self.sln_data[idx].len() - 1]];
+            self.sln_cur_data[idx].push(self.sln_data[idx][self.sln_data[idx].len() - 1]);
         }
     }
 

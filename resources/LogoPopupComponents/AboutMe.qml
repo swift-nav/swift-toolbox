@@ -35,7 +35,7 @@ ColumnLayout {
         readonly property string websiteDisplay: website.slice(12) // trim https://www.
 
         Layout.alignment: Qt.AlignHCenter
-        text: `Find help at the Swift Navigation <a href='${website}'>${websiteDisplay}</a>`
+        text: `Find help online at <a href='${website}'>${websiteDisplay}</a>`
         font.pointSize: Constants.logoPopup.aboutMe.secondaryPointSize
         onLinkActivated: {
             Qt.openUrlExternally(website);

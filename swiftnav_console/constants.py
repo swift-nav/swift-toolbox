@@ -146,7 +146,7 @@ class ConnectionState(str, Enum):
 
 
 class ConnectionType(str, Enum):
-    TCP = "TCP"
+    Tcp = "Tcp"
     File = "File"
     Serial = "Serial"
 

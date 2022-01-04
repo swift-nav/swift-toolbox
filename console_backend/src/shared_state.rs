@@ -22,7 +22,6 @@ use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use serialport::FlowControl;
 
-use crate::connection::Connection;
 use crate::constants::{
     APPLICATION_NAME, APPLICATION_ORGANIZATION, APPLICATION_QUALIFIER, CONNECTION_HISTORY_FILENAME,
     DEFAULT_LOG_DIRECTORY, MAX_CONNECTION_HISTORY, MPS,
@@ -38,6 +37,7 @@ use crate::update_tab::UpdateTabUpdate;
 use crate::utils::send_conn_state;
 use crate::watch::{WatchReceiver, Watched};
 use crate::{client_sender::BoxedClientSender, main_tab::logging_stats_thread};
+use crate::{common_constants::ConnectionType, connection::Connection};
 use crate::{
     common_constants::{self as cc, SbpLogging},
     status_bar::Heartbeat,
@@ -710,23 +710,23 @@ enum FlowControlRemote {
     Hardware,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
-pub enum ConnectionType {
-    #[serde(rename = "TCP")]
-    TCP,
-    #[serde(rename = "File")]
-    File,
-    #[serde(rename = "Serial")]
-    Serial,
-}
-
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct ConnectionHistory {
     addresses: IndexSet<Address>,
     files: IndexSet<String>,
     folders: IndexSet<String>,
     serial_configs: IndexMap<String, SerialConfig>,
+    #[serde(with = "ConnectionTypeDef")]
     last_connection_type: ConnectionType,
+}
+
+// https://serde.rs/remote-derive.html
+#[derive(Serialize, Deserialize)]
+#[serde(remote = "ConnectionType")]
+enum ConnectionTypeDef {
+    Tcp,
+    File,
+    Serial,
 }
 
 impl Default for ConnectionHistory {
@@ -787,7 +787,7 @@ impl ConnectionHistory {
         self.addresses.insert(address);
         let diff = i32::max(0, self.addresses.len() as i32 - MAX_CONNECTION_HISTORY);
         self.addresses = self.addresses.split_off(diff as usize);
-        self.last_connection_type = ConnectionType::TCP;
+        self.last_connection_type = ConnectionType::Tcp;
 
         if let Err(e) = self.save() {
             error!("Unable to save connection history, {}.", e);
@@ -952,7 +952,7 @@ mod tests {
         let first_addy = addresses.first().unwrap();
         assert_eq!(host1, first_addy.host);
         assert_eq!(port, first_addy.port);
-        assert_eq!(ConnectionType::TCP, conn_history.last_connection_type);
+        assert_eq!(ConnectionType::Tcp, conn_history.last_connection_type);
 
         conn_history.record_address(host2.clone(), port);
         let addresses = conn_history.addresses();

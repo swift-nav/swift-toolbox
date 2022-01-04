@@ -8,7 +8,7 @@ Item {
     property string tcp_ip: "TCP/IP"
     property string serial_usb: "Serial/USB"
     property string file: "File"
-    property string previous_connection_type: null
+    property string previous_connection_type: ""
     property var sources: [tcp_ip, serial_usb, file]
     property variant available_baudrates: []
     property variant available_devices: []

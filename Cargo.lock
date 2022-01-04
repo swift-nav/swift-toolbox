@@ -366,7 +366,6 @@ dependencies = [
  "serde",
  "serde-pickle",
  "serde_json",
- "serde_variant",
  "serde_yaml",
  "serial_test",
  "serialport",
@@ -1601,15 +1600,6 @@ checksum = "bcbd0344bc6533bc7ec56df11d42fb70f1b912351c0825ccb7211b59d8af7cf5"
 dependencies = [
  "itoa 1.0.1",
  "ryu",
- "serde",
-]
-
-[[package]]
-name = "serde_variant"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f988d71f968b960b45cf71e3210662f0b23906256c87820077e4f101225c494"
-dependencies = [
  "serde",
 ]
 

@@ -47,7 +47,7 @@ ColumnLayout {
         readonly property string websiteDisplay: website.slice(12)
 
         Layout.alignment: Qt.AlignHCenter
-        text: `Learn more at the <a href='${website}'>${websiteDisplay}</a>`
+        text: `Learn more at <a href='${website}'>${websiteDisplay}</a>`
         font.pointSize: Constants.logoPopup.aboutMe.secondaryPointSize
         onLinkActivated: {
             Qt.openUrlExternally(Constants.logoPopup.aboutMe.website);

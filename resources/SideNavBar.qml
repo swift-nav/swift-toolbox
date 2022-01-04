@@ -80,6 +80,9 @@ Item {
                 highlightMoveDuration: 100
                 highlightResizeDuration: 0
                 highlightFollowsCurrentItem: true
+                onCurrentIndexChanged: {
+                    navButtonGroup.checkedButton = navButtonGroup.buttons[navButtons.currentIndex];
+                }
 
                 highlight: Item {
                     // TODO: This is an odd z order which depends on the Z order of some things in the buttons, refactor.

@@ -23,6 +23,15 @@ pub fn fixed_sbp_string<T, const L: usize>(data: &str) -> SbpString<[u8; L], T> 
     SbpString::new(arr)
 }
 
+/// Notify the frontend of a Connection notification.
+pub fn send_conn_notification(client_sender: &BoxedClientSender, message: String) {
+    let mut builder = Builder::new_default();
+    let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
+    let mut status = msg.init_connection_notification();
+    status.set_message(&message);
+    client_sender.send_data(serialize_capnproto_builder(builder));
+}
+
 /// Notify the frontend of an [ConnectionState] change.
 pub fn send_conn_state(app_state: ConnectionState, client_sender: &BoxedClientSender) {
     let mut builder = Builder::new_default();

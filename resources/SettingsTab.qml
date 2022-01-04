@@ -49,6 +49,10 @@ MainTab {
         repeat: true
         onTriggered: {
             settings_tab_model.fill_data(settingsTabData);
+            if (settingsTabData.notification !== "") {
+                settingsNotification.text = settingsTabData.notification;
+                settingsNotification.visible = true;
+            }
             if (settingsTabData.import_status !== "") {
                 if (settingsTabData.import_status === "success") {
                     importSuccess.visible = true;
@@ -127,6 +131,14 @@ MainTab {
 
     SettingsTabComponents.InsSettingsPopup {
         id: insSettingsPopup
+    }
+
+    MessageDialog {
+        id: settingsNotification
+
+        title: "Settings Write Notification"
+        icon: StandardIcon.Warning
+        standardButtons: StandardButton.Close
     }
 
     MessageDialog {
@@ -283,8 +295,12 @@ MainTab {
                     font.family: Constants.fontFamily
                     font.bold: false
                     onClicked: {
-                        settingsTable.showExpert = checked;
-                        settingsTable.selectedRowIdx = -1;
+                        if (this.enabled) {
+                            this.enabled = false;
+                            settingsTable.showExpert = checked;
+                            settingsTable.selectedRowIdx = -1;
+                            this.enabled = true;
+                        }
                     }
                 }
 

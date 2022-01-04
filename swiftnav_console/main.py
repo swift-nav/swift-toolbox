@@ -235,7 +235,8 @@ def receive_messages(app_, backend, messages):
             if app_state == ConnectionState.DISCONNECTED:
                 SETTINGS_TABLE[Keys.ENTRIES] = []
             CONNECTION[Keys.CONNECTION_STATE] = app_state
-
+        elif m.which == Message.Union.ConnectionNotification:
+            CONNECTION[Keys.CONNECTION_MESSAGE] = m.connectionNotification.message
         elif m.which == Message.Union.SolutionPositionStatus:
             SOLUTION_POSITION_TAB[Keys.POINTS][:] = [
                 [QPointF(point.x, point.y) for point in m.solutionPositionStatus.data[idx]]
@@ -421,6 +422,8 @@ def receive_messages(app_, backend, messages):
             SETTINGS_TABLE[Keys.ENTRIES][:] = settings_rows_to_json(m.settingsTableStatus.data)
         elif m.which == Message.Union.SettingsImportResponse:
             SETTINGS_TAB[Keys.IMPORT_STATUS] = m.settingsImportResponse.status
+        elif m.which == Message.Union.SettingsNotification:
+            SETTINGS_TAB[Keys.NOTIFICATION] = m.settingsNotification.message
         elif m.which == Message.Union.InsSettingsChangeResponse:
             SETTINGS_TAB[Keys.RECOMMENDED_INS_SETTINGS][:] = [
                 [entry.settingName, entry.currentValue, entry.recommendedValue]

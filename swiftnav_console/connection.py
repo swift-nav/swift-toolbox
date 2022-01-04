@@ -13,6 +13,7 @@ CONNECTION: Dict[str, Any] = {
     Keys.AVAILABLE_FLOWS: [],
     Keys.AVAILABLE_REFRESH_RATES: [],
     Keys.CONNECTION_STATE: ConnectionState.DISCONNECTED,
+    Keys.CONNECTION_MESSAGE: "",
     Keys.PREVIOUS_HOSTS: [],
     Keys.PREVIOUS_PORTS: [],
     Keys.PREVIOUS_FILES: [],
@@ -37,6 +38,7 @@ class ConnectionData(QObject):  # pylint: disable=too-many-instance-attributes d
     _previous_serial_configs: List[List[Any]] = []
     _console_version: str = ""
     _previous_connection_type: ConnectionType = ConnectionType.Serial
+    _connection_message: str = ""
 
     def get_available_ports(self) -> List[str]:
         return self._available_ports
@@ -136,6 +138,14 @@ class ConnectionData(QObject):  # pylint: disable=too-many-instance-attributes d
 
     previous_connection_type = Property(str, get_previous_connection_type, set_previous_connection_type)
 
+    def get_connection_message(self) -> str:
+        return self._connection_message
+
+    def set_connection_message(self, connection_message: str) -> None:
+        self._connection_message = connection_message
+
+    connection_message = Property(str, get_connection_message, set_connection_message)
+
 
 class ConnectionModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(ConnectionData)  # type: ignore
@@ -151,4 +161,6 @@ class ConnectionModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_previous_serial_configs(CONNECTION[Keys.PREVIOUS_SERIAL_CONFIGS])
         cp.set_console_version(CONNECTION[Keys.CONSOLE_VERSION])
         cp.set_previous_connection_type(CONNECTION[Keys.PREVIOUS_CONNECTION_TYPE])
+        cp.set_connection_message(CONNECTION[Keys.CONNECTION_MESSAGE])
+        CONNECTION[Keys.CONNECTION_MESSAGE] = ""
         return cp

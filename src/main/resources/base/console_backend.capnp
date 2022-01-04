@@ -142,6 +142,10 @@ struct SettingsResetRequest {
     reset @0 :Void = void;
 }
 
+struct SettingsNotification {
+    message @0 :Text;
+}
+
 struct Point {
     x @0 :Float64;
     y @1 :Float64;
@@ -420,6 +424,10 @@ struct Status {
     text @0 :Text;
 }
 
+struct ConnectionNotification {
+    message @0 :Text;
+}
+
 struct RecommendedInsSettingsRow {
     settingGroup @0 :Text;
     settingName @1 :Text;
@@ -493,5 +501,7 @@ struct Message {
         confirmInsChange @49 : ConfirmInsChange;
         autoSurveyRequest @50 : AutoSurveyRequest;
         loggingBarRecordingStatus @51 : LoggingBarRecordingStatus;
+        connectionNotification @52 : ConnectionNotification;
+        settingsNotification @53 : SettingsNotification;
     }
 }

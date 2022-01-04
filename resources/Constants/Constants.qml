@@ -112,7 +112,7 @@ QtObject {
         aboutMe: QtObject {
             readonly property int logoWidth: 200
             readonly property int bottomPadding: 20
-            readonly property string supportWebsite: "https://swiftnav.com/support"
+            readonly property string supportWebsite: "https://www.swiftnav.com/support"
             readonly property string website: "https://www.swiftnav.com"
             readonly property string copyrightText: "Copyright © 2011-2022 Swift Navigation Inc."
             readonly property int titlePointSize: 14
@@ -318,8 +318,11 @@ QtObject {
         readonly property int logLevelButtonWidth: 110
         readonly property color placeholderTextColor: "#CDC9C9"
         readonly property int padding: 0
-        readonly property string connected: "CONNECTED"
-        readonly property string disconnected: "DISCONNECTED"
+        readonly property string connected: "connected"
+        readonly property string connecting: "connecting"
+        readonly property string disconnected: "disconnected"
+        readonly property string disconnecting: "disconnecting"
+        readonly property int warningTimerLockedInterval: 7000
     }
 
     loggingBar: QtObject {

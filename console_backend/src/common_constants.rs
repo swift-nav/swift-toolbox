@@ -289,6 +289,10 @@ pub enum Keys {
     CONSOLE_VERSION,
     #[strum(serialize = "PREVIOUS_CONNECTION_TYPE")]
     PREVIOUS_CONNECTION_TYPE,
+    #[strum(serialize = "CONNECTION_MESSAGE")]
+    CONNECTION_MESSAGE,
+    #[strum(serialize = "NOTIFICATION")]
+    NOTIFICATION,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
@@ -299,6 +303,8 @@ pub enum ConnectionState {
     CONNECTED,
     #[strum(serialize = "DISCONNECTED")]
     DISCONNECTED,
+    #[strum(serialize = "CONNECTING")]
+    CONNECTING,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]

@@ -12,6 +12,7 @@ SETTINGS_TAB: Dict[str, Any] = {
     Keys.IMPORT_STATUS: None,
     Keys.RECOMMENDED_INS_SETTINGS: [],
     Keys.NEW_INS_CONFIRMATON: False,
+    Keys.NOTIFICATION: "",
 }
 
 
@@ -25,6 +26,7 @@ class SettingsTabData(QObject):
     _import_status: str = ""
     _recommended_ins_settings: List[List[Any]] = []
     _new_ins_confirmation: bool = False
+    _notification: str = ""
 
     def get_import_status(self) -> str:
         return self._import_status
@@ -52,6 +54,14 @@ class SettingsTabData(QObject):
 
     new_ins_confirmation = Property(bool, get_new_ins_confirmation, set_new_ins_confirmation)
 
+    def get_notification(self) -> str:
+        return self._notification
+
+    def set_notification(self, notification: str) -> None:
+        self._notification = notification
+
+    notification = Property(str, get_notification, set_notification)
+
 
 class SettingsTabModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(SettingsTabData)  # type: ignore
@@ -59,6 +69,8 @@ class SettingsTabModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_import_status(SETTINGS_TAB[Keys.IMPORT_STATUS])
         cp.set_recommended_ins_settings(SETTINGS_TAB[Keys.RECOMMENDED_INS_SETTINGS])
         cp.set_new_ins_confirmation(SETTINGS_TAB[Keys.NEW_INS_CONFIRMATON])
+        cp.set_notification(SETTINGS_TAB[Keys.NOTIFICATION])
+        SETTINGS_TAB[Keys.NOTIFICATION] = ""
         return cp
 
     @Slot(SettingsTabData)  # type: ignore

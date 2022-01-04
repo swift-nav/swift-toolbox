@@ -32,9 +32,10 @@ ColumnLayout {
 
     Label {
         readonly property string website: Constants.logoPopup.aboutMe.supportWebsite
+        readonly property string websiteDisplay: website.slice(12) // trim https://www.
 
         Layout.alignment: Qt.AlignHCenter
-        text: "Find help at the Swift Navigation <a href='" + website + "'>support portal</a>"
+        text: `Find help online at <a href='${website}'>${websiteDisplay}</a>`
         font.pointSize: Constants.logoPopup.aboutMe.secondaryPointSize
         onLinkActivated: {
             Qt.openUrlExternally(website);
@@ -42,8 +43,11 @@ ColumnLayout {
     }
 
     Label {
+        readonly property string website: Constants.logoPopup.aboutMe.website
+        readonly property string websiteDisplay: website.slice(12)
+
         Layout.alignment: Qt.AlignHCenter
-        text: "Learn more at the <a href='" + Constants.logoPopup.aboutMe.website + "'>Swift Navigation website</a>"
+        text: `Learn more at <a href='${website}'>${websiteDisplay}</a>`
         font.pointSize: Constants.logoPopup.aboutMe.secondaryPointSize
         onLinkActivated: {
             Qt.openUrlExternally(Constants.logoPopup.aboutMe.website);

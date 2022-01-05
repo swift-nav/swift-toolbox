@@ -55,6 +55,8 @@ pub enum Tabs {
     ADVANCED_NETWORKING,
     #[strum(serialize = "ADVANCED_SPECTRUM_ANALYZER")]
     ADVANCED_SPECTRUM_ANALYZER,
+    #[strum(serialize = "ADVANCED_INS")]
+    ADVANCED_INS,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]

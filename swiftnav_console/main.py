@@ -214,6 +214,10 @@ TAB_LAYOUT = {
         MAIN_INDEX: 6,
         SUB_INDEX: 4,
     },
+    Tabs.ADVANCED_INS: {
+        MAIN_INDEX: 6,
+        SUB_INDEX: 5,
+    },
 }
 
 

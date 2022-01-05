@@ -94,16 +94,16 @@ Rectangle {
             visible: tabBarRepeater.count > 0
             Layout.fillWidth: false
             spacing: 1
-            onCountChanged: {
-                if (Globals.initialSubTabIndex > -1 && count == tabBarRepeater.count) {
-                    tabBar.currentIndex = Globals.initialSubTabIndex;
-                    Globals.initialSubTabIndex = -1;
-                }
-            }
 
             Repeater {
                 id: tabBarRepeater
 
+                onModelChanged: {
+                    if (Globals.initialSubTabIndex > -1) {
+                        tabBar.currentIndex = Globals.initialSubTabIndex;
+                        Globals.initialSubTabIndex = -1;
+                    }
+                }
                 model: subTabNames
 
                 TabButton {

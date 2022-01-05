@@ -477,6 +477,27 @@ impl SettingsTab {
     }
 }
 
+fn sort_import_group<'a>(
+    group: &str,
+    prop: &'a ini::Properties,
+) -> Box<dyn Iterator<Item = (&'a str, &'a str)> + 'a> {
+    match group {
+        "ntrip" => {
+            let enable = prop.iter().find(|(n, _)| *n == "enable");
+            Box::new(prop.iter().filter(|(n, _)| *n != "enable").chain(enable))
+        }
+        "ethernet" => {
+            let interface_mode = prop.iter().find(|(n, _)| *n == "interface_mode");
+            Box::new(
+                prop.iter()
+                    .filter(|(n, _)| *n != "interface_mode")
+                    .chain(interface_mode),
+            )
+        }
+        _ => Box::new(prop.iter()),
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct SaveRequest {
     pub group: String,

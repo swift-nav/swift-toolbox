@@ -90,7 +90,7 @@ Item {
                     RadioButton {
                         id: tcpRadio
 
-                        checked: previous_connection_type == "TCP"
+                        checked: previous_connection_type == "Tcp"
                         text: tcp_ip
                         onToggled: dialogRect.forceActiveFocus()
                     }

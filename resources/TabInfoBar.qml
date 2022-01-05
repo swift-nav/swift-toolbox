@@ -98,6 +98,12 @@ Rectangle {
             Repeater {
                 id: tabBarRepeater
 
+                onModelChanged: {
+                    if (Globals.initialSubTabIndex > -1) {
+                        tabBar.currentIndex = Globals.initialSubTabIndex;
+                        Globals.initialSubTabIndex = -1;
+                    }
+                }
                 model: subTabNames
 
                 TabButton {

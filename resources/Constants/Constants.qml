@@ -286,7 +286,7 @@ QtObject {
         readonly property int spacing: 20
         readonly property color borderColor: "black"
         readonly property int borderWidth: 0
-        readonly property color textColor: "white"
+        readonly property color textColor: "black"
         readonly property int textPointSize: largePointSize + 1
         readonly property int keyValueSpacing: 5
         readonly property int valueMinimumWidth: 25

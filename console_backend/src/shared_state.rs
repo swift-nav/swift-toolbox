@@ -22,7 +22,6 @@ use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use serialport::FlowControl;
 
-use crate::connection::Connection;
 use crate::constants::{
     APPLICATION_NAME, APPLICATION_ORGANIZATION, APPLICATION_QUALIFIER, CONNECTION_HISTORY_FILENAME,
     DEFAULT_LOG_DIRECTORY, MAX_CONNECTION_HISTORY, MPS,
@@ -38,6 +37,7 @@ use crate::update_tab::UpdateTabUpdate;
 use crate::utils::send_conn_state;
 use crate::watch::{WatchReceiver, Watched};
 use crate::{client_sender::BoxedClientSender, main_tab::logging_stats_thread};
+use crate::{common_constants::ConnectionType, connection::Connection};
 use crate::{
     common_constants::{self as cc, SbpLogging},
     status_bar::Heartbeat,
@@ -146,6 +146,9 @@ impl SharedState {
     }
     pub fn serial_history(&self) -> IndexMap<String, SerialConfig> {
         self.lock().connection_history.serial_configs()
+    }
+    pub fn connection_type_history(&self) -> ConnectionType {
+        self.lock().connection_history.last_connection_type.clone()
     }
     pub fn update_folder_history(&self, folder: PathBuf) {
         let folder = String::from(folder.to_str().expect(CONVERT_TO_STR_FAILURE));
@@ -713,6 +716,17 @@ pub struct ConnectionHistory {
     files: IndexSet<String>,
     folders: IndexSet<String>,
     serial_configs: IndexMap<String, SerialConfig>,
+    #[serde(with = "ConnectionTypeDef")]
+    last_connection_type: ConnectionType,
+}
+
+// https://serde.rs/remote-derive.html
+#[derive(Serialize, Deserialize)]
+#[serde(remote = "ConnectionType")]
+enum ConnectionTypeDef {
+    Tcp,
+    File,
+    Serial,
 }
 
 impl Default for ConnectionHistory {
@@ -739,6 +753,7 @@ impl ConnectionHistory {
             files: IndexSet::new(),
             folders,
             serial_configs: IndexMap::new(),
+            last_connection_type: ConnectionType::Serial,
         }
     }
     /// Return the filename of the saved connection history file.
@@ -772,6 +787,7 @@ impl ConnectionHistory {
         self.addresses.insert(address);
         let diff = i32::max(0, self.addresses.len() as i32 - MAX_CONNECTION_HISTORY);
         self.addresses = self.addresses.split_off(diff as usize);
+        self.last_connection_type = ConnectionType::Tcp;
 
         if let Err(e) = self.save() {
             error!("Unable to save connection history, {}.", e);
@@ -786,6 +802,7 @@ impl ConnectionHistory {
         self.files.insert(filename);
         let diff = i32::max(0, self.files.len() as i32 - MAX_CONNECTION_HISTORY);
         self.files = self.files.split_off(diff as usize);
+        self.last_connection_type = ConnectionType::File;
 
         if let Err(e) = self.save() {
             error!("Unable to save connection history, {}.", e);
@@ -818,6 +835,7 @@ impl ConnectionHistory {
         self.serial_configs.insert(device, serial);
         let diff = i32::max(0, self.serial_configs.len() as i32 - MAX_CONNECTION_HISTORY);
         self.serial_configs = self.serial_configs.split_off(diff as usize);
+        self.last_connection_type = ConnectionType::Serial;
 
         if let Err(e) = self.save() {
             error!("Unable to save connection history, {}.", e);
@@ -943,6 +961,7 @@ mod tests {
         let first_addy = addresses.first().unwrap();
         assert_eq!(host1, first_addy.host);
         assert_eq!(port, first_addy.port);
+        assert_eq!(ConnectionType::Tcp, conn_history.last_connection_type);
 
         conn_history.record_address(host2.clone(), port);
         let addresses = conn_history.addresses();
@@ -972,6 +991,7 @@ mod tests {
         let files = conn_history.files();
         assert_eq!(filename1, files[1]);
         assert_eq!(filename2, files[0]);
+        assert_eq!(ConnectionType::File, conn_history.last_connection_type);
 
         for ele in 0..MAX_CONNECTION_HISTORY {
             conn_history.record_file(ele.to_string());
@@ -987,12 +1007,15 @@ mod tests {
         backup_file(bfilename.clone());
 
         let mut conn_history = ConnectionHistory::new();
+        assert_eq!(ConnectionType::Serial, conn_history.last_connection_type);
 
         let configs = conn_history.serial_configs();
         assert_eq!(configs.keys().len(), 0);
 
         conn_history.record_serial("/dev/ttyUSB0".to_string(), 115200, FlowControl::Software);
         conn_history.record_serial("/dev/ttyUSB0".to_string(), 115200, FlowControl::None);
+
+        assert_eq!(ConnectionType::Serial, conn_history.last_connection_type);
 
         let configs = conn_history.serial_configs();
 

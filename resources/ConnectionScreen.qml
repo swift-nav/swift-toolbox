@@ -9,6 +9,7 @@ Item {
     property string tcp_ip: "TCP/IP"
     property string serial_usb: "Serial/USB"
     property string file: "File"
+    property string previous_connection_type: ""
     property var sources: [tcp_ip, serial_usb, file]
     property variant available_baudrates: []
     property variant available_devices: []
@@ -79,23 +80,25 @@ Item {
                     Layout.alignment: Qt.AlignTop
 
                     RadioButton {
-                        id: tcpRadio
+                        id: serialRadio
 
-                        checked: true
-                        text: tcp_ip
+                        checked: previous_connection_type == "Serial"
+                        text: serial_usb
                         onToggled: dialogRect.forceActiveFocus()
                     }
 
                     RadioButton {
-                        id: serialRadio
+                        id: tcpRadio
 
-                        text: serial_usb
+                        checked: previous_connection_type == "TCP"
+                        text: tcp_ip
                         onToggled: dialogRect.forceActiveFocus()
                     }
 
                     RadioButton {
                         id: fileRadio
 
+                        checked: previous_connection_type == "File"
                         text: file
                         onToggled: dialogRect.forceActiveFocus()
                     }
@@ -370,6 +373,7 @@ Item {
                     previous_ports = connectionData.previous_ports;
                     previous_files = connectionData.previous_files;
                     previous_serial_configs = connectionData.previous_serial_configs;
+                    previous_connection_type = connectionData.previous_connection_type;
                     if (!last_used_serial_device && connectionData.last_used_serial_device) {
                         // Set the default selected to the last used
                         last_used_serial_device = connectionData.last_used_serial_device;

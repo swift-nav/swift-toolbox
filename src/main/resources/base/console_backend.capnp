@@ -158,6 +158,7 @@ struct ConnectionStatus {
     previousHosts @3: List(Text);
     previousPorts @4: List(UInt16);
     previousFiles @5: List(Text);
+    previousConnectionType @10: Text;
     previousSerialConfigs @6: List(SerialRequest);
     lastSerialDevice: union {
         port @7 :Text;

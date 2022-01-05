@@ -24,7 +24,7 @@ import swiftnav_console.console_resources  # type: ignore # pylint: disable=unus
 
 import console_backend.server  # type: ignore  # pylint: disable=import-error,no-name-in-module
 
-from .constants import ApplicationMetadata, ConnectionState, Keys, Tabs, QTKeys
+from .constants import ApplicationMetadata, ConnectionState, ConnectionType, Keys, Tabs, QTKeys
 
 from .log_panel import (
     LOG_PANEL,
@@ -382,6 +382,7 @@ def receive_messages(app_, backend, messages):
                 [entry.device, entry.baudrate, entry.flowControl] for entry in m.connectionStatus.previousSerialConfigs
             ]
             CONNECTION[Keys.CONSOLE_VERSION] = m.connectionStatus.consoleVersion
+            CONNECTION[Keys.PREVIOUS_CONNECTION_TYPE] = ConnectionType(m.connectionStatus.previousConnectionType)
         elif m.which == Message.Union.LoggingBarStatus:
             LOGGING_BAR[Keys.PREVIOUS_FOLDERS][:] = m.loggingBarStatus.previousFolders
             LOGGING_BAR[Keys.CSV_LOGGING] = m.loggingBarStatus.csvLogging

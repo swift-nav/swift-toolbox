@@ -287,6 +287,8 @@ pub enum Keys {
     RECORDING_FILENAME,
     #[strum(serialize = "CONSOLE_VERSION")]
     CONSOLE_VERSION,
+    #[strum(serialize = "PREVIOUS_CONNECTION_TYPE")]
+    PREVIOUS_CONNECTION_TYPE,
     #[strum(serialize = "CONNECTION_MESSAGE")]
     CONNECTION_MESSAGE,
     #[strum(serialize = "NOTIFICATION")]
@@ -303,6 +305,16 @@ pub enum ConnectionState {
     DISCONNECTED,
     #[strum(serialize = "CONNECTING")]
     CONNECTING,
+}
+
+#[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
+pub enum ConnectionType {
+    #[strum(serialize = "Tcp")]
+    Tcp,
+    #[strum(serialize = "File")]
+    File,
+    #[strum(serialize = "Serial")]
+    Serial,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]

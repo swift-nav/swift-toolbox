@@ -153,6 +153,9 @@ pub fn refresh_connection_frontend(client_sender: &BoxedClientSender, shared_sta
         prevous_files.set(i as u32, filename);
     }
 
+    let prev_conn_type = shared_state.connection_type_history().to_string();
+    connection_status.set_previous_connection_type(&*prev_conn_type);
+
     client_sender.send_data(serialize_capnproto_builder(builder));
 }
 

@@ -170,7 +170,7 @@ impl SettingsTab {
         let conf = Ini::read_from(&mut f)?;
         for (group, prop) in conf.iter() {
             let group = group.unwrap();
-            for (name, value) in sort_import_group(group, prop) {
+            for (name, value) in reorganize_import_group(group, prop) {
                 if let Err(e) = self.write_setting(group, name, value) {
                     match e.downcast_ref::<sbp_settings::Error>() {
                         Some(sbp_settings::Error::WriteError(
@@ -477,7 +477,11 @@ impl SettingsTab {
     }
 }
 
-fn sort_import_group<'a>(
+// Some settings must be disabled in order to write another setting's value.
+// e.g. if `ntrip.enable=True` you can't write to `ntrip.username`. This sorts
+// setting groups such that those settings are last. Without this an import might
+// enable ntrip and then try to write another value.
+fn reorganize_import_group<'a>(
     group: &str,
     prop: &'a ini::Properties,
 ) -> Box<dyn Iterator<Item = (&'a str, &'a str)> + 'a> {

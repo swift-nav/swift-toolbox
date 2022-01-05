@@ -169,14 +169,15 @@ impl SettingsTab {
         let mut f = fs::File::open(path)?;
         let conf = Ini::read_from(&mut f)?;
         for (group, prop) in conf.iter() {
-            for (name, value) in prop.iter() {
-                if let Err(e) = self.write_setting(group.unwrap(), name, value) {
+            let group = group.unwrap();
+            for (name, value) in sort_import_group(group, prop) {
+                if let Err(e) = self.write_setting(group, name, value) {
                     match e.downcast_ref::<sbp_settings::Error>() {
                         Some(sbp_settings::Error::WriteError(
                             sbp_settings::error::WriteError::ReadOnly,
                         )) => {}
                         _ => {
-                            self.import_err(&e);
+                            self.import_err(&e, group, name, value);
                             return Err(e);
                         }
                     }
@@ -196,11 +197,17 @@ impl SettingsTab {
             .send_data(serialize_capnproto_builder(builder));
     }
 
-    fn import_err(&self, err: &Error) {
+    fn import_err(&self, err: &Error, group: &str, name: &str, value: &str) {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
         let mut import_response = msg.init_settings_import_response();
-        import_response.set_status(&err.to_string());
+        import_response.set_status(&format!(
+            "{err}\n\nWhile writing \"{value}\" to {group} -> {name}",
+            err = err,
+            group = group,
+            name = name,
+            value = value,
+        ));
         self.client_sender
             .send_data(serialize_capnproto_builder(builder));
     }

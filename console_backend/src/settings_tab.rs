@@ -479,6 +479,7 @@ pub struct SaveRequest {
 
 struct Settings {
     inner: IndexMap<String, IndexMap<String, SettingsEntry>>,
+    default: SettingValue,
 }
 
 impl Settings {
@@ -491,6 +492,7 @@ impl Settings {
                         .insert(setting.name.clone(), SettingsEntry::new(setting));
                     settings
                 }),
+            default: SettingValue::String("".into()),
         }
     }
 
@@ -498,11 +500,11 @@ impl Settings {
         self.inner.values().fold(Vec::new(), |mut groups, group| {
             let group: Vec<_> = group
                 .values()
-                .filter_map(|setting| {
-                    setting
-                        .value
-                        .as_ref()
-                        .map(|v| (setting.setting.as_ref(), v))
+                .map(|setting| {
+                    setting.value.as_ref().map_or_else(
+                        || (setting.setting.as_ref(), &self.default),
+                        |v| (setting.setting.as_ref(), v),
+                    )
                 })
                 .collect();
             if !group.is_empty() {

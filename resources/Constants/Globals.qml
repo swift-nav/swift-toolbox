@@ -6,7 +6,7 @@ QtObject {
     property int currentRefreshRate: 5 // 5 Hz
     property bool useOpenGL: true
     property int initialMainTabIndex: 0 // Tracking
-    property int initialSubTabIndex: 0 // Signals
+    property int initialSubTabIndex: -1 // Not triggered unless greater than -1. Defaults to first tab.
     property bool showCsvLog: false
     property bool showFileio: false
     property int height: 600

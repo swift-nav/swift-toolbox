@@ -15,8 +15,18 @@ fn attach_console() {
     }
 }
 
+fn handle_wayland() {
+    #[cfg(target_os = "linux")]
+    {
+        if std::env::var("XDG_SESSION_TYPE").unwrap_or_else(|_| "".to_string()) == "wayland" {
+            std::env::set_var("QT_QPA_PLATFORM", "wayland");
+        }
+    }
+}
+
 fn main() -> Result<()> {
     attach_console();
+    handle_wayland();
 
     let current_exe = std::env::current_exe()?;
     let parent = current_exe.parent().ok_or("no parent directory")?;

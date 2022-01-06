@@ -16,8 +16,8 @@ use crate::shared_state::{AdvancedNetworkingState, SharedState};
 use crate::types::{MsgSender, Result};
 use crate::utils::{bytes_to_human_readable, serialize_capnproto_builder};
 
-const DEFAULT_UDP_LOCAL_ADDRESS: &str = "127.0.0.1";
-const DEFAULT_UDP_LOCAL_PORT: u16 = 34254;
+const DEFAULT_UDP_LOCAL_ADDRESS: &str = "0.0.0.0";
+const DEFAULT_UDP_LOCAL_PORT: u16 = 0;
 const DEFAULT_UDP_ADDRESS: &str = "127.0.0.1";
 const DEFAULT_UDP_PORT: u16 = 13320;
 const PPP0_HACK_STR: &str = "---";
@@ -161,9 +161,7 @@ impl AdvancedNetworkingTab {
             if let Some(client) = &mut self.client {
                 if self.all_messages || OBS_MSGS.contains(&msg.message_type()) {
                     if let Ok(frame) = sbp::to_vec(msg) {
-                        if let Err(err) = client.send(&frame) {
-                            error!("Error sending to device: {}", err);
-                        }
+                        if let Err(_e) = client.send(&frame) {}
                     }
                 }
             } else {
@@ -183,6 +181,7 @@ impl AdvancedNetworkingTab {
             DEFAULT_UDP_LOCAL_ADDRESS, DEFAULT_UDP_LOCAL_PORT
         ))?;
         socket.set_nonblocking(true)?;
+        socket.set_broadcast(true)?;
         socket.connect(format!("{}:{}", self.ip_ad.as_str(), self.port))?;
         self.client = Some(socket);
         self.running = true;

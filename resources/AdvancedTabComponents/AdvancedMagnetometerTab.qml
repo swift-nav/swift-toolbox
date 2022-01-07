@@ -19,7 +19,8 @@ Item {
         id: advancedMagnetometerArea
 
         anchors.fill: parent
-        visible: false
+        visible: true
+        spacing: 0
 
         ChartView {
             id: advancedMagnetometerChart
@@ -108,6 +109,7 @@ Item {
                 max: Constants.advancedMagnetometer.xAxisMax
                 tickInterval: Constants.advancedMagnetometer.xAxisTickCount
                 tickType: ValueAxis.TicksDynamic
+                labelFormat: "%d"
             }
 
             SwiftValueAxis {
@@ -115,6 +117,25 @@ Item {
 
                 tickInterval: Constants.advancedMagnetometer.yAxisTickCount
                 tickType: ValueAxis.TicksDynamic
+                labelFormat: "%d"
+            }
+
+            LineSeries {
+                name: "emptySeries"
+                axisYRight: advancedMagnetometerYAxis
+                axisX: advancedMagnetometerXAxis
+                color: "transparent"
+
+                XYPoint {
+                    x: 0
+                    y: -10
+                }
+
+                XYPoint {
+                    x: 1
+                    y: 10
+                }
+
             }
 
             Timer {
@@ -143,10 +164,23 @@ Item {
                         }
                     }
                     advancedMagnetometerArea.visible = true;
-                    advancedMagnetometerYAxis.min = advancedMagnetometerPoints.ymin;
-                    advancedMagnetometerYAxis.max = advancedMagnetometerPoints.ymax;
+                    advancedMagnetometerYAxis.min = advancedMagnetometerPoints.ymin - Constants.advancedMagnetometer.yAxisPadding;
+                    advancedMagnetometerYAxis.max = advancedMagnetometerPoints.ymax + Constants.advancedMagnetometer.yAxisPadding;
                     advancedMagnetometerPoints.fill_series(lines);
                 }
+            }
+
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: Constants.advancedMagnetometer.suggestionTextRowHeight
+
+            Label {
+                text: Constants.advancedMagnetometer.suggestionText
+                font.italic: true
+                antialiasing: true
+                anchors.horizontalCenter: parent.horizontalCenter
             }
 
         }

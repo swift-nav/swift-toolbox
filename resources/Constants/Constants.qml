@@ -360,6 +360,9 @@ QtObject {
         readonly property int yAxisTickCount: 20
         readonly property int legendBottomMargin: 60
         readonly property int legendLeftMargin: 50
+        readonly property string suggestionText: "Enable in Settings tab under the \"imu\" group."
+        readonly property int suggestionTextRowHeight: 20
+        readonly property int yAxisPadding: 10
     }
 
     advancedSpectrumAnalyzer: QtObject {
@@ -369,12 +372,12 @@ QtObject {
         readonly property real yAxisTickCount: 2.5
         readonly property string yAxisTitleText: "Amplitude (dB)"
         readonly property string xAxisTitleText: "Frequency (MHz)"
-        readonly property int dropdownRowHeight: 35
-        readonly property int dropdownHeight: 35
+        readonly property int dropdownRowHeight: 20
+        readonly property int dropdownHeight: 20
         readonly property int dropdownWidth: 100
         readonly property var dropdownModel: ["Channel 1", "Channel 2", "Channel 3", "Channel 4"]
         readonly property string dropdownLabel: "Channel Selection:"
-        readonly property string dropdownRowSuggestionText: "Enable in Settings Tab under the \"System Monitor\" group."
+        readonly property string dropdownRowSuggestionText: "Enable in Settings tab under the \"system_monitor\" group."
         readonly property int rowTextHeight: 30
         readonly property int rowTextMargins: 5
     }

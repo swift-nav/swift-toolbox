@@ -1,4 +1,4 @@
-use anyhow::anyhow;
+use anyhow::{anyhow, bail};
 use capnp::message::Builder;
 use crossbeam::{
     channel::{self, Receiver, Sender},
@@ -546,7 +546,7 @@ fn firmware_upgrade(
                 _ => update_tab_context.fw_log_append(String::from("Image transfer failed.")),
             }
         } else {
-            return Err(anyhow!("Failed to read firmware file, {:?}.", filepath));
+            bail!("Failed to read firmware file, {}.", filepath.display());
         }
     }
     Ok(())

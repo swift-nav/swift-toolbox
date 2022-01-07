@@ -159,7 +159,11 @@ impl MainTab {
                         Some(logger)
                     }
                     Err(e) => {
-                        error!("issue creating file, {:?}, error, {}", sbp_log_file, e);
+                        error!(
+                            "issue creating file, {}, error, {}",
+                            sbp_log_file.display(),
+                            e
+                        );
                         None
                     }
                 }
@@ -173,7 +177,11 @@ impl MainTab {
                         Some(logger)
                     }
                     Err(e) => {
-                        error!("issue creating file, {:?}, error, {}", sbp_json_log_file, e);
+                        error!(
+                            "issue creating file, {}, error, {}",
+                            sbp_json_log_file.display(),
+                            e
+                        );
                         None
                     }
                 }

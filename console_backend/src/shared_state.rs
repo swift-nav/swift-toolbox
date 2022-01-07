@@ -169,7 +169,7 @@ impl SharedState {
         self.lock().solution_tab.velocity_tab.log_file = match CsvSerializer::new(path) {
             Ok(vel_csv) => Some(vel_csv),
             Err(e) => {
-                error!("issue creating file, {:?}, error, {}", path, e);
+                error!("issue creating file, {}, error, {}", path.display(), e);
                 None
             }
         }
@@ -185,7 +185,7 @@ impl SharedState {
         self.lock().solution_tab.position_tab.log_file = match CsvSerializer::new(path) {
             Ok(vel_csv) => Some(vel_csv),
             Err(e) => {
-                error!("issue creating file, {:?}, error, {}", path, e);
+                error!("issue creating file, {}, error, {}", path.display(), e);
                 None
             }
         }
@@ -201,7 +201,7 @@ impl SharedState {
         self.lock().baseline_tab.log_file = match CsvSerializer::new(path) {
             Ok(vel_csv) => Some(vel_csv),
             Err(e) => {
-                error!("issue creating file, {:?}, error, {}", path, e);
+                error!("issue creating file, {}, error, {}", path.display(), e);
                 None
             }
         }
@@ -433,6 +433,13 @@ impl LoggingBarState {
         } else {
             LOG_DIRECTORY.path()
         };
+        if let Err(err) = fs::create_dir_all(&logging_directory) {
+            error!(
+                "Unable to create directory, {}, {}.",
+                logging_directory.display(),
+                err
+            );
+        }
         LoggingBarState {
             sbp_logging: false,
             sbp_logging_format: SbpLogging::SBP_JSON,

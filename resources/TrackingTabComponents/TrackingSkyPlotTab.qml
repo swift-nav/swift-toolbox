@@ -147,7 +147,9 @@ Item {
                 anchors.rightMargin: Constants.trackingSkyPlot.legendRightMargin
                 implicitHeight: lineLegendRepeater.height
                 width: lineLegendRepeater.width
-                visible: showLegendCheckBox.checked
+                visible: showLegendCheckBox.checked && all_series.filter((x) => {
+                    return x.visible;
+                }).length > 0
 
                 Column {
                     id: lineLegendRepeater

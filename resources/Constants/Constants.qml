@@ -446,6 +446,8 @@ QtObject {
         readonly property int buttonSvgHeight: 15
         readonly property int navBarMargin: 10
         readonly property int navBarSpacing: 0
+        readonly property int axesDefaultMin: 0
+        readonly property int axesDefaultMax: 1
         readonly property real navBarButtonProportionOfParent: 0.11
         readonly property string yAxisTitleText: "Latitude"
         readonly property string xAxisTitleText: "Longitude"

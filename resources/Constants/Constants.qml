@@ -610,6 +610,13 @@ QtObject {
         readonly property int yAxisMax: 60
         readonly property int yAxisTickInterval: 10
         readonly property int xAxisTickInterval: 10
+        readonly property font yAxisTitleFont: Qt.font({
+            "family": fontFamily,
+            "pointSize": mediumPointSize,
+            "bold": true,
+            "letterSpacing": 2,
+            "capitalization": Font.MixedCase
+        })
     }
 
     observationTab: QtObject {

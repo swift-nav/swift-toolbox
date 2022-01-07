@@ -73,6 +73,7 @@ Item {
                 tickType: ValueAxis.TicksDynamic
                 tickInterval: Constants.trackingSignals.yAxisTickInterval
                 labelFormat: "%d"
+                titleFont: Constants.trackingSignals.yAxisTitleFont
             }
 
             Timer {

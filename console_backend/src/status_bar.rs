@@ -103,6 +103,7 @@ impl StatusBar {
         let mut heartbeat_data = shared_state.heartbeat_data();
         heartbeat_data.reset();
         heartbeat_data.set_port(shared_state.connection().name());
+        heartbeat_data.set_version(shared_state.console_version());
         StatusBar { heartbeat_data }
     }
 

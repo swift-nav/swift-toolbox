@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::ops::Index;
+use std::path::PathBuf;
 
 use capnp::message::Builder;
 use capnp::message::HeapAllocator;
@@ -526,6 +527,11 @@ pub fn format_bool(b: bool) -> String {
     if b { "True" } else { "False" }.into()
 }
 
+/// Formats a pathbuf replacing double backslahes with single forward slashes.
+pub fn pathbuf_to_unix_filepath(path: PathBuf) -> PathBuf {
+    PathBuf::from(path.to_string_lossy().replace("\\", "/"))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -553,6 +559,18 @@ mod tests {
         assert_eq!(
             bytes_to_human_readable(u128::pow(1024, 9)),
             format!("{:.1}YB", 1024)
+        );
+    }
+
+    #[test]
+    fn pathbuf_to_unix_filepath_test() {
+        assert_eq!(
+            pathbuf_to_unix_filepath(PathBuf::from("C:\\Users\\user\\Desktop\\file.txt")),
+            PathBuf::from("C:/Users/user/Desktop/file.txt")
+        );
+        assert_eq!(
+            pathbuf_to_unix_filepath(PathBuf::from("C:\\Users\\user\\Desktop\\file.txt\\")),
+            PathBuf::from("C:/Users/user/Desktop/file.txt/")
         );
     }
 

@@ -34,7 +34,7 @@ use crate::settings_tab;
 use crate::solution_tab::LatLonUnits;
 use crate::types::ArcBool;
 use crate::update_tab::UpdateTabUpdate;
-use crate::utils::send_conn_state;
+use crate::utils::{pathbuf_to_unix_filepath, send_conn_state};
 use crate::watch::{WatchReceiver, Watched};
 use crate::{client_sender::BoxedClientSender, main_tab::logging_stats_thread};
 use crate::{common_constants::ConnectionType, connection::Connection};
@@ -433,6 +433,13 @@ impl LoggingBarState {
         } else {
             LOG_DIRECTORY.path()
         };
+        if let Err(err) = fs::create_dir_all(&logging_directory) {
+            error!(
+                "Unable to create directory, {:?}, {}.",
+                pathbuf_to_unix_filepath(logging_directory.clone()),
+                err
+            );
+        }
         LoggingBarState {
             sbp_logging: false,
             sbp_logging_format: SbpLogging::SBP_JSON,

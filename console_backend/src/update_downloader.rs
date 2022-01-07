@@ -1,4 +1,4 @@
-use crate::update_tab::UpdateTabContext;
+use crate::{update_tab::UpdateTabContext, utils::pathbuf_to_unix_filepath};
 use anyhow::bail;
 use curl::easy::Easy as Curl;
 use serde::{Deserialize, Serialize};
@@ -134,8 +134,6 @@ impl UpdateDownloader {
         directory: PathBuf,
         update_shared: Option<UpdateTabContext>,
     ) -> anyhow::Result<PathBuf> {
-        let pathbuf_to_unix_filepath =
-            |path: PathBuf| PathBuf::from(path.to_string_lossy().replace("\\", "/"));
         let filename = Path::new(&filepath_url).file_name();
         if let Some(filename_) = filename {
             let filepath = Path::new(&directory).join(filename_);

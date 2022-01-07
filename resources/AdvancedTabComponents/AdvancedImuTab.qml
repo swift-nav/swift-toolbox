@@ -19,7 +19,7 @@ Item {
         id: advancedImuArea
 
         anchors.fill: parent
-        visible: false
+        visible: true
 
         ChartView {
             id: advancedImuChart
@@ -27,7 +27,7 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.alignment: Qt.AlignTop
-            visible: false
+            visible: true
             title: Constants.advancedImu.title
             titleColor: Constants.commonChart.titleColor
             plotAreaColor: Constants.commonChart.areaColor
@@ -106,6 +106,7 @@ Item {
 
                 tickInterval: Constants.advancedImu.xAxisTickCount
                 tickType: ValueAxis.TicksDynamic
+                labelFormat: "%d"
                 min: Constants.advancedImu.xAxisMin
                 max: Constants.advancedImu.xAxisMax
             }
@@ -115,8 +116,27 @@ Item {
 
                 tickInterval: Constants.advancedImu.yAxisTickCount
                 tickType: ValueAxis.TicksDynamic
+                labelFormat: "%d"
                 min: Constants.advancedImu.yAxisMin
                 max: Constants.advancedImu.yAxisMax
+            }
+
+            LineSeries {
+                name: "emptySeries"
+                axisYRight: advancedImuYAxis
+                axisX: advancedImuXAxis
+                color: "transparent"
+
+                XYPoint {
+                    x: 0
+                    y: 0
+                }
+
+                XYPoint {
+                    x: 1
+                    y: 1
+                }
+
             }
 
             Timer {
@@ -159,18 +179,17 @@ Item {
         RowLayout {
             id: textDataRow
 
-            visible: false
+            visible: true
             Layout.fillWidth: true
             Layout.preferredHeight: Constants.advancedImu.urlBarHeight
             Layout.alignment: Qt.AlignBottom
 
             Label {
                 text: Constants.advancedImu.textDataLabels[0]
-                Layout.preferredWidth: Constants.advancedImu.textDataLabelWidth
             }
 
             Rectangle {
-                Layout.fillWidth: true
+                Layout.preferredWidth: parent.width / 15
                 Layout.preferredHeight: Constants.advancedImu.textDataBarHeight
                 Layout.alignment: Qt.AlignVCenter
                 border.width: Constants.advancedImu.textDataBarBorderWidth
@@ -182,17 +201,17 @@ Item {
                     anchors.fill: parent
                     anchors.margins: Constants.advancedImu.textDataBarMargin
                     font.pointSize: Constants.mediumPointSize
+                    text: "0.00 C"
                 }
 
             }
 
             Label {
                 text: Constants.advancedImu.textDataLabels[1]
-                Layout.preferredWidth: Constants.advancedImu.textDataLabelWidth
             }
 
             Rectangle {
-                Layout.fillWidth: true
+                Layout.preferredWidth: parent.width / 15
                 Layout.preferredHeight: Constants.advancedImu.textDataBarHeight
                 Layout.alignment: Qt.AlignVCenter
                 border.width: Constants.advancedImu.textDataBarBorderWidth
@@ -204,17 +223,17 @@ Item {
                     anchors.fill: parent
                     anchors.margins: Constants.advancedImu.textDataBarMargin
                     font.pointSize: Constants.mediumPointSize
+                    text: "0x00"
                 }
 
             }
 
             Label {
                 text: Constants.advancedImu.textDataLabels[2]
-                Layout.preferredWidth: Constants.advancedImu.textDataLabelWidth
             }
 
             Rectangle {
-                Layout.fillWidth: true
+                Layout.preferredWidth: parent.width / 15
                 Layout.preferredHeight: Constants.advancedImu.textDataBarHeight
                 Layout.alignment: Qt.AlignVCenter
                 border.width: Constants.advancedImu.textDataBarBorderWidth
@@ -226,17 +245,17 @@ Item {
                     anchors.fill: parent
                     anchors.margins: Constants.advancedImu.textDataBarMargin
                     font.pointSize: Constants.mediumPointSize
+                    text: "0.00 g"
                 }
 
             }
 
             Label {
                 text: Constants.advancedImu.textDataLabels[3]
-                Layout.preferredWidth: Constants.advancedImu.textDataLabelWidth
             }
 
             Rectangle {
-                Layout.fillWidth: true
+                Layout.preferredWidth: parent.width / 15
                 Layout.preferredHeight: Constants.advancedImu.textDataBarHeight
                 Layout.alignment: Qt.AlignVCenter
                 border.width: Constants.advancedImu.textDataBarBorderWidth
@@ -248,17 +267,17 @@ Item {
                     anchors.fill: parent
                     anchors.margins: Constants.advancedImu.textDataBarMargin
                     font.pointSize: Constants.mediumPointSize
+                    text: "0.00 g"
                 }
 
             }
 
             Label {
                 text: Constants.advancedImu.textDataLabels[4]
-                Layout.preferredWidth: Constants.advancedImu.textDataLabelWidth
             }
 
             Rectangle {
-                Layout.fillWidth: true
+                Layout.preferredWidth: parent.width / 15
                 Layout.preferredHeight: Constants.advancedImu.textDataBarHeight
                 Layout.alignment: Qt.AlignVCenter
                 border.width: Constants.advancedImu.textDataBarBorderWidth
@@ -270,6 +289,20 @@ Item {
                     anchors.fill: parent
                     anchors.margins: Constants.advancedImu.textDataBarMargin
                     font.pointSize: Constants.mediumPointSize
+                    text: "0.00 g"
+                }
+
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: Constants.advancedMagnetometer.suggestionTextRowHeight
+
+                Label {
+                    text: Constants.advancedMagnetometer.suggestionText
+                    font.italic: true
+                    antialiasing: true
+                    anchors.horizontalCenter: parent.horizontalCenter
                 }
 
             }

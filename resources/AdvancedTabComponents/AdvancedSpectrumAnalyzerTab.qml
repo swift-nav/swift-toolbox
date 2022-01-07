@@ -19,7 +19,8 @@ Item {
         id: advancedSpectrumAnalyzerArea
 
         anchors.fill: parent
-        visible: false
+        visible: true
+        spacing: 0
 
         ChartView {
             id: advancedSpectrumAnalyzerChart
@@ -47,6 +48,7 @@ Item {
                 titleText: Constants.advancedSpectrumAnalyzer.xAxisTitleText
                 tickInterval: Constants.advancedSpectrumAnalyzer.xAxisTickCount
                 tickType: ValueAxis.TicksDynamic
+                labelFormat: "%d"
             }
 
             SwiftValueAxis {
@@ -55,6 +57,25 @@ Item {
                 titleText: Constants.advancedSpectrumAnalyzer.yAxisTitleText
                 tickInterval: Constants.advancedSpectrumAnalyzer.yAxisTickCount
                 tickType: ValueAxis.TicksDynamic
+                labelFormat: "%d"
+            }
+
+            LineSeries {
+                name: "emptySeries"
+                axisYRight: advancedSpectrumAnalyzerYAxis
+                axisX: advancedSpectrumAnalyzerXAxis
+                color: "transparent"
+
+                XYPoint {
+                    x: -1
+                    y: -1
+                }
+
+                XYPoint {
+                    x: 1
+                    y: 1
+                }
+
             }
 
             Timer {
@@ -95,8 +116,7 @@ Item {
             id: channelSelectionRow
 
             Layout.fillWidth: true
-            Layout.preferredHeight: Constants.advancedSpectrumAnalyzer.dropdownRowHeight
-            Layout.alignment: Qt.AlignBottom
+            Layout.maximumHeight: Constants.advancedSpectrumAnalyzer.dropdownRowHeight
         }
 
     }

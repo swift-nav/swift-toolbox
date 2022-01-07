@@ -5,56 +5,47 @@ import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
-Item {
+RowLayout {
+    id: channelSelectionRowLayout
+
     property alias dropdownIdx: channelDropdown.currentIndex
 
-    width: parent.width
-    height: parent.height
-    Component.onCompleted: {
+    Item {
+        Layout.preferredWidth: parent.width / 6
     }
 
-    RowLayout {
-        id: channelSelectionRowLayout
+    Label {
+        text: Constants.advancedSpectrumAnalyzer.dropdownLabel
+        font.bold: true
+        color: Constants.commonChart.titleColor
+        antialiasing: true
+    }
 
-        width: parent.width
-        height: parent.height
+    ComboBox {
+        id: channelDropdown
 
-        Item {
-            Layout.preferredWidth: parent.width / 6
+        Layout.preferredHeight: Constants.advancedSpectrumAnalyzer.dropdownHeight
+        Layout.preferredWidth: Constants.advancedSpectrumAnalyzer.dropdownWidth
+        topInset: 0
+        bottomInset: 0
+        model: Constants.advancedSpectrumAnalyzer.dropdownModel
+        onActivated: {
+            data_model.advanced_spectrum_analyzer_channel(currentIndex);
         }
+    }
 
-        Label {
-            text: Constants.advancedSpectrumAnalyzer.dropdownLabel
-            font.bold: true
-            color: Constants.commonChart.titleColor
-            antialiasing: true
-        }
+    Item {
+        Layout.fillWidth: true
+    }
 
-        ComboBox {
-            id: channelDropdown
+    Label {
+        text: Constants.advancedSpectrumAnalyzer.dropdownRowSuggestionText
+        font.italic: true
+        antialiasing: true
+    }
 
-            Layout.preferredHeight: Constants.advancedSpectrumAnalyzer.dropdownHeight
-            Layout.preferredWidth: Constants.advancedSpectrumAnalyzer.dropdownWidth
-            model: Constants.advancedSpectrumAnalyzer.dropdownModel
-            onActivated: {
-                data_model.advanced_spectrum_analyzer_channel(currentIndex);
-            }
-        }
-
-        Item {
-            Layout.fillWidth: true
-        }
-
-        Label {
-            text: Constants.advancedSpectrumAnalyzer.dropdownRowSuggestionText
-            font.italic: true
-            antialiasing: true
-        }
-
-        Item {
-            Layout.preferredWidth: parent.width / 6
-        }
-
+    Item {
+        Layout.preferredWidth: parent.width / 6
     }
 
 }

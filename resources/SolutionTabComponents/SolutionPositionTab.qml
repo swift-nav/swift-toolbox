@@ -394,11 +394,36 @@ Item {
                     if (center_solution)
                         solutionPositionChart.centerToSolution();
 
-                    if (orig_lat_min != solutionPositionPoints.lat_min_ || orig_lat_max != solutionPositionPoints.lat_max_ || orig_lon_min != solutionPositionPoints.lon_min_ || orig_lon_max != solutionPositionPoints.lon_max_) {
-                        orig_lat_min = solutionPositionPoints.lat_min_;
-                        orig_lat_max = solutionPositionPoints.lat_max_;
-                        orig_lon_min = solutionPositionPoints.lon_min_;
-                        orig_lon_max = solutionPositionPoints.lon_max_;
+                    let hasData = false;
+                    for (let idx in solutionPositionPoints.points) {
+                        if (solutionPositionPoints.points[idx].length) {
+                            hasData = true;
+                            break;
+                        }
+                    }
+                    let new_lat_min = Constants.solutionPosition.axesDefaultMin;
+                    let new_lat_max = Constants.solutionPosition.axesDefaultMax;
+                    let new_lon_min = Constants.solutionPosition.axesDefaultMin;
+                    let new_lon_max = Constants.solutionPosition.axesDefaultMax;
+                    solutionZoomAllButton.enabled = hasData;
+                    solutionCenterButton.enabled = hasData;
+                    if (hasData) {
+                        new_lat_min = solutionPositionPoints.lat_min_;
+                        new_lat_max = solutionPositionPoints.lat_max_;
+                        new_lon_min = solutionPositionPoints.lon_min_;
+                        new_lon_max = solutionPositionPoints.lon_max_;
+                    } else {
+                        zoom_all = true;
+                        center_solution = false;
+                        solutionZoomAllButton.checked = true;
+                        solutionCenterButton.checked = false;
+                        solutionPositionChart.resetChartZoom();
+                    }
+                    if (orig_lat_min != new_lat_min || orig_lat_max != new_lat_max || orig_lon_min != new_lon_min || orig_lon_max != new_lon_max) {
+                        orig_lat_min = new_lat_min;
+                        orig_lat_max = new_lat_max;
+                        orig_lon_min = new_lon_min;
+                        orig_lon_max = new_lon_max;
                         if (zoom_all)
                             solutionPositionChart.resetChartZoom();
 

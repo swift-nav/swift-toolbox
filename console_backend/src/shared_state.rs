@@ -34,7 +34,7 @@ use crate::settings_tab;
 use crate::solution_tab::LatLonUnits;
 use crate::types::ArcBool;
 use crate::update_tab::UpdateTabUpdate;
-use crate::utils::{pathbuf_to_unix_filepath, send_conn_state};
+use crate::utils::send_conn_state;
 use crate::watch::{WatchReceiver, Watched};
 use crate::{client_sender::BoxedClientSender, main_tab::logging_stats_thread};
 use crate::{common_constants::ConnectionType, connection::Connection};
@@ -169,7 +169,7 @@ impl SharedState {
         self.lock().solution_tab.velocity_tab.log_file = match CsvSerializer::new(path) {
             Ok(vel_csv) => Some(vel_csv),
             Err(e) => {
-                error!("issue creating file, {:?}, error, {}", path, e);
+                error!("issue creating file, {}, error, {}", path.display(), e);
                 None
             }
         }
@@ -185,7 +185,7 @@ impl SharedState {
         self.lock().solution_tab.position_tab.log_file = match CsvSerializer::new(path) {
             Ok(vel_csv) => Some(vel_csv),
             Err(e) => {
-                error!("issue creating file, {:?}, error, {}", path, e);
+                error!("issue creating file, {}, error, {}", path.display(), e);
                 None
             }
         }
@@ -201,7 +201,7 @@ impl SharedState {
         self.lock().baseline_tab.log_file = match CsvSerializer::new(path) {
             Ok(vel_csv) => Some(vel_csv),
             Err(e) => {
-                error!("issue creating file, {:?}, error, {}", path, e);
+                error!("issue creating file, {}, error, {}", path.display(), e);
                 None
             }
         }
@@ -435,8 +435,8 @@ impl LoggingBarState {
         };
         if let Err(err) = fs::create_dir_all(&logging_directory) {
             error!(
-                "Unable to create directory, {:?}, {}.",
-                pathbuf_to_unix_filepath(logging_directory.clone()),
+                "Unable to create directory, {}, {}.",
+                logging_directory.display(),
                 err
             );
         }

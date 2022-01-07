@@ -14,7 +14,7 @@ use crate::constants::{
 };
 use crate::output::{CsvLogging, SbpLogger};
 use crate::shared_state::{create_directory, SharedState};
-use crate::utils::{pathbuf_to_unix_filepath, refresh_loggingbar, refresh_loggingbar_recording};
+use crate::utils::{refresh_loggingbar, refresh_loggingbar_recording};
 use crate::{client_sender::BoxedClientSender, shared_state::ConnectionState};
 use crate::{common_constants::SbpLogging, shared_state::SbpLoggingStatsState};
 
@@ -160,8 +160,8 @@ impl MainTab {
                     }
                     Err(e) => {
                         error!(
-                            "issue creating file, {:?}, error, {}",
-                            pathbuf_to_unix_filepath(sbp_log_file),
+                            "issue creating file, {}, error, {}",
+                            sbp_log_file.display(),
                             e
                         );
                         None
@@ -178,8 +178,8 @@ impl MainTab {
                     }
                     Err(e) => {
                         error!(
-                            "issue creating file, {:?}, error, {}",
-                            pathbuf_to_unix_filepath(sbp_json_log_file),
+                            "issue creating file, {}, error, {}",
+                            sbp_json_log_file.display(),
                             e
                         );
                         None

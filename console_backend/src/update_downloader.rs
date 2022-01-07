@@ -1,4 +1,4 @@
-use crate::{update_tab::UpdateTabContext, utils::pathbuf_to_unix_filepath};
+use crate::update_tab::UpdateTabContext;
 use anyhow::bail;
 use curl::easy::Easy as Curl;
 use serde::{Deserialize, Serialize};
@@ -138,10 +138,7 @@ impl UpdateDownloader {
         if let Some(filename_) = filename {
             let filepath = Path::new(&directory).join(filename_);
             if !directory.exists() {
-                let msg = format!(
-                    "Creating directory: {:?}",
-                    pathbuf_to_unix_filepath(directory.clone())
-                );
+                let msg = format!("Creating directory: {}", directory.display());
                 if let Some(update_shared) = update_shared.clone() {
                     update_shared.fw_log_append(msg);
                 }
@@ -166,10 +163,7 @@ impl UpdateDownloader {
                 })
                 .expect("unable to configure download callback function");
             download.perform()?;
-            let msg = format!(
-                "Downloaded firmware file to: {:?}",
-                pathbuf_to_unix_filepath(filepath.clone())
-            );
+            let msg = format!("Downloaded firmware file to: {}", filepath.display());
             if let Some(update_shared) = update_shared {
                 update_shared.fw_log_append(msg);
             }

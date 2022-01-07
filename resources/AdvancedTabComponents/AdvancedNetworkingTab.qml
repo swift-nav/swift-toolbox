@@ -84,8 +84,6 @@ Item {
                     Button {
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.verticalCenterOffset: Constants.networking.refreshButtonVerticalOffset
-                        width: Constants.networking.refreshButtonWidth
-                        height: Constants.networking.refreshButtonHeight
                         ToolTip.visible: hovered
                         ToolTip.text: Constants.networking.refreshButtonLabel
                         text: Constants.networking.refreshButtonLabel
@@ -93,6 +91,7 @@ Item {
                         icon.width: Constants.networking.refreshButtonIconSideLength
                         icon.height: Constants.networking.refreshButtonIconSideLength
                         display: AbstractButton.TextUnderIcon
+                        flat: true
                         onClicked: {
                             let refresh = true;
                             let start = false;

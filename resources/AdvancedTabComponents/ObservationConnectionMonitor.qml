@@ -139,8 +139,6 @@ Item {
         Button {
             id: resetButton
 
-            Layout.maximumWidth: Constants.systemMonitor.resetButtonWidth
-            Layout.maximumHeight: Constants.systemMonitor.resetButtonHeight
             ToolTip.visible: hovered
             ToolTip.text: Constants.systemMonitor.resetButtonLabel
             text: Constants.systemMonitor.resetButtonLabel
@@ -148,6 +146,7 @@ Item {
             icon.width: Constants.systemMonitor.resetButtonIconSideLength
             icon.height: Constants.systemMonitor.resetButtonIconSideLength
             display: AbstractButton.TextUnderIcon
+            flat: true
             onClicked: {
                 data_model.reset_device();
             }

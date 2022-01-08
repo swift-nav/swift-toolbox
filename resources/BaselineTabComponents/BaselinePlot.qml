@@ -34,7 +34,7 @@ Item {
         id: baselinePlotArea
 
         anchors.fill: parent
-        visible: false
+        visible: true
         spacing: Constants.baselinePlot.navBarSpacing
 
         ButtonGroup {
@@ -341,6 +341,24 @@ Item {
                     mouse_x = mouseX;
                     mouse_y = mouseY;
                 }
+            }
+
+            LineSeries {
+                name: "emptySeries"
+                axisY: baselinePlotYAxis
+                axisX: baselinePlotXAxis
+                color: "transparent"
+
+                XYPoint {
+                    x: 0
+                    y: 0
+                }
+
+                XYPoint {
+                    x: 1
+                    y: 1
+                }
+
             }
 
             Timer {

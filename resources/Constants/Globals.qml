@@ -13,8 +13,7 @@ QtObject {
     property int minimumHeight: 600
     property int width: 1050
     property int minimumWidth: 1050
-    property string conn_state: Constants.connection.disconnected
-    property bool connected_at_least_once: false
+    property string conn_state: Constants.connection.disconnected.toUpperCase()
     property string copyClipboard: ""
     property var tablesWithHighlights: []
     property var currentSelectedTable: null

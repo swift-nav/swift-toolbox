@@ -21,6 +21,10 @@ Item {
     property variant last_used_serial_device: null
     property string connMessage: ""
     property bool warningTimerRecentlyUsed: false
+    property string connectedConstant: Constants.connection.connected.toUpperCase()
+    property string connectingConstant: Constants.connection.connecting.toUpperCase()
+    property string disconnectedConstant: Constants.connection.disconnected.toUpperCase()
+    property string disconnectingConstant: Constants.connection.disconnecting.toUpperCase()
 
     function restore_previous_serial_settings(device_name) {
         const config = previous_serial_configs.find((element) => {
@@ -65,11 +69,13 @@ Item {
             implicitWidth: parent.width / 2
             anchors.centerIn: parent
             title: "Connect to device..."
-            closePolicy: Popup.NoAutoClose
             onVisibleChanged: {
                 if (visible)
                     dialogRect.forceActiveFocus();
 
+            }
+            onClosed: {
+                stack.mainView();
             }
 
             ColumnLayout {
@@ -431,10 +437,9 @@ Item {
                         warningTimer.startTimer();
                     }
                     connectButton.state = connectionData.conn_state.toLowerCase();
-                    if (!Globals.connected_at_least_once && connectionData.conn_state == Constants.connection.connected.toUpperCase()) {
+                    if ([disconnectedConstant, connectingConstant].includes(Globals.conn_state) && connectionData.conn_state == connectedConstant)
                         stack.mainView();
-                        Globals.connected_at_least_once = true;
-                    }
+
                     Globals.conn_state = connectionData.conn_state;
                 }
             }

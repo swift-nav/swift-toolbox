@@ -21,7 +21,6 @@ Item {
     ColumnLayout {
         anchors.fill: parent
         spacing: Constants.trackingSkyPlot.checkboxSpacing
-        visible: all_series.length > 0
 
         PolarChartView {
             id: trackingSkyPlotChart
@@ -131,6 +130,19 @@ Item {
                 CategoryRange {
                     label: "90°"
                     endValue: Constants.trackingSkyPlot.axisRadialMin
+                }
+
+            }
+
+            ScatterSeries {
+                name: "emptySeries"
+                axisYRight: axisRadial
+                axisX: axisAngular
+                color: "transparent"
+
+                XYPoint {
+                    x: 0
+                    y: 0
                 }
 
             }

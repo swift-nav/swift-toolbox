@@ -9,6 +9,7 @@ Item {
     id: top
 
     property alias currentIndex: navButtons.currentIndex
+    property alias checkedButton: navButtonGroup.checkedButton
     property string currentTabName: top.currentIndex < 0 ? "" : tabModel[top.currentIndex].tooltip
     property bool solidConnection: false
     property real dataRate: 0
@@ -65,6 +66,9 @@ Item {
 
                 buttons: navButtons.children
                 onCheckedButtonChanged: {
+                    if (checkedButton === null)
+                        return ;
+
                     for (var idx = 0; idx < buttons.length && buttons[idx] != checkedButton; idx++);
                     navButtons.currentIndex = idx;
                 }
@@ -81,7 +85,9 @@ Item {
                 highlightResizeDuration: 0
                 highlightFollowsCurrentItem: true
                 onCurrentIndexChanged: {
-                    navButtonGroup.checkedButton = navButtonGroup.buttons[navButtons.currentIndex];
+                    if (navButtons.currentIndex >= 0)
+                        navButtonGroup.checkedButton = navButtonGroup.buttons[navButtons.currentIndex];
+
                 }
 
                 highlight: Item {
@@ -126,7 +132,7 @@ Item {
             icon.source: Constants.icons.lightningBoltPath
             ToolTip.text: "Connection Dialog"
             checkable: false
-            enabled: Globals.connected_at_least_once
+            enabled: stack.mainViewVisible()
             silenceButtonGroupWarning: true
             onClicked: {
                 if (stack.connectionScreenVisible())

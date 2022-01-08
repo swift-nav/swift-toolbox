@@ -190,6 +190,8 @@ Rectangle {
             Layout.rightMargin: 5
             implicitWidth: 20
             clip: true
+            visible: false
+            enabled: false
 
             MouseArea {
                 id: closeMouseArea

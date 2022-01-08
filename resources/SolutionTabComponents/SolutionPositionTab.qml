@@ -11,7 +11,7 @@ import SwiftConsole 1.0
 Item {
     id: solutionPositionTab
 
-    property variant available_units: []
+    property variant available_units: ["degrees", "meters"]
     property variant cur_scatters: []
     property variant scatters: []
     property variant lines: []
@@ -35,7 +35,7 @@ Item {
         id: solutionPositionArea
 
         anchors.fill: parent
-        visible: false
+        visible: true
         spacing: Constants.solutionPosition.navBarSpacing
 
         ButtonGroup {
@@ -191,7 +191,7 @@ Item {
                 model: available_units
                 Layout.preferredWidth: Constants.commonChart.unitDropdownWidth
                 onCurrentIndexChanged: {
-                    if (!available_units)
+                    if (!lines.length)
                         return ;
 
                     data_model.solution_position_unit(available_units[currentIndex]);
@@ -364,6 +364,24 @@ Item {
                     mouse_x = mouseX;
                     mouse_y = mouseY;
                 }
+            }
+
+            LineSeries {
+                name: "emptySeries"
+                axisY: solutionPositionYAxis
+                axisX: solutionPositionXAxis
+                color: "transparent"
+
+                XYPoint {
+                    x: 0
+                    y: 0
+                }
+
+                XYPoint {
+                    x: 1
+                    y: 1
+                }
+
             }
 
             Timer {

@@ -388,15 +388,28 @@ script = '''
 touch ./py39-dist/.frozen
 '''
 
+[tasks.pre-build-dist]
+dependencies = [
+  "prep-dist",
+  "build-dist-copy-resources",
+  "build-dist-freeze",
+  "install-qt",
+]
+
+[tasks.install-qt]
+script_runner = "@duckscript"
+script = '''
+exec --fail-on-error /home/jm/swift-toolbox/py39-dist/bin/python3.9 /home/jm/pyside-setup/setup.py install --qt 5.15.2 --qmake=/home/jm/Qt/5.15.2/gcc_64/bin/qmake --parallel=8 --relwithdebinfo --standalone --no-examples --skip-docs --module-subset  Core,Network,Gui,Qml,Widgets,Charts
+'''
+
 [tasks.build-dist]
-dependencies = ["prep-dist"]
 run_task = [
   { name = [
     "build-dist-install-frontend-wheel",
     "build-dist-install-backend-wheel",
     "build-dist-install-console",
-    "build-dist-copy-resources",
-    "build-dist-freeze",
+    # "build-dist-copy-resources",
+    # "build-dist-freeze",
   ] },
 ]
 

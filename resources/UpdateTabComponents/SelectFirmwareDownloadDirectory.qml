@@ -1,3 +1,4 @@
+import "../BaseComponents"
 import "../Constants"
 import QtQuick 2.15
 import QtQuick.Controls 2.15
@@ -13,53 +14,34 @@ Item {
         anchors.fill: parent
         spacing: Constants.updateTab.firmwareVersionColumnSpacing
 
-        Rectangle {
+        SwiftTextbox {
             Layout.preferredWidth: Constants.updateTab.hardwareVersionElementsLabelWidth
             Layout.fillHeight: true
-
-            Label {
-                text: Constants.updateTab.firmwareDownloadDirectoryLabel
-                anchors.fill: parent
-                anchors.rightMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
-                horizontalAlignment: Text.AlignRight
-            }
-
+            rightMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
+            text: Constants.updateTab.firmwareDownloadDirectoryLabel
         }
 
-        Rectangle {
+        SwiftTextInput {
+            id: directoryInput
+
             Layout.fillWidth: true
             Layout.fillHeight: true
-            border.width: Constants.advancedImu.textDataBarBorderWidth
-            clip: true
-
-            TextInput {
-                id: directoryInput
-
-                text: ""
-                cursorVisible: true
-                selectByMouse: true
-                font.pointSize: Constants.largePointSize
-                font.family: Constants.genericTable.fontFamily
-                anchors.fill: parent
-                anchors.leftMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
-                onTextEdited: {
-                    fwDirectoryEditing = true;
-                }
-                onEditingFinished: {
-                    let downloadLatestFirmware = false;
-                    let updateFirmware = false;
-                    let sendFileToDevice = false;
-                    let serialPromptConfirm = false;
-                    let updateLocalFilepath = null;
-                    let downloadDirectory = text;
-                    let fileioLocalFilepath = null;
-                    let fileioDestinationFilepath = null;
-                    let updateLocalFilename = null;
-                    data_model.update_tab([downloadLatestFirmware, updateFirmware, sendFileToDevice, serialPromptConfirm], updateLocalFilepath, downloadDirectory, fileioLocalFilepath, fileioDestinationFilepath, updateLocalFilename);
-                    fwDirectoryEditing = false;
-                }
+            onTextEdited: {
+                fwDirectoryEditing = true;
             }
-
+            onEditingFinished: {
+                let downloadLatestFirmware = false;
+                let updateFirmware = false;
+                let sendFileToDevice = false;
+                let serialPromptConfirm = false;
+                let updateLocalFilepath = null;
+                let downloadDirectory = text;
+                let fileioLocalFilepath = null;
+                let fileioDestinationFilepath = null;
+                let updateLocalFilename = null;
+                data_model.update_tab([downloadLatestFirmware, updateFirmware, sendFileToDevice, serialPromptConfirm], updateLocalFilepath, downloadDirectory, fileioLocalFilepath, fileioDestinationFilepath, updateLocalFilename);
+                fwDirectoryEditing = false;
+            }
         }
 
         Item {
@@ -81,6 +63,8 @@ Item {
             Label {
                 text: Constants.updateTab.dotDotDotLabel
                 anchors.centerIn: parent
+                font.family: Constants.genericTable.fontFamily
+                font.pointSize: Constants.largePointSize
             }
 
         }

@@ -1,3 +1,4 @@
+import "../BaseComponents"
 import "../Constants"
 import QtQuick 2.5
 import QtQuick.Controls 2.15
@@ -6,8 +7,8 @@ import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
 Item {
-    property alias currentVersion: currentVersionText.text
-    property alias latestVersion: latestVersionText.text
+    property string currentVersion: ""
+    property string latestVersion: ""
     property alias localFileText: selectLocalFile.localFileText
     property alias localFileTextEditing: selectLocalFile.localFileTextEditing
     property alias upgradeButtonEnable: updateFirmwareButton.enabled
@@ -21,6 +22,9 @@ Item {
 
         ColumnLayout {
             anchors.fill: parent
+            anchors.topMargin: Constants.updateTab.innerMargins
+            anchors.leftMargin: Constants.updateTab.innerMargins
+            anchors.rightMargin: Constants.updateTab.innerMargins
             width: parent.width
             height: parent.height
             spacing: Constants.updateTab.firmwareVersionColumnSpacing
@@ -31,33 +35,19 @@ Item {
                 Layout.leftMargin: Constants.updateTab.innerMargins
                 Layout.rightMargin: Constants.updateTab.innerMargins
 
-                Rectangle {
+                SwiftTextbox {
                     width: Constants.updateTab.hardwareVersionElementsLabelWidth
                     height: parent.height
-
-                    Label {
-                        text: Constants.updateTab.firmwareVersionCurrentLabel
-                        anchors.fill: parent
-                        anchors.rightMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
-                        horizontalAlignment: Text.AlignRight
-                    }
-
+                    rightMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
+                    text: Constants.updateTab.firmwareVersionCurrentLabel
                 }
 
-                Rectangle {
+                SwiftTextInput {
                     width: parent.width - Constants.updateTab.hardwareVersionElementsLabelWidth
                     height: parent.height
-                    border.width: Constants.advancedImu.textDataBarBorderWidth
-
-                    Label {
-                        id: currentVersionText
-
-                        text: ""
-                        clip: true
-                        color: Constants.updateTab.placeholderTextColor
-                        anchors.centerIn: parent
-                    }
-
+                    placeholderText: currentVersion ? currentVersion : "Waiting for Piksi to send settings..."
+                    labelHorizontalAlignment: Text.AlignLeft
+                    readOnly: true
                 }
 
             }
@@ -68,33 +58,19 @@ Item {
                 Layout.leftMargin: Constants.updateTab.innerMargins
                 Layout.rightMargin: Constants.updateTab.innerMargins
 
-                Rectangle {
+                SwiftTextbox {
                     width: Constants.updateTab.hardwareVersionElementsLabelWidth
                     height: parent.height
-
-                    Label {
-                        text: Constants.updateTab.firmwareVersionLatestLabel
-                        anchors.fill: parent
-                        anchors.rightMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
-                        horizontalAlignment: Text.AlignRight
-                    }
-
+                    rightMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
+                    text: Constants.updateTab.firmwareVersionLatestLabel
                 }
 
-                Rectangle {
+                SwiftTextInput {
                     width: parent.width - Constants.updateTab.hardwareVersionElementsLabelWidth
                     height: parent.height
-                    border.width: Constants.advancedImu.textDataBarBorderWidth
-
-                    Label {
-                        id: latestVersionText
-
-                        text: ""
-                        clip: true
-                        color: Constants.updateTab.placeholderTextColor
-                        anchors.centerIn: parent
-                    }
-
+                    placeholderText: latestVersion ? latestVersion : "Loading latest firmware info..."
+                    labelHorizontalAlignment: Text.AlignLeft
+                    readOnly: true
                 }
 
             }
@@ -147,6 +123,8 @@ Item {
                     Label {
                         text: Constants.updateTab.updateFirmwareButtonLabel
                         anchors.centerIn: parent
+                        font.family: Constants.genericTable.fontFamily
+                        font.pointSize: Constants.largePointSize
                     }
 
                 }

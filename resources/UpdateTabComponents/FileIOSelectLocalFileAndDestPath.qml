@@ -1,3 +1,4 @@
+import "../BaseComponents"
 import "../Constants"
 import QtQuick 2.15
 import QtQuick.Controls 2.15
@@ -14,53 +15,33 @@ Item {
     RowLayout {
         anchors.fill: parent
 
-        Rectangle {
+        SwiftTextbox {
             Layout.preferredWidth: Constants.updateTab.hardwareVersionElementsLabelWidth
             Layout.fillHeight: true
-
-            Label {
-                text: Constants.updateTab.fileioLocalFileLabel
-                anchors.fill: parent
-                anchors.rightMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
-                horizontalAlignment: Text.AlignRight
-            }
-
+            text: Constants.updateTab.fileioLocalFileLabel
         }
 
-        Rectangle {
+        SwiftTextInput {
+            id: localFileTextInput
+
             Layout.fillWidth: true
             Layout.fillHeight: true
-            border.width: Constants.advancedImu.textDataBarBorderWidth
-            clip: true
-
-            TextInput {
-                id: localFileTextInput
-
-                text: ""
-                cursorVisible: true
-                selectByMouse: true
-                font.pointSize: Constants.largePointSize
-                font.family: Constants.genericTable.fontFamily
-                anchors.fill: parent
-                anchors.leftMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
-                onTextEdited: {
-                    localTextEditing = true;
-                }
-                onEditingFinished: {
-                    let downloadLatestFirmware = false;
-                    let updateFirmware = false;
-                    let sendFileToDevice = false;
-                    let serialPromptConfirm = false;
-                    let updateLocalFilepath = null;
-                    let downloadDirectory = null;
-                    let fileioLocalFilepath = text;
-                    let fileioDestinationFilepath = null;
-                    let updateLocalFilename = null;
-                    data_model.update_tab([downloadLatestFirmware, updateFirmware, sendFileToDevice, serialPromptConfirm], updateLocalFilepath, downloadDirectory, fileioLocalFilepath, fileioDestinationFilepath, updateLocalFilename);
-                    localTextEditing = false;
-                }
+            onTextEdited: {
+                localTextEditing = true;
             }
-
+            onEditingFinished: {
+                let downloadLatestFirmware = false;
+                let updateFirmware = false;
+                let sendFileToDevice = false;
+                let serialPromptConfirm = false;
+                let updateLocalFilepath = null;
+                let downloadDirectory = null;
+                let fileioLocalFilepath = text;
+                let fileioDestinationFilepath = null;
+                let updateLocalFilename = null;
+                data_model.update_tab([downloadLatestFirmware, updateFirmware, sendFileToDevice, serialPromptConfirm], updateLocalFilepath, downloadDirectory, fileioLocalFilepath, fileioDestinationFilepath, updateLocalFilename);
+                localTextEditing = false;
+            }
         }
 
         Item {
@@ -82,6 +63,8 @@ Item {
             Label {
                 text: Constants.updateTab.dotDotDotLabel
                 anchors.centerIn: parent
+                font.family: Constants.genericTable.fontFamily
+                font.pointSize: Constants.largePointSize
             }
 
         }
@@ -113,53 +96,33 @@ Item {
             }
         }
 
-        Rectangle {
+        SwiftTextbox {
             Layout.preferredWidth: Constants.updateTab.hardwareVersionElementsLabelWidth * 2
             Layout.fillHeight: true
-
-            Label {
-                text: Constants.updateTab.fileioDestinationPathLabel
-                anchors.fill: parent
-                anchors.rightMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
-                horizontalAlignment: Text.AlignRight
-            }
-
+            text: Constants.updateTab.fileioDestinationPathLabel
         }
 
-        Rectangle {
+        SwiftTextInput {
+            id: destinationPathTextInput
+
             Layout.fillWidth: true
             Layout.fillHeight: true
-            border.width: Constants.advancedImu.textDataBarBorderWidth
-            clip: true
-
-            TextInput {
-                id: destinationPathTextInput
-
-                text: ""
-                cursorVisible: true
-                selectByMouse: true
-                font.pointSize: Constants.largePointSize
-                font.family: Constants.genericTable.fontFamily
-                anchors.fill: parent
-                anchors.leftMargin: Constants.updateTab.firmwareVersionElementsLabelRightMargin
-                onTextEdited: {
-                    destinationTextEditing = true;
-                }
-                onEditingFinished: {
-                    let downloadLatestFirmware = false;
-                    let updateFirmware = false;
-                    let sendFileToDevice = false;
-                    let serialPromptConfirm = false;
-                    let updateLocalFilepath = null;
-                    let downloadDirectory = null;
-                    let fileioLocalFilepath = null;
-                    let fileioDestinationFilepath = text;
-                    let updateLocalFilename = null;
-                    data_model.update_tab([downloadLatestFirmware, updateFirmware, sendFileToDevice, serialPromptConfirm], updateLocalFilepath, downloadDirectory, fileioLocalFilepath, fileioDestinationFilepath, updateLocalFilename);
-                    destinationTextEditing = false;
-                }
+            onTextEdited: {
+                destinationTextEditing = true;
             }
-
+            onEditingFinished: {
+                let downloadLatestFirmware = false;
+                let updateFirmware = false;
+                let sendFileToDevice = false;
+                let serialPromptConfirm = false;
+                let updateLocalFilepath = null;
+                let downloadDirectory = null;
+                let fileioLocalFilepath = null;
+                let fileioDestinationFilepath = text;
+                let updateLocalFilename = null;
+                data_model.update_tab([downloadLatestFirmware, updateFirmware, sendFileToDevice, serialPromptConfirm], updateLocalFilepath, downloadDirectory, fileioLocalFilepath, fileioDestinationFilepath, updateLocalFilename);
+                destinationTextEditing = false;
+            }
         }
 
         Item {
@@ -190,6 +153,8 @@ Item {
             Label {
                 text: Constants.updateTab.fileioSendFileToDeviceButtonLabel
                 anchors.centerIn: parent
+                font.family: Constants.genericTable.fontFamily
+                font.pointSize: Constants.largePointSize
             }
 
         }

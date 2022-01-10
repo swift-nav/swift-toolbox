@@ -1,3 +1,4 @@
+import "../BaseComponents"
 import "../Constants"
 import QtQuick 2.5
 import QtQuick.Controls 2.15
@@ -9,24 +10,18 @@ Item {
         width: parent.width
         height: parent.height
 
-        Rectangle {
+        SwiftTextbox {
             Layout.preferredWidth: parent.width / 2
             Layout.fillHeight: true
-
-            Label {
-                text: Constants.updateTab.firmwareVersionTitle
-            }
-
+            labelHorizontalAlignment: Text.AlignLeft
+            text: Constants.updateTab.firmwareVersionTitle
         }
 
-        Rectangle {
+        SwiftTextbox {
             Layout.preferredWidth: parent.width / 2
             Layout.fillHeight: true
-
-            Label {
-                text: Constants.updateTab.firmwareDownloadTitle
-            }
-
+            labelHorizontalAlignment: Text.AlignLeft
+            text: Constants.updateTab.firmwareDownloadTitle
         }
 
     }

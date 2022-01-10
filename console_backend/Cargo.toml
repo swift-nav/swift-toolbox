@@ -21,7 +21,7 @@ pyo3 = { version = "0.15", features = [
   "macros",
 ], default-features = false, optional = true }
 serde = { version = "1.0.133", features = ["derive"] }
-tempfile = "3.2.0"
+tempfile = "3.3.0"
 ordered-float = "2.10"
 ndarray = "0.15.4"
 glob = "0.3.0"

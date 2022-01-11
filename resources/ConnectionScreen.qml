@@ -134,7 +134,8 @@ Item {
                         }
                     }
 
-                    Label {}
+                    Label {
+                    }
 
                     Button {
                         id: serialDeviceRefresh
@@ -196,6 +197,7 @@ Item {
 
                         Layout.fillWidth: true
                     }
+
                 }
 
                 GridLayout {
@@ -257,6 +259,7 @@ Item {
                         }
 
                     }
+
                 }
 
                 GridLayout {

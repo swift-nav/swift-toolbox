@@ -109,14 +109,20 @@ Item {
 
                 }
 
-                RowLayout {
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignTop
+                GridLayout {
+                    rowSpacing: -5
+                    rows: 2
+                    visible: serialRadio.checked
+                    flow: GridLayout.TopToBottom
+
+                    Label {
+                        Layout.leftMargin: 4
+                        text: "Serial Device:"
+                    }
 
                     ComboBox {
                         id: serialDevice
 
-                        visible: serialRadio.checked
                         Layout.preferredHeight: Constants.connection.dropdownHeight
                         Layout.fillWidth: true
                         model: available_devices
@@ -128,10 +134,11 @@ Item {
                         }
                     }
 
+                    Label {}
+
                     Button {
                         id: serialDeviceRefresh
 
-                        visible: serialRadio.checked
                         Layout.preferredHeight: Constants.connection.buttonHeight
                         Layout.preferredWidth: Constants.connection.serialDeviceRefreshWidth
                         icon.source: Constants.icons.refreshPath
@@ -141,10 +148,14 @@ Item {
                         }
                     }
 
+                    Label {
+                        Layout.leftMargin: 4
+                        text: "Flow Control:"
+                    }
+
                     ComboBox {
                         id: serialDeviceBaudRate
 
-                        visible: serialRadio.checked
                         Layout.preferredHeight: Constants.connection.dropdownHeight
                         Layout.preferredWidth: Constants.connection.serialDeviceBaudRateDropdownWidth
                         model: available_baudrates
@@ -153,10 +164,14 @@ Item {
                         }
                     }
 
+                    Label {
+                        Layout.leftMargin: 4
+                        text: "Baudrate:"
+                    }
+
                     ComboBox {
                         id: serialDeviceFlowControl
 
-                        visible: serialRadio.checked
                         Layout.preferredHeight: Constants.connection.dropdownHeight
                         Layout.preferredWidth: Constants.connection.serialDeviceFlowControlDropdownWidth
                         model: available_flows
@@ -179,14 +194,24 @@ Item {
                     Item {
                         id: serialDeviceFill
 
-                        visible: serialRadio.checked
                         Layout.fillWidth: true
+                    }
+                }
+
+                GridLayout {
+                    rowSpacing: -5
+                    rows: 2
+                    visible: tcpRadio.checked
+                    flow: GridLayout.TopToBottom
+
+                    Label {
+                        Layout.leftMargin: 4
+                        text: "Host:"
                     }
 
                     ComboBox {
                         id: tcpUrlBar
 
-                        visible: tcpRadio.checked
                         Layout.fillWidth: true
                         model: previous_hosts
                         editable: true
@@ -206,10 +231,14 @@ Item {
 
                     }
 
+                    Label {
+                        Layout.leftMargin: 4
+                        text: "Port:"
+                    }
+
                     ComboBox {
                         id: tcpPortBar
 
-                        visible: tcpRadio.checked
                         Layout.preferredWidth: parent.width / 4
                         model: previous_ports
                         editable: true
@@ -228,11 +257,22 @@ Item {
                         }
 
                     }
+                }
+
+                GridLayout {
+                    rowSpacing: -5
+                    rows: 2
+                    visible: fileRadio.checked
+                    flow: GridLayout.TopToBottom
+
+                    Label {
+                        Layout.leftMargin: 4
+                        text: "File:"
+                    }
 
                     ComboBox {
                         id: fileUrlBar
 
-                        visible: fileRadio.checked
                         Layout.alignment: Qt.AlignLeft
                         Layout.fillWidth: true
                         model: previous_files

@@ -110,14 +110,14 @@ Item {
                 }
 
                 GridLayout {
-                    rowSpacing: -5
+                    rowSpacing: Constants.connection.labelRowSpacing
                     rows: 2
                     visible: serialRadio.checked
                     flow: GridLayout.TopToBottom
 
                     Label {
-                        Layout.leftMargin: 4
-                        text: "Serial Device:"
+                        Layout.leftMargin: Constants.connection.labelLeftMargin
+                        text: Constants.connection.serialLabel
                     }
 
                     ComboBox {
@@ -149,8 +149,8 @@ Item {
                     }
 
                     Label {
-                        Layout.leftMargin: 4
-                        text: "Flow Control:"
+                        Layout.leftMargin: Constants.connection.labelLeftMargin
+                        text: Constants.connection.baudrateLabel
                     }
 
                     ComboBox {
@@ -165,8 +165,8 @@ Item {
                     }
 
                     Label {
-                        Layout.leftMargin: 4
-                        text: "Baudrate:"
+                        Layout.leftMargin: Constants.connection.labelLeftMargin
+                        text: Constants.connection.flowLabel
                     }
 
                     ComboBox {
@@ -199,14 +199,14 @@ Item {
                 }
 
                 GridLayout {
-                    rowSpacing: -5
+                    rowSpacing: Constants.connection.labelRowSpacing
                     rows: 2
                     visible: tcpRadio.checked
                     flow: GridLayout.TopToBottom
 
                     Label {
-                        Layout.leftMargin: 4
-                        text: "Host:"
+                        Layout.leftMargin: Constants.connection.labelLeftMargin
+                        text: Constants.connection.hostLabel
                     }
 
                     ComboBox {
@@ -232,8 +232,8 @@ Item {
                     }
 
                     Label {
-                        Layout.leftMargin: 4
-                        text: "Port:"
+                        Layout.leftMargin: Constants.connection.labelLeftMargin
+                        text: Constants.connection.portLabel
                     }
 
                     ComboBox {
@@ -260,14 +260,14 @@ Item {
                 }
 
                 GridLayout {
-                    rowSpacing: -5
+                    rowSpacing: Constants.connection.labelRowSpacing
                     rows: 2
                     visible: fileRadio.checked
                     flow: GridLayout.TopToBottom
 
                     Label {
-                        Layout.leftMargin: 4
-                        text: "File:"
+                        Layout.leftMargin: Constants.connection.labelLeftMargin
+                        text: Constants.connection.fileLabel
                     }
 
                     ComboBox {

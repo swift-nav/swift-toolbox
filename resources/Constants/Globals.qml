@@ -18,6 +18,7 @@ QtObject {
     property string copyClipboard: ""
     property var tablesWithHighlights: []
     property var currentSelectedTable: null
+    property bool showFileConnection: false
 
     function clearHighlightedRows() {
         for (var i in tablesWithHighlights) {

@@ -120,6 +120,10 @@ pub struct CliOptions {
     #[clap(long = "show-fileio")]
     pub show_fileio: bool,
 
+    /// Allow File Connections.
+    #[clap(long = "show-file-connection")]
+    pub show_file_connection: bool,
+
     /// Don't use opengl in plots.
     #[clap(long = "no-opengl", parse(from_flag = Not::not))]
     pub no_opengl: bool,

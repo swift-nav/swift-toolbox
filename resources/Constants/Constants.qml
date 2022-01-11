@@ -323,6 +323,14 @@ QtObject {
         readonly property string disconnected: "disconnected"
         readonly property string disconnecting: "disconnecting"
         readonly property int warningTimerLockedInterval: 7000
+        readonly property int labelRowSpacing: -5
+        readonly property int labelLeftMargin: 4
+        readonly property string serialLabel: "Serial Device:"
+        readonly property string flowLabel: "Flow Control:"
+        readonly property string baudrateLabel: "Baudrate:"
+        readonly property string hostLabel: "Host:"
+        readonly property string portLabel: "Port:"
+        readonly property string fileLabel: "File:"
     }
 
     loggingBar: QtObject {

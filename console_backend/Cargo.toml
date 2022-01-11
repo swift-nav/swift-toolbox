@@ -21,7 +21,7 @@ pyo3 = { version = "0.15", features = [
   "macros",
 ], default-features = false, optional = true }
 serde = { version = "1.0.133", features = ["derive"] }
-tempfile = "3.2.0"
+tempfile = "3.3.0"
 ordered-float = "2.10"
 ndarray = "0.15.4"
 glob = "0.3.0"
@@ -31,8 +31,8 @@ serialport = { version = "4.0.1", default-features = false }
 directories = "4"
 anyhow = { version = "1", features = ["backtrace"] }
 serde_yaml = "0.8.23"
-clap = { version = "3.0.5", features = ["derive"] }
-indexmap = { version = "1.6.2", features = ["serde"] }
+clap = { version = "3.0.6", features = ["derive"] }
+indexmap = { version = "1.8.0", features = ["serde"] }
 serde_json = { version = "1" }
 crossbeam = "0.8"
 rand = "0.8.3"

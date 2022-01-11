@@ -792,8 +792,6 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
             globals_.setProperty("width", args.width)  # type: ignore
     if args.show_file_connection:
         globals_.setProperty("showFileConnection", True)  # type: ignore
-    else:
-        globals_.setProperty("showFileConnection", False)  # type: ignore
 
 
 def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:

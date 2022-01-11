@@ -795,6 +795,7 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
     else:
         globals_.setProperty("showFileConnection", False)  # type: ignore
 
+
 def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     parser = argparse.ArgumentParser(add_help=False, usage=argparse.SUPPRESS)
     parser.add_argument("--show-fileio", action="store_true")

@@ -82,11 +82,7 @@ Item {
                     RadioButton {
                         id: serialRadio
 
-                        checked: (
-                          previous_connection_type == "Serial"
-                          || previous_connection_type == "File"
-                          && !Globals.showFileConnection
-                        )
+                        checked: (previous_connection_type == "Serial" || previous_connection_type == "File" && !Globals.showFileConnection)
                         text: serial_usb
                         onToggled: dialogRect.forceActiveFocus()
                     }

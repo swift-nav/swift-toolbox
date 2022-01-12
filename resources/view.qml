@@ -1,4 +1,6 @@
+import "BaseComponents"
 import "Constants"
+import QtCharts 2.15
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Controls.Material 2.15
@@ -6,334 +8,119 @@ import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
 ApplicationWindow {
-    id: main
+    id: trackingSignalsTab
+
+    property alias all_series: trackingSignalsPoints.all_series
+    property alias enabled_series: trackingSignalsPoints.enabled_series
+    property alias check_labels: trackingSignalsPoints.check_labels
+    property alias num_labels: trackingSignalsPoints.num_labels
+    property variant check_visibility: []
 
     Material.accent: Constants.swiftOrange
-    width: Globals.width
-    minimumWidth: Globals.minimumWidth
-    height: Globals.height
-    minimumHeight: Globals.minimumHeight
-    font.pointSize: Constants.mediumPointSize
+    width: 1050
+    minimumWidth: 1050
+    height: 600
+    minimumHeight: 600
     visible: true
-    title: (loggingBar.sbpRecording ? "[L] " : "     ") + statusBar.title
     color: Constants.swiftWhite
 
-    TextEdit {
-        id: textEdit
-
-        visible: false
-        text: Globals.copyClipboard
+    TrackingSignalsPoints {
+        id: trackingSignalsPoints
     }
 
-    Shortcut {
-        sequences: [StandardKey.Copy]
-        onActivated: {
-            textEdit.selectAll();
-            textEdit.copy();
-            Globals.currentSelectedTable = null;
-        }
-    }
-
-    MainDialogView {
-        id: dialogStack
+    ColumnLayout {
+        id: trackingSignalsArea
 
         anchors.fill: parent
-    }
-
-    LogoPopup {
-        id: logoPopup
-
-        anchors.fill: parent
-    }
-
-    MouseArea {
-        enabled: false
-        anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.rightMargin: parent.width - openRect.x + openRect.anchors.rightMargin
-        z: 1
-        height: 30
-        visible: tabInfoBar.state == "closed"
-        hoverEnabled: true
-        acceptedButtons: Qt.NoButton
-        onPositionChanged: tabInfoBarOpenTimer.restart()
-        onExited: tabInfoBarOpenTimer.stop()
-
-        Timer {
-            id: tabInfoBarOpenTimer
-
-            interval: 200
-            onTriggered: tabInfoBar.open()
-        }
-
-    }
-
-    TabInfoBar {
-        id: tabInfoBar
-
-        property int openDuration: 1000
-        property int closeDuration: 350
-        property bool autoClose: Constants.tabInfoBar.autoClose
-
-        function cancelAutoClose() {
-            tabInfoBarCloseTimer.stop();
-        }
-
-        function closeAfterDelaySubtabless() {
-            if (tabName.length > 0 && subTabNames.length == 0)
-                tabInfoBarCloseTimer.restart();
-            else
-                cancelAutoClose();
-        }
-
-        // We explicitly do not anchor in the vertical, so the item can
-        // be slid up "under" the window.
-        anchors.left: parent.left
-        anchors.right: parent.right
-        z: 2
-        tabName: sideNavBar.currentTabName
-        subTabNames: mainTabs.subTabNames
-        onAboutClicked: logoPopup.open()
-        // If there is no subtabs, then close it after some time.
-        onTabNameChanged: {
-            if (autoClose)
-                closeAfterDelaySubtabless();
-
-        }
-        onEntered: cancelAutoClose()
-        onExited: {
-            if (autoClose)
-                closeAfterDelaySubtabless();
-
-        }
-        states: [
-            // The opened state sets the y position so the item is
-            // positioned so it's top is right at the top of the parent
-            // item.
-            State {
-                name: "opened"
-
-                PropertyChanges {
-                    target: tabInfoBar
-                    y: 0
-                }
-
-            },
-            // The closed state sets the y position so the item is
-            // positioned so it's bottom is right at the top of the
-            // parent item, and all but one pixel height of the item is
-            // hidden. One pixel is still shown so there is a border
-            // line at the top of the view.
-            State {
-                name: "closed"
-
-                PropertyChanges {
-                    target: tabInfoBar
-                    y: -height + 1
-                }
-
-            }
-        ]
-        // Make the opened/closed state transitions smooth.
-        transitions: [
-            Transition {
-                from: "opened"
-                to: "closed"
-
-                NumberAnimation {
-                    target: tabInfoBar
-                    properties: "y"
-                    duration: tabInfoBar.closeDuration
-                    easing.type: Easing.OutQuad
-                }
-
-            },
-            Transition {
-                from: "closed"
-                to: "opened"
-
-                NumberAnimation {
-                    target: tabInfoBar
-                    properties: "y"
-                    duration: tabInfoBar.openDuration
-                    easing.type: Easing.OutQuad
-                }
-
-            }
-        ]
-
-        Timer {
-            id: tabInfoBarCloseTimer
-
-            interval: 3000
-            onTriggered: parent.close()
-        }
-
-    }
-
-    Rectangle {
-        id: openRect
-
-        anchors.right: parent.right
-        anchors.rightMargin: 5
-        y: -3
-        z: 1
-        implicitHeight: openArrow.implicitHeight + 9
-        implicitWidth: 20
-        color: Constants.swiftControlBackground
-        radius: 3
-        clip: true
-
-        MouseArea {
-            anchors.fill: parent
-            hoverEnabled: true
-            onClicked: tabInfoBar.open()
-            onEntered: openArrowAnimation.start()
-            onExited: {
-                if (openArrowAnimation.running) {
-                    openArrowAnimation.stop();
-                    openArrow.y = openArrowAnimation.startingPropertyValue;
-                }
-            }
-        }
-
-        PositionLoopAnimation {
-            id: openArrowAnimation
-
-            target: openArrow
-            property: "y"
-            startingPropertyValue: 0
-            totalDuration: 700
-            reverse: true
-        }
-
-        Text {
-            id: openArrow
-
-            anchors.horizontalCenter: parent.horizontalCenter
-            y: (parent.height - height) - 3
-            text: "▼"
-            color: Constants.swiftLightGrey
-            onYChanged: {
-                if (!openArrowAnimation.running)
-                    openArrowAnimation.startingPropertyValue = y;
-
-            }
-        }
-
-    }
-
-    RowLayout {
-        property alias stackView: dialogStack.dialogStack
-
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: tabInfoBar.bottom
-        anchors.bottom: parent.bottom
         spacing: 0
 
-        SideNavBar {
-            id: sideNavBar
+        ChartView {
+            // Timer {
 
-            Layout.fillHeight: true
-            Layout.minimumWidth: Constants.sideNavBar.tabBarWidth
-            enabled: stack.currentIndex != 0
-            dataRate: statusBar.dataRate
-            solidConnection: statusBar.solidConnection
-        }
+            id: trackingSignalsChart
 
-        StackLayout {
-            id: stack
-
-            function connectionScreen() {
-                stack.currentIndex = 0;
-            }
-
-            function connectionScreenVisible() {
-                return stack.currentIndex == 0;
-            }
-
-            function mainView() {
-                if (sideNavBar.currentIndex < 0)
-                    sideNavBar.clickButton(Globals.initialMainTabIndex);
-
-                stack.currentIndex = 1;
-            }
-
-            function mainViewVisible() {
-                return stack.currentIndex == 1;
-            }
-
-            currentIndex: 0
             Layout.fillHeight: true
             Layout.fillWidth: true
+            visible: all_series.length > 0
+            title: Constants.trackingSignals.title
+            titleFont: Constants.commonChart.titleFont
+            titleColor: Constants.commonChart.titleColor
+            plotAreaColor: Constants.commonChart.areaColor
+            backgroundColor: "transparent"
+            legend.visible: false
+            antialiasing: true
 
-            ConnectionScreen {
+            margins {
+                top: 0
+                bottom: 0
+                left: 0
+                right: 0
             }
 
-            ColumnLayout {
-                id: mainView
+            ChartLegend {
+                x: Constants.trackingSignals.legendLeftMargin
+                y: Constants.trackingSignals.legendTopMargin
+                maximumHeight: parent.height - Constants.trackingSignals.legendTopMargin - Constants.trackingSignals.legendBottomMargin
+                cellTextSample: Constants.trackingSignals.legendCellTextSample
+                model: enabled_series
+            }
 
-                spacing: Constants.topLevelSpacing
+            SwiftValueAxis {
+                id: trackingSignalsXAxis
 
-                SplitView {
-                    orientation: Qt.Vertical
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    Layout.alignment: Qt.AlignTop
+                titleText: Constants.trackingSignals.xAxisTitleText
+                tickType: ValueAxis.TicksDynamic
+                tickInterval: Constants.trackingSignals.xAxisTickInterval
+                labelFormat: "%d"
+            }
 
-                    MainTabs {
-                        id: mainTabs
+            SwiftValueAxis {
+                id: trackingSignalsYAxis
 
-                        curSubTabIndex: tabInfoBar.curSubTabIndex
-                        SplitView.fillHeight: true
-                        currentIndex: sideNavBar.currentIndex
-                    }
+                titleText: Constants.trackingSignals.yAxisTitleText
+                max: Constants.trackingSignals.yAxisMax
+                min: Constants.trackingSignals.snrThreshold
+                tickType: ValueAxis.TicksDynamic
+                tickInterval: Constants.trackingSignals.yAxisTickInterval
+                labelFormat: "%d"
+                titleFont: Constants.trackingSignals.yAxisTitleFont
+            }
 
-                    ColumnLayout {
-                        SplitView.preferredHeight: loggingBar.preferredHeight + logPanel.preferredHeight
-                        SplitView.minimumHeight: loggingBar.preferredHeight
-                        spacing: Constants.topLevelSpacing
+            Timer {
+                id: trackingSignalsTimer
 
-                        LoggingBar {
-                            id: loggingBar
+                interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
+                running: true
+                repeat: true
+                triggeredOnStart: true
+                onTriggered: {
+                    if (!trackingSignalsTab.visible)
+                        return ;
 
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: preferredHeight
+                    if (all_series.length < num_labels) {
+                        for (var i = all_series.length; i < num_labels; i++) {
+                            var series = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, trackingSignalsPoints.getLabel(i), trackingSignalsXAxis);
+                            series.axisYRight = trackingSignalsYAxis;
+                            series.width = Constants.commonChart.lineWidth;
+                            series.useOpenGL = Globals.useOpenGL;
+                            // Color will be set in Python with fill_all_series call.
+                            trackingSignalsPoints.addSeries(series);
                         }
-
-                        LogPanel {
-                            id: logPanel
-
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                        }
-
                     }
-
+                    var series = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, "", trackingSignalsXAxis);
+                    series.axisYRight = trackingSignalsYAxis;
+                    series.width = Constants.commonChart.lineWidth;
+                    series.useOpenGL = Globals.useOpenGL;
+                    trackingSignalsPoints.addSeries(series);
+                    trackingSignalsPoints.fill_all_series();
+                    trackingSignalsChart.visible = true;
+                    trackingSignalsXAxis.min = trackingSignalsPoints.xaxis_min;
+                    trackingSignalsXAxis.max = trackingSignalsPoints.xaxis_max;
                 }
-
-                StatusBar {
-                    id: statusBar
-
-                    Layout.fillWidth: true
-                }
-
             }
 
         }
 
-    }
-
-    Rectangle {
-        z: -1
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: -1
-        height: 2
-        color: Constants.swiftGrey
     }
 
 }

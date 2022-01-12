@@ -57,8 +57,6 @@ MainTab {
 
     ColumnLayout {
         anchors.fill: parent
-        width: parent.width
-        height: parent.height
         anchors.margins: Constants.updateTab.outerMargins
 
         Rectangle {
@@ -121,6 +119,8 @@ MainTab {
 
             Label {
                 text: Constants.updateTab.firmwareUpgradeStatusTitle
+                font.family: Constants.genericTable.fontFamily
+                font.pointSize: Constants.largePointSize
             }
 
         }
@@ -132,7 +132,7 @@ MainTab {
             Layout.rightMargin: Constants.updateTab.innerMargins
             Layout.bottomMargin: Constants.updateTab.innerMargins
 
-            TextArea {
+            TextEdit {
                 id: fwLogTextArea
 
                 readOnly: true
@@ -140,6 +140,8 @@ MainTab {
                 selectByKeyboard: true
                 cursorVisible: true
                 activeFocusOnPress: false
+                font.family: Constants.genericTable.fontFamily
+                font.pointSize: Constants.largePointSize
             }
 
         }
@@ -151,6 +153,8 @@ MainTab {
 
             Label {
                 text: Constants.updateTab.fileioAndProductFeatureToolTitle
+                font.family: Constants.genericTable.fontFamily
+                font.pointSize: Constants.largePointSize
             }
 
         }

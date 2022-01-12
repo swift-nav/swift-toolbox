@@ -17,6 +17,9 @@ Item {
 
         ColumnLayout {
             anchors.fill: parent
+            anchors.topMargin: Constants.updateTab.innerMargins
+            anchors.leftMargin: Constants.updateTab.innerMargins
+            anchors.rightMargin: Constants.updateTab.innerMargins
             width: parent.width
             height: parent.height
 
@@ -56,6 +59,8 @@ Item {
                 Label {
                     text: Constants.updateTab.downloadLatestFirmwareButtonLabel
                     anchors.centerIn: parent
+                    font.family: Constants.genericTable.fontFamily
+                    font.pointSize: Constants.largePointSize
                 }
 
             }

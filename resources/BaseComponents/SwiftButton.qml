@@ -1,4 +1,5 @@
 // This is the source to QtQuick2's Material CheckBox with some changes to make it smaller
+import "../Constants"
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Controls.Material 2.12
@@ -12,7 +13,9 @@ T.Button {
     property color disabledColor: control.Material.buttonDisabledColor
     property color highlightedColor: control.Material.highlightedButtonColor
     property color color: control.Material.buttonColor
+    property color invertedColor: Constants.swiftWhite
     property bool showAccent: true
+    property bool invertColor: false
 
     implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset, implicitContentWidth + leftPadding + rightPadding)
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset, implicitContentHeight + topPadding + bottomPadding)
@@ -41,7 +44,7 @@ T.Button {
         implicitWidth: 64
         implicitHeight: control.Material.buttonHeight
         radius: 2
-        color: !control.enabled ? control.disabledColor : control.highlighted ? highlightedColor : color
+        color: !control.enabled ? control.disabledColor : control.highlighted ? control.highlightedColor : control.invertColor ? control.invertedColor : control.color
         // The layer is disabled when the button color is transparent so you can do
         // Material.background: "transparent" and get a proper flat button without needing
         // to set Material.elevation as well
@@ -55,8 +58,7 @@ T.Button {
             topPadding: -2
             clip: true
             visible: showAccent && control.checkable && (!control.highlighted || control.flat)
-            // color: control.checked && control.enabled ? control.Material.accentColor : control.Material.secondaryTextColor
-            color: control.checked && control.enabled ? (control.invertColor ? control.Material.secondaryTextColor : control.Material.accentColor) : (control.invertColor ? control.Material.accentColor : control.Material.secondaryTextColor)
+            color: control.checked && control.enabled ? control.Material.accentColor : control.Material.secondaryTextColor
         }
 
         Ripple {

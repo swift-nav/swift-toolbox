@@ -1,3 +1,4 @@
+import "../BaseComponents"
 import "../Constants"
 import QtQuick 2.6
 import QtQuick.Controls 2.15
@@ -81,7 +82,7 @@ Item {
                     Layout.preferredHeight: Constants.networking.refreshButtonHeight
                     Layout.fillWidth: true
 
-                    Button {
+                    SwiftButton {
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.verticalCenterOffset: Constants.networking.refreshButtonVerticalOffset
                         ToolTip.visible: hovered

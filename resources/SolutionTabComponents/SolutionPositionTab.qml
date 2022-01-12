@@ -48,7 +48,7 @@ Item {
             Layout.alignment: Qt.AlignLeft
             Layout.leftMargin: Constants.solutionPosition.navBarMargin
 
-            Button {
+            SwiftButton {
                 id: solutionPauseButton
 
                 ButtonGroup.group: solutionButtonGroup
@@ -77,7 +77,7 @@ Item {
 
             }
 
-            Button {
+            SwiftButton {
                 id: solutionClearButton
 
                 ButtonGroup.group: solutionButtonGroup
@@ -105,7 +105,7 @@ Item {
 
             }
 
-            Button {
+            SwiftButton {
                 id: solutionZoomAllButton
 
                 onClicked: {
@@ -143,7 +143,7 @@ Item {
 
             }
 
-            Button {
+            SwiftButton {
                 id: solutionCenterButton
 
                 onClicked: {

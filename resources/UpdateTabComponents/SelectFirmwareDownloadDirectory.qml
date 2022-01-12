@@ -49,7 +49,7 @@ Item {
             Layout.fillHeight: true
         }
 
-        Button {
+        SwiftButton {
             id: directorySelectionButton
 
             Layout.preferredWidth: Constants.updateTab.firmwareVersionLocalFileButtonWidth

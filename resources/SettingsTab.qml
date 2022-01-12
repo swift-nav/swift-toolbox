@@ -178,7 +178,7 @@ MainTab {
                 columns: 5
                 rows: 2
 
-                Button {
+                SwiftButton {
                     Layout.columnSpan: 1
                     Layout.rowSpan: 1
                     Layout.preferredWidth: parent.colWidth
@@ -193,7 +193,7 @@ MainTab {
                     onClicked: data_model.settings_save_request()
                 }
 
-                Button {
+                SwiftButton {
                     Layout.columnSpan: 1
                     Layout.rowSpan: 1
                     Layout.preferredWidth: parent.colWidth
@@ -208,7 +208,7 @@ MainTab {
                     onClicked: exportDialog.visible = true
                 }
 
-                Button {
+                SwiftButton {
                     Layout.columnSpan: 1
                     Layout.rowSpan: 1
                     Layout.preferredWidth: parent.colWidth
@@ -223,7 +223,7 @@ MainTab {
                     onClicked: importDialog.visible = true
                 }
 
-                Button {
+                SwiftButton {
                     Layout.columnSpan: 1
                     Layout.rowSpan: 1
                     Layout.preferredWidth: parent.colWidth
@@ -238,7 +238,7 @@ MainTab {
                     onClicked: resetDialog.visible = true
                 }
 
-                Button {
+                SwiftButton {
                     id: autoSurveyButton
 
                     property bool buttonEnabled: (selectedRowField("group") === "surveyed_position")
@@ -266,7 +266,7 @@ MainTab {
                     }
                 }
 
-                Button {
+                SwiftButton {
                     id: refreshButton
 
                     Layout.columnSpan: 1

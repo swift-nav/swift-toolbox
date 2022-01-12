@@ -1,3 +1,4 @@
+import "BaseComponents"
 import "Constants"
 import QtQuick 2.15
 import QtQuick.Controls 2.15
@@ -78,6 +79,20 @@ Item {
                 stack.mainView();
             }
 
+            ToolTip {
+                id: tooltip
+
+                visible: connectButton.state == Constants.connection.connected && mouseArea.containsMouse
+                text: "Disconnect before connecting to a new device."
+            }
+
+            MouseArea {
+                id: mouseArea
+
+                anchors.fill: parent
+                hoverEnabled: true
+            }
+
             ColumnLayout {
                 anchors.fill: parent
 
@@ -121,6 +136,7 @@ Item {
                     rows: 2
                     visible: serialRadio.checked
                     flow: GridLayout.TopToBottom
+                    enabled: connectButton.state !== Constants.connection.connected
 
                     Label {
                         Layout.leftMargin: Constants.connection.labelLeftMargin
@@ -212,6 +228,7 @@ Item {
                     rows: 2
                     visible: tcpRadio.checked
                     flow: GridLayout.TopToBottom
+                    enabled: connectButton.state !== Constants.connection.connected
 
                     Label {
                         Layout.leftMargin: Constants.connection.labelLeftMargin
@@ -274,6 +291,7 @@ Item {
                     rows: 2
                     visible: fileRadio.checked
                     flow: GridLayout.TopToBottom
+                    enabled: connectButton.state !== Constants.connection.connected
 
                     Label {
                         Layout.leftMargin: Constants.connection.labelLeftMargin
@@ -317,7 +335,18 @@ Item {
                         Layout.fillWidth: true
                     }
 
-                    Button {
+                    SwiftButton {
+                        id: closeButton
+
+                        text: "Close"
+                        Layout.preferredWidth: parent.width / 4
+                        checkable: false
+                        onClicked: {
+                            dialog.close();
+                        }
+                    }
+
+                    SwiftButton {
                         id: connectButton
 
                         property string tooltipText: "Connect"
@@ -359,6 +388,11 @@ Item {
                                     tooltipText: "Disconnect"
                                 }
 
+                                PropertyChanges {
+                                    target: dialog
+                                    title: "Connecting..."
+                                }
+
                             },
                             State {
                                 name: Constants.connection.connected
@@ -369,6 +403,11 @@ Item {
                                     checked: true
                                     text: "Disconnect"
                                     tooltipText: "Disconnect"
+                                }
+
+                                PropertyChanges {
+                                    target: dialog
+                                    title: "Connected to device."
                                 }
 
                             },
@@ -383,6 +422,11 @@ Item {
                                     tooltipText: "Disconnecting"
                                 }
 
+                                PropertyChanges {
+                                    target: dialog
+                                    title: "Disconnecting..."
+                                }
+
                             },
                             State {
                                 name: Constants.connection.disconnected
@@ -393,6 +437,11 @@ Item {
                                     checked: false
                                     text: "Connect"
                                     tooltipText: "Connect"
+                                }
+
+                                PropertyChanges {
+                                    target: dialog
+                                    title: "Connect to device."
                                 }
 
                             }

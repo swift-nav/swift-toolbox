@@ -15,6 +15,7 @@ Item {
     property alias check_labels: trackingSignalsPoints.check_labels
     property alias num_labels: trackingSignalsPoints.num_labels
     property variant check_visibility: []
+    property var emptySeries: null
 
     TrackingSignalsPoints {
         id: trackingSignalsPoints
@@ -87,6 +88,13 @@ Item {
                     if (!trackingSignalsTab.visible)
                         return ;
 
+                    if (emptySeries == null) {
+                        emptySeries = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, "", trackingSignalsXAxis);
+                        emptySeries.axisYRight = trackingSignalsYAxis;
+                        emptySeries.width = Constants.commonChart.lineWidth;
+                        emptySeries.useOpenGL = Globals.useOpenGL;
+                        trackingSignalsPoints.addEmptySeries(emptySeries);
+                    }
                     if (all_series.length < num_labels) {
                         for (var i = all_series.length; i < num_labels; i++) {
                             var series = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, trackingSignalsPoints.getLabel(i), trackingSignalsXAxis);
@@ -97,11 +105,6 @@ Item {
                             trackingSignalsPoints.addSeries(series);
                         }
                     }
-                    var series = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, "", trackingSignalsXAxis);
-                    series.axisYRight = trackingSignalsYAxis;
-                    series.width = Constants.commonChart.lineWidth;
-                    series.useOpenGL = Globals.useOpenGL;
-                    trackingSignalsPoints.addSeries(series);
                     trackingSignalsPoints.fill_all_series();
                     trackingSignalsChart.visible = true;
                     trackingSignalsXAxis.min = trackingSignalsPoints.xaxis_min;

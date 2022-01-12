@@ -1,7 +1,7 @@
 """Tracking Signals Tab QObjects.
 """
 
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 
 from PySide2.QtCore import Property, QObject, Signal, Slot
 from PySide2.QtCharts import QtCharts
@@ -24,6 +24,7 @@ class TrackingSignalsPoints(QObject):
     _xaxis_min: float = 0.0
     _xaxis_max: float = 0.0
     _check_labels: List[str] = []
+    _empty_series: Optional[QtCharts.QXYSeries] = None
     _all_series: List[QtCharts.QXYSeries] = []
     _enabled_series: List[QtCharts.QXYSeries] = []
     num_labels_changed = Signal(int, arguments="num_labels")
@@ -76,13 +77,21 @@ class TrackingSignalsPoints(QObject):
         self._all_series.append(series)
         self.all_series_changed.emit()  # type: ignore
 
+    @Slot(QtCharts.QAbstractSeries)  # type: ignore
+    def addEmptySeries(self, series) -> None:
+        """Store a QML created series in empty_series"""
+        self._empty_series = series
+
     @Slot()  # type: ignore
     def fill_all_series(self) -> None:
         cur_num_labels = len(TRACKING_SIGNALS_TAB[Keys.LABELS])
         if self._num_labels != cur_num_labels:
             self._num_labels = cur_num_labels
             self.num_labels_changed.emit(cur_num_labels)  # type: ignore
-        points_for_all_series = TRACKING_SIGNALS_TAB[Keys.POINTS]
+        all_points = TRACKING_SIGNALS_TAB[Keys.POINTS]
+        points_for_all_series = all_points[:-1]
+        if self._empty_series is not None and len(all_points) > 0:
+            self._empty_series.replace(all_points[-1])
 
         labels = TRACKING_SIGNALS_TAB[Keys.LABELS]
         colors = TRACKING_SIGNALS_TAB[Keys.COLORS]
@@ -90,12 +99,12 @@ class TrackingSignalsPoints(QObject):
             self._check_labels = TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS]
             self.check_labels_changed.emit()  # type: ignore
 
-        if len(points_for_all_series) != 0:
-            xaxis_min = points_for_all_series[0][-1].x() + TRACKING_SIGNALS_TAB[Keys.XMIN_OFFSET]
+        if len(all_points) != 0:
+            xaxis_min = all_points[0][-1].x() + TRACKING_SIGNALS_TAB[Keys.XMIN_OFFSET]
             if self._xaxis_min != xaxis_min:
                 self._xaxis_min = xaxis_min
                 self.xaxis_min_changed.emit()  # type: ignore
-            xaxis_max = points_for_all_series[0][-1].x()
+            xaxis_max = all_points[0][-1].x()
             if self._xaxis_max != xaxis_max:
                 self._xaxis_max = xaxis_max
                 self.xaxis_max_changed.emit()  # type: ignore

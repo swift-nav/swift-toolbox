@@ -30,6 +30,7 @@ T.CheckBox {
         x: control.text ? (control.mirrored ? control.width - width - control.rightPadding : control.leftPadding) : control.leftPadding + (control.availableWidth - width) / 2
         y: control.topPadding + (control.availableHeight - height) / 2
         control: control
+        border.color: !control.enabled ? control.Material.hintTextColor : Color.blend(Constants.sideNavBar.backgroundColor, control.palette.mid, control.checked ? 0.5 : 0)
 
         Ripple {
             x: (parent.width - width) / 2
@@ -40,7 +41,7 @@ T.CheckBox {
             anchor: control
             pressed: control.pressed
             active: control.down || control.visualFocus || control.hovered
-            color: control.checked ? control.Material.highlightedRippleColor : control.Material.rippleColor
+            color: control.Material.rippleColor
         }
 
     }

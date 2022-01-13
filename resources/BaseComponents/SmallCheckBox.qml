@@ -30,7 +30,7 @@ T.CheckBox {
         x: control.text ? (control.mirrored ? control.width - width - control.rightPadding : control.leftPadding) : control.leftPadding + (control.availableWidth - width) / 2
         y: control.topPadding + (control.availableHeight - height) / 2
         control: control
-        border.color: !control.enabled ? control.Material.hintTextColor : control.Material.secondaryTextColor
+        border.color: !control.enabled ? control.Material.hintTextColor : Color.blend(Constants.sideNavBar.backgroundColor, control.palette.mid, control.checked ? 0.5 : 0)
 
         Ripple {
             x: (parent.width - width) / 2

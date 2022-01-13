@@ -177,6 +177,7 @@ MainTab {
                 columnSpacing: 2
                 columns: 5
                 rows: 2
+                enabled: settingsTable.settingsHealthy
 
                 SwiftButton {
                     Layout.columnSpan: 1

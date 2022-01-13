@@ -66,8 +66,8 @@ Item {
             id: dialog
 
             visible: stack.connectionScreenVisible()
-            implicitHeight: 3 * parent.height / 7
-            implicitWidth: parent.width / 2
+            implicitHeight: 3 * Globals.height / 7
+            implicitWidth: Globals.width / 2
             anchors.centerIn: parent
             title: "Connect to device..."
             onVisibleChanged: {
@@ -77,20 +77,6 @@ Item {
             }
             onClosed: {
                 stack.mainView();
-            }
-
-            ToolTip {
-                id: tooltip
-
-                visible: connectButton.state == Constants.connection.connected && mouseArea.containsMouse
-                text: "Disconnect before connecting to a new device."
-            }
-
-            MouseArea {
-                id: mouseArea
-
-                anchors.fill: parent
-                hoverEnabled: true
             }
 
             ColumnLayout {
@@ -131,201 +117,219 @@ Item {
 
                 }
 
-                GridLayout {
-                    rowSpacing: Constants.connection.labelRowSpacing
-                    rows: 2
-                    visible: serialRadio.checked
-                    flow: GridLayout.TopToBottom
-                    enabled: connectButton.state !== Constants.connection.connected
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
 
-                    Label {
-                        Layout.leftMargin: Constants.connection.labelLeftMargin
-                        text: Constants.connection.serialLabel
+                    ToolTip {
+                        id: tooltip
+
+                        visible: connectButton.state == Constants.connection.connected && mouseArea.containsMouse
+                        text: "Disconnect before connecting to a new device."
                     }
 
-                    ComboBox {
-                        id: serialDevice
+                    MouseArea {
+                        id: mouseArea
 
-                        Layout.preferredHeight: Constants.connection.dropdownHeight
-                        Layout.fillWidth: true
-                        model: available_devices
-                        onActivated: {
-                            restore_previous_serial_settings(available_devices[currentIndex]);
-                        }
-                        Keys.onReturnPressed: {
-                            connectButton.clicked();
-                        }
+                        anchors.fill: parent
+                        hoverEnabled: true
                     }
 
-                    Label {
-                    }
+                    GridLayout {
+                        anchors.fill: parent
+                        rowSpacing: Constants.connection.labelRowSpacing
+                        rows: 2
+                        visible: serialRadio.checked
+                        flow: GridLayout.TopToBottom
+                        enabled: connectButton.state !== Constants.connection.connected
 
-                    Button {
-                        id: serialDeviceRefresh
-
-                        Layout.preferredHeight: Constants.connection.buttonHeight
-                        Layout.preferredWidth: Constants.connection.serialDeviceRefreshWidth
-                        icon.source: Constants.icons.refreshPath
-                        icon.color: checked ? Constants.swiftOrange : Constants.materialGrey
-                        onClicked: {
-                            data_model.serial_refresh();
-                        }
-                    }
-
-                    Label {
-                        Layout.leftMargin: Constants.connection.labelLeftMargin
-                        text: Constants.connection.baudrateLabel
-                    }
-
-                    ComboBox {
-                        id: serialDeviceBaudRate
-
-                        Layout.preferredHeight: Constants.connection.dropdownHeight
-                        Layout.preferredWidth: Constants.connection.serialDeviceBaudRateDropdownWidth
-                        model: available_baudrates
-                        Keys.onReturnPressed: {
-                            connectButton.clicked();
-                        }
-                    }
-
-                    Label {
-                        Layout.leftMargin: Constants.connection.labelLeftMargin
-                        text: Constants.connection.flowLabel
-                    }
-
-                    ComboBox {
-                        id: serialDeviceFlowControl
-
-                        Layout.preferredHeight: Constants.connection.dropdownHeight
-                        Layout.preferredWidth: Constants.connection.serialDeviceFlowControlDropdownWidth
-                        model: available_flows
-                        Keys.onReturnPressed: {
-                            connectButton.clicked();
+                        Label {
+                            Layout.leftMargin: Constants.connection.labelLeftMargin
+                            text: Constants.connection.serialLabel
                         }
 
-                        states: State {
-                            when: serialDeviceFlowControl.down
+                        ComboBox {
+                            id: serialDevice
 
-                            PropertyChanges {
-                                target: serialDeviceFlowControl
-                                width: Constants.connection.serialDeviceFlowControlDropdownWidth * 1.1
+                            Layout.preferredHeight: Constants.connection.dropdownHeight
+                            Layout.fillWidth: true
+                            model: available_devices
+                            onActivated: {
+                                restore_previous_serial_settings(available_devices[currentIndex]);
+                            }
+                            Keys.onReturnPressed: {
+                                connectButton.clicked();
+                            }
+                        }
+
+                        Label {
+                        }
+
+                        Button {
+                            id: serialDeviceRefresh
+
+                            Layout.preferredHeight: Constants.connection.buttonHeight
+                            Layout.preferredWidth: Constants.connection.serialDeviceRefreshWidth
+                            icon.source: Constants.icons.refreshPath
+                            icon.color: checked ? Constants.swiftOrange : Constants.materialGrey
+                            onClicked: {
+                                data_model.serial_refresh();
+                            }
+                        }
+
+                        Label {
+                            Layout.leftMargin: Constants.connection.labelLeftMargin
+                            text: Constants.connection.baudrateLabel
+                        }
+
+                        ComboBox {
+                            id: serialDeviceBaudRate
+
+                            Layout.preferredHeight: Constants.connection.dropdownHeight
+                            Layout.preferredWidth: Constants.connection.serialDeviceBaudRateDropdownWidth
+                            model: available_baudrates
+                            Keys.onReturnPressed: {
+                                connectButton.clicked();
+                            }
+                        }
+
+                        Label {
+                            Layout.leftMargin: Constants.connection.labelLeftMargin
+                            text: Constants.connection.flowLabel
+                        }
+
+                        ComboBox {
+                            id: serialDeviceFlowControl
+
+                            Layout.preferredHeight: Constants.connection.dropdownHeight
+                            Layout.preferredWidth: Constants.connection.serialDeviceFlowControlDropdownWidth
+                            model: available_flows
+                            Keys.onReturnPressed: {
+                                connectButton.clicked();
+                            }
+
+                            states: State {
+                                when: serialDeviceFlowControl.down
+
+                                PropertyChanges {
+                                    target: serialDeviceFlowControl
+                                    width: Constants.connection.serialDeviceFlowControlDropdownWidth * 1.1
+                                }
+
+                            }
+
+                        }
+
+                        Item {
+                            id: serialDeviceFill
+
+                            Layout.fillWidth: true
+                        }
+
+                    }
+
+                    GridLayout {
+                        anchors.fill: parent
+                        rowSpacing: Constants.connection.labelRowSpacing
+                        rows: 2
+                        visible: tcpRadio.checked
+                        flow: GridLayout.TopToBottom
+                        enabled: connectButton.state !== Constants.connection.connected
+
+                        Label {
+                            Layout.leftMargin: Constants.connection.labelLeftMargin
+                            text: Constants.connection.hostLabel
+                        }
+
+                        ComboBox {
+                            id: tcpUrlBar
+
+                            Layout.fillWidth: true
+                            model: previous_hosts
+                            editable: true
+                            selectTextByMouse: true
+                            onAccepted: {
+                                connectButton.clicked();
+                            }
+
+                            Label {
+                                anchors.fill: parent.contentItem
+                                anchors.leftMargin: 4
+                                verticalAlignment: Text.AlignVCenter
+                                text: "Host"
+                                color: Constants.connection.placeholderTextColor
+                                visible: (!tcpUrlBar.editText)
+                            }
+
+                        }
+
+                        Label {
+                            Layout.leftMargin: Constants.connection.labelLeftMargin
+                            text: Constants.connection.portLabel
+                        }
+
+                        ComboBox {
+                            id: tcpPortBar
+
+                            Layout.preferredWidth: parent.width / 4
+                            model: previous_ports
+                            editable: true
+                            selectTextByMouse: true
+                            onAccepted: {
+                                connectButton.clicked();
+                            }
+
+                            Label {
+                                anchors.fill: parent.contentItem
+                                anchors.leftMargin: 4
+                                verticalAlignment: Text.AlignVCenter
+                                text: "Port"
+                                color: Constants.connection.placeholderTextColor
+                                visible: !tcpPortBar.editText
                             }
 
                         }
 
                     }
 
-                    Item {
-                        id: serialDeviceFill
-
-                        Layout.fillWidth: true
-                    }
-
-                }
-
-                GridLayout {
-                    rowSpacing: Constants.connection.labelRowSpacing
-                    rows: 2
-                    visible: tcpRadio.checked
-                    flow: GridLayout.TopToBottom
-                    enabled: connectButton.state !== Constants.connection.connected
-
-                    Label {
-                        Layout.leftMargin: Constants.connection.labelLeftMargin
-                        text: Constants.connection.hostLabel
-                    }
-
-                    ComboBox {
-                        id: tcpUrlBar
-
-                        Layout.fillWidth: true
-                        model: previous_hosts
-                        editable: true
-                        selectTextByMouse: true
-                        onAccepted: {
-                            connectButton.clicked();
-                        }
+                    GridLayout {
+                        anchors.fill: parent
+                        rowSpacing: Constants.connection.labelRowSpacing
+                        rows: 2
+                        visible: fileRadio.checked
+                        flow: GridLayout.TopToBottom
+                        enabled: connectButton.state !== Constants.connection.connected
 
                         Label {
-                            anchors.fill: parent.contentItem
-                            anchors.leftMargin: 4
-                            verticalAlignment: Text.AlignVCenter
-                            text: "Host"
-                            color: Constants.connection.placeholderTextColor
-                            visible: (!tcpUrlBar.editText)
+                            Layout.leftMargin: Constants.connection.labelLeftMargin
+                            text: Constants.connection.fileLabel
+                        }
+
+                        ComboBox {
+                            id: fileUrlBar
+
+                            Layout.alignment: Qt.AlignLeft
+                            Layout.fillWidth: true
+                            model: previous_files
+                            editable: true
+                            selectTextByMouse: true
+                            onAccepted: {
+                                connectButton.clicked();
+                            }
+
+                            Label {
+                                anchors.fill: parent.contentItem
+                                anchors.leftMargin: 4
+                                verticalAlignment: Text.AlignVCenter
+                                text: "path/to/file"
+                                color: Constants.connection.placeholderTextColor
+                                visible: !fileUrlBar.editText
+                            }
+
                         }
 
                     }
 
-                    Label {
-                        Layout.leftMargin: Constants.connection.labelLeftMargin
-                        text: Constants.connection.portLabel
-                    }
-
-                    ComboBox {
-                        id: tcpPortBar
-
-                        Layout.preferredWidth: parent.width / 4
-                        model: previous_ports
-                        editable: true
-                        selectTextByMouse: true
-                        onAccepted: {
-                            connectButton.clicked();
-                        }
-
-                        Label {
-                            anchors.fill: parent.contentItem
-                            anchors.leftMargin: 4
-                            verticalAlignment: Text.AlignVCenter
-                            text: "Port"
-                            color: Constants.connection.placeholderTextColor
-                            visible: !tcpPortBar.editText
-                        }
-
-                    }
-
-                }
-
-                GridLayout {
-                    rowSpacing: Constants.connection.labelRowSpacing
-                    rows: 2
-                    visible: fileRadio.checked
-                    flow: GridLayout.TopToBottom
-                    enabled: connectButton.state !== Constants.connection.connected
-
-                    Label {
-                        Layout.leftMargin: Constants.connection.labelLeftMargin
-                        text: Constants.connection.fileLabel
-                    }
-
-                    ComboBox {
-                        id: fileUrlBar
-
-                        Layout.alignment: Qt.AlignLeft
-                        Layout.fillWidth: true
-                        model: previous_files
-                        editable: true
-                        selectTextByMouse: true
-                        onAccepted: {
-                            connectButton.clicked();
-                        }
-
-                        Label {
-                            anchors.fill: parent.contentItem
-                            anchors.leftMargin: 4
-                            verticalAlignment: Text.AlignVCenter
-                            text: "path/to/file"
-                            color: Constants.connection.placeholderTextColor
-                            visible: !fileUrlBar.editText
-                        }
-
-                    }
-
-                }
-
-                Item {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
                 }
 
                 RowLayout {
@@ -486,9 +490,10 @@ Item {
                         warningTimer.startTimer();
                     }
                     connectButton.state = connectionData.conn_state.toLowerCase();
-                    if ([disconnectedConstant, connectingConstant].includes(Globals.conn_state) && connectionData.conn_state == connectedConstant)
+                    if ([disconnectedConstant, connectingConstant].includes(Globals.conn_state) && connectionData.conn_state == connectedConstant) {
+                        connectionMessage.visible = false;
                         stack.mainView();
-
+                    }
                     Globals.conn_state = connectionData.conn_state;
                 }
             }

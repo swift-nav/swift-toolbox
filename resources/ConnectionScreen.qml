@@ -338,7 +338,7 @@ Item {
                     SwiftButton {
                         id: closeButton
 
-                        text: "Close"
+                        text: "Cancel"
                         Layout.preferredWidth: parent.width / 4
                         checkable: false
                         onClicked: {

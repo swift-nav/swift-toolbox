@@ -30,6 +30,7 @@ Item {
         ChartView {
             id: trackingSignalsChart
 
+            Layout.preferredHeight: parent.height
             Layout.fillHeight: true
             Layout.fillWidth: true
             visible: all_series.length > 0
@@ -126,6 +127,7 @@ Item {
             rowSpacing: 0
             Layout.margins: 0
             Layout.alignment: Qt.AlignHCenter
+            Layout.preferredHeight: 20
 
             SmallCheckBox {
                 id: toggleAllCheckBox

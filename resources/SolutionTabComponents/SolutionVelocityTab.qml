@@ -12,8 +12,7 @@ Item {
     property variant labels: ["Horizontal", "Vertical"]
     property variant lines: []
     property variant colors: []
-    property variant available_units: []
-    property variant unit: ""
+    property variant available_units: ["m/s", "mph", "kph"]
 
     SolutionVelocityPoints {
         id: solutionVelocityPoints
@@ -23,7 +22,7 @@ Item {
         id: solutionVelocityArea
 
         anchors.fill: parent
-        visible: false
+        visible: true
         spacing: 0
 
         ComboBox {
@@ -36,7 +35,7 @@ Item {
             Layout.preferredWidth: Constants.solutionVelocity.unitDropdownWidth
             model: available_units
             onCurrentIndexChanged: {
-                if (!available_units)
+                if (!lines.length)
                     return ;
 
                 data_model.solution_velocity_unit(available_units[currentIndex]);
@@ -129,6 +128,24 @@ Item {
                 id: solutionVelocityYAxis
 
                 titleText: solutionVelocitySelectedUnit.currentText
+            }
+
+            LineSeries {
+                name: "emptySeries"
+                axisYRight: solutionVelocityYAxis
+                axisX: solutionVelocityXAxis
+                color: "transparent"
+
+                XYPoint {
+                    x: 0
+                    y: 0
+                }
+
+                XYPoint {
+                    x: 1
+                    y: 1
+                }
+
             }
 
             Timer {

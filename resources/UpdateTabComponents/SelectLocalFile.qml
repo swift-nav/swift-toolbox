@@ -48,7 +48,7 @@ Item {
             Layout.fillHeight: true
         }
 
-        Button {
+        SwiftButton {
             id: localFileSelectionButton
 
             Layout.preferredWidth: Constants.updateTab.firmwareVersionLocalFileButtonWidth

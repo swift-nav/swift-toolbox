@@ -1,3 +1,4 @@
+import "../BaseComponents"
 import "../Constants"
 import QtQuick 2.5
 import QtQuick.Controls 2.15
@@ -32,7 +33,7 @@ Item {
                 Layout.rightMargin: Constants.updateTab.innerMargins
             }
 
-            Button {
+            SwiftButton {
                 id: downloadFirmwareButton
 
                 Layout.alignment: Qt.AlignBottom

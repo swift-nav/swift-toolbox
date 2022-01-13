@@ -248,6 +248,8 @@ ApplicationWindow {
 
             function connectionScreen() {
                 stack.currentIndex = 0;
+                sideNavBar.currentIndex = -1;
+                sideNavBar.checkedButton = null;
             }
 
             function connectionScreenVisible() {

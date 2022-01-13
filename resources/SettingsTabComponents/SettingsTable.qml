@@ -14,6 +14,7 @@ Rectangle {
     property bool showExpert: false
     property bool lastShowExpert: false
     property alias table: settingsTableEntries.entries
+    property bool settingsHealthy: false
     property real mouse_x: 0
 
     function isHeader(entry) {
@@ -168,9 +169,6 @@ Rectangle {
         SwiftTableView {
             id: tableView
 
-            onVisibleChanged: {
-                tableView.model.clear();
-            }
             columnWidths: parent.columnWidths
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -244,11 +242,10 @@ Rectangle {
                 settings_table_model.fill_console_points(settingsTableEntries);
                 var entries = settingsTableEntries.entries;
                 if (!entries.length) {
-                    selectedRowIdx = -1;
-                    tableView.model.clear();
-                    tableView.forceLayout();
+                    settingsHealthy = false;
                     return ;
                 }
+                settingsHealthy = true;
                 if (lastShowExpert != showExpert) {
                     tableView.model.clear();
                     rowOffsets = {

@@ -42,7 +42,7 @@ Rectangle {
             id: csvLoggingButton
 
             Layout.preferredHeight: parent.preferredButtonHeight
-            color: Constants.swiftControlBackground
+            invertColor: true
             text: "CSV Log"
             ToolTip.visible: hovered
             ToolTip.text: !checked ? "On" : "Off"
@@ -54,7 +54,7 @@ Rectangle {
         SwiftButton {
             id: sbpLoggingButton
 
-            color: Constants.swiftControlBackground
+            invertColor: true
             icon.source: checked ? Constants.icons.squareSolidPath : Constants.icons.solidCirclePath
             icon.color: checked ? "red" : Constants.materialGrey
             checkable: true
@@ -201,6 +201,7 @@ Rectangle {
                 SwiftButton {
                     id: folderBarButton
 
+                    invertColor: true
                     Layout.preferredWidth: Constants.loggingBar.folderButtonWidth
                     Layout.preferredHeight: loggingBarRowLayout.preferredButtonHeight
                     ToolTip.visible: hovered

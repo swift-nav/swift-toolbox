@@ -1,3 +1,4 @@
+import "../BaseComponents"
 import "../Constants"
 import Qt.labs.qmlmodels 1.0
 import QtCharts 2.2
@@ -136,7 +137,7 @@ Item {
 
         }
 
-        Button {
+        SwiftButton {
             id: resetButton
 
             ToolTip.visible: hovered

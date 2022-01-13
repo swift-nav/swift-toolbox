@@ -25,8 +25,7 @@ Item {
 
     }
 
-    width: parent.width
-    height: parent.height
+    implicitWidth: Constants.solutionTable.minimumWidth
 
     BaselineTableEntries {
         id: baselineTableEntries

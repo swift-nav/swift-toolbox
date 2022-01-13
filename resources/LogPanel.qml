@@ -26,6 +26,7 @@ Item {
         z: Constants.logPanel.zAboveTable
 
         SwiftButton {
+            invertColor: true
             width: Constants.logPanel.pauseButtonWidth
             height: Constants.logPanel.pauseButtonWidth
             padding: Constants.logPanel.pauseButtonPadding
@@ -58,6 +59,7 @@ Item {
         z: Constants.logPanel.zAboveTable
 
         SwiftButton {
+            invertColor: true
             visible: !consolePaused
             width: Constants.logPanel.pauseButtonWidth
             height: Constants.logPanel.pauseButtonWidth

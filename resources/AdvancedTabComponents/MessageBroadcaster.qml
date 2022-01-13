@@ -1,3 +1,4 @@
+import "../BaseComponents"
 import "../Constants"
 import QtQuick 2.15
 import QtQuick.Controls 2.15
@@ -254,7 +255,7 @@ Item {
                 Layout.fillHeight: true
                 Layout.preferredWidth: parent.width / 2
 
-                Button {
+                SwiftButton {
                     id: startButton
 
                     width: parent.width
@@ -294,7 +295,7 @@ Item {
                 Layout.fillHeight: true
                 Layout.preferredWidth: parent.width / 2
 
-                Button {
+                SwiftButton {
                     id: stopButton
 
                     enabled: false

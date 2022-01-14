@@ -12,7 +12,8 @@ ColumnLayout {
     property bool populated: observationTableModel ? observationTableModel.row_count > 0 : false
     property variant avgWidth: parent.width / 8
     property variant columnWidths: [parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 16, 3 * parent.width / 16]
-    property variant columnNames: ["PRN", "Pseudorange (m)", "Carrier Phase (cycles)", "C/N0 (dB-Hz)", "Meas. Doppler (Hz)", "Comp. Doppler (Hz)", "Lock", "Flags"]
+    property variant columnNames: ["PRN", "Pseudorange [m]", "Carrier Phase [cycles]", "C/N0 [dB-Hz]", "Meas. Doppler [Hz]", "Comp. Doppler [Hz]", "Lock", "Flags"]
+    property variant columnAlignments: [Text.AlignLeft, Text.AlignRight, Text.AlignRight, Text.AlignRight, Text.AlignRight, Text.AlignRight, Text.AlignRight, Text.AlignLeft]
     property real mouse_x: 0
 
     function update() {
@@ -56,7 +57,7 @@ ColumnLayout {
         Label {
             id: towLabel
 
-            text: "TOW:"
+            text: "TOW [s]:"
             padding: parent.textPadding
             ToolTip.text: "GPS milliseconds in week"
         }
@@ -185,6 +186,7 @@ ColumnLayout {
         Layout.fillHeight: true
         Layout.fillWidth: true
         columnWidths: parent.columnWidths
+        columnAlignments: parent.columnAlignments
         model: observationTableModel
     }
 

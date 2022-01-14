@@ -18,11 +18,22 @@ QtObject {
     property var tablesWithHighlights: []
     property var currentSelectedTable: null
     property bool showFileConnection: false
+    property QtObject updateTabData
 
     function clearHighlightedRows() {
         for (var i in tablesWithHighlights) {
             tablesWithHighlights[i].selectedRow = -1;
         }
+    }
+
+    updateTabData: QtObject {
+        property bool consoleOutdated: false
+        property bool fwV2Outdated: false
+        property bool fwOutdated: false
+        property string fwVersionCurrent: ""
+        property string fwVersionLatest: ""
+        property string consoleVersionCurrent: ""
+        property string consoleVersionLatest: ""
     }
 
 }

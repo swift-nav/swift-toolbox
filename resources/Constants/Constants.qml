@@ -41,6 +41,7 @@ QtObject {
     readonly property int staticTimerIntervalRate: 5 // 5 Hz
     readonly property int staticTableTimerIntervalRate: 10 // 10 Hz
     readonly property int staticTimerSlowIntervalRate: 2 // 2 Hz
+    readonly property int staticTimerNotificationIntervalRate: 1 // 1 Hz
     readonly property string monoSpaceFont: "Courier New"
     readonly property string fontFamily: "Roboto Condensed"
     property FontLoader robotoCondensedLightFont

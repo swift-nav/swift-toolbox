@@ -63,6 +63,7 @@
     <file>LogoPopupComponents/AboutMe.qml</file>
     <file>LogoPopup.qml</file>
     <file>UpdateTab.qml</file>
+    <file>UpdateNotifications.qml</file>
     <file>UpdateTabComponents/FirmwareVersionAndDownloadLabels.qml</file>
     <file>UpdateTabComponents/FirmwareRevision.qml</file>
     <file>UpdateTabComponents/SelectLocalFile.qml</file>

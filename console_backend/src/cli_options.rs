@@ -140,6 +140,10 @@ pub struct CliOptions {
     #[clap(long = "show-csv-log")]
     pub show_csv_log: bool,
 
+    /// Don't show prompts about firmware/console updates.
+    #[clap(long = "no-prompts")]
+    pub no_prompts: bool,
+
     /// Set the height of the main window.
     #[clap(long)]
     pub height: Option<u32>,

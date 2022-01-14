@@ -178,7 +178,7 @@ Item {
         running: true
         repeat: true
         onTriggered: {
-            if (!popupLock) {
+            if (!popupLock && Globals.showPrompts) {
                 if (Globals.updateTabData.consoleVersionLatest) {
                     if (!consoleVersionDialogAlready) {
                         if (Globals.updateTabData.consoleOutdated) {

@@ -5,6 +5,7 @@ QtObject {
     property string consoleVersion: "0.0.0"
     property int currentRefreshRate: 5 // 5 Hz
     property bool useOpenGL: true
+    property bool showPrompts: true
     property int initialMainTabIndex: 0 // Tracking
     property int initialSubTabIndex: -1 // Not triggered unless greater than -1. Defaults to first tab.
     property bool showCsvLog: false

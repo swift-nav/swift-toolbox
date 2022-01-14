@@ -60,7 +60,7 @@ TableView {
         Label {
             width: parent.width
             height: parent.height
-	    horizontalAlignment: tableView.foo[column] || Text.AlignLeft
+            horizontalAlignment: tableView.foo[column] || Text.AlignLeft
             verticalAlignment: Text.AlignVCenter
             clip: true
             font: tableFont

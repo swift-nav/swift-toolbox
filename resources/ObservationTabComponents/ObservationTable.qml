@@ -13,7 +13,7 @@ ColumnLayout {
     property variant avgWidth: parent.width / 8
     property variant columnWidths: [parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 16, 3 * parent.width / 16]
     property variant columnNames: ["PRN", "Pseudorange [m]", "Carrier Phase [cycles]", "C/N0 [dB-Hz]", "Meas. Doppler [Hz]", "Comp. Doppler [Hz]", "Lock", "Flags"]
-    property variant foo: [ Text.AlignLeft, Text.AlignRight, Text.AlignRight, Text.AlignRight, Text.AlignRight, Text.AlignRight, Text.AlignRight, Text.AlignLeft ]
+    property variant foo: [Text.AlignLeft, Text.AlignRight, Text.AlignRight, Text.AlignRight, Text.AlignRight, Text.AlignRight, Text.AlignRight, Text.AlignLeft]
     property real mouse_x: 0
 
     function update() {
@@ -186,7 +186,7 @@ ColumnLayout {
         Layout.fillHeight: true
         Layout.fillWidth: true
         columnWidths: parent.columnWidths
-	foo: parent.foo
+        foo: parent.foo
         model: observationTableModel
     }
 

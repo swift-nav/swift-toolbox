@@ -56,7 +56,7 @@ ColumnLayout {
         Label {
             id: towLabel
 
-            text: "TOW:"
+            text: "TOW [s]:"
             padding: parent.textPadding
             ToolTip.text: "GPS milliseconds in week"
         }

@@ -212,7 +212,10 @@ MainTab {
                 firmwareVersion.currentVersion = updateTabData.fw_version_current;
                 firmwareVersion.latestVersion = updateTabData.fw_version_latest;
             }
-            firmwareVersion.isSerialConnected = updateTabData.serial_prompt;
+            if (updateTabData.fw_version_current)
+                firmwareVersion.isSerialConnected = updateTabData.serial_prompt;
+            else
+                firmwareVersion.isSerialConnected = false;
             if (!updateTab.visible)
                 return ;
 

@@ -124,9 +124,9 @@ pub struct CliOptions {
     #[clap(long = "show-file-connection")]
     pub show_file_connection: bool,
 
-    /// Don't use opengl in plots.
-    #[clap(long = "no-opengl", parse(from_flag = Not::not))]
-    pub no_opengl: bool,
+    /// Use OpenGL, plots will become optimized for efficiency not aesthetics and require less system resources.
+    #[clap(long = "use-opengl", parse(from_flag = Not::not))]
+    pub use_opengl: bool,
 
     /// Change the refresh rate of the plots.
     #[clap(long = "refresh-rate", validator(is_refresh_rate))]

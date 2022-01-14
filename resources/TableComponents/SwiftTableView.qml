@@ -9,7 +9,7 @@ TableView {
     property alias horizontalScrollBar: _horizontalScrollBar
     property alias verticalScrollBar: _verticalScrollBar
     property variant columnWidths: []
-    property variant foo: []
+    property variant columnAlignments: []
     property int selectedRow: -1
     property int _currentSelectedIndex: -1
     property bool stayFocused: false
@@ -60,7 +60,7 @@ TableView {
         Label {
             width: parent.width
             height: parent.height
-            horizontalAlignment: tableView.foo[column] || Text.AlignLeft
+            horizontalAlignment: tableView.columnAlignments[column] || Text.AlignLeft
             verticalAlignment: Text.AlignVCenter
             clip: true
             font: tableFont

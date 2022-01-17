@@ -111,12 +111,12 @@ pub(crate) const FIXED: &str = "Fixed RTK";
 pub(crate) const DR: &str = "Dead Reckoning";
 pub(crate) const SBAS: &str = "SBAS";
 pub(crate) const NO_FIX_COLOR: &str = "#FFFFFF";
-pub(crate) const SPP_COLOR: &str = "#0000FF";
-pub(crate) const DGNSS_COLOR: &str = "#00B3FF";
-pub(crate) const FLOAT_COLOR: &str = "#BF00BF";
-pub(crate) const FIXED_COLOR: &str = "#FFA500";
+pub(crate) const SPP_COLOR: &str = "#FF0000";
+pub(crate) const DGNSS_COLOR: &str = "#00FFFF";
+pub(crate) const FLOAT_COLOR: &str = "#0000FF";
+pub(crate) const FIXED_COLOR: &str = "#00FF00";
 pub(crate) const DR_COLOR: &str = "#000000";
-pub(crate) const SBAS_COLOR: &str = "#00FF00";
+pub(crate) const SBAS_COLOR: &str = "#FF00FF";
 
 pub(crate) const LAT_SPP: &str = "lat_SPP";
 pub(crate) const LON_SPP: &str = "lon_SPP";

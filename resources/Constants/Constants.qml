@@ -462,7 +462,7 @@ QtObject {
         readonly property string xAxisTitleText: "Longitude"
         readonly property var legendLabels: ["SPP", "SBAS", "DGPS", "RTK Float", "RTK Fixed", "DR"]
         readonly property int legendLabelSpacing: 4
-        readonly property var colors: ["#0000FF", "#008000", "#00B3FF", "#BF00BF", "#FFA500", "#000000"]
+        readonly property var colors: ["#FF0000", "#FF00FF", "#00FFFF", "#0000FF", "#00FF00", "#000000"]
     }
 
     logPanel: QtObject {

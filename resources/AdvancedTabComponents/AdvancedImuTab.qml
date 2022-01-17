@@ -87,6 +87,7 @@ Item {
                                 id: label
 
                                 text: modelData
+                                textFormat: Text.RichText
                                 font.pointSize: Constants.smallPointSize
                                 font.bold: true
                                 anchors.verticalCenter: parent.verticalCenter

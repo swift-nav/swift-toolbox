@@ -42,6 +42,13 @@ pub struct AdvancedImuTab {
     gyro_z: Deque<f64>,
 }
 
+enum AccelerometerScalingRangeUnit {
+    Gravity,
+    MetersPerSecond,
+}
+
+const GRAVITY_ACCELERATION_MS2: f64 = 9.81;
+
 impl AdvancedImuTab {
     pub fn new(client_sender: BoxedClientSender) -> AdvancedImuTab {
         AdvancedImuTab {
@@ -63,8 +70,6 @@ impl AdvancedImuTab {
 
     /// Method for preparing some rms_acc data and initiating sending of data to frontend.
     fn imu_set_data(&mut self) {
-        let acc_range = self.imu_conf & 0xF;
-        let sig_figs = f64::powi(2_f64, acc_range as i32 + 1_i32) / f64::powi(2_f64, 15);
         let (rms_x, rms_y, rms_z) = {
             let mut squared_sum_x: f64 = 0_f64;
             let mut squared_sum_y: f64 = 0_f64;
@@ -80,9 +85,9 @@ impl AdvancedImuTab {
                 f64::sqrt(squared_sum_z / self.acc_z.len() as f64),
             )
         };
-        self.rms_acc_x = sig_figs * rms_x;
-        self.rms_acc_y = sig_figs * rms_y;
-        self.rms_acc_z = sig_figs * rms_z;
+        self.rms_acc_x = self.scale_raw_acc(AccelerometerScalingRangeUnit::Gravity, &rms_x);
+        self.rms_acc_y = self.scale_raw_acc(AccelerometerScalingRangeUnit::Gravity, &rms_y);
+        self.rms_acc_z = self.scale_raw_acc(AccelerometerScalingRangeUnit::Gravity, &rms_z);
         self.send_data();
     }
 
@@ -129,20 +134,27 @@ impl AdvancedImuTab {
 
         let mut tab_points = tab_status.reborrow().init_data(NUM_INS_PLOT_ROWS as u32);
 
-        let all_points = [
-            self.acc_x.iter(),
-            self.acc_y.iter(),
-            self.acc_z.iter(),
-            self.gyro_x.iter(),
-            self.gyro_y.iter(),
-            self.gyro_z.iter(),
-        ];
+        let all_points: [Box<dyn Iterator<Item = f64>>; 6] =
+            [
+                Box::new(self.acc_x.iter().map(|f| {
+                    self.scale_raw_acc(AccelerometerScalingRangeUnit::MetersPerSecond, f)
+                })),
+                Box::new(self.acc_y.iter().map(|f| {
+                    self.scale_raw_acc(AccelerometerScalingRangeUnit::MetersPerSecond, f)
+                })),
+                Box::new(self.acc_z.iter().map(|f| {
+                    self.scale_raw_acc(AccelerometerScalingRangeUnit::MetersPerSecond, f)
+                })),
+                Box::new(self.gyro_x.iter().map(|f| self.scale_raw_gyro(f))),
+                Box::new(self.gyro_y.iter().map(|f| self.scale_raw_gyro(f))),
+                Box::new(self.gyro_z.iter().map(|f| self.scale_raw_gyro(f))),
+            ];
         for (idx, points) in IntoIterator::into_iter(all_points).enumerate() {
             let mut point_val_idx = tab_points.reborrow().init(idx as u32, NUM_POINTS as u32);
             for (idx, point) in points.enumerate() {
                 let mut point_val = point_val_idx.reborrow().get(idx as u32);
                 point_val.set_x(idx as f64);
-                point_val.set_y(*point);
+                point_val.set_y(point);
             }
         }
         let fields_data = {
@@ -164,6 +176,31 @@ impl AdvancedImuTab {
 
         self.client_sender
             .send_data(serialize_capnproto_builder(builder));
+    }
+
+    fn scale_raw_acc(&self, scaling_units: AccelerometerScalingRangeUnit, value: &f64) -> f64 {
+        let acc_range = self.imu_conf & 0x0F;
+        let scaling = f64::powi(2_f64, acc_range as i32 + 1_i32) / f64::powi(2_f64, 15);
+
+        let scale_factor = match scaling_units {
+            AccelerometerScalingRangeUnit::Gravity => scaling,
+            AccelerometerScalingRangeUnit::MetersPerSecond => scaling * GRAVITY_ACCELERATION_MS2,
+        };
+
+        value * scale_factor
+    }
+
+    fn scale_raw_gyro(&self, value: &f64) -> f64 {
+        let gyr_range: f64 = match (self.imu_conf & 0xF0) << 0x04 {
+            0 => 2000.0,
+            1 => 1000.0,
+            2 => 500.0,
+            3 => 250.0,
+            4 => 125.0,
+            _ => panic!("Unknown gyro range"),
+        };
+        let scale_factor = gyr_range / f64::powi(2_f64, 15);
+        value * scale_factor
     }
 }
 

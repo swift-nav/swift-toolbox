@@ -395,16 +395,16 @@ QtObject {
         readonly property string title: "Raw IMU Data"
         readonly property var textDataLabels: ["Imu temp:", "Imu conf:", "Rms acc x:", "Rms acc y:", "Rms acc z:"]
         readonly property var insStatusLabels: ["GNSS Pos:", "GNSS Vel:", "Wheelticks:", "Wheelspeed:", "nhc:", "Static Detection:"]
-        readonly property var legendLabels: ["Accn. X", "Accn. Y", "Accn. Z", "Gyro X", "Gyro Y", "Gyro Z"]
+        readonly property var legendLabels: ["Accn. X (m/s<sup>2</sup>)", "Accn. Y (m/s<sup>2</sup>)", "Accn. Z (m/s<sup>2</sup>)", "Gyro X (°/s)", "Gyro Y (°/s)", "Gyro Z (°/s)"]
         readonly property var lineColors: ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"]
         readonly property int legendBottomMargin: 120
         readonly property int legendLeftMargin: 80
-        readonly property int yAxisTickCount: 10000
+        readonly property int yAxisTickCount: 25
         readonly property int xAxisTickCount: 25
         readonly property int xAxisMax: 200
         readonly property int xAxisMin: 0
-        readonly property int yAxisMax: 32768
-        readonly property int yAxisMin: -32768
+        readonly property int yAxisMax: 150
+        readonly property int yAxisMin: -150
         readonly property int textDataLabelWidth: 50
         readonly property int textDataRowHeight: 25
         readonly property int textDataBarHeight: 20

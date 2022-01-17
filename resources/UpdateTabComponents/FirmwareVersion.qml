@@ -115,9 +115,14 @@ Item {
                         let fileioDestinationFilepath = null;
                         let updateLocalFilename = null;
                         data_model.update_tab([downloadLatestFirmware, updateFirmware, sendFileToDevice, serialPromptConfirm], updateLocalFilepath, downloadDirectory, fileioLocalFilepath, fileioDestinationFilepath, updateLocalFilename);
-                        if (isSerialConnected)
-                            dialog.open();
-
+                        if (isSerialConnected) {
+                            if (Globals.showPrompts) {
+                                dialog.open();
+                            } else {
+                                serialPromptConfirm = true;
+                                data_model.update_tab([downloadLatestFirmware, updateFirmware, sendFileToDevice, serialPromptConfirm], updateLocalFilepath, downloadDirectory, fileioLocalFilepath, fileioDestinationFilepath, updateLocalFilename);
+                            }
+                        }
                     }
 
                     Label {

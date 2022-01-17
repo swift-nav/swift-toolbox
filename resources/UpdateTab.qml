@@ -8,46 +8,12 @@ import "UpdateTabComponents" as UpdateTabComponents
 MainTab {
     id: updateTab
 
-    property bool consoleVersionDialogAlready: false
-    property bool firmwareVersionDialogAlready: false
-    property bool v2DownloadDialogAlready: false
-    property bool popupLock: false
-
-    function consoleOutdatedDialogText(currentVersion, latestVersion) {
-        let text = "";
-        text += "Your console is out of date and may be incompatible with current firmware. We highly recommend upgrading to ensure proper behavior.\n\n";
-        text += "Please visit support.swiftnav.com to download the latest version.\n\n";
-        text += "Current Console version:\n";
-        text += "\t" + currentVersion + "\n";
-        text += "Latest Console version:\n";
-        text += "\t" + latestVersion;
-        return text;
-    }
-
     function upgradeSerialConfirmDialogText() {
         let text = "";
         text += "Upgrading your device via UART / RS232 may take up to 30 minutes.\n\n";
         text += "If the device you are upgrading has an accessible USB host port, it is recommended to instead follow the \
         \'USB Flashdrive Upgrade Procedure\' that now appears in the Firmware upgrade status box.\n\n";
         text += "Are you sure you want to continue upgrading over serial?\n";
-        return text;
-    }
-
-    function firmwareV2OutdatedDialogText() {
-        let text = "";
-        text += "Upgrading to firmware v2.1.0 or later requires that the device be running firmware v2.0.0 or later. \
-        Please upgrade to firmware version 2.0.0.\n\n";
-        text += "Would you like to download firmware version v2.0.0 now?\n";
-        return text;
-    }
-
-    function firmwareOutdatedDialogText(latestVersion) {
-        let text = "";
-        text += "New Piksi firmware available.\n\n";
-        text += "Please use the Update \
-        tab to update.\n\n";
-        text += "Newest Firmware Version:\n";
-        text += "\t" + latestVersion + "\n";
         return text;
     }
 
@@ -178,40 +144,6 @@ MainTab {
     }
 
     Dialog {
-        id: v2DownloadDialog
-
-        x: (parent.width - Constants.sideNavBar.tabBarWidth - Constants.updateTab.v2DownloadDialogWidth) / 2
-        y: parent.height / 2
-        width: Constants.updateTab.v2DownloadDialogWidth
-        height: Constants.updateTab.popupSmallHeight
-        modal: true
-        focus: true
-        title: "Update to v2.0.0"
-        standardButtons: Dialog.Ok | Dialog.Cancel
-        onAccepted: {
-            let downloadLatestFirmware = true;
-            let updateFirmware = false;
-            let sendFileToDevice = false;
-            let serialPromptConfirm = false;
-            let updateLocalFilepath = null;
-            let downloadDirectory = null;
-            let fileioLocalFilepath = null;
-            let fileioDestinationFilepath = null;
-            let updateLocalFilename = null;
-            data_model.update_tab([downloadLatestFirmware, updateFirmware, sendFileToDevice, serialPromptConfirm], updateLocalFilepath, downloadDirectory, fileioLocalFilepath, fileioDestinationFilepath, updateLocalFilename);
-        }
-
-        contentItem: Label {
-            text: firmwareV2OutdatedDialogText()
-            verticalAlignment: Qt.AlignVCenter
-            elide: Text.ElideRight
-            clip: true
-            wrapMode: Text.Wrap
-        }
-
-    }
-
-    Dialog {
         id: upgradeSerialDialog
 
         x: (parent.width - Constants.sideNavBar.tabBarWidth - Constants.updateTab.upgradeSerialDialogWidth) / 2
@@ -245,54 +177,6 @@ MainTab {
 
     }
 
-    Dialog {
-        id: consoleVersionDialog
-
-        x: (parent.width - Constants.sideNavBar.tabBarWidth - Constants.updateTab.consoleVersionDialogWidth) / 2
-        y: parent.height / 2
-        width: Constants.updateTab.consoleVersionDialogWidth
-        height: Constants.updateTab.popupLargeHeight
-        modal: true
-        focus: true
-        title: "Swift Console Outdated"
-        standardButtons: Dialog.Close
-        onRejected: {
-            popupLock = false;
-        }
-
-        contentItem: Label {
-            verticalAlignment: Qt.AlignVCenter
-            elide: Text.ElideRight
-            clip: true
-            wrapMode: Text.Wrap
-        }
-
-    }
-
-    Dialog {
-        id: fwVersionDialog
-
-        x: (parent.width - Constants.sideNavBar.tabBarWidth - Constants.updateTab.fwVersionDialogWidth) / 2
-        y: parent.height / 2
-        width: Constants.updateTab.fwVersionDialogWidth
-        height: Constants.updateTab.popupSmallHeight
-        modal: true
-        focus: true
-        title: "Firmware Update"
-        standardButtons: Dialog.Close
-        onRejected: {
-            popupLock = false;
-        }
-
-        contentItem: Label {
-            verticalAlignment: Qt.AlignVCenter
-            elide: Text.ElideRight
-            clip: true
-            wrapMode: Text.Wrap
-        }
-
-    }
-
     Timer {
         id: timer
 
@@ -316,39 +200,22 @@ MainTab {
         repeat: true
         onTriggered: {
             update_tab_model.fill_data(updateTabData);
-            if (updateTabData.console_version_latest) {
-                if (!consoleVersionDialogAlready) {
-                    if (updateTabData.console_outdated && !popupLock) {
-                        popupLock = true;
-                        consoleVersionDialog.contentItem.text = consoleOutdatedDialogText(updateTabData.console_version_current, updateTabData.console_version_latest);
-                        consoleVersionDialogAlready = true;
-                        timer.startTimer(consoleVersionDialog.open);
-                    }
-                }
-            }
-            if (!v2DownloadDialogAlready) {
-                if (updateTabData.fw_v2_outdated && !popupLock) {
-                    popupLock = true;
-                    v2DownloadDialogAlready = true;
-                    timer.startTimer(v2DownloadDialog.open);
-                }
-            }
+            Globals.updateTabData.consoleOutdated = updateTabData.console_outdated;
+            Globals.updateTabData.fwV2Outdated = updateTabData.fw_v2_outdated;
+            Globals.updateTabData.fwOutdated = updateTabData.fw_outdated;
+            Globals.updateTabData.fwVersionCurrent = updateTabData.fw_version_current;
+            Globals.updateTabData.fwVersionLatest = updateTabData.fw_version_latest;
+            Globals.updateTabData.consoleVersionCurrent = updateTabData.console_version_current;
+            Globals.updateTabData.consoleVersionLatest = updateTabData.console_version_latest;
             if (updateTabData.fw_version_latest) {
                 firmwareRevision.revision = updateTabData.hardware_revision;
                 firmwareVersion.currentVersion = updateTabData.fw_version_current;
                 firmwareVersion.latestVersion = updateTabData.fw_version_latest;
-                if (!firmwareVersionDialogAlready && !updateTabData.fw_v2_outdated && !popupLock) {
-                    if (updateTabData.fw_outdated) {
-                        popupLock = true;
-                        fwVersionDialog.contentItem.text = firmwareOutdatedDialogText(updateTabData.fw_version_latest);
-                        firmwareVersionDialogAlready = true;
-                        timer.startTimer(fwVersionDialog.open);
-                    }
-                }
             }
-            if (updateTabData.serial_prompt)
+            if (updateTabData.fw_version_current)
                 firmwareVersion.isSerialConnected = updateTabData.serial_prompt;
-
+            else
+                firmwareVersion.isSerialConnected = false;
             if (!updateTab.visible)
                 return ;
 

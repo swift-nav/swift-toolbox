@@ -46,6 +46,10 @@ ApplicationWindow {
         anchors.fill: parent
     }
 
+    UpdateNotifications {
+        anchors.fill: parent
+    }
+
     MouseArea {
         enabled: false
         anchors.top: parent.top

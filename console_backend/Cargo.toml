@@ -31,7 +31,7 @@ serialport = { version = "4.0.1", default-features = false }
 directories = "4"
 anyhow = { version = "1", features = ["backtrace"] }
 serde_yaml = "0.8.23"
-clap = { version = "3.0.7", features = ["derive"] }
+clap = { version = "3.0.9", features = ["derive"] }
 indexmap = { version = "1.8.0", features = ["serde"] }
 serde_json = { version = "1" }
 crossbeam = "0.8"

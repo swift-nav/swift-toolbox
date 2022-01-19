@@ -103,11 +103,11 @@ pub struct CliOptions {
     #[clap(long)]
     pub exit_after: bool,
 
-    /// Enable CSV logging.
+    /// Log CSV data to default / specified log file.
     #[clap(long)]
     pub csv_log: bool,
 
-    /// Enable SBP-JSON or SBP logging.
+    /// Log SBP-JSON or SBP data to default / specified log file.
     #[clap(long)]
     pub sbp_log: Option<CliSbpLogging>,
 

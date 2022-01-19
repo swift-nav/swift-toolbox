@@ -96,60 +96,60 @@ pub struct CliOptions {
     pub input: Option<Input>,
 
     /// Log messages to terminal.
-    #[clap(long = "log-stderr")]
+    #[clap(long)]
     pub log_stderr: bool,
 
     /// Exit when connection closes.
-    #[clap(long = "exit-after")]
+    #[clap(long)]
     pub exit_after: bool,
 
     /// Enable CSV logging.
-    #[clap(long = "csv-log")]
+    #[clap(long)]
     pub csv_log: bool,
 
     /// Enable SBP-JSON or SBP logging.
-    #[clap(long = "sbp-log")]
+    #[clap(long)]
     pub sbp_log: Option<CliSbpLogging>,
 
     /// Set SBP log filename.
-    #[clap(long = "sbp-log-filename")]
+    #[clap(long)]
     pub sbp_log_filename: Option<PathBuf>,
 
     /// Set Console Log Level Filter. Default: WARNING.
-    #[clap(long = "log-level")]
+    #[clap(long)]
     pub log_level: Option<CliLogLevel>,
 
     /// Set log directory.
-    #[clap(long = "log-dirname")]
-    pub dirname: Option<String>,
+    #[clap(long)]
+    pub log_dirname: Option<String>,
 
     // Frontend Options
     /// Show Filio pane in Update tab.
-    #[clap(long = "show-fileio")]
+    #[clap(long)]
     pub show_fileio: bool,
 
     /// Allow File Connections.
-    #[clap(long = "show-file-connection")]
+    #[clap(long)]
     pub show_file_connection: bool,
 
     /// Use OpenGL, plots will become optimized for efficiency not aesthetics and require less system resources.
-    #[clap(long = "use-opengl", parse(from_flag = Not::not))]
+    #[clap(long, parse(from_flag = Not::not))]
     pub use_opengl: bool,
 
     /// Change the refresh rate of the plots.
-    #[clap(long = "refresh-rate", validator(is_refresh_rate))]
+    #[clap(long, validator(is_refresh_rate))]
     pub refresh_rate: Option<u8>,
 
     /// Start console from specific tab.
-    #[clap(long = "tab")]
+    #[clap(long)]
     pub tab: Option<CliTabs>,
 
     /// Show CSV logging button.
-    #[clap(long = "show-csv-log")]
+    #[clap(long)]
     pub show_csv_log: bool,
 
     /// Don't show prompts about firmware/console updates.
-    #[clap(long = "no-prompts")]
+    #[clap(long)]
     pub no_prompts: bool,
 
     /// Set the height of the main window.
@@ -323,7 +323,7 @@ pub fn handle_cli(
             }
         }
     }
-    if let Some(folder) = opt.dirname {
+    if let Some(folder) = opt.log_dirname {
         shared_state.set_logging_directory(PathBuf::from(folder));
     }
     let log_level = if let Some(log_level_) = opt.log_level {

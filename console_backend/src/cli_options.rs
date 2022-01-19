@@ -8,7 +8,6 @@ use clap::Parser;
 use log::{debug, error};
 use strum::VariantNames;
 
-use crate::errors::CONVERT_TO_STR_FAILURE;
 use crate::log_panel::LogLevel;
 use crate::output::CsvLogging;
 use crate::shared_state::SharedState;
@@ -21,6 +20,7 @@ use crate::{
     common_constants::{SbpLogging, Tabs},
     connection::{Connection, ConnectionManager},
 };
+use crate::{constants::LOG_FILENAME, errors::CONVERT_TO_STR_FAILURE};
 
 #[derive(Debug)]
 pub struct CliLogLevel(LogLevel);
@@ -95,9 +95,9 @@ pub struct CliOptions {
     #[clap(subcommand)]
     pub input: Option<Input>,
 
-    /// Log messages to terminal.
+    /// Create a log file containing console debug information.
     #[clap(long)]
-    pub log_stderr: bool,
+    pub log_console: bool,
 
     /// Exit when connection closes.
     #[clap(long)]
@@ -319,11 +319,17 @@ pub fn handle_cli(
             }
         }
     }
+    if let Some(ref path) = opt.settings_yaml {
+        sbp_settings::setting::load_from_path(path).expect("failed to load settings");
+    }
     if let Some(folder) = opt.log_dirname {
         shared_state.set_logging_directory(PathBuf::from(folder));
     }
     shared_state.lock().logging_bar.csv_logging = CsvLogging::from(opt.csv_log);
-    shared_state.lock().log_to_std.set(opt.log_stderr);
+    if opt.log_console {
+        let filename = chrono::Local::now().format(LOG_FILENAME).to_string().into();
+        shared_state.set_log_filename(Some(filename));
+    }
     if let Some(path) = opt.sbp_log_filename {
         shared_state.set_sbp_logging_filename(Some(path));
     }

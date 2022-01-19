@@ -86,7 +86,11 @@ impl FromStr for CliSbpLogging {
 }
 
 #[derive(Parser)]
-#[clap(name = "swift_navigation_console", about = "Swift Navigation Console.")]
+#[clap(
+    name = "swift_navigation_console",
+    about = "Swift Navigation Console.",
+    version = include_str!("version.txt")
+)]
 pub struct CliOptions {
     #[clap(subcommand)]
     pub input: Option<Input>,

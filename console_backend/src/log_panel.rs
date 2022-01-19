@@ -167,15 +167,13 @@ fn write_packet(packet: ConsoleLogPacket, f: &mut File) {
     const MIN_SPACES: usize = "CONSOLE".len() + 1;
 
     let spaces = " ".repeat(MIN_SPACES - packet.level.len());
-    if let Err(e) = writeln!(
+    let _ = writeln!(
         f,
         "{timestamp} {level}{spaces}{msg}",
         timestamp = packet.timestamp,
         level = packet.level,
         msg = packet.msg,
-    ) {
-        error!("error writing console logs to file: {e}");
-    }
+    );
 }
 
 // Custom formatting of `log::Record` to account for SbpLog values

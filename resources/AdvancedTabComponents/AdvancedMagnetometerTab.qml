@@ -110,6 +110,7 @@ Item {
                 tickInterval: Constants.advancedMagnetometer.xAxisTickCount
                 tickType: ValueAxis.TicksDynamic
                 labelFormat: "%d"
+                reverse: true
             }
 
             SwiftValueAxis {

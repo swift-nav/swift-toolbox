@@ -517,13 +517,7 @@ struct Settings {
 impl Settings {
     fn new() -> Self {
         Self {
-            inner: Setting::all()
-                .iter()
-                .fold(IndexMap::new(), |mut settings, setting| {
-                    (*settings.entry(setting.group.clone()).or_default())
-                        .insert(setting.name.clone(), SettingsEntry::new(setting));
-                    settings
-                }),
+            inner: IndexMap::new(),
             default: SettingValue::String("".into()),
         }
     }
@@ -573,13 +567,4 @@ impl Settings {
 struct SettingsEntry {
     setting: Cow<'static, Setting>,
     value: Option<SettingValue>,
-}
-
-impl SettingsEntry {
-    fn new(setting: &'static Setting) -> Self {
-        Self {
-            setting: Cow::Borrowed(setting),
-            value: None,
-        }
-    }
 }

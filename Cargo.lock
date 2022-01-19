@@ -1648,9 +1648,8 @@ dependencies = [
 
 [[package]]
 name = "serialport"
-version = "4.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d8cd7c0f22290ee2c01457009fa6fc1cae4153d5608a924e5dc423babc2c655"
+version = "4.0.2-alpha.0"
+source = "git+https://gitlab.com/john-michaelburke/serialport-rs.git?branch=john-michaelburke/commtimeouts#8e117b07d9edcff507b76d57f59504855bdf1de3"
 dependencies = [
  "CoreFoundation-sys",
  "IOKit-sys",

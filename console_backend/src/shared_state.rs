@@ -95,7 +95,7 @@ impl SharedState {
         let mut guard = self.lock();
         guard.logging_bar.sbp_logging = false;
         guard.logging_bar.sbp_logging_format = SbpLogging::SBP_JSON;
-        guard.logging_bar.sbp_logging_filename = None;
+        guard.logging_bar.sbp_logging_filepath = None;
         guard.logging_bar.csv_logging = CsvLogging::OFF;
     }
     pub fn sbp_logging(&self) -> bool {

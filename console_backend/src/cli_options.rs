@@ -115,13 +115,13 @@ pub struct CliOptions {
     #[clap(long)]
     pub sbp_log_filename: Option<PathBuf>,
 
-    /// Set Console Log Level Filter. Default: WARNING.
-    #[clap(long)]
-    pub log_level: Option<CliLogLevel>,
-
     /// Set log directory.
     #[clap(long)]
     pub log_dirname: Option<String>,
+
+    /// Path to a yaml file containing known piski settings.
+    #[clap(long)]
+    pub settings_yaml: Option<PathBuf>,
 
     // Frontend Options
     /// Show Filio pane in Update tab.
@@ -159,10 +159,6 @@ pub struct CliOptions {
     /// Set the width of the main window.
     #[clap(long)]
     pub width: Option<u32>,
-
-    /// Path to a yaml file containing known piski settings.
-    #[clap(long)]
-    pub settings_yaml: Option<PathBuf>,
 }
 
 impl CliOptions {
@@ -326,12 +322,6 @@ pub fn handle_cli(
     if let Some(folder) = opt.log_dirname {
         shared_state.set_logging_directory(PathBuf::from(folder));
     }
-    let log_level = if let Some(log_level_) = opt.log_level {
-        (*log_level_).clone()
-    } else {
-        LogLevel::WARNING
-    };
-    shared_state.set_log_level(log_level);
     shared_state.lock().logging_bar.csv_logging = CsvLogging::from(opt.csv_log);
     shared_state.lock().log_to_std.set(opt.log_stderr);
     if let Some(path) = opt.sbp_log_filename {

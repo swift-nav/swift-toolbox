@@ -8,15 +8,15 @@ use chrono::Local;
 use log::error;
 use sbp::Sbp;
 
+use crate::client_sender::BoxedClientSender;
+use crate::common_constants::SbpLogging;
 use crate::constants::{
     BASELINE_TIME_STR_FILEPATH, POS_LLH_TIME_STR_FILEPATH, SBP_FILEPATH, SBP_JSON_FILEPATH,
     VEL_TIME_STR_FILEPATH,
 };
 use crate::output::{CsvLogging, SbpLogger};
-use crate::shared_state::{create_directory, SharedState};
+use crate::shared_state::{create_directory, ConnectionState, SharedState};
 use crate::utils::{refresh_loggingbar, refresh_loggingbar_recording};
-use crate::{client_sender::BoxedClientSender, shared_state::ConnectionState};
-use crate::{common_constants::SbpLogging, shared_state::SbpLoggingStatsState};
 
 const LOGGING_STATS_UPDATE_INTERVAL: Duration = Duration::from_millis(500);
 
@@ -32,13 +32,12 @@ pub fn logging_stats_thread(
             if matches!(recv.get(), Err(_) | Ok(ConnectionState::Closed)) {
                 break;
             }
-            if let Some(mut new_update) = shared_state.sbp_logging_stats_state() {
-                if new_update.sbp_log_filepath != filepath {
-                    filepath = new_update.sbp_log_filepath.take();
-                    start_time = Instant::now();
-                }
+            let current_path = shared_state.sbp_logging_filepath();
+            if current_path != filepath {
+                filepath = current_path;
+                start_time = Instant::now();
             }
-            if let Some(ref path) = filepath.clone() {
+            if let Some(ref path) = filepath {
                 let file_size = std::fs::metadata(path).unwrap().len();
                 refresh_loggingbar_recording(
                     &client_sender,
@@ -69,8 +68,7 @@ impl MainTab {
         let sbp_logging_format = shared_state.sbp_logging_format();
         // reopen an existing log if we disconnected
         let sbp_logger = shared_state
-            .sbp_logging_stats_state()
-            .and_then(|s| s.sbp_log_filepath)
+            .sbp_logging_filepath()
             .map(|path| match sbp_logging_format {
                 SbpLogging::SBP_JSON => SbpLogger::open_sbp_json(path).ok(),
                 SbpLogging::SBP => SbpLogger::open_sbp(path).ok(),
@@ -81,14 +79,12 @@ impl MainTab {
         } else {
             shared_state.sbp_logging()
         };
-        let csv_logging_live = {
-            shared_state
-                .lock()
-                .solution_tab
-                .velocity_tab
-                .log_file
-                .is_some()
-        };
+        let csv_logging_live = shared_state
+            .lock()
+            .solution_tab
+            .velocity_tab
+            .log_file
+            .is_some();
         let last_csv_logging =
             if !csv_logging_live && matches!(shared_state.csv_logging(), CsvLogging::ON) {
                 CsvLogging::OFF
@@ -146,55 +142,31 @@ impl MainTab {
     /// # Parameters:
     /// - `logging`: The type of sbp logging to use; otherwise, None.
     pub fn init_sbp_logging(&mut self, logging: SbpLogging) {
-        let local_t = Local::now();
-        let mut sbp_log_filepath = None;
+        let filepath = self.sbp_logging_filepath(logging.clone());
         self.sbp_logger = match logging {
-            SbpLogging::SBP => {
-                let sbp_log_file = local_t.format(SBP_FILEPATH).to_string();
-                let sbp_log_file = self.logging_directory.join(sbp_log_file);
-
-                match SbpLogger::new_sbp(&sbp_log_file.clone()) {
-                    Ok(logger) => {
-                        sbp_log_filepath = Some(sbp_log_file);
-                        Some(logger)
-                    }
-                    Err(e) => {
-                        error!(
-                            "issue creating file, {}, error, {}",
-                            sbp_log_file.display(),
-                            e
-                        );
-                        None
-                    }
+            SbpLogging::SBP => match SbpLogger::new_sbp(&filepath) {
+                Ok(logger) => Some(logger),
+                Err(e) => {
+                    error!("issue creating file, {}, error, {}", filepath.display(), e);
+                    None
                 }
-            }
-            SbpLogging::SBP_JSON => {
-                let sbp_json_log_file = local_t.format(SBP_JSON_FILEPATH).to_string();
-                let sbp_json_log_file = self.logging_directory.join(sbp_json_log_file);
-                match SbpLogger::new_sbp_json(&sbp_json_log_file.clone()) {
-                    Ok(logger) => {
-                        sbp_log_filepath = Some(sbp_json_log_file);
-                        Some(logger)
-                    }
-                    Err(e) => {
-                        error!(
-                            "issue creating file, {}, error, {}",
-                            sbp_json_log_file.display(),
-                            e
-                        );
-                        None
-                    }
+            },
+            SbpLogging::SBP_JSON => match SbpLogger::new_sbp_json(&filepath) {
+                Ok(logger) => Some(logger),
+                Err(e) => {
+                    error!("issue creating file, {}, error, {}", filepath.display(), e);
+                    None
                 }
-            }
+            },
         };
         if self.sbp_logger.is_some() {
             self.shared_state
                 .set_sbp_logging(true, self.client_sender.clone());
+            self.shared_state.set_sbp_logging_filepath(Some(filepath));
         }
         self.shared_state.set_sbp_logging_format(logging);
-        self.shared_state
-            .set_sbp_logging_stats_state(SbpLoggingStatsState { sbp_log_filepath });
     }
+
     pub fn serialize_sbp(&mut self, msg: &Sbp) {
         let csv_logging;
         let sbp_logging;
@@ -249,15 +221,24 @@ impl MainTab {
             }
         }
     }
+
     pub fn close_sbp(&mut self) {
         self.sbp_logger = None;
         self.shared_state
             .set_sbp_logging(false, self.client_sender.clone());
-        self.shared_state
-            .set_sbp_logging_stats_state(SbpLoggingStatsState {
-                sbp_log_filepath: None,
-            });
+        self.shared_state.set_sbp_logging_filepath(None);
         refresh_loggingbar(&self.client_sender, &self.shared_state);
+    }
+
+    fn sbp_logging_filepath(&self, logging: SbpLogging) -> PathBuf {
+        let name = self.shared_state.sbp_logging_filename().unwrap_or_else(|| {
+            let fmt = match logging {
+                SbpLogging::SBP => SBP_FILEPATH,
+                SbpLogging::SBP_JSON => SBP_JSON_FILEPATH,
+            };
+            Local::now().format(fmt).to_string().into()
+        });
+        self.logging_directory.join(&name)
     }
 }
 

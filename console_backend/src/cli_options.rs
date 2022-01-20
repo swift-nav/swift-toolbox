@@ -86,7 +86,11 @@ impl FromStr for CliSbpLogging {
 }
 
 #[derive(Parser)]
-#[clap(name = "swift_navigation_console", about = "Swift Navigation Console.")]
+#[clap(
+    name = "swift_navigation_console",
+    about = "Swift Navigation Console.",
+    version = include_str!("version.txt")
+)]
 pub struct CliOptions {
     #[clap(subcommand)]
     pub input: Option<Input>,
@@ -106,6 +110,10 @@ pub struct CliOptions {
     /// Enable SBP-JSON or SBP logging.
     #[clap(long = "sbp-log")]
     pub sbp_log: Option<CliSbpLogging>,
+
+    /// Set SBP log filename.
+    #[clap(long = "sbp-log-filename")]
+    pub sbp_log_filename: Option<PathBuf>,
 
     /// Set Console Log Level Filter. Default: WARNING.
     #[clap(long = "log-level")]
@@ -326,6 +334,9 @@ pub fn handle_cli(
     shared_state.set_log_level(log_level);
     shared_state.lock().logging_bar.csv_logging = CsvLogging::from(opt.csv_log);
     shared_state.lock().log_to_std.set(opt.log_stderr);
+    if let Some(path) = opt.sbp_log_filename {
+        shared_state.set_sbp_logging_filename(Some(path));
+    }
     if let Some(sbp_log) = opt.sbp_log {
         shared_state.set_sbp_logging(true, client_sender.clone());
         shared_state.set_sbp_logging_format(

@@ -97,7 +97,10 @@ pub fn process_messages(
     })
     .expect(PROCESS_MESSAGES_FAILURE);
 
-    messages.take_err()
+    let err = messages.take_err();
+    let handle = messages.into_handle();
+    handle.join().unwrap();
+    err
 }
 
 fn register_events(link: sbp::link::Link<Tabs>) {
@@ -295,7 +298,7 @@ mod messages {
         messages: Receiver<MessageWithTime>,
         stop_recv: Receiver<()>,
         err: Result<(), io::Error>,
-        handle: Option<JoinHandle<()>>,
+        handle: JoinHandle<()>,
     }
 
     impl Messages {
@@ -322,6 +325,10 @@ mod messages {
             std::mem::replace(&mut self.err, Ok(()))
         }
 
+        pub fn into_handle(self) -> JoinHandle<()> {
+            self.handle
+        }
+
         fn from_boxed(inner: MessageWithTimeIter) -> (Self, StopToken) {
             let (stop_token, stop_recv) = StopToken::new();
             let (messages, handle) = start_read_thd(inner);
@@ -330,18 +337,10 @@ mod messages {
                     messages,
                     stop_recv,
                     err: Ok(()),
-                    handle: Some(handle),
+                    handle,
                 },
                 stop_token,
             )
-        }
-    }
-
-    impl Drop for Messages {
-        fn drop(&mut self) {
-            if let Some(h) = self.handle.take() {
-                h.join().unwrap();
-            }
         }
     }
 

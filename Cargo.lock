@@ -1649,7 +1649,7 @@ dependencies = [
 [[package]]
 name = "serialport"
 version = "4.0.2-alpha.0"
-source = "git+https://gitlab.com/john-michaelburke/serialport-rs.git?branch=john-michaelburke/commtimeouts#8e117b07d9edcff507b76d57f59504855bdf1de3"
+source = "git+https://github.com/swift-nav/serialport-rs.git#875f545b937035dbc5dcdf454dd0460bc8d0bd3d"
 dependencies = [
  "CoreFoundation-sys",
  "IOKit-sys",

@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 use std::time::Duration;
@@ -514,14 +515,26 @@ struct Settings {
     default: SettingValue,
 }
 
+lazy_static! {
+    static ref SETTING_ORDERING: HashMap<(&'static str, &'static str), usize> = {
+        Setting::all()
+            .iter()
+            .enumerate()
+            .fold(HashMap::new(), |mut settings, (index, setting)| {
+                settings.insert((&setting.group, &setting.name), index);
+                settings
+            })
+    };
+}
+
 impl Settings {
     fn new() -> Self {
         Self {
+            // Keep the settings ordered in the same order as defined in the libsettings settings.yaml file
             inner: Setting::all()
                 .iter()
                 .fold(IndexMap::new(), |mut settings, setting| {
-                    (*settings.entry(setting.group.clone()).or_default())
-                        .insert(setting.name.clone(), SettingsEntry::new(setting));
+                    settings.insert(setting.group.clone(), IndexMap::new());
                     settings
                 }),
             default: SettingValue::String("".into()),
@@ -530,7 +543,7 @@ impl Settings {
 
     fn groups(&self) -> Vec<Vec<(&Setting, &SettingValue)>> {
         self.inner.values().fold(Vec::new(), |mut groups, group| {
-            let group: Vec<_> = group
+            let mut group: Vec<_> = group
                 .values()
                 .map(|setting| {
                     setting.value.as_ref().map_or_else(
@@ -539,6 +552,18 @@ impl Settings {
                     )
                 })
                 .collect();
+
+            // Sort settings within a group by the order in which they're defined within the libsettings settings.yaml file
+            group.sort_by(|a, b| {
+                let a_index = SETTING_ORDERING
+                    .get(&(&a.0.group, &a.0.name))
+                    .unwrap_or(&usize::MAX);
+                let b_index = SETTING_ORDERING
+                    .get(&(&b.0.group, &b.0.name))
+                    .unwrap_or(&usize::MAX);
+                a_index.cmp(b_index)
+            });
+
             if !group.is_empty() {
                 groups.push(group);
             }
@@ -573,13 +598,4 @@ impl Settings {
 struct SettingsEntry {
     setting: Cow<'static, Setting>,
     value: Option<SettingValue>,
-}
-
-impl SettingsEntry {
-    fn new(setting: &'static Setting) -> Self {
-        Self {
-            setting: Cow::Borrowed(setting),
-            value: None,
-        }
-    }
 }

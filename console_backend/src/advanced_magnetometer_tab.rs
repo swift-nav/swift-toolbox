@@ -76,7 +76,7 @@ impl AdvancedMagnetometerTab {
             let mut point_val_idx = tab_points.reborrow().init(idx as u32, NUM_POINTS as u32);
             for (idx, point) in points.enumerate() {
                 let mut point_val = point_val_idx.reborrow().get(idx as u32);
-                point_val.set_x(idx as f64);
+                point_val.set_x((NUM_POINTS - idx) as f64);
                 point_val.set_y(*point);
             }
         }

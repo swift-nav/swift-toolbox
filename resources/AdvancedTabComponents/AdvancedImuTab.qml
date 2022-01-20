@@ -109,6 +109,7 @@ Item {
                 labelFormat: "%d"
                 min: Constants.advancedImu.xAxisMin
                 max: Constants.advancedImu.xAxisMax
+                reverse: true
             }
 
             SwiftValueAxis {

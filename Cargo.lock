@@ -1648,9 +1648,8 @@ dependencies = [
 
 [[package]]
 name = "serialport"
-version = "4.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d8cd7c0f22290ee2c01457009fa6fc1cae4153d5608a924e5dc423babc2c655"
+version = "4.0.2-alpha.0"
+source = "git+https://github.com/swift-nav/serialport-rs.git#875f545b937035dbc5dcdf454dd0460bc8d0bd3d"
 dependencies = [
  "CoreFoundation-sys",
  "IOKit-sys",

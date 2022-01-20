@@ -27,7 +27,7 @@ ndarray = "0.15.4"
 glob = "0.3.0"
 criterion = "0.3.4"
 sysinfo = "0.23.0"
-serialport = { version = "4.0.1", default-features = false }
+serialport = { git = "https://github.com/swift-nav/serialport-rs.git", default-features = false }
 directories = "4"
 anyhow = { version = "1", features = ["backtrace"] }
 serde_yaml = "0.8.23"
@@ -47,7 +47,7 @@ mimalloc = { version = "0.1", default-features = false }
 curl = { version = "0.4", features = ["ssl", "static-curl"] }
 
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
-serialport = "4.0.1"
+serialport = { git = "https://github.com/swift-nav/serialport-rs.git" }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = ">=0.24", features = [

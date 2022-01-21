@@ -24,7 +24,7 @@ use serialport::FlowControl;
 
 use crate::constants::{
     APPLICATION_NAME, APPLICATION_ORGANIZATION, APPLICATION_QUALIFIER, CONNECTION_HISTORY_FILENAME,
-    DEFAULT_LOG_DIRECTORY, MAX_CONNECTION_HISTORY, MPS,
+    DEFAULT_IP_ADDRESS, DEFAULT_LOG_DIRECTORY, DEFAULT_PORT, MAX_CONNECTION_HISTORY, MPS,
 };
 use crate::errors::CONVERT_TO_STR_FAILURE;
 use crate::log_panel::LogLevel;
@@ -758,8 +758,13 @@ impl ConnectionHistory {
         if let Ok(default_path) = LOG_DIRECTORY.path().into_os_string().into_string() {
             folders.insert(default_path);
         }
+        let mut addresses = IndexSet::new();
+        addresses.insert(Address {
+            host: DEFAULT_IP_ADDRESS.to_string(),
+            port: DEFAULT_PORT,
+        });
         ConnectionHistory {
-            addresses: IndexSet::new(),
+            addresses,
             files: IndexSet::new(),
             folders,
             serial_configs: IndexMap::new(),
@@ -961,9 +966,9 @@ mod tests {
         backup_file(bfilename.clone());
 
         let mut conn_history = ConnectionHistory::new();
-        let host1 = String::from("host1");
+        let host1 = String::from(DEFAULT_IP_ADDRESS);
         let host2 = String::from("host2");
-        let port = 100;
+        let port = DEFAULT_PORT;
 
         conn_history.record_address(host1.clone(), port);
         let addresses = conn_history.addresses();

@@ -20,6 +20,8 @@ pub(crate) const BASELINE_TIME_STR_FILEPATH: &str = "baseline_log_%Y%m%d-%H%M%S.
 pub(crate) const SBP_FILEPATH: &str = "swift-gnss-%Y%m%d-%H%M%S.sbp";
 pub(crate) const SBP_JSON_FILEPATH: &str = "swift-gnss-%Y%m%d-%H%M%S.sbp.json";
 pub(crate) const DEFAULT_LOG_DIRECTORY: &str = "SwiftNav";
+pub(crate) const DEFAULT_IP_ADDRESS: &str = "192.168.0.222";
+pub(crate) const DEFAULT_PORT: u16 = 55555;
 
 // Common constants.
 pub(crate) const NUM_POINTS: usize = 200;

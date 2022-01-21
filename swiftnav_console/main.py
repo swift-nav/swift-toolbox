@@ -154,7 +154,7 @@ from .file_io import FileIO
 
 CONSOLE_BACKEND_CAPNP_PATH = "console_backend.capnp"
 
-PIKSI_HOST = "piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com"
+PIKSI_HOST = "192.168.0.222"
 PIKSI_PORT = 55555
 
 

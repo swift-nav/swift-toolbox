@@ -7,7 +7,7 @@ use std::{
     path::{Path, PathBuf},
     thread,
     thread::JoinHandle,
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use crossbeam::channel::Sender;
@@ -408,6 +408,7 @@ impl SerialConnection {
         self,
         _shared_state: Option<&SharedState>,
     ) -> io::Result<(Box<dyn io::Read + Send>, Box<dyn io::Write + Send>)> {
+        self.validate_serial_port()?;
         let rdr = serialport::new(self.device.clone(), self.baudrate)
             .flow_control(*self.flow)
             .timeout(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))
@@ -420,6 +421,32 @@ impl SerialConnection {
         }
 
         Ok((Box::new(rdr), Box::new(writer)))
+    }
+    fn validate_serial_port(&self) -> std::result::Result<(), std::io::Error> {
+        let mut rdr = serialport::new(self.device.clone(), self.baudrate)
+            .flow_control(*self.flow.clone())
+            .timeout(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))
+            .open()?;
+        let mut buffer = [0; 237];
+        let mut found_preamble = false;
+        let now = Instant::now();
+        while now.elapsed().as_millis() < SERIALPORT_READ_TIMEOUT_MS as u128 {
+            rdr.read_exact(&mut buffer)?;
+            if buffer.contains(&0x55) {
+                found_preamble = true;
+                break;
+            }
+        }
+        if !found_preamble {
+            return Err(std::io::Error::new(
+                ErrorKind::InvalidData,
+                format!(
+                    "Could not validate connection, {}, check baudrate.",
+                    self.device
+                ),
+            ));
+        }
+        Ok(())
     }
 }
 

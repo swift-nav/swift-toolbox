@@ -11,6 +11,7 @@ Rectangle {
     property var floatValidator
     property var intValidator
     property var stringValidator
+    property alias textFieldFocus: valOnDevice.item
 
     function shouldShowField(name) {
         if (!selectedRow)
@@ -311,31 +312,6 @@ Rectangle {
 
     }
 
-    Timer {
-        id: textFieldTimer
-
-        property string settingGroup: ""
-        property string settingName: ""
-        property string settingText: ""
-
-        function startTimer(group, name, text) {
-            textFieldTimer.stop();
-            if (text === "")
-                return ;
-
-            settingGroup = group;
-            settingName = name;
-            settingText = text;
-            textFieldTimer.start();
-        }
-
-        interval: Constants.settingsTable.settingEditTimeoutMilliseconds
-        repeat: false
-        onTriggered: {
-            data_model.settings_write_request(settingGroup, settingName, settingText);
-        }
-    }
-
     Component {
         id: settingRowEditable
 
@@ -355,14 +331,8 @@ Rectangle {
             selectByMouse: true
             anchors.centerIn: parent
             anchors.verticalCenterOffset: 5
-            onTextChanged: {
-                textFieldTimer.startTimer(settingGroup, settingName, text);
-            }
             onEditingFinished: {
-                if (textFieldTimer.running) {
-                    textFieldTimer.stop();
-                    data_model.settings_write_request(settingGroup, settingName, text);
-                }
+                data_model.settings_write_request(settingGroup, settingName, text);
             }
             validator: {
                 if (settingType === "integer")

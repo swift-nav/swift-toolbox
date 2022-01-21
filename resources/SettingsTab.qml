@@ -326,6 +326,18 @@ MainTab {
                     else
                         return false;
                 }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onPressed: {
+                        mouse.accepted = false;
+                        if (settingsPane.textFieldFocus.focus)
+                            settingsPane.textFieldFocus.focus = false;
+
+                    }
+                    onClicked: mouse.accepted = false
+                }
+
             }
 
             Item {

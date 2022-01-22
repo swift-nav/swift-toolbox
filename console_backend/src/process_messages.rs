@@ -97,7 +97,10 @@ pub fn process_messages(
     })
     .expect(PROCESS_MESSAGES_FAILURE);
 
-    messages.take_err()
+    let err = messages.take_err();
+    let handle = messages.into_handle();
+    handle.join().unwrap();
+    err
 }
 
 fn register_events(link: sbp::link::Link<Tabs>) {
@@ -273,7 +276,7 @@ mod messages {
     use std::{
         fmt, io,
         sync::Arc,
-        thread,
+        thread::{self, JoinHandle},
         time::{Duration, Instant},
     };
 
@@ -295,6 +298,7 @@ mod messages {
         messages: Receiver<MessageWithTime>,
         stop_recv: Receiver<()>,
         err: Result<(), io::Error>,
+        handle: JoinHandle<()>,
     }
 
     impl Messages {
@@ -321,14 +325,19 @@ mod messages {
             std::mem::replace(&mut self.err, Ok(()))
         }
 
+        pub fn into_handle(self) -> JoinHandle<()> {
+            self.handle
+        }
+
         fn from_boxed(inner: MessageWithTimeIter) -> (Self, StopToken) {
             let (stop_token, stop_recv) = StopToken::new();
-            let messages = start_read_thd(inner);
+            let (messages, handle) = start_read_thd(inner);
             (
                 Self {
                     messages,
                     stop_recv,
                     err: Ok(()),
+                    handle,
                 },
                 stop_token,
             )
@@ -364,16 +373,18 @@ mod messages {
         }
     }
 
-    fn start_read_thd(messages: MessageWithTimeIter) -> Receiver<MessageWithTime> {
+    fn start_read_thd(
+        messages: MessageWithTimeIter,
+    ) -> (Receiver<MessageWithTime>, JoinHandle<()>) {
         let (tx, rx) = channel::bounded(1000);
-        thread::spawn(move || {
+        let h = thread::spawn(move || {
             for message in messages {
                 if tx.send(message).is_err() {
                     break;
                 }
             }
         });
-        rx
+        (rx, h)
     }
 
     struct RealtimeIter<M> {

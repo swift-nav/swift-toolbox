@@ -4,7 +4,7 @@ use std::{
     str::FromStr,
 };
 
-use clap::Parser;
+use clap::{AppSettings::DeriveDisplayOrder, Parser};
 use log::{debug, error};
 use strum::VariantNames;
 
@@ -85,28 +85,20 @@ impl FromStr for CliSbpLogging {
     }
 }
 
+#[cfg(windows)]
+const BIN_NAME: &str = "Swift-Navigation-Console";
+#[cfg(not(windows))]
+const BIN_NAME: &str = "swift-navigation-console";
+
 #[derive(Parser)]
 #[clap(
     name = "swift_navigation_console",
     about = "Swift Navigation Console.",
-    version = include_str!("version.txt")
+    bin_name = BIN_NAME,
+    version = include_str!("version.txt"),
+    setting = DeriveDisplayOrder,
 )]
 pub struct CliOptions {
-    #[clap(subcommand)]
-    pub input: Option<Input>,
-
-    /// Create a log file containing console debug information.
-    #[clap(long)]
-    pub log_console: bool,
-
-    /// Exit when connection closes.
-    #[clap(long)]
-    pub exit_after: bool,
-
-    /// Log CSV data to default / specified log file.
-    #[clap(long)]
-    pub csv_log: bool,
-
     /// Log SBP-JSON or SBP data to default / specified log file.
     #[clap(long)]
     pub sbp_log: Option<CliSbpLogging>,
@@ -119,11 +111,18 @@ pub struct CliOptions {
     #[clap(long)]
     pub log_dirname: Option<String>,
 
-    /// Path to a yaml file containing known piski settings.
+    /// Create a log file containing console debug information.
     #[clap(long)]
-    pub settings_yaml: Option<PathBuf>,
+    pub log_console: bool,
 
-    // Frontend Options
+    /// Log CSV data to default / specified log file.
+    #[clap(long)]
+    pub csv_log: bool,
+
+    /// Show CSV logging button.
+    #[clap(long)]
+    pub show_csv_log: bool,
+
     /// Show Filio pane in Update tab.
     #[clap(long)]
     pub show_fileio: bool,
@@ -131,6 +130,10 @@ pub struct CliOptions {
     /// Allow File Connections.
     #[clap(long)]
     pub show_file_connection: bool,
+
+    /// Path to a yaml file containing known piski settings.
+    #[clap(long)]
+    pub settings_yaml: Option<PathBuf>,
 
     /// Use OpenGL, plots will become optimized for efficiency not aesthetics and require less system resources.
     #[clap(long, parse(from_flag = Not::not))]
@@ -140,17 +143,17 @@ pub struct CliOptions {
     #[clap(long, validator(is_refresh_rate))]
     pub refresh_rate: Option<u8>,
 
-    /// Start console from specific tab.
-    #[clap(long)]
-    pub tab: Option<CliTabs>,
-
-    /// Show CSV logging button.
-    #[clap(long)]
-    pub show_csv_log: bool,
-
     /// Don't show prompts about firmware/console updates.
     #[clap(long)]
     pub no_prompts: bool,
+
+    /// Exit when connection closes.
+    #[clap(long)]
+    pub exit_after: bool,
+
+    /// Start console from specific tab.
+    #[clap(long)]
+    pub tab: Option<CliTabs>,
 
     /// Set the height of the main window.
     #[clap(long)]
@@ -159,6 +162,9 @@ pub struct CliOptions {
     /// Set the width of the main window.
     #[clap(long)]
     pub width: Option<u32>,
+
+    #[clap(subcommand)]
+    pub input: Option<Input>,
 }
 
 impl CliOptions {
@@ -193,16 +199,8 @@ impl CliOptions {
 }
 
 #[derive(Parser, Debug)]
-#[clap(about = "Input type and corresponding options.")]
+#[clap(about = "Input type and corresponding options.", setting = DeriveDisplayOrder)]
 pub enum Input {
-    Tcp {
-        /// The TCP host to connect to.
-        host: String,
-
-        /// The port to use when connecting via TCP.
-        #[clap(long, default_value = "55555")]
-        port: u16,
-    },
     Serial {
         /// The serialport to connect to.
         #[clap(parse(from_os_str))]
@@ -215,6 +213,14 @@ pub enum Input {
         /// The flow control spec to use.
         #[clap(long = "flow-control", default_value = "None")]
         flow_control: FlowControl,
+    },
+    Tcp {
+        /// The TCP host to connect to.
+        host: String,
+
+        /// The port to use when connecting via TCP.
+        #[clap(long, default_value = "55555")]
+        port: u16,
     },
     File {
         /// Open and run an SBP file.

@@ -32,7 +32,6 @@ use crate::output::{CsvLogging, CsvSerializer};
 use crate::process_messages::StopToken;
 use crate::settings_tab;
 use crate::solution_tab::LatLonUnits;
-use crate::types::ArcBool;
 use crate::update_tab::UpdateTabUpdate;
 use crate::utils::send_conn_state;
 use crate::watch::{WatchReceiver, Watched};
@@ -84,12 +83,19 @@ impl SharedState {
             LOG_DIRECTORY.path()
         }
     }
-    pub fn set_log_level(&self, log_level: LogLevel) {
-        self.lock().log_panel.log_level = log_level.clone();
-        log::set_max_level(log_level.level_filter());
-    }
     pub fn log_level(&self) -> LogLevel {
-        self.lock().log_panel.log_level.clone()
+        self.lock().log_panel.level.clone()
+    }
+    pub fn set_log_level(&self, log_level: LogLevel) {
+        let filter = log_level.level_filter();
+        self.lock().log_panel.level = log_level;
+        log::set_max_level(filter);
+    }
+    pub fn log_filename(&self) -> Option<PathBuf> {
+        self.lock().log_panel.filename.clone()
+    }
+    pub fn set_log_filename(&self, filename: Option<PathBuf>) {
+        self.lock().log_panel.filename = filename;
     }
     pub fn reset_logging(&self) {
         let mut guard = self.lock();
@@ -319,9 +325,6 @@ impl SharedState {
         guard.auto_survey_data.alt = Some(alt);
         guard.auto_survey_data.requested = false;
     }
-    pub fn log_to_std(&self) -> ArcBool {
-        self.lock().log_to_std.clone()
-    }
     pub fn heartbeat_data(&self) -> Heartbeat {
         self.lock().heartbeat_data.clone()
     }
@@ -366,7 +369,6 @@ pub struct SharedStateInner {
     pub(crate) reset_device: bool,
     pub(crate) advanced_networking_update: Option<AdvancedNetworkingState>,
     pub(crate) auto_survey_data: AutoSurveyData,
-    pub(crate) log_to_std: ArcBool,
     pub(crate) heartbeat_data: Heartbeat,
 }
 impl SharedStateInner {
@@ -393,7 +395,6 @@ impl SharedStateInner {
             reset_device: false,
             advanced_networking_update: None,
             auto_survey_data: AutoSurveyData::new(),
-            log_to_std: ArcBool::new_with(true),
             heartbeat_data,
         }
     }
@@ -455,13 +456,15 @@ impl LoggingBarState {
 
 #[derive(Debug)]
 pub struct LogPanelState {
-    pub log_level: LogLevel,
+    pub level: LogLevel,
+    pub filename: Option<PathBuf>,
 }
 
 impl LogPanelState {
     fn new() -> LogPanelState {
         LogPanelState {
-            log_level: LogLevel::WARNING,
+            level: LogLevel::WARNING,
+            filename: None,
         }
     }
 }

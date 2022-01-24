@@ -11,6 +11,7 @@ pub(crate) const APPLICATION_NAME: &str = "swift_navigation_console";
 // Logging constants
 #[allow(dead_code)]
 pub(crate) const LOG_WRITER_BUFFER_MESSAGE_COUNT: usize = 50;
+pub(crate) const LOG_FILENAME: &str = "swift-console-%Y%m%d-%H%M%S.log";
 
 // Main Tab constants.
 pub(crate) const WRITE_TO_DEVICE_SENDER_ID: u16 = 1337;

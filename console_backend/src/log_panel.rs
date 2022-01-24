@@ -1,32 +1,25 @@
-use async_logger_log::Logger;
-use sbp::messages::logging::MsgLog;
+use std::{fs::File, io::Write};
 
+use async_logger::Writer;
+use async_logger_log::Logger;
 use capnp::message::Builder;
+use chrono::Local;
+use log::{debug, error, info, warn, LevelFilter, Record};
+use sbp::messages::logging::MsgLog;
+use serde::{Deserialize, Serialize};
 
 use crate::client_sender::BoxedClientSender;
 use crate::common_constants as cc;
 use crate::constants::LOG_WRITER_BUFFER_MESSAGE_COUNT;
 use crate::errors::CONSOLE_LOG_JSON_TO_STRING_FAILURE;
 use crate::shared_state::SharedState;
-use crate::types::ArcBool;
 use crate::utils::serialize_capnproto_builder;
-
-use async_logger::Writer;
-use chrono::Local;
-use log::{debug, error, info, warn, LevelFilter, Record};
-use serde::{Deserialize, Serialize};
-
-#[derive(Serialize, Deserialize)]
-struct ConsoleLogPacket {
-    level: String,
-    timestamp: String,
-    msg: String,
-}
 
 const DEVICE: &str = "DEVICE";
 const CONSOLE: &str = "CONSOLE";
 
 pub type LogLevel = cc::LogLevel;
+
 impl LogLevel {
     pub fn level_filter(&self) -> LevelFilter {
         match self {
@@ -34,52 +27,6 @@ impl LogLevel {
             cc::LogLevel::INFO => LevelFilter::Info,
             cc::LogLevel::NOTICE | cc::LogLevel::WARNING => LevelFilter::Warn,
             cc::LogLevel::ERROR => LevelFilter::Error,
-        }
-    }
-}
-
-// Custom formatting of `log::Record` to account for SbpLog values
-pub fn splitable_log_formatter(record: &Record) -> String {
-    let level = if record.target() != DEVICE {
-        CONSOLE
-    } else {
-        record.level().as_str()
-    };
-    let timestamp = Local::now().format("%b %d %Y %H:%M:%S");
-    let mut msg = record.args().to_string();
-    msg.retain(|c| c != '\0');
-    let msg_packet = ConsoleLogPacket {
-        level: level.to_string(),
-        timestamp: timestamp.to_string(),
-        msg,
-    };
-    serde_json::to_string(&msg_packet).expect(CONSOLE_LOG_JSON_TO_STRING_FAILURE)
-}
-
-enum SbpMsgLevel {
-    Emergency = 0,
-    Alert = 1,
-    Critical = 2,
-    Error = 3,
-    Warn = 4,
-    Notice = 5,
-    Info = 6,
-    Debug = 7,
-    Other,
-}
-
-impl From<u8> for SbpMsgLevel {
-    fn from(orig: u8) -> Self {
-        match orig {
-            0 => SbpMsgLevel::Emergency,
-            1 => SbpMsgLevel::Alert,
-            2 => SbpMsgLevel::Critical,
-            3 => SbpMsgLevel::Error,
-            4 => SbpMsgLevel::Warn,
-            5 => SbpMsgLevel::Notice,
-            6 => SbpMsgLevel::Info,
-            7 => SbpMsgLevel::Debug,
-            _ => SbpMsgLevel::Other,
         }
     }
 }
@@ -112,17 +59,17 @@ pub fn setup_logging(client_sender: BoxedClientSender, shared_state: SharedState
 }
 
 #[derive(Debug)]
-pub struct LogPanelWriter {
-    pub client_sender: BoxedClientSender,
+struct LogPanelWriter {
+    client_sender: BoxedClientSender,
     shared_state: SharedState,
-    pub log_to_std: ArcBool,
+    log_file: Option<File>,
 }
 
 impl LogPanelWriter {
     pub fn new(client_sender: BoxedClientSender, shared_state: SharedState) -> LogPanelWriter {
         LogPanelWriter {
+            log_file: init_log_file(&shared_state),
             client_sender,
-            log_to_std: shared_state.log_to_std(),
             shared_state,
         }
     }
@@ -139,22 +86,110 @@ impl Writer<Box<String>> for LogPanelWriter {
 
         let mut log_update = msg.init_log_append();
         log_update.set_log_level(&self.shared_state.log_level().to_string());
+
         let mut entries = log_update.init_entries(slice.len() as u32);
-
         for (idx, item) in slice.iter().enumerate() {
-            let packet: ConsoleLogPacket =
-                serde_json::from_str(item).expect(CONSOLE_LOG_JSON_TO_STRING_FAILURE);
-            if self.log_to_std.get() {
-                eprintln!("{}\t{}\t{}", packet.timestamp, packet.level, packet.msg);
-            }
             let mut entry = entries.reborrow().get(idx as u32);
-
             entry.set_line(item);
         }
-
         self.client_sender
             .send_data(serialize_capnproto_builder(builder));
+
+        if let Some(ref mut f) = self.log_file {
+            for item in slice {
+                let packet = serde_json::from_str(item).expect(CONSOLE_LOG_JSON_TO_STRING_FAILURE);
+                write_packet(packet, f);
+            }
+        }
     }
 
-    fn flush(&mut self) {}
+    fn flush(&mut self) {
+        if let Some(ref mut f) = self.log_file {
+            let _ = f.flush();
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+struct ConsoleLogPacket<'a> {
+    level: &'a str,
+    timestamp: &'a str,
+    msg: &'a str,
+}
+
+enum SbpMsgLevel {
+    Emergency = 0,
+    Alert = 1,
+    Critical = 2,
+    Error = 3,
+    Warn = 4,
+    Notice = 5,
+    Info = 6,
+    Debug = 7,
+    Other,
+}
+
+impl From<u8> for SbpMsgLevel {
+    fn from(orig: u8) -> Self {
+        match orig {
+            0 => SbpMsgLevel::Emergency,
+            1 => SbpMsgLevel::Alert,
+            2 => SbpMsgLevel::Critical,
+            3 => SbpMsgLevel::Error,
+            4 => SbpMsgLevel::Warn,
+            5 => SbpMsgLevel::Notice,
+            6 => SbpMsgLevel::Info,
+            7 => SbpMsgLevel::Debug,
+            _ => SbpMsgLevel::Other,
+        }
+    }
+}
+
+fn init_log_file(shared_state: &SharedState) -> Option<File> {
+    let filepath = shared_state
+        .log_filename()
+        .map(|f| shared_state.logging_directory().join(f));
+    filepath.and_then(|p| match File::create(&p) {
+        Ok(f) => Some(f),
+        Err(e) => {
+            error!(
+                "issue creating console log file, {}, error, {}",
+                p.display(),
+                e
+            );
+            None
+        }
+    })
+}
+
+fn write_packet(packet: ConsoleLogPacket, f: &mut File) {
+    // Min one space plus the longest log level
+    const MIN_SPACES: usize = "CONSOLE".len() + 1;
+
+    let spaces = " ".repeat(MIN_SPACES - packet.level.len());
+    let _ = writeln!(
+        f,
+        "{timestamp} {level}{spaces}{msg}",
+        timestamp = packet.timestamp,
+        level = packet.level,
+        msg = packet.msg,
+    );
+}
+
+// Custom formatting of `log::Record` to account for SbpLog values
+fn splitable_log_formatter(record: &Record) -> String {
+    let level = if record.target() != DEVICE {
+        CONSOLE
+    } else {
+        record.level().as_str()
+    };
+    let timestamp = Local::now().format("%b %d %Y %H:%M:%S").to_string();
+    let mut msg = record.args().to_string();
+    msg.retain(|c| c != '\0');
+    let msg_packet = ConsoleLogPacket {
+        level,
+        timestamp: &timestamp,
+        msg: &msg,
+    };
+    serde_json::to_string(&msg_packet).expect(CONSOLE_LOG_JSON_TO_STRING_FAILURE)
 }

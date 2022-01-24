@@ -121,14 +121,11 @@ impl Server {
             server_send: Some(server_send),
         };
         let shared_state = SharedState::new();
-        setup_logging(client_send.clone(), shared_state.clone());
         let opt = CliOptions::from_filtered_cli();
-        if let Some(ref path) = opt.settings_yaml {
-            sbp_settings::setting::load_from_path(path).expect("failed to load settings");
-        }
         let conn_manager = ConnectionManager::new(client_send.clone(), shared_state.clone());
         // Handle CLI Opts.
         handle_cli(opt, &conn_manager, shared_state.clone(), &client_send);
+        setup_logging(client_send.clone(), shared_state.clone());
         refresh_connection_frontend(&client_send, &shared_state);
         refresh_loggingbar(&client_send, &shared_state);
         server_recv_thread(conn_manager, client_send, server_recv, shared_state);

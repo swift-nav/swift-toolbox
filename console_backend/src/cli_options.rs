@@ -4,11 +4,10 @@ use std::{
     str::FromStr,
 };
 
-use clap::Parser;
+use clap::{AppSettings::DeriveDisplayOrder, Parser};
 use log::{debug, error};
 use strum::VariantNames;
 
-use crate::errors::CONVERT_TO_STR_FAILURE;
 use crate::log_panel::LogLevel;
 use crate::output::CsvLogging;
 use crate::shared_state::SharedState;
@@ -21,6 +20,7 @@ use crate::{
     common_constants::{SbpLogging, Tabs},
     connection::{Connection, ConnectionManager},
 };
+use crate::{constants::LOG_FILENAME, errors::CONVERT_TO_STR_FAILURE};
 
 #[derive(Debug)]
 pub struct CliLogLevel(LogLevel);
@@ -85,72 +85,75 @@ impl FromStr for CliSbpLogging {
     }
 }
 
+#[cfg(windows)]
+const BIN_NAME: &str = "Swift-Navigation-Console";
+#[cfg(not(windows))]
+const BIN_NAME: &str = "swift-navigation-console";
+
 #[derive(Parser)]
 #[clap(
     name = "swift_navigation_console",
     about = "Swift Navigation Console.",
-    version = include_str!("version.txt")
+    bin_name = BIN_NAME,
+    version = include_str!("version.txt"),
+    setting = DeriveDisplayOrder,
 )]
 pub struct CliOptions {
-    #[clap(subcommand)]
-    pub input: Option<Input>,
-
-    /// Log messages to terminal.
-    #[clap(long = "log-stderr")]
-    pub log_stderr: bool,
-
-    /// Exit when connection closes.
-    #[clap(long = "exit-after")]
-    pub exit_after: bool,
-
-    /// Enable CSV logging.
-    #[clap(long = "csv-log")]
-    pub csv_log: bool,
-
-    /// Enable SBP-JSON or SBP logging.
-    #[clap(long = "sbp-log")]
+    /// Log SBP-JSON or SBP data to default / specified log file.
+    #[clap(long)]
     pub sbp_log: Option<CliSbpLogging>,
 
     /// Set SBP log filename.
-    #[clap(long = "sbp-log-filename")]
+    #[clap(long)]
     pub sbp_log_filename: Option<PathBuf>,
 
-    /// Set Console Log Level Filter. Default: WARNING.
-    #[clap(long = "log-level")]
-    pub log_level: Option<CliLogLevel>,
-
     /// Set log directory.
-    #[clap(long = "log-dirname")]
-    pub dirname: Option<String>,
+    #[clap(long)]
+    pub log_dirname: Option<String>,
 
-    // Frontend Options
+    /// Create a log file containing console debug information.
+    #[clap(long)]
+    pub log_console: bool,
+
+    /// Log CSV data to default / specified log file.
+    #[clap(long)]
+    pub csv_log: bool,
+
+    /// Show CSV logging button.
+    #[clap(long)]
+    pub show_csv_log: bool,
+
     /// Show Filio pane in Update tab.
-    #[clap(long = "show-fileio")]
+    #[clap(long)]
     pub show_fileio: bool,
 
     /// Allow File Connections.
-    #[clap(long = "show-file-connection")]
+    #[clap(long)]
     pub show_file_connection: bool,
 
+    /// Path to a yaml file containing known piski settings.
+    #[clap(long)]
+    pub settings_yaml: Option<PathBuf>,
+
     /// Use OpenGL, plots will become optimized for efficiency not aesthetics and require less system resources.
-    #[clap(long = "use-opengl", parse(from_flag = Not::not))]
+    #[clap(long, parse(from_flag = Not::not))]
     pub use_opengl: bool,
 
     /// Change the refresh rate of the plots.
-    #[clap(long = "refresh-rate", validator(is_refresh_rate))]
+    #[clap(long, validator(is_refresh_rate))]
     pub refresh_rate: Option<u8>,
 
-    /// Start console from specific tab.
-    #[clap(long = "tab")]
-    pub tab: Option<CliTabs>,
-
-    /// Show CSV logging button.
-    #[clap(long = "show-csv-log")]
-    pub show_csv_log: bool,
-
     /// Don't show prompts about firmware/console updates.
-    #[clap(long = "no-prompts")]
+    #[clap(long)]
     pub no_prompts: bool,
+
+    /// Exit when connection closes.
+    #[clap(long)]
+    pub exit_after: bool,
+
+    /// Start console from specific tab.
+    #[clap(long)]
+    pub tab: Option<CliTabs>,
 
     /// Set the height of the main window.
     #[clap(long)]
@@ -160,9 +163,8 @@ pub struct CliOptions {
     #[clap(long)]
     pub width: Option<u32>,
 
-    /// Path to a yaml file containing known piski settings.
-    #[clap(long)]
-    pub settings_yaml: Option<PathBuf>,
+    #[clap(subcommand)]
+    pub input: Option<Input>,
 }
 
 impl CliOptions {
@@ -197,16 +199,8 @@ impl CliOptions {
 }
 
 #[derive(Parser, Debug)]
-#[clap(about = "Input type and corresponding options.")]
+#[clap(about = "Input type and corresponding options.", setting = DeriveDisplayOrder)]
 pub enum Input {
-    Tcp {
-        /// The TCP host to connect to.
-        host: String,
-
-        /// The port to use when connecting via TCP.
-        #[clap(long, default_value = "55555")]
-        port: u16,
-    },
     Serial {
         /// The serialport to connect to.
         #[clap(parse(from_os_str))]
@@ -219,6 +213,14 @@ pub enum Input {
         /// The flow control spec to use.
         #[clap(long = "flow-control", default_value = "None")]
         flow_control: FlowControl,
+    },
+    Tcp {
+        /// The TCP host to connect to.
+        host: String,
+
+        /// The port to use when connecting via TCP.
+        #[clap(long, default_value = "55555")]
+        port: u16,
     },
     File {
         /// Open and run an SBP file.
@@ -323,17 +325,17 @@ pub fn handle_cli(
             }
         }
     }
-    if let Some(folder) = opt.dirname {
+    if let Some(ref path) = opt.settings_yaml {
+        sbp_settings::setting::load_from_path(path).expect("failed to load settings");
+    }
+    if let Some(folder) = opt.log_dirname {
         shared_state.set_logging_directory(PathBuf::from(folder));
     }
-    let log_level = if let Some(log_level_) = opt.log_level {
-        (*log_level_).clone()
-    } else {
-        LogLevel::WARNING
-    };
-    shared_state.set_log_level(log_level);
     shared_state.lock().logging_bar.csv_logging = CsvLogging::from(opt.csv_log);
-    shared_state.lock().log_to_std.set(opt.log_stderr);
+    if opt.log_console {
+        let filename = chrono::Local::now().format(LOG_FILENAME).to_string().into();
+        shared_state.set_log_filename(Some(filename));
+    }
     if let Some(path) = opt.sbp_log_filename {
         shared_state.set_sbp_logging_filename(Some(path));
     }

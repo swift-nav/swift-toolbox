@@ -185,8 +185,8 @@ impl CliOptions {
                     || arg.ends_with("python.exe")
                     || arg.ends_with("pythonw.exe"))
                     && (n_arg.ends_with(".py")
-                        || n_arg.ends_with("console.exe")
-                        || n_arg.ends_with("console"))
+                        || n_arg.ends_with("swift-console.exe")
+                        || n_arg.ends_with("swift-console"))
                 {
                     continue;
                 }

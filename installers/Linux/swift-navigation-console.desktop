@@ -1,7 +1,7 @@
 [Desktop Entry]
-Name=Swift Navigation Console
+Name=Swift Console
 Type=Application
-Exec=/opt/swift-navigation-console/console
+Exec=/opt/swift-navigation-console/swift-console
 Terminal=false
 NoDisplay=false
 Categories=Science

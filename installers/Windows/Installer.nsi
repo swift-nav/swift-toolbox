@@ -13,8 +13,9 @@ Unicode true
 !searchparse /noerrors "${VER_PATCH_UNFILTERED}" `` VER_PATCH `-`
 !define VERSION_ORIGINAL "${VER_MAJOR}.${VER_MINOR}.${VER_PATCH_UNFILTERED}"
 !define VERSION "${VER_MAJOR}.${VER_MINOR}.${VER_PATCH}.0"
-!define app_name "Swift Navigation Console"
-!define app_executable "console.exe"
+!define app_name "Swift Console"
+!define app_executable "swift-console.exe"
+!define outfile_prefix "swift-navigation-console"
 !define installer_dir "py39-dist"
 !define company_name "Swift Navigation"
 
@@ -64,7 +65,7 @@ FunctionEnd
 ;General
 
   Name "${app_name}"
-  OutFile "${app_name}-${VERSION_ORIGINAL}.exe"
+  OutFile "${outfile_prefix}_${VERSION_ORIGINAL}_windows.exe"
 
 ;--------------------------------
 ;Interface Settings

@@ -619,12 +619,15 @@ script = '''
 set_env TMP_DIR "target/installer"
 set_env OPT_DIR "opt"
 set_env USR_DIR "usr"
-set_env APP_DIR_NAME "swift-navigation-console"
+set_env APP_DIR_NAME "swift-console"
 set_env APPS_DIR "share/applications"
 set_env ICONS_DIR "share/icons/hicolor"
 version = readfile console_backend/src/version.txt
 version = trim_end ${version}
 set_env VERSION ${version}
+set_env HOMEPAGE "https://www.swiftnav.com"
+set_env MAINTAINER "Swift Navigation <https://www.swiftnav.com/support>"
+set_env DESCRIPTION "The Swift Console is a Graphic User Interface (GUI) program providing visual representation of what's happening inside the Swift Navigation GNSS receivers. Console displays information and allows to adjust the settings on the hardware."
 '''
 
 [tasks.dist-to-installer.linux]
@@ -642,8 +645,7 @@ mkdir -p $TMP_DIR/$USR_DIR/$APPS_DIR
 cp installers/Linux/$APP_DIR_NAME.desktop $TMP_DIR/$USR_DIR/$APPS_DIR/
 mkdir -p $TMP_DIR/$USR_DIR/$ICONS_DIR
 cp -r installers/Linux/hicolor/* $TMP_DIR/$USR_DIR/$ICONS_DIR
-
-fpm -t deb -s dir --depends libxcb-xinerama0 -v $VERSION -p "${APP_DIR_NAME}_${VERSION}_linux.deb" --debug --verbose -C $TMP_DIR -f -n $APP_DIR_NAME $OPT_DIR $USR_DIR
+fpm -t deb -s dir --depends libxcb-xinerama0 --maintainer "$MAINTAINER" --description "$DESCRIPTION" --url "$HOMEPAGE" -v $VERSION -p "${APP_DIR_NAME}_${VERSION}_linux.deb" --verbose -C $TMP_DIR -f -n $APP_DIR_NAME $OPT_DIR $USR_DIR
 mv *.deb installers/Linux/
 '''
 

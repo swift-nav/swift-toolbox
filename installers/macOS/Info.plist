@@ -4,5 +4,9 @@
 <dict>
 	<key>CFBundleIconFile</key>
 	<string>Swift-Navigation-Console.icns</string>
+  <key>NSPrincipalClass</key>
+  <string>NSApplication</string>
+  <key>NSHighResolutionCapable</key>
+  <string>True</string>
 </dict>
 </plist>

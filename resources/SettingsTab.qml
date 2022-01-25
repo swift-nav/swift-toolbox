@@ -168,141 +168,154 @@ MainTab {
             SplitView.minimumWidth: parent.width * 0.55
             spacing: 0
 
-            GridLayout {
-                property int colWidth: Math.max(Constants.settingsTab.buttonIconWidth, ((parent.width / (columns)) - columnSpacing * (columns)))
-                property int buttonPadding: 3
-
+            Rectangle {
                 Layout.fillWidth: true
-                rowSpacing: 0
-                columnSpacing: 2
-                columns: 5
-                rows: 2
-                enabled: settingsTable.settingsHealthy
+                Layout.preferredHeight: grid.implicitHeight
 
-                SwiftButton {
-                    Layout.columnSpan: 1
-                    Layout.rowSpan: 1
-                    Layout.preferredWidth: parent.colWidth
-                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                    padding: parent.buttonPadding
-                    text: "Save to\nDevice"
-                    icon.source: Constants.icons.savePath
-                    icon.width: Constants.settingsTab.buttonIconWidth
-                    icon.height: Constants.settingsTab.buttonIconHeight
-                    display: AbstractButton.TextUnderIcon
-                    flat: true
-                    onClicked: data_model.settings_save_request()
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: parent.forceActiveFocus()
                 }
 
-                SwiftButton {
-                    Layout.columnSpan: 1
-                    Layout.rowSpan: 1
-                    Layout.preferredWidth: parent.colWidth
-                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                    padding: parent.buttonPadding
-                    text: "Export to\nfile"
-                    icon.source: Constants.icons.exportPath
-                    icon.width: Constants.settingsTab.buttonIconWidth
-                    icon.height: Constants.settingsTab.buttonIconHeight
-                    display: AbstractButton.TextUnderIcon
-                    flat: true
-                    onClicked: exportDialog.visible = true
-                }
+                GridLayout {
+                    id: grid
 
-                SwiftButton {
-                    Layout.columnSpan: 1
-                    Layout.rowSpan: 1
-                    Layout.preferredWidth: parent.colWidth
-                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                    padding: parent.buttonPadding
-                    text: "Import from\nFile"
-                    icon.source: Constants.icons.importPath
-                    icon.width: Constants.settingsTab.buttonIconWidth
-                    icon.height: Constants.settingsTab.buttonIconHeight
-                    display: AbstractButton.TextUnderIcon
-                    flat: true
-                    onClicked: importDialog.visible = true
-                }
+                    property int colWidth: Math.max(Constants.settingsTab.buttonIconWidth, ((parent.width / (columns)) - columnSpacing * (columns)))
+                    property int buttonPadding: 3
 
-                SwiftButton {
-                    Layout.columnSpan: 1
-                    Layout.rowSpan: 1
-                    Layout.preferredWidth: parent.colWidth
-                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                    padding: parent.buttonPadding
-                    text: "Reset to\nDefaults"
-                    icon.source: Constants.icons.warningPath
-                    icon.width: Constants.settingsTab.buttonIconWidth
-                    icon.height: Constants.settingsTab.buttonIconHeight
-                    display: AbstractButton.TextUnderIcon
-                    flat: true
-                    onClicked: resetDialog.visible = true
-                }
+                    anchors.fill: parent
+                    rowSpacing: 0
+                    columnSpacing: 2
+                    columns: 5
+                    rows: 2
+                    enabled: settingsTable.settingsHealthy
 
-                SwiftButton {
-                    id: autoSurveyButton
-
-                    property bool buttonEnabled: (selectedRowField("group") === "surveyed_position")
-
-                    Layout.columnSpan: 1
-                    Layout.rowSpan: 1
-                    Layout.preferredWidth: parent.colWidth
-                    Layout.preferredHeight: refreshButton.height
-                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                    ToolTip.text: "Select element under \'surveyed_position\' group to enable."
-                    ToolTip.visible: !buttonEnabled && hovered
-                    background.visible: buttonEnabled
-                    padding: parent.buttonPadding
-                    text: "Auto Survey\n"
-                    opacity: buttonEnabled ? 1 : 0.5
-                    icon.source: Constants.icons.centerOnButtonUrl
-                    icon.width: Constants.settingsTab.buttonIconWidth
-                    icon.height: Constants.settingsTab.buttonIconHeight
-                    display: AbstractButton.TextUnderIcon
-                    flat: true
-                    onClicked: {
-                        if (buttonEnabled)
-                            autoSurveyDialog.visible = true;
-
+                    SwiftButton {
+                        Layout.columnSpan: 1
+                        Layout.rowSpan: 1
+                        Layout.preferredWidth: parent.colWidth
+                        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                        padding: parent.buttonPadding
+                        text: "Save to\nDevice"
+                        icon.source: Constants.icons.savePath
+                        icon.width: Constants.settingsTab.buttonIconWidth
+                        icon.height: Constants.settingsTab.buttonIconHeight
+                        display: AbstractButton.TextUnderIcon
+                        flat: true
+                        onClicked: data_model.settings_save_request()
                     }
-                }
 
-                SwiftButton {
-                    id: refreshButton
+                    SwiftButton {
+                        Layout.columnSpan: 1
+                        Layout.rowSpan: 1
+                        Layout.preferredWidth: parent.colWidth
+                        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                        padding: parent.buttonPadding
+                        text: "Export to\nfile"
+                        icon.source: Constants.icons.exportPath
+                        icon.width: Constants.settingsTab.buttonIconWidth
+                        icon.height: Constants.settingsTab.buttonIconHeight
+                        display: AbstractButton.TextUnderIcon
+                        flat: true
+                        onClicked: exportDialog.visible = true
+                    }
 
-                    Layout.columnSpan: 1
-                    Layout.rowSpan: 1
-                    Layout.preferredWidth: parent.colWidth
-                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                    padding: parent.buttonPadding
-                    text: "Refresh from\ndevice"
-                    icon.source: Constants.icons.refreshPath
-                    icon.width: Constants.settingsTab.buttonIconWidth
-                    icon.height: Constants.settingsTab.buttonIconHeight
-                    display: AbstractButton.TextUnderIcon
-                    flat: true
-                    onClicked: data_model.settings_refresh()
-                }
+                    SwiftButton {
+                        Layout.columnSpan: 1
+                        Layout.rowSpan: 1
+                        Layout.preferredWidth: parent.colWidth
+                        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                        padding: parent.buttonPadding
+                        text: "Import from\nFile"
+                        icon.source: Constants.icons.importPath
+                        icon.width: Constants.settingsTab.buttonIconWidth
+                        icon.height: Constants.settingsTab.buttonIconHeight
+                        display: AbstractButton.TextUnderIcon
+                        flat: true
+                        onClicked: importDialog.visible = true
+                    }
 
-                SmallCheckBox {
-                    Layout.columnSpan: 1
-                    Layout.rowSpan: 1
-                    Layout.preferredWidth: parent.colWidth
-                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                    padding: parent.buttonPadding
-                    bottomPadding: refreshButton.bottomPadding
-                    text: "SHOW ADVANCED SETTINGS"
-                    font.pointSize: refreshButton.font.pointSize
-                    font.family: Constants.fontFamily
-                    font.bold: false
-                    onClicked: {
-                        if (this.enabled) {
-                            this.enabled = false;
-                            settingsTable.showExpert = checked;
-                            settingsTable.selectedRowIdx = -1;
-                            this.enabled = true;
+                    SwiftButton {
+                        Layout.columnSpan: 1
+                        Layout.rowSpan: 1
+                        Layout.preferredWidth: parent.colWidth
+                        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                        padding: parent.buttonPadding
+                        text: "Reset to\nDefaults"
+                        icon.source: Constants.icons.warningPath
+                        icon.width: Constants.settingsTab.buttonIconWidth
+                        icon.height: Constants.settingsTab.buttonIconHeight
+                        display: AbstractButton.TextUnderIcon
+                        flat: true
+                        onClicked: resetDialog.visible = true
+                    }
+
+                    SwiftButton {
+                        id: autoSurveyButton
+
+                        property bool buttonEnabled: (selectedRowField("group") === "surveyed_position")
+
+                        Layout.columnSpan: 1
+                        Layout.rowSpan: 1
+                        Layout.preferredWidth: parent.colWidth
+                        Layout.preferredHeight: refreshButton.height
+                        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                        ToolTip.text: "Select element under \'surveyed_position\' group to enable."
+                        ToolTip.visible: !buttonEnabled && hovered
+                        background.visible: buttonEnabled
+                        padding: parent.buttonPadding
+                        text: "Auto Survey\n"
+                        opacity: buttonEnabled ? 1 : 0.5
+                        icon.source: Constants.icons.centerOnButtonUrl
+                        icon.width: Constants.settingsTab.buttonIconWidth
+                        icon.height: Constants.settingsTab.buttonIconHeight
+                        display: AbstractButton.TextUnderIcon
+                        flat: true
+                        onClicked: {
+                            if (buttonEnabled)
+                                autoSurveyDialog.visible = true;
+
                         }
                     }
+
+                    SwiftButton {
+                        id: refreshButton
+
+                        Layout.columnSpan: 1
+                        Layout.rowSpan: 1
+                        Layout.preferredWidth: parent.colWidth
+                        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                        padding: parent.buttonPadding
+                        text: "Refresh from\ndevice"
+                        icon.source: Constants.icons.refreshPath
+                        icon.width: Constants.settingsTab.buttonIconWidth
+                        icon.height: Constants.settingsTab.buttonIconHeight
+                        display: AbstractButton.TextUnderIcon
+                        flat: true
+                        onClicked: data_model.settings_refresh()
+                    }
+
+                    SmallCheckBox {
+                        Layout.columnSpan: 1
+                        Layout.rowSpan: 1
+                        Layout.preferredWidth: parent.colWidth
+                        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                        padding: parent.buttonPadding
+                        bottomPadding: refreshButton.bottomPadding
+                        text: "SHOW ADVANCED SETTINGS"
+                        font.pointSize: refreshButton.font.pointSize
+                        font.family: Constants.fontFamily
+                        font.bold: false
+                        onClicked: {
+                            if (this.enabled) {
+                                this.enabled = false;
+                                settingsTable.showExpert = checked;
+                                settingsTable.selectedRowIdx = -1;
+                                this.enabled = true;
+                            }
+                        }
+                    }
+
                 }
 
             }
@@ -326,18 +339,6 @@ MainTab {
                     else
                         return false;
                 }
-
-                MouseArea {
-                    anchors.fill: parent
-                    onPressed: {
-                        mouse.accepted = false;
-                        if (settingsPane.textFieldFocus.focus)
-                            settingsPane.textFieldFocus.focus = false;
-
-                    }
-                    onClicked: mouse.accepted = false
-                }
-
             }
 
             Item {

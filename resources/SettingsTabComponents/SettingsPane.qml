@@ -11,7 +11,6 @@ Rectangle {
     property var floatValidator
     property var intValidator
     property var stringValidator
-    property alias textFieldFocus: valOnDevice.item
 
     function shouldShowField(name) {
         if (!selectedRow)
@@ -292,6 +291,12 @@ Rectangle {
             text: _title + ":"
             font.bold: true
             horizontalAlignment: Text.AlignRight
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: parent.forceActiveFocus()
+            }
+
         }
 
     }
@@ -306,6 +311,12 @@ Rectangle {
                 text: selectedRowField(_fieldName)
                 anchors.fill: parent
                 wrapMode: Text.WordWrap
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: parent.forceActiveFocus()
+                }
+
             }
 
         }

@@ -37,9 +37,9 @@ function setupScatterSeries(chart, Constants, Globals, xaxis, yaxis, labels, col
 }
 
 function createSeries(chart, Globals, xaxis, yaxis, markerSize, postFix, label, color, series=QtCharts.ChartView.SeriesTypeScatter) {
-    
     var scatter = chart.createSeries(series,  label + postFix, xaxis, yaxis);
     scatter.color = color;
+    scatter.borderColor = "transparent";
     scatter.markerSize = markerSize;
     scatter.useOpenGL = Globals.useOpenGL;
     return scatter;

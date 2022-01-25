@@ -168,13 +168,13 @@ MainTab {
             SplitView.minimumWidth: parent.width * 0.55
             spacing: 0
 
-            Rectangle {
+            Item {
                 Layout.fillWidth: true
                 Layout.preferredHeight: grid.implicitHeight
 
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: parent.forceActiveFocus()
+                    onClicked: saveButton.forceActiveFocus()
                 }
 
                 GridLayout {
@@ -191,6 +191,8 @@ MainTab {
                     enabled: settingsTable.settingsHealthy
 
                     SwiftButton {
+                        id: saveButton
+
                         Layout.columnSpan: 1
                         Layout.rowSpan: 1
                         Layout.preferredWidth: parent.colWidth

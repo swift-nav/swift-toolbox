@@ -49,6 +49,7 @@ skip_crate_env_info = true
 WORKSPACE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}"
 STANDALONE_PY_BASE_URL = "https://github.com/indygreg/python-build-standalone/releases/download/20211017"
 MACOSX_DEPLOYMENT_TARGET = "10.15"
+APP_NAME = "swift-console"
 
 [tasks.init]
 
@@ -323,7 +324,7 @@ exec --fail-on-error ${DIST_PYTHON} ./get-pip.py
 [tasks.call-build-console-bin]
 private = true
 command = "cargo"
-args = ["build", "--release", "-vv", "--bin", "swift-console"]
+args = ["build", "--release", "-vv", "--bin", "${APP_NAME}"]
 
 [tasks.build-console]
 env = { PYO3_CONFIG_FILE = "${CONSOLE_PYO3_CONFIG_FILE}" }
@@ -337,17 +338,19 @@ dependencies = ["call-build-console-bin"]
 dependencies = ["build-console"]
 script_runner = "@duckscript"
 script = '''
-cp target/release/swift-console py39-dist/swift-console
+app_name = get_env APP_NAME
+cp target/release/${app_name} py39-dist/${app_name}
 os = os_family
 if eq ${os} mac
-  exec --fail-on-error install_name_tool -change /install/lib/libpython3.9.dylib @executable_path/lib/libpython3.9.dylib py39-dist/swift-console
+  exec --fail-on-error install_name_tool -change /install/lib/libpython3.9.dylib @executable_path/lib/libpython3.9.dylib py39-dist/${app_name}
 end
 '''
 
 [tasks.build-dist-install-console.windows]
 script = '''
-cp target/release/swift-console.exe py39-dist/swift-console.exe
-cp target/release/swift-console.pdb py39-dist/swift-console.pdb
+cp target/release/${APP_NAME}.exe py39-dist/${APP_NAME}.exe
+cp target/release/${APP_NAME}.d py39-dist/${APP_NAME}.d
+cp target/release/swift_console.pdb py39-dist/swift_console.pdb
 cp target/x86_64-pc-windows-msvc/release/console_backend.pdb py39-dist/Lib/site-packages/console_backend/console_backend.pdb
 '''
 
@@ -515,7 +518,8 @@ end
 [tasks.strip-dist]
 script_runner = "@duckscript"
 script = '''
-exec --fail-on-error strip ./py39-dist/swift-console
+app_name = get_env APP_NAME
+exec --fail-on-error strip ./py39-dist/${app_name}
 rm -r ./py39-dist/bin
 '''
 
@@ -523,7 +527,8 @@ rm -r ./py39-dist/bin
 script_runner = "@duckscript"
 script = '''
 cm_run_task strip-dist-pdb
-exec --fail-on-error strip.exe ./py39-dist/swift-console.exe
+app_name = get_env APP_NAME
+exec --fail-on-error strip.exe ./py39-dist/${app_name}.exe
 rm ./py39-dist/python.exe
 rm ./py39-dist/pythonw.exe
 '''
@@ -560,12 +565,13 @@ exec --fail-on-error iconutil --convert icns ./installers/macOS/desktop-icon.ico
 [tasks.dist-to-installer-env.mac]
 script_runner = "@duckscript"
 script = '''
+app_name = get_env APP_NAME
 set_env FINAL_DIR "installers/macOS"
 set_env TMP_DIR "target/installer"
 set_env CONTENTS_MACOS_DIR "MacOS"
 set_env CONTENTS_RESOURCES_DIR "Resources"
 set_env APP_FILE_PREFIX "Swift Console"
-set_env APP_ORIGINAL_NAME "swift-console"
+set_env APP_ORIGINAL_NAME "${app_name}"
 set_env VERSION_PATH "console_backend/src/version.txt"
 set_env INFO_PLIST_PATH "installers/macOS/Info.plist"
 set_env ICNS_PATH "installers/macOS/icon.icns"
@@ -616,10 +622,11 @@ exec --fail-on-error create-dmg --volname "${app_file_prefix}" --volicon "${icns
 [tasks.dist-to-installer-env.linux]
 script_runner = "@duckscript"
 script = '''
+app_name = get_env APP_NAME
 set_env TMP_DIR "target/installer"
 set_env OPT_DIR "opt"
 set_env USR_DIR "usr"
-set_env APP_DIR_NAME "swift-console"
+set_env APP_DIR_NAME "${app_name}"
 set_env APPS_DIR "share/applications"
 set_env ICONS_DIR "share/icons/hicolor"
 version = readfile console_backend/src/version.txt
@@ -844,42 +851,42 @@ args = ["utils/bench_runner.py", "--disk_usage"]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/swift-console
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/${APP_NAME}
 '''
 
 [tasks.frontend-cpu-bench.windows]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/swift-console.exe
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/${APP_NAME}.exe
 '''
 
 [tasks.frontend-cpu-bench.mac]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/swift-console
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/${APP_NAME}
 '''
 
 [tasks.frontend-mem-bench.linux]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/swift-console
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/${APP_NAME}
 '''
 
 [tasks.frontend-mem-bench.windows]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/swift-console.exe
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/${APP_NAME}.exe
 '''
 
 [tasks.frontend-mem-bench.mac]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/swift-console
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/${APP_NAME}
 '''
 
 [tasks.newline-terminator]

@@ -2,6 +2,8 @@
 ; https://github.com/mherrmann/fbs/blob/master/fbs/_defaults/src/installer/windows/Installer.nsi
 Unicode true
 !include "x64.nsh"
+!include nsDialogs.nsh
+!include WinVer.nsh
 !include MUI2.nsh
 !include FileFunc.nsh
 !include LogicLib.nsh
@@ -15,7 +17,7 @@ Unicode true
 !define VERSION "${VER_MAJOR}.${VER_MINOR}.${VER_PATCH}.0"
 !define app_name "Swift Console"
 !define app_executable "swift-console.exe"
-!define outfile_prefix "swift-navigation-console"
+!define outfile_prefix "swift-console"
 !define installer_dir "py39-dist"
 !define company_name "Swift Navigation"
 
@@ -34,29 +36,28 @@ VIAddVersionKey "ProductVersion" "${VERSION}"
 VIAddVersionKey "LegalCopyright" "(C) ${company_name}"
 VIAddVersionKey "FileDescription" "${app_name}"
 
-!define MULTIUSER_EXECUTIONLEVEL Standard ; Switch to "Highest" for All Users when available otherwise current user.
+!define MULTIUSER_EXECUTIONLEVEL Highest ; Switch to "Highest" for All Users when available otherwise current user.
 
-!define MULTIUSER_INSTALLMODE_COMMANDLINE
 !include MultiUser.nsh
 
 ;--------------------------------
 ;Init
 
 Function .onInit
+  ${IfNot} ${AtLeastWin10}
+    MessageBox mb_iconStop "This application is only supported for Windows 10 or greater!" 
+    Abort
+  ${EndIf}
   ${IfNot} ${RunningX64}
     MessageBox MB_OK "This program must be run on an x64 machine."
     Abort
   ${EndIf}
   SetRegView 64
   ${DisableX64FSRedirection}
-  !insertmacro MULTIUSER_INIT
   ; Do not use InstallDir at all so we can detect empty $InstDir!
+  !insertmacro MULTIUSER_INIT
   ${If} $InstDir == "" ; /D not used
-    ${If} $MultiUser.InstallMode == "AllUsers"
-      StrCpy $InstDir "$PROGRAMFILES64\${company_name}\${app_name}"
-    ${Else}
-        StrCpy $InstDir "$LOCALAPPDATA\${company_name}\${app_name}"
-    ${EndIf}
+    StrCpy $InstDir "$PROGRAMFILES64\${company_name}\${app_name}"
   ${EndIf}
   
 FunctionEnd
@@ -72,11 +73,68 @@ FunctionEnd
 
   !define MUI_ABORTWARNING
 
+;-------------------------------
+;Installer Ask Uninstall Page
+
+  !define UninstallMsg "Warning! By clicking $\"Next$\", this installer will uninstall any previous versions of the Swift Console.$\n$\n\
+If this is not desired, please exit the installer now."
+
+  Function uninstallOldVersionsPage
+  !insertmacro MUI_HEADER_TEXT "Uninstall Previous Version" "This installer will uninstall any previous versions."
+
+  nsDialogs::Create 1018
+  Pop $0
+  ${If} $0 == error
+      Abort
+  ${EndIf}
+
+  ${NSD_CreateLabel} 0 0 100% 40u "${UninstallMsg}"
+  Pop $0
+
+  nsDialogs::Show
+  FunctionEnd
+
+  Function uninstallOldVersionsPageLeave
+  Call Uninstall
+  FunctionEnd
+
+;-------------------------------
+;Installer Check for VC Redistributable
+
+  !define mvcFoundMsg "Warning! Microsoft Visual C++ 14 Redistributable is not installed.$\n$\n\
+By clicking $\"Next$\", this installer will attempt to install the required package during installation.$\n$\n\
+If this is not desired, please exit the installer now."
+
+  Function mvcRedistributablePage
+  
+
+  ReadRegStr $0 HKLM "SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64" "Version"
+  ReadRegStr $1 HKLM "SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64" "Installed"
+  ${If} $1 != "1"
+    !insertmacro MUI_HEADER_TEXT "Microsoft Visual C++ Redistributable" "Check if required Microsoft Visual C++ Redistributable is installed."
+
+    nsDialogs::Create 1018
+    Pop $0
+    ${If} $0 == error
+        Abort
+    ${EndIf}
+
+    ${NSD_CreateLabel} 0 0 100% 40u "${mvcFoundMsg}"
+    Pop $0
+
+    nsDialogs::Show
+  ${EndIf}
+  
+  FunctionEnd
+
+
 ;--------------------------------
 ;Pages
   !define MUI_WELCOMEPAGE_TEXT "This wizard will guide you through the installation of ${app_name} version ${VERSION_ORIGINAL}.$\r$\n$\r$\n$\r$\nClick Next to continue."
   !insertmacro MUI_PAGE_WELCOME
+  Page custom uninstallOldVersionsPage uninstallOldVersionsPageLeave
   !insertmacro MUI_PAGE_DIRECTORY
+  Page custom mvcRedistributablePage
   !insertmacro MUI_PAGE_INSTFILES
     !define MUI_FINISHPAGE_NOAUTOCLOSE
     !define MUI_FINISHPAGE_RUN
@@ -98,7 +156,6 @@ FunctionEnd
 
 Section
   SetOutPath "$InstDir"
-  Call Uninstall
   
   ReadRegStr $0 HKLM "SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64" "Version"
   ReadRegStr $1 HKLM "SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64" "Installed"
@@ -138,7 +195,6 @@ Section
   ${GetSize} "$InstDir" "/S=0K" $0 $1 $2
   IntFmt $0 "0x%08X" $0
   WriteRegDWORD SHCTX "${UNINST_KEY}" "EstimatedSize" "$0"
-
 SectionEnd
 
 ;--------------------------------
@@ -157,8 +213,8 @@ Function ${Prefix}Uninstall
   RMDir /r "$InstDir"
   Delete "$DESKTOP\${app_name}.lnk"
   Delete "$SMPROGRAMS\${app_name}.lnk"
-  DeleteRegKey /ifempty SHCTX "Software\${app_name}"
-  DeleteRegKey SHCTX "${UNINST_KEY}"
+  DeleteRegKey HKLM64 "${UNINST_KEY}"
+  DeleteRegKey HKLM64 "SOFTWARE\${app_name}"
 FunctionEnd
 !macroend
 !insertmacro Uninstall "" 

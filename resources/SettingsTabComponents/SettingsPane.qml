@@ -291,6 +291,12 @@ Rectangle {
             text: _title + ":"
             font.bold: true
             horizontalAlignment: Text.AlignRight
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: parent.forceActiveFocus()
+            }
+
         }
 
     }
@@ -305,35 +311,16 @@ Rectangle {
                 text: selectedRowField(_fieldName)
                 anchors.fill: parent
                 wrapMode: Text.WordWrap
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: parent.forceActiveFocus()
+                }
+
             }
 
         }
 
-    }
-
-    Timer {
-        id: textFieldTimer
-
-        property string settingGroup: ""
-        property string settingName: ""
-        property string settingText: ""
-
-        function startTimer(group, name, text) {
-            textFieldTimer.stop();
-            if (text === "")
-                return ;
-
-            settingGroup = group;
-            settingName = name;
-            settingText = text;
-            textFieldTimer.start();
-        }
-
-        interval: Constants.settingsTable.settingEditTimeoutMilliseconds
-        repeat: false
-        onTriggered: {
-            data_model.settings_write_request(settingGroup, settingName, settingText);
-        }
     }
 
     Component {
@@ -355,14 +342,8 @@ Rectangle {
             selectByMouse: true
             anchors.centerIn: parent
             anchors.verticalCenterOffset: 5
-            onTextChanged: {
-                textFieldTimer.startTimer(settingGroup, settingName, text);
-            }
             onEditingFinished: {
-                if (textFieldTimer.running) {
-                    textFieldTimer.stop();
-                    data_model.settings_write_request(settingGroup, settingName, text);
-                }
+                data_model.settings_write_request(settingGroup, settingName, text);
             }
             validator: {
                 if (settingType === "integer")

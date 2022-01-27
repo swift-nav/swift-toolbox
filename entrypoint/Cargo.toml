@@ -1,6 +1,6 @@
 [package]
 authors = ["Swift Navigation <dev@swift-nav.com>"]
-name = "console"
+name = "swift-console"
 version = "0.1.0"
 description = "Starts the console with the correct python installation"
 edition = "2018"
@@ -11,7 +11,7 @@ pyo3 = { version = "0.15", features = [
 ], default-features = false }
 
 [[bin]]
-name = "console"
+name = "swift-console"
 path = "src/main.rs"
 bench = false
 

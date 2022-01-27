@@ -248,8 +248,10 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
     gal_codes = Property(QTKeys.QVARIANTLIST, get_gal_codes, notify=codes_changed)  # type: ignore
     qzs_codes = Property(QTKeys.QVARIANTLIST, get_qzs_codes, notify=codes_changed)  # type: ignore
     sbas_codes = Property(QTKeys.QVARIANTLIST, get_sbas_codes, notify=codes_changed)  # type: ignore
-    codes = Property(QTKeys.QVARIANTLIST, get_codes, notify=codes_changed)  # type: ignore
+    # Confusingly, codes depends on self._rows not self._codes
+    codes = Property(QTKeys.QVARIANTLIST, get_codes, notify=row_count_changed)  # type: ignore
     code_filters = Property(QTKeys.QVARIANTLIST, get_code_filters, constant=True)  # type: ignore
+
 
 def obs_rows_to_json(rows):
     return [

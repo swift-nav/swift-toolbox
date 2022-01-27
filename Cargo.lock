@@ -322,15 +322,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "console"
-version = "0.1.0"
-dependencies = [
- "pyo3",
- "windows",
- "winres",
-]
-
-[[package]]
 name = "console-backend"
 version = "0.1.0"
 dependencies = [
@@ -1786,6 +1777,15 @@ dependencies = [
  "quote",
  "rustversion",
  "syn",
+]
+
+[[package]]
+name = "swift-console"
+version = "0.1.0"
+dependencies = [
+ "pyo3",
+ "windows",
+ "winres",
 ]
 
 [[package]]

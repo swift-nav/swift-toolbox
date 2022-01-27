@@ -274,8 +274,9 @@ Rectangle {
                     mockRecordingSize += 15.15;
                     recordingSize.text = bytesToString(mockRecordingSize);
                 } else {
-                    if (loggingBarData.recording_size > 0)
-                        recordingSize.text = bytesToString(loggingBarData.recording_size);
+                    let recSize = loggingBarData.recording_size.toFixed(0);
+                    if (recSize > 0)
+                        recordingSize.text = bytesToString(recSize);
                     else
                         recordingSize.text = "0.00 MiB";
                 }

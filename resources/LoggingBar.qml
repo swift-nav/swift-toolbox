@@ -18,7 +18,7 @@ Rectangle {
 
     function loggingDurationFormat(duration) {
         let hours = Math.floor(duration / 3600).toFixed(0).padStart(2, 0);
-        let minutes = Math.floor(duration / 60).toFixed(0).padStart(2, 0);
+        let minutes = Math.floor((duration / 60) % 60).toFixed(0).padStart(2, 0);
         let seconds = (duration % 60).toFixed(0).padStart(2, 0);
         return hours + ":" + minutes + ":" + seconds;
     }

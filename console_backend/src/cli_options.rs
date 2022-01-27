@@ -86,14 +86,14 @@ impl FromStr for CliSbpLogging {
 }
 
 #[cfg(windows)]
-const BIN_NAME: &str = "Swift-Navigation-Console";
+const BIN_NAME: &str = "swift-console.exe";
 #[cfg(not(windows))]
-const BIN_NAME: &str = "swift-navigation-console";
+const BIN_NAME: &str = "swift-console";
 
 #[derive(Parser)]
 #[clap(
-    name = "swift_navigation_console",
-    about = "Swift Navigation Console.",
+    name = "Swift Console",
+    about = "The Swift Console is a Graphic User Interface (GUI) program providing visual representation of what's happening inside the Swift Navigation GNSS receivers. Console displays information and allows to adjust the settings on the hardware.",
     bin_name = BIN_NAME,
     version = include_str!("version.txt"),
     setting = DeriveDisplayOrder,

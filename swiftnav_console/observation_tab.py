@@ -99,6 +99,9 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
         observation_tab = REMOTE_OBSERVATION_TAB if self._remote else LOCAL_OBSERVATION_TAB
         return [entry["prn"].code for entry in observation_tab[Keys.ROWS]]
 
+    def get_code_filters(self) -> List[str]:
+        return list(self._code_filters)
+
     def get_codes_by_prefix(self, prefix) -> List[List[str]]:
         return sorted([code for code in self._codes if code.startswith(prefix)])
 
@@ -246,7 +249,7 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
     qzs_codes = Property(QTKeys.QVARIANTLIST, get_qzs_codes, notify=codes_changed)  # type: ignore
     sbas_codes = Property(QTKeys.QVARIANTLIST, get_sbas_codes, notify=codes_changed)  # type: ignore
     codes = Property(QTKeys.QVARIANTLIST, get_codes, notify=codes_changed)  # type: ignore
-
+    code_filters = Property(QTKeys.QVARIANTLIST, get_code_filters, constant=True)  # type: ignore
 
 def obs_rows_to_json(rows):
     return [

@@ -23,7 +23,7 @@ ColumnLayout {
             spacing: 2
             padding: 2
             verticalPadding: 0.2
-            checked: true
+            checked: !observationTableModel.code_filters.includes(modelData)
             onCheckedChanged: {
                 observationTableModel.filter_prn(modelData, !checked);
                 observationTableModel.update();

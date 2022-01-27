@@ -204,7 +204,7 @@ jobs:
         run: |
           & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
           & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
-        if: matrix.os == 'windows-2019'
+        if: matrix.os.name == 'windows-2019'
 
       - name: Install ${{ runner.os }} Dependencies.
         shell: bash
@@ -272,13 +272,13 @@ jobs:
           LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
         run: |
           cargo make create-dist
-        if: matrix.os == 'windows-2019'
+        if: matrix.os.name == 'windows-2019'
 
       - name: Build ${{ runner.os }} Binaries.
         shell: bash
         run: |
           cargo make create-dist
-        if: matrix.os != 'windows-2019'
+        if: matrix.os.name != 'windows-2019'
 
       - name: Create ${{ runner.os }} Installers.
         shell: bash
@@ -299,14 +299,15 @@ jobs:
       - name: Build ${{ runner.os }} fileio binary.
         run: |
           cargo build --bin fileio --features="env_logger" --release
-        if: matrix.os != 'windows-2019'
+        # Building on Mac currently not working
+        if: matrix.os.name != 'windows-2019' && matrix.os.name != 'macos-10.15'
 
       - name: Build ${{ runner.os }} fileio binary.
         run: |
           cargo build --bin fileio --features="env_logger" --release
         env:
           LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
-        if: matrix.os == 'windows-2019'
+        if: matrix.os.name == 'windows-2019'
 
       - name: Pull Git LFS objects
         run: git lfs pull

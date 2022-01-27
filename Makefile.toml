@@ -49,6 +49,7 @@ skip_crate_env_info = true
 WORKSPACE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}"
 STANDALONE_PY_BASE_URL = "https://github.com/indygreg/python-build-standalone/releases/download/20211017"
 MACOSX_DEPLOYMENT_TARGET = "10.15"
+APP_NAME = "swift-console"
 
 [tasks.init]
 
@@ -323,7 +324,7 @@ exec --fail-on-error ${DIST_PYTHON} ./get-pip.py
 [tasks.call-build-console-bin]
 private = true
 command = "cargo"
-args = ["build", "--release", "-vv", "--bin", "console"]
+args = ["build", "--release", "-vv", "--bin", "${APP_NAME}"]
 
 [tasks.build-console]
 env = { PYO3_CONFIG_FILE = "${CONSOLE_PYO3_CONFIG_FILE}" }
@@ -337,17 +338,19 @@ dependencies = ["call-build-console-bin"]
 dependencies = ["build-console"]
 script_runner = "@duckscript"
 script = '''
-cp target/release/console py39-dist/console
+app_name = get_env APP_NAME
+cp target/release/${app_name} py39-dist/${app_name}
 os = os_family
 if eq ${os} mac
-  exec --fail-on-error install_name_tool -change /install/lib/libpython3.9.dylib @executable_path/lib/libpython3.9.dylib py39-dist/console
+  exec --fail-on-error install_name_tool -change /install/lib/libpython3.9.dylib @executable_path/lib/libpython3.9.dylib py39-dist/${app_name}
 end
 '''
 
 [tasks.build-dist-install-console.windows]
 script = '''
-cp target/release/console.exe py39-dist/console.exe
-cp target/release/console.pdb py39-dist/console.pdb
+cp target/release/${APP_NAME}.exe py39-dist/${APP_NAME}.exe
+cp target/release/${APP_NAME}.d py39-dist/${APP_NAME}.d
+cp target/release/swift_console.pdb py39-dist/swift_console.pdb
 cp target/x86_64-pc-windows-msvc/release/console_backend.pdb py39-dist/Lib/site-packages/console_backend/console_backend.pdb
 '''
 
@@ -515,7 +518,8 @@ end
 [tasks.strip-dist]
 script_runner = "@duckscript"
 script = '''
-exec --fail-on-error strip ./py39-dist/console
+app_name = get_env APP_NAME
+exec --fail-on-error strip ./py39-dist/${app_name}
 rm -r ./py39-dist/bin
 '''
 
@@ -523,7 +527,8 @@ rm -r ./py39-dist/bin
 script_runner = "@duckscript"
 script = '''
 cm_run_task strip-dist-pdb
-exec --fail-on-error strip.exe ./py39-dist/console.exe
+app_name = get_env APP_NAME
+exec --fail-on-error strip.exe ./py39-dist/${app_name}.exe
 rm ./py39-dist/python.exe
 rm ./py39-dist/pythonw.exe
 '''
@@ -560,12 +565,13 @@ exec --fail-on-error iconutil --convert icns ./installers/macOS/desktop-icon.ico
 [tasks.dist-to-installer-env.mac]
 script_runner = "@duckscript"
 script = '''
+app_name = get_env APP_NAME
 set_env FINAL_DIR "installers/macOS"
 set_env TMP_DIR "target/installer"
 set_env CONTENTS_MACOS_DIR "MacOS"
 set_env CONTENTS_RESOURCES_DIR "Resources"
-set_env APP_FILE_PREFIX "Swift-Navigation-Console"
-set_env APP_ORIGINAL_NAME "console"
+set_env APP_FILE_PREFIX "Swift Console"
+set_env APP_ORIGINAL_NAME "${app_name}"
 set_env VERSION_PATH "console_backend/src/version.txt"
 set_env INFO_PLIST_PATH "installers/macOS/Info.plist"
 set_env ICNS_PATH "installers/macOS/icon.icns"
@@ -597,7 +603,7 @@ end
 version_path = get_env VERSION_PATH
 version = readfile ${version_path}
 version = trim_end ${version}
-dmg_path = set ./${final_dir}/${app_file_prefix}-Installer-${version}.dmg
+dmg_path = set ./${final_dir}/${app_original_name}_${version}_macos.dmg
 
 old_dmgs = glob_array "./${final_dir}/*.dmg"
 for dmg_path in ${old_dmgs}
@@ -610,18 +616,25 @@ exec --fail-on-error mv ./${contents_mac_os}/${app_original_name} "./${contents_
 cp ./${info_plist_path} ./${contents_dir}/Info.plist
 mkdir ${contents_resources_dir}
 cp ${icns_path} ./${contents_resources_dir}/${app_file_prefix}.icns
-exec --fail-on-error create-dmg --volname "${app_file_prefix}-Installer" --volicon "${icns_path}" --background "${background_path}" --hdiutil-verbose --window-pos 200 120 --window-size 800 400 --icon-size 100 --icon "${app_dir_name}" 200 190 --hide-extension "${app_dir_name}" --app-drop-link 600 185 "${dmg_path}" "${tmp_dir}"
+exec --fail-on-error create-dmg --volname "${app_file_prefix}" --volicon "${icns_path}" --background "${background_path}" --hdiutil-verbose --window-pos 200 120 --window-size 800 400 --icon-size 100 --icon "${app_dir_name}" 200 190 --hide-extension "${app_dir_name}" --app-drop-link 600 185 "${dmg_path}" "${tmp_dir}"
 '''
 
 [tasks.dist-to-installer-env.linux]
 script_runner = "@duckscript"
 script = '''
+app_name = get_env APP_NAME
 set_env TMP_DIR "target/installer"
 set_env OPT_DIR "opt"
 set_env USR_DIR "usr"
-set_env APP_DIR_NAME "swift-navigation-console"
+set_env APP_DIR_NAME "${app_name}"
 set_env APPS_DIR "share/applications"
 set_env ICONS_DIR "share/icons/hicolor"
+version = readfile console_backend/src/version.txt
+version = trim_end ${version}
+set_env VERSION ${version}
+set_env HOMEPAGE "https://www.swiftnav.com"
+set_env MAINTAINER "Swift Navigation <https://www.swiftnav.com/support>"
+set_env DESCRIPTION "The Swift Console is a Graphic User Interface (GUI) program providing visual representation of what's happening inside the Swift Navigation GNSS receivers. Console displays information and allows to adjust the settings on the hardware."
 '''
 
 [tasks.dist-to-installer.linux]
@@ -632,7 +645,6 @@ script = '''
 if [ -d $TMP_DIR ]; then
   rm -rf $TMP_DIR
 fi
-
 mkdir -p $TMP_DIR/$OPT_DIR
 cp -r py39-dist/ $TMP_DIR/$OPT_DIR/$APP_DIR_NAME/
 
@@ -640,8 +652,7 @@ mkdir -p $TMP_DIR/$USR_DIR/$APPS_DIR
 cp installers/Linux/$APP_DIR_NAME.desktop $TMP_DIR/$USR_DIR/$APPS_DIR/
 mkdir -p $TMP_DIR/$USR_DIR/$ICONS_DIR
 cp -r installers/Linux/hicolor/* $TMP_DIR/$USR_DIR/$ICONS_DIR
-
-fpm -t deb -s dir --depends libxcb-xinerama0 -v $(cat console_backend/src/version.txt) --debug --verbose -C $TMP_DIR -f -n $APP_DIR_NAME $OPT_DIR $USR_DIR
+fpm -t deb -s dir --depends libxcb-xinerama0 --maintainer "$MAINTAINER" --description "$DESCRIPTION" --url "$HOMEPAGE" -v $VERSION -p "${APP_DIR_NAME}_${VERSION}_linux.deb" --verbose -C $TMP_DIR -f -n $APP_DIR_NAME $OPT_DIR $USR_DIR
 mv *.deb installers/Linux/
 '''
 
@@ -840,42 +851,42 @@ args = ["utils/bench_runner.py", "--disk_usage"]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/console
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/${APP_NAME}
 '''
 
 [tasks.frontend-cpu-bench.windows]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/console.exe
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/${APP_NAME}.exe
 '''
 
 [tasks.frontend-cpu-bench.mac]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/console
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/${APP_NAME}
 '''
 
 [tasks.frontend-mem-bench.linux]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/console
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/${APP_NAME}
 '''
 
 [tasks.frontend-mem-bench.windows]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/console.exe
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/${APP_NAME}.exe
 '''
 
 [tasks.frontend-mem-bench.mac]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/console
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/${APP_NAME}
 '''
 
 [tasks.newline-terminator]

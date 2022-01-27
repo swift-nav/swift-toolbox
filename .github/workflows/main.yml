@@ -15,6 +15,7 @@ env:
   CARGO_MAKE_VERSION: 0.35.0
   CARGO_INCREMENTAL: 0
   RUSTFLAGS: "-C debuginfo=0"
+  APP_NAME: swift-console
 
 jobs:
 
@@ -371,14 +372,14 @@ jobs:
       - name: Remove previous build.
         shell: bash
         run: |
-          rm -rf console
+          rm -rf ${{ env.APP_NAME }}
           rm -rf bench
 
       - uses: actions/download-artifact@v2
         with:
           name: ${{ matrix.os }}-artifacts
           path: |
-            console
+            ${{ env.APP_NAME }}
 
       - uses: actions/download-artifact@v2
         with:
@@ -389,7 +390,7 @@ jobs:
       - name: Extract binary and data.
         shell: bash
         run: |
-          cd console
+          cd ${{ env.APP_NAME }}
           archive=$(cat release-archive.filename)
           7z x $archive -aoa
           7z x ${archive%.xz} -aoa
@@ -401,12 +402,12 @@ jobs:
       - name: Run CPU Frontend Benchmark.
         shell: bash
         run: |
-          cd console
+          cd ${{ env.APP_NAME }}
           if [ "$RUNNER_OS" == "Windows" ]; then
-              python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/console/console.exe"
+              python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}.exe"
           elif [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
-              chmod +x "${GITHUB_WORKSPACE}/console/console"
-              python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/console/console"
+              chmod +x "${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
+              python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
           else
               echo "Invalid platform"
               exit 1
@@ -415,12 +416,12 @@ jobs:
       - name: Run MEM Frontend Benchmark.
         shell: bash
         run: |
-          cd console
+          cd ${{ env.APP_NAME }}
           if [ "$RUNNER_OS" == "Windows" ]; then
-              python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/console/console.exe"
+              python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}.exe"
           elif [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
-              chmod +x "${GITHUB_WORKSPACE}/console/console"
-              python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/console/console"
+              chmod +x "${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
+              python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
           else
               echo "Invalid platform"
               exit 1

@@ -46,12 +46,13 @@ QtObject {
     readonly property string fontFamily: "Roboto Condensed"
     property FontLoader robotoCondensedLightFont
     readonly property string lightFontFamily: robotoCondensedLightFont.name
-    readonly property real xSmallPointSize: Qt.platform.os == "osx" ? 8 : 6
-    readonly property real smallPointSize: Qt.platform.os == "osx" ? 9 : 7
-    readonly property real mediumPointSize: Qt.platform.os == "osx" ? 10 : 8
-    readonly property real largePointSize: Qt.platform.os == "osx" ? 11 : 9
-    readonly property real xlPointSize: Qt.platform.os == "osx" ? 14 : 12
-    readonly property real xxlPointSize: Qt.platform.os == "osx" ? 16 : 14
+    readonly property real fontScaleFactor: Qt.platform.os == "osx" ? 1.5 : 1
+    readonly property real xSmallPointSize: fontScaleFactor * 6
+    readonly property real smallPointSize: fontScaleFactor * 7
+    readonly property real mediumPointSize: fontScaleFactor * 8
+    readonly property real largePointSize: fontScaleFactor * 9
+    readonly property real xlPointSize: fontScaleFactor * 12
+    readonly property real xxlPointSize: fontScaleFactor * 14
     readonly property bool debugMode: false
     readonly property color swiftWhite: "#FFFFFF"
     readonly property color swiftGrey: "#323F48"

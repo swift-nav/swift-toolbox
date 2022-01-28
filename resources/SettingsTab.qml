@@ -156,6 +156,7 @@ MainTab {
         SettingsTabComponents.SettingsTable {
             id: settingsTable
 
+            showExpert: showAdvancedButton.checked
             SplitView.minimumWidth: Constants.settingsTable.minimumWidth
             onSelectedRowIdxChanged: {
                 if (!!selectedRow())
@@ -298,6 +299,8 @@ MainTab {
                     }
 
                     SmallCheckBox {
+                        id: showAdvancedButton
+
                         Layout.columnSpan: 1
                         Layout.rowSpan: 1
                         Layout.preferredWidth: parent.colWidth
@@ -308,14 +311,6 @@ MainTab {
                         font.pointSize: refreshButton.font.pointSize
                         font.family: Constants.fontFamily
                         font.bold: false
-                        onClicked: {
-                            if (this.enabled) {
-                                this.enabled = false;
-                                settingsTable.showExpert = checked;
-                                settingsTable.selectedRowIdx = -1;
-                                this.enabled = true;
-                            }
-                        }
                     }
 
                 }

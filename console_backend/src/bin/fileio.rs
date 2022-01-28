@@ -124,7 +124,7 @@ fn main() -> Result<()> {
                 let res = (|| {
                     let mut fileio = Fileio::new(link, sender);
                     let files = fileio.readdir(path)?;
-                    eprintln!("{:#?}", files);
+                    files.iter().for_each(|f| println!("{}", f));
                     Ok(())
                 })();
                 done_tx.send(true).unwrap();

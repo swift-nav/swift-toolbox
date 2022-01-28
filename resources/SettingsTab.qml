@@ -11,22 +11,6 @@ import SwiftConsole 1.0
 MainTab {
     id: settingsTab
 
-    function selectedRow() {
-        var rowIdx = settingsTable.selectedRowIdx;
-        if (rowIdx < 0)
-            return ;
-
-        return settingsTable.table[settingsTable.rowOffsets[rowIdx]];
-    }
-
-    function selectedRowField(name) {
-        var row = selectedRow();
-        if (!row)
-            return "";
-
-        return row[name] || "";
-    }
-
     function autoSurveyDialogText() {
         var text = "This will set the Surveyed Position section to the mean position of up to the last 1000 position solutions. ";
         text += "The fields that will be auto-populated are: \n\n";
@@ -158,11 +142,6 @@ MainTab {
 
             showExpert: showAdvancedButton.checked
             SplitView.minimumWidth: Constants.settingsTable.minimumWidth
-            onSelectedRowIdxChanged: {
-                if (!!selectedRow())
-                    settingsPane.selectedRow = selectedRow();
-
-            }
         }
 
         ColumnLayout {
@@ -256,7 +235,7 @@ MainTab {
                     SwiftButton {
                         id: autoSurveyButton
 
-                        property bool buttonEnabled: (selectedRowField("group") === "surveyed_position")
+                        property bool buttonEnabled: (settingsPane.selectedRowField("group") === "surveyed_position")
 
                         Layout.columnSpan: 1
                         Layout.rowSpan: 1
@@ -325,12 +304,20 @@ MainTab {
             SettingsTabComponents.SettingsPane {
                 id: settingsPane
 
+                function selectedRow() {
+                    var rowIdx = settingsTable.selectedRowIdx;
+                    if (rowIdx < 0)
+                        return ;
+
+                    return settingsTable.table[settingsTable.rowOffsets[rowIdx]];
+                }
+
                 Layout.rightMargin: 10
                 Layout.fillHeight: true
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignLeft | Qt.AlignTop
                 visible: {
-                    var row = settingsTab.selectedRow();
+                    var row = this.selectedRow();
                     if (row && row.hasOwnProperty("valueOnDevice"))
                         return true;
                     else

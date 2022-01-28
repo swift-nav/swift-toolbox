@@ -259,7 +259,7 @@ impl Fileio {
                 },
                 recv(channel::tick(READDIR_TIMEOUT)) -> _ => {
                     self.link.unregister(key);
-                    bail!("MsgFileioReadDirReq timed out");
+                    bail!("MsgFileioReadDirReq timed out. Is the device configured to emit MSG_FILEIO_READ_DIR_RESP (170) messages?");
                 }
             }
         }

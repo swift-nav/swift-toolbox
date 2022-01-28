@@ -476,13 +476,14 @@ QtObject {
         readonly property string levelHeader: "Log Level"
         readonly property string msgHeader: "Message"
         readonly property int zAboveTable: 100
-        readonly property int pauseButtonRightMargin: 10
+        readonly property int pauseButtonRightMargin: 25
         readonly property int pauseButtonWidth: 30
         readonly property int pauseButtonPadding: 0
         readonly property string pauseButtonTooltip: "Pause Log Panel"
         readonly property string playButtonTooltip: "Resume Log Panel"
         readonly property string clearButtonTooltip: "Clear Log Panel"
         readonly property int logLevelMenuHeight: 100
+        readonly property int logLevelRightMargin: 10
         readonly property int dropdownButtonPadding: 0
         readonly property int dropdownButtonWidth: 20
         readonly property int delegateBorderWidth: 0

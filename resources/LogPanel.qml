@@ -166,6 +166,7 @@ Item {
                     enabled: !menu.visible
                     icon.source: Constants.icons.dropIndicatorPath
                     anchors.right: headerText.right
+                    anchors.rightMargin: Constants.logPanel.logLevelRightMargin
                     icon.color: checked ? Constants.swiftOrange : Constants.materialGrey
                     height: parent.height
                     width: Constants.logPanel.dropdownButtonWidth

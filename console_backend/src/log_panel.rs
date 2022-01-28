@@ -173,6 +173,7 @@ fn write_packet(packet: ConsoleLogPacket, f: &mut File) {
         timestamp = packet.timestamp,
         level = packet.level,
         msg = packet.msg,
+        spaces = spaces,
     );
 }
 

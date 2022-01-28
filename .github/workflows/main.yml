@@ -26,9 +26,9 @@ jobs:
     strategy:
       matrix:
         os:
-          - ubuntu-18.04
-          - macos-10.15
-          - windows-2019
+        - ubuntu-18.04
+        - macos-10.15
+        - windows-2019
 
     runs-on: ${{ matrix.os }}
 
@@ -183,11 +183,11 @@ jobs:
     strategy:
       matrix:
         os:
-        - ubuntu-18.04
-        - macos-10.15
-        - windows-2019
+        - {name: ubuntu-18.04, exe_suffix: "" }
+        - {name: macos-10.15, exe_suffix: "" }
+        - {name: windows-2019, exe_suffix: ".exe" }
 
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os.name }}
 
     steps:
 
@@ -209,7 +209,7 @@ jobs:
         run: |
           & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
           & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
-        if: matrix.os == 'windows-2019'
+        if: matrix.os.name == 'windows-2019'
 
       - name: Install ${{ runner.os }} Dependencies.
         shell: bash
@@ -277,13 +277,13 @@ jobs:
           LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
         run: |
           cargo make create-dist
-        if: matrix.os == 'windows-2019'
+        if: matrix.os.name == 'windows-2019'
 
       - name: Build ${{ runner.os }} Binaries.
         shell: bash
         run: |
           cargo make create-dist
-        if: matrix.os != 'windows-2019'
+        if: matrix.os.name != 'windows-2019'
 
       - name: Create ${{ runner.os }} Installers.
         shell: bash
@@ -300,6 +300,19 @@ jobs:
           echo $INSTALLER_ARCHIVE >installer-archive.filename
           echo "INSTALLER_ARCHIVE=$(cat installer-archive.filename)" >>$GITHUB_ENV
         if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
+
+      - name: Build ${{ runner.os }} fileio binary.
+        run: |
+          cargo build --bin fileio --features="env_logger" --release
+        # Building on Mac currently not working (DEVINFRA-612)
+        if: matrix.os.name != 'windows-2019' && matrix.os.name != 'macos-10.15'
+
+      - name: Build ${{ runner.os }} fileio binary.
+        run: |
+          cargo build --bin fileio --features="env_logger" --release
+        env:
+          LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
+        if: matrix.os.name == 'windows-2019'
 
       - name: Pull Git LFS objects
         run: git lfs pull
@@ -330,6 +343,12 @@ jobs:
           path: |
             ${{ env.RELEASE_ARCHIVE }}
             release-archive.filename
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ runner.os }}-fileio
+          path: |
+            ./target/release/fileio${{ matrix.os.exe_suffix}}
+
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ runner.os }}-installer

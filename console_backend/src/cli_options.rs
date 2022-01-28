@@ -279,7 +279,7 @@ fn is_refresh_rate(rr: &str) -> Result<(), String> {
 /// # Returns
 /// - `Ok`: The baudrate was found in AVAILABLE_BAUDRATES.
 /// - `Err`: The tab was not found in AVAILABLE_BAUDRATES.
-fn is_baudrate(br: &str) -> Result<(), String> {
+pub fn is_baudrate(br: &str) -> Result<(), String> {
     if let Ok(br_) = br.parse::<u32>() {
         if AVAILABLE_BAUDRATES.contains(&br_) {
             return Ok(());

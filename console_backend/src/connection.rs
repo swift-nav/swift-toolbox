@@ -330,7 +330,7 @@ pub struct TcpConnection {
 }
 
 impl TcpConnection {
-    fn new(host: String, port: u16) -> Result<Self> {
+    pub fn new(host: String, port: u16) -> Result<Self> {
         let name = format!("{}:{}", host, port);
         Ok(Self { name, host, port })
     }
@@ -367,7 +367,7 @@ impl TcpConnection {
         ))
     }
 
-    fn try_connect(
+    pub fn try_connect(
         self,
         shared_state: Option<&SharedState>,
     ) -> io::Result<(Box<dyn io::Read + Send>, Box<dyn io::Write + Send>)> {
@@ -391,7 +391,7 @@ pub struct SerialConnection {
 }
 
 impl SerialConnection {
-    fn new(device: String, baudrate: u32, flow: FlowControl) -> Self {
+    pub fn new(device: String, baudrate: u32, flow: FlowControl) -> Self {
         Self {
             name: format!("{} @{}", device, baudrate),
             device,
@@ -404,7 +404,7 @@ impl SerialConnection {
         self.name.clone()
     }
 
-    fn try_connect(
+    pub fn try_connect(
         self,
         _shared_state: Option<&SharedState>,
     ) -> io::Result<(Box<dyn io::Read + Send>, Box<dyn io::Write + Send>)> {

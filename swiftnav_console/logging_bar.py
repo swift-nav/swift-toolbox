@@ -14,7 +14,7 @@ LOGGING_BAR: Dict[str, Any] = {
     Keys.SBP_LOGGING_FORMAT: SbpLogging.SBP_JSON,
     Keys.SBP_LOGGING_LABELS: [SbpLogging.SBP_JSON, SbpLogging.SBP],
     Keys.RECORDING_DURATION_SEC: int,
-    Keys.RECORDING_SIZE: int,
+    Keys.RECORDING_SIZE: float,
     Keys.RECORDING_FILENAME: str,
 }
 
@@ -27,7 +27,7 @@ class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
     _sbp_logging_labels: List[str] = []
     _previous_folders: List[str] = []
     _recording_duration_sec: int = 0
-    _recording_size: int = 0
+    _recording_size: float = 0
     _recording_filename: str = ""
 
     def get_csv_logging(self) -> bool:
@@ -70,13 +70,14 @@ class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
 
     previous_folders = Property(QTKeys.QVARIANTLIST, get_previous_folders, set_previous_folders)  # type: ignore
 
-    def get_recording_size(self) -> int:
+    def get_recording_size(self) -> float:
         return self._recording_size
 
-    def set_recording_size(self, recording_size: int) -> None:
+    def set_recording_size(self, recording_size: float) -> None:
         self._recording_size = recording_size
 
-    recording_size = Property(int, get_recording_size, set_recording_size)
+    # Using float type here to avoid overflow issues when converting to int, https://bugreports.qt.io/browse/PYSIDE-648.
+    recording_size = Property(float, get_recording_size, set_recording_size)
 
     def get_recording_duration_sec(self) -> int:
         return self._recording_duration_sec

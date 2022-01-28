@@ -55,7 +55,7 @@ pub fn setup_logging(client_sender: BoxedClientSender, shared_state: SharedState
         .unwrap();
 
     log::set_boxed_logger(Box::new(logger)).expect("Failed to set logger");
-    log::set_max_level(LevelFilter::Debug);
+    log::set_max_level(LevelFilter::Warn);
 }
 
 #[derive(Debug)]

@@ -69,10 +69,13 @@ Item {
             implicitHeight: 3 * Globals.height / 7
             implicitWidth: Globals.width / 2
             anchors.centerIn: parent
-            title: "Connect to device..."
+            title: "Connect To Device"
             onVisibleChanged: {
                 if (visible)
                     dialogRect.forceActiveFocus();
+
+                if (typeof (data_model) !== "undefined")
+                    data_model.connection_dialog_status(visible);
 
             }
             onClosed: {
@@ -115,6 +118,15 @@ Item {
                         Layout.fillWidth: true
                     }
 
+                }
+
+                Label {
+                    id: connectionMessage
+
+                    visible: false
+                    text: connMessage
+                    Layout.leftMargin: Constants.connection.labelLeftMargin
+                    color: "red"
                 }
 
                 Rectangle {
@@ -411,7 +423,7 @@ Item {
 
                                 PropertyChanges {
                                     target: dialog
-                                    title: "Connected to device."
+                                    title: "Connected To Device"
                                 }
 
                             },
@@ -445,7 +457,7 @@ Item {
 
                                 PropertyChanges {
                                     target: dialog
-                                    title: "Connect to device."
+                                    title: "Connect To Device"
                                 }
 
                             }
@@ -487,44 +499,18 @@ Item {
                     }
                     if (connectionData.connection_message !== "") {
                         connMessage = connectionData.connection_message;
-                        warningTimer.startTimer();
+                        connectionMessage.visible = true;
                     }
                     connectButton.state = connectionData.conn_state.toLowerCase();
                     if ([disconnectedConstant, connectingConstant].includes(Globals.conn_state) && connectionData.conn_state == connectedConstant) {
                         connectionMessage.visible = false;
+                        connMessage = "";
                         stack.mainView();
                     }
                     Globals.conn_state = connectionData.conn_state;
                 }
             }
 
-        }
-
-        Timer {
-            id: warningTimer
-
-            function startTimer() {
-                if (!warningTimerRecentlyUsed) {
-                    warningTimerRecentlyUsed = true;
-                    connectionMessage.visible = true;
-                    warningTimer.start();
-                }
-            }
-
-            interval: Constants.connection.warningTimerLockedInterval
-            repeat: false
-            onTriggered: {
-                warningTimerRecentlyUsed = false;
-            }
-        }
-
-        Dialogs.MessageDialog {
-            id: connectionMessage
-
-            title: "Connection Message"
-            text: connMessage
-            icon: Dialogs.StandardIcon.Warning
-            standardButtons: Dialogs.StandardButton.Cancel
         }
 
     }

@@ -121,6 +121,10 @@ pub fn server_recv_thread(
                     let log_level = LogLevel::from_str(log_level).expect(CONVERT_TO_STR_FAILURE);
                     shared_state.set_log_level(log_level);
                 }
+                m::message::ConnectionDialogStatus(Ok(cv_in)) => {
+                    let visible = cv_in.get_visible();
+                    shared_state.lock().connection_dialog_visible = visible;
+                }
                 m::message::SolutionVelocityStatusFront(Ok(cv_in)) => {
                     let unit = cv_in
                         .get_solution_velocity_unit()

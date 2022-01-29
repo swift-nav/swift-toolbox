@@ -551,6 +551,15 @@ class DataModel(QObject):  # pylint: disable=too-many-instance-attributes,too-ma
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
 
+    @Slot(bool)  # type: ignore
+    def connection_dialog_status(self, visible: bool) -> None:
+        Message = self.messages.Message
+        msg = self.messages.Message()
+        msg.connectionDialogStatus = msg.init(Message.Union.ConnectionDialogStatus)
+        msg.connectionDialogStatus.visible = visible
+        buffer = msg.to_bytes()
+        self.endpoint.send_message(buffer)
+
     @Slot()  # type: ignore
     def reset_device(self) -> None:
         Message = self.messages.Message

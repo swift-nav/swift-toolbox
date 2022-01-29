@@ -56,6 +56,9 @@ impl SharedState {
     pub fn connection(&self) -> ConnectionState {
         self.lock().conn.get()
     }
+    pub fn connection_dialog_visible(&self) -> bool {
+        self.lock().connection_dialog_visible
+    }
     pub fn watch_connection(&self) -> WatchReceiver<ConnectionState> {
         self.lock().conn.watch()
     }
@@ -358,6 +361,7 @@ pub struct SharedStateInner {
     pub(crate) tracking_tab: TrackingTabState,
     pub(crate) connection_history: ConnectionHistory,
     pub(crate) conn: Watched<ConnectionState>,
+    pub(crate) connection_dialog_visible: bool,
     pub(crate) debug: bool,
     pub(crate) solution_tab: SolutionTabState,
     pub(crate) baseline_tab: BaselineTabState,
@@ -385,6 +389,7 @@ impl SharedStateInner {
             debug: false,
             connection_history,
             conn: Watched::new(ConnectionState::Disconnected),
+            connection_dialog_visible: true,
             solution_tab: SolutionTabState::new(),
             baseline_tab: BaselineTabState::new(),
             advanced_spectrum_analyzer_tab: AdvancedSpectrumAnalyzerTabState::new(),

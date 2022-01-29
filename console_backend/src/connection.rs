@@ -121,24 +121,25 @@ fn conn_manager_thd(
                         Err(e) => {
                             let (reconnect, message) = match e.kind() {
                                 ErrorKind::ConnectionRefused => {
-                                    (true, String::from("Connection refused. Reconnecting..."))
+                                    (true, String::from("Connection Error: Connection refused."))
                                 }
                                 ErrorKind::ConnectionReset => {
-                                    (true, String::from("Connection reset. Reconnecting..."))
+                                    (true, String::from("Connection Error: Connection reset."))
                                 }
-                                ErrorKind::TimedOut => {
-                                    (true, String::from("Connection timed out. Reconnecting..."))
-                                }
+                                ErrorKind::TimedOut => (
+                                    true,
+                                    String::from("Connection Error: Connection timed out."),
+                                ),
                                 ErrorKind::NotConnected => {
-                                    (true, String::from("Not connected. Reconnecting..."))
+                                    (true, String::from("Connection Error: Not connected."))
                                 }
-                                _ => (false, format!("Unable to connect: {}", e)),
+                                _ => (false, format!("Connection Error: {}", e)),
                             };
                             error!("{}", message);
                             log::logger().flush();
                             send_conn_notification(&client_sender, message.clone());
                             if !conn.is_file() {
-                                if reconnect {
+                                if reconnect && !shared_state.connection_dialog_visible() {
                                     manager_msg.send(ConnectionManagerMsg::Reconnect(conn))
                                 } else {
                                     manager_msg.send(ConnectionManagerMsg::Disconnect)

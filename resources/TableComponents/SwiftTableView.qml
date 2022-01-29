@@ -48,6 +48,11 @@ TableView {
         id: _verticalScrollBar
 
         policy: ScrollBar.AlwaysOn
+        onSizeChanged: {
+            if (position + size > 1)
+                position = 1 - size;
+
+        }
     }
 
     delegate: Rectangle {

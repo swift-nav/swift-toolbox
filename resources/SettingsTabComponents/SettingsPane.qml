@@ -7,23 +7,24 @@ import SwiftConsole 1.0
 Rectangle {
     id: settingsPane
 
-    property var selectedRow
     property var floatValidator
     property var intValidator
     property var stringValidator
 
     function shouldShowField(name) {
-        if (!selectedRow)
+        let row = settingsPane.selectedRow();
+        if (!row)
             return false;
 
-        return !!selectedRow[name];
+        return !!row[name];
     }
 
     function selectedRowField(name) {
-        if (!selectedRow)
+        let row = settingsPane.selectedRow();
+        if (!row)
             return "";
 
-        return selectedRow[name] || "";
+        return row[name] || "";
     }
 
     clip: true

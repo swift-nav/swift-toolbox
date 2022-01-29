@@ -17,6 +17,10 @@ Rectangle {
     property bool settingsHealthy: false
     property real mouse_x: 0
 
+    function clearTableModel() {
+        tableView.model.clear();
+    }
+
     function isHeader(entry) {
         return !entry.hasOwnProperty("name");
     }
@@ -53,10 +57,10 @@ Rectangle {
     }
 
     onVisibleChanged: {
-        if (visible && selectedRowIdx == -1) {
-            selectedRowIdx = 1;
-            tableView.focus = true;
-        }
+        if (visible)
+            clearTableModel();
+        else
+            selectedRowIdx = -1;
     }
     Keys.onUpPressed: {
         let cellDecrease = 1;
@@ -247,6 +251,7 @@ Rectangle {
                 }
                 settingsHealthy = true;
                 if (lastShowExpert != showExpert) {
+                    tableView._currentSelectedIndex = -1;
                     tableView.model.clear();
                     rowOffsets = {
                     };

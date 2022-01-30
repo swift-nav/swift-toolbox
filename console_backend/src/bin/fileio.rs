@@ -143,10 +143,10 @@ fn write(src: PathBuf, dest: Remote, conn: ConnectionOpts) -> Result<()> {
     pb.set_style(ProgressStyle::default_bar()
         .template("[{elapsed_precise}] [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} ({bytes_per_sec}, {eta})")
         .progress_chars("#>-"));
-    let mut downloaded = 0u64;
+    let mut bytes_sent = 0u64;
     fileio.overwrite_with_progress(dest.path, file, |n| {
-        downloaded = (downloaded + n).min(size);
-        pb.set_position(downloaded);
+        bytes_sent = (bytes_sent + n).min(size);
+        pb.set_position(bytes_sent);
     })?;
     pb.finish();
     Ok(())

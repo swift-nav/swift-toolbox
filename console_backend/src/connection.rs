@@ -1,5 +1,5 @@
 use std::{
-    fmt::Debug,
+    fmt::{Debug, Write},
     fs,
     io::{self, ErrorKind},
     net::{TcpStream, ToSocketAddrs},
@@ -361,10 +361,12 @@ impl TcpConnection {
             }
         }
 
-        Err(io::Error::new(
-            ErrorKind::ConnectionRefused,
-            format!("Could not connect to {:?}: {:#?}", self.name, errors),
-        ))
+        let mut msg = format!("Could not connect to {}\n", self.name);
+        writeln!(&mut msg, "Caused by:").unwrap();
+        for err in errors {
+            writeln!(&mut msg, "    {}", err).unwrap();
+        }
+        Err(io::Error::new(ErrorKind::ConnectionRefused, msg.trim()))
     }
 
     pub fn try_connect(

@@ -23,7 +23,6 @@ use console_backend::{
 
 fn main() -> Result<()> {
     env_logger::init();
-
     let opts = Opts::parse();
     if opts.list {
         list(opts.src, opts.conn)
@@ -95,7 +94,7 @@ fn list(target: Target, conn: ConnectionOpts) -> Result<()> {
     let remote = target
         .into_remote()
         .context("--list flag requires <SRC> to be a remote target")?;
-    let mut fileio = remote.start(conn)?;
+    let mut fileio = remote.connect(conn)?;
     let files = fileio.readdir(remote.path)?;
     for file in files {
         println!("{file}");
@@ -107,7 +106,7 @@ fn delete(target: Target, conn: ConnectionOpts) -> Result<()> {
     let remote = target
         .into_remote()
         .context("--delete flag requires <SRC> to be a remote target")?;
-    let fileio = remote.start(conn)?;
+    let fileio = remote.connect(conn)?;
     fileio.remove(remote.path)?;
     Ok(())
 }
@@ -131,13 +130,13 @@ fn read(src: Remote, dest: PathBuf, conn: ConnectionOpts) -> Result<()> {
     } else {
         Box::new(File::create(dest)?)
     };
-    let mut fileio = src.start(conn)?;
+    let mut fileio = src.connect(conn)?;
     fileio.read(src.path, dest)?;
     Ok(())
 }
 
 fn write(src: PathBuf, dest: Remote, conn: ConnectionOpts) -> Result<()> {
-    let mut fileio = dest.start(conn)?;
+    let mut fileio = dest.connect(conn)?;
     let file = fs::File::open(src)?;
     let size = file.metadata()?.len();
     let pb = ProgressBar::new(size);
@@ -194,25 +193,12 @@ struct Remote {
 }
 
 impl Remote {
-    fn connect(
-        &self,
-        port: u16,
-        baudrate: u32,
-        flow: FlowControl,
-    ) -> Result<(Box<dyn io::Read + Send>, Box<dyn io::Write + Send>)> {
-        let tcp = TcpConnection::new(self.host.clone(), port).and_then(|conn| {
-            let conn = conn.try_connect(None)?;
-            Ok(conn)
-        });
-        if let Ok(rw) = tcp {
-            return Ok(rw);
-        }
-        let serial = SerialConnection::new(self.host.clone(), baudrate, flow).try_connect(None)?;
-        Ok(serial)
-    }
-
-    fn start(&self, conn: ConnectionOpts) -> Result<Fileio> {
-        let (reader, writer) = self.connect(conn.port, conn.baudrate, conn.flow_control)?;
+    fn connect(&self, conn: ConnectionOpts) -> Result<Fileio> {
+        let (reader, writer) = match TcpConnection::new(self.host.clone(), conn.port) {
+            Ok(conn) => conn.try_connect(None)?,
+            Err(_) => SerialConnection::new(self.host.clone(), conn.baudrate, conn.flow_control)
+                .try_connect(None)?,
+        };
         let source = LinkSource::new();
         let link = source.link();
         std::thread::spawn(move || {

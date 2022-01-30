@@ -45,6 +45,7 @@ sbp-settings = "0.6.0"
 env_logger = { version = "0.9", optional = true }
 mimalloc = { version = "0.1", default-features = false }
 curl = { version = "0.4", features = ["ssl", "static-curl"] }
+indicatif = { version = "0.16", optional = true }
 
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 serialport = { git = "https://github.com/swift-nav/serialport-rs.git" }
@@ -75,7 +76,7 @@ harness = false
 name = "fileio"
 path = "src/bin/fileio.rs"
 bench = false
-required-features = ["env_logger"]
+required-features = ["env_logger", "indicatif"]
 
 [[bin]]
 name = "fft_monitor"

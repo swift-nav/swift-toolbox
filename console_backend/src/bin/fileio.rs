@@ -7,7 +7,11 @@ use std::{
 };
 
 use anyhow::{anyhow, Context};
-use clap::{Args, Parser};
+use clap::{
+    AppSettings::{ArgRequiredElseHelp, DeriveDisplayOrder},
+    Args, Parser,
+};
+use indicatif::{ProgressBar, ProgressStyle};
 use sbp::{link::LinkSource, SbpIterExt};
 
 use console_backend::{
@@ -26,20 +30,34 @@ fn main() -> Result<()> {
     } else if opts.delete {
         delete(opts.src, opts.conn)
     } else {
-        transfer(opts.src, opts.dest, opts.conn)
+        if let Some(dest) = opts.dest {
+            transfer(opts.src, dest, opts.conn)
+        } else {
+            Err(anyhow!(
+                "file transfers require both <SRC> and <DEST> to be set"
+            ))
+        }
     }
 }
 
 /// Piksi File IO operations.
 #[derive(Parser)]
-#[clap(name = "fileio", version = include_str!("../version.txt"))]
+#[clap(
+    name = "fileio",
+    version = include_str!("../version.txt"),
+    setting = ArgRequiredElseHelp | DeriveDisplayOrder,
+    override_usage = "\
+    fileio <SRC> <DEST>
+    fileio --list <SRC>
+    fileio --delete <SRC>
+    "
+)]
 struct Opts {
     /// The source target
     src: Target,
 
-    /// The optional destination (defaults to stdout)
-    #[clap(default_value = "-")]
-    dest: Target,
+    /// The destination when transfering files
+    dest: Option<Target>,
 
     /// List a directory
     #[clap(long, conflicts_with_all = &["dest", "delete"])]
@@ -56,22 +74,27 @@ struct Opts {
 #[derive(Args)]
 struct ConnectionOpts {
     /// The port to use when connecting via TCP
-    #[clap(long, default_value = "55555")]
+    #[clap(long, default_value = "55555", conflicts_with_all = &["baudrate", "flow-control"])]
     port: u16,
 
     /// The baudrate for processing packets when connecting via serial
-    #[clap(long, default_value = "115200", validator(is_baudrate))]
+    #[clap(
+        long,
+        default_value = "115200",
+        validator(is_baudrate),
+        conflicts_with = "port"
+    )]
     baudrate: u32,
 
     /// The flow control spec to use when connecting via serial
-    #[clap(long, default_value = "None")]
+    #[clap(long, default_value = "None", conflicts_with = "port")]
     flow_control: FlowControl,
 }
 
 fn list(target: Target, conn: ConnectionOpts) -> Result<()> {
     let remote = target
         .into_remote()
-        .context("--list flag requires src to be a remote target")?;
+        .context("--list flag requires <SRC> to be a remote target")?;
     let mut fileio = remote.start(conn)?;
     let files = fileio.readdir(remote.path)?;
     for file in files {
@@ -83,7 +106,7 @@ fn list(target: Target, conn: ConnectionOpts) -> Result<()> {
 fn delete(target: Target, conn: ConnectionOpts) -> Result<()> {
     let remote = target
         .into_remote()
-        .context("--delete flag requires src to be a remote target")?;
+        .context("--delete flag requires <SRC> to be a remote target")?;
     let fileio = remote.start(conn)?;
     fileio.remove(remote.path)?;
     Ok(())
@@ -94,10 +117,10 @@ fn transfer(src: Target, dest: Target, conn: ConnectionOpts) -> Result<()> {
         (Target::Remote(src), Target::Local(dest)) => read(src, dest, conn),
         (Target::Local(src), Target::Remote(dest)) => write(src, dest, conn),
         (Target::Local(_), Target::Local(_)) => {
-            Err(anyhow!("source and dest cannot both be local paths"))
+            Err(anyhow!("<SRC> and <DEST> cannot both be local paths"))
         }
         (Target::Remote(_), Target::Remote(_)) => {
-            Err(anyhow!("source and dest cannot both be remote paths"))
+            Err(anyhow!("<SRC> and <DEST> cannot both be remote paths"))
         }
     }
 }
@@ -116,15 +139,17 @@ fn read(src: Remote, dest: PathBuf, conn: ConnectionOpts) -> Result<()> {
 fn write(src: PathBuf, dest: Remote, conn: ConnectionOpts) -> Result<()> {
     let mut fileio = dest.start(conn)?;
     let file = fs::File::open(src)?;
-    let size = file.metadata()?.len() as usize;
-    let mut bytes_written = 0;
-    print!("\rWriting 0.0%...");
+    let size = file.metadata()?.len();
+    let pb = ProgressBar::new(size);
+    pb.set_style(ProgressStyle::default_bar()
+        .template("[{elapsed_precise}] [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} ({bytes_per_sec}, {eta})")
+        .progress_chars("#>-"));
+    let mut downloaded = 0u64;
     fileio.overwrite_with_progress(dest.path, file, |n| {
-        bytes_written += n;
-        let progress = (bytes_written as f64) / (size as f64) * 100.0;
-        print!("\rWriting {:.2}%...", progress);
+        downloaded = (downloaded + n).min(size);
+        pb.set_position(downloaded);
     })?;
-    println!("\nFile written successfully ({} bytes).", bytes_written);
+    pb.finish();
     Ok(())
 }
 

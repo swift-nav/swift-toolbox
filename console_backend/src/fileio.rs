@@ -121,7 +121,7 @@ impl Fileio {
         mut on_progress: F,
     ) -> Result<()>
     where
-        F: FnMut(usize) + Send,
+        F: FnMut(u64) + Send,
     {
         self.remove(filename.clone())?;
         let config = self.fetch_config();
@@ -185,7 +185,9 @@ impl Fileio {
                     match req {
                         Ok(mut msg) => {
                             msg.sequence = sequence;
-                            chunk_sizes.lock().insert(msg.sequence, msg.data.len());
+                            chunk_sizes
+                                .lock()
+                                .insert(msg.sequence, msg.data.len() as u64);
                             Ok(Some(msg))
                         }
                         Err(e) => Err(e.into()),

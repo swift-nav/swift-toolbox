@@ -194,10 +194,11 @@ struct Remote {
 
 impl Remote {
     fn connect(&self, conn: ConnectionOpts) -> Result<Fileio> {
-        let (reader, writer) = match TcpConnection::new(self.host.clone(), conn.port) {
-            Ok(conn) => conn.try_connect(None)?,
-            Err(_) => SerialConnection::new(self.host.clone(), conn.baudrate, conn.flow_control)
-                .try_connect(None)?,
+        let (reader, writer) = if self.host.parse::<SocketAddr>().is_ok() {
+            TcpConnection::new(self.host.clone(), conn.port)?.try_connect(None)?
+        } else {
+            SerialConnection::new(self.host.clone(), conn.baudrate, conn.flow_control)
+                .try_connect(None)?
         };
         let source = LinkSource::new();
         let link = source.link();

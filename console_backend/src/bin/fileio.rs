@@ -132,7 +132,13 @@ fn read(src: Remote, dest: PathBuf, conn: ConnectionOpts) -> Result<()> {
         Box::new(File::create(dest)?)
     };
     let mut fileio = src.connect(conn)?;
+
+    let pb = ProgressBar::new_spinner();
+    pb.enable_steady_tick(100);
+    pb.set_style(ProgressStyle::default_spinner().template("{spinner} {wide_msg}"));
+    pb.set_message("Reading...");
     fileio.read(src.path, dest)?;
+    pb.finish_with_message("Done");
     Ok(())
 }
 
@@ -141,9 +147,11 @@ fn write(src: PathBuf, dest: Remote, conn: ConnectionOpts) -> Result<()> {
     let file = fs::File::open(src)?;
     let size = file.metadata()?.len();
     let pb = ProgressBar::new(size);
-    pb.set_style(ProgressStyle::default_bar()
-        .template("[{elapsed_precise}] [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} ({bytes_per_sec}, {eta})")
-        .progress_chars("#>-"));
+    pb.set_style(
+        ProgressStyle::default_bar()
+            .template("[{elapsed_precise}] [{bar}] {bytes}/{total_bytes} ({bytes_per_sec}, {eta})")
+            .progress_chars("=> "),
+    );
     let mut bytes_sent = 0u64;
     fileio.overwrite_with_progress(dest.path, file, |n| {
         bytes_sent = (bytes_sent + n).min(size);

@@ -319,7 +319,7 @@ impl Event for UartState {
 }
 
 // Enum wrapping around various Vel NED Message types.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct FlowControl(SPFlowControl);
 
 impl FromStr for FlowControl {

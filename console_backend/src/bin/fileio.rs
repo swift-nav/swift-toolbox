@@ -2,8 +2,8 @@ use std::{
     convert::Infallible,
     fs::{self, File},
     io::{self, Write},
-    net::ToSocketAddrs,
-    path::PathBuf,
+    net::SocketAddr,
+    path::{Path, PathBuf},
     str::FromStr,
 };
 
@@ -202,11 +202,13 @@ struct Remote {
 
 impl Remote {
     fn connect(&self, conn: ConnectionOpts) -> Result<Fileio> {
-        let (reader, writer) = if (self.host.as_ref(), conn.port).to_socket_addrs().is_ok() {
-            TcpConnection::new(self.host.clone(), conn.port)?.try_connect(None)?
-        } else {
+        let (reader, writer) = if File::open(&self.host).is_ok() {
+            log::debug!("connecting via serial");
             SerialConnection::new(self.host.clone(), conn.baudrate, conn.flow_control)
                 .try_connect(None)?
+        } else {
+            log::debug!("connecting via tcp");
+            TcpConnection::new(self.host.clone(), conn.port)?.try_connect(None)?
         };
         let source = LinkSource::new();
         let link = source.link();

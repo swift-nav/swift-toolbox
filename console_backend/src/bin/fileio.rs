@@ -132,7 +132,6 @@ fn read(src: Remote, dest: PathBuf, conn: ConnectionOpts) -> Result<()> {
         Box::new(File::create(dest)?)
     };
     let mut fileio = src.connect(conn)?;
-
     let pb = ProgressBar::new_spinner();
     pb.enable_steady_tick(100);
     pb.set_style(ProgressStyle::default_spinner().template("{spinner} {wide_msg}"));

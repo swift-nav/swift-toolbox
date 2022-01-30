@@ -2,7 +2,7 @@ use std::{
     convert::Infallible,
     fs::{self, File},
     io::{self, Write},
-    net::SocketAddr,
+    net::IpAddr,
     path::PathBuf,
     str::FromStr,
 };
@@ -202,7 +202,7 @@ struct Remote {
 
 impl Remote {
     fn connect(&self, conn: ConnectionOpts) -> Result<Fileio> {
-        let (reader, writer) = if self.host.parse::<SocketAddr>().is_ok() {
+        let (reader, writer) = if self.host.parse::<IpAddr>().is_ok() {
             TcpConnection::new(self.host.clone(), conn.port)?.try_connect(None)?
         } else {
             SerialConnection::new(self.host.clone(), conn.baudrate, conn.flow_control)

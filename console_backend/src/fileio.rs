@@ -55,7 +55,19 @@ impl Fileio {
         }
     }
 
-    pub fn read(&mut self, path: String, mut dest: impl Write + Send) -> Result<()> {
+    pub fn read(&mut self, path: String, dest: impl Write + Send) -> Result<()> {
+        self.read_with_progress(path, dest, |_| ())
+    }
+
+    pub fn read_with_progress<F>(
+        &mut self,
+        path: String,
+        mut dest: impl Write + Send,
+        mut on_progress: F,
+    ) -> Result<()>
+    where
+        F: FnMut(u32) + Send,
+    {
         let mut sequence = new_sequence();
         let mut offset = 0;
         let (tx, rx) = channel::unbounded();
@@ -86,6 +98,7 @@ impl Fileio {
             }
             sequence += 1;
             offset += READ_CHUNK_SIZE as u32;
+            on_progress(offset);
             if let Err(err) = self.sender.send(
                 MsgFileioReadReq {
                     sender_id: None,

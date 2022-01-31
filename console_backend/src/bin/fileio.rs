@@ -5,6 +5,7 @@ use std::{
     net::SocketAddr,
     path::PathBuf,
     str::FromStr,
+    time::Duration,
 };
 
 use anyhow::{anyhow, Context};
@@ -50,6 +51,26 @@ fn main() -> Result<()> {
     fileio <SRC> <DEST>
     fileio --list <SRC>
     fileio --delete <SRC>
+
+    TCP Examples:
+        - List files on Piksi:
+            fileio --list 192.168.0.222:/data/
+        - Read file from Piksi:
+            fileio 192.168.0.222:/persistent/config.ini ./config.ini
+        - Write file to Piksi:
+            fileio ./config.ini 192.168.0.222:/persistent/config.ini
+        - Delete file from Piksi:
+            fileio --delete 192.168.0.222:/persistent/unwanted_file
+
+    Serial Examples:
+        - List files on Piksi:
+            fileio --list /dev/ttyUSB0:/data/
+        - Read file from Piksi:
+            fileio /dev/ttyUSB0:/persistent/config.ini ./config.ini
+        - Write file to Piksi:
+            fileio ./config.ini /dev/ttyUSB0:/persistent/config.ini
+        - Delete file from Piksi:
+            fileio --delete /dev/ttyUSB0:/persistent/unwanted_file
     "
 )]
 struct Opts {
@@ -136,7 +157,9 @@ fn read(src: Remote, dest: PathBuf, conn: ConnectionOpts) -> Result<()> {
     pb.enable_steady_tick(100);
     pb.set_style(ProgressStyle::default_spinner().template("{spinner} {wide_msg}"));
     pb.set_message("Reading...");
-    fileio.read(src.path, dest)?;
+    fileio.read_with_progress(src.path, dest, |bytes_read| {
+        pb.set_message(format!("Reading ({} bytes read)...", bytes_read));
+    })?;
     pb.finish_with_message("Done");
     Ok(())
 }

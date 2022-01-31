@@ -4,6 +4,7 @@ use std::{
     io::{self, Write},
     path::PathBuf,
     str::FromStr,
+    time::Duration,
 };
 
 use anyhow::{anyhow, Context};
@@ -131,6 +132,10 @@ fn delete(target: Target, conn: ConnectionOpts) -> Result<()> {
         .context("--delete flag requires <SRC> to be a remote target")?;
     let fileio = remote.connect(conn)?;
     fileio.remove(remote.path)?;
+    // without this sleep the program exits and the connection closes before the delete message
+    // is sent. we could use https://doc.rust-lang.org/std/net/struct.TcpStream.html#method.set_linger (once stable)
+    // or https://doc.rust-lang.org/std/net/struct.TcpStream.html#method.set_nodelay
+    std::thread::sleep(Duration::from_secs(1));
     Ok(())
 }
 

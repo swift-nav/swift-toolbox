@@ -56,8 +56,7 @@ impl Fileio {
     }
 
     pub fn read(&mut self, path: String, dest: impl Write + Send) -> Result<()> {
-        self.read_with_progress(path, dest, |_| ())?;
-        Ok(())
+        self.read_with_progress(path, dest, |_| ())
     }
 
     pub fn read_with_progress<F>(

@@ -52,6 +52,26 @@ fn main() -> Result<()> {
     fileio <SRC> <DEST>
     fileio --list <SRC>
     fileio --delete <SRC>
+
+    TCP Examples:
+        - List files on Piksi:
+            fileio --list 192.168.0.222:/data/
+        - Read file from Piksi:
+            fileio 192.168.0.222:/persistent/config.ini ./config.ini
+        - Write file to Piksi:
+            fileio ./config.ini 192.168.0.222:/persistent/config.ini
+        - Delete file from Piksi:
+            fileio --delete 192.168.0.222:/persistent/unwanted_file
+
+    Serial Examples:
+        - List files on Piksi:
+            fileio --list /dev/ttyUSB0:/data/
+        - Read file from Piksi:
+            fileio /dev/ttyUSB0:/persistent/config.ini ./config.ini
+        - Write file to Piksi:
+            fileio ./config.ini /dev/ttyUSB0:/persistent/config.ini
+        - Delete file from Piksi:
+            fileio --delete /dev/ttyUSB0:/persistent/unwanted_file
     "
 )]
 struct Opts {

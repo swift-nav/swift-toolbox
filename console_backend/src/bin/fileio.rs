@@ -178,10 +178,8 @@ fn write(src: PathBuf, dest: Remote, conn: ConnectionOpts) -> Result<()> {
             .template("[{elapsed_precise}] [{bar}] {bytes}/{total_bytes} ({bytes_per_sec}, {eta})")
             .progress_chars("=> "),
     );
-    let mut bytes_sent = 0u64;
     fileio.overwrite_with_progress(dest.path, file, |n| {
-        bytes_sent = (bytes_sent + n).min(size);
-        pb.set_position(bytes_sent);
+        pb.inc(n);
     })?;
     pb.finish();
     Ok(())

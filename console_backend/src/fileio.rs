@@ -489,12 +489,13 @@ fn req_maker_thd(
 ) {
     let mut batch = Vec::with_capacity(config.batch_size);
     let send_batch = move |batch: &mut Vec<MsgFileioWriteReq>| -> bool {
+        let mut guard = pending_map.lock();
         for req in batch.drain(..config.batch_size.min(batch.len())) {
             match sender.send(req.clone().into()) {
                 Ok(_) => {
                     let req = PendingReq::new(req);
                     let seq = req.message.sequence;
-                    pending_map.lock().insert(seq, req);
+                    guard.insert(seq, req);
                     let _ = pending_queue_tx.send(Some(seq));
                 }
                 Err(err) => {

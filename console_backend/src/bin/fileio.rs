@@ -83,7 +83,7 @@ struct Opts {
     dest: Option<Target>,
 
     /// List a directory
-    #[clap(long, conflicts_with_all = &["dest", "delete"])]
+    #[clap(long, short, conflicts_with_all = &["dest", "delete"])]
     list: bool,
 
     /// Delete a file

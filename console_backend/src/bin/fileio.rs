@@ -135,10 +135,15 @@ fn read(src: Remote, dest: PathBuf, conn: ConnectionOpts) -> Result<()> {
     };
     let mut fileio = src.connect(conn)?;
     let pb = ProgressBar::new_spinner();
-    pb.enable_steady_tick(100);
-    pb.set_style(ProgressStyle::default_spinner().template("{spinner} {wide_msg}"));
+    pb.enable_steady_tick(1000);
+    pb.set_style(
+        ProgressStyle::default_spinner()
+            .template("[{elapsed_precise}] {bytes} ({bytes_per_sec}) {msg}"),
+    );
     pb.set_message("Reading...");
-    fileio.read(src.path, dest)?;
+    fileio.read_with_progress(src.path, dest, |n| {
+        pb.inc(n);
+    })?;
     pb.finish_with_message("Done");
     Ok(())
 }

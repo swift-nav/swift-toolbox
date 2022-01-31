@@ -99,7 +99,6 @@ impl Fileio {
             }
             sequence += 1;
             offset += READ_CHUNK_SIZE as u32;
-            on_progress(offset);
             if let Err(err) = self.sender.send(
                 MsgFileioReadReq {
                     sender_id: None,

@@ -4,7 +4,6 @@ use std::{
     io::{self, Write},
     path::PathBuf,
     str::FromStr,
-    time::Duration,
 };
 
 use anyhow::{anyhow, Context};

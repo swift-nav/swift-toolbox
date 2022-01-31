@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     convert::Infallible,
     fs::{self, File},
     io::{self, Write},
@@ -153,18 +154,12 @@ fn transfer(src: Target, dest: Target, conn: ConnectionOpts) -> Result<()> {
 }
 
 fn read(src: Remote, dest: PathBuf, conn: ConnectionOpts) -> Result<()> {
-    let dest: Box<dyn Write + Send> = if dest.to_str() == Some("-") {
-        Box::new(io::stdout())
+    let (dest, pb): (Box<dyn Write + Send>, _) = if dest.to_str() == Some("-") {
+        (Box::new(io::stdout()), ReadProgress::stdout())
     } else {
-        Box::new(File::create(dest)?)
+        (Box::new(File::create(dest)?), ReadProgress::file())
     };
     let mut fileio = src.connect(conn)?;
-    let pb = ProgressBar::new_spinner();
-    pb.enable_steady_tick(1000);
-    pb.set_style(
-        ProgressStyle::default_spinner()
-            .template("[{elapsed_precise}] {bytes} ({bytes_per_sec}) {msg}"),
-    );
     pb.set_message("Reading...");
     fileio.read_with_progress(src.path, dest, |n| {
         pb.inc(n);
@@ -252,5 +247,43 @@ impl Remote {
         });
         let sender = MsgSender::new(writer);
         Ok(Fileio::new(link, sender))
+    }
+}
+
+struct ReadProgress {
+    inner: Option<ProgressBar>,
+}
+
+impl ReadProgress {
+    fn file() -> Self {
+        let pb = ProgressBar::new_spinner();
+        pb.enable_steady_tick(1000);
+        pb.set_style(
+            ProgressStyle::default_spinner()
+                .template("[{elapsed_precise}] {bytes} ({bytes_per_sec}) {msg}"),
+        );
+        Self { inner: Some(pb) }
+    }
+
+    fn stdout() -> Self {
+        Self { inner: None }
+    }
+
+    fn inc(&self, n: u64) {
+        if let Some(pb) = &self.inner {
+            pb.inc(n);
+        }
+    }
+
+    fn set_message(&self, msg: impl Into<Cow<'static, str>>) {
+        if let Some(pb) = &self.inner {
+            pb.set_message(msg);
+        }
+    }
+
+    fn finish_with_message(&self, msg: impl Into<Cow<'static, str>>) {
+        if let Some(pb) = &self.inner {
+            pb.finish_with_message(msg);
+        }
     }
 }

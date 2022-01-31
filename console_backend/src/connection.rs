@@ -426,7 +426,7 @@ impl SerialConnection {
     }
     fn validate_serial_port(&self) -> std::result::Result<(), std::io::Error> {
         let mut rdr = serialport::new(self.device.clone(), self.baudrate)
-            .flow_control(*self.flow.clone())
+            .flow_control(*self.flow)
             .timeout(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))
             .open()?;
         let mut buffer = [0; 237];
@@ -434,7 +434,7 @@ impl SerialConnection {
         let now = Instant::now();
         while now.elapsed().as_millis() < SERIALPORT_READ_TIMEOUT_MS as u128 {
             rdr.read_exact(&mut buffer)?;
-            if buffer.contains(&0x55) {
+            if buffer.contains(&sbp::PREAMBLE) {
                 found_preamble = true;
                 break;
             }

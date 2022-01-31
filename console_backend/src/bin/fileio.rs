@@ -2,7 +2,6 @@ use std::{
     convert::Infallible,
     fs::{self, File},
     io::{self, Write},
-    net::SocketAddr,
     path::PathBuf,
     str::FromStr,
     time::Duration,
@@ -24,6 +23,9 @@ use console_backend::{
 };
 
 fn main() -> Result<()> {
+    if std::env::var("RUST_LOG").is_err() {
+        std::env::set_var("RUST_LOG", "warn");
+    }
     env_logger::init();
     let opts = Opts::parse();
     if opts.list {
@@ -154,11 +156,14 @@ fn read(src: Remote, dest: PathBuf, conn: ConnectionOpts) -> Result<()> {
     };
     let mut fileio = src.connect(conn)?;
     let pb = ProgressBar::new_spinner();
-    pb.enable_steady_tick(100);
-    pb.set_style(ProgressStyle::default_spinner().template("{spinner} {wide_msg}"));
+    pb.enable_steady_tick(1000);
+    pb.set_style(
+        ProgressStyle::default_spinner()
+            .template("[{elapsed_precise}] {bytes} ({bytes_per_sec}) {msg}"),
+    );
     pb.set_message("Reading...");
-    fileio.read_with_progress(src.path, dest, |bytes_read| {
-        pb.set_message(format!("Reading ({} bytes read)...", bytes_read));
+    fileio.read_with_progress(src.path, dest, |n| {
+        pb.inc(n);
     })?;
     pb.finish_with_message("Done");
     Ok(())
@@ -225,11 +230,13 @@ struct Remote {
 
 impl Remote {
     fn connect(&self, conn: ConnectionOpts) -> Result<Fileio> {
-        let (reader, writer) = if self.host.parse::<SocketAddr>().is_ok() {
-            TcpConnection::new(self.host.clone(), conn.port)?.try_connect(None)?
-        } else {
+        let (reader, writer) = if File::open(&self.host).is_ok() {
+            log::debug!("connecting via serial");
             SerialConnection::new(self.host.clone(), conn.baudrate, conn.flow_control)
                 .try_connect(None)?
+        } else {
+            log::debug!("connecting via tcp");
+            TcpConnection::new(self.host.clone(), conn.port)?.try_connect(None)?
         };
         let source = LinkSource::new();
         let link = source.link();

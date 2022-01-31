@@ -66,7 +66,7 @@ impl Fileio {
         mut on_progress: F,
     ) -> Result<()>
     where
-        F: FnMut(u32) + Send,
+        F: FnMut(u64) + Send,
     {
         let mut sequence = new_sequence();
         let mut offset = 0;
@@ -93,6 +93,7 @@ impl Fileio {
                 return Err(err.into());
             }
             let bytes_read = msg.contents.len();
+            on_progress(bytes_read as u64);
             if bytes_read != READ_CHUNK_SIZE {
                 break;
             }

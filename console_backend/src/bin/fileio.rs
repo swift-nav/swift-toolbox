@@ -2,8 +2,7 @@ use std::{
     convert::Infallible,
     fs::{self, File},
     io::{self, Write},
-    net::SocketAddr,
-    path::{Path, PathBuf},
+    path::PathBuf,
     str::FromStr,
 };
 

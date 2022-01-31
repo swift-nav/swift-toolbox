@@ -22,6 +22,9 @@ use console_backend::{
 };
 
 fn main() -> Result<()> {
+    if std::env::var("RUST_LOG").is_err() {
+        std::env::set_var("RUST_LOG", "warn");
+    }
     env_logger::init();
     let opts = Opts::parse();
     if opts.list {

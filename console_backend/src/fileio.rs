@@ -395,6 +395,9 @@ where
     // we can wake up the thread with this
     let send_parker = Parker::new();
     let send_unparker = send_parker.unparker().clone();
+    // kills the timeout thread early if we finish uploading the file
+    let timeout_parker = Parker::new();
+    let timeout_unparker = timeout_parker.unparker().clone();
     let result = scope(|scope| {
         let err_tx = &err_tx;
         let pending_map = &pending_map;
@@ -433,6 +436,7 @@ where
                     err_tx,
                     sender,
                     pending_queue_tx,
+                    timeout_parker,
                 );
             })
             .expect(THREAD_START_FAILURE);
@@ -449,6 +453,7 @@ where
                     cb(res);
                     if pending_map.lock().is_empty() {
                         let _ = pending_queue_tx.send(None);
+                        timeout_unparker.unpark();
                         return Ok(());
                     }
                 }
@@ -545,6 +550,7 @@ fn timeout_thd(
     err_tx: &Sender<anyhow::Error>,
     sender: &MsgSender,
     pending_queue_tx: &Sender<Option<u32>>,
+    timeout_parker: Parker,
 ) {
     for seq in pending_queue_rx.iter() {
         let seq = match seq {
@@ -556,7 +562,7 @@ fn timeout_thd(
             None => continue,
         };
         if elapsed < FILE_IO_TIMEOUT {
-            std::thread::sleep(FILE_IO_TIMEOUT - elapsed);
+            timeout_parker.park_timeout(FILE_IO_TIMEOUT - elapsed);
         }
         let mut guard = pending_map.lock();
         if let Some(req) = guard.get_mut(&seq) {

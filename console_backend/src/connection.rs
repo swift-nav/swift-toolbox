@@ -121,7 +121,7 @@ fn conn_manager_thd(
                         Err(e) => {
                             let (reconnect, message) = match e.kind() {
                                 ErrorKind::ConnectionRefused => {
-                                    (true, String::from("Connection Error: Connection refused."))
+                                    (true, String::from("Connection error: refused"))
                                 }
                                 ErrorKind::ConnectionReset => {
                                     (true, String::from("Connection Error: Connection reset."))

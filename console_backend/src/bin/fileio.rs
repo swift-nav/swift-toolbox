@@ -227,13 +227,17 @@ struct Remote {
 
 impl Remote {
     fn connect(&self, conn: ConnectionOpts) -> Result<Fileio> {
-        let (reader, writer) = if File::open(&self.host).is_ok() {
-            log::debug!("connecting via serial");
-            SerialConnection::new(self.host.clone(), conn.baudrate, conn.flow_control)
-                .try_connect(None)?
-        } else {
-            log::debug!("connecting via tcp");
-            TcpConnection::new(self.host.clone(), conn.port)?.try_connect(None)?
+        let (reader, writer) = match File::open(&self.host) {
+            Err(e) if e.kind() == io::ErrorKind::PermissionDenied => return Err(e.into()),
+            Ok(_) => {
+                log::debug!("connecting via serial");
+                SerialConnection::new(self.host.clone(), conn.baudrate, conn.flow_control)
+                    .try_connect(None)?
+            }
+            Err(_) => {
+                log::debug!("connecting via tcp");
+                TcpConnection::new(self.host.clone(), conn.port)?.try_connect(None)?
+            }
         };
         let source = LinkSource::new();
         let link = source.link();

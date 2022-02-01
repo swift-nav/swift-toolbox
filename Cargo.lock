@@ -1521,15 +1521,15 @@ dependencies = [
 
 [[package]]
 name = "sbp-settings"
-version = "0.6.1"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5feefd31cdcc1c32aae27c17183cff350afd90e221e386f6f9be7429b80ad7df"
+checksum = "8c456a93b7ee0a86f097746bba187f703f21cd302d714e4c73b310d117914526"
 dependencies = [
  "crossbeam-channel",
  "crossbeam-utils",
  "log",
  "once_cell",
- "parking_lot 0.11.2",
+ "parking_lot 0.12.0",
  "sbp",
  "serde",
  "serde_yaml",

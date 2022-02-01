@@ -69,7 +69,7 @@ Item {
             implicitHeight: 3 * Globals.height / 7
             implicitWidth: Globals.width / 2
             anchors.centerIn: parent
-            title: "Connect To Device"
+            title: "Connect to Device"
             onVisibleChanged: {
                 if (visible)
                     dialogRect.forceActiveFocus();

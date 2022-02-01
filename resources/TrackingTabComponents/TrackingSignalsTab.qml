@@ -132,11 +132,25 @@ Item {
             SmallCheckBox {
                 id: toggleAllCheckBox
 
+                function toggleAllOn() {
+                    for (var i = 0; i < trackingSignalsCbRepeater.count; i++) {
+                        var cb = trackingSignalsCbRepeater.itemAt(i);
+                        if (!cb.checked)
+                            cb.toggle();
+
+                    }
+                }
+
+                onVisibleChanged: {
+                    if (visible && checkState != Qt.Checked)
+                        toggleAllOn();
+
+                }
                 Layout.margins: 0
                 Layout.rowSpan: parent.rows == 0 ? 1 : parent.rows
                 tristate: true
                 checkState: (parent.numChecked == trackingSignalsCbRepeater.count ? Qt.Checked : parent.numChecked > 0 ? Qt.PartiallyChecked : Qt.Unchecked)
-                text: "Toggle All"
+                text: "All"
                 onClicked: {
                     var curCheckState = checkState;
                     for (var i = 0; i < trackingSignalsCbRepeater.count; i++) {

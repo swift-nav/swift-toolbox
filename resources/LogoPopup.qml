@@ -57,7 +57,7 @@ Item {
             SwiftButton {
                 id: closeButton
 
-                text: "Cancel"
+                text: "Close"
                 Layout.preferredWidth: parent.width / 4
                 Layout.alignment: Qt.AlignRight
                 checkable: false

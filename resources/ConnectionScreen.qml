@@ -290,6 +290,10 @@ Item {
                             onAccepted: {
                                 connectButton.clicked();
                             }
+                            onEditTextChanged: {
+                                // This will perform the same validation but live.
+                                this.editText = Math.max(0, Math.min(this.editText, 65535));
+                            }
 
                             Label {
                                 anchors.fill: parent.contentItem
@@ -298,6 +302,11 @@ Item {
                                 text: "Port"
                                 color: Constants.connection.placeholderTextColor
                                 visible: !tcpPortBar.editText
+                            }
+
+                            validator: IntValidator {
+                                bottom: 0
+                                top: 65535
                             }
 
                         }

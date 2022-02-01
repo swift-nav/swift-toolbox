@@ -167,6 +167,10 @@ struct ConnectionStatus {
     consoleVersion @9: Text;
 }
 
+struct ConnectionDialogStatus {
+    visible @0 : Bool;
+}
+
 struct StatusBarStatus {
     antennaStatus @0 :Text;
     pos @1 : Text;
@@ -503,5 +507,6 @@ struct Message {
         loggingBarRecordingStatus @51 : LoggingBarRecordingStatus;
         connectionNotification @52 : ConnectionNotification;
         settingsNotification @53 : SettingsNotification;
+        connectionDialogStatus @54 :ConnectionDialogStatus;
     }
 }

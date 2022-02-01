@@ -1,3 +1,4 @@
+import "BaseComponents"
 import "Constants"
 import "LogoPopupComponents" as LogoPopupComponents
 import QtQuick 2.5
@@ -17,7 +18,6 @@ Item {
         width: parent.width / 2
         height: parent.height - Constants.logoPopup.heightPadding
         anchors.centerIn: parent
-        standardButtons: Dialog.Close
 
         ColumnLayout {
             anchors.fill: parent
@@ -52,6 +52,18 @@ Item {
                 LogoPopupComponents.Licenses {
                 }
 
+            }
+
+            SwiftButton {
+                id: closeButton
+
+                text: "Close"
+                Layout.preferredWidth: parent.width / 4
+                Layout.alignment: Qt.AlignRight
+                checkable: false
+                onClicked: {
+                    dialog.close();
+                }
             }
 
         }

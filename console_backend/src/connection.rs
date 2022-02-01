@@ -126,10 +126,9 @@ fn conn_manager_thd(
                                 ErrorKind::ConnectionReset => {
                                     (true, String::from("Connection error: connection was reset"))
                                 }
-                                ErrorKind::TimedOut => (
-                                    true,
-                                    String::from("Connection error: timed out"),
-                                ),
+                                ErrorKind::TimedOut => {
+                                    (true, String::from("Connection error: timed out"))
+                                }
                                 ErrorKind::NotConnected => {
                                     (true, String::from("Connection error: not connected"))
                                 }

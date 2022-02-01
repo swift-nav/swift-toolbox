@@ -143,7 +143,7 @@ Item {
 
                 onVisibleChanged: {
                     if (visible && checkState != Qt.Checked)
-                        toggleAllOn();
+                        setAllOn();
 
                 }
                 Layout.margins: 0

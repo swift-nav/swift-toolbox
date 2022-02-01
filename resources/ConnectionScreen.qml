@@ -466,7 +466,7 @@ Item {
 
                                 PropertyChanges {
                                     target: dialog
-                                    title: "Connect To Device"
+                                    title: "Connect to Device"
                                 }
 
                             }

@@ -124,7 +124,7 @@ fn conn_manager_thd(
                                     (true, String::from("Connection error: refused"))
                                 }
                                 ErrorKind::ConnectionReset => {
-                                    (true, String::from("Connection Error: Connection reset."))
+                                    (true, String::from("Connection error: connection was reset"))
                                 }
                                 ErrorKind::TimedOut => (
                                     true,

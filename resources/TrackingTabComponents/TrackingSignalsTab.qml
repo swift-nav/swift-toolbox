@@ -132,7 +132,7 @@ Item {
             SmallCheckBox {
                 id: toggleAllCheckBox
 
-                function toggleAllOn() {
+                function setAllOn() {
                     for (var i = 0; i < trackingSignalsCbRepeater.count; i++) {
                         var cb = trackingSignalsCbRepeater.itemAt(i);
                         if (!cb.checked)

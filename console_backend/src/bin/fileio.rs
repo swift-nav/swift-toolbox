@@ -259,7 +259,6 @@ struct ReadProgress {
 impl ReadProgress {
     fn file() -> Self {
         let pb = ProgressBar::new_spinner();
-        pb.enable_steady_tick(1000);
         pb.set_style(
             ProgressStyle::default_spinner()
                 .template("[{elapsed_precise}] {bytes} ({bytes_per_sec}) {msg}"),
@@ -285,7 +284,7 @@ impl ReadProgress {
 
     fn finish_with_message(&self, msg: impl Into<Cow<'static, str>>) {
         if let Some(pb) = &self.inner {
-            pb.finish_with_message(msg);
+            pb.abandon_with_message(msg);
         }
     }
 }

@@ -386,7 +386,7 @@ jobs:
           - macOS
           - Windows
           - Linux
-    runs-on: [self-hosted, '${{ matrix.os }}']
+    runs-on: [self-hosted, '${{ matrix.os }}', bench]
     steps:
       - name: Remove previous build.
         shell: bash

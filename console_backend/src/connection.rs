@@ -133,7 +133,7 @@ fn conn_manager_thd(
                                 ErrorKind::NotConnected => {
                                     (true, String::from("Connection error: not connected"))
                                 }
-                                _ => (false, format!("Connection Error: {}", e)),
+                                _ => (false, format!("Connection error: {}", e)),
                             };
                             error!("{}", message);
                             log::logger().flush();

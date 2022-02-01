@@ -131,7 +131,7 @@ fn conn_manager_thd(
                                     String::from("Connection error: timed out"),
                                 ),
                                 ErrorKind::NotConnected => {
-                                    (true, String::from("Connection Error: Not connected."))
+                                    (true, String::from("Connection error: not connected"))
                                 }
                                 _ => (false, format!("Connection Error: {}", e)),
                             };

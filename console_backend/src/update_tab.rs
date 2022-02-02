@@ -534,11 +534,10 @@ fn firmware_upgrade(
                     if code == 0 {
                         update_tab_context.fw_log_append(String::from("Upgrade Complete."));
                         update_tab_context.fw_log_append(String::from("Resetting Piksi..."));
-                        let msg = MsgReset {
+                        msg_sender.send(MsgReset {
                             sender_id: None,
                             flags: 0,
-                        };
-                        msg_sender.send(msg.into())?;
+                        })?;
                     } else {
                         update_tab_context.fw_log_append(String::from("Image transfer failed."))
                     }
@@ -558,15 +557,14 @@ fn firmware_upgrade_commit_to_flash(
 ) -> Result<i32> {
     let sequence = new_sequence();
     update_tab_context.set_upgrade_sequence(Some(sequence));
-    let msg = MsgCommandReq {
+    msg_sender.send(MsgCommandReq {
         sender_id: None,
         sequence,
         command: SbpString::from(format!(
             "{} {}",
             UPGRADE_FIRMWARE_TOOL, UPGRADE_FIRMWARE_REMOTE_DESTINATION
         )),
-    };
-    msg_sender.send(msg.into())?;
+    })?;
     let start_time = Instant::now();
     let timeout = Duration::from_secs(UPGRADE_FIRMWARE_TIMEOUT_SEC);
     while update_tab_context.upgrading() && start_time.elapsed() < timeout {

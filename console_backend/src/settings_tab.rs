@@ -215,21 +215,14 @@ impl SettingsTab {
 
     fn reset(&self, reset_settings: bool) -> Result<()> {
         let flags = if reset_settings { 1 } else { 0 };
-
-        self.msg_sender.send(
-            MsgReset {
-                flags,
-                sender_id: None,
-            }
-            .into(),
-        )?;
-        Ok(())
+        self.msg_sender.send(MsgReset {
+            flags,
+            sender_id: None,
+        })
     }
 
     fn save(&self) -> Result<()> {
-        self.msg_sender
-            .send(MsgSettingsSave { sender_id: None }.into())?;
-        Ok(())
+        self.msg_sender.send(MsgSettingsSave { sender_id: None })
     }
 
     fn auto_survey(&self) -> Result<()> {

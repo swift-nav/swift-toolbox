@@ -72,7 +72,8 @@ impl MsgSender {
         }
     }
 
-    pub fn send(&self, mut msg: Sbp) -> Result<()> {
+    pub fn send(&self, msg: impl Into<Sbp>) -> Result<()> {
+        let mut msg = msg.into();
         if msg.sender_id().is_none() {
             msg.set_sender_id(Self::SENDER_ID);
         }

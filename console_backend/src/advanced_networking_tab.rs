@@ -116,11 +116,9 @@ impl AdvancedNetworkingTab {
     /// Refresh Network State.
     fn refresh_network_state(&mut self) -> Result<()> {
         self.network_info.clear();
-        let msg = MsgNetworkStateReq {
+        self.writer.send(MsgNetworkStateReq {
             sender_id: Some(WRITE_TO_DEVICE_SENDER_ID),
-        };
-        let msg = sbp::messages::Sbp::from(msg);
-        self.writer.send(msg)?;
+        })?;
         Ok(())
     }
 

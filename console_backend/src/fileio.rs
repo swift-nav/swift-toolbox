@@ -32,7 +32,7 @@ const MAX_RETRIES: usize = 20;
 const READDIR_TIMEOUT: Duration = Duration::from_secs(5);
 const CONFIG_REQ_RETRY: Duration = Duration::from_millis(100);
 const CONFIG_REQ_TIMEOUT: Duration = Duration::from_secs(10);
-const FILE_IO_TIMEOUT: Duration = Duration::from_secs(3);
+const FILE_IO_TIMEOUT: Duration = Duration::from_secs(2);
 
 const READ_CHUNK_SIZE: usize = sbp::MAX_PAYLOAD_LEN - 4;
 const SEQUENCE_LEN: usize = 4;
@@ -74,16 +74,13 @@ impl Fileio {
         let key = self.link.register(move |msg: MsgFileioReadResp| {
             let _ = tx.send(msg);
         });
-        if let Err(err) = self.sender.send(
-            MsgFileioReadReq {
-                sender_id: None,
-                filename: path.clone().into(),
-                chunk_size: READ_CHUNK_SIZE as u8,
-                sequence,
-                offset,
-            }
-            .into(),
-        ) {
+        if let Err(err) = self.sender.send(MsgFileioReadReq {
+            sender_id: None,
+            filename: path.clone().into(),
+            chunk_size: READ_CHUNK_SIZE as u8,
+            sequence,
+            offset,
+        }) {
             self.link.unregister(key);
             return Err(err);
         };
@@ -99,16 +96,13 @@ impl Fileio {
             }
             sequence += 1;
             offset += READ_CHUNK_SIZE as u32;
-            if let Err(err) = self.sender.send(
-                MsgFileioReadReq {
-                    sender_id: None,
-                    filename: path.clone().into(),
-                    chunk_size: READ_CHUNK_SIZE as u8,
-                    sequence,
-                    offset,
-                }
-                .into(),
-            ) {
+            if let Err(err) = self.sender.send(MsgFileioReadReq {
+                sender_id: None,
+                filename: path.clone().into(),
+                chunk_size: READ_CHUNK_SIZE as u8,
+                sequence,
+                offset,
+            }) {
                 self.link.unregister(key);
                 return Err(err);
             };
@@ -232,15 +226,12 @@ impl Fileio {
             tx.send(msg).expect(FILEIO_CHANNEL_SEND_FAILURE);
         });
 
-        self.sender.send(
-            MsgFileioReadDirReq {
-                sender_id: None,
-                sequence: seq,
-                offset: files.len() as u32,
-                dirname: path.clone().into(),
-            }
-            .into(),
-        )?;
+        self.sender.send(MsgFileioReadDirReq {
+            sender_id: None,
+            sequence: seq,
+            offset: files.len() as u32,
+            dirname: path.clone().into(),
+        })?;
 
         loop {
             select! {
@@ -270,7 +261,7 @@ impl Fileio {
                         sequence: seq,
                         offset: files.len() as u32,
                         dirname: path.clone().into(),
-                    }.into())?;
+                    })?;
                 },
                 recv(channel::tick(READDIR_TIMEOUT)) -> _ => {
                     self.link.unregister(key);
@@ -281,14 +272,10 @@ impl Fileio {
     }
 
     pub fn remove(&self, filename: String) -> Result<()> {
-        self.sender.send(
-            MsgFileioRemove {
-                sender_id: None,
-                filename: filename.into(),
-            }
-            .into(),
-        )?;
-        Ok(())
+        self.sender.send(MsgFileioRemove {
+            sender_id: None,
+            filename: filename.into(),
+        })
     }
 
     fn fetch_config(&mut self) -> FileioConfig {
@@ -310,13 +297,10 @@ impl Fileio {
         let config = scope(|s| {
             s.spawn(|_| {
                 while stop_rx.try_recv().is_err() {
-                    let _ = sender.send(
-                        MsgFileioConfigReq {
-                            sender_id: None,
-                            sequence,
-                        }
-                        .into(),
-                    );
+                    let _ = sender.send(MsgFileioConfigReq {
+                        sender_id: None,
+                        sequence,
+                    });
                     std::thread::sleep(CONFIG_REQ_RETRY);
                 }
             });
@@ -496,7 +480,7 @@ fn req_maker_thd(
     let send_batch = move |batch: &mut Vec<MsgFileioWriteReq>| -> bool {
         let mut guard = pending_map.lock();
         for req in batch.drain(..config.batch_size.min(batch.len())) {
-            match sender.send(req.clone().into()) {
+            match sender.send(req.clone()) {
                 Ok(_) => {
                     let req = PendingReq::new(req);
                     let seq = req.message.sequence;
@@ -575,7 +559,7 @@ fn timeout_thd(
             let msg = req.message.clone();
             let seq = msg.sequence;
             drop(guard);
-            if let Err(err) = sender.send(msg.into()) {
+            if let Err(err) = sender.send(msg) {
                 let _ = err_tx.send(err);
                 break;
             };

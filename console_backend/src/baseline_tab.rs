@@ -407,12 +407,10 @@ impl BaselineTab {
 
     /// Reset Solution Filters
     fn reset_button_fired(&mut self) -> Result<()> {
-        let msg = MsgResetFilters {
+        self.writer.send(MsgResetFilters {
             sender_id: Some(WRITE_TO_DEVICE_SENDER_ID),
             filter: 0,
-        };
-        self.writer.send(msg.into())?;
-        Ok(())
+        })
     }
 
     /// Initiates preprocessing of solution data and handles frontend input.

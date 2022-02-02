@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeMap, HashMap},
+    collections::HashMap,
     io::{BufRead, BufReader, Read, Write},
     time::{Duration, Instant},
 };
@@ -361,7 +361,7 @@ where
     G: FnMut(MsgFileioWriteResp) + Send,
 {
     // maps sequences -> pending requests
-    let pending_map = Mutex::new(BTreeMap::new());
+    let pending_map = Mutex::new(HashMap::new());
     // each sequence gets sent to this channel. the timeout thread pulls from
     // it and checks the timeouts in order. On a retry the sequence gets pushed
     // back onto the queue
@@ -470,7 +470,7 @@ fn req_generator_thd<F: FnMut(u32) -> Result<Option<MsgFileioWriteReq>> + Send>(
 fn req_maker_thd(
     config: FileioConfig,
     sender: &MsgSender,
-    pending_map: &Mutex<BTreeMap<u32, PendingReq>>,
+    pending_map: &Mutex<HashMap<u32, PendingReq>>,
     pending_queue_tx: &Sender<Option<u32>>,
     err_tx: &Sender<anyhow::Error>,
     req_rx: Receiver<Result<Option<MsgFileioWriteReq>>>,
@@ -530,7 +530,7 @@ fn req_maker_thd(
 
 fn timeout_thd(
     pending_queue_rx: &Receiver<Option<u32>>,
-    pending_map: &Mutex<BTreeMap<u32, PendingReq>>,
+    pending_map: &Mutex<HashMap<u32, PendingReq>>,
     err_tx: &Sender<anyhow::Error>,
     sender: &MsgSender,
     pending_queue_tx: &Sender<Option<u32>>,
@@ -569,7 +569,7 @@ fn timeout_thd(
     debug!("timeout thread finished");
 }
 
-fn window_available(pending_map: &Mutex<BTreeMap<u32, PendingReq>>, config: FileioConfig) -> bool {
+fn window_available(pending_map: &Mutex<HashMap<u32, PendingReq>>, config: FileioConfig) -> bool {
     pending_map.lock().len() + config.batch_size <= config.window_size
 }
 

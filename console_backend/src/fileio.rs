@@ -570,18 +570,7 @@ fn timeout_thd(
 }
 
 fn window_available(pending_map: &Mutex<BTreeMap<u32, PendingReq>>, config: FileioConfig) -> bool {
-    let range = {
-        let guard = pending_map.lock();
-        let mut seqs = guard.keys();
-        seqs.next().copied().zip(seqs.next_back().copied())
-    };
-    match range {
-        Some((oldest, newest)) => {
-            // will a new batch fit in the window size
-            (newest - oldest) + config.batch_size as u32 <= config.window_size as u32
-        }
-        None => true,
-    }
+    pending_map.lock().len() + config.batch_size <= config.window_size
 }
 
 #[derive(Debug, Clone)]

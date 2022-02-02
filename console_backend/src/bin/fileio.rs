@@ -173,6 +173,7 @@ fn write(src: PathBuf, dest: Remote, conn: ConnectionOpts) -> Result<()> {
     let file = fs::File::open(src)?;
     let size = file.metadata()?.len();
     let pb = ProgressBar::new(size);
+    pb.enable_steady_tick(1000);
     pb.set_style(
         ProgressStyle::default_bar()
             .template("[{elapsed_precise}] [{bar}] {bytes}/{total_bytes} ({bytes_per_sec}, {eta})")
@@ -259,6 +260,7 @@ struct ReadProgress {
 impl ReadProgress {
     fn file() -> Self {
         let pb = ProgressBar::new_spinner();
+        pb.enable_steady_tick(1000);
         pb.set_style(
             ProgressStyle::default_spinner()
                 .template("[{elapsed_precise}] {bytes} ({bytes_per_sec}) {msg}"),

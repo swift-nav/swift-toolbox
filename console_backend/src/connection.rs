@@ -346,10 +346,7 @@ impl TcpConnection {
 
         for address in addresses {
             info!("Attempting to connect to resolved address {:?}", address);
-            match TcpStream::connect_timeout(
-                &address,
-                Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS),
-            ) {
+            match TcpStream::connect_timeout(&address, READER_TIMEOUT) {
                 Ok(stream) => return Ok(stream),
                 Err(err) => {
                     info!(
@@ -374,7 +371,7 @@ impl TcpConnection {
         shared_state: Option<&SharedState>,
     ) -> io::Result<(Box<dyn io::Read + Send>, Box<dyn io::Write + Send>)> {
         let rdr = self.open_connection()?;
-        rdr.set_read_timeout(Some(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS)))?;
+        rdr.set_read_timeout(Some(READER_TIMEOUT))?;
         let writer = rdr.try_clone()?;
         info!("Connected to tcp stream!");
         if let Some(shared_state) = shared_state {
@@ -413,7 +410,7 @@ impl SerialConnection {
         self.validate_serial_port()?;
         let rdr = serialport::new(self.device.clone(), self.baudrate)
             .flow_control(*self.flow)
-            .timeout(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))
+            .timeout(READER_TIMEOUT)
             .open()?;
         let writer = rdr.try_clone()?;
         info!("Opened serial port successfully!");
@@ -424,31 +421,27 @@ impl SerialConnection {
 
         Ok((Box::new(rdr), Box::new(writer)))
     }
+
     fn validate_serial_port(&self) -> std::result::Result<(), std::io::Error> {
         let mut rdr = serialport::new(self.device.clone(), self.baudrate)
             .flow_control(*self.flow)
-            .timeout(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))
+            .timeout(READER_TIMEOUT)
             .open()?;
         let mut buffer = [0; 237];
-        let mut found_preamble = false;
         let now = Instant::now();
-        while now.elapsed().as_millis() < SERIALPORT_READ_TIMEOUT_MS as u128 {
+        while now.elapsed() < READER_TIMEOUT {
             rdr.read_exact(&mut buffer)?;
             if buffer.contains(&sbp::PREAMBLE) {
-                found_preamble = true;
-                break;
+                return Ok(());
             }
         }
-        if !found_preamble {
-            return Err(std::io::Error::new(
-                ErrorKind::InvalidData,
-                format!(
-                    "Could not validate connection, {}, check baudrate.",
-                    self.device
-                ),
-            ));
-        }
-        Ok(())
+        Err(std::io::Error::new(
+            ErrorKind::InvalidData,
+            format!(
+                "Could not validate connection, {}, check baudrate.",
+                self.device
+            ),
+        ))
     }
 }
 

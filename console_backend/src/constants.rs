@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 // 'Universal' constants
 
 pub(crate) const NANOSECONDS_PER_SECOND: f64 = 1.0e+9;
@@ -42,7 +44,7 @@ pub(crate) const AVAILABLE_FLOWS: &[&str] = &[
     FLOW_CONTROL_SOFTWARE,
     FLOW_CONTROL_HARDWARE,
 ];
-pub(crate) const SERIALPORT_READ_TIMEOUT_MS: u64 = 1000;
+pub(crate) const READER_TIMEOUT: Duration = Duration::from_secs(1);
 pub(crate) const CONNECTION_HISTORY_FILENAME: &str = "connection_history.yaml";
 pub(crate) const MAX_CONNECTION_HISTORY: i32 = 15;
 

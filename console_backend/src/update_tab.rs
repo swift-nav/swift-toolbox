@@ -369,12 +369,7 @@ fn check_firmware_outdated(update_tab_context: UpdateTabContext) -> Result<bool>
         let outdated = latest > current;
         if outdated {
             update_tab_context.fw_log_append(format!(
-                "Latest firmware version, {}, is newer than current version, {}.",
-                latest_version, current_version
-            ));
-        } else {
-            update_tab_context.fw_log_append(format!(
-                "Latest firmware version, {}, is not newer than current version, {}.",
+                "Latest firmware version, {}, does not match current version, {}.",
                 latest_version, current_version
             ));
         }
@@ -392,17 +387,6 @@ fn check_console_outdated(update_tab_context: UpdateTabContext) -> Result<bool> 
         let current = SwiftVersion::parse(&current_version)?;
         let latest = SwiftVersion::parse(&latest_version)?;
         let outdated = latest > current;
-        if outdated {
-            update_tab_context.fw_log_append(format!(
-                "Latest console version, {}, is newer than current version, {}.",
-                latest_version, current_version
-            ));
-        } else {
-            update_tab_context.fw_log_append(format!(
-                "Latest console version, {}, is not newer than current version, {}.",
-                latest_version, current_version
-            ));
-        }
         update_tab_context.set_console_outdated(outdated);
         update_tab_context.set_current_console_version(current_version);
         update_tab_context.set_latest_console_version(latest_version);

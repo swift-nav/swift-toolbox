@@ -91,23 +91,28 @@ MainTab {
 
         }
 
-        ScrollView {
+        Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.leftMargin: Constants.updateTab.innerMargins
-            Layout.rightMargin: Constants.updateTab.innerMargins
-            Layout.bottomMargin: Constants.updateTab.innerMargins
+            border.width: Constants.updateTab.borderWidth
+            border.color: Constants.genericTable.borderColor
 
-            TextEdit {
-                id: fwLogTextArea
+            ScrollView {
+                anchors.fill: parent
+                anchors.margins: Constants.updateTab.innerMargins
 
-                readOnly: true
-                selectByMouse: true
-                selectByKeyboard: true
-                cursorVisible: true
-                activeFocusOnPress: false
-                font.family: Constants.genericTable.fontFamily
-                font.pointSize: Constants.largePointSize
+                TextEdit {
+                    id: fwLogTextArea
+
+                    readOnly: true
+                    selectByMouse: true
+                    selectByKeyboard: true
+                    cursorVisible: true
+                    activeFocusOnPress: false
+                    font.family: Constants.genericTable.fontFamily
+                    font.pointSize: Constants.largePointSize
+                }
+
             }
 
         }

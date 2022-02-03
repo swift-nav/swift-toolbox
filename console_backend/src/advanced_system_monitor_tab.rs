@@ -159,12 +159,10 @@ impl AdvancedSystemMonitorTab {
 
     /// Reset Device.
     fn reset_device(&mut self) -> Result<()> {
-        let msg = MsgReset {
+        self.writer.send(MsgReset {
             sender_id: Some(WRITE_TO_DEVICE_SENDER_ID),
             flags: 0,
-        };
-        self.writer.send(msg.into())?;
-        Ok(())
+        })
     }
 
     pub fn handle_uart_state(&mut self, msg: UartState) {

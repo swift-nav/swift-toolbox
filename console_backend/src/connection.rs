@@ -1,5 +1,5 @@
 use std::{
-    fmt::Debug,
+    fmt::{Debug, Write},
     fs,
     io::{self, ErrorKind},
     net::{TcpStream, ToSocketAddrs},
@@ -330,7 +330,7 @@ pub struct TcpConnection {
 }
 
 impl TcpConnection {
-    fn new(host: String, port: u16) -> Result<Self> {
+    pub fn new(host: String, port: u16) -> Result<Self> {
         let name = format!("{}:{}", host, port);
         Ok(Self { name, host, port })
     }
@@ -346,10 +346,7 @@ impl TcpConnection {
 
         for address in addresses {
             info!("Attempting to connect to resolved address {:?}", address);
-            match TcpStream::connect_timeout(
-                &address,
-                Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS),
-            ) {
+            match TcpStream::connect_timeout(&address, READER_TIMEOUT) {
                 Ok(stream) => return Ok(stream),
                 Err(err) => {
                     info!(
@@ -361,18 +358,20 @@ impl TcpConnection {
             }
         }
 
-        Err(io::Error::new(
-            ErrorKind::ConnectionRefused,
-            format!("Could not connect to {:?}: {:#?}", self.name, errors),
-        ))
+        let mut msg = format!("Could not connect to {}\n", self.name);
+        writeln!(&mut msg, "Caused by:").unwrap();
+        for err in errors {
+            writeln!(&mut msg, "    {}", err).unwrap();
+        }
+        Err(io::Error::new(ErrorKind::ConnectionRefused, msg.trim()))
     }
 
-    fn try_connect(
+    pub fn try_connect(
         self,
         shared_state: Option<&SharedState>,
     ) -> io::Result<(Box<dyn io::Read + Send>, Box<dyn io::Write + Send>)> {
         let rdr = self.open_connection()?;
-        rdr.set_read_timeout(Some(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS)))?;
+        rdr.set_read_timeout(Some(READER_TIMEOUT))?;
         let writer = rdr.try_clone()?;
         info!("Connected to tcp stream!");
         if let Some(shared_state) = shared_state {
@@ -391,7 +390,7 @@ pub struct SerialConnection {
 }
 
 impl SerialConnection {
-    fn new(device: String, baudrate: u32, flow: FlowControl) -> Self {
+    pub fn new(device: String, baudrate: u32, flow: FlowControl) -> Self {
         Self {
             name: format!("{} @{}", device, baudrate),
             device,
@@ -404,14 +403,14 @@ impl SerialConnection {
         self.name.clone()
     }
 
-    fn try_connect(
+    pub fn try_connect(
         self,
         _shared_state: Option<&SharedState>,
     ) -> io::Result<(Box<dyn io::Read + Send>, Box<dyn io::Write + Send>)> {
         self.validate_serial_port()?;
         let rdr = serialport::new(self.device.clone(), self.baudrate)
             .flow_control(*self.flow)
-            .timeout(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))
+            .timeout(READER_TIMEOUT)
             .open()?;
         let writer = rdr.try_clone()?;
         info!("Opened serial port successfully!");
@@ -422,31 +421,27 @@ impl SerialConnection {
 
         Ok((Box::new(rdr), Box::new(writer)))
     }
+
     fn validate_serial_port(&self) -> std::result::Result<(), std::io::Error> {
         let mut rdr = serialport::new(self.device.clone(), self.baudrate)
-            .flow_control(*self.flow.clone())
-            .timeout(Duration::from_millis(SERIALPORT_READ_TIMEOUT_MS))
+            .flow_control(*self.flow)
+            .timeout(READER_TIMEOUT)
             .open()?;
         let mut buffer = [0; 237];
-        let mut found_preamble = false;
         let now = Instant::now();
-        while now.elapsed().as_millis() < SERIALPORT_READ_TIMEOUT_MS as u128 {
+        while now.elapsed() < READER_TIMEOUT {
             rdr.read_exact(&mut buffer)?;
-            if buffer.contains(&0x55) {
-                found_preamble = true;
-                break;
+            if buffer.contains(&sbp::PREAMBLE) {
+                return Ok(());
             }
         }
-        if !found_preamble {
-            return Err(std::io::Error::new(
-                ErrorKind::InvalidData,
-                format!(
-                    "Could not validate connection, {}, check baudrate.",
-                    self.device
-                ),
-            ));
-        }
-        Ok(())
+        Err(std::io::Error::new(
+            ErrorKind::InvalidData,
+            format!(
+                "Could not validate connection, {}, check baudrate.",
+                self.device
+            ),
+        ))
     }
 }
 

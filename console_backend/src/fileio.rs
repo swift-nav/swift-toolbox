@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeMap, HashMap},
+    collections::HashMap,
     io::{BufRead, BufReader, Read, Write},
     time::{Duration, Instant},
 };
@@ -32,7 +32,7 @@ const MAX_RETRIES: usize = 20;
 const READDIR_TIMEOUT: Duration = Duration::from_secs(5);
 const CONFIG_REQ_RETRY: Duration = Duration::from_millis(100);
 const CONFIG_REQ_TIMEOUT: Duration = Duration::from_secs(10);
-const FILE_IO_TIMEOUT: Duration = Duration::from_secs(3);
+const FILE_IO_TIMEOUT: Duration = Duration::from_secs(2);
 
 const READ_CHUNK_SIZE: usize = sbp::MAX_PAYLOAD_LEN - 4;
 const SEQUENCE_LEN: usize = 4;
@@ -55,23 +55,32 @@ impl Fileio {
         }
     }
 
-    pub fn read(&mut self, path: String, mut dest: impl Write + Send) -> Result<()> {
+    pub fn read(&mut self, path: String, dest: impl Write + Send) -> Result<()> {
+        self.read_with_progress(path, dest, |_| ())
+    }
+
+    pub fn read_with_progress<F>(
+        &mut self,
+        path: String,
+        mut dest: impl Write + Send,
+        mut on_progress: F,
+    ) -> Result<()>
+    where
+        F: FnMut(u64) + Send,
+    {
         let mut sequence = new_sequence();
         let mut offset = 0;
         let (tx, rx) = channel::unbounded();
         let key = self.link.register(move |msg: MsgFileioReadResp| {
             let _ = tx.send(msg);
         });
-        if let Err(err) = self.sender.send(
-            MsgFileioReadReq {
-                sender_id: None,
-                filename: path.clone().into(),
-                chunk_size: READ_CHUNK_SIZE as u8,
-                sequence,
-                offset,
-            }
-            .into(),
-        ) {
+        if let Err(err) = self.sender.send(MsgFileioReadReq {
+            sender_id: None,
+            filename: path.clone().into(),
+            chunk_size: READ_CHUNK_SIZE as u8,
+            sequence,
+            offset,
+        }) {
             self.link.unregister(key);
             return Err(err);
         };
@@ -81,21 +90,19 @@ impl Fileio {
                 return Err(err.into());
             }
             let bytes_read = msg.contents.len();
+            on_progress(bytes_read as u64);
             if bytes_read != READ_CHUNK_SIZE {
                 break;
             }
             sequence += 1;
             offset += READ_CHUNK_SIZE as u32;
-            if let Err(err) = self.sender.send(
-                MsgFileioReadReq {
-                    sender_id: None,
-                    filename: path.clone().into(),
-                    chunk_size: READ_CHUNK_SIZE as u8,
-                    sequence,
-                    offset,
-                }
-                .into(),
-            ) {
+            if let Err(err) = self.sender.send(MsgFileioReadReq {
+                sender_id: None,
+                filename: path.clone().into(),
+                chunk_size: READ_CHUNK_SIZE as u8,
+                sequence,
+                offset,
+            }) {
                 self.link.unregister(key);
                 return Err(err);
             };
@@ -121,7 +128,7 @@ impl Fileio {
         mut on_progress: F,
     ) -> Result<()>
     where
-        F: FnMut(usize) + Send,
+        F: FnMut(u64) + Send,
     {
         self.remove(filename.clone())?;
         let config = self.fetch_config();
@@ -185,7 +192,9 @@ impl Fileio {
                     match req {
                         Ok(mut msg) => {
                             msg.sequence = sequence;
-                            chunk_sizes.lock().insert(msg.sequence, msg.data.len());
+                            chunk_sizes
+                                .lock()
+                                .insert(msg.sequence, msg.data.len() as u64);
                             Ok(Some(msg))
                         }
                         Err(e) => Err(e.into()),
@@ -217,15 +226,12 @@ impl Fileio {
             tx.send(msg).expect(FILEIO_CHANNEL_SEND_FAILURE);
         });
 
-        self.sender.send(
-            MsgFileioReadDirReq {
-                sender_id: None,
-                sequence: seq,
-                offset: files.len() as u32,
-                dirname: path.clone().into(),
-            }
-            .into(),
-        )?;
+        self.sender.send(MsgFileioReadDirReq {
+            sender_id: None,
+            sequence: seq,
+            offset: files.len() as u32,
+            dirname: path.clone().into(),
+        })?;
 
         loop {
             select! {
@@ -255,7 +261,7 @@ impl Fileio {
                         sequence: seq,
                         offset: files.len() as u32,
                         dirname: path.clone().into(),
-                    }.into())?;
+                    })?;
                 },
                 recv(channel::tick(READDIR_TIMEOUT)) -> _ => {
                     self.link.unregister(key);
@@ -266,14 +272,10 @@ impl Fileio {
     }
 
     pub fn remove(&self, filename: String) -> Result<()> {
-        self.sender.send(
-            MsgFileioRemove {
-                sender_id: None,
-                filename: filename.into(),
-            }
-            .into(),
-        )?;
-        Ok(())
+        self.sender.send(MsgFileioRemove {
+            sender_id: None,
+            filename: filename.into(),
+        })
     }
 
     fn fetch_config(&mut self) -> FileioConfig {
@@ -295,13 +297,10 @@ impl Fileio {
         let config = scope(|s| {
             s.spawn(|_| {
                 while stop_rx.try_recv().is_err() {
-                    let _ = sender.send(
-                        MsgFileioConfigReq {
-                            sender_id: None,
-                            sequence,
-                        }
-                        .into(),
-                    );
+                    let _ = sender.send(MsgFileioConfigReq {
+                        sender_id: None,
+                        sequence,
+                    });
                     std::thread::sleep(CONFIG_REQ_RETRY);
                 }
             });
@@ -362,7 +361,7 @@ where
     G: FnMut(MsgFileioWriteResp) + Send,
 {
     // maps sequences -> pending requests
-    let pending_map = Mutex::new(BTreeMap::new());
+    let pending_map = Mutex::new(HashMap::new());
     // each sequence gets sent to this channel. the timeout thread pulls from
     // it and checks the timeouts in order. On a retry the sequence gets pushed
     // back onto the queue
@@ -380,6 +379,9 @@ where
     // we can wake up the thread with this
     let send_parker = Parker::new();
     let send_unparker = send_parker.unparker().clone();
+    // kills the timeout thread early if we finish uploading the file
+    let timeout_parker = Parker::new();
+    let timeout_unparker = timeout_parker.unparker().clone();
     let result = scope(|scope| {
         let err_tx = &err_tx;
         let pending_map = &pending_map;
@@ -418,6 +420,7 @@ where
                     err_tx,
                     sender,
                     pending_queue_tx,
+                    timeout_parker,
                 );
             })
             .expect(THREAD_START_FAILURE);
@@ -434,6 +437,7 @@ where
                     cb(res);
                     if pending_map.lock().is_empty() {
                         let _ = pending_queue_tx.send(None);
+                        timeout_unparker.unpark();
                         return Ok(());
                     }
                 }
@@ -466,7 +470,7 @@ fn req_generator_thd<F: FnMut(u32) -> Result<Option<MsgFileioWriteReq>> + Send>(
 fn req_maker_thd(
     config: FileioConfig,
     sender: &MsgSender,
-    pending_map: &Mutex<BTreeMap<u32, PendingReq>>,
+    pending_map: &Mutex<HashMap<u32, PendingReq>>,
     pending_queue_tx: &Sender<Option<u32>>,
     err_tx: &Sender<anyhow::Error>,
     req_rx: Receiver<Result<Option<MsgFileioWriteReq>>>,
@@ -474,12 +478,13 @@ fn req_maker_thd(
 ) {
     let mut batch = Vec::with_capacity(config.batch_size);
     let send_batch = move |batch: &mut Vec<MsgFileioWriteReq>| -> bool {
+        let mut guard = pending_map.lock();
         for req in batch.drain(..config.batch_size.min(batch.len())) {
-            match sender.send(req.clone().into()) {
+            match sender.send(req.clone()) {
                 Ok(_) => {
                     let req = PendingReq::new(req);
                     let seq = req.message.sequence;
-                    pending_map.lock().insert(seq, req);
+                    guard.insert(seq, req);
                     let _ = pending_queue_tx.send(Some(seq));
                 }
                 Err(err) => {
@@ -525,10 +530,11 @@ fn req_maker_thd(
 
 fn timeout_thd(
     pending_queue_rx: &Receiver<Option<u32>>,
-    pending_map: &Mutex<BTreeMap<u32, PendingReq>>,
+    pending_map: &Mutex<HashMap<u32, PendingReq>>,
     err_tx: &Sender<anyhow::Error>,
     sender: &MsgSender,
     pending_queue_tx: &Sender<Option<u32>>,
+    timeout_parker: Parker,
 ) {
     for seq in pending_queue_rx.iter() {
         let seq = match seq {
@@ -540,7 +546,7 @@ fn timeout_thd(
             None => continue,
         };
         if elapsed < FILE_IO_TIMEOUT {
-            std::thread::sleep(FILE_IO_TIMEOUT - elapsed);
+            timeout_parker.park_timeout(FILE_IO_TIMEOUT - elapsed);
         }
         let mut guard = pending_map.lock();
         if let Some(req) = guard.get_mut(&seq) {
@@ -553,7 +559,7 @@ fn timeout_thd(
             let msg = req.message.clone();
             let seq = msg.sequence;
             drop(guard);
-            if let Err(err) = sender.send(msg.into()) {
+            if let Err(err) = sender.send(msg) {
                 let _ = err_tx.send(err);
                 break;
             };
@@ -563,19 +569,8 @@ fn timeout_thd(
     debug!("timeout thread finished");
 }
 
-fn window_available(pending_map: &Mutex<BTreeMap<u32, PendingReq>>, config: FileioConfig) -> bool {
-    let range = {
-        let guard = pending_map.lock();
-        let mut seqs = guard.keys();
-        seqs.next().copied().zip(seqs.next_back().copied())
-    };
-    match range {
-        Some((oldest, newest)) => {
-            // will a new batch fit in the window size
-            (newest - oldest) + config.batch_size as u32 <= config.window_size as u32
-        }
-        None => true,
-    }
+fn window_available(pending_map: &Mutex<HashMap<u32, PendingReq>>, config: FileioConfig) -> bool {
+    pending_map.lock().len() + config.batch_size <= config.window_size
 }
 
 #[derive(Debug, Clone)]

@@ -27,11 +27,16 @@ Rectangle {
         return row[name] || "";
     }
 
+    function isLongTextField(name) {
+        return selectedRowField(name).length > 70;
+    }
+
     clip: true
 
     Flickable {
         anchors.fill: parent
         contentHeight: grid.height
+        boundsBehavior: Flickable.StopAtBounds
 
         GridLayout {
             id: grid
@@ -113,7 +118,7 @@ Rectangle {
 
                         PropertyChanges {
                             target: valOnDevice
-                            Layout.preferredHeight: 3 * parent.smallRowHeight
+                            Layout.preferredHeight: isLongTextField(_fieldName) ? 4 * parent.smallRowHeight : 3 * parent.smallRowHeight
                         }
 
                     },
@@ -193,7 +198,7 @@ Rectangle {
                 Layout.rowSpan: 2
                 Layout.columnSpan: 1
                 Layout.preferredWidth: parent.colWidthLabel
-                Layout.preferredHeight: parent.smallRowHeight
+                Layout.preferredHeight: isLongTextField(_fieldName) ? 3 * parent.smallRowHeight : parent.smallRowHeight
                 sourceComponent: settingRowLabel
             }
 
@@ -204,7 +209,7 @@ Rectangle {
                 Layout.rowSpan: 2
                 Layout.columnSpan: parent.columns - 1
                 Layout.preferredWidth: parent.colWidthField
-                Layout.preferredHeight: parent.smallRowHeight
+                Layout.preferredHeight: isLongTextField(_fieldName) ? 3 * parent.smallRowHeight : parent.smallRowHeight
             }
 
             Loader {
@@ -308,14 +313,27 @@ Rectangle {
         Rectangle {
             anchors.fill: parent
 
-            Label {
+            TextEdit {
+                // MouseArea {
+                //     anchors.fill: parent
+                //     onClicked: parent.forceActiveFocus()
+                // }
+
                 text: selectedRowField(_fieldName)
                 anchors.fill: parent
                 wrapMode: Text.WordWrap
+                readOnly: true
+                selectByMouse: true
+                selectionColor: Constants.swiftOrange
+                onSelectedTextChanged: {
+                    if (selectedText.length > 0)
+                        Globals.copyClipboard = selectedText;
 
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: parent.forceActiveFocus()
+                }
+
+                font {
+                    family: Constants.fontFamily
+                    pointSize: Constants.largePointSize
                 }
 
             }

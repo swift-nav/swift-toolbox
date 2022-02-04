@@ -55,6 +55,12 @@ impl ConnectionManager {
     /// - `host`: The host portion of the TCP stream to open.
     /// - `port`: The port to be used to open a TCP stream.
     pub fn connect_to_host(&self, host: String, port: u16) -> Result<()> {
+        let host_split: Vec<&str> = host.split(':').collect();
+        let (host, port) = if host_split.len() == 2 {
+            (host_split[0].to_string(), host_split[1].parse::<u16>()?)
+        } else {
+            (host, port)
+        };
         let conn = Connection::tcp(host, port)?;
         self.msg.send(ConnectionManagerMsg::Connect(conn));
         Ok(())

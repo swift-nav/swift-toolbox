@@ -12,6 +12,7 @@ env:
   PIP_CACHE_DIR: ~/.cache/pip
   RUST_CACHE_DIRS: "~/.cargo/registry\n~/.cargo/git\ntarget\n"
   LIBCLANG_PATH_WIN: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
+  CODE_SIGNER_PATH_WIN: "C:/Program Files/Windows Kits/10/bin/x86/signtool.exe"
   CARGO_MAKE_VERSION: 0.35.0
   CARGO_INCREMENTAL: 0
   RUSTFLAGS: "-C debuginfo=0"
@@ -446,10 +447,51 @@ jobs:
               exit 1
           fi
 
+  sign_installer:
+    name: Sign Installers
+    timeout-minutes: 30
+    needs:
+      - frontend_bench
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
+    strategy:
+      matrix:
+        os:
+          - Windows
+    runs-on: [self-hosted, '${{ matrix.os }}', code-signer]
+    steps:
+
+      - name: Remove previous build.
+        shell: bash
+        run: |
+          rm -r *
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: ${{ matrix.os }}-installer
+
+      - name: Sign Installer.
+        shell: cmd
+        run: |
+          set /p executable=<installer-archive.filename
+          "${{ env.CODE_SIGNER_PATH_WIN }}" sign /debug /v /n "Swift Navigation, Inc." /a /tr http://rfc3161timestamp.globalsign.com/advanced /td SHA256 %executable%
+          
+      - name: Add archive to path.
+        shell: bash
+        run: |
+          echo "INSTALLER_ARCHIVE=$(cat installer-archive.filename)" >>$GITHUB_ENV
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ runner.os }}-installer-signed
+          path: |
+            ${{ env.INSTALLER_ARCHIVE }}
+            installer-archive.filename
+  
+
   release:
     name: Create Release
     needs:
-      - frontend_bench
+      - sign_installer
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
     runs-on: ubuntu-20.04
     steps:
@@ -461,7 +503,7 @@ jobs:
       - name: Pull Windows Artifacts
         uses: actions/download-artifact@v2
         with:
-          name: Windows-installer
+          name: Windows-installer-signed
           path: |
             windows
       - name: Pull Linux Artifacts

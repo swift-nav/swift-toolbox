@@ -170,8 +170,12 @@ jobs:
           cargo make check-all
 
       - name: Run Tests
-        run: |
-          cargo make tests
+        uses: nick-invision/retry@v2
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          retry_on: error
+          command: cargo make tests
 
   build:
 
@@ -420,32 +424,42 @@ jobs:
           echo "extracted bench data"
 
       - name: Run CPU Frontend Benchmark.
-        shell: bash
-        run: |
-          cd ${{ env.APP_NAME }}
-          if [ "$RUNNER_OS" == "Windows" ]; then
-              python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}.exe"
-          elif [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
-              chmod +x "${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
-              python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
-          else
-              echo "Invalid platform"
-              exit 1
-          fi
+        uses: nick-invision/retry@v2
+        with:
+          shell: bash
+          timeout_minutes: 3
+          max_attempts: 3
+          retry_on: error
+          command: |
+            cd ${{ env.APP_NAME }}
+            if [ "$RUNNER_OS" == "Windows" ]; then
+                python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}.exe"
+            elif [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
+                chmod +x "${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
+                python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
+            else
+                echo "Invalid platform"
+                exit 1
+            fi
 
       - name: Run MEM Frontend Benchmark.
-        shell: bash
-        run: |
-          cd ${{ env.APP_NAME }}
-          if [ "$RUNNER_OS" == "Windows" ]; then
-              python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}.exe"
-          elif [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
-              chmod +x "${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
-              python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
-          else
-              echo "Invalid platform"
-              exit 1
-          fi
+        uses: nick-invision/retry@v2
+        with:
+          shell: bash
+          timeout_minutes: 3
+          max_attempts: 3
+          retry_on: error
+          command: |
+            cd ${{ env.APP_NAME }}
+            if [ "$RUNNER_OS" == "Windows" ]; then
+                python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}.exe"
+            elif [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
+                chmod +x "${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
+                python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
+            else
+                echo "Invalid platform"
+                exit 1
+            fi
 
   sign_installer:
     name: Sign Installers

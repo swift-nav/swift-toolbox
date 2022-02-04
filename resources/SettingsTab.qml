@@ -99,7 +99,7 @@ MainTab {
         id: importSuccess
 
         title: "Successfully imported settings from file."
-        text: "Settings import from file complete.  Click OK to save the settings\nto the device's persistent storage."
+        text: "Settings import from file complete.  Click 'Yes' to save the settings to the device's persistent storage."
         standardButtons: StandardButton.Yes | StandardButton.No
         onYes: data_model.settings_save_request()
     }

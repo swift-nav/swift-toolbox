@@ -215,7 +215,7 @@ pub enum Input {
         flow_control: FlowControl,
     },
     Tcp {
-        /// The TCP host to connect to.
+        /// The TCP/IP host or TCP/IP host-port pair to connect with. For example: "192.168.0.222" or "192.168.0.222:55555"
         host: String,
 
         /// The port to use when connecting via TCP.

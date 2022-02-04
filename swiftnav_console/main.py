@@ -157,6 +157,7 @@ CONSOLE_BACKEND_CAPNP_PATH = "console_backend.capnp"
 PIKSI_HOST = "192.168.0.222"
 PIKSI_PORT = 55555
 
+HELP_CLI_ARGS = ["-h", "--help", "help"]
 
 MAIN_INDEX = "MAIN_INDEX"
 SUB_INDEX = "SUB_INDEX"
@@ -817,10 +818,16 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     parser.add_argument("--height", type=int)
     parser.add_argument("--width", type=int)
 
-    args_main, _ = parser.parse_known_args()
+    args_main, unknown_args = parser.parse_known_args()
+    found_help_arg = False
+    for arg in unknown_args:
+        if arg in HELP_CLI_ARGS:
+            found_help_arg = True
     if passed_args is not None:
+        for arg in passed_args:
+            if arg in HELP_CLI_ARGS:
+                found_help_arg = True
         args_main, _ = parser.parse_known_args(passed_args)
-
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
     app = QApplication(sys.argv)
@@ -867,18 +874,16 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     engine.objectCreated.connect(handle_qml_load_errors)  # pylint: disable=no-member
 
     capnp_path = get_capnp_path()
-
+    backend_main = console_backend.server.Server()  # pylint: disable=no-member
+    endpoint_main = backend_main.start()
+    if found_help_arg:
+        return 0
     engine.addImportPath("PySide2")
     engine.addImportPath(":/")
     engine.load(QUrl("qrc:/view.qml"))
     if not qml_object_created[0]:
         return 1
-
     messages_main = capnp.load(capnp_path)  # pylint: disable=no-member
-
-    backend_main = console_backend.server.Server()  # pylint: disable=no-member
-    endpoint_main = backend_main.start()
-
     data_model = DataModel(endpoint_main, messages_main)
     log_panel_model = LogPanelModel()
     connection_model = ConnectionModel()
@@ -918,7 +923,6 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     root_context.setContextProperty("logging_bar_model", logging_bar_model)
     root_context.setContextProperty("update_tab_model", update_tab_model)
     root_context.setContextProperty("data_model", data_model)
-
     # Unfortunately it is not possible to access singletons directly using the PySide2 API.
     # This approach stores the globals somwhere that can be grabbed and manipulated.
     component = QQmlComponent(engine)

@@ -314,11 +314,6 @@ Rectangle {
             anchors.fill: parent
 
             TextEdit {
-                // MouseArea {
-                //     anchors.fill: parent
-                //     onClicked: parent.forceActiveFocus()
-                // }
-
                 text: selectedRowField(_fieldName)
                 anchors.fill: parent
                 wrapMode: Text.WordWrap

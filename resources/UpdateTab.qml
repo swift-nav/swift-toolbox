@@ -11,8 +11,8 @@ MainTab {
     function upgradeSerialConfirmDialogText() {
         let text = "";
         text += "Upgrading your device via UART / RS232 may take up to 30 minutes.\n\n";
-        text += "If the device you are upgrading has an accessible USB host port, it is recommended to instead follow the \
-        \'USB Flashdrive Upgrade Procedure\' that now appears in the Firmware upgrade status box.\n\n";
+        text += "If the device you are upgrading has an accessible USB host port, it is recommended to instead follow the ";
+        text += "'USB Flashdrive Upgrade Procedure\' that now appears in the Firmware upgrade status box.\n\n";
         text += "Are you sure you want to continue upgrading over serial?\n";
         return text;
     }

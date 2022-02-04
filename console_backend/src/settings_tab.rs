@@ -26,6 +26,12 @@ use crate::utils::*;
 const FIRMWARE_VERSION_SETTING_KEY: &str = "firmware_version";
 const DGNSS_SOLUTION_MODE_SETTING_KEY: &str = "dgnss_solution_mode";
 
+const ETHERNET_SETTING_GROUP: &str = "ethernet";
+const ETHERNET_INTERFACE_MODE_SETTING_KEY: &str = "interface_mode";
+
+const NTRIP_SETTING_GROUP: &str = "ntrip";
+const NTRIP_ENABLE_SETTING_KEY: &str = "enable";
+
 lazy_static! {
     static ref RECOMMENDED_INS_SETTINGS: [(&'static str, &'static str, SettingValue); 4] = [
         ("imu", "imu_raw_output", SettingValue::Boolean(true)),
@@ -169,9 +175,20 @@ impl SettingsTab {
     fn import(&self, path: &Path) -> Result<()> {
         let mut f = fs::File::open(path)?;
         let conf = Ini::read_from(&mut f)?;
-        for (group, prop) in conf.iter() {
-            let group = group.unwrap();
-            for (name, value) in reorganize_import_group(group, prop) {
+        let old_ethernet = self.set_if_group_changes(
+            &conf,
+            ETHERNET_SETTING_GROUP,
+            ETHERNET_INTERFACE_MODE_SETTING_KEY,
+            "Config",
+        )?;
+        let old_ntrip = self.set_if_group_changes(
+            &conf,
+            NTRIP_SETTING_GROUP,
+            NTRIP_ENABLE_SETTING_KEY,
+            "False",
+        )?;
+        for (group, prop) in sort_import_groups(&conf) {
+            for (name, value) in sort_import_group(group, prop) {
                 if let Err(e) = self.write_setting(group, name, value) {
                     match e.downcast_ref::<sbp_settings::Error>() {
                         Some(sbp_settings::Error::WriteError(
@@ -184,6 +201,20 @@ impl SettingsTab {
                     }
                 }
             }
+        }
+        if let Some(v) = old_ethernet {
+            self.write_setting(
+                ETHERNET_SETTING_GROUP,
+                ETHERNET_INTERFACE_MODE_SETTING_KEY,
+                &v.to_string(),
+            )?;
+        }
+        if let Some(v) = old_ntrip {
+            self.write_setting(
+                NTRIP_SETTING_GROUP,
+                NTRIP_ENABLE_SETTING_KEY,
+                &v.to_string(),
+            )?;
         }
         self.import_success();
         Ok(())
@@ -469,26 +500,106 @@ impl SettingsTab {
         self.client_sender
             .send_data(serialize_capnproto_builder(builder));
     }
+
+    // set `group`.`name` = `value` if any settings in `group` will be changed
+    // when importing `conf`. returns the original value if `name` does not
+    // appear in `conf`.
+    fn set_if_group_changes(
+        &self,
+        conf: &Ini,
+        group: &str,
+        name: &str,
+        value: &str,
+    ) -> Result<Option<SettingValue>> {
+        if !self.group_changed(conf, group)? {
+            return Ok(None);
+        }
+        let original = self
+            .settings
+            .lock()
+            .get(group, name)?
+            .value
+            .as_ref()
+            .ok_or_else(|| anyhow!("{group}.{name} was none"))?
+            .clone();
+        let in_config = conf
+            .section(Some(group))
+            .map(|s| s.get(name))
+            .flatten()
+            .is_some();
+        self.write_setting(group, name, value)?;
+        if !in_config {
+            Ok(Some(original))
+        } else {
+            Ok(None)
+        }
+    }
+
+    // will any of the settings in `group` change when importing `conf`
+    fn group_changed(&self, conf: &Ini, group: &str) -> Result<bool> {
+        let new_group = match conf.section(Some(group)) {
+            Some(s) => s,
+            None => return Ok(false),
+        };
+        let guard = self.settings.lock();
+        for SettingsEntry { setting, value } in guard.group(group)? {
+            let new_value = match new_group.get(&setting.name) {
+                Some(s) => s,
+                None => continue,
+            };
+            let old_value = match value.as_ref().map(|v| v.to_string()) {
+                Some(v) => v,
+                None => return Ok(true),
+            };
+            if new_value != old_value {
+                return Ok(true);
+            }
+        }
+        Ok(false)
+    }
+}
+
+// We need to set the ethernet settings at the very end if the user is changing
+// the IP address and also communicating over TCP
+fn sort_import_groups(conf: &Ini) -> Vec<(&str, &ini::Properties)> {
+    let mut groups: Vec<_> = conf
+        .iter()
+        .flat_map(|(section, props)| section.map(|s| (s, props)))
+        .collect();
+    if let Some(idx) = groups
+        .iter()
+        .position(|(s, _)| *s == ETHERNET_SETTING_GROUP)
+    {
+        let ethernet = groups.remove(idx);
+        groups.push(ethernet);
+    }
+    groups
 }
 
 // Some settings must be disabled in order to write another setting's value.
 // e.g. if `ntrip.enable=True` you can't write to `ntrip.username`. This sorts
 // setting groups such that those settings are last. Without this an import might
 // enable ntrip and then try to write another value.
-fn reorganize_import_group<'a>(
+fn sort_import_group<'a>(
     group: &str,
     prop: &'a ini::Properties,
 ) -> Box<dyn Iterator<Item = (&'a str, &'a str)> + 'a> {
     match group {
-        "ntrip" => {
-            let enable = prop.iter().find(|(n, _)| *n == "enable");
-            Box::new(prop.iter().filter(|(n, _)| *n != "enable").chain(enable))
-        }
-        "ethernet" => {
-            let interface_mode = prop.iter().find(|(n, _)| *n == "interface_mode");
+        NTRIP_SETTING_GROUP => {
+            let enable = prop.iter().find(|(n, _)| *n == NTRIP_ENABLE_SETTING_KEY);
             Box::new(
                 prop.iter()
-                    .filter(|(n, _)| *n != "interface_mode")
+                    .filter(|(n, _)| *n != NTRIP_ENABLE_SETTING_KEY)
+                    .chain(enable),
+            )
+        }
+        ETHERNET_SETTING_GROUP => {
+            let interface_mode = prop
+                .iter()
+                .find(|(n, _)| *n == ETHERNET_INTERFACE_MODE_SETTING_KEY);
+            Box::new(
+                prop.iter()
+                    .filter(|(n, _)| *n != ETHERNET_INTERFACE_MODE_SETTING_KEY)
                     .chain(interface_mode),
             )
         }
@@ -532,6 +643,13 @@ impl Settings {
                 }),
             default: SettingValue::String("".into()),
         }
+    }
+
+    fn group(&self, group: &str) -> Result<impl Iterator<Item = &SettingsEntry> + '_> {
+        self.inner
+            .get(group)
+            .map(|group| group.values())
+            .ok_or_else(|| anyhow!("unknown setting group: {}", group))
     }
 
     fn groups(&self) -> Vec<Vec<(&Setting, &SettingValue)>> {

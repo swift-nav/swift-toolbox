@@ -175,16 +175,18 @@ impl SettingsTab {
     fn import(&self, path: &Path) -> Result<()> {
         let mut f = fs::File::open(path)?;
         let conf = Ini::read_from(&mut f)?;
-        if self.group_changed(&conf, ETHERNET_SETTING_GROUP)? {
-            self.write_setting(
-                ETHERNET_SETTING_GROUP,
-                ETHERNET_INTERFACE_MODE_SETTING_KEY,
-                "Config",
-            )?;
-        }
-        if self.group_changed(&conf, NTRIP_SETTING_GROUP)? {
-            self.write_setting(NTRIP_SETTING_GROUP, NTRIP_ENABLE_SETTING_KEY, "False")?;
-        }
+        let old_ethernet = self.set_if_group_changes(
+            &conf,
+            ETHERNET_SETTING_GROUP,
+            ETHERNET_INTERFACE_MODE_SETTING_KEY,
+            "Config",
+        )?;
+        let old_ntrip = self.set_if_group_changes(
+            &conf,
+            NTRIP_SETTING_GROUP,
+            NTRIP_ENABLE_SETTING_KEY,
+            "False",
+        )?;
         for (group, prop) in sort_import_groups(&conf) {
             for (name, value) in sort_import_group(group, prop) {
                 if let Err(e) = self.write_setting(group, name, value) {
@@ -199,6 +201,20 @@ impl SettingsTab {
                     }
                 }
             }
+        }
+        if let Some(v) = old_ethernet {
+            self.write_setting(
+                ETHERNET_SETTING_GROUP,
+                ETHERNET_INTERFACE_MODE_SETTING_KEY,
+                &v.to_string(),
+            )?;
+        }
+        if let Some(v) = old_ntrip {
+            self.write_setting(
+                NTRIP_SETTING_GROUP,
+                NTRIP_ENABLE_SETTING_KEY,
+                &v.to_string(),
+            )?;
         }
         self.import_success();
         Ok(())
@@ -485,6 +501,41 @@ impl SettingsTab {
             .send_data(serialize_capnproto_builder(builder));
     }
 
+    // set `group`.`name` = `value` if any settings in `group` will be changed
+    // when importing `conf`. returns the original value if `name` does not
+    // appear in `conf`.
+    fn set_if_group_changes(
+        &self,
+        conf: &Ini,
+        group: &str,
+        name: &str,
+        value: &str,
+    ) -> Result<Option<SettingValue>> {
+        if !self.group_changed(conf, group)? {
+            return Ok(None);
+        }
+        let original = self
+            .settings
+            .lock()
+            .get(group, name)?
+            .value
+            .as_ref()
+            .ok_or_else(|| anyhow!("{group}.{name} was none"))?
+            .clone();
+        let in_config = conf
+            .section(Some(group))
+            .map(|s| s.get(name))
+            .flatten()
+            .is_some();
+        self.write_setting(group, name, value)?;
+        if !in_config {
+            Ok(Some(original))
+        } else {
+            Ok(None)
+        }
+    }
+
+    // will any of the settings in `group` change when importing `conf`
     fn group_changed(&self, conf: &Ini, group: &str) -> Result<bool> {
         let new_group = match conf.section(Some(group)) {
             Some(s) => s,

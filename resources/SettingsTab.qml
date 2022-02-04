@@ -162,6 +162,7 @@ MainTab {
 
                     property int colWidth: Math.max(Constants.settingsTab.buttonIconWidth, ((parent.width / (columns)) - columnSpacing * (columns)))
                     property int buttonPadding: 3
+                    property var buttonDisplay: AbstractButton.TextBesideIcon
 
                     anchors.fill: parent
                     rowSpacing: 0
@@ -182,7 +183,7 @@ MainTab {
                         icon.source: Constants.icons.savePath
                         icon.width: Constants.settingsTab.buttonIconWidth
                         icon.height: Constants.settingsTab.buttonIconHeight
-                        display: AbstractButton.TextUnderIcon
+                        display: parent.buttonDisplay
                         flat: true
                         onClicked: data_model.settings_save_request()
                     }
@@ -197,7 +198,7 @@ MainTab {
                         icon.source: Constants.icons.exportPath
                         icon.width: Constants.settingsTab.buttonIconWidth
                         icon.height: Constants.settingsTab.buttonIconHeight
-                        display: AbstractButton.TextUnderIcon
+                        display: parent.buttonDisplay
                         flat: true
                         onClicked: exportDialog.visible = true
                     }
@@ -212,7 +213,7 @@ MainTab {
                         icon.source: Constants.icons.importPath
                         icon.width: Constants.settingsTab.buttonIconWidth
                         icon.height: Constants.settingsTab.buttonIconHeight
-                        display: AbstractButton.TextUnderIcon
+                        display: parent.buttonDisplay
                         flat: true
                         onClicked: importDialog.visible = true
                     }
@@ -227,7 +228,7 @@ MainTab {
                         icon.source: Constants.icons.warningPath
                         icon.width: Constants.settingsTab.buttonIconWidth
                         icon.height: Constants.settingsTab.buttonIconHeight
-                        display: AbstractButton.TextUnderIcon
+                        display: parent.buttonDisplay
                         flat: true
                         onClicked: resetDialog.visible = true
                     }
@@ -246,12 +247,12 @@ MainTab {
                         ToolTip.visible: !buttonEnabled && hovered
                         background.visible: buttonEnabled
                         padding: parent.buttonPadding
-                        text: "Auto Survey\n"
+                        text: "Auto Survey"
                         opacity: buttonEnabled ? 1 : 0.5
                         icon.source: Constants.icons.centerOnButtonUrl
                         icon.width: Constants.settingsTab.buttonIconWidth
                         icon.height: Constants.settingsTab.buttonIconHeight
-                        display: AbstractButton.TextUnderIcon
+                        display: parent.buttonDisplay
                         flat: true
                         onClicked: {
                             if (buttonEnabled)
@@ -272,7 +273,7 @@ MainTab {
                         icon.source: Constants.icons.refreshPath
                         icon.width: Constants.settingsTab.buttonIconWidth
                         icon.height: Constants.settingsTab.buttonIconHeight
-                        display: AbstractButton.TextUnderIcon
+                        display: parent.buttonDisplay
                         flat: true
                         onClicked: data_model.settings_refresh()
                     }

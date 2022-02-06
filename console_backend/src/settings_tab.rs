@@ -149,14 +149,28 @@ impl SettingsTab {
         self.shared_state.reset_settings_state();
     }
 
-    fn refresh(&self) {
+    pub fn get(&self, group: &str, name: &str) -> Result<SettingsEntry> {
+        self.settings.lock().get(group, name).map(Clone::clone)
+    }
+
+    pub fn group(&self, group: &str) -> Result<Vec<SettingsEntry>> {
+        let group = self
+            .settings
+            .lock()
+            .group(group)?
+            .map(Clone::clone)
+            .collect();
+        Ok(group)
+    }
+
+    pub fn refresh(&self) {
         (*self.settings.lock()) = Settings::new();
         self.send_table_data();
         self.read_all_settings();
         self.send_table_data();
     }
 
-    fn export(&self, path: &Path) -> Result<()> {
+    pub fn export(&self, path: &Path) -> Result<()> {
         let mut f = fs::File::create(path)?;
         let settings = self.settings.lock();
         let groups = settings.groups();
@@ -172,7 +186,7 @@ impl SettingsTab {
         Ok(())
     }
 
-    fn import(&self, path: &Path) -> Result<()> {
+    pub fn import(&self, path: &Path) -> Result<()> {
         let mut f = fs::File::open(path)?;
         let conf = Ini::read_from(&mut f)?;
         let old_ethernet = self.set_if_group_changes(
@@ -244,7 +258,7 @@ impl SettingsTab {
             .send_data(serialize_capnproto_builder(builder));
     }
 
-    fn reset(&self, reset_settings: bool) -> Result<()> {
+    pub fn reset(&self, reset_settings: bool) -> Result<()> {
         let flags = if reset_settings { 1 } else { 0 };
         self.msg_sender.send(MsgReset {
             flags,
@@ -252,7 +266,7 @@ impl SettingsTab {
         })
     }
 
-    fn save(&self) -> Result<()> {
+    pub fn save(&self) -> Result<()> {
         self.msg_sender.send(MsgSettingsSave { sender_id: None })
     }
 
@@ -359,7 +373,7 @@ impl SettingsTab {
             .send_data(serialize_capnproto_builder(builder));
     }
 
-    fn write_setting(&self, group: &str, name: &str, value: &str) -> Result<()> {
+    pub fn write_setting(&self, group: &str, name: &str, value: &str) -> Result<()> {
         {
             let settings = self.settings.lock();
             if let Ok(e) = settings.get(group, name) {
@@ -614,6 +628,7 @@ pub struct SaveRequest {
     pub value: String,
 }
 
+#[derive(Clone)]
 struct Settings {
     inner: IndexMap<String, IndexMap<String, SettingsEntry>>,
     default: SettingValue,
@@ -705,8 +720,8 @@ impl Settings {
 }
 
 /// A reference to a particular setting and its value if it has been fetched
-#[derive(Debug)]
-struct SettingsEntry {
-    setting: Cow<'static, Setting>,
-    value: Option<SettingValue>,
+#[derive(Debug, Clone)]
+pub struct SettingsEntry {
+    pub setting: Cow<'static, Setting>,
+    pub value: Option<SettingValue>,
 }

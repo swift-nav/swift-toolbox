@@ -1,6 +1,5 @@
 use std::{convert::Infallible, path::PathBuf, str::FromStr, sync::Arc};
 
-use anyhow::anyhow;
 use clap::{AppSettings::DeriveDisplayOrder, Parser};
 use sbp::SbpIterExt;
 
@@ -37,8 +36,6 @@ fn main() -> Result<()> {
     } else if opts.reset {
         log::info!("Reseting settings to factory defaults");
         settings.reset(true)?;
-    } else {
-        return Err(anyhow!("No command specified"));
     }
 
     if opts.save {

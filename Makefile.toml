@@ -635,13 +635,15 @@ version = trim_end ${version}
 set_env VERSION ${version}
 set_env HOMEPAGE "https://www.swiftnav.com"
 set_env MAINTAINER "Swift Navigation <https://www.swiftnav.com/support>"
-set_env DESCRIPTION "The Swift Console is a Graphic User Interface (GUI) program providing visual representation of what's happening inside the Swift Navigation GNSS receivers. Console displays information and allows to adjust the settings on the hardware."
+set_env DESCRIPTION "The Swift Console provides data visualization, settings management, and update capabilities for Swift Navigation GNSS products."
 '''
 
 [tasks.dist-to-installer.linux]
 dependencies = ["dist-to-installer-env"]
 script_runner = "bash"
 script = '''
+
+set -ex
 
 if [ -d $TMP_DIR ]; then
   rm -rf $TMP_DIR
@@ -656,7 +658,7 @@ cp "installers/Linux/$APP_DIR_NAME.desktop" "$TMP_DIR/$USR_DIR/$APPS_DIR/"
 mkdir -p "$TMP_DIR/$USR_DIR/$ICONS_DIR"
 cp -r installers/Linux/hicolor/* "$TMP_DIR/$USR_DIR/$ICONS_DIR"
 
-DEB_PKG_DEPS=\
+DEB_PKG_DEPS="\
   libssl1.1 \
   libxcb1 \
   libxcb-xkb1 \
@@ -665,11 +667,11 @@ DEB_PKG_DEPS=\
   libxcb-render-util0 \
   libxcb-keysyms1 \
   libxcb-xinerama0 \
-  libxkbcommon-x11-0
+  libxkbcommon-x11-0"
 
 declare -a DEPENDS_SWITCHES
 
-for dep in DEB_PKG_DEPS; do
+for dep in $DEB_PKG_DEPS; do
   DEPENDS_SWITCHES+=("--depends ${dep}")
 done
 

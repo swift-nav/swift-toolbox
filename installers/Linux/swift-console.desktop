@@ -5,5 +5,5 @@ Exec=/opt/swift-console/swift-console
 Terminal=false
 NoDisplay=false
 Categories=Science
-Version=1.2
+Version=4.0
 Icon=swift-console

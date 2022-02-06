@@ -640,20 +640,55 @@ set_env DESCRIPTION "The Swift Console is a Graphic User Interface (GUI) program
 
 [tasks.dist-to-installer.linux]
 dependencies = ["dist-to-installer-env"]
-script_runner = "@shell"
+script_runner = "bash"
 script = '''
 
 if [ -d $TMP_DIR ]; then
   rm -rf $TMP_DIR
 fi
-mkdir -p $TMP_DIR/$OPT_DIR
-cp -r py39-dist/ $TMP_DIR/$OPT_DIR/$APP_DIR_NAME/
 
-mkdir -p $TMP_DIR/$USR_DIR/$APPS_DIR
-cp installers/Linux/$APP_DIR_NAME.desktop $TMP_DIR/$USR_DIR/$APPS_DIR/
-mkdir -p $TMP_DIR/$USR_DIR/$ICONS_DIR
-cp -r installers/Linux/hicolor/* $TMP_DIR/$USR_DIR/$ICONS_DIR
-fpm -t deb -s dir --depends libxcb-xinerama0 --maintainer "$MAINTAINER" --description "$DESCRIPTION" --url "$HOMEPAGE" -v $VERSION -p "${APP_DIR_NAME}_${VERSION}_linux.deb" --verbose -C $TMP_DIR -f -n $APP_DIR_NAME $OPT_DIR $USR_DIR
+mkdir -p "$TMP_DIR/$OPT_DIR"
+cp -r py39-dist/ "$TMP_DIR/$OPT_DIR/$APP_DIR_NAME/"
+
+mkdir -p "$TMP_DIR/$USR_DIR/$APPS_DIR"
+cp "installers/Linux/$APP_DIR_NAME.desktop" "$TMP_DIR/$USR_DIR/$APPS_DIR/"
+
+mkdir -p "$TMP_DIR/$USR_DIR/$ICONS_DIR"
+cp -r installers/Linux/hicolor/* "$TMP_DIR/$USR_DIR/$ICONS_DIR"
+
+DEB_PKG_DEPS=\
+  libssl1.1 \
+  libxcb1 \
+  libxcb-xkb1 \
+  libxcb-icccm4 \
+  libxcb-image0 \
+  libxcb-render-util0 \
+  libxcb-keysyms1 \
+  libxcb-xinerama0 \
+  libxkbcommon-x11-0
+
+declare -a DEPENDS_SWITCHES
+
+for dep in DEB_PKG_DEPS; do
+  DEPENDS_SWITCHES+=("--depends ${dep}")
+done
+
+fpm \
+  --verbose \
+  --force \
+  --input-type dir \
+  --output-type deb \
+  ${DEPENDS_SWITCHES[*]} \
+  --maintainer "$MAINTAINER" \
+  --description "$DESCRIPTION" \
+  --url "$HOMEPAGE" \
+  --version "$VERSION" \
+  --package "${APP_DIR_NAME}_${VERSION}_linux.deb" \
+  --chdir "$TMP_DIR" \
+  --name "$APP_DIR_NAME" \
+  "$OPT_DIR" \
+  "$USR_DIR"
+
 mv *.deb installers/Linux/
 '''
 

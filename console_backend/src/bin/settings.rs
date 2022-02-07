@@ -78,36 +78,74 @@ fn write(write_cmds: &[WriteCmd], settings: &SettingsTab) -> Result<()> {
     name = "piksi-settings",
     version = include_str!("../version.txt"),
     setting = DeriveDisplayOrder,
+    override_usage = "\
+    piksi-settings [OPTIONS] <DEVICE>
+
+    Examples:
+        - Read a setting:
+            piksi-settings /dev/ttyUSB0 --read imu.acc_range
+        - Read a group of settings:
+            piksi-settings /dev/ttyUSB0 --read imu
+        - Write a setting value:
+            piksi-settings /dev/ttyUSB0 --write imu.acc_range=2g
+        - Write multiple settings and save to flash:
+            piksi-settings /dev/ttyUSB0 -w imu.acc_range=2g -w imu.imu_rate=100 --save
+        - Export a device's settings
+            piksi-settings /dev/ttyUSB0 --export ./config.ini
+        - Import a device's settings
+            piksi-settings /dev/ttyUSB0 --import ./config.ini
+    "
 )]
 struct Opts {
     /// The serial port or TCP stream
     device: String,
 
-    /// Read a setting value
-    #[clap(long, conflicts_with_all = &["write", "import", "export"])]
+    /// Read a setting or a group of settings
+    #[clap(
+        long,
+        short,
+        value_name = "GROUP[.SETTING]",
+        conflicts_with_all = &["write", "import", "export", "reset"]
+    )]
     read: Option<ReadCmd>,
 
     /// Write a setting value
     #[clap(
         long,
-        conflicts_with_all = &["read", "import", "export"]
+        short,
+        value_name = "GROUP.SETTING=VALUE",
+        conflicts_with_all = &["read", "import", "export", "reset"]
     )]
     write: Option<Vec<WriteCmd>>,
 
     /// Export the devices settings
-    #[clap(long, conflicts_with_all = &["import", "read", "write"])]
+    #[clap(
+        long,
+        value_name = "PATH",
+        conflicts_with_all = &["import", "read", "write", "reset"]
+    )]
     export: Option<PathBuf>,
 
     /// Import an ini file
-    #[clap(long, conflicts_with_all = &["read", "write", "export"])]
+    #[clap(
+        long,
+        value_name = "PATH",
+        conflicts_with_all = &["read", "write", "export", "reset"]
+    )]
     import: Option<PathBuf>,
 
-    /// Save settings to flash
-    #[clap(long, conflicts_with_all = &["read", "export"])]
+    /// Save settings to flash. Can be combined with --write or --import to save after writing
+    #[clap(
+        long,
+        conflicts_with_all = &["read", "export", "reset"]
+    )]
     save: bool,
 
     /// Reset settings to factory defaults
-    #[clap(long, conflicts_with_all = &["read", "write", "import", "export", "save"])]
+    #[clap(
+        long,
+        conflicts_with_all = &["read", "write", "export", "import", "save"]
+    )]
     reset: bool,
 
     #[clap(flatten)]

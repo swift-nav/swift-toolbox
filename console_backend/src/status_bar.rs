@@ -387,17 +387,14 @@ impl HeartbeatInner {
     }
 
     pub fn baseline_ned_update(&mut self) {
+        self.baseline_display_mode = String::from(EMPTY_STR);
         if let Some(last_btime_update) = self.last_btime_update {
             if self.dgnss_enabled
                 && (self.current_time - last_btime_update).as_secs_f64() < UPDATE_TOLERANCE_SECONDS
             {
-                self.baseline_display_mode = if let Some(bsoln_mode) =
-                    rtk_mode_dict.get(&(self.baseline_solution_mode as i32))
-                {
-                    String::from(*bsoln_mode)
-                } else {
-                    String::from(EMPTY_STR)
-                };
+                if let Some(bsoln_mode) = rtk_mode_dict.get(&(self.baseline_solution_mode as i32)) {
+                    self.baseline_display_mode = String::from(*bsoln_mode)
+                }
             }
         }
         if rtk_mode_dict
@@ -488,14 +485,16 @@ impl HeartbeatInner {
                 version: self.version.clone(),
             }
         } else {
-            self.llh_num_sats = 0;
-            StatusBarUpdate {
+            let packet = StatusBarUpdate {
                 solid_connection: self.solid_connection,
                 ant_status: self.ant_status.clone(),
                 num_sats: self.llh_num_sats,
                 version: self.version.clone(),
                 ..Default::default()
-            }
+            };
+            self.llh_num_sats = 0;
+            self.ant_status = String::from(EMPTY_STR);
+            packet
         }
     }
 }

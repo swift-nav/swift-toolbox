@@ -363,15 +363,12 @@ jobs:
             release-archive.filename
       - uses: actions/upload-artifact@v2
         with:
-          name: ${{ runner.os }}-fileio
-          path: |
-            ./target/release/fileio${{ matrix.os.exe_suffix}}
-
+          name: fileio-${{RUNNER_OS,,}}
+          path: ./target/release/fileio${{ matrix.os.exe_suffix}}
       - uses: actions/upload-artifact@v2
         with:
-          name: ${{ runner.os }}-piksi-settings
-          path: |
-            ./target/release/piksi-settings${{ matrix.os.exe_suffix}}
+          name: piksi-settings-${{RUNNER_OS,,}}
+          path: ./target/release/piksi-settings${{ matrix.os.exe_suffix}}
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ runner.os }}-artifacts-debug
@@ -390,18 +387,6 @@ jobs:
         shell: bash
         run: |
           cargo make disk-usage-bench
-      - uses: actions/upload-artifact@v2
-        with:
-          name: ${{ runner.os }}-fileio
-          path: |
-            ./target/release/fileio${{ matrix.os.exe_suffix}}
-        if: matrix.os.name != 'macos-10.15' && github.event_name == 'push' && contains(github.ref, 'refs/tags')
-      - uses: actions/upload-artifact@v2
-        with:
-          name: ${{ runner.os }}-piksi-settings
-          path: |
-            ./target/release/piksi-settings${{ matrix.os.exe_suffix}}
-        if: matrix.os.name != 'macos-10.15' && github.event_name == 'push' && contains(github.ref, 'refs/tags')
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ runner.os }}-installer
@@ -544,18 +529,32 @@ jobs:
           DATE="$(date '+%Y-%m-%d')";
           echo "DATE=${DATE}" >> $GITHUB_ENV
           echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
-      - name: Pull Windows Artifacts
+      - name: Pull Windows Installer
         uses: actions/download-artifact@v2
         with:
           name: Windows-installer-signed
-          path: |
-            windows
+          path: windows
+      - name: Pull Windows fileio
+        uses: actions/download-artifact@v2
+        with:
+          name: fileio-windows
+      - name: Pull Windows piksi-settings
+        uses: actions/download-artifact@v2
+        with:
+          name: piksi-settings-windows
       - name: Pull Linux Artifacts
         uses: actions/download-artifact@v2
         with:
           name: Linux-installer
-          path: |
-            linux
+          path: linux
+      - name: Pull Linux fileio
+        uses: actions/download-artifact@v2
+        with:
+          name: fileio-linux
+      - name: Pull Linux piksi-settings
+        uses: actions/download-artifact@v2
+        with:
+          name: piksi-settings-linux
       - name: Pull macOS Artifacts
         uses: actions/download-artifact@v2
         with:
@@ -576,5 +575,9 @@ jobs:
             windows/${{ env.WINDOWS_ARCHIVE }}
             linux/${{ env.LINUX_ARCHIVE }}
             macos/${{ env.MACOS_ARCHIVE }}
+            fileio-windows
+            piksi-settings-windows
+            fileio-linux
+            piksi-settings-linux
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

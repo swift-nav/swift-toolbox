@@ -238,6 +238,7 @@ Item {
         anchors.bottom: parent.bottom
         columnWidths: parent.columnWidths
         delegateBorderWidth: Constants.logPanel.delegateBorderWidth
+        horizontalScrollBar.visible: false
 
         model: TableModel {
             id: tableModel

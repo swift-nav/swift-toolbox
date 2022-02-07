@@ -34,7 +34,7 @@ fn main() -> Result<()> {
     } else if let Some(write_cmds) = opts.write {
         write(&write_cmds, &settings)?;
     } else if opts.reset {
-        log::info!("Reseting settings to factory defaults");
+        log::info!("Resetting settings to factory defaults");
         settings.reset(true)?;
     }
 

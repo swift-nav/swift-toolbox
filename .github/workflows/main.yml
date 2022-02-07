@@ -363,11 +363,11 @@ jobs:
             release-archive.filename
       - uses: actions/upload-artifact@v2
         with:
-          name: fileio_${{RUNNER_OS,,}}
+          name: ${{ runner.os }}-fileio
           path: ./target/release/fileio${{ matrix.os.exe_suffix}}
       - uses: actions/upload-artifact@v2
         with:
-          name: piksi-settings_${{RUNNER_OS,,}}
+          name: ${{ runner.os }}-piksi-settings
           path: ./target/release/piksi-settings${{ matrix.os.exe_suffix}}
       - uses: actions/upload-artifact@v2
         with:
@@ -537,12 +537,12 @@ jobs:
       - name: Pull Windows fileio
         uses: actions/download-artifact@v2
         with:
-          name: fileio_windows
+          name: Windows-fileio
           path: fileio_${{ env.VERSION }}_windows.exe
       - name: Pull Windows piksi-settings
         uses: actions/download-artifact@v2
         with:
-          name: piksi-settings_windows
+          name: Windows-piksi-settings
           path: piksi-settings_${{ env.VERSION }}_windows.exe
       - name: Pull Linux Artifacts
         uses: actions/download-artifact@v2
@@ -552,12 +552,12 @@ jobs:
       - name: Pull Linux fileio
         uses: actions/download-artifact@v2
         with:
-          name: fileio_linux
+          name: Linux-fileio
           path: fileio_${{ env.VERSION }}_linux
       - name: Pull Linux piksi-settings
         uses: actions/download-artifact@v2
         with:
-          name: piksi-settings_linux
+          name: Linux-piksi-settings
           path: piksi-settings_${{ env.VERSION }}_linux
       - name: Pull macOS Artifacts
         uses: actions/download-artifact@v2

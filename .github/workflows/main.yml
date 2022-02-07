@@ -363,11 +363,11 @@ jobs:
             release-archive.filename
       - uses: actions/upload-artifact@v2
         with:
-          name: fileio-${{RUNNER_OS,,}}
+          name: fileio_${{RUNNER_OS,,}}
           path: ./target/release/fileio${{ matrix.os.exe_suffix}}
       - uses: actions/upload-artifact@v2
         with:
-          name: piksi-settings-${{RUNNER_OS,,}}
+          name: piksi-settings_${{RUNNER_OS,,}}
           path: ./target/release/piksi-settings${{ matrix.os.exe_suffix}}
       - uses: actions/upload-artifact@v2
         with:
@@ -537,11 +537,13 @@ jobs:
       - name: Pull Windows fileio
         uses: actions/download-artifact@v2
         with:
-          name: fileio-windows
+          name: fileio_windows
+          path: fileio_${{ env.VERSION }}_windows.exe
       - name: Pull Windows piksi-settings
         uses: actions/download-artifact@v2
         with:
-          name: piksi-settings-windows
+          name: piksi-settings_windows
+          path: piksi-settings_${{ env.VERSION }}_windows.exe
       - name: Pull Linux Artifacts
         uses: actions/download-artifact@v2
         with:
@@ -550,11 +552,13 @@ jobs:
       - name: Pull Linux fileio
         uses: actions/download-artifact@v2
         with:
-          name: fileio-linux
+          name: fileio_linux
+          path: fileio_${{ env.VERSION }}_linux
       - name: Pull Linux piksi-settings
         uses: actions/download-artifact@v2
         with:
-          name: piksi-settings-linux
+          name: piksi-settings_linux
+          path: piksi-settings_${{ env.VERSION }}_linux
       - name: Pull macOS Artifacts
         uses: actions/download-artifact@v2
         with:
@@ -575,9 +579,9 @@ jobs:
             windows/${{ env.WINDOWS_ARCHIVE }}
             linux/${{ env.LINUX_ARCHIVE }}
             macos/${{ env.MACOS_ARCHIVE }}
-            fileio-windows
-            piksi-settings-windows
-            fileio-linux
-            piksi-settings-linux
+            fileio_${{ env.VERSION }}_windows.exe
+            fileio_${{ env.VERSION }}_linux
+            piksi-settings_${{ env.VERSION }}_windows.exe
+            piksi-settings_${{ env.VERSION }}_linux
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

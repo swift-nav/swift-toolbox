@@ -537,12 +537,12 @@ jobs:
       - name: Pull Windows fileio
         uses: actions/download-artifact@v2
         with:
-          name: fileio_${{ env.VERSION }}_windows.exe
+          name: fileio_windows.exe
           path: windows
       - name: Pull Windows piksi-settings
         uses: actions/download-artifact@v2
         with:
-          name: piksi-settings_${{ env.VERSION }}_windows.exe
+          name: piksi-settings_windows.exe
           path: windows
       - name: Pull Linux Artifacts
         uses: actions/download-artifact@v2
@@ -552,12 +552,12 @@ jobs:
       - name: Pull Linux fileio
         uses: actions/download-artifact@v2
         with:
-          name: fileio_${{ env.VERSION }}_linux
+          name: fileio_linux
           path: linux
       - name: Pull Linux piksi-settings
         uses: actions/download-artifact@v2
         with:
-          name: piksi-settings_${{ env.VERSION }}_linux
+          name: piksi-settings_linux
           path: linux
       - name: Pull macOS Artifacts
         uses: actions/download-artifact@v2

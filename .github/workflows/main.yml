@@ -538,10 +538,12 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: fileio_windows
+          path: windows
       - name: Pull Windows piksi-settings
         uses: actions/download-artifact@v2
         with:
           name: piksi-settings_windows
+          path: windows
       - name: Pull Linux Artifacts
         uses: actions/download-artifact@v2
         with:
@@ -551,10 +553,12 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: fileio_linux
+          path: linux
       - name: Pull Linux piksi-settings
         uses: actions/download-artifact@v2
         with:
           name: piksi-settings_linux
+          path: linux
       # - name: Pull macOS Artifacts
       #   uses: actions/download-artifact@v2
       #   with:
@@ -566,10 +570,10 @@ jobs:
       - name: Prepare Release
         shell: bash
         run: |
-          mv fileio_linux linux/fileio_${{ env.VERSION }}_linux
-          mv piksi-settings_linux linux/piksi-settings_${{ env.VERSION }}_linux
-          mv fileio_windows windows/fileio_${{ env.VERSION }}_windows.exe
-          mv piksi-settings_windows windows/piksi-settings_${{ env.VERSION }}_windows.exe
+          mv linux/fileio linux/fileio_${{ env.VERSION }}_linux
+          mv linux/piksi-settings linux/piksi-settings_${{ env.VERSION }}_linux
+          mv windows/fileio windows/fileio_${{ env.VERSION }}_windows.exe
+          mv windows/piksi-settings windows/piksi-settings_${{ env.VERSION }}_windows.exe
           # echo "WINDOWS_ARCHIVE=$(cat windows/installer-archive.filename)" >>$GITHUB_ENV
           echo "LINUX_ARCHIVE=$(cat linux/installer-archive.filename)" >>$GITHUB_ENV
           echo "MACOS_ARCHIVE=$(cat macos/installer-archive.filename)" >>$GITHUB_ENV

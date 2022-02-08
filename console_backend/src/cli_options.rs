@@ -4,7 +4,7 @@ use std::{
     str::FromStr,
 };
 
-use clap::{AppSettings::DeriveDisplayOrder, Parser};
+use clap::{AppSettings::DeriveDisplayOrder, Args, Parser};
 use log::{debug, error};
 use strum::VariantNames;
 
@@ -249,6 +249,26 @@ impl Input {
             )),
         }
     }
+}
+
+#[derive(Clone, Copy, Args)]
+pub struct ConnectionOpts {
+    /// The port to use when connecting via TCP
+    #[clap(long, default_value = "55555", conflicts_with_all = &["baudrate", "flow-control"])]
+    pub port: u16,
+
+    /// The baudrate for processing packets when connecting via serial
+    #[clap(
+        long,
+        default_value = "115200",
+        validator(is_baudrate),
+        conflicts_with = "port"
+    )]
+    pub baudrate: u32,
+
+    /// The flow control spec to use when connecting via serial
+    #[clap(long, default_value = "None", conflicts_with = "port")]
+    pub flow_control: FlowControl,
 }
 
 /// Validation for the refresh-rate cli option.

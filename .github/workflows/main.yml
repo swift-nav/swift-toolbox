@@ -188,9 +188,9 @@ jobs:
     strategy:
       matrix:
         os:
-        - {name: ubuntu-18.04, exe_suffix: "" }
-        - {name: macos-10.15, exe_suffix: "" }
-        - {name: windows-2019, exe_suffix: ".exe" }
+        - {name: ubuntu-18.04, exe_suffix: "", short_name: "linux"}
+        - {name: macos-10.15, exe_suffix: "", short_name: "macos"}
+        - {name: windows-2019, exe_suffix: ".exe", short_name: "windows"}
 
     runs-on: ${{ matrix.os.name }}
 
@@ -319,6 +319,19 @@ jobs:
           LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
         if: matrix.os.name == 'windows-2019'
 
+      - name: Build ${{ runner.os }} piksi-settings binary.
+        run: |
+          cargo build --bin piksi-settings --features="env_logger" --release
+        # Building on Mac currently not working (DEVINFRA-612)
+        if: matrix.os.name != 'windows-2019' && matrix.os.name != 'macos-10.15'
+
+      - name: Build ${{ runner.os }} piksi-settings binary.
+        run: |
+          cargo build --bin piksi-settings --features="env_logger" --release
+        env:
+          LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
+        if: matrix.os.name == 'windows-2019'
+
       - name: Pull Git LFS objects
         run: git lfs pull
         env:
@@ -350,17 +363,12 @@ jobs:
             release-archive.filename
       - uses: actions/upload-artifact@v2
         with:
-          name: ${{ runner.os }}-fileio
-          path: |
-            ./target/release/fileio${{ matrix.os.exe_suffix}}
-
+          name: fileio_${{ matrix.os.short_name }}
+          path: ./target/release/fileio${{ matrix.os.exe_suffix }}
       - uses: actions/upload-artifact@v2
         with:
-          name: ${{ runner.os }}-installer
-          path: |
-            ${{ env.INSTALLER_ARCHIVE }}
-            installer-archive.filename
-        if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
+          name: piksi-settings_${{ matrix.os.short_name }}
+          path: ./target/release/piksi-settings${{ matrix.os.exe_suffix }}
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ runner.os }}-artifacts-debug
@@ -379,6 +387,13 @@ jobs:
         shell: bash
         run: |
           cargo make disk-usage-bench
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ runner.os }}-installer
+          path: |
+            ${{ env.INSTALLER_ARCHIVE }}
+            installer-archive.filename
+        if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
 
   frontend_bench:
     name: Run Frontend Benchmarks
@@ -488,7 +503,7 @@ jobs:
         run: |
           set /p executable=<installer-archive.filename
           "${{ env.CODE_SIGNER_PATH_WIN }}" sign /debug /v /n "Swift Navigation, Inc." /a /tr http://rfc3161timestamp.globalsign.com/advanced /td SHA256 %executable%
-          
+
       - name: Add archive to path.
         shell: bash
         run: |
@@ -500,7 +515,6 @@ jobs:
           path: |
             ${{ env.INSTALLER_ARCHIVE }}
             installer-archive.filename
-  
 
   release:
     name: Create Release
@@ -514,27 +528,49 @@ jobs:
           DATE="$(date '+%Y-%m-%d')";
           echo "DATE=${DATE}" >> $GITHUB_ENV
           echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
-      - name: Pull Windows Artifacts
+      - name: Pull Windows Installer
         uses: actions/download-artifact@v2
         with:
           name: Windows-installer-signed
-          path: |
-            windows
-      - name: Pull Linux Artifacts
+          path: windows
+      - name: Pull Windows fileio
+        uses: actions/download-artifact@v2
+        with:
+          name: fileio_windows
+          path: windows
+      - name: Pull Windows piksi-settings
+        uses: actions/download-artifact@v2
+        with:
+          name: piksi-settings_windows
+          path: windows
+      - name: Pull Linux Installer
         uses: actions/download-artifact@v2
         with:
           name: Linux-installer
-          path: |
-            linux
-      - name: Pull macOS Artifacts
+          path: linux
+      - name: Pull Linux fileio
+        uses: actions/download-artifact@v2
+        with:
+          name: fileio_linux
+          path: linux
+      - name: Pull Linux piksi-settings
+        uses: actions/download-artifact@v2
+        with:
+          name: piksi-settings_linux
+          path: linux
+      - name: Pull macOS Installer
         uses: actions/download-artifact@v2
         with:
           name: macOS-installer
           path: |
             macos
-      - name: Store Env Vars
+      - name: Prepare Release
         shell: bash
         run: |
+          mv linux/fileio linux/fileio_${{ env.VERSION }}_linux
+          mv linux/piksi-settings linux/piksi-settings_${{ env.VERSION }}_linux
+          mv windows/fileio.exe windows/fileio_${{ env.VERSION }}_windows.exe
+          mv windows/piksi-settings.exe windows/piksi-settings_${{ env.VERSION }}_windows.exe
           echo "WINDOWS_ARCHIVE=$(cat windows/installer-archive.filename)" >>$GITHUB_ENV
           echo "LINUX_ARCHIVE=$(cat linux/installer-archive.filename)" >>$GITHUB_ENV
           echo "MACOS_ARCHIVE=$(cat macos/installer-archive.filename)" >>$GITHUB_ENV
@@ -544,7 +580,11 @@ jobs:
           name: "${{ env.VERSION }}-${{ env.DATE }}"
           files: |
             windows/${{ env.WINDOWS_ARCHIVE }}
+            windows/fileio_${{ env.VERSION }}_windows.exe
+            windows/piksi-settings_${{ env.VERSION }}_windows.exe
             linux/${{ env.LINUX_ARCHIVE }}
+            linux/fileio_${{ env.VERSION }}_linux
+            linux/piksi-settings_${{ env.VERSION }}_linux
             macos/${{ env.MACOS_ARCHIVE }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

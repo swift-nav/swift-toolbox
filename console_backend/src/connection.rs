@@ -13,6 +13,7 @@ use std::{
 use crossbeam::channel::Sender;
 use log::{error, info};
 
+use crate::cli_options::ConnectionOpts;
 use crate::client_sender::BoxedClientSender;
 use crate::constants::*;
 use crate::process_messages::{process_messages, Messages};
@@ -276,6 +277,21 @@ impl Connection {
             close_when_done,
             realtime_delay,
         ))
+    }
+
+    /// Connect via a serial port or tcp
+    pub fn discover(host: String, opts: ConnectionOpts) -> Result<Self> {
+        match fs::File::open(&host) {
+            Err(e) if e.kind() == io::ErrorKind::PermissionDenied => Err(e.into()),
+            Ok(_) => {
+                log::debug!("connecting via serial");
+                Ok(Connection::serial(host, opts.baudrate, opts.flow_control))
+            }
+            Err(_) => {
+                log::debug!("connecting via tcp");
+                Connection::tcp(host, opts.port)
+            }
+        }
     }
 
     pub fn name(&self) -> String {

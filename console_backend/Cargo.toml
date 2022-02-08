@@ -73,6 +73,12 @@ name = "cpu_benches"
 harness = false
 
 [[bin]]
+name = "piksi-settings"
+path = "src/bin/settings.rs"
+bench = false
+required-features = ["env_logger"]
+
+[[bin]]
 name = "fileio"
 path = "src/bin/fileio.rs"
 bench = false

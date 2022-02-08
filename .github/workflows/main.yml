@@ -20,170 +20,170 @@ env:
 
 jobs:
 
-  backend_bench:
+  # backend_bench:
 
-    name: Backend Benchmarks
+  #   name: Backend Benchmarks
 
-    strategy:
-      matrix:
-        os:
-        - ubuntu-18.04
-        - macos-10.15
-        - windows-2019
+  #   strategy:
+  #     matrix:
+  #       os:
+  #       - ubuntu-18.04
+  #       - macos-10.15
+  #       - windows-2019
 
-    runs-on: ${{ matrix.os }}
+  #   runs-on: ${{ matrix.os }}
 
-    steps:
+  #   steps:
 
-      - name: Checkout source
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
-          ssh-key: ${{ secrets.SSH_KEY }}
-          ssh-strict: false
+  #     - name: Checkout source
+  #       uses: actions/checkout@v2
+  #       with:
+  #         submodules: recursive
+  #         ssh-key: ${{ secrets.SSH_KEY }}
+  #         ssh-strict: false
 
-      - uses: webfactory/ssh-agent@v0.5.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_KEY }}
+  #     - uses: webfactory/ssh-agent@v0.5.0
+  #       with:
+  #         ssh-private-key: ${{ secrets.SSH_KEY }}
 
-      - name: Run ssh-keyscan
-        run: ssh-keyscan github.com >> ~/.ssh/known_hosts
+  #     - name: Run ssh-keyscan
+  #       run: ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-      - name: Setup SSH for Windows Git LFS
-        run: |
-          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
-          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
-        if: matrix.os == 'windows-2019'
+  #     - name: Setup SSH for Windows Git LFS
+  #       run: |
+  #         & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
+  #         & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
+  #       if: matrix.os == 'windows-2019'
 
-      - name: Install ${{ runner.os }} Dependencies.
-        shell: bash
-        run: |
-          if [ "$RUNNER_OS" == "Linux" ]; then
-              sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
-          elif [ "$RUNNER_OS" == "macOS" ]; then
-              brew install capnp llvm
-          elif [ "$RUNNER_OS" == "Windows" ]; then
-              choco install -y capnproto
-          fi
+  #     - name: Install ${{ runner.os }} Dependencies.
+  #       shell: bash
+  #       run: |
+  #         if [ "$RUNNER_OS" == "Linux" ]; then
+  #             sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
+  #         elif [ "$RUNNER_OS" == "macOS" ]; then
+  #             brew install capnp llvm
+  #         elif [ "$RUNNER_OS" == "Windows" ]; then
+  #             choco install -y capnproto
+  #         fi
 
-      - name: Pull Git LFS objects
-        run: git lfs pull
-        env:
-          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
+  #     - name: Pull Git LFS objects
+  #       run: git lfs pull
+  #       env:
+  #         GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
 
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
+  #     - uses: actions-rs/toolchain@v1
+  #       with:
+  #         profile: minimal
+  #         toolchain: stable
 
-      - uses: Swatinem/rust-cache@v1
-        with:
-          key: ${{ secrets.CACHE_VERSION }}
+  #     - uses: Swatinem/rust-cache@v1
+  #       with:
+  #         key: ${{ secrets.CACHE_VERSION }}
 
-      - uses: davidB/rust-cargo-make@v1
-        with:
-          version: ${{ env.CARGO_MAKE_VERSION }}
+  #     - uses: davidB/rust-cargo-make@v1
+  #       with:
+  #         version: ${{ env.CARGO_MAKE_VERSION }}
 
-      - name: Cache pip
-        uses: actions/cache@v2
-        with:
-          path: ${{ env.PIP_CACHE_DIR }}
-          key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
+  #     - name: Cache pip
+  #       uses: actions/cache@v2
+  #       with:
+  #         path: ${{ env.PIP_CACHE_DIR }}
+  #         key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
 
-      - name: Set up python builder
-        shell: bash
-        run: |
-          cargo make setup-builder
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Set up python builder
+  #       shell: bash
+  #       run: |
+  #         cargo make setup-builder
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run Backend Benchmarks (Windows)
-        env:
-          LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
-        run: |
-          cargo make backend-benches
-        if: matrix.os == 'windows-2019'
+  #     - name: Run Backend Benchmarks (Windows)
+  #       env:
+  #         LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
+  #       run: |
+  #         cargo make backend-benches
+  #       if: matrix.os == 'windows-2019'
 
-      - name: Run Backend Benchmarks
-        run: |
-          cargo make backend-benches
-        if: matrix.os != 'windows-2019'
+  #     - name: Run Backend Benchmarks
+  #       run: |
+  #         cargo make backend-benches
+  #       if: matrix.os != 'windows-2019'
 
-  checks:
+  # checks:
 
-    name: Code Quality Checks
+  #   name: Code Quality Checks
 
-    runs-on: ubuntu-18.04
+  #   runs-on: ubuntu-18.04
 
-    steps:
+  #   steps:
 
-      - name: Checkout source
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
-          ssh-key: ${{ secrets.SSH_KEY }}
-          ssh-strict: false
+  #     - name: Checkout source
+  #       uses: actions/checkout@v2
+  #       with:
+  #         submodules: recursive
+  #         ssh-key: ${{ secrets.SSH_KEY }}
+  #         ssh-strict: false
 
-      - uses: webfactory/ssh-agent@v0.5.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_KEY }}
+  #     - uses: webfactory/ssh-agent@v0.5.0
+  #       with:
+  #         ssh-private-key: ${{ secrets.SSH_KEY }}
 
-      - name: Pull Git LFS objects
-        run: git lfs pull
-        env:
-          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
+  #     - name: Pull Git LFS objects
+  #       run: git lfs pull
+  #       env:
+  #         GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
 
-      - name: Install stable Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          components: rustfmt, clippy
+  #     - name: Install stable Rust
+  #       uses: actions-rs/toolchain@v1
+  #       with:
+  #         toolchain: stable
+  #         override: true
+  #         components: rustfmt, clippy
 
-      - uses: Swatinem/rust-cache@v1
-        with:
-          key: ${{ secrets.CACHE_VERSION }}
+  #     - uses: Swatinem/rust-cache@v1
+  #       with:
+  #         key: ${{ secrets.CACHE_VERSION }}
 
-      - uses: davidB/rust-cargo-make@v1
-        with:
-          version: ${{ env.CARGO_MAKE_VERSION }}
+  #     - uses: davidB/rust-cargo-make@v1
+  #       with:
+  #         version: ${{ env.CARGO_MAKE_VERSION }}
 
-      - name: Install Dependencies.
-        run: |
-          sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
+  #     - name: Install Dependencies.
+  #       run: |
+  #         sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
 
-      - name: Cache pip
-        uses: actions/cache@v2
-        with:
-          path: ${{ env.PIP_CACHE_DIR }}
-          key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
+  #     - name: Cache pip
+  #       uses: actions/cache@v2
+  #       with:
+  #         path: ${{ env.PIP_CACHE_DIR }}
+  #         key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
 
-      - name: Set up python builder
-        shell: bash
-        run: |
-          cargo make setup-builder
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Set up python builder
+  #       shell: bash
+  #       run: |
+  #         cargo make setup-builder
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run Checks
-        run: |
-          cargo make check-all
+  #     - name: Run Checks
+  #       run: |
+  #         cargo make check-all
 
-      - name: Run Tests
-        uses: nick-invision/retry@v2
-        with:
-          timeout_minutes: 5
-          max_attempts: 3
-          retry_on: error
-          command: cargo make tests
+  #     - name: Run Tests
+  #       uses: nick-invision/retry@v2
+  #       with:
+  #         timeout_minutes: 5
+  #         max_attempts: 3
+  #         retry_on: error
+  #         command: cargo make tests
 
   build:
 
     name: Build Binaries
 
-    needs:
-      - checks
-      - backend_bench
+    # needs:
+    #   - checks
+    #   - backend_bench
 
     strategy:
       matrix:
@@ -363,11 +363,11 @@ jobs:
             release-archive.filename
       - uses: actions/upload-artifact@v2
         with:
-          name: fileio_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
+          name: fileio_${{ matrix.os.short_name }}
           path: ./target/release/fileio${{ matrix.os.exe_suffix }}
       - uses: actions/upload-artifact@v2
         with:
-          name: piksi-settings_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
+          name: piksi-settings_${{ matrix.os.short_name }}
           path: ./target/release/piksi-settings${{ matrix.os.exe_suffix }}
       - uses: actions/upload-artifact@v2
         with:
@@ -395,132 +395,132 @@ jobs:
             installer-archive.filename
         if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
 
-  frontend_bench:
-    name: Run Frontend Benchmarks
-    timeout-minutes: 30
-    needs:
-      - build
-    strategy:
-      matrix:
-        os:
-          - macOS
-          - Windows
-          - Linux
-    runs-on: [self-hosted, '${{ matrix.os }}', bench]
-    steps:
-      - name: Remove previous build.
-        shell: bash
-        run: |
-          rm -rf ${{ env.APP_NAME }}
-          rm -rf bench
+  # frontend_bench:
+  #   name: Run Frontend Benchmarks
+  #   timeout-minutes: 30
+  #   needs:
+  #     - build
+  #   strategy:
+  #     matrix:
+  #       os:
+  #         - macOS
+  #         - Windows
+  #         - Linux
+  #   runs-on: [self-hosted, '${{ matrix.os }}', bench]
+  #   steps:
+  #     - name: Remove previous build.
+  #       shell: bash
+  #       run: |
+  #         rm -rf ${{ env.APP_NAME }}
+  #         rm -rf bench
 
-      - uses: actions/download-artifact@v2
-        with:
-          name: ${{ matrix.os }}-artifacts
-          path: |
-            ${{ env.APP_NAME }}
+  #     - uses: actions/download-artifact@v2
+  #       with:
+  #         name: ${{ matrix.os }}-artifacts
+  #         path: |
+  #           ${{ env.APP_NAME }}
 
-      - uses: actions/download-artifact@v2
-        with:
-          name: ${{ matrix.os }}-artifacts-bench
-          path: |
-            bench
+  #     - uses: actions/download-artifact@v2
+  #       with:
+  #         name: ${{ matrix.os }}-artifacts-bench
+  #         path: |
+  #           bench
 
-      - name: Extract binary and data.
-        shell: bash
-        run: |
-          cd ${{ env.APP_NAME }}
-          archive=$(cat release-archive.filename)
-          7z x $archive -aoa
-          7z x ${archive%.xz} -aoa
-          echo "extracted release-archive"
-          mv ../bench/${{ matrix.os }}.zip .
-          7z x ${{ matrix.os }}.zip -aoa
-          echo "extracted bench data"
+  #     - name: Extract binary and data.
+  #       shell: bash
+  #       run: |
+  #         cd ${{ env.APP_NAME }}
+  #         archive=$(cat release-archive.filename)
+  #         7z x $archive -aoa
+  #         7z x ${archive%.xz} -aoa
+  #         echo "extracted release-archive"
+  #         mv ../bench/${{ matrix.os }}.zip .
+  #         7z x ${{ matrix.os }}.zip -aoa
+  #         echo "extracted bench data"
 
-      - name: Run CPU Frontend Benchmark.
-        uses: nick-invision/retry@v2
-        with:
-          shell: bash
-          timeout_minutes: 3
-          max_attempts: 3
-          retry_on: error
-          command: |
-            cd ${{ env.APP_NAME }}
-            if [ "$RUNNER_OS" == "Windows" ]; then
-                python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}.exe"
-            elif [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
-                chmod +x "${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
-                python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
-            else
-                echo "Invalid platform"
-                exit 1
-            fi
+  #     - name: Run CPU Frontend Benchmark.
+  #       uses: nick-invision/retry@v2
+  #       with:
+  #         shell: bash
+  #         timeout_minutes: 3
+  #         max_attempts: 3
+  #         retry_on: error
+  #         command: |
+  #           cd ${{ env.APP_NAME }}
+  #           if [ "$RUNNER_OS" == "Windows" ]; then
+  #               python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}.exe"
+  #           elif [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
+  #               chmod +x "${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
+  #               python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
+  #           else
+  #               echo "Invalid platform"
+  #               exit 1
+  #           fi
 
-      - name: Run MEM Frontend Benchmark.
-        uses: nick-invision/retry@v2
-        with:
-          shell: bash
-          timeout_minutes: 3
-          max_attempts: 3
-          retry_on: error
-          command: |
-            cd ${{ env.APP_NAME }}
-            if [ "$RUNNER_OS" == "Windows" ]; then
-                python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}.exe"
-            elif [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
-                chmod +x "${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
-                python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
-            else
-                echo "Invalid platform"
-                exit 1
-            fi
+  #     - name: Run MEM Frontend Benchmark.
+  #       uses: nick-invision/retry@v2
+  #       with:
+  #         shell: bash
+  #         timeout_minutes: 3
+  #         max_attempts: 3
+  #         retry_on: error
+  #         command: |
+  #           cd ${{ env.APP_NAME }}
+  #           if [ "$RUNNER_OS" == "Windows" ]; then
+  #               python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}.exe"
+  #           elif [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
+  #               chmod +x "${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
+  #               python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
+  #           else
+  #               echo "Invalid platform"
+  #               exit 1
+  #           fi
 
-  sign_installer:
-    name: Sign Installers
-    timeout-minutes: 30
-    needs:
-      - frontend_bench
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
-    strategy:
-      matrix:
-        os:
-          - Windows
-    runs-on: [self-hosted, '${{ matrix.os }}', code-signer]
-    steps:
+  # sign_installer:
+  #   name: Sign Installers
+  #   timeout-minutes: 30
+  #   needs:
+  #     - frontend_bench
+  #   if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
+  #   strategy:
+  #     matrix:
+  #       os:
+  #         - Windows
+  #   runs-on: [self-hosted, '${{ matrix.os }}', code-signer]
+  #   steps:
 
-      - name: Remove previous build.
-        shell: bash
-        run: |
-          rm -r *
+  #     - name: Remove previous build.
+  #       shell: bash
+  #       run: |
+  #         rm -r *
 
-      - uses: actions/download-artifact@v2
-        with:
-          name: ${{ matrix.os }}-installer
+  #     - uses: actions/download-artifact@v2
+  #       with:
+  #         name: ${{ matrix.os }}-installer
 
-      - name: Sign Installer.
-        shell: cmd
-        run: |
-          set /p executable=<installer-archive.filename
-          "${{ env.CODE_SIGNER_PATH_WIN }}" sign /debug /v /n "Swift Navigation, Inc." /a /tr http://rfc3161timestamp.globalsign.com/advanced /td SHA256 %executable%
+  #     - name: Sign Installer.
+  #       shell: cmd
+  #       run: |
+  #         set /p executable=<installer-archive.filename
+  #         "${{ env.CODE_SIGNER_PATH_WIN }}" sign /debug /v /n "Swift Navigation, Inc." /a /tr http://rfc3161timestamp.globalsign.com/advanced /td SHA256 %executable%
 
-      - name: Add archive to path.
-        shell: bash
-        run: |
-          echo "INSTALLER_ARCHIVE=$(cat installer-archive.filename)" >>$GITHUB_ENV
+  #     - name: Add archive to path.
+  #       shell: bash
+  #       run: |
+  #         echo "INSTALLER_ARCHIVE=$(cat installer-archive.filename)" >>$GITHUB_ENV
 
-      - uses: actions/upload-artifact@v2
-        with:
-          name: ${{ runner.os }}-installer-signed
-          path: |
-            ${{ env.INSTALLER_ARCHIVE }}
-            installer-archive.filename
+  #     - uses: actions/upload-artifact@v2
+  #       with:
+  #         name: ${{ runner.os }}-installer-signed
+  #         path: |
+  #           ${{ env.INSTALLER_ARCHIVE }}
+  #           installer-archive.filename
 
 
   release:
     name: Create Release
     needs:
-      - sign_installer
+      - build
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
     runs-on: ubuntu-20.04
     steps:
@@ -529,21 +529,19 @@ jobs:
           DATE="$(date '+%Y-%m-%d')";
           echo "DATE=${DATE}" >> $GITHUB_ENV
           echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
-      - name: Pull Windows Installer
-        uses: actions/download-artifact@v2
-        with:
-          name: Windows-installer-signed
-          path: windows
+      # - name: Pull Windows Installer
+      #   uses: actions/download-artifact@v2
+      #   with:
+      #     name: Windows-installer-signed
+      #     path: windows
       - name: Pull Windows fileio
         uses: actions/download-artifact@v2
         with:
-          name: fileio_windows.exe
-          path: windows
+          name: fileio_windows
       - name: Pull Windows piksi-settings
         uses: actions/download-artifact@v2
         with:
-          name: piksi-settings_windows.exe
-          path: windows
+          name: piksi-settings_windows
       - name: Pull Linux Artifacts
         uses: actions/download-artifact@v2
         with:
@@ -553,34 +551,36 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: fileio_linux
-          path: linux
       - name: Pull Linux piksi-settings
         uses: actions/download-artifact@v2
         with:
           name: piksi-settings_linux
-          path: linux
-      - name: Pull macOS Artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: macOS-installer
-          path: |
-            macos
+      # - name: Pull macOS Artifacts
+      #   uses: actions/download-artifact@v2
+      #   with:
+      #     name: macOS-installer
+      #     path: |
+      #       macos
+      - name: Display structure of downloaded files
+        run: ls -R
       - name: Prepare Release
         shell: bash
         run: |
-          mv linux/fileio_linux linux/fileio_${{ env.VERSION }}_linux
-          mv linux/piksi-settings_linux linux/piksi-settings_${{ env.VERSION }}_linux
-          mv windows/fileio_windows.exe windows/fileio_${{ env.VERSION }}_windows.exe
-          mv windows/piksi-settings_windows.exe windows/piksi-settings_${{ env.VERSION }}_windows.exe
-          echo "WINDOWS_ARCHIVE=$(cat windows/installer-archive.filename)" >>$GITHUB_ENV
+          mv fileio_linux linux/fileio_${{ env.VERSION }}_linux
+          mv piksi-settings_linux linux/piksi-settings_${{ env.VERSION }}_linux
+          mv fileio_windows windows/fileio_${{ env.VERSION }}_windows.exe
+          mv piksi-settings_windows windows/piksi-settings_${{ env.VERSION }}_windows.exe
+          # echo "WINDOWS_ARCHIVE=$(cat windows/installer-archive.filename)" >>$GITHUB_ENV
           echo "LINUX_ARCHIVE=$(cat linux/installer-archive.filename)" >>$GITHUB_ENV
           echo "MACOS_ARCHIVE=$(cat macos/installer-archive.filename)" >>$GITHUB_ENV
+      - name: Display structure of downloaded files
+        run: ls -R
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
           name: "${{ env.VERSION }}-${{ env.DATE }}"
           files: |
-            windows/${{ env.WINDOWS_ARCHIVE }}
+            # windows/${{ env.WINDOWS_ARCHIVE }}
             windows/fileio_${{ env.VERSION }}_windows.exe
             windows/piksi-settings_${{ env.VERSION }}_windows.exe
             linux/${{ env.LINUX_ARCHIVE }}

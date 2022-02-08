@@ -15,10 +15,13 @@ use parking_lot::Mutex;
 use rand::Rng;
 use sbp::{
     link::Link,
-    messages::file_io::{
-        MsgFileioConfigReq, MsgFileioConfigResp, MsgFileioReadDirReq, MsgFileioReadDirResp,
-        MsgFileioReadReq, MsgFileioReadResp, MsgFileioRemove, MsgFileioWriteReq,
-        MsgFileioWriteResp,
+    messages::{
+        file_io::{
+            MsgFileioConfigReq, MsgFileioConfigResp, MsgFileioReadDirReq, MsgFileioReadDirResp,
+            MsgFileioReadReq, MsgFileioReadResp, MsgFileioRemove, MsgFileioWriteReq,
+            MsgFileioWriteResp,
+        },
+        ConcreteMessage,
     },
 };
 
@@ -113,7 +116,7 @@ impl Fileio {
                 },
                 recv(channel::tick(FILE_IO_TIMEOUT)) -> _ => {
                     self.link.unregister(key);
-                    bail!("Timed out waiting for file read response. Ensure SBP FILEIO message 163 (MSG_FILEIO_READ_RESP) is enabled.");
+                    bail!("Timed out waiting for file read response. Ensure SBP FILEIO message  {} ({}) is enabled.", MsgFileioReadResp::MESSAGE_TYPE, MsgFileioReadResp::MESSAGE_NAME);
                 }
             }
         }
@@ -276,7 +279,7 @@ impl Fileio {
                 },
                 recv(channel::tick(READDIR_TIMEOUT)) -> _ => {
                     self.link.unregister(key);
-                    bail!("Timed out waiting for directory read response. Ensure SBP FILEIO message 170 (MSG_FILEIO_READ_DIR_RESP) is enabled.");
+                    bail!("Timed out waiting for directory read response. Ensure SBP FILEIO message  {} ({}) is enabled.", MsgFileioReadDirResp::MESSAGE_TYPE, MsgFileioReadDirResp::MESSAGE_NAME);
                 }
             }
         }
@@ -319,7 +322,7 @@ impl Fileio {
             let res = match rx.recv_timeout(CONFIG_REQ_TIMEOUT) {
                 Ok(config) => config,
                 Err(_) => {
-                    warn!("Timed out waiting for fileio config response, continuing with defaults. Ensure SBP FILEIO message 4098 (MSG_FILEIO_CONFIG_REQ) is enabled to receive the device's config.");
+                    warn!("Timed out waiting for fileio config response, continuing with defaults. Ensure SBP FILEIO message {} ({}) is enabled to receive the device's config.", MsgFileioConfigResp::MESSAGE_TYPE, MsgFileioConfigResp::MESSAGE_NAME);
                     Default::default()
                 }
             };
@@ -567,7 +570,7 @@ fn timeout_thd(
             req.retries += 1;
             trace!("retry {} times {}", req.message.sequence, req.retries);
             if req.retries >= MAX_RETRIES {
-                let _ = err_tx.send(anyhow!("Timed out waiting for file write response. Ensure SBP FILEIO message 171 (MSG_FILEIO_WRITE_RESP) is enabled."));
+                let _ = err_tx.send(anyhow!("Timed out waiting for file write response. Ensure SBP FILEIO message {} ({}) is enabled.", MsgFileioWriteResp::MESSAGE_TYPE, MsgFileioWriteResp::MESSAGE_NAME));
                 break;
             }
             req.sent_at = Instant::now();

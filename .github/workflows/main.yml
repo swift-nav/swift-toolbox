@@ -572,8 +572,8 @@ jobs:
         run: |
           mv linux/fileio linux/fileio_${{ env.VERSION }}_linux
           mv linux/piksi-settings linux/piksi-settings_${{ env.VERSION }}_linux
-          mv windows/fileio windows/fileio_${{ env.VERSION }}_windows.exe
-          mv windows/piksi-settings windows/piksi-settings_${{ env.VERSION }}_windows.exe
+          mv windows/fileio.exe windows/fileio_${{ env.VERSION }}_windows.exe
+          mv windows/piksi-settings.exe windows/piksi-settings_${{ env.VERSION }}_windows.exe
           # echo "WINDOWS_ARCHIVE=$(cat windows/installer-archive.filename)" >>$GITHUB_ENV
           echo "LINUX_ARCHIVE=$(cat linux/installer-archive.filename)" >>$GITHUB_ENV
           echo "MACOS_ARCHIVE=$(cat macos/installer-archive.filename)" >>$GITHUB_ENV

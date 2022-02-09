@@ -73,7 +73,7 @@ fn write(write_cmds: &[WriteCmd], settings: &SettingsTab) -> Result<()> {
     Ok(())
 }
 
-/// Piksi settings operations.
+/// A SwiftNav settings API client
 #[derive(Parser)]
 #[clap(
     name = "swift-settings",
@@ -81,7 +81,7 @@ fn write(write_cmds: &[WriteCmd], settings: &SettingsTab) -> Result<()> {
     setting = DeriveDisplayOrder,
     group = ArgGroup::new("conn").required(true).args(&["serial", "tcp"]),
     override_usage = "\
-    swift-settings [OPTIONS] <DEVICE>
+    swift-settings [OPTIONS]
 
     Examples:
         - Read a setting:

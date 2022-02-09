@@ -44,7 +44,7 @@ fn main() -> Result<()> {
     }
 }
 
-/// Piksi File IO operations.
+/// A SwiftNav fileio API client
 #[derive(Parser)]
 #[clap(
     name = "swift-files",

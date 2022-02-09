@@ -13,14 +13,14 @@ use crossbeam::channel;
 
 fn main() -> Result<()> {
     let opt = CliOptions::from_filtered_cli();
-    if opt.input.is_none() {
+    if opt.serial.serial.is_none() && opt.tcp.tcp.is_none() && opt.file.file.is_none() {
         eprintln!(
             r#"
 Running in headless mode only command line options work.
 Help:
 ./headless-console --help
 Usage:
-./headless-console tcp piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com --port=55555
+./headless-console --tcp piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com --port=55555
 "#
         );
         return Ok(());

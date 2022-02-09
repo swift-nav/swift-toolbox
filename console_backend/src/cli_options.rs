@@ -1,4 +1,5 @@
 use std::{
+    num::ParseIntError,
     ops::{Deref, Not},
     path::PathBuf,
     str::FromStr,
@@ -18,7 +19,7 @@ use crate::{
 };
 use crate::{
     common_constants::{SbpLogging, Tabs},
-    connection::{Connection, ConnectionManager},
+    connection::ConnectionManager,
 };
 use crate::{constants::LOG_FILENAME, errors::CONVERT_TO_STR_FAILURE};
 
@@ -99,6 +100,15 @@ const BIN_NAME: &str = "swift-console";
     setting = DeriveDisplayOrder,
 )]
 pub struct CliOptions {
+    #[clap(flatten)]
+    pub serial: SerialOpts,
+
+    #[clap(flatten)]
+    pub tcp: TcpOpts,
+
+    #[clap(flatten)]
+    pub file: FileOpts,
+
     /// Log SBP-JSON or SBP data to default / specified log file.
     #[clap(long)]
     pub sbp_log: Option<CliSbpLogging>,
@@ -162,9 +172,6 @@ pub struct CliOptions {
     /// Set the width of the main window.
     #[clap(long)]
     pub width: Option<u32>,
-
-    #[clap(subcommand)]
-    pub input: Option<Input>,
 }
 
 impl CliOptions {
@@ -198,77 +205,75 @@ impl CliOptions {
     }
 }
 
-#[derive(Parser, Debug)]
-#[clap(about = "Input type and corresponding options.", setting = DeriveDisplayOrder)]
-pub enum Input {
-    Serial {
-        /// The serialport to connect to.
-        #[clap(parse(from_os_str))]
-        serialport: PathBuf,
+#[derive(Args)]
+pub struct SerialOpts {
+    /// The serialport to connect to.
+    #[clap(
+        long,
+        conflicts_with_all = &["tcp", "file"]
+    )]
+    pub serial: Option<PathBuf>,
 
-        /// The baudrate for processing packets.
-        #[clap(long, default_value = "115200", validator(is_baudrate))]
-        baudrate: u32,
-
-        /// The flow control spec to use.
-        #[clap(long = "flow-control", default_value = "None")]
-        flow_control: FlowControl,
-    },
-    Tcp {
-        /// The TCP/IP host or TCP/IP host-port pair to connect with. For example: "192.168.0.222" or "192.168.0.222:55555"
-        host: String,
-
-        /// The port to use when connecting via TCP.
-        #[clap(long, default_value = "55555")]
-        port: u16,
-    },
-    File {
-        /// Open and run an SBP file.
-        #[clap(parse(from_os_str))]
-        file_in: PathBuf,
-    },
-}
-
-impl Input {
-    pub fn into_conn(self) -> crate::types::Result<Connection> {
-        match self {
-            Input::Tcp { host, port } => Ok(Connection::tcp(host, port)?),
-            Input::Serial {
-                serialport,
-                baudrate,
-                flow_control,
-            } => Ok(Connection::serial(
-                serialport.to_string_lossy().into(),
-                baudrate,
-                flow_control,
-            )),
-            Input::File { file_in } => Ok(Connection::file(
-                file_in.to_string_lossy().into(),
-                crate::types::RealtimeDelay::On,
-                /*close_when_done=*/ false,
-            )),
-        }
-    }
-}
-
-#[derive(Clone, Copy, Args)]
-pub struct ConnectionOpts {
-    /// The port to use when connecting via TCP
-    #[clap(long, default_value = "55555", conflicts_with_all = &["baudrate", "flow-control"])]
-    pub port: u16,
-
-    /// The baudrate for processing packets when connecting via serial
+    /// The baudrate for processing packets.
     #[clap(
         long,
         default_value = "115200",
         validator(is_baudrate),
-        conflicts_with = "port"
+        conflicts_with_all = &["tcp", "file"]
     )]
     pub baudrate: u32,
 
-    /// The flow control spec to use when connecting via serial
-    #[clap(long, default_value = "None", conflicts_with = "port")]
+    /// The flow control spec to use.
+    #[clap(
+        long,
+        default_value = "None",
+        conflicts_with_all = &["tcp", "file"]
+    )]
     pub flow_control: FlowControl,
+}
+
+#[derive(Args)]
+pub struct TcpOpts {
+    /// The TCP/IP host or TCP/IP host-port pair to connect with. For example: "192.168.0.222" or "192.168.0.222:55555"
+    #[clap(
+        long,
+        conflicts_with_all = &["serial", "baudrate", "flow-control", "file"]
+    )]
+    pub tcp: Option<HostPort>,
+}
+
+pub struct HostPort {
+    pub host: String,
+    pub port: u16,
+}
+
+impl FromStr for HostPort {
+    type Err = ParseIntError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if let Some(idx) = s.find(":") {
+            let (host, port) = s.split_at(idx);
+            Ok(HostPort {
+                host: host.to_owned(),
+                port: port[1..].parse()?,
+            })
+        } else {
+            Ok(HostPort {
+                host: s.to_owned(),
+                port: 55555,
+            })
+        }
+    }
+}
+
+#[derive(Args)]
+pub struct FileOpts {
+    /// Path to an SBP file.
+    #[clap(
+        long,
+        conflicts_with_all = &["tcp", "serial", "baudrate", "flow-control"]
+    )]
+    pub file: Option<PathBuf>,
 }
 
 /// Validation for the refresh-rate cli option.
@@ -324,26 +329,16 @@ pub fn handle_cli(
     shared_state: SharedState,
     client_sender: &BoxedClientSender,
 ) {
-    if let Some(opt_input) = opt.input {
-        match opt_input {
-            Input::Tcp { host, port } => {
-                if let Err(e) = conn_manager.connect_to_host(host, port) {
-                    error!("Failed to establish tcp connection: {}", e);
-                };
-            }
-            Input::File { file_in } => {
-                let filename = file_in.display().to_string();
-                conn_manager.connect_to_file(filename, RealtimeDelay::On, opt.exit_after);
-            }
-            Input::Serial {
-                serialport,
-                baudrate,
-                flow_control,
-            } => {
-                let serialport = serialport.display().to_string();
-                conn_manager.connect_to_serial(serialport, baudrate, flow_control);
-            }
-        }
+    if let Some(serial) = opt.serial.serial {
+        let serialport = serial.display().to_string();
+        conn_manager.connect_to_serial(serialport, opt.serial.baudrate, opt.serial.flow_control);
+    } else if let Some(tcp) = opt.tcp.tcp {
+        if let Err(e) = conn_manager.connect_to_host(tcp.host, tcp.port) {
+            error!("Failed to establish tcp connection: {}", e);
+        };
+    } else if let Some(file) = opt.file.file {
+        let filename = file.display().to_string();
+        conn_manager.connect_to_file(filename, RealtimeDelay::On, opt.exit_after);
     }
     if let Some(ref path) = opt.settings_yaml {
         sbp_settings::setting::load_from_path(path).expect("failed to load settings");

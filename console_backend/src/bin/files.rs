@@ -11,16 +11,16 @@ use std::{
 use anyhow::{anyhow, Context};
 use clap::{
     AppSettings::{ArgRequiredElseHelp, DeriveDisplayOrder},
-    Parser,
+    Args, Parser,
 };
 use indicatif::{ProgressBar, ProgressStyle};
 use sbp::{link::LinkSource, SbpIterExt};
 
 use console_backend::{
-    cli_options::ConnectionOpts,
+    cli_options::is_baudrate,
     connection::Connection,
     fileio::Fileio,
-    types::{MsgSender, Result},
+    types::{FlowControl, MsgSender, Result},
 };
 
 fn main() -> Result<()> {
@@ -93,6 +93,26 @@ struct Opts {
 
     #[clap(flatten)]
     conn: ConnectionOpts,
+}
+
+#[derive(Clone, Copy, Args)]
+struct ConnectionOpts {
+    /// The port to use when connecting via TCP
+    #[clap(long, default_value = "55555", conflicts_with_all = &["baudrate", "flow-control"])]
+    port: u16,
+
+    /// The baudrate for processing packets when connecting via serial
+    #[clap(
+        long,
+        default_value = "115200",
+        validator(is_baudrate),
+        conflicts_with = "port"
+    )]
+    baudrate: u32,
+
+    /// The flow control spec to use when connecting via serial
+    #[clap(long, default_value = "None", conflicts_with = "port")]
+    flow_control: FlowControl,
 }
 
 fn list(target: Target, conn: ConnectionOpts) -> Result<()> {
@@ -208,7 +228,7 @@ struct Remote {
 
 impl Remote {
     fn connect(&self, conn: ConnectionOpts) -> Result<Fileio> {
-        let (reader, writer) = Connection::discover(self.host.clone(), conn)?.try_connect(None)?;
+        let (reader, writer) = discover(self.host.clone(), conn)?.try_connect(None)?;
         let source = LinkSource::new();
         let link = source.link();
         std::thread::spawn(move || {
@@ -256,6 +276,21 @@ impl ReadProgress {
     fn finish_with_message(&self, msg: impl Into<Cow<'static, str>>) {
         if let Some(pb) = &self.inner {
             pb.abandon_with_message(msg);
+        }
+    }
+}
+
+/// Connect via a serial port or tcp
+fn discover(host: String, opts: ConnectionOpts) -> Result<Connection> {
+    match fs::File::open(&host) {
+        Err(e) if e.kind() == io::ErrorKind::PermissionDenied => Err(e.into()),
+        Ok(_) => {
+            log::debug!("connecting via serial");
+            Ok(Connection::serial(host, opts.baudrate, opts.flow_control))
+        }
+        Err(_) => {
+            log::debug!("connecting via tcp");
+            Connection::tcp(host, opts.port)
         }
     }
 }

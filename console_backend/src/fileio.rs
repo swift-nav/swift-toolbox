@@ -10,15 +10,18 @@ use crossbeam::{
     scope, select,
     sync::Parker,
 };
-use log::{debug, trace};
+use log::{debug, trace, warn};
 use parking_lot::Mutex;
 use rand::Rng;
 use sbp::{
     link::Link,
-    messages::file_io::{
-        MsgFileioConfigReq, MsgFileioConfigResp, MsgFileioReadDirReq, MsgFileioReadDirResp,
-        MsgFileioReadReq, MsgFileioReadResp, MsgFileioRemove, MsgFileioWriteReq,
-        MsgFileioWriteResp,
+    messages::{
+        file_io::{
+            MsgFileioConfigReq, MsgFileioConfigResp, MsgFileioReadDirReq, MsgFileioReadDirResp,
+            MsgFileioReadReq, MsgFileioReadResp, MsgFileioRemove, MsgFileioWriteReq,
+            MsgFileioWriteResp,
+        },
+        ConcreteMessage,
     },
 };
 
@@ -84,29 +87,40 @@ impl Fileio {
             self.link.unregister(key);
             return Err(err);
         };
-        for msg in rx.iter() {
-            if let Err(err) = dest.write_all(&msg.contents) {
-                self.link.unregister(key);
-                return Err(err.into());
+
+        loop {
+            select! {
+                recv(rx) -> msg => {
+                    let msg = msg?;
+                    if let Err(err) = dest.write_all(&msg.contents) {
+                        self.link.unregister(key);
+                        return Err(err.into());
+                    }
+                    let bytes_read = msg.contents.len();
+                    on_progress(bytes_read as u64);
+                    if bytes_read != READ_CHUNK_SIZE {
+                        break;
+                    }
+                    sequence += 1;
+                    offset += READ_CHUNK_SIZE as u32;
+                    if let Err(err) = self.sender.send(MsgFileioReadReq {
+                        sender_id: None,
+                        filename: path.clone().into(),
+                        chunk_size: READ_CHUNK_SIZE as u8,
+                        sequence,
+                        offset,
+                    }) {
+                        self.link.unregister(key);
+                        return Err(err);
+                    };
+                },
+                recv(channel::tick(FILE_IO_TIMEOUT)) -> _ => {
+                    self.link.unregister(key);
+                    bail!("Timed out waiting for file read response. Ensure SBP FILEIO message  {} ({}) is enabled.", MsgFileioReadResp::MESSAGE_TYPE, MsgFileioReadResp::MESSAGE_NAME);
+                }
             }
-            let bytes_read = msg.contents.len();
-            on_progress(bytes_read as u64);
-            if bytes_read != READ_CHUNK_SIZE {
-                break;
-            }
-            sequence += 1;
-            offset += READ_CHUNK_SIZE as u32;
-            if let Err(err) = self.sender.send(MsgFileioReadReq {
-                sender_id: None,
-                filename: path.clone().into(),
-                chunk_size: READ_CHUNK_SIZE as u8,
-                sequence,
-                offset,
-            }) {
-                self.link.unregister(key);
-                return Err(err);
-            };
         }
+
         self.link.unregister(key);
         Ok(())
     }
@@ -265,7 +279,7 @@ impl Fileio {
                 },
                 recv(channel::tick(READDIR_TIMEOUT)) -> _ => {
                     self.link.unregister(key);
-                    bail!("MsgFileioReadDirReq timed out");
+                    bail!("Timed out waiting for directory read response. Ensure SBP FILEIO message  {} ({}) is enabled.", MsgFileioReadDirResp::MESSAGE_TYPE, MsgFileioReadDirResp::MESSAGE_NAME);
                 }
             }
         }
@@ -307,7 +321,10 @@ impl Fileio {
 
             let res = match rx.recv_timeout(CONFIG_REQ_TIMEOUT) {
                 Ok(config) => config,
-                Err(_) => Default::default(),
+                Err(_) => {
+                    warn!("Timed out waiting for fileio config response, continuing with defaults. Ensure SBP FILEIO message {} ({}) is enabled to receive the device's config.", MsgFileioConfigResp::MESSAGE_TYPE, MsgFileioConfigResp::MESSAGE_NAME);
+                    Default::default()
+                }
             };
             stop_tx.send(true).expect(FILEIO_CHANNEL_SEND_FAILURE);
             res
@@ -553,7 +570,8 @@ fn timeout_thd(
             req.retries += 1;
             trace!("retry {} times {}", req.message.sequence, req.retries);
             if req.retries >= MAX_RETRIES {
-                let _ = err_tx.send(anyhow!("fileio timeout"));
+                let _ = err_tx.send(anyhow!("Timed out waiting for file write response. Ensure SBP FILEIO message {} ({}) is enabled.", MsgFileioWriteResp::MESSAGE_TYPE, MsgFileioWriteResp::MESSAGE_NAME));
+                break;
             }
             req.sent_at = Instant::now();
             let msg = req.message.clone();

@@ -125,14 +125,6 @@ QtObject {
 
     sideNavBar: QtObject {
         readonly property int buttonSvgHeight: 15
-        readonly property string hamburgerPath: "qrc:/images/fontawesome/bars-solid.svg"
-        readonly property string trackingPath: "qrc:/images/fontawesome/satellite-solid.svg"
-        readonly property string solutionPath: "qrc:/images/fontawesome/map-marker-alt-solid.svg"
-        readonly property string baselinePath: "qrc:/images/fontawesome/braille-solid.svg"
-        readonly property string observationsPath: "qrc:/images/fontawesome/table-solid.svg"
-        readonly property string settingsPath: "qrc:/images/fontawesome/cogs-solid.svg"
-        readonly property string updatePath: "qrc:/images/fontawesome/chevron-circle-up-solid.svg"
-        readonly property string advancedPath: "qrc:/images/fontawesome/lock-solid.svg"
         readonly property real tabBarHeight: 48
         readonly property real tabBarWidth: 62
         readonly property int buttonPadding: 0
@@ -657,6 +649,14 @@ QtObject {
         readonly property string swiftLogoWidePath: "qrc:/images/swiftLogoWide.svg"
         readonly property string folderPath: "qrc:/images/fontawesome/folder-regular.svg"
         readonly property string xPath: "qrc:/images/iconic/x.svg"
+        readonly property string advancedPath: "qrc:/images/swift-nav/Advanced.svg"
+        readonly property string baselinePath: "qrc:/images/swift-nav/Baseline.svg"
+        readonly property string connectionPath: "qrc:/images/swift-nav/Connection.svg"
+        readonly property string observationsPath: "qrc:/images/swift-nav/Observations.svg"
+        readonly property string trackingPath: "qrc:/images/swift-nav/Tracking.svg"
+        readonly property string solutionPath: "qrc:/images/swift-nav/Solution.svg"
+        readonly property string settingsPath: "qrc:/images/swift-nav/Settings.svg"
+        readonly property string updatePath: "qrc:/images/swift-nav/Update.svg"
     }
 
     insSettingsPopup: QtObject {

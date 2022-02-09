@@ -210,7 +210,7 @@ pub struct SerialOpts {
     /// The serialport to connect to.
     #[clap(
         long,
-        conflicts_with_all = &["tcp", "file"]
+        conflicts_with_all = &["tcp"]
     )]
     pub serial: Option<PathBuf>,
 
@@ -219,7 +219,7 @@ pub struct SerialOpts {
         long,
         default_value = "115200",
         validator(is_baudrate),
-        conflicts_with_all = &["tcp", "file"]
+        conflicts_with_all = &["tcp"]
     )]
     pub baudrate: u32,
 
@@ -227,7 +227,7 @@ pub struct SerialOpts {
     #[clap(
         long,
         default_value = "None",
-        conflicts_with_all = &["tcp", "file"]
+        conflicts_with_all = &["tcp"]
     )]
     pub flow_control: FlowControl,
 }
@@ -237,7 +237,7 @@ pub struct TcpOpts {
     /// The TCP/IP host or TCP/IP host-port pair to connect with. For example: "192.168.0.222" or "192.168.0.222:55555"
     #[clap(
         long,
-        conflicts_with_all = &["serial", "baudrate", "flow-control", "file"]
+        conflicts_with_all = &["serial", "baudrate", "flow-control"]
     )]
     pub tcp: Option<HostPort>,
 }
@@ -251,7 +251,7 @@ impl FromStr for HostPort {
     type Err = ParseIntError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if let Some(idx) = s.find(":") {
+        if let Some(idx) = s.find(':') {
             let (host, port) = s.split_at(idx);
             Ok(HostPort {
                 host: host.to_owned(),

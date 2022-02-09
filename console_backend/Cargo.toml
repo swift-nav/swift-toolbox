@@ -79,8 +79,8 @@ bench = false
 required-features = ["env_logger"]
 
 [[bin]]
-name = "fileio"
-path = "src/bin/fileio.rs"
+name = "swift-files"
+path = "src/bin/files.rs"
 bench = false
 required-features = ["env_logger", "indicatif"]
 

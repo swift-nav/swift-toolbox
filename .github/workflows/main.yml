@@ -306,15 +306,15 @@ jobs:
           echo "INSTALLER_ARCHIVE=$(cat installer-archive.filename)" >>$GITHUB_ENV
         if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
 
-      - name: Build ${{ runner.os }} fileio binary.
+      - name: Build ${{ runner.os }} swift-files binary.
         run: |
-          cargo build --bin fileio --features="env_logger,indicatif" --release
+          cargo build --bin swift-files --features="env_logger,indicatif" --release
         # Building on Mac currently not working (DEVINFRA-612)
         if: matrix.os.name != 'windows-2019' && matrix.os.name != 'macos-10.15'
 
-      - name: Build ${{ runner.os }} fileio binary.
+      - name: Build ${{ runner.os }} swift-files binary.
         run: |
-          cargo build --bin fileio --features="env_logger,indicatif" --release
+          cargo build --bin swift-files --features="env_logger,indicatif" --release
         env:
           LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
         if: matrix.os.name == 'windows-2019'
@@ -363,8 +363,8 @@ jobs:
             release-archive.filename
       - uses: actions/upload-artifact@v2
         with:
-          name: fileio_${{ matrix.os.short_name }}
-          path: ./target/release/fileio${{ matrix.os.exe_suffix }}
+          name: swift-files_${{ matrix.os.short_name }}
+          path: ./target/release/swift-files${{ matrix.os.exe_suffix }}
       - uses: actions/upload-artifact@v2
         with:
           name: swift-settings_${{ matrix.os.short_name }}
@@ -533,10 +533,10 @@ jobs:
         with:
           name: Windows-installer-signed
           path: windows
-      - name: Pull Windows fileio
+      - name: Pull Windows swift-files
         uses: actions/download-artifact@v2
         with:
-          name: fileio_windows
+          name: swift-files_windows
           path: windows
       - name: Pull Windows swift-settings
         uses: actions/download-artifact@v2
@@ -548,10 +548,10 @@ jobs:
         with:
           name: Linux-installer
           path: linux
-      - name: Pull Linux fileio
+      - name: Pull Linux swift-files
         uses: actions/download-artifact@v2
         with:
-          name: fileio_linux
+          name: swift-files_linux
           path: linux
       - name: Pull Linux swift-settings
         uses: actions/download-artifact@v2
@@ -567,9 +567,9 @@ jobs:
       - name: Prepare Release
         shell: bash
         run: |
-          mv linux/fileio linux/fileio_${{ env.VERSION }}_linux
+          mv linux/swift-files linux/swift-files_${{ env.VERSION }}_linux
           mv linux/swift-settings linux/swift-settings_${{ env.VERSION }}_linux
-          mv windows/fileio.exe windows/fileio_${{ env.VERSION }}_windows.exe
+          mv windows/swift-files.exe windows/swift-files_${{ env.VERSION }}_windows.exe
           mv windows/swift-settings.exe windows/swift-settings_${{ env.VERSION }}_windows.exe
           echo "WINDOWS_ARCHIVE=$(cat windows/installer-archive.filename)" >>$GITHUB_ENV
           echo "LINUX_ARCHIVE=$(cat linux/installer-archive.filename)" >>$GITHUB_ENV
@@ -580,10 +580,10 @@ jobs:
           name: "${{ env.VERSION }}-${{ env.DATE }}"
           files: |
             windows/${{ env.WINDOWS_ARCHIVE }}
-            windows/fileio_${{ env.VERSION }}_windows.exe
+            windows/swift-files_${{ env.VERSION }}_windows.exe
             windows/swift-settings_${{ env.VERSION }}_windows.exe
             linux/${{ env.LINUX_ARCHIVE }}
-            linux/fileio_${{ env.VERSION }}_linux
+            linux/swift-files_${{ env.VERSION }}_linux
             linux/swift-settings_${{ env.VERSION }}_linux
             macos/${{ env.MACOS_ARCHIVE }}
         env:

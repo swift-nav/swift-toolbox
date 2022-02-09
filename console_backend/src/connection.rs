@@ -13,7 +13,6 @@ use std::{
 use crossbeam::channel::Sender;
 use log::{error, info};
 
-use crate::cli_options::ConnectionOpts;
 use crate::client_sender::BoxedClientSender;
 use crate::constants::*;
 use crate::process_messages::{process_messages, Messages};
@@ -56,12 +55,6 @@ impl ConnectionManager {
     /// - `host`: The host portion of the TCP stream to open.
     /// - `port`: The port to be used to open a TCP stream.
     pub fn connect_to_host(&self, host: String, port: u16) -> Result<()> {
-        let host_split: Vec<&str> = host.split(':').collect();
-        let (host, port) = if host_split.len() == 2 {
-            (host_split[0].to_string(), host_split[1].parse::<u16>()?)
-        } else {
-            (host, port)
-        };
         let conn = Connection::tcp(host, port)?;
         self.msg.send(ConnectionManagerMsg::Connect(conn));
         Ok(())
@@ -277,21 +270,6 @@ impl Connection {
             close_when_done,
             realtime_delay,
         ))
-    }
-
-    /// Connect via a serial port or tcp
-    pub fn discover(host: String, opts: ConnectionOpts) -> Result<Self> {
-        match fs::File::open(&host) {
-            Err(e) if e.kind() == io::ErrorKind::PermissionDenied => Err(e.into()),
-            Ok(_) => {
-                log::debug!("connecting via serial");
-                Ok(Connection::serial(host, opts.baudrate, opts.flow_control))
-            }
-            Err(_) => {
-                log::debug!("connecting via tcp");
-                Connection::tcp(host, opts.port)
-            }
-        }
     }
 
     pub fn name(&self) -> String {

@@ -1,7 +1,7 @@
 use std::{convert::Infallible, path::PathBuf, str::FromStr, sync::Arc};
 
 use anyhow::anyhow;
-use clap::{AppSettings::DeriveDisplayOrder, Parser, ArgGroup};
+use clap::{AppSettings::DeriveDisplayOrder, ArgGroup, Parser};
 use sbp::SbpIterExt;
 
 use console_backend::{

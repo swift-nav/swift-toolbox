@@ -319,15 +319,15 @@ jobs:
           LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
         if: matrix.os.name == 'windows-2019'
 
-      - name: Build ${{ runner.os }} piksi-settings binary.
+      - name: Build ${{ runner.os }} swift-settings binary.
         run: |
-          cargo build --bin piksi-settings --features="env_logger" --release
+          cargo build --bin swift-settings --features="env_logger" --release
         # Building on Mac currently not working (DEVINFRA-612)
         if: matrix.os.name != 'windows-2019' && matrix.os.name != 'macos-10.15'
 
-      - name: Build ${{ runner.os }} piksi-settings binary.
+      - name: Build ${{ runner.os }} swift-settings binary.
         run: |
-          cargo build --bin piksi-settings --features="env_logger" --release
+          cargo build --bin swift-settings --features="env_logger" --release
         env:
           LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
         if: matrix.os.name == 'windows-2019'
@@ -367,8 +367,8 @@ jobs:
           path: ./target/release/fileio${{ matrix.os.exe_suffix }}
       - uses: actions/upload-artifact@v2
         with:
-          name: piksi-settings_${{ matrix.os.short_name }}
-          path: ./target/release/piksi-settings${{ matrix.os.exe_suffix }}
+          name: swift-settings_${{ matrix.os.short_name }}
+          path: ./target/release/swift-settings${{ matrix.os.exe_suffix }}
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ runner.os }}-artifacts-debug
@@ -538,10 +538,10 @@ jobs:
         with:
           name: fileio_windows
           path: windows
-      - name: Pull Windows piksi-settings
+      - name: Pull Windows swift-settings
         uses: actions/download-artifact@v2
         with:
-          name: piksi-settings_windows
+          name: swift-settings_windows
           path: windows
       - name: Pull Linux Installer
         uses: actions/download-artifact@v2
@@ -553,10 +553,10 @@ jobs:
         with:
           name: fileio_linux
           path: linux
-      - name: Pull Linux piksi-settings
+      - name: Pull Linux swift-settings
         uses: actions/download-artifact@v2
         with:
-          name: piksi-settings_linux
+          name: swift-settings_linux
           path: linux
       - name: Pull macOS Installer
         uses: actions/download-artifact@v2
@@ -568,9 +568,9 @@ jobs:
         shell: bash
         run: |
           mv linux/fileio linux/fileio_${{ env.VERSION }}_linux
-          mv linux/piksi-settings linux/piksi-settings_${{ env.VERSION }}_linux
+          mv linux/swift-settings linux/swift-settings_${{ env.VERSION }}_linux
           mv windows/fileio.exe windows/fileio_${{ env.VERSION }}_windows.exe
-          mv windows/piksi-settings.exe windows/piksi-settings_${{ env.VERSION }}_windows.exe
+          mv windows/swift-settings.exe windows/swift-settings_${{ env.VERSION }}_windows.exe
           echo "WINDOWS_ARCHIVE=$(cat windows/installer-archive.filename)" >>$GITHUB_ENV
           echo "LINUX_ARCHIVE=$(cat linux/installer-archive.filename)" >>$GITHUB_ENV
           echo "MACOS_ARCHIVE=$(cat macos/installer-archive.filename)" >>$GITHUB_ENV
@@ -581,10 +581,10 @@ jobs:
           files: |
             windows/${{ env.WINDOWS_ARCHIVE }}
             windows/fileio_${{ env.VERSION }}_windows.exe
-            windows/piksi-settings_${{ env.VERSION }}_windows.exe
+            windows/swift-settings_${{ env.VERSION }}_windows.exe
             linux/${{ env.LINUX_ARCHIVE }}
             linux/fileio_${{ env.VERSION }}_linux
-            linux/piksi-settings_${{ env.VERSION }}_linux
+            linux/swift-settings_${{ env.VERSION }}_linux
             macos/${{ env.MACOS_ARCHIVE }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

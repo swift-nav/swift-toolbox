@@ -73,7 +73,7 @@ name = "cpu_benches"
 harness = false
 
 [[bin]]
-name = "piksi-settings"
+name = "swift-settings"
 path = "src/bin/settings.rs"
 bench = false
 required-features = ["env_logger"]

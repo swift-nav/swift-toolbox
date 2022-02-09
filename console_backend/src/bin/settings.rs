@@ -75,25 +75,25 @@ fn write(write_cmds: &[WriteCmd], settings: &SettingsTab) -> Result<()> {
 /// Piksi settings operations.
 #[derive(Parser)]
 #[clap(
-    name = "piksi-settings",
+    name = "swift-settings",
     version = include_str!("../version.txt"),
     setting = DeriveDisplayOrder,
     override_usage = "\
-    piksi-settings [OPTIONS] <DEVICE>
+    swift-settings [OPTIONS] <DEVICE>
 
     Examples:
         - Read a setting:
-            piksi-settings /dev/ttyUSB0 --read imu.acc_range
+            swift-settings /dev/ttyUSB0 --read imu.acc_range
         - Read a group of settings:
-            piksi-settings /dev/ttyUSB0 --read imu
+            swift-settings /dev/ttyUSB0 --read imu
         - Write a setting value:
-            piksi-settings /dev/ttyUSB0 --write imu.acc_range=2g
+            swift-settings /dev/ttyUSB0 --write imu.acc_range=2g
         - Write multiple settings and save to flash:
-            piksi-settings /dev/ttyUSB0 -w imu.acc_range=2g -w imu.imu_rate=100 --save
+            swift-settings /dev/ttyUSB0 -w imu.acc_range=2g -w imu.imu_rate=100 --save
         - Export a device's settings
-            piksi-settings /dev/ttyUSB0 --export ./config.ini
+            swift-settings /dev/ttyUSB0 --export ./config.ini
         - Import a device's settings
-            piksi-settings /dev/ttyUSB0 --import ./config.ini
+            swift-settings /dev/ttyUSB0 --import ./config.ini
     "
 )]
 struct Opts {

@@ -105,6 +105,14 @@
     <file>images/iconic/x.svg</file>
     <file>images/icon.png</file>
     <file>images/icon.ico</file>
+    <file>images/swift-nav/Advanced.svg</file>
+    <file>images/swift-nav/Baseline.svg</file>
+    <file>images/swift-nav/Connection.svg</file>
+    <file>images/swift-nav/Observations.svg</file>
+    <file>images/swift-nav/Settings.svg</file>
+    <file>images/swift-nav/Solution.svg</file>
+    <file>images/swift-nav/Tracking.svg</file>
+    <file>images/swift-nav/Update.svg</file>
     <file>TableComponents/SortableColumnHeading.qml</file>
     <file>TableComponents/TableCellDelegate.qml</file>
     <file>TableComponents/SwiftTableView.qml</file>

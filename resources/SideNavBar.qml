@@ -17,31 +17,31 @@ Item {
     property var tabModel: [{
         "name": "Tracking",
         "tooltip": "Tracking",
-        "source": Constants.sideNavBar.trackingPath
+        "source": Constants.icons.trackingPath
     }, {
         "name": "Solution",
         "tooltip": "Solution",
-        "source": Constants.sideNavBar.solutionPath
+        "source": Constants.icons.solutionPath
     }, {
         "name": "Baseline",
         "tooltip": "Baseline",
-        "source": Constants.sideNavBar.baselinePath
+        "source": Constants.icons.baselinePath
     }, {
         "name": "Observations",
         "tooltip": "Observations",
-        "source": Constants.sideNavBar.observationsPath
+        "source": Constants.icons.observationsPath
     }, {
         "name": "Settings",
         "tooltip": "Settings",
-        "source": Constants.sideNavBar.settingsPath
+        "source": Constants.icons.settingsPath
     }, {
         "name": "Update",
         "tooltip": "Update",
-        "source": Constants.sideNavBar.updatePath
+        "source": Constants.icons.updatePath
     }, {
         "name": "Advanced",
         "tooltip": "Advanced",
-        "source": Constants.sideNavBar.advancedPath
+        "source": Constants.icons.advancedPath
     }]
 
     function clickButton(index) {
@@ -129,7 +129,7 @@ Item {
             Layout.fillWidth: true
             implicitHeight: Constants.sideNavBar.tabBarHeight
             text: "Connection"
-            icon.source: Constants.icons.lightningBoltPath
+            icon.source: Constants.icons.connectionPath
             ToolTip.text: "Connection Dialog"
             checkable: false
             enabled: stack.mainViewVisible()

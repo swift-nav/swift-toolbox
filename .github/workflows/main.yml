@@ -310,7 +310,7 @@ jobs:
 
       - name: Build ${{ runner.os }} swift-settings binary.
         run: |
-          cargo build --release --bin swift-settings --features env_logger
+          cargo build --release --bin swift-settings --no-default-features --features env_logger
 
       - name: Pull Git LFS objects
         run: git lfs pull

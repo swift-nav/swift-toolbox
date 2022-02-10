@@ -542,15 +542,26 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: macOS-installer
-          path: |
-            macos
+          path: macos
+      - name: Pull macOS swift-files
+        uses: actions/download-artifact@v2
+        with:
+          name: swift-files_macos
+          path: macos
+      - name: Pull macOS swift-settings
+        uses: actions/download-artifact@v2
+        with:
+          name: swift-settings_macos
+          path: macos
       - name: Prepare Release
         shell: bash
         run: |
-          mv linux/swift-files linux/swift-files_${{ env.VERSION }}_linux
-          mv linux/swift-settings linux/swift-settings_${{ env.VERSION }}_linux
           mv windows/swift-files.exe windows/swift-files_${{ env.VERSION }}_windows.exe
           mv windows/swift-settings.exe windows/swift-settings_${{ env.VERSION }}_windows.exe
+          mv linux/swift-files linux/swift-files_${{ env.VERSION }}_linux
+          mv linux/swift-settings linux/swift-settings_${{ env.VERSION }}_linux
+          mv macos/swift-files macos/swift-files_${{ env.VERSION }}_macos
+          mv macos/swift-settings macos/swift-settings_${{ env.VERSION }}_macos
           echo "WINDOWS_ARCHIVE=$(cat windows/installer-archive.filename)" >>$GITHUB_ENV
           echo "LINUX_ARCHIVE=$(cat linux/installer-archive.filename)" >>$GITHUB_ENV
           echo "MACOS_ARCHIVE=$(cat macos/installer-archive.filename)" >>$GITHUB_ENV
@@ -566,5 +577,7 @@ jobs:
             linux/swift-files_${{ env.VERSION }}_linux
             linux/swift-settings_${{ env.VERSION }}_linux
             macos/${{ env.MACOS_ARCHIVE }}
+            macos/swift-files_${{ env.VERSION }}_macos
+            macos/swift-settings_${{ env.VERSION }}_macos
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

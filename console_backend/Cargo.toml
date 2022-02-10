@@ -41,7 +41,7 @@ parking_lot = "0.12.0"
 regex = { version = "1.5.4" }
 rust-ini = "0.17.0"
 sbp = { version = "4.1.1", features = ["json", "link", "swiftnav"] }
-sbp-settings = "0.6.0"
+sbp-settings = "0.6.3"
 env_logger = { version = "0.9", optional = true }
 mimalloc = { version = "0.1", default-features = false }
 curl = { version = "0.4", features = ["ssl", "static-curl"] }

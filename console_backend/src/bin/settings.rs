@@ -1,10 +1,11 @@
 use std::{convert::Infallible, path::PathBuf, str::FromStr, sync::Arc};
 
-use clap::{AppSettings::DeriveDisplayOrder, Parser};
+use anyhow::anyhow;
+use clap::{AppSettings::DeriveDisplayOrder, ArgGroup, Parser};
 use sbp::SbpIterExt;
 
 use console_backend::{
-    cli_options::ConnectionOpts,
+    cli_options::{SerialOpts, TcpOpts},
     client_sender::TestSender,
     connection::Connection,
     settings_tab::SettingsTab,
@@ -72,33 +73,37 @@ fn write(write_cmds: &[WriteCmd], settings: &SettingsTab) -> Result<()> {
     Ok(())
 }
 
-/// Piksi settings operations.
+/// A SwiftNav settings API client
 #[derive(Parser)]
 #[clap(
-    name = "piksi-settings",
+    name = "swift-settings",
     version = include_str!("../version.txt"),
     setting = DeriveDisplayOrder,
+    group = ArgGroup::new("conn").required(true).args(&["serial", "tcp"]),
     override_usage = "\
-    piksi-settings [OPTIONS] <DEVICE>
+    swift-settings [OPTIONS]
 
     Examples:
         - Read a setting:
-            piksi-settings /dev/ttyUSB0 --read imu.acc_range
+            swift-settings --serial /dev/ttyUSB0 --read imu.acc_range
         - Read a group of settings:
-            piksi-settings /dev/ttyUSB0 --read imu
+            swift-settings --serial /dev/ttyUSB0 --read imu
         - Write a setting value:
-            piksi-settings /dev/ttyUSB0 --write imu.acc_range=2g
+            swift-settings --serial /dev/ttyUSB0 --write imu.acc_range=2g
         - Write multiple settings and save to flash:
-            piksi-settings /dev/ttyUSB0 -w imu.acc_range=2g -w imu.imu_rate=100 --save
+            swift-settings --serial /dev/ttyUSB0 -w imu.acc_range=2g -w imu.imu_rate=100 --save
         - Export a device's settings
-            piksi-settings /dev/ttyUSB0 --export ./config.ini
+            swift-settings --serial /dev/ttyUSB0 --export ./config.ini
         - Import a device's settings
-            piksi-settings /dev/ttyUSB0 --import ./config.ini
+            swift-settings --serial /dev/ttyUSB0 --import ./config.ini
     "
 )]
 struct Opts {
-    /// The serial port or TCP stream
-    device: String,
+    #[clap(flatten)]
+    serial: SerialOpts,
+
+    #[clap(flatten)]
+    tcp: TcpOpts,
 
     /// Read a setting or a group of settings
     #[clap(
@@ -147,14 +152,21 @@ struct Opts {
         conflicts_with_all = &["read", "write", "export", "import", "save"]
     )]
     reset: bool,
-
-    #[clap(flatten)]
-    conn: ConnectionOpts,
 }
 
 fn connect(opts: &Opts) -> Result<Arc<SettingsTab>> {
-    let (reader, writer) =
-        Connection::discover(opts.device.clone(), opts.conn)?.try_connect(None)?;
+    let (reader, writer) = if let Some(ref serial) = opts.serial.serial {
+        Connection::serial(
+            serial.to_string_lossy().into(),
+            opts.serial.baudrate,
+            opts.serial.flow_control,
+        )
+        .try_connect(None)?
+    } else if let Some(ref tcp) = opts.tcp.tcp {
+        Connection::tcp(tcp.host.clone(), tcp.port)?.try_connect(None)?
+    } else {
+        return Err(anyhow!("No serialport or tcp string supplied"));
+    };
     let sender = MsgSender::new(writer);
     let shared_state = SharedState::new();
     let settings = Arc::new(SettingsTab::new(shared_state, TestSender::boxed(), sender));

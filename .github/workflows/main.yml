@@ -277,18 +277,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build ${{ runner.os }} Binaries.
-        env:
-          LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
+      - name: Set env vars
+        shell: bash
         run: |
-          cargo make create-dist
+          echo "LIBCLANG_PATH=$LIBCLANG_PATH_WIN" >>$GITHUB_ENV
         if: matrix.os.name == 'windows-2019'
 
       - name: Build ${{ runner.os }} Binaries.
         shell: bash
         run: |
           cargo make create-dist
-        if: matrix.os.name != 'windows-2019'
 
       - name: Create ${{ runner.os }} Installers.
         shell: bash
@@ -308,29 +306,11 @@ jobs:
 
       - name: Build ${{ runner.os }} swift-files binary.
         run: |
-          cargo build --bin swift-files --features="env_logger,indicatif" --release
-        # Building on Mac currently not working (DEVINFRA-612)
-        if: matrix.os.name != 'windows-2019' && matrix.os.name != 'macos-10.15'
-
-      - name: Build ${{ runner.os }} swift-files binary.
-        run: |
-          cargo build --bin swift-files --features="env_logger,indicatif" --release
-        env:
-          LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
-        if: matrix.os.name == 'windows-2019'
+          cargo build --release --bin swift-files --no-default-features --features env_logger,indicatif
 
       - name: Build ${{ runner.os }} swift-settings binary.
         run: |
-          cargo build --bin swift-settings --features="env_logger" --release
-        # Building on Mac currently not working (DEVINFRA-612)
-        if: matrix.os.name != 'windows-2019' && matrix.os.name != 'macos-10.15'
-
-      - name: Build ${{ runner.os }} swift-settings binary.
-        run: |
-          cargo build --bin swift-settings --features="env_logger" --release
-        env:
-          LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
-        if: matrix.os.name == 'windows-2019'
+          cargo build --release --bin swift-settings --no-default-features --features env_logger
 
       - name: Pull Git LFS objects
         run: git lfs pull
@@ -562,15 +542,26 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: macOS-installer
-          path: |
-            macos
+          path: macos
+      - name: Pull macOS swift-files
+        uses: actions/download-artifact@v2
+        with:
+          name: swift-files_macos
+          path: macos
+      - name: Pull macOS swift-settings
+        uses: actions/download-artifact@v2
+        with:
+          name: swift-settings_macos
+          path: macos
       - name: Prepare Release
         shell: bash
         run: |
-          mv linux/swift-files linux/swift-files_${{ env.VERSION }}_linux
-          mv linux/swift-settings linux/swift-settings_${{ env.VERSION }}_linux
           mv windows/swift-files.exe windows/swift-files_${{ env.VERSION }}_windows.exe
           mv windows/swift-settings.exe windows/swift-settings_${{ env.VERSION }}_windows.exe
+          mv linux/swift-files linux/swift-files_${{ env.VERSION }}_linux
+          mv linux/swift-settings linux/swift-settings_${{ env.VERSION }}_linux
+          mv macos/swift-files macos/swift-files_${{ env.VERSION }}_macos
+          mv macos/swift-settings macos/swift-settings_${{ env.VERSION }}_macos
           echo "WINDOWS_ARCHIVE=$(cat windows/installer-archive.filename)" >>$GITHUB_ENV
           echo "LINUX_ARCHIVE=$(cat linux/installer-archive.filename)" >>$GITHUB_ENV
           echo "MACOS_ARCHIVE=$(cat macos/installer-archive.filename)" >>$GITHUB_ENV
@@ -586,5 +577,7 @@ jobs:
             linux/swift-files_${{ env.VERSION }}_linux
             linux/swift-settings_${{ env.VERSION }}_linux
             macos/${{ env.MACOS_ARCHIVE }}
+            macos/swift-files_${{ env.VERSION }}_macos
+            macos/swift-settings_${{ env.VERSION }}_macos
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

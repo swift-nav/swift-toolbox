@@ -456,11 +456,11 @@ if eq ${os} windows
 else
     rm -r ./share
 
-    bins = array rcc uic designer
+    bins = array rcc uic designer pyside2-lupdate Designer.app
     for bin in ${bins}
         files = glob_array ./**/PySide2/${bin}
         for bin in ${files}
-            rm ${bin}
+            rm -r ${bin}
         end
     end
 end
@@ -579,7 +579,8 @@ set_env ICNS_PATH "installers/macOS/icon.icns"
 set_env BACKGROUND_PATH "resources/images/LogoBackground.jpg"
 '''
 
-[tasks.dist-to-installer.mac]
+[tasks.dist-to-installer-app]
+[tasks.dist-to-installer-app.mac]
 dependencies = ["dist-to-installer-env"]
 script_runner = "@duckscript"
 script = '''
@@ -595,11 +596,35 @@ contents_resources_dir = get_env CONTENTS_RESOURCES_DIR
 contents_resources_dir = set ${contents_dir}/${contents_resources_dir}
 info_plist_path = get_env INFO_PLIST_PATH
 icns_path = get_env ICNS_PATH
-background_path = get_env BACKGROUND_PATH
 
 if is_path_exists ${tmp_dir}
   rm -r ${tmp_dir}
 end
+
+mkdir ${contents_dir}
+mkdir ${contents_mac_os}
+exec --fail-on-error cp -r py39-dist "${contents_resources_dir}"
+exec --fail-on-error mv ./${contents_resources_dir}/${app_original_name} "./${contents_mac_os}/${app_file_prefix}"
+exec --fail-on-error ln -s "../Resources/lib" ${contents_mac_os}/lib
+exec --fail-on-error ln -s "../Resources/.frozen" ${contents_mac_os}/.frozen
+exec --fail-on-error ln -s "../Resources/resources" ${contents_mac_os}/resources
+cp ./${info_plist_path} ./${contents_dir}/Info.plist
+mkdir ${contents_resources_dir}
+cp ${icns_path} ./${contents_resources_dir}/${app_file_prefix}.icns
+'''
+
+[tasks.dist-to-installer-dmg]
+[tasks.dist-to-installer-dmg.mac]
+dependencies = ["dist-to-installer-env"]
+script_runner = "@duckscript"
+script = '''
+final_dir = get_env FINAL_DIR
+tmp_dir = get_env TMP_DIR
+app_original_name = get_env APP_ORIGINAL_NAME
+app_file_prefix = get_env APP_FILE_PREFIX
+app_dir_name = set "${app_file_prefix}.app"
+icns_path = get_env ICNS_PATH
+background_path = get_env BACKGROUND_PATH
 
 version_path = get_env VERSION_PATH
 version = readfile ${version_path}
@@ -607,18 +632,15 @@ version = trim_end ${version}
 dmg_path = set ./${final_dir}/${app_original_name}_${version}_macos.dmg
 
 old_dmgs = glob_array "./${final_dir}/*.dmg"
-for dmg_path in ${old_dmgs}
-    rm ${dmg_path}
+for path in ${old_dmgs}
+    rm ${path}
 end
 
-mkdir ${contents_dir}
-exec --fail-on-error cp -r py39-dist "${contents_mac_os}"
-exec --fail-on-error mv ./${contents_mac_os}/${app_original_name} "./${contents_mac_os}/${app_file_prefix}"
-cp ./${info_plist_path} ./${contents_dir}/Info.plist
-mkdir ${contents_resources_dir}
-cp ${icns_path} ./${contents_resources_dir}/${app_file_prefix}.icns
 exec --fail-on-error create-dmg --volname "${app_file_prefix}" --volicon "${icns_path}" --background "${background_path}" --hdiutil-verbose --window-pos 200 120 --window-size 800 400 --icon-size 100 --icon "${app_dir_name}" 200 190 --hide-extension "${app_dir_name}" --app-drop-link 600 185 "${dmg_path}" "${tmp_dir}"
 '''
+
+[tasks.dist-to-installer.mac]
+dependencies = ["dist-to-installer-app", "dist-to-installer-dmg"]
 
 [tasks.dist-to-installer-env.linux]
 script_runner = "@duckscript"

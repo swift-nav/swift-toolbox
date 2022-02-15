@@ -261,6 +261,8 @@ QtObject {
     genericTable: QtObject {
         readonly property int headerZOffset: 100
         readonly property int padding: 2
+        readonly property int leftPadding: 5
+        readonly property int rightPadding: 5
         readonly property int borderWidth: 1
         readonly property int mouseAreaResizeWidth: 10
         readonly property int cellHeight: 25

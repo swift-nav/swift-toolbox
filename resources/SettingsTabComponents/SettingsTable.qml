@@ -216,7 +216,8 @@ Rectangle {
                     font.bold: isHeaderRow(row)
                     text: model.display
                     elide: Text.ElideRight
-                    padding: Constants.genericTable.padding
+                    leftPadding: Constants.genericTable.leftPadding
+                    rightPadding: Constants.genericTable.rightPadding
                 }
 
                 MouseArea {

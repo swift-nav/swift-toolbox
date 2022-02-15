@@ -96,6 +96,7 @@ MainTab {
             Layout.fillHeight: true
             border.width: Constants.updateTab.borderWidth
             border.color: Constants.genericTable.borderColor
+            clip: true
 
             ScrollView {
                 anchors.fill: parent

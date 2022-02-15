@@ -15,7 +15,7 @@ Unicode true
   VER_MINOR `.` VER_PATCH_UNFILTERED ``
 !searchreplace VER_MAJOR ${VER_MAJOR_UNFILTERED} "v" ""
 !searchparse /noerrors "${VER_PATCH_UNFILTERED}" `` VER_PATCH `-`
-!define VERSION_ORIGINAL "${VER_MAJOR}.${VER_MINOR}.${VER_PATCH_UNFILTERED}"
+!define VERSION_ORIGINAL "${VER_MAJOR_UNFILTERED}.${VER_MINOR}.${VER_PATCH_UNFILTERED}"
 !define VERSION "${VER_MAJOR}.${VER_MINOR}.${VER_PATCH}.0"
 !define app_name "Swift Console"
 !define app_executable "swift-console.exe"

@@ -655,6 +655,11 @@ set_env ICONS_DIR "share/icons/hicolor"
 version = readfile console_backend/src/version.txt
 version = trim_end ${version}
 set_env VERSION ${version}
+set_env VLESS_VERSION ${version}
+if starts_with ${version} v
+  vless_version = substring ${version} 1
+  set_env VLESS_VERSION ${vless_version}
+end
 set_env HOMEPAGE "https://www.swiftnav.com"
 set_env MAINTAINER "Swift Navigation <https://www.swiftnav.com/support>"
 set_env DESCRIPTION "The Swift Console provides data visualization, settings management, and update capabilities for Swift Navigation GNSS products."
@@ -706,7 +711,7 @@ fpm \
   --maintainer "$MAINTAINER" \
   --description "$DESCRIPTION" \
   --url "$HOMEPAGE" \
-  --version "$VERSION" \
+  --version "$VLESS_VERSION" \
   --package "${APP_DIR_NAME}_${VERSION}_linux.deb" \
   --chdir "$TMP_DIR" \
   --name "$APP_DIR_NAME" \

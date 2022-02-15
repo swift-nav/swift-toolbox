@@ -1549,9 +1549,9 @@ dependencies = [
 
 [[package]]
 name = "sbp-settings"
-version = "0.6.3"
+version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c0649a559b3f7ad71b011cacb35096538defb65cfd3bfabf10256aa79e12bfd7"
+checksum = "6a749fd90bfa5b6fee6a7ea30c4d1fa3f4668da17c197c516258b967f8cea902"
 dependencies = [
  "crossbeam-channel",
  "crossbeam-utils",
@@ -1691,7 +1691,7 @@ dependencies = [
 [[package]]
 name = "serialport"
 version = "4.0.2-alpha.0"
-source = "git+https://github.com/swift-nav/serialport-rs.git#875f545b937035dbc5dcdf454dd0460bc8d0bd3d"
+source = "git+https://github.com/swift-nav/serialport-rs.git#838c01c4dad635a5c9c2dcdf0ce7f9b86db2e3d2"
 dependencies = [
  "CoreFoundation-sys",
  "IOKit-sys",

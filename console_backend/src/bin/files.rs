@@ -56,7 +56,7 @@ lazy_static! {
         "\
     swift-files <SRC> <DEST>
     swift-files --list <HOST>:<DIRECTORY_PATH>
-    swift-files --delete <HOST>:<PATH>
+    swift-files --delete <HOST>:<FILE_PATH>
 
     Where, depending on the desired write direction, one of SRC and DEST is a
     path to a local file, and the other specifies a remote host

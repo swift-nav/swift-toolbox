@@ -147,7 +147,7 @@ fn list(target: Target, conn: ConnectionOpts) -> Result<()> {
 
 fn delete(target: Target, conn: ConnectionOpts) -> Result<()> {
     let remote = target.into_remote().context(
-        "--delete flag requires <TARGET> to be a remote target of the form <HOST>:<PATH>",
+        "--delete flag requires <TARGET> to be a remote target of the form <HOST>:<FILE_PATH>",
     )?;
     let fileio = remote.connect(conn)?;
     fileio.remove(remote.path)?;

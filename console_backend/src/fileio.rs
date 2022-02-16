@@ -128,7 +128,7 @@ impl Fileio {
 
         if total_bytes_read == 0 {
             Err(anyhow!(
-                "File {} not found or not permitted to be read.",
+                "File {} read was 0 bytes long. This could indicate that the file doesn't exist or is not accessible.",
                 path
             ))
         } else {

@@ -145,9 +145,19 @@ pub struct CliOptions {
     #[clap(long)]
     pub settings_yaml: Option<PathBuf>,
 
+    /// Disable antialiasing, images and plots will become optimized for efficiency not aesthetics and
+    /// require less system resources.
+    #[clap(long, parse(from_flag = Not::not))]
+    pub no_antialiasing: bool,
+
     /// Use OpenGL, plots will become optimized for efficiency not aesthetics and require less system resources.
     #[clap(long, parse(from_flag = Not::not))]
     pub use_opengl: bool,
+
+    /// Disable high dpi autoscaling, fonts and images will become optimized for efficiency not aesthetics and
+    /// require less system resources.
+    #[clap(long, parse(from_flag = Not::not))]
+    pub no_high_dpi: bool,
 
     /// Change the refresh rate of the plots.
     #[clap(long, validator(is_refresh_rate))]

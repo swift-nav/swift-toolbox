@@ -33,7 +33,7 @@ Item {
             plotAreaColor: Constants.commonChart.areaColor
             backgroundColor: "transparent"
             legend.visible: false
-            antialiasing: true
+            antialiasing: Globals.useAntiAliasing
             titleFont: Constants.commonChart.titleFont
 
             margins {
@@ -122,20 +122,18 @@ Item {
                 max: Constants.advancedImu.yAxisMax
             }
 
-            LineSeries {
+            ScatterSeries {
                 name: "emptySeries"
                 axisYRight: advancedImuYAxis
                 axisX: advancedImuXAxis
                 color: "transparent"
+                Component.onCompleted: {
+                    this.useOpenGL = Globals.useOpenGL;
+                }
 
                 XYPoint {
                     x: 0
                     y: 0
-                }
-
-                XYPoint {
-                    x: 1
-                    y: 1
                 }
 
             }
@@ -302,7 +300,7 @@ Item {
                 Label {
                     text: Constants.advancedMagnetometer.suggestionText
                     font.italic: true
-                    antialiasing: true
+                    antialiasing: Globals.useAntiAliasing
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
 

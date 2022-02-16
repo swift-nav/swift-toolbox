@@ -774,6 +774,8 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
         globals_.setProperty("showFileio", True)  # type: ignore
     if args.use_opengl:
         globals_.setProperty("useOpenGL", True)  # type: ignore
+    if args.no_antialiasing:
+        globals_.setProperty("useAntiAliasing", False)  # type: ignore
     if args.no_prompts:
         globals_.setProperty("showPrompts", False)  # type: ignore
     if args.refresh_rate is not None:
@@ -812,6 +814,8 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     parser.add_argument("--show-file-connection", action="store_true")
     parser.add_argument("--no-prompts", action="store_true")
     parser.add_argument("--use-opengl", action="store_true")
+    parser.add_argument("--no-high-dpi", action="store_true")
+    parser.add_argument("--no-antialiasing", action="store_true")
     parser.add_argument("--refresh-rate", type=int)
     parser.add_argument("--tab")
     parser.add_argument("--show-csv-log", action="store_true")
@@ -828,8 +832,12 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
             if arg in HELP_CLI_ARGS:
                 found_help_arg = True
         args_main, _ = parser.parse_known_args(passed_args)
-    QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
-    QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
+    if args_main.no_high_dpi:
+        QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_DisableHighDpiScaling)
+        QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_Use96Dpi)
+    else:
+        QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
+        QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon(":/images/icon.ico"))
     app.setOrganizationName(ApplicationMetadata.ORGANIZATION_NAME)

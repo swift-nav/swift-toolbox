@@ -55,8 +55,12 @@ lazy_static! {
     static ref FILEIO_USAGE: String = format!(
         "\
     swift-files <SRC> <DEST>
-    swift-files --list <TARGET>
-    swift-files --delete <TARGET>
+    swift-files --list <HOST>:<DIRECTORY_PATH>
+    swift-files --delete <HOST>:<PATH>
+
+    Where, depending on the desired write direction, one of SRC and DEST is a
+    path to a local file, and the other specifies a remote host
+    (serial or TCP) and a remote path. See examples below for more detail.
 
     TCP Examples:
         - List files on Piksi:
@@ -130,9 +134,9 @@ struct ConnectionOpts {
 }
 
 fn list(target: Target, conn: ConnectionOpts) -> Result<()> {
-    let remote = target
-        .into_remote()
-        .context("--list flag requires <TARGET> to be a remote target")?;
+    let remote = target.into_remote().context(
+        "--list flag requires <TARGET> to be a remote target of the form <HOST>:<DIRECTORY_PATH>",
+    )?;
     let mut fileio = remote.connect(conn)?;
     let files = fileio.readdir(remote.path)?;
     for file in files {
@@ -142,9 +146,9 @@ fn list(target: Target, conn: ConnectionOpts) -> Result<()> {
 }
 
 fn delete(target: Target, conn: ConnectionOpts) -> Result<()> {
-    let remote = target
-        .into_remote()
-        .context("--delete flag requires <TARGET> to be a remote target")?;
+    let remote = target.into_remote().context(
+        "--delete flag requires <TARGET> to be a remote target of the form <HOST>:<PATH>",
+    )?;
     let fileio = remote.connect(conn)?;
     fileio.remove(remote.path)?;
     // without this sleep the program exits and the connection closes before the delete message

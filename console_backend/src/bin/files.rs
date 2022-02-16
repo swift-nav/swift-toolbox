@@ -1,6 +1,5 @@
 use std::{
     borrow::Cow,
-    convert::Infallible,
     fs::{self, File},
     io::{self, Write},
     path::PathBuf,
@@ -203,12 +202,17 @@ impl Target {
 }
 
 impl FromStr for Target {
-    type Err = Infallible;
+    type Err = String;
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         match s.find(':') {
             Some(idx) => {
                 let (host, path) = s.split_at(idx);
+
+                if path == ":" {
+                    return Err(format!("No remote path given in '{}'", s));
+                }
+
                 Ok(Target::Remote(Remote {
                     host: host.to_owned(),
                     path: path[1..].to_owned(),

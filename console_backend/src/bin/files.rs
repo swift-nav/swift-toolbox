@@ -171,7 +171,13 @@ fn read(src: Remote, dest: PathBuf, conn: ConnectionOpts) -> Result<()> {
     let (dest, pb): (Box<dyn Write + Send>, _) = if dest.to_str() == Some("-") {
         (Box::new(io::stdout()), ReadProgress::stdout())
     } else {
-        (Box::new(File::create(dest)?), ReadProgress::file())
+        (
+            Box::new(
+                File::create(&dest)
+                    .with_context(|| format!("Could not open {:?} for writing", &dest))?,
+            ),
+            ReadProgress::file(),
+        )
     };
     let mut fileio = src.connect(conn)?;
     pb.set_message("Reading...");
@@ -184,7 +190,8 @@ fn read(src: Remote, dest: PathBuf, conn: ConnectionOpts) -> Result<()> {
 
 fn write(src: PathBuf, dest: Remote, conn: ConnectionOpts) -> Result<()> {
     let mut fileio = dest.connect(conn)?;
-    let file = fs::File::open(src)?;
+    let file =
+        fs::File::open(&src).with_context(|| format!("Could not open {:?} for reading", &src))?;
     let size = file.metadata()?.len();
     let pb = ProgressBar::new(size);
     pb.enable_steady_tick(1000);

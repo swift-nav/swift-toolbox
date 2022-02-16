@@ -54,32 +54,37 @@ const SERIAL_NAME: &str = "/dev/cu.usbserial";
 lazy_static! {
     static ref FILEIO_USAGE: String = format!(
         "\
-    swift-files <SRC> <DEST>
-    swift-files --list <HOST>:<DIRECTORY_PATH>
-    swift-files --delete <HOST>:<FILE_PATH>
+    To copy a local file to a Swift device:
+        swift-files <FILE_PATH> <HOST>:<FILE_PATH>
+    To copy a file from a Swift device:
+        swift-files <HOST>:<FILE_PATH> <FILE_PATH>
+    To list files in a directory on a Swift device:
+        swift-files --list <HOST>:<DIRECTORY_PATH>
+    To delete a file on a Swift device:
+        swift-files --delete <HOST>:<FILE_PATH>
 
-    Where, depending on the desired write direction, one of SRC and DEST is a
-    path to a local file, and the other specifies a remote host
-    (serial or TCP) and a remote path. See examples below for more detail.
-
+    <HOST> can either be an IP address when the Swift device is connected
+    via TCP (for eg: 192.168.0.222) or the name of the serial device when
+    the Swift device is connected via serial (for eg: {serial}).
+    
     TCP Examples:
-        - List files on Piksi:
+        - List files on Swift device:
             swift-files --list 192.168.0.222:/data/
-        - Read file from Piksi:
+        - Read file from Swift device:
             swift-files 192.168.0.222:/persistent/config.ini ./config.ini
-        - Write file to Piksi:
+        - Write file to Swift device:
             swift-files ./config.ini 192.168.0.222:/persistent/config.ini
-        - Delete file from Piksi:
+        - Delete file from Swift device:
             swift-files --delete 192.168.0.222:/persistent/unwanted_file
 
     Serial Examples:
-        - List files on Piksi:
+        - List files on Swift device:
             swift-files --list {serial}:/data/
-        - Read file from Piksi:
+        - Read file from Swift device:
             swift-files {serial}:/persistent/config.ini ./config.ini
-        - Write file to Piksi:
+        - Write file to Swift device:
             swift-files ./config.ini {serial}:/persistent/config.ini
-        - Delete file from Piksi:
+        - Delete file from Swift device:
             swift-files --delete {serial}:/persistent/unwanted_file
     ",
         serial = SERIAL_NAME

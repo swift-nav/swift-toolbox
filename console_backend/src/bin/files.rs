@@ -13,6 +13,7 @@ use clap::{
     Args, Parser,
 };
 use indicatif::{ProgressBar, ProgressStyle};
+use lazy_static::lazy_static;
 use sbp::{link::LinkSource, SbpIterExt};
 
 use console_backend::{
@@ -28,13 +29,13 @@ fn main() -> Result<()> {
     }
     env_logger::init();
     let opts = Opts::parse();
-    if opts.list {
-        list(opts.src, opts.conn)
-    } else if opts.delete {
-        delete(opts.src, opts.conn)
+    if let Some(target) = opts.list {
+        list(target, opts.conn)
+    } else if let Some(target) = opts.delete {
+        delete(target, opts.conn)
     } else {
-        if let Some(dest) = opts.dest {
-            transfer(opts.src, dest, opts.conn)
+        if let (Some(src), Some(dest)) = (opts.src, opts.dest) {
+            transfer(src, dest, opts.conn)
         } else {
             Err(anyhow!(
                 "file transfers require both <SRC> and <DEST> to be set"
@@ -43,16 +44,19 @@ fn main() -> Result<()> {
     }
 }
 
-/// A SwiftNav fileio API client
-#[derive(Parser)]
-#[clap(
-    name = "swift-files",
-    version = include_str!("../version.txt"),
-    setting = ArgRequiredElseHelp | DeriveDisplayOrder,
-    override_usage = "\
+#[cfg(target_os = "windows")]
+const SERIAL_NAME: &str = "COM1";
+#[cfg(target_os = "linux")]
+const SERIAL_NAME: &str = "/dev/ttyUSB0";
+#[cfg(target_os = "macos")]
+const SERIAL_NAME: &str = "/dev/cu.usbserial";
+
+lazy_static! {
+    static ref FILEIO_USAGE: String = format!(
+        "\
     swift-files <SRC> <DEST>
-    swift-files --list <SRC>
-    swift-files --delete <SRC>
+    swift-files --list <TARGET>
+    swift-files --delete <TARGET>
 
     TCP Examples:
         - List files on Piksi:
@@ -66,29 +70,40 @@ fn main() -> Result<()> {
 
     Serial Examples:
         - List files on Piksi:
-            swift-files --list /dev/ttyUSB0:/data/
+            swift-files --list {serial}:/data/
         - Read file from Piksi:
-            swift-files /dev/ttyUSB0:/persistent/config.ini ./config.ini
+            swift-files {serial}:/persistent/config.ini ./config.ini
         - Write file to Piksi:
-            swift-files ./config.ini /dev/ttyUSB0:/persistent/config.ini
+            swift-files ./config.ini {serial}:/persistent/config.ini
         - Delete file from Piksi:
-            swift-files --delete /dev/ttyUSB0:/persistent/unwanted_file
-    "
+            swift-files --delete {serial}:/persistent/unwanted_file
+    ",
+        serial = SERIAL_NAME
+    );
+}
+
+/// A SwiftNav fileio API client
+#[derive(Parser)]
+#[clap(
+    name = "swift-files",
+    version = include_str!("../version.txt"),
+    setting = ArgRequiredElseHelp | DeriveDisplayOrder,
+    override_usage = &**FILEIO_USAGE
 )]
 struct Opts {
     /// The source target
-    src: Target,
+    src: Option<Target>,
 
     /// The destination when transfering files
     dest: Option<Target>,
 
     /// List a directory
-    #[clap(long, short, conflicts_with_all = &["dest", "delete"])]
-    list: bool,
+    #[clap(long, short, value_name="TARGET", conflicts_with_all = &["dest", "delete"])]
+    list: Option<Target>,
 
     /// Delete a file
-    #[clap(long, conflicts_with_all = &["dest", "list"])]
-    delete: bool,
+    #[clap(long, value_name="TARGET", conflicts_with_all = &["dest", "list"])]
+    delete: Option<Target>,
 
     #[clap(flatten)]
     conn: ConnectionOpts,
@@ -117,7 +132,7 @@ struct ConnectionOpts {
 fn list(target: Target, conn: ConnectionOpts) -> Result<()> {
     let remote = target
         .into_remote()
-        .context("--list flag requires <SRC> to be a remote target")?;
+        .context("--list flag requires <TARGET> to be a remote target")?;
     let mut fileio = remote.connect(conn)?;
     let files = fileio.readdir(remote.path)?;
     for file in files {
@@ -129,7 +144,7 @@ fn list(target: Target, conn: ConnectionOpts) -> Result<()> {
 fn delete(target: Target, conn: ConnectionOpts) -> Result<()> {
     let remote = target
         .into_remote()
-        .context("--delete flag requires <SRC> to be a remote target")?;
+        .context("--delete flag requires <TARGET> to be a remote target")?;
     let fileio = remote.connect(conn)?;
     fileio.remove(remote.path)?;
     // without this sleep the program exits and the connection closes before the delete message

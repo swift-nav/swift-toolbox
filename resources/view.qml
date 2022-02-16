@@ -95,6 +95,7 @@ ApplicationWindow {
         // be slid up "under" the window.
         anchors.left: parent.left
         anchors.right: parent.right
+        height: Constants.tabInfoBar.height
         z: 2
         tabName: sideNavBar.currentTabName
         subTabNames: mainTabs.subTabNames

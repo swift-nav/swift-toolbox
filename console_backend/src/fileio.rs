@@ -88,6 +88,8 @@ impl Fileio {
             return Err(err);
         };
 
+        let mut total_bytes_read = 0;
+
         loop {
             select! {
                 recv(rx) -> msg => {
@@ -97,6 +99,7 @@ impl Fileio {
                         return Err(err.into());
                     }
                     let bytes_read = msg.contents.len();
+                    total_bytes_read += bytes_read;
                     on_progress(bytes_read as u64);
                     if bytes_read != READ_CHUNK_SIZE {
                         break;
@@ -116,13 +119,21 @@ impl Fileio {
                 },
                 recv(channel::tick(FILE_IO_TIMEOUT)) -> _ => {
                     self.link.unregister(key);
-                    bail!("Timed out waiting for file read response. Ensure SBP FILEIO message  {} ({}) is enabled.", MsgFileioReadResp::MESSAGE_TYPE, MsgFileioReadResp::MESSAGE_NAME);
+                    bail!("Timed out waiting for file read response. Ensure SBP FILEIO message {} ({}) is enabled.", MsgFileioReadResp::MESSAGE_TYPE, MsgFileioReadResp::MESSAGE_NAME);
                 }
             }
         }
 
         self.link.unregister(key);
-        Ok(())
+
+        if total_bytes_read == 0 {
+            Err(anyhow!(
+                "File {} read was 0 bytes long. This could indicate that the file doesn't exist or is not accessible.",
+                path
+            ))
+        } else {
+            Ok(())
+        }
     }
 
     /// Deletes `filename` on the remote device (if it exists) and writes the contents of `data` to the file.

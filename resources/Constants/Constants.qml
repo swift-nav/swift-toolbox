@@ -92,6 +92,7 @@ QtObject {
         })
         readonly property string infoButtonIconPath: "qrc:/images/fontawesome/info-circle-solid.svg"
         readonly property color infoButtonIconColor: swiftLightGrey
+        readonly property int height: 50
     }
 
     logoPopup: QtObject {

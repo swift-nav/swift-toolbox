@@ -776,6 +776,8 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
         globals_.setProperty("useOpenGL", True)  # type: ignore
     if args.no_antialiasing:
         globals_.setProperty("useAntiAliasing", False)  # type: ignore
+    if args.no_high_dpi:
+        globals_.setProperty("useHighDpi", False)  # type: ignore
     if args.no_prompts:
         globals_.setProperty("showPrompts", False)  # type: ignore
     if args.refresh_rate is not None:

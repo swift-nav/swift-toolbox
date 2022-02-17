@@ -6,6 +6,7 @@ QtObject {
     property int currentRefreshRate: 5 // 5 Hz
     property bool useOpenGL: false
     property bool useAntiAliasing: true
+    property bool useHighDpi: true
     property bool showPrompts: true
     property int initialMainTabIndex: 0 // Tracking
     property int initialSubTabIndex: -1 // Not triggered unless greater than -1. Defaults to first tab.

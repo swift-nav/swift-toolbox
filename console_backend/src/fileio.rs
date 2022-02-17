@@ -398,6 +398,8 @@ where
     let (err_tx, err_rx) = channel::unbounded();
     // forwards messages from the link to the main select loop
     let (res_tx, res_rx) = channel::unbounded();
+    // forwards a finished message to the main select loop when the file is completely read out
+    let (finished_tx, finished_rx) = channel::unbounded();
     // the request generating thread sends requests to the request making thread over this channel
     let (req_tx, req_rx) = channel::bounded(config.batch_size);
     let key = link.register(move |msg: MsgFileioWriteResp| {
@@ -436,6 +438,9 @@ where
                     req_rx,
                     send_parker,
                 );
+                finished_tx
+                    .send(true)
+                    .expect("finished channel disconnected");
             })
             .expect(THREAD_START_FAILURE);
         scope
@@ -452,6 +457,7 @@ where
                 );
             })
             .expect(THREAD_START_FAILURE);
+        let mut finished = false;
         loop {
             select! {
                 recv(res_rx) -> msg => {
@@ -463,7 +469,7 @@ where
                     trace!("got response {}", res.sequence);
                     send_unparker.unpark();
                     cb(res);
-                    if pending_map.lock().is_empty() {
+                    if finished && pending_map.lock().is_empty() {
                         let _ = pending_queue_tx.send(None);
                         timeout_unparker.unpark();
                         return Ok(());
@@ -472,6 +478,10 @@ where
                 recv(err_rx) -> msg => {
                     let err = msg.expect("error channel closed");
                     return Err(err);
+                }
+                recv(finished_rx) -> _ => {
+                    trace!("Finished sending file");
+                    finished = true;
                 }
             }
         }
@@ -508,6 +518,7 @@ fn req_maker_thd(
     let send_batch = move |batch: &mut Vec<MsgFileioWriteReq>| -> bool {
         let mut guard = pending_map.lock();
         for req in batch.drain(..config.batch_size.min(batch.len())) {
+            trace!("Sending seq {}", req.sequence);
             match sender.send(req.clone()) {
                 Ok(_) => {
                     let req = PendingReq::new(req);

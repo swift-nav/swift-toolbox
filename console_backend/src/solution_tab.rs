@@ -648,8 +648,7 @@ impl SolutionTab {
     pub fn solution_draw(&mut self, clear: bool, pause: bool) {
         if clear {
             self.clear_sln();
-        }
-        if pause {
+        } else if pause {
             return;
         }
         let current_mode: Option<String> = if !self.pending_draw_modes.is_empty() {

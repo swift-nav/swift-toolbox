@@ -137,22 +137,6 @@ Item {
 
         }
 
-        SwiftButton {
-            id: resetButton
-
-            ToolTip.visible: hovered
-            ToolTip.text: Constants.systemMonitor.resetButtonLabel
-            text: Constants.systemMonitor.resetButtonLabel
-            icon.source: Constants.icons.connectButtonPath
-            icon.width: Constants.systemMonitor.resetButtonIconSideLength
-            icon.height: Constants.systemMonitor.resetButtonIconSideLength
-            display: AbstractButton.TextUnderIcon
-            flat: true
-            onClicked: {
-                data_model.reset_device();
-            }
-        }
-
     }
 
 }

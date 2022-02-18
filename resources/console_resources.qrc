@@ -25,8 +25,10 @@
     <file>AdvancedTab.qml</file>
     <file>ConnectionScreen.qml</file>
     <file>AdvancedTabComponents/AdvancedSystemMonitorTab.qml</file>
+    <file>AdvancedTabComponents/AdvancedSystemMonitorTabLeftPane.qml</file>
     <file>AdvancedTabComponents/ThreadStateTable.qml</file>
     <file>AdvancedTabComponents/DeviceMonitor.qml</file>
+    <file>AdvancedTabComponents/DeviceMonitorAndResetDevice.qml</file>
     <file>AdvancedTabComponents/MetricsMonitor.qml</file>
     <file>AdvancedTabComponents/ObservationConnectionMonitor.qml</file>
     <file>AdvancedTabComponents/AdvancedImuTab.qml</file>

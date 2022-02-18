@@ -14,8 +14,8 @@ use crate::constants::{
     NUM_POINTS, TRACKING_UPDATE_PERIOD, TRK_RATE,
 };
 use crate::piksi_tools_constants::{
-    BDS2_B1_STR, BDS2_B2_STR, GAL_E1B_STR, GAL_E7I_STR, GLO_L1OF_STR, GLO_L2OF_STR, GPS_L1CA_STR,
-    GPS_L2CM_STR, QZS_L1CA_STR, QZS_L2CM_STR, SBAS_L1_STR,
+    BDS2_B1_STR, BDS2_B2_STR, GAL_E1B_STR, GAL_E1X_STR, GAL_E7I_STR, GAL_E7Q_STR, GLO_L1OF_STR,
+    GLO_L2OF_STR, GPS_L1CA_STR, GPS_L2CM_STR, QZS_L1CA_STR, QZS_L2CM_STR, SBAS_L1_STR,
 };
 use crate::shared_state::SharedState;
 use crate::types::{Cn0Age, Cn0Dict, Deque, ObservationMsg, SignalCodes};
@@ -46,7 +46,7 @@ use crate::utils::{serialize_capnproto_builder, signal_key_color, signal_key_lab
 #[derive(Debug)]
 pub struct TrackingSignalsTab {
     pub at_least_one_track_received: bool,
-    pub check_labels: [&'static str; 11],
+    pub check_labels: [&'static str; 13],
     pub client_sender: BoxedClientSender,
     pub cn0_age: Cn0Age,
     pub cn0_dict: Cn0Dict,
@@ -80,7 +80,9 @@ impl TrackingSignalsTab {
                 BDS2_B1_STR,
                 BDS2_B2_STR,
                 GAL_E1B_STR,
+                GAL_E1X_STR,
                 GAL_E7I_STR,
+                GAL_E7Q_STR,
                 QZS_L1CA_STR,
                 QZS_L2CM_STR,
                 SBAS_L1_STR,

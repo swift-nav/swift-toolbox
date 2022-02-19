@@ -171,7 +171,14 @@ impl SettingsTab {
     }
 
     pub fn export(&self, path: &Path) -> Result<()> {
-        let mut f = fs::File::create(path)?;
+        if path.to_string_lossy() == "-" {
+            self.export_impl(std::io::stdout())
+        } else {
+            self.export_impl(fs::File::create(path)?)
+        }
+    }
+
+    fn export_impl<T: std::io::Write>(&self, mut f: T) -> Result<()> {
         let settings = self.settings.lock();
         let groups = settings.groups();
         let mut conf = Ini::new();
@@ -187,7 +194,14 @@ impl SettingsTab {
     }
 
     pub fn import(&self, path: &Path) -> Result<()> {
-        let mut f = fs::File::open(path)?;
+        if path.to_string_lossy() == "-" {
+            self.import_impl(std::io::stdin())
+        } else {
+            self.import_impl(fs::File::create(path)?)
+        }
+    }
+
+    pub fn import_impl<T: std::io::Read>(&self, mut f: T) -> Result<()> {
         let conf = Ini::read_from(&mut f)?;
         let old_ethernet = self.set_if_group_changes(
             &conf,

@@ -11,5 +11,5 @@ rustflags = [
 ]
 
 [alias]
-files = "run --bin swift-files --no-default-features --features env_logger,indicatif --"
-settings = "run --bin swift-settings --no-default-features --features env_logger --"
+swift-files = "run --bin swift-files --no-default-features --features env_logger,indicatif --"
+swift-settings = "run --bin swift-settings --no-default-features --features env_logger --"

@@ -197,7 +197,7 @@ impl SettingsTab {
         if path.to_string_lossy() == "-" {
             self.import_impl(std::io::stdin())
         } else {
-            self.import_impl(fs::File::create(path)?)
+            self.import_impl(fs::File::open(path)?)
         }
     }
 

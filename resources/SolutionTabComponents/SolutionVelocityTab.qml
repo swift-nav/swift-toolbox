@@ -135,9 +135,7 @@ Item {
                 axisYRight: solutionVelocityYAxis
                 axisX: solutionVelocityXAxis
                 color: "transparent"
-                Component.onCompleted: {
-                    this.useOpenGL = Globals.useOpenGL;
-                }
+                useOpenGL: Globals.useOpenGL
 
                 XYPoint {
                     x: 0

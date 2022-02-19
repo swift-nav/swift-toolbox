@@ -888,6 +888,18 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     endpoint_main = backend_main.start()
     if found_help_arg:
         return 0
+    # Unfortunately it is not possible to access singletons directly using the PySide2 API.
+    # This approach stores the globals somwhere that can be grabbed and manipulated.
+    component = QQmlComponent(engine)
+    component.setData(
+        b'import QtQuick 2.0\nimport "Constants"\nItem{ property var globals: Globals }',  # type: ignore
+        QUrl("qrc:/grabGlobals.qml"),
+    )
+    globals_main = component.create()
+    globals_main = globals_main.property("globals")  # type: ignore
+
+    handle_cli_arguments(args_main, globals_main)
+
     engine.addImportPath("PySide2")
     engine.addImportPath(":/")
     engine.load(QUrl("qrc:/view.qml"))
@@ -933,17 +945,6 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     root_context.setContextProperty("logging_bar_model", logging_bar_model)
     root_context.setContextProperty("update_tab_model", update_tab_model)
     root_context.setContextProperty("data_model", data_model)
-    # Unfortunately it is not possible to access singletons directly using the PySide2 API.
-    # This approach stores the globals somwhere that can be grabbed and manipulated.
-    component = QQmlComponent(engine)
-    component.setData(
-        b'import QtQuick 2.0\nimport "Constants"\nItem{ property var globals: Globals }',  # type: ignore
-        QUrl("qrc:/grabGlobals.qml"),
-    )
-    globals_main = component.create()
-    globals_main = globals_main.property("globals")  # type: ignore
-
-    handle_cli_arguments(args_main, globals_main)
 
     server_thread = threading.Thread(
         target=receive_messages,

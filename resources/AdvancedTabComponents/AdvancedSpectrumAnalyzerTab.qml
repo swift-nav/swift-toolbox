@@ -65,9 +65,7 @@ Item {
                 axisYRight: advancedSpectrumAnalyzerYAxis
                 axisX: advancedSpectrumAnalyzerXAxis
                 color: "transparent"
-                Component.onCompleted: {
-                    this.useOpenGL = Globals.useOpenGL;
-                }
+                useOpenGL: Globals.useOpenGL
 
                 XYPoint {
                     x: -1

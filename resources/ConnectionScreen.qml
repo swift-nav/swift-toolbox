@@ -514,7 +514,7 @@ Item {
                     if ([disconnectedConstant, connectingConstant].includes(Globals.conn_state) && connectionData.conn_state == connectedConstant) {
                         connectionMessage.visible = false;
                         connMessage = "";
-                        stack.mainView();
+                        dialog.close();
                     }
                     Globals.conn_state = connectionData.conn_state;
                 }

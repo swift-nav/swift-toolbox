@@ -426,8 +426,7 @@ impl BaselineTab {
     fn solution_draw(&mut self, buttons: BaselineTabButtons) {
         if buttons.clear {
             self.clear_sln();
-        }
-        if buttons.pause {
+        } else if buttons.pause {
             return;
         }
         if buttons.reset {

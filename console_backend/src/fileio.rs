@@ -88,6 +88,8 @@ impl Fileio {
             return Err(err);
         };
 
+        let mut total_bytes_read = 0;
+
         loop {
             select! {
                 recv(rx) -> msg => {
@@ -97,6 +99,7 @@ impl Fileio {
                         return Err(err.into());
                     }
                     let bytes_read = msg.contents.len();
+                    total_bytes_read += bytes_read;
                     on_progress(bytes_read as u64);
                     if bytes_read != READ_CHUNK_SIZE {
                         break;
@@ -116,13 +119,21 @@ impl Fileio {
                 },
                 recv(channel::tick(FILE_IO_TIMEOUT)) -> _ => {
                     self.link.unregister(key);
-                    bail!("Timed out waiting for file read response. Ensure SBP FILEIO message  {} ({}) is enabled.", MsgFileioReadResp::MESSAGE_TYPE, MsgFileioReadResp::MESSAGE_NAME);
+                    bail!("Timed out waiting for file read response. Ensure SBP FILEIO message {} ({}) is enabled.", MsgFileioReadResp::MESSAGE_TYPE, MsgFileioReadResp::MESSAGE_NAME);
                 }
             }
         }
 
         self.link.unregister(key);
-        Ok(())
+
+        if total_bytes_read == 0 {
+            Err(anyhow!(
+                "File {} read was 0 bytes long. This could indicate that the file doesn't exist or is not accessible.",
+                path
+            ))
+        } else {
+            Ok(())
+        }
     }
 
     /// Deletes `filename` on the remote device (if it exists) and writes the contents of `data` to the file.
@@ -387,6 +398,8 @@ where
     let (err_tx, err_rx) = channel::unbounded();
     // forwards messages from the link to the main select loop
     let (res_tx, res_rx) = channel::unbounded();
+    // forwards a finished message to the main select loop when the file is completely read out
+    let (finished_tx, finished_rx) = channel::unbounded();
     // the request generating thread sends requests to the request making thread over this channel
     let (req_tx, req_rx) = channel::bounded(config.batch_size);
     let key = link.register(move |msg: MsgFileioWriteResp| {
@@ -425,6 +438,9 @@ where
                     req_rx,
                     send_parker,
                 );
+                finished_tx
+                    .send(true)
+                    .expect("finished channel disconnected");
             })
             .expect(THREAD_START_FAILURE);
         scope
@@ -441,6 +457,7 @@ where
                 );
             })
             .expect(THREAD_START_FAILURE);
+        let mut finished = false;
         loop {
             select! {
                 recv(res_rx) -> msg => {
@@ -452,7 +469,7 @@ where
                     trace!("got response {}", res.sequence);
                     send_unparker.unpark();
                     cb(res);
-                    if pending_map.lock().is_empty() {
+                    if finished && pending_map.lock().is_empty() {
                         let _ = pending_queue_tx.send(None);
                         timeout_unparker.unpark();
                         return Ok(());
@@ -461,6 +478,10 @@ where
                 recv(err_rx) -> msg => {
                     let err = msg.expect("error channel closed");
                     return Err(err);
+                }
+                recv(finished_rx) -> _ => {
+                    trace!("Finished sending file");
+                    finished = true;
                 }
             }
         }
@@ -497,6 +518,7 @@ fn req_maker_thd(
     let send_batch = move |batch: &mut Vec<MsgFileioWriteReq>| -> bool {
         let mut guard = pending_map.lock();
         for req in batch.drain(..config.batch_size.min(batch.len())) {
+            trace!("Sending seq {}", req.sequence);
             match sender.send(req.clone()) {
                 Ok(_) => {
                     let req = PendingReq::new(req);

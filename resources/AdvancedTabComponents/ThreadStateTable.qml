@@ -8,7 +8,6 @@ import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
 Item {
-    property variant columnWidths: [parent.width / 3, parent.width / 3, parent.width / 3]
     property real mouse_x: 0
     property variant entries: []
 
@@ -20,7 +19,7 @@ Item {
         z: Constants.genericTable.headerZOffset
 
         delegate: Rectangle {
-            implicitWidth: columnWidths[index]
+            implicitWidth: tableView.columnWidths[index]
             implicitHeight: Constants.genericTable.cellHeight
             border.color: Constants.genericTable.borderColor
 
@@ -49,9 +48,9 @@ Item {
                         var delta_x = (mouseX - mouse_x);
                         var next_idx = (index + 1) % 3;
                         var min_width = tableView.width / 6;
-                        if (columnWidths[index] + delta_x > min_width && columnWidths[next_idx] - delta_x > min_width) {
-                            columnWidths[index] += delta_x;
-                            columnWidths[next_idx] -= delta_x;
+                        if (tableView.columnWidths[index] + delta_x > min_width && tableView.columnWidths[next_idx] - delta_x > min_width) {
+                            tableView.columnWidths[index] += delta_x;
+                            tableView.columnWidths[next_idx] -= delta_x;
                         }
                         tableView.forceLayout();
                     }
@@ -82,7 +81,7 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        columnWidths: parent.columnWidths
+        columnWidths: [parent.width / 3, parent.width / 3, parent.width / 3]
 
         model: TableModel {
             id: tableModel

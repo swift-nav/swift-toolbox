@@ -1,6 +1,5 @@
 use std::{
     borrow::Cow,
-    convert::Infallible,
     fs::{self, File},
     io::{self, Write},
     path::PathBuf,
@@ -9,11 +8,9 @@ use std::{
 };
 
 use anyhow::{anyhow, Context};
-use clap::{
-    AppSettings::{ArgRequiredElseHelp, DeriveDisplayOrder},
-    Args, Parser,
-};
+use clap::{AppSettings::DeriveDisplayOrder, Args, Parser};
 use indicatif::{ProgressBar, ProgressStyle};
+use lazy_static::lazy_static;
 use sbp::{link::LinkSource, SbpIterExt};
 
 use console_backend::{
@@ -29,13 +26,13 @@ fn main() -> Result<()> {
     }
     env_logger::init();
     let opts = Opts::parse();
-    if opts.list {
-        list(opts.src, opts.conn)
-    } else if opts.delete {
-        delete(opts.src, opts.conn)
+    if let Some(target) = opts.list {
+        list(target, opts.conn)
+    } else if let Some(target) = opts.delete {
+        delete(target, opts.conn)
     } else {
-        if let Some(dest) = opts.dest {
-            transfer(opts.src, dest, opts.conn)
+        if let (Some(src), Some(dest)) = (opts.src, opts.dest) {
+            transfer(src, dest, opts.conn)
         } else {
             Err(anyhow!(
                 "file transfers require both <SRC> and <DEST> to be set"
@@ -44,52 +41,76 @@ fn main() -> Result<()> {
     }
 }
 
+#[cfg(target_os = "windows")]
+const SERIAL_NAME: &str = "COM1";
+#[cfg(target_os = "linux")]
+const SERIAL_NAME: &str = "/dev/ttyUSB0";
+#[cfg(target_os = "macos")]
+const SERIAL_NAME: &str = "/dev/cu.usbserial";
+
+lazy_static! {
+    static ref FILEIO_USAGE: String = format!(
+        "\
+    To copy a local file to a Swift device:
+        swift-files <FILE_PATH> <HOST>:<FILE_PATH>
+    To copy a file from a Swift device:
+        swift-files <HOST>:<FILE_PATH> <FILE_PATH>
+    To list files in a directory on a Swift device:
+        swift-files --list <HOST>:<DIRECTORY_PATH>
+    To delete a file on a Swift device:
+        swift-files --delete <HOST>:<FILE_PATH>
+
+    <HOST> can either be an IP address when the Swift device is connected
+    via TCP (for eg: 192.168.0.222) or the name of the serial device when
+    the Swift device is connected via serial (for eg: {serial}).
+    
+    TCP Examples:
+        - List files on Swift device:
+            swift-files --list 192.168.0.222:/data/
+        - Read file from Swift device:
+            swift-files 192.168.0.222:/persistent/config.ini ./config.ini
+        - Write file to Swift device:
+            swift-files ./config.ini 192.168.0.222:/persistent/config.ini
+        - Delete file from Swift device:
+            swift-files --delete 192.168.0.222:/persistent/unwanted_file
+
+    Serial Examples:
+        - List files on Swift device:
+            swift-files --list {serial}:/data/
+        - Read file from Swift device:
+            swift-files {serial}:/persistent/config.ini ./config.ini
+        - Write file to Swift device:
+            swift-files ./config.ini {serial}:/persistent/config.ini
+        - Delete file from Swift device:
+            swift-files --delete {serial}:/persistent/unwanted_file
+    ",
+        serial = SERIAL_NAME
+    );
+}
+
 /// A SwiftNav fileio API client
 #[derive(Parser)]
 #[clap(
     name = "swift-files",
     version = include_str!("../version.txt"),
-    setting = ArgRequiredElseHelp | DeriveDisplayOrder,
-    override_usage = "\
-    swift-files <SRC> <DEST>
-    swift-files --list <SRC>
-    swift-files --delete <SRC>
-
-    TCP Examples:
-        - List files on Piksi:
-            swift-files --list 192.168.0.222:/data/
-        - Read file from Piksi:
-            swift-files 192.168.0.222:/persistent/config.ini ./config.ini
-        - Write file to Piksi:
-            swift-files ./config.ini 192.168.0.222:/persistent/config.ini
-        - Delete file from Piksi:
-            swift-files --delete 192.168.0.222:/persistent/unwanted_file
-
-    Serial Examples:
-        - List files on Piksi:
-            swift-files --list /dev/ttyUSB0:/data/
-        - Read file from Piksi:
-            swift-files /dev/ttyUSB0:/persistent/config.ini ./config.ini
-        - Write file to Piksi:
-            swift-files ./config.ini /dev/ttyUSB0:/persistent/config.ini
-        - Delete file from Piksi:
-            swift-files --delete /dev/ttyUSB0:/persistent/unwanted_file
-    "
+    arg_required_else_help = true,
+    setting = DeriveDisplayOrder,
+    override_usage = &**FILEIO_USAGE
 )]
 struct Opts {
     /// The source target
-    src: Target,
+    src: Option<Target>,
 
     /// The destination when transfering files
     dest: Option<Target>,
 
     /// List a directory
-    #[clap(long, short, conflicts_with_all = &["dest", "delete"])]
-    list: bool,
+    #[clap(long, short, value_name="TARGET", conflicts_with_all = &["dest", "delete"])]
+    list: Option<Target>,
 
     /// Delete a file
-    #[clap(long, conflicts_with_all = &["dest", "list"])]
-    delete: bool,
+    #[clap(long, value_name="TARGET", conflicts_with_all = &["dest", "list"])]
+    delete: Option<Target>,
 
     #[clap(flatten)]
     conn: ConnectionOpts,
@@ -116,9 +137,9 @@ struct ConnectionOpts {
 }
 
 fn list(target: Target, conn: ConnectionOpts) -> Result<()> {
-    let remote = target
-        .into_remote()
-        .context("--list flag requires <SRC> to be a remote target")?;
+    let remote = target.into_remote().context(
+        "--list flag requires <TARGET> to be a remote target of the form <HOST>:<DIRECTORY_PATH>",
+    )?;
     let mut fileio = remote.connect(conn)?;
     let files = fileio.readdir(remote.path)?;
     for file in files {
@@ -128,9 +149,9 @@ fn list(target: Target, conn: ConnectionOpts) -> Result<()> {
 }
 
 fn delete(target: Target, conn: ConnectionOpts) -> Result<()> {
-    let remote = target
-        .into_remote()
-        .context("--delete flag requires <SRC> to be a remote target")?;
+    let remote = target.into_remote().context(
+        "--delete flag requires <TARGET> to be a remote target of the form <HOST>:<FILE_PATH>",
+    )?;
     let fileio = remote.connect(conn)?;
     fileio.remove(remote.path)?;
     // without this sleep the program exits and the connection closes before the delete message
@@ -157,7 +178,13 @@ fn read(src: Remote, dest: PathBuf, conn: ConnectionOpts) -> Result<()> {
     let (dest, pb): (Box<dyn Write + Send>, _) = if dest.to_str() == Some("-") {
         (Box::new(io::stdout()), ReadProgress::stdout())
     } else {
-        (Box::new(File::create(dest)?), ReadProgress::file())
+        (
+            Box::new(
+                File::create(&dest)
+                    .with_context(|| format!("Could not open {:?} for writing", &dest))?,
+            ),
+            ReadProgress::file(),
+        )
     };
     let mut fileio = src.connect(conn)?;
     pb.set_message("Reading...");
@@ -170,7 +197,8 @@ fn read(src: Remote, dest: PathBuf, conn: ConnectionOpts) -> Result<()> {
 
 fn write(src: PathBuf, dest: Remote, conn: ConnectionOpts) -> Result<()> {
     let mut fileio = dest.connect(conn)?;
-    let file = fs::File::open(src)?;
+    let file =
+        fs::File::open(&src).with_context(|| format!("Could not open {:?} for reading", &src))?;
     let size = file.metadata()?.len();
     let pb = ProgressBar::new(size);
     pb.enable_steady_tick(1000);
@@ -203,12 +231,17 @@ impl Target {
 }
 
 impl FromStr for Target {
-    type Err = Infallible;
+    type Err = String;
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         match s.find(':') {
             Some(idx) => {
                 let (host, path) = s.split_at(idx);
+
+                if path == ":" {
+                    return Err(format!("No remote path given in '{}'", s));
+                }
+
                 Ok(Target::Remote(Remote {
                     host: host.to_owned(),
                     path: path[1..].to_owned(),

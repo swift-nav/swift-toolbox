@@ -9,7 +9,7 @@ MainTab {
     id: advancedTab
 
     subTabNames: ["System Monitor", "IMU", "Magnetometer", "Networking", "Spectrum Analyzer", "INS"]
-    curSubTabIndex: Globals.initialMainTabIndex == 6 ? Globals.initialSubTabIndex : 0
+    curSubTabIndex: 0
 
     StackLayout {
         id: advancedBarLayout

@@ -9,7 +9,7 @@ MainTab {
     id: solutionTab
 
     subTabNames: ["Position", "Velocity"]
-    curSubTabIndex: Globals.initialMainTabIndex == 1 ? Globals.initialSubTabIndex : 0
+    curSubTabIndex: 0
 
     SplitView {
         id: solutionSplitView

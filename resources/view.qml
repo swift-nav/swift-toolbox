@@ -253,6 +253,8 @@ ApplicationWindow {
 
             function connectionScreen() {
                 stack.currentIndex = 0;
+                Globals.initialMainTabIndex = sideNavBar.currentIndex;
+                Globals.initialSubTabIndex = tabInfoBar.curSubTabIndex;
                 sideNavBar.currentIndex = -1;
                 sideNavBar.checkedButton = null;
             }
@@ -262,9 +264,10 @@ ApplicationWindow {
             }
 
             function mainView() {
-                if (sideNavBar.currentIndex < 0)
+                if (sideNavBar.currentIndex < 0) {
                     sideNavBar.clickButton(Globals.initialMainTabIndex);
-
+                    tabInfoBar.curSubTabIndex = Globals.initialSubTabIndex;
+                }
                 stack.currentIndex = 1;
             }
 

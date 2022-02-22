@@ -99,9 +99,11 @@ Rectangle {
                 id: tabBarRepeater
 
                 onModelChanged: {
-                    if (Globals.initialSubTabIndex > -1) {
-                        tabBar.currentIndex = Globals.initialSubTabIndex;
-                        Globals.initialSubTabIndex = -1;
+                    if (count > 0) {
+                        let button = tabBar.itemAt(tabBar.currentIndex);
+                        if (!button.checked)
+                            button.toggle();
+
                     }
                 }
                 model: subTabNames

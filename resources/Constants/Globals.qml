@@ -9,7 +9,7 @@ QtObject {
     property bool useHighDpi: true
     property bool showPrompts: true
     property int initialMainTabIndex: 0 // Tracking
-    property int initialSubTabIndex: -1 // Not triggered unless greater than -1. Defaults to first tab.
+    property int initialSubTabIndex: 0 // Signals
     property bool showCsvLog: false
     property bool showFileio: false
     property int height: 600

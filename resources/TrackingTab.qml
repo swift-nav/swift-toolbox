@@ -9,7 +9,7 @@ MainTab {
     id: trackingTab
 
     subTabNames: ["Signals", "Sky Plot"]
-    curSubTabIndex: Globals.initialMainTabIndex == 0 ? Globals.initialSubTabIndex : 0
+    curSubTabIndex: 0
 
     StackLayout {
         id: trackingBarLayout

@@ -835,7 +835,6 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
                 found_help_arg = True
         args_main, _ = parser.parse_known_args(passed_args)
     if args_main.no_high_dpi:
-        QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_DisableHighDpiScaling)
         QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_Use96Dpi)
     else:
         QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)

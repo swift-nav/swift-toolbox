@@ -9,13 +9,16 @@ from PySide2.QtCharts import QtCharts
 from .constants import Keys, QTKeys
 
 
-TRACKING_SIGNALS_TAB: Dict[str, Any] = {
-    Keys.POINTS: [],
-    Keys.CHECK_LABELS: [],
-    Keys.LABELS: [],
-    Keys.COLORS: [],
-    Keys.XMIN_OFFSET: 0,
-}
+def tracking_signals_tab_update() -> Dict[str, Any]:
+    return {
+        Keys.POINTS: [],
+        Keys.CHECK_LABELS: [],
+        Keys.LABELS: [],
+        Keys.COLORS: [],
+        Keys.XMIN_OFFSET: 0,
+    }
+
+TRACKING_SIGNALS_TAB: List[Dict[str, Any]] = [tracking_signals_tab_update()]
 
 
 class TrackingSignalsPoints(QObject):
@@ -35,7 +38,7 @@ class TrackingSignalsPoints(QObject):
     enabled_series_changed = Signal()
 
     def get_num_labels(self) -> int:  # pylint:disable=no-self-use
-        return len(TRACKING_SIGNALS_TAB[Keys.LABELS])
+        return len(TRACKING_SIGNALS_TAB[0][Keys.LABELS])
 
     num_labels = Property(int, get_num_labels, notify=num_labels_changed)  # type: ignore
 
@@ -69,7 +72,7 @@ class TrackingSignalsPoints(QObject):
     @Slot(int)  # type: ignore
     def getLabel(self, index) -> str:  # pylint:disable=no-self-use
         """Getter for one of the TRACKING_SIGNALS_TAB[Keys.LABELS]."""
-        return TRACKING_SIGNALS_TAB[Keys.LABELS][index]
+        return TRACKING_SIGNALS_TAB[0][Keys.LABELS][index]
 
     @Slot(QtCharts.QAbstractSeries)  # type: ignore
     def addSeries(self, series) -> None:
@@ -84,23 +87,24 @@ class TrackingSignalsPoints(QObject):
 
     @Slot()  # type: ignore
     def fill_all_series(self) -> None:
-        cur_num_labels = len(TRACKING_SIGNALS_TAB[Keys.LABELS])
+        tracking_signals_tab = TRACKING_SIGNALS_TAB[0]
+        cur_num_labels = len(tracking_signals_tab[Keys.LABELS])
         if self._num_labels != cur_num_labels:
             self._num_labels = cur_num_labels
             self.num_labels_changed.emit(cur_num_labels)  # type: ignore
-        all_points = TRACKING_SIGNALS_TAB[Keys.POINTS]
+        all_points = tracking_signals_tab[Keys.POINTS]
         points_for_all_series = all_points[:-1]
         if self._empty_series is not None and len(all_points) > 0:
             self._empty_series.replace(all_points[-1])
 
-        labels = TRACKING_SIGNALS_TAB[Keys.LABELS]
-        colors = TRACKING_SIGNALS_TAB[Keys.COLORS]
-        if self._check_labels != TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS]:
-            self._check_labels = TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS]
+        labels = tracking_signals_tab[Keys.LABELS]
+        colors = tracking_signals_tab[Keys.COLORS]
+        if self._check_labels != tracking_signals_tab[Keys.CHECK_LABELS]:
+            self._check_labels = tracking_signals_tab[Keys.CHECK_LABELS]
             self.check_labels_changed.emit()  # type: ignore
 
         if len(all_points) != 0:
-            xaxis_min = all_points[0][-1].x() + TRACKING_SIGNALS_TAB[Keys.XMIN_OFFSET]
+            xaxis_min = all_points[0][-1].x() + tracking_signals_tab[Keys.XMIN_OFFSET]
             if self._xaxis_min != xaxis_min:
                 self._xaxis_min = xaxis_min
                 self.xaxis_min_changed.emit()  # type: ignore

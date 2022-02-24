@@ -137,6 +137,7 @@ from .status_bar import (
 from .tracking_signals_tab import (
     TrackingSignalsPoints,
     TRACKING_SIGNALS_TAB,
+    tracking_signals_tab_update,
 )
 
 from .tracking_sky_plot_tab import (
@@ -336,14 +337,16 @@ def receive_messages(app_, backend, messages):
             FUSION_STATUS_FLAGS[Keys.NHC] = m.fusionStatusFlagsStatus.nhc
             FUSION_STATUS_FLAGS[Keys.ZEROVEL] = m.fusionStatusFlagsStatus.zerovel
         elif m.which == Message.Union.TrackingSignalsStatus:
-            TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS][:] = m.trackingSignalsStatus.checkLabels
-            TRACKING_SIGNALS_TAB[Keys.LABELS][:] = m.trackingSignalsStatus.labels
-            TRACKING_SIGNALS_TAB[Keys.COLORS][:] = m.trackingSignalsStatus.colors
-            TRACKING_SIGNALS_TAB[Keys.POINTS][:] = [
+            data = tracking_signals_tab_update()
+            data[Keys.CHECK_LABELS][:] = m.trackingSignalsStatus.checkLabels
+            data[Keys.LABELS][:] = m.trackingSignalsStatus.labels
+            data[Keys.COLORS][:] = m.trackingSignalsStatus.colors
+            data[Keys.POINTS][:] = [
                 [QPointF(point.x, point.y) for point in m.trackingSignalsStatus.data[idx]]
                 for idx in range(len(m.trackingSignalsStatus.data))
             ]
-            TRACKING_SIGNALS_TAB[Keys.XMIN_OFFSET] = m.trackingSignalsStatus.xminOffset
+            data[Keys.XMIN_OFFSET] = m.trackingSignalsStatus.xminOffset
+            TRACKING_SIGNALS_TAB[0] = data
         elif m.which == Message.Union.TrackingSkyPlotStatus:
             TRACKING_SKY_PLOT_TAB[Keys.SATS][:] = [
                 [QPointF(point.az, point.el) for point in m.trackingSkyPlotStatus.sats[idx]]

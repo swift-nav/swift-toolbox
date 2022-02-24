@@ -944,7 +944,6 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     server_thread = QThread()
 
     server_thread.started.connect(receive_thread_handler.run)
-    receive_thread_handler.done.connect(server_thread.quit)
     receive_thread_handler.moveToThread(server_thread)
     server_thread.start()
 

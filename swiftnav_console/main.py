@@ -3,7 +3,6 @@
 import argparse
 import os
 import sys
-import threading
 
 from typing import List, Any, Optional, Tuple
 
@@ -11,7 +10,7 @@ import capnp  # type: ignore
 
 from PySide2.QtWidgets import QApplication  # type: ignore
 
-from PySide2.QtCore import QObject, QUrl, QPointF, Slot
+from PySide2.QtCore import QObject, QUrl, QPointF, Slot, QThread
 from PySide2.QtCharts import QtCharts  # pylint: disable=unused-import
 
 from PySide2 import QtQml, QtCore
@@ -136,7 +135,6 @@ from .status_bar import (
 
 from .tracking_signals_tab import (
     TrackingSignalsPoints,
-    TRACKING_SIGNALS_TAB,
     tracking_signals_tab_update,
 )
 
@@ -346,7 +344,7 @@ def receive_messages(app_, backend, messages):
                 for idx in range(len(m.trackingSignalsStatus.data))
             ]
             data[Keys.XMIN_OFFSET] = m.trackingSignalsStatus.xminOffset
-            TRACKING_SIGNALS_TAB[0] = data
+            TrackingSignalsPoints.post_data_update(data)
         elif m.which == Message.Union.TrackingSkyPlotStatus:
             TRACKING_SKY_PLOT_TAB[Keys.SATS][:] = [
                 [QPointF(point.az, point.el) for point in m.trackingSkyPlotStatus.sats[idx]]
@@ -948,21 +946,24 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     root_context.setContextProperty("update_tab_model", update_tab_model)
     root_context.setContextProperty("data_model", data_model)
 
-    server_thread = threading.Thread(
-        target=receive_messages,
-        args=(
-            app,
-            backend_main,
-            messages_main,
-        ),
-        daemon=True,
-    )
+    class ReceiveThreadHandler(QObject):
+        def run(self):
+            receive_messages(app, backend_main, messages_main)
 
+    receive_thread_handler = ReceiveThreadHandler()
+    server_thread = QThread()
+
+    server_thread.started.connect(receive_thread_handler.run)
+    receive_thread_handler.done.connect(server_thread.quit)
+    receive_thread_handler.moveToThread(server_thread)
     server_thread.start()
+
     app.exec_()
 
     endpoint_main.shutdown()
-    server_thread.join()
+
+    server_thread.exit()
+    server_thread.wait()
 
     return 0
 

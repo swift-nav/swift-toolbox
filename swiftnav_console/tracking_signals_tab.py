@@ -36,9 +36,26 @@ class TrackingSignalsPoints(QObject):
     check_labels_changed = Signal()
     all_series_changed = Signal()
     enabled_series_changed = Signal()
+    data_updated = Signal()
+
+    @classmethod
+    def post_data_update(cls, update_data) -> None:
+        TRACKING_SIGNALS_TAB[0] = update_data
+        cls._instance.data_updated.emit()
+
+    def __init__(self):
+        super().__init__()
+        assert getattr(self.__class__, '_instance', None) is None
+        self.__class__._instance = self
+        self.tracking_signals_tab = TRACKING_SIGNALS_TAB[0]
+        self.data_updated.connect(self.handle_data_updated)
+
+    @Slot()
+    def handle_data_updated(self) -> None:
+        self.tracking_signals_tab = TRACKING_SIGNALS_TAB[0]
 
     def get_num_labels(self) -> int:  # pylint:disable=no-self-use
-        return len(TRACKING_SIGNALS_TAB[0][Keys.LABELS])
+        return len(self.tracking_signals_tab[Keys.LABELS])
 
     num_labels = Property(int, get_num_labels, notify=num_labels_changed)  # type: ignore
 
@@ -87,24 +104,23 @@ class TrackingSignalsPoints(QObject):
 
     @Slot()  # type: ignore
     def fill_all_series(self) -> None:
-        tracking_signals_tab = TRACKING_SIGNALS_TAB[0]
-        cur_num_labels = len(tracking_signals_tab[Keys.LABELS])
+        cur_num_labels = len(self.tracking_signals_tab[Keys.LABELS])
         if self._num_labels != cur_num_labels:
             self._num_labels = cur_num_labels
             self.num_labels_changed.emit(cur_num_labels)  # type: ignore
-        all_points = tracking_signals_tab[Keys.POINTS]
+        all_points = self.tracking_signals_tab[Keys.POINTS]
         points_for_all_series = all_points[:-1]
         if self._empty_series is not None and len(all_points) > 0:
             self._empty_series.replace(all_points[-1])
 
-        labels = tracking_signals_tab[Keys.LABELS]
-        colors = tracking_signals_tab[Keys.COLORS]
-        if self._check_labels != tracking_signals_tab[Keys.CHECK_LABELS]:
-            self._check_labels = tracking_signals_tab[Keys.CHECK_LABELS]
+        labels = self.tracking_signals_tab[Keys.LABELS]
+        colors = self.tracking_signals_tab[Keys.COLORS]
+        if self._check_labels != self.tracking_signals_tab[Keys.CHECK_LABELS]:
+            self._check_labels = self.tracking_signals_tab[Keys.CHECK_LABELS]
             self.check_labels_changed.emit()  # type: ignore
 
         if len(all_points) != 0:
-            xaxis_min = all_points[0][-1].x() + tracking_signals_tab[Keys.XMIN_OFFSET]
+            xaxis_min = all_points[0][-1].x() + self.tracking_signals_tab[Keys.XMIN_OFFSET]
             if self._xaxis_min != xaxis_min:
                 self._xaxis_min = xaxis_min
                 self.xaxis_min_changed.emit()  # type: ignore

@@ -986,9 +986,7 @@ impl Default for UpdateTabContext {
 
 impl Clone for UpdateTabContext {
     fn clone(&self) -> Self {
-        UpdateTabContext {
-            0: Arc::clone(&self.0),
-        }
+        UpdateTabContext(Arc::clone(&self.0))
     }
 }
 

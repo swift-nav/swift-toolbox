@@ -39,17 +39,17 @@ class TrackingSignalsPoints(QObject):
     _data_updated = Signal()
     _tracking_signals_tab: Dict[str, Any] = {}
 
-    @classmethod
-    def post_data_update(cls, update_data) -> None:
-        TRACKING_SIGNALS_TAB[0] = update_data
-        cls._instance._data_updated.emit()
-
     def __init__(self):
         super().__init__()
         assert getattr(self.__class__, '_instance', None) is None
         self.__class__._instance = self
         self._tracking_signals_tab = TRACKING_SIGNALS_TAB[0]
         self._data_updated.connect(self.handle_data_updated)
+
+    @classmethod
+    def post_data_update(cls, update_data: Dict[str, Any]) -> None:
+        TRACKING_SIGNALS_TAB[0] = update_data
+        cls._instance._data_updated.emit()
 
     @Slot()
     def handle_data_updated(self) -> None:

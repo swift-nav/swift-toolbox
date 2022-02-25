@@ -4,6 +4,7 @@ import QtQuick.Controls 2.15
 import QtQuick.Controls.Material 2.15
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
+import "TrackingTabComponents" as TrackingTabComponents
 
 ApplicationWindow {
     id: main
@@ -15,332 +16,336 @@ ApplicationWindow {
     minimumHeight: Globals.minimumHeight
     font.pointSize: Constants.mediumPointSize
     visible: true
-    title: (loggingBar.sbpRecording ? "[L] " : "     ") + statusBar.title
+    // title: (loggingBar.sbpRecording ? "[L] " : "     ") + statusBar.title
     color: Constants.swiftWhite
 
-    TextEdit {
-        id: textEdit
-
-        visible: false
-        text: Globals.copyClipboard
-    }
-
-    Shortcut {
-        sequences: [StandardKey.Copy]
-        onActivated: {
-            textEdit.selectAll();
-            textEdit.copy();
-            Globals.currentSelectedTable = null;
-        }
-    }
-
-    MainDialogView {
-        id: dialogStack
-
+    TrackingTabComponents.TrackingSignalsTab {
         anchors.fill: parent
     }
 
-    LogoPopup {
-        id: logoPopup
+    // TextEdit {
+    //     id: textEdit
 
-        anchors.fill: parent
-    }
+    //     visible: false
+    //     text: Globals.copyClipboard
+    // }
 
-    UpdateNotifications {
-        anchors.fill: parent
-    }
+    // Shortcut {
+    //     sequences: [StandardKey.Copy]
+    //     onActivated: {
+    //         textEdit.selectAll();
+    //         textEdit.copy();
+    //         Globals.currentSelectedTable = null;
+    //     }
+    // }
 
-    MouseArea {
-        enabled: false
-        anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.rightMargin: parent.width - openRect.x + openRect.anchors.rightMargin
-        z: 1
-        height: 30
-        visible: tabInfoBar.state == "closed"
-        hoverEnabled: true
-        acceptedButtons: Qt.NoButton
-        onPositionChanged: tabInfoBarOpenTimer.restart()
-        onExited: tabInfoBarOpenTimer.stop()
+    // MainDialogView {
+    //     id: dialogStack
 
-        Timer {
-            id: tabInfoBarOpenTimer
+    //     anchors.fill: parent
+    // }
 
-            interval: 200
-            onTriggered: tabInfoBar.open()
-        }
+    // LogoPopup {
+    //     id: logoPopup
 
-    }
+    //     anchors.fill: parent
+    // }
 
-    TabInfoBar {
-        id: tabInfoBar
+    // UpdateNotifications {
+    //     anchors.fill: parent
+    // }
 
-        property int openDuration: 1000
-        property int closeDuration: 350
-        property bool autoClose: Constants.tabInfoBar.autoClose
+    // MouseArea {
+    //     enabled: false
+    //     anchors.top: parent.top
+    //     anchors.left: parent.left
+    //     anchors.right: parent.right
+    //     anchors.rightMargin: parent.width - openRect.x + openRect.anchors.rightMargin
+    //     z: 1
+    //     height: 30
+    //     visible: tabInfoBar.state == "closed"
+    //     hoverEnabled: true
+    //     acceptedButtons: Qt.NoButton
+    //     onPositionChanged: tabInfoBarOpenTimer.restart()
+    //     onExited: tabInfoBarOpenTimer.stop()
 
-        function cancelAutoClose() {
-            tabInfoBarCloseTimer.stop();
-        }
+    //     Timer {
+    //         id: tabInfoBarOpenTimer
 
-        function closeAfterDelaySubtabless() {
-            if (tabName.length > 0 && subTabNames.length == 0)
-                tabInfoBarCloseTimer.restart();
-            else
-                cancelAutoClose();
-        }
+    //         interval: 200
+    //         onTriggered: tabInfoBar.open()
+    //     }
 
-        // We explicitly do not anchor in the vertical, so the item can
-        // be slid up "under" the window.
-        anchors.left: parent.left
-        anchors.right: parent.right
-        height: Constants.tabInfoBar.height
-        z: 2
-        tabName: sideNavBar.currentTabName
-        subTabNames: mainTabs.subTabNames
-        onAboutClicked: logoPopup.open()
-        // If there is no subtabs, then close it after some time.
-        onTabNameChanged: {
-            if (autoClose)
-                closeAfterDelaySubtabless();
+    // }
 
-        }
-        onEntered: cancelAutoClose()
-        onExited: {
-            if (autoClose)
-                closeAfterDelaySubtabless();
+    // TabInfoBar {
+    //     id: tabInfoBar
 
-        }
-        states: [
-            // The opened state sets the y position so the item is
-            // positioned so it's top is right at the top of the parent
-            // item.
-            State {
-                name: "opened"
+    //     property int openDuration: 1000
+    //     property int closeDuration: 350
+    //     property bool autoClose: Constants.tabInfoBar.autoClose
 
-                PropertyChanges {
-                    target: tabInfoBar
-                    y: 0
-                }
+    //     function cancelAutoClose() {
+    //         tabInfoBarCloseTimer.stop();
+    //     }
 
-            },
-            // The closed state sets the y position so the item is
-            // positioned so it's bottom is right at the top of the
-            // parent item, and all but one pixel height of the item is
-            // hidden. One pixel is still shown so there is a border
-            // line at the top of the view.
-            State {
-                name: "closed"
+    //     function closeAfterDelaySubtabless() {
+    //         if (tabName.length > 0 && subTabNames.length == 0)
+    //             tabInfoBarCloseTimer.restart();
+    //         else
+    //             cancelAutoClose();
+    //     }
 
-                PropertyChanges {
-                    target: tabInfoBar
-                    y: -height + 1
-                }
+    //     // We explicitly do not anchor in the vertical, so the item can
+    //     // be slid up "under" the window.
+    //     anchors.left: parent.left
+    //     anchors.right: parent.right
+    //     height: Constants.tabInfoBar.height
+    //     z: 2
+    //     tabName: sideNavBar.currentTabName
+    //     subTabNames: mainTabs.subTabNames
+    //     onAboutClicked: logoPopup.open()
+    //     // If there is no subtabs, then close it after some time.
+    //     onTabNameChanged: {
+    //         if (autoClose)
+    //             closeAfterDelaySubtabless();
 
-            }
-        ]
-        // Make the opened/closed state transitions smooth.
-        transitions: [
-            Transition {
-                from: "opened"
-                to: "closed"
+    //     }
+    //     onEntered: cancelAutoClose()
+    //     onExited: {
+    //         if (autoClose)
+    //             closeAfterDelaySubtabless();
 
-                NumberAnimation {
-                    target: tabInfoBar
-                    properties: "y"
-                    duration: tabInfoBar.closeDuration
-                    easing.type: Easing.OutQuad
-                }
+    //     }
+    //     states: [
+    //         // The opened state sets the y position so the item is
+    //         // positioned so it's top is right at the top of the parent
+    //         // item.
+    //         State {
+    //             name: "opened"
 
-            },
-            Transition {
-                from: "closed"
-                to: "opened"
+    //             PropertyChanges {
+    //                 target: tabInfoBar
+    //                 y: 0
+    //             }
 
-                NumberAnimation {
-                    target: tabInfoBar
-                    properties: "y"
-                    duration: tabInfoBar.openDuration
-                    easing.type: Easing.OutQuad
-                }
+    //         },
+    //         // The closed state sets the y position so the item is
+    //         // positioned so it's bottom is right at the top of the
+    //         // parent item, and all but one pixel height of the item is
+    //         // hidden. One pixel is still shown so there is a border
+    //         // line at the top of the view.
+    //         State {
+    //             name: "closed"
 
-            }
-        ]
+    //             PropertyChanges {
+    //                 target: tabInfoBar
+    //                 y: -height + 1
+    //             }
 
-        Timer {
-            id: tabInfoBarCloseTimer
+    //         }
+    //     ]
+    //     // Make the opened/closed state transitions smooth.
+    //     transitions: [
+    //         Transition {
+    //             from: "opened"
+    //             to: "closed"
 
-            interval: 3000
-            onTriggered: parent.close()
-        }
+    //             NumberAnimation {
+    //                 target: tabInfoBar
+    //                 properties: "y"
+    //                 duration: tabInfoBar.closeDuration
+    //                 easing.type: Easing.OutQuad
+    //             }
 
-    }
+    //         },
+    //         Transition {
+    //             from: "closed"
+    //             to: "opened"
 
-    Rectangle {
-        id: openRect
+    //             NumberAnimation {
+    //                 target: tabInfoBar
+    //                 properties: "y"
+    //                 duration: tabInfoBar.openDuration
+    //                 easing.type: Easing.OutQuad
+    //             }
 
-        anchors.right: parent.right
-        anchors.rightMargin: 5
-        y: -3
-        z: 1
-        implicitHeight: openArrow.implicitHeight + 9
-        implicitWidth: 20
-        color: Constants.swiftControlBackground
-        radius: 3
-        clip: true
+    //         }
+    //     ]
 
-        MouseArea {
-            anchors.fill: parent
-            hoverEnabled: true
-            onClicked: tabInfoBar.open()
-            onEntered: openArrowAnimation.start()
-            onExited: {
-                if (openArrowAnimation.running) {
-                    openArrowAnimation.stop();
-                    openArrow.y = openArrowAnimation.startingPropertyValue;
-                }
-            }
-        }
+    //     Timer {
+    //         id: tabInfoBarCloseTimer
 
-        PositionLoopAnimation {
-            id: openArrowAnimation
+    //         interval: 3000
+    //         onTriggered: parent.close()
+    //     }
 
-            target: openArrow
-            property: "y"
-            startingPropertyValue: 0
-            totalDuration: 700
-            reverse: true
-        }
+    // }
 
-        Text {
-            id: openArrow
+    // Rectangle {
+    //     id: openRect
 
-            anchors.horizontalCenter: parent.horizontalCenter
-            y: (parent.height - height) - 3
-            text: "▼"
-            color: Constants.swiftLightGrey
-            onYChanged: {
-                if (!openArrowAnimation.running)
-                    openArrowAnimation.startingPropertyValue = y;
+    //     anchors.right: parent.right
+    //     anchors.rightMargin: 5
+    //     y: -3
+    //     z: 1
+    //     implicitHeight: openArrow.implicitHeight + 9
+    //     implicitWidth: 20
+    //     color: Constants.swiftControlBackground
+    //     radius: 3
+    //     clip: true
 
-            }
-        }
+    //     MouseArea {
+    //         anchors.fill: parent
+    //         hoverEnabled: true
+    //         onClicked: tabInfoBar.open()
+    //         onEntered: openArrowAnimation.start()
+    //         onExited: {
+    //             if (openArrowAnimation.running) {
+    //                 openArrowAnimation.stop();
+    //                 openArrow.y = openArrowAnimation.startingPropertyValue;
+    //             }
+    //         }
+    //     }
 
-    }
+    //     PositionLoopAnimation {
+    //         id: openArrowAnimation
 
-    RowLayout {
-        property alias stackView: dialogStack.dialogStack
+    //         target: openArrow
+    //         property: "y"
+    //         startingPropertyValue: 0
+    //         totalDuration: 700
+    //         reverse: true
+    //     }
 
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: tabInfoBar.bottom
-        anchors.bottom: parent.bottom
-        spacing: 0
+    //     Text {
+    //         id: openArrow
 
-        SideNavBar {
-            id: sideNavBar
+    //         anchors.horizontalCenter: parent.horizontalCenter
+    //         y: (parent.height - height) - 3
+    //         text: "▼"
+    //         color: Constants.swiftLightGrey
+    //         onYChanged: {
+    //             if (!openArrowAnimation.running)
+    //                 openArrowAnimation.startingPropertyValue = y;
 
-            Layout.fillHeight: true
-            Layout.minimumWidth: Constants.sideNavBar.tabBarWidth
-            enabled: stack.currentIndex != 0
-            dataRate: statusBar.dataRate
-            solidConnection: statusBar.solidConnection
-        }
+    //         }
+    //     }
 
-        StackLayout {
-            id: stack
+    // }
 
-            function connectionScreen() {
-                stack.currentIndex = 0;
-                sideNavBar.currentIndex = -1;
-                sideNavBar.checkedButton = null;
-            }
+    // RowLayout {
+    //     property alias stackView: dialogStack.dialogStack
 
-            function connectionScreenVisible() {
-                return stack.currentIndex == 0;
-            }
+    //     anchors.left: parent.left
+    //     anchors.right: parent.right
+    //     anchors.top: tabInfoBar.bottom
+    //     anchors.bottom: parent.bottom
+    //     spacing: 0
 
-            function mainView() {
-                if (sideNavBar.currentIndex < 0)
-                    sideNavBar.clickButton(Globals.initialMainTabIndex);
+    //     SideNavBar {
+    //         id: sideNavBar
 
-                stack.currentIndex = 1;
-            }
+    //         Layout.fillHeight: true
+    //         Layout.minimumWidth: Constants.sideNavBar.tabBarWidth
+    //         enabled: stack.currentIndex != 0
+    //         dataRate: statusBar.dataRate
+    //         solidConnection: statusBar.solidConnection
+    //     }
 
-            function mainViewVisible() {
-                return stack.currentIndex == 1;
-            }
+    //     StackLayout {
+    //         id: stack
 
-            currentIndex: 0
-            Layout.fillHeight: true
-            Layout.fillWidth: true
+    //         function connectionScreen() {
+    //             stack.currentIndex = 0;
+    //             sideNavBar.currentIndex = -1;
+    //             sideNavBar.checkedButton = null;
+    //         }
 
-            ConnectionScreen {
-            }
+    //         function connectionScreenVisible() {
+    //             return stack.currentIndex == 0;
+    //         }
 
-            ColumnLayout {
-                id: mainView
+    //         function mainView() {
+    //             if (sideNavBar.currentIndex < 0)
+    //                 sideNavBar.clickButton(Globals.initialMainTabIndex);
 
-                spacing: Constants.topLevelSpacing
+    //             stack.currentIndex = 1;
+    //         }
 
-                SplitView {
-                    orientation: Qt.Vertical
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    Layout.alignment: Qt.AlignTop
+    //         function mainViewVisible() {
+    //             return stack.currentIndex == 1;
+    //         }
 
-                    MainTabs {
-                        id: mainTabs
+    //         currentIndex: 0
+    //         Layout.fillHeight: true
+    //         Layout.fillWidth: true
 
-                        curSubTabIndex: tabInfoBar.curSubTabIndex
-                        SplitView.fillHeight: true
-                        currentIndex: sideNavBar.currentIndex
-                    }
+    //         ConnectionScreen {
+    //         }
 
-                    ColumnLayout {
-                        SplitView.preferredHeight: loggingBar.preferredHeight + logPanel.preferredHeight
-                        SplitView.minimumHeight: loggingBar.preferredHeight
-                        spacing: Constants.topLevelSpacing
+    //         ColumnLayout {
+    //             id: mainView
 
-                        LoggingBar {
-                            id: loggingBar
+    //             spacing: Constants.topLevelSpacing
 
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: preferredHeight
-                        }
+    //             SplitView {
+    //                 orientation: Qt.Vertical
+    //                 Layout.fillWidth: true
+    //                 Layout.fillHeight: true
+    //                 Layout.alignment: Qt.AlignTop
 
-                        LogPanel {
-                            id: logPanel
+    //                 MainTabs {
+    //                     id: mainTabs
 
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                        }
+    //                     curSubTabIndex: tabInfoBar.curSubTabIndex
+    //                     SplitView.fillHeight: true
+    //                     currentIndex: sideNavBar.currentIndex
+    //                 }
 
-                    }
+    //                 ColumnLayout {
+    //                     SplitView.preferredHeight: loggingBar.preferredHeight + logPanel.preferredHeight
+    //                     SplitView.minimumHeight: loggingBar.preferredHeight
+    //                     spacing: Constants.topLevelSpacing
 
-                }
+    //                     LoggingBar {
+    //                         id: loggingBar
 
-                StatusBar {
-                    id: statusBar
+    //                         Layout.fillWidth: true
+    //                         Layout.preferredHeight: preferredHeight
+    //                     }
 
-                    Layout.fillWidth: true
-                }
+    //                     LogPanel {
+    //                         id: logPanel
 
-            }
+    //                         Layout.fillWidth: true
+    //                         Layout.fillHeight: true
+    //                     }
 
-        }
+    //                 }
 
-    }
+    //             }
 
-    Rectangle {
-        z: -1
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: -1
-        height: 2
-        color: Constants.swiftGrey
-    }
+    //             StatusBar {
+    //                 id: statusBar
+
+    //                 Layout.fillWidth: true
+    //             }
+
+    //         }
+
+    //     }
+
+    // }
+
+    // Rectangle {
+    //     z: -1
+    //     anchors.left: parent.left
+    //     anchors.right: parent.right
+    //     anchors.bottom: parent.bottom
+    //     anchors.bottomMargin: -1
+    //     height: 2
+    //     color: Constants.swiftGrey
+    // }
 
 }

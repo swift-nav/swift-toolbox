@@ -552,8 +552,7 @@ impl SettingsTab {
             .clone();
         let in_config = conf
             .section(Some(group))
-            .map(|s| s.get(name))
-            .flatten()
+            .and_then(|s| s.get(name))
             .is_some();
         self.write_setting(group, name, value)?;
         if !in_config {
@@ -714,8 +713,7 @@ impl Settings {
     fn get<'a, 'b>(&'a self, group: &'b str, name: &'b str) -> Result<&'a SettingsEntry> {
         self.inner
             .get(group)
-            .map(|g| g.get(name))
-            .flatten()
+            .and_then(|g| g.get(name))
             .ok_or_else(|| anyhow!("unknown setting: group: {} name: {}", group, name))
     }
 

@@ -117,7 +117,7 @@ pub fn refresh_connection_frontend(client_sender: &BoxedClientSender, shared_sta
         .init_available_flows(AVAILABLE_FLOWS.len() as u32);
 
     for (i, flow) in AVAILABLE_FLOWS.iter().enumerate() {
-        available_flows.set(i as u32, &flow.to_string());
+        available_flows.set(i as u32, flow.as_ref());
     }
 
     let addresses = shared_state.address_history();

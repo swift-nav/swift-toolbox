@@ -17,6 +17,7 @@ Rectangle {
     property bool settingsHealthy: false
     property real mouse_x: 0
     property int curRowLength: 0
+    property int lastEntriesLen: 0
 
     function clearTableModel() {
         tableView.model.clear();
@@ -260,9 +261,10 @@ Rectangle {
                     };
                     lastShowExpert = showExpert;
                 }
-                if (entries.length != tableView.model.rows.length)
+                if (entries.length != lastEntriesLen) {
+                    lastEntriesLen = entries.length;
                     tableView.model.clear();
-
+                }
                 var offset = 0;
                 entries.forEach((entry, idx, entries) => {
                     var new_row;

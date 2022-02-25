@@ -264,9 +264,7 @@ impl Deref for ArcBool {
 
 impl Clone for ArcBool {
     fn clone(&self) -> Self {
-        ArcBool {
-            0: Arc::clone(&self.0),
-        }
+        ArcBool(Arc::clone(&self.0))
     }
 }
 

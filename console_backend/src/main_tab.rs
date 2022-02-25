@@ -67,13 +67,13 @@ impl MainTab {
     pub fn new(shared_state: SharedState, client_sender: BoxedClientSender) -> MainTab {
         let sbp_logging_format = shared_state.sbp_logging_format();
         // reopen an existing log if we disconnected
-        let sbp_logger = shared_state
-            .sbp_logging_filepath()
-            .map(|path| match sbp_logging_format {
-                SbpLogging::SBP_JSON => SbpLogger::open_sbp_json(path).ok(),
-                SbpLogging::SBP => SbpLogger::open_sbp(path).ok(),
-            })
-            .flatten();
+        let sbp_logger =
+            shared_state
+                .sbp_logging_filepath()
+                .and_then(|path| match sbp_logging_format {
+                    SbpLogging::SBP_JSON => SbpLogger::open_sbp_json(path).ok(),
+                    SbpLogging::SBP => SbpLogger::open_sbp(path).ok(),
+                });
         let last_sbp_logging = if sbp_logger.is_none() && shared_state.sbp_logging() {
             false
         } else {

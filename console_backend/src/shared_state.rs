@@ -348,9 +348,7 @@ impl Default for SharedState {
 
 impl Clone for SharedState {
     fn clone(&self) -> Self {
-        SharedState {
-            0: Arc::clone(&self.0),
-        }
+        SharedState(Arc::clone(&self.0))
     }
 }
 

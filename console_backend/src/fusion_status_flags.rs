@@ -52,9 +52,7 @@ impl Default for FusionStatus {
 
 impl Clone for FusionStatus {
     fn clone(&self) -> Self {
-        FusionStatus {
-            0: Arc::clone(&self.0),
-        }
+        FusionStatus(Arc::clone(&self.0))
     }
 }
 

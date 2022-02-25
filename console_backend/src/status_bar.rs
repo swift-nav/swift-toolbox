@@ -553,9 +553,7 @@ impl Default for Heartbeat {
 
 impl Clone for Heartbeat {
     fn clone(&self) -> Self {
-        Heartbeat {
-            0: Arc::clone(&self.0),
-        }
+        Heartbeat(Arc::clone(&self.0))
     }
 }
 

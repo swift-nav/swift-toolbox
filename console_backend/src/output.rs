@@ -185,7 +185,7 @@ mod tests {
         let filepath = filepath.join(TEST_FILEPATH);
         let filepath = filepath.to_str().unwrap();
         {
-            let mut csv_s = CsvSerializer::new(filepath.to_string()).unwrap();
+            let mut csv_s = CsvSerializer::new(filepath).unwrap();
             let dataset_first = TestDataSet {
                 float: 13_f64,
                 string: String::from("37"),

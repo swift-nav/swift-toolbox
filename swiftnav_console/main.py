@@ -10,7 +10,7 @@ import capnp  # type: ignore
 
 from PySide2.QtWidgets import QApplication  # type: ignore
 
-from PySide2.QtCore import QObject, QUrl, QPointF, Slot, QThread
+from PySide2.QtCore import QObject, QUrl, QPointF, QThread, QTimer, Slot
 from PySide2.QtCharts import QtCharts  # pylint: disable=unused-import
 
 from PySide2 import QtQml, QtCore
@@ -224,18 +224,45 @@ TAB_LAYOUT = {
 capnp.remove_import_hook()  # pylint: disable=no-member
 
 
-def receive_messages(app_, backend, messages):
-    while True:
-        buffer = backend.fetch_message()
+class BackendMessageReceiver(QObject):
+
+    def __init__(self, app, backend, messages):
+        super().__init__()
+        self._app = app
+        self._backend = backend
+        self._messages = messages
+        self._thread = QThread()
+        self._thread.started.connect(self._handle_started)  # pylint: disable=no-member
+        self.moveToThread(self._thread)
+
+    def _handle_started(self):
+        QTimer.singleShot(0, self.receive_messages)
+
+    def start(self):
+        self._thread.start()
+
+    def join(self):
+        self._thread.wait()
+
+    @Slot()  # type: ignore
+    def receive_messages(self):
+        if not self._receive_messages():
+            self._thread.exit()
+        else:
+            QTimer.singleShot(0, self.receive_messages)
+
+    def _receive_messages(self):
+        buffer = self._backend.fetch_message()
         if not buffer:
             print("terminating GUI loop", file=sys.stderr)
-            break
-        Message = messages.Message
+            return False
+        Message = self._messages.Message
         m = Message.from_bytes(buffer)
         if m.which == Message.Union.Status:
             app_state = ConnectionState(m.status.text)
             if app_state == ConnectionState.CLOSED:
-                return app_.quit()
+                self._app.quit()
+                return True
             if app_state == ConnectionState.DISCONNECTED:
                 SETTINGS_TABLE[Keys.ENTRIES] = []
             CONNECTION[Keys.CONNECTION_STATE] = app_state
@@ -436,13 +463,12 @@ def receive_messages(app_, backend, messages):
                 for entry in m.insSettingsChangeResponse.recommendedSettings
             ]
             SETTINGS_TAB[Keys.NEW_INS_CONFIRMATON] = True
-        else:
-            pass
+        return True
 
 
 class DataModel(QObject):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
 
-    endpoint: console_backend.server.ServerEndpoint  # pylint: disable=no-member
+    endpoint: console_backend.server.ServerEndpoint  # pylint: disable=no-member,c-extension-no-member
     messages: Any
 
     def __init__(self, endpoint, messages):
@@ -875,7 +901,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     engine.objectCreated.connect(handle_qml_load_errors)  # pylint: disable=no-member
 
     capnp_path = get_capnp_path()
-    backend_main = console_backend.server.Server()  # pylint: disable=no-member
+    backend_main = console_backend.server.Server()  # pylint: disable=no-member,c-extension-no-member
     endpoint_main = backend_main.start()
     if found_help_arg:
         return 0
@@ -936,23 +962,14 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
 
     handle_cli_arguments(args_main, globals_main)
 
-    class ReceiveThreadHandler(QObject):
-        def run(self):
-            receive_messages(app, backend_main, messages_main)
-
-    receive_thread_handler = ReceiveThreadHandler()
-    server_thread = QThread()
-
-    server_thread.started.connect(receive_thread_handler.run)
-    receive_thread_handler.moveToThread(server_thread)
-    server_thread.start()
+    backend_msg_receiver = BackendMessageReceiver(app, backend_main, messages_main)
+    backend_msg_receiver.start()
 
     app.exec_()
 
     endpoint_main.shutdown()
 
-    server_thread.exit()
-    server_thread.wait()
+    backend_msg_receiver.join()
 
     return 0
 

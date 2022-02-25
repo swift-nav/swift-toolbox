@@ -47,7 +47,7 @@ from .logging_bar import (
 from .advanced_imu_tab import (
     AdvancedImuModel,
     AdvancedImuPoints,
-    ADVANCED_IMU_TAB,
+    advanced_imu_tab_update,
 )
 
 from .advanced_magnetometer_tab import (
@@ -309,11 +309,13 @@ class BackendMessageReceiver(QObject):
         elif m.which == Message.Union.BaselineTableStatus:
             BASELINE_TABLE[Keys.ENTRIES][:] = [[entry.key, entry.val] for entry in m.baselineTableStatus.data]
         elif m.which == Message.Union.AdvancedImuStatus:
-            ADVANCED_IMU_TAB[Keys.FIELDS_DATA][:] = m.advancedImuStatus.fieldsData
-            ADVANCED_IMU_TAB[Keys.POINTS][:] = [
+            advanced_imu_tab = advanced_imu_tab_update()
+            advanced_imu_tab[Keys.FIELDS_DATA][:] = m.advancedImuStatus.fieldsData
+            advanced_imu_tab[Keys.POINTS][:] = [
                 [QPointF(point.x, point.y) for point in m.advancedImuStatus.data[idx]]
                 for idx in range(len(m.advancedImuStatus.data))
             ]
+            AdvancedImuPoints.post_data_update(advanced_imu_tab)
         elif m.which == Message.Union.AdvancedSpectrumAnalyzerStatus:
             ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.CHANNEL] = m.advancedSpectrumAnalyzerStatus.channel
             ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.POINTS][:] = [

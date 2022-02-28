@@ -28,7 +28,7 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             legend.visible: false
-            antialiasing: true
+            antialiasing: Globals.useAntiAliasing
             backgroundColor: "transparent"
             onWidthChanged: {
                 polarChartWidthChanging = true;
@@ -139,6 +139,7 @@ Item {
                 axisYRight: axisRadial
                 axisX: axisAngular
                 color: "transparent"
+                useOpenGL: Globals.useOpenGL
 
                 XYPoint {
                     x: 0

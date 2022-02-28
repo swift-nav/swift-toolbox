@@ -258,7 +258,7 @@ Item {
             plotAreaColor: Constants.commonChart.areaColor
             backgroundColor: "transparent"
             legend.visible: false
-            antialiasing: true
+            antialiasing: Globals.useAntiAliasing
 
             margins {
                 top: 0
@@ -371,6 +371,7 @@ Item {
                 axisY: solutionPositionYAxis
                 axisX: solutionPositionXAxis
                 color: "transparent"
+                useOpenGL: Globals.useOpenGL
 
                 XYPoint {
                     x: 0

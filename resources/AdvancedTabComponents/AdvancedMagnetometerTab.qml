@@ -33,7 +33,7 @@ Item {
             plotAreaColor: Constants.commonChart.areaColor
             backgroundColor: "transparent"
             legend.visible: false
-            antialiasing: true
+            antialiasing: Globals.useAntiAliasing
             titleFont: Constants.commonChart.titleFont
 
             margins {
@@ -126,6 +126,7 @@ Item {
                 axisYRight: advancedMagnetometerYAxis
                 axisX: advancedMagnetometerXAxis
                 color: "transparent"
+                useOpenGL: Globals.useOpenGL
 
                 XYPoint {
                     x: 0
@@ -180,7 +181,7 @@ Item {
             Label {
                 text: Constants.advancedMagnetometer.suggestionText
                 font.italic: true
-                antialiasing: true
+                antialiasing: Globals.useAntiAliasing
                 anchors.horizontalCenter: parent.horizontalCenter
             }
 

@@ -40,7 +40,7 @@ Item {
             plotAreaColor: Constants.commonChart.areaColor
             backgroundColor: "transparent"
             legend.visible: false
-            antialiasing: true
+            antialiasing: Globals.useAntiAliasing
 
             margins {
                 top: 0

@@ -12,13 +12,13 @@ Item {
         height: Constants.advancedImu.insStatusImageWidth
         smooth: true
         source: Constants.advancedImu.okStatusPath
-        antialiasing: true
+        antialiasing: Globals.useAntiAliasing
 
         ColorOverlay {
             anchors.fill: parent
             source: parent
             color: Constants.advancedImu.okStatusColor
-            antialiasing: true
+            antialiasing: Globals.useAntiAliasing
         }
 
     }

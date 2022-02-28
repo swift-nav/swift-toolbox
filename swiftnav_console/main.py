@@ -774,6 +774,10 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
         globals_.setProperty("showFileio", True)  # type: ignore
     if args.use_opengl:
         globals_.setProperty("useOpenGL", True)  # type: ignore
+    if args.no_antialiasing:
+        globals_.setProperty("useAntiAliasing", False)  # type: ignore
+    if args.no_high_dpi:
+        globals_.setProperty("useHighDpi", False)  # type: ignore
     if args.no_prompts:
         globals_.setProperty("showPrompts", False)  # type: ignore
     if args.refresh_rate is not None:
@@ -812,6 +816,8 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     parser.add_argument("--show-file-connection", action="store_true")
     parser.add_argument("--no-prompts", action="store_true")
     parser.add_argument("--use-opengl", action="store_true")
+    parser.add_argument("--no-high-dpi", action="store_true")
+    parser.add_argument("--no-antialiasing", action="store_true")
     parser.add_argument("--refresh-rate", type=int)
     parser.add_argument("--tab")
     parser.add_argument("--show-csv-log", action="store_true")
@@ -828,8 +834,11 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
             if arg in HELP_CLI_ARGS:
                 found_help_arg = True
         args_main, _ = parser.parse_known_args(passed_args)
-    QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
-    QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
+    if args_main.no_high_dpi:
+        QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_Use96Dpi)
+    else:
+        QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
+        QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon(":/images/icon.ico"))
     app.setOrganizationName(ApplicationMetadata.ORGANIZATION_NAME)
@@ -878,6 +887,18 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     endpoint_main = backend_main.start()
     if found_help_arg:
         return 0
+    # Unfortunately it is not possible to access singletons directly using the PySide2 API.
+    # This approach stores the globals somwhere that can be grabbed and manipulated.
+    component = QQmlComponent(engine)
+    component.setData(
+        b'import QtQuick 2.0\nimport "Constants"\nItem{ property var globals: Globals }',  # type: ignore
+        QUrl("qrc:/grabGlobals.qml"),
+    )
+    globals_main = component.create()
+    globals_main = globals_main.property("globals")  # type: ignore
+
+    handle_cli_arguments(args_main, globals_main)
+
     engine.addImportPath("PySide2")
     engine.addImportPath(":/")
     engine.load(QUrl("qrc:/view.qml"))
@@ -923,17 +944,6 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     root_context.setContextProperty("logging_bar_model", logging_bar_model)
     root_context.setContextProperty("update_tab_model", update_tab_model)
     root_context.setContextProperty("data_model", data_model)
-    # Unfortunately it is not possible to access singletons directly using the PySide2 API.
-    # This approach stores the globals somwhere that can be grabbed and manipulated.
-    component = QQmlComponent(engine)
-    component.setData(
-        b'import QtQuick 2.0\nimport "Constants"\nItem{ property var globals: Globals }',  # type: ignore
-        QUrl("qrc:/grabGlobals.qml"),
-    )
-    globals_main = component.create()
-    globals_main = globals_main.property("globals")  # type: ignore
-
-    handle_cli_arguments(args_main, globals_main)
 
     server_thread = threading.Thread(
         target=receive_messages,

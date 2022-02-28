@@ -46,7 +46,7 @@ QtObject {
     readonly property string fontFamily: "Roboto Condensed"
     property FontLoader robotoCondensedLightFont
     readonly property string lightFontFamily: robotoCondensedLightFont.name
-    readonly property real fontScaleFactor: Qt.platform.os == "osx" ? 1.5 : 1
+    readonly property real fontScaleFactor: (Qt.platform.os == "osx" && Globals.useHighDpi) ? 1.5 : 1
     readonly property real xSmallPointSize: fontScaleFactor * 6
     readonly property real smallPointSize: fontScaleFactor * 7
     readonly property real mediumPointSize: fontScaleFactor * 8

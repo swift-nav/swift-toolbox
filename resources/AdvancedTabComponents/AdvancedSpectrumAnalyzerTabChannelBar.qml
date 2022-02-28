@@ -18,7 +18,7 @@ RowLayout {
         text: Constants.advancedSpectrumAnalyzer.dropdownLabel
         font.bold: true
         color: Constants.commonChart.titleColor
-        antialiasing: true
+        antialiasing: Globals.useAntiAliasing
     }
 
     ComboBox {
@@ -41,7 +41,7 @@ RowLayout {
     Label {
         text: Constants.advancedSpectrumAnalyzer.dropdownRowSuggestionText
         font.italic: true
-        antialiasing: true
+        antialiasing: Globals.useAntiAliasing
     }
 
     Item {

@@ -32,7 +32,7 @@ Item {
             plotAreaColor: Constants.commonChart.areaColor
             backgroundColor: "transparent"
             legend.visible: false
-            antialiasing: true
+            antialiasing: Globals.useAntiAliasing
             titleFont: Constants.commonChart.titleFont
 
             margins {
@@ -65,6 +65,7 @@ Item {
                 axisYRight: advancedSpectrumAnalyzerYAxis
                 axisX: advancedSpectrumAnalyzerXAxis
                 color: "transparent"
+                useOpenGL: Globals.useOpenGL
 
                 XYPoint {
                     x: -1

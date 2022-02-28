@@ -6,7 +6,7 @@ description = "Starts the console with the correct python installation"
 edition = "2018"
 
 [dependencies]
-pyo3 = { version = "0.15", features = [
+pyo3 = { version = "0.16", features = [
   "auto-initialize",
 ], default-features = false }
 

@@ -53,7 +53,7 @@ from .advanced_imu_tab import (
 from .advanced_magnetometer_tab import (
     AdvancedMagnetometerModel,
     AdvancedMagnetometerPoints,
-    ADVANCED_MAGNETOMETER_TAB,
+    advanced_magnetometer_tab_update,
 )
 
 from .advanced_networking_tab import (
@@ -349,12 +349,14 @@ class BackendMessageReceiver(QObject):
             ADVANCED_SYSTEM_MONITOR_TAB[Keys.ZYNQ_TEMP] = m.advancedSystemMonitorStatus.zynqTemp
             ADVANCED_SYSTEM_MONITOR_TAB[Keys.FE_TEMP] = m.advancedSystemMonitorStatus.feTemp
         elif m.which == Message.Union.AdvancedMagnetometerStatus:
-            ADVANCED_MAGNETOMETER_TAB[Keys.YMAX] = m.advancedMagnetometerStatus.ymax
-            ADVANCED_MAGNETOMETER_TAB[Keys.YMIN] = m.advancedMagnetometerStatus.ymin
-            ADVANCED_MAGNETOMETER_TAB[Keys.POINTS][:] = [
+            data = advanced_magnetometer_tab_update()
+            data[Keys.YMAX] = m.advancedMagnetometerStatus.ymax
+            data[Keys.YMIN] = m.advancedMagnetometerStatus.ymin
+            data[Keys.POINTS][:] = [
                 [QPointF(point.x, point.y) for point in m.advancedMagnetometerStatus.data[idx]]
                 for idx in range(len(m.advancedMagnetometerStatus.data))
             ]
+            AdvancedMagnetometerPoints.post_data_update(data)
         elif m.which == Message.Union.FusionStatusFlagsStatus:
             FUSION_STATUS_FLAGS[Keys.GNSSPOS] = m.fusionStatusFlagsStatus.gnsspos
             FUSION_STATUS_FLAGS[Keys.GNSSVEL] = m.fusionStatusFlagsStatus.gnssvel

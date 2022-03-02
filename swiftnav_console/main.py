@@ -3,7 +3,6 @@
 import argparse
 import os
 import sys
-import threading
 
 from typing import List, Any, Optional, Tuple
 
@@ -11,7 +10,7 @@ import capnp  # type: ignore
 
 from PySide2.QtWidgets import QApplication  # type: ignore
 
-from PySide2.QtCore import QObject, QUrl, QPointF, Slot
+from PySide2.QtCore import QObject, QUrl, QPointF, QThread, QTimer, Slot
 from PySide2.QtCharts import QtCharts  # pylint: disable=unused-import
 
 from PySide2 import QtQml, QtCore
@@ -48,7 +47,7 @@ from .logging_bar import (
 from .advanced_imu_tab import (
     AdvancedImuModel,
     AdvancedImuPoints,
-    ADVANCED_IMU_TAB,
+    advanced_imu_tab_update,
 )
 
 from .advanced_magnetometer_tab import (
@@ -136,7 +135,7 @@ from .status_bar import (
 
 from .tracking_signals_tab import (
     TrackingSignalsPoints,
-    TRACKING_SIGNALS_TAB,
+    tracking_signals_tab_update,
 )
 
 from .tracking_sky_plot_tab import (
@@ -225,18 +224,44 @@ TAB_LAYOUT = {
 capnp.remove_import_hook()  # pylint: disable=no-member
 
 
-def receive_messages(app_, backend, messages):
-    while True:
-        buffer = backend.fetch_message()
+class BackendMessageReceiver(QObject):
+    def __init__(self, app, backend, messages):
+        super().__init__()
+        self._app = app
+        self._backend = backend
+        self._messages = messages
+        self._thread = QThread()
+        self._thread.started.connect(self._handle_started)  # pylint: disable=no-member
+        self.moveToThread(self._thread)
+
+    def _handle_started(self):
+        QTimer.singleShot(0, self.receive_messages)
+
+    def start(self):
+        self._thread.start()
+
+    def join(self):
+        self._thread.wait()
+
+    @Slot()  # type: ignore
+    def receive_messages(self):
+        if not self._receive_messages():
+            self._thread.exit()
+        else:
+            QTimer.singleShot(0, self.receive_messages)
+
+    def _receive_messages(self):
+        buffer = self._backend.fetch_message()
         if not buffer:
             print("terminating GUI loop", file=sys.stderr)
-            break
-        Message = messages.Message
+            return False
+        Message = self._messages.Message
         m = Message.from_bytes(buffer)
         if m.which == Message.Union.Status:
             app_state = ConnectionState(m.status.text)
             if app_state == ConnectionState.CLOSED:
-                return app_.quit()
+                self._app.quit()
+                return True
             if app_state == ConnectionState.DISCONNECTED:
                 SETTINGS_TABLE[Keys.ENTRIES] = []
             CONNECTION[Keys.CONNECTION_STATE] = app_state
@@ -283,11 +308,13 @@ def receive_messages(app_, backend, messages):
         elif m.which == Message.Union.BaselineTableStatus:
             BASELINE_TABLE[Keys.ENTRIES][:] = [[entry.key, entry.val] for entry in m.baselineTableStatus.data]
         elif m.which == Message.Union.AdvancedImuStatus:
-            ADVANCED_IMU_TAB[Keys.FIELDS_DATA][:] = m.advancedImuStatus.fieldsData
-            ADVANCED_IMU_TAB[Keys.POINTS][:] = [
+            advanced_imu_tab = advanced_imu_tab_update()
+            advanced_imu_tab[Keys.FIELDS_DATA][:] = m.advancedImuStatus.fieldsData
+            advanced_imu_tab[Keys.POINTS][:] = [
                 [QPointF(point.x, point.y) for point in m.advancedImuStatus.data[idx]]
                 for idx in range(len(m.advancedImuStatus.data))
             ]
+            AdvancedImuPoints.post_data_update(advanced_imu_tab)
         elif m.which == Message.Union.AdvancedSpectrumAnalyzerStatus:
             ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.CHANNEL] = m.advancedSpectrumAnalyzerStatus.channel
             ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.POINTS][:] = [
@@ -336,14 +363,16 @@ def receive_messages(app_, backend, messages):
             FUSION_STATUS_FLAGS[Keys.NHC] = m.fusionStatusFlagsStatus.nhc
             FUSION_STATUS_FLAGS[Keys.ZEROVEL] = m.fusionStatusFlagsStatus.zerovel
         elif m.which == Message.Union.TrackingSignalsStatus:
-            TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS][:] = m.trackingSignalsStatus.checkLabels
-            TRACKING_SIGNALS_TAB[Keys.LABELS][:] = m.trackingSignalsStatus.labels
-            TRACKING_SIGNALS_TAB[Keys.COLORS][:] = m.trackingSignalsStatus.colors
-            TRACKING_SIGNALS_TAB[Keys.POINTS][:] = [
+            data = tracking_signals_tab_update()
+            data[Keys.CHECK_LABELS][:] = m.trackingSignalsStatus.checkLabels
+            data[Keys.LABELS][:] = m.trackingSignalsStatus.labels
+            data[Keys.COLORS][:] = m.trackingSignalsStatus.colors
+            data[Keys.POINTS][:] = [
                 [QPointF(point.x, point.y) for point in m.trackingSignalsStatus.data[idx]]
                 for idx in range(len(m.trackingSignalsStatus.data))
             ]
-            TRACKING_SIGNALS_TAB[Keys.XMIN_OFFSET] = m.trackingSignalsStatus.xminOffset
+            data[Keys.XMIN_OFFSET] = m.trackingSignalsStatus.xminOffset
+            TrackingSignalsPoints.post_data_update(data)
         elif m.which == Message.Union.TrackingSkyPlotStatus:
             TRACKING_SKY_PLOT_TAB[Keys.SATS][:] = [
                 [QPointF(point.az, point.el) for point in m.trackingSkyPlotStatus.sats[idx]]
@@ -435,13 +464,12 @@ def receive_messages(app_, backend, messages):
                 for entry in m.insSettingsChangeResponse.recommendedSettings
             ]
             SETTINGS_TAB[Keys.NEW_INS_CONFIRMATON] = True
-        else:
-            pass
+        return True
 
 
 class DataModel(QObject):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
 
-    endpoint: console_backend.server.ServerEndpoint  # pylint: disable=no-member
+    endpoint: console_backend.server.ServerEndpoint  # pylint: disable=no-member,c-extension-no-member
     messages: Any
 
     def __init__(self, endpoint, messages):
@@ -883,7 +911,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     engine.objectCreated.connect(handle_qml_load_errors)  # pylint: disable=no-member
 
     capnp_path = get_capnp_path()
-    backend_main = console_backend.server.Server()  # pylint: disable=no-member
+    backend_main = console_backend.server.Server()  # pylint: disable=no-member,c-extension-no-member
     endpoint_main = backend_main.start()
     if found_help_arg:
         return 0
@@ -945,21 +973,14 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     root_context.setContextProperty("update_tab_model", update_tab_model)
     root_context.setContextProperty("data_model", data_model)
 
-    server_thread = threading.Thread(
-        target=receive_messages,
-        args=(
-            app,
-            backend_main,
-            messages_main,
-        ),
-        daemon=True,
-    )
+    backend_msg_receiver = BackendMessageReceiver(app, backend_main, messages_main)
+    backend_msg_receiver.start()
 
-    server_thread.start()
     app.exec_()
 
     endpoint_main.shutdown()
-    server_thread.join()
+
+    backend_msg_receiver.join()
 
     return 0
 

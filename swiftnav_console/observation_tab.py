@@ -39,7 +39,7 @@ def showFlags(flags):
 
 
 def format_prn_string(sat, code):
-    return "{} ({})".format(sat, code)
+    return f"{sat} ({code})"
 
 
 REMOTE_OBSERVATION_TAB: Dict[str, Any] = {

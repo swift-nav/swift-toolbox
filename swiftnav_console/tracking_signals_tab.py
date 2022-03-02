@@ -9,15 +9,19 @@ from PySide2.QtCharts import QtCharts
 from .constants import Keys, QTKeys
 
 
-TRACKING_SIGNALS_TAB: Dict[str, Any] = {
-    Keys.POINTS: [],
-    Keys.CHECK_LABELS: [],
-    Keys.LABELS: [],
-    Keys.COLORS: [],
-    Keys.XMIN_OFFSET: 0,
-}
+def tracking_signals_tab_update() -> Dict[str, Any]:
+    return {
+        Keys.POINTS: [],
+        Keys.CHECK_LABELS: [],
+        Keys.LABELS: [],
+        Keys.COLORS: [],
+        Keys.XMIN_OFFSET: 0,
+    }
 
 
+TRACKING_SIGNALS_TAB: List[Dict[str, Any]] = [tracking_signals_tab_update()]
+
+# pylint:disable=too-many-instance-attributes
 class TrackingSignalsPoints(QObject):
 
     _num_labels: int = 0
@@ -33,9 +37,27 @@ class TrackingSignalsPoints(QObject):
     check_labels_changed = Signal()
     all_series_changed = Signal()
     enabled_series_changed = Signal()
+    _data_updated = Signal()
+    _tracking_signals_tab: Dict[str, Any] = {}
+
+    def __init__(self):
+        super().__init__()
+        assert getattr(self.__class__, "_instance", None) is None
+        self.__class__._instance = self
+        self._tracking_signals_tab = TRACKING_SIGNALS_TAB[0]
+        self._data_updated.connect(self.handle_data_updated)
+
+    @classmethod
+    def post_data_update(cls, update_data: Dict[str, Any]) -> None:
+        TRACKING_SIGNALS_TAB[0] = update_data
+        cls._instance._data_updated.emit()
+
+    @Slot()  # type: ignore
+    def handle_data_updated(self) -> None:
+        self._tracking_signals_tab = TRACKING_SIGNALS_TAB[0]
 
     def get_num_labels(self) -> int:  # pylint:disable=no-self-use
-        return len(TRACKING_SIGNALS_TAB[Keys.LABELS])
+        return len(self._tracking_signals_tab[Keys.LABELS])
 
     num_labels = Property(int, get_num_labels, notify=num_labels_changed)  # type: ignore
 
@@ -69,7 +91,7 @@ class TrackingSignalsPoints(QObject):
     @Slot(int)  # type: ignore
     def getLabel(self, index) -> str:  # pylint:disable=no-self-use
         """Getter for one of the TRACKING_SIGNALS_TAB[Keys.LABELS]."""
-        return TRACKING_SIGNALS_TAB[Keys.LABELS][index]
+        return self._tracking_signals_tab[Keys.LABELS][index]
 
     @Slot(QtCharts.QAbstractSeries)  # type: ignore
     def addSeries(self, series) -> None:
@@ -84,23 +106,23 @@ class TrackingSignalsPoints(QObject):
 
     @Slot()  # type: ignore
     def fill_all_series(self) -> None:
-        cur_num_labels = len(TRACKING_SIGNALS_TAB[Keys.LABELS])
+        cur_num_labels = len(self._tracking_signals_tab[Keys.LABELS])
         if self._num_labels != cur_num_labels:
             self._num_labels = cur_num_labels
             self.num_labels_changed.emit(cur_num_labels)  # type: ignore
-        all_points = TRACKING_SIGNALS_TAB[Keys.POINTS]
+        all_points = self._tracking_signals_tab[Keys.POINTS]
         points_for_all_series = all_points[:-1]
         if self._empty_series is not None and len(all_points) > 0:
             self._empty_series.replace(all_points[-1])
 
-        labels = TRACKING_SIGNALS_TAB[Keys.LABELS]
-        colors = TRACKING_SIGNALS_TAB[Keys.COLORS]
-        if self._check_labels != TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS]:
-            self._check_labels = TRACKING_SIGNALS_TAB[Keys.CHECK_LABELS]
+        labels = self._tracking_signals_tab[Keys.LABELS]
+        colors = self._tracking_signals_tab[Keys.COLORS]
+        if self._check_labels != self._tracking_signals_tab[Keys.CHECK_LABELS]:
+            self._check_labels = self._tracking_signals_tab[Keys.CHECK_LABELS]
             self.check_labels_changed.emit()  # type: ignore
 
         if len(all_points) != 0:
-            xaxis_min = all_points[0][-1].x() + TRACKING_SIGNALS_TAB[Keys.XMIN_OFFSET]
+            xaxis_min = all_points[0][-1].x() + self._tracking_signals_tab[Keys.XMIN_OFFSET]
             if self._xaxis_min != xaxis_min:
                 self._xaxis_min = xaxis_min
                 self.xaxis_min_changed.emit()  # type: ignore

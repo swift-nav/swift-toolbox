@@ -59,7 +59,7 @@ from .advanced_magnetometer_tab import (
 from .advanced_networking_tab import (
     AdvancedNetworkingModel,
     AdvancedNetworkingData,
-    ADVANCED_NETWORKING_TAB,
+    advanced_networking_tab_update,
 )
 
 from .advanced_spectrum_analyzer_tab import (
@@ -325,13 +325,15 @@ class BackendMessageReceiver(QObject):
             ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.XMAX] = m.advancedSpectrumAnalyzerStatus.xmax
             ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.XMIN] = m.advancedSpectrumAnalyzerStatus.xmin
         elif m.which == Message.Union.AdvancedNetworkingStatus:
-            ADVANCED_NETWORKING_TAB[Keys.RUNNING] = m.advancedNetworkingStatus.running
-            ADVANCED_NETWORKING_TAB[Keys.IP_ADDRESS] = m.advancedNetworkingStatus.ipAddress
-            ADVANCED_NETWORKING_TAB[Keys.PORT] = m.advancedNetworkingStatus.port
-            ADVANCED_NETWORKING_TAB[Keys.NETWORK_INFO][:] = [
+            data = advanced_networking_tab_update()
+            data[Keys.RUNNING] = m.advancedNetworkingStatus.running
+            data[Keys.IP_ADDRESS] = m.advancedNetworkingStatus.ipAddress
+            data[Keys.PORT] = m.advancedNetworkingStatus.port
+            data[Keys.NETWORK_INFO][:] = [
                 [entry.interfaceName, entry.ipv4Address, entry.running, entry.txUsage, entry.rxUsage]
                 for entry in m.advancedNetworkingStatus.networkInfo
             ]
+            AdvancedNetworkingData.post_data_update(data)
         elif m.which == Message.Union.AdvancedSystemMonitorStatus:
             ADVANCED_SYSTEM_MONITOR_TAB[Keys.OBS_LATENCY][:] = [
                 [entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.obsLatency

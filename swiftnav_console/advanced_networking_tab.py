@@ -3,16 +3,21 @@
 
 from typing import Dict, List, Any
 
-from PySide2.QtCore import Property, QObject, Slot
+from PySide2.QtCore import Property, QObject, Signal, Slot
 
 from .constants import Keys, QTKeys
 
-ADVANCED_NETWORKING_TAB: Dict[str, Any] = {
-    Keys.NETWORK_INFO: [],
-    Keys.RUNNING: False,
-    Keys.IP_ADDRESS: "127.0.0.1",
-    Keys.PORT: 13320,
-}
+
+def advanced_networking_tab_update() -> Dict[str, Any]:
+    return {
+        Keys.NETWORK_INFO: [],
+        Keys.RUNNING: False,
+        Keys.IP_ADDRESS: "127.0.0.1",
+        Keys.PORT: 13320,
+    }
+
+
+ADVANCED_NETWORKING_TAB: List[Dict[str, Any]] = [advanced_networking_tab_update()]
 
 
 class AdvancedNetworkingData(QObject):
@@ -20,6 +25,23 @@ class AdvancedNetworkingData(QObject):
     _running: bool = False
     _ip_address: str = ""
     _port: int = 0
+    _data_updated = Signal()
+
+    def __init__(self):
+        super().__init__()
+        assert getattr(self.__class__, "_instance", None) is None
+        self.__class__._instance = self
+        self.advanced_networking_tab = ADVANCED_NETWORKING_TAB[0]
+        self._data_updated.connect(self.handle_data_updated)
+
+    @classmethod
+    def post_data_update(cls, update_data: Dict[str, Any]) -> None:
+        ADVANCED_NETWORKING_TAB[0] = update_data
+        cls._instance._data_updated.emit()
+
+    @Slot()  # type: ignore
+    def handle_data_updated(self) -> None:
+        self.advanced_networking_tab = ADVANCED_NETWORKING_TAB[0]
 
     def get_network_info(self) -> List[List[str]]:
         """Getter for _network_info."""
@@ -65,8 +87,8 @@ class AdvancedNetworkingData(QObject):
 class AdvancedNetworkingModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(AdvancedNetworkingData)  # type: ignore
     def fill_console_points(self, cp: AdvancedNetworkingData) -> AdvancedNetworkingData:  # pylint:disable=no-self-use
-        cp.set_network_info(ADVANCED_NETWORKING_TAB[Keys.NETWORK_INFO])
-        cp.set_running(ADVANCED_NETWORKING_TAB[Keys.RUNNING])
-        cp.set_ip_address(ADVANCED_NETWORKING_TAB[Keys.IP_ADDRESS])
-        cp.set_port(ADVANCED_NETWORKING_TAB[Keys.PORT])
+        cp.set_network_info(cp.advanced_networking_tab[Keys.NETWORK_INFO])
+        cp.set_running(cp.advanced_networking_tab[Keys.RUNNING])
+        cp.set_ip_address(cp.advanced_networking_tab[Keys.IP_ADDRESS])
+        cp.set_port(cp.advanced_networking_tab[Keys.PORT])
         return cp

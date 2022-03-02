@@ -8,7 +8,7 @@ from PySide2.QtCore import Property, QObject, QPointF, Signal, Slot
 from .constants import Keys, QTKeys
 
 
-def baseline_tab_update() -> Dict[str, Any]:
+def baseline_plot_update() -> Dict[str, Any]:
     return {
         Keys.CUR_POINTS: [],
         Keys.POINTS: [],
@@ -19,7 +19,7 @@ def baseline_tab_update() -> Dict[str, Any]:
     }
 
 
-BASELINE_PLOT: List[Dict[str, Any]] = [baseline_tab_update()]
+BASELINE_PLOT: List[Dict[str, Any]] = [baseline_plot_update()]
 
 
 class BaselinePlotPoints(QObject):

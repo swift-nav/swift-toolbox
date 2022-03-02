@@ -83,13 +83,13 @@ from .fusion_status_flags import (
 from .baseline_plot import (
     BaselinePlotModel,
     BaselinePlotPoints,
-    baseline_tab_update,
+    baseline_plot_update,
 )
 
 from .baseline_table import (
     BaselineTableEntries,
     BaselineTableModel,
-    BASELINE_TABLE,
+    baseline_table_update,
 )
 
 from .observation_tab import (
@@ -293,7 +293,7 @@ class BackendMessageReceiver(QObject):
             SOLUTION_VELOCITY_TAB[Keys.MIN] = m.solutionVelocityStatus.min
             SOLUTION_VELOCITY_TAB[Keys.AVAILABLE_UNITS][:] = m.solutionVelocityStatus.availableUnits
         elif m.which == Message.Union.BaselinePlotStatus:
-            data = baseline_tab_update()
+            data = baseline_plot_update()
             data[Keys.POINTS][:] = [
                 [QPointF(point.x, point.y) for point in m.baselinePlotStatus.data[idx]]
                 for idx in range(len(m.baselinePlotStatus.data))
@@ -308,7 +308,9 @@ class BackendMessageReceiver(QObject):
             data[Keys.E_MIN] = m.baselinePlotStatus.eMin
             BaselinePlotPoints.post_data_update(data)
         elif m.which == Message.Union.BaselineTableStatus:
-            BASELINE_TABLE[Keys.ENTRIES][:] = [[entry.key, entry.val] for entry in m.baselineTableStatus.data]
+            data = baseline_table_update()
+            data[Keys.ENTRIES][:] = [[entry.key, entry.val] for entry in m.baselineTableStatus.data]
+            BaselineTableEntries.post_data_update(data)
         elif m.which == Message.Union.AdvancedImuStatus:
             advanced_imu_tab = advanced_imu_tab_update()
             advanced_imu_tab[Keys.FIELDS_DATA][:] = m.advancedImuStatus.fieldsData

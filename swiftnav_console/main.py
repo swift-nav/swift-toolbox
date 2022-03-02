@@ -33,7 +33,7 @@ from .log_panel import (
 )
 
 from .connection import (
-    CONNECTION,
+    connection_update,
     ConnectionData,
     ConnectionModel,
 )
@@ -264,9 +264,13 @@ class BackendMessageReceiver(QObject):
                 return True
             if app_state == ConnectionState.DISCONNECTED:
                 SETTINGS_TABLE[Keys.ENTRIES] = []
-            CONNECTION[Keys.CONNECTION_STATE] = app_state
+            data = ConnectionData.get_connection()
+            data[Keys.CONNECTION_STATE] = app_state
+            ConnectionData.post_data_update(data)
         elif m.which == Message.Union.ConnectionNotification:
-            CONNECTION[Keys.CONNECTION_MESSAGE] = m.connectionNotification.message
+            data = ConnectionData.get_connection()
+            data[Keys.CONNECTION_MESSAGE] = m.connectionNotification.message
+            ConnectionData.post_data_update(data)
         elif m.which == Message.Union.SolutionPositionStatus:
             SOLUTION_POSITION_TAB[Keys.POINTS][:] = [
                 [QPointF(point.x, point.y) for point in m.solutionPositionStatus.data[idx]]
@@ -407,22 +411,24 @@ class BackendMessageReceiver(QObject):
             STATUS_BAR[Keys.TITLE] = m.statusBarStatus.title
             STATUS_BAR[Keys.ANTENNA_STATUS] = m.statusBarStatus.antennaStatus
         elif m.which == Message.Union.ConnectionStatus:
-            CONNECTION[Keys.AVAILABLE_PORTS][:] = m.connectionStatus.availablePorts
-            CONNECTION[Keys.AVAILABLE_BAUDRATES][:] = m.connectionStatus.availableBaudrates
-            CONNECTION[Keys.AVAILABLE_FLOWS][:] = m.connectionStatus.availableFlows
-            CONNECTION[Keys.PREVIOUS_HOSTS][:] = m.connectionStatus.previousHosts
-            CONNECTION[Keys.PREVIOUS_PORTS][:] = m.connectionStatus.previousPorts
-            CONNECTION[Keys.PREVIOUS_FILES][:] = m.connectionStatus.previousFiles
-            CONNECTION[Keys.LAST_USED_SERIAL_DEVICE] = (
+            data = ConnectionData.get_connection()
+            data[Keys.AVAILABLE_PORTS][:] = m.connectionStatus.availablePorts
+            data[Keys.AVAILABLE_BAUDRATES][:] = m.connectionStatus.availableBaudrates
+            data[Keys.AVAILABLE_FLOWS][:] = m.connectionStatus.availableFlows
+            data[Keys.PREVIOUS_HOSTS][:] = m.connectionStatus.previousHosts
+            data[Keys.PREVIOUS_PORTS][:] = m.connectionStatus.previousPorts
+            data[Keys.PREVIOUS_FILES][:] = m.connectionStatus.previousFiles
+            data[Keys.LAST_USED_SERIAL_DEVICE] = (
                 m.connectionStatus.lastSerialDevice.port
                 if m.connectionStatus.lastSerialDevice.which() == "port"
                 else None
             )
-            CONNECTION[Keys.PREVIOUS_SERIAL_CONFIGS][:] = [
+            data[Keys.PREVIOUS_SERIAL_CONFIGS][:] = [
                 [entry.device, entry.baudrate, entry.flowControl] for entry in m.connectionStatus.previousSerialConfigs
             ]
-            CONNECTION[Keys.CONSOLE_VERSION] = m.connectionStatus.consoleVersion
-            CONNECTION[Keys.PREVIOUS_CONNECTION_TYPE] = ConnectionType(m.connectionStatus.previousConnectionType)
+            data[Keys.CONSOLE_VERSION] = m.connectionStatus.consoleVersion
+            data[Keys.PREVIOUS_CONNECTION_TYPE] = ConnectionType(m.connectionStatus.previousConnectionType)
+            ConnectionData.post_data_update(data)
         elif m.which == Message.Union.LoggingBarStatus:
             LOGGING_BAR[Keys.PREVIOUS_FOLDERS][:] = m.loggingBarStatus.previousFolders
             LOGGING_BAR[Keys.CSV_LOGGING] = m.loggingBarStatus.csvLogging

@@ -18,6 +18,10 @@ ApplicationWindow {
     title: (loggingBar.sbpRecording ? "[L] " : "     ") + statusBar.title
     color: Constants.swiftWhite
 
+    ConnectionData {
+        id: connectionData
+    }
+
     TextEdit {
         id: textEdit
 

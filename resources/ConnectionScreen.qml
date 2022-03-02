@@ -37,10 +37,6 @@ Item {
         }
     }
 
-    ConnectionData {
-        id: connectionData
-    }
-
     Rectangle {
         id: dialogRect
 

@@ -48,10 +48,6 @@ Item {
         navButtons.itemAtIndex(index).toggle();
     }
 
-    ConnectionData {
-        id: connectionData
-    }
-
     ColumnLayout {
         anchors.fill: parent
         spacing: 0

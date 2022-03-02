@@ -1,27 +1,32 @@
 """Connection QObjects.
 """
-
+from copy import deepcopy
 from typing import Dict, List, Any
 
-from PySide2.QtCore import Property, QObject, Slot
+from PySide2.QtCore import Property, QObject, Signal, Slot
 
 from .constants import Keys, QTKeys, ConnectionState, ConnectionType
 
-CONNECTION: Dict[str, Any] = {
-    Keys.AVAILABLE_PORTS: [],
-    Keys.AVAILABLE_BAUDRATES: [],
-    Keys.AVAILABLE_FLOWS: [],
-    Keys.AVAILABLE_REFRESH_RATES: [],
-    Keys.CONNECTION_STATE: ConnectionState.DISCONNECTED,
-    Keys.CONNECTION_MESSAGE: "",
-    Keys.PREVIOUS_HOSTS: [],
-    Keys.PREVIOUS_PORTS: [],
-    Keys.PREVIOUS_FILES: [],
-    Keys.LAST_USED_SERIAL_DEVICE: None,
-    Keys.PREVIOUS_SERIAL_CONFIGS: [],
-    Keys.CONSOLE_VERSION: str,
-    Keys.PREVIOUS_CONNECTION_TYPE: "",
-}
+
+def connection_update() -> Dict[str, Any]:
+    return {
+        Keys.AVAILABLE_PORTS: [],
+        Keys.AVAILABLE_BAUDRATES: [],
+        Keys.AVAILABLE_FLOWS: [],
+        Keys.AVAILABLE_REFRESH_RATES: [],
+        Keys.CONNECTION_STATE: ConnectionState.DISCONNECTED,
+        Keys.CONNECTION_MESSAGE: "",
+        Keys.PREVIOUS_HOSTS: [],
+        Keys.PREVIOUS_PORTS: [],
+        Keys.PREVIOUS_FILES: [],
+        Keys.LAST_USED_SERIAL_DEVICE: None,
+        Keys.PREVIOUS_SERIAL_CONFIGS: [],
+        Keys.CONSOLE_VERSION: str,
+        Keys.PREVIOUS_CONNECTION_TYPE: "",
+    }
+
+
+CONNECTION: List[Dict[str, Any]] = [connection_update()]
 
 
 class ConnectionData(QObject):  # pylint: disable=too-many-instance-attributes disable=too-many-public-methods
@@ -39,6 +44,28 @@ class ConnectionData(QObject):  # pylint: disable=too-many-instance-attributes d
     _console_version: str = ""
     _previous_connection_type: ConnectionType = ConnectionType.Serial
     _connection_message: str = ""
+    _data_updated = Signal()
+    connection: Dict[str, Any] = connection_update()
+
+    def __init__(self):
+        super().__init__()
+        assert getattr(self.__class__, "_instance", None) is None
+        self.__class__._instance = self
+        self.connection = CONNECTION[0]
+        self._data_updated.connect(self.handle_data_updated)
+
+    @classmethod
+    def post_data_update(cls, update_data: Dict[str, Any]) -> None:
+        CONNECTION[0] = update_data
+        cls._instance._data_updated.emit()
+
+    @classmethod
+    def get_connection(cls) -> Dict[str, Any]:
+        return deepcopy(CONNECTION[0])
+
+    @Slot()  # type: ignore
+    def handle_data_updated(self) -> None:
+        self.connection = CONNECTION[0]
 
     def get_available_ports(self) -> List[str]:
         return self._available_ports
@@ -150,17 +177,17 @@ class ConnectionData(QObject):  # pylint: disable=too-many-instance-attributes d
 class ConnectionModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(ConnectionData)  # type: ignore
     def fill_data(self, cp: ConnectionData) -> ConnectionData:  # pylint:disable=no-self-use
-        cp.set_available_ports(CONNECTION[Keys.AVAILABLE_PORTS])
-        cp.set_available_baudrates(CONNECTION[Keys.AVAILABLE_BAUDRATES])
-        cp.set_available_flows(CONNECTION[Keys.AVAILABLE_FLOWS])
-        cp.set_conn_state(CONNECTION[Keys.CONNECTION_STATE])
-        cp.set_previous_hosts(CONNECTION[Keys.PREVIOUS_HOSTS])
-        cp.set_previous_ports(CONNECTION[Keys.PREVIOUS_PORTS])
-        cp.set_previous_files(CONNECTION[Keys.PREVIOUS_FILES])
-        cp.set_last_used_serial_device(CONNECTION[Keys.LAST_USED_SERIAL_DEVICE])
-        cp.set_previous_serial_configs(CONNECTION[Keys.PREVIOUS_SERIAL_CONFIGS])
-        cp.set_console_version(CONNECTION[Keys.CONSOLE_VERSION])
-        cp.set_previous_connection_type(CONNECTION[Keys.PREVIOUS_CONNECTION_TYPE])
-        cp.set_connection_message(CONNECTION[Keys.CONNECTION_MESSAGE])
-        CONNECTION[Keys.CONNECTION_MESSAGE] = ""
+        cp.set_available_ports(cp.connection[Keys.AVAILABLE_PORTS])
+        cp.set_available_baudrates(cp.connection[Keys.AVAILABLE_BAUDRATES])
+        cp.set_available_flows(cp.connection[Keys.AVAILABLE_FLOWS])
+        cp.set_conn_state(cp.connection[Keys.CONNECTION_STATE])
+        cp.set_previous_hosts(cp.connection[Keys.PREVIOUS_HOSTS])
+        cp.set_previous_ports(cp.connection[Keys.PREVIOUS_PORTS])
+        cp.set_previous_files(cp.connection[Keys.PREVIOUS_FILES])
+        cp.set_last_used_serial_device(cp.connection[Keys.LAST_USED_SERIAL_DEVICE])
+        cp.set_previous_serial_configs(cp.connection[Keys.PREVIOUS_SERIAL_CONFIGS])
+        cp.set_console_version(cp.connection[Keys.CONSOLE_VERSION])
+        cp.set_previous_connection_type(cp.connection[Keys.PREVIOUS_CONNECTION_TYPE])
+        cp.set_connection_message(cp.connection[Keys.CONNECTION_MESSAGE])
+        cp.connection[Keys.CONNECTION_MESSAGE] = ""
         return cp

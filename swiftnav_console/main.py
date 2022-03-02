@@ -71,7 +71,7 @@ from .advanced_spectrum_analyzer_tab import (
 from .advanced_system_monitor_tab import (
     AdvancedSystemMonitorModel,
     AdvancedSystemMonitorData,
-    ADVANCED_SYSTEM_MONITOR_TAB,
+    advanced_system_monitor_tab_update,
 )
 
 from .fusion_status_flags import (
@@ -335,21 +335,19 @@ class BackendMessageReceiver(QObject):
             ]
             AdvancedNetworkingData.post_data_update(data)
         elif m.which == Message.Union.AdvancedSystemMonitorStatus:
-            ADVANCED_SYSTEM_MONITOR_TAB[Keys.OBS_LATENCY][:] = [
-                [entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.obsLatency
-            ]
-            ADVANCED_SYSTEM_MONITOR_TAB[Keys.OBS_PERIOD][:] = [
-                [entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.obsPeriod
-            ]
-            ADVANCED_SYSTEM_MONITOR_TAB[Keys.THREADS_TABLE][:] = [
+            data = advanced_system_monitor_tab_update()
+            data[Keys.OBS_LATENCY][:] = [[entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.obsLatency]
+            data[Keys.OBS_PERIOD][:] = [[entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.obsPeriod]
+            data[Keys.THREADS_TABLE][:] = [
                 [entry.name, entry.cpu, entry.stackFree] for entry in m.advancedSystemMonitorStatus.threadsTable
             ]
-            ADVANCED_SYSTEM_MONITOR_TAB[Keys.CSAC_TELEM_LIST][:] = [
+            data[Keys.CSAC_TELEM_LIST][:] = [
                 [entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.csacTelemList
             ]
-            ADVANCED_SYSTEM_MONITOR_TAB[Keys.CSAC_RECEIVED] = m.advancedSystemMonitorStatus.csacReceived
-            ADVANCED_SYSTEM_MONITOR_TAB[Keys.ZYNQ_TEMP] = m.advancedSystemMonitorStatus.zynqTemp
-            ADVANCED_SYSTEM_MONITOR_TAB[Keys.FE_TEMP] = m.advancedSystemMonitorStatus.feTemp
+            data[Keys.CSAC_RECEIVED] = m.advancedSystemMonitorStatus.csacReceived
+            data[Keys.ZYNQ_TEMP] = m.advancedSystemMonitorStatus.zynqTemp
+            data[Keys.FE_TEMP] = m.advancedSystemMonitorStatus.feTemp
+            AdvancedSystemMonitorData.post_data_update(data)
         elif m.which == Message.Union.AdvancedMagnetometerStatus:
             data = advanced_magnetometer_tab_update()
             data[Keys.YMAX] = m.advancedMagnetometerStatus.ymax

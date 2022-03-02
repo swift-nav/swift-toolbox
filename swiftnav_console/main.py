@@ -65,7 +65,7 @@ from .advanced_networking_tab import (
 from .advanced_spectrum_analyzer_tab import (
     AdvancedSpectrumAnalyzerModel,
     AdvancedSpectrumAnalyzerPoints,
-    ADVANCED_SPECTRUM_ANALYZER_TAB,
+    advanced_spectrum_analyzer_tab_update,
 )
 
 from .advanced_system_monitor_tab import (
@@ -316,14 +316,14 @@ class BackendMessageReceiver(QObject):
             ]
             AdvancedImuPoints.post_data_update(advanced_imu_tab)
         elif m.which == Message.Union.AdvancedSpectrumAnalyzerStatus:
-            ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.CHANNEL] = m.advancedSpectrumAnalyzerStatus.channel
-            ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.POINTS][:] = [
-                QPointF(point.x, point.y) for point in m.advancedSpectrumAnalyzerStatus.data
-            ]
-            ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.YMAX] = m.advancedSpectrumAnalyzerStatus.ymax
-            ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.YMIN] = m.advancedSpectrumAnalyzerStatus.ymin
-            ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.XMAX] = m.advancedSpectrumAnalyzerStatus.xmax
-            ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.XMIN] = m.advancedSpectrumAnalyzerStatus.xmin
+            data = advanced_spectrum_analyzer_tab_update()
+            data[Keys.CHANNEL] = m.advancedSpectrumAnalyzerStatus.channel
+            data[Keys.POINTS][:] = [QPointF(point.x, point.y) for point in m.advancedSpectrumAnalyzerStatus.data]
+            data[Keys.YMAX] = m.advancedSpectrumAnalyzerStatus.ymax
+            data[Keys.YMIN] = m.advancedSpectrumAnalyzerStatus.ymin
+            data[Keys.XMAX] = m.advancedSpectrumAnalyzerStatus.xmax
+            data[Keys.XMIN] = m.advancedSpectrumAnalyzerStatus.xmin
+            AdvancedSpectrumAnalyzerPoints.post_data_update(data)
         elif m.which == Message.Union.AdvancedNetworkingStatus:
             data = advanced_networking_tab_update()
             data[Keys.RUNNING] = m.advancedNetworkingStatus.running

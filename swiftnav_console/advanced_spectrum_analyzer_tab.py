@@ -4,18 +4,23 @@
 from typing import Dict, List, Any
 
 from PySide2.QtCharts import QtCharts
-from PySide2.QtCore import Property, QObject, QPointF, Slot
+from PySide2.QtCore import Property, QObject, QPointF, Signal, Slot
 
 from .constants import Keys, QTKeys
 
-ADVANCED_SPECTRUM_ANALYZER_TAB: Dict[str, Any] = {
-    Keys.CHANNEL: 0,
-    Keys.POINTS: [],
-    Keys.YMAX: 0,
-    Keys.YMIN: 0,
-    Keys.XMAX: 0,
-    Keys.XMIN: 0,
-}
+
+def advanced_spectrum_analyzer_tab_update() -> Dict[str, Any]:
+    return {
+        Keys.CHANNEL: 0,
+        Keys.POINTS: [],
+        Keys.YMAX: 0,
+        Keys.YMIN: 0,
+        Keys.XMAX: 0,
+        Keys.XMIN: 0,
+    }
+
+
+ADVANCED_SPECTRUM_ANALYZER_TAB: List[Dict[str, Any]] = [advanced_spectrum_analyzer_tab_update()]
 
 
 class AdvancedSpectrumAnalyzerPoints(QObject):
@@ -26,6 +31,23 @@ class AdvancedSpectrumAnalyzerPoints(QObject):
     _xmin: float = 0.0
     _xmax: float = 0.0
     _channel: int = 0
+    _data_updated = Signal()
+
+    def __init__(self):
+        super().__init__()
+        assert getattr(self.__class__, "_instance", None) is None
+        self.__class__._instance = self
+        self.advanced_spectrum_analyzer_tab = ADVANCED_SPECTRUM_ANALYZER_TAB[0]
+        self._data_updated.connect(self.handle_data_updated)
+
+    @classmethod
+    def post_data_update(cls, update_data: Dict[str, Any]) -> None:
+        ADVANCED_SPECTRUM_ANALYZER_TAB[0] = update_data
+        cls._instance._data_updated.emit()
+
+    @Slot()  # type: ignore
+    def handle_data_updated(self) -> None:
+        self.advanced_spectrum_analyzer_tab = ADVANCED_SPECTRUM_ANALYZER_TAB[0]
 
     def get_ymin(self) -> float:
         """Getter for _ymin."""
@@ -95,10 +117,10 @@ class AdvancedSpectrumAnalyzerModel(QObject):  # pylint: disable=too-few-public-
     def fill_console_points(  # pylint:disable=no-self-use
         self, cp: AdvancedSpectrumAnalyzerPoints
     ) -> AdvancedSpectrumAnalyzerPoints:
-        cp.set_points(ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.POINTS])
-        cp.set_ymax(ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.YMAX])
-        cp.set_ymin(ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.YMIN])
-        cp.set_xmax(ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.XMAX])
-        cp.set_xmin(ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.XMIN])
-        cp.set_channel(ADVANCED_SPECTRUM_ANALYZER_TAB[Keys.CHANNEL])
+        cp.set_points(cp.advanced_spectrum_analyzer_tab[Keys.POINTS])
+        cp.set_ymax(cp.advanced_spectrum_analyzer_tab[Keys.YMAX])
+        cp.set_ymin(cp.advanced_spectrum_analyzer_tab[Keys.YMIN])
+        cp.set_xmax(cp.advanced_spectrum_analyzer_tab[Keys.XMAX])
+        cp.set_xmin(cp.advanced_spectrum_analyzer_tab[Keys.XMIN])
+        cp.set_channel(cp.advanced_spectrum_analyzer_tab[Keys.CHANNEL])
         return cp

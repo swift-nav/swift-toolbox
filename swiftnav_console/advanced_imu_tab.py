@@ -27,7 +27,7 @@ class AdvancedImuPoints(QObject):
 
     def __init__(self):
         super().__init__()
-        assert getattr(self.__class__, '_instance', None) is None
+        assert getattr(self.__class__, "_instance", None) is None
         self.__class__._instance = self
         self.advanced_imu_tab = ADVANCED_IMU_TAB[0]
         self._data_updated.connect(self.handle_data_updated)
@@ -37,7 +37,7 @@ class AdvancedImuPoints(QObject):
         ADVANCED_IMU_TAB[0] = update_data
         cls._instance._data_updated.emit()
 
-    @Slot()
+    @Slot()  # type: ignore
     def handle_data_updated(self) -> None:
         self.advanced_imu_tab = ADVANCED_IMU_TAB[0]
 

@@ -225,7 +225,6 @@ capnp.remove_import_hook()  # pylint: disable=no-member
 
 
 class BackendMessageReceiver(QObject):
-
     def __init__(self, app, backend, messages):
         super().__init__()
         self._app = app

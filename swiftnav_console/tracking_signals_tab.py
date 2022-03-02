@@ -18,6 +18,7 @@ def tracking_signals_tab_update() -> Dict[str, Any]:
         Keys.XMIN_OFFSET: 0,
     }
 
+
 TRACKING_SIGNALS_TAB: List[Dict[str, Any]] = [tracking_signals_tab_update()]
 
 # pylint:disable=too-many-instance-attributes
@@ -41,7 +42,7 @@ class TrackingSignalsPoints(QObject):
 
     def __init__(self):
         super().__init__()
-        assert getattr(self.__class__, '_instance', None) is None
+        assert getattr(self.__class__, "_instance", None) is None
         self.__class__._instance = self
         self._tracking_signals_tab = TRACKING_SIGNALS_TAB[0]
         self._data_updated.connect(self.handle_data_updated)
@@ -51,7 +52,7 @@ class TrackingSignalsPoints(QObject):
         TRACKING_SIGNALS_TAB[0] = update_data
         cls._instance._data_updated.emit()
 
-    @Slot()
+    @Slot()  # type: ignore
     def handle_data_updated(self) -> None:
         self._tracking_signals_tab = TRACKING_SIGNALS_TAB[0]
 

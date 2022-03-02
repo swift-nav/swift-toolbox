@@ -83,7 +83,7 @@ from .fusion_status_flags import (
 from .baseline_plot import (
     BaselinePlotModel,
     BaselinePlotPoints,
-    BASELINE_PLOT,
+    baseline_tab_update,
 )
 
 from .baseline_table import (
@@ -293,18 +293,20 @@ class BackendMessageReceiver(QObject):
             SOLUTION_VELOCITY_TAB[Keys.MIN] = m.solutionVelocityStatus.min
             SOLUTION_VELOCITY_TAB[Keys.AVAILABLE_UNITS][:] = m.solutionVelocityStatus.availableUnits
         elif m.which == Message.Union.BaselinePlotStatus:
-            BASELINE_PLOT[Keys.POINTS][:] = [
+            data = baseline_tab_update()
+            data[Keys.POINTS][:] = [
                 [QPointF(point.x, point.y) for point in m.baselinePlotStatus.data[idx]]
                 for idx in range(len(m.baselinePlotStatus.data))
             ]
-            BASELINE_PLOT[Keys.CUR_POINTS][:] = [
+            data[Keys.CUR_POINTS][:] = [
                 [QPointF(point.x, point.y) for point in m.baselinePlotStatus.curData[idx]]
                 for idx in range(len(m.baselinePlotStatus.curData))
             ]
-            BASELINE_PLOT[Keys.N_MAX] = m.baselinePlotStatus.nMax
-            BASELINE_PLOT[Keys.N_MIN] = m.baselinePlotStatus.nMin
-            BASELINE_PLOT[Keys.E_MAX] = m.baselinePlotStatus.eMax
-            BASELINE_PLOT[Keys.E_MIN] = m.baselinePlotStatus.eMin
+            data[Keys.N_MAX] = m.baselinePlotStatus.nMax
+            data[Keys.N_MIN] = m.baselinePlotStatus.nMin
+            data[Keys.E_MAX] = m.baselinePlotStatus.eMax
+            data[Keys.E_MIN] = m.baselinePlotStatus.eMin
+            BaselinePlotPoints.post_data_update(data)
         elif m.which == Message.Union.BaselineTableStatus:
             BASELINE_TABLE[Keys.ENTRIES][:] = [[entry.key, entry.val] for entry in m.baselineTableStatus.data]
         elif m.which == Message.Union.AdvancedImuStatus:

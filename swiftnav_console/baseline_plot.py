@@ -3,18 +3,23 @@
 
 from typing import Dict, List, Any
 
-from PySide2.QtCore import Property, QObject, QPointF, Slot
+from PySide2.QtCore import Property, QObject, QPointF, Signal, Slot
 
 from .constants import Keys, QTKeys
 
-BASELINE_PLOT: Dict[str, Any] = {
-    Keys.CUR_POINTS: [],
-    Keys.POINTS: [],
-    Keys.N_MAX: 0,
-    Keys.N_MIN: 0,
-    Keys.E_MAX: 0,
-    Keys.E_MIN: 0,
-}
+
+def baseline_tab_update() -> Dict[str, Any]:
+    return {
+        Keys.CUR_POINTS: [],
+        Keys.POINTS: [],
+        Keys.N_MAX: 0,
+        Keys.N_MIN: 0,
+        Keys.E_MAX: 0,
+        Keys.E_MIN: 0,
+    }
+
+
+BASELINE_PLOT: List[Dict[str, Any]] = [baseline_tab_update()]
 
 
 class BaselinePlotPoints(QObject):
@@ -25,6 +30,23 @@ class BaselinePlotPoints(QObject):
     _n_max: float = 0.0
     _e_min: float = 0.0
     _e_max: float = 0.0
+    _data_updated = Signal()
+
+    def __init__(self):
+        super().__init__()
+        assert getattr(self.__class__, "_instance", None) is None
+        self.__class__._instance = self
+        self.baseline_plot = BASELINE_PLOT[0]
+        self._data_updated.connect(self.handle_data_updated)
+
+    @classmethod
+    def post_data_update(cls, update_data: Dict[str, Any]) -> None:
+        BASELINE_PLOT[0] = update_data
+        cls._instance._data_updated.emit()
+
+    @Slot()  # type: ignore
+    def handle_data_updated(self) -> None:
+        self.baseline_plot = BASELINE_PLOT[0]
 
     def get_n_min(self) -> float:
         """Getter for _n_min."""
@@ -94,10 +116,10 @@ class BaselinePlotPoints(QObject):
 class BaselinePlotModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(BaselinePlotPoints)  # type: ignore
     def fill_console_points(self, cp: BaselinePlotPoints) -> BaselinePlotPoints:  # pylint:disable=no-self-use
-        cp.set_points(BASELINE_PLOT[Keys.POINTS])
-        cp.set_cur_points(BASELINE_PLOT[Keys.CUR_POINTS])
-        cp.set_n_max(BASELINE_PLOT[Keys.N_MAX])
-        cp.set_n_min(BASELINE_PLOT[Keys.N_MIN])
-        cp.set_e_max(BASELINE_PLOT[Keys.E_MAX])
-        cp.set_e_min(BASELINE_PLOT[Keys.E_MIN])
+        cp.set_points(cp.baseline_plot[Keys.POINTS])
+        cp.set_cur_points(cp.baseline_plot[Keys.CUR_POINTS])
+        cp.set_n_max(cp.baseline_plot[Keys.N_MAX])
+        cp.set_n_min(cp.baseline_plot[Keys.N_MIN])
+        cp.set_e_max(cp.baseline_plot[Keys.E_MAX])
+        cp.set_e_min(cp.baseline_plot[Keys.E_MIN])
         return cp

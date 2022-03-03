@@ -39,7 +39,8 @@ from .connection import (
 )
 
 from .logging_bar import (
-    LOGGING_BAR,
+    logging_bar_update,
+    logging_bar_recording_update,
     LoggingBarData,
     LoggingBarModel,
 )
@@ -431,18 +432,22 @@ class BackendMessageReceiver(QObject):
             data[Keys.PREVIOUS_CONNECTION_TYPE] = ConnectionType(m.connectionStatus.previousConnectionType)
             ConnectionData.post_connection_data_update(data)
         elif m.which == Message.Union.LoggingBarStatus:
-            LOGGING_BAR[Keys.PREVIOUS_FOLDERS][:] = m.loggingBarStatus.previousFolders
-            LOGGING_BAR[Keys.CSV_LOGGING] = m.loggingBarStatus.csvLogging
-            LOGGING_BAR[Keys.SBP_LOGGING] = m.loggingBarStatus.sbpLogging
-            LOGGING_BAR[Keys.SBP_LOGGING_FORMAT] = m.loggingBarStatus.sbpLoggingFormat
+            data = logging_bar_update()
+            data[Keys.PREVIOUS_FOLDERS][:] = m.loggingBarStatus.previousFolders
+            data[Keys.CSV_LOGGING] = m.loggingBarStatus.csvLogging
+            data[Keys.SBP_LOGGING] = m.loggingBarStatus.sbpLogging
+            data[Keys.SBP_LOGGING_FORMAT] = m.loggingBarStatus.sbpLoggingFormat
+            LoggingBarData.post_data_update(data)
         elif m.which == Message.Union.LoggingBarRecordingStatus:
-            LOGGING_BAR[Keys.RECORDING_DURATION_SEC] = m.loggingBarRecordingStatus.recordingDurationSec
-            LOGGING_BAR[Keys.RECORDING_SIZE] = m.loggingBarRecordingStatus.recordingSize
-            LOGGING_BAR[Keys.RECORDING_FILENAME] = (
+            data = logging_bar_recording_update()
+            data[Keys.RECORDING_DURATION_SEC] = m.loggingBarRecordingStatus.recordingDurationSec
+            data[Keys.RECORDING_SIZE] = m.loggingBarRecordingStatus.recordingSize
+            data[Keys.RECORDING_FILENAME] = (
                 m.loggingBarRecordingStatus.recordingFilename.filename
                 if m.loggingBarRecordingStatus.recordingFilename.which() == "filename"
                 else ""
             )
+            LoggingBarData.post_recording_data_update(data)
         elif m.which == Message.Union.UpdateTabStatus:
             UPDATE_TAB[Keys.HARDWARE_REVISION] = m.updateTabStatus.hardwareRevision
             UPDATE_TAB[Keys.FW_VERSION_CURRENT] = m.updateTabStatus.fwVersionCurrent

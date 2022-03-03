@@ -26,7 +26,7 @@ import console_backend.server  # type: ignore  # pylint: disable=import-error,no
 from .constants import ApplicationMetadata, ConnectionState, ConnectionType, Keys, Tabs, QTKeys
 
 from .log_panel import (
-    LOG_PANEL,
+    log_panel_update,
     log_panel_lock,
     LogPanelData,
     LogPanelModel,
@@ -462,9 +462,11 @@ class BackendMessageReceiver(QObject):
             UPDATE_TAB[Keys.CONSOLE_VERSION_LATEST] = m.updateTabStatus.consoleVersionLatest
         elif m.which == Message.Union.LogAppend:
             log_panel_lock.lock()
-            LOG_PANEL[Keys.ENTRIES] += [entry.line for entry in m.logAppend.entries]
+            data = log_panel_update()
+            data[Keys.ENTRIES] += [entry.line for entry in m.logAppend.entries]
             log_panel_lock.unlock()
-            LOG_PANEL[Keys.LOG_LEVEL] = m.logAppend.logLevel
+            data[Keys.LOG_LEVEL] = m.logAppend.logLevel
+            LogPanelData.post_data_update(data)
         elif m.which == Message.Union.SettingsTableStatus:
             SETTINGS_TABLE[Keys.ENTRIES][:] = settings_rows_to_json(m.settingsTableStatus.data)
         elif m.which == Message.Union.SettingsImportResponse:

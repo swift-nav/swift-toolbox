@@ -128,7 +128,7 @@ from .solution_velocity_tab import (
 )
 
 from .status_bar import (
-    STATUS_BAR,
+    status_bar_update,
     StatusBarData,
     StatusBarModel,
 )
@@ -264,13 +264,10 @@ class BackendMessageReceiver(QObject):
                 return True
             if app_state == ConnectionState.DISCONNECTED:
                 SETTINGS_TABLE[Keys.ENTRIES] = []
-            data = ConnectionData.get_connection()
-            data[Keys.CONNECTION_STATE] = app_state
-            ConnectionData.post_data_update(data)
+            ConnectionData.post_connection_state_update(app_state)
         elif m.which == Message.Union.ConnectionNotification:
-            data = ConnectionData.get_connection()
-            data[Keys.CONNECTION_MESSAGE] = m.connectionNotification.message
-            ConnectionData.post_data_update(data)
+            data = m.connectionNotification.message
+            ConnectionData.post_connection_message_update(data)
         elif m.which == Message.Union.SolutionPositionStatus:
             SOLUTION_POSITION_TAB[Keys.POINTS][:] = [
                 [QPointF(point.x, point.y) for point in m.solutionPositionStatus.data[idx]]
@@ -401,17 +398,19 @@ class BackendMessageReceiver(QObject):
                 LOCAL_OBSERVATION_TAB[Keys.WEEK] = m.observationStatus.week
                 LOCAL_OBSERVATION_TAB[Keys.ROWS][:] = obs_rows_to_json(m.observationStatus.rows)
         elif m.which == Message.Union.StatusBarStatus:
-            STATUS_BAR[Keys.POS] = m.statusBarStatus.pos
-            STATUS_BAR[Keys.RTK] = m.statusBarStatus.rtk
-            STATUS_BAR[Keys.SATS] = m.statusBarStatus.sats
-            STATUS_BAR[Keys.CORR_AGE] = m.statusBarStatus.corrAge
-            STATUS_BAR[Keys.INS] = m.statusBarStatus.ins
-            STATUS_BAR[Keys.DATA_RATE] = m.statusBarStatus.dataRate
-            STATUS_BAR[Keys.SOLID_CONNECTION] = m.statusBarStatus.solidConnection
-            STATUS_BAR[Keys.TITLE] = m.statusBarStatus.title
-            STATUS_BAR[Keys.ANTENNA_STATUS] = m.statusBarStatus.antennaStatus
+            data = status_bar_update()
+            data[Keys.POS] = m.statusBarStatus.pos
+            data[Keys.RTK] = m.statusBarStatus.rtk
+            data[Keys.SATS] = m.statusBarStatus.sats
+            data[Keys.CORR_AGE] = m.statusBarStatus.corrAge
+            data[Keys.INS] = m.statusBarStatus.ins
+            data[Keys.DATA_RATE] = m.statusBarStatus.dataRate
+            data[Keys.SOLID_CONNECTION] = m.statusBarStatus.solidConnection
+            data[Keys.TITLE] = m.statusBarStatus.title
+            data[Keys.ANTENNA_STATUS] = m.statusBarStatus.antennaStatus
+            StatusBarData.post_data_update(data)
         elif m.which == Message.Union.ConnectionStatus:
-            data = ConnectionData.get_connection()
+            data = connection_update()
             data[Keys.AVAILABLE_PORTS][:] = m.connectionStatus.availablePorts
             data[Keys.AVAILABLE_BAUDRATES][:] = m.connectionStatus.availableBaudrates
             data[Keys.AVAILABLE_FLOWS][:] = m.connectionStatus.availableFlows
@@ -428,7 +427,7 @@ class BackendMessageReceiver(QObject):
             ]
             data[Keys.CONSOLE_VERSION] = m.connectionStatus.consoleVersion
             data[Keys.PREVIOUS_CONNECTION_TYPE] = ConnectionType(m.connectionStatus.previousConnectionType)
-            ConnectionData.post_data_update(data)
+            ConnectionData.post_connection_data_update(data)
         elif m.which == Message.Union.LoggingBarStatus:
             LOGGING_BAR[Keys.PREVIOUS_FOLDERS][:] = m.loggingBarStatus.previousFolders
             LOGGING_BAR[Keys.CSV_LOGGING] = m.loggingBarStatus.csvLogging

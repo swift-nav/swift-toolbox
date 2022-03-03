@@ -1,23 +1,28 @@
 """Status Bar QObjects.
 """
 
-from typing import Dict, Any
+from typing import Dict, List, Any
 
-from PySide2.QtCore import Property, QObject, Slot
+from PySide2.QtCore import Property, QObject, Signal, Slot
 
 from .constants import Keys
 
-STATUS_BAR: Dict[str, Any] = {
-    Keys.POS: str,
-    Keys.RTK: str,
-    Keys.SATS: int,
-    Keys.CORR_AGE: float,
-    Keys.INS: str,
-    Keys.DATA_RATE: float,
-    Keys.SOLID_CONNECTION: bool,
-    Keys.TITLE: str,
-    Keys.ANTENNA_STATUS: str,
-}
+
+def status_bar_update() -> Dict[str, Any]:
+    return {
+        Keys.POS: str,
+        Keys.RTK: str,
+        Keys.SATS: int,
+        Keys.CORR_AGE: float,
+        Keys.INS: str,
+        Keys.DATA_RATE: float,
+        Keys.SOLID_CONNECTION: bool,
+        Keys.TITLE: str,
+        Keys.ANTENNA_STATUS: str,
+    }
+
+
+STATUS_BAR: List[Dict[str, Any]] = [status_bar_update()]
 
 
 class StatusBarData(QObject):  # pylint: disable=too-many-instance-attributes
@@ -31,6 +36,24 @@ class StatusBarData(QObject):  # pylint: disable=too-many-instance-attributes
     _solid_connection: bool = False
     _title: str = ""
     _antenna_status: str = ""
+    _data_updated = Signal()
+    status_bar: Dict[str, Any] = {}
+
+    def __init__(self):
+        super().__init__()
+        assert getattr(self.__class__, "_instance", None) is None
+        self.__class__._instance = self
+        self.status_bar = STATUS_BAR[0]
+        self._data_updated.connect(self.handle_data_updated)
+
+    @classmethod
+    def post_data_update(cls, update_data: Dict[str, Any]) -> None:
+        STATUS_BAR[0] = update_data
+        cls._instance._data_updated.emit()
+
+    @Slot()  # type: ignore
+    def handle_data_updated(self) -> None:
+        self.status_bar = STATUS_BAR[0]
 
     def get_pos(self) -> str:
         return self._pos
@@ -108,13 +131,13 @@ class StatusBarData(QObject):  # pylint: disable=too-many-instance-attributes
 class StatusBarModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(StatusBarData)  # type: ignore
     def fill_data(self, cp: StatusBarData) -> StatusBarData:  # pylint:disable=no-self-use
-        cp.set_pos(STATUS_BAR[Keys.POS])
-        cp.set_rtk(STATUS_BAR[Keys.RTK])
-        cp.set_sats(STATUS_BAR[Keys.SATS])
-        cp.set_corr_age(STATUS_BAR[Keys.CORR_AGE])
-        cp.set_ins(STATUS_BAR[Keys.INS])
-        cp.set_data_rate(STATUS_BAR[Keys.DATA_RATE])
-        cp.set_solid_connection(STATUS_BAR[Keys.SOLID_CONNECTION])
-        cp.set_title(STATUS_BAR[Keys.TITLE])
-        cp.set_antenna_status(STATUS_BAR[Keys.ANTENNA_STATUS])
+        cp.set_pos(cp.status_bar[Keys.POS])
+        cp.set_rtk(cp.status_bar[Keys.RTK])
+        cp.set_sats(cp.status_bar[Keys.SATS])
+        cp.set_corr_age(cp.status_bar[Keys.CORR_AGE])
+        cp.set_ins(cp.status_bar[Keys.INS])
+        cp.set_data_rate(cp.status_bar[Keys.DATA_RATE])
+        cp.set_solid_connection(cp.status_bar[Keys.SOLID_CONNECTION])
+        cp.set_title(cp.status_bar[Keys.TITLE])
+        cp.set_antenna_status(cp.status_bar[Keys.ANTENNA_STATUS])
         return cp

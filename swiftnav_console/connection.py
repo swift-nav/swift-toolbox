@@ -1,6 +1,5 @@
 """Connection QObjects.
 """
-from copy import deepcopy
 from typing import Dict, List, Any
 
 from PySide2.QtCore import Property, QObject, Signal, Slot
@@ -14,8 +13,6 @@ def connection_update() -> Dict[str, Any]:
         Keys.AVAILABLE_BAUDRATES: [],
         Keys.AVAILABLE_FLOWS: [],
         Keys.AVAILABLE_REFRESH_RATES: [],
-        Keys.CONNECTION_STATE: ConnectionState.DISCONNECTED,
-        Keys.CONNECTION_MESSAGE: "",
         Keys.PREVIOUS_HOSTS: [],
         Keys.PREVIOUS_PORTS: [],
         Keys.PREVIOUS_FILES: [],
@@ -27,6 +24,8 @@ def connection_update() -> Dict[str, Any]:
 
 
 CONNECTION: List[Dict[str, Any]] = [connection_update()]
+CONNECTION_STATE: List[ConnectionState] = [ConnectionState.DISCONNECTED]
+CONNECTION_MESSAGE: List[str] = [""]
 
 
 class ConnectionData(QObject):  # pylint: disable=too-many-instance-attributes disable=too-many-public-methods
@@ -45,26 +44,38 @@ class ConnectionData(QObject):  # pylint: disable=too-many-instance-attributes d
     _previous_connection_type: ConnectionType = ConnectionType.Serial
     _connection_message: str = ""
     _data_updated = Signal()
-    connection: Dict[str, Any] = connection_update()
+    connection: Dict[str, Any] = {}
+    connection_state: ConnectionState = ConnectionState.DISCONNECTED
+    connection_msg: str = ""
 
     def __init__(self):
         super().__init__()
         assert getattr(self.__class__, "_instance", None) is None
         self.__class__._instance = self
         self.connection = CONNECTION[0]
+        self.connection_state = CONNECTION_STATE[0]
+        self.connection_msg = CONNECTION_MESSAGE[0]
         self._data_updated.connect(self.handle_data_updated)
 
     @classmethod
-    def post_data_update(cls, update_data: Dict[str, Any]) -> None:
-        CONNECTION[0] = update_data
+    def post_connection_state_update(cls, update_data: ConnectionState) -> None:
+        CONNECTION_STATE[0] = update_data
         cls._instance._data_updated.emit()
 
     @classmethod
-    def get_connection(cls) -> Dict[str, Any]:
-        return deepcopy(CONNECTION[0])
+    def post_connection_message_update(cls, update_data: str) -> None:
+        CONNECTION_MESSAGE[0] = update_data
+        cls._instance._data_updated.emit()
+
+    @classmethod
+    def post_connection_data_update(cls, update_data: Dict[str, Any]) -> None:
+        CONNECTION[0] = update_data
+        cls._instance._data_updated.emit()
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:
+        self.connection_state = CONNECTION_STATE[0]
+        self.connection_msg = CONNECTION_MESSAGE[0]
         self.connection = CONNECTION[0]
 
     def get_available_ports(self) -> List[str]:
@@ -180,7 +191,7 @@ class ConnectionModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_available_ports(cp.connection[Keys.AVAILABLE_PORTS])
         cp.set_available_baudrates(cp.connection[Keys.AVAILABLE_BAUDRATES])
         cp.set_available_flows(cp.connection[Keys.AVAILABLE_FLOWS])
-        cp.set_conn_state(cp.connection[Keys.CONNECTION_STATE])
+        cp.set_conn_state(cp.connection_state)
         cp.set_previous_hosts(cp.connection[Keys.PREVIOUS_HOSTS])
         cp.set_previous_ports(cp.connection[Keys.PREVIOUS_PORTS])
         cp.set_previous_files(cp.connection[Keys.PREVIOUS_FILES])
@@ -188,6 +199,6 @@ class ConnectionModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_previous_serial_configs(cp.connection[Keys.PREVIOUS_SERIAL_CONFIGS])
         cp.set_console_version(cp.connection[Keys.CONSOLE_VERSION])
         cp.set_previous_connection_type(cp.connection[Keys.PREVIOUS_CONNECTION_TYPE])
-        cp.set_connection_message(cp.connection[Keys.CONNECTION_MESSAGE])
-        cp.connection[Keys.CONNECTION_MESSAGE] = ""
+        cp.set_connection_message(cp.connection_msg)
+        cp.connection_msg = ""
         return cp

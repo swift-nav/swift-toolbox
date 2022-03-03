@@ -77,7 +77,7 @@ from .advanced_system_monitor_tab import (
 from .fusion_status_flags import (
     FusionStatusFlagsModel,
     FusionStatusFlagsData,
-    FUSION_STATUS_FLAGS,
+    fusion_status_flags_update,
 )
 
 from .baseline_plot import (
@@ -363,12 +363,14 @@ class BackendMessageReceiver(QObject):
             ]
             AdvancedMagnetometerPoints.post_data_update(data)
         elif m.which == Message.Union.FusionStatusFlagsStatus:
-            FUSION_STATUS_FLAGS[Keys.GNSSPOS] = m.fusionStatusFlagsStatus.gnsspos
-            FUSION_STATUS_FLAGS[Keys.GNSSVEL] = m.fusionStatusFlagsStatus.gnssvel
-            FUSION_STATUS_FLAGS[Keys.WHEELTICKS] = m.fusionStatusFlagsStatus.wheelticks
-            FUSION_STATUS_FLAGS[Keys.SPEED] = m.fusionStatusFlagsStatus.speed
-            FUSION_STATUS_FLAGS[Keys.NHC] = m.fusionStatusFlagsStatus.nhc
-            FUSION_STATUS_FLAGS[Keys.ZEROVEL] = m.fusionStatusFlagsStatus.zerovel
+            data = fusion_status_flags_tab_update()
+            data[Keys.GNSSPOS] = m.fusionStatusFlagsStatus.gnsspos
+            data[Keys.GNSSVEL] = m.fusionStatusFlagsStatus.gnssvel
+            data[Keys.WHEELTICKS] = m.fusionStatusFlagsStatus.wheelticks
+            data[Keys.SPEED] = m.fusionStatusFlagsStatus.speed
+            data[Keys.NHC] = m.fusionStatusFlagsStatus.nhc
+            data[Keys.ZEROVEL] = m.fusionStatusFlagsStatus.zerovel
+            FusionStatusFlagsData.post_data_update(data)
         elif m.which == Message.Union.TrackingSignalsStatus:
             data = tracking_signals_tab_update()
             data[Keys.CHECK_LABELS][:] = m.trackingSignalsStatus.checkLabels

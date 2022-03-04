@@ -3,19 +3,24 @@
 
 from typing import Dict, List, Any
 
-from PySide2.QtCore import Property, QObject, QPointF, Slot
+from PySide2.QtCore import Property, QObject, QPointF, Signal, Slot
 
 from .constants import Keys, QTKeys
 
-SOLUTION_POSITION_TAB: Dict[str, Any] = {
-    Keys.AVAILABLE_UNITS: [],
-    Keys.CUR_POINTS: [],
-    Keys.POINTS: [],
-    Keys.LAT_MAX: 0,
-    Keys.LAT_MIN: 0,
-    Keys.LON_MAX: 0,
-    Keys.LON_MIN: 0,
-}
+
+def solution_position_update() -> Dict[str, Any]:
+    return {
+        Keys.AVAILABLE_UNITS: [],
+        Keys.CUR_POINTS: [],
+        Keys.POINTS: [],
+        Keys.LAT_MAX: 0,
+        Keys.LAT_MIN: 0,
+        Keys.LON_MAX: 0,
+        Keys.LON_MIN: 0,
+    }
+
+
+SOLUTION_POSITION_TAB: List[Dict[str, Any]] = [solution_position_update()]
 
 
 class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
@@ -27,6 +32,24 @@ class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attr
     _lon_min: float = 0.0
     _lon_max: float = 0.0
     _available_units: List[str] = []
+    _data_updated = Signal()
+    solution_position: Dict[str, Any] = {}
+
+    def __init__(self):
+        super().__init__()
+        assert getattr(self.__class__, "_instance", None) is None
+        self.__class__._instance = self
+        self.solution_position = SOLUTION_POSITION_TAB[0]
+        self._data_updated.connect(self.handle_data_updated)
+
+    @classmethod
+    def post_data_update(cls, update_data: Dict[str, Any]) -> None:
+        SOLUTION_POSITION_TAB[0] = update_data
+        cls._instance._data_updated.emit()
+
+    @Slot()  # type: ignore
+    def handle_data_updated(self) -> None:
+        self.solution_position = SOLUTION_POSITION_TAB[0]
 
     def get_lat_min(self) -> float:
         """Getter for _lat_min."""
@@ -106,11 +129,11 @@ class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attr
 class SolutionPositionModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(SolutionPositionPoints)  # type: ignore
     def fill_console_points(self, cp: SolutionPositionPoints) -> SolutionPositionPoints:  # pylint:disable=no-self-use
-        cp.set_points(SOLUTION_POSITION_TAB[Keys.POINTS])
-        cp.set_cur_points(SOLUTION_POSITION_TAB[Keys.CUR_POINTS])
-        cp.set_lat_max(SOLUTION_POSITION_TAB[Keys.LAT_MAX])
-        cp.set_lat_min(SOLUTION_POSITION_TAB[Keys.LAT_MIN])
-        cp.set_lon_max(SOLUTION_POSITION_TAB[Keys.LON_MAX])
-        cp.set_lon_min(SOLUTION_POSITION_TAB[Keys.LON_MIN])
-        cp.set_available_units(SOLUTION_POSITION_TAB[Keys.AVAILABLE_UNITS])
+        cp.set_points(cp.solution_position[Keys.POINTS])
+        cp.set_cur_points(cp.solution_position[Keys.CUR_POINTS])
+        cp.set_lat_max(cp.solution_position[Keys.LAT_MAX])
+        cp.set_lat_min(cp.solution_position[Keys.LAT_MIN])
+        cp.set_lon_max(cp.solution_position[Keys.LON_MAX])
+        cp.set_lon_min(cp.solution_position[Keys.LON_MIN])
+        cp.set_available_units(cp.solution_position[Keys.AVAILABLE_UNITS])
         return cp

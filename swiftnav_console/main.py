@@ -115,7 +115,7 @@ from .settings_tab import (
 from .solution_position_tab import (
     SolutionPositionModel,
     SolutionPositionPoints,
-    SOLUTION_POSITION_TAB,
+    solution_position_update,
 )
 
 from .solution_table import (
@@ -270,19 +270,21 @@ class BackendMessageReceiver(QObject):
             data = m.connectionNotification.message
             ConnectionData.post_connection_message_update(data)
         elif m.which == Message.Union.SolutionPositionStatus:
-            SOLUTION_POSITION_TAB[Keys.POINTS][:] = [
+            data = solution_position_update()
+            data[Keys.POINTS][:] = [
                 [QPointF(point.x, point.y) for point in m.solutionPositionStatus.data[idx]]
                 for idx in range(len(m.solutionPositionStatus.data))
             ]
-            SOLUTION_POSITION_TAB[Keys.CUR_POINTS][:] = [
+            data[Keys.CUR_POINTS][:] = [
                 [QPointF(point.x, point.y) for point in m.solutionPositionStatus.curData[idx]]
                 for idx in range(len(m.solutionPositionStatus.curData))
             ]
-            SOLUTION_POSITION_TAB[Keys.LAT_MAX] = m.solutionPositionStatus.latMax
-            SOLUTION_POSITION_TAB[Keys.LAT_MIN] = m.solutionPositionStatus.latMin
-            SOLUTION_POSITION_TAB[Keys.LON_MAX] = m.solutionPositionStatus.lonMax
-            SOLUTION_POSITION_TAB[Keys.LON_MIN] = m.solutionPositionStatus.lonMin
-            SOLUTION_POSITION_TAB[Keys.AVAILABLE_UNITS][:] = m.solutionPositionStatus.availableUnits
+            data[Keys.LAT_MAX] = m.solutionPositionStatus.latMax
+            data[Keys.LAT_MIN] = m.solutionPositionStatus.latMin
+            data[Keys.LON_MAX] = m.solutionPositionStatus.lonMax
+            data[Keys.LON_MIN] = m.solutionPositionStatus.lonMin
+            data[Keys.AVAILABLE_UNITS][:] = m.solutionPositionStatus.availableUnits
+            SolutionPositionPoints.post_data_update(data)
         elif m.which == Message.Union.SolutionTableStatus:
             SOLUTION_TABLE[Keys.ENTRIES][:] = [[entry.key, entry.val] for entry in m.solutionTableStatus.data]
         elif m.which == Message.Union.SolutionVelocityStatus:

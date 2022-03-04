@@ -121,7 +121,7 @@ from .solution_position_tab import (
 from .solution_table import (
     SolutionTableEntries,
     SolutionTableModel,
-    SOLUTION_TABLE,
+    solution_table_update,
 )
 
 from .solution_velocity_tab import (
@@ -286,7 +286,9 @@ class BackendMessageReceiver(QObject):
             data[Keys.AVAILABLE_UNITS][:] = m.solutionPositionStatus.availableUnits
             SolutionPositionPoints.post_data_update(data)
         elif m.which == Message.Union.SolutionTableStatus:
-            SOLUTION_TABLE[Keys.ENTRIES][:] = [[entry.key, entry.val] for entry in m.solutionTableStatus.data]
+            data = solution_table_update()
+            data[Keys.ENTRIES][:] = [[entry.key, entry.val] for entry in m.solutionTableStatus.data]
+            SolutionTableEntries.post_data_update(data)
         elif m.which == Message.Union.SolutionVelocityStatus:
             SOLUTION_VELOCITY_TAB[Keys.COLORS][:] = m.solutionVelocityStatus.colors
             SOLUTION_VELOCITY_TAB[Keys.POINTS][:] = [

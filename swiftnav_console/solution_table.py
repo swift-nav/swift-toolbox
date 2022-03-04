@@ -3,20 +3,42 @@
 
 from typing import Dict, List, Any
 
-from PySide2.QtCore import Property, QObject, Slot
+from PySide2.QtCore import Property, QObject, Signal, Slot
 
 from .constants import Keys, QTKeys
 
 
-SOLUTION_TABLE: Dict[str, Any] = {
-    Keys.ENTRIES: [],
-}
+def solution_table_update() -> Dict[str, Any]:
+    return {
+        Keys.ENTRIES: [],
+    }
+
+
+SOLUTION_TABLE: List[Dict[str, Any]] = [solution_table_update()]
 
 
 class SolutionTableEntries(QObject):
 
     _entries: List[List[str]] = []
     _valid: bool = False
+    _data_updated = Signal()
+    solution_table: Dict[str, Any] = {}
+
+    def __init__(self):
+        super().__init__()
+        assert getattr(self.__class__, "_instance", None) is None
+        self.__class__._instance = self
+        self.solution_table = SOLUTION_TABLE[0]
+        self._data_updated.connect(self.handle_data_updated)
+
+    @classmethod
+    def post_data_update(cls, update_data: Dict[str, Any]) -> None:
+        SOLUTION_TABLE[0] = update_data
+        cls._instance._data_updated.emit()
+
+    @Slot()  # type: ignore
+    def handle_data_updated(self) -> None:
+        self.solution_table = SOLUTION_TABLE[0]
 
     def get_valid(self) -> bool:
         """Getter for _valid.
@@ -46,5 +68,5 @@ class SolutionTableEntries(QObject):
 class SolutionTableModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(SolutionTableEntries)  # type: ignore
     def fill_console_points(self, cp: SolutionTableEntries) -> SolutionTableEntries:  # pylint:disable=no-self-use
-        cp.set_entries(SOLUTION_TABLE[Keys.ENTRIES])
+        cp.set_entries(cp.solution_table[Keys.ENTRIES])
         return cp

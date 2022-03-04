@@ -127,7 +127,7 @@ from .solution_table import (
 from .solution_velocity_tab import (
     SolutionVelocityModel,
     SolutionVelocityPoints,
-    SOLUTION_VELOCITY_TAB,
+    solution_velocity_update,
 )
 
 from .status_bar import (
@@ -290,14 +290,16 @@ class BackendMessageReceiver(QObject):
             data[Keys.ENTRIES][:] = [[entry.key, entry.val] for entry in m.solutionTableStatus.data]
             SolutionTableEntries.post_data_update(data)
         elif m.which == Message.Union.SolutionVelocityStatus:
-            SOLUTION_VELOCITY_TAB[Keys.COLORS][:] = m.solutionVelocityStatus.colors
-            SOLUTION_VELOCITY_TAB[Keys.POINTS][:] = [
+            data = solution_velocity_update()
+            data[Keys.COLORS][:] = m.solutionVelocityStatus.colors
+            data[Keys.POINTS][:] = [
                 [QPointF(point.x, point.y) for point in m.solutionVelocityStatus.data[idx]]
                 for idx in range(len(m.solutionVelocityStatus.data))
             ]
-            SOLUTION_VELOCITY_TAB[Keys.MAX] = m.solutionVelocityStatus.max
-            SOLUTION_VELOCITY_TAB[Keys.MIN] = m.solutionVelocityStatus.min
-            SOLUTION_VELOCITY_TAB[Keys.AVAILABLE_UNITS][:] = m.solutionVelocityStatus.availableUnits
+            data[Keys.MAX] = m.solutionVelocityStatus.max
+            data[Keys.MIN] = m.solutionVelocityStatus.min
+            data[Keys.AVAILABLE_UNITS][:] = m.solutionVelocityStatus.availableUnits
+            SolutionVelocityPoints.post_data_update(data)
         elif m.which == Message.Union.BaselinePlotStatus:
             data = baseline_plot_update()
             data[Keys.POINTS][:] = [

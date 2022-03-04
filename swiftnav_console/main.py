@@ -147,7 +147,7 @@ from .tracking_sky_plot_tab import (
 )
 
 from .update_tab import (
-    UPDATE_TAB,
+    update_tab_update,
     UpdateTabData,
     UpdateTabModel,
 )
@@ -457,22 +457,24 @@ class BackendMessageReceiver(QObject):
             )
             LoggingBarData.post_recording_data_update(data)
         elif m.which == Message.Union.UpdateTabStatus:
-            UPDATE_TAB[Keys.HARDWARE_REVISION] = m.updateTabStatus.hardwareRevision
-            UPDATE_TAB[Keys.FW_VERSION_CURRENT] = m.updateTabStatus.fwVersionCurrent
-            UPDATE_TAB[Keys.FW_VERSION_LATEST] = m.updateTabStatus.fwVersionLatest
-            UPDATE_TAB[Keys.FW_LOCAL_FILENAME] = m.updateTabStatus.fwLocalFilename
-            UPDATE_TAB[Keys.DIRECTORY] = m.updateTabStatus.directory
-            UPDATE_TAB[Keys.DOWNLOADING] = m.updateTabStatus.downloading
-            UPDATE_TAB[Keys.UPGRADING] = m.updateTabStatus.upgrading
-            UPDATE_TAB[Keys.FW_TEXT] = m.updateTabStatus.fwText
-            UPDATE_TAB[Keys.FILEIO_LOCAL_FILEPATH] = m.updateTabStatus.fileioLocalFilepath
-            UPDATE_TAB[Keys.FILEIO_DESTINATION_FILEPATH] = m.updateTabStatus.fileioDestinationFilepath
-            UPDATE_TAB[Keys.FW_OUTDATED] = m.updateTabStatus.fwOutdated
-            UPDATE_TAB[Keys.FW_V2_OUTDATED] = m.updateTabStatus.fwV2Outdated
-            UPDATE_TAB[Keys.SERIAL_PROMPT] = m.updateTabStatus.serialPrompt
-            UPDATE_TAB[Keys.CONSOLE_OUTDATED] = m.updateTabStatus.consoleOutdated
-            UPDATE_TAB[Keys.CONSOLE_VERSION_CURRENT] = m.updateTabStatus.consoleVersionCurrent
-            UPDATE_TAB[Keys.CONSOLE_VERSION_LATEST] = m.updateTabStatus.consoleVersionLatest
+            data = update_tab_update()
+            data[Keys.HARDWARE_REVISION] = m.updateTabStatus.hardwareRevision
+            data[Keys.FW_VERSION_CURRENT] = m.updateTabStatus.fwVersionCurrent
+            data[Keys.FW_VERSION_LATEST] = m.updateTabStatus.fwVersionLatest
+            data[Keys.FW_LOCAL_FILENAME] = m.updateTabStatus.fwLocalFilename
+            data[Keys.DIRECTORY] = m.updateTabStatus.directory
+            data[Keys.DOWNLOADING] = m.updateTabStatus.downloading
+            data[Keys.UPGRADING] = m.updateTabStatus.upgrading
+            data[Keys.FW_TEXT] = m.updateTabStatus.fwText
+            data[Keys.FILEIO_LOCAL_FILEPATH] = m.updateTabStatus.fileioLocalFilepath
+            data[Keys.FILEIO_DESTINATION_FILEPATH] = m.updateTabStatus.fileioDestinationFilepath
+            data[Keys.FW_OUTDATED] = m.updateTabStatus.fwOutdated
+            data[Keys.FW_V2_OUTDATED] = m.updateTabStatus.fwV2Outdated
+            data[Keys.SERIAL_PROMPT] = m.updateTabStatus.serialPrompt
+            data[Keys.CONSOLE_OUTDATED] = m.updateTabStatus.consoleOutdated
+            data[Keys.CONSOLE_VERSION_CURRENT] = m.updateTabStatus.consoleVersionCurrent
+            data[Keys.CONSOLE_VERSION_LATEST] = m.updateTabStatus.consoleVersionLatest
+            UpdateTabData.post_data_update(data)
         elif m.which == Message.Union.LogAppend:
             log_panel_lock.lock()
             data = log_panel_update()

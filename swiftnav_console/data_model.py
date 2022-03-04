@@ -1,14 +1,12 @@
-from typing import Dict, List, Any, Optional
+from typing import Any, List, Optional
 from PySide2.QtCore import QObject, Slot
 
 import console_backend.server  # type: ignore  # pylint: disable=import-error,no-name-in-module
 
-# from copy import deepcopy
-# from collections import namedtuple
+from .constants import QTKeys
 
-# from PySide2.QtCore import Property, Slot, Signal, QAbstractTableModel, Qt, QModelIndex
-
-from .constants import Keys, QTKeys
+PIKSI_HOST = "192.168.0.222"
+PIKSI_PORT = 55555
 
 
 class DataModel(QObject):  # pylint: disable=too-many-instance-attributes,too-many-public-methods

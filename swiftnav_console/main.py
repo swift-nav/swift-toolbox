@@ -4,7 +4,7 @@ import argparse
 import os
 import sys
 
-from typing import List, Any, Optional, Tuple
+from typing import Optional, Tuple
 
 import capnp  # type: ignore
 
@@ -23,7 +23,7 @@ import swiftnav_console.console_resources  # type: ignore # pylint: disable=unus
 
 import console_backend.server  # type: ignore  # pylint: disable=import-error,no-name-in-module
 
-from .constants import ApplicationMetadata, ConnectionState, ConnectionType, Keys, Tabs, QTKeys
+from .constants import ApplicationMetadata, ConnectionState, ConnectionType, Keys, Tabs
 
 from .data_model import DataModel
 
@@ -155,9 +155,6 @@ from .update_tab import (
 from .file_io import FileIO
 
 CONSOLE_BACKEND_CAPNP_PATH = "console_backend.capnp"
-
-PIKSI_HOST = "192.168.0.222"
-PIKSI_PORT = 55555
 
 HELP_CLI_ARGS = ["-h", "--help", "help"]
 

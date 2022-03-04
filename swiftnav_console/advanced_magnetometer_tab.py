@@ -25,6 +25,7 @@ class AdvancedMagnetometerPoints(QObject):
     _ymin: float = 0.0
     _ymax: float = 0.0
     _data_updated = Signal()
+    advanced_magnetometer_tab: Dict[str, Any] = {}
 
     def __init__(self):
         super().__init__()

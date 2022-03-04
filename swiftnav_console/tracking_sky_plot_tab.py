@@ -26,13 +26,13 @@ class TrackingSkyPlotPoints(QObject):
     _data_updated = Signal()
     labels_changed = Signal()
     all_series_changed = Signal()
-    tracking_skyplot: Dict[str, Any] = {}
+    _tracking_skyplot: Dict[str, Any] = {}
 
     def __init__(self):
         super().__init__()
         assert getattr(self.__class__, "_instance", None) is None
         self.__class__._instance = self
-        self.tracking_sky_plot = TRACKING_SKY_PLOT_TAB[0]
+        self._tracking_sky_plot = TRACKING_SKY_PLOT_TAB[0]
         self._data_updated.connect(self.handle_data_updated)
 
     @classmethod
@@ -42,10 +42,10 @@ class TrackingSkyPlotPoints(QObject):
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:
-        self.tracking_sky_plot = TRACKING_SKY_PLOT_TAB[0]
+        self._tracking_sky_plot = TRACKING_SKY_PLOT_TAB[0]
 
     def get_labels(self) -> List[List[str]]:  # pylint:disable=no-self-use
-        return self.tracking_sky_plot[Keys.LABELS]
+        return self._tracking_sky_plot[Keys.LABELS]
 
     labels = Property(list, get_labels, notify=labels_changed)  # type: ignore
 
@@ -63,7 +63,7 @@ class TrackingSkyPlotPoints(QObject):
     @Slot()  # type: ignore
     def fill_all_series(self) -> None:
         series_changed = False
-        for idx, series_points in enumerate(self.tracking_sky_plot[Keys.SATS]):
+        for idx, series_points in enumerate(self._tracking_sky_plot[Keys.SATS]):
             series = self._all_series[idx]
             if series.isVisible():
                 series.clear()

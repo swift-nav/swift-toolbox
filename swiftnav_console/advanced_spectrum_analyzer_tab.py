@@ -32,6 +32,7 @@ class AdvancedSpectrumAnalyzerPoints(QObject):
     _xmax: float = 0.0
     _channel: int = 0
     _data_updated = Signal()
+    advanced_spectrum_analyzer_tab: Dict[str, Any] = {}
 
     def __init__(self):
         super().__init__()

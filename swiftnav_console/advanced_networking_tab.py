@@ -26,6 +26,7 @@ class AdvancedNetworkingData(QObject):
     _ip_address: str = ""
     _port: int = 0
     _data_updated = Signal()
+    advanced_networking_tab: Dict[str, Any] = {}
 
     def __init__(self):
         super().__init__()

@@ -21,6 +21,7 @@ class BaselineTableEntries(QObject):
 
     _entries: List[List[str]] = []
     _data_updated = Signal()
+    baseline_table: Dict[str, Any] = {}
 
     def __init__(self):
         super().__init__()

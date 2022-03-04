@@ -31,6 +31,7 @@ class BaselinePlotPoints(QObject):
     _e_min: float = 0.0
     _e_max: float = 0.0
     _data_updated = Signal()
+    baseline_plot: Dict[str, Any] = {}
 
     def __init__(self):
         super().__init__()

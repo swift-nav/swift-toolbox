@@ -101,11 +101,11 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
 
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
-        if cls._instance._remote:
+        if cls._instance.get_remote():
             REMOTE_OBSERVATION_TAB[0] = update_data
         else:
             LOCAL_OBSERVATION_TAB[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:
@@ -278,7 +278,7 @@ class ObservationRemoteTableModel(ObservationTableModel):
         super().__init__(parent)
         assert getattr(self.__class__, "_instance", None) is None
         self.__class__._instance = self
-        self._remote = True
+        self.set_remote(True)
 
 
 class ObservationLocalTableModel(ObservationTableModel):
@@ -290,7 +290,7 @@ class ObservationLocalTableModel(ObservationTableModel):
         super().__init__(parent)
         assert getattr(self.__class__, "_instance", None) is None
         self.__class__._instance = self
-        self._remote = False
+        self.set_remote(False)
 
 
 def obs_rows_to_json(rows):

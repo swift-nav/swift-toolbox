@@ -3,22 +3,28 @@
 
 from typing import Dict, List, Any
 
-from PySide2.QtCore import Property, QObject, Slot
+from PySide2.QtCore import Property, QObject, Signal, Slot
 
 from .constants import Keys, QTKeys
 
 
-SETTINGS_TAB: Dict[str, Any] = {
-    Keys.IMPORT_STATUS: None,
-    Keys.RECOMMENDED_INS_SETTINGS: [],
-    Keys.NEW_INS_CONFIRMATON: False,
-    Keys.NOTIFICATION: "",
-}
+def settings_ins_update() -> Dict[str, Any]:
+    return {
+        Keys.RECOMMENDED_INS_SETTINGS: [],
+        Keys.NEW_INS_CONFIRMATON: False,
+    }
 
 
-SETTINGS_TABLE: Dict[str, Any] = {
-    Keys.ENTRIES: [],
-}
+def settings_table_update() -> Dict[str, Any]:
+    return {
+        Keys.ENTRIES: [],
+    }
+
+
+SETTINGS_IMPORT_STATUS: List[str] = [""]
+SETTINGS_INS: List[Dict[str, Any]] = [settings_ins_update()]
+SETTINGS_NOTIFICATION: List[str] = [""]
+SETTINGS_TABLE: List[Dict[str, Any]] = [settings_table_update()]
 
 
 class SettingsTabData(QObject):
@@ -27,6 +33,40 @@ class SettingsTabData(QObject):
     _recommended_ins_settings: List[List[Any]] = []
     _new_ins_confirmation: bool = False
     _notification: str = ""
+    _data_updated = Signal()
+    settings_import_status: str = ""
+    settings_ins: Dict[str, Any] = {}
+    settings_notification: str = ""
+
+    def __init__(self):
+        super().__init__()
+        assert getattr(self.__class__, "_instance", None) is None
+        self.__class__._instance = self
+        self.settings_import_status = SETTINGS_IMPORT_STATUS[0]
+        self.settings_ins = SETTINGS_INS[0]
+        self.settings_notification = SETTINGS_NOTIFICATION[0]
+        self._data_updated.connect(self.handle_data_updated)
+
+    @classmethod
+    def post_import_status_update(cls, update_data: str) -> None:
+        SETTINGS_IMPORT_STATUS[0] = update_data
+        cls._instance._data_updated.emit()
+
+    @classmethod
+    def post_ins_update(cls, update_data: Dict[str, Any]) -> None:
+        SETTINGS_INS[0] = update_data
+        cls._instance._data_updated.emit()
+
+    @classmethod
+    def post_notification_update(cls, update_data: str) -> None:
+        SETTINGS_NOTIFICATION[0] = update_data
+        cls._instance._data_updated.emit()
+
+    @Slot()  # type: ignore
+    def handle_data_updated(self) -> None:
+        self.settings_import_status = SETTINGS_IMPORT_STATUS[0]
+        self.settings_ins = SETTINGS_INS[0]
+        self.settings_notification = SETTINGS_NOTIFICATION[0]
 
     def get_import_status(self) -> str:
         return self._import_status
@@ -66,22 +106,22 @@ class SettingsTabData(QObject):
 class SettingsTabModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(SettingsTabData)  # type: ignore
     def fill_data(self, cp: SettingsTabData) -> SettingsTabData:  # pylint:disable=no-self-use
-        cp.set_import_status(SETTINGS_TAB[Keys.IMPORT_STATUS])
-        cp.set_recommended_ins_settings(SETTINGS_TAB[Keys.RECOMMENDED_INS_SETTINGS])
-        cp.set_new_ins_confirmation(SETTINGS_TAB[Keys.NEW_INS_CONFIRMATON])
-        cp.set_notification(SETTINGS_TAB[Keys.NOTIFICATION])
-        SETTINGS_TAB[Keys.NOTIFICATION] = ""
+        cp.set_import_status(cp.settings_import_status)
+        cp.set_recommended_ins_settings(cp.settings_ins[Keys.RECOMMENDED_INS_SETTINGS])
+        cp.set_new_ins_confirmation(cp.settings_ins[Keys.NEW_INS_CONFIRMATON])
+        cp.set_notification(cp.settings_notification)
+        cp.settings_notification = ""
         return cp
 
     @Slot(SettingsTabData)  # type: ignore
     def clear_import_status(self, cp: SettingsTabData) -> SettingsTabData:  # pylint:disable=no-self-use
-        SETTINGS_TAB[Keys.IMPORT_STATUS] = ""
+        cp.settings_import_status = ""
         self.fill_data(cp)
         return cp
 
     @Slot(SettingsTabData)  # type: ignore
     def clear_new_ins_confirmation(self, cp: SettingsTabData) -> SettingsTabData:  # pylint:disable=no-self-use
-        SETTINGS_TAB[Keys.NEW_INS_CONFIRMATON] = False
+        cp.settings_ins[Keys.NEW_INS_CONFIRMATON] = False
         self.fill_data(cp)
         return cp
 
@@ -89,6 +129,24 @@ class SettingsTabModel(QObject):  # pylint: disable=too-few-public-methods
 class SettingsTableEntries(QObject):
 
     _entries: List[dict] = []
+    _data_updated = Signal()
+    settings_table: Dict[str, Any] = {}
+
+    def __init__(self):
+        super().__init__()
+        assert getattr(self.__class__, "_instance", None) is None
+        self.__class__._instance = self
+        self.settings_table = SETTINGS_TABLE[0]
+        self._data_updated.connect(self.handle_data_updated)
+
+    @classmethod
+    def post_data_update(cls, update_data: Dict[str, Any]) -> None:
+        SETTINGS_TABLE[0] = update_data
+        cls._instance._data_updated.emit()
+
+    @Slot()  # type: ignore
+    def handle_data_updated(self) -> None:
+        self.settings_table = SETTINGS_TABLE[0]
 
     def get_entries(self) -> List[dict]:
         return self._entries
@@ -102,7 +160,7 @@ class SettingsTableEntries(QObject):
 class SettingsTableModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(SettingsTableEntries)  # type: ignore
     def fill_console_points(self, cp: SettingsTableEntries) -> SettingsTableEntries:  # pylint:disable=no-self-use
-        cp.set_entries(SETTINGS_TABLE[Keys.ENTRIES])
+        cp.set_entries(cp.settings_table[Keys.ENTRIES])
         return cp
 
 

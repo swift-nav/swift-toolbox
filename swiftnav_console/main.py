@@ -105,8 +105,8 @@ from .settings_tab import (
     SettingsTabData,
     SettingsTableEntries,
     SettingsTableModel,
-    SETTINGS_TAB,
-    SETTINGS_TABLE,
+    settings_ins_update,
+    settings_table_update,
     settings_rows_to_json,
 )
 
@@ -264,7 +264,8 @@ class BackendMessageReceiver(QObject):
                 self._app.quit()
                 return True
             if app_state == ConnectionState.DISCONNECTED:
-                SETTINGS_TABLE[Keys.ENTRIES] = []
+                data = settings_table_update()
+                SettingsTableEntries.post_data_update(data)
             ConnectionData.post_connection_state_update(app_state)
         elif m.which == Message.Union.ConnectionNotification:
             data = m.connectionNotification.message
@@ -364,7 +365,7 @@ class BackendMessageReceiver(QObject):
             ]
             AdvancedMagnetometerPoints.post_data_update(data)
         elif m.which == Message.Union.FusionStatusFlagsStatus:
-            data = fusion_status_flags_tab_update()
+            data = fusion_status_flags_update()
             data[Keys.GNSSPOS] = m.fusionStatusFlagsStatus.gnsspos
             data[Keys.GNSSVEL] = m.fusionStatusFlagsStatus.gnssvel
             data[Keys.WHEELTICKS] = m.fusionStatusFlagsStatus.wheelticks
@@ -473,17 +474,21 @@ class BackendMessageReceiver(QObject):
             data[Keys.LOG_LEVEL] = m.logAppend.logLevel
             LogPanelData.post_data_update(data)
         elif m.which == Message.Union.SettingsTableStatus:
-            SETTINGS_TABLE[Keys.ENTRIES][:] = settings_rows_to_json(m.settingsTableStatus.data)
+            data = settings_table_update()
+            data[Keys.ENTRIES][:] = settings_rows_to_json(m.settingsTableStatus.data)
+            SettingsTableEntries.post_data_update(data)
         elif m.which == Message.Union.SettingsImportResponse:
-            SETTINGS_TAB[Keys.IMPORT_STATUS] = m.settingsImportResponse.status
+            SettingsTabData.post_import_status_update(m.settingsImportResponse.status)
         elif m.which == Message.Union.SettingsNotification:
-            SETTINGS_TAB[Keys.NOTIFICATION] = m.settingsNotification.message
+            SettingsTabData.post_notification_update(m.settingsNotification.message)
         elif m.which == Message.Union.InsSettingsChangeResponse:
-            SETTINGS_TAB[Keys.RECOMMENDED_INS_SETTINGS][:] = [
+            data = settings_ins_update()
+            data[Keys.RECOMMENDED_INS_SETTINGS][:] = [
                 [entry.settingName, entry.currentValue, entry.recommendedValue]
                 for entry in m.insSettingsChangeResponse.recommendedSettings
             ]
-            SETTINGS_TAB[Keys.NEW_INS_CONFIRMATON] = True
+            data[Keys.NEW_INS_CONFIRMATON] = True
+            SettingsTabData.post_ins_update(data)
         return True
 
 

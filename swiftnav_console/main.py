@@ -94,9 +94,9 @@ from .baseline_table import (
 )
 
 from .observation_tab import (
-    ObservationTableModel,
-    REMOTE_OBSERVATION_TAB,
-    LOCAL_OBSERVATION_TAB,
+    ObservationLocalTableModel,
+    ObservationRemoteTableModel,
+    observation_update,
     obs_rows_to_json,
 )
 
@@ -392,14 +392,14 @@ class BackendMessageReceiver(QObject):
                 list(m.trackingSkyPlotStatus.labels[idx]) for idx in range(len(m.trackingSkyPlotStatus.labels))
             ]
         elif m.which == Message.Union.ObservationStatus:
+            data = observation_update()
+            data[Keys.TOW] = m.observationStatus.tow
+            data[Keys.WEEK] = m.observationStatus.week
+            data[Keys.ROWS][:] = obs_rows_to_json(m.observationStatus.rows)
             if m.observationStatus.isRemote:
-                REMOTE_OBSERVATION_TAB[Keys.TOW] = m.observationStatus.tow
-                REMOTE_OBSERVATION_TAB[Keys.WEEK] = m.observationStatus.week
-                REMOTE_OBSERVATION_TAB[Keys.ROWS][:] = obs_rows_to_json(m.observationStatus.rows)
+                ObservationRemoteTableModel.post_data_update(data)
             else:
-                LOCAL_OBSERVATION_TAB[Keys.TOW] = m.observationStatus.tow
-                LOCAL_OBSERVATION_TAB[Keys.WEEK] = m.observationStatus.week
-                LOCAL_OBSERVATION_TAB[Keys.ROWS][:] = obs_rows_to_json(m.observationStatus.rows)
+                ObservationLocalTableModel.post_data_update(data)
         elif m.which == Message.Union.StatusBarStatus:
             data = status_bar_update()
             data[Keys.POS] = m.statusBarStatus.pos
@@ -918,7 +918,8 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     qmlRegisterType(StatusBarData, "SwiftConsole", 1, 0, "StatusBarData")  # type: ignore
     qmlRegisterType(TrackingSignalsPoints, "SwiftConsole", 1, 0, "TrackingSignalsPoints")  # type: ignore
     qmlRegisterType(TrackingSkyPlotPoints, "SwiftConsole", 1, 0, "TrackingSkyPlotPoints")  # type: ignore
-    qmlRegisterType(ObservationTableModel, "SwiftConsole", 1, 0, "ObservationTableModel")  # type: ignore
+    qmlRegisterType(ObservationRemoteTableModel, "SwiftConsole", 1, 0, "ObservationRemoteTableModel")  # type: ignore
+    qmlRegisterType(ObservationLocalTableModel, "SwiftConsole", 1, 0, "ObservationLocalTableModel")  # type: ignore
     qmlRegisterType(UpdateTabData, "SwiftConsole", 1, 0, "UpdateTabData")  # type: ignore
     qmlRegisterType(FileIO, "SwiftConsole", 1, 0, "FileIO")  # type: ignore
 

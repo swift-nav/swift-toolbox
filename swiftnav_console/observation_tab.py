@@ -42,17 +42,16 @@ def format_prn_string(sat, code):
     return f"{sat} ({code})"
 
 
-REMOTE_OBSERVATION_TAB: Dict[str, Any] = {
-    Keys.TOW: 0,
-    Keys.WEEK: 0,
-    Keys.ROWS: [],
-}
+def observation_update() -> Dict[str, Any]:
+    return {
+        Keys.TOW: 0,
+        Keys.WEEK: 0,
+        Keys.ROWS: [],
+    }
 
-LOCAL_OBSERVATION_TAB: Dict[str, Any] = {
-    Keys.TOW: 0,
-    Keys.WEEK: 0,
-    Keys.ROWS: [],
-}
+
+REMOTE_OBSERVATION_TAB: List[Dict[str, Any]] = [observation_update()]
+LOCAL_OBSERVATION_TAB: List[Dict[str, Any]] = [observation_update()]
 
 
 class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-public-methods
@@ -67,6 +66,8 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
     show_gps_only_changed = Signal(bool, arguments="show_gps_only")
     codes_changed = Signal()
     dataPopulated = Signal()
+    _data_updated = Signal()
+    observation_tab: Dict[str, Any] = {}
 
     column_metadata = [
         (
@@ -84,6 +85,9 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.observation_tab = observation_update()
+        self._data_updated.connect(self.handle_data_updated)
+
         self._tow = 0
         self._week = 0
         self._rows = []
@@ -95,9 +99,23 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
         self._code_filters = set()
         self._codes = set()
 
+    @classmethod
+    def post_data_update(cls, update_data: Dict[str, Any]) -> None:
+        if cls._instance._remote:
+            REMOTE_OBSERVATION_TAB[0] = update_data
+        else:
+            LOCAL_OBSERVATION_TAB[0] = update_data
+        cls._instance._data_updated.emit()
+
+    @Slot()  # type: ignore
+    def handle_data_updated(self) -> None:
+        if self._remote:
+            self.observation_tab = REMOTE_OBSERVATION_TAB[0]
+        else:
+            self.observation_tab = LOCAL_OBSERVATION_TAB[0]
+
     def get_codes(self) -> List[List[str]]:
-        observation_tab = REMOTE_OBSERVATION_TAB if self._remote else LOCAL_OBSERVATION_TAB
-        return [entry["prn"].code for entry in observation_tab[Keys.ROWS]]
+        return [entry["prn"].code for entry in self.observation_tab[Keys.ROWS]]
 
     def get_code_filters(self) -> List[str]:
         return list(self._code_filters)
@@ -159,8 +177,7 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
         return self._remote
 
     def total_rows(self) -> int:
-        observation_tab = REMOTE_OBSERVATION_TAB if self._remote else LOCAL_OBSERVATION_TAB
-        return len(observation_tab[Keys.ROWS])
+        return len(self.observation_tab[Keys.ROWS])
 
     def rowCount(self, parent=QModelIndex()):  # pylint: disable=unused-argument
         return len(self._rows)
@@ -180,12 +197,11 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
 
     @Slot()  # type: ignore
     def update(self) -> None:
-        observation_tab = REMOTE_OBSERVATION_TAB if self._remote else LOCAL_OBSERVATION_TAB
-        if observation_tab[Keys.TOW] != self._tow:
-            self.set_tow(observation_tab[Keys.TOW])
-        if observation_tab[Keys.WEEK] != self._week:
-            self.set_week(observation_tab[Keys.WEEK])
-        codes = list(set(entry["prn"].code for entry in observation_tab[Keys.ROWS]))
+        if self.observation_tab[Keys.TOW] != self._tow:
+            self.set_tow(self.observation_tab[Keys.TOW])
+        if self.observation_tab[Keys.WEEK] != self._week:
+            self.set_week(self.observation_tab[Keys.WEEK])
+        codes = list(set(entry["prn"].code for entry in self.observation_tab[Keys.ROWS]))
         if codes != self._codes:
             self.set_codes(codes)
 
@@ -194,7 +210,7 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
         # https://stackoverflow.com/questions/39980323/are-dictionaries-ordered-in-python-3-6
         rowsToInsert = []
         rowIdx = 0
-        for row in observation_tab[Keys.ROWS]:
+        for row in self.observation_tab[Keys.ROWS]:
             if row["prn"].code in self._code_filters:
                 continue
 
@@ -251,6 +267,30 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
     # Confusingly, codes depends on self._rows not self._codes
     codes = Property(QTKeys.QVARIANTLIST, get_codes, notify=row_count_changed)  # type: ignore
     code_filters = Property(QTKeys.QVARIANTLIST, get_code_filters, constant=True)  # type: ignore
+
+
+class ObservationRemoteTableModel(ObservationTableModel):
+    """
+    A model for the remote observation tab.
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        assert getattr(self.__class__, "_instance", None) is None
+        self.__class__._instance = self
+        self._remote = True
+
+
+class ObservationLocalTableModel(ObservationTableModel):
+    """
+    A model for the local observation tab.
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        assert getattr(self.__class__, "_instance", None) is None
+        self.__class__._instance = self
+        self._remote = False
 
 
 def obs_rows_to_json(rows):

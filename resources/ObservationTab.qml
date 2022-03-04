@@ -9,6 +9,14 @@ import SwiftConsole 1.0
 MainTab {
     id: observationTab
 
+    ObservationRemoteTableModel {
+        id: observationRemoteTableModel
+    }
+
+    ObservationLocalTableModel {
+        id: observationLocalTableModel
+    }
+
     SplitView {
         id: observationView
 
@@ -32,6 +40,7 @@ MainTab {
                     id: localTable
 
                     anchors.fill: parent
+                    observationTableModel: observationLocalTableModel
                 }
 
             }
@@ -52,7 +61,7 @@ MainTab {
                     id: remoteTable
 
                     anchors.fill: parent
-                    remote: true
+                    observationTableModel: observationRemoteTableModel
                 }
 
             }

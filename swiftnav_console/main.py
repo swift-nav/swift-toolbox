@@ -143,7 +143,7 @@ from .tracking_signals_tab import (
 
 from .tracking_sky_plot_tab import (
     TrackingSkyPlotPoints,
-    TRACKING_SKY_PLOT_TAB,
+    tracking_sky_plot_update,
 )
 
 from .update_tab import (
@@ -390,13 +390,15 @@ class BackendMessageReceiver(QObject):
             data[Keys.XMIN_OFFSET] = m.trackingSignalsStatus.xminOffset
             TrackingSignalsPoints.post_data_update(data)
         elif m.which == Message.Union.TrackingSkyPlotStatus:
-            TRACKING_SKY_PLOT_TAB[Keys.SATS][:] = [
+            data = tracking_sky_plot_update()
+            data[Keys.SATS][:] = [
                 [QPointF(point.az, point.el) for point in m.trackingSkyPlotStatus.sats[idx]]
                 for idx in range(len(m.trackingSkyPlotStatus.sats))
             ]
-            TRACKING_SKY_PLOT_TAB[Keys.LABELS][:] = [
+            data[Keys.LABELS][:] = [
                 list(m.trackingSkyPlotStatus.labels[idx]) for idx in range(len(m.trackingSkyPlotStatus.labels))
             ]
+            TrackingSkyPlotPoints.post_data_update(data)
         elif m.which == Message.Union.ObservationStatus:
             data = observation_update()
             data[Keys.TOW] = m.observationStatus.tow

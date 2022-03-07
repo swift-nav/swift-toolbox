@@ -25,7 +25,7 @@ import console_backend.server  # type: ignore  # pylint: disable=import-error,no
 
 from .constants import ApplicationMetadata, ConnectionState, ConnectionType, Keys, Tabs
 
-from .data_model import DataModel
+from .backend_request_broker import BackendRequestBroker
 
 from .log_panel import (
     log_panel_update,
@@ -674,7 +674,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     if not qml_object_created[0]:
         return 1
     messages_main = capnp.load(capnp_path)  # pylint: disable=no-member
-    data_model = DataModel(endpoint_main, messages_main)
+    backend_request_broker = BackendRequestBroker(endpoint_main, messages_main)
     log_panel_model = LogPanelModel()
     connection_model = ConnectionModel()
     advanced_imu_model = AdvancedImuModel()
@@ -712,7 +712,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     root_context.setContextProperty("status_bar_model", status_bar_model)
     root_context.setContextProperty("logging_bar_model", logging_bar_model)
     root_context.setContextProperty("update_tab_model", update_tab_model)
-    root_context.setContextProperty("data_model", data_model)
+    root_context.setContextProperty("backend_request_broker", backend_request_broker)
 
     backend_msg_receiver = BackendMessageReceiver(app, backend_main, messages_main)
     backend_msg_receiver.start()

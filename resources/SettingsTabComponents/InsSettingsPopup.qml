@@ -41,7 +41,7 @@ Item {
         parent: Overlay.overlay
         title: "Confirm Inertial Navigation Change?"
         onAccepted: {
-            data_model.confirm_ins_change();
+            backend_request_broker.confirm_ins_change();
         }
         standardButtons: Dialog.Ok | Dialog.Cancel
         width: Constants.insSettingsPopup.dialogWidth

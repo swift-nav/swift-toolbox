@@ -57,7 +57,7 @@ Item {
                 ToolTip.visible: hovered
                 ToolTip.text: "Pause"
                 checkable: true
-                onClicked: data_model.solution_position([solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].pressed])
+                onClicked: backend_request_broker.solution_position([solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].pressed])
 
                 Image {
                     id: solutionPauseImage
@@ -85,7 +85,7 @@ Item {
                 Layout.preferredHeight: Constants.commonChart.buttonHeight
                 ToolTip.visible: hovered
                 ToolTip.text: "Clear"
-                onPressed: data_model.solution_position([solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].pressed])
+                onPressed: backend_request_broker.solution_position([solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].pressed])
 
                 Image {
                     id: solutionClearImage
@@ -194,7 +194,7 @@ Item {
                     if (!lines.length)
                         return ;
 
-                    data_model.solution_position_unit(available_units[currentIndex]);
+                    backend_request_broker.solution_position_unit(available_units[currentIndex]);
                     zoom_all = true;
                     solutionZoomAllButton.checked = true;
                     solutionCenterButton.checked = false;

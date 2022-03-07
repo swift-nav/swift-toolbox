@@ -33,7 +33,7 @@ Item {
             display: AbstractButton.TextUnderIcon
             flat: true
             onClicked: {
-                data_model.reset_device();
+                backend_request_broker.reset_device();
             }
         }
 

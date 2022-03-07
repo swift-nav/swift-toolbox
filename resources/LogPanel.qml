@@ -124,7 +124,7 @@ Item {
 
                     onTriggered: {
                         logLevelIndex = index;
-                        data_model.log_level(modelData);
+                        backend_request_broker.log_level(modelData);
                     }
 
                     contentItem: Label {

@@ -38,7 +38,7 @@ Item {
                 if (!lines.length)
                     return ;
 
-                data_model.solution_velocity_unit(available_units[currentIndex]);
+                backend_request_broker.solution_velocity_unit(available_units[currentIndex]);
             }
         }
 

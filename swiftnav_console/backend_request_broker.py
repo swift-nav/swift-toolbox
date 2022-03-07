@@ -9,7 +9,7 @@ PIKSI_HOST = "192.168.0.222"
 PIKSI_PORT = 55555
 
 
-class DataModel(QObject):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
+class BackendRequestBroker(QObject):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
 
     endpoint: console_backend.server.ServerEndpoint  # pylint: disable=no-member,c-extension-no-member
     messages: Any

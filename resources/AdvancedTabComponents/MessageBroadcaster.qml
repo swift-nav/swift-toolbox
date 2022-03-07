@@ -70,7 +70,7 @@ Item {
                         let allMessages = false;
                         let ipv4_address = null;
                         let port = null;
-                        data_model.advanced_networking([refresh, start, stop], allMessages, ipv4_address, port);
+                        backend_request_broker.advanced_networking([refresh, start, stop], allMessages, ipv4_address, port);
                     }
                 }
 
@@ -84,7 +84,7 @@ Item {
                         let allMessages = true;
                         let ipv4_address = null;
                         let port = null;
-                        data_model.advanced_networking([refresh, start, stop], allMessages, ipv4_address, port);
+                        backend_request_broker.advanced_networking([refresh, start, stop], allMessages, ipv4_address, port);
                     }
                 }
 
@@ -153,7 +153,7 @@ Item {
                         let allMessages = null;
                         let ipv4_address = text;
                         let port = null;
-                        data_model.advanced_networking([refresh, start, stop], allMessages, ipv4_address, port);
+                        backend_request_broker.advanced_networking([refresh, start, stop], allMessages, ipv4_address, port);
                         ipAddressEditing = false;
                     }
                 }
@@ -223,7 +223,7 @@ Item {
                         let allMessages = null;
                         let ipv4_address = null;
                         let port = text;
-                        data_model.advanced_networking([refresh, start, stop], allMessages, ipv4_address, port);
+                        backend_request_broker.advanced_networking([refresh, start, stop], allMessages, ipv4_address, port);
                         portEditing = false;
                     }
 
@@ -269,7 +269,7 @@ Item {
                         let allMessages = null;
                         let ipv4_address = null;
                         let port = null;
-                        data_model.advanced_networking([refresh, start, stop], allMessages, ipv4_address, port);
+                        backend_request_broker.advanced_networking([refresh, start, stop], allMessages, ipv4_address, port);
                     }
 
                     Label {
@@ -310,7 +310,7 @@ Item {
                         let allMessages = null;
                         let ipv4_address = null;
                         let port = null;
-                        data_model.advanced_networking([refresh, start, stop], allMessages, ipv4_address, port);
+                        backend_request_broker.advanced_networking([refresh, start, stop], allMessages, ipv4_address, port);
                     }
 
                     Label {

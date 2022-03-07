@@ -70,8 +70,8 @@ Item {
                 if (visible)
                     dialogRect.forceActiveFocus();
 
-                if (typeof (data_model) !== "undefined")
-                    data_model.connection_dialog_status(visible);
+                if (typeof (backend_request_broker) !== "undefined")
+                    backend_request_broker.connection_dialog_status(visible);
 
             }
             onClosed: {
@@ -181,7 +181,7 @@ Item {
                             icon.source: Constants.icons.refreshPath
                             icon.color: checked ? Constants.swiftOrange : Constants.materialGrey
                             onClicked: {
-                                data_model.serial_refresh();
+                                backend_request_broker.serial_refresh();
                             }
                         }
 
@@ -380,20 +380,20 @@ Item {
                         onClicked: {
                             if (connectButton.state == Constants.connection.connected || connectButton.state == Constants.connection.connecting) {
                                 connectButton.state = Constants.connection.disconnecting;
-                                data_model.disconnect();
+                                backend_request_broker.disconnect();
                             } else if (connectButton.state == Constants.connection.disconnected) {
                                 connectButton.state = Constants.connection.connecting;
                                 if (tcpRadio.checked) {
                                     if (tcpUrlBar.editText && tcpPortBar.editText)
-                                        data_model.connect_tcp(tcpUrlBar.editText, tcpPortBar.editText);
+                                        backend_request_broker.connect_tcp(tcpUrlBar.editText, tcpPortBar.editText);
                                     else
-                                        data_model.connect();
+                                        backend_request_broker.connect();
                                 } else if (fileRadio.checked) {
                                     if (fileUrlBar.editText)
-                                        data_model.connect_file(fileUrlBar.editText);
+                                        backend_request_broker.connect_file(fileUrlBar.editText);
 
                                 } else {
-                                    data_model.connect_serial(serialDevice.currentText, serialDeviceBaudRate.currentText, serialDeviceFlowControl.currentText);
+                                    backend_request_broker.connect_serial(serialDevice.currentText, serialDeviceBaudRate.currentText, serialDeviceFlowControl.currentText);
                                 }
                             }
                         }

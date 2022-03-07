@@ -48,7 +48,7 @@ Rectangle {
             ToolTip.text: !checked ? "On" : "Off"
             checkable: true
             visible: Globals.showCsvLog
-            onClicked: data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText)
+            onClicked: backend_request_broker.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText)
         }
 
         SwiftButton {
@@ -64,7 +64,7 @@ Rectangle {
             ToolTip.visible: hovered
             ToolTip.text: !checked ? "Start Recording" : "Stop Recording"
             onClicked: {
-                data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText);
+                backend_request_broker.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText);
             }
         }
 
@@ -153,7 +153,7 @@ Rectangle {
                     model: sbp_logging_labels
                     ToolTip.visible: hovered
                     ToolTip.text: "SBP Log Format"
-                    onActivated: data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText)
+                    onActivated: backend_request_broker.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText)
                 }
 
                 ComboBox {
@@ -184,7 +184,7 @@ Rectangle {
                         var text = folderPathBar.currentText;
                         folderPathBar.currentIndex = -1;
                         folderPathBar.editText = text;
-                        data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText);
+                        backend_request_broker.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText);
                     }
 
                     Label {
@@ -228,7 +228,7 @@ Rectangle {
             onAccepted: {
                 var filepath = Utils.fileUrlToString(fileDialog.folder);
                 folderPathBar.editText = filepath;
-                data_model.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText);
+                backend_request_broker.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText);
             }
             onRejected: {
             }

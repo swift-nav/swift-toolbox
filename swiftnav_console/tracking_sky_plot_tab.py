@@ -26,7 +26,7 @@ class TrackingSkyPlotPoints(QObject):
     _data_updated = Signal()
     labels_changed = Signal()
     all_series_changed = Signal()
-    _tracking_skyplot: Dict[str, Any] = {}
+    _tracking_sky_plot: Dict[str, Any] = {}
 
     def __init__(self):
         super().__init__()

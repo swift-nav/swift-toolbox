@@ -5,7 +5,7 @@ import json
 
 from typing import Dict, List, Any
 
-from PySide2.QtCore import Property, QMutex, QObject, Signal, Slot
+from PySide2.QtCore import Property, QObject, Signal, Slot
 
 from .constants import Keys, LogLevel, QTKeys
 
@@ -17,8 +17,6 @@ def log_panel_update() -> Dict[str, Any]:
         Keys.LOG_LEVEL: LogLevel.WARNING,
     }
 
-
-log_panel_lock = QMutex()
 
 LOG_PANEL: List[Dict[str, Any]] = [log_panel_update()]
 
@@ -83,11 +81,9 @@ class LogPanelModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_log_level(cp.log_panel[Keys.LOG_LEVEL])
         # Avoid locking so that message processor has priority to lock
         if cp.log_panel[Keys.ENTRIES]:
-            if log_panel_lock.try_lock():
-                entries = []
-                for entry in cp.log_panel[Keys.ENTRIES]:
-                    entries.append(json.loads(entry))
-                cp.append_entries(entries)
-                cp.log_panel[Keys.ENTRIES][:] = []
-                log_panel_lock.unlock()
+            entries = []
+            for entry in cp.log_panel[Keys.ENTRIES]:
+                entries.append(json.loads(entry))
+            cp.append_entries(entries)
+            cp.log_panel[Keys.ENTRIES][:] = []
         return cp

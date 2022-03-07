@@ -29,7 +29,6 @@ from .backend_request_broker import BackendRequestBroker
 
 from .log_panel import (
     log_panel_update,
-    log_panel_lock,
     LogPanelData,
     LogPanelModel,
 )
@@ -476,10 +475,8 @@ class BackendMessageReceiver(QObject):
             data[Keys.CONSOLE_VERSION_LATEST] = m.updateTabStatus.consoleVersionLatest
             UpdateTabData.post_data_update(data)
         elif m.which == Message.Union.LogAppend:
-            log_panel_lock.lock()
             data = log_panel_update()
             data[Keys.ENTRIES] += [entry.line for entry in m.logAppend.entries]
-            log_panel_lock.unlock()
             data[Keys.LOG_LEVEL] = m.logAppend.logLevel
             LogPanelData.post_data_update(data)
         elif m.which == Message.Union.SettingsTableStatus:

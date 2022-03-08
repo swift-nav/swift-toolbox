@@ -68,7 +68,7 @@ MainTab {
         }
         onAccepted: {
             var filepath = Utils.fileUrlToString(exportDialog.file);
-            data_model.settings_export_request(filepath);
+            backend_request_broker.settings_export_request(filepath);
         }
     }
 
@@ -81,7 +81,7 @@ MainTab {
         folder: shortcuts.home + "/" + Constants.settingsTab.defaultImportExportRelativePathFromHome
         onAccepted: {
             var filepath = Utils.fileUrlToString(importDialog.fileUrl);
-            data_model.settings_import_request(filepath);
+            backend_request_broker.settings_import_request(filepath);
         }
     }
 
@@ -92,7 +92,7 @@ MainTab {
         icon: StandardIcon.Warning
         text: "This will erase all settings and then reset the device.\nAre you sure you want to reset to factory defaults?"
         standardButtons: StandardButton.RestoreDefaults | StandardButton.No
-        onReset: data_model.settings_reset_request()
+        onReset: backend_request_broker.settings_reset_request()
     }
 
     MessageDialog {
@@ -101,7 +101,7 @@ MainTab {
         title: "Successfully imported settings from file."
         text: "Settings import from file complete.  Click 'Yes' to save the settings to the device's persistent storage."
         standardButtons: StandardButton.Yes | StandardButton.No
-        onYes: data_model.settings_save_request()
+        onYes: backend_request_broker.settings_save_request()
     }
 
     MessageDialog {
@@ -110,7 +110,7 @@ MainTab {
         title: "Auto populate surveyed position?"
         text: autoSurveyDialogText()
         standardButtons: StandardButton.Yes | StandardButton.No
-        onYes: data_model.auto_survey_request()
+        onYes: backend_request_broker.auto_survey_request()
     }
 
     SettingsTabComponents.InsSettingsPopup {
@@ -185,7 +185,7 @@ MainTab {
                         icon.height: Constants.settingsTab.buttonIconHeight
                         display: parent.buttonDisplay
                         flat: true
-                        onClicked: data_model.settings_save_request()
+                        onClicked: backend_request_broker.settings_save_request()
                     }
 
                     SwiftButton {
@@ -275,7 +275,7 @@ MainTab {
                         icon.height: Constants.settingsTab.buttonIconHeight
                         display: parent.buttonDisplay
                         flat: true
-                        onClicked: data_model.settings_refresh()
+                        onClicked: backend_request_broker.settings_refresh()
                     }
 
                     SmallCheckBox {

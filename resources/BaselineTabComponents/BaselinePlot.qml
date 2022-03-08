@@ -56,7 +56,7 @@ Item {
                 ToolTip.visible: hovered
                 ToolTip.text: "Pause"
                 checkable: true
-                onClicked: data_model.baseline_plot([baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].pressed, baselineButtonGroup.buttons[0].pressed])
+                onClicked: backend_request_broker.baseline_plot([baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].pressed, baselineButtonGroup.buttons[0].pressed])
 
                 Image {
                     id: baselinePauseImage
@@ -79,7 +79,7 @@ Item {
             SwiftButton {
                 id: baselineClearButton
 
-                onPressed: data_model.baseline_plot([baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].pressed, baselineButtonGroup.buttons[0].pressed])
+                onPressed: backend_request_broker.baseline_plot([baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].pressed, baselineButtonGroup.buttons[0].pressed])
                 ButtonGroup.group: baselineButtonGroup
                 Layout.preferredWidth: Constants.baselinePlot.navBarButtonWidth
                 Layout.preferredHeight: Constants.commonChart.buttonHeight
@@ -183,7 +183,7 @@ Item {
             SwiftButton {
                 id: baselineResetFiltersButton
 
-                onPressed: data_model.baseline_plot([baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].pressed, baselineButtonGroup.buttons[0].pressed])
+                onPressed: backend_request_broker.baseline_plot([baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].pressed, baselineButtonGroup.buttons[0].pressed])
                 ButtonGroup.group: baselineButtonGroup
                 Layout.preferredWidth: Constants.baselinePlot.resetFiltersButtonWidth
                 Layout.preferredHeight: Constants.commonChart.buttonHeight

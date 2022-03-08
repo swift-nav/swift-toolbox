@@ -357,7 +357,7 @@ Rectangle {
             anchors.centerIn: parent
             anchors.verticalCenterOffset: 5
             onEditingFinished: {
-                data_model.settings_write_request(settingGroup, settingName, text);
+                backend_request_broker.settings_write_request(settingGroup, settingName, text);
             }
             validator: {
                 if (settingType === "integer")
@@ -379,7 +379,7 @@ Rectangle {
             currentIndex: model.indexOf(selectedRowField("valueOnDevice"))
             onCurrentIndexChanged: {
                 if (currentIndex != -1 && selectedRowField("valueOnDevice") != model[currentIndex])
-                    data_model.settings_write_request(selectedRowField("group"), selectedRowField("name"), model[currentIndex]);
+                    backend_request_broker.settings_write_request(selectedRowField("group"), selectedRowField("name"), model[currentIndex]);
 
             }
         }
@@ -394,7 +394,7 @@ Rectangle {
             currentIndex: model.indexOf(selectedRowField("valueOnDevice"))
             onCurrentIndexChanged: {
                 if (currentIndex != -1 && selectedRowField("valueOnDevice") != model[currentIndex])
-                    data_model.settings_write_request(selectedRowField("group"), selectedRowField("name"), model[currentIndex]);
+                    backend_request_broker.settings_write_request(selectedRowField("group"), selectedRowField("name"), model[currentIndex]);
 
             }
         }

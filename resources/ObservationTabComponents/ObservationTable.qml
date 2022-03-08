@@ -8,7 +8,7 @@ import SwiftConsole 1.0
 ColumnLayout {
     id: observationTable
 
-    property alias remote: observationTableModel.remote
+    property var observationTableModel: null
     property bool populated: observationTableModel ? observationTableModel.row_count > 0 : false
     property variant avgWidth: parent.width / 8
     property variant columnWidths: [parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 16, 3 * parent.width / 16]
@@ -26,10 +26,6 @@ ColumnLayout {
     }
     onHeightChanged: {
         innerTable.forceLayout();
-    }
-
-    ObservationTableModel {
-        id: observationTableModel
     }
 
     RowLayout {

@@ -100,7 +100,7 @@ Item {
                             let allMessages = null;
                             let ipv4_address = null;
                             let port = null;
-                            data_model.advanced_networking([refresh, start, stop], allMessages, ipv4_address, port);
+                            backend_request_broker.advanced_networking([refresh, start, stop], allMessages, ipv4_address, port);
                         }
                     }
 

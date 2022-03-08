@@ -1,20 +1,25 @@
 """Fusion Status Bar QObjects.
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, List
 
-from PySide2.QtCore import Property, QObject, Slot
+from PySide2.QtCore import Property, QObject, Signal, Slot
 
 from .constants import Keys, FusionStatus
 
-FUSION_STATUS_FLAGS: Dict[str, Any] = {
-    Keys.GNSSPOS: FusionStatus.UNKNOWN,
-    Keys.GNSSVEL: FusionStatus.UNKNOWN,
-    Keys.WHEELTICKS: FusionStatus.UNKNOWN,
-    Keys.SPEED: FusionStatus.UNKNOWN,
-    Keys.NHC: FusionStatus.UNKNOWN,
-    Keys.ZEROVEL: FusionStatus.UNKNOWN,
-}
+
+def fusion_status_flags_update() -> Dict[str, Any]:
+    return {
+        Keys.GNSSPOS: FusionStatus.UNKNOWN,
+        Keys.GNSSVEL: FusionStatus.UNKNOWN,
+        Keys.WHEELTICKS: FusionStatus.UNKNOWN,
+        Keys.SPEED: FusionStatus.UNKNOWN,
+        Keys.NHC: FusionStatus.UNKNOWN,
+        Keys.ZEROVEL: FusionStatus.UNKNOWN,
+    }
+
+
+FUSION_STATUS_FLAGS: List[Dict[str, Any]] = [fusion_status_flags_update()]
 
 
 class FusionStatusFlagsData(QObject):
@@ -25,6 +30,24 @@ class FusionStatusFlagsData(QObject):
     _speed: str = FusionStatus.UNKNOWN
     _nhc: str = FusionStatus.UNKNOWN
     _zerovel: str = FusionStatus.UNKNOWN
+    _data_updated = Signal()
+    fusion_status_flags: Dict[str, Any] = {}
+
+    def __init__(self):
+        super().__init__()
+        assert getattr(self.__class__, "_instance", None) is None
+        self.__class__._instance = self
+        self.fusion_status_flags = fusion_status_flags_update()
+        self._data_updated.connect(self.handle_data_updated)
+
+    @classmethod
+    def post_data_update(cls, update_data: Dict[str, Any]) -> None:
+        FUSION_STATUS_FLAGS[0] = update_data
+        cls._instance._data_updated.emit()
+
+    @Slot()  # type: ignore
+    def handle_data_updated(self) -> None:
+        self.fusion_status_flags = FUSION_STATUS_FLAGS[0]
 
     def get_gnsspos(self) -> str:
         return self._gnsspos
@@ -78,10 +101,10 @@ class FusionStatusFlagsData(QObject):
 class FusionStatusFlagsModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(FusionStatusFlagsData)  # type: ignore
     def fill_console_points(self, cp: FusionStatusFlagsData) -> FusionStatusFlagsData:  # pylint:disable=no-self-use
-        cp.set_gnsspos(FUSION_STATUS_FLAGS[Keys.GNSSPOS])
-        cp.set_gnssvel(FUSION_STATUS_FLAGS[Keys.GNSSVEL])
-        cp.set_wheelticks(FUSION_STATUS_FLAGS[Keys.WHEELTICKS])
-        cp.set_speed(FUSION_STATUS_FLAGS[Keys.SPEED])
-        cp.set_nhc(FUSION_STATUS_FLAGS[Keys.NHC])
-        cp.set_zerovel(FUSION_STATUS_FLAGS[Keys.ZEROVEL])
+        cp.set_gnsspos(cp.fusion_status_flags[Keys.GNSSPOS])
+        cp.set_gnssvel(cp.fusion_status_flags[Keys.GNSSVEL])
+        cp.set_wheelticks(cp.fusion_status_flags[Keys.WHEELTICKS])
+        cp.set_speed(cp.fusion_status_flags[Keys.SPEED])
+        cp.set_nhc(cp.fusion_status_flags[Keys.NHC])
+        cp.set_zerovel(cp.fusion_status_flags[Keys.ZEROVEL])
         return cp

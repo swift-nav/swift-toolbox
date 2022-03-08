@@ -30,7 +30,7 @@ RowLayout {
         bottomInset: 0
         model: Constants.advancedSpectrumAnalyzer.dropdownModel
         onActivated: {
-            data_model.advanced_spectrum_analyzer_channel(currentIndex);
+            backend_request_broker.advanced_spectrum_analyzer_channel(currentIndex);
         }
     }
 

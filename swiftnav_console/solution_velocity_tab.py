@@ -3,17 +3,22 @@
 
 from typing import Dict, List, Any
 
-from PySide2.QtCore import Property, QObject, QPointF, Slot
+from PySide2.QtCore import Property, QObject, QPointF, Signal, Slot
 
 from .constants import Keys, QTKeys
 
-SOLUTION_VELOCITY_TAB: Dict[str, Any] = {
-    Keys.AVAILABLE_UNITS: [],
-    Keys.POINTS: [],
-    Keys.COLORS: [],
-    Keys.MAX: 0,
-    Keys.MIN: 0,
-}
+
+def solution_velocity_update() -> Dict[str, Any]:
+    return {
+        Keys.AVAILABLE_UNITS: [],
+        Keys.POINTS: [],
+        Keys.COLORS: [],
+        Keys.MAX: 0,
+        Keys.MIN: 0,
+    }
+
+
+SOLUTION_VELOCITY_TAB: List[Dict[str, Any]] = [solution_velocity_update()]
 
 
 class SolutionVelocityPoints(QObject):
@@ -24,6 +29,24 @@ class SolutionVelocityPoints(QObject):
     _min: float = 0.0
     _max: float = 0.0
     _available_units: List[str] = []
+    _data_updated = Signal()
+    solution_velocity: Dict[str, Any] = {}
+
+    def __init__(self):
+        super().__init__()
+        assert getattr(self.__class__, "_instance", None) is None
+        self.__class__._instance = self
+        self.solution_velocity = SOLUTION_VELOCITY_TAB[0]
+        self._data_updated.connect(self.handle_data_updated)
+
+    @classmethod
+    def post_data_update(cls, update_data: Dict[str, Any]) -> None:
+        SOLUTION_VELOCITY_TAB[0] = update_data
+        cls._instance._data_updated.emit()
+
+    @Slot()  # type: ignore
+    def handle_data_updated(self) -> None:
+        self.solution_velocity = SOLUTION_VELOCITY_TAB[0]
 
     def get_valid(self) -> bool:
         """Getter for _valid.
@@ -94,9 +117,9 @@ class SolutionVelocityPoints(QObject):
 class SolutionVelocityModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(SolutionVelocityPoints)  # type: ignore
     def fill_console_points(self, cp: SolutionVelocityPoints) -> SolutionVelocityPoints:  # pylint:disable=no-self-use
-        cp.set_points(SOLUTION_VELOCITY_TAB[Keys.POINTS])
-        cp.set_colors(SOLUTION_VELOCITY_TAB[Keys.COLORS])
-        cp.set_max(SOLUTION_VELOCITY_TAB[Keys.MAX])
-        cp.set_min(SOLUTION_VELOCITY_TAB[Keys.MIN])
-        cp.set_available_units(SOLUTION_VELOCITY_TAB[Keys.AVAILABLE_UNITS])
+        cp.set_points(cp.solution_velocity[Keys.POINTS])
+        cp.set_colors(cp.solution_velocity[Keys.COLORS])
+        cp.set_max(cp.solution_velocity[Keys.MAX])
+        cp.set_min(cp.solution_velocity[Keys.MIN])
+        cp.set_available_units(cp.solution_velocity[Keys.AVAILABLE_UNITS])
         return cp

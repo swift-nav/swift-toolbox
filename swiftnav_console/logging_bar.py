@@ -3,20 +3,31 @@
 
 from typing import Dict, Any, List
 
-from PySide2.QtCore import Property, QObject, Slot
+from PySide2.QtCore import Property, QObject, Signal, Slot
 
 from .constants import Keys, QTKeys, SbpLogging
 
-LOGGING_BAR: Dict[str, Any] = {
-    Keys.PREVIOUS_FOLDERS: [],
-    Keys.CSV_LOGGING: False,
-    Keys.SBP_LOGGING: False,
-    Keys.SBP_LOGGING_FORMAT: SbpLogging.SBP_JSON,
-    Keys.SBP_LOGGING_LABELS: [SbpLogging.SBP_JSON, SbpLogging.SBP],
-    Keys.RECORDING_DURATION_SEC: int,
-    Keys.RECORDING_SIZE: float,
-    Keys.RECORDING_FILENAME: str,
-}
+
+def logging_bar_update() -> Dict[str, Any]:
+    return {
+        Keys.PREVIOUS_FOLDERS: [],
+        Keys.CSV_LOGGING: False,
+        Keys.SBP_LOGGING: False,
+        Keys.SBP_LOGGING_FORMAT: SbpLogging.SBP_JSON,
+        Keys.SBP_LOGGING_LABELS: [SbpLogging.SBP_JSON, SbpLogging.SBP],
+    }
+
+
+def logging_bar_recording_update() -> Dict[str, Any]:
+    return {
+        Keys.RECORDING_DURATION_SEC: int,
+        Keys.RECORDING_SIZE: float,
+        Keys.RECORDING_FILENAME: str,
+    }
+
+
+LOGGING_BAR: List[Dict[str, Any]] = [logging_bar_update()]
+LOGGING_BAR_RECORDING: List[Dict[str, Any]] = [logging_bar_recording_update()]
 
 
 class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
@@ -29,6 +40,32 @@ class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
     _recording_duration_sec: int = 0
     _recording_size: float = 0
     _recording_filename: str = ""
+    _data_updated = Signal()
+    logging_bar: Dict[str, Any] = {}
+    logging_bar_recording: Dict[str, Any] = {}
+
+    def __init__(self):
+        super().__init__()
+        assert getattr(self.__class__, "_instance", None) is None
+        self.__class__._instance = self
+        self.logging_bar = logging_bar_update()
+        self.logging_bar_recording = logging_bar_recording_update()
+        self._data_updated.connect(self.handle_data_updated)
+
+    @classmethod
+    def post_data_update(cls, update_data: Dict[str, Any]) -> None:
+        LOGGING_BAR[0] = update_data
+        cls._instance._data_updated.emit()
+
+    @classmethod
+    def post_recording_data_update(cls, update_data: Dict[str, Any]) -> None:
+        LOGGING_BAR_RECORDING[0] = update_data
+        cls._instance._data_updated.emit()
+
+    @Slot()  # type: ignore
+    def handle_data_updated(self) -> None:
+        self.logging_bar = LOGGING_BAR[0]
+        self.logging_bar_recording = LOGGING_BAR_RECORDING[0]
 
     def get_csv_logging(self) -> bool:
         return self._csv_logging
@@ -99,12 +136,12 @@ class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
 class LoggingBarModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(LoggingBarData)  # type: ignore
     def fill_data(self, cp: LoggingBarData) -> LoggingBarData:  # pylint:disable=no-self-use
-        cp.set_csv_logging(LOGGING_BAR[Keys.CSV_LOGGING])
-        cp.set_sbp_logging(LOGGING_BAR[Keys.SBP_LOGGING])
-        cp.set_sbp_logging_format(LOGGING_BAR[Keys.SBP_LOGGING_FORMAT])
-        cp.set_sbp_logging_labels(LOGGING_BAR[Keys.SBP_LOGGING_LABELS])
-        cp.set_previous_folders(LOGGING_BAR[Keys.PREVIOUS_FOLDERS])
-        cp.set_recording_size(LOGGING_BAR[Keys.RECORDING_SIZE])
-        cp.set_recording_duration_sec(LOGGING_BAR[Keys.RECORDING_DURATION_SEC])
-        cp.set_recording_filename(LOGGING_BAR[Keys.RECORDING_FILENAME])
+        cp.set_csv_logging(cp.logging_bar[Keys.CSV_LOGGING])
+        cp.set_sbp_logging(cp.logging_bar[Keys.SBP_LOGGING])
+        cp.set_sbp_logging_format(cp.logging_bar[Keys.SBP_LOGGING_FORMAT])
+        cp.set_sbp_logging_labels(cp.logging_bar[Keys.SBP_LOGGING_LABELS])
+        cp.set_previous_folders(cp.logging_bar[Keys.PREVIOUS_FOLDERS])
+        cp.set_recording_size(cp.logging_bar_recording[Keys.RECORDING_SIZE])
+        cp.set_recording_duration_sec(cp.logging_bar_recording[Keys.RECORDING_DURATION_SEC])
+        cp.set_recording_filename(cp.logging_bar_recording[Keys.RECORDING_FILENAME])
         return cp

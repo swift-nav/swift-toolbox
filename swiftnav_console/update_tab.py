@@ -1,30 +1,35 @@
 """Status Bar QObjects.
 """
 
-from typing import Dict, Any
+from typing import Any, Dict, List
 
-from PySide2.QtCore import Property, QObject, Slot
+from PySide2.QtCore import Property, QObject, Signal, Slot
 
 from .constants import Keys
 
-UPDATE_TAB: Dict[str, Any] = {
-    Keys.HARDWARE_REVISION: str,
-    Keys.FW_VERSION_CURRENT: str,
-    Keys.FW_VERSION_LATEST: str,
-    Keys.FW_LOCAL_FILENAME: str,
-    Keys.DIRECTORY: str,
-    Keys.DOWNLOADING: bool,
-    Keys.UPGRADING: bool,
-    Keys.FW_TEXT: str,
-    Keys.FILEIO_LOCAL_FILEPATH: str,
-    Keys.FILEIO_DESTINATION_FILEPATH: str,
-    Keys.FW_OUTDATED: bool,
-    Keys.FW_V2_OUTDATED: bool,
-    Keys.SERIAL_PROMPT: bool,
-    Keys.CONSOLE_OUTDATED: bool,
-    Keys.CONSOLE_VERSION_CURRENT: str,
-    Keys.CONSOLE_VERSION_LATEST: str,
-}
+
+def update_tab_update() -> Dict[str, Any]:
+    return {
+        Keys.HARDWARE_REVISION: str,
+        Keys.FW_VERSION_CURRENT: str,
+        Keys.FW_VERSION_LATEST: str,
+        Keys.FW_LOCAL_FILENAME: str,
+        Keys.DIRECTORY: str,
+        Keys.DOWNLOADING: bool,
+        Keys.UPGRADING: bool,
+        Keys.FW_TEXT: str,
+        Keys.FILEIO_LOCAL_FILEPATH: str,
+        Keys.FILEIO_DESTINATION_FILEPATH: str,
+        Keys.FW_OUTDATED: bool,
+        Keys.FW_V2_OUTDATED: bool,
+        Keys.SERIAL_PROMPT: bool,
+        Keys.CONSOLE_OUTDATED: bool,
+        Keys.CONSOLE_VERSION_CURRENT: str,
+        Keys.CONSOLE_VERSION_LATEST: str,
+    }
+
+
+UPDATE_TAB: List[Dict[str, Any]] = [update_tab_update()]
 
 
 class UpdateTabData(QObject):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
@@ -45,6 +50,24 @@ class UpdateTabData(QObject):  # pylint: disable=too-many-instance-attributes,to
     _console_outdated: bool = False
     _console_version_current: str = ""
     _console_version_latest: str = ""
+    _data_updated: Signal = Signal()
+    update_tab: Dict[str, Any] = {}
+
+    def __init__(self):
+        super().__init__()
+        assert getattr(self.__class__, "_instance", None) is None
+        self.__class__._instance = self
+        self.update_tab = UPDATE_TAB[0]
+        self._data_updated.connect(self.handle_data_updated)
+
+    @classmethod
+    def post_data_update(cls, update_data: Dict[str, Any]) -> None:
+        UPDATE_TAB[0] = update_data
+        cls._instance._data_updated.emit()
+
+    @Slot()  # type: ignore
+    def handle_data_updated(self) -> None:
+        self.update_tab = UPDATE_TAB[0]
 
     def get_hardware_revision(self) -> str:
         return self._hardware_revision
@@ -178,20 +201,20 @@ class UpdateTabData(QObject):  # pylint: disable=too-many-instance-attributes,to
 class UpdateTabModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(UpdateTabData)  # type: ignore
     def fill_data(self, cp: UpdateTabData) -> UpdateTabData:  # pylint:disable=no-self-use
-        cp.set_hardware_revision(UPDATE_TAB[Keys.HARDWARE_REVISION])
-        cp.set_fw_version_current(UPDATE_TAB[Keys.FW_VERSION_CURRENT])
-        cp.set_fw_version_latest(UPDATE_TAB[Keys.FW_VERSION_LATEST])
-        cp.set_fw_local_filename(UPDATE_TAB[Keys.FW_LOCAL_FILENAME])
-        cp.set_directory(UPDATE_TAB[Keys.DIRECTORY])
-        cp.set_downloading(UPDATE_TAB[Keys.DOWNLOADING])
-        cp.set_upgrading(UPDATE_TAB[Keys.UPGRADING])
-        cp.set_fw_text(UPDATE_TAB[Keys.FW_TEXT])
-        cp.set_fileio_local_filepath(UPDATE_TAB[Keys.FILEIO_LOCAL_FILEPATH])
-        cp.set_fileio_destination_filepath(UPDATE_TAB[Keys.FILEIO_DESTINATION_FILEPATH])
-        cp.set_fw_outdated(UPDATE_TAB[Keys.FW_OUTDATED])
-        cp.set_fw_v2_outdated(UPDATE_TAB[Keys.FW_V2_OUTDATED])
-        cp.set_serial_prompt(UPDATE_TAB[Keys.SERIAL_PROMPT])
-        cp.set_console_outdated(UPDATE_TAB[Keys.CONSOLE_OUTDATED])
-        cp.set_console_version_current(UPDATE_TAB[Keys.CONSOLE_VERSION_CURRENT])
-        cp.set_console_version_latest(UPDATE_TAB[Keys.CONSOLE_VERSION_LATEST])
+        cp.set_hardware_revision(cp.update_tab[Keys.HARDWARE_REVISION])
+        cp.set_fw_version_current(cp.update_tab[Keys.FW_VERSION_CURRENT])
+        cp.set_fw_version_latest(cp.update_tab[Keys.FW_VERSION_LATEST])
+        cp.set_fw_local_filename(cp.update_tab[Keys.FW_LOCAL_FILENAME])
+        cp.set_directory(cp.update_tab[Keys.DIRECTORY])
+        cp.set_downloading(cp.update_tab[Keys.DOWNLOADING])
+        cp.set_upgrading(cp.update_tab[Keys.UPGRADING])
+        cp.set_fw_text(cp.update_tab[Keys.FW_TEXT])
+        cp.set_fileio_local_filepath(cp.update_tab[Keys.FILEIO_LOCAL_FILEPATH])
+        cp.set_fileio_destination_filepath(cp.update_tab[Keys.FILEIO_DESTINATION_FILEPATH])
+        cp.set_fw_outdated(cp.update_tab[Keys.FW_OUTDATED])
+        cp.set_fw_v2_outdated(cp.update_tab[Keys.FW_V2_OUTDATED])
+        cp.set_serial_prompt(cp.update_tab[Keys.SERIAL_PROMPT])
+        cp.set_console_outdated(cp.update_tab[Keys.CONSOLE_OUTDATED])
+        cp.set_console_version_current(cp.update_tab[Keys.CONSOLE_VERSION_CURRENT])
+        cp.set_console_version_latest(cp.update_tab[Keys.CONSOLE_VERSION_LATEST])
         return cp

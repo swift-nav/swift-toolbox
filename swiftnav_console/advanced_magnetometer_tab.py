@@ -3,15 +3,20 @@
 
 from typing import Dict, List, Any
 
-from PySide2.QtCore import Property, QObject, QPointF, Slot
+from PySide2.QtCore import Property, QObject, QPointF, Signal, Slot
 
 from .constants import Keys, QTKeys
 
-ADVANCED_MAGNETOMETER_TAB: Dict[str, Any] = {
-    Keys.YMAX: float,
-    Keys.YMIN: float,
-    Keys.POINTS: [],
-}
+
+def advanced_magnetometer_tab_update() -> Dict[str, Any]:
+    return {
+        Keys.YMAX: float,
+        Keys.YMIN: float,
+        Keys.POINTS: [],
+    }
+
+
+ADVANCED_MAGNETOMETER_TAB: List[Dict[str, Any]] = [advanced_magnetometer_tab_update()]
 
 
 class AdvancedMagnetometerPoints(QObject):
@@ -19,6 +24,24 @@ class AdvancedMagnetometerPoints(QObject):
     _points: List[List[QPointF]] = [[]]
     _ymin: float = 0.0
     _ymax: float = 0.0
+    _data_updated = Signal()
+    advanced_magnetometer_tab: Dict[str, Any] = {}
+
+    def __init__(self):
+        super().__init__()
+        assert getattr(self.__class__, "_instance", None) is None
+        self.__class__._instance = self
+        self.advanced_magnetometer_tab = ADVANCED_MAGNETOMETER_TAB[0]
+        self._data_updated.connect(self.handle_data_updated)
+
+    @classmethod
+    def post_data_update(cls, update_data: Dict[str, Any]) -> None:
+        ADVANCED_MAGNETOMETER_TAB[0] = update_data
+        cls._instance._data_updated.emit()
+
+    @Slot()  # type: ignore
+    def handle_data_updated(self) -> None:
+        self.advanced_magnetometer_tab = ADVANCED_MAGNETOMETER_TAB[0]
 
     def get_ymin(self) -> float:
         """Getter for _ymin."""
@@ -59,7 +82,7 @@ class AdvancedMagnetometerModel(QObject):  # pylint: disable=too-few-public-meth
     def fill_console_points(  # pylint:disable=no-self-use
         self, cp: AdvancedMagnetometerPoints
     ) -> AdvancedMagnetometerPoints:
-        cp.set_points(ADVANCED_MAGNETOMETER_TAB[Keys.POINTS])
-        cp.set_ymax(ADVANCED_MAGNETOMETER_TAB[Keys.YMAX])
-        cp.set_ymin(ADVANCED_MAGNETOMETER_TAB[Keys.YMIN])
+        cp.set_points(cp.advanced_magnetometer_tab[Keys.POINTS])
+        cp.set_ymax(cp.advanced_magnetometer_tab[Keys.YMAX])
+        cp.set_ymin(cp.advanced_magnetometer_tab[Keys.YMIN])
         return cp

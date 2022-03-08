@@ -1,24 +1,29 @@
-"""Baseline Plot QObjects.
+"""Advanced System Monitor QObjects.
 """
 
 from typing import Dict, List, Any
 
-from PySide2.QtCore import Property, QObject, Slot
+from PySide2.QtCore import Property, QObject, Signal, Slot
 
 from .constants import Keys, QTKeys
 
-ADVANCED_SYSTEM_MONITOR_TAB: Dict[str, Any] = {
-    Keys.OBS_PERIOD: [],
-    Keys.OBS_LATENCY: [],
-    Keys.THREADS_TABLE: [],
-    Keys.CSAC_TELEM_LIST: [],
-    Keys.ZYNQ_TEMP: 0.0,
-    Keys.FE_TEMP: 0.0,
-    Keys.CSAC_RECEIVED: False,
-}
+
+def advanced_system_monitor_tab_update() -> Dict[str, Any]:
+    return {
+        Keys.OBS_PERIOD: [],
+        Keys.OBS_LATENCY: [],
+        Keys.THREADS_TABLE: [],
+        Keys.CSAC_TELEM_LIST: [],
+        Keys.ZYNQ_TEMP: 0.0,
+        Keys.FE_TEMP: 0.0,
+        Keys.CSAC_RECEIVED: False,
+    }
 
 
-class AdvancedSystemMonitorData(QObject):
+ADVANCED_SYSTEM_MONITOR_TAB: List[Dict[str, Any]] = [advanced_system_monitor_tab_update()]
+
+
+class AdvancedSystemMonitorData(QObject):  # pylint: disable=too-many-instance-attributes
     _obs_period: List[List[Any]] = []
     _obs_latency: List[List[Any]] = []
     _threads_table: List[List[Any]] = []
@@ -26,6 +31,24 @@ class AdvancedSystemMonitorData(QObject):
     _zynq_temp: float = 0.0
     _fe_temp: float = 0.0
     _csac_received: bool = False
+    _data_updated = Signal()
+    advanced_system_monitor_tab: Dict[str, Any] = {}
+
+    def __init__(self):
+        super().__init__()
+        assert getattr(self.__class__, "_instance", None) is None
+        self.__class__._instance = self
+        self.advanced_system_monitor_tab = ADVANCED_SYSTEM_MONITOR_TAB[0]
+        self._data_updated.connect(self.handle_data_updated)
+
+    @classmethod
+    def post_data_update(cls, update_data: Dict[str, Any]) -> None:
+        ADVANCED_SYSTEM_MONITOR_TAB[0] = update_data
+        cls._instance._data_updated.emit()
+
+    @Slot()  # type: ignore
+    def handle_data_updated(self) -> None:
+        self.advanced_system_monitor_tab = ADVANCED_SYSTEM_MONITOR_TAB[0]
 
     def get_csac_telem_list(self) -> List[List[str]]:
         """Getter for _csac_telem_list."""
@@ -103,11 +126,11 @@ class AdvancedSystemMonitorModel(QObject):  # pylint: disable=too-few-public-met
     def fill_console_points(  # pylint:disable=no-self-use
         self, cp: AdvancedSystemMonitorData
     ) -> AdvancedSystemMonitorData:
-        cp.set_obs_latency(ADVANCED_SYSTEM_MONITOR_TAB[Keys.OBS_LATENCY])
-        cp.set_obs_period(ADVANCED_SYSTEM_MONITOR_TAB[Keys.OBS_PERIOD])
-        cp.set_threads_table(ADVANCED_SYSTEM_MONITOR_TAB[Keys.THREADS_TABLE])
-        cp.set_csac_telem_list(ADVANCED_SYSTEM_MONITOR_TAB[Keys.CSAC_TELEM_LIST])
-        cp.set_fe_temp(ADVANCED_SYSTEM_MONITOR_TAB[Keys.FE_TEMP])
-        cp.set_zynq_temp(ADVANCED_SYSTEM_MONITOR_TAB[Keys.ZYNQ_TEMP])
-        cp.set_csac_received(ADVANCED_SYSTEM_MONITOR_TAB[Keys.CSAC_RECEIVED])
+        cp.set_obs_latency(cp.advanced_system_monitor_tab[Keys.OBS_LATENCY])
+        cp.set_obs_period(cp.advanced_system_monitor_tab[Keys.OBS_PERIOD])
+        cp.set_threads_table(cp.advanced_system_monitor_tab[Keys.THREADS_TABLE])
+        cp.set_csac_telem_list(cp.advanced_system_monitor_tab[Keys.CSAC_TELEM_LIST])
+        cp.set_fe_temp(cp.advanced_system_monitor_tab[Keys.FE_TEMP])
+        cp.set_zynq_temp(cp.advanced_system_monitor_tab[Keys.ZYNQ_TEMP])
+        cp.set_csac_received(cp.advanced_system_monitor_tab[Keys.CSAC_RECEIVED])
         return cp

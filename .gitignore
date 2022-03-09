@@ -20,3 +20,5 @@ get-pip.py
 installers/Windows/*.exe
 installers/Linux/*.deb
 installers/Windows/NSIS/
+/.qt_for_python
+/.vscode/launch.json

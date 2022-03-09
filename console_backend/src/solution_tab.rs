@@ -500,7 +500,7 @@ impl SolutionTab {
             }
             self._update_sln_data_by_mode(pos_llh_fields.lat, pos_llh_fields.lon, mode_string);
         } else {
-            self._append_empty_sln_data(None);
+            self._clear_other_modes_sln_data(None);
         }
         self.ins_used = ((pos_llh_fields.flags & 0x8) >> 3) == 1;
         let mut tow = pos_llh_fields.tow * 1.0e-3_f64;
@@ -755,14 +755,14 @@ impl SolutionTab {
         let lon_str = lon_str.as_str();
         self.slns.get_mut(lat_str).unwrap().push(lat);
         self.slns.get_mut(lon_str).unwrap().push(lon);
-        self._append_empty_sln_data(Some(mode_string));
+        self._clear_other_modes_sln_data(Some(mode_string));
     }
 
-    /// Append NANs to all modes unless explicitly excluded.
+    /// Clear all points from modes which are not current solution mode.
     ///
     /// # Parameters:
     /// - `exclude_mode`: The mode as a string not to update. Otherwise, None.
-    fn _append_empty_sln_data(&mut self, exclude_mode: Option<String>) {
+    fn _clear_other_modes_sln_data(&mut self, exclude_mode: Option<String>) {
         for each_mode in self.mode_strings.iter() {
             if exclude_mode == Some(each_mode.clone()) {
                 continue;
@@ -771,8 +771,8 @@ impl SolutionTab {
             let lon_str = format!("lon_{}", each_mode);
             let lat_str = lat_str.as_str();
             let lon_str = lon_str.as_str();
-            self.slns.get_mut(lat_str).unwrap().push(f64::NAN);
-            self.slns.get_mut(lon_str).unwrap().push(f64::NAN);
+            self.slns.get_mut(lat_str).unwrap().clear();
+            self.slns.get_mut(lon_str).unwrap().clear();
         }
     }
 
@@ -1386,7 +1386,7 @@ mod tests {
     // fn update_sln_data_by_mode_test() {
     // }
     // #[test]
-    // fn append_empty_sln_data_test() {
+    // fn clear_other_modes_sln_data_test() {
     // }
     // #[test]
     // fn synchronize_plot_data_by_mode_test() {

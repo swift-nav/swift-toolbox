@@ -7,6 +7,7 @@ if eq ${os} windows
   set_env STANDALONE_PY_URL "${PY_BASE_URL}/cpython-3.9.7-x86_64-pc-windows-msvc-shared-pgo-20211017T1616.tar.zst"
   set_env PYTHON "${WORKSPACE}\\py39\\python.exe"
   set_env DIST_PYTHON "${WORKSPACE}\\py39-dist\\python"
+  set_env DIST_PYSIDE2_RCC "${WORKSPACE}\\py39-dist\\Lib\\site-packages\\PySide2\\rcc.exe"
   set_env PYSIDE2_RCC "${WORKSPACE}\\py39\\Lib\\site-packages\\PySide2\\rcc.exe"
   set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-win_amd64.whl
   set_env BUILD_TRIPLET "x86_64-pc-windows-msvc"
@@ -16,6 +17,7 @@ elseif eq ${os} linux
   set_env STANDALONE_PY_URL "${SWFT_PY_BASE_URL}/cpython-3.9.10-x86_64-unknown-linux-gnu-pgo+lto-20220203T2103.tar.zst"
   set_env PYTHON "${WORKSPACE}/py39/bin/python3"
   set_env DIST_PYTHON "${WORKSPACE}/py39-dist/bin/python3"
+  set_env DIST_PYSIDE2_RCC "${WORKSPACE}/py39-dist/bin/pyside2-rcc"
   set_env PYSIDE2_RCC "${WORKSPACE}/py39/bin/pyside2-rcc"
   set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-linux_x86_64.whl
   set_env PYO3_CONFIG_FILE "${WORKSPACE}/standalone-py/pyo3_config.txt"
@@ -27,6 +29,7 @@ else
   set_env STANDALONE_PY_URL "${PY_BASE_URL}/cpython-3.9.7-x86_64-apple-darwin-pgo+lto-20211017T1616.tar.zst"
   set_env PYTHON "${WORKSPACE}/py39/bin/python3"
   set_env DIST_PYTHON "${WORKSPACE}/py39-dist/bin/python3"
+  set_env DIST_PYSIDE2_RCC "${WORKSPACE}/py39-dist/bin/pyside2-rcc"
   set_env PYSIDE2_RCC "${WORKSPACE}/py39/bin/pyside2-rcc"
   set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-macosx_10_15_x86_64.whl
   set_env PYO3_CONFIG_FILE "${WORKSPACE}/standalone-py/pyo3_config.txt"
@@ -114,6 +117,16 @@ output = exec --fail-on-error ${python} utils/extract_piksi_tools_constants.py
 writefile /tmp/piksi_tools_constants.py ${output.stdout}
 exec --fail-on-error ${python} -m py2many --rust=1 /tmp/piksi_tools_constants.py --outdir console_backend/src/
 '''
+
+[tasks.dist-generate-resources]
+command = "${DIST_PYSIDE2_RCC}"
+args = [
+  "resources/console_resources.qrc",
+  "-o",
+  "swiftnav_console/console_resources.py",
+  "-g",
+  "python",
+]
 
 [tasks.generate-resources]
 command = "${PYSIDE2_RCC}"
@@ -237,13 +250,23 @@ args = [
   "./console_backend",
 ]
 
+[tasks.dist-install-pip-flit]
+command = "${DIST_PYTHON}"
+args = ["-m", "pip", "install", "flit"]
+
 [tasks.build-frontend-wheel]
-command = "${PYTHON}"
+dependencies = ["dist-install-pip-flit"]
+command = "${DIST_PYTHON}"
 args = ["-m", "flit", "build", "--no-setup-py"]
 
+[tasks.dist-install-pip-setuptools-rust]
+command = "${DIST_PYTHON}"
+args = ["-m", "pip", "install", "setuptools_rust"]
+
 [tasks.build-backend-wheel]
+dependencies = ["dist-install-pip-setuptools-rust"]
 cwd = "console_backend"
-command = "${PYTHON}"
+command = "${DIST_PYTHON}"
 args = ["setup.py", "-vv", "bdist_wheel"]
 
 [tasks.get-get-pip]
@@ -385,16 +408,29 @@ touch ./py39-dist/.frozen
 
 [tasks.pre-build-dist]
 dependencies = [
+  "setup-builder",
   "prep-dist",
   "build-dist-copy-resources",
   "build-dist-freeze",
-  "install-qt",
+  "build-install-pyside",
 ]
 
-[tasks.install-qt]
+[tasks.build-install-pyside]
 script_runner = "@duckscript"
 script = '''
-exec --fail-on-error /home/jm/swift-toolbox/py39-dist/bin/python3.9 /home/jm/pyside-setup/setup.py install --qt 5.15.2 --qmake=/home/jm/Qt/5.15.2/gcc_64/bin/qmake --parallel=8 --relwithdebinfo --standalone --no-examples --skip-docs --module-subset  Core,Network,Gui,Qml,Widgets,Charts
+# Note: To make build-install-pyside work on Windows, you need to run from a powershell or cmd shell
+# that is a VS2019 or other visual studio command line (vcvars*.bat needs to be sourced).
+# To set up a powershell with the Visual Studio environment, run these two commands:
+# Import-Module "C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"
+# Enter-VsDevShell -VsInstanceId fdbeecbc -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -no_logo'
+# You may also need to add `jom` to the path to allow parallel builds to work. You can find this installed
+# in a standard Qt installation in the Qt\Tools\QtCreator\bin\jom directory.
+if eq ${os} windows
+  lib = get_env LIB
+  set_env LIB "${lib};${WORKSPACE}\\py39-dist\\libs"
+end
+exec --fail-on-error ${DIST_PYTHON} -m pip install setuptools wheel packaging
+exec --fail-on-error ${DIST_PYTHON} ${WORKSPACE}/../pyside-setup/setup.py install --qt 5.15.2 --qmake=D:/Qt/5.15.2/msvc2019_64/bin/qmake.exe --parallel=8 --relwithdebinfo --standalone --no-examples --skip-docs --module-subset  Core,Network,Gui,Qml,Widgets,Charts
 '''
 
 [tasks.build-dist]
@@ -403,6 +439,7 @@ run_task = [
     "build-dist-install-frontend-wheel",
     "build-dist-install-backend-wheel",
     "build-dist-install-console",
+    "dist-generate-resources",
     # "build-dist-copy-resources",
     # "build-dist-freeze",
   ] },

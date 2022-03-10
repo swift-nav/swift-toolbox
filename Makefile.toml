@@ -415,7 +415,15 @@ dependencies = [
   "build-install-pyside",
 ]
 
+[tasks.clone-pyside-repo]
+condition = { files_not_exist = ["${WORKSPACE}/pyside-setup/setup.py"] }
+script_runner = "@duckscript"
+script = '''
+  exec --fail-on-error git clone http://code.qt.io/pyside/pyside-setup.git
+'''
+
 [tasks.build-install-pyside]
+dependencies = ["clone-pyside-repo"]
 script_runner = "@duckscript"
 script = '''
 # Note: To make build-install-pyside work on Windows, you need to run from a powershell or cmd shell
@@ -430,7 +438,7 @@ if eq ${os} windows
   set_env LIB "${lib};${WORKSPACE}\\py39-dist\\libs"
 end
 exec --fail-on-error ${DIST_PYTHON} -m pip install setuptools wheel packaging
-exec --fail-on-error ${DIST_PYTHON} ${WORKSPACE}/../pyside-setup/setup.py install --qt 5.15.2 --qmake=D:/Qt/5.15.2/msvc2019_64/bin/qmake.exe --parallel=8 --relwithdebinfo --standalone --no-examples --skip-docs --module-subset  Core,Network,Gui,Qml,Widgets,Charts
+exec --fail-on-error ${DIST_PYTHON} ${WORKSPACE}/pyside-setup/setup.py install --qt 5.15.2 --qmake=D:/Qt/5.15.2/msvc2019_64/bin/qmake.exe --parallel=8 --relwithdebinfo --standalone --no-examples --skip-docs --module-subset  Core,Network,Gui,Qml,Widgets,Charts
 '''
 
 [tasks.build-dist]

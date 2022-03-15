@@ -17,6 +17,8 @@ function setupScatterSeries(chart, Constants, Globals, xaxis, yaxis, labels, col
     let scatters = []
     let cur_scatters = []
     let line = null
+    if (use_line)
+        line = createSeries(chart, Globals, xaxis, yaxis, Constants.commonChart.solutionLineWidth, "line", "line", "lightgrey", /*series=*/QtCharts.ChartView.SeriesTypeLine);
     for (let idx in labels) {
         let cur_scatter = createSeries(chart, Globals, xaxis, yaxis, Constants.commonChart.currentSolutionMarkerSize, "cur-scatter", labels[idx], colors[idx]);
         if (use_ref && idx == 0) {
@@ -25,10 +27,7 @@ function setupScatterSeries(chart, Constants, Globals, xaxis, yaxis, labels, col
             continue;
         }
         let scatter = createSeries(chart, Globals, xaxis, yaxis, Constants.commonChart.solutionMarkerSize, "scatter", labels[idx], colors[idx]);
-        if (use_line) {
-            line = createSeries(chart, Globals, xaxis, yaxis, Constants.commonChart.solutionLineWidth, "line", "line", "grey", /*series=*/QtCharts.ChartView.SeriesTypeLine);
-            line.width = Constants.commonChart.solutionLineWidth;
-        }
+        
         scatters.push(scatter);
         cur_scatters.push(cur_scatter);
     }
@@ -38,6 +37,7 @@ function setupScatterSeries(chart, Constants, Globals, xaxis, yaxis, labels, col
 function createSeries(chart, Globals, xaxis, yaxis, markerSize, postFix, label, color, series=QtCharts.ChartView.SeriesTypeScatter) {
     var scatter = chart.createSeries(series,  label + postFix, xaxis, yaxis);
     scatter.color = color;
+    scatter.width = markerSize;
     scatter.borderColor = "transparent";
     scatter.markerSize = markerSize;
     scatter.useOpenGL = Globals.useOpenGL;

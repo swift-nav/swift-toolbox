@@ -283,6 +283,7 @@ class BackendMessageReceiver(QObject):
             data[Keys.LON_MAX] = m.solutionPositionStatus.lonMax
             data[Keys.LON_MIN] = m.solutionPositionStatus.lonMin
             data[Keys.AVAILABLE_UNITS][:] = m.solutionPositionStatus.availableUnits
+            data[Keys.SOLUTION_LINE] = [QPointF(point.x, point.y) for point in m.solutionPositionStatus.lineData]
             SolutionPositionPoints.post_data_update(data)
         elif m.which == Message.Union.SolutionTableStatus:
             data = solution_table_update()

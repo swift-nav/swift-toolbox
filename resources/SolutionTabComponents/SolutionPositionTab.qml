@@ -14,7 +14,7 @@ Item {
     property variant available_units: ["degrees", "meters"]
     property variant cur_scatters: []
     property variant scatters: []
-    property variant lines: []
+    property variant line: null
     property real mouse_x: 0
     property real mouse_y: 0
     property real orig_lat_max: 0
@@ -191,7 +191,7 @@ Item {
                 model: available_units
                 Layout.preferredWidth: Constants.commonChart.unitDropdownWidth
                 onCurrentIndexChanged: {
-                    if (!lines.length)
+                    if (!scatters.length)
                         return ;
 
                     backend_request_broker.solution_position_unit(available_units[currentIndex]);
@@ -401,10 +401,10 @@ Item {
                     if (available_units != solutionPositionPoints.available_units)
                         available_units = solutionPositionPoints.available_units;
 
-                    if (!lines.length || !scatters.length || !cur_scatters.length)
-                        [scatters, cur_scatters, lines] = SolutionPlotLoop.setupScatterSeries(solutionPositionChart, Constants, Globals, solutionPositionXAxis, solutionPositionYAxis, Constants.solutionPosition.legendLabels, Constants.solutionPosition.colors, false, true);
+                    if (!line || !scatters.length || !cur_scatters.length)
+                        [scatters, cur_scatters, line] = SolutionPlotLoop.setupScatterSeries(solutionPositionChart, Constants, Globals, solutionPositionXAxis, solutionPositionYAxis, Constants.solutionPosition.legendLabels, Constants.solutionPosition.colors, false, true);
 
-                    var combined = [lines, scatters, cur_scatters];
+                    var combined = [line, scatters, cur_scatters];
                     solutionPositionPoints.fill_series(combined);
                     let point = SolutionPlotLoop.getCurSolution(solutionPositionPoints.cur_points);
                     if (point)

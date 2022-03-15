@@ -223,6 +223,7 @@ struct SolutionPositionStatus {
     lonMax @4 :Float64;
     curData @5 :List(List(Point));
     availableUnits @6 : List(Text);
+    lineData @7 :List(Point);
 }
 
 struct SolutionVelocityStatus {

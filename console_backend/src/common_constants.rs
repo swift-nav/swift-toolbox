@@ -295,6 +295,8 @@ pub enum Keys {
     CONNECTION_MESSAGE,
     #[strum(serialize = "NOTIFICATION")]
     NOTIFICATION,
+    #[strum(serialize = "SOLUTION_LINE")]
+    SOLUTION_LINE,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]

@@ -17,6 +17,7 @@ def solution_position_update() -> Dict[str, Any]:
         Keys.LAT_MIN: 0,
         Keys.LON_MAX: 0,
         Keys.LON_MIN: 0,
+        Keys.SOLUTION_LINE: [],
     }
 
 
@@ -29,6 +30,7 @@ class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attr
     _lon_min: float = 0.0
     _lon_max: float = 0.0
     _available_units: List[str] = []
+    _solution_line: List[QPointF] = []
     _data_updated = Signal(dict)
     solution_position: Dict[str, Any] = {}
 
@@ -111,13 +113,21 @@ class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attr
 
     available_units = Property(QTKeys.QVARIANTLIST, get_available_units, set_available_units)  # type: ignore
 
+    def get_solution_line(self) -> List[QPointF]:
+        return self._solution_line
+
+    def set_solution_line(self, solution_line: List[QPointF]) -> None:
+        self._solution_line = solution_line
+
+    solution_line = Property(QTKeys.QVARIANTLIST, get_solution_line, set_solution_line)  # type: ignore
+
     @Slot(list)  # type: ignore
     def fill_series(self, series_list):
-        lines = series_list[0]
+        line = series_list[0]
         scatters = series_list[1]
         cur_scatters = series_list[2]
-        for idx, _ in enumerate(lines):
-            lines[idx].replace(self._points[idx])
+        line.replace(self._solution_line)
+        for idx, _ in enumerate(scatters):
             scatters[idx].replace(self._points[idx])
             cur_scatters[idx].replace(self._cur_points[idx])
 
@@ -132,4 +142,5 @@ class SolutionPositionModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_lon_max(cp.solution_position[Keys.LON_MAX])
         cp.set_lon_min(cp.solution_position[Keys.LON_MIN])
         cp.set_available_units(cp.solution_position[Keys.AVAILABLE_UNITS])
+        cp.set_solution_line(cp.solution_position[Keys.SOLUTION_LINE])
         return cp

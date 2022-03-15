@@ -125,6 +125,7 @@ pub struct SolutionTab {
     shared_state: SharedState,
     sln_cur_data: Vec<Vec<(f64, f64)>>,
     sln_data: Vec<Vec<(f64, f64)>>,
+    sln_line: Deque<(f64, f64)>,
     slns: HashMap<&'static str, Deque<f64>>,
     table: HashMap<&'static str, String>,
     unit: LatLonUnits,
@@ -187,6 +188,7 @@ impl SolutionTab {
                     .map(|key| (*key, Deque::new(PLOT_HISTORY_MAX)))
                     .collect()
             },
+            sln_line: Deque::new(PLOT_HISTORY_MAX),
             table: {
                 SOLUTION_TABLE_KEYS
                     .iter()
@@ -500,7 +502,7 @@ impl SolutionTab {
             }
             self._update_sln_data_by_mode(pos_llh_fields.lat, pos_llh_fields.lon, mode_string);
         } else {
-            self._clear_other_modes_sln_data(None);
+            self._append_empty_sln_data(None);
         }
         self.ins_used = ((pos_llh_fields.flags & 0x8) >> 3) == 1;
         let mut tow = pos_llh_fields.tow * 1.0e-3_f64;
@@ -635,6 +637,7 @@ impl SolutionTab {
     }
 
     pub fn clear_sln(&mut self) {
+        self.sln_line.clear();
         for (_, deque) in &mut self.slns.iter_mut() {
             deque.clear();
         }
@@ -755,14 +758,15 @@ impl SolutionTab {
         let lon_str = lon_str.as_str();
         self.slns.get_mut(lat_str).unwrap().push(lat);
         self.slns.get_mut(lon_str).unwrap().push(lon);
-        self._clear_other_modes_sln_data(Some(mode_string));
+        self.sln_line.push((lon, lat));
+        self._append_empty_sln_data(Some(mode_string));
     }
 
-    /// Clear all points from modes which are not current solution mode.
+    /// Append NANs to all modes unless explicitly excluded.
     ///
     /// # Parameters:
     /// - `exclude_mode`: The mode as a string not to update. Otherwise, None.
-    fn _clear_other_modes_sln_data(&mut self, exclude_mode: Option<String>) {
+    fn _append_empty_sln_data(&mut self, exclude_mode: Option<String>) {
         for each_mode in self.mode_strings.iter() {
             if exclude_mode == Some(each_mode.clone()) {
                 continue;
@@ -771,8 +775,8 @@ impl SolutionTab {
             let lon_str = format!("lon_{}", each_mode);
             let lat_str = lat_str.as_str();
             let lon_str = lon_str.as_str();
-            self.slns.get_mut(lat_str).unwrap().clear();
-            self.slns.get_mut(lon_str).unwrap().clear();
+            self.slns.get_mut(lat_str).unwrap().push(f64::NAN);
+            self.slns.get_mut(lon_str).unwrap().push(f64::NAN);
         }
     }
 
@@ -857,6 +861,14 @@ impl SolutionTab {
                 point_val.set_x(*x);
                 point_val.set_y(*y);
             }
+        }
+        let mut solution_line = solution_status
+            .reborrow()
+            .init_line_data(self.sln_line.len() as u32);
+        for (i, (x, y)) in self.sln_line.iter().enumerate() {
+            let mut point_idx = solution_line.reborrow().get(i as u32);
+            point_idx.set_x(*x);
+            point_idx.set_y(*y);
         }
 
         self.client_sender
@@ -1386,7 +1398,7 @@ mod tests {
     // fn update_sln_data_by_mode_test() {
     // }
     // #[test]
-    // fn clear_other_modes_sln_data_test() {
+    // fn append_empty_sln_data_test() {
     // }
     // #[test]
     // fn synchronize_plot_data_by_mode_test() {

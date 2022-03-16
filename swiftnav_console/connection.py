@@ -23,11 +23,6 @@ def connection_update() -> Dict[str, Any]:
     }
 
 
-CONNECTION: List[Dict[str, Any]] = [connection_update()]
-CONNECTION_STATE: List[ConnectionState] = [ConnectionState.DISCONNECTED]
-CONNECTION_MESSAGE: List[str] = [""]
-
-
 class ConnectionData(QObject):  # pylint: disable=too-many-instance-attributes disable=too-many-public-methods
 
     _available_ports: List[str] = []
@@ -43,7 +38,9 @@ class ConnectionData(QObject):  # pylint: disable=too-many-instance-attributes d
     _console_version: str = ""
     _previous_connection_type: ConnectionType = ConnectionType.Serial
     _connection_message: str = ""
-    _data_updated = Signal()
+    _data_updated = Signal(dict)
+    _state_updated = Signal(ConnectionState)
+    _message_updated = Signal(str)
     connection: Dict[str, Any] = {}
     connection_state: ConnectionState = ConnectionState.DISCONNECTED
     connection_msg: str = ""
@@ -52,31 +49,36 @@ class ConnectionData(QObject):  # pylint: disable=too-many-instance-attributes d
         super().__init__()
         assert getattr(self.__class__, "_instance", None) is None
         self.__class__._instance = self
-        self.connection = CONNECTION[0]
-        self.connection_state = CONNECTION_STATE[0]
-        self.connection_msg = CONNECTION_MESSAGE[0]
+        self.connection = connection_update()
+        self.connection_state = ConnectionState.DISCONNECTED
+        self.connection_msg = ""
         self._data_updated.connect(self.handle_data_updated)
+        self._state_updated.connect(self.handle_state_updated)
+        self._message_updated.connect(self.handle_message_updated)
 
     @classmethod
     def post_connection_state_update(cls, update_data: ConnectionState) -> None:
-        CONNECTION_STATE[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._state_updated.emit(update_data)
 
     @classmethod
     def post_connection_message_update(cls, update_data: str) -> None:
-        CONNECTION_MESSAGE[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._message_updated.emit(update_data)
 
     @classmethod
     def post_connection_data_update(cls, update_data: Dict[str, Any]) -> None:
-        CONNECTION[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit(update_data)
 
-    @Slot()  # type: ignore
-    def handle_data_updated(self) -> None:
-        self.connection_state = CONNECTION_STATE[0]
-        self.connection_msg = CONNECTION_MESSAGE[0]
-        self.connection = CONNECTION[0]
+    @Slot(ConnectionState)  # type: ignore
+    def handle_state_updated(self, data: ConnectionState) -> None:
+        self.connection_state = data
+
+    @Slot(dict)  # type: ignore
+    def handle_data_updated(self, update_data: Dict[str, Any]) -> None:
+        self.connection = update_data
+
+    @Slot(str)  # type: ignore
+    def handle_message_updated(self, data: str) -> None:
+        self.connection_msg = data
 
     def get_available_ports(self) -> List[str]:
         return self._available_ports

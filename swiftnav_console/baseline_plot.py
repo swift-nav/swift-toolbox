@@ -19,9 +19,6 @@ def baseline_plot_update() -> Dict[str, Any]:
     }
 
 
-BASELINE_PLOT: List[Dict[str, Any]] = [baseline_plot_update()]
-
-
 class BaselinePlotPoints(QObject):
 
     _points: List[List[QPointF]] = [[]]
@@ -30,24 +27,23 @@ class BaselinePlotPoints(QObject):
     _n_max: float = 0.0
     _e_min: float = 0.0
     _e_max: float = 0.0
-    _data_updated = Signal()
+    _data_updated = Signal(dict)
     baseline_plot: Dict[str, Any] = {}
 
     def __init__(self):
         super().__init__()
         assert getattr(self.__class__, "_instance", None) is None
         self.__class__._instance = self
-        self.baseline_plot = BASELINE_PLOT[0]
+        self.baseline_plot = baseline_plot_update()
         self._data_updated.connect(self.handle_data_updated)
 
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
-        BASELINE_PLOT[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit(update_data)
 
-    @Slot()  # type: ignore
-    def handle_data_updated(self) -> None:
-        self.baseline_plot = BASELINE_PLOT[0]
+    @Slot(dict)  # type: ignore
+    def handle_data_updated(self, update_data: Dict[str, Any]) -> None:
+        self.baseline_plot = update_data
 
     def get_n_min(self) -> float:
         """Getter for _n_min."""

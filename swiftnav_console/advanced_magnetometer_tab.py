@@ -16,32 +16,28 @@ def advanced_magnetometer_tab_update() -> Dict[str, Any]:
     }
 
 
-ADVANCED_MAGNETOMETER_TAB: List[Dict[str, Any]] = [advanced_magnetometer_tab_update()]
-
-
 class AdvancedMagnetometerPoints(QObject):
 
     _points: List[List[QPointF]] = [[]]
     _ymin: float = 0.0
     _ymax: float = 0.0
-    _data_updated = Signal()
+    _data_updated = Signal(dict)
     advanced_magnetometer_tab: Dict[str, Any] = {}
 
     def __init__(self):
         super().__init__()
         assert getattr(self.__class__, "_instance", None) is None
         self.__class__._instance = self
-        self.advanced_magnetometer_tab = ADVANCED_MAGNETOMETER_TAB[0]
+        self.advanced_magnetometer_tab = advanced_magnetometer_tab_update()
         self._data_updated.connect(self.handle_data_updated)
 
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
-        ADVANCED_MAGNETOMETER_TAB[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit(update_data)
 
-    @Slot()  # type: ignore
-    def handle_data_updated(self) -> None:
-        self.advanced_magnetometer_tab = ADVANCED_MAGNETOMETER_TAB[0]
+    @Slot(dict)  # type: ignore
+    def handle_data_updated(self, update_data: Dict[str, Any]) -> None:
+        self.advanced_magnetometer_tab = update_data
 
     def get_ymin(self) -> float:
         """Getter for _ymin."""

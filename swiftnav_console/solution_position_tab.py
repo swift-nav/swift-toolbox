@@ -20,9 +20,6 @@ def solution_position_update() -> Dict[str, Any]:
     }
 
 
-SOLUTION_POSITION_TAB: List[Dict[str, Any]] = [solution_position_update()]
-
-
 class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
 
     _points: List[List[QPointF]] = [[]]
@@ -32,24 +29,23 @@ class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attr
     _lon_min: float = 0.0
     _lon_max: float = 0.0
     _available_units: List[str] = []
-    _data_updated = Signal()
+    _data_updated = Signal(dict)
     solution_position: Dict[str, Any] = {}
 
     def __init__(self):
         super().__init__()
         assert getattr(self.__class__, "_instance", None) is None
         self.__class__._instance = self
-        self.solution_position = SOLUTION_POSITION_TAB[0]
+        self.solution_position = solution_position_update()
         self._data_updated.connect(self.handle_data_updated)
 
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
-        SOLUTION_POSITION_TAB[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit(update_data)
 
-    @Slot()  # type: ignore
-    def handle_data_updated(self) -> None:
-        self.solution_position = SOLUTION_POSITION_TAB[0]
+    @Slot(dict)  # type: ignore
+    def handle_data_updated(self, update_data: Dict[str, Any]) -> None:
+        self.solution_position = update_data
 
     def get_lat_min(self) -> float:
         """Getter for _lat_min."""

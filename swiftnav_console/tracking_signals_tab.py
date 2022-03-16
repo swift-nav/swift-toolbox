@@ -19,8 +19,6 @@ def tracking_signals_tab_update() -> Dict[str, Any]:
     }
 
 
-TRACKING_SIGNALS_TAB: List[Dict[str, Any]] = [tracking_signals_tab_update()]
-
 # pylint:disable=too-many-instance-attributes
 class TrackingSignalsPoints(QObject):
 
@@ -37,24 +35,23 @@ class TrackingSignalsPoints(QObject):
     check_labels_changed = Signal()
     all_series_changed = Signal()
     enabled_series_changed = Signal()
-    _data_updated = Signal()
+    _data_updated = Signal(dict)
     _tracking_signals_tab: Dict[str, Any] = {}
 
     def __init__(self):
         super().__init__()
         assert getattr(self.__class__, "_instance", None) is None
         self.__class__._instance = self
-        self._tracking_signals_tab = TRACKING_SIGNALS_TAB[0]
+        self._tracking_signals_tab = tracking_signals_tab_update()
         self._data_updated.connect(self.handle_data_updated)
 
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
-        TRACKING_SIGNALS_TAB[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit(update_data)
 
-    @Slot()  # type: ignore
-    def handle_data_updated(self) -> None:
-        self._tracking_signals_tab = TRACKING_SIGNALS_TAB[0]
+    @Slot(dict)  # type: ignore
+    def handle_data_updated(self, update_data: Dict[str, Any]) -> None:
+        self._tracking_signals_tab = update_data
 
     def get_num_labels(self) -> int:  # pylint:disable=no-self-use
         return len(self._tracking_signals_tab[Keys.LABELS])

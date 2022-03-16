@@ -1,7 +1,7 @@
 """Fusion Status Bar QObjects.
 """
 
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 from PySide2.QtCore import Property, QObject, Signal, Slot
 
@@ -19,9 +19,6 @@ def fusion_status_flags_update() -> Dict[str, Any]:
     }
 
 
-FUSION_STATUS_FLAGS: List[Dict[str, Any]] = [fusion_status_flags_update()]
-
-
 class FusionStatusFlagsData(QObject):
 
     _gnsspos: str = FusionStatus.UNKNOWN
@@ -30,7 +27,7 @@ class FusionStatusFlagsData(QObject):
     _speed: str = FusionStatus.UNKNOWN
     _nhc: str = FusionStatus.UNKNOWN
     _zerovel: str = FusionStatus.UNKNOWN
-    _data_updated = Signal()
+    _data_updated = Signal(dict)
     fusion_status_flags: Dict[str, Any] = {}
 
     def __init__(self):
@@ -42,12 +39,11 @@ class FusionStatusFlagsData(QObject):
 
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
-        FUSION_STATUS_FLAGS[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit(update_data)
 
-    @Slot()  # type: ignore
-    def handle_data_updated(self) -> None:
-        self.fusion_status_flags = FUSION_STATUS_FLAGS[0]
+    @Slot(dict)  # type: ignore
+    def handle_data_updated(self, update_data: Dict[str, Any]) -> None:
+        self.fusion_status_flags = update_data
 
     def get_gnsspos(self) -> str:
         return self._gnsspos

@@ -125,6 +125,7 @@ pub struct SolutionTab {
     shared_state: SharedState,
     sln_cur_data: Vec<Vec<(f64, f64)>>,
     sln_data: Vec<Vec<(f64, f64)>>,
+    sln_line: Deque<(f64, f64)>,
     slns: HashMap<&'static str, Deque<f64>>,
     table: HashMap<&'static str, String>,
     unit: LatLonUnits,
@@ -187,6 +188,7 @@ impl SolutionTab {
                     .map(|key| (*key, Deque::new(PLOT_HISTORY_MAX)))
                     .collect()
             },
+            sln_line: Deque::new(PLOT_HISTORY_MAX),
             table: {
                 SOLUTION_TABLE_KEYS
                     .iter()
@@ -635,6 +637,7 @@ impl SolutionTab {
     }
 
     pub fn clear_sln(&mut self) {
+        self.sln_line.clear();
         for (_, deque) in &mut self.slns.iter_mut() {
             deque.clear();
         }
@@ -755,6 +758,7 @@ impl SolutionTab {
         let lon_str = lon_str.as_str();
         self.slns.get_mut(lat_str).unwrap().push(lat);
         self.slns.get_mut(lon_str).unwrap().push(lon);
+        self.sln_line.push((lon, lat));
         self._append_empty_sln_data(Some(mode_string));
     }
 
@@ -857,6 +861,14 @@ impl SolutionTab {
                 point_val.set_x(*x);
                 point_val.set_y(*y);
             }
+        }
+        let mut solution_line = solution_status
+            .reborrow()
+            .init_line_data(self.sln_line.len() as u32);
+        for (i, (x, y)) in self.sln_line.iter().enumerate() {
+            let mut point_idx = solution_line.reborrow().get(i as u32);
+            point_idx.set_x(*x);
+            point_idx.set_y(*y);
         }
 
         self.client_sender

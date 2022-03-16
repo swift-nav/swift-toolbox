@@ -18,9 +18,6 @@ def solution_velocity_update() -> Dict[str, Any]:
     }
 
 
-SOLUTION_VELOCITY_TAB: List[Dict[str, Any]] = [solution_velocity_update()]
-
-
 class SolutionVelocityPoints(QObject):
 
     _colors: List[str] = []
@@ -29,24 +26,23 @@ class SolutionVelocityPoints(QObject):
     _min: float = 0.0
     _max: float = 0.0
     _available_units: List[str] = []
-    _data_updated = Signal()
+    _data_updated = Signal(dict)
     solution_velocity: Dict[str, Any] = {}
 
     def __init__(self):
         super().__init__()
         assert getattr(self.__class__, "_instance", None) is None
         self.__class__._instance = self
-        self.solution_velocity = SOLUTION_VELOCITY_TAB[0]
+        self.solution_velocity = solution_velocity_update()
         self._data_updated.connect(self.handle_data_updated)
 
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
-        SOLUTION_VELOCITY_TAB[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit(update_data)
 
-    @Slot()  # type: ignore
-    def handle_data_updated(self) -> None:
-        self.solution_velocity = SOLUTION_VELOCITY_TAB[0]
+    @Slot(dict)  # type: ignore
+    def handle_data_updated(self, update_data: Dict[str, Any]) -> None:
+        self.solution_velocity = update_data
 
     def get_valid(self) -> bool:
         """Getter for _valid.

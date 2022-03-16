@@ -20,9 +20,6 @@ def advanced_system_monitor_tab_update() -> Dict[str, Any]:
     }
 
 
-ADVANCED_SYSTEM_MONITOR_TAB: List[Dict[str, Any]] = [advanced_system_monitor_tab_update()]
-
-
 class AdvancedSystemMonitorData(QObject):  # pylint: disable=too-many-instance-attributes
     _obs_period: List[List[Any]] = []
     _obs_latency: List[List[Any]] = []
@@ -31,24 +28,23 @@ class AdvancedSystemMonitorData(QObject):  # pylint: disable=too-many-instance-a
     _zynq_temp: float = 0.0
     _fe_temp: float = 0.0
     _csac_received: bool = False
-    _data_updated = Signal()
+    _data_updated = Signal(dict)
     advanced_system_monitor_tab: Dict[str, Any] = {}
 
     def __init__(self):
         super().__init__()
         assert getattr(self.__class__, "_instance", None) is None
         self.__class__._instance = self
-        self.advanced_system_monitor_tab = ADVANCED_SYSTEM_MONITOR_TAB[0]
+        self.advanced_system_monitor_tab = advanced_system_monitor_tab_update()
         self._data_updated.connect(self.handle_data_updated)
 
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
-        ADVANCED_SYSTEM_MONITOR_TAB[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit(update_data)
 
-    @Slot()  # type: ignore
-    def handle_data_updated(self) -> None:
-        self.advanced_system_monitor_tab = ADVANCED_SYSTEM_MONITOR_TAB[0]
+    @Slot(dict)  # type: ignore
+    def handle_data_updated(self, update_data: Dict[str, Any]) -> None:
+        self.advanced_system_monitor_tab = update_data
 
     def get_csac_telem_list(self) -> List[List[str]]:
         """Getter for _csac_telem_list."""

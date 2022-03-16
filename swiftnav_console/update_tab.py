@@ -1,7 +1,7 @@
 """Status Bar QObjects.
 """
 
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from PySide2.QtCore import Property, QObject, Signal, Slot
 
@@ -29,9 +29,6 @@ def update_tab_update() -> Dict[str, Any]:
     }
 
 
-UPDATE_TAB: List[Dict[str, Any]] = [update_tab_update()]
-
-
 class UpdateTabData(QObject):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
 
     _hardware_revision: str = ""
@@ -50,24 +47,23 @@ class UpdateTabData(QObject):  # pylint: disable=too-many-instance-attributes,to
     _console_outdated: bool = False
     _console_version_current: str = ""
     _console_version_latest: str = ""
-    _data_updated: Signal = Signal()
+    _data_updated: Signal = Signal(dict)
     update_tab: Dict[str, Any] = {}
 
     def __init__(self):
         super().__init__()
         assert getattr(self.__class__, "_instance", None) is None
         self.__class__._instance = self
-        self.update_tab = UPDATE_TAB[0]
+        self.update_tab = update_tab_update()
         self._data_updated.connect(self.handle_data_updated)
 
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
-        UPDATE_TAB[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit(update_data)
 
-    @Slot()  # type: ignore
-    def handle_data_updated(self) -> None:
-        self.update_tab = UPDATE_TAB[0]
+    @Slot(dict)  # type: ignore
+    def handle_data_updated(self, update_data: Dict[str, Any]) -> None:
+        self.update_tab = update_data
 
     def get_hardware_revision(self) -> str:
         return self._hardware_revision

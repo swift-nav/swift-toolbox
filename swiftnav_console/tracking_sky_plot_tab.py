@@ -16,14 +16,11 @@ def tracking_sky_plot_update() -> Dict[str, Any]:
     }
 
 
-TRACKING_SKY_PLOT_TAB: List[Dict[str, Any]] = [tracking_sky_plot_update()]
-
-
 class TrackingSkyPlotPoints(QObject):
 
     _labels: List[List[str]] = []
     _all_series: List[QtCharts.QXYSeries] = []
-    _data_updated = Signal()
+    _data_updated = Signal(dict)
     labels_changed = Signal()
     all_series_changed = Signal()
     _tracking_sky_plot: Dict[str, Any] = {}
@@ -32,17 +29,16 @@ class TrackingSkyPlotPoints(QObject):
         super().__init__()
         assert getattr(self.__class__, "_instance", None) is None
         self.__class__._instance = self
-        self._tracking_sky_plot = TRACKING_SKY_PLOT_TAB[0]
+        self._tracking_sky_plot = tracking_sky_plot_update()
         self._data_updated.connect(self.handle_data_updated)
 
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
-        TRACKING_SKY_PLOT_TAB[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit(update_data)
 
-    @Slot()  # type: ignore
-    def handle_data_updated(self) -> None:
-        self._tracking_sky_plot = TRACKING_SKY_PLOT_TAB[0]
+    @Slot(dict)  # type: ignore
+    def handle_data_updated(self, update_data: Dict[str, Any]) -> None:
+        self._tracking_sky_plot = update_data
 
     def get_labels(self) -> List[List[str]]:  # pylint:disable=no-self-use
         return self._tracking_sky_plot[Keys.LABELS]

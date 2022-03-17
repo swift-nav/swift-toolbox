@@ -253,7 +253,8 @@ class BackendMessageReceiver(QObject):
 
     def _receive_messages(self):
         if time.time() - self.start_time > 10:
-            return self._app.quit()
+            self._app.quit()
+            return True
         buffer = self._backend.fetch_message()
         if not buffer:
             print("terminating GUI loop", file=sys.stderr)

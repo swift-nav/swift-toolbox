@@ -3,7 +3,7 @@
 import argparse
 import os
 import sys
-
+import time
 from typing import Optional, Tuple
 
 import capnp  # type: ignore
@@ -232,11 +232,13 @@ class BackendMessageReceiver(QObject):
         self._thread = QThread()
         self._thread.started.connect(self._handle_started)  # pylint: disable=no-member
         self.moveToThread(self._thread)
+        self.start_time = None
 
     def _handle_started(self):
         QTimer.singleShot(0, self.receive_messages)
 
     def start(self):
+        self.start_time = time.time()
         self._thread.start()
 
     def join(self):
@@ -250,6 +252,8 @@ class BackendMessageReceiver(QObject):
             QTimer.singleShot(0, self.receive_messages)
 
     def _receive_messages(self):
+        if time.time() - self.start_time > 10:
+            return self._app.quit()
         buffer = self._backend.fetch_message()
         if not buffer:
             print("terminating GUI loop", file=sys.stderr)

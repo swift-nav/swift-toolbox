@@ -40,9 +40,7 @@ class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
     _recording_duration_sec: int = 0
     _recording_size: float = 0
     _recording_filename: str = ""
-    _data_updated = Signal(dict)
-    _recording_updated = Signal(dict)
-
+    _data_updated = Signal()
     logging_bar: Dict[str, Any] = {}
     logging_bar_recording: Dict[str, Any] = {}
 
@@ -53,23 +51,21 @@ class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
         self.logging_bar = logging_bar_update()
         self.logging_bar_recording = logging_bar_recording_update()
         self._data_updated.connect(self.handle_data_updated)
-        self._recording_updated.connect(self.handle_recording_updated)
 
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
-        cls._instance._data_updated.emit(update_data)
+        LOGGING_BAR[0] = update_data
+        cls._instance._data_updated.emit()
 
     @classmethod
     def post_recording_data_update(cls, update_data: Dict[str, Any]) -> None:
-        cls._instance._recording_updated.emit(update_data)
+        LOGGING_BAR_RECORDING[0] = update_data
+        cls._instance._data_updated.emit()
 
-    @Slot(dict)  # type: ignore
-    def handle_data_updated(self, update_data: Dict[str, Any]) -> None:
-        self.logging_bar = update_data
-
-    @Slot(dict)  # type: ignore
-    def handle_recording_updated(self, update_data: Dict[str, Any]) -> None:
-        self.logging_bar_recording = update_data
+    @Slot()  # type: ignore
+    def handle_data_updated(self) -> None:
+        self.logging_bar = LOGGING_BAR[0]
+        self.logging_bar_recording = LOGGING_BAR_RECORDING[0]
 
     def get_csv_logging(self) -> bool:
         return self._csv_logging

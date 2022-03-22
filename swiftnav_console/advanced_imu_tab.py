@@ -15,27 +15,31 @@ def advanced_imu_tab_update() -> Dict[str, Any]:
     }
 
 
+ADVANCED_IMU_TAB: List[Dict[str, Any]] = [advanced_imu_tab_update()]
+
+
 class AdvancedImuPoints(QObject):
 
     _points: List[List[QPointF]] = [[]]
     _fields_data: List[float] = []
-    _data_updated = Signal(dict)
+    _data_updated = Signal()
     advanced_imu_tab: Dict[str, Any] = {}
 
     def __init__(self):
         super().__init__()
         assert getattr(self.__class__, "_instance", None) is None
         self.__class__._instance = self
-        self.advanced_imu_tab = advanced_imu_tab_update()
+        self.advanced_imu_tab = ADVANCED_IMU_TAB[0]
         self._data_updated.connect(self.handle_data_updated)
 
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
-        cls._instance._data_updated.emit(update_data)
+        ADVANCED_IMU_TAB[0] = update_data
+        cls._instance._data_updated.emit()
 
-    @Slot(dict)  # type: ignore
-    def handle_data_updated(self, update_data: Dict[str, Any]) -> None:
-        self.advanced_imu_tab = update_data
+    @Slot()  # type: ignore
+    def handle_data_updated(self) -> None:
+        self.advanced_imu_tab = ADVANCED_IMU_TAB[0]
 
     def get_fields_data(self) -> List[float]:
         """Getter for _fields_data."""

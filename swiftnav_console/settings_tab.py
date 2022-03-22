@@ -21,15 +21,19 @@ def settings_table_update() -> Dict[str, Any]:
     }
 
 
+SETTINGS_IMPORT_STATUS: List[str] = [""]
+SETTINGS_INS: List[Dict[str, Any]] = [settings_ins_update()]
+SETTINGS_NOTIFICATION: List[str] = [""]
+SETTINGS_TABLE: List[Dict[str, Any]] = [settings_table_update()]
+
+
 class SettingsTabData(QObject):
 
     _import_status: str = ""
     _recommended_ins_settings: List[List[Any]] = []
     _new_ins_confirmation: bool = False
     _notification: str = ""
-    _import_status_updated = Signal(str)
-    _ins_updated = Signal(dict)
-    _notification_updated = Signal(str)
+    _data_updated = Signal()
     settings_import_status: str = ""
     settings_ins: Dict[str, Any] = {}
     settings_notification: str = ""
@@ -38,36 +42,31 @@ class SettingsTabData(QObject):
         super().__init__()
         assert getattr(self.__class__, "_instance", None) is None
         self.__class__._instance = self
-        self.settings_import_status = ""
-        self.settings_ins = settings_ins_update()
-        self.settings_notification = ""
-        self._import_status_updated.connect(self.handle_import_status_updated)
-        self._ins_updated.connect(self.handle_ins_updated)
-        self._notification_updated.connect(self.handle_notification_updated)
+        self.settings_import_status = SETTINGS_IMPORT_STATUS[0]
+        self.settings_ins = SETTINGS_INS[0]
+        self.settings_notification = SETTINGS_NOTIFICATION[0]
+        self._data_updated.connect(self.handle_data_updated)
 
     @classmethod
     def post_import_status_update(cls, update_data: str) -> None:
-        cls._instance._import_status_updated.emit(update_data)
+        SETTINGS_IMPORT_STATUS[0] = update_data
+        cls._instance._data_updated.emit()
 
     @classmethod
     def post_ins_update(cls, update_data: Dict[str, Any]) -> None:
-        cls._instance._ins_updated.emit(update_data)
+        SETTINGS_INS[0] = update_data
+        cls._instance._data_updated.emit()
 
     @classmethod
     def post_notification_update(cls, update_data: str) -> None:
-        cls._instance._notification_updated.emit(update_data)
+        SETTINGS_NOTIFICATION[0] = update_data
+        cls._instance._data_updated.emit()
 
-    @Slot(str)  # type: ignore
-    def handle_import_status_updated(self, data: str) -> None:
-        self.settings_import_status = data
-
-    @Slot(dict)  # type: ignore
-    def handle_ins_updated(self, update_data: Dict[str, Any]) -> None:
-        self.settings_ins = update_data
-
-    @Slot(str)  # type: ignore
-    def handle_notification_updated(self, data: str) -> None:
-        self.settings_notification = data
+    @Slot()  # type: ignore
+    def handle_data_updated(self) -> None:
+        self.settings_import_status = SETTINGS_IMPORT_STATUS[0]
+        self.settings_ins = SETTINGS_INS[0]
+        self.settings_notification = SETTINGS_NOTIFICATION[0]
 
     def get_import_status(self) -> str:
         return self._import_status
@@ -130,23 +129,24 @@ class SettingsTabModel(QObject):  # pylint: disable=too-few-public-methods
 class SettingsTableEntries(QObject):
 
     _entries: List[dict] = []
-    _data_updated = Signal(dict)
+    _data_updated = Signal()
     settings_table: Dict[str, Any] = {}
 
     def __init__(self):
         super().__init__()
         assert getattr(self.__class__, "_instance", None) is None
         self.__class__._instance = self
-        self.settings_table = settings_table_update()
+        self.settings_table = SETTINGS_TABLE[0]
         self._data_updated.connect(self.handle_data_updated)
 
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
-        cls._instance._data_updated.emit(update_data)
+        SETTINGS_TABLE[0] = update_data
+        cls._instance._data_updated.emit()
 
-    @Slot(dict)  # type: ignore
-    def handle_data_updated(self, update_data: Dict[str, Any]) -> None:
-        self.settings_table = update_data
+    @Slot()  # type: ignore
+    def handle_data_updated(self) -> None:
+        self.settings_table = SETTINGS_TABLE[0]
 
     def get_entries(self) -> List[dict]:
         return self._entries

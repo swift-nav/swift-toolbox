@@ -21,23 +21,24 @@ class SolutionTableEntries(QObject):
 
     _entries: List[List[str]] = []
     _valid: bool = False
-    _data_updated = Signal(dict)
+    _data_updated = Signal()
     solution_table: Dict[str, Any] = {}
 
     def __init__(self):
         super().__init__()
         assert getattr(self.__class__, "_instance", None) is None
         self.__class__._instance = self
-        self.solution_table = solution_table_update()
+        self.solution_table = SOLUTION_TABLE[0]
         self._data_updated.connect(self.handle_data_updated)
 
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
-        cls._instance._data_updated.emit(update_data)
+        SOLUTION_TABLE[0] = update_data
+        cls._instance._data_updated.emit()
 
-    @Slot(dict)  # type: ignore
-    def handle_data_updated(self, update_data: Dict[str, Any]) -> None:
-        self.solution_table = update_data
+    @Slot()  # type: ignore
+    def handle_data_updated(self) -> None:
+        self.solution_table = SOLUTION_TABLE[0]
 
     def get_valid(self) -> bool:
         """Getter for _valid.

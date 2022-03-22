@@ -1,7 +1,7 @@
 """Status Bar QObjects.
 """
 
-from typing import Dict, Any
+from typing import Dict, List, Any
 
 from PySide2.QtCore import Property, QObject, Signal, Slot
 
@@ -22,6 +22,9 @@ def status_bar_update() -> Dict[str, Any]:
     }
 
 
+STATUS_BAR: List[Dict[str, Any]] = [status_bar_update()]
+
+
 class StatusBarData(QObject):  # pylint: disable=too-many-instance-attributes
 
     _pos: str = ""
@@ -33,23 +36,24 @@ class StatusBarData(QObject):  # pylint: disable=too-many-instance-attributes
     _solid_connection: bool = False
     _title: str = ""
     _antenna_status: str = ""
-    _data_updated = Signal(dict)
+    _data_updated = Signal()
     status_bar: Dict[str, Any] = {}
 
     def __init__(self):
         super().__init__()
         assert getattr(self.__class__, "_instance", None) is None
         self.__class__._instance = self
-        self.status_bar = status_bar_update()
+        self.status_bar = STATUS_BAR[0]
         self._data_updated.connect(self.handle_data_updated)
 
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
-        cls._instance._data_updated.emit(update_data)
+        STATUS_BAR[0] = update_data
+        cls._instance._data_updated.emit()
 
-    @Slot(dict)  # type: ignore
-    def handle_data_updated(self, update_data: Dict[str, Any]) -> None:
-        self.status_bar = update_data
+    @Slot()  # type: ignore
+    def handle_data_updated(self) -> None:
+        self.status_bar = STATUS_BAR[0]
 
     def get_pos(self) -> str:
         return self._pos

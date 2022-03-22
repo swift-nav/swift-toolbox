@@ -20,6 +20,9 @@ def advanced_spectrum_analyzer_tab_update() -> Dict[str, Any]:
     }
 
 
+ADVANCED_SPECTRUM_ANALYZER_TAB: List[Dict[str, Any]] = [advanced_spectrum_analyzer_tab_update()]
+
+
 class AdvancedSpectrumAnalyzerPoints(QObject):
 
     _points: List[QPointF] = []
@@ -28,23 +31,24 @@ class AdvancedSpectrumAnalyzerPoints(QObject):
     _xmin: float = 0.0
     _xmax: float = 0.0
     _channel: int = 0
-    _data_updated = Signal(dict)
+    _data_updated = Signal()
     advanced_spectrum_analyzer_tab: Dict[str, Any] = {}
 
     def __init__(self):
         super().__init__()
         assert getattr(self.__class__, "_instance", None) is None
         self.__class__._instance = self
-        self.advanced_spectrum_analyzer_tab = advanced_spectrum_analyzer_tab_update()
+        self.advanced_spectrum_analyzer_tab = ADVANCED_SPECTRUM_ANALYZER_TAB[0]
         self._data_updated.connect(self.handle_data_updated)
 
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
-        cls._instance._data_updated.emit(update_data)
+        ADVANCED_SPECTRUM_ANALYZER_TAB[0] = update_data
+        cls._instance._data_updated.emit()
 
-    @Slot(dict)  # type: ignore
-    def handle_data_updated(self, update_data: Dict[str, Any]) -> None:
-        self.advanced_spectrum_analyzer_tab = update_data
+    @Slot()  # type: ignore
+    def handle_data_updated(self) -> None:
+        self.advanced_spectrum_analyzer_tab = ADVANCED_SPECTRUM_ANALYZER_TAB[0]
 
     def get_ymin(self) -> float:
         """Getter for _ymin."""

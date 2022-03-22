@@ -50,6 +50,10 @@ def observation_update() -> Dict[str, Any]:
     }
 
 
+REMOTE_OBSERVATION_TAB: List[Dict[str, Any]] = [observation_update()]
+LOCAL_OBSERVATION_TAB: List[Dict[str, Any]] = [observation_update()]
+
+
 class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-public-methods
     # pylint: disable=too-many-instance-attributes
     # Might want to move the column_widths logic into QML and use QML's
@@ -62,7 +66,7 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
     show_gps_only_changed = Signal(bool, arguments="show_gps_only")
     codes_changed = Signal()
     dataPopulated = Signal()
-    _data_updated = Signal(dict)
+    _data_updated = Signal()
     _observation_tab: Dict[str, Any] = {}
 
     column_metadata = [
@@ -97,11 +101,18 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
 
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
-        cls._instance._data_updated.emit(update_data)  # pylint: disable=protected-access
+        if cls._instance.get_remote():
+            REMOTE_OBSERVATION_TAB[0] = update_data
+        else:
+            LOCAL_OBSERVATION_TAB[0] = update_data
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
-    @Slot(dict)  # type: ignore
-    def handle_data_updated(self, update_data: Dict[str, Any]) -> None:
-        self._observation_tab = update_data
+    @Slot()  # type: ignore
+    def handle_data_updated(self) -> None:
+        if self._remote:
+            self._observation_tab = REMOTE_OBSERVATION_TAB[0]
+        else:
+            self._observation_tab = LOCAL_OBSERVATION_TAB[0]
 
     def get_codes(self) -> List[List[str]]:
         return [entry["prn"].code for entry in self._observation_tab[Keys.ROWS]]

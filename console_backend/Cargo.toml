@@ -6,7 +6,7 @@ description = "A Python wrapper for the Rust console backend"
 edition = "2018"
 
 [dependencies]
-log = "0.4.15"
+log = "0.4.16"
 async_logger_log = "0.2.0"
 async_logger = "0.3.3"
 strum = "0.24"

@@ -22,6 +22,7 @@ Unicode true
 !define outfile_prefix "swift-console"
 !define installer_dir "py39-dist"
 !define company_name "Swift Navigation"
+!define old_uninstaller "$PROGRAMFILES\${company_name}\${app_name}\Uninstall.exe"
 
 !define vc_redist_url "https://aka.ms/vs/17/release/vc_redist.x64.exe"
 
@@ -212,6 +213,7 @@ FunctionEnd
 
 !macro Uninstall Prefix
 Function ${Prefix}Uninstall
+  ExecShell open "${old_uninstaller}" "/AllUsers /S"
   RMDir /r "$InstDir"
   Delete "$DESKTOP\${app_name}.lnk"
   Delete "$SMPROGRAMS\${app_name}.lnk"

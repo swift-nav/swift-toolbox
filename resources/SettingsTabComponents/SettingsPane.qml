@@ -377,7 +377,7 @@ Rectangle {
         ComboBox {
             model: ["True", "False"]
             currentIndex: model.indexOf(selectedRowField("valueOnDevice"))
-            onCurrentIndexChanged: {
+            onActivated: {
                 if (currentIndex != -1 && selectedRowField("valueOnDevice") != model[currentIndex])
                     backend_request_broker.settings_write_request(selectedRowField("group"), selectedRowField("name"), model[currentIndex]);
 
@@ -392,7 +392,7 @@ Rectangle {
         ComboBox {
             model: selectedRowField("enumeratedPossibleValues").split(",")
             currentIndex: model.indexOf(selectedRowField("valueOnDevice"))
-            onCurrentIndexChanged: {
+            onActivated: {
                 if (currentIndex != -1 && selectedRowField("valueOnDevice") != model[currentIndex])
                     backend_request_broker.settings_write_request(selectedRowField("group"), selectedRowField("name"), model[currentIndex]);
 

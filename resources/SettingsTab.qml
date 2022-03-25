@@ -287,7 +287,7 @@ MainTab {
                         Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                         padding: parent.buttonPadding
                         bottomPadding: refreshButton.bottomPadding
-                        text: "SHOW ADVANCED SETTINGS"
+                        text: "SHOW ADVANCED\nSETTINGS"
                         font.pointSize: refreshButton.font.pointSize
                         font.family: Constants.fontFamily
                         font.bold: false

@@ -125,6 +125,7 @@ exec --fail-on-error ${python} -m py2many --rust=1 /tmp/piksi_tools_constants.py
 
 [tasks.dist-generate-resources]
 command = "${DIST_PYSIDE2_RCC}"
+condition = { files_not_exist = ["swiftnav_console/console_resources.py"] }
 args = [
   "resources/console_resources.qrc",
   "-o",
@@ -135,6 +136,7 @@ args = [
 
 [tasks.generate-resources]
 command = "${PYSIDE2_RCC}"
+condition = { files_not_exist = ["swiftnav_console/console_resources.py"] }
 args = [
   "resources/console_resources.qrc",
   "-o",

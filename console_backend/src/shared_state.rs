@@ -913,6 +913,15 @@ impl ConnectionState {
             ConnectionState::Connected { conn, .. } => conn.name(),
         }
     }
+
+    pub fn is_file(&self) -> bool {
+        match self {
+            ConnectionState::Closed => false,
+            ConnectionState::Disconnected => false,
+            ConnectionState::Connecting => false,
+            ConnectionState::Connected { conn, .. } => conn.is_file(),
+        }
+    }
 }
 
 impl std::fmt::Display for ConnectionState {

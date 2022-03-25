@@ -104,6 +104,7 @@ impl StatusBar {
         heartbeat_data.reset();
         heartbeat_data.set_port(shared_state.connection().name());
         heartbeat_data.set_version(shared_state.console_version());
+        heartbeat_data.set_conn_is_file(shared_state.connection().is_file());
         StatusBar { heartbeat_data }
     }
 
@@ -291,6 +292,7 @@ pub struct HeartbeatInner {
     ant_status: String,
     baseline_display_mode: String,
     baseline_solution_mode: u8,
+    conn_is_file: bool,
     current_time: Instant,
     data_rate: f64,
     dgnss_enabled: bool,
@@ -323,6 +325,7 @@ impl HeartbeatInner {
             ant_status: String::from(EMPTY_STR),
             baseline_display_mode: String::from(EMPTY_STR),
             baseline_solution_mode: 0,
+            conn_is_file: false,
             current_time: Instant::now(),
             data_rate: 0.0,
             dgnss_enabled: false,
@@ -374,13 +377,13 @@ impl HeartbeatInner {
     }
 
     pub fn pos_llh_update(&mut self) {
+        self.llh_display_mode = String::from(EMPTY_STR);
         if let Some(last_stime_update) = self.last_stime_update {
             if (self.current_time - last_stime_update).as_secs_f64() < UPDATE_TOLERANCE_SECONDS {
-                let llh_display_mode = GnssModes::from(self.llh_solution_mode);
-                self.llh_display_mode = llh_display_mode.pos_mode();
+                self.llh_display_mode = GnssModes::from(self.llh_solution_mode).pos_mode();
                 self.llh_is_rtk = RTK_MODES.contains(&(self.llh_solution_mode as i32));
                 if self.ins_used && (self.llh_solution_mode as i32) != DR_MODE {
-                    self.llh_display_mode = format!("{}{}", llh_display_mode, INS_POSTFIX);
+                    self.llh_display_mode = format!("{}{}", self.llh_display_mode, INS_POSTFIX);
                 }
             }
         }
@@ -389,7 +392,7 @@ impl HeartbeatInner {
     pub fn baseline_ned_update(&mut self) {
         self.baseline_display_mode = String::from(EMPTY_STR);
         if let Some(last_btime_update) = self.last_btime_update {
-            if self.dgnss_enabled
+            if (self.dgnss_enabled || self.conn_is_file)
                 && (self.current_time - last_btime_update).as_secs_f64() < UPDATE_TOLERANCE_SECONDS
             {
                 if let Some(bsoln_mode) = rtk_mode_dict.get(&(self.baseline_solution_mode as i32)) {
@@ -526,6 +529,11 @@ impl Heartbeat {
         self.lock()
             .expect(HEARTBEAT_LOCK_MUTEX_FAILURE)
             .dgnss_enabled = dgnss_enabled;
+    }
+    pub fn set_conn_is_file(&self, conn_is_file: bool) {
+        self.lock()
+            .expect(HEARTBEAT_LOCK_MUTEX_FAILURE)
+            .conn_is_file = conn_is_file;
     }
     pub fn set_version(&self, version: String) {
         self.lock().expect(HEARTBEAT_LOCK_MUTEX_FAILURE).version = version;

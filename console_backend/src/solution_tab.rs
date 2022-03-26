@@ -23,6 +23,20 @@ pub enum LatLonUnits {
 }
 
 impl LatLonUnits {
+    pub fn convert_lat(&self, lat: f64, sf: f64, offset: f64) -> f64 {
+        match self {
+            LatLonUnits::Degrees => lat / sf + offset,
+            LatLonUnits::Meters => (lat - offset) * sf,
+        }
+    }
+
+    pub fn convert_lon(&self, lon: f64, sf: f64, offset: f64) -> f64 {
+        match self {
+            LatLonUnits::Degrees => lon / sf + offset,
+            LatLonUnits::Meters => (lon - offset) * sf,
+        }
+    }
+
     /// Retrieve the velocity unit as string slice.
     pub fn as_str(&self) -> &'static str {
         match self {
@@ -126,6 +140,7 @@ pub struct SolutionTab {
     sln_cur_data: Vec<Vec<(f64, f64)>>,
     sln_data: Vec<Vec<(f64, f64)>>,
     sln_line: Deque<(f64, f64)>,
+    pending_sln_line: Deque<(f64, f64)>,
     slns: HashMap<&'static str, Deque<f64>>,
     table: HashMap<&'static str, String>,
     unit: LatLonUnits,
@@ -189,6 +204,7 @@ impl SolutionTab {
                     .collect()
             },
             sln_line: Deque::new(PLOT_HISTORY_MAX),
+            pending_sln_line: Deque::new(PLOT_HISTORY_MAX),
             table: {
                 SOLUTION_TABLE_KEYS
                     .iter()
@@ -637,7 +653,7 @@ impl SolutionTab {
     }
 
     pub fn clear_sln(&mut self) {
-        self.sln_line.clear();
+        self.pending_sln_line.clear();
         for (_, deque) in &mut self.slns.iter_mut() {
             deque.clear();
         }
@@ -694,8 +710,11 @@ impl SolutionTab {
                 let (lat_offset, lat_sf, lon_sf) = {
                     if let Some(lats) = self.slns.get_mut(lat_str.as_str()) {
                         let lats_counts = lats.iter().filter(|&x| !x.is_nan()).count();
-                        let lat_offset =
-                            lats.iter().fold(0.0, |acc, x| acc + x) / lats_counts as f64;
+                        let lat_offset = lats
+                            .iter()
+                            .filter(|&x| !x.is_nan())
+                            .fold(0.0, |acc, x| acc + x)
+                            / lats_counts as f64;
                         let (lat_sf, lon_sf) = self.unit.get_sig_figs(lat_offset);
                         (lat_offset, lat_sf, lon_sf)
                     } else {
@@ -706,36 +725,39 @@ impl SolutionTab {
                 let lon_str = format!("lon_{}", mode_string);
                 let lon_offset = if let Some(lons) = self.slns.get_mut(lon_str.as_str()) {
                     let lons_counts = lons.iter().filter(|&x| !x.is_nan()).count();
-                    lons.iter().fold(0.0, |acc, x| acc + x) / lons_counts as f64
+                    lons.iter()
+                        .filter(|&x| !x.is_nan())
+                        .fold(0.0, |acc, x| acc + x)
+                        / lons_counts as f64
                 } else {
                     0.0
                 };
 
                 (lat_offset, lat_sf, lon_offset, lon_sf)
             };
+        let (lat_sf_temp, lat_offset_temp, lon_sf_temp, lon_offset_temp) =
+            if matches!(&self.unit, &LatLonUnits::Degrees) {
+                (old_lat_sf, old_lat_offset, old_lon_sf, old_lon_offset)
+            } else {
+                (lat_sf, lat_offset, lon_sf, lon_offset)
+            };
+        let (slns, unit) = (&mut self.slns, &self.unit);
         for mode in self.mode_strings.iter() {
             let lat_str = format!("lat_{}", mode);
             let lon_str = format!("lon_{}", mode);
-            if matches!(&self.unit, &LatLonUnits::Degrees) {
-                if let Some(lats) = self.slns.get_mut(lat_str.as_str()) {
-                    lats.iter_mut()
-                        .for_each(|x| *x = *x / old_lat_sf + old_lat_offset);
-                }
-                if let Some(lons) = self.slns.get_mut(lon_str.as_str()) {
-                    lons.iter_mut()
-                        .for_each(|x| *x = *x / old_lon_sf + old_lon_offset);
-                }
-            } else {
-                if let Some(lats) = self.slns.get_mut(lat_str.as_str()) {
-                    lats.iter_mut()
-                        .for_each(|x| *x = (*x - lat_offset) * lat_sf);
-                }
-                if let Some(lons) = self.slns.get_mut(lon_str.as_str()) {
-                    lons.iter_mut()
-                        .for_each(|x| *x = (*x - lon_offset) * lon_sf);
-                }
+            if let Some(lats) = slns.get_mut(lat_str.as_str()) {
+                lats.iter_mut()
+                    .for_each(|x| *x = unit.convert_lat(*x, lat_sf_temp, lat_offset_temp));
+            }
+            if let Some(lons) = slns.get_mut(lon_str.as_str()) {
+                lons.iter_mut()
+                    .for_each(|x| *x = unit.convert_lon(*x, lon_sf_temp, lon_offset_temp));
             }
         }
+        self.pending_sln_line.iter_mut().for_each(|(lon, lat)| {
+            *lon = unit.convert_lon(*lon, lon_sf_temp, lon_offset_temp);
+            *lat = unit.convert_lat(*lat, lat_sf_temp, lat_offset_temp);
+        });
         self.lat_sf = lat_sf;
         self.lon_sf = lon_sf;
         self.lat_offset = lat_offset;
@@ -758,7 +780,7 @@ impl SolutionTab {
         let lon_str = lon_str.as_str();
         self.slns.get_mut(lat_str).unwrap().push(lat);
         self.slns.get_mut(lon_str).unwrap().push(lon);
-        self.sln_line.push((lon, lat));
+        self.pending_sln_line.push((lon, lat));
         self._append_empty_sln_data(Some(mode_string));
     }
 
@@ -815,6 +837,7 @@ impl SolutionTab {
         if update_current && !self.sln_data[idx].is_empty() {
             self.sln_cur_data[idx].push(self.sln_data[idx][self.sln_data[idx].len() - 1]);
         }
+        self.sln_line = self.pending_sln_line.clone();
     }
 
     /// Package solution data into a message buffer and send to frontend.

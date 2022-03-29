@@ -118,7 +118,7 @@ Rectangle {
 
                         PropertyChanges {
                             target: valOnDevice
-                            Layout.preferredHeight: isLongTextField(_fieldName) ? 4 * parent.smallRowHeight : 3 * parent.smallRowHeight
+                            Layout.preferredHeight: isLongTextField(_fieldName) ? 5 * parent.smallRowHeight : 3 * parent.smallRowHeight
                         }
 
                     },
@@ -198,7 +198,7 @@ Rectangle {
                 Layout.rowSpan: 2
                 Layout.columnSpan: 1
                 Layout.preferredWidth: parent.colWidthLabel
-                Layout.preferredHeight: isLongTextField(_fieldName) ? 3 * parent.smallRowHeight : parent.smallRowHeight
+                Layout.preferredHeight: isLongTextField(_fieldName) ? 4 * parent.smallRowHeight : parent.smallRowHeight
                 sourceComponent: settingRowLabel
             }
 
@@ -209,7 +209,7 @@ Rectangle {
                 Layout.rowSpan: 2
                 Layout.columnSpan: parent.columns - 1
                 Layout.preferredWidth: parent.colWidthField
-                Layout.preferredHeight: isLongTextField(_fieldName) ? 3 * parent.smallRowHeight : parent.smallRowHeight
+                Layout.preferredHeight: isLongTextField(_fieldName) ? 4 * parent.smallRowHeight : parent.smallRowHeight
             }
 
             Loader {

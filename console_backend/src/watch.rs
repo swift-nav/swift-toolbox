@@ -4,6 +4,7 @@ use std::{
         atomic::{AtomicBool, AtomicUsize, Ordering},
         Arc,
     },
+    time::Duration,
 };
 
 use parking_lot::{Condvar, MappedMutexGuard, Mutex, MutexGuard};
@@ -117,6 +118,14 @@ impl<T: Clone> WatchReceiver<T> {
         Ok(data.value.clone())
     }
 
+    pub fn wait_for(&mut self, duration: Duration) -> Result<Result<T, RecvError>, TimeoutError> {
+        let data = self.wait_for_inner(duration)?;
+        match data {
+            Ok(data) => data.value.clone(),
+            Err(e) => Err(e),
+        }
+    }
+
     pub fn wait_mut(&mut self) -> Result<MappedMutexGuard<T>, RecvError> {
         let data = self.wait_inner()?;
         Ok(MutexGuard::map(data, |d| &mut d.value))
@@ -154,6 +163,31 @@ impl<T: Clone> WatchReceiver<T> {
         }
         self.last_seen = data.version;
         Ok(data)
+    }
+
+    fn wait_for_inner(
+        &mut self,
+        duration: Duration,
+    ) -> Result<Result<MutexGuard<Value<T>>, RecvError>, TimeoutError> {
+        if self.shared.is_closed() {
+            return Ok(Err(RecvError));
+        }
+        let mut data = self.shared.data.lock();
+        while data.version == self.last_seen {
+            if self
+                .shared
+                .on_update
+                .wait_for(&mut data, duration)
+                .timed_out()
+            {
+                return Err(TimeoutError);
+            }
+            if self.shared.is_closed() {
+                return Ok(Err(RecvError));
+            }
+        }
+        self.last_seen = data.version;
+        Ok(Ok(data))
     }
 }
 
@@ -199,6 +233,17 @@ impl fmt::Display for RecvError {
 }
 
 impl std::error::Error for RecvError {}
+
+#[derive(Debug)]
+pub struct TimeoutError;
+
+impl fmt::Display for TimeoutError {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(fmt, "time out waiting for watched value")
+    }
+}
+
+impl std::error::Error for TimeoutError {}
 
 #[cfg(test)]
 mod tests {

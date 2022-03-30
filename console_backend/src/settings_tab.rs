@@ -6,7 +6,7 @@ use std::time::{Duration, Instant};
 
 use anyhow::anyhow;
 use capnp::message::Builder;
-use crossbeam::channel::{self, select, Sender};
+use crossbeam::channel::{self, Sender};
 use indexmap::IndexMap;
 use ini::Ini;
 use lazy_static::lazy_static;
@@ -430,29 +430,21 @@ impl SettingsTab {
 
         let (ctx, handle) = Context::with_timeout(SETTINGS_READ_WRITE_TIMEOUT_MS);
 
-        let conn = self.shared_state.watch_connection();
-        let monitor_handle = std::thread::spawn(move || {
-            let mut waited = Duration::from_millis(0);
+        let mut conn = self.shared_state.watch_connection();
+        let _monitor_handle = std::thread::spawn(move || {
+            let t = Instant::now();
             loop {
+                let waited = t.elapsed();
                 if waited >= GLOBAL_TIMEOUT {
                     break;
                 }
-                let t = Instant::now();
-                match conn.wait_for(GLOBAL_TIMEOUT - waited) {
-                    Ok(Ok(conn)) => {
-                        if !conn.is_connected() {
-                            handle.cancel();
-                            break;
-                        }
-                    }
-                    _ => {
-                        // timeout or conn was dropped
-                        handle.cancel();
+                if let Ok(Ok(conn)) = conn.wait_for(GLOBAL_TIMEOUT - waited) {
+                    if !conn.is_connected() {
                         break;
                     }
                 }
-                waited += t.elapsed();
             }
+            handle.cancel();
         });
 
         let (settings, errors) = self.sbp_client.lock().read_all_ctx(ctx);

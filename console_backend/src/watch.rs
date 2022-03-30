@@ -121,8 +121,8 @@ impl<T: Clone> WatchReceiver<T> {
     pub fn wait_for(&mut self, duration: Duration) -> Result<Result<T, RecvError>, TimeoutError> {
         let data = self.wait_for_inner(duration)?;
         match data {
-            Ok(data) => data.value.clone(),
-            Err(e) => Err(e),
+            Ok(data) => Ok(Ok(data.value.clone())),
+            Err(e) => Ok(Err(e)),
         }
     }
 

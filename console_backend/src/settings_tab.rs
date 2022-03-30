@@ -431,6 +431,8 @@ impl SettingsTab {
         let (ctx, handle) = Context::with_timeout(SETTINGS_READ_WRITE_TIMEOUT_MS);
 
         let mut conn = self.shared_state.watch_connection();
+        // this thread runs for at most `GLOBAL_TIMEOUT` seconds so we don't join it to avoid
+        // blocking the completion of this function
         let _monitor_handle = std::thread::spawn(move || {
             let t = Instant::now();
             loop {

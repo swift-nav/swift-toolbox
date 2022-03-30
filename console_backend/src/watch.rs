@@ -4,7 +4,7 @@ use std::{
         atomic::{AtomicBool, AtomicUsize, Ordering},
         Arc,
     },
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use parking_lot::{Condvar, MappedMutexGuard, Mutex, MutexGuard};
@@ -172,12 +172,17 @@ impl<T: Clone> WatchReceiver<T> {
         if self.shared.is_closed() {
             return Ok(Err(RecvError));
         }
+        let t = Instant::now();
         let mut data = self.shared.data.lock();
         while data.version == self.last_seen {
+            let elapsed = t.elapsed();
+            if elapsed >= duration {
+                return Err(TimeoutError);
+            }
             if self
                 .shared
                 .on_update
-                .wait_for(&mut data, duration)
+                .wait_for(&mut data, duration - elapsed)
                 .timed_out()
             {
                 return Err(TimeoutError);

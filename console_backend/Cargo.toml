@@ -40,8 +40,13 @@ serde-pickle = { version = "1.1.0", optional = true }
 parking_lot = "0.12.0"
 regex = { version = "1.5.5" }
 rust-ini = "0.18.0"
+<<<<<<< HEAD
 sbp = { version = "4.1.5", features = ["json", "link", "swiftnav"] }
 sbp-settings = "0.6.7"
+=======
+sbp = { version = "4.1.4", features = ["json", "link", "swiftnav"] }
+sbp-settings = { git = "https://github.com/swift-nav/libsettings-rs", branch = "john-michaelburke/cpp-693" }
+>>>>>>> Apply local settings timeouts, global read_all_settings timeout[CPP-693]
 env_logger = { version = "0.9", optional = true }
 mimalloc = { version = "0.1", default-features = false }
 curl = { version = "0.4", features = ["ssl", "static-curl"] }

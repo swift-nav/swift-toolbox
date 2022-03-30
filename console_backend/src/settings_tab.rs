@@ -2,11 +2,11 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use anyhow::anyhow;
 use capnp::message::Builder;
-use crossbeam::channel::{self, Sender};
+use crossbeam::channel::{self, select, Sender};
 use indexmap::IndexMap;
 use ini::Ini;
 use lazy_static::lazy_static;
@@ -31,6 +31,8 @@ const ETHERNET_INTERFACE_MODE_SETTING_KEY: &str = "interface_mode";
 
 const NTRIP_SETTING_GROUP: &str = "ntrip";
 const NTRIP_ENABLE_SETTING_KEY: &str = "enable";
+
+const SETTINGS_READ_WRITE_TIMEOUT_MS: Duration = Duration::from_millis(1000);
 
 lazy_static! {
     static ref RECOMMENDED_INS_SETTINGS: [(&'static str, &'static str, SettingValue); 4] = [
@@ -334,7 +336,7 @@ impl SettingsTab {
             let value = self
                 .sbp_client
                 .lock()
-                .read_setting(setting.0, setting.1)?
+                .read_setting_with_timeout(setting.0, setting.1, SETTINGS_READ_WRITE_TIMEOUT_MS)?
                 .ok_or_else(|| anyhow!("setting not found"))?
                 .value;
             if value.as_ref() != Some(&setting.2) {
@@ -397,7 +399,12 @@ impl SettingsTab {
                 }
             }
         }
-        let setting = self.sbp_client.lock().write_setting(group, name, value)?;
+        let setting = self.sbp_client.lock().write_setting_with_timeout(
+            group,
+            name,
+            value,
+            SETTINGS_READ_WRITE_TIMEOUT_MS,
+        )?;
         if matches!(
             setting.setting.kind,
             SettingKind::Float | SettingKind::Double
@@ -405,7 +412,7 @@ impl SettingsTab {
             let setting = self
                 .sbp_client
                 .lock()
-                .read_setting(group, name)?
+                .read_setting_with_timeout(group, name, SETTINGS_READ_WRITE_TIMEOUT_MS)?
                 .ok_or_else(|| anyhow!("setting not found"))?;
             self.settings.lock().insert(setting);
         } else {
@@ -419,9 +426,36 @@ impl SettingsTab {
     }
 
     fn read_all_settings(&self) {
-        const TIMEOUT: Duration = Duration::from_secs(15);
+        const GLOBAL_TIMEOUT: Duration = Duration::from_secs(15);
 
-        let (ctx, _handle) = Context::with_timeout(TIMEOUT);
+        let (ctx, _handle) = Context::with_timeout(SETTINGS_READ_WRITE_TIMEOUT_MS);
+        let shared_state_clone = self.shared_state.clone();
+        let ctx_clone = ctx.clone();
+        let cancel_rx = ctx.cancel_rx();
+        let timeout_rx = ctx.timeout_rx();
+
+        let monitor_handle = std::thread::spawn(move || {
+            let start_time = Instant::now();
+            loop {
+                if start_time.elapsed() > GLOBAL_TIMEOUT
+                    || !shared_state_clone.connection().is_connected()
+                {
+                    ctx_clone.cancel();
+                    break;
+                }
+                select! {
+                    recv(cancel_rx) -> _ => {
+                        break;
+                    },
+                    recv(timeout_rx) -> _ => {
+                        break;
+                    }
+                    default(Duration::from_millis(250)) => {
+                    }
+                }
+            }
+        });
+
         let (settings, errors) = self.sbp_client.lock().read_all_ctx(ctx);
         for e in errors {
             warn!("{}", e);
@@ -437,6 +471,9 @@ impl SettingsTab {
             }
             self.settings.lock().insert(entry);
         }
+        monitor_handle
+            .join()
+            .expect("read_all_settings timeout thread panicked");
     }
 
     /// Package settings table data into a message buffer and send to frontend.

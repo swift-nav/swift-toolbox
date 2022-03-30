@@ -240,7 +240,9 @@ fn process_messages_thd(
             if let Err(e) = res {
                 error!("Connection error: {}", e);
             }
-            if !matches!(shared_state.connection(), ConnectionState::Disconnected) {
+            if !matches!(shared_state.connection(), ConnectionState::Disconnected)
+                && !shared_state.connection_dialog_visible()
+            {
                 manager_msg.send(ConnectionManagerMsg::Reconnect(conn));
             }
         }

@@ -1520,8 +1520,9 @@ dependencies = [
 
 [[package]]
 name = "sbp-settings"
-version = "0.6.7"
-source = "git+https://github.com/swift-nav/libsettings-rs?branch=john-michaelburke/cpp-693#58a960cb64001886fc4dc304c1f7797e5dd94e0c"
+version = "0.6.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8cc0add3be37b1e5182263295dfdb2f958af26bb7f4a28493e419a0826b620f5"
 dependencies = [
  "crossbeam-channel",
  "crossbeam-utils",

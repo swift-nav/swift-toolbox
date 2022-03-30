@@ -6,7 +6,7 @@ use std::time::{Duration, Instant};
 
 use anyhow::anyhow;
 use capnp::message::Builder;
-use crossbeam::channel::{self, select, Sender};
+use crossbeam::channel::{self, Sender};
 use indexmap::IndexMap;
 use ini::Ini;
 use lazy_static::lazy_static;
@@ -428,32 +428,25 @@ impl SettingsTab {
     fn read_all_settings(&self) {
         const GLOBAL_TIMEOUT: Duration = Duration::from_secs(15);
 
-        let (ctx, _handle) = Context::with_timeout(SETTINGS_READ_WRITE_TIMEOUT_MS);
-        let shared_state_clone = self.shared_state.clone();
-        let ctx_clone = ctx.clone();
-        let cancel_rx = ctx.cancel_rx();
-        let timeout_rx = ctx.timeout_rx();
+        let (ctx, handle) = Context::with_timeout(SETTINGS_READ_WRITE_TIMEOUT_MS);
 
-        let monitor_handle = std::thread::spawn(move || {
-            let start_time = Instant::now();
+        let mut conn = self.shared_state.watch_connection();
+        // this thread runs for at most `GLOBAL_TIMEOUT` seconds so we don't join it to avoid
+        // blocking the completion of this function
+        let _monitor_handle = std::thread::spawn(move || {
+            let t = Instant::now();
             loop {
-                if start_time.elapsed() > GLOBAL_TIMEOUT
-                    || !shared_state_clone.connection().is_connected()
-                {
-                    ctx_clone.cancel();
+                let waited = t.elapsed();
+                if waited >= GLOBAL_TIMEOUT {
                     break;
                 }
-                select! {
-                    recv(cancel_rx) -> _ => {
+                if let Ok(Ok(conn)) = conn.wait_for(GLOBAL_TIMEOUT - waited) {
+                    if !conn.is_connected() {
                         break;
-                    },
-                    recv(timeout_rx) -> _ => {
-                        break;
-                    }
-                    default(Duration::from_millis(250)) => {
                     }
                 }
             }
+            handle.cancel();
         });
 
         let (settings, errors) = self.sbp_client.lock().read_all_ctx(ctx);
@@ -471,9 +464,6 @@ impl SettingsTab {
             }
             self.settings.lock().insert(entry);
         }
-        monitor_handle
-            .join()
-            .expect("read_all_settings timeout thread panicked");
     }
 
     /// Package settings table data into a message buffer and send to frontend.

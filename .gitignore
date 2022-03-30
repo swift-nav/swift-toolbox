@@ -22,3 +22,4 @@ installers/Linux/*.deb
 installers/Windows/NSIS/
 /.qt_for_python
 /.vscode/launch.json
+/pyside-setup

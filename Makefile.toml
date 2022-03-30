@@ -421,7 +421,7 @@ dependencies = [
 condition = { files_not_exist = ["${WORKSPACE}/pyside-setup/setup.py"] }
 script_runner = "@duckscript"
 script = '''
-  exec --fail-on-error git clone http://code.qt.io/pyside/pyside-setup.git
+  exec --fail-on-error git clone -b v5.15.2.1 http://code.qt.io/pyside/pyside-setup.git
 '''
 
 [tasks.build-install-pyside]
@@ -435,12 +435,18 @@ script = '''
 # Enter-VsDevShell -VsInstanceId fdbeecbc -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -no_logo'
 # You may also need to add `jom` to the path to allow parallel builds to work. You can find this installed
 # in a standard Qt installation in the Qt\Tools\QtCreator\bin\jom directory.
+os = os_family
 if eq ${os} windows
   lib = get_env LIB
   set_env LIB "${lib};${WORKSPACE}\\py39-dist\\libs"
+  qmake_path = set "D:/Qt/5.15.2/msvc2019_64/bin/qmake.exe"
+elseif eq ${os} linux
+  qmake_path = set "${HOME}/Qt/5.15.2/gcc_64/bin/qmake"
+else
+  qmake_path = set "${HOME}/Qt/5.15.2/<compiler_arch>/bin/qmake"
 end
 exec --fail-on-error ${DIST_PYTHON} -m pip install setuptools wheel packaging
-exec --fail-on-error ${DIST_PYTHON} ${WORKSPACE}/pyside-setup/setup.py install --qt 5.15.2 --qmake=D:/Qt/5.15.2/msvc2019_64/bin/qmake.exe --parallel=8 --relwithdebinfo --standalone --no-examples --skip-docs --module-subset  Core,Network,Gui,Qml,Widgets,Charts
+exec --fail-on-error ${DIST_PYTHON} ${WORKSPACE}/pyside-setup/setup.py install --qt 5.15.2 --qmake=${qmake_path} --parallel=8 --relwithdebinfo --standalone --no-examples --skip-docs --module-subset  Core,Network,Gui,Qml,Widgets,Charts
 '''
 
 [tasks.build-dist]

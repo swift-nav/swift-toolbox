@@ -258,6 +258,8 @@ mod tests {
 
     use super::*;
 
+    const SECOND: Duration = Duration::from_secs(1);
+
     #[test]
     fn starts_unseen() {
         let watched = Watched::new(0);
@@ -305,15 +307,15 @@ mod tests {
             s.send(()).unwrap()
         });
 
-        thread::sleep(Duration::from_secs(1));
+        thread::sleep(SECOND);
         assert!(r.try_recv().is_err());
 
         watched.send(1);
-        thread::sleep(Duration::from_secs(1));
+        thread::sleep(SECOND);
         assert!(r.try_recv().is_err());
 
         watched.send(2);
-        thread::sleep(Duration::from_secs(1));
+        thread::sleep(SECOND);
         assert!(r.try_recv().is_ok());
     }
 
@@ -324,10 +326,28 @@ mod tests {
         // mark first as seen
         let _ = recv.get();
         thread::spawn(move || {
-            thread::sleep(Duration::from_secs(1));
+            thread::sleep(SECOND);
             drop(watched);
         });
         assert!(recv.wait().is_err());
+    }
+
+    #[test]
+    fn wait_for() {
+        let watched = Watched::new(0);
+        let mut recv = watched.watch();
+        let h = thread::spawn(move || {
+            // mark first as seen
+            let _ = recv.get();
+            let res = recv.wait_for(SECOND / 2);
+            assert!(matches!(res, Err(TimeoutError)));
+            // wait for rest of the second plus a little bit
+            let res = recv.wait_for(SECOND / 2 + Duration::from_millis(100));
+            assert!(matches!(res, Ok(Ok(1))));
+        });
+        thread::sleep(SECOND);
+        watched.send(1);
+        h.join().unwrap();
     }
 
     #[test]

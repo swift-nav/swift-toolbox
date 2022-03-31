@@ -23,22 +23,6 @@ pub enum LatLonUnits {
 }
 
 impl LatLonUnits {
-    pub fn lat_deg_to_meters(lat: f64, sf: f64, offset: f64) -> f64 {
-        (lat - offset) * sf
-    }
-
-    pub fn lon_deg_to_meters(lon: f64, sf: f64, offset: f64) -> f64 {
-        (lon - offset) * sf
-    }
-
-    pub fn lat_meters_to_deg(lat: f64, sf: f64, offset: f64) -> f64 {
-        lat / sf + offset
-    }
-
-    pub fn lon_meters_to_deg(lon: f64, sf: f64, offset: f64) -> f64 {
-        lon / sf + offset
-    }
-
     /// Retrieve the velocity unit as string slice.
     pub fn as_str(&self) -> &'static str {
         match self {
@@ -697,7 +681,10 @@ impl SolutionTab {
     /// Calculate mean lat/lon sigfigs and offsets used for roughly converting
     /// lat/lon degrees to x/y meters. Use lat/lon points from the mode currently
     /// used for as the current solution mode. Drops NAN values.
-    fn calc_deg_to_meters_lat_lon_sf_and_offset(&mut self) -> (f64, f64, f64, f64) {
+    fn calc_deg_to_meters_lat_lon_sf_and_offset(
+        &mut self,
+        unit: &LatLonUnits,
+    ) -> (f64, f64, f64, f64) {
         let gnss_mode = GnssModes::from(self.last_pos_mode);
         let mode_string = gnss_mode.to_string();
         let lat_str = format!("lat_{}", mode_string);
@@ -710,7 +697,7 @@ impl SolutionTab {
                     .filter(|&x| !x.is_nan())
                     .fold(0.0, |acc, x| acc + x)
                     / lats_counts as f64;
-                let (lat_sf, lon_sf) = self.unit.get_sig_figs(lat_offset);
+                let (lat_sf, lon_sf) = unit.get_sig_figs(lat_offset);
                 (lat_offset, lat_sf, lon_sf)
             } else {
                 (0.0, 1.0, 1.0)
@@ -730,66 +717,49 @@ impl SolutionTab {
     }
 
     fn convert_points(&mut self, unit: LatLonUnits) {
-        self.unit = unit;
-
-        let old_lat_sf = self.lat_sf;
-        let old_lon_sf = self.lon_sf;
-        let old_lat_offset = self.lat_offset;
-        let old_lon_offset = self.lon_offset;
-
-        match &self.unit {
-            LatLonUnits::Degrees => {
-                let (lat_offset, lat_sf, lon_offset, lon_sf) = (0.0, 1.0, 0.0, 1.0);
-                for mode in self.mode_strings.iter() {
-                    let lat_str = format!("lat_{}", mode);
-                    let lon_str = format!("lon_{}", mode);
-                    if let Some(lats) = self.slns.get_mut(lat_str.as_str()) {
-                        for lat in lats.iter_mut() {
-                            *lat = LatLonUnits::lat_meters_to_deg(*lat, old_lat_sf, old_lat_offset);
-                        }
-                    }
-                    if let Some(lons) = self.slns.get_mut(lon_str.as_str()) {
-                        for lon in lons.iter_mut() {
-                            *lon = LatLonUnits::lon_meters_to_deg(*lon, old_lon_sf, old_lon_offset);
-                        }
-                    }
-                }
-                for (lon, lat) in self.pending_sln_line.iter_mut() {
-                    *lon = LatLonUnits::lon_meters_to_deg(*lon, old_lon_sf, old_lon_offset);
-                    *lat = LatLonUnits::lat_meters_to_deg(*lat, old_lat_sf, old_lat_offset);
-                }
-                self.lat_sf = lat_sf;
-                self.lon_sf = lon_sf;
-                self.lat_offset = lat_offset;
-                self.lon_offset = lon_offset;
-            }
+        let (
+            (lat_offset, lat_sf, lon_offset, lon_sf),
+            (old_lat_offset, old_lat_sf, old_lon_offset, old_lon_sf),
+            convert,
+        ) = match &unit {
+            LatLonUnits::Degrees => (
+                (0.0, 1.0, 0.0, 1.0),
+                (self.lat_offset, self.lat_sf, self.lon_offset, self.lon_sf),
+                &ll_meters_to_deg as &dyn Fn(f64, f64, f64) -> f64,
+            ),
             LatLonUnits::Meters => {
                 let (lat_offset, lat_sf, lon_offset, lon_sf) =
-                    self.calc_deg_to_meters_lat_lon_sf_and_offset();
-                for mode in self.mode_strings.iter() {
-                    let lat_str = format!("lat_{}", mode);
-                    let lon_str = format!("lon_{}", mode);
-                    if let Some(lats) = self.slns.get_mut(lat_str.as_str()) {
-                        for lat in lats.iter_mut() {
-                            *lat = LatLonUnits::lat_deg_to_meters(*lat, lat_sf, lat_offset);
-                        }
-                    }
-                    if let Some(lons) = self.slns.get_mut(lon_str.as_str()) {
-                        for lon in lons.iter_mut() {
-                            *lon = LatLonUnits::lon_deg_to_meters(*lon, lon_sf, lon_offset);
-                        }
-                    }
+                    self.calc_deg_to_meters_lat_lon_sf_and_offset(&unit);
+                (
+                    (lat_offset, lat_sf, lon_offset, lon_sf),
+                    (lat_offset, lat_sf, lon_offset, lon_sf),
+                    &ll_deg_to_meters as &dyn Fn(f64, f64, f64) -> f64,
+                )
+            }
+        };
+        for mode in self.mode_strings.iter() {
+            let lat_str = format!("lat_{}", mode);
+            let lon_str = format!("lon_{}", mode);
+            if let Some(lats) = self.slns.get_mut(lat_str.as_str()) {
+                for lat in lats.iter_mut() {
+                    *lat = convert(*lat, old_lat_sf, old_lat_offset);
                 }
-                for (lon, lat) in self.pending_sln_line.iter_mut() {
-                    *lon = LatLonUnits::lon_deg_to_meters(*lon, lon_sf, lon_offset);
-                    *lat = LatLonUnits::lat_deg_to_meters(*lat, lat_sf, lat_offset);
+            }
+            if let Some(lons) = self.slns.get_mut(lon_str.as_str()) {
+                for lon in lons.iter_mut() {
+                    *lon = convert(*lon, old_lon_sf, old_lon_offset);
                 }
-                self.lat_sf = lat_sf;
-                self.lon_sf = lon_sf;
-                self.lat_offset = lat_offset;
-                self.lon_offset = lon_offset;
             }
         }
+        for (lon, lat) in self.pending_sln_line.iter_mut() {
+            *lon = convert(*lon, old_lon_sf, old_lon_offset);
+            *lat = convert(*lat, old_lat_sf, old_lat_offset);
+        }
+        self.lat_sf = lat_sf;
+        self.lon_sf = lon_sf;
+        self.lat_offset = lat_offset;
+        self.lon_offset = lon_offset;
+        self.unit = unit;
     }
 
     /// Update a single mode's solution data for with lat and lon values.
@@ -945,6 +915,13 @@ impl SolutionTab {
         self.client_sender
             .send_data(serialize_capnproto_builder(builder));
     }
+}
+
+fn ll_deg_to_meters(l: f64, sf: f64, offset: f64) -> f64 {
+    (l - offset) * sf
+}
+fn ll_meters_to_deg(l: f64, sf: f64, offset: f64) -> f64 {
+    l / sf + offset
 }
 
 #[cfg(test)]

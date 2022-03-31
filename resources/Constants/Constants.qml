@@ -46,13 +46,12 @@ QtObject {
     readonly property string fontFamily: "Roboto Condensed"
     property FontLoader robotoCondensedLightFont
     readonly property string lightFontFamily: robotoCondensedLightFont.name
-    readonly property real fontScaleFactor: (Qt.platform.os == "osx" && Globals.useHighDpi) ? 1.5 : 1
-    readonly property real xSmallPointSize: fontScaleFactor * 6
-    readonly property real smallPointSize: fontScaleFactor * 7
-    readonly property real mediumPointSize: fontScaleFactor * 8
-    readonly property real largePointSize: fontScaleFactor * 9
-    readonly property real xlPointSize: fontScaleFactor * 12
-    readonly property real xxlPointSize: fontScaleFactor * 14
+    readonly property real xSmallPixelSize: 7
+    readonly property real smallPixelSize: 9
+    readonly property real mediumPixelSize: 10
+    readonly property real largePixelSize: 11
+    readonly property real xlPixelSize: 15
+    readonly property real xxlPixelSize: 16
     readonly property bool debugMode: false
     readonly property color swiftWhite: "#FFFFFF"
     readonly property color swiftGrey: "#323F48"
@@ -77,7 +76,7 @@ QtObject {
         readonly property color tabLabelColor: swiftOrange
         readonly property font tabLabelFont: Qt.font({
             "family": "Roboto Condensed",
-            "pointSize": 20,
+            "pixelSize": 20,
             "bold": true,
             "letterSpacing": 1,
             "capitalization": Font.AllUppercase
@@ -86,7 +85,7 @@ QtObject {
         readonly property color appNameColor: swiftLightGrey
         readonly property font appNameFont: Qt.font({
             "family": robotoCondensedLightFont.name,
-            "pointSize": 20,
+            "pixelSize": 20,
             "letterSpacing": 2,
             "capitalization": Font.AllUppercase
         })
@@ -118,8 +117,8 @@ QtObject {
             readonly property string supportWebsite: "https://www.swiftnav.com/support"
             readonly property string website: "https://www.swiftnav.com"
             readonly property string copyrightText: "Copyright © 2011-2022 Swift Navigation Inc."
-            readonly property int titlePointSize: 14
-            readonly property int secondaryPointSize: 10
+            readonly property int titlePixelSize: 14
+            readonly property int secondaryPixelSize: 10
         }
 
     }
@@ -284,7 +283,7 @@ QtObject {
         readonly property color borderColor: "black"
         readonly property int borderWidth: 0
         readonly property color textColor: "black"
-        readonly property int textPointSize: largePointSize + 1
+        readonly property int textPixelSize: largePixelSize + 1
         readonly property int keyValueSpacing: 5
         readonly property int valueMinimumWidth: 25
         readonly property string portLabel: "Port:"
@@ -351,7 +350,7 @@ QtObject {
         readonly property int recordingSizeLabelWidth: 40
         readonly property font comboBoxFont: Qt.font({
             "family": fontFamily,
-            "pointSize": mediumPointSize
+            "pixelSize": mediumPixelSize
         })
     }
 
@@ -539,8 +538,8 @@ QtObject {
         readonly property int markerWidth: 20
         readonly property int topMargin: 85
         readonly property int rightMargin: 60
-        readonly property real markerPointSizeOffset: 4
-        readonly property int labelPointSize: 10
+        readonly property real markerPixelSizeOffset: 4
+        readonly property int labelPixelSize: 10
         readonly property int padding: 10
         readonly property int spacing: 5
         readonly property int verticalCenterOffset: -1
@@ -566,23 +565,23 @@ QtObject {
         readonly property color labelsColor: "#000000"
         readonly property font titleFont: Qt.font({
             "family": fontFamily,
-            "pointSize": xlPointSize,
+            "pixelSize": xlPixelSize,
             "bold": true
         })
         readonly property color titleColor: swiftGrey
         readonly property font axisTitleFont: Qt.font({
             "family": fontFamily,
-            "pointSize": mediumPointSize,
+            "pixelSize": mediumPixelSize,
             "bold": true,
             "letterSpacing": 2,
             "capitalization": Font.AllUppercase
         })
         readonly property font axisLabelsFont: Qt.font({
             "family": fontFamily,
-            "pointSize": smallPointSize,
+            "pixelSize": smallPixelSize,
             "bold": true
         })
-        readonly property int tickPointSize: 10
+        readonly property int tickPixelSize: 10
         readonly property int buttonHeight: 40
         readonly property int unitDropdownWidth: 90
         readonly property real zoomInMult: 1.1
@@ -620,7 +619,7 @@ QtObject {
         readonly property int xAxisTickInterval: 10
         readonly property font yAxisTitleFont: Qt.font({
             "family": fontFamily,
-            "pointSize": mediumPointSize,
+            "pixelSize": mediumPixelSize,
             "bold": true,
             "letterSpacing": 2,
             "capitalization": Font.MixedCase

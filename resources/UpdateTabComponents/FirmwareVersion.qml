@@ -129,7 +129,7 @@ Item {
                         text: Constants.updateTab.updateFirmwareButtonLabel
                         anchors.centerIn: parent
                         font.family: Constants.genericTable.fontFamily
-                        font.pointSize: Constants.largePointSize
+                        font.pixelSize: Constants.largePixelSize
                     }
 
                 }

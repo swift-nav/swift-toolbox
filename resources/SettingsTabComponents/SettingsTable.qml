@@ -128,7 +128,7 @@ Rectangle {
                     elide: Text.ElideRight
                     clip: true
                     font.family: Constants.genericTable.fontFamily
-                    font.pointSize: Constants.largePointSize
+                    font.pixelSize: Constants.largePixelSize
                 }
 
                 MouseArea {
@@ -213,7 +213,7 @@ Rectangle {
                     verticalAlignment: Text.AlignVCenter
                     clip: true
                     font.family: Constants.genericTable.fontFamily
-                    font.pointSize: isHeaderRow(row) ? Constants.xlPointSize : Constants.largePointSize
+                    font.pixelSize: isHeaderRow(row) ? Constants.xlPixelSize : Constants.largePixelSize
                     font.bold: isHeaderRow(row)
                     text: model.display
                     elide: Text.ElideRight

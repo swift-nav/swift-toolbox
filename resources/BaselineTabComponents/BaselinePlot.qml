@@ -273,7 +273,7 @@ Item {
                                 id: marker
 
                                 text: "+ "
-                                font.pointSize: (Constants.mediumPointSize + Constants.commonLegend.markerPointSizeOffset)
+                                font.pixelSize: (Constants.mediumPixelSize + Constants.commonLegend.markerPixelSizeOffset)
                                 font.bold: true
                                 color: Constants.baselinePlot.colors[index]
                                 anchors.verticalCenter: parent.verticalCenter
@@ -284,7 +284,7 @@ Item {
                                 id: label
 
                                 text: modelData
-                                font.pointSize: Constants.mediumPointSize
+                                font.pixelSize: Constants.mediumPixelSize
                                 font.bold: true
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset

@@ -20,7 +20,7 @@ T.CheckBox {
 
     font {
         family: Constants.fontFamily
-        pointSize: Constants.smallPointSize
+        pixelSize: Constants.smallPixelSize
         bold: true
     }
 

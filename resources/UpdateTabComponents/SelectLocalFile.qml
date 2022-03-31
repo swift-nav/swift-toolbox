@@ -63,7 +63,7 @@ Item {
                 text: Constants.updateTab.dotDotDotLabel
                 anchors.centerIn: parent
                 font.family: Constants.genericTable.fontFamily
-                font.pointSize: Constants.largePointSize
+                font.pixelSize: Constants.largePixelSize
             }
 
         }

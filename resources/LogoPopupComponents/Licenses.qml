@@ -35,7 +35,7 @@ ColumnLayout {
                 selectByKeyboard: true
                 selectByMouse: true
                 font.family: Constants.logoPopup.licenses.fontFamily
-                font.pointSize: Constants.largePointSize
+                font.pixelSize: Constants.largePixelSize
 
                 FileIO {
                     id: robotoFileIO
@@ -65,7 +65,7 @@ ColumnLayout {
                 selectByKeyboard: true
                 selectByMouse: true
                 font.family: Constants.logoPopup.licenses.fontFamily
-                font.pointSize: Constants.largePointSize
+                font.pixelSize: Constants.largePixelSize
 
                 FileIO {
                     id: fontAwesomeFileIO

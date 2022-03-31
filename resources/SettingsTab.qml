@@ -288,7 +288,7 @@ MainTab {
                         padding: parent.buttonPadding
                         bottomPadding: refreshButton.bottomPadding
                         text: "SHOW ADVANCED\nSETTINGS"
-                        font.pointSize: refreshButton.font.pointSize
+                        font.pixelSize: refreshButton.font.pixelSize
                         font.family: Constants.fontFamily
                         font.bold: false
                     }

@@ -44,7 +44,7 @@ Rectangle {
     }
     property font font: Qt.font({
         "family": Constants.genericTable.fontFamily,
-        "pointSize": Constants.largePointSize
+        "pixelSize": Constants.largePixelSize
     })
     property color gradientStartColor: Constants.genericTable.cellColor
     property color gradientStopColor: Constants.genericTable.gradientColor

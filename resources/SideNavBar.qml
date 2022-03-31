@@ -186,7 +186,7 @@ Item {
                     bottomPadding: 0
                     bottomInset: 0
                     text: dataRate.toFixed(2) + "  KB/s"
-                    font.pointSize: Constants.smallPointSize
+                    font.pixelSize: Constants.smallPixelSize
                     font.bold: true
                     color: Qt.darker("white", enabled ? 1 : 1.4)
                 }

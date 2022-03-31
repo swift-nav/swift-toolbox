@@ -86,7 +86,7 @@ MainTab {
             Label {
                 text: Constants.updateTab.firmwareUpgradeStatusTitle
                 font.family: Constants.genericTable.fontFamily
-                font.pointSize: Constants.largePointSize
+                font.pixelSize: Constants.largePixelSize
             }
 
         }
@@ -111,7 +111,7 @@ MainTab {
                     cursorVisible: true
                     activeFocusOnPress: false
                     font.family: Constants.genericTable.fontFamily
-                    font.pointSize: Constants.largePointSize
+                    font.pixelSize: Constants.largePixelSize
                 }
 
             }
@@ -126,7 +126,7 @@ MainTab {
             Label {
                 text: Constants.updateTab.fileioAndProductFeatureToolTitle
                 font.family: Constants.genericTable.fontFamily
-                font.pointSize: Constants.largePointSize
+                font.pixelSize: Constants.largePixelSize
             }
 
         }

@@ -137,7 +137,7 @@ Item {
                     text: ""
                     cursorVisible: true
                     selectByMouse: true
-                    font.pointSize: Constants.largePointSize
+                    font.pixelSize: Constants.largePixelSize
                     font.family: Constants.genericTable.fontFamily
                     anchors.left: parent.left
                     anchors.right: parent.right
@@ -207,7 +207,7 @@ Item {
                     text: ""
                     cursorVisible: true
                     selectByMouse: true
-                    font.pointSize: Constants.largePointSize
+                    font.pixelSize: Constants.largePixelSize
                     font.family: Constants.genericTable.fontFamily
                     anchors.left: parent.left
                     anchors.right: parent.right

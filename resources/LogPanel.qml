@@ -130,7 +130,7 @@ Item {
                     contentItem: Label {
                         text: modelData
                         color: logLevelIndex == index ? Constants.swiftOrange : Constants.genericTable.textColor
-                        font.pointSize: Constants.mediumPointSize
+                        font.pixelSize: Constants.mediumPixelSize
                     }
 
                 }
@@ -157,7 +157,7 @@ Item {
                 elide: Text.ElideRight
                 clip: true
                 font.family: Constants.genericTable.fontFamily
-                font.pointSize: Constants.largePointSize
+                font.pixelSize: Constants.largePixelSize
 
                 Button {
                     id: button

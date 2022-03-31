@@ -60,7 +60,7 @@ T.Button {
 
     font {
         family: Constants.fontFamily
-        pointSize: Constants.largePointSize
+        pixelSize: Constants.largePixelSize
     }
 
     contentItem: IconLabel {

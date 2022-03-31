@@ -47,7 +47,7 @@ Item {
                     text: tableView.model.columns[index].display
                     elide: Text.ElideRight
                     font.family: Constants.genericTable.fontFamily
-                    font.pointSize: Constants.largePointSize
+                    font.pixelSize: Constants.largePixelSize
                 }
 
                 MouseArea {
@@ -132,7 +132,7 @@ Item {
                 wrapMode: Text.Wrap
                 anchors.fill: parent
                 font.family: Constants.genericTable.fontFamily
-                font.pointSize: Constants.largePointSize
+                font.pixelSize: Constants.largePixelSize
                 text: Constants.solutionTable.rtkNoteText
                 padding: Constants.solutionTable.rtkNoteMargins
             }

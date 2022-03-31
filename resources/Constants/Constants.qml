@@ -46,12 +46,12 @@ QtObject {
     readonly property string fontFamily: "Roboto Condensed"
     property FontLoader robotoCondensedLightFont
     readonly property string lightFontFamily: robotoCondensedLightFont.name
-    readonly property real xSmallPixelSize: 7
-    readonly property real smallPixelSize: 9
-    readonly property real mediumPixelSize: 10
-    readonly property real largePixelSize: 11
-    readonly property real xlPixelSize: 15
-    readonly property real xxlPixelSize: 16
+    readonly property real xSmallPixelSize: 8
+    readonly property real smallPixelSize: 10
+    readonly property real mediumPixelSize: 11
+    readonly property real largePixelSize: 12
+    readonly property real xlPixelSize: 16
+    readonly property real xxlPixelSize: 17
     readonly property bool debugMode: false
     readonly property color swiftWhite: "#FFFFFF"
     readonly property color swiftGrey: "#323F48"

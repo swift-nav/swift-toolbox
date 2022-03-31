@@ -474,14 +474,15 @@ exec --fail-on-error ${DIST_PYTHON} ${WORKSPACE}/pyside-setup/setup.py install -
 '''
 
 [tasks.build-dist]
+dependencies = ["prep-dist"]
 run_task = [
   { name = [
     "build-dist-install-frontend-wheel",
     "build-dist-install-backend-wheel",
     "build-dist-install-console",
-    "dist-generate-resources",
-    # "build-dist-copy-resources",
-    # "build-dist-freeze",
+    # "dist-generate-resources",
+    "build-dist-copy-resources",
+    "build-dist-freeze",
   ] },
 ]
 

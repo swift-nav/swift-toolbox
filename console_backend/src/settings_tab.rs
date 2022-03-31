@@ -32,7 +32,7 @@ const ETHERNET_INTERFACE_MODE_SETTING_KEY: &str = "interface_mode";
 const NTRIP_SETTING_GROUP: &str = "ntrip";
 const NTRIP_ENABLE_SETTING_KEY: &str = "enable";
 
-const SETTINGS_READ_WRITE_TIMEOUT_MS: Duration = Duration::from_millis(1000);
+const SETTINGS_READ_WRITE_TIMEOUT: Duration = Duration::from_millis(1000);
 
 lazy_static! {
     static ref RECOMMENDED_INS_SETTINGS: [(&'static str, &'static str, SettingValue); 4] = [
@@ -336,7 +336,7 @@ impl SettingsTab {
             let value = self
                 .sbp_client
                 .lock()
-                .read_setting_with_timeout(setting.0, setting.1, SETTINGS_READ_WRITE_TIMEOUT_MS)?
+                .read_setting_with_timeout(setting.0, setting.1, SETTINGS_READ_WRITE_TIMEOUT)?
                 .ok_or_else(|| anyhow!("setting not found"))?
                 .value;
             if value.as_ref() != Some(&setting.2) {
@@ -403,7 +403,7 @@ impl SettingsTab {
             group,
             name,
             value,
-            SETTINGS_READ_WRITE_TIMEOUT_MS,
+            SETTINGS_READ_WRITE_TIMEOUT,
         )?;
         if matches!(
             setting.setting.kind,
@@ -412,7 +412,7 @@ impl SettingsTab {
             let setting = self
                 .sbp_client
                 .lock()
-                .read_setting_with_timeout(group, name, SETTINGS_READ_WRITE_TIMEOUT_MS)?
+                .read_setting_with_timeout(group, name, SETTINGS_READ_WRITE_TIMEOUT)?
                 .ok_or_else(|| anyhow!("setting not found"))?;
             self.settings.lock().insert(setting);
         } else {
@@ -428,7 +428,7 @@ impl SettingsTab {
     fn read_all_settings(&self) {
         const GLOBAL_TIMEOUT: Duration = Duration::from_secs(15);
 
-        let (ctx, handle) = Context::with_timeout(SETTINGS_READ_WRITE_TIMEOUT_MS);
+        let (ctx, handle) = Context::with_timeout(SETTINGS_READ_WRITE_TIMEOUT);
 
         let mut conn = self.shared_state.watch_connection();
         // this thread runs for at most `GLOBAL_TIMEOUT` seconds so we don't join it to avoid

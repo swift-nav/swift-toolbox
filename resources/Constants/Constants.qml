@@ -50,8 +50,8 @@ QtObject {
     readonly property real smallPixelSize: 10
     readonly property real mediumPixelSize: 11
     readonly property real largePixelSize: 12
-    readonly property real xlPixelSize: 16
-    readonly property real xxlPixelSize: 17
+    readonly property real xlPixelSize: 18
+    readonly property real xxlPixelSize: 19
     readonly property bool debugMode: false
     readonly property color swiftWhite: "#FFFFFF"
     readonly property color swiftGrey: "#323F48"
@@ -76,7 +76,7 @@ QtObject {
         readonly property color tabLabelColor: swiftOrange
         readonly property font tabLabelFont: Qt.font({
             "family": "Roboto Condensed",
-            "pixelSize": 20,
+            "pixelSize": 25,
             "bold": true,
             "letterSpacing": 1,
             "capitalization": Font.AllUppercase
@@ -85,7 +85,7 @@ QtObject {
         readonly property color appNameColor: swiftLightGrey
         readonly property font appNameFont: Qt.font({
             "family": robotoCondensedLightFont.name,
-            "pixelSize": 20,
+            "pixelSize": 25,
             "letterSpacing": 2,
             "capitalization": Font.AllUppercase
         })

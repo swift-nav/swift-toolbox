@@ -220,7 +220,7 @@ Rectangle {
                 Layout.rowSpan: 2
                 Layout.columnSpan: 1
                 Layout.preferredWidth: parent.colWidthLabel
-                Layout.preferredHeight: parent.smallRowHeight
+                Layout.preferredHeight: isLongTextField(_fieldName) ? 2 * parent.smallRowHeight : parent.smallRowHeight
                 sourceComponent: settingRowLabel
             }
 
@@ -231,7 +231,7 @@ Rectangle {
                 Layout.rowSpan: 2
                 Layout.columnSpan: parent.columns - 1
                 Layout.preferredWidth: parent.colWidthField
-                Layout.preferredHeight: parent.smallRowHeight
+                Layout.preferredHeight: isLongTextField(_fieldName) ? 2 * parent.smallRowHeight : parent.smallRowHeight
                 sourceComponent: settingRowText
             }
 
@@ -328,7 +328,7 @@ Rectangle {
 
                 font {
                     family: Constants.fontFamily
-                    pointSize: Constants.largePointSize
+                    pixelSize: Constants.largePixelSize
                 }
 
             }
@@ -352,7 +352,7 @@ Rectangle {
             text: selectedRowField(_fieldName)
             wrapMode: Text.Wrap
             font.family: Constants.genericTable.fontFamily
-            font.pointSize: Constants.largePointSize
+            font.pixelSize: Constants.largePixelSize
             selectByMouse: true
             anchors.centerIn: parent
             anchors.verticalCenterOffset: 5

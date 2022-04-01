@@ -20,14 +20,14 @@ ColumnLayout {
     Label {
         Layout.alignment: Qt.AlignHCenter
         text: "Swift Navigation Console " + Globals.consoleVersion
-        font.pointSize: Constants.logoPopup.aboutMe.titlePointSize
+        font.pixelSize: Constants.logoPopup.aboutMe.titlePixelSize
         font.bold: true
     }
 
     Label {
         Layout.alignment: Qt.AlignHCenter
         text: Constants.logoPopup.aboutMe.copyrightText
-        font.pointSize: Constants.logoPopup.aboutMe.secondaryPointSize
+        font.pixelSize: Constants.logoPopup.aboutMe.secondaryPixelSize
     }
 
     Label {
@@ -36,7 +36,7 @@ ColumnLayout {
 
         Layout.alignment: Qt.AlignHCenter
         text: `Find help online at <a href='${website}'>${websiteDisplay}</a>`
-        font.pointSize: Constants.logoPopup.aboutMe.secondaryPointSize
+        font.pixelSize: Constants.logoPopup.aboutMe.secondaryPixelSize
         onLinkActivated: {
             Qt.openUrlExternally(website);
         }
@@ -48,7 +48,7 @@ ColumnLayout {
 
         Layout.alignment: Qt.AlignHCenter
         text: `Learn more at <a href='${website}'>${websiteDisplay}</a>`
-        font.pointSize: Constants.logoPopup.aboutMe.secondaryPointSize
+        font.pixelSize: Constants.logoPopup.aboutMe.secondaryPixelSize
         onLinkActivated: {
             Qt.openUrlExternally(Constants.logoPopup.aboutMe.website);
         }

@@ -88,7 +88,7 @@ Item {
                                 id: label
 
                                 text: modelData
-                                font.pointSize: Constants.smallPointSize
+                                font.pixelSize: Constants.smallPixelSize
                                 font.bold: true
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset

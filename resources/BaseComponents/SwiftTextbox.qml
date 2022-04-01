@@ -12,7 +12,7 @@ Rectangle {
     property var fontFamily: Constants.genericTable.fontFamily
     property font labelFont: Qt.font({
         "family": Constants.genericTable.fontFamily,
-        "pointSize": Constants.largePointSize
+        "pixelSize": Constants.largePixelSize
     })
 
     Label {

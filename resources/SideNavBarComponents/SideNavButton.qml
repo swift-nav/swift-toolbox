@@ -26,7 +26,7 @@ Button {
     ToolTip.delay: 1000
     ToolTip.timeout: 5000
     ToolTip.visible: ToolTip.text.length != 0 && hovered
-    font.pointSize: Constants.smallPointSize
+    font.pixelSize: Constants.smallPixelSize
     font.capitalization: Font.MixedCase
     font.letterSpacing: 0
     // No idea why the insets are set, but they need to be 0 so there are no gaps between buttons.

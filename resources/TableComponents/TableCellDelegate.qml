@@ -15,7 +15,7 @@ Rectangle {
         anchors.fill: parent
         text: display
         font.family: Constants.genericTable.fontFamily
-        font.pointSize: Constants.largePointSize
+        font.pixelSize: Constants.largePixelSize
         elide: Text.ElideRight
         verticalAlignment: Text.AlignVCenter
         horizontalAlignment: Text.AlignLeft

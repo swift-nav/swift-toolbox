@@ -33,7 +33,7 @@ Item {
 
             Label {
                 text: Constants.advancedImu.insStatusLabels[0]
-                font.pointSize: Constants.fusionStatusFlags.labelFontSize
+                font.pixelSize: Constants.fusionStatusFlags.labelFontSize
             }
 
             UnknownStatus {
@@ -58,7 +58,7 @@ Item {
 
             Label {
                 text: Constants.advancedImu.insStatusLabels[1]
-                font.pointSize: Constants.fusionStatusFlags.labelFontSize
+                font.pixelSize: Constants.fusionStatusFlags.labelFontSize
             }
 
             UnknownStatus {
@@ -83,7 +83,7 @@ Item {
 
             Label {
                 text: Constants.advancedImu.insStatusLabels[2]
-                font.pointSize: Constants.fusionStatusFlags.labelFontSize
+                font.pixelSize: Constants.fusionStatusFlags.labelFontSize
             }
 
             UnknownStatus {
@@ -108,7 +108,7 @@ Item {
 
             Label {
                 text: Constants.advancedImu.insStatusLabels[3]
-                font.pointSize: Constants.fusionStatusFlags.labelFontSize
+                font.pixelSize: Constants.fusionStatusFlags.labelFontSize
             }
 
             UnknownStatus {
@@ -133,7 +133,7 @@ Item {
 
             Label {
                 text: Constants.advancedImu.insStatusLabels[4]
-                font.pointSize: Constants.fusionStatusFlags.labelFontSize
+                font.pixelSize: Constants.fusionStatusFlags.labelFontSize
             }
 
             UnknownStatus {
@@ -158,7 +158,7 @@ Item {
 
             Label {
                 text: Constants.advancedImu.insStatusLabels[5]
-                font.pointSize: Constants.fusionStatusFlags.labelFontSize
+                font.pixelSize: Constants.fusionStatusFlags.labelFontSize
             }
 
             UnknownStatus {
@@ -307,7 +307,7 @@ Item {
 
         label: Label {
             text: Constants.fusionStatusFlags.title
-            font.pointSize: Constants.fusionStatusFlags.titleFontSize
+            font.pixelSize: Constants.fusionStatusFlags.titleFontSize
         }
 
     }

@@ -476,6 +476,9 @@ else
 end
 exec --fail-on-error ${DIST_PYTHON} -m pip install setuptools wheel packaging
 exec --fail-on-error ${DIST_PYTHON} ${WORKSPACE}/pyside-setup/setup.py install --debug --qt 5.15.2 --qmake=${qmake_path} --parallel=8 --standalone --no-examples --skip-docs --module-subset  Core,Network,Gui,Qml,Widgets,Charts
+if eq ${os} linux
+  exec --fail-on-error ln -s -t ${WORKSPACE}/py39-dist/lib/python3.9/site-packages/PySide2/Qt/lib/ ${HOME}/Qt/5.15.2/gcc_64/lib/*.debug
+end
 '''
 
 [tasks.build-dist]

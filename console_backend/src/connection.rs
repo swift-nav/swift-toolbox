@@ -116,6 +116,7 @@ fn conn_manager_thd(
             match msg {
                 ConnectionManagerMsg::Connect(conn) => {
                     shared_state.set_connection(ConnectionState::Connecting, &client_sender);
+                    send_conn_notification(&client_sender, String::from(""));
                     let (reader, writer) = match conn.try_connect(Some(&shared_state)) {
                         Ok(rw) => rw,
                         Err(e) => {

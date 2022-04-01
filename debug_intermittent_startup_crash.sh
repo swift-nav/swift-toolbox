@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if [ ! -d py39-dist ]; then
     cargo make build-dist
@@ -11,7 +11,7 @@ for i in {1..1000}; do
     if [ $(uname) == "Darwin" ]; then
         rust-lldb -o run -o quit -- ./swift-console --log-console --file ../console_backend/tests/data/ins_updates.sbp
     else
-        rust-gdb -ex='set confirm on' -ex run -ex=quit --args swift-console --log-console --file ../console_backend/tests/data/ins_updates.sbp
+        rust-gdb -iex='set pagination off' -ex='set confirm on' -ex run -ex=quit --args swift-console --log-console --file ../console_backend/tests/data/ins_updates.sbp
     fi
     echo ${i}
 done

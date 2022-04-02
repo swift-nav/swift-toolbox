@@ -33,6 +33,8 @@ pub fn server_recv_thread(
     shared_state: SharedState,
 ) {
     thread::spawn(move || {
+        // We use warning here because it is the minimum log level displayed
+        // in the log panel until the user selects a different level.
         warn!("Console started...");
         loop {
             log::logger().flush();

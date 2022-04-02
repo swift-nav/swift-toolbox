@@ -111,7 +111,6 @@ fn conn_manager_thd(
     let mut pm_thd: Option<JoinHandle<()>> = None;
     let mut recv = manager_msg.watch();
     thread::spawn(move || {
-        info!("Console started...");
         while let Ok(msg) = recv.wait() {
             match msg {
                 ConnectionManagerMsg::Connect(conn) => {

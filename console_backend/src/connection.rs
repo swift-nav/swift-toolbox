@@ -132,6 +132,9 @@ fn conn_manager_thd(
                                 ErrorKind::NotConnected => {
                                     (true, String::from("Connection error: not connected"))
                                 }
+                                ErrorKind::NotFound => {
+                                    (true, String::from("Connection error: not found"))
+                                }
                                 _ => (false, format!("Connection error: {}", e)),
                             };
                             error!("{}", message);
@@ -139,6 +142,7 @@ fn conn_manager_thd(
                             send_conn_notification(&client_sender, message.clone());
                             if !conn.is_file() {
                                 if reconnect && !shared_state.connection_dialog_visible() {
+                                    refresh_connection_frontend(&client_sender, &shared_state);
                                     manager_msg.send(ConnectionManagerMsg::Reconnect(conn))
                                 } else {
                                     manager_msg.send(ConnectionManagerMsg::Disconnect)

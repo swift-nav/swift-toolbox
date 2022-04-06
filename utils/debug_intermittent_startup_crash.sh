@@ -5,7 +5,7 @@ if [ ! -d py39-dist ]; then
 fi
 cd py39-dist
 
-set SWIFT_CONSOLE_ARGS="--log-console --file ../console_backend/tests/data/ins_updates.sbp"
+set SWIFT_CONSOLE_ARGS="--log-console --file ../console_backend/tests/data/ins_updates.sbp --exit-after-timeout=10"
 
 trap "echo Ctrl-C pressed, exiting loop. ; exit" SIGINT SIGTERM
 

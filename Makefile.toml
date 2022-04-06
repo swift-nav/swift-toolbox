@@ -506,7 +506,6 @@ end
 '''
 
 [tasks.build-dist]
-dependencies = ["dist-to-installer-env"]
 script_runner = "@duckscript"
 script = '''
 if not contains ${output.stdout} "PySide2=="

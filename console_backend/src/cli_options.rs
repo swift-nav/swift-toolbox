@@ -171,6 +171,10 @@ pub struct CliOptions {
     #[clap(long)]
     pub exit_after: bool,
 
+    /// Set the number of seconds after which the app automatically quits. (useful for debugging crashes)
+    #[clap(long)]
+    pub exit_after_secs: Option<u32>,
+
     /// Start console from specific tab.
     #[clap(long)]
     pub tab: Option<CliTabs>,

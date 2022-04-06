@@ -224,11 +224,12 @@ capnp.remove_import_hook()  # pylint: disable=no-member
 
 
 class BackendMessageReceiver(QObject):
-    def __init__(self, app, backend, messages):
+    def __init__(self, app, backend, messages, exit_after_secs):
         super().__init__()
         self._app = app
         self._backend = backend
         self._messages = messages
+        self._exit_after_secs = exit_after_secs
         self._thread = QThread()
         self._thread.started.connect(self._handle_started)  # pylint: disable=no-member
         self.moveToThread(self._thread)
@@ -252,7 +253,7 @@ class BackendMessageReceiver(QObject):
             QTimer.singleShot(0, self.receive_messages)
 
     def _receive_messages(self):
-        if time.time() - self.start_time > 10:
+        if self._exit_after_secs > 0 and (time.time() - self.start_time) > self._exit_after_secs:
             return self._app.quit()
         buffer = self._backend.fetch_message()
         if not buffer:
@@ -593,6 +594,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     parser.add_argument("--show-csv-log", action="store_true")
     parser.add_argument("--height", type=int)
     parser.add_argument("--width", type=int)
+    parser.add_argument("--exit-after-secs", type=int, default=0)
 
     args_main, unknown_args = parser.parse_known_args()
     found_help_arg = False
@@ -716,7 +718,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     root_context.setContextProperty("update_tab_model", update_tab_model)
     root_context.setContextProperty("backend_request_broker", backend_request_broker)
 
-    backend_msg_receiver = BackendMessageReceiver(app, backend_main, messages_main)
+    backend_msg_receiver = BackendMessageReceiver(app, backend_main, messages_main, args_main.exit_after_secs)
     backend_msg_receiver.start()
 
     app.exec_()

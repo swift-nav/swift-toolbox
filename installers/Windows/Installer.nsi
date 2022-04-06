@@ -23,7 +23,7 @@ Unicode true
 !define installer_dir "py39-dist"
 !define company_name "Swift Navigation"
 !define old_uninstaller "$PROGRAMFILES\${company_name}\${app_name}\Uninstall.exe"
-!define old_shortcut "OLD-${app_name}.lnk"
+!define old_shortcut "${app_name} (Old).lnk"
 
 !define vc_redist_url "https://aka.ms/vs/17/release/vc_redist.x64.exe"
 

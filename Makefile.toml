@@ -503,7 +503,13 @@ end
 [tasks.build-dist]
 script_runner = "@duckscript"
 script = '''
-if not contains ${output.stdout} "PySide2=="
+if is_path_exists ${DIST_PYTHON}
+  output = exec --fail-on-error ${DIST_PYTHON} -m pip freeze
+  out = set ${output.stdout}
+  if not contains "${out}" "PySide2=="
+    cm_run_task pre-build-dist
+  end
+else
   cm_run_task pre-build-dist
 end
 cm_run_task build-dist-install-frontend-wheel

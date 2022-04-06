@@ -354,7 +354,6 @@ cp . ../../../py39
 cd ../../../
 exec --fail-on-error ${PYTHON} ./get-pip.py
 exec --fail-on-error ${PYTHON} -m pip install wheel flit . ".[test]"
-cm_run_task generate-resources
 '''
 
 [tasks.prep-dist]
@@ -439,18 +438,36 @@ dependencies = [
   "prep-dist",
   "build-dist-copy-resources",
   "build-dist-freeze",
-  "build-install-pyside",
 ]
+script_runner = "@duckscript"
+script = '''
+# If pyside-setup exists, then assume user wants to build and install pyside2
+if is_path_exists "${WORKSPACE}/pyside-setup/setup.py"
+  # This will install to both dist and non-dist python
+  cm_run_task build-dist-install-pyside
+else
+exec --fail-on-error ${PYTHON} -m pip install PySide2==5.15.2.1
+exec --fail-on-error ${DIST_PYTHON} -m pip install PySide2==5.15.2.1
+end
+'''
 
-[tasks.clone-pyside-repo]
+[tasks.prep-debug-pyside]
 condition = { files_not_exist = ["${WORKSPACE}/pyside-setup/setup.py"] }
 script_runner = "@duckscript"
 script = '''
   exec --fail-on-error git clone -b v5.15.2.1 http://code.qt.io/pyside/pyside-setup.git
 '''
 
+[tasks.build-dist-install-pyside]
+dependencies = ["build-install-pyside"]
+script_runner = "@duckscript"
+script = '''
+exec --fail-on-error ${PYTHON} -m pip install setuptools wheel packaging
+exec --fail-on-error ${PYTHON} ${WORKSPACE}/pyside-setup/setup.py install --skip-build --debug --qt 5.15.2 --qmake=${qmake_path} --parallel=${PARALLEL_BUILDS} --standalone --no-examples --skip-docs --module-subset  Core,Network,Gui,Qml,Widgets,Charts
+'''
+
 [tasks.build-install-pyside]
-dependencies = ["clone-pyside-repo"]
+dependencies = ["prep-debug-pyside"]
 script_runner = "@duckscript"
 script = '''
 # Note: To make build-install-pyside work on Windows, you need to run from a powershell or cmd shell
@@ -478,16 +495,17 @@ end
 '''
 
 [tasks.build-dist]
-run_task = [
-  { name = [
-    "build-dist-install-frontend-wheel",
-    "build-dist-install-backend-wheel",
-    "build-dist-install-console",
-    "dist-generate-resources",
-    # "build-dist-copy-resources",
-    # "build-dist-freeze",
-  ] },
-]
+dependencies = ["dist-to-installer-env"]
+script_runner = "@duckscript"
+script = '''
+if not contains ${output.stdout} "PySide2=="
+  cm_run_task pre-build-dist
+end
+cm_run_task build-dist-install-frontend-wheel
+cm_run_task build-dist-install-backend-wheel
+cm_run_task build-dist-install-console
+cm_run_task dist-generate-resources
+'''
 
 [tasks.purge-dist]
 env = { PYTHONDONTWRITEBYTECODE = "1" }

@@ -23,6 +23,7 @@ Unicode true
 !define installer_dir "py39-dist"
 !define company_name "Swift Navigation"
 !define old_uninstaller "$PROGRAMFILES\${company_name}\${app_name}\Uninstall.exe"
+!define old_shortcut "${app_name} (Old).lnk"
 
 !define vc_redist_url "https://aka.ms/vs/17/release/vc_redist.x64.exe"
 
@@ -157,6 +158,22 @@ If this is not desired, please exit the installer now."
 ;--------------------------------
 ;Installer Sections
 
+Function MoveOldShtct
+    SetShellVarContext current
+    Rename "$DESKTOP\${app_name}.lnk" "$DESKTOP\${old_shortcut}"
+    SetShellVarContext all
+FunctionEnd
+
+!define SHCNE_ASSOCCHANGED 0x08000000
+!define SHCNF_IDLIST 0
+
+Function RefreshShellIcons
+  System::Call 'Shell32::SHChangeNotify(i 0x8000000, i 0, i 0, i 0)'
+  ; By jerome tremblay - april 2003
+  System::Call 'shell32.dll::SHChangeNotify(i, i, i, i) v \
+  (${SHCNE_ASSOCCHANGED}, ${SHCNF_IDLIST}, 0, 0)'
+FunctionEnd
+
 Section
   SetOutPath "$InstDir"
   
@@ -186,6 +203,7 @@ Section
   File /r "..\..\${installer_dir}\*"
   WriteRegStr SHCTX "Software\${app_name}" "" $InstDir
   WriteUninstaller "$InstDir\uninstall.exe"
+  Call MoveOldShtct
   CreateShortCut "$DESKTOP\${app_name}.lnk" "$InstDir\${app_executable}"
   CreateShortCut "$SMPROGRAMS\${app_name}.lnk" "$InstDir\${app_executable}"
   WriteRegStr SHCTX "${UNINST_KEY}" "DisplayName" "${app_name}"
@@ -198,6 +216,7 @@ Section
   ${GetSize} "$InstDir" "/S=0K" $0 $1 $2
   IntFmt $0 "0x%08X" $0
   WriteRegDWORD SHCTX "${UNINST_KEY}" "EstimatedSize" "$0"
+  Call RefreshShellIcons
 SectionEnd
 
 ;--------------------------------
@@ -213,7 +232,7 @@ FunctionEnd
 
 !macro Uninstall Prefix
 Function ${Prefix}Uninstall
-  ExecShell open "${old_uninstaller}" "/AllUsers /S"
+  Exec '"${old_uninstaller}" "/AllUsers /S"'
   RMDir /r "$InstDir"
   Delete "$DESKTOP\${app_name}.lnk"
   Delete "$SMPROGRAMS\${app_name}.lnk"

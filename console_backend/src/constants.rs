@@ -44,7 +44,7 @@ pub(crate) const AVAILABLE_FLOWS: &[&str] = &[
     FLOW_CONTROL_SOFTWARE,
     FLOW_CONTROL_HARDWARE,
 ];
-pub(crate) const READER_TIMEOUT: Duration = Duration::from_secs(1);
+pub(crate) const READER_TIMEOUT: Duration = Duration::from_secs(2);
 pub(crate) const CONNECTION_HISTORY_FILENAME: &str = "connection_history.yaml";
 pub(crate) const MAX_CONNECTION_HISTORY: i32 = 15;
 

@@ -296,6 +296,12 @@ cwd = "console_backend"
 command = "${DIST_PYTHON}"
 args = ["setup.py", "-vv", "bdist_wheel"]
 
+[tasks.clean-backend]
+dependencies = ["dist-install-pip-setuptools-rust"]
+cwd = "console_backend"
+command = "${DIST_PYTHON}"
+args = ["setup.py", "-vv", "clean"]
+
 [tasks.get-get-pip]
 script_runner = "@duckscript"
 script = '''

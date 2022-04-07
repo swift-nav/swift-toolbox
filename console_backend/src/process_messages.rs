@@ -13,6 +13,7 @@ use sbp::{
         piksi::{MsgCommandResp, MsgDeviceMonitor, MsgNetworkStateResp, MsgThreadState},
         system::{
             MsgCsacTelemetry, MsgCsacTelemetryLabels, MsgHeartbeat, MsgInsStatus, MsgInsUpdates,
+            MsgStartup,
         },
         tracking::{MsgMeasurementState, MsgTrackingState},
     },
@@ -231,6 +232,9 @@ fn register_events(link: sbp::link::Link<Tabs>) {
     });
     link.register(|tabs: &Tabs, msg: MsgSvAzEl| {
         tabs.tracking_sky_plot.lock().unwrap().handle_sv_az_el(msg);
+    });
+    link.register(|tabs: &Tabs, _msg: MsgStartup| {
+        tabs.shared_state.set_settings_refresh(true);
     });
     link.register(|tabs: &Tabs, msg: MsgThreadState| {
         tabs.advanced_system_monitor

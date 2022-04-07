@@ -515,10 +515,10 @@ if is_path_exists ${DIST_PYTHON}
 else
   cm_run_task pre-build-dist
 end
+cm_run_task dist-generate-resources
 cm_run_task build-dist-install-frontend-wheel
 cm_run_task build-dist-install-backend-wheel
 cm_run_task build-dist-install-console
-cm_run_task dist-generate-resources
 '''
 
 [tasks.purge-dist]

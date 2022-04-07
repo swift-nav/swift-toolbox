@@ -80,6 +80,11 @@ fn tick(settings_tab: &SettingsTab, settings_state: SettingsTabState) {
             error!("Issue resetting settings {}", e);
         };
     }
+    if settings_state.reboot {
+        if let Err(e) = settings_tab.reset(false) {
+            error!("Issue rebooting device {}", e);
+        };
+    }
     if settings_state.save {
         if let Err(e) = settings_tab.save() {
             error!("Issue saving settings, {}", e);

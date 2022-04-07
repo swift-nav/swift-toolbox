@@ -19,19 +19,19 @@ module OS
   end
 end
 
-auth_files = ["qtlicenses.ini", "qtaccount.ini"]
 auth_file_prefix = "#{ENV['HOME']}/.local/share/Qt/"
 if OS.mac?
   auth_file_prefix = "/Users/#{ENV['USERNAME']}/Library/Application Support/Qt"
 elsif OS.windows?
   auth_file_prefix = "#{ENV['APPDATA']}\\qt\\"
 end
+qt_install_files = ["./qt-unified-linux-x64-4.3.0-1-online.run", "#{auth_file_prefix}/qtlicenses.ini", "#{auth_file_prefix}/qtaccount.ini"]
 
 qtlicenses_ini_path = "#{auth_file_prefix}/qtlicenses.ini"
 qtaccount_ini_path = "#{auth_file_prefix}/qtaccount.ini"
-auth_files.each { |auth_file|
+qt_install_files.each { |qt_install_file|
   # Refuse to run if qtlicenses.ini or qtaccount.ini do not exist.
-  raise "\n\nCould not find #{auth_file_prefix}#{auth_file}.\nPlease download and run the Qt installer.\nYou can find it at https://account.qt.io/ in the Downloads section.\nThere is no need to install Qt, just run the installer and log into your account." unless File.exist?("#{auth_file_prefix}#{auth_file}")
+  raise "\n\nCould not find #{qt_install_file}.\n\nPlease download the Qt installer for both the host system and for Linux.\nRun the Qt installer for the host system.\nYou can find it at https://account.qt.io/ in the Downloads section.\nThere is no need to install Qt, just run the installer and log into your account." unless File.exist?("#{qt_install_file}")
 }
 
 # All Vagrant configuration is done below. The "2" in Vagrant.configure

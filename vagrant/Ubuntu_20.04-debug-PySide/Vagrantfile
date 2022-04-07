@@ -1,0 +1,165 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+module OS
+  def OS.windows?
+    (/cygwin|mswin|mingw|bccwin|wince|emx/ =~ RUBY_PLATFORM) != nil
+  end
+
+  def OS.mac?
+    (/darwin/ =~ RUBY_PLATFORM) != nil
+  end
+
+  def OS.unix?
+    !OS.windows?
+  end
+
+  def OS.linux?
+    OS.unix? and not OS.mac?
+  end
+end
+
+auth_files = ["qtlicenses.ini", "qtaccount.ini"]
+auth_file_prefix = "#{ENV['HOME']}/.local/share/Qt/"
+if OS.mac?
+  auth_file_prefix = "/Users/#{ENV['USERNAME']}/Library/Application Support/Qt"
+elsif OS.windows?
+  auth_file_prefix = "#{ENV['APPDATA']}\\qt\\"
+end
+
+qtlicenses_ini_path = "#{auth_file_prefix}/qtlicenses.ini"
+qtaccount_ini_path = "#{auth_file_prefix}/qtaccount.ini"
+auth_files.each { |auth_file|
+  # Refuse to run if qtlicenses.ini or qtaccount.ini do not exist.
+  raise "\n\nCould not find #{auth_file_prefix}#{auth_file}.\nPlease download and run the Qt installer.\nYou can find it at https://account.qt.io/ in the Downloads section.\nThere is no need to install Qt, just run the installer and log into your account." unless File.exist?("#{auth_file_prefix}#{auth_file}")
+}
+
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
+Vagrant.configure("2") do |config|
+  # The most common configuration options are documented and commented below.
+  # For a complete reference, please see the online documentation at
+  # https://docs.vagrantup.com.
+
+  # Every Vagrant development environment requires a box. You can search for
+  # boxes at https://vagrantcloud.com/search.
+  config.vm.box = "ubuntu/focal64"
+
+  config.vm.provider "virtualbox" do |v|
+    v.memory = 8192
+    v.cpus = 2
+    v.gui = true
+    v.customize ["modifyvm", :id, "--accelerate3d", "on"]
+    v.customize ["modifyvm", :id, "--graphicscontroller", "VMSVGA"]
+    v.customize ["modifyvm", :id, "--vram", "128"]
+  end
+
+  config.vm.provision "file", source: "~/.ssh/id_rsa", destination: "~/.ssh/"
+  config.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/"
+  config.vm.provision "file", source: "~/.ssh/id_rsa_github-qt", destination: "~/.ssh/"
+  config.vm.provision "file", source: "~/.ssh/id_rsa_github-qt.pub", destination: "~/.ssh/"
+  config.vm.provision "file", source: "~/.ssh/config", destination: "~/.ssh/"
+  config.vm.provision "file", source: "#{qtaccount_ini_path}", destination: "~/.local/share/Qt/"
+  config.vm.provision "file", source: "#{qtlicenses_ini_path}", destination: "~/.local/share/Qt/"
+
+  config.vm.provision "shell", inline: <<-SHELL
+    if [ -e /vagrant/apt-cache.tar.gz ]; then
+      havecache=1
+      echo "Expanding apt cache to speed up package installation"
+      tar -C / -zxvf /vagrant/apt-cache.tar.gz
+    fi
+    apt-get -y update
+    apt-get -y upgrade
+    apt-get -y install build-essential vim git git-lfs linux-headers-$(uname -r) ubuntu-session gdm3 gnome-terminal gdb
+    apt-get -y install p7zip-full libxcb-xinerama0 zstd libssl-dev pkg-config libgl1-mesa-dev
+    if [ -z "$havecache" ]; then
+      tar zcvf /vagrant/apt-cache.tar.gz /var/cache/apt/archives
+    fi
+    apt-get clean
+    cp /vagrant/qt-unified-linux-x64-4.3.0-1-online.run /home/vagrant
+    chown vagrant /home/vagrant/qt-unified-linux-x64-4.3.0-1-online.run
+    chmod a+x /home/vagrant/qt-unified-linux-x64-4.3.0-1-online.run
+
+    ln -sf /home/vagrant/Build/swift-nav/console_pp/py39-dist /install
+
+    if [ -e /vagrant/VBoxLinuxAdditions.run ]; then
+      apt-get -y remove open-vm-tools virtualbox-guest-utils
+      apt-get -y autoremove
+      cp /vagrant/VBoxLinuxAdditions.run /tmp
+      chmod u+x /tmp/VBoxLinuxAdditions.run
+      /tmp/VBoxLinuxAdditions.run || true
+    fi
+  SHELL
+
+  config.vm.provision :reload
+
+  config.vm.provision "shell", privileged: false, inline: <<-SHELL
+    chmod 600 ~/.ssh/config ~/.ssh/id_rsa ~/.ssh/id_rsa_github-qt
+    sed -i -e '/RemoteCommand/d' ~/.ssh/config
+    echo "github.com,192.30.253.112 ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==" >> ~/.ssh/known_hosts
+
+    if [ ! -d ~/libclang ]; then
+      if [ -e /vagrant/libclang-release_120-based-linux-Rhel7.6-gcc5.3-x86_64.7z ]; then
+        7za x /vagrant/libclang-release_120-based-linux-Rhel7.6-gcc5.3-x86_64.7z
+      else
+        curl -L -O https://download.qt.io/development_releases/prebuilt/libclang/libclang-release_120-based-linux-Rhel7.6-gcc5.3-x86_64.7z
+        7za x ./libclang-release_120-based-linux-Rhel7.6-gcc5.3-x86_64.7z
+        mv libclang-release_120-based-linux-Rhel7.6-gcc5.3-x86_64.7z /vagrant/
+      fi
+    fi
+
+    if [ ! -d ~/cmake-3.22.3-linux-x86_64 ]; then
+      if [ -e /vagrant/cmake-3.22.3-linux-x86_64.tar.gz ]; then
+        tar zxf /vagrant/cmake-3.22.3-linux-x86_64.tar.gz
+      else
+        curl -L -O https://github.com/Kitware/CMake/releases/download/v3.22.3/cmake-3.22.3-linux-x86_64.tar.gz
+        tar zxvf cmake-3.22.3-linux-x86_64.tar.gz
+        mv cmake-3.22.3-linux-x86_64.tar.gz /vagrant/
+      fi
+    fi
+
+    if [ -e /vagrant/capnproto-c++-0.9.1-prebuilt.tar.gz ]; then
+      tar zxf /vagrant/capnproto-c++-0.9.1-prebuilt.tar.gz
+    else
+      curl -O https://capnproto.org/capnproto-c++-0.9.1.tar.gz
+      tar zxf capnproto-c++-0.9.1.tar.gz
+      cd capnproto-c++-0.9.1
+      ./configure
+      make -j3 check
+      cd ..
+      tar zcf /vagrant/capnproto-c++-0.9.1-prebuilt.tar.gz ./capnproto-c++-0.9.1
+    fi
+    cd capnproto-c++-0.9.1
+    sudo make install
+    cd $HOME
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
+    cat << BASHRC_EOF >> ~/.bashrc
+export PATH=\\$PATH:\\$HOME/libclang/bin:\\$HOME/cmake-3.22.3-linux-x86_64/bin
+export CLANG_INSTALL_DIR=\$HOME/libclang
+echo -n
+echo "To build swift toolbox for debugging Qt, run:
+    $ cd ~/Build/swift-nav/console_pp
+    $ cargo make prep-debug-pyside
+    $ cargo make build-dist
+    $ utils/debug_intermittent_startup_crash.sh"
+BASHRC_EOF
+    source $HOME/.bashrc
+
+    # Install Qt in an automated fashion
+    ~/qt-unified-linux-x64-4.3.0-1-online.run install --no-default-installations --no-force-installations --auto-answer telemetry-question=Yes,installationErrorWithCancel=Ignore --default-answer --accept-licenses --accept-obligations qt.qt5.5152.gcc_64 qt.qt5.5152.qtcharts qt.qt5.5152.debug_info qt.qt5.5152.src --confirm-command
+
+    # Install cargo-make, clone the console_pp repo, and prep console_pp for building.
+    . "/home/vagrant/.cargo/env"
+    cargo install --force cargo-make
+    mkdir -p /home/vagrant/Build/swift-nav
+    cd /home/vagrant/Build/swift-nav
+    git clone -b keithel-qt/crash-inspection-branch git@github.com-qt:swift-nav/console_pp.git
+
+
+    echo "If you're finding that you cannot scale the guest desktop size, VirtualBox Guest Additions likely needs updating in this VM."
+    echo "You can try the guest additions stored in this vagrant configuration located in /vagrant, or create an optical drive in the VM and attach the guest additions iso that ships with your copy of VirtualBox, and follow the instructions therein."
+    echo "try the following from an SSH session: $ sudo /vagrant/VBoxLinuxAdditions.run"
+  SHELL
+end

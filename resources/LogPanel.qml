@@ -267,6 +267,14 @@ Item {
         repeat: true
         onTriggered: {
             log_panel_model.fill_data(logPanelData);
+            if (!tableView.model.rows.length) {
+                tableView.model.clear();
+                tableView.model.rows = [{
+                    [Constants.logPanel.timestampHeader]: "",
+                    [Constants.logPanel.levelHeader]: "",
+                    [Constants.logPanel.msgHeader]: ""
+                }];
+            }
             if (!logPanelData.entries.length)
                 return ;
 

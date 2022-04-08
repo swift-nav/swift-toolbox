@@ -1,14 +1,11 @@
 use capnp::message::Builder;
-use log::error;
 use ordered_float::OrderedFloat;
-use sbp::messages::piksi::{MsgDeviceMonitor, MsgReset, MsgThreadState};
+use sbp::messages::piksi::{MsgDeviceMonitor, MsgThreadState};
 use sbp::messages::system::{MsgCsacTelemetry, MsgCsacTelemetryLabels};
 use std::collections::HashMap;
 
 use crate::client_sender::BoxedClientSender;
-use crate::constants::WRITE_TO_DEVICE_SENDER_ID;
-use crate::shared_state::SharedState;
-use crate::types::{MsgSender, Result, UartState};
+use crate::types::UartState;
 use crate::utils::{cc_to_c, normalize_cpu_usage, serialize_capnproto_builder};
 
 const NO_NAME: &str = "(no name)";
@@ -36,12 +33,10 @@ struct ThreadStateFields {
 /// - `headers`: Vec of CsacTelemetry metric labels.
 /// - `obs_latency`: UART state latency measurements.
 /// - `obs_period`: UART state period measurements.
-/// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
 /// - `telem_header_index`: Index of current CsacTelemetry label packet.
 /// - `threads`: Vec of, ThreadStateFields, running threads on device containing cpu and memory metric values.
 /// - `threads_table_list`: Vec of ThreadStateFields, sent to frontend after heartbeat received.
 /// - `zynq_temp`: Zynq SoC temperature reading.
-/// - `writer`: MsgSender for communication from backend to device.
 pub struct AdvancedSystemMonitorTab {
     client_sender: BoxedClientSender,
     csac_received: bool,
@@ -50,19 +45,13 @@ pub struct AdvancedSystemMonitorTab {
     headers: Vec<String>,
     obs_latency: HashMap<String, i32>,
     obs_period: HashMap<String, i32>,
-    shared_state: SharedState,
     telem_header_index: Option<u8>,
     threads: Vec<ThreadStateFields>,
     threads_table_list: Vec<ThreadStateFields>,
     zynq_temp: f64,
-    writer: MsgSender,
 }
 impl AdvancedSystemMonitorTab {
-    pub fn new(
-        shared_state: SharedState,
-        client_sender: BoxedClientSender,
-        writer: MsgSender,
-    ) -> AdvancedSystemMonitorTab {
+    pub fn new(client_sender: BoxedClientSender) -> AdvancedSystemMonitorTab {
         AdvancedSystemMonitorTab {
             client_sender,
             csac_received: false,
@@ -81,12 +70,10 @@ impl AdvancedSystemMonitorTab {
                     .map(|key| (String::from(*key), 0))
                     .collect()
             },
-            shared_state,
             telem_header_index: None,
             threads: vec![],
             threads_table_list: vec![],
             zynq_temp: 0.0,
-            writer,
         }
     }
 
@@ -157,14 +144,6 @@ impl AdvancedSystemMonitorTab {
         }
     }
 
-    /// Reset Device.
-    fn reset_device(&mut self) -> Result<()> {
-        self.writer.send(MsgReset {
-            sender_id: Some(WRITE_TO_DEVICE_SENDER_ID),
-            flags: 0,
-        })
-    }
-
     pub fn handle_uart_state(&mut self, msg: UartState) {
         let uart_fields = msg.fields();
         self.obs_latency
@@ -185,16 +164,6 @@ impl AdvancedSystemMonitorTab {
 
     /// Package data into a message buffer and send to frontend.
     fn send_data(&mut self) {
-        let reset_device = {
-            let mut shared_data = self.shared_state.lock();
-            std::mem::take(&mut (*shared_data).reset_device)
-        };
-        if reset_device {
-            if let Err(err) = self.reset_device() {
-                error!("Unable to reset device, {}.", err);
-            }
-        }
-
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
         let mut status = msg.init_advanced_system_monitor_status();
@@ -257,14 +226,11 @@ mod tests {
         sbp_string::NullTerminated,
         SbpString,
     };
-    use std::io::sink;
 
     #[test]
     fn handle_uart_state_test() {
-        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let writer = MsgSender::new(sink());
-        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send, writer);
+        let mut tab = AdvancedSystemMonitorTab::new(client_send);
         let sender_id = Some(1337);
         let uart_a = UARTChannel {
             tx_throughput: 0.0,
@@ -339,19 +305,9 @@ mod tests {
     }
 
     #[test]
-    fn handle_reset_device_test() {
-        let shared_state = SharedState::new();
-        let client_send = TestSender::boxed();
-        let writer = MsgSender::new(sink());
-        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send, writer);
-        assert!(tab.reset_device().is_ok());
-    }
-    #[test]
     fn handle_csac_telemetry_test() {
-        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let writer = MsgSender::new(sink());
-        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send, writer);
+        let mut tab = AdvancedSystemMonitorTab::new(client_send);
         let id = 13;
         let headers: Vec<String> = METRICS_OF_INTEREST.iter().map(|s| s.to_string()).collect();
         tab.headers = headers.clone();
@@ -383,10 +339,8 @@ mod tests {
     }
     #[test]
     fn handle_csac_telemetry_labels_test() {
-        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let writer = MsgSender::new(sink());
-        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send, writer);
+        let mut tab = AdvancedSystemMonitorTab::new(client_send);
         let id = 13;
         let headers_pre: Vec<String> = "mcdonald,had,a,farm"
             .split(',')
@@ -405,10 +359,8 @@ mod tests {
     }
     #[test]
     fn handle_device_monitor_test() {
-        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let writer = MsgSender::new(sink());
-        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send, writer);
+        let mut tab = AdvancedSystemMonitorTab::new(client_send);
         let cpu_temperature = 3333;
         let fe_temperature = 4444;
         let msg = MsgDeviceMonitor {
@@ -427,10 +379,8 @@ mod tests {
     }
     #[test]
     fn handle_thread_state_test() {
-        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let writer = MsgSender::new(sink());
-        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send, writer);
+        let mut tab = AdvancedSystemMonitorTab::new(client_send);
         let name1: SbpString<[u8; 20], NullTerminated> = fixed_sbp_string("mcdonald");
         let msg1 = MsgThreadState {
             sender_id: Some(1337),
@@ -475,10 +425,8 @@ mod tests {
 
     #[test]
     fn handle_heartbeat_test() {
-        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let writer = MsgSender::new(sink());
-        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send, writer);
+        let mut tab = AdvancedSystemMonitorTab::new(client_send);
         assert!(tab.threads_table_list.is_empty());
         tab.handle_heartbeat();
         assert!(tab.threads_table_list.is_empty());

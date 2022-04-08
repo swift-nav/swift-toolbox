@@ -264,6 +264,11 @@ impl SharedState {
         let data = guard.settings_tab.get();
         guard.settings_tab.send(SettingsTabState { reset, ..data });
     }
+    pub fn set_device_reboot(&self, reboot: bool) {
+        let guard = self.lock();
+        let data = guard.settings_tab.get();
+        guard.settings_tab.send(SettingsTabState { reboot, ..data });
+    }
     pub fn set_settings_auto_survey_request(&self, auto_survey_request: bool) {
         let guard = self.lock();
         let data = guard.settings_tab.get();
@@ -308,9 +313,6 @@ impl SharedState {
         self.lock()
             .heartbeat_data
             .set_dgnss_enabled(dgnss_solution_mode != "No DGNSS");
-    }
-    pub fn set_reset_device(&self, reset_device: bool) {
-        self.lock().reset_device = reset_device;
     }
     pub fn set_advanced_networking_update(&self, update: AdvancedNetworkingState) {
         self.lock().advanced_networking_update = Some(update);
@@ -368,7 +370,6 @@ pub struct SharedStateInner {
     pub(crate) settings_tab: Watched<SettingsTabState>,
     pub(crate) console_version: String,
     pub(crate) firmware_version: Option<String>,
-    pub(crate) reset_device: bool,
     pub(crate) advanced_networking_update: Option<AdvancedNetworkingState>,
     pub(crate) auto_survey_data: AutoSurveyData,
     pub(crate) heartbeat_data: Heartbeat,
@@ -395,7 +396,6 @@ impl SharedStateInner {
             settings_tab: Watched::new(SettingsTabState::new()),
             console_version,
             firmware_version: None,
-            reset_device: false,
             advanced_networking_update: None,
             auto_survey_data: AutoSurveyData::new(),
             heartbeat_data,
@@ -606,6 +606,7 @@ impl AutoSurveyData {
 
 #[derive(Debug, Default, Clone)]
 pub struct SettingsTabState {
+    pub reboot: bool,
     pub refresh: bool,
     pub reset: bool,
     pub save: bool,

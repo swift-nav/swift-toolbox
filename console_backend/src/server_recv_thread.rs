@@ -276,7 +276,7 @@ pub fn server_recv_thread(
                     shared_state.set_write_setting(Some(req));
                 }
                 m::message::AdvancedSystemMonitorStatusFront(Ok(_)) => {
-                    shared_state.set_reset_device(true);
+                    shared_state.set_device_reboot(true);
                 }
                 m::message::AdvancedNetworkingStatusFront(Ok(cv_in)) => {
                     let refresh = cv_in.get_refresh();

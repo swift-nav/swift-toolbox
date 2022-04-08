@@ -93,12 +93,7 @@ impl Tabs {
                 msg_sender.clone(),
             )
             .into(),
-            advanced_system_monitor: AdvancedSystemMonitorTab::new(
-                shared_state.clone(),
-                client_sender.clone(),
-                msg_sender.clone(),
-            )
-            .into(),
+            advanced_system_monitor: AdvancedSystemMonitorTab::new(client_sender.clone()).into(),
             baseline: BaselineTab::new(shared_state.clone(), client_sender.clone(), msg_sender)
                 .into(),
             tracking_signals: TrackingSignalsTab::new(shared_state.clone(), client_sender.clone())

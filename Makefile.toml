@@ -371,6 +371,13 @@ cp . ../../../py39
 cd ../../../
 exec --fail-on-error ${PYTHON} ./get-pip.py
 exec --fail-on-error ${PYTHON} -m pip install wheel flit . ".[test]"
+
+# If pyside-setup exists, then assume user wants to build and install pyside2
+if is_path_exists "${WORKSPACE}/pyside-setup/setup.py"
+  cm_run_task build-install-pyside
+else
+  exec --fail-on-error ${PYTHON} -m pip install PySide2==5.15.2.1
+end
 '''
 
 [tasks.prep-dist]
@@ -386,6 +393,14 @@ cd standalone-py/python/install/
 cp . ../../../py39-dist
 cd ../../..
 exec --fail-on-error ${DIST_PYTHON} ./get-pip.py
+
+# If pyside-setup exists, then assume user wants to build and install pyside2
+if is_path_exists "${WORKSPACE}/pyside-setup/setup.py"
+  # This will install to both dist and non-dist python
+  cm_run_task build-dist-install-pyside
+else
+  exec --fail-on-error ${DIST_PYTHON} -m pip install PySide2==5.15.2.1
+end
 '''
 
 [tasks.call-build-console-bin]
@@ -456,17 +471,6 @@ dependencies = [
   "build-dist-copy-resources",
   "build-dist-freeze",
 ]
-script_runner = "@duckscript"
-script = '''
-# If pyside-setup exists, then assume user wants to build and install pyside2
-if is_path_exists "${WORKSPACE}/pyside-setup/setup.py"
-  # This will install to both dist and non-dist python
-  cm_run_task build-dist-install-pyside
-else
-exec --fail-on-error ${PYTHON} -m pip install PySide2==5.15.2.1
-exec --fail-on-error ${DIST_PYTHON} -m pip install PySide2==5.15.2.1
-end
-'''
 
 [tasks.prep-debug-pyside]
 condition = { files_not_exist = ["${WORKSPACE}/pyside-setup/setup.py"] }
@@ -475,20 +479,8 @@ script = '''
   exec --fail-on-error git clone -b v5.15.2.1 http://code.qt.io/pyside/pyside-setup.git
 '''
 
-[tasks.build-dist-install-pyside]
-dependencies = ["build-install-pyside"]
-script_runner = "@duckscript"
-script = '''
-exec --fail-on-error ${DIST_PYTHON} -m pip install setuptools wheel packaging
-exec --fail-on-error ${DIST_PYTHON} ${WORKSPACE}/pyside-setup/setup.py install --skip-build --debug --qt 5.15.2 --qmake=${QMAKE_PATH} --parallel=${PARALLEL_BUILDS} --standalone --no-examples --skip-docs --module-subset  Core,Network,Gui,Qml,Widgets,Charts
-# Provide Qt debug symbols for Linux. This could be refined for other OSes.
-os = os_family
-if eq ${os} linux
-  exec --fail-on-error ln -s -t ${WORKSPACE}/py39-dist/lib/python3.9/site-packages/PySide2/Qt/lib/ ${HOME}/Qt/5.15.2/gcc_64/lib/*.debug
-end
-'''
-
-[tasks.build-install-pyside]
+[tasks.build-pyside]
+condition = { files_not_exist = ["${WORKSPACE}/pyside-setup/dist/PySide2-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl"] }
 dependencies = ["prep-debug-pyside"]
 script_runner = "@duckscript"
 script = '''
@@ -500,12 +492,22 @@ script = '''
 # You may also need to add `jom` to the path to allow parallel builds to work. You can find this installed
 # in a standard Qt installation in the Qt\Tools\QtCreator\bin\jom directory.
 exec --fail-on-error ${PYTHON} -m pip install setuptools wheel packaging
-exec --fail-on-error ${PYTHON} ${WORKSPACE}/pyside-setup/setup.py install --debug --qt 5.15.2 --qmake=${QMAKE_PATH} --parallel=${PARALLEL_BUILDS} --standalone --no-examples --skip-docs --module-subset  Core,Network,Gui,Qml,Widgets,Charts
-# Provide Qt debug symbols for Linux. This could be refined for other OSes.
-os = os_family
-if eq ${os} linux
-  exec --fail-on-error ln -s -t ${WORKSPACE}/py39/lib/python3.9/site-packages/PySide2/Qt/lib/ ${HOME}/Qt/5.15.2/gcc_64/lib/*.debug
-end
+exec --fail-on-error ${PYTHON} ${WORKSPACE}/pyside-setup/setup.py bdist_wheel --debug --qt 5.15.2 --qmake=${QMAKE_PATH} --parallel=${PARALLEL_BUILDS} --no-examples --skip-docs --module-subset Core,Network,Gui,Qml,Widgets,Charts
+'''
+
+[tasks.build-dist-install-pyside]
+dependencies = ["build-pyside"]
+script_runner = "@duckscript"
+script = '''
+exec --fail-on-error ${DIST_PYTHON} -m pip install setuptools wheel packaging
+exec --fail-on-error ${DIST_PYTHON} -m pip install ${WORKSPACE}/pyside-setup/dist/shiboken2-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl ${WORKSPACE}/pyside-setup/dist/PySide2-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl ${WORKSPACE}/pyside-setup/dist/shiboken2_generator-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl
+'''
+
+[tasks.build-install-pyside]
+dependencies = ["build-pyside"]
+script_runner = "@duckscript"
+script = '''
+exec --fail-on-error ${PYTHON} -m pip install ${WORKSPACE}/pyside-setup/dist/shiboken2-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl ${WORKSPACE}/pyside-setup/dist/PySide2-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl ${WORKSPACE}/pyside-setup/dist/shiboken2_generator-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl
 '''
 
 [tasks.build-dist]

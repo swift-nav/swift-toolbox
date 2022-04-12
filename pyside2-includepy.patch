@@ -1,0 +1,93 @@
+From 3a2b31af9259cb61c5615b7e6c428a9f849526df Mon Sep 17 00:00:00 2001
+From: Keith Kyzivat <keith.kyzivat@qt.io>
+Date: Tue, 12 Apr 2022 15:50:09 -0400
+Subject: [PATCH] Properly fall back if INCLUDEPY config_var !exist
+
+if get_config_var("INCLUDEPY") is a path that does not exist, properly
+fall back to using os.path.join(py_prefix, "include"). py_prefix itself
+may have a fallback to sys.prefix if get_config_var("prefix") is a path
+that doesn't exist.
+---
+ build_scripts/main.py | 25 ++++++++++++-------------
+ 1 file changed, 12 insertions(+), 13 deletions(-)
+
+diff --git a/build_scripts/main.py b/build_scripts/main.py
+index 7784c5cb8..d6c716443 100644
+--- a/build_scripts/main.py
++++ b/build_scripts/main.py
+@@ -136,10 +136,10 @@ def _get_py_library_win(build_type, py_version, py_prefix, py_libdir,
+     if OPTION["MAKESPEC"] == "mingw":
+         static_lib_name = "libpython{}{}.a".format(
+             py_version.replace(".", ""), dbg_postfix)
+-        return os.path.join(py_libdir, static_lib_name)
++        return (os.path.join(py_libdir, static_lib_name), py_include_dir)
+     v = py_version.replace(".", "")
+     python_lib_name = "python{}{}.lib".format(v, dbg_postfix)
+-    return os.path.join(py_libdir, python_lib_name)
++    return (os.path.join(py_libdir, python_lib_name), py_include_dir)
+ 
+ 
+ def _get_py_library_unix(build_type, py_version, py_prefix, py_libdir,
+@@ -176,7 +176,7 @@ def _get_py_library_unix(build_type, py_version, py_prefix, py_libdir,
+         lib_name = "libpython{}{}{}".format(py_version, lib_suff, lib_ext)
+         py_library = os.path.join(py_libdir, lib_name)
+         if os.path.exists(py_library):
+-            return py_library
++            return (py_library, py_include_dir)
+         libs_tried.append(py_library)
+     # At least on macOS 10.11, the system Python 2.6 does not include a
+     # symlink to the framework file disguised as a .dylib file, thus finding
+@@ -193,7 +193,7 @@ def _get_py_library_unix(build_type, py_version, py_prefix, py_libdir,
+ 
+         if (possible_framework_version == '2.6'
+                 and os.path.exists(possible_framework_library)):
+-            return possible_framework_library
++            return (possible_framework_library, py_include_dir)
+         libs_tried.append(possible_framework_library)
+ 
+     # Try to find shared libraries which have a multi arch
+@@ -206,7 +206,7 @@ def _get_py_library_unix(build_type, py_version, py_prefix, py_libdir,
+             lib_name = "libpython{}{}{}".format(py_version, lib_suff, lib_ext)
+             py_library = os.path.join(try_py_libdir, lib_name)
+             if os.path.exists(py_library):
+-                return py_library
++                return (py_library, py_include_dir)
+             libs_tried.append(py_library)
+ 
+     m = "Failed to locate the Python library with {}".format(", ".join(libs_tried))
+@@ -216,15 +216,15 @@ def _get_py_library_unix(build_type, py_version, py_prefix, py_libdir,
+ def get_py_library(build_type, py_version, py_prefix, py_libdir, py_include_dir):
+     """Find the Python library"""
+     if sys.platform == "win32":
+-        py_library = _get_py_library_win(build_type, py_version, py_prefix,
+-                                         py_libdir, py_include_dir)
++        (py_library, py_include_dir) = _get_py_library_win(build_type,
++            py_version, py_prefix, py_libdir, py_include_dir)
+     else:
+-        py_library = _get_py_library_unix(build_type, py_version, py_prefix,
+-                                          py_libdir, py_include_dir)
++        (py_library, py_include_dir) = _get_py_library_unix(build_type,
++            py_version, py_prefix, py_libdir, py_include_dir)
+     if py_library.endswith('.a'):
+         # Python was compiled as a static library
+         log.error("Failed to locate a dynamic Python library, using {}".format(py_library))
+-    return py_library
++    return (py_library, py_include_dir)
+ 
+ 
+ # Git submodules: ["submodule_name", "location_relative_to_sources_folder"]
+@@ -586,9 +586,8 @@ class PysideBuild(_build, DistUtilsCommandMixin):
+         self.build_dir = build_dir
+         self.install_dir = install_dir
+         self.py_executable = py_executable
+-        self.py_include_dir = py_include_dir
+-        self.py_library = get_py_library(build_type, py_version, py_prefix,
+-                                         py_libdir, py_include_dir)
++        (self.py_library, self.py_include_dir) = get_py_library(
++            build_type, py_version, py_prefix, py_libdir, py_include_dir)
+         self.py_version = py_version
+         self.build_type = build_type
+         self.site_packages_dir = get_python_lib(1, 0, prefix=install_dir)
+-- 
+2.31.1
+

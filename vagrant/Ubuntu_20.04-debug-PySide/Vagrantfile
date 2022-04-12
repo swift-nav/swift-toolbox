@@ -82,8 +82,6 @@ Vagrant.configure("2") do |config|
     chown vagrant /home/vagrant/qt-unified-linux-x64-4.3.0-1-online.run
     chmod a+x /home/vagrant/qt-unified-linux-x64-4.3.0-1-online.run
 
-    ln -sf /home/vagrant/Build/swift-nav/console_pp/py39-dist /install
-
     if [ -e /vagrant/VBoxLinuxAdditions.run ]; then
       apt-get -y remove open-vm-tools virtualbox-guest-utils
       apt-get -y autoremove

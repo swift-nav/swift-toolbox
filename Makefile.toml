@@ -32,6 +32,8 @@ if eq ${os} windows
   lib = get_env LIB
   set_env LIB "${lib};${WORKSPACE}\\py39-dist\\libs"
   set_env QMAKE_PATH "${QTDIR}/bin/qmake.exe"
+  set_env PYSIDE_WHEEL fill_me_in.whl
+  set_env SHIBOKEN_WHEEL fill_me_in.whl
 elseif eq ${os} linux
   if eq "${QTDIR}" ''
     set_env QTDIR "${HOME}/Qt/5.15.2/gcc_64"
@@ -56,6 +58,8 @@ elseif eq ${os} linux
   triplet = trim ${output.stdout}
   set_env BUILD_TRIPLET ${triplet}
   set_env QMAKE_PATH "${QTDIR}/bin/qmake"
+  set_env PYSIDE_WHEEL PySide2-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl
+  set_env SHIBOKEN_WHEEL shiboken2-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl
 else
   if eq "${QTDIR}" ''
     set_env QTDIR "${HOME}/Qt/5.15.2/clang_64"
@@ -82,6 +86,8 @@ else
   set_env BUILD_TRIPLET ${triplet}
   # Below needs to be specified for macOS - I'm not sure where it is installed on macOS
   set_env QMAKE_PATH "${QTDIR}/bin/qmake"
+  set_env PYSIDE_WHEEL PySide2-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_x86_64.whl
+  set_env SHIBOKEN_WHEEL shiboken2-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_x86_64.whl
 end
 ''',
 ]
@@ -494,7 +500,7 @@ script = '''
 '''
 
 [tasks.build-pyside]
-condition = { files_not_exist = ["${WORKSPACE}/pyside-setup/dist/PySide2-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl"] }
+condition = { files_not_exist = ["${WORKSPACE}/pyside-setup/dist/${PYSIDE_WHEEL}"] }
 dependencies = ["prep-debug-pyside"]
 script_runner = "@duckscript"
 script = '''
@@ -514,14 +520,14 @@ dependencies = ["build-pyside"]
 script_runner = "@duckscript"
 script = '''
 exec --fail-on-error ${DIST_PYTHON} -m pip install setuptools wheel packaging
-exec --fail-on-error ${DIST_PYTHON} -m pip install ${WORKSPACE}/pyside-setup/dist/shiboken2-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl ${WORKSPACE}/pyside-setup/dist/PySide2-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl ${WORKSPACE}/pyside-setup/dist/shiboken2_generator-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl
+exec --fail-on-error ${DIST_PYTHON} -m pip install ${WORKSPACE}/pyside-setup/dist/${SHIBOKEN_WHEEL} ${WORKSPACE}/pyside-setup/dist/${PYSIDE_WHEEL}
 '''
 
 [tasks.build-install-pyside]
 dependencies = ["build-pyside"]
 script_runner = "@duckscript"
 script = '''
-exec --fail-on-error ${PYTHON} -m pip install ${WORKSPACE}/pyside-setup/dist/shiboken2-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl ${WORKSPACE}/pyside-setup/dist/PySide2-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl ${WORKSPACE}/pyside-setup/dist/shiboken2_generator-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl
+exec --fail-on-error ${PYTHON} -m pip install ${WORKSPACE}/pyside-setup/dist/${SHIBOKEN_WHEEL} ${WORKSPACE}/pyside-setup/dist/${PYSIDE_WHEEL}
 '''
 
 [tasks.build-dist]

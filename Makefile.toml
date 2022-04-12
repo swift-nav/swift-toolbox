@@ -492,6 +492,7 @@ condition = { files_not_exist = ["${WORKSPACE}/pyside-setup/setup.py"] }
 script_runner = "@duckscript"
 script = '''
   exec --fail-on-error git clone -b v5.15.2.1 http://code.qt.io/pyside/pyside-setup.git
+  exec --fail-on-error git apply "${WORKSPACE}/pyside2-includepy.patch"
 '''
 
 [tasks.build-pyside]

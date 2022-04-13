@@ -22,11 +22,12 @@ if [ ! -d py39-dist ]; then
     cargo make build-dist
 fi
 
+
 # If we are not on windows, log this whole looped debugging session.
 # Output file will be named debug_intermittent_startup_crash<num>.log
 logfn=./$(uniqueFn "debug_intermittent_startup_crash" "log")
 exec 3>&1 4>&2
-exec 1>$logfn 2>&1
+exec 1> >(tee $logfn) 2>&1
 
 export SWIFT_CONSOLE_ARGS="--log-console --file ../console_backend/tests/data/ins_updates.sbp --exit-after-timeout=10"
 
@@ -36,10 +37,11 @@ echo "Logging to $logfn"
 echo "Starting looped debugging of app, 10s execution per iteration."
 
 cd ${scriptpath}/../py39-dist
+uname_o=$(uname -o 2>/dev/null)
 for i in {1..1000}; do
     if [ $(uname) == "Darwin" ]; then
         rust-lldb -o run -o quit -- ./swift-console $SWIFT_CONSOLE_ARGS
-    elif [ $(uname -o) == "Msys" ]; then
+    elif [ $(uname_o) == "Msys" ]; then
         # With Visual Studio installed, if there is a crash, a dialog will pop
         # up prompting if you want to debug.
         ./swift-console $SWIFT_CONSOLE_ARGS

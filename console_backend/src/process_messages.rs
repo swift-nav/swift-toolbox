@@ -306,13 +306,13 @@ mod messages {
     }
 
     impl Messages {
-        const TIMEOUT: Duration = Duration::from_secs(30);
+        const TIMEOUT: Duration = Duration::from_secs(2);
 
         pub fn new<R>(reader: R) -> (Self, StopToken)
         where
             R: io::Read + Send + 'static,
         {
-            let messages = sbp::iter_messages(reader).with_rover_time();
+            let messages = sbp::iter_messages_with_timeout(reader, Self::TIMEOUT).with_rover_time();
             Self::from_boxed(Box::new(messages))
         }
 
@@ -320,7 +320,7 @@ mod messages {
         where
             R: io::Read + Send + 'static,
         {
-            let messages = sbp::iter_messages(reader).with_rover_time();
+            let messages = sbp::iter_messages_with_timeout(reader, Self::TIMEOUT).with_rover_time();
             let messages = Box::new(RealtimeIter::new(messages));
             Self::from_boxed(messages)
         }
@@ -369,10 +369,6 @@ mod messages {
                     }
                 }
                 recv(self.stop_recv) -> _ => None,
-                default(Self::TIMEOUT) => {
-                    self.err = Err(io::Error::new(io::ErrorKind::TimedOut, "timeout"));
-                    None
-                }
             }
         }
     }

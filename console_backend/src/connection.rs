@@ -7,7 +7,7 @@ use std::{
     path::{Path, PathBuf},
     thread,
     thread::JoinHandle,
-    time::{Duration, Instant},
+    time::Duration,
 };
 
 use crossbeam::channel::Sender;
@@ -413,7 +413,6 @@ impl SerialConnection {
         self,
         _shared_state: Option<&SharedState>,
     ) -> io::Result<(Box<dyn io::Read + Send>, Box<dyn io::Write + Send>)> {
-        self.validate_serial_port()?;
         let rdr = serialport::new(self.device.clone(), self.baudrate)
             .flow_control(*self.flow)
             .timeout(READER_TIMEOUT)
@@ -426,28 +425,6 @@ impl SerialConnection {
         }
 
         Ok((Box::new(rdr), Box::new(writer)))
-    }
-
-    fn validate_serial_port(&self) -> std::result::Result<(), std::io::Error> {
-        let mut rdr = serialport::new(self.device.clone(), self.baudrate)
-            .flow_control(*self.flow)
-            .timeout(READER_TIMEOUT)
-            .open()?;
-        let mut buffer = [0; 237];
-        let now = Instant::now();
-        while now.elapsed() < READER_TIMEOUT {
-            rdr.read_exact(&mut buffer)?;
-            if buffer.contains(&sbp::PREAMBLE) {
-                return Ok(());
-            }
-        }
-        Err(std::io::Error::new(
-            ErrorKind::InvalidData,
-            format!(
-                "Could not validate connection, {}, check baudrate.",
-                self.device
-            ),
-        ))
     }
 }
 

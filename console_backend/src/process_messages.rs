@@ -369,10 +369,6 @@ mod messages {
                     }
                 }
                 recv(self.stop_recv) -> _ => None,
-                default(Self::TIMEOUT) => {
-                    self.err = Err(io::Error::new(io::ErrorKind::TimedOut, "timeout"));
-                    None
-                }
             }
         }
     }

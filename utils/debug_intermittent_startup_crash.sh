@@ -23,7 +23,7 @@ if [ ! -d py39-dist ]; then
 fi
 
 
-# If we are not on windows, log this whole looped debugging session.
+# Log this whole looped debugging session.
 # Output file will be named debug_intermittent_startup_crash<num>.log
 logfn=./$(uniqueFn "debug_intermittent_startup_crash" "log")
 exec 3>&1 4>&2
@@ -41,7 +41,7 @@ uname_o=$(uname -o 2>/dev/null)
 for i in {1..1000}; do
     if [ $(uname) == "Darwin" ]; then
         rust-lldb -o run -o quit -- ./swift-console $SWIFT_CONSOLE_ARGS
-    elif [ $(uname_o) == "Msys" ]; then
+    elif [ ${uname_o} == "Msys" ]; then
         # With Visual Studio installed, if there is a crash, a dialog will pop
         # up prompting if you want to debug.
         ./swift-console $SWIFT_CONSOLE_ARGS

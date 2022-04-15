@@ -1,7 +1,10 @@
 """Frontend module for the Swift Console.
 """
 import argparse
+from datetime import datetime
 import os
+import pickle
+import time
 import sys
 
 from typing import Optional, Tuple
@@ -223,20 +226,37 @@ TAB_LAYOUT = {
 capnp.remove_import_hook()  # pylint: disable=no-member
 
 
-class BackendMessageReceiver(QObject):
-    def __init__(self, app, backend, messages):
+class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attributes
+    def __init__(
+        self,
+        app,
+        backend,
+        messages,
+        record_file: Optional[str] = None,
+        record: bool = False,
+        exit_after_secs: Optional[int] = None,
+    ):
         super().__init__()
         self._app = app
         self._backend = backend
         self._messages = messages
         self._thread = QThread()
         self._thread.started.connect(self._handle_started)  # pylint: disable=no-member
+        self._reader = (
+            None if record_file is None else open(str(record_file), "rb")  # pylint: disable=consider-using-with
+        )
+        filename = f"console-capnp-{datetime.now().strftime('%Y%m%d-%H%M%S')}.pickle"
+        self._writer = None if not record else open(filename, "ab")  # pylint: disable=consider-using-with
+        self._last_msg_receipt_ns = time.perf_counter_ns()
         self.moveToThread(self._thread)
+        self.start_time = None
+        self.exit_after_secs = exit_after_secs
 
     def _handle_started(self):
         QTimer.singleShot(0, self.receive_messages)
 
     def start(self):
+        self.start_time = time.time()
         self._thread.start()
 
     def join(self):
@@ -250,7 +270,25 @@ class BackendMessageReceiver(QObject):
             QTimer.singleShot(0, self.receive_messages)
 
     def _receive_messages(self):
-        buffer = self._backend.fetch_message()
+        if self.exit_after_secs is not None and time.time() - self.start_time > self.exit_after_secs:
+            self._app.quit()
+        msg_receipt_time = time.perf_counter_ns()
+        if self._reader is None:
+            buffer = self._backend.fetch_message()
+        else:
+            try:
+                msg = pickle.load(self._reader)
+            except EOFError:
+                return self._app.quit()
+            buffer = msg["data"]
+            if buffer is None:
+                self._app.quit()
+            diff = max((msg_receipt_time - self._last_msg_receipt_ns), 0)
+            if diff < msg["ns"]:
+                time.sleep((msg["ns"] - diff) / 1e9)
+        if self._writer is not None:
+            pickle.dump({"data": buffer, "ns": msg_receipt_time - self._last_msg_receipt_ns}, self._writer)
+        self._last_msg_receipt_ns = msg_receipt_time
         if not buffer:
             print("terminating GUI loop", file=sys.stderr)
             return False
@@ -575,7 +613,10 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
 
 
 def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
-    parser = argparse.ArgumentParser(add_help=False, usage=argparse.SUPPRESS)
+    parser = argparse.ArgumentParser(add_help=False, usage=argparse.SUPPRESS, allow_abbrev=False)
+    parser.add_argument("--exit-after-secs", type=int, default=None)
+    parser.add_argument("--read-capnp-recording", type=str, default=None)
+    parser.add_argument("--record-capnp-recording", action="store_true")
     parser.add_argument("--show-fileio", action="store_true")
     parser.add_argument("--show-file-connection", action="store_true")
     parser.add_argument("--no-prompts", action="store_true")
@@ -710,7 +751,14 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     root_context.setContextProperty("update_tab_model", update_tab_model)
     root_context.setContextProperty("backend_request_broker", backend_request_broker)
 
-    backend_msg_receiver = BackendMessageReceiver(app, backend_main, messages_main)
+    backend_msg_receiver = BackendMessageReceiver(
+        app,
+        backend_main,
+        messages_main,
+        record_file=args_main.read_capnp_recording,
+        record=args_main.record_capnp_recording,
+        exit_after_secs=args_main.exit_after_secs,
+    )
     backend_msg_receiver.start()
 
     app.exec_()

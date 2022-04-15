@@ -117,6 +117,18 @@ pub struct CliOptions {
     #[clap(long)]
     pub sbp_log_filename: Option<PathBuf>,
 
+    /// Record capnp messages.
+    #[clap(long)]
+    pub record_capnp_recording: bool,
+
+    /// Read capnp messages from file.
+    #[clap(long)]
+    pub read_capnp_recording: Option<PathBuf>,
+
+    /// Exit after number of seconds elapses.
+    #[clap(long)]
+    pub exit_after_secs: Option<f64>,
+
     /// Set log directory.
     #[clap(long)]
     pub log_dirname: Option<String>,

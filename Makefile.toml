@@ -6,11 +6,13 @@ if not is_empty ${QTDIR}
    echo "Using user-defined QTDIR ${QTDIR} to find Qt's debug libs and headers for pyside2 build."
 end
 
+QTDIR = get_env QTDIR
 # set os specific env vars
 os = os_family
 if eq ${os} windows
   if is_empty ${QTDIR}
-    set_env QTDIR "C:/Qt/5.15.2/msvc2019_64"
+    QTDIR = set "C:/Qt/5.15.2/msvc2019_64"
+    set_env QTDIR "${QTDIR}"
   end
   set_env STANDALONE_PY_URL "${PY_BASE_URL}/cpython-3.9.7-x86_64-pc-windows-msvc-shared-pgo-20211017T1616.tar.zst"
   set_env PYTHON "${WORKSPACE}\\py39\\python.exe"
@@ -36,7 +38,8 @@ if eq ${os} windows
   set_env SHIBOKEN_WHEEL fill_me_in.whl
 elseif eq ${os} linux
   if is_empty ${QTDIR}
-    set_env QTDIR "${HOME}/Qt/5.15.2/gcc_64"
+    QTDIR = set "${HOME}/Qt/5.15.2/gcc_64"
+    set_env QTDIR "${QTDIR}"
   end
   set_env STANDALONE_PY_URL "${SWFT_PY_BASE_URL}/cpython-3.9.10-x86_64-unknown-linux-gnu-pgo+lto-20220203T2103.tar.zst"
   set_env PYTHON "${WORKSPACE}/py39/bin/python3"
@@ -62,7 +65,8 @@ elseif eq ${os} linux
   set_env SHIBOKEN_WHEEL shiboken2-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl
 else
   if is_empty ${QTDIR}
-    set_env QTDIR "${HOME}/Qt/5.15.2/clang_64"
+    QTDIR = set "${HOME}/Qt/5.15.2/clang_64"
+    set_env QTDIR "${QTDIR}"
   end
   set_env STANDALONE_PY_URL "${PY_BASE_URL}/cpython-3.9.7-x86_64-apple-darwin-pgo+lto-20211017T1616.tar.zst"
   set_env PYTHON "${WORKSPACE}/py39/bin/python3"

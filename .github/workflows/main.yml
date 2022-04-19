@@ -22,533 +22,533 @@ env:
 
 jobs:
 
-  backend_bench:
-
-    name: Backend Benchmarks
-
-    strategy:
-      matrix:
-        os:
-        - ubuntu-18.04
-        - macos-10.15
-        - windows-2019
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-
-      - name: Checkout source
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
-          ssh-key: ${{ secrets.SSH_KEY }}
-          ssh-strict: false
-
-      - uses: webfactory/ssh-agent@v0.5.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_KEY }}
-
-      - name: Run ssh-keyscan
-        run: ssh-keyscan github.com >> ~/.ssh/known_hosts
-
-      - name: Setup SSH for Windows Git LFS
-        run: |
-          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
-          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
-        if: matrix.os == 'windows-2019'
-
-      - name: Install ${{ runner.os }} Dependencies.
-        shell: bash
-        run: |
-          if [ "$RUNNER_OS" == "Linux" ]; then
-              sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
-          elif [ "$RUNNER_OS" == "macOS" ]; then
-              brew install capnp llvm
-          elif [ "$RUNNER_OS" == "Windows" ]; then
-              choco install -y capnproto
-          fi
-
-      - name: Pull Git LFS objects
-        run: git lfs pull
-        env:
-          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
-
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-
-      - uses: Swatinem/rust-cache@v1
-        with:
-          key: ${{ secrets.CACHE_VERSION }}
-
-      - uses: davidB/rust-cargo-make@v1
-        with:
-          version: ${{ env.CARGO_MAKE_VERSION }}
-
-      - name: Cache pip
-        uses: actions/cache@v2
-        with:
-          path: ${{ env.PIP_CACHE_DIR }}
-          key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
-
-      - name: Set up python builder
-        shell: bash
-        run: |
-          cargo make setup-builder
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Run Backend Benchmarks (Windows)
-        env:
-          LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
-        run: |
-          cargo make backend-benches
-        if: matrix.os == 'windows-2019'
-
-      - name: Run Backend Benchmarks
-        run: |
-          cargo make backend-benches
-        if: matrix.os != 'windows-2019'
-
-  checks:
-
-    name: Code Quality Checks
-
-    runs-on: ubuntu-18.04
-
-    steps:
-
-      - name: Checkout source
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
-          ssh-key: ${{ secrets.SSH_KEY }}
-          ssh-strict: false
-
-      - uses: webfactory/ssh-agent@v0.5.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_KEY }}
-
-      - name: Pull Git LFS objects
-        run: git lfs pull
-        env:
-          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
-
-      - name: Install stable Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          components: rustfmt, clippy
-
-      - uses: Swatinem/rust-cache@v1
-        with:
-          key: ${{ secrets.CACHE_VERSION }}
-
-      - uses: davidB/rust-cargo-make@v1
-        with:
-          version: ${{ env.CARGO_MAKE_VERSION }}
-
-      - name: Install Dependencies.
-        run: |
-          sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
-
-      - name: Cache pip
-        uses: actions/cache@v2
-        with:
-          path: ${{ env.PIP_CACHE_DIR }}
-          key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
-
-      - name: Set up python builder
-        shell: bash
-        run: |
-          cargo make setup-builder
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Run Checks
-        run: |
-          cargo make check-all
-
-      - name: Run Tests
-        uses: nick-invision/retry@v2
-        with:
-          timeout_minutes: 5
-          max_attempts: 3
-          retry_on: error
-          command: cargo make tests
-
-  build:
-
-    name: Build Binaries
-
-    needs:
-      - checks
-      - backend_bench
-
-    strategy:
-      matrix:
-        os:
-        - {name: ubuntu-18.04, exe_suffix: "", short_name: "linux"}
-        - {name: macos-10.15, exe_suffix: "", short_name: "macos"}
-        - {name: windows-2019, exe_suffix: ".exe", short_name: "windows"}
-
-    runs-on: ${{ matrix.os.name }}
-
-    steps:
-
-      - name: Checkout source
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
-          ssh-key: ${{ secrets.SSH_KEY }}
-          ssh-strict: false
-
-      - uses: webfactory/ssh-agent@v0.5.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_KEY }}
-
-      - name: Run ssh-keyscan
-        run: ssh-keyscan github.com >> ~/.ssh/known_hosts
-
-      - name: Setup SSH for Windows Git LFS
-        run: |
-          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
-          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
-        if: matrix.os.name == 'windows-2019'
-
-      - name: Install ${{ runner.os }} Dependencies.
-        shell: bash
-        run: |
-          if [ "$RUNNER_OS" == "Linux" ]; then
-              sudo apt-get update
-              sudo apt-get install -y \
-                capnproto \
-                libxcb-icccm4 \
-                libxcb-image0 \
-                libxcb-keysyms1 \
-                libxcb-randr0 \
-                libxcb-render-util0 \
-                libxcb-render0 \
-                libxcb-shape0 \
-                libxcb-shm0 \
-                libxcb-sync1 \
-                libxcb-util1 \
-                libxcb-xfixes0 \
-                libxcb-xinerama0 \
-                libxcb-xkb1 \
-                libxkbcommon-x11-0 \
-                ruby \
-                ruby-dev \
-                rubygems \
-                build-essential \
-                libudev-dev
-              sudo gem install --no-document fpm
-          elif [ "$RUNNER_OS" == "macOS" ]; then
-              brew install capnp llvm create-dmg
-          elif [ "$RUNNER_OS" == "Windows" ]; then
-              choco install capnproto nsis
-          fi
-
-      - name: Install stable Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          components: rustfmt, clippy
-
-      - uses: Swatinem/rust-cache@v1
-        with:
-          key: ${{ secrets.CACHE_VERSION }}
-
-      - uses: davidB/rust-cargo-make@v1
-        with:
-          version: ${{ env.CARGO_MAKE_VERSION }}
-
-      - name: Cache pip
-        uses: actions/cache@v2
-        with:
-          path: ${{ env.PIP_CACHE_DIR }}
-          key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
-
-      - name: Set up python builder
-        shell: bash
-        run: |
-          cargo make setup-builder
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set env vars
-        shell: bash
-        run: |
-          echo "LIBCLANG_PATH=$LIBCLANG_PATH_WIN" >>$GITHUB_ENV
-        if: matrix.os.name == 'windows-2019'
-
-      - name: Build ${{ runner.os }} Binaries.
-        shell: bash
-        run: |
-          cargo make create-dist
-
-      - name: Create ${{ runner.os }} Installers.
-        shell: bash
-        run: |
-          cargo make dist-to-installer
-          if [ "$RUNNER_OS" == "Linux" ]; then
-              INSTALLER_ARCHIVE=$(find installers/Linux -maxdepth 1 -iname "*.deb")
-          elif [ "$RUNNER_OS" == "Windows" ]; then
-              INSTALLER_ARCHIVE=$(find installers/Windows -maxdepth 1 -iname "*.exe")
-          elif [ "$RUNNER_OS" == "macOS" ]; then
-              mv installers/macOS/*.dmg .
-              INSTALLER_ARCHIVE=$(find . -maxdepth 1 -iname "*.dmg")
-          fi
-          echo $INSTALLER_ARCHIVE >installer-archive.filename
-          echo "INSTALLER_ARCHIVE=$(cat installer-archive.filename)" >>$GITHUB_ENV
-        if: github.event_name == 'push' && contains(github.ref, 'refs/tags') && matrix.os.name != 'macos-10.15'
-
-      - name: Build ${{ runner.os }} swift-files binary.
-        run: |
-          cargo build --release --bin swift-files --no-default-features --features env_logger,indicatif
-
-      - name: Build ${{ runner.os }} swift-settings binary.
-        run: |
-          cargo build --release --bin swift-settings --no-default-features --features env_logger
-
-      - name: Pull Git LFS objects
-        run: git lfs pull
-        env:
-          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
-      - name: Archive ${{ runner.os }} Binaries.
-        env:
-          OS_NAME: ${{ runner.os }}
-        shell: bash
-        run: |
-          mkdir bench
-          cp -r console_backend/tests/data bench
-          cp utils/bench_runner.py bench
-          cd bench
-          7z a -tzip "../$OS_NAME.zip" *;
-          cd ..
-          echo "${OS_NAME}.zip" >bench-archive.filename;
-          echo "BENCH_ARCHIVE=$(cat bench-archive.filename)" >>$GITHUB_ENV
-          RELEASE_ARCHIVE=$(find . -maxdepth 1 -iname "*.tar.xz" ! -iname "*-debug*")
-          DEBUG_ARCHIVE=$(find . -maxdepth 1 -iname "*-debug.tar.xz")
-          echo $RELEASE_ARCHIVE >release-archive.filename
-          echo "RELEASE_ARCHIVE=$(cat release-archive.filename)" >>$GITHUB_ENV
-          echo $DEBUG_ARCHIVE >debug-archive.filename
-          echo "DEBUG_ARCHIVE=$(cat debug-archive.filename)" >>$GITHUB_ENV
-      - uses: actions/upload-artifact@v2
-        with:
-          name: ${{ runner.os }}-artifacts
-          path: |
-            ${{ env.RELEASE_ARCHIVE }}
-            release-archive.filename
-      - uses: actions/upload-artifact@v2
-        with:
-          name: swift-files_${{ matrix.os.short_name }}
-          path: ./target/release/swift-files${{ matrix.os.exe_suffix }}
-      - uses: actions/upload-artifact@v2
-        with:
-          name: swift-settings_${{ matrix.os.short_name }}
-          path: ./target/release/swift-settings${{ matrix.os.exe_suffix }}
-      - uses: actions/upload-artifact@v2
-        with:
-          name: ${{ runner.os }}-installer
-          path: |
-            ${{ env.INSTALLER_ARCHIVE }}
-            installer-archive.filename
-        if: github.event_name == 'push' && contains(github.ref, 'refs/tags') && matrix.os.name != 'macos-10.15'
-      - uses: actions/upload-artifact@v2
-        with:
-          name: ${{ runner.os }}-artifacts-debug
-          path: |
-            ${{ env.DEBUG_ARCHIVE }}
-            debug-archive.filename
-      - uses: actions/upload-artifact@v2
-        with:
-          name: ${{ runner.os }}-artifacts-bench
-          path: |
-            ${{ env.BENCH_ARCHIVE }}
-            bench-archive.filename
-      - name: ${{ runner.os }} Installer Size Benchmark.
-        env:
-          OS_NAME: ${{ runner.os }}
-        shell: bash
-        run: |
-          cargo make disk-usage-bench
-
-  sign_application:
-    name: Sign Application
-    timeout-minutes: 30
-    needs:
-      - build
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
-    strategy:
-      matrix:
-        os:
-          - macOS
-    runs-on: [self-hosted, '${{ matrix.os }}', code-signer]
-    steps:
-
-      - name: Remove previous build.
-        shell: bash
-        continue-on-error: true
-        run: |
-          rm -rf application
-
-      - name: Checkout source.
-        uses: actions/checkout@v2
-        with:
-          path: application
-
-      - uses: actions/download-artifact@v2
-        with:
-          name: ${{ matrix.os }}-artifacts
-          path: |
-            application
-
-      - name: Unzip release artifact.
-        shell: bash
-        run: |
-          cd application
-          mkdir -p py39-dist
-          tar -xvf "$(cat release-archive.filename)" -C py39-dist
-
-      - name: Build .app bundle.
-        shell: bash
-        run: |
-          cd application
-          cargo make dist-to-installer-app
-
-      - name: Sign application.
-        shell: bash
-        run: |
-          cd "application/target/installer/Swift Console.app"
-          for f in $(find Contents/Resources/lib/ -name '*.dylib' -or -name '*.so')
-          do 
-            codesign \
-            -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
-            --timestamp \
-            "$f"
-          done
-
-          for f in $(ls Contents/Resources/lib/python3.9/site-packages/PySide2/Qt/lib/*.framework/Versions/5/*)
-          do
-            codesign \
-              -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
-              --timestamp \
-              "$f"
-          done
-
-          cd ../../../
-          codesign \
-            -s "${{ secrets.APPLE_DEVELOPER_ID }}" --deep \
-            --entitlements installers/macOS/entitlements.plist \
-            --timestamp \
-            --options=runtime \
-            "target/installer/Swift Console.app"
-
-      - name: Build dmg file.
-        shell: bash
-        run: |
-          cd application
-          cargo make store-version
-          cargo make dist-to-installer-dmg
-
-      - name: Add archive to path.
-        shell: bash
-        run: |
-          INSTALLER_ARCHIVE=$(find application -iname "*.dmg")
-          echo $INSTALLER_ARCHIVE >installer-archive.filename
-          echo "INSTALLER_ARCHIVE=$(cat installer-archive.filename)" >>$GITHUB_ENV
-
-      - uses: actions/upload-artifact@v2
-        with:
-          name: ${{ runner.os }}-installer
-          path: |
-            ${{ env.INSTALLER_ARCHIVE }}
-            installer-archive.filename
-
-  frontend_bench:
-    name: Run Frontend Benchmarks
-    timeout-minutes: 30
-    needs:
-      - build
-    strategy:
-      matrix:
-        os:
-          - macOS
-          - Windows
-          - Linux
-    runs-on: [self-hosted, '${{ matrix.os }}', bench]
-    steps:
-      - name: Remove previous build.
-        shell: bash
-        run: |
-          rm -rf ${{ env.APP_NAME }}
-          rm -rf bench
-
-      - uses: actions/download-artifact@v2
-        with:
-          name: ${{ matrix.os }}-artifacts
-          path: |
-            ${{ env.APP_NAME }}
-
-      - uses: actions/download-artifact@v2
-        with:
-          name: ${{ matrix.os }}-artifacts-bench
-          path: |
-            bench
-
-      - name: Extract binary and data.
-        shell: bash
-        run: |
-          cd ${{ env.APP_NAME }}
-          archive=$(cat release-archive.filename)
-          7z x $archive -aoa
-          7z x ${archive%.xz} -aoa
-          echo "extracted release-archive"
-          mv ../bench/${{ matrix.os }}.zip .
-          7z x ${{ matrix.os }}.zip -aoa
-          echo "extracted bench data"
-
-      - name: Run CPU Frontend Benchmark.
-        uses: nick-invision/retry@v2
-        with:
-          shell: bash
-          timeout_minutes: 3
-          max_attempts: 3
-          retry_on: error
-          command: |
-            cd ${{ env.APP_NAME }}
-            if [ "$RUNNER_OS" == "Windows" ]; then
-                python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}.exe"
-            elif [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
-                chmod +x "${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
-                python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
-            else
-                echo "Invalid platform"
-                exit 1
-            fi
-
-      - name: Run MEM Frontend Benchmark.
-        uses: nick-invision/retry@v2
-        with:
-          shell: bash
-          timeout_minutes: 3
-          max_attempts: 3
-          retry_on: error
-          command: |
-            cd ${{ env.APP_NAME }}
-            if [ "$RUNNER_OS" == "Windows" ]; then
-                python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}.exe"
-            elif [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
-                chmod +x "${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
-                python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
-            else
-                echo "Invalid platform"
-                exit 1
-            fi
+#  backend_bench:
+#
+#    name: Backend Benchmarks
+#
+#    strategy:
+#      matrix:
+#        os:
+#        - ubuntu-18.04
+#        - macos-10.15
+#        - windows-2019
+#
+#    runs-on: ${{ matrix.os }}
+#
+#    steps:
+#
+#      - name: Checkout source
+#        uses: actions/checkout@v2
+#        with:
+#          submodules: recursive
+#          ssh-key: ${{ secrets.SSH_KEY }}
+#          ssh-strict: false
+#
+#      - uses: webfactory/ssh-agent@v0.5.0
+#        with:
+#          ssh-private-key: ${{ secrets.SSH_KEY }}
+#
+#      - name: Run ssh-keyscan
+#        run: ssh-keyscan github.com >> ~/.ssh/known_hosts
+#
+#      - name: Setup SSH for Windows Git LFS
+#        run: |
+#          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
+#          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
+#        if: matrix.os == 'windows-2019'
+#
+#      - name: Install ${{ runner.os }} Dependencies.
+#        shell: bash
+#        run: |
+#          if [ "$RUNNER_OS" == "Linux" ]; then
+#              sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
+#          elif [ "$RUNNER_OS" == "macOS" ]; then
+#              brew install capnp llvm
+#          elif [ "$RUNNER_OS" == "Windows" ]; then
+#              choco install -y capnproto
+#          fi
+#
+#      - name: Pull Git LFS objects
+#        run: git lfs pull
+#        env:
+#          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
+#
+#      - uses: actions-rs/toolchain@v1
+#        with:
+#          profile: minimal
+#          toolchain: stable
+#
+#      - uses: Swatinem/rust-cache@v1
+#        with:
+#          key: ${{ secrets.CACHE_VERSION }}
+#
+#      - uses: davidB/rust-cargo-make@v1
+#        with:
+#          version: ${{ env.CARGO_MAKE_VERSION }}
+#
+#      - name: Cache pip
+#        uses: actions/cache@v2
+#        with:
+#          path: ${{ env.PIP_CACHE_DIR }}
+#          key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
+#
+#      - name: Set up python builder
+#        shell: bash
+#        run: |
+#          cargo make setup-builder
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#
+#      - name: Run Backend Benchmarks (Windows)
+#        env:
+#          LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
+#        run: |
+#          cargo make backend-benches
+#        if: matrix.os == 'windows-2019'
+#
+#      - name: Run Backend Benchmarks
+#        run: |
+#          cargo make backend-benches
+#        if: matrix.os != 'windows-2019'
+#
+#  checks:
+#
+#    name: Code Quality Checks
+#
+#    runs-on: ubuntu-18.04
+#
+#    steps:
+#
+#      - name: Checkout source
+#        uses: actions/checkout@v2
+#        with:
+#          submodules: recursive
+#          ssh-key: ${{ secrets.SSH_KEY }}
+#          ssh-strict: false
+#
+#      - uses: webfactory/ssh-agent@v0.5.0
+#        with:
+#          ssh-private-key: ${{ secrets.SSH_KEY }}
+#
+#      - name: Pull Git LFS objects
+#        run: git lfs pull
+#        env:
+#          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
+#
+#      - name: Install stable Rust
+#        uses: actions-rs/toolchain@v1
+#        with:
+#          toolchain: stable
+#          override: true
+#          components: rustfmt, clippy
+#
+#      - uses: Swatinem/rust-cache@v1
+#        with:
+#          key: ${{ secrets.CACHE_VERSION }}
+#
+#      - uses: davidB/rust-cargo-make@v1
+#        with:
+#          version: ${{ env.CARGO_MAKE_VERSION }}
+#
+#      - name: Install Dependencies.
+#        run: |
+#          sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
+#
+#      - name: Cache pip
+#        uses: actions/cache@v2
+#        with:
+#          path: ${{ env.PIP_CACHE_DIR }}
+#          key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
+#
+#      - name: Set up python builder
+#        shell: bash
+#        run: |
+#          cargo make setup-builder
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#
+#      - name: Run Checks
+#        run: |
+#          cargo make check-all
+#
+#      - name: Run Tests
+#        uses: nick-invision/retry@v2
+#        with:
+#          timeout_minutes: 5
+#          max_attempts: 3
+#          retry_on: error
+#          command: cargo make tests
+#
+#  build:
+#
+#    name: Build Binaries
+#
+#    needs:
+#      - checks
+#      - backend_bench
+#
+#    strategy:
+#      matrix:
+#        os:
+#        - {name: ubuntu-18.04, exe_suffix: "", short_name: "linux"}
+#        - {name: macos-10.15, exe_suffix: "", short_name: "macos"}
+#        - {name: windows-2019, exe_suffix: ".exe", short_name: "windows"}
+#
+#    runs-on: ${{ matrix.os.name }}
+#
+#    steps:
+#
+#      - name: Checkout source
+#        uses: actions/checkout@v2
+#        with:
+#          submodules: recursive
+#          ssh-key: ${{ secrets.SSH_KEY }}
+#          ssh-strict: false
+#
+#      - uses: webfactory/ssh-agent@v0.5.0
+#        with:
+#          ssh-private-key: ${{ secrets.SSH_KEY }}
+#
+#      - name: Run ssh-keyscan
+#        run: ssh-keyscan github.com >> ~/.ssh/known_hosts
+#
+#      - name: Setup SSH for Windows Git LFS
+#        run: |
+#          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
+#          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
+#        if: matrix.os.name == 'windows-2019'
+#
+#      - name: Install ${{ runner.os }} Dependencies.
+#        shell: bash
+#        run: |
+#          if [ "$RUNNER_OS" == "Linux" ]; then
+#              sudo apt-get update
+#              sudo apt-get install -y \
+#                capnproto \
+#                libxcb-icccm4 \
+#                libxcb-image0 \
+#                libxcb-keysyms1 \
+#                libxcb-randr0 \
+#                libxcb-render-util0 \
+#                libxcb-render0 \
+#                libxcb-shape0 \
+#                libxcb-shm0 \
+#                libxcb-sync1 \
+#                libxcb-util1 \
+#                libxcb-xfixes0 \
+#                libxcb-xinerama0 \
+#                libxcb-xkb1 \
+#                libxkbcommon-x11-0 \
+#                ruby \
+#                ruby-dev \
+#                rubygems \
+#                build-essential \
+#                libudev-dev
+#              sudo gem install --no-document fpm
+#          elif [ "$RUNNER_OS" == "macOS" ]; then
+#              brew install capnp llvm create-dmg
+#          elif [ "$RUNNER_OS" == "Windows" ]; then
+#              choco install capnproto nsis
+#          fi
+#
+#      - name: Install stable Rust
+#        uses: actions-rs/toolchain@v1
+#        with:
+#          toolchain: stable
+#          override: true
+#          components: rustfmt, clippy
+#
+#      - uses: Swatinem/rust-cache@v1
+#        with:
+#          key: ${{ secrets.CACHE_VERSION }}
+#
+#      - uses: davidB/rust-cargo-make@v1
+#        with:
+#          version: ${{ env.CARGO_MAKE_VERSION }}
+#
+#      - name: Cache pip
+#        uses: actions/cache@v2
+#        with:
+#          path: ${{ env.PIP_CACHE_DIR }}
+#          key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
+#
+#      - name: Set up python builder
+#        shell: bash
+#        run: |
+#          cargo make setup-builder
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#
+#      - name: Set env vars
+#        shell: bash
+#        run: |
+#          echo "LIBCLANG_PATH=$LIBCLANG_PATH_WIN" >>$GITHUB_ENV
+#        if: matrix.os.name == 'windows-2019'
+#
+#      - name: Build ${{ runner.os }} Binaries.
+#        shell: bash
+#        run: |
+#          cargo make create-dist
+#
+#      - name: Create ${{ runner.os }} Installers.
+#        shell: bash
+#        run: |
+#          cargo make dist-to-installer
+#          if [ "$RUNNER_OS" == "Linux" ]; then
+#              INSTALLER_ARCHIVE=$(find installers/Linux -maxdepth 1 -iname "*.deb")
+#          elif [ "$RUNNER_OS" == "Windows" ]; then
+#              INSTALLER_ARCHIVE=$(find installers/Windows -maxdepth 1 -iname "*.exe")
+#          elif [ "$RUNNER_OS" == "macOS" ]; then
+#              mv installers/macOS/*.dmg .
+#              INSTALLER_ARCHIVE=$(find . -maxdepth 1 -iname "*.dmg")
+#          fi
+#          echo $INSTALLER_ARCHIVE >installer-archive.filename
+#          echo "INSTALLER_ARCHIVE=$(cat installer-archive.filename)" >>$GITHUB_ENV
+#        if: github.event_name == 'push' && contains(github.ref, 'refs/tags') && matrix.os.name != 'macos-10.15'
+#
+#      - name: Build ${{ runner.os }} swift-files binary.
+#        run: |
+#          cargo build --release --bin swift-files --no-default-features --features env_logger,indicatif
+#
+#      - name: Build ${{ runner.os }} swift-settings binary.
+#        run: |
+#          cargo build --release --bin swift-settings --no-default-features --features env_logger
+#
+#      - name: Pull Git LFS objects
+#        run: git lfs pull
+#        env:
+#          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
+#      - name: Archive ${{ runner.os }} Binaries.
+#        env:
+#          OS_NAME: ${{ runner.os }}
+#        shell: bash
+#        run: |
+#          mkdir bench
+#          cp -r console_backend/tests/data bench
+#          cp utils/bench_runner.py bench
+#          cd bench
+#          7z a -tzip "../$OS_NAME.zip" *;
+#          cd ..
+#          echo "${OS_NAME}.zip" >bench-archive.filename;
+#          echo "BENCH_ARCHIVE=$(cat bench-archive.filename)" >>$GITHUB_ENV
+#          RELEASE_ARCHIVE=$(find . -maxdepth 1 -iname "*.tar.xz" ! -iname "*-debug*")
+#          DEBUG_ARCHIVE=$(find . -maxdepth 1 -iname "*-debug.tar.xz")
+#          echo $RELEASE_ARCHIVE >release-archive.filename
+#          echo "RELEASE_ARCHIVE=$(cat release-archive.filename)" >>$GITHUB_ENV
+#          echo $DEBUG_ARCHIVE >debug-archive.filename
+#          echo "DEBUG_ARCHIVE=$(cat debug-archive.filename)" >>$GITHUB_ENV
+#      - uses: actions/upload-artifact@v2
+#        with:
+#          name: ${{ runner.os }}-artifacts
+#          path: |
+#            ${{ env.RELEASE_ARCHIVE }}
+#            release-archive.filename
+#      - uses: actions/upload-artifact@v2
+#        with:
+#          name: swift-files_${{ matrix.os.short_name }}
+#          path: ./target/release/swift-files${{ matrix.os.exe_suffix }}
+#      - uses: actions/upload-artifact@v2
+#        with:
+#          name: swift-settings_${{ matrix.os.short_name }}
+#          path: ./target/release/swift-settings${{ matrix.os.exe_suffix }}
+#      - uses: actions/upload-artifact@v2
+#        with:
+#          name: ${{ runner.os }}-installer
+#          path: |
+#            ${{ env.INSTALLER_ARCHIVE }}
+#            installer-archive.filename
+#        if: github.event_name == 'push' && contains(github.ref, 'refs/tags') && matrix.os.name != 'macos-10.15'
+#      - uses: actions/upload-artifact@v2
+#        with:
+#          name: ${{ runner.os }}-artifacts-debug
+#          path: |
+#            ${{ env.DEBUG_ARCHIVE }}
+#            debug-archive.filename
+#      - uses: actions/upload-artifact@v2
+#        with:
+#          name: ${{ runner.os }}-artifacts-bench
+#          path: |
+#            ${{ env.BENCH_ARCHIVE }}
+#            bench-archive.filename
+#      - name: ${{ runner.os }} Installer Size Benchmark.
+#        env:
+#          OS_NAME: ${{ runner.os }}
+#        shell: bash
+#        run: |
+#          cargo make disk-usage-bench
+#
+#  sign_application:
+#    name: Sign Application
+#    timeout-minutes: 30
+#    needs:
+#      - build
+#    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
+#    strategy:
+#      matrix:
+#        os:
+#          - macOS
+#    runs-on: [self-hosted, '${{ matrix.os }}', code-signer]
+#    steps:
+#
+#      - name: Remove previous build.
+#        shell: bash
+#        continue-on-error: true
+#        run: |
+#          rm -rf application
+#
+#      - name: Checkout source.
+#        uses: actions/checkout@v2
+#        with:
+#          path: application
+#
+#      - uses: actions/download-artifact@v2
+#        with:
+#          name: ${{ matrix.os }}-artifacts
+#          path: |
+#            application
+#
+#      - name: Unzip release artifact.
+#        shell: bash
+#        run: |
+#          cd application
+#          mkdir -p py39-dist
+#          tar -xvf "$(cat release-archive.filename)" -C py39-dist
+#
+#      - name: Build .app bundle.
+#        shell: bash
+#        run: |
+#          cd application
+#          cargo make dist-to-installer-app
+#
+#      - name: Sign application.
+#        shell: bash
+#        run: |
+#          cd "application/target/installer/Swift Console.app"
+#          for f in $(find Contents/Resources/lib/ -name '*.dylib' -or -name '*.so')
+#          do
+#            codesign \
+#            -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
+#            --timestamp \
+#            "$f"
+#          done
+#
+#          for f in $(ls Contents/Resources/lib/python3.9/site-packages/PySide2/Qt/lib/*.framework/Versions/5/*)
+#          do
+#            codesign \
+#              -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
+#              --timestamp \
+#              "$f"
+#          done
+#
+#          cd ../../../
+#          codesign \
+#            -s "${{ secrets.APPLE_DEVELOPER_ID }}" --deep \
+#            --entitlements installers/macOS/entitlements.plist \
+#            --timestamp \
+#            --options=runtime \
+#            "target/installer/Swift Console.app"
+#
+#      - name: Build dmg file.
+#        shell: bash
+#        run: |
+#          cd application
+#          cargo make store-version
+#          cargo make dist-to-installer-dmg
+#
+#      - name: Add archive to path.
+#        shell: bash
+#        run: |
+#          INSTALLER_ARCHIVE=$(find application -iname "*.dmg")
+#          echo $INSTALLER_ARCHIVE >installer-archive.filename
+#          echo "INSTALLER_ARCHIVE=$(cat installer-archive.filename)" >>$GITHUB_ENV
+#
+#      - uses: actions/upload-artifact@v2
+#        with:
+#          name: ${{ runner.os }}-installer
+#          path: |
+#            ${{ env.INSTALLER_ARCHIVE }}
+#            installer-archive.filename
+#
+#  frontend_bench:
+#    name: Run Frontend Benchmarks
+#    timeout-minutes: 30
+#    needs:
+#      - build
+#    strategy:
+#      matrix:
+#        os:
+#          - macOS
+#          - Windows
+#          - Linux
+#    runs-on: [self-hosted, '${{ matrix.os }}', bench]
+#    steps:
+#      - name: Remove previous build.
+#        shell: bash
+#        run: |
+#          rm -rf ${{ env.APP_NAME }}
+#          rm -rf bench
+#
+#      - uses: actions/download-artifact@v2
+#        with:
+#          name: ${{ matrix.os }}-artifacts
+#          path: |
+#            ${{ env.APP_NAME }}
+#
+#      - uses: actions/download-artifact@v2
+#        with:
+#          name: ${{ matrix.os }}-artifacts-bench
+#          path: |
+#            bench
+#
+#      - name: Extract binary and data.
+#        shell: bash
+#        run: |
+#          cd ${{ env.APP_NAME }}
+#          archive=$(cat release-archive.filename)
+#          7z x $archive -aoa
+#          7z x ${archive%.xz} -aoa
+#          echo "extracted release-archive"
+#          mv ../bench/${{ matrix.os }}.zip .
+#          7z x ${{ matrix.os }}.zip -aoa
+#          echo "extracted bench data"
+#
+#      - name: Run CPU Frontend Benchmark.
+#        uses: nick-invision/retry@v2
+#        with:
+#          shell: bash
+#          timeout_minutes: 3
+#          max_attempts: 3
+#          retry_on: error
+#          command: |
+#            cd ${{ env.APP_NAME }}
+#            if [ "$RUNNER_OS" == "Windows" ]; then
+#                python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}.exe"
+#            elif [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
+#                chmod +x "${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
+#                python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
+#            else
+#                echo "Invalid platform"
+#                exit 1
+#            fi
+#
+#      - name: Run MEM Frontend Benchmark.
+#        uses: nick-invision/retry@v2
+#        with:
+#          shell: bash
+#          timeout_minutes: 3
+#          max_attempts: 3
+#          retry_on: error
+#          command: |
+#            cd ${{ env.APP_NAME }}
+#            if [ "$RUNNER_OS" == "Windows" ]; then
+#                python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}.exe"
+#            elif [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
+#                chmod +x "${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
+#                python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
+#            else
+#                echo "Invalid platform"
+#                exit 1
+#            fi
 
   sign_installer:
     name: Sign Installers
@@ -556,7 +556,7 @@ jobs:
     needs:
       - sign_application
       - frontend_bench
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
+#    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
     strategy:
       matrix:
         os:
@@ -631,7 +631,7 @@ jobs:
     needs:
       - sign_application
       - frontend_bench
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
+#    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
     strategy:
       matrix:
         os:
@@ -699,88 +699,88 @@ jobs:
             ${{ env.INSTALLER_ARCHIVE }}
             installer-archive.filename
 
-  release:
-    name: Create Release
-    needs:
-      - sign_installer
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Store git tag and date vars.
-        run: |
-          DATE="$(date '+%Y-%m-%d')";
-          echo "DATE=${DATE}" >> $GITHUB_ENV
-          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
-      - name: Pull Windows Installer
-        uses: actions/download-artifact@v2
-        with:
-          name: Windows-installer-signed
-          path: windows
-      - name: Pull Windows swift-files
-        uses: actions/download-artifact@v2
-        with:
-          name: swift-files_windows
-          path: windows
-      - name: Pull Windows swift-settings
-        uses: actions/download-artifact@v2
-        with:
-          name: swift-settings_windows
-          path: windows
-      - name: Pull Linux Installer
-        uses: actions/download-artifact@v2
-        with:
-          name: Linux-installer
-          path: linux
-      - name: Pull Linux swift-files
-        uses: actions/download-artifact@v2
-        with:
-          name: swift-files_linux
-          path: linux
-      - name: Pull Linux swift-settings
-        uses: actions/download-artifact@v2
-        with:
-          name: swift-settings_linux
-          path: linux
-      - name: Pull macOS Installer
-        uses: actions/download-artifact@v2
-        with:
-          name: macOS-installer
-          path: macos
-      - name: Pull macOS swift-files
-        uses: actions/download-artifact@v2
-        with:
-          name: swift-files_macos
-          path: macos
-      - name: Pull macOS swift-settings
-        uses: actions/download-artifact@v2
-        with:
-          name: swift-settings_macos
-          path: macos
-      - name: Prepare Release
-        shell: bash
-        run: |
-          mv windows/swift-files.exe windows/swift-files_${{ env.VERSION }}_windows.exe
-          mv windows/swift-settings.exe windows/swift-settings_${{ env.VERSION }}_windows.exe
-          mv linux/swift-files linux/swift-files_${{ env.VERSION }}_linux
-          mv linux/swift-settings linux/swift-settings_${{ env.VERSION }}_linux
-          mv macos/swift-files macos/swift-files_${{ env.VERSION }}_macos
-          mv macos/swift-settings macos/swift-settings_${{ env.VERSION }}_macos
-          echo "WINDOWS_ARCHIVE=$(cat windows/installer-archive.filename)" >>$GITHUB_ENV
-          echo "LINUX_ARCHIVE=$(cat linux/installer-archive.filename)" >>$GITHUB_ENV
-          echo "MACOS_ARCHIVE=$(cat macos/installer-archive.filename)" >>$GITHUB_ENV
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          name: "${{ env.VERSION }}-${{ env.DATE }}"
-          files: |
-            windows/${{ env.WINDOWS_ARCHIVE }}
-            windows/swift-files_${{ env.VERSION }}_windows.exe
-            windows/swift-settings_${{ env.VERSION }}_windows.exe
-            linux/${{ env.LINUX_ARCHIVE }}
-            linux/swift-files_${{ env.VERSION }}_linux
-            linux/swift-settings_${{ env.VERSION }}_linux
-            macos/${{ env.MACOS_ARCHIVE }}
-            macos/swift-files_${{ env.VERSION }}_macos
-            macos/swift-settings_${{ env.VERSION }}_macos
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#  release:
+#    name: Create Release
+#    needs:
+#      - sign_installer
+#    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
+#    runs-on: ubuntu-20.04
+#    steps:
+#      - name: Store git tag and date vars.
+#        run: |
+#          DATE="$(date '+%Y-%m-%d')";
+#          echo "DATE=${DATE}" >> $GITHUB_ENV
+#          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+#      - name: Pull Windows Installer
+#        uses: actions/download-artifact@v2
+#        with:
+#          name: Windows-installer-signed
+#          path: windows
+#      - name: Pull Windows swift-files
+#        uses: actions/download-artifact@v2
+#        with:
+#          name: swift-files_windows
+#          path: windows
+#      - name: Pull Windows swift-settings
+#        uses: actions/download-artifact@v2
+#        with:
+#          name: swift-settings_windows
+#          path: windows
+#      - name: Pull Linux Installer
+#        uses: actions/download-artifact@v2
+#        with:
+#          name: Linux-installer
+#          path: linux
+#      - name: Pull Linux swift-files
+#        uses: actions/download-artifact@v2
+#        with:
+#          name: swift-files_linux
+#          path: linux
+#      - name: Pull Linux swift-settings
+#        uses: actions/download-artifact@v2
+#        with:
+#          name: swift-settings_linux
+#          path: linux
+#      - name: Pull macOS Installer
+#        uses: actions/download-artifact@v2
+#        with:
+#          name: macOS-installer
+#          path: macos
+#      - name: Pull macOS swift-files
+#        uses: actions/download-artifact@v2
+#        with:
+#          name: swift-files_macos
+#          path: macos
+#      - name: Pull macOS swift-settings
+#        uses: actions/download-artifact@v2
+#        with:
+#          name: swift-settings_macos
+#          path: macos
+#      - name: Prepare Release
+#        shell: bash
+#        run: |
+#          mv windows/swift-files.exe windows/swift-files_${{ env.VERSION }}_windows.exe
+#          mv windows/swift-settings.exe windows/swift-settings_${{ env.VERSION }}_windows.exe
+#          mv linux/swift-files linux/swift-files_${{ env.VERSION }}_linux
+#          mv linux/swift-settings linux/swift-settings_${{ env.VERSION }}_linux
+#          mv macos/swift-files macos/swift-files_${{ env.VERSION }}_macos
+#          mv macos/swift-settings macos/swift-settings_${{ env.VERSION }}_macos
+#          echo "WINDOWS_ARCHIVE=$(cat windows/installer-archive.filename)" >>$GITHUB_ENV
+#          echo "LINUX_ARCHIVE=$(cat linux/installer-archive.filename)" >>$GITHUB_ENV
+#          echo "MACOS_ARCHIVE=$(cat macos/installer-archive.filename)" >>$GITHUB_ENV
+#      - name: Release
+#        uses: softprops/action-gh-release@v1
+#        with:
+#          name: "${{ env.VERSION }}-${{ env.DATE }}"
+#          files: |
+#            windows/${{ env.WINDOWS_ARCHIVE }}
+#            windows/swift-files_${{ env.VERSION }}_windows.exe
+#            windows/swift-settings_${{ env.VERSION }}_windows.exe
+#            linux/${{ env.LINUX_ARCHIVE }}
+#            linux/swift-files_${{ env.VERSION }}_linux
+#            linux/swift-settings_${{ env.VERSION }}_linux
+#            macos/${{ env.MACOS_ARCHIVE }}
+#            macos/swift-files_${{ env.VERSION }}_macos
+#            macos/swift-settings_${{ env.VERSION }}_macos
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

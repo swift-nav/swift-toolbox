@@ -1,0 +1,43 @@
+From 388d1ff980f705aad50650c030c3a6a4ec7a8c01 Mon Sep 17 00:00:00 2001
+From: Friedemann Kleint <Friedemann.Kleint@qt.io>
+Date: Tue, 5 Apr 2022 17:09:01 +0200
+Subject: [PATCH] PySide6: Handle not finding a slot by name
+
+Pick-to: 6.2 5.15
+Change-Id: Ie2c652223aaaa853c99d540acebb99f754f34d61
+---
+ sources/pyside2/libpyside/signalmanager.cpp | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/sources/pyside2/libpyside/signalmanager.cpp b/sources/pyside2/libpyside/signalmanager.cpp
+index 93847e066..496cc2cb1 100644
+--- a/sources/pyside2/libpyside/signalmanager.cpp
++++ b/sources/pyside2/libpyside/signalmanager.cpp
+@@ -646,6 +646,7 @@ static int callMethod(QObject *object, int id, void **args)
+ {
+     const QMetaObject *metaObject = object->metaObject();
+     QMetaMethod method = metaObject->method(id);
++    int result = -1;
+ 
+     if (method.methodType() == QMetaMethod::Signal) {
+         // emit python signal
+@@ -656,9 +657,14 @@ static int callMethod(QObject *object, int id, void **args)
+         QByteArray methodName = method.methodSignature();
+         methodName.truncate(methodName.indexOf('('));
+         Shiboken::AutoDecRef pyMethod(PyObject_GetAttrString(self, methodName));
+-        return SignalManager::callPythonMetaMethod(method, args, pyMethod, false);
++        if (pyMethod.isNull()) {
++            PyErr_Format(PyExc_AttributeError, "Slot '%s::%s' not found.",
++                         metaObject->className(), method.methodSignature().constData());
++        } else {
++            result = SignalManager::callPythonMetaMethod(method, args, pyMethod, false);
++        }
+     }
+-    return -1;
++    return result;
+ }
+ 
+ 
+-- 
+2.25.1
+

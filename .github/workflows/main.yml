@@ -419,7 +419,7 @@ jobs:
         run: |
           cd application
           cargo make dist-to-installer-app
-      
+
       - name: Sign application.
         shell: bash
         run: |
@@ -600,6 +600,80 @@ jobs:
           xcrun altool \
             --notarize-app \
             --file $(cat installer-archive.filename) \
+            --primary-bundle-id ${{ env.APP_BUNDLE_ID }} \
+            --apiKey ${{ secrets.APPLE_KEY_ID }} \
+            --apiIssuer ${{ secrets.APPLE_ISSUER_ID }}
+        if: matrix.os == 'macOS'
+
+      - name: Add archive to path.
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+              INSTALLER_ARCHIVE=$(find installer -iname "*.deb")
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+              INSTALLER_ARCHIVE=$(ls installer/installers/Windows/*.exe)
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+              INSTALLER_ARCHIVE=$(find installer -iname "*.dmg")
+          fi
+          echo $INSTALLER_ARCHIVE >installer-archive.filename
+          echo "INSTALLER_ARCHIVE=$(cat installer-archive.filename)" >>$GITHUB_ENV
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ runner.os }}-installer-signed
+          path: |
+            ${{ env.INSTALLER_ARCHIVE }}
+            installer-archive.filename
+
+  sign_binaries:
+    name: Sign Binaries
+    timeout-minutes: 30
+    needs:
+      - sign_application
+      - frontend_bench
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
+    strategy:
+      matrix:
+        os:
+          - Windows
+          - macOS
+    runs-on: [self-hosted, '${{ matrix.os }}', code-signer]
+    steps:
+
+      - name: Remove previous build.
+        shell: bash
+        continue-on-error: true
+        run: |
+          rm -rf binaries
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: swift-files_${{ matrix.os }}
+          path: |
+            binaries
+
+      - name: Sign Binaries.
+        shell: cmd
+        run: |
+          cd binaries
+          set /p executable=<swift-files_${{ matrix.os }}
+          "${{ env.CODE_SIGNER_PATH_WIN }}" sign ^
+            /debug /v ^
+            /n "Swift Navigation, Inc." /a ^
+            /tr http://rfc3161timestamp.globalsign.com/advanced ^
+            /td SHA256 %executable%
+        if: matrix.os == 'Windows'
+
+      - name: Sign Binaries.
+        shell: bash
+        run: |
+          cd binaries
+          codesign \
+            -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
+            -f --timestamp
+          xcrun altool \
+            --notarize-app \
+            --file swift-files_${{ matrix.os }} \
             --primary-bundle-id ${{ env.APP_BUNDLE_ID }} \
             --apiKey ${{ secrets.APPLE_KEY_ID }} \
             --apiIssuer ${{ secrets.APPLE_ISSUER_ID }}

@@ -3,6 +3,7 @@
 import argparse
 import os
 import sys
+import time
 
 from typing import Optional, Tuple
 
@@ -224,7 +225,7 @@ capnp.remove_import_hook()  # pylint: disable=no-member
 
 
 class BackendMessageReceiver(QObject):
-    def __init__(self, app, backend, messages):
+    def __init__(self, app, backend, messages, exit_after_timeout: Optional[int] = None):
         super().__init__()
         self._app = app
         self._backend = backend
@@ -232,11 +233,14 @@ class BackendMessageReceiver(QObject):
         self._thread = QThread()
         self._thread.started.connect(self._handle_started)  # pylint: disable=no-member
         self.moveToThread(self._thread)
+        self.start_time = None
+        self.exit_after_timeout = exit_after_timeout
 
     def _handle_started(self):
         QTimer.singleShot(0, self.receive_messages)
 
     def start(self):
+        self.start_time = time.time()
         self._thread.start()
 
     def join(self):
@@ -250,6 +254,8 @@ class BackendMessageReceiver(QObject):
             QTimer.singleShot(0, self.receive_messages)
 
     def _receive_messages(self):
+        if self.exit_after_timeout is not None and time.time() - self.start_time > self.exit_after_timeout:
+            self._app.quit()
         buffer = self._backend.fetch_message()
         if not buffer:
             print("terminating GUI loop", file=sys.stderr)
@@ -576,6 +582,7 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
 
 def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     parser = argparse.ArgumentParser(add_help=False, usage=argparse.SUPPRESS)
+    parser.add_argument("--exit-after-timeout", type=int, default=None)
     parser.add_argument("--show-fileio", action="store_true")
     parser.add_argument("--show-file-connection", action="store_true")
     parser.add_argument("--no-prompts", action="store_true")
@@ -710,7 +717,12 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     root_context.setContextProperty("update_tab_model", update_tab_model)
     root_context.setContextProperty("backend_request_broker", backend_request_broker)
 
-    backend_msg_receiver = BackendMessageReceiver(app, backend_main, messages_main)
+    backend_msg_receiver = BackendMessageReceiver(
+        app,
+        backend_main,
+        messages_main,
+        exit_after_timeout=args_main.exit_after_timeout,
+    )
     backend_msg_receiver.start()
 
     app.exec_()

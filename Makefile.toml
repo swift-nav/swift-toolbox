@@ -18,15 +18,7 @@ if eq ${os} windows
   set_env PYTHON "${WORKSPACE}\\py39\\python.exe"
   set_env DIST_PYTHON "${WORKSPACE}\\py39-dist\\python"
   set_env DIST_PYSIDE2_RCC "${WORKSPACE}\\py39-dist\\Lib\\site-packages\\PySide2\\rcc.exe"
-  dist_pyside2_rcc = get_env DIST_PYSIDE2_RCC
-  if not is_path_exists ${dist_pyside2_rcc}
-    set_env DIST_PYSIDE2_RCC "${QTDIR}/bin/rcc.exe"
-  end
   set_env PYSIDE2_RCC "${WORKSPACE}\\py39\\Lib\\site-packages\\PySide2\\rcc.exe"
-  pyside2_rcc = get_env PYSIDE2_RCC
-  if not is_path_exists ${pyside2_rcc}
-    set_env PYSIDE2_RCC "${QTDIR}/bin/rcc.exe"
-  end
   set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-win_amd64.whl
   set_env BUILD_TRIPLET "x86_64-pc-windows-msvc"
   set_env PYO3_CONFIG_FILE "${WORKSPACE}\\standalone-py\\pyo3_config.txt"
@@ -45,15 +37,7 @@ elseif eq ${os} linux
   set_env PYTHON "${WORKSPACE}/py39/bin/python3"
   set_env DIST_PYTHON "${WORKSPACE}/py39-dist/bin/python3"
   set_env DIST_PYSIDE2_RCC "${WORKSPACE}/py39-dist/bin/pyside2-rcc"
-  dist_pyside2_rcc = get_env DIST_PYSIDE2_RCC
-  if not is_path_exists ${dist_pyside2_rcc}
-    set_env DIST_PYSIDE2_RCC "${QTDIR}/bin/rcc"
-  end
   set_env PYSIDE2_RCC "${WORKSPACE}/py39/bin/pyside2-rcc"
-  pyside2_rcc = get_env PYSIDE2_RCC
-  if not is_path_exists ${pyside2_rcc}
-    set_env PYSIDE2_RCC "${QTDIR}/bin/rcc"
-  end
   set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-linux_x86_64.whl
   set_env PYO3_CONFIG_FILE "${WORKSPACE}/standalone-py/pyo3_config.txt"
   set_env CONSOLE_PYO3_CONFIG_FILE "${WORKSPACE}/standalone-py/pyo3_config_console.txt"
@@ -72,16 +56,7 @@ else
   set_env PYTHON "${WORKSPACE}/py39/bin/python3"
   set_env DIST_PYTHON "${WORKSPACE}/py39-dist/bin/python3"
   set_env DIST_PYSIDE2_RCC "${WORKSPACE}/py39-dist/bin/pyside2-rcc"
-  dist_pyside2_rcc = get_env DIST_PYSIDE2_RCC
-  if not is_path_exists ${dist_pyside2_rcc}
-    set_env DIST_PYSIDE2_RCC "${QTDIR}/bin/rcc"
-    # /Volumes/G-DRIVE_mobile_USB-C/Qt/5.15.2/clang_64
-  end
   set_env PYSIDE2_RCC "${WORKSPACE}/py39/bin/pyside2-rcc"
-  pyside2_rcc = get_env PYSIDE2_RCC
-  if not is_path_exists ${pyside2_rcc}
-    set_env PYSIDE2_RCC "${QTDIR}/bin/rcc"
-  end
   set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-macosx_10_15_x86_64.whl
   set_env PYO3_CONFIG_FILE "${WORKSPACE}/standalone-py/pyo3_config.txt"
   set_env CONSOLE_PYO3_CONFIG_FILE "${WORKSPACE}/standalone-py/pyo3_config_console.txt"

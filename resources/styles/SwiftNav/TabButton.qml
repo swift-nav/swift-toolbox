@@ -60,7 +60,7 @@ T.TabButton {
 
     font {
         family: "Roboto"
-        pointSize: Constants.largePointSize
+        pixelSize: Constants.largePixelSize
         bold: true
         capitalization: Font.MixedCase
     }

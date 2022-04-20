@@ -74,6 +74,7 @@ struct Tabs {
     pub status_bar: Mutex<StatusBar>,
     pub update: Mutex<UpdateTab>,
     pub settings: Option<SettingsTab>,
+    pub shared_state: shared_state::SharedState,
 }
 
 impl Tabs {
@@ -92,12 +93,7 @@ impl Tabs {
                 msg_sender.clone(),
             )
             .into(),
-            advanced_system_monitor: AdvancedSystemMonitorTab::new(
-                shared_state.clone(),
-                client_sender.clone(),
-                msg_sender.clone(),
-            )
-            .into(),
+            advanced_system_monitor: AdvancedSystemMonitorTab::new(client_sender.clone()).into(),
             baseline: BaselineTab::new(shared_state.clone(), client_sender.clone(), msg_sender)
                 .into(),
             tracking_signals: TrackingSignalsTab::new(shared_state.clone(), client_sender.clone())
@@ -117,8 +113,9 @@ impl Tabs {
             )
             .into(),
             status_bar: StatusBar::new(shared_state.clone()).into(),
-            update: UpdateTab::new(shared_state).into(),
+            update: UpdateTab::new(shared_state.clone()).into(),
             settings: None,
+            shared_state,
         }
     }
 

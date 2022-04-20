@@ -13,7 +13,7 @@ ApplicationWindow {
     minimumWidth: Globals.minimumWidth
     height: Globals.height
     minimumHeight: Globals.minimumHeight
-    font.pointSize: Constants.mediumPointSize
+    font.pixelSize: Constants.mediumPixelSize
     visible: true
     title: (loggingBar.sbpRecording ? "[L] " : "     ") + statusBar.title
     color: Constants.swiftWhite

@@ -7,7 +7,7 @@ use std::{
     path::{Path, PathBuf},
     thread,
     thread::JoinHandle,
-    time::{Duration, Instant},
+    time::Duration,
 };
 
 use crossbeam::channel::Sender;
@@ -111,11 +111,11 @@ fn conn_manager_thd(
     let mut pm_thd: Option<JoinHandle<()>> = None;
     let mut recv = manager_msg.watch();
     thread::spawn(move || {
-        info!("Console started...");
         while let Ok(msg) = recv.wait() {
             match msg {
                 ConnectionManagerMsg::Connect(conn) => {
                     shared_state.set_connection(ConnectionState::Connecting, &client_sender);
+                    send_conn_notification(&client_sender, String::from(""));
                     let (reader, writer) = match conn.try_connect(Some(&shared_state)) {
                         Ok(rw) => rw,
                         Err(e) => {
@@ -132,6 +132,9 @@ fn conn_manager_thd(
                                 ErrorKind::NotConnected => {
                                     (true, String::from("Connection error: not connected"))
                                 }
+                                ErrorKind::NotFound => {
+                                    (true, String::from("Connection error: not found"))
+                                }
                                 _ => (false, format!("Connection error: {}", e)),
                             };
                             error!("{}", message);
@@ -139,6 +142,7 @@ fn conn_manager_thd(
                             send_conn_notification(&client_sender, message.clone());
                             if !conn.is_file() {
                                 if reconnect && !shared_state.connection_dialog_visible() {
+                                    refresh_connection_frontend(&client_sender, &shared_state);
                                     manager_msg.send(ConnectionManagerMsg::Reconnect(conn))
                                 } else {
                                     manager_msg.send(ConnectionManagerMsg::Disconnect)
@@ -240,7 +244,9 @@ fn process_messages_thd(
             if let Err(e) = res {
                 error!("Connection error: {}", e);
             }
-            if !matches!(shared_state.connection(), ConnectionState::Disconnected) {
+            if !matches!(shared_state.connection(), ConnectionState::Disconnected)
+                && !shared_state.connection_dialog_visible()
+            {
                 manager_msg.send(ConnectionManagerMsg::Reconnect(conn));
             }
         }
@@ -407,7 +413,6 @@ impl SerialConnection {
         self,
         _shared_state: Option<&SharedState>,
     ) -> io::Result<(Box<dyn io::Read + Send>, Box<dyn io::Write + Send>)> {
-        self.validate_serial_port()?;
         let rdr = serialport::new(self.device.clone(), self.baudrate)
             .flow_control(*self.flow)
             .timeout(READER_TIMEOUT)
@@ -420,28 +425,6 @@ impl SerialConnection {
         }
 
         Ok((Box::new(rdr), Box::new(writer)))
-    }
-
-    fn validate_serial_port(&self) -> std::result::Result<(), std::io::Error> {
-        let mut rdr = serialport::new(self.device.clone(), self.baudrate)
-            .flow_control(*self.flow)
-            .timeout(READER_TIMEOUT)
-            .open()?;
-        let mut buffer = [0; 237];
-        let now = Instant::now();
-        while now.elapsed() < READER_TIMEOUT {
-            rdr.read_exact(&mut buffer)?;
-            if buffer.contains(&sbp::PREAMBLE) {
-                return Ok(());
-            }
-        }
-        Err(std::io::Error::new(
-            ErrorKind::InvalidData,
-            format!(
-                "Could not validate connection, {}, check baudrate.",
-                self.device
-            ),
-        ))
     }
 }
 

@@ -18,7 +18,7 @@ TableView {
     property color delegateBorderColor: Constants.genericTable.borderColor
     property font tableFont: Qt.font({
         "family": Constants.genericTable.fontFamily,
-        "pointSize": Constants.largePointSize
+        "pixelSize": Constants.largePixelSize
     })
 
     clip: true

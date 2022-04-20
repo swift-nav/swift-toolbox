@@ -22,24 +22,32 @@ Item {
         id: solutionVelocityArea
 
         anchors.fill: parent
-        visible: true
         spacing: 0
 
-        ComboBox {
-            id: solutionVelocitySelectedUnit
+        RowLayout {
+            Layout.alignment: Qt.AlignHCenter
 
-            Component.onCompleted: {
-                solutionVelocitySelectedUnit.indicator.width = Constants.solutionVelocity.unitDropdownWidth / 3;
+            Label {
+                text: "Display Units:"
             }
-            Layout.alignment: Qt.AlignCenter | Qt.AlignTop
-            Layout.preferredWidth: Constants.solutionVelocity.unitDropdownWidth
-            model: available_units
-            onCurrentIndexChanged: {
-                if (!lines.length)
-                    return ;
 
-                backend_request_broker.solution_velocity_unit(available_units[currentIndex]);
+            ComboBox {
+                id: solutionVelocitySelectedUnit
+
+                Component.onCompleted: {
+                    solutionVelocitySelectedUnit.indicator.width = Constants.solutionVelocity.unitDropdownWidth / 3;
+                }
+                Layout.alignment: Qt.AlignCenter | Qt.AlignTop
+                Layout.preferredWidth: Constants.solutionVelocity.unitDropdownWidth
+                model: available_units
+                onCurrentIndexChanged: {
+                    if (!lines.length)
+                        return ;
+
+                    backend_request_broker.solution_velocity_unit(available_units[currentIndex]);
+                }
             }
+
         }
 
         ChartView {
@@ -105,7 +113,7 @@ Item {
                                 id: label
 
                                 text: modelData
-                                font.pointSize: Constants.mediumPointSize
+                                font.pixelSize: Constants.mediumPixelSize
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                             }
@@ -122,6 +130,7 @@ Item {
                 id: solutionVelocityXAxis
 
                 titleText: Constants.solutionVelocity.xAxisTitleText
+                labelFormat: "%d"
             }
 
             SwiftValueAxis {

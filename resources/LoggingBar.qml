@@ -79,7 +79,7 @@ Rectangle {
                 visible: false
                 Layout.alignment: Qt.AlignVCenter
                 Layout.topMargin: 6
-                font.pointSize: Constants.mediumPointSize
+                font.pixelSize: Constants.mediumPixelSize
                 font.family: Constants.fontFamily
                 font.capitalization: Font.AllUppercase
                 font.bold: true
@@ -91,7 +91,7 @@ Rectangle {
                 Layout.minimumWidth: 100
                 Layout.alignment: Qt.AlignHCenter
                 horizontalAlignment: Text.AlignHCenter
-                font.pointSize: Constants.xxlPointSize
+                font.pixelSize: Constants.xxlPixelSize
                 font.family: Constants.lightFontFamily
             }
 
@@ -110,7 +110,7 @@ Rectangle {
                 Layout.minimumWidth: 100
                 Layout.alignment: Qt.AlignHCenter
                 horizontalAlignment: Text.AlignHCenter
-                font.pointSize: Constants.xxlPointSize
+                font.pixelSize: Constants.xxlPixelSize
                 font.family: Constants.lightFontFamily
             }
 

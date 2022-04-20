@@ -61,7 +61,7 @@ Item {
                     elide: Text.ElideRight
                     clip: true
                     font.family: Constants.genericTable.fontFamily
-                    font.pointSize: Constants.largePointSize
+                    font.pixelSize: Constants.largePixelSize
                 }
 
                 MouseArea {

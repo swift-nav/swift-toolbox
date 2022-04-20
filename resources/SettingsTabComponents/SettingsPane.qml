@@ -118,7 +118,7 @@ Rectangle {
 
                         PropertyChanges {
                             target: valOnDevice
-                            Layout.preferredHeight: isLongTextField(_fieldName) ? 4 * parent.smallRowHeight : 3 * parent.smallRowHeight
+                            Layout.preferredHeight: isLongTextField(_fieldName) ? 5 * parent.smallRowHeight : 3 * parent.smallRowHeight
                         }
 
                     },
@@ -198,7 +198,7 @@ Rectangle {
                 Layout.rowSpan: 2
                 Layout.columnSpan: 1
                 Layout.preferredWidth: parent.colWidthLabel
-                Layout.preferredHeight: isLongTextField(_fieldName) ? 3 * parent.smallRowHeight : parent.smallRowHeight
+                Layout.preferredHeight: isLongTextField(_fieldName) ? 4 * parent.smallRowHeight : parent.smallRowHeight
                 sourceComponent: settingRowLabel
             }
 
@@ -209,7 +209,7 @@ Rectangle {
                 Layout.rowSpan: 2
                 Layout.columnSpan: parent.columns - 1
                 Layout.preferredWidth: parent.colWidthField
-                Layout.preferredHeight: isLongTextField(_fieldName) ? 3 * parent.smallRowHeight : parent.smallRowHeight
+                Layout.preferredHeight: isLongTextField(_fieldName) ? 4 * parent.smallRowHeight : parent.smallRowHeight
             }
 
             Loader {
@@ -220,7 +220,7 @@ Rectangle {
                 Layout.rowSpan: 2
                 Layout.columnSpan: 1
                 Layout.preferredWidth: parent.colWidthLabel
-                Layout.preferredHeight: parent.smallRowHeight
+                Layout.preferredHeight: isLongTextField(_fieldName) ? 2 * parent.smallRowHeight : parent.smallRowHeight
                 sourceComponent: settingRowLabel
             }
 
@@ -231,7 +231,7 @@ Rectangle {
                 Layout.rowSpan: 2
                 Layout.columnSpan: parent.columns - 1
                 Layout.preferredWidth: parent.colWidthField
-                Layout.preferredHeight: parent.smallRowHeight
+                Layout.preferredHeight: isLongTextField(_fieldName) ? 2 * parent.smallRowHeight : parent.smallRowHeight
                 sourceComponent: settingRowText
             }
 
@@ -328,7 +328,7 @@ Rectangle {
 
                 font {
                     family: Constants.fontFamily
-                    pointSize: Constants.largePointSize
+                    pixelSize: Constants.largePixelSize
                 }
 
             }
@@ -352,7 +352,7 @@ Rectangle {
             text: selectedRowField(_fieldName)
             wrapMode: Text.Wrap
             font.family: Constants.genericTable.fontFamily
-            font.pointSize: Constants.largePointSize
+            font.pixelSize: Constants.largePixelSize
             selectByMouse: true
             anchors.centerIn: parent
             anchors.verticalCenterOffset: 5
@@ -377,7 +377,7 @@ Rectangle {
         ComboBox {
             model: ["True", "False"]
             currentIndex: model.indexOf(selectedRowField("valueOnDevice"))
-            onCurrentIndexChanged: {
+            onActivated: {
                 if (currentIndex != -1 && selectedRowField("valueOnDevice") != model[currentIndex])
                     backend_request_broker.settings_write_request(selectedRowField("group"), selectedRowField("name"), model[currentIndex]);
 
@@ -392,7 +392,7 @@ Rectangle {
         ComboBox {
             model: selectedRowField("enumeratedPossibleValues").split(",")
             currentIndex: model.indexOf(selectedRowField("valueOnDevice"))
-            onCurrentIndexChanged: {
+            onActivated: {
                 if (currentIndex != -1 && selectedRowField("valueOnDevice") != model[currentIndex])
                     backend_request_broker.settings_write_request(selectedRowField("group"), selectedRowField("name"), model[currentIndex]);
 

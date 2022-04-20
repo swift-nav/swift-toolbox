@@ -4,6 +4,7 @@ use std::{
         atomic::{AtomicBool, AtomicUsize, Ordering},
         Arc,
     },
+    time::{Duration, Instant},
 };
 
 use parking_lot::{Condvar, MappedMutexGuard, Mutex, MutexGuard};
@@ -117,6 +118,14 @@ impl<T: Clone> WatchReceiver<T> {
         Ok(data.value.clone())
     }
 
+    pub fn wait_for(&mut self, duration: Duration) -> Result<Result<T, RecvError>, TimeoutError> {
+        let data = self.wait_for_inner(duration)?;
+        match data {
+            Ok(data) => Ok(Ok(data.value.clone())),
+            Err(e) => Ok(Err(e)),
+        }
+    }
+
     pub fn wait_mut(&mut self) -> Result<MappedMutexGuard<T>, RecvError> {
         let data = self.wait_inner()?;
         Ok(MutexGuard::map(data, |d| &mut d.value))
@@ -154,6 +163,36 @@ impl<T: Clone> WatchReceiver<T> {
         }
         self.last_seen = data.version;
         Ok(data)
+    }
+
+    fn wait_for_inner(
+        &mut self,
+        duration: Duration,
+    ) -> Result<Result<MutexGuard<Value<T>>, RecvError>, TimeoutError> {
+        if self.shared.is_closed() {
+            return Ok(Err(RecvError));
+        }
+        let t = Instant::now();
+        let mut data = self.shared.data.lock();
+        while data.version == self.last_seen {
+            let elapsed = t.elapsed();
+            if elapsed >= duration {
+                return Err(TimeoutError);
+            }
+            if self
+                .shared
+                .on_update
+                .wait_for(&mut data, duration - elapsed)
+                .timed_out()
+            {
+                return Err(TimeoutError);
+            }
+            if self.shared.is_closed() {
+                return Ok(Err(RecvError));
+            }
+        }
+        self.last_seen = data.version;
+        Ok(Ok(data))
     }
 }
 
@@ -200,6 +239,17 @@ impl fmt::Display for RecvError {
 
 impl std::error::Error for RecvError {}
 
+#[derive(Debug)]
+pub struct TimeoutError;
+
+impl fmt::Display for TimeoutError {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(fmt, "time out waiting for watched value")
+    }
+}
+
+impl std::error::Error for TimeoutError {}
+
 #[cfg(test)]
 mod tests {
     use std::{thread, time::Duration};
@@ -207,6 +257,8 @@ mod tests {
     use crossbeam::channel;
 
     use super::*;
+
+    const SECOND: Duration = Duration::from_secs(1);
 
     #[test]
     fn starts_unseen() {
@@ -255,15 +307,15 @@ mod tests {
             s.send(()).unwrap()
         });
 
-        thread::sleep(Duration::from_secs(1));
+        thread::sleep(SECOND);
         assert!(r.try_recv().is_err());
 
         watched.send(1);
-        thread::sleep(Duration::from_secs(1));
+        thread::sleep(SECOND);
         assert!(r.try_recv().is_err());
 
         watched.send(2);
-        thread::sleep(Duration::from_secs(1));
+        thread::sleep(SECOND);
         assert!(r.try_recv().is_ok());
     }
 
@@ -274,10 +326,28 @@ mod tests {
         // mark first as seen
         let _ = recv.get();
         thread::spawn(move || {
-            thread::sleep(Duration::from_secs(1));
+            thread::sleep(SECOND);
             drop(watched);
         });
         assert!(recv.wait().is_err());
+    }
+
+    #[test]
+    fn wait_for() {
+        let watched = Watched::new(0);
+        let mut recv = watched.watch();
+        let h = thread::spawn(move || {
+            // mark first as seen
+            let _ = recv.get();
+            let res = recv.wait_for(SECOND / 2);
+            assert!(matches!(res, Err(TimeoutError)));
+            // wait for rest of the second plus a little bit
+            let res = recv.wait_for(SECOND / 2 + Duration::from_millis(100));
+            assert!(matches!(res, Ok(Ok(1))));
+        });
+        thread::sleep(SECOND);
+        watched.send(1);
+        h.join().unwrap();
     }
 
     #[test]

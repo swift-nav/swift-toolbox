@@ -3,7 +3,7 @@ use std::{io::Cursor, path::PathBuf, str::FromStr, thread};
 use capnp::serialize;
 use chrono::{DateTime, Utc};
 use crossbeam::channel;
-use log::{debug, error};
+use log::{debug, error, warn};
 
 use crate::client_sender::BoxedClientSender;
 use crate::common_constants::SbpLogging;
@@ -33,6 +33,9 @@ pub fn server_recv_thread(
     shared_state: SharedState,
 ) {
     thread::spawn(move || {
+        // We use warning here because it is the minimum log level displayed
+        // in the log panel until the user selects a different level.
+        warn!("Console started...");
         loop {
             log::logger().flush();
             let mut reader = match server_recv.recv() {
@@ -273,7 +276,7 @@ pub fn server_recv_thread(
                     shared_state.set_write_setting(Some(req));
                 }
                 m::message::AdvancedSystemMonitorStatusFront(Ok(_)) => {
-                    shared_state.set_reset_device(true);
+                    shared_state.set_device_reboot(true);
                 }
                 m::message::AdvancedNetworkingStatusFront(Ok(cv_in)) => {
                     let refresh = cv_in.get_refresh();

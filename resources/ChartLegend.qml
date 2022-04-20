@@ -152,7 +152,7 @@ Rectangle {
                 id: legendTextMetrics
 
                 font.family: Constants.fontFamily
-                font.pointSize: Constants.xSmallPointSize
+                font.pixelSize: Constants.xSmallPixelSize
                 text: cellTextSample
             }
 

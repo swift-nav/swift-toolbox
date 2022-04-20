@@ -13,6 +13,7 @@ use sbp::{
         piksi::{MsgCommandResp, MsgDeviceMonitor, MsgNetworkStateResp, MsgThreadState},
         system::{
             MsgCsacTelemetry, MsgCsacTelemetryLabels, MsgHeartbeat, MsgInsStatus, MsgInsUpdates,
+            MsgStartup,
         },
         tracking::{MsgMeasurementState, MsgTrackingState},
     },
@@ -232,6 +233,9 @@ fn register_events(link: sbp::link::Link<Tabs>) {
     link.register(|tabs: &Tabs, msg: MsgSvAzEl| {
         tabs.tracking_sky_plot.lock().unwrap().handle_sv_az_el(msg);
     });
+    link.register(|tabs: &Tabs, _msg: MsgStartup| {
+        tabs.shared_state.set_settings_refresh(true);
+    });
     link.register(|tabs: &Tabs, msg: MsgThreadState| {
         tabs.advanced_system_monitor
             .lock()
@@ -302,13 +306,13 @@ mod messages {
     }
 
     impl Messages {
-        const TIMEOUT: Duration = Duration::from_secs(30);
+        const TIMEOUT: Duration = Duration::from_secs(2);
 
         pub fn new<R>(reader: R) -> (Self, StopToken)
         where
             R: io::Read + Send + 'static,
         {
-            let messages = sbp::iter_messages(reader).with_rover_time();
+            let messages = sbp::iter_messages_with_timeout(reader, Self::TIMEOUT).with_rover_time();
             Self::from_boxed(Box::new(messages))
         }
 
@@ -316,7 +320,7 @@ mod messages {
         where
             R: io::Read + Send + 'static,
         {
-            let messages = sbp::iter_messages(reader).with_rover_time();
+            let messages = sbp::iter_messages_with_timeout(reader, Self::TIMEOUT).with_rover_time();
             let messages = Box::new(RealtimeIter::new(messages));
             Self::from_boxed(messages)
         }
@@ -365,10 +369,6 @@ mod messages {
                     }
                 }
                 recv(self.stop_recv) -> _ => None,
-                default(Self::TIMEOUT) => {
-                    self.err = Err(io::Error::new(io::ErrorKind::TimedOut, "timeout"));
-                    None
-                }
             }
         }
     }

@@ -87,7 +87,7 @@ Item {
                                 id: label
 
                                 text: modelData
-                                font.pointSize: Constants.smallPointSize
+                                font.pixelSize: Constants.smallPixelSize
                                 font.bold: true
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
@@ -197,7 +197,7 @@ Item {
                     clip: true
                     anchors.fill: parent
                     anchors.margins: Constants.advancedImu.textDataBarMargin
-                    font.pointSize: Constants.mediumPointSize
+                    font.pixelSize: Constants.mediumPixelSize
                     text: "0.00 C"
                 }
 
@@ -219,7 +219,7 @@ Item {
                     clip: true
                     anchors.fill: parent
                     anchors.margins: Constants.advancedImu.textDataBarMargin
-                    font.pointSize: Constants.mediumPointSize
+                    font.pixelSize: Constants.mediumPixelSize
                     text: "0x00"
                 }
 
@@ -241,7 +241,7 @@ Item {
                     clip: true
                     anchors.fill: parent
                     anchors.margins: Constants.advancedImu.textDataBarMargin
-                    font.pointSize: Constants.mediumPointSize
+                    font.pixelSize: Constants.mediumPixelSize
                     text: "0.00 g"
                 }
 
@@ -263,7 +263,7 @@ Item {
                     clip: true
                     anchors.fill: parent
                     anchors.margins: Constants.advancedImu.textDataBarMargin
-                    font.pointSize: Constants.mediumPointSize
+                    font.pixelSize: Constants.mediumPixelSize
                     text: "0.00 g"
                 }
 
@@ -285,7 +285,7 @@ Item {
                     clip: true
                     anchors.fill: parent
                     anchors.margins: Constants.advancedImu.textDataBarMargin
-                    font.pointSize: Constants.mediumPointSize
+                    font.pixelSize: Constants.mediumPixelSize
                     text: "0.00 g"
                 }
 

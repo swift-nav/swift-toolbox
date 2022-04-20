@@ -63,7 +63,7 @@ Rectangle {
                     bottomPadding: Constants.statusBar.verticalPadding
                     text: modelData.labelText
                     color: Constants.statusBar.textColor
-                    font.pointSize: Constants.statusBar.textPointSize
+                    font.pixelSize: Constants.statusBar.textPixelSize
                 }
 
                 Label {
@@ -74,7 +74,7 @@ Rectangle {
                     bottomPadding: Constants.statusBar.verticalPadding
                     text: modelData.valueText
                     color: Constants.statusBar.textColor
-                    font.pointSize: Constants.statusBar.textPointSize
+                    font.pixelSize: Constants.statusBar.textPixelSize
                     font.bold: true
                 }
 

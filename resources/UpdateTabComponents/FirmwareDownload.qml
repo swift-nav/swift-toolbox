@@ -61,7 +61,7 @@ Item {
                     text: Constants.updateTab.downloadLatestFirmwareButtonLabel
                     anchors.centerIn: parent
                     font.family: Constants.genericTable.fontFamily
-                    font.pointSize: Constants.largePointSize
+                    font.pixelSize: Constants.largePixelSize
                 }
 
             }

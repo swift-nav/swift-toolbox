@@ -14,7 +14,7 @@ env:
   RUST_CACHE_DIRS: "~/.cargo/registry\n~/.cargo/git\ntarget\n"
   LIBCLANG_PATH_WIN: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
   CODE_SIGNER_PATH_WIN: "%win10sdk%/x64/signtool.exe"
-  CARGO_MAKE_VERSION: 0.35.0
+  CARGO_MAKE_VERSION: 0.35.10
   CARGO_INCREMENTAL: 0
   RUSTFLAGS: "-C debuginfo=0"
   APP_NAME: swift-console

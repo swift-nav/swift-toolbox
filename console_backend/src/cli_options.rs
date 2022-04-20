@@ -169,11 +169,11 @@ pub struct CliOptions {
 
     /// Exit when file connection closes.
     #[clap(long)]
-    pub exit_after: bool,
+    pub exit_after_close: bool,
 
     /// Set the number of seconds after which the app automatically quits.
     #[clap(long)]
-    pub exit_after_secs: Option<f64>,
+    pub exit_after_timeout: Option<f64>,
 
     /// Start console from specific tab.
     #[clap(long)]
@@ -352,7 +352,7 @@ pub fn handle_cli(
         };
     } else if let Some(file) = opt.file.file {
         let filename = file.display().to_string();
-        conn_manager.connect_to_file(filename, RealtimeDelay::On, opt.exit_after);
+        conn_manager.connect_to_file(filename, RealtimeDelay::On, opt.exit_after_close);
     }
     if let Some(ref path) = opt.settings_yaml {
         sbp_settings::setting::load_from_path(path).expect("failed to load settings");

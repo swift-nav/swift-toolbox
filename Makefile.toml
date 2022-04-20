@@ -822,6 +822,17 @@ dependencies = ["set-python-files"]
 command = "${PYTHON}"
 args = ["-m", "pylint", "--output-format=parseable", "@@split(PYTHON_FILES, )"]
 
+[tasks.format-toml]
+description = "Formats all toml files defined in the CARGO_MAKE_FORMAT_TOML_FILES environment variable."
+category = "Development"
+condition = { env_set = ["CARGO_MAKE_FORMAT_TOML_FILES"] }
+install_crate = { crate_name = "taplo-cli", binary = "taplo", test_arg = [
+  "--help",
+] }
+install_crate_args = ["--version", "0.6.0"]
+command = "taplo"
+args = ["format", "${CARGO_MAKE_FORMAT_TOML_FILES}"]
+
 [tasks.toml-format-check]
 # Note format-toml task is defined by cargo-make to use crate taplo-cli, but the version is
 # unspecified.  Task cargo-make-deps-update keeps the dev version in sync with CI.

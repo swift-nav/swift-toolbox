@@ -141,7 +141,7 @@ pub struct CliOptions {
     #[clap(long)]
     pub show_file_connection: bool,
 
-    /// Path to a yaml file containing known piski settings.
+    /// Path to a yaml file containing known piksi settings.
     #[clap(long)]
     pub settings_yaml: Option<PathBuf>,
 
@@ -167,7 +167,7 @@ pub struct CliOptions {
     #[clap(long)]
     pub no_prompts: bool,
 
-    /// Exit when connection closes.
+    /// Exit when file connection closes.
     #[clap(long)]
     pub exit_after: bool,
 

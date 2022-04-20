@@ -1,7 +1,9 @@
 """Frontend module for the Swift Console.
 """
 import argparse
+from datetime import datetime
 import os
+import pickle
 import sys
 import time
 
@@ -22,7 +24,10 @@ from PySide2.QtQml import QQmlComponent, qmlRegisterType
 
 import swiftnav_console.console_resources  # type: ignore # pylint: disable=unused-import
 
-import console_backend.server  # type: ignore  # pylint: disable=import-error,no-name-in-module
+try:
+    import console_backend.server  # type: ignore  # pylint: disable=import-error,no-name-in-module
+except ModuleNotFoundError:
+    pass
 
 from .constants import ApplicationMetadata, ConnectionState, ConnectionType, Keys, Tabs
 
@@ -224,17 +229,36 @@ TAB_LAYOUT = {
 capnp.remove_import_hook()  # pylint: disable=no-member
 
 
-class BackendMessageReceiver(QObject):
-    def __init__(self, app, backend, messages, exit_after_timeout: Optional[int] = None):
+class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attributes
+    def __init__(
+        self,
+        app,
+        backend,
+        messages,
+        exit_after_timeout: Optional[float] = None,
+        record_file: Optional[str] = None,
+        record: bool = False,
+    ):
         super().__init__()
         self._app = app
         self._backend = backend
         self._messages = messages
         self._thread = QThread()
         self._thread.started.connect(self._handle_started)  # pylint: disable=no-member
+        self._reader = (
+            None if record_file is None else open(str(record_file), "rb")  # pylint: disable=consider-using-with
+        )
+        filename = f"console-capnp-{datetime.now().strftime('%Y%m%d-%H%M%S')}.pickle"
+        self._writer = None if not record else open(filename, "ab")  # pylint: disable=consider-using-with
+        self._last_msg_receipt_ns = time.perf_counter_ns()
         self.moveToThread(self._thread)
         self.start_time = None
         self.exit_after_timeout = exit_after_timeout
+        self._receive_messages = (
+            self._receive_messages_prod
+            if (exit_after_timeout is None and record_file is None and not record)
+            else self._receive_messages_debug
+        )
 
     def _handle_started(self):
         QTimer.singleShot(0, self.receive_messages)
@@ -253,10 +277,33 @@ class BackendMessageReceiver(QObject):
         else:
             QTimer.singleShot(0, self.receive_messages)
 
-    def _receive_messages(self):
+    def _receive_messages_debug(self):
         if self.exit_after_timeout is not None and time.time() - self.start_time > self.exit_after_timeout:
             self._app.quit()
+        msg_receipt_time = time.perf_counter_ns()
+        if self._reader is None:
+            buffer = self._backend.fetch_message()
+        else:
+            try:
+                msg = pickle.load(self._reader)
+            except EOFError:
+                return self._app.quit()
+            buffer = msg["data"]
+            if buffer is None:
+                self._app.quit()
+            diff = max((msg_receipt_time - self._last_msg_receipt_ns), 0)
+            if diff < msg["ns"]:
+                time.sleep((msg["ns"] - diff) / 1e9)
+        if self._writer is not None:
+            pickle.dump({"data": buffer, "ns": msg_receipt_time - self._last_msg_receipt_ns}, self._writer)
+        self._last_msg_receipt_ns = msg_receipt_time
+        return self._process_message_buffer(buffer)
+
+    def _receive_messages_prod(self):
         buffer = self._backend.fetch_message()
+        return self._process_message_buffer(buffer)
+
+    def _process_message_buffer(self, buffer):
         if not buffer:
             print("terminating GUI loop", file=sys.stderr)
             return False
@@ -583,6 +630,8 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
 def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     parser = argparse.ArgumentParser(add_help=False, usage=argparse.SUPPRESS)
     parser.add_argument("--exit-after-timeout", type=int, default=None)
+    parser.add_argument("--read-capnp-recording", type=str, default=None)
+    parser.add_argument("--record-capnp-recording", action="store_true")
     parser.add_argument("--show-fileio", action="store_true")
     parser.add_argument("--show-file-connection", action="store_true")
     parser.add_argument("--no-prompts", action="store_true")
@@ -655,8 +704,12 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     engine.objectCreated.connect(handle_qml_load_errors)  # pylint: disable=no-member
 
     capnp_path = get_capnp_path()
-    backend_main = console_backend.server.Server()  # pylint: disable=no-member,c-extension-no-member
-    endpoint_main = backend_main.start()
+    try:
+        backend_main = console_backend.server.Server()  # pylint: disable=no-member,c-extension-no-member
+        endpoint_main = backend_main.start()
+    except NameError:
+        backend_main = None
+        endpoint_main = None
     if found_help_arg:
         return 0
     # Unfortunately it is not possible to access singletons directly using the PySide2 API.
@@ -722,13 +775,17 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
         backend_main,
         messages_main,
         exit_after_timeout=args_main.exit_after_timeout,
+        record_file=args_main.read_capnp_recording,
+        record=args_main.record_capnp_recording,
     )
     backend_msg_receiver.start()
 
     app.exec_()
 
-    endpoint_main.shutdown()
-
+    try:
+        endpoint_main.shutdown()
+    except AttributeError:
+        pass
     backend_msg_receiver.join()
 
     return 0

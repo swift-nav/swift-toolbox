@@ -128,6 +128,7 @@ Item {
                 axisX: advancedImuXAxis
                 color: "transparent"
                 useOpenGL: Globals.useOpenGL
+                markerSize: 0.1
 
                 XYPoint {
                     x: 0

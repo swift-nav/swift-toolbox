@@ -691,34 +691,31 @@ jobs:
             --apiIssuer ${{ secrets.APPLE_ISSUER_ID }}
         if: matrix.os.name == 'macOS'
 
-      - uses: actions/upload-artifact@v2
-        with:
-          name: swift-files.zip
-          path: ./target/release/swift-files.zip
-      # - uses: actions/upload-artifact@v2
-      #   with:
-      #     name: swift-settings_${{ matrix.os.short_name }}
-      #     path: ./target/release/swift-settings${{ matrix.os.exe_suffix }}
+       - uses: actions/upload-artifact@v2
+         with:
+           name: swift-files
+           path: ./target/release/swift-files
 
-      # - name: Add archive to path.
-      #   shell: bash
-      #   run: |
-      #     if [ "$RUNNER_OS" == "Linux" ]; then
-      #         INSTALLER_ARCHIVE=$(find installer -iname "*.deb")
-      #     elif [ "$RUNNER_OS" == "Windows" ]; then
-      #         INSTALLER_ARCHIVE=$(ls installer/installers/Windows/*.exe)
-      #     elif [ "$RUNNER_OS" == "macOS" ]; then
-      #         INSTALLER_ARCHIVE=$(find installer -iname "*.dmg")
-      #     fi
-      #     echo $INSTALLER_ARCHIVE >installer-archive.filename
-      #     echo "INSTALLER_ARCHIVE=$(cat installer-archive.filename)" >>$GITHUB_ENV
+       - name: Add archive to path.
+         shell: bash
+         run: |
+#           if [ "$RUNNER_OS" == "Linux" ]; then
+#               INSTALLER_ARCHIVE=$(find installer -iname "*.deb")
+#           elif [ "$RUNNER_OS" == "Windows" ]; then
+#               INSTALLER_ARCHIVE=$(ls installer/installers/Windows/*.exe)
+#           el
+           if [ "$RUNNER_OS" == "macOS" ]; then
+               SWIFT_FILES=$(find installer -iname "*.zip")
+           fi
+           echo $SWIFT_FILES >swift-files.filename
+           echo "SWIFT_FILES=$(cat swift-files.filename)" >>$GITHUB_ENV
 
-      # - uses: actions/upload-artifact@v2
-      #   with:
-      #     name: ${{ runner.os }}-installer-signed
-      #     path: |
-      #       ${{ env.INSTALLER_ARCHIVE }}
-      #       installer-archive.filename
+       - uses: actions/upload-artifact@v2
+         with:
+           name: ${{ runner.os }}-swift-files-signed
+           path: |
+             ${{ env.SWIFT_FILES }}
+             swift-files.filename
 
   release:
     name: Create Release

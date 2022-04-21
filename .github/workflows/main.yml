@@ -660,25 +660,31 @@ jobs:
         shell: cmd
         run: |
           cd binaries
-          set /p executable=<swift-files
+          set /p executable=<swift-files${{ matrix.os.exe_suffix }}
           "${{ env.CODE_SIGNER_PATH_WIN }}" sign ^
             /debug /v ^
             /n "Swift Navigation, Inc." /a ^
-            /tr http://rfc3161timestamp.globalsign.com/advanced ^
+            /tr https://rfc3161timestamp.globalsign.com/advanced ^
             /td SHA256 %executable%
         if: matrix.os.name == 'Windows'
 
-      - name: Sign Binaries.
+      - name: Zip Binaries.
         shell: bash
         run: |
           cd binaries
           ls
+          7z a -tzip "../swift-files.zip"
+        if: matrix.os.name == 'macOS'
+
+      - name: Sign Binaries.
+        shell: bash
+        run: |
           codesign \
             -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
-            -f --timestamp "swift-files"
+            -f --timestamp "swift-files.zip"
           xcrun altool \
             --notarize-app \
-            --file swift-files\
+            --file swift-files.zip\
             --primary-bundle-id ${{ env.APP_BUNDLE_ID }} \
             --apiKey ${{ secrets.APPLE_KEY_ID }} \
             --apiIssuer ${{ secrets.APPLE_ISSUER_ID }}

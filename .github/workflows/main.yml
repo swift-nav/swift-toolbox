@@ -691,31 +691,31 @@ jobs:
             --apiIssuer ${{ secrets.APPLE_ISSUER_ID }}
         if: matrix.os.name == 'macOS'
 
-       - uses: actions/upload-artifact@v2
-         with:
-           name: swift-files
-           path: ./target/release/swift-files
+      - uses: actions/upload-artifact@v2
+        with:
+          name: swift-files
+          path: ./target/release/swift-files
 
-       - name: Add archive to path.
-         shell: bash
-         run: |
+      - name: Add archive to path.
+        shell: bash
+        run: |
 #           if [ "$RUNNER_OS" == "Linux" ]; then
 #               INSTALLER_ARCHIVE=$(find installer -iname "*.deb")
 #           elif [ "$RUNNER_OS" == "Windows" ]; then
 #               INSTALLER_ARCHIVE=$(ls installer/installers/Windows/*.exe)
 #           el
-           if [ "$RUNNER_OS" == "macOS" ]; then
-               SWIFT_FILES=$(find installer -iname "*.zip")
-           fi
-           echo $SWIFT_FILES >swift-files.filename
-           echo "SWIFT_FILES=$(cat swift-files.filename)" >>$GITHUB_ENV
+          if [ "$RUNNER_OS" == "macOS" ]; then
+              SWIFT_FILES=$(find installer -iname "*.zip")
+          fi
+          echo $SWIFT_FILES >swift-files.filename
+          echo "SWIFT_FILES=$(cat swift-files.filename)" >>$GITHUB_ENV
 
-       - uses: actions/upload-artifact@v2
-         with:
-           name: ${{ runner.os }}-swift-files-signed
-           path: |
-             ${{ env.SWIFT_FILES }}
-             swift-files.filename
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ runner.os }}-swift-files-signed
+          path: |
+            ${{ env.SWIFT_FILES }}
+            swift-files.filename
 
   release:
     name: Create Release

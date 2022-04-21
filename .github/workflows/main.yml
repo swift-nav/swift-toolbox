@@ -285,10 +285,10 @@ jobs:
           echo "LIBCLANG_PATH=$LIBCLANG_PATH_WIN" >>$GITHUB_ENV
         if: matrix.os.name == 'windows-2019'
 
-       - name: Build ${{ runner.os }} Binaries.
-         shell: bash
-         run: |
-           cargo make create-dist
+      - name: Build ${{ runner.os }} Binaries.
+        shell: bash
+        run: |
+          cargo make create-dist
 
       # - name: Create ${{ runner.os }} Installers.
       #   shell: bash

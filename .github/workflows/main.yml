@@ -660,6 +660,7 @@ jobs:
         shell: cmd
         run: |
           cd binaries
+          ls
           set /p executable=<swift-files_${{ matrix.os.short_name }}
           "${{ env.CODE_SIGNER_PATH_WIN }}" sign ^
             /debug /v ^
@@ -674,7 +675,7 @@ jobs:
           cd binaries
           codesign \
             -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
-            -f --timestamp "swift-files_${{ matrix.os.short_name }}"
+            -f --timestamp "binaries/swift-files_${{ matrix.os.short_name }}"
           xcrun altool \
             --notarize-app \
             --file swift-files_${{ matrix.os.short_name }} \

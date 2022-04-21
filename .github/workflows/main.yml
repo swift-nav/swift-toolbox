@@ -660,7 +660,7 @@ jobs:
         shell: cmd
         run: |
           cd binaries
-          set /p executable=<swift-files${{ matrix.os.exe_suffix }}
+          set /p executable=<swift-files_${{ matrix.os.short_name}}${{ matrix.os.exe_suffix }}
           "${{ env.CODE_SIGNER_PATH_WIN }}" sign ^
             /debug /v ^
             /n "Swift Navigation, Inc." /a ^

@@ -678,7 +678,7 @@ jobs:
             -f --timestamp "swift-files"
           xcrun altool \
             --notarize-app \
-            --file swift-files_${{ matrix.os.short_name }} \
+            --file swift-files\
             --primary-bundle-id ${{ env.APP_BUNDLE_ID }} \
             --apiKey ${{ secrets.APPLE_KEY_ID }} \
             --apiIssuer ${{ secrets.APPLE_ISSUER_ID }}

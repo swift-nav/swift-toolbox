@@ -1,8 +1,8 @@
-use anyhow::{anyhow, bail};
+use anyhow::anyhow;
 use capnp::message::Builder;
 use crossbeam::{
     channel::{self, Receiver, Sender},
-    thread,
+    select, thread,
 };
 use glob::glob;
 use lazy_static::lazy_static;
@@ -16,9 +16,9 @@ use sbp::messages::{
 use sbp::SbpString;
 use std::{
     ops::Deref,
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::{Arc, Mutex},
-    time::{Duration, Instant},
+    time::Duration,
 };
 
 use crate::client_sender::BoxedClientSender;
@@ -201,12 +201,13 @@ pub fn update_tab_thread(
                                             }
                                             if update.update_firmware && !update_tab_context.upgrading() && upgrade_confirmed(update_tab_context.clone(), update.serial_prompt_confirm) {
                                                 inner_scope.spawn(|_| {
-                                                    let mut fileio = Fileio::new(link.clone(), msg_sender.clone());
-                                                    upgrade_firmware(
+                                                    if let Err(err) = upgrade_firmware(
                                                         update_tab_context.clone(),
-                                                        &mut fileio,
+                                                        link.clone(),
                                                         msg_sender.clone(),
-                                                    );
+                                                    ) {
+                                                        update_tab_context.fw_log_append(format!("Error starting upgrade: {}", err));
+                                                    }
                                                 });
                                             }
                                             if update.send_file_to_device && !update_tab_context.upgrading() {
@@ -425,15 +426,35 @@ USB Flashdrive Upgrade Procedure
 
 fn upgrade_firmware(
     update_tab_context: UpdateTabContext,
-    fileio: &mut Fileio,
+    link: Link<'static, ()>,
     msg_sender: MsgSender,
-) {
+) -> anyhow::Result<()> {
+    let raw_version = update_tab_context
+        .current_firmware_version()
+        .ok_or_else(|| anyhow!("Could not get current filename!"))?;
+    let current_version = SwiftVersion::parse(&raw_version)?;
+    let filepath = update_tab_context
+        .firmware_local_filepath()
+        .ok_or_else(|| anyhow!("Could not get firmware filepath!"))?;
+
     update_tab_context.set_upgrading(true);
     update_tab_context.fw_log_clear();
-    if let Err(err) = firmware_upgrade(update_tab_context.clone(), fileio, msg_sender) {
+
+    if let Err(err) = firmware_upgrade(
+        msg_sender,
+        link,
+        &filepath,
+        &current_version,
+        |msg| update_tab_context.fw_log_append(msg),
+        |progress| {
+            update_tab_context.fw_log_replace_last(format!("Writing {:.2}%...", progress));
+        },
+    ) {
         update_tab_context.fw_log_append(err.to_string());
     }
+
     update_tab_context.set_upgrading(false);
+    Ok(())
 }
 
 fn firmware_can_upgrade(current: &SwiftVersion, update: &SwiftVersion) -> anyhow::Result<()> {
@@ -454,93 +475,80 @@ fn firmware_can_upgrade(current: &SwiftVersion, update: &SwiftVersion) -> anyhow
     Ok(())
 }
 
-fn firmware_upgrade(
-    update_tab_context: UpdateTabContext,
-    fileio: &mut Fileio,
+fn firmware_upgrade<FLog, FProgress>(
     msg_sender: MsgSender,
-) -> anyhow::Result<()> {
-    if let Some(filepath) = update_tab_context.firmware_local_filepath() {
-        update_tab_context.fw_log_append(format!(
-            "Reading firmware file from path, {}.",
-            filepath.display()
+    link: Link<'static, ()>,
+    filepath: &Path,
+    current_version: &SwiftVersion,
+    log_callback: FLog,
+    progress_callback: FProgress,
+) -> anyhow::Result<()>
+where
+    FLog: Fn(String) + Send + Sync,
+    FProgress: Fn(f64) + Send + Sync,
+{
+    log_callback(format!(
+        "Reading firmware file from path, {}.",
+        filepath.display()
+    ));
+
+    if !filepath.exists() || !filepath.is_file() {
+        return Err(anyhow!(
+            "Firmware filepath is not a file or does not exist."
         ));
-        if !filepath.exists() || !filepath.is_file() {
-            return Err(anyhow!(
-                "Firmware filepath is not a file or does not exist."
-            ));
-        }
-        let update_filename = filepath
-            .file_name()
-            .ok_or_else(|| anyhow!("Could not get update filename!"))?
-            .to_str()
-            .ok_or_else(|| anyhow!("Could not convert update filename!"))?;
-
-        let current_version = update_tab_context
-            .current_firmware_version()
-            .ok_or_else(|| anyhow!("Could not get current firmware name"))?;
-
-        let current = SwiftVersion::parse(&current_version)
-            .map_err(|e| anyhow!("Failed to parse current firmware version: {:?}", e))?;
-
-        let update = SwiftVersion::parse_filename(update_filename)
-            .map_err(|e| anyhow!("Failed to parse new firmware version: {:?}", e))?;
-
-        firmware_can_upgrade(&current, &update)?;
-
-        if let Ok(firmware_blob) = std::fs::File::open(filepath.clone()) {
-            update_tab_context.fw_log_append(String::from("Transferring image to device..."));
-            update_tab_context.fw_log_append(String::from(""));
-            let size = firmware_blob.metadata()?.len() as usize;
-            let mut bytes_written = 0;
-            update_tab_context.fw_log_replace_last("Writing 0.0%...".to_string());
-            match fileio.overwrite_with_progress(
-                String::from(UPGRADE_FIRMWARE_REMOTE_DESTINATION),
-                firmware_blob,
-                |n| {
-                    bytes_written += n;
-                    let progress = (bytes_written as f64) / (size as f64) * 100.0;
-                    update_tab_context.fw_log_replace_last(format!("Writing {:.2}%...", progress));
-                },
-            ) {
-                Ok(_) => {
-                    update_tab_context.fw_log_append(String::from("Image transfer complete."));
-                }
-                Err(err) => {
-                    update_tab_context.fw_log_append(String::from("Image transfer failed."));
-                    update_tab_context.fw_log_append(err.to_string());
-                    return Err(err);
-                }
-            }
-            update_tab_context.fw_log_append(String::from("Committing image to flash..."));
-            update_tab_context.fw_log_append(String::from(""));
-            match firmware_upgrade_commit_to_flash(update_tab_context.clone(), msg_sender.clone()) {
-                Ok(code) => {
-                    if code == 0 {
-                        update_tab_context.fw_log_append(String::from("Upgrade Complete."));
-                        update_tab_context.fw_log_append(String::from("Resetting Piksi..."));
-                        msg_sender.send(MsgReset {
-                            sender_id: None,
-                            flags: 0,
-                        })?;
-                    } else {
-                        update_tab_context.fw_log_append(String::from("Image transfer failed."))
-                    }
-                }
-                _ => update_tab_context.fw_log_append(String::from("Image transfer failed.")),
-            }
-        } else {
-            bail!("Failed to read firmware file, {}.", filepath.display());
-        }
     }
+    let update_filename = filepath
+        .file_name()
+        .ok_or_else(|| anyhow!("Could not get update filename!"))?
+        .to_str()
+        .ok_or_else(|| anyhow!("Could not convert update filename!"))?;
+
+    let update = SwiftVersion::parse_filename(update_filename)
+        .map_err(|e| anyhow!("Failed to parse new firmware version: {:?}", e))?;
+
+    firmware_can_upgrade(current_version, &update)?;
+
+    let firmware_blob = std::fs::File::open(filepath)
+        .map_err(|e| anyhow!("Failed to open firmware file: {:?}", e))?;
+
+    log_callback(String::from("Transferring image to device..."));
+    log_callback(String::from(""));
+
+    let size = firmware_blob.metadata()?.len() as usize;
+
+    let mut bytes_written = 0;
+    progress_callback(0.0);
+
+    let mut fileio = Fileio::new(link.clone(), msg_sender.clone());
+
+    fileio.overwrite_with_progress(
+        String::from(UPGRADE_FIRMWARE_REMOTE_DESTINATION),
+        firmware_blob,
+        |n| {
+            bytes_written += n;
+            let progress = (bytes_written as f64) / (size as f64) * 100.0;
+            progress_callback(progress);
+        },
+    )?;
+
+    log_callback(String::from(
+        "Image transfer complete.\nCommitting image to flash...\n",
+    ));
+
+    firmware_upgrade_commit_to_flash(link, msg_sender.clone())?;
+    log_callback(String::from("Upgrade Complete."));
+    log_callback(String::from("Resetting Piksi..."));
+    msg_sender.send(MsgReset {
+        sender_id: None,
+        flags: 0,
+    })?;
+
     Ok(())
 }
 
-fn firmware_upgrade_commit_to_flash(
-    mut update_tab_context: UpdateTabContext,
-    msg_sender: MsgSender,
-) -> Result<i32> {
+fn firmware_upgrade_commit_to_flash(link: Link<'static, ()>, msg_sender: MsgSender) -> Result<()> {
     let sequence = new_sequence();
-    update_tab_context.set_upgrade_sequence(Some(sequence));
+
     msg_sender.send(MsgCommandReq {
         sender_id: None,
         sequence,
@@ -549,18 +557,30 @@ fn firmware_upgrade_commit_to_flash(
             UPGRADE_FIRMWARE_TOOL, UPGRADE_FIRMWARE_REMOTE_DESTINATION
         )),
     })?;
-    let start_time = Instant::now();
-    let timeout = Duration::from_secs(UPGRADE_FIRMWARE_TIMEOUT_SEC);
-    while update_tab_context.upgrading() && start_time.elapsed() < timeout {
-        std::thread::sleep(Duration::from_millis(100));
-    }
-    let code = if let Some(ret_code) = update_tab_context.upgrade_ret() {
-        ret_code
-    } else {
-        update_tab_context.fw_log_append(String::from("Upgrade process timed out."));
-        -255
+
+    let (finished_tx, finished_rx) = channel::unbounded();
+
+    let key = link.register(move |msg: MsgCommandResp| {
+        if msg.sequence == sequence {
+            finished_tx.send(msg.code == 0).expect("Sending failed");
+        }
+    });
+
+    let res = select! {
+        recv(finished_rx) -> val => {
+            if val.expect("Receiving failed") {
+                Ok(())
+            } else {
+                Err(anyhow!("Failed to commit image to flash."))
+            }
+        }
+        default(Duration::from_secs(UPGRADE_FIRMWARE_TIMEOUT_SEC)) => {
+            Err(anyhow!("Firmware upgrade timed out"))
+        }
     };
-    Ok(code)
+
+    link.unregister(key);
+    res
 }
 
 fn send_file_to_device(update_tab_context: UpdateTabContext, fileio: &mut Fileio) {

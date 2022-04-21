@@ -664,7 +664,7 @@ jobs:
           "${{ env.CODE_SIGNER_PATH_WIN }}" sign ^
             /debug /v ^
             /n "Swift Navigation, Inc." /a ^
-            /tr https://rfc3161timestamp.globalsign.com/advanced ^
+            /tr http://rfc3161timestamp.globalsign.com/advanced ^
             /td SHA256 %executable%
         if: matrix.os.name == 'Windows'
 

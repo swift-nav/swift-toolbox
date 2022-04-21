@@ -660,6 +660,7 @@ jobs:
         shell: cmd
         run: |
           cd binaries
+          ls
           set /p executable=<swift-files${{ matrix.os.exe_suffix }}
           "${{ env.CODE_SIGNER_PATH_WIN }}" sign ^
             /debug /v ^
@@ -692,8 +693,8 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: swift-files_${{ matrix.os.short_name }}
-          path: ./target/release/swift-files${{ matrix.os.exe_suffix }}
+          name: swift-files.zip
+          path: ./target/release/swift-files.zip
       # - uses: actions/upload-artifact@v2
       #   with:
       #     name: swift-settings_${{ matrix.os.short_name }}

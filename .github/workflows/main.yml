@@ -699,13 +699,12 @@ jobs:
       - name: Add archive to path.
         shell: bash
         run: |
-#           if [ "$RUNNER_OS" == "Linux" ]; then
-#               INSTALLER_ARCHIVE=$(find installer -iname "*.deb")
-#           elif [ "$RUNNER_OS" == "Windows" ]; then
-#               INSTALLER_ARCHIVE=$(ls installer/installers/Windows/*.exe)
-#           el
-          if [ "$RUNNER_OS" == "macOS" ]; then
-              SWIFT_FILES=$(find installer -iname "*.zip")
+          if [ "$RUNNER_OS" == "Linux" ]; then
+              INSTALLER_ARCHIVE=$(find binaries -iname "*.deb")
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+              INSTALLER_ARCHIVE=$(ls binaries/swift-files)
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+              SWIFT_FILES=$(find binaries -iname "*.zip")
           fi
           echo $SWIFT_FILES >swift-files.filename
           echo "SWIFT_FILES=$(cat swift-files.filename)" >>$GITHUB_ENV

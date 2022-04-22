@@ -1,1 +1,4 @@
 "console_backend/tests/data/*" filter=lfs diff=lfs merge=lfs -text
+PySide2-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_universal2.whl filter=lfs diff=lfs merge=lfs -text
+shiboken2-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_universal2.whl filter=lfs diff=lfs merge=lfs -text
+shiboken2_generator-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_universal2.whl filter=lfs diff=lfs merge=lfs -text

@@ -309,6 +309,9 @@ cp . ../../../py39
 cd ../../../
 exec --fail-on-error ${PYTHON} ./get-pip.py
 exec --fail-on-error ${PYTHON} -m pip install wheel flit . ".[test]"
+exec --fail-on-error ${PYTHON} -m pip install shiboken2-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_universal2.whl
+exec --fail-on-error ${PYTHON} -m pip install shiboken2_generator-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_universal2.whl
+exec --fail-on-error ${PYTHON} -m pip install PySide2-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_universal2.whl
 cm_run_task generate-resources
 '''
 
@@ -386,14 +389,12 @@ cp target/x86_64-pc-windows-msvc/release/console_backend.pdb py39-dist/Lib/site-
 
 [tasks.build-dist-install-frontend-wheel]
 dependencies = ["build-frontend-wheel"]
-command = "${DIST_PYTHON}"
-args = [
-  "-m",
-  "pip",
-  "install",
-  "./dist/swiftnav_console-0.1.0-py3-none-any.whl",
-  "--force-reinstall",
-]
+script = '''
+${DIST_PYTHON} -m pip install ./dist/swiftnav_console-0.1.0-py3-none-any.whl --force-reinstall
+${DIST_PYTHON} -m pip install shiboken2-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_universal2.whl
+${DIST_PYTHON} -m pip install shiboken2_generator-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_universal2.whl
+${DIST_PYTHON} -m pip install PySide2-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_universal2.whl
+'''
 
 [tasks.build-dist-install-backend-wheel]
 dependencies = ["build-backend-wheel"]

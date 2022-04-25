@@ -67,7 +67,7 @@ logfn=./$(uniqueFn "debug_intermittent_startup_crash" "log")
 exec 3>&1 4>&2
 exec 1> >(tee $logfn) 2>&1
 
-export SWIFT_CONSOLE_ARGS="--log-console --file ../console_backend/tests/data/ins_updates.sbp --exit-after-secs=10"
+export SWIFT_CONSOLE_ARGS="--log-console --file ../console_backend/tests/data/ins_updates.sbp --exit-after-timeout=10"
 
 trap 'exec 2>&4 1>&3; echo Ctrl-C pressed, exiting loop. ; exit' SIGINT SIGTERM
 

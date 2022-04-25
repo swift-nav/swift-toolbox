@@ -500,14 +500,14 @@ dependencies = ["build-pyside"]
 script_runner = "@duckscript"
 script = '''
 exec --fail-on-error ${DIST_PYTHON} -m pip install setuptools wheel packaging
-exec --fail-on-error ${DIST_PYTHON} -m pip install ${WORKSPACE}/pyside-setup/dist/${SHIBOKEN_WHEEL} ${WORKSPACE}/pyside-setup/dist/${PYSIDE_WHEEL}
+exec --fail-on-error ${DIST_PYTHON} -m pip install --force-reinstall ${WORKSPACE}/pyside-setup/dist/${SHIBOKEN_WHEEL} ${WORKSPACE}/pyside-setup/dist/${PYSIDE_WHEEL}
 '''
 
 [tasks.build-install-pyside]
 dependencies = ["build-pyside"]
 script_runner = "@duckscript"
 script = '''
-exec --fail-on-error ${PYTHON} -m pip install ${WORKSPACE}/pyside-setup/dist/${SHIBOKEN_WHEEL} ${WORKSPACE}/pyside-setup/dist/${PYSIDE_WHEEL}
+exec --fail-on-error ${PYTHON} -m pip install --force-reinstall ${WORKSPACE}/pyside-setup/dist/${SHIBOKEN_WHEEL} ${WORKSPACE}/pyside-setup/dist/${PYSIDE_WHEEL}
 '''
 
 [tasks.build-dist]

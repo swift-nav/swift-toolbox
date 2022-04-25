@@ -24,12 +24,9 @@ from PySide2.QtQml import QQmlComponent, qmlRegisterType
 
 import swiftnav_console.console_resources  # type: ignore # pylint: disable=unused-import
 
-try:
-    import console_backend.server  # type: ignore  # pylint: disable=import-error,no-name-in-module
-except ModuleNotFoundError:
-    pass
-
 from .constants import ApplicationMetadata, ConnectionState, ConnectionType, Keys, Tabs
+
+from .backend_importer import BackendImporter
 
 from .backend_request_broker import BackendRequestBroker
 
@@ -632,6 +629,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     parser.add_argument("--exit-after-timeout", type=int, default=None)
     parser.add_argument("--read-capnp-recording", type=str, default=None)
     parser.add_argument("--record-capnp-recording", action="store_true")
+    parser.add_argument("--debug-with-no-backend", action="store_true")
     parser.add_argument("--show-fileio", action="store_true")
     parser.add_argument("--show-file-connection", action="store_true")
     parser.add_argument("--no-prompts", action="store_true")
@@ -645,6 +643,9 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     parser.add_argument("--width", type=int)
 
     args_main, unknown_args = parser.parse_known_args()
+    if args_main.debug_with_no_backend and args_main.read_capnp_recording is None:
+        parser.error("The --debug-with-no-backend argument requires the --read-capnp-recording argument.")
+
     found_help_arg = False
     for arg in unknown_args:
         if arg in HELP_CLI_ARGS:
@@ -704,12 +705,9 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     engine.objectCreated.connect(handle_qml_load_errors)  # pylint: disable=no-member
 
     capnp_path = get_capnp_path()
-    try:
-        backend_main = console_backend.server.Server()  # pylint: disable=no-member,c-extension-no-member
-        endpoint_main = backend_main.start()
-    except NameError:
-        backend_main = None
-        endpoint_main = None
+    backend_main = BackendImporter(use_fake=args_main.debug_with_no_backend).Server()
+    endpoint_main = backend_main.start()
+
     if found_help_arg:
         return 0
     # Unfortunately it is not possible to access singletons directly using the PySide2 API.
@@ -782,10 +780,8 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
 
     app.exec_()
 
-    try:
-        endpoint_main.shutdown()
-    except AttributeError:
-        pass
+    endpoint_main.shutdown()
+
     backend_msg_receiver.join()
 
     return 0

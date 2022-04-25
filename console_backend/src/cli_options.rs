@@ -125,6 +125,11 @@ pub struct CliOptions {
     #[clap(long)]
     pub read_capnp_recording: Option<PathBuf>,
 
+    /// Run application without the backend. Useful for debugging.
+    /// This mode must be run with a capnp recording file.
+    #[clap(long, requires = "read-capnp-recording")]
+    pub debug_with_no_backend: bool,
+
     /// Set log directory.
     #[clap(long)]
     pub log_dirname: Option<String>,

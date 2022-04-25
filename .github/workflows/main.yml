@@ -631,12 +631,15 @@ jobs:
     needs:
       - build
       - frontend_bench
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
+#    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
     strategy:
       matrix:
         os:
           - {name: macOS, exe_suffix: "", short_name: "macos", upload_suffix: ".zip"}
           - {name: Windows, exe_suffix: ".exe", short_name: "windows", upload_suffix: ".exe"}
+        type:
+          - "files"
+          - "settings"
     runs-on: [self-hosted, '${{ matrix.os.name }}', code-signer]
     steps:
       - name: Store git tag vars.
@@ -652,7 +655,7 @@ jobs:
 
       - uses: actions/download-artifact@v2
         with:
-          name: swift-files_${{ matrix.os.short_name }}
+          name: swift-${{ matrix.type }}_${{ matrix.os.short_name }}
           path: |
             binaries
 
@@ -660,7 +663,7 @@ jobs:
         shell: bash
         working-directory: binaries
         run: |
-          mv swift-files${{ matrix.os.exe_suffix }} swift-files_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
+          mv swift-${{ matrix.type }}${{ matrix.os.exe_suffix }} swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
 
       - name: Sign Binaries.
         shell: cmd
@@ -669,8 +672,8 @@ jobs:
             /debug /v ^
             /n "Swift Navigation, Inc." /a ^
             /tr http://rfc3161timestamp.globalsign.com/advanced ^
-            /td SHA256 binaries/swift-files_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
-          mv binaries/swift-files_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }} .
+            /td SHA256 binaries/swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
+          mv binaries/swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }} .
         if: matrix.os.name == 'Windows'
 
       - name: Sign Binaries.
@@ -681,14 +684,14 @@ jobs:
             -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
             --timestamp \
             --options=runtime \
-            swift-files_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
+            swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
         if: matrix.os.name == 'macOS'
 
       - name: Zip Mac Binaries.
         working-directory: binaries
         shell: bash
         run: |
-          7z a -tzip "../swift-files_${{ env.VERSION }}_${{ matrix.os.short_name }}.zip"
+          7z a -tzip "../swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}.zip"
         if: matrix.os.name == 'macOS'
 
       - name: Sign Binaries.
@@ -696,10 +699,10 @@ jobs:
         run: |
           codesign \
             -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
-            -f --timestamp "swift-files_${{ env.VERSION }}_${{ matrix.os.short_name }}.zip"
+            -f --timestamp "swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}.zip"
           xcrun altool \
             --notarize-app \
-            --file swift-files_${{ env.VERSION }}_${{ matrix.os.short_name }}.zip\
+            --file swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}.zip\
             --primary-bundle-id ${{ env.APP_BUNDLE_ID }} \
             --apiKey ${{ secrets.APPLE_KEY_ID }} \
             --apiIssuer ${{ secrets.APPLE_ISSUER_ID }}
@@ -707,12 +710,8 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: swift-files_${{ matrix.os.short_name }}-signed
-          path: swift-files_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.upload_suffix }}
-      # - uses: actions/upload-artifact@v2
-      #   with:
-      #     name: swift-settings_${{ matrix.os.short_name }}-signed
-      #     path: ./target/release/swift-settings${{ matrix.os.exe_suffix }}${{ matrix.os.upload_suffix }}
+          name: swift-${{ matrix.type }}_${{ matrix.os.short_name }}-signed
+          path: swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.upload_suffix }}
 
   release:
     name: Create Release
@@ -740,7 +739,7 @@ jobs:
       - name: Pull Windows swift-settings
         uses: actions/download-artifact@v2
         with:
-          name: swift-settings_windows
+          name: swift-settings_windows-signed
           path: windows
       - name: Pull Linux Installer
         uses: actions/download-artifact@v2
@@ -770,7 +769,7 @@ jobs:
       - name: Pull macOS swift-settings
         uses: actions/download-artifact@v2
         with:
-          name: swift-settings_macos
+          name: swift-settings_macos-signed
           path: macos
       - name: Prepare Release
         shell: bash

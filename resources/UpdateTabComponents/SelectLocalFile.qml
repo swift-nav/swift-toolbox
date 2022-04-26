@@ -1,9 +1,10 @@
 import "../BaseComponents"
 import "../Constants"
-import QtQuick 2.15
-import QtQuick.Controls 2.15
+import QtQuick
+import QtQuick.Controls
 import QtQuick.Dialogs
-import QtQuick.Layouts 1.15
+import QtQuick.Layouts
+import Qt.labs.platform as LP
 
 Item {
     property alias localFileText: localFileTextInput.text
@@ -73,7 +74,7 @@ Item {
 
             visible: false
             title: "Please choose a binary."
-            currentFolder: StandardPaths.standardLocations(StandardPaths.HomeLocation)[0]
+            currentFolder: LP.StandardPaths.standardLocations(LP.StandardPaths.HomeLocation)[0]
             fileMode: FileDialog.OpenFile
             nameFilters: ["Binary Image Set (*.bin)"]
             onAccepted: {

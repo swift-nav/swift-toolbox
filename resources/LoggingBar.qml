@@ -1,11 +1,12 @@
 import "BaseComponents"
 import "Constants"
-import QtCharts 2.2
-import QtQuick 2.5
-import QtQuick.Controls 2.2
+import QtCharts
+import QtQuick
+import QtQuick.Controls
 import QtQuick.Dialogs
-import QtQuick.Layouts 1.15
-import SwiftConsole 1.0
+import QtQuick.Layouts
+import Qt.labs.platform as LP
+import SwiftConsole
 
 Rectangle {
     property variant previous_folders: []
@@ -222,7 +223,7 @@ Rectangle {
 
             visible: false
             title: "Please choose a folder."
-            currentFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+            currentFolder: LP.StandardPaths.writableLocation(LP.StandardPaths.HomeLocation)
             fileMode: FileDialog.SaveFile
             onAccepted: {
                 var filepath = Utils.fileUrlToString(fileDialog.folder);

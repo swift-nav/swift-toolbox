@@ -1,9 +1,9 @@
 import "BaseComponents"
 import "Constants"
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.15
-import SwiftConsole 1.0
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import SwiftConsole
 
 Item {
     property string tcp_ip: "TCP/IP"
@@ -482,7 +482,7 @@ Item {
                 repeat: true
                 onTriggered: {
                     connection_model.fill_data(connectionData);
-                    if (!connectionData.available_baudrates.length)
+                    if (!connectionData.available_baudrates || !connectionData.available_baudrates.length)
                         return ;
 
                     if (!available_baudrates.length || !available_flows.length) {

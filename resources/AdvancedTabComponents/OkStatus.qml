@@ -1,5 +1,4 @@
 import "../Constants"
-import QtGraphicalEffects 1.15
 import QtQuick 2.5
 import QtQuick.Controls 2.15
 
@@ -14,12 +13,12 @@ Item {
         source: Constants.advancedImu.okStatusPath
         antialiasing: Globals.useAntiAliasing
 
-        ColorOverlay {
-            anchors.fill: parent
-            source: parent
-            color: Constants.advancedImu.okStatusColor
-            antialiasing: Globals.useAntiAliasing
-        }
+//        ColorOverlay {
+//            anchors.fill: parent
+//            source: parent
+//            color: Constants.advancedImu.okStatusColor
+//            antialiasing: Globals.useAntiAliasing
+//        }
 
     }
 

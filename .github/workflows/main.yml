@@ -631,13 +631,13 @@ jobs:
     needs:
       - build
       - frontend_bench
-#    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
     strategy:
       matrix:
         os:
           - {name: macOS, exe_suffix: "", short_name: "macos", upload_suffix: ".zip"}
           - {name: Windows, exe_suffix: ".exe", short_name: "windows", upload_suffix: ".exe"}
-          - {name: Linux, exe_suffix: "", short_name: "linux", upload_suffix: ".zip"}
+          - {name: ubuntu-18.04, exe_suffix: "", short_name: "linux", upload_suffix: ".zip"}
         type:
           - "files"
           - "settings"
@@ -776,8 +776,6 @@ jobs:
       - name: Prepare Release
         shell: bash
         run: |
-          mv linux/swift-files linux/swift-files_${{ env.VERSION }}_linux
-          mv linux/swift-settings linux/swift-settings_${{ env.VERSION }}_linux
           echo "WINDOWS_ARCHIVE=$(cat windows/installer-archive.filename)" >>$GITHUB_ENV
           echo "LINUX_ARCHIVE=$(cat linux/installer-archive.filename)" >>$GITHUB_ENV
           echo "MACOS_ARCHIVE=$(cat macos/installer-archive.filename)" >>$GITHUB_ENV
@@ -790,10 +788,10 @@ jobs:
             windows/swift-files_${{ env.VERSION }}_windows.exe
             windows/swift-settings_${{ env.VERSION }}_windows.exe
             linux/${{ env.LINUX_ARCHIVE }}
-            linux/swift-files_${{ env.VERSION }}_linux
-            linux/swift-settings_${{ env.VERSION }}_linux
+            linux/swift-files_${{ env.VERSION }}_linux.zip
+            linux/swift-settings_${{ env.VERSION }}_linux.zip
             macos/${{ env.MACOS_ARCHIVE }}
             macos/swift-files_${{ env.VERSION }}_macos.zip
-            macos/swift-settings_${{ env.VERSION }}_macos
+            macos/swift-settings_${{ env.VERSION }}_macos.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

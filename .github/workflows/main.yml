@@ -637,7 +637,7 @@ jobs:
         os:
           - {name: macOS, exe_suffix: "", short_name: "macos", upload_suffix: ".zip"}
           - {name: Windows, exe_suffix: ".exe", short_name: "windows", upload_suffix: ".exe"}
-          - {name: ubuntu-18.04, exe_suffix: "", short_name: "linux", upload_suffix: ".zip"}
+          - {name: Linux, exe_suffix: "", short_name: "linux", upload_suffix: ".zip"}
         type:
           - "files"
           - "settings"
@@ -751,12 +751,12 @@ jobs:
       - name: Pull Linux swift-files
         uses: actions/download-artifact@v2
         with:
-          name: swift-files_linux
+          name: swift-files_linux-signed
           path: linux
       - name: Pull Linux swift-settings
         uses: actions/download-artifact@v2
         with:
-          name: swift-settings_linux
+          name: swift-settings_linux-signed
           path: linux
       - name: Pull macOS Installer
         uses: actions/download-artifact@v2

@@ -637,6 +637,7 @@ jobs:
         os:
           - {name: macOS, exe_suffix: "", short_name: "macos", upload_suffix: ".zip"}
           - {name: Windows, exe_suffix: ".exe", short_name: "windows", upload_suffix: ".exe"}
+          - {name: Linux, exe_suffix: "", short_name: "linux", upload_suffix: ".zip"}
         type:
           - "files"
           - "settings"
@@ -687,12 +688,13 @@ jobs:
             swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
         if: matrix.os.name == 'macOS'
 
-      - name: Zip Mac Binaries.
+      - name: Zip Binaries.
         working-directory: binaries
         shell: bash
         run: |
+          chmod +x "swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}"
           7z a -tzip "../swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}.zip"
-        if: matrix.os.name == 'macOS'
+        if: matrix.os.name != 'Windows'
 
       - name: Sign Binaries.
         shell: bash
@@ -774,10 +776,8 @@ jobs:
       - name: Prepare Release
         shell: bash
         run: |
-          mv windows/swift-settings.exe windows/swift-settings_${{ env.VERSION }}_windows.exe
           mv linux/swift-files linux/swift-files_${{ env.VERSION }}_linux
           mv linux/swift-settings linux/swift-settings_${{ env.VERSION }}_linux
-          mv macos/swift-settings macos/swift-settings_${{ env.VERSION }}_macos
           echo "WINDOWS_ARCHIVE=$(cat windows/installer-archive.filename)" >>$GITHUB_ENV
           echo "LINUX_ARCHIVE=$(cat linux/installer-archive.filename)" >>$GITHUB_ENV
           echo "MACOS_ARCHIVE=$(cat macos/installer-archive.filename)" >>$GITHUB_ENV

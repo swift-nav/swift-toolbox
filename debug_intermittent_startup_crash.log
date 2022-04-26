@@ -1,0 +1,8 @@
+Logging to ./debug_intermittent_startup_crash.log
+lldbpy_path == /var/folders/hb/l5gg_s816gd15sl9_dk9hvpw0000gn/T//intmt_startup_crashK0zb5
+
+
+Once lldb starts, run the following (it will be in your clipboard so you can just paste):
+script intmt_startup_crashK0zb5.run("--log-console", "--file", "../console_backend/tests/data/ins_updates.sbp", "--exit-after-secs=10")
+
+

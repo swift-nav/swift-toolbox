@@ -1,7 +1,7 @@
 import "../Constants"
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import SwiftConsole 1.0
+import QtQuick
+import QtQuick.Controls
+import SwiftConsole
 
 TableView {
     id: tableView

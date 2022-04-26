@@ -1,12 +1,12 @@
 import "BaseComponents"
 import "Constants"
 import Qt.labs.platform as LP
-import QtQuick 2.15
-import QtQuick.Controls 2.15
+import QtQuick
+import QtQuick.Controls
 import QtQuick.Dialogs
-import QtQuick.Layouts 1.15
+import QtQuick.Layouts
 import "SettingsTabComponents" as SettingsTabComponents
-import SwiftConsole 1.0
+import SwiftConsole
 
 MainTab {
     id: settingsTab

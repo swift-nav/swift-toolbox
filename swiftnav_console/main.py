@@ -782,7 +782,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     )
     backend_msg_receiver.start()
 
-    app.exec_()
+    app.exec()
 
     try:
         endpoint_main.shutdown()

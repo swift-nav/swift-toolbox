@@ -1,0 +1,205 @@
+use std::{path::Path, time::Duration};
+
+use anyhow::anyhow;
+use crossbeam::{channel, select};
+use regex::Regex;
+use sbp::{
+    link::Link,
+    messages::{
+        logging::MsgLog,
+        piksi::{MsgCommandReq, MsgCommandResp, MsgReset},
+    },
+    SbpString,
+};
+
+use crate::{
+    constants::FIRMWARE_V2,
+    fileio::{new_sequence, Fileio},
+    swift_version::SwiftVersion,
+    types::{MsgSender, Result},
+};
+
+const UPGRADE_FIRMWARE_REMOTE_DESTINATION: &str = "upgrade.image_set.bin";
+const UPGRADE_FIRMWARE_TOOL: &str = "upgrade_tool";
+const UPGRADE_WHITELIST: &[&str] = &[
+    "ok",
+    "writing.*",
+    "erasing.*",
+    r"\s*[0-9]* % complete",
+    "Error.*",
+    "error.*",
+    ".*Image.*",
+    ".*upgrade.*",
+    "Warning:*",
+    ".*install.*",
+    "upgrade completed successfully",
+];
+
+const UPGRADE_FIRMWARE_TIMEOUT_SEC: u64 = 600;
+
+pub fn firmware_update<LogCallback, ProgressCallback>(
+    link: Link<'static, ()>,
+    msg_sender: MsgSender,
+    filepath: &Path,
+    current_version: &SwiftVersion,
+    log_callback: LogCallback,
+    progress_callback: ProgressCallback,
+) -> anyhow::Result<()>
+where
+    LogCallback: Fn(String) + Sync + Send + Clone + 'static,
+    ProgressCallback: Fn(f64) + Sync + Send + 'static,
+{
+    let msg_log_callback = log_callback.clone();
+    let key = link.register(move |msg: MsgLog| {
+        handle_log_msg(msg, &msg_log_callback);
+    });
+
+    // Following is surrounded in a closure, to avoid forgetting to unregister the callback from the link
+    let res = (|| {
+        log_callback(format!(
+            "Reading firmware file from path, {}.",
+            filepath.display()
+        ));
+
+        if !filepath.exists() || !filepath.is_file() {
+            return Err(anyhow!(
+                "Firmware filepath is not a file or does not exist."
+            ));
+        }
+        let update_filename = filepath
+            .file_name()
+            .ok_or_else(|| anyhow!("Could not get update filename!"))?
+            .to_str()
+            .ok_or_else(|| anyhow!("Could not convert update filename!"))?;
+
+        let update = SwiftVersion::parse_filename(update_filename)
+            .map_err(|e| anyhow!("Failed to parse new firmware version: {:?}", e))?;
+
+        firmware_can_upgrade(current_version, &update)?;
+
+        let firmware_blob = std::fs::File::open(filepath)
+            .map_err(|e| anyhow!("Failed to open firmware file: {:?}", e))?;
+
+        log_callback(String::from("Transferring image to device..."));
+        log_callback(String::from(""));
+
+        let size = firmware_blob.metadata()?.len() as usize;
+
+        let mut bytes_written = 0;
+        progress_callback(0.0);
+
+        let mut fileio = Fileio::new(link.clone(), msg_sender.clone());
+
+        fileio.overwrite_with_progress(
+            String::from(UPGRADE_FIRMWARE_REMOTE_DESTINATION),
+            firmware_blob,
+            |n| {
+                bytes_written += n;
+                let progress = (bytes_written as f64) / (size as f64) * 100.0;
+                progress_callback(progress);
+            },
+        )?;
+
+        log_callback(String::from("Image transfer complete."));
+
+        log_callback(String::from("Committing image to flash..."));
+
+        firmware_upgrade_commit_to_flash(link.clone(), msg_sender.clone())?;
+        log_callback(String::from("Upgrade Complete."));
+        log_callback(String::from("Resetting Piksi..."));
+        msg_sender.send(MsgReset {
+            sender_id: None,
+            flags: 0,
+        })?;
+
+        Ok(())
+    })();
+
+    link.unregister(key);
+
+    res
+}
+
+fn firmware_upgrade_commit_to_flash(link: Link<'static, ()>, msg_sender: MsgSender) -> Result<()> {
+    let sequence = new_sequence();
+
+    msg_sender.send(MsgCommandReq {
+        sender_id: None,
+        sequence,
+        command: SbpString::from(format!(
+            "{} {}",
+            UPGRADE_FIRMWARE_TOOL, UPGRADE_FIRMWARE_REMOTE_DESTINATION
+        )),
+    })?;
+
+    let (finished_tx, finished_rx) = channel::unbounded();
+
+    let key = link.register(move |msg: MsgCommandResp| {
+        if msg.sequence == sequence {
+            finished_tx.send(msg.code == 0).expect("Sending failed");
+        }
+    });
+
+    let res = select! {
+        recv(finished_rx) -> val => {
+            if val.expect("Receiving failed") {
+                Ok(())
+            } else {
+                Err(anyhow!("Failed to commit image to flash."))
+            }
+        }
+        default(Duration::from_secs(UPGRADE_FIRMWARE_TIMEOUT_SEC)) => {
+            Err(anyhow!("Firmware upgrade timed out"))
+        }
+    };
+
+    link.unregister(key);
+    res
+}
+
+fn handle_log_msg<LogCallback>(msg: MsgLog, log_callback: &LogCallback)
+where
+    LogCallback: Fn(String) + Sync + Send + Clone + 'static,
+{
+    for regex in UPGRADE_WHITELIST.iter() {
+        let text = msg.text.to_string();
+        if let Ok(reg) = Regex::new(regex) {
+            if reg.captures(&text).is_some() {
+                let text: String = text
+                    .chars()
+                    .map(|x| match x {
+                        '\r' => '\n',
+                        _ => x,
+                    })
+                    .collect();
+                let text = text.split('\n').collect::<Vec<&str>>();
+                let final_text = if text.len() > 1 {
+                    // upgrade tool deliminates lines in stoud with \r, we want penultimate line that is complete to show
+                    text[text.len() - 2]
+                } else {
+                    // If there is only one line, we show that
+                    text[text.len() - 1]
+                };
+                log_callback(final_text.to_string());
+            }
+        }
+    }
+}
+
+fn firmware_can_upgrade(current: &SwiftVersion, update: &SwiftVersion) -> anyhow::Result<()> {
+    if current.is_dev() || update.is_dev() {
+        return Ok(());
+    }
+
+    if *current >= *FIRMWARE_V2 {
+        return Ok(());
+    }
+
+    if *current < *FIRMWARE_V2 && *update != *FIRMWARE_V2 && *update > *FIRMWARE_V2 {
+        return Err(anyhow!(
+            "Upgrading to firmware v2.1.0 or later requires that the device be running firmware v2.0.0 or later."
+        ));
+    }
+
+    Ok(())
+}

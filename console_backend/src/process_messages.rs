@@ -5,12 +5,11 @@ use sbp::{
     link::LinkSource,
     messages::{
         imu::{MsgImuAux, MsgImuRaw},
-        logging::MsgLog,
         mag::MsgMagRaw,
         navigation::{MsgAgeCorrections, MsgPosLlhCov, MsgUtcTime, MsgVelNed},
         observation::{MsgObsDepA, MsgSvAzEl},
         orientation::{MsgAngularRate, MsgBaselineHeading, MsgOrientEuler},
-        piksi::{MsgCommandResp, MsgDeviceMonitor, MsgNetworkStateResp, MsgThreadState},
+        piksi::{MsgDeviceMonitor, MsgNetworkStateResp, MsgThreadState},
         system::{
             MsgCsacTelemetry, MsgCsacTelemetryLabels, MsgHeartbeat, MsgInsStatus, MsgInsUpdates,
             MsgStartup,
@@ -23,7 +22,6 @@ use sbp::{
 use crate::client_sender::BoxedClientSender;
 use crate::connection::Connection;
 use crate::errors::{PROCESS_MESSAGES_FAILURE, UNABLE_TO_CLONE_UPDATE_SHARED};
-use crate::log_panel::handle_log_msg;
 use crate::settings_tab;
 use crate::shared_state::SharedState;
 use crate::types::{
@@ -121,9 +119,6 @@ fn register_events(link: sbp::link::Link<Tabs>) {
     });
     link.register(|tabs: &Tabs, msg: MsgBaselineHeading| {
         tabs.baseline.lock().unwrap().handle_baseline_heading(msg);
-    });
-    link.register(|tabs: &Tabs, msg: MsgCommandResp| {
-        tabs.update.lock().unwrap().handle_command_resp(msg);
     });
     link.register(|tabs: &Tabs, msg: MsgCsacTelemetry| {
         tabs.advanced_system_monitor
@@ -264,10 +259,6 @@ fn register_events(link: sbp::link::Link<Tabs>) {
     link.register(|tabs: &Tabs, msg: MsgUtcTime| {
         tabs.baseline.lock().unwrap().handle_utc_time(msg.clone());
         tabs.solution.lock().unwrap().handle_utc_time(msg);
-    });
-    link.register(|tabs: &Tabs, msg: MsgLog| {
-        tabs.update.lock().unwrap().handle_log_msg(msg.clone());
-        handle_log_msg(msg);
     });
     link.register(|tabs: &Tabs, msg: Sbp| {
         tabs.main.lock().unwrap().serialize_sbp(&msg);

@@ -16,6 +16,7 @@ pub mod date_conv;
 pub mod errors;
 pub mod fft_monitor;
 pub mod fileio;
+pub mod firmware_update;
 pub mod formatters;
 pub mod fusion_status_flags;
 pub mod log_panel;

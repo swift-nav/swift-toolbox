@@ -1,4 +1,4 @@
-from PySide2.QtCore import Property, Slot, Signal, QObject, QFile, QIODevice, QTextStream
+from PySide6.QtCore import Property, Slot, Signal, QObject, QFile, QIODevice, QTextStream
 import swiftnav_console.console_resources  # type: ignore # pylint: disable=unused-import
 
 

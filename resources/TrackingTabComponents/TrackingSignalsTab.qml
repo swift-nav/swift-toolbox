@@ -147,7 +147,7 @@ Item {
 
                 }
                 Layout.margins: 0
-                Layout.rowSpan: parent.rows == 0 ? 1 : parent.rows
+                Layout.rowSpan: parent.rows <= 0 ? 1 : parent.rows
                 tristate: true
                 checkState: (parent.numChecked == trackingSignalsCbRepeater.count ? Qt.Checked : parent.numChecked > 0 ? Qt.PartiallyChecked : Qt.Unchecked)
                 text: "All"

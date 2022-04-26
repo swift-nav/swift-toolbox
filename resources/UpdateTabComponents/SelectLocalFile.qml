@@ -2,7 +2,7 @@ import "../BaseComponents"
 import "../Constants"
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-import QtQuick.Dialogs 1.0
+import QtQuick.Dialogs
 import QtQuick.Layouts 1.15
 
 Item {
@@ -73,10 +73,8 @@ Item {
 
             visible: false
             title: "Please choose a binary."
-            folder: shortcuts.home
-            selectFolder: false
-            selectMultiple: false
-            selectExisting: true
+            currentFolder: StandardPaths.standardLocations(StandardPaths.HomeLocation)[0]
+            fileMode: FileDialog.OpenFile
             nameFilters: ["Binary Image Set (*.bin)"]
             onAccepted: {
                 var filepath = Utils.fileUrlToString(fileDialog.fileUrl);

@@ -1,6 +1,6 @@
 [MASTER]
 jobs=0
-extension-pkg-whitelist=PySide2
+extension-pkg-whitelist=PySide6
 
 [MESSAGES CONTROL]
 # Disable undesired lints here (https://stackoverflow.com/a/4341833/749342)

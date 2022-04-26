@@ -1,10 +1,9 @@
 import "BaseComponents"
 import "Constants"
 import QtCharts 2.2
-import QtGraphicalEffects 1.15
 import QtQuick 2.5
 import QtQuick.Controls 2.2
-import QtQuick.Dialogs 1.0
+import QtQuick.Dialogs
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
@@ -223,8 +222,8 @@ Rectangle {
 
             visible: false
             title: "Please choose a folder."
-            folder: shortcuts.home
-            selectFolder: true
+            currentFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+            fileMode: FileDialog.SaveFile
             onAccepted: {
                 var filepath = Utils.fileUrlToString(fileDialog.folder);
                 folderPathBar.editText = filepath;

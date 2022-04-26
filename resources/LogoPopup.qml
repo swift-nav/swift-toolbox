@@ -1,9 +1,9 @@
 import "BaseComponents"
 import "Constants"
 import "LogoPopupComponents" as LogoPopupComponents
-import QtQuick 2.5
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.15
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
 Item {
     function open() {

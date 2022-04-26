@@ -837,7 +837,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     backend_msg_receiver.start()
 
     stop_splash(splash)
-    app.exec_()
+    app.exec()
 
     endpoint_main.shutdown()
     backend_msg_receiver.join()

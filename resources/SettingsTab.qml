@@ -1,9 +1,9 @@
 import "BaseComponents"
 import "Constants"
-import Qt.labs.platform 1.1 as LabsPlatform
+import Qt.labs.platform as LP
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-import QtQuick.Dialogs 1.3
+import QtQuick.Dialogs
 import QtQuick.Layouts 1.15
 import "SettingsTabComponents" as SettingsTabComponents
 import SwiftConsole 1.0
@@ -54,14 +54,14 @@ MainTab {
         }
     }
 
-    LabsPlatform.FileDialog {
+    LP.FileDialog {
         id: exportDialog
 
         defaultSuffix: "ini"
         nameFilters: ["*.ini"]
-        fileMode: LabsPlatform.FileDialog.SaveFile
+        fileMode: LP.FileDialog.SaveFile
         currentFile: {
-            let text = LabsPlatform.StandardPaths.writableLocation(LabsPlatform.StandardPaths.HomeLocation);
+            let text = LP.StandardPaths.writableLocation(LP.StandardPaths.HomeLocation);
             text += "/" + Constants.settingsTab.defaultImportExportRelativePathFromHome;
             text += "/" + Constants.settingsTab.defaultExportFileName;
             return text;
@@ -75,10 +75,11 @@ MainTab {
     FileDialog {
         id: importDialog
 
+        fileMode: FileDialog.OpenFile
         defaultSuffix: "ini"
-        selectExisting: true
         nameFilters: ["*.ini"]
-        folder: shortcuts.home + "/" + Constants.settingsTab.defaultImportExportRelativePathFromHome
+        currentFolder:
+        LP.StandardPaths.standardLocations(LP.StandardPaths.HomeLocation)[0] + "/" + Constants.settingsTab.defaultImportExportRelativePathFromHome
         onAccepted: {
             var filepath = Utils.fileUrlToString(importDialog.fileUrl);
             backend_request_broker.settings_import_request(filepath);
@@ -89,10 +90,12 @@ MainTab {
         id: resetDialog
 
         title: "Reset to Factory Defaults?"
-        icon: StandardIcon.Warning
         text: "This will erase all settings and then reset the device.\nAre you sure you want to reset to factory defaults?"
-        standardButtons: StandardButton.RestoreDefaults | StandardButton.No
-        onReset: backend_request_broker.settings_reset_request()
+        buttons: MessageDialog.RestoreDefaults | MessageDialog.No
+        onButtonClicked: (button, role) => {
+            if (button & MessageDialog.RestoreDefaults)
+                backend_request_broker.settings_reset_request();
+        }
     }
 
     MessageDialog {
@@ -100,8 +103,11 @@ MainTab {
 
         title: "Successfully imported settings from file."
         text: "Settings import from file complete.  Click 'Yes' to save the settings to the device's persistent storage."
-        standardButtons: StandardButton.Yes | StandardButton.No
-        onYes: backend_request_broker.settings_save_request()
+        buttons: MessageDialog.Yes | MessageDialog.No
+        onButtonClicked: (button, role) => {
+            if (button & MessageDialog.Yes)
+                backend_request_broker.settings_save_request();
+        }
     }
 
     MessageDialog {
@@ -109,8 +115,11 @@ MainTab {
 
         title: "Auto populate surveyed position?"
         text: autoSurveyDialogText()
-        standardButtons: StandardButton.Yes | StandardButton.No
-        onYes: backend_request_broker.auto_survey_request()
+        buttons: MessageDialog.Yes | MessageDialog.No
+        onButtonClicked: (button, role) => {
+            if (button & MessageDialog.Yes)
+                backend_request_broker.auto_survey_request();
+        }
     }
 
     SettingsTabComponents.InsSettingsPopup {
@@ -121,15 +130,14 @@ MainTab {
         id: settingsNotification
 
         title: "Settings Write Notification"
-        icon: StandardIcon.Warning
-        standardButtons: StandardButton.Close
+        buttons: MessageDialog.Close
     }
 
     MessageDialog {
         id: importFailure
 
         title: "Failed to import settings from file."
-        standardButtons: StandardButton.Ok
+        buttons: MessageDialog.Ok
     }
 
     SplitView {

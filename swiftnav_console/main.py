@@ -11,16 +11,16 @@ from typing import Optional, Tuple
 
 import capnp  # type: ignore
 
-from PySide2.QtWidgets import QApplication  # type: ignore
+from PySide6.QtWidgets import QApplication  # type: ignore
 
-from PySide2.QtCore import QObject, QUrl, QPointF, QThread, QTimer, Slot
-from PySide2.QtCharts import QtCharts  # pylint: disable=unused-import
+from PySide6.QtCore import QObject, QUrl, QPointF, QThread, QTimer, Slot
+from PySide6 import QtCharts  # pylint: disable=unused-import
 
-from PySide2 import QtQml, QtCore
+from PySide6 import QtQml, QtCore
 
-from PySide2.QtGui import QFontDatabase, QIcon
+from PySide6.QtGui import QFontDatabase, QIcon
 
-from PySide2.QtQml import QQmlComponent, qmlRegisterType
+from PySide6.QtQml import QQmlComponent, qmlRegisterType
 
 import swiftnav_console.console_resources  # type: ignore # pylint: disable=unused-import
 
@@ -714,7 +714,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
         endpoint_main = None
     if found_help_arg:
         return 0
-    # Unfortunately it is not possible to access singletons directly using the PySide2 API.
+    # Unfortunately it is not possible to access singletons directly using the PySide6 API.
     # This approach stores the globals somwhere that can be grabbed and manipulated.
     component = QQmlComponent(engine)
     component.setData(
@@ -726,7 +726,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
 
     handle_cli_arguments(args_main, globals_main)
 
-    engine.addImportPath("PySide2")
+    engine.addImportPath("PySide6")
     engine.addImportPath(":/")
     engine.load(QUrl("qrc:/view.qml"))
     if not qml_object_created[0]:

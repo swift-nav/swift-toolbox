@@ -2,7 +2,7 @@ from typing import Dict, List, Any
 from copy import deepcopy
 from collections import namedtuple
 
-from PySide2.QtCore import Property, Slot, Signal, QAbstractTableModel, Qt, QModelIndex
+from PySide6.QtCore import Property, Slot, Signal, QAbstractTableModel, Qt, QModelIndex
 
 from .constants import Keys, QTKeys
 

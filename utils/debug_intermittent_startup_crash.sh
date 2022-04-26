@@ -48,9 +48,9 @@ function uniqueFn () {
     echo "$uniquefn"
 }
 
-if [ ! -d py39-dist ]; then
-    cargo make build-dist
-fi
+#if [ ! -d py39-dist ]; then
+#    cargo make build-dist
+#fi
 
 function join () {
     local delim=${1-}
@@ -89,6 +89,7 @@ if [ $(uname) == "Darwin" ]; then
     lldbcmdtorun="script $(basename ${lldbpy_path}).run(\"$(join "\", \"" $SWIFT_CONSOLE_ARGS)\")"
     echo -e "\n\nOnce lldb starts, run the following (it will be in your clipboard so you can just paste):"
     echo -e "$lldbcmdtorun\n\n"
+    exit 0
     echo -n "$lldbcmdtorun" | pbcopy
     rust-lldb -o "command script import ${lldbpy_path}.py" -- ./swift-console
     #rust-lldb --batch -o run -- ./swift-console

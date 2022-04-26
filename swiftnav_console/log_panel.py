@@ -5,7 +5,7 @@ import json
 
 from typing import Dict, List, Any
 
-from PySide2.QtCore import Property, QObject, Signal, Slot
+from PySide6.QtCore import Property, QObject, Signal, Slot
 
 from .constants import Keys, LogLevel, QTKeys
 

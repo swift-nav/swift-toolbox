@@ -114,7 +114,6 @@ Rectangle {
                     bottomPadding: 16
                     rightInset: -0.5
                     text: modelData
-                    border: false
                 }
 
             }

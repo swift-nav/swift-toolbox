@@ -2,7 +2,6 @@ import "../BaseComponents"
 import "../Constants"
 import "../SolutionPlotCommon/SolutionPlotLoop.js" as SolutionPlotLoop
 import QtCharts 2.15
-import QtGraphicalEffects 1.15
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
@@ -68,11 +67,11 @@ Item {
                     visible: false
                 }
 
-                ColorOverlay {
-                    anchors.fill: baselinePauseImage
-                    source: baselinePauseImage
-                    color: !baselinePauseButton.checked ? Constants.materialGrey : Constants.swiftOrange
-                }
+//                ColorOverlay {
+//                    anchors.fill: baselinePauseImage
+//                    source: baselinePauseImage
+//                    color: !baselinePauseButton.checked ? Constants.materialGrey : Constants.swiftOrange
+//                }
 
             }
 
@@ -96,11 +95,11 @@ Item {
                     visible: false
                 }
 
-                ColorOverlay {
-                    anchors.fill: baselineClearImage
-                    source: baselineClearImage
-                    color: !baselineClearButton.checked ? Constants.materialGrey : Constants.swiftOrange
-                }
+//                ColorOverlay {
+//                    anchors.fill: baselineClearImage
+//                    source: baselineClearImage
+//                    color: !baselineClearButton.checked ? Constants.materialGrey : Constants.swiftOrange
+//                }
 
             }
 
@@ -134,11 +133,11 @@ Item {
                     visible: false
                 }
 
-                ColorOverlay {
-                    anchors.fill: baselineZoomAllImage
-                    source: baselineZoomAllImage
-                    color: !baselineZoomAllButton.checked ? Constants.materialGrey : Constants.swiftOrange
-                }
+//                ColorOverlay {
+//                    anchors.fill: baselineZoomAllImage
+//                    source: baselineZoomAllImage
+//                    color: !baselineZoomAllButton.checked ? Constants.materialGrey : Constants.swiftOrange
+//                }
 
             }
 
@@ -172,11 +171,11 @@ Item {
                     visible: false
                 }
 
-                ColorOverlay {
-                    anchors.fill: centerButtonImage
-                    source: centerButtonImage
-                    color: !baselineCenterButton.checked ? Constants.materialGrey : Constants.swiftOrange
-                }
+//                ColorOverlay {
+//                    anchors.fill: centerButtonImage
+//                    source: centerButtonImage
+//                    color: !baselineCenterButton.checked ? Constants.materialGrey : Constants.swiftOrange
+//                }
 
             }
 

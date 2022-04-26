@@ -2,7 +2,7 @@ import "../BaseComponents"
 import "../Constants"
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-import QtQuick.Dialogs 1.0
+import QtQuick.Dialogs
 import QtQuick.Layouts 1.15
 import SwiftConsole 1.0
 
@@ -74,10 +74,8 @@ Item {
 
             visible: false
             title: "Please choose a file."
-            folder: shortcuts.home
-            selectFolder: false
-            selectMultiple: false
-            selectExisting: true
+            currentFolder: StandardPaths.standardLocations(StandardPaths.HomeLocation)[0]
+            fileMode: FileDialog.OpenFile
             nameFilters: ["All Files (*)"]
             onAccepted: {
                 var filepath = Utils.fileUrlToString(fileDialog.fileUrl);

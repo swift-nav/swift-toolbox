@@ -1,5 +1,5 @@
 from typing import Any, List, Optional
-from PySide2.QtCore import QObject, Slot
+from PySide6.QtCore import QObject, Slot
 
 try:
     import console_backend.server  # type: ignore  # pylint: disable=import-error,no-name-in-module

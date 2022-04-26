@@ -407,7 +407,7 @@ Rectangle {
     intValidator: IntValidator {
     }
 
-    stringValidator: RegExpValidator {
+    stringValidator: RegularExpressionValidator {
     }
 
 }

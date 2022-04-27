@@ -19,7 +19,7 @@ use sbp_settings::Client;
 
 #[derive(Parser)]
 #[clap(
-    name = "swift-update-tool",
+    name = "swift-updater",
     version = include_str!("../version.txt"),
 )]
 struct Opts {

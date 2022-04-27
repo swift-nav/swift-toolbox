@@ -96,7 +96,7 @@ path = "src/bin/headless-console.rs"
 bench = false
 
 [[bin]]
-name = "swift-update-tool"
+name = "swift-updater"
 path = "src/bin/update_tool.rs"
 bench = false
 required-features = ["env_logger", "indicatif"]

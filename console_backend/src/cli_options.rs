@@ -118,16 +118,16 @@ pub struct CliOptions {
     pub sbp_log_filename: Option<PathBuf>,
 
     /// Record capnp messages.
-    #[clap(long)]
+    #[clap(long, hide = true)]
     pub record_capnp_recording: bool,
 
     /// Read capnp messages from file.
-    #[clap(long)]
+    #[clap(long, hide = true)]
     pub read_capnp_recording: Option<PathBuf>,
 
     /// Run application without the backend. Useful for debugging.
     /// This mode must be run with a capnp recording file.
-    #[clap(long, requires = "read-capnp-recording")]
+    #[clap(long, requires = "read-capnp-recording", hide = true)]
     pub debug_with_no_backend: bool,
 
     /// Set log directory.

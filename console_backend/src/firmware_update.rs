@@ -212,7 +212,7 @@ fn extract_log_message(text: &str) -> String {
         .collect();
     let text = text.split('\n').collect::<Vec<&str>>();
     let final_text = if text.len() > 1 {
-        // upgrade tool deliminates lines in stoud with \r, we want penultimate line that is complete to show
+        // upgrade tool delineates lines in stdout with \r, we want penultimate line that is complete to show
         text[text.len() - 2]
     } else {
         // If there is only one line, we show that

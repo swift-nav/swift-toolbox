@@ -1,8 +1,6 @@
 from typing import Any, List, Optional
 from PySide2.QtCore import QObject, Slot
 
-import console_backend.server  # type: ignore  # pylint: disable=import-error,no-name-in-module
-
 from .constants import QTKeys
 
 PIKSI_HOST = "192.168.0.222"
@@ -11,7 +9,7 @@ PIKSI_PORT = 55555
 
 class BackendRequestBroker(QObject):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
 
-    endpoint: console_backend.server.ServerEndpoint  # pylint: disable=no-member,c-extension-no-member
+    endpoint: Any
     messages: Any
 
     def __init__(self, endpoint, messages):

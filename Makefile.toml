@@ -667,7 +667,7 @@ if starts_with ${version} v
 end
 set_env HOMEPAGE "https://www.swiftnav.com"
 set_env MAINTAINER "Swift Navigation <https://www.swiftnav.com/support>"
-set_env DESCRIPTION "The Swift Console provides data visualization, settings management, and update capabilities for Swift Navigation GNSS products."
+set_env DESCRIPTION "The Swift Console provides data visualization, settings management, and firmware update capabilities for Swift Navigation GNSS products."
 '''
 
 [tasks.dist-to-installer.linux]

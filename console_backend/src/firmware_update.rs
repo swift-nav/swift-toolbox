@@ -150,8 +150,7 @@ fn firmware_upgrade_commit_to_flash(link: Link<'static, ()>, msg_sender: MsgSend
         sender_id: None,
         sequence,
         command: SbpString::from(format!(
-            "{} {}",
-            UPGRADE_FIRMWARE_TOOL, UPGRADE_FIRMWARE_REMOTE_DESTINATION
+            "{UPGRADE_FIRMWARE_TOOL} {UPGRADE_FIRMWARE_REMOTE_DESTINATION}",
         )),
     })?;
 

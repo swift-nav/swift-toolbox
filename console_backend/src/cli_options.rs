@@ -94,7 +94,7 @@ const BIN_NAME: &str = "swift-console";
 #[derive(Parser)]
 #[clap(
     name = "Swift Console",
-    about = "The Swift Console is a Graphic User Interface (GUI) program providing visual representation of what's happening inside the Swift Navigation GNSS receivers. Console displays information and allows to adjust the settings on the hardware.",
+    about = "The Swift Console provides data visualization, settings management, and firmware update capabilities for Swift Navigation GNSS products.",
     bin_name = BIN_NAME,
     version = include_str!("version.txt"),
     setting = DeriveDisplayOrder,

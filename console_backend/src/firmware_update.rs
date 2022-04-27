@@ -203,3 +203,109 @@ fn firmware_can_upgrade(current: &SwiftVersion, update: &SwiftVersion) -> anyhow
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[cfg(test)]
+    mod firmware_update {
+        use std::sync::{Arc, Mutex};
+
+        use super::*;
+
+        #[test]
+        fn handle_log_msg_test() {
+            let sender_id = Some(1337);
+            let level = 1;
+
+            let good_log_messages = vec![
+                "ok\r",
+                "writing\r",
+                "erasing\r",
+                "100 % complete\r",
+                "Error\r",
+                "error\r",
+                "Image\r",
+                "upgrade\r",
+                "Warning:\r",
+                "install\r",
+                "upgrade completed successfully\r",
+            ];
+
+            let message = String::new();
+            let last_message = Arc::new(Mutex::new(message));
+
+            let callback_copy = last_message.clone();
+
+            let callback = move |msg| {
+                let mut current = callback_copy.lock().unwrap();
+                *current = msg;
+            };
+
+            for log_message in good_log_messages {
+                let msg = MsgLog {
+                    sender_id,
+                    level,
+                    text: SbpString::from(log_message.to_string()),
+                };
+                handle_log_msg(msg, &callback);
+                assert_eq!(*last_message.lock().unwrap(), log_message.trim());
+            }
+
+            let good_log_messages_one_line = vec![
+                "ok",
+                "writing",
+                "erasing",
+                "99 % complete",
+                "Error",
+                "error",
+                "Image",
+                "upgrade",
+                "Warning",
+                "install",
+                "upgrade completed successfully",
+            ];
+
+            for log_message in good_log_messages_one_line {
+                let msg = MsgLog {
+                    sender_id,
+                    level,
+                    text: SbpString::from(log_message.to_string()),
+                };
+                handle_log_msg(msg, &callback);
+                assert_eq!(
+                    *last_message.lock().unwrap(),
+                    log_message.trim().to_string()
+                );
+            }
+
+            let bad_log_messages = vec![
+                "o1k",
+                "wr2iting",
+                "era3sing",
+                "99 %4 complete",
+                "Er5ror",
+                "er6ror",
+                "Im7age",
+                "up8grade",
+                "Wa9rning",
+                "in10stall",
+                "upgr11ade completed successfully",
+            ];
+
+            for log_message in bad_log_messages {
+                let msg = MsgLog {
+                    sender_id,
+                    level,
+                    text: SbpString::from(log_message.to_string()),
+                };
+                handle_log_msg(msg, &callback);
+                assert_ne!(
+                    *last_message.lock().unwrap(),
+                    log_message.trim().to_string()
+                );
+            }
+        }
+    }
+}

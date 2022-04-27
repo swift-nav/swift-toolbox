@@ -1,7 +1,7 @@
 use std::{path::Path, time::Duration};
 
 use anyhow::anyhow;
-use crossbeam::{channel, select};
+use crossbeam::channel;
 use lazy_static::lazy_static;
 use regex::Regex;
 use sbp::{
@@ -162,16 +162,12 @@ fn firmware_upgrade_commit_to_flash(link: Link<'static, ()>, msg_sender: MsgSend
         }
     });
 
-    let res = select! {
-        recv(finished_rx) -> val => {
-            if val.expect("Receiving failed") {
-                Ok(())
-            } else {
-                Err(anyhow!("Failed to commit image to flash."))
-            }
-        }
-        default(Duration::from_secs(UPGRADE_FIRMWARE_TIMEOUT_SEC)) => {
-            Err(anyhow!("Firmware upgrade timed out"))
+    let res = match finished_rx.recv_timeout(Duration::from_secs(UPGRADE_FIRMWARE_TIMEOUT_SEC)) {
+        Ok(true) => Ok(()),
+        Ok(false) => Err(anyhow!("Failed to commit image to flash.")),
+        Err(channel::RecvTimeoutError::Timeout) => Err(anyhow!("Failed to commit image to flash.")),
+        Err(channel::RecvTimeoutError::Disconnected) => {
+            Err(anyhow!("Failed to commit image to flash."))
         }
     };
 

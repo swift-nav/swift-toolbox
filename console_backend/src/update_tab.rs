@@ -16,10 +16,6 @@ use std::{
     time::Duration,
 };
 
-use crate::errors::{
-    CONVERT_TO_STR_FAILURE, CROSSBEAM_SCOPE_UNWRAP_FAILURE, SHARED_STATE_LOCK_MUTEX_FAILURE,
-    THREAD_JOIN_FAILURE,
-};
 use crate::fileio::Fileio;
 use crate::shared_state::{SharedState, LOG_DIRECTORY};
 use crate::swift_version::SwiftVersion;
@@ -30,6 +26,13 @@ use crate::{
     client_sender::BoxedClientSender,
     constants::{FIRMWARE_V2, FIRMWARE_V2_VERSION, HARDWARE_REVISION},
     firmware_update::firmware_update,
+};
+use crate::{
+    errors::{
+        CONVERT_TO_STR_FAILURE, CROSSBEAM_SCOPE_UNWRAP_FAILURE, SHARED_STATE_LOCK_MUTEX_FAILURE,
+        THREAD_JOIN_FAILURE,
+    },
+    firmware_update::LogOverwriteBehavior,
 };
 
 const UPDATE_THREAD_SLEEP_MS: u64 = 1000;
@@ -386,7 +389,10 @@ fn upgrade_firmware(
         msg_sender,
         &filepath,
         &current_version,
-        move |msg| log_callback_ctx.fw_log_append(msg),
+        move |msg, overwrite| match overwrite {
+            LogOverwriteBehavior::DontOverwrite => log_callback_ctx.fw_log_append(msg),
+            LogOverwriteBehavior::Overwrite => log_callback_ctx.fw_log_replace_last(msg),
+        },
         move |progress| {
             progress_callback_ctx.fw_log_replace_last(format!("Writing {:.2}%...", progress));
         },

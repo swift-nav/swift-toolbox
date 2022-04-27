@@ -103,7 +103,7 @@ fn main() -> anyhow::Result<()> {
         msg_sender,
         &opts.update_file,
         &firmware_version,
-        |msg| println!("> {}", msg),
+        |msg, _| println!("> {}", msg),
         move |progress| pb.set_position(progress as u64),
     )?;
 

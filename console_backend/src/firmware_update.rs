@@ -2,6 +2,7 @@ use std::{path::Path, time::Duration};
 
 use anyhow::anyhow;
 use crossbeam::{channel, select};
+use lazy_static::lazy_static;
 use regex::Regex;
 use sbp::{
     link::Link,
@@ -25,7 +26,6 @@ const UPGRADE_WHITELIST: &[&str] = &[
     "ok",
     "writing.*",
     "erasing.*",
-    r"\s*[0-9]* % complete",
     "Error.*",
     "error.*",
     ".*Image.*",
@@ -35,7 +35,16 @@ const UPGRADE_WHITELIST: &[&str] = &[
     "upgrade completed successfully",
 ];
 
+lazy_static! {
+    static ref UPGRADE_PROGRESS_RE: Regex = Regex::new(r"\s*[0-9]* % complete").unwrap();
+}
+
 const UPGRADE_FIRMWARE_TIMEOUT_SEC: u64 = 600;
+
+pub enum LogOverwriteBehavior {
+    DontOverwrite,
+    Overwrite,
+}
 
 pub fn firmware_update<LogCallback, ProgressCallback>(
     link: Link<'static, ()>,
@@ -46,7 +55,7 @@ pub fn firmware_update<LogCallback, ProgressCallback>(
     progress_callback: ProgressCallback,
 ) -> anyhow::Result<()>
 where
-    LogCallback: Fn(String) + Sync + Send + Clone + 'static,
+    LogCallback: Fn(String, LogOverwriteBehavior) + Sync + Send + Clone + 'static,
     ProgressCallback: Fn(f64) + Sync + Send + 'static,
 {
     let msg_log_callback = log_callback.clone();
@@ -56,10 +65,10 @@ where
 
     // Following is surrounded in a closure, to avoid forgetting to unregister the callback from the link
     let res = (|| {
-        log_callback(format!(
-            "Reading firmware file from path, {}.",
-            filepath.display()
-        ));
+        log_callback(
+            format!("Reading firmware file from path, {}.", filepath.display()),
+            LogOverwriteBehavior::DontOverwrite,
+        );
 
         if !filepath.exists() || !filepath.is_file() {
             return Err(anyhow!(
@@ -80,8 +89,10 @@ where
         let firmware_blob = std::fs::File::open(filepath)
             .map_err(|e| anyhow!("Failed to open firmware file: {:?}", e))?;
 
-        log_callback(String::from("Transferring image to device..."));
-        log_callback(String::from(""));
+        log_callback(
+            String::from("Transferring image to device..."),
+            LogOverwriteBehavior::DontOverwrite,
+        );
 
         let size = firmware_blob.metadata()?.len() as usize;
 
@@ -100,13 +111,25 @@ where
             },
         )?;
 
-        log_callback(String::from("Image transfer complete."));
+        log_callback(
+            String::from("Image transfer complete."),
+            LogOverwriteBehavior::DontOverwrite,
+        );
 
-        log_callback(String::from("Committing image to flash..."));
+        log_callback(
+            String::from("Committing image to flash..."),
+            LogOverwriteBehavior::DontOverwrite,
+        );
 
         firmware_upgrade_commit_to_flash(link.clone(), msg_sender.clone())?;
-        log_callback(String::from("Upgrade Complete."));
-        log_callback(String::from("Resetting Piksi..."));
+        log_callback(
+            String::from("Upgrade Complete."),
+            LogOverwriteBehavior::DontOverwrite,
+        );
+        log_callback(
+            String::from("Resetting Piksi..."),
+            LogOverwriteBehavior::DontOverwrite,
+        );
         msg_sender.send(MsgReset {
             sender_id: None,
             flags: 0,
@@ -159,31 +182,44 @@ fn firmware_upgrade_commit_to_flash(link: Link<'static, ()>, msg_sender: MsgSend
 
 fn handle_log_msg<LogCallback>(msg: MsgLog, log_callback: &LogCallback)
 where
-    LogCallback: Fn(String) + Sync + Send + Clone + 'static,
+    LogCallback: Fn(String, LogOverwriteBehavior) + Sync + Send + Clone + 'static,
 {
+    let text = msg.text.to_string();
+
+    if UPGRADE_PROGRESS_RE.is_match(&text) {
+        log_callback(extract_log_message(&text), LogOverwriteBehavior::Overwrite);
+        return;
+    }
+
     for regex in UPGRADE_WHITELIST.iter() {
-        let text = msg.text.to_string();
         if let Ok(reg) = Regex::new(regex) {
             if reg.captures(&text).is_some() {
-                let text: String = text
-                    .chars()
-                    .map(|x| match x {
-                        '\r' => '\n',
-                        _ => x,
-                    })
-                    .collect();
-                let text = text.split('\n').collect::<Vec<&str>>();
-                let final_text = if text.len() > 1 {
-                    // upgrade tool deliminates lines in stoud with \r, we want penultimate line that is complete to show
-                    text[text.len() - 2]
-                } else {
-                    // If there is only one line, we show that
-                    text[text.len() - 1]
-                };
-                log_callback(final_text.to_string());
+                log_callback(
+                    extract_log_message(&text),
+                    LogOverwriteBehavior::DontOverwrite,
+                );
             }
         }
     }
+}
+
+fn extract_log_message(text: &str) -> String {
+    let text: String = text
+        .chars()
+        .map(|x| match x {
+            '\r' => '\n',
+            _ => x,
+        })
+        .collect();
+    let text = text.split('\n').collect::<Vec<&str>>();
+    let final_text = if text.len() > 1 {
+        // upgrade tool deliminates lines in stoud with \r, we want penultimate line that is complete to show
+        text[text.len() - 2]
+    } else {
+        // If there is only one line, we show that
+        text[text.len() - 1]
+    };
+    final_text.to_string()
 }
 
 fn firmware_can_upgrade(current: &SwiftVersion, update: &SwiftVersion) -> anyhow::Result<()> {
@@ -238,7 +274,7 @@ mod tests {
 
             let callback_copy = last_message.clone();
 
-            let callback = move |msg| {
+            let callback = move |msg, _| {
                 let mut current = callback_copy.lock().unwrap();
                 *current = msg;
             };

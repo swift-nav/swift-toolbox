@@ -234,7 +234,7 @@ pub(crate) const MPH: &str = "mph";
 pub(crate) const KPH: &str = "kph";
 pub(crate) const MPS2MPH: f64 = 2.236934;
 pub(crate) const MPS2KPH: f64 = 3.600000;
-pub(crate) const UDEG2DEG: f64 = 0.0000001;
+pub(crate) const UDEG2DEG: f64 = 1.0e-6_f64;
 
 // Status Bar constants.
 pub(crate) const UPDATE_TOLERANCE_SECONDS: f64 = 1.2;

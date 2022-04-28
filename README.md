@@ -51,6 +51,46 @@ Or in "prod" mode (compiles a wheel for the backend):
 cargo make prod-run
 ```
 
+### (Debug) Recording a stream from the backend.
+If you are interested in debugging the frontend, you can first record a capnp recording.
+Either connect to a device via the GUI or command line and include the flag:
+```
+--record-capnp-recording
+```
+This will save a `.pickle` file in your current working directory.
+
+### (Debug) Replaying a stream from the backend in frontend (with or without Rust).
+If you have recorded a capnp recording pickle file as shown in the previous step, now you
+can replay this file. If you already have the standard development environment set up, you
+can simply use the command line flag:
+```
+--read-capnp-recording <path/to/pickle-file>
+```
+
+If you want to run the application without the standard development envionrment.
+```
+# Set up a python 3.8 environment.
+
+# Install flit for generating a wheel from our pyproject.toml.
+pip install flit
+
+# Generate the wheel.
+python -m flit build --no-setup-py
+
+# Install the wheel.
+pip install dist/swiftnav_console-0.1.0-py3-none-any.whl --force-reinstall
+
+# Generate our resources file (may need to manually point to this binary installed by PySide2).
+pyside2-rcc resources/console_resources.qrc -o swiftnav_console/console_resources.py -g python
+
+# Run the application.
+python -m swiftnav_console.main --read-capnp-recording path/to/pickle-file
+
+# Note some of these calls may be different if you are attempting on windows,
+# assume binaries end with ".exe". May also need to direct the correct python pip
+# depending on how your python 3.8 environment is set up.
+```
+
 ## Building the distribution (and optionally create installer)
 
 ```

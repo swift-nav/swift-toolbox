@@ -94,7 +94,7 @@ const BIN_NAME: &str = "swift-console";
 #[derive(Parser)]
 #[clap(
     name = "Swift Console",
-    about = "The Swift Console is a Graphic User Interface (GUI) program providing visual representation of what's happening inside the Swift Navigation GNSS receivers. Console displays information and allows to adjust the settings on the hardware.",
+    about = "The Swift Console provides data visualization, settings management, and firmware update capabilities for Swift Navigation GNSS products.",
     bin_name = BIN_NAME,
     version = include_str!("version.txt"),
     setting = DeriveDisplayOrder,
@@ -116,6 +116,19 @@ pub struct CliOptions {
     /// Set SBP log filename.
     #[clap(long)]
     pub sbp_log_filename: Option<PathBuf>,
+
+    /// Record capnp messages.
+    #[clap(long, hide = true)]
+    pub record_capnp_recording: bool,
+
+    /// Read capnp messages from file.
+    #[clap(long, hide = true)]
+    pub read_capnp_recording: Option<PathBuf>,
+
+    /// Run application without the backend. Useful for debugging.
+    /// This mode must be run with a capnp recording file.
+    #[clap(long, requires = "read-capnp-recording", hide = true)]
+    pub debug_with_no_backend: bool,
 
     /// Set log directory.
     #[clap(long)]

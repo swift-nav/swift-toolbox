@@ -419,13 +419,13 @@ jobs:
         run: |
           cd application
           cargo make dist-to-installer-app
-      
+
       - name: Sign application.
         shell: bash
         run: |
           cd "application/target/installer/Swift Console.app"
           for f in $(find Contents/Resources/lib/ -name '*.dylib' -or -name '*.so')
-          do 
+          do
             codesign \
             -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
             --timestamp \
@@ -625,9 +625,100 @@ jobs:
             ${{ env.INSTALLER_ARCHIVE }}
             installer-archive.filename
 
+  sign_binaries:
+    name: Sign Binaries
+    timeout-minutes: 30
+    needs:
+      - build
+      - frontend_bench
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
+    strategy:
+      matrix:
+        os:
+          - {name: macOS, exe_suffix: "", short_name: "macos", upload_suffix: ".zip"}
+          - {name: Windows, exe_suffix: ".exe", short_name: "windows", upload_suffix: ".exe"}
+          - {name: Linux, exe_suffix: "", short_name: "linux", upload_suffix: ".zip"}
+        type:
+          - "files"
+          - "settings"
+    runs-on: [self-hosted, '${{ matrix.os.name }}', code-signer]
+    steps:
+      - name: Store git tag vars.
+        shell: bash
+        run: |
+          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+
+      - name: Remove previous build.
+        shell: bash
+        continue-on-error: true
+        run: |
+          rm -rf binaries
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: swift-${{ matrix.type }}_${{ matrix.os.short_name }}
+          path: |
+            binaries
+
+      - name: Add version to binary names.
+        shell: bash
+        working-directory: binaries
+        run: |
+          mv swift-${{ matrix.type }}${{ matrix.os.exe_suffix }} swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
+
+      - name: Sign Binaries.
+        shell: cmd
+        run: |
+          "${{ env.CODE_SIGNER_PATH_WIN }}" sign ^
+            /debug /v ^
+            /n "Swift Navigation, Inc." /a ^
+            /tr http://rfc3161timestamp.globalsign.com/advanced ^
+            /td SHA256 binaries/swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
+          mv binaries/swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }} .
+        if: matrix.os.name == 'Windows'
+
+      - name: Sign Binaries.
+        shell: bash
+        working-directory: binaries
+        run: |
+          codesign \
+            -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
+            --timestamp \
+            --options=runtime \
+            swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
+        if: matrix.os.name == 'macOS'
+
+      - name: Zip Binaries.
+        working-directory: binaries
+        shell: bash
+        run: |
+          chmod +x "swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}"
+          7z a -tzip "../swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}.zip"
+        if: matrix.os.name != 'Windows'
+
+      - name: Sign Binaries.
+        shell: bash
+        run: |
+          codesign \
+            -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
+            -f --timestamp "swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}.zip"
+          xcrun altool \
+            --notarize-app \
+            --file swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}.zip\
+            --primary-bundle-id ${{ env.APP_BUNDLE_ID }} \
+            --apiKey ${{ secrets.APPLE_KEY_ID }} \
+            --apiIssuer ${{ secrets.APPLE_ISSUER_ID }}
+        if: matrix.os.name == 'macOS'
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: swift-${{ matrix.type }}_${{ matrix.os.short_name }}-signed
+          path: swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.upload_suffix }}
+
   release:
     name: Create Release
     needs:
+      - sign_binaries
       - sign_installer
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
     runs-on: ubuntu-20.04
@@ -645,12 +736,12 @@ jobs:
       - name: Pull Windows swift-files
         uses: actions/download-artifact@v2
         with:
-          name: swift-files_windows
+          name: swift-files_windows-signed
           path: windows
       - name: Pull Windows swift-settings
         uses: actions/download-artifact@v2
         with:
-          name: swift-settings_windows
+          name: swift-settings_windows-signed
           path: windows
       - name: Pull Linux Installer
         uses: actions/download-artifact@v2
@@ -660,12 +751,12 @@ jobs:
       - name: Pull Linux swift-files
         uses: actions/download-artifact@v2
         with:
-          name: swift-files_linux
+          name: swift-files_linux-signed
           path: linux
       - name: Pull Linux swift-settings
         uses: actions/download-artifact@v2
         with:
-          name: swift-settings_linux
+          name: swift-settings_linux-signed
           path: linux
       - name: Pull macOS Installer
         uses: actions/download-artifact@v2
@@ -675,22 +766,16 @@ jobs:
       - name: Pull macOS swift-files
         uses: actions/download-artifact@v2
         with:
-          name: swift-files_macos
+          name: swift-files_macos-signed
           path: macos
       - name: Pull macOS swift-settings
         uses: actions/download-artifact@v2
         with:
-          name: swift-settings_macos
+          name: swift-settings_macos-signed
           path: macos
       - name: Prepare Release
         shell: bash
         run: |
-          mv windows/swift-files.exe windows/swift-files_${{ env.VERSION }}_windows.exe
-          mv windows/swift-settings.exe windows/swift-settings_${{ env.VERSION }}_windows.exe
-          mv linux/swift-files linux/swift-files_${{ env.VERSION }}_linux
-          mv linux/swift-settings linux/swift-settings_${{ env.VERSION }}_linux
-          mv macos/swift-files macos/swift-files_${{ env.VERSION }}_macos
-          mv macos/swift-settings macos/swift-settings_${{ env.VERSION }}_macos
           echo "WINDOWS_ARCHIVE=$(cat windows/installer-archive.filename)" >>$GITHUB_ENV
           echo "LINUX_ARCHIVE=$(cat linux/installer-archive.filename)" >>$GITHUB_ENV
           echo "MACOS_ARCHIVE=$(cat macos/installer-archive.filename)" >>$GITHUB_ENV
@@ -703,10 +788,10 @@ jobs:
             windows/swift-files_${{ env.VERSION }}_windows.exe
             windows/swift-settings_${{ env.VERSION }}_windows.exe
             linux/${{ env.LINUX_ARCHIVE }}
-            linux/swift-files_${{ env.VERSION }}_linux
-            linux/swift-settings_${{ env.VERSION }}_linux
+            linux/swift-files_${{ env.VERSION }}_linux.zip
+            linux/swift-settings_${{ env.VERSION }}_linux.zip
             macos/${{ env.MACOS_ARCHIVE }}
-            macos/swift-files_${{ env.VERSION }}_macos
-            macos/swift-settings_${{ env.VERSION }}_macos
+            macos/swift-files_${{ env.VERSION }}_macos.zip
+            macos/swift-settings_${{ env.VERSION }}_macos.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

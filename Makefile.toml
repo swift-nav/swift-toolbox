@@ -291,7 +291,7 @@ script_runner = "@duckscript"
 script = '''
 wget -O py39.tar.zst ${STANDALONE_PY_URL}
 exec --fail-on-error zstd -f -d py39.tar.zst
-exec --fail-on-error tar -xvf py39.tar
+exec --fail-on-error tar -xf py39.tar
 '''
 
 [tasks.install-pyside-wheels]

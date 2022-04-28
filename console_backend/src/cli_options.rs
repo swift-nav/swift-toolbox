@@ -5,6 +5,8 @@ use std::{
     str::FromStr,
 };
 
+#[allow(deprecated)]
+use clap::AppSettings::AllowExternalSubcommands;
 use clap::{AppSettings::DeriveDisplayOrder, Args, Parser};
 use log::{debug, error};
 use strum::VariantNames;
@@ -97,7 +99,8 @@ const BIN_NAME: &str = "swift-console";
     about = "The Swift Console provides data visualization, settings management, and firmware update capabilities for Swift Navigation GNSS products.",
     bin_name = BIN_NAME,
     version = include_str!("version.txt"),
-    setting = DeriveDisplayOrder,
+    setting = DeriveDisplayOrder, 
+    setting = AllowExternalSubcommands,
 )]
 pub struct CliOptions {
     #[clap(flatten)]

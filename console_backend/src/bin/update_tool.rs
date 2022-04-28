@@ -4,7 +4,7 @@ use std::str::FromStr;
 use std::time::Duration;
 
 use anyhow::anyhow;
-use clap::{Args, Parser};
+use clap::Parser;
 use indicatif::{ProgressBar, ProgressStyle};
 
 use console_backend::cli_options::{SerialOpts, TcpOpts};

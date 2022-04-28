@@ -199,7 +199,7 @@ where
 }
 
 fn extract_log_message(text: &str) -> String {
-    let text = text.replace("\r", "\n");
+    let text = text.replace('\r', "\n");
     let text = text.split('\n').collect::<Vec<&str>>();
     let final_text = if text.len() > 1 {
         // upgrade tool delineates lines in stdout with \r, we want penultimate line that is complete to show

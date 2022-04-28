@@ -314,6 +314,10 @@ jobs:
         run: |
           cargo build --release --bin swift-settings --no-default-features --features env_logger
 
+      - name: Build ${{ runner.os }} swift-updater binary.
+        run: |
+          cargo build --release --bin swift-updater --no-default-features
+
       - name: Pull Git LFS objects
         run: git lfs pull
         env:
@@ -351,6 +355,10 @@ jobs:
         with:
           name: swift-settings_${{ matrix.os.short_name }}
           path: ./target/release/swift-settings${{ matrix.os.exe_suffix }}
+      - uses: actions/upload-artifact@v2
+        with:
+          name: swift-updater_${{ matrix.os.short_name }}
+          path: ./target/release/swift-updater${{ matrix.os.exe_suffix }}
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ runner.os }}-installer
@@ -652,6 +660,11 @@ jobs:
         with:
           name: swift-settings_windows
           path: windows
+      - name: Pull Windows swift-updater
+        uses: actions/download-artifact@v2
+        with:
+          name: swift-updater_windows
+          path: windows
       - name: Pull Linux Installer
         uses: actions/download-artifact@v2
         with:
@@ -666,6 +679,11 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: swift-settings_linux
+          path: linux
+      - name: Pull Linux swift-updater
+        uses: actions/download-artifact@v2
+        with:
+          name: swift-updater_linux
           path: linux
       - name: Pull macOS Installer
         uses: actions/download-artifact@v2
@@ -682,15 +700,23 @@ jobs:
         with:
           name: swift-settings_macos
           path: macos
+      - name: Pull macOS swift-updater
+        uses: actions/download-artifact@v2
+        with:
+          name: swift-updater_macos
+          path: macos
       - name: Prepare Release
         shell: bash
         run: |
           mv windows/swift-files.exe windows/swift-files_${{ env.VERSION }}_windows.exe
           mv windows/swift-settings.exe windows/swift-settings_${{ env.VERSION }}_windows.exe
+          mv windows/swift-updater.exe windows/swift-updater_${{ env.VERSION }}_windows.exe
           mv linux/swift-files linux/swift-files_${{ env.VERSION }}_linux
           mv linux/swift-settings linux/swift-settings_${{ env.VERSION }}_linux
+          mv linux/swift-updater linux/swift-updater_${{ env.VERSION }}_linux
           mv macos/swift-files macos/swift-files_${{ env.VERSION }}_macos
           mv macos/swift-settings macos/swift-settings_${{ env.VERSION }}_macos
+          mv macos/swift-updater macos/swift-updater_${{ env.VERSION }}_macos
           echo "WINDOWS_ARCHIVE=$(cat windows/installer-archive.filename)" >>$GITHUB_ENV
           echo "LINUX_ARCHIVE=$(cat linux/installer-archive.filename)" >>$GITHUB_ENV
           echo "MACOS_ARCHIVE=$(cat macos/installer-archive.filename)" >>$GITHUB_ENV
@@ -702,11 +728,14 @@ jobs:
             windows/${{ env.WINDOWS_ARCHIVE }}
             windows/swift-files_${{ env.VERSION }}_windows.exe
             windows/swift-settings_${{ env.VERSION }}_windows.exe
+            windows/swift-updater_${{ env.VERSION }}_windows.exe
             linux/${{ env.LINUX_ARCHIVE }}
             linux/swift-files_${{ env.VERSION }}_linux
             linux/swift-settings_${{ env.VERSION }}_linux
+            linux/swift-updater_${{ env.VERSION }}_linux
             macos/${{ env.MACOS_ARCHIVE }}
             macos/swift-files_${{ env.VERSION }}_macos
             macos/swift-settings_${{ env.VERSION }}_macos
+            macos/swift-updater_${{ env.VERSION }}_macos
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

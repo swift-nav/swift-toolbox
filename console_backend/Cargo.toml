@@ -99,7 +99,6 @@ bench = false
 name = "swift-updater"
 path = "src/bin/update_tool.rs"
 bench = false
-required-features = ["env_logger", "indicatif"]
 
 [features]
 default = ["pyo3"]

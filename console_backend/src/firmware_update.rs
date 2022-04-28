@@ -41,6 +41,7 @@ lazy_static! {
 
 const UPGRADE_FIRMWARE_TIMEOUT_SEC: u64 = 600;
 
+#[derive(Copy, Clone)]
 pub enum LogOverwriteBehavior {
     DontOverwrite,
     Overwrite,
@@ -52,7 +53,7 @@ pub fn firmware_update<LogCallback, ProgressCallback>(
     filepath: &Path,
     current_version: &SwiftVersion,
     log_callback: LogCallback,
-    progress_callback: ProgressCallback,
+    upload_progress_callback: ProgressCallback,
 ) -> anyhow::Result<()>
 where
     LogCallback: Fn(String, LogOverwriteBehavior) + Sync + Send + Clone + 'static,
@@ -97,7 +98,7 @@ where
         let size = firmware_blob.metadata()?.len() as usize;
 
         let mut bytes_written = 0;
-        progress_callback(0.0);
+        upload_progress_callback(0.0);
 
         let mut fileio = Fileio::new(link.clone(), msg_sender.clone());
 
@@ -107,7 +108,7 @@ where
             |n| {
                 bytes_written += n;
                 let progress = (bytes_written as f64) / (size as f64) * 100.0;
-                progress_callback(progress);
+                upload_progress_callback(progress);
             },
         )?;
 

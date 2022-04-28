@@ -394,7 +394,8 @@ fn upgrade_firmware(
             LogOverwriteBehavior::Overwrite => log_callback_ctx.fw_log_replace_last(msg),
         },
         move |progress| {
-            progress_callback_ctx.fw_log_replace_last(format!("Writing {:.2}%...", progress));
+            progress_callback_ctx
+                .fw_log_replace_last(format!("Uploading image to device {:.2}%...", progress));
         },
     ) {
         update_tab_context.fw_log_append(err.to_string());

@@ -1,15 +1,15 @@
-use std::io::{Read, Write};
+use std::io::{stdout, Read, Write};
 use std::path::PathBuf;
 use std::str::FromStr;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use anyhow::anyhow;
 use clap::Parser;
-use indicatif::{ProgressBar, ProgressStyle};
 
 use console_backend::cli_options::{SerialOpts, TcpOpts};
 use console_backend::connection::Connection;
-use console_backend::firmware_update;
+use console_backend::firmware_update::{self, LogOverwriteBehavior};
 use console_backend::swift_version::SwiftVersion;
 use console_backend::types::MsgSender;
 use console_backend::types::Result;
@@ -46,9 +46,9 @@ fn get_firmware_version(link: Link<'static, ()>, msg_sender: MsgSender) -> Resul
             FIRMWARE_VERSION_SETTING,
             READ_TIMEOUT,
         )?
-        .ok_or(anyhow!("Couldn't read firmware version"))?
+        .ok_or_else(|| anyhow!("Couldn't read firmware version"))?
         .value
-        .ok_or(anyhow!("Couldn't read firmware version"))?
+        .ok_or_else(|| anyhow!("Couldn't read firmware version"))?
         .to_string();
 
     SwiftVersion::from_str(&setting_value).map_err(Into::into)
@@ -68,6 +68,32 @@ fn get_connection(opts: &Opts) -> Result<(Box<dyn Read + Send>, Box<dyn Write + 
         return Err(anyhow!("No serialport or tcp string supplied"));
     };
     Ok((reader, writer))
+}
+
+fn printer(
+    line: &str,
+    overwrite: LogOverwriteBehavior,
+    last_state: &Arc<Mutex<LogOverwriteBehavior>>,
+) {
+    let mut last_overwrite = last_state.lock().expect("Mutex poisoned");
+
+    // Logic here is needed here to avoid overwriting lines that shouldn't be overwritten
+    match (*last_overwrite, overwrite) {
+        (LogOverwriteBehavior::DontOverwrite, LogOverwriteBehavior::DontOverwrite) => {
+            println!("> {line}")
+        }
+        (LogOverwriteBehavior::DontOverwrite, LogOverwriteBehavior::Overwrite) => {
+            print!("> {line}")
+        }
+        (LogOverwriteBehavior::Overwrite, LogOverwriteBehavior::DontOverwrite) => {
+            println!("\n> {line}")
+        }
+        (LogOverwriteBehavior::Overwrite, LogOverwriteBehavior::Overwrite) => print!("\r> {line}"),
+    }
+
+    *last_overwrite = overwrite;
+
+    stdout().flush().expect("Couldn't flush stdout");
 }
 
 fn main() -> anyhow::Result<()> {
@@ -91,20 +117,22 @@ fn main() -> anyhow::Result<()> {
 
     let firmware_version = get_firmware_version(link.clone(), msg_sender.clone())?;
 
-    let pb = ProgressBar::new(100);
+    let log_state = Arc::new(Mutex::new(LogOverwriteBehavior::Overwrite));
+    let progress_state = log_state.clone();
 
-    pb.set_style(
-        ProgressStyle::default_bar()
-            .template("[{elapsed_precise}] [{bar}] {pos}/{len}% ({eta} remaining)")
-            .progress_chars("=> "),
-    );
     firmware_update::firmware_update(
         link,
         msg_sender,
         &opts.update_file,
         &firmware_version,
-        |msg, _| println!("> {}", msg),
-        move |progress| pb.set_position(progress as u64),
+        move |msg, overwrite| printer(&msg, overwrite, &log_state),
+        move |progress| {
+            printer(
+                &format!("Uploading image to device {:.2}%...", progress),
+                LogOverwriteBehavior::Overwrite,
+                &progress_state,
+            )
+        },
     )?;
 
     Ok(())

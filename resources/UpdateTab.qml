@@ -99,12 +99,17 @@ MainTab {
             clip: true
 
             ScrollView {
+                id: control
+
                 anchors.fill: parent
                 anchors.margins: Constants.updateTab.innerMargins
 
                 TextEdit {
                     id: fwLogTextArea
 
+                    onTextChanged: {
+                        scrollBarVertical.position = 1 - scrollBarVertical.size;
+                    }
                     readOnly: true
                     selectByMouse: true
                     selectByKeyboard: true
@@ -112,6 +117,16 @@ MainTab {
                     activeFocusOnPress: false
                     font.family: Constants.genericTable.fontFamily
                     font.pixelSize: Constants.largePixelSize
+                }
+
+                ScrollBar.vertical: ScrollBar {
+                    id: scrollBarVertical
+
+                    parent: control
+                    x: control.mirrored ? 0 : control.width - width
+                    y: control.topPadding
+                    height: control.availableHeight
+                    active: control.ScrollBar.horizontal.active
                 }
 
             }
@@ -228,7 +243,9 @@ MainTab {
             if (!firmwareDownload.fwDirectoryEditing)
                 firmwareDownload.fwDirectory = updateTabData.directory;
 
-            fwLogTextArea.text = updateTabData.fw_text;
+            if (fwLogTextArea.text != updateTabData.fw_text)
+                fwLogTextArea.text = updateTabData.fw_text;
+
             firmwareDownload.downloadButtonEnable = !updateTabData.downloading && !updateTabData.upgrading;
             firmwareVersion.upgradeButtonEnable = !updateTabData.upgrading && !updateTabData.downloading;
             if (!firmwareVersion.localFileTextEditing)

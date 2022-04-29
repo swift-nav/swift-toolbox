@@ -16,6 +16,7 @@ use sbp::{link::LinkSource, SbpIterExt};
 use console_backend::{
     cli_options::is_baudrate,
     connection::Connection,
+    constants::EXAMPLE_SERIAL_NAME,
     fileio::Fileio,
     types::{FlowControl, MsgSender, Result},
 };
@@ -40,13 +41,6 @@ fn main() -> Result<()> {
         }
     }
 }
-
-#[cfg(target_os = "windows")]
-const SERIAL_NAME: &str = "COM1";
-#[cfg(target_os = "linux")]
-const SERIAL_NAME: &str = "/dev/ttyUSB0";
-#[cfg(target_os = "macos")]
-const SERIAL_NAME: &str = "/dev/cu.usbserial";
 
 lazy_static! {
     static ref FILEIO_USAGE: String = format!(
@@ -84,7 +78,7 @@ lazy_static! {
         - Delete file from Swift device:
             swift-files --delete {serial}:/persistent/unwanted_file
     ",
-        serial = SERIAL_NAME
+        serial = EXAMPLE_SERIAL_NAME
     );
 }
 

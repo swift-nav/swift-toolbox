@@ -95,6 +95,11 @@ name = "headless-console"
 path = "src/bin/headless-console.rs"
 bench = false
 
+[[bin]]
+name = "swift-updater"
+path = "src/bin/update_tool.rs"
+bench = false
+
 [features]
 default = ["pyo3"]
 benches = []

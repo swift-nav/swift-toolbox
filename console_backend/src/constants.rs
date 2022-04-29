@@ -1,4 +1,7 @@
+use lazy_static::lazy_static;
 use std::time::Duration;
+
+use crate::swift_version::SwiftVersion;
 
 // 'Universal' constants
 
@@ -242,3 +245,19 @@ pub(crate) const UNKNOWN_ERROR: &str = "Unk Error";
 pub(crate) const UNKNOWN_ERROR_SHORT: &str = "Unk";
 pub(crate) const ODO_POSTFIX: &str = "+Odo";
 pub(crate) const INS_POSTFIX: &str = "+INS";
+
+// Update firmware constants.
+pub(crate) const HARDWARE_REVISION: &str = "piksi_multi";
+pub(crate) const FIRMWARE_V2_VERSION: &str = "v2.0.0";
+lazy_static! {
+    pub(crate) static ref FIRMWARE_V2: SwiftVersion =
+        SwiftVersion::parse(FIRMWARE_V2_VERSION).unwrap();
+}
+
+// CLI constants
+#[cfg(target_os = "windows")]
+pub const EXAMPLE_SERIAL_NAME: &str = "COM1";
+#[cfg(target_os = "linux")]
+pub const EXAMPLE_SERIAL_NAME: &str = "/dev/ttyUSB0";
+#[cfg(target_os = "macos")]
+pub const EXAMPLE_SERIAL_NAME: &str = "/dev/cu.usbserial";

@@ -314,6 +314,10 @@ jobs:
         run: |
           cargo build --release --bin swift-settings --no-default-features --features env_logger
 
+      - name: Build ${{ runner.os }} swift-updater binary.
+        run: |
+          cargo build --release --bin swift-updater --no-default-features
+
       - name: Pull Git LFS objects
         run: git lfs pull
         env:
@@ -351,6 +355,10 @@ jobs:
         with:
           name: swift-settings_${{ matrix.os.short_name }}
           path: ./target/release/swift-settings${{ matrix.os.exe_suffix }}
+      - uses: actions/upload-artifact@v2
+        with:
+          name: swift-updater_${{ matrix.os.short_name }}
+          path: ./target/release/swift-updater${{ matrix.os.exe_suffix }}
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ runner.os }}-installer
@@ -641,6 +649,7 @@ jobs:
         type:
           - "files"
           - "settings"
+          - "updater"
     runs-on: [self-hosted, '${{ matrix.os.name }}', code-signer]
     steps:
       - name: Store git tag vars.
@@ -743,6 +752,11 @@ jobs:
         with:
           name: swift-settings_windows-signed
           path: windows
+      - name: Pull Windows swift-updater
+        uses: actions/download-artifact@v2
+        with:
+          name: swift-updater_windows-signed
+          path: windows
       - name: Pull Linux Installer
         uses: actions/download-artifact@v2
         with:
@@ -757,6 +771,11 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: swift-settings_linux-signed
+          path: linux
+      - name: Pull Linux swift-updater
+        uses: actions/download-artifact@v2
+        with:
+          name: swift-updater_linux-signed
           path: linux
       - name: Pull macOS Installer
         uses: actions/download-artifact@v2
@@ -773,6 +792,11 @@ jobs:
         with:
           name: swift-settings_macos-signed
           path: macos
+      - name: Pull macOS swift-updater
+        uses: actions/download-artifact@v2
+        with:
+          name: swift-updater_macos-signed
+          path: macos
       - name: Prepare Release
         shell: bash
         run: |
@@ -787,11 +811,14 @@ jobs:
             windows/${{ env.WINDOWS_ARCHIVE }}
             windows/swift-files_${{ env.VERSION }}_windows.exe
             windows/swift-settings_${{ env.VERSION }}_windows.exe
+            windows/swift-updater_${{ env.VERSION }}_windows.exe
             linux/${{ env.LINUX_ARCHIVE }}
             linux/swift-files_${{ env.VERSION }}_linux.zip
             linux/swift-settings_${{ env.VERSION }}_linux.zip
+            linux/swift-updater_${{ env.VERSION }}_linux.zip
             macos/${{ env.MACOS_ARCHIVE }}
             macos/swift-files_${{ env.VERSION }}_macos.zip
             macos/swift-settings_${{ env.VERSION }}_macos.zip
+            macos/swift-updater_${{ env.VERSION }}_macos.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -241,7 +241,7 @@ pub struct SerialOpts {
     )]
     pub serial: Option<PathBuf>,
 
-    /// The baudrate for processing packets.
+    /// The baudrate for processing packets when connecting via serial.
     #[clap(
         long,
         default_value = "115200",
@@ -250,7 +250,7 @@ pub struct SerialOpts {
     )]
     pub baudrate: u32,
 
-    /// The flow control spec to use.
+    /// The flow control spec to use when connecting via serial.
     #[clap(
         long,
         default_value = "None",

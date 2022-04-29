@@ -253,3 +253,11 @@ lazy_static! {
     pub(crate) static ref FIRMWARE_V2: SwiftVersion =
         SwiftVersion::parse(FIRMWARE_V2_VERSION).unwrap();
 }
+
+// CLI constants
+#[cfg(target_os = "windows")]
+pub const EXAMPLE_SERIAL_NAME: &str = "COM1";
+#[cfg(target_os = "linux")]
+pub const EXAMPLE_SERIAL_NAME: &str = "/dev/ttyUSB0";
+#[cfg(target_os = "macos")]
+pub const EXAMPLE_SERIAL_NAME: &str = "/dev/cu.usbserial";

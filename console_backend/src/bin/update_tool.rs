@@ -5,7 +5,9 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use anyhow::anyhow;
-use clap::Parser;
+use clap::{AppSettings::DeriveDisplayOrder, ArgGroup, Parser};
+use console_backend::constants::EXAMPLE_SERIAL_NAME;
+use lazy_static::lazy_static;
 
 use console_backend::cli_options::{SerialOpts, TcpOpts};
 use console_backend::connection::Connection;
@@ -17,12 +19,40 @@ use sbp::link::{Link, LinkSource};
 use sbp::SbpIterExt;
 use sbp_settings::Client;
 
+lazy_static! {
+    static ref USAGE: String = format!(
+        "\
+    swift-updater [OPTIONS]
+
+    Examples:
+        - Updating firmware using TCP/IP
+            swift-updater --tcp 192.168.0.2222:55555 ./firmware.bin
+        - Updating firmware using serial
+            swift-updater --serial {serial} ./firmware.bin
+    ",
+        serial = EXAMPLE_SERIAL_NAME
+    );
+}
+
+/// A SwiftNav firmware updater API client
 #[derive(Parser)]
 #[clap(
     name = "swift-updater",
     version = include_str!("../version.txt"),
+    setting = DeriveDisplayOrder,
+    group = ArgGroup::new("conn").required(true).args(&["serial", "tcp"]),
+    override_usage = "\
+    swift-updater [OPTIONS]
+
+    Examples:
+        - Updating firmware using TCP/IP
+            swift-updater --tcp 192.168.0.2222:55555 ./firmware.bin
+        - Updating firmware using serial
+            swift-updater --serial /dev/ttyUSB0 ./firmware.bin
+    "
 )]
 struct Opts {
+    /// The binary (.bin) file to write to flash
     update_file: PathBuf,
 
     #[clap(flatten)]

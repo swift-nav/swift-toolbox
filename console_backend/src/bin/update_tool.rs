@@ -41,15 +41,7 @@ lazy_static! {
     version = include_str!("../version.txt"),
     setting = DeriveDisplayOrder,
     group = ArgGroup::new("conn").required(true).args(&["serial", "tcp"]),
-    override_usage = "\
-    swift-updater [OPTIONS]
-
-    Examples:
-        - Updating firmware using TCP/IP
-            swift-updater --tcp 192.168.0.2222:55555 ./firmware.bin
-        - Updating firmware using serial
-            swift-updater --serial /dev/ttyUSB0 ./firmware.bin
-    "
+    override_usage = &**USAGE
 )]
 struct Opts {
     /// The binary (.bin) file to write to flash

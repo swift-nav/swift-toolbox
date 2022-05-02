@@ -9,8 +9,6 @@ import Qt.labs.platform as LP
 import SwiftConsole
 
 Rectangle {
-    property variant previous_folders: []
-    property variant sbp_logging_labels: []
     property alias sbpRecording: sbpLoggingButton.checked
     property string recordingFilename: ""
     property string lastEdittedLogDirectoryText: ""
@@ -150,7 +148,7 @@ Rectangle {
                     Layout.preferredHeight: loggingBarRowLayout.preferredButtonHeight
                     enabled: !sbpLoggingButton.checked
                     font: Constants.loggingBar.comboBoxFont
-                    model: sbp_logging_labels
+                    model: loggingBarData.sbp_logging_labels
                     ToolTip.visible: hovered
                     ToolTip.text: "SBP Log Format"
                     onActivated: backend_request_broker.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText)
@@ -163,7 +161,7 @@ Rectangle {
                     Layout.preferredHeight: loggingBarRowLayout.preferredButtonHeight
                     enabled: !sbpLoggingButton.checked
                     font: Constants.loggingBar.comboBoxFont
-                    model: previous_folders
+                    model: loggingBarData.previous_folders
                     editable: true
                     selectTextByMouse: true
                     visible: sbpLoggingButton.checked
@@ -176,7 +174,7 @@ Rectangle {
                     Layout.preferredHeight: loggingBarRowLayout.preferredButtonHeight
                     enabled: !sbpLoggingButton.checked
                     font: Constants.loggingBar.comboBoxFont
-                    model: previous_folders
+                    model: loggingBarData.previous_folders
                     editable: true
                     selectTextByMouse: true
                     visible: !sbpLoggingButton.checked
@@ -256,12 +254,9 @@ Rectangle {
             repeat: true
             onTriggered: {
                 logging_bar_model.fill_data(loggingBarData);
-                previous_folders = loggingBarData.previous_folders;
-                if (!sbp_logging_labels.length)
-                    sbp_logging_labels = loggingBarData.sbp_logging_labels;
 
                 sbpLoggingButton.checked = loggingBarData.sbp_logging;
-                sbpLoggingFormat.currentIndex = sbp_logging_labels.indexOf(loggingBarData.sbp_logging_format);
+                sbpLoggingFormat.currentIndex = loggingBarData.sbp_logging_labels.indexOf(loggingBarData.sbp_logging_format);
                 csvLoggingButton.checked = loggingBarData.csv_logging;
                 recordingFilenameText.editText = loggingBarData.recording_filename;
                 if (mockTime) {

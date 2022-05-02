@@ -156,7 +156,7 @@ class ConnectionType(str, Enum):
     Serial = "Serial"
 
 
-class QTKeys(str, Enum):
+class QTKeys():
     QVARIANTLIST = "QVariantList"
     QVARIANT = "QVariant"
 

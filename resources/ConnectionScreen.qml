@@ -359,7 +359,7 @@ Item {
                         id: closeButton
 
                         text: "Cancel"
-                        Layout.preferredWidth: parent.width / 4
+                        Layout.preferredWidth: dialog.width / 4
                         checkable: false
                         onClicked: {
                             dialog.close();
@@ -371,7 +371,7 @@ Item {
 
                         property string tooltipText: "Connect"
 
-                        Layout.preferredWidth: parent.width / 4
+                        Layout.preferredWidth: dialog.width / 4
                         checkable: true
                         state: Constants.connection.disconnected
                         ToolTip.visible: hovered

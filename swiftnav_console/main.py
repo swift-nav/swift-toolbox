@@ -1,5 +1,6 @@
 """Frontend module for the Swift Console.
 """
+import signal
 import argparse
 from datetime import datetime
 import os
@@ -634,6 +635,9 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
 
 
 def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
+    # Redirect SIGINT to SIG_DFL, so Qt handles Sigint and terminates properly.
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+
     parser = argparse.ArgumentParser(add_help=False, usage=argparse.SUPPRESS)
     parser.add_argument("--exit-after-timeout", type=int, default=None)
     parser.add_argument("--read-capnp-recording", type=str, default=None)

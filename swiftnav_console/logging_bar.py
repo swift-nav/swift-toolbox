@@ -1,12 +1,16 @@
 """Logging Bar QObjects.
 """
 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
-from PySide6.QtCore import Property, QObject, Signal, Slot
+from PySide6.QtCore import Property, QObject, QStringListModel, Signal, Slot, Qt
+from PySide6.QtQml import QmlElement
 
 from .constants import Keys, QTKeys, SbpLogging
 
+QML_IMPORT_NAME = "SwiftConsole"
+QML_IMPORT_MAJOR_VERSION = 1
+#QML_IMPORT_MINOR_VERSION is optional
 
 def logging_bar_update() -> Dict[str, Any]:
     return {
@@ -30,19 +34,34 @@ LOGGING_BAR: List[Dict[str, Any]] = [logging_bar_update()]
 LOGGING_BAR_RECORDING: List[Dict[str, Any]] = [logging_bar_recording_update()]
 
 
+@QmlElement
+class SwiftStringListModel(QStringListModel):
+    def __init__(self, parent: Optional[QObject] = None) -> None:
+        super().__init__(parent)
+
+    @Slot(str, result=int)
+    def indexOf(self, string: str) -> int:
+        matchedIndices = self.match(self.index(0), Qt.EditRole, string)
+        index = matchedIndices[0].row() if len(matchedIndices) > 0 else -1
+        return index
+
+@QmlElement
 class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
 
     _csv_logging: bool = False
     _sbp_logging: bool = False
     _sbp_logging_format: str = SbpLogging.SBP_JSON
-    _sbp_logging_labels: List[str] = []
-    _previous_folders: List[str] = []
+    _sbp_logging_labels: QStringListModel = SwiftStringListModel()
+    _previous_folders: QStringListModel = SwiftStringListModel()
     _recording_duration_sec: int = 0
     _recording_size: float = 0
     _recording_filename: str = ""
     _data_updated = Signal()
     logging_bar: Dict[str, Any] = {}
     logging_bar_recording: Dict[str, Any] = {}
+
+    sbp_logging_labels_changed = Signal(QObject)
+    previous_folders_changed = Signal(QObject)
 
     def __init__(self):
         super().__init__()
@@ -91,21 +110,25 @@ class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
 
     sbp_logging_format = Property(str, get_sbp_logging_format, set_sbp_logging_format)
 
-    def get_sbp_logging_labels(self) -> List[str]:
+    # sbp_logging_labels property
+    def get_sbp_logging_labels(self) -> QObject:
         return self._sbp_logging_labels
 
     def set_sbp_logging_labels(self, sbp_logging_labels: List[str]) -> None:
-        self._sbp_logging_labels = sbp_logging_labels
+        self._sbp_logging_labels.setStringList(sbp_logging_labels)
+        self.sbp_logging_labels_changed.emit(self._sbp_logging_labels)
 
-    sbp_logging_labels = Property(QTKeys.QVARIANTLIST, get_sbp_logging_labels, set_sbp_logging_labels)  # type: ignore
+    sbp_logging_labels = Property(QObject, get_sbp_logging_labels, notify=sbp_logging_labels_changed)  # type: ignore
 
-    def get_previous_folders(self) -> List[str]:
+    # previous_folders property
+    def get_previous_folders(self) -> QObject:
         return self._previous_folders
 
     def set_previous_folders(self, previous_folders: List[str]) -> None:
-        self._previous_folders = previous_folders
+        self._previous_folders.setStringList(previous_folders)
+        self.previous_folders_changed.emit(self._previous_folders)
 
-    previous_folders = Property(QTKeys.QVARIANTLIST, get_previous_folders, set_previous_folders)  # type: ignore
+    previous_folders = Property(QObject, get_previous_folders, notify=previous_folders_changed)  # type: ignore
 
     def get_recording_size(self) -> float:
         return self._recording_size

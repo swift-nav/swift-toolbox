@@ -272,9 +272,13 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
 
     @Slot()  # type: ignore
     def receive_messages(self):
-        if not self._receive_messages():
-            self._thread.exit()
-        else:
+        try:
+            if not self._receive_messages():
+                self._thread.exit()
+            else:
+                QTimer.singleShot(0, self.receive_messages)
+        except AttributeError as e:
+            time.sleep(0.2)
             QTimer.singleShot(0, self.receive_messages)
 
     def _receive_messages_debug(self):

@@ -683,7 +683,6 @@ jobs:
             /n "Swift Navigation, Inc." /a ^
             /tr http://rfc3161timestamp.globalsign.com/advanced ^
             /td SHA256 binaries/swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
-          mv binaries/swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }} .
         if: matrix.os.name == 'Windows'
 
       - name: Sign Binaries.
@@ -738,8 +737,17 @@ jobs:
       - name: Zip Binaries.
         shell: bash
         run: |
-          chmod +x "swift-binaries_${{ matrix.os }}_${{ env.VERSION }}-signed.zip"
           7z a -tzip "swift-binaries_${{ matrix.os }}_${{ env.VERSION }}-signed.zip"
+
+      - name: Sign Binaries.
+        shell: cmd
+        run: |
+          "${{ env.CODE_SIGNER_PATH_WIN }}" sign ^
+            /debug /v ^
+            /n "Swift Navigation, Inc." /a ^
+            /tr http://rfc3161timestamp.globalsign.com/advanced ^
+            /td SHA256 swift-binaries_${{ matrix.os }}_${{ env.VERSION }}-signed.zip
+        if: matrix.os == 'windows'
 
       - name: Sign Binaries.
         shell: bash
@@ -753,7 +761,7 @@ jobs:
             --primary-bundle-id ${{ env.APP_BUNDLE_ID }} \
             --apiKey ${{ secrets.APPLE_KEY_ID }} \
             --apiIssuer ${{ secrets.APPLE_ISSUER_ID }}
-        if: matrix.os.name == 'macos'
+        if: matrix.os == 'macos'
 
       - uses: actions/upload-artifact@v2
         with:

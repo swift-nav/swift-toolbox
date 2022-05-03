@@ -55,23 +55,12 @@ Item {
                 ToolTip.visible: hovered
                 ToolTip.text: "Pause"
                 checkable: true
-                onClicked: backend_request_broker.baseline_plot([baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].pressed, baselineButtonGroup.buttons[0].pressed])
-
-                Image {
-                    id: baselinePauseImage
-
-                    anchors.centerIn: parent
-                    width: Constants.baselinePlot.buttonSvgHeight
-                    height: Constants.baselinePlot.buttonSvgHeight
+                icon {
                     source: Constants.icons.pauseButtonUrl
-                    visible: false
+                    color: !baselinePauseButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 }
 
-//                ColorOverlay {
-//                    anchors.fill: baselinePauseImage
-//                    source: baselinePauseImage
-//                    color: !baselinePauseButton.checked ? Constants.materialGrey : Constants.swiftOrange
-//                }
+                onClicked: backend_request_broker.baseline_plot([baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].pressed, baselineButtonGroup.buttons[0].pressed])
 
             }
 
@@ -84,6 +73,10 @@ Item {
                 Layout.preferredHeight: Constants.commonChart.buttonHeight
                 ToolTip.visible: hovered
                 ToolTip.text: "Clear"
+                icon {
+                    source: Constants.icons.clearButtonUrl
+                    color: !baselineClearButton.checked ? Constants.materialGrey : Constants.swiftOrange
+                }
 
                 Image {
                     id: baselineClearImage
@@ -94,12 +87,6 @@ Item {
                     source: Constants.icons.clearButtonUrl
                     visible: false
                 }
-
-//                ColorOverlay {
-//                    anchors.fill: baselineClearImage
-//                    source: baselineClearImage
-//                    color: !baselineClearButton.checked ? Constants.materialGrey : Constants.swiftOrange
-//                }
 
             }
 
@@ -122,22 +109,10 @@ Item {
                 ToolTip.text: "Zoom All"
                 checkable: true
                 checked: true
-
-                Image {
-                    id: baselineZoomAllImage
-
-                    anchors.centerIn: parent
-                    width: Constants.baselinePlot.buttonSvgHeight
-                    height: Constants.baselinePlot.buttonSvgHeight
+                icon {
                     source: Constants.icons.zoomAllButtonUrl
-                    visible: false
+                    color: !baselineZoomAllButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 }
-
-//                ColorOverlay {
-//                    anchors.fill: baselineZoomAllImage
-//                    source: baselineZoomAllImage
-//                    color: !baselineZoomAllButton.checked ? Constants.materialGrey : Constants.swiftOrange
-//                }
 
             }
 
@@ -160,22 +135,10 @@ Item {
                 ToolTip.visible: hovered
                 ToolTip.text: "Center On Solution"
                 checkable: true
-
-                Image {
-                    id: centerButtonImage
-
-                    anchors.centerIn: parent
-                    width: Constants.baselinePlot.buttonSvgHeight
-                    height: Constants.baselinePlot.buttonSvgHeight
+                icon {
                     source: Constants.icons.centerOnButtonUrl
-                    visible: false
+                    color: !baselineCenterButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 }
-
-//                ColorOverlay {
-//                    anchors.fill: centerButtonImage
-//                    source: centerButtonImage
-//                    color: !baselineCenterButton.checked ? Constants.materialGrey : Constants.swiftOrange
-//                }
 
             }
 

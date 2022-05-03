@@ -56,23 +56,12 @@ Item {
                 ToolTip.visible: hovered
                 ToolTip.text: "Pause"
                 checkable: true
-                onClicked: backend_request_broker.solution_position([solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].pressed])
-
-                Image {
-                    id: solutionPauseImage
-
-                    anchors.centerIn: parent
-                    width: Constants.solutionPosition.buttonSvgHeight
-                    height: Constants.solutionPosition.buttonSvgHeight
+                icon {
                     source: Constants.icons.pauseButtonUrl
-                    visible: false
+                    color: !solutionPauseButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 }
 
-//                ColorOverlay {
-//                    anchors.fill: solutionPauseImage
-//                    source: solutionPauseImage
-//                    color: !solutionPauseButton.checked ? Constants.materialGrey : Constants.swiftOrange
-//                }
+                onClicked: backend_request_broker.solution_position([solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].pressed])
 
             }
 
@@ -80,27 +69,16 @@ Item {
                 id: solutionClearButton
 
                 ButtonGroup.group: solutionButtonGroup
-                Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
+                Layout.preferredWidth: parent.labelComboWidth/4
                 Layout.preferredHeight: Constants.commonChart.buttonHeight
                 ToolTip.visible: hovered
                 ToolTip.text: "Clear"
-                onPressed: backend_request_broker.solution_position([solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].pressed])
-
-                Image {
-                    id: solutionClearImage
-
-                    anchors.centerIn: parent
-                    width: Constants.solutionPosition.buttonSvgHeight
-                    height: Constants.solutionPosition.buttonSvgHeight
+                icon {
                     source: Constants.icons.clearButtonUrl
-                    visible: false
+                    color: !solutionClearButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 }
 
-//                ColorOverlay {
-//                    anchors.fill: solutionClearImage
-//                    source: solutionClearImage
-//                    color: !solutionClearButton.checked ? Constants.materialGrey : Constants.swiftOrange
-//                }
+                onPressed: backend_request_broker.solution_position([solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].pressed])
 
             }
 
@@ -123,22 +101,10 @@ Item {
                 ToolTip.text: "Zoom All"
                 checkable: true
                 checked: true
-
-                Image {
-                    id: solutionZoomAllImage
-
-                    anchors.centerIn: parent
-                    width: Constants.solutionPosition.buttonSvgHeight
-                    height: Constants.solutionPosition.buttonSvgHeight
+                icon {
                     source: Constants.icons.zoomAllButtonUrl
-                    visible: false
+                    color: !solutionZoomAllButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 }
-
-//                ColorOverlay {
-//                    anchors.fill: solutionZoomAllImage
-//                    source: solutionZoomAllImage
-//                    color: !solutionZoomAllButton.checked ? Constants.materialGrey : Constants.swiftOrange
-//                }
 
             }
 
@@ -161,22 +127,10 @@ Item {
                 ToolTip.visible: hovered
                 ToolTip.text: "Center On Solution"
                 checkable: true
-
-                Image {
-                    id: centerButtonImage
-
-                    anchors.centerIn: parent
-                    width: Constants.solutionPosition.buttonSvgHeight
-                    height: Constants.solutionPosition.buttonSvgHeight
+                icon {
                     source: Constants.icons.centerOnButtonUrl
-                    visible: false
+                    color: !solutionCenterButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 }
-
-//                ColorOverlay {
-//                    anchors.fill: centerButtonImage
-//                    source: centerButtonImage
-//                    color: !solutionCenterButton.checked ? Constants.materialGrey : Constants.swiftOrange
-//                }
 
             }
 

@@ -724,10 +724,51 @@ jobs:
           name: swift-${{ matrix.type }}_${{ matrix.os.short_name }}-signed
           path: swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.upload_suffix }}
 
+  zip_binaries:
+    name: Zip Binaries
+    timeout-minutes: 10
+    needs:
+      - sign_binaries
+    strategy:
+      matrix:
+        os:
+          - "macos"
+          - "windows"
+          - "linux"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Store git tag vars.
+        shell: bash
+        run: |
+          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+      - name: Pull swift-files
+        uses: actions/download-artifact@v2
+        with:
+          name: swift-files_${{ matrix.os }}-signed
+          path: ${{ matrix.os }}
+      - name: Pull swift-settings
+        uses: actions/download-artifact@v2
+        with:
+          name: swift-settings_${{ matrix.os }}-signed
+          path: ${{ matrix.os }}
+      - name: Pull swift-updater
+        uses: actions/download-artifact@v2
+        with:
+          name: swift-updater_${{ matrix.os }}-signed
+          path: ${{ matrix.os }}
+      - name: Zip everything
+        shell: bash
+        run: |
+          7z a -tzip "../swift-binaries_${{ matrix.os }}_${{ env.VERSION }}-signed.zip"
+      - uses: actions/upload-artifact@v2
+        with:
+          name: swift-binaries_${{ matrix.os }}-signed
+          path: swift-binaries_${{ matrix.os }}_${{ env.VERSION }}-signed.zip
+
   release:
     name: Create Release
     needs:
-      - sign_binaries
+      - zip_binaries
       - sign_installer
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
     runs-on: ubuntu-20.04
@@ -742,60 +783,30 @@ jobs:
         with:
           name: Windows-installer-signed
           path: windows
-      - name: Pull Windows swift-files
+      - name: Pull Windows Binaries
         uses: actions/download-artifact@v2
         with:
-          name: swift-files_windows-signed
-          path: windows
-      - name: Pull Windows swift-settings
-        uses: actions/download-artifact@v2
-        with:
-          name: swift-settings_windows-signed
-          path: windows
-      - name: Pull Windows swift-updater
-        uses: actions/download-artifact@v2
-        with:
-          name: swift-updater_windows-signed
+          name: swift-binaries_windows-signed
           path: windows
       - name: Pull Linux Installer
         uses: actions/download-artifact@v2
         with:
           name: Linux-installer
           path: linux
-      - name: Pull Linux swift-files
+      - name: Pull Linux Binaries
         uses: actions/download-artifact@v2
         with:
-          name: swift-files_linux-signed
-          path: linux
-      - name: Pull Linux swift-settings
-        uses: actions/download-artifact@v2
-        with:
-          name: swift-settings_linux-signed
-          path: linux
-      - name: Pull Linux swift-updater
-        uses: actions/download-artifact@v2
-        with:
-          name: swift-updater_linux-signed
+          name: swift-binaries_linux-signed
           path: linux
       - name: Pull macOS Installer
         uses: actions/download-artifact@v2
         with:
           name: macOS-installer
           path: macos
-      - name: Pull macOS swift-files
+      - name: Pull macOS Binaries
         uses: actions/download-artifact@v2
         with:
-          name: swift-files_macos-signed
-          path: macos
-      - name: Pull macOS swift-settings
-        uses: actions/download-artifact@v2
-        with:
-          name: swift-settings_macos-signed
-          path: macos
-      - name: Pull macOS swift-updater
-        uses: actions/download-artifact@v2
-        with:
-          name: swift-updater_macos-signed
+          name: swift-binaries_macos-signed
           path: macos
       - name: Prepare Release
         shell: bash
@@ -809,16 +820,10 @@ jobs:
           name: "${{ env.VERSION }}-${{ env.DATE }}"
           files: |
             windows/${{ env.WINDOWS_ARCHIVE }}
-            windows/swift-files_${{ env.VERSION }}_windows.exe
-            windows/swift-settings_${{ env.VERSION }}_windows.exe
-            windows/swift-updater_${{ env.VERSION }}_windows.exe
+            windows/swift-binaries_windows_${{ env.VERSION }}-signed.zip
             linux/${{ env.LINUX_ARCHIVE }}
-            linux/swift-files_${{ env.VERSION }}_linux.zip
-            linux/swift-settings_${{ env.VERSION }}_linux.zip
-            linux/swift-updater_${{ env.VERSION }}_linux.zip
+            linux/swift-binaries_linux_${{ env.VERSION }}-signed.zip
             macos/${{ env.MACOS_ARCHIVE }}
-            macos/swift-files_${{ env.VERSION }}_macos.zip
-            macos/swift-settings_${{ env.VERSION }}_macos.zip
-            macos/swift-updater_${{ env.VERSION }}_macos.zip
+            macos/swift-binaries_macos_${{ env.VERSION }}-signed.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

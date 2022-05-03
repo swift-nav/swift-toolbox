@@ -700,7 +700,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: swift-${{ matrix.type }}_${{ matrix.os.short_name }}-signed
-          path: swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
+          path: binaries/swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
 
   zip_binaries:
     name: Zip Binaries

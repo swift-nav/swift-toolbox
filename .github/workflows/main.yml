@@ -643,9 +643,9 @@ jobs:
     strategy:
       matrix:
         os:
-          - {name: macOS, exe_suffix: "", short_name: "macos", upload_suffix: ".zip"}
-          - {name: Windows, exe_suffix: ".exe", short_name: "windows", upload_suffix: ".exe"}
-          - {name: Linux, exe_suffix: "", short_name: "linux", upload_suffix: ".zip"}
+          - {name: macOS, exe_suffix: "", short_name: "macos"}
+          - {name: Windows, exe_suffix: ".exe", short_name: "windows"}
+          - {name: Linux, exe_suffix: "", short_name: "linux"}
         type:
           - "files"
           - "settings"
@@ -738,6 +738,15 @@ jobs:
         shell: bash
         run: |
           7z a -tzip "swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-signed.zip"
+        if: matrix.os.name != "Windows"
+
+      - name: Zip Binaries.
+        shell: cmd
+        run: |
+          tar -a -c -f "swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-signed.zip" \
+            --exclude="swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-signed.zip" *
+        continue-on-error: true
+        if: matrix.os.name == "Windows"
 
       - name: Sign Binaries.
         shell: cmd

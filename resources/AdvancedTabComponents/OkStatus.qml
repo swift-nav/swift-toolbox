@@ -1,24 +1,18 @@
 import "../Constants"
+import "../BaseComponents"
 import QtQuick
 import QtQuick.Controls
 
 Item {
-    Image {
+    SwiftImage {
         id: okStatusImage
 
         anchors.verticalCenter: parent.verticalCenter
-        width: Constants.advancedImu.insStatusImageWidth
-        height: Constants.advancedImu.insStatusImageWidth
+        sourceSize: Qt.size(Constants.advancedImu.insStatusImageWidth, Constants.advancedImu.insStatusImageWidth)
         smooth: true
         source: Constants.advancedImu.okStatusPath
         antialiasing: Globals.useAntiAliasing
-
-//        ColorOverlay {
-//            anchors.fill: parent
-//            source: parent
-//            color: Constants.advancedImu.okStatusColor
-//            antialiasing: Globals.useAntiAliasing
-//        }
+        color: Constants.advancedImu.okStatusColor
 
     }
 

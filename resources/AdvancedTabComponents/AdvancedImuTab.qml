@@ -182,12 +182,14 @@ Item {
             Layout.preferredHeight: Constants.advancedImu.urlBarHeight
             Layout.alignment: Qt.AlignBottom
 
+            property real preferredChildWidths: advancedImuArea.width / 15
+
             Label {
                 text: Constants.advancedImu.textDataLabels[0]
             }
 
             Rectangle {
-                Layout.preferredWidth: parent.width / 15
+                Layout.preferredWidth: parent.preferredChildWidths
                 Layout.preferredHeight: Constants.advancedImu.textDataBarHeight
                 Layout.alignment: Qt.AlignVCenter
                 border.width: Constants.advancedImu.textDataBarBorderWidth
@@ -209,7 +211,7 @@ Item {
             }
 
             Rectangle {
-                Layout.preferredWidth: parent.width / 15
+                Layout.preferredWidth: parent.preferredChildWidths
                 Layout.preferredHeight: Constants.advancedImu.textDataBarHeight
                 Layout.alignment: Qt.AlignVCenter
                 border.width: Constants.advancedImu.textDataBarBorderWidth
@@ -231,7 +233,7 @@ Item {
             }
 
             Rectangle {
-                Layout.preferredWidth: parent.width / 15
+                Layout.preferredWidth: parent.preferredChildWidths
                 Layout.preferredHeight: Constants.advancedImu.textDataBarHeight
                 Layout.alignment: Qt.AlignVCenter
                 border.width: Constants.advancedImu.textDataBarBorderWidth
@@ -253,7 +255,7 @@ Item {
             }
 
             Rectangle {
-                Layout.preferredWidth: parent.width / 15
+                Layout.preferredWidth: parent.preferredChildWidths
                 Layout.preferredHeight: Constants.advancedImu.textDataBarHeight
                 Layout.alignment: Qt.AlignVCenter
                 border.width: Constants.advancedImu.textDataBarBorderWidth
@@ -275,7 +277,7 @@ Item {
             }
 
             Rectangle {
-                Layout.preferredWidth: parent.width / 15
+                Layout.preferredWidth: parent.preferredChildWidths
                 Layout.preferredHeight: Constants.advancedImu.textDataBarHeight
                 Layout.alignment: Qt.AlignVCenter
                 border.width: Constants.advancedImu.textDataBarBorderWidth
@@ -292,7 +294,7 @@ Item {
 
             }
 
-            Rectangle {
+            Item {
                 Layout.fillWidth: true
                 Layout.preferredHeight: Constants.advancedMagnetometer.suggestionTextRowHeight
 

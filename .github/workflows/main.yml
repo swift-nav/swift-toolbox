@@ -314,6 +314,10 @@ jobs:
         run: |
           cargo build --release --bin swift-settings --no-default-features --features env_logger
 
+      - name: Build ${{ runner.os }} swift-updater binary.
+        run: |
+          cargo build --release --bin swift-updater --no-default-features
+
       - name: Pull Git LFS objects
         run: git lfs pull
         env:
@@ -351,6 +355,10 @@ jobs:
         with:
           name: swift-settings_${{ matrix.os.short_name }}
           path: ./target/release/swift-settings${{ matrix.os.exe_suffix }}
+      - uses: actions/upload-artifact@v2
+        with:
+          name: swift-updater_${{ matrix.os.short_name }}
+          path: ./target/release/swift-updater${{ matrix.os.exe_suffix }}
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ runner.os }}-installer
@@ -626,7 +634,7 @@ jobs:
             installer-archive.filename
 
   sign_files:
-    name: Sign Files
+    name: Sign files
     timeout-minutes: 30
     needs:
       - build
@@ -657,13 +665,13 @@ jobs:
           path: |
             files
 
-      - name: Add version to files names.
+      - name: Add version to binary names.
         shell: bash
         working-directory: files
         run: |
           mv swift-files${{ matrix.os.exe_suffix }} swift-files_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
 
-      - name: Sign Files.
+      - name: Sign files.
         shell: cmd
         run: |
           "${{ env.CODE_SIGNER_PATH_WIN }}" sign ^
@@ -674,7 +682,7 @@ jobs:
           mv files/swift-files_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }} .
         if: matrix.os.name == 'Windows'
 
-      - name: Sign Files.
+      - name: Sign files.
         shell: bash
         working-directory: files
         run: |
@@ -685,7 +693,7 @@ jobs:
             swift-files_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
         if: matrix.os.name == 'macOS'
 
-      - name: Zip Files.
+      - name: Zip files.
         working-directory: files
         shell: bash
         run: |
@@ -693,7 +701,7 @@ jobs:
           7z a -tzip "../swift-files_${{ env.VERSION }}_${{ matrix.os.short_name }}.zip"
         if: matrix.os.name != 'Windows'
 
-      - name: Sign Files.
+      - name: Sign files.
         shell: bash
         run: |
           codesign \
@@ -713,7 +721,7 @@ jobs:
           path: swift-files_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.upload_suffix }}
 
   sign_settings:
-    name: Sign Settings
+    name: Sign settings
     timeout-minutes: 30
     needs:
       - build
@@ -744,13 +752,13 @@ jobs:
           path: |
             settings
 
-      - name: Add version to settings names.
+      - name: Add version to binary names.
         shell: bash
         working-directory: settings
         run: |
-          mv swift-settings${{ matrix.os.exe_suffix }} swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
+          mv swift-settings${{ matrix.os.exe_suffix }} swift-settings_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
 
-      - name: Sign Settings.
+      - name: Sign settings.
         shell: cmd
         run: |
           "${{ env.CODE_SIGNER_PATH_WIN }}" sign ^
@@ -772,7 +780,7 @@ jobs:
             swift-settings_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
         if: matrix.os.name == 'macOS'
 
-      - name: Zip Settings.
+      - name: Zip settings.
         working-directory: settings
         shell: bash
         run: |
@@ -780,7 +788,7 @@ jobs:
           7z a -tzip "../swift-settings_${{ env.VERSION }}_${{ matrix.os.short_name }}.zip"
         if: matrix.os.name != 'Windows'
 
-      - name: Sign Settings.
+      - name: Sign settings.
         shell: bash
         run: |
           codesign \
@@ -799,9 +807,100 @@ jobs:
           name: swift-settings_${{ matrix.os.short_name }}-signed
           path: swift-settings_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.upload_suffix }}
 
+  sign_updater:
+    name: Sign updater
+    timeout-minutes: 30
+    needs:
+      - build
+      - frontend_bench
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
+    strategy:
+      matrix:
+        os:
+          - {name: macOS, exe_suffix: "", short_name: "macos", upload_suffix: ".zip"}
+          - {name: Windows, exe_suffix: ".exe", short_name: "windows", upload_suffix: ".exe"}
+          - {name: Linux, exe_suffix: "", short_name: "linux", upload_suffix: ".zip"}
+    runs-on: [self-hosted, '${{ matrix.os.name }}', code-signer]
+    steps:
+      - name: Store git tag vars.
+        shell: bash
+        run: |
+          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+
+      - name: Remove previous build.
+        shell: bash
+        continue-on-error: true
+        run: |
+          rm -rf updater
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: swift-updater_${{ matrix.os.short_name }}
+          path: |
+            updater
+
+      - name: Add version to binary names.
+        shell: bash
+        working-directory: updater
+        run: |
+          mv swift-updater${{ matrix.os.exe_suffix }} swift-updater_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
+
+      - name: Sign updater.
+        shell: cmd
+        run: |
+          "${{ env.CODE_SIGNER_PATH_WIN }}" sign ^
+            /debug /v ^
+            /n "Swift Navigation, Inc." /a ^
+            /tr http://rfc3161timestamp.globalsign.com/advanced ^
+            /td SHA256 updater/swift-updater_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
+          mv updater/swift-updater_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }} .
+        if: matrix.os.name == 'Windows'
+
+      - name: Sign updater.
+        shell: bash
+        working-directory: updater
+        run: |
+          codesign \
+            -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
+            --timestamp \
+            --options=runtime \
+            swift-updater_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
+        if: matrix.os.name == 'macOS'
+
+      - name: Zip updater.
+        working-directory: updater
+        shell: bash
+        run: |
+          chmod +x "swift-updater_${{ env.VERSION }}_${{ matrix.os.short_name }}"
+          7z a -tzip "../swift-updater_${{ env.VERSION }}_${{ matrix.os.short_name }}.zip"
+        if: matrix.os.name != 'Windows'
+
+      - name: Sign updater.
+        shell: bash
+        run: |
+          codesign \
+            -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
+            -f --timestamp "swift-updater_${{ env.VERSION }}_${{ matrix.os.short_name }}.zip"
+          xcrun altool \
+            --notarize-app \
+            --file swift-updater_${{ env.VERSION }}_${{ matrix.os.short_name }}.zip\
+            --primary-bundle-id ${{ env.APP_BUNDLE_ID }} \
+            --apiKey ${{ secrets.APPLE_KEY_ID }} \
+            --apiIssuer ${{ secrets.APPLE_ISSUER_ID }}
+        if: matrix.os.name == 'macOS'
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: swift-updater_${{ matrix.os.short_name }}-signed
+          path: swift-updater_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.upload_suffix }}
+
+
   release:
     name: Create Release
     needs:
+      - sign_files
+      - sign_settings
+      - sign_updater
       - sign_binaries
       - sign_installer
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
@@ -827,6 +926,11 @@ jobs:
         with:
           name: swift-settings_windows-signed
           path: windows
+      - name: Pull Windows swift-updater
+        uses: actions/download-artifact@v2
+        with:
+          name: swift-updater_windows-signed
+          path: windows
       - name: Pull Linux Installer
         uses: actions/download-artifact@v2
         with:
@@ -841,6 +945,11 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: swift-settings_linux-signed
+          path: linux
+      - name: Pull Linux swift-updater
+        uses: actions/download-artifact@v2
+        with:
+          name: swift-updater_linux-signed
           path: linux
       - name: Pull macOS Installer
         uses: actions/download-artifact@v2
@@ -857,25 +966,26 @@ jobs:
         with:
           name: swift-settings_macos-signed
           path: macos
+      - name: Pull macOS swift-updater
+        uses: actions/download-artifact@v2
+        with:
+          name: swift-updater_macos-signed
+          path: macos
       - name: Prepare Release
         shell: bash
         run: |
           echo "WINDOWS_ARCHIVE=$(cat windows/installer-archive.filename)" >>$GITHUB_ENV
           echo "LINUX_ARCHIVE=$(cat linux/installer-archive.filename)" >>$GITHUB_ENV
           echo "MACOS_ARCHIVE=$(cat macos/installer-archive.filename)" >>$GITHUB_ENV
+      - name: Zip everything.
+        shell: bash
+        run: |
+          7z a -tzip "all.zip"
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
           name: "${{ env.VERSION }}-${{ env.DATE }}"
           files: |
-            windows/${{ env.WINDOWS_ARCHIVE }}
-            windows/swift-files_${{ env.VERSION }}_windows.exe
-            windows/swift-settings_${{ env.VERSION }}_windows.exe
-            linux/${{ env.LINUX_ARCHIVE }}
-            linux/swift-files_${{ env.VERSION }}_linux.zip
-            linux/swift-settings_${{ env.VERSION }}_linux.zip
-            macos/${{ env.MACOS_ARCHIVE }}
-            macos/swift-files_${{ env.VERSION }}_macos.zip
-            macos/swift-settings_${{ env.VERSION }}_macos.zip
+            all.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -9,9 +9,10 @@ RowLayout {
     id: channelSelectionRowLayout
 
     property alias dropdownIdx: channelDropdown.currentIndex
+    property real parentWidth: parent ? parent.width : width
 
     Item {
-        Layout.preferredWidth: parent.width / 6
+        Layout.preferredWidth: parent.parentWidth / 6
     }
 
     Label {
@@ -45,7 +46,7 @@ RowLayout {
     }
 
     Item {
-        Layout.preferredWidth: parent.width / 6
+        Layout.preferredWidth: parent.parentWidth / 6
     }
 
 }

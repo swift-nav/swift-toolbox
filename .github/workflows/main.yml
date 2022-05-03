@@ -709,10 +709,10 @@ jobs:
     strategy:
       matrix:
         os:
-          - "macos"
-          - "windows"
-          - "linux"
-    runs-on: ubuntu-latest
+          - { name: macOS, short_name: "macos" }
+          - { name: Windows, short_name: "windows" }
+          - { name: Linux, short_name: "linux" }
+    runs-on: [self-hosted, '${{ matrix.os.name }}', code-signer]
     steps:
       - name: Store git tag vars.
         shell: bash
@@ -721,23 +721,23 @@ jobs:
       - name: Pull swift-files
         uses: actions/download-artifact@v2
         with:
-          name: swift-files_${{ matrix.os }}-signed
-          path: ${{ matrix.os }}
+          name: swift-files_${{ matrix.os.short_name }}-signed
+          path: ${{ matrix.os.short_name }}
       - name: Pull swift-settings
         uses: actions/download-artifact@v2
         with:
-          name: swift-settings_${{ matrix.os }}-signed
-          path: ${{ matrix.os }}
+          name: swift-settings_${{ matrix.os.short_name }}-signed
+          path: ${{ matrix.os.short_name }}
       - name: Pull swift-updater
         uses: actions/download-artifact@v2
         with:
-          name: swift-updater_${{ matrix.os }}-signed
-          path: ${{ matrix.os }}
+          name: swift-updater_${{ matrix.os.short_name }}-signed
+          path: ${{ matrix.os.short_name }}
 
       - name: Zip Binaries.
         shell: bash
         run: |
-          7z a -tzip "swift-binaries_${{ matrix.os }}_${{ env.VERSION }}-signed.zip"
+          7z a -tzip "swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-signed.zip"
 
       - name: Sign Binaries.
         shell: cmd
@@ -746,27 +746,27 @@ jobs:
             /debug /v ^
             /n "Swift Navigation, Inc." /a ^
             /tr http://rfc3161timestamp.globalsign.com/advanced ^
-            /td SHA256 swift-binaries_${{ matrix.os }}_${{ env.VERSION }}-signed.zip
-        if: matrix.os == 'windows'
+            /td SHA256 swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-signed.zip
+        if: matrix.os.name == 'Windows'
 
       - name: Sign Binaries.
         shell: bash
         run: |
           codesign \
             -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
-            -f --timestamp "swift-binaries_${{ matrix.os }}_${{ env.VERSION }}-signed.zip"
+            -f --timestamp "swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-signed.zip"
           xcrun altool \
             --notarize-app \
-            --file swift-binaries_${{ matrix.os }}_${{ env.VERSION }}-signed.zip\
+            --file swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-signed.zip\
             --primary-bundle-id ${{ env.APP_BUNDLE_ID }} \
             --apiKey ${{ secrets.APPLE_KEY_ID }} \
             --apiIssuer ${{ secrets.APPLE_ISSUER_ID }}
-        if: matrix.os == 'macos'
+        if: matrix.os.name == 'macOS'
 
       - uses: actions/upload-artifact@v2
         with:
-          name: swift-binaries_${{ matrix.os }}-signed
-          path: swift-binaries_${{ matrix.os }}_${{ env.VERSION }}-signed.zip
+          name: swift-binaries_${{ matrix.os.short_name }}-signed
+          path: swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-signed.zip
 
   release:
     name: Create Release

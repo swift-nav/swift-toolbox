@@ -295,7 +295,7 @@ Item {
                     solutionZoomAllButton.checked = true;
                     solutionPositionChart.resetChartZoom();
                 }
-                onWheel: {
+                onWheel: (wheel) => {
                     solutionPositionChart.stopZoomFeatures();
                     solutionPositionChart.chartZoomByDirection(wheel.angleDelta.y);
                 }

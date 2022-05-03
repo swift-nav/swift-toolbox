@@ -46,12 +46,13 @@ Item {
         RowLayout {
             Layout.alignment: Qt.AlignLeft
             Layout.leftMargin: Constants.solutionPosition.navBarMargin
+            property real labelComboWidth: solutionPositionSelectedUnit.width + solutionPositionSelectedUnitLabel.width
 
             SwiftButton {
                 id: solutionPauseButton
 
                 ButtonGroup.group: solutionButtonGroup
-                Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
+                Layout.preferredWidth: parent.labelComboWidth/4
                 Layout.preferredHeight: Constants.commonChart.buttonHeight
                 ToolTip.visible: hovered
                 ToolTip.text: "Pause"
@@ -95,7 +96,7 @@ Item {
                         zoom_all = false;
                     }
                 }
-                Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
+                Layout.preferredWidth: parent.labelComboWidth/4
                 Layout.preferredHeight: Constants.commonChart.buttonHeight
                 ToolTip.visible: hovered
                 ToolTip.text: "Zoom All"
@@ -122,7 +123,7 @@ Item {
                         center_solution = false;
                     }
                 }
-                Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
+                Layout.preferredWidth: parent.labelComboWidth/4
                 Layout.preferredHeight: Constants.commonChart.buttonHeight
                 ToolTip.visible: hovered
                 ToolTip.text: "Center On Solution"
@@ -135,6 +136,7 @@ Item {
             }
 
             Label {
+                id: solutionPositionSelectedUnitLabel
                 text: "Display Units: "
             }
 
@@ -205,7 +207,7 @@ Item {
             }
 
             Layout.preferredWidth: parent.width
-            Layout.preferredHeight: parent.height - Constants.commonChart.heightOffset
+            Layout.minimumHeight: parent.height - Constants.commonChart.heightOffset
             Layout.alignment: Qt.AlignBottom
             Layout.fillHeight: true
             plotAreaColor: Constants.commonChart.areaColor

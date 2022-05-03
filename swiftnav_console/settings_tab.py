@@ -142,12 +142,7 @@ class SettingsTableEntries(QObject):
 
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
-        try:
-            cls._instance._data_updated.emit(update_data)
-        except AttributeError as e:
-            # If _instance doesn't exist - just continue (Debugging without settings)
-            if getattr(cls, "_instance", None) is not None:
-                raise e
+        cls._instance._data_updated.emit(update_data)
 
     @Slot(dict)  # type: ignore
     def handle_data_updated(self, update_data: Dict[str, Any]) -> None:

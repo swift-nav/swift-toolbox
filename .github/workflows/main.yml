@@ -738,7 +738,7 @@ jobs:
         shell: bash
         run: |
           7z a -tzip "swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-signed.zip"
-        if: matrix.os.name != "Windows"
+        if: matrix.os.name != 'Windows'
 
       - name: Zip Binaries.
         shell: cmd
@@ -746,7 +746,7 @@ jobs:
           tar -a -c -f "swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-signed.zip" \
             --exclude="swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-signed.zip" *
         continue-on-error: true
-        if: matrix.os.name == "Windows"
+        if: matrix.os.name == 'Windows'
 
       - name: Sign Binaries.
         shell: cmd

@@ -25,10 +25,10 @@ from PySide6.QtQml import QQmlComponent, qmlRegisterType
 
 import swiftnav_console.console_resources  # type: ignore # pylint: disable=unused-import
 
-#try:
-#    import console_backend.server  # type: ignore  # pylint: disable=import-error,no-name-in-module
-#except ModuleNotFoundError:
-#    pass
+try:
+    import console_backend.server  # type: ignore  # pylint: disable=import-error,no-name-in-module
+except ModuleNotFoundError:
+    pass
 
 from .constants import ApplicationMetadata, ConnectionState, ConnectionType, Keys, Tabs
 

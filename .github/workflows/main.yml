@@ -712,12 +712,8 @@ jobs:
           - { name: macOS, short_name: "macos" }
           - { name: Windows, short_name: "windows" }
           - { name: Linux, short_name: "linux" }
-    runs-on: [self-hosted, '${{ matrix.os.name }}', code-signer]
+    runs-on: ubuntu-latest
     steps:
-      - name: Store git tag vars.
-        shell: bash
-        run: |
-          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
       - name: Pull swift-files
         uses: actions/download-artifact@v2
         with:
@@ -736,20 +732,36 @@ jobs:
 
       - name: Zip Binaries.
         shell: bash
+        working-directory: ${{ matrix.os.short_name }}
         run: |
-          7z a -tzip "swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-signed.zip"
-        if: matrix.os.name != 'Windows'
+          7z a -tzip "../swift-binaries_${{ matrix.os.short_name }}-all.zip"
 
-      - name: Zip Binaries.
-        shell: cmd
-        run: |
-          tar -a -c -f "swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-signed.zip" \
-            --exclude="swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-signed.zip" *
-        continue-on-error: true
-        if: matrix.os.name == 'Windows'
+      - uses: actions/upload-artifact@v2
+        with:
+          name: swift-binaries_${{ matrix.os.short_name }}-all
+          path: swift-binaries_${{ matrix.os.short_name }}-all.zip
 
+  sign_zipped_binaries:
+    name: Sign Zipped Binaries
+    timeout-minutes: 10
+    needs:
+      - zip_binaries
+    strategy:
+      matrix:
+        os:
+          - { name: macOS, short_name: "macos" }
+          - { name: Windows, short_name: "windows" }
+          - { name: Linux, short_name: "linux" }
+    runs-on: [self-hosted, '${{ matrix.os.name }}', code-signer]
+    steps:
+      - name: Pull zipped binaries
+        uses: actions/download-artifact@v2
+        with:
+          name: swift-binaries_${{ matrix.os.short_name }}-all
+          path: binaries-all
       - name: Sign Binaries.
         shell: cmd
+        working-directory: binaries-all
         run: |
           "${{ env.CODE_SIGNER_PATH_WIN }}" sign ^
             /debug /v ^
@@ -757,9 +769,9 @@ jobs:
             /tr http://rfc3161timestamp.globalsign.com/advanced ^
             /td SHA256 swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-signed.zip
         if: matrix.os.name == 'Windows'
-
       - name: Sign Binaries.
         shell: bash
+        working-directory: binaries-all
         run: |
           codesign \
             -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
@@ -771,11 +783,10 @@ jobs:
             --apiKey ${{ secrets.APPLE_KEY_ID }} \
             --apiIssuer ${{ secrets.APPLE_ISSUER_ID }}
         if: matrix.os.name == 'macOS'
-
       - uses: actions/upload-artifact@v2
         with:
           name: swift-binaries_${{ matrix.os.short_name }}-signed
-          path: swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-signed.zip
+          path: binaries-all/swift-binaries_${{ matrix.os.short_name }}-all.zip
 
   release:
     name: Create Release

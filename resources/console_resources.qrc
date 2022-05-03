@@ -125,6 +125,7 @@
     <file>BaseComponents/SwiftCategoryAxis.qml</file>
     <file>BaseComponents/SwiftTextbox.qml</file>
     <file>BaseComponents/SwiftTextInput.qml</file>
+    <file>BaseComponents/SwiftImage.qml</file>
     <file>ChartLegend.qml</file>
     <file alias="SwiftNav/TabBar.qml">styles/SwiftNav/TabBar.qml</file>
     <file alias="SwiftNav/TabButton.qml">styles/SwiftNav/TabButton.qml</file>

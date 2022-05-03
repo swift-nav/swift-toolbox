@@ -27,7 +27,8 @@ Item {
 
         }
 
-        Rectangle {
+        Item {
+            id: contentItem
             property variant columnWidths: [width / 2, width / 2]
 
             Layout.fillWidth: true
@@ -42,7 +43,7 @@ Item {
                 z: Constants.genericTable.headerZOffset
 
                 delegate: Rectangle {
-                    implicitWidth: columnWidths[index]
+                    implicitWidth: contentItem.columnWidths[index]
                     implicitHeight: Constants.genericTable.cellHeight
                     border.color: Constants.genericTable.borderColor
 
@@ -68,10 +69,10 @@ Item {
                         }
                         onPositionChanged: {
                             if (pressed) {
-                                let oldcols = columnWidths.slice();
+                                let oldcols = contentItem.columnWidths.slice();
                                 var delta_x = (mouseX - mouse_x);
-                                columnWidths[index] += delta_x;
-                                columnWidths[(index + 1) % 2] -= delta_x;
+                                contentItem.columnWidths[index] += delta_x;
+                                contentItem.columnWidths[(index + 1) % 2] -= delta_x;
                                 tableView.forceLayout();
                             }
                         }

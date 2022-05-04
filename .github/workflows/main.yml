@@ -767,18 +767,19 @@ jobs:
             /debug /v ^
             /n "Swift Navigation, Inc." /a ^
             /tr http://rfc3161timestamp.globalsign.com/advanced ^
-            /td SHA256 swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-signed.zip
+            /td SHA256 swift-binaries_${{ matrix.os.short_name }}-all.zip
         if: matrix.os.name == 'Windows'
+
       - name: Sign Binaries.
         shell: bash
         working-directory: binaries-all
         run: |
           codesign \
             -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
-            -f --timestamp "swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-signed.zip"
+            -f --timestamp "swift-binaries_${{ matrix.os.short_name }}-all.zip"
           xcrun altool \
             --notarize-app \
-            --file swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-signed.zip\
+            --file swift-binaries_${{ matrix.os.short_name }}-all.zip\
             --primary-bundle-id ${{ env.APP_BUNDLE_ID }} \
             --apiKey ${{ secrets.APPLE_KEY_ID }} \
             --apiIssuer ${{ secrets.APPLE_ISSUER_ID }}

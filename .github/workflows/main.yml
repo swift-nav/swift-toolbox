@@ -759,15 +759,6 @@ jobs:
         with:
           name: swift-binaries_${{ matrix.os.short_name }}-all
           path: binaries-all
-      - name: Sign Binaries.
-        shell: cmd
-        run: |
-          "${{ env.CODE_SIGNER_PATH_WIN }}" sign ^
-            /debug /v ^
-            /n "Swift Navigation, Inc." /a ^
-            /tr http://rfc3161timestamp.globalsign.com/advanced ^
-            /td SHA256 binaries-all/swift-binaries_${{ matrix.os.short_name }}-all.zip
-        if: matrix.os.name == 'Windows'
 
       - name: Sign Binaries.
         shell: bash
@@ -790,7 +781,7 @@ jobs:
   release:
     name: Create Release
     needs:
-      - zip_binaries
+      - sign_zipped_binaries
       - sign_installer
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
     runs-on: ubuntu-20.04

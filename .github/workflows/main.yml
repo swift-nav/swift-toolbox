@@ -666,8 +666,7 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: swift-${{ matrix.type }}_${{ matrix.os.short_name }}
-          path: |
-            binaries
+          path: binaries
 
       - name: Add version to binary names.
         shell: bash
@@ -714,6 +713,11 @@ jobs:
           - { name: Linux, short_name: "linux" }
     runs-on: ubuntu-latest
     steps:
+      - name: Store git tag vars.
+        shell: bash
+        run: |
+          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+
       - name: Pull swift-files
         uses: actions/download-artifact@v2
         with:
@@ -734,18 +738,18 @@ jobs:
         shell: bash
         working-directory: ${{ matrix.os.short_name }}
         run: |
-          7z a -tzip "../swift-binaries_${{ matrix.os.short_name }}-all.zip"
+          7z a -tzip "../swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-all.zip"
 
       - uses: actions/upload-artifact@v2
         with:
           name: swift-binaries_${{ matrix.os.short_name }}-all
-          path: swift-binaries_${{ matrix.os.short_name }}-all.zip
+          path: swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-all.zip
         if: matrix.os.name == 'macOS'
 
       - uses: actions/upload-artifact@v2
         with:
           name: swift-binaries_${{ matrix.os.short_name }}-signed
-          path: swift-binaries_${{ matrix.os.short_name }}-all.zip
+          path: swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-all.zip
         if: matrix.os.name != 'macOS'
 
   sign_zipped_binaries:
@@ -759,6 +763,11 @@ jobs:
           - { name: macOS, short_name: "macos" }
     runs-on: [self-hosted, '${{ matrix.os.name }}', code-signer]
     steps:
+      - name: Store git tag vars.
+        shell: bash
+        run: |
+          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+
       - name: Pull zipped binaries
         uses: actions/download-artifact@v2
         with:
@@ -771,10 +780,10 @@ jobs:
         run: |
           codesign \
             -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
-            -f --timestamp "swift-binaries_${{ matrix.os.short_name }}-all.zip"
+            -f --timestamp "swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-all.zip"
           xcrun altool \
             --notarize-app \
-            --file swift-binaries_${{ matrix.os.short_name }}-all.zip\
+            --file swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-all.zip\
             --primary-bundle-id ${{ env.APP_BUNDLE_ID }} \
             --apiKey ${{ secrets.APPLE_KEY_ID }} \
             --apiIssuer ${{ secrets.APPLE_ISSUER_ID }}
@@ -782,7 +791,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: swift-binaries_${{ matrix.os.short_name }}-signed
-          path: binaries-all/swift-binaries_${{ matrix.os.short_name }}-all.zip
+          path: binaries-all/swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-all.zip
 
   release:
     name: Create Release
@@ -839,10 +848,10 @@ jobs:
           name: "${{ env.VERSION }}-${{ env.DATE }}"
           files: |
             windows/${{ env.WINDOWS_ARCHIVE }}
-            windows/swift-binaries_windows_${{ env.VERSION }}-signed.zip
+            windows/swift-binaries_windows_${{ env.VERSION }}-all.zip
             linux/${{ env.LINUX_ARCHIVE }}
-            linux/swift-binaries_linux_${{ env.VERSION }}-signed.zip
+            linux/swift-binaries_linux_${{ env.VERSION }}-all.zip
             macos/${{ env.MACOS_ARCHIVE }}
-            macos/swift-binaries_macos_${{ env.VERSION }}-signed.zip
+            macos/swift-binaries_macos_${{ env.VERSION }}-all.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

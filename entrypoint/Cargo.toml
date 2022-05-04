@@ -8,18 +8,31 @@ edition = "2018"
 [dependencies]
 pyo3 = { version = "0.16", features = [
   "auto-initialize",
-], default-features = false }
+], default-features = false, optional = true }
+minifb = { version = "0.23", optional = true }
+image = { version = "0.24.2", optional = true }
 
 [[bin]]
 name = "swift-console"
 path = "src/main.rs"
 bench = false
+required-features = ["entrypoint"]
+
+[[bin]]
+name = "splash"
+path = "src/splash.rs"
+bench = false
+required-features = ["splash"]
 
 [target.'cfg(target_os = "windows")'.dependencies]
-windows = { version = ">=0.24", features = [
+windows = { version = ">=0.24", optional = true, features = [
   "Win32_System_Console",
   "Win32_Foundation",
 ] }
 
 [target.'cfg(target_os = "windows")'.build-dependencies]
-winres = "0.1"
+winres = { version = "0.1" }
+
+[features]
+entrypoint = ["pyo3", "windows"]
+splash = ["minifb", "image"]

@@ -1,3 +1,5 @@
+import os
+import tempfile
 from typing import Any, List, Optional
 from PySide2.QtCore import QObject, Slot
 
@@ -58,6 +60,14 @@ class BackendRequestBroker(QObject):  # pylint: disable=too-many-instance-attrib
         msg.disconnectRequest = msg.init(Message.Union.DisconnectRequest)
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
+
+    @Slot()  # type: ignore
+    def app_visible(self) -> None:  # pylint: disable=no-self-use
+        splash_filename = os.path.join(tempfile.gettempdir(), "splash_pid.txt")
+        try:
+            os.remove(splash_filename)
+        except FileNotFoundError:
+            pass
 
     @Slot()  # type: ignore
     def serial_refresh(self) -> None:

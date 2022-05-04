@@ -695,6 +695,13 @@ jobs:
             swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
         if: matrix.os.name == 'macOS'
 
+      - name: Add executable permission.
+        shell: bash
+        working-directory: binaries
+        run: |
+          chmod +x swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
+        if: matrix.os.name != 'Windows'
+
       - uses: actions/upload-artifact@v2
         with:
           name: swift-${{ matrix.type }}_${{ matrix.os.short_name }}-signed

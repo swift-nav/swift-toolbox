@@ -299,7 +299,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                 return
             diff = max((msg_receipt_time - self._last_msg_receipt_ns), 0)
             if diff < msg["ns"]:
-                time.sleep((msg["ns"] - diff) / 1e9)
+                time.sleep(((msg["ns"] - diff) / 1e9)/5)
         if self._writer is not None:
             pickle.dump({"data": buffer, "ns": msg_receipt_time - self._last_msg_receipt_ns}, self._writer)
         self._last_msg_receipt_ns = msg_receipt_time

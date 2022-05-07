@@ -19,6 +19,7 @@ pub mod fileio;
 pub mod firmware_update;
 pub mod formatters;
 pub mod fusion_status_flags;
+pub mod ipc;
 pub mod log_panel;
 pub mod main_tab;
 pub mod observation_tab;

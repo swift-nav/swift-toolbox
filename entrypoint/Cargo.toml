@@ -19,7 +19,7 @@ bench = false
 required-features = ["entrypoint"]
 
 [[bin]]
-name = "splash"
+name = "swift-console-splash"
 path = "src/splash.rs"
 bench = false
 required-features = ["splash"]

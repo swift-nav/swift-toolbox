@@ -29,8 +29,8 @@ fn main() -> Result<()> {
     handle_wayland();
     let current_exe = std::env::current_exe()?;
     let parent = current_exe.parent().ok_or("no parent directory")?;
-    if let Err(_) = std::process::Command::new(parent.join("splash")).spawn() {
-        // Do nothing if splash fails.
+    if let Err(e) = std::process::Command::new(parent.join("splash")).spawn() {
+        eprintln!("Starting splash screen failed:  {e}");
     };
 
     std::env::set_var("SWIFTNAV_CONSOLE_FROZEN", parent);

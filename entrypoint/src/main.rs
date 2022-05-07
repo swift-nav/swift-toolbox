@@ -18,8 +18,15 @@ fn attach_console() {
 fn handle_wayland() {
     #[cfg(target_os = "linux")]
     {
-        if std::env::var("XDG_SESSION_TYPE").as_deref() == Ok("wayland") {
-            std::env::set_var("QT_QPA_PLATFORM", "wayland");
+        const QT_QPA_PLATFORM: &str = "QT_QPA_PLATFORM";
+        const XDG_SESSION_TYPE: &str = "XDG_SESSION_TYPE";
+        const WAYLAND: &str = "wayland";
+
+        if std::env::var(XDG_SESSION_TYPE).as_deref() == Ok(WAYLAND) {
+            // Only override QT_QPA_PLATFORM if it's not already set
+            if std::env::var(QT_QPA_PLATFORM).is_err() {
+              std::env::set_var(QT_QPA_PLATFORM, WAYLAND);
+            }
         }
     }
 }

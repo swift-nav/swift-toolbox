@@ -25,7 +25,7 @@ fn handle_wayland() {
         if std::env::var(XDG_SESSION_TYPE).as_deref() == Ok(WAYLAND) {
             // Only override QT_QPA_PLATFORM if it's not already set
             if std::env::var(QT_QPA_PLATFORM).is_err() {
-              std::env::set_var(QT_QPA_PLATFORM, WAYLAND);
+                std::env::set_var(QT_QPA_PLATFORM, WAYLAND);
             }
         }
     }

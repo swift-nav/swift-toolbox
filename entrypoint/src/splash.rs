@@ -7,7 +7,7 @@ use std::{
 };
 
 const TIMEOUT_DURATION: Duration = Duration::from_secs(15);
-const TEMP_FILENAME: &str = "splash_pid.txt";
+const TEMP_FILENAME: &str = "swiftnav_console.{pid}"; // don't think a template like this will actually work, but you get the idea
 const NAIVE_UPPER_LEFT_X: isize = 20;
 const NAIVE_UPPER_LEFT_Y: isize = 20;
 

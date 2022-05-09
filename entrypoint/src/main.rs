@@ -5,6 +5,8 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
+const SWIFT_CONSOLE_PID: &str = "SWIFT_CONSOLE_PID";
+
 fn attach_console() {
     #[cfg(target_os = "windows")]
     {
@@ -29,8 +31,15 @@ fn main() -> Result<()> {
     handle_wayland();
     let current_exe = std::env::current_exe()?;
     let parent = current_exe.parent().ok_or("no parent directory")?;
-    if let Err(e) = std::process::Command::new(parent.join("splash")).spawn() {
-        eprintln!("Starting splash screen failed:  {e}");
+    let mut command = std::process::Command::new(parent.join("swift-console-splash"));
+    match command.spawn() {
+        Ok(child) => {
+            let pid = child.id();
+            std::env::set_var(SWIFT_CONSOLE_PID, format!("{pid}"));
+        }
+        Err(e) => {
+            eprintln!("Starting splash screen failed:  {e}");
+        }
     };
 
     std::env::set_var("SWIFTNAV_CONSOLE_FROZEN", parent);

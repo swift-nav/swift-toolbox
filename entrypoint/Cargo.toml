@@ -1,38 +1,51 @@
 [package]
 authors = ["Swift Navigation <dev@swift-nav.com>"]
-name = "swift-console"
-version = "0.1.0"
 description = "Starts the console with the correct python installation"
 edition = "2018"
-
-[dependencies]
-pyo3 = { version = "0.16", features = [
-  "auto-initialize",
-], default-features = false, optional = true }
-minifb = { version = "0.23", optional = true }
-image = { version = "0.24.2", optional = true }
+name = "swift-console"
+version = "0.1.0"
 
 [[bin]]
+bench = false
 name = "swift-console"
 path = "src/main.rs"
-bench = false
 required-features = ["entrypoint"]
 
 [[bin]]
+bench = false
 name = "swift-console-splash"
 path = "src/splash.rs"
-bench = false
 required-features = ["splash"]
 
-[target.'cfg(target_os = "windows")'.dependencies]
-windows = { version = ">=0.24", optional = true, features = [
-  "Win32_System_Console",
-  "Win32_Foundation",
-] }
+[dependencies]
+winit = "*"
 
-[target.'cfg(target_os = "windows")'.build-dependencies]
-winres = { version = "0.1" }
+[dependencies.image]
+optional = true
+version = "0.24.2"
+
+[dependencies.minifb]
+optional = true
+version = "0.23"
+
+[dependencies.pyo3]
+default-features = false
+features = ["auto-initialize"]
+optional = true
+version = "0.16"
 
 [features]
 entrypoint = ["pyo3", "windows"]
 splash = ["minifb", "image"]
+
+[target]
+[target."cfg(target_os = \"windows\")"]
+[target."cfg(target_os = \"windows\")".build-dependencies]
+[target."cfg(target_os = \"windows\")".build-dependencies.winres]
+version = "0.1"
+
+[target."cfg(target_os = \"windows\")".dependencies]
+[target."cfg(target_os = \"windows\")".dependencies.windows]
+features = ["Win32_System_Console", "Win32_Foundation"]
+optional = true
+version = ">=0.24"

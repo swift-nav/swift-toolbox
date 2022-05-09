@@ -1,15 +1,13 @@
 #![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
 use minifb::{Window, WindowOptions};
 use std::{
-    io::{Cursor, Write},
+    io::Cursor,
     path::PathBuf,
     time::{Duration, Instant},
 };
-
+use winit::{event_loop::EventLoop, window::Window as WinitWindow};
 const TIMEOUT_DURATION: Duration = Duration::from_secs(15);
-const TEMP_FILENAME: &str = "swiftnav_console.{pid}"; // don't think a template like this will actually work, but you get the idea
-const NAIVE_UPPER_LEFT_X: isize = 20;
-const NAIVE_UPPER_LEFT_Y: isize = 20;
+const TEMP_FILENAME: &str = "swiftnav_console";
 
 pub type Error = Box<dyn std::error::Error>;
 pub type Result<T> = std::result::Result<T, Error>;
@@ -18,11 +16,11 @@ fn rgb8_3_to_rgb32(r: u8, g: u8, b: u8) -> u32 {
     ((r as u32) << 16) | ((g as u32) << 8) | (b as u32)
 }
 
-fn create_temp_file(path: &PathBuf) -> Result<()> {
-    let mut file = std::fs::File::create(path)?;
+fn create_temp_file() -> Result<PathBuf> {
     let pid = std::process::id();
-    write!(file, "{pid}")?;
-    Ok(())
+    let temp_filename = std::env::temp_dir().join(format!("{TEMP_FILENAME}.{pid}"));
+    std::fs::File::create(&temp_filename)?;
+    Ok(temp_filename)
 }
 
 fn main() {
@@ -38,6 +36,13 @@ fn main() {
         .chunks(3)
         .map(|v| rgb8_3_to_rgb32(v[0], v[1], v[2]))
         .collect();
+    let current_monitor_size = WinitWindow::new(&EventLoop::new())
+        .unwrap()
+        .current_monitor()
+        .unwrap()
+        .size();
+    let pos_x = ((current_monitor_size.width - image.width()) / 2) as isize;
+    let pos_y = ((current_monitor_size.height - image.height()) / 2) as isize;
 
     let mut window = Window::new(
         "",
@@ -46,18 +51,19 @@ fn main() {
         WindowOptions {
             title: false,
             borderless: true,
+            topmost: true,
             none: true,
             ..WindowOptions::default()
         },
     )
     .expect("unable to open window");
-    let temp_filename = std::env::temp_dir().join(TEMP_FILENAME);
-    create_temp_file(&temp_filename).unwrap();
+
+    let temp_filename = create_temp_file().unwrap();
     let now = Instant::now();
     while window.is_open() && now.elapsed() < TIMEOUT_DURATION && temp_filename.exists() {
         window
             .update_with_buffer(&u32_buffer, image.width() as usize, image.height() as usize)
             .unwrap();
-        window.set_position(NAIVE_UPPER_LEFT_X, NAIVE_UPPER_LEFT_Y);
+        window.set_position(pos_x, pos_y);
     }
 }

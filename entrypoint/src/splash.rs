@@ -24,7 +24,7 @@ fn create_temp_file() -> Result<PathBuf> {
 }
 
 fn main() {
-    let logo = include_bytes!("../../resources/images/LogoBackground.jpg");
+    let logo = include_bytes!("../../resources/images/splash.jpg");
     let image = image::io::Reader::with_format(
         std::io::BufReader::new(Cursor::new(logo)),
         image::ImageFormat::Jpeg,

@@ -327,10 +327,32 @@ cd ../../..
 exec --fail-on-error ${DIST_PYTHON} ./get-pip.py
 '''
 
-[tasks.call-build-console-bin]
+[tasks.call-build-splash-bin]
 private = true
 command = "cargo"
-args = ["build", "--release", "-vv", "--bin", "${APP_NAME}"]
+args = [
+  "build",
+  "--release",
+  "-vv",
+  "--features",
+  "splash",
+  "--bin",
+  "swift-console-splash",
+]
+
+[tasks.call-build-console-bin]
+private = true
+dependencies = ["call-build-splash-bin"]
+command = "cargo"
+args = [
+  "build",
+  "--release",
+  "-vv",
+  "--features",
+  "entrypoint",
+  "--bin",
+  "${APP_NAME}",
+]
 
 [tasks.build-console]
 env = { PYO3_CONFIG_FILE = "${CONSOLE_PYO3_CONFIG_FILE}" }
@@ -346,6 +368,7 @@ script_runner = "@duckscript"
 script = '''
 app_name = get_env APP_NAME
 cp target/release/${app_name} py39-dist/${app_name}
+cp target/release/swift-console-splash py39-dist/swift-console-splash
 os = os_family
 if eq ${os} mac
   exec --fail-on-error install_name_tool -change /install/lib/libpython3.9.dylib @executable_path/lib/libpython3.9.dylib py39-dist/${app_name}
@@ -354,6 +377,7 @@ end
 
 [tasks.build-dist-install-console.windows]
 script = '''
+cp target/release/swift-console-splash.exe py39-dist/swift-console-splash.exe
 cp target/release/${APP_NAME}.exe py39-dist/${APP_NAME}.exe
 cp target/release/${APP_NAME}.d py39-dist/${APP_NAME}.d
 cp target/release/swift_console.pdb py39-dist/swift_console.pdb
@@ -610,6 +634,7 @@ mkdir ${contents_dir}
 mkdir ${contents_mac_os}
 exec --fail-on-error cp -r py39-dist "${contents_resources_dir}"
 exec --fail-on-error mv ./${contents_resources_dir}/${app_original_name} "./${contents_mac_os}/${app_file_prefix}"
+exec --fail-on-error mv ./${contents_resources_dir}/swift-console-splash "./${contents_mac_os}/swift-console-splash"
 exec --fail-on-error ln -s "../Resources/lib" ${contents_mac_os}/lib
 exec --fail-on-error ln -s "../Resources/.frozen" ${contents_mac_os}/.frozen
 exec --fail-on-error ln -s "../Resources/resources" ${contents_mac_os}/resources

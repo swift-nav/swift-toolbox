@@ -3,6 +3,7 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Controls.Material 2.15
 import QtQuick.Layouts 1.15
+import QtQuick.Window 2.0
 import SwiftConsole 1.0
 
 ApplicationWindow {
@@ -17,6 +18,10 @@ ApplicationWindow {
     visible: true
     title: (loggingBar.sbpRecording ? "[L] " : "     ") + statusBar.title
     color: Constants.swiftWhite
+    Component.onCompleted: {
+        this.x = Screen.width / 2 - width / 2;
+        this.y = Screen.height / 2 - height / 2;
+    }
 
     ConnectionData {
         id: connectionData

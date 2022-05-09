@@ -18,7 +18,7 @@ path = "src/splash.rs"
 required-features = ["splash"]
 
 [dependencies]
-winit = "*"
+winit = "0.26.1"
 
 [dependencies.image]
 optional = true

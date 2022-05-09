@@ -36,13 +36,15 @@ fn main() {
         .chunks(3)
         .map(|v| rgb8_3_to_rgb32(v[0], v[1], v[2]))
         .collect();
-    let current_monitor_size = WinitWindow::new(&EventLoop::new())
+    let current_monitor = WinitWindow::new(&EventLoop::new())
         .unwrap()
         .current_monitor()
-        .unwrap()
-        .size();
-    let pos_x = ((current_monitor_size.width - image.width()) / 2) as isize;
-    let pos_y = ((current_monitor_size.height - image.height()) / 2) as isize;
+        .unwrap();
+    let size = current_monitor.size();
+    let pos_x = ((size.width as f64 / current_monitor.scale_factor() - image.width() as f64) / 2.0)
+        as isize;
+    let pos_y = ((size.height as f64 / current_monitor.scale_factor() - image.height() as f64)
+        / 2.0) as isize;
 
     let mut window = Window::new(
         "",

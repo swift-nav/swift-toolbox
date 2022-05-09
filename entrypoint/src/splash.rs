@@ -1,11 +1,18 @@
 #![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
-use minifb::{Window, WindowOptions};
+
 use std::{
     io::Cursor,
     path::PathBuf,
     time::{Duration, Instant},
 };
+
+use minifb::{Window, WindowOptions};
+
 use winit::{event_loop::EventLoop, window::Window as WinitWindow};
+
+use entrypoint::attach_console;
+
+
 const TIMEOUT_DURATION: Duration = Duration::from_secs(15);
 const TEMP_FILENAME: &str = "swiftnav_console";
 
@@ -24,6 +31,7 @@ fn create_temp_file() -> Result<PathBuf> {
 }
 
 fn main() {
+    attach_console();
     let logo = include_bytes!("../../resources/images/splash.jpg");
     let image = image::io::Reader::with_format(
         std::io::BufReader::new(Cursor::new(logo)),

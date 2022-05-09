@@ -5,6 +5,10 @@ edition = "2018"
 name = "swift-console"
 version = "0.1.0"
 
+[lib]
+name = "entrypoint"
+bench = false
+
 [[bin]]
 bench = false
 name = "swift-console"
@@ -37,7 +41,7 @@ version = "0.16"
 
 [features]
 entrypoint = ["pyo3", "windows"]
-splash = ["minifb", "image", "winit"]
+splash = ["minifb", "image", "winit", "windows"]
 
 [target]
 [target."cfg(target_os = \"windows\")"]

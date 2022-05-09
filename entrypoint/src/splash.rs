@@ -21,7 +21,9 @@ type Result<T> = std::result::Result<T, Error>;
 lazy_static! {
     static ref PID_FILE: PathBuf = {
         let pid = std::process::id();
-        std::env::temp_dir().join(format!("{TEMP_FILENAME}.{pid}")).into()
+        std::env::temp_dir()
+            .join(format!("{TEMP_FILENAME}.{pid}"))
+            .into()
     };
 }
 
@@ -49,14 +51,10 @@ fn launch_splash() -> Result<()> {
         .collect();
     let current_monitor = WinitWindow::new(&EventLoop::new())?
         .current_monitor()
-        .ok_or_else(||{
-            Into::<Error>::into(String::from("could not get current monitor"))
-        })?;
+        .ok_or_else(|| Into::<Error>::into(String::from("could not get current monitor")))?;
     let size = current_monitor.size();
-    let pos_x = ((size.width as f64 - image.width() as f64) / 2.0)
-        as isize;
-    let pos_y = ((size.height as f64 - image.height() as f64)
-        / 2.0) as isize;
+    let pos_x = ((size.width as f64 - image.width() as f64) / 2.0) as isize;
+    let pos_y = ((size.height as f64 - image.height() as f64) / 2.0) as isize;
 
     let mut window = Window::new(
         "",
@@ -74,8 +72,7 @@ fn launch_splash() -> Result<()> {
     let temp_filename = create_temp_file()?;
     let now = Instant::now();
     while window.is_open() && now.elapsed() < TIMEOUT_DURATION && temp_filename.exists() {
-        window
-            .update_with_buffer(&u32_buffer, image.width() as usize, image.height() as usize)?;
+        window.update_with_buffer(&u32_buffer, image.width() as usize, image.height() as usize)?;
         window.set_position(pos_x, pos_y);
     }
 

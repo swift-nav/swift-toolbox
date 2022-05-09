@@ -2620,6 +2620,7 @@ name = "swift-console"
 version = "0.1.0"
 dependencies = [
  "image",
+ "lazy_static",
  "minifb",
  "pyo3",
  "windows",

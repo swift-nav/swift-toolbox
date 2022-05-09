@@ -21,6 +21,10 @@ name = "swift-console-splash"
 path = "src/splash.rs"
 required-features = ["splash"]
 
+[dependencies.lazy_static]
+optional = true
+version = "1.4.0"
+
 [dependencies.winit]
 optional = true
 version = "0.26.1"
@@ -41,7 +45,7 @@ version = "0.16"
 
 [features]
 entrypoint = ["pyo3", "windows"]
-splash = ["minifb", "image", "winit", "windows"]
+splash = ["minifb", "image", "winit", "windows", "lazy_static"]
 
 [target]
 [target."cfg(target_os = \"windows\")"]

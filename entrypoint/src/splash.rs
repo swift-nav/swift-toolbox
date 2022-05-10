@@ -52,9 +52,9 @@ fn launch_splash() -> Result<()> {
     let current_monitor = WinitWindow::new(&EventLoop::new())?
         .current_monitor()
         .ok_or_else(|| Into::<Error>::into(String::from("could not get current monitor")))?;
-    let size = current_monitor.size();
-    let pos_x = ((size.width as f64 - image.width() as f64) / 2.0) as isize;
-    let pos_y = ((size.height as f64 - image.height() as f64) / 2.0) as isize;
+    let size = current_monitor.size().to_logical::<f64>(current_monitor.scale_factor());
+    let pos_x = ((size.width - image.width() as f64) / 2.0) as isize;
+    let pos_y = ((size.height - image.height() as f64) / 2.0) as isize;
 
     let mut window = Window::new(
         "",

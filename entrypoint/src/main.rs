@@ -5,17 +5,9 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
-const SWIFT_CONSOLE_PID: &str = "SWIFT_CONSOLE_PID";
+use entrypoint::attach_console;
 
-fn attach_console() {
-    #[cfg(target_os = "windows")]
-    {
-        use windows::Win32::System::Console::AttachConsole;
-        unsafe {
-            AttachConsole(u32::MAX).as_bool();
-        }
-    }
-}
+const SWIFT_CONSOLE_PID: &str = "SWIFT_CONSOLE_PID";
 
 fn handle_wayland() {
     #[cfg(target_os = "linux")]

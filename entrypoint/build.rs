@@ -13,6 +13,8 @@ fn main() -> Result<()> {
         WindowsResource::new()
             .set_icon("../resources/images/icon.ico")
             .compile()?;
+
+        println!("cargo:rerun-if-changed=../resources/images/splash.jpg");
     }
     Ok(())
 }

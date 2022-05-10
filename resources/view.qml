@@ -9,6 +9,10 @@ import SwiftConsole 1.0
 ApplicationWindow {
     id: main
 
+    function titleBetaTag() {
+        return Qt.platform.os === "osx" ? " [Beta]" : ""; // Add beta tag for mac.
+    }
+
     Material.accent: Constants.swiftOrange
     width: Globals.width
     minimumWidth: Globals.minimumWidth
@@ -16,7 +20,7 @@ ApplicationWindow {
     minimumHeight: Globals.minimumHeight
     font.pixelSize: Constants.mediumPixelSize
     visible: true
-    title: (loggingBar.sbpRecording ? "[L] " : "     ") + statusBar.title
+    title: (loggingBar.sbpRecording ? "[L] " : "     ") + statusBar.title + titleBetaTag()
     color: Constants.swiftWhite
     Component.onCompleted: {
         this.x = Screen.width / 2 - width / 2;

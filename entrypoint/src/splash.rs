@@ -8,11 +8,11 @@ use std::{
 
 use lazy_static::lazy_static;
 use minifb::{Window, WindowOptions};
-use winit::{event_loop::EventLoop, window::Window as WinitWindow};
+use winit::{event_loop::EventLoop, monitor::MonitorHandle, window::Window as WinitWindow};
 
 use entrypoint::attach_console;
 
-const TIMEOUT_DURATION: Duration = Duration::from_secs(15);
+const TIMEOUT_DURATION: Duration = Duration::from_secs(30);
 const TEMP_FILENAME: &str = "swiftnav_console";
 
 type Error = Box<dyn std::error::Error>;
@@ -36,6 +36,18 @@ fn create_temp_file() -> Result<PathBuf> {
     Ok(PID_FILE.clone())
 }
 
+fn fetch_scale_factor(monitor: &MonitorHandle) -> f64 {
+    #[cfg(target_os = "macos")]
+    {
+        monitor.scale_factor()
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = monitor;
+        1.0
+    }
+}
+
 fn launch_splash() -> Result<()> {
     attach_console();
     let logo = include_bytes!("../../resources/images/splash.jpg");
@@ -53,8 +65,9 @@ fn launch_splash() -> Result<()> {
         .current_monitor()
         .ok_or_else(|| Into::<Error>::into(String::from("could not get current monitor")))?;
     let size = current_monitor.size();
-    let pos_x = ((size.width as f64 - image.width() as f64) / 2.0) as isize;
-    let pos_y = ((size.height as f64 - image.height() as f64) / 2.0) as isize;
+    let scale_factor = fetch_scale_factor(&current_monitor);
+    let pos_x = ((size.width as f64 / scale_factor - image.width() as f64) / 2.0) as isize;
+    let pos_y = ((size.height as f64 / scale_factor - image.height() as f64) / 2.0) as isize;
 
     let mut window = Window::new(
         "",
@@ -63,7 +76,6 @@ fn launch_splash() -> Result<()> {
         WindowOptions {
             title: false,
             borderless: true,
-            topmost: true,
             none: true,
             ..WindowOptions::default()
         },

@@ -51,8 +51,13 @@ fn launch_splash() -> Result<()> {
         .map(|v| rgb8_3_to_rgb32(v[0], v[1], v[2]))
         .collect();
 
+    let init_pos = winit::dpi::Position::Logical(winit::dpi::LogicalPosition::new(0.0, 0.0));
+    let init_size = winit::dpi::Size::Logical(winit::dpi::LogicalSize::new(0.0, 0.0));
     let current_monitor = winit::window::WindowBuilder::new()
         .with_visible(false)
+        .with_decorations(false)
+        .with_inner_size(init_size)
+        .with_position(init_pos)
         .build(&winit::event_loop::EventLoop::new())?
         .current_monitor();
 

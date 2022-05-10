@@ -43,16 +43,18 @@ features = ["auto-initialize"]
 optional = true
 version = "0.16"
 
-[dependencies.windows]
-features = ["Win32_System_Console", "Win32_Foundation"]
-version = ">=0.24"
-
 [features]
-entrypoint = ["pyo3"]
-splash = ["minifb", "image", "winit", "lazy_static"]
+entrypoint = ["pyo3", "windows"]
+splash = ["minifb", "image", "winit", "windows", "lazy_static"]
 
 [target]
 [target."cfg(target_os = \"windows\")"]
 [target."cfg(target_os = \"windows\")".build-dependencies]
 [target."cfg(target_os = \"windows\")".build-dependencies.winres]
 version = "0.1"
+
+[target."cfg(target_os = \"windows\")".dependencies]
+[target."cfg(target_os = \"windows\")".dependencies.windows]
+features = ["Win32_System_Console", "Win32_Foundation"]
+optional = true
+version = ">=0.24"

@@ -55,15 +55,13 @@ fn launch_splash() -> Result<()> {
         let init_pos = winit::dpi::Position::Logical(winit::dpi::LogicalPosition::new(0.0, 0.0));
         let init_size = winit::dpi::Size::Logical(winit::dpi::LogicalSize::new(0.0, 0.0));
         let event_loop = winit::event_loop::EventLoop::new();
-        let current_monitor = winit::window::WindowBuilder::new()
+        winit::window::WindowBuilder::new()
             .with_visible(false)
             .with_decorations(false)
             .with_inner_size(init_size)
             .with_position(init_pos)
             .build(&event_loop)?
-            .current_monitor();
-
-        current_monitor
+            .current_monitor()
             .or(event_loop.primary_monitor())
             .or(event_loop.available_monitors().take(1).next())
     };
@@ -91,7 +89,6 @@ fn launch_splash() -> Result<()> {
             title: false,
             borderless: true,
             none: true,
-            resize: true,
             ..WindowOptions::default()
         },
     )?;

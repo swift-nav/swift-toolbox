@@ -51,20 +51,30 @@ fn launch_splash() -> Result<()> {
         .map(|v| rgb8_3_to_rgb32(v[0], v[1], v[2]))
         .collect();
 
-    let init_pos = winit::dpi::Position::Logical(winit::dpi::LogicalPosition::new(0.0, 0.0));
-    let init_size = winit::dpi::Size::Logical(winit::dpi::LogicalSize::new(0.0, 0.0));
-    let current_monitor = winit::window::WindowBuilder::new()
-        .with_visible(false)
-        .with_decorations(false)
-        .with_inner_size(init_size)
-        .with_position(init_pos)
-        .build(&winit::event_loop::EventLoop::new())?
-        .current_monitor();
+    let monitor = {
+        let init_pos = winit::dpi::Position::Logical(winit::dpi::LogicalPosition::new(0.0, 0.0));
+        let init_size = winit::dpi::Size::Logical(winit::dpi::LogicalSize::new(0.0, 0.0));
+        let event_loop = winit::event_loop::EventLoop::new();
+        let current_monitor = winit::window::WindowBuilder::new()
+            .with_visible(false)
+            .with_decorations(false)
+            .with_inner_size(init_size)
+            .with_position(init_pos)
+            .build(&event_loop)?
+            .current_monitor();
 
-    let (pos_x, pos_y) = if let Some(current_monitor) = current_monitor {
-        let size = current_monitor.size();
+        let default_window_monitor = winit::window::Window::new(&event_loop)?.current_monitor();
+
+        current_monitor
+            .or(default_window_monitor)
+            .or(event_loop.primary_monitor())
+            .or(event_loop.available_monitors().take(1).next())
+    };
+
+    let (pos_x, pos_y) = if let Some(monitor) = monitor {
+        let size = monitor.size();
         let (width, height) = if cfg!(target_os = "macos") {
-            let size = size.to_logical::<f64>(current_monitor.scale_factor());
+            let size = size.to_logical::<f64>(monitor.scale_factor());
             (size.width, size.height)
         } else {
             (size.width as f64, size.height as f64)
@@ -73,8 +83,11 @@ fn launch_splash() -> Result<()> {
         let pos_y = ((height - image.height() as f64) / 2.0) as isize;
         (pos_x, pos_y)
     } else {
+        eprintln!("Warning: could not fetch current monitor");
         (20, 20)
     };
+
+    eprintln!("pos: {pos_x}, {pos_y}");
 
     let mut window = Window::new(
         "",
@@ -84,6 +97,7 @@ fn launch_splash() -> Result<()> {
             title: false,
             borderless: true,
             none: true,
+            resize: true,
             ..WindowOptions::default()
         },
     )?;
@@ -91,8 +105,8 @@ fn launch_splash() -> Result<()> {
     let temp_filename = create_temp_file()?;
     let now = Instant::now();
     while window.is_open() && now.elapsed() < TIMEOUT_DURATION && temp_filename.exists() {
-        window.update_with_buffer(&u32_buffer, image.width() as usize, image.height() as usize)?;
         window.set_position(pos_x, pos_y);
+        window.update_with_buffer(&u32_buffer, image.width() as usize, image.height() as usize)?;
     }
 
     Ok(())

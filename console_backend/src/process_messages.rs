@@ -5,6 +5,7 @@ use sbp::{
     link::LinkSource,
     messages::{
         imu::{MsgImuAux, MsgImuRaw},
+        logging::MsgLog,
         mag::MsgMagRaw,
         navigation::{MsgAgeCorrections, MsgPosLlhCov, MsgUtcTime, MsgVelNed},
         observation::{MsgObsDepA, MsgSvAzEl},
@@ -22,6 +23,7 @@ use sbp::{
 use crate::client_sender::BoxedClientSender;
 use crate::connection::Connection;
 use crate::errors::{PROCESS_MESSAGES_FAILURE, UNABLE_TO_CLONE_UPDATE_SHARED};
+use crate::log_panel;
 use crate::settings_tab;
 use crate::shared_state::SharedState;
 use crate::types::{
@@ -180,6 +182,9 @@ fn register_events(link: sbp::link::Link<Tabs>) {
             .unwrap()
             .handle_ins_updates(msg.clone());
         tabs.status_bar.lock().unwrap().handle_ins_updates(msg);
+    });
+    link.register(|_tabs: &Tabs, msg: MsgLog| {
+        log_panel::handle_log_msg(msg);
     });
     link.register(|tabs: &Tabs, msg: MsgMagRaw| {
         tabs.advanced_magnetometer

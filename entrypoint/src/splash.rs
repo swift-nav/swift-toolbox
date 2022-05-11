@@ -53,7 +53,7 @@ fn launch_splash() -> Result<()> {
 
     let monitor = {
         let init_pos = winit::dpi::Position::Logical(winit::dpi::LogicalPosition::new(0.0, 0.0));
-        let init_size = winit::dpi::Size::Logical(winit::dpi::LogicalSize::new(0.0, 0.0));
+        let init_size = winit::dpi::Size::Logical(winit::dpi::LogicalSize::new(1.0, 1.0));
         let event_loop = winit::event_loop::EventLoop::new();
         winit::window::WindowBuilder::new()
             .with_visible(false)

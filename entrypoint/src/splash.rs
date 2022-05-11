@@ -63,10 +63,7 @@ fn launch_splash() -> Result<()> {
             .build(&event_loop)?
             .current_monitor();
 
-        let default_window_monitor = winit::window::Window::new(&event_loop)?.current_monitor();
-
         current_monitor
-            .or(default_window_monitor)
             .or(event_loop.primary_monitor())
             .or(event_loop.available_monitors().take(1).next())
     };

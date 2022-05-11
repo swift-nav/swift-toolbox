@@ -83,11 +83,8 @@ fn launch_splash() -> Result<()> {
         let pos_y = ((height - image.height() as f64) / 2.0) as isize;
         (pos_x, pos_y)
     } else {
-        eprintln!("Warning: could not fetch current monitor");
         (20, 20)
     };
-
-    eprintln!("pos: {pos_x}, {pos_y}");
 
     let mut window = Window::new(
         "",

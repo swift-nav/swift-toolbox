@@ -96,8 +96,8 @@ fn launch_splash() -> Result<()> {
     let temp_filename = create_temp_file()?;
     let now = Instant::now();
     while window.is_open() && now.elapsed() < TIMEOUT_DURATION && temp_filename.exists() {
-        window.set_position(pos_x, pos_y);
         window.update_with_buffer(&u32_buffer, image.width() as usize, image.height() as usize)?;
+        window.set_position(pos_x, pos_y);
     }
 
     Ok(())

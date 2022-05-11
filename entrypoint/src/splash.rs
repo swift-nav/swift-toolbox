@@ -8,7 +8,6 @@ use std::{
 
 use lazy_static::lazy_static;
 use minifb::{Window, WindowOptions};
-use winit::{event_loop::EventLoop, window::Window as WinitWindow};
 
 use entrypoint::attach_console;
 
@@ -37,7 +36,9 @@ fn create_temp_file() -> Result<PathBuf> {
 }
 
 fn launch_splash() -> Result<()> {
+    // Attach to console in windows so logs go somewhere
     attach_console();
+
     let logo = include_bytes!("../../resources/images/splash.jpg");
     let image = image::io::Reader::with_format(
         std::io::BufReader::new(Cursor::new(logo)),
@@ -49,18 +50,36 @@ fn launch_splash() -> Result<()> {
         .chunks(3)
         .map(|v| rgb8_3_to_rgb32(v[0], v[1], v[2]))
         .collect();
-    let current_monitor = WinitWindow::new(&EventLoop::new())?
-        .current_monitor()
-        .ok_or_else(|| Into::<Error>::into(String::from("could not get current monitor")))?;
-    let size = current_monitor.size();
-    let (width, height) = if cfg!(target_os = "macos") {
-        let size = size.to_logical::<f64>(current_monitor.scale_factor());
-        (size.width, size.height)
-    } else {
-        (size.width as f64, size.height as f64)
+
+    let monitor = {
+        let init_pos = winit::dpi::Position::Logical(winit::dpi::LogicalPosition::new(0.0, 0.0));
+        let init_size = winit::dpi::Size::Logical(winit::dpi::LogicalSize::new(1.0, 1.0));
+        let event_loop = winit::event_loop::EventLoop::new();
+        winit::window::WindowBuilder::new()
+            .with_visible(false)
+            .with_decorations(false)
+            .with_inner_size(init_size)
+            .with_position(init_pos)
+            .build(&event_loop)?
+            .current_monitor()
+            .or(event_loop.primary_monitor())
+            .or(event_loop.available_monitors().take(1).next())
     };
-    let pos_x = ((width - image.width() as f64) / 2.0) as isize;
-    let pos_y = ((height - image.height() as f64) / 2.0) as isize;
+
+    let (pos_x, pos_y) = if let Some(monitor) = monitor {
+        let size = monitor.size();
+        let (width, height) = if cfg!(target_os = "macos") {
+            let size = size.to_logical::<f64>(monitor.scale_factor());
+            (size.width, size.height)
+        } else {
+            (size.width as f64, size.height as f64)
+        };
+        let pos_x = ((width - image.width() as f64) / 2.0) as isize;
+        let pos_y = ((height - image.height() as f64) / 2.0) as isize;
+        (pos_x, pos_y)
+    } else {
+        (20, 20)
+    };
 
     let mut window = Window::new(
         "",

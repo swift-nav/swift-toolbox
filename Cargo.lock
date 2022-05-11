@@ -1419,21 +1419,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d9e21c5f89bb820c7878c300c5b944e65de0f1b2a75e0be92ce670b95943740e"
 dependencies = [
  "cc",
- "dlib",
  "futures",
  "instant",
  "js-sys",
- "lazy_static",
  "libc",
  "orbclient",
  "raw-window-handle 0.4.3",
  "serde",
  "serde_derive",
- "tempfile",
  "wasm-bindgen-futures",
- "wayland-client",
- "wayland-cursor",
- "wayland-protocols",
  "winapi",
  "x11-dl",
 ]

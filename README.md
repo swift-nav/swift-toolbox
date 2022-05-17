@@ -154,7 +154,7 @@ Python extension.
 
 ### PySide2
 
-We're using Qt 5.15.2 via PySide2 (the official Python bindings for Qt).  Made possible via fork of fbs: https://github.com/silverjam/fbs
+We're using Qt 6.3.0 via PySide2 (the official Python bindings for Qt).  Made possible via fork of fbs: https://github.com/silverjam/fbs
 
 ### QML
 
@@ -179,8 +179,8 @@ PyInstaller (via fbs) ends up being a great way to package a massive
 framework like Qt.  Otherwise we would have to rely on Qt being present
 on Unix like systems, or using tools like [macdeployqt][] and [windeployqt][].
 
-[macdeployqt]: https://doc.qt.io/qt-5/macos-deployment.html#the-bundle
-[windeployqt]: https://doc.qt.io/qt-5/windows-deployment.html
+[macdeployqt]: https://doc.qt.io/qt-6/macos-deployment.html#the-bundle
+[windeployqt]: https://doc.qt.io/qt-6/windows-deployment.html
 
 To this end, it makes sense to minimize the number of dependencies that we
 use for Python in order to avoid this problem.  This ends up "dovetailing"

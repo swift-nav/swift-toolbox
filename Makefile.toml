@@ -11,52 +11,52 @@ QTDIR = get_env QTDIR
 os = os_family
 if eq ${os} windows
   if is_empty ${QTDIR}
-    QTDIR = set "C:/Qt/5.15.2/msvc2019_64"
+    QTDIR = set "C:/Qt/6.3.0/msvc2019_64"
     set_env QTDIR "${QTDIR}"
   end
   set_env STANDALONE_PY_URL "${PY_BASE_URL}/cpython-3.9.7-x86_64-pc-windows-msvc-shared-pgo-20211017T1616.tar.zst"
   set_env PYTHON "${WORKSPACE}\\py39\\python.exe"
   set_env DIST_PYTHON "${WORKSPACE}\\py39-dist\\python"
-  set_env DIST_PYSIDE2_RCC "${WORKSPACE}\\py39-dist\\Lib\\site-packages\\PySide6\\rcc.exe"
-  set_env PYSIDE2_RCC "${WORKSPACE}\\py39\\Lib\\site-packages\\PySide6\\rcc.exe"
+  set_env DIST_PYSIDE6_RCC "${WORKSPACE}\\py39-dist\\Lib\\site-packages\\PySide6\\rcc.exe"
+  set_env PYSIDE6_RCC "${WORKSPACE}\\py39\\Lib\\site-packages\\PySide6\\rcc.exe"
   set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-win_amd64.whl
   set_env BUILD_TRIPLET "x86_64-pc-windows-msvc"
   set_env PYO3_CONFIG_FILE "${WORKSPACE}\\standalone-py\\pyo3_config.txt"
   set_env CONSOLE_PYO3_CONFIG_FILE "${WORKSPACE}\\standalone-py\\pyo3_config.txt"
   lib = get_env LIB
   set_env LIB "${lib};${WORKSPACE}\\py39-dist\\libs"
-  set_env QMAKE_PATH "${QTDIR}/bin/qmake.exe"
+  set_env QTPATHS_PATH "${QTDIR}/bin/qtpaths.exe"
   set_env PYSIDE_WHEEL fill_me_in.whl
   set_env SHIBOKEN_WHEEL fill_me_in.whl
 elseif eq ${os} linux
   if is_empty ${QTDIR}
-    QTDIR = set "${HOME}/Qt/5.15.2/gcc_64"
+    QTDIR = set "${HOME}/Qt/6.3.0/gcc_64"
     set_env QTDIR "${QTDIR}"
   end
   set_env STANDALONE_PY_URL "${SWFT_PY_BASE_URL}/cpython-3.9.10-x86_64-unknown-linux-gnu-pgo+lto-20220203T2103.tar.zst"
   set_env PYTHON "${WORKSPACE}/py39/bin/python3"
   set_env DIST_PYTHON "${WORKSPACE}/py39-dist/bin/python3"
-  set_env DIST_PYSIDE2_RCC "${WORKSPACE}/py39-dist/bin/pyside6-rcc"
-  set_env PYSIDE2_RCC "${WORKSPACE}/py39/bin/pyside6-rcc"
+  set_env DIST_PYSIDE6_RCC "${WORKSPACE}/py39-dist/bin/pyside6-rcc"
+  set_env PYSIDE6_RCC "${WORKSPACE}/py39/bin/pyside6-rcc"
   set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-linux_x86_64.whl
   set_env PYO3_CONFIG_FILE "${WORKSPACE}/standalone-py/pyo3_config.txt"
   set_env CONSOLE_PYO3_CONFIG_FILE "${WORKSPACE}/standalone-py/pyo3_config_console.txt"
   output = exec --fail-on-error gcc -dumpmachine
   triplet = trim ${output.stdout}
   set_env BUILD_TRIPLET ${triplet}
-  set_env QMAKE_PATH "${QTDIR}/bin/qmake"
-  set_env PYSIDE_WHEEL PySide6-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl
-  set_env SHIBOKEN_WHEEL shiboken6-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl
+  set_env QTPATHS_PATH "${QTDIR}/bin/qtpaths"
+  set_env PYSIDE_WHEEL PySide6-6.3.0-6.3.0-cp39-cp39-linux_x86_64.whl
+  set_env SHIBOKEN_WHEEL shiboken6-6.3.0-6.3.0-cp39-cp39-linux_x86_64.whl
 else
   if is_empty ${QTDIR}
-    QTDIR = set "${HOME}/Qt/5.15.2/clang_64"
+    QTDIR = set "${HOME}/Qt/6.3.0/clang_64"
     set_env QTDIR "${QTDIR}"
   end
   set_env STANDALONE_PY_URL "${PY_BASE_URL}/cpython-3.9.7-x86_64-apple-darwin-pgo+lto-20211017T1616.tar.zst"
   set_env PYTHON "${WORKSPACE}/py39/bin/python3"
   set_env DIST_PYTHON "${WORKSPACE}/py39-dist/bin/python3"
-  set_env DIST_PYSIDE2_RCC "${WORKSPACE}/py39-dist/bin/pyside6-rcc"
-  set_env PYSIDE2_RCC "${WORKSPACE}/py39/bin/pyside6-rcc"
+  set_env DIST_PYSIDE6_RCC "${WORKSPACE}/py39-dist/bin/pyside6-rcc"
+  set_env PYSIDE6_RCC "${WORKSPACE}/py39/bin/pyside6-rcc"
   set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-macosx_10_15_x86_64.whl
   set_env PYO3_CONFIG_FILE "${WORKSPACE}/standalone-py/pyo3_config.txt"
   set_env CONSOLE_PYO3_CONFIG_FILE "${WORKSPACE}/standalone-py/pyo3_config_console.txt"
@@ -64,9 +64,9 @@ else
   triplet = trim ${output.stdout}
   set_env BUILD_TRIPLET ${triplet}
   # Below needs to be specified for macOS - I'm not sure where it is installed on macOS
-  set_env QMAKE_PATH "${QTDIR}/bin/qmake"
-  set_env PYSIDE_WHEEL PySide6-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_x86_64.whl
-  set_env SHIBOKEN_WHEEL shiboken6-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_x86_64.whl
+  set_env QTPATHS_PATH "${QTDIR}/bin/qtpaths"
+  set_env PYSIDE_WHEEL PySide6-6.3.0-6.3.0-cp39-cp39-macosx_10_13_x86_64.whl
+  set_env SHIBOKEN_WHEEL shiboken6-6.3.0-6.3.0-cp39-cp39-macosx_10_13_x86_64.whl
 end
 ''',
 ]
@@ -149,7 +149,7 @@ exec --fail-on-error ${python} -m py2many --rust=1 /tmp/piksi_tools_constants.py
 '''
 
 [tasks.dist-generate-resources]
-command = "${DIST_PYSIDE2_RCC}"
+command = "${DIST_PYSIDE6_RCC}"
 args = [
   "resources/console_resources.qrc",
   "-o",
@@ -159,7 +159,7 @@ args = [
 ]
 
 [tasks.generate-resources]
-command = "${PYSIDE2_RCC}"
+command = "${PYSIDE6_RCC}"
 args = [
   "resources/console_resources.qrc",
   "-o",
@@ -473,12 +473,13 @@ dependencies = [
 condition = { files_not_exist = ["${WORKSPACE}/pyside-setup/setup.py"] }
 script_runner = "@duckscript"
 script = '''
-  exec --fail-on-error git clone -b v5.15.2.1 http://code.qt.io/pyside/pyside-setup.git
+  exec --fail-on-error git clone -b v6.3.0 http://code.qt.io/pyside/pyside-setup.git
 '''
 
 [tasks.build-pyside]
 condition = { files_not_exist = ["${WORKSPACE}/pyside-setup/dist/${PYSIDE_WHEEL}"] }
 dependencies = ["prep-debug-pyside"]
+cwd = "pyside-setup"
 script_runner = "@duckscript"
 script = '''
 # Note: To make build-install-pyside work on Windows, you need to run from a powershell or cmd shell
@@ -488,8 +489,8 @@ script = '''
 # Enter-VsDevShell -VsInstanceId fdbeecbc -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -no_logo'
 # You may also need to add `jom` to the path to allow parallel builds to work. You can find this installed
 # in a standard Qt installation in the Qt\Tools\QtCreator\bin\jom directory.
-exec --fail-on-error ${PYTHON} -m pip install setuptools wheel packaging
-exec --fail-on-error ${PYTHON} ${WORKSPACE}/pyside-setup/setup.py bdist_wheel --debug --qt 5.15.2 --qmake=${QMAKE_PATH} --parallel=${PARALLEL_BUILDS} --no-examples --skip-docs --module-subset Core,Network,Gui,Qml,Widgets,Charts
+exec --fail-on-error ${PYTHON} -m pip install -r requirements.txt
+exec --fail-on-error ${PYTHON} setup.py bdist_wheel --debug --qt 6.3.0 --qtpaths=${QTPATHS_PATH} --parallel=${PARALLEL_BUILDS} --no-examples --skip-docs --module-subset Core,Network,Gui,Qml,Widgets,Charts
 '''
 
 [tasks.build-dist-install-pyside]

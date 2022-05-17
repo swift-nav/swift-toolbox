@@ -265,6 +265,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
         self._request_quit.connect(self._app.quit, Qt.QueuedConnection)
         self._app.aboutToQuit.connect(self._thread.exit)
 
+    @Slot()
     def _handle_started(self):
         QTimer.singleShot(0, self.receive_messages)
 

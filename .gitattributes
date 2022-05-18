@@ -1,3 +1,2 @@
 "console_backend/tests/data/*" filter=lfs diff=lfs merge=lfs -text
-"PySide*.whl" filter=lfs diff=lfs merge=lfs -text
-"shiboken*.whl" filter=lfs diff=lfs merge=lfs -text
+"pyside-wheels/*.whl" filter=lfs diff=lfs merge=lfs -text

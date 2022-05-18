@@ -300,16 +300,16 @@ exec --fail-on-error tar -xvf py39.tar
 [tasks.setup-builder-whl.mac]
 script_runner = "@duckscript"
 script = '''
-exec --fail-on-error ${PYTHON} -m pip install shiboken2-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_universal2.whl
-exec --fail-on-error ${PYTHON} -m pip install shiboken2_generator-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_universal2.whl
-exec --fail-on-error ${PYTHON} -m pip install PySide2-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_universal2.whl
+exec --fail-on-error ${PYTHON} -m pip install pyside-wheels/shiboken2-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_universal2.whl
+exec --fail-on-error ${PYTHON} -m pip install pyside-wheels/shiboken2_generator-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_universal2.whl
+exec --fail-on-error ${PYTHON} -m pip install pyside-wheels/PySide2-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_universal2.whl
 '''
 [tasks.setup-builder-whl.linux]
 script_runner = "@duckscript"
 script = '''
-exec --fail-on-error ${PYTHON} -m pip install shiboken2-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl
-exec --fail-on-error ${PYTHON} -m pip install shiboken2_generator-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl
-exec --fail-on-error ${PYTHON} -m pip install PySide2-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl
+exec --fail-on-error ${PYTHON} -m pip install pyside-wheels/shiboken2-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl
+exec --fail-on-error ${PYTHON} -m pip install pyside-wheels/shiboken2_generator-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl
+exec --fail-on-error ${PYTHON} -m pip install pyside-wheels/PySide2-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl
 '''
 
 [tasks.setup-builder]
@@ -406,17 +406,17 @@ cp target/x86_64-pc-windows-msvc/release/console_backend.pdb py39-dist/Lib/site-
 dependencies = ["build-frontend-wheel"]
 script = '''
 ${DIST_PYTHON} -m pip install ./dist/swiftnav_console-0.1.0-py3-none-any.whl --force-reinstall
-${DIST_PYTHON} -m pip install shiboken2-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_universal2.whl
-${DIST_PYTHON} -m pip install shiboken2_generator-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_universal2.whl
-${DIST_PYTHON} -m pip install PySide2-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_universal2.whl
+${DIST_PYTHON} -m pip install pyside-wheels/shiboken2-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_universal2.whl
+${DIST_PYTHON} -m pip install pyside-wheels/shiboken2_generator-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_universal2.whl
+${DIST_PYTHON} -m pip install pyside-wheels/PySide2-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_universal2.whl
 '''
 [tasks.build-dist-install-frontend-wheel.linux]
 dependencies = ["build-frontend-wheel"]
 script = '''
 ${DIST_PYTHON} -m pip install ./dist/swiftnav_console-0.1.0-py3-none-any.whl --force-reinstall
-${DIST_PYTHON} -m pip install shiboken2-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl
-${DIST_PYTHON} -m pip install shiboken2_generator-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl
-${DIST_PYTHON} -m pip install PySide2-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl
+${DIST_PYTHON} -m pip install pyside-wheels/shiboken2-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl
+${DIST_PYTHON} -m pip install pyside-wheels/shiboken2_generator-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl
+${DIST_PYTHON} -m pip install pyside-wheels/PySide2-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl
 '''
 
 [tasks.build-dist-install-backend-wheel]

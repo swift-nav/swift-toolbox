@@ -296,7 +296,7 @@ Item {
                             Label {
                                 id: marker
 
-                                text: "+"
+                                text: "● "
                                 font.pixelSize: (Constants.mediumPixelSize + Constants.commonLegend.markerPixelSizeOffset)
                                 font.bold: true
                                 color: Constants.solutionPosition.colors[index]

@@ -3,6 +3,7 @@ env_scripts = [
 #!@duckscript
 # set os specific env vars
 os = os_family
+set_env OS "${os}"
 if eq ${os} windows
   set_env STANDALONE_PY_URL "${PY_BASE_URL}/cpython-3.9.7-x86_64-pc-windows-msvc-shared-pgo-20211017T1616.tar.zst"
   set_env PYTHON "${WORKSPACE}\\py39\\python.exe"
@@ -296,20 +297,15 @@ exec --fail-on-error zstd -f -d py39.tar.zst
 exec --fail-on-error tar -xvf py39.tar
 '''
 
-[tasks.setup-builder-whl]
-[tasks.setup-builder-whl.mac]
+[tasks.install-pyside-wheels]
+env = { USE_PYTHON = { value = "${PYTHON}", condition = { env_not_set = [
+  "USE_PYTHON",
+] } }, OS_WHEEL_LABEL = { source = "${OS}", default_value = "unknown", mapping = { "linux" = "linux_x86_64", "mac" = "macosx_10_13_x86_64", "windows" = "win_amd64" } } }
 script_runner = "@duckscript"
 script = '''
-exec --fail-on-error ${PYTHON} -m pip install pyside-wheels/shiboken2-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_universal2.whl
-exec --fail-on-error ${PYTHON} -m pip install pyside-wheels/shiboken2_generator-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_universal2.whl
-exec --fail-on-error ${PYTHON} -m pip install pyside-wheels/PySide2-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_universal2.whl
-'''
-[tasks.setup-builder-whl.linux]
-script_runner = "@duckscript"
-script = '''
-exec --fail-on-error ${PYTHON} -m pip install pyside-wheels/shiboken2-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl
-exec --fail-on-error ${PYTHON} -m pip install pyside-wheels/shiboken2_generator-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl
-exec --fail-on-error ${PYTHON} -m pip install pyside-wheels/PySide2-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl
+exec --fail-on-error ${USE_PYTHON} -m pip install pyside-wheels/shiboken2-5.15.2.1-5.15.2-cp39-cp39-${OS_WHEEL_LABEL}.whl
+exec --fail-on-error ${USE_PYTHON} -m pip install pyside-wheels/shiboken2_generator-5.15.2.1-5.15.2-cp39-cp39-${OS_WHEEL_LABEL}.whl
+exec --fail-on-error ${USE_PYTHON} -m pip install pyside-wheels/PySide2-5.15.2.1-5.15.2-cp39-cp39-${OS_WHEEL_LABEL}.whl
 '''
 
 [tasks.setup-builder]
@@ -324,8 +320,8 @@ cd standalone-py/python/install
 cp . ../../../py39
 cd ../../../
 exec --fail-on-error ${PYTHON} ./get-pip.py
+cm_run_task install-pyside-wheels
 exec --fail-on-error ${PYTHON} -m pip install wheel flit . ".[test]"
-cm_run_task setup-builder-whl
 cm_run_task generate-resources
 '''
 
@@ -402,21 +398,12 @@ cp target/x86_64-pc-windows-msvc/release/console_backend.pdb py39-dist/Lib/site-
 '''
 
 [tasks.build-dist-install-frontend-wheel]
-[tasks.build-dist-install-frontend-wheel.mac]
+env = { USE_PYTHON = "${DIST_PYTHON}" }
 dependencies = ["build-frontend-wheel"]
+script_runner = "@duckscript"
 script = '''
-${DIST_PYTHON} -m pip install ./dist/swiftnav_console-0.1.0-py3-none-any.whl --force-reinstall
-${DIST_PYTHON} -m pip install pyside-wheels/shiboken2-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_universal2.whl
-${DIST_PYTHON} -m pip install pyside-wheels/shiboken2_generator-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_universal2.whl
-${DIST_PYTHON} -m pip install pyside-wheels/PySide2-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_universal2.whl
-'''
-[tasks.build-dist-install-frontend-wheel.linux]
-dependencies = ["build-frontend-wheel"]
-script = '''
-${DIST_PYTHON} -m pip install ./dist/swiftnav_console-0.1.0-py3-none-any.whl --force-reinstall
-${DIST_PYTHON} -m pip install pyside-wheels/shiboken2-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl
-${DIST_PYTHON} -m pip install pyside-wheels/shiboken2_generator-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl
-${DIST_PYTHON} -m pip install pyside-wheels/PySide2-5.15.2.1-5.15.2-cp39-cp39-linux_x86_64.whl
+exec --fail-on-error ${DIST_PYTHON} -m pip install ./dist/swiftnav_console-0.1.0-py3-none-any.whl --force-reinstall
+cm_run_task install-pyside-wheels
 '''
 
 [tasks.build-dist-install-backend-wheel]

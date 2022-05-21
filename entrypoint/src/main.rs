@@ -31,8 +31,10 @@ fn main() -> Result<()> {
     let current_exe = std::env::current_exe()?;
     let parent = current_exe.parent().ok_or("no parent directory")?;
     let args: Vec<_> = std::env::args().collect();
-    let help_found = args.iter().any(|arg| arg == "--help" || arg == "-h");
-    if !help_found {
+    let helper_found = args
+        .iter()
+        .any(|arg| matches!(arg.as_ref(), "--help" | "-h" | "--version" | "-V"));
+    if !helper_found {
         let mut command = std::process::Command::new(parent.join("swift-console-splash"));
         match command.spawn() {
             Ok(child) => {

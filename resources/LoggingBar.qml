@@ -278,7 +278,7 @@ Rectangle {
                     if (recSize > 0)
                         recordingSize.text = bytesToString(recSize);
                     else
-                        recordingSize.text = "0.00 MiB";
+                        recordingSize.text = "0.00 MB";
                 }
             }
         }

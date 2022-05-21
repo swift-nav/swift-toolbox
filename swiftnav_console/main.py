@@ -257,6 +257,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
             else self._receive_messages_debug
         )
 
+    @Slot()  # type: ignore
     def _handle_started(self):
         QTimer.singleShot(0, self.receive_messages)
 

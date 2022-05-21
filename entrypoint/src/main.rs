@@ -30,22 +30,27 @@ fn main() -> Result<()> {
     handle_wayland();
     let current_exe = std::env::current_exe()?;
     let parent = current_exe.parent().ok_or("no parent directory")?;
-    let mut command = std::process::Command::new(parent.join("swift-console-splash"));
-    match command.spawn() {
-        Ok(child) => {
-            let pid = child.id();
-            std::env::set_var(SWIFT_CONSOLE_PID, format!("{pid}"));
-        }
-        Err(e) => {
-            eprintln!("Starting splash screen failed:  {e}");
-        }
-    };
+    let args: Vec<_> = std::env::args().collect();
+    let helper_found = args
+        .iter()
+        .any(|arg| matches!(arg.as_ref(), "--help" | "-h" | "--version" | "-V"));
+    if !helper_found {
+        let mut command = std::process::Command::new(parent.join("swift-console-splash"));
+        match command.spawn() {
+            Ok(child) => {
+                let pid = child.id();
+                std::env::set_var(SWIFT_CONSOLE_PID, format!("{pid}"));
+            }
+            Err(e) => {
+                eprintln!("Starting splash screen failed:  {e}");
+            }
+        };
+    }
 
     std::env::set_var("SWIFTNAV_CONSOLE_FROZEN", parent);
 
     std::env::set_var("PYTHONHOME", parent);
     std::env::set_var("PYTHONDONTWRITEBYTECODE", "1");
-    let args: Vec<_> = std::env::args().collect();
     let exit_code = Python::with_gil(|py| {
         let args = PyTuple::new(py, args);
         let snav = py.import("swiftnav_console.main")?;

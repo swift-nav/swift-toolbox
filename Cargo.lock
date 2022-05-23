@@ -2354,9 +2354,9 @@ dependencies = [
 
 [[package]]
 name = "serde-pickle"
-version = "1.1.0"
+version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "47b0d075918cbf8475cedcae8e85844f437e2a7c70d54a2f405fab29bb6b2536"
+checksum = "c762ad136a26407c6a80825813600ceeab5e613660d93d79a41f0ec877171e71"
 dependencies = [
  "byteorder",
  "iter-read",

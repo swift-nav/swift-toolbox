@@ -320,8 +320,8 @@ cd standalone-py/python/install
 cp . ../../../py39
 cd ../../../
 exec --fail-on-error ${PYTHON} ./get-pip.py
-cm_run_task install-pyside-wheels
 exec --fail-on-error ${PYTHON} -m pip install wheel flit . ".[test]"
+cm_run_task install-pyside-wheels
 cm_run_task generate-resources
 '''
 

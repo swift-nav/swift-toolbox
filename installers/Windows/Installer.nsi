@@ -22,8 +22,9 @@ Unicode true
 !define outfile_prefix "swift-console"
 !define installer_dir "py39-dist"
 !define company_name "Swift Navigation"
-!define old_uninstaller "$PROGRAMFILES\${company_name}\${app_name}\Uninstall.exe"
 !define old_shortcut "${app_name} (Old).lnk"
+
+var Checkbox
 
 !define vc_redist_url "https://aka.ms/vs/17/release/vc_redist.x64.exe"
 
@@ -82,6 +83,7 @@ FunctionEnd
 
   !define UninstallMsg "Warning! By clicking $\"Next$\", this installer will uninstall any previous versions of the Swift Console.$\n$\n\
 If this is not desired, please exit the installer now."
+  !define OldUninstallMsg "Run uninstaller for any versions earlier than v4.X.X"
 
   Function uninstallOldVersionsPage
   !insertmacro MUI_HEADER_TEXT "Uninstall Previous Version" "This installer will uninstall any previous versions."
@@ -95,10 +97,26 @@ If this is not desired, please exit the installer now."
   ${NSD_CreateLabel} 0 0 100% 40u "${UninstallMsg}"
   Pop $0
 
+  ${NSD_CreateCheckbox} 120u 110u 100% 10u "${OldUninstallMsg}"
+  Pop $Checkbox
+  ${NSD_Check} $Checkbox
+  SetCtlColors $Checkbox "" "ffffff"
+
   nsDialogs::Show
   FunctionEnd
 
   Function uninstallOldVersionsPageLeave
+  ${NSD_GetState} $Checkbox $0
+  ${If} $0 <> ${BST_UNCHECKED}
+      SetShellVarContext current
+      RMDir /r "$PROGRAMFILES\Swift Navigation\Swift Console\*.*"
+      Delete "$DESKTOP\Swift Console.lnk"
+      Delete "$DESKTOP\${old_shortcut}"
+      Delete "$SMPROGRAMS\Swift Navigation\Swift Console.lnk"
+      Delete "$SMPROGRAMS\Swift Navigation\Uninstall.lnk"
+      RMDir "$SMPROGRAMS\Swift Navigation"
+      SetShellVarContext all
+  ${EndIf}
   Call Uninstall
   FunctionEnd
 
@@ -160,6 +178,7 @@ If this is not desired, please exit the installer now."
 
 Function MoveOldShtct
     SetShellVarContext current
+    IfFileExists "$DESKTOP\${old_shortcut}" +2 0
     Rename "$DESKTOP\${app_name}.lnk" "$DESKTOP\${old_shortcut}"
     SetShellVarContext all
 FunctionEnd
@@ -232,7 +251,6 @@ FunctionEnd
 
 !macro Uninstall Prefix
 Function ${Prefix}Uninstall
-  Exec '"${old_uninstaller}" "/AllUsers /S"'
   RMDir /r "$InstDir"
   Delete "$DESKTOP\${app_name}.lnk"
   Delete "$SMPROGRAMS\${app_name}.lnk"

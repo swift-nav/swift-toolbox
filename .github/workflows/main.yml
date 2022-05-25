@@ -161,7 +161,6 @@ jobs:
           key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
 
       - name: Set up python builder
-        shell: bash
         run: |
           cargo make setup-builder
         env:
@@ -271,6 +270,11 @@ jobs:
         with:
           path: ${{ env.PIP_CACHE_DIR }}
           key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
+
+      - name: Pull Git LFS objects
+        run: git lfs pull
+        env:
+          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
 
       - name: Set up python builder
         shell: bash
@@ -440,7 +444,13 @@ jobs:
             "$f"
           done
 
-          for f in $(ls Contents/Resources/lib/python3.9/site-packages/PySide2/Qt/lib/*.framework/Versions/5/*)
+          codesign \
+            -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
+            --timestamp \
+            --options=runtime \
+            Contents/Resources/lib/python3.9/site-packages/shiboken2_generator/shiboken2
+
+          for f in $(ls Contents/Resources/lib/python3.9/site-packages/**/Qt/lib/*.framework/Versions/5/*)
           do
             codesign \
               -s "${{ secrets.APPLE_DEVELOPER_ID }}" \

@@ -620,7 +620,36 @@ jobs:
             --file $(cat installer-archive.filename) \
             --primary-bundle-id ${{ env.APP_BUNDLE_ID }} \
             --apiKey ${{ secrets.APPLE_KEY_ID }} \
-            --apiIssuer ${{ secrets.APPLE_ISSUER_ID }}
+            --apiIssuer ${{ secrets.APPLE_ISSUER_ID }} | tee notarize.log
+
+          REQUEST_UUID=$(cat notarize.log | grep RequestUUID | awk '{print $3}')
+
+          echo "REQUEST_UUID=$REQUEST_UUID" >>$GITHUB_ENV
+        if: matrix.os == 'macOS'
+
+      - name: Check Notarization.
+        uses: nick-invision/retry@v2
+        with:
+          shell: bash
+          timeout_minutes: 3
+          retry_wait_seconds: 120
+          max_attempts: 10
+          retry_on: error
+          command: |
+            cd installer
+
+            xcrun altool \
+              --notarization-info ${{ env.REQUEST_UUID }} \
+              --apiKey ${{ secrets.APPLE_KEY_ID }} \
+              --apiIssuer ${{ secrets.APPLE_ISSUER_ID }} | tee notarize_status.log
+            
+            NOTARIZATION_STATUS=$(cat notarize_status.log | grep Status: | awk '{print $2}')
+            if [ $NOTARIZATION_STATUS == "success" ]; then
+              echo "Notarization Successful"
+            else
+              echo "Notarization Failed"
+              exit 1
+            fi
         if: matrix.os == 'macOS'
 
       - name: Add archive to path.

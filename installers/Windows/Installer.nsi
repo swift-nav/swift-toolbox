@@ -1,6 +1,7 @@
 ; This file was adapted from:
 ; https://github.com/mherrmann/fbs/blob/master/fbs/_defaults/src/installer/windows/Installer.nsi
 Unicode true
+ManifestDPIAware true
 !include "x64.nsh"
 !include nsDialogs.nsh
 !include WinVer.nsh
@@ -8,9 +9,10 @@ Unicode true
 !include FileFunc.nsh
 !include LogicLib.nsh
 !addplugindir "NSIS\Plugins\x86-unicode"
-!addplugindir "NSIS\Plugin"
 !define MUI_ICON "..\..\resources\images\icon.ico"
 !define MUI_UNICON "..\..\resources\images\icon.ico"
+!define MUI_WELCOMEFINISHPAGE_BITMAP "..\..\resources\images\installer-side-panel.bmp"
+!define MUI_UNWELCOMEFINISHPAGE_BITMAP "..\..\resources\images\installer-side-panel.bmp"
 
 !searchparse /file "..\..\console_backend\src\version.txt" `` VER_MAJOR_UNFILTERED `.` \
   VER_MINOR `.` VER_PATCH_UNFILTERED ``
@@ -23,14 +25,10 @@ Unicode true
 !define outfile_prefix "swift-console"
 !define installer_dir "py39-dist"
 !define company_name "Swift Navigation"
+!define old_uninstaller "$PROGRAMFILES\${company_name}\${app_name}\Uninstall.exe"
 !define old_shortcut "${app_name} (Old).lnk"
 
-var Checkbox
-
 !define vc_redist_url "https://aka.ms/vs/17/release/vc_redist.x64.exe"
-
-ManifestDPIAware true
-
 
 !define UNINST_KEY \
   "Software\Microsoft\Windows\CurrentVersion\Uninstall\${app_name}"
@@ -84,7 +82,6 @@ FunctionEnd
 
   !define UninstallMsg "Warning! By clicking $\"Next$\", this installer will uninstall any previous versions of the Swift Console.$\n$\n\
 If this is not desired, please exit the installer now."
-  !define OldUninstallMsg "Also uninstall the previous generation of Swift Console (versions lower than v4.0.0)"
 
   Function uninstallOldVersionsPage
   !insertmacro MUI_HEADER_TEXT "Uninstall Previous Version" "This installer will uninstall any previous versions."
@@ -98,25 +95,10 @@ If this is not desired, please exit the installer now."
   ${NSD_CreateLabel} 0 0 100% 40u "${UninstallMsg}"
   Pop $0
 
-  ${NSD_CreateCheckbox} 10u 110u 100% 10u "${OldUninstallMsg}"
-  Pop $Checkbox
-  ${NSD_Check} $Checkbox
-
   nsDialogs::Show
   FunctionEnd
 
   Function uninstallOldVersionsPageLeave
-  ${NSD_GetState} $Checkbox $0
-  ${If} $0 <> ${BST_UNCHECKED}
-      SetShellVarContext current
-      RMDir /r "$PROGRAMFILES\Swift Navigation\Swift Console\*.*"
-      Delete "$DESKTOP\Swift Console.lnk"
-      Delete "$DESKTOP\${old_shortcut}"
-      Delete "$SMPROGRAMS\Swift Navigation\Swift Console.lnk"
-      Delete "$SMPROGRAMS\Swift Navigation\Uninstall.lnk"
-      RMDir "$SMPROGRAMS\Swift Navigation"
-      SetShellVarContext all
-  ${EndIf}
   Call Uninstall
   FunctionEnd
 
@@ -178,7 +160,6 @@ If this is not desired, please exit the installer now."
 
 Function MoveOldShtct
     SetShellVarContext current
-    IfFileExists "$DESKTOP\${old_shortcut}" +2 0
     Rename "$DESKTOP\${app_name}.lnk" "$DESKTOP\${old_shortcut}"
     SetShellVarContext all
 FunctionEnd
@@ -249,23 +230,9 @@ Function LaunchAsNonAdmin
   Exec '"$WINDIR\explorer.exe" "$InstDir\${app_executable}"'
 FunctionEnd
 
-!macro CloseAppIfRunning Prefix
-Function ${Prefix}CloseAppIfRunning
-  nsProcess::_FindProcess "${app_executable}"
-  Pop $R0
-  ${If} $R0 == 0
-      nsProcess::_CloseProcess "${app_executable}"
-      Sleep 2000
-  ${EndIf}
-  nsProcess::_Unload
-FunctionEnd
-!macroend
-!insertmacro CloseAppIfRunning "" 
-!insertmacro CloseAppIfRunning "un."
-
 !macro Uninstall Prefix
 Function ${Prefix}Uninstall
-  Call ${Prefix}CloseAppIfRunning
+  Exec '"${old_uninstaller}" "/AllUsers /S"'
   RMDir /r "$InstDir"
   Delete "$DESKTOP\${app_name}.lnk"
   Delete "$SMPROGRAMS\${app_name}.lnk"

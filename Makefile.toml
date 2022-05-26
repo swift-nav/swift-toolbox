@@ -304,7 +304,6 @@ env = { USE_PYTHON = { value = "${PYTHON}", condition = { env_not_set = [
 script_runner = "@duckscript"
 script = '''
 exec --fail-on-error ${USE_PYTHON} -m pip install pyside-wheels/shiboken2-5.15.2.1-5.15.2-cp39-cp39-${OS_WHEEL_LABEL}.whl
-exec --fail-on-error ${USE_PYTHON} -m pip install pyside-wheels/shiboken2_generator-5.15.2.1-5.15.2-cp39-cp39-${OS_WHEEL_LABEL}.whl
 exec --fail-on-error ${USE_PYTHON} -m pip install pyside-wheels/PySide2-5.15.2.1-5.15.2-cp39-cp39-${OS_WHEEL_LABEL}.whl
 '''
 

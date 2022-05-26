@@ -444,12 +444,6 @@ jobs:
             "$f"
           done
 
-          codesign \
-            -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
-            --timestamp \
-            --options=runtime \
-            Contents/Resources/lib/python3.9/site-packages/shiboken2_generator/shiboken2
-
           for f in $(ls Contents/Resources/lib/python3.9/site-packages/**/Qt/lib/*.framework/Versions/5/*)
           do
             codesign \

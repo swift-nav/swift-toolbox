@@ -8,6 +8,7 @@ Unicode true
 !include FileFunc.nsh
 !include LogicLib.nsh
 !addplugindir "NSIS\Plugins\x86-unicode"
+!addplugindir "NSIS\Plugin"
 !define MUI_ICON "..\..\resources\images\icon.ico"
 !define MUI_UNICON "..\..\resources\images\icon.ico"
 
@@ -83,7 +84,7 @@ FunctionEnd
 
   !define UninstallMsg "Warning! By clicking $\"Next$\", this installer will uninstall any previous versions of the Swift Console.$\n$\n\
 If this is not desired, please exit the installer now."
-  !define OldUninstallMsg "Run uninstaller for any versions earlier than v4.X.X"
+  !define OldUninstallMsg "Also uninstall the previous generation of Swift Console (versions lower than v4.0.0)"
 
   Function uninstallOldVersionsPage
   !insertmacro MUI_HEADER_TEXT "Uninstall Previous Version" "This installer will uninstall any previous versions."
@@ -97,10 +98,9 @@ If this is not desired, please exit the installer now."
   ${NSD_CreateLabel} 0 0 100% 40u "${UninstallMsg}"
   Pop $0
 
-  ${NSD_CreateCheckbox} 120u 110u 100% 10u "${OldUninstallMsg}"
+  ${NSD_CreateCheckbox} 10u 110u 100% 10u "${OldUninstallMsg}"
   Pop $Checkbox
   ${NSD_Check} $Checkbox
-  SetCtlColors $Checkbox "" "ffffff"
 
   nsDialogs::Show
   FunctionEnd
@@ -249,8 +249,23 @@ Function LaunchAsNonAdmin
   Exec '"$WINDIR\explorer.exe" "$InstDir\${app_executable}"'
 FunctionEnd
 
+!macro CloseAppIfRunning Prefix
+Function ${Prefix}CloseAppIfRunning
+  nsProcess::_FindProcess "${app_executable}"
+  Pop $R0
+  ${If} $R0 == 0
+      nsProcess::_CloseProcess "${app_executable}"
+      Sleep 2000
+  ${EndIf}
+  nsProcess::_Unload
+FunctionEnd
+!macroend
+!insertmacro CloseAppIfRunning "" 
+!insertmacro CloseAppIfRunning "un."
+
 !macro Uninstall Prefix
 Function ${Prefix}Uninstall
+  Call ${Prefix}CloseAppIfRunning
   RMDir /r "$InstDir"
   Delete "$DESKTOP\${app_name}.lnk"
   Delete "$SMPROGRAMS\${app_name}.lnk"

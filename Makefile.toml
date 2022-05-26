@@ -765,11 +765,18 @@ mv *.deb installers/Linux/
 [tasks.install-nsis-plugin]
 script_runner = "@duckscript"
 script = '''
-filepath = set installers/Windows/NSIS/Inetc.zip
-if not is_path_exists ${filepath}
+inetc_filepath = set installers/Windows/NSIS/Inetc.zip
+if not is_path_exists ${inetc_filepath}
   mkdir installers/Windows/NSIS
-  wget -O ${filepath} https://nsis.sourceforge.io/mediawiki/images/c/c9/Inetc.zip
+  wget -O ${inetc_filepath} https://nsis.sourceforge.io/mediawiki/images/c/c9/Inetc.zip
   exec --fail-on-error unzip -d installers/Windows/NSIS installers/Windows/NSIS/Inetc.zip
+end
+nsprocess_filepath = set installers/Windows/NSIS/NsProcess.zip
+if not is_path_exists ${nsprocess_filepath}
+  mkdir installers/Windows/NSIS
+  wget -O ${nsprocess_filepath} http://forums.winamp.com/attachment.php?attachmentid=54705&d=1610882327
+  exec --fail-on-error unzip -d installers/Windows/NSIS installers/Windows/NSIS/NsProcess.zip
+  exec --fail-on-error mv installers/Windows/NSIS/Plugin/nsProcessW.dll installers/Windows/NSIS/Plugin/nsProcess.dll
 end
 '''
 

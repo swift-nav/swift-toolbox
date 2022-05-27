@@ -21,3 +21,6 @@ installers/Windows/*.exe
 installers/Linux/*.deb
 installers/Windows/NSIS/*
 !installers/Windows/NSIS/*.zip
+sonar-coverage.xml
+sonar-issues.json
+tarpaulin-report.json

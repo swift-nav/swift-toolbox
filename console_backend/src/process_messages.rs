@@ -511,6 +511,7 @@ mod messages {
         }
 
         #[test]
+        #[cfg_attr(tarpaulin, ignore)]
         fn realtime_delay() {
             let mut data = Vec::new();
             sbp::to_writer(&mut data, &msg_log()).unwrap();
@@ -524,6 +525,7 @@ mod messages {
         }
 
         #[test]
+        #[cfg_attr(tarpaulin, ignore)]
         fn no_realtime_delay() {
             let mut data = Vec::new();
             sbp::to_writer(&mut data, &msg_log()).unwrap();
@@ -537,6 +539,7 @@ mod messages {
         }
 
         #[test]
+        #[cfg_attr(tarpaulin, ignore)]
         fn realtime_delay_no_last_time() {
             let mut data = Vec::new();
             sbp::to_writer(&mut data, &msg_log()).unwrap();

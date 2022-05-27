@@ -1,0 +1,81 @@
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+name: Sonarcloud
+
+env:
+  CARGO_MAKE_VERSION: 0.35.10
+  CARGO_INCREMENTAL: 0
+  RUSTFLAGS: "-C debuginfo=0"
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+jobs:
+  sonarcloud:
+    name: Rust Coverage Sonar
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout source
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+        ssh-key: ${{ secrets.SSH_KEY }}
+        ssh-strict: false
+
+    - uses: webfactory/ssh-agent@v0.5.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_KEY }}
+
+    - name: Pull Git LFS objects
+      run: git lfs pull
+      env:
+        GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
+    
+    - name: Install stable Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+        components: rustfmt, clippy
+    
+    - uses: Swatinem/rust-cache@v1
+      with:
+        key: ${{ secrets.CACHE_VERSION }}
+    
+    - uses: davidB/rust-cargo-make@v1
+      with:
+        version: ${{ env.CARGO_MAKE_VERSION }}
+
+    - name: Install ${{ runner.os }} Dependencies.
+      shell: bash
+      run: |
+        sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
+      
+    - name: Generate Version and Capnproto
+      run: |
+        cargo make store-version
+        cargo make copy-capnp
+
+    - name: Install and run Tarpaulin coverage
+      run: |
+        cargo install cargo-tarpaulin
+        cargo tarpaulin --all-features --no-default-features --lib --out json
+    
+    - name: Install and run Cargo-Sonar
+      run: |
+        cargo install --git https://gitlab.com/john-michaelburke/cargo-sonar.git
+        cargo sonar --coverage tarpaulin
+
+    - name: SonarCloud Scan
+      uses: sonarsource/sonarcloud-github-action@master
+      with:
+        args: >
+          -Dsonar.projectKey=swift-nav_console_pp
+          -Dsonar.organization=swift-nav
+          -Dsonar.sources=./
+          -Dsonar.verbose=true
+          -Dsonar.externalIssuesReportPaths=sonar-issues.json
+          -Dsonar.coverageReportPaths=sonar-coverage.xml

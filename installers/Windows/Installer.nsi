@@ -1,6 +1,7 @@
 ; This file was adapted from:
 ; https://github.com/mherrmann/fbs/blob/master/fbs/_defaults/src/installer/windows/Installer.nsi
 Unicode true
+ManifestDPIAware true
 !include "x64.nsh"
 !include nsDialogs.nsh
 !include WinVer.nsh
@@ -11,6 +12,8 @@ Unicode true
 !addplugindir "NSIS\Plugin"
 !define MUI_ICON "..\..\resources\images\icon.ico"
 !define MUI_UNICON "..\..\resources\images\icon.ico"
+!define MUI_WELCOMEFINISHPAGE_BITMAP "..\..\resources\images\installer-side-panel.bmp"
+!define MUI_UNWELCOMEFINISHPAGE_BITMAP "..\..\resources\images\installer-side-panel.bmp"
 
 !searchparse /file "..\..\console_backend\src\version.txt" `` VER_MAJOR_UNFILTERED `.` \
   VER_MINOR `.` VER_PATCH_UNFILTERED ``
@@ -28,9 +31,6 @@ Unicode true
 var Checkbox
 
 !define vc_redist_url "https://aka.ms/vs/17/release/vc_redist.x64.exe"
-
-ManifestDPIAware true
-
 
 !define UNINST_KEY \
   "Software\Microsoft\Windows\CurrentVersion\Uninstall\${app_name}"

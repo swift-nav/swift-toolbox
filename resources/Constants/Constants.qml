@@ -196,7 +196,7 @@ QtObject {
         readonly property int observationConnectionMonitorColumnSpan: 2
         readonly property int resetButtonHeight: 50
         readonly property int resetButtonWidth: 100
-        readonly property string resetButtonLabel: "Reset Device"
+        readonly property string resetButtonLabel: "Reboot Device"
         readonly property int resetButtonIconSideLength: 10
         readonly property int obsTextMargins: 5
         readonly property int textHeight: 20

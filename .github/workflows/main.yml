@@ -19,6 +19,7 @@ env:
   RUSTFLAGS: "-C debuginfo=0"
   APP_NAME: swift-console
   APP_BUNDLE_ID: com.swift-nav.SwiftConsole
+  USE_EXISTING_CONSOLE_VERSION_SPLASH: 1
 
 jobs:
 
@@ -288,6 +289,18 @@ jobs:
         run: |
           echo "LIBCLANG_PATH=$LIBCLANG_PATH_WIN" >>$GITHUB_ENV
         if: matrix.os.name == 'windows-2019'
+
+      - name: Store git tag vars.
+        shell: bash
+        run: |
+          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+
+      - name: ImageMagick Action
+        uses: jruipinto/ImageMagick-action@v1
+        with:
+          command: >-
+            convert -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${{ env.VERSION }}
+            ./resources/images/splash.jpg ./resources/images/splash-version.jpg
 
       - name: Build ${{ runner.os }} Binaries.
         shell: bash

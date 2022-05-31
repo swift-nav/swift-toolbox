@@ -39,7 +39,7 @@ fn launch_splash() -> Result<()> {
     // Attach to console in windows so logs go somewhere
     attach_console();
 
-    let logo = include_bytes!("../../resources/images/splash.jpg");
+    let logo = include_bytes!(concat!("../../", env!("CONSOLE_SPLASH_IMAGE")));
     let image = image::io::Reader::with_format(
         std::io::BufReader::new(Cursor::new(logo)),
         image::ImageFormat::Jpeg,

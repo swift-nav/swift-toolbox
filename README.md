@@ -23,7 +23,19 @@ xcode-select install
 brew install cmake capnp zstd create-dmg
 
 # Linux
-apt-get install cmake libclang-dev capnproto zstd
+apt install cmake libclang-dev capnproto zstd
+```
+
+Install ImageMagick:
+```
+# Windows - install via Scoop
+scoop install imagemagick
+
+# Mac
+brew install imagemagick
+
+# Linux
+apt install imagemagick
 ```
 
 ### Troubleshooting building for macos

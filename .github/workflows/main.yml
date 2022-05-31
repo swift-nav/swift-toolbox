@@ -295,12 +295,13 @@ jobs:
         run: |
           echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
 
-      - name: ImageMagick Action
-        uses: jruipinto/ImageMagick-action@v1
-        with:
-          command: >-
-            convert -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${{ env.VERSION }}
-            ./resources/images/splash.jpg ./resources/images/splash-version.jpg
+      - uses: MinoruSekine/setup-scoop@v1
+        if: matrix.os.name == 'windows-2019'
+
+      - name: Install ImageMagick Action
+        shell: bash
+        run: |
+          cargo make install-imagemagick
 
       - name: Build ${{ runner.os }} Binaries.
         shell: bash

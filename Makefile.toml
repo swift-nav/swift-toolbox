@@ -342,6 +342,17 @@ cd ../../..
 exec --fail-on-error ${DIST_PYTHON} ./get-pip.py
 '''
 
+[tasks.install-imagemagick]
+
+[tasks.install-imagemagick.windows]
+script = "scoop install imagemagick"
+
+[tasks.install-imagemagick.linux]
+script = "sudo apt install imagemagick"
+
+[tasks.install-imagemagick.mac]
+script = "brew install imagemagick"
+
 [tasks.build-splash-version]
 script_runner = "@duckscript"
 script = '''

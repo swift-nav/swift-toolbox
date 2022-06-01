@@ -55,8 +55,6 @@ Item {
             leftPane.observationConnectionMonitor.obsLatency[advancedSystemMonitorData.obs_latency[2][0]] = advancedSystemMonitorData.obs_latency[2][1];
             leftPane.observationConnectionMonitor.obsLatency[advancedSystemMonitorData.obs_latency[3][0]] = advancedSystemMonitorData.obs_latency[3][1];
             leftPane.observationConnectionMonitor.obsLatency[advancedSystemMonitorData.obs_latency[3][0]] = advancedSystemMonitorData.obs_latency[3][1];
-            leftPane.metricsMonitor.entries = advancedSystemMonitorData.csac_telem_list;
-            leftPane.metricsMonitor.csacReceived = advancedSystemMonitorData.csac_received;
             leftPane.deviceMonitor.zynqTemp = advancedSystemMonitorData.zynq_temp;
             leftPane.deviceMonitor.feTemp = advancedSystemMonitorData.fe_temp;
         }

@@ -15,6 +15,7 @@ if eq ${os} windows
   set_env CONSOLE_PYO3_CONFIG_FILE "${WORKSPACE}\\standalone-py\\pyo3_config.txt"
   program_data = get_env ProgramData
   set_env IMAGEMAGICK_PATH "${program_data}\\chocolatey\\bin"
+  set_env SPLASH_FONT "arial"
 elseif eq ${os} linux
   set_env STANDALONE_PY_URL "${SWFT_PY_BASE_URL}/cpython-3.9.10-x86_64-unknown-linux-gnu-pgo+lto-20220203T2103.tar.zst"
   set_env PYTHON "${WORKSPACE}/py39/bin/python3"
@@ -27,6 +28,7 @@ elseif eq ${os} linux
   triplet = trim ${output.stdout}
   set_env BUILD_TRIPLET ${triplet}
   set_env IMAGEMAGICK_PATH "/usr/bin"
+  set_env SPLASH_FONT "helvetica"
 else
   set_env STANDALONE_PY_URL "${PY_BASE_URL}/cpython-3.9.7-x86_64-apple-darwin-pgo+lto-20211017T1616.tar.zst"
   set_env PYTHON "${WORKSPACE}/py39/bin/python3"
@@ -38,7 +40,7 @@ else
   output = exec --fail-on-error gcc -dumpmachine
   triplet = trim ${output.stdout}
   set_env BUILD_TRIPLET ${triplet}
-  set_env IMAGEMAGICK_PATH "/usr/local/bin"
+  set_env SPLASH_FONT "helvetica"
 end
 ''',
 ]
@@ -355,13 +357,12 @@ script = "sudo apt-get install gsfonts imagemagick"
 script = "brew install imagemagick"
 
 [tasks.build-splash-version]
-private = true
 script_runner = "@duckscript"
 script = '''
 output = exec --fail-on-error git describe --always --tags --dirty
 version = trim ${output.stdout}
 if not is_empty "${IMAGEMAGICK_PATH}"
-  exec --fail-on-error ${IMAGEMAGICK_PATH}/convert -font helvetica -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
+  exec --fail-on-error ${IMAGEMAGICK_PATH}/convert -font ${SPLASH_FONT} -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
 else
   assert_false "Environment variable IMAGEMAGICK_PATH must be set"
 end

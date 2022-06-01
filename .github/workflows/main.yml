@@ -250,6 +250,11 @@ jobs:
               choco install capnproto nsis
           fi
 
+      - name: Install Scoop (Windows)
+        if: matrix.os.name == 'windows-2019'
+        shell: pwsh
+        run: irm get.scoop.sh | iex
+
       - name: Install stable Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -294,10 +299,7 @@ jobs:
         run: |
           echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
 
-      - uses: MinoruSekine/setup-scoop@v1
-        if: matrix.os.name == 'windows-2019'
-
-      - name: Install ImageMagick Action
+      - name: Install ImageMagick
         shell: bash
         run: |
           cargo make install-imagemagick

@@ -348,7 +348,7 @@ exec --fail-on-error ${DIST_PYTHON} ./get-pip.py
 script = "scoop install imagemagick"
 
 [tasks.install-imagemagick.linux]
-script = "sudo apt install imagemagick"
+script = "sudo apt-get install imagemagick"
 
 [tasks.install-imagemagick.mac]
 script = "brew install imagemagick"

@@ -22,169 +22,169 @@ env:
 
 jobs:
 
-#  backend_bench:
-#
-#    name: Backend Benchmarks
-#
-#    strategy:
-#      matrix:
-#        os:
-#        - ubuntu-18.04
-#        - macos-10.15
-#        - windows-2019
-#
-#    runs-on: ${{ matrix.os }}
-#
-#    steps:
-#
-#      - name: Checkout source
-#        uses: actions/checkout@v2
-#        with:
-#          submodules: recursive
-#          ssh-key: ${{ secrets.SSH_KEY }}
-#          ssh-strict: false
-#
-#      - uses: webfactory/ssh-agent@v0.5.0
-#        with:
-#          ssh-private-key: ${{ secrets.SSH_KEY }}
-#
-#      - name: Run ssh-keyscan
-#        run: ssh-keyscan github.com >> ~/.ssh/known_hosts
-#
-#      - name: Setup SSH for Windows Git LFS
-#        run: |
-#          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
-#          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
-#        if: matrix.os == 'windows-2019'
-#
-#      - name: Install ${{ runner.os }} Dependencies.
-#        shell: bash
-#        run: |
-#          if [ "$RUNNER_OS" == "Linux" ]; then
-#              sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
-#          elif [ "$RUNNER_OS" == "macOS" ]; then
-#              brew install capnp llvm
-#          elif [ "$RUNNER_OS" == "Windows" ]; then
-#              choco install -y capnproto
-#          fi
-#
-#      - name: Pull Git LFS objects
-#        run: git lfs pull
-#        env:
-#          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
-#
-#      - uses: actions-rs/toolchain@v1
-#        with:
-#          profile: minimal
-#          toolchain: stable
-#
-#      - uses: Swatinem/rust-cache@v1
-#        with:
-#          key: ${{ secrets.CACHE_VERSION }}
-#
-#      - uses: davidB/rust-cargo-make@v1
-#        with:
-#          version: ${{ env.CARGO_MAKE_VERSION }}
-#
-#      - name: Cache pip
-#        uses: actions/cache@v2
-#        with:
-#          path: ${{ env.PIP_CACHE_DIR }}
-#          key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
-#
-#      - name: Set up python builder
-#        shell: bash
-#        run: |
-#          cargo make setup-builder
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#
-#      - name: Run Backend Benchmarks (Windows)
-#        env:
-#          LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
-#        run: |
-#          cargo make backend-benches
-#        if: matrix.os == 'windows-2019'
-#
-#      - name: Run Backend Benchmarks
-#        run: |
-#          cargo make backend-benches
-#        if: matrix.os != 'windows-2019'
-#
-#  checks:
-#
-#    name: Code Quality Checks
-#
-#    runs-on: ubuntu-18.04
-#
-#    steps:
-#
-#      - name: Checkout source
-#        uses: actions/checkout@v2
-#        with:
-#          submodules: recursive
-#          ssh-key: ${{ secrets.SSH_KEY }}
-#          ssh-strict: false
-#
-#      - uses: webfactory/ssh-agent@v0.5.0
-#        with:
-#          ssh-private-key: ${{ secrets.SSH_KEY }}
-#
-#      - name: Pull Git LFS objects
-#        run: git lfs pull
-#        env:
-#          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
-#
-#      - name: Install stable Rust
-#        uses: actions-rs/toolchain@v1
-#        with:
-#          toolchain: stable
-#          override: true
-#          components: rustfmt, clippy
-#
-#      - uses: Swatinem/rust-cache@v1
-#        with:
-#          key: ${{ secrets.CACHE_VERSION }}
-#
-#      - uses: davidB/rust-cargo-make@v1
-#        with:
-#          version: ${{ env.CARGO_MAKE_VERSION }}
-#
-#      - name: Install Dependencies.
-#        run: |
-#          sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
-#
-#      - name: Cache pip
-#        uses: actions/cache@v2
-#        with:
-#          path: ${{ env.PIP_CACHE_DIR }}
-#          key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
-#
-#      - name: Set up python builder
-#        run: |
-#          cargo make setup-builder
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#
-#      - name: Run Checks
-#        run: |
-#          cargo make check-all
-#
-#      - name: Run Tests
-#        uses: nick-invision/retry@v2
-#        with:
-#          timeout_minutes: 5
-#          max_attempts: 3
-#          retry_on: error
-#          command: cargo make tests
-#
+  backend_bench:
+
+    name: Backend Benchmarks
+
+    strategy:
+      matrix:
+        os:
+        - ubuntu-18.04
+        - macos-10.15
+        - windows-2019
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+
+      - name: Checkout source
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          ssh-key: ${{ secrets.SSH_KEY }}
+          ssh-strict: false
+
+      - uses: webfactory/ssh-agent@v0.5.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Run ssh-keyscan
+        run: ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      - name: Setup SSH for Windows Git LFS
+        run: |
+          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
+          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
+        if: matrix.os == 'windows-2019'
+
+      - name: Install ${{ runner.os }} Dependencies.
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+              sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+              brew install capnp llvm
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+              choco install -y capnproto
+          fi
+
+      - name: Pull Git LFS objects
+        run: git lfs pull
+        env:
+          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+
+      - uses: Swatinem/rust-cache@v1
+        with:
+          key: ${{ secrets.CACHE_VERSION }}
+
+      - uses: davidB/rust-cargo-make@v1
+        with:
+          version: ${{ env.CARGO_MAKE_VERSION }}
+
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.PIP_CACHE_DIR }}
+          key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
+
+      - name: Set up python builder
+        shell: bash
+        run: |
+          cargo make setup-builder
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Backend Benchmarks (Windows)
+        env:
+          LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
+        run: |
+          cargo make backend-benches
+        if: matrix.os == 'windows-2019'
+
+      - name: Run Backend Benchmarks
+        run: |
+          cargo make backend-benches
+        if: matrix.os != 'windows-2019'
+
+  checks:
+
+    name: Code Quality Checks
+
+    runs-on: ubuntu-18.04
+
+    steps:
+
+      - name: Checkout source
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          ssh-key: ${{ secrets.SSH_KEY }}
+          ssh-strict: false
+
+      - uses: webfactory/ssh-agent@v0.5.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Pull Git LFS objects
+        run: git lfs pull
+        env:
+          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
+
+      - name: Install stable Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v1
+        with:
+          key: ${{ secrets.CACHE_VERSION }}
+
+      - uses: davidB/rust-cargo-make@v1
+        with:
+          version: ${{ env.CARGO_MAKE_VERSION }}
+
+      - name: Install Dependencies.
+        run: |
+          sudo apt-get update && sudo apt-get install -y capnproto libudev-dev
+
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.PIP_CACHE_DIR }}
+          key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
+
+      - name: Set up python builder
+        run: |
+          cargo make setup-builder
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Checks
+        run: |
+          cargo make check-all
+
+      - name: Run Tests
+        uses: nick-invision/retry@v2
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          retry_on: error
+          command: cargo make tests
+
   build:
 
     name: Build Binaries
 
-#    needs:
-#      - checks
-#      - backend_bench
+    needs:
+      - checks
+      - backend_bench
 
     strategy:
       matrix:
@@ -269,11 +269,6 @@ jobs:
         shell: bash
         run: |
           cargo make install-imagemagick
-
-      - name: Test build splash version
-        shell: bash
-        run: |
-          cargo make build-splash-version
 
       - name: Cache pip
         uses: actions/cache@v2
@@ -404,509 +399,509 @@ jobs:
         run: |
           cargo make disk-usage-bench
 
-#  sign_application:
-#    name: Sign Application
-#    timeout-minutes: 30
-#    needs:
-#      - build
-#    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
-#    strategy:
-#      matrix:
-#        os:
-#          - macOS
-#    runs-on: [self-hosted, '${{ matrix.os }}', code-signer]
-#    steps:
-#
-#      - name: Remove previous build.
-#        shell: bash
-#        continue-on-error: true
-#        run: |
-#          rm -rf application
-#
-#      - name: Checkout source.
-#        uses: actions/checkout@v2
-#        with:
-#          path: application
-#
-#      - uses: actions/download-artifact@v2
-#        with:
-#          name: ${{ matrix.os }}-artifacts
-#          path: |
-#            application
-#
-#      - name: Unzip release artifact.
-#        shell: bash
-#        run: |
-#          cd application
-#          mkdir -p py39-dist
-#          tar -xvf "$(cat release-archive.filename)" -C py39-dist
-#
-#      - name: Build .app bundle.
-#        shell: bash
-#        run: |
-#          cd application
-#          cargo make dist-to-installer-app
-#
-#      - name: Sign application.
-#        shell: bash
-#        run: |
-#          cd "application/target/installer/Swift Console.app"
-#          for f in $(find Contents/Resources/lib/ -name '*.dylib' -or -name '*.so')
-#          do
-#            codesign \
-#            -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
-#            --timestamp \
-#            "$f"
-#          done
-#
-#          for f in $(ls Contents/Resources/lib/python3.9/site-packages/**/Qt/lib/*.framework/Versions/5/*)
-#          do
-#            codesign \
-#              -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
-#              --timestamp \
-#              "$f"
-#          done
-#
-#          cd ../../../
-#          codesign \
-#            -s "${{ secrets.APPLE_DEVELOPER_ID }}" --deep \
-#            --entitlements installers/macOS/entitlements.plist \
-#            --timestamp \
-#            --options=runtime \
-#            "target/installer/Swift Console.app"
-#
-#      - name: Build dmg file.
-#        shell: bash
-#        run: |
-#          cd application
-#          cargo make store-version
-#          cargo make dist-to-installer-dmg
-#
-#      - name: Add archive to path.
-#        shell: bash
-#        run: |
-#          INSTALLER_ARCHIVE=$(find application -iname "*.dmg")
-#          echo $INSTALLER_ARCHIVE >installer-archive.filename
-#          echo "INSTALLER_ARCHIVE=$(cat installer-archive.filename)" >>$GITHUB_ENV
-#
-#      - uses: actions/upload-artifact@v2
-#        with:
-#          name: ${{ runner.os }}-installer
-#          path: |
-#            ${{ env.INSTALLER_ARCHIVE }}
-#            installer-archive.filename
-#
-#  frontend_bench:
-#    name: Run Frontend Benchmarks
-#    timeout-minutes: 30
-#    needs:
-#      - build
-#    strategy:
-#      matrix:
-#        os:
-#          - macOS
-#          - Windows
-#          - Linux
-#    runs-on: [self-hosted, '${{ matrix.os }}', bench]
-#    steps:
-#      - name: Remove previous build.
-#        shell: bash
-#        run: |
-#          rm -rf ${{ env.APP_NAME }}
-#          rm -rf bench
-#
-#      - uses: actions/download-artifact@v2
-#        with:
-#          name: ${{ matrix.os }}-artifacts
-#          path: |
-#            ${{ env.APP_NAME }}
-#
-#      - uses: actions/download-artifact@v2
-#        with:
-#          name: ${{ matrix.os }}-artifacts-bench
-#          path: |
-#            bench
-#
-#      - name: Extract binary and data.
-#        shell: bash
-#        run: |
-#          cd ${{ env.APP_NAME }}
-#          archive=$(cat release-archive.filename)
-#          7z x $archive -aoa
-#          7z x ${archive%.xz} -aoa
-#          echo "extracted release-archive"
-#          mv ../bench/${{ matrix.os }}.zip .
-#          7z x ${{ matrix.os }}.zip -aoa
-#          echo "extracted bench data"
-#
-#      - name: Run CPU Frontend Benchmark.
-#        uses: nick-invision/retry@v2
-#        with:
-#          shell: bash
-#          timeout_minutes: 3
-#          max_attempts: 3
-#          retry_on: error
-#          command: |
-#            cd ${{ env.APP_NAME }}
-#            if [ "$RUNNER_OS" == "Windows" ]; then
-#                python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}.exe"
-#            elif [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
-#                chmod +x "${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
-#                python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
-#            else
-#                echo "Invalid platform"
-#                exit 1
-#            fi
-#
-#      - name: Run MEM Frontend Benchmark.
-#        uses: nick-invision/retry@v2
-#        with:
-#          shell: bash
-#          timeout_minutes: 3
-#          max_attempts: 3
-#          retry_on: error
-#          command: |
-#            cd ${{ env.APP_NAME }}
-#            if [ "$RUNNER_OS" == "Windows" ]; then
-#                python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}.exe"
-#            elif [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
-#                chmod +x "${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
-#                python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
-#            else
-#                echo "Invalid platform"
-#                exit 1
-#            fi
-#
-#  sign_installer:
-#    name: Sign Installers
-#    timeout-minutes: 30
-#    needs:
-#      - sign_application
-#      - frontend_bench
-#    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
-#    strategy:
-#      matrix:
-#        os:
-#          - Windows
-#          - macOS
-#    runs-on: [self-hosted, '${{ matrix.os }}', code-signer]
-#    steps:
-#
-#      - name: Remove previous build.
-#        shell: bash
-#        continue-on-error: true
-#        run: |
-#          rm -rf installer
-#
-#      - uses: actions/download-artifact@v2
-#        with:
-#          name: ${{ matrix.os }}-installer
-#          path: |
-#            installer
-#
-#      - name: Sign Installer.
-#        shell: cmd
-#        run: |
-#          cd installer
-#          set /p executable=<installer-archive.filename
-#          "${{ env.CODE_SIGNER_PATH_WIN }}" sign ^
-#            /debug /v ^
-#            /n "Swift Navigation, Inc." /a ^
-#            /tr http://rfc3161timestamp.globalsign.com/advanced ^
-#            /td SHA256 %executable%
-#        if: matrix.os == 'Windows'
-#
-#      - name: Sign Installer.
-#        shell: bash
-#        run: |
-#          cd installer
-#          codesign \
-#            -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
-#            -f --timestamp \
-#            $(cat installer-archive.filename)
-#          xcrun altool \
-#            --notarize-app \
-#            --file $(cat installer-archive.filename) \
-#            --primary-bundle-id ${{ env.APP_BUNDLE_ID }} \
-#            --apiKey ${{ secrets.APPLE_KEY_ID }} \
-#            --apiIssuer ${{ secrets.APPLE_ISSUER_ID }} | tee notarize.log
-#
-#          REQUEST_UUID=$(cat notarize.log | grep RequestUUID | awk '{print $3}')
-#
-#          echo "REQUEST_UUID=$REQUEST_UUID" >>$GITHUB_ENV
-#        if: matrix.os == 'macOS'
-#
-#      - name: Check Notarization.
-#        uses: nick-invision/retry@v2
-#        with:
-#          shell: bash
-#          timeout_minutes: 3
-#          retry_wait_seconds: 120
-#          max_attempts: 10
-#          retry_on: error
-#          command: |
-#            cd installer
-#
-#            xcrun altool \
-#              --notarization-info ${{ env.REQUEST_UUID }} \
-#              --apiKey ${{ secrets.APPLE_KEY_ID }} \
-#              --apiIssuer ${{ secrets.APPLE_ISSUER_ID }} | tee notarize_status.log
-#            
-#            NOTARIZATION_STATUS=$(cat notarize_status.log | grep Status: | awk '{print $2}')
-#            if [ $NOTARIZATION_STATUS == "success" ]; then
-#              echo "Notarization Successful"
-#            else
-#              echo "Notarization Failed"
-#              exit 1
-#            fi
-#        if: matrix.os == 'macOS'
-#
-#      - name: Add archive to path.
-#        shell: bash
-#        run: |
-#          if [ "$RUNNER_OS" == "Linux" ]; then
-#              INSTALLER_ARCHIVE=$(find installer -iname "*.deb")
-#          elif [ "$RUNNER_OS" == "Windows" ]; then
-#              INSTALLER_ARCHIVE=$(ls installer/installers/Windows/*.exe)
-#          elif [ "$RUNNER_OS" == "macOS" ]; then
-#              INSTALLER_ARCHIVE=$(find installer -iname "*.dmg")
-#          fi
-#          echo $INSTALLER_ARCHIVE >installer-archive.filename
-#          echo "INSTALLER_ARCHIVE=$(cat installer-archive.filename)" >>$GITHUB_ENV
-#
-#      - uses: actions/upload-artifact@v2
-#        with:
-#          name: ${{ runner.os }}-installer-signed
-#          path: |
-#            ${{ env.INSTALLER_ARCHIVE }}
-#            installer-archive.filename
-#
-#  sign_binaries:
-#    name: Sign Binaries
-#    timeout-minutes: 30
-#    needs:
-#      - build
-#      - frontend_bench
-#    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
-#    strategy:
-#      matrix:
-#        os:
-#          - {name: macOS, exe_suffix: "", short_name: "macos"}
-#          - {name: Windows, exe_suffix: ".exe", short_name: "windows"}
-#          - {name: Linux, exe_suffix: "", short_name: "linux"}
-#        type:
-#          - "files"
-#          - "settings"
-#          - "updater"
-#    runs-on: [self-hosted, '${{ matrix.os.name }}', code-signer]
-#    steps:
-#      - name: Store git tag vars.
-#        shell: bash
-#        run: |
-#          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
-#
-#      - name: Remove previous build.
-#        shell: bash
-#        continue-on-error: true
-#        run: |
-#          rm -rf binaries
-#
-#      - uses: actions/download-artifact@v2
-#        with:
-#          name: swift-${{ matrix.type }}_${{ matrix.os.short_name }}
-#          path: binaries
-#
-#      - name: Add version to binary names.
-#        shell: bash
-#        working-directory: binaries
-#        run: |
-#          mv swift-${{ matrix.type }}${{ matrix.os.exe_suffix }} swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
-#
-#      - name: Sign Binaries.
-#        shell: cmd
-#        run: |
-#          "${{ env.CODE_SIGNER_PATH_WIN }}" sign ^
-#            /debug /v ^
-#            /n "Swift Navigation, Inc." /a ^
-#            /tr http://rfc3161timestamp.globalsign.com/advanced ^
-#            /td SHA256 binaries/swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
-#        if: matrix.os.name == 'Windows'
-#
-#      - name: Sign Binaries.
-#        shell: bash
-#        working-directory: binaries
-#        run: |
-#          codesign \
-#            -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
-#            --timestamp \
-#            --options=runtime \
-#            swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
-#        if: matrix.os.name == 'macOS'
-#
-#      - name: Add executable permission.
-#        shell: bash
-#        working-directory: binaries
-#        run: |
-#          chmod +x swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
-#        if: matrix.os.name != 'Windows'
-#
-#      - uses: actions/upload-artifact@v2
-#        with:
-#          name: swift-${{ matrix.type }}_${{ matrix.os.short_name }}-signed
-#          path: binaries/swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
-#
-#  zip_binaries:
-#    name: Zip Binaries
-#    timeout-minutes: 10
-#    needs:
-#      - sign_binaries
-#    strategy:
-#      matrix:
-#        os:
-#          - { name: macOS, short_name: "macos" }
-#          - { name: Windows, short_name: "windows" }
-#          - { name: Linux, short_name: "linux" }
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Store git tag vars.
-#        shell: bash
-#        run: |
-#          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
-#
-#      - name: Pull swift-files
-#        uses: actions/download-artifact@v2
-#        with:
-#          name: swift-files_${{ matrix.os.short_name }}-signed
-#          path: ${{ matrix.os.short_name }}
-#      - name: Pull swift-settings
-#        uses: actions/download-artifact@v2
-#        with:
-#          name: swift-settings_${{ matrix.os.short_name }}-signed
-#          path: ${{ matrix.os.short_name }}
-#      - name: Pull swift-updater
-#        uses: actions/download-artifact@v2
-#        with:
-#          name: swift-updater_${{ matrix.os.short_name }}-signed
-#          path: ${{ matrix.os.short_name }}
-#
-#      - name: Zip Binaries.
-#        shell: bash
-#        working-directory: ${{ matrix.os.short_name }}
-#        run: |
-#          7z a -tzip "../swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-all.zip"
-#
-#      - uses: actions/upload-artifact@v2
-#        with:
-#          name: swift-binaries_${{ matrix.os.short_name }}-all
-#          path: swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-all.zip
-#        if: matrix.os.name == 'macOS'
-#
-#      - uses: actions/upload-artifact@v2
-#        with:
-#          name: swift-binaries_${{ matrix.os.short_name }}-signed
-#          path: swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-all.zip
-#        if: matrix.os.name != 'macOS'
-#
-#  sign_zipped_binaries:
-#    name: Sign Zipped Binaries
-#    timeout-minutes: 10
-#    needs:
-#      - zip_binaries
-#    strategy:
-#      matrix:
-#        os:
-#          - { name: macOS, short_name: "macos" }
-#    runs-on: [self-hosted, '${{ matrix.os.name }}', code-signer]
-#    steps:
-#      - name: Store git tag vars.
-#        shell: bash
-#        run: |
-#          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
-#
-#      - name: Pull zipped binaries
-#        uses: actions/download-artifact@v2
-#        with:
-#          name: swift-binaries_${{ matrix.os.short_name }}-all
-#          path: binaries-all
-#
-#      - name: Sign Binaries.
-#        shell: bash
-#        working-directory: binaries-all
-#        run: |
-#          codesign \
-#            -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
-#            -f --timestamp "swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-all.zip"
-#          xcrun altool \
-#            --notarize-app \
-#            --file swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-all.zip\
-#            --primary-bundle-id ${{ env.APP_BUNDLE_ID }} \
-#            --apiKey ${{ secrets.APPLE_KEY_ID }} \
-#            --apiIssuer ${{ secrets.APPLE_ISSUER_ID }}
-#
-#      - uses: actions/upload-artifact@v2
-#        with:
-#          name: swift-binaries_${{ matrix.os.short_name }}-signed
-#          path: binaries-all/swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-all.zip
-#
-#  release:
-#    name: Create Release
-#    needs:
-#      - sign_zipped_binaries
-#      - sign_installer
-#    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
-#    runs-on: ubuntu-20.04
-#    steps:
-#      - name: Store git tag and date vars.
-#        run: |
-#          DATE="$(date '+%Y-%m-%d')";
-#          echo "DATE=${DATE}" >> $GITHUB_ENV
-#          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
-#      - name: Pull Windows Installer
-#        uses: actions/download-artifact@v2
-#        with:
-#          name: Windows-installer-signed
-#          path: windows
-#      - name: Pull Windows Binaries
-#        uses: actions/download-artifact@v2
-#        with:
-#          name: swift-binaries_windows-signed
-#          path: windows
-#      - name: Pull Linux Installer
-#        uses: actions/download-artifact@v2
-#        with:
-#          name: Linux-installer
-#          path: linux
-#      - name: Pull Linux Binaries
-#        uses: actions/download-artifact@v2
-#        with:
-#          name: swift-binaries_linux-signed
-#          path: linux
-#      - name: Pull macOS Installer
-#        uses: actions/download-artifact@v2
-#        with:
-#          name: macOS-installer
-#          path: macos
-#      - name: Pull macOS Binaries
-#        uses: actions/download-artifact@v2
-#        with:
-#          name: swift-binaries_macos-signed
-#          path: macos
-#      - name: Prepare Release
-#        shell: bash
-#        run: |
-#          echo "WINDOWS_ARCHIVE=$(cat windows/installer-archive.filename)" >>$GITHUB_ENV
-#          echo "LINUX_ARCHIVE=$(cat linux/installer-archive.filename)" >>$GITHUB_ENV
-#          echo "MACOS_ARCHIVE=$(cat macos/installer-archive.filename)" >>$GITHUB_ENV
-#      - name: Release
-#        uses: softprops/action-gh-release@v1
-#        with:
-#          name: "${{ env.VERSION }}-${{ env.DATE }}"
-#          files: |
-#            windows/${{ env.WINDOWS_ARCHIVE }}
-#            windows/swift-binaries_windows_${{ env.VERSION }}-all.zip
-#            linux/${{ env.LINUX_ARCHIVE }}
-#            linux/swift-binaries_linux_${{ env.VERSION }}-all.zip
-#            macos/${{ env.MACOS_ARCHIVE }}
-#            macos/swift-binaries_macos_${{ env.VERSION }}-all.zip
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  sign_application:
+    name: Sign Application
+    timeout-minutes: 30
+    needs:
+      - build
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
+    strategy:
+      matrix:
+        os:
+          - macOS
+    runs-on: [self-hosted, '${{ matrix.os }}', code-signer]
+    steps:
+
+      - name: Remove previous build.
+        shell: bash
+        continue-on-error: true
+        run: |
+          rm -rf application
+
+      - name: Checkout source.
+        uses: actions/checkout@v2
+        with:
+          path: application
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: ${{ matrix.os }}-artifacts
+          path: |
+            application
+
+      - name: Unzip release artifact.
+        shell: bash
+        run: |
+          cd application
+          mkdir -p py39-dist
+          tar -xvf "$(cat release-archive.filename)" -C py39-dist
+
+      - name: Build .app bundle.
+        shell: bash
+        run: |
+          cd application
+          cargo make dist-to-installer-app
+
+      - name: Sign application.
+        shell: bash
+        run: |
+          cd "application/target/installer/Swift Console.app"
+          for f in $(find Contents/Resources/lib/ -name '*.dylib' -or -name '*.so')
+          do
+            codesign \
+            -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
+            --timestamp \
+            "$f"
+          done
+
+          for f in $(ls Contents/Resources/lib/python3.9/site-packages/**/Qt/lib/*.framework/Versions/5/*)
+          do
+            codesign \
+              -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
+              --timestamp \
+              "$f"
+          done
+
+          cd ../../../
+          codesign \
+            -s "${{ secrets.APPLE_DEVELOPER_ID }}" --deep \
+            --entitlements installers/macOS/entitlements.plist \
+            --timestamp \
+            --options=runtime \
+            "target/installer/Swift Console.app"
+
+      - name: Build dmg file.
+        shell: bash
+        run: |
+          cd application
+          cargo make store-version
+          cargo make dist-to-installer-dmg
+
+      - name: Add archive to path.
+        shell: bash
+        run: |
+          INSTALLER_ARCHIVE=$(find application -iname "*.dmg")
+          echo $INSTALLER_ARCHIVE >installer-archive.filename
+          echo "INSTALLER_ARCHIVE=$(cat installer-archive.filename)" >>$GITHUB_ENV
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ runner.os }}-installer
+          path: |
+            ${{ env.INSTALLER_ARCHIVE }}
+            installer-archive.filename
+
+  frontend_bench:
+    name: Run Frontend Benchmarks
+    timeout-minutes: 30
+    needs:
+      - build
+    strategy:
+      matrix:
+        os:
+          - macOS
+          - Windows
+          - Linux
+    runs-on: [self-hosted, '${{ matrix.os }}', bench]
+    steps:
+      - name: Remove previous build.
+        shell: bash
+        run: |
+          rm -rf ${{ env.APP_NAME }}
+          rm -rf bench
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: ${{ matrix.os }}-artifacts
+          path: |
+            ${{ env.APP_NAME }}
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: ${{ matrix.os }}-artifacts-bench
+          path: |
+            bench
+
+      - name: Extract binary and data.
+        shell: bash
+        run: |
+          cd ${{ env.APP_NAME }}
+          archive=$(cat release-archive.filename)
+          7z x $archive -aoa
+          7z x ${archive%.xz} -aoa
+          echo "extracted release-archive"
+          mv ../bench/${{ matrix.os }}.zip .
+          7z x ${{ matrix.os }}.zip -aoa
+          echo "extracted bench data"
+
+      - name: Run CPU Frontend Benchmark.
+        uses: nick-invision/retry@v2
+        with:
+          shell: bash
+          timeout_minutes: 3
+          max_attempts: 3
+          retry_on: error
+          command: |
+            cd ${{ env.APP_NAME }}
+            if [ "$RUNNER_OS" == "Windows" ]; then
+                python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}.exe"
+            elif [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
+                chmod +x "${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
+                python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
+            else
+                echo "Invalid platform"
+                exit 1
+            fi
+
+      - name: Run MEM Frontend Benchmark.
+        uses: nick-invision/retry@v2
+        with:
+          shell: bash
+          timeout_minutes: 3
+          max_attempts: 3
+          retry_on: error
+          command: |
+            cd ${{ env.APP_NAME }}
+            if [ "$RUNNER_OS" == "Windows" ]; then
+                python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}.exe"
+            elif [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
+                chmod +x "${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
+                python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
+            else
+                echo "Invalid platform"
+                exit 1
+            fi
+
+  sign_installer:
+    name: Sign Installers
+    timeout-minutes: 30
+    needs:
+      - sign_application
+      - frontend_bench
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
+    strategy:
+      matrix:
+        os:
+          - Windows
+          - macOS
+    runs-on: [self-hosted, '${{ matrix.os }}', code-signer]
+    steps:
+
+      - name: Remove previous build.
+        shell: bash
+        continue-on-error: true
+        run: |
+          rm -rf installer
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: ${{ matrix.os }}-installer
+          path: |
+            installer
+
+      - name: Sign Installer.
+        shell: cmd
+        run: |
+          cd installer
+          set /p executable=<installer-archive.filename
+          "${{ env.CODE_SIGNER_PATH_WIN }}" sign ^
+            /debug /v ^
+            /n "Swift Navigation, Inc." /a ^
+            /tr http://rfc3161timestamp.globalsign.com/advanced ^
+            /td SHA256 %executable%
+        if: matrix.os == 'Windows'
+
+      - name: Sign Installer.
+        shell: bash
+        run: |
+          cd installer
+          codesign \
+            -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
+            -f --timestamp \
+            $(cat installer-archive.filename)
+          xcrun altool \
+            --notarize-app \
+            --file $(cat installer-archive.filename) \
+            --primary-bundle-id ${{ env.APP_BUNDLE_ID }} \
+            --apiKey ${{ secrets.APPLE_KEY_ID }} \
+            --apiIssuer ${{ secrets.APPLE_ISSUER_ID }} | tee notarize.log
+
+          REQUEST_UUID=$(cat notarize.log | grep RequestUUID | awk '{print $3}')
+
+          echo "REQUEST_UUID=$REQUEST_UUID" >>$GITHUB_ENV
+        if: matrix.os == 'macOS'
+
+      - name: Check Notarization.
+        uses: nick-invision/retry@v2
+        with:
+          shell: bash
+          timeout_minutes: 3
+          retry_wait_seconds: 120
+          max_attempts: 10
+          retry_on: error
+          command: |
+            cd installer
+
+            xcrun altool \
+              --notarization-info ${{ env.REQUEST_UUID }} \
+              --apiKey ${{ secrets.APPLE_KEY_ID }} \
+              --apiIssuer ${{ secrets.APPLE_ISSUER_ID }} | tee notarize_status.log
+            
+            NOTARIZATION_STATUS=$(cat notarize_status.log | grep Status: | awk '{print $2}')
+            if [ $NOTARIZATION_STATUS == "success" ]; then
+              echo "Notarization Successful"
+            else
+              echo "Notarization Failed"
+              exit 1
+            fi
+        if: matrix.os == 'macOS'
+
+      - name: Add archive to path.
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+              INSTALLER_ARCHIVE=$(find installer -iname "*.deb")
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+              INSTALLER_ARCHIVE=$(ls installer/installers/Windows/*.exe)
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+              INSTALLER_ARCHIVE=$(find installer -iname "*.dmg")
+          fi
+          echo $INSTALLER_ARCHIVE >installer-archive.filename
+          echo "INSTALLER_ARCHIVE=$(cat installer-archive.filename)" >>$GITHUB_ENV
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ runner.os }}-installer-signed
+          path: |
+            ${{ env.INSTALLER_ARCHIVE }}
+            installer-archive.filename
+
+  sign_binaries:
+    name: Sign Binaries
+    timeout-minutes: 30
+    needs:
+      - build
+      - frontend_bench
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
+    strategy:
+      matrix:
+        os:
+          - {name: macOS, exe_suffix: "", short_name: "macos"}
+          - {name: Windows, exe_suffix: ".exe", short_name: "windows"}
+          - {name: Linux, exe_suffix: "", short_name: "linux"}
+        type:
+          - "files"
+          - "settings"
+          - "updater"
+    runs-on: [self-hosted, '${{ matrix.os.name }}', code-signer]
+    steps:
+      - name: Store git tag vars.
+        shell: bash
+        run: |
+          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+
+      - name: Remove previous build.
+        shell: bash
+        continue-on-error: true
+        run: |
+          rm -rf binaries
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: swift-${{ matrix.type }}_${{ matrix.os.short_name }}
+          path: binaries
+
+      - name: Add version to binary names.
+        shell: bash
+        working-directory: binaries
+        run: |
+          mv swift-${{ matrix.type }}${{ matrix.os.exe_suffix }} swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
+
+      - name: Sign Binaries.
+        shell: cmd
+        run: |
+          "${{ env.CODE_SIGNER_PATH_WIN }}" sign ^
+            /debug /v ^
+            /n "Swift Navigation, Inc." /a ^
+            /tr http://rfc3161timestamp.globalsign.com/advanced ^
+            /td SHA256 binaries/swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
+        if: matrix.os.name == 'Windows'
+
+      - name: Sign Binaries.
+        shell: bash
+        working-directory: binaries
+        run: |
+          codesign \
+            -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
+            --timestamp \
+            --options=runtime \
+            swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
+        if: matrix.os.name == 'macOS'
+
+      - name: Add executable permission.
+        shell: bash
+        working-directory: binaries
+        run: |
+          chmod +x swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
+        if: matrix.os.name != 'Windows'
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: swift-${{ matrix.type }}_${{ matrix.os.short_name }}-signed
+          path: binaries/swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
+
+  zip_binaries:
+    name: Zip Binaries
+    timeout-minutes: 10
+    needs:
+      - sign_binaries
+    strategy:
+      matrix:
+        os:
+          - { name: macOS, short_name: "macos" }
+          - { name: Windows, short_name: "windows" }
+          - { name: Linux, short_name: "linux" }
+    runs-on: ubuntu-latest
+    steps:
+      - name: Store git tag vars.
+        shell: bash
+        run: |
+          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+
+      - name: Pull swift-files
+        uses: actions/download-artifact@v2
+        with:
+          name: swift-files_${{ matrix.os.short_name }}-signed
+          path: ${{ matrix.os.short_name }}
+      - name: Pull swift-settings
+        uses: actions/download-artifact@v2
+        with:
+          name: swift-settings_${{ matrix.os.short_name }}-signed
+          path: ${{ matrix.os.short_name }}
+      - name: Pull swift-updater
+        uses: actions/download-artifact@v2
+        with:
+          name: swift-updater_${{ matrix.os.short_name }}-signed
+          path: ${{ matrix.os.short_name }}
+
+      - name: Zip Binaries.
+        shell: bash
+        working-directory: ${{ matrix.os.short_name }}
+        run: |
+          7z a -tzip "../swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-all.zip"
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: swift-binaries_${{ matrix.os.short_name }}-all
+          path: swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-all.zip
+        if: matrix.os.name == 'macOS'
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: swift-binaries_${{ matrix.os.short_name }}-signed
+          path: swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-all.zip
+        if: matrix.os.name != 'macOS'
+
+  sign_zipped_binaries:
+    name: Sign Zipped Binaries
+    timeout-minutes: 10
+    needs:
+      - zip_binaries
+    strategy:
+      matrix:
+        os:
+          - { name: macOS, short_name: "macos" }
+    runs-on: [self-hosted, '${{ matrix.os.name }}', code-signer]
+    steps:
+      - name: Store git tag vars.
+        shell: bash
+        run: |
+          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+
+      - name: Pull zipped binaries
+        uses: actions/download-artifact@v2
+        with:
+          name: swift-binaries_${{ matrix.os.short_name }}-all
+          path: binaries-all
+
+      - name: Sign Binaries.
+        shell: bash
+        working-directory: binaries-all
+        run: |
+          codesign \
+            -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
+            -f --timestamp "swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-all.zip"
+          xcrun altool \
+            --notarize-app \
+            --file swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-all.zip\
+            --primary-bundle-id ${{ env.APP_BUNDLE_ID }} \
+            --apiKey ${{ secrets.APPLE_KEY_ID }} \
+            --apiIssuer ${{ secrets.APPLE_ISSUER_ID }}
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: swift-binaries_${{ matrix.os.short_name }}-signed
+          path: binaries-all/swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-all.zip
+
+  release:
+    name: Create Release
+    needs:
+      - sign_zipped_binaries
+      - sign_installer
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Store git tag and date vars.
+        run: |
+          DATE="$(date '+%Y-%m-%d')";
+          echo "DATE=${DATE}" >> $GITHUB_ENV
+          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+      - name: Pull Windows Installer
+        uses: actions/download-artifact@v2
+        with:
+          name: Windows-installer-signed
+          path: windows
+      - name: Pull Windows Binaries
+        uses: actions/download-artifact@v2
+        with:
+          name: swift-binaries_windows-signed
+          path: windows
+      - name: Pull Linux Installer
+        uses: actions/download-artifact@v2
+        with:
+          name: Linux-installer
+          path: linux
+      - name: Pull Linux Binaries
+        uses: actions/download-artifact@v2
+        with:
+          name: swift-binaries_linux-signed
+          path: linux
+      - name: Pull macOS Installer
+        uses: actions/download-artifact@v2
+        with:
+          name: macOS-installer
+          path: macos
+      - name: Pull macOS Binaries
+        uses: actions/download-artifact@v2
+        with:
+          name: swift-binaries_macos-signed
+          path: macos
+      - name: Prepare Release
+        shell: bash
+        run: |
+          echo "WINDOWS_ARCHIVE=$(cat windows/installer-archive.filename)" >>$GITHUB_ENV
+          echo "LINUX_ARCHIVE=$(cat linux/installer-archive.filename)" >>$GITHUB_ENV
+          echo "MACOS_ARCHIVE=$(cat macos/installer-archive.filename)" >>$GITHUB_ENV
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: "${{ env.VERSION }}-${{ env.DATE }}"
+          files: |
+            windows/${{ env.WINDOWS_ARCHIVE }}
+            windows/swift-binaries_windows_${{ env.VERSION }}-all.zip
+            linux/${{ env.LINUX_ARCHIVE }}
+            linux/swift-binaries_linux_${{ env.VERSION }}-all.zip
+            macos/${{ env.MACOS_ARCHIVE }}
+            macos/swift-binaries_macos_${{ env.VERSION }}-all.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

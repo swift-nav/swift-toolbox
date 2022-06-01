@@ -359,6 +359,7 @@ script = "sudo apt-get install gsfonts imagemagick"
 script = "brew install imagemagick"
 
 [tasks.build-splash-version]
+private = true
 script_runner = "@duckscript"
 script = '''
 output = exec --fail-on-error git describe --always --tags --dirty

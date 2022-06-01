@@ -349,7 +349,12 @@ exec --fail-on-error ${DIST_PYTHON} ./get-pip.py
 [tasks.install-imagemagick]
 
 [tasks.install-imagemagick.windows]
-script = "choco install imagemagick"
+script_runner = "@shell"
+script = '''
+choco install imagemagick
+ls $IMAGEMAGICK_PATH%
+ls "C:/Program Files/ImageMagick-7.1.0-Q16-HDRI"
+'''
 
 [tasks.install-imagemagick.linux]
 script = "sudo apt-get install gsfonts imagemagick"

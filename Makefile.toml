@@ -349,19 +349,19 @@ exec --fail-on-error ${DIST_PYTHON} ./get-pip.py
 script = "choco install imagemagick"
 
 [tasks.install-imagemagick.linux]
-script = "sudo apt-get install fonts-freefont-otf fonts-freefont-ttf imagemagick"
+script = "sudo apt-get install gsfonts imagemagick"
 
 [tasks.install-imagemagick.mac]
 script = "brew install imagemagick"
 
 [tasks.build-splash-version]
-#private = true
+private = true
 script_runner = "@duckscript"
 script = '''
 output = exec --fail-on-error git describe --always --tags --dirty
 version = trim ${output.stdout}
 if not is_empty "${IMAGEMAGICK_PATH}"
-  exec --fail-on-error ${IMAGEMAGICK_PATH}/convert -font arial -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
+  exec --fail-on-error ${IMAGEMAGICK_PATH}/convert -font helvetica -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
 else
   assert_false "Environment variable IMAGEMAGICK_PATH must be set"
 end

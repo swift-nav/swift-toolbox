@@ -53,10 +53,10 @@ Item {
         contentItem: Column {
             id: layout
 
+	    property variant columnWidths: [layout.width / 3, layout.width / 3, layout.width / 3]
+
             width: parent.width
             spacing: Constants.insSettingsPopup.columnSpacing
-
-	    property variant columnWidths: [layout.width / 3, layout.width / 3, layout.width / 3]
 
             Label {
                 text: settingsChangeConfirmText()
@@ -68,7 +68,6 @@ Item {
             }
 
             ColumnLayout {
-
                 spacing: 0
                 width: parent.width
                 height: Constants.insSettingsPopup.tableHeight

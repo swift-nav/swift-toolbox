@@ -217,16 +217,6 @@ jobs:
           & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
         if: matrix.os.name == 'windows-2019'
 
-      - name: Install ImageMagick
-        shell: bash
-        run: |
-          cargo make install-imagemagick
-
-      - name: Test build splash version
-        shell: bash
-        run: |
-          cargo make build-splash-version
-
       - name: Install ${{ runner.os }} Dependencies.
         shell: bash
         run: |
@@ -274,6 +264,16 @@ jobs:
       - uses: davidB/rust-cargo-make@v1
         with:
           version: ${{ env.CARGO_MAKE_VERSION }}
+
+      - name: Install ImageMagick
+        shell: bash
+        run: |
+          cargo make install-imagemagick
+
+      - name: Test build splash version
+        shell: bash
+        run: |
+          cargo make build-splash-version
 
       - name: Cache pip
         uses: actions/cache@v2

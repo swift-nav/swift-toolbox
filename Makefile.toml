@@ -26,7 +26,6 @@ elseif eq ${os} linux
   output = exec --fail-on-error gcc -dumpmachine
   triplet = trim ${output.stdout}
   set_env BUILD_TRIPLET ${triplet}
-  set_env SPLASH_FONT "helvetica"
 else
   set_env STANDALONE_PY_URL "${PY_BASE_URL}/cpython-3.9.7-x86_64-apple-darwin-pgo+lto-20211017T1616.tar.zst"
   set_env PYTHON "${WORKSPACE}/py39/bin/python3"
@@ -38,7 +37,6 @@ else
   output = exec --fail-on-error gcc -dumpmachine
   triplet = trim ${output.stdout}
   set_env BUILD_TRIPLET ${triplet}
-  set_env SPLASH_FONT "helvetica"
 end
 ''',
 ]
@@ -366,8 +364,9 @@ output = exec --fail-on-error git describe --always --tags --dirty
 version = trim ${output.stdout}
 os = os_family
 if eq ${os} windows
-  exec --fail-on-error magick convert -font ${SPLASH_FONT} -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
-  exec --fail-on-error convert -font ${SPLASH_FONT} -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
+  exec --fail-on-error magick convert -font arial -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
+else
+  exec --fail-on-error convert -font helvetica -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
 else
 end
 '''

@@ -28,8 +28,8 @@ apt install cmake libclang-dev capnproto zstd
 
 Install ImageMagick:
 ```
-# Windows - install via Scoop
-scoop install imagemagick
+# Windows
+choco install imagemagick
 
 # Mac
 brew install imagemagick

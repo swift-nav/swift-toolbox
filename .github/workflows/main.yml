@@ -255,6 +255,10 @@ jobs:
         shell: pwsh
         run: iex "& {$(irm get.scoop.sh)} -RunAsAdmin"
 
+      - name: Check Scoop (Windows)
+        if: matrix.os.name == 'windows-2019'
+        run: scoop help
+
       - name: Install stable Rust
         uses: actions-rs/toolchain@v1
         with:

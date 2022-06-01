@@ -217,6 +217,16 @@ jobs:
           & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
         if: matrix.os.name == 'windows-2019'
 
+      - name: Install ImageMagick
+        shell: bash
+        run: |
+          cargo make install-imagemagick
+
+      - name: Test build splash version
+        shell: bash
+        run: |
+          cargo make build-splash-version
+
       - name: Install ${{ runner.os }} Dependencies.
         shell: bash
         run: |
@@ -293,11 +303,6 @@ jobs:
         shell: bash
         run: |
           echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
-
-      - name: Install ImageMagick
-        shell: bash
-        run: |
-          cargo make install-imagemagick
 
       - name: Build ${{ runner.os }} Binaries.
         shell: bash

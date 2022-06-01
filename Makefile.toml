@@ -746,7 +746,6 @@ fpm \
   --force \
   --input-type dir \
   --output-type deb \
-  --depends "libssl1.1 | libssl3" \
   ${DEPENDS_SWITCHES[*]} \
   --maintainer "$MAINTAINER" \
   --description "$DESCRIPTION" \

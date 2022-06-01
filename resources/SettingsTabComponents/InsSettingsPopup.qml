@@ -53,7 +53,7 @@ Item {
         contentItem: Column {
             id: layout
 
-	    property variant columnWidths: [layout.width / 3, layout.width / 3, layout.width / 3]
+            property variant columnWidths: [layout.width / 3, layout.width / 3, layout.width / 3]
 
             width: parent.width
             spacing: Constants.insSettingsPopup.columnSpacing

@@ -56,6 +56,8 @@ Item {
             width: parent.width
             spacing: Constants.insSettingsPopup.columnSpacing
 
+	    property variant columnWidths: [layout.width / 3, layout.width / 3, layout.width / 3]
+
             Label {
                 text: settingsChangeConfirmText()
                 verticalAlignment: Qt.AlignVCenter
@@ -66,7 +68,6 @@ Item {
             }
 
             ColumnLayout {
-                property variant columnWidths: [layout.width / 3, layout.width / 3, layout.width / 3]
 
                 spacing: 0
                 width: parent.width
@@ -80,7 +81,7 @@ Item {
                     syncView: tableView
 
                     delegate: Rectangle {
-                        implicitWidth: columnWidths[index]
+                        implicitWidth: layout.columnWidths[index]
                         implicitHeight: Constants.genericTable.cellHeight
                         border.color: Constants.genericTable.borderColor
 
@@ -106,10 +107,10 @@ Item {
                             }
                             onPositionChanged: {
                                 if (pressed) {
-                                    let oldcols = columnWidths.slice();
+                                    let oldcols = layout.columnWidths.slice();
                                     var delta_x = (mouseX - mouse_x);
-                                    columnWidths[index] += delta_x;
-                                    columnWidths[(index + 1) % 3] -= delta_x;
+                                    layout.columnWidths[index] += delta_x;
+                                    layout.columnWidths[(index + 1) % 3] -= delta_x;
                                     tableView.forceLayout();
                                 }
                             }
@@ -137,7 +138,7 @@ Item {
 
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    columnWidths: parent.columnWidths
+                    columnWidths: layout.columnWidths
 
                     model: TableModel {
                         id: tableModel

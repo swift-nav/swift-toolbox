@@ -253,7 +253,9 @@ jobs:
       - name: Install Scoop (Windows)
         if: matrix.os.name == 'windows-2019'
         shell: pwsh
-        run: iex "& {$(irm get.scoop.sh)} -RunAsAdmin"
+        run: |
+          iex "& {$(irm get.scoop.sh)} -RunAsAdmin"
+          echo "PATH=$HOME\\scoop\\shims;$PATH" >>$GITHUB_ENV
 
       - name: Check Scoop (Windows)
         if: matrix.os.name == 'windows-2019'

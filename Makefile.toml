@@ -40,6 +40,7 @@ else
   output = exec --fail-on-error gcc -dumpmachine
   triplet = trim ${output.stdout}
   set_env BUILD_TRIPLET ${triplet}
+  set_env IMAGEMAGICK_PATH "/usr/local/bin"
   set_env SPLASH_FONT "helvetica"
 end
 ''',

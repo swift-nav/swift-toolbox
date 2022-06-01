@@ -349,6 +349,7 @@ script = '''
 wget -O imagemagick.tool.7.1.0.nupkg https://github.com/swift-nav/swift-toolchains/releases/download/imagemagick-7.1.0/imagemagick.tool.7.1.0.nupkg
 exec --fail-on-error choco install -q -y vcredist2010 --version=10.0.40219.1
 exec --fail-on-error choco install -q -y ./imagemagick.tool.7.1.0.nupkg
+rm imagemagick.tool.7.1.0.nupkg
 '''
 
 [tasks.install-imagemagick.linux]

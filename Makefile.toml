@@ -726,7 +726,6 @@ mkdir -p "$TMP_DIR/$USR_DIR/$ICONS_DIR"
 cp -r installers/Linux/hicolor/* "$TMP_DIR/$USR_DIR/$ICONS_DIR"
 
 DEB_PKG_DEPS="\
-  libssl1.1 \
   libxcb1 \
   libxcb-xkb1 \
   libxcb-icccm4 \
@@ -747,6 +746,7 @@ fpm \
   --force \
   --input-type dir \
   --output-type deb \
+  --depends "libssl1.1 | libssl3" \
   ${DEPENDS_SWITCHES[*]} \
   --maintainer "$MAINTAINER" \
   --description "$DESCRIPTION" \

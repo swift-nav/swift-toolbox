@@ -7,3 +7,5 @@ pub fn attach_console() {
         }
     }
 }
+
+pub mod splash;

@@ -7,8 +7,6 @@ use pyo3::types::PyTuple;
 
 use entrypoint::attach_console;
 
-const SWIFT_CONSOLE_PID: &str = "SWIFT_CONSOLE_PID";
-
 fn handle_wayland() {
     #[cfg(target_os = "linux")]
     {
@@ -31,21 +29,9 @@ fn main() -> Result<()> {
     let current_exe = std::env::current_exe()?;
     let parent = current_exe.parent().ok_or("no parent directory")?;
     let args: Vec<_> = std::env::args().collect();
-    let helper_found = args
-        .iter()
-        .any(|arg| matches!(arg.as_ref(), "--help" | "-h" | "--version" | "-V"));
-    if !helper_found {
-        let mut command = std::process::Command::new(parent.join("swift-console-splash"));
-        match command.spawn() {
-            Ok(child) => {
-                let pid = child.id();
-                std::env::set_var(SWIFT_CONSOLE_PID, format!("{pid}"));
-            }
-            Err(e) => {
-                eprintln!("Starting splash screen failed:  {e}");
-            }
-        };
-    }
+
+    std::env::set_var("SWIFT_CONSOLE_SPLASH", entrypoint::splash::marker_filepath());
+    entrypoint::splash::spawn()?;
 
     std::env::set_var("SWIFTNAV_CONSOLE_FROZEN", parent);
 

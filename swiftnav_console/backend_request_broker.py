@@ -63,14 +63,13 @@ class BackendRequestBroker(QObject):  # pylint: disable=too-many-instance-attrib
 
     @Slot()  # type: ignore
     def app_visible(self) -> None:  # pylint: disable=no-self-use
-        pid = os.getenv("SWIFT_CONSOLE_PID")
-        if pid is not None:
-
-            splash_filename = os.path.join(tempfile.gettempdir(), f"swiftnav_console.{pid}")
-            try:
-                os.remove(splash_filename)
-            except FileNotFoundError:
-                pass
+        splash_filename = os.getenv("SWIFT_CONSOLE_SPLASH")
+        if not splash_filename:
+            return
+        try:
+            os.remove(splash_filename)
+        except FileNotFoundError:
+            pass
 
     @Slot()  # type: ignore
     def serial_refresh(self) -> None:

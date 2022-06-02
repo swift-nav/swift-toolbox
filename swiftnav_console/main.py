@@ -625,6 +625,17 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
         globals_.setProperty("showFileConnection", True)  # type: ignore
 
 
+def start_splash():
+    splash_filename = os.getenv("SWIFT_CONSOLE_SPLASH")
+    if not splash_filename:
+        return
+    try:
+        with open(splash_filename, "wb"):
+            pass
+    except FileNotFoundError:
+        pass
+
+
 def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     parser = argparse.ArgumentParser(add_help=False, usage=argparse.SUPPRESS)
     parser.add_argument("--exit-after-timeout", type=int, default=None)
@@ -778,6 +789,8 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
         record=args_main.record_capnp_recording,
     )
     backend_msg_receiver.start()
+
+    start_splash()
 
     app.exec_()
 

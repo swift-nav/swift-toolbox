@@ -10,7 +10,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 lazy_static! {
     pub static ref SPLASH_IMAGE: image::DynamicImage = {
-        let splash_image_buf = include_bytes!("../../resources/images/splash.jpg");
+        let splash_image_buf = include_bytes!(concat!("../../", env!("CONSOLE_SPLASH_IMAGE")));
         image::io::Reader::with_format(
             std::io::BufReader::new(Cursor::new(splash_image_buf)),
             image::ImageFormat::Jpeg,

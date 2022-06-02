@@ -265,6 +265,11 @@ jobs:
         with:
           version: ${{ env.CARGO_MAKE_VERSION }}
 
+      - name: Install ImageMagick
+        shell: bash
+        run: |
+          cargo make install-imagemagick
+
       - name: Cache pip
         uses: actions/cache@v2
         with:
@@ -288,6 +293,11 @@ jobs:
         run: |
           echo "LIBCLANG_PATH=$LIBCLANG_PATH_WIN" >>$GITHUB_ENV
         if: matrix.os.name == 'windows-2019'
+
+      - name: Store git tag vars.
+        shell: bash
+        run: |
+          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
 
       - name: Build ${{ runner.os }} Binaries.
         shell: bash

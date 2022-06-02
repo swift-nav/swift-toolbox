@@ -11,14 +11,14 @@ from typing import Optional, Tuple
 
 import capnp  # type: ignore
 
-from PySide2.QtWidgets import QApplication  # type: ignore
+from PySide2.QtWidgets import QApplication, QSplashScreen  # type: ignore
 
 from PySide2.QtCore import QObject, QUrl, QPointF, QThread, QTimer, Slot
 from PySide2.QtCharts import QtCharts  # pylint: disable=unused-import
 
 from PySide2 import QtQml, QtCore
 
-from PySide2.QtGui import QFontDatabase, QIcon
+from PySide2.QtGui import QFontDatabase, QIcon, QPixmap
 
 from PySide2.QtQml import QQmlComponent, qmlRegisterType
 
@@ -625,28 +625,6 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
         globals_.setProperty("showFileConnection", True)  # type: ignore
 
 
-def start_splash():
-    splash_filename = os.getenv("SWIFTNAV_CONSOLE_SPLASH")
-    if not splash_filename:
-        return
-    try:
-        with open(splash_filename, "wb"):
-            pass
-    except FileNotFoundError:
-        pass
-
-
-def stop_splash():
-    splash_filename = os.getenv("SWIFTNAV_CONSOLE_SPLASH")
-    if not splash_filename:
-        return
-    try:
-        os.remove(splash_filename)
-        time.sleep(0.200)
-    except FileNotFoundError:
-        pass
-
-
 def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     parser = argparse.ArgumentParser(add_help=False, usage=argparse.SUPPRESS)
     parser.add_argument("--exit-after-timeout", type=int, default=None)
@@ -745,7 +723,13 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     globals_main = globals_main.property("globals")  # type: ignore
 
     handle_cli_arguments(args_main, globals_main)
-    start_splash()
+
+    pixmap = QPixmap(":/images/splash-version.jpg")
+    if pixmap.isNull():
+        pixmap = QPixmap(":/images/splash.jpg")
+
+    splash = QSplashScreen(pixmap)
+    splash.show()
 
     engine.addImportPath("PySide2")
     engine.addImportPath(":/")
@@ -803,7 +787,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     )
     backend_msg_receiver.start()
 
-    stop_splash()
+    splash.close()
     app.exec_()
 
     endpoint_main.shutdown()

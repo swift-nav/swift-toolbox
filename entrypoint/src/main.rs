@@ -3,9 +3,18 @@
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
-use entrypoint::attach_console;
+type Error = Box<dyn std::error::Error>;
+type Result<T> = std::result::Result<T, Error>;
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+pub fn attach_console() {
+    #[cfg(target_os = "windows")]
+    {
+        use windows::Win32::System::Console::AttachConsole;
+        unsafe {
+            AttachConsole(u32::MAX).as_bool();
+        }
+    }
+}
 
 fn handle_wayland() {
     #[cfg(target_os = "linux")]
@@ -29,14 +38,9 @@ fn main() -> Result<()> {
     let current_exe = std::env::current_exe()?;
     let parent = current_exe.parent().ok_or("no parent directory")?;
     let args: Vec<_> = std::env::args().collect();
-    std::env::set_var(
-        "SWIFTNAV_CONSOLE_SPLASH",
-        entrypoint::splash::marker_filepath(),
-    );
     std::env::set_var("SWIFTNAV_CONSOLE_FROZEN", parent);
     std::env::set_var("PYTHONHOME", parent);
     std::env::set_var("PYTHONDONTWRITEBYTECODE", "1");
-    entrypoint::splash::spawn();
     let exit_code = Python::with_gil(|py| {
         let args = PyTuple::new(py, args);
         let snav = py.import("swiftnav_console.main")?;

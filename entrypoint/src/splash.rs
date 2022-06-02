@@ -84,12 +84,12 @@ pub fn spawn() {
         let (pos_x, pos_y) = splash_position().unwrap();
         let result = launch_splash(pos_x, pos_y);
         if let Err(ref err) = result {
-            eprint!("Error launching splash screen: {err}");
+            eprint!("error launching splash screen: {err}");
         }
         // Try to remove the file, don't care about the result
         let _result = std::fs::remove_file(&*PID_FILE);
-        if let Err(e) = result {
-            eprintln!("error launching splash: {e}");
+        if let Err(ref err) = result {
+            eprintln!("error launching splash screen: {err}");
         }
     });
 }

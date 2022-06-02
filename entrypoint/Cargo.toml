@@ -56,5 +56,6 @@ version = ">=0.24"
 optional = true
 
 [features]
+default = []
 entrypoint = ["pyo3", "windows", "minifb"]
 splash = []

@@ -20,6 +20,7 @@ lazy_static! {
     };
 }
 
+#[cfg(feature = "splash")]
 pub fn attach_console() {
     #[cfg(target_os = "windows")]
     {

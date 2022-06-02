@@ -626,7 +626,7 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
 
 
 def start_splash():
-    splash_filename = os.getenv("SWIFT_CONSOLE_SPLASH")
+    splash_filename = os.getenv("SWIFTNAV_CONSOLE_SPLASH")
     if not splash_filename:
         return
     try:
@@ -722,6 +722,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
 
     if found_help_arg:
         return 0
+
     # Unfortunately it is not possible to access singletons directly using the PySide2 API.
     # This approach stores the globals somwhere that can be grabbed and manipulated.
     component = QQmlComponent(engine)
@@ -733,6 +734,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     globals_main = globals_main.property("globals")  # type: ignore
 
     handle_cli_arguments(args_main, globals_main)
+    start_splash()
 
     engine.addImportPath("PySide2")
     engine.addImportPath(":/")
@@ -789,8 +791,6 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
         record=args_main.record_capnp_recording,
     )
     backend_msg_receiver.start()
-
-    start_splash()
 
     app.exec_()
 

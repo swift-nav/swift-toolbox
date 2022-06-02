@@ -63,7 +63,7 @@ class BackendRequestBroker(QObject):  # pylint: disable=too-many-instance-attrib
 
     @Slot()  # type: ignore
     def app_visible(self) -> None:  # pylint: disable=no-self-use
-        splash_filename = os.getenv("SWIFT_CONSOLE_SPLASH")
+        splash_filename = os.getenv("SWIFTNAV_CONSOLE_SPLASH")
         if not splash_filename:
             return
         try:

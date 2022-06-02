@@ -394,7 +394,9 @@ script = '''
 cp target/release/windowpos.exe py39-dist/windowpos.exe
 cp target/release/${APP_NAME}.exe py39-dist/${APP_NAME}.exe
 cp target/release/${APP_NAME}.d py39-dist/${APP_NAME}.d
-cp target/release/swift_console.pdb py39-dist/swift_console.pdb
+if is_path_exists target/release/swift_console.pdb
+  cp target/release/swift_console.pdb py39-dist/swift_console.pdb
+end
 cp target/x86_64-pc-windows-msvc/release/console_backend.pdb py39-dist/Lib/site-packages/console_backend/console_backend.pdb
 '''
 

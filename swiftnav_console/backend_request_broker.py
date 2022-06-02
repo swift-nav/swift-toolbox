@@ -1,5 +1,4 @@
 import os
-import tempfile
 from typing import Any, List, Optional
 from PySide2.QtCore import QObject, Slot
 

@@ -13,25 +13,35 @@ bench = false
 bench = false
 name = "swift-console"
 path = "src/main.rs"
+required-features = ["entrypoint", "splash"]
+
+[[bin]]
+bench = false
+name = "windowpos"
+path = "src/windowpos.rs"
+required-features = ["winit"]
 
 [dependencies.lazy_static]
 version = "1.4.0"
 
-[dependencies.winit]
-version = "0.26.1"
-
 [dependencies.image]
 version = "0.24.2"
+
+[dependencies.winit]
+version = "0.26.1"
+optional = true
 
 [dependencies.minifb]
 default-features = false
 features = ["x11"]
 version = "0.23"
+optional = true
 
 [dependencies.pyo3]
 default-features = false
 features = ["auto-initialize"]
 version = "0.16"
+optional = true
 
 [target]
 [target."cfg(target_os = \"windows\")"]
@@ -43,3 +53,8 @@ version = "0.1"
 [target."cfg(target_os = \"windows\")".dependencies.windows]
 features = ["Win32_System_Console", "Win32_Foundation"]
 version = ">=0.24"
+optional = true
+
+[features]
+entrypoint = ["pyo3", "windows", "minifb"]
+splash = []

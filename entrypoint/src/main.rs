@@ -1,11 +1,11 @@
 #![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
-
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
 use entrypoint::attach_console;
+
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 fn handle_wayland() {
     #[cfg(target_os = "linux")]
@@ -29,19 +29,15 @@ fn main() -> Result<()> {
     let current_exe = std::env::current_exe()?;
     let parent = current_exe.parent().ok_or("no parent directory")?;
     let args: Vec<_> = std::env::args().collect();
-
     std::env::set_var("SWIFT_CONSOLE_SPLASH", entrypoint::splash::marker_filepath());
-    entrypoint::splash::spawn()?;
-
     std::env::set_var("SWIFTNAV_CONSOLE_FROZEN", parent);
-
     std::env::set_var("PYTHONHOME", parent);
     std::env::set_var("PYTHONDONTWRITEBYTECODE", "1");
+    entrypoint::splash::spawn();
     let exit_code = Python::with_gil(|py| {
         let args = PyTuple::new(py, args);
         let snav = py.import("swiftnav_console.main")?;
         snav.call_method("main", (args,), None)?.extract::<i32>()
     })?;
-
     std::process::exit(exit_code);
 }

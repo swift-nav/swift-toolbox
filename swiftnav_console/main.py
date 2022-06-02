@@ -3,6 +3,7 @@
 import argparse
 from datetime import datetime
 import os
+import platform
 import pickle
 import sys
 import time
@@ -556,15 +557,22 @@ def is_frozen() -> bool:
     Returns:
         bool: Whether the application is frozen.
     """
-    me = os.path.dirname(sys.executable)
+    me = get_app_dir()
     var_frozen = os.environ.get("SWIFTNAV_CONSOLE_FROZEN", "") != ""
     path_frozen = os.path.exists(os.path.join(me, ".frozen"))
     return var_frozen or path_frozen
 
 
 def get_app_dir() -> str:
+    """Fetches the application resources directory.
+
+    Returns:
+        str: path to the resoure dir (accounting for OS differences)
+    """
     var_frozen = os.environ.get("SWIFTNAV_CONSOLE_FROZEN", "")
     if var_frozen != "":
+        if platform.system() == "Darwin":
+            return os.path.join(var_frozen, "../Resources")
         return var_frozen
     return os.path.dirname(sys.executable)
 

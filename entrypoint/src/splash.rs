@@ -55,7 +55,11 @@ fn launch_splash(pos_x: isize, pos_y: isize) -> Result<()> {
     )?;
     let now = Instant::now();
     while window.is_open() && now.elapsed() < TIMEOUT_DURATION && marker_exists() {
-        window.update_with_buffer(&image_buffer, image.width() as usize, image.height() as usize)?;
+        window.update_with_buffer(
+            &image_buffer,
+            image.width() as usize,
+            image.height() as usize,
+        )?;
         window.set_position(pos_x, pos_y);
     }
     Ok(())

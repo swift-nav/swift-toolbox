@@ -29,7 +29,10 @@ fn main() -> Result<()> {
     let current_exe = std::env::current_exe()?;
     let parent = current_exe.parent().ok_or("no parent directory")?;
     let args: Vec<_> = std::env::args().collect();
-    std::env::set_var("SWIFTNAV_CONSOLE_SPLASH", entrypoint::splash::marker_filepath());
+    std::env::set_var(
+        "SWIFTNAV_CONSOLE_SPLASH",
+        entrypoint::splash::marker_filepath(),
+    );
     std::env::set_var("SWIFTNAV_CONSOLE_FROZEN", parent);
     std::env::set_var("PYTHONHOME", parent);
     std::env::set_var("PYTHONDONTWRITEBYTECODE", "1");

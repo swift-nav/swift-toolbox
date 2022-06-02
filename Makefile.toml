@@ -371,7 +371,7 @@ end
 '''
 
 [tasks.build-windowpos-bin]
-private = true
+#private = true
 dependencies = ["build-splash-version"]
 command = "cargo"
 args = [
@@ -386,7 +386,7 @@ args = [
 ]
 
 [tasks.build-console-bin]
-private = true
+#private = true
 dependencies = ["build-windowpos-bin"]
 command = "cargo"
 args = [

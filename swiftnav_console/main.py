@@ -636,6 +636,17 @@ def start_splash():
         pass
 
 
+def stop_splash():
+    splash_filename = os.getenv("SWIFTNAV_CONSOLE_SPLASH")
+    if not splash_filename:
+        return
+    try:
+        os.remove(splash_filename)
+        time.sleep(0.200)
+    except FileNotFoundError:
+        pass
+
+
 def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     parser = argparse.ArgumentParser(add_help=False, usage=argparse.SUPPRESS)
     parser.add_argument("--exit-after-timeout", type=int, default=None)
@@ -792,6 +803,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     )
     backend_msg_receiver.start()
 
+    stop_splash()
     app.exec_()
 
     endpoint_main.shutdown()

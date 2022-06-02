@@ -1,5 +1,3 @@
-#![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
-
 use std::{
     path::PathBuf,
     time::{Duration, Instant},
@@ -10,7 +8,7 @@ use minifb::{Window, WindowOptions};
 
 use crate::Result;
 
-const STARTUP_TIMEOUT_DURATION: Duration = Duration::from_secs(1);
+const STARTUP_TIMEOUT_DURATION: Duration = Duration::from_secs(2);
 const TIMEOUT_DURATION: Duration = Duration::from_secs(30);
 const TEMP_FILENAME: &str = "swiftnav_console";
 
@@ -33,6 +31,10 @@ pub fn marker_filepath() -> PathBuf {
 
 fn marker_exists() -> bool {
     std::fs::metadata(&*PID_FILE).is_ok()
+}
+
+fn ensure_no_marker() {
+    let _ = std::fs::remove_file(marker_filepath());
 }
 
 fn launch_splash(pos_x: isize, pos_y: isize) -> Result<()> {
@@ -77,23 +79,26 @@ fn splash_position() -> Result<(isize, isize)> {
 }
 
 pub fn spawn() {
+    ensure_no_marker();
     std::thread::spawn(|| {
         let now = Instant::now();
         while !marker_exists() {
-            std::thread::sleep(Duration::from_millis(50));
+            std::thread::sleep(Duration::from_millis(100));
             if now.elapsed() > STARTUP_TIMEOUT_DURATION {
+                eprintln!("splash: marker never existed, exiting...");
                 return;
             }
         }
+        eprintln!("splash: launching");
         let (pos_x, pos_y) = splash_position().unwrap();
         let result = launch_splash(pos_x, pos_y);
         if let Err(ref err) = result {
-            eprint!("error launching splash screen: {err}");
+            eprint!("splash: error launching: {err}");
         }
         // Try to remove the file, don't care about the result
         let _result = std::fs::remove_file(&*PID_FILE);
         if let Err(ref err) = result {
-            eprintln!("error launching splash screen: {err}");
+            eprintln!("splash: error launching: {err}");
         }
     });
 }

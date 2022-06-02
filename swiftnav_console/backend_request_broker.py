@@ -61,16 +61,6 @@ class BackendRequestBroker(QObject):  # pylint: disable=too-many-instance-attrib
         self.endpoint.send_message(buffer)
 
     @Slot()  # type: ignore
-    def app_visible(self) -> None:  # pylint: disable=no-self-use
-        splash_filename = os.getenv("SWIFTNAV_CONSOLE_SPLASH")
-        if not splash_filename:
-            return
-        try:
-            os.remove(splash_filename)
-        except FileNotFoundError:
-            pass
-
-    @Slot()  # type: ignore
     def serial_refresh(self) -> None:
         Message = self.messages.Message
         msg = self.messages.Message()

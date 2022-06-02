@@ -26,7 +26,6 @@ Item {
     property string connectingConstant: Constants.connection.connecting.toUpperCase()
     property string disconnectedConstant: Constants.connection.disconnected.toUpperCase()
     property string disconnectingConstant: Constants.connection.disconnecting.toUpperCase()
-    property bool appVisible: false
 
     function backend_request_broker_ready() {
         return (typeof (backend_request_broker) !== "undefined");
@@ -486,11 +485,6 @@ Item {
                     connection_model.fill_data(connectionData);
                     if (!connectionData.available_baudrates.length)
                         return ;
-
-                    if (!appVisible && backend_request_broker_ready()) {
-                        backend_request_broker.app_visible();
-                        appVisible = true;
-                    }
                     if (!available_baudrates.length || !available_flows.length) {
                         Globals.consoleVersion = connectionData.console_version;
                         available_baudrates = connectionData.available_baudrates;

@@ -339,8 +339,40 @@ cd ../../..
 exec --fail-on-error ${DIST_PYTHON} ./get-pip.py
 '''
 
-[tasks.call-build-splash-bin]
+[tasks.install-imagemagick]
+
+[tasks.install-imagemagick.windows]
+script_runner = "@duckscript"
+script = '''
+wget -O imagemagick.tool.7.1.0.nupkg https://github.com/swift-nav/swift-toolchains/releases/download/imagemagick-7.1.0/imagemagick.tool.7.1.0.nupkg
+exec --fail-on-error choco install -q -y vcredist2010 --version=10.0.40219.1
+exec --fail-on-error choco install -q -y ./imagemagick.tool.7.1.0.nupkg
+rm imagemagick.tool.7.1.0.nupkg
+'''
+
+[tasks.install-imagemagick.linux]
+script = "sudo apt-get install gsfonts imagemagick"
+
+[tasks.install-imagemagick.mac]
+script = "brew install imagemagick"
+
+[tasks.build-splash-version]
 private = true
+script_runner = "@duckscript"
+script = '''
+output = exec --fail-on-error git describe --always --tags --dirty
+version = trim ${output.stdout}
+os = os_family
+if eq ${os} windows
+  exec --fail-on-error magick convert -font arial -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
+else
+  exec --fail-on-error convert -font helvetica -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
+end
+'''
+
+[tasks.build-splash-bin]
+private = true
+dependencies = ["build-splash-version"]
 command = "cargo"
 args = [
   "build",
@@ -352,9 +384,9 @@ args = [
   "swift-console-splash",
 ]
 
-[tasks.call-build-console-bin]
+[tasks.build-console-bin]
 private = true
-dependencies = ["call-build-splash-bin"]
+dependencies = ["build-splash-bin"]
 command = "cargo"
 args = [
   "build",
@@ -369,10 +401,10 @@ args = [
 [tasks.build-console]
 env = { PYO3_CONFIG_FILE = "${CONSOLE_PYO3_CONFIG_FILE}" }
 dependencies = ["write-pyo3-config-console"]
-run_task = "call-build-console-bin"
+run_task = "build-console-bin"
 
 [tasks.build-console.windows]
-dependencies = ["call-build-console-bin"]
+dependencies = ["build-console-bin"]
 
 [tasks.build-dist-install-console]
 dependencies = ["build-console"]

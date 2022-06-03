@@ -1,6 +1,6 @@
-﻿use std::{
-    process::Command,
+use std::{
     path::PathBuf,
+    process::Command,
     time::{Duration, Instant},
 };
 

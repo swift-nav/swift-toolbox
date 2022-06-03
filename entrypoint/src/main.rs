@@ -1,4 +1,4 @@
-﻿#![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
+#![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
 
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
@@ -39,7 +39,8 @@ use std::path::{Path, PathBuf};
 
 fn app_dir() -> Result<PathBuf> {
     let current_exe = std::env::current_exe()?;
-    current_exe.parent()
+    current_exe
+        .parent()
         .ok_or("no parent directory".into())
         .map(Path::to_path_buf)
 }

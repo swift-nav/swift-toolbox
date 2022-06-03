@@ -725,9 +725,6 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     handle_cli_arguments(args_main, globals_main)
 
     pixmap = QPixmap(":/images/splash-version.jpg")
-    if pixmap.isNull():
-        pixmap = QPixmap(":/images/splash.jpg")
-
     splash = QSplashScreen(pixmap)
     splash.show()
 

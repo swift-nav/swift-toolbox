@@ -116,7 +116,6 @@
     <file>images/swift-nav/Tracking.svg</file>
     <file>images/swift-nav/Update.svg</file>
     <file>images/splash-version.jpg</file>
-    <file>images/splash.jpg</file>
     <file>TableComponents/SortableColumnHeading.qml</file>
     <file>TableComponents/TableCellDelegate.qml</file>
     <file>TableComponents/SwiftTableView.qml</file>

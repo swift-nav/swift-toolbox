@@ -5,7 +5,8 @@ use pyo3::types::PyTuple;
 
 use entrypoint::attach_console;
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+type Error = Box<dyn std::error::Error>;
+type Result<T> = std::result::Result<T, Error>;
 
 fn handle_wayland() {
     #[cfg(target_os = "linux")]
@@ -34,14 +35,39 @@ fn handle_splash() {
     }
 }
 
+use std::path::{Path, PathBuf};
+
+fn app_dir() -> Result<PathBuf> {
+    let current_exe = std::env::current_exe()?;
+    current_exe.parent()
+        .ok_or("no parent directory".into())
+        .map(Path::to_path_buf)
+}
+
+fn pythonhome_dir() -> Result<PathBuf> {
+    let app_dir = app_dir()?.to_path_buf();
+    if cfg!(target_os = "macos") {
+        if let Some(parent) = app_dir.parent() {
+            let resources = parent.join("Resources");
+            if resources.exists() {
+                Ok(resources)
+            } else {
+                Ok(app_dir)
+            }
+        } else {
+            Ok(app_dir)
+        }
+    } else {
+        Ok(app_dir)
+    }
+}
+
 fn main() -> Result<()> {
     attach_console();
     handle_wayland();
-    let current_exe = std::env::current_exe()?;
-    let parent = current_exe.parent().ok_or("no parent directory")?;
     let args: Vec<_> = std::env::args().collect();
-    std::env::set_var("SWIFTNAV_CONSOLE_FROZEN", parent);
-    std::env::set_var("PYTHONHOME", parent);
+    std::env::set_var("SWIFTNAV_CONSOLE_FROZEN", app_dir()?);
+    std::env::set_var("PYTHONHOME", pythonhome_dir()?);
     std::env::set_var("PYTHONDONTWRITEBYTECODE", "1");
     handle_splash();
     let exit_code = Python::with_gil(|py| {

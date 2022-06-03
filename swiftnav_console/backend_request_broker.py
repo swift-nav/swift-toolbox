@@ -1,4 +1,3 @@
-import os
 from typing import Any, List, Optional
 from PySide2.QtCore import QObject, Slot
 

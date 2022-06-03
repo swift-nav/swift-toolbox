@@ -640,11 +640,11 @@ def start_splash_linux():
 def start_splash() -> Optional[QSplashScreen]:
     if platform.system() == "Linux":
         start_splash_linux()
-    else:
-        pixmap = QPixmap(":/images/splash-version.jpg")
-        splash = QSplashScreen(pixmap)
-        splash.show()
-        return splash
+        return None
+    pixmap = QPixmap(":/images/splash-version.jpg")
+    splash = QSplashScreen(pixmap)
+    splash.show()
+    return splash
 
 
 def stop_splash_linux():

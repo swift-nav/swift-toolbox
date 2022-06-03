@@ -529,9 +529,21 @@ if eq ${os} windows
             rm ${file}
         end
     end
+
     qtbins = glob_array ./Lib/site-packages/PySide2/*.exe
     for bin in ${qtbins}
         rm ${bin}
+    end
+
+    all_dlls = glob_array ./**/*.dll
+    for dll in ${all_dlls}
+        if ends_with ${dll} "d.dll"
+            dll_no_debug = substring ${dll} -5 # remove d.dll
+            dll_no_debug = concat ${dll_no_debug} ".dll"
+            if is_path_exists ${dll_no_debug}
+                rm ${dll}
+            end
+        end
     end
 else
     rm -r ./share

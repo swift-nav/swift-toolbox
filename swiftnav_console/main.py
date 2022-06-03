@@ -5,6 +5,7 @@ from datetime import datetime
 import os
 import platform
 import pickle
+import platform
 import sys
 import time
 
@@ -12,14 +13,14 @@ from typing import Optional, Tuple
 
 import capnp  # type: ignore
 
-from PySide2.QtWidgets import QApplication  # type: ignore
+from PySide2.QtWidgets import QApplication, QSplashScreen  # type: ignore
 
 from PySide2.QtCore import QObject, QUrl, QPointF, QThread, QTimer, Slot
 from PySide2.QtCharts import QtCharts  # pylint: disable=unused-import
 
 from PySide2 import QtQml, QtCore
 
-from PySide2.QtGui import QFontDatabase, QIcon
+from PySide2.QtGui import QFontDatabase, QIcon, QPixmap
 
 from PySide2.QtQml import QQmlComponent, qmlRegisterType
 
@@ -639,6 +640,46 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
         globals_.setProperty("showFileConnection", True)  # type: ignore
 
 
+def start_splash_linux():
+    splash_filename = os.getenv("SWIFTNAV_CONSOLE_SPLASH")
+    if not splash_filename:
+        return
+    try:
+        with open(splash_filename, "wb"):
+            pass
+    except FileNotFoundError:
+        pass
+
+
+def start_splash() -> Optional[QSplashScreen]:
+    if platform.system() == "Linux":
+        start_splash_linux()
+        return None
+    pixmap = QPixmap(":/images/splash-version.jpg")
+    splash = QSplashScreen(pixmap)
+    splash.show()
+    return splash
+
+
+def stop_splash_linux():
+    splash_filename = os.getenv("SWIFTNAV_CONSOLE_SPLASH")
+    if not splash_filename:
+        return
+    try:
+        os.remove(splash_filename)
+        time.sleep(0.200)
+    except FileNotFoundError:
+        pass
+
+
+def stop_splash(splash: Optional[QSplashScreen]):
+    if platform.system() == "Linux":
+        stop_splash_linux()
+    else:
+        assert splash is not None
+        splash.close()
+
+
 def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     parser = argparse.ArgumentParser(add_help=False, usage=argparse.SUPPRESS)
     parser.add_argument("--exit-after-timeout", type=int, default=None)
@@ -725,6 +766,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
 
     if found_help_arg:
         return 0
+
     # Unfortunately it is not possible to access singletons directly using the PySide2 API.
     # This approach stores the globals somwhere that can be grabbed and manipulated.
     component = QQmlComponent(engine)
@@ -736,6 +778,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     globals_main = globals_main.property("globals")  # type: ignore
 
     handle_cli_arguments(args_main, globals_main)
+    splash = start_splash()
 
     engine.addImportPath("PySide2")
     engine.addImportPath(":/")
@@ -793,6 +836,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     )
     backend_msg_receiver.start()
 
+    stop_splash(splash)
     app.exec_()
 
     endpoint_main.shutdown()

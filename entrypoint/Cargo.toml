@@ -17,37 +17,31 @@ required-features = ["entrypoint"]
 
 [[bin]]
 bench = false
-name = "swift-console-splash"
-path = "src/splash.rs"
-required-features = ["splash"]
+name = "windowpos"
+path = "src/windowpos.rs"
+required-features = ["winit"]
 
 [dependencies.lazy_static]
-optional = true
 version = "1.4.0"
 
-[dependencies.winit]
-optional = true
-version = "0.26.1"
-
 [dependencies.image]
-optional = true
 version = "0.24.2"
 
-[dependencies.minifb]
+[dependencies.winit]
+version = "0.26.1"
 optional = true
+
+[dependencies.minifb]
 default-features = false
 features = ["x11"]
 version = "0.23"
+optional = true
 
 [dependencies.pyo3]
 default-features = false
 features = ["auto-initialize"]
-optional = true
 version = "0.16"
-
-[features]
-entrypoint = ["pyo3", "windows"]
-splash = ["minifb", "image", "winit", "windows", "lazy_static"]
+optional = true
 
 [target]
 [target."cfg(target_os = \"windows\")"]
@@ -58,5 +52,10 @@ version = "0.1"
 [target."cfg(target_os = \"windows\")".dependencies]
 [target."cfg(target_os = \"windows\")".dependencies.windows]
 features = ["Win32_System_Console", "Win32_Foundation"]
-optional = true
 version = ">=0.24"
+optional = true
+
+[features]
+default = []
+entrypoint = ["pyo3", "windows", "minifb"]
+splash = []

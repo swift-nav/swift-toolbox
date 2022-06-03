@@ -445,7 +445,8 @@ jobs:
       - name: Sign application.
         shell: bash
         run: |
-          cd "application/target/installer/Swift Console.app"
+          pushd "application/target/installer/Swift Console.app"
+
           for f in $(find Contents/Resources/lib/ -name '*.dylib' -or -name '*.so')
           do
             codesign \
@@ -462,7 +463,8 @@ jobs:
               "$f"
           done
 
-          cd ../../../
+          popd
+
           codesign \
             -s "${{ secrets.APPLE_DEVELOPER_ID }}" --deep \
             --entitlements installers/macOS/entitlements.plist \
@@ -475,13 +477,16 @@ jobs:
         run: |
           cd application
           cargo make store-version
-          cargo make dist-to-installer-dmg
+          cargo make dist-to-installer
 
       - name: Add archive to path.
         shell: bash
         run: |
-          INSTALLER_ARCHIVE=$(find application -iname "*.dmg")
-          echo $INSTALLER_ARCHIVE >installer-archive.filename
+          pushd target/installer
+          zip -r SwiftConsole.zip "Swift Console.app"
+          popd
+
+          echo SwiftConsole.zip >installer-archive.filename
           echo "INSTALLER_ARCHIVE=$(cat installer-archive.filename)" >>$GITHUB_ENV
 
       - uses: actions/upload-artifact@v2
@@ -612,13 +617,16 @@ jobs:
         if: matrix.os == 'Windows'
 
       - name: Sign Installer.
+        if: matrix.os == 'macOS'
         shell: bash
         run: |
           cd installer
+
           codesign \
             -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
             -f --timestamp \
             $(cat installer-archive.filename)
+
           xcrun altool \
             --notarize-app \
             --file $(cat installer-archive.filename) \
@@ -629,9 +637,9 @@ jobs:
           REQUEST_UUID=$(cat notarize.log | grep RequestUUID | awk '{print $3}')
 
           echo "REQUEST_UUID=$REQUEST_UUID" >>$GITHUB_ENV
-        if: matrix.os == 'macOS'
 
       - name: Check Notarization.
+        if: matrix.os == 'macOS'
         uses: nick-invision/retry@v2
         with:
           shell: bash
@@ -654,7 +662,15 @@ jobs:
               echo "Notarization Failed"
               exit 1
             fi
-        if: matrix.os == 'macOS'
+
+            unzip $(cat installer-archive.filename)
+            xcrun stapler staple "Swift Console.app"
+
+            # Move back to path that task automation expects
+            rm -rf target/installer
+            mv "Swift Console.app" target/installer
+
+            cargo make dist-to-installer-dmg
 
       - name: Add archive to path.
         shell: bash

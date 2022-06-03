@@ -1,20 +1,11 @@
-#![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
+﻿#![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
 
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
-type Error = Box<dyn std::error::Error>;
-type Result<T> = std::result::Result<T, Error>;
+use entrypoint::attach_console;
 
-pub fn attach_console() {
-    #[cfg(target_os = "windows")]
-    {
-        use windows::Win32::System::Console::AttachConsole;
-        unsafe {
-            AttachConsole(u32::MAX).as_bool();
-        }
-    }
-}
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 fn handle_wayland() {
     #[cfg(target_os = "linux")]
@@ -32,6 +23,17 @@ fn handle_wayland() {
     }
 }
 
+fn handle_splash() {
+    #[cfg(feature = "splash")]
+    {
+        std::env::set_var(
+            "SWIFTNAV_CONSOLE_SPLASH",
+            entrypoint::splash::marker_filepath(),
+        );
+        entrypoint::splash::spawn();
+    }
+}
+
 fn main() -> Result<()> {
     attach_console();
     handle_wayland();
@@ -41,6 +43,7 @@ fn main() -> Result<()> {
     std::env::set_var("SWIFTNAV_CONSOLE_FROZEN", parent);
     std::env::set_var("PYTHONHOME", parent);
     std::env::set_var("PYTHONDONTWRITEBYTECODE", "1");
+    handle_splash();
     let exit_code = Python::with_gil(|py| {
         let args = PyTuple::new(py, args);
         let snav = py.import("swiftnav_console.main")?;

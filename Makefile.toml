@@ -366,9 +366,42 @@ else
 end
 '''
 
+[tasks.build-windowpos-bin]
+dependencies = ["build-splash-version"]
+command = "cargo"
+args = [
+  "build",
+  "--release",
+  "-vv",
+  "--features",
+  "winit",
+  "--bin",
+  "windowpos",
+]
+
 [tasks.build-console-bin]
 command = "cargo"
-args = ["build", "--release", "-vv", "--bin", "${APP_NAME}"]
+args = [
+  "build",
+  "--release",
+  "-vv",
+  "--features=entrypoint",
+  "--bin",
+  "${APP_NAME}",
+]
+
+[tasks.build-console-bin.linux]
+dependencies = ["build-windowpos-bin"]
+command = "cargo"
+args = [
+  "build",
+  "--release",
+  "-vv",
+  "--features",
+  "entrypoint,splash",
+  "--bin",
+  "${APP_NAME}",
+]
 
 [tasks.build-console]
 env = { PYO3_CONFIG_FILE = "${CONSOLE_PYO3_CONFIG_FILE}" }
@@ -387,6 +420,8 @@ cp target/release/${app_name} py39-dist/${app_name}
 os = os_family
 if eq ${os} mac
   exec --fail-on-error install_name_tool -change /install/lib/libpython3.9.dylib @executable_path/lib/libpython3.9.dylib py39-dist/${app_name}
+elseif eq ${os} linux
+  cp target/release/windowpos py39-dist/windowpos
 end
 '''
 
@@ -843,6 +878,20 @@ args = ["test", "--features", "tests", "${@}", "--", "--nocapture"]
 dependencies = ["store-version", "copy-capnp"]
 command = "cargo"
 args = ["check"]
+
+[tasks.watch-entrypoint]
+dependencies = ["store-version", "copy-capnp"]
+command = "cargo"
+args = [
+  "watch",
+  "--exec",
+  "check --bin swift-console --features=entrypoint,splash",
+]
+
+[tasks.watch-windowpos]
+dependencies = ["store-version", "copy-capnp"]
+command = "cargo"
+args = ["watch", "--exec", "check --bin windowpos --features=winit"]
 
 [tasks.python-type-check]
 dependencies = ["set-python-files"]

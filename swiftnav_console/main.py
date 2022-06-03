@@ -4,6 +4,7 @@ import argparse
 from datetime import datetime
 import os
 import pickle
+import platform
 import sys
 import time
 
@@ -625,6 +626,46 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
         globals_.setProperty("showFileConnection", True)  # type: ignore
 
 
+def start_splash_linux():
+    splash_filename = os.getenv("SWIFTNAV_CONSOLE_SPLASH")
+    if not splash_filename:
+        return
+    try:
+        with open(splash_filename, "wb"):
+            pass
+    except FileNotFoundError:
+        pass
+
+
+def start_splash() -> Optional[QSplashScreen]:
+    if platform.system() == "Linux":
+        start_splash_linux()
+    else:
+        pixmap = QPixmap(":/images/splash-version.jpg")
+        splash = QSplashScreen(pixmap)
+        splash.show()
+        return splash
+
+
+def stop_splash_linux():
+    splash_filename = os.getenv("SWIFTNAV_CONSOLE_SPLASH")
+    if not splash_filename:
+        return
+    try:
+        os.remove(splash_filename)
+        time.sleep(0.200)
+    except FileNotFoundError:
+        pass
+
+
+def stop_splash(splash: Optional[QSplashScreen]):
+    if platform.system() == "Linux":
+        stop_splash_linux()
+    else:
+        assert splash is not None
+        splash.close()
+
+
 def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     parser = argparse.ArgumentParser(add_help=False, usage=argparse.SUPPRESS)
     parser.add_argument("--exit-after-timeout", type=int, default=None)
@@ -723,10 +764,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     globals_main = globals_main.property("globals")  # type: ignore
 
     handle_cli_arguments(args_main, globals_main)
-
-    pixmap = QPixmap(":/images/splash-version.jpg")
-    splash = QSplashScreen(pixmap)
-    splash.show()
+    splash = start_splash()
 
     engine.addImportPath("PySide2")
     engine.addImportPath(":/")
@@ -784,7 +822,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     )
     backend_msg_receiver.start()
 
-    splash.close()
+    stop_splash(splash)
     app.exec_()
 
     endpoint_main.shutdown()

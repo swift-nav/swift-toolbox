@@ -1,4 +1,5 @@
-use std::{
+﻿use std::{
+    process::Command,
     path::PathBuf,
     time::{Duration, Instant},
 };
@@ -68,7 +69,6 @@ fn launch_splash(pos_x: isize, pos_y: isize) -> Result<()> {
 }
 
 fn splash_position() -> Result<(isize, isize)> {
-    use std::process::Command;
     let current_exe = std::env::current_exe()?;
     let parent = current_exe.parent().ok_or("no parent directory")?;
     let stdout = Command::new(parent.join("windowpos")).output()?.stdout;
@@ -90,7 +90,13 @@ pub fn spawn() {
             }
         }
         eprintln!("splash: launching");
-        let (pos_x, pos_y) = splash_position().unwrap();
+        let (pos_x, pos_y) = match splash_position() {
+            Ok((pos_x, pos_y)) => (pos_x, pos_y),
+            Err(err) => {
+                eprint!("splash: error launching: {err}");
+                (20, 20)
+            }
+        };
         let result = launch_splash(pos_x, pos_y);
         if let Err(ref err) = result {
             eprint!("splash: error launching: {err}");

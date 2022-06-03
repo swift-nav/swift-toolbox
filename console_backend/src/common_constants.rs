@@ -335,6 +335,6 @@ pub enum ApplicationMetadata {
     ORGANIZATION_NAME,
     #[strum(serialize = "swiftnav.com")]
     ORGANIZATION_DOMAIN,
-    #[strum(serialize = "swift-toolbox")]
+    #[strum(serialize = "Swift Console")]
     APPLICATION_NAME,
 }

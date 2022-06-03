@@ -1,4 +1,4 @@
-﻿use std::{
+use std::{
     path::PathBuf,
     time::{Duration, Instant},
 };

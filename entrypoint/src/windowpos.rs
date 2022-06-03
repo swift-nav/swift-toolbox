@@ -1,4 +1,4 @@
-﻿use entrypoint::Result;
+use entrypoint::Result;
 
 fn splash_position() -> Result<(isize, isize)> {
     let monitor = {

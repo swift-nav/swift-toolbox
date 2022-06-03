@@ -692,6 +692,7 @@ exec --fail-on-error mv ./${contents_resources_dir}/swift-console-splash "./${co
 exec --fail-on-error ln -s "../Resources/lib" ${contents_mac_os}/lib
 exec --fail-on-error ln -s "../Resources/.frozen" ${contents_mac_os}/.frozen
 exec --fail-on-error ln -s "../Resources/resources" ${contents_mac_os}/resources
+exec --fail-on-error chmod -R -w ${contents_mac_os}
 cp ./${info_plist_path} ./${contents_dir}/Info.plist
 mkdir ${contents_resources_dir}
 cp ${icns_path} ./${contents_resources_dir}/${app_file_prefix}.icns

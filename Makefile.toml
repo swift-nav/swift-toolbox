@@ -122,14 +122,11 @@ exec --fail-on-error ${python} -m py2many --rust=1 /tmp/piksi_tools_constants.py
 '''
 
 [tasks.generate-resources]
-command = "${PYSIDE2_RCC}"
-args = [
-  "resources/console_resources.qrc",
-  "-o",
-  "swiftnav_console/console_resources.py",
-  "-g",
-  "python",
-]
+script_runner = "@duckscript"
+script = '''
+  touch resources/images/splash-version.jpg
+  exec --fail-on-error "${PYSIDE2_RCC}" "resources/console_resources.qrc" "-o" "swiftnav_console/console_resources.py" "-g" "python"
+'''
 
 [tasks.check-capnp]
 script_runner = "@shell"
@@ -370,6 +367,7 @@ end
 '''
 
 [tasks.build-console-bin]
+dependencies = ["build-splash-version"]
 command = "cargo"
 args = [
   "build",

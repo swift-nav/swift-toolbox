@@ -3,7 +3,6 @@
 import argparse
 from datetime import datetime
 import os
-import platform
 import pickle
 import platform
 import sys

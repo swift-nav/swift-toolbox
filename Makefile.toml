@@ -369,13 +369,7 @@ end
 [tasks.build-console-bin]
 dependencies = ["build-splash-version"]
 command = "cargo"
-args = [
-  "build",
-  "--release",
-  "-vv",
-  "--bin",
-  "${APP_NAME}",
-]
+args = ["build", "--release", "-vv", "--bin", "${APP_NAME}"]
 
 [tasks.build-console]
 env = { PYO3_CONFIG_FILE = "${CONSOLE_PYO3_CONFIG_FILE}" }

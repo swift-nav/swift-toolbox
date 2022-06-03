@@ -485,6 +485,7 @@ Item {
                     connection_model.fill_data(connectionData);
                     if (!connectionData.available_baudrates.length)
                         return ;
+
                     if (!available_baudrates.length || !available_flows.length) {
                         Globals.consoleVersion = connectionData.console_version;
                         available_baudrates = connectionData.available_baudrates;

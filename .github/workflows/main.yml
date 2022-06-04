@@ -482,8 +482,8 @@ jobs:
       - name: Add archive to path.
         shell: bash
         run: |
-          pushd target/installer
-          zip -r SwiftConsole.zip "Swift Console.app"
+          pushd application/target/installer
+          zip -r ../../../SwiftConsole.zip "Swift Console.app"
           popd
 
           echo SwiftConsole.zip >installer-archive.filename

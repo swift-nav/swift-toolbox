@@ -455,8 +455,7 @@ jobs:
       - name: Sign application.
         shell: bash
         run: |
-          pushd "application/target/installer/Swift Console.app"
-
+          cd "application/target/installer/Swift Console.app"
           for f in $(find Contents/Resources/lib/ -name '*.dylib' -or -name '*.so')
           do
             codesign \
@@ -473,30 +472,26 @@ jobs:
               "$f"
           done
 
-          popd
-
+          cd ../../../
           codesign \
             -s "${{ secrets.APPLE_DEVELOPER_ID }}" --deep \
-            --entitlements application/installers/macOS/entitlements.plist \
+            --entitlements installers/macOS/entitlements.plist \
             --timestamp \
             --options=runtime \
-            "application/target/installer/Swift Console.app"
+            "target/installer/Swift Console.app"
 
       - name: Build dmg file.
         shell: bash
         run: |
           cd application
           cargo make store-version
-          cargo make dist-to-installer
+          cargo make dist-to-installer-dmg
 
       - name: Add archive to path.
         shell: bash
         run: |
-          pushd application/target/installer
-          zip -r ../../../SwiftConsole.zip "Swift Console.app"
-          popd
-
-          echo SwiftConsole.zip >installer-archive.filename
+          INSTALLER_ARCHIVE=$(find application -iname "*.dmg")
+          echo $INSTALLER_ARCHIVE >installer-archive.filename
           echo "INSTALLER_ARCHIVE=$(cat installer-archive.filename)" >>$GITHUB_ENV
 
       - uses: actions/upload-artifact@v2
@@ -614,7 +609,8 @@ jobs:
           path: |
             installer
 
-      - name: Sign Installer.
+      - name: Sign NSIS installer (Windows)
+        if: matrix.os == 'Windows'
         shell: cmd
         run: |
           cd installer
@@ -624,19 +620,16 @@ jobs:
             /n "Swift Navigation, Inc." /a ^
             /tr http://rfc3161timestamp.globalsign.com/advanced ^
             /td SHA256 %executable%
-        if: matrix.os == 'Windows'
 
-      - name: Sign Installer.
+      - name: Sign installer (macOS)
         if: matrix.os == 'macOS'
         shell: bash
         run: |
           cd installer
-
           codesign \
             -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
             -f --timestamp \
             $(cat installer-archive.filename)
-
           xcrun altool \
             --notarize-app \
             --file $(cat installer-archive.filename) \
@@ -648,7 +641,7 @@ jobs:
 
           echo "REQUEST_UUID=$REQUEST_UUID" >>$GITHUB_ENV
 
-      - name: Check Notarization.
+      - name: Check notarization (macOS)
         if: matrix.os == 'macOS'
         uses: nick-invision/retry@v2
         with:
@@ -673,14 +666,7 @@ jobs:
               exit 1
             fi
 
-            unzip $(cat installer-archive.filename)
-            xcrun stapler staple "Swift Console.app"
-
-            # Move back to path that task automation expects
-            rm -rf target/installer
-            mv "Swift Console.app" target/installer
-
-            cargo make dist-to-installer-dmg
+            xcrun stapler staple "$(cat installer-archive.filename)"
 
       - name: Add archive to path.
         shell: bash

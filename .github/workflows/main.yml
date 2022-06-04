@@ -609,7 +609,8 @@ jobs:
           path: |
             installer
 
-      - name: Sign Installer.
+      - name: Sign NSIS installer (Windows)
+        if: matrix.os == 'Windows'
         shell: cmd
         run: |
           cd installer
@@ -619,9 +620,9 @@ jobs:
             /n "Swift Navigation, Inc." /a ^
             /tr http://rfc3161timestamp.globalsign.com/advanced ^
             /td SHA256 %executable%
-        if: matrix.os == 'Windows'
 
-      - name: Sign Installer.
+      - name: Sign installer (macOS)
+        if: matrix.os == 'macOS'
         shell: bash
         run: |
           cd installer
@@ -639,9 +640,9 @@ jobs:
           REQUEST_UUID=$(cat notarize.log | grep RequestUUID | awk '{print $3}')
 
           echo "REQUEST_UUID=$REQUEST_UUID" >>$GITHUB_ENV
-        if: matrix.os == 'macOS'
 
-      - name: Check Notarization.
+      - name: Check notarization (macOS)
+        if: matrix.os == 'macOS'
         uses: nick-invision/retry@v2
         with:
           shell: bash
@@ -664,7 +665,8 @@ jobs:
               echo "Notarization Failed"
               exit 1
             fi
-        if: matrix.os == 'macOS'
+
+            xcrun stapler staple "$(cat installer-archive.filename)"
 
       - name: Add archive to path.
         shell: bash

@@ -467,10 +467,10 @@ jobs:
 
           codesign \
             -s "${{ secrets.APPLE_DEVELOPER_ID }}" --deep \
-            --entitlements installers/macOS/entitlements.plist \
+            --entitlements application/installers/macOS/entitlements.plist \
             --timestamp \
             --options=runtime \
-            "target/installer/Swift Console.app"
+            "application/target/installer/Swift Console.app"
 
       - name: Build dmg file.
         shell: bash

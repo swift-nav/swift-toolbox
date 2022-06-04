@@ -6,5 +6,7 @@
 	<string>Swift Console.icns</string>
 	<key>NSHighResolutionCapable</key>
 	<string>True</string>
+	<key>CFBundlePackageType</key>
+        <string>APPL</string>
 </dict>
 </plist>

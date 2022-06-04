@@ -1,4 +1,4 @@
-#[cfg(target_os = "windows")]
+﻿#[cfg(target_os = "windows")]
 use winres::WindowsResource;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 

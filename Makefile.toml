@@ -122,14 +122,11 @@ exec --fail-on-error ${python} -m py2many --rust=1 /tmp/piksi_tools_constants.py
 '''
 
 [tasks.generate-resources]
-command = "${PYSIDE2_RCC}"
-args = [
-  "resources/console_resources.qrc",
-  "-o",
-  "swiftnav_console/console_resources.py",
-  "-g",
-  "python",
-]
+dependencies = ["build-splash-version"]
+script_runner = "@duckscript"
+script = '''
+  exec --fail-on-error "${PYSIDE2_RCC}" "resources/console_resources.qrc" "-o" "swiftnav_console/console_resources.py" "-g" "python"
+'''
 
 [tasks.check-capnp]
 script_runner = "@shell"
@@ -357,7 +354,6 @@ script = "sudo apt-get install gsfonts imagemagick"
 script = "brew install imagemagick"
 
 [tasks.build-splash-version]
-private = true
 script_runner = "@duckscript"
 script = '''
 output = exec --fail-on-error git describe --always --tags --dirty
@@ -370,8 +366,7 @@ else
 end
 '''
 
-[tasks.build-splash-bin]
-private = true
+[tasks.build-windowpos-bin]
 dependencies = ["build-splash-version"]
 command = "cargo"
 args = [
@@ -379,21 +374,31 @@ args = [
   "--release",
   "-vv",
   "--features",
-  "splash",
+  "winit",
   "--bin",
-  "swift-console-splash",
+  "windowpos",
 ]
 
 [tasks.build-console-bin]
-private = true
-dependencies = ["build-splash-bin"]
+command = "cargo"
+args = [
+  "build",
+  "--release",
+  "-vv",
+  "--features=entrypoint",
+  "--bin",
+  "${APP_NAME}",
+]
+
+[tasks.build-console-bin.linux]
+dependencies = ["build-windowpos-bin"]
 command = "cargo"
 args = [
   "build",
   "--release",
   "-vv",
   "--features",
-  "entrypoint",
+  "entrypoint,splash",
   "--bin",
   "${APP_NAME}",
 ]
@@ -412,19 +417,21 @@ script_runner = "@duckscript"
 script = '''
 app_name = get_env APP_NAME
 cp target/release/${app_name} py39-dist/${app_name}
-cp target/release/swift-console-splash py39-dist/swift-console-splash
 os = os_family
 if eq ${os} mac
   exec --fail-on-error install_name_tool -change /install/lib/libpython3.9.dylib @executable_path/lib/libpython3.9.dylib py39-dist/${app_name}
+elseif eq ${os} linux
+  cp target/release/windowpos py39-dist/windowpos
 end
 '''
 
 [tasks.build-dist-install-console.windows]
 script = '''
-cp target/release/swift-console-splash.exe py39-dist/swift-console-splash.exe
 cp target/release/${APP_NAME}.exe py39-dist/${APP_NAME}.exe
 cp target/release/${APP_NAME}.d py39-dist/${APP_NAME}.d
-cp target/release/swift_console.pdb py39-dist/swift_console.pdb
+if is_path_exists target/release/swift_console.pdb
+  cp target/release/swift_console.pdb py39-dist/swift_console.pdb
+end
 cp target/x86_64-pc-windows-msvc/release/console_backend.pdb py39-dist/Lib/site-packages/console_backend/console_backend.pdb
 '''
 
@@ -688,7 +695,6 @@ mkdir ${contents_dir}
 mkdir ${contents_mac_os}
 exec --fail-on-error cp -r py39-dist "${contents_resources_dir}"
 exec --fail-on-error mv ./${contents_resources_dir}/${app_original_name} "./${contents_mac_os}/${app_file_prefix}"
-exec --fail-on-error mv ./${contents_resources_dir}/swift-console-splash "./${contents_mac_os}/swift-console-splash"
 exec --fail-on-error ln -s "../Resources/lib" ${contents_mac_os}/lib
 exec --fail-on-error ln -s "../Resources/.frozen" ${contents_mac_os}/.frozen
 exec --fail-on-error ln -s "../Resources/resources" ${contents_mac_os}/resources
@@ -884,6 +890,20 @@ args = ["test", "--features", "tests", "${@}", "--", "--nocapture"]
 dependencies = ["store-version", "copy-capnp"]
 command = "cargo"
 args = ["check"]
+
+[tasks.watch-entrypoint]
+dependencies = ["store-version", "copy-capnp"]
+command = "cargo"
+args = [
+  "watch",
+  "--exec",
+  "check --bin swift-console --features=entrypoint,splash",
+]
+
+[tasks.watch-windowpos]
+dependencies = ["store-version", "copy-capnp"]
+command = "cargo"
+args = ["watch", "--exec", "check --bin windowpos --features=winit"]
 
 [tasks.python-type-check]
 dependencies = ["set-python-files"]

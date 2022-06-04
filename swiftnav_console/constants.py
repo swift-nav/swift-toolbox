@@ -164,4 +164,4 @@ class QTKeys(str, Enum):
 class ApplicationMetadata(str, Enum):
     ORGANIZATION_NAME = "Swift Navigation"
     ORGANIZATION_DOMAIN = "swiftnav.com"
-    APPLICATION_NAME = "swift-toolbox"
+    APPLICATION_NAME = "Swift Console"

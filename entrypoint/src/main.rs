@@ -1,5 +1,7 @@
 #![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
 
+use std::path::{Path, PathBuf};
+
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
@@ -34,8 +36,6 @@ fn handle_splash() {
         entrypoint::splash::spawn();
     }
 }
-
-use std::path::{Path, PathBuf};
 
 fn app_dir() -> Result<PathBuf> {
     let current_exe = std::env::current_exe()?;

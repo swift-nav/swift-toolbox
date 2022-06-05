@@ -583,6 +583,8 @@ else
 endif
 
 if eq ${os} mac
+    rm -r lib/python3.9/site-packages/PySide2/Designer.app/
+
     rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtBluetooth.framework/
     rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtConcurrent.framework/
     rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtDBus.framework/
@@ -735,7 +737,7 @@ mkdir ${contents_mac_os}
 exec --fail-on-error cp -r py39-dist "${contents_resources_dir}"
 exec --fail-on-error mv ./${contents_resources_dir}/${app_original_name} "./${contents_mac_os}/${app_file_prefix}"
 cp ./${info_plist_path} ./${contents_dir}/Info.plist
-exec --fail-on-error sed -i s/@@VERSION@@/${version}/g ./${contents_dir}/Info.plist
+#exec --fail-on-error sed -i "" -e "s/@@VERSION@@/${version}/g" "${contents_dir}/Info.plist"
 mkdir ${contents_resources_dir}
 cp ${icns_path} ./${contents_resources_dir}/${app_file_prefix}.icns
 '''

@@ -15,5 +15,7 @@
     <key>com.apple.security.cs.disable-executable-page-protection</key>
     <true/>
 
+    <key>com.apple.security.app-sandbox</key>
+    <false/>
   </dict>
 </plist>

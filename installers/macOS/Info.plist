@@ -2,11 +2,34 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleIconFile</key>
-	<string>Swift Console.icns</string>
-	<key>NSHighResolutionCapable</key>
-	<string>True</string>
-	<key>CFBundlePackageType</key>
-	<string>APPL</string>
+    <key>CFBundleIconFile</key>
+    <string>Swift Console.icns</string>
+
+    <key>NSHighResolutionCapable</key>
+    <string>True</string>
+
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+
+    <key>CFBundleExecutable</key>
+    <string>Swift Console</string>
+
+    <key>CFBundleDisplayName</key>
+    <string>Swift Console</string>
+
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+
+    <key>CFBundleIdentifier</key>
+    <string>com.swift-nav.SwiftConsole</string>
+
+    <key>CFBundleName</key>
+    <string>Swift Console</string>
+
+    <key>CFBundleShortVersionString</key>
+    <string>@@VERSION@@</string>
+
+    <key>CFBundleVersion</key>
+    <string>@@VERSION@@</string>
 </dict>
 </plist>

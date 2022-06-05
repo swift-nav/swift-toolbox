@@ -484,6 +484,7 @@ py_folders = array test tests examples __pycache__ demos turtledemo translations
 qt_folders = array plugins/geoservices plugins/virtualkeyboard plugins/sqldrivers lib/Tix8.4.3 tcl/tix8.4.3 Qt/resources PySide2/resources
 qml_folders = array qml/QtWeb* qml/QtBluetooth* qml/QtNfc* qml/QtGamepad qml/QtTest qml/QtQuick3D qml/Qt3D qml/QtSensors qml/QtLocation qml/QtPositioning
 all_folders = array_concat ${py_folders} ${qt_folders} ${qml_folders}
+
 for name in ${all_folders}
     folders = glob_array **/${name}/
     for folder in ${folders}
@@ -492,6 +493,7 @@ for name in ${all_folders}
 end
 
 file_exts = array pyc pyi tcl gif png
+
 for ext in ${file_exts}
     files = glob_array **/*.${ext}
     for file in ${files}
@@ -507,6 +509,7 @@ for ext in ${file_exts}
 end
 
 libs = array QtSensors QtLocation Qt5Location QtPositioning Qt3D Qt53D Qt5Nfc Qt5Web QtWeb Qt5Pdf Qt5Designer Qt5DesignerComponents Qt5VirtualKeyboard Qt5Bluetooth Qt5Quick3D
+
 for lib in ${libs}
     files = glob_array ./**/*${lib}*
     for file in ${files}
@@ -516,6 +519,7 @@ for lib in ${libs}
 end
 
 os = os_family
+
 if eq ${os} windows
     rm -r ./Scripts
 
@@ -604,6 +608,7 @@ for name in ${py_internal_libs}
 end
 
 files = glob_array ./**/*.py
+
 for file in ${files}
     rm ${file}
 end

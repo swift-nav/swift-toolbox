@@ -690,7 +690,7 @@ set_env BACKGROUND_PATH "resources/images/LogoBackground.jpg"
 
 [tasks.dist-to-installer-app]
 [tasks.dist-to-installer-app.mac]
-dependencies = ["dist-to-installer-env"]
+dependencies = ["dist-to-installer-env", "store-version"]
 script_runner = "@duckscript"
 script = '''
 final_dir = get_env FINAL_DIR

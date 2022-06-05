@@ -49,7 +49,7 @@ fn pythonhome_dir() -> Result<PathBuf> {
     let app_dir = app_dir()?.to_path_buf();
     if cfg!(target_os = "macos") {
         if let Some(parent) = app_dir.parent() {
-            let resources = parent.join("Resources");
+            let resources = parent.join("Resources/lib");
             if resources.exists() {
                 Ok(resources)
             } else {

@@ -591,22 +591,15 @@ if eq ${os} mac
     rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtDesigner.framework/
     rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtDesignerComponents.framework/
     rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtGamepad.framework/
-    rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtHelp.framework/
     rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtNfc.framework/
     rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtPrintSupport.framework/
     rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtRemoteObjects.framework/
-    rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtScxml.framework/
     rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtSerialBus.framework/
     rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtSerialPort.framework/
     rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtSql.framework/
     rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtTextToSpeech.framework/
-    rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtXml.framework/
-    rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtXmlPatterns.framework/
     rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtTest.framework/
     rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtQuickTest.framework/
-
-    rm -r lib/python3.9/site-packages/PySide2/Qt/plugins/qmltooling/
-    rm -r lib/python3.9/site-packages/PySide2/Qt/plugins/webview/
 
     rm lib/python3.9/lib-dynload/_testcapi.cpython-39-darwin.so
     rm lib/python3.9/lib-dynload/xxlimited.cpython-39-darwin.so

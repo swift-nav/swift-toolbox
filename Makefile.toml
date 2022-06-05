@@ -585,26 +585,9 @@ endif
 if eq ${os} mac
     rm -r lib/python3.9/site-packages/PySide2/Designer.app/
 
-    rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtBluetooth.framework/
-    rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtConcurrent.framework/
-    rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtDBus.framework/
-    rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtDesigner.framework/
-    rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtDesignerComponents.framework/
-    rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtGamepad.framework/
-    rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtNfc.framework/
-    rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtPrintSupport.framework/
-    rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtRemoteObjects.framework/
-    rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtSerialBus.framework/
-    rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtSerialPort.framework/
-    rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtSql.framework/
-    rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtTextToSpeech.framework/
-    rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtTest.framework/
-    rm -r lib/python3.9/site-packages/PySide2/Qt/lib/QtQuickTest.framework/
-
     rm lib/python3.9/lib-dynload/_testcapi.cpython-39-darwin.so
     rm lib/python3.9/lib-dynload/xxlimited.cpython-39-darwin.so
 
-    rm -r lib/python3.9/config-3.9-darwin/
     rm -r lib/python3.9/venv/
 
     rm -r lib/pkgconfig/

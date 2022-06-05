@@ -51,7 +51,7 @@ fn pythonhome_dir() -> Result<PathBuf> {
         if let Some(parent) = app_dir.parent() {
             let resources = parent.join("Resources/lib");
             if resources.exists() {
-                Ok(resources)
+                Ok(parent.join("Resources"))
             } else {
                 Ok(app_dir)
             }

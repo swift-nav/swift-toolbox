@@ -456,9 +456,10 @@ jobs:
         shell: bash
         run: |
           cd "application/target/installer/Swift Console.app"
+
           for f in $(find Contents/Resources/lib/ -name '*.dylib' -or -name '*.so')
           do
-            codesign \
+            codesign -vvvv \
             -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
             --timestamp \
             "$f"
@@ -466,14 +467,15 @@ jobs:
 
           for f in $(ls Contents/Resources/lib/python3.9/site-packages/**/Qt/lib/*.framework/Versions/5/*)
           do
-            codesign \
+            codesign -vvvv \
               -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
               --timestamp \
               "$f"
           done
 
           cd ../../../
-          codesign \
+
+          codesign -vvvv \
             -s "${{ secrets.APPLE_DEVELOPER_ID }}" --deep \
             --entitlements installers/macOS/entitlements.plist \
             --timestamp \
@@ -626,11 +628,14 @@ jobs:
         shell: bash
         run: |
           cd installer
-          codesign \
+
+          codesign -vvvv \
             -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
             -f --timestamp \
             $(cat installer-archive.filename)
+
           xcrun altool \
+            --verbose \
             --notarize-app \
             --file $(cat installer-archive.filename) \
             --primary-bundle-id ${{ env.APP_BUNDLE_ID }} \
@@ -654,6 +659,7 @@ jobs:
             cd installer
 
             xcrun altool \
+              --verbose \
               --notarization-info ${{ env.REQUEST_UUID }} \
               --apiKey ${{ secrets.APPLE_KEY_ID }} \
               --apiIssuer ${{ secrets.APPLE_ISSUER_ID }} | tee notarize_status.log
@@ -666,7 +672,7 @@ jobs:
               exit 1
             fi
 
-            xcrun stapler staple "$(cat installer-archive.filename)"
+            xcrun stapler staple -v "$(cat installer-archive.filename)"
 
       - name: Add archive to path.
         shell: bash
@@ -743,7 +749,7 @@ jobs:
         shell: bash
         working-directory: binaries
         run: |
-          codesign \
+          codesign -vvvv \
             -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
             --timestamp \
             --options=runtime \
@@ -840,10 +846,13 @@ jobs:
         shell: bash
         working-directory: binaries-all
         run: |
-          codesign \
+
+          codesign -vvvv \
             -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
             -f --timestamp "swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-all.zip"
+
           xcrun altool \
+            --verbose \
             --notarize-app \
             --file swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-all.zip\
             --primary-bundle-id ${{ env.APP_BUNDLE_ID }} \

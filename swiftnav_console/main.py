@@ -557,15 +557,27 @@ def is_frozen() -> bool:
     Returns:
         bool: Whether the application is frozen.
     """
-    me = os.path.dirname(sys.executable)
+    me = get_app_dir()
     var_frozen = os.environ.get("SWIFTNAV_CONSOLE_FROZEN", "") != ""
     path_frozen = os.path.exists(os.path.join(me, ".frozen"))
     return var_frozen or path_frozen
 
 
-def get_app_dir() -> str:
+def get_app_dir(alt: bool = False) -> str:
+    """Fetches the application resources directory.
+
+    Args:
+        alt (bool): fetch an alternate data directory (only valid on macOS)
+
+    Returns:
+        str: path to the resoure dir (accounting for OS differences)
+    """
     var_frozen = os.environ.get("SWIFTNAV_CONSOLE_FROZEN", "")
     if var_frozen != "":
+        if platform.system() == "Darwin":
+            if alt:
+                return var_frozen
+            return os.path.join(var_frozen, "../Resources")
         return var_frozen
     return os.path.dirname(sys.executable)
 
@@ -576,10 +588,11 @@ def get_capnp_path() -> str:
     Returns:
         str: The path to the capnp file.
     """
-    d = get_app_dir()
     path = ""
     if is_frozen():
-        path = os.path.join(d, "resources/base", CONSOLE_BACKEND_CAPNP_PATH)
+        path = os.path.join(get_app_dir(), "resources/base", CONSOLE_BACKEND_CAPNP_PATH)
+        if not os.path.exists(path):
+            path = os.path.join(get_app_dir(alt=True), "resources/base", CONSOLE_BACKEND_CAPNP_PATH)
     else:
         path = os.path.join(
             os.path.dirname(os.path.dirname(__file__)), "src/main/resources/base", CONSOLE_BACKEND_CAPNP_PATH

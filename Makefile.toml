@@ -419,7 +419,9 @@ app_name = get_env APP_NAME
 cp target/release/${app_name} py39-dist/${app_name}
 os = os_family
 if eq ${os} mac
-  exec --fail-on-error install_name_tool -change /install/lib/libpython3.9.dylib @executable_path/lib/libpython3.9.dylib py39-dist/${app_name}
+  exec --fail-on-error install_name_tool -change /install/lib/libpython3.9.dylib @rpath/libpython3.9.dylib py39-dist/${app_name}
+  exec --fail-on-error install_name_tool -add_rpath @executable_path/../Resources/lib py39-dist/${app_name}
+  exec --fail-on-error install_name_tool -add_rpath @executable_path/lib py39-dist/${app_name}
 elseif eq ${os} linux
   cp target/release/windowpos py39-dist/windowpos
 end
@@ -482,6 +484,7 @@ py_folders = array test tests examples __pycache__ demos turtledemo translations
 qt_folders = array plugins/geoservices plugins/virtualkeyboard plugins/sqldrivers lib/Tix8.4.3 tcl/tix8.4.3 Qt/resources PySide2/resources
 qml_folders = array qml/QtWeb* qml/QtBluetooth* qml/QtNfc* qml/QtGamepad qml/QtTest qml/QtQuick3D qml/Qt3D qml/QtSensors qml/QtLocation qml/QtPositioning
 all_folders = array_concat ${py_folders} ${qt_folders} ${qml_folders}
+
 for name in ${all_folders}
     folders = glob_array **/${name}/
     for folder in ${folders}
@@ -490,6 +493,7 @@ for name in ${all_folders}
 end
 
 file_exts = array pyc pyi tcl gif png
+
 for ext in ${file_exts}
     files = glob_array **/*.${ext}
     for file in ${files}
@@ -505,6 +509,7 @@ for ext in ${file_exts}
 end
 
 libs = array QtSensors QtLocation Qt5Location QtPositioning Qt3D Qt53D Qt5Nfc Qt5Web QtWeb Qt5Pdf Qt5Designer Qt5DesignerComponents Qt5VirtualKeyboard Qt5Bluetooth Qt5Quick3D
+
 for lib in ${libs}
     files = glob_array ./**/*${lib}*
     for file in ${files}
@@ -514,6 +519,7 @@ for lib in ${libs}
 end
 
 os = os_family
+
 if eq ${os} windows
     rm -r ./Scripts
 
@@ -580,6 +586,18 @@ else
     end
 endif
 
+if eq ${os} mac
+    rm -r lib/python3.9/site-packages/PySide2/Designer.app/
+
+    rm lib/python3.9/lib-dynload/_testcapi.cpython-39-darwin.so
+    rm lib/python3.9/lib-dynload/xxlimited.cpython-39-darwin.so
+
+    rm -r lib/python3.9/venv/
+
+    rm -r lib/pkgconfig/
+    rm -r lib/thread2.8.5/
+endif
+
 py_internal_libs = array Lib/email Lib/distutils Lib/http Lib/multiprocessing Lib/msilib Lib/http Lib/dbm Lib/curses Lib/xml Lib/xmlrpc Lib/urllib Lib/ensurepip Lib/venv Lib/wsgiref Lib/lib2to3
 
 for name in ${py_internal_libs}
@@ -590,6 +608,7 @@ for name in ${py_internal_libs}
 end
 
 files = glob_array ./**/*.py
+
 for file in ${files}
     rm ${file}
 end
@@ -671,7 +690,7 @@ set_env BACKGROUND_PATH "resources/images/LogoBackground.jpg"
 
 [tasks.dist-to-installer-app]
 [tasks.dist-to-installer-app.mac]
-dependencies = ["dist-to-installer-env"]
+dependencies = ["dist-to-installer-env", "store-version"]
 script_runner = "@duckscript"
 script = '''
 final_dir = get_env FINAL_DIR
@@ -686,6 +705,9 @@ contents_resources_dir = get_env CONTENTS_RESOURCES_DIR
 contents_resources_dir = set ${contents_dir}/${contents_resources_dir}
 info_plist_path = get_env INFO_PLIST_PATH
 icns_path = get_env ICNS_PATH
+version_path = get_env VERSION_PATH
+version = readfile ${version_path}
+version = trim_end ${version}
 
 if is_path_exists ${tmp_dir}
   rm -r ${tmp_dir}
@@ -695,10 +717,8 @@ mkdir ${contents_dir}
 mkdir ${contents_mac_os}
 exec --fail-on-error cp -r py39-dist "${contents_resources_dir}"
 exec --fail-on-error mv ./${contents_resources_dir}/${app_original_name} "./${contents_mac_os}/${app_file_prefix}"
-exec --fail-on-error ln -s "../Resources/lib" ${contents_mac_os}/lib
-exec --fail-on-error ln -s "../Resources/.frozen" ${contents_mac_os}/.frozen
-exec --fail-on-error ln -s "../Resources/resources" ${contents_mac_os}/resources
 cp ./${info_plist_path} ./${contents_dir}/Info.plist
+exec --fail-on-error sed -i "" -e "s/@@VERSION@@/${version}/g" "${contents_dir}/Info.plist"
 mkdir ${contents_resources_dir}
 cp ${icns_path} ./${contents_resources_dir}/${app_file_prefix}.icns
 '''

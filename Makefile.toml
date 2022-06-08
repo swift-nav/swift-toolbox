@@ -297,7 +297,7 @@ exec --fail-on-error tar -xvf py39.tar
 [tasks.install-pyside-wheels]
 env = { USE_PYTHON = { value = "${PYTHON}", condition = { env_not_set = [
   "USE_PYTHON",
-] } }, OS_WHEEL_LABEL = { source = "${OS}", default_value = "unknown", mapping = { "linux" = "manylinux1_x86_64", "mac" = "abi3-macosx_10_13_intel", "windows" = "none-win_amd64" } } }
+] } }, OS_WHEEL_LABEL = { source = "${OS}", default_value = "unknown", mapping = { "linux" = "abi3-manylinux1_x86_64", "mac" = "abi3-macosx_10_13_intel", "windows" = "none-win_amd64" } } }
 script_runner = "@duckscript"
 script = '''
 exec --fail-on-error ${USE_PYTHON} -m pip install pyside-wheels/shiboken2-5.15.2.2-5.15.2-cp35.cp36.cp37.cp38.cp39.cp310-${OS_WHEEL_LABEL}.whl

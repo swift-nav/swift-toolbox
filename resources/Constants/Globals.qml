@@ -13,8 +13,8 @@ QtObject {
     property bool showFileio: false
     property int height: 600
     property int minimumHeight: 600
-    property int width: 1050
-    property int minimumWidth: 1050
+    property int width: 1000
+    property int minimumWidth: 900
     property string conn_state: Constants.connection.disconnected.toUpperCase()
     property string copyClipboard: ""
     property var tablesWithHighlights: []

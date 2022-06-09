@@ -209,11 +209,8 @@ Item {
                         target: solutionPositionSelectedUnit
                         width: Constants.commonChart.unitDropdownWidth * 1.5
                     }
-
                 }
-
             }
-
         }
 
         ChartView {
@@ -221,6 +218,13 @@ Item {
 
             function resetChartZoom() {
                 solutionPositionChart.zoomReset();
+/*
+                var current = solutionPositionChart.plotArea;
+                var delta_x = Utils.spanBetweenValues(orig_lon_max, orig_lon_min);
+                var delta_y = Utils.spanBetweenValues(orig_lat_max, orig_lat_min);
+                var xy_diff = Utils.spanBetweenValues(current.height, current.width);
+                var y_pixel_ratio = delta_y / current.height;
+*/
                 solutionPositionXAxis.max = orig_lon_max;
                 solutionPositionXAxis.min = orig_lon_min;
                 solutionPositionYAxis.max = orig_lat_max;
@@ -321,16 +325,40 @@ Item {
 
             }
 
+            function computeLabelFormat() {
+                if (available_units[solutionPositionSelectedUnit.currentIndex] == "degrees") {
+                    return "%.04f";
+                } else {
+                    return null;
+                }
+            }
+
             SwiftValueAxis {
                 id: solutionPositionXAxis
-
+                labelFormat: solutionPositionChart.computeLabelFormat()
                 titleText: Constants.solutionPosition.xAxisTitleText + " (" + available_units[solutionPositionSelectedUnit.currentIndex] + ")"
+                tickType: ValueAxis.TicksDynamic
+                tickInterval: 0.1
+                onRangeChanged: {
+                    if ((max-min) < 0.1) {
+                        tickInterval = 0.00000001
+                    }
+                    tickAnchor = min
+                }
             }
 
             SwiftValueAxis {
                 id: solutionPositionYAxis
-
+                labelFormat: solutionPositionChart.computeLabelFormat()
                 titleText: Constants.solutionPosition.yAxisTitleText + " (" + available_units[solutionPositionSelectedUnit.currentIndex] + ")"
+                tickType: ValueAxis.TicksDynamic
+                tickInterval: 0.1
+                onRangeChanged: {
+                    if ((max-min) < 0.1) {
+                        tickInterval = 0.00000001
+                    }
+                    tickAnchor = min
+                }
             }
 
             MouseArea {
@@ -445,13 +473,9 @@ Item {
                         orig_lon_max = new_lon_max;
                         if (zoom_all)
                             solutionPositionChart.resetChartZoom();
-
                     }
                 }
             }
-
         }
-
     }
-
 }

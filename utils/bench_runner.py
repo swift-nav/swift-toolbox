@@ -272,6 +272,7 @@ def run_frontend_cpu_benchmark(executable: str):
             f'{HYPERFINE_COMMAND(DEFAULT_JSON_FILEPATH)} "{prepped_command} '
             f'{BENCHMARK_COMMAND_ARGS(bench[FILE_PATH])}"'
         )
+        print(bench_command)
         subprocess.call(bench_command, shell=True)
         with open(DEFAULT_JSON_FILEPATH, "r", encoding="utf-8") as fileo:
             bench_result = json.load(fileo)

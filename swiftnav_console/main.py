@@ -305,6 +305,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
     def _process_message_buffer(self, buffer):
         if not buffer:
             print("terminating GUI loop", file=sys.stderr)
+            sys.stderr.flush()
             return False
         Message = self._messages.Message
         m = Message.from_bytes(buffer)
@@ -701,6 +702,8 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     if args_main.debug_with_no_backend and args_main.read_capnp_recording is None:
         parser.error("The --debug-with-no-backend argument requires the --read-capnp-recording argument.")
 
+    print("args_main: {args_main}, unknown_args: {unknown_args}")
+
     found_help_arg = False
     for arg in unknown_args:
         if arg in HELP_CLI_ARGS:
@@ -839,11 +842,12 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     app.exec_()
 
     endpoint_main.shutdown()
-
     backend_msg_receiver.join()
 
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    status = main()
+    print(f"console exit code: {status}")
+    sys.exit(status)

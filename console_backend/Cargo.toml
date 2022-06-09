@@ -40,7 +40,7 @@ serde-pickle = { version = "1.1.1", optional = true }
 parking_lot = "0.12.1"
 regex = { version = "1.5.6" }
 rust-ini = "0.18.0"
-sbp = { version = "4.3.0", features = ["json", "link", "swiftnav"] }
+sbp = { version = "4.3.3", features = ["json", "link", "swiftnav"] }
 sbp-settings = "0.6.9"
 env_logger = { version = "0.9", optional = true }
 mimalloc = { version = "0.1", default-features = false }

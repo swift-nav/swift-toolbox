@@ -272,6 +272,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
     @Slot()  # type: ignore
     def receive_messages(self):
         if not self._receive_messages():
+            print("Attempting to exit QThread", file=sys.stderr, flush=True)
             self._thread.exit()
         else:
             QTimer.singleShot(0, self.receive_messages)
@@ -304,8 +305,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
 
     def _process_message_buffer(self, buffer):
         if not buffer:
-            print("terminating GUI loop", file=sys.stderr)
-            sys.stderr.flush()
+            print("Terminating GUI loop", file=sys.stderr, flush=True)
             return False
         Message = self._messages.Message
         m = Message.from_bytes(buffer)
@@ -702,7 +702,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     if args_main.debug_with_no_backend and args_main.read_capnp_recording is None:
         parser.error("The --debug-with-no-backend argument requires the --read-capnp-recording argument.")
 
-    print("args_main: {args_main}, unknown_args: {unknown_args}")
+    print(f"Parsed command line args: {args_main}, unparsed command line: {unknown_args}", file=sys.stderr)
 
     found_help_arg = False
     for arg in unknown_args:
@@ -841,13 +841,16 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     stop_splash(splash)
     app.exec_()
 
+    print("Shutting down Rust backend", file=sys.stderr, flush=True)
     endpoint_main.shutdown()
+
+    print("Waiting for backend QThread to terminate", file=sys.stderr, flush=True)
     backend_msg_receiver.join()
 
     return 0
 
 
 if __name__ == "__main__":
-    status = main()
-    print(f"console exit code: {status}")
-    sys.exit(status)
+    exit_code = main()
+    print(f"App exit code: {exit_code}", flush=True)
+    sys.exit(exit_code)

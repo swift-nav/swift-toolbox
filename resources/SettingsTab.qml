@@ -194,7 +194,7 @@ MainTab {
                         Layout.preferredWidth: parent.colWidth
                         Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                         padding: parent.buttonPadding
-                        text: "Export to\nfile"
+                        text: "Export\nto file"
                         icon.source: Constants.icons.exportPath
                         icon.width: Constants.settingsTab.buttonIconWidth
                         icon.height: Constants.settingsTab.buttonIconHeight
@@ -209,7 +209,7 @@ MainTab {
                         Layout.preferredWidth: parent.colWidth
                         Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                         padding: parent.buttonPadding
-                        text: "Import from\nFile"
+                        text: "Import\nfrom file"
                         icon.source: Constants.icons.importPath
                         icon.width: Constants.settingsTab.buttonIconWidth
                         icon.height: Constants.settingsTab.buttonIconHeight
@@ -224,7 +224,7 @@ MainTab {
                         Layout.preferredWidth: parent.colWidth
                         Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                         padding: parent.buttonPadding
-                        text: "Reset to\nDefaults"
+                        text: "Reset to\ndefaults"
                         icon.source: Constants.icons.warningPath
                         icon.width: Constants.settingsTab.buttonIconWidth
                         icon.height: Constants.settingsTab.buttonIconHeight
@@ -269,7 +269,7 @@ MainTab {
                         Layout.preferredWidth: parent.colWidth
                         Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                         padding: parent.buttonPadding
-                        text: "Refresh from\ndevice"
+                        text: "Refresh\nfrom device"
                         icon.source: Constants.icons.refreshPath
                         icon.width: Constants.settingsTab.buttonIconWidth
                         icon.height: Constants.settingsTab.buttonIconHeight

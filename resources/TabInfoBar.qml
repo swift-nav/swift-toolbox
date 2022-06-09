@@ -127,6 +127,10 @@ Rectangle {
             Layout.fillWidth: true
         }
 
+        Rectangle {
+            width: 10
+        }
+
         Item {
             implicitWidth: children[0].implicitWidth + rhsItemSpacing
             Layout.fillHeight: true

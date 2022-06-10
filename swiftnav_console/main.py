@@ -270,7 +270,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
         self._thread.wait()
 
     @Slot()  # type: ignore
-    def receive_messages(self):
+    def receive_messages(self):  # pylint: disable=fixme
         if not self._receive_messages():
             ## FIXME: HACK ALERT:
             ##   We should be able call `self._thread.exit()` and the app will
@@ -278,7 +278,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
             ##   a deadlock during shutdown so we just tear everything down for now.
             ##
             ##   See https://swift-nav.atlassian.net/browse/CPP-772
-            os._exit(0)
+            os._exit(0)  # pylint: disable=protected-access
         else:
             QTimer.singleShot(0, self.receive_messages)
 

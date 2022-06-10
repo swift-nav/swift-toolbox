@@ -272,8 +272,13 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
     @Slot()  # type: ignore
     def receive_messages(self):
         if not self._receive_messages():
-            print("Attempting to exit QThread", file=sys.stderr, flush=True)
-            self._thread.exit()
+            ## FIXME: HACK ALERT:
+            ##   We should be able call `self._thread.exit()` and the app will
+            ##   cleanly shutdown after the threads exit... but there's apparently
+            ##   a deadlock during shutdown so we just tear everything down for now.
+            ##
+            ##   See https://swift-nav.atlassian.net/browse/CPP-772
+            os._exit(0)
         else:
             QTimer.singleShot(0, self.receive_messages)
 
@@ -702,8 +707,6 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     if args_main.debug_with_no_backend and args_main.read_capnp_recording is None:
         parser.error("The --debug-with-no-backend argument requires the --read-capnp-recording argument.")
 
-    print(f"Parsed command line args: {args_main}, unparsed command line: {unknown_args}", file=sys.stderr)
-
     found_help_arg = False
     for arg in unknown_args:
         if arg in HELP_CLI_ARGS:
@@ -841,10 +844,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     stop_splash(splash)
     app.exec_()
 
-    print("Shutting down Rust backend", file=sys.stderr, flush=True)
     endpoint_main.shutdown()
-
-    print("Waiting for backend QThread to terminate", file=sys.stderr, flush=True)
     backend_msg_receiver.join()
 
     return 0
@@ -852,5 +852,4 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
 
 if __name__ == "__main__":
     exit_code = main()
-    print(f"App exit code: {exit_code}", flush=True)
     sys.exit(exit_code)

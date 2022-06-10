@@ -178,7 +178,7 @@ QtObject {
     }
 
     systemMonitor: QtObject {
-        readonly property var columnHeaders: ["Thread Name", "CPU %", "Stack Free (KB)"]
+        readonly property var columnHeaders: ["Thread Name", "CPU %", "Stack Free (B)"]
         readonly property var metricColumnHeaders: ["Metric", "Value"]
         readonly property string currLabel: "Curr"
         readonly property string maxLabel: "Max"
@@ -214,7 +214,7 @@ QtObject {
         readonly property var defaultThreadsList: {
             "Thread Name": "",
             "CPU %": "",
-            "Stack Free (KB)": ""
+            "Stack Free (B)": ""
         }
         readonly property var defaultMetricsList: {
             "Metric": "",

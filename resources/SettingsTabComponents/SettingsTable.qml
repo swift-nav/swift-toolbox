@@ -41,14 +41,14 @@ Rectangle {
 
     function row(entry) {
         return {
-            [Constants.settingsTable.tableLeftColumnHeader]: entry.name.replaceAll("_", " "),
+            [Constants.settingsTable.tableLeftColumnHeader]: entry.name.replace(/_/g, " "),
             [Constants.settingsTable.tableRightColumnHeader]: entry.valueOnDevice || "---"
         };
     }
 
     function headerRow(entry) {
         return {
-            [Constants.settingsTable.tableLeftColumnHeader]: entry.group.replaceAll("_", " "),
+            [Constants.settingsTable.tableLeftColumnHeader]: entry.group.replace(/_/g, " "),
             [Constants.settingsTable.tableRightColumnHeader]: ""
         };
     }

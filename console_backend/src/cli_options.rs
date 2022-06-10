@@ -209,7 +209,6 @@ impl CliOptions {
     /// - `filtered_args`: The filtered args parsed via CliOptions.
     pub fn from_filtered_cli() -> CliOptions {
         let args = std::env::args();
-        eprintln!("args {:?}", args);
         let mut next_args = std::env::args().skip(1);
         let mut filtered_args: Vec<String> = vec![];
         for arg in args.filter(|a| !matches!(a.as_str(), "swiftnav_console.main" | "-m" | "--")) {
@@ -357,16 +356,13 @@ pub fn handle_cli(
     client_sender: &BoxedClientSender,
 ) {
     if let Some(serial) = opt.serial.serial {
-        eprintln!("connecting to serial");
         let serialport = serial.display().to_string();
         conn_manager.connect_to_serial(serialport, opt.serial.baudrate, opt.serial.flow_control);
     } else if let Some(tcp) = opt.tcp.tcp {
-        eprintln!("connecting to tcp");
         if let Err(e) = conn_manager.connect_to_host(tcp.host, tcp.port) {
             error!("Failed to establish tcp connection: {}", e);
         };
     } else if let Some(file) = opt.file.file {
-        eprintln!("connecting to tcp");
         let filename = file.display().to_string();
         conn_manager.connect_to_file(filename, RealtimeDelay::On, opt.exit_after_close);
     }

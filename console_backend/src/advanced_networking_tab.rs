@@ -258,8 +258,8 @@ mod tests {
         let entry = tab.network_info.get(interface_name_pre).unwrap();
         assert_eq!(entry.ipv4_address, "127.0.0.1");
         assert!(entry.running);
-        assert_eq!(entry.tx_usage, format!("  {}B", tx_bytes));
-        assert_eq!(entry.rx_usage, format!("  {}B", rx_bytes));
+        assert_eq!(entry.tx_usage, format!("{:.1}B", tx_bytes as f64));
+        assert_eq!(entry.rx_usage, format!("{:.1}B", rx_bytes as f64));
         let bad_flags = 0b0100000;
         let msg = MsgNetworkStateResp {
             sender_id,

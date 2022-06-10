@@ -353,12 +353,12 @@ pub fn meters_per_deg(lat_deg: f64) -> (f64, f64) {
 ///
 /// - The number of bytes converted to a human readable string.
 pub fn bytes_to_human_readable(bytes: u128) -> String {
-    let mut bytes = bytes;
+    let mut bytes = bytes as f64;
     for unit in ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB"].iter() {
-        if bytes < 1024 {
-            return format!("{:3.1}{}", bytes, unit);
+        if bytes < 1024.0 {
+            return format!("{:3.1}{}", bytes as f64, unit);
         } else {
-            bytes /= 1024;
+            bytes /= 1024.0;
         }
     }
     format!("{:.1}YB", bytes)
@@ -543,17 +543,18 @@ mod tests {
             .for_each(|(idx, &unit)| {
                 assert_eq!(
                     bytes_to_human_readable(u128::pow(1024, idx as u32)),
-                    format!("{:3.1}{}", 1, unit)
+                    format!("{:3.1}{}", 1.0, unit)
                 );
             });
         assert_eq!(
             bytes_to_human_readable(u128::pow(1024, 8)),
-            format!("{:.1}YB", 1)
+            format!("{:.1}YB", 1.0)
         );
         assert_eq!(
             bytes_to_human_readable(u128::pow(1024, 9)),
-            format!("{:.1}YB", 1024)
+            format!("{:.1}YB", 1024.0)
         );
+        assert_eq!(bytes_to_human_readable(230123123), "219.5MB");
     }
 
     #[test]

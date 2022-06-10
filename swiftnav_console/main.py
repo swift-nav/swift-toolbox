@@ -403,7 +403,8 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
             data[Keys.OBS_LATENCY][:] = [[entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.obsLatency]
             data[Keys.OBS_PERIOD][:] = [[entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.obsPeriod]
             data[Keys.THREADS_TABLE][:] = [
-                [entry.name, entry.cpu, entry.stackFree] for entry in m.advancedSystemMonitorStatus.threadsTable
+                [entry.name, "%.1f" % entry.cpu, entry.stackFree]
+                for entry in m.advancedSystemMonitorStatus.threadsTable
             ]
             data[Keys.CSAC_TELEM_LIST][:] = [
                 [entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.csacTelemList

@@ -906,6 +906,22 @@ command = "cargo"
 cwd = "console_backend"
 args = ["test", "--features", "tests", "${@}", "--", "--nocapture"]
 
+[tasks.rust-tests-filter]
+dependencies = ["store-version", "copy-capnp"]
+command = "cargo"
+cwd = "console_backend"
+args = [
+  'test',
+  '--package',
+  'console-backend',
+  '--lib',
+  '--all-features',
+  '--',
+  '${RUST_TEST_FILTER}',
+  '--exact',
+  '--nocapture',
+]
+
 [tasks.rust-type-check]
 dependencies = ["store-version", "copy-capnp"]
 command = "cargo"

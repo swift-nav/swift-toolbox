@@ -297,11 +297,20 @@ exec --fail-on-error tar -xvf py39.tar
 [tasks.install-pyside-wheels]
 env = { USE_PYTHON = { value = "${PYTHON}", condition = { env_not_set = [
   "USE_PYTHON",
-] } }, OS_WHEEL_LABEL = { source = "${OS}", default_value = "unknown", mapping = { "linux" = "linux_x86_64", "mac" = "macosx_10_13_x86_64", "windows" = "win_amd64" } } }
+] } } }
 script_runner = "@duckscript"
 script = '''
-exec --fail-on-error ${USE_PYTHON} -m pip install pyside-wheels/shiboken2-5.15.2.1-5.15.2-cp39-cp39-${OS_WHEEL_LABEL}.whl
-exec --fail-on-error ${USE_PYTHON} -m pip install pyside-wheels/PySide2-5.15.2.1-5.15.2-cp39-cp39-${OS_WHEEL_LABEL}.whl
+os = os_family
+if eq ${os} mac
+  exec --fail-on-error ${USE_PYTHON} -m pip install pyside-wheels/shiboken2-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_x86_64.whl
+  exec --fail-on-error ${USE_PYTHON} -m pip install pyside-wheels/PySide2-5.15.2.1-5.15.2-cp39-cp39-macosx_10_13_x86_64.whl
+elseif eq ${os} windows
+  exec --fail-on-error ${USE_PYTHON} -m pip install PySide2==5.15.2.1
+elseif eq ${os} linux
+  exec --fail-on-error ${USE_PYTHON} -m pip install PySide2==5.15.2.1
+else
+  assert_fail "Invalid platform"
+end
 '''
 
 [tasks.setup-builder]

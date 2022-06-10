@@ -39,7 +39,7 @@ pub fn handle_log_msg(msg: MsgLog) {
         | SbpMsgLevel::Alert
         | SbpMsgLevel::Critical
         | SbpMsgLevel::Error => error!(target: DEVICE, "{}", text),
-        SbpMsgLevel::Warn | SbpMsgLevel::Notice => warn!(target: DEVICE, "{}", text),
+        SbpMsgLevel::Warning | SbpMsgLevel::Notice => warn!(target: DEVICE, "{}", text),
         SbpMsgLevel::Info => info!(target: DEVICE, "{}", text),
         _ => debug!(target: DEVICE, "{}", text),
     }
@@ -122,7 +122,7 @@ enum SbpMsgLevel {
     Alert = 1,
     Critical = 2,
     Error = 3,
-    Warn = 4,
+    Warning = 4,
     Notice = 5,
     Info = 6,
     Debug = 7,
@@ -136,7 +136,7 @@ impl From<u8> for SbpMsgLevel {
             1 => SbpMsgLevel::Alert,
             2 => SbpMsgLevel::Critical,
             3 => SbpMsgLevel::Error,
-            4 => SbpMsgLevel::Warn,
+            4 => SbpMsgLevel::Warning,
             5 => SbpMsgLevel::Notice,
             6 => SbpMsgLevel::Info,
             7 => SbpMsgLevel::Debug,
@@ -181,7 +181,12 @@ fn splitable_log_formatter(record: &Record) -> String {
     let level = if record.target() != DEVICE {
         CONSOLE
     } else {
-        record.level().as_str()
+        let level = record.level().as_str();
+        if level == "WARN" {
+            "WARNING"
+        } else {
+            level
+        }
     };
     let timestamp = Local::now().format("%b %d %Y %H:%M:%S").to_string();
     let mut msg = record.args().to_string();

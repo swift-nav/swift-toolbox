@@ -27,6 +27,10 @@ Rectangle {
         return !entry.hasOwnProperty("name");
     }
 
+    function capitalize(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+
     function groupHasNonExpertSetting(entries, entryIdx) {
         for (var idx = entryIdx + 1; idx < entries.length; idx++) {
             if (isHeader(entries[idx]))
@@ -41,14 +45,14 @@ Rectangle {
 
     function row(entry) {
         return {
-            [Constants.settingsTable.tableLeftColumnHeader]: entry.name,
+            [Constants.settingsTable.tableLeftColumnHeader]: capitalize(entry.name.replace("_", " ")),
             [Constants.settingsTable.tableRightColumnHeader]: entry.valueOnDevice || "---"
         };
     }
 
     function headerRow(entry) {
         return {
-            [Constants.settingsTable.tableLeftColumnHeader]: entry.group,
+            [Constants.settingsTable.tableLeftColumnHeader]: capitalize(entry.group.replace("_", " ")),
             [Constants.settingsTable.tableRightColumnHeader]: ""
         };
     }

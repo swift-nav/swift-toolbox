@@ -270,9 +270,9 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
         self._thread.wait()
 
     @Slot()  # type: ignore
-    def receive_messages(self):  # pylint: disable=fixme
+    def receive_messages(self):
         if not self._receive_messages():
-            ## FIXME: HACK ALERT:
+            ## FIXME: HACK ALERT:  # pylint: disable=fixme
             ##   We should be able call `self._thread.exit()` and the app will
             ##   cleanly shutdown after the threads exit... but there's apparently
             ##   a deadlock during shutdown so we just tear everything down for now.

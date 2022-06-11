@@ -209,7 +209,6 @@ impl CliOptions {
     /// - `filtered_args`: The filtered args parsed via CliOptions.
     pub fn from_filtered_cli() -> CliOptions {
         let args = std::env::args();
-        eprintln!("args {:?}", args);
         let mut next_args = std::env::args().skip(1);
         let mut filtered_args: Vec<String> = vec![];
         for arg in args.filter(|a| !matches!(a.as_str(), "swiftnav_console.main" | "-m" | "--")) {

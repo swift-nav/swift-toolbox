@@ -272,7 +272,13 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
     @Slot()  # type: ignore
     def receive_messages(self):
         if not self._receive_messages():
-            self._thread.exit()
+            ## FIXME: HACK ALERT:  # pylint: disable=fixme
+            ##   We should be able call `self._thread.exit()` and the app will
+            ##   cleanly shutdown after the threads exit... but there's apparently
+            ##   a deadlock during shutdown so we just tear everything down for now.
+            ##
+            ##   See https://swift-nav.atlassian.net/browse/CPP-772
+            os._exit(0)  # pylint: disable=protected-access
         else:
             QTimer.singleShot(0, self.receive_messages)
 
@@ -304,7 +310,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
 
     def _process_message_buffer(self, buffer):
         if not buffer:
-            print("terminating GUI loop", file=sys.stderr)
+            print("Terminating GUI loop", file=sys.stderr, flush=True)
             return False
         Message = self._messages.Message
         m = Message.from_bytes(buffer)
@@ -840,11 +846,11 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     app.exec_()
 
     endpoint_main.shutdown()
-
     backend_msg_receiver.join()
 
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    exit_code = main()
+    sys.exit(exit_code)

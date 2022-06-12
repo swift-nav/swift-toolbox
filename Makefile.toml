@@ -481,9 +481,11 @@ cwd = "py39-dist"
 script_runner = "@duckscript"
 script = '''
 py_folders = array test tests examples __pycache__ demos turtledemo translations idlelib lib/tcl8 lib/tcl8.6 lib/tk8.6 shiboken2/docs ensurepip lib2to3 tkinter unittest include
-qt_folders = array plugins/geoservices plugins/virtualkeyboard plugins/sqldrivers lib/Tix8.4.3 tcl/tix8.4.3 Qt/resources PySide2/resources
+qt_folders = array plugins/geoservices plugins/virtualkeyboard plugins/sqldrivers lib/Tix8.4.3 tcl/tix8.4.3 Qt/resources PySide2/resources PySide2/typesystems PySide2/glue
 qml_folders = array qml/QtWeb* qml/QtBluetooth* qml/QtNfc* qml/QtGamepad qml/QtTest qml/QtQuick3D qml/Qt3D qml/QtSensors qml/QtLocation qml/QtPositioning
 all_folders = array_concat ${py_folders} ${qt_folders} ${qml_folders}
+
+echo "Purging unnecessary data folders..."
 
 for name in ${all_folders}
     folders = glob_array **/${name}/
@@ -492,7 +494,9 @@ for name in ${all_folders}
     end
 end
 
-file_exts = array pyc pyi tcl gif png
+echo "Purging unnecessary data files..."
+
+file_exts = array pyc pyi tcl gif png pxd
 
 for ext in ${file_exts}
     files = glob_array **/*.${ext}
@@ -508,6 +512,8 @@ for ext in ${file_exts}
     end
 end
 
+echo "Purging unnecessary Qt components..."
+
 libs = array QtSensors QtLocation Qt5Location QtPositioning Qt3D Qt53D Qt5Nfc Qt5Web QtWeb Qt5Pdf Qt5Designer Qt5DesignerComponents Qt5VirtualKeyboard Qt5Bluetooth Qt5Quick3D
 
 for lib in ${libs}
@@ -521,10 +527,17 @@ end
 os = os_family
 
 if eq ${os} windows
-    rm -r ./Scripts
 
+    echo "Purging windows specific folders..."
+
+    rm -r ./Scripts
     rm -r ./include
     rm -r ./tcl
+    rm -r ./libs
+    rm -r ./swift-console.d
+    rm -f ./LICENSE.txt
+
+    echo "Purging unnecessary Windows DLLs..."
 
     globs = array _test*.pyd libcrypto*.dll libssl*.dll tcl*.dll tk*.dll
     for glob in ${globs}
@@ -534,10 +547,21 @@ if eq ${os} windows
         end
     end
 
+    echo "Purging unnecessary Qt tools..."
+
     qtbins = glob_array ./Lib/site-packages/PySide2/*.exe
     for bin in ${qtbins}
         rm ${bin}
     end
+
+    echo "Purging static Windows libraries..."
+
+    staticlibs = glob_array ./**/*.lib
+    for libfile in ${staticlibs}
+        rm ${libfile}
+    end
+
+    echo "Removing debug DLLs..."
 
     all_dlls = glob_array ./**/*.dll
     for dll in ${all_dlls}
@@ -550,7 +574,10 @@ if eq ${os} windows
         end
     end
 else
+    echo "Purging `share` dir..."
     rm -r ./share
+
+    echo "Purging Qt unnecessary tools..."
 
     bins = array rcc uic designer pyside2-lupdate Designer.app
     for bin in ${bins}
@@ -561,22 +588,33 @@ else
     end
 end
 
+echo "Purging Python modules: setuptools, wheel, flit, pip..."
 exec --fail-on-error ${DIST_PYTHON} -m pip uninstall -y pip setuptools wheel flit
-exec --fail-on-error ${DIST_PYTHON} -m compileall -b -f -o 1 -o 2 .
+
+echo "Purging pyc files before compiling them..."
+
+pyc_files = glob_array ./**/*.pyc
+
+for pyc_file in ${pyc_files}
+    rm ${pyc_file}
+end
+
+echo "Compiling py files to pyc..."
+
+#exec --fail-on-error ${DIST_PYTHON} -m compileall -f -j 2 -b -o 1 -o 2 .
+exec ${DIST_PYTHON} -m compileall -f -j 2 -b -o 1 -o 2 .
 
 if eq ${os} windows
+    echo "Purging Windows Python native libraries..."
     globs = array pyexpat.* sqlite3.* _ctypes_test.* _bz2.* _decimal.* _elementtree.* _multiprocessing.* _sqlite3.* _ssl.* _tkinter.* _uuid.* _zoneinfo.* _msi.* _test*.*
     for glob in ${globs}
         files = glob_array ./DLLs/${glob}
         for file in ${files}
             rm ${file}
         end
-        files = glob_array ./libs/${glob}
-        for file in ${files}
-            rm ${file}
-        end
     end
 else
+    echo "Purging static Python libraries..."
     globs = array *.a
     for glob in ${globs}
         files = glob_array ./lib/**/${glob}
@@ -587,6 +625,8 @@ else
 endif
 
 if eq ${os} mac
+    echo "Purging misc macOS specific folders and files..."
+
     rm -r lib/python3.9/site-packages/PySide2/Designer.app/
 
     rm lib/python3.9/lib-dynload/_testcapi.cpython-39-darwin.so
@@ -598,7 +638,9 @@ if eq ${os} mac
     rm -r lib/thread2.8.5/
 endif
 
-py_internal_libs = array Lib/email Lib/distutils Lib/http Lib/multiprocessing Lib/msilib Lib/http Lib/dbm Lib/curses Lib/xml Lib/xmlrpc Lib/urllib Lib/ensurepip Lib/venv Lib/wsgiref Lib/lib2to3
+echo "Purging unnecessary Python internal libraries..."
+
+py_internal_libs = array Lib/email Lib/distutils Lib/http Lib/multiprocessing Lib/msilib Lib/http Lib/dbm Lib/curses Lib/xml Lib/xmlrpc Lib/urllib Lib/ensurepip Lib/venv Lib/wsgiref Lib/lib2to3 Lib/pydoc_data Lib/html Lib/sqlite3
 
 for name in ${py_internal_libs}
     folders = glob_array **/${name}/
@@ -607,10 +649,72 @@ for name in ${py_internal_libs}
     end
 end
 
-files = glob_array ./**/*.py
+echo "Purging Python source files..."
 
+files = glob_array ./**/*.py
 for file in ${files}
     rm ${file}
+end
+
+echo "Zipping up Python standard library source files..."
+
+pyc_files = glob_array ./**/*.pyc
+
+if eq ${os} windows
+
+    echo "Copying Python pyc for zip lib..."
+
+    cp Lib ziplib
+    ziplib_files = glob_array ./ziplib/**/*
+
+    for path in ${ziplib_files}
+        is_pyc = ends_with "${path}" ".pyc"
+        if not ${is_pyc}
+	    is_a_file = is_file "${path}"
+	    if ${is_a_file}
+	        echo "Removing ${path}..."
+	        rm -r ${path}
+	    end
+	end
+	site_packages = contains "${path}" "site-packages"
+        if ${site_packages}
+          rm -r ${path}
+	end
+    end
+
+    echo "Removing pyc files..."
+
+    for pyc_file in ${pyc_files}
+        is_pyc = ends_with "${pyc_file}" "os.pyc"
+        if not ${is_pyc}
+            is_palmos_pyc = ends_with "${pyc_file}" "palmos.pyc"
+	    if not ${is_palmos_pyc}
+	       site_packages = contains "${pyc_file}" "site-packages"
+	       if not ${site_packages}
+                   rm ${pyc_file}
+               end
+	    end
+	end
+    end
+
+    ziplib_files = glob_array ./Lib/**/*
+    for path in ${ziplib_files}
+        if is_dir "${path}"
+	    rmdir "${path}"
+	end
+    end
+
+    rm -r Lib/concurrent
+    rm -r Lib/ctypes
+    rm -r Lib/encodings
+
+    echo "Creating Python zip lib..."
+
+    cd ziplib/Lib
+    exec --fail-on-error 7z a -r ../../python39.zip .
+    cd ../..
+
+    rm -r ziplib
 end
 '''
 
@@ -631,6 +735,7 @@ script = '''
 app_name = get_env APP_NAME
 exec --fail-on-error strip ./py39-dist/${app_name}
 rm -r ./py39-dist/bin
+rm ./py39-dist/.frozen
 '''
 
 [tasks.strip-dist.windows]
@@ -641,6 +746,7 @@ app_name = get_env APP_NAME
 exec --fail-on-error strip.exe ./py39-dist/${app_name}.exe
 rm ./py39-dist/python.exe
 rm ./py39-dist/pythonw.exe
+rm ./py39-dist/.frozen
 '''
 
 [tasks.compress-dist]

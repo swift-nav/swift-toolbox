@@ -739,7 +739,7 @@ background_path = get_env BACKGROUND_PATH
 version_path = get_env VERSION_PATH
 version = readfile ${version_path}
 version = trim_end ${version}
-dmg_path = set ./${final_dir}/${app_original_name}_${version}-beta_macos.dmg
+dmg_path = set ./${final_dir}/${app_original_name}_${version}_macos.dmg
 
 old_dmgs = glob_array "./${final_dir}/*.dmg"
 for path in ${old_dmgs}

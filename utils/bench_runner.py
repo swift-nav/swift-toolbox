@@ -116,7 +116,7 @@ BACKEND_CPU_BENCHMARKS = {
 DEFAULT_JSON_FILEPATH = "fileout.json"
 BENCHMARK_COMMAND_ARGS = lambda file_path: f" --exit-after-close --file {file_path}"
 HYPERFINE_COMMAND = (
-    lambda file_out: f'hyperfine --warmup 1 --runs 5 --cleanup "sleep 1" --show-output --export-json {file_out} '
+    lambda file_out: f'hyperfine --warmup 1 --runs 5 --cleanup "sleep 1" --show-output --export-json {file_out}'
 )
 
 FRONTEND_CPU_BENCHMARKS = {
@@ -272,6 +272,7 @@ def run_frontend_cpu_benchmark(executable: str):
             f'{HYPERFINE_COMMAND(DEFAULT_JSON_FILEPATH)} "{prepped_command} '
             f'{BENCHMARK_COMMAND_ARGS(bench[FILE_PATH])}"'
         )
+        print(bench_command)
         subprocess.call(bench_command, shell=True)
         with open(DEFAULT_JSON_FILEPATH, "r", encoding="utf-8") as fileo:
             bench_result = json.load(fileo)

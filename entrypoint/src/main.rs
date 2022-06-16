@@ -1,13 +1,14 @@
 #![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+use std::path::{Path, PathBuf};
 
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
 use entrypoint::attach_console;
 
-const SWIFT_CONSOLE_PID: &str = "SWIFT_CONSOLE_PID";
+type Error = Box<dyn std::error::Error>;
+type Result<T> = std::result::Result<T, Error>;
 
 fn handle_wayland() {
     #[cfg(target_os = "linux")]
@@ -25,37 +26,55 @@ fn handle_wayland() {
     }
 }
 
+fn handle_splash() {
+    #[cfg(feature = "splash")]
+    {
+        std::env::set_var(
+            "SWIFTNAV_CONSOLE_SPLASH",
+            entrypoint::splash::marker_filepath(),
+        );
+        entrypoint::splash::spawn();
+    }
+}
+
+fn app_dir() -> Result<PathBuf> {
+    let current_exe = std::env::current_exe()?;
+    current_exe
+        .parent()
+        .ok_or("no parent directory".into())
+        .map(Path::to_path_buf)
+}
+
+fn pythonhome_dir() -> Result<PathBuf> {
+    let app_dir = app_dir()?.to_path_buf();
+    if cfg!(target_os = "macos") {
+        if let Some(parent) = app_dir.parent() {
+            let resources = parent.join("Resources/lib");
+            if resources.exists() {
+                Ok(parent.join("Resources"))
+            } else {
+                Ok(app_dir)
+            }
+        } else {
+            Ok(app_dir)
+        }
+    } else {
+        Ok(app_dir)
+    }
+}
+
 fn main() -> Result<()> {
     attach_console();
     handle_wayland();
-    let current_exe = std::env::current_exe()?;
-    let parent = current_exe.parent().ok_or("no parent directory")?;
     let args: Vec<_> = std::env::args().collect();
-    let helper_found = args
-        .iter()
-        .any(|arg| matches!(arg.as_ref(), "--help" | "-h" | "--version" | "-V"));
-    if !helper_found {
-        let mut command = std::process::Command::new(parent.join("swift-console-splash"));
-        match command.spawn() {
-            Ok(child) => {
-                let pid = child.id();
-                std::env::set_var(SWIFT_CONSOLE_PID, format!("{pid}"));
-            }
-            Err(e) => {
-                eprintln!("Starting splash screen failed:  {e}");
-            }
-        };
-    }
-
-    std::env::set_var("SWIFTNAV_CONSOLE_FROZEN", parent);
-
-    std::env::set_var("PYTHONHOME", parent);
+    std::env::set_var("SWIFTNAV_CONSOLE_FROZEN", app_dir()?);
+    std::env::set_var("PYTHONHOME", pythonhome_dir()?);
     std::env::set_var("PYTHONDONTWRITEBYTECODE", "1");
+    handle_splash();
     let exit_code = Python::with_gil(|py| {
         let args = PyTuple::new(py, args);
         let snav = py.import("swiftnav_console.main")?;
         snav.call_method("main", (args,), None)?.extract::<i32>()
     })?;
-
     std::process::exit(exit_code);
 }

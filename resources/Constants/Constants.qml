@@ -178,7 +178,7 @@ QtObject {
     }
 
     systemMonitor: QtObject {
-        readonly property var columnHeaders: ["Thread Name", "CPU %", "Stack Free"]
+        readonly property var columnHeaders: ["Thread Name", "CPU %", "Stack Free (B)"]
         readonly property var metricColumnHeaders: ["Metric", "Value"]
         readonly property string currLabel: "Curr"
         readonly property string maxLabel: "Max"
@@ -196,7 +196,7 @@ QtObject {
         readonly property int observationConnectionMonitorColumnSpan: 2
         readonly property int resetButtonHeight: 50
         readonly property int resetButtonWidth: 100
-        readonly property string resetButtonLabel: "Reset Device"
+        readonly property string resetButtonLabel: "Reboot Device"
         readonly property int resetButtonIconSideLength: 10
         readonly property int obsTextMargins: 5
         readonly property int textHeight: 20
@@ -214,7 +214,7 @@ QtObject {
         readonly property var defaultThreadsList: {
             "Thread Name": "",
             "CPU %": "",
-            "Stack Free": ""
+            "Stack Free (B)": ""
         }
         readonly property var defaultMetricsList: {
             "Metric": "",
@@ -579,7 +579,7 @@ QtObject {
         readonly property font axisLabelsFont: Qt.font({
             "family": fontFamily,
             "pixelSize": smallPixelSize,
-            "bold": true
+            "bold": false
         })
         readonly property int tickPixelSize: 10
         readonly property int buttonHeight: 40

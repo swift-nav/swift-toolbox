@@ -92,6 +92,11 @@ jobs:
           path: ${{ env.PIP_CACHE_DIR }}
           key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
 
+      - name: Install ImageMagick
+        shell: bash
+        run: |
+          cargo make install-imagemagick
+
       - name: Set up python builder
         shell: bash
         run: |
@@ -159,6 +164,11 @@ jobs:
         with:
           path: ${{ env.PIP_CACHE_DIR }}
           key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
+
+      - name: Install ImageMagick
+        shell: bash
+        run: |
+          cargo make install-imagemagick
 
       - name: Set up python builder
         run: |
@@ -265,6 +275,11 @@ jobs:
         with:
           version: ${{ env.CARGO_MAKE_VERSION }}
 
+      - name: Install ImageMagick
+        shell: bash
+        run: |
+          cargo make install-imagemagick
+
       - name: Cache pip
         uses: actions/cache@v2
         with:
@@ -288,6 +303,11 @@ jobs:
         run: |
           echo "LIBCLANG_PATH=$LIBCLANG_PATH_WIN" >>$GITHUB_ENV
         if: matrix.os.name == 'windows-2019'
+
+      - name: Store git tag vars.
+        shell: bash
+        run: |
+          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
 
       - name: Build ${{ runner.os }} Binaries.
         shell: bash
@@ -436,30 +456,26 @@ jobs:
         shell: bash
         run: |
           cd "application/target/installer/Swift Console.app"
+
           for f in $(find Contents/Resources/lib/ -name '*.dylib' -or -name '*.so')
           do
-            codesign \
+            codesign -vvvv \
             -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
             --timestamp \
             "$f"
           done
 
-          codesign \
-            -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
-            --timestamp \
-            --options=runtime \
-            Contents/Resources/lib/python3.9/site-packages/shiboken2_generator/shiboken2
-
           for f in $(ls Contents/Resources/lib/python3.9/site-packages/**/Qt/lib/*.framework/Versions/5/*)
           do
-            codesign \
+            codesign -vvvv \
               -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
               --timestamp \
               "$f"
           done
 
           cd ../../../
-          codesign \
+
+          codesign -vvvv \
             -s "${{ secrets.APPLE_DEVELOPER_ID }}" --deep \
             --entitlements installers/macOS/entitlements.plist \
             --timestamp \
@@ -595,7 +611,8 @@ jobs:
           path: |
             installer
 
-      - name: Sign Installer.
+      - name: Sign NSIS installer (Windows)
+        if: matrix.os == 'Windows'
         shell: cmd
         run: |
           cd installer
@@ -605,23 +622,57 @@ jobs:
             /n "Swift Navigation, Inc." /a ^
             /tr http://rfc3161timestamp.globalsign.com/advanced ^
             /td SHA256 %executable%
-        if: matrix.os == 'Windows'
 
-      - name: Sign Installer.
+      - name: Sign installer (macOS)
+        if: matrix.os == 'macOS'
         shell: bash
         run: |
           cd installer
-          codesign \
+
+          codesign -vvvv \
             -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
             -f --timestamp \
             $(cat installer-archive.filename)
+
           xcrun altool \
+            --verbose \
             --notarize-app \
             --file $(cat installer-archive.filename) \
             --primary-bundle-id ${{ env.APP_BUNDLE_ID }} \
             --apiKey ${{ secrets.APPLE_KEY_ID }} \
-            --apiIssuer ${{ secrets.APPLE_ISSUER_ID }}
+            --apiIssuer ${{ secrets.APPLE_ISSUER_ID }} | tee notarize.log
+
+          REQUEST_UUID=$(cat notarize.log | grep RequestUUID | awk '{print $3}')
+
+          echo "REQUEST_UUID=$REQUEST_UUID" >>$GITHUB_ENV
+
+      - name: Check notarization (macOS)
         if: matrix.os == 'macOS'
+        uses: nick-invision/retry@v2
+        with:
+          shell: bash
+          timeout_minutes: 3
+          retry_wait_seconds: 120
+          max_attempts: 10
+          retry_on: error
+          command: |
+            cd installer
+
+            xcrun altool \
+              --verbose \
+              --notarization-info ${{ env.REQUEST_UUID }} \
+              --apiKey ${{ secrets.APPLE_KEY_ID }} \
+              --apiIssuer ${{ secrets.APPLE_ISSUER_ID }} | tee notarize_status.log
+            
+            NOTARIZATION_STATUS=$(cat notarize_status.log | grep Status: | awk '{print $2}')
+            if [ $NOTARIZATION_STATUS == "success" ]; then
+              echo "Notarization Successful"
+            else
+              echo "Notarization Failed"
+              exit 1
+            fi
+
+            xcrun stapler staple -v "$(cat installer-archive.filename)"
 
       - name: Add archive to path.
         shell: bash
@@ -698,7 +749,7 @@ jobs:
         shell: bash
         working-directory: binaries
         run: |
-          codesign \
+          codesign -vvvv \
             -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
             --timestamp \
             --options=runtime \
@@ -795,10 +846,13 @@ jobs:
         shell: bash
         working-directory: binaries-all
         run: |
-          codesign \
+
+          codesign -vvvv \
             -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
             -f --timestamp "swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-all.zip"
+
           xcrun altool \
+            --verbose \
             --notarize-app \
             --file swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-all.zip\
             --primary-bundle-id ${{ env.APP_BUNDLE_ID }} \

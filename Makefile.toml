@@ -122,14 +122,11 @@ exec --fail-on-error ${python} -m py2many --rust=1 /tmp/piksi_tools_constants.py
 '''
 
 [tasks.generate-resources]
-command = "${PYSIDE2_RCC}"
-args = [
-  "resources/console_resources.qrc",
-  "-o",
-  "swiftnav_console/console_resources.py",
-  "-g",
-  "python",
-]
+dependencies = ["build-splash-version"]
+script_runner = "@duckscript"
+script = '''
+  exec --fail-on-error "${PYSIDE2_RCC}" "resources/console_resources.qrc" "-o" "swiftnav_console/console_resources.py" "-g" "python"
+'''
 
 [tasks.check-capnp]
 script_runner = "@shell"
@@ -300,12 +297,11 @@ exec --fail-on-error tar -xvf py39.tar
 [tasks.install-pyside-wheels]
 env = { USE_PYTHON = { value = "${PYTHON}", condition = { env_not_set = [
   "USE_PYTHON",
-] } }, OS_WHEEL_LABEL = { source = "${OS}", default_value = "unknown", mapping = { "linux" = "linux_x86_64", "mac" = "macosx_10_13_x86_64", "windows" = "win_amd64" } } }
+] } }, OS_WHEEL_LABEL = { source = "${OS}", default_value = "unknown", mapping = { "linux" = "abi3-manylinux1_x86_64", "mac" = "abi3-macosx_10_13_intel", "windows" = "none-win_amd64" } } }
 script_runner = "@duckscript"
 script = '''
-exec --fail-on-error ${USE_PYTHON} -m pip install pyside-wheels/shiboken2-5.15.2.1-5.15.2-cp39-cp39-${OS_WHEEL_LABEL}.whl
-exec --fail-on-error ${USE_PYTHON} -m pip install pyside-wheels/shiboken2_generator-5.15.2.1-5.15.2-cp39-cp39-${OS_WHEEL_LABEL}.whl
-exec --fail-on-error ${USE_PYTHON} -m pip install pyside-wheels/PySide2-5.15.2.1-5.15.2-cp39-cp39-${OS_WHEEL_LABEL}.whl
+exec --fail-on-error ${USE_PYTHON} -m pip install pyside-wheels/shiboken2-5.15.2.2-5.15.2-cp35.cp36.cp37.cp38.cp39.cp310-${OS_WHEEL_LABEL}.whl
+exec --fail-on-error ${USE_PYTHON} -m pip install pyside-wheels/PySide2-5.15.2.2-5.15.2-cp35.cp36.cp37.cp38.cp39.cp310-${OS_WHEEL_LABEL}.whl
 '''
 
 [tasks.setup-builder]
@@ -340,29 +336,69 @@ cd ../../..
 exec --fail-on-error ${DIST_PYTHON} ./get-pip.py
 '''
 
-[tasks.call-build-splash-bin]
-private = true
+[tasks.install-imagemagick]
+
+[tasks.install-imagemagick.windows]
+script_runner = "@duckscript"
+script = '''
+wget -O imagemagick.tool.7.1.0.nupkg https://github.com/swift-nav/swift-toolchains/releases/download/imagemagick-7.1.0/imagemagick.tool.7.1.0.nupkg
+exec --fail-on-error choco install -q -y vcredist2010 --version=10.0.40219.1
+exec --fail-on-error choco install -q -y ./imagemagick.tool.7.1.0.nupkg
+rm imagemagick.tool.7.1.0.nupkg
+'''
+
+[tasks.install-imagemagick.linux]
+script = "sudo apt-get install gsfonts imagemagick"
+
+[tasks.install-imagemagick.mac]
+script = "brew install imagemagick"
+
+[tasks.build-splash-version]
+script_runner = "@duckscript"
+script = '''
+output = exec --fail-on-error git describe --always --tags --dirty
+version = trim ${output.stdout}
+os = os_family
+if eq ${os} windows
+  exec --fail-on-error magick convert -font arial -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
+else
+  exec --fail-on-error convert -font helvetica -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
+end
+'''
+
+[tasks.build-windowpos-bin]
+dependencies = ["build-splash-version"]
 command = "cargo"
 args = [
   "build",
   "--release",
   "-vv",
   "--features",
-  "splash",
+  "winit",
   "--bin",
-  "swift-console-splash",
+  "windowpos",
 ]
 
-[tasks.call-build-console-bin]
-private = true
-dependencies = ["call-build-splash-bin"]
+[tasks.build-console-bin]
+command = "cargo"
+args = [
+  "build",
+  "--release",
+  "-vv",
+  "--features=entrypoint",
+  "--bin",
+  "${APP_NAME}",
+]
+
+[tasks.build-console-bin.linux]
+dependencies = ["build-windowpos-bin"]
 command = "cargo"
 args = [
   "build",
   "--release",
   "-vv",
   "--features",
-  "entrypoint",
+  "entrypoint,splash",
   "--bin",
   "${APP_NAME}",
 ]
@@ -370,10 +406,10 @@ args = [
 [tasks.build-console]
 env = { PYO3_CONFIG_FILE = "${CONSOLE_PYO3_CONFIG_FILE}" }
 dependencies = ["write-pyo3-config-console"]
-run_task = "call-build-console-bin"
+run_task = "build-console-bin"
 
 [tasks.build-console.windows]
-dependencies = ["call-build-console-bin"]
+dependencies = ["build-console-bin"]
 
 [tasks.build-dist-install-console]
 dependencies = ["build-console"]
@@ -381,19 +417,23 @@ script_runner = "@duckscript"
 script = '''
 app_name = get_env APP_NAME
 cp target/release/${app_name} py39-dist/${app_name}
-cp target/release/swift-console-splash py39-dist/swift-console-splash
 os = os_family
 if eq ${os} mac
-  exec --fail-on-error install_name_tool -change /install/lib/libpython3.9.dylib @executable_path/lib/libpython3.9.dylib py39-dist/${app_name}
+  exec --fail-on-error install_name_tool -change /install/lib/libpython3.9.dylib @rpath/libpython3.9.dylib py39-dist/${app_name}
+  exec --fail-on-error install_name_tool -add_rpath @executable_path/../Resources/lib py39-dist/${app_name}
+  exec --fail-on-error install_name_tool -add_rpath @executable_path/lib py39-dist/${app_name}
+elseif eq ${os} linux
+  cp target/release/windowpos py39-dist/windowpos
 end
 '''
 
 [tasks.build-dist-install-console.windows]
 script = '''
-cp target/release/swift-console-splash.exe py39-dist/swift-console-splash.exe
 cp target/release/${APP_NAME}.exe py39-dist/${APP_NAME}.exe
 cp target/release/${APP_NAME}.d py39-dist/${APP_NAME}.d
-cp target/release/swift_console.pdb py39-dist/swift_console.pdb
+if is_path_exists target/release/swift_console.pdb
+  cp target/release/swift_console.pdb py39-dist/swift_console.pdb
+end
 cp target/x86_64-pc-windows-msvc/release/console_backend.pdb py39-dist/Lib/site-packages/console_backend/console_backend.pdb
 '''
 
@@ -444,6 +484,7 @@ py_folders = array test tests examples __pycache__ demos turtledemo translations
 qt_folders = array plugins/geoservices plugins/virtualkeyboard plugins/sqldrivers lib/Tix8.4.3 tcl/tix8.4.3 Qt/resources PySide2/resources
 qml_folders = array qml/QtWeb* qml/QtBluetooth* qml/QtNfc* qml/QtGamepad qml/QtTest qml/QtQuick3D qml/Qt3D qml/QtSensors qml/QtLocation qml/QtPositioning
 all_folders = array_concat ${py_folders} ${qt_folders} ${qml_folders}
+
 for name in ${all_folders}
     folders = glob_array **/${name}/
     for folder in ${folders}
@@ -452,6 +493,7 @@ for name in ${all_folders}
 end
 
 file_exts = array pyc pyi tcl gif png
+
 for ext in ${file_exts}
     files = glob_array **/*.${ext}
     for file in ${files}
@@ -467,6 +509,7 @@ for ext in ${file_exts}
 end
 
 libs = array QtSensors QtLocation Qt5Location QtPositioning Qt3D Qt53D Qt5Nfc Qt5Web QtWeb Qt5Pdf Qt5Designer Qt5DesignerComponents Qt5VirtualKeyboard Qt5Bluetooth Qt5Quick3D
+
 for lib in ${libs}
     files = glob_array ./**/*${lib}*
     for file in ${files}
@@ -476,6 +519,7 @@ for lib in ${libs}
 end
 
 os = os_family
+
 if eq ${os} windows
     rm -r ./Scripts
 
@@ -489,9 +533,21 @@ if eq ${os} windows
             rm ${file}
         end
     end
+
     qtbins = glob_array ./Lib/site-packages/PySide2/*.exe
     for bin in ${qtbins}
         rm ${bin}
+    end
+
+    all_dlls = glob_array ./**/*.dll
+    for dll in ${all_dlls}
+        if ends_with ${dll} "d.dll"
+            dll_no_debug = substring ${dll} -5 # remove d.dll
+            dll_no_debug = concat ${dll_no_debug} ".dll"
+            if is_path_exists ${dll_no_debug}
+                rm ${dll}
+            end
+        end
     end
 else
     rm -r ./share
@@ -530,6 +586,18 @@ else
     end
 endif
 
+if eq ${os} mac
+    rm -r lib/python3.9/site-packages/PySide2/Designer.app/
+
+    rm lib/python3.9/lib-dynload/_testcapi.cpython-39-darwin.so
+    rm lib/python3.9/lib-dynload/xxlimited.cpython-39-darwin.so
+
+    rm -r lib/python3.9/venv/
+
+    rm -r lib/pkgconfig/
+    rm -r lib/thread2.8.5/
+endif
+
 py_internal_libs = array Lib/email Lib/distutils Lib/http Lib/multiprocessing Lib/msilib Lib/http Lib/dbm Lib/curses Lib/xml Lib/xmlrpc Lib/urllib Lib/ensurepip Lib/venv Lib/wsgiref Lib/lib2to3
 
 for name in ${py_internal_libs}
@@ -540,6 +608,7 @@ for name in ${py_internal_libs}
 end
 
 files = glob_array ./**/*.py
+
 for file in ${files}
     rm ${file}
 end
@@ -621,7 +690,7 @@ set_env BACKGROUND_PATH "resources/images/LogoBackground.jpg"
 
 [tasks.dist-to-installer-app]
 [tasks.dist-to-installer-app.mac]
-dependencies = ["dist-to-installer-env"]
+dependencies = ["dist-to-installer-env", "store-version"]
 script_runner = "@duckscript"
 script = '''
 final_dir = get_env FINAL_DIR
@@ -636,6 +705,9 @@ contents_resources_dir = get_env CONTENTS_RESOURCES_DIR
 contents_resources_dir = set ${contents_dir}/${contents_resources_dir}
 info_plist_path = get_env INFO_PLIST_PATH
 icns_path = get_env ICNS_PATH
+version_path = get_env VERSION_PATH
+version = readfile ${version_path}
+version = trim_end ${version}
 
 if is_path_exists ${tmp_dir}
   rm -r ${tmp_dir}
@@ -645,11 +717,8 @@ mkdir ${contents_dir}
 mkdir ${contents_mac_os}
 exec --fail-on-error cp -r py39-dist "${contents_resources_dir}"
 exec --fail-on-error mv ./${contents_resources_dir}/${app_original_name} "./${contents_mac_os}/${app_file_prefix}"
-exec --fail-on-error mv ./${contents_resources_dir}/swift-console-splash "./${contents_mac_os}/swift-console-splash"
-exec --fail-on-error ln -s "../Resources/lib" ${contents_mac_os}/lib
-exec --fail-on-error ln -s "../Resources/.frozen" ${contents_mac_os}/.frozen
-exec --fail-on-error ln -s "../Resources/resources" ${contents_mac_os}/resources
 cp ./${info_plist_path} ./${contents_dir}/Info.plist
+exec --fail-on-error sed -i "" -e "s/@@VERSION@@/${version}/g" "${contents_dir}/Info.plist"
 mkdir ${contents_resources_dir}
 cp ${icns_path} ./${contents_resources_dir}/${app_file_prefix}.icns
 '''
@@ -727,7 +796,6 @@ mkdir -p "$TMP_DIR/$USR_DIR/$ICONS_DIR"
 cp -r installers/Linux/hicolor/* "$TMP_DIR/$USR_DIR/$ICONS_DIR"
 
 DEB_PKG_DEPS="\
-  libssl1.1 \
   libxcb1 \
   libxcb-xkb1 \
   libxcb-icccm4 \
@@ -765,11 +833,14 @@ mv *.deb installers/Linux/
 [tasks.install-nsis-plugin]
 script_runner = "@duckscript"
 script = '''
-filepath = set installers/Windows/NSIS/Inetc.zip
-if not is_path_exists ${filepath}
-  mkdir installers/Windows/NSIS
-  wget -O ${filepath} https://nsis.sourceforge.io/mediawiki/images/c/c9/Inetc.zip
+inetc_filepath = set installers/Windows/NSIS/Plugins/x86-unicode/INetC.dll
+if not is_path_exists ${inetc_filepath}
   exec --fail-on-error unzip -d installers/Windows/NSIS installers/Windows/NSIS/Inetc.zip
+end
+nsprocess_filepath = set installers/Windows/NSIS/Plugin/nsProcess.dll
+if not is_path_exists ${nsprocess_filepath}
+  exec --fail-on-error unzip -d installers/Windows/NSIS installers/Windows/NSIS/nsProcess.zip
+  exec --fail-on-error mv installers/Windows/NSIS/Plugin/nsProcessW.dll installers/Windows/NSIS/Plugin/nsProcess.dll
 end
 '''
 
@@ -835,10 +906,40 @@ command = "cargo"
 cwd = "console_backend"
 args = ["test", "--features", "tests", "${@}", "--", "--nocapture"]
 
+[tasks.rust-tests-filter]
+dependencies = ["store-version", "copy-capnp"]
+command = "cargo"
+cwd = "console_backend"
+args = [
+  'test',
+  '--package',
+  'console-backend',
+  '--lib',
+  '--all-features',
+  '--',
+  '${RUST_TEST_FILTER}',
+  '--exact',
+  '--nocapture',
+]
+
 [tasks.rust-type-check]
 dependencies = ["store-version", "copy-capnp"]
 command = "cargo"
 args = ["check"]
+
+[tasks.watch-entrypoint]
+dependencies = ["store-version", "copy-capnp"]
+command = "cargo"
+args = [
+  "watch",
+  "--exec",
+  "check --bin swift-console --features=entrypoint,splash",
+]
+
+[tasks.watch-windowpos]
+dependencies = ["store-version", "copy-capnp"]
+command = "cargo"
+args = ["watch", "--exec", "check --bin windowpos --features=winit"]
 
 [tasks.python-type-check]
 dependencies = ["set-python-files"]

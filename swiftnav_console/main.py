@@ -4,6 +4,7 @@ import argparse
 from datetime import datetime
 import os
 import pickle
+import platform
 import sys
 import time
 
@@ -11,14 +12,14 @@ from typing import Optional, Tuple
 
 import capnp  # type: ignore
 
-from PySide2.QtWidgets import QApplication  # type: ignore
+from PySide2.QtWidgets import QApplication, QSplashScreen  # type: ignore
 
 from PySide2.QtCore import QObject, QUrl, QPointF, QThread, QTimer, Slot
 from PySide2.QtCharts import QtCharts  # pylint: disable=unused-import
 
 from PySide2 import QtQml, QtCore
 
-from PySide2.QtGui import QFontDatabase, QIcon
+from PySide2.QtGui import QFontDatabase, QIcon, QPixmap
 
 from PySide2.QtQml import QQmlComponent, qmlRegisterType
 
@@ -303,7 +304,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
 
     def _process_message_buffer(self, buffer):
         if not buffer:
-            print("terminating GUI loop", file=sys.stderr)
+            print("Terminating GUI loop", file=sys.stderr, flush=True)
             return False
         Message = self._messages.Message
         m = Message.from_bytes(buffer)
@@ -402,7 +403,8 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
             data[Keys.OBS_LATENCY][:] = [[entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.obsLatency]
             data[Keys.OBS_PERIOD][:] = [[entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.obsPeriod]
             data[Keys.THREADS_TABLE][:] = [
-                [entry.name, entry.cpu, entry.stackFree] for entry in m.advancedSystemMonitorStatus.threadsTable
+                [entry.name, "%.1f" % entry.cpu, entry.stackFree]
+                for entry in m.advancedSystemMonitorStatus.threadsTable
             ]
             data[Keys.CSAC_TELEM_LIST][:] = [
                 [entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.csacTelemList
@@ -556,15 +558,27 @@ def is_frozen() -> bool:
     Returns:
         bool: Whether the application is frozen.
     """
-    me = os.path.dirname(sys.executable)
+    me = get_app_dir()
     var_frozen = os.environ.get("SWIFTNAV_CONSOLE_FROZEN", "") != ""
     path_frozen = os.path.exists(os.path.join(me, ".frozen"))
     return var_frozen or path_frozen
 
 
-def get_app_dir() -> str:
+def get_app_dir(alt: bool = False) -> str:
+    """Fetches the application resources directory.
+
+    Args:
+        alt (bool): fetch an alternate data directory (only valid on macOS)
+
+    Returns:
+        str: path to the resoure dir (accounting for OS differences)
+    """
     var_frozen = os.environ.get("SWIFTNAV_CONSOLE_FROZEN", "")
     if var_frozen != "":
+        if platform.system() == "Darwin":
+            if alt:
+                return var_frozen
+            return os.path.join(var_frozen, "../Resources")
         return var_frozen
     return os.path.dirname(sys.executable)
 
@@ -575,10 +589,11 @@ def get_capnp_path() -> str:
     Returns:
         str: The path to the capnp file.
     """
-    d = get_app_dir()
     path = ""
     if is_frozen():
-        path = os.path.join(d, "resources/base", CONSOLE_BACKEND_CAPNP_PATH)
+        path = os.path.join(get_app_dir(), "resources/base", CONSOLE_BACKEND_CAPNP_PATH)
+        if not os.path.exists(path):
+            path = os.path.join(get_app_dir(alt=True), "resources/base", CONSOLE_BACKEND_CAPNP_PATH)
     else:
         path = os.path.join(
             os.path.dirname(os.path.dirname(__file__)), "src/main/resources/base", CONSOLE_BACKEND_CAPNP_PATH
@@ -623,6 +638,46 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
             globals_.setProperty("width", args.width)  # type: ignore
     if args.show_file_connection:
         globals_.setProperty("showFileConnection", True)  # type: ignore
+
+
+def start_splash_linux():
+    splash_filename = os.getenv("SWIFTNAV_CONSOLE_SPLASH")
+    if not splash_filename:
+        return
+    try:
+        with open(splash_filename, "wb"):
+            pass
+    except FileNotFoundError:
+        pass
+
+
+def start_splash() -> Optional[QSplashScreen]:
+    if platform.system() == "Linux":
+        start_splash_linux()
+        return None
+    pixmap = QPixmap(":/images/splash-version.jpg")
+    splash = QSplashScreen(pixmap)
+    splash.show()
+    return splash
+
+
+def stop_splash_linux():
+    splash_filename = os.getenv("SWIFTNAV_CONSOLE_SPLASH")
+    if not splash_filename:
+        return
+    try:
+        os.remove(splash_filename)
+        time.sleep(0.200)
+    except FileNotFoundError:
+        pass
+
+
+def stop_splash(splash: Optional[QSplashScreen]):
+    if platform.system() == "Linux":
+        stop_splash_linux()
+    else:
+        assert splash is not None
+        splash.close()
 
 
 def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
@@ -711,6 +766,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
 
     if found_help_arg:
         return 0
+
     # Unfortunately it is not possible to access singletons directly using the PySide2 API.
     # This approach stores the globals somwhere that can be grabbed and manipulated.
     component = QQmlComponent(engine)
@@ -722,6 +778,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     globals_main = globals_main.property("globals")  # type: ignore
 
     handle_cli_arguments(args_main, globals_main)
+    splash = start_splash()
 
     engine.addImportPath("PySide2")
     engine.addImportPath(":/")
@@ -779,14 +836,15 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     )
     backend_msg_receiver.start()
 
+    stop_splash(splash)
     app.exec_()
 
     endpoint_main.shutdown()
-
     backend_msg_receiver.join()
 
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    exit_code = main()
+    sys.exit(exit_code)

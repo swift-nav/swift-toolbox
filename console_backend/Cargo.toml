@@ -26,29 +26,32 @@ ordered-float = "3.0"
 ndarray = "0.15.4"
 glob = "0.3.0"
 criterion = "0.3.4"
-sysinfo = "0.23.13"
+sysinfo = "0.24.3"
 serialport = { git = "https://github.com/swift-nav/serialport-rs.git", default-features = false }
 directories = "4"
 anyhow = { version = "1", features = ["backtrace"] }
 serde_yaml = "0.8.24"
 clap = { version = "3.1.18", features = ["derive"] }
-indexmap = { version = "1.8.1", features = ["serde"] }
+indexmap = { version = "1.8.2", features = ["serde"] }
 serde_json = { version = "1" }
 crossbeam = "0.8"
 rand = "0.8.5"
 serde-pickle = { version = "1.1.1", optional = true }
-parking_lot = "0.12.0"
+parking_lot = "0.12.1"
 regex = { version = "1.5.6" }
 rust-ini = "0.18.0"
-sbp = { version = "4.3.0", features = ["json", "link", "swiftnav"] }
-sbp-settings = "0.6.9"
+sbp = { version = "4.3.3", features = ["json", "link", "swiftnav"] }
+sbp-settings = "0.6.10"
 env_logger = { version = "0.9", optional = true }
 mimalloc = { version = "0.1", default-features = false }
-curl = { version = "0.4", features = ["ssl", "static-curl"] }
 indicatif = { version = "0.16", optional = true }
 
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 serialport = { git = "https://github.com/swift-nav/serialport-rs.git" }
+curl = { version = "0.4", features = ["ssl", "static-curl"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+curl = { version = "0.4", features = ["rustls", "static-curl"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = ">=0.24", features = [
@@ -58,7 +61,7 @@ windows = { version = ">=0.24", features = [
 
 [dev-dependencies]
 logtest = "2.0.0"
-serial_test = "0.6.0"
+serial_test = "0.7.0"
 
 [build-dependencies]
 capnpc = "0.14"

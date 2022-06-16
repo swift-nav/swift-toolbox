@@ -2288,9 +2288,9 @@ dependencies = [
 
 [[package]]
 name = "sbp"
-version = "4.3.3"
+version = "4.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b385329ce6940c10121b73e44fa160bcaa0866d6b748a2a98a9839d9801e3824"
+checksum = "9fa719db69b6b5eb88f54c7ef5d1342f2f79d4e01bb548674b020ce835dd669c"
 dependencies = [
  "base64",
  "bytes",
@@ -2691,18 +2691,18 @@ dependencies = [
 
 [[package]]
 name = "swiftnav"
-version = "0.7.0"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1327b1980ace390626603d314b572d90ccfc628783c0ed1ad24fb15ad27de4d8"
+checksum = "596f5dddddeb2895b7d0c81eeb65f1a3d5b64e349c73efa8c3d83e9ead19c5fe"
 dependencies = [
  "swiftnav-sys",
 ]
 
 [[package]]
 name = "swiftnav-sys"
-version = "0.7.0"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba1ab75340a2ca76fc93c979d2811de32b8f0f133761246659ba4eb486e6f563"
+checksum = "7eb495c3322f6a34303e872e75bd2dade8d39898bbdd2bb1ddba2c8f560a0539"
 dependencies = [
  "bindgen",
  "cmake",

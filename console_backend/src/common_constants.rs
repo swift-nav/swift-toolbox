@@ -257,14 +257,10 @@ pub enum Keys {
     OBS_LATENCY,
     #[strum(serialize = "THREADS_TABLE")]
     THREADS_TABLE,
-    #[strum(serialize = "CSAC_TELEM_LIST")]
-    CSAC_TELEM_LIST,
     #[strum(serialize = "ZYNQ_TEMP")]
     ZYNQ_TEMP,
     #[strum(serialize = "FE_TEMP")]
     FE_TEMP,
-    #[strum(serialize = "CSAC_RECEIVED")]
-    CSAC_RECEIVED,
     #[strum(serialize = "RUNNING")]
     RUNNING,
     #[strum(serialize = "NETWORK_INFO")]

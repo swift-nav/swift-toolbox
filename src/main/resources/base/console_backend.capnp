@@ -251,8 +251,6 @@ struct AdvancedSystemMonitorStatus {
     threadsTable @2 :List(ThreadState);
     zynqTemp @3: Float64;
     feTemp @4: Float64;
-    csacTelemList @5: List(KeyValPair);
-    csacReceived @6: Bool;
 }
 
 struct NetworkState {

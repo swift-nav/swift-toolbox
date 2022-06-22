@@ -13,10 +13,8 @@ def advanced_system_monitor_tab_update() -> Dict[str, Any]:
         Keys.OBS_PERIOD: [],
         Keys.OBS_LATENCY: [],
         Keys.THREADS_TABLE: [],
-        Keys.CSAC_TELEM_LIST: [],
         Keys.ZYNQ_TEMP: 0.0,
         Keys.FE_TEMP: 0.0,
-        Keys.CSAC_RECEIVED: False,
     }
 
 
@@ -27,10 +25,8 @@ class AdvancedSystemMonitorData(QObject):  # pylint: disable=too-many-instance-a
     _obs_period: List[List[Any]] = []
     _obs_latency: List[List[Any]] = []
     _threads_table: List[List[Any]] = []
-    _csac_telem_list: List[List[str]] = []
     _zynq_temp: float = 0.0
     _fe_temp: float = 0.0
-    _csac_received: bool = False
     _data_updated = Signal()
     advanced_system_monitor_tab: Dict[str, Any] = {}
 
@@ -49,16 +45,6 @@ class AdvancedSystemMonitorData(QObject):  # pylint: disable=too-many-instance-a
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:
         self.advanced_system_monitor_tab = ADVANCED_SYSTEM_MONITOR_TAB[0]
-
-    def get_csac_telem_list(self) -> List[List[str]]:
-        """Getter for _csac_telem_list."""
-        return self._csac_telem_list
-
-    def set_csac_telem_list(self, csac_telem_list: List[List[str]]) -> None:
-        """Setter for _csac_telem_list."""
-        self._csac_telem_list = csac_telem_list
-
-    csac_telem_list = Property(QTKeys.QVARIANTLIST, get_csac_telem_list, set_csac_telem_list)  # type: ignore
 
     def get_threads_table(self) -> List[List[str]]:
         """Getter for _threads_table."""
@@ -110,16 +96,6 @@ class AdvancedSystemMonitorData(QObject):  # pylint: disable=too-many-instance-a
 
     fe_temp = Property(float, get_fe_temp, set_fe_temp)
 
-    def get_csac_received(self) -> bool:
-        """Getter for _csac_received."""
-        return self._csac_received
-
-    def set_csac_received(self, csac_received_: bool) -> None:
-        """Setter for _csac_received."""
-        self._csac_received = csac_received_
-
-    csac_received = Property(bool, get_csac_received, set_csac_received)
-
 
 class AdvancedSystemMonitorModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(AdvancedSystemMonitorData)  # type: ignore
@@ -129,8 +105,6 @@ class AdvancedSystemMonitorModel(QObject):  # pylint: disable=too-few-public-met
         cp.set_obs_latency(cp.advanced_system_monitor_tab[Keys.OBS_LATENCY])
         cp.set_obs_period(cp.advanced_system_monitor_tab[Keys.OBS_PERIOD])
         cp.set_threads_table(cp.advanced_system_monitor_tab[Keys.THREADS_TABLE])
-        cp.set_csac_telem_list(cp.advanced_system_monitor_tab[Keys.CSAC_TELEM_LIST])
         cp.set_fe_temp(cp.advanced_system_monitor_tab[Keys.FE_TEMP])
         cp.set_zynq_temp(cp.advanced_system_monitor_tab[Keys.ZYNQ_TEMP])
-        cp.set_csac_received(cp.advanced_system_monitor_tab[Keys.CSAC_RECEIVED])
         return cp

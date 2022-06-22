@@ -404,10 +404,6 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
             data[Keys.THREADS_TABLE][:] = [
                 [entry.name, entry.cpu, entry.stackFree] for entry in m.advancedSystemMonitorStatus.threadsTable
             ]
-            data[Keys.CSAC_TELEM_LIST][:] = [
-                [entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.csacTelemList
-            ]
-            data[Keys.CSAC_RECEIVED] = m.advancedSystemMonitorStatus.csacReceived
             data[Keys.ZYNQ_TEMP] = m.advancedSystemMonitorStatus.zynqTemp
             data[Keys.FE_TEMP] = m.advancedSystemMonitorStatus.feTemp
             AdvancedSystemMonitorData.post_data_update(data)

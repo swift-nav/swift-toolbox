@@ -515,6 +515,8 @@ jobs:
           - Windows
           - Linux
     runs-on: [self-hosted, '${{ matrix.os }}', bench]
+    env:
+      WINDOWPOS_NAME: windowpos
     steps:
       - name: Remove previous build.
         shell: bash
@@ -559,6 +561,9 @@ jobs:
                 python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}.exe"
             elif [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
                 chmod +x "${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
+                if [ "$RUNNER_OS" == "Linux" ]; then
+                  chmod +x "${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.WINDOWPOS_NAME }}"
+                fi
                 python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
             else
                 echo "Invalid platform"
@@ -578,6 +583,9 @@ jobs:
                 python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}.exe"
             elif [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
                 chmod +x "${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
+                if [ "$RUNNER_OS" == "Linux" ]; then
+                  chmod +x "${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.WINDOWPOS_NAME }}"
+                fi
                 python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
             else
                 echo "Invalid platform"

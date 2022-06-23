@@ -1,7 +1,6 @@
 use capnp::message::Builder;
 use ordered_float::OrderedFloat;
 use sbp::messages::piksi::{MsgDeviceMonitor, MsgThreadState};
-use sbp::messages::system::{MsgCsacTelemetry, MsgCsacTelemetryLabels};
 use std::collections::HashMap;
 
 use crate::client_sender::BoxedClientSender;
@@ -9,7 +8,6 @@ use crate::types::UartState;
 use crate::utils::{cc_to_c, normalize_cpu_usage, serialize_capnproto_builder};
 
 const NO_NAME: &str = "(no name)";
-const METRICS_OF_INTEREST: &[&str] = &["Status", "Alarm", "Mode", "Phase", "DiscOK"];
 const CURR: &str = "Curr";
 const AVG: &str = "Avg";
 const MIN: &str = "Min";
@@ -27,25 +25,17 @@ struct ThreadStateFields {
 /// # Fields:
 ///
 /// - `client_send`: Client Sender channel for communication from backend to frontend.
-/// - `csac_received`: CsacTelemetry received flag.
-/// - `csac_telem_list`: Vec of CsacTelemetry metrics and corresponding values.
 /// - `fe_temp`: RF frontend temperature reading.
-/// - `headers`: Vec of CsacTelemetry metric labels.
 /// - `obs_latency`: UART state latency measurements.
 /// - `obs_period`: UART state period measurements.
-/// - `telem_header_index`: Index of current CsacTelemetry label packet.
 /// - `threads`: Vec of, ThreadStateFields, running threads on device containing cpu and memory metric values.
 /// - `threads_table_list`: Vec of ThreadStateFields, sent to frontend after heartbeat received.
 /// - `zynq_temp`: Zynq SoC temperature reading.
 pub struct AdvancedSystemMonitorTab {
     client_sender: BoxedClientSender,
-    csac_received: bool,
-    csac_telem_list: Vec<(String, String)>,
     fe_temp: f64,
-    headers: Vec<String>,
     obs_latency: HashMap<String, i32>,
     obs_period: HashMap<String, i32>,
-    telem_header_index: Option<u8>,
     threads: Vec<ThreadStateFields>,
     threads_table_list: Vec<ThreadStateFields>,
     zynq_temp: f64,
@@ -54,10 +44,7 @@ impl AdvancedSystemMonitorTab {
     pub fn new(client_sender: BoxedClientSender) -> AdvancedSystemMonitorTab {
         AdvancedSystemMonitorTab {
             client_sender,
-            csac_received: false,
-            csac_telem_list: vec![],
             fe_temp: 0.0,
-            headers: vec![],
             obs_latency: {
                 UART_STATE_KEYS
                     .iter()
@@ -70,7 +57,6 @@ impl AdvancedSystemMonitorTab {
                     .map(|key| (String::from(*key), 0))
                     .collect()
             },
-            telem_header_index: None,
             threads: vec![],
             threads_table_list: vec![],
             zynq_temp: 0.0,
@@ -107,41 +93,6 @@ impl AdvancedSystemMonitorTab {
     pub fn handle_device_monitor(&mut self, msg: MsgDeviceMonitor) {
         self.zynq_temp = cc_to_c(msg.cpu_temperature);
         self.fe_temp = cc_to_c(msg.fe_temperature);
-    }
-
-    pub fn handle_csac_telemetry_labels(&mut self, msg: MsgCsacTelemetryLabels) {
-        self.headers = msg
-            .telemetry_labels
-            .to_string()
-            .split(',')
-            .map(|s| s.to_string())
-            .collect();
-        self.telem_header_index = Some(msg.id);
-    }
-
-    pub fn handle_csac_telemetry(&mut self, msg: MsgCsacTelemetry) {
-        self.csac_telem_list.clear();
-        if let Some(header_index) = self.telem_header_index {
-            if msg.id == header_index {
-                self.csac_received = true;
-                let telems: Vec<String> = msg
-                    .telemetry
-                    .to_string()
-                    .split(',')
-                    .map(|s| s.to_string())
-                    .collect();
-                self.headers
-                    .clone()
-                    .iter()
-                    .enumerate()
-                    .for_each(|(i, header)| {
-                        if METRICS_OF_INTEREST.contains(&(header.clone().as_str())) {
-                            self.csac_telem_list
-                                .push((header.clone(), telems[i].clone()));
-                        }
-                    });
-            }
-        }
     }
 
     pub fn handle_uart_state(&mut self, msg: UartState) {
@@ -198,19 +149,8 @@ impl AdvancedSystemMonitorTab {
                 entry.set_stack_free(val.stack_free);
             }
         }
-        let mut csac_telem_entries = status
-            .reborrow()
-            .init_csac_telem_list(self.csac_telem_list.len() as u32);
-        {
-            for (i, (key, val)) in self.csac_telem_list.iter().enumerate() {
-                let mut entry = csac_telem_entries.reborrow().get(i as u32);
-                entry.set_key(key);
-                entry.set_val(val);
-            }
-        }
         status.set_zynq_temp(self.zynq_temp);
         status.set_fe_temp(self.fe_temp);
-        status.set_csac_received(self.csac_received);
         self.client_sender
             .send_data(serialize_capnproto_builder(builder));
     }
@@ -304,59 +244,6 @@ mod tests {
         assert_eq!(*tab.obs_period.get(&MAX.to_string()).unwrap(), pmax);
     }
 
-    #[test]
-    fn handle_csac_telemetry_test() {
-        let client_send = TestSender::boxed();
-        let mut tab = AdvancedSystemMonitorTab::new(client_send);
-        let id = 13;
-        let headers: Vec<String> = METRICS_OF_INTEREST.iter().map(|s| s.to_string()).collect();
-        tab.headers = headers.clone();
-        let telemetry_pre: Vec<String> = "4,3,2,1,0".split(',').map(|s| s.to_string()).collect();
-        let telemetry = SbpString::from(telemetry_pre.join(","));
-        let csac_telem = MsgCsacTelemetry {
-            sender_id: Some(1337),
-            id,
-            telemetry,
-        };
-        tab.handle_csac_telemetry(csac_telem.clone());
-        assert!(tab.csac_telem_list.is_empty());
-        let bad_id = 31;
-        tab.telem_header_index = Some(bad_id);
-        assert!(!tab.csac_received);
-        tab.handle_csac_telemetry(csac_telem.clone());
-        assert!(tab.csac_telem_list.is_empty());
-        tab.telem_header_index = Some(id);
-        assert!(!tab.csac_received);
-        tab.handle_csac_telemetry(csac_telem);
-        assert!(!tab.csac_telem_list.is_empty());
-        assert!(tab.csac_received);
-        let telem_table_list: Vec<(String, String)> = headers
-            .iter()
-            .zip(telemetry_pre)
-            .map(|(h, t)| (h.clone(), t))
-            .collect();
-        assert_eq!(tab.csac_telem_list, telem_table_list);
-    }
-    #[test]
-    fn handle_csac_telemetry_labels_test() {
-        let client_send = TestSender::boxed();
-        let mut tab = AdvancedSystemMonitorTab::new(client_send);
-        let id = 13;
-        let headers_pre: Vec<String> = "mcdonald,had,a,farm"
-            .split(',')
-            .map(|s| s.to_string())
-            .collect();
-        let telemetry_labels = SbpString::from(headers_pre.join(","));
-        let csac_telem_labels = MsgCsacTelemetryLabels {
-            sender_id: Some(1337),
-            id,
-            telemetry_labels,
-        };
-        assert!(tab.telem_header_index.is_none());
-        tab.handle_csac_telemetry_labels(csac_telem_labels);
-        assert_eq!(tab.telem_header_index, Some(id));
-        assert_eq!(tab.headers, headers_pre);
-    }
     #[test]
     fn handle_device_monitor_test() {
         let client_send = TestSender::boxed();

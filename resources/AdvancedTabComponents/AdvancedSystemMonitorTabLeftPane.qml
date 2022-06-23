@@ -9,7 +9,6 @@ import SwiftConsole 1.0
 Item {
     property alias observationConnectionMonitor: observationConnectionMonitor
     property alias deviceMonitor: deviceMonitorAndResetDevice.deviceMonitor
-    property alias metricsMonitor: metricsMonitor
 
     ColumnLayout {
         id: gridLayout
@@ -28,13 +27,6 @@ Item {
 
             Layout.fillWidth: true
             Layout.fillHeight: true
-        }
-
-        MetricsMonitor {
-            id: metricsMonitor
-
-            visible: false
-            enabled: false
         }
 
     }

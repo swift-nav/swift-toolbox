@@ -11,10 +11,7 @@ use sbp::{
         observation::{MsgObsDepA, MsgSvAzEl},
         orientation::{MsgAngularRate, MsgBaselineHeading, MsgOrientEuler},
         piksi::{MsgDeviceMonitor, MsgNetworkStateResp, MsgThreadState},
-        system::{
-            MsgCsacTelemetry, MsgCsacTelemetryLabels, MsgHeartbeat, MsgInsStatus, MsgInsUpdates,
-            MsgStartup,
-        },
+        system::{MsgHeartbeat, MsgInsStatus, MsgInsUpdates, MsgStartup},
         tracking::{MsgMeasurementState, MsgTrackingState},
     },
     Sbp, SbpMessage,
@@ -121,18 +118,6 @@ fn register_events(link: sbp::link::Link<Tabs>) {
     });
     link.register(|tabs: &Tabs, msg: MsgBaselineHeading| {
         tabs.baseline.lock().unwrap().handle_baseline_heading(msg);
-    });
-    link.register(|tabs: &Tabs, msg: MsgCsacTelemetry| {
-        tabs.advanced_system_monitor
-            .lock()
-            .unwrap()
-            .handle_csac_telemetry(msg);
-    });
-    link.register(|tabs: &Tabs, msg: MsgCsacTelemetryLabels| {
-        tabs.advanced_system_monitor
-            .lock()
-            .unwrap()
-            .handle_csac_telemetry_labels(msg);
     });
     link.register(|tabs: &Tabs, msg: MsgDeviceMonitor| {
         tabs.advanced_system_monitor

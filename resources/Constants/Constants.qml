@@ -427,7 +427,7 @@ QtObject {
         readonly property string yAxisTitleText: "N (meters)"
         readonly property string xAxisTitleText: "E (meters)"
         readonly property var legendLabels: ["Base Position", "DGPS", "RTK Float", "RTK Fixed"]
-        readonly property var colors: ["#FF0000", "#00B3FF", "#BF00BF", "#FFA500"]
+        readonly property var colors: ["#FF0000", "#00FFFF", "#0000FF", "#00FF00"]
     }
 
     baselineTable: QtObject {

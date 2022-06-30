@@ -38,6 +38,8 @@ Item {
     Dialog {
         id: dialog
 
+        property variant columnWidths: [width / 3, width / 3, width / 3]
+
         parent: Overlay.overlay
         title: "Confirm Inertial Navigation Change?"
         onAccepted: {
@@ -51,10 +53,6 @@ Item {
         focus: true
 
         contentItem: Column {
-            id: layout
-
-            property variant columnWidths: [width / 3, width / 3, width / 3]
-
             width: parent.width
             spacing: Constants.insSettingsPopup.columnSpacing
 
@@ -80,7 +78,7 @@ Item {
                     syncView: tableView
 
                     delegate: Rectangle {
-                        implicitWidth: layout.columnWidths[index]
+                        implicitWidth: dialog.columnWidths[index]
                         implicitHeight: Constants.genericTable.cellHeight
                         border.color: Constants.genericTable.borderColor
 
@@ -106,10 +104,10 @@ Item {
                             }
                             onPositionChanged: {
                                 if (pressed) {
-                                    let oldcols = layout.columnWidths.slice();
+                                    let oldcols = dialog.columnWidths.slice();
                                     var delta_x = (mouseX - mouse_x);
-                                    layout.columnWidths[index] += delta_x;
-                                    layout.columnWidths[(index + 1) % 3] -= delta_x;
+                                    dialog.columnWidths[index] += delta_x;
+                                    dialog.columnWidths[(index + 1) % 3] -= delta_x;
                                     tableView.forceLayout();
                                 }
                             }
@@ -137,7 +135,7 @@ Item {
 
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    columnWidths: layout.columnWidths
+                    columnWidths: dialog.columnWidths
 
                     model: TableModel {
                         id: tableModel

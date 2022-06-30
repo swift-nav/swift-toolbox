@@ -785,6 +785,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
 
     engine.addImportPath("PySide6")
     engine.addImportPath(":/")
+    engine.addImportPath(":/styles")
     engine.load(QUrl("qrc:/view.qml"))
     if not qml_object_created[0]:
         return 1

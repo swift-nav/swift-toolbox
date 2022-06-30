@@ -31,8 +31,6 @@ Item {
     }
 
     ColumnLayout {
-        id: solutionPositionArea
-
         anchors.fill: parent
         visible: true
         spacing: Constants.solutionPosition.navBarSpacing
@@ -352,7 +350,6 @@ Item {
                     if (!solutionPositionPoints.points.length)
                         return ;
 
-                    solutionPositionArea.visible = true;
                     if (available_units != solutionPositionPoints.available_units)
                         available_units = solutionPositionPoints.available_units;
 

@@ -127,12 +127,13 @@
     <file>BaseComponents/SwiftTextInput.qml</file>
     <file>BaseComponents/SwiftImage.qml</file>
     <file>ChartLegend.qml</file>
-    <file alias="SwiftNav/TabBar.qml">styles/SwiftNav/TabBar.qml</file>
-    <file alias="SwiftNav/TabButton.qml">styles/SwiftNav/TabButton.qml</file>
-    <file alias="SwiftNav/RoundButton.qml">styles/SwiftNav/RoundButton.qml</file>
-    <file alias="SwiftNav/ComboBox.qml">styles/SwiftNav/ComboBox.qml</file>
-    <file alias="SwiftNav/Label.qml">styles/SwiftNav/Label.qml</file>
-    <file alias="SwiftNav/Button.qml">styles/SwiftNav/Button.qml</file>
+    <file>styles/SwiftNav/qmldir</file>
+    <file>styles/SwiftNav/TabBar.qml</file>
+    <file>styles/SwiftNav/TabButton.qml</file>
+    <file>styles/SwiftNav/RoundButton.qml</file>
+    <file>styles/SwiftNav/ComboBox.qml</file>
+    <file>styles/SwiftNav/Label.qml</file>
+    <file>styles/SwiftNav/Button.qml</file>
     <file>MainTab.qml</file>
     <file>TabInfoBar.qml</file>
     <file>PositionLoopAnimation.qml</file>

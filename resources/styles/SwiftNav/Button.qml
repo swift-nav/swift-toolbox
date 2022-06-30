@@ -37,7 +37,7 @@
 **
 ****************************************************************************/
 
-import "../Constants"
+import "../../Constants"
 import QtQuick
 import QtQuick.Templates as T
 import QtQuick.Controls.impl

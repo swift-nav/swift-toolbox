@@ -779,8 +779,6 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     handle_cli_arguments(args_main, globals_main)
     splash = start_splash()
 
-    engine.addImportPath("PySide6")
-    engine.addImportPath(":/")
     engine.addImportPath(":/styles")
     engine.load(QUrl("qrc:/view.qml"))
     if not qml_object_created[0]:

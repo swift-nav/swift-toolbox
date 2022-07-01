@@ -163,6 +163,7 @@ impl MainTab {
             self.shared_state
                 .set_sbp_logging(true, self.client_sender.clone());
             self.shared_state.set_sbp_logging_filepath(Some(filepath));
+            self.shared_state.set_settings_refresh(true);
         }
         self.shared_state.set_sbp_logging_format(logging);
     }

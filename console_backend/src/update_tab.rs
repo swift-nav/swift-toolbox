@@ -98,8 +98,9 @@ pub fn update_tab_thread(
     msg_sender: MsgSender,
 ) {
     let is_running = ArcBool::new_with(true);
+    let mut app_started = false;
     thread::scope(|scope| {
-        scope.spawn(|_| wait_for_device_settings(is_running.clone(), sender.clone(), update_tab_context.clone(), shared_state.clone()));
+        scope.spawn(|_| wait_for_device_settings(is_running.clone(), update_tab_context.clone(), shared_state.clone()));
         scope
             .spawn(|inner_scope| {
                 sender.send(Some(UpdateTabUpdate::new())).unwrap();
@@ -113,8 +114,10 @@ pub fn update_tab_thread(
                                             // Check for path updates.
                                             if let Some(fw_dir) = update.firmware_directory {
                                                 update_tab_context.set_firmware_directory(fw_dir.clone());
-                                                update_tab_context
-                                                    .set_firmware_local_filepath(check_for_firmware_local_filepath(fw_dir));
+                                                if app_started {
+                                                    update_tab_context.set_firmware_local_filepath(check_for_firmware_local_filepath(fw_dir));
+                                                }
+                                                app_started = true;
                                             }
                                             if let Some(fw_local_filepath) = update.firmware_local_filepath {
                                                 if let Some(parent_path) = fw_local_filepath.parent() {
@@ -184,7 +187,6 @@ pub fn update_tab_thread(
 
 fn wait_for_device_settings(
     is_running: ArcBool,
-    sender: Sender<Option<UpdateTabUpdate>>,
     update_tab_context: UpdateTabContext,
     shared_state: SharedState,
 ) -> Result<()> {
@@ -193,11 +195,7 @@ fn wait_for_device_settings(
             update_tab_context.set_current_firmware_version(firmware_version);
             check_console_outdated(update_tab_context.clone())?;
             check_firmware_outdated(update_tab_context.clone())?;
-            check_above_v2(update_tab_context.clone())?;
-            sender.send(Some(UpdateTabUpdate {
-                firmware_directory: Some(update_tab_context.firmware_directory()),
-                ..Default::default()
-            }))?;
+            check_above_v2(update_tab_context)?;
             break;
         }
         std::thread::sleep(Duration::from_millis(WAIT_FOR_SETTINGS_THREAD_SLEEP_MS));

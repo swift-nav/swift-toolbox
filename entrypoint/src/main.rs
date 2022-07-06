@@ -70,7 +70,6 @@ fn main() -> Result<()> {
     std::env::set_var("SWIFTNAV_CONSOLE_FROZEN", app_dir()?);
     std::env::set_var("PYTHONHOME", pythonhome_dir()?);
     std::env::set_var("PYTHONDONTWRITEBYTECODE", "1");
-    std::env::set_var("QSG_RHI", "1");
     handle_splash();
     let exit_code = Python::with_gil(|py| {
         let args = PyTuple::new(py, args);

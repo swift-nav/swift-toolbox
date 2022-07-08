@@ -24,6 +24,8 @@ use crate::types::{Error, MsgSender, Result};
 use crate::utils::*;
 
 const FIRMWARE_VERSION_SETTING_KEY: &str = "firmware_version";
+const PRODUCT_ID_SETTING_KEY: &str = "product_id";
+const ALLOWED_PRODUCT_ID_SUBSTRINGS: [&str; 2] = ["Piksi Multi", "Duro"];
 const DGNSS_SOLUTION_MODE_SETTING_KEY: &str = "dgnss_solution_mode";
 
 const ETHERNET_SETTING_GROUP: &str = "ethernet";
@@ -458,16 +460,31 @@ impl SettingsTab {
         for e in errors {
             warn!("{}", e);
         }
+        let mut firmware_version = None;
+        let mut product_id = None;
         for entry in settings {
             if let Some(ref value) = entry.value {
                 if FIRMWARE_VERSION_SETTING_KEY == entry.setting.name {
-                    self.shared_state.set_firmware_version(value.to_string());
+                    firmware_version = Some(value.to_string());
+                }
+                if PRODUCT_ID_SETTING_KEY == entry.setting.name {
+                    product_id = Some(value.to_string());
                 }
                 if DGNSS_SOLUTION_MODE_SETTING_KEY == entry.setting.name {
                     self.shared_state.set_dgnss_enabled(value.to_string());
                 }
             }
             self.settings.lock().insert(entry);
+        }
+        if let Some(product_id) = product_id {
+            for substring in ALLOWED_PRODUCT_ID_SUBSTRINGS {
+                if product_id.contains(substring) {
+                    if let Some(firmware_version) = firmware_version {
+                        self.shared_state.set_firmware_version(firmware_version);
+                    }
+                    break;
+                }
+            }
         }
     }
 

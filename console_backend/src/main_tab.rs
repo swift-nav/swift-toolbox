@@ -38,13 +38,15 @@ pub fn logging_stats_thread(
                 start_time = Instant::now();
             }
             if let Some(ref path) = filepath {
-                let file_size = std::fs::metadata(path).unwrap().len();
-                refresh_loggingbar_recording(
-                    &client_sender,
-                    file_size,
-                    start_time.elapsed().as_secs(),
-                    Some(path.to_string_lossy().to_string()),
-                );
+                if let Ok(metadata) = std::fs::metadata(path) {
+                    let file_size = metadata.len();
+                    refresh_loggingbar_recording(
+                        &client_sender,
+                        file_size,
+                        start_time.elapsed().as_secs(),
+                        Some(path.to_string_lossy().to_string()),
+                    );
+                }
             } else {
                 refresh_loggingbar_recording(&client_sender, 0, 0, None);
             }

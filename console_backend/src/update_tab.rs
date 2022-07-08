@@ -190,9 +190,15 @@ fn wait_for_device_settings(
     update_tab_context: UpdateTabContext,
     shared_state: SharedState,
 ) -> Result<()> {
+    update_tab_context.fw_log_append(
+        "Warning: Settings received from Piksi do not contain firmware version information. \
+        Unable to determine software update status."
+            .to_string(),
+    );
     while is_running.get() && !update_tab_context.debug() {
         if let Some(firmware_version) = shared_state.firmware_version() {
             update_tab_context.set_current_firmware_version(firmware_version);
+            update_tab_context.fw_log_clear();
             check_console_outdated(update_tab_context.clone())?;
             check_firmware_outdated(update_tab_context.clone())?;
             check_above_v2(update_tab_context)?;

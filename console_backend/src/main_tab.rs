@@ -114,6 +114,9 @@ impl MainTab {
     pub fn init_csv_logging(&mut self) {
         let local_t = Local::now();
 
+        if let Err(e) = create_directory(self.logging_directory.clone()) {
+            error!("Issue creating directory {}.", e);
+        }
         let vel_log_file = local_t.format(VEL_TIME_STR_FILEPATH).to_string();
         let vel_log_file = self.logging_directory.join(vel_log_file);
         self.shared_state.start_vel_log(&vel_log_file);
@@ -143,6 +146,11 @@ impl MainTab {
     /// - `logging`: The type of sbp logging to use; otherwise, None.
     pub fn init_sbp_logging(&mut self, logging: SbpLogging) {
         let filepath = self.sbp_logging_filepath(logging.clone());
+        if let Some(parent) = filepath.parent() {
+            if let Err(e) = create_directory(parent.to_path_buf()) {
+                error!("Issue creating directory {}.", e);
+            }
+        }
         self.sbp_logger = match logging {
             SbpLogging::SBP => match SbpLogger::new_sbp(&filepath) {
                 Ok(logger) => Some(logger),

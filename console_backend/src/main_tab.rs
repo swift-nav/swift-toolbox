@@ -38,13 +38,15 @@ pub fn logging_stats_thread(
                 start_time = Instant::now();
             }
             if let Some(ref path) = filepath {
-                let file_size = std::fs::metadata(path).unwrap().len();
-                refresh_loggingbar_recording(
-                    &client_sender,
-                    file_size,
-                    start_time.elapsed().as_secs(),
-                    Some(path.to_string_lossy().to_string()),
-                );
+                if let Ok(metadata) = std::fs::metadata(path) {
+                    let file_size = metadata.len();
+                    refresh_loggingbar_recording(
+                        &client_sender,
+                        file_size,
+                        start_time.elapsed().as_secs(),
+                        Some(path.to_string_lossy().to_string()),
+                    );
+                }
             } else {
                 refresh_loggingbar_recording(&client_sender, 0, 0, None);
             }
@@ -114,6 +116,9 @@ impl MainTab {
     pub fn init_csv_logging(&mut self) {
         let local_t = Local::now();
 
+        if let Err(e) = create_directory(self.logging_directory.clone()) {
+            error!("Issue creating directory {}.", e);
+        }
         let vel_log_file = local_t.format(VEL_TIME_STR_FILEPATH).to_string();
         let vel_log_file = self.logging_directory.join(vel_log_file);
         self.shared_state.start_vel_log(&vel_log_file);
@@ -143,6 +148,11 @@ impl MainTab {
     /// - `logging`: The type of sbp logging to use; otherwise, None.
     pub fn init_sbp_logging(&mut self, logging: SbpLogging) {
         let filepath = self.sbp_logging_filepath(logging.clone());
+        if let Some(parent) = filepath.parent() {
+            if let Err(e) = create_directory(parent.to_path_buf()) {
+                error!("Issue creating directory {}.", e);
+            }
+        }
         self.sbp_logger = match logging {
             SbpLogging::SBP => match SbpLogger::new_sbp(&filepath) {
                 Ok(logger) => Some(logger),

@@ -328,7 +328,7 @@ jobs:
           fi
           echo $INSTALLER_ARCHIVE >installer-archive.filename
           echo "INSTALLER_ARCHIVE=$(cat installer-archive.filename)" >>$GITHUB_ENV
-        if: github.event_name == 'push' && contains(github.ref, 'refs/tags') && matrix.os.name != 'macos-10.15'
+        if: github.event_name == 'push' && contains(github.ref, 'refs/tags') && runner.os == 'Linux'
 
       - name: Build ${{ runner.os }} swift-files binary.
         run: |
@@ -389,7 +389,7 @@ jobs:
           path: |
             ${{ env.INSTALLER_ARCHIVE }}
             installer-archive.filename
-        if: github.event_name == 'push' && contains(github.ref, 'refs/tags') && matrix.os.name != 'macos-10.15'
+        if: github.event_name == 'push' && contains(github.ref, 'refs/tags') && runner.os == 'Linux'
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ runner.os }}-artifacts-debug
@@ -419,6 +419,7 @@ jobs:
       matrix:
         os:
           - macOS
+          - Windows
     runs-on: [self-hosted, '${{ matrix.os }}', code-signer]
     steps:
 
@@ -432,6 +433,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           path: application
+          lfs: true
 
       - uses: actions/download-artifact@v2
         with:
@@ -444,15 +446,20 @@ jobs:
         run: |
           cd application
           mkdir -p py39-dist
-          tar -xvf "$(cat release-archive.filename)" -C py39-dist
+          if [ "$RUNNER_OS" == "Windows" ]; then
+              7z x -so $(cat release-archive.filename) | 7z x -ttar -si -y -opy39-dist
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+              tar -xvf "$(cat release-archive.filename)" -C py39-dist
+          fi
 
       - name: Build .app bundle.
         shell: bash
         run: |
           cd application
           cargo make dist-to-installer-app
+        if: matrix.os == 'macOS'
 
-      - name: Sign application.
+      - name: Sign application (${{ matrix.os }}).
         shell: bash
         run: |
           cd "application/target/installer/Swift Console.app"
@@ -481,20 +488,99 @@ jobs:
             --timestamp \
             --options=runtime \
             "target/installer/Swift Console.app"
+        if: matrix.os == 'macOS'
 
-      - name: Build dmg file.
+      - name: Sign application (${{ matrix.os }}).
+        shell: cmd
+        run: |
+          cd application
+          "${{ env.CODE_SIGNER_PATH_WIN }}" sign ^
+            /debug /v /td SHA256 ^
+            /n "Swift Navigation, Inc." /a ^
+            /tr http://rfc3161timestamp.globalsign.com/advanced ^
+            py39-dist/swift-console.exe
+        if: matrix.os == 'Windows'
+
+      - name: Create Installer (${{ matrix.os }})
         shell: bash
         run: |
           cd application
           cargo make store-version
-          cargo make dist-to-installer-dmg
+          if [ "$RUNNER_OS" == "Windows" ]; then
+              cargo make dist-to-installer
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+              cargo make dist-to-installer-dmg
+          fi
 
       - name: Add archive to path.
         shell: bash
         run: |
-          INSTALLER_ARCHIVE=$(find application -iname "*.dmg")
+          if [ "$RUNNER_OS" == "Windows" ]; then
+              INSTALLER_ARCHIVE="$(dir application/installers/Windows/*.exe)"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+              mv application/installers/macOS/*.dmg application
+              INSTALLER_ARCHIVE=$(find application -maxdepth 1 -iname "*.dmg")
+          fi
           echo $INSTALLER_ARCHIVE >installer-archive.filename
           echo "INSTALLER_ARCHIVE=$(cat installer-archive.filename)" >>$GITHUB_ENV
+
+      - name: Sign installer (macOS)
+        if: matrix.os == 'macOS'
+        shell: bash
+        run: |
+          codesign -vvvv \
+            -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
+            -f --timestamp \
+            $(cat installer-archive.filename)
+
+          xcrun altool \
+            --verbose \
+            --notarize-app \
+            --file $(cat installer-archive.filename) \
+            --primary-bundle-id ${{ env.APP_BUNDLE_ID }} \
+            --apiKey ${{ secrets.APPLE_KEY_ID }} \
+            --apiIssuer ${{ secrets.APPLE_ISSUER_ID }} | tee notarize.log
+
+          REQUEST_UUID=$(cat notarize.log | grep RequestUUID | awk '{print $3}')
+
+          echo "REQUEST_UUID=$REQUEST_UUID" >>$GITHUB_ENV
+
+      - name: Check notarization (macOS)
+        if: matrix.os == 'macOS'
+        uses: nick-invision/retry@v2
+        with:
+          shell: bash
+          timeout_minutes: 3
+          retry_wait_seconds: 120
+          max_attempts: 10
+          retry_on: error
+          command: |
+            xcrun altool \
+              --verbose \
+              --notarization-info ${{ env.REQUEST_UUID }} \
+              --apiKey ${{ secrets.APPLE_KEY_ID }} \
+              --apiIssuer ${{ secrets.APPLE_ISSUER_ID }} | tee notarize_status.log
+            
+            NOTARIZATION_STATUS=$(cat notarize_status.log | grep Status: | awk '{print $2}')
+            if [ $NOTARIZATION_STATUS == "success" ]; then
+              echo "Notarization Successful"
+            else
+              echo "Notarization Failed"
+              exit 1
+            fi
+
+            xcrun stapler staple -v "$(cat installer-archive.filename)"
+
+      - name: Sign NSIS installer (Windows)
+        if: matrix.os == 'Windows'
+        shell: cmd
+        run: |
+          set /p executable=<installer-archive.filename
+          "${{ env.CODE_SIGNER_PATH_WIN }}" sign ^
+            /debug /v /td SHA256 ^
+            /n "Swift Navigation, Inc." /a ^
+            /tr http://rfc3161timestamp.globalsign.com/advanced ^
+            %executable%
 
       - uses: actions/upload-artifact@v2
         with:
@@ -592,116 +678,6 @@ jobs:
                 exit 1
             fi
 
-  sign_installer:
-    name: Sign Installers
-    timeout-minutes: 30
-    needs:
-      - sign_application
-      - frontend_bench
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
-    strategy:
-      matrix:
-        os:
-          - Windows
-          - macOS
-    runs-on: [self-hosted, '${{ matrix.os }}', code-signer]
-    steps:
-
-      - name: Remove previous build.
-        shell: bash
-        continue-on-error: true
-        run: |
-          rm -rf installer
-
-      - uses: actions/download-artifact@v2
-        with:
-          name: ${{ matrix.os }}-installer
-          path: |
-            installer
-
-      - name: Sign NSIS installer (Windows)
-        if: matrix.os == 'Windows'
-        shell: cmd
-        run: |
-          cd installer
-          set /p executable=<installer-archive.filename
-          "${{ env.CODE_SIGNER_PATH_WIN }}" sign ^
-            /debug /v ^
-            /n "Swift Navigation, Inc." /a ^
-            /tr http://rfc3161timestamp.globalsign.com/advanced ^
-            /td SHA256 %executable%
-
-      - name: Sign installer (macOS)
-        if: matrix.os == 'macOS'
-        shell: bash
-        run: |
-          cd installer
-
-          codesign -vvvv \
-            -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
-            -f --timestamp \
-            $(cat installer-archive.filename)
-
-          xcrun altool \
-            --verbose \
-            --notarize-app \
-            --file $(cat installer-archive.filename) \
-            --primary-bundle-id ${{ env.APP_BUNDLE_ID }} \
-            --apiKey ${{ secrets.APPLE_KEY_ID }} \
-            --apiIssuer ${{ secrets.APPLE_ISSUER_ID }} | tee notarize.log
-
-          REQUEST_UUID=$(cat notarize.log | grep RequestUUID | awk '{print $3}')
-
-          echo "REQUEST_UUID=$REQUEST_UUID" >>$GITHUB_ENV
-
-      - name: Check notarization (macOS)
-        if: matrix.os == 'macOS'
-        uses: nick-invision/retry@v2
-        with:
-          shell: bash
-          timeout_minutes: 3
-          retry_wait_seconds: 120
-          max_attempts: 10
-          retry_on: error
-          command: |
-            cd installer
-
-            xcrun altool \
-              --verbose \
-              --notarization-info ${{ env.REQUEST_UUID }} \
-              --apiKey ${{ secrets.APPLE_KEY_ID }} \
-              --apiIssuer ${{ secrets.APPLE_ISSUER_ID }} | tee notarize_status.log
-            
-            NOTARIZATION_STATUS=$(cat notarize_status.log | grep Status: | awk '{print $2}')
-            if [ $NOTARIZATION_STATUS == "success" ]; then
-              echo "Notarization Successful"
-            else
-              echo "Notarization Failed"
-              exit 1
-            fi
-
-            xcrun stapler staple -v "$(cat installer-archive.filename)"
-
-      - name: Add archive to path.
-        shell: bash
-        run: |
-          if [ "$RUNNER_OS" == "Linux" ]; then
-              INSTALLER_ARCHIVE=$(find installer -iname "*.deb")
-          elif [ "$RUNNER_OS" == "Windows" ]; then
-              INSTALLER_ARCHIVE=$(ls installer/installers/Windows/*.exe)
-          elif [ "$RUNNER_OS" == "macOS" ]; then
-              INSTALLER_ARCHIVE=$(find installer -iname "*.dmg")
-          fi
-          echo $INSTALLER_ARCHIVE >installer-archive.filename
-          echo "INSTALLER_ARCHIVE=$(cat installer-archive.filename)" >>$GITHUB_ENV
-
-      - uses: actions/upload-artifact@v2
-        with:
-          name: ${{ runner.os }}-installer-signed
-          path: |
-            ${{ env.INSTALLER_ARCHIVE }}
-            installer-archive.filename
-
   sign_binaries:
     name: Sign Binaries
     timeout-minutes: 30
@@ -747,10 +723,10 @@ jobs:
         shell: cmd
         run: |
           "${{ env.CODE_SIGNER_PATH_WIN }}" sign ^
-            /debug /v ^
+            /debug /v /td SHA256 ^
             /n "Swift Navigation, Inc." /a ^
             /tr http://rfc3161timestamp.globalsign.com/advanced ^
-            /td SHA256 binaries/swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
+            binaries/swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
         if: matrix.os.name == 'Windows'
 
       - name: Sign Binaries.
@@ -876,7 +852,7 @@ jobs:
     name: Create Release
     needs:
       - sign_zipped_binaries
-      - sign_installer
+      - sign_application
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
     runs-on: ubuntu-20.04
     steps:
@@ -888,7 +864,7 @@ jobs:
       - name: Pull Windows Installer
         uses: actions/download-artifact@v2
         with:
-          name: Windows-installer-signed
+          name: Windows-installer
           path: windows
       - name: Pull Windows Binaries
         uses: actions/download-artifact@v2

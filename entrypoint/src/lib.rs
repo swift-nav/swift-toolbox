@@ -22,11 +22,13 @@ lazy_static! {
 
 #[cfg(feature = "entrypoint")]
 pub fn attach_console() {
-    #[cfg(target_os = "windows")]
-    {
-        use windows::Win32::System::Console::AttachConsole;
-        unsafe {
-            AttachConsole(u32::MAX).as_bool();
+    if std::env::var("SWIFTNAV_CONSOLE_DEBUG").is_ok() {
+        #[cfg(target_os = "windows")]
+        {
+            use windows::Win32::System::Console::AttachConsole;
+            unsafe {
+                AttachConsole(u32::MAX).as_bool();
+            }
         }
     }
 }

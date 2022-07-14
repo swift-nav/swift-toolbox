@@ -55,6 +55,7 @@
     <file>SolutionTabComponents/SolutionPositionTab.qml</file>
     <file>SolutionTabComponents/SolutionTable.qml</file>
     <file>SolutionTabComponents/SolutionVelocityTab.qml</file>
+    <file>SolutionTabComponents/SolutionMapTab.qml</file>
     <file>TrackingTab.qml</file>
     <file>TrackingTabComponents/TrackingSignalsTab.qml</file>
     <file>TrackingTabComponents/TrackingSkyPlotTab.qml</file>

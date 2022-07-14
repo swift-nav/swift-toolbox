@@ -121,6 +121,11 @@ from .solution_position_tab import (
     solution_position_update,
 )
 
+from .solution_position_tab2 import (
+    SolutionPositionModel2,
+    SolutionPositionPoints2,
+)
+
 from .solution_table import (
     SolutionTableEntries,
     SolutionTableModel,
@@ -337,6 +342,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
             data[Keys.AVAILABLE_UNITS][:] = m.solutionPositionStatus.availableUnits
             data[Keys.SOLUTION_LINE] = [QPointF(point.x, point.y) for point in m.solutionPositionStatus.lineData]
             SolutionPositionPoints.post_data_update(data)
+            SolutionPositionPoints2.post_data_update(data)
         elif m.which == Message.Union.SolutionTableStatus:
             data = solution_table_update()
             data[Keys.ENTRIES][:] = [[entry.key, entry.val] for entry in m.solutionTableStatus.data]
@@ -636,8 +642,8 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
             )
         else:
             globals_.setProperty("width", args.width)  # type: ignore
-    if args.show_file_connection:
-        globals_.setProperty("showFileConnection", True)  # type: ignore
+    #if args.show_file_connection:
+    globals_.setProperty("showFileConnection", True)  # type: ignore
 
 
 def start_splash_linux():
@@ -742,6 +748,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     qmlRegisterType(SettingsTabData, "SwiftConsole", 1, 0, "SettingsTabData")  # type: ignore
     qmlRegisterType(SettingsTableEntries, "SwiftConsole", 1, 0, "SettingsTableEntries")  # type: ignore
     qmlRegisterType(SolutionPositionPoints, "SwiftConsole", 1, 0, "SolutionPositionPoints")  # type: ignore
+    qmlRegisterType(SolutionPositionPoints2, "SwiftConsole", 1, 0, "SolutionPositionPoints2")  # type: ignore
     qmlRegisterType(SolutionTableEntries, "SwiftConsole", 1, 0, "SolutionTableEntries")  # type: ignore
     qmlRegisterType(SolutionVelocityPoints, "SwiftConsole", 1, 0, "SolutionVelocityPoints")  # type: ignore
     qmlRegisterType(StatusBarData, "SwiftConsole", 1, 0, "StatusBarData")  # type: ignore
@@ -800,6 +807,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     settings_tab_model = SettingsTabModel()
     settings_table_model = SettingsTableModel()
     solution_position_model = SolutionPositionModel()
+    solution_position_model2 = SolutionPositionModel2()
     solution_table_model = SolutionTableModel()
     solution_velocity_model = SolutionVelocityModel()
     status_bar_model = StatusBarModel()
@@ -819,6 +827,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     root_context.setContextProperty("settings_tab_model", settings_tab_model)
     root_context.setContextProperty("settings_table_model", settings_table_model)
     root_context.setContextProperty("solution_position_model", solution_position_model)
+    root_context.setContextProperty("solution_position_model2", solution_position_model2)
     root_context.setContextProperty("solution_table_model", solution_table_model)
     root_context.setContextProperty("solution_velocity_model", solution_velocity_model)
     root_context.setContextProperty("status_bar_model", status_bar_model)

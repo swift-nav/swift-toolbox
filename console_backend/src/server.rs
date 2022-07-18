@@ -14,12 +14,14 @@ use crate::server_recv_thread::server_recv_thread;
 use crate::shared_state::SharedState;
 use crate::utils::{refresh_connection_frontend, refresh_loggingbar};
 
-pub(crate) fn attach_console() {
-    #[cfg(target_os = "windows")]
-    {
-        use windows::Win32::System::Console::AttachConsole;
-        unsafe {
-            AttachConsole(u32::MAX).as_bool();
+pub fn attach_console() {
+    if std::env::var("SWIFTNAV_CONSOLE_DEBUG").is_ok() {
+        #[cfg(target_os = "windows")]
+        {
+            use windows::Win32::System::Console::AttachConsole;
+            unsafe {
+                AttachConsole(u32::MAX).as_bool();
+            }
         }
     }
 }

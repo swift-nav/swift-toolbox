@@ -25,7 +25,7 @@ required-features = ["winit"]
 version = "1.4.0"
 
 [dependencies.image]
-version = "0.24.2"
+version = "0.24.3"
 
 [dependencies.winit]
 version = "0.26.1"

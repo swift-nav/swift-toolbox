@@ -9,7 +9,6 @@
             "type": "python",
             "request": "launch",
             "module": "swiftnav_console.main",
-            "args": ["--read-capnp-recording", "./console-capnp-20220419-033358.pickle"],
             "stopOnEntry": false,
             "sourceLanguages": [
                 "rust",

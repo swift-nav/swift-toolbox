@@ -172,18 +172,13 @@ args = [
 dependencies = ["generate-resources"]
 run_task = "start-console"
 
-[tasks.prepare-run]
+[tasks.run]
 dependencies = [
   "copy-capnp",
   "generate-resources",
   "remove-egg-dist",
   "store-version",
   "install-backend",
-]
-
-[tasks.run]
-dependencies = [
-  "prepare-run",
 ]
 run_task = "start-console"
 

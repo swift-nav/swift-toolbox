@@ -1,5 +1,5 @@
-import "../Constants"
 import "../BaseComponents"
+import "../Constants"
 import QtQuick
 import QtQuick.Controls
 
@@ -13,7 +13,6 @@ Item {
         source: Constants.advancedImu.unknownStatusPath
         antialiasing: Globals.useAntiAliasing
         color: Constants.advancedImu.unknownStatusColor
-
     }
 
     Label {

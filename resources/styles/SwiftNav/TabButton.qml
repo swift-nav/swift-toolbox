@@ -39,10 +39,10 @@
 
 import "../../Constants"
 import QtQuick
-import QtQuick.Templates as T
-import QtQuick.Controls.impl
 import QtQuick.Controls.Material
 import QtQuick.Controls.Material.impl
+import QtQuick.Controls.impl
+import QtQuick.Templates as T
 
 T.TabButton {
     id: control
@@ -52,14 +52,10 @@ T.TabButton {
     property color backgroundColor: down || checked ? Constants.swiftGrey : hovered ? Qt.darker(Constants.swiftControlBackground, 1.1) : Constants.swiftControlBackground
     property bool border: true
 
-    implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
-                            implicitContentWidth + leftPadding + rightPadding)
-    implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
-                             implicitContentHeight + topPadding + bottomPadding)
-
+    implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset, implicitContentWidth + leftPadding + rightPadding)
+    implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset, implicitContentHeight + topPadding + bottomPadding)
     padding: 12
     spacing: 6
-
     icon.width: 24
     icon.height: 24
     icon.color: !enabled ? Material.hintTextColor : down || checked ? "white" : Constants.tabButtonUnselectedTextColor
@@ -75,7 +71,6 @@ T.TabButton {
         spacing: control.spacing
         mirrored: control.mirrored
         display: control.display
-
         icon: control.icon
         text: control.text
         font: control.font
@@ -99,6 +94,9 @@ T.TabButton {
                 position: 1
                 color: backgroundColor
             }
+
         }
+
     }
+
 }

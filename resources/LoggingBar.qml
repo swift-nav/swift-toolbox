@@ -1,11 +1,11 @@
 import "BaseComponents"
 import "Constants"
+import Qt.labs.platform as LP
 import QtCharts
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
-import Qt.labs.platform as LP
 import SwiftConsole
 
 Rectangle {
@@ -149,6 +149,7 @@ Rectangle {
                     enabled: !sbpLoggingButton.checked
                     font: Constants.loggingBar.comboBoxFont
                     model: loggingBarData.sbp_logging_labels
+                    textRole: "display"
                     ToolTip.visible: hovered
                     ToolTip.text: "SBP Log Format"
                     onActivated: backend_request_broker.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText)
@@ -161,7 +162,8 @@ Rectangle {
                     Layout.preferredHeight: loggingBarRowLayout.preferredButtonHeight
                     enabled: !sbpLoggingButton.checked
                     font: Constants.loggingBar.comboBoxFont
-                    model: loggingBarData.previous_folders
+                    model: []
+                    textRole: "display"
                     editable: true
                     selectTextByMouse: true
                     visible: sbpLoggingButton.checked
@@ -175,14 +177,28 @@ Rectangle {
                     enabled: !sbpLoggingButton.checked
                     font: Constants.loggingBar.comboBoxFont
                     model: loggingBarData.previous_folders
+                    textRole: "display"
                     editable: true
                     selectTextByMouse: true
                     visible: !sbpLoggingButton.checked
+                    currentIndex: 0
                     onActivated: {
-                        var text = folderPathBar.currentText;
-                        folderPathBar.currentIndex = -1;
-                        folderPathBar.editText = text;
-                        backend_request_broker.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText);
+                        if (folderPathBar.editText == folderPathBar.currentText) {
+                            backend_request_broker.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText);
+                            folderPathBar.currentIndex = 0;
+                        } else {
+                            folderPathBar.editText = folderPathBar.currentText;
+                        }
+                    }
+                    onAccepted: {
+                        if (folderPathBar.editText != folderPathBar.currentText)
+                            backend_request_broker.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText);
+
+                    }
+                    onCurrentIndexChanged: {
+                        if (folderPathBar.currentIndex == -1)
+                            folderPathBar.currentIndex = 0;
+
                     }
 
                     Label {
@@ -254,7 +270,6 @@ Rectangle {
             repeat: true
             onTriggered: {
                 logging_bar_model.fill_data(loggingBarData);
-
                 sbpLoggingButton.checked = loggingBarData.sbp_logging;
                 sbpLoggingFormat.currentIndex = loggingBarData.sbp_logging_labels.indexOf(loggingBarData.sbp_logging_format);
                 csvLoggingButton.checked = loggingBarData.csv_logging;

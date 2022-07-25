@@ -55,12 +55,12 @@ Item {
                 ToolTip.visible: hovered
                 ToolTip.text: "Pause"
                 checkable: true
+                onClicked: backend_request_broker.baseline_plot([baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].pressed, baselineButtonGroup.buttons[0].pressed])
+
                 icon {
                     source: Constants.icons.pauseButtonUrl
                     color: !baselinePauseButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 }
-
-                onClicked: backend_request_broker.baseline_plot([baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].pressed, baselineButtonGroup.buttons[0].pressed])
 
             }
 
@@ -73,6 +73,7 @@ Item {
                 Layout.preferredHeight: Constants.commonChart.buttonHeight
                 ToolTip.visible: hovered
                 ToolTip.text: "Clear"
+
                 icon {
                     source: Constants.icons.clearButtonUrl
                     color: !baselineClearButton.checked ? Constants.materialGrey : Constants.swiftOrange
@@ -109,6 +110,7 @@ Item {
                 ToolTip.text: "Zoom All"
                 checkable: true
                 checked: true
+
                 icon {
                     source: Constants.icons.zoomAllButtonUrl
                     color: !baselineZoomAllButton.checked ? Constants.materialGrey : Constants.swiftOrange
@@ -135,6 +137,7 @@ Item {
                 ToolTip.visible: hovered
                 ToolTip.text: "Center On Solution"
                 checkable: true
+
                 icon {
                     source: Constants.icons.centerOnButtonUrl
                     color: !baselineCenterButton.checked ? Constants.materialGrey : Constants.swiftOrange

@@ -1,10 +1,10 @@
 import "../BaseComponents"
 import "../Constants"
+import Qt.labs.platform as LP
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
-import Qt.labs.platform as LP
 
 Item {
     property alias localFileText: localFileTextInput.text

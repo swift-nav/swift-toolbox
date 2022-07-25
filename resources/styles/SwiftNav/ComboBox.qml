@@ -38,29 +38,22 @@
 ****************************************************************************/
 
 import QtQuick
-import QtQuick.Window
-import QtQuick.Controls.impl
-import QtQuick.Templates as T
 import QtQuick.Controls.Material
 import QtQuick.Controls.Material.impl
+import QtQuick.Controls.impl
+import QtQuick.Templates as T
+import QtQuick.Window
 
 T.ComboBox {
     id: control
 
-    implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
-                            implicitContentWidth + leftPadding + rightPadding)
-    implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
-                             implicitContentHeight + topPadding + bottomPadding,
-                             implicitIndicatorHeight + topPadding + bottomPadding)
-
+    implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset, implicitContentWidth + leftPadding + rightPadding)
+    implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset, implicitContentHeight + topPadding + bottomPadding, implicitIndicatorHeight + topPadding + bottomPadding)
     topInset: 6
     bottomInset: 6
-
     leftPadding: padding + (!control.mirrored || !indicator || !indicator.visible ? 0 : indicator.width + spacing)
     rightPadding: padding + (control.mirrored || !indicator || !indicator.visible ? 0 : indicator.width + spacing)
-
-    Material.elevation: flat ? control.pressed || control.hovered ? 2 : 0
-                             : control.pressed ? 8 : 2
+    Material.elevation: flat ? control.pressed || control.hovered ? 2 : 0 : control.pressed ? 8 : 2
     Material.background: flat ? "transparent" : undefined
     Material.foreground: flat ? undefined : Material.primaryTextColor
 
@@ -84,36 +77,30 @@ T.ComboBox {
         padding: 6
         leftPadding: control.editable ? 2 : control.mirrored ? 0 : 12
         rightPadding: control.editable ? 2 : control.mirrored ? 12 : 0
-
         text: control.editable ? control.editText : control.displayText
-
         enabled: control.editable
         autoScroll: control.editable
         readOnly: control.down
         inputMethodHints: control.inputMethodHints
         validator: control.validator
         selectByMouse: control.selectTextByMouse
-
         font: control.font
         color: control.enabled ? control.Material.foreground : control.Material.hintTextColor
         selectionColor: control.Material.accentColor
         selectedTextColor: control.Material.primaryHighlightedTextColor
         verticalAlignment: Text.AlignVCenter
 
-        cursorDelegate: CursorDelegate { }
+        cursorDelegate: CursorDelegate {
+        }
+
     }
 
     background: Rectangle {
         implicitWidth: 120
         implicitHeight: control.Material.buttonHeight
-
         radius: control.flat ? 0 : 2
         color: !control.editable ? control.Material.dialogColor : "transparent"
-
         layer.enabled: control.enabled && !control.editable && control.Material.background.a > 0
-        layer.effect: ElevationEffect {
-            elevation: control.Material.elevation
-        }
 
         Rectangle {
             visible: control.editable
@@ -134,6 +121,11 @@ T.ComboBox {
             active: control.pressed || control.visualFocus || control.hovered
             color: control.Material.rippleColor
         }
+
+        layer.effect: ElevationEffect {
+            elevation: control.Material.elevation
+        }
+
     }
 
     popup: T.Popup {
@@ -143,21 +135,44 @@ T.ComboBox {
         transformOrigin: Item.Top
         topMargin: 12
         bottomMargin: 12
-
         Material.theme: control.Material.theme
         Material.accent: control.Material.accent
         Material.primary: control.Material.primary
 
         enter: Transition {
             // grow_fade_in
-            NumberAnimation { property: "scale"; from: 0.9; easing.type: Easing.OutQuint; duration: 220 }
-            NumberAnimation { property: "opacity"; from: 0.0; easing.type: Easing.OutCubic; duration: 150 }
+            NumberAnimation {
+                property: "scale"
+                from: 0.9
+                easing.type: Easing.OutQuint
+                duration: 220
+            }
+
+            NumberAnimation {
+                property: "opacity"
+                from: 0
+                easing.type: Easing.OutCubic
+                duration: 150
+            }
+
         }
 
         exit: Transition {
             // shrink_fade_out
-            NumberAnimation { property: "scale"; to: 0.9; easing.type: Easing.OutQuint; duration: 220 }
-            NumberAnimation { property: "opacity"; to: 0.0; easing.type: Easing.OutCubic; duration: 150 }
+            NumberAnimation {
+                property: "scale"
+                to: 0.9
+                easing.type: Easing.OutQuint
+                duration: 220
+            }
+
+            NumberAnimation {
+                property: "opacity"
+                to: 0
+                easing.type: Easing.OutCubic
+                duration: 150
+            }
+
         }
 
         contentItem: ListView {
@@ -167,17 +182,22 @@ T.ComboBox {
             currentIndex: control.highlightedIndex
             highlightMoveDuration: 0
 
-            T.ScrollIndicator.vertical: ScrollIndicator { }
+            T.ScrollIndicator.vertical: ScrollIndicator {
+            }
+
         }
 
         background: Rectangle {
             radius: 2
             color: parent.Material.dialogColor
-
             layer.enabled: control.enabled
+
             layer.effect: ElevationEffect {
                 elevation: 8
             }
+
         }
+
     }
+
 }

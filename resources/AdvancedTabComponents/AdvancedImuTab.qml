@@ -177,12 +177,12 @@ Item {
         RowLayout {
             id: textDataRow
 
+            property real preferredChildWidths: advancedImuArea.width / 15
+
             visible: true
             Layout.fillWidth: true
             Layout.preferredHeight: Constants.advancedImu.urlBarHeight
             Layout.alignment: Qt.AlignBottom
-
-            property real preferredChildWidths: advancedImuArea.width / 15
 
             Label {
                 text: Constants.advancedImu.textDataLabels[0]

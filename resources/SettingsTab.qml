@@ -78,66 +78,56 @@ MainTab {
         fileMode: FileDialog.OpenFile
         defaultSuffix: "ini"
         nameFilters: ["*.ini"]
-        currentFolder:
-        LP.StandardPaths.standardLocations(LP.StandardPaths.HomeLocation)[0] + "/" + Constants.settingsTab.defaultImportExportRelativePathFromHome
+        currentFolder: LP.StandardPaths.standardLocations(LP.StandardPaths.HomeLocation)[0] + "/" + Constants.settingsTab.defaultImportExportRelativePathFromHome
         onAccepted: {
-            var filepath = Utils.fileUrlToString(importDialog.fileUrl);
+            var filepath = Utils.fileUrlToString(importDialog.selectedFile);
             backend_request_broker.settings_import_request(filepath);
         }
     }
 
-    MessageDialog {
+    LP.MessageDialog {
         id: resetDialog
 
         title: "Reset to Factory Defaults?"
         text: "This will erase all settings and then reset the device.\nAre you sure you want to reset to factory defaults?"
-        buttons: MessageDialog.RestoreDefaults | MessageDialog.No
-        onButtonClicked: (button, role) => {
-            if (button & MessageDialog.RestoreDefaults)
-                backend_request_broker.settings_reset_request();
-        }
+        buttons: LP.MessageDialog.RestoreDefaults | LP.MessageDialog.No
+        onYesClicked: backend_request_broker.settings_reset_request()
     }
 
-    MessageDialog {
+    LP.MessageDialog {
         id: importSuccess
 
         title: "Successfully imported settings from file."
         text: "Settings import from file complete.  Click 'Yes' to save the settings to the device's persistent storage."
-        buttons: MessageDialog.Yes | MessageDialog.No
-        onButtonClicked: (button, role) => {
-            if (button & MessageDialog.Yes)
-                backend_request_broker.settings_save_request();
-        }
+        buttons: LP.MessageDialog.Yes | LP.MessageDialog.No
+        onYesClicked: backend_request_broker.settings_save_request()
     }
 
-    MessageDialog {
+    LP.MessageDialog {
         id: autoSurveyDialog
 
         title: "Auto populate surveyed position?"
         text: autoSurveyDialogText()
-        buttons: MessageDialog.Yes | MessageDialog.No
-        onButtonClicked: (button, role) => {
-            if (button & MessageDialog.Yes)
-                backend_request_broker.auto_survey_request();
-        }
+        buttons: LP.MessageDialog.Yes | LP.MessageDialog.No
+        onYesClicked: backend_request_broker.auto_survey_request()
     }
 
     SettingsTabComponents.InsSettingsPopup {
         id: insSettingsPopup
     }
 
-    MessageDialog {
+    LP.MessageDialog {
         id: settingsNotification
 
         title: "Settings Write Notification"
-        buttons: MessageDialog.Close
+        buttons: LP.MessageDialog.Close
     }
 
-    MessageDialog {
+    LP.MessageDialog {
         id: importFailure
 
         title: "Failed to import settings from file."
-        buttons: MessageDialog.Ok
+        buttons: LP.MessageDialog.Ok
     }
 
     SplitView {

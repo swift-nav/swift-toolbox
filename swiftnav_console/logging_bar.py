@@ -1,16 +1,17 @@
 """Logging Bar QObjects.
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 
 from PySide6.QtCore import Property, QObject, QStringListModel, Signal, Slot, Qt
 from PySide6.QtQml import QmlElement
 
-from .constants import Keys, QTKeys, SbpLogging
+from .constants import Keys, SbpLogging
 
 QML_IMPORT_NAME = "SwiftConsole"
 QML_IMPORT_MAJOR_VERSION = 1
-#QML_IMPORT_MINOR_VERSION is optional
+# QML_IMPORT_MINOR_VERSION is optional
+
 
 def logging_bar_update() -> Dict[str, Any]:
     return {
@@ -36,14 +37,15 @@ LOGGING_BAR_RECORDING: List[Dict[str, Any]] = [logging_bar_recording_update()]
 
 @QmlElement
 class SwiftStringListModel(QStringListModel):
-    def __init__(self, parent: Optional[QObject] = None) -> None:
-        super().__init__(parent)
-
     @Slot(str, result=int)
     def indexOf(self, string: str) -> int:
         matchedIndices = self.match(self.index(0), Qt.EditRole, string)
         index = matchedIndices[0].row() if len(matchedIndices) > 0 else -1
         return index
+
+    def __len__(self) -> int:
+        return len(self.stringList())
+
 
 @QmlElement
 class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
@@ -115,8 +117,9 @@ class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
         return self._sbp_logging_labels
 
     def set_sbp_logging_labels(self, sbp_logging_labels: List[str]) -> None:
-        self._sbp_logging_labels.setStringList(sbp_logging_labels)
-        self.sbp_logging_labels_changed.emit(self._sbp_logging_labels)
+        if len(self._sbp_logging_labels) == 0:
+            self._sbp_logging_labels.setStringList(sbp_logging_labels)
+            self.sbp_logging_labels_changed.emit(self._sbp_logging_labels)
 
     sbp_logging_labels = Property(QObject, get_sbp_logging_labels, notify=sbp_logging_labels_changed)  # type: ignore
 
@@ -125,8 +128,9 @@ class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
         return self._previous_folders
 
     def set_previous_folders(self, previous_folders: List[str]) -> None:
-        self._previous_folders.setStringList(previous_folders)
-        self.previous_folders_changed.emit(self._previous_folders)
+        if previous_folders != self._previous_folders.stringList():
+            self._previous_folders.setStringList(previous_folders)
+            self.previous_folders_changed.emit(self._previous_folders)
 
     previous_folders = Property(QObject, get_previous_folders, notify=previous_folders_changed)  # type: ignore
 

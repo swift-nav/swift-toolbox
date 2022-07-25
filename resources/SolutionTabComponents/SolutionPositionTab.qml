@@ -42,25 +42,26 @@ Item {
         }
 
         RowLayout {
+            property real labelComboWidth: solutionPositionSelectedUnit.width + solutionPositionSelectedUnitLabel.width
+
             Layout.alignment: Qt.AlignLeft
             Layout.leftMargin: Constants.solutionPosition.navBarMargin
-            property real labelComboWidth: solutionPositionSelectedUnit.width + solutionPositionSelectedUnitLabel.width
 
             SwiftButton {
                 id: solutionPauseButton
 
                 ButtonGroup.group: solutionButtonGroup
-                Layout.preferredWidth: parent.labelComboWidth/4
+                Layout.preferredWidth: parent.labelComboWidth / 4
                 Layout.preferredHeight: Constants.commonChart.buttonHeight
                 ToolTip.visible: hovered
                 ToolTip.text: "Pause"
                 checkable: true
+                onClicked: backend_request_broker.solution_position([solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].pressed])
+
                 icon {
                     source: Constants.icons.pauseButtonUrl
                     color: !solutionPauseButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 }
-
-                onClicked: backend_request_broker.solution_position([solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].pressed])
 
             }
 
@@ -68,16 +69,16 @@ Item {
                 id: solutionClearButton
 
                 ButtonGroup.group: solutionButtonGroup
-                Layout.preferredWidth: parent.labelComboWidth/4
+                Layout.preferredWidth: parent.labelComboWidth / 4
                 Layout.preferredHeight: Constants.commonChart.buttonHeight
                 ToolTip.visible: hovered
                 ToolTip.text: "Clear"
+                onPressed: backend_request_broker.solution_position([solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].pressed])
+
                 icon {
                     source: Constants.icons.clearButtonUrl
                     color: !solutionClearButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 }
-
-                onPressed: backend_request_broker.solution_position([solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].pressed])
 
             }
 
@@ -94,12 +95,13 @@ Item {
                         zoom_all = false;
                     }
                 }
-                Layout.preferredWidth: parent.labelComboWidth/4
+                Layout.preferredWidth: parent.labelComboWidth / 4
                 Layout.preferredHeight: Constants.commonChart.buttonHeight
                 ToolTip.visible: hovered
                 ToolTip.text: "Zoom All"
                 checkable: true
                 checked: true
+
                 icon {
                     source: Constants.icons.zoomAllButtonUrl
                     color: !solutionZoomAllButton.checked ? Constants.materialGrey : Constants.swiftOrange
@@ -121,11 +123,12 @@ Item {
                         center_solution = false;
                     }
                 }
-                Layout.preferredWidth: parent.labelComboWidth/4
+                Layout.preferredWidth: parent.labelComboWidth / 4
                 Layout.preferredHeight: Constants.commonChart.buttonHeight
                 ToolTip.visible: hovered
                 ToolTip.text: "Center On Solution"
                 checkable: true
+
                 icon {
                     source: Constants.icons.centerOnButtonUrl
                     color: !solutionCenterButton.checked ? Constants.materialGrey : Constants.swiftOrange
@@ -135,6 +138,7 @@ Item {
 
             Label {
                 id: solutionPositionSelectedUnitLabel
+
                 text: "Display Units: "
             }
 

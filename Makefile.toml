@@ -838,7 +838,7 @@ makensis /V4  .\installers\Windows\Installer.nsi
 dependencies = ["set-qml-files", "set-qml-app"]
 script_runner = "@shell"
 script = '''
-${QT_APP}/Qt/bin/qmlformat -i ${QML_FILES}
+qmlformat -i ${QML_FILES}
 '''
 
 [tasks.qml-format.windows]
@@ -846,7 +846,7 @@ dependencies = ["set-qml-files", "set-qml-app"]
 script_runner = "powershell"
 script_extension = "ps1"
 script = '''
-& ${env:QT_APP}\Qt\bin\qmlformat -i $(-split ${env:QML_FILES})
+& qmlformat -i $(-split ${env:QML_FILES})
 '''
 
 [tasks.qml-lint]

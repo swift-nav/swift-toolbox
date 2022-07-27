@@ -124,7 +124,6 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-
       - name: Checkout source
         uses: actions/checkout@v2
         with:
@@ -176,6 +175,11 @@ jobs:
           cargo make setup-builder
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.3.1'
 
       - name: Run Checks
         continue-on-error: true

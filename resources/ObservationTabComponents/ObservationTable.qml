@@ -79,7 +79,6 @@ ColumnLayout {
             text: observationTableModel ? observationTableModel.row_count : ""
             padding: parent.textPadding
         }
-
     }
 
     RowLayout {
@@ -108,7 +107,6 @@ ColumnLayout {
         ObservationFilterColumn {
             codes: observationTableModel ? observationTableModel.sbas_codes : 0
         }
-
     }
 
     HorizontalHeaderView {
@@ -169,11 +167,8 @@ ColumnLayout {
                     position: 1
                     color: Constants.genericTable.gradientColor
                 }
-
             }
-
         }
-
     }
 
     SwiftTableView {
@@ -192,5 +187,4 @@ ColumnLayout {
         color: "transparent"
         border.color: Constants.genericTable.borderColor
     }
-
 }

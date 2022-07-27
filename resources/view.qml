@@ -79,7 +79,6 @@ ApplicationWindow {
             interval: 200
             onTriggered: tabInfoBar.open()
         }
-
     }
 
     TabInfoBar {
@@ -113,13 +112,11 @@ ApplicationWindow {
         onTabNameChanged: {
             if (autoClose)
                 closeAfterDelaySubtabless();
-
         }
         onEntered: cancelAutoClose()
         onExited: {
             if (autoClose)
                 closeAfterDelaySubtabless();
-
         }
         states: [
             // The opened state sets the y position so the item is
@@ -132,7 +129,6 @@ ApplicationWindow {
                     target: tabInfoBar
                     y: 0
                 }
-
             },
             // The closed state sets the y position so the item is
             // positioned so it's bottom is right at the top of the
@@ -146,7 +142,6 @@ ApplicationWindow {
                     target: tabInfoBar
                     y: -height + 1
                 }
-
             }
         ]
         // Make the opened/closed state transitions smooth.
@@ -161,7 +156,6 @@ ApplicationWindow {
                     duration: tabInfoBar.closeDuration
                     easing.type: Easing.OutQuad
                 }
-
             },
             Transition {
                 from: "closed"
@@ -173,7 +167,6 @@ ApplicationWindow {
                     duration: tabInfoBar.openDuration
                     easing.type: Easing.OutQuad
                 }
-
             }
         ]
 
@@ -183,7 +176,6 @@ ApplicationWindow {
             interval: 3000
             onTriggered: parent.close()
         }
-
     }
 
     Rectangle {
@@ -232,10 +224,8 @@ ApplicationWindow {
             onYChanged: {
                 if (!openArrowAnimation.running)
                     openArrowAnimation.startingPropertyValue = y;
-
             }
         }
-
     }
 
     RowLayout {
@@ -328,9 +318,7 @@ ApplicationWindow {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                         }
-
                     }
-
                 }
 
                 StatusBar {
@@ -338,11 +326,8 @@ ApplicationWindow {
 
                     Layout.fillWidth: true
                 }
-
             }
-
         }
-
     }
 
     Rectangle {
@@ -354,5 +339,4 @@ ApplicationWindow {
         height: 2
         color: Constants.swiftGrey
     }
-
 }

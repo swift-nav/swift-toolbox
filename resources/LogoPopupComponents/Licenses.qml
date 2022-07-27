@@ -41,14 +41,12 @@ ColumnLayout {
                     id: robotoFileIO
 
                     source: Constants.logoPopup.licenses.robotoFontLicensePath
-                    onError: (msg) => {
+                    onError: msg => {
                         console.log("Roboto Font License file read error: " + msg);
                         robotoFontTextArea.text = msg;
                     }
                 }
-
             }
-
         }
 
         ScrollView {
@@ -71,16 +69,12 @@ ColumnLayout {
                     id: fontAwesomeFileIO
 
                     source: Constants.logoPopup.licenses.fontAwesomeIconsLicensePath
-                    onError: (msg) => {
+                    onError: msg => {
                         console.log("Font Awesome License file read error: " + msg);
                         fontAwesomeTextArea.text = msg;
                     }
                 }
-
             }
-
         }
-
     }
-
 }

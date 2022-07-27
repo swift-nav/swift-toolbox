@@ -76,7 +76,6 @@ Item {
                     x: 1
                     y: 1
                 }
-
             }
 
             Timer {
@@ -87,12 +86,10 @@ Item {
                 repeat: true
                 onTriggered: {
                     if (!advancedSpectrumAnalyzerTab.visible)
-                        return ;
-
+                        return;
                     advanced_spectrum_analyzer_model.fill_console_points(advancedSpectrumAnalyzerPoints);
                     if (!advancedSpectrumAnalyzerPoints.points.length)
-                        return ;
-
+                        return;
                     if (!line) {
                         var line_ = advancedSpectrumAnalyzerChart.createSeries(ChartView.SeriesTypeLine, 0, advancedSpectrumAnalyzerXAxis);
                         line_.color = Constants.advancedSpectrumAnalyzer.lineColors[0];
@@ -110,7 +107,6 @@ Item {
                     advancedSpectrumAnalyzerPoints.fill_series(line);
                 }
             }
-
         }
 
         AdvancedSpectrumAnalyzerTabChannelBar {
@@ -119,7 +115,5 @@ Item {
             Layout.fillWidth: true
             Layout.maximumHeight: Constants.advancedSpectrumAnalyzer.dropdownRowHeight
         }
-
     }
-
 }

@@ -72,7 +72,6 @@ Item {
             clip: true
             wrapMode: Text.Wrap
         }
-
     }
 
     Dialog {
@@ -126,9 +125,7 @@ Item {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
             }
-
         }
-
     }
 
     Dialog {
@@ -153,7 +150,6 @@ Item {
             clip: true
             wrapMode: Text.Wrap
         }
-
     }
 
     Timer {
@@ -187,7 +183,7 @@ Item {
                             timer.startTimer(consoleVersionDialog.open);
                         }
                         consoleVersionDialogAlready = true;
-                        return ;
+                        return;
                     }
                 }
                 if (Globals.updateTabData.fwVersionCurrent) {
@@ -197,13 +193,13 @@ Item {
                             timer.startTimer(v2DownloadDialog.open);
                         }
                         v2DownloadDialogAlready = true;
-                        return ;
+                        return;
                     }
                 } else {
                     // This will clear between device connections.
                     v2DownloadDialogAlready = false;
                     firmwareVersionDialogAlready = false;
-                    return ;
+                    return;
                 }
                 if (Globals.updateTabData.fwVersionCurrent && Globals.updateTabData.fwVersionLatest) {
                     if (!firmwareVersionDialogAlready && !Globals.updateTabData.fwV2Outdated) {
@@ -218,5 +214,4 @@ Item {
             }
         }
     }
-
 }

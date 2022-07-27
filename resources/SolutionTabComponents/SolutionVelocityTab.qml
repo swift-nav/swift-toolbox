@@ -42,12 +42,10 @@ Item {
                 model: available_units
                 onCurrentIndexChanged: {
                     if (!lines.length)
-                        return ;
-
+                        return;
                     backend_request_broker.solution_velocity_unit(available_units[currentIndex]);
                 }
             }
-
         }
 
         ChartView {
@@ -97,7 +95,6 @@ Item {
                                 for (var idx in colors) {
                                     if (lineLegendRepeaterRows.itemAt(idx))
                                         lineLegendRepeaterRows.itemAt(idx).children[0].color = colors[idx];
-
                                 }
                             }
 
@@ -117,13 +114,9 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                             }
-
                         }
-
                     }
-
                 }
-
             }
 
             SwiftValueAxis {
@@ -155,7 +148,6 @@ Item {
                     x: 1
                     y: 1
                 }
-
             }
 
             Timer {
@@ -164,12 +156,10 @@ Item {
                 repeat: true
                 onTriggered: {
                     if (!solutionVelocityTab.visible)
-                        return ;
-
+                        return;
                     solution_velocity_model.fill_console_points(solutionVelocityPoints);
                     if (!solutionVelocityPoints.points.length)
-                        return ;
-
+                        return;
                     solutionVelocityArea.visible = true;
                     var points = solutionVelocityPoints.points;
                     if (colors != solutionVelocityPoints.colors) {
@@ -177,12 +167,10 @@ Item {
                         for (var idx in colors) {
                             if (lineLegendRepeaterRows.itemAt(idx))
                                 lineLegendRepeaterRows.itemAt(idx).children[0].color = colors[idx];
-
                         }
                     }
                     if (available_units != solutionVelocityPoints.available_units)
                         available_units = solutionVelocityPoints.available_units;
-
                     if (!lines.length) {
                         for (var idx in labels) {
                             var line = solutionVelocityChart.createSeries(ChartView.SeriesTypeLine, Constants.solutionVelocity.labels[idx], solutionVelocityXAxis);
@@ -203,9 +191,6 @@ Item {
                     }
                 }
             }
-
         }
-
     }
-
 }

@@ -131,7 +131,6 @@ Item {
                     label: "90°"
                     endValue: Constants.trackingSkyPlot.axisRadialMin
                 }
-
             }
 
             ScatterSeries {
@@ -145,7 +144,6 @@ Item {
                     x: 0
                     y: 0
                 }
-
             }
 
             Rectangle {
@@ -160,9 +158,9 @@ Item {
                 anchors.rightMargin: Constants.trackingSkyPlot.legendRightMargin
                 implicitHeight: lineLegendRepeater.height
                 width: lineLegendRepeater.width
-                visible: showLegendCheckBox.checked && all_series.filter((x) => {
-                    return x.visible;
-                }).length > 0
+                visible: showLegendCheckBox.checked && all_series.filter(x => {
+                        return x.visible;
+                    }).length > 0
 
                 Column {
                     id: lineLegendRepeater
@@ -196,15 +194,10 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                             }
-
                         }
-
                     }
-
                 }
-
             }
-
         }
 
         Label {
@@ -244,11 +237,8 @@ Item {
                         updateTimer.restart();
                     }
                 }
-
             }
-
         }
-
     }
 
     Timer {
@@ -260,8 +250,7 @@ Item {
         triggeredOnStart: true
         onTriggered: {
             if (!trackingSkyPlotTab.visible)
-                return ;
-
+                return;
             let labels = trackingSkyPlotPoints.labels;
             if (all_series.length < labels.length) {
                 for (var i = all_series.length; i < labels.length; i++) {
@@ -275,12 +264,11 @@ Item {
             trackingSkyPlotPoints.fill_all_series();
             if (polarChartWidthChanging) {
                 polarChartWidthChanging = false;
-                return ;
+                return;
             }
             for (var idx in labels) {
                 if (!all_series[idx].visible)
                     continue;
-
                 if (labelsVisible) {
                     for (var jdx in labels[idx]) {
                         var pose = trackingSkyPlotChart.mapToPosition(all_series[idx].at(jdx), all_series[idx]);
@@ -292,5 +280,4 @@ Item {
             }
         }
     }
-
 }

@@ -26,7 +26,5 @@ Item {
             Layout.fillHeight: true
             readOnly: true
         }
-
     }
-
 }

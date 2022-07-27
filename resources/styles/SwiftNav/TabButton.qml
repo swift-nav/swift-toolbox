@@ -36,7 +36,6 @@
 ** $QT_END_LICENSE$
 **
 ****************************************************************************/
-
 import "../../Constants"
 import QtQuick
 import QtQuick.Controls.Material
@@ -94,9 +93,6 @@ T.TabButton {
                 position: 1
                 color: backgroundColor
             }
-
         }
-
     }
-
 }

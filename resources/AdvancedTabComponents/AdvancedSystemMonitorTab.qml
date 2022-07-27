@@ -30,7 +30,6 @@ Item {
             Layout.fillHeight: true
             Layout.fillWidth: true
         }
-
     }
 
     Timer {
@@ -39,12 +38,10 @@ Item {
         repeat: true
         onTriggered: {
             if (!advancedTab.visible)
-                return ;
-
+                return;
             advanced_system_monitor_model.fill_console_points(advancedSystemMonitorData);
             if (!advancedSystemMonitorData.threads_table.length)
-                return ;
-
+                return;
             threadStateTable.entries = advancedSystemMonitorData.threads_table;
             leftPane.observationConnectionMonitor.obsPeriod[advancedSystemMonitorData.obs_period[0][0]] = advancedSystemMonitorData.obs_period[0][1];
             leftPane.observationConnectionMonitor.obsPeriod[advancedSystemMonitorData.obs_period[1][0]] = advancedSystemMonitorData.obs_period[1][1];
@@ -59,5 +56,4 @@ Item {
             leftPane.deviceMonitor.feTemp = advancedSystemMonitorData.fe_temp;
         }
     }
-
 }

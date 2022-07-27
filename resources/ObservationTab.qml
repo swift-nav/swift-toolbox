@@ -1,4 +1,4 @@
-import "./Constants"
+import "Constants"
 import "BaseComponents"
 import "ObservationTabComponents" as ObservationTabComponents
 import QtQuick
@@ -42,9 +42,7 @@ MainTab {
                     anchors.fill: parent
                     observationTableModel: observationLocalTableModel
                 }
-
             }
-
         }
 
         Rectangle {
@@ -63,9 +61,7 @@ MainTab {
                     anchors.fill: parent
                     observationTableModel: observationRemoteTableModel
                 }
-
             }
-
         }
 
         Timer {
@@ -74,13 +70,10 @@ MainTab {
             repeat: true
             onTriggered: {
                 if (!observationTab.visible)
-                    return ;
-
+                    return;
                 remoteTable.update();
                 localTable.update();
             }
         }
-
     }
-
 }

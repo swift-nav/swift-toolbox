@@ -1,6 +1,6 @@
+pragma Singleton
 import QtQml
 import QtQuick
-pragma Singleton
 
 QtObject {
     readonly property real tabBarWidth: 70
@@ -74,20 +74,20 @@ QtObject {
         readonly property bool autoClose: false
         readonly property color tabLabelColor: swiftOrange
         readonly property font tabLabelFont: Qt.font({
-            "family": "Roboto Condensed",
-            "pixelSize": 25,
-            "bold": true,
-            "letterSpacing": 1,
-            "capitalization": Font.AllUppercase
-        })
+                "family": "Roboto Condensed",
+                "pixelSize": 25,
+                "bold": true,
+                "letterSpacing": 1,
+                "capitalization": Font.AllUppercase
+            })
         readonly property string appName: "Console"
         readonly property color appNameColor: swiftLightGrey
         readonly property font appNameFont: Qt.font({
-            "family": robotoCondensedLightFont.name,
-            "pixelSize": 25,
-            "letterSpacing": 2,
-            "capitalization": Font.AllUppercase
-        })
+                "family": robotoCondensedLightFont.name,
+                "pixelSize": 25,
+                "letterSpacing": 2,
+                "capitalization": Font.AllUppercase
+            })
         readonly property string infoButtonIconPath: "qrc:/images/fontawesome/info-circle-solid.svg"
         readonly property color infoButtonIconColor: swiftLightGrey
         readonly property int height: 50
@@ -119,7 +119,6 @@ QtObject {
             readonly property int titlePixelSize: 14
             readonly property int secondaryPixelSize: 10
         }
-
     }
 
     sideNavBar: QtObject {
@@ -348,9 +347,9 @@ QtObject {
         readonly property int recordingDividerLabelWidth: 10
         readonly property int recordingSizeLabelWidth: 40
         readonly property font comboBoxFont: Qt.font({
-            "family": fontFamily,
-            "pixelSize": mediumPixelSize
-        })
+                "family": fontFamily,
+                "pixelSize": mediumPixelSize
+            })
     }
 
     advancedMagnetometer: QtObject {
@@ -563,23 +562,23 @@ QtObject {
         readonly property color gridLineColor: "#CDC9C9"
         readonly property color labelsColor: "#000000"
         readonly property font titleFont: Qt.font({
-            "family": fontFamily,
-            "pixelSize": xlPixelSize,
-            "bold": true
-        })
+                "family": fontFamily,
+                "pixelSize": xlPixelSize,
+                "bold": true
+            })
         readonly property color titleColor: swiftGrey
         readonly property font axisTitleFont: Qt.font({
-            "family": fontFamily,
-            "pixelSize": mediumPixelSize,
-            "bold": true,
-            "letterSpacing": 2,
-            "capitalization": Font.AllUppercase
-        })
+                "family": fontFamily,
+                "pixelSize": mediumPixelSize,
+                "bold": true,
+                "letterSpacing": 2,
+                "capitalization": Font.AllUppercase
+            })
         readonly property font axisLabelsFont: Qt.font({
-            "family": fontFamily,
-            "pixelSize": smallPixelSize,
-            "bold": false
-        })
+                "family": fontFamily,
+                "pixelSize": smallPixelSize,
+                "bold": false
+            })
         readonly property int tickPixelSize: 10
         readonly property int buttonHeight: 40
         readonly property int unitDropdownWidth: 90
@@ -617,12 +616,12 @@ QtObject {
         readonly property int yAxisTickInterval: 10
         readonly property int xAxisTickInterval: 10
         readonly property font yAxisTitleFont: Qt.font({
-            "family": fontFamily,
-            "pixelSize": mediumPixelSize,
-            "bold": true,
-            "letterSpacing": 2,
-            "capitalization": Font.MixedCase
-        })
+                "family": fontFamily,
+                "pixelSize": mediumPixelSize,
+                "bold": true,
+                "letterSpacing": 2,
+                "capitalization": Font.MixedCase
+            })
     }
 
     observationTab: QtObject {
@@ -666,5 +665,4 @@ QtObject {
         readonly property int columnSpacing: 10
         readonly property int tableHeight: 150
     }
-
 }

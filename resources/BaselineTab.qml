@@ -22,7 +22,5 @@ MainTab {
             SplitView.fillWidth: true
             SplitView.fillHeight: true
         }
-
     }
-
 }

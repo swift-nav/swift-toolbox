@@ -15,12 +15,12 @@ Rectangle {
     property var labelHorizontalAlignment: Text.AlignRight
     property var fontFamily: Constants.genericTable.fontFamily
     property font labelFont: Qt.font({
-        "family": Constants.genericTable.fontFamily,
-        "pixelSize": Constants.largePixelSize
-    })
+            "family": Constants.genericTable.fontFamily,
+            "pixelSize": Constants.largePixelSize
+        })
 
-    signal textEdited()
-    signal editingFinished()
+    signal textEdited
+    signal editingFinished
 
     clip: true
     border.width: borderWidth
@@ -51,7 +51,5 @@ Rectangle {
             color: placeholderColor
             visible: !textInput.text
         }
-
     }
-
 }

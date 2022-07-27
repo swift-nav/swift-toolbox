@@ -36,7 +36,6 @@
 ** $QT_END_LICENSE$
 **
 ****************************************************************************/
-
 import QtQuick
 import QtQuick.Controls.Material
 import QtQuick.Controls.Material.impl
@@ -74,9 +73,7 @@ T.TabBar {
                 y: control.position === T.TabBar.Footer ? 0 : parent.height - height
                 color: control.Material.accentColor
             }
-
         }
-
     }
 
     background: Item {
@@ -89,9 +86,6 @@ T.TabBar {
                 elevation: control.Material.elevation
                 fullWidth: true
             }
-
         }
-
     }
-
 }

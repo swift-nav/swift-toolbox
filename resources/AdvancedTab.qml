@@ -34,7 +34,5 @@ MainTab {
 
         AdvancedTabComponents.AdvancedInsTab {
         }
-
     }
-
 }

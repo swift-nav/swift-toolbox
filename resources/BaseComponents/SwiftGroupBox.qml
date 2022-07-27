@@ -20,5 +20,4 @@ GroupBox {
         border.color: control.borderColor
         border.width: control.borderWidth
     }
-
 }

@@ -34,9 +34,6 @@ MainTab {
 
             SolutionTabComponents.SolutionVelocityTab {
             }
-
         }
-
     }
-
 }

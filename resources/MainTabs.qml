@@ -46,7 +46,5 @@ Item {
         AdvancedTab {
             curSubTabIndex: mainTabs.curSubTabIndex
         }
-
     }
-
 }

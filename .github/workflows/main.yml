@@ -92,6 +92,7 @@ jobs:
           path: ${{ env.PIP_CACHE_DIR }}
           key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
 
+
       - name: Install ImageMagick
         shell: bash
         run: |

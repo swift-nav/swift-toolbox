@@ -853,7 +853,7 @@ script = '''
 dependencies = ["set-qml-files", "set-qml-app"]
 script_runner = "@shell"
 script = '''
-${QT_APP}/Qt/bin/qmllint -I ${QT_APP}/../PySide6/Qt/qml/ -I resources/ ${QML_FILES}
+${QT_APP}/qmllint -I ${QT_APP}/../PySide6/Qt/qml/ -I resources/ ${QML_FILES}
 '''
 
 [tasks.qml-lint.windows]
@@ -861,7 +861,7 @@ dependencies = ["set-qml-files", "set-qml-app"]
 script_runner = "powershell"
 script_extension = "ps1"
 script = '''
-& ${env:QT_APP}\Qt\bin\qmllint -I ${env:QT_APP}\..\PySide6\Qt\qml -I resources $(-split ${env:QML_FILES})
+& ${env:QT_APP}\qmllint -I ${env:QT_APP}\..\PySide6\Qt\qml -I resources $(-split ${env:QML_FILES})
 '''
 
 [tasks.qml-format-check]

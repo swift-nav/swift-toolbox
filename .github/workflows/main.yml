@@ -177,6 +177,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run Checks
+        continue-on-error: true
         run: |
           cargo make check-all
 

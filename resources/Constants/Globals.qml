@@ -1,5 +1,5 @@
-import QtQuick
 pragma Singleton
+import QtQuick
 
 QtObject {
     property string consoleVersion: "0.0.0"
@@ -37,5 +37,4 @@ QtObject {
         property string consoleVersionCurrent: ""
         property string consoleVersionLatest: ""
     }
-
 }

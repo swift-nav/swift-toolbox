@@ -31,5 +31,4 @@ SequentialAnimation {
         easing.type: Easing.OutQuad
         to: anim.startingPropertyValue
     }
-
 }

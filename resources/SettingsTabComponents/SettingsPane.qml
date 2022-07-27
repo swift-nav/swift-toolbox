@@ -15,7 +15,6 @@ Rectangle {
         let row = settingsPane.selectedRow();
         if (!row)
             return false;
-
         return !!row[name];
     }
 
@@ -23,7 +22,6 @@ Rectangle {
         let row = settingsPane.selectedRow();
         if (!row)
             return "";
-
         return row[name] || "";
     }
 
@@ -102,7 +100,6 @@ Rectangle {
                 sourceComponent: {
                     if (selectedRowField("readonly"))
                         return settingRowText;
-
                     var ty = selectedRowField("type");
                     if (ty === "boolean")
                         return settingRowBool;
@@ -120,7 +117,6 @@ Rectangle {
                             target: valOnDevice
                             Layout.preferredHeight: isLongTextField(_fieldName) ? 5 * parent.smallRowHeight : 3 * parent.smallRowHeight
                         }
-
                     },
                     State {
                         name: "enumOrBool"
@@ -130,7 +126,6 @@ Rectangle {
                             target: valOnDevice
                             Layout.preferredHeight: 2 * parent.smallRowHeight
                         }
-
                     },
                     State {
                         name: "label"
@@ -140,7 +135,6 @@ Rectangle {
                             target: valOnDevice
                             Layout.preferredHeight: parent.smallRowHeight
                         }
-
                     }
                 ]
             }
@@ -270,7 +264,6 @@ Rectangle {
                 Layout.fillWidth: true
                 sourceComponent: emptyRow
             }
-
         }
 
         ScrollBar.vertical: ScrollBar {
@@ -278,7 +271,6 @@ Rectangle {
 
             policy: ScrollBar.AlwaysOn
         }
-
     }
 
     Component {
@@ -287,7 +279,6 @@ Rectangle {
         Rectangle {
             anchors.fill: parent
         }
-
     }
 
     Component {
@@ -302,9 +293,7 @@ Rectangle {
                 anchors.fill: parent
                 onClicked: parent.forceActiveFocus()
             }
-
         }
-
     }
 
     Component {
@@ -323,18 +312,14 @@ Rectangle {
                 onSelectedTextChanged: {
                     if (selectedText.length > 0)
                         Globals.copyClipboard = selectedText;
-
                 }
 
                 font {
                     family: Constants.fontFamily
                     pixelSize: Constants.largePixelSize
                 }
-
             }
-
         }
-
     }
 
     Component {
@@ -368,7 +353,6 @@ Rectangle {
                     return stringValidator;
             }
         }
-
     }
 
     Component {
@@ -380,10 +364,8 @@ Rectangle {
             onActivated: {
                 if (currentIndex != -1 && selectedRowField("valueOnDevice") != model[currentIndex])
                     backend_request_broker.settings_write_request(selectedRowField("group"), selectedRowField("name"), model[currentIndex]);
-
             }
         }
-
     }
 
     Component {
@@ -395,10 +377,8 @@ Rectangle {
             onActivated: {
                 if (currentIndex != -1 && selectedRowField("valueOnDevice") != model[currentIndex])
                     backend_request_broker.settings_write_request(selectedRowField("group"), selectedRowField("name"), model[currentIndex]);
-
             }
         }
-
     }
 
     floatValidator: DoubleValidator {
@@ -409,5 +389,4 @@ Rectangle {
 
     stringValidator: RegularExpressionValidator {
     }
-
 }

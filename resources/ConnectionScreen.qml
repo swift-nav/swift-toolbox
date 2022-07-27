@@ -31,9 +31,9 @@ Item {
     }
 
     function restore_previous_serial_settings(device_name) {
-        const config = previous_serial_configs.find((element) => {
-            return element[0] === device_name;
-        });
+        const config = previous_serial_configs.find(element => {
+                return element[0] === device_name;
+            });
         if (config) {
             serialDeviceBaudRate.currentIndex = available_baudrates.indexOf(config[1]);
             serialDeviceFlowControl.currentIndex = available_flows.indexOf(config[2]);
@@ -72,10 +72,8 @@ Item {
             onVisibleChanged: {
                 if (visible)
                     dialogRect.forceActiveFocus();
-
                 if (backend_request_broker_ready())
                     backend_request_broker.connection_dialog_status(visible);
-
             }
             onClosed: {
                 stack.mainView();
@@ -116,7 +114,6 @@ Item {
                     Item {
                         Layout.fillWidth: true
                     }
-
                 }
 
                 Label {
@@ -226,9 +223,7 @@ Item {
                                     target: serialDeviceFlowControl
                                     width: Constants.connection.serialDeviceFlowControlDropdownWidth * 1.1
                                 }
-
                             }
-
                         }
 
                         Item {
@@ -236,7 +231,6 @@ Item {
 
                             Layout.fillWidth: true
                         }
-
                     }
 
                     GridLayout {
@@ -271,7 +265,6 @@ Item {
                                 color: Constants.connection.placeholderTextColor
                                 visible: (!tcpUrlBar.editText)
                             }
-
                         }
 
                         Label {
@@ -307,9 +300,7 @@ Item {
                                 bottom: 0
                                 top: 65535
                             }
-
                         }
-
                     }
 
                     GridLayout {
@@ -345,11 +336,8 @@ Item {
                                 color: Constants.connection.placeholderTextColor
                                 visible: !fileUrlBar.editText
                             }
-
                         }
-
                     }
-
                 }
 
                 RowLayout {
@@ -394,7 +382,6 @@ Item {
                                 } else if (fileRadio.checked) {
                                     if (fileUrlBar.editText)
                                         backend_request_broker.connect_file(fileUrlBar.editText);
-
                                 } else {
                                     backend_request_broker.connect_serial(serialDevice.currentText, serialDeviceBaudRate.currentText, serialDeviceFlowControl.currentText);
                                 }
@@ -416,7 +403,6 @@ Item {
                                     target: dialog
                                     title: "Connecting..."
                                 }
-
                             },
                             State {
                                 name: Constants.connection.connected
@@ -433,7 +419,6 @@ Item {
                                     target: dialog
                                     title: "Connected to Device"
                                 }
-
                             },
                             State {
                                 name: Constants.connection.disconnecting
@@ -450,7 +435,6 @@ Item {
                                     target: dialog
                                     title: "Disconnecting..."
                                 }
-
                             },
                             State {
                                 name: Constants.connection.disconnected
@@ -467,13 +451,10 @@ Item {
                                     target: dialog
                                     title: "Connect to Device"
                                 }
-
                             }
                         ]
                     }
-
                 }
-
             }
 
             Timer {
@@ -483,8 +464,7 @@ Item {
                 onTriggered: {
                     connection_model.fill_data(connectionData);
                     if (!connectionData.available_baudrates || !connectionData.available_baudrates.length)
-                        return ;
-
+                        return;
                     if (!available_baudrates.length || !available_flows.length) {
                         Globals.consoleVersion = connectionData.console_version;
                         available_baudrates = connectionData.available_baudrates;
@@ -503,7 +483,6 @@ Item {
                         serialDevice.currentIndex = available_devices.indexOf(last_used_serial_device);
                         if (serialDevice.currentIndex != -1)
                             restore_previous_serial_settings(available_devices[serialDevice.currentIndex]);
-
                     }
                     if (connectionData.connection_message !== "") {
                         connMessage = connectionData.connection_message;
@@ -518,9 +497,6 @@ Item {
                     Globals.conn_state = connectionData.conn_state;
                 }
             }
-
         }
-
     }
-
 }

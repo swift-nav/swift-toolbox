@@ -35,7 +35,6 @@ MainTab {
 
                 anchors.fill: parent
             }
-
         }
 
         Rectangle {
@@ -46,7 +45,6 @@ MainTab {
             UpdateTabComponents.FirmwareVersionAndDownloadLabels {
                 anchors.fill: parent
             }
-
         }
 
         Rectangle {
@@ -74,9 +72,7 @@ MainTab {
                     Layout.preferredWidth: parent.width / 2
                     Layout.fillHeight: true
                 }
-
             }
-
         }
 
         Rectangle {
@@ -88,7 +84,6 @@ MainTab {
                 font.family: Constants.genericTable.fontFamily
                 font.pixelSize: Constants.largePixelSize
             }
-
         }
 
         Rectangle {
@@ -128,9 +123,7 @@ MainTab {
                     height: control.availableHeight
                     active: control.ScrollBar.horizontal.active
                 }
-
             }
-
         }
 
         Rectangle {
@@ -143,7 +136,6 @@ MainTab {
                 font.family: Constants.genericTable.fontFamily
                 font.pixelSize: Constants.largePixelSize
             }
-
         }
 
         Rectangle {
@@ -159,9 +151,7 @@ MainTab {
 
                 anchors.fill: parent
             }
-
         }
-
     }
 
     Dialog {
@@ -195,7 +185,6 @@ MainTab {
             clip: true
             wrapMode: Text.Wrap
         }
-
     }
 
     Timer {
@@ -238,26 +227,19 @@ MainTab {
             else
                 firmwareVersion.isSerialConnected = false;
             if (!updateTab.visible)
-                return ;
-
+                return;
             if (!firmwareDownload.fwDirectoryEditing)
                 firmwareDownload.fwDirectory = updateTabData.directory;
-
             if (fwLogTextArea.text != updateTabData.fw_text)
                 fwLogTextArea.text = updateTabData.fw_text;
-
             firmwareDownload.downloadButtonEnable = !updateTabData.downloading && !updateTabData.upgrading;
             firmwareVersion.upgradeButtonEnable = updateTabData.fw_version_current && !updateTabData.upgrading && !updateTabData.downloading;
             if (!firmwareVersion.localFileTextEditing)
                 firmwareVersion.localFileText = updateTabData.fw_local_filename;
-
             if (!fileioSelect.destinationTextEditing)
                 fileioSelect.destinationText = updateTabData.fileio_destination_filepath;
-
             if (!fileioSelect.localTextEditing)
                 fileioSelect.localText = updateTabData.fileio_local_filepath;
-
         }
     }
-
 }

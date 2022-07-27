@@ -74,7 +74,5 @@ T.Button {
         layer.effect: ElevationEffect {
             elevation: control.Material.elevation
         }
-
     }
-
 }

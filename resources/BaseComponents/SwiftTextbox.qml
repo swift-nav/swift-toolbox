@@ -11,9 +11,9 @@ Rectangle {
     property var labelHorizontalAlignment: Text.AlignRight
     property var fontFamily: Constants.genericTable.fontFamily
     property font labelFont: Qt.font({
-        "family": Constants.genericTable.fontFamily,
-        "pixelSize": Constants.largePixelSize
-    })
+            "family": Constants.genericTable.fontFamily,
+            "pixelSize": Constants.largePixelSize
+        })
 
     Label {
         text: parent.text
@@ -25,5 +25,4 @@ Rectangle {
         horizontalAlignment: labelHorizontalAlignment
         font: labelFont
     }
-
 }

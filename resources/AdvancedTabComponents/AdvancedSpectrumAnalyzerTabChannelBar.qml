@@ -48,5 +48,4 @@ RowLayout {
     Item {
         Layout.preferredWidth: parent.parentWidth / 6
     }
-
 }

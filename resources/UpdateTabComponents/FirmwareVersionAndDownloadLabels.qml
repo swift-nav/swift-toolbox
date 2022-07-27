@@ -23,7 +23,5 @@ Item {
             labelHorizontalAlignment: Text.AlignLeft
             text: Constants.updateTab.firmwareDownloadTitle
         }
-
     }
-
 }

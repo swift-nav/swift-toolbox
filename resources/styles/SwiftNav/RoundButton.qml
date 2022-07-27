@@ -36,7 +36,6 @@
 ** $QT_END_LICENSE$
 **
 ****************************************************************************/
-
 import "../../Constants"
 import QtQuick
 import QtQuick.Controls
@@ -79,5 +78,4 @@ T.RoundButton {
         border.color: control.palette.highlight
         border.width: control.visualFocus ? 2 : 0
     }
-
 }

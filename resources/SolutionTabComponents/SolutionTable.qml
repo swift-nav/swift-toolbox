@@ -84,11 +84,8 @@ Item {
                         position: 1
                         color: Constants.genericTable.gradientColor
                     }
-
                 }
-
             }
-
         }
 
         SwiftTableView {
@@ -102,9 +99,9 @@ Item {
                 id: tableModel
 
                 rows: [{
-                    "Item": "",
-                    "Value": ""
-                }]
+                        "Item": "",
+                        "Value": ""
+                    }]
 
                 TableModelColumn {
                     display: "Item"
@@ -113,9 +110,7 @@ Item {
                 TableModelColumn {
                     display: "Value"
                 }
-
             }
-
         }
 
         Rectangle {
@@ -136,7 +131,6 @@ Item {
                 text: Constants.solutionTable.rtkNoteText
                 padding: Constants.solutionTable.rtkNoteMargins
             }
-
         }
 
         Timer {
@@ -145,16 +139,13 @@ Item {
             repeat: true
             onTriggered: {
                 if (!solutionTab.visible)
-                    return ;
-
+                    return;
                 solution_table_model.fill_console_points(solutionTableEntries);
                 if (!solutionTableEntries.entries.length)
-                    return ;
-
+                    return;
                 var entries = solutionTableEntries.entries;
                 for (var idx in entries) {
-                    var new_row = {
-                    };
+                    var new_row = {};
                     new_row[Constants.solutionTable.tableLeftColumnHeader] = entries[idx][0];
                     new_row[Constants.solutionTable.tableRightColumnHeader] = entries[idx][1];
                     tableView.model.setRow(idx, new_row);
@@ -162,7 +153,5 @@ Item {
                 tableView.forceLayout();
             }
         }
-
     }
-
 }

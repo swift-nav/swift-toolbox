@@ -23,5 +23,4 @@ Item {
         anchors.leftMargin: Constants.fusionStatusFlags.labelMargin
         anchors.verticalCenter: okStatusImage.verticalCenter
     }
-
 }

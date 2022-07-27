@@ -25,7 +25,6 @@
 //                 if (i != index)
 //                     headerRepeater.itemAt(i).clearSorting()
 //         }
-
 import "../Constants"
 import QtQuick
 import QtQuick.Controls
@@ -40,17 +39,16 @@ Rectangle {
     property alias sortable: tap.enabled
     property alias reorderable: dragHandler.enabled
     property QtObject table: undefined
-    property var headerRelayoutProvider: function() {
-    }
+    property var headerRelayoutProvider: function () {}
     property font font: Qt.font({
-        "family": Constants.genericTable.fontFamily,
-        "pixelSize": Constants.largePixelSize
-    })
+            "family": Constants.genericTable.fontFamily,
+            "pixelSize": Constants.largePixelSize
+        })
     property color gradientStartColor: Constants.genericTable.cellColor
     property color gradientStopColor: Constants.genericTable.gradientColor
     property color selectedCellColor: Constants.genericTable.selectedCellColor
 
-    signal sorting()
+    signal sorting
     signal dropped(real x)
 
     function clearSorting() {
@@ -74,14 +72,12 @@ Rectangle {
     onSortableChanged: {
         if (sortable && typeof table.model.sort === "undefined")
             console.warn("SortableColumnHeading: Model does not support sorting, but sortable enabled.");
-
     }
     onReorderableChanged: {
         if (reorderable && typeof table.model.reorderColumn === "undefined")
             console.warn("SortableColumnHeading: Model does not support reordering columns, but reorderable enabled.");
-
     }
-    onDropped: (x) => {
+    onDropped: x => {
         if (typeof table.model.reorderColumn !== "undefined") {
             table.model.reorderColumn(index, x);
             if (typeof headerRelayoutProvider === "undefined")
@@ -93,7 +89,6 @@ Rectangle {
     onSorting: {
         if (typeof table.model.sort !== "undefined")
             table.model.sort(index, state == "up" ? Qt.AscendingOrder : Qt.DescendingOrder);
-
     }
     states: [
         State {
@@ -109,7 +104,6 @@ Rectangle {
                 target: sortableColumnHeading
                 gradientStopColor: selectedCellColor
             }
-
         },
         State {
             name: "down"
@@ -124,7 +118,6 @@ Rectangle {
                 target: sortableColumnHeading
                 gradientStopColor: selectedCellColor
             }
-
         }
     ]
 
@@ -165,7 +158,6 @@ Rectangle {
         onXChanged: {
             if (x < 0)
                 x = 0;
-
         } // Prevent resizing cell smaller than 0
         width: 12
         height: parent.height + 10
@@ -182,10 +174,8 @@ Rectangle {
             onActiveChanged: {
                 if (!active)
                     table.forceLayout();
-
             }
         }
-
     }
 
     DragHandler {
@@ -195,7 +185,6 @@ Rectangle {
         onActiveChanged: {
             if (!active)
                 sortableColumnHeading.dropped(centroid.scenePosition.x);
-
         }
     }
 
@@ -209,7 +198,5 @@ Rectangle {
             position: 1
             color: sortableColumnHeading.gradientStopColor
         }
-
     }
-
 }

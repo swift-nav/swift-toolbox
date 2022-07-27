@@ -43,7 +43,6 @@ T.CheckBox {
             active: control.down || control.visualFocus || control.hovered
             color: control.Material.rippleColor
         }
-
     }
 
     contentItem: Text {
@@ -57,5 +56,4 @@ T.CheckBox {
         horizontalAlignment: Text.AlignHCenter
         wrapMode: Text.WordWrap
     }
-
 }

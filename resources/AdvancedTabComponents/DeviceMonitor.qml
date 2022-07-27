@@ -20,7 +20,6 @@ Item {
             Label {
                 text: "Device Monitor"
             }
-
         }
 
         Rectangle {
@@ -44,7 +43,6 @@ Item {
                         text: Constants.systemMonitor.zynqTempLabel + ": " + zynqTemp.toFixed(1) + Constants.systemMonitor.tempUnits
                         horizontalAlignment: Text.AlignRight
                     }
-
                 }
 
                 Rectangle {
@@ -57,18 +55,13 @@ Item {
                         text: Constants.systemMonitor.feTempLabel + ": " + feTemp.toFixed(1) + Constants.systemMonitor.tempUnits
                         horizontalAlignment: Text.AlignRight
                     }
-
                 }
 
                 Item {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                 }
-
             }
-
         }
-
     }
-
 }

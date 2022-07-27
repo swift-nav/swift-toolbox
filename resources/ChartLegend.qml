@@ -23,7 +23,6 @@ Rectangle {
     Component.onCompleted: {
         if (cellTextSample == cellTextSampleDefault)
             console.log("warning: default cellTextSample used in ChartLegend");
-
     }
     states: [
         State {
@@ -38,7 +37,6 @@ Rectangle {
                 target: gridView
                 visible: true
             }
-
         },
         State {
             name: "closed"
@@ -52,7 +50,6 @@ Rectangle {
                 target: gridView
                 visible: false
             }
-
         }
     ]
     transitions: [
@@ -70,9 +67,7 @@ Rectangle {
                 PropertyAction {
                     property: "visible"
                 }
-
             }
-
         },
         Transition {
             to: "opened"
@@ -86,9 +81,7 @@ Rectangle {
                     property: "height"
                     duration: lineLegend.openCloseSpeed
                 }
-
             }
-
         }
     ]
 
@@ -105,7 +98,7 @@ Rectangle {
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.NoButton
-        onWheel: (wheelEvent) => {
+        onWheel: wheelEvent => {
             if (wheelEvent.angleDelta.y > 0)
                 legendScrollBar.decrease();
             else
@@ -134,7 +127,6 @@ Rectangle {
                 //drag.target: lineLegend
                 hoverEnabled: true
             }
-
         }
 
         GridView {
@@ -182,11 +174,7 @@ Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                 }
-
             }
-
         }
-
     }
-
 }

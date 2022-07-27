@@ -28,11 +28,9 @@ ColumnLayout {
                 observationTableModel.filter_prn(modelData, !checked);
                 observationTableModel.update();
             }
-            text: modelData + ": " + observationTableModel.codes.filter((x) => {
-                return x === modelData;
-            }).length
+            text: modelData + ": " + observationTableModel.codes.filter(x => {
+                    return x === modelData;
+                }).length
         }
-
     }
-
 }

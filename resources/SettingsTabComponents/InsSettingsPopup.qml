@@ -28,7 +28,6 @@ Item {
         text += "Choose \"Ok\" to";
         if (settings.length > 0)
             text += " allow the console to change the above settings on your device to help enable INS output and then";
-
         text += " immediately save settings to device flash and send the software reset command.";
         text += " The software reset will temporarily interrupt the console's connection to the device but it ";
         text += " will recover on its own. ";
@@ -123,11 +122,8 @@ Item {
                                 position: 1
                                 color: Constants.genericTable.gradientColor
                             }
-
                         }
-
                     }
-
                 }
 
                 SwiftTableView {
@@ -153,11 +149,8 @@ Item {
                         TableModelColumn {
                             display: Constants.insSettingsPopup.columnHeaders[2]
                         }
-
                     }
-
                 }
-
             }
 
             Label {
@@ -168,9 +161,7 @@ Item {
                 wrapMode: Text.Wrap
                 width: parent.width
             }
-
         }
-
     }
 
     Timer {
@@ -179,8 +170,7 @@ Item {
         repeat: true
         onTriggered: {
             for (var idx in settings) {
-                var new_row = {
-                };
+                var new_row = {};
                 new_row[Constants.insSettingsPopup.columnHeaders[0]] = settings[idx][0];
                 new_row[Constants.insSettingsPopup.columnHeaders[1]] = settings[idx][1];
                 new_row[Constants.insSettingsPopup.columnHeaders[2]] = settings[idx][2];
@@ -188,5 +178,4 @@ Item {
             }
         }
     }
-
 }

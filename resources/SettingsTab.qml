@@ -255,7 +255,6 @@ MainTab {
                         onClicked: {
                             if (buttonEnabled)
                                 autoSurveyDialog.visible = true;
-
                         }
                     }
 
@@ -290,9 +289,7 @@ MainTab {
                         font.family: Constants.fontFamily
                         font.bold: false
                     }
-
                 }
-
             }
 
             ToolSeparator {
@@ -306,8 +303,7 @@ MainTab {
                 function selectedRow() {
                     var rowIdx = settingsTable.selectedRowIdx;
                     if (rowIdx < 0)
-                        return ;
-
+                        return;
                     return settingsTable.table[settingsTable.rowOffsets[rowIdx]];
                 }
 
@@ -329,9 +325,6 @@ MainTab {
                 Layout.fillHeight: true
                 visible: !settingsPane.visible
             }
-
         }
-
     }
-
 }

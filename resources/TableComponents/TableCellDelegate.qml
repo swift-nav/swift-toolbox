@@ -21,5 +21,4 @@ Rectangle {
         horizontalAlignment: Text.AlignLeft
         padding: Constants.genericTable.padding
     }
-
 }

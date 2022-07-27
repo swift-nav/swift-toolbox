@@ -67,7 +67,6 @@ Item {
                 font.family: Constants.genericTable.fontFamily
                 font.pixelSize: Constants.largePixelSize
             }
-
         }
 
         FileDialog {
@@ -155,9 +154,6 @@ Item {
                 font.family: Constants.genericTable.fontFamily
                 font.pixelSize: Constants.largePixelSize
             }
-
         }
-
     }
-
 }

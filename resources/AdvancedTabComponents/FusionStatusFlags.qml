@@ -191,12 +191,10 @@ Item {
                 repeat: true
                 onTriggered: {
                     if (!advancedTab.visible)
-                        return ;
-
+                        return;
                     fusion_engine_flags_model.fill_console_points(fusionStatusFlagsData);
                     if (!fusionStatusFlagsData.gnsspos)
-                        return ;
-
+                        return;
                     fusionStatusFlagsArea.visible = true;
                     var gnsspos = fusionStatusFlagsData.gnsspos;
                     if (gnsspos != last_gnsspos) {
@@ -302,14 +300,11 @@ Item {
                     }
                 }
             }
-
         }
 
         label: Label {
             text: Constants.fusionStatusFlags.title
             font.pixelSize: Constants.fusionStatusFlags.titleFontSize
         }
-
     }
-
 }

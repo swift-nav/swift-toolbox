@@ -71,7 +71,6 @@ Item {
                                 for (var idx in Constants.advancedImu.lineColors) {
                                     if (lineLegendRepeaterRows.itemAt(idx))
                                         lineLegendRepeaterRows.itemAt(idx).children[0].color = Constants.advancedImu.lineColors[idx];
-
                                 }
                             }
 
@@ -92,13 +91,9 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                             }
-
                         }
-
                     }
-
                 }
-
             }
 
             SwiftValueAxis {
@@ -134,7 +129,6 @@ Item {
                     x: 0
                     y: 0
                 }
-
             }
 
             Timer {
@@ -145,12 +139,10 @@ Item {
                 repeat: true
                 onTriggered: {
                     if (!advancedImuTab.visible)
-                        return ;
-
+                        return;
                     advanced_imu_model.fill_console_points(advancedImuPoints);
                     if (!advancedImuPoints.points.length)
-                        return ;
-
+                        return;
                     var points = advancedImuPoints.points;
                     advancedImuArea.visible = true;
                     if (!lines.length) {
@@ -171,7 +163,6 @@ Item {
                     advancedImuPoints.fill_series(lines);
                 }
             }
-
         }
 
         RowLayout {
@@ -203,7 +194,6 @@ Item {
                     font.pixelSize: Constants.mediumPixelSize
                     text: "0.00 C"
                 }
-
             }
 
             Label {
@@ -225,7 +215,6 @@ Item {
                     font.pixelSize: Constants.mediumPixelSize
                     text: "0x00"
                 }
-
             }
 
             Label {
@@ -247,7 +236,6 @@ Item {
                     font.pixelSize: Constants.mediumPixelSize
                     text: "0.00 g"
                 }
-
             }
 
             Label {
@@ -269,7 +257,6 @@ Item {
                     font.pixelSize: Constants.mediumPixelSize
                     text: "0.00 g"
                 }
-
             }
 
             Label {
@@ -291,7 +278,6 @@ Item {
                     font.pixelSize: Constants.mediumPixelSize
                     text: "0.00 g"
                 }
-
             }
 
             Item {
@@ -304,11 +290,7 @@ Item {
                     antialiasing: Globals.useAntiAliasing
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
-
             }
-
         }
-
     }
-
 }

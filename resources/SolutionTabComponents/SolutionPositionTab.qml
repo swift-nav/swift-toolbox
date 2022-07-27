@@ -62,7 +62,6 @@ Item {
                     source: Constants.icons.pauseButtonUrl
                     color: !solutionPauseButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 }
-
             }
 
             SwiftButton {
@@ -79,7 +78,6 @@ Item {
                     source: Constants.icons.clearButtonUrl
                     color: !solutionClearButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 }
-
             }
 
             SwiftButton {
@@ -106,7 +104,6 @@ Item {
                     source: Constants.icons.zoomAllButtonUrl
                     color: !solutionZoomAllButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 }
-
             }
 
             SwiftButton {
@@ -133,7 +130,6 @@ Item {
                     source: Constants.icons.centerOnButtonUrl
                     color: !solutionCenterButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 }
-
             }
 
             Label {
@@ -149,8 +145,7 @@ Item {
                 Layout.preferredWidth: Constants.commonChart.unitDropdownWidth
                 onCurrentIndexChanged: {
                     if (!scatters.length)
-                        return ;
-
+                        return;
                     backend_request_broker.solution_position_unit(available_units[currentIndex]);
                     zoom_all = true;
                     solutionZoomAllButton.checked = true;
@@ -166,11 +161,8 @@ Item {
                         target: solutionPositionSelectedUnit
                         width: Constants.commonChart.unitDropdownWidth * 1.5
                     }
-
                 }
-
             }
-
         }
 
         ChartView {
@@ -269,13 +261,9 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                             }
-
                         }
-
                     }
-
                 }
-
             }
 
             SwiftValueAxis {
@@ -297,7 +285,7 @@ Item {
                     solutionZoomAllButton.checked = true;
                     solutionPositionChart.resetChartZoom();
                 }
-                onWheel: (wheel) => {
+                onWheel: wheel => {
                     solutionPositionChart.stopZoomFeatures();
                     solutionPositionChart.chartZoomByDirection(wheel.angleDelta.y);
                 }
@@ -339,7 +327,6 @@ Item {
                     x: 1
                     y: 1
                 }
-
             }
 
             Timer {
@@ -348,27 +335,21 @@ Item {
                 repeat: true
                 onTriggered: {
                     if (!solutionPositionTab.visible)
-                        return ;
-
+                        return;
                     solution_position_model.fill_console_points(solutionPositionPoints);
                     if (!solutionPositionPoints.points.length)
-                        return ;
-
+                        return;
                     if (available_units != solutionPositionPoints.available_units)
                         available_units = solutionPositionPoints.available_units;
-
                     if (!line || !scatters.length || !cur_scatters.length)
                         [scatters, cur_scatters, line] = SolutionPlotLoop.setupScatterSeries(solutionPositionChart, Constants, Globals, solutionPositionXAxis, solutionPositionYAxis, Constants.solutionPosition.legendLabels, Constants.solutionPosition.colors, false, true);
-
                     var combined = [line, scatters, cur_scatters];
                     solutionPositionPoints.fill_series(combined);
                     let point = SolutionPlotLoop.getCurSolution(solutionPositionPoints.cur_points);
                     if (point)
                         cur_solution = point;
-
                     if (center_solution)
                         solutionPositionChart.centerToSolution();
-
                     let hasData = false;
                     for (let idx in solutionPositionPoints.points) {
                         if (solutionPositionPoints.points[idx].length) {
@@ -401,13 +382,9 @@ Item {
                         orig_lon_max = new_lon_max;
                         if (zoom_all)
                             solutionPositionChart.resetChartZoom();
-
                     }
                 }
             }
-
         }
-
     }
-
 }

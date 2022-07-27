@@ -67,11 +67,8 @@ Item {
                     position: 1
                     color: Constants.genericTable.gradientColor
                 }
-
             }
-
         }
-
     }
 
     SwiftTableView {
@@ -99,9 +96,7 @@ Item {
             TableModelColumn {
                 display: Constants.systemMonitor.columnHeaders[2]
             }
-
         }
-
     }
 
     Timer {
@@ -110,11 +105,9 @@ Item {
         repeat: true
         onTriggered: {
             if (!advancedTab.visible)
-                return ;
-
+                return;
             for (var idx in entries) {
-                var new_row = {
-                };
+                var new_row = {};
                 new_row[Constants.systemMonitor.columnHeaders[0]] = entries[idx][0];
                 new_row[Constants.systemMonitor.columnHeaders[1]] = entries[idx][1];
                 new_row[Constants.systemMonitor.columnHeaders[2]] = entries[idx][2];
@@ -122,5 +115,4 @@ Item {
             }
         }
     }
-
 }

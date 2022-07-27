@@ -52,9 +52,7 @@ Item {
                         return text;
                     }
                 }
-
             }
-
         }
 
         GroupBox {
@@ -75,7 +73,6 @@ Item {
                         width: parent.width
                         height: parent.height
                     }
-
                 }
 
                 Item {
@@ -103,13 +100,9 @@ Item {
                             backend_request_broker.advanced_networking([refresh, start, stop], allMessages, ipv4_address, port);
                         }
                     }
-
                 }
-
             }
-
         }
-
     }
 
     Timer {
@@ -118,8 +111,7 @@ Item {
         repeat: true
         onTriggered: {
             if (!advancedTab.visible)
-                return ;
-
+                return;
             advanced_networking_model.fill_console_points(advancedNetworkingData);
             if (advancedNetworkingData.running) {
                 messageBroadcaster.messageTypeSelectionEnabled = false;
@@ -136,15 +128,11 @@ Item {
             }
             if (!messageBroadcaster.ipAddressEditing)
                 messageBroadcaster.ip_address = advancedNetworkingData.ip_address;
-
             if (!messageBroadcaster.portEditing)
                 messageBroadcaster.port = advancedNetworkingData.port;
-
             if (!advancedNetworkingData.network_info.length)
-                return ;
-
+                return;
             networkInfoTable.entries = advancedNetworkingData.network_info;
         }
     }
-
 }

@@ -14,7 +14,6 @@ ColumnLayout {
             width: Constants.logoPopup.aboutMe.logoWidth
             source: Constants.icons.swiftLogoPath
         }
-
     }
 
     Label {
@@ -53,5 +52,4 @@ ColumnLayout {
             Qt.openUrlExternally(Constants.logoPopup.aboutMe.website);
         }
     }
-
 }

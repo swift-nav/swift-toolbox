@@ -36,7 +36,6 @@
 ** $QT_END_LICENSE$
 **
 ****************************************************************************/
-
 import QtQuick
 import QtQuick.Controls.Material
 import QtQuick.Controls.Material.impl
@@ -92,7 +91,6 @@ T.ComboBox {
 
         cursorDelegate: CursorDelegate {
         }
-
     }
 
     background: Rectangle {
@@ -125,7 +123,6 @@ T.ComboBox {
         layer.effect: ElevationEffect {
             elevation: control.Material.elevation
         }
-
     }
 
     popup: T.Popup {
@@ -154,7 +151,6 @@ T.ComboBox {
                 easing.type: Easing.OutCubic
                 duration: 150
             }
-
         }
 
         exit: Transition {
@@ -172,7 +168,6 @@ T.ComboBox {
                 easing.type: Easing.OutCubic
                 duration: 150
             }
-
         }
 
         contentItem: ListView {
@@ -184,7 +179,6 @@ T.ComboBox {
 
             T.ScrollIndicator.vertical: ScrollIndicator {
             }
-
         }
 
         background: Rectangle {
@@ -195,9 +189,6 @@ T.ComboBox {
             layer.effect: ElevationEffect {
                 elevation: 8
             }
-
         }
-
     }
-
 }

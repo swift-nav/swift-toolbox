@@ -9,8 +9,7 @@ import SwiftConsole
 
 Rectangle {
     property alias selectedRowIdx: tableView._currentSelectedIndex
-    property var rowOffsets: ({
-    })
+    property var rowOffsets: ({})
     property bool showExpert: false
     property bool lastShowExpert: false
     property alias table: settingsTableEntries.entries
@@ -31,10 +30,8 @@ Rectangle {
         for (var idx = entryIdx + 1; idx < entries.length; idx++) {
             if (isHeader(entries[idx]))
                 return false;
-
             if (!entries[idx].expert)
                 return true;
-
         }
         return false;
     }
@@ -165,11 +162,8 @@ Rectangle {
                         position: 1
                         color: Constants.genericTable.gradientColor
                     }
-
                 }
-
             }
-
         }
 
         SwiftTableView {
@@ -185,9 +179,9 @@ Rectangle {
                 id: tableModel
 
                 rows: [{
-                    "Name": "",
-                    "Value": ""
-                }]
+                        "Name": "",
+                        "Value": ""
+                    }]
 
                 TableModelColumn {
                     display: "Name"
@@ -196,7 +190,6 @@ Rectangle {
                 TableModelColumn {
                     display: "Value"
                 }
-
             }
 
             delegate: Rectangle {
@@ -237,9 +230,7 @@ Rectangle {
                         }
                     }
                 }
-
             }
-
         }
 
         Timer {
@@ -251,14 +242,13 @@ Rectangle {
                 var entries = settingsTableEntries.entries;
                 if (!entries.length) {
                     settingsHealthy = false;
-                    return ;
+                    return;
                 }
                 settingsHealthy = true;
                 if (lastShowExpert != showExpert) {
                     tableView._currentSelectedIndex = -1;
                     tableView.model.clear();
-                    rowOffsets = {
-                    };
+                    rowOffsets = {};
                     lastShowExpert = showExpert;
                 }
                 if (entries.length != lastEntriesLen) {
@@ -267,29 +257,27 @@ Rectangle {
                 }
                 var offset = 0;
                 entries.forEach((entry, idx, entries) => {
-                    var new_row;
-                    if (!isHeader(entry)) {
-                        if (showExpert || entry.expert === false) {
-                            new_row = row(entry);
+                        var new_row;
+                        if (!isHeader(entry)) {
+                            if (showExpert || entry.expert === false) {
+                                new_row = row(entry);
+                            } else {
+                                offset++;
+                                return;
+                            }
                         } else {
-                            offset++;
-                            return ;
+                            if (showExpert || groupHasNonExpertSetting(entries, idx)) {
+                                new_row = headerRow(entry);
+                            } else {
+                                offset++;
+                                return;
+                            }
                         }
-                    } else {
-                        if (showExpert || groupHasNonExpertSetting(entries, idx)) {
-                            new_row = headerRow(entry);
-                        } else {
-                            offset++;
-                            return ;
-                        }
-                    }
-                    rowOffsets[idx - offset] = idx;
-                    tableView.model.setRow(idx - offset, new_row);
-                });
+                        rowOffsets[idx - offset] = idx;
+                        tableView.model.setRow(idx - offset, new_row);
+                    });
                 tableView.forceLayout();
             }
         }
-
     }
-
 }

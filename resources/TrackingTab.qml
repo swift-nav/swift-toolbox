@@ -22,7 +22,5 @@ MainTab {
 
         TrackingTabComponents.TrackingSkyPlotTab {
         }
-
     }
-
 }

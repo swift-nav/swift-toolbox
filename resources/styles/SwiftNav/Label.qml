@@ -36,7 +36,6 @@
 ** $QT_END_LICENSE$
 **
 ****************************************************************************/
-
 import "../../Constants"
 import QtQuick
 import QtQuick.Controls.Material
@@ -52,5 +51,4 @@ T.Label {
         family: Constants.fontFamily
         pixelSize: Constants.largePixelSize
     }
-
 }

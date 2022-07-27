@@ -16,7 +16,5 @@ Item {
 
         FusionStatusFlags {
         }
-
     }
-
 }

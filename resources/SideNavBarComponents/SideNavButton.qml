@@ -42,7 +42,6 @@ Button {
     Component.onCompleted: {
         if (!silenceButtonGroupWarning)
             console.assert(buttonGroup != undefined, "No buttonGroup assigned to SideNavButton! Undesired behavior will result.");
-
     }
 
     contentItem: IconLabel {
@@ -84,9 +83,6 @@ Button {
                 color: Constants.swiftGrey
                 visible: !control.visualFocus && (control.checked || control.highlighted) && control.enabled
             }
-
         }
-
     }
-
 }

@@ -36,7 +36,6 @@
 ** $QT_END_LICENSE$
 **
 ****************************************************************************/
-
 import "../../Constants"
 import QtQuick
 import QtQuick.Controls.Material
@@ -109,7 +108,5 @@ T.Button {
         layer.effect: ElevationEffect {
             elevation: control.Material.elevation
         }
-
     }
-
 }

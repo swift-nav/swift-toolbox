@@ -15,34 +15,34 @@ Item {
     property real dataRate: 0
     property bool enabled: true
     property var tabModel: [{
-        "name": "Tracking",
-        "tooltip": "Tracking",
-        "source": Constants.icons.trackingPath
-    }, {
-        "name": "Solution",
-        "tooltip": "Solution",
-        "source": Constants.icons.solutionPath
-    }, {
-        "name": "Baseline",
-        "tooltip": "Baseline",
-        "source": Constants.icons.baselinePath
-    }, {
-        "name": "Observations",
-        "tooltip": "Observations",
-        "source": Constants.icons.observationsPath
-    }, {
-        "name": "Settings",
-        "tooltip": "Settings",
-        "source": Constants.icons.settingsPath
-    }, {
-        "name": "Update",
-        "tooltip": "Update",
-        "source": Constants.icons.updatePath
-    }, {
-        "name": "Advanced",
-        "tooltip": "Advanced",
-        "source": Constants.icons.advancedPath
-    }]
+            "name": "Tracking",
+            "tooltip": "Tracking",
+            "source": Constants.icons.trackingPath
+        }, {
+            "name": "Solution",
+            "tooltip": "Solution",
+            "source": Constants.icons.solutionPath
+        }, {
+            "name": "Baseline",
+            "tooltip": "Baseline",
+            "source": Constants.icons.baselinePath
+        }, {
+            "name": "Observations",
+            "tooltip": "Observations",
+            "source": Constants.icons.observationsPath
+        }, {
+            "name": "Settings",
+            "tooltip": "Settings",
+            "source": Constants.icons.settingsPath
+        }, {
+            "name": "Update",
+            "tooltip": "Update",
+            "source": Constants.icons.updatePath
+        }, {
+            "name": "Advanced",
+            "tooltip": "Advanced",
+            "source": Constants.icons.advancedPath
+        }]
 
     function clickButton(index) {
         navButtons.itemAtIndex(index).toggle();
@@ -63,9 +63,9 @@ Item {
                 buttons: navButtons.children
                 onCheckedButtonChanged: {
                     if (checkedButton === null)
-                        return ;
-
-                    for (var idx = 0; idx < buttons.length && buttons[idx] != checkedButton; idx++);
+                        return;
+                    for (var idx = 0; idx < buttons.length && buttons[idx] != checkedButton; idx++)
+                        ;
                     navButtons.currentIndex = idx;
                 }
             }
@@ -83,7 +83,6 @@ Item {
                 onCurrentIndexChanged: {
                     if (navButtons.currentIndex >= 0)
                         navButtonGroup.checkedButton = navButtonGroup.buttons[navButtons.currentIndex];
-
                 }
 
                 highlight: Item {
@@ -96,7 +95,6 @@ Item {
                         y: parent.height - height
                         color: Constants.swiftOrange
                     }
-
                 }
 
                 delegate: SideNavButton {
@@ -106,9 +104,7 @@ Item {
                     buttonGroup: navButtonGroup
                     height: Constants.sideNavBar.tabBarHeight
                 }
-
             }
-
         }
 
         Rectangle {
@@ -155,7 +151,6 @@ Item {
                         target: connectionStatusCircle
                         color: Constants.sideNavBar.statusGoodColor
                     }
-
                 },
                 State {
                     name: "ok"
@@ -164,7 +159,6 @@ Item {
                         target: connectionStatusCircle
                         color: Constants.sideNavBar.statusOkColor
                     }
-
                 },
                 State {
                     name: "bad"
@@ -173,7 +167,6 @@ Item {
                         target: connectionStatusCircle
                         color: Constants.sideNavBar.statusBadColor
                     }
-
                 }
             ]
 
@@ -201,18 +194,12 @@ Item {
                     height: diameter
                     radius: diameter / 2
 
-                    Behavior on color {
+                    Behavior on color  {
                         ColorAnimation {
                         }
-
                     }
-
                 }
-
             }
-
         }
-
     }
-
 }

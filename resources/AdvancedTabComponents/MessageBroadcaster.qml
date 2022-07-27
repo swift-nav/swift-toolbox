@@ -42,9 +42,7 @@ Item {
                     horizontalAlignment: Text.AlignRight
                     verticalAlignment: Text.AlignVCenter
                 }
-
             }
-
         }
 
         Item {
@@ -86,9 +84,7 @@ Item {
                         backend_request_broker.advanced_networking([refresh, start, stop], allMessages, ipv4_address, port);
                     }
                 }
-
             }
-
         }
 
         Item {
@@ -109,9 +105,7 @@ Item {
                     horizontalAlignment: Text.AlignRight
                     verticalAlignment: Text.AlignVCenter
                 }
-
             }
-
         }
 
         Item {
@@ -156,9 +150,7 @@ Item {
                         ipAddressEditing = false;
                     }
                 }
-
             }
-
         }
 
         Item {
@@ -179,9 +171,7 @@ Item {
                     horizontalAlignment: Text.AlignRight
                     verticalAlignment: Text.AlignVCenter
                 }
-
             }
-
         }
 
         Item {
@@ -230,11 +220,8 @@ Item {
                         bottom: Constants.networking.messageBroadcasterIntValidatorUInt16Min
                         top: Constants.networking.messageBroadcasterIntValidatorUInt16Max
                     }
-
                 }
-
             }
-
         }
 
         RowLayout {
@@ -275,11 +262,8 @@ Item {
                         text: "Start"
                         anchors.centerIn: parent
                     }
-
                 }
-
             }
-
         }
 
         RowLayout {
@@ -316,18 +300,13 @@ Item {
                         text: "Stop"
                         anchors.centerIn: parent
                     }
-
                 }
-
             }
 
             Item {
                 Layout.fillHeight: true
                 Layout.fillWidth: true
             }
-
         }
-
     }
-
 }

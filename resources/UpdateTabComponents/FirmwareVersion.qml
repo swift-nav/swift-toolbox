@@ -48,7 +48,6 @@ Item {
                     labelHorizontalAlignment: Text.AlignLeft
                     readOnly: true
                 }
-
             }
 
             Row {
@@ -71,7 +70,6 @@ Item {
                     labelHorizontalAlignment: Text.AlignLeft
                     readOnly: true
                 }
-
             }
 
             SelectLocalFile {
@@ -130,13 +128,8 @@ Item {
                         font.family: Constants.genericTable.fontFamily
                         font.pixelSize: Constants.largePixelSize
                     }
-
                 }
-
             }
-
         }
-
     }
-
 }

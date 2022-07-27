@@ -21,7 +21,6 @@ Item {
             Label {
                 text: "Observation Connection Monitor"
             }
-
         }
 
         Rectangle {
@@ -45,7 +44,6 @@ Item {
                         Label {
                             text: Constants.systemMonitor.obsLatencyLabel
                         }
-
                     }
 
                     Rectangle {
@@ -76,11 +74,8 @@ Item {
                                 text: Constants.systemMonitor.maxLabel + ": " + obsLatency.Max + Constants.systemMonitor.obsUnits
                                 horizontalAlignment: Text.AlignRight
                             }
-
                         }
-
                     }
-
                 }
 
                 ColumnLayout {
@@ -95,7 +90,6 @@ Item {
                         Label {
                             text: Constants.systemMonitor.obsPeriodLabel
                         }
-
                     }
 
                     Rectangle {
@@ -126,17 +120,10 @@ Item {
                                 text: Constants.systemMonitor.maxLabel + ": " + obsPeriod.Max + Constants.systemMonitor.obsUnits
                                 horizontalAlignment: Text.AlignRight
                             }
-
                         }
-
                     }
-
                 }
-
             }
-
         }
-
     }
-
 }

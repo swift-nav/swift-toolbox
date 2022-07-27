@@ -36,7 +36,5 @@ Item {
                 backend_request_broker.reset_device();
             }
         }
-
     }
-
 }

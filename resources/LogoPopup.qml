@@ -9,7 +9,6 @@ Item {
     function open() {
         if (!dialog.visible)
             dialog.open();
-
     }
 
     Dialog {
@@ -36,9 +35,7 @@ Item {
                         text: modelData
                         width: implicitWidth
                     }
-
                 }
-
             }
 
             StackLayout {
@@ -51,7 +48,6 @@ Item {
 
                 LogoPopupComponents.Licenses {
                 }
-
             }
 
             SwiftButton {
@@ -65,9 +61,6 @@ Item {
                     dialog.close();
                 }
             }
-
         }
-
     }
-
 }

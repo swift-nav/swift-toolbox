@@ -17,14 +17,14 @@ TableView {
     property int delegateBorderWidth: Constants.genericTable.borderWidth
     property color delegateBorderColor: Constants.genericTable.borderColor
     property font tableFont: Qt.font({
-        "family": Constants.genericTable.fontFamily,
-        "pixelSize": Constants.largePixelSize
-    })
+            "family": Constants.genericTable.fontFamily,
+            "pixelSize": Constants.largePixelSize
+        })
 
     clip: true
     columnSpacing: -1
     rowSpacing: -1
-    columnWidthProvider: function(column) {
+    columnWidthProvider: function (column) {
         return columnWidths[column];
     }
     reuseItems: true
@@ -37,7 +37,6 @@ TableView {
     onFocusChanged: {
         if (!stayFocused)
             _currentSelectedIndex = -1;
-
     }
 
     ScrollBar.horizontal: ScrollBar {
@@ -51,7 +50,6 @@ TableView {
         onSizeChanged: {
             if (position + size > 1)
                 position = 1 - size;
-
         }
     }
 
@@ -91,7 +89,5 @@ TableView {
                 }
             }
         }
-
     }
-
 }

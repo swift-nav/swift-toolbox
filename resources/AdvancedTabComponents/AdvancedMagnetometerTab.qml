@@ -72,7 +72,6 @@ Item {
                                 for (var idx in Constants.advancedMagnetometer.lineColors) {
                                     if (lineLegendRepeaterRows.itemAt(idx))
                                         lineLegendRepeaterRows.itemAt(idx).children[0].color = Constants.advancedMagnetometer.lineColors[idx];
-
                                 }
                             }
 
@@ -93,13 +92,9 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                             }
-
                         }
-
                     }
-
                 }
-
             }
 
             SwiftValueAxis {
@@ -137,7 +132,6 @@ Item {
                     x: 1
                     y: 10
                 }
-
             }
 
             Timer {
@@ -148,12 +142,10 @@ Item {
                 repeat: true
                 onTriggered: {
                     if (!advancedMagnetometerTab.visible)
-                        return ;
-
+                        return;
                     advanced_magnetometer_model.fill_console_points(advancedMagnetometerPoints);
                     if (!advancedMagnetometerPoints.points.length)
-                        return ;
-
+                        return;
                     var points = advancedMagnetometerPoints.points;
                     if (!lines.length) {
                         for (var idx in advancedMagnetometerPoints.points) {
@@ -171,7 +163,6 @@ Item {
                     advancedMagnetometerPoints.fill_series(lines);
                 }
             }
-
         }
 
         Rectangle {
@@ -184,9 +175,6 @@ Item {
                 antialiasing: Globals.useAntiAliasing
                 anchors.horizontalCenter: parent.horizontalCenter
             }
-
         }
-
     }
-
 }

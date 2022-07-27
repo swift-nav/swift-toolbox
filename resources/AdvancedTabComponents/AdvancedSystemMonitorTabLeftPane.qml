@@ -28,7 +28,5 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
         }
-
     }
-
 }

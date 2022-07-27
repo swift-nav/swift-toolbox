@@ -61,7 +61,6 @@ Item {
                     source: Constants.icons.pauseButtonUrl
                     color: !baselinePauseButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 }
-
             }
 
             SwiftButton {
@@ -88,7 +87,6 @@ Item {
                     source: Constants.icons.clearButtonUrl
                     visible: false
                 }
-
             }
 
             SwiftButton {
@@ -115,7 +113,6 @@ Item {
                     source: Constants.icons.zoomAllButtonUrl
                     color: !baselineZoomAllButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 }
-
             }
 
             SwiftButton {
@@ -142,7 +139,6 @@ Item {
                     source: Constants.icons.centerOnButtonUrl
                     color: !baselineCenterButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 }
-
             }
 
             SwiftButton {
@@ -156,7 +152,6 @@ Item {
                 ToolTip.visible: hovered
                 ToolTip.text: "Reset Filters"
             }
-
         }
 
         ChartView {
@@ -254,13 +249,9 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                             }
-
                         }
-
                     }
-
                 }
-
             }
 
             SwiftValueAxis {
@@ -324,7 +315,6 @@ Item {
                     x: 1
                     y: 1
                 }
-
             }
 
             Timer {
@@ -333,25 +323,20 @@ Item {
                 repeat: true
                 onTriggered: {
                     if (!baselinePlot.visible)
-                        return ;
-
+                        return;
                     baseline_plot_model.fill_console_points(baselinePlotPoints);
                     if (!baselinePlotPoints.points.length)
-                        return ;
-
+                        return;
                     baselinePlotArea.visible = true;
                     let _lines = null;
                     if (!scatters.length || !cur_scatters.length)
                         [scatters, cur_scatters, _lines] = SolutionPlotLoop.setupScatterSeries(baselinePlotChart, Constants, Globals, baselinePlotXAxis, baselinePlotYAxis, Constants.baselinePlot.legendLabels, Constants.baselinePlot.colors);
-
                     baselinePlotPoints.fill_series([scatters, cur_scatters]);
                     let point = SolutionPlotLoop.getCurSolution(baselinePlotPoints.cur_points);
                     if (point)
                         cur_solution = point;
-
                     if (center_solution)
                         baselinePlotChart.centerToSolution();
-
                     let hasData = false;
                     for (let idx in baselinePlotPoints.points) {
                         if (baselinePlotPoints.points[idx].length > 0) {
@@ -384,13 +369,9 @@ Item {
                         orig_e_max = new_e_max;
                         if (zoom_all)
                             baselinePlotChart.resetChartZoom();
-
                     }
                 }
             }
-
         }
-
     }
-
 }

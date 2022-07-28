@@ -24,7 +24,7 @@ from PySide6.QtGui import QFontDatabase, QIcon, QPixmap
 
 from PySide6.QtQml import QQmlComponent, qmlRegisterType
 
-from PySide2.QtQuickControls2 import QQuickStyle
+from PySide6.QtQuickControls2 import QQuickStyle
 
 import swiftnav_console.console_resources  # type: ignore # pylint: disable=unused-import
 

@@ -979,7 +979,7 @@ dependencies = [
 run_task = "check-git-diff"
 
 [tasks.lint]
-dependencies = ["qml-lint", "python-lint", "rust-lint", "format-check"]
+dependencies = ["python-lint", "rust-lint", "format-check"]
 
 [tasks.types]
 dependencies = ["python-type-check", "rust-type-check"]

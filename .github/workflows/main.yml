@@ -182,9 +182,13 @@ jobs:
           version: '6.3.1'
 
       - name: Run Checks
-        continue-on-error: true
         run: |
           cargo make check-all
+
+      - name: Run qmllint
+        continue-on-error: true
+        run: |
+          cargo make qml-lint
 
       - name: Run Tests
         uses: nick-invision/retry@v2

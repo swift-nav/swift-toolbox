@@ -195,10 +195,10 @@ fn write(src: PathBuf, dest: Remote, conn: ConnectionOpts) -> Result<()> {
         fs::File::open(&src).with_context(|| format!("Could not open {:?} for reading", &src))?;
     let size = file.metadata()?.len();
     let pb = ProgressBar::new(size);
-    pb.enable_steady_tick(1000);
+    pb.enable_steady_tick(Duration::from_millis(1000));
     pb.set_style(
         ProgressStyle::default_bar()
-            .template("[{elapsed_precise}] [{bar}] {bytes}/{total_bytes} ({bytes_per_sec}, {eta})")
+            .template("[{elapsed_precise}] [{bar}] {bytes}/{total_bytes} ({bytes_per_sec}, {eta})")?
             .progress_chars("=> "),
     );
     fileio.overwrite_with_progress(dest.path, file, |n| {
@@ -276,10 +276,11 @@ struct ReadProgress {
 impl ReadProgress {
     fn file() -> Self {
         let pb = ProgressBar::new_spinner();
-        pb.enable_steady_tick(1000);
+        pb.enable_steady_tick(Duration::from_millis(1000));
         pb.set_style(
             ProgressStyle::default_spinner()
-                .template("[{elapsed_precise}] {bytes} ({bytes_per_sec}) {msg}"),
+                .template("[{elapsed_precise}] {bytes} ({bytes_per_sec}) {msg}")
+                .expect("failed to configure progress bar"),
         );
         Self { inner: Some(pb) }
     }

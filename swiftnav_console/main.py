@@ -23,6 +23,8 @@ from PySide2.QtGui import QFontDatabase, QIcon, QPixmap
 
 from PySide2.QtQml import QQmlComponent, qmlRegisterType
 
+from PySide2.QtQuickControls2 import QQuickStyle
+
 import swiftnav_console.console_resources  # type: ignore # pylint: disable=unused-import
 
 from .constants import ApplicationMetadata, ConnectionState, ConnectionType, Keys, Tabs
@@ -720,6 +722,8 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     QFontDatabase.addApplicationFont(":/fonts/Roboto-Regular.ttf")
     QFontDatabase.addApplicationFont(":/fonts/Roboto-Bold.ttf")
     QFontDatabase.addApplicationFont(":/fonts/RobotoCondensed-Regular.ttf")
+    QQuickStyle.setStyle("SwiftNav")
+    QQuickStyle.setFallbackStyle("Material")
     # We specifically *don't* want the RobotoCondensed-Bold.ttf font so we get the right look when bolded.
 
     qmlRegisterType(LogPanelData, "SwiftConsole", 1, 0, "LogPanelData")  # type: ignore

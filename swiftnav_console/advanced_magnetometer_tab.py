@@ -20,7 +20,7 @@ ADVANCED_MAGNETOMETER_TAB: List[Dict[str, Any]] = [advanced_magnetometer_tab_upd
 
 
 class AdvancedMagnetometerPoints(QObject):
-
+    _instance: "AdvancedMagnetometerPoints"
     _points: List[List[QPointF]] = [[]]
     _ymin: float = 0.0
     _ymax: float = 0.0
@@ -37,7 +37,7 @@ class AdvancedMagnetometerPoints(QObject):
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
         ADVANCED_MAGNETOMETER_TAB[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:

@@ -28,7 +28,7 @@ SETTINGS_TABLE: List[Dict[str, Any]] = [settings_table_update()]
 
 
 class SettingsTabData(QObject):
-
+    _instance: "SettingsTabData"
     _import_status: str = ""
     _recommended_ins_settings: List[List[Any]] = []
     _new_ins_confirmation: bool = False
@@ -50,17 +50,17 @@ class SettingsTabData(QObject):
     @classmethod
     def post_import_status_update(cls, update_data: str) -> None:
         SETTINGS_IMPORT_STATUS[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @classmethod
     def post_ins_update(cls, update_data: Dict[str, Any]) -> None:
         SETTINGS_INS[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @classmethod
     def post_notification_update(cls, update_data: str) -> None:
         SETTINGS_NOTIFICATION[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:
@@ -127,7 +127,7 @@ class SettingsTabModel(QObject):  # pylint: disable=too-few-public-methods
 
 
 class SettingsTableEntries(QObject):
-
+    _instance: "SettingsTableEntries"
     _entries: List[dict] = []
     _data_updated = Signal()
     settings_table: Dict[str, Any] = {}
@@ -142,7 +142,7 @@ class SettingsTableEntries(QObject):
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
         SETTINGS_TABLE[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:

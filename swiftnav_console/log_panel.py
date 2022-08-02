@@ -22,6 +22,7 @@ LOG_PANEL: List[Dict[str, Any]] = [log_panel_update()]
 
 
 class LogPanelData(QObject):
+    _instance: "LogPanelData"
     _entries: List[Dict[str, str]] = []
     _log_level_labels: List[str] = []
     _log_level: str
@@ -38,7 +39,7 @@ class LogPanelData(QObject):
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
         LOG_PANEL[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:

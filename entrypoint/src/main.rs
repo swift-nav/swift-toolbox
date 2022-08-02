@@ -37,6 +37,14 @@ fn handle_splash() {
     }
 }
 
+fn handle_debug() {
+    if std::env::var("SWIFTNAV_CONSOLE_DEBUG").is_ok() {
+        for (key, value) in std::env::vars() {
+            eprintln!("{key}={value}");
+        }
+    }
+}
+
 fn app_dir() -> Result<PathBuf> {
     let current_exe = std::env::current_exe()?;
     current_exe
@@ -66,6 +74,7 @@ fn pythonhome_dir() -> Result<PathBuf> {
 fn main() -> Result<()> {
     attach_console();
     handle_wayland();
+    handle_debug();
     let args: Vec<_> = std::env::args().collect();
     std::env::set_var("SWIFTNAV_CONSOLE_FROZEN", app_dir()?);
     std::env::set_var("PYTHONHOME", pythonhome_dir()?);

@@ -39,9 +39,9 @@ fn handle_splash() {
 
 fn handle_debug() {
     if std::env::var("SWIFTNAV_CONSOLE_DEBUG").is_ok() {
-        let qt_quick_controls_style =
-            std::env::var("QT_QUICK_CONTROLS_STYLE").unwrap_or(String::from("<empty>"));
-        eprintln!("QT_QUICK_CONTROLS_STYLE={}", qt_quick_controls_style);
+        for (key, value) in std::env::vars() {
+            eprintln!("{key}={value}");
+        }
     }
 }
 

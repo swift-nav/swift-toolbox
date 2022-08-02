@@ -18,7 +18,7 @@ BASELINE_TABLE: List[Dict[str, Any]] = [baseline_table_update()]
 
 
 class BaselineTableEntries(QObject):
-
+    _instance: "BaselineTableEntries"
     _entries: List[List[str]] = []
     _data_updated = Signal()
     baseline_table: Dict[str, Any] = {}
@@ -33,7 +33,7 @@ class BaselineTableEntries(QObject):
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
         BASELINE_TABLE[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:

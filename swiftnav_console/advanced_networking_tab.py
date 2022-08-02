@@ -21,6 +21,7 @@ ADVANCED_NETWORKING_TAB: List[Dict[str, Any]] = [advanced_networking_tab_update(
 
 
 class AdvancedNetworkingData(QObject):
+    _instance: "AdvancedNetworkingData"
     _network_info: List[List[str]] = []
     _running: bool = False
     _ip_address: str = ""
@@ -38,7 +39,7 @@ class AdvancedNetworkingData(QObject):
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
         ADVANCED_NETWORKING_TAB[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:

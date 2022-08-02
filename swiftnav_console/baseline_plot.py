@@ -23,7 +23,7 @@ BASELINE_PLOT: List[Dict[str, Any]] = [baseline_plot_update()]
 
 
 class BaselinePlotPoints(QObject):
-
+    _instance: "BaselinePlotPoints"
     _points: List[List[QPointF]] = [[]]
     _cur_points: List[List[QPointF]] = [[]]
     _n_min: float = 0.0
@@ -43,7 +43,7 @@ class BaselinePlotPoints(QObject):
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
         BASELINE_PLOT[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:

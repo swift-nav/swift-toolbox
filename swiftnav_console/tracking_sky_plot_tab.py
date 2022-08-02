@@ -20,7 +20,7 @@ TRACKING_SKY_PLOT_TAB: List[Dict[str, Any]] = [tracking_sky_plot_update()]
 
 
 class TrackingSkyPlotPoints(QObject):
-
+    _instance: "TrackingSkyPlotPoints"
     _labels: List[List[str]] = []
     _all_series: List[QtCharts.QXYSeries] = []
     _data_updated = Signal()
@@ -38,7 +38,7 @@ class TrackingSkyPlotPoints(QObject):
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
         TRACKING_SKY_PLOT_TAB[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:

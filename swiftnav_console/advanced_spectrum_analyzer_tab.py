@@ -24,7 +24,7 @@ ADVANCED_SPECTRUM_ANALYZER_TAB: List[Dict[str, Any]] = [advanced_spectrum_analyz
 
 
 class AdvancedSpectrumAnalyzerPoints(QObject):
-
+    _instance: "AdvancedSpectrumAnalyzerPoints"
     _points: List[QPointF] = []
     _ymin: float = 0.0
     _ymax: float = 0.0
@@ -44,7 +44,7 @@ class AdvancedSpectrumAnalyzerPoints(QObject):
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
         ADVANCED_SPECTRUM_ANALYZER_TAB[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:

@@ -18,7 +18,7 @@ SOLUTION_TABLE: List[Dict[str, Any]] = [solution_table_update()]
 
 
 class SolutionTableEntries(QObject):
-
+    _instance: "SolutionTableEntries"
     _entries: List[List[str]] = []
     _valid: bool = False
     _data_updated = Signal()
@@ -34,7 +34,7 @@ class SolutionTableEntries(QObject):
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
         SOLUTION_TABLE[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:

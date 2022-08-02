@@ -26,7 +26,7 @@ STATUS_BAR: List[Dict[str, Any]] = [status_bar_update()]
 
 
 class StatusBarData(QObject):  # pylint: disable=too-many-instance-attributes
-
+    _instance: "StatusBarData"
     _pos: str = ""
     _rtk: str = ""
     _sats: int = 0
@@ -49,7 +49,7 @@ class StatusBarData(QObject):  # pylint: disable=too-many-instance-attributes
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
         STATUS_BAR[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:

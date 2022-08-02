@@ -245,7 +245,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
         self._backend = backend
         self._messages = messages
         self._thread = QThread()
-        self._thread.started.connect(self._handle_started)  # pylint: disable=no-member
+        self._thread.started.connect(self._handle_started)  # type: ignore  # pylint: disable=no-member
         self._reader = (
             None if record_file is None else open(str(record_file), "rb")  # pylint: disable=consider-using-with
         )
@@ -761,7 +761,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     def handle_qml_load_errors(obj, _url):
         qml_object_created[0] = obj is not None
 
-    engine.objectCreated.connect(handle_qml_load_errors)  # pylint: disable=no-member
+    engine.objectCreated.connect(handle_qml_load_errors)  # type: ignore  # pylint: disable=no-member
 
     capnp_path = get_capnp_path()
     backend_main = BackendImporter(use_fake=args_main.debug_with_no_backend).Server()

@@ -23,7 +23,7 @@ FUSION_STATUS_FLAGS: List[Dict[str, Any]] = [fusion_status_flags_update()]
 
 
 class FusionStatusFlagsData(QObject):
-
+    _instance: "FusionStatusFlagsData"
     _gnsspos: str = FusionStatus.UNKNOWN
     _gnssvel: str = FusionStatus.UNKNOWN
     _wheelticks: str = FusionStatus.UNKNOWN
@@ -43,7 +43,7 @@ class FusionStatusFlagsData(QObject):
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
         FUSION_STATUS_FLAGS[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:

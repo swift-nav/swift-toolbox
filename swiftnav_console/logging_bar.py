@@ -37,7 +37,7 @@ LOGGING_BAR_RECORDING: List[Dict[str, Any]] = [logging_bar_recording_update()]
 
 @QmlElement
 class SwiftStringListModel(QStringListModel):
-    @Slot(str, result=int)
+    @Slot(str, result=int)  # type: ignore
     def indexOf(self, string: str) -> int:
         matchedIndices = self.match(self.index(0), Qt.EditRole, string)
         index = matchedIndices[0].row() if len(matchedIndices) > 0 else -1
@@ -49,7 +49,7 @@ class SwiftStringListModel(QStringListModel):
 
 @QmlElement
 class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
-
+    _instance: "LoggingBarData"
     _csv_logging: bool = False
     _sbp_logging: bool = False
     _sbp_logging_format: str = SbpLogging.SBP_JSON
@@ -76,12 +76,12 @@ class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
         LOGGING_BAR[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @classmethod
     def post_recording_data_update(cls, update_data: Dict[str, Any]) -> None:
         LOGGING_BAR_RECORDING[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:
@@ -117,7 +117,7 @@ class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
         return self._sbp_logging_labels
 
     def set_sbp_logging_labels(self, sbp_logging_labels: List[str]) -> None:
-        if len(self._sbp_logging_labels) == 0:
+        if len(self._sbp_logging_labels) == 0:  # type: ignore
             self._sbp_logging_labels.setStringList(sbp_logging_labels)
             self.sbp_logging_labels_changed.emit(self._sbp_logging_labels)
 

@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'main'
+      - 'swift-toolbox-v.*'
     tags:
       - '[0-9]+.[0-9]+.[0-9]+*'
       - 'v[0-9]+.[0-9]+.[0-9]+*'

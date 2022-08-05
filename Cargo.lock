@@ -2381,9 +2381,9 @@ dependencies = [
 
 [[package]]
 name = "sbp"
-version = "4.5.0"
+version = "4.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1c842a7d4819a9109ae0b988d109cb161b98906acec77243ccd13c644620fe7"
+checksum = "5c673f0b50687dcf3fc27259ead5b89de8b12c622b673e5ebba398934a1a29c1"
 dependencies = [
  "base64",
  "bytes",
@@ -2391,6 +2391,7 @@ dependencies = [
  "dencode",
  "log",
  "serde",
+ "serde-big-array",
  "serde_json",
  "slotmap",
  "swiftnav",
@@ -2515,6 +2516,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc855a42c7967b7c369eb5860f7164ef1f6f81c20c7cc1141f2a604e18723b03"
 dependencies = [
  "serde_derive",
+]
+
+[[package]]
+name = "serde-big-array"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3323f09a748af288c3dc2474ea6803ee81f118321775bffa3ac8f7e65c5e90e7"
+dependencies = [
+ "serde",
 ]
 
 [[package]]

@@ -29,7 +29,7 @@ jobs:
     strategy:
       matrix:
         os:
-        - ubuntu-20.04
+        - ubuntu-18.04
         - macos-11
         - windows-2019
 
@@ -121,7 +121,7 @@ jobs:
 
     name: Code Quality Checks
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
 
     steps:
       - name: Checkout source
@@ -209,7 +209,7 @@ jobs:
     strategy:
       matrix:
         os:
-        - {name: ubuntu-20.04, exe_suffix: "", short_name: "linux"}
+        - {name: ubuntu-18.04, exe_suffix: "", short_name: "linux"}
         - {name: macos-11, exe_suffix: "", short_name: "macos"}
         - {name: windows-2019, exe_suffix: ".exe", short_name: "windows"}
 
@@ -865,7 +865,7 @@ jobs:
       - sign_zipped_binaries
       - sign_application
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
     steps:
       - name: Store git tag and date vars.
         run: |

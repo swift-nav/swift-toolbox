@@ -1,3 +1,4 @@
+#![allow(clippy::borrow_deref_ref)] // Waiting on this to merge: https://github.com/rust-lang/rust-clippy/issues/8971
 use crossbeam::channel;
 use pyo3::exceptions;
 use pyo3::prelude::*;

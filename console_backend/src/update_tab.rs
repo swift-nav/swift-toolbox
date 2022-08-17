@@ -220,14 +220,9 @@ fn update_frontend(client_sender: BoxedClientSender, mut update_tab_context: Upd
     status.set_fw_version_current(&packet.current_firmware_version);
     status.set_fw_version_latest(&packet.latest_firmware_version);
     status.set_fw_local_filename(&packet.firmware_filename);
-    status.set_fileio_local_filepath(&packet.fileio_local_filepath.to_string_lossy().to_string());
-    status.set_fileio_destination_filepath(
-        &packet
-            .fileio_destination_filepath
-            .to_string_lossy()
-            .to_string(),
-    );
-    status.set_directory(&packet.firmware_directory.to_string_lossy().to_string());
+    status.set_fileio_local_filepath(&packet.fileio_local_filepath.to_string_lossy());
+    status.set_fileio_destination_filepath(&packet.fileio_destination_filepath.to_string_lossy());
+    status.set_directory(&packet.firmware_directory.to_string_lossy());
     status.set_downloading(packet.downloading);
     status.set_upgrading(packet.upgrading);
     status.set_fw_text(&packet.fw_log);

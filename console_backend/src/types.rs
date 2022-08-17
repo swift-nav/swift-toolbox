@@ -269,7 +269,7 @@ impl Clone for ArcBool {
 }
 
 // Main Tab Types.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum RealtimeDelay {
     On,
     Off,
@@ -1479,7 +1479,7 @@ impl Event for BaselineNED {
 }
 
 // Solution Velocity Tab Types.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum VelocityUnits {
     Mps,
     Mph,

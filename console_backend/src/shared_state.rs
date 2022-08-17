@@ -727,7 +727,7 @@ enum FlowControlRemote {
     Hardware,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ConnectionHistory {
     addresses: IndexSet<Address>,
     files: IndexSet<String>,

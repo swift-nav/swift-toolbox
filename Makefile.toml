@@ -581,7 +581,7 @@ if eq ${os} mac
     rm -r lib/thread2.8.5/
 endif
 
-py_internal_libs = array Lib/email Lib/distutils Lib/http Lib/multiprocessing Lib/msilib Lib/http Lib/dbm Lib/curses Lib/xml Lib/xmlrpc Lib/urllib Lib/ensurepip Lib/venv Lib/wsgiref Lib/lib2to3
+py_internal_libs = array Lib/email Lib/distutils Lib/http Lib/multiprocessing Lib/msilib Lib/http Lib/dbm Lib/curses Lib/xml Lib/xmlrpc Lib/ensurepip Lib/venv Lib/wsgiref Lib/lib2to3
 
 for name in ${py_internal_libs}
     folders = glob_array **/${name}/

@@ -101,7 +101,7 @@ pub fn refresh_connection_frontend(client_sender: &BoxedClientSender, shared_sta
         .init_available_ports(ports.len() as u32);
 
     for (i, serialportinfo) in ports.iter().enumerate() {
-        available_ports.set(i as u32, &(*serialportinfo));
+        available_ports.set(i as u32, serialportinfo);
     }
 
     let mut available_baudrates = connection_status

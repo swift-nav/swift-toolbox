@@ -156,7 +156,7 @@ MAXIMUM_MEAN_MB = "maximum_mean_mb"
 
 BYTES_TO_MB = lambda x: float(x) / (1 << 20)
 ABSOLUTE_MINIMUM_MEMORY_MB = 1
-ABSOLUTE_MINIMUM_READINGS = 150
+ABSOLUTE_MINIMUM_READINGS = 140
 THREAD_TIMEOUT_SEC = 180
 RUN_COUNT = 5
 
@@ -165,7 +165,7 @@ FRONTEND_MEM_BENCHMARKS: Dict[str, List[Dict[str, Any]]] = {
         {
             NAME: "piksi-relay-5sec",
             FILE_PATH: "data/piksi-relay-5sec.sbp",
-            MAXIMUM_MEAN_MB: 400,
+            MAXIMUM_MEAN_MB: 475,
             MAXIMUM_RATE_OF_MAX_MEAN: 0.05,
             MAXIMUM_RATE_OF_MAX_STD: 0.4,
         },

@@ -15,7 +15,7 @@ import capnp  # type: ignore
 
 from PySide6.QtWidgets import QApplication, QSplashScreen  # type: ignore
 
-from PySide6.QtCore import QObject, QUrl, QPointF, QThread, QTimer, Slot
+from PySide6.QtCore import QObject, QUrl, QPointF, QThread, QTimer, Slot, Signal, Qt
 from PySide6 import QtCharts  # pylint: disable=unused-import
 
 from PySide6 import QtQml, QtCore
@@ -231,6 +231,8 @@ capnp.remove_import_hook()  # pylint: disable=no-member
 
 
 class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attributes
+    _request_quit: Signal = Signal()
+
     def __init__(
         self,
         app,
@@ -260,6 +262,8 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
             if (exit_after_timeout is None and record_file is None and not record)
             else self._receive_messages_debug
         )
+        self._request_quit.connect(self._app.quit, Qt.QueuedConnection)
+        self._app.aboutToQuit.connect(self._thread.exit)
 
     @Slot()  # type: ignore
     def _handle_started(self):
@@ -275,13 +279,13 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
     @Slot()  # type: ignore
     def receive_messages(self):
         if not self._receive_messages():
-            self._thread.exit()
+            self._request_quit.emit()
         else:
             QTimer.singleShot(0, self.receive_messages)
 
     def _receive_messages_debug(self):
         if self.exit_after_timeout is not None and time.time() - self.start_time > self.exit_after_timeout:
-            self._app.quit()
+            return False
         msg_receipt_time = time.perf_counter_ns()
         if self._reader is None:
             buffer = self._backend.fetch_message()
@@ -289,10 +293,11 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
             try:
                 msg = pickle.load(self._reader)
             except EOFError:
-                return self._app.quit()
+                print("Pickle file read finished, exiting")
+                return False
             buffer = msg["data"]
             if buffer is None:
-                self._app.quit()
+                return False
             diff = max((msg_receipt_time - self._last_msg_receipt_ns), 0)
             if diff < msg["ns"]:
                 time.sleep((msg["ns"] - diff) / 1e9)
@@ -314,8 +319,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
         if m.which == Message.Union.Status:
             app_state = ConnectionState(m.status.text)
             if app_state == ConnectionState.CLOSED:
-                self._app.quit()
-                return True
+                return False
             if app_state == ConnectionState.DISCONNECTED:
                 data = settings_table_update()
                 SettingsTableEntries.post_data_update(data)

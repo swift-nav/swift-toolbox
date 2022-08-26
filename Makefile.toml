@@ -491,7 +491,9 @@ for ext in ${file_exts}
     end
 end
 
-libs = array QtSensors QtLocation Qt5Location QtPositioning Qt3D Qt53D Qt5Nfc Qt5Web QtWeb Qt5Pdf Qt5Designer Qt5DesignerComponents Qt5VirtualKeyboard Qt5Bluetooth Qt5Quick3D
+libs_a = array Qt3D QtBluetooth QtCconcurrent QtDataVisualization QtDesigner QtHelp QtMultimedia QtNfs QtPositioning
+libs_b = array QtQuick3D QtRemoteObjects QtScxml QtSensors QtSerialPort QtSql QtStateMachine QtTest QtUiTools QtWeb QtXml
+libs = array_concat ${libs_a} ${libs_b}
 
 for lib in ${libs}
     files = glob_array ./**/*${lib}*
@@ -530,6 +532,16 @@ if eq ${os} windows
             if is_path_exists ${dll_no_debug}
                 rm ${dll}
             end
+        end
+    end
+elseif eq ${os} mac
+    rm -r ./share
+    rm -r ./lib/python3.9/site-packages/PySide6/Qt/libexec
+    bins = array qmllint lupdate lrelease scripts
+    for bin in ${bins}
+        files = glob_array ./lib/python3.9//PySide6/${bin}
+        for bin in ${files}
+            rm -r ${bin}
         end
     end
 else
@@ -571,6 +583,8 @@ endif
 
 if eq ${os} mac
     rm -r lib/python3.9/site-packages/PySide6/Designer.app/
+    rm -r lib/python3.9/site-packages/PySide6/Assistant.app/
+    rm -r lib/python3.9/site-packages/PySide6/Linguist.app/
 
     rm lib/python3.9/lib-dynload/_testcapi.cpython-39-darwin.so
     rm lib/python3.9/lib-dynload/xxlimited.cpython-39-darwin.so

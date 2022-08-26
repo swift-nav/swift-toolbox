@@ -484,7 +484,7 @@ jobs:
             "$f"
           done
 
-          for f in $(ls Contents/Resources/lib/python3.9/site-packages/**/Qt/lib/*.framework/Versions/5/*)
+          for f in $(ls Contents/Resources/lib/python3.9/site-packages/**/Qt/lib/*.framework/Versions/A/*)
           do
             codesign -vvvv \
               -s "${{ secrets.APPLE_DEVELOPER_ID }}" \

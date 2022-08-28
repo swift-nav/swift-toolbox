@@ -539,10 +539,16 @@ elseif eq ${os} mac
     rm -r ./lib/python3.9/site-packages/PySide6/Qt/libexec
     bins = array qmllint lupdate lrelease scripts
     for bin in ${bins}
-        files = glob_array ./lib/python3.9//PySide6/${bin}
+        files = glob_array ./lib/python3.9/site-packages/PySide6/${bin}
         for bin in ${files}
             rm -r ${bin}
         end
+    end
+    resources_a = glob_array ./lib/python3.9/site-packages/PySide6/Qt/lib/*.framework/Versions/A/Resources
+    resources_b = glob_array ./lib/python3.9/site-packages/PySide6/Qt/lib/*.framework/Resources
+    resources = array_concat ${resources_a} ${resources_b}
+    for dir in ${resources}
+      rm -r ${dir}
     end
 else
     rm -r ./share

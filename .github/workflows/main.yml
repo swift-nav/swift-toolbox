@@ -186,6 +186,7 @@ jobs:
         run: |
           cargo make check-all
 
+      # TODO Fix qmllint warnings [CPP-798]
       - name: Run qmllint
         continue-on-error: true
         run: |

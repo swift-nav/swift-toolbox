@@ -544,6 +544,14 @@ elseif eq ${os} mac
             rm -r ${bin}
         end
     end
+
+    # The Mac signing process needed to be fine tuned. There were a bunch of variations in the paths
+    # that we purge or sign which needed fixing. Also there were quite a few "Resources" folders buried
+    # within all of the PySide6 .framework files that were causing issues with the signing. I'm not sure
+    # if it was simply due to the folder named "Resources" or that each folder contained an Info.plist file.
+    # That being said after deleting them the app runs fine and passes the mac signing gauntlet.
+    # See: https://stackoverflow.com/a/29271922/12265938
+
     resources_a = glob_array ./lib/python3.9/site-packages/PySide6/Qt/lib/*.framework/Versions/A/Resources
     resources_b = glob_array ./lib/python3.9/site-packages/PySide6/Qt/lib/*.framework/Resources
     resources = array_concat ${resources_a} ${resources_b}
@@ -854,6 +862,7 @@ script = '''
 makensis /V4  .\installers\Windows\Installer.nsi
 '''
 
+# TODO Fix tool location when available in PySide6 wheels[CPP-799]
 [tasks.qml-format]
 dependencies = ["set-qml-files", "set-qml-app"]
 script_runner = "@shell"
@@ -861,6 +870,7 @@ script = '''
 qmlformat -i ${QML_FILES}
 '''
 
+# TODO Fix tool location when available in PySide6 wheels[CPP-799]
 [tasks.qml-format.windows]
 dependencies = ["set-qml-files", "set-qml-app"]
 script_runner = "powershell"
@@ -998,6 +1008,7 @@ dependencies = [
 ]
 run_task = "check-git-diff"
 
+# TODO Fix qmllint warnings then add qml-lint back to lint task.[CPP-798]
 [tasks.lint]
 dependencies = ["python-lint", "rust-lint", "format-check"]
 

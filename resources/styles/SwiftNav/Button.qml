@@ -71,14 +71,42 @@ T.Button {
         icon: control.icon
         text: control.text
         font: control.font
-        color: !control.enabled ? control.Material.hintTextColor : control.flat && control.highlighted ? control.Material.accentColor : control.highlighted ? control.Material.primaryHighlightedTextColor : control.Material.foreground
+        color: {
+            if (!control.enabled) {
+                control.Material.hintTextColor;
+            } else {
+                if (control.flat && control.highlighted) {
+                    control.Material.accentColor;
+                } else {
+                    if (control.highlighted) {
+                        control.Material.primaryHighlightedTextColor;
+                    } else {
+                        control.Material.foreground;
+                    }
+                }
+            }
+        }
     }
 
     background: Rectangle {
         implicitWidth: 64
         implicitHeight: control.Material.buttonHeight
         radius: 2
-        color: !control.enabled ? control.Material.buttonDisabledColor : control.highlighted ? (control.checked ? control.Material.highlightedCheckedButtonColor : control.Material.highlightedButtonColor) : control.Material.buttonColor
+        color: {
+            if (!control.enabled) {
+                control.Material.buttonDisabledColor;
+            } else {
+                if (control.highlighted) {
+                    if (control.checked) {
+                        control.Material.highlightedCheckedButtonColor;
+                    } else {
+                        control.Material.highlightedButtonColor;
+                    }
+                } else {
+                    control.Material.buttonColor;
+                }
+            }
+        }
         // The layer is disabled when the button color is transparent so you can do
         // Material.background: "transparent" and get a proper flat button without needing
         // to set Material.elevation as well

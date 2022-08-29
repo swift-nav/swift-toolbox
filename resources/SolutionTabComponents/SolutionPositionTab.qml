@@ -25,6 +25,7 @@ Item {
     property variant cur_solution: null
     property bool zoom_all: true
     property bool center_solution: false
+    readonly property int num_buttons: 4
 
     SolutionPositionPoints {
         id: solutionPositionPoints
@@ -51,7 +52,7 @@ Item {
                 id: solutionPauseButton
 
                 ButtonGroup.group: solutionButtonGroup
-                Layout.preferredWidth: parent.labelComboWidth / 4
+                Layout.preferredWidth: parent.labelComboWidth / num_buttons
                 Layout.preferredHeight: Constants.commonChart.buttonHeight
                 ToolTip.visible: hovered
                 ToolTip.text: "Pause"
@@ -68,7 +69,7 @@ Item {
                 id: solutionClearButton
 
                 ButtonGroup.group: solutionButtonGroup
-                Layout.preferredWidth: parent.labelComboWidth / 4
+                Layout.preferredWidth: parent.labelComboWidth / num_buttons
                 Layout.preferredHeight: Constants.commonChart.buttonHeight
                 ToolTip.visible: hovered
                 ToolTip.text: "Clear"
@@ -93,7 +94,7 @@ Item {
                         zoom_all = false;
                     }
                 }
-                Layout.preferredWidth: parent.labelComboWidth / 4
+                Layout.preferredWidth: parent.labelComboWidth / num_buttons
                 Layout.preferredHeight: Constants.commonChart.buttonHeight
                 ToolTip.visible: hovered
                 ToolTip.text: "Zoom All"
@@ -120,7 +121,7 @@ Item {
                         center_solution = false;
                     }
                 }
-                Layout.preferredWidth: parent.labelComboWidth / 4
+                Layout.preferredWidth: parent.labelComboWidth / num_buttons
                 Layout.preferredHeight: Constants.commonChart.buttonHeight
                 ToolTip.visible: hovered
                 ToolTip.text: "Center On Solution"

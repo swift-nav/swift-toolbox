@@ -117,6 +117,7 @@ class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
         return self._sbp_logging_labels
 
     def set_sbp_logging_labels(self, sbp_logging_labels: List[str]) -> None:
+        # can't call setStringList with an empty list
         if len(self._sbp_logging_labels) == 0:  # type: ignore
             self._sbp_logging_labels.setStringList(sbp_logging_labels)
             self.sbp_logging_labels_changed.emit(self._sbp_logging_labels)

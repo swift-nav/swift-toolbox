@@ -300,3 +300,72 @@ impl ObservationTab {
             .send_data(serialize_capnproto_builder(builder));
     }
 }
+
+#[cfg(test)]
+mod tests {
+    const DEFAULT_OBSERVATION_CODE: &str = "GLO L2OF";
+
+    use super::*;
+    use crate::client_sender::TestSender;
+    use sbp::messages::{
+        gnss::{CarrierPhase, GnssSignal, GpsTime},
+        observation::{Doppler, MsgObs, ObservationHeader, PackedObsContent},
+    };
+
+    #[test]
+    fn handle_obs_msgobs_test() {
+        let shared_state = SharedState::new();
+        let client_send = TestSender::boxed();
+        let mut obs_tab = ObservationTab::new(shared_state, client_send);
+
+        let mut obs_msg = MsgObs {
+            sender_id: Some(23),
+            obs: Vec::new(),
+            header: ObservationHeader {
+                t: GpsTime {
+                    tow: 0,
+                    ns_residual: 0,
+                    wn: 1,
+                },
+                n_obs: 16,
+            },
+        };
+        let signal_code = 4;
+        let cn0 = 5;
+        let lock = 0;
+        let flags = 0b00000001;
+        let sat: u8 = 25;
+        obs_msg.obs.push(PackedObsContent {
+            p: 0_u32,
+            l: CarrierPhase { i: 0_i32, f: 0_u8 },
+            d: Doppler { i: 0_i16, f: 0_u8 },
+            cn0,
+            lock,
+            flags,
+            sid: GnssSignal {
+                code: signal_code,
+                sat,
+            },
+        });
+
+        // Add note to PR: can these always be local?
+        assert_eq!(obs_tab.local.gps_week, 0);
+        assert!(obs_tab.local.incoming_obs.is_empty());
+        obs_tab.handle_obs(ObservationMsg::MsgObs(obs_msg));
+        // Add note to PR: how to just access first element using iters?
+        // Expect identifiers and metadata fields to match obs_msg fields
+        for (count, obs) in obs_tab.local.incoming_obs.iter().enumerate() {
+            if count > 0 {
+                break;
+            }
+            assert_eq!(
+                obs.1.code,
+                String::from(DEFAULT_OBSERVATION_CODE.to_string())
+            );
+            //
+            assert_eq!(obs.1.flags, flags);
+            assert_eq!(obs.1.sat as u8, sat);
+        }
+        assert_eq!(obs_tab.local.gps_week, 1);
+    }
+}

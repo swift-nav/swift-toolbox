@@ -55,7 +55,23 @@ T.Button {
     spacing: 6
     icon.width: 24
     icon.height: 24
-    icon.color: !enabled ? Material.hintTextColor : flat && highlighted ? Material.accentColor : highlighted ? Material.primaryHighlightedTextColor : Material.foreground
+    icon.color: {
+        var color;
+        if (!enabled) {
+            color = Material.hintTextColor;
+        } else {
+            if (flat && highlighted) {
+                color = Material.accentColor;
+            } else {
+                if (highlighted) {
+                    color = Material.primaryHighlightedTextColor;
+                } else {
+                    color = Material.foreground;
+                }
+            }
+        }
+        return color;
+    }
     Material.elevation: flat ? control.down || control.hovered ? 2 : 0 : control.down ? 8 : 2
     Material.background: flat ? "transparent" : undefined
 
@@ -72,19 +88,21 @@ T.Button {
         text: control.text
         font: control.font
         color: {
+            var color;
             if (!control.enabled) {
-                control.Material.hintTextColor;
+                color = control.Material.hintTextColor;
             } else {
                 if (control.flat && control.highlighted) {
-                    control.Material.accentColor;
+                    color = control.Material.accentColor;
                 } else {
                     if (control.highlighted) {
-                        control.Material.primaryHighlightedTextColor;
+                        color = control.Material.primaryHighlightedTextColor;
                     } else {
-                        control.Material.foreground;
+                        color = control.Material.foreground;
                     }
                 }
             }
+            return color;
         }
     }
 
@@ -93,19 +111,21 @@ T.Button {
         implicitHeight: control.Material.buttonHeight
         radius: 2
         color: {
+            var color;
             if (!control.enabled) {
-                control.Material.buttonDisabledColor;
+                color = control.Material.buttonDisabledColor;
             } else {
                 if (control.highlighted) {
                     if (control.checked) {
-                        control.Material.highlightedCheckedButtonColor;
+                        color = control.Material.highlightedCheckedButtonColor;
                     } else {
-                        control.Material.highlightedButtonColor;
+                        color = control.Material.highlightedButtonColor;
                     }
                 } else {
-                    control.Material.buttonColor;
+                    color = control.Material.buttonColor;
                 }
             }
+            return color;
         }
         // The layer is disabled when the button color is transparent so you can do
         // Material.background: "transparent" and get a proper flat button without needing

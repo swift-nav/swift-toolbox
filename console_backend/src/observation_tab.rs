@@ -349,11 +349,9 @@ mod tests {
             },
         });
 
-        // Add note to PR: can these always be local?
         assert_eq!(obs_tab.local.gps_week, 0);
         assert!(obs_tab.local.incoming_obs.is_empty());
         obs_tab.handle_obs(ObservationMsg::MsgObs(obs_msg));
-        // Add note to PR: how to just access first element using iters?
         // Expect identifiers and metadata fields to match obs_msg fields
         for (count, obs) in obs_tab.local.incoming_obs.iter().enumerate() {
             if count > 0 {
@@ -363,7 +361,6 @@ mod tests {
                 obs.1.code,
                 String::from(DEFAULT_OBSERVATION_CODE.to_string())
             );
-            //
             assert_eq!(obs.1.flags, flags);
             assert_eq!(obs.1.sat as u8, sat);
         }

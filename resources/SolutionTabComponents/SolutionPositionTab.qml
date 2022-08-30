@@ -1,12 +1,11 @@
 import "../BaseComponents"
 import "../Constants"
 import "../SolutionPlotCommon/SolutionPlotLoop.js" as SolutionPlotLoop
-import QtCharts 2.15
-import QtGraphicalEffects 1.15
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.15
-import SwiftConsole 1.0
+import QtCharts
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import SwiftConsole
 
 Item {
     id: solutionPositionTab
@@ -26,14 +25,13 @@ Item {
     property variant cur_solution: null
     property bool zoom_all: true
     property bool center_solution: false
+    readonly property int num_buttons: 4
 
     SolutionPositionPoints {
         id: solutionPositionPoints
     }
 
     ColumnLayout {
-        id: solutionPositionArea
-
         anchors.fill: parent
         visible: true
         spacing: Constants.solutionPosition.navBarSpacing
@@ -45,6 +43,8 @@ Item {
         }
 
         RowLayout {
+            property real labelComboWidth: solutionPositionSelectedUnit.width + solutionPositionSelectedUnitLabel.width
+
             Layout.alignment: Qt.AlignLeft
             Layout.leftMargin: Constants.solutionPosition.navBarMargin
 
@@ -52,57 +52,33 @@ Item {
                 id: solutionPauseButton
 
                 ButtonGroup.group: solutionButtonGroup
-                Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
+                Layout.preferredWidth: parent.labelComboWidth / num_buttons
                 Layout.preferredHeight: Constants.commonChart.buttonHeight
                 ToolTip.visible: hovered
                 ToolTip.text: "Pause"
                 checkable: true
                 onClicked: backend_request_broker.solution_position([solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].pressed])
 
-                Image {
-                    id: solutionPauseImage
-
-                    anchors.centerIn: parent
-                    width: Constants.solutionPosition.buttonSvgHeight
-                    height: Constants.solutionPosition.buttonSvgHeight
+                icon {
                     source: Constants.icons.pauseButtonUrl
-                    visible: false
-                }
-
-                ColorOverlay {
-                    anchors.fill: solutionPauseImage
-                    source: solutionPauseImage
                     color: !solutionPauseButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 }
-
             }
 
             SwiftButton {
                 id: solutionClearButton
 
                 ButtonGroup.group: solutionButtonGroup
-                Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
+                Layout.preferredWidth: parent.labelComboWidth / num_buttons
                 Layout.preferredHeight: Constants.commonChart.buttonHeight
                 ToolTip.visible: hovered
                 ToolTip.text: "Clear"
                 onPressed: backend_request_broker.solution_position([solutionButtonGroup.buttons[1].checked, solutionButtonGroup.buttons[0].pressed])
 
-                Image {
-                    id: solutionClearImage
-
-                    anchors.centerIn: parent
-                    width: Constants.solutionPosition.buttonSvgHeight
-                    height: Constants.solutionPosition.buttonSvgHeight
+                icon {
                     source: Constants.icons.clearButtonUrl
-                    visible: false
-                }
-
-                ColorOverlay {
-                    anchors.fill: solutionClearImage
-                    source: solutionClearImage
                     color: !solutionClearButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 }
-
             }
 
             SwiftButton {
@@ -118,29 +94,17 @@ Item {
                         zoom_all = false;
                     }
                 }
-                Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
+                Layout.preferredWidth: parent.labelComboWidth / num_buttons
                 Layout.preferredHeight: Constants.commonChart.buttonHeight
                 ToolTip.visible: hovered
                 ToolTip.text: "Zoom All"
                 checkable: true
                 checked: true
 
-                Image {
-                    id: solutionZoomAllImage
-
-                    anchors.centerIn: parent
-                    width: Constants.solutionPosition.buttonSvgHeight
-                    height: Constants.solutionPosition.buttonSvgHeight
+                icon {
                     source: Constants.icons.zoomAllButtonUrl
-                    visible: false
-                }
-
-                ColorOverlay {
-                    anchors.fill: solutionZoomAllImage
-                    source: solutionZoomAllImage
                     color: !solutionZoomAllButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 }
-
             }
 
             SwiftButton {
@@ -157,31 +121,21 @@ Item {
                         center_solution = false;
                     }
                 }
-                Layout.preferredWidth: parent.width * Constants.solutionPosition.navBarButtonProportionOfParent
+                Layout.preferredWidth: parent.labelComboWidth / num_buttons
                 Layout.preferredHeight: Constants.commonChart.buttonHeight
                 ToolTip.visible: hovered
                 ToolTip.text: "Center On Solution"
                 checkable: true
 
-                Image {
-                    id: centerButtonImage
-
-                    anchors.centerIn: parent
-                    width: Constants.solutionPosition.buttonSvgHeight
-                    height: Constants.solutionPosition.buttonSvgHeight
+                icon {
                     source: Constants.icons.centerOnButtonUrl
-                    visible: false
-                }
-
-                ColorOverlay {
-                    anchors.fill: centerButtonImage
-                    source: centerButtonImage
                     color: !solutionCenterButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 }
-
             }
 
             Label {
+                id: solutionPositionSelectedUnitLabel
+
                 text: "Display Units: "
             }
 
@@ -192,8 +146,7 @@ Item {
                 Layout.preferredWidth: Constants.commonChart.unitDropdownWidth
                 onCurrentIndexChanged: {
                     if (!scatters.length)
-                        return ;
-
+                        return;
                     backend_request_broker.solution_position_unit(available_units[currentIndex]);
                     zoom_all = true;
                     solutionZoomAllButton.checked = true;
@@ -209,11 +162,8 @@ Item {
                         target: solutionPositionSelectedUnit
                         width: Constants.commonChart.unitDropdownWidth * 1.5
                     }
-
                 }
-
             }
-
         }
 
         ChartView {
@@ -252,7 +202,7 @@ Item {
             }
 
             Layout.preferredWidth: parent.width
-            Layout.preferredHeight: parent.height - Constants.commonChart.heightOffset
+            Layout.minimumHeight: parent.height - Constants.commonChart.heightOffset
             Layout.alignment: Qt.AlignBottom
             Layout.fillHeight: true
             plotAreaColor: Constants.commonChart.areaColor
@@ -312,13 +262,9 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                             }
-
                         }
-
                     }
-
                 }
-
             }
 
             SwiftValueAxis {
@@ -340,7 +286,7 @@ Item {
                     solutionZoomAllButton.checked = true;
                     solutionPositionChart.resetChartZoom();
                 }
-                onWheel: {
+                onWheel: wheel => {
                     solutionPositionChart.stopZoomFeatures();
                     solutionPositionChart.chartZoomByDirection(wheel.angleDelta.y);
                 }
@@ -382,7 +328,6 @@ Item {
                     x: 1
                     y: 1
                 }
-
             }
 
             Timer {
@@ -391,28 +336,21 @@ Item {
                 repeat: true
                 onTriggered: {
                     if (!solutionPositionTab.visible)
-                        return ;
-
+                        return;
                     solution_position_model.fill_console_points(solutionPositionPoints);
                     if (!solutionPositionPoints.points.length)
-                        return ;
-
-                    solutionPositionArea.visible = true;
+                        return;
                     if (available_units != solutionPositionPoints.available_units)
                         available_units = solutionPositionPoints.available_units;
-
                     if (!line || !scatters.length || !cur_scatters.length)
                         [scatters, cur_scatters, line] = SolutionPlotLoop.setupScatterSeries(solutionPositionChart, Constants, Globals, solutionPositionXAxis, solutionPositionYAxis, Constants.solutionPosition.legendLabels, Constants.solutionPosition.colors, false, true);
-
                     var combined = [line, scatters, cur_scatters];
                     solutionPositionPoints.fill_series(combined);
                     let point = SolutionPlotLoop.getCurSolution(solutionPositionPoints.cur_points);
                     if (point)
                         cur_solution = point;
-
                     if (center_solution)
                         solutionPositionChart.centerToSolution();
-
                     let hasData = false;
                     for (let idx in solutionPositionPoints.points) {
                         if (solutionPositionPoints.points[idx].length) {
@@ -445,13 +383,9 @@ Item {
                         orig_lon_max = new_lon_max;
                         if (zoom_all)
                             solutionPositionChart.resetChartZoom();
-
                     }
                 }
             }
-
         }
-
     }
-
 }

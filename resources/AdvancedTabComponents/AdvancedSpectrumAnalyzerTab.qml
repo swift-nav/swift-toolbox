@@ -1,10 +1,10 @@
 import "../BaseComponents"
 import "../Constants"
-import QtCharts 2.15
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.15
-import SwiftConsole 1.0
+import QtCharts
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import SwiftConsole
 
 Item {
     id: advancedSpectrumAnalyzerTab
@@ -76,7 +76,6 @@ Item {
                     x: 1
                     y: 1
                 }
-
             }
 
             Timer {
@@ -87,12 +86,10 @@ Item {
                 repeat: true
                 onTriggered: {
                     if (!advancedSpectrumAnalyzerTab.visible)
-                        return ;
-
+                        return;
                     advanced_spectrum_analyzer_model.fill_console_points(advancedSpectrumAnalyzerPoints);
                     if (!advancedSpectrumAnalyzerPoints.points.length)
-                        return ;
-
+                        return;
                     if (!line) {
                         var line_ = advancedSpectrumAnalyzerChart.createSeries(ChartView.SeriesTypeLine, 0, advancedSpectrumAnalyzerXAxis);
                         line_.color = Constants.advancedSpectrumAnalyzer.lineColors[0];
@@ -110,7 +107,6 @@ Item {
                     advancedSpectrumAnalyzerPoints.fill_series(line);
                 }
             }
-
         }
 
         AdvancedSpectrumAnalyzerTabChannelBar {
@@ -119,7 +115,5 @@ Item {
             Layout.fillWidth: true
             Layout.maximumHeight: Constants.advancedSpectrumAnalyzer.dropdownRowHeight
         }
-
     }
-
 }

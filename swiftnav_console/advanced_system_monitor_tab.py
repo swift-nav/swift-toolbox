@@ -3,7 +3,7 @@
 
 from typing import Dict, List, Any
 
-from PySide2.QtCore import Property, QObject, Signal, Slot
+from PySide6.QtCore import Property, QObject, Signal, Slot
 
 from .constants import Keys, QTKeys
 
@@ -22,6 +22,7 @@ ADVANCED_SYSTEM_MONITOR_TAB: List[Dict[str, Any]] = [advanced_system_monitor_tab
 
 
 class AdvancedSystemMonitorData(QObject):  # pylint: disable=too-many-instance-attributes
+    _instance: "AdvancedSystemMonitorData"
     _obs_period: List[List[Any]] = []
     _obs_latency: List[List[Any]] = []
     _threads_table: List[List[Any]] = []
@@ -40,7 +41,7 @@ class AdvancedSystemMonitorData(QObject):  # pylint: disable=too-many-instance-a
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
         ADVANCED_SYSTEM_MONITOR_TAB[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:

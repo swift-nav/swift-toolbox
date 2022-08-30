@@ -1,10 +1,10 @@
 import "../Constants"
 import "../TableComponents"
-import Qt.labs.qmlmodels 1.0
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.15
-import SwiftConsole 1.0
+import Qt.labs.qmlmodels
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import SwiftConsole
 
 Item {
     property real mouse_x: 0
@@ -28,7 +28,6 @@ Item {
         text += "Choose \"Ok\" to";
         if (settings.length > 0)
             text += " allow the console to change the above settings on your device to help enable INS output and then";
-
         text += " immediately save settings to device flash and send the software reset command.";
         text += " The software reset will temporarily interrupt the console's connection to the device but it ";
         text += " will recover on its own. ";
@@ -37,6 +36,8 @@ Item {
 
     Dialog {
         id: dialog
+
+        property variant columnWidths: [width / 3, width / 3, width / 3]
 
         parent: Overlay.overlay
         title: "Confirm Inertial Navigation Change?"
@@ -51,10 +52,6 @@ Item {
         focus: true
 
         contentItem: Column {
-            id: layout
-
-            property variant columnWidths: [layout.width / 3, layout.width / 3, layout.width / 3]
-
             width: parent.width
             spacing: Constants.insSettingsPopup.columnSpacing
 
@@ -80,7 +77,7 @@ Item {
                     syncView: tableView
 
                     delegate: Rectangle {
-                        implicitWidth: layout.columnWidths[index]
+                        implicitWidth: dialog.columnWidths[index]
                         implicitHeight: Constants.genericTable.cellHeight
                         border.color: Constants.genericTable.borderColor
 
@@ -106,10 +103,10 @@ Item {
                             }
                             onPositionChanged: {
                                 if (pressed) {
-                                    let oldcols = layout.columnWidths.slice();
+                                    let oldcols = dialog.columnWidths.slice();
                                     var delta_x = (mouseX - mouse_x);
-                                    layout.columnWidths[index] += delta_x;
-                                    layout.columnWidths[(index + 1) % 3] -= delta_x;
+                                    dialog.columnWidths[index] += delta_x;
+                                    dialog.columnWidths[(index + 1) % 3] -= delta_x;
                                     tableView.forceLayout();
                                 }
                             }
@@ -125,11 +122,8 @@ Item {
                                 position: 1
                                 color: Constants.genericTable.gradientColor
                             }
-
                         }
-
                     }
-
                 }
 
                 SwiftTableView {
@@ -137,7 +131,7 @@ Item {
 
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    columnWidths: layout.columnWidths
+                    columnWidths: dialog.columnWidths
 
                     model: TableModel {
                         id: tableModel
@@ -155,11 +149,8 @@ Item {
                         TableModelColumn {
                             display: Constants.insSettingsPopup.columnHeaders[2]
                         }
-
                     }
-
                 }
-
             }
 
             Label {
@@ -170,9 +161,7 @@ Item {
                 wrapMode: Text.Wrap
                 width: parent.width
             }
-
         }
-
     }
 
     Timer {
@@ -181,8 +170,7 @@ Item {
         repeat: true
         onTriggered: {
             for (var idx in settings) {
-                var new_row = {
-                };
+                var new_row = {};
                 new_row[Constants.insSettingsPopup.columnHeaders[0]] = settings[idx][0];
                 new_row[Constants.insSettingsPopup.columnHeaders[1]] = settings[idx][1];
                 new_row[Constants.insSettingsPopup.columnHeaders[2]] = settings[idx][2];
@@ -190,5 +178,4 @@ Item {
             }
         }
     }
-
 }

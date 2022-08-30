@@ -1,9 +1,9 @@
 import "Constants"
-import QtCharts 2.2
-import QtQuick 2.5
-import QtQuick.Controls 2.2
-import QtQuick.Layouts 1.15
-import SwiftConsole 1.0
+import QtCharts
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import SwiftConsole
 
 Rectangle {
     property string position: Constants.statusBar.defaultValue
@@ -36,24 +36,24 @@ Rectangle {
 
         Repeater {
             model: [{
-                "labelText": Constants.statusBar.posLabel,
-                "valueText": position
-            }, {
-                "labelText": Constants.statusBar.rtkLabel,
-                "valueText": rtk
-            }, {
-                "labelText": Constants.statusBar.insLabel,
-                "valueText": ins
-            }, {
-                "labelText": Constants.statusBar.satsLabel,
-                "valueText": satellites < 0 ? Constants.statusBar.defaultValue : satellites
-            }, {
-                "labelText": Constants.statusBar.corrAgeLabel,
-                "valueText": correctionAge <= 0 ? Constants.statusBar.defaultValue : Utils.padFloat(correctionAge, 1, 1) + " s"
-            }, {
-                "labelText": Constants.statusBar.antennaLabel,
-                "valueText": antennaStatus
-            }]
+                    "labelText": Constants.statusBar.posLabel,
+                    "valueText": position
+                }, {
+                    "labelText": Constants.statusBar.rtkLabel,
+                    "valueText": rtk
+                }, {
+                    "labelText": Constants.statusBar.insLabel,
+                    "valueText": ins
+                }, {
+                    "labelText": Constants.statusBar.satsLabel,
+                    "valueText": satellites < 0 ? Constants.statusBar.defaultValue : satellites
+                }, {
+                    "labelText": Constants.statusBar.corrAgeLabel,
+                    "valueText": correctionAge <= 0 ? Constants.statusBar.defaultValue : Utils.padFloat(correctionAge, 1, 1) + " s"
+                }, {
+                    "labelText": Constants.statusBar.antennaLabel,
+                    "valueText": antennaStatus
+                }]
 
             RowLayout {
                 spacing: Constants.statusBar.keyValueSpacing
@@ -77,11 +77,8 @@ Rectangle {
                     font.pixelSize: Constants.statusBar.textPixelSize
                     font.bold: true
                 }
-
             }
-
         }
-
     }
 
     Timer {
@@ -103,5 +100,4 @@ Rectangle {
             }
         }
     }
-
 }

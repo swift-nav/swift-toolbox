@@ -1,4 +1,4 @@
-import QtQuick 2.15
+import QtQuick
 
 SequentialAnimation {
     id: anim
@@ -31,5 +31,4 @@ SequentialAnimation {
         easing.type: Easing.OutQuad
         to: anim.startingPropertyValue
     }
-
 }

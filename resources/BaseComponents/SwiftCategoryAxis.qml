@@ -1,5 +1,5 @@
 import "../Constants"
-import QtCharts 2.15
+import QtCharts
 
 CategoryAxis {
     labelsVisible: true

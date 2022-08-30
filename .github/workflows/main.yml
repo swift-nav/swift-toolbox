@@ -29,8 +29,8 @@ jobs:
     strategy:
       matrix:
         os:
-        - ubuntu-18.04
-        - macos-10.15
+        - ubuntu-20.04
+        - macos-11
         - windows-2019
 
     runs-on: ${{ matrix.os }}
@@ -92,6 +92,7 @@ jobs:
           path: ${{ env.PIP_CACHE_DIR }}
           key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
 
+
       - name: Install ImageMagick
         shell: bash
         run: |
@@ -120,10 +121,9 @@ jobs:
 
     name: Code Quality Checks
 
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
 
     steps:
-
       - name: Checkout source
         uses: actions/checkout@v2
         with:
@@ -176,9 +176,21 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install Qt
+        uses: jurplel/install-qt-action@910f37ee23653fd4b243fe5c7f81ff26a8a6a64e
+        with:
+          version: '6.3.1'
+          setup-python: false
+
       - name: Run Checks
         run: |
           cargo make check-all
+
+      # TODO Fix qmllint warnings [CPP-798]
+      - name: Run qmllint
+        continue-on-error: true
+        run: |
+          cargo make qml-lint
 
       - name: Run Tests
         uses: nick-invision/retry@v2
@@ -199,8 +211,8 @@ jobs:
     strategy:
       matrix:
         os:
-        - {name: ubuntu-18.04, exe_suffix: "", short_name: "linux"}
-        - {name: macos-10.15, exe_suffix: "", short_name: "macos"}
+        - {name: ubuntu-20.04, exe_suffix: "", short_name: "linux"}
+        - {name: macos-11, exe_suffix: "", short_name: "macos"}
         - {name: windows-2019, exe_suffix: ".exe", short_name: "windows"}
 
     runs-on: ${{ matrix.os.name }}
@@ -406,6 +418,7 @@ jobs:
         env:
           OS_NAME: ${{ runner.os }}
         shell: bash
+        continue-on-error: true
         run: |
           cargo make disk-usage-bench
 
@@ -472,7 +485,7 @@ jobs:
             "$f"
           done
 
-          for f in $(ls Contents/Resources/lib/python3.9/site-packages/**/Qt/lib/*.framework/Versions/5/*)
+          for f in $(ls -d Contents/Resources/lib/python3.9/site-packages/**/Qt/lib/*.framework/Versions/A/*)
           do
             codesign -vvvv \
               -s "${{ secrets.APPLE_DEVELOPER_ID }}" \

@@ -3,7 +3,7 @@
 
 from typing import Dict, List, Any
 
-from PySide2.QtCore import Property, QObject, QPointF, Signal, Slot
+from PySide6.QtCore import Property, QObject, QPointF, Signal, Slot
 
 from .constants import Keys, QTKeys
 
@@ -19,7 +19,7 @@ ADVANCED_IMU_TAB: List[Dict[str, Any]] = [advanced_imu_tab_update()]
 
 
 class AdvancedImuPoints(QObject):
-
+    _instance: "AdvancedImuPoints"
     _points: List[List[QPointF]] = [[]]
     _fields_data: List[float] = []
     _data_updated = Signal()
@@ -35,7 +35,7 @@ class AdvancedImuPoints(QObject):
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
         ADVANCED_IMU_TAB[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:

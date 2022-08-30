@@ -1,26 +1,18 @@
+import "../BaseComponents"
 import "../Constants"
-import QtGraphicalEffects 1.15
-import QtQuick 2.5
-import QtQuick.Controls 2.15
+import QtQuick
+import QtQuick.Controls
 
 Item {
-    Image {
+    SwiftImage {
         id: okStatusImage
 
         anchors.verticalCenter: parent.verticalCenter
-        width: Constants.advancedImu.insStatusImageWidth
-        height: Constants.advancedImu.insStatusImageWidth
+        sourceSize: Qt.size(Constants.advancedImu.insStatusImageWidth, Constants.advancedImu.insStatusImageWidth)
         smooth: true
         source: Constants.advancedImu.okStatusPath
         antialiasing: Globals.useAntiAliasing
-
-        ColorOverlay {
-            anchors.fill: parent
-            source: parent
-            color: Constants.advancedImu.okStatusColor
-            antialiasing: Globals.useAntiAliasing
-        }
-
+        color: Constants.advancedImu.okStatusColor
     }
 
     Label {
@@ -31,5 +23,4 @@ Item {
         anchors.leftMargin: Constants.fusionStatusFlags.labelMargin
         anchors.verticalCenter: okStatusImage.verticalCenter
     }
-
 }

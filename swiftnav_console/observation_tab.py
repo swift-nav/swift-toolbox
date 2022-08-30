@@ -2,7 +2,7 @@ from typing import Dict, List, Any
 from copy import deepcopy
 from collections import namedtuple
 
-from PySide2.QtCore import Property, Slot, Signal, QAbstractTableModel, Qt, QModelIndex
+from PySide6.QtCore import Property, Slot, Signal, QAbstractTableModel, Qt, QModelIndex
 
 from .constants import Keys, QTKeys
 
@@ -58,7 +58,7 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
     # pylint: disable=too-many-instance-attributes
     # Might want to move the column_widths logic into QML and use QML's
     # FontMetrics, but for now this is ok.
-
+    _instance: "ObservationTableModel"
     tow_changed = Signal(float, arguments="tow")
     week_changed = Signal(int, arguments="week")
     row_count_changed = Signal(int, arguments="row_count")
@@ -105,7 +105,7 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
             REMOTE_OBSERVATION_TAB[0] = update_data
         else:
             LOCAL_OBSERVATION_TAB[0] = update_data
-        cls._instance._data_updated.emit()  # pylint: disable=protected-access
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access  # pylint: disable=protected-access
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:
@@ -224,7 +224,7 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
                 if row[obsKey] != current_row[obsKey]:
                     current_row[obsKey] = row[obsKey]
                     modelIdx = self.index(rowIdx, colIdx)
-                    self.dataChanged.emit(modelIdx, modelIdx)  # pylint: disable=no-member
+                    self.dataChanged.emit(modelIdx, modelIdx)  # type: ignore  # pylint: disable=no-member
 
             rowIdx += 1
 

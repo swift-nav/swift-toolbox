@@ -1,10 +1,11 @@
 import "../BaseComponents"
 import "../Constants"
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Dialogs 1.0
-import QtQuick.Layouts 1.15
-import SwiftConsole 1.0
+import Qt.labs.platform as LP
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
+import SwiftConsole
 
 Item {
     property alias fwDirectory: directoryInput.text
@@ -66,7 +67,6 @@ Item {
                 font.family: Constants.genericTable.fontFamily
                 font.pixelSize: Constants.largePixelSize
             }
-
         }
 
         FileDialog {
@@ -74,9 +74,8 @@ Item {
 
             visible: false
             title: "Please choose a folder."
-            folder: shortcuts.home
-            selectFolder: true
-            selectMultiple: false
+            currentFolder: LP.StandardPaths.writableLocation(LP.StandardPaths.HomeLocation)
+            fileMode: FileDialog.SaveFile
             onAccepted: {
                 var filepath = Utils.fileUrlToString(fileDialog.folder);
                 let downloadLatestFirmware = false;
@@ -93,7 +92,5 @@ Item {
             onRejected: {
             }
         }
-
     }
-
 }

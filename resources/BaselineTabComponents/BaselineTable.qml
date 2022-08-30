@@ -1,11 +1,11 @@
 import "../Constants"
 import "../TableComponents"
-import Qt.labs.qmlmodels 1.0
-import QtCharts 2.2
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.15
-import SwiftConsole 1.0
+import Qt.labs.qmlmodels
+import QtCharts
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import SwiftConsole
 
 Item {
     id: baselineTable
@@ -22,7 +22,6 @@ Item {
         }
         if (columnWidths != oldcols)
             tableView.forceLayout();
-
     }
 
     implicitWidth: Constants.solutionTable.minimumWidth
@@ -98,11 +97,8 @@ Item {
                         position: 1
                         color: Constants.genericTable.gradientColor
                     }
-
                 }
-
             }
-
         }
 
         SwiftTableView {
@@ -116,9 +112,9 @@ Item {
                 id: tableModel
 
                 rows: [{
-                    "Item": "",
-                    "Value": ""
-                }]
+                        "Item": "",
+                        "Value": ""
+                    }]
 
                 TableModelColumn {
                     display: "Item"
@@ -127,9 +123,7 @@ Item {
                 TableModelColumn {
                     display: "Value"
                 }
-
             }
-
         }
 
         Timer {
@@ -138,16 +132,13 @@ Item {
             repeat: true
             onTriggered: {
                 if (!baselineTab.visible)
-                    return ;
-
+                    return;
                 baseline_table_model.fill_console_points(baselineTableEntries);
                 if (!baselineTableEntries.entries.length)
-                    return ;
-
+                    return;
                 var entries = baselineTableEntries.entries;
                 for (var idx in entries) {
-                    var new_row = {
-                    };
+                    var new_row = {};
                     new_row[Constants.baselineTable.tableLeftColumnHeader] = entries[idx][0];
                     new_row[Constants.baselineTable.tableRightColumnHeader] = entries[idx][1];
                     tableView.model.setRow(idx, new_row);
@@ -155,7 +146,5 @@ Item {
                 tableView.forceLayout();
             }
         }
-
     }
-
 }

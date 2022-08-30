@@ -1,12 +1,11 @@
 import "../BaseComponents"
 import "../Constants"
 import "../SolutionPlotCommon/SolutionPlotLoop.js" as SolutionPlotLoop
-import QtCharts 2.15
-import QtGraphicalEffects 1.15
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.15
-import SwiftConsole 1.0
+import QtCharts
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import SwiftConsole
 
 Item {
     id: baselinePlot
@@ -58,22 +57,10 @@ Item {
                 checkable: true
                 onClicked: backend_request_broker.baseline_plot([baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].pressed, baselineButtonGroup.buttons[0].pressed])
 
-                Image {
-                    id: baselinePauseImage
-
-                    anchors.centerIn: parent
-                    width: Constants.baselinePlot.buttonSvgHeight
-                    height: Constants.baselinePlot.buttonSvgHeight
+                icon {
                     source: Constants.icons.pauseButtonUrl
-                    visible: false
-                }
-
-                ColorOverlay {
-                    anchors.fill: baselinePauseImage
-                    source: baselinePauseImage
                     color: !baselinePauseButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 }
-
             }
 
             SwiftButton {
@@ -86,6 +73,11 @@ Item {
                 ToolTip.visible: hovered
                 ToolTip.text: "Clear"
 
+                icon {
+                    source: Constants.icons.clearButtonUrl
+                    color: !baselineClearButton.checked ? Constants.materialGrey : Constants.swiftOrange
+                }
+
                 Image {
                     id: baselineClearImage
 
@@ -95,13 +87,6 @@ Item {
                     source: Constants.icons.clearButtonUrl
                     visible: false
                 }
-
-                ColorOverlay {
-                    anchors.fill: baselineClearImage
-                    source: baselineClearImage
-                    color: !baselineClearButton.checked ? Constants.materialGrey : Constants.swiftOrange
-                }
-
             }
 
             SwiftButton {
@@ -124,22 +109,10 @@ Item {
                 checkable: true
                 checked: true
 
-                Image {
-                    id: baselineZoomAllImage
-
-                    anchors.centerIn: parent
-                    width: Constants.baselinePlot.buttonSvgHeight
-                    height: Constants.baselinePlot.buttonSvgHeight
+                icon {
                     source: Constants.icons.zoomAllButtonUrl
-                    visible: false
-                }
-
-                ColorOverlay {
-                    anchors.fill: baselineZoomAllImage
-                    source: baselineZoomAllImage
                     color: !baselineZoomAllButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 }
-
             }
 
             SwiftButton {
@@ -162,22 +135,10 @@ Item {
                 ToolTip.text: "Center On Solution"
                 checkable: true
 
-                Image {
-                    id: centerButtonImage
-
-                    anchors.centerIn: parent
-                    width: Constants.baselinePlot.buttonSvgHeight
-                    height: Constants.baselinePlot.buttonSvgHeight
+                icon {
                     source: Constants.icons.centerOnButtonUrl
-                    visible: false
-                }
-
-                ColorOverlay {
-                    anchors.fill: centerButtonImage
-                    source: centerButtonImage
                     color: !baselineCenterButton.checked ? Constants.materialGrey : Constants.swiftOrange
                 }
-
             }
 
             SwiftButton {
@@ -191,7 +152,6 @@ Item {
                 ToolTip.visible: hovered
                 ToolTip.text: "Reset Filters"
             }
-
         }
 
         ChartView {
@@ -289,13 +249,9 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                             }
-
                         }
-
                     }
-
                 }
-
             }
 
             SwiftValueAxis {
@@ -359,7 +315,6 @@ Item {
                     x: 1
                     y: 1
                 }
-
             }
 
             Timer {
@@ -368,25 +323,20 @@ Item {
                 repeat: true
                 onTriggered: {
                     if (!baselinePlot.visible)
-                        return ;
-
+                        return;
                     baseline_plot_model.fill_console_points(baselinePlotPoints);
                     if (!baselinePlotPoints.points.length)
-                        return ;
-
+                        return;
                     baselinePlotArea.visible = true;
                     let _lines = null;
                     if (!scatters.length || !cur_scatters.length)
                         [scatters, cur_scatters, _lines] = SolutionPlotLoop.setupScatterSeries(baselinePlotChart, Constants, Globals, baselinePlotXAxis, baselinePlotYAxis, Constants.baselinePlot.legendLabels, Constants.baselinePlot.colors);
-
                     baselinePlotPoints.fill_series([scatters, cur_scatters]);
                     let point = SolutionPlotLoop.getCurSolution(baselinePlotPoints.cur_points);
                     if (point)
                         cur_solution = point;
-
                     if (center_solution)
                         baselinePlotChart.centerToSolution();
-
                     let hasData = false;
                     for (let idx in baselinePlotPoints.points) {
                         if (baselinePlotPoints.points[idx].length > 0) {
@@ -419,13 +369,9 @@ Item {
                         orig_e_max = new_e_max;
                         if (zoom_all)
                             baselinePlotChart.resetChartZoom();
-
                     }
                 }
             }
-
         }
-
     }
-
 }

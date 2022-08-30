@@ -1,6 +1,6 @@
 import "../Constants"
-import QtQuick 2.15
-import QtQuick.Controls 2.15
+import QtQuick
+import QtQuick.Controls
 
 Rectangle {
     property alias text: textInput.text
@@ -15,12 +15,12 @@ Rectangle {
     property var labelHorizontalAlignment: Text.AlignRight
     property var fontFamily: Constants.genericTable.fontFamily
     property font labelFont: Qt.font({
-        "family": Constants.genericTable.fontFamily,
-        "pixelSize": Constants.largePixelSize
-    })
+            "family": Constants.genericTable.fontFamily,
+            "pixelSize": Constants.largePixelSize
+        })
 
-    signal textEdited()
-    signal editingFinished()
+    signal textEdited
+    signal editingFinished
 
     clip: true
     border.width: borderWidth
@@ -51,7 +51,5 @@ Rectangle {
             color: placeholderColor
             visible: !textInput.text
         }
-
     }
-
 }

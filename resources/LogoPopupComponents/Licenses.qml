@@ -1,8 +1,8 @@
 import "../Constants"
-import QtQuick 2.5
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.15
-import SwiftConsole 1.0
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import SwiftConsole
 
 ColumnLayout {
     ComboBox {
@@ -41,14 +41,12 @@ ColumnLayout {
                     id: robotoFileIO
 
                     source: Constants.logoPopup.licenses.robotoFontLicensePath
-                    onError: (msg) => {
+                    onError: msg => {
                         console.log("Roboto Font License file read error: " + msg);
                         robotoFontTextArea.text = msg;
                     }
                 }
-
             }
-
         }
 
         ScrollView {
@@ -71,16 +69,12 @@ ColumnLayout {
                     id: fontAwesomeFileIO
 
                     source: Constants.logoPopup.licenses.fontAwesomeIconsLicensePath
-                    onError: (msg) => {
+                    onError: msg => {
                         console.log("Font Awesome License file read error: " + msg);
                         fontAwesomeTextArea.text = msg;
                     }
                 }
-
             }
-
         }
-
     }
-
 }

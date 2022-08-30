@@ -1,11 +1,11 @@
 // This is the source to QtQuick2's Material CheckBox with some changes to make it smaller
 import "../Constants"
-import QtQuick 2.12
-import QtQuick.Controls 2.12
-import QtQuick.Controls.Material 2.12
-import QtQuick.Controls.Material.impl 2.12
-import QtQuick.Controls.impl 2.12
-import QtQuick.Templates 2.12 as T
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Controls.Material
+import QtQuick.Controls.Material.impl
+import QtQuick.Controls.impl
+import QtQuick.Templates as T
 
 T.Button {
     id: control
@@ -26,7 +26,23 @@ T.Button {
     spacing: 6
     icon.width: 24
     icon.height: 24
-    icon.color: !enabled ? Material.hintTextColor : flat && highlighted ? Material.accentColor : highlighted ? Material.primaryHighlightedTextColor : Material.foreground
+    icon.color: {
+        var color;
+        if (!enabled) {
+            color = Material.hintTextColor;
+        } else {
+            if (flat && highlighted) {
+                color = Material.accentColor;
+            } else {
+                if (highlighted) {
+                    color = Material.primaryHighlightedTextColor;
+                } else {
+                    color = Material.foreground;
+                }
+            }
+        }
+        return color;
+    }
     Material.elevation: flat ? control.down || control.hovered ? 2 : 0 : control.down ? 8 : 2
     Material.background: flat ? "transparent" : undefined
 
@@ -37,14 +53,46 @@ T.Button {
         icon: control.icon
         text: control.text
         font: control.font
-        color: !control.enabled ? control.Material.hintTextColor : control.flat && control.highlighted ? control.Material.accentColor : control.highlighted ? control.Material.primaryHighlightedTextColor : control.Material.foreground
+        color: {
+            var color;
+            if (!control.enabled) {
+                color = control.Material.hintTextColor;
+            } else {
+                if (control.flat && control.highlighted) {
+                    color = control.Material.accentColor;
+                } else {
+                    if (control.highlighted) {
+                        color = control.Material.primaryHighlightedTextColor;
+                    } else {
+                        color = control.Material.foreground;
+                    }
+                }
+            }
+            return color;
+        }
     }
 
     background: Rectangle {
         implicitWidth: 64
         implicitHeight: control.Material.buttonHeight
         radius: 2
-        color: !control.enabled ? control.disabledColor : control.highlighted ? control.highlightedColor : control.invertColor ? control.invertedColor : control.color
+        color: {
+            var color;
+            if (!control.enabled) {
+                color = control.disabledColor;
+            } else {
+                if (control.highlighted) {
+                    color = control.highlightedColor;
+                } else {
+                    if (control.invertColor) {
+                        color = control.invertedColor;
+                    } else {
+                        color = control.color;
+                    }
+                }
+            }
+            return color;
+        }
         // The layer is disabled when the button color is transparent so you can do
         // Material.background: "transparent" and get a proper flat button without needing
         // to set Material.elevation as well
@@ -74,7 +122,5 @@ T.Button {
         layer.effect: ElevationEffect {
             elevation: control.Material.elevation
         }
-
     }
-
 }

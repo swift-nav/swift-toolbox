@@ -1,10 +1,10 @@
 import "../BaseComponents"
 import "../Constants"
-import QtCharts 2.15
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.15
-import SwiftConsole 1.0
+import QtCharts
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import SwiftConsole
 
 Item {
     id: advancedImuTab
@@ -71,7 +71,6 @@ Item {
                                 for (var idx in Constants.advancedImu.lineColors) {
                                     if (lineLegendRepeaterRows.itemAt(idx))
                                         lineLegendRepeaterRows.itemAt(idx).children[0].color = Constants.advancedImu.lineColors[idx];
-
                                 }
                             }
 
@@ -92,13 +91,9 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                             }
-
                         }
-
                     }
-
                 }
-
             }
 
             SwiftValueAxis {
@@ -134,7 +129,6 @@ Item {
                     x: 0
                     y: 0
                 }
-
             }
 
             Timer {
@@ -145,12 +139,10 @@ Item {
                 repeat: true
                 onTriggered: {
                     if (!advancedImuTab.visible)
-                        return ;
-
+                        return;
                     advanced_imu_model.fill_console_points(advancedImuPoints);
                     if (!advancedImuPoints.points.length)
-                        return ;
-
+                        return;
                     var points = advancedImuPoints.points;
                     advancedImuArea.visible = true;
                     if (!lines.length) {
@@ -171,11 +163,12 @@ Item {
                     advancedImuPoints.fill_series(lines);
                 }
             }
-
         }
 
         RowLayout {
             id: textDataRow
+
+            property real preferredChildWidths: advancedImuArea.width / 15
 
             visible: true
             Layout.fillWidth: true
@@ -187,7 +180,7 @@ Item {
             }
 
             Rectangle {
-                Layout.preferredWidth: parent.width / 15
+                Layout.preferredWidth: parent.preferredChildWidths
                 Layout.preferredHeight: Constants.advancedImu.textDataBarHeight
                 Layout.alignment: Qt.AlignVCenter
                 border.width: Constants.advancedImu.textDataBarBorderWidth
@@ -201,7 +194,6 @@ Item {
                     font.pixelSize: Constants.mediumPixelSize
                     text: "0.00 C"
                 }
-
             }
 
             Label {
@@ -209,7 +201,7 @@ Item {
             }
 
             Rectangle {
-                Layout.preferredWidth: parent.width / 15
+                Layout.preferredWidth: parent.preferredChildWidths
                 Layout.preferredHeight: Constants.advancedImu.textDataBarHeight
                 Layout.alignment: Qt.AlignVCenter
                 border.width: Constants.advancedImu.textDataBarBorderWidth
@@ -223,7 +215,6 @@ Item {
                     font.pixelSize: Constants.mediumPixelSize
                     text: "0x00"
                 }
-
             }
 
             Label {
@@ -231,7 +222,7 @@ Item {
             }
 
             Rectangle {
-                Layout.preferredWidth: parent.width / 15
+                Layout.preferredWidth: parent.preferredChildWidths
                 Layout.preferredHeight: Constants.advancedImu.textDataBarHeight
                 Layout.alignment: Qt.AlignVCenter
                 border.width: Constants.advancedImu.textDataBarBorderWidth
@@ -245,7 +236,6 @@ Item {
                     font.pixelSize: Constants.mediumPixelSize
                     text: "0.00 g"
                 }
-
             }
 
             Label {
@@ -253,7 +243,7 @@ Item {
             }
 
             Rectangle {
-                Layout.preferredWidth: parent.width / 15
+                Layout.preferredWidth: parent.preferredChildWidths
                 Layout.preferredHeight: Constants.advancedImu.textDataBarHeight
                 Layout.alignment: Qt.AlignVCenter
                 border.width: Constants.advancedImu.textDataBarBorderWidth
@@ -267,7 +257,6 @@ Item {
                     font.pixelSize: Constants.mediumPixelSize
                     text: "0.00 g"
                 }
-
             }
 
             Label {
@@ -275,7 +264,7 @@ Item {
             }
 
             Rectangle {
-                Layout.preferredWidth: parent.width / 15
+                Layout.preferredWidth: parent.preferredChildWidths
                 Layout.preferredHeight: Constants.advancedImu.textDataBarHeight
                 Layout.alignment: Qt.AlignVCenter
                 border.width: Constants.advancedImu.textDataBarBorderWidth
@@ -289,10 +278,9 @@ Item {
                     font.pixelSize: Constants.mediumPixelSize
                     text: "0.00 g"
                 }
-
             }
 
-            Rectangle {
+            Item {
                 Layout.fillWidth: true
                 Layout.preferredHeight: Constants.advancedMagnetometer.suggestionTextRowHeight
 
@@ -302,11 +290,7 @@ Item {
                     antialiasing: Globals.useAntiAliasing
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
-
             }
-
         }
-
     }
-
 }

@@ -1,9 +1,8 @@
 import "../BaseComponents"
 import "../Constants"
-import QtQuick 2.5
-import QtQuick.Controls 2.15
-import QtQuick.Dialogs 1.0
-import QtQuick.Layouts 1.15
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
 Item {
     property alias fwDirectory: selectFirmwareDownloadDirectory.fwDirectory
@@ -63,11 +62,7 @@ Item {
                     font.family: Constants.genericTable.fontFamily
                     font.pixelSize: Constants.largePixelSize
                 }
-
             }
-
         }
-
     }
-
 }

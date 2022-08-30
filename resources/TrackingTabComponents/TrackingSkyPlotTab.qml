@@ -1,10 +1,10 @@
 import "../BaseComponents"
 import "../Constants"
-import QtCharts 2.15
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.15
-import SwiftConsole 1.0
+import QtCharts
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import SwiftConsole
 
 Item {
     id: trackingSkyPlotTab
@@ -131,7 +131,6 @@ Item {
                     label: "90°"
                     endValue: Constants.trackingSkyPlot.axisRadialMin
                 }
-
             }
 
             ScatterSeries {
@@ -145,7 +144,6 @@ Item {
                     x: 0
                     y: 0
                 }
-
             }
 
             Rectangle {
@@ -160,9 +158,9 @@ Item {
                 anchors.rightMargin: Constants.trackingSkyPlot.legendRightMargin
                 implicitHeight: lineLegendRepeater.height
                 width: lineLegendRepeater.width
-                visible: showLegendCheckBox.checked && all_series.filter((x) => {
-                    return x.visible;
-                }).length > 0
+                visible: showLegendCheckBox.checked && all_series.filter(x => {
+                        return x.visible;
+                    }).length > 0
 
                 Column {
                     id: lineLegendRepeater
@@ -196,15 +194,10 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.verticalCenterOffset: Constants.commonLegend.verticalCenterOffset
                             }
-
                         }
-
                     }
-
                 }
-
             }
-
         }
 
         Label {
@@ -244,11 +237,8 @@ Item {
                         updateTimer.restart();
                     }
                 }
-
             }
-
         }
-
     }
 
     Timer {
@@ -260,8 +250,7 @@ Item {
         triggeredOnStart: true
         onTriggered: {
             if (!trackingSkyPlotTab.visible)
-                return ;
-
+                return;
             let labels = trackingSkyPlotPoints.labels;
             if (all_series.length < labels.length) {
                 for (var i = all_series.length; i < labels.length; i++) {
@@ -275,16 +264,25 @@ Item {
             trackingSkyPlotPoints.fill_all_series();
             if (polarChartWidthChanging) {
                 polarChartWidthChanging = false;
-                return ;
+                return;
             }
             for (var idx in labels) {
                 if (!all_series[idx].visible)
                     continue;
-
                 if (labelsVisible) {
                     for (var jdx in labels[idx]) {
                         var pose = trackingSkyPlotChart.mapToPosition(all_series[idx].at(jdx), all_series[idx]);
-                        let qmlStr = "import QtQuick.Controls 2.15; Label {color: 'black'; text: '" + labels[idx][jdx] + "'; visible: (!polarChartWidthChanging && labelsVisible && all_series[" + idx + "].visible); width: 20; height: 20; x: " + pose.x + "; y: " + pose.y + ";}";
+                        let qmlStr = `
+                        import QtQuick.Controls;
+                        Label {
+                            color: 'black'
+                            text: '` + labels[idx][jdx] + `'
+                            visible: (!polarChartWidthChanging && labelsVisible && all_series[` + idx + `].visible)
+                            width: 20
+                            height: 20
+                            x: ` + pose.x + `
+                            y: ` + pose.y + `
+                        }`;
                         var obj = Qt.createQmlObject(qmlStr, trackingSkyPlotChart, labels[idx][jdx]);
                         obj.destroy(Utils.hzToMilliseconds(Constants.staticTimerSlowIntervalRate));
                     }
@@ -292,5 +290,4 @@ Item {
             }
         }
     }
-
 }

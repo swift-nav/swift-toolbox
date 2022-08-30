@@ -1,9 +1,9 @@
 import "../Constants"
-import QtCharts 2.3
-import QtQuick 2.6
-import QtQuick.Controls 2.12
-import QtQuick.Layouts 1.15
-import SwiftConsole 1.0
+import QtCharts
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import SwiftConsole
 
 Item {
     id: fusionStatusFlags
@@ -191,12 +191,10 @@ Item {
                 repeat: true
                 onTriggered: {
                     if (!advancedTab.visible)
-                        return ;
-
+                        return;
                     fusion_engine_flags_model.fill_console_points(fusionStatusFlagsData);
                     if (!fusionStatusFlagsData.gnsspos)
-                        return ;
-
+                        return;
                     fusionStatusFlagsArea.visible = true;
                     var gnsspos = fusionStatusFlagsData.gnsspos;
                     if (gnsspos != last_gnsspos) {
@@ -302,14 +300,11 @@ Item {
                     }
                 }
             }
-
         }
 
         label: Label {
             text: Constants.fusionStatusFlags.title
             font.pixelSize: Constants.fusionStatusFlags.titleFontSize
         }
-
     }
-
 }

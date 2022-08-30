@@ -1,9 +1,10 @@
 import "../BaseComponents"
 import "../Constants"
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Dialogs 1.0
-import QtQuick.Layouts 1.15
+import Qt.labs.platform as LP
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
 Item {
     property alias localFileText: localFileTextInput.text
@@ -65,7 +66,6 @@ Item {
                 font.family: Constants.genericTable.fontFamily
                 font.pixelSize: Constants.largePixelSize
             }
-
         }
 
         FileDialog {
@@ -73,10 +73,8 @@ Item {
 
             visible: false
             title: "Please choose a binary."
-            folder: shortcuts.home
-            selectFolder: false
-            selectMultiple: false
-            selectExisting: true
+            currentFolder: LP.StandardPaths.standardLocations(LP.StandardPaths.HomeLocation)[0]
+            fileMode: FileDialog.OpenFile
             nameFilters: ["Binary Image Set (*.bin)"]
             onAccepted: {
                 var filepath = Utils.fileUrlToString(fileDialog.fileUrl);
@@ -94,7 +92,5 @@ Item {
             onRejected: {
             }
         }
-
     }
-
 }

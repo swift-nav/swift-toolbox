@@ -2,7 +2,7 @@
 """
 from typing import Dict, List, Any
 
-from PySide2.QtCore import Property, QObject, Signal, Slot
+from PySide6.QtCore import Property, QObject, Signal, Slot
 
 from .constants import Keys, QTKeys, ConnectionState, ConnectionType
 
@@ -29,7 +29,7 @@ CONNECTION_MESSAGE: List[str] = [""]
 
 
 class ConnectionData(QObject):  # pylint: disable=too-many-instance-attributes disable=too-many-public-methods
-
+    _instance: "ConnectionData"
     _available_ports: List[str] = []
     _available_baudrates: List[str] = []
     _available_flows: List[str] = []
@@ -60,17 +60,17 @@ class ConnectionData(QObject):  # pylint: disable=too-many-instance-attributes d
     @classmethod
     def post_connection_state_update(cls, update_data: ConnectionState) -> None:
         CONNECTION_STATE[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @classmethod
     def post_connection_message_update(cls, update_data: str) -> None:
         CONNECTION_MESSAGE[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @classmethod
     def post_connection_data_update(cls, update_data: Dict[str, Any]) -> None:
         CONNECTION[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:

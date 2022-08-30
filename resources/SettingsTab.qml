@@ -1,12 +1,12 @@
 import "BaseComponents"
 import "Constants"
-import Qt.labs.platform 1.1 as LabsPlatform
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Dialogs 1.3
-import QtQuick.Layouts 1.15
+import Qt.labs.platform as LP
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 import "SettingsTabComponents" as SettingsTabComponents
-import SwiftConsole 1.0
+import SwiftConsole
 
 MainTab {
     id: settingsTab
@@ -54,14 +54,14 @@ MainTab {
         }
     }
 
-    LabsPlatform.FileDialog {
+    LP.FileDialog {
         id: exportDialog
 
         defaultSuffix: "ini"
         nameFilters: ["*.ini"]
-        fileMode: LabsPlatform.FileDialog.SaveFile
+        fileMode: LP.FileDialog.SaveFile
         currentFile: {
-            let text = LabsPlatform.StandardPaths.writableLocation(LabsPlatform.StandardPaths.HomeLocation);
+            let text = LP.StandardPaths.writableLocation(LP.StandardPaths.HomeLocation);
             text += "/" + Constants.settingsTab.defaultImportExportRelativePathFromHome;
             text += "/" + Constants.settingsTab.defaultExportFileName;
             return text;
@@ -75,61 +75,59 @@ MainTab {
     FileDialog {
         id: importDialog
 
+        fileMode: FileDialog.OpenFile
         defaultSuffix: "ini"
-        selectExisting: true
         nameFilters: ["*.ini"]
-        folder: shortcuts.home + "/" + Constants.settingsTab.defaultImportExportRelativePathFromHome
+        currentFolder: LP.StandardPaths.standardLocations(LP.StandardPaths.HomeLocation)[0] + "/" + Constants.settingsTab.defaultImportExportRelativePathFromHome
         onAccepted: {
-            var filepath = Utils.fileUrlToString(importDialog.fileUrl);
+            var filepath = Utils.fileUrlToString(importDialog.selectedFile);
             backend_request_broker.settings_import_request(filepath);
         }
     }
 
-    MessageDialog {
+    LP.MessageDialog {
         id: resetDialog
 
         title: "Reset to Factory Defaults?"
-        icon: StandardIcon.Warning
         text: "This will erase all settings and then reset the device.\nAre you sure you want to reset to factory defaults?"
-        standardButtons: StandardButton.RestoreDefaults | StandardButton.No
-        onReset: backend_request_broker.settings_reset_request()
+        buttons: LP.MessageDialog.RestoreDefaults | LP.MessageDialog.No
+        onYesClicked: backend_request_broker.settings_reset_request()
     }
 
-    MessageDialog {
+    LP.MessageDialog {
         id: importSuccess
 
         title: "Successfully imported settings from file."
         text: "Settings import from file complete.  Click 'Yes' to save the settings to the device's persistent storage."
-        standardButtons: StandardButton.Yes | StandardButton.No
-        onYes: backend_request_broker.settings_save_request()
+        buttons: LP.MessageDialog.Yes | LP.MessageDialog.No
+        onYesClicked: backend_request_broker.settings_save_request()
     }
 
-    MessageDialog {
+    LP.MessageDialog {
         id: autoSurveyDialog
 
         title: "Auto populate surveyed position?"
         text: autoSurveyDialogText()
-        standardButtons: StandardButton.Yes | StandardButton.No
-        onYes: backend_request_broker.auto_survey_request()
+        buttons: LP.MessageDialog.Yes | LP.MessageDialog.No
+        onYesClicked: backend_request_broker.auto_survey_request()
     }
 
     SettingsTabComponents.InsSettingsPopup {
         id: insSettingsPopup
     }
 
-    MessageDialog {
+    LP.MessageDialog {
         id: settingsNotification
 
         title: "Settings Write Notification"
-        icon: StandardIcon.Warning
-        standardButtons: StandardButton.Close
+        buttons: LP.MessageDialog.Close
     }
 
-    MessageDialog {
+    LP.MessageDialog {
         id: importFailure
 
         title: "Failed to import settings from file."
-        standardButtons: StandardButton.Ok
+        buttons: LP.MessageDialog.Ok
     }
 
     SplitView {
@@ -257,7 +255,6 @@ MainTab {
                         onClicked: {
                             if (buttonEnabled)
                                 autoSurveyDialog.visible = true;
-
                         }
                     }
 
@@ -292,9 +289,7 @@ MainTab {
                         font.family: Constants.fontFamily
                         font.bold: false
                     }
-
                 }
-
             }
 
             ToolSeparator {
@@ -308,8 +303,7 @@ MainTab {
                 function selectedRow() {
                     var rowIdx = settingsTable.selectedRowIdx;
                     if (rowIdx < 0)
-                        return ;
-
+                        return;
                     return settingsTable.table[settingsTable.rowOffsets[rowIdx]];
                 }
 
@@ -331,9 +325,6 @@ MainTab {
                 Layout.fillHeight: true
                 visible: !settingsPane.visible
             }
-
         }
-
     }
-
 }

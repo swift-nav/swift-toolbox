@@ -3,7 +3,7 @@
 
 from typing import Any, Dict, List
 
-from PySide2.QtCore import Property, QObject, Signal, Slot
+from PySide6.QtCore import Property, QObject, Signal, Slot
 
 from .constants import Keys
 
@@ -33,7 +33,7 @@ UPDATE_TAB: List[Dict[str, Any]] = [update_tab_update()]
 
 
 class UpdateTabData(QObject):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
-
+    _instance: "UpdateTabData"
     _hardware_revision: str = ""
     _fw_version_current: str = ""
     _fw_version_latest: str = ""
@@ -63,7 +63,7 @@ class UpdateTabData(QObject):  # pylint: disable=too-many-instance-attributes,to
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
         UPDATE_TAB[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:

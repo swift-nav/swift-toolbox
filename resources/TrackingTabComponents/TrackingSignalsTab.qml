@@ -1,11 +1,11 @@
-import ".."
+import "../"
 import "../BaseComponents"
 import "../Constants"
-import QtCharts 2.15
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.15
-import SwiftConsole 1.0
+import QtCharts
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import SwiftConsole
 
 Item {
     id: trackingSignalsTab
@@ -87,8 +87,7 @@ Item {
                 triggeredOnStart: true
                 onTriggered: {
                     if (!trackingSignalsTab.visible)
-                        return ;
-
+                        return;
                     if (emptySeries == null) {
                         emptySeries = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, "", trackingSignalsXAxis);
                         emptySeries.axisYRight = trackingSignalsYAxis;
@@ -112,7 +111,6 @@ Item {
                     trackingSignalsXAxis.max = trackingSignalsPoints.xaxis_max;
                 }
             }
-
         }
 
         GridLayout {
@@ -137,17 +135,15 @@ Item {
                         var cb = trackingSignalsCbRepeater.itemAt(i);
                         if (!cb.checked)
                             cb.toggle();
-
                     }
                 }
 
                 onVisibleChanged: {
                     if (visible && checkState != Qt.Checked)
                         setAllOn();
-
                 }
                 Layout.margins: 0
-                Layout.rowSpan: parent.rows == 0 ? 1 : parent.rows
+                Layout.rowSpan: parent.rows <= 0 ? 1 : parent.rows
                 tristate: true
                 checkState: (parent.numChecked == trackingSignalsCbRepeater.count ? Qt.Checked : parent.numChecked > 0 ? Qt.PartiallyChecked : Qt.Unchecked)
                 text: "All"
@@ -157,15 +153,13 @@ Item {
                         var cb = trackingSignalsCbRepeater.itemAt(i);
                         if ((curCheckState == Qt.Checked && !cb.checked) || (curCheckState != Qt.Checked && cb.checked))
                             cb.toggle();
-
                     }
                 }
                 Component.onCompleted: {
                     if (implicitWidth > parent.maxCheckboxImplicitWidth)
                         parent.maxCheckboxImplicitWidth = implicitWidth;
-
                 }
-                nextCheckState: function() {
+                nextCheckState: function () {
                     return (checkState == Qt.Checked) ? Qt.Unchecked : Qt.Checked;
                 }
             }
@@ -187,7 +181,6 @@ Item {
                         for (var idx in check_visibility) {
                             if (!check_visibility[idx])
                                 labels_not_visible.push(check_labels[idx]);
-
                         }
                         backend_request_broker.tracking_signals_check_visibility(labels_not_visible);
                     }
@@ -195,14 +188,9 @@ Item {
                         check_visibility.push(checked);
                         if (implicitWidth > trackingSignalsCheckboxes.maxCheckboxImplicitWidth)
                             trackingSignalsCheckboxes.maxCheckboxImplicitWidth = implicitWidth;
-
                     }
                 }
-
             }
-
         }
-
     }
-
 }

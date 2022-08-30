@@ -1,17 +1,18 @@
 import "../Constants"
-import QtCharts 2.3
-import QtQuick 2.6
-import QtQuick.Controls 2.12
-import QtQuick.Layouts 1.15
-import SwiftConsole 1.0
+import QtCharts
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import SwiftConsole
 
 RowLayout {
     id: channelSelectionRowLayout
 
     property alias dropdownIdx: channelDropdown.currentIndex
+    property real parentWidth: parent ? parent.width : width
 
     Item {
-        Layout.preferredWidth: parent.width / 6
+        Layout.preferredWidth: parent.parentWidth / 6
     }
 
     Label {
@@ -45,7 +46,6 @@ RowLayout {
     }
 
     Item {
-        Layout.preferredWidth: parent.width / 6
+        Layout.preferredWidth: parent.parentWidth / 6
     }
-
 }

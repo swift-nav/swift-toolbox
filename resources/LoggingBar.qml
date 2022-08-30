@@ -1,16 +1,14 @@
 import "BaseComponents"
 import "Constants"
-import QtCharts 2.2
-import QtGraphicalEffects 1.15
-import QtQuick 2.5
-import QtQuick.Controls 2.2
-import QtQuick.Dialogs 1.0
-import QtQuick.Layouts 1.15
-import SwiftConsole 1.0
+import Qt.labs.platform as LP
+import QtCharts
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
+import SwiftConsole
 
 Rectangle {
-    property variant previous_folders: []
-    property variant sbp_logging_labels: []
     property alias sbpRecording: sbpLoggingButton.checked
     property string recordingFilename: ""
     property string lastEdittedLogDirectoryText: ""
@@ -122,7 +120,6 @@ Rectangle {
                 width: 1
                 color: parent.spacerColor
             }
-
         }
 
         Item {
@@ -137,7 +134,6 @@ Rectangle {
                     visible: parent.containsMouse && sbpLoggingButton.checked
                     text: "Currently logging, stop logging to adjust."
                 }
-
             }
 
             RowLayout {
@@ -150,7 +146,8 @@ Rectangle {
                     Layout.preferredHeight: loggingBarRowLayout.preferredButtonHeight
                     enabled: !sbpLoggingButton.checked
                     font: Constants.loggingBar.comboBoxFont
-                    model: sbp_logging_labels
+                    model: loggingBarData.sbp_logging_labels
+                    textRole: "display"
                     ToolTip.visible: hovered
                     ToolTip.text: "SBP Log Format"
                     onActivated: backend_request_broker.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText)
@@ -163,7 +160,8 @@ Rectangle {
                     Layout.preferredHeight: loggingBarRowLayout.preferredButtonHeight
                     enabled: !sbpLoggingButton.checked
                     font: Constants.loggingBar.comboBoxFont
-                    model: previous_folders
+                    model: []
+                    textRole: "display"
                     editable: true
                     selectTextByMouse: true
                     visible: sbpLoggingButton.checked
@@ -176,15 +174,27 @@ Rectangle {
                     Layout.preferredHeight: loggingBarRowLayout.preferredButtonHeight
                     enabled: !sbpLoggingButton.checked
                     font: Constants.loggingBar.comboBoxFont
-                    model: previous_folders
+                    model: loggingBarData.previous_folders
+                    textRole: "display"
                     editable: true
                     selectTextByMouse: true
                     visible: !sbpLoggingButton.checked
+                    currentIndex: 0
                     onActivated: {
-                        var text = folderPathBar.currentText;
-                        folderPathBar.currentIndex = -1;
-                        folderPathBar.editText = text;
-                        backend_request_broker.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText);
+                        if (folderPathBar.editText == folderPathBar.currentText) {
+                            backend_request_broker.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText);
+                            folderPathBar.currentIndex = 0;
+                        } else {
+                            folderPathBar.editText = folderPathBar.currentText;
+                        }
+                    }
+                    onAccepted: {
+                        if (folderPathBar.editText != folderPathBar.currentText)
+                            backend_request_broker.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText);
+                    }
+                    onCurrentIndexChanged: {
+                        if (folderPathBar.currentIndex == -1)
+                            folderPathBar.currentIndex = 0;
                     }
 
                     Label {
@@ -195,7 +205,6 @@ Rectangle {
                         color: Constants.loggingBar.placeholderTextColor
                         visible: !folderPathBar.editText
                     }
-
                 }
 
                 SwiftButton {
@@ -213,9 +222,7 @@ Rectangle {
                         fileDialog.visible = !fileDialog.visible;
                     }
                 }
-
             }
-
         }
 
         FileDialog {
@@ -223,8 +230,8 @@ Rectangle {
 
             visible: false
             title: "Please choose a folder."
-            folder: shortcuts.home
-            selectFolder: true
+            currentFolder: LP.StandardPaths.writableLocation(LP.StandardPaths.HomeLocation)
+            fileMode: FileDialog.SaveFile
             onAccepted: {
                 var filepath = Utils.fileUrlToString(fileDialog.folder);
                 folderPathBar.editText = filepath;
@@ -243,7 +250,6 @@ Rectangle {
             function bytesToString(bytes, decimals = 2) {
                 if (bytes === 0)
                     return '0 Bytes';
-
                 const k = 1024;
                 const dm = decimals < 0 ? 0 : decimals;
                 const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
@@ -256,12 +262,8 @@ Rectangle {
             repeat: true
             onTriggered: {
                 logging_bar_model.fill_data(loggingBarData);
-                previous_folders = loggingBarData.previous_folders;
-                if (!sbp_logging_labels.length)
-                    sbp_logging_labels = loggingBarData.sbp_logging_labels;
-
                 sbpLoggingButton.checked = loggingBarData.sbp_logging;
-                sbpLoggingFormat.currentIndex = sbp_logging_labels.indexOf(loggingBarData.sbp_logging_format);
+                sbpLoggingFormat.currentIndex = loggingBarData.sbp_logging_labels.indexOf(loggingBarData.sbp_logging_format);
                 csvLoggingButton.checked = loggingBarData.csv_logging;
                 recordingFilenameText.editText = loggingBarData.recording_filename;
                 if (mockTime) {
@@ -282,7 +284,5 @@ Rectangle {
                 }
             }
         }
-
     }
-
 }

@@ -1,8 +1,8 @@
 import "Constants"
-import QtQuick 2.5
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.15
-import SwiftConsole 1.0
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import SwiftConsole
 
 Rectangle {
     id: tabInfoBar
@@ -12,9 +12,9 @@ Rectangle {
     property alias curSubTabIndex: tabBar.currentIndex
     property int rhsItemSpacing: 15
 
-    signal aboutClicked()
-    signal entered()
-    signal exited()
+    signal aboutClicked
+    signal entered
+    signal exited
 
     function open() {
         state = "opened";
@@ -103,7 +103,6 @@ Rectangle {
                         let button = tabBar.itemAt(tabBar.currentIndex);
                         if (!button.checked)
                             button.toggle();
-
                     }
                 }
                 model: subTabNames
@@ -114,11 +113,8 @@ Rectangle {
                     bottomPadding: 16
                     rightInset: -0.5
                     text: modelData
-                    border: false
                 }
-
             }
-
         }
 
         // Spacer item
@@ -143,7 +139,6 @@ Rectangle {
                 source: Constants.icons.swiftLogoWidePath
                 fillMode: Image.PreserveAspectFit
             }
-
         }
 
         Rectangle {
@@ -186,7 +181,6 @@ Rectangle {
                 padding: rhsItemSpacing / 3
                 onClicked: tabInfoBar.aboutClicked()
             }
-
         }
 
         Item {
@@ -233,12 +227,9 @@ Rectangle {
                 onYChanged: {
                     if (!closeArrowAnimation.running)
                         closeArrowAnimation.startingPropertyValue = y;
-
                 }
             }
-
         }
-
     }
 
     // Add in single-line separators between the items.
@@ -253,7 +244,6 @@ Rectangle {
             color: Constants.spacerColor
             x: tabBar.count > 0 ? tabBar.x + (tabButton ? tabButton.x - 1 : tabBar.width) : tabLabel.x + tabLabel.width
         }
-
     }
 
     gradient: Gradient {
@@ -266,7 +256,5 @@ Rectangle {
             position: 1
             color: Constants.swiftControlBackground
         }
-
     }
-
 }

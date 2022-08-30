@@ -3,7 +3,7 @@
 
 from typing import Dict, List, Any
 
-from PySide2.QtCore import Property, QObject, QPointF, Signal, Slot
+from PySide6.QtCore import Property, QObject, QPointF, Signal, Slot
 
 from .constants import Keys, QTKeys
 
@@ -25,7 +25,7 @@ SOLUTION_POSITION_TAB: List[Dict[str, Any]] = [solution_position_update()]
 
 
 class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
-
+    _instance: "SolutionPositionPoints"
     _points: List[List[QPointF]] = [[]]
     _cur_points: List[List[QPointF]] = [[]]
     _lat_min: float = 0.0
@@ -47,7 +47,7 @@ class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attr
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
         SOLUTION_POSITION_TAB[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:

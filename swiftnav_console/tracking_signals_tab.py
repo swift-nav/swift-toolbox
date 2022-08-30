@@ -3,8 +3,8 @@
 
 from typing import Dict, List, Any, Optional
 
-from PySide2.QtCore import Property, QObject, Signal, Slot
-from PySide2.QtCharts import QtCharts
+from PySide6.QtCore import Property, QObject, Signal, Slot
+from PySide6 import QtCharts
 
 from .constants import Keys, QTKeys
 
@@ -23,7 +23,7 @@ TRACKING_SIGNALS_TAB: List[Dict[str, Any]] = [tracking_signals_tab_update()]
 
 # pylint:disable=too-many-instance-attributes
 class TrackingSignalsPoints(QObject):
-
+    _instance: "TrackingSignalsPoints"
     _num_labels: int = 0
     _xaxis_min: float = 0.0
     _xaxis_max: float = 0.0
@@ -50,7 +50,7 @@ class TrackingSignalsPoints(QObject):
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
         TRACKING_SIGNALS_TAB[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:

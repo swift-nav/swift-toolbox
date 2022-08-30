@@ -1,9 +1,9 @@
 import "../Constants"
 import "../TableComponents"
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.15
-import SwiftConsole 1.0
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import SwiftConsole
 
 ColumnLayout {
     id: observationTable
@@ -79,7 +79,6 @@ ColumnLayout {
             text: observationTableModel ? observationTableModel.row_count : ""
             padding: parent.textPadding
         }
-
     }
 
     RowLayout {
@@ -108,7 +107,6 @@ ColumnLayout {
         ObservationFilterColumn {
             codes: observationTableModel ? observationTableModel.sbas_codes : 0
         }
-
     }
 
     HorizontalHeaderView {
@@ -169,11 +167,8 @@ ColumnLayout {
                     position: 1
                     color: Constants.genericTable.gradientColor
                 }
-
             }
-
         }
-
     }
 
     SwiftTableView {
@@ -192,5 +187,4 @@ ColumnLayout {
         color: "transparent"
         border.color: Constants.genericTable.borderColor
     }
-
 }

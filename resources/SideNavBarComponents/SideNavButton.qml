@@ -1,7 +1,7 @@
 import "../Constants"
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Controls.impl 2.15
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Controls.impl
 
 // This defines a Side Navigation button as is specified in the Style mockup guidelines listed here:
 // https://snav.slack.com/archives/C020JLK6PK8/p1637094700036500
@@ -42,7 +42,6 @@ Button {
     Component.onCompleted: {
         if (!silenceButtonGroupWarning)
             console.assert(buttonGroup != undefined, "No buttonGroup assigned to SideNavButton! Undesired behavior will result.");
-
     }
 
     contentItem: IconLabel {
@@ -84,9 +83,6 @@ Button {
                 color: Constants.swiftGrey
                 visible: !control.visualFocus && (control.checked || control.highlighted) && control.enabled
             }
-
         }
-
     }
-
 }

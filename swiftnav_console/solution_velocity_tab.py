@@ -3,7 +3,7 @@
 
 from typing import Dict, List, Any
 
-from PySide2.QtCore import Property, QObject, QPointF, Signal, Slot
+from PySide6.QtCore import Property, QObject, QPointF, Signal, Slot
 
 from .constants import Keys, QTKeys
 
@@ -22,7 +22,7 @@ SOLUTION_VELOCITY_TAB: List[Dict[str, Any]] = [solution_velocity_update()]
 
 
 class SolutionVelocityPoints(QObject):
-
+    _instance: "SolutionVelocityPoints"
     _colors: List[str] = []
     _points: List[List[QPointF]] = [[]]
     _valid: bool = False
@@ -42,7 +42,7 @@ class SolutionVelocityPoints(QObject):
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
         SOLUTION_VELOCITY_TAB[0] = update_data
-        cls._instance._data_updated.emit()
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:

@@ -1,7 +1,7 @@
 import "BaselineTabComponents" as BaselineTabComponents
 import "Constants"
-import QtQuick 2.15
-import QtQuick.Controls 2.15
+import QtQuick
+import QtQuick.Controls
 
 MainTab {
     id: baselineTab
@@ -22,7 +22,5 @@ MainTab {
             SplitView.fillWidth: true
             SplitView.fillHeight: true
         }
-
     }
-
 }

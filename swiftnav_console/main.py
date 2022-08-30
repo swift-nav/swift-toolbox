@@ -1,5 +1,6 @@
 """Frontend module for the Swift Console.
 """
+import signal
 import argparse
 from datetime import datetime
 import os
@@ -12,18 +13,18 @@ from typing import Optional, Tuple
 
 import capnp  # type: ignore
 
-from PySide2.QtWidgets import QApplication, QSplashScreen  # type: ignore
+from PySide6.QtWidgets import QApplication, QSplashScreen  # type: ignore
 
-from PySide2.QtCore import QObject, QUrl, QPointF, QThread, QTimer, Slot
-from PySide2.QtCharts import QtCharts  # pylint: disable=unused-import
+from PySide6.QtCore import QObject, QUrl, QPointF, QThread, QTimer, Slot, Signal, Qt
+from PySide6 import QtCharts  # pylint: disable=unused-import
 
-from PySide2 import QtQml, QtCore
+from PySide6 import QtQml, QtCore
 
-from PySide2.QtGui import QFontDatabase, QIcon, QPixmap
+from PySide6.QtGui import QFontDatabase, QIcon, QPixmap
 
-from PySide2.QtQml import QQmlComponent, qmlRegisterType
+from PySide6.QtQml import QQmlComponent, qmlRegisterType
 
-from PySide2.QtQuickControls2 import QQuickStyle
+from PySide6.QtQuickControls2 import QQuickStyle
 
 import swiftnav_console.console_resources  # type: ignore # pylint: disable=unused-import
 
@@ -230,6 +231,8 @@ capnp.remove_import_hook()  # pylint: disable=no-member
 
 
 class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attributes
+    _request_quit: Signal = Signal()
+
     def __init__(
         self,
         app,
@@ -244,7 +247,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
         self._backend = backend
         self._messages = messages
         self._thread = QThread()
-        self._thread.started.connect(self._handle_started)  # pylint: disable=no-member
+        self._thread.started.connect(self._handle_started)  # type: ignore  # pylint: disable=no-member
         self._reader = (
             None if record_file is None else open(str(record_file), "rb")  # pylint: disable=consider-using-with
         )
@@ -259,6 +262,8 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
             if (exit_after_timeout is None and record_file is None and not record)
             else self._receive_messages_debug
         )
+        self._request_quit.connect(self._app.quit, Qt.QueuedConnection)
+        self._app.aboutToQuit.connect(self._thread.exit)
 
     @Slot()  # type: ignore
     def _handle_started(self):
@@ -274,13 +279,13 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
     @Slot()  # type: ignore
     def receive_messages(self):
         if not self._receive_messages():
-            self._thread.exit()
+            self._request_quit.emit()
         else:
             QTimer.singleShot(0, self.receive_messages)
 
     def _receive_messages_debug(self):
         if self.exit_after_timeout is not None and time.time() - self.start_time > self.exit_after_timeout:
-            self._app.quit()
+            return False
         msg_receipt_time = time.perf_counter_ns()
         if self._reader is None:
             buffer = self._backend.fetch_message()
@@ -288,10 +293,11 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
             try:
                 msg = pickle.load(self._reader)
             except EOFError:
-                return self._app.quit()
+                print("Pickle file read finished, exiting")
+                return False
             buffer = msg["data"]
             if buffer is None:
-                self._app.quit()
+                return False
             diff = max((msg_receipt_time - self._last_msg_receipt_ns), 0)
             if diff < msg["ns"]:
                 time.sleep((msg["ns"] - diff) / 1e9)
@@ -313,8 +319,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
         if m.which == Message.Union.Status:
             app_state = ConnectionState(m.status.text)
             if app_state == ConnectionState.CLOSED:
-                self._app.quit()
-                return True
+                return False
             if app_state == ConnectionState.DISCONNECTED:
                 data = settings_table_update()
                 SettingsTableEntries.post_data_update(data)
@@ -679,6 +684,9 @@ def stop_splash(splash: Optional[QSplashScreen]):
 
 
 def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
+    # Redirect SIGINT to SIG_DFL, so Qt handles Sigint and terminates properly.
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+
     parser = argparse.ArgumentParser(add_help=False, usage=argparse.SUPPRESS)
     parser.add_argument("--exit-after-timeout", type=int, default=None)
     parser.add_argument("--read-capnp-recording", type=str, default=None)
@@ -728,7 +736,6 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
 
     qmlRegisterType(LogPanelData, "SwiftConsole", 1, 0, "LogPanelData")  # type: ignore
     qmlRegisterType(ConnectionData, "SwiftConsole", 1, 0, "ConnectionData")  # type: ignore
-    qmlRegisterType(LoggingBarData, "SwiftConsole", 1, 0, "LoggingBarData")  # type: ignore
     qmlRegisterType(AdvancedImuPoints, "SwiftConsole", 1, 0, "AdvancedImuPoints")  # type: ignore
     qmlRegisterType(AdvancedMagnetometerPoints, "SwiftConsole", 1, 0, "AdvancedMagnetometerPoints")  # type: ignore
     qmlRegisterType(AdvancedNetworkingData, "SwiftConsole", 1, 0, "AdvancedNetworkingData")  # type: ignore
@@ -758,7 +765,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     def handle_qml_load_errors(obj, _url):
         qml_object_created[0] = obj is not None
 
-    engine.objectCreated.connect(handle_qml_load_errors)  # pylint: disable=no-member
+    engine.objectCreated.connect(handle_qml_load_errors)  # type: ignore  # pylint: disable=no-member
 
     capnp_path = get_capnp_path()
     backend_main = BackendImporter(use_fake=args_main.debug_with_no_backend).Server()
@@ -767,7 +774,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     if found_help_arg:
         return 0
 
-    # Unfortunately it is not possible to access singletons directly using the PySide2 API.
+    # Unfortunately it is not possible to access singletons directly using the PySide6 API.
     # This approach stores the globals somwhere that can be grabbed and manipulated.
     component = QQmlComponent(engine)
     component.setData(
@@ -780,8 +787,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     handle_cli_arguments(args_main, globals_main)
     splash = start_splash()
 
-    engine.addImportPath("PySide2")
-    engine.addImportPath(":/")
+    engine.addImportPath(":/styles")
     engine.load(QUrl("qrc:/view.qml"))
     if not qml_object_created[0]:
         return 1
@@ -837,7 +843,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     backend_msg_receiver.start()
 
     stop_splash(splash)
-    app.exec_()
+    app.exec()
 
     endpoint_main.shutdown()
     backend_msg_receiver.join()

@@ -1,10 +1,10 @@
 import "../Constants"
 import "../TableComponents"
-import Qt.labs.qmlmodels 1.0
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.15
-import SwiftConsole 1.0
+import Qt.labs.qmlmodels
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import SwiftConsole
 
 ColumnLayout {
     property variant entries: []
@@ -68,11 +68,8 @@ ColumnLayout {
                     position: 1
                     color: Constants.genericTable.gradientColor
                 }
-
             }
-
         }
-
     }
 
     SwiftTableView {
@@ -104,9 +101,7 @@ ColumnLayout {
             TableModelColumn {
                 display: Constants.networking.columnHeaders[4]
             }
-
         }
-
     }
 
     Timer {
@@ -115,11 +110,9 @@ ColumnLayout {
         repeat: true
         onTriggered: {
             if (!advancedTab.visible || !entries.length)
-                return ;
-
+                return;
             for (var idx in entries) {
-                var new_row = {
-                };
+                var new_row = {};
                 new_row[Constants.networking.columnHeaders[0]] = entries[idx][0];
                 new_row[Constants.networking.columnHeaders[1]] = entries[idx][1];
                 new_row[Constants.networking.columnHeaders[2]] = entries[idx][2];
@@ -129,5 +122,4 @@ ColumnLayout {
             }
         }
     }
-
 }

@@ -1,9 +1,9 @@
 import "BaseComponents"
 import "Constants"
-import Qt.labs.qmlmodels 1.0
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import SwiftConsole 1.0
+import Qt.labs.qmlmodels
+import QtQuick
+import QtQuick.Controls
+import SwiftConsole
 import "TableComponents"
 
 Item {
@@ -40,8 +40,7 @@ Item {
             ToolTip.text: Constants.logPanel.clearButtonTooltip
             onClicked: {
                 tableView.model.clear();
-                var new_row = {
-                };
+                var new_row = {};
                 new_row[Constants.logPanel.timestampHeader] = "";
                 new_row[Constants.logPanel.levelHeader] = "";
                 new_row[Constants.logPanel.msgHeader] = "";
@@ -49,7 +48,6 @@ Item {
                 tableView.forceLayout();
             }
         }
-
     }
 
     Item {
@@ -94,7 +92,6 @@ Item {
                 consolePaused = false;
             }
         }
-
     }
 
     HorizontalHeaderView {
@@ -132,11 +129,8 @@ Item {
                         color: logLevelIndex == index ? Constants.swiftOrange : Constants.genericTable.textColor
                         font.pixelSize: Constants.mediumPixelSize
                     }
-
                 }
-
             }
-
         }
 
         delegate: Rectangle {
@@ -179,9 +173,7 @@ Item {
 
                     background: Item {
                     }
-
                 }
-
             }
 
             MouseArea {
@@ -222,11 +214,8 @@ Item {
                     position: 1
                     color: Constants.genericTable.gradientColor
                 }
-
             }
-
         }
-
     }
 
     SwiftTableView {
@@ -256,9 +245,7 @@ Item {
             TableModelColumn {
                 display: Constants.logPanel.msgHeader
             }
-
         }
-
     }
 
     Timer {
@@ -270,27 +257,22 @@ Item {
             if (!tableView.model.rows.length) {
                 tableView.model.clear();
                 tableView.model.rows = [{
-                    [Constants.logPanel.timestampHeader]: "",
-                    [Constants.logPanel.levelHeader]: "",
-                    [Constants.logPanel.msgHeader]: ""
-                }];
+                        [Constants.logPanel.timestampHeader]: "",
+                        [Constants.logPanel.levelHeader]: "",
+                        [Constants.logPanel.msgHeader]: ""
+                    }];
             }
             if (!logPanelData.entries.length)
-                return ;
-
+                return;
             if (forceLayoutLock)
-                return ;
-
+                return;
             if (!logLevelLabels.length)
                 logLevelLabels = logPanelData.log_level_labels;
-
             logLevelIndex = logLevelLabels.indexOf(logPanelData.log_level);
             if (consolePaused)
-                return ;
-
+                return;
             for (var idx in logPanelData.entries) {
-                var new_row = {
-                };
+                var new_row = {};
                 new_row[Constants.logPanel.timestampHeader] = logPanelData.entries[idx].timestamp;
                 new_row[Constants.logPanel.levelHeader] = logPanelData.entries[idx].level;
                 new_row[Constants.logPanel.msgHeader] = logPanelData.entries[idx].msg;
@@ -300,9 +282,7 @@ Item {
             }
             if (logPanelData.entries.length && tableView.selectedRow != -1)
                 tableView.selectedRow += logPanelData.entries.length;
-
             logPanelData.entries = [];
         }
     }
-
 }

@@ -1,5 +1,5 @@
-import QtQuick 2.12
-import QtQuick.Controls 2.12
+import QtQuick
+import QtQuick.Controls
 
 GroupBox {
     id: control
@@ -20,5 +20,4 @@ GroupBox {
         border.color: control.borderColor
         border.width: control.borderWidth
     }
-
 }

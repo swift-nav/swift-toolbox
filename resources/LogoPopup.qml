@@ -1,15 +1,14 @@
 import "BaseComponents"
 import "Constants"
 import "LogoPopupComponents" as LogoPopupComponents
-import QtQuick 2.5
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.15
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
 Item {
     function open() {
         if (!dialog.visible)
             dialog.open();
-
     }
 
     Dialog {
@@ -36,9 +35,7 @@ Item {
                         text: modelData
                         width: implicitWidth
                     }
-
                 }
-
             }
 
             StackLayout {
@@ -51,7 +48,6 @@ Item {
 
                 LogoPopupComponents.Licenses {
                 }
-
             }
 
             SwiftButton {
@@ -65,9 +61,6 @@ Item {
                     dialog.close();
                 }
             }
-
         }
-
     }
-
 }

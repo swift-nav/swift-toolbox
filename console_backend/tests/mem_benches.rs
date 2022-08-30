@@ -17,8 +17,8 @@ mod mem_bench_impl {
     const MINIMUM_MEM_READINGS: usize = 20;
 
     const DIFF_THRESHOLD: f32 = 0.25;
-    const MAXIMUM_MEM_USAGE_KB: f32 = 220000.0;
-    const ABSOLUTE_MINIMUM_MEM_USAGE: f32 = 1000.0;
+    const MAXIMUM_MEM_USAGE_BYTES: f32 = 30000000.0;
+    const ABSOLUTE_MINIMUM_MEM_USAGE: f32 = 1000000.0;
     const MAXIMUM_STANDARD_DEV_RATE_OF_MAXIMUM_MEM: f32 = 0.5;
 
     /// Convert a 1D Vector to an ArrayView.
@@ -55,18 +55,18 @@ mod mem_bench_impl {
 
         let mem_read_thread = thread::spawn(move || {
             let mut sys = System::new();
-            let mut mem_readings_kb: Vec<f32> = vec![];
+            let mut mem_readings_bytes: Vec<f32> = vec![];
             let mut cpu_readings: Vec<f32> = vec![];
             loop {
                 sys.refresh_process(pid);
                 let proc = sys.process(pid).unwrap();
-                mem_readings_kb.push(proc.memory() as f32);
+                mem_readings_bytes.push(proc.memory() as f32);
                 cpu_readings.push(proc.cpu_usage());
                 if mem_stop_recv.try_recv().is_ok() {
                     break;
                 }
             }
-            validate_memory_benchmark(&mem_readings_kb, &cpu_readings);
+            validate_memory_benchmark(&mem_readings_bytes, &cpu_readings);
         });
 
         let recv_state = shared_state.clone();
@@ -119,7 +119,7 @@ mod mem_bench_impl {
         let mem_usage_mean = mems.mean_axis(Axis(0)).unwrap();
         let mem_usage_std = mems.std_axis(Axis(0), 0.0);
         println!(
-            "Memory Usage: {:.2}kB ~ +/- {:.2}kB",
+            "Memory Usage: {:.2}bytes ~ +/- {:.2}bytes",
             mem_usage_mean, mem_usage_std
         );
         let mem_usage_mean = mem_usage_mean.into_owned();
@@ -131,26 +131,26 @@ mod mem_bench_impl {
 
         let mem_usage_min = mem_usage_mean - mem_usage_std;
 
-        let mem_usage_over_amount = mem_usage_max - MAXIMUM_MEM_USAGE_KB;
-        let mem_usage_threshold = MAXIMUM_MEM_USAGE_KB * DIFF_THRESHOLD;
-        let worst_case_message = format!("Worst Case Memory Usage:\nThe mean memory usage, {:.2}kB, is added to the stdev, {:.2}kB, equaling {:.2}kB.", mem_usage_mean, mem_usage_std, mem_usage_max);
-        let worst_case_message = format!("{}\nThen this value is subtracted by the ideal maximum memory usage {:.2}kB equaling {:.2}kB.", worst_case_message, MAXIMUM_MEM_USAGE_KB, mem_usage_over_amount);
+        let mem_usage_over_amount = mem_usage_max - MAXIMUM_MEM_USAGE_BYTES;
+        let mem_usage_threshold = MAXIMUM_MEM_USAGE_BYTES * DIFF_THRESHOLD;
+        let worst_case_message = format!("Worst Case Memory Usage:\nThe mean memory usage, {:.2}bytes, is added to the stdev, {:.2}bytes, equaling {:.2}bytes.", mem_usage_mean, mem_usage_std, mem_usage_max);
+        let worst_case_message = format!("{}\nThen this value is subtracted by the ideal maximum memory usage {:.2}bytes equaling {:.2}bytes.", worst_case_message, MAXIMUM_MEM_USAGE_BYTES, mem_usage_over_amount);
         let worst_case_message = format!(
-            "{}\nThis amount is greater than {:.2}kB which is {:.2} of the maximum amount {:.2}.",
-            worst_case_message, mem_usage_threshold, DIFF_THRESHOLD, MAXIMUM_MEM_USAGE_KB
+            "{}\nThis amount is greater than {:.2}bytes which is {:.2} of the maximum amount {:.2}.",
+            worst_case_message, mem_usage_threshold, DIFF_THRESHOLD, MAXIMUM_MEM_USAGE_BYTES
         );
         assert!(
-            (mem_usage_max - MAXIMUM_MEM_USAGE_KB) <= MAXIMUM_MEM_USAGE_KB * DIFF_THRESHOLD,
+            (mem_usage_max - MAXIMUM_MEM_USAGE_BYTES) <= MAXIMUM_MEM_USAGE_BYTES * DIFF_THRESHOLD,
             "{}",
             worst_case_message
         );
-        assert!(*mem_usage_std <= MAXIMUM_MEM_USAGE_KB*MAXIMUM_STANDARD_DEV_RATE_OF_MAXIMUM_MEM,
-            "Memory Standard Deviation, {:.2}kB, was greater than {:.2}kB which is {:.2} of the maximum memory usage {:.2}kB.", *mem_usage_std, (
-                MAXIMUM_MEM_USAGE_KB*MAXIMUM_STANDARD_DEV_RATE_OF_MAXIMUM_MEM), MAXIMUM_STANDARD_DEV_RATE_OF_MAXIMUM_MEM, MAXIMUM_MEM_USAGE_KB
+        assert!(*mem_usage_std <= MAXIMUM_MEM_USAGE_BYTES*MAXIMUM_STANDARD_DEV_RATE_OF_MAXIMUM_MEM,
+            "Memory Standard Deviation, {:.2}bytes, was greater than {:.2}bytes which is {:.2} of the maximum memory usage {:.2}bytes.", *mem_usage_std, (
+                MAXIMUM_MEM_USAGE_BYTES*MAXIMUM_STANDARD_DEV_RATE_OF_MAXIMUM_MEM), MAXIMUM_STANDARD_DEV_RATE_OF_MAXIMUM_MEM, MAXIMUM_MEM_USAGE_BYTES
         );
         assert!(
             mem_usage_min >= ABSOLUTE_MINIMUM_MEM_USAGE,
-            "Best Case Memory Usage: {:.2}kB was less than absolute minimum {:.2}kB.",
+            "Best Case Memory Usage: {:.2}bytes was less than absolute minimum {:.2}bytes.",
             mem_usage_min,
             ABSOLUTE_MINIMUM_MEM_USAGE
         );

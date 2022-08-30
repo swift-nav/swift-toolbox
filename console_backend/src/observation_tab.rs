@@ -312,6 +312,7 @@ mod tests {
         observation::{Doppler, MsgObs, ObservationHeader, PackedObsContent},
     };
 
+    // Validate that messages received by handle_obs() populate ObservationTable's incoming obs struct.
     #[test]
     fn handle_obs_msgobs_test() {
         let shared_state = SharedState::new();

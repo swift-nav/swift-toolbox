@@ -357,10 +357,7 @@ mod tests {
             if count > 0 {
                 break;
             }
-            assert_eq!(
-                obs.1.code,
-                String::from(DEFAULT_OBSERVATION_CODE.to_string())
-            );
+            assert_eq!(obs.1.code, DEFAULT_OBSERVATION_CODE.to_string());
             assert_eq!(obs.1.flags, flags);
             assert_eq!(obs.1.sat as u8, sat);
         }

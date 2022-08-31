@@ -17,8 +17,8 @@ mod mem_bench_impl {
     const MINIMUM_MEM_READINGS: usize = 20;
 
     const DIFF_THRESHOLD: f32 = 0.25;
-    const MAXIMUM_MEM_USAGE_BYTES: f32 = 30000000.0;
-    const ABSOLUTE_MINIMUM_MEM_USAGE: f32 = 1000000.0;
+    const MAXIMUM_MEM_USAGE_BYTES: f32 = 30e6;
+    const ABSOLUTE_MINIMUM_MEM_USAGE: f32 = 1e6;
     const MAXIMUM_STANDARD_DEV_RATE_OF_MAXIMUM_MEM: f32 = 0.5;
 
     /// Convert a 1D Vector to an ArrayView.
@@ -65,6 +65,9 @@ mod mem_bench_impl {
                 if mem_stop_recv.try_recv().is_ok() {
                     break;
                 }
+                // The file is roughly a minute long so storing memory usage
+                // every half second is sufficient.
+                thread::sleep(std::time::Duration::from_millis(500));
             }
             validate_memory_benchmark(&mem_readings_bytes, &cpu_readings);
         });

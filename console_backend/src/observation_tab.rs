@@ -358,7 +358,7 @@ mod tests {
         // Expect identifiers and metadata fields to match obs_msg fields
         // TODO: [DEVINFRA-895] don't use this loop
         for (count, obs) in obs_tab.local.incoming_obs.iter().enumerate() {
-            if count < 1 {
+            if count > 0 {
                 break;
             }
             assert_eq!(obs.1.code, DEFAULT_OBSERVATION_CODE.to_string());
@@ -404,7 +404,7 @@ mod tests {
         // Expect identifiers and metadata fields to match obs_msg fields
         // TODO: [DEVINFRA-895] don't use this loop
         for (count, obs) in obs_tab.remote.incoming_obs.iter().enumerate() {
-            if count < 1 {
+            if count > 0 {
                 break;
             }
             assert_eq!(obs.1.code, DEFAULT_OBSERVATION_CODE.to_string());

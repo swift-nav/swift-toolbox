@@ -312,15 +312,18 @@ mod tests {
         observation::{Doppler, MsgObs, ObservationHeader, PackedObsContent},
     };
 
-    // Validate that messages received by handle_obs() populate ObservationTable's incoming obs struct.
+    // Validate that both local and remote messages received by handle_obs() populate ObservationTable's
+    // incoming obs struct.
     #[test]
     fn handle_obs_msgobs_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
         let mut obs_tab = ObservationTab::new(shared_state, client_send);
 
-        let mut obs_msg = MsgObs {
-            sender_id: Some(23),
+        // local test
+        let mut local_obs_msg = MsgObs {
+            // arbitrary non-zero identifier
+            sender_id: Some(11),
             obs: Vec::new(),
             header: ObservationHeader {
                 t: GpsTime {
@@ -331,36 +334,83 @@ mod tests {
                 n_obs: 16,
             },
         };
-        let signal_code = 4;
-        let cn0 = 5;
-        let lock = 0;
-        let flags = 0b00000001;
-        let sat: u8 = 25;
-        obs_msg.obs.push(PackedObsContent {
+        let local_signal_code = 4;
+        let local_cn0 = 5;
+        let local_lock = 0;
+        let local_flags = 0b00000001;
+        let local_sat: u8 = 25;
+        local_obs_msg.obs.push(PackedObsContent {
             p: 0_u32,
             l: CarrierPhase { i: 0_i32, f: 0_u8 },
             d: Doppler { i: 0_i16, f: 0_u8 },
-            cn0,
-            lock,
-            flags,
+            cn0: local_cn0,
+            lock: local_lock,
+            flags: local_flags,
             sid: GnssSignal {
-                code: signal_code,
-                sat,
+                code: local_signal_code,
+                sat: local_sat,
             },
         });
 
         assert_eq!(obs_tab.local.gps_week, 0);
         assert!(obs_tab.local.incoming_obs.is_empty());
-        obs_tab.handle_obs(ObservationMsg::MsgObs(obs_msg));
+        obs_tab.handle_obs(ObservationMsg::MsgObs(local_obs_msg));
         // Expect identifiers and metadata fields to match obs_msg fields
+        // TODO: [DEVINFRA-895] don't use this loop
         for (count, obs) in obs_tab.local.incoming_obs.iter().enumerate() {
-            if count > 0 {
+            if count < 1 {
                 break;
             }
             assert_eq!(obs.1.code, DEFAULT_OBSERVATION_CODE.to_string());
-            assert_eq!(obs.1.flags, flags);
-            assert_eq!(obs.1.sat as u8, sat);
+            assert_eq!(obs.1.flags, local_flags);
+            assert_eq!(obs.1.sat as u8, local_sat);
         }
         assert_eq!(obs_tab.local.gps_week, 1);
+
+        // remote test
+        let mut remote_obs_msg = MsgObs {
+            sender_id: Some(0),
+            obs: Vec::new(),
+            header: ObservationHeader {
+                t: GpsTime {
+                    tow: 0,
+                    ns_residual: 0,
+                    wn: 1,
+                },
+                n_obs: 16,
+            },
+        };
+        let remote_signal_code = 4;
+        let remote_cn0 = 5;
+        let remote_lock = 0;
+        let remote_flags = 0b00000001;
+        let remote_sat: u8 = 25;
+        remote_obs_msg.obs.push(PackedObsContent {
+            p: 0_u32,
+            l: CarrierPhase { i: 0_i32, f: 0_u8 },
+            d: Doppler { i: 0_i16, f: 0_u8 },
+            cn0: remote_cn0,
+            lock: remote_lock,
+            flags: remote_flags,
+            sid: GnssSignal {
+                code: remote_signal_code,
+                sat: remote_sat,
+            },
+        });
+
+        assert_eq!(obs_tab.remote.gps_week, 0);
+        assert!(obs_tab.remote.incoming_obs.is_empty());
+        obs_tab.handle_obs(ObservationMsg::MsgObs(remote_obs_msg));
+        // Expect identifiers and metadata fields to match obs_msg fields
+        // TODO: [DEVINFRA-895] don't use this loop
+        for (count, obs) in obs_tab.remote.incoming_obs.iter().enumerate() {
+            if count < 1 {
+                break;
+            }
+            assert_eq!(obs.1.code, DEFAULT_OBSERVATION_CODE.to_string());
+            assert_eq!(obs.1.flags, remote_flags);
+            assert_eq!(obs.1.sat as u8, remote_sat);
+        }
+        assert_eq!(obs_tab.remote.gps_week, 1);
     }
 }

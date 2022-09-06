@@ -280,8 +280,6 @@ Item {
                 rows.unshift(new_row);
                 tableView.model.rows = rows.slice(0, Constants.logPanel.maxRows);
             }
-            if (logPanelData.entries.length && tableView.selectedRow != -1)
-                tableView.selectedRow += logPanelData.entries.length;
             logPanelData.entries = [];
         }
     }

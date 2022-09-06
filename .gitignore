@@ -22,3 +22,5 @@ installers/Linux/*.deb
 installers/Windows/NSIS/*
 !installers/Windows/NSIS/*.zip
 /.qt_for_python
+*.pyproject.user
+*.pyproject.bkup

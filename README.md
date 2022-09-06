@@ -141,17 +141,40 @@ cargo make create-dist
 cargo make frontend-cpu-bench
 ```
 
+## QML Profiling
+
+Download the universal Qt installer from qt.io. Run the installer, pick custom
+installation, and make sure that the Qt version installed matches the PySide2 or
+PySide6 version that is used for this project. Qt Creator will be automatically
+installed.
+
+Once done, start the app using `cargo make run --qmldebug` or
+`cargo make qml-run --qmldebug`.
+
+The application will indicate that the client application is waiting for a
+socket connection from the QML debugger. This is displayed to stderr.
+    ```QML Debugger: Waiting for connection on port 10002...```
+
+Launch Qt Creator, and from the `Analyze` menu, choose `QML Profiler (Attach to
+waiting application)`. Connect to the same port that is shown in the shell you
+started the toolbox from.
+
+The application should now start-up and can be used. Perform whatever actions
+for which you wish to capture profiling information. Qt Creator's Profiler pane
+will just be showing an elapsed timer counting up, with no information shown.
+This is expected.
+
+When you are done performing actions in the application, click the red
+"recording" circle button to stop the recording and present the data.
+
+You now have profiling data for the session you can comb through in Qt Creator.
+
 ## QML Debugging
 
-In order to enable QML debugging, add this block to the main.py file.
+In order to enable QML debugging, add the command line option `-qmldebug`.
 QML debugging does not entirely work currently for this project and
-still needs to be flushed out. See https://swift-nav.atlassian.net/browse/CPP-400
-```
-from PySide2.QtQml import QQmlDebuggingEnabler
+still needs to be fleshed out. See https://swift-nav.atlassian.net/browse/CPP-400
 
-sys.argv.append("-qmljsdebugger=port:10002,block")
-debug = QQmlDebuggingEnabler()  # pylint: disable=unused-variable
-```
 ## Contributing
 
 After making changes, run to tasks to ensure the code is ready for submission

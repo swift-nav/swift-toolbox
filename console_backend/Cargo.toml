@@ -30,7 +30,7 @@ sysinfo = "0.26.1"
 serialport = { git = "https://github.com/swift-nav/serialport-rs.git", default-features = false }
 directories = "4"
 anyhow = { version = "1", features = ["backtrace"] }
-serde_yaml = "0.9.10"
+serde_yaml = "0.9.11"
 clap = { version = "3.2.20", features = ["derive"] }
 indexmap = { version = "1.9.1", features = ["serde"] }
 serde_json = { version = "1" }

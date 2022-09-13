@@ -10,7 +10,6 @@ TableView {
     property alias verticalScrollBar: _verticalScrollBar
     property variant columnWidths: []
     property variant columnAlignments: []
-    property int selectedRow: -1
     property int _currentSelectedIndex: -1
     property bool stayFocused: false
     property int currentSelectedIndex: (!stayFocused && Globals.currentSelectedTable == this) ? _currentSelectedIndex : -1

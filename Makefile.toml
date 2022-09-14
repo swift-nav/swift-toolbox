@@ -116,8 +116,16 @@ writefile /tmp/piksi_tools_constants.py ${output.stdout}
 exec --fail-on-error ${python} -m py2many --rust=1 /tmp/piksi_tools_constants.py --outdir console_backend/src/
 '''
 
+[tasks.check-python-exists]
+script_runner = "@duckscript"
+script = '''
+if not is_path_exists py39
+	echo "'cargo make setup-builder' needs to be run first."
+end
+'''
+
 [tasks.generate-resources]
-dependencies = ["build-splash-version"]
+dependencies = ["check-python-exists", "build-splash-version"]
 script_runner = "@duckscript"
 script = '''
   exec --fail-on-error "${PYSIDE2_RCC}" "resources/console_resources.qrc" "-o" "swiftnav_console/console_resources.py" "-g" "python"

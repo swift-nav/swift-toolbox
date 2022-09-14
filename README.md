@@ -155,19 +155,25 @@ The application will indicate that the client application is waiting for a
 socket connection from the QML debugger. This is displayed to stderr.
     ```QML Debugger: Waiting for connection on port 10002...```
 
-Launch Qt Creator, and from the `Analyze` menu, choose `QML Profiler (Attach to
-waiting application)`. Connect to the same port that is shown in the shell you
-started the toolbox from.
+Launch Qt Creator and load the project swift-toolbox.pyproject.
+
+From the `Analyze` menu, choose `QML Profiler (Attach to waiting application)`.
+Connect to the same port that is shown in the shell you started the toolbox
+from.
 
 The application should now start-up and can be used. Perform whatever actions
 for which you wish to capture profiling information. Qt Creator's Profiler pane
 will just be showing an elapsed timer counting up, with no information shown.
 This is expected.
 
-When you are done performing actions in the application, click the red
-"recording" circle button to stop the recording and present the data.
+When you are done performing actions in the application, either click the red
+"recording" circle button to stop the recording, or close the client
+application.
 
-You now have profiling data for the session you can comb through in Qt Creator.
+Upon doing this, Qt Creator's QML Profiling view should show profiling data.
+
+You now have profiling data for the session you can comb through in the Qt
+Creator QML Profiling view that shows.
 
 ## QML Debugging
 

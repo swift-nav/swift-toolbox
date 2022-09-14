@@ -156,6 +156,10 @@ Get-ChildItem .\console_backend -Recurse -Include @("*.egg-info", "*.dist-info")
 command = "${PYTHON}"
 args = ["-m", "swiftnav_console.main", "${@}"]
 
+[tasks.start-console-callgrind]
+command = "valgrind"
+args = ["--tool=callgrind", "${PYTHON}", "-m", "swiftnav_console.main", "${@}"]
+
 [tasks.start-console-gdb]
 command = "rust-gdb"
 args = [
@@ -191,6 +195,16 @@ dependencies = [
   "install-backend",
 ]
 run_task = "start-console-gdb"
+
+[tasks.callgrind-run]
+dependencies = [
+  "copy-capnp",
+  "generate-resources",
+  "remove-egg-dist",
+  "store-version",
+  "install-backend",
+]
+run_task = "start-console-callgrind"
 
 [tasks.prod-run]
 dependencies = [

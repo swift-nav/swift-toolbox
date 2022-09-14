@@ -608,7 +608,7 @@ dependencies = [
  "atty",
  "cast",
  "ciborium",
- "clap 3.2.20",
+ "clap 3.2.21",
  "criterion-plot",
  "itertools",
  "lazy_static",

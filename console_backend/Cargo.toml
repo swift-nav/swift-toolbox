@@ -31,7 +31,7 @@ serialport = { git = "https://github.com/swift-nav/serialport-rs.git", default-f
 directories = "4"
 anyhow = { version = "1", features = ["backtrace"] }
 serde_yaml = "0.9.11"
-clap = { version = "3.2.20", features = ["derive"] }
+clap = { version = "3.2.21", features = ["derive"] }
 indexmap = { version = "1.9.1", features = ["serde"] }
 serde_json = { version = "1" }
 crossbeam = "0.8"

@@ -193,6 +193,45 @@ cargo make check-all
 cargo make tests
 ```
 
+## Callgrind
+
+It may be helpful to profile the application. To do this, you can use valgrind.
+One mode of valgrind that is particularly useful is --callgrind.
+
+In order to use this, you need to install valgrind in your favorite OS.
+You can initiate this using the cargo make target `callgrind-run`.
+
+Once you run the app with callgrind and quit the application, it will generate a
+file named callgrind.out.\<unique id\>.
+
+To analyze the results, use kcachegrind or qcachegrind, which you should be able
+to find installable with your distribution's package manager.
+Both are the same tool, just have slightly different dependencies. If you are
+using KDE, install `kcachegrind`. If you are using Gnome, install `qcachegrind`.
+Pass the `callgrind.out` file to the tool like so:
+```
+qcachegrind callgrind.out.163238
+```
+
+To dive into the source code, download the sources for the libraries you wish to
+inspect (like Qt or Python), matching the exact version, and set the source
+directories in QCacheGrind from the configuration dialog accessible from the
+View menu (View-\>Configure...-\>Source Annotation-\>Add).
+
+The Qt libraries contained in the PySide6 python module do not contain debug
+symbols, and thus you see limited information from Qt when profiling. To add
+debug symbols to this, download and install Qt from qt.io, matching the PySide6
+version, and use the included `utils/symlink-qt-installer-libs-to-pyside6.sh`
+script.
+
+You can fetch the Qt source code either from the Qt installer, or from git
+using the `v6.n.n` tags.
+
+This has only been tested on Linux, but it should also work on macOS and
+Windows.
+
+Someone else may be able to expand this showing how to profile the Rust code.
+
 ## Technologies
 
 ### Rust

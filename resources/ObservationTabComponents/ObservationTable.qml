@@ -8,8 +8,8 @@ import SwiftConsole
 ColumnLayout {
     id: observationTable
 
-    property var observationTableModel: null
-    property bool populated: observationTableModel ? observationTableModel.row_count > 0 : false
+    property alias observationTableModel: innerTable.model
+    property bool populated: _modelValid() ? observationTableModel.row_count > 0 : false
     property variant avgWidth: parent.width / 8
     property variant columnWidths: [parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 16, 3 * parent.width / 16]
     property variant columnNames: ["PRN", "Pseudorange [m]", "Carrier Phase [cycles]", "C/N0 [dB-Hz]", "Meas. Doppler [Hz]", "Comp. Doppler [Hz]", "Lock", "Flags"]
@@ -18,6 +18,10 @@ ColumnLayout {
 
     function update() {
         observationTableModel.update();
+    }
+
+    function _modelValid() {
+        return observationTableModel != 0;
     }
 
     spacing: 0
@@ -46,7 +50,7 @@ ColumnLayout {
         Label {
             id: weekValue
 
-            text: observationTableModel ? observationTableModel.week : ""
+            text: _modelValid() ? observationTableModel.week : ""
             padding: parent.textPadding
         }
 
@@ -61,7 +65,7 @@ ColumnLayout {
         Label {
             id: towValue
 
-            text: observationTableModel ? observationTableModel.padFloat(observationTableModel.tow, 2) : ""
+            text: _modelValid() ? observationTableModel.padFloat(observationTableModel.tow, 2) : ""
             padding: parent.textPadding
         }
 
@@ -76,7 +80,7 @@ ColumnLayout {
         Label {
             id: totalValue
 
-            text: observationTableModel ? observationTableModel.row_count : ""
+            text: _modelValid() ? observationTableModel.row_count : ""
             padding: parent.textPadding
         }
     }
@@ -85,27 +89,27 @@ ColumnLayout {
         spacing: 3
 
         ObservationFilterColumn {
-            codes: observationTableModel ? observationTableModel.gps_codes : 0
+            codes: _modelValid() ? observationTableModel.gps_codes : 0
         }
 
         ObservationFilterColumn {
-            codes: observationTableModel ? observationTableModel.glo_codes : 0
+            codes: _modelValid() ? observationTableModel.glo_codes : 0
         }
 
         ObservationFilterColumn {
-            codes: observationTableModel ? observationTableModel.bds_codes : 0
+            codes: _modelValid() ? observationTableModel.bds_codes : 0
         }
 
         ObservationFilterColumn {
-            codes: observationTableModel ? observationTableModel.gal_codes : 0
+            codes: _modelValid() ? observationTableModel.gal_codes : 0
         }
 
         ObservationFilterColumn {
-            codes: observationTableModel ? observationTableModel.qzs_codes : 0
+            codes: _modelValid() ? observationTableModel.qzs_codes : 0
         }
 
         ObservationFilterColumn {
-            codes: observationTableModel ? observationTableModel.sbas_codes : 0
+            codes: _modelValid() ? observationTableModel.sbas_codes : 0
         }
     }
 

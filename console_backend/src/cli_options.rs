@@ -199,6 +199,10 @@ pub struct CliOptions {
     /// Set the width of the main window.
     #[clap(long)]
     pub width: Option<u32>,
+
+    /// Enable QML Debugging and profiling.
+    #[clap(long, hide = true)]
+    pub qmldebug: bool,
 }
 
 impl CliOptions {

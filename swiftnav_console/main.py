@@ -22,7 +22,7 @@ from PySide6 import QtQml, QtCore
 
 from PySide6.QtGui import QFontDatabase, QIcon, QPixmap
 
-from PySide6.QtQml import QQmlComponent, qmlRegisterType
+from PySide6.QtQml import QQmlComponent, qmlRegisterType, QQmlDebuggingEnabler
 
 from PySide6.QtQuickControls2 import QQuickStyle
 
@@ -703,6 +703,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     parser.add_argument("--show-csv-log", action="store_true")
     parser.add_argument("--height", type=int)
     parser.add_argument("--width", type=int)
+    parser.add_argument("--qmldebug", action="store_true")
 
     args_main, unknown_args = parser.parse_known_args()
     if args_main.debug_with_no_backend and args_main.read_capnp_recording is None:
@@ -722,6 +723,9 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     else:
         QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
         QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
+    if args_main.qmldebug:
+        sys.argv.append("-qmljsdebugger=port:10002,block")
+        debug = QQmlDebuggingEnabler()  # pylint: disable=unused-variable
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon(":/images/icon.ico"))
     app.setOrganizationName(ApplicationMetadata.ORGANIZATION_NAME)

@@ -249,7 +249,7 @@ Item {
     }
 
     Timer {
-        interval: Globals.currentRefreshRate
+        interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
         running: parent.visible
         repeat: true
         onTriggered: {

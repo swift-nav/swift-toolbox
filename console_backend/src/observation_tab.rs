@@ -355,16 +355,20 @@ mod tests {
         assert_eq!(obs_tab.local.gps_week, 0);
         assert!(obs_tab.local.incoming_obs.is_empty());
         obs_tab.handle_obs(ObservationMsg::MsgObs(local_obs_msg));
+        assert_eq!(obs_tab.local.incoming_obs.len(), 1);
+        let obs_table_object = match obs_tab.local.incoming_obs.iter().nth(0) {
+            Some(obj) => obj,
+            None => panic!("No elements present within obversation table"),
+        };
+
         // Expect identifiers and metadata fields to match obs_msg fields
-        // TODO: [DEVINFRA-895] don't use this loop
-        for (count, obs) in obs_tab.local.incoming_obs.iter().enumerate() {
-            if count > 0 {
-                break;
-            }
-            assert_eq!(obs.1.code, DEFAULT_OBSERVATION_CODE.to_string());
-            assert_eq!(obs.1.flags, local_flags);
-            assert_eq!(obs.1.sat as u8, local_sat);
-        }
+        assert_eq!(
+            obs_table_object.1.code,
+            DEFAULT_OBSERVATION_CODE.to_string()
+        );
+        assert_eq!(obs_table_object.1.flags, local_flags);
+        assert_eq!(obs_table_object.1.sat as u8, local_sat);
+
         assert_eq!(obs_tab.local.gps_week, 1);
 
         // remote test
@@ -401,16 +405,20 @@ mod tests {
         assert_eq!(obs_tab.remote.gps_week, 0);
         assert!(obs_tab.remote.incoming_obs.is_empty());
         obs_tab.handle_obs(ObservationMsg::MsgObs(remote_obs_msg));
+        assert_eq!(obs_tab.remote.incoming_obs.len(), 1);
+        let obs_table_object = match obs_tab.remote.incoming_obs.iter().nth(0) {
+            Some(obj) => obj,
+            None => panic!("No elements present within obversation table"),
+        };
+
         // Expect identifiers and metadata fields to match obs_msg fields
-        // TODO: [DEVINFRA-895] don't use this loop
-        for (count, obs) in obs_tab.remote.incoming_obs.iter().enumerate() {
-            if count > 0 {
-                break;
-            }
-            assert_eq!(obs.1.code, DEFAULT_OBSERVATION_CODE.to_string());
-            assert_eq!(obs.1.flags, remote_flags);
-            assert_eq!(obs.1.sat as u8, remote_sat);
-        }
+        assert_eq!(
+            obs_table_object.1.code,
+            DEFAULT_OBSERVATION_CODE.to_string()
+        );
+        assert_eq!(obs_table_object.1.flags, remote_flags);
+        assert_eq!(obs_table_object.1.sat as u8, remote_sat);
+
         assert_eq!(obs_tab.remote.gps_week, 1);
     }
 }

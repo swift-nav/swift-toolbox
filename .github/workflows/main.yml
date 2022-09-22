@@ -255,6 +255,7 @@ jobs:
                 build-essential \
                 libudev-dev \
                 libssl-dev
+              sudo gem install public_suffix -v 4.0.7
               sudo gem install --no-document fpm
           elif [ "$RUNNER_OS" == "macOS" ]; then
               brew install capnp llvm create-dmg

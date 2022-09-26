@@ -356,10 +356,12 @@ mod tests {
         assert!(obs_tab.local.incoming_obs.is_empty());
         obs_tab.handle_obs(ObservationMsg::MsgObs(local_obs_msg));
         assert_eq!(obs_tab.local.incoming_obs.len(), 1);
-        let obs_table_object = match obs_tab.local.incoming_obs.iter().next() {
-            Some(obj) => obj,
-            None => panic!("No elements present within obversation table"),
-        };
+        let obs_table_object = obs_tab
+            .local
+            .incoming_obs
+            .iter()
+            .next()
+            .expect("No elements present within obversation table");
 
         // Expect identifiers and metadata fields to match obs_msg fields
         assert_eq!(
@@ -406,10 +408,12 @@ mod tests {
         assert!(obs_tab.remote.incoming_obs.is_empty());
         obs_tab.handle_obs(ObservationMsg::MsgObs(remote_obs_msg));
         assert_eq!(obs_tab.remote.incoming_obs.len(), 1);
-        let obs_table_object = match obs_tab.remote.incoming_obs.iter().next() {
-            Some(obj) => obj,
-            None => panic!("No elements present within obversation table"),
-        };
+        let obs_table_object = obs_tab
+            .local
+            .incoming_obs
+            .iter()
+            .next()
+            .expect("No elements present within obversation table");
 
         // Expect identifiers and metadata fields to match obs_msg fields
         assert_eq!(

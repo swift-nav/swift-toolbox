@@ -80,7 +80,7 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
         ("Meas. Doppler (Hz)", lambda obsData: localPadFloat(obsData["measuredDoppler"], 1)),
         ("Comp. Doppler (Hz)", lambda obsData: localPadFloat(obsData["computedDoppler"], 1)),
         ("Lock", lambda obsData: obsData["lock"]),
-        ("Flags", lambda obsData: showFlags(obsData["lock"])),
+        ("Flags", lambda obsData: showFlags(obsData["flags"])),
     ]
 
     def __init__(self, parent=None):

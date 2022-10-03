@@ -203,6 +203,14 @@ pub struct CliOptions {
     /// Enable QML Debugging and profiling.
     #[clap(long, hide = true)]
     pub qmldebug: bool,
+
+    /// SSH tunnel to a jumphost specified ([username]:[password]@some.fqdn)
+    #[clap(long, hide = true)]
+    pub ssh_tunnel: Option<PathBuf>,
+
+    /// SSH tunnel forward port of remote IP and port to localhost (some.fqdn:port)
+    #[clap(long, hide = true)]
+    pub ssh_remote_bind_address: Option<PathBuf>,
 }
 
 impl CliOptions {

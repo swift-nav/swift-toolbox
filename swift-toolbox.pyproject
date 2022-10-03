@@ -23,6 +23,7 @@
         "swiftnav_console/solution_position_tab.py",
         "swiftnav_console/solution_table.py",
         "swiftnav_console/solution_velocity_tab.py",
+        "swiftnav_console/ssh_tunnel.py",
         "swiftnav_console/status_bar.py",
         "swiftnav_console/tracking_signals_tab.py",
         "swiftnav_console/tracking_sky_plot_tab.py",

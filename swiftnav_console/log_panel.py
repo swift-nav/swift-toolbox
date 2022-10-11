@@ -6,8 +6,12 @@ import json
 from typing import Dict, List, Any
 
 from PySide6.QtCore import Property, QObject, Signal, Slot
+from PySide6.QtQml import QmlElement
 
 from .constants import Keys, LogLevel, QTKeys
+
+QML_IMPORT_NAME = "SwiftConsole"
+QML_IMPORT_MAJOR_VERSION = 1
 
 
 def log_panel_update() -> Dict[str, Any]:
@@ -21,12 +25,13 @@ def log_panel_update() -> Dict[str, Any]:
 LOG_PANEL: List[Dict[str, Any]] = [log_panel_update()]
 
 
+@QmlElement
 class LogPanelData(QObject):
     _instance: "LogPanelData"
     _entries: List[Dict[str, str]] = []
     _log_level_labels: List[str] = []
     _log_level: str
-    _data_updated = Signal()
+    data_updated = Signal()
     log_panel: Dict[str, Any] = {}
 
     def __init__(self):
@@ -34,12 +39,12 @@ class LogPanelData(QObject):
         assert getattr(self.__class__, "_instance", None) is None
         self.__class__._instance = self
         self.log_panel = LOG_PANEL[0]
-        self._data_updated.connect(self.handle_data_updated)
+        self.data_updated.connect(self.handle_data_updated)
 
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
         LOG_PANEL[0] = update_data
-        cls._instance._data_updated.emit()  # pylint: disable=protected-access
+        cls._instance.data_updated.emit()  # pylint: disable=protected-access
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:
@@ -75,6 +80,7 @@ class LogPanelData(QObject):
         self._entries += entries
 
 
+@QmlElement
 class LogPanelModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(LogPanelData)  # type: ignore
     def fill_data(self, cp: LogPanelData) -> LogPanelData:  # pylint:disable=no-self-use

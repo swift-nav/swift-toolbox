@@ -37,7 +37,6 @@ from .backend_request_broker import BackendRequestBroker
 from .log_panel import (
     log_panel_update,
     LogPanelData,
-    LogPanelModel,
 )
 
 from .connection import (
@@ -738,7 +737,6 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     QQuickStyle.setFallbackStyle("Material")
     # We specifically *don't* want the RobotoCondensed-Bold.ttf font so we get the right look when bolded.
 
-    qmlRegisterType(LogPanelData, "SwiftConsole", 1, 0, "LogPanelData")  # type: ignore
     qmlRegisterType(ConnectionData, "SwiftConsole", 1, 0, "ConnectionData")  # type: ignore
     qmlRegisterType(AdvancedImuPoints, "SwiftConsole", 1, 0, "AdvancedImuPoints")  # type: ignore
     qmlRegisterType(AdvancedMagnetometerPoints, "SwiftConsole", 1, 0, "AdvancedMagnetometerPoints")  # type: ignore
@@ -797,7 +795,6 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
         return 1
     messages_main = capnp.load(capnp_path)  # pylint: disable=no-member
     backend_request_broker = BackendRequestBroker(endpoint_main, messages_main)
-    log_panel_model = LogPanelModel()
     connection_model = ConnectionModel()
     advanced_imu_model = AdvancedImuModel()
     advanced_magnetometer_model = AdvancedMagnetometerModel()
@@ -816,7 +813,6 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     logging_bar_model = LoggingBarModel()
     update_tab_model = UpdateTabModel()
     root_context = engine.rootContext()
-    root_context.setContextProperty("log_panel_model", log_panel_model)
     root_context.setContextProperty("connection_model", connection_model)
     root_context.setContextProperty("advanced_imu_model", advanced_imu_model)
     root_context.setContextProperty("advanced_magnetometer_model", advanced_magnetometer_model)

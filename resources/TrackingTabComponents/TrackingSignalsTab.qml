@@ -15,7 +15,6 @@ Item {
     property alias check_labels: trackingSignalsPoints.check_labels
     property alias num_labels: trackingSignalsPoints.num_labels
     property variant check_visibility: []
-    property var emptySeries: null
 
     TrackingSignalsPoints {
         id: trackingSignalsPoints
@@ -82,19 +81,12 @@ Item {
                 id: trackingSignalsTimer
 
                 interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
-                running: true
+                running: trackingSignalsTab.visible
                 repeat: true
                 triggeredOnStart: true
                 onTriggered: {
                     if (!trackingSignalsTab.visible)
                         return;
-                    if (emptySeries == null) {
-                        emptySeries = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, "", trackingSignalsXAxis);
-                        emptySeries.axisYRight = trackingSignalsYAxis;
-                        emptySeries.width = Constants.commonChart.lineWidth;
-                        emptySeries.useOpenGL = Globals.useOpenGL;
-                        trackingSignalsPoints.addEmptySeries(emptySeries);
-                    }
                     if (all_series.length < num_labels) {
                         for (var i = all_series.length; i < num_labels; i++) {
                             var series = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, trackingSignalsPoints.getLabel(i), trackingSignalsXAxis);

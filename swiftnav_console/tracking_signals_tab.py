@@ -99,11 +99,6 @@ class TrackingSignalsPoints(QObject):
         self._all_series.append(series)
         self.all_series_changed.emit()  # type: ignore
 
-    @Slot(QtCharts.QAbstractSeries)  # type: ignore
-    def addEmptySeries(self, series) -> None:
-        """Store a QML created series in empty_series"""
-        self._empty_series = series
-
     @Slot()  # type: ignore
     def fill_all_series(self) -> None:
         cur_num_labels = len(self._tracking_signals_tab[Keys.LABELS])
@@ -112,8 +107,6 @@ class TrackingSignalsPoints(QObject):
             self.num_labels_changed.emit(cur_num_labels)  # type: ignore
         all_points = self._tracking_signals_tab[Keys.POINTS]
         points_for_all_series = all_points[:-1]
-        if self._empty_series is not None and len(all_points) > 0:
-            self._empty_series.replace(all_points[-1])
 
         labels = self._tracking_signals_tab[Keys.LABELS]
         colors = self._tracking_signals_tab[Keys.COLORS]

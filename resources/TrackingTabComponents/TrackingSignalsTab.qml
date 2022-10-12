@@ -18,6 +18,29 @@ Item {
 
     TrackingSignalsPoints {
         id: trackingSignalsPoints
+
+        onData_updated: if (visible)
+            update()
+    }
+
+    onVisibleChanged: if (visible)
+        update()
+
+    function update() {
+        if (all_series.length < num_labels) {
+            for (var i = all_series.length; i < num_labels; i++) {
+                var series = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, trackingSignalsPoints.getLabel(i), trackingSignalsXAxis);
+                series.axisYRight = trackingSignalsYAxis;
+                series.width = Constants.commonChart.lineWidth;
+                series.useOpenGL = Globals.useOpenGL;
+                // Color will be set in Python with fill_all_series call.
+                trackingSignalsPoints.addSeries(series);
+            }
+        }
+        trackingSignalsPoints.fill_all_series();
+        trackingSignalsChart.visible = true;
+        trackingSignalsXAxis.min = trackingSignalsPoints.xaxis_min;
+        trackingSignalsXAxis.max = trackingSignalsPoints.xaxis_max;
     }
 
     ColumnLayout {
@@ -75,33 +98,6 @@ Item {
                 tickInterval: Constants.trackingSignals.yAxisTickInterval
                 labelFormat: "%d"
                 titleFont: Constants.trackingSignals.yAxisTitleFont
-            }
-
-            Timer {
-                id: trackingSignalsTimer
-
-                interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
-                running: trackingSignalsTab.visible
-                repeat: true
-                triggeredOnStart: true
-                onTriggered: {
-                    if (!trackingSignalsTab.visible)
-                        return;
-                    if (all_series.length < num_labels) {
-                        for (var i = all_series.length; i < num_labels; i++) {
-                            var series = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, trackingSignalsPoints.getLabel(i), trackingSignalsXAxis);
-                            series.axisYRight = trackingSignalsYAxis;
-                            series.width = Constants.commonChart.lineWidth;
-                            series.useOpenGL = Globals.useOpenGL;
-                            // Color will be set in Python with fill_all_series call.
-                            trackingSignalsPoints.addSeries(series);
-                        }
-                    }
-                    trackingSignalsPoints.fill_all_series();
-                    trackingSignalsChart.visible = true;
-                    trackingSignalsXAxis.min = trackingSignalsPoints.xaxis_min;
-                    trackingSignalsXAxis.max = trackingSignalsPoints.xaxis_max;
-                }
             }
         }
 

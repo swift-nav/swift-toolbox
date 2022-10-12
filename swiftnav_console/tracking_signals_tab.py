@@ -5,8 +5,12 @@ from typing import Dict, List, Any, Optional
 
 from PySide6.QtCore import Property, QObject, Signal, Slot
 from PySide6 import QtCharts
+from PySide6.QtQml import QmlElement
 
 from .constants import Keys, QTKeys
+
+QML_IMPORT_NAME = "SwiftConsole"
+QML_IMPORT_MAJOR_VERSION = 1
 
 
 def tracking_signals_tab_update() -> Dict[str, Any]:
@@ -22,6 +26,7 @@ def tracking_signals_tab_update() -> Dict[str, Any]:
 TRACKING_SIGNALS_TAB: List[Dict[str, Any]] = [tracking_signals_tab_update()]
 
 # pylint:disable=too-many-instance-attributes
+@QmlElement
 class TrackingSignalsPoints(QObject):
     _instance: "TrackingSignalsPoints"
     _num_labels: int = 0
@@ -37,7 +42,7 @@ class TrackingSignalsPoints(QObject):
     check_labels_changed = Signal()
     all_series_changed = Signal()
     enabled_series_changed = Signal()
-    _data_updated = Signal()
+    data_updated = Signal()
     _tracking_signals_tab: Dict[str, Any] = {}
 
     def __init__(self):
@@ -45,12 +50,12 @@ class TrackingSignalsPoints(QObject):
         assert getattr(self.__class__, "_instance", None) is None
         self.__class__._instance = self
         self._tracking_signals_tab = TRACKING_SIGNALS_TAB[0]
-        self._data_updated.connect(self.handle_data_updated)
+        self.data_updated.connect(self.handle_data_updated)
 
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
         TRACKING_SIGNALS_TAB[0] = update_data
-        cls._instance._data_updated.emit()  # pylint: disable=protected-access
+        cls._instance.data_updated.emit()  # pylint: disable=protected-access
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:

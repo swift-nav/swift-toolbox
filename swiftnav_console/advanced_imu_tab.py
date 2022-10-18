@@ -72,7 +72,7 @@ class AdvancedImuPoints(QObject):
 
     def set_points(self, points) -> None:
         t1 = perf_counter_ns()
-        self._points = points
+        self._points = [[QPointF(point.x, point.y) for point in points[idx]] for idx in range(len(points))]
         self.set_points_time = self._perf_measure(t1, self.set_points_time, "set_points")
 
     points = Property(QTKeys.QVARIANTLIST, get_points, set_points)  # type: ignore

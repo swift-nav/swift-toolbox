@@ -382,8 +382,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
             advanced_imu_tab = advanced_imu_tab_update()
             advanced_imu_tab[Keys.FIELDS_DATA][:] = m.advancedImuStatus.fieldsData
             advanced_imu_tab[Keys.POINTS][:] = [
-                [QPointF(point.x, point.y) for point in m.advancedImuStatus.data[idx]]
-                for idx in range(len(m.advancedImuStatus.data))
+                m.advancedImuStatus.data[idx] for idx in range(len(m.advancedImuStatus.data))
             ]
             AdvancedImuPoints.post_data_update(advanced_imu_tab)
         elif m.which == Message.Union.AdvancedSpectrumAnalyzerStatus:

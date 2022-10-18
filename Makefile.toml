@@ -168,6 +168,10 @@ args = ["-m", "swiftnav_console.main", "${@}"]
 command = "valgrind"
 args = ["--tool=callgrind", "${PYTHON}", "-m", "swiftnav_console.main", "${@}"]
 
+[tasks.start-console-cprofile]
+command = "${PYTHON}"
+args = ["-m", "cProfile", "-m", "swiftnav_console.main", "${@}"]
+
 [tasks.start-console-gdb]
 command = "rust-gdb"
 args = [
@@ -213,6 +217,16 @@ dependencies = [
   "install-backend",
 ]
 run_task = "start-console-callgrind"
+
+[tasks.cprofile-run]
+dependencies = [
+  "copy-capnp",
+  "generate-resources",
+  "remove-egg-dist",
+  "store-version",
+  "install-backend",
+]
+run_task = "start-console-cprofile"
 
 [tasks.prod-run]
 dependencies = [

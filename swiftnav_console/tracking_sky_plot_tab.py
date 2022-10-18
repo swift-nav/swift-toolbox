@@ -5,12 +5,8 @@ from typing import Dict, List, Any
 
 from PySide6.QtCore import Property, QObject, Slot, Signal
 from PySide6 import QtCharts
-from PySide6.QtQml import QmlElement
 
 from .constants import Keys, QTKeys
-
-QML_IMPORT_NAME = "SwiftConsole"
-QML_IMPORT_MAJOR_VERSION = 1
 
 
 def tracking_sky_plot_update() -> Dict[str, Any]:
@@ -23,12 +19,11 @@ def tracking_sky_plot_update() -> Dict[str, Any]:
 TRACKING_SKY_PLOT_TAB: List[Dict[str, Any]] = [tracking_sky_plot_update()]
 
 
-@QmlElement
 class TrackingSkyPlotPoints(QObject):
     _instance: "TrackingSkyPlotPoints"
     _labels: List[List[str]] = []
     _all_series: List[QtCharts.QXYSeries] = []
-    data_updated = Signal()
+    _data_updated = Signal()
     labels_changed = Signal()
     all_series_changed = Signal()
     _tracking_sky_plot: Dict[str, Any] = {}
@@ -38,12 +33,12 @@ class TrackingSkyPlotPoints(QObject):
         assert getattr(self.__class__, "_instance", None) is None
         self.__class__._instance = self
         self._tracking_sky_plot = TRACKING_SKY_PLOT_TAB[0]
-        self.data_updated.connect(self.handle_data_updated)
+        self._data_updated.connect(self.handle_data_updated)
 
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
         TRACKING_SKY_PLOT_TAB[0] = update_data
-        cls._instance.data_updated.emit()  # pylint: disable=protected-access
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:

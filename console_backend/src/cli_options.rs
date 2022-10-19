@@ -215,7 +215,12 @@ impl CliOptions {
         let args = std::env::args();
         let mut next_args = std::env::args().skip(1);
         let mut filtered_args: Vec<String> = vec![];
-        for arg in args.filter(|a| !matches!(a.as_str(), "swiftnav_console.main" | "-m" | "--")) {
+        for arg in args.filter(|a| {
+            !matches!(
+                a.as_str(),
+                "cProfile" | "swiftnav_console.main" | "-m" | "--"
+            )
+        }) {
             if let Some(n_arg) = next_args.next() {
                 if (arg.ends_with("python")
                     || arg.ends_with("python3")

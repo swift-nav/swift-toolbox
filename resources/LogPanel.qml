@@ -17,6 +17,45 @@ Item {
 
     LogPanelData {
         id: logPanelData
+        onData_updated: update()
+    }
+
+    LogPanelModel {
+        id: logPanelModel
+    }
+
+    onVisibleChanged: if (visible)
+        update()
+
+    function update() {
+        logPanelModel.fill_data(logPanelData);
+        if (!tableView.model.rows.length) {
+            tableView.model.clear();
+            tableView.model.rows = [{
+                    [Constants.logPanel.timestampHeader]: "",
+                    [Constants.logPanel.levelHeader]: "",
+                    [Constants.logPanel.msgHeader]: ""
+                }];
+        }
+        if (!logPanelData.entries.length)
+            return;
+        if (forceLayoutLock)
+            return;
+        if (!logLevelLabels.length)
+            logLevelLabels = logPanelData.log_level_labels;
+        logLevelIndex = logLevelLabels.indexOf(logPanelData.log_level);
+        if (consolePaused)
+            return;
+        for (var idx in logPanelData.entries) {
+            var new_row = {};
+            new_row[Constants.logPanel.timestampHeader] = logPanelData.entries[idx].timestamp;
+            new_row[Constants.logPanel.levelHeader] = logPanelData.entries[idx].level;
+            new_row[Constants.logPanel.msgHeader] = logPanelData.entries[idx].msg;
+            var rows = tableView.model.rows;
+            rows.unshift(new_row);
+            tableView.model.rows = rows.slice(0, Constants.logPanel.maxRows);
+        }
+        logPanelData.entries = [];
     }
 
     Item {
@@ -245,42 +284,6 @@ Item {
             TableModelColumn {
                 display: Constants.logPanel.msgHeader
             }
-        }
-    }
-
-    Timer {
-        interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
-        running: parent.visible
-        repeat: true
-        onTriggered: {
-            log_panel_model.fill_data(logPanelData);
-            if (!tableView.model.rows.length) {
-                tableView.model.clear();
-                tableView.model.rows = [{
-                        [Constants.logPanel.timestampHeader]: "",
-                        [Constants.logPanel.levelHeader]: "",
-                        [Constants.logPanel.msgHeader]: ""
-                    }];
-            }
-            if (!logPanelData.entries.length)
-                return;
-            if (forceLayoutLock)
-                return;
-            if (!logLevelLabels.length)
-                logLevelLabels = logPanelData.log_level_labels;
-            logLevelIndex = logLevelLabels.indexOf(logPanelData.log_level);
-            if (consolePaused)
-                return;
-            for (var idx in logPanelData.entries) {
-                var new_row = {};
-                new_row[Constants.logPanel.timestampHeader] = logPanelData.entries[idx].timestamp;
-                new_row[Constants.logPanel.levelHeader] = logPanelData.entries[idx].level;
-                new_row[Constants.logPanel.msgHeader] = logPanelData.entries[idx].msg;
-                var rows = tableView.model.rows;
-                rows.unshift(new_row);
-                tableView.model.rows = rows.slice(0, Constants.logPanel.maxRows);
-            }
-            logPanelData.entries = [];
         }
     }
 }

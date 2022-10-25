@@ -68,7 +68,7 @@ impl TrackingSkyPlotTab {
             let key = (SignalCodes::from(azel.sid.code), azel.sid.sat as i16);
             if let Some(mut label) = signal_key_label(key, None).2 {
                 if svs_tracked.contains(&label) {
-                    label = format!("{}*", label);
+                    label.push('*');
                 }
                 let code = azel.sid.code as i32;
                 let obs = SkyPlotObs {
@@ -107,25 +107,23 @@ impl TrackingSkyPlotTab {
         let mut tab = msg.init_tracking_sky_plot_status();
         let mut sats = tab.reborrow().init_sats(self.sats.len() as u32);
         {
-            for idx in 0..self.sats.len() {
-                let sat_row = self.sats.get_mut(idx).unwrap();
+            self.sats.iter_mut().enumerate().for_each(|(idx, sat_row)| {
                 let mut point_val_idx = sats.reborrow().init(idx as u32, sat_row.len() as u32);
                 for (i, obs) in sat_row.iter().enumerate() {
                     let mut point_val = point_val_idx.reborrow().get(i as u32);
                     point_val.set_az(obs.az);
                     point_val.set_el(obs.el);
                 }
-            }
+            });
         }
         let mut labels = tab.reborrow().init_labels(self.sats.len() as u32);
         {
-            for idx in 0..self.sats.len() {
-                let sat_row = self.sats.get_mut(idx).unwrap();
+            self.sats.iter_mut().enumerate().for_each(|(idx, sat_row)| {
                 let mut label_val_idx = labels.reborrow().init(idx as u32, sat_row.len() as u32);
                 for (i, obs) in sat_row.iter().enumerate() {
                     label_val_idx.reborrow().set(i as u32, &obs.label);
                 }
-            }
+            });
         }
         self.client_sender
             .send_data(serialize_capnproto_builder(builder));

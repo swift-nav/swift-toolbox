@@ -642,7 +642,7 @@ lazy_static! {
 impl Directory {
     pub fn new_data_directory() -> Directory {
         Directory {
-            path: create_data_dir().unwrap(),
+            path: create_data_dir().expect("unable to create data directory"),
         }
     }
 

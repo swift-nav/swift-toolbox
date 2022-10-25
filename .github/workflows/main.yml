@@ -52,6 +52,7 @@ jobs:
           repository: swift-nav/toolbox-backend-ci
           token: ${{ secrets.GITHUB_TOKEN }}
           path: "${{ github.workspace }}/benchmark-backend-ci"
+          ref: "main"
 
       - run: |
           ./benchmark-backend-ci

@@ -68,7 +68,7 @@ impl TrackingSkyPlotTab {
             let key = (SignalCodes::from(azel.sid.code), azel.sid.sat as i16);
             if let Some(mut label) = signal_key_label(key, None).2 {
                 if svs_tracked.contains(&label) {
-                    label.push('*');
+                    label = format!("{}*", label);
                 }
                 let code = azel.sid.code as i32;
                 let obs = SkyPlotObs {

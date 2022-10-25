@@ -564,7 +564,8 @@ jobs:
         with:
           repository: swift-nav/toolbox-frontend-ci
           token: ${{ secrets.GITHUB_TOKEN }}
-          path: benchmark-frontend-ci
+          path: "${{ github.workspace }}/benchmark-frontend-ci"
+          ref: "main"
 
       - run: |
           ./benchmark-frontend-ci

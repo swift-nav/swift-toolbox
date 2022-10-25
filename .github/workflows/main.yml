@@ -48,10 +48,10 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
       - uses: actions/checkout@v3
-        working-directory: benchmark-backend-ci
         with:
           repository: swift-nav/toolbox-backend-ci
           token: ${{ secrets.GITHUB_TOKEN }}
+          path: "${{ github.workspace }}/benchmark-backend-ci"
 
       - run: |
           ./benchmark-backend-ci

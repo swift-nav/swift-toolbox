@@ -88,10 +88,9 @@ fn main() -> Result<()> {
             ser::to_writer(&mut file, &fft, SerOptions::new().proto_v2())?;
         }
         println!("File written successfully.");
-        done_tx.send(true).unwrap();
+        done_tx.send(true)?;
         Result::Ok(())
     })
     .unwrap()?;
-
     Ok(())
 }

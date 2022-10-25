@@ -17,7 +17,7 @@ test = [
   "setuptools-rust ~= 0.12.1",
   "psutil ~= 5.8.0",
   "py2many >=0.3",
-  "types-requests ~= 2.25.0",
+  "types-requests ~= 2.28.11",
 ]
 
 [build-system]

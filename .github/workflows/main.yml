@@ -615,83 +615,14 @@ jobs:
           - macOS
           - Windows
           - Linux
-    runs-on: [self-hosted, '${{ matrix.os }}', bench]
+    runs-on: [ self-hosted, '${{ matrix.os }}', bench ]
     env:
       WINDOWPOS_NAME: windowpos
     steps:
-      - name: Remove previous build.
-        shell: bash
-        run: |
-          rm -rf ${{ env.APP_NAME }}
-          rm -rf bench
-
-      - uses: actions/download-artifact@v2
+      - uses: actions/checkout@v3
         with:
-          name: ${{ matrix.os }}-artifacts
-          path: |
-            ${{ env.APP_NAME }}
-
-      - uses: actions/download-artifact@v2
-        with:
-          name: ${{ matrix.os }}-artifacts-bench
-          path: |
-            bench
-
-      - name: Extract binary and data.
-        shell: bash
-        run: |
-          cd ${{ env.APP_NAME }}
-          archive=$(cat release-archive.filename)
-          7z x $archive -aoa
-          7z x ${archive%.xz} -aoa
-          echo "extracted release-archive"
-          mv ../bench/${{ matrix.os }}.zip .
-          7z x ${{ matrix.os }}.zip -aoa
-          echo "extracted bench data"
-
-      - name: Run CPU Frontend Benchmark.
-        uses: nick-invision/retry@v2
-        with:
-          shell: bash
-          timeout_minutes: 3
-          max_attempts: 3
-          retry_on: error
-          command: |
-            cd ${{ env.APP_NAME }}
-            if [ "$RUNNER_OS" == "Windows" ]; then
-                python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}.exe"
-            elif [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
-                chmod +x "${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
-                if [ "$RUNNER_OS" == "Linux" ]; then
-                  chmod +x "${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.WINDOWPOS_NAME }}"
-                fi
-                python ./bench_runner.py --frontend_cpu --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
-            else
-                echo "Invalid platform"
-                exit 1
-            fi
-
-      - name: Run MEM Frontend Benchmark.
-        uses: nick-invision/retry@v2
-        with:
-          shell: bash
-          timeout_minutes: 3
-          max_attempts: 3
-          retry_on: error
-          command: |
-            cd ${{ env.APP_NAME }}
-            if [ "$RUNNER_OS" == "Windows" ]; then
-                python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}.exe"
-            elif [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
-                chmod +x "${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
-                if [ "$RUNNER_OS" == "Linux" ]; then
-                  chmod +x "${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.WINDOWPOS_NAME }}"
-                fi
-                python ./bench_runner.py --frontend_mem --executable="${GITHUB_WORKSPACE}/${{ env.APP_NAME }}/${{ env.APP_NAME }}"
-            else
-                echo "Invalid platform"
-                exit 1
-            fi
+          repository: swift-nav/toolbox-frontend-ci
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   sign_binaries:
     name: Sign Binaries

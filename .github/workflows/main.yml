@@ -36,7 +36,6 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-
       - name: Checkout source
         uses: actions/checkout@v2
         with:
@@ -48,74 +47,15 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
-      - name: Run ssh-keyscan
-        run: ssh-keyscan github.com >> ~/.ssh/known_hosts
-
-      - name: Setup SSH for Windows Git LFS
-        run: |
-          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
-          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
-        if: matrix.os == 'windows-2019'
-
-      - name: Install ${{ runner.os }} Dependencies.
-        shell: bash
-        run: |
-          if [ "$RUNNER_OS" == "Linux" ]; then
-              sudo apt-get update && sudo apt-get install -y capnproto libudev-dev libssl-dev
-          elif [ "$RUNNER_OS" == "macOS" ]; then
-              brew install capnp llvm
-          elif [ "$RUNNER_OS" == "Windows" ]; then
-              choco install -y capnproto
-          fi
-
-      - name: Pull Git LFS objects
-        run: git lfs pull
-        env:
-          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
-
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v3
         with:
-          profile: minimal
-          toolchain: stable
+          repository: swift-nav/toolbox-backend-ci
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: benchmark-backend-ci
 
-      - uses: Swatinem/rust-cache@v1
-        with:
-          key: ${{ secrets.CACHE_VERSION }}
-
-      - uses: davidB/rust-cargo-make@v1
-        with:
-          version: ${{ env.CARGO_MAKE_VERSION }}
-
-      - name: Cache pip
-        uses: actions/cache@v2
-        with:
-          path: ${{ env.PIP_CACHE_DIR }}
-          key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
-
-
-      - name: Install ImageMagick
-        shell: bash
-        run: |
-          cargo make install-imagemagick
-
-      - name: Set up python builder
-        shell: bash
-        run: |
-          cargo make setup-builder
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Run Backend Benchmarks (Windows)
-        env:
-          LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
-        run: |
-          cargo make backend-benches
-        if: matrix.os == 'windows-2019'
-
-      - name: Run Backend Benchmarks
-        run: |
-          cargo make backend-benches
-        if: matrix.os != 'windows-2019'
+      - run: |
+          ./benchmark-backend-ci
+          rm -rf ./benchmark-backend-ci
 
   checks:
 
@@ -623,6 +563,11 @@ jobs:
         with:
           repository: swift-nav/toolbox-frontend-ci
           token: ${{ secrets.GITHUB_TOKEN }}
+          path: benchmark-frontend-ci
+
+      - run: |
+        ./benchmark-frontend-ci
+        rm -rf ./benchmark-frontend-ci
 
   sign_binaries:
     name: Sign Binaries

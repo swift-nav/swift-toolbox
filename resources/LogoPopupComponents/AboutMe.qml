@@ -52,4 +52,9 @@ ColumnLayout {
             Qt.openUrlExternally(Constants.logoPopup.aboutMe.website);
         }
     }
+
+    Button {
+        text: `Check for updates`
+        onClicked:
+    }
 }

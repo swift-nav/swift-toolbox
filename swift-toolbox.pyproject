@@ -164,6 +164,7 @@
         "resources/images/swift-nav/Update.svg",
 
         "resources/LogoPopupComponents/AboutMe.qml",
+        "resources/LogoPopupComponents/Commands.qml",
         "resources/LogoPopupComponents/Licenses.qml",
 
         "resources/ObservationTabComponents/ObservationFilterColumn.qml",

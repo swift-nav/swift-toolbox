@@ -29,7 +29,7 @@ Item {
                 Layout.preferredHeight: Constants.tabBarHeight
 
                 Repeater {
-                    model: ["About", "Licenses"]
+                    model: ["About", "Commands", "Licenses"]
 
                     TabButton {
                         text: modelData
@@ -44,6 +44,9 @@ Item {
                 Layout.fillHeight: true
 
                 LogoPopupComponents.AboutMe {
+                }
+
+                LogoPopupComponents.Commands {
                 }
 
                 LogoPopupComponents.Licenses {

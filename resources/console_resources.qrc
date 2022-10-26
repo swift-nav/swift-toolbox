@@ -62,6 +62,7 @@
     <file>ObservationTabComponents/ObservationFilterColumn.qml</file>
     <file>LogoPopupComponents/Licenses.qml</file>
     <file>LogoPopupComponents/AboutMe.qml</file>
+    <file>LogoPopupComponents/Commands.qml</file>
     <file>LogoPopup.qml</file>
     <file>UpdateTab.qml</file>
     <file>UpdateNotifications.qml</file>

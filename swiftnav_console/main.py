@@ -328,20 +328,14 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
             ConnectionData.post_connection_message_update(data)
         elif m.which == Message.Union.SolutionPositionStatus:
             data = solution_position_update()
-            data[Keys.POINTS][:] = [
-                [QPointF(point.x, point.y) for point in m.solutionPositionStatus.data[idx]]
-                for idx in range(len(m.solutionPositionStatus.data))
-            ]
-            data[Keys.CUR_POINTS][:] = [
-                [QPointF(point.x, point.y) for point in m.solutionPositionStatus.curData[idx]]
-                for idx in range(len(m.solutionPositionStatus.curData))
-            ]
+            data[Keys.POINTS][:] = m.solutionPositionStatus.data
+            data[Keys.CUR_POINTS][:] = m.solutionPositionStatus.curData
             data[Keys.LAT_MAX] = m.solutionPositionStatus.latMax
             data[Keys.LAT_MIN] = m.solutionPositionStatus.latMin
             data[Keys.LON_MAX] = m.solutionPositionStatus.lonMax
             data[Keys.LON_MIN] = m.solutionPositionStatus.lonMin
             data[Keys.AVAILABLE_UNITS][:] = m.solutionPositionStatus.availableUnits
-            data[Keys.SOLUTION_LINE] = [QPointF(point.x, point.y) for point in m.solutionPositionStatus.lineData]
+            data[Keys.SOLUTION_LINE] = m.solutionPositionStatus.lineData
             SolutionPositionPoints.post_data_update(data)
         elif m.which == Message.Union.SolutionTableStatus:
             data = solution_table_update()
@@ -350,24 +344,15 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
         elif m.which == Message.Union.SolutionVelocityStatus:
             data = solution_velocity_update()
             data[Keys.COLORS][:] = m.solutionVelocityStatus.colors
-            data[Keys.POINTS][:] = [
-                [QPointF(point.x, point.y) for point in m.solutionVelocityStatus.data[idx]]
-                for idx in range(len(m.solutionVelocityStatus.data))
-            ]
+            data[Keys.POINTS][:] = m.solutionVelocityStatus.data
             data[Keys.MAX] = m.solutionVelocityStatus.max
             data[Keys.MIN] = m.solutionVelocityStatus.min
             data[Keys.AVAILABLE_UNITS][:] = m.solutionVelocityStatus.availableUnits
             SolutionVelocityPoints.post_data_update(data)
         elif m.which == Message.Union.BaselinePlotStatus:
             data = baseline_plot_update()
-            data[Keys.POINTS][:] = [
-                [QPointF(point.x, point.y) for point in m.baselinePlotStatus.data[idx]]
-                for idx in range(len(m.baselinePlotStatus.data))
-            ]
-            data[Keys.CUR_POINTS][:] = [
-                [QPointF(point.x, point.y) for point in m.baselinePlotStatus.curData[idx]]
-                for idx in range(len(m.baselinePlotStatus.curData))
-            ]
+            data[Keys.POINTS][:] = m.baselinePlotStatus.data
+            data[Keys.CUR_POINTS][:] = m.baselinePlotStatus.curData
             data[Keys.N_MAX] = m.baselinePlotStatus.nMax
             data[Keys.N_MIN] = m.baselinePlotStatus.nMin
             data[Keys.E_MAX] = m.baselinePlotStatus.eMax
@@ -380,14 +365,12 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
         elif m.which == Message.Union.AdvancedImuStatus:
             advanced_imu_tab = advanced_imu_tab_update()
             advanced_imu_tab[Keys.FIELDS_DATA][:] = m.advancedImuStatus.fieldsData
-            advanced_imu_tab[Keys.POINTS][:] = [
-                m.advancedImuStatus.data[idx] for idx in range(len(m.advancedImuStatus.data))
-            ]
+            advanced_imu_tab[Keys.POINTS][:] = m.advancedImuStatus.data
             AdvancedImuPoints.post_data_update(advanced_imu_tab)
         elif m.which == Message.Union.AdvancedSpectrumAnalyzerStatus:
             data = advanced_spectrum_analyzer_tab_update()
             data[Keys.CHANNEL] = m.advancedSpectrumAnalyzerStatus.channel
-            data[Keys.POINTS][:] = [QPointF(point.x, point.y) for point in m.advancedSpectrumAnalyzerStatus.data]
+            data[Keys.POINTS][:] = m.advancedSpectrumAnalyzerStatus.data
             data[Keys.YMAX] = m.advancedSpectrumAnalyzerStatus.ymax
             data[Keys.YMIN] = m.advancedSpectrumAnalyzerStatus.ymin
             data[Keys.XMAX] = m.advancedSpectrumAnalyzerStatus.xmax
@@ -418,10 +401,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
             data = advanced_magnetometer_tab_update()
             data[Keys.YMAX] = m.advancedMagnetometerStatus.ymax
             data[Keys.YMIN] = m.advancedMagnetometerStatus.ymin
-            data[Keys.POINTS][:] = [
-                [QPointF(point.x, point.y) for point in m.advancedMagnetometerStatus.data[idx]]
-                for idx in range(len(m.advancedMagnetometerStatus.data))
-            ]
+            data[Keys.POINTS][:] = m.advancedMagnetometerStatus.data
             AdvancedMagnetometerPoints.post_data_update(data)
         elif m.which == Message.Union.FusionStatusFlagsStatus:
             data = fusion_status_flags_update()
@@ -437,10 +417,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
             data[Keys.CHECK_LABELS][:] = m.trackingSignalsStatus.checkLabels
             data[Keys.LABELS][:] = m.trackingSignalsStatus.labels
             data[Keys.COLORS][:] = m.trackingSignalsStatus.colors
-            data[Keys.POINTS][:] = [
-                [QPointF(point.x, point.y) for point in m.trackingSignalsStatus.data[idx]]
-                for idx in range(len(m.trackingSignalsStatus.data))
-            ]
+            data[Keys.POINTS][:] = m.trackingSignalsStatus.data
             data[Keys.XMIN_OFFSET] = m.trackingSignalsStatus.xminOffset
             TrackingSignalsPoints.post_data_update(data)
         elif m.which == Message.Union.TrackingSkyPlotStatus:

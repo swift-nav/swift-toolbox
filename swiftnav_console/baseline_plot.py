@@ -101,7 +101,7 @@ class BaselinePlotPoints(QObject):
         return self._cur_points
 
     def set_cur_points(self, cur_points) -> None:
-        self._points = [list(map(lambda point: QPointF(point.x, point.y), ps)) for ps in cur_points]
+        self._cur_points = [list(map(lambda point: QPointF(point.x, point.y), ps)) for ps in cur_points]
 
     cur_points = Property(QTKeys.QVARIANTLIST, get_cur_points, set_cur_points)  # type: ignore
 

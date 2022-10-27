@@ -3,7 +3,7 @@
 
 from typing import Dict, List, Any, Optional
 
-from PySide6.QtCore import Property, QObject, Signal, Slot
+from PySide6.QtCore import Property, QObject, QPointF, Signal, Slot
 from PySide6 import QtCharts
 from PySide6.QtQml import QmlElement
 
@@ -110,8 +110,8 @@ class TrackingSignalsPoints(QObject):
         if self._num_labels != cur_num_labels:
             self._num_labels = cur_num_labels
             self.num_labels_changed.emit(cur_num_labels)  # type: ignore
-        all_points = self._tracking_signals_tab[Keys.POINTS]
-        points_for_all_series = all_points[:-1]
+
+        all_points = [[QPointF(point.x, point.y) for point in points] for points in self._tracking_signals_tab[Keys.POINTS]]
 
         labels = self._tracking_signals_tab[Keys.LABELS]
         colors = self._tracking_signals_tab[Keys.COLORS]
@@ -131,17 +131,17 @@ class TrackingSignalsPoints(QObject):
 
         series_changed = False
         enabled_series = []
-        for idx, series_points in enumerate(points_for_all_series):
-            series = None
-            try:
-                series = self._all_series[idx]
-                series.clear()
-                series.replace(series_points)
-                series.setName(labels[idx])
-                series.setColor(colors[idx])
-                series_changed = True
 
+        for idx in range(len(all_points) - 1):
+            series_points = all_points[idx]
+            try:
                 if len(series_points) > 0:
+                    series = self._all_series[idx]
+                    series.clear()
+                    series.replace(series_points)
+                    series.setName(labels[idx])
+                    series.setColor(colors[idx])
+                    series_changed = True
                     enabled_series.append(series)
             except IndexError:
                 # This is ok - QML will create these series, and call addSeries, and these will be

@@ -111,7 +111,9 @@ class TrackingSignalsPoints(QObject):
             self._num_labels = cur_num_labels
             self.num_labels_changed.emit(cur_num_labels)  # type: ignore
 
-        all_points = [[QPointF(point.x, point.y) for point in points] for points in self._tracking_signals_tab[Keys.POINTS]]
+        all_points = [
+            [QPointF(point.x, point.y) for point in points] for points in self._tracking_signals_tab[Keys.POINTS]
+        ]
 
         labels = self._tracking_signals_tab[Keys.LABELS]
         colors = self._tracking_signals_tab[Keys.COLORS]

@@ -15,7 +15,7 @@ import capnp  # type: ignore
 
 from PySide6.QtWidgets import QApplication, QSplashScreen  # type: ignore
 
-from PySide6.QtCore import QObject, QUrl, QPointF, QThread, QTimer, Slot, Signal, Qt
+from PySide6.QtCore import QObject, QUrl, QThread, QTimer, Slot, Signal, Qt
 from PySide6 import QtCharts  # pylint: disable=unused-import
 
 from PySide6 import QtQml, QtCore

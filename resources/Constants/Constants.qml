@@ -353,7 +353,6 @@ QtObject {
     }
 
     advancedMagnetometer: QtObject {
-        readonly property string title: "Raw Magnetometer Data"
         readonly property var legendLabels: ["Mag. X (uT)", "Mag. Y (uT)", "Mag. Z (uT)"]
         readonly property var lineColors: ["#66c2a5", "#fc8d62", "#8da0cb"]
         readonly property int xAxisMax: 200
@@ -368,7 +367,6 @@ QtObject {
     }
 
     advancedSpectrumAnalyzer: QtObject {
-        readonly property string title: "Spectrum Analyzer"
         readonly property var lineColors: ["#000000"]
         readonly property int xAxisTickCount: 10
         readonly property real yAxisTickCount: 2.5
@@ -385,7 +383,6 @@ QtObject {
     }
 
     advancedImu: QtObject {
-        readonly property string title: "Raw IMU Data"
         readonly property var textDataLabels: ["Imu temp:", "Imu conf:", "Rms acc x:", "Rms acc y:", "Rms acc z:"]
         readonly property var insStatusLabels: ["GNSS Pos:", "GNSS Vel:", "Wheelticks:", "Wheelspeed:", "nhc:", "Static Detection:"]
         readonly property var legendLabels: ["Accn. X", "Accn. Y", "Accn. Z", "Gyro X", "Gyro Y", "Gyro Z"]

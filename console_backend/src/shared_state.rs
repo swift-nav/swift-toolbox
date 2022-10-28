@@ -330,6 +330,14 @@ impl SharedState {
         guard.auto_survey_data.alt = Some(alt);
         guard.auto_survey_data.requested = false;
     }
+
+    pub fn set_current_tab(&self, tab_index: u8) {
+        self.lock().visible_tab = TabIndices::from(tab_index);
+    }
+    pub fn current_tab(&self) -> TabIndices {
+        self.lock().visible_tab.clone()
+    }
+
     pub fn heartbeat_data(&self) -> Heartbeat {
         self.lock().heartbeat_data.clone()
     }
@@ -373,6 +381,7 @@ pub struct SharedStateInner {
     pub(crate) advanced_networking_update: Option<AdvancedNetworkingState>,
     pub(crate) auto_survey_data: AutoSurveyData,
     pub(crate) heartbeat_data: Heartbeat,
+    pub(crate) visible_tab: TabIndices,
 }
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
@@ -399,12 +408,40 @@ impl SharedStateInner {
             advanced_networking_update: None,
             auto_survey_data: AutoSurveyData::new(),
             heartbeat_data,
+            visible_tab: TabIndices::Unknown,
         }
     }
 }
 impl Default for SharedStateInner {
     fn default() -> Self {
         SharedStateInner::new()
+    }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum TabIndices {
+    Unknown,
+    Tracking,
+    Solution,
+    Baseline,
+    Observations,
+    Settings,
+    Update,
+    Advanced,
+}
+
+impl From<u8> for TabIndices {
+    fn from(i: u8) -> Self {
+        match i {
+            0 => Self::Tracking,
+            1 => Self::Solution,
+            2 => Self::Baseline,
+            3 => Self::Observations,
+            4 => Self::Settings,
+            5 => Self::Update,
+            6 => Self::Advanced,
+            _ => Self::Unknown,
+        }
     }
 }
 

@@ -11,7 +11,7 @@ use sbp::messages::{
 use crate::date_conv::*;
 use crate::output::BaselineLog;
 use crate::piksi_tools_constants::EMPTY_STR;
-use crate::shared_state::SharedState;
+use crate::shared_state::{SharedState, TabIndices};
 use crate::types::{BaselineNED, Deque, GnssModes, GpsTime, MsgSender, Result, UtcDateTime};
 use crate::utils::*;
 use crate::zip;
@@ -113,13 +113,13 @@ impl BaselineTab {
             slns: {
                 BASELINE_DATA_KEYS
                     .iter()
-                    .map(|key| (*key, Deque::new(PLOT_HISTORY_MAX)))
+                    .map(|&key| (key, Deque::new(PLOT_HISTORY_MAX)))
                     .collect()
             },
             table: {
                 BASELINE_TABLE_KEYS
                     .iter()
-                    .map(|key| (*key, EMPTY_STR.to_string()))
+                    .map(|&key| (key, EMPTY_STR.to_string()))
                     .collect()
             },
             utc_source: None,
@@ -387,6 +387,9 @@ impl BaselineTab {
 
         let buttons = self.check_state();
         self.solution_draw(buttons);
+        if self.shared_state.current_tab() != TabIndices::Baseline {
+            return;
+        }
         self.send_solution_data();
         self.send_table_data();
     }

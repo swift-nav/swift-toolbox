@@ -322,6 +322,10 @@ pub fn server_recv_thread(
                 m::message::ConfirmInsChange(Ok(_)) => {
                     shared_state.set_settings_confirm_ins_change(true);
                 }
+                m::message::OnTabChangeEvent(Ok(cv_in)) => {
+                    let curr_tab: u8 = cv_in.get_current_tab();
+                    shared_state.set_current_tab(curr_tab);
+                }
                 _ => {
                     error!("unknown message from front-end");
                 }

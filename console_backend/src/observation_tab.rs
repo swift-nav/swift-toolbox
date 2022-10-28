@@ -4,7 +4,7 @@ use log::warn;
 use std::collections::{BTreeMap, HashMap};
 
 use crate::client_sender::BoxedClientSender;
-use crate::shared_state::SharedState;
+use crate::shared_state::{SharedState, TabIndices};
 use crate::types::{ObservationMsg, SignalCodes};
 use crate::utils::{compute_doppler, sec_to_ns, serialize_capnproto_builder};
 
@@ -269,6 +269,9 @@ impl ObservationTab {
     ///
     /// - `is_remote`: Sender local or remote table
     fn send_data(&mut self, is_remote: bool) {
+        if self.shared_state.current_tab() != TabIndices::Observations {
+            return;
+        }
         let table: &ObservationTable = match is_remote {
             true => &self.remote,
             false => &self.local,

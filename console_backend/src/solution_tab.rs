@@ -12,7 +12,7 @@ use crate::constants::*;
 use crate::date_conv::*;
 use crate::output::{PosLLHLog, VelLog};
 use crate::piksi_tools_constants::EMPTY_STR;
-use crate::shared_state::SharedState;
+use crate::shared_state::{SharedState, TabIndices};
 use crate::types::{Deque, Dops, GnssModes, GpsTime, PosLLH, UtcDateTime, VelNED};
 use crate::utils::*;
 
@@ -617,6 +617,9 @@ impl SolutionTab {
         }
         let (clear, pause) = self.check_state();
         self.solution_draw(clear, pause);
+        if self.shared_state.current_tab() != TabIndices::Solution {
+            return;
+        }
         self.send_solution_data();
         self.send_table_data();
     }

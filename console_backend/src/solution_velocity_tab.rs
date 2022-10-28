@@ -6,7 +6,7 @@ use sbp::messages::navigation::MsgVelNed;
 
 use crate::client_sender::BoxedClientSender;
 use crate::constants::{HORIZONTAL_COLOR, NUM_POINTS, VERTICAL_COLOR};
-use crate::shared_state::SharedState;
+use crate::shared_state::{SharedState, TabIndices};
 use crate::types::{Deque, VelocityUnits};
 use crate::utils::serialize_capnproto_builder;
 use crate::zip;
@@ -125,6 +125,9 @@ impl SolutionVelocityTab {
 
     /// Package data into a message buffer and send to frontend.
     fn send_data(&mut self) {
+        if self.shared_state.current_tab() != TabIndices::Solution {
+            return;
+        }
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 

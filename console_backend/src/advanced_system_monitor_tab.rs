@@ -4,6 +4,7 @@ use sbp::messages::piksi::{MsgDeviceMonitor, MsgThreadState};
 use std::collections::HashMap;
 
 use crate::client_sender::BoxedClientSender;
+use crate::shared_state::{SharedState, TabIndices};
 use crate::types::UartState;
 use crate::utils::{cc_to_c, normalize_cpu_usage, serialize_capnproto_builder};
 
@@ -33,6 +34,7 @@ struct ThreadStateFields {
 /// - `zynq_temp`: Zynq SoC temperature reading.
 pub struct AdvancedSystemMonitorTab {
     client_sender: BoxedClientSender,
+    shared_state: Option<SharedState>,
     fe_temp: f64,
     obs_latency: HashMap<String, i32>,
     obs_period: HashMap<String, i32>,
@@ -44,6 +46,33 @@ impl AdvancedSystemMonitorTab {
     pub fn new(client_sender: BoxedClientSender) -> AdvancedSystemMonitorTab {
         AdvancedSystemMonitorTab {
             client_sender,
+            shared_state: None,
+            fe_temp: 0.0,
+            obs_latency: {
+                UART_STATE_KEYS
+                    .iter()
+                    .map(|key| (String::from(*key), 0))
+                    .collect()
+            },
+            obs_period: {
+                UART_STATE_KEYS
+                    .iter()
+                    .map(|key| (String::from(*key), 0))
+                    .collect()
+            },
+            threads: vec![],
+            threads_table_list: vec![],
+            zynq_temp: 0.0,
+        }
+    }
+
+    pub fn new_with_shared_state(
+        shared_state: SharedState,
+        client_sender: BoxedClientSender,
+    ) -> AdvancedSystemMonitorTab {
+        AdvancedSystemMonitorTab {
+            client_sender,
+            shared_state: Some(shared_state),
             fe_temp: 0.0,
             obs_latency: {
                 UART_STATE_KEYS
@@ -115,6 +144,11 @@ impl AdvancedSystemMonitorTab {
 
     /// Package data into a message buffer and send to frontend.
     fn send_data(&mut self) {
+        if let Some(ss) = &self.shared_state {
+            if ss.current_tab() != TabIndices::Advanced {
+                return;
+            }
+        }
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
         let mut status = msg.init_advanced_system_monitor_status();

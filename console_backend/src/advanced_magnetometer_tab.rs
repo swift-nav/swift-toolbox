@@ -4,6 +4,7 @@ use capnp::message::Builder;
 
 use crate::client_sender::BoxedClientSender;
 use crate::constants::{MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER, NUM_POINTS};
+use crate::shared_state::{SharedState, TabIndices};
 use crate::types::Deque;
 use crate::utils::serialize_capnproto_builder;
 use crate::zip;
@@ -20,6 +21,7 @@ use crate::zip;
 #[derive(Debug)]
 pub struct AdvancedMagnetometerTab {
     client_sender: BoxedClientSender,
+    shared_state: Option<SharedState>,
     mag_x: Deque<f64>,
     mag_y: Deque<f64>,
     mag_z: Deque<f64>,
@@ -31,6 +33,21 @@ impl AdvancedMagnetometerTab {
     pub fn new(client_sender: BoxedClientSender) -> AdvancedMagnetometerTab {
         AdvancedMagnetometerTab {
             client_sender,
+            shared_state: None,
+            mag_x: Deque::with_fill_value(NUM_POINTS, 0.),
+            mag_y: Deque::with_fill_value(NUM_POINTS, 0.),
+            mag_z: Deque::with_fill_value(NUM_POINTS, 0.),
+            ymax: f64::MIN,
+            ymin: f64::MAX,
+        }
+    }
+    pub fn new_with_shared_state(
+        shared_state: SharedState,
+        client_sender: BoxedClientSender,
+    ) -> AdvancedMagnetometerTab {
+        AdvancedMagnetometerTab {
+            client_sender,
+            shared_state: Some(shared_state),
             mag_x: Deque::with_fill_value(NUM_POINTS, 0.),
             mag_y: Deque::with_fill_value(NUM_POINTS, 0.),
             mag_z: Deque::with_fill_value(NUM_POINTS, 0.),
@@ -65,6 +82,11 @@ impl AdvancedMagnetometerTab {
 
     /// Package data into a message buffer and send to frontend.
     fn send_data(&mut self) {
+        if let Some(ss) = &self.shared_state {
+            if ss.current_tab() != TabIndices::Advanced {
+                return;
+            }
+        }
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
         let mut tab_status = msg.init_advanced_magnetometer_status();

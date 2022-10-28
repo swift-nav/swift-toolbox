@@ -450,6 +450,10 @@ struct AutoSurveyRequest {
     request @0 :Void = void;
 }
 
+struct TabChangeEvent {
+    currentTab @0 :UInt8;
+}
+
 struct Message {
     union {
         solutionVelocityStatus @0 :SolutionVelocityStatus;
@@ -507,5 +511,6 @@ struct Message {
         connectionNotification @52 : ConnectionNotification;
         settingsNotification @53 : SettingsNotification;
         connectionDialogStatus @54 :ConnectionDialogStatus;
+        onTabChangeEvent @55 :TabChangeEvent;
     }
 }

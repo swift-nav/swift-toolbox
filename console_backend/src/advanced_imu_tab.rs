@@ -5,6 +5,7 @@ use capnp::message::Builder;
 
 use crate::client_sender::BoxedClientSender;
 use crate::fusion_status_flags::FusionStatusFlags;
+use crate::shared_state::{SharedState, TabIndices};
 use crate::types::Deque;
 use crate::utils::serialize_capnproto_builder;
 use crate::{constants::*, zip};
@@ -28,6 +29,7 @@ use crate::{constants::*, zip};
 #[derive(Debug)]
 pub struct AdvancedImuTab {
     client_sender: BoxedClientSender,
+    shared_state: Option<SharedState>,
     pub fusion_engine_status_bar: FusionStatusFlags,
     imu_conf: u8,
     imu_temp: f64,
@@ -47,6 +49,29 @@ impl AdvancedImuTab {
         AdvancedImuTab {
             fusion_engine_status_bar: FusionStatusFlags::new(client_sender.clone()),
             client_sender,
+            shared_state: None,
+            imu_conf: 0_u8,
+            imu_temp: 0_f64,
+            rms_acc_x: 0_f64,
+            rms_acc_y: 0_f64,
+            rms_acc_z: 0_f64,
+            acc_x: Deque::with_fill_value(NUM_POINTS, 0.),
+            acc_y: Deque::with_fill_value(NUM_POINTS, 0.),
+            acc_z: Deque::with_fill_value(NUM_POINTS, 0.),
+            gyro_x: Deque::with_fill_value(NUM_POINTS, 0.),
+            gyro_y: Deque::with_fill_value(NUM_POINTS, 0.),
+            gyro_z: Deque::with_fill_value(NUM_POINTS, 0.),
+        }
+    }
+
+    pub fn new_with_shared_state(
+        shared_state: SharedState,
+        client_sender: BoxedClientSender,
+    ) -> AdvancedImuTab {
+        AdvancedImuTab {
+            fusion_engine_status_bar: FusionStatusFlags::new(client_sender.clone()),
+            client_sender,
+            shared_state: Some(shared_state),
             imu_conf: 0_u8,
             imu_temp: 0_f64,
             rms_acc_x: 0_f64,
@@ -122,6 +147,11 @@ impl AdvancedImuTab {
 
     /// Package data into a message buffer and send to frontend.
     fn send_data(&mut self) {
+        if let Some(ss) = &self.shared_state {
+            if ss.current_tab() != TabIndices::Advanced {
+                return;
+            }
+        }
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 

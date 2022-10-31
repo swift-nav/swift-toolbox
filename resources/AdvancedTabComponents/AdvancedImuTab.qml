@@ -148,14 +148,16 @@ Item {
                     let commonChart = Constants.commonChart;
                     let advancedImu = Constants.advancedImu;
                     if (!lines.length) {
+                        const tempLines = [];
                         for (var idx in points) {
                             var line = advancedImuChart.createSeries(ChartView.SeriesTypeLine, idx, advancedImuXAxis);
                             line.color = advancedImu.lineColors[idx];
                             line.width = commonChart.lineWidth;
                             line.axisYRight = advancedImuYAxis;
                             line.useOpenGL = Globals.useOpenGL;
-                            lines.push(line);
+                            tempLines.push(line);
                         }
+                        lines = lines.concat(tempLines);
                     }
                     let fieldDatum = advancedImuPoints.fields_data;
                     imuTempText.text = `${fieldDatum[0].toFixed(2)} C`;

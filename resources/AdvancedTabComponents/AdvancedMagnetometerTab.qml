@@ -151,14 +151,16 @@ Item {
                     let magnetometer = Constants.advancedMagnetometer;
                     let commonChart = Constants.commonChart;
                     if (!lines.length) {
+                        const tempLines = [];
                         for (var idx in magnetometerPoints) {
                             var line = advancedMagnetometerChart.createSeries(ChartView.SeriesTypeLine, idx, advancedMagnetometerXAxis);
                             line.color = magnetometer.lineColors[idx];
                             line.width = commonChart.lineWidth;
                             line.axisYRight = advancedMagnetometerYAxis;
                             line.useOpenGL = Globals.useOpenGL;
-                            lines.push(line);
+                            tempLines.push(line);
                         }
+                        line = line.concat(tempLines);
                     }
                     advancedMagnetometerArea.visible = true;
                     advancedMagnetometerYAxis.min = advancedMagnetometerPoints.ymin - magnetometer.yAxisPadding;

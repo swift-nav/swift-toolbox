@@ -352,8 +352,9 @@ Item {
                     if (center_solution)
                         solutionPositionChart.centerToSolution();
                     let hasData = false;
-                    for (let idx in solutionPositionPoints.points) {
-                        if (solutionPositionPoints.points[idx].length) {
+                    let solnPoints = solutionPositionPoints.points;
+                    for (let idx in solnPoints) {
+                        if (solnPoints[idx].length) {
                             hasData = true;
                             break;
                         }

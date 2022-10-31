@@ -1,5 +1,6 @@
-use std::io;
+use crossbeam::channel;
 use std::thread::spawn;
+use std::{io, thread};
 
 use log::{debug, error};
 use sbp::{
@@ -63,6 +64,33 @@ pub fn process_messages(
     let (update_tab_tx, update_tab_rx) = tabs.update.lock().unwrap().clone_channel();
     crossbeam::scope(|scope| {
         scope.spawn(|_| {
+            let (_, rx) = shared_state.lock().channel.clone();
+            channel::select! {
+                recv(rx) -> res => {
+                    if let Ok(event_type) = res{
+                        match event_type {
+                            EventType::EventRefresh(tab) => {
+                                match tab {
+                                    TabIndices::Unknown => {}
+                                    TabIndices::Tracking => {
+                                        tabs.tracking_signals.lock().unwrap().send_data();
+                                    }
+                                    TabIndices::Solution => {}
+                                    TabIndices::Baseline => {}
+                                    TabIndices::Observations => {}
+                                    TabIndices::Settings => {}
+                                    TabIndices::Update => {}
+                                    TabIndices::Advanced => {
+                                        tabs.advanced_imu.lock().unwrap().send_data();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        scope.spawn(|_| {
             update_tab::update_tab_thread(
                 update_tab_tx.clone(),
                 update_tab_rx,
@@ -80,38 +108,13 @@ pub fn process_messages(
                 settings_tab::start_thd(tab);
             });
         }
-        let mut has_msg = false;
         for (message, _) in &mut messages {
-            has_msg = true;
             source.send_with_state(&tabs, &message);
             if let Some(ref tab) = tabs.settings {
                 tab.handle_msg(message);
             }
             log::logger().flush();
         }
-        scope.spawn(|_| {
-            let (_, rx) = &shared_state.lock().channel;
-            loop {
-                let event_type = rx.recv().unwrap();
-                match event_type {
-                    EventType::EventRefresh(tab) => match tab {
-                        TabIndices::Unknown => {}
-                        TabIndices::Tracking => {
-                            tabs.tracking_signals.lock().unwrap().send_data();
-                        }
-                        TabIndices::Solution => {}
-                        TabIndices::Baseline => {}
-                        TabIndices::Observations => {}
-                        TabIndices::Settings => {}
-                        TabIndices::Update => {}
-                        TabIndices::Advanced => {
-                            tabs.advanced_imu.lock().unwrap().send_data();
-                        }
-                    },
-                }
-            }
-        });
-
         if let Some(ref tab) = tabs.settings {
             tab.stop()
         }

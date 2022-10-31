@@ -1,3 +1,4 @@
+use std::fmt::Formatter;
 use std::{
     cmp::{Eq, PartialEq},
     fmt::Debug,
@@ -35,7 +36,9 @@ use crate::solution_tab::LatLonUnits;
 use crate::update_tab::UpdateTabUpdate;
 use crate::utils::send_conn_state;
 use crate::watch::{WatchReceiver, Watched};
-use crate::{client_sender::BoxedClientSender, main_tab::logging_stats_thread, AdvancedImuTab};
+use crate::{
+    client_sender::BoxedClientSender, main_tab::logging_stats_thread, AdvancedImuTab, Tabs,
+};
 use crate::{common_constants::ConnectionType, connection::Connection};
 use crate::{
     common_constants::{self as cc, SbpLogging},

@@ -34,7 +34,7 @@ struct ThreadStateFields {
 /// - `zynq_temp`: Zynq SoC temperature reading.
 pub struct AdvancedSystemMonitorTab {
     client_sender: BoxedClientSender,
-    shared_state: Option<SharedState>,
+    shared_state: SharedState,
     fe_temp: f64,
     obs_latency: HashMap<String, i32>,
     obs_period: HashMap<String, i32>,
@@ -43,49 +43,20 @@ pub struct AdvancedSystemMonitorTab {
     zynq_temp: f64,
 }
 impl AdvancedSystemMonitorTab {
-    pub fn new(client_sender: BoxedClientSender) -> AdvancedSystemMonitorTab {
-        AdvancedSystemMonitorTab {
-            client_sender,
-            shared_state: None,
-            fe_temp: 0.0,
-            obs_latency: {
-                UART_STATE_KEYS
-                    .iter()
-                    .map(|key| (String::from(*key), 0))
-                    .collect()
-            },
-            obs_period: {
-                UART_STATE_KEYS
-                    .iter()
-                    .map(|key| (String::from(*key), 0))
-                    .collect()
-            },
-            threads: vec![],
-            threads_table_list: vec![],
-            zynq_temp: 0.0,
-        }
-    }
-
-    pub fn new_with_shared_state(
+    pub fn new(
         shared_state: SharedState,
         client_sender: BoxedClientSender,
     ) -> AdvancedSystemMonitorTab {
+        let keys: HashMap<String, i32> = UART_STATE_KEYS
+            .iter()
+            .map(|&key| (String::from(key), 0))
+            .collect();
         AdvancedSystemMonitorTab {
+            shared_state,
             client_sender,
-            shared_state: Some(shared_state),
             fe_temp: 0.0,
-            obs_latency: {
-                UART_STATE_KEYS
-                    .iter()
-                    .map(|key| (String::from(*key), 0))
-                    .collect()
-            },
-            obs_period: {
-                UART_STATE_KEYS
-                    .iter()
-                    .map(|key| (String::from(*key), 0))
-                    .collect()
-            },
+            obs_latency: keys.clone(),
+            obs_period: keys,
             threads: vec![],
             threads_table_list: vec![],
             zynq_temp: 0.0,
@@ -144,10 +115,8 @@ impl AdvancedSystemMonitorTab {
 
     /// Package data into a message buffer and send to frontend.
     fn send_data(&mut self) {
-        if let Some(ss) = &self.shared_state {
-            if ss.current_tab() != TabIndices::Advanced {
-                return;
-            }
+        if self.shared_state.current_tab() != TabIndices::Advanced {
+            return;
         }
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
@@ -203,8 +172,9 @@ mod tests {
 
     #[test]
     fn handle_uart_state_test() {
+        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut tab = AdvancedSystemMonitorTab::new(client_send);
+        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send);
         let sender_id = Some(1337);
         let uart_a = UARTChannel {
             tx_throughput: 0.0,
@@ -280,8 +250,9 @@ mod tests {
 
     #[test]
     fn handle_device_monitor_test() {
+        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut tab = AdvancedSystemMonitorTab::new(client_send);
+        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send);
         let cpu_temperature = 3333;
         let fe_temperature = 4444;
         let msg = MsgDeviceMonitor {
@@ -300,8 +271,9 @@ mod tests {
     }
     #[test]
     fn handle_thread_state_test() {
+        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut tab = AdvancedSystemMonitorTab::new(client_send);
+        let mut tab = AdvancedSystemMonitorTab::new(shared_state, shared_state, client_send);
         let name1: SbpString<[u8; 20], NullTerminated> = fixed_sbp_string("mcdonald");
         let msg1 = MsgThreadState {
             sender_id: Some(1337),
@@ -346,8 +318,9 @@ mod tests {
 
     #[test]
     fn handle_heartbeat_test() {
+        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut tab = AdvancedSystemMonitorTab::new(client_send);
+        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send);
         assert!(tab.threads_table_list.is_empty());
         tab.handle_heartbeat();
         assert!(tab.threads_table_list.is_empty());

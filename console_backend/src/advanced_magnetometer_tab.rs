@@ -21,7 +21,7 @@ use crate::zip;
 #[derive(Debug)]
 pub struct AdvancedMagnetometerTab {
     client_sender: BoxedClientSender,
-    shared_state: Option<SharedState>,
+    shared_state: SharedState,
     mag_x: Deque<f64>,
     mag_y: Deque<f64>,
     mag_z: Deque<f64>,
@@ -30,24 +30,13 @@ pub struct AdvancedMagnetometerTab {
 }
 
 impl AdvancedMagnetometerTab {
-    pub fn new(client_sender: BoxedClientSender) -> AdvancedMagnetometerTab {
-        AdvancedMagnetometerTab {
-            client_sender,
-            shared_state: None,
-            mag_x: Deque::with_fill_value(NUM_POINTS, 0.),
-            mag_y: Deque::with_fill_value(NUM_POINTS, 0.),
-            mag_z: Deque::with_fill_value(NUM_POINTS, 0.),
-            ymax: f64::MIN,
-            ymin: f64::MAX,
-        }
-    }
-    pub fn new_with_shared_state(
+    pub fn new(
         shared_state: SharedState,
         client_sender: BoxedClientSender,
     ) -> AdvancedMagnetometerTab {
         AdvancedMagnetometerTab {
             client_sender,
-            shared_state: Some(shared_state),
+            shared_state,
             mag_x: Deque::with_fill_value(NUM_POINTS, 0.),
             mag_y: Deque::with_fill_value(NUM_POINTS, 0.),
             mag_z: Deque::with_fill_value(NUM_POINTS, 0.),
@@ -82,10 +71,8 @@ impl AdvancedMagnetometerTab {
 
     /// Package data into a message buffer and send to frontend.
     fn send_data(&mut self) {
-        if let Some(ss) = &self.shared_state {
-            if ss.current_tab() != TabIndices::Advanced {
-                return;
-            }
+        if self.shared_state.current_tab() != TabIndices::Advanced {
+            return;
         }
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
@@ -119,8 +106,9 @@ mod tests {
 
     #[test]
     fn hangle_mag_raw_test() {
+        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut mag_tab = AdvancedMagnetometerTab::new(client_send);
+        let mut mag_tab = AdvancedMagnetometerTab::new(shared_state, client_send);
         let tow = 1_u32;
         let tow_f = 1_u8;
         let mag_x = 2_i16;
@@ -147,8 +135,9 @@ mod tests {
 
     #[test]
     fn handle_imu_send_data_test() {
+        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut mag_tab = AdvancedMagnetometerTab::new(client_send);
+        let mut mag_tab = AdvancedMagnetometerTab::new(shared_state, client_send);
         assert!(f64::abs(mag_tab.ymin - f64::MAX) <= f64::EPSILON);
         assert!(f64::abs(mag_tab.ymax - f64::MIN) <= f64::EPSILON);
 

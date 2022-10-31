@@ -20,6 +20,7 @@ use crate::piksi_tools_constants::{
 use crate::shared_state::{SharedState, TabIndices};
 use crate::types::{Cn0Age, Cn0Dict, Deque, ObservationMsg, SignalCodes};
 use crate::utils::{serialize_capnproto_builder, signal_key_color, signal_key_label};
+use crate::DataSender;
 
 /// TrackingSignalsTab struct.
 ///
@@ -383,12 +384,11 @@ impl TrackingSignalsTab {
             CHART_XMIN_OFFSET_NO_TRACKING
         }
     }
+}
 
-    /// Package data into a message buffer and send to frontend.
-    fn send_data(&mut self) {
-        if self.shared_state.current_tab() != TabIndices::Tracking {
-            return;
-        }
+impl DataSender for TrackingSignalsTab {
+    /// Package data into a message buffer
+    fn as_packet(&mut self) -> Vec<u8> {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
@@ -442,8 +442,16 @@ impl TrackingSignalsTab {
         for (i, label) in self.check_labels.iter().enumerate() {
             tracking_checkbox_labels.set(i as u32, label);
         }
-        self.client_sender
-            .send_data(serialize_capnproto_builder(builder));
+        serialize_capnproto_builder(builder)
+    }
+
+    /// Send to frontend.
+    fn send_data(&mut self) {
+        if self.shared_state.current_tab() != TabIndices::Tracking {
+            return;
+        }
+        let packet = self.as_packet();
+        self.client_sender.send_data(packet);
     }
 }
 

@@ -1,4 +1,5 @@
 use std::io;
+use std::thread::spawn;
 
 use log::{debug, error};
 use sbp::{
@@ -20,14 +21,14 @@ use sbp::{
 use crate::client_sender::BoxedClientSender;
 use crate::connection::Connection;
 use crate::errors::{PROCESS_MESSAGES_FAILURE, UNABLE_TO_CLONE_UPDATE_SHARED};
-use crate::log_panel;
 use crate::settings_tab;
-use crate::shared_state::SharedState;
+use crate::shared_state::{EventType, SharedState, TabIndices};
 use crate::types::{
     BaselineNED, Dops, GpsTime, MsgSender, ObservationMsg, PosLLH, Specan, UartState, VelNED,
 };
 use crate::update_tab;
 use crate::Tabs;
+use crate::{log_panel, DataSender};
 
 pub use messages::{Messages, StopToken};
 
@@ -79,13 +80,38 @@ pub fn process_messages(
                 settings_tab::start_thd(tab);
             });
         }
+        let mut has_msg = false;
         for (message, _) in &mut messages {
+            has_msg = true;
             source.send_with_state(&tabs, &message);
             if let Some(ref tab) = tabs.settings {
                 tab.handle_msg(message);
             }
             log::logger().flush();
         }
+        scope.spawn(|_| {
+            let (_, rx) = &shared_state.lock().channel;
+            loop {
+                let event_type = rx.recv().unwrap();
+                match event_type {
+                    EventType::EventRefresh(tab) => match tab {
+                        TabIndices::Unknown => {}
+                        TabIndices::Tracking => {
+                            tabs.tracking_signals.lock().unwrap().send_data();
+                        }
+                        TabIndices::Solution => {}
+                        TabIndices::Baseline => {}
+                        TabIndices::Observations => {}
+                        TabIndices::Settings => {}
+                        TabIndices::Update => {}
+                        TabIndices::Advanced => {
+                            tabs.advanced_imu.lock().unwrap().send_data();
+                        }
+                    },
+                }
+            }
+        });
+
         if let Some(ref tab) = tabs.settings {
             tab.stop()
         }

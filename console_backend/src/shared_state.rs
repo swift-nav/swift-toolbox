@@ -12,7 +12,8 @@ use std::{
 
 use anyhow::{Context, Result as AHResult};
 use chrono::{DateTime, Utc};
-use crossbeam::channel::Sender;
+use crossbeam::channel::internal::SelectHandle;
+use crossbeam::channel::{unbounded, Receiver, Sender};
 use directories::{ProjectDirs, UserDirs};
 use indexmap::set::IndexSet;
 use indexmap::IndexMap;
@@ -30,17 +31,17 @@ use crate::errors::CONVERT_TO_STR_FAILURE;
 use crate::log_panel::LogLevel;
 use crate::output::{CsvLogging, CsvSerializer};
 use crate::process_messages::StopToken;
-use crate::settings_tab;
 use crate::solution_tab::LatLonUnits;
 use crate::update_tab::UpdateTabUpdate;
 use crate::utils::send_conn_state;
 use crate::watch::{WatchReceiver, Watched};
-use crate::{client_sender::BoxedClientSender, main_tab::logging_stats_thread};
+use crate::{client_sender::BoxedClientSender, main_tab::logging_stats_thread, AdvancedImuTab};
 use crate::{common_constants::ConnectionType, connection::Connection};
 use crate::{
     common_constants::{self as cc, SbpLogging},
     status_bar::Heartbeat,
 };
+use crate::{settings_tab, DataSender};
 
 pub type Error = anyhow::Error;
 pub type Result<T> = anyhow::Result<T>;
@@ -332,7 +333,11 @@ impl SharedState {
     }
 
     pub fn set_current_tab(&self, tab_index: u8) {
-        self.lock().visible_tab = TabIndices::from(tab_index);
+        let mut guard = self.lock();
+        let tab = TabIndices::from(tab_index);
+        guard.visible_tab = tab.clone();
+        let (sx, _) = &guard.channel;
+        sx.send(EventType::EventRefresh(tab));
     }
     pub fn current_tab(&self) -> TabIndices {
         self.lock().visible_tab.clone()
@@ -382,7 +387,13 @@ pub struct SharedStateInner {
     pub(crate) auto_survey_data: AutoSurveyData,
     pub(crate) heartbeat_data: Heartbeat,
     pub(crate) visible_tab: TabIndices,
+    pub(crate) channel: (Sender<EventType>, Receiver<EventType>),
 }
+
+pub(crate) enum EventType {
+    EventRefresh(TabIndices),
+}
+
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
         let connection_history = ConnectionHistory::new();
@@ -409,6 +420,7 @@ impl SharedStateInner {
             auto_survey_data: AutoSurveyData::new(),
             heartbeat_data,
             visible_tab: TabIndices::Unknown,
+            channel: unbounded(),
         }
     }
 }

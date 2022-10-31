@@ -315,6 +315,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
             return False
         Message = self._messages.Message
         m = Message.from_bytes(buffer)
+        print(m.which)
         if m.which == Message.Union.Status:
             app_state = ConnectionState(m.status.text)
             if app_state == ConnectionState.CLOSED:

@@ -59,6 +59,13 @@ use crate::{
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
+trait DataSender {
+    /// Consumes object as capnproto packet
+    fn as_packet(&mut self) -> Vec<u8>;
+    /// Process packets to frontend
+    fn send_data(&mut self);
+}
+
 struct Tabs {
     pub main: Mutex<MainTab>,
     pub advanced_imu: Mutex<AdvancedImuTab>,
@@ -86,11 +93,7 @@ impl Tabs {
     ) -> Self {
         Self {
             main: MainTab::new(shared_state.clone(), client_sender.clone()).into(),
-            advanced_imu: AdvancedImuTab::new_with_shared_state(
-                shared_state.clone(),
-                client_sender.clone(),
-            )
-            .into(),
+            advanced_imu: AdvancedImuTab::new(shared_state.clone(), client_sender.clone()).into(),
             advanced_magnetometer: AdvancedMagnetometerTab::new_with_shared_state(
                 shared_state.clone(),
                 client_sender.clone(),

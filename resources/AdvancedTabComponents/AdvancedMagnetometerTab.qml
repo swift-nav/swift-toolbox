@@ -160,7 +160,7 @@ Item {
                             line.useOpenGL = Globals.useOpenGL;
                             tempLines.push(line);
                         }
-                        line = line.concat(tempLines);
+                        lines = lines.concat(tempLines);
                     }
                     advancedMagnetometerArea.visible = true;
                     advancedMagnetometerYAxis.min = advancedMagnetometerPoints.ymin - magnetometer.yAxisPadding;

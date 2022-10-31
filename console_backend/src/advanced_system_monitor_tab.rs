@@ -273,7 +273,7 @@ mod tests {
     fn handle_thread_state_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut tab = AdvancedSystemMonitorTab::new(shared_state, shared_state, client_send);
+        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send);
         let name1: SbpString<[u8; 20], NullTerminated> = fixed_sbp_string("mcdonald");
         let msg1 = MsgThreadState {
             sender_id: Some(1337),

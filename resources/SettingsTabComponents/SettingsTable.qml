@@ -37,16 +37,18 @@ Rectangle {
     }
 
     function row(entry) {
+        let settingsTable = Constants.settingsTable;
         return {
-            [Constants.settingsTable.tableLeftColumnHeader]: entry.name.replace(/_/g, " "),
-            [Constants.settingsTable.tableRightColumnHeader]: entry.valueOnDevice || "---"
+            [settingsTable.tableLeftColumnHeader]: entry.name.replace(/_/g, " "),
+            [settingsTable.tableRightColumnHeader]: entry.valueOnDevice || "---"
         };
     }
 
     function headerRow(entry) {
+        let settingsTable = Constants.settingsTable;
         return {
-            [Constants.settingsTable.tableLeftColumnHeader]: entry.group.replace(/_/g, " "),
-            [Constants.settingsTable.tableRightColumnHeader]: ""
+            [settingsTable.tableLeftColumnHeader]: entry.group.replace(/_/g, " "),
+            [settingsTable.tableRightColumnHeader]: ""
         };
     }
 

@@ -253,10 +253,11 @@ Item {
                 return;
             let labels = trackingSkyPlotPoints.labels;
             if (all_series.length < labels.length) {
+                let tsp = Constants.trackingSkyPlot;
                 for (var i = all_series.length; i < labels.length; i++) {
-                    var series = trackingSkyPlotChart.createSeries(ChartView.SeriesTypeScatter, Constants.trackingSkyPlot.scatterLabels[i], axisAngular, axisRadial);
-                    series.color = Constants.trackingSkyPlot.colors[i];
-                    series.markerSize = Constants.trackingSkyPlot.markerSize;
+                    var series = trackingSkyPlotChart.createSeries(ChartView.SeriesTypeScatter, tsp.scatterLabels[i], axisAngular, axisRadial);
+                    series.color = tsp.colors[i];
+                    series.markerSize = tsp.markerSize;
                     series.useOpenGL = Globals.useOpenGL;
                     trackingSkyPlotPoints.addSeries(series);
                 }

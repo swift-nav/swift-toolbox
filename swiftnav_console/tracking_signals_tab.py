@@ -132,7 +132,6 @@ class TrackingSignalsPoints(QObject):
         series_changed = False
         enabled_series = []
         for idx, series_points in enumerate(points_for_all_series):
-            series = None
             try:
                 series = self._all_series[idx]
                 series.clear()

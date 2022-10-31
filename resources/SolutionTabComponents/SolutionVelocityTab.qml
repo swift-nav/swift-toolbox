@@ -171,11 +171,12 @@ Item {
                     }
                     if (available_units != solutionVelocityPoints.available_units)
                         available_units = solutionVelocityPoints.available_units;
+                    let commonChart = Constants.commonChart;
                     if (!lines.length) {
                         for (var idx in labels) {
                             var line = solutionVelocityChart.createSeries(ChartView.SeriesTypeLine, Constants.solutionVelocity.labels[idx], solutionVelocityXAxis);
                             line.color = colors[idx];
-                            line.width = Constants.commonChart.lineWidth;
+                            line.width = commonChart.lineWidth;
                             line.axisYRight = solutionVelocityYAxis;
                             line.useOpenGL = Globals.useOpenGL;
                             lines.push(line);

@@ -137,10 +137,12 @@ Item {
                 if (!baselineTableEntries.entries.length)
                     return;
                 var entries = baselineTableEntries.entries;
+                let baselineTable = Constants.baselineTable;
                 for (var idx in entries) {
                     var new_row = {};
-                    new_row[Constants.baselineTable.tableLeftColumnHeader] = entries[idx][0];
-                    new_row[Constants.baselineTable.tableRightColumnHeader] = entries[idx][1];
+                    var entry = entries[idx];
+                    new_row[baselineTable.tableLeftColumnHeader] = entry[0];
+                    new_row[baselineTable.tableRightColumnHeader] = entry[1];
                     tableView.model.setRow(idx, new_row);
                 }
                 tableView.forceLayout();

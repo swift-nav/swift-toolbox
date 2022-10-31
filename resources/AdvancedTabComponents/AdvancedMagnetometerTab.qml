@@ -67,9 +67,11 @@ Item {
                         Row {
                             spacing: Constants.commonLegend.spacing
                             Component.onCompleted: {
-                                for (var idx in Constants.advancedMagnetometer.lineColors) {
-                                    if (lineLegendRepeaterRows.itemAt(idx))
-                                        lineLegendRepeaterRows.itemAt(idx).children[0].color = Constants.advancedMagnetometer.lineColors[idx];
+                                let magnetometer = Constants.advancedMagnetometer;
+                                for (var idx in magnetometer.lineColors) {
+                                    let item = lineLegendRepeaterRows.itemAt(idx);
+                                    if (item)
+                                        item.children[0].color = magnetometer.lineColors[idx];
                                 }
                             }
 
@@ -142,22 +144,25 @@ Item {
                     if (!advancedMagnetometerTab.visible)
                         return;
                     advanced_magnetometer_model.fill_console_points(advancedMagnetometerPoints);
-                    if (!advancedMagnetometerPoints.points.length)
+                    let magnetometerPoints = advancedMagnetometerPoints.points;
+                    if (!magnetometerPoints.length)
                         return;
                     var points = advancedMagnetometerPoints.points;
+                    let magnetometer = Constants.advancedMagnetometer;
+                    let commonChart = Constants.commonChart;
                     if (!lines.length) {
-                        for (var idx in advancedMagnetometerPoints.points) {
+                        for (var idx in magnetometerPoints) {
                             var line = advancedMagnetometerChart.createSeries(ChartView.SeriesTypeLine, idx, advancedMagnetometerXAxis);
-                            line.color = Constants.advancedMagnetometer.lineColors[idx];
-                            line.width = Constants.commonChart.lineWidth;
+                            line.color = magnetometer.lineColors[idx];
+                            line.width = commonChart.lineWidth;
                             line.axisYRight = advancedMagnetometerYAxis;
                             line.useOpenGL = Globals.useOpenGL;
                             lines.push(line);
                         }
                     }
                     advancedMagnetometerArea.visible = true;
-                    advancedMagnetometerYAxis.min = advancedMagnetometerPoints.ymin - Constants.advancedMagnetometer.yAxisPadding;
-                    advancedMagnetometerYAxis.max = advancedMagnetometerPoints.ymax + Constants.advancedMagnetometer.yAxisPadding;
+                    advancedMagnetometerYAxis.min = advancedMagnetometerPoints.ymin - magnetometer.yAxisPadding;
+                    advancedMagnetometerYAxis.max = advancedMagnetometerPoints.ymax + magnetometer.yAxisPadding;
                     advancedMagnetometerPoints.fill_series(lines);
                 }
             }

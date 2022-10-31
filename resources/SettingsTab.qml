@@ -61,9 +61,10 @@ MainTab {
         nameFilters: ["*.ini"]
         fileMode: LP.FileDialog.SaveFile
         currentFile: {
+            let settingsTab = Constants.settingsTab;
             let text = LP.StandardPaths.writableLocation(LP.StandardPaths.HomeLocation);
-            text += "/" + Constants.settingsTab.defaultImportExportRelativePathFromHome;
-            text += "/" + Constants.settingsTab.defaultExportFileName;
+            text += "/" + settingsTab.defaultImportExportRelativePathFromHome;
+            text += "/" + settingsTab.defaultExportFileName;
             return text;
         }
         onAccepted: {

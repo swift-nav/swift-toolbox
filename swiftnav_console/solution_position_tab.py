@@ -96,7 +96,27 @@ class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attr
     def get_points(self) -> List[List[QPointF]]:
         return self._points
 
+    cached_points = [{}, {}, {}, {}, {}, {}]
+    deleted_points = []
+    added_points = []
+
     def set_points(self, points) -> None:
+        new_cached_map = [{}, {}, {}, {}, {}, {}]
+        self.deleted_points = []
+        self.added_points = []
+        for i in range(len(points)):
+            for point in points[i]:
+                tup = (point.x, point.y)
+                new_cached_map[i][tup] = 1
+                if self.cached_points[i].get(tup):
+                    del self.cached_points[i][tup]
+                    continue
+                self.added_points.append(tup)
+        for i in self.cached_points:
+            for tup in i.keys():
+                self.deleted_points.append(tup)
+
+        self.cached_points = new_cached_map
         self._points = [list(map(lambda point: QPointF(point.x, point.y), points[idx])) for idx in range(len(points))]
 
     points = Property(QTKeys.QVARIANTLIST, get_points, set_points)  # type: ignore
@@ -134,7 +154,18 @@ class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attr
         cur_scatters = series_list[2]
         line.replace(self._solution_line)
         for idx, _ in enumerate(scatters):
-            scatters[idx].replace(self._points[idx])
+            if idx == 3:
+                index = 0
+                if self.deleted_points:
+                    index = len(self.deleted_points)
+                    for i in range(index):
+                        x,y = self.deleted_points[i]
+                        x1,y1 = self.added_points[i]
+                        scatters[idx].replace(x, y, x1, y1)
+                for i in range(len(self.added_points) - index):
+                    x, y = self.added_points[i]
+                    scatters[idx].append(x, y)
+            # scatters[idx].replace(self._points[idx])
             cur_scatters[idx].replace(self._cur_points[idx])
 
 

@@ -338,7 +338,8 @@ Item {
                     if (!solutionPositionTab.visible)
                         return;
                     solution_position_model.fill_console_points(solutionPositionPoints);
-                    if (!solutionPositionPoints.points.length)
+                    const points = solutionPositionPoints.points;
+                    if (!points.length)
                         return;
                     if (available_units != solutionPositionPoints.available_units)
                         available_units = solutionPositionPoints.available_units;
@@ -352,8 +353,8 @@ Item {
                     if (center_solution)
                         solutionPositionChart.centerToSolution();
                     let hasData = false;
-                    for (let idx in solutionPositionPoints.points) {
-                        if (solutionPositionPoints.points[idx].length) {
+                    for (let idx in points) {
+                        if (points[idx].length) {
                             hasData = true;
                             break;
                         }

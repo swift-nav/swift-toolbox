@@ -349,6 +349,10 @@ impl SharedState {
     pub fn heartbeat_data(&self) -> Heartbeat {
         self.lock().heartbeat_data.clone()
     }
+
+    pub fn event_channel(&self) -> (Sender<EventType>, Receiver<EventType>) {
+        self.lock().channel.clone()
+    }
 }
 
 impl Deref for SharedState {
@@ -393,7 +397,7 @@ pub struct SharedStateInner {
     pub(crate) channel: (Sender<EventType>, Receiver<EventType>),
 }
 
-pub(crate) enum EventType {
+pub enum EventType {
     EventRefresh(TabIndices),
 }
 

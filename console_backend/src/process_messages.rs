@@ -2,7 +2,7 @@ use crossbeam::channel;
 use std::thread::spawn;
 use std::{io, thread};
 
-use log::{debug, error};
+use log::{debug, error, info};
 use sbp::{
     link::LinkSource,
     messages::{
@@ -61,10 +61,11 @@ pub fn process_messages(
         .expect(UNABLE_TO_CLONE_UPDATE_SHARED)
         .clone_update_tab_context();
     update_tab_context.set_serial_prompt(conn.is_serial());
+    info!("asd");
     let (update_tab_tx, update_tab_rx) = tabs.update.lock().unwrap().clone_channel();
     crossbeam::scope(|scope| {
         scope.spawn(|_| {
-            let (_, rx) = shared_state.lock().channel.clone();
+            let (_, rx) = shared_state.event_channel();
             channel::select! {
                 recv(rx) -> res => {
                     if let Ok(event_type) = res{

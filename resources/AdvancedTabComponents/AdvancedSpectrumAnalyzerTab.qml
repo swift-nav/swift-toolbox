@@ -27,8 +27,6 @@ Item {
 
             Layout.fillWidth: true
             Layout.fillHeight: true
-            title: Constants.advancedSpectrumAnalyzer.title
-            titleColor: Constants.commonChart.titleColor
             plotAreaColor: Constants.commonChart.areaColor
             backgroundColor: "transparent"
             legend.visible: false

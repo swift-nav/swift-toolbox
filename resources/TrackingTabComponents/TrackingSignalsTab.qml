@@ -27,11 +27,12 @@ Item {
         update()
 
     function update() {
+        let commonChart = Constants.commonChart;
         if (all_series.length < num_labels) {
             for (var i = all_series.length; i < num_labels; i++) {
                 var series = trackingSignalsChart.createSeries(ChartView.SeriesTypeLine, trackingSignalsPoints.getLabel(i), trackingSignalsXAxis);
                 series.axisYRight = trackingSignalsYAxis;
-                series.width = Constants.commonChart.lineWidth;
+                series.width = commonChart.lineWidth;
                 series.useOpenGL = Globals.useOpenGL;
                 // Color will be set in Python with fill_all_series call.
                 trackingSignalsPoints.addSeries(series);

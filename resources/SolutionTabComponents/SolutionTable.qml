@@ -144,10 +144,12 @@ Item {
                 if (!solutionTableEntries.entries.length)
                     return;
                 var entries = solutionTableEntries.entries;
+                let solnTable = Constants.solutionTable;
                 for (var idx in entries) {
                     var new_row = {};
-                    new_row[Constants.solutionTable.tableLeftColumnHeader] = entries[idx][0];
-                    new_row[Constants.solutionTable.tableRightColumnHeader] = entries[idx][1];
+                    var entry = entries[idx];
+                    new_row[solnTable.tableLeftColumnHeader] = entry[0];
+                    new_row[solnTable.tableRightColumnHeader] = entry[1];
                     tableView.model.setRow(idx, new_row);
                 }
                 tableView.forceLayout();

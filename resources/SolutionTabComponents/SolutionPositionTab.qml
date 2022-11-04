@@ -352,16 +352,18 @@ Item {
                     if (center_solution)
                         solutionPositionChart.centerToSolution();
                     let hasData = false;
-                    for (let idx in solutionPositionPoints.points) {
-                        if (solutionPositionPoints.points[idx].length) {
+                    let solnPoints = solutionPositionPoints.points;
+                    for (let idx in solnPoints) {
+                        if (solnPoints[idx].length) {
                             hasData = true;
                             break;
                         }
                     }
-                    let new_lat_min = Constants.solutionPosition.axesDefaultMin;
-                    let new_lat_max = Constants.solutionPosition.axesDefaultMax;
-                    let new_lon_min = Constants.solutionPosition.axesDefaultMin;
-                    let new_lon_max = Constants.solutionPosition.axesDefaultMax;
+                    let solnPos = Constants.solutionPosition;
+                    let new_lat_min = solnPos.axesDefaultMin;
+                    let new_lat_max = solnPos.axesDefaultMax;
+                    let new_lon_min = solnPos.axesDefaultMin;
+                    let new_lon_max = solnPos.axesDefaultMax;
                     solutionZoomAllButton.enabled = hasData;
                     solutionCenterButton.enabled = hasData;
                     if (hasData) {

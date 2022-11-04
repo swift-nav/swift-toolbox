@@ -355,7 +355,7 @@ impl SolutionTab {
         // Validate logging.
         {
             let mut shared_data = self.shared_state.lock();
-            if let Some(ref mut vel_file) = (*shared_data).solution_tab.velocity_tab.log_file {
+            if let Some(ref mut vel_file) = shared_data.solution_tab.velocity_tab.log_file {
                 let mut gps_time = None;
                 if let Some(tgps) = tgps_ {
                     if let Some(secgps) = secgps_ {
@@ -415,8 +415,8 @@ impl SolutionTab {
         self.ins_status_flags = msg.flags;
         self.last_ins_status_receipt_time = Instant::now();
         let mut shared_data = self.shared_state.lock();
-        (*shared_data).solution_tab.position_tab.ins_status_flags = msg.flags;
-        (*shared_data)
+        shared_data.solution_tab.position_tab.ins_status_flags = msg.flags;
+        shared_data
             .solution_tab
             .position_tab
             .last_ins_status_receipt_time = self.last_ins_status_receipt_time;
@@ -532,7 +532,7 @@ impl SolutionTab {
         // Validate logging.
         {
             let mut shared_data = self.shared_state.lock();
-            if let Some(ref mut pos_file) = (*shared_data).solution_tab.position_tab.log_file {
+            if let Some(ref mut pos_file) = shared_data.solution_tab.position_tab.log_file {
                 let pc_time = format!("{}:{:>6.06}", tloc, secloc);
                 if let Err(err) = pos_file.serialize(&PosLLHLog {
                     pc_time,
@@ -624,10 +624,10 @@ impl SolutionTab {
     pub fn check_state(&mut self) -> (bool, bool) {
         let (clear, pause, new_unit) = {
             let mut shared_data = self.shared_state.lock();
-            let clear = (*shared_data).solution_tab.position_tab.clear;
-            (*shared_data).solution_tab.position_tab.clear = false;
-            let pause = (*shared_data).solution_tab.position_tab.pause;
-            let new_unit = (*shared_data).solution_tab.position_tab.unit.take();
+            let clear = shared_data.solution_tab.position_tab.clear;
+            shared_data.solution_tab.position_tab.clear = false;
+            let pause = shared_data.solution_tab.position_tab.pause;
+            let new_unit = shared_data.solution_tab.position_tab.unit.take();
             (clear, pause, new_unit)
         };
         if let Some(unit) = new_unit {
@@ -867,7 +867,7 @@ impl SolutionTab {
             .reborrow()
             .init_available_units(self.available_units.len() as u32);
         for (i, unit) in self.available_units.iter().enumerate() {
-            available_units.set(i as u32, *unit);
+            available_units.set(i as u32, unit);
         }
         let mut solution_points = solution_status
             .reborrow()

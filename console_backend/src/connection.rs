@@ -448,7 +448,7 @@ impl FileConnection {
         } else {
             filepath.as_os_str()
         };
-        let name: &str = &*name.to_string_lossy();
+        let name: &str = &name.to_string_lossy();
         Self {
             name: String::from(name),
             filepath,

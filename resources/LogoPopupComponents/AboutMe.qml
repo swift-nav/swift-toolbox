@@ -55,6 +55,8 @@ ColumnLayout {
 
     Button {
         text: `Check for updates`
-        onClicked:
+        onClicked: {
+
+        }
     }
 }

@@ -67,7 +67,7 @@ class AdvancedMagnetometerPoints(QObject):
         return self._points
 
     def set_points(self, points) -> None:
-        self._points = points
+        self._points = [list(map(lambda point: QPointF(point.x, point.y), points[idx])) for idx in range(len(points))]
 
     points = Property(QTKeys.QVARIANTLIST, get_points, set_points)  # type: ignore
 

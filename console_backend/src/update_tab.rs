@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Error};
+use anyhow::anyhow;
 use capnp::message::Builder;
 use crossbeam::{
     channel::{self, Receiver, Sender},
@@ -163,6 +163,12 @@ pub fn update_tab_thread(
                                                     );
                                                 });
                                             }
+
+                                            if update.check_for_updates {
+                                                inner_scope.spawn(|_| {
+                                                    let _result = check_console_outdated(update_tab_context.clone());
+                                                });
+                                            }
                                         },
                                         None => {
                                             is_running.set(false);
@@ -244,7 +250,7 @@ fn download_firmware(update_tab_context: UpdateTabContext) {
 
     let filepath = update_tab_context
         .current_firmware_version()
-        .ok_or(anyhow!("Waiting on settings to load to get current version."))
+        .ok_or_else(||anyhow!("Waiting on settings to load to get current version."))
         .and_then(|current_version| {
             if let Ok(above_v2) = check_above_v2(update_tab_context.clone()) {
                 return if !above_v2 {
@@ -452,6 +458,7 @@ pub struct UpdateTabUpdate {
     pub update_firmware: bool,
     pub send_file_to_device: bool,
     pub serial_prompt_confirm: bool,
+    pub check_for_updates: bool,
 }
 
 impl UpdateTabUpdate {
@@ -466,6 +473,7 @@ impl UpdateTabUpdate {
             firmware_local_filename: None,
             fileio_local_filepath: None,
             fileio_destination_filepath: None,
+            check_for_updates: false,
         }
     }
 }
@@ -898,6 +906,7 @@ mod tests {
                         update_firmware: false,
                         send_file_to_device: false,
                         serial_prompt_confirm: false,
+                        check_for_updates: false,
                     }))
                     .unwrap();
                 let start_time = Instant::now();
@@ -964,6 +973,7 @@ mod tests {
                         update_firmware: false,
                         send_file_to_device: false,
                         serial_prompt_confirm: false,
+                        check_for_updates: false,
                     }))
                     .unwrap();
                 let start_time = Instant::now();

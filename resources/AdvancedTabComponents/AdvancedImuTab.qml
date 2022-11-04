@@ -28,8 +28,6 @@ Item {
             Layout.fillHeight: true
             Layout.alignment: Qt.AlignTop
             visible: true
-            title: Constants.advancedImu.title
-            titleColor: Constants.commonChart.titleColor
             plotAreaColor: Constants.commonChart.areaColor
             backgroundColor: "transparent"
             legend.visible: false

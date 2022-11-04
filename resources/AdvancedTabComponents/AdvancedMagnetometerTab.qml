@@ -28,8 +28,6 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.alignment: Qt.AlignTop
-            title: Constants.advancedMagnetometer.title
-            titleColor: Constants.commonChart.titleColor
             plotAreaColor: Constants.commonChart.areaColor
             backgroundColor: "transparent"
             legend.visible: false

@@ -606,6 +606,7 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
     if args.show_fileio:
         globals_.setProperty("showFileio", True)  # type: ignore
     if args.use_opengl:
+        os.environ["QSG_RHI_BACKEND"] = "opengl"
         globals_.setProperty("useOpenGL", True)  # type: ignore
     if args.no_antialiasing:
         globals_.setProperty("useAntiAliasing", False)  # type: ignore

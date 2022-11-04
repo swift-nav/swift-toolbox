@@ -108,10 +108,8 @@ class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attr
             for point in points[i]:
                 tup = (point.x, point.y)
                 new_cached_map[i][tup] = 1
-                if self.cached_points[i].get(tup):
-                    del self.cached_points[i][tup]
-                    continue
-                self.added_points.append(tup)
+                if self.cached_points[i].pop(tup, None) is None:
+                    self.added_points.append(tup)
         for i in self.cached_points:
             for tup in i.keys():
                 self.deleted_points.append(tup)

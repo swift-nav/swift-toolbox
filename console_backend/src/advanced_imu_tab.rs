@@ -4,10 +4,10 @@ use sbp::messages::imu::{MsgImuAux, MsgImuRaw};
 use capnp::message::Builder;
 
 use crate::client_sender::BoxedClientSender;
+use crate::constants::*;
 use crate::fusion_status_flags::FusionStatusFlags;
 use crate::types::Deque;
 use crate::utils::serialize_capnproto_builder;
-use crate::{constants::*, zip};
 
 /// AdvancedImuTab struct.
 ///
@@ -65,24 +65,14 @@ impl AdvancedImuTab {
     fn imu_set_data(&mut self) {
         let acc_range = self.imu_conf & 0xF;
         let sig_figs = f64::powi(2_f64, acc_range as i32 + 1_i32) / f64::powi(2_f64, 15);
-        let (rms_x, rms_y, rms_z) = {
-            let mut squared_sum_x: f64 = 0_f64;
-            let mut squared_sum_y: f64 = 0_f64;
-            let mut squared_sum_z: f64 = 0_f64;
-            for (x, y, z) in zip!(&self.acc_x, &self.acc_y, &self.acc_z) {
-                squared_sum_x += x.powi(2);
-                squared_sum_y += y.powi(2);
-                squared_sum_z += z.powi(2);
-            }
-            (
-                f64::sqrt(squared_sum_x / self.acc_x.len() as f64),
-                f64::sqrt(squared_sum_y / self.acc_y.len() as f64),
-                f64::sqrt(squared_sum_z / self.acc_z.len() as f64),
-            )
-        };
-        self.rms_acc_x = sig_figs * rms_x;
-        self.rms_acc_y = sig_figs * rms_y;
-        self.rms_acc_z = sig_figs * rms_z;
+        let (rms_x2, rms_y2, rms_z2) = (
+            self.acc_x.iter().map(|x| x.powf(2_f64)).sum::<f64>() / self.acc_x.len() as f64,
+            self.acc_y.iter().map(|y| y.powf(2_f64)).sum::<f64>() / self.acc_y.len() as f64,
+            self.acc_z.iter().map(|z| z.powf(2_f64)).sum::<f64>() / self.acc_z.len() as f64,
+        );
+        self.rms_acc_x = sig_figs * f64::sqrt(rms_x2);
+        self.rms_acc_y = sig_figs * f64::sqrt(rms_y2);
+        self.rms_acc_z = sig_figs * f64::sqrt(rms_z2);
         self.send_data();
     }
 
@@ -145,15 +135,13 @@ impl AdvancedImuTab {
                 point_val.set_y(*point);
             }
         }
-        let fields_data = {
-            vec![
-                self.imu_temp,
-                self.imu_conf as f64,
-                self.rms_acc_x,
-                self.rms_acc_y,
-                self.rms_acc_z,
-            ]
-        };
+        let fields_data = [
+            self.imu_temp,
+            self.imu_conf as f64,
+            self.rms_acc_x,
+            self.rms_acc_y,
+            self.rms_acc_z,
+        ];
         let mut fields_data_status = tab_status
             .reborrow()
             .init_fields_data(NUM_INS_FIELDS as u32);

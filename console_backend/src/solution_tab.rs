@@ -213,15 +213,7 @@ impl SolutionTab {
             self.utc_time = None;
             self.utc_source = None;
         } else {
-            self.utc_time = Some(utc_time(
-                msg.year as i32,
-                msg.month as u32,
-                msg.day as u32,
-                msg.hours as u32,
-                msg.minutes as u32,
-                msg.seconds as u32,
-                msg.ns as u32,
-            ));
+            self.utc_time = Some(utc_time_from_msg(&msg));
             self.utc_source = Some(utc_source(msg.flags));
         }
     }
@@ -308,27 +300,31 @@ impl SolutionTab {
     /// # Parameters
     /// - `msg`: MsgPosLlhCov to extract data from.
     pub fn handle_pos_llh_cov(&mut self, msg: MsgPosLlhCov) {
-        if msg.flags != 0 {
-            self.table
-                .insert(COV_N_N, format_fixed_decimal_and_sign(msg.cov_n_n, 5, 3));
-            self.table
-                .insert(COV_N_E, format_fixed_decimal_and_sign(msg.cov_n_e, 5, 3));
-            self.table
-                .insert(COV_N_D, format_fixed_decimal_and_sign(msg.cov_n_d, 5, 3));
-            self.table
-                .insert(COV_E_E, format_fixed_decimal_and_sign(msg.cov_e_e, 5, 3));
-            self.table
-                .insert(COV_E_D, format_fixed_decimal_and_sign(msg.cov_e_d, 5, 3));
-            self.table
-                .insert(COV_D_D, format_fixed_decimal_and_sign(msg.cov_d_d, 5, 3));
+        let (cov_n_n, cov_n_e, cov_n_d, cov_e_e, cov_e_d, cov_d_d) = if msg.flags != 0 {
+            (
+                format_fixed_decimal_and_sign(msg.cov_n_n, 5, 3),
+                format_fixed_decimal_and_sign(msg.cov_n_e, 5, 3),
+                format_fixed_decimal_and_sign(msg.cov_n_d, 5, 3),
+                format_fixed_decimal_and_sign(msg.cov_e_e, 5, 3),
+                format_fixed_decimal_and_sign(msg.cov_e_d, 5, 3),
+                format_fixed_decimal_and_sign(msg.cov_d_d, 5, 3),
+            )
         } else {
-            self.table.insert(COV_N_N, String::from(EMPTY_STR));
-            self.table.insert(COV_N_E, String::from(EMPTY_STR));
-            self.table.insert(COV_N_D, String::from(EMPTY_STR));
-            self.table.insert(COV_E_E, String::from(EMPTY_STR));
-            self.table.insert(COV_E_D, String::from(EMPTY_STR));
-            self.table.insert(COV_D_D, String::from(EMPTY_STR));
-        }
+            (
+                EMPTY_STR.into(),
+                EMPTY_STR.into(),
+                EMPTY_STR.into(),
+                EMPTY_STR.into(),
+                EMPTY_STR.into(),
+                EMPTY_STR.into(),
+            )
+        };
+        self.table.insert(COV_N_N, cov_n_n);
+        self.table.insert(COV_N_E, cov_n_e);
+        self.table.insert(COV_N_D, cov_n_d);
+        self.table.insert(COV_E_E, cov_e_e);
+        self.table.insert(COV_E_D, cov_e_d);
+        self.table.insert(COV_D_D, cov_d_d);
     }
 
     /// Handle Vel NED / NEDDepA messages.
@@ -374,16 +370,16 @@ impl SolutionTab {
                     flags: vel_ned_fields.flags,
                     num_signals: vel_ned_fields.n_sats,
                 }) {
-                    error!("Unable to to write to vel log, error {}.", err);
+                    error!("Unable to to write to vel log, error {err}.");
                 }
             }
         }
         self.table
             .insert(VEL_FLAGS, format!("0x{:<03x}", vel_ned_fields.flags));
         if (vel_ned_fields.flags & 0x7) != 0 {
-            self.table.insert(VEL_N, format!("{: >8.4}", n));
-            self.table.insert(VEL_E, format!("{: >8.4}", e));
-            self.table.insert(VEL_D, format!("{: >8.4}", d));
+            self.table.insert(VEL_N, format!("{n: >8.4}"));
+            self.table.insert(VEL_E, format!("{e: >8.4}"));
+            self.table.insert(VEL_D, format!("{d: >8.4}"));
         } else {
             self.table.insert(VEL_N, String::from(EMPTY_STR));
             self.table.insert(VEL_E, String::from(EMPTY_STR));
@@ -482,11 +478,11 @@ impl SolutionTab {
     /// # Parameters
     /// - `msg`: The MsgAgeCorrections to extract data from.
     pub fn handle_age_corrections(&mut self, msg: MsgAgeCorrections) {
-        if msg.age != 0xFFFF {
-            self.age_corrections = Some(decisec_to_sec(msg.age as f64));
+        self.age_corrections = if msg.age != 0xFFFF {
+            Some(decisec_to_sec(msg.age as f64))
         } else {
-            self.age_corrections = None;
-        }
+            None
+        };
     }
 
     /// Handle PosLLH / PosLLHDepA messages.

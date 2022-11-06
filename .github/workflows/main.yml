@@ -37,8 +37,6 @@ jobs:
 
     steps:
 
-      - run: echo ${{ env.LIBCLANG_PATH }}
-
       - name: Checkout source
         uses: actions/checkout@v2
         with:

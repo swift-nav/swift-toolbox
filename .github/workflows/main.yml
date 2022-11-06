@@ -12,7 +12,7 @@ on:
 env:
   PIP_CACHE_DIR: ~/.cache/pip
   RUST_CACHE_DIRS: "~/.cargo/registry\n~/.cargo/git\ntarget\n"
-  LIBCLANG_PATH_WIN: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
+  LIBCLANG_PATH: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
   CODE_SIGNER_PATH_WIN: "%win10sdk%/x64/signtool.exe"
   CARGO_MAKE_VERSION: 0.35.13
   CARGO_INCREMENTAL: 0
@@ -36,6 +36,8 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
+
+      - run: echo ${{ env.LIBCLANG_PATH }}
 
       - name: Checkout source
         uses: actions/checkout@v2
@@ -299,12 +301,6 @@ jobs:
           cargo make setup-builder
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set env vars
-        shell: bash
-        run: |
-          echo "LIBCLANG_PATH=$LIBCLANG_PATH_WIN" >>$GITHUB_ENV
-        if: matrix.os.name == 'windows-2019'
 
       - name: Store git tag vars.
         shell: bash

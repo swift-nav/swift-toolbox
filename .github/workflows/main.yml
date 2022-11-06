@@ -92,30 +92,18 @@ jobs:
           path: ${{ env.PIP_CACHE_DIR }}
           key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
 
-
       - name: Install ImageMagick
         shell: bash
-        run: |
-          cargo make install-imagemagick
+        run: cargo make install-imagemagick
 
       - name: Set up python builder
         shell: bash
-        run: |
-          cargo make setup-builder
+        run: cargo make setup-builder
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run Backend Benchmarks (Windows)
-        env:
-          LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
-        run: |
-          cargo make backend-benches
-        if: matrix.os == 'windows-2019'
-
       - name: Run Backend Benchmarks
-        run: |
-          cargo make backend-benches
-        if: matrix.os != 'windows-2019'
+        run: cargo make backend-benches
 
   checks:
 

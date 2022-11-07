@@ -89,7 +89,7 @@ pub fn process_messages(
             tab.stop()
         }
         if let Err(err) = update_tab_tx.send(None) {
-            error!("Issue stopping update tab: {}", err);
+            error!("Issue stopping update tab: {err}");
         }
     })
     .expect(PROCESS_MESSAGES_FAILURE);
@@ -218,7 +218,9 @@ fn register_events(link: sbp::link::Link<Tabs>) {
         tabs.tracking_sky_plot.lock().unwrap().handle_sv_az_el(msg);
     });
     link.register(|tabs: &Tabs, _msg: MsgStartup| {
-        tabs.shared_state.set_settings_refresh(true);
+        if let Some(settings) = &tabs.settings {
+            settings.shared_state.set_settings_refresh(true);
+        }
     });
     link.register(|tabs: &Tabs, msg: MsgThreadState| {
         tabs.advanced_system_monitor

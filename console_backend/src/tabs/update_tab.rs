@@ -150,7 +150,7 @@ pub fn update_tab_thread(
                                                         link.clone(),
                                                         msg_sender.clone(),
                                                     ) {
-                                                        update_tab_context.fw_log_append(format!("Error starting upgrade: {}", err));
+                                                        update_tab_context.fw_log_append(format!("Error starting upgrade: {err}"));
                                                     }
                                                 });
                                             }
@@ -241,44 +241,29 @@ fn download_firmware(update_tab_context: UpdateTabContext) {
     update_tab_context.set_downloading(true);
     update_tab_context.fw_log_clear();
     let mut update_downloader = update_tab_context.update_downloader();
-    let filepath = if let Some(current_version) = update_tab_context.current_firmware_version() {
-        if let Ok(above_v2) = check_above_v2(update_tab_context.clone()) {
-            if !above_v2 {
-                update_tab_context.fw_log_append(format!(
-                    "Current firmware version, {}, requires upgrading to {} before upgrading to latest version.",
-                    current_version, FIRMWARE_V2_VERSION
-                ));
-                match update_downloader
-                    .download_multi_v2_firmware(directory, Some(update_tab_context.clone()))
-                {
-                    Ok(filepath_) => Some(filepath_),
-                    Err(err) => {
-                        update_tab_context.fw_log_append(err.to_string());
-                        None
-                    }
-                }
-            } else {
-                match update_downloader
-                    .download_multi_firmware(directory, Some(update_tab_context.clone()))
-                {
-                    Ok(filepath_) => Some(filepath_),
-                    Err(err) => {
-                        update_tab_context.fw_log_append(err.to_string());
-                        None
-                    }
+    let filepath = update_tab_context
+        .current_firmware_version()
+        .ok_or_else(||anyhow!("Waiting on settings to load to get current version."))
+        .and_then(|current_version| {
+            if let Ok(above_v2) = check_above_v2(update_tab_context.clone()) {
+                return if !above_v2 {
+                    update_tab_context.fw_log_append(format!(
+                        "Current firmware version, {current_version}, requires upgrading to {FIRMWARE_V2_VERSION} before upgrading to latest version."
+                    ));
+                    update_downloader.download_multi_v2_firmware(directory, Some(update_tab_context.clone()))
+                } else {
+                    update_downloader.download_multi_firmware(directory, Some(update_tab_context.clone()))
                 }
             }
-        } else {
-            update_tab_context.fw_log_append(String::from(
-                "Waiting on settings to load to get current version.",
-            ));
+            Err(anyhow!("Waiting on settings to load to get current version."))
+        });
+
+    let filepath = match filepath {
+        Ok(path) => Some(path),
+        Err(err) => {
+            update_tab_context.fw_log_append(err.to_string());
             None
         }
-    } else {
-        update_tab_context.fw_log_append(String::from(
-            "Waiting on settings to load to get current version.",
-        ));
-        None
     };
     update_tab_context.set_firmware_local_filepath(filepath);
     update_tab_context.set_downloading(false);
@@ -310,8 +295,7 @@ fn check_firmware_outdated(update_tab_context: UpdateTabContext) -> Result<bool>
         let outdated = latest > current;
         if outdated {
             update_tab_context.fw_log_append(format!(
-                "Latest firmware version, {}, does not match current version, {}.",
-                latest_version, current_version
+                "Latest firmware version, {latest_version}, does not match current version, {current_version}."
             ));
         }
         update_tab_context.set_firmware_outdated(outdated);

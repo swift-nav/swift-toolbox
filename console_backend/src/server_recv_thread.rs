@@ -15,11 +15,11 @@ use crate::errors::{
 };
 use crate::log_panel::LogLevel;
 use crate::output::CsvLogging;
-use crate::settings_tab;
 use crate::shared_state::{AdvancedNetworkingState, SharedState};
-use crate::tabs::solution_tab::LatLonUnits;
+use crate::tabs::{
+    settings_tab::SaveRequest, solution_tab::LatLonUnits, update_tab::UpdateTabUpdate,
+};
 use crate::types::{FlowControl, RealtimeDelay};
-use crate::update_tab::UpdateTabUpdate;
 use crate::utils::refresh_connection_frontend;
 
 pub type Error = anyhow::Error;
@@ -268,7 +268,7 @@ pub fn server_recv_thread(
                     let group = req.get_group().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
                     let name = req.get_name().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
                     let value = req.get_value().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
-                    let req = settings_tab::SaveRequest {
+                    let req = SaveRequest {
                         group: group.to_string(),
                         name: name.to_string(),
                         value: value.to_string(),

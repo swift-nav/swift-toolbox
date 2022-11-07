@@ -187,7 +187,7 @@ where
         return;
     }
 
-    for regex in UPGRADE_WHITELIST.iter() {
+    for &regex in UPGRADE_WHITELIST.iter() {
         if let Ok(reg) = Regex::new(regex) {
             if reg.captures(&text).is_some() {
                 log_callback(

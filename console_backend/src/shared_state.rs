@@ -31,10 +31,10 @@ use crate::errors::CONVERT_TO_STR_FAILURE;
 use crate::log_panel::LogLevel;
 use crate::output::{CsvLogging, CsvSerializer};
 use crate::process_messages::StopToken;
-use crate::settings_tab;
-use crate::tabs::main_tab::logging_stats_thread;
-use crate::tabs::solution_tab::LatLonUnits;
-use crate::update_tab::UpdateTabUpdate;
+use crate::tabs::{
+    main_tab::logging_stats_thread, settings_tab, solution_tab::LatLonUnits,
+    update_tab::UpdateTabUpdate,
+};
 use crate::utils::send_conn_state;
 use crate::watch::{WatchReceiver, Watched};
 use crate::{common_constants::ConnectionType, connection::Connection};

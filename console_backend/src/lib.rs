@@ -21,34 +21,28 @@ pub mod process_messages;
 #[cfg(all(not(feature = "benches"), not(feature = "tests"), feature = "pyo3"))]
 pub mod server;
 pub mod server_recv_thread;
-pub mod settings_tab;
 pub mod shared_state;
 pub mod status_bar;
 pub mod swift_version;
 pub mod tabs;
 pub mod types;
 pub mod update_downloader;
-pub mod update_tab;
 pub mod utils;
 pub mod watch;
 
-use crate::settings_tab::SettingsTab;
 use crate::status_bar::StatusBar;
 use std::sync::Mutex;
 
-use crate::tabs::advanced_imu_tab::AdvancedImuTab;
-use crate::tabs::advanced_magnetometer_tab::AdvancedMagnetometerTab;
-use crate::tabs::advanced_networking_tab::AdvancedNetworkingTab;
-use crate::tabs::advanced_spectrum_analyzer_tab::AdvancedSpectrumAnalyzerTab;
-use crate::tabs::advanced_system_monitor_tab::AdvancedSystemMonitorTab;
-use crate::tabs::baseline_tab::BaselineTab;
-use crate::tabs::main_tab::MainTab;
-use crate::tabs::observation_tab::ObservationTab;
-use crate::tabs::solution_tab::SolutionTab;
-use crate::tabs::solution_velocity_tab::SolutionVelocityTab;
-use crate::tabs::tracking_signals_tab::TrackingSignalsTab;
-use crate::tabs::tracking_sky_plot_tab::TrackingSkyPlotTab;
-use crate::update_tab::UpdateTab;
+use crate::tabs::{
+    advanced_imu_tab::AdvancedImuTab, advanced_magnetometer_tab::AdvancedMagnetometerTab,
+    advanced_networking_tab::AdvancedNetworkingTab,
+    advanced_spectrum_analyzer_tab::AdvancedSpectrumAnalyzerTab,
+    advanced_system_monitor_tab::AdvancedSystemMonitorTab, baseline_tab::BaselineTab,
+    main_tab::MainTab, observation_tab::ObservationTab, settings_tab::SettingsTab,
+    solution_tab::SolutionTab, solution_velocity_tab::SolutionVelocityTab,
+    tracking_signals_tab::TrackingSignalsTab, tracking_sky_plot_tab::TrackingSkyPlotTab,
+    update_tab::UpdateTab,
+};
 
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;

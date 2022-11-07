@@ -28,10 +28,7 @@ pub fn logging_stats_thread(
         let mut recv = shared_state.watch_connection();
         let mut start_time = Instant::now();
         let mut filepath = None;
-        loop {
-            if matches!(recv.get(), Err(_) | Ok(ConnectionState::Closed)) {
-                break;
-            }
+        while !matches!(recv.get(), Err(_) | Ok(ConnectionState::Closed)) {
             let current_path = shared_state.sbp_logging_filepath();
             if current_path != filepath {
                 filepath = current_path;

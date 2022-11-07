@@ -17,7 +17,7 @@ use crate::log_panel::LogLevel;
 use crate::output::CsvLogging;
 use crate::settings_tab;
 use crate::shared_state::{AdvancedNetworkingState, SharedState};
-use crate::solution_tab::LatLonUnits;
+use crate::tabs::solution_tab::LatLonUnits;
 use crate::types::{FlowControl, RealtimeDelay};
 use crate::update_tab::UpdateTabUpdate;
 use crate::utils::refresh_connection_frontend;

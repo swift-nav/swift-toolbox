@@ -253,9 +253,9 @@ impl MainTab {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::baseline_tab::BaselineTab;
     use crate::client_sender::TestSender;
-    use crate::solution_tab::SolutionTab;
+    use crate::tabs::baseline_tab::BaselineTab;
+    use crate::tabs::solution_tab::SolutionTab;
     use crate::types::{BaselineNED, MsgSender, PosLLH, VelNED};
     use crate::utils::{mm_to_m, ms_to_sec};
     use glob::glob;

@@ -22,6 +22,7 @@ use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use serialport::FlowControl;
 
+use crate::client_sender::BoxedClientSender;
 use crate::constants::{
     APPLICATION_NAME, APPLICATION_ORGANIZATION, APPLICATION_QUALIFIER, CONNECTION_HISTORY_FILENAME,
     DEFAULT_IP_ADDRESS, DEFAULT_LOG_DIRECTORY, DEFAULT_PORT, MAX_CONNECTION_HISTORY, MPS,
@@ -31,11 +32,11 @@ use crate::log_panel::LogLevel;
 use crate::output::{CsvLogging, CsvSerializer};
 use crate::process_messages::StopToken;
 use crate::settings_tab;
-use crate::solution_tab::LatLonUnits;
+use crate::tabs::main_tab::logging_stats_thread;
+use crate::tabs::solution_tab::LatLonUnits;
 use crate::update_tab::UpdateTabUpdate;
 use crate::utils::send_conn_state;
 use crate::watch::{WatchReceiver, Watched};
-use crate::{client_sender::BoxedClientSender, main_tab::logging_stats_thread};
 use crate::{common_constants::ConnectionType, connection::Connection};
 use crate::{
     common_constants::{self as cc, SbpLogging},

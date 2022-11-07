@@ -4,7 +4,7 @@ use capnp::message::Builder;
 
 use crate::client_sender::BoxedClientSender;
 use crate::constants::{MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER, NUM_POINTS};
-use crate::shared_state::{SharedState, TabIndices};
+use crate::shared_state::{SharedState, TabName};
 use crate::types::Deque;
 use crate::utils::serialize_capnproto_builder;
 use crate::zip;
@@ -71,7 +71,7 @@ impl AdvancedMagnetometerTab {
 
     /// Package data into a message buffer and send to frontend.
     fn send_data(&mut self) {
-        if self.shared_state.current_tab() != TabIndices::Advanced {
+        if self.shared_state.current_tab() != TabName::Advanced {
             return;
         }
         let mut builder = Builder::new_default();

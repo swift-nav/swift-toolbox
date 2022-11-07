@@ -11,7 +11,7 @@ use sbp::messages::{
 use crate::date_conv::*;
 use crate::output::BaselineLog;
 use crate::piksi_tools_constants::EMPTY_STR;
-use crate::shared_state::{SharedState, TabIndices};
+use crate::shared_state::{SharedState, TabName};
 use crate::types::{BaselineNED, Deque, GnssModes, GpsTime, MsgSender, Result, UtcDateTime};
 use crate::utils::*;
 use crate::zip;
@@ -387,7 +387,7 @@ impl BaselineTab {
 
         let buttons = self.check_state();
         self.solution_draw(buttons);
-        if self.shared_state.current_tab() != TabIndices::Baseline {
+        if self.shared_state.current_tab() != TabName::Baseline {
             return;
         }
         self.send_solution_data();

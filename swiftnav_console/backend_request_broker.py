@@ -300,11 +300,11 @@ class BackendRequestBroker(QObject):  # pylint: disable=too-many-instance-attrib
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
 
-    @Slot(int)  # type: ignore
-    def switch_tab(self, tab_index) -> None:
+    @Slot(str)  # type: ignore
+    def switch_tab(self, tab_name) -> None:
         Message = self.messages.Message
         m = Message()
         m.onTabChangeEvent = m.init(Message.Union.OnTabChangeEvent)
-        m.onTabChangeEvent.currentTab = tab_index
+        m.onTabChangeEvent.currentTab = tab_name
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)

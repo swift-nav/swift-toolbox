@@ -323,7 +323,9 @@ pub fn server_recv_thread(
                     shared_state.set_settings_confirm_ins_change(true);
                 }
                 m::message::OnTabChangeEvent(Ok(cv_in)) => {
-                    let curr_tab: u8 = cv_in.get_current_tab();
+                    let curr_tab = cv_in
+                        .get_current_tab()
+                        .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
                     shared_state.set_current_tab(curr_tab);
                 }
                 _ => {

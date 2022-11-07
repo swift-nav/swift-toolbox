@@ -451,7 +451,7 @@ struct AutoSurveyRequest {
 }
 
 struct TabChangeEvent {
-    currentTab @0 :UInt8;
+    currentTab @0 :Text;
 }
 
 struct Message {

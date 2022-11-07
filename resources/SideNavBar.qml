@@ -67,7 +67,7 @@ Item {
                     for (var idx = 0; idx < buttons.length && buttons[idx] != checkedButton; idx++)
                         ;
                     navButtons.currentIndex = idx;
-                    backend_request_broker.switch_tab(idx);
+                    backend_request_broker.switch_tab(tabModel[idx]["name"]);
                 }
             }
 

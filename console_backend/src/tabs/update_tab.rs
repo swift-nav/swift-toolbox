@@ -275,8 +275,7 @@ fn check_above_v2(update_tab_context: UpdateTabContext) -> Result<bool> {
         let above_v2 = current.is_dev() || current > *FIRMWARE_V2;
         if !above_v2 {
             update_tab_context.fw_log_append(format!(
-                "Checkpoint firmware version, {}, is newer than current version, {}.",
-                FIRMWARE_V2_VERSION, current_version
+                "Checkpoint firmware version, {FIRMWARE_V2_VERSION}, is newer than current version, {current_version}." 
             ));
         }
         update_tab_context.set_firmware_v2_outdated(!above_v2);

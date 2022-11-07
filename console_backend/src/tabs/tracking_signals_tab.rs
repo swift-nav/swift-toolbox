@@ -176,14 +176,14 @@ impl TrackingSignalsTab {
             let (code_lbl, freq_lbl, id_lbl) = signal_key_label(*key, Some(&self.glo_slot_dict));
             let mut label = String::from("");
             if let Some(lbl) = code_lbl {
-                label = format!("{} {}", label, lbl);
+                label = format!("{label} {lbl}");
             }
             if let Some(lbl) = freq_lbl {
-                label = format!("{} {}", label, lbl);
+                label = format!("{label} {lbl}");
             }
             if let Some(lbl) = id_lbl {
                 tracked_sv_labels.push(lbl.clone());
-                label = format!("{} {}", label, lbl);
+                label = format!("{label} {lbl}");
             }
 
             temp_labels.push((label, *key));

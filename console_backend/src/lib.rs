@@ -101,7 +101,7 @@ impl Tabs {
             )
             .into(),
             status_bar: StatusBar::new(shared_state.clone()).into(),
-            update: UpdateTab::new(shared_state.clone()).into(),
+            update: UpdateTab::new(shared_state).into(),
             settings: None,
         }
     }

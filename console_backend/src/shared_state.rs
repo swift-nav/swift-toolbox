@@ -676,7 +676,7 @@ fn create_data_dir() -> AHResult<PathBuf> {
     )
     .context("could not discover local project directory")?;
     let path: PathBuf = ProjectDirs::data_local_dir(&proj_dirs).into();
-    fs::create_dir_all(path.clone())?;
+    fs::create_dir_all(path.as_path())?;
     Ok(path)
 }
 

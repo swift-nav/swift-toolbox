@@ -112,7 +112,7 @@ impl<T> Deque<T> {
     }
 
     /// Returns old element in the event that it has been replaced
-    pub fn push_out(&mut self, value: T) -> Option<T> {
+    pub fn push(&mut self, value: T) -> Option<T> {
         let ret = if self.is_full() {
             Some(std::mem::replace(&mut self.data[self.index], value))
         } else {
@@ -121,10 +121,6 @@ impl<T> Deque<T> {
         };
         self.index = (self.index + 1) % self.capacity();
         ret
-    }
-
-    pub fn push(&mut self, value: T) {
-        self.push_out(value);
     }
 
     pub fn clear(&mut self) {

@@ -22,7 +22,7 @@ pyo3 = { version = "0.17", features = [
 ], default-features = false, optional = true }
 serde = { version = "1.0.147", features = ["derive"] }
 tempfile = "3.3.0"
-ordered-float = "3.3"
+ordered-float = "3.4"
 ndarray = "0.15.6"
 glob = "0.3.0"
 criterion = "0.4.0"

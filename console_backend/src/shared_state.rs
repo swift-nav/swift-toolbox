@@ -12,7 +12,7 @@ use std::{
 
 use anyhow::{Context, Result as AHResult};
 use chrono::{DateTime, Utc};
-use crossbeam::channel::Sender;
+use crossbeam::channel::{unbounded, Receiver, Sender};
 use directories::{ProjectDirs, UserDirs};
 use indexmap::set::IndexSet;
 use indexmap::IndexMap;
@@ -202,13 +202,7 @@ impl SharedState {
         Ok(())
     }
     pub fn start_pos_log(&self, path: &Path) {
-        self.lock().solution_tab.position_tab.log_file = match CsvSerializer::new(path) {
-            Ok(vel_csv) => Some(vel_csv),
-            Err(e) => {
-                error!("issue creating file, {}, error, {}", path.display(), e);
-                None
-            }
-        }
+        self.lock().solution_tab.position_tab.log_file = CsvSerializer::new_option(path);
     }
     pub fn end_pos_log(&self) -> Result<()> {
         if let Some(ref mut log) = self.lock().solution_tab.position_tab.log_file {
@@ -218,13 +212,7 @@ impl SharedState {
         Ok(())
     }
     pub fn start_baseline_log(&self, path: &Path) {
-        self.lock().baseline_tab.log_file = match CsvSerializer::new(path) {
-            Ok(vel_csv) => Some(vel_csv),
-            Err(e) => {
-                error!("issue creating file, {}, error, {}", path.display(), e);
-                None
-            }
-        }
+        self.lock().baseline_tab.log_file = CsvSerializer::new_option(path);
     }
     pub fn end_baseline_log(&self) -> Result<()> {
         if let Some(ref mut log) = self.lock().baseline_tab.log_file {
@@ -374,7 +362,9 @@ pub struct SharedStateInner {
     pub(crate) advanced_networking_update: Option<AdvancedNetworkingState>,
     pub(crate) auto_survey_data: AutoSurveyData,
     pub(crate) heartbeat_data: Heartbeat,
+    pub(crate) server_channel: (Sender<EventType>, Receiver<EventType>),
 }
+
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
         let connection_history = ConnectionHistory::new();
@@ -400,13 +390,19 @@ impl SharedStateInner {
             advanced_networking_update: None,
             auto_survey_data: AutoSurveyData::new(),
             heartbeat_data,
+            server_channel: unbounded(),
         }
     }
 }
+
 impl Default for SharedStateInner {
     fn default() -> Self {
         SharedStateInner::new()
     }
+}
+
+pub enum EventType {
+    EventRefresh(),
 }
 
 #[derive(Debug, Default)]
@@ -441,9 +437,8 @@ impl LoggingBarState {
         };
         if let Err(err) = fs::create_dir_all(&logging_directory) {
             error!(
-                "Unable to create directory, {}, {}.",
-                logging_directory.display(),
-                err
+                "Unable to create directory, {}, {err}.",
+                logging_directory.display()
             );
         }
         LoggingBarState {
@@ -950,19 +945,13 @@ mod tests {
         create_data_dir().unwrap();
         let user_dirs = UserDirs::new().unwrap();
         let home_dir = user_dirs.home_dir();
-        #[cfg(target_os = "linux")]
-        {
-            assert!(home_dir.join(data_directories::LINUX).exists());
-        }
 
+        #[cfg(target_os = "linux")]
+        assert!(home_dir.join(data_directories::LINUX).exists());
         #[cfg(target_os = "macos")]
-        {
-            assert!(home_dir.join(data_directories::MACOS).exists());
-        }
+        assert!(home_dir.join(data_directories::MACOS).exists());
         #[cfg(target_os = "windows")]
-        {
-            assert!(home_dir.join(data_directories::WINDOWS).exists());
-        }
+        assert!(home_dir.join(data_directories::WINDOWS).exists());
     }
 
     #[test]

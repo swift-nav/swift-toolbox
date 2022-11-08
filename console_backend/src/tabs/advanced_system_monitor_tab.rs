@@ -48,13 +48,13 @@ impl AdvancedSystemMonitorTab {
             obs_latency: {
                 UART_STATE_KEYS
                     .iter()
-                    .map(|key| (String::from(*key), 0))
+                    .map(|&key| (String::from(key), 0))
                     .collect()
             },
             obs_period: {
                 UART_STATE_KEYS
                     .iter()
-                    .map(|key| (String::from(*key), 0))
+                    .map(|&key| (String::from(key), 0))
                     .collect()
             },
             threads: vec![],

@@ -26,6 +26,7 @@ pub type Error = anyhow::Error;
 pub type Result<T> = anyhow::Result<T>;
 pub type UtcDateTime = DateTime<Utc>;
 
+/// Handles all capnproto messages, links from front-end dispatched to backend
 pub fn server_recv_thread(
     conn_manager: ConnectionManager,
     client_sender: BoxedClientSender,
@@ -66,11 +67,7 @@ pub fn server_recv_thread(
                         .get_filename()
                         .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
                     let filename = filename.to_string();
-                    conn_manager.connect_to_file(
-                        filename,
-                        RealtimeDelay::On,
-                        /*close_when_done*/ false,
-                    );
+                    conn_manager.connect_to_file(filename, RealtimeDelay::On, false);
                 }
                 m::message::TcpRequest(Ok(req)) => {
                     let host = req.get_host().expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);

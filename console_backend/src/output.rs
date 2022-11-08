@@ -1,3 +1,4 @@
+use log::error;
 use std::fs::{File, OpenOptions};
 use std::path::Path;
 
@@ -76,18 +77,29 @@ pub struct CsvSerializer {
 }
 
 impl CsvSerializer {
-    pub fn new<P: AsRef<Path>>(filepath: P) -> Result<CsvSerializer> {
-        Ok(CsvSerializer {
-            writer: csv::Writer::from_path(filepath)?,
-        })
+    pub fn new(filepath: impl AsRef<Path>) -> Result<CsvSerializer> {
+        let writer = csv::Writer::from_path(filepath)?;
+        Ok(CsvSerializer { writer })
     }
-    pub fn serialize<T>(&mut self, ds: &T) -> Result<()>
-    where
-        T: Serialize,
-    {
+
+    pub fn new_option(filepath: impl AsRef<Path> + Copy) -> Option<CsvSerializer> {
+        match CsvSerializer::new(filepath) {
+            Ok(vel_csv) => Some(vel_csv),
+            Err(e) => {
+                error!(
+                    "issue creating file, {:?}, error, {e}",
+                    filepath.as_ref().display()
+                );
+                None
+            }
+        }
+    }
+
+    pub fn serialize(&mut self, ds: &impl Serialize) -> Result<()> {
         self.writer.serialize(ds)?;
         Ok(())
     }
+
     pub fn flush(&mut self) -> Result<()> {
         self.writer.flush()?;
         Ok(())

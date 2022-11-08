@@ -18,7 +18,7 @@ use crate::types::SignalCodes;
 
 pub mod date_conv;
 
-pub fn ok_or_log<T, E>(res: Result<T, E>, log_err: fn(E) -> ()) -> Option<T> {
+pub fn ok_or_log<T, E>(res: Result<T, E>, log_err: impl FnOnce(E)) -> Option<T> {
     match res {
         Ok(res) => Some(res),
         Err(e) => {

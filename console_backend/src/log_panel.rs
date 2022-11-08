@@ -154,7 +154,7 @@ fn init_log_file(shared_state: &SharedState) -> Option<File> {
             error!(
                 "issue creating console log file, {}, error, {e}",
                 p.display()
-            )
+            );
         })
     })
 }

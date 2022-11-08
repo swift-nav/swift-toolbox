@@ -16,6 +16,8 @@ use crate::errors::*;
 use crate::shared_state::{ConnectionState, SerialConfig, SharedState};
 use crate::types::SignalCodes;
 
+pub mod date_conv;
+
 /// Create a new SbpString of L size with T termination.
 pub fn fixed_sbp_string<T, const L: usize>(data: &str) -> SbpString<[u8; L], T> {
     let mut arr = [0u8; L];

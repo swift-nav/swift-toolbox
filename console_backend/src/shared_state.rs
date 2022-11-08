@@ -937,21 +937,13 @@ impl std::fmt::Display for ConnectionState {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_common::{backup_file, data_directories, filename, restore_backup_file};
+    use crate::test_common::{backup_file, filename, restore_backup_file};
     use serial_test::serial;
 
     #[test]
     fn create_data_dir_test() {
         create_data_dir().unwrap();
-        let user_dirs = UserDirs::new().unwrap();
-        let home_dir = user_dirs.home_dir();
-
-        #[cfg(target_os = "linux")]
-        assert!(home_dir.join(data_directories::LINUX).exists());
-        #[cfg(target_os = "macos")]
-        assert!(home_dir.join(data_directories::MACOS).exists());
-        #[cfg(target_os = "windows")]
-        assert!(home_dir.join(data_directories::WINDOWS).exists());
+        assert!(filename().parent().unwrap().exists())
     }
 
     #[test]

@@ -16,23 +16,22 @@ use std::{
     time::Duration,
 };
 
+use crate::errors::{
+    CONVERT_TO_STR_FAILURE, CROSSBEAM_SCOPE_UNWRAP_FAILURE, SHARED_STATE_LOCK_MUTEX_FAILURE,
+    THREAD_JOIN_FAILURE,
+};
 use crate::fileio::Fileio;
 use crate::shared_state::{SharedState, LOG_DIRECTORY};
-use crate::swift_version::SwiftVersion;
 use crate::types::{ArcBool, MsgSender, Result};
-use crate::update_downloader::UpdateDownloader;
+use crate::updater::{
+    firmware_update::{firmware_update, LogOverwriteBehavior},
+    swift_version::SwiftVersion,
+    update_downloader::UpdateDownloader,
+};
 use crate::utils::serialize_capnproto_builder;
 use crate::{
     client_sender::BoxedClientSender,
     constants::{FIRMWARE_V2, FIRMWARE_V2_VERSION, HARDWARE_REVISION},
-    firmware_update::firmware_update,
-};
-use crate::{
-    errors::{
-        CONVERT_TO_STR_FAILURE, CROSSBEAM_SCOPE_UNWRAP_FAILURE, SHARED_STATE_LOCK_MUTEX_FAILURE,
-        THREAD_JOIN_FAILURE,
-    },
-    firmware_update::LogOverwriteBehavior,
 };
 
 const UPDATE_THREAD_SLEEP_MS: u64 = 1000;

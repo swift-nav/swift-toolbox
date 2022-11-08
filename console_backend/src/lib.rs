@@ -6,11 +6,9 @@ pub mod client_sender;
 pub mod common_constants;
 pub mod connection;
 pub mod constants;
-pub mod date_conv;
 pub mod errors;
 pub mod fft_monitor;
 pub mod fileio;
-pub mod firmware_update;
 pub mod formatters;
 pub mod fusion_status_flags;
 pub mod log_panel;
@@ -23,10 +21,9 @@ pub mod server;
 pub mod server_recv_thread;
 pub mod shared_state;
 pub mod status_bar;
-pub mod swift_version;
 pub mod tabs;
 pub mod types;
-pub mod update_downloader;
+pub mod updater;
 pub mod utils;
 pub mod watch;
 
@@ -34,13 +31,20 @@ use crate::status_bar::StatusBar;
 use std::sync::Mutex;
 
 use crate::tabs::{
-    advanced_imu_tab::AdvancedImuTab, advanced_magnetometer_tab::AdvancedMagnetometerTab,
-    advanced_networking_tab::AdvancedNetworkingTab,
-    advanced_spectrum_analyzer_tab::AdvancedSpectrumAnalyzerTab,
-    advanced_system_monitor_tab::AdvancedSystemMonitorTab, baseline_tab::BaselineTab,
-    main_tab::MainTab, observation_tab::ObservationTab, settings_tab::SettingsTab,
-    solution_tab::SolutionTab, solution_velocity_tab::SolutionVelocityTab,
-    tracking_signals_tab::TrackingSignalsTab, tracking_sky_plot_tab::TrackingSkyPlotTab,
+    advanced_tab::{
+        advanced_imu_tab::AdvancedImuTab, advanced_magnetometer_tab::AdvancedMagnetometerTab,
+        advanced_networking_tab::AdvancedNetworkingTab,
+        advanced_spectrum_analyzer_tab::AdvancedSpectrumAnalyzerTab,
+        advanced_system_monitor_tab::AdvancedSystemMonitorTab,
+    },
+    baseline_tab::BaselineTab,
+    main_tab::MainTab,
+    observation_tab::ObservationTab,
+    settings_tab::SettingsTab,
+    solution_tab::SolutionTab,
+    solution_velocity_tab::SolutionVelocityTab,
+    tracking_signals_tab::TrackingSignalsTab,
+    tracking_sky_plot_tab::TrackingSkyPlotTab,
     update_tab::UpdateTab,
 };
 

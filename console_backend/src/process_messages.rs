@@ -65,7 +65,7 @@ pub fn process_messages(
             recv(event_rx) -> event => {
                 match event {
                     Ok(EventType::EventRefresh()) => {
-                        println!("asd");
+                        // TODO: here is where we will process refreshes in the other PRs.
                     }
                     Err(e) => error!("what happened here @ event type channel {e}")
                 }

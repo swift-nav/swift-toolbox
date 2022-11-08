@@ -13,10 +13,10 @@ use sbp::{
     SbpString,
 };
 
+use crate::updater::swift_version::SwiftVersion;
 use crate::{
     constants::FIRMWARE_V2,
     fileio::{new_sequence, Fileio},
-    swift_version::SwiftVersion,
     types::{MsgSender, Result},
 };
 

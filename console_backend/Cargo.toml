@@ -64,7 +64,7 @@ logtest = "2.0.0"
 serial_test = "0.8.0"
 
 [build-dependencies]
-capnpc = "0.14"
+capnpc = "0.15"
 
 [lib]
 name = "console_backend"

@@ -255,7 +255,7 @@ mod tests {
     use super::*;
     use crate::client_sender::TestSender;
     use crate::tabs::baseline_tab::BaselineTab;
-    use crate::tabs::solution_tab::SolutionTab;
+    use crate::tabs::solution_tab::solution_position_tab::SolutionPositionTab;
     use crate::types::{BaselineNED, MsgSender, PosLLH, VelNED};
     use crate::utils::{mm_to_m, ms_to_sec};
     use glob::glob;
@@ -275,7 +275,7 @@ mod tests {
         let writer = sink();
         let msg_sender = MsgSender::new(writer);
         let mut main = MainTab::new(shared_state.clone(), client_send.clone());
-        let mut solution_tab = SolutionTab::new(shared_state.clone(), client_send.clone());
+        let mut solution_tab = SolutionPositionTab::new(shared_state.clone(), client_send.clone());
         let mut baseline_tab = BaselineTab::new(shared_state, client_send, msg_sender);
         assert_eq!(main.last_csv_logging, CsvLogging::OFF);
         main.shared_state.set_csv_logging(CsvLogging::ON);

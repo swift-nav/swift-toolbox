@@ -41,10 +41,12 @@ use crate::tabs::{
     main_tab::MainTab,
     observation_tab::ObservationTab,
     settings_tab::SettingsTab,
-    solution_tab::SolutionTab,
-    solution_velocity_tab::SolutionVelocityTab,
-    tracking_signals_tab::TrackingSignalsTab,
-    tracking_sky_plot_tab::TrackingSkyPlotTab,
+    solution_tab::{
+        solution_position_tab::SolutionPositionTab, solution_velocity_tab::SolutionVelocityTab,
+    },
+    tracking_tab::{
+        tracking_signals_tab::TrackingSignalsTab, tracking_sky_plot_tab::TrackingSkyPlotTab,
+    },
     update_tab::UpdateTab,
 };
 
@@ -60,7 +62,7 @@ struct Tabs {
     pub baseline: Mutex<BaselineTab>,
     pub tracking_signals: Mutex<TrackingSignalsTab>,
     pub tracking_sky_plot: Mutex<TrackingSkyPlotTab>,
-    pub solution: Mutex<SolutionTab>,
+    pub solution_position: Mutex<SolutionPositionTab>,
     pub observation: Mutex<ObservationTab>,
     pub solution_velocity: Mutex<SolutionVelocityTab>,
     pub advanced_spectrum_analyzer: Mutex<AdvancedSpectrumAnalyzerTab>,
@@ -93,7 +95,11 @@ impl Tabs {
             tracking_sky_plot: TrackingSkyPlotTab::new(client_sender.clone(), shared_state.clone())
                 .into(),
             observation: ObservationTab::new(shared_state.clone(), client_sender.clone()).into(),
-            solution: SolutionTab::new(shared_state.clone(), client_sender.clone()).into(),
+            solution_position: SolutionPositionTab::new(
+                shared_state.clone(),
+                client_sender.clone(),
+            )
+            .into(),
             solution_velocity: SolutionVelocityTab::new(
                 shared_state.clone(),
                 client_sender.clone(),

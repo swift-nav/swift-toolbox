@@ -11,7 +11,7 @@ use sbp::messages::{
 use crate::output::BaselineLog;
 use crate::piksi_tools_constants::EMPTY_STR;
 use crate::shared_state::SharedState;
-use crate::types::{BaselineNED, Deque, GnssModes, GpsTime, MsgSender, Result, UtcDateTime};
+use crate::types::{BaselineNED, GnssModes, GpsTime, MsgSender, Result, RingBuffer, UtcDateTime};
 use crate::utils::{date_conv::*, *};
 use crate::zip;
 use crate::{client_sender::BoxedClientSender, constants::*};
@@ -66,7 +66,7 @@ pub struct BaselineTab {
     shared_state: SharedState,
     sln_cur_data: Vec<Vec<(f64, f64)>>,
     sln_data: Vec<Vec<(f64, f64)>>,
-    slns: HashMap<&'static str, Deque<f64>>,
+    slns: HashMap<&'static str, RingBuffer<f64>>,
     table: HashMap<&'static str, String>,
     utc_source: Option<String>,
     utc_time: Option<UtcDateTime>,
@@ -112,7 +112,7 @@ impl BaselineTab {
             slns: {
                 BASELINE_DATA_KEYS
                     .iter()
-                    .map(|key| (*key, Deque::new(PLOT_HISTORY_MAX)))
+                    .map(|key| (*key, RingBuffer::new(PLOT_HISTORY_MAX)))
                     .collect()
             },
             table: {
@@ -262,7 +262,7 @@ impl BaselineTab {
         let h_accuracy = mm_to_m(baseline_ned_fields.h_accuracy as f64);
         let v_accuracy = mm_to_m(baseline_ned_fields.v_accuracy as f64);
 
-        let dist: f64 = f64::sqrt(f64::powi(n, 2) + f64::powi(e, 2) + f64::powi(d, 2));
+        let dist = euclidean_distance([n, e, d].iter());
 
         let mut tow = ms_to_sec(baseline_ned_fields.tow);
         if let Some(nsec) = self.nsec {

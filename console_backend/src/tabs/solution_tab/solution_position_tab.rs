@@ -13,7 +13,7 @@ use crate::output::{PosLLHLog, VelLog};
 use crate::piksi_tools_constants::EMPTY_STR;
 use crate::shared_state::SharedState;
 use crate::tabs::solution_tab::LatLonUnits;
-use crate::types::{Deque, Dops, GnssModes, GpsTime, PosLLH, UtcDateTime, VelNED};
+use crate::types::{Dops, GnssModes, GpsTime, PosLLH, RingBuffer, UtcDateTime, VelNED};
 use crate::utils::{date_conv::*, *};
 
 /// SolutionTab struct.
@@ -50,9 +50,9 @@ pub struct SolutionPositionTab {
     client_sender: BoxedClientSender,
     ins_status_flags: u32,
     ins_used: bool,
-    lats: Deque<f64>,
-    lons: Deque<f64>,
-    alts: Deque<f64>,
+    lats: RingBuffer<f64>,
+    lons: RingBuffer<f64>,
+    alts: RingBuffer<f64>,
     last_ins_status_receipt_time: Instant,
     last_pos_mode: u8,
     last_odo_update_time: Instant,
@@ -65,15 +65,15 @@ pub struct SolutionPositionTab {
     lon_max: f64,
     lon_min: f64,
     mode_strings: Vec<String>,
-    modes: Deque<u8>,
+    modes: RingBuffer<u8>,
     nsec: Option<i32>,
     pending_draw_modes: Vec<String>,
     shared_state: SharedState,
     sln_cur_data: Vec<Vec<(f64, f64)>>,
     sln_data: Vec<Vec<(f64, f64)>>,
-    sln_line: Deque<(f64, f64)>,
-    pending_sln_line: Deque<(f64, f64)>,
-    slns: HashMap<&'static str, Deque<f64>>,
+    sln_line: RingBuffer<(f64, f64)>,
+    pending_sln_line: RingBuffer<(f64, f64)>,
+    slns: HashMap<&'static str, RingBuffer<f64>>,
     table: HashMap<&'static str, String>,
     unit: LatLonUnits,
     utc_source: Option<String>,
@@ -100,9 +100,9 @@ impl SolutionPositionTab {
             client_sender,
             ins_status_flags: 0,
             ins_used: false,
-            lats: Deque::new(PLOT_HISTORY_MAX),
-            lons: Deque::new(PLOT_HISTORY_MAX),
-            alts: Deque::new(PLOT_HISTORY_MAX),
+            lats: RingBuffer::new(PLOT_HISTORY_MAX),
+            lons: RingBuffer::new(PLOT_HISTORY_MAX),
+            alts: RingBuffer::new(PLOT_HISTORY_MAX),
             last_ins_status_receipt_time: Instant::now(),
             last_pos_mode: 0,
             last_odo_update_time: Instant::now(),
@@ -114,7 +114,7 @@ impl SolutionPositionTab {
             lon_offset: 0.0,
             lon_max: f64::MAX,
             lon_min: f64::MIN,
-            modes: Deque::new(PLOT_HISTORY_MAX),
+            modes: RingBuffer::new(PLOT_HISTORY_MAX),
             pending_draw_modes: Vec::with_capacity(mode_strings.len()),
             mode_strings,
             nsec: Some(0),
@@ -132,11 +132,11 @@ impl SolutionPositionTab {
             slns: {
                 SOLUTION_DATA_KEYS
                     .iter()
-                    .map(|key| (*key, Deque::new(PLOT_HISTORY_MAX)))
+                    .map(|key| (*key, RingBuffer::new(PLOT_HISTORY_MAX)))
                     .collect()
             },
-            sln_line: Deque::new(PLOT_HISTORY_MAX),
-            pending_sln_line: Deque::new(PLOT_HISTORY_MAX),
+            sln_line: RingBuffer::new(PLOT_HISTORY_MAX),
+            pending_sln_line: RingBuffer::new(PLOT_HISTORY_MAX),
             table: {
                 SOLUTION_TABLE_KEYS
                     .iter()
@@ -279,12 +279,14 @@ impl SolutionPositionTab {
     /// - `msg`: VelNED wrapper around a MsgVelNed or MsgVELNEDDepA.
     pub fn handle_vel_ned(&mut self, msg: VelNED) {
         let vel_ned_fields = msg.fields();
-        let speed: f64 = mm_to_m(f64::sqrt(
-            (i32::pow(vel_ned_fields.n, 2) + i32::pow(vel_ned_fields.e, 2)) as f64,
-        ));
-        let n = mm_to_m(vel_ned_fields.n as f64);
-        let e = mm_to_m(vel_ned_fields.e as f64);
-        let d = mm_to_m(vel_ned_fields.d as f64);
+        let n = vel_ned_fields.n as f64;
+        let e = vel_ned_fields.e as f64;
+        let d = vel_ned_fields.d as f64;
+
+        let speed: f64 = mm_to_m(euclidean_distance([n, e].iter()));
+        let n = mm_to_m(n);
+        let e = mm_to_m(e);
+        let d = mm_to_m(d);
         let mut tow = ms_to_sec(vel_ned_fields.tow);
         if let Some(nsec) = self.nsec {
             tow += ns_to_sec(nsec as f64);
@@ -301,10 +303,10 @@ impl SolutionPositionTab {
                 let mut gps_time = None;
                 if let Some(tgps) = tgps_ {
                     if let Some(secgps) = secgps_ {
-                        gps_time = Some(format!("{}:{:0>6.06}", tgps, secgps));
+                        gps_time = Some(format!("{tgps}:{secgps:0>6.06}"));
                     }
                 }
-                let pc_time = format!("{}:{:0>6.06}", tloc, secloc);
+                let pc_time = format!("{tloc}:{secloc:0>6.06}");
                 if let Err(err) = vel_file.serialize(&VelLog {
                     pc_time,
                     gps_time,

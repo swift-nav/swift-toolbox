@@ -18,14 +18,19 @@ use crate::types::SignalCodes;
 
 pub mod date_conv;
 
+/// Compute n-dimensional euclidean distance
+pub fn euclidean_distance<'a>(pos_iter: impl Iterator<Item = &'a f64>) -> f64 {
+    f64::sqrt(pos_iter.map(|x| x.powf(2_f64)).sum())
+}
+
+pub trait OkOrLog<T, E, F: FnOnce(E)> {
+    fn ok_or_log(self, log_err: F) -> Option<T>;
+}
+
 /// Unwrap result, log if error
-pub fn ok_or_log<T, E>(res: Result<T, E>, log_err: impl FnOnce(E)) -> Option<T> {
-    match res {
-        Ok(res) => Some(res),
-        Err(e) => {
-            log_err(e);
-            None
-        }
+impl<T, E, F: FnOnce(E)> OkOrLog<T, E, F> for Result<T, E> {
+    fn ok_or_log(self, log_err: F) -> Option<T> {
+        self.map_err(log_err).ok()
     }
 }
 

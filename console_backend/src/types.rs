@@ -94,17 +94,18 @@ impl Clone for MsgSender {
 type Iter<'a, T> = std::iter::Chain<std::slice::Iter<'a, T>, std::slice::Iter<'a, T>>;
 type IterMut<'a, T> = std::iter::Chain<std::slice::IterMut<'a, T>, std::slice::IterMut<'a, T>>;
 
+/// Circular queue suited for popping oldest element to make room for new element
 #[derive(Debug, Clone)]
-pub struct Deque<T> {
+pub struct RingBuffer<T> {
     data: Vec<T>,
     capacity: usize,
     // Index to where the next element will be placed.
     index: usize,
 }
 
-impl<T> Deque<T> {
-    pub fn new(capacity: usize) -> Deque<T> {
-        Deque {
+impl<T> RingBuffer<T> {
+    pub fn new(capacity: usize) -> RingBuffer<T> {
+        RingBuffer {
             data: Vec::with_capacity(capacity),
             capacity,
             index: 0,
@@ -157,9 +158,9 @@ impl<T> Deque<T> {
     }
 }
 
-impl<T: Clone> Deque<T> {
-    pub fn with_fill_value(capacity: usize, fill_value: T) -> Deque<T> {
-        Deque {
+impl<T: Clone> RingBuffer<T> {
+    pub fn with_fill_value(capacity: usize, fill_value: T) -> RingBuffer<T> {
+        RingBuffer {
             data: vec![fill_value; capacity],
             capacity,
             index: 0,
@@ -167,7 +168,7 @@ impl<T: Clone> Deque<T> {
     }
 }
 
-impl<T> std::ops::Index<usize> for Deque<T> {
+impl<T> std::ops::Index<usize> for RingBuffer<T> {
     type Output = T;
 
     fn index(&self, index: usize) -> &Self::Output {
@@ -177,7 +178,7 @@ impl<T> std::ops::Index<usize> for Deque<T> {
     }
 }
 
-impl<T> std::ops::IndexMut<usize> for Deque<T> {
+impl<T> std::ops::IndexMut<usize> for RingBuffer<T> {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         let len = self.len();
         assert!(index < len);
@@ -185,7 +186,7 @@ impl<T> std::ops::IndexMut<usize> for Deque<T> {
     }
 }
 
-impl<'a, T> IntoIterator for &'a Deque<T> {
+impl<'a, T> IntoIterator for &'a RingBuffer<T> {
     type Item = &'a T;
     type IntoIter = Iter<'a, T>;
 
@@ -194,7 +195,7 @@ impl<'a, T> IntoIterator for &'a Deque<T> {
     }
 }
 
-impl<'a, T> IntoIterator for &'a mut Deque<T> {
+impl<'a, T> IntoIterator for &'a mut RingBuffer<T> {
     type Item = &'a mut T;
     type IntoIter = IterMut<'a, T>;
 
@@ -354,7 +355,7 @@ impl Deref for FlowControl {
 }
 
 // Tracking Signals Tab Types.
-pub type Cn0Dict = HashMap<(SignalCodes, i16), Deque<(OrderedFloat<f64>, f64)>>;
+pub type Cn0Dict = HashMap<(SignalCodes, i16), RingBuffer<(OrderedFloat<f64>, f64)>>;
 pub type Cn0Age = HashMap<(SignalCodes, i16), f64>;
 
 #[repr(u8)]
@@ -1530,7 +1531,7 @@ mod tests {
 
     #[test]
     fn test_deque_index() {
-        let mut d = Deque::new(3);
+        let mut d = RingBuffer::new(3);
         d.push(0);
         d.push(1);
         d.push(2);
@@ -1553,7 +1554,7 @@ mod tests {
 
     #[test]
     fn test_deque_iter() {
-        let mut d = Deque::new(3);
+        let mut d = RingBuffer::new(3);
         d.push(0);
         d.push(1);
         d.push(2);
@@ -1592,9 +1593,9 @@ mod tests {
 
     #[test]
     fn test_zip() {
-        let x = Deque::with_fill_value(3, 0);
-        let y = Deque::with_fill_value(3, 1);
-        let z = Deque::with_fill_value(3, 2);
+        let x = RingBuffer::with_fill_value(3, 0);
+        let y = RingBuffer::with_fill_value(3, 1);
+        let z = RingBuffer::with_fill_value(3, 2);
         for (x, y, z) in zip!(&x, &y, &z) {
             assert_eq!(*x, 0);
             assert_eq!(*y, 1);
@@ -1605,7 +1606,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_index_oob_panic() {
-        let mut d = Deque::new(3);
+        let mut d = RingBuffer::new(3);
         d.push(1);
         d.push(2);
         d.push(3);

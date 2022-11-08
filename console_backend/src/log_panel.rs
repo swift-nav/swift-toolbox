@@ -23,10 +23,10 @@ pub type LogLevel = cc::LogLevel;
 impl LogLevel {
     pub fn level_filter(&self) -> LevelFilter {
         match self {
-            cc::LogLevel::DEBUG => LevelFilter::Debug,
-            cc::LogLevel::INFO => LevelFilter::Info,
-            cc::LogLevel::NOTICE | cc::LogLevel::WARNING => LevelFilter::Warn,
-            cc::LogLevel::ERROR => LevelFilter::Error,
+            LogLevel::DEBUG => LevelFilter::Debug,
+            LogLevel::INFO => LevelFilter::Info,
+            LogLevel::NOTICE | LogLevel::WARNING => LevelFilter::Warn,
+            LogLevel::ERROR => LevelFilter::Error,
         }
     }
 }

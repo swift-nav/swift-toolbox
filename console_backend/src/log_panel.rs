@@ -9,11 +9,11 @@ use sbp::messages::logging::MsgLog;
 use serde::{Deserialize, Serialize};
 
 use crate::client_sender::BoxedClientSender;
-use crate::common_constants as cc;
 use crate::constants::LOG_WRITER_BUFFER_MESSAGE_COUNT;
 use crate::errors::CONSOLE_LOG_JSON_TO_STRING_FAILURE;
 use crate::shared_state::SharedState;
 use crate::utils::serialize_capnproto_builder;
+use crate::{common_constants as cc, utils};
 
 const DEVICE: &str = "DEVICE";
 const CONSOLE: &str = "CONSOLE";
@@ -149,16 +149,13 @@ fn init_log_file(shared_state: &SharedState) -> Option<File> {
     let filepath = shared_state
         .log_filename()
         .map(|f| shared_state.logging_directory().join(f));
-    filepath.and_then(|p| match File::create(&p) {
-        Ok(f) => Some(f),
-        Err(e) => {
+    filepath.and_then(|p| {
+        utils::ok_or_log(File::create(&p), |e| {
             error!(
-                "issue creating console log file, {}, error, {}",
-                p.display(),
-                e
-            );
-            None
-        }
+                "issue creating console log file, {}, error, {e}",
+                p.display()
+            )
+        })
     })
 }
 

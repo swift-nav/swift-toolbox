@@ -16,6 +16,7 @@ use crate::constants::{
 };
 use crate::output::{CsvLogging, SbpLogger};
 use crate::shared_state::{create_directory, ConnectionState, SharedState};
+use crate::utils;
 use crate::utils::{refresh_loggingbar, refresh_loggingbar_recording};
 
 const LOGGING_STATS_UPDATE_INTERVAL: Duration = Duration::from_millis(500);
@@ -150,22 +151,14 @@ impl MainTab {
                 error!("Issue creating directory {}.", e);
             }
         }
-        self.sbp_logger = match logging {
-            SbpLogging::SBP => match SbpLogger::new_sbp(&filepath) {
-                Ok(logger) => Some(logger),
-                Err(e) => {
-                    error!("issue creating file, {}, error, {}", filepath.display(), e);
-                    None
-                }
+
+        self.sbp_logger = utils::ok_or_log(
+            match logging {
+                SbpLogging::SBP => SbpLogger::new_sbp(&filepath),
+                SbpLogging::SBP_JSON => SbpLogger::new_sbp_json(&filepath),
             },
-            SbpLogging::SBP_JSON => match SbpLogger::new_sbp_json(&filepath) {
-                Ok(logger) => Some(logger),
-                Err(e) => {
-                    error!("issue creating file, {}, error, {}", filepath.display(), e);
-                    None
-                }
-            },
-        };
+            |e| error!("issue creating file, {}, error, {e}", filepath.display()),
+        );
         if self.sbp_logger.is_some() {
             self.shared_state
                 .set_sbp_logging(true, self.client_sender.clone());

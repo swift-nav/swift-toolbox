@@ -186,13 +186,7 @@ impl SharedState {
             .record_serial(device, baud, flow);
     }
     pub fn start_vel_log(&self, path: &Path) {
-        self.lock().solution_tab.velocity_tab.log_file = match CsvSerializer::new(path) {
-            Ok(vel_csv) => Some(vel_csv),
-            Err(e) => {
-                error!("issue creating file, {}, error, {}", path.display(), e);
-                None
-            }
-        }
+        self.lock().solution_tab.velocity_tab.log_file = CsvSerializer::new_option(path);
     }
     pub fn end_vel_log(&self) -> Result<()> {
         if let Some(ref mut log) = self.lock().solution_tab.velocity_tab.log_file {

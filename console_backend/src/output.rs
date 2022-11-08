@@ -7,9 +7,9 @@ use sbp::{Sbp, SbpEncoder};
 use serde::Serialize;
 use serde_json::ser::CompactFormatter;
 
-use crate::common_constants as cc;
 use crate::formatters::*;
 use crate::types::Result;
+use crate::{common_constants as cc, utils};
 
 pub type CsvLogging = cc::CsvLogging;
 impl From<bool> for CsvLogging {
@@ -83,16 +83,12 @@ impl CsvSerializer {
     }
 
     pub fn new_option(filepath: impl AsRef<Path> + Copy) -> Option<CsvSerializer> {
-        match CsvSerializer::new(filepath) {
-            Ok(vel_csv) => Some(vel_csv),
-            Err(e) => {
-                error!(
-                    "issue creating file, {:?}, error, {e}",
-                    filepath.as_ref().display()
-                );
-                None
-            }
-        }
+        utils::ok_or_log(CsvSerializer::new(filepath), |e| {
+            error!(
+                "issue creating file, {:?}, error, {e}",
+                filepath.as_ref().display()
+            )
+        })
     }
 
     pub fn serialize(&mut self, ds: &impl Serialize) -> Result<()> {

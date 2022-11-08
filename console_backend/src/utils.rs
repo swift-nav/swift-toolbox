@@ -18,6 +18,16 @@ use crate::types::SignalCodes;
 
 pub mod date_conv;
 
+pub fn ok_or_log<T, E>(res: Result<T, E>, log_err: fn(E) -> ()) -> Option<T> {
+    match res {
+        Ok(res) => Some(res),
+        Err(e) => {
+            log_err(e);
+            None
+        }
+    }
+}
+
 /// Create a new SbpString of L size with T termination.
 pub fn fixed_sbp_string<T, const L: usize>(data: &str) -> SbpString<[u8; L], T> {
     let mut arr = [0u8; L];

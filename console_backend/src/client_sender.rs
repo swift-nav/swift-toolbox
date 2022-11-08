@@ -2,9 +2,11 @@ use std::fmt;
 use std::sync::Arc;
 
 use crossbeam::channel::Sender;
+use log::error;
 use parking_lot::Mutex;
 
 use crate::types::ArcBool;
+use crate::utils;
 
 pub type BoxedClientSender = Box<dyn ClientSender + 'static>;
 
@@ -56,7 +58,9 @@ impl ChannelSender {
 impl ClientSender for ChannelSender {
     fn send_data(&self, msg_bytes: Vec<u8>) {
         if self.connected.get() {
-            let _ = self.inner.send(msg_bytes);
+            utils::ok_or_log(self.inner.send(msg_bytes), |e| {
+                error!("error dispatching data: {e:?}")
+            });
         }
     }
 

@@ -18,6 +18,11 @@ use crate::types::SignalCodes;
 
 pub mod date_conv;
 
+/// Formats DOPS field into string, used in SolutionPositionTab
+pub fn dops_into_string(field: u16) -> String {
+    format!("{:.1}", field as f64 * DILUTION_OF_PRECISION_UNITS)
+}
+
 /// Compute n-dimensional euclidean distance
 pub fn euclidean_distance<'a>(pos_iter: impl Iterator<Item = &'a f64>) -> f64 {
     f64::sqrt(pos_iter.map(|x| x.powf(2_f64)).sum())

@@ -14,6 +14,7 @@ use crate::piksi_tools_constants::EMPTY_STR;
 use crate::shared_state::SharedState;
 use crate::tabs::solution_tab::LatLonUnits;
 use crate::types::{Dops, GnssModes, GpsTime, PosLLH, RingBuffer, UtcDateTime, VelNED};
+use crate::utils;
 use crate::utils::{date_conv::*, *};
 
 /// SolutionTab struct.
@@ -377,41 +378,11 @@ impl SolutionPositionTab {
         self.table
             .insert(INS_STATUS, format!("0x{:<01x}", self.ins_status_flags));
         if dops_fields.flags != 0 {
-            self.table.insert(
-                PDOP,
-                format!(
-                    "{:.1}",
-                    dops_fields.pdop as f64 * DILUTION_OF_PRECISION_UNITS
-                ),
-            );
-            self.table.insert(
-                GDOP,
-                format!(
-                    "{:.1}",
-                    dops_fields.gdop as f64 * DILUTION_OF_PRECISION_UNITS
-                ),
-            );
-            self.table.insert(
-                TDOP,
-                format!(
-                    "{:.1}",
-                    dops_fields.tdop as f64 * DILUTION_OF_PRECISION_UNITS
-                ),
-            );
-            self.table.insert(
-                HDOP,
-                format!(
-                    "{:.1}",
-                    dops_fields.hdop as f64 * DILUTION_OF_PRECISION_UNITS
-                ),
-            );
-            self.table.insert(
-                VDOP,
-                format!(
-                    "{:.1}",
-                    dops_fields.vdop as f64 * DILUTION_OF_PRECISION_UNITS
-                ),
-            );
+            self.table.insert(PDOP, dops_into_string(dops_fields.pdop));
+            self.table.insert(GDOP, dops_into_string(dops_fields.gdop));
+            self.table.insert(TDOP, dops_into_string(dops_fields.tdop));
+            self.table.insert(HDOP, dops_into_string(dops_fields.hdop));
+            self.table.insert(VDOP, dops_into_string(dops_fields.vdop));
         } else {
             self.table.insert(PDOP, String::from(EMPTY_STR));
             self.table.insert(GDOP, String::from(EMPTY_STR));
@@ -1168,23 +1139,23 @@ mod tests {
         solution_tab.handle_dops(msg);
         assert_eq!(
             solution_tab.table[PDOP],
-            format!("{:.1}", pdop as f64 * DILUTION_OF_PRECISION_UNITS)
+            format!("{:.1}", pdop * DILUTION_OF_PRECISION_UNITS)
         );
         assert_eq!(
             solution_tab.table[GDOP],
-            format!("{:.1}", gdop as f64 * DILUTION_OF_PRECISION_UNITS)
+            format!("{:.1}", gdop * DILUTION_OF_PRECISION_UNITS)
         );
         assert_eq!(
             solution_tab.table[TDOP],
-            format!("{:.1}", tdop as f64 * DILUTION_OF_PRECISION_UNITS)
+            format!("{:.1}", tdop * DILUTION_OF_PRECISION_UNITS)
         );
         assert_eq!(
             solution_tab.table[HDOP],
-            format!("{:.1}", hdop as f64 * DILUTION_OF_PRECISION_UNITS)
+            format!("{:.1}", hdop * DILUTION_OF_PRECISION_UNITS)
         );
         assert_eq!(
             solution_tab.table[VDOP],
-            format!("{:.1}", vdop as f64 * DILUTION_OF_PRECISION_UNITS)
+            format!("{:.1}", vdop * DILUTION_OF_PRECISION_UNITS)
         );
 
         let msg = Dops::MsgDopsDepA(MsgDopsDepA {

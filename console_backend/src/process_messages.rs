@@ -1,4 +1,3 @@
-use crossbeam::select;
 use std::io;
 
 use log::{debug, error};
@@ -63,10 +62,9 @@ pub fn process_messages(
     std::thread::spawn(move || {
         for event in event_rx.iter() {
             match event {
-                Ok(EventType::EventRefresh()) => {
+                EventType::EventRefresh() => {
                     println!("refresh!");
                 }
-                Err(e) => error!("what happened here @ event type channel {e}")
             }
         }
     });

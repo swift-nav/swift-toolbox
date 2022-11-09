@@ -61,14 +61,12 @@ pub fn process_messages(
     update_tab_context.set_serial_prompt(conn.is_serial());
     let (_, event_rx) = shared_state.lock().event_channel.clone();
     std::thread::spawn(move || {
-        select! {
-            recv(event_rx) -> event => {
-                match event {
-                    Ok(EventType::EventRefresh()) => {
-                        println!("refresh!");
-                    }
-                    Err(e) => error!("what happened here @ event type channel {e}")
+        for event in event_rx.iter() {
+            match event {
+                Ok(EventType::EventRefresh()) => {
+                    println!("refresh!");
                 }
+                Err(e) => error!("what happened here @ event type channel {e}")
             }
         }
     });

@@ -14,7 +14,6 @@ use crate::piksi_tools_constants::EMPTY_STR;
 use crate::shared_state::SharedState;
 use crate::tabs::solution_tab::LatLonUnits;
 use crate::types::{Dops, GnssModes, GpsTime, PosLLH, RingBuffer, UtcDateTime, VelNED};
-use crate::utils;
 use crate::utils::{date_conv::*, *};
 
 /// SolutionTab struct.
@@ -511,9 +510,9 @@ impl SolutionPositionTab {
             self.modes.push(self.last_pos_mode);
 
             if self.shared_state.auto_survey_requested() {
-                let lat = self.lats.iter().sum::<f64>() as f64 / self.lats.len() as f64;
-                let lon = self.lons.iter().sum::<f64>() as f64 / self.lons.len() as f64;
-                let alt = self.alts.iter().sum::<f64>() as f64 / self.alts.len() as f64;
+                let lat = self.lats.iter().sum::<f64>() / self.lats.len() as f64;
+                let lon = self.lons.iter().sum::<f64>() / self.lons.len() as f64;
+                let alt = self.alts.iter().sum::<f64>() / self.alts.len() as f64;
 
                 self.shared_state.set_auto_survey_result(lat, lon, alt);
                 self.shared_state.set_settings_auto_survey_request(true);
@@ -1139,23 +1138,23 @@ mod tests {
         solution_tab.handle_dops(msg);
         assert_eq!(
             solution_tab.table[PDOP],
-            format!("{:.1}", pdop * DILUTION_OF_PRECISION_UNITS)
+            format!("{:.1}", pdop as f64 * DILUTION_OF_PRECISION_UNITS)
         );
         assert_eq!(
             solution_tab.table[GDOP],
-            format!("{:.1}", gdop * DILUTION_OF_PRECISION_UNITS)
+            format!("{:.1}", gdop as f64 * DILUTION_OF_PRECISION_UNITS)
         );
         assert_eq!(
             solution_tab.table[TDOP],
-            format!("{:.1}", tdop * DILUTION_OF_PRECISION_UNITS)
+            format!("{:.1}", tdop as f64 * DILUTION_OF_PRECISION_UNITS)
         );
         assert_eq!(
             solution_tab.table[HDOP],
-            format!("{:.1}", hdop * DILUTION_OF_PRECISION_UNITS)
+            format!("{:.1}", hdop as f64 * DILUTION_OF_PRECISION_UNITS)
         );
         assert_eq!(
             solution_tab.table[VDOP],
-            format!("{:.1}", vdop * DILUTION_OF_PRECISION_UNITS)
+            format!("{:.1}", vdop as f64 * DILUTION_OF_PRECISION_UNITS)
         );
 
         let msg = Dops::MsgDopsDepA(MsgDopsDepA {

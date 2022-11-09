@@ -600,16 +600,13 @@ impl SolutionPositionTab {
     ) -> (f64, f64, f64, f64) {
         let gnss_mode = GnssModes::from(self.last_pos_mode);
         let mode_string = gnss_mode.to_string();
-        let lat_str = format!("lat_{}", mode_string);
-        let lon_str = format!("lon_{}", mode_string);
+        let lat_str = format!("lat_{mode_string}");
+        let lon_str = format!("lon_{mode_string}");
         let (lat_offset, lat_sf, lon_sf) = {
             if let Some(lats) = self.slns.get_mut(lat_str.as_str()) {
                 let lats_counts = lats.iter().filter(|&x| !x.is_nan()).count();
-                let lat_offset = lats
-                    .iter()
-                    .filter(|&x| !x.is_nan())
-                    .fold(0.0, |acc, x| acc + x)
-                    / lats_counts as f64;
+                let lat_offset =
+                    lats.iter().filter(|&x| !x.is_nan()).sum::<f64>() / lats_counts as f64;
                 let (lat_sf, lon_sf) = unit.get_sig_figs(lat_offset);
                 (lat_offset, lat_sf, lon_sf)
             } else {
@@ -619,10 +616,7 @@ impl SolutionPositionTab {
 
         let lon_offset = if let Some(lons) = self.slns.get_mut(lon_str.as_str()) {
             let lons_counts = lons.iter().filter(|&x| !x.is_nan()).count();
-            lons.iter()
-                .filter(|&x| !x.is_nan())
-                .fold(0.0, |acc, x| acc + x)
-                / lons_counts as f64
+            lons.iter().filter(|&x| !x.is_nan()).sum::<f64>() / lons_counts as f64
         } else {
             0.0
         };
@@ -651,8 +645,8 @@ impl SolutionPositionTab {
             }
         };
         for mode in self.mode_strings.iter() {
-            let lat_str = format!("lat_{}", mode);
-            let lon_str = format!("lon_{}", mode);
+            let lat_str = format!("lat_{mode}");
+            let lon_str = format!("lon_{mode}");
             if let Some(lats) = self.slns.get_mut(lat_str.as_str()) {
                 for lat in lats.iter_mut() {
                     *lat = convert(*lat, old_lat_sf, old_lat_offset);
@@ -685,8 +679,8 @@ impl SolutionPositionTab {
         let lat = (last_lat - self.lat_offset) * self.lat_sf;
         let lon = (last_lon - self.lon_offset) * self.lon_sf;
 
-        let lat_str = format!("lat_{}", mode_string);
-        let lon_str = format!("lon_{}", mode_string);
+        let lat_str = format!("lat_{mode_string}");
+        let lon_str = format!("lon_{mode_string}");
         let lat_str = lat_str.as_str();
         let lon_str = lon_str.as_str();
         self.slns.get_mut(lat_str).unwrap().push(lat);
@@ -704,8 +698,8 @@ impl SolutionPositionTab {
             if exclude_mode == Some(each_mode.clone()) {
                 continue;
             }
-            let lat_str = format!("lat_{}", each_mode);
-            let lon_str = format!("lon_{}", each_mode);
+            let lat_str = format!("lat_{each_mode}");
+            let lon_str = format!("lon_{each_mode}");
             let lat_str = lat_str.as_str();
             let lon_str = lon_str.as_str();
             self.slns.get_mut(lat_str).unwrap().push(f64::NAN);

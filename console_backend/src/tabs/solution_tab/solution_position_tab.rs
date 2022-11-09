@@ -525,9 +525,8 @@ impl SolutionPositionTab {
             POS_FIX_MODE,
             GnssModes::from(self.last_pos_mode).to_string(),
         );
-        if let Some(age_corrections_) = self.age_corrections {
-            self.table
-                .insert(CORR_AGE_S, format!("{:.1}", age_corrections_));
+        if let Some(corr_age) = self.age_corrections {
+            self.table.insert(CORR_AGE_S, format!("{corr_age:.1}"));
         }
         let (clear, pause) = self.check_state();
         self.solution_draw(clear, pause);

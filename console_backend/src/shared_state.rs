@@ -12,7 +12,7 @@ use std::{
 
 use anyhow::{Context, Result as AHResult};
 use chrono::{DateTime, Utc};
-use crossbeam::channel::Sender;
+use crossbeam::channel::{unbounded, Receiver, Sender};
 use directories::{ProjectDirs, UserDirs};
 use indexmap::set::IndexSet;
 use indexmap::IndexMap;
@@ -356,6 +356,7 @@ pub struct SharedStateInner {
     pub(crate) advanced_networking_update: Option<AdvancedNetworkingState>,
     pub(crate) auto_survey_data: AutoSurveyData,
     pub(crate) heartbeat_data: Heartbeat,
+    pub(crate) event_channel: (Sender<EventType>, Receiver<EventType>),
 }
 
 impl SharedStateInner {
@@ -383,6 +384,7 @@ impl SharedStateInner {
             advanced_networking_update: None,
             auto_survey_data: AutoSurveyData::new(),
             heartbeat_data,
+            event_channel: unbounded(),
         }
     }
 }

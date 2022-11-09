@@ -1,3 +1,4 @@
+use crossbeam::select;
 use std::io;
 
 use log::{debug, error};
@@ -21,7 +22,7 @@ use crate::client_sender::BoxedClientSender;
 use crate::connection::Connection;
 use crate::errors::{PROCESS_MESSAGES_FAILURE, UNABLE_TO_CLONE_UPDATE_SHARED};
 use crate::log_panel;
-use crate::shared_state::SharedState;
+use crate::shared_state::{EventType, SharedState};
 use crate::tabs::{settings_tab, update_tab};
 use crate::types::{
     BaselineNED, Dops, GpsTime, MsgSender, ObservationMsg, PosLLH, Specan, UartState, VelNED,
@@ -58,6 +59,20 @@ pub fn process_messages(
         .expect(UNABLE_TO_CLONE_UPDATE_SHARED)
         .clone_update_tab_context();
     update_tab_context.set_serial_prompt(conn.is_serial());
+    let (_, event_rx) = shared_state.lock().event_channel.clone();
+    std::thread::spawn(move || {
+        select! {
+            recv(event_rx) -> event => {
+                match event {
+                    Ok(EventType::EventRefresh()) => {
+                        println!("refresh!");
+                    }
+                    Err(e) => error!("what happened here @ event type channel {e}")
+                }
+            }
+        }
+    });
+
     let (update_tab_tx, update_tab_rx) = tabs.update.lock().unwrap().clone_channel();
     crossbeam::scope(|scope| {
         scope.spawn(|_| {

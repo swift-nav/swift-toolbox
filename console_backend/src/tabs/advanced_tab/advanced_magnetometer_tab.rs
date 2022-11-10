@@ -4,7 +4,7 @@ use capnp::message::Builder;
 
 use crate::client_sender::BoxedClientSender;
 use crate::constants::{MAGNETOMETER_Y_AXIS_PADDING_MULTIPLIER, NUM_POINTS};
-use crate::types::Deque;
+use crate::types::RingBuffer;
 use crate::utils::serialize_capnproto_builder;
 use crate::zip;
 
@@ -20,9 +20,9 @@ use crate::zip;
 #[derive(Debug)]
 pub struct AdvancedMagnetometerTab {
     client_sender: BoxedClientSender,
-    mag_x: Deque<f64>,
-    mag_y: Deque<f64>,
-    mag_z: Deque<f64>,
+    mag_x: RingBuffer<f64>,
+    mag_y: RingBuffer<f64>,
+    mag_z: RingBuffer<f64>,
     ymax: f64,
     ymin: f64,
 }
@@ -31,9 +31,9 @@ impl AdvancedMagnetometerTab {
     pub fn new(client_sender: BoxedClientSender) -> AdvancedMagnetometerTab {
         AdvancedMagnetometerTab {
             client_sender,
-            mag_x: Deque::with_fill_value(NUM_POINTS, 0.),
-            mag_y: Deque::with_fill_value(NUM_POINTS, 0.),
-            mag_z: Deque::with_fill_value(NUM_POINTS, 0.),
+            mag_x: RingBuffer::with_fill_value(NUM_POINTS, 0.),
+            mag_y: RingBuffer::with_fill_value(NUM_POINTS, 0.),
+            mag_z: RingBuffer::with_fill_value(NUM_POINTS, 0.),
             ymax: f64::MIN,
             ymin: f64::MAX,
         }

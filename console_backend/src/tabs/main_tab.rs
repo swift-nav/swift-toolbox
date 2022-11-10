@@ -16,7 +16,7 @@ use crate::constants::{
 };
 use crate::output::{CsvLogging, SbpLogger};
 use crate::shared_state::{create_directory, ConnectionState, SharedState};
-use crate::utils::{refresh_loggingbar, refresh_loggingbar_recording};
+use crate::utils::{refresh_loggingbar, refresh_loggingbar_recording, OkOrLog};
 
 const LOGGING_STATS_UPDATE_INTERVAL: Duration = Duration::from_millis(500);
 
@@ -28,10 +28,7 @@ pub fn logging_stats_thread(
         let mut recv = shared_state.watch_connection();
         let mut start_time = Instant::now();
         let mut filepath = None;
-        loop {
-            if matches!(recv.get(), Err(_) | Ok(ConnectionState::Closed)) {
-                break;
-            }
+        while !matches!(recv.get(), Err(_) | Ok(ConnectionState::Closed)) {
             let current_path = shared_state.sbp_logging_filepath();
             if current_path != filepath {
                 filepath = current_path;
@@ -153,22 +150,13 @@ impl MainTab {
                 error!("Issue creating directory {}.", e);
             }
         }
+
         self.sbp_logger = match logging {
-            SbpLogging::SBP => match SbpLogger::new_sbp(&filepath) {
-                Ok(logger) => Some(logger),
-                Err(e) => {
-                    error!("issue creating file, {}, error, {}", filepath.display(), e);
-                    None
-                }
-            },
-            SbpLogging::SBP_JSON => match SbpLogger::new_sbp_json(&filepath) {
-                Ok(logger) => Some(logger),
-                Err(e) => {
-                    error!("issue creating file, {}, error, {}", filepath.display(), e);
-                    None
-                }
-            },
-        };
+            SbpLogging::SBP => SbpLogger::new_sbp(&filepath),
+            SbpLogging::SBP_JSON => SbpLogger::new_sbp_json(&filepath),
+        }
+        .ok_or_log(|e| error!("issue creating file, {}, error, {e}", filepath.display()));
+
         if self.sbp_logger.is_some() {
             self.shared_state
                 .set_sbp_logging(true, self.client_sender.clone());
@@ -256,9 +244,9 @@ impl MainTab {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::baseline_tab::BaselineTab;
     use crate::client_sender::TestSender;
-    use crate::solution_tab::SolutionTab;
+    use crate::tabs::baseline_tab::BaselineTab;
+    use crate::tabs::solution_tab::solution_position_tab::SolutionPositionTab;
     use crate::types::{BaselineNED, MsgSender, PosLLH, VelNED};
     use crate::utils::{mm_to_m, ms_to_sec};
     use glob::glob;
@@ -278,7 +266,7 @@ mod tests {
         let writer = sink();
         let msg_sender = MsgSender::new(writer);
         let mut main = MainTab::new(shared_state.clone(), client_send.clone());
-        let mut solution_tab = SolutionTab::new(shared_state.clone(), client_send.clone());
+        let mut solution_tab = SolutionPositionTab::new(shared_state.clone(), client_send.clone());
         let mut baseline_tab = BaselineTab::new(shared_state, client_send, msg_sender);
         assert_eq!(main.last_csv_logging, CsvLogging::OFF);
         main.shared_state.set_csv_logging(CsvLogging::ON);

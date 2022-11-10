@@ -53,7 +53,7 @@ impl AdvancedSpectrumAnalyzerTab {
     /// - `msg`: MsgSpecan to extract data from.
     pub fn handle_specan(&mut self, msg: Specan) {
         if let Err(err) = self.fft_monitor.capture_fft(msg) {
-            error!("{}", err);
+            error!("{err}");
             return;
         }
         {

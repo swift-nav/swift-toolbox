@@ -11,10 +11,10 @@ use lazy_static::lazy_static;
 
 use console_backend::cli_options::{SerialOpts, TcpOpts};
 use console_backend::connection::Connection;
-use console_backend::firmware_update::{self, LogOverwriteBehavior};
-use console_backend::swift_version::SwiftVersion;
 use console_backend::types::MsgSender;
 use console_backend::types::Result;
+use console_backend::updater::firmware_update::{self, LogOverwriteBehavior};
+use console_backend::updater::swift_version::SwiftVersion;
 use sbp::link::{Link, LinkSource};
 use sbp::SbpIterExt;
 use sbp_settings::Client;

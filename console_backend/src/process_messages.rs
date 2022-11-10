@@ -21,12 +21,11 @@ use crate::client_sender::BoxedClientSender;
 use crate::connection::Connection;
 use crate::errors::{PROCESS_MESSAGES_FAILURE, UNABLE_TO_CLONE_UPDATE_SHARED};
 use crate::log_panel;
-use crate::settings_tab;
 use crate::shared_state::SharedState;
+use crate::tabs::{settings_tab, update_tab};
 use crate::types::{
     BaselineNED, Dops, GpsTime, MsgSender, ObservationMsg, PosLLH, Specan, UartState, VelNED,
 };
-use crate::update_tab;
 use crate::Tabs;
 
 pub use messages::{Messages, StopToken};
@@ -90,7 +89,7 @@ pub fn process_messages(
             tab.stop()
         }
         if let Err(err) = update_tab_tx.send(None) {
-            error!("Issue stopping update tab: {}", err);
+            error!("Issue stopping update tab: {err}");
         }
     })
     .expect(PROCESS_MESSAGES_FAILURE);
@@ -107,14 +106,17 @@ fn register_events(link: sbp::link::Link<Tabs>) {
             .lock()
             .unwrap()
             .handle_age_corrections(msg.clone());
-        tabs.solution
+        tabs.solution_position
             .lock()
             .unwrap()
             .handle_age_corrections(msg.clone());
         tabs.status_bar.lock().unwrap().handle_age_corrections(msg);
     });
     link.register(|tabs: &Tabs, msg: MsgAngularRate| {
-        tabs.solution.lock().unwrap().handle_angular_rate(msg);
+        tabs.solution_position
+            .lock()
+            .unwrap()
+            .handle_angular_rate(msg);
     });
     link.register(|tabs: &Tabs, msg: MsgBaselineHeading| {
         tabs.baseline.lock().unwrap().handle_baseline_heading(msg);
@@ -133,11 +135,11 @@ fn register_events(link: sbp::link::Link<Tabs>) {
         tabs.status_bar.lock().unwrap().handle_baseline_ned(msg);
     });
     link.register(|tabs: &Tabs, msg: Dops| {
-        tabs.solution.lock().unwrap().handle_dops(msg);
+        tabs.solution_position.lock().unwrap().handle_dops(msg);
     });
     link.register(|tabs: &Tabs, msg: GpsTime| {
         tabs.baseline.lock().unwrap().handle_gps_time(msg.clone());
-        tabs.solution.lock().unwrap().handle_gps_time(msg);
+        tabs.solution_position.lock().unwrap().handle_gps_time(msg);
     });
     link.register(|tabs: &Tabs, msg: MsgHeartbeat| {
         tabs.advanced_system_monitor
@@ -153,7 +155,10 @@ fn register_events(link: sbp::link::Link<Tabs>) {
         tabs.advanced_imu.lock().unwrap().handle_imu_raw(msg);
     });
     link.register(|tabs: &Tabs, msg: MsgInsStatus| {
-        tabs.solution.lock().unwrap().handle_ins_status(msg.clone());
+        tabs.solution_position
+            .lock()
+            .unwrap()
+            .handle_ins_status(msg.clone());
         tabs.status_bar.lock().unwrap().handle_ins_status(msg);
     });
     link.register(|tabs: &Tabs, msg: MsgInsUpdates| {
@@ -162,7 +167,7 @@ fn register_events(link: sbp::link::Link<Tabs>) {
             .unwrap()
             .fusion_engine_status_bar
             .handle_ins_updates(msg.clone());
-        tabs.solution
+        tabs.solution_position
             .lock()
             .unwrap()
             .handle_ins_updates(msg.clone());
@@ -200,14 +205,23 @@ fn register_events(link: sbp::link::Link<Tabs>) {
         debug!("The message type, MsgObsDepA, is not handled in the Tracking->SignalsPlot or Observation tab.");
     });
     link.register(|tabs: &Tabs, msg: MsgOrientEuler| {
-        tabs.solution.lock().unwrap().handle_orientation_euler(msg);
+        tabs.solution_position
+            .lock()
+            .unwrap()
+            .handle_orientation_euler(msg);
     });
     link.register(|tabs: &Tabs, msg: PosLLH| {
-        tabs.solution.lock().unwrap().handle_pos_llh(msg.clone());
+        tabs.solution_position
+            .lock()
+            .unwrap()
+            .handle_pos_llh(msg.clone());
         tabs.status_bar.lock().unwrap().handle_pos_llh(msg);
     });
     link.register(|tabs: &Tabs, msg: MsgPosLlhCov| {
-        tabs.solution.lock().unwrap().handle_pos_llh_cov(msg);
+        tabs.solution_position
+            .lock()
+            .unwrap()
+            .handle_pos_llh_cov(msg);
     });
     link.register(|tabs: &Tabs, msg: Specan| {
         tabs.advanced_spectrum_analyzer
@@ -219,7 +233,9 @@ fn register_events(link: sbp::link::Link<Tabs>) {
         tabs.tracking_sky_plot.lock().unwrap().handle_sv_az_el(msg);
     });
     link.register(|tabs: &Tabs, _msg: MsgStartup| {
-        tabs.shared_state.set_settings_refresh(true);
+        if let Some(settings) = &tabs.settings {
+            settings.shared_state.set_settings_refresh(true);
+        }
     });
     link.register(|tabs: &Tabs, msg: MsgThreadState| {
         tabs.advanced_system_monitor
@@ -234,7 +250,7 @@ fn register_events(link: sbp::link::Link<Tabs>) {
             .handle_msg_tracking_state(msg.states);
     });
     link.register(|tabs: &Tabs, msg: VelNED| {
-        tabs.solution.lock().unwrap().handle_vel_ned(msg);
+        tabs.solution_position.lock().unwrap().handle_vel_ned(msg);
     });
     link.register(|tabs: &Tabs, msg: MsgVelNed| {
         // why does this tab not take both VelNED messages?
@@ -248,7 +264,7 @@ fn register_events(link: sbp::link::Link<Tabs>) {
     });
     link.register(|tabs: &Tabs, msg: MsgUtcTime| {
         tabs.baseline.lock().unwrap().handle_utc_time(msg.clone());
-        tabs.solution.lock().unwrap().handle_utc_time(msg);
+        tabs.solution_position.lock().unwrap().handle_utc_time(msg);
     });
     link.register(|tabs: &Tabs, msg: Sbp| {
         tabs.main.lock().unwrap().serialize_sbp(&msg);

@@ -1,3 +1,4 @@
+use log::error;
 use std::fs::{File, OpenOptions};
 use std::path::Path;
 
@@ -9,6 +10,7 @@ use serde_json::ser::CompactFormatter;
 use crate::common_constants as cc;
 use crate::formatters::*;
 use crate::types::Result;
+use crate::utils::OkOrLog;
 
 pub type CsvLogging = cc::CsvLogging;
 impl From<bool> for CsvLogging {
@@ -76,18 +78,23 @@ pub struct CsvSerializer {
 }
 
 impl CsvSerializer {
-    pub fn new<P: AsRef<Path>>(filepath: P) -> Result<CsvSerializer> {
-        Ok(CsvSerializer {
-            writer: csv::Writer::from_path(filepath)?,
+    pub fn new(filepath: impl AsRef<Path>) -> Result<CsvSerializer> {
+        let writer = csv::Writer::from_path(filepath)?;
+        Ok(CsvSerializer { writer })
+    }
+
+    pub fn new_option(filepath: impl AsRef<Path> + Copy) -> Option<CsvSerializer> {
+        CsvSerializer::new(filepath).ok_or_log(|e| {
+            let fname = filepath.as_ref().display();
+            error!("issue creating file, {fname:?}, error, {e}")
         })
     }
-    pub fn serialize<T>(&mut self, ds: &T) -> Result<()>
-    where
-        T: Serialize,
-    {
+
+    pub fn serialize(&mut self, ds: &impl Serialize) -> Result<()> {
         self.writer.serialize(ds)?;
         Ok(())
     }
+
     pub fn flush(&mut self) -> Result<()> {
         self.writer.flush()?;
         Ok(())

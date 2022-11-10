@@ -48,13 +48,13 @@ impl AdvancedSystemMonitorTab {
             obs_latency: {
                 UART_STATE_KEYS
                     .iter()
-                    .map(|key| (String::from(*key), 0))
+                    .map(|&key| (String::from(key), 0))
                     .collect()
             },
             obs_period: {
                 UART_STATE_KEYS
                     .iter()
-                    .map(|key| (String::from(*key), 0))
+                    .map(|&key| (String::from(key), 0))
                     .collect()
             },
             threads: vec![],
@@ -97,14 +97,11 @@ impl AdvancedSystemMonitorTab {
 
     pub fn handle_uart_state(&mut self, msg: UartState) {
         let uart_fields = msg.fields();
-        self.obs_latency
-            .insert(CURR.to_string(), uart_fields.latency.current);
-        self.obs_latency
-            .insert(AVG.to_string(), uart_fields.latency.avg);
-        self.obs_latency
-            .insert(MIN.to_string(), uart_fields.latency.lmin);
-        self.obs_latency
-            .insert(MAX.to_string(), uart_fields.latency.lmax);
+        let latency = uart_fields.latency;
+        self.obs_latency.insert(CURR.to_string(), latency.current);
+        self.obs_latency.insert(AVG.to_string(), latency.avg);
+        self.obs_latency.insert(MIN.to_string(), latency.lmin);
+        self.obs_latency.insert(MAX.to_string(), latency.lmax);
         if let Some(period) = uart_fields.obs_period {
             self.obs_period.insert(CURR.to_string(), period.current);
             self.obs_period.insert(AVG.to_string(), period.avg);

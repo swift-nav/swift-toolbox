@@ -14,7 +14,6 @@ ColumnLayout {
             width: Constants.logoPopup.aboutMe.logoWidth
             source: Constants.icons.swiftLogoPath
         }
-
     }
 
     Label {
@@ -60,5 +59,4 @@ ColumnLayout {
             backend_request_broker.check_for_update();
         }
     }
-
 }

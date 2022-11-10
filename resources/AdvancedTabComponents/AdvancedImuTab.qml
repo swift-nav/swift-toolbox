@@ -66,9 +66,11 @@ Item {
 
                         Row {
                             Component.onCompleted: {
-                                for (var idx in Constants.advancedImu.lineColors) {
-                                    if (lineLegendRepeaterRows.itemAt(idx))
-                                        lineLegendRepeaterRows.itemAt(idx).children[0].color = Constants.advancedImu.lineColors[idx];
+                                let imuLineColors = Constants.advancedImu.lineColors;
+                                for (var idx in imuLineColors) {
+                                    let item = lineLegendRepeaterRows.itemAt(idx);
+                                    if (item)
+                                        item.children[0].color = imuLineColors[idx];
                                 }
                             }
 
@@ -143,21 +145,26 @@ Item {
                         return;
                     var points = advancedImuPoints.points;
                     advancedImuArea.visible = true;
+                    let commonChart = Constants.commonChart;
+                    let advancedImu = Constants.advancedImu;
                     if (!lines.length) {
-                        for (var idx in advancedImuPoints.points) {
+                        const tempLines = [];
+                        for (var idx in points) {
                             var line = advancedImuChart.createSeries(ChartView.SeriesTypeLine, idx, advancedImuXAxis);
-                            line.color = Constants.advancedImu.lineColors[idx];
-                            line.width = Constants.commonChart.lineWidth;
+                            line.color = advancedImu.lineColors[idx];
+                            line.width = commonChart.lineWidth;
                             line.axisYRight = advancedImuYAxis;
                             line.useOpenGL = Globals.useOpenGL;
-                            lines.push(line);
+                            tempLines.push(line);
                         }
+                        lines = lines.concat(tempLines);
                     }
-                    imuTempText.text = `${advancedImuPoints.fields_data[0].toFixed(2)} C`;
-                    imuConfText.text = `0x${advancedImuPoints.fields_data[1].toString(16).padStart(2, "0")}`;
-                    rmsAccXText.text = `${advancedImuPoints.fields_data[2].toFixed(2)} g`;
-                    rmsAccYText.text = `${advancedImuPoints.fields_data[3].toFixed(2)} g`;
-                    rmsAccZText.text = `${advancedImuPoints.fields_data[4].toFixed(2)} g`;
+                    let fieldDatum = advancedImuPoints.fields_data;
+                    imuTempText.text = `${fieldDatum[0].toFixed(2)} C`;
+                    imuConfText.text = `0x${fieldDatum[1].toString(16).padStart(2, "0")}`;
+                    rmsAccXText.text = `${fieldDatum[2].toFixed(2)} g`;
+                    rmsAccYText.text = `${fieldDatum[3].toFixed(2)} g`;
+                    rmsAccZText.text = `${fieldDatum[4].toFixed(2)} g`;
                     advancedImuPoints.fill_series(lines);
                 }
             }

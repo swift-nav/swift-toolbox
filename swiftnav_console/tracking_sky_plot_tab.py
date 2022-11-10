@@ -3,7 +3,7 @@
 
 from typing import Dict, List, Any
 
-from PySide6.QtCore import Property, QObject, Slot, Signal
+from PySide6.QtCore import Property, QObject, Slot, Signal, QPointF
 from PySide6 import QtCharts
 
 from .constants import Keys, QTKeys
@@ -63,11 +63,12 @@ class TrackingSkyPlotPoints(QObject):
     @Slot()  # type: ignore
     def fill_all_series(self) -> None:
         series_changed = False
-        for idx, series_points in enumerate(self._tracking_sky_plot[Keys.SATS]):
+        for idx in range(len(self._tracking_sky_plot[Keys.SATS])):
             series = self._all_series[idx]
             if series.isVisible():
+                sats = self._tracking_sky_plot[Keys.SATS][idx]
                 series.clear()
-                series.replace(series_points)
+                series.replace(list(map(lambda point: QPointF(point.az, point.el), sats)))
                 series_changed = True
 
         if series_changed:

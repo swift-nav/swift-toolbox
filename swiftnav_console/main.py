@@ -9,13 +9,21 @@ import platform
 import sys
 import time
 
+try:
+    import sshtunnel  # type: ignore # pylint: disable=unused-import
+    from . import ssh_tunnel
+
+    FEATURE_SSHTUNNEL = True
+except ImportError:
+    FEATURE_SSHTUNNEL = False
+
 from typing import Optional, Tuple
 
 import capnp  # type: ignore
 
 from PySide6.QtWidgets import QApplication, QSplashScreen  # type: ignore
 
-from PySide6.QtCore import QObject, QUrl, QPointF, QThread, QTimer, Slot, Signal, Qt
+from PySide6.QtCore import QObject, QUrl, QThread, QTimer, Slot, Signal, Qt
 from PySide6 import QtCharts  # pylint: disable=unused-import
 
 from PySide6 import QtQml, QtCore
@@ -328,20 +336,14 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
             ConnectionData.post_connection_message_update(data)
         elif m.which == Message.Union.SolutionPositionStatus:
             data = solution_position_update()
-            data[Keys.POINTS][:] = [
-                [QPointF(point.x, point.y) for point in m.solutionPositionStatus.data[idx]]
-                for idx in range(len(m.solutionPositionStatus.data))
-            ]
-            data[Keys.CUR_POINTS][:] = [
-                [QPointF(point.x, point.y) for point in m.solutionPositionStatus.curData[idx]]
-                for idx in range(len(m.solutionPositionStatus.curData))
-            ]
+            data[Keys.POINTS][:] = m.solutionPositionStatus.data
+            data[Keys.CUR_POINTS][:] = m.solutionPositionStatus.curData
             data[Keys.LAT_MAX] = m.solutionPositionStatus.latMax
             data[Keys.LAT_MIN] = m.solutionPositionStatus.latMin
             data[Keys.LON_MAX] = m.solutionPositionStatus.lonMax
             data[Keys.LON_MIN] = m.solutionPositionStatus.lonMin
             data[Keys.AVAILABLE_UNITS][:] = m.solutionPositionStatus.availableUnits
-            data[Keys.SOLUTION_LINE] = [QPointF(point.x, point.y) for point in m.solutionPositionStatus.lineData]
+            data[Keys.SOLUTION_LINE] = m.solutionPositionStatus.lineData
             SolutionPositionPoints.post_data_update(data)
         elif m.which == Message.Union.SolutionTableStatus:
             data = solution_table_update()
@@ -350,24 +352,15 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
         elif m.which == Message.Union.SolutionVelocityStatus:
             data = solution_velocity_update()
             data[Keys.COLORS][:] = m.solutionVelocityStatus.colors
-            data[Keys.POINTS][:] = [
-                [QPointF(point.x, point.y) for point in m.solutionVelocityStatus.data[idx]]
-                for idx in range(len(m.solutionVelocityStatus.data))
-            ]
+            data[Keys.POINTS][:] = m.solutionVelocityStatus.data
             data[Keys.MAX] = m.solutionVelocityStatus.max
             data[Keys.MIN] = m.solutionVelocityStatus.min
             data[Keys.AVAILABLE_UNITS][:] = m.solutionVelocityStatus.availableUnits
             SolutionVelocityPoints.post_data_update(data)
         elif m.which == Message.Union.BaselinePlotStatus:
             data = baseline_plot_update()
-            data[Keys.POINTS][:] = [
-                [QPointF(point.x, point.y) for point in m.baselinePlotStatus.data[idx]]
-                for idx in range(len(m.baselinePlotStatus.data))
-            ]
-            data[Keys.CUR_POINTS][:] = [
-                [QPointF(point.x, point.y) for point in m.baselinePlotStatus.curData[idx]]
-                for idx in range(len(m.baselinePlotStatus.curData))
-            ]
+            data[Keys.POINTS][:] = m.baselinePlotStatus.data
+            data[Keys.CUR_POINTS][:] = m.baselinePlotStatus.curData
             data[Keys.N_MAX] = m.baselinePlotStatus.nMax
             data[Keys.N_MIN] = m.baselinePlotStatus.nMin
             data[Keys.E_MAX] = m.baselinePlotStatus.eMax
@@ -380,14 +373,12 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
         elif m.which == Message.Union.AdvancedImuStatus:
             advanced_imu_tab = advanced_imu_tab_update()
             advanced_imu_tab[Keys.FIELDS_DATA][:] = m.advancedImuStatus.fieldsData
-            advanced_imu_tab[Keys.POINTS][:] = [
-                m.advancedImuStatus.data[idx] for idx in range(len(m.advancedImuStatus.data))
-            ]
+            advanced_imu_tab[Keys.POINTS][:] = m.advancedImuStatus.data
             AdvancedImuPoints.post_data_update(advanced_imu_tab)
         elif m.which == Message.Union.AdvancedSpectrumAnalyzerStatus:
             data = advanced_spectrum_analyzer_tab_update()
             data[Keys.CHANNEL] = m.advancedSpectrumAnalyzerStatus.channel
-            data[Keys.POINTS][:] = [QPointF(point.x, point.y) for point in m.advancedSpectrumAnalyzerStatus.data]
+            data[Keys.POINTS][:] = m.advancedSpectrumAnalyzerStatus.data
             data[Keys.YMAX] = m.advancedSpectrumAnalyzerStatus.ymax
             data[Keys.YMIN] = m.advancedSpectrumAnalyzerStatus.ymin
             data[Keys.XMAX] = m.advancedSpectrumAnalyzerStatus.xmax
@@ -418,10 +409,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
             data = advanced_magnetometer_tab_update()
             data[Keys.YMAX] = m.advancedMagnetometerStatus.ymax
             data[Keys.YMIN] = m.advancedMagnetometerStatus.ymin
-            data[Keys.POINTS][:] = [
-                [QPointF(point.x, point.y) for point in m.advancedMagnetometerStatus.data[idx]]
-                for idx in range(len(m.advancedMagnetometerStatus.data))
-            ]
+            data[Keys.POINTS][:] = m.advancedMagnetometerStatus.data
             AdvancedMagnetometerPoints.post_data_update(data)
         elif m.which == Message.Union.FusionStatusFlagsStatus:
             data = fusion_status_flags_update()
@@ -437,21 +425,13 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
             data[Keys.CHECK_LABELS][:] = m.trackingSignalsStatus.checkLabels
             data[Keys.LABELS][:] = m.trackingSignalsStatus.labels
             data[Keys.COLORS][:] = m.trackingSignalsStatus.colors
-            data[Keys.POINTS][:] = [
-                [QPointF(point.x, point.y) for point in m.trackingSignalsStatus.data[idx]]
-                for idx in range(len(m.trackingSignalsStatus.data))
-            ]
+            data[Keys.POINTS][:] = m.trackingSignalsStatus.data
             data[Keys.XMIN_OFFSET] = m.trackingSignalsStatus.xminOffset
             TrackingSignalsPoints.post_data_update(data)
         elif m.which == Message.Union.TrackingSkyPlotStatus:
             data = tracking_sky_plot_update()
-            data[Keys.SATS][:] = [
-                [QPointF(point.az, point.el) for point in m.trackingSkyPlotStatus.sats[idx]]
-                for idx in range(len(m.trackingSkyPlotStatus.sats))
-            ]
-            data[Keys.LABELS][:] = [
-                list(m.trackingSkyPlotStatus.labels[idx]) for idx in range(len(m.trackingSkyPlotStatus.labels))
-            ]
+            data[Keys.SATS][:] = m.trackingSkyPlotStatus.sats
+            data[Keys.LABELS][:] = m.trackingSkyPlotStatus.labels
             TrackingSkyPlotPoints.post_data_update(data)
         elif m.which == Message.Union.ObservationStatus:
             data = observation_update()
@@ -640,6 +620,11 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
             globals_.setProperty("width", args.width)  # type: ignore
     if args.show_file_connection:
         globals_.setProperty("showFileConnection", True)  # type: ignore
+    try:
+        if args.ssh_tunnel:
+            ssh_tunnel.setup(args.ssh_tunnel, args.ssh_remote_bind_address)
+    except AttributeError:
+        pass
 
 
 def start_splash_linux():
@@ -703,10 +688,25 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     parser.add_argument("--height", type=int)
     parser.add_argument("--width", type=int)
     parser.add_argument("--qmldebug", action="store_true")
+    if FEATURE_SSHTUNNEL:
+        parser.add_argument("--ssh-tunnel", type=str, default=None)
+        parser.add_argument("--ssh-remote-bind-address", type=str, default=None)
 
     args_main, unknown_args = parser.parse_known_args()
+    for unknown_arg in unknown_args:
+        for tunnel_arg in ("--ssh-tunnel", "--ssh-remote-bind-address"):
+            if tunnel_arg in unknown_arg:
+                parser.error(
+                    f"Option {tunnel_arg} unsupported.\n"
+                    "The --ssh-tunnel and --ssh-remote-bind-address "
+                    "arguments require the `sshtunnel` python module."
+                )
+
     if args_main.debug_with_no_backend and args_main.read_capnp_recording is None:
         parser.error("The --debug-with-no-backend argument requires the --read-capnp-recording argument.")
+
+    if FEATURE_SSHTUNNEL:
+        ssh_tunnel.validate(args_main, parser)
 
     found_help_arg = False
     for arg in unknown_args:
@@ -847,6 +847,11 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
 
     endpoint_main.shutdown()
     backend_msg_receiver.join()
+    try:
+        # Stop the sshtunnel server if there is one.
+        sshtunnel_server.stop()  # type: ignore
+    except NameError:
+        pass
 
     return 0
 

@@ -337,7 +337,7 @@ cd standalone-py/python/install
 cp . ../../../py39
 cd ../../../
 exec --fail-on-error ${PYTHON} ./get-pip.py
-exec --fail-on-error ${PYTHON} -m pip install wheel flit . ".[test]"
+exec --fail-on-error ${PYTHON} -m pip install wheel flit . ".[test]" ".[ssh-tunnel]"
 cm_run_task generate-resources
 '''
 

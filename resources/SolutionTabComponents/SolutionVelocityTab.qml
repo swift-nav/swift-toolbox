@@ -171,15 +171,18 @@ Item {
                     }
                     if (available_units != solutionVelocityPoints.available_units)
                         available_units = solutionVelocityPoints.available_units;
+                    let commonChart = Constants.commonChart;
                     if (!lines.length) {
+                        const tempLines = [];
                         for (var idx in labels) {
                             var line = solutionVelocityChart.createSeries(ChartView.SeriesTypeLine, Constants.solutionVelocity.labels[idx], solutionVelocityXAxis);
                             line.color = colors[idx];
-                            line.width = Constants.commonChart.lineWidth;
+                            line.width = commonChart.lineWidth;
                             line.axisYRight = solutionVelocityYAxis;
                             line.useOpenGL = Globals.useOpenGL;
-                            lines.push(line);
+                            tempLines.push(line);
                         }
+                        lines = lines.concat(tempLines);
                     }
                     solutionVelocityPoints.fill_series(lines);
                     var last = points[0][points[0].length - 1];

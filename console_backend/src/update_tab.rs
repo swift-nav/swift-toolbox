@@ -726,17 +726,16 @@ impl UpdateTabContext {
             .fileio_local_filepath
             .clone()
             .unwrap_or_default();
-        let firmware_filename = if let Some(firmware_local_filepath_) =
-            shared_data.firmware_local_filepath.clone()
-        {
-            firmware_local_filepath_
-                .file_name()
-                .expect(CONVERT_TO_STR_FAILURE)
-                .to_string_lossy()
-                .to_string()
-        } else {
-            String::new()
-        };
+        let firmware_filename =
+            if let Some(firmware_local_filepath_) = shared_data.firmware_local_filepath.clone() {
+                firmware_local_filepath_
+                    .file_name()
+                    .expect(CONVERT_TO_STR_FAILURE)
+                    .to_string_lossy()
+                    .to_string()
+            } else {
+                String::new()
+            };
         let console_version_current = shared_data
             .current_console_version
             .clone()

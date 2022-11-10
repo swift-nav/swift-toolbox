@@ -106,8 +106,9 @@ mod tests {
 
     #[test]
     fn hangle_mag_raw_test() {
+        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut mag_tab = AdvancedMagnetometerTab::new(client_send);
+        let mut mag_tab = AdvancedMagnetometerTab::new(shared_state, client_send);
         let tow = 1_u32;
         let tow_f = 1_u8;
         let mag_x = 2_i16;
@@ -134,8 +135,9 @@ mod tests {
 
     #[test]
     fn handle_imu_send_data_test() {
+        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut mag_tab = AdvancedMagnetometerTab::new(client_send);
+        let mut mag_tab = AdvancedMagnetometerTab::new(shared_state, client_send);
         assert!(f64::abs(mag_tab.ymin - f64::MAX) <= f64::EPSILON);
         assert!(f64::abs(mag_tab.ymax - f64::MIN) <= f64::EPSILON);
 

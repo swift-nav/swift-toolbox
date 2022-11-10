@@ -31,7 +31,7 @@ use crate::errors::CONVERT_TO_STR_FAILURE;
 use crate::log_panel::LogLevel;
 use crate::output::{CsvLogging, CsvSerializer};
 use crate::process_messages::StopToken;
-use crate::shared_state::EventType::EventRefresh;
+use crate::shared_state::EventType::Refresh;
 use crate::tabs::{
     main_tab::logging_stats_thread, settings_tab, solution_tab::LatLonUnits,
     update_tab::UpdateTabUpdate,
@@ -322,7 +322,7 @@ impl SharedState {
         let mut guard = self.lock();
         guard.tracking_tab.signals_tab.check_visibility = check_visibility;
         let (s, _) = &guard.event_channel;
-        s.send(EventRefresh)
+        s.send(Refresh)
             .ok_or_log(|e| error!("send refresh fail: {e}"));
     }
 }
@@ -405,7 +405,8 @@ impl Default for SharedStateInner {
 }
 
 pub enum EventType {
-    EventRefresh,
+    Refresh,
+    Stop,
 }
 
 #[derive(Debug, Default)]

@@ -58,7 +58,7 @@ pub fn process_messages(
         .expect(UNABLE_TO_CLONE_UPDATE_SHARED)
         .clone_update_tab_context();
     update_tab_context.set_serial_prompt(conn.is_serial());
-    let (_, event_rx) = shared_state.lock().event_channel.clone();
+    let (event_tx, event_rx) = shared_state.lock().event_channel.clone();
     let (update_tab_tx, update_tab_rx) = tabs.update.lock().unwrap().clone_channel();
     crossbeam::scope(|scope| {
         scope.spawn(|_| {
@@ -82,11 +82,12 @@ pub fn process_messages(
         scope.spawn(|_| {
             for event in event_rx.iter() {
                 match event {
-                    EventType::EventRefresh => {
+                    EventType::Refresh => {
                         let mut tab = tabs.tracking_signals.lock().unwrap();
                         tab.update_plot();
                         tab.send_data();
                     }
+                    EventType::Stop => break,
                 }
             }
         });
@@ -99,6 +100,9 @@ pub fn process_messages(
         }
         if let Some(ref tab) = tabs.settings {
             tab.stop()
+        }
+        if let Err(err) = event_tx.send(EventType::Stop) {
+            error!("Issue stopping event thread: {err}");
         }
         if let Err(err) = update_tab_tx.send(None) {
             error!("Issue stopping update tab: {err}");

@@ -145,7 +145,7 @@ impl StatusBar {
             .heartbeat_data
             .lock()
             .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
-        (*shared_data).total_bytes_read += bytes;
+        shared_data.total_bytes_read += bytes;
     }
 
     /// Package data into a message buffer and send to frontend.
@@ -178,8 +178,8 @@ impl StatusBar {
             .heartbeat_data
             .lock()
             .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
-        (*shared_data).heartbeat_count += 1;
-        (*shared_data).ant_status = AntennaStatus::label(msg.flags);
+        shared_data.heartbeat_count += 1;
+        shared_data.ant_status = AntennaStatus::label(msg.flags);
     }
 
     /// Handle PosLLH / PosLLHDepA messages.
@@ -203,12 +203,12 @@ impl StatusBar {
                 .heartbeat_data
                 .lock()
                 .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
-            (*shared_data).llh_solution_mode = llh_solution_mode;
-            (*shared_data).last_stime_update = last_stime_update;
+            shared_data.llh_solution_mode = llh_solution_mode;
+            shared_data.last_stime_update = last_stime_update;
             if llh_solution_mode > 0 {
-                (*shared_data).llh_num_sats = llh_num_sats;
+                shared_data.llh_num_sats = llh_num_sats;
             }
-            (*shared_data).ins_used = ins_used;
+            shared_data.ins_used = ins_used;
         }
     }
 
@@ -225,8 +225,8 @@ impl StatusBar {
                 .heartbeat_data
                 .lock()
                 .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
-            (*shared_data).baseline_solution_mode = baseline_solution_mode;
-            (*shared_data).last_btime_update = last_btime_update;
+            shared_data.baseline_solution_mode = baseline_solution_mode;
+            shared_data.last_btime_update = last_btime_update;
         }
     }
 
@@ -242,7 +242,7 @@ impl StatusBar {
                 .heartbeat_data
                 .lock()
                 .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
-            (*shared_data).last_odo_update_time = Some(last_odo_update_time);
+            shared_data.last_odo_update_time = Some(last_odo_update_time);
         }
     }
 
@@ -258,8 +258,8 @@ impl StatusBar {
                 .heartbeat_data
                 .lock()
                 .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
-            (*shared_data).ins_status_flags = ins_status_flags;
-            (*shared_data).last_ins_status_receipt_time = last_ins_status_receipt_time;
+            shared_data.ins_status_flags = ins_status_flags;
+            shared_data.last_ins_status_receipt_time = last_ins_status_receipt_time;
         }
     }
 
@@ -279,8 +279,8 @@ impl StatusBar {
                 .heartbeat_data
                 .lock()
                 .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
-            (*shared_data).age_corrections = age_corrections;
-            (*shared_data).last_age_corr_receipt_time = Some(Instant::now());
+            shared_data.age_corrections = age_corrections;
+            shared_data.last_age_corr_receipt_time = Some(Instant::now());
         }
     }
 }
@@ -585,7 +585,7 @@ mod tests {
             let heartbeat_data = shared_state.heartbeat_data();
             {
                 let hb = heartbeat_data.lock().unwrap();
-                assert!(!(*hb).solid_connection);
+                assert!(!hb.solid_connection);
             }
             (0..3).for_each(|_| {
                 {
@@ -597,12 +597,12 @@ mod tests {
             });
             {
                 let hb = heartbeat_data.lock().unwrap();
-                assert!((*hb).solid_connection);
+                assert!(hb.solid_connection);
             }
             sleep(Duration::from_secs_f64(2.0 * UPDATE_TOLERANCE_SECONDS));
             {
                 let hb = heartbeat_data.lock().unwrap();
-                assert!(!(*hb).solid_connection);
+                assert!(!hb.solid_connection);
             }
         })
         .join()
@@ -620,7 +620,7 @@ mod tests {
                 .heartbeat_data
                 .lock()
                 .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
-            (*shared_data).age_corrections
+            shared_data.age_corrections
         };
 
         assert!(age_corrections.is_none());
@@ -635,7 +635,7 @@ mod tests {
                 .heartbeat_data
                 .lock()
                 .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
-            (*shared_data).age_corrections
+            shared_data.age_corrections
         };
         assert!(age_corrections.is_none());
         let good_age = 0x4DC6;
@@ -650,7 +650,7 @@ mod tests {
                 .heartbeat_data
                 .lock()
                 .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
-            (*shared_data).age_corrections
+            shared_data.age_corrections
         };
         assert!(age_corrections.is_some());
         if let Some(age) = age_corrections {
@@ -676,8 +676,8 @@ mod tests {
                 .lock()
                 .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
             (
-                (*shared_data).last_ins_status_receipt_time,
-                (*shared_data).ins_status_flags,
+                shared_data.last_ins_status_receipt_time,
+                shared_data.ins_status_flags,
             )
         };
         assert!(
@@ -712,7 +712,7 @@ mod tests {
                 .heartbeat_data
                 .lock()
                 .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
-            (*shared_data).last_odo_update_time
+            shared_data.last_odo_update_time
         };
         assert!(last_odo_update_time.unwrap() > odo_update_time);
 
@@ -734,7 +734,7 @@ mod tests {
                 .heartbeat_data
                 .lock()
                 .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
-            (*shared_data).last_odo_update_time
+            shared_data.last_odo_update_time
         };
 
         assert!(last_odo_update_time.unwrap() < odo_update_time);

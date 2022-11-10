@@ -185,10 +185,10 @@ impl MainTab {
         let directory;
         {
             let shared_data = self.shared_state.lock();
-            csv_logging = (*shared_data).logging_bar.csv_logging.clone();
-            sbp_logging = (*shared_data).logging_bar.sbp_logging;
-            sbp_logging_format = (*shared_data).logging_bar.sbp_logging_format.clone();
-            directory = (*shared_data).logging_bar.logging_directory.clone();
+            csv_logging = shared_data.logging_bar.csv_logging.clone();
+            sbp_logging = shared_data.logging_bar.sbp_logging;
+            sbp_logging_format = shared_data.logging_bar.sbp_logging_format.clone();
+            directory = shared_data.logging_bar.logging_directory.clone();
         }
         self.logging_directory = self.shared_state.clone().logging_directory();
 

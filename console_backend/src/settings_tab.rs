@@ -282,7 +282,7 @@ impl SettingsTab {
     }
 
     pub fn reset(&self, reset_settings: bool) -> Result<()> {
-        let flags = if reset_settings { 1 } else { 0 };
+        let flags = u32::from(reset_settings);
         self.msg_sender.send(MsgReset {
             flags,
             sender_id: None,

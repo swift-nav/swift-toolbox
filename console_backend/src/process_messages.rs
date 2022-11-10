@@ -21,7 +21,7 @@ use crate::client_sender::BoxedClientSender;
 use crate::connection::Connection;
 use crate::errors::{PROCESS_MESSAGES_FAILURE, UNABLE_TO_CLONE_UPDATE_SHARED};
 use crate::log_panel;
-use crate::shared_state::SharedState;
+use crate::shared_state::{EventType, SharedState};
 use crate::tabs::{settings_tab, update_tab};
 use crate::types::{
     BaselineNED, Dops, GpsTime, MsgSender, ObservationMsg, PosLLH, Specan, UartState, VelNED,
@@ -58,6 +58,7 @@ pub fn process_messages(
         .expect(UNABLE_TO_CLONE_UPDATE_SHARED)
         .clone_update_tab_context();
     update_tab_context.set_serial_prompt(conn.is_serial());
+    let (event_tx, event_rx) = shared_state.lock().event_channel.clone();
     let (update_tab_tx, update_tab_rx) = tabs.update.lock().unwrap().clone_channel();
     crossbeam::scope(|scope| {
         scope.spawn(|_| {
@@ -78,6 +79,18 @@ pub fn process_messages(
                 settings_tab::start_thd(tab);
             });
         }
+        scope.spawn(|_| {
+            for event in event_rx.iter() {
+                match event {
+                    EventType::Refresh => {
+                        let mut tab = tabs.tracking_signals.lock().unwrap();
+                        tab.update_plot();
+                        tab.send_data();
+                    }
+                    EventType::Stop => break,
+                }
+            }
+        });
         for (message, _) in &mut messages {
             source.send_with_state(&tabs, &message);
             if let Some(ref tab) = tabs.settings {
@@ -87,6 +100,9 @@ pub fn process_messages(
         }
         if let Some(ref tab) = tabs.settings {
             tab.stop()
+        }
+        if let Err(err) = event_tx.send(EventType::Stop) {
+            error!("Issue stopping event thread: {err}");
         }
         if let Err(err) = update_tab_tx.send(None) {
             error!("Issue stopping update tab: {err}");

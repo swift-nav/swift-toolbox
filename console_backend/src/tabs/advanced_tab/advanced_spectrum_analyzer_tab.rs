@@ -53,12 +53,12 @@ impl AdvancedSpectrumAnalyzerTab {
     /// - `msg`: MsgSpecan to extract data from.
     pub fn handle_specan(&mut self, msg: Specan) {
         if let Err(err) = self.fft_monitor.capture_fft(msg) {
-            error!("{}", err);
+            error!("{err}");
             return;
         }
         {
             let shared_data = self.shared_state.lock();
-            self.channel_idx = (*shared_data).advanced_spectrum_analyzer_tab.channel_idx as usize;
+            self.channel_idx = shared_data.advanced_spectrum_analyzer_tab.channel_idx as usize;
         }
         let channel = CHANNELS[self.channel_idx];
         if let Some(num_ffts) = self.fft_monitor.num_ffts(channel) {

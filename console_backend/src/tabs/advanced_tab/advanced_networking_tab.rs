@@ -177,8 +177,7 @@ impl AdvancedNetworkingTab {
 
     fn start_relay(&mut self) -> Result<()> {
         let socket = UdpSocket::bind(format!(
-            "{}:{}",
-            DEFAULT_UDP_LOCAL_ADDRESS, DEFAULT_UDP_LOCAL_PORT
+            "{DEFAULT_UDP_LOCAL_ADDRESS}:{DEFAULT_UDP_LOCAL_PORT}"
         ))?;
         socket.set_nonblocking(true)?;
         socket.set_broadcast(true)?;

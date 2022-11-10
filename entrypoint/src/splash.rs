@@ -16,9 +16,7 @@ const TEMP_FILENAME: &str = "swiftnav_console";
 lazy_static! {
     static ref PID_FILE: PathBuf = {
         let pid = std::process::id();
-        std::env::temp_dir()
-            .join(format!("{TEMP_FILENAME}.{pid}"))
-            .into()
+        std::env::temp_dir().join(format!("{TEMP_FILENAME}.{pid}"))
     };
 }
 

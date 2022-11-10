@@ -33,8 +33,8 @@ struct ThreadStateFields {
 /// - `threads_table_list`: Vec of ThreadStateFields, sent to frontend after heartbeat received.
 /// - `zynq_temp`: Zynq SoC temperature reading.
 pub struct AdvancedSystemMonitorTab {
-    client_sender: BoxedClientSender,
     shared_state: SharedState,
+    client_sender: BoxedClientSender,
     fe_temp: f64,
     obs_latency: HashMap<String, i32>,
     obs_period: HashMap<String, i32>,
@@ -97,14 +97,11 @@ impl AdvancedSystemMonitorTab {
 
     pub fn handle_uart_state(&mut self, msg: UartState) {
         let uart_fields = msg.fields();
-        self.obs_latency
-            .insert(CURR.to_string(), uart_fields.latency.current);
-        self.obs_latency
-            .insert(AVG.to_string(), uart_fields.latency.avg);
-        self.obs_latency
-            .insert(MIN.to_string(), uart_fields.latency.lmin);
-        self.obs_latency
-            .insert(MAX.to_string(), uart_fields.latency.lmax);
+        let latency = uart_fields.latency;
+        self.obs_latency.insert(CURR.to_string(), latency.current);
+        self.obs_latency.insert(AVG.to_string(), latency.avg);
+        self.obs_latency.insert(MIN.to_string(), latency.lmin);
+        self.obs_latency.insert(MAX.to_string(), latency.lmax);
         if let Some(period) = uart_fields.obs_period {
             self.obs_period.insert(CURR.to_string(), period.current);
             self.obs_period.insert(AVG.to_string(), period.avg);

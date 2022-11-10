@@ -169,11 +169,13 @@ Item {
         running: true
         repeat: true
         onTriggered: {
+            let columnHeaders = Constants.insSettingsPopup.columnHeaders;
             for (var idx in settings) {
                 var new_row = {};
-                new_row[Constants.insSettingsPopup.columnHeaders[0]] = settings[idx][0];
-                new_row[Constants.insSettingsPopup.columnHeaders[1]] = settings[idx][1];
-                new_row[Constants.insSettingsPopup.columnHeaders[2]] = settings[idx][2];
+                var entry = settings[idx];
+                new_row[columnHeaders[0]] = entry[0];
+                new_row[columnHeaders[1]] = entry[1];
+                new_row[columnHeaders[2]] = entry[2];
                 tableView.model.setRow(idx, new_row);
             }
         }

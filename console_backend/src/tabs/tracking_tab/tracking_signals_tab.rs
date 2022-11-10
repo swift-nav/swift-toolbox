@@ -18,7 +18,7 @@ use crate::piksi_tools_constants::{
     GLO_L2OF_STR, GPS_L1CA_STR, GPS_L2CM_STR, QZS_L1CA_STR, QZS_L2CM_STR, SBAS_L1_STR,
 };
 use crate::shared_state::{SharedState, TabName};
-use crate::types::{Cn0Age, Cn0Dict, Deque, ObservationMsg, SignalCodes};
+use crate::types::{Cn0Age, Cn0Dict, ObservationMsg, RingBuffer, SignalCodes};
 use crate::utils::{serialize_capnproto_builder, signal_key_color, signal_key_label};
 
 /// TrackingSignalsTab struct.
@@ -61,11 +61,11 @@ pub struct TrackingSignalsTab {
     pub prev_obs_count: u8,
     pub prev_obs_total: u8,
     pub received_codes: Vec<SignalCodes>,
-    pub sats: Vec<Deque<(OrderedFloat<f64>, f64)>>,
+    pub sats: Vec<RingBuffer<(OrderedFloat<f64>, f64)>>,
     pub shared_state: SharedState,
     pub sv_labels: Vec<String>,
     pub t_init: Instant,
-    pub time: Deque<f64>,
+    pub time: RingBuffer<f64>,
 }
 
 impl TrackingSignalsTab {
@@ -106,7 +106,7 @@ impl TrackingSignalsTab {
             sv_labels: Vec::new(),
             t_init: Instant::now(),
             time: {
-                let mut time = Deque::new(NUM_POINTS);
+                let mut time = RingBuffer::new(NUM_POINTS);
                 for x in (0..(NUM_POINTS as i32)).rev() {
                     time.push((-x as f64) * (1.0 / TRK_RATE));
                 }
@@ -124,7 +124,7 @@ impl TrackingSignalsTab {
         let cn0_deque = self
             .cn0_dict
             .entry(key)
-            .or_insert_with(|| Deque::new(NUM_POINTS));
+            .or_insert_with(|| RingBuffer::new(NUM_POINTS));
         cn0_deque.push((OrderedFloat(t), cn0));
     }
     /// Push carrier-to-noise density age to cn0_age with key.
@@ -176,14 +176,14 @@ impl TrackingSignalsTab {
             let (code_lbl, freq_lbl, id_lbl) = signal_key_label(*key, Some(&self.glo_slot_dict));
             let mut label = String::from("");
             if let Some(lbl) = code_lbl {
-                label = format!("{} {}", label, lbl);
+                label = format!("{label} {lbl}");
             }
             if let Some(lbl) = freq_lbl {
-                label = format!("{} {}", label, lbl);
+                label = format!("{label} {lbl}");
             }
             if let Some(lbl) = id_lbl {
                 tracked_sv_labels.push(lbl.clone());
-                label = format!("{} {}", label, lbl);
+                label = format!("{label} {lbl}");
             }
 
             temp_labels.push((label, *key));

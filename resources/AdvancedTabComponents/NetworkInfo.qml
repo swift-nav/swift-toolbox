@@ -111,13 +111,16 @@ ColumnLayout {
         onTriggered: {
             if (!advancedTab.visible || !entries.length)
                 return;
+            let networking = Constants.networking;
+            let colHeader = networking.columnHeaders;
             for (var idx in entries) {
                 var new_row = {};
-                new_row[Constants.networking.columnHeaders[0]] = entries[idx][0];
-                new_row[Constants.networking.columnHeaders[1]] = entries[idx][1];
-                new_row[Constants.networking.columnHeaders[2]] = entries[idx][2];
-                new_row[Constants.networking.columnHeaders[3]] = entries[idx][3];
-                new_row[Constants.networking.columnHeaders[4]] = entries[idx][4];
+                var entry = entries[idx];
+                new_row[colHeader[0]] = entry[0];
+                new_row[colHeader[1]] = entry[1];
+                new_row[colHeader[2]] = entry[2];
+                new_row[colHeader[3]] = entry[3];
+                new_row[colHeader[4]] = entry[4];
                 tableView.model.setRow(idx, new_row);
             }
         }

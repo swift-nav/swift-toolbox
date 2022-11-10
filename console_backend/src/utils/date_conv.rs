@@ -1,4 +1,5 @@
 use chrono::{prelude::*, DateTime, Duration, Local, TimeZone, Utc};
+use sbp::messages::navigation::MsgUtcTime;
 use std::fmt::Display;
 
 use crate::constants::{DECODED_THIS_SESSION, FACTORY_DEFAULT, NON_VOLATILE_MEMORY, UNKNOWN};
@@ -43,6 +44,19 @@ pub fn utc_time(
 ) -> UtcDateTime {
     Utc.ymd(year, month, day)
         .and_hms_nano(hours, minutes, seconds, nanoseconds)
+}
+
+/// Get UTC date time from sbp MsgUtcTime
+pub fn utc_time_from_msg(msg: &MsgUtcTime) -> UtcDateTime {
+    utc_time(
+        msg.year as i32,
+        msg.month as u32,
+        msg.day as u32,
+        msg.hours as u32,
+        msg.minutes as u32,
+        msg.seconds as u32,
+        msg.ns as u32,
+    )
 }
 
 /// Return generic datetime as date and seconds.

@@ -337,7 +337,7 @@ pub struct TcpConnection {
 
 impl TcpConnection {
     pub fn new(host: String, port: u16) -> Result<Self> {
-        let name = format!("{}:{}", host, port);
+        let name = format!("{host}:{port}");
         Ok(Self { name, host, port })
     }
 
@@ -351,14 +351,11 @@ impl TcpConnection {
         let mut errors = vec![];
 
         for address in addresses {
-            info!("Attempting to connect to resolved address {:?}", address);
+            info!("Attempting to connect to resolved address {address:?}");
             match TcpStream::connect_timeout(&address, READER_TIMEOUT) {
                 Ok(stream) => return Ok(stream),
                 Err(err) => {
-                    info!(
-                        "Error connecting to resolved address {:?}: {:?}",
-                        address, err
-                    );
+                    info!("Error connecting to resolved address {address:?}: {err:?}");
                     errors.push(err);
                 }
             }
@@ -398,7 +395,7 @@ pub struct SerialConnection {
 impl SerialConnection {
     pub fn new(device: String, baudrate: u32, flow: FlowControl) -> Self {
         Self {
-            name: format!("{} @{}", device, baudrate),
+            name: format!("{device} @{baudrate}"),
             device,
             baudrate,
             flow,
@@ -437,18 +434,17 @@ pub struct FileConnection {
 }
 
 impl FileConnection {
-    fn new<P: AsRef<Path>>(
-        filepath: P,
-        close_when_done: bool,
-        realtime_delay: RealtimeDelay,
-    ) -> Self {
+    fn new<P>(filepath: P, close_when_done: bool, realtime_delay: RealtimeDelay) -> Self
+    where
+        P: AsRef<Path>,
+    {
         let filepath = PathBuf::from(filepath.as_ref());
         let name = if let Some(path) = filepath.file_name() {
             path
         } else {
             filepath.as_os_str()
         };
-        let name: &str = &*name.to_string_lossy();
+        let name: &str = &name.to_string_lossy();
         Self {
             name: String::from(name),
             filepath,

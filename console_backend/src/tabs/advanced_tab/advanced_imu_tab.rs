@@ -4,11 +4,11 @@ use sbp::messages::imu::{MsgImuAux, MsgImuRaw};
 use capnp::message::Builder;
 
 use crate::client_sender::BoxedClientSender;
+use crate::constants::*;
 use crate::fusion_status_flags::FusionStatusFlags;
 use crate::shared_state::{SharedState, TabName};
-use crate::types::Deque;
-use crate::utils::serialize_capnproto_builder;
-use crate::{constants::*, zip};
+use crate::types::RingBuffer;
+use crate::utils::{euclidean_distance, serialize_capnproto_builder};
 
 /// AdvancedImuTab struct.
 ///
@@ -28,39 +28,39 @@ use crate::{constants::*, zip};
 /// - `gyro_z`: The stored historic Imu angular rate values along z axis.
 #[derive(Debug)]
 pub struct AdvancedImuTab {
-    client_sender: BoxedClientSender,
     shared_state: SharedState,
+    client_sender: BoxedClientSender,
     pub fusion_engine_status_bar: FusionStatusFlags,
     imu_conf: u8,
     imu_temp: f64,
     rms_acc_x: f64,
     rms_acc_y: f64,
     rms_acc_z: f64,
-    acc_x: Deque<f64>,
-    acc_y: Deque<f64>,
-    acc_z: Deque<f64>,
-    gyro_x: Deque<f64>,
-    gyro_y: Deque<f64>,
-    gyro_z: Deque<f64>,
+    acc_x: RingBuffer<f64>,
+    acc_y: RingBuffer<f64>,
+    acc_z: RingBuffer<f64>,
+    gyro_x: RingBuffer<f64>,
+    gyro_y: RingBuffer<f64>,
+    gyro_z: RingBuffer<f64>,
 }
 
 impl AdvancedImuTab {
     pub fn new(shared_state: SharedState, client_sender: BoxedClientSender) -> AdvancedImuTab {
         AdvancedImuTab {
-            fusion_engine_status_bar: FusionStatusFlags::new(client_sender.clone()),
             shared_state,
+            fusion_engine_status_bar: FusionStatusFlags::new(client_sender.clone()),
             client_sender,
             imu_conf: 0_u8,
             imu_temp: 0_f64,
             rms_acc_x: 0_f64,
             rms_acc_y: 0_f64,
             rms_acc_z: 0_f64,
-            acc_x: Deque::with_fill_value(NUM_POINTS, 0.),
-            acc_y: Deque::with_fill_value(NUM_POINTS, 0.),
-            acc_z: Deque::with_fill_value(NUM_POINTS, 0.),
-            gyro_x: Deque::with_fill_value(NUM_POINTS, 0.),
-            gyro_y: Deque::with_fill_value(NUM_POINTS, 0.),
-            gyro_z: Deque::with_fill_value(NUM_POINTS, 0.),
+            acc_x: RingBuffer::with_fill_value(NUM_POINTS, 0.),
+            acc_y: RingBuffer::with_fill_value(NUM_POINTS, 0.),
+            acc_z: RingBuffer::with_fill_value(NUM_POINTS, 0.),
+            gyro_x: RingBuffer::with_fill_value(NUM_POINTS, 0.),
+            gyro_y: RingBuffer::with_fill_value(NUM_POINTS, 0.),
+            gyro_z: RingBuffer::with_fill_value(NUM_POINTS, 0.),
         }
     }
 
@@ -68,21 +68,9 @@ impl AdvancedImuTab {
     fn imu_set_data(&mut self) {
         let acc_range = self.imu_conf & 0xF;
         let sig_figs = f64::powi(2_f64, acc_range as i32 + 1_i32) / f64::powi(2_f64, 15);
-        let (rms_x, rms_y, rms_z) = {
-            let mut squared_sum_x: f64 = 0_f64;
-            let mut squared_sum_y: f64 = 0_f64;
-            let mut squared_sum_z: f64 = 0_f64;
-            for (x, y, z) in zip!(&self.acc_x, &self.acc_y, &self.acc_z) {
-                squared_sum_x += x.powi(2);
-                squared_sum_y += y.powi(2);
-                squared_sum_z += z.powi(2);
-            }
-            (
-                f64::sqrt(squared_sum_x / self.acc_x.len() as f64),
-                f64::sqrt(squared_sum_y / self.acc_y.len() as f64),
-                f64::sqrt(squared_sum_z / self.acc_z.len() as f64),
-            )
-        };
+        let rms_x = euclidean_distance(self.acc_x.iter()) / f64::sqrt(self.acc_x.len() as f64);
+        let rms_y = euclidean_distance(self.acc_y.iter()) / f64::sqrt(self.acc_y.len() as f64);
+        let rms_z = euclidean_distance(self.acc_z.iter()) / f64::sqrt(self.acc_z.len() as f64);
         self.rms_acc_x = sig_figs * rms_x;
         self.rms_acc_y = sig_figs * rms_y;
         self.rms_acc_z = sig_figs * rms_z;
@@ -96,7 +84,7 @@ impl AdvancedImuTab {
     pub fn handle_imu_aux(&mut self, msg: MsgImuAux) {
         match msg.imu_type {
             0 => {
-                self.imu_temp = 23_f64 + msg.temp as f64 / f64::powi(2_f64, 9);
+                self.imu_temp = 23_f64 + msg.temp as f64 / 512_f64;
                 self.imu_conf = msg.imu_conf;
             }
             1 => {

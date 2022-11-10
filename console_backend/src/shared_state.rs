@@ -24,6 +24,7 @@ use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use serialport::FlowControl;
 
+use crate::client_sender::BoxedClientSender;
 use crate::constants::{
     APPLICATION_NAME, APPLICATION_ORGANIZATION, APPLICATION_QUALIFIER, CONNECTION_HISTORY_FILENAME,
     DEFAULT_IP_ADDRESS, DEFAULT_LOG_DIRECTORY, DEFAULT_PORT, MAX_CONNECTION_HISTORY, MPS,
@@ -32,12 +33,12 @@ use crate::errors::CONVERT_TO_STR_FAILURE;
 use crate::log_panel::LogLevel;
 use crate::output::{CsvLogging, CsvSerializer};
 use crate::process_messages::StopToken;
-use crate::settings_tab;
-use crate::solution_tab::LatLonUnits;
-use crate::update_tab::UpdateTabUpdate;
+use crate::tabs::{
+    main_tab::logging_stats_thread, settings_tab, solution_tab::LatLonUnits,
+    update_tab::UpdateTabUpdate,
+};
 use crate::utils::send_conn_state;
 use crate::watch::{WatchReceiver, Watched};
-use crate::{client_sender::BoxedClientSender, main_tab::logging_stats_thread};
 use crate::{common_constants::ConnectionType, connection::Connection};
 use crate::{
     common_constants::{self as cc, SbpLogging},
@@ -187,13 +188,7 @@ impl SharedState {
             .record_serial(device, baud, flow);
     }
     pub fn start_vel_log(&self, path: &Path) {
-        self.lock().solution_tab.velocity_tab.log_file = match CsvSerializer::new(path) {
-            Ok(vel_csv) => Some(vel_csv),
-            Err(e) => {
-                error!("issue creating file, {}, error, {}", path.display(), e);
-                None
-            }
-        }
+        self.lock().solution_tab.velocity_tab.log_file = CsvSerializer::new_option(path);
     }
     pub fn end_vel_log(&self) -> Result<()> {
         if let Some(ref mut log) = self.lock().solution_tab.velocity_tab.log_file {
@@ -203,13 +198,7 @@ impl SharedState {
         Ok(())
     }
     pub fn start_pos_log(&self, path: &Path) {
-        self.lock().solution_tab.position_tab.log_file = match CsvSerializer::new(path) {
-            Ok(vel_csv) => Some(vel_csv),
-            Err(e) => {
-                error!("issue creating file, {}, error, {}", path.display(), e);
-                None
-            }
-        }
+        self.lock().solution_tab.position_tab.log_file = CsvSerializer::new_option(path);
     }
     pub fn end_pos_log(&self) -> Result<()> {
         if let Some(ref mut log) = self.lock().solution_tab.position_tab.log_file {
@@ -219,13 +208,7 @@ impl SharedState {
         Ok(())
     }
     pub fn start_baseline_log(&self, path: &Path) {
-        self.lock().baseline_tab.log_file = match CsvSerializer::new(path) {
-            Ok(vel_csv) => Some(vel_csv),
-            Err(e) => {
-                error!("issue creating file, {}, error, {}", path.display(), e);
-                None
-            }
-        }
+        self.lock().baseline_tab.log_file = CsvSerializer::new_option(path);
     }
     pub fn end_baseline_log(&self) -> Result<()> {
         if let Some(ref mut log) = self.lock().baseline_tab.log_file {
@@ -386,6 +369,7 @@ pub struct SharedStateInner {
     pub(crate) heartbeat_data: Heartbeat,
     pub(crate) visible_tab: TabName,
 }
+
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
         let connection_history = ConnectionHistory::new();
@@ -415,6 +399,7 @@ impl SharedStateInner {
         }
     }
 }
+
 impl Default for SharedStateInner {
     fn default() -> Self {
         SharedStateInner::new()
@@ -430,6 +415,10 @@ pub enum TabName {
     Settings,
     Update,
     Advanced,
+}
+
+pub enum EventType {
+    EventRefresh(),
 }
 
 #[derive(Debug, Default)]
@@ -464,9 +453,8 @@ impl LoggingBarState {
         };
         if let Err(err) = fs::create_dir_all(&logging_directory) {
             error!(
-                "Unable to create directory, {}, {}.",
-                logging_directory.display(),
-                err
+                "Unable to create directory, {}, {err}.",
+                logging_directory.display()
             );
         }
         LoggingBarState {
@@ -700,7 +688,7 @@ fn create_data_dir() -> AHResult<PathBuf> {
     )
     .context("could not discover local project directory")?;
     let path: PathBuf = ProjectDirs::data_local_dir(&proj_dirs).into();
-    fs::create_dir_all(path.clone())?;
+    fs::create_dir_all(path.as_path())?;
     Ok(path)
 }
 
@@ -965,27 +953,13 @@ impl std::fmt::Display for ConnectionState {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_common::{backup_file, data_directories, filename, restore_backup_file};
+    use crate::test_common::{backup_file, filename, restore_backup_file};
     use serial_test::serial;
 
     #[test]
     fn create_data_dir_test() {
         create_data_dir().unwrap();
-        let user_dirs = UserDirs::new().unwrap();
-        let home_dir = user_dirs.home_dir();
-        #[cfg(target_os = "linux")]
-        {
-            assert!(home_dir.join(data_directories::LINUX).exists());
-        }
-
-        #[cfg(target_os = "macos")]
-        {
-            assert!(home_dir.join(data_directories::MACOS).exists());
-        }
-        #[cfg(target_os = "windows")]
-        {
-            assert!(home_dir.join(data_directories::WINDOWS).exists());
-        }
+        assert!(filename().parent().unwrap().exists())
     }
 
     #[test]

@@ -16,6 +16,29 @@ use crate::errors::*;
 use crate::shared_state::{ConnectionState, SerialConfig, SharedState};
 use crate::types::SignalCodes;
 
+pub mod date_conv;
+
+/// Formats DOPS field into string, used in SolutionPositionTab
+pub fn dops_into_string(field: u16) -> String {
+    format!("{:.1}", field as f64 * DILUTION_OF_PRECISION_UNITS)
+}
+
+/// Compute n-dimensional euclidean distance
+pub fn euclidean_distance<'a>(pos_iter: impl Iterator<Item = &'a f64>) -> f64 {
+    f64::sqrt(pos_iter.map(|x| x.powf(2_f64)).sum())
+}
+
+pub trait OkOrLog<T, E, F: FnOnce(E)> {
+    fn ok_or_log(self, log_err: F) -> Option<T>;
+}
+
+/// Unwrap result, log if error
+impl<T, E, F: FnOnce(E)> OkOrLog<T, E, F> for Result<T, E> {
+    fn ok_or_log(self, log_err: F) -> Option<T> {
+        self.map_err(log_err).ok()
+    }
+}
+
 /// Create a new SbpString of L size with T termination.
 pub fn fixed_sbp_string<T, const L: usize>(data: &str) -> SbpString<[u8; L], T> {
     let mut arr = [0u8; L];
@@ -154,7 +177,7 @@ pub fn refresh_connection_frontend(client_sender: &BoxedClientSender, shared_sta
     }
 
     let prev_conn_type = shared_state.connection_type_history().to_string();
-    connection_status.set_previous_connection_type(&*prev_conn_type);
+    connection_status.set_previous_connection_type(&prev_conn_type);
 
     client_sender.send_data(serialize_capnproto_builder(builder));
 }

@@ -1,9 +1,3 @@
-pub mod advanced_imu_tab;
-pub mod advanced_magnetometer_tab;
-pub mod advanced_networking_tab;
-pub mod advanced_spectrum_analyzer_tab;
-pub mod advanced_system_monitor_tab;
-pub mod baseline_tab;
 pub mod cli_options;
 pub mod console_backend_capnp {
     include!(concat!(env!("OUT_DIR"), "/console_backend_capnp.rs"));
@@ -12,16 +6,12 @@ pub mod client_sender;
 pub mod common_constants;
 pub mod connection;
 pub mod constants;
-pub mod date_conv;
 pub mod errors;
 pub mod fft_monitor;
 pub mod fileio;
-pub mod firmware_update;
 pub mod formatters;
 pub mod fusion_status_flags;
 pub mod log_panel;
-pub mod main_tab;
-pub mod observation_tab;
 pub mod output;
 pub mod piksi_tools_constants;
 pub mod process_messages;
@@ -29,30 +19,34 @@ pub mod process_messages;
 #[cfg(all(not(feature = "benches"), not(feature = "tests"), feature = "pyo3"))]
 pub mod server;
 pub mod server_recv_thread;
-pub mod settings_tab;
 pub mod shared_state;
-pub mod solution_tab;
-pub mod solution_velocity_tab;
 pub mod status_bar;
-pub mod swift_version;
-pub mod tracking_signals_tab;
-pub mod tracking_sky_plot_tab;
+pub mod tabs;
 pub mod types;
-pub mod update_downloader;
-pub mod update_tab;
+pub mod updater;
 pub mod utils;
 pub mod watch;
 
+use crate::status_bar::StatusBar;
 use std::sync::Mutex;
 
-use crate::{
-    advanced_imu_tab::AdvancedImuTab, advanced_magnetometer_tab::AdvancedMagnetometerTab,
-    advanced_networking_tab::AdvancedNetworkingTab,
-    advanced_spectrum_analyzer_tab::AdvancedSpectrumAnalyzerTab,
-    advanced_system_monitor_tab::AdvancedSystemMonitorTab, baseline_tab::BaselineTab,
-    main_tab::MainTab, observation_tab::ObservationTab, settings_tab::SettingsTab,
-    solution_tab::SolutionTab, solution_velocity_tab::SolutionVelocityTab, status_bar::StatusBar,
-    tracking_signals_tab::TrackingSignalsTab, tracking_sky_plot_tab::TrackingSkyPlotTab,
+use crate::tabs::{
+    advanced_tab::{
+        advanced_imu_tab::AdvancedImuTab, advanced_magnetometer_tab::AdvancedMagnetometerTab,
+        advanced_networking_tab::AdvancedNetworkingTab,
+        advanced_spectrum_analyzer_tab::AdvancedSpectrumAnalyzerTab,
+        advanced_system_monitor_tab::AdvancedSystemMonitorTab,
+    },
+    baseline_tab::BaselineTab,
+    main_tab::MainTab,
+    observation_tab::ObservationTab,
+    settings_tab::SettingsTab,
+    solution_tab::{
+        solution_position_tab::SolutionPositionTab, solution_velocity_tab::SolutionVelocityTab,
+    },
+    tracking_tab::{
+        tracking_signals_tab::TrackingSignalsTab, tracking_sky_plot_tab::TrackingSkyPlotTab,
+    },
     update_tab::UpdateTab,
 };
 
@@ -68,14 +62,13 @@ struct Tabs {
     pub baseline: Mutex<BaselineTab>,
     pub tracking_signals: Mutex<TrackingSignalsTab>,
     pub tracking_sky_plot: Mutex<TrackingSkyPlotTab>,
-    pub solution: Mutex<SolutionTab>,
+    pub solution_position: Mutex<SolutionPositionTab>,
     pub observation: Mutex<ObservationTab>,
     pub solution_velocity: Mutex<SolutionVelocityTab>,
     pub advanced_spectrum_analyzer: Mutex<AdvancedSpectrumAnalyzerTab>,
     pub status_bar: Mutex<StatusBar>,
     pub update: Mutex<UpdateTab>,
-    pub settings: Option<SettingsTab>,
-    pub shared_state: shared_state::SharedState,
+    pub settings: Option<SettingsTab>, // settings only enabled on TCP / Serial
 }
 
 impl Tabs {
@@ -110,7 +103,11 @@ impl Tabs {
             tracking_sky_plot: TrackingSkyPlotTab::new(client_sender.clone(), shared_state.clone())
                 .into(),
             observation: ObservationTab::new(shared_state.clone(), client_sender.clone()).into(),
-            solution: SolutionTab::new(shared_state.clone(), client_sender.clone()).into(),
+            solution_position: SolutionPositionTab::new(
+                shared_state.clone(),
+                client_sender.clone(),
+            )
+            .into(),
             solution_velocity: SolutionVelocityTab::new(
                 shared_state.clone(),
                 client_sender.clone(),
@@ -122,9 +119,8 @@ impl Tabs {
             )
             .into(),
             status_bar: StatusBar::new(shared_state.clone()).into(),
-            update: UpdateTab::new(shared_state.clone()).into(),
+            update: UpdateTab::new(shared_state).into(),
             settings: None,
-            shared_state,
         }
     }
 

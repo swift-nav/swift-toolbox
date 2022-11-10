@@ -126,7 +126,7 @@ impl StatusTimer {
             if let Err(err) = running_sender.try_send(false) {
                 match err {
                     TrySendError::Disconnected(_) => (),
-                    _ => error!("Issue cancelling timer, {}.", err),
+                    _ => error!("Issue cancelling timer, {err}."),
                 }
             }
         }

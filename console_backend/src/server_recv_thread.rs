@@ -92,11 +92,8 @@ pub fn server_recv_thread(
                         .iter()
                         .map(|x| String::from(x.unwrap()))
                         .collect();
-                    shared_state
-                        .lock()
-                        .tracking_tab
-                        .signals_tab
-                        .check_visibility = check_visibility;
+
+                    shared_state.set_check_visibility(check_visibility);
                 }
                 m::message::LoggingBarFront(Ok(cv_in)) => {
                     let directory = cv_in

@@ -31,11 +31,12 @@ use crate::errors::CONVERT_TO_STR_FAILURE;
 use crate::log_panel::LogLevel;
 use crate::output::{CsvLogging, CsvSerializer};
 use crate::process_messages::StopToken;
+use crate::shared_state::EventType::EventRefresh;
 use crate::tabs::{
     main_tab::logging_stats_thread, settings_tab, solution_tab::LatLonUnits,
     update_tab::UpdateTabUpdate,
 };
-use crate::utils::send_conn_state;
+use crate::utils::{send_conn_state, OkOrLog};
 use crate::watch::{WatchReceiver, Watched};
 use crate::{common_constants::ConnectionType, connection::Connection};
 use crate::{
@@ -316,6 +317,14 @@ impl SharedState {
     pub fn heartbeat_data(&self) -> Heartbeat {
         self.lock().heartbeat_data.clone()
     }
+
+    pub fn set_check_visibility(&self, check_visibility: Vec<String>) {
+        let mut guard = self.lock();
+        guard.tracking_tab.signals_tab.check_visibility = check_visibility;
+        let (s, _) = &guard.event_channel;
+        s.send(EventRefresh)
+            .ok_or_log(|e| error!("send refresh fail: {e}"));
+    }
 }
 
 impl Deref for SharedState {
@@ -396,7 +405,7 @@ impl Default for SharedStateInner {
 }
 
 pub enum EventType {
-    EventRefresh(),
+    EventRefresh,
 }
 
 #[derive(Debug, Default)]

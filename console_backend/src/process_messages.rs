@@ -59,16 +59,6 @@ pub fn process_messages(
         .clone_update_tab_context();
     update_tab_context.set_serial_prompt(conn.is_serial());
     let (_, event_rx) = shared_state.lock().event_channel.clone();
-    std::thread::spawn(move || {
-        for event in event_rx.iter() {
-            match event {
-                EventType::EventRefresh() => {
-                    println!("refresh!");
-                }
-            }
-        }
-    });
-
     let (update_tab_tx, update_tab_rx) = tabs.update.lock().unwrap().clone_channel();
     crossbeam::scope(|scope| {
         scope.spawn(|_| {
@@ -89,6 +79,17 @@ pub fn process_messages(
                 settings_tab::start_thd(tab);
             });
         }
+        scope.spawn(|_| {
+            for event in event_rx.iter() {
+                match event {
+                    EventType::EventRefresh => {
+                        let mut tab = tabs.tracking_signals.lock().unwrap();
+                        tab.update_plot();
+                        tab.send_data();
+                    }
+                }
+            }
+        });
         for (message, _) in &mut messages {
             source.send_with_state(&tabs, &message);
             if let Some(ref tab) = tabs.settings {

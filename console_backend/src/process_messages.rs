@@ -21,7 +21,7 @@ use crate::client_sender::BoxedClientSender;
 use crate::connection::Connection;
 use crate::errors::{PROCESS_MESSAGES_FAILURE, UNABLE_TO_CLONE_UPDATE_SHARED};
 use crate::log_panel;
-use crate::shared_state::{EventType, SharedState};
+use crate::shared_state::{EventType, SharedState, TabName};
 use crate::tabs::{settings_tab, update_tab};
 use crate::types::{
     BaselineNED, Dops, GpsTime, MsgSender, ObservationMsg, PosLLH, Specan, UartState, VelNED,
@@ -82,7 +82,58 @@ pub fn process_messages(
         scope.spawn(|_| {
             for event in event_rx.iter() {
                 match event {
-                    EventType::Refresh => {
+                    EventType::Refresh(tab) => {
+                        match tab {
+                            TabName::Unknown => error!("failed to process unknown tab in channel"),
+                            TabName::Tracking => {
+                                // tracking signal
+                                let mut tab = tabs.tracking_signals.lock().unwrap();
+                                tab.update_plot();
+                                tab.send_data();
+                                // sky plot
+                                let mut tab = tabs.tracking_sky_plot.lock().unwrap();
+                                tab.send_data();
+                            }
+                            TabName::Solution => {
+                                // sln pos
+                                let mut tab = tabs.solution_position.lock().unwrap();
+                                tab.send_solution_data();
+                                tab.send_table_data();
+                                // sln vel
+                                let mut tab = tabs.solution_velocity.lock().unwrap();
+                                tab.send_data();
+                            }
+                            TabName::Baseline => {
+                                let mut tab = tabs.baseline.lock().unwrap();
+                                tab.send_table_data();
+                                tab.send_solution_data();
+                            }
+                            TabName::Advanced => {
+                                // imu
+                                let mut tab = tabs.advanced_imu.lock().unwrap();
+                                tab.send_data();
+                                // mag
+                                let mut tab = tabs.advanced_magnetometer.lock().unwrap();
+                                tab.send_data();
+                                // network
+                                let mut tab = tabs.advanced_networking.lock().unwrap();
+                                tab.send_data();
+                                // spectrum
+                                let mut tab = tabs.advanced_spectrum_analyzer.lock().unwrap();
+                                tab.send_data();
+                                // sys mon
+                                let mut tab = tabs.advanced_system_monitor.lock().unwrap();
+                                tab.send_data();
+                            }
+                            TabName::Observations => {
+                                // TODO: is_remote
+                                // let mut tab = tabs.observation.lock().unwrap();
+                                // tab.send_data();
+                            }
+                            TabName::Settings | TabName::Update => {
+                                // TODO: decide what to do with this one
+                            }
+                        }
                         let mut tab = tabs.tracking_signals.lock().unwrap();
                         tab.update_plot();
                         tab.send_data();

@@ -319,7 +319,7 @@ pub fn server_recv_thread(
                     let curr_tab = cv_in
                         .get_current_tab()
                         .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
-                    shared_state.set_current_tab(curr_tab);
+                    shared_state.switch_tab(curr_tab);
                 }
                 _ => {
                     error!("unknown message from front-end");

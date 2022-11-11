@@ -749,7 +749,7 @@ impl SolutionPositionTab {
     }
 
     /// Package solution data into a message buffer and send to frontend.
-    fn send_solution_data(&mut self) {
+    pub fn send_solution_data(&mut self) {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
@@ -807,7 +807,7 @@ impl SolutionPositionTab {
     }
 
     /// Package solution table data into a message buffer and send to frontend.
-    fn send_table_data(&mut self) {
+    pub fn send_table_data(&mut self) {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
         let mut solution_table_status = msg.init_solution_table_status();

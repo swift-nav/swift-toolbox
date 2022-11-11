@@ -268,7 +268,7 @@ impl ObservationTab {
     /// # Parameters:
     ///
     /// - `is_remote`: Sender local or remote table
-    fn send_data(&mut self, is_remote: bool) {
+    pub fn send_data(&mut self, is_remote: bool) {
         if self.shared_state.current_tab() != TabName::Observations {
             return;
         }

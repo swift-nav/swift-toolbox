@@ -70,7 +70,7 @@ impl AdvancedMagnetometerTab {
     }
 
     /// Package data into a message buffer and send to frontend.
-    fn send_data(&mut self) {
+    pub fn send_data(&mut self) {
         if self.shared_state.current_tab() != TabName::Advanced {
             return;
         }

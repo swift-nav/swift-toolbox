@@ -14,7 +14,7 @@ use strum_macros::EnumString;
 
 use anyhow::{Context, Result as AHResult};
 use chrono::{DateTime, Utc};
-use crossbeam::channel::{unbounded, Receiver, Sender};
+use crossbeam::channel::{unbounded, Receiver, SendError, Sender};
 use directories::{ProjectDirs, UserDirs};
 use indexmap::set::IndexSet;
 use indexmap::IndexMap;
@@ -317,8 +317,15 @@ impl SharedState {
         guard.auto_survey_data.requested = false;
     }
 
-    pub fn set_current_tab(&self, tab_name: &str) {
-        self.lock().visible_tab = TabName::from_str(tab_name).unwrap();
+    pub fn switch_tab(&self, tab_name: &str) {
+        let tab = TabName::from_str(tab_name);
+        if let Some(tab) = tab.ok_or_log(|_| error!("{tab_name} is not a valid tab")) {
+            let mut guard = self.lock();
+            guard.visible_tab = tab;
+            if let Some(err) = guard.send_event(Refresh(tab)) {
+                error!("send refresh on tab switch failed: {err}")
+            }
+        }
     }
 
     pub fn current_tab(&self) -> TabName {
@@ -332,9 +339,9 @@ impl SharedState {
     pub fn set_check_visibility(&self, check_visibility: Vec<String>) {
         let mut guard = self.lock();
         guard.tracking_tab.signals_tab.check_visibility = check_visibility;
-        let (s, _) = &guard.event_channel;
-        s.send(Refresh)
-            .ok_or_log(|e| error!("send refresh fail: {e}"));
+        if let Some(err) = guard.send_event(Refresh(TabName::Tracking)) {
+            error!("send refresh on signal update failed: {err}")
+        }
     }
 }
 
@@ -409,6 +416,10 @@ impl SharedStateInner {
             event_channel: unbounded(),
         }
     }
+
+    fn send_event(&self, event: EventType) -> Option<SendError<EventType>> {
+        self.event_channel.0.send(event).err()
+    }
 }
 
 impl Default for SharedStateInner {
@@ -416,7 +427,7 @@ impl Default for SharedStateInner {
         SharedStateInner::new()
     }
 }
-#[derive(EnumString, Debug, Clone, Eq, PartialEq)]
+#[derive(EnumString, Debug, Clone, Eq, PartialEq, Copy)]
 pub enum TabName {
     Unknown,
     Tracking,
@@ -429,7 +440,7 @@ pub enum TabName {
 }
 
 pub enum EventType {
-    Refresh,
+    Refresh(TabName),
     Stop,
 }
 

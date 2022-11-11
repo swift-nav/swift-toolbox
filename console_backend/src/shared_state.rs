@@ -329,7 +329,7 @@ impl SharedState {
     }
 
     pub fn current_tab(&self) -> TabName {
-        self.lock().visible_tab.clone()
+        self.lock().visible_tab
     }
 
     pub fn heartbeat_data(&self) -> Heartbeat {

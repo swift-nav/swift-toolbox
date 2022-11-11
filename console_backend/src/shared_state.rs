@@ -14,7 +14,7 @@ use strum_macros::EnumString;
 
 use anyhow::{Context, Result as AHResult};
 use chrono::{DateTime, Utc};
-use crossbeam::channel::Sender;
+use crossbeam::channel::{unbounded, Receiver, Sender};
 use directories::{ProjectDirs, UserDirs};
 use indexmap::set::IndexSet;
 use indexmap::IndexMap;
@@ -33,11 +33,12 @@ use crate::errors::CONVERT_TO_STR_FAILURE;
 use crate::log_panel::LogLevel;
 use crate::output::{CsvLogging, CsvSerializer};
 use crate::process_messages::StopToken;
+use crate::shared_state::EventType::Refresh;
 use crate::tabs::{
     main_tab::logging_stats_thread, settings_tab, solution_tab::LatLonUnits,
     update_tab::UpdateTabUpdate,
 };
-use crate::utils::send_conn_state;
+use crate::utils::{send_conn_state, OkOrLog};
 use crate::watch::{WatchReceiver, Watched};
 use crate::{common_constants::ConnectionType, connection::Connection};
 use crate::{
@@ -327,6 +328,14 @@ impl SharedState {
     pub fn heartbeat_data(&self) -> Heartbeat {
         self.lock().heartbeat_data.clone()
     }
+
+    pub fn set_check_visibility(&self, check_visibility: Vec<String>) {
+        let mut guard = self.lock();
+        guard.tracking_tab.signals_tab.check_visibility = check_visibility;
+        let (s, _) = &guard.event_channel;
+        s.send(Refresh)
+            .ok_or_log(|e| error!("send refresh fail: {e}"));
+    }
 }
 
 impl Deref for SharedState {
@@ -368,6 +377,7 @@ pub struct SharedStateInner {
     pub(crate) auto_survey_data: AutoSurveyData,
     pub(crate) heartbeat_data: Heartbeat,
     pub(crate) visible_tab: TabName,
+    pub(crate) event_channel: (Sender<EventType>, Receiver<EventType>),
 }
 
 impl SharedStateInner {
@@ -396,6 +406,7 @@ impl SharedStateInner {
             auto_survey_data: AutoSurveyData::new(),
             heartbeat_data,
             visible_tab: TabName::Unknown,
+            event_channel: unbounded(),
         }
     }
 }
@@ -418,7 +429,8 @@ pub enum TabName {
 }
 
 pub enum EventType {
-    EventRefresh(),
+    Refresh,
+    Stop,
 }
 
 #[derive(Debug, Default)]

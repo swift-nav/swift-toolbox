@@ -126,9 +126,6 @@ impl StatusBar {
             spawn(move || loop {
                 select! {
                     recv(channel::after(Duration::from_secs_f64(delay_time))) -> _ => {
-                        if shared_state.connection().is_disconnected() || shared_state.connection().is_disconnected(){
-                            continue;
-                        }
                         let last_time = Instant::now();
                         let sb_update = heartbeat_data.heartbeat();
                         StatusBar::send_data(client_sender.clone(), sb_update);

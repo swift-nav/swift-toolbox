@@ -1,5 +1,4 @@
-use crossbeam::channel::internal::SelectHandle;
-use crossbeam::channel::{Receiver, SelectedOperation};
+use crossbeam::channel::Receiver;
 use std::io;
 
 use log::{debug, error};

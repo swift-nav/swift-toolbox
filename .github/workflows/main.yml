@@ -66,6 +66,7 @@ jobs:
               brew install capnp llvm
           elif [ "$RUNNER_OS" == "Windows" ]; then
               choco install -y capnproto
+              echo "LIBCLANG_PATH=${{ env.LIBCLANG_PATH_WIN }}" >> $GITHUB_ENV
           fi
 
       - name: Pull Git LFS objects
@@ -92,30 +93,18 @@ jobs:
           path: ${{ env.PIP_CACHE_DIR }}
           key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
 
-
       - name: Install ImageMagick
         shell: bash
-        run: |
-          cargo make install-imagemagick
+        run: cargo make install-imagemagick
 
       - name: Set up python builder
         shell: bash
-        run: |
-          cargo make setup-builder
+        run: cargo make setup-builder
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run Backend Benchmarks (Windows)
-        env:
-          LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
-        run: |
-          cargo make backend-benches
-        if: matrix.os == 'windows-2019'
-
       - name: Run Backend Benchmarks
-        run: |
-          cargo make backend-benches
-        if: matrix.os != 'windows-2019'
+        run: cargo make backend-benches
 
   checks:
 
@@ -156,8 +145,7 @@ jobs:
           version: ${{ env.CARGO_MAKE_VERSION }}
 
       - name: Install Dependencies.
-        run: |
-          sudo apt-get update && sudo apt-get install -y capnproto libudev-dev libssl-dev
+        run: sudo apt-get update && sudo apt-get install -y capnproto libudev-dev libssl-dev
 
       - name: Cache pip
         uses: actions/cache@v2
@@ -183,14 +171,12 @@ jobs:
           setup-python: false
 
       - name: Run Checks
-        run: |
-          cargo make check-all
+        run: cargo make check-all
 
       # TODO Fix qmllint warnings [CPP-798]
       - name: Run qmllint
         continue-on-error: true
-        run: |
-          cargo make qml-lint
+        run: cargo make qml-lint
 
       - name: Run Tests
         uses: nick-invision/retry@v2
@@ -272,6 +258,7 @@ jobs:
               brew install capnp llvm create-dmg
           elif [ "$RUNNER_OS" == "Windows" ]; then
               choco install capnproto nsis
+              echo "LIBCLANG_PATH=${{ env.LIBCLANG_PATH_WIN }}" >> $GITHUB_ENV
           fi
 
       - name: Install stable Rust
@@ -291,8 +278,7 @@ jobs:
 
       - name: Install ImageMagick
         shell: bash
-        run: |
-          cargo make install-imagemagick
+        run: cargo make install-imagemagick
 
       - name: Cache pip
         uses: actions/cache@v2
@@ -307,26 +293,17 @@ jobs:
 
       - name: Set up python builder
         shell: bash
-        run: |
-          cargo make setup-builder
+        run: cargo make setup-builder
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set env vars
-        shell: bash
-        run: |
-          echo "LIBCLANG_PATH=$LIBCLANG_PATH_WIN" >>$GITHUB_ENV
-        if: matrix.os.name == 'windows-2019'
-
       - name: Store git tag vars.
         shell: bash
-        run: |
-          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+        run: echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
 
       - name: Build ${{ runner.os }} Binaries.
         shell: bash
-        run: |
-          cargo make create-dist
+        run: cargo make create-dist
 
       - name: Create ${{ runner.os }} Installers.
         shell: bash
@@ -345,16 +322,13 @@ jobs:
         if: github.event_name == 'push' && contains(github.ref, 'refs/tags') && runner.os == 'Linux'
 
       - name: Build ${{ runner.os }} swift-files binary.
-        run: |
-          cargo build --release --bin swift-files --no-default-features --features env_logger,indicatif
+        run: cargo build --release --bin swift-files --no-default-features --features env_logger,indicatif
 
       - name: Build ${{ runner.os }} swift-settings binary.
-        run: |
-          cargo build --release --bin swift-settings --no-default-features --features env_logger
+        run: cargo build --release --bin swift-settings --no-default-features --features env_logger
 
       - name: Build ${{ runner.os }} swift-updater binary.
-        run: |
-          cargo build --release --bin swift-updater --no-default-features
+        run: cargo build --release --bin swift-updater --no-default-features
 
       - name: Pull Git LFS objects
         run: git lfs pull
@@ -421,8 +395,7 @@ jobs:
           OS_NAME: ${{ runner.os }}
         shell: bash
         continue-on-error: true
-        run: |
-          cargo make disk-usage-bench
+        run: cargo make disk-usage-bench
 
   sign_application:
     name: Sign Application
@@ -441,8 +414,7 @@ jobs:
       - name: Remove previous build.
         shell: bash
         continue-on-error: true
-        run: |
-          rm -rf application
+        run: rm -rf application
 
       - name: Checkout source.
         uses: actions/checkout@v2
@@ -453,8 +425,7 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: ${{ matrix.os }}-artifacts
-          path: |
-            application
+          path: application
 
       - name: Unzip release artifact.
         shell: bash
@@ -714,14 +685,12 @@ jobs:
     steps:
       - name: Store git tag vars.
         shell: bash
-        run: |
-          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+        run: echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
 
       - name: Remove previous build.
         shell: bash
         continue-on-error: true
-        run: |
-          rm -rf binaries
+        run: rm -rf binaries
 
       - uses: actions/download-artifact@v2
         with:
@@ -804,8 +773,7 @@ jobs:
       - name: Zip Binaries.
         shell: bash
         working-directory: ${{ matrix.os.short_name }}
-        run: |
-          7z a -tzip "../swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-all.zip"
+        run: 7z a -tzip "../swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-all.zip"
 
       - uses: actions/upload-artifact@v2
         with:

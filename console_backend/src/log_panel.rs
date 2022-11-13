@@ -13,7 +13,7 @@ use crate::common_constants as cc;
 use crate::constants::LOG_WRITER_BUFFER_MESSAGE_COUNT;
 use crate::errors::CONSOLE_LOG_JSON_TO_STRING_FAILURE;
 use crate::shared_state::SharedState;
-use crate::utils::serialize_capnproto_builder;
+use crate::utils::{serialize_capnproto_builder, OkOrLog};
 
 const DEVICE: &str = "DEVICE";
 const CONSOLE: &str = "CONSOLE";
@@ -23,10 +23,10 @@ pub type LogLevel = cc::LogLevel;
 impl LogLevel {
     pub fn level_filter(&self) -> LevelFilter {
         match self {
-            cc::LogLevel::DEBUG => LevelFilter::Debug,
-            cc::LogLevel::INFO => LevelFilter::Info,
-            cc::LogLevel::NOTICE | cc::LogLevel::WARNING => LevelFilter::Warn,
-            cc::LogLevel::ERROR => LevelFilter::Error,
+            LogLevel::DEBUG => LevelFilter::Debug,
+            LogLevel::INFO => LevelFilter::Info,
+            LogLevel::NOTICE | LogLevel::WARNING => LevelFilter::Warn,
+            LogLevel::ERROR => LevelFilter::Error,
         }
     }
 }
@@ -149,16 +149,11 @@ fn init_log_file(shared_state: &SharedState) -> Option<File> {
     let filepath = shared_state
         .log_filename()
         .map(|f| shared_state.logging_directory().join(f));
-    filepath.and_then(|p| match File::create(&p) {
-        Ok(f) => Some(f),
-        Err(e) => {
-            error!(
-                "issue creating console log file, {}, error, {}",
-                p.display(),
-                e
-            );
-            None
-        }
+    filepath.and_then(|p| {
+        File::create(&p).ok_or_log(|e| {
+            let fname = p.display();
+            error!("issue creating console log file, {fname}, error, {e}");
+        })
     })
 }
 

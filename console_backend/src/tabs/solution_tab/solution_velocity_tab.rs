@@ -7,8 +7,8 @@ use sbp::messages::navigation::MsgVelNed;
 use crate::client_sender::BoxedClientSender;
 use crate::constants::{HORIZONTAL_COLOR, NUM_POINTS, VERTICAL_COLOR};
 use crate::shared_state::SharedState;
-use crate::types::{Deque, VelocityUnits};
-use crate::utils::serialize_capnproto_builder;
+use crate::types::{RingBuffer, VelocityUnits};
+use crate::utils::{euclidean_distance, serialize_capnproto_builder};
 use crate::zip;
 
 /// SolutionVelocityTab struct.
@@ -32,7 +32,7 @@ pub struct SolutionVelocityTab {
     pub max: f64,
     pub min: f64,
     pub multiplier: f64,
-    pub points: Vec<Deque<(f64, OrderedFloat<f64>)>>,
+    pub points: Vec<RingBuffer<(f64, OrderedFloat<f64>)>>,
     pub shared_state: SharedState,
     pub tow: f64,
     pub unit: VelocityUnits,
@@ -51,7 +51,7 @@ impl SolutionVelocityTab {
             max: 0_f64,
             min: 0_f64,
             multiplier: VelocityUnits::Mps.get_multiplier(),
-            points: vec![Deque::new(NUM_POINTS), Deque::new(NUM_POINTS)],
+            points: vec![RingBuffer::new(NUM_POINTS), RingBuffer::new(NUM_POINTS)],
             shared_state,
             tow: 0_f64,
             unit: VelocityUnits::Mps,
@@ -60,8 +60,8 @@ impl SolutionVelocityTab {
 
     fn convert_points(&mut self, new_unit: VelocityUnits) {
         let new_mult = new_unit.get_multiplier();
-        let mut hpoints: Deque<(f64, OrderedFloat<f64>)> = Deque::new(NUM_POINTS);
-        let mut vpoints: Deque<(f64, OrderedFloat<f64>)> = Deque::new(NUM_POINTS);
+        let mut hpoints: RingBuffer<(f64, OrderedFloat<f64>)> = RingBuffer::new(NUM_POINTS);
+        let mut vpoints: RingBuffer<(f64, OrderedFloat<f64>)> = RingBuffer::new(NUM_POINTS);
         let mult_conversion = new_mult / self.multiplier;
         for idx in 0..self.points[0].len() {
             let mut hpoint = self.points[0][idx];
@@ -86,7 +86,7 @@ impl SolutionVelocityTab {
         let e = msg.e as f64;
         let d = msg.d as f64;
 
-        let h_vel = f64::sqrt(f64::powi(n, 2) + f64::powi(e, 2)) / 1000.0;
+        let h_vel = euclidean_distance([n, e].iter()) / 1000.0;
         let v_vel = (-1.0 * d) / 1000.0;
 
         self.tow = msg.tow as f64 / 1000.0;

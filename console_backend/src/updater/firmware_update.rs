@@ -13,10 +13,10 @@ use sbp::{
     SbpString,
 };
 
+use crate::updater::swift_version::SwiftVersion;
 use crate::{
     constants::FIRMWARE_V2,
     fileio::{new_sequence, Fileio},
-    swift_version::SwiftVersion,
     types::{MsgSender, Result},
 };
 
@@ -187,7 +187,7 @@ where
         return;
     }
 
-    for regex in UPGRADE_WHITELIST.iter() {
+    for &regex in UPGRADE_WHITELIST.iter() {
         if let Ok(reg) = Regex::new(regex) {
             if reg.captures(&text).is_some() {
                 log_callback(

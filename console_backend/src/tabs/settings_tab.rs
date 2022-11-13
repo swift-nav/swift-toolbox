@@ -105,7 +105,7 @@ fn tick(settings_tab: &SettingsTab, settings_state: SettingsTabState) {
 }
 
 pub struct SettingsTab {
-    shared_state: SharedState,
+    pub(crate) shared_state: SharedState,
     client_sender: BoxedClientSender,
     msg_sender: MsgSender,
     settings: Mutex<Settings>,
@@ -762,7 +762,7 @@ impl Settings {
         self.inner
             .get(group)
             .and_then(|g| g.get(name))
-            .ok_or_else(|| anyhow!("unknown setting: group: {} name: {}", group, name))
+            .ok_or_else(|| anyhow!("unknown setting: group: {group} name: {name}"))
     }
 
     fn insert(&mut self, entry: sbp_settings::Entry) {

@@ -28,6 +28,8 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
+      - name: Checkout source
+        uses: actions/checkout@v2
       - name: Trigger workflow
         run: |
           gh workflow run backend_bench.yml
@@ -38,6 +40,8 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
+      - name: Checkout source
+        uses: actions/checkout@v2
       - name: Trigger workflow
         run: |
           gh workflow run code_quality.yml

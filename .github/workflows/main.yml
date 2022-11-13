@@ -25,6 +25,8 @@ jobs:
   backend_bench:
     name: Backend Benchmark
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Trigger workflow
         run: |
@@ -33,6 +35,8 @@ jobs:
   checks:
     name: Code Quality
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Trigger workflow
         run: |

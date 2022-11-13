@@ -23,186 +23,31 @@ env:
 jobs:
 
   backend_bench:
-
-    name: Backend Benchmarks
-
-    strategy:
-      matrix:
-        os:
-        - ubuntu-20.04
-        - macos-11
-        - windows-2019
-
-    runs-on: ${{ matrix.os }}
-
+    name: Backend Benchmark
+    runs-on: ubuntu-latest
     steps:
-
-      - name: Checkout source
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
-          ssh-key: ${{ secrets.SSH_KEY }}
-          ssh-strict: false
-
-      - uses: webfactory/ssh-agent@v0.5.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_KEY }}
-
-      - name: Run ssh-keyscan
-        run: ssh-keyscan github.com >> ~/.ssh/known_hosts
-
-      - name: Setup SSH for Windows Git LFS
+      - name: Trigger workflow
         run: |
-          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
-          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
-        if: matrix.os == 'windows-2019'
-
-      - name: Install ${{ runner.os }} Dependencies.
-        shell: bash
-        run: |
-          if [ "$RUNNER_OS" == "Linux" ]; then
-              sudo apt-get update && sudo apt-get install -y capnproto libudev-dev libssl-dev
-          elif [ "$RUNNER_OS" == "macOS" ]; then
-              brew install capnp llvm
-          elif [ "$RUNNER_OS" == "Windows" ]; then
-              choco install -y capnproto
-              echo "LIBCLANG_PATH=${{ env.LIBCLANG_PATH_WIN }}" >> $GITHUB_ENV
-          fi
-
-      - name: Pull Git LFS objects
-        run: git lfs pull
-        env:
-          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
-
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-
-      - uses: Swatinem/rust-cache@v1
-        with:
-          key: ${{ secrets.CACHE_VERSION }}
-
-      - uses: davidB/rust-cargo-make@v1
-        with:
-          version: ${{ env.CARGO_MAKE_VERSION }}
-
-      - name: Cache pip
-        uses: actions/cache@v2
-        with:
-          path: ${{ env.PIP_CACHE_DIR }}
-          key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
-
-      - name: Install ImageMagick
-        shell: bash
-        run: cargo make install-imagemagick
-
-      - name: Set up python builder
-        shell: bash
-        run: cargo make setup-builder
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Run Backend Benchmarks
-        run: cargo make backend-benches
+          gh workflow run backend_bench.yml
 
   checks:
-
-    name: Code Quality Checks
-
-    runs-on: ubuntu-20.04
-
+    name: Code Quality
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
-          ssh-key: ${{ secrets.SSH_KEY }}
-          ssh-strict: false
-
-      - uses: webfactory/ssh-agent@v0.5.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_KEY }}
-
-      - name: Pull Git LFS objects
-        run: git lfs pull
-        env:
-          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
-
-      - name: Install stable Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          components: rustfmt, clippy
-
-      - uses: Swatinem/rust-cache@v1
-        with:
-          key: ${{ secrets.CACHE_VERSION }}
-
-      - uses: davidB/rust-cargo-make@v1
-        with:
-          version: ${{ env.CARGO_MAKE_VERSION }}
-
-      - name: Install Dependencies.
-        run: sudo apt-get update && sudo apt-get install -y capnproto libudev-dev libssl-dev
-
-      - name: Cache pip
-        uses: actions/cache@v2
-        with:
-          path: ${{ env.PIP_CACHE_DIR }}
-          key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
-
-      - name: Install ImageMagick
-        shell: bash
+      - name: Trigger workflow
         run: |
-          cargo make install-imagemagick
-
-      - name: Set up python builder
-        run: |
-          cargo make setup-builder
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install Qt
-        uses: jurplel/install-qt-action@910f37ee23653fd4b243fe5c7f81ff26a8a6a64e
-        with:
-          version: '6.3.1'
-          setup-python: false
-
-      - name: Run Checks
-        run: cargo make check-all
-
-      # TODO Fix qmllint warnings [CPP-798]
-      - name: Run qmllint
-        continue-on-error: true
-        run: cargo make qml-lint
-
-      - name: Run Tests
-        uses: nick-invision/retry@v2
-        with:
-          timeout_minutes: 5
-          max_attempts: 3
-          retry_on: error
-          command: cargo make tests
+          gh workflow run code_quality.yml
 
   build:
-
     name: Build Binaries
-
-    needs:
-      - checks
-      - backend_bench
-
+    needs: [checks, backend_bench]
     strategy:
       matrix:
         os:
         - {name: ubuntu-20.04, exe_suffix: "", short_name: "linux"}
         - {name: macos-11, exe_suffix: "", short_name: "macos"}
         - {name: windows-2019, exe_suffix: ".exe", short_name: "windows"}
-
     runs-on: ${{ matrix.os.name }}
-
     steps:
 
       - name: Checkout source
@@ -400,14 +245,11 @@ jobs:
   sign_application:
     name: Sign Application
     timeout-minutes: 30
-    needs:
-      - build
+    needs: [build]
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
     strategy:
       matrix:
-        os:
-          - macOS
-          - Windows
+        os: [macOS, Windows]
     runs-on: [self-hosted, '${{ matrix.os }}', code-signer]
     steps:
 
@@ -578,8 +420,7 @@ jobs:
   frontend_bench:
     name: Run Frontend Benchmarks
     timeout-minutes: 30
-    needs:
-      - build
+    needs: [build]
     strategy:
       matrix:
         os:
@@ -667,9 +508,7 @@ jobs:
   sign_binaries:
     name: Sign Binaries
     timeout-minutes: 30
-    needs:
-      - build
-      - frontend_bench
+    needs: [build, frontend_bench]
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
     strategy:
       matrix:
@@ -727,8 +566,7 @@ jobs:
       - name: Add executable permission.
         shell: bash
         working-directory: binaries
-        run: |
-          chmod +x swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
+        run: chmod +x swift-${{ matrix.type }}_${{ env.VERSION }}_${{ matrix.os.short_name }}${{ matrix.os.exe_suffix }}
         if: matrix.os.name != 'Windows'
 
       - uses: actions/upload-artifact@v2
@@ -739,8 +577,7 @@ jobs:
   zip_binaries:
     name: Zip Binaries
     timeout-minutes: 10
-    needs:
-      - sign_binaries
+    needs: [sign_binaries]
     strategy:
       matrix:
         os:
@@ -751,8 +588,7 @@ jobs:
     steps:
       - name: Store git tag vars.
         shell: bash
-        run: |
-          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+        run: echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
 
       - name: Pull swift-files
         uses: actions/download-artifact@v2
@@ -800,8 +636,7 @@ jobs:
     steps:
       - name: Store git tag vars.
         shell: bash
-        run: |
-          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+        run: echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
 
       - name: Pull zipped binaries
         uses: actions/download-artifact@v2
@@ -813,7 +648,6 @@ jobs:
         shell: bash
         working-directory: binaries-all
         run: |
-
           codesign -vvvv \
             -s "${{ secrets.APPLE_DEVELOPER_ID }}" \
             -f --timestamp "swift-binaries_${{ matrix.os.short_name }}_${{ env.VERSION }}-all.zip"
@@ -833,9 +667,7 @@ jobs:
 
   release:
     name: Create Release
-    needs:
-      - sign_zipped_binaries
-      - sign_application
+    needs: [sign_zipped_binaries, sign_application]
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
     runs-on: ubuntu-20.04
     steps:

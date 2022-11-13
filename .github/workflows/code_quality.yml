@@ -1,14 +1,7 @@
 name: Backend Benchmark
 
 on:
-  push:
-    branches:
-      - 'main'
-    tags:
-      - '[0-9]+.[0-9]+.[0-9]+*'
-      - 'v[0-9]+.[0-9]+.[0-9]+*'
-  pull_request:
-
+  workflow_call:
 env:
   CARGO_MAKE_VERSION: 0.35.13
   PIP_CACHE_DIR: ~/.cache/pip

@@ -21,30 +21,10 @@ env:
   APP_BUNDLE_ID: com.swift-nav.SwiftConsole
 
 jobs:
-
   backend_bench:
-    name: Backend Benchmark
-    runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@v2
-      - name: Trigger workflow
-        run: |
-          gh workflow run backend_bench.yml
-
+    uses: swift-nav/swift-toolbox/.github/workflows/backend_benchmark.yml@main
   checks:
-    name: Code Quality
-    runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@v2
-      - name: Trigger workflow
-        run: |
-          gh workflow run code_quality.yml
+    uses: swift-nav/swift-toolbox/.github/workflows/code_quality.yml@main
 
   build:
     name: Build Binaries

@@ -397,6 +397,4 @@ jobs:
         continue-on-error: true
         run: cargo make disk-usage-bench
 
-  create_release:
-    name: Build and release
-
+# trigger create release workflow + frontend bench

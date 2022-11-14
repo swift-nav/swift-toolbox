@@ -354,7 +354,7 @@ Item {
                     let hasData = false;
                     let solnPoints = solutionPositionPoints.points;
                     for (let idx in solnPoints) {
-                        if (solnPoints[idx].length) {
+                        if (solnPoints[idx]) {
                             hasData = true;
                             break;
                         }

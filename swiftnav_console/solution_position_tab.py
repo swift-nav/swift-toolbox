@@ -1,7 +1,7 @@
 """Solution Position Tab QObjects.
 """
 
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Set, Tuple
 
 from PySide6.QtCore import Property, QObject, QPointF, Signal, Slot
 
@@ -23,10 +23,11 @@ def solution_position_update() -> Dict[str, Any]:
 
 SOLUTION_POSITION_TAB: List[Dict[str, Any]] = [solution_position_update()]
 
+Point = Tuple[float, float]
 
 class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
     _instance: "SolutionPositionPoints"
-    _points: List[List[QPointF]] = [[]]
+    _points: List[bool] = [False] * 6
     _cur_points: List[List[QPointF]] = [[]]
     _lat_min: float = 0.0
     _lat_max: float = 0.0
@@ -36,6 +37,10 @@ class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attr
     _solution_line: List[QPointF] = []
     _data_updated = Signal()
     solution_position: Dict[str, Any] = {}
+
+    cached_points: List[Set[Point]] = [set(), set(), set(), set(), set(), set()]
+    added_points: List[Set[Point]] = [set(), set(), set(), set(), set(), set()]
+    deleted_points: List[Set[Point]] = [set(), set(), set(), set(), set(), set()]
 
     def __init__(self):
         super().__init__()
@@ -93,11 +98,21 @@ class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attr
 
     lon_max_ = Property(float, get_lon_max, set_lon_max)
 
-    def get_points(self) -> List[List[QPointF]]:
+    def get_points(self) -> List[bool]:
         return self._points
 
     def set_points(self, points) -> None:
-        self._points = [list(map(lambda point: QPointF(point.x, point.y), points[idx])) for idx in range(len(points))]
+        new_cached_points = [set(), set(), set(), set(), set(), set()]
+
+        for i in range(len(points)):
+            for point in points[i]:
+                pos = (point.x, point.y)
+                new_cached_points[i].add(pos)
+
+        self.added_points = [new_cached_points[i] - self.cached_points[i] for i in range(len(points))]
+        self.deleted_points = [self.cached_points[i] - new_cached_points[i] for i in range(len(points))]
+        self.cached_points = new_cached_points
+        self._points = [bool(self.added_points[i]) for i in range(len(self.added_points))]
 
     points = Property(QTKeys.QVARIANTLIST, get_points, set_points)  # type: ignore
 
@@ -105,9 +120,7 @@ class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attr
         return self._cur_points
 
     def set_cur_points(self, cur_points) -> None:
-        self._cur_points = [
-            list(map(lambda point: QPointF(point.x, point.y), cur_points[idx])) for idx in range(len(cur_points))
-        ]
+        self._cur_points = [list(s) for s in self.added_points]
 
     cur_points = Property(QTKeys.QVARIANTLIST, get_cur_points, set_cur_points)  # type: ignore
 
@@ -134,7 +147,16 @@ class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attr
         cur_scatters = series_list[2]
         line.replace(self._solution_line)
         for idx, _ in enumerate(scatters):
-            scatters[idx].replace(self._points[idx])
+
+            added = self.added_points[idx]
+            deleted = self.deleted_points[idx]
+
+            for (add, rem) in zip(added, deleted):
+                scatters[idx].replace(add[0], add[1], rem[0], rem[1])
+
+            for (x, y) in added - deleted:
+                scatters[idx].append(x, y)
+
             cur_scatters[idx].replace(self._cur_points[idx])
 
 

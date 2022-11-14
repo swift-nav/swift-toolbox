@@ -28,10 +28,7 @@ jobs:
 
     strategy:
       matrix:
-        os:
-        - ubuntu-20.04
-        - macos-11
-        - windows-2019
+        os: [ ubuntu-20.04, macos-11, windows-2019 ]
 
     runs-on: ${{ matrix.os }}
 
@@ -190,16 +187,14 @@ jobs:
 
     name: Build Binaries
 
-    needs:
-      - checks
-      - backend_bench
+    needs: [ checks,backend_bench ]
 
     strategy:
       matrix:
         os:
-        - {name: ubuntu-20.04, exe_suffix: "", short_name: "linux"}
-        - {name: macos-11, exe_suffix: "", short_name: "macos"}
-        - {name: windows-2019, exe_suffix: ".exe", short_name: "windows"}
+          - { name: ubuntu-20.04, exe_suffix: "", short_name: "linux" }
+          - { name: macos-11, exe_suffix: "", short_name: "macos" }
+          - { name: windows-2019, exe_suffix: ".exe", short_name: "windows" }
 
     runs-on: ${{ matrix.os.name }}
 

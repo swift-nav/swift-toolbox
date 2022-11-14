@@ -1,7 +1,7 @@
 name: Backend Benchmark
 
 on:
-  workflow_call:
+  workflow_dispatch:
 env:
   LIBCLANG_PATH_WIN: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
   CARGO_MAKE_VERSION: 0.35.13

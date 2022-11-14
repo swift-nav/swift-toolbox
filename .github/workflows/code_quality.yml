@@ -1,7 +1,7 @@
 name: Backend Benchmark
 
 on:
-  workflow_call:
+  workflow_dispatch:
 env:
   CARGO_MAKE_VERSION: 0.35.13
   PIP_CACHE_DIR: ~/.cache/pip

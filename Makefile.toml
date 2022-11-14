@@ -172,6 +172,10 @@ args = ["--tool=callgrind", "${PYTHON}", "-m", "swiftnav_console.main", "${@}"]
 command = "${PYTHON}"
 args = ["-m", "cProfile", "-m", "swiftnav_console.main", "${@}"]
 
+[tasks.start-console-scalene]
+command = "scalene"
+args = ["swiftnav_console/scalene_main.py", "${@}"]
+
 [tasks.start-console-gdb]
 command = "rust-gdb"
 args = [
@@ -227,6 +231,16 @@ dependencies = [
   "install-backend",
 ]
 run_task = "start-console-cprofile"
+
+[tasks.scalene-run]
+dependencies = [
+    "copy-capnp",
+    "generate-resources",
+    "remove-egg-dist",
+    "store-version",
+    "install-backend",
+]
+run_task = "start-console-scalene"
 
 [tasks.prod-run]
 dependencies = [

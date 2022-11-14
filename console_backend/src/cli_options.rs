@@ -226,7 +226,7 @@ impl CliOptions {
         for arg in args.filter(|a| {
             !matches!(
                 a.as_str(),
-                "cProfile" | "swiftnav_console.main" | "-m" | "--"
+                "cProfile" | "scalene" | "swiftnav_console.main" | "-m" | "--"
             )
         }) {
             if let Some(n_arg) = next_args.next() {

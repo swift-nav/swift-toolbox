@@ -1,6 +1,6 @@
 #![allow(clippy::borrow_deref_ref)] // Waiting on this to merge: https://github.com/rust-lang/rust-clippy/issues/8971
 use crossbeam::channel;
-use pyo3::exceptions;
+use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 
@@ -49,26 +49,21 @@ impl ServerEndpoint {
     #[pyo3(text_signature = "($self, bytes, /)")]
     pub fn shutdown(&mut self) -> PyResult<()> {
         if let Some(server_send) = self.server_send.take() {
-            drop(server_send);
-            Ok(())
+            Ok(drop(server_send))
         } else {
-            Err(exceptions::PyRuntimeError::new_err(
-                "no server send endpoint",
-            ))
+            Err(PyRuntimeError::new_err("no server send endpoint"))
         }
     }
 
     #[pyo3(text_signature = "($self, bytes, /)")]
     pub fn send_message(&mut self, bytes: &PyBytes) -> PyResult<()> {
-        let byte_vec: Vec<u8> = bytes.extract().unwrap();
+        let byte_vec: Vec<u8> = bytes.extract()?;
         if let Some(server_send) = &self.server_send {
             server_send
                 .send(byte_vec)
-                .map_err(|e| exceptions::PyRuntimeError::new_err(format!("{}", e)))
+                .map_err(|e| PyRuntimeError::new_err(format!("{e}")))
         } else {
-            Err(exceptions::PyRuntimeError::new_err(
-                "no server send endpoint",
-            ))
+            Err(PyRuntimeError::new_err("no server send endpoint"))
         }
     }
 }
@@ -90,9 +85,8 @@ impl Server {
                 match client_recv.recv_timeout(time::Duration::from_millis(1)) {
                     Ok(buf) => break Some(buf),
                     Err(err) => {
-                        use channel::RecvTimeoutError;
-                        if matches!(err, RecvTimeoutError::Timeout) {
-                            if self.client_sender.as_ref().unwrap().connected() {
+                        if matches!(err, channel::RecvTimeoutError::Timeout) {
+                            if self.client_sender.as_ref()?.connected() {
                                 continue;
                             } else {
                                 eprintln!("shutting down");

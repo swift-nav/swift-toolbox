@@ -52,5 +52,4 @@ ColumnLayout {
             Qt.openUrlExternally(Constants.logoPopup.aboutMe.website);
         }
     }
-
 }

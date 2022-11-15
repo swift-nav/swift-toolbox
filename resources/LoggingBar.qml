@@ -120,6 +120,7 @@ Rectangle {
                 width: 1
                 color: parent.spacerColor
             }
+
         }
 
         Item {
@@ -134,6 +135,7 @@ Rectangle {
                     visible: parent.containsMouse && sbpLoggingButton.checked
                     text: "Currently logging, stop logging to adjust."
                 }
+
             }
 
             RowLayout {
@@ -195,10 +197,12 @@ Rectangle {
                     onAccepted: {
                         if (folderPathBar.editText != folderPathBar.currentText)
                             backend_request_broker.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText);
+
                     }
                     onCurrentIndexChanged: {
                         if (folderPathBar.currentIndex == -1)
                             folderPathBar.currentIndex = 0;
+
                     }
 
                     Label {
@@ -209,6 +213,7 @@ Rectangle {
                         color: Constants.loggingBar.placeholderTextColor
                         visible: !folderPathBar.editText
                     }
+
                 }
 
                 SwiftButton {
@@ -226,7 +231,9 @@ Rectangle {
                         fileDialog.visible = !fileDialog.visible;
                     }
                 }
+
             }
+
         }
 
         FileDialog {
@@ -254,6 +261,7 @@ Rectangle {
             function bytesToString(bytes, decimals = 2) {
                 if (bytes === 0)
                     return '0 Bytes';
+
                 const k = 1024;
                 const dm = decimals < 0 ? 0 : decimals;
                 const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
@@ -266,9 +274,9 @@ Rectangle {
             repeat: true
             onTriggered: {
                 logging_bar_model.fill_data(loggingBarData);
-                sbpLoggingButton.checked = loggingBarData.sbp_logging;
-                csvLoggingButton.checked = loggingBarData.csv_logging;
-                recordingFilenameText.editText = loggingBarData.recording_filename;
+                if (loggingBarData.recording_filename)
+                    recordingFilenameText.editText = loggingBarData.recording_filename;
+
                 if (mockTime) {
                     mockRecordingTime += interval;
                     recordingTime.text = loggingDurationFormat(mockRecordingTime / 1000);
@@ -287,5 +295,7 @@ Rectangle {
                 }
             }
         }
+
     }
+
 }

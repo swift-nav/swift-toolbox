@@ -142,6 +142,7 @@ Rectangle {
                 ComboBox {
                     id: sbpLoggingFormat
 
+                    currentIndex: 0
                     Layout.preferredWidth: Constants.loggingBar.sbpLoggingButtonWidth
                     Layout.preferredHeight: loggingBarRowLayout.preferredButtonHeight
                     enabled: !sbpLoggingButton.checked
@@ -150,7 +151,10 @@ Rectangle {
                     textRole: "display"
                     ToolTip.visible: hovered
                     ToolTip.text: "SBP Log Format"
-                    onActivated: backend_request_broker.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText)
+                    onActivated: {
+                        backend_request_broker.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText);
+                        loggingBarData.sbp_logging_format = sbpLoggingFormat.currentText;
+                    }
                 }
 
                 ComboBox {
@@ -263,7 +267,6 @@ Rectangle {
             onTriggered: {
                 logging_bar_model.fill_data(loggingBarData);
                 sbpLoggingButton.checked = loggingBarData.sbp_logging;
-                sbpLoggingFormat.currentIndex = loggingBarData.sbp_logging_labels.indexOf(loggingBarData.sbp_logging_format);
                 csvLoggingButton.checked = loggingBarData.csv_logging;
                 recordingFilenameText.editText = loggingBarData.recording_filename;
                 if (mockTime) {

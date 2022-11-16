@@ -266,6 +266,8 @@ Rectangle {
             repeat: true
             onTriggered: {
                 logging_bar_model.fill_data(loggingBarData);
+                sbpLoggingButton.checked = loggingBarData.sbp_logging;
+                csvLoggingButton.checked = loggingBarData.csv_logging;
                 if (loggingBarData.recording_filename)
                     recordingFilenameText.editText = loggingBarData.recording_filename;
                 if (mockTime) {

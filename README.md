@@ -141,6 +141,33 @@ cargo make create-dist
 cargo make frontend-cpu-bench
 ```
 
+## QML Formatting
+The `qmlformat` tool is not included in the Qt PySide6 pip packages so the quickest (only?) way to get the tool is by installing Qt on your machine. In CI, we rely on a quick installer tool `aqt` to achieve this.
+
+* Create a python 3.7+ virtual environment:
+  ```
+  conda create -n qt python=3.10
+  ```
+* Install the `aqt` package:
+  ```
+  pip install aqtinstall
+  ```
+* Install the desired version of qt. This website will help you customize the install command for your machine, https://ddalcino.github.io/aqt-list-server/ . Here are some OS specific generic install commands (visit the website if you need a different architecture):
+  ```
+  # Linux
+  aqt install-qt linux desktop 6.3.1 gcc_64
+  # MacOS
+  aqt install-qt mac desktop 6.3.1 clang_64
+  # Windows
+  aqt install-qt windows desktop 6.3.1 win64_msvc2019_64
+  ```
+* Add the `qmlformat` tool to your path. It is located in `<qt install dir>/<qt version>/<arch>/bin/`, this may be different depending on your system.
+
+* Now you can run the tool, but use this cargo make command to match CI behavior:
+  ```
+  cargo make qml-format
+  ```
+
 ## QML Profiling
 
 Download the universal Qt installer from qt.io. Run the installer, pick custom

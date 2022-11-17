@@ -389,6 +389,7 @@ struct UpdateTabStatusFront {
         none @12 :Void;
     }
     serialPromptConfirm @13: Bool;
+    checkForUpdates @14: Bool;
 }
 
 struct TrackingSignalsStatusFront {

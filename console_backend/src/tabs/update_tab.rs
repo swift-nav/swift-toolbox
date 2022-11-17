@@ -99,7 +99,11 @@ pub fn update_tab_thread(
     let is_running = ArcBool::new_with(true);
     let mut app_started = false;
     thread::scope(|scope| {
-        scope.spawn(|_| wait_for_device_settings(is_running.clone(), update_tab_context.clone(), shared_state.clone()));
+        scope.spawn(|_| {
+            if let Err(err) = wait_for_device_settings(is_running.clone(), update_tab_context.clone(), shared_state.clone()) {
+                error!("{}", err.to_string());
+            }
+        });
         scope
             .spawn(|inner_scope| {
                 sender.send(Some(UpdateTabUpdate::new())).unwrap();
@@ -160,6 +164,14 @@ pub fn update_tab_thread(
                                                         update_tab_context.clone(),
                                                         &mut fileio,
                                                     );
+                                                });
+                                            }
+
+                                            if update.check_for_updates {
+                                                inner_scope.spawn(|_| {
+                                                    if let Err(err) = check_console_outdated(update_tab_context.clone()) {
+                                                        error!("{}", err);
+                                                    }
                                                 });
                                             }
                                         },
@@ -437,7 +449,7 @@ fn send_file(update_tab_context: UpdateTabContext, fileio: &mut Fileio) -> anyho
     Ok(())
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct UpdateTabUpdate {
     pub firmware_local_filepath: Option<PathBuf>,
     pub firmware_local_filename: Option<PathBuf>,
@@ -448,26 +460,15 @@ pub struct UpdateTabUpdate {
     pub update_firmware: bool,
     pub send_file_to_device: bool,
     pub serial_prompt_confirm: bool,
+    pub check_for_updates: bool,
 }
 
 impl UpdateTabUpdate {
     fn new() -> UpdateTabUpdate {
         UpdateTabUpdate {
-            download_latest_firmware: false,
-            update_firmware: false,
-            send_file_to_device: false,
-            serial_prompt_confirm: false,
             firmware_directory: Some(LOG_DIRECTORY.path()),
-            firmware_local_filepath: None,
-            firmware_local_filename: None,
-            fileio_local_filepath: None,
-            fileio_destination_filepath: None,
+            ..Default::default()
         }
-    }
-}
-impl Default for UpdateTabUpdate {
-    fn default() -> Self {
-        Self::new()
     }
 }
 
@@ -500,6 +501,7 @@ impl Default for FirmwareUpgradePaneLogger {
     }
 }
 
+#[derive(Default)]
 pub struct UpdateTabContextInner {
     upgrade_ret: Option<i32>,
     upgrade_sequence: Option<u32>,
@@ -520,35 +522,18 @@ pub struct UpdateTabContextInner {
     firmware_v2_outdated: bool,
     serial_prompt: bool,
 }
+
 impl UpdateTabContextInner {
     pub fn new() -> UpdateTabContextInner {
         UpdateTabContextInner {
-            upgrade_ret: None,
-            upgrade_sequence: None,
-            upgrading: false,
-            downloading: false,
-            debug: false,
             firmware_directory: PathBuf::from(""),
-            firmware_local_filepath: None,
-            fileio_destination_filepath: None,
-            fileio_local_filepath: None,
             update_downloader: UpdateDownloader::new(),
             fw_logger: FirmwareUpgradePaneLogger::new(),
-            current_firmware_version: None,
-            current_console_version: None,
-            latest_console_version: None,
-            console_outdated: false,
-            firmware_outdated: false,
-            firmware_v2_outdated: false,
-            serial_prompt: false,
+            ..Default::default()
         }
     }
 }
-impl Default for UpdateTabContextInner {
-    fn default() -> Self {
-        UpdateTabContextInner::new()
-    }
-}
+
 pub struct UpdateTabContext(Arc<Mutex<UpdateTabContextInner>>);
 
 impl UpdateTabContext {
@@ -884,15 +869,8 @@ mod tests {
                 assert!(!ctx.downloading());
                 update_tab_tx
                     .send(Some(UpdateTabUpdate {
-                        firmware_directory: None,
-                        firmware_local_filename: None,
-                        firmware_local_filepath: None,
-                        fileio_local_filepath: None,
-                        fileio_destination_filepath: None,
                         download_latest_firmware: true,
-                        update_firmware: false,
-                        send_file_to_device: false,
-                        serial_prompt_confirm: false,
+                        ..Default::default()
                     }))
                     .unwrap();
                 let start_time = Instant::now();
@@ -951,14 +929,7 @@ mod tests {
                 update_tab_tx
                     .send(Some(UpdateTabUpdate {
                         firmware_directory: Some(tmp_dir.clone()),
-                        firmware_local_filename: None,
-                        firmware_local_filepath: None,
-                        fileio_local_filepath: None,
-                        fileio_destination_filepath: None,
-                        download_latest_firmware: false,
-                        update_firmware: false,
-                        send_file_to_device: false,
-                        serial_prompt_confirm: false,
+                        ..Default::default()
                     }))
                     .unwrap();
                 let start_time = Instant::now();

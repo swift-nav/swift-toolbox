@@ -11,7 +11,7 @@ use crate::client_sender::BoxedClientSender;
 use crate::constants::*;
 use crate::output::{PosLLHLog, VelLog};
 use crate::piksi_tools_constants::EMPTY_STR;
-use crate::shared_state::SharedState;
+use crate::shared_state::{SharedState, TabName};
 use crate::tabs::solution_tab::LatLonUnits;
 use crate::types::{Dops, GnssModes, GpsTime, PosLLH, RingBuffer, UtcDateTime, VelNED};
 use crate::utils::{date_conv::*, *};
@@ -530,6 +530,9 @@ impl SolutionPositionTab {
         }
         let (clear, pause) = self.check_state();
         self.solution_draw(clear, pause);
+        if self.shared_state.current_tab() != TabName::Solution {
+            return;
+        }
         self.send_solution_data();
         self.send_table_data();
     }
@@ -746,7 +749,7 @@ impl SolutionPositionTab {
     }
 
     /// Package solution data into a message buffer and send to frontend.
-    fn send_solution_data(&mut self) {
+    pub fn send_solution_data(&mut self) {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
@@ -804,7 +807,7 @@ impl SolutionPositionTab {
     }
 
     /// Package solution table data into a message buffer and send to frontend.
-    fn send_table_data(&mut self) {
+    pub fn send_table_data(&mut self) {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
         let mut solution_table_status = msg.init_solution_table_status();

@@ -222,6 +222,8 @@ pub fn server_recv_thread(
                             }
                             _ => None,
                         };
+
+                        let check_for_updates = cv_in.get_check_for_updates();
                         if let Err(err) = update_tab_sender.send(Some(UpdateTabUpdate {
                             download_latest_firmware,
                             update_firmware,
@@ -232,6 +234,7 @@ pub fn server_recv_thread(
                             fileio_local_filepath,
                             fileio_destination_filepath,
                             serial_prompt_confirm,
+                            check_for_updates,
                         })) {
                             error!("{}", err);
                         }
@@ -314,6 +317,12 @@ pub fn server_recv_thread(
                 }
                 m::message::ConfirmInsChange(Ok(_)) => {
                     shared_state.set_settings_confirm_ins_change(true);
+                }
+                m::message::OnTabChangeEvent(Ok(cv_in)) => {
+                    let curr_tab = cv_in
+                        .get_current_tab()
+                        .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
+                    shared_state.switch_tab(curr_tab);
                 }
                 _ => {
                     error!("unknown message from front-end");

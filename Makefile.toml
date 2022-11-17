@@ -903,7 +903,7 @@ makensis /V4  .\installers\Windows\Installer.nsi
 dependencies = ["set-qml-files", "set-qml-app"]
 script_runner = "@shell"
 script = '''
-qmlformat -i ${QML_FILES}
+qmlformat --verbose -i ${QML_FILES}
 '''
 
 # TODO Fix tool location when available in PySide6 wheels[CPP-799]
@@ -912,7 +912,7 @@ dependencies = ["set-qml-files", "set-qml-app"]
 script_runner = "powershell"
 script_extension = "ps1"
 script = '''
-& qmlformat -i $(-split ${env:QML_FILES})
+& qmlformat --verbose  -i $(-split ${env:QML_FILES})
 '''
 
 [tasks.qml-lint]

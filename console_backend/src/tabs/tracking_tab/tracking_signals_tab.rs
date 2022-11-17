@@ -17,7 +17,7 @@ use crate::piksi_tools_constants::{
     BDS2_B1_STR, BDS2_B2_STR, GAL_E1B_STR, GAL_E1X_STR, GAL_E7I_STR, GAL_E7Q_STR, GLO_L1OF_STR,
     GLO_L2OF_STR, GPS_L1CA_STR, GPS_L2CM_STR, QZS_L1CA_STR, QZS_L2CM_STR, SBAS_L1_STR,
 };
-use crate::shared_state::SharedState;
+use crate::shared_state::{SharedState, TabName};
 use crate::types::{Cn0Age, Cn0Dict, ObservationMsg, RingBuffer, SignalCodes};
 use crate::utils::{serialize_capnproto_builder, signal_key_color, signal_key_label};
 
@@ -386,6 +386,9 @@ impl TrackingSignalsTab {
 
     /// Package data into a message buffer and send to frontend.
     pub fn send_data(&mut self) {
+        if self.shared_state.current_tab() != TabName::Tracking {
+            return;
+        }
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 

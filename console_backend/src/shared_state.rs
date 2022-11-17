@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use std::{
     cmp::{Eq, PartialEq},
     fmt::Debug,
@@ -9,10 +10,11 @@ use std::{
     thread::JoinHandle,
     time::Instant,
 };
+use strum_macros::EnumString;
 
 use anyhow::{Context, Result as AHResult};
 use chrono::{DateTime, Utc};
-use crossbeam::channel::{unbounded, Receiver, Sender};
+use crossbeam::channel::{unbounded, Receiver, SendError, Sender};
 use directories::{ProjectDirs, UserDirs};
 use indexmap::set::IndexSet;
 use indexmap::IndexMap;
@@ -314,6 +316,22 @@ impl SharedState {
         guard.auto_survey_data.alt = Some(alt);
         guard.auto_survey_data.requested = false;
     }
+
+    pub fn switch_tab(&self, tab_name: &str) {
+        let tab = TabName::from_str(tab_name);
+        if let Some(tab) = tab.ok_or_log(|_| error!("{tab_name} is not a valid tab")) {
+            let mut guard = self.lock();
+            guard.visible_tab = tab;
+            if let Some(err) = guard.send_event(Refresh(tab)) {
+                error!("send refresh on tab switch failed: {err}")
+            }
+        }
+    }
+
+    pub fn current_tab(&self) -> TabName {
+        self.lock().visible_tab
+    }
+
     pub fn heartbeat_data(&self) -> Heartbeat {
         self.lock().heartbeat_data.clone()
     }
@@ -321,9 +339,9 @@ impl SharedState {
     pub fn set_check_visibility(&self, check_visibility: Vec<String>) {
         let mut guard = self.lock();
         guard.tracking_tab.signals_tab.check_visibility = check_visibility;
-        let (s, _) = &guard.event_channel;
-        s.send(Refresh)
-            .ok_or_log(|e| error!("send refresh fail: {e}"));
+        if let Some(err) = guard.send_event(Refresh(TabName::Tracking)) {
+            error!("send refresh on signal update failed: {err}")
+        }
     }
 }
 
@@ -365,6 +383,7 @@ pub struct SharedStateInner {
     pub(crate) advanced_networking_update: Option<AdvancedNetworkingState>,
     pub(crate) auto_survey_data: AutoSurveyData,
     pub(crate) heartbeat_data: Heartbeat,
+    pub(crate) visible_tab: TabName,
     pub(crate) event_channel: (Sender<EventType>, Receiver<EventType>),
 }
 
@@ -393,8 +412,13 @@ impl SharedStateInner {
             advanced_networking_update: None,
             auto_survey_data: AutoSurveyData::new(),
             heartbeat_data,
+            visible_tab: TabName::Unknown,
             event_channel: unbounded(),
         }
+    }
+
+    fn send_event(&self, event: EventType) -> Option<SendError<EventType>> {
+        self.event_channel.0.send(event).err()
     }
 }
 
@@ -403,9 +427,20 @@ impl Default for SharedStateInner {
         SharedStateInner::new()
     }
 }
+#[derive(EnumString, Debug, Clone, Eq, PartialEq, Copy)]
+pub enum TabName {
+    Unknown,
+    Tracking,
+    Solution,
+    Baseline,
+    Observations,
+    Settings,
+    Update,
+    Advanced,
+}
 
 pub enum EventType {
-    Refresh,
+    Refresh(TabName),
     Stop,
 }
 

@@ -1,3 +1,4 @@
+use crossbeam::channel::Receiver;
 use std::io;
 
 use log::{debug, error};
@@ -21,7 +22,7 @@ use crate::client_sender::BoxedClientSender;
 use crate::connection::Connection;
 use crate::errors::{PROCESS_MESSAGES_FAILURE, UNABLE_TO_CLONE_UPDATE_SHARED};
 use crate::log_panel;
-use crate::shared_state::{EventType, SharedState};
+use crate::shared_state::{EventType, SharedState, TabName};
 use crate::tabs::{settings_tab, update_tab};
 use crate::types::{
     BaselineNED, Dops, GpsTime, MsgSender, ObservationMsg, PosLLH, Specan, UartState, VelNED,
@@ -79,18 +80,7 @@ pub fn process_messages(
                 settings_tab::start_thd(tab);
             });
         }
-        scope.spawn(|_| {
-            for event in event_rx.iter() {
-                match event {
-                    EventType::Refresh => {
-                        let mut tab = tabs.tracking_signals.lock().unwrap();
-                        tab.update_plot();
-                        tab.send_data();
-                    }
-                    EventType::Stop => break,
-                }
-            }
-        });
+        scope.spawn(|_| process_shared_state_events(event_rx, &tabs));
         for (message, _) in &mut messages {
             source.send_with_state(&tabs, &message);
             if let Some(ref tab) = tabs.settings {
@@ -116,6 +106,54 @@ pub fn process_messages(
     err
 }
 
+/// Process custom events defined by [`SharedState::EventType`]
+///
+/// Allows channel to manage events dispatched from front end,
+/// indirectly gives [`SharedState`] access to [`Tabs`]
+fn process_shared_state_events(rx: Receiver<EventType>, tabs: &Tabs) {
+    for event in rx.iter() {
+        match event {
+            EventType::Refresh(tab) => match tab {
+                TabName::Tracking => {
+                    let mut tab = tabs.tracking_signals.lock().unwrap();
+                    tab.update_plot();
+                    tab.send_data();
+
+                    tabs.tracking_sky_plot.lock().unwrap().send_data();
+                }
+                TabName::Solution => {
+                    let mut tab = tabs.solution_position.lock().unwrap();
+                    tab.send_solution_data();
+                    tab.send_table_data();
+
+                    tabs.solution_velocity.lock().unwrap().send_data();
+                }
+                TabName::Baseline => {
+                    let mut tab = tabs.baseline.lock().unwrap();
+                    tab.send_table_data();
+                    tab.send_solution_data();
+                }
+                TabName::Advanced => {
+                    tabs.advanced_imu.lock().unwrap().send_data();
+                    tabs.advanced_magnetometer.lock().unwrap().send_data();
+                    tabs.advanced_networking.lock().unwrap().send_data();
+                    tabs.advanced_spectrum_analyzer.lock().unwrap().send_data();
+                    tabs.advanced_system_monitor.lock().unwrap().send_data();
+                }
+                TabName::Observations => {
+                    let mut tab = tabs.observation.lock().unwrap();
+                    tab.send_data(true);
+                    tab.send_data(false);
+                }
+                TabName::Settings | TabName::Update => {}
+                TabName::Unknown => error!("failed to process unknown tab in channel"),
+            },
+            EventType::Stop => break,
+        }
+    }
+}
+
+/// Processes sbp message events
 fn register_events(link: sbp::link::Link<Tabs>) {
     link.register(|tabs: &Tabs, msg: MsgAgeCorrections| {
         tabs.baseline

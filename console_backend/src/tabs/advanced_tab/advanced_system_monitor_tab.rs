@@ -4,6 +4,7 @@ use sbp::messages::piksi::{MsgDeviceMonitor, MsgThreadState};
 use std::collections::HashMap;
 
 use crate::client_sender::BoxedClientSender;
+use crate::shared_state::{SharedState, TabName};
 use crate::types::UartState;
 use crate::utils::{cc_to_c, normalize_cpu_usage, serialize_capnproto_builder};
 
@@ -32,6 +33,7 @@ struct ThreadStateFields {
 /// - `threads_table_list`: Vec of ThreadStateFields, sent to frontend after heartbeat received.
 /// - `zynq_temp`: Zynq SoC temperature reading.
 pub struct AdvancedSystemMonitorTab {
+    shared_state: SharedState,
     client_sender: BoxedClientSender,
     fe_temp: f64,
     obs_latency: HashMap<String, i32>,
@@ -41,22 +43,20 @@ pub struct AdvancedSystemMonitorTab {
     zynq_temp: f64,
 }
 impl AdvancedSystemMonitorTab {
-    pub fn new(client_sender: BoxedClientSender) -> AdvancedSystemMonitorTab {
+    pub fn new(
+        shared_state: SharedState,
+        client_sender: BoxedClientSender,
+    ) -> AdvancedSystemMonitorTab {
+        let keys: HashMap<String, i32> = UART_STATE_KEYS
+            .iter()
+            .map(|&key| (String::from(key), 0))
+            .collect();
         AdvancedSystemMonitorTab {
+            shared_state,
             client_sender,
             fe_temp: 0.0,
-            obs_latency: {
-                UART_STATE_KEYS
-                    .iter()
-                    .map(|&key| (String::from(key), 0))
-                    .collect()
-            },
-            obs_period: {
-                UART_STATE_KEYS
-                    .iter()
-                    .map(|&key| (String::from(key), 0))
-                    .collect()
-            },
+            obs_latency: keys.clone(),
+            obs_period: keys,
             threads: vec![],
             threads_table_list: vec![],
             zynq_temp: 0.0,
@@ -111,7 +111,10 @@ impl AdvancedSystemMonitorTab {
     }
 
     /// Package data into a message buffer and send to frontend.
-    fn send_data(&mut self) {
+    pub fn send_data(&mut self) {
+        if self.shared_state.current_tab() != TabName::Advanced {
+            return;
+        }
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
         let mut status = msg.init_advanced_system_monitor_status();
@@ -166,8 +169,9 @@ mod tests {
 
     #[test]
     fn handle_uart_state_test() {
+        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut tab = AdvancedSystemMonitorTab::new(client_send);
+        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send);
         let sender_id = Some(1337);
         let uart_a = UARTChannel {
             tx_throughput: 0.0,
@@ -243,8 +247,9 @@ mod tests {
 
     #[test]
     fn handle_device_monitor_test() {
+        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut tab = AdvancedSystemMonitorTab::new(client_send);
+        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send);
         let cpu_temperature = 3333;
         let fe_temperature = 4444;
         let msg = MsgDeviceMonitor {
@@ -263,8 +268,9 @@ mod tests {
     }
     #[test]
     fn handle_thread_state_test() {
+        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut tab = AdvancedSystemMonitorTab::new(client_send);
+        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send);
         let name1: SbpString<[u8; 20], NullTerminated> = fixed_sbp_string("mcdonald");
         let msg1 = MsgThreadState {
             sender_id: Some(1337),
@@ -309,8 +315,9 @@ mod tests {
 
     #[test]
     fn handle_heartbeat_test() {
+        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut tab = AdvancedSystemMonitorTab::new(client_send);
+        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send);
         assert!(tab.threads_table_list.is_empty());
         tab.handle_heartbeat();
         assert!(tab.threads_table_list.is_empty());

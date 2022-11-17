@@ -299,3 +299,12 @@ class BackendRequestBroker(QObject):  # pylint: disable=too-many-instance-attrib
         msg.autoSurveyRequest = msg.init(Message.Union.AutoSurveyRequest)
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
+
+    @Slot(str)  # type: ignore
+    def switch_tab(self, tab_name) -> None:
+        Message = self.messages.Message
+        m = Message()
+        m.onTabChangeEvent = m.init(Message.Union.OnTabChangeEvent)
+        m.onTabChangeEvent.currentTab = tab_name
+        buffer = m.to_bytes()
+        self.endpoint.send_message(buffer)

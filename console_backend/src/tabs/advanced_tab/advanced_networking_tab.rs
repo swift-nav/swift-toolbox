@@ -12,7 +12,7 @@ use std::net::UdpSocket;
 
 use crate::client_sender::BoxedClientSender;
 use crate::constants::WRITE_TO_DEVICE_SENDER_ID;
-use crate::shared_state::{AdvancedNetworkingState, SharedState};
+use crate::shared_state::{AdvancedNetworkingState, SharedState, TabName};
 use crate::types::{MsgSender, Result};
 use crate::utils::{bytes_to_human_readable, serialize_capnproto_builder};
 
@@ -188,7 +188,10 @@ impl AdvancedNetworkingTab {
     }
 
     /// Package data into a message buffer and send to frontend.
-    fn send_data(&mut self) {
+    pub fn send_data(&mut self) {
+        if self.shared_state.current_tab() != TabName::Advanced {
+            return;
+        }
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
         let mut status = msg.init_advanced_networking_status();

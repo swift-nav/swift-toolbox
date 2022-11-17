@@ -50,15 +50,30 @@ Item {
                 }
             }
 
-            SwiftButton {
-                id: closeButton
+            RowLayout {
+                spacing: 20
+                Layout.topMargin: 12
+                Layout.alignment: Qt.AlignCenter
 
-                text: "Close"
-                Layout.preferredWidth: parent.width / 4
-                Layout.alignment: Qt.AlignRight
-                checkable: false
-                onClicked: {
-                    dialog.close();
+                SwiftButton {
+                    text: `Check for updates`
+                    Layout.preferredWidth: dialog.width / 4
+                    Layout.alignment: Qt.AlignLeft
+                    onClicked: {
+                        backend_request_broker.check_for_update();
+                    }
+                }
+
+                SwiftButton {
+                    id: closeButton
+
+                    text: "Close"
+                    Layout.preferredWidth: dialog.width / 4
+                    Layout.alignment: Qt.AlignRight
+                    checkable: false
+                    onClicked: {
+                        dialog.close();
+                    }
                 }
             }
         }

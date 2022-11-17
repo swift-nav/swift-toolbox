@@ -113,44 +113,41 @@ pub fn process_messages(
 fn process_shared_state_events(rx: Receiver<EventType>, tabs: &Tabs) {
     for event in rx.iter() {
         match event {
-            EventType::Refresh(tab) => {
-                match tab {
-                    TabName::Tracking => {
-                        let mut tab = tabs.tracking_signals.lock().unwrap();
-                        tab.update_plot();
-                        tab.send_data();
+            EventType::Refresh(tab) => match tab {
+                TabName::Tracking => {
+                    let mut tab = tabs.tracking_signals.lock().unwrap();
+                    tab.update_plot();
+                    tab.send_data();
 
-                        tabs.tracking_sky_plot.lock().unwrap().send_data();
-                    }
-                    TabName::Solution => {
-                        let mut tab = tabs.solution_position.lock().unwrap();
-                        tab.send_solution_data();
-                        tab.send_table_data();
-
-                        tabs.solution_velocity.lock().unwrap().send_data();
-                    }
-                    TabName::Baseline => {
-                        let mut tab = tabs.baseline.lock().unwrap();
-                        tab.send_table_data();
-                        tab.send_solution_data();
-                    }
-                    TabName::Advanced => {
-                        tabs.advanced_imu.lock().unwrap().send_data();
-                        tabs.advanced_magnetometer.lock().unwrap().send_data();
-                        tabs.advanced_networking.lock().unwrap().send_data();
-                        tabs.advanced_spectrum_analyzer.lock().unwrap().send_data();
-                        tabs.advanced_system_monitor.lock().unwrap().send_data();
-                    }
-                    TabName::Observations => {
-                        // TODO: is_remote
-                        // tabs.observation.lock().unwrap().tab.send_data();
-                    }
-                    TabName::Settings | TabName::Update => {
-                        // TODO: decide what to do with this one
-                    }
-                    TabName::Unknown => error!("failed to process unknown tab in channel"),
+                    tabs.tracking_sky_plot.lock().unwrap().send_data();
                 }
-            }
+                TabName::Solution => {
+                    let mut tab = tabs.solution_position.lock().unwrap();
+                    tab.send_solution_data();
+                    tab.send_table_data();
+
+                    tabs.solution_velocity.lock().unwrap().send_data();
+                }
+                TabName::Baseline => {
+                    let mut tab = tabs.baseline.lock().unwrap();
+                    tab.send_table_data();
+                    tab.send_solution_data();
+                }
+                TabName::Advanced => {
+                    tabs.advanced_imu.lock().unwrap().send_data();
+                    tabs.advanced_magnetometer.lock().unwrap().send_data();
+                    tabs.advanced_networking.lock().unwrap().send_data();
+                    tabs.advanced_spectrum_analyzer.lock().unwrap().send_data();
+                    tabs.advanced_system_monitor.lock().unwrap().send_data();
+                }
+                TabName::Observations => {
+                    let mut tab = tabs.observation.lock().unwrap();
+                    tab.send_data(true);
+                    tab.send_data(false);
+                }
+                TabName::Settings | TabName::Update => {}
+                TabName::Unknown => error!("failed to process unknown tab in channel"),
+            },
             EventType::Stop => break,
         }
     }

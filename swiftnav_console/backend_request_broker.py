@@ -268,6 +268,25 @@ class BackendRequestBroker(QObject):  # pylint: disable=too-many-instance-attrib
         m.updateTabStatusFront.updateFirmware = buttons[1]
         m.updateTabStatusFront.sendFileToDevice = buttons[2]
         m.updateTabStatusFront.serialPromptConfirm = buttons[3]
+        m.updateTabStatusFront.checkForUpdates = False
+        buffer = m.to_bytes()
+        self.endpoint.send_message(buffer)
+
+    @Slot()
+    def check_for_update(self) -> None:
+        Message = self.messages.Message
+        m = Message()
+        m.updateTabStatusFront = m.init(Message.Union.UpdateTabStatusFront)
+        m.updateTabStatusFront.updateLocalFilepath.none = None
+        m.updateTabStatusFront.downloadDirectory.none = None
+        m.updateTabStatusFront.fileioLocalFilepath.none = None
+        m.updateTabStatusFront.fileioDestinationFilepath.none = None
+        m.updateTabStatusFront.updateLocalFilename.none = None
+        m.updateTabStatusFront.downloadLatestFirmware = False
+        m.updateTabStatusFront.updateFirmware = False
+        m.updateTabStatusFront.sendFileToDevice = False
+        m.updateTabStatusFront.serialPromptConfirm = False
+        m.updateTabStatusFront.checkForUpdates = True
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
 

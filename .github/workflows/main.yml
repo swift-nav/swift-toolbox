@@ -384,11 +384,28 @@ jobs:
     name: Run frontend benchmarks, sign and distribute
     needs: build
     runs-on: ubuntu-latest
-    run: |
-      const ret = await github.rest.createWorkflowDispatch({
-        owner: 'swift-nav',
-        repo: 'toolbox-backend-ci',
-        workflow_id: 'distribute.yml',
-        ref: 'main',
-      });
-      console.log(ret);
+    steps:
+      - shell: bash
+        if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
+        run: echo "SHOULD_RELEASE=true"
+
+      - shell: bash
+        run: echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+
+      - uses: convictional/trigger-workflow-and-wait@v1.6.1
+        with:
+          owner: swift-nav
+          repo: toolbox-backend-ci
+          ref: main
+          workflow_file_name: distribute.yml
+          client_payload: '{
+            "branch": "${{ github.ref_name }}", 
+            "run_id": "${{ github.run_id }}",
+            "should_release": ${{ env.SHOULD_RELEASE }},
+            "version": ${{ env.VERSION }}
+          }'
+          github_user: "swiftnav-travis"
+          github_token: ${{ secrets.SWIFTNAV_TRAVIS_GITHUB_TOKEN }}
+          propagate_failure: true
+          wait_workflow: true
+          trigger_workflow: true

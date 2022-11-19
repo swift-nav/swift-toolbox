@@ -405,7 +405,7 @@ jobs:
             "version": ${{ env.VERSION }}
           }'
           github_user: "swiftnav-travis"
-          github_token: ${{ secrets.SWIFTNAV_TRAVIS_GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           propagate_failure: true
           wait_workflow: true
           trigger_workflow: true

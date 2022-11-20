@@ -173,8 +173,8 @@ command = "${PYTHON}"
 args = ["-m", "cProfile", "-m", "swiftnav_console.main", "${@}"]
 
 [tasks.start-console-scalene]
-command = "scalene"
-args = ["swiftnav_console/scalene_main.py", "${@}"]
+command = "${PYTHON}"
+args = ["-m", "scalene", "swiftnav_console/scalene_main.py", "--", "${@}"]
 
 [tasks.start-console-gdb]
 command = "rust-gdb"

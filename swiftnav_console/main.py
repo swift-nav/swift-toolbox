@@ -9,9 +9,11 @@ import platform
 import sys
 import time
 
+from scalene import scalene_profiler
+
 try:
     import sshtunnel  # type: ignore # pylint: disable=unused-import
-    from . import ssh_tunnel
+    from swiftnav_console.ssh_tunnel import ssh_tunnel
 
     FEATURE_SSHTUNNEL = True
 except ImportError:
@@ -36,86 +38,86 @@ from PySide6.QtQuickControls2 import QQuickStyle
 
 import swiftnav_console.console_resources  # type: ignore # pylint: disable=unused-import
 
-from .constants import ApplicationMetadata, ConnectionState, ConnectionType, Keys, Tabs
+from swiftnav_console.constants import ApplicationMetadata, ConnectionState, ConnectionType, Keys, Tabs
 
-from .backend_importer import BackendImporter
+from swiftnav_console.backend_importer import BackendImporter
 
-from .backend_request_broker import BackendRequestBroker
+from swiftnav_console.backend_request_broker import BackendRequestBroker
 
-from .log_panel import (
+from swiftnav_console.log_panel import (
     log_panel_update,
     LogPanelData,
 )
 
-from .connection import (
+from swiftnav_console.connection import (
     connection_update,
     ConnectionData,
     ConnectionModel,
 )
 
-from .logging_bar import (
+from swiftnav_console.logging_bar import (
     logging_bar_update,
     logging_bar_recording_update,
     LoggingBarData,
     LoggingBarModel,
 )
 
-from .advanced_imu_tab import (
+from swiftnav_console.advanced_imu_tab import (
     AdvancedImuModel,
     AdvancedImuPoints,
     advanced_imu_tab_update,
 )
 
-from .advanced_magnetometer_tab import (
+from swiftnav_console.advanced_magnetometer_tab import (
     AdvancedMagnetometerModel,
     AdvancedMagnetometerPoints,
     advanced_magnetometer_tab_update,
 )
 
-from .advanced_networking_tab import (
+from swiftnav_console.advanced_networking_tab import (
     AdvancedNetworkingModel,
     AdvancedNetworkingData,
     advanced_networking_tab_update,
 )
 
-from .advanced_spectrum_analyzer_tab import (
+from swiftnav_console.advanced_spectrum_analyzer_tab import (
     AdvancedSpectrumAnalyzerModel,
     AdvancedSpectrumAnalyzerPoints,
     advanced_spectrum_analyzer_tab_update,
 )
 
-from .advanced_system_monitor_tab import (
+from swiftnav_console.advanced_system_monitor_tab import (
     AdvancedSystemMonitorModel,
     AdvancedSystemMonitorData,
     advanced_system_monitor_tab_update,
 )
 
-from .fusion_status_flags import (
+from swiftnav_console.fusion_status_flags import (
     FusionStatusFlagsModel,
     FusionStatusFlagsData,
     fusion_status_flags_update,
 )
 
-from .baseline_plot import (
+from swiftnav_console.baseline_plot import (
     BaselinePlotModel,
     BaselinePlotPoints,
     baseline_plot_update,
 )
 
-from .baseline_table import (
+from swiftnav_console.baseline_table import (
     BaselineTableEntries,
     BaselineTableModel,
     baseline_table_update,
 )
 
-from .observation_tab import (
+from swiftnav_console.observation_tab import (
     ObservationLocalTableModel,
     ObservationRemoteTableModel,
     observation_update,
     obs_rows_to_json,
 )
 
-from .settings_tab import (
+from swiftnav_console.settings_tab import (
     SettingsTabModel,
     SettingsTabData,
     SettingsTableEntries,
@@ -125,47 +127,47 @@ from .settings_tab import (
     settings_rows_to_json,
 )
 
-from .solution_position_tab import (
+from swiftnav_console.solution_position_tab import (
     SolutionPositionModel,
     SolutionPositionPoints,
     solution_position_update,
 )
 
-from .solution_table import (
+from swiftnav_console.solution_table import (
     SolutionTableEntries,
     SolutionTableModel,
     solution_table_update,
 )
 
-from .solution_velocity_tab import (
+from swiftnav_console.solution_velocity_tab import (
     SolutionVelocityModel,
     SolutionVelocityPoints,
     solution_velocity_update,
 )
 
-from .status_bar import (
+from swiftnav_console.status_bar import (
     status_bar_update,
     StatusBarData,
     StatusBarModel,
 )
 
-from .tracking_signals_tab import (
+from swiftnav_console.tracking_signals_tab import (
     TrackingSignalsPoints,
     tracking_signals_tab_update,
 )
 
-from .tracking_sky_plot_tab import (
+from swiftnav_console.tracking_sky_plot_tab import (
     TrackingSkyPlotPoints,
     tracking_sky_plot_update,
 )
 
-from .update_tab import (
+from swiftnav_console.update_tab import (
     update_tab_update,
     UpdateTabData,
     UpdateTabModel,
 )
 
-from .file_io import FileIO
+from swiftnav_console.file_io import FileIO
 
 CONSOLE_BACKEND_CAPNP_PATH = "console_backend.capnp"
 

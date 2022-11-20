@@ -402,7 +402,7 @@ jobs:
             "branch": "${{ github.ref_name }}", 
             "run_id": "${{ github.run_id }}",
             "should_release": "${{ env.SHOULD_RELEASE }}",
-            "version": ${{ env.VERSION }}
+            "version": "${{ env.VERSION }}"
           }'
           github_user: "swiftnav-travis"
           github_token: ${{ secrets.GITHUB_TOKEN }}

@@ -401,7 +401,7 @@ jobs:
           client_payload: '{
             "branch": "${{ github.ref_name }}", 
             "run_id": "${{ github.run_id }}",
-            "should_release": "${{ env.SHOULD_RELEASE }}",
+            "should_release": ${{ env.SHOULD_RELEASE || false}},
             "version": "${{ env.VERSION }}"
           }'
           github_user: "swiftnav-travis"

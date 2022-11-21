@@ -401,11 +401,11 @@ jobs:
           client_payload: '{
             "branch": "${{ github.ref_name }}", 
             "run_id": "${{ github.run_id }}",
-            "should_release": ${{ env.SHOULD_RELEASE || false}},
+            "should_release": "${{ env.SHOULD_RELEASE || false}}",
             "version": "${{ env.VERSION }}"
           }'
           github_user: "swiftnav-travis"
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.SWIFTNAV_TRAVIS_GITHUB_TOKEN }}
           propagate_failure: true
           wait_workflow: true
           trigger_workflow: true

@@ -385,6 +385,8 @@ jobs:
     steps:
       - name: Wait until artifacts fetchable
         uses: nick-invision/retry@v2
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
           timeout_minutes: 1
           max_attempts: 3

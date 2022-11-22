@@ -388,7 +388,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
-          timeout_minutes: 1
+          timeout_minutes: 5
           max_attempts: 3
           retry_on: error
           command: gh run -R swift-nav/swift-toolbox download ${{ github.run_id }} -n Linux-artifacts

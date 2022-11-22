@@ -145,12 +145,10 @@ jobs:
 
       - name: Install ImageMagick
         shell: bash
-        run: |
-          cargo make install-imagemagick
+        run: cargo make install-imagemagick
 
       - name: Set up python builder
-        run: |
-          cargo make setup-builder
+        run: cargo make setup-builder
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -171,7 +169,7 @@ jobs:
       - name: Run Tests
         uses: nick-invision/retry@v2
         with:
-          timeout_minutes: 5
+          timeout_minutes: 2
           max_attempts: 3
           retry_on: error
           command: cargo make tests
@@ -380,9 +378,22 @@ jobs:
         continue-on-error: true
         run: cargo make disk-usage-bench
 
+  pre-frontend-distribute:
+    name: Force delay, ensure files are uploaded
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait until artifacts fetchable
+        uses: nick-invision/retry@v2
+        with:
+          timeout_minutes: 1
+          max_attempts: 3
+          retry_on: error
+          command: gh run -R swift-nav/swift-toolbox download ${{ github.run_id }} -n Linux-artifacts
+
   frontend_distribute:
     name: Run frontend benchmarks, sign and distribute
-    needs: build
+    needs: pre-frontend-distribute
     runs-on: ubuntu-latest
     steps:
       - shell: bash

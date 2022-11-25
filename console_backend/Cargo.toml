@@ -42,7 +42,7 @@ regex = { version = "1.7.0" }
 rust-ini = "0.18.0"
 sbp = { version = "4.9.0", features = ["json", "link", "swiftnav"] }
 sbp-settings = "0.6.13"
-env_logger = { version = "0.9", optional = true }
+env_logger = { version = "0.10", optional = true }
 mimalloc = { version = "0.1", default-features = false }
 indicatif = { version = "0.17", optional = true }
 

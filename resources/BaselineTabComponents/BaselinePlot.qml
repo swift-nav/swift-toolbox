@@ -85,6 +85,7 @@ Item {
                     width: Constants.baselinePlot.buttonSvgHeight
                     height: Constants.baselinePlot.buttonSvgHeight
                     source: Constants.icons.clearButtonUrl
+                    asynchronous: true
                     visible: false
                 }
             }

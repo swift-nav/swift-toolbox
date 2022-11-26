@@ -70,6 +70,7 @@ T.ComboBox {
         color: control.enabled ? control.Material.foreground : control.Material.hintTextColor
         source: "qrc:/qt-project.org/imports/QtQuick/Controls/Material/images/drop-indicator.png"
         sourceSize: "30x18" // Orig is 40x24
+        asynchronous: true
     }
 
     contentItem: T.TextField {

@@ -660,6 +660,7 @@ def stop_splash_linux():
 
 
 def stop_splash(splash: Optional[QSplashScreen]):
+    splash.deleteLater()
     if platform.system() == "Linux":
         stop_splash_linux()
     else:

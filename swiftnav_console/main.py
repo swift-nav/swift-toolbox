@@ -660,12 +660,11 @@ def stop_splash_linux():
 
 
 def stop_splash(splash: Optional[QSplashScreen]):
-    splash.deleteLater()
     if platform.system() == "Linux":
         stop_splash_linux()
-    else:
-        assert splash is not None
-        splash.close()
+    assert splash is not None
+    splash.deleteLater()
+    splash.close()
 
 
 def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:

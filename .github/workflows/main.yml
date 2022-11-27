@@ -181,7 +181,7 @@ jobs:
     steps:
       - shell: bash
         if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
-        run: echo "SHOULD_RELEASE=true"
+        run: echo "SHOULD_RELEASE=true" >> $GITHUB_ENV
 
       - shell: bash
         run: echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV

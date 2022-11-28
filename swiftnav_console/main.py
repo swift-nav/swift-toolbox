@@ -664,6 +664,7 @@ def stop_splash(splash: Optional[QSplashScreen]):
         stop_splash_linux()
     else:
         assert splash is not None
+        splash.deleteLater()
         splash.close()
 
 

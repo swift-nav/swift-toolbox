@@ -52,6 +52,7 @@ Item {
             width: parent.width
             height: parent.height
             source: Constants.icons.splashScreenPath
+            asynchronous: true
         }
 
         Rectangle {

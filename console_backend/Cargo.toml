@@ -20,7 +20,7 @@ pyo3 = { version = "0.17", features = [
   "extension-module",
   "macros",
 ], default-features = false, optional = true }
-serde = { version = "1.0.147", features = ["derive"] }
+serde = { version = "1.0.148", features = ["derive"] }
 tempfile = "3.3.0"
 ndarray = "0.15.6"
 glob = "0.3.0"

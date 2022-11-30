@@ -25,10 +25,10 @@
 
 extern crate strum;
 extern crate strum_macros;
-use clap::ArgEnum;
+use clap::ValueEnum;
 use strum_macros::{Display, EnumString, EnumVariantNames};
 
-#[derive(Clone, Debug, Display, Eq, Hash, PartialEq, ArgEnum)]
+#[derive(Clone, Debug, Display, Eq, Hash, PartialEq, ValueEnum)]
 pub enum Tabs {
     #[strum(serialize = "TRACKING_SIGNALS")]
     TRACKING_SIGNALS,
@@ -70,7 +70,7 @@ pub enum FusionStatus {
     OK,
 }
 
-#[derive(Clone, Debug, Display, Eq, Hash, PartialEq, ArgEnum)]
+#[derive(Clone, Debug, Display, Eq, Hash, PartialEq, ValueEnum)]
 pub enum SbpLogging {
     #[strum(serialize = "SBP-JSON")]
     SBP_JSON,

@@ -1,6 +1,6 @@
-use std::{num::ParseIntError, ops::Not, path::PathBuf, str::FromStr};
+use std::{num::ParseIntError, path::PathBuf, str::FromStr};
 
-use clap::{AppSettings::DeriveDisplayOrder, Args, Parser, ValueEnum};
+use clap::{ArgAction, Args, Parser, ValueEnum};
 use log::{debug, error};
 
 use crate::output::CsvLogging;
@@ -27,7 +27,6 @@ const BIN_NAME: &str = "swift-console";
     about = "The Swift Console provides data visualization, settings management, and firmware update capabilities for Swift Navigation GNSS products.",
     bin_name = BIN_NAME,
     version = include_str!("version.txt"),
-    setting = DeriveDisplayOrder,
 )]
 pub struct CliOptions {
     #[clap(flatten)]
@@ -40,7 +39,7 @@ pub struct CliOptions {
     pub file: FileOpts,
 
     /// Log SBP-JSON or SBP data to default / specified log file.
-    #[clap(long, arg_enum)]
+    #[clap(long, value_enum)]
     pub sbp_log: Option<SbpLogging>,
 
     /// Set SBP log filename.
@@ -90,20 +89,20 @@ pub struct CliOptions {
 
     /// Disable antialiasing, images and plots will become optimized for efficiency not aesthetics and
     /// require less system resources.
-    #[clap(long, parse(from_flag = Not::not))]
+    #[clap(long, action = ArgAction::SetFalse)]
     pub no_antialiasing: bool,
 
     /// Use OpenGL, plots will become optimized for efficiency not aesthetics and require less system resources.
-    #[clap(long, parse(from_flag = Not::not))]
+    #[clap(long, action = ArgAction::SetFalse)]
     pub use_opengl: bool,
 
     /// Disable high dpi autoscaling, fonts and images will become optimized for efficiency not aesthetics and
     /// require less system resources.
-    #[clap(long, parse(from_flag = Not::not))]
+    #[clap(long, action = ArgAction::SetFalse)]
     pub no_high_dpi: bool,
 
     /// Change the refresh rate of the plots.
-    #[clap(long, validator(is_refresh_rate))]
+    #[clap(long, value_parser = is_refresh_rate)]
     pub refresh_rate: Option<u8>,
 
     /// Don't show prompts about firmware/console updates.
@@ -119,7 +118,7 @@ pub struct CliOptions {
     pub exit_after_timeout: Option<f64>,
 
     /// Start console from specific tab.
-    #[clap(long, arg_enum)]
+    #[clap(long, value_enum)]
     pub tab: Option<Tabs>,
 
     /// Set the height of the main window.
@@ -191,7 +190,7 @@ pub struct SerialOpts {
     #[clap(
         long,
         default_value = "115200",
-        validator(is_baudrate),
+        value_parser = is_baudrate,
         conflicts_with_all = &["tcp"]
     )]
     pub baudrate: u32,
@@ -215,6 +214,7 @@ pub struct TcpOpts {
     pub tcp: Option<HostPort>,
 }
 
+#[derive(Clone)]
 pub struct HostPort {
     pub host: String,
     pub port: u16,

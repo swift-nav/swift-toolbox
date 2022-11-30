@@ -2,6 +2,8 @@ use std::{io::Cursor, path::PathBuf, str::FromStr, thread};
 
 use capnp::serialize;
 use chrono::{DateTime, Utc};
+use clap::ValueEnum;
+
 use crossbeam::channel;
 use log::{debug, error, warn};
 
@@ -106,7 +108,8 @@ pub fn server_recv_thread(
                         .get_sbp_logging_format()
                         .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
                     shared_state.set_sbp_logging_format(
-                        SbpLogging::from_str(sbp_logging_format).expect(CONVERT_TO_STR_FAILURE),
+                        SbpLogging::from_str(sbp_logging_format, false)
+                            .expect(CONVERT_TO_STR_FAILURE),
                     );
                 }
                 m::message::LogLevelFront(Ok(cv_in)) => {

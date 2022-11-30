@@ -15,6 +15,7 @@ use crate::{
     connection::ConnectionManager,
 };
 use crate::{constants::LOG_FILENAME, errors::CONVERT_TO_STR_FAILURE};
+use clap::ValueEnum;
 
 #[cfg(windows)]
 const BIN_NAME: &str = "swift-console.exe";
@@ -40,7 +41,7 @@ pub struct CliOptions {
     pub file: FileOpts,
 
     /// Log SBP-JSON or SBP data to default / specified log file.
-    #[clap(long)]
+    #[clap(long, arg_enum)]
     pub sbp_log: Option<SbpLogging>,
 
     /// Set SBP log filename.
@@ -119,7 +120,7 @@ pub struct CliOptions {
     pub exit_after_timeout: Option<f64>,
 
     /// Start console from specific tab.
-    #[clap(long)]
+    #[clap(long, arg_enum)]
     pub tab: Option<Tabs>,
 
     /// Set the height of the main window.
@@ -328,7 +329,7 @@ pub fn handle_cli(
     if let Some(sbp_log) = opt.sbp_log {
         shared_state.set_sbp_logging(true, client_sender.clone());
         shared_state.set_sbp_logging_format(
-            SbpLogging::from_str(&sbp_log.to_string()).expect(CONVERT_TO_STR_FAILURE),
+            SbpLogging::from_str(&sbp_log.to_string(), false).expect(CONVERT_TO_STR_FAILURE),
         );
     }
     log::logger().flush();

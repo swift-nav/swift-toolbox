@@ -1,15 +1,8 @@
-use std::{
-    num::ParseIntError,
-    ops::{Deref, Not},
-    path::PathBuf,
-    str::FromStr,
-};
+use std::{num::ParseIntError, ops::Not, path::PathBuf, str::FromStr};
 
 use clap::{AppSettings::DeriveDisplayOrder, Args, Parser};
 use log::{debug, error};
-use strum::VariantNames;
 
-use crate::log_panel::LogLevel;
 use crate::output::CsvLogging;
 use crate::shared_state::SharedState;
 use crate::types::{FlowControl, RealtimeDelay};

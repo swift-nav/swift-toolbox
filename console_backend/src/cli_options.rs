@@ -56,7 +56,7 @@ pub struct CliOptions {
 
     /// Run application without the backend. Useful for debugging.
     /// This mode must be run with a capnp recording file.
-    #[clap(long, requires = "read-capnp-recording", hide = true)]
+    #[clap(long, requires = "read_capnp_recording", hide = true)]
     pub debug_with_no_backend: bool,
 
     /// Set log directory.
@@ -180,10 +180,7 @@ impl CliOptions {
 #[derive(Args)]
 pub struct SerialOpts {
     /// The serialport to connect to.
-    #[clap(
-        long,
-        conflicts_with_all = &["tcp"]
-    )]
+    #[clap(long, conflicts_with_all = &["tcp"])]
     pub serial: Option<PathBuf>,
 
     /// The baudrate for processing packets when connecting via serial.
@@ -196,21 +193,14 @@ pub struct SerialOpts {
     pub baudrate: u32,
 
     /// The flow control spec to use when connecting via serial.
-    #[clap(
-        long,
-        default_value = "None",
-        conflicts_with_all = &["tcp"]
-    )]
+    #[clap(long, default_value = "None", conflicts_with_all = &["tcp"])]
     pub flow_control: FlowControl,
 }
 
 #[derive(Args)]
 pub struct TcpOpts {
     /// The TCP/IP host or TCP/IP host-port pair to connect with. For example: "192.168.0.222" or "192.168.0.222:55555"
-    #[clap(
-        long,
-        conflicts_with_all = &["serial", "baudrate", "flow-control"]
-    )]
+    #[clap(long, conflicts_with_all = &["serial", "baudrate", "flow_control"])]
     pub tcp: Option<HostPort>,
 }
 
@@ -224,28 +214,20 @@ impl FromStr for HostPort {
     type Err = ParseIntError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if let Some(idx) = s.find(':') {
-            let (host, port) = s.split_at(idx);
-            Ok(HostPort {
-                host: host.to_owned(),
-                port: port[1..].parse()?,
-            })
+        let (host, port) = if let Some((host, port)) = s.split_once(':') {
+            (host.to_owned(), port.parse::<u16>()?)
         } else {
-            Ok(HostPort {
-                host: s.to_owned(),
-                port: 55555,
-            })
-        }
+            (s.to_owned(), 55555)
+        };
+
+        Ok(HostPort { host, port })
     }
 }
 
 #[derive(Args)]
 pub struct FileOpts {
     /// Path to an SBP file.
-    #[clap(
-        long,
-        conflicts_with_all = &["tcp", "serial", "baudrate", "flow-control"]
-    )]
+    #[clap(long, conflicts_with_all = &["tcp", "serial", "baudrate", "flow_control"])]
     pub file: Option<PathBuf>,
 }
 

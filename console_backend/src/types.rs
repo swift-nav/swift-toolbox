@@ -19,7 +19,6 @@ use crate::piksi_tools_constants::{
 use crate::utils::{mm_to_m, ms_to_sec};
 use anyhow::Context;
 use chrono::{DateTime, Utc};
-use ordered_float::OrderedFloat;
 use sbp::link::Event;
 use sbp::messages::{
     navigation::{
@@ -355,7 +354,7 @@ impl Deref for FlowControl {
 }
 
 // Tracking Signals Tab Types.
-pub type Cn0Dict = HashMap<(SignalCodes, i16), RingBuffer<(OrderedFloat<f64>, f64)>>;
+pub type Cn0Dict = HashMap<(SignalCodes, i16), RingBuffer<(f64, f64)>>;
 pub type Cn0Age = HashMap<(SignalCodes, i16), f64>;
 
 #[repr(u8)]

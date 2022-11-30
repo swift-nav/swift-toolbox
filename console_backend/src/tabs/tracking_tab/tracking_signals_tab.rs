@@ -5,7 +5,6 @@ use std::{
 
 use capnp::message::Builder;
 use log::warn;
-use ordered_float::OrderedFloat;
 use sbp::messages::tracking::{MeasurementState, TrackingChannelState};
 
 use crate::client_sender::BoxedClientSender;
@@ -61,7 +60,7 @@ pub struct TrackingSignalsTab {
     pub prev_obs_count: u8,
     pub prev_obs_total: u8,
     pub received_codes: Vec<SignalCodes>,
-    pub sats: Vec<RingBuffer<(OrderedFloat<f64>, f64)>>,
+    pub sats: Vec<RingBuffer<(f64, f64)>>,
     pub shared_state: SharedState,
     pub sv_labels: Vec<String>,
     pub t_init: Instant,
@@ -125,7 +124,7 @@ impl TrackingSignalsTab {
             .cn0_dict
             .entry(key)
             .or_insert_with(|| RingBuffer::new(NUM_POINTS));
-        cn0_deque.push((OrderedFloat(t), cn0));
+        cn0_deque.push((t, cn0));
     }
     /// Push carrier-to-noise density age to cn0_age with key.
     ///
@@ -238,7 +237,7 @@ impl TrackingSignalsTab {
         }
         for (key, cn0_deque) in self.cn0_dict.iter_mut() {
             if !codes_that_came.contains(key) {
-                cn0_deque.push((OrderedFloat(t), 0.0));
+                cn0_deque.push((t, 0.0));
             }
         }
         self.clean_cn0();
@@ -353,7 +352,7 @@ impl TrackingSignalsTab {
         }
         for (key, cn0_deque) in self.cn0_dict.iter_mut() {
             if !codes_that_came.contains(key) {
-                cn0_deque.push((OrderedFloat(t), 0.0));
+                cn0_deque.push((t, 0.0));
             }
         }
         self.clean_cn0();
@@ -418,7 +417,7 @@ impl TrackingSignalsTab {
                 let mut point_val_idx = tracking_points
                     .reborrow()
                     .init(idx as u32, points.len() as u32);
-                for (i, (OrderedFloat(x), y)) in points.iter().enumerate() {
+                for (i, (x, y)) in points.iter().enumerate() {
                     let mut point_val = point_val_idx.reborrow().get(i as u32);
                     point_val.set_x(*x);
                     point_val.set_y(*y);

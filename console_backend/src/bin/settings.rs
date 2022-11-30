@@ -181,6 +181,7 @@ fn connect(opts: &Opts) -> Result<Arc<SettingsTab>> {
     Ok(settings)
 }
 
+#[derive(Clone)]
 struct ReadCmd {
     group: String,
     name: Option<String>,
@@ -205,7 +206,7 @@ impl FromStr for ReadCmd {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct WriteCmd {
     group: String,
     name: String,

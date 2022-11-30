@@ -191,18 +191,13 @@ impl FromStr for ReadCmd {
     type Err = Infallible;
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        if let Some(idx) = s.find('.') {
-            let (group, name) = s.split_at(idx);
-            Ok(ReadCmd {
-                group: group.to_owned(),
-                name: Some(name[1..].to_owned()),
-            })
+        let (group, name) = if let Some((group, name)) = s.split_once('.') {
+            (group.to_owned(), Some(name.to_owned()))
         } else {
-            Ok(ReadCmd {
-                group: s.to_owned(),
-                name: None,
-            })
-        }
+            (s.to_owned(), None)
+        };
+
+        Ok(ReadCmd(group, name))
     }
 }
 

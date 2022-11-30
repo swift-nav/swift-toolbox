@@ -23,69 +23,6 @@ use crate::{
 };
 use crate::{constants::LOG_FILENAME, errors::CONVERT_TO_STR_FAILURE};
 
-#[derive(Debug)]
-pub struct CliLogLevel(LogLevel);
-
-impl Deref for CliLogLevel {
-    type Target = LogLevel;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl FromStr for CliLogLevel {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(CliLogLevel(LogLevel::from_str(s).map_err(|_| {
-            format!("Must choose from available tabs {:?}", LogLevel::VARIANTS)
-        })?))
-    }
-}
-
-#[derive(Debug)]
-pub struct CliTabs(Tabs);
-
-impl Deref for CliTabs {
-    type Target = Tabs;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl FromStr for CliTabs {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(CliTabs(Tabs::from_str(s).map_err(|_| {
-            format!("Must choose from available tabs {:?}", Tabs::VARIANTS)
-        })?))
-    }
-}
-
-#[derive(Debug)]
-pub struct CliSbpLogging(SbpLogging);
-
-impl Deref for CliSbpLogging {
-    type Target = SbpLogging;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl FromStr for CliSbpLogging {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(CliSbpLogging(SbpLogging::from_str(s).map_err(|_| {
-            format!("Must choose from available tabs {:?}", SbpLogging::VARIANTS)
-        })?))
-    }
-}
-
 #[cfg(windows)]
 const BIN_NAME: &str = "swift-console.exe";
 #[cfg(not(windows))]
@@ -111,7 +48,7 @@ pub struct CliOptions {
 
     /// Log SBP-JSON or SBP data to default / specified log file.
     #[clap(long)]
-    pub sbp_log: Option<CliSbpLogging>,
+    pub sbp_log: Option<SbpLogging>,
 
     /// Set SBP log filename.
     #[clap(long)]
@@ -190,7 +127,7 @@ pub struct CliOptions {
 
     /// Start console from specific tab.
     #[clap(long)]
-    pub tab: Option<CliTabs>,
+    pub tab: Option<Tabs>,
 
     /// Set the height of the main window.
     #[clap(long)]

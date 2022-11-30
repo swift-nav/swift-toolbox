@@ -1,6 +1,6 @@
 use std::{num::ParseIntError, ops::Not, path::PathBuf, str::FromStr};
 
-use clap::{AppSettings::DeriveDisplayOrder, Args, Parser};
+use clap::{AppSettings::DeriveDisplayOrder, Args, Parser, ValueEnum};
 use log::{debug, error};
 
 use crate::output::CsvLogging;
@@ -15,7 +15,6 @@ use crate::{
     connection::ConnectionManager,
 };
 use crate::{constants::LOG_FILENAME, errors::CONVERT_TO_STR_FAILURE};
-use clap::ValueEnum;
 
 #[cfg(windows)]
 const BIN_NAME: &str = "swift-console.exe";

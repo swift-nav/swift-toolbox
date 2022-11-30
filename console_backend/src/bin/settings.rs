@@ -1,7 +1,7 @@
 use std::{convert::Infallible, path::PathBuf, str::FromStr, sync::Arc};
 
 use anyhow::anyhow;
-use clap::{AppSettings::DeriveDisplayOrder, ArgGroup, Parser};
+use clap::{ArgGroup, Parser};
 use sbp::SbpIterExt;
 
 use console_backend::{
@@ -78,7 +78,6 @@ fn write(write_cmds: &[WriteCmd], settings: &SettingsTab) -> Result<()> {
 #[clap(
     name = "swift-settings",
     version = include_str!("../version.txt"),
-    setting = DeriveDisplayOrder,
     group = ArgGroup::new("conn").required(true).args(&["serial", "tcp"]),
     override_usage = "\
     swift-settings [OPTIONS]

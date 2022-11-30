@@ -8,7 +8,7 @@ use std::{
 };
 
 use anyhow::{anyhow, Context};
-use clap::{AppSettings::DeriveDisplayOrder, Args, Parser};
+use clap::{Args, Parser};
 use indicatif::{ProgressBar, ProgressStyle};
 use lazy_static::lazy_static;
 use sbp::{link::LinkSource, SbpIterExt};
@@ -86,7 +86,6 @@ lazy_static! {
     name = "swift-files",
     version = include_str!("../version.txt"),
     arg_required_else_help = true,
-    setting = DeriveDisplayOrder,
     override_usage = &**FILEIO_USAGE
 )]
 struct Opts {
@@ -118,7 +117,7 @@ struct ConnectionOpts {
     #[clap(
         long,
         default_value = "115200",
-        validator(is_baudrate),
+        value_parser = is_baudrate,
         conflicts_with = "port"
     )]
     baudrate: u32,
@@ -309,6 +308,7 @@ impl ReadProgress {
 /// Connect via a serial port or tcp
 fn discover(host: String, opts: ConnectionOpts) -> Result<Connection> {
     match fs::File::open(&host) {
+        Err(e) if e.kind() == io::ErrorKind::PermissionDenied => Err(e.into()),
         Err(e) if e.kind() == io::ErrorKind::PermissionDenied => Err(e.into()),
         Ok(_) => {
             log::debug!("connecting via serial");

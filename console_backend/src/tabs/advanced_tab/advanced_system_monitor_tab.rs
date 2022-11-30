@@ -1,5 +1,4 @@
 use capnp::message::Builder;
-use ordered_float::OrderedFloat;
 use sbp::messages::piksi::{MsgDeviceMonitor, MsgThreadState};
 use std::collections::HashMap;
 
@@ -17,7 +16,7 @@ const UART_STATE_KEYS: &[&str] = &[CURR, AVG, MIN, MAX];
 
 struct ThreadStateFields {
     name: String,
-    cpu: OrderedFloat<f64>,
+    cpu: f64,
     stack_free: u32,
 }
 
@@ -78,14 +77,14 @@ impl AdvancedSystemMonitorTab {
         };
         let thread_state = ThreadStateFields {
             name,
-            cpu: OrderedFloat::from(normalize_cpu_usage(msg.cpu)),
+            cpu: normalize_cpu_usage(msg.cpu),
             stack_free: msg.stack_free,
         };
         self.threads.push(thread_state);
     }
 
     fn update_threads(&mut self) {
-        self.threads.sort_by(|a, b| b.cpu.cmp(&a.cpu));
+        self.threads.sort_by(|a, b| b.cpu.total_cmp(&a.cpu));
         self.threads_table_list = std::mem::take(&mut self.threads);
         self.send_data();
     }
@@ -145,7 +144,7 @@ impl AdvancedSystemMonitorTab {
             for (i, val) in self.threads_table_list.iter().enumerate() {
                 let mut entry = threads_table_entries.reborrow().get(i as u32);
                 entry.set_name(&val.name.to_string());
-                entry.set_cpu(*val.cpu);
+                entry.set_cpu(val.cpu);
                 entry.set_stack_free(val.stack_free);
             }
         }
@@ -354,28 +353,19 @@ mod tests {
             tab.threads_table_list[0].name,
             name3.to_string().trim_end_matches('\0')
         );
-        assert_eq!(
-            tab.threads_table_list[0].cpu,
-            OrderedFloat(msg3.cpu as f64 / 10.0)
-        );
+        assert_eq!(tab.threads_table_list[0].cpu, msg3.cpu as f64 / 10.0);
         assert_eq!(tab.threads_table_list[0].stack_free, msg3.stack_free);
         assert_eq!(
             tab.threads_table_list[1].name,
             name1.to_string().trim_end_matches('\0')
         );
-        assert_eq!(
-            tab.threads_table_list[1].cpu,
-            OrderedFloat(msg1.cpu as f64 / 10.0)
-        );
+        assert_eq!(tab.threads_table_list[1].cpu, msg1.cpu as f64 / 10.0);
         assert_eq!(tab.threads_table_list[1].stack_free, msg1.stack_free);
         assert_eq!(
             tab.threads_table_list[2].name,
             name2.to_string().trim_end_matches('\0')
         );
-        assert_eq!(
-            tab.threads_table_list[2].cpu,
-            OrderedFloat(msg2.cpu as f64 / 10.0)
-        );
+        assert_eq!(tab.threads_table_list[2].cpu, msg2.cpu as f64 / 10.0);
         assert_eq!(tab.threads_table_list[2].stack_free, msg2.stack_free);
     }
 }

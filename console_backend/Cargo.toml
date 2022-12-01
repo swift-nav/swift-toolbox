@@ -12,7 +12,7 @@ async_logger = "0.3.3"
 strum = "0.24"
 strum_macros = "0.24"
 lazy_static = "1.4.0"
-capnp = "0.14"
+capnp = "0.15"
 chrono = { version = "0.4", features = ["serde"] }
 csv = "1"
 paste = "1"

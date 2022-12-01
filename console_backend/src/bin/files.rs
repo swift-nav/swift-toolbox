@@ -110,7 +110,7 @@ struct Opts {
 #[derive(Clone, Copy, Args)]
 struct ConnectionOpts {
     /// The port to use when connecting via TCP
-    #[clap(long, default_value = "55555", conflicts_with_all = &["baudrate", "flow-control"])]
+    #[clap(long, default_value = "55555", conflicts_with_all = &["baudrate", "flow_control"])]
     port: u16,
 
     /// The baudrate for processing packets when connecting via serial

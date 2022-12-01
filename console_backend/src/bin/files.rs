@@ -309,7 +309,6 @@ impl ReadProgress {
 fn discover(host: String, opts: ConnectionOpts) -> Result<Connection> {
     match fs::File::open(&host) {
         Err(e) if e.kind() == io::ErrorKind::PermissionDenied => Err(e.into()),
-        Err(e) if e.kind() == io::ErrorKind::PermissionDenied => Err(e.into()),
         Ok(_) => {
             log::debug!("connecting via serial");
             Ok(Connection::serial(host, opts.baudrate, opts.flow_control))

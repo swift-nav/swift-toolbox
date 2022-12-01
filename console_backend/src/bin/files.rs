@@ -169,13 +169,9 @@ fn read(src: Remote, dest: PathBuf, conn: ConnectionOpts) -> Result<()> {
     let (dest, pb): (Box<dyn Write + Send>, _) = if dest.to_str() == Some("-") {
         (Box::new(io::stdout()), ReadProgress::stdout())
     } else {
-        (
-            Box::new(
-                File::create(&dest)
-                    .with_context(|| format!("Could not open {:?} for writing", &dest))?,
-            ),
-            ReadProgress::file(),
-        )
+        let dest = File::create(&dest)
+            .with_context(|| format!("Could not open {:?} for writing", &dest))?;
+        (Box::new(dest), ReadProgress::file())
     };
     let mut fileio = src.connect(conn)?;
     pb.set_message("Reading...");
@@ -189,7 +185,7 @@ fn read(src: Remote, dest: PathBuf, conn: ConnectionOpts) -> Result<()> {
 fn write(src: PathBuf, dest: Remote, conn: ConnectionOpts) -> Result<()> {
     let mut fileio = dest.connect(conn)?;
     let file =
-        fs::File::open(&src).with_context(|| format!("Could not open {:?} for reading", &src))?;
+        File::open(&src).with_context(|| format!("Could not open {:?} for reading", &src))?;
     let size = file.metadata()?.len();
     let pb = ProgressBar::new(size);
     pb.enable_steady_tick(Duration::from_millis(1000));
@@ -307,7 +303,7 @@ impl ReadProgress {
 
 /// Connect via a serial port or tcp
 fn discover(host: String, opts: ConnectionOpts) -> Result<Connection> {
-    match fs::File::open(&host) {
+    match File::open(&host) {
         Err(e) if e.kind() == io::ErrorKind::PermissionDenied => Err(e.into()),
         Ok(_) => {
             log::debug!("connecting via serial");

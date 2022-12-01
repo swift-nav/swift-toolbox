@@ -205,7 +205,7 @@ fn write(src: PathBuf, dest: Remote, conn: ConnectionOpts) -> Result<()> {
     Ok(())
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum Target {
     Local(PathBuf),
     Remote(Remote),
@@ -244,7 +244,7 @@ impl FromStr for Target {
 }
 
 /// A host + path specified as <host>:<path>
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Remote {
     host: String,
     path: String,

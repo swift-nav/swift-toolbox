@@ -197,7 +197,7 @@ impl FromStr for ReadCmd {
             (s.to_owned(), None)
         };
 
-        Ok(ReadCmd(group, name))
+        Ok(ReadCmd { group, name })
     }
 }
 

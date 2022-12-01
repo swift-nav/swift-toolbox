@@ -1,6 +1,6 @@
 use std::{
     borrow::Cow,
-    fs::{self, File},
+    fs::File,
     io::{self, Write},
     path::PathBuf,
     str::FromStr,

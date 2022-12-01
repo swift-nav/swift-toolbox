@@ -389,6 +389,7 @@ struct UpdateTabStatusFront {
         none @12 :Void;
     }
     serialPromptConfirm @13: Bool;
+    checkForUpdates @14: Bool;
 }
 
 struct TrackingSignalsStatusFront {
@@ -450,6 +451,10 @@ struct AutoSurveyRequest {
     request @0 :Void = void;
 }
 
+struct TabChangeEvent {
+    currentTab @0 :Text;
+}
+
 struct Message {
     union {
         solutionVelocityStatus @0 :SolutionVelocityStatus;
@@ -507,5 +512,6 @@ struct Message {
         connectionNotification @52 : ConnectionNotification;
         settingsNotification @53 : SettingsNotification;
         connectionDialogStatus @54 :ConnectionDialogStatus;
+        onTabChangeEvent @55 :TabChangeEvent;
     }
 }

@@ -1,7 +1,7 @@
 use lazy_static::lazy_static;
 use std::time::Duration;
 
-use crate::swift_version::SwiftVersion;
+use crate::updater::swift_version::SwiftVersion;
 
 // 'Universal' constants
 

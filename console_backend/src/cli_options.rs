@@ -37,7 +37,7 @@ impl Deref for CliLogLevel {
 impl FromStr for CliLogLevel {
     type Err = String;
 
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(CliLogLevel(LogLevel::from_str(s).map_err(|_| {
             format!("Must choose from available tabs {:?}", LogLevel::VARIANTS)
         })?))
@@ -58,7 +58,7 @@ impl Deref for CliTabs {
 impl FromStr for CliTabs {
     type Err = String;
 
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(CliTabs(Tabs::from_str(s).map_err(|_| {
             format!("Must choose from available tabs {:?}", Tabs::VARIANTS)
         })?))
@@ -79,7 +79,7 @@ impl Deref for CliSbpLogging {
 impl FromStr for CliSbpLogging {
     type Err = String;
 
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(CliSbpLogging(SbpLogging::from_str(s).map_err(|_| {
             format!("Must choose from available tabs {:?}", SbpLogging::VARIANTS)
         })?))
@@ -203,6 +203,14 @@ pub struct CliOptions {
     /// Enable QML Debugging and profiling.
     #[clap(long, hide = true)]
     pub qmldebug: bool,
+
+    /// SSH tunnel to a jumphost specified ([username]:[password]@some.fqdn)
+    #[clap(long, hide = true)]
+    pub ssh_tunnel: Option<PathBuf>,
+
+    /// SSH tunnel forward port of remote IP and port to localhost (some.fqdn:port)
+    #[clap(long, hide = true)]
+    pub ssh_remote_bind_address: Option<PathBuf>,
 }
 
 impl CliOptions {
@@ -326,8 +334,7 @@ fn is_refresh_rate(rr: &str) -> Result<(), String> {
         }
     }
     Err(format!(
-        "Must choose from available refresh rates {:?}",
-        AVAILABLE_REFRESH_RATES
+        "Must choose from available refresh rates {AVAILABLE_REFRESH_RATES:?}"
     ))
 }
 
@@ -346,8 +353,7 @@ pub fn is_baudrate(br: &str) -> Result<(), String> {
         }
     }
     Err(format!(
-        "Must choose from available baudrates {:?}",
-        AVAILABLE_BAUDRATES
+        "Must choose from available baudrates {AVAILABLE_BAUDRATES:?}"
     ))
 }
 

@@ -5,7 +5,6 @@ use std::{
 
 use capnp::message::Builder;
 use log::warn;
-use ordered_float::OrderedFloat;
 use sbp::messages::tracking::{MeasurementState, TrackingChannelState};
 
 use crate::client_sender::BoxedClientSender;
@@ -17,8 +16,8 @@ use crate::piksi_tools_constants::{
     BDS2_B1_STR, BDS2_B2_STR, GAL_E1B_STR, GAL_E1X_STR, GAL_E7I_STR, GAL_E7Q_STR, GLO_L1OF_STR,
     GLO_L2OF_STR, GPS_L1CA_STR, GPS_L2CM_STR, QZS_L1CA_STR, QZS_L2CM_STR, SBAS_L1_STR,
 };
-use crate::shared_state::SharedState;
-use crate::types::{Cn0Age, Cn0Dict, Deque, ObservationMsg, SignalCodes};
+use crate::shared_state::{SharedState, TabName};
+use crate::types::{Cn0Age, Cn0Dict, ObservationMsg, RingBuffer, SignalCodes};
 use crate::utils::{serialize_capnproto_builder, signal_key_color, signal_key_label};
 
 /// TrackingSignalsTab struct.
@@ -61,11 +60,11 @@ pub struct TrackingSignalsTab {
     pub prev_obs_count: u8,
     pub prev_obs_total: u8,
     pub received_codes: Vec<SignalCodes>,
-    pub sats: Vec<Deque<(OrderedFloat<f64>, f64)>>,
+    pub sats: Vec<RingBuffer<(f64, f64)>>,
     pub shared_state: SharedState,
     pub sv_labels: Vec<String>,
     pub t_init: Instant,
-    pub time: Deque<f64>,
+    pub time: RingBuffer<f64>,
 }
 
 impl TrackingSignalsTab {
@@ -106,7 +105,7 @@ impl TrackingSignalsTab {
             sv_labels: Vec::new(),
             t_init: Instant::now(),
             time: {
-                let mut time = Deque::new(NUM_POINTS);
+                let mut time = RingBuffer::new(NUM_POINTS);
                 for x in (0..(NUM_POINTS as i32)).rev() {
                     time.push((-x as f64) * (1.0 / TRK_RATE));
                 }
@@ -124,8 +123,8 @@ impl TrackingSignalsTab {
         let cn0_deque = self
             .cn0_dict
             .entry(key)
-            .or_insert_with(|| Deque::new(NUM_POINTS));
-        cn0_deque.push((OrderedFloat(t), cn0));
+            .or_insert_with(|| RingBuffer::new(NUM_POINTS));
+        cn0_deque.push((t, cn0));
     }
     /// Push carrier-to-noise density age to cn0_age with key.
     ///
@@ -176,14 +175,14 @@ impl TrackingSignalsTab {
             let (code_lbl, freq_lbl, id_lbl) = signal_key_label(*key, Some(&self.glo_slot_dict));
             let mut label = String::from("");
             if let Some(lbl) = code_lbl {
-                label = format!("{} {}", label, lbl);
+                label = format!("{label} {lbl}");
             }
             if let Some(lbl) = freq_lbl {
-                label = format!("{} {}", label, lbl);
+                label = format!("{label} {lbl}");
             }
             if let Some(lbl) = id_lbl {
                 tracked_sv_labels.push(lbl.clone());
-                label = format!("{} {}", label, lbl);
+                label = format!("{label} {lbl}");
             }
 
             temp_labels.push((label, *key));
@@ -238,7 +237,7 @@ impl TrackingSignalsTab {
         }
         for (key, cn0_deque) in self.cn0_dict.iter_mut() {
             if !codes_that_came.contains(key) {
-                cn0_deque.push((OrderedFloat(t), 0.0));
+                cn0_deque.push((t, 0.0));
             }
         }
         self.clean_cn0();
@@ -353,7 +352,7 @@ impl TrackingSignalsTab {
         }
         for (key, cn0_deque) in self.cn0_dict.iter_mut() {
             if !codes_that_came.contains(key) {
-                cn0_deque.push((OrderedFloat(t), 0.0));
+                cn0_deque.push((t, 0.0));
             }
         }
         self.clean_cn0();
@@ -385,7 +384,10 @@ impl TrackingSignalsTab {
     }
 
     /// Package data into a message buffer and send to frontend.
-    fn send_data(&mut self) {
+    pub fn send_data(&mut self) {
+        if self.shared_state.current_tab() != TabName::Tracking {
+            return;
+        }
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
@@ -415,7 +417,7 @@ impl TrackingSignalsTab {
                 let mut point_val_idx = tracking_points
                     .reborrow()
                     .init(idx as u32, points.len() as u32);
-                for (i, (OrderedFloat(x), y)) in points.iter().enumerate() {
+                for (i, (x, y)) in points.iter().enumerate() {
                     let mut point_val = point_val_idx.reborrow().get(i as u32);
                     point_val.set_x(*x);
                     point_val.set_y(*y);

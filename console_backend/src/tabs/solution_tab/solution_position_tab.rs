@@ -5,70 +5,16 @@ use sbp::messages::{
     orientation::{MsgAngularRate, MsgOrientEuler},
     system::{MsgInsStatus, MsgInsUpdates},
 };
-use std::{collections::HashMap, str::FromStr, time::Instant};
+use std::{collections::HashMap, time::Instant};
 
 use crate::client_sender::BoxedClientSender;
 use crate::constants::*;
-use crate::date_conv::*;
 use crate::output::{PosLLHLog, VelLog};
 use crate::piksi_tools_constants::EMPTY_STR;
-use crate::shared_state::SharedState;
-use crate::types::{Deque, Dops, GnssModes, GpsTime, PosLLH, UtcDateTime, VelNED};
-use crate::utils::*;
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum LatLonUnits {
-    Degrees,
-    Meters,
-}
-
-impl LatLonUnits {
-    /// Retrieve the velocity unit as string slice.
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            LatLonUnits::Degrees => DEGREES,
-            LatLonUnits::Meters => METERS,
-        }
-    }
-    pub fn get_sig_figs(&self, mean_lat: f64) -> (f64, f64) {
-        match self {
-            LatLonUnits::Degrees => (1.0, 1.0),
-            LatLonUnits::Meters => LatLonUnits::meters_per_degree(mean_lat),
-        }
-    }
-    /// Convert latitude in degrees to latitude and longitude to meters multipliers.
-    ///
-    /// Taken from:
-    /// https://github.com/swift-nav/piksi_tools/blob/v3.1.0-release/piksi_tools/console/solution_view.py
-    fn meters_per_degree(lat: f64) -> (f64, f64) {
-        let m1 = 111132.92; // latitude calculation term 1
-        let m2 = -559.82; // latitude calculation term 2
-        let m3 = 1.175; // latitude calculation term 3
-        let m4 = -0.0023; // latitude calculation term 4
-        let p1 = 111412.84; // longitude calculation term 1
-        let p2 = -93.5; // longitude calculation term 2
-        let p3 = 0.118; // longitude calculation term 3
-        let latlen = m1
-            + (m2 * f64::cos(2.0 * f64::to_radians(lat)))
-            + (m3 * f64::cos(4.0 * f64::to_radians(lat)))
-            + (m4 * f64::cos(6.0 * f64::to_radians(lat)));
-        let longlen = (p1 * f64::cos(f64::to_radians(lat)))
-            + (p2 * f64::cos(3.0 * f64::to_radians(lat)))
-            + (p3 * f64::cos(5.0 * f64::to_radians(lat)));
-        (latlen, longlen)
-    }
-}
-impl FromStr for LatLonUnits {
-    type Err = String;
-
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        match s {
-            DEGREES => Ok(LatLonUnits::Degrees),
-            METERS => Ok(LatLonUnits::Meters),
-            _ => Err(format!("Invalid LatLonUnits: {}", s)),
-        }
-    }
-}
+use crate::shared_state::{SharedState, TabName};
+use crate::tabs::solution_tab::LatLonUnits;
+use crate::types::{Dops, GnssModes, GpsTime, PosLLH, RingBuffer, UtcDateTime, VelNED};
+use crate::utils::{date_conv::*, *};
 
 /// SolutionTab struct.
 ///
@@ -98,15 +44,15 @@ impl FromStr for LatLonUnits {
 /// - `vel_log_file`: The CsvSerializer corresponding to an open velocity log if any.
 /// - `week`: The stored week value from GPS Time messages.
 #[derive(Debug)]
-pub struct SolutionTab {
+pub struct SolutionPositionTab {
     age_corrections: Option<f64>,
     available_units: [&'static str; 2],
     client_sender: BoxedClientSender,
     ins_status_flags: u32,
     ins_used: bool,
-    lats: Deque<f64>,
-    lons: Deque<f64>,
-    alts: Deque<f64>,
+    lats: RingBuffer<f64>,
+    lons: RingBuffer<f64>,
+    alts: RingBuffer<f64>,
     last_ins_status_receipt_time: Instant,
     last_pos_mode: u8,
     last_odo_update_time: Instant,
@@ -119,15 +65,15 @@ pub struct SolutionTab {
     lon_max: f64,
     lon_min: f64,
     mode_strings: Vec<String>,
-    modes: Deque<u8>,
+    modes: RingBuffer<u8>,
     nsec: Option<i32>,
     pending_draw_modes: Vec<String>,
     shared_state: SharedState,
     sln_cur_data: Vec<Vec<(f64, f64)>>,
     sln_data: Vec<Vec<(f64, f64)>>,
-    sln_line: Deque<(f64, f64)>,
-    pending_sln_line: Deque<(f64, f64)>,
-    slns: HashMap<&'static str, Deque<f64>>,
+    sln_line: RingBuffer<(f64, f64)>,
+    pending_sln_line: RingBuffer<(f64, f64)>,
+    slns: HashMap<&'static str, RingBuffer<f64>>,
     table: HashMap<&'static str, String>,
     unit: LatLonUnits,
     utc_source: Option<String>,
@@ -135,8 +81,8 @@ pub struct SolutionTab {
     week: Option<u16>,
 }
 
-impl SolutionTab {
-    pub fn new(shared_state: SharedState, client_sender: BoxedClientSender) -> SolutionTab {
+impl SolutionPositionTab {
+    pub fn new(shared_state: SharedState, client_sender: BoxedClientSender) -> SolutionPositionTab {
         let unit = LatLonUnits::Degrees;
         let (lat_sf, lon_sf) = unit.get_sig_figs(0.0);
         let mut mode_strings = vec![
@@ -148,15 +94,15 @@ impl SolutionTab {
             GnssModes::Dr.to_string(),
         ];
         mode_strings.reserve_exact(mode_strings.len());
-        SolutionTab {
+        SolutionPositionTab {
             age_corrections: None,
             available_units: [DEGREES, METERS],
             client_sender,
             ins_status_flags: 0,
             ins_used: false,
-            lats: Deque::new(PLOT_HISTORY_MAX),
-            lons: Deque::new(PLOT_HISTORY_MAX),
-            alts: Deque::new(PLOT_HISTORY_MAX),
+            lats: RingBuffer::new(PLOT_HISTORY_MAX),
+            lons: RingBuffer::new(PLOT_HISTORY_MAX),
+            alts: RingBuffer::new(PLOT_HISTORY_MAX),
             last_ins_status_receipt_time: Instant::now(),
             last_pos_mode: 0,
             last_odo_update_time: Instant::now(),
@@ -168,7 +114,7 @@ impl SolutionTab {
             lon_offset: 0.0,
             lon_max: f64::MAX,
             lon_min: f64::MIN,
-            modes: Deque::new(PLOT_HISTORY_MAX),
+            modes: RingBuffer::new(PLOT_HISTORY_MAX),
             pending_draw_modes: Vec::with_capacity(mode_strings.len()),
             mode_strings,
             nsec: Some(0),
@@ -186,11 +132,11 @@ impl SolutionTab {
             slns: {
                 SOLUTION_DATA_KEYS
                     .iter()
-                    .map(|key| (*key, Deque::new(PLOT_HISTORY_MAX)))
+                    .map(|key| (*key, RingBuffer::new(PLOT_HISTORY_MAX)))
                     .collect()
             },
-            sln_line: Deque::new(PLOT_HISTORY_MAX),
-            pending_sln_line: Deque::new(PLOT_HISTORY_MAX),
+            sln_line: RingBuffer::new(PLOT_HISTORY_MAX),
+            pending_sln_line: RingBuffer::new(PLOT_HISTORY_MAX),
             table: {
                 SOLUTION_TABLE_KEYS
                     .iter()
@@ -213,15 +159,7 @@ impl SolutionTab {
             self.utc_time = None;
             self.utc_source = None;
         } else {
-            self.utc_time = Some(utc_time(
-                msg.year as i32,
-                msg.month as u32,
-                msg.day as u32,
-                msg.hours as u32,
-                msg.minutes as u32,
-                msg.seconds as u32,
-                msg.ns as u32,
-            ));
+            self.utc_time = Some(utc_time_from_msg(&msg));
             self.utc_source = Some(utc_source(msg.flags));
         }
     }
@@ -308,27 +246,31 @@ impl SolutionTab {
     /// # Parameters
     /// - `msg`: MsgPosLlhCov to extract data from.
     pub fn handle_pos_llh_cov(&mut self, msg: MsgPosLlhCov) {
-        if msg.flags != 0 {
-            self.table
-                .insert(COV_N_N, format_fixed_decimal_and_sign(msg.cov_n_n, 5, 3));
-            self.table
-                .insert(COV_N_E, format_fixed_decimal_and_sign(msg.cov_n_e, 5, 3));
-            self.table
-                .insert(COV_N_D, format_fixed_decimal_and_sign(msg.cov_n_d, 5, 3));
-            self.table
-                .insert(COV_E_E, format_fixed_decimal_and_sign(msg.cov_e_e, 5, 3));
-            self.table
-                .insert(COV_E_D, format_fixed_decimal_and_sign(msg.cov_e_d, 5, 3));
-            self.table
-                .insert(COV_D_D, format_fixed_decimal_and_sign(msg.cov_d_d, 5, 3));
+        let (cov_n_n, cov_n_e, cov_n_d, cov_e_e, cov_e_d, cov_d_d) = if msg.flags != 0 {
+            (
+                format_fixed_decimal_and_sign(msg.cov_n_n, 5, 3),
+                format_fixed_decimal_and_sign(msg.cov_n_e, 5, 3),
+                format_fixed_decimal_and_sign(msg.cov_n_d, 5, 3),
+                format_fixed_decimal_and_sign(msg.cov_e_e, 5, 3),
+                format_fixed_decimal_and_sign(msg.cov_e_d, 5, 3),
+                format_fixed_decimal_and_sign(msg.cov_d_d, 5, 3),
+            )
         } else {
-            self.table.insert(COV_N_N, String::from(EMPTY_STR));
-            self.table.insert(COV_N_E, String::from(EMPTY_STR));
-            self.table.insert(COV_N_D, String::from(EMPTY_STR));
-            self.table.insert(COV_E_E, String::from(EMPTY_STR));
-            self.table.insert(COV_E_D, String::from(EMPTY_STR));
-            self.table.insert(COV_D_D, String::from(EMPTY_STR));
-        }
+            (
+                EMPTY_STR.into(),
+                EMPTY_STR.into(),
+                EMPTY_STR.into(),
+                EMPTY_STR.into(),
+                EMPTY_STR.into(),
+                EMPTY_STR.into(),
+            )
+        };
+        self.table.insert(COV_N_N, cov_n_n);
+        self.table.insert(COV_N_E, cov_n_e);
+        self.table.insert(COV_N_D, cov_n_d);
+        self.table.insert(COV_E_E, cov_e_e);
+        self.table.insert(COV_E_D, cov_e_d);
+        self.table.insert(COV_D_D, cov_d_d);
     }
 
     /// Handle Vel NED / NEDDepA messages.
@@ -337,12 +279,14 @@ impl SolutionTab {
     /// - `msg`: VelNED wrapper around a MsgVelNed or MsgVELNEDDepA.
     pub fn handle_vel_ned(&mut self, msg: VelNED) {
         let vel_ned_fields = msg.fields();
-        let speed: f64 = mm_to_m(f64::sqrt(
-            (i32::pow(vel_ned_fields.n, 2) + i32::pow(vel_ned_fields.e, 2)) as f64,
-        ));
-        let n = mm_to_m(vel_ned_fields.n as f64);
-        let e = mm_to_m(vel_ned_fields.e as f64);
-        let d = mm_to_m(vel_ned_fields.d as f64);
+        let n = vel_ned_fields.n as f64;
+        let e = vel_ned_fields.e as f64;
+        let d = vel_ned_fields.d as f64;
+
+        let speed: f64 = mm_to_m(euclidean_distance([n, e].iter()));
+        let n = mm_to_m(n);
+        let e = mm_to_m(e);
+        let d = mm_to_m(d);
         let mut tow = ms_to_sec(vel_ned_fields.tow);
         if let Some(nsec) = self.nsec {
             tow += ns_to_sec(nsec as f64);
@@ -355,14 +299,14 @@ impl SolutionTab {
         // Validate logging.
         {
             let mut shared_data = self.shared_state.lock();
-            if let Some(ref mut vel_file) = (*shared_data).solution_tab.velocity_tab.log_file {
+            if let Some(ref mut vel_file) = shared_data.solution_tab.velocity_tab.log_file {
                 let mut gps_time = None;
                 if let Some(tgps) = tgps_ {
                     if let Some(secgps) = secgps_ {
-                        gps_time = Some(format!("{}:{:0>6.06}", tgps, secgps));
+                        gps_time = Some(format!("{tgps}:{secgps:0>6.06}"));
                     }
                 }
-                let pc_time = format!("{}:{:0>6.06}", tloc, secloc);
+                let pc_time = format!("{tloc}:{secloc:0>6.06}");
                 if let Err(err) = vel_file.serialize(&VelLog {
                     pc_time,
                     gps_time,
@@ -374,16 +318,16 @@ impl SolutionTab {
                     flags: vel_ned_fields.flags,
                     num_signals: vel_ned_fields.n_sats,
                 }) {
-                    error!("Unable to to write to vel log, error {}.", err);
+                    error!("Unable to to write to vel log, error {err}.");
                 }
             }
         }
         self.table
             .insert(VEL_FLAGS, format!("0x{:<03x}", vel_ned_fields.flags));
         if (vel_ned_fields.flags & 0x7) != 0 {
-            self.table.insert(VEL_N, format!("{: >8.4}", n));
-            self.table.insert(VEL_E, format!("{: >8.4}", e));
-            self.table.insert(VEL_D, format!("{: >8.4}", d));
+            self.table.insert(VEL_N, format!("{n: >8.4}"));
+            self.table.insert(VEL_E, format!("{e: >8.4}"));
+            self.table.insert(VEL_D, format!("{d: >8.4}"));
         } else {
             self.table.insert(VEL_N, String::from(EMPTY_STR));
             self.table.insert(VEL_E, String::from(EMPTY_STR));
@@ -415,8 +359,8 @@ impl SolutionTab {
         self.ins_status_flags = msg.flags;
         self.last_ins_status_receipt_time = Instant::now();
         let mut shared_data = self.shared_state.lock();
-        (*shared_data).solution_tab.position_tab.ins_status_flags = msg.flags;
-        (*shared_data)
+        shared_data.solution_tab.position_tab.ins_status_flags = msg.flags;
+        shared_data
             .solution_tab
             .position_tab
             .last_ins_status_receipt_time = self.last_ins_status_receipt_time;
@@ -433,41 +377,11 @@ impl SolutionTab {
         self.table
             .insert(INS_STATUS, format!("0x{:<01x}", self.ins_status_flags));
         if dops_fields.flags != 0 {
-            self.table.insert(
-                PDOP,
-                format!(
-                    "{:.1}",
-                    dops_fields.pdop as f64 * DILUTION_OF_PRECISION_UNITS
-                ),
-            );
-            self.table.insert(
-                GDOP,
-                format!(
-                    "{:.1}",
-                    dops_fields.gdop as f64 * DILUTION_OF_PRECISION_UNITS
-                ),
-            );
-            self.table.insert(
-                TDOP,
-                format!(
-                    "{:.1}",
-                    dops_fields.tdop as f64 * DILUTION_OF_PRECISION_UNITS
-                ),
-            );
-            self.table.insert(
-                HDOP,
-                format!(
-                    "{:.1}",
-                    dops_fields.hdop as f64 * DILUTION_OF_PRECISION_UNITS
-                ),
-            );
-            self.table.insert(
-                VDOP,
-                format!(
-                    "{:.1}",
-                    dops_fields.vdop as f64 * DILUTION_OF_PRECISION_UNITS
-                ),
-            );
+            self.table.insert(PDOP, dops_into_string(dops_fields.pdop));
+            self.table.insert(GDOP, dops_into_string(dops_fields.gdop));
+            self.table.insert(TDOP, dops_into_string(dops_fields.tdop));
+            self.table.insert(HDOP, dops_into_string(dops_fields.hdop));
+            self.table.insert(VDOP, dops_into_string(dops_fields.vdop));
         } else {
             self.table.insert(PDOP, String::from(EMPTY_STR));
             self.table.insert(GDOP, String::from(EMPTY_STR));
@@ -482,11 +396,11 @@ impl SolutionTab {
     /// # Parameters
     /// - `msg`: The MsgAgeCorrections to extract data from.
     pub fn handle_age_corrections(&mut self, msg: MsgAgeCorrections) {
-        if msg.age != 0xFFFF {
-            self.age_corrections = Some(decisec_to_sec(msg.age as f64));
+        self.age_corrections = if msg.age != 0xFFFF {
+            Some(decisec_to_sec(msg.age as f64))
         } else {
-            self.age_corrections = None;
-        }
+            None
+        };
     }
 
     /// Handle PosLLH / PosLLHDepA messages.
@@ -532,7 +446,7 @@ impl SolutionTab {
         // Validate logging.
         {
             let mut shared_data = self.shared_state.lock();
-            if let Some(ref mut pos_file) = (*shared_data).solution_tab.position_tab.log_file {
+            if let Some(ref mut pos_file) = shared_data.solution_tab.position_tab.log_file {
                 let pc_time = format!("{}:{:>6.06}", tloc, secloc);
                 if let Err(err) = pos_file.serialize(&PosLLHLog {
                     pc_time,
@@ -596,9 +510,9 @@ impl SolutionTab {
             self.modes.push(self.last_pos_mode);
 
             if self.shared_state.auto_survey_requested() {
-                let lat = self.lats.iter().sum::<f64>() as f64 / self.lats.len() as f64;
-                let lon = self.lons.iter().sum::<f64>() as f64 / self.lons.len() as f64;
-                let alt = self.alts.iter().sum::<f64>() as f64 / self.alts.len() as f64;
+                let lat = self.lats.iter().sum::<f64>() / self.lats.len() as f64;
+                let lon = self.lons.iter().sum::<f64>() / self.lons.len() as f64;
+                let alt = self.alts.iter().sum::<f64>() / self.alts.len() as f64;
 
                 self.shared_state.set_auto_survey_result(lat, lon, alt);
                 self.shared_state.set_settings_auto_survey_request(true);
@@ -611,12 +525,14 @@ impl SolutionTab {
             POS_FIX_MODE,
             GnssModes::from(self.last_pos_mode).to_string(),
         );
-        if let Some(age_corrections_) = self.age_corrections {
-            self.table
-                .insert(CORR_AGE_S, format!("{:.1}", age_corrections_));
+        if let Some(corr_age) = self.age_corrections {
+            self.table.insert(CORR_AGE_S, format!("{corr_age:.1}"));
         }
         let (clear, pause) = self.check_state();
         self.solution_draw(clear, pause);
+        if self.shared_state.current_tab() != TabName::Solution {
+            return;
+        }
         self.send_solution_data();
         self.send_table_data();
     }
@@ -624,10 +540,10 @@ impl SolutionTab {
     pub fn check_state(&mut self) -> (bool, bool) {
         let (clear, pause, new_unit) = {
             let mut shared_data = self.shared_state.lock();
-            let clear = (*shared_data).solution_tab.position_tab.clear;
-            (*shared_data).solution_tab.position_tab.clear = false;
-            let pause = (*shared_data).solution_tab.position_tab.pause;
-            let new_unit = (*shared_data).solution_tab.position_tab.unit.take();
+            let clear = shared_data.solution_tab.position_tab.clear;
+            shared_data.solution_tab.position_tab.clear = false;
+            let pause = shared_data.solution_tab.position_tab.pause;
+            let new_unit = shared_data.solution_tab.position_tab.unit.take();
             (clear, pause, new_unit)
         };
         if let Some(unit) = new_unit {
@@ -687,16 +603,13 @@ impl SolutionTab {
     ) -> (f64, f64, f64, f64) {
         let gnss_mode = GnssModes::from(self.last_pos_mode);
         let mode_string = gnss_mode.to_string();
-        let lat_str = format!("lat_{}", mode_string);
-        let lon_str = format!("lon_{}", mode_string);
+        let lat_str = format!("lat_{mode_string}");
+        let lon_str = format!("lon_{mode_string}");
         let (lat_offset, lat_sf, lon_sf) = {
             if let Some(lats) = self.slns.get_mut(lat_str.as_str()) {
                 let lats_counts = lats.iter().filter(|&x| !x.is_nan()).count();
-                let lat_offset = lats
-                    .iter()
-                    .filter(|&x| !x.is_nan())
-                    .fold(0.0, |acc, x| acc + x)
-                    / lats_counts as f64;
+                let lat_offset =
+                    lats.iter().filter(|&x| !x.is_nan()).sum::<f64>() / lats_counts as f64;
                 let (lat_sf, lon_sf) = unit.get_sig_figs(lat_offset);
                 (lat_offset, lat_sf, lon_sf)
             } else {
@@ -706,10 +619,7 @@ impl SolutionTab {
 
         let lon_offset = if let Some(lons) = self.slns.get_mut(lon_str.as_str()) {
             let lons_counts = lons.iter().filter(|&x| !x.is_nan()).count();
-            lons.iter()
-                .filter(|&x| !x.is_nan())
-                .fold(0.0, |acc, x| acc + x)
-                / lons_counts as f64
+            lons.iter().filter(|&x| !x.is_nan()).sum::<f64>() / lons_counts as f64
         } else {
             0.0
         };
@@ -738,8 +648,8 @@ impl SolutionTab {
             }
         };
         for mode in self.mode_strings.iter() {
-            let lat_str = format!("lat_{}", mode);
-            let lon_str = format!("lon_{}", mode);
+            let lat_str = format!("lat_{mode}");
+            let lon_str = format!("lon_{mode}");
             if let Some(lats) = self.slns.get_mut(lat_str.as_str()) {
                 for lat in lats.iter_mut() {
                     *lat = convert(*lat, old_lat_sf, old_lat_offset);
@@ -772,8 +682,8 @@ impl SolutionTab {
         let lat = (last_lat - self.lat_offset) * self.lat_sf;
         let lon = (last_lon - self.lon_offset) * self.lon_sf;
 
-        let lat_str = format!("lat_{}", mode_string);
-        let lon_str = format!("lon_{}", mode_string);
+        let lat_str = format!("lat_{mode_string}");
+        let lon_str = format!("lon_{mode_string}");
         let lat_str = lat_str.as_str();
         let lon_str = lon_str.as_str();
         self.slns.get_mut(lat_str).unwrap().push(lat);
@@ -791,8 +701,8 @@ impl SolutionTab {
             if exclude_mode == Some(each_mode.clone()) {
                 continue;
             }
-            let lat_str = format!("lat_{}", each_mode);
-            let lon_str = format!("lon_{}", each_mode);
+            let lat_str = format!("lat_{each_mode}");
+            let lon_str = format!("lon_{each_mode}");
             let lat_str = lat_str.as_str();
             let lon_str = lon_str.as_str();
             self.slns.get_mut(lat_str).unwrap().push(f64::NAN);
@@ -839,7 +749,7 @@ impl SolutionTab {
     }
 
     /// Package solution data into a message buffer and send to frontend.
-    fn send_solution_data(&mut self) {
+    pub fn send_solution_data(&mut self) {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
@@ -867,7 +777,7 @@ impl SolutionTab {
             .reborrow()
             .init_available_units(self.available_units.len() as u32);
         for (i, unit) in self.available_units.iter().enumerate() {
-            available_units.set(i as u32, *unit);
+            available_units.set(i as u32, unit);
         }
         let mut solution_points = solution_status
             .reborrow()
@@ -897,7 +807,7 @@ impl SolutionTab {
     }
 
     /// Package solution table data into a message buffer and send to frontend.
-    fn send_table_data(&mut self) {
+    pub fn send_table_data(&mut self) {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
         let mut solution_table_status = msg.init_solution_table_status();
@@ -939,7 +849,7 @@ mod tests {
     fn handle_utc_time_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut solution_table = SolutionTab::new(shared_state, client_send);
+        let mut solution_table = SolutionPositionTab::new(shared_state, client_send);
         let year = 2020_u16;
         let month = 3_u8;
         let day = 19_u8;
@@ -999,7 +909,7 @@ mod tests {
     fn handle_gps_time_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut solution_table = SolutionTab::new(shared_state, client_send);
+        let mut solution_table = SolutionPositionTab::new(shared_state, client_send);
         let wn = 0_u16;
         let ns_residual = 1337_i32;
         let bad_flags = 0_u8;
@@ -1035,7 +945,7 @@ mod tests {
     fn handle_vel_ned_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut solution_tab = SolutionTab::new(shared_state, client_send);
+        let mut solution_tab = SolutionPositionTab::new(shared_state, client_send);
         let good_flags = 0x07;
         let bad_flags = 0xF0;
         let n = 1;
@@ -1127,7 +1037,7 @@ mod tests {
     fn handle_ins_status_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut solution_tab = SolutionTab::new(shared_state, client_send);
+        let mut solution_tab = SolutionPositionTab::new(shared_state, client_send);
         let flags = 0xf0_u32;
         let msg = MsgInsStatus {
             sender_id: Some(1337),
@@ -1143,7 +1053,7 @@ mod tests {
     fn handle_ins_updates_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut solution_tab = SolutionTab::new(shared_state, client_send);
+        let mut solution_tab = SolutionPositionTab::new(shared_state, client_send);
         let msg = MsgInsUpdates {
             sender_id: Some(1337),
             gnsspos: 0,
@@ -1182,7 +1092,7 @@ mod tests {
     fn handle_dops_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut solution_tab = SolutionTab::new(shared_state, client_send);
+        let mut solution_tab = SolutionPositionTab::new(shared_state, client_send);
         let pdop = 1;
         let gdop = 2;
         let tdop = 3;
@@ -1279,7 +1189,7 @@ mod tests {
     fn handle_age_corrections_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut solution_tab = SolutionTab::new(shared_state, client_send);
+        let mut solution_tab = SolutionPositionTab::new(shared_state, client_send);
         assert!(solution_tab.age_corrections.is_none());
         let msg = MsgAgeCorrections {
             sender_id: Some(1337),
@@ -1305,7 +1215,7 @@ mod tests {
     fn handle_pos_llh_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut solution_tab = SolutionTab::new(shared_state, client_send);
+        let mut solution_tab = SolutionPositionTab::new(shared_state, client_send);
         solution_tab.utc_time = Some(utc_time(1_i32, 3_u32, 3_u32, 7_u32, 6_u32, 6_u32, 6_u32));
         solution_tab.utc_source = Some(utc_source(0x02));
         solution_tab.nsec = Some(1337);

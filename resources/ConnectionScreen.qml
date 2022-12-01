@@ -52,6 +52,7 @@ Item {
             width: parent.width
             height: parent.height
             source: Constants.icons.splashScreenPath
+            asynchronous: true
         }
 
         Rectangle {
@@ -369,11 +370,12 @@ Item {
                         ToolTip.visible: hovered
                         ToolTip.text: tooltipText
                         onClicked: {
-                            if (connectButton.state == Constants.connection.connected || connectButton.state == Constants.connection.connecting) {
-                                connectButton.state = Constants.connection.disconnecting;
+                            let conn = Constants.connection;
+                            if (connectButton.state == conn.connected || connectButton.state == conn.connecting) {
+                                connectButton.state = conn.disconnecting;
                                 backend_request_broker.disconnect();
-                            } else if (connectButton.state == Constants.connection.disconnected) {
-                                connectButton.state = Constants.connection.connecting;
+                            } else if (connectButton.state == conn.disconnected) {
+                                connectButton.state = conn.connecting;
                                 if (tcpRadio.checked) {
                                     if (tcpUrlBar.editText && tcpPortBar.editText)
                                         backend_request_broker.connect_tcp(tcpUrlBar.editText, tcpPortBar.editText);

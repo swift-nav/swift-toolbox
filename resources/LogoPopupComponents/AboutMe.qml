@@ -13,6 +13,7 @@ ColumnLayout {
             height: Constants.logoPopup.aboutMe.logoWidth
             width: Constants.logoPopup.aboutMe.logoWidth
             source: Constants.icons.swiftLogoPath
+            asynchronous: true
         }
     }
 

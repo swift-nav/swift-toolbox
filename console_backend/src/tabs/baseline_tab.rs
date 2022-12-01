@@ -8,12 +8,11 @@ use sbp::messages::{
     piksi::MsgResetFilters,
 };
 
-use crate::date_conv::*;
 use crate::output::BaselineLog;
 use crate::piksi_tools_constants::EMPTY_STR;
-use crate::shared_state::SharedState;
-use crate::types::{BaselineNED, Deque, GnssModes, GpsTime, MsgSender, Result, UtcDateTime};
-use crate::utils::*;
+use crate::shared_state::{SharedState, TabName};
+use crate::types::{BaselineNED, GnssModes, GpsTime, MsgSender, Result, RingBuffer, UtcDateTime};
+use crate::utils::{date_conv::*, *};
 use crate::zip;
 use crate::{client_sender::BoxedClientSender, constants::*};
 
@@ -67,7 +66,7 @@ pub struct BaselineTab {
     shared_state: SharedState,
     sln_cur_data: Vec<Vec<(f64, f64)>>,
     sln_data: Vec<Vec<(f64, f64)>>,
-    slns: HashMap<&'static str, Deque<f64>>,
+    slns: HashMap<&'static str, RingBuffer<f64>>,
     table: HashMap<&'static str, String>,
     utc_source: Option<String>,
     utc_time: Option<UtcDateTime>,
@@ -113,7 +112,7 @@ impl BaselineTab {
             slns: {
                 BASELINE_DATA_KEYS
                     .iter()
-                    .map(|key| (*key, Deque::new(PLOT_HISTORY_MAX)))
+                    .map(|key| (*key, RingBuffer::new(PLOT_HISTORY_MAX)))
                     .collect()
             },
             table: {
@@ -141,8 +140,8 @@ impl BaselineTab {
             _ => return,
         };
 
-        let n_string = format!("n_{}", mode_string);
-        let e_string = format!("e_{}", mode_string);
+        let n_string = format!("n_{mode_string}");
+        let e_string = format!("e_{mode_string}");
         let n_values = &self.slns[&*n_string];
         let e_values = &self.slns[&*e_string];
 
@@ -173,8 +172,8 @@ impl BaselineTab {
             if exclude_mode == Some(each_mode.clone()) {
                 continue;
             }
-            let n_str = format!("n_{}", each_mode);
-            let e_str = format!("e_{}", each_mode);
+            let n_str = format!("n_{each_mode}",);
+            let e_str = format!("e_{each_mode}");
             self.slns.get_mut(&*n_str).unwrap().push(f64::NAN);
             self.slns.get_mut(&*e_str).unwrap().push(f64::NAN);
         }
@@ -188,8 +187,8 @@ impl BaselineTab {
     /// - `last_e`: The baseline east coordinate in meters.
     /// - `mode_string`: The mode associated with the update in string form.
     fn _update_sln_data_by_mode(&mut self, last_n: f64, last_e: f64, mode_string: String) {
-        let n_str = format!("n_{}", mode_string);
-        let e_str = format!("e_{}", mode_string);
+        let n_str = format!("n_{mode_string}");
+        let e_str = format!("e_{mode_string}");
         self.slns.get_mut(&*n_str).unwrap().push(last_n);
         self.slns.get_mut(&*e_str).unwrap().push(last_e);
         self._append_empty_sln_data(Some(mode_string));
@@ -206,11 +205,11 @@ impl BaselineTab {
     /// # Parameters
     /// - `msg`: The MsgAgeCorrections to extract data from.
     pub fn handle_age_corrections(&mut self, msg: MsgAgeCorrections) {
-        if msg.age != 0xFFFF {
-            self.age_corrections = Some(decisec_to_sec(msg.age as f64));
+        self.age_corrections = if msg.age != 0xFFFF {
+            Some(decisec_to_sec(msg.age as f64))
         } else {
-            self.age_corrections = None;
-        }
+            None
+        };
     }
 
     /// Handler for GPS time messages.
@@ -231,15 +230,7 @@ impl BaselineTab {
     /// - `msg`: MsgUtcTime to extract data from.
     pub fn handle_utc_time(&mut self, msg: MsgUtcTime) {
         if msg.flags & 0x1 == 1 {
-            self.utc_time = Some(utc_time(
-                msg.year as i32,
-                msg.month as u32,
-                msg.day as u32,
-                msg.hours as u32,
-                msg.minutes as u32,
-                msg.seconds as u32,
-                msg.ns as u32,
-            ));
+            self.utc_time = Some(utc_time_from_msg(&msg));
             self.utc_source = Some(utc_source(msg.flags));
         } else {
             self.utc_time = None;
@@ -271,7 +262,7 @@ impl BaselineTab {
         let h_accuracy = mm_to_m(baseline_ned_fields.h_accuracy as f64);
         let v_accuracy = mm_to_m(baseline_ned_fields.v_accuracy as f64);
 
-        let dist: f64 = f64::sqrt(f64::powi(n, 2) + f64::powi(e, 2) + f64::powi(d, 2));
+        let dist = euclidean_distance([n, e, d].iter());
 
         let mut tow = ms_to_sec(baseline_ned_fields.tow);
         if let Some(nsec) = self.nsec {
@@ -288,17 +279,15 @@ impl BaselineTab {
         }
         let mut gps_time = None;
         let mut gps_time_short = None;
-        if let Some(tgps) = tgps_ {
-            if let Some(secgps) = secgps_ {
-                gps_time = Some(format!("{}:{:0>6.06}", tgps, secgps));
-                gps_time_short = Some(format!("{}:{:0>6.03}", tgps, secgps));
-            }
+        if let (Some(tgps), Some(secgps)) = (tgps_, secgps_) {
+            gps_time = Some(format!("{tgps}:{secgps:0>6.06}"));
+            gps_time_short = Some(format!("{tgps}:{secgps:0>6.03}"));
         }
 
         {
             let mut shared_data = self.shared_state.lock();
-            if let Some(ref mut baseline_file) = (*shared_data).baseline_tab.log_file {
-                let pc_time = format!("{}:{:0>6.06}", tloc, secloc);
+            if let Some(ref mut baseline_file) = shared_data.baseline_tab.log_file {
+                let pc_time = format!("{tloc}:{secloc:0>6.06}");
                 if let Err(err) = baseline_file.serialize(&BaselineLog {
                     pc_time,
                     gps_time,
@@ -361,7 +350,7 @@ impl BaselineTab {
             self.table.insert(DOWN, d.to_string());
             self.table.insert(HORIZ_ACC, h_accuracy.to_string());
             self.table.insert(VERT_ACC, v_accuracy.to_string());
-            self.table.insert(DIST, format!("{:.3}", dist));
+            self.table.insert(DIST, format!("{dist:.3}"));
             self.table
                 .insert(SATS_USED, baseline_ned_fields.n_sats.to_string());
             self.table
@@ -372,7 +361,7 @@ impl BaselineTab {
             }
             if let Some(age_corrections_) = self.age_corrections {
                 self.table
-                    .insert(CORR_AGE_S, format!("{:.1}", age_corrections_));
+                    .insert(CORR_AGE_S, format!("{age_corrections_:.1}"));
             }
         }
 
@@ -387,17 +376,20 @@ impl BaselineTab {
 
         let buttons = self.check_state();
         self.solution_draw(buttons);
+        if self.shared_state.current_tab() != TabName::Baseline {
+            return;
+        }
         self.send_solution_data();
         self.send_table_data();
     }
 
     fn check_state(&self) -> BaselineTabButtons {
         let mut shared_data = self.shared_state.lock();
-        let clear = (*shared_data).baseline_tab.clear;
-        (*shared_data).baseline_tab.clear = false;
-        let pause = (*shared_data).baseline_tab.pause;
-        let reset = (*shared_data).baseline_tab.reset;
-        (*shared_data).baseline_tab.reset = false;
+        let clear = shared_data.baseline_tab.clear;
+        shared_data.baseline_tab.clear = false;
+        let pause = shared_data.baseline_tab.pause;
+        let reset = shared_data.baseline_tab.reset;
+        shared_data.baseline_tab.reset = false;
         BaselineTabButtons {
             clear,
             pause,
@@ -457,7 +449,7 @@ impl BaselineTab {
     }
 
     /// Package solution data into a message buffer and send to frontend.
-    fn send_solution_data(&mut self) {
+    pub fn send_solution_data(&mut self) {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
@@ -499,7 +491,7 @@ impl BaselineTab {
     }
 
     /// Package solution table data into a message buffer and send to frontend.
-    fn send_table_data(&mut self) {
+    pub fn send_table_data(&mut self) {
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
         let mut baseline_table_status = msg.init_baseline_table_status();
@@ -844,9 +836,9 @@ mod tests {
         assert!(!buttons.reset);
         {
             let mut shared_data = baseline_tab.shared_state.lock();
-            (*shared_data).baseline_tab.clear = true;
-            (*shared_data).baseline_tab.pause = true;
-            (*shared_data).baseline_tab.reset = true;
+            shared_data.baseline_tab.clear = true;
+            shared_data.baseline_tab.pause = true;
+            shared_data.baseline_tab.reset = true;
         }
         let buttons = baseline_tab.check_state();
         assert!(buttons.clear);

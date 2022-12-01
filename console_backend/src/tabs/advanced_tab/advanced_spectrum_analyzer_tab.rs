@@ -4,7 +4,7 @@ use log::error;
 use crate::client_sender::BoxedClientSender;
 use crate::constants::{AMPLITUDES, CHANNELS, FREQUENCIES};
 use crate::fft_monitor::FftMonitor;
-use crate::shared_state::SharedState;
+use crate::shared_state::{SharedState, TabName};
 use crate::types::Specan;
 use crate::utils::serialize_capnproto_builder;
 
@@ -53,12 +53,12 @@ impl AdvancedSpectrumAnalyzerTab {
     /// - `msg`: MsgSpecan to extract data from.
     pub fn handle_specan(&mut self, msg: Specan) {
         if let Err(err) = self.fft_monitor.capture_fft(msg) {
-            error!("{}", err);
+            error!("{err}");
             return;
         }
         {
             let shared_data = self.shared_state.lock();
-            self.channel_idx = (*shared_data).advanced_spectrum_analyzer_tab.channel_idx as usize;
+            self.channel_idx = shared_data.advanced_spectrum_analyzer_tab.channel_idx as usize;
         }
         let channel = CHANNELS[self.channel_idx];
         if let Some(num_ffts) = self.fft_monitor.num_ffts(channel) {
@@ -81,7 +81,10 @@ impl AdvancedSpectrumAnalyzerTab {
     }
 
     // /// Package data into a message buffer and send to frontend.
-    fn send_data(&mut self) {
+    pub fn send_data(&mut self) {
+        if self.shared_state.current_tab() != TabName::Advanced {
+            return;
+        }
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 

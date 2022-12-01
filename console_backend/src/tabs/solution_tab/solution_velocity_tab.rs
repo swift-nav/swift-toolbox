@@ -1,14 +1,13 @@
 use std::str::FromStr;
 
 use capnp::message::Builder;
-use ordered_float::OrderedFloat;
 use sbp::messages::navigation::MsgVelNed;
 
 use crate::client_sender::BoxedClientSender;
 use crate::constants::{HORIZONTAL_COLOR, NUM_POINTS, VERTICAL_COLOR};
-use crate::shared_state::SharedState;
-use crate::types::{Deque, VelocityUnits};
-use crate::utils::serialize_capnproto_builder;
+use crate::shared_state::{SharedState, TabName};
+use crate::types::{RingBuffer, VelocityUnits};
+use crate::utils::{euclidean_distance, serialize_capnproto_builder};
 use crate::zip;
 
 /// SolutionVelocityTab struct.
@@ -32,7 +31,7 @@ pub struct SolutionVelocityTab {
     pub max: f64,
     pub min: f64,
     pub multiplier: f64,
-    pub points: Vec<Deque<(f64, OrderedFloat<f64>)>>,
+    pub points: Vec<RingBuffer<(f64, f64)>>,
     pub shared_state: SharedState,
     pub tow: f64,
     pub unit: VelocityUnits,
@@ -51,7 +50,7 @@ impl SolutionVelocityTab {
             max: 0_f64,
             min: 0_f64,
             multiplier: VelocityUnits::Mps.get_multiplier(),
-            points: vec![Deque::new(NUM_POINTS), Deque::new(NUM_POINTS)],
+            points: vec![RingBuffer::new(NUM_POINTS), RingBuffer::new(NUM_POINTS)],
             shared_state,
             tow: 0_f64,
             unit: VelocityUnits::Mps,
@@ -60,15 +59,15 @@ impl SolutionVelocityTab {
 
     fn convert_points(&mut self, new_unit: VelocityUnits) {
         let new_mult = new_unit.get_multiplier();
-        let mut hpoints: Deque<(f64, OrderedFloat<f64>)> = Deque::new(NUM_POINTS);
-        let mut vpoints: Deque<(f64, OrderedFloat<f64>)> = Deque::new(NUM_POINTS);
+        let mut hpoints: RingBuffer<(f64, f64)> = RingBuffer::new(NUM_POINTS);
+        let mut vpoints: RingBuffer<(f64, f64)> = RingBuffer::new(NUM_POINTS);
         let mult_conversion = new_mult / self.multiplier;
         for idx in 0..self.points[0].len() {
             let mut hpoint = self.points[0][idx];
-            *hpoint.1 *= mult_conversion;
+            hpoint.1 *= mult_conversion;
             hpoints.push(hpoint);
             let mut vpoint = self.points[1][idx];
-            *vpoint.1 *= mult_conversion;
+            vpoint.1 *= mult_conversion;
             vpoints.push(vpoint);
         }
         self.multiplier = new_mult;
@@ -86,13 +85,13 @@ impl SolutionVelocityTab {
         let e = msg.e as f64;
         let d = msg.d as f64;
 
-        let h_vel = f64::sqrt(f64::powi(n, 2) + f64::powi(e, 2)) / 1000.0;
+        let h_vel = euclidean_distance([n, e].iter()) / 1000.0;
         let v_vel = (-1.0 * d) / 1000.0;
 
         self.tow = msg.tow as f64 / 1000.0;
 
-        self.points[0].push((self.tow, OrderedFloat(h_vel * self.multiplier)));
-        self.points[1].push((self.tow, OrderedFloat(v_vel * self.multiplier)));
+        self.points[0].push((self.tow, h_vel * self.multiplier));
+        self.points[1].push((self.tow, v_vel * self.multiplier));
 
         let mut new_unit = self.unit.clone();
         {
@@ -112,11 +111,11 @@ impl SolutionVelocityTab {
         }
         let hpoints = &self.points[0];
         let vpoints = &self.points[1];
-        let mut min = *hpoints[0].1;
-        let mut max = *hpoints[0].1;
+        let mut min = hpoints[0].1;
+        let mut max = hpoints[0].1;
         for (h, v) in zip!(hpoints, vpoints) {
-            min = f64::min(*h.1, f64::min(*v.1, min));
-            max = f64::max(*h.1, f64::max(*v.1, max));
+            min = f64::min(h.1, f64::min(v.1, min));
+            max = f64::max(h.1, f64::max(v.1, max));
         }
         self.min = min;
         self.max = max;
@@ -124,7 +123,10 @@ impl SolutionVelocityTab {
     }
 
     /// Package data into a message buffer and send to frontend.
-    fn send_data(&mut self) {
+    pub fn send_data(&mut self) {
+        if self.shared_state.current_tab() != TabName::Solution {
+            return;
+        }
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
@@ -140,7 +142,7 @@ impl SolutionVelocityTab {
             let mut point_val_idx = velocity_points
                 .reborrow()
                 .init(idx as u32, points.len() as u32);
-            for (i, (x, OrderedFloat(y))) in points.iter().enumerate() {
+            for (i, (x, y)) in points.iter().enumerate() {
                 let mut point_val = point_val_idx.reborrow().get(i as u32);
                 point_val.set_x(*x);
                 point_val.set_y(*y);
@@ -151,7 +153,7 @@ impl SolutionVelocityTab {
             .init_available_units(self.available_units.len() as u32);
 
         for (i, unit) in self.available_units.iter().enumerate() {
-            available_units.set(i as u32, *unit);
+            available_units.set(i as u32, unit);
         }
         let mut colors = velocity_status
             .reborrow()
@@ -196,8 +198,8 @@ mod tests {
         let vpoints = &solution_velocity_tab.points[1];
         assert_eq!(hpoints.len(), 1);
         assert_eq!(vpoints.len(), 1);
-        assert!((*hpoints[0].1 - 0.06627216610312357) <= f64::EPSILON);
-        assert!((*vpoints[0].1 - (-0.666)) <= f64::EPSILON);
+        assert!((hpoints[0].1 - 0.06627216610312357) <= f64::EPSILON);
+        assert!((vpoints[0].1 - (-0.666)) <= f64::EPSILON);
         let msg = MsgVelNed {
             sender_id: Some(5),
             n: 1,
@@ -214,8 +216,8 @@ mod tests {
         let vpoints = &solution_velocity_tab.points[1];
         assert_eq!(hpoints.len(), 2);
         assert_eq!(vpoints.len(), 2);
-        assert!(f64::abs(*hpoints[1].1 - 0.13300375934536587) <= f64::EPSILON);
-        assert!(f64::abs(*vpoints[1].1 - (-1.337)) <= f64::EPSILON);
+        assert!(f64::abs(hpoints[1].1 - 0.13300375934536587) <= f64::EPSILON);
+        assert!(f64::abs(vpoints[1].1 - (-1.337)) <= f64::EPSILON);
         let msg = MsgVelNed {
             sender_id: Some(5),
             n: 7,
@@ -232,8 +234,8 @@ mod tests {
         let vpoints = &solution_velocity_tab.points[1];
         assert_eq!(hpoints.len(), 3);
         assert_eq!(vpoints.len(), 3);
-        assert!(f64::abs(*hpoints[1].1 - solution_velocity_tab.max) <= f64::EPSILON);
-        assert!(f64::abs(*vpoints[1].1 - solution_velocity_tab.min) <= f64::EPSILON);
+        assert!(f64::abs(hpoints[1].1 - solution_velocity_tab.max) <= f64::EPSILON);
+        assert!(f64::abs(vpoints[1].1 - solution_velocity_tab.min) <= f64::EPSILON);
     }
 
     #[test]
@@ -275,8 +277,8 @@ mod tests {
         let new_hpoints = &solution_velocity_tab.points[0];
         let new_vpoints = &solution_velocity_tab.points[1];
         for idx in 0..hpoints.len() {
-            assert!(f64::abs(*hpoints[idx].1 - *new_hpoints[idx].1) <= f64::EPSILON);
-            assert!(f64::abs(*vpoints[idx].1 - *new_vpoints[idx].1) <= f64::EPSILON);
+            assert!(f64::abs(hpoints[idx].1 - new_hpoints[idx].1) <= f64::EPSILON);
+            assert!(f64::abs(vpoints[idx].1 - new_vpoints[idx].1) <= f64::EPSILON);
         }
 
         let hpoints = solution_velocity_tab.points[0].clone();
@@ -287,8 +289,8 @@ mod tests {
         let new_hpoints = &solution_velocity_tab.points[0];
         let new_vpoints = &solution_velocity_tab.points[1];
         for idx in 0..hpoints.len() {
-            assert!(f64::abs((*hpoints[idx].1 * MPS2MPH) - *new_hpoints[idx].1) <= f64::EPSILON);
-            assert!(f64::abs((*vpoints[idx].1 * MPS2MPH) - *new_vpoints[idx].1) <= f64::EPSILON);
+            assert!(f64::abs((hpoints[idx].1 * MPS2MPH) - new_hpoints[idx].1) <= f64::EPSILON);
+            assert!(f64::abs((vpoints[idx].1 * MPS2MPH) - new_vpoints[idx].1) <= f64::EPSILON);
         }
 
         let hpoints = solution_velocity_tab.points[0].clone();
@@ -300,12 +302,10 @@ mod tests {
 
         for idx in 0..hpoints.len() {
             assert!(
-                f64::abs(*hpoints[idx].1 * (MPS2KPH / MPS2MPH) - *new_hpoints[idx].1)
-                    <= f64::EPSILON
+                f64::abs(hpoints[idx].1 * (MPS2KPH / MPS2MPH) - new_hpoints[idx].1) <= f64::EPSILON
             );
             assert!(
-                f64::abs(*vpoints[idx].1 * (MPS2KPH / MPS2MPH) - *new_vpoints[idx].1)
-                    <= f64::EPSILON
+                f64::abs(vpoints[idx].1 * (MPS2KPH / MPS2MPH) - new_vpoints[idx].1) <= f64::EPSILON
             );
         }
     }

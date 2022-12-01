@@ -5,7 +5,7 @@ use crate::client_sender::BoxedClientSender;
 use crate::piksi_tools_constants::{
     code_is_bds, code_is_galileo, code_is_glo, code_is_gps, code_is_qzss, code_is_sbas,
 };
-use crate::shared_state::SharedState;
+use crate::shared_state::{SharedState, TabName};
 use crate::types::SignalCodes;
 use crate::utils::{serialize_capnproto_builder, signal_key_label};
 
@@ -68,7 +68,7 @@ impl TrackingSkyPlotTab {
             let key = (SignalCodes::from(azel.sid.code), azel.sid.sat as i16);
             if let Some(mut label) = signal_key_label(key, None).2 {
                 if svs_tracked.contains(&label) {
-                    label = format!("{}*", label);
+                    label = format!("{label}*");
                 }
                 let code = azel.sid.code as i32;
                 let obs = SkyPlotObs {
@@ -100,7 +100,10 @@ impl TrackingSkyPlotTab {
     }
 
     /// Package data into a message buffer and send to frontend.
-    fn send_data(&mut self) {
+    pub fn send_data(&mut self) {
+        if self.shared_state.current_tab() != TabName::Tracking {
+            return;
+        }
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 

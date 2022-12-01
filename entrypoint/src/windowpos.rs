@@ -12,8 +12,8 @@ fn splash_position() -> Result<(isize, isize)> {
             .with_position(init_pos)
             .build(&event_loop)?
             .current_monitor()
-            .or(event_loop.primary_monitor())
-            .or(event_loop.available_monitors().take(1).next())
+            .or_else(|| event_loop.primary_monitor())
+            .or_else(|| event_loop.available_monitors().take(1).next())
     };
     let image = &entrypoint::SPLASH_IMAGE;
     let (pos_x, pos_y) = if let Some(monitor) = monitor {

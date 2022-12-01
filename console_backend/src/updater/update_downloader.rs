@@ -1,4 +1,4 @@
-use crate::update_tab::UpdateTabContext;
+use crate::tabs::update_tab::UpdateTabContext;
 use anyhow::bail;
 use curl::easy::Easy as Curl;
 use serde::{Deserialize, Serialize};

@@ -29,12 +29,13 @@ Item {
 
     function update() {
         logPanelModel.fill_data(logPanelData);
+        let logPanel = Constants.logPanel;
         if (!tableView.model.rows.length) {
             tableView.model.clear();
             tableView.model.rows = [{
-                    [Constants.logPanel.timestampHeader]: "",
-                    [Constants.logPanel.levelHeader]: "",
-                    [Constants.logPanel.msgHeader]: ""
+                    [logPanel.timestampHeader]: "",
+                    [logPanel.levelHeader]: "",
+                    [logPanel.msgHeader]: ""
                 }];
         }
         if (!logPanelData.entries.length)
@@ -46,14 +47,16 @@ Item {
         logLevelIndex = logLevelLabels.indexOf(logPanelData.log_level);
         if (consolePaused)
             return;
-        for (var idx in logPanelData.entries) {
+        let logPanelEntries = logPanelData.entries;
+        for (var idx in logPanelEntries) {
             var new_row = {};
-            new_row[Constants.logPanel.timestampHeader] = logPanelData.entries[idx].timestamp;
-            new_row[Constants.logPanel.levelHeader] = logPanelData.entries[idx].level;
-            new_row[Constants.logPanel.msgHeader] = logPanelData.entries[idx].msg;
+            var logPanelEntry = logPanelEntries[idx];
+            new_row[logPanel.timestampHeader] = logPanelEntry.timestamp;
+            new_row[logPanel.levelHeader] = logPanelEntry.level;
+            new_row[logPanel.msgHeader] = logPanelEntry.msg;
             var rows = tableView.model.rows;
             rows.unshift(new_row);
-            tableView.model.rows = rows.slice(0, Constants.logPanel.maxRows);
+            tableView.model.rows = rows.slice(0, logPanel.maxRows);
         }
         logPanelData.entries = [];
     }
@@ -80,9 +83,10 @@ Item {
             onClicked: {
                 tableView.model.clear();
                 var new_row = {};
-                new_row[Constants.logPanel.timestampHeader] = "";
-                new_row[Constants.logPanel.levelHeader] = "";
-                new_row[Constants.logPanel.msgHeader] = "";
+                let logPanel = Constants.logPanel;
+                new_row[logPanel.timestampHeader] = "";
+                new_row[logPanel.levelHeader] = "";
+                new_row[logPanel.msgHeader] = "";
                 tableView.model.setRow(0, new_row);
                 tableView.forceLayout();
             }

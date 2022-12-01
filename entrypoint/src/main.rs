@@ -49,12 +49,12 @@ fn app_dir() -> Result<PathBuf> {
     let current_exe = std::env::current_exe()?;
     current_exe
         .parent()
-        .ok_or("no parent directory".into())
+        .ok_or_else(|| "no parent directory".into())
         .map(Path::to_path_buf)
 }
 
 fn pythonhome_dir() -> Result<PathBuf> {
-    let app_dir = app_dir()?.to_path_buf();
+    let app_dir = app_dir()?;
     if cfg!(target_os = "macos") {
         if let Some(parent) = app_dir.parent() {
             let resources = parent.join("Resources/lib");

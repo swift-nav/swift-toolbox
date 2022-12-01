@@ -28,25 +28,28 @@ Rectangle {
 
     function groupHasNonExpertSetting(entries, entryIdx) {
         for (var idx = entryIdx + 1; idx < entries.length; idx++) {
-            if (isHeader(entries[idx]))
+            let entry = entries[idx];
+            if (isHeader(entry))
                 return false;
-            if (!entries[idx].expert)
+            if (!entry.expert)
                 return true;
         }
         return false;
     }
 
     function row(entry) {
+        let settingsTable = Constants.settingsTable;
         return {
-            [Constants.settingsTable.tableLeftColumnHeader]: entry.name.replace(/_/g, " "),
-            [Constants.settingsTable.tableRightColumnHeader]: entry.valueOnDevice || "---"
+            [settingsTable.tableLeftColumnHeader]: entry.name.replace(/_/g, " "),
+            [settingsTable.tableRightColumnHeader]: entry.valueOnDevice || "---"
         };
     }
 
     function headerRow(entry) {
+        let settingsTable = Constants.settingsTable;
         return {
-            [Constants.settingsTable.tableLeftColumnHeader]: entry.group.replace(/_/g, " "),
-            [Constants.settingsTable.tableRightColumnHeader]: ""
+            [settingsTable.tableLeftColumnHeader]: entry.group.replace(/_/g, " "),
+            [settingsTable.tableRightColumnHeader]: ""
         };
     }
 

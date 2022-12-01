@@ -97,7 +97,7 @@ class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attr
         return self._points
 
     def set_points(self, points) -> None:
-        self._points = points
+        self._points = [list(map(lambda point: QPointF(point.x, point.y), points[idx])) for idx in range(len(points))]
 
     points = Property(QTKeys.QVARIANTLIST, get_points, set_points)  # type: ignore
 
@@ -105,7 +105,9 @@ class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attr
         return self._cur_points
 
     def set_cur_points(self, cur_points) -> None:
-        self._cur_points = cur_points
+        self._cur_points = [
+            list(map(lambda point: QPointF(point.x, point.y), cur_points[idx])) for idx in range(len(cur_points))
+        ]
 
     cur_points = Property(QTKeys.QVARIANTLIST, get_cur_points, set_cur_points)  # type: ignore
 
@@ -120,8 +122,8 @@ class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attr
     def get_solution_line(self) -> List[QPointF]:
         return self._solution_line
 
-    def set_solution_line(self, solution_line: List[QPointF]) -> None:
-        self._solution_line = solution_line
+    def set_solution_line(self, solution_line) -> None:
+        self._solution_line = list(map(lambda point: QPointF(point.x, point.y), solution_line))
 
     solution_line = Property(QTKeys.QVARIANTLIST, get_solution_line, set_solution_line)  # type: ignore
 

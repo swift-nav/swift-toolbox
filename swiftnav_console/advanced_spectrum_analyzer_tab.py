@@ -104,7 +104,7 @@ class AdvancedSpectrumAnalyzerPoints(QObject):
         return self._points
 
     def set_points(self, points) -> None:
-        self._points = points
+        self._points = [QPointF(point.x, point.y) for point in points]
 
     points = Property(QTKeys.QVARIANTLIST, get_points, set_points)  # type: ignore
 

@@ -31,14 +31,12 @@ fn main() -> Result<()> {
         list(target, opts.conn)
     } else if let Some(target) = opts.delete {
         delete(target, opts.conn)
+    } else if let (Some(src), Some(dest)) = (opts.src, opts.dest) {
+        transfer(src, dest, opts.conn)
     } else {
-        if let (Some(src), Some(dest)) = (opts.src, opts.dest) {
-            transfer(src, dest, opts.conn)
-        } else {
-            Err(anyhow!(
-                "file transfers require both <SRC> and <DEST> to be set"
-            ))
-        }
+        Err(anyhow!(
+            "file transfers require both <SRC> and <DEST> to be set"
+        ))
     }
 }
 

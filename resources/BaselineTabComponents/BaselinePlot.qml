@@ -85,6 +85,7 @@ Item {
                     width: Constants.baselinePlot.buttonSvgHeight
                     height: Constants.baselinePlot.buttonSvgHeight
                     source: Constants.icons.clearButtonUrl
+                    asynchronous: true
                     visible: false
                 }
             }
@@ -329,8 +330,9 @@ Item {
                         return;
                     baselinePlotArea.visible = true;
                     let _lines = null;
+                    let bp = Constants.baselinePlot;
                     if (!scatters.length || !cur_scatters.length)
-                        [scatters, cur_scatters, _lines] = SolutionPlotLoop.setupScatterSeries(baselinePlotChart, Constants, Globals, baselinePlotXAxis, baselinePlotYAxis, Constants.baselinePlot.legendLabels, Constants.baselinePlot.colors);
+                        [scatters, cur_scatters, _lines] = SolutionPlotLoop.setupScatterSeries(baselinePlotChart, Constants, Globals, baselinePlotXAxis, baselinePlotYAxis, bp.legendLabels, bp.colors);
                     baselinePlotPoints.fill_series([scatters, cur_scatters]);
                     let point = SolutionPlotLoop.getCurSolution(baselinePlotPoints.cur_points);
                     if (point)
@@ -338,16 +340,17 @@ Item {
                     if (center_solution)
                         baselinePlotChart.centerToSolution();
                     let hasData = false;
-                    for (let idx in baselinePlotPoints.points) {
-                        if (baselinePlotPoints.points[idx].length > 0) {
+                    let bpPoints = baselinePlotPoints.points;
+                    for (let idx in bpPoints) {
+                        if (bpPoints[idx].length > 0) {
                             hasData = true;
                             break;
                         }
                     }
-                    let new_n_min = Constants.baselinePlot.axesDefaultMin;
-                    let new_n_max = Constants.baselinePlot.axesDefaultMax;
-                    let new_e_min = Constants.baselinePlot.axesDefaultMin;
-                    let new_e_max = Constants.baselinePlot.axesDefaultMax;
+                    let new_n_min = bp.axesDefaultMin;
+                    let new_n_max = bp.axesDefaultMax;
+                    let new_e_min = bp.axesDefaultMin;
+                    let new_e_max = bp.axesDefaultMax;
                     baselineZoomAllButton.enabled = hasData;
                     baselineCenterButton.enabled = hasData;
                     if (hasData) {

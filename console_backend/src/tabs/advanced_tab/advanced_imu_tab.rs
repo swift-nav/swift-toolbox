@@ -4,10 +4,11 @@ use sbp::messages::imu::{MsgImuAux, MsgImuRaw};
 use capnp::message::Builder;
 
 use crate::client_sender::BoxedClientSender;
+use crate::constants::*;
 use crate::fusion_status_flags::FusionStatusFlags;
-use crate::types::Deque;
-use crate::utils::serialize_capnproto_builder;
-use crate::{constants::*, zip};
+use crate::shared_state::{SharedState, TabName};
+use crate::types::RingBuffer;
+use crate::utils::{euclidean_distance, serialize_capnproto_builder};
 
 /// AdvancedImuTab struct.
 ///
@@ -27,6 +28,7 @@ use crate::{constants::*, zip};
 /// - `gyro_z`: The stored historic Imu angular rate values along z axis.
 #[derive(Debug)]
 pub struct AdvancedImuTab {
+    shared_state: SharedState,
     client_sender: BoxedClientSender,
     pub fusion_engine_status_bar: FusionStatusFlags,
     imu_conf: u8,
@@ -34,17 +36,18 @@ pub struct AdvancedImuTab {
     rms_acc_x: f64,
     rms_acc_y: f64,
     rms_acc_z: f64,
-    acc_x: Deque<f64>,
-    acc_y: Deque<f64>,
-    acc_z: Deque<f64>,
-    gyro_x: Deque<f64>,
-    gyro_y: Deque<f64>,
-    gyro_z: Deque<f64>,
+    acc_x: RingBuffer<f64>,
+    acc_y: RingBuffer<f64>,
+    acc_z: RingBuffer<f64>,
+    gyro_x: RingBuffer<f64>,
+    gyro_y: RingBuffer<f64>,
+    gyro_z: RingBuffer<f64>,
 }
 
 impl AdvancedImuTab {
-    pub fn new(client_sender: BoxedClientSender) -> AdvancedImuTab {
+    pub fn new(shared_state: SharedState, client_sender: BoxedClientSender) -> AdvancedImuTab {
         AdvancedImuTab {
+            shared_state,
             fusion_engine_status_bar: FusionStatusFlags::new(client_sender.clone()),
             client_sender,
             imu_conf: 0_u8,
@@ -52,12 +55,12 @@ impl AdvancedImuTab {
             rms_acc_x: 0_f64,
             rms_acc_y: 0_f64,
             rms_acc_z: 0_f64,
-            acc_x: Deque::with_fill_value(NUM_POINTS, 0.),
-            acc_y: Deque::with_fill_value(NUM_POINTS, 0.),
-            acc_z: Deque::with_fill_value(NUM_POINTS, 0.),
-            gyro_x: Deque::with_fill_value(NUM_POINTS, 0.),
-            gyro_y: Deque::with_fill_value(NUM_POINTS, 0.),
-            gyro_z: Deque::with_fill_value(NUM_POINTS, 0.),
+            acc_x: RingBuffer::with_fill_value(NUM_POINTS, 0.),
+            acc_y: RingBuffer::with_fill_value(NUM_POINTS, 0.),
+            acc_z: RingBuffer::with_fill_value(NUM_POINTS, 0.),
+            gyro_x: RingBuffer::with_fill_value(NUM_POINTS, 0.),
+            gyro_y: RingBuffer::with_fill_value(NUM_POINTS, 0.),
+            gyro_z: RingBuffer::with_fill_value(NUM_POINTS, 0.),
         }
     }
 
@@ -65,21 +68,9 @@ impl AdvancedImuTab {
     fn imu_set_data(&mut self) {
         let acc_range = self.imu_conf & 0xF;
         let sig_figs = f64::powi(2_f64, acc_range as i32 + 1_i32) / f64::powi(2_f64, 15);
-        let (rms_x, rms_y, rms_z) = {
-            let mut squared_sum_x: f64 = 0_f64;
-            let mut squared_sum_y: f64 = 0_f64;
-            let mut squared_sum_z: f64 = 0_f64;
-            for (x, y, z) in zip!(&self.acc_x, &self.acc_y, &self.acc_z) {
-                squared_sum_x += x.powi(2);
-                squared_sum_y += y.powi(2);
-                squared_sum_z += z.powi(2);
-            }
-            (
-                f64::sqrt(squared_sum_x / self.acc_x.len() as f64),
-                f64::sqrt(squared_sum_y / self.acc_y.len() as f64),
-                f64::sqrt(squared_sum_z / self.acc_z.len() as f64),
-            )
-        };
+        let rms_x = euclidean_distance(self.acc_x.iter()) / f64::sqrt(self.acc_x.len() as f64);
+        let rms_y = euclidean_distance(self.acc_y.iter()) / f64::sqrt(self.acc_y.len() as f64);
+        let rms_z = euclidean_distance(self.acc_z.iter()) / f64::sqrt(self.acc_z.len() as f64);
         self.rms_acc_x = sig_figs * rms_x;
         self.rms_acc_y = sig_figs * rms_y;
         self.rms_acc_z = sig_figs * rms_z;
@@ -93,7 +84,7 @@ impl AdvancedImuTab {
     pub fn handle_imu_aux(&mut self, msg: MsgImuAux) {
         match msg.imu_type {
             0 => {
-                self.imu_temp = 23_f64 + msg.temp as f64 / f64::powi(2_f64, 9);
+                self.imu_temp = 23_f64 + msg.temp as f64 / 512_f64;
                 self.imu_conf = msg.imu_conf;
             }
             1 => {
@@ -121,7 +112,10 @@ impl AdvancedImuTab {
     }
 
     /// Package data into a message buffer and send to frontend.
-    fn send_data(&mut self) {
+    pub fn send_data(&mut self) {
+        if self.shared_state.current_tab() != TabName::Advanced {
+            return;
+        }
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
@@ -175,8 +169,9 @@ mod tests {
 
     #[test]
     fn handle_imu_raw_test() {
+        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut ins_tab = AdvancedImuTab::new(client_send);
+        let mut ins_tab = AdvancedImuTab::new(shared_state, client_send);
         let tow = 1_u32;
         let tow_f = 1_u8;
         let acc_x = 2_i16;
@@ -221,8 +216,9 @@ mod tests {
 
     #[test]
     fn handle_imu_aux_test() {
+        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut ins_tab = AdvancedImuTab::new(client_send.clone());
+        let mut ins_tab = AdvancedImuTab::new(shared_state.clone(), client_send.clone());
         let imu_type_a = 0_u8;
         let imu_type_b = 1_u8;
         let imu_type_unknown = 2_u8;
@@ -240,7 +236,7 @@ mod tests {
         assert!(f64::abs(ins_tab.imu_temp - 0_f64) <= f64::EPSILON);
         assert_ne!(ins_tab.imu_conf, imu_conf);
 
-        let mut ins_tab = AdvancedImuTab::new(client_send.clone());
+        let mut ins_tab = AdvancedImuTab::new(shared_state.clone(), client_send.clone());
         let msg = MsgImuAux {
             sender_id: Some(1337),
             imu_type: imu_type_a,
@@ -253,7 +249,7 @@ mod tests {
         assert!(f64::abs(ins_tab.imu_temp - 23.390625_f64) <= f64::EPSILON);
         assert_eq!(ins_tab.imu_conf, imu_conf);
 
-        let mut ins_tab = AdvancedImuTab::new(client_send);
+        let mut ins_tab = AdvancedImuTab::new(shared_state, client_send);
         let msg = MsgImuAux {
             sender_id: Some(1337),
             imu_type: imu_type_b,
@@ -269,8 +265,9 @@ mod tests {
 
     #[test]
     fn handle_imu_send_data_test() {
+        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut ins_tab = AdvancedImuTab::new(client_send);
+        let mut ins_tab = AdvancedImuTab::new(shared_state, client_send);
 
         assert!(f64::abs(ins_tab.rms_acc_x - 0_f64) <= f64::EPSILON);
         assert!(f64::abs(ins_tab.rms_acc_y - 0_f64) <= f64::EPSILON);

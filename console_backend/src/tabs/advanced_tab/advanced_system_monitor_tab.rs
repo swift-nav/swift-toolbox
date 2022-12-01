@@ -1,9 +1,9 @@
 use capnp::message::Builder;
-use ordered_float::OrderedFloat;
 use sbp::messages::piksi::{MsgDeviceMonitor, MsgThreadState};
 use std::collections::HashMap;
 
 use crate::client_sender::BoxedClientSender;
+use crate::shared_state::{SharedState, TabName};
 use crate::types::UartState;
 use crate::utils::{cc_to_c, normalize_cpu_usage, serialize_capnproto_builder};
 
@@ -16,7 +16,7 @@ const UART_STATE_KEYS: &[&str] = &[CURR, AVG, MIN, MAX];
 
 struct ThreadStateFields {
     name: String,
-    cpu: OrderedFloat<f64>,
+    cpu: f64,
     stack_free: u32,
 }
 
@@ -32,6 +32,7 @@ struct ThreadStateFields {
 /// - `threads_table_list`: Vec of ThreadStateFields, sent to frontend after heartbeat received.
 /// - `zynq_temp`: Zynq SoC temperature reading.
 pub struct AdvancedSystemMonitorTab {
+    shared_state: SharedState,
     client_sender: BoxedClientSender,
     fe_temp: f64,
     obs_latency: HashMap<String, i32>,
@@ -41,22 +42,20 @@ pub struct AdvancedSystemMonitorTab {
     zynq_temp: f64,
 }
 impl AdvancedSystemMonitorTab {
-    pub fn new(client_sender: BoxedClientSender) -> AdvancedSystemMonitorTab {
+    pub fn new(
+        shared_state: SharedState,
+        client_sender: BoxedClientSender,
+    ) -> AdvancedSystemMonitorTab {
+        let keys: HashMap<String, i32> = UART_STATE_KEYS
+            .iter()
+            .map(|&key| (String::from(key), 0))
+            .collect();
         AdvancedSystemMonitorTab {
+            shared_state,
             client_sender,
             fe_temp: 0.0,
-            obs_latency: {
-                UART_STATE_KEYS
-                    .iter()
-                    .map(|key| (String::from(*key), 0))
-                    .collect()
-            },
-            obs_period: {
-                UART_STATE_KEYS
-                    .iter()
-                    .map(|key| (String::from(*key), 0))
-                    .collect()
-            },
+            obs_latency: keys.clone(),
+            obs_period: keys,
             threads: vec![],
             threads_table_list: vec![],
             zynq_temp: 0.0,
@@ -78,14 +77,14 @@ impl AdvancedSystemMonitorTab {
         };
         let thread_state = ThreadStateFields {
             name,
-            cpu: OrderedFloat::from(normalize_cpu_usage(msg.cpu)),
+            cpu: normalize_cpu_usage(msg.cpu),
             stack_free: msg.stack_free,
         };
         self.threads.push(thread_state);
     }
 
     fn update_threads(&mut self) {
-        self.threads.sort_by(|a, b| b.cpu.cmp(&a.cpu));
+        self.threads.sort_by(|a, b| b.cpu.total_cmp(&a.cpu));
         self.threads_table_list = std::mem::take(&mut self.threads);
         self.send_data();
     }
@@ -97,14 +96,11 @@ impl AdvancedSystemMonitorTab {
 
     pub fn handle_uart_state(&mut self, msg: UartState) {
         let uart_fields = msg.fields();
-        self.obs_latency
-            .insert(CURR.to_string(), uart_fields.latency.current);
-        self.obs_latency
-            .insert(AVG.to_string(), uart_fields.latency.avg);
-        self.obs_latency
-            .insert(MIN.to_string(), uart_fields.latency.lmin);
-        self.obs_latency
-            .insert(MAX.to_string(), uart_fields.latency.lmax);
+        let latency = uart_fields.latency;
+        self.obs_latency.insert(CURR.to_string(), latency.current);
+        self.obs_latency.insert(AVG.to_string(), latency.avg);
+        self.obs_latency.insert(MIN.to_string(), latency.lmin);
+        self.obs_latency.insert(MAX.to_string(), latency.lmax);
         if let Some(period) = uart_fields.obs_period {
             self.obs_period.insert(CURR.to_string(), period.current);
             self.obs_period.insert(AVG.to_string(), period.avg);
@@ -114,7 +110,10 @@ impl AdvancedSystemMonitorTab {
     }
 
     /// Package data into a message buffer and send to frontend.
-    fn send_data(&mut self) {
+    pub fn send_data(&mut self) {
+        if self.shared_state.current_tab() != TabName::Advanced {
+            return;
+        }
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
         let mut status = msg.init_advanced_system_monitor_status();
@@ -145,7 +144,7 @@ impl AdvancedSystemMonitorTab {
             for (i, val) in self.threads_table_list.iter().enumerate() {
                 let mut entry = threads_table_entries.reborrow().get(i as u32);
                 entry.set_name(&val.name.to_string());
-                entry.set_cpu(*val.cpu);
+                entry.set_cpu(val.cpu);
                 entry.set_stack_free(val.stack_free);
             }
         }
@@ -169,8 +168,9 @@ mod tests {
 
     #[test]
     fn handle_uart_state_test() {
+        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut tab = AdvancedSystemMonitorTab::new(client_send);
+        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send);
         let sender_id = Some(1337);
         let uart_a = UARTChannel {
             tx_throughput: 0.0,
@@ -246,8 +246,9 @@ mod tests {
 
     #[test]
     fn handle_device_monitor_test() {
+        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut tab = AdvancedSystemMonitorTab::new(client_send);
+        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send);
         let cpu_temperature = 3333;
         let fe_temperature = 4444;
         let msg = MsgDeviceMonitor {
@@ -266,8 +267,9 @@ mod tests {
     }
     #[test]
     fn handle_thread_state_test() {
+        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut tab = AdvancedSystemMonitorTab::new(client_send);
+        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send);
         let name1: SbpString<[u8; 20], NullTerminated> = fixed_sbp_string("mcdonald");
         let msg1 = MsgThreadState {
             sender_id: Some(1337),
@@ -312,8 +314,9 @@ mod tests {
 
     #[test]
     fn handle_heartbeat_test() {
+        let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
-        let mut tab = AdvancedSystemMonitorTab::new(client_send);
+        let mut tab = AdvancedSystemMonitorTab::new(shared_state, client_send);
         assert!(tab.threads_table_list.is_empty());
         tab.handle_heartbeat();
         assert!(tab.threads_table_list.is_empty());
@@ -350,28 +353,19 @@ mod tests {
             tab.threads_table_list[0].name,
             name3.to_string().trim_end_matches('\0')
         );
-        assert_eq!(
-            tab.threads_table_list[0].cpu,
-            OrderedFloat(msg3.cpu as f64 / 10.0)
-        );
+        assert_eq!(tab.threads_table_list[0].cpu, msg3.cpu as f64 / 10.0);
         assert_eq!(tab.threads_table_list[0].stack_free, msg3.stack_free);
         assert_eq!(
             tab.threads_table_list[1].name,
             name1.to_string().trim_end_matches('\0')
         );
-        assert_eq!(
-            tab.threads_table_list[1].cpu,
-            OrderedFloat(msg1.cpu as f64 / 10.0)
-        );
+        assert_eq!(tab.threads_table_list[1].cpu, msg1.cpu as f64 / 10.0);
         assert_eq!(tab.threads_table_list[1].stack_free, msg1.stack_free);
         assert_eq!(
             tab.threads_table_list[2].name,
             name2.to_string().trim_end_matches('\0')
         );
-        assert_eq!(
-            tab.threads_table_list[2].cpu,
-            OrderedFloat(msg2.cpu as f64 / 10.0)
-        );
+        assert_eq!(tab.threads_table_list[2].cpu, msg2.cpu as f64 / 10.0);
         assert_eq!(tab.threads_table_list[2].stack_free, msg2.stack_free);
     }
 }

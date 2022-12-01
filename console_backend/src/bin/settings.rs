@@ -8,8 +8,8 @@ use console_backend::{
     cli_options::{SerialOpts, TcpOpts},
     client_sender::TestSender,
     connection::Connection,
-    settings_tab::SettingsTab,
     shared_state::SharedState,
+    tabs::settings_tab::SettingsTab,
     types::{MsgSender, Result},
 };
 

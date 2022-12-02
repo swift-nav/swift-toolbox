@@ -132,6 +132,7 @@ jobs:
       - name: Install stable Rust
         uses: actions-rs/toolchain@v1
         with:
+          profile: minimal
           toolchain: stable
           override: true
           components: rustfmt, clippy

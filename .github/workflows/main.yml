@@ -143,6 +143,13 @@ jobs:
         with:
           version: ${{ env.CARGO_MAKE_VERSION }}
 
+      - name: Hacky fix cargo clippy
+        run: |
+          rm -rf /home/runner/.cargo/bin/rustfmt
+          rm -rf /home/runner/.cargo/bin/cargo-fmt
+          rm -rf /home/runner/.cargo/bin/cargo-clippy
+          rustup update
+
       - name: Install Dependencies.
         run: sudo apt-get update && sudo apt-get install -y capnproto libudev-dev libssl-dev
 
@@ -170,10 +177,7 @@ jobs:
           setup-python: false
 
       - name: Run Checks
-        # hacky update clippy
-        run: |
-          rustup update
-          cargo make check-all
+        run: cargo make check-all
 
       # TODO Fix qmllint warnings [CPP-798]
       - name: Run qmllint

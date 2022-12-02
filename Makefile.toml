@@ -947,7 +947,7 @@ args = ["fmt", "--", "--check"]
 [tasks.rust-lint]
 dependencies = ["store-version", "copy-capnp"]
 command = "cargo"
-args = ["clippy", "--all-targets", "--", "--deny", "warnings"]
+args = ["clippy", "--all-targets", "--all-features", "--", "--deny", "warnings"]
 
 [tasks.rust-tests]
 dependencies = ["store-version", "copy-capnp"]

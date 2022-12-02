@@ -80,14 +80,6 @@ fn main() -> Result<()> {
     std::env::set_var("PYTHONHOME", pythonhome_dir()?);
     std::env::set_var("PYTHONDONTWRITEBYTECODE", "1");
 
-    // This enables the Qt Rendering Hardware Interface (RHI), to reduce observed render
-    // glitching on Windows. You can disable this feature by setting QSG_RHI=0 in your
-    // environment variables.
-    #[cfg(target_os = "windows")]
-    if std::env::var("QSG_RHI").is_err() {
-        std::env::set_var("QSG_RHI", "1");
-    }
-
     handle_splash();
     let exit_code = Python::with_gil(|py| {
         let args = PyTuple::new(py, args);

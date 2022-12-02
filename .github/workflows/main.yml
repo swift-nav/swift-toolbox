@@ -170,8 +170,9 @@ jobs:
           setup-python: false
 
       - name: Run Checks
-        run:
-          rustup update # hacky update clippy
+        # hacky update clippy
+        run: |
+          rustup update
           cargo make check-all
 
       # TODO Fix qmllint warnings [CPP-798]

@@ -138,6 +138,7 @@ Rectangle {
                 anchors.bottomMargin: 7
                 source: Constants.icons.swiftLogoWidePath
                 fillMode: Image.PreserveAspectFit
+                asynchronous: true
             }
         }
 

@@ -189,7 +189,7 @@ jobs:
       - uses: convictional/trigger-workflow-and-wait@v1.6.1
         with:
           owner: swift-nav
-          repo: toolbox-backend-ci
+          repo: swift-toolbox-ci
           ref: main
           workflow_file_name: distribute.yml
           client_payload: '{

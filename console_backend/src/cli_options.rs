@@ -247,9 +247,7 @@ fn is_refresh_rate(rr: &str) -> Result<u8, String> {
             return Ok(rr_);
         }
     }
-    Err(format!(
-        "Must choose from available refresh rates {AVAILABLE_REFRESH_RATES:?}"
-    ))
+    Err(format!("possible values: {AVAILABLE_REFRESH_RATES:?}"))
 }
 
 /// Validation for the baudrate cli option.
@@ -266,9 +264,7 @@ pub fn is_baudrate(br: &str) -> Result<u32, String> {
             return Ok(br_);
         }
     }
-    Err(format!(
-        "Must choose from available baudrates {AVAILABLE_BAUDRATES:?}"
-    ))
+    Err(format!("possible values: {AVAILABLE_BAUDRATES:?}"))
 }
 
 pub fn sbp_logger(s: &str) -> Result<SbpLogging, String> {

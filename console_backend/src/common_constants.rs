@@ -53,19 +53,19 @@ pub enum FusionStatus {
     OK,
 }
 
-#[derive(Clone, Debug, Display, ValueEnum, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Display, EnumString, EnumVariantNames, ValueEnum, Eq, Hash, PartialEq)]
 pub enum SbpLogging {
     SBP_JSON,
     SBP,
 }
 
-#[derive(Clone, Debug, Display, ValueEnum, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
 pub enum CsvLogging {
     OFF,
     ON,
 }
 
-#[derive(Clone, Debug, Display, ValueEnum, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Display, EnumString, EnumVariantNames, ValueEnum, Eq, Hash, PartialEq)]
 pub enum LogLevel {
     ERROR,
     WARNING,

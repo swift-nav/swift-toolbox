@@ -1,6 +1,6 @@
 use std::{num::ParseIntError, path::PathBuf, str::FromStr};
 
-use clap::{ArgAction, Args, Parser, ValueEnum};
+use clap::{ArgAction, Args, Parser};
 use log::{debug, error};
 
 use crate::output::CsvLogging;
@@ -310,7 +310,7 @@ pub fn handle_cli(
     if let Some(sbp_log) = opt.sbp_log {
         shared_state.set_sbp_logging(true, client_sender.clone());
         shared_state.set_sbp_logging_format(
-            SbpLogging::from_str(&sbp_log.to_string(), false).expect(CONVERT_TO_STR_FAILURE),
+            SbpLogging::from_str(&sbp_log.to_string()).expect(CONVERT_TO_STR_FAILURE),
         );
     }
     log::logger().flush();

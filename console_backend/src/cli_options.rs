@@ -38,7 +38,7 @@ pub struct CliOptions {
     #[clap(flatten)]
     pub file: FileOpts,
 
-    /// Log SBP-JSON or SBP data to default / specified log file.
+    /// Log SBP_JSON or SBP data to default / specified log file.
     #[clap(long, value_enum)]
     pub sbp_log: Option<SbpLogging>,
 
@@ -239,10 +239,10 @@ pub struct FileOpts {
 /// # Returns
 /// - `Ok`: The refresh-rate was found in AVAILABLE_REFRESH_RATES.
 /// - `Err`: The tab was not found in AVAILABLE_REFRESH_RATES.
-fn is_refresh_rate(rr: &str) -> Result<(), String> {
+fn is_refresh_rate(rr: &str) -> Result<u8, String> {
     if let Ok(rr_) = rr.parse::<u8>() {
         if AVAILABLE_REFRESH_RATES.contains(&rr_) {
-            return Ok(());
+            return Ok(rr_);
         }
     }
     Err(format!(
@@ -258,10 +258,10 @@ fn is_refresh_rate(rr: &str) -> Result<(), String> {
 /// # Returns
 /// - `Ok`: The baudrate was found in AVAILABLE_BAUDRATES.
 /// - `Err`: The tab was not found in AVAILABLE_BAUDRATES.
-pub fn is_baudrate(br: &str) -> Result<(), String> {
+pub fn is_baudrate(br: &str) -> Result<u32, String> {
     if let Ok(br_) = br.parse::<u32>() {
         if AVAILABLE_BAUDRATES.contains(&br_) {
-            return Ok(());
+            return Ok(br_);
         }
     }
     Err(format!(

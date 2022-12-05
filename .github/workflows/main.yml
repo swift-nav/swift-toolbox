@@ -14,7 +14,6 @@ env:
   RUST_CACHE_DIRS: "~/.cargo/registry\n~/.cargo/git\ntarget\n"
   LIBCLANG_PATH_WIN: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
   CODE_SIGNER_PATH_WIN: "%win10sdk%/x64/signtool.exe"
-  CARGO_MAKE_VERSION: 0.36.2
   CARGO_INCREMENTAL: 0
   RUSTFLAGS: "-C debuginfo=0"
   APP_NAME: swift-console
@@ -77,8 +76,6 @@ jobs:
           key: ${{ secrets.CACHE_VERSION }}
 
       - uses: davidB/rust-cargo-make@v1
-        with:
-          version: ${{ env.CARGO_MAKE_VERSION }}
 
       - name: Cache pip
         uses: actions/cache@v2
@@ -130,15 +127,6 @@ jobs:
           key: ${{ secrets.CACHE_VERSION }}
 
       - uses: davidB/rust-cargo-make@v1
-        with:
-          version: ${{ env.CARGO_MAKE_VERSION }}
-
-      - name: Hacky fix cargo clippy
-        run: |
-          rm -rf /home/runner/.cargo/bin/rustfmt
-          rm -rf /home/runner/.cargo/bin/cargo-fmt
-          rm -rf /home/runner/.cargo/bin/cargo-clippy
-          rustup update
 
       - name: Install Dependencies.
         run: sudo apt-get update && sudo apt-get install -y capnproto libudev-dev libssl-dev

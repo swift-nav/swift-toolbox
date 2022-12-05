@@ -16,16 +16,6 @@ Item {
     property alias num_labels: trackingSignalsPoints.num_labels
     property variant check_visibility: []
 
-    TrackingSignalsPoints {
-        id: trackingSignalsPoints
-
-        onData_updated: if (visible)
-            update()
-    }
-
-    onVisibleChanged: if (visible)
-        update()
-
     function update() {
         let commonChart = Constants.commonChart;
         if (all_series.length < num_labels) {
@@ -42,6 +32,20 @@ Item {
         trackingSignalsChart.visible = true;
         trackingSignalsXAxis.min = trackingSignalsPoints.xaxis_min;
         trackingSignalsXAxis.max = trackingSignalsPoints.xaxis_max;
+    }
+
+    onVisibleChanged: {
+        if (visible)
+            update();
+    }
+
+    TrackingSignalsPoints {
+        id: trackingSignalsPoints
+
+        onData_updated: {
+            if (visible)
+                update();
+        }
     }
 
     ColumnLayout {

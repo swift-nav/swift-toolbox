@@ -15,18 +15,6 @@ Item {
     property int preferredHeight: Constants.logPanel.preferredHeight
     property var columnWidths: [parent.width * Constants.logPanel.defaultColumnWidthRatios[0], parent.width * Constants.logPanel.defaultColumnWidthRatios[1], parent.width * Constants.logPanel.defaultColumnWidthRatios[2]]
 
-    LogPanelData {
-        id: logPanelData
-        onData_updated: update()
-    }
-
-    LogPanelModel {
-        id: logPanelModel
-    }
-
-    onVisibleChanged: if (visible)
-        update()
-
     function update() {
         logPanelModel.fill_data(logPanelData);
         let logPanel = Constants.logPanel;
@@ -59,6 +47,21 @@ Item {
             tableView.model.rows = rows.slice(0, logPanel.maxRows);
         }
         logPanelData.entries = [];
+    }
+
+    onVisibleChanged: {
+        if (visible)
+            update();
+    }
+
+    LogPanelData {
+        id: logPanelData
+
+        onData_updated: update()
+    }
+
+    LogPanelModel {
+        id: logPanelModel
     }
 
     Item {

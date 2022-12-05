@@ -1,5 +1,5 @@
-import "Constants"
 import "BaseComponents"
+import "Constants"
 import "ObservationTabComponents" as ObservationTabComponents
 import QtQuick
 import QtQuick.Controls

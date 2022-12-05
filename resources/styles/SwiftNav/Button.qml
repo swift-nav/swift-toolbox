@@ -63,11 +63,10 @@ T.Button {
             if (flat && highlighted) {
                 color = Material.accentColor;
             } else {
-                if (highlighted) {
+                if (highlighted)
                     color = Material.primaryHighlightedTextColor;
-                } else {
+                else
                     color = Material.foreground;
-                }
             }
         }
         return color;
@@ -95,11 +94,10 @@ T.Button {
                 if (control.flat && control.highlighted) {
                     color = control.Material.accentColor;
                 } else {
-                    if (control.highlighted) {
+                    if (control.highlighted)
                         color = control.Material.primaryHighlightedTextColor;
-                    } else {
+                    else
                         color = control.Material.foreground;
-                    }
                 }
             }
             return color;
@@ -116,11 +114,10 @@ T.Button {
                 color = control.Material.buttonDisabledColor;
             } else {
                 if (control.highlighted) {
-                    if (control.checked) {
+                    if (control.checked)
                         color = control.Material.highlightedCheckedButtonColor;
-                    } else {
+                    else
                         color = control.Material.highlightedButtonColor;
-                    }
                 } else {
                     color = control.Material.buttonColor;
                 }

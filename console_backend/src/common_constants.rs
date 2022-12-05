@@ -27,9 +27,7 @@ extern crate strum;
 extern crate strum_macros;
 use strum_macros::{Display, EnumString, EnumVariantNames};
 
-#[derive(
-    Clone, Debug, Display, clap::ValueEnum, EnumString, EnumVariantNames, Eq, Hash, PartialEq,
-)]
+#[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
 pub enum Tabs {
     #[strum(serialize = "TRACKING_SIGNALS")]
     TRACKING_SIGNALS,

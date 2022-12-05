@@ -35,8 +35,8 @@ mimalloc = { version = "0.1", default-features = false }
 serialport = { git = "https://github.com/swift-nav/serialport-rs.git", default-features = false }
 
 pyo3 = { version = "0.17", features = [
-    "extension-module",
-    "macros",
+  "extension-module",
+  "macros",
 ], default-features = false, optional = true }
 env_logger = { version = "0.10.0", optional = true }
 indicatif = { version = "0.17", optional = true }
@@ -51,8 +51,8 @@ curl = { version = "0.4", features = ["rustls", "static-curl"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = ">=0.24", features = [
-    "Win32_System_Console",
-    "Win32_Foundation",
+  "Win32_System_Console",
+  "Win32_Foundation",
 ] }
 
 [dev-dependencies]

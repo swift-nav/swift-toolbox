@@ -3,6 +3,7 @@ use std::{num::ParseIntError, path::PathBuf, str::FromStr};
 use clap::{ArgAction, Args, Parser};
 use log::{debug, error};
 
+use crate::common_constants::LogLevel;
 use crate::output::CsvLogging;
 use crate::shared_state::SharedState;
 use crate::types::{FlowControl, RealtimeDelay};
@@ -15,6 +16,7 @@ use crate::{
     connection::ConnectionManager,
 };
 use crate::{constants::LOG_FILENAME, errors::CONVERT_TO_STR_FAILURE};
+use strum::VariantNames;
 
 #[cfg(windows)]
 const BIN_NAME: &str = "swift-console.exe";
@@ -39,7 +41,7 @@ pub struct CliOptions {
     pub file: FileOpts,
 
     /// Log SBP_JSON or SBP data to default / specified log file.
-    #[clap(long, value_enum)]
+    #[clap(long, value_parser = sbp_logger)]
     pub sbp_log: Option<SbpLogging>,
 
     /// Set SBP log filename.
@@ -118,7 +120,7 @@ pub struct CliOptions {
     pub exit_after_timeout: Option<f64>,
 
     /// Start console from specific tab.
-    #[clap(long, value_enum)]
+    #[clap(long, value_parser = tabs)]
     pub tab: Option<Tabs>,
 
     /// Set the height of the main window.
@@ -267,6 +269,18 @@ pub fn is_baudrate(br: &str) -> Result<u32, String> {
     Err(format!(
         "Must choose from available baudrates {AVAILABLE_BAUDRATES:?}"
     ))
+}
+
+pub fn sbp_logger(s: &str) -> Result<SbpLogging, String> {
+    SbpLogging::from_str(s).map_err(|_| format!("possible values: {:?}", SbpLogging::VARIANTS))
+}
+
+pub fn tabs(s: &str) -> Result<Tabs, String> {
+    Tabs::from_str(s).map_err(|_| format!("possible values: {:?}", Tabs::VARIANTS))
+}
+
+pub fn log_level(s: &str) -> Result<LogLevel, String> {
+    LogLevel::from_str(s).map_err(|_| format!("possible values: {:?}", LogLevel::VARIANTS))
 }
 
 /// Start connections based on CLI options.

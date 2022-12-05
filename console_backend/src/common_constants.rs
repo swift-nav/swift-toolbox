@@ -71,7 +71,7 @@ pub enum FusionStatus {
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
 pub enum SbpLogging {
-    #[strum(serialize = "SBP-JSON")]
+    #[strum(serialize = "SBP_JSON")]
     SBP_JSON,
     #[strum(serialize = "SBP")]
     SBP,

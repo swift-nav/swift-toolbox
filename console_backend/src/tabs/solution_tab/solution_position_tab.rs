@@ -838,7 +838,6 @@ fn ll_meters_to_deg(l: f64, sf: f64, offset: f64) -> f64 {
 mod tests {
     use super::*;
     use crate::client_sender::TestSender;
-    use chrono::{TimeZone, Utc};
     use sbp::messages::navigation::{
         MsgAgeCorrections, MsgDops, MsgDopsDepA, MsgGpsTime, MsgPosLlh, MsgPosLlhDepA, MsgVelNed,
         MsgVelNedDepA,
@@ -892,7 +891,10 @@ mod tests {
         solution_table.utc_time = None;
         solution_table.utc_source = None;
         solution_table.handle_utc_time(msg);
-        let datetime = Utc.ymd(year as i32, month as u32, day as u32).and_hms_nano(
+        let datetime = utc_time(
+            year as i32,
+            month as u32,
+            day as u32,
             hours as u32,
             minutes as u32,
             seconds as u32,

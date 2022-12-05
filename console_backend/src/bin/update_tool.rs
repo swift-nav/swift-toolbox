@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use anyhow::anyhow;
-use clap::{AppSettings::DeriveDisplayOrder, ArgGroup, Parser};
+use clap::{ArgGroup, Parser};
 use console_backend::constants::EXAMPLE_SERIAL_NAME;
 use lazy_static::lazy_static;
 
@@ -39,7 +39,6 @@ lazy_static! {
 #[clap(
     name = "swift-updater",
     version = include_str!("../version.txt"),
-    setting = DeriveDisplayOrder,
     group = ArgGroup::new("conn").required(true).args(&["serial", "tcp"]),
     override_usage = &**USAGE
 )]

@@ -1,6 +1,6 @@
 use std::{
     borrow::Cow,
-    fs::{self, File},
+    fs::File,
     io::{self, Write},
     path::PathBuf,
     str::FromStr,
@@ -8,7 +8,7 @@ use std::{
 };
 
 use anyhow::{anyhow, Context};
-use clap::{AppSettings::DeriveDisplayOrder, Args, Parser};
+use clap::{Args, Parser};
 use indicatif::{ProgressBar, ProgressStyle};
 use lazy_static::lazy_static;
 use sbp::{link::LinkSource, SbpIterExt};
@@ -86,7 +86,6 @@ lazy_static! {
     name = "swift-files",
     version = include_str!("../version.txt"),
     arg_required_else_help = true,
-    setting = DeriveDisplayOrder,
     override_usage = &**FILEIO_USAGE
 )]
 struct Opts {
@@ -111,14 +110,14 @@ struct Opts {
 #[derive(Clone, Copy, Args)]
 struct ConnectionOpts {
     /// The port to use when connecting via TCP
-    #[clap(long, default_value = "55555", conflicts_with_all = &["baudrate", "flow-control"])]
+    #[clap(long, default_value = "55555", conflicts_with_all = &["baudrate", "flow_control"])]
     port: u16,
 
     /// The baudrate for processing packets when connecting via serial
     #[clap(
         long,
         default_value = "115200",
-        validator(is_baudrate),
+        value_parser = is_baudrate,
         conflicts_with = "port"
     )]
     baudrate: u32,
@@ -170,13 +169,9 @@ fn read(src: Remote, dest: PathBuf, conn: ConnectionOpts) -> Result<()> {
     let (dest, pb): (Box<dyn Write + Send>, _) = if dest.to_str() == Some("-") {
         (Box::new(io::stdout()), ReadProgress::stdout())
     } else {
-        (
-            Box::new(
-                File::create(&dest)
-                    .with_context(|| format!("Could not open {:?} for writing", &dest))?,
-            ),
-            ReadProgress::file(),
-        )
+        let dest = File::create(&dest)
+            .with_context(|| format!("Could not open {:?} for writing", &dest))?;
+        (Box::new(dest), ReadProgress::file())
     };
     let mut fileio = src.connect(conn)?;
     pb.set_message("Reading...");
@@ -190,7 +185,7 @@ fn read(src: Remote, dest: PathBuf, conn: ConnectionOpts) -> Result<()> {
 fn write(src: PathBuf, dest: Remote, conn: ConnectionOpts) -> Result<()> {
     let mut fileio = dest.connect(conn)?;
     let file =
-        fs::File::open(&src).with_context(|| format!("Could not open {:?} for reading", &src))?;
+        File::open(&src).with_context(|| format!("Could not open {:?} for reading", &src))?;
     let size = file.metadata()?.len();
     let pb = ProgressBar::new(size);
     pb.enable_steady_tick(Duration::from_millis(1000));
@@ -206,7 +201,7 @@ fn write(src: PathBuf, dest: Remote, conn: ConnectionOpts) -> Result<()> {
     Ok(())
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum Target {
     Local(PathBuf),
     Remote(Remote),
@@ -245,7 +240,7 @@ impl FromStr for Target {
 }
 
 /// A host + path specified as <host>:<path>
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Remote {
     host: String,
     path: String,
@@ -308,7 +303,7 @@ impl ReadProgress {
 
 /// Connect via a serial port or tcp
 fn discover(host: String, opts: ConnectionOpts) -> Result<Connection> {
-    match fs::File::open(&host) {
+    match File::open(&host) {
         Err(e) if e.kind() == io::ErrorKind::PermissionDenied => Err(e.into()),
         Ok(_) => {
             log::debug!("connecting via serial");

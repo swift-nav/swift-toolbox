@@ -41,7 +41,7 @@ Usage:
         msg_count += 1;
         if msg_count % 100 == 0 {
             let local: DateTime<Local> = Local::now();
-            eprintln!("{} :: Messages received: {}", local, msg_count);
+            eprintln!("{local} :: Messages received: {msg_count}");
         }
     }
     Ok(())

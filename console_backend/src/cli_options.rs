@@ -1,15 +1,9 @@
-use std::{
-    num::ParseIntError,
-    ops::{Deref, Not},
-    path::PathBuf,
-    str::FromStr,
-};
+use std::{num::ParseIntError, path::PathBuf, str::FromStr};
 
-use clap::{AppSettings::DeriveDisplayOrder, Args, Parser};
+use clap::{ArgAction, Args, Parser};
 use log::{debug, error};
-use strum::VariantNames;
 
-use crate::log_panel::LogLevel;
+use crate::common_constants::LogLevel;
 use crate::output::CsvLogging;
 use crate::shared_state::SharedState;
 use crate::types::{FlowControl, RealtimeDelay};
@@ -22,69 +16,7 @@ use crate::{
     connection::ConnectionManager,
 };
 use crate::{constants::LOG_FILENAME, errors::CONVERT_TO_STR_FAILURE};
-
-#[derive(Debug)]
-pub struct CliLogLevel(LogLevel);
-
-impl Deref for CliLogLevel {
-    type Target = LogLevel;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl FromStr for CliLogLevel {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(CliLogLevel(LogLevel::from_str(s).map_err(|_| {
-            format!("Must choose from available tabs {:?}", LogLevel::VARIANTS)
-        })?))
-    }
-}
-
-#[derive(Debug)]
-pub struct CliTabs(Tabs);
-
-impl Deref for CliTabs {
-    type Target = Tabs;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl FromStr for CliTabs {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(CliTabs(Tabs::from_str(s).map_err(|_| {
-            format!("Must choose from available tabs {:?}", Tabs::VARIANTS)
-        })?))
-    }
-}
-
-#[derive(Debug)]
-pub struct CliSbpLogging(SbpLogging);
-
-impl Deref for CliSbpLogging {
-    type Target = SbpLogging;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl FromStr for CliSbpLogging {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(CliSbpLogging(SbpLogging::from_str(s).map_err(|_| {
-            format!("Must choose from available tabs {:?}", SbpLogging::VARIANTS)
-        })?))
-    }
-}
+use strum::VariantNames;
 
 #[cfg(windows)]
 const BIN_NAME: &str = "swift-console.exe";
@@ -97,7 +29,6 @@ const BIN_NAME: &str = "swift-console";
     about = "The Swift Console provides data visualization, settings management, and firmware update capabilities for Swift Navigation GNSS products.",
     bin_name = BIN_NAME,
     version = include_str!("version.txt"),
-    setting = DeriveDisplayOrder,
 )]
 pub struct CliOptions {
     #[clap(flatten)]
@@ -109,9 +40,9 @@ pub struct CliOptions {
     #[clap(flatten)]
     pub file: FileOpts,
 
-    /// Log SBP-JSON or SBP data to default / specified log file.
-    #[clap(long)]
-    pub sbp_log: Option<CliSbpLogging>,
+    /// Log SBP_JSON or SBP data to default / specified log file.
+    #[clap(long, value_parser = sbp_logger)]
+    pub sbp_log: Option<SbpLogging>,
 
     /// Set SBP log filename.
     #[clap(long)]
@@ -127,7 +58,7 @@ pub struct CliOptions {
 
     /// Run application without the backend. Useful for debugging.
     /// This mode must be run with a capnp recording file.
-    #[clap(long, requires = "read-capnp-recording", hide = true)]
+    #[clap(long, requires = "read_capnp_recording", hide = true)]
     pub debug_with_no_backend: bool,
 
     /// Set log directory.
@@ -160,20 +91,20 @@ pub struct CliOptions {
 
     /// Disable antialiasing, images and plots will become optimized for efficiency not aesthetics and
     /// require less system resources.
-    #[clap(long, parse(from_flag = Not::not))]
+    #[clap(long, action = ArgAction::SetFalse)]
     pub no_antialiasing: bool,
 
     /// Use OpenGL, plots will become optimized for efficiency not aesthetics and require less system resources.
-    #[clap(long, parse(from_flag = Not::not))]
+    #[clap(long, action = ArgAction::SetFalse)]
     pub use_opengl: bool,
 
     /// Disable high dpi autoscaling, fonts and images will become optimized for efficiency not aesthetics and
     /// require less system resources.
-    #[clap(long, parse(from_flag = Not::not))]
+    #[clap(long, action = ArgAction::SetFalse)]
     pub no_high_dpi: bool,
 
     /// Change the refresh rate of the plots.
-    #[clap(long, validator(is_refresh_rate))]
+    #[clap(long, value_parser = is_refresh_rate)]
     pub refresh_rate: Option<u8>,
 
     /// Don't show prompts about firmware/console updates.
@@ -189,8 +120,8 @@ pub struct CliOptions {
     pub exit_after_timeout: Option<f64>,
 
     /// Start console from specific tab.
-    #[clap(long)]
-    pub tab: Option<CliTabs>,
+    #[clap(long, value_parser = tabs)]
+    pub tab: Option<Tabs>,
 
     /// Set the height of the main window.
     #[clap(long)]
@@ -251,40 +182,31 @@ impl CliOptions {
 #[derive(Args)]
 pub struct SerialOpts {
     /// The serialport to connect to.
-    #[clap(
-        long,
-        conflicts_with_all = &["tcp"]
-    )]
+    #[clap(long, conflicts_with_all = &["tcp"])]
     pub serial: Option<PathBuf>,
 
     /// The baudrate for processing packets when connecting via serial.
     #[clap(
         long,
         default_value = "115200",
-        validator(is_baudrate),
+        value_parser = is_baudrate,
         conflicts_with_all = &["tcp"]
     )]
     pub baudrate: u32,
 
     /// The flow control spec to use when connecting via serial.
-    #[clap(
-        long,
-        default_value = "None",
-        conflicts_with_all = &["tcp"]
-    )]
+    #[clap(long, default_value = "None", conflicts_with_all = &["tcp"])]
     pub flow_control: FlowControl,
 }
 
 #[derive(Args)]
 pub struct TcpOpts {
     /// The TCP/IP host or TCP/IP host-port pair to connect with. For example: "192.168.0.222" or "192.168.0.222:55555"
-    #[clap(
-        long,
-        conflicts_with_all = &["serial", "baudrate", "flow-control"]
-    )]
+    #[clap(long, conflicts_with_all = &["serial", "baudrate", "flow_control"])]
     pub tcp: Option<HostPort>,
 }
 
+#[derive(Clone)]
 pub struct HostPort {
     pub host: String,
     pub port: u16,
@@ -294,28 +216,20 @@ impl FromStr for HostPort {
     type Err = ParseIntError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if let Some(idx) = s.find(':') {
-            let (host, port) = s.split_at(idx);
-            Ok(HostPort {
-                host: host.to_owned(),
-                port: port[1..].parse()?,
-            })
+        let (host, port) = if let Some((host, port)) = s.split_once(':') {
+            (host.to_owned(), port.parse::<u16>()?)
         } else {
-            Ok(HostPort {
-                host: s.to_owned(),
-                port: 55555,
-            })
-        }
+            (s.to_owned(), 55555)
+        };
+
+        Ok(HostPort { host, port })
     }
 }
 
 #[derive(Args)]
 pub struct FileOpts {
     /// Path to an SBP file.
-    #[clap(
-        long,
-        conflicts_with_all = &["tcp", "serial", "baudrate", "flow-control"]
-    )]
+    #[clap(long, conflicts_with_all = &["tcp", "serial", "baudrate", "flow_control"])]
     pub file: Option<PathBuf>,
 }
 
@@ -327,15 +241,13 @@ pub struct FileOpts {
 /// # Returns
 /// - `Ok`: The refresh-rate was found in AVAILABLE_REFRESH_RATES.
 /// - `Err`: The tab was not found in AVAILABLE_REFRESH_RATES.
-fn is_refresh_rate(rr: &str) -> Result<(), String> {
+fn is_refresh_rate(rr: &str) -> Result<u8, String> {
     if let Ok(rr_) = rr.parse::<u8>() {
         if AVAILABLE_REFRESH_RATES.contains(&rr_) {
-            return Ok(());
+            return Ok(rr_);
         }
     }
-    Err(format!(
-        "Must choose from available refresh rates {AVAILABLE_REFRESH_RATES:?}"
-    ))
+    Err(format!("possible values: {AVAILABLE_REFRESH_RATES:?}"))
 }
 
 /// Validation for the baudrate cli option.
@@ -346,15 +258,25 @@ fn is_refresh_rate(rr: &str) -> Result<(), String> {
 /// # Returns
 /// - `Ok`: The baudrate was found in AVAILABLE_BAUDRATES.
 /// - `Err`: The tab was not found in AVAILABLE_BAUDRATES.
-pub fn is_baudrate(br: &str) -> Result<(), String> {
+pub fn is_baudrate(br: &str) -> Result<u32, String> {
     if let Ok(br_) = br.parse::<u32>() {
         if AVAILABLE_BAUDRATES.contains(&br_) {
-            return Ok(());
+            return Ok(br_);
         }
     }
-    Err(format!(
-        "Must choose from available baudrates {AVAILABLE_BAUDRATES:?}"
-    ))
+    Err(format!("possible values: {AVAILABLE_BAUDRATES:?}"))
+}
+
+pub fn sbp_logger(s: &str) -> Result<SbpLogging, String> {
+    SbpLogging::from_str(s).map_err(|_| format!("possible values: {:?}", SbpLogging::VARIANTS))
+}
+
+pub fn tabs(s: &str) -> Result<Tabs, String> {
+    Tabs::from_str(s).map_err(|_| format!("possible values: {:?}", Tabs::VARIANTS))
+}
+
+pub fn log_level(s: &str) -> Result<LogLevel, String> {
+    LogLevel::from_str(s).map_err(|_| format!("possible values: {:?}", LogLevel::VARIANTS))
 }
 
 /// Start connections based on CLI options.

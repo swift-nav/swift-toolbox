@@ -1,7 +1,7 @@
 use std::{convert::Infallible, path::PathBuf, str::FromStr, sync::Arc};
 
 use anyhow::anyhow;
-use clap::{AppSettings::DeriveDisplayOrder, ArgGroup, Parser};
+use clap::{ArgGroup, Parser};
 use sbp::SbpIterExt;
 
 use console_backend::{
@@ -78,7 +78,6 @@ fn write(write_cmds: &[WriteCmd], settings: &SettingsTab) -> Result<()> {
 #[clap(
     name = "swift-settings",
     version = include_str!("../version.txt"),
-    setting = DeriveDisplayOrder,
     group = ArgGroup::new("conn").required(true).args(&["serial", "tcp"]),
     override_usage = "\
     swift-settings [OPTIONS]
@@ -182,6 +181,7 @@ fn connect(opts: &Opts) -> Result<Arc<SettingsTab>> {
     Ok(settings)
 }
 
+#[derive(Clone)]
 struct ReadCmd {
     group: String,
     name: Option<String>,
@@ -191,22 +191,17 @@ impl FromStr for ReadCmd {
     type Err = Infallible;
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        if let Some(idx) = s.find('.') {
-            let (group, name) = s.split_at(idx);
-            Ok(ReadCmd {
-                group: group.to_owned(),
-                name: Some(name[1..].to_owned()),
-            })
+        let (group, name) = if let Some((group, name)) = s.split_once('.') {
+            (group.to_owned(), Some(name.to_owned()))
         } else {
-            Ok(ReadCmd {
-                group: s.to_owned(),
-                name: None,
-            })
-        }
+            (s.to_owned(), None)
+        };
+
+        Ok(ReadCmd { group, name })
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct WriteCmd {
     group: String,
     name: String,

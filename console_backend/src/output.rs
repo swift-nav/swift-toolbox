@@ -15,10 +15,9 @@ use crate::utils::OkOrLog;
 pub type CsvLogging = cc::CsvLogging;
 impl From<bool> for CsvLogging {
     fn from(logging: bool) -> Self {
-        if logging {
-            CsvLogging::ON
-        } else {
-            CsvLogging::OFF
+        match logging {
+            true => CsvLogging::ON,
+            false => CsvLogging::OFF,
         }
     }
 }

@@ -128,10 +128,9 @@
     <file>BaseComponents/SwiftImage.qml</file>
     <file>BaseComponents/SwiftComboBox.qml</file>
     <file>BaseComponents/SwiftRoundButton.qml</file>
+    <file>BaseComponents/SwiftTabBar.qml</file>
+    <file>BaseComponents/SwiftTabButton.qml</file>
     <file>ChartLegend.qml</file>
-    <file>styles/SwiftNav/qmldir</file>
-    <file>styles/SwiftNav/TabBar.qml</file>
-    <file>styles/SwiftNav/TabButton.qml</file>
     <file>MainTab.qml</file>
     <file>TabInfoBar.qml</file>
     <file>PositionLoopAnimation.qml</file>

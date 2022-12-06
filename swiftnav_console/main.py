@@ -739,7 +739,6 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     QFontDatabase.addApplicationFont(":/fonts/Roboto-Bold.ttf")
     QFontDatabase.addApplicationFont(":/fonts/RobotoCondensed-Regular.ttf")
     QQuickStyle.setStyle("Material")
-    QQuickStyle.setFallbackStyle("Material")
     # We specifically *don't* want the RobotoCondensed-Bold.ttf font so we get the right look when bolded.
 
     qmlRegisterType(ConnectionData, "SwiftConsole", 1, 0, "ConnectionData")  # type: ignore

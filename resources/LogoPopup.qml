@@ -21,7 +21,7 @@ Item {
         ColumnLayout {
             anchors.fill: parent
 
-            TabBar {
+            SwiftTabBar {
                 id: logoPopupBar
 
                 z: Constants.commonChart.zAboveCharts
@@ -31,7 +31,7 @@ Item {
                 Repeater {
                     model: ["About", "Licenses"]
 
-                    TabButton {
+                    SwiftTabButton {
                         text: modelData
                         width: implicitWidth
                     }

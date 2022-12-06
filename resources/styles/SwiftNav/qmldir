@@ -1,5 +1,0 @@
-module SwiftNav
-
-import QtQuick.Controls.Material auto
-TabBar 6.0 TabBar.qml
-TabButton 6.0 TabButton.qml

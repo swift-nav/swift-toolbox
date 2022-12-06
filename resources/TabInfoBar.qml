@@ -68,7 +68,6 @@ Rectangle {
         anchors.bottom: parent.bottom
         height: 1
         color: Constants.spacerColor
-        z: 2
     }
 
     RowLayout {
@@ -89,7 +88,7 @@ Rectangle {
             font: Constants.tabInfoBar.tabLabelFont
         }
 
-        TabBar {
+        SwiftTabBar {
             id: tabBar
 
             visible: tabBarRepeater.count > 0
@@ -108,11 +107,12 @@ Rectangle {
                 }
                 model: subTabNames
 
-                TabButton {
+                SwiftTabButton {
                     width: implicitWidth
-                    topPadding: 16
-                    bottomPadding: 16
-                    rightInset: -0.5
+                    topPadding: 17.5
+                    bottomPadding: 17.5
+                    rightInset: -1
+                    leftInset: -1
                     text: modelData
                 }
             }

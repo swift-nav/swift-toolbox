@@ -36,15 +36,14 @@
 ** $QT_END_LICENSE$
 **
 ****************************************************************************/
+import "../Constants"
 import QtQuick
+import QtQuick.Templates as T
 import QtQuick.Controls.Material
 import QtQuick.Controls.Material.impl
-import QtQuick.Templates as T
 
 T.TabBar {
     id: control
-
-    property var orientation: ListView.Horizontal
 
     implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset, contentWidth + leftPadding + rightPadding)
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset, contentHeight + topPadding + bottomPadding)
@@ -53,7 +52,7 @@ T.TabBar {
         model: control.contentModel
         currentIndex: control.currentIndex
         spacing: control.spacing
-        orientation: control.orientation
+        orientation: ListView.Horizontal
         boundsBehavior: Flickable.StopAtBounds
         flickableDirection: Flickable.AutoFlickIfNeeded
         snapMode: ListView.SnapToItem
@@ -79,7 +78,7 @@ T.TabBar {
     background: Item {
         Rectangle {
             anchors.fill: parent
-            color: "white"
+            color: Constants.swiftWhite
             layer.enabled: control.Material.elevation > 0
 
             layer.effect: ElevationEffect {

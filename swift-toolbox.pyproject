@@ -82,6 +82,8 @@
         "resources/BaseComponents/SwiftValueAxis.qml",
         "resources/BaseComponents/SwiftComboBox.qml",
         "resources/BaseComponents/SwiftRoundButton.qml",
+        "resources/BaseComponents/SwiftTabBar.qml",
+        "resources/BaseComponents/SwiftTabButton.qml",
 
         "resources/BaselineTabComponents/BaselinePlot.qml",
         "resources/BaselineTabComponents/BaselineTable.qml",
@@ -183,10 +185,6 @@
         "resources/SolutionTabComponents/SolutionPositionTab.qml",
         "resources/SolutionTabComponents/SolutionTable.qml",
         "resources/SolutionTabComponents/SolutionVelocityTab.qml",
-
-        "resources/styles/SwiftNav/qmldir",
-        "resources/styles/SwiftNav/TabBar.qml",
-        "resources/styles/SwiftNav/TabButton.qml",
 
         "resources/TableComponents/SortableColumnHeading.qml",
         "resources/TableComponents/SwiftTableView.qml",

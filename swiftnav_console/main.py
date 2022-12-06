@@ -396,7 +396,9 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                 AdvancedNetworkingData.post_data_update(data)
             elif m.which == Message.Union.AdvancedSystemMonitorStatus:
                 data = advanced_system_monitor_tab_update()
-                data[Keys.OBS_LATENCY][:] = [[entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.obsLatency]
+                data[Keys.OBS_LATENCY][:] = [
+                    [entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.obsLatency
+                ]
                 data[Keys.OBS_PERIOD][:] = [[entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.obsPeriod]
                 data[Keys.THREADS_TABLE][:] = [
                     [entry.name, "%.1f" % entry.cpu, entry.stackFree]
@@ -468,7 +470,8 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                     else None
                 )
                 data[Keys.PREVIOUS_SERIAL_CONFIGS][:] = [
-                    [entry.device, entry.baudrate, entry.flowControl] for entry in m.connectionStatus.previousSerialConfigs
+                    [entry.device, entry.baudrate, entry.flowControl]
+                    for entry in m.connectionStatus.previousSerialConfigs
                 ]
                 data[Keys.CONSOLE_VERSION] = m.connectionStatus.consoleVersion
                 data[Keys.PREVIOUS_CONNECTION_TYPE] = ConnectionType(m.connectionStatus.previousConnectionType)

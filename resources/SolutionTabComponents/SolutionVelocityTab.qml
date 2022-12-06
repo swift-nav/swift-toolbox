@@ -31,7 +31,7 @@ Item {
                 text: "Display Units:"
             }
 
-            ComboBox {
+            SwiftComboBox {
                 id: solutionVelocitySelectedUnit
 
                 Component.onCompleted: {

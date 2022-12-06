@@ -55,7 +55,7 @@ Item {
                 Layout.topMargin: 12
                 Layout.alignment: Qt.AlignCenter
 
-                SwiftButton {
+                Button {
                     text: `Check for updates`
                     Layout.preferredWidth: dialog.width / 4
                     Layout.alignment: Qt.AlignLeft
@@ -64,7 +64,7 @@ Item {
                     }
                 }
 
-                SwiftButton {
+                Button {
                     id: closeButton
 
                     text: "Close"

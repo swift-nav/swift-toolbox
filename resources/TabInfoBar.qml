@@ -1,3 +1,4 @@
+import "BaseComponents"
 import "Constants"
 import QtQuick
 import QtQuick.Controls
@@ -172,7 +173,7 @@ Rectangle {
             implicitWidth: children[0].implicitWidth + rhsItemSpacing * 4 / 3
             Layout.fillHeight: true
 
-            RoundButton {
+            SwiftRoundButton {
                 anchors.centerIn: parent
                 flat: true
                 icon.source: Constants.tabInfoBar.infoButtonIconPath

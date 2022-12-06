@@ -170,7 +170,7 @@ MainTab {
                     rows: 2
                     enabled: settingsTable.settingsHealthy
 
-                    SwiftButton {
+                    Button {
                         id: saveButton
 
                         Layout.columnSpan: 1
@@ -187,7 +187,7 @@ MainTab {
                         onClicked: backend_request_broker.settings_save_request()
                     }
 
-                    SwiftButton {
+                    Button {
                         Layout.columnSpan: 1
                         Layout.rowSpan: 1
                         Layout.preferredWidth: parent.colWidth
@@ -202,7 +202,7 @@ MainTab {
                         onClicked: exportDialog.visible = true
                     }
 
-                    SwiftButton {
+                    Button {
                         Layout.columnSpan: 1
                         Layout.rowSpan: 1
                         Layout.preferredWidth: parent.colWidth
@@ -217,7 +217,7 @@ MainTab {
                         onClicked: importDialog.visible = true
                     }
 
-                    SwiftButton {
+                    Button {
                         Layout.columnSpan: 1
                         Layout.rowSpan: 1
                         Layout.preferredWidth: parent.colWidth
@@ -232,7 +232,7 @@ MainTab {
                         onClicked: resetDialog.visible = true
                     }
 
-                    SwiftButton {
+                    Button {
                         id: autoSurveyButton
 
                         property bool buttonEnabled: (settingsPane.selectedRowField("group") === "surveyed_position")
@@ -259,7 +259,7 @@ MainTab {
                         }
                     }
 
-                    SwiftButton {
+                    Button {
                         id: refreshButton
 
                         Layout.columnSpan: 1

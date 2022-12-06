@@ -1,4 +1,5 @@
 import "../Constants"
+import "../BaseComponents"
 import QtCharts
 import QtQuick
 import QtQuick.Controls
@@ -22,7 +23,7 @@ RowLayout {
         antialiasing: Globals.useAntiAliasing
     }
 
-    ComboBox {
+    SwiftComboBox {
         id: channelDropdown
 
         Layout.preferredHeight: Constants.advancedSpectrumAnalyzer.dropdownHeight

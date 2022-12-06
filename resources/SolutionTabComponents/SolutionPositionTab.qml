@@ -48,7 +48,7 @@ Item {
             Layout.alignment: Qt.AlignLeft
             Layout.leftMargin: Constants.solutionPosition.navBarMargin
 
-            SwiftButton {
+            Button {
                 id: solutionPauseButton
 
                 ButtonGroup.group: solutionButtonGroup
@@ -65,7 +65,7 @@ Item {
                 }
             }
 
-            SwiftButton {
+            Button {
                 id: solutionClearButton
 
                 ButtonGroup.group: solutionButtonGroup
@@ -81,7 +81,7 @@ Item {
                 }
             }
 
-            SwiftButton {
+            Button {
                 id: solutionZoomAllButton
 
                 onClicked: {
@@ -107,7 +107,7 @@ Item {
                 }
             }
 
-            SwiftButton {
+            Button {
                 id: solutionCenterButton
 
                 onClicked: {
@@ -139,7 +139,7 @@ Item {
                 text: "Display Units: "
             }
 
-            ComboBox {
+            SwiftComboBox {
                 id: solutionPositionSelectedUnit
 
                 model: available_units

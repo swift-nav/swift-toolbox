@@ -19,7 +19,7 @@ Item {
             Layout.fillHeight: true
         }
 
-        SwiftButton {
+        Button {
             id: resetButton
 
             Layout.preferredWidth: parent.width * 0.5

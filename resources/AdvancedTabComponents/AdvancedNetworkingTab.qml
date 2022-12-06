@@ -79,7 +79,7 @@ Item {
                     Layout.preferredHeight: Constants.networking.refreshButtonHeight
                     Layout.fillWidth: true
 
-                    SwiftButton {
+                    Button {
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.verticalCenterOffset: Constants.networking.refreshButtonVerticalOffset
                         ToolTip.visible: hovered

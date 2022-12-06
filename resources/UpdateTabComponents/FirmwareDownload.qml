@@ -32,7 +32,7 @@ Item {
                 Layout.rightMargin: Constants.updateTab.innerMargins
             }
 
-            SwiftButton {
+            Button {
                 id: downloadFirmwareButton
 
                 Layout.alignment: Qt.AlignBottom

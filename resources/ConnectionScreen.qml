@@ -157,7 +157,7 @@ Item {
                             text: Constants.connection.serialLabel
                         }
 
-                        ComboBox {
+                        SwiftComboBox {
                             id: serialDevice
 
                             Layout.preferredHeight: Constants.connection.dropdownHeight
@@ -191,7 +191,7 @@ Item {
                             text: Constants.connection.baudrateLabel
                         }
 
-                        ComboBox {
+                        SwiftComboBox {
                             id: serialDeviceBaudRate
 
                             Layout.preferredHeight: Constants.connection.dropdownHeight
@@ -207,7 +207,7 @@ Item {
                             text: Constants.connection.flowLabel
                         }
 
-                        ComboBox {
+                        SwiftComboBox {
                             id: serialDeviceFlowControl
 
                             Layout.preferredHeight: Constants.connection.dropdownHeight
@@ -247,7 +247,7 @@ Item {
                             text: Constants.connection.hostLabel
                         }
 
-                        ComboBox {
+                        SwiftComboBox {
                             id: tcpUrlBar
 
                             Layout.fillWidth: true
@@ -273,7 +273,7 @@ Item {
                             text: Constants.connection.portLabel
                         }
 
-                        ComboBox {
+                        SwiftComboBox {
                             id: tcpPortBar
 
                             Layout.preferredWidth: parent.width / 4
@@ -317,7 +317,7 @@ Item {
                             text: Constants.connection.fileLabel
                         }
 
-                        ComboBox {
+                        SwiftComboBox {
                             id: fileUrlBar
 
                             Layout.alignment: Qt.AlignLeft
@@ -348,7 +348,7 @@ Item {
                         Layout.fillWidth: true
                     }
 
-                    SwiftButton {
+                    Button {
                         id: closeButton
 
                         text: "Cancel"
@@ -359,7 +359,7 @@ Item {
                         }
                     }
 
-                    SwiftButton {
+                    Button {
                         id: connectButton
 
                         property string tooltipText: "Connect"

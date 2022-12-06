@@ -1,11 +1,12 @@
 import "../Constants"
+import "../BaseComponents"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import SwiftConsole
 
 ColumnLayout {
-    ComboBox {
+    SwiftComboBox {
         id: licenses
 
         Layout.preferredHeight: Constants.logoPopup.licenses.dropdownHeight

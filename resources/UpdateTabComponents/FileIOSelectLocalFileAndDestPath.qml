@@ -50,7 +50,7 @@ Item {
             Layout.fillHeight: true
         }
 
-        SwiftButton {
+        Button {
             id: localFileSelectionButton
 
             Layout.preferredWidth: Constants.updateTab.firmwareVersionLocalFileButtonWidth
@@ -128,7 +128,7 @@ Item {
             Layout.fillHeight: true
         }
 
-        SwiftButton {
+        Button {
             id: sendFileToDeviceButton
 
             Layout.preferredWidth: Constants.updateTab.fileioDestinationPathButtonWidth

@@ -139,7 +139,7 @@ Rectangle {
             RowLayout {
                 anchors.fill: parent
 
-                ComboBox {
+                SwiftComboBox {
                     id: sbpLoggingFormat
 
                     currentIndex: 0
@@ -157,7 +157,7 @@ Rectangle {
                     }
                 }
 
-                ComboBox {
+                SwiftComboBox {
                     id: recordingFilenameText
 
                     Layout.fillWidth: true
@@ -171,7 +171,7 @@ Rectangle {
                     visible: sbpLoggingButton.checked
                 }
 
-                ComboBox {
+                SwiftComboBox {
                     id: folderPathBar
 
                     Layout.fillWidth: true

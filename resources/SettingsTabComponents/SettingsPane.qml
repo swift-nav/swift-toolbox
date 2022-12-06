@@ -1,4 +1,5 @@
 import "../Constants"
+import "../BaseComponents"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -120,7 +121,7 @@ Rectangle {
                     },
                     State {
                         name: "enumOrBool"
-                        when: valOnDevice.item instanceof ComboBox
+                        when: valOnDevice.item instanceof SwiftComboBox
 
                         PropertyChanges {
                             target: valOnDevice
@@ -358,7 +359,7 @@ Rectangle {
     Component {
         id: settingRowBool
 
-        ComboBox {
+        SwiftComboBox {
             model: ["True", "False"]
             currentIndex: model.indexOf(selectedRowField("valueOnDevice"))
             onActivated: {
@@ -371,7 +372,7 @@ Rectangle {
     Component {
         id: settingRowEnum
 
-        ComboBox {
+        SwiftComboBox {
             model: selectedRowField("enumeratedPossibleValues").split(",")
             currentIndex: model.indexOf(selectedRowField("valueOnDevice"))
             onActivated: {

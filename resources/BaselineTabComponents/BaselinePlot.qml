@@ -46,7 +46,7 @@ Item {
             Layout.alignment: Qt.AlignLeft
             Layout.leftMargin: Constants.baselinePlot.navBarMargin
 
-            SwiftButton {
+            Button {
                 id: baselinePauseButton
 
                 ButtonGroup.group: baselineButtonGroup
@@ -63,7 +63,7 @@ Item {
                 }
             }
 
-            SwiftButton {
+            Button {
                 id: baselineClearButton
 
                 onPressed: backend_request_broker.baseline_plot([baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].pressed, baselineButtonGroup.buttons[0].pressed])
@@ -90,7 +90,7 @@ Item {
                 }
             }
 
-            SwiftButton {
+            Button {
                 id: baselineZoomAllButton
 
                 onClicked: {
@@ -116,7 +116,7 @@ Item {
                 }
             }
 
-            SwiftButton {
+            Button {
                 id: baselineCenterButton
 
                 onClicked: {
@@ -142,7 +142,7 @@ Item {
                 }
             }
 
-            SwiftButton {
+            Button {
                 id: baselineResetFiltersButton
 
                 onPressed: backend_request_broker.baseline_plot([baselineButtonGroup.buttons[2].checked, baselineButtonGroup.buttons[1].pressed, baselineButtonGroup.buttons[0].pressed])

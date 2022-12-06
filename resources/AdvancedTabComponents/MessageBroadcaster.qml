@@ -241,7 +241,7 @@ Item {
                 Layout.fillHeight: true
                 Layout.preferredWidth: parent.width / 2
 
-                SwiftButton {
+                Button {
                     id: startButton
 
                     width: parent.width
@@ -278,7 +278,7 @@ Item {
                 Layout.fillHeight: true
                 Layout.preferredWidth: parent.width / 2
 
-                SwiftButton {
+                Button {
                     id: stopButton
 
                     enabled: false

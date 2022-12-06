@@ -94,7 +94,7 @@ Item {
                     height: parent.height
                 }
 
-                SwiftButton {
+                Button {
                     id: updateFirmwareButton
 
                     width: parent.width - Constants.updateTab.hardwareVersionElementsLabelWidth

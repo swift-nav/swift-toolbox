@@ -9,6 +9,9 @@ import QtQuick.Templates as T
 T.CheckBox {
     id: control
 
+    property alias indicatorHeight: control.indicator.height
+    property alias indicatorWidth: control.indicator.width
+
     spacing: 2
     implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset, implicitContentWidth + leftPadding + rightPadding)
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset, implicitContentHeight + topPadding + bottomPadding, implicitIndicatorHeight + topPadding + bottomPadding)

@@ -18,8 +18,8 @@ ColumnLayout {
         model: codes
 
         SmallCheckBox {
-            indicator.width: 15
-            indicator.height: 15
+            indicatorWidth: 15
+            indicatorHeight: 15
             spacing: 2
             padding: 2
             verticalPadding: 0.2

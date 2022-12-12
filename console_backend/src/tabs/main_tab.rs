@@ -28,7 +28,7 @@ pub fn logging_stats_thread(
         let mut recv = shared_state.watch_connection();
         let mut start_time = Instant::now();
         let mut filepath = None;
-        while !matches!(recv.get(), Err(_) | Ok(ConnectionState::Closed)) {
+        while !matches!(recv.get(), Err(_)) {
             let current_path = shared_state.sbp_logging_filepath();
             if current_path != filepath {
                 filepath = current_path;
@@ -166,7 +166,7 @@ impl MainTab {
         self.shared_state.set_sbp_logging_format(logging);
     }
 
-    pub fn serialize_sbp(&mut self, frame: &Frame) {
+    pub fn prepare_record(&mut self) {
         let csv_logging;
         let sbp_logging;
         let sbp_logging_format;
@@ -213,7 +213,9 @@ impl MainTab {
             self.last_sbp_logging_format = sbp_logging_format;
             refresh_loggingbar(&self.client_sender, &self.shared_state);
         }
+    }
 
+    pub fn serialize_sbp(&mut self, frame: &Frame) {
         if let Some(ref mut sbp_logger) = self.sbp_logger {
             if let Err(e) = sbp_logger.serialize(frame) {
                 error!("error, {}, unable to log sbp frame, {:?}", e, frame);
@@ -279,6 +281,7 @@ mod tests {
         assert_eq!(main.last_csv_logging, CsvLogging::OFF);
         main.shared_state.set_csv_logging(CsvLogging::ON);
         main.shared_state.set_logging_directory(tmp_dir.clone());
+        main.prepare_record();
 
         let flags = 0x01;
         let lat = 45_f64;
@@ -410,6 +413,7 @@ mod tests {
         main.shared_state.set_sbp_logging_format(SbpLogging::SBP);
         main.shared_state.set_sbp_logging(true, client_send);
         main.shared_state.set_logging_directory(tmp_dir.clone());
+        main.prepare_record();
 
         let flags = 0x01;
         let lat = 45_f64;

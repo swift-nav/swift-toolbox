@@ -81,7 +81,11 @@ pub fn process_messages(
         }
         scope.spawn(|_| process_shared_state_events(event_rx, &tabs));
         for (frame, _) in &mut messages {
-            tabs.main.lock().unwrap().serialize_sbp(&frame);
+            {
+                let mut main_tab = tabs.main.lock().unwrap();
+                main_tab.prepare_record();
+                main_tab.serialize_sbp(&frame)
+            }
             tabs.status_bar.lock().unwrap().add_bytes(frame.len());
             tabs.advanced_networking.lock().unwrap().update(&frame);
             let message = match frame.to_sbp() {

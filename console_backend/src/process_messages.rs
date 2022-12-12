@@ -15,7 +15,6 @@ use sbp::{
         system::{MsgHeartbeat, MsgInsStatus, MsgInsUpdates, MsgStartup},
         tracking::{MsgMeasurementState, MsgTrackingState},
     },
-    Sbp, SbpMessage,
 };
 
 use crate::client_sender::BoxedClientSender;

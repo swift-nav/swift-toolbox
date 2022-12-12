@@ -5,7 +5,7 @@ use sbp::messages::{
     piksi::{MsgNetworkStateReq, MsgNetworkStateResp},
     ConcreteMessage,
 };
-use sbp::{Frame, Sbp, SbpMessage};
+use sbp::Frame;
 use std::collections::HashMap;
 
 use std::net::UdpSocket;

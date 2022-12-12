@@ -64,7 +64,7 @@ sysinfo = "0.26.7"
 tempfile = "3.3.0"
 
 [build-dependencies]
-capnpc = "0.15.0"
+capnpc = "0.15.2"
 
 [lib]
 name = "console_backend"

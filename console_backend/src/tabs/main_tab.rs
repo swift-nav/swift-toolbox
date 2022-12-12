@@ -166,7 +166,7 @@ impl MainTab {
         self.shared_state.set_sbp_logging_format(logging);
     }
 
-    pub fn serialize_sbp(&mut self, frame: &Frame) {
+    pub fn serialize_frame(&mut self, frame: &Frame) {
         let csv_logging;
         let sbp_logging;
         let sbp_logging_format;
@@ -328,15 +328,15 @@ mod tests {
         };
 
         {
-            main.serialize_sbp(&msg_to_frame(msg.clone()));
+            main.serialize_frame(&msg_to_frame(msg.clone()));
             solution_tab.handle_pos_llh(PosLLH::MsgPosLlh(msg));
-            main.serialize_sbp(&msg_to_frame(msg_two.clone()));
+            main.serialize_frame(&msg_to_frame(msg_two.clone()));
             solution_tab.handle_vel_ned(VelNED::MsgVelNed(msg_two.clone()));
-            main.serialize_sbp(&msg_to_frame(msg_three.clone()));
+            main.serialize_frame(&msg_to_frame(msg_three.clone()));
             baseline_tab.handle_baseline_ned(BaselineNED::MsgBaselineNed(msg_three));
             assert_eq!(main.last_csv_logging, CsvLogging::ON);
             main.end_csv_logging().unwrap();
-            main.serialize_sbp(&msg_to_frame(msg_two));
+            main.serialize_frame(&msg_to_frame(msg_two));
             assert_eq!(main.last_csv_logging, CsvLogging::OFF);
         }
 
@@ -443,11 +443,11 @@ mod tests {
         };
 
         {
-            main.serialize_sbp(&msg_to_frame(msg_one.clone()));
-            main.serialize_sbp(&msg_to_frame(msg_two.clone()));
+            main.serialize_frame(&msg_to_frame(msg_one.clone()));
+            main.serialize_frame(&msg_to_frame(msg_two.clone()));
             assert_eq!(main.last_sbp_logging_format, SbpLogging::SBP);
             main.close_sbp();
-            main.serialize_sbp(&msg_to_frame(msg_two.clone()));
+            main.serialize_frame(&msg_to_frame(msg_two.clone()));
             assert!(!main.last_sbp_logging);
         }
 
@@ -535,11 +535,11 @@ mod tests {
         };
 
         {
-            main.serialize_sbp(&msg_to_frame(msg_one));
-            main.serialize_sbp(&msg_to_frame(msg_two.clone()));
+            main.serialize_frame(&msg_to_frame(msg_one));
+            main.serialize_frame(&msg_to_frame(msg_two.clone()));
             assert_eq!(main.last_sbp_logging_format, SbpLogging::SBP_JSON);
             main.close_sbp();
-            main.serialize_sbp(&msg_to_frame(msg_two));
+            main.serialize_frame(&msg_to_frame(msg_two));
             assert!(!main.last_sbp_logging);
         }
 

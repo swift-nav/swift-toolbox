@@ -83,6 +83,11 @@ pub fn process_messages(
         scope.spawn(|_| process_shared_state_events(event_rx, &tabs));
         for (frame, _) in &mut messages {
             tabs.main.lock().unwrap().serialize_sbp(&frame);
+            tabs.status_bar.lock().unwrap().add_bytes(frame.len());
+            tabs.advanced_networking
+                .lock()
+                .unwrap()
+                .handle_frame(&frame);
             let message = match frame.to_sbp() {
                 Ok(msg) => msg,
                 Err(e) => {
@@ -327,10 +332,6 @@ fn register_events(link: sbp::link::Link<Tabs>) {
     link.register(|tabs: &Tabs, msg: MsgUtcTime| {
         tabs.baseline.lock().unwrap().handle_utc_time(msg.clone());
         tabs.solution_position.lock().unwrap().handle_utc_time(msg);
-    });
-    link.register(|tabs: &Tabs, msg: Sbp| {
-        tabs.status_bar.lock().unwrap().add_bytes(msg.encoded_len());
-        tabs.advanced_networking.lock().unwrap().handle_sbp(&msg);
     });
 }
 

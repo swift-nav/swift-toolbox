@@ -5,7 +5,7 @@ use sbp::messages::{
     piksi::{MsgNetworkStateReq, MsgNetworkStateResp},
     ConcreteMessage,
 };
-use sbp::{Sbp, SbpMessage};
+use sbp::{Frame, Sbp, SbpMessage};
 use std::collections::HashMap;
 
 use std::net::UdpSocket;
@@ -152,16 +152,14 @@ impl AdvancedNetworkingTab {
         }
     }
 
-    pub fn handle_sbp(&mut self, msg: &Sbp) {
+    pub fn handle_frame(&mut self, frame: &Frame) {
         self.check_update();
 
         if self.running {
             if let Some(client) = &mut self.client {
-                if self.all_messages || OBS_MSGS.contains(&msg.message_type()) {
-                    if let Ok(frame) = sbp::to_vec(msg) {
-                        if let Err(_e) = client.send(&frame) {
-                            // Need to squelch error for the case of no client listening.
-                        }
+                if self.all_messages || OBS_MSGS.contains(&frame.msg_type()) {
+                    if let Err(_e) = client.send(frame.as_bytes()) {
+                        // Need to squelch error for the case of no client listening.
                     }
                 }
             } else {

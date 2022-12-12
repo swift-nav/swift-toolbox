@@ -82,6 +82,7 @@ pub fn process_messages(
         }
         scope.spawn(|_| process_shared_state_events(event_rx, &tabs));
         for (frame, _) in &mut messages {
+            tabs.main.lock().unwrap().serialize_sbp(&frame);
             let message = match frame.to_sbp() {
                 Ok(msg) => msg,
                 Err(e) => {
@@ -89,7 +90,6 @@ pub fn process_messages(
                     continue;
                 }
             };
-            tabs.main.lock().unwrap().serialize_sbp(&message);
             source.send_with_state(&tabs, &message);
             if let Some(ref tab) = tabs.settings {
                 tab.handle_msg(message);
@@ -346,7 +346,7 @@ mod messages {
     use log::debug;
     use sbp::{
         time::{GpsTime, GpsTimeError},
-        DeserializeError, Frame, Sbp, SbpIterExt,
+        DeserializeError, Frame, SbpIterExt,
     };
 
     type MessageWithTimeIter = Box<dyn Iterator<Item = MessageWithTime> + Send>;
@@ -543,6 +543,7 @@ mod messages {
 
         use sbp::messages::logging::MsgLog;
         use sbp::messages::navigation::MsgGpsTime;
+        use sbp::Sbp;
 
         use super::*;
 

@@ -1,9 +1,10 @@
 use log::error;
 use std::fs::{File, OpenOptions};
+use std::io::Write;
 use std::path::Path;
 
 use sbp::json::JsonEncoder;
-use sbp::{Sbp, SbpEncoder};
+use sbp::Frame;
 use serde::Serialize;
 use serde_json::ser::CompactFormatter;
 
@@ -31,39 +32,39 @@ pub type SbpLogging = cc::SbpLogging;
 
 #[derive(Debug)]
 pub enum SbpLogger {
-    Sbp(SbpEncoder<File>),
+    Sbp(File),
     Json(JsonEncoder<File, CompactFormatter>),
 }
 
 impl SbpLogger {
     pub fn new_sbp<P: AsRef<Path>>(filepath: P) -> Result<SbpLogger> {
-        Ok(SbpLogger::Sbp(SbpEncoder::new(File::create(filepath)?)))
+        Ok(SbpLogger::Sbp(File::create(filepath)?))
     }
+
     pub fn open_sbp<P: AsRef<Path>>(filepath: P) -> Result<SbpLogger> {
-        Ok(SbpLogger::Sbp(SbpEncoder::new(
+        Ok(SbpLogger::Sbp(
             OpenOptions::new().append(true).open(filepath)?,
-        )))
+        ))
     }
+
     pub fn new_sbp_json<P: AsRef<Path>>(filepath: P) -> Result<SbpLogger> {
         Ok(SbpLogger::Json(JsonEncoder::new(
             File::create(filepath)?,
             CompactFormatter,
         )))
     }
+
     pub fn open_sbp_json<P: AsRef<Path>>(filepath: P) -> Result<SbpLogger> {
         Ok(SbpLogger::Json(JsonEncoder::new(
             OpenOptions::new().append(true).open(filepath)?,
             CompactFormatter,
         )))
     }
-    pub fn serialize(&mut self, msg: &Sbp) -> Result<()> {
+
+    pub fn serialize(&mut self, frame: &Frame) -> Result<()> {
         match self {
-            SbpLogger::Sbp(logger) => {
-                logger.send(msg)?;
-            }
-            SbpLogger::Json(logger) => {
-                logger.send(msg)?;
-            }
+            SbpLogger::Sbp(writer) => writer.write_all(frame.as_bytes())?,
+            SbpLogger::Json(logger) => logger.send(&frame.to_sbp()?)?,
         }
         Ok(())
     }
@@ -166,6 +167,7 @@ mod tests {
     use super::*;
 
     use sbp::messages::{navigation::MsgAgeCorrections, system::MsgInsUpdates};
+    use sbp::{Sbp, SbpMessage};
     use serde::Serialize;
     use std::{fs::File, path::Path};
     use tempfile::TempDir;
@@ -182,6 +184,13 @@ mod tests {
     fn serialize_test_dataset(csv_serializer: &mut CsvSerializer, ds: &TestDataSet) -> Result<()> {
         csv_serializer.writer.serialize(ds)?;
         Ok(())
+    }
+
+    fn msg_to_frame(msg: impl SbpMessage) -> Frame {
+        let vec = sbp::to_vec(&msg).unwrap();
+        let bytes = vec.as_slice();
+        let mut msgs = sbp::iter_frames(bytes);
+        msgs.next().unwrap().unwrap()
     }
 
     #[test]
@@ -231,8 +240,12 @@ mod tests {
         let msg_two_wrapped = Sbp::MsgInsUpdates(msg_two.clone());
         {
             let mut sbp_logger = SbpLogger::new_sbp(&filepath).unwrap();
-            sbp_logger.serialize(&msg_one_wrapped).unwrap();
-            sbp_logger.serialize(&msg_two_wrapped).unwrap();
+            sbp_logger
+                .serialize(&msg_to_frame(msg_one_wrapped))
+                .unwrap();
+            sbp_logger
+                .serialize(&msg_to_frame(msg_two_wrapped))
+                .unwrap();
         }
         assert!(&filepath.is_file());
         {

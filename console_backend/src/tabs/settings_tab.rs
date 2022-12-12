@@ -142,7 +142,7 @@ impl SettingsTab {
             msg_sender: msg_sender.clone(),
             settings: Mutex::new(Settings::new()),
             sbp_client: Mutex::new(Client::with_link(link.clone(), move |msg| {
-                msg_sender.send(msg).map_err(Into::into)
+                msg_sender.send(msg.into()).map_err(Into::into)
             })),
             send,
         }

@@ -81,7 +81,15 @@ pub fn process_messages(
             });
         }
         scope.spawn(|_| process_shared_state_events(event_rx, &tabs));
-        for (message, _) in &mut messages {
+        for (frame, _) in &mut messages {
+            let message = match frame.to_sbp() {
+                Ok(msg) => msg,
+                Err(e) => {
+                    debug!("{e}");
+                    continue;
+                }
+            };
+            tabs.main.lock().unwrap().serialize_sbp(&message);
             source.send_with_state(&tabs, &message);
             if let Some(ref tab) = tabs.settings {
                 tab.handle_msg(message);
@@ -321,7 +329,6 @@ fn register_events(link: sbp::link::Link<Tabs>) {
         tabs.solution_position.lock().unwrap().handle_utc_time(msg);
     });
     link.register(|tabs: &Tabs, msg: Sbp| {
-        tabs.main.lock().unwrap().serialize_sbp(&msg);
         tabs.status_bar.lock().unwrap().add_bytes(msg.encoded_len());
         tabs.advanced_networking.lock().unwrap().handle_sbp(&msg);
     });
@@ -339,13 +346,13 @@ mod messages {
     use log::debug;
     use sbp::{
         time::{GpsTime, GpsTimeError},
-        DeserializeError, Sbp, SbpIterExt,
+        DeserializeError, Frame, Sbp, SbpIterExt,
     };
 
     type MessageWithTimeIter = Box<dyn Iterator<Item = MessageWithTime> + Send>;
 
     type MessageWithTime = (
-        Result<Sbp, DeserializeError>,
+        Result<Frame, DeserializeError>,
         Option<Result<GpsTime, GpsTimeError>>,
     );
 
@@ -363,7 +370,7 @@ mod messages {
         where
             R: io::Read + Send + 'static,
         {
-            let messages = sbp::iter_messages_with_timeout(reader, Self::TIMEOUT).with_rover_time();
+            let messages = sbp::iter_frames_with_timeout(reader, Self::TIMEOUT).with_rover_time();
             Self::from_boxed(Box::new(messages))
         }
 
@@ -371,7 +378,7 @@ mod messages {
         where
             R: io::Read + Send + 'static,
         {
-            let messages = sbp::iter_messages_with_timeout(reader, Self::TIMEOUT).with_rover_time();
+            let messages = sbp::iter_frames_with_timeout(reader, Self::TIMEOUT).with_rover_time();
             let messages = Box::new(RealtimeIter::new(messages));
             Self::from_boxed(messages)
         }
@@ -400,23 +407,21 @@ mod messages {
     }
 
     impl Iterator for Messages {
-        type Item = (Sbp, Option<Result<GpsTime, GpsTimeError>>);
+        type Item = (Frame, Option<Result<GpsTime, GpsTimeError>>);
 
         fn next(&mut self) -> Option<Self::Item> {
             crossbeam::select! {
                 recv(self.messages) -> msg => {
                     match msg.ok()? {
                         (Ok(msg), time) => Some((msg, time)),
-                        (Err(e), _) => match e {
-                            DeserializeError::IoError(e) => {
+                        (Err(e), _) => {
+                            if let DeserializeError::IoError(e) = e {
                                 self.err = Err(e);
-                                None
+                                return None;
                             }
-                            _ => {
-                                debug!("{}", e);
-                                self.next()
-                            }
-                        },
+                            debug!("{e}");
+                            self.next()
+                        }
                     }
                 }
                 recv(self.stop_recv) -> _ => None,

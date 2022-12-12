@@ -247,23 +247,17 @@ mod tests {
     use crate::client_sender::TestSender;
     use crate::tabs::baseline_tab::BaselineTab;
     use crate::tabs::solution_tab::solution_position_tab::SolutionPositionTab;
+    use crate::test_common::msg_to_frame;
     use crate::types::{BaselineNED, MsgSender, PosLLH, VelNED};
     use crate::utils::{mm_to_m, ms_to_sec};
     use glob::glob;
     use sbp::messages::navigation::{MsgBaselineNed, MsgPosLlh, MsgVelNed};
-    use sbp::{Sbp, SbpMessage};
+    use sbp::Sbp;
     use std::{
         fs::File,
         io::{sink, BufRead, BufReader},
     };
     use tempfile::TempDir;
-
-    fn msg_to_frame(msg: impl SbpMessage) -> Frame {
-        let vec = sbp::to_vec(&msg).unwrap();
-        let bytes = vec.as_slice();
-        let mut msgs = sbp::iter_frames(bytes);
-        msgs.next().unwrap().unwrap()
-    }
 
     #[test]
     fn csv_logging_test() {

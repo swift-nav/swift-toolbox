@@ -166,11 +166,13 @@ pub struct VelLog {
 mod tests {
     use super::*;
 
+    use crate::test_common::msg_to_frame;
     use sbp::messages::{navigation::MsgAgeCorrections, system::MsgInsUpdates};
-    use sbp::{Sbp, SbpMessage};
+    use sbp::Sbp;
     use serde::Serialize;
     use std::{fs::File, path::Path};
     use tempfile::TempDir;
+
     const TEST_FILEPATH: &str = "test.csv";
     const TEST_SBP_FILEPATH: &str = "test.sbp";
 
@@ -184,13 +186,6 @@ mod tests {
     fn serialize_test_dataset(csv_serializer: &mut CsvSerializer, ds: &TestDataSet) -> Result<()> {
         csv_serializer.writer.serialize(ds)?;
         Ok(())
-    }
-
-    fn msg_to_frame(msg: impl SbpMessage) -> Frame {
-        let vec = sbp::to_vec(&msg).unwrap();
-        let bytes = vec.as_slice();
-        let mut msgs = sbp::iter_frames(bytes);
-        msgs.next().unwrap().unwrap()
     }
 
     #[test]

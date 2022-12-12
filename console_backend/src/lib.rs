@@ -195,4 +195,11 @@ pub mod test_common {
             fs::rename(backup_filename, filename).unwrap();
         }
     }
+
+    pub fn msg_to_frame(msg: impl sbp::SbpMessage) -> sbp::Frame {
+        let vec = sbp::to_vec(&msg).unwrap();
+        let bytes = vec.as_slice();
+        let mut msgs = sbp::iter_frames(bytes);
+        msgs.next().unwrap().unwrap()
+    }
 }

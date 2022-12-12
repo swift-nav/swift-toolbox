@@ -152,7 +152,7 @@ impl AdvancedNetworkingTab {
         }
     }
 
-    pub fn handle_frame(&mut self, frame: &Frame) {
+    pub fn update(&mut self, frame: &Frame) {
         self.check_update();
 
         if self.running {

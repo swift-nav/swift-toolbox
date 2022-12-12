@@ -84,10 +84,7 @@ pub fn process_messages(
         for (frame, _) in &mut messages {
             tabs.main.lock().unwrap().serialize_sbp(&frame);
             tabs.status_bar.lock().unwrap().add_bytes(frame.len());
-            tabs.advanced_networking
-                .lock()
-                .unwrap()
-                .handle_frame(&frame);
+            tabs.advanced_networking.lock().unwrap().update(&frame);
             let message = match frame.to_sbp() {
                 Ok(msg) => msg,
                 Err(e) => {

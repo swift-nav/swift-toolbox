@@ -61,9 +61,7 @@ Rectangle {
             Layout.preferredHeight: parent.preferredButtonHeight
             ToolTip.visible: hovered
             ToolTip.text: !checked ? "Start Recording" : "Stop Recording"
-            onClicked: {
-                backend_request_broker.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText);
-            }
+            onClicked: backend_request_broker.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText)
         }
 
         RowLayout {

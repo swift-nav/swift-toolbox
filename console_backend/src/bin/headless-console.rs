@@ -30,7 +30,7 @@ Usage:
     let client_send = ChannelSender::boxed(client_send_);
     let shared_state = SharedState::new();
     let conn_manager = ConnectionManager::new(client_send.clone(), shared_state.clone());
-    handle_cli(opt, &conn_manager, shared_state.clone(), &client_send);
+    handle_cli(opt, &conn_manager, shared_state.clone());
     setup_logging(client_send.clone(), shared_state.clone());
     refresh_connection_frontend(&client_send, &shared_state);
     refresh_loggingbar(&client_send, &shared_state);

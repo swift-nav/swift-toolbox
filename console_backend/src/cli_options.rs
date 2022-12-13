@@ -282,13 +282,7 @@ pub fn log_level(s: &str) -> Result<LogLevel, String> {
 /// - `opt`: CLI Options to start specific connection type.
 /// - `conn_manager`: The Server state to start a specific connection.
 /// - `shared_state`: The shared state for validating another connection is not already running.
-/// - `client_sender`: Client Sender channel for communication from backend to frontend.
-pub fn handle_cli(
-    opt: CliOptions,
-    conn_manager: &ConnectionManager,
-    shared_state: SharedState,
-    client_sender: &BoxedClientSender,
-) {
+pub fn handle_cli(opt: CliOptions, conn_manager: &ConnectionManager, shared_state: SharedState) {
     if let Some(serial) = opt.serial.serial {
         let serialport = serial.display().to_string();
         conn_manager.connect_to_serial(serialport, opt.serial.baudrate, opt.serial.flow_control);

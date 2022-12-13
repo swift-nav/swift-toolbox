@@ -16,7 +16,10 @@ use crate::constants::{
 };
 use crate::output::{CsvLogging, SbpLogger};
 use crate::shared_state::{create_directory, ConnectionState, SharedState};
-use crate::utils::{refresh_loggingbar, refresh_loggingbar_recording, OkOrLog};
+use crate::utils::{
+    refresh_log_recording_name, refresh_log_recording_size, refresh_loggingbar,
+    refresh_loggingbar_recording, OkOrLog,
+};
 
 const LOGGING_STATS_UPDATE_INTERVAL: Duration = Duration::from_millis(500);
 
@@ -160,10 +163,12 @@ impl MainTab {
         if self.sbp_logger.is_some() {
             self.shared_state
                 .set_sbp_logging(true, self.client_sender.clone());
-            self.shared_state.set_sbp_logging_filepath(Some(filepath));
+            self.shared_state
+                .set_sbp_logging_filepath(Some(filepath.clone()));
             self.shared_state.set_settings_refresh(true);
         }
         self.shared_state.set_sbp_logging_format(logging);
+        refresh_log_recording_name(&self.client_sender, filepath.display().to_string());
     }
 
     pub fn serialize_frame(&mut self, frame: &Frame) {
@@ -217,6 +222,9 @@ impl MainTab {
         if let Some(ref mut sbp_logger) = self.sbp_logger {
             if let Err(e) = sbp_logger.serialize(frame) {
                 error!("error, {}, unable to log sbp frame, {:?}", e, frame);
+            } else {
+                let bytes_size = frame.as_bytes().len() as u16;
+                refresh_log_recording_size(&self.client_sender, bytes_size);
             }
         }
     }

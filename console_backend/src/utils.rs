@@ -239,6 +239,22 @@ pub fn refresh_loggingbar_recording(
     client_sender.send_data(serialize_capnproto_builder(builder));
 }
 
+pub fn refresh_log_recording_size(client_sender: &BoxedClientSender, size: u16) {
+    let mut builder = Builder::new_default();
+    let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
+    let mut log_size = msg.init_logging_bar_recording_size();
+    log_size.set_size(size);
+    client_sender.send_data(serialize_capnproto_builder(builder));
+}
+
+pub fn refresh_log_recording_name(client_sender: &BoxedClientSender, name: String) {
+    let mut builder = Builder::new_default();
+    let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
+    let mut log_name = msg.init_logging_bar_recording_name();
+    log_name.set_name(name.as_str());
+    client_sender.send_data(serialize_capnproto_builder(builder));
+}
+
 pub fn signal_key_label(
     key: (SignalCodes, i16),
     extra: Option<&HashMap<i16, i16>>,

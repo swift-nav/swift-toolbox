@@ -336,14 +336,6 @@ struct LoggingBarStatus {
     sbpLogging @2 :Bool;
     sbpLoggingFormat @3 :Text;
 }
-struct LoggingBarRecordingStatus {
-    recordingDurationSec @0 : UInt64;
-    recordingSize @1 :UInt64;
-    recordingFilename :union {
-        filename @2 :Text;
-        none @3 :Void = void;
-    }
-}
 
 struct UpdateTabStatus {
     hardwareRevision @0 : Text;
@@ -516,7 +508,6 @@ struct Message {
         insSettingsChangeResponse @48 : InsSettingsChangeResponse;
         confirmInsChange @49 : ConfirmInsChange;
         autoSurveyRequest @50 : AutoSurveyRequest;
-        loggingBarRecordingStatus @51 : LoggingBarRecordingStatus;
         connectionNotification @52 : ConnectionNotification;
         settingsNotification @53 : SettingsNotification;
         connectionDialogStatus @54 :ConnectionDialogStatus;

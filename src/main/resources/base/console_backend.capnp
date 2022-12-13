@@ -508,11 +508,11 @@ struct Message {
         insSettingsChangeResponse @48 : InsSettingsChangeResponse;
         confirmInsChange @49 : ConfirmInsChange;
         autoSurveyRequest @50 : AutoSurveyRequest;
-        connectionNotification @52 : ConnectionNotification;
-        settingsNotification @53 : SettingsNotification;
-        connectionDialogStatus @54 :ConnectionDialogStatus;
-        onTabChangeEvent @55 :TabChangeEvent;
-        loggingBarRecordingName @56 : LoggingBarRecordingName;
-        loggingBarRecordingSize @57 : LoggingBarRecordingSize;
+        connectionNotification @51 : ConnectionNotification;
+        settingsNotification @52 : SettingsNotification;
+        connectionDialogStatus @53 :ConnectionDialogStatus;
+        onTabChangeEvent @54 :TabChangeEvent;
+        loggingBarRecordingName @55 : LoggingBarRecordingName;
+        loggingBarRecordingSize @56 : LoggingBarRecordingSize;
     }
 }

@@ -8,8 +8,12 @@ from PySide6.QtQml import QmlElement
 
 from .constants import Keys, SbpLogging
 
+import time
+
 QML_IMPORT_NAME = "SwiftConsole"
 QML_IMPORT_MAJOR_VERSION = 1
+
+
 # QML_IMPORT_MINOR_VERSION is optional
 
 
@@ -25,9 +29,9 @@ def logging_bar_update() -> Dict[str, Any]:
 
 def logging_bar_recording_update() -> Dict[str, Any]:
     return {
-        Keys.RECORDING_DURATION_SEC: int,
-        Keys.RECORDING_SIZE: float,
-        Keys.RECORDING_FILENAME: str,
+        Keys.RECORDING_START_TIME: None,
+        Keys.RECORDING_SIZE: 0,
+        Keys.RECORDING_FILENAME: None,
     }
 
 
@@ -80,7 +84,21 @@ class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
 
     @classmethod
     def post_recording_data_update(cls, update_data: Dict[str, Any]) -> None:
-        LOGGING_BAR_RECORDING[0] = update_data
+        current_bar = LOGGING_BAR_RECORDING[0]
+        name = update_data[Keys.RECORDING_FILENAME]
+        if name is not None:
+            current_bar[Keys.RECORDING_FILENAME] = name
+
+        size = update_data[Keys.RECORDING_SIZE]
+        if size is not None:
+            current_bar[Keys.RECORDING_SIZE] += size
+        else: # event reset recording
+            current_bar[Keys.RECORDING_SIZE] = 0
+            current_bar[Keys.RECORDING_START_TIME] = None
+
+        start_time = update_data[Keys.RECORDING_START_TIME]
+        if start_time is not None:
+            current_bar[Keys.RECORDING_START_TIME] = start_time
         cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @Slot()  # type: ignore
@@ -147,8 +165,8 @@ class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
     def get_recording_duration_sec(self) -> int:
         return self._recording_duration_sec
 
-    def set_recording_duration_sec(self, recording_duration_sec: int) -> None:
-        self._recording_duration_sec = recording_duration_sec
+    def set_recording_duration_sec(self, start_time) -> None:
+        self._recording_duration_sec = time.time() - start_time if start_time else 0
 
     recording_duration_sec = Property(int, get_recording_duration_sec, set_recording_duration_sec)  # type: ignore
 
@@ -170,6 +188,6 @@ class LoggingBarModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_sbp_logging_labels(cp.logging_bar[Keys.SBP_LOGGING_LABELS])
         cp.set_previous_folders(cp.logging_bar[Keys.PREVIOUS_FOLDERS])
         cp.set_recording_size(cp.logging_bar_recording[Keys.RECORDING_SIZE])
-        cp.set_recording_duration_sec(cp.logging_bar_recording[Keys.RECORDING_DURATION_SEC])
+        cp.set_recording_duration_sec(cp.logging_bar_recording[Keys.RECORDING_START_TIME])
         cp.set_recording_filename(cp.logging_bar_recording[Keys.RECORDING_FILENAME])
         return cp

@@ -17,8 +17,7 @@ use crate::constants::{
 use crate::output::{CsvLogging, SbpLogger};
 use crate::shared_state::{create_directory, ConnectionState, SharedState};
 use crate::utils::{
-    refresh_log_recording_name, refresh_log_recording_size, refresh_loggingbar,
-    refresh_loggingbar_recording, OkOrLog,
+    refresh_log_recording_name, refresh_log_recording_size, refresh_loggingbar, OkOrLog,
 };
 
 pub struct MainTab {

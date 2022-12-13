@@ -91,6 +91,7 @@ Rectangle {
                 horizontalAlignment: Text.AlignHCenter
                 font.pixelSize: Constants.xxlPixelSize
                 font.family: Constants.lightFontFamily
+                text: "00:00:00"
             }
 
             Rectangle {
@@ -270,11 +271,14 @@ Rectangle {
                 csvLoggingButton.checked = loggingBarData.csv_logging;
                 if (loggingBarData.recording_filename)
                     recordingFilenameText.editText = loggingBarData.recording_filename;
-                if (mockTime) {
-                    mockRecordingTime += interval;
-                    recordingTime.text = loggingDurationFormat(mockRecordingTime / 1000);
-                } else {
-                    recordingTime.text = loggingDurationFormat(loggingBarData.recording_duration_sec);
+
+                if (sbpLoggingButton.checked) {
+                    if (mockTime) {
+                        mockRecordingTime += interval;
+                        recordingTime.text = loggingDurationFormat(mockRecordingTime / 1000);
+                    } else {
+                        recordingTime.text = loggingDurationFormat(loggingBarData.recording_duration_sec);
+                    }
                 }
                 if (mockSize) {
                     mockRecordingSize += 15.15;

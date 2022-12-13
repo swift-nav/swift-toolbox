@@ -7,7 +7,6 @@ use std::{
     ops::Deref,
     path::{Path, PathBuf},
     sync::Arc,
-    thread::JoinHandle,
     time::Instant,
 };
 use strum_macros::EnumString;

@@ -1,8 +1,4 @@
-use std::{
-    path::PathBuf,
-    thread::JoinHandle,
-    time::{Duration, Instant},
-};
+use std::path::PathBuf;
 
 use chrono::Local;
 use log::error;
@@ -15,7 +11,7 @@ use crate::constants::{
     VEL_TIME_STR_FILEPATH,
 };
 use crate::output::{CsvLogging, SbpLogger};
-use crate::shared_state::{create_directory, ConnectionState, SharedState};
+use crate::shared_state::{create_directory, SharedState};
 use crate::utils::{
     refresh_log_recording_name, refresh_log_recording_size, refresh_loggingbar, OkOrLog,
 };

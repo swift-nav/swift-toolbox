@@ -4,13 +4,10 @@ use clap::{ArgAction, Args, Parser};
 use log::{debug, error};
 
 use crate::common_constants::LogLevel;
+use crate::constants::{AVAILABLE_BAUDRATES, AVAILABLE_REFRESH_RATES};
 use crate::output::CsvLogging;
 use crate::shared_state::SharedState;
 use crate::types::{FlowControl, RealtimeDelay};
-use crate::{
-    client_sender::BoxedClientSender,
-    constants::{AVAILABLE_BAUDRATES, AVAILABLE_REFRESH_RATES},
-};
 use crate::{
     common_constants::{SbpLogging, Tabs},
     connection::ConnectionManager,

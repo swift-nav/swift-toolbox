@@ -111,7 +111,7 @@ impl SharedState {
     pub fn sbp_logging(&self) -> bool {
         self.lock().logging_bar.sbp_logging
     }
-    pub fn set_sbp_logging(&self, running: bool, client_sender: BoxedClientSender) {
+    pub fn set_sbp_logging(&self, running: bool) {
         let mut guard = self.lock();
         guard.logging_bar.sbp_logging = running;
     }

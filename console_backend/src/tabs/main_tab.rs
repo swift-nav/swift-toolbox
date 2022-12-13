@@ -21,40 +21,6 @@ use crate::utils::{
     refresh_loggingbar_recording, OkOrLog,
 };
 
-const LOGGING_STATS_UPDATE_INTERVAL: Duration = Duration::from_millis(500);
-
-pub fn logging_stats_thread(
-    shared_state: SharedState,
-    client_sender: BoxedClientSender,
-) -> JoinHandle<()> {
-    std::thread::spawn(move || {
-        let mut recv = shared_state.watch_connection();
-        let mut start_time = Instant::now();
-        let mut filepath = None;
-        while !matches!(recv.get(), Err(_) | Ok(ConnectionState::Closed)) {
-            let current_path = shared_state.sbp_logging_filepath();
-            if current_path != filepath {
-                filepath = current_path;
-                start_time = Instant::now();
-            }
-            if let Some(ref path) = filepath {
-                if let Ok(metadata) = std::fs::metadata(path) {
-                    let file_size = metadata.len();
-                    refresh_loggingbar_recording(
-                        &client_sender,
-                        file_size,
-                        start_time.elapsed().as_secs(),
-                        Some(path.to_string_lossy().to_string()),
-                    );
-                }
-            } else {
-                refresh_loggingbar_recording(&client_sender, 0, 0, None);
-            }
-            std::thread::sleep(LOGGING_STATS_UPDATE_INTERVAL);
-        }
-    })
-}
-
 pub struct MainTab {
     logging_directory: PathBuf,
     last_csv_logging: CsvLogging,
@@ -161,8 +127,7 @@ impl MainTab {
         .ok_or_log(|e| error!("issue creating file, {}, error, {e}", filepath.display()));
 
         if self.sbp_logger.is_some() {
-            self.shared_state
-                .set_sbp_logging(true, self.client_sender.clone());
+            self.shared_state.set_sbp_logging(true);
             self.shared_state
                 .set_sbp_logging_filepath(Some(filepath.clone()));
             self.shared_state.set_settings_refresh(true);
@@ -221,7 +186,7 @@ impl MainTab {
 
         if let Some(ref mut sbp_logger) = self.sbp_logger {
             if let Err(e) = sbp_logger.serialize(frame) {
-                error!("error, {}, unable to log sbp frame, {:?}", e, frame);
+                error!("error, {e}, unable to log sbp frame, {frame:?}");
             } else {
                 let bytes_size = frame.as_bytes().len() as u16;
                 refresh_log_recording_size(&self.client_sender, bytes_size);
@@ -231,8 +196,7 @@ impl MainTab {
 
     pub fn close_sbp(&mut self) {
         self.sbp_logger = None;
-        self.shared_state
-            .set_sbp_logging(false, self.client_sender.clone());
+        self.shared_state.set_sbp_logging(false);
         self.shared_state.set_sbp_logging_filepath(None);
         refresh_loggingbar(&self.client_sender, &self.shared_state);
     }
@@ -410,7 +374,7 @@ mod tests {
         let mut main = MainTab::new(shared_state, client_send.clone());
         assert!(!main.last_sbp_logging);
         main.shared_state.set_sbp_logging_format(SbpLogging::SBP);
-        main.shared_state.set_sbp_logging(true, client_send);
+        main.shared_state.set_sbp_logging(true);
         main.shared_state.set_logging_directory(tmp_dir.clone());
 
         let flags = 0x01;
@@ -502,7 +466,7 @@ mod tests {
         assert!(!main.last_sbp_logging);
         main.shared_state
             .set_sbp_logging_format(SbpLogging::SBP_JSON);
-        main.shared_state.set_sbp_logging(true, client_send);
+        main.shared_state.set_sbp_logging(true);
         main.shared_state.set_logging_directory(tmp_dir.clone());
 
         let flags = 0x01;

@@ -318,7 +318,7 @@ pub fn handle_cli(
         shared_state.set_sbp_logging_filename(Some(path));
     }
     if let Some(sbp_log) = opt.sbp_log {
-        shared_state.set_sbp_logging(true, client_sender.clone());
+        shared_state.set_sbp_logging(true);
         shared_state.set_sbp_logging_format(
             SbpLogging::from_str(&sbp_log.to_string()).expect(CONVERT_TO_STR_FAILURE),
         );

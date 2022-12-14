@@ -397,6 +397,6 @@ Python support.
 
 # LICENSE
 
-Copyright © 2022 Swift Navigation
+Copyright © 2021 Swift Navigation
 
 Distributed under MIT.

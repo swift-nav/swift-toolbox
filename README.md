@@ -394,3 +394,9 @@ Python support.
 
 [capnproto]: https://capnproto.org/
 [flatbuffers]: https://google.github.io/flatbuffers/
+
+# LICENSE
+
+Copyright © 2022 Swift Navigation
+
+Distributed under MIT.

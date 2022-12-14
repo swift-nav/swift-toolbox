@@ -25,3 +25,4 @@ installers/Windows/NSIS/*
 *.pyproject.user
 *.pyproject.bkup
 /swiftnav_console/.idea/workspace.xml
+/.idea/

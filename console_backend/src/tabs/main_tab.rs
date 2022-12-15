@@ -237,7 +237,7 @@ impl MainTab {
             };
             Local::now().format(fmt).to_string().into()
         });
-        self.logging_directory.join(&name)
+        self.logging_directory.join(name)
     }
 }
 

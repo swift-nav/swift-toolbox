@@ -379,7 +379,7 @@ pub fn bytes_to_human_readable(bytes: u128) -> String {
     let mut bytes = bytes as f64;
     for unit in ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB"].iter() {
         if bytes < 1024.0 {
-            return format!("{:3.1}{}", bytes as f64, unit);
+            return format!("{:3.1}{}", bytes, unit);
         } else {
             bytes /= 1024.0;
         }
@@ -499,7 +499,7 @@ pub fn compute_doppler(
         return 0 as f64;
     }
     let mut computed_doppler =
-        (old_carrier_phase - new_carrier_phase) as f64 / (current_gps_tow - previous_tow) as f64;
+        (old_carrier_phase - new_carrier_phase) / (current_gps_tow - previous_tow);
     if is_deprecated_message {
         computed_doppler = -computed_doppler;
     }

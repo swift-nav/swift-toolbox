@@ -87,7 +87,7 @@ pub fn process_messages(
             let message = match frame.to_sbp() {
                 Ok(msg) => msg,
                 Err(e) => {
-                    debug!("{e}");
+                    error!("{e}");
                     continue;
                 }
             };

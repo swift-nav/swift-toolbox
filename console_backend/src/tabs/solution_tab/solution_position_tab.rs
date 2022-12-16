@@ -139,13 +139,13 @@ impl SolutionPositionTab {
             nsec: Some(0),
             shared_state,
             sln_cur_data: {
-                let mut data = vec![Vec::with_capacity(1); NUM_GNSS_MODES as usize];
-                data.reserve_exact(NUM_GNSS_MODES as usize);
+                let mut data = vec![Vec::with_capacity(1); NUM_GNSS_MODES];
+                data.reserve_exact(NUM_GNSS_MODES);
                 data
             },
             sln_data: {
-                let mut data = vec![Vec::with_capacity(PLOT_HISTORY_MAX); NUM_GNSS_MODES as usize];
-                data.reserve_exact(NUM_GNSS_MODES as usize);
+                let mut data = vec![Vec::with_capacity(PLOT_HISTORY_MAX); NUM_GNSS_MODES];
+                data.reserve_exact(NUM_GNSS_MODES);
                 data
             },
             slns: {
@@ -917,7 +917,7 @@ mod tests {
             hours as u32,
             minutes as u32,
             seconds as u32,
-            ns as u32,
+            ns,
         );
         assert_eq!(solution_table.utc_time, Some(datetime));
         assert_eq!(

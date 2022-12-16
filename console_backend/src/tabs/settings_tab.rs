@@ -151,7 +151,7 @@ impl SettingsTab {
         // this thread will join when `SettingsTab` is dropped, because the channel will disconnect
         std::thread::spawn(move || {
             for msg in recv.iter() {
-                source.send(&msg);
+                source.send(msg);
             }
         });
 

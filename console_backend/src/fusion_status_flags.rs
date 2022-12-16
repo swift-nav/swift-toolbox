@@ -416,12 +416,12 @@ mod tests {
         status_timer.restart(sender.clone(), update_status_inner.clone(), STATUS_PERIOD);
         assert!(status_timer.active());
         assert!(receiver.is_empty());
-        sleep(Duration::from_secs_f64(STATUS_PERIOD as f64 * 0.5));
+        sleep(Duration::from_secs_f64(STATUS_PERIOD * 0.5));
         status_timer.restart(sender, update_status_inner.clone(), STATUS_PERIOD);
         assert!(receiver.is_empty());
-        sleep(Duration::from_secs_f64(STATUS_PERIOD as f64 * 0.75));
+        sleep(Duration::from_secs_f64(STATUS_PERIOD * 0.75));
         assert!(receiver.is_empty());
-        sleep(Duration::from_secs_f64(STATUS_PERIOD as f64 * 0.26));
+        sleep(Duration::from_secs_f64(STATUS_PERIOD * 0.26));
         assert_eq!(receiver.recv().unwrap().unwrap(), update_status_inner);
     }
 

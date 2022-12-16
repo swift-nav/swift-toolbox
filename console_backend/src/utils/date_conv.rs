@@ -76,7 +76,7 @@ pub fn utc_time_from_msg(msg: &MsgUtcTime) -> UtcDateTime {
         msg.hours as u32,
         msg.minutes as u32,
         msg.seconds as u32,
-        msg.ns as u32,
+        msg.ns,
     )
 }
 

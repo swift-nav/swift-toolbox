@@ -1,3 +1,22 @@
+// Copyright (c) 2022 Swift Navigation
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of
+// this software and associated documentation files (the "Software"), to deal in
+// the Software without restriction, including without limitation the rights to
+// use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+// the Software, and to permit persons to whom the Software is furnished to do so,
+// subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+// FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+// COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+// CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 use capnp::message::Builder;
 use crossbeam::channel::{after, select, unbounded, Receiver, Sender, TrySendError};
 use log::error;
@@ -397,12 +416,12 @@ mod tests {
         status_timer.restart(sender.clone(), update_status_inner.clone(), STATUS_PERIOD);
         assert!(status_timer.active());
         assert!(receiver.is_empty());
-        sleep(Duration::from_secs_f64(STATUS_PERIOD as f64 * 0.5));
+        sleep(Duration::from_secs_f64(STATUS_PERIOD * 0.5));
         status_timer.restart(sender, update_status_inner.clone(), STATUS_PERIOD);
         assert!(receiver.is_empty());
-        sleep(Duration::from_secs_f64(STATUS_PERIOD as f64 * 0.75));
+        sleep(Duration::from_secs_f64(STATUS_PERIOD * 0.75));
         assert!(receiver.is_empty());
-        sleep(Duration::from_secs_f64(STATUS_PERIOD as f64 * 0.26));
+        sleep(Duration::from_secs_f64(STATUS_PERIOD * 0.26));
         assert_eq!(receiver.recv().unwrap().unwrap(), update_status_inner);
     }
 

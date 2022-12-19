@@ -25,6 +25,7 @@ import "Constants"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Dialogs
 import SwiftConsole
 
 Item {
@@ -339,26 +340,41 @@ Item {
                             text: Constants.connection.fileLabel
                         }
 
-                        SwiftComboBox {
-                            id: fileUrlBar
+                        RowLayout {
 
-                            Layout.alignment: Qt.AlignLeft
-                            Layout.fillWidth: true
-                            model: previous_files
-                            editable: true
-                            selectTextByMouse: true
-                            onAccepted: {
-                                connectButton.clicked();
+                            SwiftComboBox {
+                                id: fileUrlBar
+
+                                Layout.alignment: Qt.AlignLeft
+                                Layout.fillWidth: true
+                                model: previous_files
+                                editable: true
+                                selectTextByMouse: true
+                                onAccepted: {
+                                    connectButton.clicked();
+                                }
+
+                                Label {
+                                    anchors.fill: parent.contentItem
+                                    anchors.leftMargin: 4
+                                    verticalAlignment: Text.AlignVCenter
+                                    text: "path/to/file"
+                                    color: Constants.connection.placeholderTextColor
+                                    visible: !fileUrlBar.editText
+                                }
                             }
 
-                            Label {
-                                anchors.fill: parent.contentItem
-                                anchors.leftMargin: 4
-                                verticalAlignment: Text.AlignVCenter
-                                text: "path/to/file"
-                                color: Constants.connection.placeholderTextColor
-                                visible: !fileUrlBar.editText
+                            Button {
+                                Layout.preferredWidth: 30
+                                text: "..."
+                                onClicked: fileDialog.open()
                             }
+                        }
+                        FileDialog {
+                            id: fileDialog
+                            title: "Please choose a file"
+                            nameFilters: ["SBP files (*.sbp)"]
+                            onAccepted: fileUrlBar.editText = Utils.fileUrlToString(selectedFile)
                         }
                     }
                 }

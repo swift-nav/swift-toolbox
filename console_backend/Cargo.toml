@@ -60,7 +60,7 @@ logtest = "2.0.0"
 serial_test = "0.9.0"
 ndarray = "0.15.6"
 criterion = "0.4.0"
-sysinfo = "0.26.7"
+sysinfo = "0.27.1"
 tempfile = "3.3.0"
 
 [build-dependencies]

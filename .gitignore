@@ -26,3 +26,5 @@ installers/Windows/NSIS/*
 *.pyproject.bkup
 /swiftnav_console/.idea/workspace.xml
 /.idea/
+/.qt_for_python
+/pyside-setup

@@ -30,7 +30,7 @@ choco install cmake llvm capnproto zstandard
 
 # Mac
 xcode-select install
-brew install cmake capnp zstd create-dmg
+brew install cmake capnp zstd create-dmg wget
 
 # Linux
 apt install cmake libclang-dev capnproto zstd

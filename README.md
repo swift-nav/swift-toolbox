@@ -1,5 +1,7 @@
 # Swift Toolbox 🧰
 
+[![main](https://github.com/swift-nav/swift-toolbox/actions/workflows/main.yml/badge.svg)](https://github.com/swift-nav/swift-toolbox/actions/workflows/main.yml)
+
 ## Setup
 
 Install Rust: https://rustup.rs/

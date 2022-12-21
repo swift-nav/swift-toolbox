@@ -292,14 +292,13 @@ Rectangle {
                 if (loggingBarData.recording_filename)
                     recordingFilenameText.editText = loggingBarData.recording_filename;
 
-                if (sbpLoggingButton.checked) {
-                    if (mockTime) {
-                        mockRecordingTime += interval;
-                        recordingTime.text = loggingDurationFormat(mockRecordingTime / 1000);
-                    } else {
-                        recordingTime.text = loggingDurationFormat(loggingBarData.recording_duration_sec);
-                    }
+                if (mockTime) {
+                    mockRecordingTime += interval;
+                    recordingTime.text = loggingDurationFormat(mockRecordingTime / 1000);
+                } else {
+                    recordingTime.text = loggingDurationFormat(loggingBarData.recording_duration_sec);
                 }
+
                 if (mockSize) {
                     mockRecordingSize += 15.15;
                     recordingSize.text = bytesToString(mockRecordingSize);

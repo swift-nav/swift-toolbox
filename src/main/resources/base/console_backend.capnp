@@ -447,13 +447,15 @@ struct TabChangeEvent {
     currentTab @0 :Text;
 }
 
-struct LoggingBarRecordingName {
+struct LoggingBarStartRecording {
     name @0 :Text;
 }
 
 struct LoggingBarRecordingSize {
     size @0 :UInt16;
 }
+
+struct LoggingBarStopRecording {}
 
 struct Message {
     union {
@@ -512,7 +514,8 @@ struct Message {
         settingsNotification @52 : SettingsNotification;
         connectionDialogStatus @53 :ConnectionDialogStatus;
         onTabChangeEvent @54 :TabChangeEvent;
-        loggingBarRecordingName @55 : LoggingBarRecordingName;
+        loggingBarStartRecording @55 : LoggingBarStartRecording;
         loggingBarRecordingSize @56 : LoggingBarRecordingSize;
+        loggingBarStopRecording @57 : LoggingBarStopRecording;
     }
 }

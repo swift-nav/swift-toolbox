@@ -1,5 +1,15 @@
 # Swift Toolbox 🧰
 
+[![main](https://github.com/swift-nav/swift-toolbox/actions/workflows/main.yml/badge.svg)](https://github.com/swift-nav/swift-toolbox/actions/workflows/main.yml)
+
+## Introduction
+
+The Swift Console is a Graphical User Interface (GUI) program that provides a visual representation of the output from Swift Navigation GNSS receivers. The console displays information and enables the user to adjust the hardware settings. It runs on Windows, Linux, and macOS platforms.
+
+This is the open source repository for code that implements the console.  **Releases on this page are provisional and _NOT_ official releases.**  For official (and supported) releases please see visit [our downloads page](https://swiftnav.com/latest/swift-console) for the console and see [our guide](https://support.swiftnav.com/support/solutions/articles/44001903699-installing-swift-console) on how to install the console.
+
+![main](docs/swift-console.png)
+
 ## Setup
 
 Install Rust: https://rustup.rs/
@@ -394,3 +404,9 @@ Python support.
 
 [capnproto]: https://capnproto.org/
 [flatbuffers]: https://google.github.io/flatbuffers/
+
+## LICENSE
+
+Copyright © 2021-2022 Swift Navigation
+
+Distributed under the [MIT open source license](LICENSE).

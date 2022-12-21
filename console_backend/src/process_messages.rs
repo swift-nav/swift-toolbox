@@ -1,3 +1,22 @@
+// Copyright (c) 2022 Swift Navigation
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of
+// this software and associated documentation files (the "Software"), to deal in
+// the Software without restriction, including without limitation the rights to
+// use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+// the Software, and to permit persons to whom the Software is furnished to do so,
+// subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+// FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+// COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+// CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 use crossbeam::channel::Receiver;
 use std::io;
 
@@ -15,7 +34,6 @@ use sbp::{
         system::{MsgHeartbeat, MsgInsStatus, MsgInsUpdates, MsgStartup},
         tracking::{MsgMeasurementState, MsgTrackingState},
     },
-    Sbp, SbpMessage,
 };
 
 use crate::client_sender::BoxedClientSender;
@@ -81,7 +99,17 @@ pub fn process_messages(
             });
         }
         scope.spawn(|_| process_shared_state_events(event_rx, &tabs));
-        for (message, _) in &mut messages {
+        for (frame, _) in &mut messages {
+            tabs.main.lock().unwrap().serialize_frame(&frame);
+            tabs.status_bar.lock().unwrap().add_bytes(frame.len());
+            tabs.advanced_networking.lock().unwrap().update(&frame);
+            let message = match frame.to_sbp() {
+                Ok(msg) => msg,
+                Err(e) => {
+                    error!("{e}");
+                    continue;
+                }
+            };
             source.send_with_state(&tabs, &message);
             if let Some(ref tab) = tabs.settings {
                 tab.handle_msg(message);
@@ -320,11 +348,6 @@ fn register_events(link: sbp::link::Link<Tabs>) {
         tabs.baseline.lock().unwrap().handle_utc_time(msg.clone());
         tabs.solution_position.lock().unwrap().handle_utc_time(msg);
     });
-    link.register(|tabs: &Tabs, msg: Sbp| {
-        tabs.main.lock().unwrap().serialize_sbp(&msg);
-        tabs.status_bar.lock().unwrap().add_bytes(msg.encoded_len());
-        tabs.advanced_networking.lock().unwrap().handle_sbp(&msg);
-    });
 }
 
 mod messages {
@@ -339,13 +362,13 @@ mod messages {
     use log::debug;
     use sbp::{
         time::{GpsTime, GpsTimeError},
-        DeserializeError, Sbp, SbpIterExt,
+        DeserializeError, Frame, SbpIterExt,
     };
 
     type MessageWithTimeIter = Box<dyn Iterator<Item = MessageWithTime> + Send>;
 
     type MessageWithTime = (
-        Result<Sbp, DeserializeError>,
+        Result<Frame, DeserializeError>,
         Option<Result<GpsTime, GpsTimeError>>,
     );
 
@@ -363,7 +386,7 @@ mod messages {
         where
             R: io::Read + Send + 'static,
         {
-            let messages = sbp::iter_messages_with_timeout(reader, Self::TIMEOUT).with_rover_time();
+            let messages = sbp::iter_frames_with_timeout(reader, Self::TIMEOUT).with_rover_time();
             Self::from_boxed(Box::new(messages))
         }
 
@@ -371,7 +394,7 @@ mod messages {
         where
             R: io::Read + Send + 'static,
         {
-            let messages = sbp::iter_messages_with_timeout(reader, Self::TIMEOUT).with_rover_time();
+            let messages = sbp::iter_frames_with_timeout(reader, Self::TIMEOUT).with_rover_time();
             let messages = Box::new(RealtimeIter::new(messages));
             Self::from_boxed(messages)
         }
@@ -400,23 +423,21 @@ mod messages {
     }
 
     impl Iterator for Messages {
-        type Item = (Sbp, Option<Result<GpsTime, GpsTimeError>>);
+        type Item = (Frame, Option<Result<GpsTime, GpsTimeError>>);
 
         fn next(&mut self) -> Option<Self::Item> {
             crossbeam::select! {
                 recv(self.messages) -> msg => {
                     match msg.ok()? {
                         (Ok(msg), time) => Some((msg, time)),
-                        (Err(e), _) => match e {
-                            DeserializeError::IoError(e) => {
+                        (Err(e), _) => {
+                            if let DeserializeError::IoError(e) = e {
                                 self.err = Err(e);
-                                None
+                                return None;
                             }
-                            _ => {
-                                debug!("{}", e);
-                                self.next()
-                            }
-                        },
+                            debug!("{e}");
+                            self.next()
+                        }
                     }
                 }
                 recv(self.stop_recv) -> _ => None,
@@ -538,6 +559,7 @@ mod messages {
 
         use sbp::messages::logging::MsgLog;
         use sbp::messages::navigation::MsgGpsTime;
+        use sbp::Sbp;
 
         use super::*;
 

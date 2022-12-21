@@ -1,3 +1,25 @@
+/****************************************************************************
+ **
+ ** Copyright (c) 2022 Swift Navigation
+ **
+ ** Permission is hereby granted, free of charge, to any person obtaining a copy of
+ ** this software and associated documentation files (the "Software"), to deal in
+ ** the Software without restriction, including without limitation the rights to
+ ** use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ ** the Software, and to permit persons to whom the Software is furnished to do so,
+ ** subject to the following conditions:
+ **
+ ** The above copyright notice and this permission notice shall be included in all
+ ** copies or substantial portions of the Software.
+ **
+ ** THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ ** IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ ** FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ ** COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ ** IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ ** CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ **
+ ****************************************************************************/
 import "BaseComponents"
 import "Constants"
 import Qt.labs.platform as LP
@@ -170,7 +192,7 @@ MainTab {
                     rows: 2
                     enabled: settingsTable.settingsHealthy
 
-                    SwiftButton {
+                    Button {
                         id: saveButton
 
                         Layout.columnSpan: 1
@@ -187,7 +209,7 @@ MainTab {
                         onClicked: backend_request_broker.settings_save_request()
                     }
 
-                    SwiftButton {
+                    Button {
                         Layout.columnSpan: 1
                         Layout.rowSpan: 1
                         Layout.preferredWidth: parent.colWidth
@@ -202,7 +224,7 @@ MainTab {
                         onClicked: exportDialog.visible = true
                     }
 
-                    SwiftButton {
+                    Button {
                         Layout.columnSpan: 1
                         Layout.rowSpan: 1
                         Layout.preferredWidth: parent.colWidth
@@ -217,7 +239,7 @@ MainTab {
                         onClicked: importDialog.visible = true
                     }
 
-                    SwiftButton {
+                    Button {
                         Layout.columnSpan: 1
                         Layout.rowSpan: 1
                         Layout.preferredWidth: parent.colWidth
@@ -232,7 +254,7 @@ MainTab {
                         onClicked: resetDialog.visible = true
                     }
 
-                    SwiftButton {
+                    Button {
                         id: autoSurveyButton
 
                         property bool buttonEnabled: (settingsPane.selectedRowField("group") === "surveyed_position")
@@ -259,7 +281,7 @@ MainTab {
                         }
                     }
 
-                    SwiftButton {
+                    Button {
                         id: refreshButton
 
                         Layout.columnSpan: 1

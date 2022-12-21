@@ -24,3 +24,5 @@ installers/Windows/NSIS/*
 /.qt_for_python
 *.pyproject.user
 *.pyproject.bkup
+/swiftnav_console/.idea/workspace.xml
+/.idea/

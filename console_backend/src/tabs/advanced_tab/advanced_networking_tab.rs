@@ -1,3 +1,22 @@
+// Copyright (c) 2022 Swift Navigation
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of
+// this software and associated documentation files (the "Software"), to deal in
+// the Software without restriction, including without limitation the rights to
+// use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+// the Software, and to permit persons to whom the Software is furnished to do so,
+// subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+// FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+// COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+// CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 use capnp::message::Builder;
 use log::error;
 use sbp::messages::{
@@ -5,7 +24,7 @@ use sbp::messages::{
     piksi::{MsgNetworkStateReq, MsgNetworkStateResp},
     ConcreteMessage,
 };
-use sbp::{Sbp, SbpMessage};
+use sbp::Frame;
 use std::collections::HashMap;
 
 use std::net::UdpSocket;
@@ -152,16 +171,14 @@ impl AdvancedNetworkingTab {
         }
     }
 
-    pub fn handle_sbp(&mut self, msg: &Sbp) {
+    pub fn update(&mut self, frame: &Frame) {
         self.check_update();
 
         if self.running {
             if let Some(client) = &mut self.client {
-                if self.all_messages || OBS_MSGS.contains(&msg.message_type()) {
-                    if let Ok(frame) = sbp::to_vec(msg) {
-                        if let Err(_e) = client.send(&frame) {
-                            // Need to squelch error for the case of no client listening.
-                        }
+                if self.all_messages || OBS_MSGS.contains(&frame.msg_type()) {
+                    if let Err(_e) = client.send(frame.as_bytes()) {
+                        // Need to squelch error for the case of no client listening.
                     }
                 }
             } else {

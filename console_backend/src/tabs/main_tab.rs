@@ -1,3 +1,22 @@
+// Copyright (c) 2022 Swift Navigation
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of
+// this software and associated documentation files (the "Software"), to deal in
+// the Software without restriction, including without limitation the rights to
+// use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+// the Software, and to permit persons to whom the Software is furnished to do so,
+// subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+// FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+// COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+// CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 use std::{
     path::PathBuf,
     thread::JoinHandle,
@@ -6,7 +25,7 @@ use std::{
 
 use chrono::Local;
 use log::error;
-use sbp::Sbp;
+use sbp::Frame;
 
 use crate::client_sender::BoxedClientSender;
 use crate::common_constants::SbpLogging;
@@ -166,7 +185,7 @@ impl MainTab {
         self.shared_state.set_sbp_logging_format(logging);
     }
 
-    pub fn serialize_sbp(&mut self, msg: &Sbp) {
+    pub fn serialize_frame(&mut self, frame: &Frame) {
         let csv_logging;
         let sbp_logging;
         let sbp_logging_format;
@@ -215,8 +234,8 @@ impl MainTab {
         }
 
         if let Some(ref mut sbp_logger) = self.sbp_logger {
-            if let Err(e) = sbp_logger.serialize(msg) {
-                error!("error, {}, unable to log sbp msg, {:?}", e, msg);
+            if let Err(e) = sbp_logger.serialize(frame) {
+                error!("error, {}, unable to log sbp frame, {:?}", e, frame);
             }
         }
     }
@@ -237,7 +256,7 @@ impl MainTab {
             };
             Local::now().format(fmt).to_string().into()
         });
-        self.logging_directory.join(&name)
+        self.logging_directory.join(name)
     }
 }
 
@@ -247,10 +266,12 @@ mod tests {
     use crate::client_sender::TestSender;
     use crate::tabs::baseline_tab::BaselineTab;
     use crate::tabs::solution_tab::solution_position_tab::SolutionPositionTab;
+    use crate::test_common::msg_to_frame;
     use crate::types::{BaselineNED, MsgSender, PosLLH, VelNED};
     use crate::utils::{mm_to_m, ms_to_sec};
     use glob::glob;
     use sbp::messages::navigation::{MsgBaselineNed, MsgPosLlh, MsgVelNed};
+    use sbp::Sbp;
     use std::{
         fs::File,
         io::{sink, BufRead, BufReader},
@@ -326,15 +347,15 @@ mod tests {
         };
 
         {
-            main.serialize_sbp(&Sbp::MsgPosLlh(msg.clone()));
+            main.serialize_frame(&msg_to_frame(msg.clone()));
             solution_tab.handle_pos_llh(PosLLH::MsgPosLlh(msg));
-            main.serialize_sbp(&Sbp::MsgVelNed(msg_two.clone()));
+            main.serialize_frame(&msg_to_frame(msg_two.clone()));
             solution_tab.handle_vel_ned(VelNED::MsgVelNed(msg_two.clone()));
-            main.serialize_sbp(&Sbp::MsgBaselineNed(msg_three.clone()));
+            main.serialize_frame(&msg_to_frame(msg_three.clone()));
             baseline_tab.handle_baseline_ned(BaselineNED::MsgBaselineNed(msg_three));
             assert_eq!(main.last_csv_logging, CsvLogging::ON);
             main.end_csv_logging().unwrap();
-            main.serialize_sbp(&Sbp::MsgVelNed(msg_two));
+            main.serialize_frame(&msg_to_frame(msg_two));
             assert_eq!(main.last_csv_logging, CsvLogging::OFF);
         }
 
@@ -441,11 +462,11 @@ mod tests {
         };
 
         {
-            main.serialize_sbp(&Sbp::MsgPosLlh(msg_one.clone()));
-            main.serialize_sbp(&Sbp::MsgVelNed(msg_two.clone()));
+            main.serialize_frame(&msg_to_frame(msg_one.clone()));
+            main.serialize_frame(&msg_to_frame(msg_two.clone()));
             assert_eq!(main.last_sbp_logging_format, SbpLogging::SBP);
             main.close_sbp();
-            main.serialize_sbp(&Sbp::MsgVelNed(msg_two.clone()));
+            main.serialize_frame(&msg_to_frame(msg_two.clone()));
             assert!(!main.last_sbp_logging);
         }
 
@@ -533,11 +554,11 @@ mod tests {
         };
 
         {
-            main.serialize_sbp(&Sbp::MsgPosLlh(msg_one));
-            main.serialize_sbp(&Sbp::MsgVelNed(msg_two.clone()));
+            main.serialize_frame(&msg_to_frame(msg_one));
+            main.serialize_frame(&msg_to_frame(msg_two.clone()));
             assert_eq!(main.last_sbp_logging_format, SbpLogging::SBP_JSON);
             main.close_sbp();
-            main.serialize_sbp(&Sbp::MsgVelNed(msg_two));
+            main.serialize_frame(&msg_to_frame(msg_two));
             assert!(!main.last_sbp_logging);
         }
 

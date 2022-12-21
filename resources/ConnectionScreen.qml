@@ -1,8 +1,31 @@
+/****************************************************************************
+ **
+ ** Copyright (c) 2022 Swift Navigation
+ **
+ ** Permission is hereby granted, free of charge, to any person obtaining a copy of
+ ** this software and associated documentation files (the "Software"), to deal in
+ ** the Software without restriction, including without limitation the rights to
+ ** use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ ** the Software, and to permit persons to whom the Software is furnished to do so,
+ ** subject to the following conditions:
+ **
+ ** The above copyright notice and this permission notice shall be included in all
+ ** copies or substantial portions of the Software.
+ **
+ ** THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ ** IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ ** FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ ** COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ ** IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ ** CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ **
+ ****************************************************************************/
 import "BaseComponents"
 import "Constants"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Dialogs
 import SwiftConsole
 
 Item {
@@ -157,7 +180,7 @@ Item {
                             text: Constants.connection.serialLabel
                         }
 
-                        ComboBox {
+                        SwiftComboBox {
                             id: serialDevice
 
                             Layout.preferredHeight: Constants.connection.dropdownHeight
@@ -191,7 +214,7 @@ Item {
                             text: Constants.connection.baudrateLabel
                         }
 
-                        ComboBox {
+                        SwiftComboBox {
                             id: serialDeviceBaudRate
 
                             Layout.preferredHeight: Constants.connection.dropdownHeight
@@ -207,7 +230,7 @@ Item {
                             text: Constants.connection.flowLabel
                         }
 
-                        ComboBox {
+                        SwiftComboBox {
                             id: serialDeviceFlowControl
 
                             Layout.preferredHeight: Constants.connection.dropdownHeight
@@ -247,7 +270,7 @@ Item {
                             text: Constants.connection.hostLabel
                         }
 
-                        ComboBox {
+                        SwiftComboBox {
                             id: tcpUrlBar
 
                             Layout.fillWidth: true
@@ -273,7 +296,7 @@ Item {
                             text: Constants.connection.portLabel
                         }
 
-                        ComboBox {
+                        SwiftComboBox {
                             id: tcpPortBar
 
                             Layout.preferredWidth: parent.width / 4
@@ -317,26 +340,41 @@ Item {
                             text: Constants.connection.fileLabel
                         }
 
-                        ComboBox {
-                            id: fileUrlBar
+                        RowLayout {
 
-                            Layout.alignment: Qt.AlignLeft
-                            Layout.fillWidth: true
-                            model: previous_files
-                            editable: true
-                            selectTextByMouse: true
-                            onAccepted: {
-                                connectButton.clicked();
+                            SwiftComboBox {
+                                id: fileUrlBar
+
+                                Layout.alignment: Qt.AlignLeft
+                                Layout.fillWidth: true
+                                model: previous_files
+                                editable: true
+                                selectTextByMouse: true
+                                onAccepted: {
+                                    connectButton.clicked();
+                                }
+
+                                Label {
+                                    anchors.fill: parent.contentItem
+                                    anchors.leftMargin: 4
+                                    verticalAlignment: Text.AlignVCenter
+                                    text: "path/to/file"
+                                    color: Constants.connection.placeholderTextColor
+                                    visible: !fileUrlBar.editText
+                                }
                             }
 
-                            Label {
-                                anchors.fill: parent.contentItem
-                                anchors.leftMargin: 4
-                                verticalAlignment: Text.AlignVCenter
-                                text: "path/to/file"
-                                color: Constants.connection.placeholderTextColor
-                                visible: !fileUrlBar.editText
+                            Button {
+                                Layout.preferredWidth: 30
+                                text: "..."
+                                onClicked: fileDialog.open()
                             }
+                        }
+                        FileDialog {
+                            id: fileDialog
+                            title: "Please choose a file"
+                            nameFilters: ["SBP files (*.sbp)"]
+                            onAccepted: fileUrlBar.editText = Utils.fileUrlToString(selectedFile)
                         }
                     }
                 }
@@ -348,7 +386,7 @@ Item {
                         Layout.fillWidth: true
                     }
 
-                    SwiftButton {
+                    Button {
                         id: closeButton
 
                         text: "Cancel"
@@ -359,7 +397,7 @@ Item {
                         }
                     }
 
-                    SwiftButton {
+                    Button {
                         id: connectButton
 
                         property string tooltipText: "Connect"

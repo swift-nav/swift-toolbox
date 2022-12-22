@@ -288,7 +288,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
             if (exit_after_timeout is None and record_file is None and not record)
             else self._receive_messages_debug
         )
-        self._request_quit.connect(self._app.quit, Qt.QueuedConnection)
+        self._request_quit.connect(self._app.quit, Qt.QueuedConnection)  # type: ignore
         self._app.aboutToQuit.connect(self._thread.exit)
 
     @Slot()  # type: ignore
@@ -742,7 +742,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
                 found_help_arg = True
         args_main, _ = parser.parse_known_args(passed_args)
     if args_main.no_high_dpi:
-        QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_Use96Dpi)
+        QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_Use96Dpi)  # type: ignore
     if args_main.qmldebug:
         sys.argv.append("-qmljsdebugger=port:10002,block")
         debug = QQmlDebuggingEnabler()  # pylint: disable=unused-variable

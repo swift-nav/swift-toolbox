@@ -58,7 +58,7 @@ LOGGING_BAR_RECORDING: List[Dict[str, Any]] = [logging_bar_recording_update()]
 class SwiftStringListModel(QStringListModel):
     @Slot(str, result=int)  # type: ignore
     def indexOf(self, string: str) -> int:
-        matchedIndices = self.match(self.index(0), Qt.EditRole, string)
+        matchedIndices = self.match(self.index(0), Qt.EditRole, string)  # type: ignore
         index = matchedIndices[0].row() if len(matchedIndices) > 0 else -1
         return index
 

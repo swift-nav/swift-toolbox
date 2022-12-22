@@ -4,13 +4,11 @@
 
 ## Introduction
 
-The Swift Console is a Graphical User Interface (GUI) program that provides a visual representation of the output from Swift Navigation GNSS receivers. The console displays information and enables the user to adjust the hardware settings. It runs on Windows, Linux, and macOS platforms.
-
-This is the open source repository for code that implements the console.  **Releases on this page are provisional and _NOT_ official releases.**  For official (and supported) releases please see visit [our downloads page](https://swiftnav.com/latest/swift-console) for the console and see [our guide](https://support.swiftnav.com/support/solutions/articles/44001903699-installing-swift-console) on how to install the console.
+This is the open source repository for code that implements the Swift Navigation Console.  **Releases hosted on this page are provisional and are _NOT_ official releases.**  For official (and supported) releases please visit [our downloads page](https://swiftnav.com/latest/swift-console) and see [our guide](https://support.swiftnav.com/support/solutions/articles/44001903699-installing-swift-console) on how to install the application.
 
 ![main](docs/swift-console.png)
 
-## Setup
+## Development Setup
 
 Install Rust: https://rustup.rs/
 
@@ -48,7 +46,7 @@ brew install imagemagick
 apt install imagemagick
 ```
 
-### Troubleshooting building for macos
+### Troubleshooting building for macOS
 
 The module used for generating rust bindings for native libraries; `rust-bindgen`
 has been observed to fail to find system headers (i.e. `assert.h`, `math.h`) on

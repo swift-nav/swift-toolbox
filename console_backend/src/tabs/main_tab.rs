@@ -17,11 +17,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-use std::{
-    path::PathBuf,
-    thread::JoinHandle,
-    time::{Duration, Instant},
-};
+use std::path::PathBuf;
 
 use chrono::Local;
 use log::error;
@@ -36,7 +32,7 @@ use crate::constants::{
 use crate::output::{CsvLogging, SbpLogger};
 use crate::shared_state::{create_directory, SharedState};
 use crate::utils::{
-    refresh_log_recording_name, refresh_log_recording_size, refresh_loggingbar, OkOrLog,
+    refresh_log_recording_size, refresh_loggingbar, start_recording, stop_recording, OkOrLog,
 };
 
 pub struct MainTab {
@@ -151,7 +147,7 @@ impl MainTab {
             self.shared_state.set_settings_refresh(true);
         }
         self.shared_state.set_sbp_logging_format(logging);
-        refresh_log_recording_name(&self.client_sender, filepath.display().to_string());
+        start_recording(&self.client_sender, filepath.display().to_string());
     }
 
     pub fn serialize_frame(&mut self, frame: &Frame) {
@@ -209,6 +205,8 @@ impl MainTab {
                 let bytes_size = frame.as_bytes().len() as u16;
                 refresh_log_recording_size(&self.client_sender, bytes_size);
             }
+        } else {
+            stop_recording(&self.client_sender);
         }
     }
 

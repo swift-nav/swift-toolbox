@@ -4,13 +4,11 @@
 
 ## Introduction
 
-The Swift Console is a Graphical User Interface (GUI) program that provides a visual representation of the output from Swift Navigation GNSS receivers. The console displays information and enables the user to adjust the hardware settings. It runs on Windows, Linux, and macOS platforms.
-
-This is the open source repository for code that implements the console.  **Releases on this page are provisional and _NOT_ official releases.**  For official (and supported) releases please see visit [our downloads page](https://swiftnav.com/latest/swift-console) for the console and see [our guide](https://support.swiftnav.com/support/solutions/articles/44001903699-installing-swift-console) on how to install the console.
+This is the open source repository for code that implements the Swift Navigation Console.  **Releases hosted on this page are provisional and are _NOT_ official releases.**  For official (and supported) releases please visit [our downloads page](https://swiftnav.com/latest/swift-console) and see [our guide](https://support.swiftnav.com/support/solutions/articles/44001903699-installing-swift-console) on how to install the application.
 
 ![main](docs/swift-console.png)
 
-## Setup
+## Development Setup
 
 Install Rust: https://rustup.rs/
 
@@ -48,7 +46,7 @@ brew install imagemagick
 apt install imagemagick
 ```
 
-### Troubleshooting building for macos
+### Troubleshooting building for macOS
 
 The module used for generating rust bindings for native libraries; `rust-bindgen`
 has been observed to fail to find system headers (i.e. `assert.h`, `math.h`) on
@@ -102,8 +100,8 @@ python -m flit build --no-setup-py
 # Install the wheel.
 pip install dist/swiftnav_console-0.1.0-py3-none-any.whl --force-reinstall
 
-# Generate our resources file (may need to manually point to this binary installed by PySide2).
-pyside2-rcc resources/console_resources.qrc -o swiftnav_console/console_resources.py -g python
+# Generate our resources file (may need to manually point to this binary installed by PySide6).
+pyside6-rcc resources/console_resources.qrc -o swiftnav_console/console_resources.py -g python
 
 # Run the application.
 python -m swiftnav_console.main --read-capnp-recording path/to/pickle-file
@@ -181,8 +179,8 @@ The `qmlformat` tool is not included in the Qt PySide6 pip packages so the quick
 ## QML Profiling
 
 Download the universal Qt installer from qt.io. Run the installer, pick custom
-installation, and make sure that the Qt version installed matches the PySide2 or
-PySide6 version that is used for this project. Qt Creator will be automatically
+installation, and make sure that the Qt version installed matches the PySide6
+version that is used for this project. Qt Creator will be automatically
 installed.
 
 Once done, start the app using `cargo make run --qmldebug` or
@@ -280,9 +278,9 @@ Python extension.
 [pyo3]: https://docs.rs/pyo3/0.13.1/pyo3/
 [setuptools-rust]: https://github.com/PyO3/setuptools-rust
 
-### PySide2
+### PySide6
 
-We're using Qt 5.15.2 via PySide2 (the official Python bindings for Qt).  Made possible via fork of fbs: https://github.com/silverjam/fbs
+We're using Qt 6 via PySide6 (the official Python bindings for Qt).
 
 ### QML
 
@@ -325,7 +323,7 @@ potentially be used for this too.
 
 To this end the prototype attempts to impose these constraints:
 
-+ Minimal dependencies in Python: only Qt (PySide2) and Capnproto (pycapnp)
++ Minimal dependencies in Python: only Qt (via PySide6) and Capnproto (pycapnp)
 + All other necessary external libraries should be include via Rust libraries
 
 [ui-javascript]: https://github.com/swift-nav/swift-toolbox/blob/main/src/main/resources/base/view.qml#L57

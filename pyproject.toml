@@ -52,7 +52,7 @@ disable = [
   "too-many-branches",
   "too-many-function-args",
   "ungrouped-imports",
-  "duplicate-code"
+  "duplicate-code",
 ]
 
 [tool.pylint.FORMAT]

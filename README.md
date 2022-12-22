@@ -100,8 +100,8 @@ python -m flit build --no-setup-py
 # Install the wheel.
 pip install dist/swiftnav_console-0.1.0-py3-none-any.whl --force-reinstall
 
-# Generate our resources file (may need to manually point to this binary installed by PySide2).
-pyside2-rcc resources/console_resources.qrc -o swiftnav_console/console_resources.py -g python
+# Generate our resources file (may need to manually point to this binary installed by PySide6).
+pyside6-rcc resources/console_resources.qrc -o swiftnav_console/console_resources.py -g python
 
 # Run the application.
 python -m swiftnav_console.main --read-capnp-recording path/to/pickle-file
@@ -179,8 +179,8 @@ The `qmlformat` tool is not included in the Qt PySide6 pip packages so the quick
 ## QML Profiling
 
 Download the universal Qt installer from qt.io. Run the installer, pick custom
-installation, and make sure that the Qt version installed matches the PySide2 or
-PySide6 version that is used for this project. Qt Creator will be automatically
+installation, and make sure that the Qt version installed matches the PySide6
+version that is used for this project. Qt Creator will be automatically
 installed.
 
 Once done, start the app using `cargo make run --qmldebug` or
@@ -278,9 +278,9 @@ Python extension.
 [pyo3]: https://docs.rs/pyo3/0.13.1/pyo3/
 [setuptools-rust]: https://github.com/PyO3/setuptools-rust
 
-### PySide2
+### PySide6
 
-We're using Qt 5.15.2 via PySide2 (the official Python bindings for Qt).  Made possible via fork of fbs: https://github.com/silverjam/fbs
+We're using Qt 6 via PySide6 (the official Python bindings for Qt).
 
 ### QML
 
@@ -323,7 +323,7 @@ potentially be used for this too.
 
 To this end the prototype attempts to impose these constraints:
 
-+ Minimal dependencies in Python: only Qt (PySide2) and Capnproto (pycapnp)
++ Minimal dependencies in Python: only Qt (via PySide6) and Capnproto (pycapnp)
 + All other necessary external libraries should be include via Rust libraries
 
 [ui-javascript]: https://github.com/swift-nav/swift-toolbox/blob/main/src/main/resources/base/view.qml#L57

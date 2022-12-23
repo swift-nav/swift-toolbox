@@ -163,11 +163,11 @@ The `qmlformat` tool is not included in the Qt PySide6 pip packages so the quick
 * Install the desired version of qt. This website will help you customize the install command for your machine, https://ddalcino.github.io/aqt-list-server/ . Here are some OS specific generic install commands (visit the website if you need a different architecture):
   ```
   # Linux
-  aqt install-qt linux desktop 6.3.1 gcc_64
+  aqt install-qt linux desktop 6.4.1 gcc_64
   # MacOS
-  aqt install-qt mac desktop 6.3.1 clang_64
+  aqt install-qt mac desktop 6.4.1 clang_64
   # Windows
-  aqt install-qt windows desktop 6.3.1 win64_msvc2019_64
+  aqt install-qt windows desktop 6.4.1 win64_msvc2019_64
   ```
 * Add the `qmlformat` tool to your path. It is located in `<qt install dir>/<qt version>/<arch>/bin/`, this may be different depending on your system.
 

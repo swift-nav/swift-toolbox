@@ -35,3 +35,25 @@ include = ["swiftnav_console/console_resources.py"]
 
 [tool.black]
 line-length = 120
+
+[tool.pylint.MASTER]
+jobs = 0
+extension-pkg-whitelist = "PySide6"
+
+[tool.pylint.'MESSAGES CONTROL']
+disable = [
+  "missing-function-docstring",
+  "invalid-name",
+  "missing-module-docstring",
+  "missing-class-docstring",
+  "too-many-locals",
+  "too-many-statements",
+  "too-many-arguments",
+  "too-many-branches",
+  "too-many-function-args",
+  "ungrouped-imports",
+  "duplicate-code",
+]
+
+[tool.pylint.FORMAT]
+max-line-length = 120

@@ -168,7 +168,7 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@910f37ee23653fd4b243fe5c7f81ff26a8a6a64e
         with:
-          version: '6.3.1'
+          version: '6.4.1'
           setup-python: false
 
       - name: Run Checks

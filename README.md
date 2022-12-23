@@ -365,7 +365,7 @@ To this end the prototype attempts to imposes these constraints:
     be written to pass data to the backend, and to marshal data from the
     backend into the data binding objects.
 
-[ui-javascript]: https://github.com/swift-nav/swift-toolbox/blob/main/src/main/resources/base/view.qml#L57
+[ui-javascript]: https://github.com/swift-nav/swift-toolbox/blob/4c8736ddc938f2937fafde778c36fcfb3cc2c806/resources/SolutionTabComponents/SolutionPositionTab.qml#L359
 
 #### pyqtdeploy
 

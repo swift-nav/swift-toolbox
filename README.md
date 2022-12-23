@@ -214,7 +214,8 @@ Creator QML Profiling view that shows.
 
 In order to enable QML debugging, add the command line option `-qmldebug`.
 QML debugging does not entirely work currently for this project and
-still needs to be fleshed out. See https://swift-nav.atlassian.net/browse/CPP-400
+still needs to be fleshed out.  The internal tracking issue for this is
+[CPP-400](https://swift-nav.atlassian.net/browse/CPP-400).
 
 ## Contributing
 

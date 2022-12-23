@@ -90,6 +90,7 @@ PY_BASE_URL = "https://github.com/indygreg/python-build-standalone/releases/down
 SWFT_PY_BASE_URL = "https://github.com/swift-nav/python-build-standalone/releases/download/20220205%2Bswift"
 MACOSX_DEPLOYMENT_TARGET = "10.15"
 APP_NAME = "swift-console"
+QT_VERSION = "6.4.1"
 
 [tasks.init]
 
@@ -413,7 +414,7 @@ if is_path_exists "${WORKSPACE}/pyside-setup/setup.py"
   cm_run_task get-qt-version
   cm_run_task build-install-pyside
 else
-  exec --fail-on-error ${PYTHON} -m pip install PySide6==6.3.2
+  exec --fail-on-error ${PYTHON} -m pip install PySide6==${QT_VERSION}
 end
 '''
 
@@ -436,7 +437,7 @@ if is_path_exists "${WORKSPACE}/pyside-setup/setup.py"
   # This will install to both dist and non-dist python
   cm_run_task build-dist-install-pyside
 else
-  exec --fail-on-error ${DIST_PYTHON} -m pip install PySide6==6.3.2
+  exec --fail-on-error ${DIST_PYTHON} -m pip install PySide6==${QT_VERSION}
 end
 '''
 

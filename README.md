@@ -288,52 +288,68 @@ QML (QtQuick Mark-up Language) is used to model the UI.
 
 ### Python 3.9 Standalone Build
 
-[python-build-standalone](https://github.com/indygreg/python-build-standalone) provides redistributable builds of Python for multiple enviroments. We use Python 3.9 (which requires PyInstaller 4.2).
+[python-build-standalone](https://github.com/indygreg/python-build-standalone) provides
+redistributable builds of Python, these builds are designed to function in a variety
+of generic Linux, Windows and macOS environments.
 
 ## Design Philosophy
 
 ### Installers, resources and packaging
 
-One of the things that makes the current console difficult to maintain is the
-number of Python dependencies that are required to implement the console. In
+One of the things that made the old console difficult to maintain was the
+number of Python dependencies that were required to implement the console. In
 particular things like the TraitsUI library bind us to particular versions of
-PyQt that work with traits. Additionally, if we want to use new libraries,
+PyQt that work with traits. Additionally, if we wanted to use new libraries,
 PyInstaller's "hooks" need to be up-to-date enough to work with these
-libraries: https://github.com/pyinstaller/pyinstaller/tree/develop/PyInstaller/hooks.
+libraries (see (PyInstaller hooks)pyinsthooks] for reference).
 
-PyInstaller (via fbs) ends up being a great way to package a massive
-framework like Qt.  Otherwise we would have to rely on Qt being present
-on Unix like systems, or using tools like [macdeployqt][] and [windeployqt][].
+[pyinsthooks]: https://github.com/pyinstaller/pyinstaller/tree/develop/PyInstaller/hooks.
+
+PyInstaller can be a great way to package a massive framework like Qt,
+but it still requires PyInstaller to process and package your application,
+which creates an environment where your deployed app isn't quite the same
+as your development app.
+
+In the current framework don't use PyInstaller, but rather rely on the 
+redistributable nature of the "Python standalone" build to create a build
+of the app that is usable for both development and distribution.  The
+Python standlone build can be packaged up and dropped onto a user's sytem
+as a simple zip file, or via a standard installer technology like NSIS/MSI,
+DEB/RPM or a macOS app bundle.
+
+If we didn't bundle dependencies like Qt, we would have to rely on Qt
+being present on Unix like systems via package dependencies, and on
+other systems we need to use tools like [macdeployqt][] and [windeployqt][].  
 
 [macdeployqt]: https://doc.qt.io/qt-5/macos-deployment.html#the-bundle
 [windeployqt]: https://doc.qt.io/qt-5/windows-deployment.html
 
-To this end, it makes sense to minimize the number of dependencies that we
-use for Python in order to avoid this problem.  This ends up "dovetailing"
-well with the usage of Rust as the UI backend.
+Also in service of this goal, it makes sense to minimize the number of
+dependencies that we use for Python in order to avoid this problem.
+This ends up "dovetailing" well with the usage of Rust as the UI backend.
+Rust's package management prefers static linking, so depedencies are
+wrapped up into a single redistributable object, which makes distribution
+to client machines easier.
 
 Resource management is another concern, for non-code assets like pictures,
 protocol definitions (`.capnp` files) and UI mark-up files (`.qml`) we need a
-system to bundle these -- the `fbs` tool currently handles this, though other
-tools like [qrc][] and Rust's [`include_bytes!`][rust_include] could
-potentially be used for this too.
+system to bundle these -- we use Qt's resource system (via [qrc][]) but we
+could use things like Rust's [`include_bytes!`][rust_include].
 
 [qrc]: https://doc.qt.io/qt-5/resources.html
 [rust_include]: https://doc.rust-lang.org/std/macro.include_bytes.html
 
-To this end the prototype attempts to impose these constraints:
+To this end the original prototype of this app attempted to impose these constraints:
 
 + Minimal dependencies in Python: only Qt (via PySide6) and Capnproto (pycapnp)
 + All other necessary external libraries should be include via Rust libraries
 
-[ui-javascript]: https://github.com/swift-nav/swift-toolbox/blob/main/src/main/resources/base/view.qml#L57
-
-### QML - a path to mobile
+### QML - minimizing dependence on Python
 
 The QtQuick Mark-up Language (QML) is used to code the UI.  QML provides an
 abstraction layer for describing the UI that doesn't require the UI to be hand
 coded in any particular language.  While Qt already has support for this
-through their UIC files, QML also provides support for lightweight logic to be
+through their UIC files, QML also provides support for display logic to be
 directly embedded in the QML file via JavaScript - this helps with the
 portability of the QML since UI logic doesn't need to be encoded in the
 language hostign the QML.
@@ -348,6 +364,8 @@ To this end the prototype attempts to imposes these constraints:
   - For "message passing", to implement features, Python code will need to
     be written to pass data to the backend, and to marshal data from the
     backend into the data binding objects.
+
+[ui-javascript]: https://github.com/swift-nav/swift-toolbox/blob/4c8736ddc938f2937fafde778c36fcfb3cc2c806/resources/SolutionTabComponents/SolutionPositionTab.qml#L359
 
 #### pyqtdeploy
 

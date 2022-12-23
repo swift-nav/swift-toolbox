@@ -90,7 +90,7 @@ PY_BASE_URL = "https://github.com/indygreg/python-build-standalone/releases/down
 SWFT_PY_BASE_URL = "https://github.com/swift-nav/python-build-standalone/releases/download/20220205%2Bswift"
 MACOSX_DEPLOYMENT_TARGET = "10.15"
 APP_NAME = "swift-console"
-QT_VERSION = "6.4.1"
+QT_VERSION = "6.4.1"                                                                                         # Also needs to be updated in .github/workflows/main.yml
 
 [tasks.init]
 
@@ -249,21 +249,19 @@ dependencies = [
 ]
 
 [tasks.run]
-dependencies = [
-  "prepare-run",
-]
+dependencies = ["prepare-run"]
 run_task = "start-console"
 
 [tasks.gdb-run]
-dependencies = [ "prepare-run" ]
+dependencies = ["prepare-run"]
 run_task = "start-console-gdb"
 
 [tasks.callgrind-run]
-dependencies = [ "prepare-run" ]
+dependencies = ["prepare-run"]
 run_task = "start-console-callgrind"
 
 [tasks.cprofile-run]
-dependencies = [ "prepare-run" ]
+dependencies = ["prepare-run"]
 run_task = "start-console-cprofile"
 
 [tasks.prod-run]
@@ -311,7 +309,7 @@ args = [
 ]
 
 [tasks.dist-install-pip-flit]
-command="${DIST_PYTHON}"
+command = "${DIST_PYTHON}"
 args = ["-m", "pip", "install", "flit"]
 
 [tasks.build-frontend-wheel]
@@ -577,7 +575,7 @@ dependencies = [
 
 [tasks.prep-debug-pyside]
 condition = { files_not_exist = ["${WORKSPACE}/pyside-setup/setup.py"] }
-dependencies = [ "get-qt-version" ]
+dependencies = ["get-qt-version"]
 script_runner = "@duckscript"
 script = '''
   qt_version = get_env QT_VERSION
@@ -586,7 +584,9 @@ script = '''
 '''
 
 [tasks.build-pyside]
-condition = { files_not_exist = ["${WORKSPACE}/pyside-setup/dist/${PYSIDE_WHEEL}"] }
+condition = { files_not_exist = [
+  "${WORKSPACE}/pyside-setup/dist/${PYSIDE_WHEEL}",
+] }
 dependencies = ["prep-debug-pyside"]
 cwd = "pyside-setup"
 script_runner = "@duckscript"

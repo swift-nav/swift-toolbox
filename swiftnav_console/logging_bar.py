@@ -21,13 +21,12 @@
 """
 
 from typing import Dict, Any, List
+import time
 
 from PySide6.QtCore import Property, QObject, QStringListModel, Signal, Slot, Qt
 from PySide6.QtQml import QmlElement
 
 from .constants import Keys, SbpLogging
-
-import time
 
 QML_IMPORT_NAME = "SwiftConsole"
 QML_IMPORT_MAJOR_VERSION = 1
@@ -111,7 +110,7 @@ class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
         size = update_data[Keys.RECORDING_SIZE]
         if size is not None:
             current_bar[Keys.RECORDING_SIZE] += size
-        else: # event reset recording
+        else:  # event reset recording
             current_bar[Keys.RECORDING_SIZE] = 0
             current_bar[Keys.RECORDING_START_TIME] = None
 

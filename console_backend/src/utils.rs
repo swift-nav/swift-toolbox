@@ -240,11 +240,18 @@ pub fn refresh_log_recording_size(client_sender: &BoxedClientSender, size: u16) 
     client_sender.send_data(serialize_capnproto_builder(builder));
 }
 
-pub fn refresh_log_recording_name(client_sender: &BoxedClientSender, name: String) {
+pub fn start_recording(client_sender: &BoxedClientSender, file_name: String) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
-    let mut log_name = msg.init_logging_bar_recording_name();
-    log_name.set_name(name.as_str());
+    let mut packet = msg.init_logging_bar_start_recording();
+    packet.set_name(file_name.as_str());
+    client_sender.send_data(serialize_capnproto_builder(builder));
+}
+
+pub fn stop_recording(client_sender: &BoxedClientSender) {
+    let mut builder = Builder::new_default();
+    let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
+    msg.init_logging_bar_stop_recording();
     client_sender.send_data(serialize_capnproto_builder(builder));
 }
 

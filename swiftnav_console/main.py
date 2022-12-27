@@ -288,7 +288,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
             if (exit_after_timeout is None and record_file is None and not record)
             else self._receive_messages_debug
         )
-        self._request_quit.connect(self._app.quit, Qt.QueuedConnection)
+        self._request_quit.connect(self._app.quit, Qt.QueuedConnection)  # type: ignore
         self._app.aboutToQuit.connect(self._thread.exit)
 
     @Slot()  # type: ignore
@@ -502,11 +502,16 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                 data[Keys.SBP_LOGGING] = m.loggingBarStatus.sbpLogging
                 data[Keys.SBP_LOGGING_FORMAT] = m.loggingBarStatus.sbpLoggingFormat
                 LoggingBarData.post_data_update(data)
-            elif m.which == Message.Union.LoggingBarRecordingName: # used as basically recording reset
+            elif m.which == Message.Union.LoggingBarStartRecording:
                 data = logging_bar_recording_update()
                 data[Keys.RECORDING_SIZE] = None # reset since name changed => new file
                 data[Keys.RECORDING_START_TIME] = time.time()
-                data[Keys.RECORDING_FILENAME] = m.loggingBarRecordingName.name
+                data[Keys.RECORDING_FILENAME] = m.loggingBarStartRecording.name
+                LoggingBarData.post_recording_data_update(data)
+            elif m.which == Message.Union.LoggingBarStopRecording:
+                data = logging_bar_recording_update()
+                data[Keys.RECORDING_SIZE] = None # reset since name changed => new file
+                data[Keys.RECORDING_START_TIME] = None
                 LoggingBarData.post_recording_data_update(data)
             elif m.which == Message.Union.LoggingBarRecordingSize:
                 data = logging_bar_recording_update()
@@ -742,10 +747,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
                 found_help_arg = True
         args_main, _ = parser.parse_known_args(passed_args)
     if args_main.no_high_dpi:
-        QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_Use96Dpi)
-    else:
-        QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
-        QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
+        QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_Use96Dpi)  # type: ignore
     if args_main.qmldebug:
         sys.argv.append("-qmljsdebugger=port:10002,block")
         debug = QQmlDebuggingEnabler()  # pylint: disable=unused-variable

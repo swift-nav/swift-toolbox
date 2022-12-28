@@ -17,7 +17,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use chrono::Local;
 use log::error;
@@ -35,17 +35,17 @@ use crate::utils::{
     refresh_log_recording_size, refresh_loggingbar, start_recording, stop_recording, OkOrLog,
 };
 
-pub struct MainTab<W> {
+pub struct MainTab {
     logging_directory: PathBuf,
     last_csv_logging: CsvLogging,
     last_sbp_logging: bool,
     last_sbp_logging_format: SbpLogging,
-    sbp_logger: Option<SbpLogger<W>>,
+    sbp_logger: Option<SbpLogger<PathBuf>>,
     client_sender: BoxedClientSender,
     shared_state: SharedState,
 }
 
-impl<W> MainTab<W> {
+impl MainTab {
     pub fn new(shared_state: SharedState, client_sender: BoxedClientSender) -> Self {
         let sbp_logging_format = shared_state.sbp_logging_format();
         // reopen an existing log if we disconnected
@@ -128,7 +128,7 @@ impl<W> MainTab<W> {
             }
         }
 
-        self.sbp_logger = Some(logging.new_logger(&filepath));
+        self.sbp_logger = Some(logging.new_logger(filepath.clone()));
 
         if self.sbp_logger.is_some() {
             self.shared_state.set_sbp_logging(true);

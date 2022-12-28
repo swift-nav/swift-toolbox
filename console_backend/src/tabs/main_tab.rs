@@ -35,44 +35,38 @@ use crate::utils::{
     refresh_log_recording_size, refresh_loggingbar, start_recording, stop_recording, OkOrLog,
 };
 
-pub struct MainTab {
+pub struct MainTab<W> {
     logging_directory: PathBuf,
     last_csv_logging: CsvLogging,
     last_sbp_logging: bool,
     last_sbp_logging_format: SbpLogging,
-    sbp_logger: Option<SbpLogger>,
+    sbp_logger: Option<SbpLogger<W>>,
     client_sender: BoxedClientSender,
     shared_state: SharedState,
 }
 
-impl MainTab {
-    pub fn new(shared_state: SharedState, client_sender: BoxedClientSender) -> MainTab {
+impl<W> MainTab<W> {
+    pub fn new(shared_state: SharedState, client_sender: BoxedClientSender) -> Self {
         let sbp_logging_format = shared_state.sbp_logging_format();
         // reopen an existing log if we disconnected
-        let sbp_logger =
-            shared_state
-                .sbp_logging_filepath()
-                .and_then(|path| match sbp_logging_format {
-                    SbpLogging::SBP_JSON => SbpLogger::open_sbp_json(path).ok(),
-                    SbpLogging::SBP => SbpLogger::open_sbp(path).ok(),
-                });
-        let last_sbp_logging = if sbp_logger.is_none() && shared_state.sbp_logging() {
-            false
-        } else {
-            shared_state.sbp_logging()
-        };
+        let sbp_logger = shared_state
+            .sbp_logging_filepath()
+            .map(|path| sbp_logging_format.new_logger(path));
+        let last_sbp_logging = sbp_logger.is_some() && shared_state.sbp_logging();
         let csv_logging_live = shared_state
             .lock()
             .solution_tab
             .velocity_tab
             .log_file
             .is_some();
+
         let last_csv_logging =
             if !csv_logging_live && matches!(shared_state.csv_logging(), CsvLogging::ON) {
                 CsvLogging::OFF
             } else {
                 shared_state.csv_logging()
             };
+
         MainTab {
             logging_directory: shared_state.logging_directory(),
             last_csv_logging,
@@ -134,11 +128,7 @@ impl MainTab {
             }
         }
 
-        self.sbp_logger = match logging {
-            SbpLogging::SBP => SbpLogger::new_sbp(&filepath),
-            SbpLogging::SBP_JSON => SbpLogger::new_sbp_json(&filepath),
-        }
-        .ok_or_log(|e| error!("issue creating file, {}, error, {e}", filepath.display()));
+        self.sbp_logger = Some(logging.new_logger(&filepath));
 
         if self.sbp_logger.is_some() {
             self.shared_state.set_sbp_logging(true);

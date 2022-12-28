@@ -50,42 +50,27 @@ impl CsvLogging {
 pub type SbpLogging = cc::SbpLogging;
 
 #[derive(Debug)]
-pub enum SbpLogger {
-    Sbp(File),
-    Json(JsonEncoder<File, CompactFormatter>),
+pub struct SbpLogger<W> {
+    logger: SbpLogging,
+    out: W,
 }
 
-impl SbpLogger {
-    pub fn new_sbp<P: AsRef<Path>>(filepath: P) -> Result<SbpLogger> {
-        Ok(SbpLogger::Sbp(File::create(filepath)?))
+impl<W: AsRef<Path>> SbpLogger<W> {
+    pub fn new(logger: SbpLogging, out: W) -> Self {
+        Self { logger, out }
     }
 
-    pub fn open_sbp<P: AsRef<Path>>(filepath: P) -> Result<SbpLogger> {
-        Ok(SbpLogger::Sbp(
-            OpenOptions::new().append(true).open(filepath)?,
-        ))
+    pub fn serialize(&self, frame: &Frame) {
+        let bytes = match &self.logger {
+            SbpLogging::SBP_JSON => frame.as_bytes(),
+            SbpLogging::SBP => frame.as_bytes(),
+        };
     }
+}
 
-    pub fn new_sbp_json<P: AsRef<Path>>(filepath: P) -> Result<SbpLogger> {
-        Ok(SbpLogger::Json(JsonEncoder::new(
-            File::create(filepath)?,
-            CompactFormatter,
-        )))
-    }
-
-    pub fn open_sbp_json<P: AsRef<Path>>(filepath: P) -> Result<SbpLogger> {
-        Ok(SbpLogger::Json(JsonEncoder::new(
-            OpenOptions::new().append(true).open(filepath)?,
-            CompactFormatter,
-        )))
-    }
-
-    pub fn serialize(&mut self, frame: &Frame) -> Result<()> {
-        match self {
-            SbpLogger::Sbp(writer) => writer.write_all(frame.as_bytes())?,
-            SbpLogger::Json(logger) => logger.send(&frame.to_sbp()?)?,
-        }
-        Ok(())
+impl SbpLogging {
+    pub fn new_logger<W>(self, out: W) -> SbpLogger<W> {
+        SbpLogger::new(self, out)
     }
 }
 
@@ -253,7 +238,7 @@ mod tests {
         };
         let msg_two_wrapped = Sbp::MsgInsUpdates(msg_two.clone());
         {
-            let mut sbp_logger = SbpLogger::new_sbp(&filepath).unwrap();
+            let mut sbp_logger = SbpLogger::new(SbpLogging::SBP, &filepath);
             sbp_logger
                 .serialize(&msg_to_frame(msg_one_wrapped))
                 .unwrap();

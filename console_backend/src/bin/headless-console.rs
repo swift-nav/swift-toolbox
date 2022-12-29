@@ -39,7 +39,7 @@ Running in headless mode only command line options work.
 Help:
 ./headless-console --help
 Usage:
-./headless-console --tcp piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com --port=55555
+./headless-console --tcp piksi-relay-bb9f2b10e53143f4a816a11884e679cf.ce.swiftnav.com:55555
 "#
         );
         return Ok(());
@@ -54,7 +54,6 @@ Usage:
     refresh_connection_frontend(&client_send, &shared_state);
     refresh_loggingbar(&client_send, &shared_state);
     server_recv_thread(conn_manager, client_send, server_recv, shared_state);
-
     let mut msg_count: usize = 0;
     while client_recv.recv().is_ok() {
         msg_count += 1;

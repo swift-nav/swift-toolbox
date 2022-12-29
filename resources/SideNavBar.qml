@@ -165,7 +165,7 @@ Item {
             implicitHeight: Constants.sideNavBar.tabBarHeight
             enabled: top.enabled
             color: Constants.sideNavBar.backgroundColor
-            state: (solidConnection && dataRate > 0) ? "good" : solidConnection ? "ok" : "bad"
+            state: solidConnection ? (dataRate > 0 ? "good" : "ok") : "bad"
             states: [
                 State {
                     name: "good"

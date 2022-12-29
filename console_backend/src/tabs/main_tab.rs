@@ -17,11 +17,12 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+use std::fs::File;
 use std::path::{Path, PathBuf};
 
 use chrono::Local;
 use log::error;
-use sbp::Frame;
+use sbp::{Frame, Sbp};
 
 use crate::client_sender::BoxedClientSender;
 use crate::common_constants::SbpLogging;
@@ -40,7 +41,7 @@ pub struct MainTab {
     last_csv_logging: CsvLogging,
     last_sbp_logging: bool,
     last_sbp_logging_format: SbpLogging,
-    sbp_logger: Option<SbpLogger<PathBuf>>,
+    sbp_logger: Option<SbpLogger<File>>,
     client_sender: BoxedClientSender,
     shared_state: SharedState,
 }
@@ -51,7 +52,7 @@ impl MainTab {
         // reopen an existing log if we disconnected
         let sbp_logger = shared_state
             .sbp_logging_filepath()
-            .map(|path| sbp_logging_format.new_logger(path));
+            .and_then(|path| sbp_logging_format.new_logger(path).ok());
         let last_sbp_logging = sbp_logger.is_some() && shared_state.sbp_logging();
         let csv_logging_live = shared_state
             .lock()
@@ -128,7 +129,7 @@ impl MainTab {
             }
         }
 
-        self.sbp_logger = Some(logging.new_logger(filepath.clone()));
+        self.sbp_logger = logging.new_logger(filepath.clone()).ok();
 
         if self.sbp_logger.is_some() {
             self.shared_state.set_sbp_logging(true);
@@ -140,7 +141,12 @@ impl MainTab {
         start_recording(&self.client_sender, filepath.display().to_string());
     }
 
-    pub fn serialize_frame(&mut self, frame: &Frame) {
+    /// Serialize frame incoming data,
+    ///
+    /// # Parameters:
+    /// - `frame`: The raw incoming data frame
+    /// - `msg`: Parsed message if present
+    pub fn serialize(&mut self, frame: &Frame, msg: Option<Sbp>) {
         let csv_logging;
         let sbp_logging;
         let sbp_logging_format;
@@ -189,12 +195,7 @@ impl MainTab {
         }
 
         if let Some(ref mut sbp_logger) = self.sbp_logger {
-            if let Err(e) = sbp_logger.serialize(frame) {
-                error!("error, {e}, unable to log sbp frame, {frame:?}");
-            } else {
-                let bytes_size = frame.as_bytes().len() as u16;
-                refresh_log_recording_size(&self.client_sender, bytes_size);
-            }
+            sbp_logger.serialize(frame, msg);
         } else {
             stop_recording(&self.client_sender);
         }
@@ -306,15 +307,15 @@ mod tests {
         };
 
         {
-            main.serialize_frame(&msg_to_frame(msg.clone()));
+            main.serialize(&msg_to_frame(msg.clone()), None);
             solution_tab.handle_pos_llh(PosLLH::MsgPosLlh(msg));
-            main.serialize_frame(&msg_to_frame(msg_two.clone()));
+            main.serialize(&msg_to_frame(msg_two.clone()));
             solution_tab.handle_vel_ned(VelNED::MsgVelNed(msg_two.clone()));
-            main.serialize_frame(&msg_to_frame(msg_three.clone()));
+            main.serialize(&msg_to_frame(msg_three.clone()));
             baseline_tab.handle_baseline_ned(BaselineNED::MsgBaselineNed(msg_three));
             assert_eq!(main.last_csv_logging, CsvLogging::ON);
             main.end_csv_logging().unwrap();
-            main.serialize_frame(&msg_to_frame(msg_two));
+            main.serialize(&msg_to_frame(msg_two));
             assert_eq!(main.last_csv_logging, CsvLogging::OFF);
         }
 
@@ -421,11 +422,11 @@ mod tests {
         };
 
         {
-            main.serialize_frame(&msg_to_frame(msg_one.clone()));
-            main.serialize_frame(&msg_to_frame(msg_two.clone()));
+            main.serialize(&msg_to_frame(msg_one.clone()));
+            main.serialize(&msg_to_frame(msg_two.clone()));
             assert_eq!(main.last_sbp_logging_format, SbpLogging::SBP);
             main.close_sbp();
-            main.serialize_frame(&msg_to_frame(msg_two.clone()));
+            main.serialize(&msg_to_frame(msg_two.clone()));
             assert!(!main.last_sbp_logging);
         }
 
@@ -513,11 +514,11 @@ mod tests {
         };
 
         {
-            main.serialize_frame(&msg_to_frame(msg_one));
-            main.serialize_frame(&msg_to_frame(msg_two.clone()));
+            main.serialize(&msg_to_frame(msg_one));
+            main.serialize(&msg_to_frame(msg_two.clone()));
             assert_eq!(main.last_sbp_logging_format, SbpLogging::SBP_JSON);
             main.close_sbp();
-            main.serialize_frame(&msg_to_frame(msg_two));
+            main.serialize(&msg_to_frame(msg_two));
             assert!(!main.last_sbp_logging);
         }
 

@@ -34,6 +34,7 @@ use sbp::{
         system::{MsgHeartbeat, MsgInsStatus, MsgInsUpdates, MsgStartup},
         tracking::{MsgMeasurementState, MsgTrackingState},
     },
+    Error, Sbp,
 };
 
 use crate::client_sender::BoxedClientSender;
@@ -100,19 +101,21 @@ pub fn process_messages(
         }
         scope.spawn(|_| process_shared_state_events(event_rx, &tabs));
         for (frame, _) in &mut messages {
-            tabs.main.lock().unwrap().serialize_frame(&frame);
             tabs.status_bar.lock().unwrap().add_bytes(frame.len());
             tabs.advanced_networking.lock().unwrap().update(&frame);
-            let message = match frame.to_sbp() {
-                Ok(msg) => msg,
+            let msg = match frame.to_sbp() {
+                Ok(msg) => Some(msg),
                 Err(e) => {
                     error!("{e}");
-                    continue;
+                    None
                 }
             };
-            source.send_with_state(&tabs, &message);
+            tabs.main.lock().unwrap().serialize(&frame, msg.to_owned());
+            let msg = if let Some(msg) = msg { msg } else { continue };
+
+            source.send_with_state(&tabs, &msg);
             if let Some(ref tab) = tabs.settings {
-                tab.handle_msg(message);
+                tab.handle_msg(msg);
             }
             log::logger().flush();
         }

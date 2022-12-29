@@ -20,10 +20,10 @@
 use log::error;
 use std::fs::{File, OpenOptions};
 use std::io::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
-use sbp::json::JsonEncoder;
-use sbp::Frame;
+use sbp::json::{to_vec, JsonEncoder};
+use sbp::{Frame, Sbp, SbpMessage};
 use serde::Serialize;
 use serde_json::ser::CompactFormatter;
 
@@ -53,24 +53,45 @@ pub type SbpLogging = cc::SbpLogging;
 pub struct SbpLogger<W> {
     logger: SbpLogging,
     out: W,
+    path: Option<PathBuf>,
 }
 
-impl<W: AsRef<Path>> SbpLogger<W> {
-    pub fn new(logger: SbpLogging, out: W) -> Self {
-        Self { logger, out }
+impl<W> SbpLogger<W>
+where
+    W: Write,
+{
+    pub fn new(logger: SbpLogging, out: W, path: Option<PathBuf>) -> Self {
+        Self { logger, out, path }
     }
 
-    pub fn serialize(&self, frame: &Frame) {
+    pub fn serialize(&mut self, frame: &Frame, msg: Option<Sbp>) -> usize {
+        if msg.is_none() {
+            error!("(SBP) message cannot be parsed as SBP, serializing frame instead: {frame:?}");
+        }
         let bytes = match &self.logger {
-            SbpLogging::SBP_JSON => frame.as_bytes(),
-            SbpLogging::SBP => frame.as_bytes(),
+            SbpLogging::SBP_JSON => msg.and_then(|msg| {
+                to_vec(&msg).ok_or_log(|_| error!("error serializing SBP to JSON"))
+            }),
+            SbpLogging::SBP => Some(frame.as_bytes().to_owned()),
         };
+
+        if let Some(bytes) = bytes {
+            if self.out.write_all(bytes.as_slice()).is_ok() {
+                bytes.len()
+            } else {
+                error!("failed to serialize to file");
+                0
+            }
+        } else {
+            0
+        }
     }
 }
 
 impl SbpLogging {
-    pub fn new_logger<W>(self, out: W) -> SbpLogger<W> {
-        SbpLogger::new(self, out)
+    pub fn new_logger(&self, path: PathBuf) -> Result<SbpLogger<File>> {
+        let out = OpenOptions::new().create(true).append(true).open(&path)?;
+        Ok(SbpLogger::new(self.to_owned(), out, Some(path)))
     }
 }
 
@@ -238,7 +259,7 @@ mod tests {
         };
         let msg_two_wrapped = Sbp::MsgInsUpdates(msg_two.clone());
         {
-            let mut sbp_logger = SbpLogger::new(SbpLogging::SBP, &filepath);
+            let mut sbp_logger = SbpLogging::SBP::new_logger(&filepath);
             sbp_logger
                 .serialize(&msg_to_frame(msg_one_wrapped))
                 .unwrap();

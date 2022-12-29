@@ -34,7 +34,6 @@ use sbp::{
         system::{MsgHeartbeat, MsgInsStatus, MsgInsUpdates, MsgStartup},
         tracking::{MsgMeasurementState, MsgTrackingState},
     },
-    Error, Sbp,
 };
 
 use crate::client_sender::BoxedClientSender;
@@ -110,7 +109,7 @@ pub fn process_messages(
                     None
                 }
             };
-            tabs.main.lock().unwrap().serialize(&frame, msg.to_owned());
+            tabs.main.lock().unwrap().serialize(&frame, msg.as_ref());
             let msg = if let Some(msg) = msg { msg } else { continue };
 
             source.send_with_state(&tabs, &msg);

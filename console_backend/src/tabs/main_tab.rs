@@ -18,7 +18,7 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 use std::fs::File;
-use std::path::{Path, PathBuf};
+use std::path::{PathBuf};
 
 use chrono::Local;
 use log::error;
@@ -33,7 +33,7 @@ use crate::constants::{
 use crate::output::{CsvLogging, SbpLogger};
 use crate::shared_state::{create_directory, SharedState};
 use crate::utils::{
-    refresh_log_recording_size, refresh_loggingbar, start_recording, stop_recording, OkOrLog,
+    refresh_log_recording_size, refresh_loggingbar, start_recording, stop_recording,
 };
 
 pub struct MainTab {
@@ -146,7 +146,7 @@ impl MainTab {
     /// # Parameters:
     /// - `frame`: The raw incoming data frame
     /// - `msg`: Parsed message if present
-    pub fn serialize(&mut self, frame: &Frame, msg: Option<Sbp>) {
+    pub fn serialize(&mut self, frame: &Frame, msg: Option<&Sbp>) {
         let csv_logging;
         let sbp_logging;
         let sbp_logging_format;
@@ -195,7 +195,8 @@ impl MainTab {
         }
 
         if let Some(ref mut sbp_logger) = self.sbp_logger {
-            sbp_logger.serialize(frame, msg);
+            let byte_size = sbp_logger.serialize(frame, msg);
+            refresh_log_recording_size(&self.client_sender, byte_size);
         } else {
             stop_recording(&self.client_sender);
         }
@@ -309,13 +310,13 @@ mod tests {
         {
             main.serialize(&msg_to_frame(msg.clone()), None);
             solution_tab.handle_pos_llh(PosLLH::MsgPosLlh(msg));
-            main.serialize(&msg_to_frame(msg_two.clone()));
+            main.serialize(&msg_to_frame(msg_two.clone()), None);
             solution_tab.handle_vel_ned(VelNED::MsgVelNed(msg_two.clone()));
-            main.serialize(&msg_to_frame(msg_three.clone()));
+            main.serialize(&msg_to_frame(msg_three.clone()), None);
             baseline_tab.handle_baseline_ned(BaselineNED::MsgBaselineNed(msg_three));
             assert_eq!(main.last_csv_logging, CsvLogging::ON);
             main.end_csv_logging().unwrap();
-            main.serialize(&msg_to_frame(msg_two));
+            main.serialize(&msg_to_frame(msg_two), None);
             assert_eq!(main.last_csv_logging, CsvLogging::OFF);
         }
 
@@ -422,11 +423,11 @@ mod tests {
         };
 
         {
-            main.serialize(&msg_to_frame(msg_one.clone()));
-            main.serialize(&msg_to_frame(msg_two.clone()));
+            main.serialize(&msg_to_frame(msg_one.clone()), None);
+            main.serialize(&msg_to_frame(msg_two.clone()), None);
             assert_eq!(main.last_sbp_logging_format, SbpLogging::SBP);
             main.close_sbp();
-            main.serialize(&msg_to_frame(msg_two.clone()));
+            main.serialize(&msg_to_frame(msg_two.clone()), None);
             assert!(!main.last_sbp_logging);
         }
 
@@ -514,11 +515,15 @@ mod tests {
         };
 
         {
-            main.serialize(&msg_to_frame(msg_one));
-            main.serialize(&msg_to_frame(msg_two.clone()));
+            let msg1 = Sbp::from(msg_one.clone());
+            let msg2 = Sbp::from(msg_two.clone());
+            let frame1 = msg_to_frame(msg_one);
+            let frame2 = msg_to_frame(msg_two);
+            main.serialize(&frame1, Some(&msg1));
+            main.serialize(&frame2, Some(&msg2));
             assert_eq!(main.last_sbp_logging_format, SbpLogging::SBP_JSON);
             main.close_sbp();
-            main.serialize(&msg_to_frame(msg_two));
+            main.serialize(&frame2, Some(&msg1));
             assert!(!main.last_sbp_logging);
         }
 

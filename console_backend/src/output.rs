@@ -65,25 +65,33 @@ impl<W: Write> SbpLogger<W> {
     /// # Parameters:
     /// - `frame`: The raw frame data that a message must have
     /// - `msg`: Optional SBP depending on validity, only required in JSON format
-    pub fn serialize(&mut self, frame: &Frame, msg: Option<&Sbp>) -> u16 {
+    ///
+    /// # Returns: the bytes serialized and whether path exists.
+    /// Error returns should be considered interruptions which breaks the callers flow.
+    pub fn serialize(&mut self, frame: &Frame, msg: Option<&Sbp>) -> Result<u16> {
         if msg.is_none() {
             error!("(SBP) message cannot be parsed as SBP, serializing frame instead: {frame:?}");
         }
         let bytes = match &self.logger {
             SbpLogging::SBP_JSON => msg
-                .and_then(|msg| to_vec(msg).ok_or_log(|_| error!("error serializing SBP to JSON"))),
+                .map(to_vec)
+                .and_then(|ret| ret.ok_or_log(|_| error!("error serializing SBP to JSON"))),
             SbpLogging::SBP => Some(frame.as_bytes().to_owned()),
         };
-        if let Some(bytes) = bytes {
-            if self.out.write_all(bytes.as_slice()).is_ok() {
-                bytes.len() as u16
-            } else {
-                error!("failed to serialize to file");
-                0
+
+        if let Some(path) = &self.path {
+            if !path.exists() {
+                return Err(format!("serializing path {} does not exist", path.display()).into());
             }
-        } else {
-            0
         }
+
+        Ok(bytes
+            .map(|b| self.out.write_all(b.as_slice()).map(|_| b))
+            .transpose()
+            .ok_or_log(|e| error!("{e}"))
+            .flatten()
+            .map(|b| b.len() as u16)
+            .unwrap_or(0))
     }
 }
 

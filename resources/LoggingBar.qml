@@ -292,11 +292,16 @@ Rectangle {
                 if (loggingBarData.recording_filename)
                     recordingFilenameText.editText = loggingBarData.recording_filename;
 
+                let recording = sbpLoggingButton.checked || csvLoggingButton.checked;
+
                 if (mockTime) {
                     mockRecordingTime += interval;
                     recordingTime.text = loggingDurationFormat(mockRecordingTime / 1000);
                 } else {
-                    recordingTime.text = loggingDurationFormat(loggingBarData.recording_duration_sec);
+                    if (recording)
+                        recordingTime.text = loggingDurationFormat(loggingBarData.recording_duration_sec);
+                    else
+                        recordingTime.text = "00:00:00"
                 }
 
                 if (mockSize) {
@@ -304,7 +309,7 @@ Rectangle {
                     recordingSize.text = bytesToString(mockRecordingSize);
                 } else {
                     let recSize = loggingBarData.recording_size.toFixed(0);
-                    if (recSize > 0)
+                    if (recSize > 0 && recording)
                         recordingSize.text = bytesToString(recSize);
                     else
                         recordingSize.text = "0.00 MB";

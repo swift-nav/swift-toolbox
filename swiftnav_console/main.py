@@ -508,11 +508,6 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                 data[Keys.RECORDING_START_TIME] = time.time()
                 data[Keys.RECORDING_FILENAME] = m.loggingBarStartRecording.name
                 LoggingBarData.post_recording_data_update(data)
-            elif m.which == Message.Union.LoggingBarStopRecording:
-                data = logging_bar_recording_update()
-                data[Keys.RECORDING_SIZE] = None # reset since name changed => new file
-                data[Keys.RECORDING_START_TIME] = None
-                LoggingBarData.post_recording_data_update(data)
             elif m.which == Message.Union.LoggingBarRecordingSize:
                 data = logging_bar_recording_update()
                 data[Keys.RECORDING_SIZE] = m.loggingBarRecordingSize.size

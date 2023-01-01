@@ -32,9 +32,7 @@ use crate::constants::{
 };
 use crate::output::{CsvLogging, SbpLogger};
 use crate::shared_state::{create_directory, SharedState};
-use crate::utils::{
-    refresh_log_recording_size, refresh_loggingbar, start_recording, stop_recording,
-};
+use crate::utils::{refresh_log_recording_size, refresh_loggingbar, start_recording};
 
 pub struct MainTab {
     logging_directory: PathBuf,
@@ -201,8 +199,8 @@ impl MainTab {
 
         match size {
             Some(size) => refresh_log_recording_size(&self.client_sender, size),
-            None => stop_recording(&self.client_sender),
-        }
+            None => self.close_sbp(),
+        };
     }
 
     pub fn close_sbp(&mut self) {

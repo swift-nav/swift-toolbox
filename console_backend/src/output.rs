@@ -17,6 +17,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+use anyhow::anyhow;
 use log::error;
 use std::fs::{File, OpenOptions};
 use std::io::Write;
@@ -81,7 +82,10 @@ impl<W: Write> SbpLogger<W> {
 
         if let Some(path) = &self.path {
             if !path.exists() {
-                return Err(format!("serializing path {} does not exist", path.display()).into());
+                return Err(anyhow!(
+                    "serializing path {} does not exist",
+                    path.display()
+                ));
             }
         }
 
@@ -269,11 +273,15 @@ mod tests {
             let mut sbp_logger = SbpLogging::SBP.new_logger(filepath.to_owned()).unwrap();
             assert_eq!(
                 &msg_one_wrapped.encoded_len(),
-                &(sbp_logger.serialize(&msg_to_frame(msg_one_wrapped), None) as usize)
+                &(sbp_logger
+                    .serialize(&msg_to_frame(msg_one_wrapped), None)
+                    .unwrap() as usize)
             );
             assert_eq!(
                 &msg_two_wrapped.encoded_len(),
-                &(sbp_logger.serialize(&msg_to_frame(msg_two_wrapped), None) as usize)
+                &(sbp_logger
+                    .serialize(&msg_to_frame(msg_two_wrapped), None)
+                    .unwrap() as usize)
             );
         }
         assert!(&filepath.is_file());

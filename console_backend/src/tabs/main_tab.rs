@@ -18,7 +18,7 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 use std::fs::File;
-use std::path::{PathBuf};
+use std::path::PathBuf;
 
 use chrono::Local;
 use log::error;
@@ -194,11 +194,14 @@ impl MainTab {
             refresh_loggingbar(&self.client_sender, &self.shared_state);
         }
 
-        if let Some(ref mut sbp_logger) = self.sbp_logger {
-            let byte_size = sbp_logger.serialize(frame, msg);
-            refresh_log_recording_size(&self.client_sender, byte_size);
-        } else {
-            stop_recording(&self.client_sender);
+        let size = self
+            .sbp_logger
+            .as_mut()
+            .and_then(|f| f.serialize(frame, msg).ok());
+
+        match size {
+            Some(size) => refresh_log_recording_size(&self.client_sender, size),
+            None => stop_recording(&self.client_sender),
         }
     }
 

@@ -252,7 +252,6 @@ TAB_LAYOUT = {
     },
 }
 
-
 capnp.remove_import_hook()  # pylint: disable=no-member
 
 
@@ -260,13 +259,13 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
     _request_quit: Signal = Signal()
 
     def __init__(
-        self,
-        app,
-        backend,
-        messages,
-        exit_after_timeout: Optional[float] = None,
-        record_file: Optional[str] = None,
-        record: bool = False,
+            self,
+            app,
+            backend,
+            messages,
+            exit_after_timeout: Optional[float] = None,
+            record_file: Optional[str] = None,
+            record: bool = False,
     ):
         super().__init__()
         self._app = app
@@ -504,7 +503,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                 LoggingBarData.post_data_update(data)
             elif m.which == Message.Union.LoggingBarStartRecording:
                 data = logging_bar_recording_update()
-                data[Keys.RECORDING_SIZE] = None # reset since name changed => new file
+                data[Keys.RECORDING_SIZE] = None  # reset since name changed => new file
                 data[Keys.RECORDING_START_TIME] = time.time()
                 data[Keys.RECORDING_FILENAME] = m.loggingBarStartRecording.name
                 LoggingBarData.post_recording_data_update(data)

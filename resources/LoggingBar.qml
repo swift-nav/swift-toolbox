@@ -291,9 +291,7 @@ Rectangle {
                 csvLoggingButton.checked = loggingBarData.csv_logging;
                 if (loggingBarData.recording_filename)
                     recordingFilenameText.editText = loggingBarData.recording_filename;
-
                 let recording = sbpLoggingButton.checked || csvLoggingButton.checked;
-
                 if (mockTime) {
                     mockRecordingTime += interval;
                     recordingTime.text = loggingDurationFormat(mockRecordingTime / 1000);
@@ -301,9 +299,8 @@ Rectangle {
                     if (recording)
                         recordingTime.text = loggingDurationFormat(loggingBarData.recording_duration_sec);
                     else
-                        recordingTime.text = "00:00:00"
+                        recordingTime.text = "00:00:00";
                 }
-
                 if (mockSize) {
                     mockRecordingSize += 15.15;
                     recordingSize.text = bytesToString(mockRecordingSize);

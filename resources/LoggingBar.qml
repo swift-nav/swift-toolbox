@@ -286,7 +286,8 @@ Rectangle {
             repeat: true
             onTriggered: {
                 logging_bar_model.fill_data(loggingBarData);
-                sbpLoggingFormat.currentIndex = loggingBarData.sbp_logging_format_index;
+                if (sbpLoggingFormat.currentIndex == -1)
+                    sbpLoggingFormat.currentIndex = loggingBarData.sbp_logging_format_index;
                 sbpLoggingButton.checked = loggingBarData.sbp_logging;
                 csvLoggingButton.checked = loggingBarData.csv_logging;
                 if (loggingBarData.recording_filename)

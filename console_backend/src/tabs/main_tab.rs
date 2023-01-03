@@ -199,7 +199,8 @@ impl MainTab {
 
         match size {
             Some(size) => refresh_log_recording_size(&self.client_sender, size),
-            None => self.close_sbp(),
+            None if sbp_logging => self.close_sbp(),
+            _ => {}
         };
     }
 

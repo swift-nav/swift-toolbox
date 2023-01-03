@@ -71,7 +71,7 @@ class SwiftStringListModel(QStringListModel):
 
 
 @QmlElement
-class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
+class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes, too-many-public-methods
     _instance: "LoggingBarData"
     _csv_logging: bool = False
     _sbp_logging: bool = False

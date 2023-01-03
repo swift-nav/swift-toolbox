@@ -286,13 +286,14 @@ Rectangle {
             repeat: true
             onTriggered: {
                 logging_bar_model.fill_data(loggingBarData);
-                if (sbpLoggingFormat.currentIndex == -1)
+                if (sbpLoggingFormat.currentIndex == -1) {
                     sbpLoggingFormat.currentIndex = loggingBarData.sbp_logging_format_index;
-                sbpLoggingButton.checked = loggingBarData.sbp_logging;
-                csvLoggingButton.checked = loggingBarData.csv_logging;
+                    sbpLoggingButton.checked = loggingBarData.sbp_logging;
+                    csvLoggingButton.checked = loggingBarData.csv_logging;
+                }
                 if (loggingBarData.recording_filename)
                     recordingFilenameText.editText = loggingBarData.recording_filename;
-                let recording = sbpLoggingButton.checked || csvLoggingButton.checked;
+                let recording = loggingBarData.sbp_logging || loggingBarData.csv_logging;
                 if (mockTime) {
                     mockRecordingTime += interval;
                     recordingTime.text = loggingDurationFormat(mockRecordingTime / 1000);

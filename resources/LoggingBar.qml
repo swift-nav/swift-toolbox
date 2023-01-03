@@ -163,7 +163,6 @@ Rectangle {
                 SwiftComboBox {
                     id: sbpLoggingFormat
 
-                    currentIndex: 0
                     Layout.preferredWidth: Constants.loggingBar.sbpLoggingButtonWidth
                     Layout.preferredHeight: loggingBarRowLayout.preferredButtonHeight
                     enabled: !sbpLoggingButton.checked
@@ -287,6 +286,7 @@ Rectangle {
             repeat: true
             onTriggered: {
                 logging_bar_model.fill_data(loggingBarData);
+                sbpLoggingFormat.currentIndex = loggingBarData.sbp_logging_format_index;
                 sbpLoggingButton.checked = loggingBarData.sbp_logging;
                 csvLoggingButton.checked = loggingBarData.csv_logging;
                 if (loggingBarData.recording_filename)

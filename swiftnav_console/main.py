@@ -259,13 +259,13 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
     _request_quit: Signal = Signal()
 
     def __init__(
-            self,
-            app,
-            backend,
-            messages,
-            exit_after_timeout: Optional[float] = None,
-            record_file: Optional[str] = None,
-            record: bool = False,
+        self,
+        app,
+        backend,
+        messages,
+        exit_after_timeout: Optional[float] = None,
+        record_file: Optional[str] = None,
+        record: bool = False,
     ):
         super().__init__()
         self._app = app

@@ -273,8 +273,8 @@ pub enum Keys {
     NEW_INS_CONFIRMATON,
     #[strum(serialize = "ANTENNA_STATUS")]
     ANTENNA_STATUS,
-    #[strum(serialize = "RECORDING_DURATION_SEC")]
-    RECORDING_DURATION_SEC,
+    #[strum(serialize = "RECORDING_START_TIME")]
+    RECORDING_START_TIME,
     #[strum(serialize = "RECORDING_SIZE")]
     RECORDING_SIZE,
     #[strum(serialize = "LAST_USED_SERIAL_DEVICE")]

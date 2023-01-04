@@ -17,7 +17,6 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-use std::fs::File;
 use std::path::PathBuf;
 
 use chrono::Local;
@@ -30,7 +29,7 @@ use crate::constants::{
     BASELINE_TIME_STR_FILEPATH, POS_LLH_TIME_STR_FILEPATH, SBP_FILEPATH, SBP_JSON_FILEPATH,
     VEL_TIME_STR_FILEPATH,
 };
-use crate::output::{CsvLogging, SbpLogger};
+use crate::output::{CsvLogging, SbpFileLogger};
 use crate::shared_state::{create_directory, SharedState};
 use crate::utils::{refresh_log_recording_size, refresh_loggingbar, start_recording};
 
@@ -39,7 +38,7 @@ pub struct MainTab {
     last_csv_logging: CsvLogging,
     last_sbp_logging: bool,
     last_sbp_logging_format: SbpLogging,
-    sbp_logger: Option<SbpLogger<File>>,
+    sbp_logger: Option<SbpFileLogger>,
     client_sender: BoxedClientSender,
     shared_state: SharedState,
 }

@@ -50,15 +50,22 @@ impl CsvLogging {
 pub type SbpLogging = cc::SbpLogging;
 
 #[derive(Debug)]
-pub struct SbpLogger<W> {
+pub struct SbpFileLogger {
     logger: SbpLogging,
-    out: W,
-    path: Option<PathBuf>,
+    path: PathBuf,
+    write: File,
 }
 
-impl<W: Write> SbpLogger<W> {
-    pub fn new(logger: SbpLogging, out: W, path: Option<PathBuf>) -> Self {
-        Self { logger, out, path }
+impl SbpFileLogger {
+    /// Currently file logger with PathBuf to handle linking between files and their output streams.
+    /// This is necessary to reflect counter in UI for when file is deleted.
+    pub fn new(logger: SbpLogging, path: PathBuf) -> Result<Self> {
+        let write = OpenOptions::new().create(true).append(true).open(&path)?;
+        Ok(Self {
+            logger,
+            path,
+            write,
+        })
     }
 
     /// Log data into respective outputs, SBP or JSON format
@@ -80,17 +87,16 @@ impl<W: Write> SbpLogger<W> {
             SbpLogging::SBP => Some(frame.as_bytes().to_owned()),
         };
 
-        if let Some(path) = &self.path {
-            if !path.exists() {
-                return Err(anyhow!(
-                    "serializing path {} does not exist",
-                    path.display()
-                ));
-            }
+        // To ensure file still exists before writing, else reset UI bytes counter.
+        if !&self.path.exists() {
+            return Err(anyhow!(
+                "serializing path {} does not exist",
+                &self.path.display()
+            ));
         }
 
         Ok(bytes
-            .map(|b| self.out.write_all(b.as_slice()).map(|_| b))
+            .map(|b| self.write.write_all(b.as_slice()).map(|_| b))
             .transpose()
             .ok_or_log(|e| error!("{e}"))
             .flatten()
@@ -100,9 +106,8 @@ impl<W: Write> SbpLogger<W> {
 }
 
 impl SbpLogging {
-    pub fn new_logger(&self, path: PathBuf) -> Result<SbpLogger<File>> {
-        let out = OpenOptions::new().create(true).append(true).open(&path)?;
-        Ok(SbpLogger::new(self.to_owned(), out, Some(path)))
+    pub fn new_logger(&self, path: PathBuf) -> Result<SbpFileLogger> {
+        SbpFileLogger::new(self.to_owned(), path)
     }
 }
 

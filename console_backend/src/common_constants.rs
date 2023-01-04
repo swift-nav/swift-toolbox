@@ -181,6 +181,8 @@ pub enum Keys {
     SBP_LOGGING,
     #[strum(serialize = "SBP_LOGGING_FORMAT")]
     SBP_LOGGING_FORMAT,
+    #[strum(serialize = "SBP_LOGGING_FORMAT_INDEX")]
+    SBP_LOGGING_FORMAT_INDEX,
     #[strum(serialize = "CSV_LOGGING")]
     CSV_LOGGING,
     #[strum(serialize = "SBP_LOGGING_LABELS")]

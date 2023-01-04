@@ -99,7 +99,9 @@ class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes, 
 
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
-        update_data[Keys.SBP_LOGGING_FORMAT_INDEX] = update_data[Keys.SBP_LOGGING_LABELS].index(update_data[Keys.SBP_LOGGING_FORMAT])
+        update_data[Keys.SBP_LOGGING_FORMAT_INDEX] = update_data[Keys.SBP_LOGGING_LABELS].index(
+            update_data[Keys.SBP_LOGGING_FORMAT]
+        )
         LOGGING_BAR[0] = update_data
         cls._instance._data_updated.emit()  # pylint: disable=protected-access
 

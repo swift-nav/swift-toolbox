@@ -209,7 +209,6 @@ fn conn_manager_thd(
                     refresh_loggingbar(&client_sender, &shared_state);
                     shared_state.set_connection(ConnectionState::Disconnected, &client_sender);
                     refresh_connection_frontend(&client_sender, &shared_state);
-                    join(&mut pm_thd);
                     info!("Disconnected successfully.");
                 }
             };

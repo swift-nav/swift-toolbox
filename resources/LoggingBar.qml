@@ -293,7 +293,7 @@ Rectangle {
                 }
                 if (loggingBarData.recording_filename)
                     recordingFilenameText.editText = loggingBarData.recording_filename;
-                let recording = loggingBarData.sbp_logging || loggingBarData.csv_logging;
+                let recording = loggingBarData.sbp_logging;
                 if (mockTime) {
                     mockRecordingTime += interval;
                     recordingTime.text = loggingDurationFormat(mockRecordingTime / 1000);

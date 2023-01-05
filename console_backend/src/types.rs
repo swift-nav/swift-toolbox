@@ -373,6 +373,7 @@ impl Deref for FlowControl {
 }
 
 // Tracking Signals Tab Types.
+// Key (signal code, satellite identifier)
 pub type Cn0Dict = HashMap<(SignalCodes, i16), RingBuffer<(f64, f64)>>;
 pub type Cn0Age = HashMap<(SignalCodes, i16), f64>;
 

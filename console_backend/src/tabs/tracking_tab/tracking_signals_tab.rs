@@ -254,6 +254,7 @@ impl TrackingSignalsTab {
                 self.received_codes.push(signal_code);
             }
         }
+        println!("{:?}", self.cn0_dict);
         for (key, cn0_deque) in self.cn0_dict.iter_mut() {
             if !codes_that_came.contains(key) {
                 cn0_deque.push((t, 0.0));
@@ -302,11 +303,7 @@ impl TrackingSignalsTab {
     /// - `msg`: The full SBP message cast as an ObservationMsg variant.
     pub fn handle_obs(&mut self, msg: ObservationMsg) {
         let msg_fields = msg.fields();
-        if let Some(sender_id_) = msg_fields.sender_id {
-            if sender_id_ == 0_u16 {
-                return;
-            }
-        } else {
+        if msg_fields.sender_id.is_none() || msg_fields.sender_id == Some(0_u16) {
             return;
         }
 

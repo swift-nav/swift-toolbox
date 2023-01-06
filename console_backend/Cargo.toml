@@ -28,7 +28,11 @@ serde_yaml = "0.9.14"
 anyhow = { version = "1", features = ["backtrace"] }
 clap = { version = "4.0.29", features = ["derive"] }
 indexmap = { version = "1.9.2", features = ["serde"] }
-chrono = { version = "0.4.23", features = ["serde", "clock", "std"], default-features = false}
+chrono = { version = "0.4.23", features = [
+  "serde",
+  "clock",
+  "std"
+], default-features = false}
 serde = { version = "1.0.148", features = ["derive"] }
 sbp = { version = "4.9.1", features = ["json", "link", "swiftnav"] }
 mimalloc = { version = "0.1", default-features = false }

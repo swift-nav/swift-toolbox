@@ -46,7 +46,7 @@ impl LatLonUnits {
     /// Convert latitude in degrees to latitude and longitude to meters multipliers.
     ///
     /// Taken from:
-    /// https://github.com/swift-nav/piksi_tools/blob/v3.1.0-release/piksi_tools/console/solution_view.py
+    /// <https://github.com/swift-nav/piksi_tools/blob/v3.1.0-release/piksi_tools/console/solution_view.py>
     fn meters_per_degree(lat: f64) -> (f64, f64) {
         let m1 = 111132.92; // latitude calculation term 1
         let m2 = -559.82; // latitude calculation term 2

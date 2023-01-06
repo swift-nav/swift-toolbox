@@ -39,27 +39,24 @@ struct ThreadStateFields {
     stack_free: u32,
 }
 
-/// AdvancedSystemMonitorTab struct.
-///
-/// # Fields:
-///
-/// - `client_send`: Client Sender channel for communication from backend to frontend.
-/// - `fe_temp`: RF frontend temperature reading.
-/// - `obs_latency`: UART state latency measurements.
-/// - `obs_period`: UART state period measurements.
-/// - `threads`: Vec of, ThreadStateFields, running threads on device containing cpu and memory metric values.
-/// - `threads_table_list`: Vec of ThreadStateFields, sent to frontend after heartbeat received.
-/// - `zynq_temp`: Zynq SoC temperature reading.
 pub struct AdvancedSystemMonitorTab {
     shared_state: SharedState,
+    /// Client Sender channel for communication from backend to frontend.
     client_sender: BoxedClientSender,
+    /// RF frontend temperature reading.
     fe_temp: f64,
+    /// UART state latency measurements.
     obs_latency: HashMap<String, i32>,
+    /// UART state period measurements.
     obs_period: HashMap<String, i32>,
+    /// Vec of, ThreadStateFields, running threads on device containing cpu and memory metric values.
     threads: Vec<ThreadStateFields>,
+    /// Vec of ThreadStateFields, sent to frontend after heartbeat received.
     threads_table_list: Vec<ThreadStateFields>,
+    /// Zynq SoC temperature reading.
     zynq_temp: f64,
 }
+
 impl AdvancedSystemMonitorTab {
     pub fn new(
         shared_state: SharedState,

@@ -105,12 +105,9 @@ impl Default for StatusBarUpdate {
     }
 }
 
-/// StatusBar struct.
-///
-/// # Fields:
-/// - `heartbeat_data`: The shared object for storing and accessing relevant status bar data.
 #[derive(Debug)]
 pub struct StatusBar {
+    /// The shared object for storing and accessing relevant status bar data.
     heartbeat_data: Heartbeat,
 }
 impl StatusBar {

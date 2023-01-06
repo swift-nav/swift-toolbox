@@ -386,7 +386,7 @@ pub fn meters_per_deg(lat_deg: f64) -> (f64, f64) {
 
 /// Convert bytes to the equivalent human readable format as a string.
 ///
-/// - Modified based on https://stackoverflow.com/a/1094933
+/// - Modified based on <https://stackoverflow.com/a/1094933>
 ///
 /// # Parameters
 ///
@@ -484,7 +484,7 @@ pub fn mdeg_to_deg(mdeg: f64) -> f64 {
     mdeg / 1.0e+3_f64
 }
 
-/// Normalize CPU usage from [0,1000] to [0,100].
+/// Normalize CPU usage from \[0,1000\] to \[0,100\].
 ///
 /// # Parameters
 /// - `cpu`: The CPU usage value to be normalized.
@@ -574,8 +574,14 @@ mod tests {
     use crate::piksi_tools_constants::*;
     use rstest::rstest;
 
-    fn float_eq(f1: f64, f2: f64) -> bool {
-        f64::abs(f1 - f2) <= f64::EPSILON
+    #[track_caller]
+    fn assert_float_eq(f1: f64, f2: f64) {
+        assert!(
+            f64::abs(f1 - f2) <= f64::EPSILON,
+            "Asserting {} is within float epsilon of {}",
+            f1,
+            f2
+        )
     }
 
     #[rstest]
@@ -591,7 +597,13 @@ mod tests {
     #[case(u128::pow(1024, 9), "1024.0YB")]
     #[case(230123123, "219.5MB")]
     fn bytes_to_human_readable_test(#[case] raw: u128, #[case] readable: &str) {
-        assert_eq!(bytes_to_human_readable(raw), readable);
+        assert_eq!(
+            bytes_to_human_readable(raw),
+            readable,
+            "testing that {} is converted to {} for human eyes",
+            raw,
+            readable
+        );
     }
 
     #[test]
@@ -668,7 +680,7 @@ mod tests {
     #[case(0.0, 0.0)]
     #[case(1337.0, 1.337)]
     fn nano_to_micro_sec_test(#[case] as_nano: f64, #[case] expected_micro: f64) {
-        assert!(float_eq(nano_to_micro_sec(as_nano), expected_micro));
+        assert_float_eq(nano_to_micro_sec(as_nano), expected_micro)
     }
 
     #[rstest]
@@ -737,7 +749,7 @@ mod tests {
         #[case] is_deprecated_message: bool,
         #[case] expected_output: f64,
     ) {
-        assert!(float_eq(
+        assert_float_eq(
             compute_doppler(
                 new_carrier_phase,
                 old_carrier_phase,
@@ -745,8 +757,8 @@ mod tests {
                 previous_tow,
                 is_deprecated_message,
             ),
-            expected_output
-        ));
+            expected_output,
+        )
     }
 
     #[rstest]

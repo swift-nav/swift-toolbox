@@ -27,25 +27,18 @@ use crate::shared_state::{SharedState, TabName};
 use crate::types::Specan;
 use crate::utils::serialize_capnproto_builder;
 
-/// AdvancedSpectrumAnalyzerTab struct.
-///
-/// # Fields:
-///
-/// - `client_send`: Client Sender channel for communication from backend to frontend.
-/// - `fft_monitor`: Instance of the FftMonitor struct for handling specan messages.
-/// - `channel_idx`: Stores the index received from the frontend for which CHANNEL
-///      to send to frontend.
-/// - `most_recent_amplitudes`: Stores the currently viewed channel's amplitude values to be
-///      sent to frontend.
-/// - `most_recent_frequencies`: Stores the currently viewed channel's frequency values to be
-///      sent to frontend.
-/// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
 pub struct AdvancedSpectrumAnalyzerTab {
+    /// Client Sender channel for communication from backend to frontend.
     client_sender: BoxedClientSender,
+    /// Instance of the FftMonitor struct for handling specan messages.
     fft_monitor: FftMonitor,
+    /// Stores the index received from the frontend for which CHANNEL to send to frontend.
     channel_idx: usize,
+    /// Stores the currently viewed channel's amplitude values to be sent to frontend.
     most_recent_amplitudes: Vec<f32>,
+    /// Stores the currently viewed channel's frequency values to be sent to frontend.
     most_recent_frequencies: Vec<f32>,
+    /// The shared state for communicating between frontend/backend/other backend tabs.
     shared_state: SharedState,
 }
 

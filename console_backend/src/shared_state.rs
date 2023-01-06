@@ -680,9 +680,6 @@ impl SettingsTabState {
 // Navbar Types.
 
 /// Directory struct for storing informating and helpers pertaining to project directory.
-///
-/// Taken from swift-cli/swift/src/types.rs.
-/// impl taken from swift-cli/swift/src/lib.rs.
 #[derive(Debug)]
 pub struct Directory {
     path: PathBuf,
@@ -718,7 +715,6 @@ impl Default for Directory {
 
 /// Deduce data directory path and create folder.
 ///
-/// Taken from swift-cli/swift/src/lib.rs.
 /// # Returns
 /// - `Ok`: The PathBuf for the data directory path.
 /// - `Err`: Issue deducing path or creating the data directory.
@@ -736,7 +732,6 @@ fn create_data_dir() -> AHResult<PathBuf> {
 
 /// Create directory.
 ///
-/// Taken from swift-cli/swift/src/lib.rs.
 /// # Returns
 /// - `Ok`: The PathBuf for the data directory path.
 /// - `Err`: Issue deducing path or creating the data directory.

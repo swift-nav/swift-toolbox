@@ -174,9 +174,8 @@ jobs:
       - name: Run Checks
         run: cargo make check-all
 
-      # TODO Fix qmllint warnings [CPP-798]
       - name: Run qmllint
-        continue-on-error: true
+        continue-on-error: false
         run: cargo make qml-lint
 
       - name: Run Tests

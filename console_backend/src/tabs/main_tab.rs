@@ -541,12 +541,12 @@ mod tests {
         let value: serde_json::Value = serde_json::from_str(&line.unwrap()).unwrap();
         let value = value.as_object().unwrap();
         let lat_ = value.get("lat").unwrap();
-        assert_eq!(*lat_, serde_json::json!(lat));
+        assert_eq!(*lat_, lat);
 
         let line = lines.next().unwrap();
         let value: serde_json::Value = serde_json::from_str(&line.unwrap()).unwrap();
         let value = value.as_object().unwrap();
         let n_ = value.get("n").unwrap();
-        assert_eq!(*n_, serde_json::json!(n));
+        assert_eq!(*n_, n);
     }
 }

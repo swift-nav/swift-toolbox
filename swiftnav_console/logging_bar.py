@@ -41,6 +41,7 @@ def logging_bar_update() -> Dict[str, Any]:
         Keys.CSV_LOGGING: False,
         Keys.SBP_LOGGING: False,
         Keys.SBP_LOGGING_FORMAT: SbpLogging.SBP_JSON,
+        Keys.SBP_LOGGING_FORMAT_INDEX: 0,
         Keys.SBP_LOGGING_LABELS: [SbpLogging.SBP_JSON, SbpLogging.SBP],
     }
 
@@ -70,11 +71,12 @@ class SwiftStringListModel(QStringListModel):
 
 
 @QmlElement
-class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
+class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes, too-many-public-methods
     _instance: "LoggingBarData"
     _csv_logging: bool = False
     _sbp_logging: bool = False
     _sbp_logging_format: str = SbpLogging.SBP_JSON
+    _sbp_logging_format_index: int = 0
     _sbp_logging_labels: QStringListModel = SwiftStringListModel()
     _previous_folders: QStringListModel = SwiftStringListModel()
     _recording_duration_sec: int = 0
@@ -97,6 +99,9 @@ class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
 
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
+        update_data[Keys.SBP_LOGGING_FORMAT_INDEX] = update_data[Keys.SBP_LOGGING_LABELS].index(
+            update_data[Keys.SBP_LOGGING_FORMAT]
+        )
         LOGGING_BAR[0] = update_data
         cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
@@ -147,6 +152,14 @@ class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes
         self._sbp_logging_format = sbp_logging_format
 
     sbp_logging_format = Property(str, get_sbp_logging_format, set_sbp_logging_format)
+
+    def get_sbp_logging_format_index(self) -> int:
+        return self._sbp_logging_format_index
+
+    def set_sbp_logging_format_index(self, sbp_logging_format_index: int) -> None:
+        self._sbp_logging_format_index = sbp_logging_format_index
+
+    sbp_logging_format_index = Property(int, get_sbp_logging_format_index, set_sbp_logging_format_index)
 
     # sbp_logging_labels property
     def get_sbp_logging_labels(self) -> QObject:
@@ -203,6 +216,7 @@ class LoggingBarModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_csv_logging(cp.logging_bar[Keys.CSV_LOGGING])
         cp.set_sbp_logging(cp.logging_bar[Keys.SBP_LOGGING])
         cp.set_sbp_logging_format(cp.logging_bar[Keys.SBP_LOGGING_FORMAT])
+        cp.set_sbp_logging_format_index(cp.logging_bar[Keys.SBP_LOGGING_FORMAT_INDEX])
         cp.set_sbp_logging_labels(cp.logging_bar[Keys.SBP_LOGGING_LABELS])
         cp.set_previous_folders(cp.logging_bar[Keys.PREVIOUS_FOLDERS])
         cp.set_recording_size(cp.logging_bar_recording[Keys.RECORDING_SIZE])

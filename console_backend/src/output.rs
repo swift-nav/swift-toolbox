@@ -17,15 +17,15 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+use anyhow::anyhow;
 use log::error;
 use std::fs::{File, OpenOptions};
 use std::io::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
-use sbp::json::JsonEncoder;
-use sbp::Frame;
+use sbp::json::to_vec;
+use sbp::{Frame, Sbp};
 use serde::Serialize;
-use serde_json::ser::CompactFormatter;
 
 use crate::common_constants as cc;
 use crate::formatters::*;
@@ -50,42 +50,64 @@ impl CsvLogging {
 pub type SbpLogging = cc::SbpLogging;
 
 #[derive(Debug)]
-pub enum SbpLogger {
-    Sbp(File),
-    Json(JsonEncoder<File, CompactFormatter>),
+pub struct SbpFileLogger {
+    logger: SbpLogging,
+    path: PathBuf,
+    write: File,
 }
 
-impl SbpLogger {
-    pub fn new_sbp<P: AsRef<Path>>(filepath: P) -> Result<SbpLogger> {
-        Ok(SbpLogger::Sbp(File::create(filepath)?))
+impl SbpFileLogger {
+    /// Currently file logger with PathBuf to handle linking between files and their output streams.
+    /// This is necessary to reflect counter in UI for when file is deleted.
+    pub fn new(logger: SbpLogging, path: PathBuf) -> Result<Self> {
+        let write = OpenOptions::new().create(true).append(true).open(&path)?;
+        Ok(Self {
+            logger,
+            path,
+            write,
+        })
     }
 
-    pub fn open_sbp<P: AsRef<Path>>(filepath: P) -> Result<SbpLogger> {
-        Ok(SbpLogger::Sbp(
-            OpenOptions::new().append(true).open(filepath)?,
-        ))
-    }
-
-    pub fn new_sbp_json<P: AsRef<Path>>(filepath: P) -> Result<SbpLogger> {
-        Ok(SbpLogger::Json(JsonEncoder::new(
-            File::create(filepath)?,
-            CompactFormatter,
-        )))
-    }
-
-    pub fn open_sbp_json<P: AsRef<Path>>(filepath: P) -> Result<SbpLogger> {
-        Ok(SbpLogger::Json(JsonEncoder::new(
-            OpenOptions::new().append(true).open(filepath)?,
-            CompactFormatter,
-        )))
-    }
-
-    pub fn serialize(&mut self, frame: &Frame) -> Result<()> {
-        match self {
-            SbpLogger::Sbp(writer) => writer.write_all(frame.as_bytes())?,
-            SbpLogger::Json(logger) => logger.send(&frame.to_sbp()?)?,
+    /// Log data into respective outputs, SBP or JSON format
+    ///
+    /// # Parameters:
+    /// - `frame`: The raw frame data that a message must have
+    /// - `msg`: Optional SBP depending on validity, only required in JSON format
+    ///
+    /// # Returns: the bytes serialized and whether path exists.
+    /// Error returns should be considered interruptions which breaks the callers flow.
+    pub fn serialize(&mut self, frame: &Frame, msg: Option<&Sbp>) -> Result<u16> {
+        if msg.is_none() {
+            error!("(SBP) message cannot be parsed as SBP, serializing frame instead: {frame:?}");
         }
-        Ok(())
+        let bytes = match &self.logger {
+            SbpLogging::SBP_JSON => msg
+                .map(to_vec)
+                .and_then(|ret| ret.ok_or_log(|_| error!("error serializing SBP to JSON"))),
+            SbpLogging::SBP => Some(frame.as_bytes().to_owned()),
+        };
+
+        // To ensure file still exists before writing, else reset UI bytes counter.
+        if !&self.path.exists() {
+            return Err(anyhow!(
+                "serializing path {} does not exist",
+                &self.path.display()
+            ));
+        }
+
+        Ok(bytes
+            .map(|b| self.write.write_all(b.as_slice()).map(|_| b))
+            .transpose()
+            .ok_or_log(|e| error!("{e}"))
+            .flatten()
+            .map(|b| b.len() as u16)
+            .unwrap_or(0))
+    }
+}
+
+impl SbpLogging {
+    pub fn new_logger(&self, path: PathBuf) -> Result<SbpFileLogger> {
+        SbpFileLogger::new(self.to_owned(), path)
     }
 }
 
@@ -187,7 +209,7 @@ mod tests {
 
     use crate::test_common::msg_to_frame;
     use sbp::messages::{navigation::MsgAgeCorrections, system::MsgInsUpdates};
-    use sbp::Sbp;
+    use sbp::{Sbp, SbpMessage};
     use serde::Serialize;
     use std::{fs::File, path::Path};
     use tempfile::TempDir;
@@ -253,13 +275,19 @@ mod tests {
         };
         let msg_two_wrapped = Sbp::MsgInsUpdates(msg_two.clone());
         {
-            let mut sbp_logger = SbpLogger::new_sbp(&filepath).unwrap();
-            sbp_logger
-                .serialize(&msg_to_frame(msg_one_wrapped))
-                .unwrap();
-            sbp_logger
-                .serialize(&msg_to_frame(msg_two_wrapped))
-                .unwrap();
+            let mut sbp_logger = SbpLogging::SBP.new_logger(filepath.to_owned()).unwrap();
+            assert_eq!(
+                &msg_one_wrapped.encoded_len(),
+                &(sbp_logger
+                    .serialize(&msg_to_frame(msg_one_wrapped), None)
+                    .unwrap() as usize)
+            );
+            assert_eq!(
+                &msg_two_wrapped.encoded_len(),
+                &(sbp_logger
+                    .serialize(&msg_to_frame(msg_two_wrapped), None)
+                    .unwrap() as usize)
+            );
         }
         assert!(&filepath.is_file());
         {

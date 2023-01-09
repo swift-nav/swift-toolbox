@@ -455,8 +455,6 @@ struct LoggingBarRecordingSize {
     size @0 :UInt16;
 }
 
-struct LoggingBarStopRecording {}
-
 struct Message {
     union {
         solutionVelocityStatus @0 :SolutionVelocityStatus;
@@ -516,6 +514,5 @@ struct Message {
         onTabChangeEvent @54 :TabChangeEvent;
         loggingBarStartRecording @55 : LoggingBarStartRecording;
         loggingBarRecordingSize @56 : LoggingBarRecordingSize;
-        loggingBarStopRecording @57 : LoggingBarStopRecording;
     }
 }

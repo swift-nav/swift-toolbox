@@ -248,13 +248,6 @@ pub fn start_recording(client_sender: &BoxedClientSender, file_name: String) {
     client_sender.send_data(serialize_capnproto_builder(builder));
 }
 
-pub fn stop_recording(client_sender: &BoxedClientSender) {
-    let mut builder = Builder::new_default();
-    let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
-    msg.init_logging_bar_stop_recording();
-    client_sender.send_data(serialize_capnproto_builder(builder));
-}
-
 pub fn signal_key_label(
     key: (SignalCodes, i16),
     extra: Option<&HashMap<i16, i16>>,

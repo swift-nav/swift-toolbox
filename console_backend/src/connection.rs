@@ -209,6 +209,7 @@ fn conn_manager_thd(
                     refresh_loggingbar(&client_sender, &shared_state);
                     shared_state.set_connection(ConnectionState::Disconnected, &client_sender);
                     refresh_connection_frontend(&client_sender, &shared_state);
+                    drop(pm_thd.take());
                     info!("Disconnected successfully.");
                 }
             };
@@ -218,8 +219,8 @@ fn conn_manager_thd(
         tx.send(false)
             .expect("panicking sending stop message to status bar");
         join(&mut status_thd);
-        join(&mut pm_thd);
         join(&mut reconnect_thd);
+        drop(pm_thd.take());
     })
 }
 
@@ -253,6 +254,7 @@ fn process_messages_thd(
             shared_state.clone(),
             client_sender,
         );
+        // when no more messages
         if conn.is_file() {
             manager_msg.send(ConnectionManagerMsg::Disconnect);
             if conn.close_when_done() {

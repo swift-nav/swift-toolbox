@@ -424,12 +424,10 @@ impl HeartbeatInner {
             .is_none()
             && self.llh_is_rtk
         {
-            self.baseline_display_mode =
-                if let Some(soln_mode) = rtk_mode_dict.get(&(self.llh_solution_mode as i32)) {
-                    String::from(*soln_mode)
-                } else {
-                    String::from(EMPTY_STR)
-                };
+            self.baseline_display_mode = rtk_mode_dict
+                .get(&(self.llh_solution_mode as i32))
+                .unwrap_or_else(|| &EMPTY_STR)
+                .to_string();
         }
     }
 
@@ -450,31 +448,20 @@ impl HeartbeatInner {
                 }
                 let ins_error = (self.ins_status_flags >> 4) & 0xF;
                 if ins_error != 0 {
-                    self.ins_status_string =
-                        if let Some(err_string) = ins_error_dict.get(&(ins_error as i32)) {
-                            err_string.to_string()
-                        } else {
-                            UNKNOWN_ERROR.to_string()
-                        };
+                    self.ins_status_string = ins_error_dict
+                        .get(&(ins_error as i32))
+                        .unwrap_or_else(|| &UNKNOWN_ERROR)
+                        .to_string();
                 } else {
-                    let ins_type_string =
-                        if let Some(type_string) = ins_type_dict.get(&(ins_type as i32)) {
-                            String::from(*type_string)
-                        } else {
-                            format!("{}-", UNKNOWN_ERROR_SHORT)
-                        };
-                    let ins_mode_string =
-                        if let Some(mode_string) = ins_mode_dict.get(&(ins_mode as i32)) {
-                            mode_string
-                        } else {
-                            UNKNOWN_ERROR_SHORT
-                        };
-                    let mut odo_str = "";
-                    if odo_status == 1 {
-                        odo_str = ODO_POSTFIX;
-                    }
-                    self.ins_status_string =
-                        format!("{}{}{}", ins_type_string, ins_mode_string, odo_str);
+                    let ins_type_string = ins_type_dict
+                        .get(&(ins_type as i32))
+                        .map(|s| s.to_string())
+                        .unwrap_or_else(|| format!("{UNKNOWN_ERROR_SHORT}-"));
+                    let ins_mode_string = ins_mode_dict
+                        .get(&(ins_mode as i32))
+                        .unwrap_or_else(|| &UNKNOWN_ERROR_SHORT);
+                    let odo_str = if odo_status == 1 { ODO_POSTFIX } else { "" };
+                    self.ins_status_string = format!("{ins_type_string}{ins_mode_string}{odo_str}");
                 }
             }
         }
@@ -482,12 +469,11 @@ impl HeartbeatInner {
 
     pub fn age_of_corrections_update(&mut self) {
         self.age_of_corrections = 0.0;
-        if let Some(age_corr) = self.age_corrections {
-            if let Some(last_age_corr_time) = self.last_age_corr_receipt_time {
-                if (self.current_time - last_age_corr_time).as_secs_f64() < UPDATE_TOLERANCE_SECONDS
-                {
-                    self.age_of_corrections = age_corr;
-                }
+        if let (Some(age_corr), Some(last_age_corr_time)) =
+            (self.age_corrections, self.last_age_corr_receipt_time)
+        {
+            if (self.current_time - last_age_corr_time).as_secs_f64() < UPDATE_TOLERANCE_SECONDS {
+                self.age_of_corrections = age_corr;
             }
         }
     }

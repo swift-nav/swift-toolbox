@@ -36,6 +36,7 @@ use crate::shared_state::{ConnectionState, SerialConfig, SharedState};
 use crate::types::SignalCodes;
 
 pub mod date_conv;
+pub mod formatters;
 
 /// Formats DOPS field into string, used in SolutionPositionTab
 pub fn dops_into_string(field: u16) -> String {

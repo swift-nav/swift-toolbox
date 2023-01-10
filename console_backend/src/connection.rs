@@ -219,8 +219,8 @@ fn conn_manager_thd(
         tx.send(false)
             .expect("panicking sending stop message to status bar");
         join(&mut status_thd);
-        join(&mut reconnect_thd);
         join(&mut pm_thd);
+        join(&mut reconnect_thd);
     })
 }
 

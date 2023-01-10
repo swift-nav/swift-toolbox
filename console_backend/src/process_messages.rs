@@ -127,9 +127,9 @@ pub fn process_messages(
         }
     })
     .expect(PROCESS_MESSAGES_FAILURE);
-
     let err = messages.take_err();
     let handle = messages.into_handle();
+    handle.thread().unpark();
     handle.join().unwrap();
     err
 }
@@ -490,7 +490,7 @@ mod messages {
                     if diff > elapsed {
                         let sleep_dur = diff - elapsed;
                         debug!("Realtime delay sleeping for {:?}", sleep_dur);
-                        thread::sleep(sleep_dur);
+                        thread::park_timeout(sleep_dur);
                     }
                     self.last_time = Some(*time);
                     self.updated_at = Instant::now();

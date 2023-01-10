@@ -277,27 +277,14 @@ impl SettingsTab {
     }
 
     fn import_success(&self) {
-        let mut builder = Builder::new_default();
-        let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
-        let mut import_response = msg.init_settings_import_response();
-        import_response.set_status("success");
-        self.client_sender
-            .send_data(serialize_capnproto_builder(builder));
+        send_settings_import_response(&self.client_sender, "success".to_string());
     }
 
     fn import_err(&self, err: &Error, group: &str, name: &str, value: &str) {
-        let mut builder = Builder::new_default();
-        let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
-        let mut import_response = msg.init_settings_import_response();
-        import_response.set_status(&format!(
-            "{err}\n\nWhile writing \"{value}\" to {group} -> {name}",
-            err = err,
-            group = group,
-            name = name,
-            value = value,
-        ));
-        self.client_sender
-            .send_data(serialize_capnproto_builder(builder));
+        send_settings_import_response(
+            &self.client_sender,
+            format!("{err}\n\nWhile writing \"{value}\" to {group} -> {name}"),
+        );
     }
 
     pub fn reset(&self, reset_settings: bool) -> Result<()> {

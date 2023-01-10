@@ -258,7 +258,7 @@ pub fn refresh_loggingbar_recording(
     client_sender.send_data(serialize_capnproto_builder(builder));
 }
 
-pub fn send_settings_import_response(client_sender: &BoxedClientSender, status: String) {
+pub fn send_settings_import_response(client_sender: &BoxedClientSender, status: &str) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
     let mut import_response = msg.init_settings_import_response();

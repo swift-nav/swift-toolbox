@@ -277,13 +277,13 @@ impl SettingsTab {
     }
 
     fn import_success(&self) {
-        send_settings_import_response(&self.client_sender, "success".to_string());
+        send_settings_import_response(&self.client_sender, "success");
     }
 
     fn import_err(&self, err: &Error, group: &str, name: &str, value: &str) {
         send_settings_import_response(
             &self.client_sender,
-            format!("{err}\n\nWhile writing \"{value}\" to {group} -> {name}"),
+            &format!("{err}\n\nWhile writing \"{value}\" to {group} -> {name}"),
         );
     }
 

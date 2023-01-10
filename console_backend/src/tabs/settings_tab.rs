@@ -406,20 +406,24 @@ impl SettingsTab {
 
     pub fn write_setting(&self, group: &str, name: &str, value: &str) -> Result<()> {
         {
+            // check if current value is identical
             let settings = self.settings.lock();
             if let Ok(e) = settings.get(group, name) {
                 let current = e.value.as_ref().map(|v| v.to_string());
+                log::info!("current {group}.{name}={current:?}");
                 if current.as_deref() == Some(value) {
                     return Ok(());
                 }
             }
         }
+        println!("writing {group} {name} {value}");
         let setting = self.sbp_client.lock().write_setting_with_timeout(
             group,
             name,
             value,
             SETTINGS_READ_WRITE_TIMEOUT,
         )?;
+        println!("OK {group} {name} {value}");
         if matches!(
             setting.setting.kind,
             SettingKind::Float | SettingKind::Double

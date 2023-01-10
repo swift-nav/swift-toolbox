@@ -214,7 +214,8 @@ Creator QML Profiling view that shows.
 
 In order to enable QML debugging, add the command line option `-qmldebug`.
 QML debugging does not entirely work currently for this project and
-still needs to be fleshed out. See https://swift-nav.atlassian.net/browse/CPP-400
+still needs to be fleshed out.  The internal tracking issue for this is
+[CPP-400](https://swift-nav.atlassian.net/browse/CPP-400).
 
 ## Contributing
 
@@ -298,12 +299,12 @@ of generic Linux, Windows and macOS environments.
 
 One of the things that made the old console difficult to maintain was the
 number of Python dependencies that were required to implement the console. In
-particular things like the TraitsUI library bind us to particular versions of
-PyQt that work with traits. Additionally, if we wanted to use new libraries,
-PyInstaller's "hooks" need to be up-to-date enough to work with these
-libraries (see (PyInstaller hooks)pyinsthooks] for reference).
+particular things like the `TraitsUI` library bound us to particular versions of
+PyQt that worked well with `TraitsUI`. Additionally, if we wanted to use new libraries,
+PyInstaller's "hooks" needed to be up-to-date enough to work with these
+libraries (see [PyInstaller hooks][] for reference).
 
-[pyinsthooks]: https://github.com/pyinstaller/pyinstaller/tree/develop/PyInstaller/hooks.
+[PyInstaller hooks]: https://github.com/pyinstaller/pyinstaller/tree/develop/PyInstaller/hooks
 
 PyInstaller can be a great way to package a massive framework like Qt,
 but it still requires PyInstaller to process and package your application,
@@ -375,30 +376,32 @@ applications to deploy to desktop and mobile environments, however the
 project page emphasizes that the project was designed specifically around
 allowing the PyQt5 apps to be deployed to iOS and Android.
 
-#### C++ "shell"
+#### Rust or C++ application host
 
 It's possible that we can build a C++ shell that hosts the QML, and
 re-implements the "data binding" and "message passing" code if deploying with
 something like *pyqtdeploy* is not sucessful, or proves to be prohibitive.
+This would allow us to remove Python from the mix completely.  Projects
+like Rust's [qmetaobject](https://docs.rs/qmetaobject/latest/qmetaobject/)
+may make this possible too.
 
 ### Rust backend
 
 The rust backend gives us a statically type checked, modern programming
-language with (probably) enough library support to support our development
-activities.  The "big" libraries that the current console uses are
-*numpy* and *pyserial*.
+language with enough library support to support our development activities.
+The "big" libraries that the current console uses are *numpy* and *pyserial*.
 
 The equivalents for Rust are:
 
-+ serialport: https://docs.rs/serialport/4.0.0/serialport/
-+ ndarray: https://docs.rs/ndarray/0.14.0/ndarray/
++ [serialport](https://docs.rs/serialport/4.0.0/serialport/)
++ [ndarray](https://docs.rs/ndarray/0.14.0/ndarray/)
 
 Using Rust should give us a head start on speed and resource usage issues.
 However, we don't want to be bound to tightly with any particular FFI system.
 To that end, we integrate into Python with [pyo3][] but we try to minimize
 the dependence here by driving most of the interaction with the back-end via
 message passing. This gives the backend greater portability should we need to
-move to different "shell" (C++) for Qt/QML or a different UI system
+move to different application host (Rust/C++) for Qt/QML or a different UI system
 altogether (e.g. we could build native UIs for Android/iOS).
 
 To this end the prototype attempts to imposes these constraints:
@@ -411,10 +414,10 @@ To this end the prototype attempts to imposes these constraints:
 
 We use [capnproto][] for message passing since it does not require parsing,
 the in memory representation is accessed directly by the library, without an
-unpacking/parsing step-- this makes it suitable for "high speed" scenarios like IPC
-(where it's preferable to not pay the compute cost of parsing just to cross
-language barriers). Other formats like protobufs require a "parse" phase,
-capnproto also has very ergonomic Python bindings. Other formats such as
+unpacking/parsing step -- this makes it suitable for "high speed" scenarios like 
+in memory IPC (where it's preferable to not pay the compute cost of parsing
+just to cross language barriers). Other formats like protobufs require a parsing
+phase -- capnproto also has very ergonomic Python bindings. Other formats such as
 [flatbuffers][] achieve similar goals as *capnproto* but do not have good
 Python support.
 

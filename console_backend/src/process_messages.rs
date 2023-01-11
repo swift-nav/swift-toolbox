@@ -129,7 +129,6 @@ pub fn process_messages(
     .expect(PROCESS_MESSAGES_FAILURE);
     let err = messages.take_err();
     let handle = messages.into_handle();
-    handle.thread().unpark();
     handle.join().unwrap();
     err
 }
@@ -440,7 +439,10 @@ mod messages {
                         }
                     }
                 }
-                recv(self.stop_recv) -> _ => None,
+                recv(self.stop_recv) -> _ =>  {
+                    self.handle.thread().unpark();
+                    None
+                },
             }
         }
     }

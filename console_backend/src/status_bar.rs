@@ -426,7 +426,7 @@ impl HeartbeatInner {
         {
             self.baseline_display_mode = rtk_mode_dict
                 .get(&(self.llh_solution_mode as i32))
-                .unwrap_or_else(|| &EMPTY_STR)
+                .unwrap_or(&EMPTY_STR)
                 .to_string();
         }
     }
@@ -450,7 +450,7 @@ impl HeartbeatInner {
                 if ins_error != 0 {
                     self.ins_status_string = ins_error_dict
                         .get(&(ins_error as i32))
-                        .unwrap_or_else(|| &UNKNOWN_ERROR)
+                        .unwrap_or(&UNKNOWN_ERROR)
                         .to_string();
                 } else {
                     let ins_type_string = ins_type_dict
@@ -459,7 +459,7 @@ impl HeartbeatInner {
                         .unwrap_or_else(|| format!("{UNKNOWN_ERROR_SHORT}-"));
                     let ins_mode_string = ins_mode_dict
                         .get(&(ins_mode as i32))
-                        .unwrap_or_else(|| &UNKNOWN_ERROR_SHORT);
+                        .unwrap_or(&UNKNOWN_ERROR_SHORT);
                     let odo_str = if odo_status == 1 { ODO_POSTFIX } else { "" };
                     self.ins_status_string = format!("{ins_type_string}{ins_mode_string}{odo_str}");
                 }

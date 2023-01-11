@@ -406,7 +406,6 @@ cp . ../../../py39
 cd ../../../
 exec --fail-on-error ${PYTHON} ./get-pip.py
 exec --fail-on-error ${PYTHON} -m pip install wheel flit . ".[test]" ".[ssh-tunnel]"
-cm_run_task generate-resources
 
 # If pyside-setup exists, then assume user wants to build and install pyside6
 if is_path_exists "${WORKSPACE}/pyside-setup/setup.py"
@@ -415,6 +414,7 @@ if is_path_exists "${WORKSPACE}/pyside-setup/setup.py"
 else
   exec --fail-on-error ${PYTHON} -m pip install PySide6==${QT_VERSION}
 end
+cm_run_task generate-resources
 '''
 
 [tasks.prep-dist]

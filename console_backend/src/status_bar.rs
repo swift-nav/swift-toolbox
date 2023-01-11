@@ -372,9 +372,9 @@ impl HeartbeatInner {
     }
 
     pub fn check_heartbeat(&mut self) -> bool {
-        self.solid_connection = (self.heartbeat_count == self.last_heartbeat_count
-            && self.heartbeat_count != 0)
-            || (self.data_rate <= f64::EPSILON);
+        self.solid_connection = (self.heartbeat_count != self.last_heartbeat_count
+            || self.heartbeat_count == 0)
+            && (self.data_rate > f64::EPSILON);
         if self.solid_connection {
             self.current_time = Instant::now();
         }

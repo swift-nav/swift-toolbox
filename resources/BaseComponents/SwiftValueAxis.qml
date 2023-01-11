@@ -33,10 +33,16 @@ ValueAxis {
     titleFont: Constants.commonChart.axisTitleFont
     labelsFont: Constants.commonChart.axisLabelsFont
 
-    // A function that can be placed in onRangeChanged signal
-    // slot to get that good tick spacing. It requires the 
-    // tickType to be `ValueAxis.TicksDynamic` otherwise it
-    // does nothing but spin yer CPU
+    // A function that can be used to get that good tick spacing.
+    //
+    // WARNING! if the tickType is dynamic, and you drastically change
+    // the size of the plot via zooming or plotting a new series, it is
+    // NOT ENOUGH to have the getGoodTicks function on the onRangeChanged
+    // slot of the ValueAxis to avoid your plot trying to render thousands
+    // of tick lines. I think there may be a way around that, but instead
+    // what I chose to do is manually call the fixTicks function below before
+    // the big change in range, and then calling the getGoodTicks() function
+    // after.
     //
     // adapted from 
     // https://stackoverflow.com/questions/8506881/nice-label-algorithm-for-charts-with-minimum-ticks
@@ -61,6 +67,8 @@ ValueAxis {
         tickType = ValueAxis.TicksDynamic;
     }
 
+    // Kind of a throwaway function, but it is used whenever you
+    // need to make sure you won't render too many ticks.
     function fixTicks () {
         tickType = ValueAxis.TicksFixed;
     }

@@ -372,15 +372,12 @@ impl HeartbeatInner {
     }
 
     pub fn check_heartbeat(&mut self) -> bool {
-        self.solid_connection = if (self.heartbeat_count == self.last_heartbeat_count
+        self.solid_connection = (self.heartbeat_count == self.last_heartbeat_count
             && self.heartbeat_count != 0)
-            || (self.data_rate <= f64::EPSILON)
-        {
-            false
-        } else {
+            || (self.data_rate <= f64::EPSILON);
+        if self.solid_connection {
             self.current_time = Instant::now();
-            true
-        };
+        }
         self.last_heartbeat_count = self.heartbeat_count;
         self.data_rate_update();
         self.solid_connection

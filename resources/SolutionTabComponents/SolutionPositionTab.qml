@@ -213,10 +213,22 @@ Item {
             }
 
             function chartZoomByDirection(delta) {
-                if (delta > 0)
+
+                // fix ticks before zooming because if you don't and the user spins
+                // their mouse wheel really fast you can get a situation where it
+                // tries to render a ton of ticks
+
+                solutionPositionYAxis.fixTicks();
+                solutionPositionXAxis.fixTicks();
+
+                if (delta > 0) {
                     solutionPositionChart.zoom(Constants.commonChart.zoomInMult);
-                else
+                } else {
                     solutionPositionChart.zoom(Constants.commonChart.zoomOutMult);
+                }
+
+                solutionPositionYAxis.getGoodTicks();
+                solutionPositionXAxis.getGoodTicks();
             }
 
             function stopZoomFeatures() {

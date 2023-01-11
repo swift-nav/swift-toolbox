@@ -254,6 +254,7 @@ fn process_messages_thd(
             shared_state.clone(),
             client_sender,
         );
+        // when no more messages
         if conn.is_file() {
             manager_msg.send(ConnectionManagerMsg::Disconnect);
             if conn.close_when_done() {

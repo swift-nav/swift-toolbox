@@ -193,11 +193,13 @@ Item {
 
             function resetChartZoom() {
                 solutionPositionChart.zoomReset();
-                solutionPositionXAxis.max = orig_lon_max;
+                // for some reason if you set the max first here it locks the
+                // GUI.
                 solutionPositionXAxis.min = orig_lon_min;
+                solutionPositionXAxis.max = orig_lon_max;
                 solutionPositionYAxis.max = orig_lat_max;
                 solutionPositionYAxis.min = orig_lat_min;
-            }
+           }
 
             function centerToSolution() {
                 solutionPositionChart.zoomReset();
@@ -293,12 +295,20 @@ Item {
                 id: solutionPositionXAxis
 
                 titleText: Constants.solutionPosition.xAxisTitleText + " (" + available_units[solutionPositionSelectedUnit.currentIndex] + ")"
+                tickType: ValueAxis.TicksDynamic
+                onRangeChanged: (new_min, new_max) => {
+                    solutionPositionXAxis.getGoodTicks(new_min, new_max);
+                }
             }
 
             SwiftValueAxis {
                 id: solutionPositionYAxis
 
                 titleText: Constants.solutionPosition.yAxisTitleText + " (" + available_units[solutionPositionSelectedUnit.currentIndex] + ")"
+                tickType: ValueAxis.TicksDynamic
+                onRangeChanged: (new_min, new_max) => {
+                    solutionPositionYAxis.getGoodTicks(new_min, new_max);
+                }
             }
 
             MouseArea {
@@ -357,15 +367,19 @@ Item {
                 running: true
                 repeat: true
                 onTriggered: {
-                    if (!solutionPositionTab.visible)
+                    if (!solutionPositionTab.visible) {
                         return;
+                    }
                     solution_position_model.fill_console_points(solutionPositionPoints);
-                    if (!solutionPositionPoints.points.length)
+                    if (!solutionPositionPoints.points.length) {
                         return;
-                    if (available_units != solutionPositionPoints.available_units)
+                    }
+                    if (available_units != solutionPositionPoints.available_units) {
                         available_units = solutionPositionPoints.available_units;
-                    if (!line || !scatters.length || !cur_scatters.length)
+                    }
+                    if (!line || !scatters.length || !cur_scatters.length) {
                         [scatters, cur_scatters, line] = SolutionPlotLoop.setupScatterSeries(solutionPositionChart, Constants, Globals, solutionPositionXAxis, solutionPositionYAxis, Constants.solutionPosition.legendLabels, Constants.solutionPosition.colors, false, true);
+                    }
                     var combined = [line, scatters, cur_scatters];
                     solutionPositionPoints.fill_series(combined);
                     let point = SolutionPlotLoop.getCurSolution(solutionPositionPoints.cur_points);
@@ -405,8 +419,10 @@ Item {
                         orig_lat_max = new_lat_max;
                         orig_lon_min = new_lon_min;
                         orig_lon_max = new_lon_max;
-                        if (zoom_all)
+
+                        if (zoom_all) {
                             solutionPositionChart.resetChartZoom();
+                        }
                     }
                 }
             }

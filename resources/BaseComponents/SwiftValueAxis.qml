@@ -41,8 +41,8 @@ ValueAxis {
     // adapted from 
     // https://stackoverflow.com/questions/8506881/nice-label-algorithm-for-charts-with-minimum-ticks
 
-    function getGoodTicks (new_min, new_max) {
-        const ticksRange = (new_max - new_min)/(tickCount - 1);
+    function getGoodTicks () {
+        const ticksRange = (max - min)/(tickCount - 1);
         const exponent = Math.floor(Math.log10(ticksRange));
         const fraction = ticksRange/Math.pow(10, exponent);     
         var niceFraction = 10;
@@ -56,7 +56,12 @@ ValueAxis {
 
         const tickSpacing = niceFraction * Math.pow(10, exponent);
 
-        tickAnchor = Math.ceil(new_min / tickSpacing) * tickSpacing;
+        tickAnchor = Math.ceil(min / tickSpacing) * tickSpacing;
         tickInterval = tickSpacing;
+        tickType = ValueAxis.TicksDynamic;
+    }
+
+    function fixTicks () {
+        tickType = ValueAxis.TicksFixed;
     }
 }

@@ -195,8 +195,9 @@ Item {
                 solutionPositionChart.zoomReset();
                 // for some reason if you set the max first here it locks the
                 // GUI.
-                solutionPositionXAxis.min = orig_lon_min;
                 solutionPositionXAxis.max = orig_lon_max;
+                solutionPositionXAxis.min = orig_lon_min;
+
                 solutionPositionYAxis.max = orig_lat_max;
                 solutionPositionYAxis.min = orig_lat_min;
            }
@@ -296,9 +297,6 @@ Item {
 
                 titleText: Constants.solutionPosition.xAxisTitleText + " (" + available_units[solutionPositionSelectedUnit.currentIndex] + ")"
                 tickType: ValueAxis.TicksDynamic
-                onRangeChanged: (new_min, new_max) => {
-                    solutionPositionXAxis.getGoodTicks(new_min, new_max);
-                }
             }
 
             SwiftValueAxis {
@@ -306,9 +304,6 @@ Item {
 
                 titleText: Constants.solutionPosition.yAxisTitleText + " (" + available_units[solutionPositionSelectedUnit.currentIndex] + ")"
                 tickType: ValueAxis.TicksDynamic
-                onRangeChanged: (new_min, new_max) => {
-                    solutionPositionYAxis.getGoodTicks(new_min, new_max);
-                }
             }
 
             MouseArea {
@@ -407,6 +402,11 @@ Item {
                         new_lat_max = solutionPositionPoints.lat_max_;
                         new_lon_min = solutionPositionPoints.lon_min_;
                         new_lon_max = solutionPositionPoints.lon_max_;
+
+                        // fix the interval so tick number cannot overflow
+                        // freeze ticks incase too many would be produced
+                        solutionPositionXAxis.fixTicks();
+                        solutionPositionYAxis.fixTicks();
                     } else {
                         zoom_all = true;
                         center_solution = false;
@@ -424,6 +424,8 @@ Item {
                             solutionPositionChart.resetChartZoom();
                         }
                     }
+                    solutionPositionXAxis.getGoodTicks();
+                    solutionPositionYAxis.getGoodTicks();
                 }
             }
         }

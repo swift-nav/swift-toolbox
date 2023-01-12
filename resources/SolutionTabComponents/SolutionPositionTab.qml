@@ -201,9 +201,9 @@ Item {
             // same interval, and have them land on evenish numbers.
             // It also ensures the ranges of the two axes are the same.
             function setTicks() {
-                const max_tick_interval = Math.max(
-                    solutionPositionXAxis.getGoodTickInterval(),
-                    solutionPositionYAxis.getGoodTickInterval());
+                const x_tick_interval = solutionPositionXAxis.getGoodTickInterval();
+                const y_tick_interval = solutionPositionYAxis.getGoodTickInterval();
+                const max_tick_interval = Math.max(x_tick_interval, y_tick_interval);
                 const x_range = Math.abs(solutionPositionXAxis.max - solutionPositionXAxis.min);
                 const y_range = Math.abs(solutionPositionYAxis.max - solutionPositionYAxis.min);
                 const range_diff = Math.abs(x_range - y_range);
@@ -245,7 +245,6 @@ Item {
             }
 
             function chartZoomByDirection(delta) {
-
                 solutionPositionChart.freezeTicks();
                 if (delta > 0) {
                     solutionPositionChart.zoom(Constants.commonChart.zoomInMult);

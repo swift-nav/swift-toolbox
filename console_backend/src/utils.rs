@@ -36,6 +36,7 @@ use crate::shared_state::{ConnectionState, SerialConfig, SharedState};
 use crate::types::SignalCodes;
 
 pub mod date_conv;
+pub mod formatters;
 
 /// Formats DOPS field into string, used in SolutionPositionTab
 pub fn dops_into_string(field: u16) -> String {
@@ -245,6 +246,14 @@ pub fn start_recording(client_sender: &BoxedClientSender, file_name: String) {
     let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
     let mut packet = msg.init_logging_bar_start_recording();
     packet.set_name(file_name.as_str());
+    client_sender.send_data(serialize_capnproto_builder(builder));
+}
+
+pub fn send_settings_import_response(client_sender: &BoxedClientSender, status: &str) {
+    let mut builder = Builder::new_default();
+    let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
+    let mut import_response = msg.init_settings_import_response();
+    import_response.set_status(status);
     client_sender.send_data(serialize_capnproto_builder(builder));
 }
 

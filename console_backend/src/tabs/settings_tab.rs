@@ -55,6 +55,9 @@ const NTRIP_ENABLE_SETTING_KEY: &str = "enable";
 
 const SETTINGS_READ_WRITE_TIMEOUT: Duration = Duration::from_millis(1000);
 
+// Timeout used to read all settings
+const GLOBAL_TIMEOUT: Duration = Duration::from_secs(15);
+
 lazy_static! {
     static ref RECOMMENDED_INS_SETTINGS: [(&'static str, &'static str, SettingValue); 4] = [
         ("imu", "imu_raw_output", SettingValue::Boolean(true)),
@@ -277,27 +280,14 @@ impl SettingsTab {
     }
 
     fn import_success(&self) {
-        let mut builder = Builder::new_default();
-        let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
-        let mut import_response = msg.init_settings_import_response();
-        import_response.set_status("success");
-        self.client_sender
-            .send_data(serialize_capnproto_builder(builder));
+        send_settings_import_response(&self.client_sender, "success");
     }
 
     fn import_err(&self, err: &Error, group: &str, name: &str, value: &str) {
-        let mut builder = Builder::new_default();
-        let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
-        let mut import_response = msg.init_settings_import_response();
-        import_response.set_status(&format!(
-            "{err}\n\nWhile writing \"{value}\" to {group} -> {name}",
-            err = err,
-            group = group,
-            name = name,
-            value = value,
-        ));
-        self.client_sender
-            .send_data(serialize_capnproto_builder(builder));
+        send_settings_import_response(
+            &self.client_sender,
+            &format!("{err}\n\nWhile writing \"{value}\" to {group} -> {name}"),
+        )
     }
 
     pub fn reset(&self, reset_settings: bool) -> Result<()> {
@@ -345,8 +335,8 @@ impl SettingsTab {
         let ins_on = ins_mode != SettingValue::String("Disabled".to_string());
         if ins_on {
             let recommended_settings = self.get_recommended_ins_setting_changes()?;
-            for recommendation in recommended_settings {
-                self.write_setting(&recommendation.0, &recommendation.1, &recommendation.3)?;
+            for (group, name, _, value) in recommended_settings {
+                self.write_setting(&group, &name, &value)?;
             }
         }
         self.save()?;
@@ -357,19 +347,19 @@ impl SettingsTab {
     fn get_recommended_ins_setting_changes(&self) -> Result<Vec<(String, String, String, String)>> {
         let mut recommended_changes = vec![];
 
-        for setting in RECOMMENDED_INS_SETTINGS.iter() {
+        for &(group, name, ref recommended_value) in RECOMMENDED_INS_SETTINGS.iter() {
             let value = self
                 .sbp_client
                 .lock()
-                .read_setting_with_timeout(setting.0, setting.1, SETTINGS_READ_WRITE_TIMEOUT)?
+                .read_setting_with_timeout(group, name, SETTINGS_READ_WRITE_TIMEOUT)?
                 .ok_or_else(|| anyhow!("setting not found"))?
                 .value;
-            if value.as_ref() != Some(&setting.2) {
+            if value.as_ref() != Some(recommended_value) {
                 recommended_changes.push((
-                    setting.0.to_string(),
-                    setting.1.to_string(),
+                    group.to_owned(),
+                    name.to_owned(),
                     value.map_or_else(String::new, |v| v.to_string()),
-                    setting.2.to_string(),
+                    recommended_value.to_string(),
                 ));
             }
         }
@@ -388,12 +378,12 @@ impl SettingsTab {
                 .reborrow()
                 .init_recommended_settings(recommendations.len() as u32);
 
-            for (i, recommendation) in recommendations.iter().enumerate() {
+            for (i, (group, name, curr_val, rec_val)) in recommendations.iter().enumerate() {
                 let mut entry = recommended_entries.reborrow().get(i as u32);
-                entry.set_setting_group(&recommendation.0);
-                entry.set_setting_name(&recommendation.1);
-                entry.set_current_value(&recommendation.2);
-                entry.set_recommended_value(&recommendation.3);
+                entry.set_setting_group(group);
+                entry.set_setting_name(name);
+                entry.set_current_value(curr_val);
+                entry.set_recommended_value(rec_val);
             }
         }
 
@@ -451,8 +441,6 @@ impl SettingsTab {
     }
 
     fn read_all_settings(&self) {
-        const GLOBAL_TIMEOUT: Duration = Duration::from_secs(15);
-
         let (ctx, handle) = Context::with_timeout(SETTINGS_READ_WRITE_TIMEOUT);
 
         let mut conn = self.shared_state.watch_connection();
@@ -482,14 +470,13 @@ impl SettingsTab {
         let mut product_id = None;
         for entry in settings {
             if let Some(ref value) = entry.value {
-                if FIRMWARE_VERSION_SETTING_KEY == entry.setting.name {
-                    firmware_version = Some(value.to_string());
-                }
-                if PRODUCT_ID_SETTING_KEY == entry.setting.name {
-                    product_id = Some(value.to_string());
-                }
-                if DGNSS_SOLUTION_MODE_SETTING_KEY == entry.setting.name {
-                    self.shared_state.set_dgnss_enabled(value.to_string());
+                match entry.setting.name.as_str() {
+                    FIRMWARE_VERSION_SETTING_KEY => firmware_version = Some(value.to_string()),
+                    PRODUCT_ID_SETTING_KEY => product_id = Some(value.to_string()),
+                    DGNSS_SOLUTION_MODE_SETTING_KEY => {
+                        self.shared_state.set_dgnss_enabled(value.to_string())
+                    }
+                    _ => {}
                 }
             }
             self.settings.lock().insert(entry);
@@ -658,11 +645,11 @@ impl SettingsTab {
 fn sort_import_groups(conf: &Ini) -> Vec<(&str, &ini::Properties)> {
     let mut groups: Vec<_> = conf
         .iter()
-        .flat_map(|(section, props)| section.map(|s| (s, props)))
+        .flat_map(|(section, props)| section.zip(Some(props)))
         .collect();
     if let Some(idx) = groups
         .iter()
-        .position(|(s, _)| *s == ETHERNET_SETTING_GROUP)
+        .position(|&(s, _)| s == ETHERNET_SETTING_GROUP)
     {
         let ethernet = groups.remove(idx);
         groups.push(ethernet);
@@ -680,20 +667,20 @@ fn sort_import_group<'a>(
 ) -> Box<dyn Iterator<Item = (&'a str, &'a str)> + 'a> {
     match group {
         NTRIP_SETTING_GROUP => {
-            let enable = prop.iter().find(|(n, _)| *n == NTRIP_ENABLE_SETTING_KEY);
+            let enable = prop.iter().find(|&(n, _)| n == NTRIP_ENABLE_SETTING_KEY);
             Box::new(
                 prop.iter()
-                    .filter(|(n, _)| *n != NTRIP_ENABLE_SETTING_KEY)
+                    .filter(|&(n, _)| n != NTRIP_ENABLE_SETTING_KEY)
                     .chain(enable),
             )
         }
         ETHERNET_SETTING_GROUP => {
             let interface_mode = prop
                 .iter()
-                .find(|(n, _)| *n == ETHERNET_INTERFACE_MODE_SETTING_KEY);
+                .find(|&(n, _)| n == ETHERNET_INTERFACE_MODE_SETTING_KEY);
             Box::new(
                 prop.iter()
-                    .filter(|(n, _)| *n != ETHERNET_INTERFACE_MODE_SETTING_KEY)
+                    .filter(|&(n, _)| n != ETHERNET_INTERFACE_MODE_SETTING_KEY)
                     .chain(interface_mode),
             )
         }

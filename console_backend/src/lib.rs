@@ -30,7 +30,6 @@ pub mod constants;
 pub mod errors;
 pub mod fft_monitor;
 pub mod fileio;
-pub mod formatters;
 pub mod fusion_status_flags;
 pub mod log_panel;
 pub mod output;

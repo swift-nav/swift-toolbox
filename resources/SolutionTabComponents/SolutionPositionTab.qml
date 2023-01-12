@@ -192,18 +192,30 @@ Item {
             id: solutionPositionChart
 
             function freezeTicks() {
-                // fix the interval so tick number cannot overflow
-                // freeze ticks incase too many would be produced
+                // fix the interval so tick number will not be too large.
                 solutionPositionXAxis.freezeTicks();
                 solutionPositionYAxis.freezeTicks();
             }
 
+            // This function make the ticks on the x & y axes have the
+            // same interval, and have them land on evenish numbers.
+            // It also ensures the ranges of the two axes are the same.
             function setTicks() {
-                const min_tick_interval = Math.min(
+                const max_tick_interval = Math.max(
                     solutionPositionXAxis.getGoodTickInterval(),
                     solutionPositionYAxis.getGoodTickInterval());
-                solutionPositionXAxis.setGoodTicks(min_tick_interval);
-                solutionPositionYAxis.setGoodTicks(min_tick_interval);
+                const x_range = Math.abs(solutionPositionXAxis.max - solutionPositionXAxis.min);
+                const y_range = Math.abs(solutionPositionYAxis.max - solutionPositionYAxis.min);
+                const range_diff = Math.abs(x_range - y_range);
+                if (x_range < y_range) {
+                    solutionPositionXAxis.min -= range_diff / 2;
+                    solutionPositionXAxis.max += range_diff / 2;
+                } else {
+                    solutionPositionYAxis.min -= range_diff / 2;
+                    solutionPositionYAxis.max += range_diff / 2;
+                }
+                solutionPositionXAxis.setGoodTicks(max_tick_interval);
+                solutionPositionYAxis.setGoodTicks(max_tick_interval);
             }
 
             function resetChartZoom() {

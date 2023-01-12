@@ -419,12 +419,6 @@ impl BaselineTab {
 
     /// Initiates preprocessing of solution data and handles frontend input.
     ///
-    /// TODO(johnmichael.burke@) <https://swift-nav.atlassian.net/browse/CPP-245>
-    /// Need to complete missing functionalities:
-    /// - Center on solution
-    /// - Handle zoom feature.
-    /// - Reset Filters button.
-    ///
     /// # Parameters
     /// - `buttons`: Instance of BaselineTabButtons which trigger different behaviors.
     fn solution_draw(&mut self, buttons: BaselineTabButtons) {

@@ -416,7 +416,7 @@ impl SettingsTab {
                 }
             }
         }
-        println!("writing {group} {name} {value}");
+        log::info!("writing {group} {name} {value}");
         let setting = self.sbp_client.lock().write_setting_with_timeout(
             group,
             name,

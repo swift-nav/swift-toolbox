@@ -34,7 +34,7 @@ ValueAxis {
     labelsFont: Constants.commonChart.axisLabelsFont
 
     // A function that can be used to get that good tick spacing.
-    //
+    // --
     // WARNING! if the tickType is dynamic, and you drastically change
     // the size of the plot via zooming or plotting a new series, it is
     // NOT ENOUGH to have the getGoodTicks function on the onRangeChanged
@@ -43,14 +43,14 @@ ValueAxis {
     // what I chose to do is manually call the fixTicks function below before
     // the big change in range, and then calling the getGoodTicks() function
     // after.
-    //
+    // --
     // adapted from 
     // https://stackoverflow.com/questions/8506881/nice-label-algorithm-for-charts-with-minimum-ticks
 
-    function getGoodTicks () {
-        const ticksRange = (max - min)/(tickCount - 1);
+    function getGoodTicks() {
+        const ticksRange = (max - min) / (tickCount - 1);
         const exponent = Math.floor(Math.log10(ticksRange));
-        const fraction = ticksRange/Math.pow(10, exponent);     
+        const fraction = ticksRange / Math.pow(10, exponent);
         var niceFraction = 10;
         if (fraction < 1.5) {
             niceFraction = 1;
@@ -59,9 +59,7 @@ ValueAxis {
         } else if (fraction < 7) {
             niceFraction = 5;
         }
-
         const tickSpacing = niceFraction * Math.pow(10, exponent);
-
         tickAnchor = Math.ceil(min / tickSpacing) * tickSpacing;
         tickInterval = tickSpacing;
         tickType = ValueAxis.TicksDynamic;
@@ -69,7 +67,7 @@ ValueAxis {
 
     // Kind of a throwaway function, but it is used whenever you
     // need to make sure you won't render too many ticks.
-    function fixTicks () {
+    function fixTicks() {
         tickType = ValueAxis.TicksFixed;
     }
 }

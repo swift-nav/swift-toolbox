@@ -193,14 +193,11 @@ Item {
 
             function resetChartZoom() {
                 solutionPositionChart.zoomReset();
-                // for some reason if you set the max first here it locks the
-                // GUI.
                 solutionPositionXAxis.max = orig_lon_max;
                 solutionPositionXAxis.min = orig_lon_min;
-
                 solutionPositionYAxis.max = orig_lat_max;
                 solutionPositionYAxis.min = orig_lat_min;
-           }
+            }
 
             function centerToSolution() {
                 solutionPositionChart.zoomReset();
@@ -217,16 +214,13 @@ Item {
                 // fix ticks before zooming because if you don't and the user spins
                 // their mouse wheel really fast you can get a situation where it
                 // tries to render a ton of ticks
-
                 solutionPositionYAxis.fixTicks();
                 solutionPositionXAxis.fixTicks();
-
                 if (delta > 0) {
                     solutionPositionChart.zoom(Constants.commonChart.zoomInMult);
                 } else {
                     solutionPositionChart.zoom(Constants.commonChart.zoomOutMult);
                 }
-
                 solutionPositionYAxis.getGoodTicks();
                 solutionPositionXAxis.getGoodTicks();
             }
@@ -431,7 +425,6 @@ Item {
                         orig_lat_max = new_lat_max;
                         orig_lon_min = new_lon_min;
                         orig_lon_max = new_lon_max;
-
                         if (zoom_all) {
                             solutionPositionChart.resetChartZoom();
                         }

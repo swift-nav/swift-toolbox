@@ -191,11 +191,23 @@ Item {
         ChartView {
             id: solutionPositionChart
 
-            function resetChartZoom() {
+            function freezeTicks() {
                 // fix the interval so tick number cannot overflow
                 // freeze ticks incase too many would be produced
-                solutionPositionXAxis.fixTicks();
-                solutionPositionYAxis.fixTicks();
+                solutionPositionXAxis.freezeTicks();
+                solutionPositionYAxis.freezeTicks();
+            }
+
+            function setTicks() {
+                const min_tick_interval = Math.min(
+                    solutionPositionXAxis.getGoodTickInterval(),
+                    solutionPositionYAxis.getGoodTickInterval());
+                solutionPositionXAxis.setGoodTicks(min_tick_interval);
+                solutionPositionYAxis.setGoodTicks(min_tick_interval);
+            }
+
+            function resetChartZoom() {
+                solutionPositionChart.freezeTicks();
                 // update the chart lims
                 solutionPositionChart.zoomReset();
                 solutionPositionXAxis.max = orig_lon_max;
@@ -203,15 +215,11 @@ Item {
                 solutionPositionYAxis.max = orig_lat_max;
                 solutionPositionYAxis.min = orig_lat_min;
                 // update ticks
-                solutionPositionXAxis.getGoodTicks();
-                solutionPositionYAxis.getGoodTicks();
+                solutionPositionChart.setTicks();
             }
 
             function centerToSolution() {
-                // fix the interval so tick number cannot overflow
-                // freeze ticks incase too many would be produced
-                solutionPositionXAxis.fixTicks();
-                solutionPositionYAxis.fixTicks();
+                solutionPositionChart.freezeTicks();
                 // update chart lims
                 solutionPositionChart.zoomReset();
                 if (cur_scatters.length) {
@@ -221,24 +229,18 @@ Item {
                     solutionPositionYAxis.min = cur_solution.y - y_axis_half;
                 }
                 // update ticks
-                solutionPositionXAxis.getGoodTicks();
-                solutionPositionYAxis.getGoodTicks();
+                solutionPositionChart.setTicks();
             }
 
             function chartZoomByDirection(delta) {
 
-                // fix ticks before zooming because if you don't and the user spins
-                // their mouse wheel really fast you can get a situation where it
-                // tries to render a ton of ticks
-                solutionPositionYAxis.fixTicks();
-                solutionPositionXAxis.fixTicks();
+                solutionPositionChart.freezeTicks();
                 if (delta > 0) {
                     solutionPositionChart.zoom(Constants.commonChart.zoomInMult);
                 } else {
                     solutionPositionChart.zoom(Constants.commonChart.zoomOutMult);
                 }
-                solutionPositionYAxis.getGoodTicks();
-                solutionPositionXAxis.getGoodTicks();
+                solutionPositionChart.setTicks();
             }
 
             function stopZoomFeatures() {

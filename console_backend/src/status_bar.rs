@@ -422,7 +422,7 @@ impl HeartbeatInner {
             && self.llh_is_rtk
         {
             self.baseline_display_mode = rtk_mode_dict
-                .get(&(self.llh_solution_mode as i32
+                .get(&(self.llh_solution_mode as i32))
                 .unwrap_or(&EMPTY_STR)
                 .to_string();
         }

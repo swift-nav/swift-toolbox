@@ -46,7 +46,6 @@ ValueAxis {
     // --
     // adapted from 
     // https://stackoverflow.com/questions/8506881/nice-label-algorithm-for-charts-with-minimum-ticks
-
     function getGoodTicks() {
         const ticksRange = (max - min) / (tickCount - 1);
         const exponent = Math.floor(Math.log10(ticksRange));

@@ -406,14 +406,17 @@ impl SettingsTab {
 
     pub fn write_setting(&self, group: &str, name: &str, value: &str) -> Result<()> {
         {
+            // check if current value is identical
             let settings = self.settings.lock();
             if let Ok(e) = settings.get(group, name) {
                 let current = e.value.as_ref().map(|v| v.to_string());
+                log::debug!("current {group}.{name}={current:?}");
                 if current.as_deref() == Some(value) {
                     return Ok(());
                 }
             }
         }
+        log::info!("writing {group} {name} {value}");
         let setting = self.sbp_client.lock().write_setting_with_timeout(
             group,
             name,
@@ -599,18 +602,17 @@ impl SettingsTab {
         let original = self
             .settings
             .lock()
-            .get(group, name)?
-            .value
-            .as_ref()
-            .ok_or_else(|| anyhow!("{group}.{name} was none"))?
-            .clone();
+            .get(group, name)
+            .map(|x| x.value.clone())
+            .unwrap_or_default();
+        // if is in new config
         let in_config = conf
             .section(Some(group))
             .and_then(|s| s.get(name))
             .is_some();
         self.write_setting(group, name, value)?;
         if !in_config {
-            Ok(Some(original))
+            Ok(original) // revert to original if not in new config
         } else {
             Ok(None)
         }
@@ -620,19 +622,17 @@ impl SettingsTab {
     fn group_changed(&self, conf: &Ini, group: &str) -> Result<bool> {
         let new_group = match conf.section(Some(group)) {
             Some(s) => s,
-            None => return Ok(false),
+            None => return Ok(false), // no change, no need to update
         };
         let guard = self.settings.lock();
-        for SettingsEntry { setting, value } in guard.group(group)? {
-            let new_value = match new_group.get(&setting.name) {
-                Some(s) => s,
-                None => continue,
-            };
-            let old_value = match value.as_ref().map(|v| v.to_string()) {
-                Some(v) => v,
-                None => return Ok(true),
-            };
-            if new_value != old_value {
+        let groups = match guard.get_group(group) {
+            Some(v) => v,
+            None => return Ok(true), // update since current values are empty
+        };
+        for (name, new_value) in new_group.iter() {
+            let entry: Option<&SettingsEntry> = groups.get(name);
+            let old_value = entry.and_then(|e| e.value.as_ref().map(|s| s.to_string()));
+            if Some(new_value) != old_value.as_deref() {
                 return Ok(true);
             }
         }
@@ -727,9 +727,12 @@ impl Settings {
         }
     }
 
+    fn get_group(&self, group: &str) -> Option<&'_ IndexMap<String, SettingsEntry>> {
+        self.inner.get(group)
+    }
+
     fn group(&self, group: &str) -> Result<impl Iterator<Item = &SettingsEntry> + '_> {
-        self.inner
-            .get(group)
+        self.get_group(group)
             .map(|group| group.values())
             .ok_or_else(|| anyhow!("unknown setting group: {}", group))
     }
@@ -765,8 +768,7 @@ impl Settings {
     }
 
     fn get<'a, 'b>(&'a self, group: &'b str, name: &'b str) -> Result<&'a SettingsEntry> {
-        self.inner
-            .get(group)
+        self.get_group(group)
             .and_then(|g| g.get(name))
             .ok_or_else(|| anyhow!("unknown setting: group: {group} name: {name}"))
     }

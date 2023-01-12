@@ -28,8 +28,8 @@ use serde::Serialize;
 use serde_json::ser::CompactFormatter;
 
 use crate::common_constants as cc;
-use crate::formatters::*;
 use crate::types::Result;
+use crate::utils::formatters::*;
 use crate::utils::OkOrLog;
 
 pub type CsvLogging = cc::CsvLogging;

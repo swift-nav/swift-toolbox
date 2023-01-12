@@ -44,7 +44,7 @@ ValueAxis {
     // the big change in range, and then calling the getGoodTicks() function
     // after.
     // --
-    // adapted from 
+    // adapted from
     // https://stackoverflow.com/questions/8506881/nice-label-algorithm-for-charts-with-minimum-ticks
     function getGoodTicks() {
         const ticksRange = (max - min) / (tickCount - 1);

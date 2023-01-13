@@ -133,10 +133,10 @@ pub fn process_messages(
     err
 }
 
-/// Process custom events defined by [`SharedState::EventType`]
+/// Process custom events defined by `SharedState::EventType`
 ///
 /// Allows channel to manage events dispatched from front end,
-/// indirectly gives [`SharedState`] access to [`Tabs`]
+/// indirectly gives `SharedState` access to `Tabs`
 fn process_shared_state_events(rx: Receiver<EventType>, tabs: &Tabs) {
     for event in rx.iter() {
         match event {
@@ -534,9 +534,9 @@ mod messages {
         }
     }
 
-    // Wrapper type so can hook into the drop call that happens when the last Arc<Shared> is dropped.
-    // We could not use this and drop when the arc's strong count is 1, but the count might change
-    // between calling `Arc::strong_count` and `self.stop`
+    /// Wrapper type so can hook into the drop call that happens when the last `Arc<Shared>` is dropped.
+    /// We could not use this and drop when the arc's strong count is 1, but the count might change
+    /// between calling `Arc::strong_count` and `self.stop`
     struct Shared(Sender<()>);
 
     impl Shared {

@@ -35,60 +35,53 @@ use crate::utils::{date_conv::*, *};
 use crate::zip;
 use crate::{client_sender::BoxedClientSender, constants::*};
 
-/// Baseline Tab Button Struct.
-///
-/// # Parameters
-/// - `clear`: Indicates whether to initiate a clearing of all solution data stored.
-/// - `pause`: Indicates whther or not to pause the plot updates.
-/// - `reset`: Indicates whether or not to reset filters.
 pub(crate) struct BaselineTabButtons {
+    /// Indicates whether to initiate a clearing of all solution data stored.
     clear: bool,
+    /// Indicates whether or not to pause the plot updates.
     pause: bool,
+    /// Indicates whether or not to reset filters.
     reset: bool,
 }
 
-/// BaselineTab struct.
-///
-/// # Fields
-/// - `age_corrections`: Stored age corrections to be displayed in the table.
-/// - `client_sender`: Client Sender channel for communication from backend to frontend.
-/// - `heading`: The stored heading value.
-/// - `last_mode`: The most recent gnss mode stored.
-/// - `n_max`: The baseline north direction maximimum value storage for plot bounds.
-/// - `n_min`: The baseline north direction minimum value storage for plot bounds.
-/// - `n_max`: The baseline east direction maximimum value storage for plot bounds.
-/// - `n_min`: The baseline east direction minimum value storage for plot bounds.
-/// - `mode_strings`: The available modes in string form to store updates for.
-/// - `nsec`: The stored nanosecond value from GPS Time messages.
-/// - `pending_draw_modes`: A list of draw modes waiting to be updated.
-/// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
-/// - `baseline_log_file`: The CsvSerializer corresponding to an open position log if any.
-/// - `sln_cur_data`: The current most recent n/e point for each mode.
-/// - `sln_data`: The preprocessed solution data to be sent to the frontend.
-/// - `slns`: All solution data is stored before preparing for frontend.
-/// - `table`: This stores all the key/value pairs to be displayed in the Baseline Table.
-/// - `utc_source`: The string equivalent for the source of the UTC updates.
-/// - `utc_time`: The stored monotonic Utc time.
-/// - `week`: The stored week value from GPS Time messages.
 pub struct BaselineTab {
+    /// Stored age corrections to be displayed in the table.
     age_corrections: Option<f64>,
+    /// Client Sender channel for communication from backend to frontend.
     client_sender: BoxedClientSender,
+    /// The stored heading value.
     heading: Option<f64>,
+    /// The most recent gnss mode stored.
     last_mode: u8,
+    /// The baseline north direction maximimum value storage for plot bounds.
     n_max: f64,
+    /// The baseline north direction minimum value storage for plot bounds.
     n_min: f64,
+    /// The baseline east direction maximimum value storage for plot bounds.
     e_max: f64,
+    /// The baseline east direction minimum value storage for plot bounds.
     e_min: f64,
+    /// The available modes in string form to store updates for.
     mode_strings: Vec<String>,
+    /// The stored nanosecond value from GPS Time messages.
     nsec: Option<i32>,
+    /// A list of draw modes waiting to be updated.
     pending_draw_modes: Vec<String>,
+    /// The shared state for communicating between frontend/backend/other backend tabs.
     shared_state: SharedState,
+    /// The current most recent n/e point for each mode.
     sln_cur_data: Vec<Vec<(f64, f64)>>,
+    /// The preprocessed solution data to be sent to the frontend.
     sln_data: Vec<Vec<(f64, f64)>>,
+    /// All solution data is stored before preparing for frontend.
     slns: HashMap<&'static str, RingBuffer<f64>>,
+    /// This stores all the key/value pairs to be displayed in the Baseline Table.
     table: HashMap<&'static str, String>,
+    /// The string equivalent for the source of the UTC updates.
     utc_source: Option<String>,
+    /// The stored monotonic Utc time.
     utc_time: Option<UtcDateTime>,
+    /// The stored week value from GPS Time messages.
     week: Option<u16>,
     writer: MsgSender,
 }
@@ -425,12 +418,6 @@ impl BaselineTab {
     }
 
     /// Initiates preprocessing of solution data and handles frontend input.
-    ///
-    /// TODO(johnmichael.burke@) https://swift-nav.atlassian.net/browse/CPP-245
-    /// Need to complete missing functionalities:
-    /// - Center on solution
-    /// - Handle zoom feature.
-    /// - Reset Filters button.
     ///
     /// # Parameters
     /// - `buttons`: Instance of BaselineTabButtons which trigger different behaviors.

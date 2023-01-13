@@ -395,7 +395,7 @@ pub fn meters_per_deg(lat_deg: f64) -> (f64, f64) {
 
 /// Convert bytes to the equivalent human readable format as a string.
 ///
-/// - Modified based on https://stackoverflow.com/a/1094933
+/// - Modified based on <https://stackoverflow.com/a/1094933>
 ///
 /// # Parameters
 ///
@@ -493,7 +493,7 @@ pub fn mdeg_to_deg(mdeg: f64) -> f64 {
     mdeg / 1.0e+3_f64
 }
 
-/// Normalize CPU usage from [0,1000] to [0,100].
+/// Normalize CPU usage from \[0,1000\] to \[0,100\].
 ///
 /// # Parameters
 /// - `cpu`: The CPU usage value to be normalized.
@@ -581,31 +581,38 @@ pub fn format_bool(b: bool) -> String {
 mod tests {
     use super::*;
     use crate::piksi_tools_constants::*;
+    use rstest::rstest;
 
-    fn float_eq(f1: f64, f2: f64) -> bool {
-        f64::abs(f1 - f2) <= f64::EPSILON
+    #[track_caller]
+    fn assert_float_eq(f1: f64, f2: f64) {
+        assert!(
+            f64::abs(f1 - f2) <= f64::EPSILON,
+            "Asserting {} is within float epsilon of {}",
+            f1,
+            f2
+        )
     }
 
-    #[test]
-    fn bytes_to_human_readable_test() {
-        ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB"]
-            .iter()
-            .enumerate()
-            .for_each(|(idx, &unit)| {
-                assert_eq!(
-                    bytes_to_human_readable(u128::pow(1024, idx as u32)),
-                    format!("{:3.1}{}", 1.0, unit)
-                );
-            });
+    #[rstest]
+    #[case(1, "1.0B")]
+    #[case(1024, "1.0KB")]
+    #[case(u128::pow(1024, 2), "1.0MB")]
+    #[case(u128::pow(1024, 3), "1.0GB")]
+    #[case(u128::pow(1024, 4), "1.0TB")]
+    #[case(u128::pow(1024, 5), "1.0PB")]
+    #[case(u128::pow(1024, 6), "1.0EB")]
+    #[case(u128::pow(1024, 7), "1.0ZB")]
+    #[case(u128::pow(1024, 8), "1.0YB")]
+    #[case(u128::pow(1024, 9), "1024.0YB")]
+    #[case(230123123, "219.5MB")]
+    fn bytes_to_human_readable_test(#[case] raw: u128, #[case] readable: &str) {
         assert_eq!(
-            bytes_to_human_readable(u128::pow(1024, 8)),
-            format!("{:.1}YB", 1.0)
+            bytes_to_human_readable(raw),
+            readable,
+            "testing that {} is converted to {} for human eyes",
+            raw,
+            readable
         );
-        assert_eq!(
-            bytes_to_human_readable(u128::pow(1024, 9)),
-            format!("{:.1}YB", 1024.0)
-        );
-        assert_eq!(bytes_to_human_readable(230123123), "219.5MB");
     }
 
     #[test]
@@ -665,111 +672,119 @@ mod tests {
         assert_eq!(id_lbl.unwrap(), "E25");
     }
 
-    #[test]
-    fn meters_per_deg_test() {
+    #[rstest]
+    #[case(-90_f64, (111693.9173, 6.839280692934427e-12))]
+    #[case(-45_f64, (111131.745, 78846.80572069259))]
+    #[case(0_f64, (110574.2727, 111319.458))]
+    #[case(45_f64, (111131.745, 78846.80572069259))]
+    #[case(90_f64, (111693.9173, 6.839280692934427e-12))]
+    fn meters_per_deg_test(#[case] lat: f64, #[case] expected_tup: (f64, f64)) {
         // Latitude range: [-90, 90]
-        assert_eq!(
-            meters_per_deg(-90_f64),
-            (111693.9173, 6.839280692934427e-12)
-        );
-        assert_eq!(meters_per_deg(-45_f64), (111131.745, 78846.80572069259));
-        assert_eq!(meters_per_deg(0_f64), (110574.2727, 111319.458));
-        assert_eq!(meters_per_deg(45_f64), (111131.745, 78846.80572069259));
-        assert_eq!(meters_per_deg(90_f64), (111693.9173, 6.839280692934427e-12));
+        assert_eq!(meters_per_deg(lat), expected_tup);
     }
 
-    #[test]
-    fn nano_to_micro_sec_test() {
-        assert!(float_eq(nano_to_micro_sec(1000_f64), 1_f64));
-        assert!(float_eq(nano_to_micro_sec(1000000_f64), 1000_f64));
-        assert!(float_eq(nano_to_micro_sec(0_f64), 0_f64));
-        assert!(float_eq(nano_to_micro_sec(1337_f64), 1.337_f64));
+    #[rstest]
+    #[case(1e3, 1.0)]
+    #[case(1e6, 1000.0)]
+    #[case(0.0, 0.0)]
+    #[case(1337.0, 1.337)]
+    fn nano_to_micro_sec_test(#[case] as_nano: f64, #[case] expected_micro: f64) {
+        assert_float_eq(nano_to_micro_sec(as_nano), expected_micro)
     }
 
-    #[test]
-    fn compute_doppler_test() {
-        assert!(float_eq(
+    #[rstest]
+    #[case(123438650.3359375, 123438590.203125, 251746.8, 251746.8, false, 0.0)]
+    #[case(
+        123438650.3359375,
+        123438590.203125,
+        251746.9,
+        251746.8,
+        false,
+        -601.3281249649981
+    )]
+    #[case(
+        89473356.9453125,
+        89473456.921875,
+        251746.9,
+        251746.8,
+        false,
+        999.765624941806
+    )]
+    #[case(
+        96692940.6015625,
+        96692834.87890625,
+        251746.9,
+        251746.8,
+        false,
+        -1057.2265624384613
+    )]
+    #[case(
+        108296328.85546875,
+        108296130.609375,
+        251746.9,
+        251746.8,
+        false,
+        -1982.4609373846056
+    )]
+    #[case(
+        99816633.2109375,
+        99816774.25,
+        251746.9,
+        251746.8,
+        false,
+        1410.3906249179045
+    )]
+    #[case(
+        109036269.546875,
+        109036058.60546875,
+        251746.9,
+        251746.8,
+        false,
+        -2109.414062377216
+    )]
+    #[case(
+        94582860.46484375,
+        94582814.38671875,
+        251746.9,
+        251746.8,
+        false,
+        -460.781249973179
+    )]
+    fn compute_doppler_test(
+        #[case] new_carrier_phase: f64,
+        #[case] old_carrier_phase: f64,
+        #[case] current_gps_tow: f64,
+        #[case] previous_tow: f64,
+        #[case] is_deprecated_message: bool,
+        #[case] expected_output: f64,
+    ) {
+        assert_float_eq(
             compute_doppler(
-                123438650.3359375,
-                123438590.203125,
-                251746.8,
-                251746.8,
-                false
+                new_carrier_phase,
+                old_carrier_phase,
+                current_gps_tow,
+                previous_tow,
+                is_deprecated_message,
             ),
-            0.0
-        ));
-        assert!(float_eq(
-            compute_doppler(
-                123438650.3359375,
-                123438590.203125,
-                251746.9,
-                251746.8,
-                false
-            ),
-            -601.3281249649981
-        ));
-        assert!(float_eq(
-            compute_doppler(89473356.9453125, 89473456.921875, 251746.9, 251746.8, false),
-            999.765624941806
-        ));
-        assert!(float_eq(
-            compute_doppler(
-                96692940.6015625,
-                96692834.87890625,
-                251746.9,
-                251746.8,
-                false
-            ),
-            -1057.2265624384613
-        ));
-        assert!(float_eq(
-            compute_doppler(
-                108296328.85546875,
-                108296130.609375,
-                251746.9,
-                251746.8,
-                false
-            ),
-            -1982.4609373846056
-        ));
-        assert!(float_eq(
-            compute_doppler(99816633.2109375, 99816774.25, 251746.9, 251746.8, false),
-            1410.3906249179045
-        ));
-        assert!(float_eq(
-            compute_doppler(
-                109036269.546875,
-                109036058.60546875,
-                251746.9,
-                251746.8,
-                false
-            ),
-            -2109.414062377216
-        ));
-        assert!(float_eq(
-            compute_doppler(
-                94582860.46484375,
-                94582814.38671875,
-                251746.9,
-                251746.8,
-                false
-            ),
-            -460.781249973179
-        ));
+            expected_output,
+        )
     }
 
-    #[test]
-    #[rustfmt::skip]
-    fn format_fixed_sign_test() {
-        #[rustfmt::skip]
-        assert_eq!(format_fixed_decimal_and_sign(0.1, 8, 3),    "   0.100");
-        assert_eq!(format_fixed_decimal_and_sign(20.0, 8, 3),   "  20.000");
-        assert_eq!(format_fixed_decimal_and_sign(100.0, 8, 3),  " 100.000");
-        assert_eq!(format_fixed_decimal_and_sign(-1.0, 8, 3),   "-  1.000");
-        assert_eq!(format_fixed_decimal_and_sign(-30.4, 8, 3),  "- 30.400");
-        assert_eq!(format_fixed_decimal_and_sign(-320.6, 8, 3), "-320.600");
-
-        assert_eq!(format_fixed_decimal_and_sign(0.1953421, 6, 1), "   0.2");
-        assert_eq!(format_fixed_decimal_and_sign(-200.1, 6, 1),    "-200.1");
+    #[rstest]
+    #[case(0.1, 8, 3, "   0.100")]
+    #[case(20.0, 8, 3, "  20.000")]
+    #[case(100.0, 8, 3, " 100.000")]
+    #[case(-1.0, 8, 3, "-  1.000")]
+    #[case(-30.4, 8, 3, "- 30.400")]
+    #[case(-320.6, 8, 3, "-320.600")]
+    #[case(0.1953421, 6, 1, "   0.2")]
+    #[case(-200.1, 6, 1, "-200.1")]
+    fn format_fixed_sign_test(
+        #[case] val: f32,
+        #[case] width: usize,
+        #[case] prec: usize,
+        #[case] expected: &str,
+    ) {
+        assert_eq!(format_fixed_decimal_and_sign(val, width, prec), expected);
     }
 }

@@ -35,45 +35,27 @@ use crate::tabs::solution_tab::LatLonUnits;
 use crate::types::{Dops, GnssModes, GpsTime, PosLLH, RingBuffer, UtcDateTime, VelNED};
 use crate::utils::{date_conv::*, *};
 
-/// SolutionTab struct.
-///
-/// # Fields
-/// - `age_corrections`: Stored age corrections to be displayed in the table.
-/// - `available_units` - The available units of measure to send to frontend for selection.
-/// - `ins_status_flags`: The stored ins status flags expected by other tabs.
-/// - `ins_used`: Indicates whether or not ins is currently used.
-/// - `lats`: The stored latitude values for quickly extracting aggregate data.
-/// - `lons`: The stored longitude values for quickly extracting aggregate data.
-/// - `last_ins_status_receipt_time`: The last ins status receipt monotonic time stored.
-/// - `last_pos_mode`: The most recent gnss mode stored.
-/// - `last_odo_update_time`: The last odo update monotonic time stored.
-/// - `mode_strings`: The available modes in string formm to store updates for.
-/// - `modes`: The stored mode values used for quickly extracting aggregate data.
-/// - `nsec`: The stored nanosecond value from GPS Time messages.
-/// - `pending_draw_modes`: A list of draw modes waiting to be updated.
-/// - `pos_log_file`: The CsvSerializer corresponding to an open position log if any.
-/// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
-/// - `sln_cur_data`: The current most recent lat/lon point for each mode.
-/// - `sln_data`: The preprocessed solution data to be sent to the frontend.
-/// - `slns`: All solution data is stored before preparing for frontend.
-/// - `table`: This stores all the key/value pairs to be displayed in the Solution Table.
-/// - `unit`: The current unit of measure for the solution position plot.
-/// - `utc_source`: The string equivalent for the source of the UTC updates.
-/// - `utc_time`: The stored monotonic Utc time.
-/// - `vel_log_file`: The CsvSerializer corresponding to an open velocity log if any.
-/// - `week`: The stored week value from GPS Time messages.
 #[derive(Debug)]
 pub struct SolutionPositionTab {
+    /// Stored age corrections to be displayed in the table.
     age_corrections: Option<f64>,
+    ///  The available units of measure to send to frontend for selection.
     available_units: [&'static str; 2],
     client_sender: BoxedClientSender,
+    /// The stored ins status flags expected by other tabs.
     ins_status_flags: u32,
+    /// Indicates whether or not ins is currently used.
     ins_used: bool,
+    /// The stored latitude values for quickly extracting aggregate data.
     lats: RingBuffer<f64>,
+    /// The stored longitude values for quickly extracting aggregate data.
     lons: RingBuffer<f64>,
     alts: RingBuffer<f64>,
+    /// The last ins status receipt monotonic time stored.
     last_ins_status_receipt_time: Instant,
+    /// The most recent gnss mode stored.
     last_pos_mode: u8,
+    /// The last odo update monotonic time stored.
     last_odo_update_time: Instant,
     lat_sf: f64,
     lat_offset: f64,
@@ -83,20 +65,33 @@ pub struct SolutionPositionTab {
     lon_offset: f64,
     lon_max: f64,
     lon_min: f64,
+    /// The available modes in string formm to store updates for.
     mode_strings: Vec<String>,
+    /// The stored mode values used for quickly extracting aggregate data.
     modes: RingBuffer<u8>,
+    /// The stored nanosecond value from GPS Time messages.
     nsec: Option<i32>,
+    /// A list of draw modes waiting to be updated.
     pending_draw_modes: Vec<String>,
+    /// The shared state for communicating between frontend/backend/other backend tabs.
     shared_state: SharedState,
+    /// The current most recent lat/lon point for each mode.
     sln_cur_data: Vec<Vec<(f64, f64)>>,
+    /// The preprocessed solution data to be sent to the frontend.
     sln_data: Vec<Vec<(f64, f64)>>,
     sln_line: RingBuffer<(f64, f64)>,
     pending_sln_line: RingBuffer<(f64, f64)>,
+    /// All solution data is stored before preparing for frontend.
     slns: HashMap<&'static str, RingBuffer<f64>>,
+    /// This stores all the key/value pairs to be displayed in the Solution Table.
     table: HashMap<&'static str, String>,
+    /// The current unit of measure for the solution position plot.
     unit: LatLonUnits,
+    /// The string equivalent for the source of the UTC updates.
     utc_source: Option<String>,
+    /// The stored monotonic Utc time.
     utc_time: Option<UtcDateTime>,
+    /// The stored week value from GPS Time messages.
     week: Option<u16>,
 }
 
@@ -424,7 +419,7 @@ impl SolutionPositionTab {
 
     /// Handle PosLLH / PosLLHDepA messages.
     ///
-    /// TODO(johnmichael.burke@) https://swift-nav.atlassian.net/browse/CPP-95
+    /// TODO(johnmichael.burke@) <https://swift-nav.atlassian.net/browse/CPP-95>
     /// Need to validate logging.
     pub fn handle_pos_llh(&mut self, msg: PosLLH) {
         self.last_pos_mode = msg.mode();

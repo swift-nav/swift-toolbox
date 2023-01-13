@@ -29,30 +29,26 @@ use crate::types::{RingBuffer, VelocityUnits};
 use crate::utils::{euclidean_distance, serialize_capnproto_builder};
 use crate::zip;
 
-/// SolutionVelocityTab struct.
-///
-/// # Fields:
-///
-/// - `available_units` - The available units of measure to send to frontend for selection.
-/// - `colors`: Stored rgb codes for frontend correspond to index of sv_labels.
-/// - `max`: Stored maximum measure of unit used for frontend plot.
-/// - `min`: Stored minimum measure of unit used for frontend plot.
-/// - `multiplier`: The current multiplier used to modify points accounting for unit of measure.
-/// - `points`: The horizontal and vertical velocity points of size, NUM_POINTS, to be sent to frontend.
-/// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
-/// - `tow`: The GPS Time of Week.
-/// - `unit`: Currently displayed and converted to unit of measure.
 #[derive(Debug)]
 pub struct SolutionVelocityTab {
+    /// The available units of measure to send to frontend for selection.
     pub available_units: Vec<&'static str>,
     pub client_sender: BoxedClientSender,
+    /// Stored rgb codes for frontend correspond to index of sv_labels.
     pub colors: Vec<String>,
+    /// Stored maximum measure of unit used for frontend plot.
     pub max: f64,
+    /// Stored minimum measure of unit used for frontend plot.
     pub min: f64,
+    /// The current multiplier used to modify points accounting for unit of measure.
     pub multiplier: f64,
+    /// The horizontal and vertical velocity points of size, NUM_POINTS, to be sent to frontend.
     pub points: Vec<RingBuffer<(f64, f64)>>,
+    /// The shared state for communicating between frontend/backend/other backend tabs.
     pub shared_state: SharedState,
+    /// The GPS Time of Week.
     pub tow: f64,
+    /// Currently displayed and converted to unit of measure.
     pub unit: VelocityUnits,
 }
 

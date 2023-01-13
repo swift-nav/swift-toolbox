@@ -56,15 +56,12 @@ use crate::{
 const UPDATE_THREAD_SLEEP_MS: u64 = 1000;
 const WAIT_FOR_SETTINGS_THREAD_SLEEP_MS: u64 = 500;
 
-/// UpdateTab struct.
-///
-/// # Fields
-/// - `sender`: A sender to send messages to the update thread.
-/// - `receiver`: A receiver to receive messages from the update thread.
-/// - `update_tab_context`: The shared state for update tab.
 pub struct UpdateTab {
+    /// A sender to send messages to the update thread.
     sender: Sender<Option<UpdateTabUpdate>>,
+    /// A receiver to receive messages from the update thread.
     receiver: Receiver<Option<UpdateTabUpdate>>,
+    /// The shared state for update tab.
     update_tab_context: UpdateTabContext,
 }
 impl UpdateTab {

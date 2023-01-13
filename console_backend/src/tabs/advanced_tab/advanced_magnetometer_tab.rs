@@ -28,21 +28,16 @@ use crate::types::RingBuffer;
 use crate::utils::serialize_capnproto_builder;
 use crate::zip;
 
-/// AdvancedMagnetometerTab struct.
-///
-/// # Fields:
-///
-/// - `client_send`: Client Sender channel for communication from backend to frontend.
-/// - `last_plot_update_time`: The last time the plot values were attempted to send to frontend.
-/// - `mag_x`: The stored historic Magnetometer values along x axis.
-/// - `mag_y`: The stored historic Magnetometer values along y axis.
-/// - `mag_z`: The stored historic Magnetometer values along z axis.
 #[derive(Debug)]
 pub struct AdvancedMagnetometerTab {
     shared_state: SharedState,
+    /// Client Sender channel for communication from backend to frontend.
     client_sender: BoxedClientSender,
+    /// The stored historic Magnetometer values along x axis.
     mag_x: RingBuffer<f64>,
+    /// The stored historic Magnetometer values along y axis.
     mag_y: RingBuffer<f64>,
+    /// The stored historic Magnetometer values along z axis.
     mag_z: RingBuffer<f64>,
     ymax: f64,
     ymin: f64,

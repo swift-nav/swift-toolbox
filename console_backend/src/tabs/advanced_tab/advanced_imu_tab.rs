@@ -29,37 +29,33 @@ use crate::shared_state::{SharedState, TabName};
 use crate::types::RingBuffer;
 use crate::utils::{euclidean_distance, serialize_capnproto_builder};
 
-/// AdvancedImuTab struct.
-///
-/// # Fields:
-///
-/// - `client_send`: Client Sender channel for communication from backend to frontend.
-/// - `imu_conf`: Storage for the Imu configuration.
-/// - `imu_temp`: Storage for the raw Imu temperature converted to proper units.
-/// - `rms_acc_x`: The calculated root mean squared imu acceleration for x axis.
-/// - `rms_acc_y`: The calculated root mean squared imu acceleration for y axis.
-/// - `rms_acc_z`: The calculated root mean squared imu acceleration for z axis.
-/// - `acc_x`: The stored historic Imu acceleration values along x axis.
-/// - `acc_y`: The stored historic Imu acceleration values along y axis.
-/// - `acc_z`: The stored historic Imu acceleration values along z axis.
-/// - `gyro_x`: The stored historic Imu angular rate values along x axis.
-/// - `gyro_y`: The stored historic Imu angular rate values along y axis.
-/// - `gyro_z`: The stored historic Imu angular rate values along z axis.
 #[derive(Debug)]
 pub struct AdvancedImuTab {
     shared_state: SharedState,
+    ///  Client Sender channel for communication from backend to frontend.
     client_sender: BoxedClientSender,
     pub fusion_engine_status_bar: FusionStatusFlags,
+    /// Storage for the Imu configuration.
     imu_conf: u8,
+    /// Storage for the raw Imu temperature converted to proper units.
     imu_temp: f64,
+    /// The calculated root mean squared imu acceleration for x axis.
     rms_acc_x: f64,
+    /// The calculated root mean squared imu acceleration for y axis.
     rms_acc_y: f64,
+    /// The calculated root mean squared imu acceleration for z axis.
     rms_acc_z: f64,
+    /// The stored historic Imu acceleration values along x axis.
     acc_x: RingBuffer<f64>,
+    /// The stored historic Imu acceleration values along y axis.
     acc_y: RingBuffer<f64>,
+    /// The stored historic Imu acceleration values along z axis.
     acc_z: RingBuffer<f64>,
+    /// The stored historic Imu angular rate values along x axis.
     gyro_x: RingBuffer<f64>,
+    /// The stored historic Imu angular rate values along y axis.
     gyro_y: RingBuffer<f64>,
+    /// The stored historic Imu angular rate values along z axis.
     gyro_z: RingBuffer<f64>,
 }
 

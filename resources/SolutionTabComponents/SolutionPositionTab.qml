@@ -191,15 +191,48 @@ Item {
         ChartView {
             id: solutionPositionChart
 
+            function freezeTicks() {
+                // fix the interval so tick number will not be too large.
+                solutionPositionXAxis.freezeTicks();
+                solutionPositionYAxis.freezeTicks();
+            }
+
+            // This function make the ticks on the x & y axes have the
+            // same interval, and have them land on evenish numbers.
+            // It also ensures the ranges of the two axes are the same.
+            function setTicks() {
+                const x_tick_interval = solutionPositionXAxis.getGoodTickInterval();
+                const y_tick_interval = solutionPositionYAxis.getGoodTickInterval();
+                const max_tick_interval = Math.max(x_tick_interval, y_tick_interval);
+                const x_range = Math.abs(solutionPositionXAxis.max - solutionPositionXAxis.min);
+                const y_range = Math.abs(solutionPositionYAxis.max - solutionPositionYAxis.min);
+                const range_diff = Math.abs(x_range - y_range);
+                if (x_range < y_range) {
+                    solutionPositionXAxis.min -= range_diff / 2;
+                    solutionPositionXAxis.max += range_diff / 2;
+                } else {
+                    solutionPositionYAxis.min -= range_diff / 2;
+                    solutionPositionYAxis.max += range_diff / 2;
+                }
+                solutionPositionXAxis.setGoodTicks(max_tick_interval);
+                solutionPositionYAxis.setGoodTicks(max_tick_interval);
+            }
+
             function resetChartZoom() {
+                solutionPositionChart.freezeTicks();
+                // update the chart lims
                 solutionPositionChart.zoomReset();
                 solutionPositionXAxis.max = orig_lon_max;
                 solutionPositionXAxis.min = orig_lon_min;
                 solutionPositionYAxis.max = orig_lat_max;
                 solutionPositionYAxis.min = orig_lat_min;
+                // update ticks
+                solutionPositionChart.setTicks();
             }
 
             function centerToSolution() {
+                solutionPositionChart.freezeTicks();
+                // update chart lims
                 solutionPositionChart.zoomReset();
                 if (cur_scatters.length) {
                     solutionPositionXAxis.max = cur_solution.x + x_axis_half;
@@ -207,13 +240,18 @@ Item {
                     solutionPositionYAxis.max = cur_solution.y + y_axis_half;
                     solutionPositionYAxis.min = cur_solution.y - y_axis_half;
                 }
+                // update ticks
+                solutionPositionChart.setTicks();
             }
 
             function chartZoomByDirection(delta) {
-                if (delta > 0)
+                solutionPositionChart.freezeTicks();
+                if (delta > 0) {
                     solutionPositionChart.zoom(Constants.commonChart.zoomInMult);
-                else
+                } else {
                     solutionPositionChart.zoom(Constants.commonChart.zoomOutMult);
+                }
+                solutionPositionChart.setTicks();
             }
 
             function stopZoomFeatures() {
@@ -293,12 +331,14 @@ Item {
                 id: solutionPositionXAxis
 
                 titleText: Constants.solutionPosition.xAxisTitleText + " (" + available_units[solutionPositionSelectedUnit.currentIndex] + ")"
+                tickType: ValueAxis.TicksDynamic
             }
 
             SwiftValueAxis {
                 id: solutionPositionYAxis
 
                 titleText: Constants.solutionPosition.yAxisTitleText + " (" + available_units[solutionPositionSelectedUnit.currentIndex] + ")"
+                tickType: ValueAxis.TicksDynamic
             }
 
             MouseArea {
@@ -357,15 +397,19 @@ Item {
                 running: true
                 repeat: true
                 onTriggered: {
-                    if (!solutionPositionTab.visible)
+                    if (!solutionPositionTab.visible) {
                         return;
+                    }
                     solution_position_model.fill_console_points(solutionPositionPoints);
-                    if (!solutionPositionPoints.points.length)
+                    if (!solutionPositionPoints.points.length) {
                         return;
-                    if (available_units != solutionPositionPoints.available_units)
+                    }
+                    if (available_units != solutionPositionPoints.available_units) {
                         available_units = solutionPositionPoints.available_units;
-                    if (!line || !scatters.length || !cur_scatters.length)
+                    }
+                    if (!line || !scatters.length || !cur_scatters.length) {
                         [scatters, cur_scatters, line] = SolutionPlotLoop.setupScatterSeries(solutionPositionChart, Constants, Globals, solutionPositionXAxis, solutionPositionYAxis, Constants.solutionPosition.legendLabels, Constants.solutionPosition.colors, false, true);
+                    }
                     var combined = [line, scatters, cur_scatters];
                     solutionPositionPoints.fill_series(combined);
                     let point = SolutionPlotLoop.getCurSolution(solutionPositionPoints.cur_points);
@@ -405,8 +449,9 @@ Item {
                         orig_lat_max = new_lat_max;
                         orig_lon_min = new_lon_min;
                         orig_lon_max = new_lon_max;
-                        if (zoom_all)
+                        if (zoom_all) {
                             solutionPositionChart.resetChartZoom();
+                        }
                     }
                 }
             }

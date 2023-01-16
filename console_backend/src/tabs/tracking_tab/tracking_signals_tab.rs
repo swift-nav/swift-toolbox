@@ -39,50 +39,45 @@ use crate::shared_state::{SharedState, TabName};
 use crate::types::{Cn0Age, Cn0Dict, ObservationMsg, RingBuffer, SignalCodes};
 use crate::utils::{serialize_capnproto_builder, signal_key_color, signal_key_label};
 
-/// TrackingSignalsTab struct.
-///
-/// # Fields:
-///
-/// - `at_least_one_track_received`: Whether a MsgTrackingState has been received. If so block Obs Msgs from being processed.
-/// - `cn0_age`: Main storage of (code, sat) keys corresponding to cn0 age.
-/// - `cn0_dict`: Main storage of (code, sat) keys corresponding to cn0 values.
-/// - `colors`: Stored rgb codes for frontend correspond to index of sv_labels.
-/// - `glo_fcn_dict`:  Storage of glonass sat codes if 100 +[-6, 7] case.
-/// - `glo_slot_dict`: Storage of glonass sat codes if [1, 28] slot.
-/// - `gps_tow`: The GPS Time of Week.
-/// - `gps_week`: The GPS week.
-/// - `incoming_obs_cn0`: Map used for accumulating (key, cn0) pairs before performing update_from_obs.
-/// - `last_update_time`: Instant monotonic time checking if enough time has passed before performing update_from_obs.
-/// - `max`: Stored maximum dB-Hz used for frontend plot.
-/// - `min`: Stored minimum dB-Hz used for frontend plot.
-/// - `prev_obs_count`: Previous observation count of total expected messages.
-/// - `prev_obs_total`: Previous total expected observation messages.
-/// - `sats`: Stored satellite data (NUM_SATS, NUM_POINTS) to be sent to frontend.
-/// - `sv_labels`: Vector used to store sorted labels before sending to frontend.
-/// - `t_init`: Instant monotonic time used as starting reference time.
-/// - `time`: Vector of Monotic times stored.
 #[derive(Debug)]
 pub struct TrackingSignalsTab {
+    /// Whether a MsgTrackingState has been received. If so block Obs Msgs from being processed.
     pub at_least_one_track_received: bool,
+
     pub check_labels: [&'static str; 13],
     pub client_sender: BoxedClientSender,
+    /// Main storage of (code, sat) keys corresponding to cn0 age.
     pub cn0_age: Cn0Age,
+    /// Main storage of (code, sat) keys corresponding to cn0 values.
     pub cn0_dict: Cn0Dict,
+    /// Stored rgb codes for frontend correspond to index of sv_labels.
     pub colors: Vec<String>,
+    /// Storage of glonass sat codes if 100 +[-6, 7] case.
     pub glo_fcn_dict: HashMap<u8, i16>,
+    /// Storage of glonass sat codes if [1, 28] slot.
     pub glo_slot_dict: HashMap<i16, i16>,
+    /// The GPS Time of Week.
     pub gps_tow: f64,
+    /// The GPS week.
     pub gps_week: u16,
+    /// Map used for accumulating (key, cn0) pairs before performing update_from_obs.
     pub incoming_obs_cn0: HashMap<(SignalCodes, i16), f64>,
     pub last_obs_update_time: Instant,
+    /// Instant monotonic time checking if enough time has passed before performing update_from_obs.
     pub last_update_time: Instant,
+    /// Previous observation count of total expected messages.
     pub prev_obs_count: u8,
+    /// Previous total expected observation messages.
     pub prev_obs_total: u8,
     pub received_codes: Vec<SignalCodes>,
+    /// Stored satellite data (NUM_SATS, NUM_POINTS) to be sent to frontend.
     pub sats: Vec<RingBuffer<(f64, f64)>>,
     pub shared_state: SharedState,
+    /// Vector used to store sorted labels before sending to frontend.
     pub sv_labels: Vec<String>,
+    /// Instant monotonic time used as starting reference time.
     pub t_init: Instant,
+    /// Vector of Monotic times stored.
     pub time: RingBuffer<f64>,
 }
 

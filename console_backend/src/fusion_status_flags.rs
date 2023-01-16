@@ -272,25 +272,21 @@ impl Drop for FusionStatusFlag {
     }
 }
 
-/// FusionStatusFlags struct.
-///
-/// # Fields:
-///
-/// - `client_send`: Client Sender channel for communication from backend to frontend.
-/// - `gnsspos`: Storage for the GNSS Position status.
-/// - `gnssvel`: Storage for the GNSS Velocity status.
-/// - `wheelticks`: Storage for the wheel ticks status.
-/// - `speed`: Storage for the wheel speed status.
-/// - `nhc`: Storage for the non-holonomic constraints model status.
-/// - `zerovel`: Storage for the zero velocity status.
 #[derive(Debug)]
 pub struct FusionStatusFlags {
+    /// Sender channel for communication from backend to frontend.
     client_sender: BoxedClientSender,
+    /// Storage for the GNSS Position status.
     gnsspos: FusionStatusFlag,
+    /// Storage for the GNSS Velocity status.
     gnssvel: FusionStatusFlag,
+    /// Storage for the wheel ticks status.
     wheelticks: FusionStatusFlag,
+    /// Storage for the wheel speed status.
     speed: FusionStatusFlag,
+    /// Storage for the non-holonomic constraints model status.
     nhc: FusionStatusFlag,
+    /// Storage for the zero velocity status.
     zerovel: FusionStatusFlag,
 }
 

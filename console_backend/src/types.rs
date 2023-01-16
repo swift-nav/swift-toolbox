@@ -298,13 +298,14 @@ pub enum RealtimeDelay {
 }
 
 // Advanced System Monitor Types.
-// Struct with shared fields for various UartState Message types.
+
+/// Holds shared fields for various UartState Message types.
 pub struct UartStateFields {
     pub latency: Latency,
     pub obs_period: Option<Period>,
 }
 
-// Enum wrapping around various UartState Message types.
+/// Enum wrapping around various UartState Message types.
 #[derive(Debug, Clone)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum UartState {
@@ -339,7 +340,6 @@ impl Event for UartState {
     }
 }
 
-// Enum wrapping around various Vel NED Message types.
 #[derive(Debug, Clone, Copy)]
 pub struct FlowControl(SPFlowControl);
 
@@ -790,7 +790,7 @@ impl fmt::Display for SignalCodes {
     }
 }
 
-// Struct with shared fields for various Observation Message types.
+/// Holds various Observation Message types.
 pub struct ObservationMsgFields {
     pub n_obs: u8,
     pub tow: f64,
@@ -800,7 +800,7 @@ pub struct ObservationMsgFields {
     pub sender_id: Option<u16>,
 }
 
-// Enum wrapping around various Observation Message types.
+/// Enum wrapping around various Observation Message types.
 #[derive(Debug, Clone)]
 pub enum ObservationMsg {
     MsgObs(MsgObs),
@@ -910,7 +910,7 @@ impl Event for ObservationMsg {
     }
 }
 
-// Struct with shared fields for various Observation Contents types.
+/// Struct with shared fields for various Observation Contents types.
 pub struct ObservationFields {
     pub is_deprecated_msg_type: bool,
     pub code: SignalCodes,
@@ -924,7 +924,7 @@ pub struct ObservationFields {
     pub flags: u8,
 }
 
-// Enum wrapping around various Observation Contents observation types.
+/// Enum wrapping around various Observation Contents observation types.
 pub enum Observations {
     PackedObsContent(PackedObsContent),
     // PackedObsContentDepA(PackedObsContentDepA),
@@ -1117,7 +1117,7 @@ impl GnssModes {
     }
 }
 
-// Struct with shared fields for various PosLLH Message types.
+/// Struct with shared fields for various PosLLH Message types.
 #[allow(clippy::upper_case_acronyms)]
 pub struct PosLLHFields {
     pub flags: u8,
@@ -1130,7 +1130,7 @@ pub struct PosLLHFields {
     pub n_sats: u8,
 }
 
-// Enum wrapping around various PosLLH Message types.
+/// Enum wrapping around various PosLLH Message types.
 #[derive(Debug, Clone)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum PosLLH {
@@ -1202,7 +1202,7 @@ impl Event for PosLLH {
     }
 }
 
-// Struct with shared fields for various Dops Message types.
+/// Struct with shared fields for various Dops Message types.
 pub struct DopsFields {
     pub pdop: u16,
     pub gdop: u16,
@@ -1211,7 +1211,7 @@ pub struct DopsFields {
     pub vdop: u16,
     pub flags: u8,
 }
-// Enum wrapping around various Dops Message types.
+/// Enum wrapping around various Dops Message types.
 #[derive(Debug, Clone)]
 pub enum Dops {
     MsgDops(MsgDops),
@@ -1251,13 +1251,13 @@ impl Event for Dops {
     }
 }
 
-// Struct with shared fields for various GpsTime Message types.
+/// Struct with shared fields for various GpsTime Message types.
 pub struct GpsTimeFields {
     pub wn: u16,
     pub ns_residual: i32,
     pub flags: u8,
 }
-// Enum wrapping around various GpsTime Message types.
+/// Enum wrapping around various GpsTime Message types.
 #[derive(Debug, Clone)]
 pub enum GpsTime {
     MsgGpsTime(MsgGpsTime),
@@ -1290,7 +1290,7 @@ impl Event for GpsTime {
     }
 }
 
-// Struct with shared fields for various Specan Message types.
+/// Struct with shared fields for various Specan Message types.
 pub struct SpecanFields {
     pub wn: u16,
     pub tow: u32,
@@ -1303,7 +1303,7 @@ pub struct SpecanFields {
     pub channel_tag: u16,
 }
 
-// Enum wrapping around various Specan Message types.
+/// Enum wrapping around various Specan Message types.
 #[derive(Debug, Clone)]
 pub enum Specan {
     MsgSpecan(MsgSpecan),
@@ -1372,7 +1372,7 @@ impl Event for Specan {
     }
 }
 
-// Struct with shared fields for various VelNED Message types.
+/// Struct with shared fields for various VelNED Message types.
 #[allow(clippy::upper_case_acronyms)]
 pub struct VelNEDFields {
     pub flags: u8,
@@ -1383,7 +1383,7 @@ pub struct VelNEDFields {
     pub n_sats: u8,
 }
 
-// Enum wrapping around various Vel NED Message types.
+/// Enum wrapping around various Vel NED Message types.
 #[derive(Debug, Clone)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum VelNED {
@@ -1422,7 +1422,7 @@ impl Event for VelNED {
 
 // Baseline Tab Types.
 
-// Struct with shared fields for various BaselineNED Message types.
+/// Struct with shared fields for various BaselineNED Message types.
 #[allow(clippy::upper_case_acronyms)]
 pub struct BaselineNEDFields {
     pub flags: u8,
@@ -1434,7 +1434,7 @@ pub struct BaselineNEDFields {
     pub v_accuracy: u16,
     pub n_sats: u8,
 }
-// Enum wrapping around various Baseline NED Message types.
+/// Enum wrapping around various Baseline NED Message types.
 #[derive(Debug, Clone)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum BaselineNED {

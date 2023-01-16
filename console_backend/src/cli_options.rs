@@ -151,7 +151,7 @@ pub struct CliOptions {
     #[clap(long, hide = true)]
     pub qmldebug: bool,
 
-    /// SSH tunnel to a jumphost specified ([username]:[password]@some.fqdn)
+    /// SSH tunnel to a jumphost specified (`[username]:[password]@some.fqdn`)
     #[clap(long, hide = true)]
     pub ssh_tunnel: Option<PathBuf>,
 

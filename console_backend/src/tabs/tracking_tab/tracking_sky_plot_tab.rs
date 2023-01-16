@@ -28,31 +28,22 @@ use crate::shared_state::{SharedState, TabName};
 use crate::types::SignalCodes;
 use crate::utils::{serialize_capnproto_builder, signal_key_label};
 
-/// SkyPlotObs struct.
-///
-/// This struct is used to store information about observed satellite locations.
-///
-/// # Fields
-///
-/// - `az`: Azimuth angle of the satellite in degrees [0, 360].
-/// - `el`: Elevation angle of the satellite in degrees [-90, 90].
-/// - `label`: Label of the satellite.
+/// Used to store information about observed satellite locations.
 struct SkyPlotObs {
+    /// Azimuth angle of the satellite in degrees [0, 360].
     az: u16,
+    /// Elevation angle of the satellite in degrees [-90, 90].
     el: u16,
+    /// Label of the satellite.
     label: String,
 }
 
-/// TrackingSkyPlotTab struct.
-///
-/// # Fields:
-///
-/// - `client_send`: Client Sender channel for communication from backend to frontend.
-/// - `sats`: Storage for Satellite SkyPlotObs to be sent to frontend.
-/// - `shared_state`: The shared state for communicating between frontend/backend/other backend tabs.
 pub struct TrackingSkyPlotTab {
+    /// Client Sender channel for communication from backend to frontend.
     client_sender: BoxedClientSender,
+    /// Storage for Satellite SkyPlotObs to be sent to frontend.
     sats: Vec<Vec<SkyPlotObs>>,
+    /// The shared state for communicating between frontend/backend/other backend tabs.
     shared_state: SharedState,
 }
 

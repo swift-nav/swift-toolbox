@@ -59,15 +59,12 @@ struct IndexData {
     piksi_multi: PiksiMultiData,
 }
 
-/// UpdateDownloader struct.
-///
-/// # Fields:
-///
-/// - `index_data`: The deserialized index data containing firmware/console download links and versions.
 #[derive(Clone)]
 pub struct UpdateDownloader {
+    /// The deserialized index data containing firmware/console download links and versions.
     index_data: Option<IndexData>,
 }
+
 impl UpdateDownloader {
     pub fn new() -> UpdateDownloader {
         UpdateDownloader { index_data: None }

@@ -135,8 +135,8 @@ Item {
                 onClicked: {
                     if (checked) {
                         solutionZoomAllButton.checked = false;
-                        y_axis_half = Utils.spanBetweenValues(solutionPositionXAxis.max, solutionPositionXAxis.min) / 2;
-                        x_axis_half = Utils.spanBetweenValues(solutionPositionYAxis.max, solutionPositionYAxis.min) / 2;
+                        x_axis_half = Utils.spanBetweenValues(solutionPositionXAxis.max, solutionPositionXAxis.min) / 2;
+                        y_axis_half = Utils.spanBetweenValues(solutionPositionYAxis.max, solutionPositionYAxis.min) / 2;
                         center_solution = true;
                         zoom_all = false;
                     } else {
@@ -191,29 +191,43 @@ Item {
         ChartView {
             id: solutionPositionChart
 
+            onWidthChanged: (width) => {
+                solutionPositionChart.fixRange()
+            }
+
+            onHeightChanged: (width) => {
+                solutionPositionChart.fixRange()
+            }
+
             function freezeTicks() {
                 // fix the interval so tick number will not be too large.
                 solutionPositionXAxis.freezeTicks();
                 solutionPositionYAxis.freezeTicks();
             }
 
-            // This function make the ticks on the x & y axes have the
-            // same interval, and have them land on evenish numbers.
-            // It also ensures the ranges of the two axes are the same.
-            function setTicks() {
-                const x_tick_interval = solutionPositionXAxis.getGoodTickInterval();
-                const y_tick_interval = solutionPositionYAxis.getGoodTickInterval();
-                const max_tick_interval = Math.max(x_tick_interval, y_tick_interval);
+            function fixRange() {
+                const aspect_ratio = height / width;
                 const x_range = Math.abs(solutionPositionXAxis.max - solutionPositionXAxis.min);
                 const y_range = Math.abs(solutionPositionYAxis.max - solutionPositionYAxis.min);
-                const range_diff = Math.abs(x_range - y_range);
-                if (x_range < y_range) {
-                    solutionPositionXAxis.min -= range_diff / 2;
-                    solutionPositionXAxis.max += range_diff / 2;
+                const range_diff = aspect_ratio * x_range - y_range;
+                if (range_diff < 0) {
+                    solutionPositionXAxis.min += range_diff / 2;
+                    solutionPositionXAxis.max -= range_diff / 2;
                 } else {
                     solutionPositionYAxis.min -= range_diff / 2;
                     solutionPositionYAxis.max += range_diff / 2;
                 }
+
+            }
+
+            // This function make the ticks on the x & y axes have the
+            // same interval, and have them land on evenish numbers.
+            // It also ensures the ranges of the two axes are the same.
+            function setTicks() {
+                fixRange();
+                const x_tick_interval = solutionPositionXAxis.getGoodTickInterval();
+                const y_tick_interval = solutionPositionYAxis.getGoodTickInterval();
+                const max_tick_interval = Math.max(x_tick_interval, y_tick_interval);
                 solutionPositionXAxis.setGoodTicks(max_tick_interval);
                 solutionPositionYAxis.setGoodTicks(max_tick_interval);
             }
@@ -444,15 +458,20 @@ Item {
                         solutionCenterButton.checked = false;
                         solutionPositionChart.resetChartZoom();
                     }
-                    if (orig_lat_min != new_lat_min || orig_lat_max != new_lat_max || orig_lon_min != new_lon_min || orig_lon_max != new_lon_max) {
-                        orig_lat_min = new_lat_min;
-                        orig_lat_max = new_lat_max;
-                        orig_lon_min = new_lon_min;
-                        orig_lon_max = new_lon_max;
-                        if (zoom_all) {
-                            solutionPositionChart.resetChartZoom();
-                        }
+
+                    orig_lat_min = new_lat_min;
+                    orig_lat_max = new_lat_max;
+                    orig_lon_min = new_lon_min;
+                    orig_lon_max = new_lon_max;
+                    if (zoom_all) {
+                        solutionPositionChart.resetChartZoom();
+                    } else {
+                        solutionPositionChart.fixRange();
                     }
+                    orig_lat_min = solutionPositionYAxis.min;
+                    orig_lat_max = solutionPositionYAxis.max;
+                    orig_lon_min = solutionPositionXAxis.min;
+                    orig_lon_max = solutionPositionXAxis.max;
                 }
             }
         }

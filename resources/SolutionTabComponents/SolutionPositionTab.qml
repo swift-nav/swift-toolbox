@@ -191,12 +191,12 @@ Item {
         ChartView {
             id: solutionPositionChart
 
-            onWidthChanged: (width) => {
+            onWidthChanged: {
                 solutionPositionChart.fixRange()
             }
 
-            onHeightChanged: (width) => {
-                solutionPositionChart.fixRange()
+            onHeightChanged: {
+                solutionPositionChart.fixRange();
             }
 
             function freezeTicks() {
@@ -211,20 +211,20 @@ Item {
                 const y_range = Math.abs(solutionPositionYAxis.max - solutionPositionYAxis.min);
                 const range_diff = aspect_ratio * x_range - y_range;
                 if (range_diff < 0) {
-                    solutionPositionXAxis.min += range_diff / 2;
-                    solutionPositionXAxis.max -= range_diff / 2;
+                    const correction = Math.abs(range_diff / aspect_ratio / 2);
+                    solutionPositionXAxis.min -= correction
+                    solutionPositionXAxis.max += correction;
                 } else {
-                    solutionPositionYAxis.min -= range_diff / 2;
-                    solutionPositionYAxis.max += range_diff / 2;
+                    const correction = Math.abs(range.diff / 2);
+                    solutionPositionYAxis.min -= correction;
+                    solutionPositionYAxis.max += correction;
                 }
-
             }
 
             // This function make the ticks on the x & y axes have the
             // same interval, and have them land on evenish numbers.
             // It also ensures the ranges of the two axes are the same.
             function setTicks() {
-                fixRange();
                 const x_tick_interval = solutionPositionXAxis.getGoodTickInterval();
                 const y_tick_interval = solutionPositionYAxis.getGoodTickInterval();
                 const max_tick_interval = Math.max(x_tick_interval, y_tick_interval);
@@ -458,20 +458,27 @@ Item {
                         solutionCenterButton.checked = false;
                         solutionPositionChart.resetChartZoom();
                     }
-
+                    const aspect_ratio = height / width;
+                    const x_range = Math.abs(new_lon_max - new_lon_min);
+                    const y_range =  Math.abs(new_lat_max - new_lat_min);
+                    const range_diff = aspect_ratio * x_range - y_range;
+                    if (range_diff < 0) {
+                        const corr = Math.abs(range_diff / aspect_ratio);
+                        new_lon_min -= corr / 2;
+                        new_lon_max += corr / 2;
+                    } else {
+                        const corr = range_diff;
+                        new_lat_min -= corr / 2;
+                        new_lat_max += corr / 2;
+                    }
+                    console.log((new_lat_max-new_lat_min)/(new_lon_max - new_lon_min), aspect_ratio);
                     orig_lat_min = new_lat_min;
                     orig_lat_max = new_lat_max;
                     orig_lon_min = new_lon_min;
                     orig_lon_max = new_lon_max;
                     if (zoom_all) {
                         solutionPositionChart.resetChartZoom();
-                    } else {
-                        solutionPositionChart.fixRange();
-                    }
-                    orig_lat_min = solutionPositionYAxis.min;
-                    orig_lat_max = solutionPositionYAxis.max;
-                    orig_lon_min = solutionPositionXAxis.min;
-                    orig_lon_max = solutionPositionXAxis.max;
+                    } 
                 }
             }
         }

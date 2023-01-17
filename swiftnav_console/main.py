@@ -452,7 +452,9 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
             elif m.which == Message.Union.TrackingSkyPlotStatus:
                 data = tracking_sky_plot_update()
                 data[Keys.SATS][:] = m.trackingSkyPlotStatus.sats
-                data[Keys.LABELS][:] = m.trackingSkyPlotStatus.labels
+                data[Keys.LABELS][:] = [
+                    list(m.trackingSkyPlotStatus.labels[idx]) for idx in range(len(m.trackingSkyPlotStatus.labels))
+                ]
                 TrackingSkyPlotPoints.post_data_update(data)
             elif m.which == Message.Union.ObservationStatus:
                 data = observation_update()

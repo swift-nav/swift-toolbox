@@ -193,7 +193,7 @@ Item {
 
             onWidthChanged: {
                 solutionPositionChart.freezeTicks();
-                solutionPositionChart.fixRange()
+                solutionPositionChart.fixRange();
                 solutionPositionChart.setTicks();
             }
 
@@ -216,7 +216,7 @@ Item {
                 const range_diff = aspect_ratio * x_range - y_range;
                 if (range_diff < 0) {
                     const correction = Math.abs(range_diff / aspect_ratio / 2);
-                    solutionPositionXAxis.min -= correction
+                    solutionPositionXAxis.min -= correction;
                     solutionPositionXAxis.max += correction;
                 } else {
                     const correction = Math.abs(range_diff / 2);
@@ -244,6 +244,7 @@ Item {
                 solutionPositionXAxis.min = orig_lon_min;
                 solutionPositionYAxis.max = orig_lat_max;
                 solutionPositionYAxis.min = orig_lat_min;
+                solutionPositionChart.fixRange();
                 // update ticks
                 solutionPositionChart.setTicks();
             }
@@ -462,26 +463,15 @@ Item {
                         solutionCenterButton.checked = false;
                         solutionPositionChart.resetChartZoom();
                     }
-                    const aspect_ratio = height / width;
-                    const x_range = Math.abs(new_lon_max - new_lon_min);
-                    const y_range =  Math.abs(new_lat_max - new_lat_min);
-                    const range_diff = aspect_ratio * x_range - y_range;
-                    if (range_diff < 0) {
-                        const corr = Math.abs(range_diff / aspect_ratio);
-                        new_lon_min -= corr / 2;
-                        new_lon_max += corr / 2;
-                    } else {
-                        const corr = range_diff;
-                        new_lat_min -= corr / 2;
-                        new_lat_max += corr / 2;
+                    if (orig_lat_min != new_lat_min || orig_lat_max != new_lat_max || orig_lon_min != new_lon_min || orig_lon_max != new_lon_max) {
+                        orig_lat_min = new_lat_min;
+                        orig_lat_max = new_lat_max;
+                        orig_lon_min = new_lon_min;
+                        orig_lon_max = new_lon_max;
+                        if (zoom_all) {
+                            solutionPositionChart.resetChartZoom();
+                        }
                     }
-                    orig_lat_min = new_lat_min;
-                    orig_lat_max = new_lat_max;
-                    orig_lon_min = new_lon_min;
-                    orig_lon_max = new_lon_max;
-                    if (zoom_all) {
-                        solutionPositionChart.resetChartZoom();
-                    } 
                 }
             }
         }

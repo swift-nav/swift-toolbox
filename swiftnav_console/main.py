@@ -252,7 +252,6 @@ TAB_LAYOUT = {
     },
 }
 
-
 capnp.remove_import_hook()  # pylint: disable=no-member
 
 
@@ -502,15 +501,15 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                 data[Keys.SBP_LOGGING] = m.loggingBarStatus.sbpLogging
                 data[Keys.SBP_LOGGING_FORMAT] = m.loggingBarStatus.sbpLoggingFormat
                 LoggingBarData.post_data_update(data)
-            elif m.which == Message.Union.LoggingBarRecordingStatus:
+            elif m.which == Message.Union.LoggingBarStartRecording:
                 data = logging_bar_recording_update()
-                data[Keys.RECORDING_DURATION_SEC] = m.loggingBarRecordingStatus.recordingDurationSec
-                data[Keys.RECORDING_SIZE] = m.loggingBarRecordingStatus.recordingSize
-                data[Keys.RECORDING_FILENAME] = (
-                    m.loggingBarRecordingStatus.recordingFilename.filename
-                    if m.loggingBarRecordingStatus.recordingFilename.which() == "filename"
-                    else ""
-                )
+                data[Keys.RECORDING_SIZE] = None  # reset since name changed => new file
+                data[Keys.RECORDING_START_TIME] = time.time()
+                data[Keys.RECORDING_FILENAME] = m.loggingBarStartRecording.name
+                LoggingBarData.post_recording_data_update(data)
+            elif m.which == Message.Union.LoggingBarRecordingSize:
+                data = logging_bar_recording_update()
+                data[Keys.RECORDING_SIZE] = m.loggingBarRecordingSize.size
                 LoggingBarData.post_recording_data_update(data)
             elif m.which == Message.Union.UpdateTabStatus:
                 data = update_tab_update()

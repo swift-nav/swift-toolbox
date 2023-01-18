@@ -206,7 +206,7 @@ jobs:
           ref: main
           workflow_file_name: distribute.yml
           client_payload: '{
-            "branch": "${{ env.VERSION }}", 
+            "branch": "${{ github.head_ref || github.ref_name }}", 
             "run_id": "${{ github.run_id }}",
             "should_release": "${{ env.SHOULD_RELEASE || false}}",
             "version": "${{ env.VERSION }}",

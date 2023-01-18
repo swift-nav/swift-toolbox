@@ -336,14 +336,6 @@ struct LoggingBarStatus {
     sbpLogging @2 :Bool;
     sbpLoggingFormat @3 :Text;
 }
-struct LoggingBarRecordingStatus {
-    recordingDurationSec @0 : UInt64;
-    recordingSize @1 :UInt64;
-    recordingFilename :union {
-        filename @2 :Text;
-        none @3 :Void = void;
-    }
-}
 
 struct UpdateTabStatus {
     hardwareRevision @0 : Text;
@@ -455,6 +447,14 @@ struct TabChangeEvent {
     currentTab @0 :Text;
 }
 
+struct LoggingBarStartRecording {
+    name @0 :Text;
+}
+
+struct LoggingBarRecordingSize {
+    size @0 :UInt16;
+}
+
 struct Message {
     union {
         solutionVelocityStatus @0 :SolutionVelocityStatus;
@@ -508,10 +508,11 @@ struct Message {
         insSettingsChangeResponse @48 : InsSettingsChangeResponse;
         confirmInsChange @49 : ConfirmInsChange;
         autoSurveyRequest @50 : AutoSurveyRequest;
-        loggingBarRecordingStatus @51 : LoggingBarRecordingStatus;
-        connectionNotification @52 : ConnectionNotification;
-        settingsNotification @53 : SettingsNotification;
-        connectionDialogStatus @54 :ConnectionDialogStatus;
-        onTabChangeEvent @55 :TabChangeEvent;
+        connectionNotification @51 : ConnectionNotification;
+        settingsNotification @52 : SettingsNotification;
+        connectionDialogStatus @53 :ConnectionDialogStatus;
+        onTabChangeEvent @54 :TabChangeEvent;
+        loggingBarStartRecording @55 : LoggingBarStartRecording;
+        loggingBarRecordingSize @56 : LoggingBarRecordingSize;
     }
 }

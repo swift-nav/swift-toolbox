@@ -83,9 +83,7 @@ Rectangle {
             Layout.preferredHeight: parent.preferredButtonHeight
             ToolTip.visible: hovered
             ToolTip.text: !checked ? "Start Recording" : "Stop Recording"
-            onClicked: {
-                backend_request_broker.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText);
-            }
+            onClicked: backend_request_broker.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText)
         }
 
         RowLayout {
@@ -113,6 +111,7 @@ Rectangle {
                 horizontalAlignment: Text.AlignHCenter
                 font.pixelSize: Constants.xxlPixelSize
                 font.family: Constants.lightFontFamily
+                text: "00:00:00"
             }
 
             Rectangle {
@@ -164,7 +163,6 @@ Rectangle {
                 SwiftComboBox {
                     id: sbpLoggingFormat
 
-                    currentIndex: 0
                     Layout.preferredWidth: Constants.loggingBar.sbpLoggingButtonWidth
                     Layout.preferredHeight: loggingBarRowLayout.preferredButtonHeight
                     enabled: !sbpLoggingButton.checked
@@ -288,22 +286,29 @@ Rectangle {
             repeat: true
             onTriggered: {
                 logging_bar_model.fill_data(loggingBarData);
-                sbpLoggingButton.checked = loggingBarData.sbp_logging;
-                csvLoggingButton.checked = loggingBarData.csv_logging;
+                if (sbpLoggingFormat.currentIndex == -1) {
+                    sbpLoggingFormat.currentIndex = loggingBarData.sbp_logging_format_index;
+                    sbpLoggingButton.checked = loggingBarData.sbp_logging;
+                    csvLoggingButton.checked = loggingBarData.csv_logging;
+                }
                 if (loggingBarData.recording_filename)
                     recordingFilenameText.editText = loggingBarData.recording_filename;
+                let recording = loggingBarData.sbp_logging;
                 if (mockTime) {
                     mockRecordingTime += interval;
                     recordingTime.text = loggingDurationFormat(mockRecordingTime / 1000);
                 } else {
-                    recordingTime.text = loggingDurationFormat(loggingBarData.recording_duration_sec);
+                    if (recording)
+                        recordingTime.text = loggingDurationFormat(loggingBarData.recording_duration_sec);
+                    else
+                        recordingTime.text = "00:00:00";
                 }
                 if (mockSize) {
                     mockRecordingSize += 15.15;
                     recordingSize.text = bytesToString(mockRecordingSize);
                 } else {
                     let recSize = loggingBarData.recording_size.toFixed(0);
-                    if (recSize > 0)
+                    if (recSize > 0 && recording)
                         recordingSize.text = bytesToString(recSize);
                     else
                         recordingSize.text = "0.00 MB";

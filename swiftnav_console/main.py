@@ -342,216 +342,217 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
             return False
         Message = self._messages.Message
         with Message.from_bytes(buffer) as m:
-            if m.which == Message.Union.Status:
-                app_state = ConnectionState(m.status.text)
-                if app_state == ConnectionState.CLOSED:
-                    return False
-                if app_state == ConnectionState.DISCONNECTED:
+            match m.which:
+                case Message.Union.Status:
+                    app_state = ConnectionState(m.status.text)
+                    if app_state == ConnectionState.CLOSED:
+                        return False
+                    if app_state == ConnectionState.DISCONNECTED:
+                        data = settings_table_update()
+                        SettingsTableEntries.post_data_update(data)
+                    ConnectionData.post_connection_state_update(app_state)
+                case Message.Union.ConnectionNotification:
+                    data = m.connectionNotification.message
+                    ConnectionData.post_connection_message_update(data)
+                case Message.Union.SolutionPositionStatus:
+                    data = solution_position_update()
+                    data[Keys.POINTS][:] = m.solutionPositionStatus.data
+                    data[Keys.CUR_POINTS][:] = m.solutionPositionStatus.curData
+                    data[Keys.LAT_MAX] = m.solutionPositionStatus.latMax
+                    data[Keys.LAT_MIN] = m.solutionPositionStatus.latMin
+                    data[Keys.LON_MAX] = m.solutionPositionStatus.lonMax
+                    data[Keys.LON_MIN] = m.solutionPositionStatus.lonMin
+                    data[Keys.AVAILABLE_UNITS][:] = m.solutionPositionStatus.availableUnits
+                    data[Keys.SOLUTION_LINE] = m.solutionPositionStatus.lineData
+                    SolutionPositionPoints.post_data_update(data)
+                case Message.Union.SolutionTableStatus:
+                    data = solution_table_update()
+                    data[Keys.ENTRIES][:] = [[entry.key, entry.val] for entry in m.solutionTableStatus.data]
+                    SolutionTableEntries.post_data_update(data)
+                case Message.Union.SolutionVelocityStatus:
+                    data = solution_velocity_update()
+                    data[Keys.COLORS][:] = m.solutionVelocityStatus.colors
+                    data[Keys.POINTS][:] = m.solutionVelocityStatus.data
+                    data[Keys.MAX] = m.solutionVelocityStatus.max
+                    data[Keys.MIN] = m.solutionVelocityStatus.min
+                    data[Keys.AVAILABLE_UNITS][:] = m.solutionVelocityStatus.availableUnits
+                    SolutionVelocityPoints.post_data_update(data)
+                case Message.Union.BaselinePlotStatus:
+                    data = baseline_plot_update()
+                    data[Keys.POINTS][:] = m.baselinePlotStatus.data
+                    data[Keys.CUR_POINTS][:] = m.baselinePlotStatus.curData
+                    data[Keys.N_MAX] = m.baselinePlotStatus.nMax
+                    data[Keys.N_MIN] = m.baselinePlotStatus.nMin
+                    data[Keys.E_MAX] = m.baselinePlotStatus.eMax
+                    data[Keys.E_MIN] = m.baselinePlotStatus.eMin
+                    BaselinePlotPoints.post_data_update(data)
+                case Message.Union.BaselineTableStatus:
+                    data = baseline_table_update()
+                    data[Keys.ENTRIES][:] = [[entry.key, entry.val] for entry in m.baselineTableStatus.data]
+                    BaselineTableEntries.post_data_update(data)
+                case Message.Union.AdvancedImuStatus:
+                    advanced_imu_tab = advanced_imu_tab_update()
+                    advanced_imu_tab[Keys.FIELDS_DATA][:] = m.advancedImuStatus.fieldsData
+                    advanced_imu_tab[Keys.POINTS][:] = m.advancedImuStatus.data
+                    AdvancedImuPoints.post_data_update(advanced_imu_tab)
+                case Message.Union.AdvancedSpectrumAnalyzerStatus:
+                    data = advanced_spectrum_analyzer_tab_update()
+                    data[Keys.CHANNEL] = m.advancedSpectrumAnalyzerStatus.channel
+                    data[Keys.POINTS][:] = m.advancedSpectrumAnalyzerStatus.data
+                    data[Keys.YMAX] = m.advancedSpectrumAnalyzerStatus.ymax
+                    data[Keys.YMIN] = m.advancedSpectrumAnalyzerStatus.ymin
+                    data[Keys.XMAX] = m.advancedSpectrumAnalyzerStatus.xmax
+                    data[Keys.XMIN] = m.advancedSpectrumAnalyzerStatus.xmin
+                    AdvancedSpectrumAnalyzerPoints.post_data_update(data)
+                case Message.Union.AdvancedNetworkingStatus:
+                    data = advanced_networking_tab_update()
+                    data[Keys.RUNNING] = m.advancedNetworkingStatus.running
+                    data[Keys.IP_ADDRESS] = m.advancedNetworkingStatus.ipAddress
+                    data[Keys.PORT] = m.advancedNetworkingStatus.port
+                    data[Keys.NETWORK_INFO][:] = [
+                        [entry.interfaceName, entry.ipv4Address, entry.running, entry.txUsage, entry.rxUsage]
+                        for entry in m.advancedNetworkingStatus.networkInfo
+                    ]
+                    AdvancedNetworkingData.post_data_update(data)
+                case Message.Union.AdvancedSystemMonitorStatus:
+                    data = advanced_system_monitor_tab_update()
+                    data[Keys.OBS_LATENCY][:] = [
+                        [entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.obsLatency
+                    ]
+                    data[Keys.OBS_PERIOD][:] = [[entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.obsPeriod]
+                    data[Keys.THREADS_TABLE][:] = [
+                        [entry.name, "%.1f" % entry.cpu, entry.stackFree]
+                        for entry in m.advancedSystemMonitorStatus.threadsTable
+                    ]
+                    data[Keys.ZYNQ_TEMP] = m.advancedSystemMonitorStatus.zynqTemp
+                    data[Keys.FE_TEMP] = m.advancedSystemMonitorStatus.feTemp
+                    AdvancedSystemMonitorData.post_data_update(data)
+                case Message.Union.AdvancedMagnetometerStatus:
+                    data = advanced_magnetometer_tab_update()
+                    data[Keys.YMAX] = m.advancedMagnetometerStatus.ymax
+                    data[Keys.YMIN] = m.advancedMagnetometerStatus.ymin
+                    data[Keys.POINTS][:] = m.advancedMagnetometerStatus.data
+                    AdvancedMagnetometerPoints.post_data_update(data)
+                case Message.Union.FusionStatusFlagsStatus:
+                    data = fusion_status_flags_update()
+                    data[Keys.GNSSPOS] = m.fusionStatusFlagsStatus.gnsspos
+                    data[Keys.GNSSVEL] = m.fusionStatusFlagsStatus.gnssvel
+                    data[Keys.WHEELTICKS] = m.fusionStatusFlagsStatus.wheelticks
+                    data[Keys.SPEED] = m.fusionStatusFlagsStatus.speed
+                    data[Keys.NHC] = m.fusionStatusFlagsStatus.nhc
+                    data[Keys.ZEROVEL] = m.fusionStatusFlagsStatus.zerovel
+                    FusionStatusFlagsData.post_data_update(data)
+                case Message.Union.TrackingSignalsStatus:
+                    data = tracking_signals_tab_update()
+                    data[Keys.CHECK_LABELS][:] = m.trackingSignalsStatus.checkLabels
+                    data[Keys.LABELS][:] = m.trackingSignalsStatus.labels
+                    data[Keys.COLORS][:] = m.trackingSignalsStatus.colors
+                    data[Keys.POINTS][:] = m.trackingSignalsStatus.data
+                    data[Keys.XMIN_OFFSET] = m.trackingSignalsStatus.xminOffset
+                    TrackingSignalsPoints.post_data_update(data)
+                case Message.Union.TrackingSkyPlotStatus:
+                    data = tracking_sky_plot_update()
+                    data[Keys.SATS][:] = m.trackingSkyPlotStatus.sats
+                    data[Keys.LABELS][:] = m.trackingSkyPlotStatus.labels
+                    TrackingSkyPlotPoints.post_data_update(data)
+                case Message.Union.ObservationStatus:
+                    data = observation_update()
+                    data[Keys.TOW] = m.observationStatus.tow
+                    data[Keys.WEEK] = m.observationStatus.week
+                    data[Keys.ROWS][:] = obs_rows_to_json(m.observationStatus.rows)
+                    if m.observationStatus.isRemote:
+                        ObservationRemoteTableModel.post_data_update(data)
+                    else:
+                        ObservationLocalTableModel.post_data_update(data)
+                case Message.Union.StatusBarStatus:
+                    data = status_bar_update()
+                    data[Keys.POS] = m.statusBarStatus.pos
+                    data[Keys.RTK] = m.statusBarStatus.rtk
+                    data[Keys.SATS] = m.statusBarStatus.sats
+                    data[Keys.CORR_AGE] = m.statusBarStatus.corrAge
+                    data[Keys.INS] = m.statusBarStatus.ins
+                    data[Keys.DATA_RATE] = m.statusBarStatus.dataRate
+                    data[Keys.SOLID_CONNECTION] = m.statusBarStatus.solidConnection
+                    data[Keys.TITLE] = m.statusBarStatus.title
+                    data[Keys.ANTENNA_STATUS] = m.statusBarStatus.antennaStatus
+                    StatusBarData.post_data_update(data)
+                case Message.Union.ConnectionStatus:
+                    data = connection_update()
+                    data[Keys.AVAILABLE_PORTS][:] = m.connectionStatus.availablePorts
+                    data[Keys.AVAILABLE_BAUDRATES][:] = m.connectionStatus.availableBaudrates
+                    data[Keys.AVAILABLE_FLOWS][:] = m.connectionStatus.availableFlows
+                    data[Keys.PREVIOUS_HOSTS][:] = m.connectionStatus.previousHosts
+                    data[Keys.PREVIOUS_PORTS][:] = m.connectionStatus.previousPorts
+                    data[Keys.PREVIOUS_FILES][:] = m.connectionStatus.previousFiles
+                    data[Keys.LAST_USED_SERIAL_DEVICE] = (
+                        m.connectionStatus.lastSerialDevice.port
+                        if m.connectionStatus.lastSerialDevice.which() == "port"
+                        else None
+                    )
+                    data[Keys.PREVIOUS_SERIAL_CONFIGS][:] = [
+                        [entry.device, entry.baudrate, entry.flowControl]
+                        for entry in m.connectionStatus.previousSerialConfigs
+                    ]
+                    data[Keys.CONSOLE_VERSION] = m.connectionStatus.consoleVersion
+                    data[Keys.PREVIOUS_CONNECTION_TYPE] = ConnectionType(m.connectionStatus.previousConnectionType)
+                    ConnectionData.post_connection_data_update(data)
+                case Message.Union.LoggingBarStatus:
+                    data = logging_bar_update()
+                    data[Keys.PREVIOUS_FOLDERS][:] = m.loggingBarStatus.previousFolders
+                    data[Keys.CSV_LOGGING] = m.loggingBarStatus.csvLogging
+                    data[Keys.SBP_LOGGING] = m.loggingBarStatus.sbpLogging
+                    data[Keys.SBP_LOGGING_FORMAT] = m.loggingBarStatus.sbpLoggingFormat
+                    LoggingBarData.post_data_update(data)
+                case Message.Union.LoggingBarRecordingStatus:
+                    data = logging_bar_recording_update()
+                    data[Keys.RECORDING_DURATION_SEC] = m.loggingBarRecordingStatus.recordingDurationSec
+                    data[Keys.RECORDING_SIZE] = m.loggingBarRecordingStatus.recordingSize
+                    data[Keys.RECORDING_FILENAME] = (
+                        m.loggingBarRecordingStatus.recordingFilename.filename
+                        if m.loggingBarRecordingStatus.recordingFilename.which() == "filename"
+                        else ""
+                    )
+                    LoggingBarData.post_recording_data_update(data)
+                case Message.Union.UpdateTabStatus:
+                    data = update_tab_update()
+                    data[Keys.HARDWARE_REVISION] = m.updateTabStatus.hardwareRevision
+                    data[Keys.FW_VERSION_CURRENT] = m.updateTabStatus.fwVersionCurrent
+                    data[Keys.FW_VERSION_LATEST] = m.updateTabStatus.fwVersionLatest
+                    data[Keys.FW_LOCAL_FILENAME] = m.updateTabStatus.fwLocalFilename
+                    data[Keys.DIRECTORY] = m.updateTabStatus.directory
+                    data[Keys.DOWNLOADING] = m.updateTabStatus.downloading
+                    data[Keys.UPGRADING] = m.updateTabStatus.upgrading
+                    data[Keys.FW_TEXT] = m.updateTabStatus.fwText
+                    data[Keys.FILEIO_LOCAL_FILEPATH] = m.updateTabStatus.fileioLocalFilepath
+                    data[Keys.FILEIO_DESTINATION_FILEPATH] = m.updateTabStatus.fileioDestinationFilepath
+                    data[Keys.FW_OUTDATED] = m.updateTabStatus.fwOutdated
+                    data[Keys.FW_V2_OUTDATED] = m.updateTabStatus.fwV2Outdated
+                    data[Keys.SERIAL_PROMPT] = m.updateTabStatus.serialPrompt
+                    data[Keys.CONSOLE_OUTDATED] = m.updateTabStatus.consoleOutdated
+                    data[Keys.CONSOLE_VERSION_CURRENT] = m.updateTabStatus.consoleVersionCurrent
+                    data[Keys.CONSOLE_VERSION_LATEST] = m.updateTabStatus.consoleVersionLatest
+                    UpdateTabData.post_data_update(data)
+                case Message.Union.LogAppend:
+                    data = log_panel_update()
+                    data[Keys.ENTRIES] += [entry.line for entry in m.logAppend.entries]
+                    data[Keys.LOG_LEVEL] = m.logAppend.logLevel
+                    LogPanelData.post_data_update(data)
+                case Message.Union.SettingsTableStatus:
                     data = settings_table_update()
+                    data[Keys.ENTRIES][:] = settings_rows_to_json(m.settingsTableStatus.data)
                     SettingsTableEntries.post_data_update(data)
-                ConnectionData.post_connection_state_update(app_state)
-            elif m.which == Message.Union.ConnectionNotification:
-                data = m.connectionNotification.message
-                ConnectionData.post_connection_message_update(data)
-            elif m.which == Message.Union.SolutionPositionStatus:
-                data = solution_position_update()
-                data[Keys.POINTS][:] = m.solutionPositionStatus.data
-                data[Keys.CUR_POINTS][:] = m.solutionPositionStatus.curData
-                data[Keys.LAT_MAX] = m.solutionPositionStatus.latMax
-                data[Keys.LAT_MIN] = m.solutionPositionStatus.latMin
-                data[Keys.LON_MAX] = m.solutionPositionStatus.lonMax
-                data[Keys.LON_MIN] = m.solutionPositionStatus.lonMin
-                data[Keys.AVAILABLE_UNITS][:] = m.solutionPositionStatus.availableUnits
-                data[Keys.SOLUTION_LINE] = m.solutionPositionStatus.lineData
-                SolutionPositionPoints.post_data_update(data)
-            elif m.which == Message.Union.SolutionTableStatus:
-                data = solution_table_update()
-                data[Keys.ENTRIES][:] = [[entry.key, entry.val] for entry in m.solutionTableStatus.data]
-                SolutionTableEntries.post_data_update(data)
-            elif m.which == Message.Union.SolutionVelocityStatus:
-                data = solution_velocity_update()
-                data[Keys.COLORS][:] = m.solutionVelocityStatus.colors
-                data[Keys.POINTS][:] = m.solutionVelocityStatus.data
-                data[Keys.MAX] = m.solutionVelocityStatus.max
-                data[Keys.MIN] = m.solutionVelocityStatus.min
-                data[Keys.AVAILABLE_UNITS][:] = m.solutionVelocityStatus.availableUnits
-                SolutionVelocityPoints.post_data_update(data)
-            elif m.which == Message.Union.BaselinePlotStatus:
-                data = baseline_plot_update()
-                data[Keys.POINTS][:] = m.baselinePlotStatus.data
-                data[Keys.CUR_POINTS][:] = m.baselinePlotStatus.curData
-                data[Keys.N_MAX] = m.baselinePlotStatus.nMax
-                data[Keys.N_MIN] = m.baselinePlotStatus.nMin
-                data[Keys.E_MAX] = m.baselinePlotStatus.eMax
-                data[Keys.E_MIN] = m.baselinePlotStatus.eMin
-                BaselinePlotPoints.post_data_update(data)
-            elif m.which == Message.Union.BaselineTableStatus:
-                data = baseline_table_update()
-                data[Keys.ENTRIES][:] = [[entry.key, entry.val] for entry in m.baselineTableStatus.data]
-                BaselineTableEntries.post_data_update(data)
-            elif m.which == Message.Union.AdvancedImuStatus:
-                advanced_imu_tab = advanced_imu_tab_update()
-                advanced_imu_tab[Keys.FIELDS_DATA][:] = m.advancedImuStatus.fieldsData
-                advanced_imu_tab[Keys.POINTS][:] = m.advancedImuStatus.data
-                AdvancedImuPoints.post_data_update(advanced_imu_tab)
-            elif m.which == Message.Union.AdvancedSpectrumAnalyzerStatus:
-                data = advanced_spectrum_analyzer_tab_update()
-                data[Keys.CHANNEL] = m.advancedSpectrumAnalyzerStatus.channel
-                data[Keys.POINTS][:] = m.advancedSpectrumAnalyzerStatus.data
-                data[Keys.YMAX] = m.advancedSpectrumAnalyzerStatus.ymax
-                data[Keys.YMIN] = m.advancedSpectrumAnalyzerStatus.ymin
-                data[Keys.XMAX] = m.advancedSpectrumAnalyzerStatus.xmax
-                data[Keys.XMIN] = m.advancedSpectrumAnalyzerStatus.xmin
-                AdvancedSpectrumAnalyzerPoints.post_data_update(data)
-            elif m.which == Message.Union.AdvancedNetworkingStatus:
-                data = advanced_networking_tab_update()
-                data[Keys.RUNNING] = m.advancedNetworkingStatus.running
-                data[Keys.IP_ADDRESS] = m.advancedNetworkingStatus.ipAddress
-                data[Keys.PORT] = m.advancedNetworkingStatus.port
-                data[Keys.NETWORK_INFO][:] = [
-                    [entry.interfaceName, entry.ipv4Address, entry.running, entry.txUsage, entry.rxUsage]
-                    for entry in m.advancedNetworkingStatus.networkInfo
-                ]
-                AdvancedNetworkingData.post_data_update(data)
-            elif m.which == Message.Union.AdvancedSystemMonitorStatus:
-                data = advanced_system_monitor_tab_update()
-                data[Keys.OBS_LATENCY][:] = [
-                    [entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.obsLatency
-                ]
-                data[Keys.OBS_PERIOD][:] = [[entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.obsPeriod]
-                data[Keys.THREADS_TABLE][:] = [
-                    [entry.name, "%.1f" % entry.cpu, entry.stackFree]
-                    for entry in m.advancedSystemMonitorStatus.threadsTable
-                ]
-                data[Keys.ZYNQ_TEMP] = m.advancedSystemMonitorStatus.zynqTemp
-                data[Keys.FE_TEMP] = m.advancedSystemMonitorStatus.feTemp
-                AdvancedSystemMonitorData.post_data_update(data)
-            elif m.which == Message.Union.AdvancedMagnetometerStatus:
-                data = advanced_magnetometer_tab_update()
-                data[Keys.YMAX] = m.advancedMagnetometerStatus.ymax
-                data[Keys.YMIN] = m.advancedMagnetometerStatus.ymin
-                data[Keys.POINTS][:] = m.advancedMagnetometerStatus.data
-                AdvancedMagnetometerPoints.post_data_update(data)
-            elif m.which == Message.Union.FusionStatusFlagsStatus:
-                data = fusion_status_flags_update()
-                data[Keys.GNSSPOS] = m.fusionStatusFlagsStatus.gnsspos
-                data[Keys.GNSSVEL] = m.fusionStatusFlagsStatus.gnssvel
-                data[Keys.WHEELTICKS] = m.fusionStatusFlagsStatus.wheelticks
-                data[Keys.SPEED] = m.fusionStatusFlagsStatus.speed
-                data[Keys.NHC] = m.fusionStatusFlagsStatus.nhc
-                data[Keys.ZEROVEL] = m.fusionStatusFlagsStatus.zerovel
-                FusionStatusFlagsData.post_data_update(data)
-            elif m.which == Message.Union.TrackingSignalsStatus:
-                data = tracking_signals_tab_update()
-                data[Keys.CHECK_LABELS][:] = m.trackingSignalsStatus.checkLabels
-                data[Keys.LABELS][:] = m.trackingSignalsStatus.labels
-                data[Keys.COLORS][:] = m.trackingSignalsStatus.colors
-                data[Keys.POINTS][:] = m.trackingSignalsStatus.data
-                data[Keys.XMIN_OFFSET] = m.trackingSignalsStatus.xminOffset
-                TrackingSignalsPoints.post_data_update(data)
-            elif m.which == Message.Union.TrackingSkyPlotStatus:
-                data = tracking_sky_plot_update()
-                data[Keys.SATS][:] = m.trackingSkyPlotStatus.sats
-                data[Keys.LABELS][:] = m.trackingSkyPlotStatus.labels
-                TrackingSkyPlotPoints.post_data_update(data)
-            elif m.which == Message.Union.ObservationStatus:
-                data = observation_update()
-                data[Keys.TOW] = m.observationStatus.tow
-                data[Keys.WEEK] = m.observationStatus.week
-                data[Keys.ROWS][:] = obs_rows_to_json(m.observationStatus.rows)
-                if m.observationStatus.isRemote:
-                    ObservationRemoteTableModel.post_data_update(data)
-                else:
-                    ObservationLocalTableModel.post_data_update(data)
-            elif m.which == Message.Union.StatusBarStatus:
-                data = status_bar_update()
-                data[Keys.POS] = m.statusBarStatus.pos
-                data[Keys.RTK] = m.statusBarStatus.rtk
-                data[Keys.SATS] = m.statusBarStatus.sats
-                data[Keys.CORR_AGE] = m.statusBarStatus.corrAge
-                data[Keys.INS] = m.statusBarStatus.ins
-                data[Keys.DATA_RATE] = m.statusBarStatus.dataRate
-                data[Keys.SOLID_CONNECTION] = m.statusBarStatus.solidConnection
-                data[Keys.TITLE] = m.statusBarStatus.title
-                data[Keys.ANTENNA_STATUS] = m.statusBarStatus.antennaStatus
-                StatusBarData.post_data_update(data)
-            elif m.which == Message.Union.ConnectionStatus:
-                data = connection_update()
-                data[Keys.AVAILABLE_PORTS][:] = m.connectionStatus.availablePorts
-                data[Keys.AVAILABLE_BAUDRATES][:] = m.connectionStatus.availableBaudrates
-                data[Keys.AVAILABLE_FLOWS][:] = m.connectionStatus.availableFlows
-                data[Keys.PREVIOUS_HOSTS][:] = m.connectionStatus.previousHosts
-                data[Keys.PREVIOUS_PORTS][:] = m.connectionStatus.previousPorts
-                data[Keys.PREVIOUS_FILES][:] = m.connectionStatus.previousFiles
-                data[Keys.LAST_USED_SERIAL_DEVICE] = (
-                    m.connectionStatus.lastSerialDevice.port
-                    if m.connectionStatus.lastSerialDevice.which() == "port"
-                    else None
-                )
-                data[Keys.PREVIOUS_SERIAL_CONFIGS][:] = [
-                    [entry.device, entry.baudrate, entry.flowControl]
-                    for entry in m.connectionStatus.previousSerialConfigs
-                ]
-                data[Keys.CONSOLE_VERSION] = m.connectionStatus.consoleVersion
-                data[Keys.PREVIOUS_CONNECTION_TYPE] = ConnectionType(m.connectionStatus.previousConnectionType)
-                ConnectionData.post_connection_data_update(data)
-            elif m.which == Message.Union.LoggingBarStatus:
-                data = logging_bar_update()
-                data[Keys.PREVIOUS_FOLDERS][:] = m.loggingBarStatus.previousFolders
-                data[Keys.CSV_LOGGING] = m.loggingBarStatus.csvLogging
-                data[Keys.SBP_LOGGING] = m.loggingBarStatus.sbpLogging
-                data[Keys.SBP_LOGGING_FORMAT] = m.loggingBarStatus.sbpLoggingFormat
-                LoggingBarData.post_data_update(data)
-            elif m.which == Message.Union.LoggingBarRecordingStatus:
-                data = logging_bar_recording_update()
-                data[Keys.RECORDING_DURATION_SEC] = m.loggingBarRecordingStatus.recordingDurationSec
-                data[Keys.RECORDING_SIZE] = m.loggingBarRecordingStatus.recordingSize
-                data[Keys.RECORDING_FILENAME] = (
-                    m.loggingBarRecordingStatus.recordingFilename.filename
-                    if m.loggingBarRecordingStatus.recordingFilename.which() == "filename"
-                    else ""
-                )
-                LoggingBarData.post_recording_data_update(data)
-            elif m.which == Message.Union.UpdateTabStatus:
-                data = update_tab_update()
-                data[Keys.HARDWARE_REVISION] = m.updateTabStatus.hardwareRevision
-                data[Keys.FW_VERSION_CURRENT] = m.updateTabStatus.fwVersionCurrent
-                data[Keys.FW_VERSION_LATEST] = m.updateTabStatus.fwVersionLatest
-                data[Keys.FW_LOCAL_FILENAME] = m.updateTabStatus.fwLocalFilename
-                data[Keys.DIRECTORY] = m.updateTabStatus.directory
-                data[Keys.DOWNLOADING] = m.updateTabStatus.downloading
-                data[Keys.UPGRADING] = m.updateTabStatus.upgrading
-                data[Keys.FW_TEXT] = m.updateTabStatus.fwText
-                data[Keys.FILEIO_LOCAL_FILEPATH] = m.updateTabStatus.fileioLocalFilepath
-                data[Keys.FILEIO_DESTINATION_FILEPATH] = m.updateTabStatus.fileioDestinationFilepath
-                data[Keys.FW_OUTDATED] = m.updateTabStatus.fwOutdated
-                data[Keys.FW_V2_OUTDATED] = m.updateTabStatus.fwV2Outdated
-                data[Keys.SERIAL_PROMPT] = m.updateTabStatus.serialPrompt
-                data[Keys.CONSOLE_OUTDATED] = m.updateTabStatus.consoleOutdated
-                data[Keys.CONSOLE_VERSION_CURRENT] = m.updateTabStatus.consoleVersionCurrent
-                data[Keys.CONSOLE_VERSION_LATEST] = m.updateTabStatus.consoleVersionLatest
-                UpdateTabData.post_data_update(data)
-            elif m.which == Message.Union.LogAppend:
-                data = log_panel_update()
-                data[Keys.ENTRIES] += [entry.line for entry in m.logAppend.entries]
-                data[Keys.LOG_LEVEL] = m.logAppend.logLevel
-                LogPanelData.post_data_update(data)
-            elif m.which == Message.Union.SettingsTableStatus:
-                data = settings_table_update()
-                data[Keys.ENTRIES][:] = settings_rows_to_json(m.settingsTableStatus.data)
-                SettingsTableEntries.post_data_update(data)
-            elif m.which == Message.Union.SettingsImportResponse:
-                SettingsTabData.post_import_status_update(m.settingsImportResponse.status)
-            elif m.which == Message.Union.SettingsNotification:
-                SettingsTabData.post_notification_update(m.settingsNotification.message)
-            elif m.which == Message.Union.InsSettingsChangeResponse:
-                data = settings_ins_update()
-                data[Keys.RECOMMENDED_INS_SETTINGS][:] = [
-                    [entry.settingName, entry.currentValue, entry.recommendedValue]
-                    for entry in m.insSettingsChangeResponse.recommendedSettings
-                ]
-                data[Keys.NEW_INS_CONFIRMATON] = True
-                SettingsTabData.post_ins_update(data)
+                case Message.Union.SettingsImportResponse:
+                    SettingsTabData.post_import_status_update(m.settingsImportResponse.status)
+                case Message.Union.SettingsNotification:
+                    SettingsTabData.post_notification_update(m.settingsNotification.message)
+                case Message.Union.InsSettingsChangeResponse:
+                    data = settings_ins_update()
+                    data[Keys.RECOMMENDED_INS_SETTINGS][:] = [
+                        [entry.settingName, entry.currentValue, entry.recommendedValue]
+                        for entry in m.insSettingsChangeResponse.recommendedSettings
+                    ]
+                    data[Keys.NEW_INS_CONFIRMATON] = True
+                    SettingsTabData.post_ins_update(data)
         return True
 
 

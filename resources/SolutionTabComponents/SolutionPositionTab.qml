@@ -193,13 +193,13 @@ Item {
 
             onWidthChanged: {
                 solutionPositionChart.freezeTicks();
-                solutionPositionChart.fixRange();
+                solutionPositionChart.fixAspectRatio();
                 solutionPositionChart.setTicks();
             }
 
             onHeightChanged: {
                 solutionPositionChart.freezeTicks();
-                solutionPositionChart.fixRange();
+                solutionPositionChart.fixAspectRatio();
                 solutionPositionChart.setTicks();
             }
 
@@ -209,7 +209,7 @@ Item {
                 solutionPositionYAxis.freezeTicks();
             }
 
-            function fixRange() {
+            function fixAspectRatio() {
                 const aspect_ratio = height / width;
                 const x_range = Math.abs(solutionPositionXAxis.max - solutionPositionXAxis.min);
                 const y_range = Math.abs(solutionPositionYAxis.max - solutionPositionYAxis.min);
@@ -244,7 +244,7 @@ Item {
                 solutionPositionXAxis.min = orig_lon_min;
                 solutionPositionYAxis.max = orig_lat_max;
                 solutionPositionYAxis.min = orig_lat_min;
-                solutionPositionChart.fixRange();
+                solutionPositionChart.fixAspectRatio();
                 // update ticks
                 solutionPositionChart.setTicks();
             }

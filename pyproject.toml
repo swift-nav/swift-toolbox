@@ -5,7 +5,7 @@ readme = "README.md"
 classifiers = []
 requires-python = ">=3.8"
 dynamic = ['version', 'description']
-dependencies = ["pycapnp == 1.2.1"]
+dependencies = ["pycapnp == 1.2.2"]
 
 [project.optional-dependencies]
 test = [

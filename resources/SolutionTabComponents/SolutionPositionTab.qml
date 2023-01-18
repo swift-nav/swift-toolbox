@@ -259,6 +259,7 @@ Item {
                     solutionPositionYAxis.max = cur_solution.y + y_axis_half;
                     solutionPositionYAxis.min = cur_solution.y - y_axis_half;
                 }
+                solutionPositionChart.fixAspectRatio();
                 // update ticks
                 solutionPositionChart.setTicks();
             }

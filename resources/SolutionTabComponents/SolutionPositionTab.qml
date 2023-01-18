@@ -192,11 +192,15 @@ Item {
             id: solutionPositionChart
 
             onWidthChanged: {
+                solutionPositionChart.freezeTicks();
                 solutionPositionChart.fixRange()
+                solutionPositionChart.setTicks();
             }
 
             onHeightChanged: {
+                solutionPositionChart.freezeTicks();
                 solutionPositionChart.fixRange();
+                solutionPositionChart.setTicks();
             }
 
             function freezeTicks() {
@@ -215,7 +219,7 @@ Item {
                     solutionPositionXAxis.min -= correction
                     solutionPositionXAxis.max += correction;
                 } else {
-                    const correction = Math.abs(range.diff / 2);
+                    const correction = Math.abs(range_diff / 2);
                     solutionPositionYAxis.min -= correction;
                     solutionPositionYAxis.max += correction;
                 }
@@ -471,7 +475,6 @@ Item {
                         new_lat_min -= corr / 2;
                         new_lat_max += corr / 2;
                     }
-                    console.log((new_lat_max-new_lat_min)/(new_lon_max - new_lon_min), aspect_ratio);
                     orig_lat_min = new_lat_min;
                     orig_lat_max = new_lat_max;
                     orig_lon_min = new_lon_min;

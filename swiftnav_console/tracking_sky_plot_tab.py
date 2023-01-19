@@ -82,10 +82,9 @@ class TrackingSkyPlotPoints(QObject):
     @Slot()  # type: ignore
     def fill_all_series(self) -> None:
         series_changed = False
-        for idx in range(len(self._tracking_sky_plot[Keys.SATS])):
+        for idx, sats in enumerate(self._tracking_sky_plot[Keys.SATS]):
             series = self._all_series[idx]
             if series.isVisible():
-                sats = self._tracking_sky_plot[Keys.SATS][idx]
                 series.clear()
                 series.replace(list(map(lambda point: QPointF(point.az, point.el), sats)))
                 series_changed = True

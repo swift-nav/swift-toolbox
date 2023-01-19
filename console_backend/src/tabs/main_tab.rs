@@ -17,15 +17,11 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-use std::{
-    path::PathBuf,
-    thread::JoinHandle,
-    time::{Duration, Instant},
-};
+use std::path::PathBuf;
 
 use chrono::Local;
 use log::error;
-use sbp::Frame;
+use sbp::{Frame, Sbp};
 
 use crate::client_sender::BoxedClientSender;
 use crate::common_constants::SbpLogging;
@@ -33,82 +29,42 @@ use crate::constants::{
     BASELINE_TIME_STR_FILEPATH, POS_LLH_TIME_STR_FILEPATH, SBP_FILEPATH, SBP_JSON_FILEPATH,
     VEL_TIME_STR_FILEPATH,
 };
-use crate::output::{CsvLogging, SbpLogger};
-use crate::shared_state::{create_directory, ConnectionState, SharedState};
-use crate::utils::{refresh_loggingbar, refresh_loggingbar_recording, OkOrLog};
-
-const LOGGING_STATS_UPDATE_INTERVAL: Duration = Duration::from_millis(500);
-
-pub fn logging_stats_thread(
-    shared_state: SharedState,
-    client_sender: BoxedClientSender,
-) -> JoinHandle<()> {
-    std::thread::spawn(move || {
-        let mut recv = shared_state.watch_connection();
-        let mut start_time = Instant::now();
-        let mut filepath = None;
-        while !matches!(recv.get(), Err(_) | Ok(ConnectionState::Closed)) {
-            let current_path = shared_state.sbp_logging_filepath();
-            if current_path != filepath {
-                filepath = current_path;
-                start_time = Instant::now();
-            }
-            if let Some(ref path) = filepath {
-                if let Ok(metadata) = std::fs::metadata(path) {
-                    let file_size = metadata.len();
-                    refresh_loggingbar_recording(
-                        &client_sender,
-                        file_size,
-                        start_time.elapsed().as_secs(),
-                        Some(path.to_string_lossy().to_string()),
-                    );
-                }
-            } else {
-                refresh_loggingbar_recording(&client_sender, 0, 0, None);
-            }
-            std::thread::sleep(LOGGING_STATS_UPDATE_INTERVAL);
-        }
-    })
-}
+use crate::output::{CsvLogging, SbpFileLogger};
+use crate::shared_state::{create_directory, SharedState};
+use crate::utils::{refresh_log_recording_size, refresh_loggingbar, start_recording};
 
 pub struct MainTab {
     logging_directory: PathBuf,
     last_csv_logging: CsvLogging,
     last_sbp_logging: bool,
     last_sbp_logging_format: SbpLogging,
-    sbp_logger: Option<SbpLogger>,
+    sbp_logger: Option<SbpFileLogger>,
     client_sender: BoxedClientSender,
     shared_state: SharedState,
 }
 
 impl MainTab {
-    pub fn new(shared_state: SharedState, client_sender: BoxedClientSender) -> MainTab {
+    pub fn new(shared_state: SharedState, client_sender: BoxedClientSender) -> Self {
         let sbp_logging_format = shared_state.sbp_logging_format();
         // reopen an existing log if we disconnected
-        let sbp_logger =
-            shared_state
-                .sbp_logging_filepath()
-                .and_then(|path| match sbp_logging_format {
-                    SbpLogging::SBP_JSON => SbpLogger::open_sbp_json(path).ok(),
-                    SbpLogging::SBP => SbpLogger::open_sbp(path).ok(),
-                });
-        let last_sbp_logging = if sbp_logger.is_none() && shared_state.sbp_logging() {
-            false
-        } else {
-            shared_state.sbp_logging()
-        };
+        let sbp_logger = shared_state
+            .sbp_logging_filepath()
+            .and_then(|path| sbp_logging_format.new_logger(path).ok());
+        let last_sbp_logging = sbp_logger.is_some() && shared_state.sbp_logging();
         let csv_logging_live = shared_state
             .lock()
             .solution_tab
             .velocity_tab
             .log_file
             .is_some();
+
         let last_csv_logging =
             if !csv_logging_live && matches!(shared_state.csv_logging(), CsvLogging::ON) {
                 CsvLogging::OFF
             } else {
                 shared_state.csv_logging()
             };
+
         MainTab {
             logging_directory: shared_state.logging_directory(),
             last_csv_logging,
@@ -170,22 +126,24 @@ impl MainTab {
             }
         }
 
-        self.sbp_logger = match logging {
-            SbpLogging::SBP => SbpLogger::new_sbp(&filepath),
-            SbpLogging::SBP_JSON => SbpLogger::new_sbp_json(&filepath),
-        }
-        .ok_or_log(|e| error!("issue creating file, {}, error, {e}", filepath.display()));
+        self.sbp_logger = logging.new_logger(filepath.clone()).ok();
 
         if self.sbp_logger.is_some() {
+            self.shared_state.set_sbp_logging(true);
             self.shared_state
-                .set_sbp_logging(true, self.client_sender.clone());
-            self.shared_state.set_sbp_logging_filepath(Some(filepath));
+                .set_sbp_logging_filepath(Some(filepath.clone()));
             self.shared_state.set_settings_refresh(true);
         }
         self.shared_state.set_sbp_logging_format(logging);
+        start_recording(&self.client_sender, filepath.display().to_string());
     }
 
-    pub fn serialize_frame(&mut self, frame: &Frame) {
+    /// Serialize frame incoming data,
+    ///
+    /// # Parameters:
+    /// - `frame`: The raw incoming data frame
+    /// - `msg`: Parsed message if present
+    pub fn serialize(&mut self, frame: &Frame, msg: Option<&Sbp>) {
         let csv_logging;
         let sbp_logging;
         let sbp_logging_format;
@@ -233,17 +191,21 @@ impl MainTab {
             refresh_loggingbar(&self.client_sender, &self.shared_state);
         }
 
-        if let Some(ref mut sbp_logger) = self.sbp_logger {
-            if let Err(e) = sbp_logger.serialize(frame) {
-                error!("error, {}, unable to log sbp frame, {:?}", e, frame);
-            }
-        }
+        let size = self
+            .sbp_logger
+            .as_mut()
+            .and_then(|f| f.serialize(frame, msg).ok());
+
+        match size {
+            Some(size) => refresh_log_recording_size(&self.client_sender, size),
+            None if sbp_logging => self.close_sbp(),
+            _ => {}
+        };
     }
 
     pub fn close_sbp(&mut self) {
         self.sbp_logger = None;
-        self.shared_state
-            .set_sbp_logging(false, self.client_sender.clone());
+        self.shared_state.set_sbp_logging(false);
         self.shared_state.set_sbp_logging_filepath(None);
         refresh_loggingbar(&self.client_sender, &self.shared_state);
     }
@@ -347,15 +309,15 @@ mod tests {
         };
 
         {
-            main.serialize_frame(&msg_to_frame(msg.clone()));
+            main.serialize(&msg_to_frame(msg.clone()), None);
             solution_tab.handle_pos_llh(PosLLH::MsgPosLlh(msg));
-            main.serialize_frame(&msg_to_frame(msg_two.clone()));
+            main.serialize(&msg_to_frame(msg_two.clone()), None);
             solution_tab.handle_vel_ned(VelNED::MsgVelNed(msg_two.clone()));
-            main.serialize_frame(&msg_to_frame(msg_three.clone()));
+            main.serialize(&msg_to_frame(msg_three.clone()), None);
             baseline_tab.handle_baseline_ned(BaselineNED::MsgBaselineNed(msg_three));
             assert_eq!(main.last_csv_logging, CsvLogging::ON);
             main.end_csv_logging().unwrap();
-            main.serialize_frame(&msg_to_frame(msg_two));
+            main.serialize(&msg_to_frame(msg_two), None);
             assert_eq!(main.last_csv_logging, CsvLogging::OFF);
         }
 
@@ -421,7 +383,7 @@ mod tests {
         let mut main = MainTab::new(shared_state, client_send.clone());
         assert!(!main.last_sbp_logging);
         main.shared_state.set_sbp_logging_format(SbpLogging::SBP);
-        main.shared_state.set_sbp_logging(true, client_send);
+        main.shared_state.set_sbp_logging(true);
         main.shared_state.set_logging_directory(tmp_dir.clone());
 
         let flags = 0x01;
@@ -462,11 +424,11 @@ mod tests {
         };
 
         {
-            main.serialize_frame(&msg_to_frame(msg_one.clone()));
-            main.serialize_frame(&msg_to_frame(msg_two.clone()));
+            main.serialize(&msg_to_frame(msg_one.clone()), None);
+            main.serialize(&msg_to_frame(msg_two.clone()), None);
             assert_eq!(main.last_sbp_logging_format, SbpLogging::SBP);
             main.close_sbp();
-            main.serialize_frame(&msg_to_frame(msg_two.clone()));
+            main.serialize(&msg_to_frame(msg_two.clone()), None);
             assert!(!main.last_sbp_logging);
         }
 
@@ -513,7 +475,7 @@ mod tests {
         assert!(!main.last_sbp_logging);
         main.shared_state
             .set_sbp_logging_format(SbpLogging::SBP_JSON);
-        main.shared_state.set_sbp_logging(true, client_send);
+        main.shared_state.set_sbp_logging(true);
         main.shared_state.set_logging_directory(tmp_dir.clone());
 
         let flags = 0x01;
@@ -554,11 +516,15 @@ mod tests {
         };
 
         {
-            main.serialize_frame(&msg_to_frame(msg_one));
-            main.serialize_frame(&msg_to_frame(msg_two.clone()));
+            let msg1 = Sbp::from(msg_one.clone());
+            let msg2 = Sbp::from(msg_two.clone());
+            let frame1 = msg_to_frame(msg_one);
+            let frame2 = msg_to_frame(msg_two);
+            main.serialize(&frame1, Some(&msg1));
+            main.serialize(&frame2, Some(&msg2));
             assert_eq!(main.last_sbp_logging_format, SbpLogging::SBP_JSON);
             main.close_sbp();
-            main.serialize_frame(&msg_to_frame(msg_two));
+            main.serialize(&frame2, Some(&msg1));
             assert!(!main.last_sbp_logging);
         }
 
@@ -575,12 +541,12 @@ mod tests {
         let value: serde_json::Value = serde_json::from_str(&line.unwrap()).unwrap();
         let value = value.as_object().unwrap();
         let lat_ = value.get("lat").unwrap();
-        assert_eq!(*lat_, serde_json::json!(lat));
+        assert_eq!(*lat_, lat);
 
         let line = lines.next().unwrap();
         let value: serde_json::Value = serde_json::from_str(&line.unwrap()).unwrap();
         let value = value.as_object().unwrap();
         let n_ = value.get("n").unwrap();
-        assert_eq!(*n_, serde_json::json!(n));
+        assert_eq!(*n_, n);
     }
 }

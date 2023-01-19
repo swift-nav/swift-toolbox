@@ -23,13 +23,10 @@ use clap::{ArgAction, Args, Parser};
 use log::{debug, error};
 
 use crate::common_constants::LogLevel;
+use crate::constants::{AVAILABLE_BAUDRATES, AVAILABLE_REFRESH_RATES};
 use crate::output::CsvLogging;
 use crate::shared_state::SharedState;
 use crate::types::{FlowControl, RealtimeDelay};
-use crate::{
-    client_sender::BoxedClientSender,
-    constants::{AVAILABLE_BAUDRATES, AVAILABLE_REFRESH_RATES},
-};
 use crate::{
     common_constants::{SbpLogging, Tabs},
     connection::ConnectionManager,
@@ -304,13 +301,7 @@ pub fn log_level(s: &str) -> Result<LogLevel, String> {
 /// - `opt`: CLI Options to start specific connection type.
 /// - `conn_manager`: The Server state to start a specific connection.
 /// - `shared_state`: The shared state for validating another connection is not already running.
-/// - `client_sender`: Client Sender channel for communication from backend to frontend.
-pub fn handle_cli(
-    opt: CliOptions,
-    conn_manager: &ConnectionManager,
-    shared_state: SharedState,
-    client_sender: &BoxedClientSender,
-) {
+pub fn handle_cli(opt: CliOptions, conn_manager: &ConnectionManager, shared_state: SharedState) {
     if let Some(serial) = opt.serial.serial {
         let serialport = serial.display().to_string();
         conn_manager.connect_to_serial(serialport, opt.serial.baudrate, opt.serial.flow_control);
@@ -337,7 +328,7 @@ pub fn handle_cli(
         shared_state.set_sbp_logging_filename(Some(path));
     }
     if let Some(sbp_log) = opt.sbp_log {
-        shared_state.set_sbp_logging(true, client_sender.clone());
+        shared_state.set_sbp_logging(true);
         shared_state.set_sbp_logging_format(
             SbpLogging::from_str(&sbp_log.to_string()).expect(CONVERT_TO_STR_FAILURE),
         );

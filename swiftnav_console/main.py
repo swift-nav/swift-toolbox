@@ -252,7 +252,6 @@ TAB_LAYOUT = {
     },
 }
 
-
 capnp.remove_import_hook()  # pylint: disable=no-member
 
 

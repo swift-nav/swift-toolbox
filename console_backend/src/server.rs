@@ -147,7 +147,7 @@ impl Server {
         let opt = CliOptions::from_filtered_cli();
         let conn_manager = ConnectionManager::new(client_send.clone(), shared_state.clone());
         // Handle CLI Opts.
-        handle_cli(opt, &conn_manager, shared_state.clone(), &client_send);
+        handle_cli(opt, &conn_manager, shared_state.clone());
         setup_logging(client_send.clone(), shared_state.clone());
         refresh_connection_frontend(&client_send, &shared_state);
         refresh_loggingbar(&client_send, &shared_state);

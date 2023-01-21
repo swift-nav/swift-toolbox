@@ -715,7 +715,7 @@ if eq ${os} windows
 elseif eq ${os} mac
     rm -r ./share
     rm -r ./lib/python3.9/site-packages/PySide6/Qt/libexec
-    bins = array qmllint lupdate lrelease scripts
+    bins = array qmllint lupdate lrelease scripts qmlls qmlformat
     for bin in ${bins}
         files = glob_array ./lib/python3.9/site-packages/PySide6/${bin}
         for bin in ${files}
@@ -739,7 +739,7 @@ elseif eq ${os} mac
 else
     rm -r ./share
 
-    bins = array rcc uic designer pyside6-lupdate Designer.app
+    bins = array rcc uic designer pyside6-lupdate Designer.app qmllint qmlls qmlformat
     for bin in ${bins}
         files = glob_array ./**/PySide6/${bin}
         for bin in ${files}

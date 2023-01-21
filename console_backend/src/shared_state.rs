@@ -26,7 +26,6 @@ use std::{
     ops::Deref,
     path::{Path, PathBuf},
     sync::Arc,
-    thread::JoinHandle,
     time::Instant,
 };
 use strum_macros::EnumString;
@@ -53,10 +52,7 @@ use crate::log_panel::LogLevel;
 use crate::output::{CsvLogging, CsvSerializer};
 use crate::process_messages::StopToken;
 use crate::shared_state::EventType::Refresh;
-use crate::tabs::{
-    main_tab::logging_stats_thread, settings_tab, solution_tab::LatLonUnits,
-    update_tab::UpdateTabUpdate,
-};
+use crate::tabs::{settings_tab, solution_tab::LatLonUnits, update_tab::UpdateTabUpdate};
 use crate::utils::{send_conn_state, OkOrLog};
 use crate::watch::{WatchReceiver, Watched};
 use crate::{common_constants::ConnectionType, connection::Connection};
@@ -133,13 +129,9 @@ impl SharedState {
     pub fn sbp_logging(&self) -> bool {
         self.lock().logging_bar.sbp_logging
     }
-    pub fn set_sbp_logging(&self, running: bool, client_sender: BoxedClientSender) {
+    pub fn set_sbp_logging(&self, running: bool) {
         let mut guard = self.lock();
         guard.logging_bar.sbp_logging = running;
-        if running && guard.logging_bar.handle.is_none() {
-            let handle = logging_stats_thread(self.clone(), client_sender);
-            guard.logging_bar.handle = Some(handle);
-        }
     }
     pub fn sbp_logging_format(&self) -> SbpLogging {
         self.lock().logging_bar.sbp_logging_format.clone()
@@ -483,7 +475,6 @@ pub struct LoggingBarState {
     pub sbp_logging_filepath: Option<PathBuf>,
     pub csv_logging: CsvLogging,
     pub logging_directory: PathBuf,
-    pub handle: Option<JoinHandle<()>>,
 }
 
 impl LoggingBarState {
@@ -506,7 +497,6 @@ impl LoggingBarState {
             sbp_logging_filepath: None,
             csv_logging: CsvLogging::OFF,
             logging_directory,
-            handle: None,
         }
     }
 }

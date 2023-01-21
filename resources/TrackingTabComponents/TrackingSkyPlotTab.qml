@@ -302,7 +302,7 @@ Item {
                         Label {
                             color: 'black'
                             text: '` + labels[idx][jdx] + `'
-                            visible: (!polarChartWidthChanging && labelsVisible && seriesEntry.visible)
+                            visible: !polarChartWidthChanging
                             width: 20
                             height: 20
                             x: ` + pose.x + `

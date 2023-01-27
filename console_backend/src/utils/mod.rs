@@ -577,7 +577,7 @@ mod tests {
     fn assert_float_eq(f1: f64, f2: f64) {
         assert!(
             f64::abs(f1 - f2) <= f64::EPSILON,
-            "{}", 
+            "{}",
             "Asserting {f1} is within float epsilon of {f2}"
         )
     }

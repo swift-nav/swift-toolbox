@@ -170,7 +170,7 @@ mod mem_bench_impl {
         );
         assert!(
             mem_usage_min >= ABSOLUTE_MINIMUM_MEM_USAGE,
-            "Best Case Memory Usage: {mem_usage_min:.2}bytes was less than absolute minimum {ABSOLUTE_MINIMUM_MEM_USAGE:.2}bytes."
+            "{}", "Best Case Memory Usage: {mem_usage_min:.2}bytes was less than absolute minimum {ABSOLUTE_MINIMUM_MEM_USAGE:.2}bytes."
         );
         println!(
             "CPU Usage: {:.2}% ~ +/- {:.2}%",

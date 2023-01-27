@@ -246,7 +246,7 @@ mod tests {
 
         for version_str in fail_cases {
             let ver = SwiftVersion::parse(version_str);
-            assert!(ver.is_err(), "{version_str:?}");
+            assert!(ver.is_err(), "{}", "{version_str:?}");
         }
     }
 

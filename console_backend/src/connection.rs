@@ -631,7 +631,7 @@ mod tests {
             Ok(elapsed) => {
                 assert!(
                     elapsed < expected_duration,
-                    "Time elapsed for disconnect test {elapsed:?}, expecting {expected_duration:?}ms"
+                    "{}", "Time elapsed for disconnect test {elapsed:?}, expecting {expected_duration:?}ms"
                 );
             }
             Err(e) => {

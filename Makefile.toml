@@ -60,7 +60,7 @@ elseif eq ${os} linux
   set_env PYSIDE_WHEEL PySide6-\${qt_version}-\${qt_version}-cp39-cp39-linux_x86_64.whl
   set_env SHIBOKEN_WHEEL shiboken6-\${qt_version}-\${qt_version}-cp39-cp39-linux_x86_64.whl
 else
-  set_env STANDALONE_PY_URL "${PY_BASE_URL}/cpython-3.10.9+20230116-x86_64-apple-darwin-pgo+lto-full.tar.zst"
+  set_env STANDALONE_PY_URL "${PY_BASE_URL}/cpython-3.11.1+20230116-x86_64-apple-darwin-pgo+lto-full.tar.zst"
   set_env PYTHON "${WORKSPACE}/py39/bin/python3"
   set_env DIST_PYTHON "${WORKSPACE}/py39-dist/bin/python3"
   set_env DIST_PYSIDE6_RCC "${WORKSPACE}/py39-dist/bin/pyside6-rcc"

@@ -140,9 +140,7 @@ mod mem_bench_impl {
         );
         let mem_usage_mean = mems.mean_axis(Axis(0)).unwrap();
         let mem_usage_std = mems.std_axis(Axis(0), 0.0);
-        println!(
-            "Memory Usage: {mem_usage_mean:.2}bytes ~ +/- {mem_usage_std:.2}bytes"
-        );
+        println!("Memory Usage: {mem_usage_mean:.2}bytes ~ +/- {mem_usage_std:.2}bytes");
         let mem_usage_mean = mem_usage_mean.into_owned();
         let mem_usage_mean = mem_usage_mean.first().unwrap();
         let mem_usage_std = mem_usage_std.into_owned();

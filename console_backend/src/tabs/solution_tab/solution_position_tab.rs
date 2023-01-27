@@ -984,10 +984,7 @@ mod tests {
         assert_eq!(solution_tab.table[VEL_E], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[VEL_D], String::from(EMPTY_STR));
         solution_tab.handle_vel_ned(msg);
-        assert_eq!(
-            solution_tab.table[VEL_FLAGS],
-            format!("0x{bad_flags:<03x}")
-        );
+        assert_eq!(solution_tab.table[VEL_FLAGS], format!("0x{bad_flags:<03x}"));
         assert_eq!(solution_tab.table[VEL_N], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[VEL_E], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[VEL_D], String::from(EMPTY_STR));

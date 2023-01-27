@@ -72,7 +72,7 @@ impl FromStr for LatLonUnits {
         match s {
             DEGREES => Ok(LatLonUnits::Degrees),
             METERS => Ok(LatLonUnits::Meters),
-            _ => Err(format!("Invalid LatLonUnits: {}", s)),
+            _ => Err(format!("Invalid LatLonUnits: {s}")),
         }
     }
 }

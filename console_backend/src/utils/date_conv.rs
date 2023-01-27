@@ -209,7 +209,7 @@ mod tests {
         assert_eq!(
             datetime_to_string_and_seconds(datetime),
             (
-                format!("{}-{:02}-{:02} {:02}:{:02}", year, month, day, hour, minute),
+                format!("{year}-{month:02}-{day:02} {hour:02}:{minute:02}"),
                 second as f64 + nanosecond as f64 / 1E9_f64
             )
         );

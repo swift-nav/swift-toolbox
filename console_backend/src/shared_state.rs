@@ -1101,7 +1101,7 @@ mod tests {
 
         for ele in 0..MAX_CONNECTION_HISTORY {
             conn_history.record_serial(
-                format!("/dev/ttyUSB{:?}", ele),
+                format!("/dev/ttyUSB{ele:?}"),
                 9600,
                 FlowControl::Hardware,
             );

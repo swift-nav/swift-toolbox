@@ -357,8 +357,7 @@ impl FromStr for FlowControl {
             FLOW_CONTROL_SOFTWARE => Ok(FlowControl(SPFlowControl::Software)),
             FLOW_CONTROL_HARDWARE => Ok(FlowControl(SPFlowControl::Hardware)),
             _ => Err(format!(
-                "Not a valid flow control option. Choose from [\"{}\", \"{}\", \"{}\"]",
-                FLOW_CONTROL_NONE, FLOW_CONTROL_SOFTWARE, FLOW_CONTROL_HARDWARE
+                "Not a valid flow control option. Choose from [\"{FLOW_CONTROL_NONE}\", \"{FLOW_CONTROL_SOFTWARE}\", \"{FLOW_CONTROL_HARDWARE}\"]"
             )),
         }
     }
@@ -786,7 +785,7 @@ impl fmt::Display for SignalCodes {
             SignalCodes::CodeAuxQzs => QZS_AUX_STR,
             _ => CODE_NOT_AVAILABLE,
         };
-        write!(f, "{}", sat_code_str)
+        write!(f, "{sat_code_str}")
     }
 }
 
@@ -1075,7 +1074,7 @@ impl fmt::Display for GnssModes {
             GnssModes::Dr => DR,
             GnssModes::Sbas => SBAS,
         };
-        write!(f, "{}", gnss_mode_str)
+        write!(f, "{gnss_mode_str}")
     }
 }
 impl GnssModes {

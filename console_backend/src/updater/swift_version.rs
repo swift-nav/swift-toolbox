@@ -246,7 +246,7 @@ mod tests {
 
         for version_str in fail_cases {
             let ver = SwiftVersion::parse(version_str);
-            assert!(ver.is_err(), "{:?}", version_str);
+            assert!(ver.is_err(), "{version_str:?}");
         }
     }
 
@@ -270,10 +270,7 @@ mod tests {
             assert_eq!(
                 lhs == rhs,
                 equality,
-                "{:?} == {:?} != {:?}",
-                lhs,
-                rhs,
-                equality
+                "{lhs:?} == {rhs:?} != {equality:?}"
             );
         }
     }

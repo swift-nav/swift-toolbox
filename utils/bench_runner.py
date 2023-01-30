@@ -352,7 +352,7 @@ def get_mean_and_pop_stdev(values: List[float]) -> Tuple[float, float]:
     """
     lenn = float(len(values))
     mean = sum(values) / lenn
-    std = ((1.0 / lenn) * sum([(val - mean) ** 2 for val in values])) ** (1 / 2)
+    std = (sum((val - mean) ** 2 for val in values) / lenn) ** (1 / 2)
     return (mean, std)
 
 

@@ -262,7 +262,7 @@ def run_disk_usage_benchmark():
             f"{bench[ERROR_MARGIN_FRAC] * bench[EXPECTED]}MB."
         )
         assert (
-            disk_usage <= INSTALLER_MAX_SIZE
+                disk_usage <= INSTALLER_MAX_SIZE
         ), f"Test:{bench[NAME]} Bench Value:{disk_usage} not less than {INSTALLER_MAX_SIZE}"  # type: ignore
         print(f"PASS - {os_}:{bench[NAME]} MARGIN={disk_usage - bench[EXPECTED]}")
 
@@ -374,12 +374,12 @@ def run_frontend_mem_benchmark(executable: str):
             std_mb = BYTES_TO_MB(std_bytes)
             print(f"Mean: {mean_mb:.2f}MB, Stdev: {std_mb:.2f}MB")
             assert (
-                len(mem_readings) >= ABSOLUTE_MINIMUM_READINGS
+                    len(mem_readings) >= ABSOLUTE_MINIMUM_READINGS
             ), f"Not enough readings recorded {len(mem_readings)} < {ABSOLUTE_MINIMUM_READINGS}"
             mean_std_max_diff = mean_mb + std_mb - bench[MAXIMUM_MEAN_MB]
             max_diff_allowed = bench[MAXIMUM_MEAN_MB] * bench[MAXIMUM_RATE_OF_MAX_MEAN]
             assert (
-                mean_std_max_diff <= max_diff_allowed
+                    mean_std_max_diff <= max_diff_allowed
             ), f"mean + std - max, {mean_std_max_diff}, > max * max_rate, {max_diff_allowed}"
 
             max_std_allowed = bench[MAXIMUM_MEAN_MB] * bench[MAXIMUM_RATE_OF_MAX_STD]
@@ -399,7 +399,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.frontend_cpu or args.frontend_mem:
         assert (
-            args.executable is not None
+                args.executable is not None
         ), "'--executable=<path/to/console/executable>' is required to run the Frontend CPU or MEM Benchmark."
         if args.frontend_cpu:
             run_frontend_cpu_benchmark(args.executable)

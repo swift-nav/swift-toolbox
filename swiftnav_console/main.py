@@ -259,13 +259,13 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
     _request_quit: Signal = Signal()
 
     def __init__(
-        self,
-        app,
-        backend,
-        messages,
-        exit_after_timeout: Optional[float] = None,
-        record_file: Optional[str] = None,
-        record: bool = False,
+            self,
+            app,
+            backend,
+            messages,
+            exit_after_timeout: Optional[float] = None,
+            record_file: Optional[str] = None,
+            record: bool = False,
     ):
         super().__init__()
         self._app = app
@@ -419,7 +419,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                 ]
                 data[Keys.OBS_PERIOD][:] = [[entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.obsPeriod]
                 data[Keys.THREADS_TABLE][:] = [
-                    [entry.name, "%.1f" % entry.cpu, entry.stackFree]
+                    [entry.name, f"{entry.cpu:.1f}", entry.stackFree]
                     for entry in m.advancedSystemMonitorStatus.threadsTable
                 ]
                 data[Keys.ZYNQ_TEMP] = m.advancedSystemMonitorStatus.zynqTemp

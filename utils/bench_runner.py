@@ -41,9 +41,12 @@ NAME = "name"
 SUCCESS = "success"
 RESULTS = "results"
 
+
 ## Benchmark Specific Functions and Containers.
 # Installer Disk Usage Benchmark.
-DISK_USAGE_COMMAND = lambda file_path: f"du -ch {file_path} | grep total"
+def DISK_USAGE_COMMAND(file_path):
+    return f"du -ch {file_path} | grep total"
+
 
 INSTALLER_MAX_SIZE = 100
 INSTALLER_BENCHMARKS = {
@@ -133,10 +136,15 @@ BACKEND_CPU_BENCHMARKS = {
 
 # Frontend CPU Benchmarks.
 DEFAULT_JSON_FILEPATH = "fileout.json"
-BENCHMARK_COMMAND_ARGS = lambda file_path: f" --exit-after-close --file {file_path}"
-HYPERFINE_COMMAND = (
-    lambda file_out: f'hyperfine --warmup 1 --runs 5 --cleanup "sleep 1" --show-output --export-json {file_out}'
-)
+
+
+def BENCHMARK_COMMAND_ARGS(file_path):
+    return f" --exit-after-close --file {file_path}"
+
+
+def HYPERFINE_COMMAND(file_out):
+    return f'hyperfine --warmup 1 --runs 5 --cleanup "sleep 1" --show-output --export-json {file_out}'
+
 
 FRONTEND_CPU_BENCHMARKS = {
     WINDOWS: [
@@ -173,7 +181,11 @@ MAXIMUM_RATE_OF_MAX_STD = "maximum_rate_of_max_std"
 MAXIMUM_RATE_OF_MAX_MEAN = "maximum_rate_of_max_mean"
 MAXIMUM_MEAN_MB = "maximum_mean_mb"
 
-BYTES_TO_MB = lambda x: float(x) / (1 << 20)
+
+def BYTES_TO_MB(x):
+    return float(x) / (1 << 20)
+
+
 ABSOLUTE_MINIMUM_MEMORY_MB = 1
 ABSOLUTE_MINIMUM_READINGS = 140
 THREAD_TIMEOUT_SEC = 180
@@ -247,10 +259,10 @@ def run_disk_usage_benchmark():
         assert disk_usage is not None, f"Test:{bench[NAME]} retrieved bench value None."
         assert disk_usage >= bench[ERROR_MARGIN_FRAC] * bench[EXPECTED], (
             f"Test:{bench[NAME]} Bench Value:{disk_usage} not larger than "
-            f"{bench[ERROR_MARGIN_FRAC]*bench[EXPECTED]}MB."
+            f"{bench[ERROR_MARGIN_FRAC] * bench[EXPECTED]}MB."
         )
         assert (
-            disk_usage <= INSTALLER_MAX_SIZE
+                disk_usage <= INSTALLER_MAX_SIZE
         ), f"Test:{bench[NAME]} Bench Value:{disk_usage} not less than {INSTALLER_MAX_SIZE}"  # type: ignore
         print(f"PASS - {os_}:{bench[NAME]} MARGIN={disk_usage - bench[EXPECTED]}")
 
@@ -362,12 +374,12 @@ def run_frontend_mem_benchmark(executable: str):
             std_mb = BYTES_TO_MB(std_bytes)
             print(f"Mean: {mean_mb:.2f}MB, Stdev: {std_mb:.2f}MB")
             assert (
-                len(mem_readings) >= ABSOLUTE_MINIMUM_READINGS
+                    len(mem_readings) >= ABSOLUTE_MINIMUM_READINGS
             ), f"Not enough readings recorded {len(mem_readings)} < {ABSOLUTE_MINIMUM_READINGS}"
             mean_std_max_diff = mean_mb + std_mb - bench[MAXIMUM_MEAN_MB]
             max_diff_allowed = bench[MAXIMUM_MEAN_MB] * bench[MAXIMUM_RATE_OF_MAX_MEAN]
             assert (
-                mean_std_max_diff <= max_diff_allowed
+                    mean_std_max_diff <= max_diff_allowed
             ), f"mean + std - max, {mean_std_max_diff}, > max * max_rate, {max_diff_allowed}"
 
             max_std_allowed = bench[MAXIMUM_MEAN_MB] * bench[MAXIMUM_RATE_OF_MAX_STD]
@@ -387,7 +399,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.frontend_cpu or args.frontend_mem:
         assert (
-            args.executable is not None
+                args.executable is not None
         ), "'--executable=<path/to/console/executable>' is required to run the Frontend CPU or MEM Benchmark."
         if args.frontend_cpu:
             run_frontend_cpu_benchmark(args.executable)

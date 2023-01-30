@@ -28,7 +28,7 @@ struct LogLevelFront {
 }
 
 enum LogLevel {
-    error @0;
+    err @0;
     warning @1;
     info @2;
     debug @3;

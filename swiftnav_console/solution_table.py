@@ -86,6 +86,6 @@ class SolutionTableEntries(QObject):
 
 class SolutionTableModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(SolutionTableEntries)  # type: ignore
-    def fill_console_points(self, cp: SolutionTableEntries) -> SolutionTableEntries:  # pylint:disable=no-self-use
+    def fill_console_points(self, cp: SolutionTableEntries) -> SolutionTableEntries:
         cp.set_entries(cp.solution_table[Keys.ENTRIES])
         return cp

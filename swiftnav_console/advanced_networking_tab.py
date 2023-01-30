@@ -107,7 +107,7 @@ class AdvancedNetworkingData(QObject):
 
 class AdvancedNetworkingModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(AdvancedNetworkingData)  # type: ignore
-    def fill_console_points(self, cp: AdvancedNetworkingData) -> AdvancedNetworkingData:  # pylint:disable=no-self-use
+    def fill_console_points(self, cp: AdvancedNetworkingData) -> AdvancedNetworkingData:
         cp.set_network_info(cp.advanced_networking_tab[Keys.NETWORK_INFO])
         cp.set_running(cp.advanced_networking_tab[Keys.RUNNING])
         cp.set_ip_address(cp.advanced_networking_tab[Keys.IP_ADDRESS])

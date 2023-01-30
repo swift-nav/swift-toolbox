@@ -135,7 +135,7 @@ class BaselinePlotPoints(QObject):
 
 class BaselinePlotModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(BaselinePlotPoints)  # type: ignore
-    def fill_console_points(self, cp: BaselinePlotPoints) -> BaselinePlotPoints:  # pylint:disable=no-self-use
+    def fill_console_points(self, cp: BaselinePlotPoints) -> BaselinePlotPoints:
         cp.set_points(cp.baseline_plot[Keys.POINTS])
         cp.set_cur_points(cp.baseline_plot[Keys.CUR_POINTS])
         cp.set_n_max(cp.baseline_plot[Keys.N_MAX])

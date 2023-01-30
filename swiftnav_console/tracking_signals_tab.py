@@ -80,7 +80,7 @@ class TrackingSignalsPoints(QObject):
     def handle_data_updated(self) -> None:
         self._tracking_signals_tab = TRACKING_SIGNALS_TAB[0]
 
-    def get_num_labels(self) -> int:  # pylint:disable=no-self-use
+    def get_num_labels(self) -> int:
         return len(self._tracking_signals_tab[Keys.LABELS])
 
     num_labels = Property(int, get_num_labels, notify=num_labels_changed)  # type: ignore
@@ -113,7 +113,7 @@ class TrackingSignalsPoints(QObject):
     enabled_series = Property(QTKeys.QVARIANTLIST, get_enabled_series, notify=enabled_series_changed)  # type: ignore
 
     @Slot(int)  # type: ignore
-    def getLabel(self, index) -> str:  # pylint:disable=no-self-use
+    def getLabel(self, index) -> str:
         """Getter for one of the TRACKING_SIGNALS_TAB[Keys.LABELS]."""
         return self._tracking_signals_tab[Keys.LABELS][index]
 

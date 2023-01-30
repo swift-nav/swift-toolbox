@@ -71,6 +71,6 @@ class BaselineTableEntries(QObject):
 
 class BaselineTableModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(BaselineTableEntries)  # type: ignore
-    def fill_console_points(self, cp: BaselineTableEntries) -> BaselineTableEntries:  # pylint:disable=no-self-use
+    def fill_console_points(self, cp: BaselineTableEntries) -> BaselineTableEntries:
         cp.set_entries(cp.baseline_table[Keys.ENTRIES])
         return cp

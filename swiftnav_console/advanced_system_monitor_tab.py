@@ -119,9 +119,7 @@ class AdvancedSystemMonitorData(QObject):  # pylint: disable=too-many-instance-a
 
 class AdvancedSystemMonitorModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(AdvancedSystemMonitorData)  # type: ignore
-    def fill_console_points(  # pylint:disable=no-self-use
-        self, cp: AdvancedSystemMonitorData
-    ) -> AdvancedSystemMonitorData:
+    def fill_console_points(self, cp: AdvancedSystemMonitorData) -> AdvancedSystemMonitorData:
         cp.set_obs_latency(cp.advanced_system_monitor_tab[Keys.OBS_LATENCY])
         cp.set_obs_period(cp.advanced_system_monitor_tab[Keys.OBS_PERIOD])
         cp.set_threads_table(cp.advanced_system_monitor_tab[Keys.THREADS_TABLE])

@@ -119,7 +119,7 @@ class FusionStatusFlagsData(QObject):
 
 class FusionStatusFlagsModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(FusionStatusFlagsData)  # type: ignore
-    def fill_console_points(self, cp: FusionStatusFlagsData) -> FusionStatusFlagsData:  # pylint:disable=no-self-use
+    def fill_console_points(self, cp: FusionStatusFlagsData) -> FusionStatusFlagsData:
         cp.set_gnsspos(cp.fusion_status_flags[Keys.GNSSPOS])
         cp.set_gnssvel(cp.fusion_status_flags[Keys.GNSSVEL])
         cp.set_wheelticks(cp.fusion_status_flags[Keys.WHEELTICKS])

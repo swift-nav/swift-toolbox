@@ -86,7 +86,7 @@ class AdvancedImuPoints(QObject):
 
 class AdvancedImuModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(AdvancedImuPoints)  # type: ignore
-    def fill_console_points(self, cp: AdvancedImuPoints) -> AdvancedImuPoints:  # pylint:disable=no-self-use
+    def fill_console_points(self, cp: AdvancedImuPoints) -> AdvancedImuPoints:
         cp.set_points(cp.advanced_imu_tab[Keys.POINTS])
         cp.set_fields_data(cp.advanced_imu_tab[Keys.FIELDS_DATA])
         return cp

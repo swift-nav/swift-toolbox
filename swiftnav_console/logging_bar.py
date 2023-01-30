@@ -212,7 +212,7 @@ class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes, 
 
 class LoggingBarModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(LoggingBarData)  # type: ignore
-    def fill_data(self, cp: LoggingBarData) -> LoggingBarData:  # pylint:disable=no-self-use
+    def fill_data(self, cp: LoggingBarData) -> LoggingBarData:
         cp.set_csv_logging(cp.logging_bar[Keys.CSV_LOGGING])
         cp.set_sbp_logging(cp.logging_bar[Keys.SBP_LOGGING])
         cp.set_sbp_logging_format(cp.logging_bar[Keys.SBP_LOGGING_FORMAT])

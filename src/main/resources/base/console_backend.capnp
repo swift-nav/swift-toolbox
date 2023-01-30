@@ -37,7 +37,7 @@ enum LogLevel {
 
 struct LogEntry {
     timestamp @0 :Text;
-    level @1 :LogLevel;
+    level @1 :Text;
     line @2 :Text;
 }
 

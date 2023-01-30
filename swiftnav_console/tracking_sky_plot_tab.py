@@ -63,7 +63,7 @@ class TrackingSkyPlotPoints(QObject):
     def handle_data_updated(self) -> None:
         self._tracking_sky_plot = TRACKING_SKY_PLOT_TAB[0]
 
-    def get_labels(self) -> List[List[str]]:  # pylint:disable=no-self-use
+    def get_labels(self) -> List[List[str]]:
         return self._tracking_sky_plot[Keys.LABELS]
 
     labels = Property(list, get_labels, notify=labels_changed)  # type: ignore

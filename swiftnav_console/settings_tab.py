@@ -124,7 +124,7 @@ class SettingsTabData(QObject):
 
 class SettingsTabModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(SettingsTabData)  # type: ignore
-    def fill_data(self, cp: SettingsTabData) -> SettingsTabData:  # pylint:disable=no-self-use
+    def fill_data(self, cp: SettingsTabData) -> SettingsTabData:
         cp.set_import_status(cp.settings_import_status)
         cp.set_recommended_ins_settings(cp.settings_ins[Keys.RECOMMENDED_INS_SETTINGS])
         cp.set_new_ins_confirmation(cp.settings_ins[Keys.NEW_INS_CONFIRMATON])
@@ -133,13 +133,13 @@ class SettingsTabModel(QObject):  # pylint: disable=too-few-public-methods
         return cp
 
     @Slot(SettingsTabData)  # type: ignore
-    def clear_import_status(self, cp: SettingsTabData) -> SettingsTabData:  # pylint:disable=no-self-use
+    def clear_import_status(self, cp: SettingsTabData) -> SettingsTabData:
         cp.settings_import_status = ""
         self.fill_data(cp)
         return cp
 
     @Slot(SettingsTabData)  # type: ignore
-    def clear_new_ins_confirmation(self, cp: SettingsTabData) -> SettingsTabData:  # pylint:disable=no-self-use
+    def clear_new_ins_confirmation(self, cp: SettingsTabData) -> SettingsTabData:
         cp.settings_ins[Keys.NEW_INS_CONFIRMATON] = False
         self.fill_data(cp)
         return cp
@@ -178,7 +178,7 @@ class SettingsTableEntries(QObject):
 
 class SettingsTableModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(SettingsTableEntries)  # type: ignore
-    def fill_console_points(self, cp: SettingsTableEntries) -> SettingsTableEntries:  # pylint:disable=no-self-use
+    def fill_console_points(self, cp: SettingsTableEntries) -> SettingsTableEntries:
         cp.set_entries(cp.settings_table[Keys.ENTRIES])
         return cp
 

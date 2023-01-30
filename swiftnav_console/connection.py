@@ -206,7 +206,7 @@ class ConnectionData(QObject):  # pylint: disable=too-many-instance-attributes d
 
 class ConnectionModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(ConnectionData)  # type: ignore
-    def fill_data(self, cp: ConnectionData) -> ConnectionData:  # pylint:disable=no-self-use
+    def fill_data(self, cp: ConnectionData) -> ConnectionData:
         cp.set_available_ports(cp.connection[Keys.AVAILABLE_PORTS])
         cp.set_available_baudrates(cp.connection[Keys.AVAILABLE_BAUDRATES])
         cp.set_available_flows(cp.connection[Keys.AVAILABLE_FLOWS])

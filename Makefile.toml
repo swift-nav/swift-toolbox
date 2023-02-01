@@ -538,11 +538,7 @@ cp target/release/${APP_NAME}.d py39-dist/${APP_NAME}.d
 if is_path_exists target/release/swift_console.pdb
   cp target/release/swift_console.pdb py39-dist/swift_console.pdb
 end
-ls target
-echo ==
-ls target/release
-echo ==
-cp target/x86_64-pc-windows-msvc/release/console_backend.pdb py39-dist/Lib/site-packages/console_backend/console_backend.pdb
+cp target/release/console_backend.pdb py39-dist/Lib/site-packages/console_backend/console_backend.pdb
 '''
 
 [tasks.build-dist-install-frontend-wheel]

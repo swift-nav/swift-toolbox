@@ -134,9 +134,7 @@ class AdvancedSpectrumAnalyzerPoints(QObject):
 
 class AdvancedSpectrumAnalyzerModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(AdvancedSpectrumAnalyzerPoints)  # type: ignore
-    def fill_console_points(  # pylint:disable=no-self-use
-        self, cp: AdvancedSpectrumAnalyzerPoints
-    ) -> AdvancedSpectrumAnalyzerPoints:
+    def fill_console_points(self, cp: AdvancedSpectrumAnalyzerPoints) -> AdvancedSpectrumAnalyzerPoints:
         cp.set_points(cp.advanced_spectrum_analyzer_tab[Keys.POINTS])
         cp.set_ymax(cp.advanced_spectrum_analyzer_tab[Keys.YMAX])
         cp.set_ymin(cp.advanced_spectrum_analyzer_tab[Keys.YMIN])

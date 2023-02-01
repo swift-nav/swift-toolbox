@@ -419,7 +419,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                 ]
                 data[Keys.OBS_PERIOD][:] = [[entry.key, entry.val] for entry in m.advancedSystemMonitorStatus.obsPeriod]
                 data[Keys.THREADS_TABLE][:] = [
-                    [entry.name, "%.1f" % entry.cpu, entry.stackFree]
+                    [entry.name, f"{entry.cpu:.1f}", entry.stackFree]
                     for entry in m.advancedSystemMonitorStatus.threadsTable
                 ]
                 data[Keys.ZYNQ_TEMP] = m.advancedSystemMonitorStatus.zynqTemp

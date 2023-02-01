@@ -287,7 +287,7 @@ impl BaselineTab {
         let mut utc_time_str = None;
         if let Some(utc_time_) = self.utc_time {
             let (tutc, secutc) = datetime_to_string_and_seconds(utc_time_);
-            utc_time_str = Some(format!("{}:{:0>6.03}", tutc, secutc));
+            utc_time_str = Some(format!("{tutc}:{secutc:0>6.03}"));
         }
         let mut gps_time = None;
         let mut gps_time_short = None;
@@ -347,7 +347,7 @@ impl BaselineTab {
                     self.table.insert(GPS_TIME, gps_time_);
                 }
             }
-            self.table.insert(GPS_TOW, format!("{:.3}", tow));
+            self.table.insert(GPS_TOW, format!("{tow:.3}"));
             if let Some(utc_time_) = utc_time_str {
                 self.table.insert(UTC_TIME, utc_time_);
                 if let Some(utc_src_) = self.utc_source.clone() {

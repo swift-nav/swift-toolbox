@@ -102,7 +102,7 @@ class LogPanelData(QObject):
 @QmlElement
 class LogPanelModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(LogPanelData)  # type: ignore
-    def fill_data(self, cp: LogPanelData) -> LogPanelData:  # pylint:disable=no-self-use
+    def fill_data(self, cp: LogPanelData) -> LogPanelData:
         cp.set_log_level_labels(cp.log_panel[Keys.LOG_LEVEL_LABELS])
         cp.set_log_level(cp.log_panel[Keys.LOG_LEVEL])
         # Avoid locking so that message processor has priority to lock

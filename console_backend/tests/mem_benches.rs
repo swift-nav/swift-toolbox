@@ -65,7 +65,7 @@ mod mem_bench_impl {
     #[test]
     fn test_run_process_messages() {
         let pid = get_current_pid().unwrap();
-        println!("PID: {}", pid);
+        println!("PID: {pid}");
 
         let (client_send, client_recv) = channel::unbounded::<Vec<u8>>();
         let (mem_stop_send, mem_stop_recv) = channel::bounded(1);
@@ -140,10 +140,7 @@ mod mem_bench_impl {
         );
         let mem_usage_mean = mems.mean_axis(Axis(0)).unwrap();
         let mem_usage_std = mems.std_axis(Axis(0), 0.0);
-        println!(
-            "Memory Usage: {:.2}bytes ~ +/- {:.2}bytes",
-            mem_usage_mean, mem_usage_std
-        );
+        println!("Memory Usage: {mem_usage_mean:.2}bytes ~ +/- {mem_usage_std:.2}bytes");
         let mem_usage_mean = mem_usage_mean.into_owned();
         let mem_usage_mean = mem_usage_mean.first().unwrap();
         let mem_usage_std = mem_usage_std.into_owned();
@@ -155,11 +152,10 @@ mod mem_bench_impl {
 
         let mem_usage_over_amount = mem_usage_max - MAXIMUM_MEM_USAGE_BYTES;
         let mem_usage_threshold = MAXIMUM_MEM_USAGE_BYTES * DIFF_THRESHOLD;
-        let worst_case_message = format!("Worst Case Memory Usage:\nThe mean memory usage, {:.2}bytes, is added to the stdev, {:.2}bytes, equaling {:.2}bytes.", mem_usage_mean, mem_usage_std, mem_usage_max);
-        let worst_case_message = format!("{}\nThen this value is subtracted by the ideal maximum memory usage {:.2}bytes equaling {:.2}bytes.", worst_case_message, MAXIMUM_MEM_USAGE_BYTES, mem_usage_over_amount);
+        let worst_case_message = format!("Worst Case Memory Usage:\nThe mean memory usage, {mem_usage_mean:.2}bytes, is added to the stdev, {mem_usage_std:.2}bytes, equaling {mem_usage_max:.2}bytes.");
+        let worst_case_message = format!("{worst_case_message}\nThen this value is subtracted by the ideal maximum memory usage {MAXIMUM_MEM_USAGE_BYTES:.2}bytes equaling {mem_usage_over_amount:.2}bytes.");
         let worst_case_message = format!(
-            "{}\nThis amount is greater than {:.2}bytes which is {:.2} of the maximum amount {:.2}.",
-            worst_case_message, mem_usage_threshold, DIFF_THRESHOLD, MAXIMUM_MEM_USAGE_BYTES
+            "{worst_case_message}\nThis amount is greater than {mem_usage_threshold:.2}bytes which is {DIFF_THRESHOLD:.2} of the maximum amount {MAXIMUM_MEM_USAGE_BYTES:.2}."
         );
         assert!(
             (mem_usage_max - MAXIMUM_MEM_USAGE_BYTES) <= MAXIMUM_MEM_USAGE_BYTES * DIFF_THRESHOLD,
@@ -172,9 +168,7 @@ mod mem_bench_impl {
         );
         assert!(
             mem_usage_min >= ABSOLUTE_MINIMUM_MEM_USAGE,
-            "Best Case Memory Usage: {:.2}bytes was less than absolute minimum {:.2}bytes.",
-            mem_usage_min,
-            ABSOLUTE_MINIMUM_MEM_USAGE
+            "{}", "Best Case Memory Usage: {mem_usage_min:.2}bytes was less than absolute minimum {ABSOLUTE_MINIMUM_MEM_USAGE:.2}bytes."
         );
         println!(
             "CPU Usage: {:.2}% ~ +/- {:.2}%",

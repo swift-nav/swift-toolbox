@@ -219,7 +219,7 @@ class UpdateTabData(QObject):  # pylint: disable=too-many-instance-attributes,to
 
 class UpdateTabModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(UpdateTabData)  # type: ignore
-    def fill_data(self, cp: UpdateTabData) -> UpdateTabData:  # pylint:disable=no-self-use
+    def fill_data(self, cp: UpdateTabData) -> UpdateTabData:
         cp.set_hardware_revision(cp.update_tab[Keys.HARDWARE_REVISION])
         cp.set_fw_version_current(cp.update_tab[Keys.FW_VERSION_CURRENT])
         cp.set_fw_version_latest(cp.update_tab[Keys.FW_VERSION_LATEST])

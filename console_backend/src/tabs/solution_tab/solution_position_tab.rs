@@ -445,14 +445,14 @@ impl SolutionPositionTab {
         let mut utc_time_str = None;
         if let Some(utc_time_) = self.utc_time {
             let (tutc, secutc) = datetime_to_string_and_seconds(utc_time_);
-            utc_time_str = Some(format!("{}:{:0>6.03}", tutc, secutc));
+            utc_time_str = Some(format!("{tutc}:{secutc:0>6.03}"));
         }
         let mut gps_time = None;
         let mut gps_time_short = None;
         if let Some(tgps) = tgps_ {
             if let Some(secgps) = secgps_ {
-                gps_time = Some(format!("{}:{:0>6.06}", tgps, secgps));
-                gps_time_short = Some(format!("{}:{:0>6.03}", tgps, secgps));
+                gps_time = Some(format!("{tgps}:{secgps:0>6.06}"));
+                gps_time_short = Some(format!("{tgps}:{secgps:0>6.03}"));
             }
         }
 
@@ -461,7 +461,7 @@ impl SolutionPositionTab {
         {
             let mut shared_data = self.shared_state.lock();
             if let Some(ref mut pos_file) = shared_data.solution_tab.position_tab.log_file {
-                let pc_time = format!("{}:{:>6.06}", tloc, secloc);
+                let pc_time = format!("{tloc}:{secloc:>6.06}");
                 if let Err(err) = pos_file.serialize(&PosLLHLog {
                     pc_time,
                     gps_time,
@@ -498,7 +498,7 @@ impl SolutionPositionTab {
                     self.table.insert(GPS_TIME, gps_time_);
                 }
             }
-            self.table.insert(GPS_TOW, format!("{:.3}", tow));
+            self.table.insert(GPS_TOW, format!("{tow:.3}"));
             if let Some(utc_time_) = utc_time_str {
                 self.table.insert(UTC_TIME, utc_time_);
                 if let Some(utc_src_) = self.utc_source.clone() {
@@ -736,9 +736,9 @@ impl SolutionPositionTab {
             _ => return,
         };
 
-        let lat_string = format!("lat_{}", mode_string);
+        let lat_string = format!("lat_{mode_string}");
         let lat_string = lat_string.as_str();
-        let lon_string = format!("lon_{}", mode_string);
+        let lon_string = format!("lon_{mode_string}");
         let lon_string = lon_string.as_str();
 
         let lat_values = &self.slns[&lat_string];
@@ -984,10 +984,7 @@ mod tests {
         assert_eq!(solution_tab.table[VEL_E], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[VEL_D], String::from(EMPTY_STR));
         solution_tab.handle_vel_ned(msg);
-        assert_eq!(
-            solution_tab.table[VEL_FLAGS],
-            format!("0x{:<03x}", bad_flags)
-        );
+        assert_eq!(solution_tab.table[VEL_FLAGS], format!("0x{bad_flags:<03x}"));
         assert_eq!(solution_tab.table[VEL_N], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[VEL_E], String::from(EMPTY_STR));
         assert_eq!(solution_tab.table[VEL_D], String::from(EMPTY_STR));
@@ -1005,7 +1002,7 @@ mod tests {
         solution_tab.handle_vel_ned(msg);
         assert_eq!(
             solution_tab.table[VEL_FLAGS],
-            format!("0x{:<03x}", good_flags)
+            format!("0x{good_flags:<03x}")
         );
         assert_eq!(
             solution_tab.table[VEL_N],

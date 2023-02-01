@@ -47,9 +47,8 @@ lazy_static! {
         - Updating firmware using TCP/IP
             swift-updater --tcp 192.168.0.2222:55555 ./firmware.bin
         - Updating firmware using serial
-            swift-updater --serial {serial} ./firmware.bin
-    ",
-        serial = EXAMPLE_SERIAL_NAME
+            swift-updater --serial {EXAMPLE_SERIAL_NAME} ./firmware.bin
+    "
     );
 }
 
@@ -168,7 +167,7 @@ fn main() -> anyhow::Result<()> {
         move |msg, overwrite| printer(&msg, overwrite, &log_state),
         move |progress| {
             printer(
-                &format!("Uploading image to device {:.2}%...", progress),
+                &format!("Uploading image to device {progress:.2}%..."),
                 LogOverwriteBehavior::Overwrite,
                 &progress_state,
             )

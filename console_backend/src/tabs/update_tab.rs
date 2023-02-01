@@ -404,7 +404,7 @@ fn upgrade_firmware(
         },
         move |progress| {
             progress_callback_ctx
-                .fw_log_replace_last(format!("Uploading image to device {:.2}%...", progress));
+                .fw_log_replace_last(format!("Uploading image to device {progress:.2}%..."));
         },
     ) {
         update_tab_context.fw_log_append(err.to_string());
@@ -440,8 +440,7 @@ fn send_file(update_tab_context: UpdateTabContext, fileio: &mut Fileio) -> anyho
             .map_err(|e| anyhow!("Failed to read file {}: {}", filepath.display(), e))?;
 
         update_tab_context.fw_log_append(format!(
-            "Transferring file to device location {}",
-            destination
+            "Transferring file to device location {destination}"
         ));
         update_tab_context.fw_log_append(String::from(""));
         let size = file_blob.metadata()?.len() as usize;
@@ -450,7 +449,7 @@ fn send_file(update_tab_context: UpdateTabContext, fileio: &mut Fileio) -> anyho
         match fileio.overwrite_with_progress(destination, file_blob, |n| {
             bytes_written += n;
             let progress = (bytes_written as f64) / (size as f64) * 100.0;
-            update_tab_context.fw_log_replace_last(format!("Writing {:.2}%...", progress));
+            update_tab_context.fw_log_replace_last(format!("Writing {progress:.2}%..."));
         }) {
             Ok(_) => {
                 update_tab_context.fw_log_append(String::from("File transfer complete."));

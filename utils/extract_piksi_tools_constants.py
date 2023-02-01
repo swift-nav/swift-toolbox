@@ -21,7 +21,8 @@ import requests
 
 
 def main():
-    r = requests.get("https://raw.githubusercontent.com/swift-nav/piksi_tools/master/piksi_tools/console/utils.py")
+    url = "https://raw.githubusercontent.com/swift-nav/piksi_tools/master/piksi_tools/console/utils.py"
+    r = requests.get(url, timeout=30)
     lines = r.text.splitlines()
 
     emit = False

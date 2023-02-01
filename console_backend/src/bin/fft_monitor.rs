@@ -82,7 +82,7 @@ fn main() -> Result<()> {
     let link = source.link();
     link.register(|msg: MsgSpecan| {
         if let Err(err) = fftmonitor.lock().capture_fft(Specan::MsgSpecan(msg)) {
-            eprintln!("error capturing fft, {}", err);
+            eprintln!("error capturing fft, {err}");
         }
     });
 

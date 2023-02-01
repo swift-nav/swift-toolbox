@@ -200,6 +200,6 @@ mod tests {
         assert_eq!(tab.sats[4].len(), 1);
         assert_eq!(tab.sats[4][0].az, 30 * 2);
         assert_eq!(tab.sats[4][0].el, 90 - 30);
-        assert_eq!(tab.sats[4][0].label, format!("{}*", label));
+        assert_eq!(tab.sats[4][0].label, format!("{label}*"));
     }
 }

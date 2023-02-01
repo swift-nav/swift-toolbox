@@ -135,7 +135,7 @@ class SolutionVelocityPoints(QObject):
 
 class SolutionVelocityModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(SolutionVelocityPoints)  # type: ignore
-    def fill_console_points(self, cp: SolutionVelocityPoints) -> SolutionVelocityPoints:  # pylint:disable=no-self-use
+    def fill_console_points(self, cp: SolutionVelocityPoints) -> SolutionVelocityPoints:
         cp.set_points(cp.solution_velocity[Keys.POINTS])
         cp.set_colors(cp.solution_velocity[Keys.COLORS])
         cp.set_max(cp.solution_velocity[Keys.MAX])

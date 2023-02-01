@@ -268,7 +268,7 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
     @Slot(float, int, result=str)  # type: ignore
     @Slot(float, int, int, result=str)  # type: ignore
     @Slot(float, int, int, bool, result=str)  # type: ignore
-    def padFloat(self, num, length, digits=2, allowNegative=True):  # pylint: disable=no-self-use
+    def padFloat(self, num, length, digits=2, allowNegative=True):
         return localPadFloat(num, length, digits, allowNegative)
 
     # Intentionally do not provide a setter in the property - no setting from QML.

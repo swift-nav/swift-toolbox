@@ -154,7 +154,7 @@ fn conn_manager_thd(
                                 ErrorKind::NotFound => {
                                     (true, String::from("Connection error: not found"))
                                 }
-                                _ => (false, format!("Connection error: {}", e)),
+                                _ => (false, format!("Connection error: {e}")),
                             };
                             error!("{}", message);
                             log::logger().flush();
@@ -384,7 +384,7 @@ impl TcpConnection {
         let mut msg = format!("Could not connect to {}\n", self.name);
         writeln!(&mut msg, "Caused by:").unwrap();
         for err in errors {
-            writeln!(&mut msg, "    {}", err).unwrap();
+            writeln!(&mut msg, "    {err}").unwrap();
         }
         Err(io::Error::new(ErrorKind::ConnectionRefused, msg.trim()))
     }
@@ -523,7 +523,7 @@ mod tests {
         let host = String::from("0.0.0.0");
         let port = 55555;
         let conn = Connection::tcp(host.clone(), port).unwrap();
-        assert_eq!(conn.name(), format!("{}:{}", host, port));
+        assert_eq!(conn.name(), format!("{host}:{port}"));
         assert!(!conn.close_when_done());
         assert_eq!(conn.realtime_delay(), RealtimeDelay::Off);
     }
@@ -550,7 +550,7 @@ mod tests {
         let baudrate = 115200;
         let flow = FlowControl::from_str(FLOW_CONTROL_NONE).unwrap();
         let conn = Connection::serial(device.clone(), baudrate, flow);
-        assert_eq!(conn.name(), format!("{} @{}", device, baudrate));
+        assert_eq!(conn.name(), format!("{device} @{baudrate}"));
         assert!(!conn.close_when_done());
         assert_eq!(conn.realtime_delay(), RealtimeDelay::Off);
     }
@@ -631,9 +631,7 @@ mod tests {
             Ok(elapsed) => {
                 assert!(
                     elapsed < expected_duration,
-                    "Time elapsed for disconnect test {:?}, expecting {:?}ms",
-                    elapsed,
-                    expected_duration
+                    "{}", "Time elapsed for disconnect test {elapsed:?}, expecting {expected_duration:?}ms"
                 );
             }
             Err(e) => {

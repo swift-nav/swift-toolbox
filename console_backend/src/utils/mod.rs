@@ -269,23 +269,23 @@ pub fn signal_key_label(
     let extra = extra.unwrap_or(&default_extra);
 
     if code.code_is_glo() {
-        let freq_lbl_ = format!("F+{:02}", sat);
+        let freq_lbl_ = format!("F+{sat:02}");
         freq_lbl = Some(freq_lbl_);
         if extra.contains_key(&sat) {
             id_lbl = Some(format!("R{:<02}", extra[&sat]));
         } else {
-            id_lbl = Some(format!("R{:<02}", sat));
+            id_lbl = Some(format!("R{sat:<02}"));
         }
     } else if code.code_is_sbas() {
-        id_lbl = Some(format!("S{: >3}", sat));
+        id_lbl = Some(format!("S{sat: >3}"));
     } else if code.code_is_bds() {
-        id_lbl = Some(format!("C{:0>2}", sat));
+        id_lbl = Some(format!("C{sat:0>2}"));
     } else if code.code_is_qzss() {
-        id_lbl = Some(format!("J{: >3}", sat));
+        id_lbl = Some(format!("J{sat: >3}"));
     } else if code.code_is_galileo() {
-        id_lbl = Some(format!("E{:0>2}", sat));
+        id_lbl = Some(format!("E{sat:0>2}"));
     } else {
-        id_lbl = Some(format!("G{:0>2}", sat));
+        id_lbl = Some(format!("G{sat:0>2}"));
     }
     (code_lbl, freq_lbl, id_lbl)
 }
@@ -397,12 +397,12 @@ pub fn bytes_to_human_readable(bytes: u128) -> String {
     let mut bytes = bytes as f64;
     for unit in ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB"].iter() {
         if bytes < 1024.0 {
-            return format!("{:3.1}{}", bytes, unit);
+            return format!("{bytes:3.1}{unit}");
         } else {
             bytes /= 1024.0;
         }
     }
-    format!("{:.1}YB", bytes)
+    format!("{bytes:.1}YB")
 }
 
 /// Nanoseconds to Microseconds
@@ -577,9 +577,8 @@ mod tests {
     fn assert_float_eq(f1: f64, f2: f64) {
         assert!(
             f64::abs(f1 - f2) <= f64::EPSILON,
-            "Asserting {} is within float epsilon of {}",
-            f1,
-            f2
+            "{}",
+            "Asserting {f1} is within float epsilon of {f2}"
         )
     }
 
@@ -599,9 +598,7 @@ mod tests {
         assert_eq!(
             bytes_to_human_readable(raw),
             readable,
-            "testing that {} is converted to {} for human eyes",
-            raw,
-            readable
+            "testing that {raw} is converted to {readable} for human eyes"
         );
     }
 

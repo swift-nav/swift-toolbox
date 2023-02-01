@@ -1100,11 +1100,7 @@ mod tests {
         let mut conn_history = ConnectionHistory::new();
 
         for ele in 0..MAX_CONNECTION_HISTORY {
-            conn_history.record_serial(
-                format!("/dev/ttyUSB{:?}", ele),
-                9600,
-                FlowControl::Hardware,
-            );
+            conn_history.record_serial(format!("/dev/ttyUSB{ele:?}"), 9600, FlowControl::Hardware);
         }
         let configs = conn_history.serial_configs();
         configs.get("/dev/ttyUSB0").unwrap();

@@ -149,7 +149,7 @@ class StatusBarData(QObject):  # pylint: disable=too-many-instance-attributes
 
 class StatusBarModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(StatusBarData)  # type: ignore
-    def fill_data(self, cp: StatusBarData) -> StatusBarData:  # pylint:disable=no-self-use
+    def fill_data(self, cp: StatusBarData) -> StatusBarData:
         cp.set_pos(cp.status_bar[Keys.POS])
         cp.set_rtk(cp.status_bar[Keys.RTK])
         cp.set_sats(cp.status_bar[Keys.SATS])

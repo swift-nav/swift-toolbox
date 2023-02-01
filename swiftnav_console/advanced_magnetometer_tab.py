@@ -98,9 +98,7 @@ class AdvancedMagnetometerPoints(QObject):
 
 class AdvancedMagnetometerModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(AdvancedMagnetometerPoints)  # type: ignore
-    def fill_console_points(  # pylint:disable=no-self-use
-        self, cp: AdvancedMagnetometerPoints
-    ) -> AdvancedMagnetometerPoints:
+    def fill_console_points(self, cp: AdvancedMagnetometerPoints) -> AdvancedMagnetometerPoints:
         cp.set_points(cp.advanced_magnetometer_tab[Keys.POINTS])
         cp.set_ymax(cp.advanced_magnetometer_tab[Keys.YMAX])
         cp.set_ymin(cp.advanced_magnetometer_tab[Keys.YMIN])

@@ -160,7 +160,7 @@ impl UpdateDownloader {
                 }
                 create_dir_all(&directory)?;
             }
-            let msg = format!("Downloading firmware file: {:?}", filename_);
+            let msg = format!("Downloading firmware file: {filename_:?}");
             if let Some(update_shared) = update_shared.clone() {
                 update_shared.fw_log_append(msg);
             }

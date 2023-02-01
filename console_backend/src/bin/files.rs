@@ -73,7 +73,7 @@ lazy_static! {
 
     <HOST> can either be an IP address when the Swift device is connected
     via TCP (for eg: 192.168.0.222) or the name of the serial device when
-    the Swift device is connected via serial (for eg: {serial}).
+    the Swift device is connected via serial (for eg: {EXAMPLE_SERIAL_NAME}).
     
     TCP Examples:
         - List files on Swift device:
@@ -87,15 +87,14 @@ lazy_static! {
 
     Serial Examples:
         - List files on Swift device:
-            swift-files --list {serial}:/data/
+            swift-files --list {EXAMPLE_SERIAL_NAME}:/data/
         - Read file from Swift device:
-            swift-files {serial}:/persistent/config.ini ./config.ini
+            swift-files {EXAMPLE_SERIAL_NAME}:/persistent/config.ini ./config.ini
         - Write file to Swift device:
-            swift-files ./config.ini {serial}:/persistent/config.ini
+            swift-files ./config.ini {EXAMPLE_SERIAL_NAME}:/persistent/config.ini
         - Delete file from Swift device:
-            swift-files --delete {serial}:/persistent/unwanted_file
-    ",
-        serial = EXAMPLE_SERIAL_NAME
+            swift-files --delete {EXAMPLE_SERIAL_NAME}:/persistent/unwanted_file
+    "
     );
 }
 
@@ -245,7 +244,7 @@ impl FromStr for Target {
                 let (host, path) = s.split_at(idx);
 
                 if path == ":" {
-                    return Err(format!("No remote path given in '{}'", s));
+                    return Err(format!("No remote path given in '{s}'"));
                 }
 
                 Ok(Target::Remote(Remote {

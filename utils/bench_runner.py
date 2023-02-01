@@ -41,9 +41,12 @@ NAME = "name"
 SUCCESS = "success"
 RESULTS = "results"
 
+
 ## Benchmark Specific Functions and Containers.
 # Installer Disk Usage Benchmark.
-DISK_USAGE_COMMAND = lambda file_path: f"du -ch {file_path} | grep total"
+def DISK_USAGE_COMMAND(file_path):
+    return f"du -ch {file_path} | grep total"
+
 
 INSTALLER_MAX_SIZE = 100
 INSTALLER_BENCHMARKS = {
@@ -133,10 +136,15 @@ BACKEND_CPU_BENCHMARKS = {
 
 # Frontend CPU Benchmarks.
 DEFAULT_JSON_FILEPATH = "fileout.json"
-BENCHMARK_COMMAND_ARGS = lambda file_path: f" --exit-after-close --file {file_path}"
-HYPERFINE_COMMAND = (
-    lambda file_out: f'hyperfine --warmup 1 --runs 5 --cleanup "sleep 1" --show-output --export-json {file_out}'
-)
+
+
+def BENCHMARK_COMMAND_ARGS(file_path):
+    return f" --exit-after-close --file {file_path}"
+
+
+def HYPERFINE_COMMAND(file_out):
+    return f'hyperfine --warmup 1 --runs 5 --cleanup "sleep 1" --show-output --export-json {file_out}'
+
 
 FRONTEND_CPU_BENCHMARKS = {
     WINDOWS: [
@@ -173,7 +181,11 @@ MAXIMUM_RATE_OF_MAX_STD = "maximum_rate_of_max_std"
 MAXIMUM_RATE_OF_MAX_MEAN = "maximum_rate_of_max_mean"
 MAXIMUM_MEAN_MB = "maximum_mean_mb"
 
-BYTES_TO_MB = lambda x: float(x) / (1 << 20)
+
+def BYTES_TO_MB(x):
+    return float(x) / (1 << 20)
+
+
 ABSOLUTE_MINIMUM_MEMORY_MB = 1
 ABSOLUTE_MINIMUM_READINGS = 140
 THREAD_TIMEOUT_SEC = 180
@@ -247,7 +259,7 @@ def run_disk_usage_benchmark():
         assert disk_usage is not None, f"Test:{bench[NAME]} retrieved bench value None."
         assert disk_usage >= bench[ERROR_MARGIN_FRAC] * bench[EXPECTED], (
             f"Test:{bench[NAME]} Bench Value:{disk_usage} not larger than "
-            f"{bench[ERROR_MARGIN_FRAC]*bench[EXPECTED]}MB."
+            f"{bench[ERROR_MARGIN_FRAC] * bench[EXPECTED]}MB."
         )
         assert (
             disk_usage <= INSTALLER_MAX_SIZE
@@ -340,7 +352,7 @@ def get_mean_and_pop_stdev(values: List[float]) -> Tuple[float, float]:
     """
     lenn = float(len(values))
     mean = sum(values) / lenn
-    std = ((1.0 / lenn) * sum([(val - mean) ** 2 for val in values])) ** (1 / 2)
+    std = (sum((val - mean) ** 2 for val in values) / lenn) ** (1 / 2)
     return (mean, std)
 
 

@@ -152,14 +152,14 @@ class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attr
         scatters = series_list[1]
         cur_scatters = series_list[2]
         line.replace(self._solution_line)
-        for idx, _ in enumerate(scatters):
-            scatters[idx].replace(self._points[idx])
+        for idx, scatter in enumerate(scatters):
+            scatter.replace(self._points[idx])
             cur_scatters[idx].replace(self._cur_points[idx])
 
 
 class SolutionPositionModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(SolutionPositionPoints)  # type: ignore
-    def fill_console_points(self, cp: SolutionPositionPoints) -> SolutionPositionPoints:  # pylint:disable=no-self-use
+    def fill_console_points(self, cp: SolutionPositionPoints) -> SolutionPositionPoints:
         cp.set_points(cp.solution_position[Keys.POINTS])
         cp.set_cur_points(cp.solution_position[Keys.CUR_POINTS])
         cp.set_lat_max(cp.solution_position[Keys.LAT_MAX])

@@ -185,6 +185,7 @@
         "resources/SolutionTabComponents/SolutionPositionTab.qml",
         "resources/SolutionTabComponents/SolutionTable.qml",
         "resources/SolutionTabComponents/SolutionVelocityTab.qml",
+        "resources/SolutionTabComponents/SolutionMapTab.qml",
 
         "resources/TableComponents/SortableColumnHeading.qml",
         "resources/TableComponents/SwiftTableView.qml",

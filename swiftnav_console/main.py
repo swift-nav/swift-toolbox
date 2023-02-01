@@ -747,6 +747,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     if args_main.qmldebug:
         sys.argv.append("-qmljsdebugger=port:10002,block")
         debug = QQmlDebuggingEnabler()  # pylint: disable=unused-variable
+    QtCore.QCoreApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon(":/images/icon.ico"))
     app.setOrganizationName(ApplicationMetadata.ORGANIZATION_NAME)

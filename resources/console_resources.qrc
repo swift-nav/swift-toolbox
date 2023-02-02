@@ -135,5 +135,15 @@
     <file>MainTab.qml</file>
     <file>TabInfoBar.qml</file>
     <file>PositionLoopAnimation.qml</file>
+    <file>web/map/index.html</file>
+    <file>web/map/js/trajectory.js</file>
+    <file>web/map/plugins/condensed-attributes/condensed-attribute.css</file>
+    <file>web/map/plugins/condensed-attributes/condensed-attribute.js</file>
+    <file>web/map/plugins/dashflow/dashflow.js</file>
+    <file>web/map/js/leaflet.js</file>
+    <file>web/map/css/leaflet.css</file>
+    <file>web/map/css/style.css</file>
+    <file>web/map/css/maplibre-gl.css</file>
+    <file>web/map/js/maplibre-gl.js</file>
 </qresource>
 </RCC>

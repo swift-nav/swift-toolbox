@@ -14,7 +14,7 @@ Item {
 
     WebEngineView {
         anchors.fill: parent
-        url: "http://localhost:63342/swift-toolbox/resources/web/map/index.html"
+        url: Constants.solutionMap.pageURL
         onCertificateError: error.ignoreCertificateError()
     }
 

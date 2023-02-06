@@ -17,7 +17,7 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-"""Solution Position Tab QObjects.
+"""Solution Map QObject.
 """
 from PySide6.QtCore import QObject
 
@@ -35,5 +35,3 @@ class SolutionMap(QObject):
         for id, data in enumerate(currData):
             for pos in data:
                 cls._instance.recvPos.emit(id, pos.x, pos.y)  # pylint: disable=protected-access
-
-

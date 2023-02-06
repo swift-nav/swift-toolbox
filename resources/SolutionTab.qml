@@ -58,7 +58,6 @@ MainTab {
             }
 
             SolutionTabComponents.SolutionMapTab {
-
             }
         }
     }

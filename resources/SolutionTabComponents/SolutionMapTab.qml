@@ -15,7 +15,7 @@ Item {
     SolutionMap {
         id: solutionMap
         WebChannel.id: "currPos"
-        signal recvPos(int id, double lat, double lng);
+        signal recvPos(int id, double lat, double lng)
     }
 
     WebChannel {
@@ -28,6 +28,6 @@ Item {
         webChannel: solutionMapChannel
         url: Constants.solutionMap.pageURL
         onCertificateError: error.ignoreCertificateError()
-        onJavaScriptConsoleMessage: (level, message, lineNumber, sourceID) => console.log("[MAP LOG] " + message);
+        onJavaScriptConsoleMessage: (level, message, lineNumber, sourceID) => console.log("[MAP LOG] " + message)
     }
 }

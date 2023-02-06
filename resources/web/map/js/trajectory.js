@@ -80,7 +80,25 @@
 
 var map = new maplibregl.Map({
     container: 'map',
-    style: 'https://tiles.stadiamaps.com/styles/alidade_smooth.json',  // Style URL; see our documentation for more options
+    style: {
+        "version": 8,
+        "sources": {
+            "osm": {
+                "type": "raster",
+                "tiles": ["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"],
+                "tileSize": 256,
+                "attribution": "&copy; OpenStreetMap Contributors",
+                "maxzoom": 22
+            }
+        },
+        "layers": [
+            {
+                "id": "osm",
+                "type": "raster",
+                "source": "osm" // This must match the source key above
+            }
+        ]
+    },
     center: [12, 53],  // Initial focus coordinate
     zoom: 4
 });

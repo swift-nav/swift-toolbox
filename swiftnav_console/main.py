@@ -21,7 +21,6 @@
 """
 import signal
 import argparse
-from PySide6.QtWebEngineQuick import QtWebEngineQuick
 from datetime import datetime
 import os
 import pickle
@@ -40,6 +39,8 @@ except ImportError:
 from typing import Optional, Tuple
 
 import capnp  # type: ignore
+
+from PySide6.QtWebEngineQuick import QtWebEngineQuick
 
 from PySide6.QtWidgets import QApplication, QSplashScreen  # type: ignore
 

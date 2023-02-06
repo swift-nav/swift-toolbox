@@ -29,3 +29,4 @@ installers/Windows/NSIS/*
 /.qt_for_python
 /pyside-setup
 swiftnav_console/.idea
+/resources/base/

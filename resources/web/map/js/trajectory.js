@@ -1,24 +1,52 @@
+var data = {
+    type: 'Feature',
+    properties: {},
+    geometry: {
+        type: 'LineString',
+        coordinates: []
+    }
+};
+
+const style = {
+    "version": 8,
+    "sources": {
+        "osm": {
+            "type": "raster",
+            "tiles": ["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"],
+            "tileSize": 256,
+            "attribution": "&copy; OpenStreetMap Contributors",
+            "maxzoom": 22
+        },
+        "route": {
+            "type": "geojson",
+            data
+        }
+    },
+    "layers": [
+        {
+            "id": "osm",
+            "type": "raster",
+            "source": "osm"
+        },
+        {
+            "id": "route",
+            "type": "line",
+            "source": "route",
+            "layout": {
+                "line-join": "round",
+                "line-cap": "round"
+            },
+            "paint": {
+                "line-color": "#ff8600",
+                "line-width": 10
+            }
+        }
+    ]
+};
+
 var map = new maplibregl.Map({
     container: 'map',
-    style: {
-        "version": 8,
-        "sources": {
-            "osm": {
-                "type": "raster",
-                "tiles": ["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"],
-                "tileSize": 256,
-                "attribution": "&copy; OpenStreetMap Contributors",
-                "maxzoom": 22
-            }
-        },
-        "layers": [
-            {
-                "id": "osm",
-                "type": "raster",
-                "source": "osm" // This must match the source key above
-            }
-        ]
-    },
+    style,
     center: [-122.486052, 37.830348],  // Initial focus coordinate
     zoom: 16
 });
@@ -30,28 +58,6 @@ maplibregl.setRTLTextPlugin('https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-
 map.addControl(new maplibregl.NavigationControl());
 
 map.on('load', function () {
-    var data = {
-        type: 'Feature',
-        properties: {},
-        geometry: {
-            type: 'LineString',
-            coordinates: []
-        }
-    };
-    map.addSource('route', {type: 'geojson', data});
-    map.addLayer({
-        id: 'route',
-        type: 'line',
-        source: 'route',
-        layout: {
-            'line-join': 'round',
-            'line-cap': 'round'
-        },
-        paint: {
-            'line-color': '#ff8600',
-            'line-width': 10
-        }
-    });
     console.log("loaded");
     var start;
     new QWebChannel(qt.webChannelTransport, (channel) => {

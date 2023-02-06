@@ -99,8 +99,8 @@ var map = new maplibregl.Map({
             }
         ]
     },
-    center: [12, 53],  // Initial focus coordinate
-    zoom: 4
+    center: [-122.486052, 37.830348],  // Initial focus coordinate
+    zoom: 16
 });
 
 // MapLibre GL JS does not handle RTL text by default, so we recommend adding this dependency to fully support RTL rendering.
@@ -108,3 +108,38 @@ maplibregl.setRTLTextPlugin('https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-
 
 // Add zoom and rotation controls to the map.
 map.addControl(new maplibregl.NavigationControl());
+
+map.on('load', function () {
+    var data = {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+            type: 'LineString',
+            coordinates: []
+        }
+    };
+    map.addSource('route', {type: 'geojson', data});
+    map.addLayer({
+        id: 'route',
+        type: 'line',
+        source: 'route',
+        layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+        },
+        paint: {
+            'line-color': '#ff8600',
+            'line-width': 10
+        }
+    });
+    console.log("loaded");
+    new QWebChannel(qt.webChannelTransport, (channel) => {
+        channel.objects.currPos.recvPos.connect((id, lat, lng) => {
+            console.log(`received ${id} ${lat} ${lng}`);
+            const pos = [lat, lng];
+            data.geometry.coordinates.push(pos);
+            map.getSource('route').setData(data);
+            map.panTo(pos);
+        })
+    });
+});

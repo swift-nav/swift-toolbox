@@ -133,13 +133,18 @@ map.on('load', function () {
         }
     });
     console.log("loaded");
+    var start;
     new QWebChannel(qt.webChannelTransport, (channel) => {
         channel.objects.currPos.recvPos.connect((id, lat, lng) => {
             console.log(`received ${id} ${lat} ${lng}`);
             const pos = [lat, lng];
+            if (!start) {
+                new maplibregl.Marker().setLngLat(pos).addTo(map);
+                start = pos;
+            }
+            map.panTo(pos);
             data.geometry.coordinates.push(pos);
             map.getSource('route').setData(data);
-            map.panTo(pos);
         })
     });
 });

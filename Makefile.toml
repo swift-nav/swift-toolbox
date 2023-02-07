@@ -643,7 +643,7 @@ script_runner = "@duckscript"
 script = '''
 py_folders = array test tests examples __pycache__ demos turtledemo translations idlelib lib/tcl8 lib/tcl8.6 lib/tk8.6 shiboken6/docs ensurepip lib2to3 tkinter unittest include
 qt_folders = array plugins/geoservices plugins/virtualkeyboard plugins/sqldrivers lib/Tix8.4.3 tcl/tix8.4.3 Qt/resources PySide6/resources
-qml_folders = array qml/QtBluetooth* qml/QtNfc* qml/QtGamepad qml/QtTest qml/QtQuick3D qml/Qt3D qml/QtSensors qml/QtLocation qml/QtPositioning
+qml_folders = array qml/QtBluetooth* qml/QtNfc* qml/QtGamepad qml/QtTest qml/QtQuick3D qml/Qt3D qml/QtSensors qml/QtLocation
 all_folders = array_concat ${py_folders} ${qt_folders} ${qml_folders}
 
 for name in ${all_folders}
@@ -669,7 +669,7 @@ for ext in ${file_exts}
     end
 end
 
-libs_a = array Qt3D QtBluetooth QtCconcurrent QtDataVisualization QtDesigner QtHelp QtMultimedia QtNfs QtPositioning
+libs_a = array Qt3D QtBluetooth QtCconcurrent QtDataVisualization QtDesigner QtHelp QtMultimedia QtNfs
 libs_b = array QtQuick3D QtRemoteObjects QtScxml QtSensors QtSerialPort QtSql QtStateMachine QtTest QtUiTools QtXml
 libs = array_concat ${libs_a} ${libs_b}
 

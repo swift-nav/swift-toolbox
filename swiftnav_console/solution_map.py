@@ -24,6 +24,7 @@ from PySide6.QtCore import QObject
 
 class SolutionMap(QObject):
     _instance: "SolutionMap"
+    recvPos: 'signal'
 
     def __init__(self):
         super().__init__()
@@ -34,4 +35,4 @@ class SolutionMap(QObject):
     def sendPos(cls, currData) -> None:
         for idx, data in enumerate(currData):
             for pos in data:
-                cls._instance.recvPos.emit(idx, pos.x, pos.y)  # pylint: disable=protected-access
+                cls._instance.recvPos.emit(idx, pos.x, pos.y)

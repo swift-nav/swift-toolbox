@@ -24,7 +24,7 @@ from PySide6.QtCore import QObject
 
 class SolutionMap(QObject):
     _instance: "SolutionMap"
-    recvPos: 'signal'
+    recvPos: "signal"
 
     def __init__(self):
         super().__init__()

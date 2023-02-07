@@ -19,12 +19,12 @@
 
 """Solution Map QObject.
 """
-from PySide6.QtCore import QObject
+from PySide6.QtCore import QObject, Signal
 
 
 class SolutionMap(QObject):
     _instance: "SolutionMap"
-    recvPos: "signal"
+    recvPos: "Signal"
 
     def __init__(self):
         super().__init__()

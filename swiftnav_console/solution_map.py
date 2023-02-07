@@ -32,6 +32,6 @@ class SolutionMap(QObject):
 
     @classmethod
     def sendPos(cls, currData) -> None:
-        for id, data in enumerate(currData):
+        for idx, data in enumerate(currData):
             for pos in data:
-                cls._instance.recvPos.emit(id, pos.x, pos.y)  # pylint: disable=protected-access
+                cls._instance.recvPos.emit(idx, pos.x, pos.y)  # pylint: disable=protected-access

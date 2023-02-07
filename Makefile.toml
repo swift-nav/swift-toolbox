@@ -369,10 +369,13 @@ writefile pyo3_config.txt "implementation=CPython\nversion=3.9\nshared=true\nabi
 
 [tasks.get-standalone-py]
 dependencies = ["get-get-pip", "write-pyo3-config"]
-cwd = "standalone-py"
-condition = { files_not_exist = ["${WORKSPACE}/standalone-py/python"] }
 script_runner = "@duckscript"
 script = '''
+if is_path_exists standalone-py
+  rm -r standalone-py
+end
+mkdir standalone-py
+cd standalone-py
 wget -O py39.tar.zst ${STANDALONE_PY_URL}
 exec --fail-on-error zstd -f -d py39.tar.zst
 exec --fail-on-error tar -xf py39.tar

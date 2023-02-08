@@ -736,6 +736,10 @@ elseif eq ${os} mac
     for dir in ${resources}
       rm -r ${dir}
     end
+
+    # remove helper directory since this exists relatively at
+    # ./lib/python3.9/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Versions/A/Helpers
+    rm -r ./lib/python3.9/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Helpers
 else
     rm -r ./share
 

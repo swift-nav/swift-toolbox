@@ -526,6 +526,7 @@ if eq ${os} mac
   exec --fail-on-error install_name_tool -change /install/lib/libpython3.9.dylib @rpath/libpython3.9.dylib py39-dist/${app_name}
   exec --fail-on-error install_name_tool -add_rpath @executable_path/../Resources/lib py39-dist/${app_name}
   exec --fail-on-error install_name_tool -add_rpath @executable_path/lib py39-dist/${app_name}
+  exec --fail-on-error install_name_tool -add_rpath @executable_path/lib/python3.9/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Versions/A py39-dist/${app_name}
 elseif eq ${os} linux
   cp target/release/windowpos py39-dist/windowpos
 end

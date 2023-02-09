@@ -526,7 +526,6 @@ if eq ${os} mac
   exec --fail-on-error install_name_tool -change /install/lib/libpython3.9.dylib @rpath/libpython3.9.dylib py39-dist/${app_name}
   exec --fail-on-error install_name_tool -add_rpath @executable_path/../Resources/lib py39-dist/${app_name}
   exec --fail-on-error install_name_tool -add_rpath @executable_path/lib py39-dist/${app_name}
-  exec --fail-on-error install_name_tool -add_rpath @executable_path/lib/python3.9/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Versions/A py39-dist/${app_name}
 elseif eq ${os} linux
   cp target/release/windowpos py39-dist/windowpos
 end
@@ -731,6 +730,18 @@ elseif eq ${os} mac
     # That being said after deleting them the app runs fine and passes the mac signing gauntlet.
     # See: https://stackoverflow.com/a/29271922/12265938
 
+    echo "START OF QTWEBENGINE TRANSLATIONS DISTRIBUTION"
+    mkdir ./lib/python3.9/site-packages/PySide6/Qt/translations
+    mv ./lib/python3.9/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Resources/qtwebengine_locales ./lib/python3.9/site-packages/PySide6/Qt/translations
+
+    echo "START OF QTWEBENGINE RESOURCE DISTRIBUTION"
+    mkdir ./lib/python3.9/site-packages/PySide6/Qt/resources
+    web_resources = glob_array ./lib/python3.9/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Resources/*
+    for r in ${web_resources}
+        mv ${r} ./lib/python3.9/site-packages/PySide6/Qt/resources
+    end
+
+    echo "REMOVING EXCESS RESOURCES"
     resources_a = glob_array ./lib/python3.9/site-packages/PySide6/Qt/lib/*.framework/Versions/A/Resources
     resources_b = glob_array ./lib/python3.9/site-packages/PySide6/Qt/lib/*.framework/Resources
     resources = array_concat ${resources_a} ${resources_b}

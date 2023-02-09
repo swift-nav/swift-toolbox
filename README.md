@@ -79,6 +79,10 @@ Either connect to a device via the GUI or command line and include the flag:
 ```
 This will save a `.pickle` file in your current working directory.
 
+**NOTE:** This recording is not intended to be compatible with other console versions.
+Debugging internal messaging should be version specific and recording it should be tied
+to its version.
+
 ### (Debug) Replaying a stream from the backend in frontend (with or without Rust).
 If you have recorded a capnp recording pickle file as shown in the previous step, now you
 can replay this file. If you already have the standard development environment set up, you
@@ -420,6 +424,10 @@ just to cross language barriers). Other formats like protobufs require a parsing
 phase -- capnproto also has very ergonomic Python bindings. Other formats such as
 [flatbuffers][] achieve similar goals as *capnproto* but do not have good
 Python support.
+
+**We do not intend on allowing backward compatibility** in internal message passing via
+capnproto. There may be releases that modify internal message structures and should 
+not be relied on even though these internal packets are being exposed.
 
 [capnproto]: https://capnproto.org/
 [flatbuffers]: https://google.github.io/flatbuffers/

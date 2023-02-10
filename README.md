@@ -79,7 +79,11 @@ Either connect to a device via the GUI or command line and include the flag:
 ```
 This will save a `.pickle` file in your current working directory.
 
-**NOTE:** This recording is not intended to be compatible with other console versions.
+**NOTE:** Use of this recording is intended only for debugging the swift-console and not for
+long term storage of streams. There is no guarantee the recording will be compatible with
+other console versions, as the messaging format between backend and frontend has no guarantee
+of backwards or forwards compatibility
+
 Debugging internal messaging should be version specific and recording it should be tied
 to its version.
 

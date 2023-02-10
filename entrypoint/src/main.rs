@@ -98,6 +98,11 @@ fn main() -> Result<()> {
     std::env::set_var("PYTHONHOME", pythonhome_dir()?);
     std::env::set_var("PYTHONDONTWRITEBYTECODE", "1");
 
+    let webengine_process = "./lib/python3.9/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Helpers/QtWebEngineProcess.app/Contents/MacOS/QtWebEngineProcess";
+
+    std::env::set_var("QTWEBENGINEPROCESS_PATH", webengine_process);
+    std::env::set_var("QTWEBENGINE_DISABLE_SANDBOX", "1");
+
     handle_splash();
     let exit_code = Python::with_gil(|py| {
         let args = PyTuple::new(py, args);

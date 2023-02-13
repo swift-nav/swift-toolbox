@@ -138,5 +138,6 @@
     <file>web/map/index.html</file>
     <file>web/map/js/trajectory.js</file>
     <file>web/map/css/style.css</file>
+    <file>web/map/MapMarker_Swift.svg</file>
 </qresource>
 </RCC>

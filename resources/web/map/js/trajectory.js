@@ -1,76 +1,64 @@
-var data = {
-    type: 'Feature',
-    properties: {},
-    geometry: {
-        type: 'LineString',
-        coordinates: []
-    }
-};
+var focus = false;
+document.getElementById("focus-btn").addEventListener('click', _ => {
+    focus = document.getElementById("focus-btn").checked;
+})
 
-const style = {
-    "version": 8,
-    "sources": {
-        "osm": {
-            "type": "raster",
-            "tiles": ["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"],
-            "tileSize": 256,
-            "attribution": "&copy; OpenStreetMap Contributors",
-            "maxzoom": 22
-        },
-        "route": {
-            "type": "geojson",
-            data
-        }
-    },
-    "layers": [
-        {
-            "id": "osm",
-            "type": "raster",
-            "source": "osm"
-        },
-        {
-            "id": "route",
-            "type": "line",
-            "source": "route",
-            "layout": {
-                "line-join": "round",
-                "line-cap": "round"
-            },
-            "paint": {
-                "line-color": "#ff8600",
-                "line-width": 10
-            }
-        }
-    ]
-};
+function initMap() {
+    var options = {
+        zoom: 18,
+        center: new google.maps.LatLng(37.7913741, -122.3947172),
+        streetViewControl: false,
+        fullscreenControl: false,
+        controlSize: 24
+    };
 
-var map = new maplibregl.Map({
-    container: 'map',
-    style,
-    center: [-122.486052, 37.830348],  // Initial focus coordinate
-    zoom: 16
-});
+    // init map
+    var map = new google.maps.Map(document.getElementById('map'), options);
 
-// MapLibre GL JS does not handle RTL text by default, so we recommend adding this dependency to fully support RTL rendering.
-maplibregl.setRTLTextPlugin('https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-rtl-text/v0.2.1/mapbox-gl-rtl-text.js');
+    map.controls[google.maps.ControlPosition.TOP_CENTER].push(document.getElementById('focus'));
 
-// Add zoom and rotation controls to the map.
-map.addControl(new maplibregl.NavigationControl());
+    var lines = ["#FF0000", "#FF00FF", "#00FFFF", "#0000FF", "#00FF00", "#000000"].map((value) => {
+        var poly = new google.maps.Polyline({
+            strokeColor: value,
+            strokeOpacity: 1,
+            strokeWeight: 3,
+        });
+        poly.setMap(map);
+        return poly;
+    });
 
-map.on('load', function () {
-    console.log("loaded");
-    var start;
+    const marker = {
+        url: "./MapMarker_Swift.svg", // url
+        scaledSize: new google.maps.Size(50, 50)
+    };
+    var startMarker = null;
+    var endMarker = null;
     new QWebChannel(qt.webChannelTransport, (channel) => {
-        channel.objects.currPos.recvPos.connect((id, lat, lng) => {
-            console.log(`received ${id} ${lat} ${lng}`);
-            const pos = [lat, lng];
-            if (!start) {
-                new maplibregl.Marker().setLngLat(pos).addTo(map);
-                start = pos;
+        channel.objects.currPos.recvPos.connect((id, lng, lat) => {
+            // console.log(`received ${id} ${lat} ${lng}`);
+            const pos = new google.maps.LatLng(lat, lng);
+            lines[id].getPath().push(pos);
+            if (!startMarker) {
+                map.setCenter(pos);
+                startMarker = new google.maps.Marker({
+                    position: pos,
+                    map,
+                    icon: marker
+                })
             }
-            map.panTo(pos);
-            data.geometry.coordinates.push(pos);
-            map.getSource('route').setData(data);
+            if (!endMarker) {
+                endMarker = new google.maps.Marker({
+                    position: pos,
+                    map,
+                    icon: marker
+                })
+            }
+            endMarker.setPosition(pos);
+            if (focus) map.setCenter(pos);
         })
     });
-});
+
+    console.log("Loaded");
+}
+
+window.initMap = initMap;

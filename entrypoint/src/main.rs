@@ -89,6 +89,24 @@ fn pythonhome_dir() -> Result<PathBuf> {
     }
 }
 
+fn webengine_dir() -> Result<PathBuf> {
+    let app_dir = app_dir()?;
+    if cfg!(target_os = "macos") {
+        if let Some(parent) = app_dir.parent() {
+            let resources = parent.join("Resources/lib");
+            if resources.exists() {
+                Ok(parent.join("Resources/lib/python3.9/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Helpers/QtWebEngineProcess.app/Contents/MacOS/QtWebEngineProcess"))
+            } else {
+                Ok(app_dir.join("lib/python3.9/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Helpers/QtWebEngineProcess.app/Contents/MacOS/QtWebEngineProcess"))
+            }
+        } else {
+            Ok(app_dir.join("lib/python3.9/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Helpers/QtWebEngineProcess.app/Contents/MacOS/QtWebEngineProcess"))
+        }
+    } else {
+        Ok(app_dir.join("lib/python3.9/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Helpers/QtWebEngineProcess.app/Contents/MacOS/QtWebEngineProcess"))
+    }
+}
+
 fn main() -> Result<()> {
     attach_console();
     handle_wayland();
@@ -98,9 +116,8 @@ fn main() -> Result<()> {
     std::env::set_var("PYTHONHOME", pythonhome_dir()?);
     std::env::set_var("PYTHONDONTWRITEBYTECODE", "1");
 
-    let webengine_process = "./lib/python3.9/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Helpers/QtWebEngineProcess.app/Contents/MacOS/QtWebEngineProcess";
-
-    std::env::set_var("QTWEBENGINEPROCESS_PATH", webengine_process);
+    println!("{:?}", webengine_dir());
+    std::env::set_var("QTWEBENGINEPROCESS_PATH", webengine_dir()?);
     std::env::set_var("QTWEBENGINE_DISABLE_SANDBOX", "1");
 
     handle_splash();

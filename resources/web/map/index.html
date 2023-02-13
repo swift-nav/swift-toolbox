@@ -3,13 +3,18 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no"/>
-    <script type="text/javascript" src="http://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
-    <link href="http://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet"/>
     <link href="css/style.css" rel="stylesheet"/>
 </head>
 <body>
+<label id="focus">
+    <input type="checkbox" id="focus-btn">
+    <span>Focus</span>
+</label>
 <div id="map"></div>
 <script type="text/javascript" src="js/trajectory.js"></script>
+<!--api key here-->
+<script src="https://maps.googleapis.com/maps/api/js?key=*********&callback=initMap" async
+        defer></script>
 <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
 </body>
 </html>

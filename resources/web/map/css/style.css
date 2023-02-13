@@ -9,3 +9,23 @@ body {
     bottom: 0;
     width: 100%;
 }
+
+#focus {
+    background-color: #fff;
+    border: 2px solid #fff;
+    border-radius: 3px;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
+    color: rgb(25,25,25);
+    cursor: pointer;
+    font-size: 14px;
+    margin: 8px;
+    text-align: center;
+}
+
+/* Disable fade-in animations */
+* {
+    -webkit-transition-property: none !important;
+    transition-property: none !important;
+    -webkit-animation: none !important;
+    animation: none !important;
+}

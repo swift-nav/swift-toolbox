@@ -698,7 +698,7 @@ if eq ${os} windows
         end
     end
 
-    qtbins = lrelease.exe qmlimportscanner.exe uic.exe rcc.exe linguist.exe lconvert.exe lupdate.exe qmlls.exe qtdiag.exe qmlformat.exe qmllint.exe designer.exe assistant.exe qmltyperegistrar.exe
+    qtbins = array lrelease.exe qmlimportscanner.exe uic.exe rcc.exe linguist.exe lconvert.exe lupdate.exe qmlls.exe qtdiag.exe qmlformat.exe qmllint.exe designer.exe assistant.exe qmltyperegistrar.exe
     for bin in ${qtbins}
         rm ./Lib/site-packages/PySide6/${bin}
     end

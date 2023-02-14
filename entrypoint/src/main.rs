@@ -90,13 +90,13 @@ fn pythonhome_dir() -> Result<PathBuf> {
 }
 
 fn webengine_dir() -> Result<PathBuf> {
-    let app_dir = pythonhome_dir()?.join("lib/python3.9/site-packages/PySide6/Qt");
+    let app_dir = pythonhome_dir()?.join("lib/python3.9/site-packages/PySide6");
     if cfg!(target_os = "macos") {
-        Ok(app_dir.join("lib/QtWebEngineCore.framework/Versions/A/Helpers/QtWebEngineProcess.app/Contents/MacOS/QtWebEngineProcess"))
+        Ok(app_dir.join("Qt/lib/QtWebEngineCore.framework/Versions/A/Helpers/QtWebEngineProcess.app/Contents/MacOS/QtWebEngineProcess"))
     } else if cfg!(target_os = "windows") {
-        Ok(app_dir.join("libexec/QtWebEngineProcess.exe"))
+        Ok(app_dir.join("QtWebEngineProcess.exe"))
     } else {
-        Ok(app_dir.join("libexec/QtWebEngineProcess"))
+        Ok(app_dir.join("Qt/libexec/QtWebEngineProcess"))
     }
 }
 

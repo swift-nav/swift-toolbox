@@ -643,7 +643,7 @@ cwd = "py39-dist"
 script_runner = "@duckscript"
 script = '''
 py_folders = array test tests examples __pycache__ demos turtledemo translations idlelib lib/tcl8 lib/tcl8.6 lib/tk8.6 shiboken6/docs ensurepip lib2to3 tkinter unittest include
-qt_folders = array plugins/geoservices plugins/virtualkeyboard plugins/sqldrivers lib/Tix8.4.3 tcl/tix8.4.3 Qt/resources PySide6/resources
+qt_folders = array plugins/geoservices plugins/virtualkeyboard plugins/sqldrivers lib/Tix8.4.3 tcl/tix8.4.3
 qml_folders = array qml/QtBluetooth* qml/QtNfc* qml/QtGamepad qml/QtTest qml/QtQuick3D qml/Qt3D qml/QtSensors qml/QtLocation
 all_folders = array_concat ${py_folders} ${qt_folders} ${qml_folders}
 
@@ -698,10 +698,10 @@ if eq ${os} windows
         end
     end
 
-#    qtbins = glob_array ./Lib/site-packages/PySide6/*.exe
-#    for bin in ${qtbins}
-#        rm ${bin}
-#    end
+    qtbins = lrelease.exe qmlimportscanner.exe uic.exe rcc.exe linguist.exe lconvert.exe lupdate.exe qmlls.exe qtdiag.exe qmlformat.exe qmllint.exe designer.exe assistant.exe qmltyperegistrar.exe
+    for bin in ${qtbins}
+        rm ./Lib/site-packages/PySide6/${bin}
+    end
 
     all_dlls = glob_array ./**/*.dll
     for dll in ${all_dlls}

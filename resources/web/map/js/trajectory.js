@@ -30,15 +30,11 @@ const style = {
         },
         {
             "id": "route",
-            "type": "line",
+            "type": "circle",
             "source": "route",
-            "layout": {
-                "line-join": "round",
-                "line-cap": "round"
-            },
             "paint": {
-                "line-color": "#ff8600",
-                "line-width": 10
+                'circle-color': 'red',
+                'circle-radius': 3,
             }
         }
     ]

@@ -90,8 +90,14 @@ fn pythonhome_dir() -> Result<PathBuf> {
 }
 
 fn webengine_dir() -> Result<PathBuf> {
-    let app_dir = pythonhome_dir()?;
-    Ok(app_dir.join("lib/python3.9/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Versions/A/Helpers/QtWebEngineProcess.app/Contents/MacOS/QtWebEngineProcess"))
+    let app_dir = pythonhome_dir()?.join("lib/python3.9/site-packages/PySide6/Qt");
+    if cfg!(target_os = "macos") {
+        Ok(app_dir.join("lib/QtWebEngineCore.framework/Versions/A/Helpers/QtWebEngineProcess.app/Contents/MacOS/QtWebEngineProcess"))
+    } else if cfg!(target_os = "windows") {
+        Ok(app_dir.join("libexec/QtWebEngineProcess.exe"))
+    } else {
+        Ok(app_dir.join("libexec/QtWebEngineProcess"))
+    }
 }
 
 fn main() -> Result<()> {
@@ -104,9 +110,7 @@ fn main() -> Result<()> {
     std::env::set_var("PYTHONHOME", pythonhome_dir()?);
     std::env::set_var("PYTHONDONTWRITEBYTECODE", "1");
 
-    if cfg!(target_os = "macos") {
-        std::env::set_var("QTWEBENGINEPROCESS_PATH", webengine_dir()?);
-    }
+    std::env::set_var("QTWEBENGINEPROCESS_PATH", webengine_dir()?);
     std::env::set_var("QTWEBENGINE_DISABLE_SANDBOX", "1");
 
     handle_splash();

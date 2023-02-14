@@ -698,10 +698,10 @@ if eq ${os} windows
         end
     end
 
-    qtbins = glob_array ./Lib/site-packages/PySide6/*.exe
-    for bin in ${qtbins}
-        rm ${bin}
-    end
+#    qtbins = glob_array ./Lib/site-packages/PySide6/*.exe
+#    for bin in ${qtbins}
+#        rm ${bin}
+#    end
 
     all_dlls = glob_array ./**/*.dll
     for dll in ${all_dlls}

@@ -624,7 +624,8 @@ script = '''
 if is_path_exists ${DIST_PYTHON}
   output = exec --fail-on-error ${DIST_PYTHON} -m pip freeze
   out = set ${output.stdout}
-  if not contains "${out}" "PySide6=="
+  a = contains "${out}" "PySide6=="
+  if not ${a}
     cm_run_task pre-build-dist
   end
 else

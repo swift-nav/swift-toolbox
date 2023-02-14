@@ -91,11 +91,7 @@ fn pythonhome_dir() -> Result<PathBuf> {
 
 fn webengine_dir() -> Result<PathBuf> {
     let app_dir = pythonhome_dir()?;
-    if cfg!(target_os = "macos") {
-        Ok(app_dir.join("lib/python3.9/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Helpers/QtWebEngineProcess.app/Contents/MacOS/QtWebEngineProcess"))
-    } else {
-        Ok(app_dir.join("lib/python3.9/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Helpers/QtWebEngineProcess.app/Contents/MacOS/QtWebEngineProcess"))
-    }
+    Ok(app_dir.join("lib/python3.9/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Helpers/QtWebEngineProcess.app/Contents/MacOS/QtWebEngineProcess"))
 }
 
 fn main() -> Result<()> {
@@ -108,7 +104,9 @@ fn main() -> Result<()> {
     std::env::set_var("PYTHONHOME", pythonhome_dir()?);
     std::env::set_var("PYTHONDONTWRITEBYTECODE", "1");
 
-    std::env::set_var("QTWEBENGINEPROCESS_PATH", webengine_dir()?);
+    if cfg!(target_os = "macos") {
+        std::env::set_var("QTWEBENGINEPROCESS_PATH", webengine_dir()?);
+    }
     std::env::set_var("QTWEBENGINE_DISABLE_SANDBOX", "1");
 
     handle_splash();

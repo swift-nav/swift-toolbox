@@ -91,7 +91,7 @@ fn pythonhome_dir() -> Result<PathBuf> {
 
 fn webengine_dir() -> Result<PathBuf> {
     let app_dir = pythonhome_dir()?;
-    Ok(app_dir.join("lib/python3.9/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Helpers/QtWebEngineProcess.app/Contents/MacOS/QtWebEngineProcess"))
+    Ok(app_dir.join("lib/python3.9/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Versions/A/Helpers/QtWebEngineProcess.app/Contents/MacOS/QtWebEngineProcess"))
 }
 
 fn main() -> Result<()> {

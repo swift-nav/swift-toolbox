@@ -139,7 +139,7 @@ DEFAULT_JSON_FILEPATH = "fileout.json"
 
 
 def BENCHMARK_COMMAND_ARGS(file_path):
-    return f" --show-output --exit-after-close --file {file_path}"
+    return f" --exit-after-close --file {file_path}"
 
 
 def HYPERFINE_COMMAND(file_out):

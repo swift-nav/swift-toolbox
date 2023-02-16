@@ -17,7 +17,6 @@ class FocusToggle {
         this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-focus-toggle";
         this._btn.type = "button";
         this._btn.onclick = () => {
-            console.log(this._btn.className);
             focus = !focus;
             if (focus) {
                 this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-unfocus-toggle";
@@ -44,33 +43,31 @@ map.addControl(new mapboxgl.NavigationControl());
 map.on('load', function () {
     console.log("loaded");
     var start;
-
-    var data = {
-        type: 'Feature',
-        properties: {},
-        geometry: {
-            type: 'LineString',
-            coordinates: []
-        }
-    };
-
-    const source = {
-        type: 'geojson',
-        cluster: false,
-        data
-    };
-
-    map.addSource('route', source)
-
-    map.addLayer({
-        "id": "route",
-        "type": "circle",
-        "source": "route",
-        "paint": {
-            'circle-color': 'red',
-            'circle-radius': 3,
-        }
-    });
+    var data = [];
+    var lines = ["#FF0000", "#FF00FF", "#00FFFF", "#0000FF", "#00FF00", "#000000"];
+    for (let i = 0; i < lines.length; i++) {
+        data.push({
+            type: 'FeatureCollection',
+            features: []
+        });
+        map.addSource(`route${i}`, {
+            type: 'geojson',
+            cluster: false,
+            data: {
+                type: 'FeatureCollection',
+                features: data[i]
+            }
+        });
+        map.addLayer({
+            id: `route${i}`,
+            type: 'circle',
+            source: `route${i}`,
+            paint: {
+                'circle-color': lines[i],
+                'circle-radius': 3,
+            }
+        });
+    }
 
     new QWebChannel(qt.webChannelTransport, (channel) => {
         channel.objects.currPos.recvPos.connect((id, lat, lng) => {
@@ -80,11 +77,15 @@ map.on('load', function () {
                 new mapboxgl.Marker().setLngLat(pos).addTo(map);
                 start = pos;
                 map.panTo(pos);
-            } else if (focus) {
-                map.panTo(pos);
-            }
-            data.geometry.coordinates.push(pos);
-            map.getSource('route').setData(data);
+            } else if (focus) map.panTo(pos);
+            data[id].features.push({
+                type: 'Feature',
+                geometry: {
+                    type: 'Point',
+                    coordinates: pos
+                }
+            });
+            map.getSource(`route${id}`).setData(data[id]);
         })
     });
 });

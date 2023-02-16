@@ -867,7 +867,7 @@ exec --fail-on-error xz -T 0 -e -9 "${output_name}.tar"
 '''
 
 [tasks.create-dist]
-run_task = [{ name = ["build-dist", "purge-dist", "compress-dist"] }]
+run_task = [{ name = ["build-dist", "compress-dist"] }]
 
 [tasks.dist-to-installer]
 

@@ -30,7 +30,7 @@ use crate::client_sender::BoxedClientSender;
 use crate::constants::*;
 use crate::output::{PosLLHLog, VelLog};
 use crate::piksi_tools_constants::EMPTY_STR;
-use crate::shared_state::{SharedState, TabName};
+use crate::shared_state::SharedState;
 use crate::tabs::solution_tab::LatLonUnits;
 use crate::types::{Dops, GnssModes, GpsTime, PosLLH, RingBuffer, UtcDateTime, VelNED};
 use crate::utils::{date_conv::*, *};

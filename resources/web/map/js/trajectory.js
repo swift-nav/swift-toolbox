@@ -40,15 +40,20 @@ map.addControl(new mapboxGlStyleSwitcher.MapboxStyleSwitcherControl());
 map.addControl(new FocusToggle(), "top-right");
 map.addControl(new mapboxgl.NavigationControl());
 
+const lines = ["#FF0000", "#FF00FF", "#00FFFF", "#0000FF", "#00FF00", "#000000"];
+
 var data = [];
 
-var lines = ["#FF0000", "#FF00FF", "#00FFFF", "#0000FF", "#00FF00", "#000000"];
+setupData();
 
-for (let i = 0; i < lines.length; i++) {
-    data.push({
-        type: 'FeatureCollection',
-        features: []
-    });
+function setupData() {
+    data = [];
+    for (let i = 0; i < lines.length; i++) {
+        data.push({
+            type: 'FeatureCollection',
+            features: []
+        });
+    }
 }
 
 function setupLayers() {
@@ -76,11 +81,15 @@ function setupLayers() {
     }
 }
 
-map.on('style.load', () => {
-    setupLayers();
+function syncLayers() {
     for (let i = 0; i < lines.length; i++) {
         map.getSource(`route${i}`).setData(data[i]);
     }
+}
+
+map.on('style.load', () => {
+    setupLayers();
+    syncLayers();
 })
 
 map.on('load', () => {
@@ -88,11 +97,22 @@ map.on('load', () => {
     var start;
     setupLayers();
     new QWebChannel(qt.webChannelTransport, (channel) => {
-        channel.objects.currPos.recvPos.connect((id, lat, lng) => {
+
+        let chn = channel.objects.currPos;
+
+        chn.clearPos.connect(() => {
+            setupData();
+            syncLayers();
+            if (start) {
+                start.remove();
+                start = null;
+            }
+        });
+
+        chn.recvPos.connect((id, lat, lng) => {
             const pos = [lat, lng];
             if (!start) {
-                new mapboxgl.Marker().setLngLat(pos).addTo(map);
-                start = pos;
+                start = new mapboxgl.Marker().setLngLat(pos).addTo(map);
                 map.panTo(pos);
             } else if (focus) map.panTo(pos);
             data[id].features.push({

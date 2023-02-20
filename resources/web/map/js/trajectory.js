@@ -40,16 +40,22 @@ map.addControl(new mapboxGlStyleSwitcher.MapboxStyleSwitcherControl());
 map.addControl(new FocusToggle(), "top-right");
 map.addControl(new mapboxgl.NavigationControl());
 
-map.on('load', function () {
-    console.log("loaded");
-    var start;
-    var data = [];
-    var lines = ["#FF0000", "#FF00FF", "#00FFFF", "#0000FF", "#00FF00", "#000000"];
+var data = [];
+
+var lines = ["#FF0000", "#FF00FF", "#00FFFF", "#0000FF", "#00FF00", "#000000"];
+
+for (let i = 0; i < lines.length; i++) {
+    data.push({
+        type: 'FeatureCollection',
+        features: []
+    });
+}
+
+function setupLayers() {
     for (let i = 0; i < lines.length; i++) {
-        data.push({
-            type: 'FeatureCollection',
-            features: []
-        });
+        if (map.getSource(`route${i}`) != null) {
+            continue;
+        }
         map.addSource(`route${i}`, {
             type: 'geojson',
             cluster: false,
@@ -68,10 +74,21 @@ map.on('load', function () {
             }
         });
     }
+}
 
+map.on('style.load', () => {
+    setupLayers();
+    for (let i = 0; i < lines.length; i++) {
+        map.getSource(`route${i}`).setData(data[i]);
+    }
+})
+
+map.on('load', () => {
+    console.log("loaded");
+    var start;
+    setupLayers();
     new QWebChannel(qt.webChannelTransport, (channel) => {
         channel.objects.currPos.recvPos.connect((id, lat, lng) => {
-            console.log(`received ${id} ${lat} ${lng}`);
             const pos = [lat, lng];
             if (!start) {
                 new mapboxgl.Marker().setLngLat(pos).addTo(map);
@@ -85,7 +102,7 @@ map.on('load', function () {
                     coordinates: pos
                 }
             });
-            map.getSource(`route${id}`).setData(data[id]);
+            if (map.getSource(`route${id}`) != null) map.getSource(`route${id}`).setData(data[id]);
         })
     });
 });

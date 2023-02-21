@@ -87,6 +87,40 @@ function syncLayers() {
     }
 }
 
+var start;
+
+new QWebChannel(qt.webChannelTransport, (channel) => {
+
+    let chn = channel.objects.currPos;
+
+    chn.clearPos.connect(() => {
+        setupData();
+        if (map) syncLayers();
+        if (start) {
+            start.remove();
+            start = null;
+        }
+    });
+
+    chn.recvPos.connect((id, lat, lng) => {
+        const pos = [lat, lng];
+
+        data[id].features.push({
+            type: 'Feature',
+            geometry: {
+                type: 'Point',
+                coordinates: pos
+            }
+        });
+        if (!map) return
+        if (!start) {
+            start = new mapboxgl.Marker().setLngLat(pos).addTo(map);
+            map.panTo(pos);
+        } else if (focus) map.panTo(pos);
+        if (map.getSource(`route${id}`) != null) map.getSource(`route${id}`).setData(data[id]);
+    })
+});
+
 map.on('style.load', () => {
     setupLayers();
     syncLayers();
@@ -94,35 +128,5 @@ map.on('style.load', () => {
 
 map.on('load', () => {
     console.log("loaded");
-    var start;
     setupLayers();
-    new QWebChannel(qt.webChannelTransport, (channel) => {
-
-        let chn = channel.objects.currPos;
-
-        chn.clearPos.connect(() => {
-            setupData();
-            syncLayers();
-            if (start) {
-                start.remove();
-                start = null;
-            }
-        });
-
-        chn.recvPos.connect((id, lat, lng) => {
-            const pos = [lat, lng];
-            if (!start) {
-                start = new mapboxgl.Marker().setLngLat(pos).addTo(map);
-                map.panTo(pos);
-            } else if (focus) map.panTo(pos);
-            data[id].features.push({
-                type: 'Feature',
-                geometry: {
-                    type: 'Point',
-                    coordinates: pos
-                }
-            });
-            if (map.getSource(`route${id}`) != null) map.getSource(`route${id}`).setData(data[id]);
-        })
-    });
 });

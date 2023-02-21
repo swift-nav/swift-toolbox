@@ -18,11 +18,8 @@ class FocusToggle {
         this._btn.type = "button";
         this._btn.onclick = () => {
             focus = !focus;
-            if (focus) {
-                this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-unfocus-toggle";
-            } else {
-                this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-focus-toggle";
-            }
+            if (focus) this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-unfocus-toggle";
+            else this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-focus-toggle";
         };
         this._container = document.createElement("div");
         this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
@@ -87,10 +84,46 @@ function syncLayers() {
     }
 }
 
+// https://stackoverflow.com/a/39006388
+function createGeoJsonCircle(center, radiusKm, points = 64) {
+    let coords = {latitude: center[1], longitude: center[0]};
+
+    const lngKm = 111.320, latKm = 110.574;
+
+    let ret = [];
+    let distanceX = radiusKm / (lngKm * Math.cos(coords.latitude * Math.PI / 180));
+    let distanceY = radiusKm / latKm;
+
+    let theta, x, y;
+    for (let i = 0; i < points; i++) {
+        theta = (i / points) * (2 * Math.PI);
+        x = distanceX * Math.cos(theta);
+        y = distanceY * Math.sin(theta);
+
+        ret.push([coords.longitude + x, coords.latitude + y]);
+    }
+    ret.push(ret[0]);
+
+    return {
+        "type": "geojson",
+        "data": {
+            "type": "FeatureCollection",
+            "features": [{
+                "type": "Feature",
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [ret]
+                }
+            }]
+        }
+    };
+}
+
 var start;
 
 new QWebChannel(qt.webChannelTransport, (channel) => {
 
+    // Signals defined in SolutionMap (SolutionMapTab.qml), with WebChannel id "currPos"
     let chn = channel.objects.currPos;
 
     chn.clearPos.connect(() => {
@@ -112,12 +145,14 @@ new QWebChannel(qt.webChannelTransport, (channel) => {
                 coordinates: pos
             }
         });
-        if (!map) return
+        if (!map) return;
         if (!start) {
             start = new mapboxgl.Marker().setLngLat(pos).addTo(map);
             map.panTo(pos);
         } else if (focus) map.panTo(pos);
-        if (map.getSource(`route${id}`) != null) map.getSource(`route${id}`).setData(data[id]);
+
+        let src = map.getSource(`route${id}`);
+        if (src != null) src.setData(data[id]);
     })
 });
 

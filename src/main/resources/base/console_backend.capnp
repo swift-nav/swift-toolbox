@@ -27,14 +27,6 @@ struct LogLevelFront {
     logLevel @0 :Text;
 }
 
-enum LogLevel {
-    err @0;
-    warning @1;
-    info @2;
-    debug @3;
-    trace @4;
-}
-
 struct LogEntry {
     timestamp @0 :Text;
     level @1 :Text;

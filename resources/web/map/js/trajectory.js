@@ -1,72 +1,132 @@
-var data = {
-    type: 'Feature',
-    properties: {},
-    geometry: {
-        type: 'LineString',
-        coordinates: []
-    }
-};
+import mapboxGlStyleSwitcher from 'https://cdn.skypack.dev/mapbox-gl-style-switcher';
 
-const style = {
-    "version": 8,
-    "sources": {
-        "osm": {
-            "type": "raster",
-            "tiles": ["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"],
-            "tileSize": 256,
-            "attribution": "&copy; OpenStreetMap Contributors",
-            "maxzoom": 22
-        },
-        "route": {
-            "type": "geojson",
-            data
-        }
-    },
-    "layers": [
-        {
-            "id": "osm",
-            "type": "raster",
-            "source": "osm"
-        },
-        {
-            "id": "route",
-            "type": "circle",
-            "source": "route",
-            "paint": {
-                'circle-color': 'red',
-                'circle-radius': 3,
-            }
-        }
-    ]
-};
-
-var map = new maplibregl.Map({
+mapboxgl.accessToken = "pk.eyJ1Ijoic3dpZnQtYWRyaWFuIiwiYSI6ImNsZTN1MW82bDA2OGgzdXFvOWFuZTJlMnEifQ.9nR8m0C-B_ISNR4r4cMExw";
+var map = new mapboxgl.Map({
     container: 'map',
-    style,
+    style: "mapbox://styles/mapbox/dark-v11",
     center: [-122.486052, 37.830348],  // Initial focus coordinate
     zoom: 16
 });
 
-// MapLibre GL JS does not handle RTL text by default, so we recommend adding this dependency to fully support RTL rendering.
-maplibregl.setRTLTextPlugin('https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-rtl-text/v0.2.1/mapbox-gl-rtl-text.js');
+var focus = false;
 
-// Add zoom and rotation controls to the map.
-map.addControl(new maplibregl.NavigationControl());
-
-map.on('load', function () {
-    console.log("loaded");
-    var start;
-    new QWebChannel(qt.webChannelTransport, (channel) => {
-        channel.objects.currPos.recvPos.connect((id, lat, lng) => {
-            console.log(`received ${id} ${lat} ${lng}`);
-            const pos = [lat, lng];
-            if (!start) {
-                new maplibregl.Marker().setLngLat(pos).addTo(map);
-                start = pos;
+class FocusToggle {
+    onAdd(map) {
+        this._map = map;
+        this._btn = document.createElement("button");
+        this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-focus-toggle";
+        this._btn.type = "button";
+        this._btn.onclick = () => {
+            focus = !focus;
+            if (focus) {
+                this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-unfocus-toggle";
+            } else {
+                this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-focus-toggle";
             }
-            map.panTo(pos);
-            data.geometry.coordinates.push(pos);
-            map.getSource('route').setData(data);
-        })
+        };
+        this._container = document.createElement("div");
+        this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
+        this._container.appendChild(this._btn);
+        return this._container;
+    }
+
+    onRemove() {
+        this._container.parentNode.removeChild(this._container);
+        this._map = undefined;
+    }
+}
+
+map.addControl(new mapboxGlStyleSwitcher.MapboxStyleSwitcherControl());
+map.addControl(new FocusToggle(), "top-right");
+map.addControl(new mapboxgl.NavigationControl());
+
+const lines = ["#FF0000", "#FF00FF", "#00FFFF", "#0000FF", "#00FF00", "#000000"];
+
+var data = [];
+
+setupData();
+
+function setupData() {
+    data = [];
+    for (let i = 0; i < lines.length; i++) {
+        data.push({
+            type: 'FeatureCollection',
+            features: []
+        });
+    }
+}
+
+function setupLayers() {
+    for (let i = 0; i < lines.length; i++) {
+        if (map.getSource(`route${i}`) != null) {
+            continue;
+        }
+        map.addSource(`route${i}`, {
+            type: 'geojson',
+            cluster: false,
+            data: {
+                type: 'FeatureCollection',
+                features: data[i]
+            }
+        });
+        map.addLayer({
+            id: `route${i}`,
+            type: 'circle',
+            source: `route${i}`,
+            paint: {
+                'circle-color': lines[i],
+                'circle-radius': 3,
+            }
+        });
+    }
+}
+
+function syncLayers() {
+    for (let i = 0; i < lines.length; i++) {
+        map.getSource(`route${i}`).setData(data[i]);
+    }
+}
+
+var start;
+
+new QWebChannel(qt.webChannelTransport, (channel) => {
+
+    let chn = channel.objects.currPos;
+
+    chn.clearPos.connect(() => {
+        setupData();
+        if (map) syncLayers();
+        if (start) {
+            start.remove();
+            start = null;
+        }
     });
+
+    chn.recvPos.connect((id, lat, lng) => {
+        const pos = [lat, lng];
+
+        data[id].features.push({
+            type: 'Feature',
+            geometry: {
+                type: 'Point',
+                coordinates: pos
+            }
+        });
+        if (!map) return
+        if (!start) {
+            start = new mapboxgl.Marker().setLngLat(pos).addTo(map);
+            map.panTo(pos);
+        } else if (focus) map.panTo(pos);
+        if (map.getSource(`route${id}`) != null) map.getSource(`route${id}`).setData(data[id]);
+    })
+});
+
+map.on('style.load', () => {
+    setupLayers();
+    syncLayers();
+})
+
+map.on('load', () => {
+    console.log("loaded");
+    setupLayers();
 });

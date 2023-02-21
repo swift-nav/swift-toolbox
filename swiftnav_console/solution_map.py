@@ -25,6 +25,7 @@ from PySide6.QtCore import QObject, Signal
 class SolutionMap(QObject):
     _instance: "SolutionMap"
     recvPos: "Signal"
+    clearPos: "Signal"
 
     def __init__(self):
         super().__init__()
@@ -36,3 +37,7 @@ class SolutionMap(QObject):
         for idx, data in enumerate(currData):
             for pos in data:
                 cls._instance.recvPos.emit(idx, pos.x, pos.y)
+
+    @classmethod
+    def clear(cls) -> None:
+        cls._instance.clearPos.emit()

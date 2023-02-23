@@ -90,7 +90,7 @@ PY_BASE_URL = "https://github.com/indygreg/python-build-standalone/releases/down
 SWFT_PY_BASE_URL = "https://github.com/swift-nav/python-build-standalone/releases/download/20220205%2Bswift"
 MACOSX_DEPLOYMENT_TARGET = "10.15"
 APP_NAME = "swift-console"
-QT_VERSION = "6.4.1"                                                                                         # Also needs to be updated in .github/workflows/main.yml
+QT_VERSION = "6.3.2"                                                                                         # Also needs to be updated in .github/workflows/main.yml
 
 [tasks.init]
 

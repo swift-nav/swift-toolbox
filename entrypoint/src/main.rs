@@ -90,13 +90,13 @@ fn pythonhome_dir() -> Result<PathBuf> {
 }
 
 fn webengine_dir() -> Result<PathBuf> {
-    let app_dir = pythonhome_dir()?.join("lib/python3.9/site-packages/PySide6");
+    let app_dir = pythonhome_dir()?;
     if cfg!(target_os = "macos") {
-        Ok(app_dir.join("Qt/lib/QtWebEngineCore.framework/Versions/A/Helpers/QtWebEngineProcess.app/Contents/MacOS/QtWebEngineProcess"))
+        Ok(app_dir.join("lib/python3.9/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Versions/A/Helpers/QtWebEngineProcess.app/Contents/MacOS/QtWebEngineProcess"))
     } else if cfg!(target_os = "windows") {
-        Ok(app_dir.join("QtWebEngineProcess.exe"))
+        Ok(app_dir.join("Lib/site-packages/PySide6/QtWebEngineProcess.exe"))
     } else {
-        Ok(app_dir.join("Qt/libexec/QtWebEngineProcess"))
+        Ok(app_dir.join("lib/python3.9/site-packages/PySide6/Qt/libexec/QtWebEngineProcess"))
     }
 }
 
@@ -112,6 +112,19 @@ fn main() -> Result<()> {
 
     std::env::set_var("QTWEBENGINEPROCESS_PATH", webengine_dir()?);
     std::env::set_var("QTWEBENGINE_DISABLE_SANDBOX", "1");
+
+    if cfg!(target_os = "windows") {
+        let app_dir = pythonhome_dir()?;
+        std::env::set_var(
+            "QTWEBENGINE_LOCALES_PATH",
+            app_dir.join("Lib/site-packages/PySide6/translations/qtwebengine_locales"),
+        );
+
+        std::env::set_var(
+            "QTWEBENGINE_RESOURCES_PATH",
+            app_dir.join("Lib/site-packages/PySide6/resources"),
+        );
+    }
 
     handle_splash();
     let exit_code = Python::with_gil(|py| {

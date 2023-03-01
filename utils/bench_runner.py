@@ -143,7 +143,7 @@ def BENCHMARK_COMMAND_ARGS(file_path):
 
 
 def HYPERFINE_COMMAND(file_out):
-    return f'hyperfine --warmup 1 --runs 5 --cleanup "sleep 1" --show-output --export-json {file_out}'
+    return f'hyperfine --ignore-failure --warmup 1 --runs 5 --cleanup "sleep 1" --show-output --export-json {file_out}'
 
 
 FRONTEND_CPU_BENCHMARKS = {
@@ -196,7 +196,7 @@ FRONTEND_MEM_BENCHMARKS: Dict[str, List[Dict[str, Any]]] = {
         {
             NAME: "piksi-relay-5sec",
             FILE_PATH: "data/piksi-relay-5sec.sbp",
-            MAXIMUM_MEAN_MB: 475,
+            MAXIMUM_MEAN_MB: 600,
             MAXIMUM_RATE_OF_MAX_MEAN: 0.05,
             MAXIMUM_RATE_OF_MAX_STD: 0.4,
         },

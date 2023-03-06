@@ -18,11 +18,7 @@ class FocusToggle {
         this._btn.type = "button";
         this._btn.onclick = () => {
             focus = !focus;
-            if (focus) {
-                this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-unfocus-toggle";
-            } else {
-                this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-focus-toggle";
-            }
+            this._btn.className = focus ? "mapboxgl-ctrl-icon mapboxgl-ctrl-unfocus-toggle" : "mapboxgl-ctrl-icon mapboxgl-ctrl-focus-toggle";
         };
         this._container = document.createElement("div");
         this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
@@ -58,9 +54,7 @@ function setupData() {
 
 function setupLayers() {
     for (let i = 0; i < lines.length; i++) {
-        if (map.getSource(`route${i}`) != null) {
-            continue;
-        }
+        if (map.getSource(`route${i}`) != null) continue;
         map.addSource(`route${i}`, {
             type: 'geojson',
             cluster: false,
@@ -71,11 +65,11 @@ function setupLayers() {
         });
         map.addLayer({
             id: `route${i}`,
-            type: 'circle',
+            type: 'fill',
             source: `route${i}`,
             paint: {
-                'circle-color': lines[i],
-                'circle-radius': 3,
+                'fill-color': lines[i],
+                'fill-opacity': 0.2
             }
         });
     }
@@ -86,6 +80,42 @@ function syncLayers() {
         map.getSource(`route${i}`).setData(data[i]);
     }
 }
+
+const LNG_KM = 111.320, LAT_KM = 110.574;
+
+/**
+ * Helper method to create elliptical geojson data
+ * @param center {[lng: number, lat: number]}
+ * @param rX horizontal radius in kilometers of ellipse
+ * @param rY vertical radius in kilometers of ellipse
+ * @param points optional number of points to render ellipse, higher for smoothness
+ * @return {{geometry: {coordinates: [][], type: string}, type: string}}
+ */
+function createGeoJsonEllipse(center, rX, rY, points = 32) {
+    let coords = {latitude: center[1], longitude: center[0]};
+    let ret = [];
+    let dX = rX / (LNG_KM * Math.cos(coords.latitude * Math.PI / 180));
+    let dY = rY / LAT_KM;
+
+    let theta, x, y;
+    for (let i = 0; i < points; i++) {
+        theta = (i / points) * (2 * Math.PI);
+        x = dX * Math.cos(theta);
+        y = dY * Math.sin(theta);
+
+        ret.push([coords.longitude + x, coords.latitude + y]);
+    }
+    ret.push(ret[0]);
+
+    return {
+        type: "Feature",
+        geometry: {
+            type: "Polygon",
+            coordinates: [ret]
+        }
+    };
+}
+
 
 var start;
 
@@ -102,22 +132,20 @@ new QWebChannel(qt.webChannelTransport, (channel) => {
         }
     });
 
-    chn.recvPos.connect((id, lat, lng) => {
-        const pos = [lat, lng];
-
-        data[id].features.push({
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: pos
-            }
-        });
-        if (!map) return
+    chn.recvPos.connect((id, lat, lng, hAcc, vAcc) => {
+        const pos = [lat, lng],
+            RADIUS_MIN = 0.0002,
+            // cap radius to be 20cm minimum, for visibility on map
+            rX = Math.max(RADIUS_MIN, hAcc / 1000),
+            rY = Math.max(RADIUS_MIN, vAcc / 1000)
+        data[id].features.push(createGeoJsonEllipse(pos, rX, rY));
+        if (!map) return;
         if (!start) {
             start = new mapboxgl.Marker().setLngLat(pos).addTo(map);
             map.panTo(pos);
         } else if (focus) map.panTo(pos);
-        if (map.getSource(`route${id}`) != null) map.getSource(`route${id}`).setData(data[id]);
+        let src = map.getSource(`route${id}`);
+        if (src != null) src.setData(data[id]);
     })
 });
 

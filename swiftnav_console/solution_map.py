@@ -33,10 +33,10 @@ class SolutionMap(QObject):
         self.__class__._instance = self
 
     @classmethod
-    def sendPos(cls, currData) -> None:
+    def sendPos(cls, currData, hAcc, vAcc) -> None:
         for idx, data in enumerate(currData):
             for pos in data:
-                cls._instance.recvPos.emit(idx, pos.x, pos.y)
+                cls._instance.recvPos.emit(idx, pos.x, pos.y, hAcc, vAcc)
 
     @classmethod
     def clear(cls) -> None:

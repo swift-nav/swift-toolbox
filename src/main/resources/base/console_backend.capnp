@@ -216,6 +216,8 @@ struct SolutionPositionStatus {
     curData @5 :List(List(Point));
     availableUnits @6 : List(Text);
     lineData @7 :List(Point);
+    hAcc @8: Float64;
+    vAcc @9: Float64;
 }
 
 struct SolutionVelocityStatus {

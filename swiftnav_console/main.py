@@ -367,7 +367,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                 data[Keys.LON_MIN] = m.solutionPositionStatus.lonMin
                 data[Keys.AVAILABLE_UNITS][:] = m.solutionPositionStatus.availableUnits
                 data[Keys.SOLUTION_LINE] = m.solutionPositionStatus.lineData
-                SolutionMap.sendPos(m.solutionPositionStatus.curData, m.solutionPositionStatus.hAcc, m.solutionPositionStatus.vAcc)
+                SolutionMap.send_pos(m.solutionPositionStatus)
                 SolutionPositionPoints.post_data_update(data)
             elif m.which == Message.Union.SolutionTableStatus:
                 data = solution_table_update()

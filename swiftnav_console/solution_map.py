@@ -36,7 +36,7 @@ class SolutionMap(QObject):
     def send_pos(cls, status) -> None:
         for idx, data in enumerate(status.curData):
             for pos in data:
-                cls._instance.recvPos.emit(idx, pos.x, pos.y, status.hAcc, status.vAcc)
+                cls._instance.recvPos.emit(idx, pos.x, pos.y, status.hAcc)
 
     @classmethod
     def clear(cls) -> None:

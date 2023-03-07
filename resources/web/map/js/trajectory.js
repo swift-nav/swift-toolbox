@@ -132,13 +132,10 @@ new QWebChannel(qt.webChannelTransport, (channel) => {
         }
     });
 
-    chn.recvPos.connect((id, lat, lng, hAcc, vAcc) => {
+    chn.recvPos.connect((id, lat, lng, hAcc) => {
         const pos = [lat, lng],
-            RADIUS_MIN = 0.0002,
-            // cap radius to be 20cm minimum, for visibility on map
-            rX = Math.max(RADIUS_MIN, hAcc / 1000),
-            rY = Math.max(RADIUS_MIN, vAcc / 1000)
-        data[id].features.push(createGeoJsonEllipse(pos, rX, rY));
+            rX = hAcc / 1000;
+        data[id].features.push(createGeoJsonEllipse(pos, rX, rX));
         if (!map) return;
         if (!start) {
             start = new mapboxgl.Marker().setLngLat(pos).addTo(map);

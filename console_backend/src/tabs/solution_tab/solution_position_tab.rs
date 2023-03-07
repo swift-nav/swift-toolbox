@@ -67,8 +67,6 @@ pub struct SolutionPositionTab {
     lon_min: f64,
     /// The last horizontal accuracy
     h_acc: f64,
-    /// The last vertical accuracy
-    v_acc: f64,
     /// The available modes in string formm to store updates for.
     mode_strings: Vec<String>,
     /// The stored mode values used for quickly extracting aggregate data.
@@ -166,7 +164,6 @@ impl SolutionPositionTab {
             utc_time: None,
             week: None,
             h_acc: 0.0,
-            v_acc: 0.0,
         }
     }
 
@@ -430,7 +427,6 @@ impl SolutionPositionTab {
     pub fn handle_pos_llh(&mut self, msg: PosLLH) {
         self.last_pos_mode = msg.mode();
         let pos_llh_fields = msg.fields();
-        self.v_acc = pos_llh_fields.v_accuracy;
         self.h_acc = pos_llh_fields.h_accuracy;
         let gnss_mode = GnssModes::from(self.last_pos_mode);
         let mode_string = gnss_mode.to_string();
@@ -825,7 +821,6 @@ impl SolutionPositionTab {
         }
 
         solution_status.set_h_acc(self.h_acc);
-        solution_status.set_v_acc(self.v_acc);
         self.client_sender
             .send_data(serialize_capnproto_builder(builder));
     }

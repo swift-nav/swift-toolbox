@@ -47,13 +47,10 @@ var data = [];
 setupData();
 
 function setupData() {
-    data = [];
-    for (let i = 0; i < lines.length; i++) {
-        data.push({
+    data = Array(lines.length).fill({
             type: 'FeatureCollection',
             features: []
-        });
-    }
+        })
 }
 
 function setupLayers() {

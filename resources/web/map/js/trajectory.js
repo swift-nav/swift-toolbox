@@ -3,7 +3,7 @@ import mapboxGlStyleSwitcher from 'https://cdn.skypack.dev/mapbox-gl-style-switc
 mapboxgl.accessToken = "pk.eyJ1Ijoic3dpZnQtYWRyaWFuIiwiYSI6ImNsZTN1MW82bDA2OGgzdXFvOWFuZTJlMnEifQ.9nR8m0C-B_ISNR4r4cMExw";
 var map = new mapboxgl.Map({
     container: 'map',
-    style: "mapbox://styles/mapbox/dark-v11",
+    style: "mapbox://styles/mapbox/light-v11",
     center: [-122.486052, 37.830348],  // Initial focus coordinate
     zoom: 16
 });

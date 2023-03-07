@@ -1,5 +1,7 @@
 import mapboxGlStyleSwitcher from 'https://cdn.skypack.dev/mapbox-gl-style-switcher';
 
+const lines = ["#FF0000", "#FF00FF", "#00FFFF", "#0000FF", "#00FF00", "#000000"];
+
 mapboxgl.accessToken = "pk.eyJ1Ijoic3dpZnQtYWRyaWFuIiwiYSI6ImNsZTN1MW82bDA2OGgzdXFvOWFuZTJlMnEifQ.9nR8m0C-B_ISNR4r4cMExw";
 var map = new mapboxgl.Map({
     container: 'map',
@@ -8,7 +10,8 @@ var map = new mapboxgl.Map({
     zoom: 16
 });
 
-var focus = false;
+var focusCurrent = false;
+var startMarker = null;
 
 class FocusToggle {
     onAdd(map) {
@@ -17,8 +20,8 @@ class FocusToggle {
         this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-focus-toggle";
         this._btn.type = "button";
         this._btn.onclick = () => {
-            focus = !focus;
-            if (focus) {
+            focusCurrent = !focusCurrent;
+            if (focusCurrent) {
                 this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-unfocus-toggle";
             } else {
                 this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-focus-toggle";
@@ -40,18 +43,12 @@ map.addControl(new mapboxGlStyleSwitcher.MapboxStyleSwitcherControl());
 map.addControl(new FocusToggle(), "top-right");
 map.addControl(new mapboxgl.NavigationControl());
 
-const lines = ["#FF0000", "#FF00FF", "#00FFFF", "#0000FF", "#00FF00", "#000000"];
+const createDatas = () => Array(lines.length).fill({
+    type: 'FeatureCollection',
+    features: []
+});
 
-var data = [];
-
-setupData();
-
-function setupData() {
-    data = Array(lines.length).fill({
-            type: 'FeatureCollection',
-            features: []
-        })
-}
+var data = createDatas();
 
 function setupLayers() {
     for (let i = 0; i < lines.length; i++) {
@@ -84,18 +81,16 @@ function syncLayers() {
     }
 }
 
-var start;
-
 new QWebChannel(qt.webChannelTransport, (channel) => {
 
     let chn = channel.objects.currPos;
 
     chn.clearPos.connect(() => {
-        setupData();
+        data = createDatas();
         if (map) syncLayers();
-        if (start) {
-            start.remove();
-            start = null;
+        if (startMarker) {
+            startMarker.remove();
+            startMarker = null;
         }
     });
 
@@ -110,10 +105,10 @@ new QWebChannel(qt.webChannelTransport, (channel) => {
             }
         });
         if (!map) return
-        if (!start) {
-            start = new mapboxgl.Marker().setLngLat(pos).addTo(map);
+        if (!startMarker) {
+            startMarker = new mapboxgl.Marker().setLngLat(pos).addTo(map);
             map.panTo(pos);
-        } else if (focus) map.panTo(pos);
+        } else if (focusCurrent) map.panTo(pos);
         if (map.getSource(`route${id}`) != null) map.getSource(`route${id}`).setData(data[id]);
     })
 });

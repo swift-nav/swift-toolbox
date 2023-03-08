@@ -27,7 +27,6 @@ PIKSI_PORT = 55555
 
 
 class BackendRequestBroker(QObject):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
-
     endpoint: Any
     messages: Any
 

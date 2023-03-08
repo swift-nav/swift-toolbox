@@ -548,9 +548,6 @@ impl SolutionPositionTab {
         }
         let (clear, pause) = self.check_state();
         self.solution_draw(clear, pause);
-        // if self.shared_state.current_tab() != TabName::Solution {
-        //     return;
-        // }
         self.send_solution_data();
         self.send_table_data();
     }

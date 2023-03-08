@@ -1,14 +1,17 @@
 import mapboxGlStyleSwitcher from 'https://cdn.skypack.dev/mapbox-gl-style-switcher';
 
+const lines = ["#FF0000", "#FF00FF", "#00FFFF", "#0000FF", "#00FF00", "#000000"];
+
 mapboxgl.accessToken = "pk.eyJ1Ijoic3dpZnQtYWRyaWFuIiwiYSI6ImNsZTN1MW82bDA2OGgzdXFvOWFuZTJlMnEifQ.9nR8m0C-B_ISNR4r4cMExw";
 var map = new mapboxgl.Map({
     container: 'map',
-    style: "mapbox://styles/mapbox/dark-v11",
+    style: "mapbox://styles/mapbox/light-v11",
     center: [-122.486052, 37.830348],  // Initial focus coordinate
     zoom: 16
 });
 
-var focus = false;
+var focusCurrent = false;
+var startMarker = null;
 
 class FocusToggle {
     onAdd(map) {
@@ -36,25 +39,18 @@ map.addControl(new mapboxGlStyleSwitcher.MapboxStyleSwitcherControl());
 map.addControl(new FocusToggle(), "top-right");
 map.addControl(new mapboxgl.NavigationControl());
 
-const lines = ["#FF0000", "#FF00FF", "#00FFFF", "#0000FF", "#00FF00", "#000000"];
+const createDatas = () => Array(lines.length).fill({
+    type: 'FeatureCollection',
+    features: []
+});
 
-var data = [];
-
-setupData();
-
-function setupData() {
-    data = [];
-    for (let i = 0; i < lines.length; i++) {
-        data.push({
-            type: 'FeatureCollection',
-            features: []
-        });
-    }
-}
+var data = createDatas();
 
 function setupLayers() {
     for (let i = 0; i < lines.length; i++) {
-        if (map.getSource(`route${i}`) != null) continue;
+        if (map.getSource(`route${i}`) != null) {
+            continue;
+        }
         map.addSource(`route${i}`, {
             type: 'geojson',
             cluster: false,
@@ -124,7 +120,7 @@ new QWebChannel(qt.webChannelTransport, (channel) => {
     let chn = channel.objects.currPos;
 
     chn.clearPos.connect(() => {
-        setupData();
+        data = createDatas();
         if (map) syncLayers();
         if (start) {
             start.remove();

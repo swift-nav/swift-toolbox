@@ -711,9 +711,11 @@ if eq ${os} windows
         end
     end
 
-    qtbins = array lrelease.exe qmlimportscanner.exe uic.exe rcc.exe linguist.exe lconvert.exe lupdate.exe qmlls.exe qtdiag.exe qmlformat.exe qmllint.exe designer.exe assistant.exe qmltyperegistrar.exe
+    qtbins = glob_array ./Lib/site-packages/PySide6/*.exe
     for bin in ${qtbins}
-        rm ./Lib/site-packages/PySide6/${bin}
+        if not contains ${bin} "QtWebEngineProcess"
+            rm ./Lib/site-packages/PySide6/${bin}
+        end
     end
 
     all_dlls = glob_array ./**/*.dll

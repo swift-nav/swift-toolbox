@@ -164,7 +164,7 @@ end
 '''
 
 [tasks.dist-generate-resources]
-dependencies = ["build-splash-version"]
+dependencies = ["build-splash-version", "map-js-token"]
 command = "${DIST_PYSIDE6_RCC}"
 args = [
   "resources/console_resources.qrc",

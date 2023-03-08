@@ -245,7 +245,7 @@ dependencies = [
   "generate-resources",
   "remove-egg-dist",
   "store-version",
-  "install-backend"
+  "install-backend",
 ]
 
 [tasks.run]

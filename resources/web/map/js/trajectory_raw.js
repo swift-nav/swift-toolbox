@@ -2,7 +2,7 @@ import mapboxGlStyleSwitcher from 'https://cdn.skypack.dev/mapbox-gl-style-switc
 
 const lines = ["#FF0000", "#FF00FF", "#00FFFF", "#0000FF", "#00FF00", "#000000"];
 
-mapboxgl.accessToken = "%ACCESS_TOKEN%";
+mapboxgl.accessToken = "@ACCESS_TOKEN@";
 var map = new mapboxgl.Map({
     container: 'map',
     style: "mapbox://styles/mapbox/light-v11",

@@ -1360,6 +1360,6 @@ args = ["diff", "--exit-code"]
 script_runner = "@duckscript"
 script = '''
 file = readfile resources/web/map/js/trajectory_raw.js
-file_modified = replace ${file} "%ACCESS_TOKEN%" ${MAPBOX_TOKEN}
+file_modified = replace ${file} "@ACCESS_TOKEN@" ${MAPBOX_TOKEN}
 writefile "resources/web/map/js/trajectory.js" ${file_modified}
 '''

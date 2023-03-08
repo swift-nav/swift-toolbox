@@ -34,7 +34,7 @@ optional = true
 [dependencies.minifb]
 default-features = false
 features = ["x11"]
-version = "0.23"
+version = "0.24"
 optional = true
 
 [dependencies.pyo3]

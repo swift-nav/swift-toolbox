@@ -436,6 +436,12 @@ not be relied on even though these internal packets are being exposed.
 [capnproto]: https://capnproto.org/
 [flatbuffers]: https://google.github.io/flatbuffers/
 
+
+### Mapping support
+
+To modify map: https://github.com/swift-nav/swift-toolbox/tree/main/resources/web/map/js/trajectory_raw.js 
+`Makefile.toml` uses task called `map-js-token` to replace `%ACCES_TOKEN%` in trajectory_raw.
+
 ## LICENSE
 
 Copyright © 2021-2022 Swift Navigation

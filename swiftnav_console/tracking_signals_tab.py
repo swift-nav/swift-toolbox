@@ -44,6 +44,7 @@ def tracking_signals_tab_update() -> Dict[str, Any]:
 
 TRACKING_SIGNALS_TAB: List[Dict[str, Any]] = [tracking_signals_tab_update()]
 
+
 # pylint:disable=too-many-instance-attributes
 @QmlElement
 class TrackingSignalsPoints(QObject):

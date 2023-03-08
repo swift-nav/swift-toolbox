@@ -90,7 +90,7 @@ PY_BASE_URL = "https://github.com/indygreg/python-build-standalone/releases/down
 SWFT_PY_BASE_URL = "https://github.com/swift-nav/python-build-standalone/releases/download/20220205%2Bswift"
 MACOSX_DEPLOYMENT_TARGET = "10.15"
 APP_NAME = "swift-console"
-QT_VERSION = "6.4.1"                                                                                         # Also needs to be updated in .github/workflows/main.yml
+QT_VERSION = "6.3.2"                                                                                         # Also needs to be updated in .github/workflows/main.yml
 
 [tasks.init]
 
@@ -526,6 +526,19 @@ if eq ${os} mac
   exec --fail-on-error install_name_tool -change /install/lib/libpython3.9.dylib @rpath/libpython3.9.dylib py39-dist/${app_name}
   exec --fail-on-error install_name_tool -add_rpath @executable_path/../Resources/lib py39-dist/${app_name}
   exec --fail-on-error install_name_tool -add_rpath @executable_path/lib py39-dist/${app_name}
+
+  cd py39-dist
+  echo "START OF QTWEBENGINE TRANSLATIONS DISTRIBUTION"
+  mkdir ./lib/python3.9/site-packages/PySide6/Qt/translations
+  mv ./lib/python3.9/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Resources/qtwebengine_locales ./lib/python3.9/site-packages/PySide6/Qt/translations
+
+  echo "START OF QTWEBENGINE RESOURCE DISTRIBUTION"
+  mkdir ./lib/python3.9/site-packages/PySide6/Qt/resources
+  web_resources = glob_array ./lib/python3.9/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Resources/*
+  for r in ${web_resources}
+    mv ${r} ./lib/python3.9/site-packages/PySide6/Qt/resources
+  end
+
 elseif eq ${os} linux
   cp target/release/windowpos py39-dist/windowpos
 end
@@ -624,7 +637,8 @@ script = '''
 if is_path_exists ${DIST_PYTHON}
   output = exec --fail-on-error ${DIST_PYTHON} -m pip freeze
   out = set ${output.stdout}
-  if not contains "${out}" "PySide6=="
+  a = contains "${out}" "PySide6=="
+  if not ${a}
     cm_run_task pre-build-dist
   end
 else
@@ -641,9 +655,9 @@ env = { PYTHONDONTWRITEBYTECODE = "1" }
 cwd = "py39-dist"
 script_runner = "@duckscript"
 script = '''
-py_folders = array test tests examples __pycache__ demos turtledemo translations idlelib lib/tcl8 lib/tcl8.6 lib/tk8.6 shiboken6/docs ensurepip lib2to3 tkinter unittest include
-qt_folders = array plugins/geoservices plugins/virtualkeyboard plugins/sqldrivers lib/Tix8.4.3 tcl/tix8.4.3 Qt/resources PySide6/resources
-qml_folders = array qml/QtWeb* qml/QtBluetooth* qml/QtNfc* qml/QtGamepad qml/QtTest qml/QtQuick3D qml/Qt3D qml/QtSensors qml/QtLocation qml/QtPositioning
+py_folders = array test tests examples __pycache__ demos turtledemo idlelib lib/tcl8 lib/tcl8.6 lib/tk8.6 shiboken6/docs ensurepip lib2to3 tkinter unittest include
+qt_folders = array plugins/geoservices plugins/virtualkeyboard plugins/sqldrivers lib/Tix8.4.3 tcl/tix8.4.3
+qml_folders = array qml/QtBluetooth* qml/QtNfc* qml/QtGamepad qml/QtTest qml/QtQuick3D qml/Qt3D qml/QtSensors qml/QtLocation
 all_folders = array_concat ${py_folders} ${qt_folders} ${qml_folders}
 
 for name in ${all_folders}
@@ -669,8 +683,8 @@ for ext in ${file_exts}
     end
 end
 
-libs_a = array Qt3D QtBluetooth QtCconcurrent QtDataVisualization QtDesigner QtHelp QtMultimedia QtNfs QtPositioning
-libs_b = array QtQuick3D QtRemoteObjects QtScxml QtSensors QtSerialPort QtSql QtStateMachine QtTest QtUiTools QtWeb QtXml
+libs_a = array Qt3D QtBluetooth QtCconcurrent QtDataVisualization QtDesigner QtHelp QtMultimedia QtNfs
+libs_b = array QtQuick3D QtRemoteObjects QtScxml QtSensors QtSerialPort QtSql QtStateMachine QtTest QtUiTools QtXml
 libs = array_concat ${libs_a} ${libs_b}
 
 for lib in ${libs}
@@ -699,7 +713,9 @@ if eq ${os} windows
 
     qtbins = glob_array ./Lib/site-packages/PySide6/*.exe
     for bin in ${qtbins}
-        rm ${bin}
+        if not contains ${bin} "QtWebEngineProcess"
+            rm ./Lib/site-packages/PySide6/${bin}
+        end
     end
 
     all_dlls = glob_array ./**/*.dll
@@ -730,12 +746,17 @@ elseif eq ${os} mac
     # That being said after deleting them the app runs fine and passes the mac signing gauntlet.
     # See: https://stackoverflow.com/a/29271922/12265938
 
+    echo "REMOVING EXCESS RESOURCES"
     resources_a = glob_array ./lib/python3.9/site-packages/PySide6/Qt/lib/*.framework/Versions/A/Resources
     resources_b = glob_array ./lib/python3.9/site-packages/PySide6/Qt/lib/*.framework/Resources
     resources = array_concat ${resources_a} ${resources_b}
     for dir in ${resources}
       rm -r ${dir}
     end
+
+    # remove helper directory since this exists relatively at
+    # ./lib/python3.9/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Versions/A/Helpers
+    rm -r ./lib/python3.9/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Helpers
 else
     rm -r ./share
 

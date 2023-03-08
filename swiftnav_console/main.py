@@ -40,6 +40,8 @@ from typing import Optional, Tuple
 
 import capnp  # type: ignore
 
+from PySide6.QtWebEngineQuick import QtWebEngineQuick
+
 from PySide6.QtWidgets import QApplication, QSplashScreen  # type: ignore
 
 from PySide6.QtCore import QObject, QUrl, QThread, QTimer, Slot, Signal, Qt
@@ -143,6 +145,8 @@ from .settings_tab import (
     settings_table_update,
     settings_rows_to_json,
 )
+
+from .solution_map import SolutionMap
 
 from .solution_position_tab import (
     SolutionPositionModel,
@@ -349,6 +353,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                     data = settings_table_update()
                     SettingsTableEntries.post_data_update(data)
                 ConnectionData.post_connection_state_update(app_state)
+                SolutionMap.clear()
             elif m.which == Message.Union.ConnectionNotification:
                 data = m.connectionNotification.message
                 ConnectionData.post_connection_message_update(data)
@@ -362,6 +367,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                 data[Keys.LON_MIN] = m.solutionPositionStatus.lonMin
                 data[Keys.AVAILABLE_UNITS][:] = m.solutionPositionStatus.availableUnits
                 data[Keys.SOLUTION_LINE] = m.solutionPositionStatus.lineData
+                SolutionMap.send_pos(m.solutionPositionStatus)
                 SolutionPositionPoints.post_data_update(data)
             elif m.which == Message.Union.SolutionTableStatus:
                 data = solution_table_update()
@@ -747,6 +753,8 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     if args_main.qmldebug:
         sys.argv.append("-qmljsdebugger=port:10002,block")
         debug = QQmlDebuggingEnabler()  # pylint: disable=unused-variable
+    QtCore.QCoreApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
+    QtWebEngineQuick.initialize()
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon(":/images/icon.ico"))
     app.setOrganizationName(ApplicationMetadata.ORGANIZATION_NAME)
@@ -771,6 +779,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     qmlRegisterType(BaselineTableEntries, "SwiftConsole", 1, 0, "BaselineTableEntries")  # type: ignore
     qmlRegisterType(SettingsTabData, "SwiftConsole", 1, 0, "SettingsTabData")  # type: ignore
     qmlRegisterType(SettingsTableEntries, "SwiftConsole", 1, 0, "SettingsTableEntries")  # type: ignore
+    qmlRegisterType(SolutionMap, "SwiftConsole", 1, 0, "SolutionMap")  # type: ignore
     qmlRegisterType(SolutionPositionPoints, "SwiftConsole", 1, 0, "SolutionPositionPoints")  # type: ignore
     qmlRegisterType(SolutionTableEntries, "SwiftConsole", 1, 0, "SolutionTableEntries")  # type: ignore
     qmlRegisterType(SolutionVelocityPoints, "SwiftConsole", 1, 0, "SolutionVelocityPoints")  # type: ignore

@@ -30,7 +30,7 @@ import "SolutionTabComponents" as SolutionTabComponents
 MainTab {
     id: solutionTab
 
-    subTabNames: ["Position", "Velocity"]
+    subTabNames: ["Position", "Velocity", "Map"]
     curSubTabIndex: 0
 
     SplitView {
@@ -55,6 +55,9 @@ MainTab {
             }
 
             SolutionTabComponents.SolutionVelocityTab {
+            }
+
+            SolutionTabComponents.SolutionMapTab {
             }
         }
     }

@@ -81,6 +81,9 @@ impl TrackingSkyPlotTab {
                     label = format!("{label}*");
                 }
                 let code = azel.sid.code as i32;
+                if azel.el < -90 || azel.el > 90 {
+                    return;
+                }
                 let obs = SkyPlotObs {
                     az: azel.az as u16 * 2,
                     el: 90 - azel.el as u16,

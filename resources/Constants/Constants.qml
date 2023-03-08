@@ -48,6 +48,7 @@ QtObject {
     property QtObject insSettingsPopup
     property QtObject solutionPosition
     property QtObject solutionTable
+    property QtObject solutionMap
     property QtObject solutionVelocity
     property QtObject trackingSignals
     property QtObject observationTab
@@ -683,5 +684,9 @@ QtObject {
         readonly property int dialogWidth: 550
         readonly property int columnSpacing: 10
         readonly property int tableHeight: 150
+    }
+
+    solutionMap: QtObject {
+        readonly property string pageURL: "qrc:/web/map/index.html"
     }
 }

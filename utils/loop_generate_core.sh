@@ -6,6 +6,8 @@
 # No interactive debugger is invoked for this script - just crash and
 # generate core file for later inspection.
 
+# run with PATH_TO_PICKLE set to specify capnp recording
+
 if [ "$core_pat" != "core" ]; then
     echo "/proc/sys/kernel/core_pattern incorrect: '$core_pat', should be 'core'"
     echo "Please run the following as root:"
@@ -22,7 +24,7 @@ I=0
 while [ true ]
 do
     echo "++++++++++++++++++++++" $I
-python -m swiftnav_console.main --read-capnp-recording console_backend/tests/data/console-capnp-20220419-033358.pickle
+python -m swiftnav_console.main --read-capnp-recording $PATH_TO_PICKLE
 if [ $? -ne 0 ]; then
     break
 fi

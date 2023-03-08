@@ -175,7 +175,7 @@ args = [
 ]
 
 [tasks.generate-resources]
-dependencies = ["build-splash-version"]
+dependencies = ["build-splash-version", "map-js-token"]
 script_runner = "@duckscript"
 script = '''
   exec --fail-on-error "${PYSIDE6_RCC}" "resources/console_resources.qrc" "-o" "swiftnav_console/console_resources.py" "-g" "python"
@@ -242,7 +242,6 @@ run_task = "start-console"
 dependencies = [
   "check-python-exists",
   "copy-capnp",
-  "map-js-token",
   "generate-resources",
   "remove-egg-dist",
   "store-version",

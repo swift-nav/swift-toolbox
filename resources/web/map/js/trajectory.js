@@ -21,11 +21,7 @@ class FocusToggle {
         this._btn.type = "button";
         this._btn.onclick = () => {
             focusCurrent = !focusCurrent;
-            if (focusCurrent) {
-                this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-unfocus-toggle";
-            } else {
-                this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-focus-toggle";
-            }
+            this._btn.className = focusCurrent ? "mapboxgl-ctrl-icon mapboxgl-ctrl-unfocus-toggle" : "mapboxgl-ctrl-icon mapboxgl-ctrl-focus-toggle";
         };
         this._container = document.createElement("div");
         this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
@@ -43,18 +39,24 @@ map.addControl(new mapboxGlStyleSwitcher.MapboxStyleSwitcherControl());
 map.addControl(new FocusToggle(), "top-right");
 map.addControl(new mapboxgl.NavigationControl());
 
-const createDatas = () => Array(lines.length).fill({
-    type: 'FeatureCollection',
-    features: []
-});
 
-var data = createDatas();
+var data = [];
+
+function setupData() {
+    data = [];
+    for (let i = 0; i < lines.length; i++) {
+        data.push({
+            type: 'FeatureCollection',
+            features: []
+        });
+    }
+}
+
+setupData();
 
 function setupLayers() {
     for (let i = 0; i < lines.length; i++) {
-        if (map.getSource(`route${i}`) != null) {
-            continue;
-        }
+        if (map.getSource(`route${i}`) != null) continue;
         map.addSource(`route${i}`, {
             type: 'geojson',
             cluster: false,
@@ -65,11 +67,11 @@ function setupLayers() {
         });
         map.addLayer({
             id: `route${i}`,
-            type: 'circle',
+            type: 'fill',
             source: `route${i}`,
             paint: {
-                'circle-color': lines[i],
-                'circle-radius': 3,
+                'fill-color': lines[i],
+                'fill-opacity': 0.2
             }
         });
     }
@@ -81,12 +83,47 @@ function syncLayers() {
     }
 }
 
+const LNG_KM = 111.320, LAT_KM = 110.574;
+
+/**
+ * Helper method to create elliptical geojson data
+ * @param center {[lng: number, lat: number]}
+ * @param rX horizontal radius in kilometers of ellipse
+ * @param rY vertical radius in kilometers of ellipse
+ * @param points optional number of points to render ellipse, higher for smoothness
+ * @return {{geometry: {coordinates: [][], type: string}, type: string}}
+ */
+function createGeoJsonEllipse(center, rX, rY, points = 32) {
+    let coords = {latitude: center[1], longitude: center[0]};
+    let ret = [];
+    let dX = rX / (LNG_KM * Math.cos(coords.latitude * Math.PI / 180));
+    let dY = rY / LAT_KM;
+
+    let theta, x, y;
+    for (let i = 0; i < points; i++) {
+        theta = (i / points) * (2 * Math.PI);
+        x = dX * Math.cos(theta);
+        y = dY * Math.sin(theta);
+
+        ret.push([coords.longitude + x, coords.latitude + y]);
+    }
+    ret.push(ret[0]);
+
+    return {
+        type: "Feature",
+        geometry: {
+            type: "Polygon",
+            coordinates: [ret]
+        }
+    };
+}
+
 new QWebChannel(qt.webChannelTransport, (channel) => {
 
     let chn = channel.objects.currPos;
 
     chn.clearPos.connect(() => {
-        data = createDatas();
+        setupData();
         if (map) syncLayers();
         if (startMarker) {
             startMarker.remove();
@@ -94,22 +131,17 @@ new QWebChannel(qt.webChannelTransport, (channel) => {
         }
     });
 
-    chn.recvPos.connect((id, lat, lng) => {
-        const pos = [lat, lng];
-
-        data[id].features.push({
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: pos
-            }
-        });
-        if (!map) return
+    chn.recvPos.connect((id, lat, lng, hAcc) => {
+        const pos = [lat, lng],
+            rX = hAcc / 1000;
+        data[id].features.push(createGeoJsonEllipse(pos, rX, rX));
+        if (!map) return;
         if (!startMarker) {
             startMarker = new mapboxgl.Marker().setLngLat(pos).addTo(map);
             map.panTo(pos);
         } else if (focusCurrent) map.panTo(pos);
-        if (map.getSource(`route${id}`) != null) map.getSource(`route${id}`).setData(data[id]);
+        let src = map.getSource(`route${id}`);
+        if (src != null) src.setData(data[id]);
     })
 });
 

@@ -143,7 +143,7 @@ def BENCHMARK_COMMAND_ARGS(file_path):
 
 
 def HYPERFINE_COMMAND(file_out):
-    return f'hyperfine --ignore-failure --warmup 1 --runs 5 --cleanup "sleep 1" --show-output --export-json {file_out}'
+    return f'hyperfine --warmup 1 --runs 5 --cleanup "sleep 1" --show-output --export-json {file_out}'
 
 
 FRONTEND_CPU_BENCHMARKS = {

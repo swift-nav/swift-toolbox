@@ -20,8 +20,8 @@ class FocusToggle {
         this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-focus-toggle";
         this._btn.type = "button";
         this._btn.onclick = () => {
-            focus = !focus;
-            this._btn.className = focus ? "mapboxgl-ctrl-icon mapboxgl-ctrl-unfocus-toggle" : "mapboxgl-ctrl-icon mapboxgl-ctrl-focus-toggle";
+            focusCurrent = !focusCurrent;
+            this._btn.className = focusCurrent ? "mapboxgl-ctrl-icon mapboxgl-ctrl-unfocus-toggle" : "mapboxgl-ctrl-icon mapboxgl-ctrl-focus-toggle";
         };
         this._container = document.createElement("div");
         this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
@@ -39,18 +39,24 @@ map.addControl(new mapboxGlStyleSwitcher.MapboxStyleSwitcherControl());
 map.addControl(new FocusToggle(), "top-right");
 map.addControl(new mapboxgl.NavigationControl());
 
-const createDatas = () => Array(lines.length).fill({
-    type: 'FeatureCollection',
-    features: []
-});
 
-var data = createDatas();
+var data = [];
+
+function setupData() {
+    data = [];
+    for (let i = 0; i < lines.length; i++) {
+        data.push({
+            type: 'FeatureCollection',
+            features: []
+        });
+    }
+}
+
+setupData();
 
 function setupLayers() {
     for (let i = 0; i < lines.length; i++) {
-        if (map.getSource(`route${i}`) != null) {
-            continue;
-        }
+        if (map.getSource(`route${i}`) != null) continue;
         map.addSource(`route${i}`, {
             type: 'geojson',
             cluster: false,
@@ -112,19 +118,16 @@ function createGeoJsonEllipse(center, rX, rY, points = 32) {
     };
 }
 
-
-var start;
-
 new QWebChannel(qt.webChannelTransport, (channel) => {
 
     let chn = channel.objects.currPos;
 
     chn.clearPos.connect(() => {
-        data = createDatas();
+        setupData();
         if (map) syncLayers();
-        if (start) {
-            start.remove();
-            start = null;
+        if (startMarker) {
+            startMarker.remove();
+            startMarker = null;
         }
     });
 
@@ -133,10 +136,10 @@ new QWebChannel(qt.webChannelTransport, (channel) => {
             rX = hAcc / 1000;
         data[id].features.push(createGeoJsonEllipse(pos, rX, rX));
         if (!map) return;
-        if (!start) {
-            start = new mapboxgl.Marker().setLngLat(pos).addTo(map);
+        if (!startMarker) {
+            startMarker = new mapboxgl.Marker().setLngLat(pos).addTo(map);
             map.panTo(pos);
-        } else if (focus) map.panTo(pos);
+        } else if (focusCurrent) map.panTo(pos);
         let src = map.getSource(`route${id}`);
         if (src != null) src.setData(data[id]);
     })

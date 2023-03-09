@@ -1190,6 +1190,18 @@ impl PosLLH {
     }
 }
 
+impl Event for PosLLH {
+    const MESSAGE_TYPES: &'static [u16] = &[MsgPosLlh::MESSAGE_TYPE, MsgPosLlhDepA::MESSAGE_TYPE];
+
+    fn from_sbp(msg: Sbp) -> Self {
+        match msg {
+            Sbp::MsgPosLlh(m) => PosLLH::MsgPosLlh(m),
+            Sbp::MsgPosLlhDepA(m) => PosLLH::MsgPosLlhDepA(m),
+            _ => unreachable!(),
+        }
+    }
+}
+
 /// Struct with shared fields for various Protection Level Message types.
 #[allow(clippy::upper_case_acronyms)]
 pub struct ProtectionLevelFields {
@@ -1224,13 +1236,16 @@ impl ProtectionLevel {
     }
 }
 
-impl Event for PosLLH {
-    const MESSAGE_TYPES: &'static [u16] = &[MsgPosLlh::MESSAGE_TYPE, MsgPosLlhDepA::MESSAGE_TYPE];
+impl Event for ProtectionLevel {
+    const MESSAGE_TYPES: &'static [u16] = &[
+        MsgProtectionLevel::MESSAGE_TYPE,
+        MsgProtectionLevelDepA::MESSAGE_TYPE,
+    ];
 
     fn from_sbp(msg: Sbp) -> Self {
         match msg {
-            Sbp::MsgPosLlh(m) => PosLLH::MsgPosLlh(m),
-            Sbp::MsgPosLlhDepA(m) => PosLLH::MsgPosLlhDepA(m),
+            Sbp::MsgProtectionLevel(m) => Self::MsgProtLvl(m),
+            Sbp::MsgProtectionLevelDepA(m) => Self::MsgProtLvlDepA(m),
             _ => unreachable!(),
         }
     }

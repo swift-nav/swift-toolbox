@@ -30,6 +30,6 @@ Item {
         webChannel: solutionMapChannel
         url: Constants.solutionMap.pageURL
         onCertificateError: error.ignoreCertificateError()
-        onJavaScriptConsoleMessage: (level, message, lineNumber, sourceID) => console.log("[MAP LOG] " + message)
+        onJavaScriptConsoleMessage: (level, message, lineNumber, sourceID) => console.log("[MAP LOG] @" + lineNumber + ": " + message)
     }
 }

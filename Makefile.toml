@@ -164,7 +164,7 @@ end
 '''
 
 [tasks.dist-generate-resources]
-dependencies = ["build-splash-version"]
+dependencies = ["build-splash-version", "map-js-token"]
 command = "${DIST_PYSIDE6_RCC}"
 args = [
   "resources/console_resources.qrc",
@@ -175,7 +175,7 @@ args = [
 ]
 
 [tasks.generate-resources]
-dependencies = ["build-splash-version"]
+dependencies = ["build-splash-version", "map-js-token"]
 script_runner = "@duckscript"
 script = '''
   exec --fail-on-error "${PYSIDE6_RCC}" "resources/console_resources.qrc" "-o" "swiftnav_console/console_resources.py" "-g" "python"
@@ -1355,3 +1355,11 @@ run_task = "newline-terminator"
 [tasks.check-git-diff]
 command = "git"
 args = ["diff", "--exit-code"]
+
+[tasks.map-js-token]
+script_runner = "@duckscript"
+script = '''
+file = readfile resources/web/map/js/trajectory_raw.js
+file_modified = replace ${file} "@ACCESS_TOKEN@" ${MAPBOX_TOKEN}
+writefile "resources/web/map/js/trajectory.js" ${file_modified}
+'''

@@ -30,3 +30,4 @@ installers/Windows/NSIS/*
 /pyside-setup
 swiftnav_console/.idea
 /resources/base/
+/resources/web/map/js/trajectory.js

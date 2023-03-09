@@ -45,6 +45,7 @@ map.addControl(new mapboxgl.NavigationControl());
 
 
 var data = [];
+var crumbCoords = [];
 
 function setupData() {
     data = [];
@@ -54,6 +55,7 @@ function setupData() {
             features: []
         });
     }
+    crumbCoords = [];
 }
 
 setupData();
@@ -75,28 +77,64 @@ function setupLayers() {
             source: `route${i}`,
             paint: {
                 'fill-color': lines[i],
-                'fill-opacity': 0.2
+                'fill-opacity': 0.3
             }
         });
     }
-    if (map.getSource(`prot`) != null) return;
-    map.addSource(`prot`, {
-        type: 'geojson',
-        cluster: false,
-        data: {
-            type: 'FeatureCollection',
-            features: []
+    if (map.getSource('prot') == null) {
+        map.addSource('prot', {
+            type: 'geojson',
+            cluster: false,
+            data: {
+                type: 'FeatureCollection',
+                features: []
+            }
+        })
+        map.addLayer({
+            id: 'prot',
+            type: 'fill',
+            source: 'prot',
+            paint: {
+                'fill-color': "#00FF00",
+                'fill-opacity': 0.5
+            }
+        });
+    }
+    if (map.getSource('breadcrumb') == null) {
+        map.addSource('breadcrumb', {
+            type: 'geojson',
+            data: {
+                type: 'Feature',
+                geometry: {
+                    type: "LineString",
+                    coordinates: []
+                }
+            }
+        })
+        map.addLayer({
+            id: 'breadcrumb',
+            type: 'line',
+            source: 'breadcrumb',
+            layout: {
+                'line-join': 'round',
+                'line-cap': 'round'
+            },
+            paint: {
+                'line-color': '#888',
+                'line-width': 1
+            }
+        })
+    }
+}
+
+function syncCrumbCoords(){
+    map.getSource('breadcrumb').setData({
+        type: 'Feature',
+        geometry: {
+            type: 'LineString',
+            coordinates: crumbCoords
         }
     })
-    map.addLayer({
-        id: `prot`,
-        type: 'fill',
-        source: `prot`,
-        paint: {
-            'fill-color': "#00FF00",
-            'fill-opacity': 0.5
-        }
-    });
 }
 
 function syncLayers() {
@@ -109,6 +147,7 @@ function syncLayers() {
         type: 'FeatureCollection',
         features: []
     });
+    syncCrumbCoords();
 }
 
 /**
@@ -164,6 +203,7 @@ new QWebChannel(qt.webChannelTransport, (channel) => {
     chn.recvPos.connect((id, lat, lng, hAcc) => {
         const pos = [lat, lng], rX = hAcc / 1000;
         data[id].features.push(createGeoJsonEllipse(pos, rX, rX));
+        crumbCoords.push(pos);
         if (!map) return;
         if (!currentMarker) currentMarker = new mapboxgl.Marker().setLngLat(pos).addTo(map);
         else currentMarker.setLngLat(pos);
@@ -172,14 +212,16 @@ new QWebChannel(qt.webChannelTransport, (channel) => {
             map.panTo(pos);
         } else if (focusCurrent) map.panTo(pos);
         let src = map.getSource(`route${id}`);
-        if (src != null) src.setData(data[id]);
+        if (src) src.setData(data[id]);
+
+        if (map.getSource('breadcrumb')) syncCrumbCoords();
     })
 
     chn.protPos.connect((lat, lng, hpl) => {
         const pos = [lng, lat], rX = hpl / 100_000; // hpl in cm, convert to km
         if (!map) return;
         let src = map.getSource(`prot`);
-        if (src != null) src.setData({
+        if (src) src.setData({
             type: 'FeatureCollection',
             features: [createGeoJsonEllipse(pos, rX, rX)]
         });

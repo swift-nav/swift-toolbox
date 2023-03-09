@@ -143,6 +143,10 @@ new QWebChannel(qt.webChannelTransport, (channel) => {
         let src = map.getSource(`route${id}`);
         if (src != null) src.setData(data[id]);
     })
+
+    chn.protPos.connect((lat, lng, hpl) => {
+        console.log(hpl)
+    })
 });
 
 map.on('style.load', () => {

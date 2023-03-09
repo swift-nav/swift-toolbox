@@ -448,6 +448,12 @@ struct LoggingBarRecordingSize {
     size @0 :UInt16;
 }
 
+struct SolutionProtectionLevel {
+    lat @0: Float64,
+    lon @1: Float64,
+    hpl @2: UInt16,
+}
+
 struct Message {
     union {
         solutionVelocityStatus @0 :SolutionVelocityStatus;
@@ -507,5 +513,6 @@ struct Message {
         onTabChangeEvent @54 :TabChangeEvent;
         loggingBarStartRecording @55 : LoggingBarStartRecording;
         loggingBarRecordingSize @56 : LoggingBarRecordingSize;
+        solutionProtectionLevel @57: SolutionProtectionLevel;
     }
 }

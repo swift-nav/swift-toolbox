@@ -16,6 +16,7 @@ Item {
         id: solutionMap
         WebChannel.id: "currPos"
         signal recvPos(int id, double lat, double lng, double hAcc)
+        signal protPos(double lat, double lng, int hpl)
         signal clearPos
     }
 

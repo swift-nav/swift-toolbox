@@ -449,9 +449,9 @@ struct LoggingBarRecordingSize {
 }
 
 struct SolutionProtectionLevel {
-    lat @0: Float64,
-    lon @1: Float64,
-    hpl @2: UInt16,
+    lat @0: Float64;
+    lon @1: Float64;
+    hpl @2: UInt16;
 }
 
 struct Message {

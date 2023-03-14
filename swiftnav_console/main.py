@@ -44,7 +44,7 @@ from PySide6.QtWebEngineQuick import QtWebEngineQuick
 
 from PySide6.QtWidgets import QApplication, QSplashScreen  # type: ignore
 
-from PySide6.QtCore import QObject, QUrl, QThread, QTimer, Slot, Signal, Qt
+from PySide6.QtCore import QObject, QUrl, QThread, QTimer, Slot, Signal, Qt, QLocale
 from PySide6 import QtCharts  # pylint: disable=unused-import
 
 from PySide6 import QtQml, QtCore
@@ -753,6 +753,8 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     if args_main.qmldebug:
         sys.argv.append("-qmljsdebugger=port:10002,block")
         debug = QQmlDebuggingEnabler()  # pylint: disable=unused-variable
+
+    QLocale.setDefault(QLocale.c())
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
     QtWebEngineQuick.initialize()
     app = QApplication(sys.argv)

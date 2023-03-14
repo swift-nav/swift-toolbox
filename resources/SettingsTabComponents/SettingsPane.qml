@@ -405,9 +405,11 @@ Rectangle {
     }
 
     floatValidator: DoubleValidator {
+        locale: "C"
     }
 
     intValidator: IntValidator {
+        locale: "C"
     }
 
     stringValidator: RegularExpressionValidator {

@@ -650,6 +650,8 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
             globals_.setProperty("width", args.width)  # type: ignore
     if args.show_file_connection:
         globals_.setProperty("showFileConnection", True)  # type: ignore
+    if args.disable_map:
+        globals_.setProperty("disableMap", True)  # type: ignore
     try:
         if args.ssh_tunnel:
             ssh_tunnel.setup(args.ssh_tunnel, args.ssh_remote_bind_address)
@@ -708,6 +710,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     parser.add_argument("--record-capnp-recording", action="store_true")
     parser.add_argument("--debug-with-no-backend", action="store_true")
     parser.add_argument("--show-fileio", action="store_true")
+    parser.add_argument("--disable-map", action="store_true")
     parser.add_argument("--show-file-connection", action="store_true")
     parser.add_argument("--no-prompts", action="store_true")
     parser.add_argument("--use-opengl", action="store_true")

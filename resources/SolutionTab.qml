@@ -30,7 +30,7 @@ import "SolutionTabComponents" as SolutionTabComponents
 MainTab {
     id: solutionTab
 
-    subTabNames: ["Position", "Velocity", "Map"]
+    subTabNames: Globals.disableMap ? ["Position", "Velocity"] : ["Position", "Velocity", "Map"]
     curSubTabIndex: 0
 
     SplitView {

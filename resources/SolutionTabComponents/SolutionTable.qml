@@ -39,7 +39,7 @@ Item {
     SolutionTableEntries {
         id: solutionTableEntries
 
-        function update(){
+        function update() {
             if (!solutionTab.visible)
                 return;
             solution_table_model.fill_console_points(solutionTableEntries);

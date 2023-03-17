@@ -142,22 +142,22 @@ Rectangle {
             }
             var offset = 0;
             entries.forEach((entry, idx, entries) => {
-                var new_row;
-                if (!isHeader(entry)) {
-                    if (!showExpert && entry.expert === true) {
-                        offset++;
-                        return;
+                    var new_row;
+                    if (!isHeader(entry)) {
+                        if (!showExpert && entry.expert === true) {
+                            offset++;
+                            return;
+                        }
+                        new_row = row(entry);
+                    } else {
+                        if (!showExpert && !groupHasNonExpertSetting(entries, idx)) {
+                            offset++;
+                            return;
+                        }
+                        new_row = headerRow(entry);
                     }
-                    new_row = row(entry);
-                } else {
-                    if (!showExpert && !groupHasNonExpertSetting(entries, idx)) {
-                        offset++;
-                        return;
-                    }
-                    new_row = headerRow(entry);
-                }
-                rowOffsets[idx - offset] = idx;
-                tableView.model.setRow(idx - offset, new_row);
+                    rowOffsets[idx - offset] = idx;
+                    tableView.model.setRow(idx - offset, new_row);
             });
             tableView.forceLayout();
         }

@@ -266,21 +266,6 @@ Rectangle {
         }
 
         Timer {
-            property bool mockTime: false
-            property bool mockSize: false
-            property int mockRecordingTime: 0
-            property real mockRecordingSize: 0
-
-            function bytesToString(bytes, decimals = 2) {
-                if (bytes === 0)
-                    return '0 Bytes';
-                const k = 1024;
-                const dm = decimals < 0 ? 0 : decimals;
-                const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-                const i = Math.floor(Math.log(bytes) / Math.log(k));
-                return (bytes / Math.pow(k, i)).toFixed(dm) + ' ' + sizes[i];
-            }
-
             interval: Utils.hzToMilliseconds(Constants.staticTimerIntervalRate)
             running: true
             repeat: true
@@ -294,26 +279,26 @@ Rectangle {
                 if (loggingBarData.recording_filename)
                     recordingFilenameText.editText = loggingBarData.recording_filename;
                 let recording = loggingBarData.sbp_logging;
-                if (mockTime) {
-                    mockRecordingTime += interval;
-                    recordingTime.text = loggingDurationFormat(mockRecordingTime / 1000);
-                } else {
-                    if (recording)
-                        recordingTime.text = loggingDurationFormat(loggingBarData.recording_duration_sec);
-                    else
-                        recordingTime.text = "00:00:00";
-                }
-                if (mockSize) {
-                    mockRecordingSize += 15.15;
-                    recordingSize.text = bytesToString(mockRecordingSize);
-                } else {
-                    let recSize = loggingBarData.recording_size.toFixed(0);
-                    if (recSize > 0 && recording)
-                        recordingSize.text = bytesToString(recSize);
-                    else
-                        recordingSize.text = "0.00 MB";
-                }
+                if (recording)
+                    recordingTime.text = loggingDurationFormat(loggingBarData.recording_duration_sec);
+                else
+                    recordingTime.text = "00:00:00";
+                let recSize = loggingBarData.recording_size.toFixed(0);
+                if (recSize > 0 && recording)
+                    recordingSize.text = bytesToString(recSize);
+                else
+                    recordingSize.text = "0.00 MB";
             }
+        }
+
+        function bytesToString(bytes, decimals = 2) {
+            if (bytes === 0)
+                return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return (bytes / Math.pow(k, i)).toFixed(dm) + ' ' + sizes[i];
         }
     }
 }

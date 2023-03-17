@@ -158,7 +158,7 @@ Rectangle {
                     }
                     rowOffsets[idx - offset] = idx;
                     tableView.model.setRow(idx - offset, new_row);
-            });
+                });
             tableView.forceLayout();
         }
     }

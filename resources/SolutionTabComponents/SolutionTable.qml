@@ -38,6 +38,24 @@ Item {
 
     SolutionTableEntries {
         id: solutionTableEntries
+
+        function update(){
+            if (!solutionTab.visible)
+                return;
+            solution_table_model.fill_console_points(solutionTableEntries);
+            if (!solutionTableEntries.entries.length)
+                return;
+            var entries = solutionTableEntries.entries;
+            let solnTable = Constants.solutionTable;
+            for (var idx in entries) {
+                var new_row = {};
+                var entry = entries[idx];
+                new_row[solnTable.tableLeftColumnHeader] = entry[0];
+                new_row[solnTable.tableRightColumnHeader] = entry[1];
+                tableView.model.setRow(idx, new_row);
+            }
+            tableView.forceLayout();
+        }
     }
 
     ColumnLayout {
@@ -152,29 +170,6 @@ Item {
                 font.pixelSize: Constants.largePixelSize
                 text: Constants.solutionTable.rtkNoteText
                 padding: Constants.solutionTable.rtkNoteMargins
-            }
-        }
-
-        Timer {
-            interval: Utils.hzToMilliseconds(Constants.staticTableTimerIntervalRate)
-            running: true
-            repeat: true
-            onTriggered: {
-                if (!solutionTab.visible)
-                    return;
-                solution_table_model.fill_console_points(solutionTableEntries);
-                if (!solutionTableEntries.entries.length)
-                    return;
-                var entries = solutionTableEntries.entries;
-                let solnTable = Constants.solutionTable;
-                for (var idx in entries) {
-                    var new_row = {};
-                    var entry = entries[idx];
-                    new_row[solnTable.tableLeftColumnHeader] = entry[0];
-                    new_row[solnTable.tableRightColumnHeader] = entry[1];
-                    tableView.model.setRow(idx, new_row);
-                }
-                tableView.forceLayout();
             }
         }
     }

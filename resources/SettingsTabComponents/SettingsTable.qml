@@ -122,7 +122,7 @@ Rectangle {
     SettingsTableEntries {
         id: settingsTableEntries
 
-        function updateTable() {
+        function update() {
             settings_table_model.fill_console_points(settingsTableEntries);
             var entries = settingsTableEntries.entries;
             if (!entries.length) {

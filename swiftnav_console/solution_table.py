@@ -58,6 +58,7 @@ class SolutionTableEntries(QObject):
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:
         self.solution_table = SOLUTION_TABLE[0]
+        self.update()
 
     def get_valid(self) -> bool:
         """Getter for _valid.

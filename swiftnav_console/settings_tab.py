@@ -166,7 +166,7 @@ class SettingsTableEntries(QObject):
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:
         self.settings_table = SETTINGS_TABLE[0]
-        self.updateTable()
+        self.update()
 
     def get_entries(self) -> List[dict]:
         return self._entries

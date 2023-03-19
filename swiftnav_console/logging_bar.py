@@ -128,6 +128,7 @@ class LoggingBarData(QObject):  # pylint: disable=too-many-instance-attributes, 
     def handle_data_updated(self) -> None:
         self.logging_bar = LOGGING_BAR[0]
         self.logging_bar_recording = LOGGING_BAR_RECORDING[0]
+        self.update()
 
     def get_csv_logging(self) -> bool:
         return self._csv_logging

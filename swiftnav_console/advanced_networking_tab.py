@@ -63,6 +63,7 @@ class AdvancedNetworkingData(QObject):
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:
         self.advanced_networking_tab = ADVANCED_NETWORKING_TAB[0]
+        self.update()
 
     def get_network_info(self) -> List[List[str]]:
         """Getter for _network_info."""

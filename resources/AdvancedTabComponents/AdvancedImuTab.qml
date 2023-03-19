@@ -35,6 +35,37 @@ Item {
 
     AdvancedImuPoints {
         id: advancedImuPoints
+
+        function update() {
+            if (!advancedImuTab.visible)
+                return;
+            advanced_imu_model.fill_console_points(advancedImuPoints);
+            if (!advancedImuPoints.points.length)
+                return;
+            var points = advancedImuPoints.points;
+            advancedImuArea.visible = true;
+            let commonChart = Constants.commonChart;
+            let advancedImu = Constants.advancedImu;
+            if (!lines.length) {
+                const tempLines = [];
+                for (var idx in points) {
+                    var line = advancedImuChart.createSeries(ChartView.SeriesTypeLine, idx, advancedImuXAxis);
+                    line.color = advancedImu.lineColors[idx];
+                    line.width = commonChart.lineWidth;
+                    line.axisYRight = advancedImuYAxis;
+                    line.useOpenGL = Globals.useOpenGL;
+                    tempLines.push(line);
+                }
+                lines = lines.concat(tempLines);
+            }
+            let fieldDatum = advancedImuPoints.fields_data;
+            imuTempText.text = `${fieldDatum[0].toFixed(2)} C`;
+            imuConfText.text = `0x${fieldDatum[1].toString(16).padStart(2, "0")}`;
+            rmsAccXText.text = `${fieldDatum[2].toFixed(2)} g`;
+            rmsAccYText.text = `${fieldDatum[3].toFixed(2)} g`;
+            rmsAccZText.text = `${fieldDatum[4].toFixed(2)} g`;
+            advancedImuPoints.fill_series(lines);
+        }
     }
 
     ColumnLayout {
@@ -150,44 +181,6 @@ Item {
                 XYPoint {
                     x: 0
                     y: 0
-                }
-            }
-
-            Timer {
-                id: advancedImuTimer
-
-                interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
-                running: true
-                repeat: true
-                onTriggered: {
-                    if (!advancedImuTab.visible)
-                        return;
-                    advanced_imu_model.fill_console_points(advancedImuPoints);
-                    if (!advancedImuPoints.points.length)
-                        return;
-                    var points = advancedImuPoints.points;
-                    advancedImuArea.visible = true;
-                    let commonChart = Constants.commonChart;
-                    let advancedImu = Constants.advancedImu;
-                    if (!lines.length) {
-                        const tempLines = [];
-                        for (var idx in points) {
-                            var line = advancedImuChart.createSeries(ChartView.SeriesTypeLine, idx, advancedImuXAxis);
-                            line.color = advancedImu.lineColors[idx];
-                            line.width = commonChart.lineWidth;
-                            line.axisYRight = advancedImuYAxis;
-                            line.useOpenGL = Globals.useOpenGL;
-                            tempLines.push(line);
-                        }
-                        lines = lines.concat(tempLines);
-                    }
-                    let fieldDatum = advancedImuPoints.fields_data;
-                    imuTempText.text = `${fieldDatum[0].toFixed(2)} C`;
-                    imuConfText.text = `0x${fieldDatum[1].toString(16).padStart(2, "0")}`;
-                    rmsAccXText.text = `${fieldDatum[2].toFixed(2)} g`;
-                    rmsAccYText.text = `${fieldDatum[3].toFixed(2)} g`;
-                    rmsAccZText.text = `${fieldDatum[4].toFixed(2)} g`;
-                    advancedImuPoints.fill_series(lines);
                 }
             }
         }

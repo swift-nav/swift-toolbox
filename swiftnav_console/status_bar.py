@@ -73,6 +73,7 @@ class StatusBarData(QObject):  # pylint: disable=too-many-instance-attributes
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:
         self.status_bar = STATUS_BAR[0]
+        self.update()
 
     def get_pos(self) -> str:
         return self._pos

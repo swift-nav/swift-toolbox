@@ -35,6 +35,34 @@ Item {
 
     AdvancedMagnetometerPoints {
         id: advancedMagnetometerPoints
+
+        function update() {
+            if (!advancedMagnetometerTab.visible)
+                return;
+            advanced_magnetometer_model.fill_console_points(advancedMagnetometerPoints);
+            let magnetometerPoints = advancedMagnetometerPoints.points;
+            if (!magnetometerPoints.length)
+                return;
+            var points = advancedMagnetometerPoints.points;
+            let magnetometer = Constants.advancedMagnetometer;
+            let commonChart = Constants.commonChart;
+            if (!lines.length) {
+                const tempLines = [];
+                for (var idx in magnetometerPoints) {
+                    var line = advancedMagnetometerChart.createSeries(ChartView.SeriesTypeLine, idx, advancedMagnetometerXAxis);
+                    line.color = magnetometer.lineColors[idx];
+                    line.width = commonChart.lineWidth;
+                    line.axisYRight = advancedMagnetometerYAxis;
+                    line.useOpenGL = Globals.useOpenGL;
+                    tempLines.push(line);
+                }
+                lines = lines.concat(tempLines);
+            }
+            advancedMagnetometerArea.visible = true;
+            advancedMagnetometerYAxis.min = advancedMagnetometerPoints.ymin - magnetometer.yAxisPadding;
+            advancedMagnetometerYAxis.max = advancedMagnetometerPoints.ymax + magnetometer.yAxisPadding;
+            advancedMagnetometerPoints.fill_series(lines);
+        }
     }
 
     ColumnLayout {
@@ -153,41 +181,6 @@ Item {
                 XYPoint {
                     x: 1
                     y: 10
-                }
-            }
-
-            Timer {
-                id: advancedMagnetometerTimer
-
-                interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
-                running: true
-                repeat: true
-                onTriggered: {
-                    if (!advancedMagnetometerTab.visible)
-                        return;
-                    advanced_magnetometer_model.fill_console_points(advancedMagnetometerPoints);
-                    let magnetometerPoints = advancedMagnetometerPoints.points;
-                    if (!magnetometerPoints.length)
-                        return;
-                    var points = advancedMagnetometerPoints.points;
-                    let magnetometer = Constants.advancedMagnetometer;
-                    let commonChart = Constants.commonChart;
-                    if (!lines.length) {
-                        const tempLines = [];
-                        for (var idx in magnetometerPoints) {
-                            var line = advancedMagnetometerChart.createSeries(ChartView.SeriesTypeLine, idx, advancedMagnetometerXAxis);
-                            line.color = magnetometer.lineColors[idx];
-                            line.width = commonChart.lineWidth;
-                            line.axisYRight = advancedMagnetometerYAxis;
-                            line.useOpenGL = Globals.useOpenGL;
-                            tempLines.push(line);
-                        }
-                        lines = lines.concat(tempLines);
-                    }
-                    advancedMagnetometerArea.visible = true;
-                    advancedMagnetometerYAxis.min = advancedMagnetometerPoints.ymin - magnetometer.yAxisPadding;
-                    advancedMagnetometerYAxis.max = advancedMagnetometerPoints.ymax + magnetometer.yAxisPadding;
-                    advancedMagnetometerPoints.fill_series(lines);
                 }
             }
         }

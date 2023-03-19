@@ -35,6 +35,29 @@ Item {
 
     AdvancedSpectrumAnalyzerPoints {
         id: advancedSpectrumAnalyzerPoints
+
+        function update() {
+            if (!advancedSpectrumAnalyzerTab.visible)
+                return;
+            advanced_spectrum_analyzer_model.fill_console_points(advancedSpectrumAnalyzerPoints);
+            if (!advancedSpectrumAnalyzerPoints.points.length)
+                return;
+            if (!line) {
+                var line_ = advancedSpectrumAnalyzerChart.createSeries(ChartView.SeriesTypeLine, 0, advancedSpectrumAnalyzerXAxis);
+                line_.color = Constants.advancedSpectrumAnalyzer.lineColors[0];
+                line_.width = Constants.commonChart.lineWidth;
+                line_.axisYRight = advancedSpectrumAnalyzerYAxis;
+                line_.useOpenGL = Globals.useOpenGL;
+                line = line_;
+            }
+            advancedSpectrumAnalyzerArea.visible = true;
+            advancedSpectrumAnalyzerYAxis.min = advancedSpectrumAnalyzerPoints.ymin;
+            advancedSpectrumAnalyzerYAxis.max = advancedSpectrumAnalyzerPoints.ymax;
+            advancedSpectrumAnalyzerXAxis.min = advancedSpectrumAnalyzerPoints.xmin;
+            advancedSpectrumAnalyzerXAxis.max = advancedSpectrumAnalyzerPoints.xmax;
+            channelSelectionRow.dropdownIdx = advancedSpectrumAnalyzerPoints.channel;
+            advancedSpectrumAnalyzerPoints.fill_series(line);
+        }
     }
 
     ColumnLayout {
@@ -95,36 +118,6 @@ Item {
                 XYPoint {
                     x: 1
                     y: 1
-                }
-            }
-
-            Timer {
-                id: advancedSpectrumAnalyzerTimer
-
-                interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
-                running: true
-                repeat: true
-                onTriggered: {
-                    if (!advancedSpectrumAnalyzerTab.visible)
-                        return;
-                    advanced_spectrum_analyzer_model.fill_console_points(advancedSpectrumAnalyzerPoints);
-                    if (!advancedSpectrumAnalyzerPoints.points.length)
-                        return;
-                    if (!line) {
-                        var line_ = advancedSpectrumAnalyzerChart.createSeries(ChartView.SeriesTypeLine, 0, advancedSpectrumAnalyzerXAxis);
-                        line_.color = Constants.advancedSpectrumAnalyzer.lineColors[0];
-                        line_.width = Constants.commonChart.lineWidth;
-                        line_.axisYRight = advancedSpectrumAnalyzerYAxis;
-                        line_.useOpenGL = Globals.useOpenGL;
-                        line = line_;
-                    }
-                    advancedSpectrumAnalyzerArea.visible = true;
-                    advancedSpectrumAnalyzerYAxis.min = advancedSpectrumAnalyzerPoints.ymin;
-                    advancedSpectrumAnalyzerYAxis.max = advancedSpectrumAnalyzerPoints.ymax;
-                    advancedSpectrumAnalyzerXAxis.min = advancedSpectrumAnalyzerPoints.xmin;
-                    advancedSpectrumAnalyzerXAxis.max = advancedSpectrumAnalyzerPoints.xmax;
-                    channelSelectionRow.dropdownIdx = advancedSpectrumAnalyzerPoints.channel;
-                    advancedSpectrumAnalyzerPoints.fill_series(line);
                 }
             }
         }

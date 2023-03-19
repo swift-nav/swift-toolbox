@@ -38,6 +38,51 @@ Item {
 
     TrackingSkyPlotPoints {
         id: trackingSkyPlotPoints
+
+        function update() {
+            if (!trackingSkyPlotTab.visible)
+                return;
+            let labels = trackingSkyPlotPoints.labels;
+            if (all_series.length < labels.length) {
+                let tsp = Constants.trackingSkyPlot;
+                for (var i = all_series.length; i < labels.length; i++) {
+                    var series = trackingSkyPlotChart.createSeries(ChartView.SeriesTypeScatter, tsp.scatterLabels[i], axisAngular, axisRadial);
+                    series.color = tsp.colors[i];
+                    series.markerSize = tsp.markerSize;
+                    series.useOpenGL = Globals.useOpenGL;
+                    trackingSkyPlotPoints.addSeries(series);
+                }
+            }
+            trackingSkyPlotPoints.fill_all_series();
+            if (polarChartWidthChanging) {
+                polarChartWidthChanging = false;
+                return;
+            }
+            for (var idx in labels) {
+                let seriesEntry = all_series[idx];
+                if (!seriesEntry.visible)
+                    continue;
+                if (labelsVisible) {
+                    const lbl = labels[idx];
+                    for (var jdx in lbl) {
+                        var pose = trackingSkyPlotChart.mapToPosition(seriesEntry.at(jdx), seriesEntry);
+                        let qmlStr = `
+                        import QtQuick.Controls;
+                        Label {
+                            color: 'black'
+                            text: '` + labels[idx][jdx] + `'
+                            visible: !polarChartWidthChanging
+                            width: 20
+                            height: 20
+                            x: ` + pose.x + `
+                            y: ` + pose.y + `
+                        }`;
+                        var obj = Qt.createQmlObject(qmlStr, trackingSkyPlotChart, lbl[jdx]);
+                        obj.destroy(Utils.hzToMilliseconds(Constants.staticTimerSlowIntervalRate));
+                    }
+                }
+            }
+        }
     }
 
     ColumnLayout {
@@ -257,59 +302,6 @@ Item {
                     onCheckedChanged: {
                         modelData.visible = checked;
                         updateTimer.restart();
-                    }
-                }
-            }
-        }
-    }
-
-    Timer {
-        id: updateTimer
-
-        interval: Utils.hzToMilliseconds(Constants.staticTimerSlowIntervalRate)
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: {
-            if (!trackingSkyPlotTab.visible)
-                return;
-            let labels = trackingSkyPlotPoints.labels;
-            if (all_series.length < labels.length) {
-                let tsp = Constants.trackingSkyPlot;
-                for (var i = all_series.length; i < labels.length; i++) {
-                    var series = trackingSkyPlotChart.createSeries(ChartView.SeriesTypeScatter, tsp.scatterLabels[i], axisAngular, axisRadial);
-                    series.color = tsp.colors[i];
-                    series.markerSize = tsp.markerSize;
-                    series.useOpenGL = Globals.useOpenGL;
-                    trackingSkyPlotPoints.addSeries(series);
-                }
-            }
-            trackingSkyPlotPoints.fill_all_series();
-            if (polarChartWidthChanging) {
-                polarChartWidthChanging = false;
-                return;
-            }
-            for (var idx in labels) {
-                let seriesEntry = all_series[idx];
-                if (!seriesEntry.visible)
-                    continue;
-                if (labelsVisible) {
-                    const lbl = labels[idx];
-                    for (var jdx in lbl) {
-                        var pose = trackingSkyPlotChart.mapToPosition(seriesEntry.at(jdx), seriesEntry);
-                        let qmlStr = `
-                        import QtQuick.Controls;
-                        Label {
-                            color: 'black'
-                            text: '` + labels[idx][jdx] + `'
-                            visible: !polarChartWidthChanging
-                            width: 20
-                            height: 20
-                            x: ` + pose.x + `
-                            y: ` + pose.y + `
-                        }`;
-                        var obj = Qt.createQmlObject(qmlStr, trackingSkyPlotChart, lbl[jdx]);
-                        obj.destroy(Utils.hzToMilliseconds(Constants.staticTimerSlowIntervalRate));
                     }
                 }
             }

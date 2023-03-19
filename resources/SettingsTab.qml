@@ -47,13 +47,8 @@ MainTab {
 
     SettingsTabData {
         id: settingsTabData
-    }
 
-    Timer {
-        interval: Utils.hzToMilliseconds(Constants.staticTimerIntervalRate)
-        running: true
-        repeat: true
-        onTriggered: {
+        function update() {
             settings_tab_model.fill_data(settingsTabData);
             if (settingsTabData.notification !== "") {
                 settingsNotification.text = settingsTabData.notification;

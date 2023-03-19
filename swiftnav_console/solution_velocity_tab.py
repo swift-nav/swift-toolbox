@@ -66,6 +66,7 @@ class SolutionVelocityPoints(QObject):
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:
         self.solution_velocity = SOLUTION_VELOCITY_TAB[0]
+        self.update()
 
     def get_valid(self) -> bool:
         """Getter for _valid.

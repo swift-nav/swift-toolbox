@@ -67,6 +67,7 @@ class FusionStatusFlagsData(QObject):
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:
         self.fusion_status_flags = FUSION_STATUS_FLAGS[0]
+        self.update()
 
     def get_gnsspos(self) -> str:
         return self._gnsspos

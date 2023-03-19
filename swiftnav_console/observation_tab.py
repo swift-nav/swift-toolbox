@@ -132,6 +132,7 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
             self._observation_tab = REMOTE_OBSERVATION_TAB[0]
         else:
             self._observation_tab = LOCAL_OBSERVATION_TAB[0]
+        self.update()
 
     def get_codes(self) -> List[List[str]]:
         return [entry["prn"].code for entry in self._observation_tab[Keys.ROWS]]

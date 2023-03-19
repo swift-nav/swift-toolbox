@@ -65,6 +65,7 @@ class AdvancedSystemMonitorData(QObject):  # pylint: disable=too-many-instance-a
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:
         self.advanced_system_monitor_tab = ADVANCED_SYSTEM_MONITOR_TAB[0]
+        self.update()
 
     def get_threads_table(self) -> List[List[str]]:
         """Getter for _threads_table."""

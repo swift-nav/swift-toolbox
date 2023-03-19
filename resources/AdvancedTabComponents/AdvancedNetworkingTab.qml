@@ -32,6 +32,32 @@ Item {
 
     AdvancedNetworkingData {
         id: advancedNetworkingData
+
+        function update() {
+            if (!advancedTab.visible)
+                return;
+            advanced_networking_model.fill_console_points(advancedNetworkingData);
+            if (advancedNetworkingData.running) {
+                messageBroadcaster.messageTypeSelectionEnabled = false;
+                messageBroadcaster.ipAddressInputEnabled = false;
+                messageBroadcaster.portInputEnabled = false;
+                messageBroadcaster.startEnabled = false;
+                messageBroadcaster.stopEnabled = true;
+            } else {
+                messageBroadcaster.messageTypeSelectionEnabled = true;
+                messageBroadcaster.ipAddressInputEnabled = true;
+                messageBroadcaster.portInputEnabled = true;
+                messageBroadcaster.startEnabled = true;
+                messageBroadcaster.stopEnabled = false;
+            }
+            if (!messageBroadcaster.ipAddressEditing)
+                messageBroadcaster.ip_address = advancedNetworkingData.ip_address;
+            if (!messageBroadcaster.portEditing)
+                messageBroadcaster.port = advancedNetworkingData.port;
+            if (!advancedNetworkingData.network_info.length)
+                return;
+            networkInfoTable.entries = advancedNetworkingData.network_info;
+        }
     }
 
     ColumnLayout {
@@ -124,37 +150,6 @@ Item {
                     }
                 }
             }
-        }
-    }
-
-    Timer {
-        interval: Utils.hzToMilliseconds(Constants.staticTimerSlowIntervalRate)
-        running: true
-        repeat: true
-        onTriggered: {
-            if (!advancedTab.visible)
-                return;
-            advanced_networking_model.fill_console_points(advancedNetworkingData);
-            if (advancedNetworkingData.running) {
-                messageBroadcaster.messageTypeSelectionEnabled = false;
-                messageBroadcaster.ipAddressInputEnabled = false;
-                messageBroadcaster.portInputEnabled = false;
-                messageBroadcaster.startEnabled = false;
-                messageBroadcaster.stopEnabled = true;
-            } else {
-                messageBroadcaster.messageTypeSelectionEnabled = true;
-                messageBroadcaster.ipAddressInputEnabled = true;
-                messageBroadcaster.portInputEnabled = true;
-                messageBroadcaster.startEnabled = true;
-                messageBroadcaster.stopEnabled = false;
-            }
-            if (!messageBroadcaster.ipAddressEditing)
-                messageBroadcaster.ip_address = advancedNetworkingData.ip_address;
-            if (!messageBroadcaster.portEditing)
-                messageBroadcaster.port = advancedNetworkingData.port;
-            if (!advancedNetworkingData.network_info.length)
-                return;
-            networkInfoTable.entries = advancedNetworkingData.network_info;
         }
     }
 }

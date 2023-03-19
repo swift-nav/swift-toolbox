@@ -49,6 +49,59 @@ Item {
 
     BaselinePlotPoints {
         id: baselinePlotPoints
+
+        function update() {
+            if (!baselinePlot.visible)
+                return;
+            baseline_plot_model.fill_console_points(baselinePlotPoints);
+            if (!baselinePlotPoints.points.length)
+                return;
+            baselinePlotArea.visible = true;
+            let _lines = null;
+            let bp = Constants.baselinePlot;
+            if (!scatters.length || !cur_scatters.length)
+                [scatters, cur_scatters, _lines] = SolutionPlotLoop.setupScatterSeries(baselinePlotChart, Constants, Globals, baselinePlotXAxis, baselinePlotYAxis, bp.legendLabels, bp.colors);
+            baselinePlotPoints.fill_series([scatters, cur_scatters]);
+            let point = SolutionPlotLoop.getCurSolution(baselinePlotPoints.cur_points);
+            if (point)
+                cur_solution = point;
+            if (center_solution)
+                baselinePlotChart.centerToSolution();
+            let hasData = false;
+            let bpPoints = baselinePlotPoints.points;
+            for (let idx in bpPoints) {
+                if (bpPoints[idx].length > 0) {
+                    hasData = true;
+                    break;
+                }
+            }
+            let new_n_min = bp.axesDefaultMin;
+            let new_n_max = bp.axesDefaultMax;
+            let new_e_min = bp.axesDefaultMin;
+            let new_e_max = bp.axesDefaultMax;
+            baselineZoomAllButton.enabled = hasData;
+            baselineCenterButton.enabled = hasData;
+            if (hasData) {
+                new_n_min = baselinePlotPoints.n_min;
+                new_n_max = baselinePlotPoints.n_max;
+                new_e_min = baselinePlotPoints.e_min;
+                new_e_max = baselinePlotPoints.e_max;
+            } else {
+                zoom_all = true;
+                center_solution = false;
+                baselineZoomAllButton.checked = true;
+                baselineCenterButton.checked = false;
+                baselinePlotChart.resetChartZoom();
+            }
+            if (orig_n_min != new_n_min || orig_n_max != new_n_max || orig_e_min != new_e_min || orig_e_max != new_e_max) {
+                orig_n_min = new_n_min;
+                orig_n_max = new_n_max;
+                orig_e_min = new_e_min;
+                orig_e_max = new_e_max;
+                if (zoom_all)
+                    baselinePlotChart.resetChartZoom();
+            }
+        }
     }
 
     ColumnLayout {
@@ -337,64 +390,6 @@ Item {
                 XYPoint {
                     x: 1
                     y: 1
-                }
-            }
-
-            Timer {
-                interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
-                running: true
-                repeat: true
-                onTriggered: {
-                    if (!baselinePlot.visible)
-                        return;
-                    baseline_plot_model.fill_console_points(baselinePlotPoints);
-                    if (!baselinePlotPoints.points.length)
-                        return;
-                    baselinePlotArea.visible = true;
-                    let _lines = null;
-                    let bp = Constants.baselinePlot;
-                    if (!scatters.length || !cur_scatters.length)
-                        [scatters, cur_scatters, _lines] = SolutionPlotLoop.setupScatterSeries(baselinePlotChart, Constants, Globals, baselinePlotXAxis, baselinePlotYAxis, bp.legendLabels, bp.colors);
-                    baselinePlotPoints.fill_series([scatters, cur_scatters]);
-                    let point = SolutionPlotLoop.getCurSolution(baselinePlotPoints.cur_points);
-                    if (point)
-                        cur_solution = point;
-                    if (center_solution)
-                        baselinePlotChart.centerToSolution();
-                    let hasData = false;
-                    let bpPoints = baselinePlotPoints.points;
-                    for (let idx in bpPoints) {
-                        if (bpPoints[idx].length > 0) {
-                            hasData = true;
-                            break;
-                        }
-                    }
-                    let new_n_min = bp.axesDefaultMin;
-                    let new_n_max = bp.axesDefaultMax;
-                    let new_e_min = bp.axesDefaultMin;
-                    let new_e_max = bp.axesDefaultMax;
-                    baselineZoomAllButton.enabled = hasData;
-                    baselineCenterButton.enabled = hasData;
-                    if (hasData) {
-                        new_n_min = baselinePlotPoints.n_min;
-                        new_n_max = baselinePlotPoints.n_max;
-                        new_e_min = baselinePlotPoints.e_min;
-                        new_e_max = baselinePlotPoints.e_max;
-                    } else {
-                        zoom_all = true;
-                        center_solution = false;
-                        baselineZoomAllButton.checked = true;
-                        baselineCenterButton.checked = false;
-                        baselinePlotChart.resetChartZoom();
-                    }
-                    if (orig_n_min != new_n_min || orig_n_max != new_n_max || orig_e_min != new_e_min || orig_e_max != new_e_max) {
-                        orig_n_min = new_n_min;
-                        orig_n_max = new_n_max;
-                        orig_e_min = new_e_min;
-                        orig_e_max = new_e_max;
-                        if (zoom_all)
-                            baselinePlotChart.resetChartZoom();
-                    }
                 }
             }
         }

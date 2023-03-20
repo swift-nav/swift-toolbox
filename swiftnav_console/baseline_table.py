@@ -57,7 +57,7 @@ class BaselineTableEntries(QObject):
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:
         self.baseline_table = BASELINE_TABLE[0]
-        self.update()
+        self.update()  # type: ignore
 
     def get_entries(self) -> List[List[str]]:
         """Getter for _entries."""

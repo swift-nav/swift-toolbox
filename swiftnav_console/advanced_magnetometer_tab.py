@@ -61,7 +61,7 @@ class AdvancedMagnetometerPoints(QObject):
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:
         self.advanced_magnetometer_tab = ADVANCED_MAGNETOMETER_TAB[0]
-        self.update()
+        self.update()  # type: ignore
 
     def get_ymin(self) -> float:
         """Getter for _ymin."""

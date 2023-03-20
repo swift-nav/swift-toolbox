@@ -157,7 +157,6 @@ function syncLayers() {
  * @param center {[lng: number, lat: number]}
  * @param rX horizontal radius in kilometers of ellipse
  * @param rY vertical radius in kilometers of ellipse
- * @param points optional number of points to render ellipse, higher for smoothness
  * @return {{geometry: {coordinates: [][], type: string}, type: string}}
  */
 function createGeoJsonEllipse(center, rX, rY) {

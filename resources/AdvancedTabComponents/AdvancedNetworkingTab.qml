@@ -36,7 +36,7 @@ Item {
         function update() {
             advanced_networking_model.fill_console_points(advancedNetworkingData);
             let isRunning = advancedNetworkingData.running;
-            messageBroadcaster.messageTypeSelectionEnabled = !isRuning;
+            messageBroadcaster.messageTypeSelectionEnabled = !isRunning;
             messageBroadcaster.ipAddressInputEnabled = !isRunning;
             messageBroadcaster.portInputEnabled = !isRunning;
             messageBroadcaster.startEnabled = !isRunning;

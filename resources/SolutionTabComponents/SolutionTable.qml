@@ -40,6 +40,8 @@ Item {
         id: solutionTableEntries
 
         function update() {
+            if (!solutionTab.visible)
+                return;
             solution_table_model.fill_console_points(solutionTableEntries);
             if (!solutionTableEntries.entries.length)
                 return;

@@ -34,22 +34,13 @@ Item {
         id: advancedNetworkingData
 
         function update() {
-            if (!advancedTab.visible)
-                return;
             advanced_networking_model.fill_console_points(advancedNetworkingData);
-            if (advancedNetworkingData.running) {
-                messageBroadcaster.messageTypeSelectionEnabled = false;
-                messageBroadcaster.ipAddressInputEnabled = false;
-                messageBroadcaster.portInputEnabled = false;
-                messageBroadcaster.startEnabled = false;
-                messageBroadcaster.stopEnabled = true;
-            } else {
-                messageBroadcaster.messageTypeSelectionEnabled = true;
-                messageBroadcaster.ipAddressInputEnabled = true;
-                messageBroadcaster.portInputEnabled = true;
-                messageBroadcaster.startEnabled = true;
-                messageBroadcaster.stopEnabled = false;
-            }
+            let isRunning = advancedNetworkingData.running;
+            messageBroadcaster.messageTypeSelectionEnabled = !isRuning;
+            messageBroadcaster.ipAddressInputEnabled = !isRunning;
+            messageBroadcaster.portInputEnabled = !isRunning;
+            messageBroadcaster.startEnabled = !isRunning;
+            messageBroadcaster.stopEnabled = isRunning;
             if (!messageBroadcaster.ipAddressEditing)
                 messageBroadcaster.ip_address = advancedNetworkingData.ip_address;
             if (!messageBroadcaster.portEditing)

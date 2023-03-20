@@ -51,8 +51,6 @@ Item {
         id: baselinePlotPoints
 
         function update() {
-            if (!baselinePlot.visible)
-                return;
             baseline_plot_model.fill_console_points(baselinePlotPoints);
             if (!baselinePlotPoints.points.length)
                 return;

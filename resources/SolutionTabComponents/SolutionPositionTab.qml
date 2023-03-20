@@ -53,8 +53,6 @@ Item {
         id: solutionPositionPoints
 
         function update() {
-            if (!solutionPositionTab.visible)
-                return;
             solution_position_model.fill_console_points(solutionPositionPoints);
             if (!solutionPositionPoints.points.length)
                 return;

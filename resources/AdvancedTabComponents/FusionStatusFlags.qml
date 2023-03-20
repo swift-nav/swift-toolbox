@@ -44,113 +44,45 @@ Item {
     FusionStatusFlagsData {
         id: fusionStatusFlagsData
 
+        function updateStatus(status, unknown, warning, ok) {
+            unknown.visible = status == "UNKNOWN";
+            warning.visible = status != "UNKNOWN" && status == "WARNING";
+            ok.visible = status != "UNKNOWN" && status != "WARNING";
+        }
+
         function update() {
-            if (!advancedTab.visible)
-                return;
             fusion_engine_flags_model.fill_console_points(fusionStatusFlagsData);
             if (!fusionStatusFlagsData.gnsspos)
                 return;
             fusionStatusFlagsArea.visible = true;
             var gnsspos = fusionStatusFlagsData.gnsspos;
             if (gnsspos != last_gnsspos) {
-                if (gnsspos == "UNKNOWN") {
-                    gnssposUnknown.visible = true;
-                    gnssposWarning.visible = false;
-                    gnssposOk.visible = false;
-                } else if (gnsspos == "WARNING") {
-                    gnssposUnknown.visible = false;
-                    gnssposWarning.visible = true;
-                    gnssposOk.visible = false;
-                } else {
-                    gnssposUnknown.visible = false;
-                    gnssposWarning.visible = false;
-                    gnssposOk.visible = true;
-                }
+                updateStatus(gnsspos, gnssposUnknown, gnssposWarning, gnssposOk)
                 last_gnsspos = gnsspos;
             }
             var gnssvel = fusionStatusFlagsData.gnssvel;
             if (gnssvel != last_gnssvel) {
-                if (gnssvel == "UNKNOWN") {
-                    gnssvelUnknown.visible = true;
-                    gnssvelWarning.visible = false;
-                    gnssvelOk.visible = false;
-                } else if (gnssvel == "WARNING") {
-                    gnssvelUnknown.visible = false;
-                    gnssvelWarning.visible = true;
-                    gnssvelOk.visible = false;
-                } else {
-                    gnssvelUnknown.visible = false;
-                    gnssvelWarning.visible = false;
-                    gnssvelOk.visible = true;
-                }
+                updateStatus(gnssvel, gnssvelUnknown, gnssvelWarning, gnssvelOk)
                 last_gnssvel = gnssvel;
             }
             var wheelticks = fusionStatusFlagsData.wheelticks;
             if (wheelticks != last_wheelticks) {
-                if (wheelticks == "UNKNOWN") {
-                    wheelticksUnknown.visible = true;
-                    wheelticksWarning.visible = false;
-                    wheelticksOk.visible = false;
-                } else if (wheelticks == "WARNING") {
-                    wheelticksUnknown.visible = false;
-                    wheelticksWarning.visible = true;
-                    wheelticksOk.visible = false;
-                } else {
-                    wheelticksUnknown.visible = false;
-                    wheelticksWarning.visible = false;
-                    wheelticksOk.visible = true;
-                }
+                updateStatus(wheelticks, wheelticksUnknown, wheelticksWarning, wheelticksOk)
                 last_wheelticks = wheelticks;
             }
             var speed = fusionStatusFlagsData.speed;
             if (speed != last_speed) {
-                if (speed == "UNKNOWN") {
-                    speedUnknown.visible = true;
-                    speedWarning.visible = false;
-                    speedOk.visible = false;
-                } else if (speed == "WARNING") {
-                    speedUnknown.visible = false;
-                    speedWarning.visible = true;
-                    speedOk.visible = false;
-                } else {
-                    speedUnknown.visible = false;
-                    speedWarning.visible = false;
-                    speedOk.visible = true;
-                }
+                updateStatus(speed, speedUnknown, speedWarning, speedOk)
                 last_speed = speed;
             }
             var nhc = fusionStatusFlagsData.nhc;
             if (nhc != last_nhc) {
-                if (nhc == "UNKNOWN") {
-                    nhcUnknown.visible = true;
-                    nhcWarning.visible = false;
-                    nhcOk.visible = false;
-                } else if (nhc == "WARNING") {
-                    nhcUnknown.visible = false;
-                    nhcWarning.visible = true;
-                    nhcOk.visible = false;
-                } else {
-                    nhcUnknown.visible = false;
-                    nhcWarning.visible = false;
-                    nhcOk.visible = true;
-                }
+                updateStatus(nhc, nhcUnknown, nhcWarning, nhcOk)
                 last_nhc = nhc;
             }
             var zerovel = fusionStatusFlagsData.zerovel;
             if (zerovel != last_zerovel) {
-                if (zerovel == "UNKNOWN") {
-                    zerovelUnknown.visible = true;
-                    zerovelWarning.visible = false;
-                    zerovelOk.visible = false;
-                } else if (zerovel == "WARNING") {
-                    zerovelUnknown.visible = false;
-                    zerovelWarning.visible = true;
-                    zerovelOk.visible = false;
-                } else {
-                    zerovelUnknown.visible = false;
-                    zerovelWarning.visible = false;
-                    zerovelOk.visible = true;
-                }
+                updateStatus(zerovel, zerovelUnknown, zerovelWarning, zerovelOk)
                 last_zerovel = zerovel;
             }
         }

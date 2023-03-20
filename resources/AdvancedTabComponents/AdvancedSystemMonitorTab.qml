@@ -34,8 +34,6 @@ Item {
         id: advancedSystemMonitorData
 
         function update() {
-            if (!advancedTab.visible)
-                return;
             advanced_system_monitor_model.fill_console_points(advancedSystemMonitorData);
             if (!advancedSystemMonitorData.threads_table.length)
                 return;

@@ -40,8 +40,6 @@ Item {
         id: trackingSkyPlotPoints
 
         function update() {
-            if (!trackingSkyPlotTab.visible)
-                return;
             let labels = trackingSkyPlotPoints.labels;
             if (all_series.length < labels.length) {
                 let tsp = Constants.trackingSkyPlot;

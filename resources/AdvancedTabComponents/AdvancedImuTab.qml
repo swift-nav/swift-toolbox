@@ -37,8 +37,6 @@ Item {
         id: advancedImuPoints
 
         function update() {
-            if (!advancedImuTab.visible)
-                return;
             advanced_imu_model.fill_console_points(advancedImuPoints);
             if (!advancedImuPoints.points.length)
                 return;

@@ -37,8 +37,6 @@ Item {
         id: advancedMagnetometerPoints
 
         function update() {
-            if (!advancedMagnetometerTab.visible)
-                return;
             advanced_magnetometer_model.fill_console_points(advancedMagnetometerPoints);
             let magnetometerPoints = advancedMagnetometerPoints.points;
             if (!magnetometerPoints.length)

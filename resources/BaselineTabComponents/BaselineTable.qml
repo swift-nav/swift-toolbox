@@ -52,8 +52,6 @@ Item {
         id: baselineTableEntries
 
         function update() {
-            if (!baselineTab.visible)
-                return;
             baseline_table_model.fill_console_points(baselineTableEntries);
             if (!baselineTableEntries.entries.length)
                 return;

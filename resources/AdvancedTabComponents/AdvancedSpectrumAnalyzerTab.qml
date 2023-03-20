@@ -37,8 +37,6 @@ Item {
         id: advancedSpectrumAnalyzerPoints
 
         function update() {
-            if (!advancedSpectrumAnalyzerTab.visible)
-                return;
             advanced_spectrum_analyzer_model.fill_console_points(advancedSpectrumAnalyzerPoints);
             if (!advancedSpectrumAnalyzerPoints.points.length)
                 return;

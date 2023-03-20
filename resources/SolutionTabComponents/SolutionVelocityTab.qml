@@ -40,8 +40,6 @@ Item {
         id: solutionVelocityPoints
 
         function update() {
-            if (!solutionVelocityTab.visible)
-                return;
             solution_velocity_model.fill_console_points(solutionVelocityPoints);
             if (!solutionVelocityPoints.points.length)
                 return;

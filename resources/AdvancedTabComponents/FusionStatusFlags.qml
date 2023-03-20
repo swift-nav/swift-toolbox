@@ -57,32 +57,32 @@ Item {
             fusionStatusFlagsArea.visible = true;
             var gnsspos = fusionStatusFlagsData.gnsspos;
             if (gnsspos != last_gnsspos) {
-                updateStatus(gnsspos, gnssposUnknown, gnssposWarning, gnssposOk)
+                updateStatus(gnsspos, gnssposUnknown, gnssposWarning, gnssposOk);
                 last_gnsspos = gnsspos;
             }
             var gnssvel = fusionStatusFlagsData.gnssvel;
             if (gnssvel != last_gnssvel) {
-                updateStatus(gnssvel, gnssvelUnknown, gnssvelWarning, gnssvelOk)
+                updateStatus(gnssvel, gnssvelUnknown, gnssvelWarning, gnssvelOk);
                 last_gnssvel = gnssvel;
             }
             var wheelticks = fusionStatusFlagsData.wheelticks;
             if (wheelticks != last_wheelticks) {
-                updateStatus(wheelticks, wheelticksUnknown, wheelticksWarning, wheelticksOk)
+                updateStatus(wheelticks, wheelticksUnknown, wheelticksWarning, wheelticksOk);
                 last_wheelticks = wheelticks;
             }
             var speed = fusionStatusFlagsData.speed;
             if (speed != last_speed) {
-                updateStatus(speed, speedUnknown, speedWarning, speedOk)
+                updateStatus(speed, speedUnknown, speedWarning, speedOk);
                 last_speed = speed;
             }
             var nhc = fusionStatusFlagsData.nhc;
             if (nhc != last_nhc) {
-                updateStatus(nhc, nhcUnknown, nhcWarning, nhcOk)
+                updateStatus(nhc, nhcUnknown, nhcWarning, nhcOk);
                 last_nhc = nhc;
             }
             var zerovel = fusionStatusFlagsData.zerovel;
             if (zerovel != last_zerovel) {
-                updateStatus(zerovel, zerovelUnknown, zerovelWarning, zerovelOk)
+                updateStatus(zerovel, zerovelUnknown, zerovelWarning, zerovelOk);
                 last_zerovel = zerovel;
             }
         }

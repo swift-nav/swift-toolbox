@@ -38,7 +38,7 @@ Item {
     property bool polarChartWidthChanging: false
 
     function clearLabels() {
-        labelObjs.forEach((labelObj) => labelObj.destroy());
+        labelObjs.forEach(labelObj => labelObj.destroy());
         labelObjs = [];
     }
 
@@ -293,7 +293,7 @@ Item {
 
                 checked: false
                 text: "Show Labels"
-                onCheckedChanged: clearLabels();
+                onCheckedChanged: clearLabels()
             }
 
             Repeater {
@@ -302,7 +302,7 @@ Item {
                 SmallCheckBox {
                     checked: true
                     text: modelData.name
-                    onCheckedChanged: modelData.visible = checked;
+                    onCheckedChanged: modelData.visible = checked
                 }
             }
         }

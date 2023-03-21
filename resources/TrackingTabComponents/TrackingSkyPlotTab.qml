@@ -33,8 +33,14 @@ Item {
 
     property alias all_series: trackingSkyPlotPoints.all_series
     property var series: []
+    property var labelObjs: []
     property bool labelsVisible: labelsVisibleCheckBox.checked
     property bool polarChartWidthChanging: false
+
+    function clearLabels() {
+        labelObjs.forEach((labelObj) => labelObj.destroy());
+        labelObjs = [];
+    }
 
     TrackingSkyPlotPoints {
         id: trackingSkyPlotPoints
@@ -56,11 +62,12 @@ Item {
                 polarChartWidthChanging = false;
                 return;
             }
-            for (var idx in labels) {
-                let seriesEntry = all_series[idx];
-                if (!seriesEntry.visible)
-                    continue;
-                if (labelsVisible) {
+            if (labelsVisible) {
+                clearLabels();
+                for (var idx in labels) {
+                    let seriesEntry = all_series[idx];
+                    if (!seriesEntry.visible)
+                        continue;
                     const lbl = labels[idx];
                     for (var jdx in lbl) {
                         var pose = trackingSkyPlotChart.mapToPosition(seriesEntry.at(jdx), seriesEntry);
@@ -76,7 +83,7 @@ Item {
                             y: ` + pose.y + `
                         }`;
                         var obj = Qt.createQmlObject(qmlStr, trackingSkyPlotChart, lbl[jdx]);
-                        obj.destroy(Utils.hzToMilliseconds(Constants.staticTimerSlowIntervalRate));
+                        labelObjs.push(obj);
                     }
                 }
             }
@@ -286,9 +293,7 @@ Item {
 
                 checked: false
                 text: "Show Labels"
-                onCheckedChanged: {
-                    updateTimer.restart();
-                }
+                onCheckedChanged: clearLabels();
             }
 
             Repeater {
@@ -297,10 +302,7 @@ Item {
                 SmallCheckBox {
                     checked: true
                     text: modelData.name
-                    onCheckedChanged: {
-                        modelData.visible = checked;
-                        updateTimer.restart();
-                    }
+                    onCheckedChanged: modelData.visible = checked;
                 }
             }
         }

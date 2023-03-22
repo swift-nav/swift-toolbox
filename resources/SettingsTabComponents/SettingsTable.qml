@@ -81,9 +81,7 @@ Rectangle {
     }
 
     onVisibleChanged: {
-        if (visible)
-            clearTableModel();
-        else
+        if (!visible)
             selectedRowIdx = -1;
     }
     Keys.onUpPressed: {

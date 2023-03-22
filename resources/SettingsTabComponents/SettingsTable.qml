@@ -121,6 +121,46 @@ Rectangle {
 
     SettingsTableEntries {
         id: settingsTableEntries
+
+        function update() {
+            settings_table_model.fill_console_points(settingsTableEntries);
+            var entries = settingsTableEntries.entries;
+            if (!entries.length) {
+                settingsHealthy = false;
+                return;
+            }
+            settingsHealthy = true;
+            if (lastShowExpert != showExpert) {
+                tableView._currentSelectedIndex = -1;
+                tableView.model.clear();
+                rowOffsets = {};
+                lastShowExpert = showExpert;
+            }
+            if (entries.length != lastEntriesLen) {
+                lastEntriesLen = entries.length;
+                tableView.model.clear();
+            }
+            var offset = 0;
+            entries.forEach((entry, idx, entries) => {
+                    var new_row;
+                    if (!isHeader(entry)) {
+                        if (!showExpert && entry.expert === true) {
+                            offset++;
+                            return;
+                        }
+                        new_row = row(entry);
+                    } else {
+                        if (!showExpert && !groupHasNonExpertSetting(entries, idx)) {
+                            offset++;
+                            return;
+                        }
+                        new_row = headerRow(entry);
+                    }
+                    rowOffsets[idx - offset] = idx;
+                    tableView.model.setRow(idx - offset, new_row);
+                });
+            tableView.forceLayout();
+        }
     }
 
     ColumnLayout {
@@ -255,53 +295,6 @@ Rectangle {
                         }
                     }
                 }
-            }
-        }
-
-        Timer {
-            interval: Utils.hzToMilliseconds(Constants.staticTableTimerIntervalRate)
-            running: parent.visible
-            repeat: true
-            onTriggered: {
-                settings_table_model.fill_console_points(settingsTableEntries);
-                var entries = settingsTableEntries.entries;
-                if (!entries.length) {
-                    settingsHealthy = false;
-                    return;
-                }
-                settingsHealthy = true;
-                if (lastShowExpert != showExpert) {
-                    tableView._currentSelectedIndex = -1;
-                    tableView.model.clear();
-                    rowOffsets = {};
-                    lastShowExpert = showExpert;
-                }
-                if (entries.length != lastEntriesLen) {
-                    lastEntriesLen = entries.length;
-                    tableView.model.clear();
-                }
-                var offset = 0;
-                entries.forEach((entry, idx, entries) => {
-                        var new_row;
-                        if (!isHeader(entry)) {
-                            if (showExpert || entry.expert === false) {
-                                new_row = row(entry);
-                            } else {
-                                offset++;
-                                return;
-                            }
-                        } else {
-                            if (showExpert || groupHasNonExpertSetting(entries, idx)) {
-                                new_row = headerRow(entry);
-                            } else {
-                                offset++;
-                                return;
-                            }
-                        }
-                        rowOffsets[idx - offset] = idx;
-                        tableView.model.setRow(idx - offset, new_row);
-                    });
-                tableView.forceLayout();
             }
         }
     }

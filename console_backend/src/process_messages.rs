@@ -43,7 +43,8 @@ use crate::log_panel;
 use crate::shared_state::{EventType, SharedState, TabName};
 use crate::tabs::{settings_tab, update_tab};
 use crate::types::{
-    BaselineNED, Dops, GpsTime, MsgSender, ObservationMsg, PosLLH, Specan, UartState, VelNED,
+    BaselineNED, Dops, GpsTime, MsgSender, ObservationMsg, PosLLH, ProtectionLevel, Specan,
+    UartState, VelNED,
 };
 use crate::Tabs;
 
@@ -219,6 +220,9 @@ fn register_events(link: sbp::link::Link<Tabs>) {
     });
     link.register(|tabs: &Tabs, msg: Dops| {
         tabs.solution_position.lock().unwrap().handle_dops(msg);
+    });
+    link.register(|tabs: &Tabs, msg: ProtectionLevel| {
+        tabs.solution_position.lock().unwrap().handle_prot_lvl(msg);
     });
     link.register(|tabs: &Tabs, msg: GpsTime| {
         tabs.baseline.lock().unwrap().handle_gps_time(msg.clone());

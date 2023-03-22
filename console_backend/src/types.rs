@@ -42,7 +42,8 @@ use sbp::link::Event;
 use sbp::messages::{
     navigation::{
         MsgBaselineNed, MsgBaselineNedDepA, MsgDops, MsgDopsDepA, MsgGpsTime, MsgGpsTimeDepA,
-        MsgPosLlh, MsgPosLlhDepA, MsgVelNed, MsgVelNedDepA,
+        MsgPosLlh, MsgPosLlhDepA, MsgProtectionLevel, MsgProtectionLevelDepA, MsgVelNed,
+        MsgVelNedDepA,
     },
     observation::{
         MsgObs, MsgObsDepB, MsgObsDepC, MsgOsr, PackedObsContent, PackedObsContentDepB,
@@ -1196,6 +1197,55 @@ impl Event for PosLLH {
         match msg {
             Sbp::MsgPosLlh(m) => PosLLH::MsgPosLlh(m),
             Sbp::MsgPosLlhDepA(m) => PosLLH::MsgPosLlhDepA(m),
+            _ => unreachable!(),
+        }
+    }
+}
+
+/// Struct with shared fields for various Protection Level Message types.
+#[allow(clippy::upper_case_acronyms)]
+pub struct ProtectionLevelFields {
+    pub lat: f64,
+    pub lon: f64,
+    pub hpl: u16,
+}
+
+impl ProtectionLevelFields {
+    pub fn new(lat: f64, lon: f64, hpl: u16) -> Self {
+        Self { lat, lon, hpl }
+    }
+}
+
+/// Enum wrapping around various Protection Level Message types.
+#[derive(Debug, Clone)]
+#[allow(clippy::upper_case_acronyms)]
+pub enum ProtectionLevel {
+    MsgProtLvl(MsgProtectionLevel),
+    MsgProtLvlDepA(MsgProtectionLevelDepA),
+}
+
+impl ProtectionLevel {
+    /// Return protection level fields
+    pub fn fields(&self) -> ProtectionLevelFields {
+        match self {
+            Self::MsgProtLvl(MsgProtectionLevel { lat, lon, hpl, .. })
+            | Self::MsgProtLvlDepA(MsgProtectionLevelDepA { lat, lon, hpl, .. }) => {
+                ProtectionLevelFields::new(*lat, *lon, *hpl)
+            }
+        }
+    }
+}
+
+impl Event for ProtectionLevel {
+    const MESSAGE_TYPES: &'static [u16] = &[
+        MsgProtectionLevel::MESSAGE_TYPE,
+        MsgProtectionLevelDepA::MESSAGE_TYPE,
+    ];
+
+    fn from_sbp(msg: Sbp) -> Self {
+        match msg {
+            Sbp::MsgProtectionLevel(m) => Self::MsgProtLvl(m),
+            Sbp::MsgProtectionLevelDepA(m) => Self::MsgProtLvlDepA(m),
             _ => unreachable!(),
         }
     }

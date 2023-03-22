@@ -24,7 +24,11 @@ from PySide6.QtCore import QObject, Signal
 
 class SolutionMap(QObject):
     _instance: "SolutionMap"
+    # signal used to communicate (id, lat, lon, accuracy) points to map
     recvPos: "Signal"
+    # signal used to communicate (lat, lon, hpl) to map
+    protPos: "Signal"
+    # signal used to reset map when disconnected
     clearPos: "Signal"
 
     def __init__(self):
@@ -37,6 +41,10 @@ class SolutionMap(QObject):
         for idx, data in enumerate(status.curData):
             for pos in data:
                 cls._instance.recvPos.emit(idx, pos.x, pos.y, status.hAcc)
+
+    @classmethod
+    def send_prot_lvl(cls, status) -> None:
+        cls._instance.protPos.emit(status.lat, status.lon, status.hpl)
 
     @classmethod
     def clear(cls) -> None:

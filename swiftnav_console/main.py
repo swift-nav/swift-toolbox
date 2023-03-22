@@ -369,6 +369,8 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                 data[Keys.SOLUTION_LINE] = m.solutionPositionStatus.lineData
                 SolutionMap.send_pos(m.solutionPositionStatus)
                 SolutionPositionPoints.post_data_update(data)
+            elif m.which == Message.Union.SolutionProtectionLevel:
+                SolutionMap.send_prot_lvl(m.solutionProtectionLevel)
             elif m.which == Message.Union.SolutionTableStatus:
                 data = solution_table_update()
                 data[Keys.ENTRIES][:] = [[entry.key, entry.val] for entry in m.solutionTableStatus.data]
@@ -759,6 +761,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
 
     QLocale.setDefault(QLocale.c())
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
+    QtCore.QCoreApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_UseDesktopOpenGL)
     QtWebEngineQuick.initialize()
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon(":/images/icon.ico"))

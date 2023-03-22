@@ -32,7 +32,9 @@ use crate::output::{PosLLHLog, VelLog};
 use crate::piksi_tools_constants::EMPTY_STR;
 use crate::shared_state::SharedState;
 use crate::tabs::solution_tab::LatLonUnits;
-use crate::types::{Dops, GnssModes, GpsTime, PosLLH, RingBuffer, UtcDateTime, VelNED};
+use crate::types::{
+    Dops, GnssModes, GpsTime, PosLLH, ProtectionLevel, RingBuffer, UtcDateTime, VelNED,
+};
 use crate::utils::{date_conv::*, *};
 
 #[derive(Debug)]
@@ -418,6 +420,19 @@ impl SolutionPositionTab {
         } else {
             None
         };
+    }
+
+    pub fn handle_prot_lvl(&mut self, msg: ProtectionLevel) {
+        let fields = msg.fields();
+        // Send protection level
+        let mut builder = Builder::new_default();
+        let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
+        let mut solution_protection_level = msg.init_solution_protection_level();
+        solution_protection_level.set_lat(fields.lat);
+        solution_protection_level.set_lon(fields.lon);
+        solution_protection_level.set_hpl(fields.hpl);
+        self.client_sender
+            .send_data(serialize_capnproto_builder(builder));
     }
 
     /// Handle PosLLH / PosLLHDepA messages.

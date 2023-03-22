@@ -1,19 +1,22 @@
 import mapboxGlStyleSwitcher from 'https://cdn.skypack.dev/mapbox-gl-style-switcher';
 
 const lines = ["#FF0000", "#FF00FF", "#00FFFF", "#0000FF", "#00FF00", "#000000"];
+const LNG_KM = 111.320, LAT_KM = 110.574;
 
 function decode(r){var n=r,t=[0,10,13,34,38,92],e=new Uint8Array(1.75*n.length|0),f=0,o=0,a=0;function i(r){o|=(r<<=1)>>>a,8<=(a+=7)&&(e[f++]=o,o=r<<7-(a-=8)&255)}for(var u=0;u<n.length;u++){var c,d=n.charCodeAt(u);127<d?(7!=(c=d>>>8&7)&&i(t[c]),i(127&d)):i(d)}r=new Uint8Array(e,0,f);var s=new TextDecoder().decode(r);while (s.slice(-1)=="\x00") s=s.slice(0,-1); return s;}
 
 mapboxgl.accessToken = decode("@ACCESS_TOKEN@");
 var map = new mapboxgl.Map({
     container: 'map',
-    style: "mapbox://styles/mapbox/light-v11",
+    style: "mapbox://styles/mapbox/light-v11?optimize=true",
     center: [-122.486052, 37.830348],  // Initial focus coordinate
-    zoom: 16
+    zoom: 16,
+    performanceMetricsCollection: false,
 });
 
 var focusCurrent = false;
 var startMarker = null;
+var currentMarker = null;
 
 class FocusToggle {
     onAdd(map) {
@@ -43,6 +46,7 @@ map.addControl(new mapboxgl.NavigationControl());
 
 
 var data = [];
+var crumbCoords = [];
 
 function setupData() {
     data = [];
@@ -52,6 +56,7 @@ function setupData() {
             features: []
         });
     }
+    crumbCoords = [];
 }
 
 setupData();
@@ -73,34 +78,94 @@ function setupLayers() {
             source: `route${i}`,
             paint: {
                 'fill-color': lines[i],
-                'fill-opacity': 0.2
+                'fill-opacity': 0.3,
+                'fill-outline-color': '#000000'
             }
         });
     }
-}
-
-function syncLayers() {
-    for (let i = 0; i < lines.length; i++) {
-        map.getSource(`route${i}`).setData(data[i]);
+    if (map.getSource('prot') == null) {
+        map.addSource('prot', {
+            type: 'geojson',
+            cluster: false,
+            data: {
+                type: 'FeatureCollection',
+                features: []
+            }
+        })
+        map.addLayer({
+            id: 'prot',
+            type: 'fill',
+            source: 'prot',
+            paint: {
+                'fill-color': "#00FF00",
+                'fill-opacity': 0.5
+            }
+        });
+    }
+    if (map.getSource('breadcrumb') == null) {
+        map.addSource('breadcrumb', {
+            type: 'geojson',
+            data: {
+                type: 'Feature',
+                geometry: {
+                    type: "LineString",
+                    coordinates: []
+                }
+            }
+        })
+        map.addLayer({
+            id: 'breadcrumb',
+            type: 'line',
+            source: 'breadcrumb',
+            layout: {
+                'line-join': 'round',
+                'line-cap': 'round'
+            },
+            paint: {
+                'line-color': '#888',
+                'line-width': 1
+            }
+        })
     }
 }
 
-const LNG_KM = 111.320, LAT_KM = 110.574;
+function syncCrumbCoords(){
+    map.getSource('breadcrumb').setData({
+        type: 'Feature',
+        geometry: {
+            type: 'LineString',
+            coordinates: crumbCoords
+        }
+    })
+}
+
+function syncLayers() {
+    // sync route datas with stored points
+    for (let i = 0; i < lines.length; i++) {
+        map.getSource(`route${i}`).setData(data[i]);
+    }
+    // clear protection, since its only one point and temporary
+    map.getSource('prot').setData({
+        type: 'FeatureCollection',
+        features: []
+    });
+    syncCrumbCoords();
+}
 
 /**
  * Helper method to create elliptical geojson data
  * @param center {[lng: number, lat: number]}
  * @param rX horizontal radius in kilometers of ellipse
  * @param rY vertical radius in kilometers of ellipse
- * @param points optional number of points to render ellipse, higher for smoothness
  * @return {{geometry: {coordinates: [][], type: string}, type: string}}
  */
-function createGeoJsonEllipse(center, rX, rY, points = 32) {
+function createGeoJsonEllipse(center, rX, rY) {
     let coords = {latitude: center[1], longitude: center[0]};
     let ret = [];
     let dX = rX / (LNG_KM * Math.cos(coords.latitude * Math.PI / 180));
     let dY = rY / LAT_KM;
 
+    let points = 16;
     let theta, x, y;
     for (let i = 0; i < points; i++) {
         theta = (i / points) * (2 * Math.PI);
@@ -131,19 +196,37 @@ new QWebChannel(qt.webChannelTransport, (channel) => {
             startMarker.remove();
             startMarker = null;
         }
+        if (currentMarker) {
+            currentMarker.remove();
+            currentMarker = null;
+        }
     });
 
     chn.recvPos.connect((id, lat, lng, hAcc) => {
-        const pos = [lat, lng],
-            rX = hAcc / 1000;
+        const pos = [lat, lng], rX = hAcc / 1000;
         data[id].features.push(createGeoJsonEllipse(pos, rX, rX));
+        crumbCoords.push(pos);
         if (!map) return;
+        if (!currentMarker) currentMarker = new mapboxgl.Marker().setLngLat(pos).addTo(map);
+        else currentMarker.setLngLat(pos);
         if (!startMarker) {
             startMarker = new mapboxgl.Marker().setLngLat(pos).addTo(map);
             map.panTo(pos);
         } else if (focusCurrent) map.panTo(pos);
         let src = map.getSource(`route${id}`);
-        if (src != null) src.setData(data[id]);
+        if (src) src.setData(data[id]);
+
+        if (map.getSource('breadcrumb')) syncCrumbCoords();
+    })
+
+    chn.protPos.connect((lat, lng, hpl) => {
+        const pos = [lng, lat], rX = hpl / 100_000; // hpl in cm, convert to km
+        if (!map) return;
+        let src = map.getSource(`prot`);
+        if (src) src.setData({
+            type: 'FeatureCollection',
+            features: [createGeoJsonEllipse(pos, rX, rX)]
+        });
     })
 });
 

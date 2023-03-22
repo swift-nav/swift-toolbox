@@ -8,9 +8,10 @@ function decode(r){var n=r,t=[0,10,13,34,38,92],e=new Uint8Array(1.75*n.length|0
 mapboxgl.accessToken = decode("@ACCESS_TOKEN@");
 var map = new mapboxgl.Map({
     container: 'map',
-    style: "mapbox://styles/mapbox/light-v11",
+    style: "mapbox://styles/mapbox/light-v11?optimize=true",
     center: [-122.486052, 37.830348],  // Initial focus coordinate
-    zoom: 16
+    zoom: 16,
+    performanceMetricsCollection: false,
 });
 
 var focusCurrent = false;
@@ -156,15 +157,15 @@ function syncLayers() {
  * @param center {[lng: number, lat: number]}
  * @param rX horizontal radius in kilometers of ellipse
  * @param rY vertical radius in kilometers of ellipse
- * @param points optional number of points to render ellipse, higher for smoothness
  * @return {{geometry: {coordinates: [][], type: string}, type: string}}
  */
-function createGeoJsonEllipse(center, rX, rY, points = 32) {
+function createGeoJsonEllipse(center, rX, rY) {
     let coords = {latitude: center[1], longitude: center[0]};
     let ret = [];
     let dX = rX / (LNG_KM * Math.cos(coords.latitude * Math.PI / 180));
     let dY = rY / LAT_KM;
 
+    let points = 16;
     let theta, x, y;
     for (let i = 0; i < points; i++) {
         theta = (i / points) * (2 * Math.PI);

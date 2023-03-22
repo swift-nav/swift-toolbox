@@ -761,6 +761,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
 
     QLocale.setDefault(QLocale.c())
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
+    QtCore.QCoreApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_UseDesktopOpenGL)
     QtWebEngineQuick.initialize()
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon(":/images/icon.ico"))

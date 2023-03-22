@@ -306,6 +306,7 @@ impl SolutionPositionTab {
         let n = mm_to_m(n);
         let e = mm_to_m(e);
         let d = mm_to_m(d);
+        let t = speed;
         let mut tow = ms_to_sec(vel_ned_fields.tow);
         if let Some(nsec) = self.nsec {
             tow += ns_to_sec(nsec as f64);
@@ -347,10 +348,12 @@ impl SolutionPositionTab {
             self.table.insert(VEL_N, format!("{n: >8.4}"));
             self.table.insert(VEL_E, format!("{e: >8.4}"));
             self.table.insert(VEL_D, format!("{d: >8.4}"));
+            self.table.insert(VEL_TOTAL, format!("{t: >8.4}"));
         } else {
             self.table.insert(VEL_N, String::from(EMPTY_STR));
             self.table.insert(VEL_E, String::from(EMPTY_STR));
             self.table.insert(VEL_D, String::from(EMPTY_STR));
+            self.table.insert(VEL_TOTAL, String::from(EMPTY_STR));
         }
     }
 

@@ -186,6 +186,7 @@ pub(crate) const CORR_AGE_S: &str = "Corr. Age [s]";
 pub(crate) const VEL_N: &str = "Vel. N [m/s]";
 pub(crate) const VEL_E: &str = "Vel. E [m/s]";
 pub(crate) const VEL_D: &str = "Vel. D [m/s]";
+pub(crate) const VEL_TOTAL: &str = "Vel. Total [m/s]";
 pub(crate) const VEL_FLAGS: &str = "Vel. Flags";
 pub(crate) const PDOP: &str = "PDOP";
 pub(crate) const GDOP: &str = "GDOP";
@@ -226,6 +227,7 @@ pub(crate) const SOLUTION_TABLE_KEYS: &[&str] = &[
     VEL_N,
     VEL_E,
     VEL_D,
+    VEL_TOTAL,
     VEL_FLAGS,
     PDOP,
     GDOP,

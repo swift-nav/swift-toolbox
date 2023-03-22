@@ -86,7 +86,7 @@ class SettingsTabData(QObject):
         self.settings_import_status = SETTINGS_IMPORT_STATUS[0]
         self.settings_ins = SETTINGS_INS[0]
         self.settings_notification = SETTINGS_NOTIFICATION[0]
-        self.update()
+        self.update()  # type: ignore
 
     def get_import_status(self) -> str:
         return self._import_status

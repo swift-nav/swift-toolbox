@@ -365,7 +365,10 @@ Rectangle {
             anchors.centerIn: parent
             anchors.verticalCenterOffset: 5
             onEditingFinished: {
+                if (settingType === "float" || settingType === "double")
+                    text = text.replace(",", ".");
                 backend_request_broker.settings_write_request(settingGroup, settingName, text);
+                console.log(text);
             }
             validator: {
                 if (settingType === "integer")
@@ -404,7 +407,8 @@ Rectangle {
         }
     }
 
-    floatValidator: DoubleValidator {
+    floatValidator: RegularExpressionValidator {
+        regularExpression: /[-+]?[0-9]*[.,]?[0-9]+/
     }
 
     intValidator: IntValidator {

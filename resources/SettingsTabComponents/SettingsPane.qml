@@ -368,7 +368,6 @@ Rectangle {
                 if (settingType === "float" || settingType === "double")
                     text = text.replace(",", ".");
                 backend_request_broker.settings_write_request(settingGroup, settingName, text);
-                console.log(text);
             }
             validator: {
                 if (settingType === "integer")

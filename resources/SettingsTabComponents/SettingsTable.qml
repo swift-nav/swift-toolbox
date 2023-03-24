@@ -22,6 +22,7 @@
  ****************************************************************************/
 import "../Constants"
 import "../TableComponents"
+import "../BaseComponents"
 import Qt.labs.qmlmodels
 import QtCharts
 import QtQuick
@@ -227,6 +228,9 @@ Rectangle {
                     }
                 }
             }
+        }
+
+        SwiftLoader {
         }
 
         SwiftTableView {

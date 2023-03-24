@@ -66,8 +66,7 @@ TableView {
 
     ScrollBar.vertical: ScrollBar {
         id: _verticalScrollBar
-
-        policy: ScrollBar.AlwaysOn
+        width: 20
         onSizeChanged: {
             if (position + size > 1)
                 position = 1 - size;

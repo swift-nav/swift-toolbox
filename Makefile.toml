@@ -466,7 +466,10 @@ os = os_family
 if eq ${os} windows
   exec --fail-on-error magick convert -font arial -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
 else
-  exec --fail-on-error convert -font helvetica -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
+  output = exec convert -font helvetica -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
+  if not eq ${output.code} 0
+    exec --fail-on-error convert -font arial -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
+  end
 end
 '''
 

@@ -21,6 +21,10 @@
 """
 from PySide6.QtCore import QObject, Signal
 
+pos_queue: [] = []
+is_visible = False
+
+parent = None
 
 class SolutionMap(QObject):
     _instance: "SolutionMap"
@@ -35,12 +39,20 @@ class SolutionMap(QObject):
         super().__init__()
         assert getattr(self.__class__, "_instance", None) is None
         self.__class__._instance = self
+        global pos_queue, parent
+        pos_queue = []
+        parent = self.parent()
 
     @classmethod
     def send_pos(cls, status) -> None:
         for idx, data in enumerate(status.curData):
             for pos in data:
-                cls._instance.recvPos.emit(idx, pos.x, pos.y, status.hAcc)
+                pos_queue.append((idx, pos.x, pos.y, status.hAcc))
+
+    def send_pos_points(self):
+        for (idx, x, y, hAcc) in pos_queue:
+            self._instance.recvPos.emit(idx, x, y, hAcc)
+        pos_queue.clear()
 
     @classmethod
     def send_prot_lvl(cls, status) -> None:

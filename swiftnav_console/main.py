@@ -355,7 +355,8 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                     data = settings_table_update()
                     SettingsTableEntries.post_data_update(data)
                 ConnectionData.post_connection_state_update(app_state)
-                SolutionMap.clear()
+                if MAP_ENABLED:
+                    SolutionMap.clear()
             elif m.which == Message.Union.ConnectionNotification:
                 data = m.connectionNotification.message
                 ConnectionData.post_connection_message_update(data)

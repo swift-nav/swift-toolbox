@@ -101,9 +101,9 @@ pub struct CliOptions {
     #[clap(long)]
     pub show_file_connection: bool,
 
-    /// Disable map.
+    /// Enable map.
     #[clap(long)]
-    pub disable_map: bool,
+    pub enable_map: bool,
 
     /// Path to a yaml file containing known piksi settings.
     #[clap(long)]

@@ -659,7 +659,7 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
         globals_.setProperty("showFileConnection", True)  # type: ignore
     if args.enable_map:
         globals_.setProperty("enableMap", True)  # type: ignore
-        global MAP_ENABLED
+        global MAP_ENABLED  # type: ignore
         MAP_ENABLED = True
     try:
         if args.ssh_tunnel:

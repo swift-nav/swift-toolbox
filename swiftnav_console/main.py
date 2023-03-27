@@ -133,7 +133,7 @@ from .observation_tab import (
     ObservationLocalTableModel,
     ObservationRemoteTableModel,
     observation_update,
-    obs_rows_to_json,
+    obs_rows_to_dict,
 )
 
 from .settings_tab import (
@@ -143,7 +143,7 @@ from .settings_tab import (
     SettingsTableModel,
     settings_ins_update,
     settings_table_update,
-    settings_rows_to_json,
+    settings_rows_to_dict,
 )
 
 from .solution_map import SolutionMap
@@ -472,7 +472,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                 data = observation_update()
                 data[Keys.TOW] = m.observationStatus.tow
                 data[Keys.WEEK] = m.observationStatus.week
-                data[Keys.ROWS][:] = obs_rows_to_json(m.observationStatus.rows)
+                data[Keys.ROWS][:] = obs_rows_to_dict(m.observationStatus.rows)
                 if m.observationStatus.isRemote:
                     ObservationRemoteTableModel.post_data_update(data)
                 else:
@@ -552,7 +552,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                 LogPanelData.post_data_update(data)
             elif m.which == Message.Union.SettingsTableStatus:
                 data = settings_table_update()
-                data[Keys.ENTRIES][:] = settings_rows_to_json(m.settingsTableStatus.data)
+                data[Keys.ENTRIES][:] = settings_rows_to_dict(m.settingsTableStatus.data)
                 SettingsTableEntries.post_data_update(data)
             elif m.which == Message.Union.SettingsImportResponse:
                 SettingsTabData.post_import_status_update(m.settingsImportResponse.status)

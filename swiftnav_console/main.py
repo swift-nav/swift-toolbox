@@ -258,7 +258,7 @@ TAB_LAYOUT = {
 
 capnp.remove_import_hook()  # pylint: disable=no-member
 
-MAP_ENABLED = False
+MAP_ENABLED = [False]
 
 
 class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attributes
@@ -355,7 +355,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                     data = settings_table_update()
                     SettingsTableEntries.post_data_update(data)
                 ConnectionData.post_connection_state_update(app_state)
-                if MAP_ENABLED:
+                if MAP_ENABLED[0]:
                     SolutionMap.clear()
             elif m.which == Message.Union.ConnectionNotification:
                 data = m.connectionNotification.message
@@ -371,10 +371,10 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                 data[Keys.AVAILABLE_UNITS][:] = m.solutionPositionStatus.availableUnits
                 data[Keys.SOLUTION_LINE] = m.solutionPositionStatus.lineData
 
-                if MAP_ENABLED:
+                if MAP_ENABLED[0]:
                     SolutionMap.send_pos(m.solutionPositionStatus)
                 SolutionPositionPoints.post_data_update(data)
-            elif m.which == Message.Union.SolutionProtectionLevel and MAP_ENABLED:
+            elif m.which == Message.Union.SolutionProtectionLevel and MAP_ENABLED[0]:
                 SolutionMap.send_prot_lvl(m.solutionProtectionLevel)
             elif m.which == Message.Union.SolutionTableStatus:
                 data = solution_table_update()
@@ -659,8 +659,7 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
         globals_.setProperty("showFileConnection", True)  # type: ignore
     if args.enable_map:
         globals_.setProperty("enableMap", True)  # type: ignore
-        global MAP_ENABLED  # type: ignore
-        MAP_ENABLED = True
+        MAP_ENABLED[0] = True
     try:
         if args.ssh_tunnel:
             ssh_tunnel.setup(args.ssh_tunnel, args.ssh_remote_bind_address)

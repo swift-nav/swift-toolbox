@@ -178,12 +178,12 @@ class SettingsTableEntries(QObject):
 
 class SettingsTableModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(SettingsTableEntries)  # type: ignore
-    def fill_console_points(self, cp: SettingsTableEntries) -> SettingsTableEntries:
+    def fill_table_entries(self, cp: SettingsTableEntries) -> SettingsTableEntries:
         cp.set_entries(cp.settings_table[Keys.ENTRIES])
         return cp
 
 
-def to_json(entry):
+def to_dict(entry):
     def handle_null(name):
         e = getattr(entry.setting, name)
         if e.which() == name:
@@ -208,5 +208,5 @@ def to_json(entry):
     return {"group": entry.group}
 
 
-def settings_rows_to_json(rows):
-    return [to_json(entry) for entry in rows]
+def settings_rows_to_dict(rows):
+    return [to_dict(entry) for entry in rows]

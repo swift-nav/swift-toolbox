@@ -312,7 +312,7 @@ class ObservationLocalTableModel(ObservationTableModel):
         self.set_remote(False)
 
 
-def obs_rows_to_json(rows):
+def obs_rows_to_dict(rows):
     return [
         {
             "prn": PrnEntry(entry.sat, entry.code),

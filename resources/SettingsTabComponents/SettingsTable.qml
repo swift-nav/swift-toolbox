@@ -263,7 +263,7 @@ Rectangle {
             running: parent.visible
             repeat: true
             onTriggered: {
-                settings_table_model.fill_console_points(settingsTableEntries);
+                settings_table_model.fill_table_entries(settingsTableEntries);
                 var entries = settingsTableEntries.entries;
                 if (!entries.length) {
                     settingsHealthy = false;

@@ -43,10 +43,35 @@ Rectangle {
         return hours + ":" + minutes + ":" + seconds;
     }
 
+    function bytesToString(bytes, decimals = 2) {
+        if (bytes === 0)
+            return '0 Bytes';
+        const k = 1024;
+        const dm = decimals < 0 ? 0 : decimals;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return (bytes / Math.pow(k, i)).toFixed(dm) + ' ' + sizes[i];
+    }
+
     color: Constants.swiftControlBackground
 
     LoggingBarData {
         id: loggingBarData
+
+        function update() {
+            logging_bar_model.fill_data(loggingBarData);
+            if (sbpLoggingFormat.currentIndex == -1) {
+                sbpLoggingFormat.currentIndex = loggingBarData.sbp_logging_format_index;
+                sbpLoggingButton.checked = loggingBarData.sbp_logging;
+                csvLoggingButton.checked = loggingBarData.csv_logging;
+            }
+            if (loggingBarData.recording_filename)
+                recordingFilenameText.editText = loggingBarData.recording_filename;
+            let recording = loggingBarData.sbp_logging;
+            recordingTime.text = recording ? loggingDurationFormat(loggingBarData.recording_duration_sec) : "00:00:00";
+            let recSize = loggingBarData.recording_size.toFixed(0);
+            recordingSize.text = recSize > 0 && recording ? bytesToString(recSize) : "0.00 MB";
+        }
     }
 
     RowLayout {
@@ -262,57 +287,6 @@ Rectangle {
                 backend_request_broker.logging_bar([csvLoggingButton.checked, sbpLoggingButton.checked, sbpLoggingFormat.currentText], folderPathBar.editText);
             }
             onRejected: {
-            }
-        }
-
-        Timer {
-            property bool mockTime: false
-            property bool mockSize: false
-            property int mockRecordingTime: 0
-            property real mockRecordingSize: 0
-
-            function bytesToString(bytes, decimals = 2) {
-                if (bytes === 0)
-                    return '0 Bytes';
-                const k = 1024;
-                const dm = decimals < 0 ? 0 : decimals;
-                const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-                const i = Math.floor(Math.log(bytes) / Math.log(k));
-                return (bytes / Math.pow(k, i)).toFixed(dm) + ' ' + sizes[i];
-            }
-
-            interval: Utils.hzToMilliseconds(Constants.staticTimerIntervalRate)
-            running: true
-            repeat: true
-            onTriggered: {
-                logging_bar_model.fill_data(loggingBarData);
-                if (sbpLoggingFormat.currentIndex == -1) {
-                    sbpLoggingFormat.currentIndex = loggingBarData.sbp_logging_format_index;
-                    sbpLoggingButton.checked = loggingBarData.sbp_logging;
-                    csvLoggingButton.checked = loggingBarData.csv_logging;
-                }
-                if (loggingBarData.recording_filename)
-                    recordingFilenameText.editText = loggingBarData.recording_filename;
-                let recording = loggingBarData.sbp_logging;
-                if (mockTime) {
-                    mockRecordingTime += interval;
-                    recordingTime.text = loggingDurationFormat(mockRecordingTime / 1000);
-                } else {
-                    if (recording)
-                        recordingTime.text = loggingDurationFormat(loggingBarData.recording_duration_sec);
-                    else
-                        recordingTime.text = "00:00:00";
-                }
-                if (mockSize) {
-                    mockRecordingSize += 15.15;
-                    recordingSize.text = bytesToString(mockRecordingSize);
-                } else {
-                    let recSize = loggingBarData.recording_size.toFixed(0);
-                    if (recSize > 0 && recording)
-                        recordingSize.text = bytesToString(recSize);
-                    else
-                        recordingSize.text = "0.00 MB";
-                }
             }
         }
     }

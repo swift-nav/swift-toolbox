@@ -141,8 +141,6 @@ pub enum Keys {
     AVAILABLE_BAUDRATES,
     #[strum(serialize = "AVAILABLE_FLOWS")]
     AVAILABLE_FLOWS,
-    #[strum(serialize = "AVAILABLE_REFRESH_RATES")]
-    AVAILABLE_REFRESH_RATES,
     #[strum(serialize = "REMOTE")]
     REMOTE,
     #[strum(serialize = "TOW")]

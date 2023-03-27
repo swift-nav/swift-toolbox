@@ -38,6 +38,46 @@ Item {
 
     SolutionVelocityPoints {
         id: solutionVelocityPoints
+
+        function update() {
+            if (!solutionVelocityTab.visible)
+                return;
+            solution_velocity_model.fill_console_points(solutionVelocityPoints);
+            if (!solutionVelocityPoints.points.length)
+                return;
+            solutionVelocityArea.visible = true;
+            var points = solutionVelocityPoints.points;
+            if (colors != solutionVelocityPoints.colors) {
+                colors = solutionVelocityPoints.colors;
+                for (var idx in colors) {
+                    if (lineLegendRepeaterRows.itemAt(idx))
+                        lineLegendRepeaterRows.itemAt(idx).children[0].color = colors[idx];
+                }
+            }
+            if (available_units != solutionVelocityPoints.available_units)
+                available_units = solutionVelocityPoints.available_units;
+            let commonChart = Constants.commonChart;
+            if (!lines.length) {
+                const tempLines = [];
+                for (var idx in labels) {
+                    var line = solutionVelocityChart.createSeries(ChartView.SeriesTypeLine, Constants.solutionVelocity.labels[idx], solutionVelocityXAxis);
+                    line.color = colors[idx];
+                    line.width = commonChart.lineWidth;
+                    line.axisYRight = solutionVelocityYAxis;
+                    line.useOpenGL = Globals.useOpenGL;
+                    tempLines.push(line);
+                }
+                lines = lines.concat(tempLines);
+            }
+            solutionVelocityPoints.fill_series(lines);
+            var last = points[0][points[0].length - 1];
+            solutionVelocityXAxis.min = last.x - Constants.solutionVelocity.xAxisMinOffsetFromMaxSeconds;
+            solutionVelocityXAxis.max = last.x;
+            if (solutionVelocityYAxis.min != solutionVelocityPoints.min_ || solutionVelocityYAxis.max != solutionVelocityPoints.max_) {
+                solutionVelocityYAxis.min = solutionVelocityPoints.min_;
+                solutionVelocityYAxis.max = solutionVelocityPoints.max_;
+            }
+        }
     }
 
     ColumnLayout {
@@ -169,51 +209,6 @@ Item {
                 XYPoint {
                     x: 1
                     y: 1
-                }
-            }
-
-            Timer {
-                interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
-                running: true
-                repeat: true
-                onTriggered: {
-                    if (!solutionVelocityTab.visible)
-                        return;
-                    solution_velocity_model.fill_console_points(solutionVelocityPoints);
-                    if (!solutionVelocityPoints.points.length)
-                        return;
-                    solutionVelocityArea.visible = true;
-                    var points = solutionVelocityPoints.points;
-                    if (colors != solutionVelocityPoints.colors) {
-                        colors = solutionVelocityPoints.colors;
-                        for (var idx in colors) {
-                            if (lineLegendRepeaterRows.itemAt(idx))
-                                lineLegendRepeaterRows.itemAt(idx).children[0].color = colors[idx];
-                        }
-                    }
-                    if (available_units != solutionVelocityPoints.available_units)
-                        available_units = solutionVelocityPoints.available_units;
-                    let commonChart = Constants.commonChart;
-                    if (!lines.length) {
-                        const tempLines = [];
-                        for (var idx in labels) {
-                            var line = solutionVelocityChart.createSeries(ChartView.SeriesTypeLine, Constants.solutionVelocity.labels[idx], solutionVelocityXAxis);
-                            line.color = colors[idx];
-                            line.width = commonChart.lineWidth;
-                            line.axisYRight = solutionVelocityYAxis;
-                            line.useOpenGL = Globals.useOpenGL;
-                            tempLines.push(line);
-                        }
-                        lines = lines.concat(tempLines);
-                    }
-                    solutionVelocityPoints.fill_series(lines);
-                    var last = points[0][points[0].length - 1];
-                    solutionVelocityXAxis.min = last.x - Constants.solutionVelocity.xAxisMinOffsetFromMaxSeconds;
-                    solutionVelocityXAxis.max = last.x;
-                    if (solutionVelocityYAxis.min != solutionVelocityPoints.min_ || solutionVelocityYAxis.max != solutionVelocityPoints.max_) {
-                        solutionVelocityYAxis.min = solutionVelocityPoints.min_;
-                        solutionVelocityYAxis.max = solutionVelocityPoints.max_;
-                    }
                 }
             }
         }

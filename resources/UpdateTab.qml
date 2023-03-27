@@ -41,6 +41,40 @@ MainTab {
 
     UpdateTabData {
         id: updateTabData
+
+        function update() {
+            update_tab_model.fill_data(updateTabData);
+            Globals.updateTabData.consoleOutdated = updateTabData.console_outdated;
+            Globals.updateTabData.fwV2Outdated = updateTabData.fw_v2_outdated;
+            Globals.updateTabData.fwOutdated = updateTabData.fw_outdated;
+            Globals.updateTabData.fwVersionCurrent = updateTabData.fw_version_current;
+            Globals.updateTabData.fwVersionLatest = updateTabData.fw_version_latest;
+            Globals.updateTabData.consoleVersionCurrent = updateTabData.console_version_current;
+            Globals.updateTabData.consoleVersionLatest = updateTabData.console_version_latest;
+            if (updateTabData.fw_version_latest) {
+                firmwareRevision.revision = updateTabData.hardware_revision;
+                firmwareVersion.currentVersion = updateTabData.fw_version_current;
+                firmwareVersion.latestVersion = updateTabData.fw_version_latest;
+            }
+            if (updateTabData.fw_version_current)
+                firmwareVersion.isSerialConnected = updateTabData.serial_prompt;
+            else
+                firmwareVersion.isSerialConnected = false;
+            if (!updateTab.visible)
+                return;
+            if (!firmwareDownload.fwDirectoryEditing)
+                firmwareDownload.fwDirectory = updateTabData.directory;
+            if (fwLogTextArea.text != updateTabData.fw_text)
+                fwLogTextArea.text = updateTabData.fw_text;
+            firmwareDownload.downloadButtonEnable = !updateTabData.downloading && !updateTabData.upgrading;
+            firmwareVersion.upgradeButtonEnable = updateTabData.fw_version_current && !updateTabData.upgrading && !updateTabData.downloading;
+            if (!firmwareVersion.localFileTextEditing)
+                firmwareVersion.localFileText = updateTabData.fw_local_filename;
+            if (!fileioSelect.destinationTextEditing)
+                fileioSelect.destinationText = updateTabData.fileio_destination_filepath;
+            if (!fileioSelect.localTextEditing)
+                fileioSelect.localText = updateTabData.fileio_local_filepath;
+        }
     }
 
     ColumnLayout {
@@ -223,45 +257,6 @@ MainTab {
         repeat: false
         onTriggered: {
             currentCallback();
-        }
-    }
-
-    Timer {
-        interval: Utils.hzToMilliseconds(Constants.staticTableTimerIntervalRate)
-        running: true
-        repeat: true
-        onTriggered: {
-            update_tab_model.fill_data(updateTabData);
-            Globals.updateTabData.consoleOutdated = updateTabData.console_outdated;
-            Globals.updateTabData.fwV2Outdated = updateTabData.fw_v2_outdated;
-            Globals.updateTabData.fwOutdated = updateTabData.fw_outdated;
-            Globals.updateTabData.fwVersionCurrent = updateTabData.fw_version_current;
-            Globals.updateTabData.fwVersionLatest = updateTabData.fw_version_latest;
-            Globals.updateTabData.consoleVersionCurrent = updateTabData.console_version_current;
-            Globals.updateTabData.consoleVersionLatest = updateTabData.console_version_latest;
-            if (updateTabData.fw_version_latest) {
-                firmwareRevision.revision = updateTabData.hardware_revision;
-                firmwareVersion.currentVersion = updateTabData.fw_version_current;
-                firmwareVersion.latestVersion = updateTabData.fw_version_latest;
-            }
-            if (updateTabData.fw_version_current)
-                firmwareVersion.isSerialConnected = updateTabData.serial_prompt;
-            else
-                firmwareVersion.isSerialConnected = false;
-            if (!updateTab.visible)
-                return;
-            if (!firmwareDownload.fwDirectoryEditing)
-                firmwareDownload.fwDirectory = updateTabData.directory;
-            if (fwLogTextArea.text != updateTabData.fw_text)
-                fwLogTextArea.text = updateTabData.fw_text;
-            firmwareDownload.downloadButtonEnable = !updateTabData.downloading && !updateTabData.upgrading;
-            firmwareVersion.upgradeButtonEnable = updateTabData.fw_version_current && !updateTabData.upgrading && !updateTabData.downloading;
-            if (!firmwareVersion.localFileTextEditing)
-                firmwareVersion.localFileText = updateTabData.fw_local_filename;
-            if (!fileioSelect.destinationTextEditing)
-                fileioSelect.destinationText = updateTabData.fileio_destination_filepath;
-            if (!fileioSelect.localTextEditing)
-                fileioSelect.localText = updateTabData.fileio_local_filepath;
         }
     }
 }

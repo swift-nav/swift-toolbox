@@ -629,8 +629,6 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
         globals_.setProperty("useAntiAliasing", False)  # type: ignore
     if args.no_prompts:
         globals_.setProperty("showPrompts", False)  # type: ignore
-    if args.refresh_rate is not None:
-        globals_.setProperty("currentRefreshRate", args.refresh_rate)  # type: ignore
     if args.tab is not None:
         layout_idxs = TAB_LAYOUT[args.tab]
         globals_.setProperty("initialMainTabIndex", layout_idxs[MAIN_INDEX])  # type: ignore
@@ -724,7 +722,6 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     parser.add_argument("--use-opengl", action="store_true")
     parser.add_argument("--no-high-dpi", action="store_true")
     parser.add_argument("--no-antialiasing", action="store_true")
-    parser.add_argument("--refresh-rate", type=int)
     parser.add_argument("--tab")
     parser.add_argument("--show-csv-log", action="store_true")
     parser.add_argument("--height", type=int)

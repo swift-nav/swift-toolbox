@@ -45,6 +45,10 @@ Rectangle {
         tableView.model.clear();
     }
 
+    function loaderVisibility(value) {
+        refreshLoader.visible = value;
+    }
+
     function isHeader(entry) {
         return !entry.hasOwnProperty("name");
     }
@@ -128,6 +132,7 @@ Rectangle {
                 settingsHealthy = false;
                 return;
             }
+            refreshLoader.visible = false;
             settingsHealthy = true;
             if (lastShowExpert != showExpert) {
                 tableView._currentSelectedIndex = -1;
@@ -231,6 +236,8 @@ Rectangle {
         }
 
         SwiftLoader {
+            id: refreshLoader
+            visible: true
         }
 
         SwiftTableView {
@@ -245,10 +252,7 @@ Rectangle {
             model: TableModel {
                 id: tableModel
 
-                rows: [{
-                        "Name": "",
-                        "Value": ""
-                    }]
+                rows: []
 
                 TableModelColumn {
                     display: "Name"

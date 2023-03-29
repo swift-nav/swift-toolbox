@@ -111,7 +111,7 @@ impl AdvancedImuTab {
                         self.imu_temp = 25_f64 + msg.temp as f64 / 30_f64;
                     }
                     ImuType::TdkIam20680Hp => {
-                        self.imu_temp = 25_f64 + msg.temp as f64 / 256_f64;
+                        self.imu_temp = 25_f64 + (msg.temp as f64 - 25_f64) / 326.8;
                     }
                 };
                 self.imu_conf = msg.imu_conf;

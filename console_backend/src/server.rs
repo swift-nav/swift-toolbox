@@ -84,7 +84,7 @@ impl ServerEndpoint {
         if let Some(server_send) = &self.server_send {
             server_send
                 .send(byte_vec)
-                .map_err(|e| exceptions::PyRuntimeError::new_err(format!("{}", e)))
+                .map_err(|e| exceptions::PyRuntimeError::new_err(format!("{e}")))
         } else {
             Err(exceptions::PyRuntimeError::new_err(
                 "no server send endpoint",

@@ -452,7 +452,7 @@ rm imagemagick.tool.7.1.0.nupkg
 '''
 
 [tasks.install-imagemagick.linux]
-script = "sudo apt-get install gsfonts imagemagick"
+script = "sudo apt-get install gsfonts imagemagick ghostscript fonts-freefont-otf"
 
 [tasks.install-imagemagick.mac]
 script = "brew install imagemagick"

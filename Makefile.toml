@@ -5,8 +5,8 @@ os = os_family
 
 qtpaths_path = which qtpaths
 if is_empty "${qtpaths_path}"
-	echo "qtpaths not in PATH"
-    qtpaths_path = set "/__/__"
+  echo "qtpaths not in PATH"
+  qtpaths_path = set "/__/__"
 end
 
 qtdir = get_env QTDIR

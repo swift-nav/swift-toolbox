@@ -162,8 +162,6 @@ jobs:
       - name: Install ImageMagick
         shell: bash
         run: |
-          sudo apt-get install ghostscript
-          sudo apt-get install fonts-freefont-otf
           cargo make install-imagemagick
           
       - name: Set up python builder

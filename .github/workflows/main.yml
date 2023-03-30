@@ -44,7 +44,7 @@ jobs:
     name: Backend Benchmarks
     strategy:
       matrix:
-        os: [ ubuntu-20.04, macos-11, windows-2019 ]
+        os: [ubuntu-20.04, macos-11, windows-2019]
     runs-on: ${{ matrix.os }}
     steps:
 
@@ -104,10 +104,7 @@ jobs:
 
       - name: Install ImageMagick
         shell: bash
-        run: |
-          sudo apt-get install ghostscript
-          sudo apt-get install fonts-freefont-otf
-          cargo make install-imagemagick
+        run: cargo make install-imagemagick
 
       - name: Set up python builder
         shell: bash
@@ -161,9 +158,8 @@ jobs:
 
       - name: Install ImageMagick
         shell: bash
-        run: |
-          cargo make install-imagemagick
-          
+        run: cargo make install-imagemagick
+
       - name: Set up python builder
         run: cargo make setup-builder
         env:

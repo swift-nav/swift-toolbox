@@ -104,7 +104,10 @@ jobs:
 
       - name: Install ImageMagick
         shell: bash
-        run: cargo make install-imagemagick
+        run: |
+          sudo apt-get install ghostscript
+          sudo apt-get install fonts-freefont-otf
+          cargo make install-imagemagick
 
       - name: Set up python builder
         shell: bash
@@ -158,8 +161,11 @@ jobs:
 
       - name: Install ImageMagick
         shell: bash
-        run: cargo make install-imagemagick
-
+        run: |
+          sudo apt-get install ghostscript
+          sudo apt-get install fonts-freefont-otf
+          cargo make install-imagemagick
+          
       - name: Set up python builder
         run: cargo make setup-builder
         env:

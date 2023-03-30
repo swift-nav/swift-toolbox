@@ -73,6 +73,8 @@ jobs:
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
               sudo apt-get update && sudo apt-get install -y capnproto libudev-dev libssl-dev
+              sudo apt install ttf-mscorefonts-installer
+              sudo fc-cache -f
           elif [ "$RUNNER_OS" == "macOS" ]; then
               brew install capnp llvm
           elif [ "$RUNNER_OS" == "Windows" ]; then

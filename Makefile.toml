@@ -468,7 +468,7 @@ if eq ${os} windows
 else
   output = exec convert -font helvetica -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
   if not eq ${output.code} 0
-    exec --fail-on-error convert -font arial -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
+    exec --fail-on-error convert -font liberation -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
   end
 end
 '''

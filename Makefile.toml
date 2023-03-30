@@ -464,11 +464,11 @@ output = exec --fail-on-error git describe --always --tags --dirty
 version = trim ${output.stdout}
 os = os_family
 if eq ${os} windows
-  echo "Creating splash screen (OS: Windows, font family: Arial)"
-  exec --fail-on-error magick convert -family Arial -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
+  echo "Creating splash screen (OS: Windows, font: Arial)"
+  exec --fail-on-error magick convert -font ./utils/arial.ttf -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
 else
-  echo "Creating splash screen (OS: Linux/macOS, font family: Arial)"
-  exec --fail-on-error convert -family Arial -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
+  echo "Creating splash screen (OS: Linux/macOS, font: Arial)"
+  exec --fail-on-error convert -font ./utils/arial.ttf -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
 end
 '''
 

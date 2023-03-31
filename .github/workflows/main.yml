@@ -16,10 +16,10 @@
 # COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
+---
 name: main
 
-on:
+'on':
   push:
     branches:
       - 'main'
@@ -189,7 +189,7 @@ jobs:
 
   frontend_distribute:
     name: Run frontend benchmarks, build, sign and distribute
-    needs: [ checks, backend_bench ]
+    needs: [checks, backend_bench]
     runs-on: ubuntu-latest
     steps:
       - shell: bash
@@ -203,10 +203,10 @@ jobs:
         with:
           owner: swift-nav
           repo: swift-toolbox-ci
-          ref: main
+          ref: silverjam/py311
           workflow_file_name: distribute.yml
           client_payload: '{
-            "branch": "${{ github.head_ref || github.ref_name }}", 
+            "branch": "${{ github.head_ref || github.ref_name }}",
             "run_id": "${{ github.run_id }}",
             "should_release": "${{ env.SHOULD_RELEASE || false}}",
             "version": "${{ env.VERSION }}",

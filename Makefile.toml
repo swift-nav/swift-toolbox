@@ -5,8 +5,8 @@ os = os_family
 
 qtpaths_path = which qtpaths
 if is_empty "${qtpaths_path}"
-	echo "qtpaths not in PATH"
-    qtpaths_path = set "/__/__"
+  echo "qtpaths not in PATH"
+  qtpaths_path = set "/__/__"
 end
 
 qtdir = get_env QTDIR
@@ -452,7 +452,7 @@ rm imagemagick.tool.7.1.0.nupkg
 '''
 
 [tasks.install-imagemagick.linux]
-script = "sudo apt-get install gsfonts imagemagick"
+script = "sudo apt-get install gsfonts imagemagick ghostscript fonts-freefont-otf"
 
 [tasks.install-imagemagick.mac]
 script = "brew install imagemagick"
@@ -464,12 +464,11 @@ output = exec --fail-on-error git describe --always --tags --dirty
 version = trim ${output.stdout}
 os = os_family
 if eq ${os} windows
-  exec --fail-on-error magick convert -font arial -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
+  echo "Creating splash screen (OS: Windows, font: Arial)"
+  exec --fail-on-error magick convert -font ./utils/arial.ttf -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
 else
-  output = exec convert -font helvetica -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
-  if not eq ${output.code} 0
-    exec --fail-on-error convert -font arial -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
-  end
+  echo "Creating splash screen (OS: Linux/macOS, font: Arial)"
+  exec --fail-on-error convert -font ./utils/arial.ttf -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
 end
 '''
 

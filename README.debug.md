@@ -79,7 +79,7 @@ rust backend:
 ```
 cargo make prep-debug-pyside
 cargo make build-dist
-py39-dist/bin/python3 -m swiftnav_console.main --read-capnp-recording console_backend/tests/data/console-capnp-20220419-033358.pickle
+py311-dist/bin/python3 -m swiftnav_console.main --read-capnp-recording console_backend/tests/data/console-capnp-20220419-033358.pickle
 ```
 
 ## Debugging an intermittent crash on startup

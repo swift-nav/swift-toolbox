@@ -97,7 +97,7 @@ if [[ ! -e "${QTDIR}/lib/libQt6Core.so.6" ]]; then
 fi
 
 # Check if PySide6 is installed
-pyside6_qt_lib_dir=$(realpath "${SCRIPT_DIR}/../py39/lib/python3.9/site-packages/PySide6/Qt/lib")
+pyside6_qt_lib_dir=$(realpath "${SCRIPT_DIR}/../311/lib/python3.11/site-packages/PySide6/Qt/lib")
 if [[ ! -e "$pyside6_qt_lib_dir" ]]; then
     echo >&2 "Could not find $pyside6_qt_lib_dir. aborting."
     exit 1
@@ -105,7 +105,7 @@ fi
 
 cd "${QTDIR}/lib"
 qtdir_libs=$(ls -1 libQt6*.so.6 | sort)
-cd "${SCRIPT_DIR}/../py39/lib/python3.9/site-packages/PySide6/Qt/lib"
+cd "${SCRIPT_DIR}/../311/lib/python3.11/site-packages/PySide6/Qt/lib"
 
 bkup_dir_suffix=""
 while [[ -e "original_libs${bkup_dir_suffix}" ]]; do

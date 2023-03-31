@@ -89,7 +89,7 @@ WORKSPACE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}"
 PY_BASE_URL = "https://github.com/indygreg/python-build-standalone/releases/download/20230116"
 MACOSX_DEPLOYMENT_TARGET = "10.15"
 APP_NAME = "swift-console"
-QT_VERSION = "6.4.3" # Also needs to be updated in .github/workflows/main.yml
+QT_VERSION = "6.4.3"                                                                           # Also needs to be updated in .github/workflows/main.yml
 
 [tasks.init]
 

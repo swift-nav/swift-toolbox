@@ -365,9 +365,7 @@ Rectangle {
             anchors.centerIn: parent
             anchors.verticalCenterOffset: 5
             onEditingFinished: {
-                if (settingType === "float" || settingType === "double")
-                    text = text.replace(",", ".");
-                backend_request_broker.settings_write_request(settingGroup, settingName, text);
+                backend_request_broker.settings_write_request(settingGroup, settingName, text.replace(",", "."));
             }
             validator: {
                 if (settingType === "integer")

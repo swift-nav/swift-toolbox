@@ -1,9 +1,10 @@
 import QtQuick 2.7
 
+// Loaders taken here https://github.com/Furkanzmc/QML-Loaders
 Item {
+    id: root
 
     // ----- Public Properties ----- //
-
     property int radius: 15
     property bool useDouble: false
     property bool running: true
@@ -11,11 +12,8 @@ Item {
     property color color: "black"
 
     // ----- Private Properties ----- //
-
     property int _innerRadius: radius * 0.7
     property int _circleRadius: (radius - _innerRadius) * 0.5
-
-    id: root
     width: radius * 2
     height: radius * 2
     onRunningChanged: {
@@ -40,10 +38,11 @@ Item {
         model: root.useDouble ? 10 : 4
         delegate: Component {
             Rectangle {
+                id: rect
+
                 // ----- Private Properties ----- //
                 property int _currentAngle: _getStartAngle()
 
-                id: rect
                 width: _getWidth()
                 height: width
                 radius: width
@@ -66,16 +65,16 @@ Item {
                         easing.type: Easing.OutQuad
                     }
 
-                    PauseAnimation { duration: 500 }
+                    PauseAnimation {
+                        duration: 500
+                    }
                 }
 
                 // ----- Public Functions ----- //
-
                 function playAnimation() {
                     if (anim.running == false) {
                         anim.start();
-                    }
-                    else if (anim.paused) {
+                    } else if (anim.paused) {
                         anim.resume();
                     }
                 }
@@ -87,7 +86,6 @@ Item {
                 }
 
                 // ----- Private Functions ----- //
-
                 function _getStartAngle() {
                     var ang = 90;
                     if (root.useDouble) {
@@ -100,7 +98,7 @@ Item {
                 function _getWidth() {
                     var w = (root._circleRadius) * 0.5 * (repeater.model - index);
                     if (root.useDouble) {
-                        w = (root._circleRadius) * 0.5 * ((repeater.model / 2) - Math.abs(repeater.model / 2 - index))
+                        w = (root._circleRadius) * 0.5 * ((repeater.model / 2) - Math.abs(repeater.model / 2 - index));
                     }
 
                     return w;
@@ -110,10 +108,11 @@ Item {
     }
 
     Timer {
+        id: timer
+
         // ----- Private Properties ----- //
         property int _circleIndex: 0
 
-        id: timer
         interval: 100
         repeat: true
         running: true
@@ -122,20 +121,17 @@ Item {
             if (_circleIndex === maxIndex) {
                 stop();
                 _circleIndex = 0;
-            }
-            else {
+            } else {
                 repeater.itemAt(_circleIndex).playAnimation();
                 if (root.useDouble) {
                     repeater.itemAt(repeater.model - _circleIndex - 1).playAnimation();
                 }
-
                 _circleIndex++;
             }
         }
     }
 
     // ----- Private Functions ----- //
-
     function _toRadian(degree) {
         return (degree * Math.PI) / 180.0;
     }
@@ -143,7 +139,6 @@ Item {
     function _getPosOnCircle(angleInDegree) {
         var centerX = root.width / 2, centerY = root.height / 2;
         var posX = 0, posY = 0;
-
         posX = centerX + root._innerRadius * Math.cos(_toRadian(angleInDegree));
         posY = centerY - root._innerRadius * Math.sin(_toRadian(angleInDegree));
         return Qt.point(posX, posY);

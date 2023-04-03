@@ -25,7 +25,6 @@ import QtQuick
 
 QtObject {
     property string consoleVersion: "0.0.0"
-    property int currentRefreshRate: 5 // 5 Hz
     property bool useOpenGL: false
     property bool useAntiAliasing: true
     property bool showPrompts: true
@@ -33,7 +32,7 @@ QtObject {
     property int initialSubTabIndex: 0 // Signals
     property bool showCsvLog: false
     property bool showFileio: false
-    property bool disableMap: false
+    property bool enableMap: false
     property int height: 600
     property int minimumHeight: 600
     property int width: 1000

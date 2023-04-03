@@ -87,6 +87,7 @@ class UpdateTabData(QObject):  # pylint: disable=too-many-instance-attributes,to
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:
         self.update_tab = UPDATE_TAB[0]
+        self.update()  # type: ignore
 
     def get_hardware_revision(self) -> str:
         return self._hardware_revision

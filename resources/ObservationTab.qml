@@ -85,17 +85,5 @@ MainTab {
                 }
             }
         }
-
-        Timer {
-            interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
-            running: true
-            repeat: true
-            onTriggered: {
-                if (!observationTab.visible)
-                    return;
-                remoteTable.update();
-                localTable.update();
-            }
-        }
     }
 }

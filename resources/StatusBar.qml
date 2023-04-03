@@ -47,6 +47,21 @@ Rectangle {
 
     StatusBarData {
         id: statusBarData
+
+        function update() {
+            status_bar_model.fill_data(statusBarData);
+            if (statusBarData.title) {
+                position = statusBarData.pos;
+                rtk = statusBarData.rtk;
+                ins = statusBarData.ins;
+                satellites = statusBarData.solid_connection ? statusBarData.sats : -1;
+                correctionAge = statusBarData.corr_age;
+                antennaStatus = statusBarData.antenna_status;
+                dataRate = statusBarData.data_rate;
+                solidConnection = statusBarData.solid_connection;
+                title = statusBarData.title;
+            }
+        }
     }
 
     RowLayout {
@@ -99,26 +114,6 @@ Rectangle {
                     font.pixelSize: Constants.statusBar.textPixelSize
                     font.bold: true
                 }
-            }
-        }
-    }
-
-    Timer {
-        interval: Utils.hzToMilliseconds(Constants.staticTimerIntervalRate)
-        running: true
-        repeat: true
-        onTriggered: {
-            status_bar_model.fill_data(statusBarData);
-            if (statusBarData.title) {
-                position = statusBarData.pos;
-                rtk = statusBarData.rtk;
-                ins = statusBarData.ins;
-                satellites = statusBarData.solid_connection ? statusBarData.sats : -1;
-                correctionAge = statusBarData.corr_age;
-                antennaStatus = statusBarData.antenna_status;
-                dataRate = statusBarData.data_rate;
-                solidConnection = statusBarData.solid_connection;
-                title = statusBarData.title;
             }
         }
     }

@@ -50,6 +50,22 @@ Item {
 
     BaselineTableEntries {
         id: baselineTableEntries
+
+        function update() {
+            baseline_table_model.fill_console_points(baselineTableEntries);
+            if (!baselineTableEntries.entries.length)
+                return;
+            var entries = baselineTableEntries.entries;
+            let baselineTable = Constants.baselineTable;
+            for (var idx in entries) {
+                var new_row = {};
+                var entry = entries[idx];
+                new_row[baselineTable.tableLeftColumnHeader] = entry[0];
+                new_row[baselineTable.tableRightColumnHeader] = entry[1];
+                tableView.model.setRow(idx, new_row);
+            }
+            tableView.forceLayout();
+        }
     }
 
     ColumnLayout {
@@ -145,29 +161,6 @@ Item {
                 TableModelColumn {
                     display: "Value"
                 }
-            }
-        }
-
-        Timer {
-            interval: Utils.hzToMilliseconds(Constants.staticTableTimerIntervalRate)
-            running: true
-            repeat: true
-            onTriggered: {
-                if (!baselineTab.visible)
-                    return;
-                baseline_table_model.fill_console_points(baselineTableEntries);
-                if (!baselineTableEntries.entries.length)
-                    return;
-                var entries = baselineTableEntries.entries;
-                let baselineTable = Constants.baselineTable;
-                for (var idx in entries) {
-                    var new_row = {};
-                    var entry = entries[idx];
-                    new_row[baselineTable.tableLeftColumnHeader] = entry[0];
-                    new_row[baselineTable.tableRightColumnHeader] = entry[1];
-                    tableView.model.setRow(idx, new_row);
-                }
-                tableView.forceLayout();
             }
         }
     }

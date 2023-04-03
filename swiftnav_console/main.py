@@ -133,7 +133,7 @@ from .observation_tab import (
     ObservationLocalTableModel,
     ObservationRemoteTableModel,
     observation_update,
-    obs_rows_to_json,
+    obs_rows_to_dict,
 )
 
 from .settings_tab import (
@@ -143,7 +143,7 @@ from .settings_tab import (
     SettingsTableModel,
     settings_ins_update,
     settings_table_update,
-    settings_rows_to_json,
+    settings_rows_to_dict,
 )
 
 from .solution_map import SolutionMap
@@ -258,6 +258,8 @@ TAB_LAYOUT = {
 
 capnp.remove_import_hook()  # pylint: disable=no-member
 
+MAP_ENABLED = [False]
+
 
 class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attributes
     _request_quit: Signal = Signal()
@@ -353,7 +355,8 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                     data = settings_table_update()
                     SettingsTableEntries.post_data_update(data)
                 ConnectionData.post_connection_state_update(app_state)
-                SolutionMap.clear()
+                if MAP_ENABLED[0]:
+                    SolutionMap.clear()
             elif m.which == Message.Union.ConnectionNotification:
                 data = m.connectionNotification.message
                 ConnectionData.post_connection_message_update(data)
@@ -367,9 +370,11 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                 data[Keys.LON_MIN] = m.solutionPositionStatus.lonMin
                 data[Keys.AVAILABLE_UNITS][:] = m.solutionPositionStatus.availableUnits
                 data[Keys.SOLUTION_LINE] = m.solutionPositionStatus.lineData
-                SolutionMap.send_pos(m.solutionPositionStatus)
+
+                if MAP_ENABLED[0]:
+                    SolutionMap.send_pos(m.solutionPositionStatus)
                 SolutionPositionPoints.post_data_update(data)
-            elif m.which == Message.Union.SolutionProtectionLevel:
+            elif m.which == Message.Union.SolutionProtectionLevel and MAP_ENABLED[0]:
                 SolutionMap.send_prot_lvl(m.solutionProtectionLevel)
             elif m.which == Message.Union.SolutionTableStatus:
                 data = solution_table_update()
@@ -467,7 +472,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                 data = observation_update()
                 data[Keys.TOW] = m.observationStatus.tow
                 data[Keys.WEEK] = m.observationStatus.week
-                data[Keys.ROWS][:] = obs_rows_to_json(m.observationStatus.rows)
+                data[Keys.ROWS][:] = obs_rows_to_dict(m.observationStatus.rows)
                 if m.observationStatus.isRemote:
                     ObservationRemoteTableModel.post_data_update(data)
                 else:
@@ -547,7 +552,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                 LogPanelData.post_data_update(data)
             elif m.which == Message.Union.SettingsTableStatus:
                 data = settings_table_update()
-                data[Keys.ENTRIES][:] = settings_rows_to_json(m.settingsTableStatus.data)
+                data[Keys.ENTRIES][:] = settings_rows_to_dict(m.settingsTableStatus.data)
                 SettingsTableEntries.post_data_update(data)
             elif m.which == Message.Union.SettingsImportResponse:
                 SettingsTabData.post_import_status_update(m.settingsImportResponse.status)
@@ -624,8 +629,6 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
         globals_.setProperty("useAntiAliasing", False)  # type: ignore
     if args.no_prompts:
         globals_.setProperty("showPrompts", False)  # type: ignore
-    if args.refresh_rate is not None:
-        globals_.setProperty("currentRefreshRate", args.refresh_rate)  # type: ignore
     if args.tab is not None:
         layout_idxs = TAB_LAYOUT[args.tab]
         globals_.setProperty("initialMainTabIndex", layout_idxs[MAIN_INDEX])  # type: ignore
@@ -652,8 +655,9 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
             globals_.setProperty("width", args.width)  # type: ignore
     if args.show_file_connection:
         globals_.setProperty("showFileConnection", True)  # type: ignore
-    if args.disable_map:
-        globals_.setProperty("disableMap", True)  # type: ignore
+    if args.enable_map:
+        globals_.setProperty("enableMap", True)  # type: ignore
+        MAP_ENABLED[0] = True
     try:
         if args.ssh_tunnel:
             ssh_tunnel.setup(args.ssh_tunnel, args.ssh_remote_bind_address)
@@ -712,13 +716,12 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     parser.add_argument("--record-capnp-recording", action="store_true")
     parser.add_argument("--debug-with-no-backend", action="store_true")
     parser.add_argument("--show-fileio", action="store_true")
-    parser.add_argument("--disable-map", action="store_true")
+    parser.add_argument("--enable-map", action="store_true")
     parser.add_argument("--show-file-connection", action="store_true")
     parser.add_argument("--no-prompts", action="store_true")
     parser.add_argument("--use-opengl", action="store_true")
     parser.add_argument("--no-high-dpi", action="store_true")
     parser.add_argument("--no-antialiasing", action="store_true")
-    parser.add_argument("--refresh-rate", type=int)
     parser.add_argument("--tab")
     parser.add_argument("--show-csv-log", action="store_true")
     parser.add_argument("--height", type=int)

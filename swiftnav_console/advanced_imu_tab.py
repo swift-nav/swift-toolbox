@@ -59,6 +59,7 @@ class AdvancedImuPoints(QObject):
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:
         self.advanced_imu_tab = ADVANCED_IMU_TAB[0]
+        self.update()  # type: ignore
 
     def get_fields_data(self) -> List[float]:
         """Getter for _fields_data."""

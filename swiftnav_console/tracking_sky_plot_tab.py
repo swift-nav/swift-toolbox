@@ -62,6 +62,7 @@ class TrackingSkyPlotPoints(QObject):
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:
         self._tracking_sky_plot = TRACKING_SKY_PLOT_TAB[0]
+        self.update()  # type: ignore
 
     def get_labels(self) -> List[List[str]]:
         return self._tracking_sky_plot[Keys.LABELS]

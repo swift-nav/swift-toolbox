@@ -67,6 +67,7 @@ class BaselinePlotPoints(QObject):
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:
         self.baseline_plot = BASELINE_PLOT[0]
+        self.update()  # type: ignore
 
     def get_n_min(self) -> float:
         """Getter for _n_min."""

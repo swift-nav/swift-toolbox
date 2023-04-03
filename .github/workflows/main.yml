@@ -16,10 +16,10 @@
 # COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
+---
 name: main
 
-on:
+'on':
   push:
     branches:
       - 'main'
@@ -44,7 +44,7 @@ jobs:
     name: Backend Benchmarks
     strategy:
       matrix:
-        os: [ ubuntu-20.04, macos-11, windows-2019 ]
+        os: [ubuntu-20.04, macos-11, windows-2019]
     runs-on: ${{ matrix.os }}
     steps:
 
@@ -168,7 +168,7 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@910f37ee23653fd4b243fe5c7f81ff26a8a6a64e
         with:
-          version: '6.3.2'
+          version: '6.4.3'
           setup-python: false
 
       - name: Run Checks
@@ -189,7 +189,7 @@ jobs:
 
   frontend_distribute:
     name: Run frontend benchmarks, build, sign and distribute
-    needs: [ checks, backend_bench ]
+    needs: [checks, backend_bench]
     runs-on: ubuntu-latest
     steps:
       - shell: bash
@@ -206,7 +206,7 @@ jobs:
           ref: main
           workflow_file_name: distribute.yml
           client_payload: '{
-            "branch": "${{ github.head_ref || github.ref_name }}", 
+            "branch": "${{ github.head_ref || github.ref_name }}",
             "run_id": "${{ github.run_id }}",
             "should_release": "${{ env.SHOULD_RELEASE || false}}",
             "version": "${{ env.VERSION }}",

@@ -5,8 +5,8 @@ os = os_family
 
 qtpaths_path = which qtpaths
 if is_empty "${qtpaths_path}"
-	echo "qtpaths not in PATH"
-    qtpaths_path = set "/__/__"
+  echo "qtpaths not in PATH"
+  qtpaths_path = set "/__/__"
 end
 
 qtdir = get_env QTDIR
@@ -34,45 +34,45 @@ set_env NUM_PROCESSES "${num_processes}"
 # set os specific env vars
 set_env OS "${os}"
 if eq ${os} windows
-  set_env STANDALONE_PY_URL "${PY_BASE_URL}/cpython-3.9.7-x86_64-pc-windows-msvc-shared-pgo-20211017T1616.tar.zst"
-  set_env PYTHON "${WORKSPACE}\\py39\\python.exe"
-  set_env DIST_PYTHON "${WORKSPACE}\\py39-dist\\python"
-  set_env DIST_PYSIDE6_RCC "${WORKSPACE}\\py39-dist\\Lib\\site-packages\\PySide6\\rcc.exe"
-  set_env PYSIDE6_RCC "${WORKSPACE}\\py39\\Lib\\site-packages\\PySide6\\rcc.exe"
-  set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-win_amd64.whl
+  set_env STANDALONE_PY_URL "${PY_BASE_URL}/cpython-3.11.1+20230116-x86_64-pc-windows-msvc-shared-pgo-full.tar.zst"
+  set_env PYTHON "${WORKSPACE}\\py311\\python.exe"
+  set_env DIST_PYTHON "${WORKSPACE}\\py311-dist\\python"
+  set_env DIST_PYSIDE6_RCC "${WORKSPACE}\\py311-dist\\Lib\\site-packages\\PySide6\\rcc.exe"
+  set_env PYSIDE6_RCC "${WORKSPACE}\\py311\\Lib\\site-packages\\PySide6\\rcc.exe"
+  set_env BACKEND_WHEEL console_backend-0.1.0-cp311-cp311-win_amd64.whl
   set_env BUILD_TRIPLET "x86_64-pc-windows-msvc"
   set_env PYO3_CONFIG_FILE "${WORKSPACE}\\standalone-py\\pyo3_config.txt"
   set_env CONSOLE_PYO3_CONFIG_FILE "${WORKSPACE}\\standalone-py\\pyo3_config.txt"
   set_env PYSIDE_WHEEL fill_me_in.whl
   set_env SHIBOKEN_WHEEL fill_me_in.whl
 elseif eq ${os} linux
-  set_env STANDALONE_PY_URL "${SWFT_PY_BASE_URL}/cpython-3.9.10-x86_64-unknown-linux-gnu-pgo+lto-20220203T2103.tar.zst"
-  set_env PYTHON "${WORKSPACE}/py39/bin/python3"
-  set_env DIST_PYTHON "${WORKSPACE}/py39-dist/bin/python3"
-  set_env DIST_PYSIDE6_RCC "${WORKSPACE}/py39-dist/bin/pyside6-rcc"
-  set_env PYSIDE6_RCC "${WORKSPACE}/py39/bin/pyside6-rcc"
-  set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-linux_x86_64.whl
+  set_env STANDALONE_PY_URL "${PY_BASE_URL}/cpython-3.11.1+20230116-x86_64-unknown-linux-gnu-pgo+lto-full.tar.zst"
+  set_env PYTHON "${WORKSPACE}/py311/bin/python3"
+  set_env DIST_PYTHON "${WORKSPACE}/py311-dist/bin/python3"
+  set_env DIST_PYSIDE6_RCC "${WORKSPACE}/py311-dist/bin/pyside6-rcc"
+  set_env PYSIDE6_RCC "${WORKSPACE}/py311/bin/pyside6-rcc"
+  set_env BACKEND_WHEEL console_backend-0.1.0-cp311-cp311-linux_x86_64.whl
   set_env PYO3_CONFIG_FILE "${WORKSPACE}/standalone-py/pyo3_config.txt"
   set_env CONSOLE_PYO3_CONFIG_FILE "${WORKSPACE}/standalone-py/pyo3_config_console.txt"
   output = exec --fail-on-error gcc -dumpmachine
   triplet = trim ${output.stdout}
   set_env BUILD_TRIPLET ${triplet}
-  set_env PYSIDE_WHEEL PySide6-\${qt_version}-\${qt_version}-cp39-cp39-linux_x86_64.whl
-  set_env SHIBOKEN_WHEEL shiboken6-\${qt_version}-\${qt_version}-cp39-cp39-linux_x86_64.whl
+  set_env PYSIDE_WHEEL PySide6-\${qt_version}-\${qt_version}-cp311-cp311-linux_x86_64.whl
+  set_env SHIBOKEN_WHEEL shiboken6-\${qt_version}-\${qt_version}-cp311-cp311-linux_x86_64.whl
 else
-  set_env STANDALONE_PY_URL "${PY_BASE_URL}/cpython-3.9.7-x86_64-apple-darwin-pgo+lto-20211017T1616.tar.zst"
-  set_env PYTHON "${WORKSPACE}/py39/bin/python3"
-  set_env DIST_PYTHON "${WORKSPACE}/py39-dist/bin/python3"
-  set_env DIST_PYSIDE6_RCC "${WORKSPACE}/py39-dist/bin/pyside6-rcc"
-  set_env PYSIDE6_RCC "${WORKSPACE}/py39/bin/pyside6-rcc"
-  set_env BACKEND_WHEEL console_backend-0.1.0-cp39-cp39-macosx_10_15_x86_64.whl
+  set_env STANDALONE_PY_URL "${PY_BASE_URL}/cpython-3.11.1+20230116-x86_64-apple-darwin-pgo+lto-full.tar.zst"
+  set_env PYTHON "${WORKSPACE}/py311/bin/python3"
+  set_env DIST_PYTHON "${WORKSPACE}/py311-dist/bin/python3"
+  set_env DIST_PYSIDE6_RCC "${WORKSPACE}/py311-dist/bin/pyside6-rcc"
+  set_env PYSIDE6_RCC "${WORKSPACE}/py311/bin/pyside6-rcc"
+  set_env BACKEND_WHEEL console_backend-0.1.0-cp311-cp311-macosx_10_15_x86_64.whl
   set_env PYO3_CONFIG_FILE "${WORKSPACE}/standalone-py/pyo3_config.txt"
   set_env CONSOLE_PYO3_CONFIG_FILE "${WORKSPACE}/standalone-py/pyo3_config_console.txt"
   output = exec --fail-on-error gcc -dumpmachine
   triplet = trim ${output.stdout}
   set_env BUILD_TRIPLET ${triplet}
-  set_env PYSIDE_WHEEL PySide6-\${qt_version}-\${qt_version}-cp39-cp39-macosx_12_x86_64.whl
-  set_env SHIBOKEN_WHEEL shiboken6-\${qt_version}-\${qt_version}-cp39-cp39-macosx_12_x86_64.whl
+  set_env PYSIDE_WHEEL PySide6-\${qt_version}-\${qt_version}-cp311-cp311-macosx_12_x86_64.whl
+  set_env SHIBOKEN_WHEEL shiboken6-\${qt_version}-\${qt_version}-cp311-cp311-macosx_12_x86_64.whl
 end
 ''',
 ]
@@ -86,11 +86,10 @@ skip_crate_env_info = true
 
 [env]
 WORKSPACE = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}"
-PY_BASE_URL = "https://github.com/indygreg/python-build-standalone/releases/download/20211017"
-SWFT_PY_BASE_URL = "https://github.com/swift-nav/python-build-standalone/releases/download/20220205%2Bswift"
+PY_BASE_URL = "https://github.com/indygreg/python-build-standalone/releases/download/20230116"
 MACOSX_DEPLOYMENT_TARGET = "10.15"
 APP_NAME = "swift-console"
-QT_VERSION = "6.3.2"                                                                                         # Also needs to be updated in .github/workflows/main.yml
+QT_VERSION = "6.4.3"                                                                           # Also needs to be updated in .github/workflows/main.yml
 
 [tasks.init]
 
@@ -158,7 +157,7 @@ exec --fail-on-error ${python} -m py2many --rust=1 /tmp/piksi_tools_constants.py
 [tasks.check-python-exists]
 script_runner = "@duckscript"
 script = '''
-if not is_path_exists py39
+if not is_path_exists py311
 	echo "'cargo make setup-builder' needs to be run first."
 end
 '''
@@ -344,7 +343,7 @@ script_runner = "@duckscript"
 cwd = "standalone-py"
 condition = { files_not_exist = ["${CONSOLE_PYO3_CONFIG_FILE}"] }
 script = '''
-writefile pyo3_config_console.txt "implementation=CPython\nversion=3.9\nshared=true\nabi3=false\nlib_name=python3.9\nlib_dir=${WORKSPACE}/standalone-py/python/install/lib\nexecutable=${WORKSPACE}/standalone-py/python/install/bin/python3.9\npointer_width=64\nbuild_flags=WITH_THREAD\nsuppress_build_script_link_lines=false\nextra_build_script_line=cargo:rustc-link-lib=python3.9\nextra_build_script_line=cargo:rustc-link-search=${WORKSPACE}/standalone-py/python/install/lib\n"
+writefile pyo3_config_console.txt "implementation=CPython\nversion=3.11\nshared=true\nabi3=false\nlib_name=python3.11\nlib_dir=${WORKSPACE}/standalone-py/python/install/lib\nexecutable=${WORKSPACE}/standalone-py/python/install/bin/python3.11\npointer_width=64\nbuild_flags=WITH_THREAD\nsuppress_build_script_link_lines=false\nextra_build_script_line=cargo:rustc-link-lib=python3.11\nextra_build_script_line=cargo:rustc-link-search=${WORKSPACE}/standalone-py/python/install/lib\n"
 '''
 
 [tasks.write-pyo3-config-console.windows]
@@ -356,7 +355,7 @@ script_runner = "@duckscript"
 cwd = "standalone-py"
 condition = { files_not_exist = ["${PYO3_CONFIG_FILE}"] }
 script = '''
-writefile pyo3_config.txt "implementation=CPython\nversion=3.9\nshared=true\nabi3=false\nlib_name=python3.9\nlib_dir=${WORKSPACE}/standalone-py/python/install/lib\nexecutable=${WORKSPACE}/standalone-py/python/install/bin/python3.9\npointer_width=64\nbuild_flags=WITH_THREAD\nsuppress_build_script_link_lines=false\nextra_build_script_line=\n"
+writefile pyo3_config.txt "implementation=CPython\nversion=3.11\nshared=true\nabi3=false\nlib_name=python3.11\nlib_dir=${WORKSPACE}/standalone-py/python/install/lib\nexecutable=${WORKSPACE}/standalone-py/python/install/bin/python3.11\npointer_width=64\nbuild_flags=WITH_THREAD\nsuppress_build_script_link_lines=false\nextra_build_script_line=\n"
 '''
 
 [tasks.write-pyo3-config.windows]
@@ -364,7 +363,7 @@ script_runner = "@duckscript"
 cwd = "standalone-py"
 condition = { files_not_exist = ["${PYO3_CONFIG_FILE}"] }
 script = '''
-writefile pyo3_config.txt "implementation=CPython\nversion=3.9\nshared=true\nabi3=false\nlib_name=python39\nlib_dir=${WORKSPACE}\\standalone-py\\python\\install\\libs\nexecutable=${WORKSPACE}\\standalone-py\\python\\install\\python.exe\npointer_width=64\nbuild_flags=WITH_THREAD\nsuppress_build_script_link_lines=false\nextra_build_script_line=\n"
+writefile pyo3_config.txt "implementation=CPython\nversion=3.11\nshared=true\nabi3=false\nlib_name=python311\nlib_dir=${WORKSPACE}\\standalone-py\\python\\install\\libs\nexecutable=${WORKSPACE}\\standalone-py\\python\\install\\python.exe\npointer_width=64\nbuild_flags=WITH_THREAD\nsuppress_build_script_link_lines=false\nextra_build_script_line=\n"
 '''
 
 [tasks.get-standalone-py]
@@ -373,9 +372,9 @@ cwd = "standalone-py"
 condition = { files_not_exist = ["${WORKSPACE}/standalone-py/python"] }
 script_runner = "@duckscript"
 script = '''
-wget -O py39.tar.zst ${STANDALONE_PY_URL}
-exec --fail-on-error zstd -f -d py39.tar.zst
-exec --fail-on-error tar -xf py39.tar
+wget -O py311.tar.zst ${STANDALONE_PY_URL}
+exec --fail-on-error zstd -f -d py311.tar.zst
+exec --fail-on-error tar -xf py311.tar
 '''
 
 [tasks.get-qt-version]
@@ -397,12 +396,12 @@ script = '''
 dependencies = ["get-standalone-py"]
 script_runner = "@duckscript"
 script = '''
-if is_path_exists py39
-  rm -r py39
+if is_path_exists py311
+  rm -r py311
 end
-mkdir py39
+mkdir py311
 cd standalone-py/python/install
-cp . ../../../py39
+cp . ../../../py311
 cd ../../../
 exec --fail-on-error ${PYTHON} ./get-pip.py
 exec --fail-on-error ${PYTHON} -m pip install wheel flit . ".[test]" ".[ssh-tunnel]"
@@ -422,12 +421,12 @@ script_runner = "@duckscript"
 script = '''
 cm_run_task copy-capnp
 cm_run_task store-version
-if is_path_exists py39-dist
-  rm -r py39-dist
+if is_path_exists py311-dist
+  rm -r py311-dist
 end
-mkdir py39-dist
+mkdir py311-dist
 cd standalone-py/python/install/
-cp . ../../../py39-dist
+cp . ../../../py311-dist
 cd ../../..
 exec --fail-on-error ${DIST_PYTHON} ./get-pip.py
 
@@ -452,7 +451,7 @@ rm imagemagick.tool.7.1.0.nupkg
 '''
 
 [tasks.install-imagemagick.linux]
-script = "sudo apt-get install gsfonts imagemagick"
+script = "sudo apt-get install gsfonts imagemagick ghostscript fonts-freefont-otf"
 
 [tasks.install-imagemagick.mac]
 script = "brew install imagemagick"
@@ -464,12 +463,11 @@ output = exec --fail-on-error git describe --always --tags --dirty
 version = trim ${output.stdout}
 os = os_family
 if eq ${os} windows
-  exec --fail-on-error magick convert -font arial -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
+  echo "Creating splash screen (OS: Windows, font: Arial)"
+  exec --fail-on-error magick convert -font ./utils/arial.ttf -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
 else
-  output = exec convert -font helvetica -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
-  if not eq ${output.code} 0
-    exec --fail-on-error convert -font arial -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
-  end
+  echo "Creating splash screen (OS: Linux/macOS, font: Arial)"
+  exec --fail-on-error convert -font ./utils/arial.ttf -pointsize 14 -fill "#FFA400" -gravity south -annotate +0+5 ${version} ./resources/images/splash.jpg ./resources/images/splash-version.jpg
 end
 '''
 
@@ -523,38 +521,38 @@ dependencies = ["build-console"]
 script_runner = "@duckscript"
 script = '''
 app_name = get_env APP_NAME
-cp target/release/${app_name} py39-dist/${app_name}
+cp target/release/${app_name} py311-dist/${app_name}
 os = os_family
 if eq ${os} mac
-  exec --fail-on-error install_name_tool -change /install/lib/libpython3.9.dylib @rpath/libpython3.9.dylib py39-dist/${app_name}
-  exec --fail-on-error install_name_tool -add_rpath @executable_path/../Resources/lib py39-dist/${app_name}
-  exec --fail-on-error install_name_tool -add_rpath @executable_path/lib py39-dist/${app_name}
+  exec --fail-on-error install_name_tool -change /install/lib/libpython3.11.dylib @rpath/libpython3.11.dylib py311-dist/${app_name}
+  exec --fail-on-error install_name_tool -add_rpath @executable_path/../Resources/lib py311-dist/${app_name}
+  exec --fail-on-error install_name_tool -add_rpath @executable_path/lib py311-dist/${app_name}
 
-  cd py39-dist
+  cd py311-dist
   echo "START OF QTWEBENGINE TRANSLATIONS DISTRIBUTION"
-  mkdir ./lib/python3.9/site-packages/PySide6/Qt/translations
-  mv ./lib/python3.9/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Resources/qtwebengine_locales ./lib/python3.9/site-packages/PySide6/Qt/translations
+  mkdir ./lib/python3.11/site-packages/PySide6/Qt/translations
+  mv ./lib/python3.11/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Resources/qtwebengine_locales ./lib/python3.11/site-packages/PySide6/Qt/translations
 
   echo "START OF QTWEBENGINE RESOURCE DISTRIBUTION"
-  mkdir ./lib/python3.9/site-packages/PySide6/Qt/resources
-  web_resources = glob_array ./lib/python3.9/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Resources/*
+  mkdir ./lib/python3.11/site-packages/PySide6/Qt/resources
+  web_resources = glob_array ./lib/python3.11/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Resources/*
   for r in ${web_resources}
-    mv ${r} ./lib/python3.9/site-packages/PySide6/Qt/resources
+    mv ${r} ./lib/python3.11/site-packages/PySide6/Qt/resources
   end
 
 elseif eq ${os} linux
-  cp target/release/windowpos py39-dist/windowpos
+  cp target/release/windowpos py311-dist/windowpos
 end
 '''
 
 [tasks.build-dist-install-console.windows]
 script = '''
-cp target/release/${APP_NAME}.exe py39-dist/${APP_NAME}.exe
-cp target/release/${APP_NAME}.d py39-dist/${APP_NAME}.d
+cp target/release/${APP_NAME}.exe py311-dist/${APP_NAME}.exe
+cp target/release/${APP_NAME}.d py311-dist/${APP_NAME}.d
 if is_path_exists target/release/swift_console.pdb
-  cp target/release/swift_console.pdb py39-dist/swift_console.pdb
+  cp target/release/swift_console.pdb py311-dist/swift_console.pdb
 end
-cp target/release/console_backend.pdb py39-dist/Lib/site-packages/console_backend/console_backend.pdb
+cp target/release/console_backend.pdb py311-dist/Lib/site-packages/console_backend/console_backend.pdb
 '''
 
 [tasks.build-dist-install-frontend-wheel]
@@ -573,13 +571,13 @@ args = ["-m", "pip", "install", "console_backend/dist/${BACKEND_WHEEL}"]
 [tasks.build-dist-copy-resources]
 script_runner = "@duckscript"
 script = '''
-cp src/main/resources py39-dist/
+cp src/main/resources py311-dist/
 '''
 
 [tasks.build-dist-freeze]
 script_runner = "@duckscript"
 script = '''
-touch ./py39-dist/.frozen
+touch ./py311-dist/.frozen
 '''
 
 [tasks.pre-build-dist]
@@ -655,7 +653,7 @@ cm_run_task build-dist-install-console
 
 [tasks.purge-dist]
 env = { PYTHONDONTWRITEBYTECODE = "1" }
-cwd = "py39-dist"
+cwd = "py311-dist"
 script_runner = "@duckscript"
 script = '''
 py_folders = array test tests examples __pycache__ demos turtledemo idlelib lib/tcl8 lib/tcl8.6 lib/tk8.6 shiboken6/docs ensurepip lib2to3 tkinter unittest include
@@ -733,10 +731,10 @@ if eq ${os} windows
     end
 elseif eq ${os} mac
     rm -r ./share
-    rm -r ./lib/python3.9/site-packages/PySide6/Qt/libexec
+    rm -r ./lib/python3.11/site-packages/PySide6/Qt/libexec
     bins = array qmllint lupdate lrelease scripts qmlls qmlformat
     for bin in ${bins}
-        files = glob_array ./lib/python3.9/site-packages/PySide6/${bin}
+        files = glob_array ./lib/python3.11/site-packages/PySide6/${bin}
         for bin in ${files}
             rm -r ${bin}
         end
@@ -750,16 +748,16 @@ elseif eq ${os} mac
     # See: https://stackoverflow.com/a/29271922/12265938
 
     echo "REMOVING EXCESS RESOURCES"
-    resources_a = glob_array ./lib/python3.9/site-packages/PySide6/Qt/lib/*.framework/Versions/A/Resources
-    resources_b = glob_array ./lib/python3.9/site-packages/PySide6/Qt/lib/*.framework/Resources
+    resources_a = glob_array ./lib/python3.11/site-packages/PySide6/Qt/lib/*.framework/Versions/A/Resources
+    resources_b = glob_array ./lib/python3.11/site-packages/PySide6/Qt/lib/*.framework/Resources
     resources = array_concat ${resources_a} ${resources_b}
     for dir in ${resources}
       rm -r ${dir}
     end
 
     # remove helper directory since this exists relatively at
-    # ./lib/python3.9/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Versions/A/Helpers
-    rm -r ./lib/python3.9/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Helpers
+    # ./lib/python3.11/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Versions/A/Helpers
+    rm -r ./lib/python3.11/site-packages/PySide6/Qt/lib/QtWebEngineCore.framework/Helpers
 else
     rm -r ./share
 
@@ -798,14 +796,14 @@ else
 endif
 
 if eq ${os} mac
-    rm -r lib/python3.9/site-packages/PySide6/Designer.app/
-    rm -r lib/python3.9/site-packages/PySide6/Assistant.app/
-    rm -r lib/python3.9/site-packages/PySide6/Linguist.app/
+    rm -r lib/python3.11/site-packages/PySide6/Designer.app/
+    rm -r lib/python3.11/site-packages/PySide6/Assistant.app/
+    rm -r lib/python3.11/site-packages/PySide6/Linguist.app/
 
-    rm lib/python3.9/lib-dynload/_testcapi.cpython-39-darwin.so
-    rm lib/python3.9/lib-dynload/xxlimited.cpython-39-darwin.so
+    rm lib/python3.11/lib-dynload/_testcapi.cpython-311-darwin.so
+    rm lib/python3.11/lib-dynload/xxlimited.cpython-311-darwin.so
 
-    rm -r lib/python3.9/venv/
+    rm -r lib/python3.11/venv/
 
     rm -r lib/pkgconfig/
     rm -r lib/thread2.8.5/
@@ -828,7 +826,7 @@ end
 '''
 
 [tasks.strip-dist-pdb.windows]
-cwd = "py39-dist"
+cwd = "py311-dist"
 script_runner = "@duckscript"
 script = '''
 files = glob_array **/*.pdb
@@ -842,8 +840,8 @@ end
 script_runner = "@duckscript"
 script = '''
 app_name = get_env APP_NAME
-exec --fail-on-error strip ./py39-dist/${app_name}
-rm -r ./py39-dist/bin
+exec --fail-on-error strip ./py311-dist/${app_name}
+rm -r ./py311-dist/bin
 '''
 
 [tasks.strip-dist.windows]
@@ -851,9 +849,9 @@ script_runner = "@duckscript"
 script = '''
 cm_run_task strip-dist-pdb
 app_name = get_env APP_NAME
-exec --fail-on-error strip.exe ./py39-dist/${app_name}.exe
-rm ./py39-dist/python.exe
-rm ./py39-dist/pythonw.exe
+exec --fail-on-error strip.exe ./py311-dist/${app_name}.exe
+rm ./py311-dist/python.exe
+rm ./py311-dist/pythonw.exe
 '''
 
 [tasks.compress-dist]
@@ -865,9 +863,9 @@ date = trim ${output.stdout}
 output = exec --fail-on-error git describe --always --tags --dirty
 version = trim ${output.stdout}
 output_name = set "${ARCHIVE_NAME}-${version}-${BUILD_TRIPLET}-${date}"
-exec --fail-on-error tar -C "py39-dist" -cvf "${output_name}-debug.tar" .
+exec --fail-on-error tar -C "py311-dist" -cvf "${output_name}-debug.tar" .
 cm_run_task strip-dist
-exec --fail-on-error tar -C "py39-dist" -cvf "${output_name}.tar" .
+exec --fail-on-error tar -C "py311-dist" -cvf "${output_name}.tar" .
 exec --fail-on-error rm -f "${output_name}.tar.xz"
 exec --fail-on-error xz -T 0 -e -9 "${output_name}-debug.tar"
 exec --fail-on-error xz -T 0 -e -9 "${output_name}.tar"
@@ -928,7 +926,7 @@ end
 
 mkdir ${contents_dir}
 mkdir ${contents_mac_os}
-exec --fail-on-error cp -r py39-dist "${contents_resources_dir}"
+exec --fail-on-error cp -r py311-dist "${contents_resources_dir}"
 exec --fail-on-error mv ./${contents_resources_dir}/${app_original_name} "./${contents_mac_os}/${app_file_prefix}"
 cp ./${info_plist_path} ./${contents_dir}/Info.plist
 exec --fail-on-error sed -i "" -e "s/@@VERSION@@/${version}/g" "${contents_dir}/Info.plist"
@@ -1000,7 +998,7 @@ if [ -d $TMP_DIR ]; then
 fi
 
 mkdir -p "$TMP_DIR/$OPT_DIR"
-cp -r py39-dist/ "$TMP_DIR/$OPT_DIR/$APP_DIR_NAME/"
+cp -r py311-dist/ "$TMP_DIR/$OPT_DIR/$APP_DIR_NAME/"
 
 mkdir -p "$TMP_DIR/$USR_DIR/$APPS_DIR"
 cp "installers/Linux/$APP_DIR_NAME.desktop" "$TMP_DIR/$USR_DIR/$APPS_DIR/"
@@ -1274,42 +1272,42 @@ args = ["utils/bench_runner.py", "--disk_usage"]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/${APP_NAME}
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py311-dist/${APP_NAME}
 '''
 
 [tasks.frontend-cpu-bench.windows]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/${APP_NAME}.exe
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py311-dist/${APP_NAME}.exe
 '''
 
 [tasks.frontend-cpu-bench.mac]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py39-dist/${APP_NAME}
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_cpu --executable=${WORKSPACE}/py311-dist/${APP_NAME}
 '''
 
 [tasks.frontend-mem-bench.linux]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/${APP_NAME}
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py311-dist/${APP_NAME}
 '''
 
 [tasks.frontend-mem-bench.windows]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/${APP_NAME}.exe
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py311-dist/${APP_NAME}.exe
 '''
 
 [tasks.frontend-mem-bench.mac]
 script_runner = "@shell"
 script = '''
 echo 'This is only used to validate locally.'
-cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py39-dist/${APP_NAME}
+cd console_backend/tests && python ../../utils/bench_runner.py --frontend_mem --executable=${WORKSPACE}/py311-dist/${APP_NAME}
 '''
 
 [tasks.newline-terminator]

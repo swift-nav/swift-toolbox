@@ -22,23 +22,23 @@ rand = "0.8.5"
 parking_lot = "0.12.1"
 sbp-settings = "0.6.13"
 rust-ini = "0.18.0"
-regex = "1.7.2"
+regex = "1.7.3"
 serde_json = "1"
 serde_yaml = "0.9"
 anyhow = { version = "1", features = ["backtrace"] }
 clap = { version = "4.1", features = ["derive"] }
-indexmap = { version = "1.9.2", features = ["serde"] }
+indexmap = { version = "1.9.3", features = ["serde"] }
 chrono = { version = "0.4.24", features = [
   "serde",
   "clock",
   "std",
 ], default-features = false }
-serde = { version = "1.0.158", features = ["derive"] }
-sbp = { version = "4.11.0", features = ["json", "link", "swiftnav"] }
+serde = { version = "1.0.159", features = ["derive"] }
+sbp = { version = "4.13.0", features = ["json", "link", "swiftnav"] }
 mimalloc = { version = "0.1", default-features = false }
 serialport = { git = "https://github.com/swift-nav/serialport-rs.git", default-features = false }
 
-pyo3 = { version = "0.18.1", features = [
+pyo3 = { version = "0.18.2", features = [
   "extension-module",
   "macros",
 ], default-features = false, optional = true }
@@ -61,11 +61,11 @@ windows = { version = ">=0.24", features = [
 
 [dev-dependencies]
 logtest = "2.0.0"
-serial_test = "1"
+serial_test = "2"
 ndarray = "0.15.6"
 criterion = "0.4.0"
-sysinfo = "0.28.3"
-tempfile = "3.4.0"
+sysinfo = "0.28.4"
+tempfile = "3.5.0"
 rstest = "0.17.0"
 
 [build-dependencies]

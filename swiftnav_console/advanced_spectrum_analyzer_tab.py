@@ -68,6 +68,7 @@ class AdvancedSpectrumAnalyzerPoints(QObject):
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:
         self.advanced_spectrum_analyzer_tab = ADVANCED_SPECTRUM_ANALYZER_TAB[0]
+        self.update()  # type: ignore
 
     def get_ymin(self) -> float:
         """Getter for _ymin."""

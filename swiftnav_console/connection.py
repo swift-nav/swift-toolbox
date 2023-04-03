@@ -31,7 +31,6 @@ def connection_update() -> Dict[str, Any]:
         Keys.AVAILABLE_PORTS: [],
         Keys.AVAILABLE_BAUDRATES: [],
         Keys.AVAILABLE_FLOWS: [],
-        Keys.AVAILABLE_REFRESH_RATES: [],
         Keys.PREVIOUS_HOSTS: [],
         Keys.PREVIOUS_PORTS: [],
         Keys.PREVIOUS_FILES: [],
@@ -52,7 +51,6 @@ class ConnectionData(QObject):  # pylint: disable=too-many-instance-attributes d
     _available_ports: List[str] = []
     _available_baudrates: List[str] = []
     _available_flows: List[str] = []
-    _available_refresh_rates: List[str] = []
     _conn_state: ConnectionState = ConnectionState.DISCONNECTED
     _previous_hosts: List[str] = []
     _previous_ports: List[str] = []

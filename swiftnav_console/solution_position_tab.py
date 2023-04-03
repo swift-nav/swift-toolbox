@@ -71,6 +71,7 @@ class SolutionPositionPoints(QObject):  # pylint: disable=too-many-instance-attr
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:
         self.solution_position = SOLUTION_POSITION_TAB[0]
+        self.update()  # type: ignore
 
     def get_lat_min(self) -> float:
         """Getter for _lat_min."""

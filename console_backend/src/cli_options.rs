@@ -23,7 +23,7 @@ use clap::{ArgAction, Args, Parser};
 use log::{debug, error};
 
 use crate::common_constants::LogLevel;
-use crate::constants::{AVAILABLE_BAUDRATES, AVAILABLE_REFRESH_RATES};
+use crate::constants::AVAILABLE_BAUDRATES;
 use crate::output::CsvLogging;
 use crate::shared_state::SharedState;
 use crate::types::{FlowControl, RealtimeDelay};
@@ -101,9 +101,9 @@ pub struct CliOptions {
     #[clap(long)]
     pub show_file_connection: bool,
 
-    /// Disable map.
+    /// Enable map.
     #[clap(long)]
-    pub disable_map: bool,
+    pub enable_map: bool,
 
     /// Path to a yaml file containing known piksi settings.
     #[clap(long)]
@@ -122,10 +122,6 @@ pub struct CliOptions {
     /// require less system resources.
     #[clap(long, action = ArgAction::SetFalse)]
     pub no_high_dpi: bool,
-
-    /// Change the refresh rate of the plots.
-    #[clap(long, value_parser = is_refresh_rate)]
-    pub refresh_rate: Option<u8>,
 
     /// Don't show prompts about firmware/console updates.
     #[clap(long)]
@@ -251,23 +247,6 @@ pub struct FileOpts {
     /// Path to an SBP file.
     #[clap(long, conflicts_with_all = &["tcp", "serial", "baudrate", "flow_control"])]
     pub file: Option<PathBuf>,
-}
-
-/// Validation for the refresh-rate cli option.
-///
-/// # Parameters
-/// - `rr`: The user input refresh-rate.
-///
-/// # Returns
-/// - `Ok`: The refresh-rate was found in AVAILABLE_REFRESH_RATES.
-/// - `Err`: The tab was not found in AVAILABLE_REFRESH_RATES.
-fn is_refresh_rate(rr: &str) -> Result<u8, String> {
-    if let Ok(rr_) = rr.parse::<u8>() {
-        if AVAILABLE_REFRESH_RATES.contains(&rr_) {
-            return Ok(rr_);
-        }
-    }
-    Err(format!("possible values: {AVAILABLE_REFRESH_RATES:?}"))
 }
 
 /// Validation for the baudrate cli option.

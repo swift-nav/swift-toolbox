@@ -51,6 +51,60 @@ Item {
 
     SolutionPositionPoints {
         id: solutionPositionPoints
+
+        function update() {
+            if (!solutionPositionTab.visible)
+                return;
+            solution_position_model.fill_console_points(solutionPositionPoints);
+            if (!solutionPositionPoints.points.length)
+                return;
+            if (available_units != solutionPositionPoints.available_units)
+                available_units = solutionPositionPoints.available_units;
+            if (!line || !scatters.length || !cur_scatters.length)
+                [scatters, cur_scatters, line] = SolutionPlotLoop.setupScatterSeries(solutionPositionChart, Constants, Globals, solutionPositionXAxis, solutionPositionYAxis, Constants.solutionPosition.legendLabels, Constants.solutionPosition.colors, false, true);
+            var combined = [line, scatters, cur_scatters];
+            solutionPositionPoints.fill_series(combined);
+            let point = SolutionPlotLoop.getCurSolution(solutionPositionPoints.cur_points);
+            if (point)
+                cur_solution = point;
+            if (center_solution)
+                solutionPositionChart.centerToSolution();
+            let hasData = false;
+            let solnPoints = solutionPositionPoints.points;
+            for (let idx in solnPoints) {
+                if (solnPoints[idx].length) {
+                    hasData = true;
+                    break;
+                }
+            }
+            let solnPos = Constants.solutionPosition;
+            let new_lat_min = solnPos.axesDefaultMin;
+            let new_lat_max = solnPos.axesDefaultMax;
+            let new_lon_min = solnPos.axesDefaultMin;
+            let new_lon_max = solnPos.axesDefaultMax;
+            solutionZoomAllButton.enabled = hasData;
+            solutionCenterButton.enabled = hasData;
+            if (hasData) {
+                new_lat_min = solutionPositionPoints.lat_min_;
+                new_lat_max = solutionPositionPoints.lat_max_;
+                new_lon_min = solutionPositionPoints.lon_min_;
+                new_lon_max = solutionPositionPoints.lon_max_;
+            } else {
+                zoom_all = true;
+                center_solution = false;
+                solutionZoomAllButton.checked = true;
+                solutionCenterButton.checked = false;
+                solutionPositionChart.resetChartZoom();
+            }
+            if (orig_lat_min != new_lat_min || orig_lat_max != new_lat_max || orig_lon_min != new_lon_min || orig_lon_max != new_lon_max) {
+                orig_lat_min = new_lat_min;
+                orig_lat_max = new_lat_max;
+                orig_lon_min = new_lon_min;
+                orig_lon_max = new_lon_max;
+                if (zoom_all)
+                    solutionPositionChart.resetChartZoom();
+            }
+        }
     }
 
     ColumnLayout {
@@ -409,70 +463,6 @@ Item {
                 XYPoint {
                     x: 1
                     y: 1
-                }
-            }
-
-            Timer {
-                interval: Utils.hzToMilliseconds(Globals.currentRefreshRate)
-                running: true
-                repeat: true
-                onTriggered: {
-                    if (!solutionPositionTab.visible) {
-                        return;
-                    }
-                    solution_position_model.fill_console_points(solutionPositionPoints);
-                    if (!solutionPositionPoints.points.length) {
-                        return;
-                    }
-                    if (available_units != solutionPositionPoints.available_units) {
-                        available_units = solutionPositionPoints.available_units;
-                    }
-                    if (!line || !scatters.length || !cur_scatters.length) {
-                        [scatters, cur_scatters, line] = SolutionPlotLoop.setupScatterSeries(solutionPositionChart, Constants, Globals, solutionPositionXAxis, solutionPositionYAxis, Constants.solutionPosition.legendLabels, Constants.solutionPosition.colors, false, true);
-                    }
-                    var combined = [line, scatters, cur_scatters];
-                    solutionPositionPoints.fill_series(combined);
-                    let point = SolutionPlotLoop.getCurSolution(solutionPositionPoints.cur_points);
-                    if (point)
-                        cur_solution = point;
-                    if (center_solution)
-                        solutionPositionChart.centerToSolution();
-                    let hasData = false;
-                    let solnPoints = solutionPositionPoints.points;
-                    for (let idx in solnPoints) {
-                        if (solnPoints[idx].length) {
-                            hasData = true;
-                            break;
-                        }
-                    }
-                    let solnPos = Constants.solutionPosition;
-                    let new_lat_min = solnPos.axesDefaultMin;
-                    let new_lat_max = solnPos.axesDefaultMax;
-                    let new_lon_min = solnPos.axesDefaultMin;
-                    let new_lon_max = solnPos.axesDefaultMax;
-                    solutionZoomAllButton.enabled = hasData;
-                    solutionCenterButton.enabled = hasData;
-                    if (hasData) {
-                        new_lat_min = solutionPositionPoints.lat_min_;
-                        new_lat_max = solutionPositionPoints.lat_max_;
-                        new_lon_min = solutionPositionPoints.lon_min_;
-                        new_lon_max = solutionPositionPoints.lon_max_;
-                    } else {
-                        zoom_all = true;
-                        center_solution = false;
-                        solutionZoomAllButton.checked = true;
-                        solutionCenterButton.checked = false;
-                        solutionPositionChart.resetChartZoom();
-                    }
-                    if (orig_lat_min != new_lat_min || orig_lat_max != new_lat_max || orig_lon_min != new_lon_min || orig_lon_max != new_lon_max) {
-                        orig_lat_min = new_lat_min;
-                        orig_lat_max = new_lat_max;
-                        orig_lon_min = new_lon_min;
-                        orig_lon_max = new_lon_max;
-                        if (zoom_all) {
-                            solutionPositionChart.resetChartZoom();
-                        }
-                    }
                 }
             }
         }

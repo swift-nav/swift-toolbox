@@ -235,9 +235,11 @@ Rectangle {
             }
         }
 
-        SwiftLoader {
+        ProgressBar {
             id: refreshLoader
-            visible: true
+            visible: false
+            indeterminate: true
+            Layout.fillWidth: true
         }
 
         SwiftTableView {

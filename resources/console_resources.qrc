@@ -131,7 +131,6 @@
     <file>BaseComponents/SwiftRoundButton.qml</file>
     <file>BaseComponents/SwiftTabBar.qml</file>
     <file>BaseComponents/SwiftTabButton.qml</file>
-    <file>BaseComponents/SwiftLoader.qml</file>
     <file>ChartLegend.qml</file>
     <file>MainTab.qml</file>
     <file>TabInfoBar.qml</file>

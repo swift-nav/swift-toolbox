@@ -48,7 +48,7 @@ function uniqueFn () {
     echo "$uniquefn"
 }
 
-#if [ ! -d py39-dist ]; then
+#if [ ! -d py311-dist ]; then
 #    cargo make build-dist
 #fi
 
@@ -73,7 +73,7 @@ trap 'exec 2>&4 1>&3; echo Ctrl-C pressed, exiting loop. ; exit' SIGINT SIGTERM
 
 echo "Logging to $logfn"
 
-cd ${scriptpath}/../py39-dist
+cd ${scriptpath}/../py311-dist
 # macOS (or any platform using lldb) works differently.
 # The looping is done within the debugger in a python script.
 # This is faster, as the debugger doesn't have to shutdown and restart,

@@ -24,7 +24,7 @@ ManifestDPIAware true
 !define app_name "Swift Console"
 !define app_executable "swift-console.exe"
 !define outfile_prefix "swift-console"
-!define installer_dir "py39-dist"
+!define installer_dir "py311-dist"
 !define company_name "Swift Navigation"
 !define old_shortcut "${app_name} (Old).lnk"
 

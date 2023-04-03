@@ -295,7 +295,7 @@ We're using Qt 6 via PySide6 (the official Python bindings for Qt).
 
 QML (QtQuick Mark-up Language) is used to model the UI.
 
-### Python 3.9 Standalone Build
+### Python 3.11 Standalone Build
 
 [python-build-standalone](https://github.com/indygreg/python-build-standalone) provides
 redistributable builds of Python, these builds are designed to function in a variety

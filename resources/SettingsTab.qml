@@ -290,7 +290,10 @@ MainTab {
                         icon.height: Constants.settingsTab.buttonIconHeight
                         display: parent.buttonDisplay
                         flat: true
-                        onClicked: backend_request_broker.settings_refresh()
+                        onClicked: {
+                            backend_request_broker.settings_refresh();
+                            settingsTable.loaderVisibility(true);
+                        }
                     }
 
                     SmallCheckBox {

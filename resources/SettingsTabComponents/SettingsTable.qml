@@ -22,6 +22,7 @@
  ****************************************************************************/
 import "../Constants"
 import "../TableComponents"
+import "../BaseComponents"
 import Qt.labs.qmlmodels
 import QtCharts
 import QtQuick
@@ -42,6 +43,10 @@ Rectangle {
 
     function clearTableModel() {
         tableView.model.clear();
+    }
+
+    function loaderVisibility(value) {
+        refreshLoader.visible = value;
     }
 
     function isHeader(entry) {
@@ -127,6 +132,7 @@ Rectangle {
                 settingsHealthy = false;
                 return;
             }
+            refreshLoader.visible = false;
             settingsHealthy = true;
             if (lastShowExpert != showExpert) {
                 tableView._currentSelectedIndex = -1;
@@ -229,6 +235,13 @@ Rectangle {
             }
         }
 
+        ProgressBar {
+            id: refreshLoader
+            visible: false
+            indeterminate: true
+            Layout.fillWidth: true
+        }
+
         SwiftTableView {
             id: tableView
 
@@ -241,10 +254,7 @@ Rectangle {
             model: TableModel {
                 id: tableModel
 
-                rows: [{
-                        "Name": "",
-                        "Value": ""
-                    }]
+                rows: []
 
                 TableModelColumn {
                     display: "Name"

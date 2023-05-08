@@ -39,7 +39,7 @@ use crate::piksi_tools_constants::{
     ins_error_dict, ins_mode_dict, ins_type_dict, rtk_mode_dict, DR_MODE, EMPTY_STR, RTK_MODES,
 };
 use crate::shared_state::SharedState;
-use crate::types::{BaselineNED, Dops, GnssModes, PosLLH};
+use crate::types::{BaselineNED, GnssModes, PosLLH};
 use crate::utils::{bytes_to_kb, decisec_to_sec, serialize_capnproto_builder};
 
 enum AntennaStatus {

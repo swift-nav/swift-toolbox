@@ -28,9 +28,10 @@ import QtQuick.Layouts
 import SwiftConsole
 
 Rectangle {
+    id: rect
     property string position: Constants.statusBar.defaultValue
-    property string rtk: Constants.statusBar.defaultValue
-    property string ins: Constants.statusBar.defaultValue
+    property string rtk_val: Constants.statusBar.defaultValue
+    property string ins_val: Constants.statusBar.defaultValue
     property int satellites: -1
     property real correctionAge: -1
     property string antennaStatus: Constants.statusBar.defaultValue
@@ -52,9 +53,8 @@ Rectangle {
             status_bar_model.fill_data(statusBarData);
             if (statusBarData.title) {
                 position = statusBarData.pos;
-                rtk = statusBarData.rtk;
-                console.log(rtk);
-                ins = statusBarData.ins;
+                rtk_val = statusBarData.rtk;
+                ins_val = statusBarData.ins;
                 satellites = statusBarData.solid_connection ? statusBarData.sats : -1;
                 correctionAge = statusBarData.corr_age;
                 antennaStatus = statusBarData.antenna_status;
@@ -78,10 +78,10 @@ Rectangle {
                     "valueText": position
                 }, {
                     "labelText": Constants.statusBar.rtkLabel,
-                    "valueText": rtk
+                    "valueText": rtk_val
                 }, {
                     "labelText": Constants.statusBar.insLabel,
-                    "valueText": ins
+                    "valueText": ins_val
                 }, {
                     "labelText": Constants.statusBar.satsLabel,
                     "valueText": satellites < 0 ? Constants.statusBar.defaultValue : satellites

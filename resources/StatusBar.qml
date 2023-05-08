@@ -53,6 +53,7 @@ Rectangle {
             if (statusBarData.title) {
                 position = statusBarData.pos;
                 rtk = statusBarData.rtk;
+                console.log(rtk);
                 ins = statusBarData.ins;
                 satellites = statusBarData.solid_connection ? statusBarData.sats : -1;
                 correctionAge = statusBarData.corr_age;

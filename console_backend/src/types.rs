@@ -1108,8 +1108,8 @@ impl GnssModes {
             GnssModes::NoFix => NO_FIX_LABEL,
             GnssModes::Spp => SPP,
             GnssModes::Dgnss => DGNSS,
-            GnssModes::Float => FLOAT,
-            GnssModes::Fixed => FIXED,
+            GnssModes::Float => RTK,
+            GnssModes::Fixed => RTK,
             GnssModes::Dr => DR_LABEL,
             GnssModes::Sbas => SBAS,
         };

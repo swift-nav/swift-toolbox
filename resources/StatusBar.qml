@@ -28,7 +28,6 @@ import QtQuick.Layouts
 import SwiftConsole
 
 Rectangle {
-    id: rect
     property string position: Constants.statusBar.defaultValue
     property string rtk_val: Constants.statusBar.defaultValue
     property string ins_val: Constants.statusBar.defaultValue

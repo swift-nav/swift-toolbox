@@ -379,6 +379,8 @@ impl SolutionPositionTab {
     /// - `msg`: The MsgInsStatus to extract data from.
     pub fn handle_ins_status(&mut self, msg: MsgInsStatus) {
         self.ins_status_flags = msg.flags;
+        self.table
+            .insert(INS_STATUS, format!("0x{:<01x}", self.ins_status_flags));
         self.last_ins_status_receipt_time = Instant::now();
         let mut shared_data = self.shared_state.lock();
         shared_data.solution_tab.position_tab.ins_status_flags = msg.flags;
@@ -396,8 +398,6 @@ impl SolutionPositionTab {
         let dops_fields = msg.fields();
         self.table
             .insert(DOPS_FLAGS, format!("0x{:<03x}", dops_fields.flags));
-        self.table
-            .insert(INS_STATUS, format!("0x{:<01x}", self.ins_status_flags));
         if dops_fields.flags != 0 {
             self.table.insert(PDOP, dops_into_string(dops_fields.pdop));
             self.table.insert(GDOP, dops_into_string(dops_fields.gdop));

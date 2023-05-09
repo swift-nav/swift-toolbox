@@ -21,6 +21,7 @@ pub mod formatters;
 pub mod fusion_status_flags;
 pub mod log_panel;
 pub mod main_tab;
+pub mod ntripping;
 pub mod observation_tab;
 pub mod output;
 pub mod piksi_tools_constants;

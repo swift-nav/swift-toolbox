@@ -308,12 +308,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "18eca1b9aca7e3623dda158213b1b79c1e5c4293fbbf0ead6b9ed28a1763bbff"
 
 [[package]]
-name = "capnpc"
-version = "0.16.3"
+name = "capnp"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b45a0c0b3fec59ba52fc3bb90ba34cb6444e20691faa07be1dabb80660e4ad0"
+checksum = "13e2d432d1601d61d1e11140d04e9d239b5cf7316fa1106523c3d86eea19c29d"
+
+[[package]]
+name = "capnpc"
+version = "0.17.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d96f2815c224ac779eeef76a292264d5361600f0f3ab97ab189342c7042308cc"
 dependencies = [
- "capnp",
+ "capnp 0.17.0",
 ]
 
 [[package]]
@@ -521,7 +527,7 @@ dependencies = [
  "anyhow",
  "async_logger",
  "async_logger_log",
- "capnp",
+ "capnp 0.16.1",
  "capnpc",
  "chrono",
  "clap 4.1.11",

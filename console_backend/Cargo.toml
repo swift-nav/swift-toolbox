@@ -69,7 +69,7 @@ tempfile = "3.5.0"
 rstest = "0.17.0"
 
 [build-dependencies]
-capnpc = "0.16"
+capnpc = "0.17"
 
 [lib]
 name = "console_backend"

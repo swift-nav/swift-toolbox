@@ -274,6 +274,7 @@ impl StatusBar {
                 .heartbeat_data
                 .lock()
                 .expect(HEARTBEAT_LOCK_MUTEX_FAILURE);
+            shared_data.ins_status_string = format!("0x{:<01x}", msg.flags);
             shared_data.ins_status_flags = ins_status_flags;
             shared_data.last_ins_status_receipt_time = last_ins_status_receipt_time;
         }

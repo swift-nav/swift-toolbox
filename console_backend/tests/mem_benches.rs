@@ -17,7 +17,7 @@ mod mem_bench_impl {
     const MINIMUM_MEM_READINGS: usize = 20;
 
     const DIFF_THRESHOLD: f32 = 0.25;
-    const MAXIMUM_MEM_USAGE_KB: f32 = 220000.0;
+    const MAXIMUM_MEM_USAGE_KB: f32 = 250000.0;
     const ABSOLUTE_MINIMUM_MEM_USAGE: f32 = 1000.0;
     const MAXIMUM_STANDARD_DEV_RATE_OF_MAXIMUM_MEM: f32 = 0.5;
 

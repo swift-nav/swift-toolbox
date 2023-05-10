@@ -101,13 +101,13 @@ impl BaselineTab {
             nsec: Some(0),
             shared_state,
             sln_cur_data: {
-                let mut data = vec![Vec::with_capacity(1); NUM_GNSS_MODES as usize];
-                data.reserve_exact(NUM_GNSS_MODES as usize);
+                let mut data = vec![Vec::with_capacity(1); NUM_GNSS_MODES];
+                data.reserve_exact(NUM_GNSS_MODES);
                 data
             },
             sln_data: {
-                let mut data = vec![Vec::with_capacity(PLOT_HISTORY_MAX); NUM_GNSS_MODES as usize];
-                data.reserve_exact(NUM_GNSS_MODES as usize);
+                let mut data = vec![Vec::with_capacity(PLOT_HISTORY_MAX); NUM_GNSS_MODES];
+                data.reserve_exact(NUM_GNSS_MODES);
                 data
             },
             slns: {
@@ -238,7 +238,7 @@ impl BaselineTab {
                 msg.hours as u32,
                 msg.minutes as u32,
                 msg.seconds as u32,
-                msg.ns as u32,
+                msg.ns,
             ));
             self.utc_source = Some(utc_source(msg.flags));
         } else {
@@ -297,7 +297,7 @@ impl BaselineTab {
 
         {
             let mut shared_data = self.shared_state.lock();
-            if let Some(ref mut baseline_file) = (*shared_data).baseline_tab.log_file {
+            if let Some(ref mut baseline_file) = shared_data.baseline_tab.log_file {
                 let pc_time = format!("{}:{:0>6.06}", tloc, secloc);
                 if let Err(err) = baseline_file.serialize(&BaselineLog {
                     pc_time,
@@ -393,11 +393,11 @@ impl BaselineTab {
 
     fn check_state(&self) -> BaselineTabButtons {
         let mut shared_data = self.shared_state.lock();
-        let clear = (*shared_data).baseline_tab.clear;
-        (*shared_data).baseline_tab.clear = false;
-        let pause = (*shared_data).baseline_tab.pause;
-        let reset = (*shared_data).baseline_tab.reset;
-        (*shared_data).baseline_tab.reset = false;
+        let clear = shared_data.baseline_tab.clear;
+        shared_data.baseline_tab.clear = false;
+        let pause = shared_data.baseline_tab.pause;
+        let reset = shared_data.baseline_tab.reset;
+        shared_data.baseline_tab.reset = false;
         BaselineTabButtons {
             clear,
             pause,
@@ -642,7 +642,7 @@ mod tests {
             hours as u32,
             minutes as u32,
             seconds as u32,
-            ns as u32,
+            ns,
         );
         assert_eq!(baseline_table.utc_time, Some(datetime));
         assert_eq!(
@@ -844,9 +844,9 @@ mod tests {
         assert!(!buttons.reset);
         {
             let mut shared_data = baseline_tab.shared_state.lock();
-            (*shared_data).baseline_tab.clear = true;
-            (*shared_data).baseline_tab.pause = true;
-            (*shared_data).baseline_tab.reset = true;
+            shared_data.baseline_tab.clear = true;
+            shared_data.baseline_tab.pause = true;
+            shared_data.baseline_tab.reset = true;
         }
         let buttons = baseline_tab.check_state();
         assert!(buttons.clear);

@@ -151,7 +151,7 @@ impl SolutionVelocityTab {
             .init_available_units(self.available_units.len() as u32);
 
         for (i, unit) in self.available_units.iter().enumerate() {
-            available_units.set(i as u32, *unit);
+            available_units.set(i as u32, unit);
         }
         let mut colors = velocity_status
             .reborrow()

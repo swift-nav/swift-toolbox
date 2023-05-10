@@ -54,7 +54,7 @@ fn app_dir() -> Result<PathBuf> {
 }
 
 fn pythonhome_dir() -> Result<PathBuf> {
-    let app_dir = app_dir()?.to_path_buf();
+    let app_dir = app_dir()?;
     if cfg!(target_os = "macos") {
         if let Some(parent) = app_dir.parent() {
             let resources = parent.join("Resources/lib");

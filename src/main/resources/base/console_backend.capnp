@@ -452,6 +452,12 @@ struct AutoSurveyRequest {
     request @0 :Void = void;
 }
 
+struct NtripConfig {
+    url @0: Text;
+    username @1: Text;
+    password @2: Text;
+}
+
 struct Message {
     union {
         solutionVelocityStatus @0 :SolutionVelocityStatus;

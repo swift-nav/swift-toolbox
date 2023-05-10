@@ -18,7 +18,6 @@ lazy_static! {
         let pid = std::process::id();
         std::env::temp_dir()
             .join(format!("{TEMP_FILENAME}.{pid}"))
-            .into()
     };
 }
 

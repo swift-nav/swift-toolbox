@@ -452,10 +452,14 @@ struct AutoSurveyRequest {
     request @0 :Void = void;
 }
 
-struct NtripConfig {
+struct NtripConnect {
     url @0: Text;
     username @1: Text;
     password @2: Text;
+    epoch @3: UInt64;
+    lat @4: Float64;
+    lon @5: Float64;
+    alt @6: Float64;
 }
 
 struct Message {
@@ -515,6 +519,6 @@ struct Message {
         connectionNotification @52 : ConnectionNotification;
         settingsNotification @53 : SettingsNotification;
         connectionDialogStatus @54 :ConnectionDialogStatus;
-        ntripConfig @55 :NtripConfig;
+        ntripConnect @55 :NtripConnect;
     }
 }

@@ -24,6 +24,7 @@ Item {
     RowLayout {
         ColumnLayout {
             Repeater {
+                id: generalRepeater
                 model: ["Url", "Username", "Password"]
                 RowLayout {
                     width: 500
@@ -33,7 +34,6 @@ Item {
                         Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
                     }
                     TextField {
-                        id: textField
                         width: 200
                         placeholderText: modelData
                         font.family: Constants.genericTable.fontFamily
@@ -45,7 +45,27 @@ Item {
                 }
             }
 
+            RowLayout {
+                width: 500
+                height: 30
+                Label {
+                    text: "Epoch: "
+                    Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
+                }
+                TextField {
+                    id: epochField
+                    width: 200
+                    placeholderText: "Epoch"
+                    font.family: Constants.genericTable.fontFamily
+                    font.pixelSize: Constants.largePixelSize
+                    selectByMouse: true
+                    Layout.alignment: Qt.AlignVCenter| Qt.AlignRight
+                    validator: floatValidator
+                }
+            }
+
             Repeater {
+                id: positionRepeater
                 model: ["Lat", "Lon", "Alt"]
                 RowLayout {
                     width: 500
@@ -63,7 +83,7 @@ Item {
                         font.pixelSize: Constants.largePixelSize
                         selectByMouse: true
                         Layout.alignment: Qt.AlignVCenter| Qt.AlignRight
-                        validator: stringValidator
+                        validator: floatValidator
                     }
                 }
             }
@@ -94,7 +114,14 @@ Item {
                     ToolTip.visible: hovered
                     ToolTip.text: "Start"
                     onClicked: {
-                        console.log("hello");
+                        let url = generalRepeater.itemAt(0).children[1].text;
+                        let username = generalRepeater.itemAt(1).children[1].text;
+                        let password = generalRepeater.itemAt(2).children[1].text;
+                        let epoch = epochField.text;
+                        let lat = positionRepeater.itemAt(0).children[1].text;
+                        let lon = positionRepeater.itemAt(1).children[1].text;
+                        let alt = positionRepeater.itemAt(2).children[1].text;
+                        backend_request_broker.ntrip_connect(url, username, password, epoch, lat, lon, alt);
                     }
                 }
                 SwiftButton {

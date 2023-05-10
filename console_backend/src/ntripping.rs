@@ -5,6 +5,7 @@ use std::io::Write;
 use std::iter;
 use std::rc::Rc;
 
+use anyhow::anyhow;
 use crossbeam::channel;
 use std::time::{Duration, SystemTime};
 
@@ -180,7 +181,7 @@ fn get_commands(opt: NtripOptions) -> anyhow::Result<Box<dyn Iterator<Item = Com
         //     Some(next)
         // });
         // Ok(Box::new(it))
-        Err(anyhow::format_err!("cra not implemented"))
+        Err(anyhow!("cra not implemented"))
     } else {
         let first = build_gga(&opt);
         let rest = iter::repeat(Command {
@@ -200,7 +201,7 @@ fn connect(opt: NtripOptions) -> anyhow::Result<()> {
     if opt.nmea_header {
         if opt.area_id.is_some() {
             // headers.append(&format!("Ntrip-CRA: {}", build_cra(&opt)))?;
-            Err(anyhow::format_err!("cra not implemented"))
+            return Err(anyhow!("cra not implemented"));
         } else {
             headers.append(&format!("Ntrip-GGA: {}", build_gga(&opt)))?;
         }

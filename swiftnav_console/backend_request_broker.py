@@ -299,3 +299,18 @@ class BackendRequestBroker(QObject):  # pylint: disable=too-many-instance-attrib
         msg.autoSurveyRequest = msg.init(Message.Union.AutoSurveyRequest)
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
+
+    @Slot(str, str, str, int, float, float, float)  # type: ignore
+    def ntrip_connect(self, url, username, password, epoch, lat, lon, alt) -> None:
+        Message = self.messages.Message
+        msg = self.messages.Message()
+        msg.ntripConnect = msg.init(Message.Union.NtripConnect)
+        msg.ntripConnect.url = url
+        msg.ntripConnect.username = username
+        msg.ntripConnect.password = password
+        msg.ntripConnect.epoch = epoch
+        msg.ntripConnect.lat = lat
+        msg.ntripConnect.lon = lon
+        msg.ntripConnect.alt = alt
+        buffer = msg.to_bytes()
+        self.endpoint.send_message(buffer)

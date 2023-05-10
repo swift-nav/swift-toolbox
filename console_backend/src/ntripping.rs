@@ -1,9 +1,14 @@
 use chrono::{DateTime, Utc};
-use curl::easy::{Easy, HttpVersion, List};
+use curl::easy::{Easy, HttpVersion, List, ReadError};
+use std::cell::RefCell;
+use std::io::Write;
+use std::rc::Rc;
 
+use crossbeam::channel;
 use std::time::{Duration, SystemTime};
 
-struct NtripOptions {
+#[derive(Debug, Default)]
+pub struct NtripOptions {
     url: String,
     lat: f64,
     lon: f64,
@@ -153,7 +158,7 @@ impl Message {
     }
 }
 
-fn fetch_ntrip(opt: NtripOptions) -> anyhow::Result<()> {
+fn connect(opt: NtripOptions) -> anyhow::Result<()> {
     let mut curl = Easy::new();
     let mut headers = List::new();
     headers.append("Transfer-Encoding:")?;
@@ -181,5 +186,62 @@ fn fetch_ntrip(opt: NtripOptions) -> anyhow::Result<()> {
     if let Some(password) = &opt.password {
         curl.password(password)?;
     }
-    Ok(())
+    let (tx, rx) = channel::bounded::<Vec<u8>>(1);
+    let transfer = Rc::new(RefCell::new(curl.transfer()));
+
+    transfer.borrow_mut().progress_function({
+        let rx = &rx;
+        let transfer = Rc::clone(&transfer);
+        move |_dltot, _dlnow, _ultot, _ulnow| {
+            if !rx.is_empty() {
+                if let Err(e) = transfer.borrow().unpause_read() {
+                    eprintln!("unpause error: {e}");
+                    return false;
+                }
+            }
+            true
+        }
+    })?;
+
+    transfer.borrow_mut().write_function(|data| {
+        if let Err(e) = std::io::stdout().write_all(data) {
+            eprintln!("write error: {e}");
+            return Ok(0);
+        }
+        Ok(data.len())
+    })?;
+
+    transfer.borrow_mut().read_function(|mut data: &mut [u8]| {
+        let mut bytes = match rx.try_recv() {
+            Ok(mut bytes) => bytes,
+            Err(_) => return Err(ReadError::Pause),
+        };
+        bytes.extend_from_slice(b"\r\n");
+        if let Err(e) = data.write_all(&bytes) {
+            eprintln!("read error: {e}");
+            return Err(ReadError::Abort);
+        }
+        Ok(bytes.len())
+    })?;
+
+    let commands = get_commands(opt.clone())?;
+    let handle = std::thread::spawn(move || {
+        for cmd in commands {
+            if cmd.after > 0 {
+                std::thread::sleep(Duration::from_secs(cmd.after));
+            }
+            if tx.send(cmd.to_bytes()).is_err() {
+                break;
+            }
+        }
+        Ok(())
+    });
+
+    transfer.borrow().perform()?;
+    if !handle.is_finished() {
+        Ok(())
+    } else {
+        // an error stopped the thread early
+        handle.join().unwrap()
+    }
 }

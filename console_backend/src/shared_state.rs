@@ -28,6 +28,7 @@ use crate::constants::{
 };
 use crate::errors::CONVERT_TO_STR_FAILURE;
 use crate::log_panel::LogLevel;
+use crate::ntripping::NtripOptions;
 use crate::output::{CsvLogging, CsvSerializer};
 use crate::process_messages::StopToken;
 use crate::settings_tab;
@@ -358,6 +359,7 @@ impl Clone for SharedState {
 pub struct SharedStateInner {
     pub(crate) logging_bar: LoggingBarState,
     pub(crate) log_panel: LogPanelState,
+    pub(crate) ntrip_tab: NtripState,
     pub(crate) tracking_tab: TrackingTabState,
     pub(crate) connection_history: ConnectionHistory,
     pub(crate) conn: Watched<ConnectionState>,
@@ -384,6 +386,7 @@ impl SharedStateInner {
         SharedStateInner {
             logging_bar: LoggingBarState::new(log_directory),
             log_panel: LogPanelState::new(),
+            ntrip_tab: NtripState::default(),
             tracking_tab: TrackingTabState::new(),
             debug: false,
             connection_history,
@@ -470,6 +473,12 @@ impl LogPanelState {
             filename: None,
         }
     }
+}
+
+#[derive(Debug, Default)]
+pub struct NtripState {
+    pub connected: bool,
+    pub config: NtripOptions,
 }
 
 #[derive(Debug)]

@@ -515,5 +515,6 @@ struct Message {
         connectionNotification @52 : ConnectionNotification;
         settingsNotification @53 : SettingsNotification;
         connectionDialogStatus @54 :ConnectionDialogStatus;
+        ntripConfig @55 :NtripConfig;
     }
 }

@@ -21,53 +21,93 @@ Item {
 
     stringValidator: RegExpValidator {
     }
-
-    ColumnLayout {
-        Repeater {
-            model: ["Url", "Username", "Password"]
-            RowLayout {
-                width: 500
-                height: 30
-                Label {
-                    text: modelData + ": "
-                    Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
+    RowLayout {
+        ColumnLayout {
+            Repeater {
+                model: ["Url", "Username", "Password"]
+                RowLayout {
+                    width: 500
+                    height: 30
+                    Label {
+                        text: modelData + ": "
+                        Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
+                    }
+                    TextField {
+                        id: textField
+                        width: 200
+                        placeholderText: modelData
+                        font.family: Constants.genericTable.fontFamily
+                        font.pixelSize: Constants.largePixelSize
+                        selectByMouse: true
+                        Layout.alignment: Qt.AlignVCenter| Qt.AlignRight
+                        validator: stringValidator
+                    }
                 }
-                TextField {
-                    id: textField
-                    width: 200
-                    placeholderText: modelData
-                    font.family: Constants.genericTable.fontFamily
-                    font.pixelSize: Constants.largePixelSize
-                    selectByMouse: true
-                    Layout.alignment: Qt.AlignVCenter| Qt.AlignRight
-                    validator: stringValidator
+            }
+
+            Repeater {
+                model: ["Lat", "Lon", "Alt"]
+                RowLayout {
+                    width: 500
+                    height: 30
+                    visible: staticRadio.checked
+                    Label {
+                        text: modelData + ": "
+                        Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
+                    }
+                    TextField {
+                        id: textField
+                        width: 200
+                        placeholderText: modelData
+                        font.family: Constants.genericTable.fontFamily
+                        font.pixelSize: Constants.largePixelSize
+                        selectByMouse: true
+                        Layout.alignment: Qt.AlignVCenter| Qt.AlignRight
+                        validator: stringValidator
+                    }
                 }
             }
         }
-
-        RowLayout {
-            SwiftButton {
-                invertColor: true
-                icon.width: 10
-                icon.height: 10
-                icon.source: Constants.icons.playPath
-                icon.color: Constants.materialGrey
+        ColumnLayout {
+            RadioButton {
+                checked: true
+                text: "Dynamic"
                 ToolTip.visible: hovered
-                ToolTip.text: "Start"
-                onClicked: {
-                    console.log("hello");
-                }
+                ToolTip.text: "Allow automatically fetching position from device"
             }
-            SwiftButton {
-                invertColor: true
-                icon.width: 10
-                icon.height: 10
-                icon.source: Constants.icons.pauseButtonUrl
-                icon.color: Constants.materialGrey
+
+            RadioButton {
+                id: staticRadio
+                text: "Static"
                 ToolTip.visible: hovered
-                ToolTip.text: "Stop"
-                onClicked: {
-                    console.log("hello");
+                ToolTip.text: "Allow user input position"
+            }
+        }
+        ColumnLayout {
+            RowLayout {
+                SwiftButton {
+                    invertColor: true
+                    icon.width: 10
+                    icon.height: 10
+                    icon.source: Constants.icons.playPath
+                    icon.color: Constants.materialGrey
+                    ToolTip.visible: hovered
+                    ToolTip.text: "Start"
+                    onClicked: {
+                        console.log("hello");
+                    }
+                }
+                SwiftButton {
+                    invertColor: true
+                    icon.width: 10
+                    icon.height: 10
+                    icon.source: Constants.icons.pauseButtonUrl
+                    icon.color: Constants.materialGrey
+                    ToolTip.visible: hovered
+                    ToolTip.text: "Stop"
+                    onClicked: {
+                        console.log("hello");
+                    }
                 }
             }
         }

@@ -2,12 +2,13 @@ use chrono::{DateTime, Utc};
 use curl::easy::{Easy, HttpVersion, List, ReadError};
 use std::cell::RefCell;
 use std::io::Write;
+use std::iter;
 use std::rc::Rc;
 
 use crossbeam::channel;
 use std::time::{Duration, SystemTime};
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct NtripOptions {
     url: String,
     lat: f64,
@@ -28,32 +29,28 @@ pub struct NtripOptions {
 #[derive(Debug, Clone, Copy, serde::Deserialize)]
 #[serde(rename_all = "lowercase")]
 enum Message {
-    Gga {
-        lat: f64,
-        lon: f64,
-        height: f64,
-    },
-    Cra {
-        request_counter: Option<u8>,
-        area_id: Option<u32>,
-        corrections_mask: Option<u16>,
-        solution_id: Option<u8>,
-    },
+    Gga { lat: f64, lon: f64, height: f64 },
+    // Cra {
+    //     request_counter: Option<u8>,
+    //     area_id: Option<u32>,
+    //     corrections_mask: Option<u16>,
+    //     solution_id: Option<u8>,
+    // },
 }
 
-fn build_cra(opt: &NtripOptions) -> Command {
-    Command {
-        epoch: opt.epoch,
-        after: 0,
-        crc: None,
-        message: Message::Cra {
-            request_counter: opt.request_counter,
-            area_id: opt.area_id,
-            corrections_mask: opt.corr_mask,
-            solution_id: opt.soln_id,
-        },
-    }
-}
+// fn build_cra(opt: &NtripOptions) -> Command {
+//     Command {
+//         epoch: opt.epoch,
+//         after: 0,
+//         crc: None,
+//         message: Message::Cra {
+//             request_counter: opt.request_counter,
+//             area_id: opt.area_id,
+//             corrections_mask: opt.corr_mask,
+//             solution_id: opt.soln_id,
+//         },
+//     }
+// }
 
 fn build_gga(opt: &NtripOptions) -> Command {
     Command {
@@ -129,32 +126,68 @@ impl Message {
                     "$GPGGA,{},{:02}{:010.7},{},{:03}{:010.7},{},4,12,1.3,{:.2},M,0.0,M,1.7,0078",
                     time, lat_deg, lat_min, lat_dir, lon_deg, lon_min, lon_dir, height
                 )
-            }
-            Message::Cra {
-                request_counter,
-                area_id,
-                corrections_mask,
-                solution_id,
-            } => {
-                let mut s = String::from("$PSWTCRA,");
-                if let Some(request_counter) = request_counter {
-                    s.push_str(&format!("{request_counter},"));
-                }
-                s.push(',');
-                if let Some(area_id) = area_id {
-                    s.push_str(&format!("{area_id},"));
-                }
-                s.push(',');
-                if let Some(corrections_mask) = corrections_mask {
-                    s.push_str(&format!("{corrections_mask},"));
-                }
-                s.push(',');
-                if let Some(solution_id) = solution_id {
-                    s.push_str(&format!("{solution_id},"));
-                }
-                s
-            }
+            } // Message::Cra {
+              //     request_counter,
+              //     area_id,
+              //     corrections_mask,
+              //     solution_id,
+              // } => {
+              //     let mut s = String::from("$PSWTCRA,");
+              //     if let Some(request_counter) = request_counter {
+              //         s.push_str(&format!("{request_counter},"));
+              //     }
+              //     s.push(',');
+              //     if let Some(area_id) = area_id {
+              //         s.push_str(&format!("{area_id},"));
+              //     }
+              //     s.push(',');
+              //     if let Some(corrections_mask) = corrections_mask {
+              //         s.push_str(&format!("{corrections_mask},"));
+              //     }
+              //     s.push(',');
+              //     if let Some(solution_id) = solution_id {
+              //         s.push_str(&format!("{solution_id},"));
+              //     }
+              //     s
+              // }
         }
+    }
+}
+
+fn get_commands(opt: NtripOptions) -> anyhow::Result<Box<dyn Iterator<Item = Command> + Send>> {
+    // if let Some(path) = opt.input {
+    //     let file = std::fs::File::open(path)?;
+    //     let cmds: Vec<_> = serde_yaml::from_reader(file)?;
+    //     return Ok(Box::new(cmds.into_iter()));
+    // }
+
+    if opt.nmea_period == 0 {
+        return Ok(Box::new(iter::empty()));
+    }
+
+    if opt.area_id.is_some() {
+        // let first = build_cra(&opt);
+        // let it = iter::successors(Some(first), move |prev| {
+        //     let mut next = *prev;
+        //     if let Message::Cra {
+        //         request_counter: Some(ref mut counter),
+        //         ..
+        //     } = &mut next.message
+        //     {
+        //         *counter = counter.wrapping_add(1);
+        //     }
+        //     next.after = opt.nmea_period;
+        //     Some(next)
+        // });
+        // Ok(Box::new(it))
+        Err(anyhow::format_err!("cra not implemented"))
+    } else {
+        let first = build_gga(&opt);
+        let rest = iter::repeat(Command {
+            after: opt.nmea_period,
+            ..first
+        });
+        Ok(Box::new(iter::once(first).chain(rest)))
     }
 }
 
@@ -166,7 +199,8 @@ fn connect(opt: NtripOptions) -> anyhow::Result<()> {
     headers.append(&format!("X-SwiftNav-Client-Id: {}", opt.client_id))?;
     if opt.nmea_header {
         if opt.area_id.is_some() {
-            headers.append(&format!("Ntrip-CRA: {}", build_cra(&opt)))?;
+            // headers.append(&format!("Ntrip-CRA: {}", build_cra(&opt)))?;
+            Err(anyhow::format_err!("cra not implemented"))
         } else {
             headers.append(&format!("Ntrip-GGA: {}", build_gga(&opt)))?;
         }

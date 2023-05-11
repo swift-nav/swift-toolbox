@@ -575,202 +575,201 @@ impl UpdateTabContext {
     }
     pub fn debug(&self) -> bool {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).debug
+        shared_data.debug
     }
     pub fn set_debug(&self, set_to: bool) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).debug = set_to;
+        shared_data.debug = set_to;
     }
     pub fn upgrade_ret(&self) -> Option<i32> {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).upgrade_ret.take()
+        shared_data.upgrade_ret.take()
     }
     pub fn set_upgrade_ret(&mut self, upgrade_ret: Option<i32>) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).upgrade_ret = upgrade_ret;
+        shared_data.upgrade_ret = upgrade_ret;
     }
     pub fn upgrade_sequence(&self) -> Option<u32> {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).upgrade_sequence
+        shared_data.upgrade_sequence
     }
     pub fn set_upgrade_sequence(&mut self, sequence: Option<u32>) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).upgrade_sequence = sequence;
+        shared_data.upgrade_sequence = sequence;
     }
     pub fn downloading(&self) -> bool {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).downloading
+        shared_data.downloading
     }
     pub fn set_downloading(&self, set_to: bool) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).downloading = set_to;
+        shared_data.downloading = set_to;
     }
     pub fn upgrading(&self) -> bool {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).upgrading
+        shared_data.upgrading
     }
     pub fn set_upgrading(&self, set_to: bool) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).upgrading = set_to;
+        shared_data.upgrading = set_to;
     }
     pub fn fileio_destination_filepath(&self) -> Option<PathBuf> {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).fileio_destination_filepath.clone()
+        shared_data.fileio_destination_filepath.clone()
     }
     pub fn set_fileio_destination_filepath(&self, filepath: Option<PathBuf>) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).fileio_destination_filepath = filepath;
+        shared_data.fileio_destination_filepath = filepath;
     }
     pub fn fileio_local_filepath(&self) -> Option<PathBuf> {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).fileio_local_filepath.clone()
+        shared_data.fileio_local_filepath.clone()
     }
     pub fn set_fileio_local_filepath(&self, filepath: Option<PathBuf>) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).fileio_local_filepath = filepath;
+        shared_data.fileio_local_filepath = filepath;
     }
     pub fn firmware_local_filepath(&self) -> Option<PathBuf> {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).firmware_local_filepath.clone()
+        shared_data.firmware_local_filepath.clone()
     }
     pub fn set_firmware_local_filepath(&self, filepath: Option<PathBuf>) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).firmware_local_filepath = filepath;
+        shared_data.firmware_local_filepath = filepath;
     }
     pub fn firmware_directory(&self) -> PathBuf {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).firmware_directory.clone()
+        shared_data.firmware_directory.clone()
     }
     pub fn set_firmware_directory(&self, directory: PathBuf) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).firmware_directory = directory;
+        shared_data.firmware_directory = directory;
     }
     pub fn update_downloader(&self) -> UpdateDownloader {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        if let Err(err) = (*shared_data).update_downloader.get_index_data() {
+        if let Err(err) = shared_data.update_downloader.get_index_data() {
             error!("{}", err);
         }
-        (*shared_data).update_downloader.clone()
+        shared_data.update_downloader.clone()
     }
     pub fn fw_log_append(&self, log: String) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
         debug!("{}", log);
-        (*shared_data).fw_logger.log_append(log);
+        shared_data.fw_logger.log_append(log);
     }
     pub fn fw_log_replace_last(&self, log: String) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).fw_logger.log_replace_last(log);
+        shared_data.fw_logger.log_replace_last(log);
     }
     pub fn fw_log_clear(&self) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).fw_logger.clear();
+        shared_data.fw_logger.clear();
     }
     pub fn fw_log(&self) -> String {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).fw_logger.joined_string()
+        shared_data.fw_logger.joined_string()
     }
     pub fn current_firmware_version(&self) -> Option<String> {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).current_firmware_version.clone()
+        shared_data.current_firmware_version.clone()
     }
     pub fn set_current_firmware_version(&self, current_firmware_version: String) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).current_firmware_version = Some(current_firmware_version);
+        shared_data.current_firmware_version = Some(current_firmware_version);
     }
     pub fn current_console_version(&self) -> Option<String> {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).current_console_version.clone()
+        shared_data.current_console_version.clone()
     }
     pub fn set_current_console_version(&self, current_console_version: String) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).current_console_version = Some(current_console_version);
+        shared_data.current_console_version = Some(current_console_version);
     }
     pub fn console_outdated(&self) -> bool {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).console_outdated
+        shared_data.console_outdated
     }
     pub fn set_console_outdated(&self, console_outdated: bool) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).console_outdated = console_outdated;
+        shared_data.console_outdated = console_outdated;
     }
     pub fn firmware_outdated(&self) -> bool {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).firmware_outdated
+        shared_data.firmware_outdated
     }
     pub fn set_firmware_outdated(&self, firmware_outdated: bool) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).firmware_outdated = firmware_outdated;
+        shared_data.firmware_outdated = firmware_outdated;
     }
     pub fn firmware_v2_outdated(&self) -> bool {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).firmware_v2_outdated
+        shared_data.firmware_v2_outdated
     }
     pub fn set_firmware_v2_outdated(&self, firmware_v2_outdated: bool) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).firmware_v2_outdated = firmware_v2_outdated;
+        shared_data.firmware_v2_outdated = firmware_v2_outdated;
     }
     pub fn serial_prompt(&self) -> bool {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).serial_prompt
+        shared_data.serial_prompt
     }
     pub fn set_serial_prompt(&self, serial_prompt: bool) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).serial_prompt = serial_prompt;
+        shared_data.serial_prompt = serial_prompt;
     }
     pub fn set_latest_console_version(&self, latest_console_version: String) {
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).latest_console_version = Some(latest_console_version);
+        shared_data.latest_console_version = Some(latest_console_version);
     }
     pub fn latest_console_version(&self) -> Option<String> {
         let shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        (*shared_data).latest_console_version.clone()
+        shared_data.latest_console_version.clone()
     }
     pub fn packet(&mut self) -> UpdatePacket {
         let fw_log = self.fw_log();
         let mut shared_data = self.lock().expect(SHARED_STATE_LOCK_MUTEX_FAILURE);
-        let latest_firmware_version = if !(*shared_data).debug {
-            (*shared_data)
+        let latest_firmware_version = if !shared_data.debug {
+            shared_data
                 .update_downloader
                 .latest_firmware_version()
                 .unwrap_or_default()
         } else {
             String::from("")
         };
-        let current_firmware_version = (*shared_data)
+        let current_firmware_version = shared_data
             .current_firmware_version
             .clone()
             .unwrap_or_default();
-        let serial_prompt = (*shared_data).serial_prompt;
-        let console_outdated = (*shared_data).console_outdated;
-        let fw_outdated = (*shared_data).firmware_outdated;
-        let fw_v2_outdated = (*shared_data).firmware_v2_outdated;
-        let downloading = (*shared_data).downloading;
-        let upgrading = (*shared_data).upgrading;
-        let firmware_directory = (*shared_data).firmware_directory.clone();
-        let fileio_destination_filepath = (*shared_data)
+        let serial_prompt = shared_data.serial_prompt;
+        let console_outdated = shared_data.console_outdated;
+        let fw_outdated = shared_data.firmware_outdated;
+        let fw_v2_outdated = shared_data.firmware_v2_outdated;
+        let downloading = shared_data.downloading;
+        let upgrading = shared_data.upgrading;
+        let firmware_directory = shared_data.firmware_directory.clone();
+        let fileio_destination_filepath = shared_data
             .fileio_destination_filepath
             .clone()
             .unwrap_or_default();
-        let fileio_local_filepath = (*shared_data)
+        let fileio_local_filepath = shared_data
             .fileio_local_filepath
             .clone()
             .unwrap_or_default();
-        let firmware_filename = if let Some(firmware_local_filepath_) =
-            (*shared_data).firmware_local_filepath.clone()
-        {
-            firmware_local_filepath_
-                .file_name()
-                .expect(CONVERT_TO_STR_FAILURE)
-                .to_string_lossy()
-                .to_string()
-        } else {
-            String::new()
-        };
-        let console_version_current = (*shared_data)
+        let firmware_filename =
+            if let Some(firmware_local_filepath_) = shared_data.firmware_local_filepath.clone() {
+                firmware_local_filepath_
+                    .file_name()
+                    .expect(CONVERT_TO_STR_FAILURE)
+                    .to_string_lossy()
+                    .to_string()
+            } else {
+                String::new()
+            };
+        let console_version_current = shared_data
             .current_console_version
             .clone()
             .unwrap_or_default();
-        let console_version_latest = (*shared_data)
+        let console_version_latest = shared_data
             .latest_console_version
             .clone()
             .unwrap_or_default();

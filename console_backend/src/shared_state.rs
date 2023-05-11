@@ -756,7 +756,7 @@ impl ConnectionHistory {
     /// Attempts to create a new ConnectionHistory from expected filepath otherwise empty.
     pub fn new() -> ConnectionHistory {
         let filename = DATA_DIRECTORY.path().join(CONNECTION_HISTORY_FILENAME);
-        if let Ok(file) = fs::File::open(&filename) {
+        if let Ok(file) = fs::File::open(filename) {
             if let Ok(conn_yaml) = serde_yaml::from_reader(file) {
                 return conn_yaml;
             }
@@ -866,7 +866,7 @@ impl ConnectionHistory {
 
     /// Save the history to the expected filepath.
     fn save(&self) -> Result<()> {
-        serde_yaml::to_writer(fs::File::create(&self.filename())?, self)?;
+        serde_yaml::to_writer(fs::File::create(self.filename())?, self)?;
         Ok(())
     }
 }

@@ -118,9 +118,14 @@ Item {
                         let username = generalRepeater.itemAt(1).children[1].text;
                         let password = generalRepeater.itemAt(2).children[1].text;
                         let epoch = epochField.text;
-                        let lat = positionRepeater.itemAt(0).children[1].text;
-                        let lon = positionRepeater.itemAt(1).children[1].text;
-                        let alt = positionRepeater.itemAt(2).children[1].text;
+                        let lat = null;
+                        let lon = null;
+                        let alt = null;
+                        if (staticRadio.checked){
+                            lat = positionRepeater.itemAt(0).children[1].text;
+                            lon = positionRepeater.itemAt(1).children[1].text;
+                            alt = positionRepeater.itemAt(2).children[1].text;
+                        }
                         backend_request_broker.ntrip_connect(url, username, password, epoch, lat, lon, alt);
                     }
                 }

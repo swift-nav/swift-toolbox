@@ -174,7 +174,7 @@ class BackendRequestBroker(QObject):  # pylint: disable=too-many-instance-attrib
 
     @Slot(list, QTKeys.QVARIANT, QTKeys.QVARIANT, QTKeys.QVARIANT)  # type: ignore
     def advanced_networking(
-        self, buttons: list, all_messages_toggle: Optional[bool], ipv4_address: Optional[str], port: Optional[int]
+            self, buttons: list, all_messages_toggle: Optional[bool], ipv4_address: Optional[str], port: Optional[int]
     ) -> None:
         Message = self.messages.Message
         m = Message()
@@ -229,13 +229,13 @@ class BackendRequestBroker(QObject):  # pylint: disable=too-many-instance-attrib
 
     @Slot(list, QTKeys.QVARIANT, QTKeys.QVARIANT, QTKeys.QVARIANT, QTKeys.QVARIANT, QTKeys.QVARIANT)  # type: ignore
     def update_tab(
-        self,
-        buttons: list,
-        update_local_filepath: Optional[str],
-        download_directory: Optional[str],
-        fileio_local_filepath: Optional[str],
-        fileio_destination_filepath: Optional[str],
-        update_local_filename: Optional[str],
+            self,
+            buttons: list,
+            update_local_filepath: Optional[str],
+            download_directory: Optional[str],
+            fileio_local_filepath: Optional[str],
+            fileio_destination_filepath: Optional[str],
+            update_local_filename: Optional[str],
     ) -> None:
         Message = self.messages.Message
         m = Message()
@@ -300,8 +300,9 @@ class BackendRequestBroker(QObject):  # pylint: disable=too-many-instance-attrib
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
 
-    @Slot(str, str, str, int, float, float, float)  # type: ignore
-    def ntrip_connect(self, url, username, password, epoch, lat, lon, alt) -> None:
+    @Slot(str, str, str, int, QTKeys.QVARIANT, QTKeys.QVARIANT, QTKeys.QVARIANT)  # type: ignore
+    def ntrip_connect(self, url: str, username: str, password: str, epoch: int, lat: Optional[float],
+                      lon: Optional[float], alt: Optional[float]) -> None:
         Message = self.messages.Message
         msg = self.messages.Message()
         msg.ntripConnect = msg.init(Message.Union.NtripConnect)
@@ -309,8 +310,11 @@ class BackendRequestBroker(QObject):  # pylint: disable=too-many-instance-attrib
         msg.ntripConnect.username = username
         msg.ntripConnect.password = password
         msg.ntripConnect.epoch = epoch
-        msg.ntripConnect.lat = lat
-        msg.ntripConnect.lon = lon
-        msg.ntripConnect.alt = alt
+        if lat is not None and lon is not None and alt is not None:
+            msg.ntripConnect.position.pos.lat = lat
+            msg.ntripConnect.position.pos.lon = lon
+            msg.ntripConnect.position.pos.alt = alt
+        else:
+            msg.ntripConnect.position.none = None
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)

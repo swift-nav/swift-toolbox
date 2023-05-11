@@ -452,14 +452,21 @@ struct AutoSurveyRequest {
     request @0 :Void = void;
 }
 
+struct Position {
+    lat @0: Float64;
+    lon @1: Float64;
+    alt @2: Float64;
+}
+
 struct NtripConnect {
-    url @0: Text;
-    username @1: Text;
-    password @2: Text;
-    epoch @3: UInt64;
-    lat @4: Float64;
-    lon @5: Float64;
-    alt @6: Float64;
+    url @0 :Text;
+    username @1 :Text;
+    password @2 :Text;
+    epoch @3 :UInt64;
+    position :union {
+        pos @4 :Position;
+        none @5 :Void;
+    }
 }
 
 struct Message {

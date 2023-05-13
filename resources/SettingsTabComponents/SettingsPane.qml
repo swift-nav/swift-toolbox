@@ -403,7 +403,7 @@ Rectangle {
     }
 
     floatValidator: RegExpValidator {
-        regExp: /[-+]?[0-9]*[.,]?[0-9]+/	
+        regExp: /[-+]?[0-9]*[.,]?[0-9]+/
     }
 
     intValidator: IntValidator {

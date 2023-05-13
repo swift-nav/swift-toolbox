@@ -357,7 +357,7 @@ Rectangle {
             anchors.centerIn: parent
             anchors.verticalCenterOffset: 5
             onEditingFinished: {
-	            let isNumericField = settingType === "float" || settingType === "double";	
+	        let isNumericField = settingType === "float" || settingType === "double";	
                 backend_request_broker.settings_write_request(settingGroup, settingName, isNumericField ? text.replace(",", ".") : text);
             }
             validator: {

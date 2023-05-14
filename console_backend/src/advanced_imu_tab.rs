@@ -2,6 +2,7 @@ use log::error;
 use sbp::messages::imu::{MsgImuAux, MsgImuRaw};
 
 use capnp::message::Builder;
+use sbp::messages::imu::msg_imu_aux::ImuType;
 
 use crate::client_sender::BoxedClientSender;
 use crate::fusion_status_flags::FusionStatusFlags;
@@ -91,18 +92,25 @@ impl AdvancedImuTab {
     /// # Parameters
     /// - `msg`: MsgImuAux to extract data from.
     pub fn handle_imu_aux(&mut self, msg: MsgImuAux) {
-        match msg.imu_type {
-            0 => {
-                self.imu_temp = 23_f64 + msg.temp as f64 / f64::powi(2_f64, 9);
+        match msg.imu_type() {
+            Ok(imu) => {
+                match imu {
+                    ImuType::BoschBmi160 => {
+                        self.imu_temp = 23_f64 + msg.temp as f64 / 512_f64;
+                    }
+                    ImuType::StMicroelectronicsAsm330Llh => {
+                        self.imu_temp = 25_f64 + msg.temp as f64 / 256_f64;
+                    }
+                    ImuType::MurataScha634D03 => {
+                        self.imu_temp = 25_f64 + msg.temp as f64 / 30_f64;
+                    }
+                    ImuType::TdkIam20680Hp => {
+                        self.imu_temp = 25_f64 + (msg.temp as f64 - 25_f64) / 326.8;
+                    }
+                };
                 self.imu_conf = msg.imu_conf;
             }
-            1 => {
-                self.imu_temp = 25_f64 + msg.temp as f64 / 256_f64;
-                self.imu_conf = msg.imu_conf;
-            }
-            _ => {
-                error!("IMU type {} not known.", msg.imu_type);
-            }
+            Err(e) => error!("IMU type {e} not known"),
         }
     }
 

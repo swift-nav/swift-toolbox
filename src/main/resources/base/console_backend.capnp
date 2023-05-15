@@ -462,11 +462,15 @@ struct NtripConnect {
     url @0 :Text;
     username @1 :Text;
     password @2 :Text;
-    epoch @3 :UInt64;
+    ggaPeriod @3 :UInt64;
     position :union {
         pos @4 :Position;
         none @5 :Void;
     }
+}
+
+struct NtripDisconnect {
+
 }
 
 struct Message {
@@ -527,5 +531,6 @@ struct Message {
         settingsNotification @53 : SettingsNotification;
         connectionDialogStatus @54 :ConnectionDialogStatus;
         ntripConnect @55 :NtripConnect;
+        ntripDisconnect @56 :NtripDisconnect;
     }
 }

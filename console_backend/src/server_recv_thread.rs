@@ -323,11 +323,20 @@ pub fn server_recv_thread(
                     shared_state.set_settings_confirm_ins_change(true);
                 }
                 m::message::NtripConnect(Ok(cv_in)) => {
-                    let url = cv_in.get_url();
-                    let usr = cv_in.get_username();
-                    let pwd = cv_in.get_password();
-                    let epoch = cv_in.get_epoch();
-                    let position = match cv_in.get_position().which() {
+                    let url = cv_in
+                        .get_url()
+                        .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE)
+                        .to_string();
+                    let usr = cv_in
+                        .get_username()
+                        .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE)
+                        .to_string();
+                    let pwd = cv_in
+                        .get_password()
+                        .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE)
+                        .to_string();
+                    let gga_period = cv_in.get_gga_period();
+                    let position: Option<(f64, f64, f64)> = match cv_in.get_position().which() {
                         Ok(m::ntrip_connect::position::Pos(Ok(pos))) => {
                             Some((pos.get_lat(), pos.get_lon(), pos.get_alt()))
                         }
@@ -337,6 +346,13 @@ pub fn server_recv_thread(
                         }
                         _ => None,
                     };
+                    shared_state
+                        .lock()
+                        .ntrip_tab
+                        .connect(url, usr, pwd, gga_period, position);
+                }
+                m::message::NtripDisconnect(Ok(_)) => {
+                    shared_state.lock().ntrip_tab.disconnect();
                 }
                 _ => {
                     error!("unknown message from front-end");

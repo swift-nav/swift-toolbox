@@ -48,10 +48,10 @@ indicatif = { version = "0.16", optional = true }
 
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 serialport = { git = "https://github.com/swift-nav/serialport-rs.git" }
-curl = { version = "0.4", features = ["ssl", "static-curl"] }
+curl = { version = "^0.4.44", features = ["ssl", "static-curl"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-curl = { version = "0.4", features = ["rustls", "static-curl"] }
+curl = { version = "^0.4.44", features = ["rustls", "static-curl"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = ">=0.24", features = [

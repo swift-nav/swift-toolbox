@@ -2,29 +2,37 @@ use chrono::{DateTime, Utc};
 use curl::easy::{Easy, HttpVersion, List, ReadError};
 use std::cell::RefCell;
 use std::io::Write;
-use std::iter;
 use std::rc::Rc;
+use std::thread::JoinHandle;
+use std::{iter, thread};
 
 use anyhow::anyhow;
 use crossbeam::channel;
 use std::time::{Duration, SystemTime};
 
+#[derive(Debug, Default)]
+pub struct NtripState {
+    pub(crate) connected_thd: Option<JoinHandle<()>>,
+    pub(crate) options: NtripOptions,
+    pub(crate) dynamic_pos: Option<(f64, f64, f64)>,
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct NtripOptions {
-    url: String,
-    lat: f64,
-    lon: f64,
-    alt: f64,
-    client_id: String,
-    epoch: Option<u32>,
-    username: Option<String>,
-    password: Option<String>,
-    nmea_period: u64,
-    nmea_header: bool,
-    request_counter: Option<u8>,
-    area_id: Option<u32>,
-    corr_mask: Option<u16>,
-    soln_id: Option<u8>,
+    pub(crate) url: String,
+    pub(crate) username: Option<String>,
+    pub(crate) password: Option<String>,
+    pub(crate) nmea_period: u64,
+    pub(crate) lat: f64,
+    pub(crate) lon: f64,
+    pub(crate) alt: f64,
+    pub(crate) client_id: String,
+    pub(crate) epoch: Option<u32>,
+    // nmea_header: bool,
+    // request_counter: Option<u8>,
+    // area_id: Option<u32>,
+    // corr_mask: Option<u16>,
+    // soln_id: Option<u8>,
 }
 
 #[derive(Debug, Clone, Copy, serde::Deserialize)]
@@ -166,46 +174,46 @@ fn get_commands(opt: NtripOptions) -> anyhow::Result<Box<dyn Iterator<Item = Com
         return Ok(Box::new(iter::empty()));
     }
 
-    if opt.area_id.is_some() {
-        // let first = build_cra(&opt);
-        // let it = iter::successors(Some(first), move |prev| {
-        //     let mut next = *prev;
-        //     if let Message::Cra {
-        //         request_counter: Some(ref mut counter),
-        //         ..
-        //     } = &mut next.message
-        //     {
-        //         *counter = counter.wrapping_add(1);
-        //     }
-        //     next.after = opt.nmea_period;
-        //     Some(next)
-        // });
-        // Ok(Box::new(it))
-        Err(anyhow!("cra not implemented"))
-    } else {
-        let first = build_gga(&opt);
-        let rest = iter::repeat(Command {
-            after: opt.nmea_period,
-            ..first
-        });
-        Ok(Box::new(iter::once(first).chain(rest)))
-    }
+    // if opt.area_id.is_some() {
+    // let first = build_cra(&opt);
+    // let it = iter::successors(Some(first), move |prev| {
+    //     let mut next = *prev;
+    //     if let Message::Cra {
+    //         request_counter: Some(ref mut counter),
+    //         ..
+    //     } = &mut next.message
+    //     {
+    //         *counter = counter.wrapping_add(1);
+    //     }
+    //     next.after = opt.nmea_period;
+    //     Some(next)
+    // });
+    // Ok(Box::new(it))
+    // Err(anyhow!("cra not implemented"))
+    // } else {
+    let first = build_gga(&opt);
+    let rest = iter::repeat(Command {
+        after: opt.nmea_period,
+        ..first
+    });
+    Ok(Box::new(iter::once(first).chain(rest)))
+    // }
 }
 
-fn connect(opt: NtripOptions) -> anyhow::Result<()> {
+fn main(opt: NtripOptions) -> anyhow::Result<()> {
     let mut curl = Easy::new();
     let mut headers = List::new();
     headers.append("Transfer-Encoding:")?;
     headers.append("Ntrip-Version: Ntrip/2.0")?;
     headers.append(&format!("X-SwiftNav-Client-Id: {}", opt.client_id))?;
-    if opt.nmea_header {
-        if opt.area_id.is_some() {
-            // headers.append(&format!("Ntrip-CRA: {}", build_cra(&opt)))?;
-            return Err(anyhow!("cra not implemented"));
-        } else {
-            headers.append(&format!("Ntrip-GGA: {}", build_gga(&opt)))?;
-        }
-    }
+    // if opt.nmea_header {
+    // if opt.area_id.is_some() {
+    //     // headers.append(&format!("Ntrip-CRA: {}", build_cra(&opt)))?;
+    //     return Err(anyhow!("cra not implemented"));
+    // } else {
+    headers.append(&format!("Ntrip-GGA: {}", build_gga(&opt)))?;
+    // }
+    // }
     curl.http_headers(headers)?;
     curl.useragent("NTRIP ntrip-client/1.0")?;
     curl.url(&opt.url)?;
@@ -213,6 +221,7 @@ fn connect(opt: NtripOptions) -> anyhow::Result<()> {
     curl.put(true)?;
     curl.custom_request("GET")?;
     curl.http_version(HttpVersion::Any)?;
+    curl.http_09_allowed(true)?;
 
     if let Some(username) = &opt.username {
         curl.username(username)?;
@@ -230,7 +239,7 @@ fn connect(opt: NtripOptions) -> anyhow::Result<()> {
         move |_dltot, _dlnow, _ultot, _ulnow| {
             if !rx.is_empty() {
                 if let Err(e) = transfer.borrow().unpause_read() {
-                    eprintln!("unpause error: {e}");
+                    println!("unpause error: {e}");
                     return false;
                 }
             }
@@ -240,7 +249,7 @@ fn connect(opt: NtripOptions) -> anyhow::Result<()> {
 
     transfer.borrow_mut().write_function(|data| {
         if let Err(e) = std::io::stdout().write_all(data) {
-            eprintln!("write error: {e}");
+            println!("write error: {e}");
             return Ok(0);
         }
         Ok(data.len())
@@ -253,17 +262,17 @@ fn connect(opt: NtripOptions) -> anyhow::Result<()> {
         };
         bytes.extend_from_slice(b"\r\n");
         if let Err(e) = data.write_all(&bytes) {
-            eprintln!("read error: {e}");
+            println!("read error: {e}");
             return Err(ReadError::Abort);
         }
         Ok(bytes.len())
     })?;
 
     let commands = get_commands(opt.clone())?;
-    let handle = std::thread::spawn(move || {
+    let handle = thread::spawn(move || {
         for cmd in commands {
             if cmd.after > 0 {
-                std::thread::sleep(Duration::from_secs(cmd.after));
+                thread::sleep(Duration::from_secs(cmd.after));
             }
             if tx.send(cmd.to_bytes()).is_err() {
                 break;
@@ -278,5 +287,51 @@ fn connect(opt: NtripOptions) -> anyhow::Result<()> {
     } else {
         // an error stopped the thread early
         handle.join().unwrap()
+    }
+}
+
+impl NtripState {
+    pub fn connect(
+        &mut self,
+        url: String,
+        username: String, // empty username is None
+        password: String,
+        gga_period: u64,
+        pos: Option<(f64, f64, f64)>,
+    ) {
+        if self.connected_thd.is_some() {
+            // is already connected
+            return;
+        }
+
+        let (lat, lon, alt) = pos.or(self.dynamic_pos).unwrap_or_default();
+
+        let options = NtripOptions {
+            url,
+            username: Some(username).filter(|s| !s.is_empty()),
+            password: Some(password).filter(|s| !s.is_empty()),
+            nmea_period: gga_period,
+            lat,
+            lon,
+            alt,
+            client_id: "00000000-0000-0000-0000-000000000000".to_string(),
+            epoch: None,
+        };
+
+        self.options = options.clone();
+
+        let thd = thread::spawn(move || {
+            let r = main(options);
+            println!("{:?}", r);
+        });
+
+        self.connected_thd = Some(thd);
+    }
+
+    pub fn disconnect(&mut self) {
+        if let Some(thd) = self.connected_thd.take() {
+            let _ = thd.join();
+        }
+        println!("disconnected");
     }
 }

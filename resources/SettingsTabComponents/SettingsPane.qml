@@ -228,10 +228,10 @@ Rectangle {
                 property string _fieldName: "description"
 
                 visible: !!selectedRowField(_fieldName)
-                Layout.rowSpan: 2
+                Layout.rowSpan: 3
                 Layout.columnSpan: parent.columns - 1
                 Layout.preferredWidth: parent.colWidthField
-                Layout.preferredHeight: isLongTextField(_fieldName) ? 2 * parent.smallRowHeight : parent.smallRowHeight
+                Layout.preferredHeight: isLongTextField(_fieldName) ? 3 * parent.smallRowHeight : parent.smallRowHeight
                 sourceComponent: settingRowText
             }
 
@@ -310,15 +310,17 @@ Rectangle {
     Component {
         id: settingRowText
 
-        Rectangle {
+        ScrollView {
             anchors.fill: parent
-
+            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+            clip: true
+            contentWidth: -1
             TextEdit {
                 text: selectedRowField(_fieldName)
-                anchors.fill: parent
                 wrapMode: Text.WordWrap
                 readOnly: true
                 selectByMouse: true
+                width: parent.width
                 selectionColor: Constants.swiftOrange
                 onSelectedTextChanged: {
                     if (selectedText.length > 0)

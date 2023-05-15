@@ -3,18 +3,38 @@ use curl::easy::{Easy, HttpVersion, List, ReadError};
 use std::cell::RefCell;
 use std::io::Write;
 use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::{iter, thread};
 
 use anyhow::anyhow;
 use crossbeam::channel;
+use csv::Position;
 use std::time::{Duration, SystemTime};
 
 #[derive(Debug, Default)]
 pub struct NtripState {
     pub(crate) connected_thd: Option<JoinHandle<()>>,
     pub(crate) options: NtripOptions,
-    pub(crate) dynamic_pos: Option<(f64, f64, f64)>,
+    pub(crate) last_pos: Arc<Mutex<LastPos>>,
+}
+
+#[derive(Debug, Default, Copy, Clone)]
+pub struct LastPos {
+    pub(crate) lat: f64,
+    pub(crate) lon: f64,
+    pub(crate) alt: f64,
+}
+
+#[derive(Debug, Default, Clone)]
+pub enum PositionMode {
+    #[default]
+    Dynamic,
+    Static {
+        lat: f64,
+        lon: f64,
+        alt: f64,
+    },
 }
 
 #[derive(Debug, Default, Clone)]
@@ -23,9 +43,7 @@ pub struct NtripOptions {
     pub(crate) username: Option<String>,
     pub(crate) password: Option<String>,
     pub(crate) nmea_period: u64,
-    pub(crate) lat: f64,
-    pub(crate) lon: f64,
-    pub(crate) alt: f64,
+    pub(crate) pos_mode: PositionMode,
     pub(crate) client_id: String,
     pub(crate) epoch: Option<u32>,
     // nmea_header: bool,
@@ -61,16 +79,19 @@ enum Message {
 //     }
 // }
 
-fn build_gga(opt: &NtripOptions) -> Command {
+fn build_gga(opts: &NtripOptions, last_pos: &Arc<Mutex<LastPos>>) -> Command {
+    let (lat, lon, height) = match opts.pos_mode {
+        PositionMode::Dynamic => {
+            let guard = last_pos.lock().unwrap();
+            (guard.lat, guard.lon, guard.alt)
+        }
+        PositionMode::Static { lat, lon, alt } => (lat, lon, alt),
+    };
     Command {
-        epoch: opt.epoch,
+        epoch: opts.epoch,
         after: 0,
         crc: None,
-        message: Message::Gga {
-            lat: opt.lat,
-            lon: opt.lon,
-            height: opt.alt,
-        },
+        message: Message::Gga { lat, lon, height },
     }
 }
 
@@ -163,7 +184,10 @@ impl Message {
     }
 }
 
-fn get_commands(opt: NtripOptions) -> anyhow::Result<Box<dyn Iterator<Item = Command> + Send>> {
+fn get_commands(
+    opt: NtripOptions,
+    last_pos: Arc<Mutex<LastPos>>,
+) -> anyhow::Result<Box<dyn Iterator<Item = Command> + Send>> {
     // if let Some(path) = opt.input {
     //     let file = std::fs::File::open(path)?;
     //     let cmds: Vec<_> = serde_yaml::from_reader(file)?;
@@ -191,7 +215,7 @@ fn get_commands(opt: NtripOptions) -> anyhow::Result<Box<dyn Iterator<Item = Com
     // Ok(Box::new(it))
     // Err(anyhow!("cra not implemented"))
     // } else {
-    let first = build_gga(&opt);
+    let first = build_gga(&opt, &last_pos);
     let rest = iter::repeat(Command {
         after: opt.nmea_period,
         ..first
@@ -200,7 +224,7 @@ fn get_commands(opt: NtripOptions) -> anyhow::Result<Box<dyn Iterator<Item = Com
     // }
 }
 
-fn main(opt: NtripOptions) -> anyhow::Result<()> {
+fn main(opt: NtripOptions, last_pos: Arc<Mutex<LastPos>>) -> anyhow::Result<()> {
     let mut curl = Easy::new();
     let mut headers = List::new();
     headers.append("Transfer-Encoding:")?;
@@ -211,7 +235,9 @@ fn main(opt: NtripOptions) -> anyhow::Result<()> {
     //     // headers.append(&format!("Ntrip-CRA: {}", build_cra(&opt)))?;
     //     return Err(anyhow!("cra not implemented"));
     // } else {
-    headers.append(&format!("Ntrip-GGA: {}", build_gga(&opt)))?;
+
+    let gga = build_gga(&opt, &last_pos);
+    headers.append(&format!("Ntrip-GGA: {gga}"))?;
     // }
     // }
     curl.http_headers(headers)?;
@@ -268,7 +294,7 @@ fn main(opt: NtripOptions) -> anyhow::Result<()> {
         Ok(bytes.len())
     })?;
 
-    let commands = get_commands(opt.clone())?;
+    let commands = get_commands(opt.clone(), last_pos)?;
     let handle = thread::spawn(move || {
         for cmd in commands {
             if cmd.after > 0 {
@@ -304,24 +330,24 @@ impl NtripState {
             return;
         }
 
-        let (lat, lon, alt) = pos.or(self.dynamic_pos).unwrap_or_default();
+        let pos_mode = pos
+            .map(|(lat, lon, alt)| PositionMode::Static { lat, lon, alt })
+            .unwrap_or(PositionMode::Dynamic);
 
         let options = NtripOptions {
             url,
+            pos_mode,
             username: Some(username).filter(|s| !s.is_empty()),
             password: Some(password).filter(|s| !s.is_empty()),
             nmea_period: gga_period,
-            lat,
-            lon,
-            alt,
             client_id: "00000000-0000-0000-0000-000000000000".to_string(),
             epoch: None,
         };
 
         self.options = options.clone();
-
+        let last_pos = Arc::clone(&self.last_pos);
         let thd = thread::spawn(move || {
-            let r = main(options);
+            let r = main(options, last_pos);
             println!("{:?}", r);
         });
 

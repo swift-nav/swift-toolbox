@@ -315,6 +315,7 @@ Rectangle {
             ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
             clip: true
             contentWidth: -1
+
             TextEdit {
                 text: selectedRowField(_fieldName)
                 wrapMode: Text.WordWrap

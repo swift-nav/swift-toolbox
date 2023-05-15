@@ -357,7 +357,8 @@ Rectangle {
             anchors.centerIn: parent
             anchors.verticalCenterOffset: 5
             onEditingFinished: {
-                backend_request_broker.settings_write_request(settingGroup, settingName, text);
+                let isNumericField = settingType === "float" || settingType === "double";
+                backend_request_broker.settings_write_request(settingGroup, settingName, isNumericField ? text.replace(",", ".") : text);
             }
             validator: {
                 if (settingType === "integer")
@@ -401,13 +402,15 @@ Rectangle {
 
     }
 
-    floatValidator: DoubleValidator {
+    floatValidator: RegExpValidator {
+        regExp: /[-+]?[0-9]*[.,]?[0-9]+/
     }
 
     intValidator: IntValidator {
     }
 
     stringValidator: RegExpValidator {
+        regExp: /[-+]?[0-9]*[.,]?[0-9]+/
     }
 
 }

@@ -18,6 +18,7 @@ pub struct NtripState {
     pub(crate) connected_thd: Option<JoinHandle<()>>,
     pub(crate) options: NtripOptions,
     pub(crate) last_pos: Arc<Mutex<LastPos>>,
+    pub(crate) is_running: Arc<Mutex<bool>>,
 }
 
 #[derive(Debug, Default, Copy, Clone)]
@@ -229,6 +230,7 @@ fn main(
     mut msg_sender: MsgSender,
     opt: NtripOptions,
     last_pos: Arc<Mutex<LastPos>>,
+    is_running: Arc<Mutex<bool>>,
 ) -> anyhow::Result<()> {
     let mut curl = Easy::new();
     let mut headers = List::new();
@@ -268,6 +270,12 @@ fn main(
         let rx = &rx;
         let transfer = Rc::clone(&transfer);
         move |_dltot, _dlnow, _ultot, _ulnow| {
+            {
+                let running = *is_running.lock().unwrap();
+                if !running {
+                    return false;
+                }
+            }
             if !rx.is_empty() {
                 if let Err(e) = transfer.borrow().unpause_read() {
                     println!("unpause error: {e}");
@@ -279,13 +287,13 @@ fn main(
     })?;
 
     transfer.borrow_mut().write_function(|data| {
+        std::io::stdout().write_all(data).unwrap(); // should be infallible
         if let Err(e) = msg_sender.write_all(data) {
             println!("write error: {e}");
             return Ok(0);
         }
         Ok(data.len())
     })?;
-
     transfer.borrow_mut().read_function(|mut data: &mut [u8]| {
         let mut bytes = match rx.try_recv() {
             Ok(mut bytes) => bytes,
@@ -303,6 +311,7 @@ fn main(
     let handle = thread::spawn(move || {
         for cmd in commands {
             if cmd.after > 0 {
+                // need to unpark thread (?)
                 thread::park_timeout(Duration::from_secs(cmd.after));
             }
             if tx.send(cmd.to_bytes()).is_err() {
@@ -312,7 +321,7 @@ fn main(
         Ok(())
     });
 
-    transfer.borrow().perform()?;
+    transfer.borrow().perform();
     if !handle.is_finished() {
         Ok(())
     } else {
@@ -352,8 +361,10 @@ impl NtripState {
 
         self.options = options.clone();
         let last_pos = Arc::clone(&self.last_pos);
+        self.set_running(true);
+        let running = self.is_running.clone();
         let thd = thread::spawn(move || {
-            let r = main(msg_sender, options, last_pos);
+            let r = main(msg_sender, options, last_pos, running);
             println!("{:?}", r);
         });
 
@@ -362,8 +373,14 @@ impl NtripState {
 
     pub fn disconnect(&mut self) {
         if let Some(thd) = self.connected_thd.take() {
+            self.set_running(false);
             let _ = thd.join();
         }
         println!("disconnected");
+    }
+
+    pub fn set_running(&mut self, val: bool) {
+        let mut lock = self.is_running.lock().unwrap();
+        *lock = val;
     }
 }

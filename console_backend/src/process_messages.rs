@@ -224,11 +224,7 @@ fn register_events(link: sbp::link::Link<Tabs>) {
         // ntrip tab dynamic position
         let mut guard = tabs.shared_state.lock();
         let ntrip = &mut guard.ntrip_tab;
-        let mut lp_guard = ntrip.last_pos.lock().unwrap();
-        let f = msg.fields();
-        lp_guard.lat = f.lat;
-        lp_guard.lon = f.lon;
-        lp_guard.alt = f.height;
+        ntrip.set_lastdata(msg);
     });
     link.register(|tabs: &Tabs, msg: MsgPosLlhCov| {
         tabs.solution.lock().unwrap().handle_pos_llh_cov(msg);

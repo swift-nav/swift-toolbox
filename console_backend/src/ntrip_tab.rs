@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::{iter, thread};
 
-use crate::types::MsgSender;
+use crate::types::{MsgSender, PosLLH};
 
 use crossbeam::channel;
 
@@ -18,15 +18,16 @@ use std::time::{Duration, SystemTime};
 pub struct NtripState {
     pub(crate) connected_thd: Option<JoinHandle<()>>,
     pub(crate) options: NtripOptions,
-    pub(crate) last_pos: Arc<Mutex<LastPos>>,
     pub(crate) is_running: Arc<Mutex<bool>>,
+    last_data: Arc<Mutex<LastData>>,
 }
 
 #[derive(Debug, Default, Copy, Clone)]
-pub struct LastPos {
-    pub(crate) lat: f64,
-    pub(crate) lon: f64,
-    pub(crate) alt: f64,
+struct LastData {
+    lat: f64,
+    lon: f64,
+    alt: f64,
+    epoch: f64,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -82,10 +83,10 @@ enum Message {
 //     }
 // }
 
-fn build_gga(opts: &NtripOptions, last_pos: &Arc<Mutex<LastPos>>) -> Command {
+fn build_gga(opts: &NtripOptions, last_data: &Arc<Mutex<LastData>>) -> Command {
     let (lat, lon, height) = match opts.pos_mode {
         PositionMode::Dynamic => {
-            let guard = last_pos.lock().unwrap();
+            let guard = last_data.lock().unwrap();
             (guard.lat, guard.lon, guard.alt)
         }
         PositionMode::Static { lat, lon, alt } => (lat, lon, alt),
@@ -189,7 +190,7 @@ impl Message {
 
 fn get_commands(
     opt: NtripOptions,
-    last_pos: Arc<Mutex<LastPos>>,
+    last_data: Arc<Mutex<LastData>>,
 ) -> anyhow::Result<Box<dyn Iterator<Item = Command> + Send>> {
     // if let Some(path) = opt.input {
     //     let file = std::fs::File::open(path)?;
@@ -218,7 +219,7 @@ fn get_commands(
     // Ok(Box::new(it))
     // Err(anyhow!("cra not implemented"))
     // } else {
-    let first = build_gga(&opt, &last_pos);
+    let first = build_gga(&opt, &last_data);
     let rest = iter::repeat(Command {
         after: opt.nmea_period,
         ..first
@@ -230,7 +231,7 @@ fn get_commands(
 fn main(
     mut msg_sender: MsgSender,
     opt: NtripOptions,
-    last_pos: Arc<Mutex<LastPos>>,
+    last_data: Arc<Mutex<LastData>>,
     is_running: Arc<Mutex<bool>>,
 ) -> anyhow::Result<()> {
     let mut curl = Easy::new();
@@ -244,7 +245,7 @@ fn main(
     //     return Err(anyhow!("cra not implemented"));
     // } else {
 
-    let gga = build_gga(&opt, &last_pos);
+    let gga = build_gga(&opt, &last_data);
     headers.append(&format!("Ntrip-GGA: {gga}"))?;
     // }
     // }
@@ -308,7 +309,7 @@ fn main(
         Ok(bytes.len())
     })?;
 
-    let commands = get_commands(opt.clone(), last_pos)?;
+    let commands = get_commands(opt.clone(), last_data)?;
     let handle = thread::spawn(move || {
         for cmd in commands {
             if cmd.after > 0 {
@@ -364,11 +365,11 @@ impl NtripState {
         };
 
         self.options = options.clone();
-        let last_pos = Arc::clone(&self.last_pos);
+        let last_data = self.last_data.clone();
         self.set_running(true);
         let running = self.is_running.clone();
         let thd = thread::spawn(move || {
-            let r = main(msg_sender, options, last_pos, running);
+            let r = main(msg_sender, options, last_data, running);
             println!("{:?}", r);
         });
 
@@ -386,5 +387,14 @@ impl NtripState {
     pub fn set_running(&mut self, val: bool) {
         let mut lock = self.is_running.lock().unwrap();
         *lock = val;
+    }
+
+    pub fn set_lastdata(&mut self, val: PosLLH) {
+        let fields = val.fields();
+        let mut guard = self.last_data.lock().unwrap();
+        guard.lat = fields.lat;
+        guard.lon = fields.lon;
+        guard.alt = fields.height;
+        guard.epoch = fields.tow;
     }
 }

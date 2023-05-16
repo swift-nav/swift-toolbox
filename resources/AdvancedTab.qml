@@ -37,6 +37,7 @@ MainTab {
 
         AdvancedTabComponents.NtripClientTab {
         }
+
     }
 
 }

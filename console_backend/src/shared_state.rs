@@ -11,6 +11,7 @@ use std::{
 };
 
 use anyhow::{Context, Result as AHResult};
+use capnp::io;
 use chrono::{DateTime, Utc};
 use crossbeam::channel::Sender;
 use directories::{ProjectDirs, UserDirs};
@@ -33,6 +34,7 @@ use crate::output::{CsvLogging, CsvSerializer};
 use crate::process_messages::StopToken;
 use crate::settings_tab;
 use crate::solution_tab::LatLonUnits;
+use crate::types::MsgSender;
 use crate::update_tab::UpdateTabUpdate;
 use crate::utils::send_conn_state;
 use crate::watch::{WatchReceiver, Watched};
@@ -375,6 +377,7 @@ pub struct SharedStateInner {
     pub(crate) advanced_networking_update: Option<AdvancedNetworkingState>,
     pub(crate) auto_survey_data: AutoSurveyData,
     pub(crate) heartbeat_data: Heartbeat,
+    pub(crate) msg_sender: Option<MsgSender>,
 }
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
@@ -402,6 +405,7 @@ impl SharedStateInner {
             advanced_networking_update: None,
             auto_survey_data: AutoSurveyData::new(),
             heartbeat_data,
+            msg_sender: None,
         }
     }
 }

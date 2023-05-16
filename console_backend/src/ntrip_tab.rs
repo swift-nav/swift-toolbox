@@ -7,6 +7,7 @@ use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::{iter, thread};
 
+use crate::types::MsgSender;
 use anyhow::anyhow;
 use crossbeam::channel;
 use csv::Position;
@@ -224,7 +225,11 @@ fn get_commands(
     // }
 }
 
-fn main(opt: NtripOptions, last_pos: Arc<Mutex<LastPos>>) -> anyhow::Result<()> {
+fn main(
+    mut msg_sender: MsgSender,
+    opt: NtripOptions,
+    last_pos: Arc<Mutex<LastPos>>,
+) -> anyhow::Result<()> {
     let mut curl = Easy::new();
     let mut headers = List::new();
     headers.append("Transfer-Encoding:")?;
@@ -274,7 +279,7 @@ fn main(opt: NtripOptions, last_pos: Arc<Mutex<LastPos>>) -> anyhow::Result<()> 
     })?;
 
     transfer.borrow_mut().write_function(|data| {
-        if let Err(e) = std::io::stdout().write_all(data) {
+        if let Err(e) = msg_sender.write_all(data) {
             println!("write error: {e}");
             return Ok(0);
         }
@@ -298,7 +303,7 @@ fn main(opt: NtripOptions, last_pos: Arc<Mutex<LastPos>>) -> anyhow::Result<()> 
     let handle = thread::spawn(move || {
         for cmd in commands {
             if cmd.after > 0 {
-                thread::sleep(Duration::from_secs(cmd.after));
+                thread::park_timeout(Duration::from_secs(cmd.after));
             }
             if tx.send(cmd.to_bytes()).is_err() {
                 break;
@@ -319,6 +324,7 @@ fn main(opt: NtripOptions, last_pos: Arc<Mutex<LastPos>>) -> anyhow::Result<()> 
 impl NtripState {
     pub fn connect(
         &mut self,
+        mut msg_sender: MsgSender,
         url: String,
         username: String, // empty username is None
         password: String,
@@ -347,7 +353,7 @@ impl NtripState {
         self.options = options.clone();
         let last_pos = Arc::clone(&self.last_pos);
         let thd = thread::spawn(move || {
-            let r = main(options, last_pos);
+            let r = main(msg_sender, options, last_pos);
             println!("{:?}", r);
         });
 

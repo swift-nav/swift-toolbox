@@ -346,10 +346,17 @@ pub fn server_recv_thread(
                         }
                         _ => None,
                     };
-                    shared_state
-                        .lock()
-                        .ntrip_tab
-                        .connect(url, usr, pwd, gga_period, position);
+                    {
+                        let sender = shared_state.lock().msg_sender.clone();
+                        if let Some(sender) = sender {
+                            shared_state
+                                .lock()
+                                .ntrip_tab
+                                .connect(sender, url, usr, pwd, gga_period, position);
+                        } else {
+                            error!("TODO: no device sender");
+                        }
+                    }
                 }
                 m::message::NtripDisconnect(Ok(_)) => {
                     shared_state.lock().ntrip_tab.disconnect();

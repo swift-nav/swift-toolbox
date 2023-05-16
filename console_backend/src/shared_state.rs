@@ -11,7 +11,7 @@ use std::{
 };
 
 use anyhow::{Context, Result as AHResult};
-use capnp::io;
+
 use chrono::{DateTime, Utc};
 use crossbeam::channel::Sender;
 use directories::{ProjectDirs, UserDirs};
@@ -29,7 +29,7 @@ use crate::constants::{
 };
 use crate::errors::CONVERT_TO_STR_FAILURE;
 use crate::log_panel::LogLevel;
-use crate::ntrip_tab::{NtripOptions, NtripState};
+use crate::ntrip_tab::{NtripState};
 use crate::output::{CsvLogging, CsvSerializer};
 use crate::process_messages::StopToken;
 use crate::settings_tab;

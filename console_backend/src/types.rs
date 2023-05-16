@@ -17,7 +17,7 @@ use crate::piksi_tools_constants::{
 };
 
 use crate::utils::{mm_to_m, ms_to_sec};
-use anyhow::Context;
+
 use chrono::{DateTime, Utc};
 use ordered_float::OrderedFloat;
 use sbp::link::Event;
@@ -33,7 +33,7 @@ use sbp::messages::{
     piksi::{Latency, MsgSpecan, MsgSpecanDep, MsgUartState, MsgUartStateDepa, Period},
     ConcreteMessage,
 };
-use sbp::{Sbp, SbpEncoder, SbpMessage};
+use sbp::{Sbp, SbpMessage};
 use serialport::FlowControl as SPFlowControl;
 use std::fmt::Formatter;
 use std::io;
@@ -62,7 +62,7 @@ pub struct MsgSender {
 }
 
 impl Debug for MsgSender {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, _f: &mut Formatter<'_>) -> fmt::Result {
         Ok(())
     }
 }

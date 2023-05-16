@@ -8,9 +8,10 @@ use std::thread::JoinHandle;
 use std::{iter, thread};
 
 use crate::types::MsgSender;
-use anyhow::anyhow;
+
 use crossbeam::channel;
-use csv::Position;
+
+use anyhow::Context;
 use std::time::{Duration, SystemTime};
 
 #[derive(Debug, Default)]
@@ -296,7 +297,7 @@ fn main(
     })?;
     transfer.borrow_mut().read_function(|mut data: &mut [u8]| {
         let mut bytes = match rx.try_recv() {
-            Ok(mut bytes) => bytes,
+            Ok(bytes) => bytes,
             Err(_) => return Err(ReadError::Pause),
         };
         bytes.extend_from_slice(b"\r\n");
@@ -321,7 +322,10 @@ fn main(
         Ok(())
     });
 
-    transfer.borrow().perform();
+    transfer
+        .borrow()
+        .perform()
+        .context("ntrip curl perform errored")?;
     if !handle.is_finished() {
         Ok(())
     } else {
@@ -333,7 +337,7 @@ fn main(
 impl NtripState {
     pub fn connect(
         &mut self,
-        mut msg_sender: MsgSender,
+        msg_sender: MsgSender,
         url: String,
         username: String, // empty username is None
         password: String,

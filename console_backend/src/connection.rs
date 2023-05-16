@@ -1,4 +1,4 @@
-use crossbeam::channel;
+
 use std::{
     fmt::{Debug, Write},
     fs,
@@ -117,7 +117,7 @@ fn conn_manager_thd(
                 ConnectionManagerMsg::Connect(conn) => {
                     shared_state.set_connection(ConnectionState::Connecting, &client_sender);
                     send_conn_notification(&client_sender, String::from(""));
-                    let (reader, mut writer) = match conn.try_connect(Some(&shared_state)) {
+                    let (reader, writer) = match conn.try_connect(Some(&shared_state)) {
                         Ok(rw) => rw,
                         Err(e) => {
                             let (reconnect, message) = match e.kind() {

@@ -174,7 +174,7 @@ class BackendRequestBroker(QObject):  # pylint: disable=too-many-instance-attrib
 
     @Slot(list, QTKeys.QVARIANT, QTKeys.QVARIANT, QTKeys.QVARIANT)  # type: ignore
     def advanced_networking(
-            self, buttons: list, all_messages_toggle: Optional[bool], ipv4_address: Optional[str], port: Optional[int]
+        self, buttons: list, all_messages_toggle: Optional[bool], ipv4_address: Optional[str], port: Optional[int]
     ) -> None:
         Message = self.messages.Message
         m = Message()
@@ -309,7 +309,7 @@ class BackendRequestBroker(QObject):  # pylint: disable=too-many-instance-attrib
         gga_period: int,
         lat: Optional[float],
         lon: Optional[float],
-        alt: Optional[float]
+        alt: Optional[float],
     ) -> None:
         Message = self.messages.Message
         msg = self.messages.Message()

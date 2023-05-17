@@ -2519,9 +2519,9 @@ dependencies = [
 
 [[package]]
 name = "sbp"
-version = "4.13.0"
+version = "4.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "453decc75450e3fdab69da3c07a7ad6ba8b138ac639f27620b9638f9bb3a8261"
+checksum = "327bf4a9b8bef1d9748c49fcbbfbce206dc0b9712ead02f3f64656bcace770ae"
 dependencies = [
  "base64",
  "bytes",

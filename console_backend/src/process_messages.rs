@@ -364,7 +364,10 @@ mod messages {
                         },
                     }
                 }
-                recv(self.stop_recv) -> _ => None,
+                recv(self.stop_recv) -> _ =>  {
+                    self.handle.thread().unpark();
+                    None
+                },
             }
         }
     }
@@ -414,7 +417,7 @@ mod messages {
                     if diff > elapsed {
                         let sleep_dur = diff - elapsed;
                         debug!("Realtime delay sleeping for {:?}", sleep_dur);
-                        thread::sleep(sleep_dur);
+                        thread::park_timeout(sleep_dur);
                     }
                     self.last_time = Some(*time);
                     self.updated_at = Instant::now();

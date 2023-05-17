@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::{iter, thread};
 
-use crate::types::{MsgSender, PosLLH};
+use crate::types::{GpsTime, MsgSender, PosLLH};
 
 use crossbeam::channel;
 
@@ -27,6 +27,7 @@ struct LastData {
     lat: f64,
     lon: f64,
     alt: f64,
+    wn: i16,
     epoch: Option<u64>,
 }
 
@@ -395,9 +396,13 @@ impl NtripState {
         guard.alt = fields.height;
 
         let tow_s = fields.tow / 1000.0;
-        guard.epoch = match sbp::time::GpsTime::new(0, tow_s) {
+        guard.epoch = match sbp::time::GpsTime::new(guard.wn, tow_s) {
             Ok(gps_time) => Some(gps_time.to_utc_hardcoded().seconds().round() as u64),
             Err(_) => None,
         };
+    }
+
+    pub fn set_wn(&mut self, val: GpsTime) {
+        self.last_data.lock().unwrap().wn = val.fields().wn as i16;
     }
 }

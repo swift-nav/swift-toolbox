@@ -152,7 +152,9 @@ fn register_events(link: sbp::link::Link<Tabs>) {
     });
     link.register(|tabs: &Tabs, msg: GpsTime| {
         tabs.baseline.lock().unwrap().handle_gps_time(msg.clone());
-        tabs.solution.lock().unwrap().handle_gps_time(msg);
+        tabs.solution.lock().unwrap().handle_gps_time(msg.clone());
+
+        tabs.shared_state.lock().ntrip_tab.set_wn(msg);
     });
     link.register(|tabs: &Tabs, msg: MsgHeartbeat| {
         tabs.advanced_system_monitor

@@ -327,7 +327,7 @@ class BackendRequestBroker(QObject):  # pylint: disable=too-many-instance-attrib
         buffer = msg.to_bytes()
         self.endpoint.send_message(buffer)
 
-    @Slot()
+    @Slot()  # type: ignore
     def ntrip_disconnect(self):
         Message = self.messages.Message
         msg = self.messages.Message()

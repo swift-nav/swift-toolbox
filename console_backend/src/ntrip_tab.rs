@@ -27,7 +27,7 @@ struct LastData {
     lat: f64,
     lon: f64,
     alt: f64,
-    epoch: f64,
+    epoch: Option<u64>,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -49,7 +49,6 @@ pub struct NtripOptions {
     pub(crate) nmea_period: u64,
     pub(crate) pos_mode: PositionMode,
     pub(crate) client_id: String,
-    pub(crate) epoch: Option<u32>,
     // nmea_header: bool,
     // request_counter: Option<u8>,
     // area_id: Option<u32>,
@@ -84,15 +83,15 @@ enum Message {
 // }
 
 fn build_gga(opts: &NtripOptions, last_data: &Arc<Mutex<LastData>>) -> Command {
-    let (lat, lon, height) = match opts.pos_mode {
+    let (lat, lon, height, epoch) = match opts.pos_mode {
         PositionMode::Dynamic => {
             let guard = last_data.lock().unwrap();
-            (guard.lat, guard.lon, guard.alt)
+            (guard.lat, guard.lon, guard.alt, guard.epoch)
         }
-        PositionMode::Static { lat, lon, alt } => (lat, lon, alt),
+        PositionMode::Static { lat, lon, alt } => (lat, lon, alt, None),
     };
     Command {
-        epoch: opts.epoch,
+        epoch,
         after: 0,
         crc: None,
         message: Message::Gga { lat, lon, height },
@@ -103,7 +102,7 @@ fn build_gga(opts: &NtripOptions, last_data: &Arc<Mutex<LastData>>) -> Command {
 struct Command {
     #[serde(default = "default_after")]
     after: u64,
-    epoch: Option<u32>,
+    epoch: Option<u64>,
     crc: Option<u8>,
     #[serde(flatten)]
     message: Message,
@@ -122,7 +121,7 @@ impl Command {
 impl std::fmt::Display for Command {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let now = self.epoch.map_or_else(SystemTime::now, |e| {
-            SystemTime::UNIX_EPOCH + Duration::from_secs(e.into())
+            SystemTime::UNIX_EPOCH + Duration::from_secs(e)
         });
         let message = self.message.format(now.into());
         let checksum = self.crc.unwrap_or_else(|| checksum(message.as_bytes()));
@@ -361,7 +360,6 @@ impl NtripState {
             password: Some(password).filter(|s| !s.is_empty()),
             nmea_period: gga_period,
             client_id: "00000000-0000-0000-0000-000000000000".to_string(),
-            epoch: None,
         };
 
         self.options = options.clone();
@@ -395,6 +393,11 @@ impl NtripState {
         guard.lat = fields.lat;
         guard.lon = fields.lon;
         guard.alt = fields.height;
-        guard.epoch = fields.tow;
+
+        let tow_s = fields.tow / 1000.0;
+        guard.epoch = match sbp::time::GpsTime::new(0, tow_s) {
+            Ok(gps_time) => Some(gps_time.to_utc_hardcoded().seconds().round() as u64),
+            Err(_) => None,
+        };
     }
 }

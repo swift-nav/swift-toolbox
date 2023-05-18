@@ -2,32 +2,22 @@ import "../Constants"
 import QtCharts 2.15
 
 ValueAxis {
-    gridVisible: true
-    lineVisible: true
-    minorGridVisible: true
-    minorGridLineColor: Constants.commonChart.minorGridLineColor
-    gridLineColor: Constants.commonChart.gridLineColor
-    labelsColor: Constants.commonChart.labelsColor
-    titleFont: Constants.commonChart.axisTitleFont
-    labelsFont: Constants.commonChart.axisLabelsFont
-
     // A function that returns the best tick interval for the
     // plot to have ticks that land on round numbers
     // --
     // adapted from
     // https://stackoverflow.com/questions/8506881/nice-label-algorithm-for-charts-with-minimum-ticks
-    function getGoodTickInterval(): real {
+    function getGoodTickInterval() : real {
         const ticksRange = (max - min) / (tickCount - 1);
         const exponent = Math.floor(Math.log10(ticksRange));
         const fraction = ticksRange / Math.pow(10, exponent);
         var niceFraction = 10;
-        if (fraction < 1.5) {
+        if (fraction < 1.5)
             niceFraction = 1;
-        } else if (fraction < 3) {
+        else if (fraction < 3)
             niceFraction = 2;
-        } else if (fraction < 7) {
+        else if (fraction < 7)
             niceFraction = 5;
-        }
         return niceFraction * Math.pow(10, exponent);
     }
 
@@ -52,4 +42,13 @@ ValueAxis {
     function freezeTicks() {
         tickType = ValueAxis.TicksFixed;
     }
+
+    gridVisible: true
+    lineVisible: true
+    minorGridVisible: true
+    minorGridLineColor: Constants.commonChart.minorGridLineColor
+    gridLineColor: Constants.commonChart.gridLineColor
+    labelsColor: Constants.commonChart.labelsColor
+    titleFont: Constants.commonChart.axisTitleFont
+    labelsFont: Constants.commonChart.axisLabelsFont
 }

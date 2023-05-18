@@ -219,7 +219,6 @@ Item {
         ChartView {
             id: solutionPositionChart
 
-
             function freezeTicks() {
                 // fix the interval so tick number will not be too large.
                 solutionPositionXAxis.freezeTicks();
@@ -280,7 +279,6 @@ Item {
                     solutionPositionChart.zoom(Constants.commonChart.zoomInMult);
                 else
                     solutionPositionChart.zoom(Constants.commonChart.zoomOutMult);
-
                 // update ticks
                 solutionPositionChart.setTicks();
             }

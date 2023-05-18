@@ -299,7 +299,6 @@ Item {
                     solutionPositionChart.zoom(Constants.commonChart.zoomInMult);
                 else
                     solutionPositionChart.zoom(Constants.commonChart.zoomOutMult);
-
                 // update ticks
                 solutionPositionChart.setTicks();
             }

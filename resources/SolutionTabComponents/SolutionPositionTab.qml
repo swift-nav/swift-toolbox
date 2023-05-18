@@ -219,18 +219,6 @@ Item {
         ChartView {
             id: solutionPositionChart
 
-            onWidthChanged: {
-                solutionPositionChart.freezeTicks();
-                solutionPositionChart.fixAspectRatio();
-                solutionPositionChart.setTicks();
-            }
-
-            onHeightChanged: {
-                solutionPositionChart.freezeTicks();
-                solutionPositionChart.fixAspectRatio();
-                solutionPositionChart.setTicks();
-            }
-
             function freezeTicks() {
                 // fix the interval so tick number will not be too large.
                 solutionPositionXAxis.freezeTicks();
@@ -310,6 +298,17 @@ Item {
                 zoom_all = false;
             }
 
+            onWidthChanged: {
+                solutionPositionChart.freezeTicks();
+                solutionPositionChart.fixAspectRatio();
+                solutionPositionChart.setTicks();
+            }
+
+            onHeightChanged: {
+                solutionPositionChart.freezeTicks();
+                solutionPositionChart.fixAspectRatio();
+                solutionPositionChart.setTicks();
+            }
             Layout.preferredWidth: parent.width
             Layout.preferredHeight: parent.height - Constants.commonChart.heightOffset
             Layout.alignment: Qt.AlignBottom

@@ -234,7 +234,7 @@ Rectangle {
                 Layout.preferredHeight: Math.max(1, parent.height - 8 * parent.smallRowHeight)
                 sourceComponent: settingRowText
             }
-            
+
         }
 
         ScrollBar.vertical: ScrollBar {
@@ -281,8 +281,8 @@ Rectangle {
                 text: {
                     if (_fieldName == "description")
                         return selectedRowField(_fieldName) + "\n\nNotes:\n" + selectedRowField("notes");
-                        
-                    return selectedRowField(_fieldName)
+
+                    return selectedRowField(_fieldName);
                 }
                 anchors.fill: parent
                 wrapMode: Text.WordWrap

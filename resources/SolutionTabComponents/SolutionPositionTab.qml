@@ -303,7 +303,6 @@ Item {
                 solutionPositionChart.fixAspectRatio();
                 solutionPositionChart.setTicks();
             }
-
             onHeightChanged: {
                 solutionPositionChart.freezeTicks();
                 solutionPositionChart.fixAspectRatio();

@@ -149,8 +149,8 @@ Item {
                 onClicked: {
                     if (checked) {
                         solutionZoomAllButton.checked = false;
-                        y_axis_half = Utils.spanBetweenValues(solutionPositionXAxis.max, solutionPositionXAxis.min) / 2;
                         x_axis_half = Utils.spanBetweenValues(solutionPositionYAxis.max, solutionPositionYAxis.min) / 2;
+                        y_axis_half = Utils.spanBetweenValues(solutionPositionXAxis.max, solutionPositionXAxis.min) / 2;
                         center_solution = true;
                         zoom_all = false;
                     } else {
@@ -219,11 +219,38 @@ Item {
         ChartView {
             id: solutionPositionChart
 
+            onWidthChanged: {
+                solutionPositionChart.freezeTicks();
+                solutionPositionChart.fixAspectRatio();
+                solutionPositionChart.setTicks();
+            }
+
+            onHeightChanged: {
+                solutionPositionChart.freezeTicks();
+                solutionPositionChart.fixAspectRatio();
+                solutionPositionChart.setTicks();
+            }
 
             function freezeTicks() {
                 // fix the interval so tick number will not be too large.
                 solutionPositionXAxis.freezeTicks();
                 solutionPositionYAxis.freezeTicks();
+            }
+
+            function fixAspectRatio() {
+                const aspect_ratio = height / width;
+                const x_range = Math.abs(solutionPositionXAxis.max - solutionPositionXAxis.min);
+                const y_range = Math.abs(solutionPositionYAxis.max - solutionPositionYAxis.min);
+                const range_diff = aspect_ratio * x_range - y_range;
+                if (range_diff < 0) {
+                    const correction = Math.abs(range_diff / aspect_ratio / 2);
+                    solutionPositionXAxis.min -= correction;
+                    solutionPositionXAxis.max += correction;
+                } else {
+                    const correction = Math.abs(range_diff / 2);
+                    solutionPositionYAxis.min -= correction;
+                    solutionPositionYAxis.max += correction;
+                }
             }
 
             // This function make the ticks on the x & y axes have the
@@ -233,16 +260,6 @@ Item {
                 const x_tick_interval = solutionPositionXAxis.getGoodTickInterval();
                 const y_tick_interval = solutionPositionYAxis.getGoodTickInterval();
                 const max_tick_interval = Math.max(x_tick_interval, y_tick_interval);
-                const x_range = Math.abs(solutionPositionXAxis.max - solutionPositionXAxis.min);
-                const y_range = Math.abs(solutionPositionYAxis.max - solutionPositionYAxis.min);
-                const range_diff = Math.abs(x_range - y_range);
-                if (x_range < y_range) {
-                    solutionPositionXAxis.min -= range_diff / 2;
-                    solutionPositionXAxis.max += range_diff / 2;
-                } else {
-                    solutionPositionYAxis.min -= range_diff / 2;
-                    solutionPositionYAxis.max += range_diff / 2;
-                }
                 solutionPositionXAxis.setGoodTicks(max_tick_interval);
                 solutionPositionYAxis.setGoodTicks(max_tick_interval);
             }
@@ -255,6 +272,7 @@ Item {
                 solutionPositionXAxis.min = orig_lon_min;
                 solutionPositionYAxis.max = orig_lat_max;
                 solutionPositionYAxis.min = orig_lat_min;
+                solutionPositionChart.fixAspectRatio();
                 // update ticks
                 solutionPositionChart.setTicks();
             }
@@ -269,6 +287,7 @@ Item {
                     solutionPositionYAxis.max = cur_solution.y + y_axis_half;
                     solutionPositionYAxis.min = cur_solution.y - y_axis_half;
                 }
+                solutionPositionChart.fixAspectRatio();
                 // update ticks
                 solutionPositionChart.setTicks();
             }

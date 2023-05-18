@@ -234,6 +234,7 @@ Rectangle {
                 Layout.preferredHeight: Math.max(1, parent.height - 8 * parent.smallRowHeight)
                 sourceComponent: settingRowText
             }
+            
         }
 
         ScrollBar.vertical: ScrollBar {

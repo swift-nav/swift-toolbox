@@ -219,15 +219,48 @@ Item {
         ChartView {
             id: solutionPositionChart
 
+            function freezeTicks() {
+                // fix the interval so tick number will not be too large.
+                solutionPositionXAxis.freezeTicks();
+                solutionPositionYAxis.freezeTicks();
+            }
+
+            // This function make the ticks on the x & y axes have the
+            // same interval, and have them land on evenish numbers.
+            // It also ensures the ranges of the two axes are the same.
+            function setTicks() {
+                const x_tick_interval = solutionPositionXAxis.getGoodTickInterval();
+                const y_tick_interval = solutionPositionYAxis.getGoodTickInterval();
+                const max_tick_interval = Math.max(x_tick_interval, y_tick_interval);
+                const x_range = Math.abs(solutionPositionXAxis.max - solutionPositionXAxis.min);
+                const y_range = Math.abs(solutionPositionYAxis.max - solutionPositionYAxis.min);
+                const range_diff = Math.abs(x_range - y_range);
+                if (x_range < y_range) {
+                    solutionPositionXAxis.min -= range_diff / 2;
+                    solutionPositionXAxis.max += range_diff / 2;
+                } else {
+                    solutionPositionYAxis.min -= range_diff / 2;
+                    solutionPositionYAxis.max += range_diff / 2;
+                }
+                solutionPositionXAxis.setGoodTicks(max_tick_interval);
+                solutionPositionYAxis.setGoodTicks(max_tick_interval);
+            }
+
             function resetChartZoom() {
+                solutionPositionChart.freezeTicks();
+                // update the chart lims
                 solutionPositionChart.zoomReset();
                 solutionPositionXAxis.max = orig_lon_max;
                 solutionPositionXAxis.min = orig_lon_min;
                 solutionPositionYAxis.max = orig_lat_max;
                 solutionPositionYAxis.min = orig_lat_min;
+                // update ticks
+                solutionPositionChart.setTicks();
             }
 
             function centerToSolution() {
+                solutionPositionChart.freezeTicks();
+                // update chart lims
                 solutionPositionChart.zoomReset();
                 if (cur_scatters.length) {
                     solutionPositionXAxis.max = cur_solution.x + x_axis_half;
@@ -235,13 +268,19 @@ Item {
                     solutionPositionYAxis.max = cur_solution.y + y_axis_half;
                     solutionPositionYAxis.min = cur_solution.y - y_axis_half;
                 }
+                // update ticks
+                solutionPositionChart.setTicks();
             }
 
             function chartZoomByDirection(delta) {
+                solutionPositionChart.freezeTicks();
+                // update chart lims
                 if (delta > 0)
                     solutionPositionChart.zoom(Constants.commonChart.zoomInMult);
                 else
                     solutionPositionChart.zoom(Constants.commonChart.zoomOutMult);
+                // update ticks
+                solutionPositionChart.setTicks();
             }
 
             function stopZoomFeatures() {

@@ -280,6 +280,7 @@ Rectangle {
                 text: {
                     if (_fieldName == "description")
                         return selectedRowField(_fieldName) + "\n\nNotes:\n" + selectedRowField("notes");
+                        
                     return selectedRowField(_fieldName)
                 }
                 anchors.fill: parent

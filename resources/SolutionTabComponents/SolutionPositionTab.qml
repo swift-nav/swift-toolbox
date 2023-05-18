@@ -149,8 +149,8 @@ Item {
                 onClicked: {
                     if (checked) {
                         solutionZoomAllButton.checked = false;
-                        y_axis_half = Utils.spanBetweenValues(solutionPositionXAxis.max, solutionPositionXAxis.min) / 2;
                         x_axis_half = Utils.spanBetweenValues(solutionPositionYAxis.max, solutionPositionYAxis.min) / 2;
+                        y_axis_half = Utils.spanBetweenValues(solutionPositionXAxis.max, solutionPositionXAxis.min) / 2;
                         center_solution = true;
                         zoom_all = false;
                     } else {
@@ -219,15 +219,55 @@ Item {
         ChartView {
             id: solutionPositionChart
 
+            function freezeTicks() {
+                // fix the interval so tick number will not be too large.
+                solutionPositionXAxis.freezeTicks();
+                solutionPositionYAxis.freezeTicks();
+            }
+
+            function fixAspectRatio() {
+                const aspect_ratio = height / width;
+                const x_range = Math.abs(solutionPositionXAxis.max - solutionPositionXAxis.min);
+                const y_range = Math.abs(solutionPositionYAxis.max - solutionPositionYAxis.min);
+                const range_diff = aspect_ratio * x_range - y_range;
+                if (range_diff < 0) {
+                    const correction = Math.abs(range_diff / aspect_ratio / 2);
+                    solutionPositionXAxis.min -= correction;
+                    solutionPositionXAxis.max += correction;
+                } else {
+                    const correction = Math.abs(range_diff / 2);
+                    solutionPositionYAxis.min -= correction;
+                    solutionPositionYAxis.max += correction;
+                }
+            }
+
+            // This function make the ticks on the x & y axes have the
+            // same interval, and have them land on evenish numbers.
+            // It also ensures the ranges of the two axes are the same.
+            function setTicks() {
+                const x_tick_interval = solutionPositionXAxis.getGoodTickInterval();
+                const y_tick_interval = solutionPositionYAxis.getGoodTickInterval();
+                const max_tick_interval = Math.max(x_tick_interval, y_tick_interval);
+                solutionPositionXAxis.setGoodTicks(max_tick_interval);
+                solutionPositionYAxis.setGoodTicks(max_tick_interval);
+            }
+
             function resetChartZoom() {
+                solutionPositionChart.freezeTicks();
+                // update the chart lims
                 solutionPositionChart.zoomReset();
                 solutionPositionXAxis.max = orig_lon_max;
                 solutionPositionXAxis.min = orig_lon_min;
                 solutionPositionYAxis.max = orig_lat_max;
                 solutionPositionYAxis.min = orig_lat_min;
+                solutionPositionChart.fixAspectRatio();
+                // update ticks
+                solutionPositionChart.setTicks();
             }
 
             function centerToSolution() {
+                solutionPositionChart.freezeTicks();
+                // update chart lims
                 solutionPositionChart.zoomReset();
                 if (cur_scatters.length) {
                     solutionPositionXAxis.max = cur_solution.x + x_axis_half;
@@ -235,13 +275,20 @@ Item {
                     solutionPositionYAxis.max = cur_solution.y + y_axis_half;
                     solutionPositionYAxis.min = cur_solution.y - y_axis_half;
                 }
+                solutionPositionChart.fixAspectRatio();
+                // update ticks
+                solutionPositionChart.setTicks();
             }
 
             function chartZoomByDirection(delta) {
+                solutionPositionChart.freezeTicks();
+                // update chart lims
                 if (delta > 0)
                     solutionPositionChart.zoom(Constants.commonChart.zoomInMult);
                 else
                     solutionPositionChart.zoom(Constants.commonChart.zoomOutMult);
+                // update ticks
+                solutionPositionChart.setTicks();
             }
 
             function stopZoomFeatures() {
@@ -251,6 +298,16 @@ Item {
                 zoom_all = false;
             }
 
+            onWidthChanged: {
+                solutionPositionChart.freezeTicks();
+                solutionPositionChart.fixAspectRatio();
+                solutionPositionChart.setTicks();
+            }
+            onHeightChanged: {
+                solutionPositionChart.freezeTicks();
+                solutionPositionChart.fixAspectRatio();
+                solutionPositionChart.setTicks();
+            }
             Layout.preferredWidth: parent.width
             Layout.preferredHeight: parent.height - Constants.commonChart.heightOffset
             Layout.alignment: Qt.AlignBottom

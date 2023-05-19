@@ -287,7 +287,6 @@ Rectangle {
 
                         return notes;
                     }
-
                     return selectedRowField(_fieldName);
                 }
                 anchors.fill: parent

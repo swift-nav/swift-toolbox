@@ -336,6 +336,10 @@ impl SharedState {
     pub fn heartbeat_data(&self) -> Heartbeat {
         self.lock().heartbeat_data.clone()
     }
+
+    pub fn msg_sender(&self) -> Option<MsgSender> {
+        self.lock().msg_sender.clone()
+    }
 }
 
 impl Deref for SharedState {

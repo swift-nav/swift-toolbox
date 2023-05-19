@@ -33,6 +33,8 @@ from .backend_importer import BackendImporter
 
 from .backend_request_broker import BackendRequestBroker
 
+from .ntrip_status import NtripStatusData
+
 from .log_panel import (
     log_panel_update,
     LogPanelData,
@@ -225,19 +227,18 @@ TAB_LAYOUT = {
     },
 }
 
-
 capnp.remove_import_hook()  # pylint: disable=no-member
 
 
 class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attributes
     def __init__(
-        self,
-        app,
-        backend,
-        messages,
-        exit_after_timeout: Optional[float] = None,
-        record_file: Optional[str] = None,
-        record: bool = False,
+            self,
+            app,
+            backend,
+            messages,
+            exit_after_timeout: Optional[float] = None,
+            record_file: Optional[str] = None,
+            record: bool = False,
     ):
         super().__init__()
         self._app = app
@@ -474,6 +475,16 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
             data[Keys.SOLID_CONNECTION] = m.statusBarStatus.solidConnection
             data[Keys.TITLE] = m.statusBarStatus.title
             data[Keys.ANTENNA_STATUS] = m.statusBarStatus.antennaStatus
+
+            up = m.statusBarStatus.ntripUpload
+            down = m.statusBarStatus.ntripDownload
+            connected = m.statusBarStatus.ntripConnected
+            if connected:
+                data[Keys.NTRIP_DISPLAY] = f"{up}B/{down}B"
+                NtripStatusData.post_connected(True)
+            else:
+                data[Keys.NTRIP_DISPLAY] = "off"
+                NtripStatusData.post_connected(False)
             StatusBarData.post_data_update(data)
         elif m.which == Message.Union.ConnectionStatus:
             data = connection_update()
@@ -749,6 +760,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     qmlRegisterType(SolutionTableEntries, "SwiftConsole", 1, 0, "SolutionTableEntries")  # type: ignore
     qmlRegisterType(SolutionVelocityPoints, "SwiftConsole", 1, 0, "SolutionVelocityPoints")  # type: ignore
     qmlRegisterType(StatusBarData, "SwiftConsole", 1, 0, "StatusBarData")  # type: ignore
+    qmlRegisterType(NtripStatusData, "SwiftConsole", 1, 0, "NtripStatusData")  # type: ignore
     qmlRegisterType(TrackingSignalsPoints, "SwiftConsole", 1, 0, "TrackingSignalsPoints")  # type: ignore
     qmlRegisterType(TrackingSkyPlotPoints, "SwiftConsole", 1, 0, "TrackingSkyPlotPoints")  # type: ignore
     qmlRegisterType(ObservationRemoteTableModel, "SwiftConsole", 1, 0, "ObservationRemoteTableModel")  # type: ignore

@@ -347,14 +347,15 @@ pub fn server_recv_thread(
                         _ => None,
                     };
                     {
-                        let sender = shared_state.lock().msg_sender.clone();
-                        if let Some(sender) = sender {
-                            shared_state
-                                .lock()
-                                .ntrip_tab
-                                .connect(sender, url, usr, pwd, gga_period, position);
+                        let mut guard = shared_state.lock();
+                        let heartbeat = guard.heartbeat_data.clone();
+                        let msg_sender = guard.msg_sender.clone();
+                        if let Some(msg_sender) = msg_sender {
+                            guard.ntrip_tab.connect(
+                                msg_sender, heartbeat, url, usr, pwd, gga_period, position,
+                            );
                         } else {
-                            error!("TODO: no device sender");
+                            error!("ntrip unable to find connected device");
                         }
                     }
                 }

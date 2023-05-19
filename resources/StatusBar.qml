@@ -15,6 +15,7 @@ Rectangle {
     property real dataRate: 0
     property bool solidConnection: false
     property string title: ""
+    property string ntrip: "off"
     property int verticalPadding: Constants.statusBar.verticalPadding
 
     color: Constants.swiftOrange
@@ -53,6 +54,9 @@ Rectangle {
             }, {
                 "labelText": Constants.statusBar.antennaLabel,
                 "valueText": antennaStatus
+            }, {
+                "labelText": Constants.statusBar.ntripLabel,
+                "valueText": ntrip
             }]
 
             RowLayout {
@@ -100,6 +104,7 @@ Rectangle {
                 dataRate = statusBarData.data_rate;
                 solidConnection = statusBarData.solid_connection;
                 title = statusBarData.title;
+                ntrip = statusBarData.ntrip_display
             }
         }
     }

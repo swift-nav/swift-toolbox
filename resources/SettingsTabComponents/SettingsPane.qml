@@ -279,8 +279,14 @@ Rectangle {
 
             TextEdit {
                 text: {
-                    if (_fieldName == "description")
-                        return selectedRowField(_fieldName) + "\n\nNotes:\n" + selectedRowField("notes");
+                    if (_fieldName == "description") {
+                        let desc = selectedRowField("description");
+                        let notes = selectedRowField("notes");
+                        if (notes)
+                            return desc + "\n\nNotes:\n" + notes;
+
+                        return notes;
+                    }
 
                     return selectedRowField(_fieldName);
                 }

@@ -11,11 +11,11 @@ use crate::types::{GpsTime, MsgSender, PosLLH};
 
 use crossbeam::channel;
 
-use crate::client_sender::BoxedClientSender;
+
 use crate::status_bar::Heartbeat;
-use crate::utils::serialize_capnproto_builder;
+
 use anyhow::Context;
-use log::error;
+
 use std::time::{Duration, SystemTime};
 
 #[derive(Debug, Default)]

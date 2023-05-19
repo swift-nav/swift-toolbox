@@ -11,7 +11,6 @@ use crate::types::{GpsTime, MsgSender, PosLLH};
 
 use crossbeam::channel;
 
-
 use crate::status_bar::Heartbeat;
 
 use anyhow::Context;

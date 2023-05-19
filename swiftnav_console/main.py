@@ -232,13 +232,13 @@ capnp.remove_import_hook()  # pylint: disable=no-member
 
 class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attributes
     def __init__(
-            self,
-            app,
-            backend,
-            messages,
-            exit_after_timeout: Optional[float] = None,
-            record_file: Optional[str] = None,
-            record: bool = False,
+        self,
+        app,
+        backend,
+        messages,
+        exit_after_timeout: Optional[float] = None,
+        record_file: Optional[str] = None,
+        record: bool = False,
     ):
         super().__init__()
         self._app = app

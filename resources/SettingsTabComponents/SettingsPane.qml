@@ -217,10 +217,10 @@ Rectangle {
                 property string _fieldName: "description"
 
                 visible: !!selectedRowField(_fieldName)
-                Layout.rowSpan: parent.rows - 7
+                Layout.rowSpan: parent.rows - 8
                 Layout.columnSpan: 1
                 Layout.preferredWidth: parent.colWidthLabel
-                Layout.preferredHeight: Math.max(1, parent.height - 7 * parent.smallRowHeight)
+                Layout.preferredHeight: Math.max(1, parent.height - 8 * parent.smallRowHeight)
                 sourceComponent: settingRowLabel
             }
 

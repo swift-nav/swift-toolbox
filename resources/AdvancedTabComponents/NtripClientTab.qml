@@ -13,15 +13,54 @@ Item {
     property var floatValidator
     property var intValidator
     property var stringValidator
+    property string url
+    property string mountpoint
+    property string port
 
     RowLayout {
         anchors.fill: parent
 
         ColumnLayout {
+            RowLayout {
+                ComboBox {
+                    Layout.fillWidth: true
+                    editable: true
+                    model: ListModel {
+                        ListElement { text: "na.l1l2.skylark.swiftnav.com"}
+                        ListElement { text: "na.l1l5.skylark.swiftnav.com" }
+                        ListElement { text: "eu.l1l2.skylark.swiftnav.com" }
+                        ListElement { text: "eu.l1l5.skylark.swiftnav.com" }
+                        ListElement { text: "ap.l1l2.skylark.swiftnav.com" }
+                        ListElement { text: "ap.l1l5.skylark.swiftnav.com" }
+                    }
+                    validator: stringValidator
+                    onAccepted: url = currentText
+                }
+                ComboBox {
+                    Layout.fillWidth: true
+                    editable: true
+                    model: ListModel {
+                        ListElement { text: "OSR" }
+                        ListElement { text: "MSM5" }
+                    }
+                    validator: stringValidator
+                    onAccepted: mountpoint = currentText
+                }
+                ComboBox {
+                    Layout.fillWidth: true
+                    editable: true
+                    model: ListModel {
+                        ListElement { text: "2101" }
+                        ListElement { text: "2102" }
+                    }
+                    validator: intValidator
+                    onAccepted: port = currentText
+                }
+            }
             Repeater {
                 id: generalRepeater
 
-                model: ["Url", "Username", "Password", "GGA Period"]
+                model: ["Username", "Password", "GGA Period"]
 
                 RowLayout {
                     height: 30
@@ -35,9 +74,6 @@ Item {
                         width: 400
                         Layout.fillWidth: true
                         text: {
-                            if (modelData == "Url")
-                                return "na.skylark.swiftnav.com:2101";
-
                             if (modelData == "GGA Period")
                                 return "10";
 
@@ -149,12 +185,12 @@ Item {
                     ToolTip.text: "Start"
                     enabled: !connected
                     onClicked: {
-                        let url = generalRepeater.itemAt(0).children[1].text;
                         if (!url) {
                             inputErrorLabel.text = "URL is not provided!";
                             inputErrorLabel.visible = true;
                             return ;
                         }
+                        let address = url + ":" + port + "/" + mountpoint;
                         let username = generalRepeater.itemAt(1).children[1].text;
                         let password = generalRepeater.itemAt(2).children[1].text;
                         let ggaPeriod = generalRepeater.itemAt(3).children[1].text;
@@ -176,7 +212,7 @@ Item {
                                 return ;
                             }
                         }
-                        backend_request_broker.ntrip_connect(url, username, password, ggaPeriod, lat, lon, alt);
+                        backend_request_broker.ntrip_connect(address, username, password, ggaPeriod, lat, lon, alt);
                         connected = true;
                         inputErrorLabel.visible = false;
                     }

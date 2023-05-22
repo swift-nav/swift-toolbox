@@ -171,7 +171,7 @@ impl StatusBar {
         } else {
             sb_update.port + " - "
         };
-        status_bar_status.set_title(&format!("{port}Swift Console {}", sb_update.version));
+        status_bar_status.set_title(&format!("{}Swift Console {}", port, sb_update.version));
         client_sender.send_data(serialize_capnproto_builder(builder));
     }
 

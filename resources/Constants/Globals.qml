@@ -7,6 +7,7 @@ QtObject {
     property bool useOpenGL: false
     property bool useAntiAliasing: true
     property bool showPrompts: true
+    property bool disableNtrip: false
     property int initialMainTabIndex: 0 // Tracking
     property int initialSubTabIndex: 0 // Signals
     property bool showCsvLog: false

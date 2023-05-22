@@ -40,21 +40,21 @@ Item {
                     Layout.fillWidth: true
                     editable: true
                     model: ListModel {
-                        ListElement { text: "OSR" }
-                        ListElement { text: "MSM5" }
-                    }
-                    validator: stringValidator
-                    onAccepted: mountpoint = currentText
-                }
-                ComboBox {
-                    Layout.fillWidth: true
-                    editable: true
-                    model: ListModel {
                         ListElement { text: "2101" }
                         ListElement { text: "2102" }
                     }
                     validator: intValidator
                     onAccepted: port = currentText
+                }
+                ComboBox {
+                    Layout.fillWidth: true
+                    editable: true
+                    model: ListModel {
+                        ListElement { text: "OSR" }
+                        ListElement { text: "MSM5" }
+                    }
+                    validator: stringValidator
+                    onAccepted: mountpoint = currentText
                 }
             }
             Repeater {

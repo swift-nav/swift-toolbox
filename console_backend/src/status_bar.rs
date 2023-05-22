@@ -167,7 +167,7 @@ impl StatusBar {
         status_bar_status.set_data_rate(sb_update.data_rate);
         status_bar_status.set_solid_connection(sb_update.solid_connection);
         let port = if sb_update.port.is_empty() {
-            ""
+            "".to_string()
         } else {
             sb_update.port + " - "
         };

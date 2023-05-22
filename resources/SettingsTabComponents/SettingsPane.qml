@@ -234,10 +234,10 @@ Rectangle {
                 property string _fieldName: "description"
 
                 visible: !!selectedRowField(_fieldName)
-                Layout.rowSpan: 2
+                Layout.rowSpan: parents.rows - 8
                 Layout.columnSpan: 1
                 Layout.preferredWidth: parent.colWidthLabel
-                Layout.preferredHeight: isLongTextField(_fieldName) ? 2 * parent.smallRowHeight : parent.smallRowHeight
+                Layout.preferredHeight: Math.max(1, parent.height - 8 * parent.smallRowHeight)
                 sourceComponent: settingRowLabel
             }
 
@@ -245,47 +245,11 @@ Rectangle {
                 property string _fieldName: "description"
 
                 visible: !!selectedRowField(_fieldName)
-                Layout.rowSpan: 2
+                Layout.rowSpan: parents.rows - 8
                 Layout.columnSpan: parent.columns - 1
                 Layout.preferredWidth: parent.colWidthField
-                Layout.preferredHeight: isLongTextField(_fieldName) ? 2 * parent.smallRowHeight : parent.smallRowHeight
-                sourceComponent: settingRowText
-            }
-
-            Loader {
-                property string _title: "Notes"
-                property string _fieldName: "notes"
-
-                visible: !!selectedRowField(_fieldName)
-                Layout.columnSpan: 1
-                Layout.rowSpan: parent.rows - 7
-                Layout.preferredHeight: Math.max(1, parent.height - 7 * parent.smallRowHeight)
-                Layout.preferredWidth: parent.colWidthLabel
-                sourceComponent: settingRowLabel
-            }
-
-            Loader {
-                id: notes
-
-                property string _fieldName: "notes"
-
-                visible: !!selectedRowField(_fieldName)
-                Layout.columnSpan: parent.columns - 1
-                Layout.rowSpan: parent.rows - 8
                 Layout.preferredHeight: Math.max(1, parent.height - 8 * parent.smallRowHeight)
-                Layout.preferredWidth: parent.colWidthField
                 sourceComponent: settingRowText
-            }
-
-            Loader {
-                property string _fieldName: "notes"
-
-                visible: !notes.visible
-                Layout.columnSpan: parent.columns
-                Layout.rowSpan: parent.rows - 8
-                Layout.fillHeight: true
-                Layout.fillWidth: true
-                sourceComponent: emptyRow
             }
         }
 
@@ -326,7 +290,17 @@ Rectangle {
             anchors.fill: parent
 
             TextEdit {
-                text: selectedRowField(_fieldName)
+                text: {
+                    if (_fieldName == "description") {
+                        let desc = selectedRowField("description");
+                        let notes = selectedRowField("notes");
+                        if (notes)
+                            return desc + "\n\nNotes:\n" + notes;
+
+                        return notes;
+                    }
+                    return selectedRowField(_fieldName);
+                }
                 anchors.fill: parent
                 wrapMode: Text.WordWrap
                 readOnly: true

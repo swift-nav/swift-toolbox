@@ -29,28 +29,28 @@ Item {
                     onAccepted: url = currentText
 
                     model: ListModel {
-                        ListElement { 
+                        ListElement {
                             text: "na.l1l2.skylark.swiftnav.com"
                         }
 
-                        ListElement { 
-                            text: "na.l1l5.skylark.swiftnav.com" 
+                        ListElement {
+                            text: "na.l1l5.skylark.swiftnav.com"
                         }
 
-                        ListElement { 
-                            text: "eu.l1l2.skylark.swiftnav.com" 
+                        ListElement {
+                            text: "eu.l1l2.skylark.swiftnav.com"
                         }
 
-                        ListElement { 
-                            text: "eu.l1l5.skylark.swiftnav.com" 
+                        ListElement {
+                            text: "eu.l1l5.skylark.swiftnav.com"
                         }
 
-                        ListElement { 
-                            text: "ap.l1l2.skylark.swiftnav.com" 
+                        ListElement {
+                            text: "ap.l1l2.skylark.swiftnav.com"
                         }
 
-                        ListElement { 
-                            text: "ap.l1l5.skylark.swiftnav.com" 
+                        ListElement {
+                            text: "ap.l1l5.skylark.swiftnav.com"
                         }
 
                     }
@@ -64,12 +64,12 @@ Item {
                     onAccepted: port = currentText
 
                     model: ListModel {
-                        ListElement { 
-                            text: "2101" 
+                        ListElement {
+                            text: "2101"
                         }
 
-                        ListElement { 
-                            text: "2102" 
+                        ListElement {
+                            text: "2102"
                         }
 
                     }
@@ -83,12 +83,12 @@ Item {
                     onAccepted: mountpoint = currentText
 
                     model: ListModel {
-                        ListElement { 
-                            text: "OSR" 
+                        ListElement {
+                            text: "OSR"
                         }
 
-                        ListElement { 
-                            text: "MSM5" 
+                        ListElement {
+                            text: "MSM5"
                         }
 
                     }

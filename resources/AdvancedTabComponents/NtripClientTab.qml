@@ -27,6 +27,7 @@ Item {
                     editable: true
                     validator: stringValidator
                     onAccepted: url = currentText
+
                     model: ListModel {
                         ListElement { 
                             text: "na.l1l2.skylark.swiftnav.com"
@@ -61,6 +62,7 @@ Item {
                     editable: true
                     validator: intValidator
                     onAccepted: port = currentText
+
                     model: ListModel {
                         ListElement { 
                             text: "2101" 

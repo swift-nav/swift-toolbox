@@ -296,7 +296,6 @@ Rectangle {
                         let notes = selectedRowField("notes");
                         if (notes)
                             return desc + "\n\nNotes:\n" + notes;
-
                         return desc;
                     }
                     return selectedRowField(_fieldName);

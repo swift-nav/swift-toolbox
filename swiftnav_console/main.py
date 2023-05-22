@@ -643,6 +643,7 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
     if args.disable_ntrip:
         globals_.setProperty("disableNtrip", True)  # type: ignore
 
+
 def start_splash_linux():
     splash_filename = os.getenv("SWIFTNAV_CONSOLE_SPLASH")
     if not splash_filename:

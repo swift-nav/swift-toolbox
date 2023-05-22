@@ -297,7 +297,7 @@ Rectangle {
                         if (notes)
                             return desc + "\n\nNotes:\n" + notes;
 
-                        return notes;
+                        return desc;
                     }
                     return selectedRowField(_fieldName);
                 }

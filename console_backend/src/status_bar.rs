@@ -183,7 +183,7 @@ impl StatusBar {
         status_bar_status.set_data_rate(sb_update.data_rate);
         status_bar_status.set_solid_connection(sb_update.solid_connection);
         status_bar_status.set_title(&format!(
-            "{} Swift Console {}",
+            "{} - Swift Console {}",
             sb_update.port, sb_update.version
         ));
         client_sender.send_data(serialize_capnproto_builder(builder));

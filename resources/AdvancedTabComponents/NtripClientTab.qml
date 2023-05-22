@@ -25,38 +25,76 @@ Item {
                 ComboBox {
                     Layout.fillWidth: true
                     editable: true
-                    model: ListModel {
-                        ListElement { text: "na.l1l2.skylark.swiftnav.com"}
-                        ListElement { text: "na.l1l5.skylark.swiftnav.com" }
-                        ListElement { text: "eu.l1l2.skylark.swiftnav.com" }
-                        ListElement { text: "eu.l1l5.skylark.swiftnav.com" }
-                        ListElement { text: "ap.l1l2.skylark.swiftnav.com" }
-                        ListElement { text: "ap.l1l5.skylark.swiftnav.com" }
-                    }
                     validator: stringValidator
                     onAccepted: url = currentText
+                    model: ListModel {
+                        ListElement { 
+                            text: "na.l1l2.skylark.swiftnav.com"
+                        }
+
+                        ListElement { 
+                            text: "na.l1l5.skylark.swiftnav.com" 
+                        }
+
+                        ListElement { 
+                            text: "eu.l1l2.skylark.swiftnav.com" 
+                        }
+
+                        ListElement { 
+                            text: "eu.l1l5.skylark.swiftnav.com" 
+                        }
+
+                        ListElement { 
+                            text: "ap.l1l2.skylark.swiftnav.com" 
+                        }
+
+                        ListElement { 
+                            text: "ap.l1l5.skylark.swiftnav.com" 
+                        }
+
+                    }
+
                 }
+
                 ComboBox {
                     Layout.fillWidth: true
                     editable: true
-                    model: ListModel {
-                        ListElement { text: "2101" }
-                        ListElement { text: "2102" }
-                    }
                     validator: intValidator
                     onAccepted: port = currentText
+                    model: ListModel {
+                        ListElement { 
+                            text: "2101" 
+                        }
+
+                        ListElement { 
+                            text: "2102" 
+                        }
+
+                    }
+
                 }
+
                 ComboBox {
                     Layout.fillWidth: true
                     editable: true
-                    model: ListModel {
-                        ListElement { text: "OSR" }
-                        ListElement { text: "MSM5" }
-                    }
                     validator: stringValidator
                     onAccepted: mountpoint = currentText
+
+                    model: ListModel {
+                        ListElement { 
+                            text: "OSR" 
+                        }
+
+                        ListElement { 
+                            text: "MSM5" 
+                        }
+
+                    }
+
                 }
+
             }
+
             Repeater {
                 id: generalRepeater
 

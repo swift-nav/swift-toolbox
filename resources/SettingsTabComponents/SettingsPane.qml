@@ -384,7 +384,6 @@ Rectangle {
     }
 
     stringValidator: RegExpValidator {
-        regExp: /[-+]?[0-9]*[.,]?[0-9]+/
     }
 
 }

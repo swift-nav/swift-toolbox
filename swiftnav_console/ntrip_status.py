@@ -1,9 +1,7 @@
 """Ntrip Status QObjects.
 """
 
-from typing import Dict, List, Any
-
-from PySide2.QtCore import Property, QObject, Signal, Slot
+from PySide2.QtCore import QObject, Signal
 
 class NtripStatusData(QObject):  # pylint: disable=too-many-instance-attributes
     _instance: "NtripStatusData"

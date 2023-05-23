@@ -26,7 +26,7 @@ def status_bar_update() -> Dict[str, Any]:
 STATUS_BAR: List[Dict[str, Any]] = [status_bar_update()]
 
 
-class StatusBarData(QObject):  # pylint: disable=too-many-instance-attributes
+class StatusBarData(QObject):  # pylint: disable=too-many-instance-attributes, too-many-public-methods
 
     _pos: str = ""
     _rtk: str = ""

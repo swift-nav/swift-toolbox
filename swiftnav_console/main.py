@@ -651,6 +651,8 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
             globals_.setProperty("width", args.width)  # type: ignore
     if args.show_file_connection:
         globals_.setProperty("showFileConnection", True)  # type: ignore
+    if args.disable_ntrip:
+        globals_.setProperty("disableNtrip", True)  # type: ignore
 
 
 def start_splash_linux():
@@ -710,6 +712,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     parser.add_argument("--show-csv-log", action="store_true")
     parser.add_argument("--height", type=int)
     parser.add_argument("--width", type=int)
+    parser.add_argument("--disable-ntrip", action="store_true")
 
     args_main, unknown_args = parser.parse_known_args()
     if args_main.debug_with_no_backend and args_main.read_capnp_recording is None:

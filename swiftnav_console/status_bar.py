@@ -132,7 +132,7 @@ class StatusBarData(QObject):  # pylint: disable=too-many-instance-attributes, t
     def get_ntrip_display(self) -> str:
         return self._ntrip_display
 
-    def set_ntrip_display(self, ntrip_display : str) -> None:
+    def set_ntrip_display(self, ntrip_display: str) -> None:
         self._ntrip_display = ntrip_display
 
     ntrip_display = Property(str, get_ntrip_display, set_ntrip_display)

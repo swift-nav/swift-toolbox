@@ -3,6 +3,7 @@
 
 from PySide2.QtCore import QObject
 
+
 class NtripStatusData(QObject):  # pylint: disable=too-many-instance-attributes
     _instance: "NtripStatusData"
     ntrip_connected: "Signal"

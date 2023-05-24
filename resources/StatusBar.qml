@@ -104,7 +104,7 @@ Rectangle {
                 dataRate = statusBarData.data_rate;
                 solidConnection = statusBarData.solid_connection;
                 title = statusBarData.title;
-                ntrip = statusBarData.ntrip_display
+                ntrip = statusBarData.ntrip_display;
             }
         }
     }

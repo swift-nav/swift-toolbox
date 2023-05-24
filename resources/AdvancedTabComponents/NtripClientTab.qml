@@ -209,12 +209,12 @@ Item {
 
         signal ntrip_connected(bool connected)
 
-        Component.onCompleted: {
-            ntripStatusData.ntrip_connected.connect(setConnection);
-        }
-
         function setConnection(connected) {
             ntripClientTab.connected = connected;
+        }
+
+        Component.onCompleted: {
+            ntripStatusData.ntrip_connected.connect(setConnection);
         }
     }
 

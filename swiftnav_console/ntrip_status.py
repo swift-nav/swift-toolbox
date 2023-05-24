@@ -1,12 +1,12 @@
 """Ntrip Status QObjects.
 """
 
-from PySide2.QtCore import QObject
+from PySide2.QtCore import QObject, Signal
 
 
 class NtripStatusData(QObject):  # pylint: disable=too-many-instance-attributes
     _instance: "NtripStatusData"
-    ntrip_connected: "Signal"
+    ntrip_connected: Signal
 
     def __init__(self):
         super().__init__()

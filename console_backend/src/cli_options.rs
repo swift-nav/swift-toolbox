@@ -200,9 +200,9 @@ pub struct CliOptions {
     #[clap(long)]
     pub width: Option<u32>,
 
-    /// Disable ntrip client
+    /// Enable ntrip client
     #[clap(long)]
-    pub disable_ntrip: bool,
+    pub enable_ntrip: bool,
 }
 
 impl CliOptions {

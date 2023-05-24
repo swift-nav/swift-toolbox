@@ -214,7 +214,6 @@ Item {
         }
 
         function setConnection(connected) {
-            console.log(connected);
             ntripClientTab.connected = connected;
         }
     }

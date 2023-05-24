@@ -56,6 +56,31 @@ pub struct NtripOptions {
     pub(crate) client_id: String,
 }
 
+impl NtripOptions {
+    pub fn new(
+        url: String,
+        username: String,
+        password: String,
+        pos_mode: Option<(f64, f64, f64)>,
+        nmea_period: u64,
+    ) -> Self {
+        let pos_mode = pos_mode
+            .map(|(lat, lon, alt)| PositionMode::Static { lat, lon, alt })
+            .unwrap_or(PositionMode::Dynamic);
+
+        let username = Some(username).filter(|s| !s.is_empty());
+        let password = Some(password).filter(|s| !s.is_empty());
+        NtripOptions {
+            url,
+            username,
+            password,
+            pos_mode,
+            nmea_period,
+            client_id: "00000000-0000-0000-0000-000000000000".to_string(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, serde::Deserialize)]
 #[serde(rename_all = "lowercase")]
 enum Message {
@@ -267,29 +292,12 @@ impl NtripState {
         &mut self,
         msg_sender: MsgSender,
         mut heartbeat: Heartbeat,
-        url: String,
-        username: String, // empty username is None
-        password: String,
-        gga_period: u64,
-        pos: Option<(f64, f64, f64)>,
+        options: NtripOptions,
     ) {
         if self.connected_thd.is_some() && heartbeat.get_ntrip_connected() {
             // is already connected
             return;
         }
-
-        let pos_mode = pos
-            .map(|(lat, lon, alt)| PositionMode::Static { lat, lon, alt })
-            .unwrap_or(PositionMode::Dynamic);
-
-        let options = NtripOptions {
-            url,
-            pos_mode,
-            username: Some(username).filter(|s| !s.is_empty()),
-            password: Some(password).filter(|s| !s.is_empty()),
-            nmea_period: gga_period,
-            client_id: "00000000-0000-0000-0000-000000000000".to_string(),
-        };
 
         self.options = options.clone();
         let last_data = self.last_data.clone();

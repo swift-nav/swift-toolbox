@@ -14,6 +14,7 @@ use crate::errors::{
     SOLUTION_POSITION_UNIT_SELECTION_NOT_AVAILABLE,
 };
 use crate::log_panel::LogLevel;
+use crate::ntrip_tab::NtripOptions;
 use crate::output::CsvLogging;
 use crate::settings_tab;
 use crate::shared_state::{AdvancedNetworkingState, SharedState};
@@ -351,9 +352,8 @@ pub fn server_recv_thread(
                         let heartbeat = guard.heartbeat_data.clone();
                         let msg_sender = guard.msg_sender.clone();
                         if let Some(msg_sender) = msg_sender {
-                            guard.ntrip_tab.connect(
-                                msg_sender, heartbeat, url, usr, pwd, gga_period, position,
-                            );
+                            let options = NtripOptions::new(url, usr, pwd, position, gga_period);
+                            guard.ntrip_tab.connect(msg_sender, heartbeat, options);
                         } else {
                             error!("ntrip unable to find connected device");
                         }

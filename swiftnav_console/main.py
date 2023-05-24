@@ -483,7 +483,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                 data[Keys.NTRIP_DISPLAY] = f"{up}B/{down}B"
                 NtripStatusData.post_connected(True)
             else:
-                data[Keys.NTRIP_DISPLAY] = "off"
+                data[Keys.NTRIP_DISPLAY] = ""
                 NtripStatusData.post_connected(False)
             StatusBarData.post_data_update(data)
         elif m.which == Message.Union.ConnectionStatus:

@@ -63,6 +63,7 @@ Rectangle {
                 spacing: Constants.statusBar.keyValueSpacing
 
                 Label {
+                    visible: modelData.valueText
                     topPadding: Constants.statusBar.verticalPadding
                     bottomPadding: Constants.statusBar.verticalPadding
                     text: modelData.labelText
@@ -73,6 +74,7 @@ Rectangle {
                 Label {
                     id: statusBarPos
 
+                    visible: modelData.valueText
                     Layout.minimumWidth: Constants.statusBar.valueMinimumWidth
                     topPadding: Constants.statusBar.verticalPadding
                     bottomPadding: Constants.statusBar.verticalPadding

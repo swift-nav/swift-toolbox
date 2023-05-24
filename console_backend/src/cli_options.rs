@@ -199,6 +199,10 @@ pub struct CliOptions {
     /// Set the width of the main window.
     #[clap(long)]
     pub width: Option<u32>,
+
+    /// Disable ntrip client
+    #[clap(long)]
+    pub disable_ntrip: bool,
 }
 
 impl CliOptions {

@@ -15,6 +15,7 @@ use crate::status_bar::Heartbeat;
 
 use anyhow::Context;
 
+use log::error;
 use std::time::{Duration, SystemTime};
 
 #[derive(Debug, Default)]
@@ -304,10 +305,10 @@ impl NtripState {
         self.set_running(true);
         let running = self.is_running.clone();
         heartbeat.set_ntrip_connected(true);
-        println!("connected");
         let thd = thread::spawn(move || {
-            let r = main(msg_sender, heartbeat.clone(), options, last_data, running);
-            println!("{:?}", r);
+            if let Err(e) = main(msg_sender, heartbeat.clone(), options, last_data, running) {
+                error!("{e}");
+            }
             heartbeat.set_ntrip_connected(false);
         });
 

@@ -217,7 +217,6 @@ fn main(
     })?;
 
     transfer.borrow_mut().write_function(|data| {
-        std::io::stdout().write_all(data).unwrap(); // should be infallible
         if let Err(e) = msg_sender.write_all(data) {
             error!("ntrip write error: {e}");
             return Ok(0);
@@ -299,7 +298,7 @@ impl NtripState {
         heartbeat.set_ntrip_connected(true);
         let thd = thread::spawn(move || {
             if let Err(e) = main(msg_sender, heartbeat.clone(), options, last_data, running) {
-                error!("ntrip error {e}");
+                error!("{e}");
             }
             heartbeat.set_ntrip_connected(false);
         });

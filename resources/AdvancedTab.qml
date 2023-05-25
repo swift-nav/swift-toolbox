@@ -8,7 +8,7 @@ import QtQuick.Layouts 1.15
 MainTab {
     id: advancedTab
 
-    subTabNames: Globals.disableNtrip ? ["System Monitor", "IMU", "Magnetometer", "Networking", "Spectrum Analyzer", "INS"] : ["System Monitor", "IMU", "Magnetometer", "Networking", "Spectrum Analyzer", "INS", "NTRIP"]
+    subTabNames: Globals.enableNtrip ? ["System Monitor", "IMU", "Magnetometer", "Networking", "Spectrum Analyzer", "INS", "NTRIP"] : ["System Monitor", "IMU", "Magnetometer", "Networking", "Spectrum Analyzer", "INS"]
     curSubTabIndex: 0
 
     StackLayout {

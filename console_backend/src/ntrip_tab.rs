@@ -209,6 +209,8 @@ fn main(
     curl.http_version(HttpVersion::Any)?;
     curl.http_09_allowed(true)?;
 
+    curl.verbose(true)?;
+
     if let Some(username) = &opt.username {
         curl.username(username)?;
     }

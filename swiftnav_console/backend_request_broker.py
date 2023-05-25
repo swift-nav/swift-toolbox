@@ -319,9 +319,9 @@ class BackendRequestBroker(QObject):  # pylint: disable=too-many-instance-attrib
         msg.ntripConnect.password = password
         msg.ntripConnect.ggaPeriod = gga_period
         if lat is not None and lon is not None and alt is not None:
-            msg.ntripConnect.position.pos.lat = lat
-            msg.ntripConnect.position.pos.lon = lon
-            msg.ntripConnect.position.pos.alt = alt
+            msg.ntripConnect.position.pos.lat = float(lat)
+            msg.ntripConnect.position.pos.lon = float(lon)
+            msg.ntripConnect.position.pos.alt = float(alt)
         else:
             msg.ntripConnect.position.none = None
         buffer = msg.to_bytes()

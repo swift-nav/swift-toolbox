@@ -91,7 +91,7 @@ fn build_gga(opts: &NtripOptions, last_data: &Arc<Mutex<LastData>>) -> Command {
     let (lat, lon, height, epoch) = match opts.pos_mode {
         PositionMode::Dynamic => {
             let guard = last_data.lock().unwrap();
-            (guard.lat, guard.lon, guard.alt, guard.epoch)
+            (guard.lat, guard.lon, guard.alt, None)
         }
         PositionMode::Static { lat, lon, alt } => (lat, lon, alt, None),
     };
@@ -208,8 +208,6 @@ fn main(
     curl.custom_request("GET")?;
     curl.http_version(HttpVersion::Any)?;
     curl.http_09_allowed(true)?;
-
-    curl.verbose(true)?;
 
     if let Some(username) = &opt.username {
         curl.username(username)?;

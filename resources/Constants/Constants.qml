@@ -293,6 +293,7 @@ QtObject {
         readonly property string corrAgeLabel: "Correction Age:"
         readonly property string insLabel: "INS:"
         readonly property string antennaLabel: "Antenna:"
+        readonly property string ntripLabel: "Ntrip:"
         readonly property string defaultValue: "--"
     }
 

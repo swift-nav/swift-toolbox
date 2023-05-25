@@ -11,7 +11,11 @@ use crate::types::{GpsTime, MsgSender, PosLLH};
 
 use crossbeam::channel;
 
+use crate::status_bar::Heartbeat;
+
 use anyhow::Context;
+
+use log::error;
 use std::time::{Duration, SystemTime};
 
 #[derive(Debug, Default)]
@@ -50,44 +54,44 @@ pub struct NtripOptions {
     pub(crate) nmea_period: u64,
     pub(crate) pos_mode: PositionMode,
     pub(crate) client_id: String,
-    // nmea_header: bool,
-    // request_counter: Option<u8>,
-    // area_id: Option<u32>,
-    // corr_mask: Option<u16>,
-    // soln_id: Option<u8>,
+}
+
+impl NtripOptions {
+    pub fn new(
+        url: String,
+        username: String,
+        password: String,
+        pos_mode: Option<(f64, f64, f64)>,
+        nmea_period: u64,
+    ) -> Self {
+        let pos_mode = pos_mode
+            .map(|(lat, lon, alt)| PositionMode::Static { lat, lon, alt })
+            .unwrap_or(PositionMode::Dynamic);
+
+        let username = Some(username).filter(|s| !s.is_empty());
+        let password = Some(password).filter(|s| !s.is_empty());
+        NtripOptions {
+            url,
+            username,
+            password,
+            pos_mode,
+            nmea_period,
+            client_id: "00000000-0000-0000-0000-000000000000".to_string(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, serde::Deserialize)]
 #[serde(rename_all = "lowercase")]
 enum Message {
     Gga { lat: f64, lon: f64, height: f64 },
-    // Cra {
-    //     request_counter: Option<u8>,
-    //     area_id: Option<u32>,
-    //     corrections_mask: Option<u16>,
-    //     solution_id: Option<u8>,
-    // },
 }
-
-// fn build_cra(opt: &NtripOptions) -> Command {
-//     Command {
-//         epoch: opt.epoch,
-//         after: 0,
-//         crc: None,
-//         message: Message::Cra {
-//             request_counter: opt.request_counter,
-//             area_id: opt.area_id,
-//             corrections_mask: opt.corr_mask,
-//             solution_id: opt.soln_id,
-//         },
-//     }
-// }
 
 fn build_gga(opts: &NtripOptions, last_data: &Arc<Mutex<LastData>>) -> Command {
     let (lat, lon, height, epoch) = match opts.pos_mode {
         PositionMode::Dynamic => {
             let guard = last_data.lock().unwrap();
-            (guard.lat, guard.lon, guard.alt, guard.epoch)
+            (guard.lat, guard.lon, guard.alt, None)
         }
         PositionMode::Static { lat, lon, alt } => (lat, lon, alt, None),
     };
@@ -160,30 +164,7 @@ impl Message {
                     "$GPGGA,{},{:02}{:010.7},{},{:03}{:010.7},{},4,12,1.3,{:.2},M,0.0,M,1.7,0078",
                     time, lat_deg, lat_min, lat_dir, lon_deg, lon_min, lon_dir, height
                 )
-            } // Message::Cra {
-              //     request_counter,
-              //     area_id,
-              //     corrections_mask,
-              //     solution_id,
-              // } => {
-              //     let mut s = String::from("$PSWTCRA,");
-              //     if let Some(request_counter) = request_counter {
-              //         s.push_str(&format!("{request_counter},"));
-              //     }
-              //     s.push(',');
-              //     if let Some(area_id) = area_id {
-              //         s.push_str(&format!("{area_id},"));
-              //     }
-              //     s.push(',');
-              //     if let Some(corrections_mask) = corrections_mask {
-              //         s.push_str(&format!("{corrections_mask},"));
-              //     }
-              //     s.push(',');
-              //     if let Some(solution_id) = solution_id {
-              //         s.push_str(&format!("{solution_id},"));
-              //     }
-              //     s
-              // }
+            }
         }
     }
 }
@@ -192,44 +173,20 @@ fn get_commands(
     opt: NtripOptions,
     last_data: Arc<Mutex<LastData>>,
 ) -> anyhow::Result<Box<dyn Iterator<Item = Command> + Send>> {
-    // if let Some(path) = opt.input {
-    //     let file = std::fs::File::open(path)?;
-    //     let cmds: Vec<_> = serde_yaml::from_reader(file)?;
-    //     return Ok(Box::new(cmds.into_iter()));
-    // }
-
     if opt.nmea_period == 0 {
         return Ok(Box::new(iter::empty()));
     }
-
-    // if opt.area_id.is_some() {
-    // let first = build_cra(&opt);
-    // let it = iter::successors(Some(first), move |prev| {
-    //     let mut next = *prev;
-    //     if let Message::Cra {
-    //         request_counter: Some(ref mut counter),
-    //         ..
-    //     } = &mut next.message
-    //     {
-    //         *counter = counter.wrapping_add(1);
-    //     }
-    //     next.after = opt.nmea_period;
-    //     Some(next)
-    // });
-    // Ok(Box::new(it))
-    // Err(anyhow!("cra not implemented"))
-    // } else {
     let first = build_gga(&opt, &last_data);
     let rest = iter::repeat(Command {
         after: opt.nmea_period,
         ..first
     });
     Ok(Box::new(iter::once(first).chain(rest)))
-    // }
 }
 
 fn main(
     mut msg_sender: MsgSender,
+    mut heartbeat: Heartbeat,
     opt: NtripOptions,
     last_data: Arc<Mutex<LastData>>,
     is_running: Arc<Mutex<bool>>,
@@ -239,16 +196,10 @@ fn main(
     headers.append("Transfer-Encoding:")?;
     headers.append("Ntrip-Version: Ntrip/2.0")?;
     headers.append(&format!("X-SwiftNav-Client-Id: {}", opt.client_id))?;
-    // if opt.nmea_header {
-    // if opt.area_id.is_some() {
-    //     // headers.append(&format!("Ntrip-CRA: {}", build_cra(&opt)))?;
-    //     return Err(anyhow!("cra not implemented"));
-    // } else {
 
     let gga = build_gga(&opt, &last_data);
     headers.append(&format!("Ntrip-GGA: {gga}"))?;
-    // }
-    // }
+
     curl.http_headers(headers)?;
     curl.useragent("NTRIP ntrip-client/1.0")?;
     curl.url(&opt.url)?;
@@ -278,9 +229,11 @@ fn main(
                     return false;
                 }
             }
+            heartbeat.set_ntrip_dl(_dlnow);
+            heartbeat.set_ntrip_ul(_ulnow);
             if !rx.is_empty() {
                 if let Err(e) = transfer.borrow().unpause_read() {
-                    println!("unpause error: {e}");
+                    error!("ntrip unpause error: {e}");
                     return false;
                 }
             }
@@ -289,9 +242,8 @@ fn main(
     })?;
 
     transfer.borrow_mut().write_function(|data| {
-        std::io::stdout().write_all(data).unwrap(); // should be infallible
         if let Err(e) = msg_sender.write_all(data) {
-            println!("write error: {e}");
+            error!("ntrip write error: {e}");
             return Ok(0);
         }
         Ok(data.len())
@@ -303,7 +255,7 @@ fn main(
         };
         bytes.extend_from_slice(b"\r\n");
         if let Err(e) = data.write_all(&bytes) {
-            println!("read error: {e}");
+            error!("ntrip read error: {e}");
             return Err(ReadError::Abort);
         }
         Ok(bytes.len())
@@ -339,48 +291,34 @@ impl NtripState {
     pub fn connect(
         &mut self,
         msg_sender: MsgSender,
-        url: String,
-        username: String, // empty username is None
-        password: String,
-        gga_period: u64,
-        pos: Option<(f64, f64, f64)>,
+        mut heartbeat: Heartbeat,
+        options: NtripOptions,
     ) {
-        if self.connected_thd.is_some() {
+        if self.connected_thd.is_some() && heartbeat.get_ntrip_connected() {
             // is already connected
             return;
         }
-
-        let pos_mode = pos
-            .map(|(lat, lon, alt)| PositionMode::Static { lat, lon, alt })
-            .unwrap_or(PositionMode::Dynamic);
-
-        let options = NtripOptions {
-            url,
-            pos_mode,
-            username: Some(username).filter(|s| !s.is_empty()),
-            password: Some(password).filter(|s| !s.is_empty()),
-            nmea_period: gga_period,
-            client_id: "00000000-0000-0000-0000-000000000000".to_string(),
-        };
 
         self.options = options.clone();
         let last_data = self.last_data.clone();
         self.set_running(true);
         let running = self.is_running.clone();
+        heartbeat.set_ntrip_connected(true);
         let thd = thread::spawn(move || {
-            let r = main(msg_sender, options, last_data, running);
-            println!("{:?}", r);
+            if let Err(e) = main(msg_sender, heartbeat.clone(), options, last_data, running) {
+                error!("{e}");
+            }
+            heartbeat.set_ntrip_connected(false);
         });
 
         self.connected_thd = Some(thd);
     }
 
     pub fn disconnect(&mut self) {
+        self.set_running(false);
         if let Some(thd) = self.connected_thd.take() {
-            self.set_running(false);
             let _ = thd.join();
         }
-        println!("disconnected");
     }
 
     pub fn set_running(&mut self, val: bool) {

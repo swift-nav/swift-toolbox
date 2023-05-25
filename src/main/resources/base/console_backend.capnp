@@ -181,6 +181,9 @@ struct StatusBarStatus {
     dataRate @6: Float64;
     solidConnection @7: Bool;
     title @8: Text;
+    ntripConnected @9: Bool;
+    ntripDownload @10: Float64;
+    ntripUpload @11: Float64;
 }
 
 struct BaselinePlotStatus {

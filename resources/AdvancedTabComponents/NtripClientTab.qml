@@ -204,6 +204,20 @@ Item {
 
     }
 
+    NtripStatusData {
+        id: ntripStatusData
+
+        signal ntrip_connected(bool connected)
+
+        function setConnection(connected) {
+            ntripClientTab.connected = connected;
+        }
+
+        Component.onCompleted: {
+            ntripStatusData.ntrip_connected.connect(setConnection);
+        }
+    }
+
     floatValidator: DoubleValidator {
     }
 

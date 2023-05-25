@@ -233,7 +233,7 @@ fn main(
             heartbeat.set_ntrip_ul(_ulnow);
             if !rx.is_empty() {
                 if let Err(e) = transfer.borrow().unpause_read() {
-                    println!("unpause error: {e}");
+                    error!("ntrip unpause error: {e}");
                     return false;
                 }
             }
@@ -242,9 +242,8 @@ fn main(
     })?;
 
     transfer.borrow_mut().write_function(|data| {
-        std::io::stdout().write_all(data).unwrap(); // should be infallible
         if let Err(e) = msg_sender.write_all(data) {
-            println!("write error: {e}");
+            error!("ntrip write error: {e}");
             return Ok(0);
         }
         Ok(data.len())
@@ -256,7 +255,7 @@ fn main(
         };
         bytes.extend_from_slice(b"\r\n");
         if let Err(e) = data.write_all(&bytes) {
-            println!("read error: {e}");
+            error!("ntrip read error: {e}");
             return Err(ReadError::Abort);
         }
         Ok(bytes.len())
@@ -317,11 +316,9 @@ impl NtripState {
 
     pub fn disconnect(&mut self) {
         self.set_running(false);
-        println!("disconnecting");
         if let Some(thd) = self.connected_thd.take() {
             let _ = thd.join();
         }
-        println!("disconnected");
     }
 
     pub fn set_running(&mut self, val: bool) {

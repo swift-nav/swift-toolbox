@@ -10,6 +10,9 @@ rustflags = [
   "-C", "link-arg=dynamic_lookup",
 ]
 
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-Ctarget-feature=+crt-static", "-Zunstable-options"]
+
 [alias]
 swift-files = "run --bin swift-files --no-default-features --features env_logger,indicatif --"
 swift-settings = "run --bin swift-settings --no-default-features --features env_logger --"

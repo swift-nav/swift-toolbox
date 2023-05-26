@@ -45,6 +45,9 @@ sbp-settings = "0.6.14"
 env_logger = { version = "0.9", optional = true }
 mimalloc = { version = "0.1", default-features = false }
 indicatif = { version = "0.16", optional = true }
+#rtcm_conv = { path = "../gnss-converters-private/rtcm_conv" }
+libc = "0.2.144"
+gnss-converters = { git = "https://github.com/swift-nav/gnss-converters-private.git", branch = "master" }
 
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 serialport = { git = "https://github.com/swift-nav/serialport-rs.git" }

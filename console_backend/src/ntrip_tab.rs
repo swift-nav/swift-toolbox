@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use curl::easy::{Easy, HttpVersion, List, ReadError};
 use std::cell::RefCell;
-use std::io::Write;
+use std::io::{Cursor, Write};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
@@ -15,6 +15,7 @@ use crate::status_bar::Heartbeat;
 
 use anyhow::Context;
 
+use crate::rtcm_converter;
 use log::error;
 use std::time::{Duration, SystemTime};
 
@@ -185,7 +186,7 @@ fn get_commands(
 }
 
 fn main(
-    mut msg_sender: MsgSender,
+    msg_sender: MsgSender,
     mut heartbeat: Heartbeat,
     opt: NtripOptions,
     last_data: Arc<Mutex<LastData>>,
@@ -242,10 +243,8 @@ fn main(
     })?;
 
     transfer.borrow_mut().write_function(|data| {
-        if let Err(e) = msg_sender.write_all(data) {
-            error!("ntrip write error: {e}");
-            return Ok(0);
-        }
+        let reader = Cursor::new(data.to_owned());
+        rtcm_converter::convert(reader, msg_sender.clone());
         Ok(data.len())
     })?;
     transfer.borrow_mut().read_function(|mut data: &mut [u8]| {

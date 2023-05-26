@@ -35,8 +35,11 @@ jobs:
         - windows-2019
 
     runs-on: ${{ matrix.os }}
-
+    env:
+      GITHUB_USER: swiftnav-travis
+      GITHUB_TOKEN: "${{ secrets.GH_TOKEN }}"
     steps:
+      - run: gh auth setup-git
 
       - name: Checkout source
         uses: actions/checkout@v2

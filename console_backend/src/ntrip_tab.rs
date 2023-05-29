@@ -16,6 +16,7 @@ use crate::status_bar::Heartbeat;
 use anyhow::Context;
 
 use crate::rtcm_converter::RtcmConverter;
+use crossbeam::channel::Sender;
 use log::error;
 use std::time::{Duration, SystemTime};
 
@@ -210,11 +211,11 @@ impl Progress {
 }
 
 fn main(
-    mut msg_sender: MsgSender,
     mut heartbeat: Heartbeat,
     opt: NtripOptions,
     last_data: Arc<Mutex<LastData>>,
     is_running: Arc<Mutex<bool>>,
+    rtcm_tx: Sender<Vec<u8>>,
 ) -> anyhow::Result<()> {
     let mut curl = Easy::new();
     let mut headers = List::new();
@@ -285,9 +286,6 @@ fn main(
         }
     })?;
 
-    let (rtcm_tx, rtcm_rx) = channel::unbounded::<Vec<u8>>();
-    let rtcm2sbp = RtcmConverter::new(rtcm_rx);
-    rtcm2sbp.start(msg_sender);
     transfer.borrow_mut().write_function(move |data| {
         if let Err(e) = rtcm_tx.send(data.to_owned()) {
             error!("ntrip write error: {e}");
@@ -353,9 +351,14 @@ impl NtripState {
         let running = self.is_running.clone();
         heartbeat.set_ntrip_connected(true);
         let thd = thread::spawn(move || {
-            if let Err(e) = main(msg_sender, heartbeat.clone(), options, last_data, running) {
+            let (rtcm_tx, rtcm_rx) = channel::unbounded::<Vec<u8>>();
+            let mut rtcm_converter = RtcmConverter::new(rtcm_rx);
+            rtcm_converter.start(msg_sender);
+            println!("starting...");
+            if let Err(e) = main(heartbeat.clone(), options, last_data, running, rtcm_tx) {
                 error!("{e}");
             }
+            rtcm_converter.stop();
             heartbeat.set_ntrip_connected(false);
         });
 

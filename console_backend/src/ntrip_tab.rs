@@ -285,9 +285,11 @@ fn main(
         }
     })?;
 
-    let rtcm2sbp = RtcmConverter::start(msg_sender);
+    let (rtcm_tx, rtcm_rx) = channel::unbounded::<Vec<u8>>();
+    let rtcm2sbp = RtcmConverter::new(rtcm_rx);
+    rtcm2sbp.start(msg_sender);
     transfer.borrow_mut().write_function(move |data| {
-        if let Err(e) = rtcm2sbp.send_data(data.to_owned()) {
+        if let Err(e) = rtcm_tx.send(data.to_owned()) {
             error!("ntrip write error: {e}");
             return Ok(0);
         }

@@ -172,10 +172,12 @@ impl StatusBar {
         status_bar_status.set_ins(&sb_update.ins_status);
         status_bar_status.set_data_rate(sb_update.data_rate);
         status_bar_status.set_solid_connection(sb_update.solid_connection);
-        status_bar_status.set_title(&format!(
-            "{} Swift Console {}",
-            sb_update.port, sb_update.version
-        ));
+        let port = if sb_update.port.is_empty() {
+            "".to_string()
+        } else {
+            sb_update.port + " - "
+        };
+        status_bar_status.set_title(&format!("{}Swift Console {}", port, sb_update.version));
         status_bar_status.set_ntrip_upload(sb_update.ntrip_upload_bytes);
         status_bar_status.set_ntrip_download(sb_update.ntrip_download_bytes);
         status_bar_status.set_ntrip_connected(sb_update.ntrip_connected);

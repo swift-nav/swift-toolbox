@@ -15,6 +15,7 @@ use crate::status_bar::Heartbeat;
 
 use anyhow::Context;
 
+use crate::rtcm_converter::RtcmConverter;
 use log::error;
 use std::time::{Duration, SystemTime};
 
@@ -241,8 +242,9 @@ fn main(
         }
     })?;
 
-    transfer.borrow_mut().write_function(|data| {
-        if let Err(e) = msg_sender.write_all(data) {
+    let rtcm2sbp = RtcmConverter::start(msg_sender);
+    transfer.borrow_mut().write_function(move |data| {
+        if let Err(e) = rtcm2sbp.send_data(data.to_owned()) {
             error!("ntrip write error: {e}");
             return Ok(0);
         }

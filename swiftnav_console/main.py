@@ -478,9 +478,16 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
 
             up = m.statusBarStatus.ntripUpload
             down = m.statusBarStatus.ntripDownload
+            down_units = "B/s"
+
+            if down >= 1000:
+                down /= 1000
+                down = round(down, 1)
+                down_units = "KB/s"
+
             connected = m.statusBarStatus.ntripConnected
             if connected:
-                data[Keys.NTRIP_DISPLAY] = f"{up}B/{down}B"
+                data[Keys.NTRIP_DISPLAY] = f"{up}B/s ⬆ {down}{down_units} ⬇"
                 NtripStatusData.post_connected(True)
             else:
                 data[Keys.NTRIP_DISPLAY] = ""

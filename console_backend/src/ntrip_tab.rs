@@ -184,6 +184,30 @@ fn get_commands(
     Ok(Box::new(iter::once(first).chain(rest)))
 }
 
+#[derive(Default)]
+struct Progress {
+    ul_tot: f64,
+    dl_tot: f64,
+    ul_tot_old: f64,
+    dl_tot_old: f64,
+}
+
+impl Progress {
+    /// Fetch changed download and modify last changed
+    pub fn tick_dl(&mut self) -> f64 {
+        let diff = self.dl_tot - self.dl_tot_old;
+        self.dl_tot_old = self.dl_tot;
+        diff
+    }
+
+    /// Fetch changed upload and modify last changed
+    pub fn tick_ul(&mut self) -> f64 {
+        let diff = self.ul_tot - self.ul_tot_old;
+        self.ul_tot_old = self.ul_tot;
+        diff
+    }
+}
+
 fn main(
     mut msg_sender: MsgSender,
     mut heartbeat: Heartbeat,
@@ -219,18 +243,37 @@ fn main(
     let (tx, rx) = channel::bounded::<Vec<u8>>(1);
     let transfer = Rc::new(RefCell::new(curl.transfer()));
 
+    let progress = Arc::new(Mutex::new(Progress::default()));
+    let progress_clone = progress.clone();
+    let running_clone = is_running.clone();
+    let progress_thd = thread::spawn(move || loop {
+        {
+            if !*running_clone.lock().unwrap() {
+                break;
+            }
+        }
+        {
+            let mut progress = progress_clone.lock().unwrap();
+            heartbeat.set_ntrip_ul(progress.tick_ul());
+            heartbeat.set_ntrip_dl(progress.tick_dl());
+        }
+        thread::park_timeout(Duration::from_secs(1))
+    });
+
     transfer.borrow_mut().progress_function({
         let rx = &rx;
         let transfer = Rc::clone(&transfer);
-        move |_dltot, _dlnow, _ultot, _ulnow| {
+        move |_dlnow, dltot, _ulnow, ultot| {
             {
-                let running = *is_running.lock().unwrap();
-                if !running {
+                if !*is_running.lock().unwrap() {
                     return false;
                 }
             }
-            heartbeat.set_ntrip_dl(_dlnow);
-            heartbeat.set_ntrip_ul(_ulnow);
+            {
+                let mut progress = progress.lock().unwrap();
+                progress.ul_tot = ultot;
+                progress.dl_tot = dltot;
+            }
             if !rx.is_empty() {
                 if let Err(e) = transfer.borrow().unpause_read() {
                     error!("ntrip unpause error: {e}");
@@ -283,7 +326,8 @@ fn main(
         Ok(())
     } else {
         // an error stopped the thread early
-        handle.join().unwrap()
+        progress_thd.join().expect("could not join progress thread");
+        handle.join().expect("could not join on handle thread")
     }
 }
 

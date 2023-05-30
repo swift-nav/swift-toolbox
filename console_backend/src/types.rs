@@ -93,7 +93,9 @@ impl MsgSender {
 impl Write for MsgSender {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         let mut guard = self.inner.lock().expect(MsgSender::LOCK_FAILURE);
-        guard.write(buf)
+        let res = guard.write(buf);
+        println!("{:?}", res);
+        res
     }
 
     fn flush(&mut self) -> io::Result<()> {

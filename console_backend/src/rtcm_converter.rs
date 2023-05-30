@@ -42,7 +42,6 @@ impl RtcmConverter {
         thread::spawn(move || {
             while let Ok(data) = in_rx.recv() {
                 child_in.write_all(&data).unwrap();
-                println!("{:?}", data.clone())
             }
             println!("channel closed");
         });

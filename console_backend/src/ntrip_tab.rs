@@ -209,7 +209,7 @@ impl Progress {
 }
 
 fn main(
-    mut msg_sender: MsgSender,
+    msg_sender: MsgSender,
     mut heartbeat: Heartbeat,
     opt: NtripOptions,
     last_data: Arc<Mutex<LastData>>,
@@ -285,7 +285,7 @@ fn main(
     })?;
 
     transfer.borrow_mut().write_function(|data| {
-        if let Err(e) = msg_sender.write_all(data) {
+        if let Err(e) = msg_sender.send_bytes(data) {
             error!("ntrip write error: {e}");
             return Ok(0);
         }

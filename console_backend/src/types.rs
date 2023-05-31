@@ -36,7 +36,6 @@ use sbp::messages::{
 use sbp::{Sbp, SbpMessage};
 use serialport::FlowControl as SPFlowControl;
 use std::fmt::Formatter;
-use std::io;
 use std::io::Write;
 use std::{
     cmp::{Eq, PartialEq},
@@ -97,9 +96,11 @@ impl Write for MsgSender {
         println!("{:?}", res);
         res
     }
-
-    fn flush(&mut self) -> io::Result<()> {
-        self.inner.lock().expect(MsgSender::LOCK_FAILURE).flush()
+  
+    pub fn send_bytes(&self, buf: &[u8]) -> Result<()> {
+        let mut framed = self.inner.lock().expect(MsgSender::LOCK_FAILURE);
+        framed.write_all(buf)?;
+        Ok(())
     }
 }
 

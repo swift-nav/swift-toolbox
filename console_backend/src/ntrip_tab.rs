@@ -247,7 +247,6 @@ fn main(
 
     let progress = Arc::new(Mutex::new(Progress::default()));
     let progress_clone = progress.clone();
-    let running_clone = is_running.clone();
     let progress_thd = thread::spawn(move || loop {
         {
             let mut progress = progress_clone.lock().unwrap();

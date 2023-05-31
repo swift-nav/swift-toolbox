@@ -354,7 +354,6 @@ impl NtripState {
             let (rtcm_tx, rtcm_rx) = channel::unbounded::<Vec<u8>>();
             let mut rtcm_converter = RtcmConverter::new(rtcm_rx);
             rtcm_converter.start(msg_sender);
-            println!("starting...");
             if let Err(e) = main(heartbeat.clone(), options, last_data, running, rtcm_tx) {
                 error!("{e}");
             }

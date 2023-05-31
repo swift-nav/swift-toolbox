@@ -250,11 +250,6 @@ fn main(
     let running_clone = is_running.clone();
     let progress_thd = thread::spawn(move || loop {
         {
-            if !*running_clone.lock().unwrap() {
-                break;
-            }
-        }
-        {
             let mut progress = progress_clone.lock().unwrap();
             heartbeat.set_ntrip_ul(progress.tick_ul());
             heartbeat.set_ntrip_dl(progress.tick_dl());

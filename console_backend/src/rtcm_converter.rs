@@ -4,7 +4,7 @@ use crossbeam::{channel, select};
 use std::io::{stdout, BufRead, BufReader, Read, Write};
 use std::process::{Child, Command, Stdio};
 use std::sync::{Arc, Mutex};
-use std::{io, thread};
+use std::{fs, io, thread};
 
 pub struct RtcmConverter {
     in_rx: Receiver<Vec<u8>>,
@@ -21,8 +21,20 @@ impl RtcmConverter {
 
     pub fn start<W: Write + Send + 'static>(&mut self, mut out: W) {
         self.running.set(true);
-        let mut child = Command::new("sh")
-            .args(["-c", "./binaries/mac/rtcm3tosbp"])
+        let mut child = if cfg!(target_os = "windows") {
+            let mut cmd = Command::new("cmd");
+            cmd.args(["/C", "resources/binaries/win/rtcm3tosbp.exe"]);
+            cmd
+        } else if cfg!(target_os = "macos") {
+            let mut cmd = Command::new("sh");
+            cmd.args(["-c", "resources/binaries/mac/rtcm3tosbp"]);
+            cmd
+        } else {
+            let mut cmd = Command::new("sh");
+            cmd.args(["-c", "resources/binaries/win/rtcm3tosbp"]);
+            cmd
+        };
+        let mut child = child
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())

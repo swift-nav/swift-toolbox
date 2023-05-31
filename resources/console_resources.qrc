@@ -137,5 +137,8 @@
     <file>MainTab.qml</file>
     <file>TabInfoBar.qml</file>
     <file>PositionLoopAnimation.qml</file>
+    <file>binaries/linux/rtcm3tosbp</file>
+    <file>binaries/mac/rtcm3tosbp</file>
+    <file>binaries/win/rtcm3tosbp.exe</file>
 </qresource>
 </RCC>

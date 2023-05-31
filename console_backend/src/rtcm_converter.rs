@@ -1,10 +1,8 @@
 use crate::types::ArcBool;
-use crossbeam::channel::{Receiver, Sender};
-use crossbeam::{channel, select};
-use std::io::{stdout, BufRead, BufReader, Read, Write};
-use std::process::{Child, Command, Stdio};
-use std::sync::{Arc, Mutex};
-use std::{fs, io, thread};
+use crossbeam::channel::Receiver;
+use std::io::Write;
+use std::process::{Command, Stdio};
+use std::{io, thread};
 
 pub struct RtcmConverter {
     in_rx: Receiver<Vec<u8>>,
@@ -55,15 +53,12 @@ impl RtcmConverter {
             println!("channel closed");
         });
         let running = self.running.clone();
-        thread::spawn(move || loop {
-            match child.try_wait() {
-                Ok(None) => {
-                    if !running.get() {
-                        child.kill().unwrap();
-                        break;
-                    }
+        thread::spawn(move || {
+            while let Ok(None) = child.try_wait() {
+                if !running.get() {
+                    child.kill().unwrap();
+                    break;
                 }
-                _ => break,
             }
         });
     }

@@ -377,7 +377,6 @@ impl NtripState {
                 )) {
                     error!("{e}");
                 }
-                println!("terminating...");
                 running.set(false);
                 heartbeat.set_ntrip_connected(false);
                 output_converter.stop();

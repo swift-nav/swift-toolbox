@@ -125,7 +125,6 @@ Item {
                 enabled: !connected
             }
 
-
             ComboBox {
                 id: outputType
 

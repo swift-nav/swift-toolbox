@@ -21,12 +21,12 @@ pub mod formatters;
 pub mod fusion_status_flags;
 pub mod log_panel;
 pub mod main_tab;
+pub mod ntrip_output;
 pub mod ntrip_tab;
 pub mod observation_tab;
 pub mod output;
 pub mod piksi_tools_constants;
 pub mod process_messages;
-pub mod rtcm_converter;
 #[cfg(not(test))]
 #[cfg(all(not(feature = "benches"), not(feature = "tests"), feature = "pyo3"))]
 pub mod server;

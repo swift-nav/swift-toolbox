@@ -125,6 +125,22 @@ Item {
                 enabled: !connected
             }
 
+
+            ComboBox {
+                id: outputType
+                editable: false
+                model: ListModel {
+                    ListElement {
+                        text: "RTCM"
+                    }
+
+                    ListElement {
+                        text: "SBP"
+                    }
+                }
+
+            }
+
         }
 
         ColumnLayout {
@@ -176,7 +192,8 @@ Item {
                                 return ;
                             }
                         }
-                        backend_request_broker.ntrip_connect(url, username, password, ggaPeriod, lat, lon, alt);
+                        let output_type = outputType.currentText;
+                        backend_request_broker.ntrip_connect(url, username, password, ggaPeriod, lat, lon, alt, output_type);
                         connected = true;
                         inputErrorLabel.visible = false;
                     }

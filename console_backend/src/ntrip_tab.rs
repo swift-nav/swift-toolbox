@@ -3,11 +3,13 @@ use curl::easy::{Easy, HttpVersion, List, ReadError};
 use std::cell::RefCell;
 use std::io::Write;
 use std::rc::Rc;
+use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::{iter, thread};
+use strum_macros::EnumString;
 
-use crate::types::{GpsTime, MsgSender, PosLLH};
+use crate::types::{ArcBool, GpsTime, MsgSender, PosLLH};
 
 use crossbeam::channel;
 
@@ -15,7 +17,7 @@ use crate::status_bar::Heartbeat;
 
 use anyhow::Context;
 
-use crate::rtcm_converter::RtcmConverter;
+use crate::ntrip_output::MessageConverter;
 use crossbeam::channel::Sender;
 use log::error;
 use std::time::{Duration, SystemTime};
@@ -24,7 +26,7 @@ use std::time::{Duration, SystemTime};
 pub struct NtripState {
     pub(crate) connected_thd: Option<JoinHandle<()>>,
     pub(crate) options: NtripOptions,
-    pub(crate) is_running: Arc<Mutex<bool>>,
+    pub(crate) is_running: ArcBool,
     last_data: Arc<Mutex<LastData>>,
 }
 
@@ -48,6 +50,12 @@ pub enum PositionMode {
     },
 }
 
+#[derive(Debug, Clone, EnumString)]
+pub enum OutputType {
+    RTCM,
+    SBP,
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct NtripOptions {
     pub(crate) url: String,
@@ -56,6 +64,7 @@ pub struct NtripOptions {
     pub(crate) nmea_period: u64,
     pub(crate) pos_mode: PositionMode,
     pub(crate) client_id: String,
+    pub(crate) output_type: Option<OutputType>,
 }
 
 impl NtripOptions {
@@ -65,6 +74,7 @@ impl NtripOptions {
         password: String,
         pos_mode: Option<(f64, f64, f64)>,
         nmea_period: u64,
+        output_type: &str,
     ) -> Self {
         let pos_mode = pos_mode
             .map(|(lat, lon, alt)| PositionMode::Static { lat, lon, alt })
@@ -79,6 +89,7 @@ impl NtripOptions {
             pos_mode,
             nmea_period,
             client_id: "00000000-0000-0000-0000-000000000000".to_string(),
+            output_type: OutputType::from_str(output_type).ok(),
         }
     }
 }
@@ -214,7 +225,7 @@ fn main(
     mut heartbeat: Heartbeat,
     opt: NtripOptions,
     last_data: Arc<Mutex<LastData>>,
-    is_running: Arc<Mutex<bool>>,
+    is_running: ArcBool,
     rtcm_tx: Sender<Vec<u8>>,
 ) -> anyhow::Result<()> {
     let mut curl = Easy::new();
@@ -247,13 +258,21 @@ fn main(
 
     let progress = Arc::new(Mutex::new(Progress::default()));
     let progress_clone = progress.clone();
-    let progress_thd = thread::spawn(move || loop {
-        {
-            let mut progress = progress_clone.lock().unwrap();
-            heartbeat.set_ntrip_ul(progress.tick_ul());
-            heartbeat.set_ntrip_dl(progress.tick_dl());
+    let progress_thd = thread::spawn({
+        let running = is_running.clone();
+        move || loop {
+            {
+                if !running.get() {
+                    return false;
+                }
+            }
+            {
+                let mut progress = progress_clone.lock().unwrap();
+                heartbeat.set_ntrip_ul(progress.tick_ul());
+                heartbeat.set_ntrip_dl(progress.tick_dl());
+            }
+            thread::park_timeout(Duration::from_secs(1))
         }
-        thread::park_timeout(Duration::from_secs(1))
     });
 
     transfer.borrow_mut().progress_function({
@@ -261,7 +280,7 @@ fn main(
         let transfer = Rc::clone(&transfer);
         move |_dlnow, dltot, _ulnow, ultot| {
             {
-                if !*is_running.lock().unwrap() {
+                if !is_running.get() {
                     return false;
                 }
             }
@@ -341,33 +360,38 @@ impl NtripState {
 
         self.options = options.clone();
         let last_data = self.last_data.clone();
-        self.set_running(true);
-        let running = self.is_running.clone();
+        self.is_running.set(true);
         heartbeat.set_ntrip_connected(true);
-        let thd = thread::spawn(move || {
-            let (rtcm_tx, rtcm_rx) = channel::unbounded::<Vec<u8>>();
-            let mut rtcm_converter = RtcmConverter::new(rtcm_rx);
-            rtcm_converter.start(msg_sender);
-            if let Err(e) = main(heartbeat.clone(), options, last_data, running, rtcm_tx) {
-                error!("{e}");
+        let thd = thread::spawn({
+            let running = self.is_running.clone();
+            move || {
+                let (conv_tx, conv_rx) = channel::unbounded::<Vec<u8>>();
+                let output_type = options.output_type.clone().unwrap_or(OutputType::RTCM);
+                let mut output_converter = MessageConverter::new(conv_rx, output_type);
+                if let Err(e) = output_converter.start(msg_sender).and(main(
+                    heartbeat.clone(),
+                    options,
+                    last_data,
+                    running.clone(),
+                    conv_tx,
+                )) {
+                    error!("{e}");
+                }
+                println!("terminating...");
+                running.set(false);
+                heartbeat.set_ntrip_connected(false);
+                output_converter.stop();
             }
-            rtcm_converter.stop();
-            heartbeat.set_ntrip_connected(false);
         });
 
         self.connected_thd = Some(thd);
     }
 
     pub fn disconnect(&mut self) {
-        self.set_running(false);
+        self.is_running.set(false);
         if let Some(thd) = self.connected_thd.take() {
             let _ = thd.join();
         }
-    }
-
-    pub fn set_running(&mut self, val: bool) {
-        let mut lock = self.is_running.lock().unwrap();
-        *lock = val;
     }
 
     pub fn set_lastdata(&mut self, val: PosLLH) {

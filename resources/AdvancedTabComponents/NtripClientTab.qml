@@ -128,7 +128,9 @@ Item {
 
             ComboBox {
                 id: outputType
+
                 editable: false
+
                 model: ListModel {
                     ListElement {
                         text: "RTCM"
@@ -137,6 +139,7 @@ Item {
                     ListElement {
                         text: "SBP"
                     }
+
                 }
 
             }

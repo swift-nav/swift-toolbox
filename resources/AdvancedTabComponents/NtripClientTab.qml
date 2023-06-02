@@ -125,10 +125,11 @@ Item {
                 enabled: !connected
             }
 
-
             ComboBox {
                 id: outputType
+
                 editable: false
+
                 model: ListModel {
                     ListElement {
                         text: "RTCM"
@@ -137,6 +138,7 @@ Item {
                     ListElement {
                         text: "SBP"
                     }
+
                 }
 
             }

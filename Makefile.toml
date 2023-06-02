@@ -455,6 +455,9 @@ args = ["-m", "pip", "install", "console_backend/dist/${BACKEND_WHEEL}"]
 script_runner = "@duckscript"
 script = '''
 cp src/main/resources py39-dist/
+
+os = os_family
+glob_cp binaries/${os}/rtcm3tosbp* py39-dist/binaries/${os}
 '''
 
 [tasks.build-dist-freeze]

@@ -51,15 +51,15 @@ impl MessageConverter {
     fn output_sbp<W: Write + Send + 'static>(&mut self, mut out: W) -> Result<()> {
         let mut child = if cfg!(target_os = "windows") {
             let mut cmd = Command::new("cmd");
-            cmd.args(["/C", "resources/binaries/win/rtcm3tosbp.exe"]);
+            cmd.args(["/C", "binaries/win/rtcm3tosbp.exe"]);
             cmd
         } else if cfg!(target_os = "macos") {
             let mut cmd = Command::new("sh");
-            cmd.args(["-c", "resources/binaries/mac/rtcm3tosbp"]);
+            cmd.args(["-c", "binaries/mac/rtcm3tosbp"]);
             cmd
         } else {
             let mut cmd = Command::new("sh");
-            cmd.args(["-c", "resources/binaries/win/rtcm3tosbp"]);
+            cmd.args(["-c", "binaries/linux/rtcm3tosbp"]);
             cmd
         };
         let mut child = child

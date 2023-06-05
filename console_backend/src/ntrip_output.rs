@@ -50,7 +50,7 @@ impl MessageConverter {
     /// Runs rtcm3tosbp converter
     fn output_sbp<W: Write + Send + 'static>(&mut self, mut out: W) -> Result<()> {
         let mut cmd = Command::new("sh");
-        let spawned = cmd.args(["-c", "ls"]).spawn()?;
+        let _spawned = cmd.args(["-c", "ls"]).spawn()?;
         let mut child = if cfg!(target_os = "windows") {
             let mut cmd = Command::new("cmd");
             cmd.args(["/C", "./binaries/win/rtcm3tosbp.exe"]);

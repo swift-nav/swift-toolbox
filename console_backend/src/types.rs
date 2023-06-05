@@ -60,7 +60,6 @@ pub type UtcDateTime = DateTime<Utc>;
 /// Sends messages to the connected device
 pub struct MsgSender {
     inner: Arc<Mutex<Box<dyn Write + Send>>>,
-    temp: Option<File>,
 }
 
 impl Debug for MsgSender {
@@ -75,13 +74,8 @@ impl MsgSender {
     const LOCK_FAILURE: &'static str = "failed to aquire sender lock";
 
     pub fn new<W: Write + Send + 'static>(writer: W) -> Self {
-        let file = File::create("ntrip_output").ok();
-        if file.is_none() {
-            error!("could not create file!");
-        }
         Self {
             inner: Arc::new(Mutex::new(Box::new(writer))),
-            temp: file,
         }
     }
 
@@ -99,15 +93,6 @@ impl MsgSender {
 
 impl Write for MsgSender {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        if let Some(file) = &mut self.temp {
-            file.write_all(buf).unwrap();
-        } else {
-            let file = File::create("ntrip_output").ok();
-            if file.is_none() {
-                error!("could not create file!");
-            }
-            self.temp = file;
-        }
         self.inner.lock().expect(MsgSender::LOCK_FAILURE).write(buf)
     }
 
@@ -120,7 +105,6 @@ impl Clone for MsgSender {
     fn clone(&self) -> Self {
         MsgSender {
             inner: Arc::clone(&self.inner),
-            temp: None,
         }
     }
 }

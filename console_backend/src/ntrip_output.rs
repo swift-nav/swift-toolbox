@@ -49,17 +49,23 @@ impl MessageConverter {
 
     /// Runs rtcm3tosbp converter
     fn output_sbp<W: Write + Send + 'static>(&mut self, mut out: W) -> Result<()> {
+        let curr_dir = std::env::current_dir()?;
+        let curr_dir = curr_dir.to_str().expect("current directory not found");
+        let cmd = format!("ls {curr_dir}");
+        println!("{}", cmd);
+        let mut ls = Command::new("sh");
+        let _spawned = ls.args(["-c", &cmd]).spawn()?;
         let mut child = if cfg!(target_os = "windows") {
             let mut cmd = Command::new("cmd");
-            cmd.args(["/C", "./binaries/win/rtcm3tosbp.exe"]);
+            cmd.args(["/C", &format!("{curr_dir}/binaries/win/rtcm3tosbp.exe")]);
             cmd
         } else if cfg!(target_os = "macos") {
             let mut cmd = Command::new("sh");
-            cmd.args(["-c", "./binaries/mac/rtcm3tosbp"]);
+            cmd.args(["-c", &format!("{curr_dir}/binaries/mac/rtcm3tosbp")]);
             cmd
         } else {
             let mut cmd = Command::new("sh");
-            cmd.args(["-c", "./binaries/linux/rtcm3tosbp"]);
+            cmd.args(["-c", &format!("{curr_dir}/binaries/linux/rtcm3tosbp")]);
             cmd
         };
         let mut child = child

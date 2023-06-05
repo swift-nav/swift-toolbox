@@ -19,7 +19,6 @@ use crate::piksi_tools_constants::{
 use crate::utils::{mm_to_m, ms_to_sec};
 
 use chrono::{DateTime, Utc};
-use log::error;
 use ordered_float::OrderedFloat;
 use sbp::link::Event;
 use sbp::messages::{
@@ -37,7 +36,6 @@ use sbp::messages::{
 use sbp::{Sbp, SbpMessage};
 use serialport::FlowControl as SPFlowControl;
 use std::fmt::Formatter;
-use std::fs::File;
 use std::io::Write;
 use std::{
     cmp::{Eq, PartialEq},

@@ -49,23 +49,25 @@ impl MessageConverter {
 
     /// Runs rtcm3tosbp converter
     fn output_sbp<W: Write + Send + 'static>(&mut self, mut out: W) -> Result<()> {
+        let mut cmd = Command::new("sh");
+        let spawned = cmd.args(["-c", "ls"]).spawn()?;
         let mut child = if cfg!(target_os = "windows") {
             let mut cmd = Command::new("cmd");
-            cmd.args(["/C", "binaries/win/rtcm3tosbp.exe"]);
+            cmd.args(["/C", "./binaries/win/rtcm3tosbp.exe"]);
             cmd
         } else if cfg!(target_os = "macos") {
             let mut cmd = Command::new("sh");
-            cmd.args(["-c", "binaries/mac/rtcm3tosbp"]);
+            cmd.args(["-c", "./binaries/mac/rtcm3tosbp"]);
             cmd
         } else {
             let mut cmd = Command::new("sh");
-            cmd.args(["-c", "binaries/linux/rtcm3tosbp"]);
+            cmd.args(["-c", "./binaries/linux/rtcm3tosbp"]);
             cmd
         };
         let mut child = child
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
+            .stderr(Stdio::null())
             .spawn()
             .context("rtcm converter process failed")?;
 

@@ -338,7 +338,7 @@ pub fn server_recv_thread(
                         .to_string();
                     let gga_period = cv_in.get_gga_period();
                     let binary_path = cv_in
-                        .get_output_type()
+                        .get_binary_path()
                         .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE)
                         .to_string();
                     let position: Option<(f64, f64, f64)> = match cv_in.get_position().which() {
@@ -356,11 +356,9 @@ pub fn server_recv_thread(
                         let heartbeat = guard.heartbeat_data.clone();
                         let msg_sender = guard.msg_sender.clone();
                         if let Some(msg_sender) = msg_sender {
-                            let options =
-                                NtripOptions::new(url, usr, pwd, position, gga_period, "");
-                            guard
-                                .ntrip_tab
-                                .connect(msg_sender, heartbeat, options, binary_path);
+                            let options = NtripOptions::new(url, usr, pwd, position, gga_period);
+                            let ntrip_tab = &mut guard.ntrip_tab;
+                            ntrip_tab.connect(msg_sender, heartbeat, options, binary_path);
                         } else {
                             error!("ntrip unable to find connected device");
                         }

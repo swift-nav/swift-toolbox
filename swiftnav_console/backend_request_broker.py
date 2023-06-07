@@ -310,7 +310,7 @@ class BackendRequestBroker(QObject):  # pylint: disable=too-many-instance-attrib
         lat: Optional[float],
         lon: Optional[float],
         alt: Optional[float],
-        output_type: str,
+        binary_path: str,
     ) -> None:
         Message = self.messages.Message
         msg = self.messages.Message()
@@ -319,7 +319,7 @@ class BackendRequestBroker(QObject):  # pylint: disable=too-many-instance-attrib
         msg.ntripConnect.username = username
         msg.ntripConnect.password = password
         msg.ntripConnect.ggaPeriod = gga_period
-        msg.ntripConnect.outputType = output_type
+        msg.ntripConnect.binaryPath = binary_path
         if lat is not None and lon is not None and alt is not None:
             msg.ntripConnect.position.pos.lat = float(lat)
             msg.ntripConnect.position.pos.lon = float(lon)

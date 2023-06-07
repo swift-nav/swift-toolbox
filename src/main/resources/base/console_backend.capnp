@@ -470,7 +470,7 @@ struct NtripConnect {
         pos @4 :Position;
         none @5 :Void;
     }
-    outputType @6: Text;
+    binaryPath @6: Text;
 }
 
 struct NtripDisconnect {

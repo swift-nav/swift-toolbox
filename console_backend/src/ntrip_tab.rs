@@ -1,27 +1,19 @@
+use crate::ntrip_output::MessageConverter;
+use crate::status_bar::Heartbeat;
+use crate::types::{ArcBool, GpsTime, MsgSender, PosLLH};
+use anyhow::Context;
 use chrono::{DateTime, Utc};
+use crossbeam::channel;
+use crossbeam::channel::Sender;
 use curl::easy::{Easy, HttpVersion, List, ReadError};
+use log::error;
 use std::cell::RefCell;
 use std::io::Write;
-use std::path::PathBuf;
 use std::rc::Rc;
-use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
-use std::{iter, thread};
-use strum_macros::EnumString;
-
-use crate::types::{ArcBool, GpsTime, MsgSender, PosLLH};
-
-use crossbeam::channel;
-
-use crate::status_bar::Heartbeat;
-
-use anyhow::Context;
-
-use crate::ntrip_output::MessageConverter;
-use crossbeam::channel::Sender;
-use log::error;
 use std::time::{Duration, SystemTime};
+use std::{iter, thread};
 
 #[derive(Debug, Default)]
 pub struct NtripState {
@@ -51,12 +43,6 @@ pub enum PositionMode {
     },
 }
 
-#[derive(Debug, Clone, EnumString)]
-pub enum OutputType {
-    RTCM,
-    SBP,
-}
-
 #[derive(Debug, Default, Clone)]
 pub struct NtripOptions {
     pub(crate) url: String,
@@ -65,7 +51,6 @@ pub struct NtripOptions {
     pub(crate) nmea_period: u64,
     pub(crate) pos_mode: PositionMode,
     pub(crate) client_id: String,
-    pub(crate) output_type: Option<OutputType>,
 }
 
 impl NtripOptions {
@@ -75,7 +60,6 @@ impl NtripOptions {
         password: String,
         pos_mode: Option<(f64, f64, f64)>,
         nmea_period: u64,
-        output_type: &str,
     ) -> Self {
         let pos_mode = pos_mode
             .map(|(lat, lon, alt)| PositionMode::Static { lat, lon, alt })
@@ -90,7 +74,6 @@ impl NtripOptions {
             pos_mode,
             nmea_period,
             client_id: "00000000-0000-0000-0000-000000000000".to_string(),
-            output_type: OutputType::from_str(output_type).ok(),
         }
     }
 }
@@ -368,9 +351,8 @@ impl NtripState {
             let running = self.is_running.clone();
             move || {
                 let (conv_tx, conv_rx) = channel::unbounded::<Vec<u8>>();
-                let output_type = options.output_type.clone().unwrap_or(OutputType::RTCM);
-                let mut output_converter = MessageConverter::new(conv_rx, output_type);
-                if let Err(e) = output_converter.start(msg_sender, binary).and(main(
+                let mut output_converter = MessageConverter::new(conv_rx, binary);
+                if let Err(e) = output_converter.start(msg_sender).and(main(
                     heartbeat.clone(),
                     options,
                     last_data,

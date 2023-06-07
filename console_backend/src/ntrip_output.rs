@@ -4,6 +4,7 @@ use anyhow::Context;
 use crossbeam::channel::Receiver;
 use log::error;
 use std::io::Write;
+use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::{io, thread};
 
@@ -22,11 +23,16 @@ impl MessageConverter {
         }
     }
 
-    pub fn start<W: Write + Send + 'static>(&mut self, out: W) -> Result<()> {
+    pub fn start<W: Write + Send + 'static>(&mut self, out: W, binary: String) -> Result<()> {
         self.running.set(true);
-        match self.output_type {
-            OutputType::RTCM => self.output_rtcm(out),
-            OutputType::SBP => self.output_sbp(out),
+        // match self.output_type {
+        //     OutputType::RTCM => self.output_rtcm(out),
+        //     OutputType::SBP => self.output_sbp(out, binary),
+        // }
+        if std::fs::metadata(binary.clone()).is_ok() {
+            self.output_sbp(out, binary)
+        } else {
+            self.output_rtcm(out)
         }
     }
 
@@ -48,24 +54,27 @@ impl MessageConverter {
     }
 
     /// Runs rtcm3tosbp converter
-    fn output_sbp<W: Write + Send + 'static>(&mut self, mut out: W) -> Result<()> {
-        let curr_dir = std::env::current_dir()?;
-        let curr_dir = curr_dir.to_str().expect("current directory not found");
-        let cmd = format!("ls {curr_dir}");
-        println!("{}", cmd);
-        let mut ls = Command::new("sh");
-        let _spawned = ls.args(["-c", &cmd]).spawn()?;
+    fn output_sbp<W: Write + Send + 'static>(&mut self, mut out: W, path: String) -> Result<()> {
+        // let mut child = if cfg!(target_os = "windows") {
+        //     let mut cmd = Command::new("cmd");
+        //     cmd.args(["/C", &format!("{curr_dir}/binaries/win/rtcm3tosbp.exe")]);
+        //     cmd
+        // } else if cfg!(target_os = "macos") {
+        //     let mut cmd = Command::new("sh");
+        //     cmd.args(["-c", &format!("{curr_dir}/binaries/mac/rtcm3tosbp")]);
+        //     cmd
+        // } else {
+        //     let mut cmd = Command::new("sh");
+        //     cmd.args(["-c", &format!("{curr_dir}/binaries/linux/rtcm3tosbp")]);
+        //     cmd
+        // };
         let mut child = if cfg!(target_os = "windows") {
             let mut cmd = Command::new("cmd");
-            cmd.args(["/C", &format!("{curr_dir}/binaries/win/rtcm3tosbp.exe")]);
-            cmd
-        } else if cfg!(target_os = "macos") {
-            let mut cmd = Command::new("sh");
-            cmd.args(["-c", &format!("{curr_dir}/binaries/mac/rtcm3tosbp")]);
+            cmd.args(["/C", &path]);
             cmd
         } else {
             let mut cmd = Command::new("sh");
-            cmd.args(["-c", &format!("{curr_dir}/binaries/linux/rtcm3tosbp")]);
+            cmd.args(["-c", &path]);
             cmd
         };
         let mut child = child

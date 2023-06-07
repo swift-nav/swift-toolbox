@@ -2,6 +2,7 @@ use chrono::{DateTime, Utc};
 use curl::easy::{Easy, HttpVersion, List, ReadError};
 use std::cell::RefCell;
 use std::io::Write;
+use std::path::PathBuf;
 use std::rc::Rc;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
@@ -352,6 +353,7 @@ impl NtripState {
         msg_sender: MsgSender,
         mut heartbeat: Heartbeat,
         options: NtripOptions,
+        binary: String,
     ) {
         if self.connected_thd.is_some() && heartbeat.get_ntrip_connected() {
             // is already connected
@@ -368,7 +370,7 @@ impl NtripState {
                 let (conv_tx, conv_rx) = channel::unbounded::<Vec<u8>>();
                 let output_type = options.output_type.clone().unwrap_or(OutputType::RTCM);
                 let mut output_converter = MessageConverter::new(conv_rx, output_type);
-                if let Err(e) = output_converter.start(msg_sender).and(main(
+                if let Err(e) = output_converter.start(msg_sender, binary).and(main(
                     heartbeat.clone(),
                     options,
                     last_data,

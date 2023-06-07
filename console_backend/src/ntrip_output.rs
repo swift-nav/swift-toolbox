@@ -27,7 +27,7 @@ impl MessageConverter {
             return self.output_rtcm(out);
         }
         let path = self.binary_path.clone();
-        let meta = fs::metadata(path.clone());
+        let meta = fs::metadata(&path);
         match meta {
             Ok(meta) => {
                 if meta.is_file() {

@@ -341,9 +341,10 @@ exec --fail-on-error ${DIST_PYTHON} ./get-pip.py
 [tasks.install-imagemagick.windows]
 script_runner = "@duckscript"
 script = '''
+pwd
 wget -O imagemagick.tool.7.1.0.nupkg https://github.com/swift-nav/swift-toolchains/releases/download/imagemagick-7.1.0/imagemagick.tool.7.1.0.nupkg
 exec --fail-on-error choco install -q -y --side-by-side vcredist2010 --version=10.0.40219.32503
-exec --fail-on-error choco install imagemagick.tool --version="7.1.0" --pre -y -q --source="D:\a\swift-toolbox\swift-toolbox"
+exec --fail-on-error choco install imagemagick.tool --version="7.1.0" --source="./" --pre -y -q
 rm imagemagick.tool.7.1.0.nupkg
 '''
 

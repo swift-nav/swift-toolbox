@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::ops::Index;
+use std::path::{Path, PathBuf};
 
 use capnp::message::Builder;
 use capnp::message::HeapAllocator;
@@ -14,7 +15,33 @@ use crate::client_sender::BoxedClientSender;
 use crate::constants::*;
 use crate::errors::*;
 use crate::shared_state::{ConnectionState, SerialConfig, SharedState};
-use crate::types::SignalCodes;
+use crate::types::{Result, SignalCodes};
+
+pub fn app_dir() -> Result<PathBuf> {
+    let current_exe = std::env::current_exe()?;
+    current_exe
+        .parent()
+        .ok_or(anyhow::format_err!("no parent directory"))
+        .map(Path::to_path_buf)
+}
+
+pub fn pythonhome_dir() -> Result<PathBuf> {
+    let app_dir = app_dir()?;
+    if cfg!(target_os = "macos") {
+        if let Some(parent) = app_dir.parent() {
+            let resources = parent.join("Resources/lib");
+            if resources.exists() {
+                Ok(parent.join("Resources"))
+            } else {
+                Ok(app_dir)
+            }
+        } else {
+            Ok(app_dir)
+        }
+    } else {
+        Ok(app_dir)
+    }
+}
 
 /// Create a new SbpString of L size with T termination.
 pub fn fixed_sbp_string<T, const L: usize>(data: &str) -> SbpString<[u8; L], T> {

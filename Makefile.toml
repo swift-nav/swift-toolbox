@@ -226,7 +226,7 @@ git describe --tags --always > console_backend/src/version.txt
 
 [tasks.install-backend]
 command = "${PYTHON}"
-args = ["-m", "pip", "install", "-e", "./console_backend"]
+args = ["-m", "pip", "install", "-v", "-e", "./console_backend"]
 
 [tasks.prod-install-backend]
 command = "${PYTHON}"

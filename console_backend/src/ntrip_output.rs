@@ -1,5 +1,4 @@
 use crate::types::{ArcBool, Result};
-use crate::utils::pythonhome_dir;
 use anyhow::Context;
 use crossbeam::channel::Receiver;
 use log::error;

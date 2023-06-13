@@ -5,7 +5,6 @@ use anyhow::Context;
 use crossbeam::channel::Receiver;
 use log::error;
 use std::io::Write;
-use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::{io, thread};
 

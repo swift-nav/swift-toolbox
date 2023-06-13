@@ -48,9 +48,9 @@ pub fn pythonhome_dir() -> crate::types::Result<PathBuf> {
         // app_dir gives "Swift Console.app/MacOS"
         // returns "Swift Console.app/Resources/lib"
         if cfg!(target = "macos") {
-            let resources = parent.join("Resources/lib");
+            let resources = py39.join("Resources/lib");
             if resources.exists() {
-                return Ok(parent.join("Resources"));
+                return Ok(py39.join("Resources"));
             }
         }
     }

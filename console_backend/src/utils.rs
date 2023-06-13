@@ -47,7 +47,7 @@ pub fn pythonhome_dir() -> crate::types::Result<PathBuf> {
         // if compiled on mac, exe should be in "Swift Console.app/MacOS/Swift Console"
         // app_dir gives "Swift Console.app/MacOS"
         // returns "Swift Console.app/Resources/lib"
-        if cfg!(target = "macos") {
+        if cfg!(target_os = "macos") {
             let resources = py39.join("Resources/lib");
             if resources.exists() {
                 return Ok(py39.join("Resources"));

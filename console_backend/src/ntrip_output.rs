@@ -58,6 +58,7 @@ impl MessageConverter {
                 .join("rtcm3tosbp.exe")
                 .to_string_lossy()
                 .to_string();
+            log::info!("running rtcm3tosbp from \"{}\"", rtcm);
             cmd.args(["/C", &rtcm]);
             cmd
         } else if cfg!(target_os = "macos") {
@@ -68,6 +69,7 @@ impl MessageConverter {
                 .join("rtcm3tosbp")
                 .to_string_lossy()
                 .to_string();
+            log::info!("running rtcm3tosbp from \"{}\"", rtcm);
             cmd.args(["-c", &rtcm]);
             cmd
         } else {
@@ -78,6 +80,7 @@ impl MessageConverter {
                 .join("rtcm3tosbp")
                 .to_string_lossy()
                 .to_string();
+            log::info!("running rtcm3tosbp from \"{}\"", rtcm);
             cmd.args(["-c", &rtcm]);
             cmd
         };

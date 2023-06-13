@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::ops::Index;
+use std::path::{Path, PathBuf};
 
 use capnp::message::Builder;
 use capnp::message::HeapAllocator;
@@ -15,6 +16,46 @@ use crate::constants::*;
 use crate::errors::*;
 use crate::shared_state::{ConnectionState, SerialConfig, SharedState};
 use crate::types::SignalCodes;
+
+pub fn app_dir() -> crate::types::Result<PathBuf> {
+    std::env::current_exe()?
+        .parent()
+        .ok_or(anyhow::format_err!("no parent directory"))
+        .map(Path::to_path_buf)
+}
+
+/// Returns directory to packaged python, or workspace when ran locally in dev environment
+/// This is used to locate rtcm3tosbp
+pub fn pythonhome_dir() -> crate::types::Result<PathBuf> {
+    let app_dir = app_dir()?;
+    // If dev environment, hard code check to py39 path "${WORKSPACE}\\py39"
+    // Mac and Linux both share python3 in "${WORKSPACE}/py39/bin"
+    let py39 = if cfg!(target_os = "windows") {
+        Some(app_dir.as_path())
+    } else {
+        app_dir.parent()
+    };
+    if let Some(py39) = py39 {
+        // if we are in the "${WORKSPACE}/py39" directory,
+        // we are in dev environment, move up one folder.
+        if py39.file_name().filter(|&x| x.eq("py39")).is_some() {
+            let workspace = py39
+                .parent()
+                .ok_or(anyhow::format_err!("no workspace found?"));
+            return workspace.map(Path::to_path_buf);
+        }
+        // if compiled on mac, exe should be in "Swift Console.app/MacOS/Swift Console"
+        // app_dir gives "Swift Console.app/MacOS"
+        // returns "Swift Console.app/Resources/lib"
+        if cfg!(target = "macos") {
+            let resources = parent.join("Resources/lib");
+            if resources.exists() {
+                return Ok(parent.join("Resources"));
+            }
+        }
+    }
+    Ok(app_dir)
+}
 
 /// Create a new SbpString of L size with T termination.
 pub fn fixed_sbp_string<T, const L: usize>(data: &str) -> SbpString<[u8; L], T> {

@@ -1,38 +1,13 @@
 use crate::ntrip_tab::OutputType;
 use crate::types::{ArcBool, Result};
+use crate::utils::pythonhome_dir;
 use anyhow::Context;
 use crossbeam::channel::Receiver;
 use log::error;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
-use std::{env, io, thread};
-
-pub fn app_dir() -> Result<PathBuf> {
-    let current_exe = std::env::current_exe()?;
-    current_exe
-        .parent()
-        .ok_or(anyhow::format_err!("no parent directory"))
-        .map(Path::to_path_buf)
-}
-
-pub fn pythonhome_dir() -> Result<PathBuf> {
-    let app_dir = app_dir()?;
-    if cfg!(target_os = "macos") {
-        if let Some(parent) = app_dir.parent() {
-            let resources = parent.join("Resources/lib");
-            if resources.exists() {
-                Ok(parent.join("Resources"))
-            } else {
-                Ok(app_dir)
-            }
-        } else {
-            Ok(app_dir)
-        }
-    } else {
-        Ok(app_dir)
-    }
-}
+use std::{io, thread};
 
 pub struct MessageConverter {
     in_rx: Receiver<Vec<u8>>,
@@ -76,20 +51,35 @@ impl MessageConverter {
 
     /// Runs rtcm3tosbp converter
     fn output_sbp<W: Write + Send + 'static>(&mut self, mut out: W) -> Result<()> {
-        println!("{:?}", app_dir());
-        println!("{:?}", pythonhome_dir());
-        println!("{:?}", env::current_exe());
         let mut child = if cfg!(target_os = "windows") {
             let mut cmd = Command::new("cmd");
-            cmd.args(["/C", "/binaries/win/rtcm3tosbp.exe"]);
+            let rtcm = pythonhome_dir()?
+                .join("binaries")
+                .join("win")
+                .join("rtcm3tosbp.exe")
+                .to_string_lossy()
+                .to_string();
+            cmd.args(["/C", &rtcm]);
             cmd
         } else if cfg!(target_os = "macos") {
             let mut cmd = Command::new("sh");
-            cmd.args(["-c", "/binaries/mac/rtcm3tosbp"]);
+            let rtcm = pythonhome_dir()?
+                .join("binaries")
+                .join("mac")
+                .join("rtcm3tosbp")
+                .to_string_lossy()
+                .to_string();
+            cmd.args(["-c", &rtcm]);
             cmd
         } else {
             let mut cmd = Command::new("sh");
-            cmd.args(["-c", "/binaries/linux/rtcm3tosbp"]);
+            let rtcm = pythonhome_dir()?
+                .join("binaries")
+                .join("linux")
+                .join("rtcm3tosbp")
+                .to_string_lossy()
+                .to_string();
+            cmd.args(["-c", &rtcm]);
             cmd
         };
         let mut child = child

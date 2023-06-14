@@ -616,6 +616,8 @@ files = glob_array ./**/*.py
 for file in ${files}
     rm ${file}
 end
+
+ls
 '''
 
 [tasks.strip-dist-pdb.windows]

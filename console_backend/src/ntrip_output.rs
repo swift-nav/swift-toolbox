@@ -54,7 +54,7 @@ impl MessageConverter {
             let mut cmd = Command::new("cmd");
             let rtcm = pythonhome_dir()?
                 .join("binaries")
-                .join("win")
+                .join("windows")
                 .join("rtcm3tosbp.exe")
                 .to_string_lossy()
                 .to_string();

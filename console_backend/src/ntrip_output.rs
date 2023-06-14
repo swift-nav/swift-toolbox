@@ -3,7 +3,7 @@ use crate::types::{ArcBool, Result};
 use crate::utils::pythonhome_dir;
 use anyhow::Context;
 use crossbeam::channel::Receiver;
-use log::error;
+use log::{error, warn};
 use std::io::Write;
 use std::process::{Command, Stdio};
 use std::{io, thread};
@@ -58,7 +58,7 @@ impl MessageConverter {
                 .join("rtcm3tosbp.exe")
                 .to_string_lossy()
                 .to_string();
-            log::info!("running rtcm3tosbp from \"{}\"", rtcm);
+            warn!("running rtcm3tosbp from \"{}\"", rtcm);
             cmd.args(["/C", &rtcm]);
             cmd
         } else if cfg!(target_os = "macos") {
@@ -69,7 +69,7 @@ impl MessageConverter {
                 .join("rtcm3tosbp")
                 .to_string_lossy()
                 .to_string();
-            log::info!("running rtcm3tosbp from \"{}\"", rtcm);
+            warn!("running rtcm3tosbp from \"{}\"", rtcm);
             cmd.args(["-c", &rtcm]);
             cmd
         } else {
@@ -80,7 +80,7 @@ impl MessageConverter {
                 .join("rtcm3tosbp")
                 .to_string_lossy()
                 .to_string();
-            log::info!("running rtcm3tosbp from \"{}\"", rtcm);
+            warn!("running rtcm3tosbp from \"{}\"", rtcm);
             cmd.args(["-c", &rtcm]);
             cmd
         };

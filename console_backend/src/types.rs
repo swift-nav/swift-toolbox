@@ -87,11 +87,15 @@ impl MsgSender {
         framed.write_all(&sbp::to_vec(&msg).expect("while serializing into bytes"))?;
         Ok(())
     }
+}
 
-    pub fn send_bytes(&self, buf: &[u8]) -> Result<()> {
-        let mut framed = self.inner.lock().expect(MsgSender::LOCK_FAILURE);
-        framed.write_all(buf)?;
-        Ok(())
+impl Write for MsgSender {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        self.inner.lock().expect(MsgSender::LOCK_FAILURE).write(buf)
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        self.inner.lock().expect(MsgSender::LOCK_FAILURE).flush()
     }
 }
 

@@ -120,7 +120,7 @@ struct Command {
     message: Message,
 }
 
-fn default_after() -> u64 {
+const fn default_after() -> u64 {
     10
 }
 

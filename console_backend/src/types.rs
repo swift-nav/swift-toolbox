@@ -52,7 +52,7 @@ use sbp::messages::{
     piksi::{Latency, MsgSpecan, MsgSpecanDep, MsgUartState, MsgUartStateDepa, Period},
     ConcreteMessage,
 };
-use sbp::{Sbp, SbpEncoder, SbpMessage};
+use sbp::{Sbp, SbpMessage};
 use serialport::FlowControl as SPFlowControl;
 use std::fmt::Formatter;
 use std::io;

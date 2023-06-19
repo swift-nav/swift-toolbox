@@ -33,7 +33,6 @@ pub mod fileio;
 pub mod fusion_status_flags;
 pub mod log_panel;
 pub mod ntrip_output;
-pub mod ntrip_tab;
 pub mod output;
 pub mod piksi_tools_constants;
 pub mod process_messages;

@@ -71,7 +71,7 @@ Rectangle {
             columns: 7
             rows: 12
             rowSpacing: 1
-            height: parent.height + Constants.settingsTab.paneScrollBufferHeight
+            Layout.preferredHeight: parent.height + Constants.settingsTab.paneScrollBufferHeight
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
@@ -234,7 +234,7 @@ Rectangle {
                 property string _fieldName: "description"
 
                 visible: !!selectedRowField(_fieldName)
-                Layout.rowSpan: parents.rows - 8
+                Layout.rowSpan: parent.rows - 8
                 Layout.columnSpan: 1
                 Layout.preferredWidth: parent.colWidthLabel
                 Layout.preferredHeight: Math.max(1, parent.height - 8 * parent.smallRowHeight)
@@ -245,7 +245,7 @@ Rectangle {
                 property string _fieldName: "description"
 
                 visible: !!selectedRowField(_fieldName)
-                Layout.rowSpan: parents.rows - 8
+                Layout.rowSpan: parent.rows - 8
                 Layout.columnSpan: parent.columns - 1
                 Layout.preferredWidth: parent.colWidthField
                 Layout.preferredHeight: Math.max(1, parent.height - 8 * parent.smallRowHeight)

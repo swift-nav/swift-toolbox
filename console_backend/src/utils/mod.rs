@@ -50,18 +50,18 @@ pub fn app_dir() -> crate::types::Result<PathBuf> {
 /// This is used to locate rtcm3tosbp
 pub fn pythonhome_dir() -> crate::types::Result<PathBuf> {
     let app_dir = app_dir()?;
-    // If dev environment, hard code check to py39 path "${WORKSPACE}\\py39"
-    // Mac and Linux both share python3 in "${WORKSPACE}/py39/bin"
-    let py39 = if cfg!(target_os = "windows") {
+    // If dev environment, hard code check to py311 path "${WORKSPACE}\\py311"
+    // Mac and Linux both share python3 in "${WORKSPACE}/py311/bin"
+    let py311 = if cfg!(target_os = "windows") {
         Some(app_dir.as_path())
     } else {
         app_dir.parent()
     };
-    if let Some(py39) = py39 {
-        // if we are in the "${WORKSPACE}/py39" directory,
+    if let Some(py311) = py311 {
+        // if we are in the "${WORKSPACE}/py311" directory,
         // we are in dev environment, move up one folder.
-        if py39.file_name().filter(|&x| x.eq("py39")).is_some() {
-            let workspace = py39
+        if py311.file_name().filter(|&x| x.eq("py311")).is_some() {
+            let workspace = py311
                 .parent()
                 .ok_or(anyhow::format_err!("no workspace found?"));
             return workspace.map(Path::to_path_buf);
@@ -70,9 +70,9 @@ pub fn pythonhome_dir() -> crate::types::Result<PathBuf> {
         // app_dir gives "Swift Console.app/MacOS"
         // returns "Swift Console.app/Resources/lib"
         if cfg!(target_os = "macos") {
-            let resources = py39.join("Resources/lib");
+            let resources = py311.join("Resources/lib");
             if resources.exists() {
-                return Ok(py39.join("Resources"));
+                return Ok(py311.join("Resources"));
             }
         }
     }

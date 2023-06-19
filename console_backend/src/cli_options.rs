@@ -105,6 +105,10 @@ pub struct CliOptions {
     #[clap(long)]
     pub enable_map: bool,
 
+    /// Enable ntrip client
+    #[clap(long)]
+    pub enable_ntrip: bool,
+
     /// Path to a yaml file containing known piksi settings.
     #[clap(long)]
     pub settings_yaml: Option<PathBuf>,

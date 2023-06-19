@@ -158,6 +158,7 @@ class Keys(str, Enum):
     CONNECTION_MESSAGE = "CONNECTION_MESSAGE"
     NOTIFICATION = "NOTIFICATION"
     SOLUTION_LINE = "SOLUTION_LINE"
+    NTRIP_DISPLAY = "NTRIP_DISPLAY"
 
 
 class ConnectionState(str, Enum):

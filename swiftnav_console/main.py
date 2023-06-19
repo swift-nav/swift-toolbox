@@ -63,6 +63,8 @@ from .backend_importer import BackendImporter
 
 from .backend_request_broker import BackendRequestBroker
 
+from .ntrip_status import NtripStatusData
+
 from .log_panel import (
     log_panel_update,
     LogPanelData,
@@ -488,6 +490,22 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                 data[Keys.SOLID_CONNECTION] = m.statusBarStatus.solidConnection
                 data[Keys.TITLE] = m.statusBarStatus.title
                 data[Keys.ANTENNA_STATUS] = m.statusBarStatus.antennaStatus
+                up = m.statusBarStatus.ntripUpload
+                down = m.statusBarStatus.ntripDownload
+                down_units = "B/s"
+
+                if down >= 1000:
+                    down /= 1000
+                    down = round(down, 1)
+                    down_units = "KB/s"
+
+                connected = m.statusBarStatus.ntripConnected
+                if connected:
+                    data[Keys.NTRIP_DISPLAY] = f"{up}B/s ⬆ {down}{down_units} ⬇"
+                    NtripStatusData.post_connected(True)
+                else:
+                    data[Keys.NTRIP_DISPLAY] = ""
+                    NtripStatusData.post_connected(False)
                 StatusBarData.post_data_update(data)
             elif m.which == Message.Union.ConnectionStatus:
                 data = connection_update()
@@ -658,6 +676,8 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
     if args.enable_map:
         globals_.setProperty("enableMap", True)  # type: ignore
         MAP_ENABLED[0] = True
+    if args.enable_ntrip:
+        globals_.setProperty("enableNtrip", True)  # type: ignore
     try:
         if args.ssh_tunnel:
             ssh_tunnel.setup(args.ssh_tunnel, args.ssh_remote_bind_address)
@@ -726,6 +746,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     parser.add_argument("--show-csv-log", action="store_true")
     parser.add_argument("--height", type=int)
     parser.add_argument("--width", type=int)
+    parser.add_argument("--enable-ntrip", action="store_true")
     parser.add_argument("--qmldebug", action="store_true")
     if FEATURE_SSHTUNNEL:
         parser.add_argument("--ssh-tunnel", type=str, default=None)
@@ -795,6 +816,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     qmlRegisterType(SolutionTableEntries, "SwiftConsole", 1, 0, "SolutionTableEntries")  # type: ignore
     qmlRegisterType(SolutionVelocityPoints, "SwiftConsole", 1, 0, "SolutionVelocityPoints")  # type: ignore
     qmlRegisterType(StatusBarData, "SwiftConsole", 1, 0, "StatusBarData")  # type: ignore
+    qmlRegisterType(NtripStatusData, "SwiftConsole", 1, 0, "NtripStatusData")  # type: ignore
     qmlRegisterType(TrackingSignalsPoints, "SwiftConsole", 1, 0, "TrackingSignalsPoints")  # type: ignore
     qmlRegisterType(TrackingSkyPlotPoints, "SwiftConsole", 1, 0, "TrackingSkyPlotPoints")  # type: ignore
     qmlRegisterType(ObservationRemoteTableModel, "SwiftConsole", 1, 0, "ObservationRemoteTableModel")  # type: ignore

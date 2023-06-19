@@ -345,3 +345,40 @@ class BackendRequestBroker(QObject):  # pylint: disable=too-many-instance-attrib
         m.onTabChangeEvent.currentTab = tab_name
         buffer = m.to_bytes()
         self.endpoint.send_message(buffer)
+
+    @Slot(str, str, str, int, QTKeys.QVARIANT, QTKeys.QVARIANT, QTKeys.QVARIANT, str)  # type: ignore
+    def ntrip_connect(
+            self,
+            url: str,
+            username: str,
+            password: str,
+            gga_period: int,
+            lat: Optional[float],
+            lon: Optional[float],
+            alt: Optional[float],
+            output_type: str,
+    ) -> None:
+        Message = self.messages.Message
+        msg = self.messages.Message()
+        msg.ntripConnect = msg.init(Message.Union.NtripConnect)
+        msg.ntripConnect.url = url
+        msg.ntripConnect.username = username
+        msg.ntripConnect.password = password
+        msg.ntripConnect.ggaPeriod = gga_period
+        msg.ntripConnect.outputType = output_type
+        if lat is not None and lon is not None and alt is not None:
+            msg.ntripConnect.position.pos.lat = float(lat)
+            msg.ntripConnect.position.pos.lon = float(lon)
+            msg.ntripConnect.position.pos.alt = float(alt)
+        else:
+            msg.ntripConnect.position.none = None
+        buffer = msg.to_bytes()
+        self.endpoint.send_message(buffer)
+
+    @Slot()  # type: ignore
+    def ntrip_disconnect(self):
+        Message = self.messages.Message
+        msg = self.messages.Message()
+        msg.ntripDisconnect = msg.init(Message.Union.NtripDisconnect)
+        buffer = msg.to_bytes()
+        self.endpoint.send_message(buffer)

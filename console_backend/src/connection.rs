@@ -182,6 +182,7 @@ fn conn_manager_thd(
                         ConnectionState::Connected {
                             conn: conn.clone(),
                             stop_token,
+                            msg_sender: msg_sender.clone(),
                         },
                         &client_sender,
                     );

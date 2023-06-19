@@ -1,3 +1,6 @@
 "console_backend/tests/data/*" filter=lfs diff=lfs merge=lfs -text
 "pyside-wheels/*.whl" filter=lfs diff=lfs merge=lfs -text
 installers/Windows/NSIS/*.zip filter=lfs diff=lfs merge=lfs -text
+binaries/linux filter=lfs diff=lfs merge=lfs -text
+binaries/mac filter=lfs diff=lfs merge=lfs -text
+binaries/windows filter=lfs diff=lfs merge=lfs -text

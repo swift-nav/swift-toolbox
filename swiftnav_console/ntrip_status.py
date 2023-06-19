@@ -1,7 +1,7 @@
 """Ntrip Status QObjects.
 """
 
-from PySide2.QtCore import QObject, SignalInstance
+from PySide6.QtCore import QObject, SignalInstance
 
 
 class NtripStatusData(QObject):  # pylint: disable=too-many-instance-attributes

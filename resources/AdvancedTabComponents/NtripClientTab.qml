@@ -226,6 +226,6 @@ Item {
     intValidator: IntValidator {
     }
 
-    stringValidator: RegExpValidator {
+    stringValidator: RegularExpressionValidator {
     }
 }

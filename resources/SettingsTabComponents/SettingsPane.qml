@@ -71,7 +71,7 @@ Rectangle {
             columns: 7
             rows: 12
             rowSpacing: 1
-            height: parent.parent.height + Constants.settingsTab.paneScrollBufferHeight
+            height: parent.height + Constants.settingsTab.paneScrollBufferHeight
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top

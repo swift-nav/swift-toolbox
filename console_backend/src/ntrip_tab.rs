@@ -1,26 +1,22 @@
+use crate::ntrip_output::MessageConverter;
+use crate::status_bar::Heartbeat;
+use crate::types::{ArcBool, MsgSender, PosLLH};
+use anyhow::Context;
 use chrono::{DateTime, Utc};
+use crossbeam::channel;
+use crossbeam::channel::Sender;
+use crossbeam::channel::TryRecvError;
 use curl::easy::{Easy, HttpVersion, List, ReadError};
+use log::error;
 use std::cell::RefCell;
 use std::io::Write;
 use std::rc::Rc;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
+use std::time::{Duration, SystemTime};
 use std::{iter, thread};
 use strum_macros::EnumString;
-
-use crate::types::{ArcBool, GpsTime, MsgSender, PosLLH};
-
-use crossbeam::channel;
-
-use crate::status_bar::Heartbeat;
-
-use anyhow::Context;
-
-use crate::ntrip_output::MessageConverter;
-use crossbeam::channel::Sender;
-use log::error;
-use std::time::{Duration, SystemTime};
 
 #[derive(Debug, Default)]
 pub struct NtripState {
@@ -35,8 +31,6 @@ struct LastData {
     lat: f64,
     lon: f64,
     alt: f64,
-    wn: i16,
-    epoch: Option<u64>,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -101,15 +95,15 @@ enum Message {
 }
 
 fn build_gga(opts: &NtripOptions, last_data: &Arc<Mutex<LastData>>) -> Command {
-    let (lat, lon, height, epoch) = match opts.pos_mode {
+    let (lat, lon, height) = match opts.pos_mode {
         PositionMode::Dynamic => {
             let guard = last_data.lock().unwrap();
-            (guard.lat, guard.lon, guard.alt, None)
+            (guard.lat, guard.lon, guard.alt)
         }
-        PositionMode::Static { lat, lon, alt } => (lat, lon, alt, None),
+        PositionMode::Static { lat, lon, alt } => (lat, lon, alt),
     };
     Command {
-        epoch,
+        epoch: None,
         after: 0,
         crc: None,
         message: Message::Gga { lat, lon, height },
@@ -309,7 +303,8 @@ fn main(
     transfer.borrow_mut().read_function(|mut data: &mut [u8]| {
         let mut bytes = match rx.try_recv() {
             Ok(bytes) => bytes,
-            Err(_) => return Err(ReadError::Pause),
+            Err(TryRecvError::Empty) => return Err(ReadError::Pause),
+            Err(TryRecvError::Disconnected) => return Err(ReadError::Abort),
         };
         bytes.extend_from_slice(b"\r\n");
         if let Err(e) = data.write_all(&bytes) {
@@ -379,7 +374,6 @@ impl NtripState {
                 }
                 running.set(false);
                 heartbeat.set_ntrip_connected(false);
-                output_converter.stop();
             }
         });
 
@@ -393,21 +387,13 @@ impl NtripState {
         }
     }
 
-    pub fn set_lastdata(&mut self, val: PosLLH) {
+    /// Update data required for dynamic mode.
+    /// Currently used for position data, potentially epoch in the future.
+    pub fn set_last_data(&mut self, val: PosLLH) {
         let fields = val.fields();
         let mut guard = self.last_data.lock().unwrap();
         guard.lat = fields.lat;
         guard.lon = fields.lon;
         guard.alt = fields.height;
-
-        let tow_s = fields.tow / 1000.0;
-        guard.epoch = match sbp::time::GpsTime::new(guard.wn, tow_s) {
-            Ok(gps_time) => Some(gps_time.to_utc_hardcoded().seconds().round() as u64),
-            Err(_) => None,
-        };
-    }
-
-    pub fn set_wn(&mut self, val: GpsTime) {
-        self.last_data.lock().unwrap().wn = val.fields().wn as i16;
     }
 }

@@ -152,9 +152,7 @@ fn register_events(link: sbp::link::Link<Tabs>) {
     });
     link.register(|tabs: &Tabs, msg: GpsTime| {
         tabs.baseline.lock().unwrap().handle_gps_time(msg.clone());
-        tabs.solution.lock().unwrap().handle_gps_time(msg.clone());
-
-        tabs.shared_state.lock().ntrip_tab.set_wn(msg);
+        tabs.solution.lock().unwrap().handle_gps_time(msg);
     });
     link.register(|tabs: &Tabs, msg: MsgHeartbeat| {
         tabs.advanced_system_monitor
@@ -226,7 +224,7 @@ fn register_events(link: sbp::link::Link<Tabs>) {
         // ntrip tab dynamic position
         let mut guard = tabs.shared_state.lock();
         let ntrip = &mut guard.ntrip_tab;
-        ntrip.set_lastdata(msg);
+        ntrip.set_last_data(msg);
     });
     link.register(|tabs: &Tabs, msg: MsgPosLlhCov| {
         tabs.solution.lock().unwrap().handle_pos_llh_cov(msg);

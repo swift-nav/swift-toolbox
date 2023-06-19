@@ -338,7 +338,10 @@ impl SharedState {
     }
 
     pub fn msg_sender(&self) -> Option<MsgSender> {
-        self.lock().msg_sender.clone()
+        match self.connection() {
+            ConnectionState::Connected { msg_sender, .. } => Some(msg_sender),
+            _ => None,
+        }
     }
 }
 
@@ -381,7 +384,6 @@ pub struct SharedStateInner {
     pub(crate) advanced_networking_update: Option<AdvancedNetworkingState>,
     pub(crate) auto_survey_data: AutoSurveyData,
     pub(crate) heartbeat_data: Heartbeat,
-    pub(crate) msg_sender: Option<MsgSender>,
 }
 impl SharedStateInner {
     pub fn new() -> SharedStateInner {
@@ -409,7 +411,6 @@ impl SharedStateInner {
             advanced_networking_update: None,
             auto_survey_data: AutoSurveyData::new(),
             heartbeat_data,
-            msg_sender: None,
         }
     }
 }
@@ -894,6 +895,7 @@ pub enum ConnectionState {
     Connected {
         conn: Connection,
         stop_token: StopToken,
+        msg_sender: MsgSender,
     },
 
     /// Attempting to connect

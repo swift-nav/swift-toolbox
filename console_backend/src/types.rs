@@ -18,6 +18,7 @@ use crate::piksi_tools_constants::{
 
 use crate::utils::{mm_to_m, ms_to_sec};
 
+use anyhow::Context;
 use chrono::{DateTime, Utc};
 use ordered_float::OrderedFloat;
 use sbp::link::Event;
@@ -77,15 +78,14 @@ impl MsgSender {
         }
     }
 
-    /// send sbp msg
+    /// Send SBP Message
     pub fn send(&self, msg: impl Into<Sbp>) -> Result<()> {
         let mut msg = msg.into();
         if msg.sender_id().is_none() {
             msg.set_sender_id(Self::SENDER_ID);
         }
-        let mut framed = self.inner.lock().expect(MsgSender::LOCK_FAILURE);
-        framed.write_all(&sbp::to_vec(&msg).expect("while serializing into bytes"))?;
-        Ok(())
+        let mut framed = self.inner.lock().expect(Self::LOCK_FAILURE);
+        Ok(framed.write_all(&sbp::to_vec(&msg).context("while serializing into bytes")?)?)
     }
 }
 

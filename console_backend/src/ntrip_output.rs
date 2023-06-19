@@ -1,30 +1,24 @@
 use crate::ntrip_tab::OutputType;
-use crate::types::{ArcBool, Result};
+use crate::types::Result;
 use crate::utils::pythonhome_dir;
 use anyhow::Context;
 use crossbeam::channel::Receiver;
-use log::{error, warn};
+use log::{error, info};
 use std::io::Write;
 use std::process::{Command, Stdio};
 use std::{io, thread};
 
 pub struct MessageConverter {
     in_rx: Receiver<Vec<u8>>,
-    running: ArcBool,
     output_type: OutputType,
 }
 
 impl MessageConverter {
     pub fn new(in_rx: Receiver<Vec<u8>>, output_type: OutputType) -> Self {
-        Self {
-            in_rx,
-            running: ArcBool::new(),
-            output_type,
-        }
+        Self { in_rx, output_type }
     }
 
     pub fn start<W: Write + Send + 'static>(&mut self, out: W) -> Result<()> {
-        self.running.set(true);
         match self.output_type {
             OutputType::RTCM => self.output_rtcm(out),
             OutputType::SBP => self.output_sbp(out),
@@ -34,12 +28,8 @@ impl MessageConverter {
     /// Just redirects directly to writer
     fn output_rtcm<W: Write + Send + 'static>(&mut self, mut out: W) -> Result<()> {
         let in_rx = self.in_rx.clone();
-        let running = self.running.clone();
         thread::spawn(move || loop {
-            if !running.get() {
-                break;
-            }
-            if let Ok(data) = in_rx.try_recv() {
+            if let Ok(data) = in_rx.recv() {
                 if let Err(e) = out.write(&data) {
                     error!("failed to write to device {e}");
                 }
@@ -58,7 +48,7 @@ impl MessageConverter {
                 .join("rtcm3tosbp.exe")
                 .to_string_lossy()
                 .to_string();
-            warn!("running rtcm3tosbp from \"{}\"", rtcm);
+            info!("running rtcm3tosbp from \"{}\"", rtcm);
             cmd.args(["/C", &rtcm]);
             cmd
         } else if cfg!(target_os = "macos") {
@@ -69,7 +59,7 @@ impl MessageConverter {
                 .join("rtcm3tosbp")
                 .to_string_lossy()
                 .to_string();
-            warn!("running rtcm3tosbp from \"{}\"", rtcm);
+            info!("running rtcm3tosbp from \"{}\"", rtcm);
             cmd.args(["-c", &rtcm]);
             cmd
         } else {
@@ -80,7 +70,7 @@ impl MessageConverter {
                 .join("rtcm3tosbp")
                 .to_string_lossy()
                 .to_string();
-            warn!("running rtcm3tosbp from \"{}\"", rtcm);
+            info!("running rtcm3tosbp from \"{}\"", rtcm);
             cmd.args(["-c", &rtcm]);
             cmd
         };
@@ -107,19 +97,7 @@ impl MessageConverter {
                 }
             }
         });
-        let running = self.running.clone();
-        thread::spawn(move || {
-            while let Ok(None) = child.try_wait() {
-                if !running.get() {
-                    let _ = child.kill();
-                    break;
-                }
-            }
-        });
+        thread::spawn(move || child.wait());
         Ok(())
-    }
-
-    pub fn stop(&mut self) {
-        self.running.set(false);
     }
 }

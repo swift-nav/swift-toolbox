@@ -47,6 +47,9 @@ pub mod watch;
 
 use std::sync::Mutex;
 
+use crate::client_sender::BoxedClientSender;
+use crate::shared_state::SharedState;
+use crate::types::MsgSender;
 use crate::{
     advanced_imu_tab::AdvancedImuTab, advanced_magnetometer_tab::AdvancedMagnetometerTab,
     advanced_networking_tab::AdvancedNetworkingTab,
@@ -77,14 +80,14 @@ struct Tabs {
     pub status_bar: Mutex<StatusBar>,
     pub update: Mutex<UpdateTab>,
     pub settings: Option<SettingsTab>,
-    pub shared_state: shared_state::SharedState,
+    pub shared_state: SharedState,
 }
 
 impl Tabs {
     fn new(
-        shared_state: shared_state::SharedState,
-        client_sender: client_sender::BoxedClientSender,
-        msg_sender: types::MsgSender,
+        shared_state: SharedState,
+        client_sender: BoxedClientSender,
+        msg_sender: MsgSender,
     ) -> Self {
         Self {
             main: MainTab::new(shared_state.clone(), client_sender.clone()).into(),
@@ -123,9 +126,9 @@ impl Tabs {
     }
 
     fn with_settings(
-        shared_state: shared_state::SharedState,
-        client_sender: client_sender::BoxedClientSender,
-        msg_sender: types::MsgSender,
+        shared_state: SharedState,
+        client_sender: BoxedClientSender,
+        msg_sender: MsgSender,
     ) -> Self {
         let mut tabs = Self::new(
             shared_state.clone(),

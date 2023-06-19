@@ -163,13 +163,11 @@ fn conn_manager_thd(
                         ConnectionState::Connected {
                             conn: conn.clone(),
                             stop_token,
+                            msg_sender: msg_sender.clone(),
                         },
                         &client_sender,
                     );
                     refresh_connection_frontend(&client_sender, &shared_state);
-                    {
-                        shared_state.lock().msg_sender = Some(msg_sender.clone());
-                    }
                     pm_thd = Some(process_messages_thd(
                         messages,
                         msg_sender,

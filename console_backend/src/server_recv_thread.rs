@@ -17,7 +17,7 @@ use crate::log_panel::LogLevel;
 use crate::ntrip_tab::NtripOptions;
 use crate::output::CsvLogging;
 use crate::settings_tab;
-use crate::shared_state::{AdvancedNetworkingState, SharedState};
+use crate::shared_state::{AdvancedNetworkingState, ConnectionState, SharedState};
 use crate::solution_tab::LatLonUnits;
 use crate::types::{FlowControl, RealtimeDelay};
 use crate::update_tab::UpdateTabUpdate;
@@ -351,11 +351,10 @@ pub fn server_recv_thread(
                         }
                         _ => None,
                     };
-                    {
-                        let mut guard = shared_state.lock();
-                        let heartbeat = guard.heartbeat_data.clone();
-                        let msg_sender = guard.msg_sender.clone();
-                        if let Some(msg_sender) = msg_sender {
+                    let mut guard = shared_state.lock();
+                    let heartbeat = guard.heartbeat_data.clone();
+                    match guard.conn.get() {
+                        ConnectionState::Connected { msg_sender, .. } => {
                             let options = NtripOptions::new(
                                 url,
                                 usr,
@@ -365,9 +364,8 @@ pub fn server_recv_thread(
                                 &output_type,
                             );
                             guard.ntrip_tab.connect(msg_sender, heartbeat, options);
-                        } else {
-                            error!("ntrip unable to find connected device");
                         }
+                        _ => error!("ntrip unable to find connected device"),
                     }
                 }
                 m::message::NtripDisconnect(Ok(_)) => {

@@ -37,10 +37,8 @@ Item {
                         text: {
                             if (modelData == "Url")
                                 return "na.skylark.swiftnav.com:2101";
-
                             if (modelData == "GGA Period")
                                 return "10";
-
                             return "";
                         }
                         placeholderText: modelData
@@ -51,14 +49,11 @@ Item {
                         validator: {
                             if (modelData == "GGA Period")
                                 return intValidator;
-
                             return stringValidator;
                         }
                         readOnly: connected
                     }
-
                 }
-
             }
 
             Repeater {
@@ -89,22 +84,16 @@ Item {
                         text: {
                             if (modelData == "Lat")
                                 return "37.77101999622968";
-
                             if (modelData == "Lon")
                                 return "-122.40315159140708";
-
                             if (modelData == "Alt")
                                 return "-5.549358852471994";
-
                             return "";
                         }
                         readOnly: connected
                     }
-
                 }
-
             }
-
         }
 
         ColumnLayout {
@@ -138,11 +127,8 @@ Item {
                     ListElement {
                         text: "SBP"
                     }
-
                 }
-
             }
-
         }
 
         ColumnLayout {
@@ -171,7 +157,7 @@ Item {
                         if (!url) {
                             inputErrorLabel.text = "URL is not provided!";
                             inputErrorLabel.visible = true;
-                            return ;
+                            return;
                         }
                         let username = generalRepeater.itemAt(1).children[1].text;
                         let password = generalRepeater.itemAt(2).children[1].text;
@@ -179,7 +165,7 @@ Item {
                         if (!ggaPeriod) {
                             inputErrorLabel.text = "GGA Period is not provided!";
                             inputErrorLabel.visible = true;
-                            return ;
+                            return;
                         }
                         let lat = null;
                         let lon = null;
@@ -191,7 +177,7 @@ Item {
                             if (!lat || !lon || !alt) {
                                 inputErrorLabel.text = "Position missing!";
                                 inputErrorLabel.visible = true;
-                                return ;
+                                return;
                             }
                         }
                         let output_type = outputType.currentText;
@@ -216,11 +202,8 @@ Item {
                         inputErrorLabel.visible = false;
                     }
                 }
-
             }
-
         }
-
     }
 
     NtripStatusData {
@@ -245,5 +228,4 @@ Item {
 
     stringValidator: RegExpValidator {
     }
-
 }

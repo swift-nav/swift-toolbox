@@ -348,15 +348,15 @@ class BackendRequestBroker(QObject):  # pylint: disable=too-many-instance-attrib
 
     @Slot(str, str, str, int, QTKeys.QVARIANT, QTKeys.QVARIANT, QTKeys.QVARIANT, str)  # type: ignore
     def ntrip_connect(
-            self,
-            url: str,
-            username: str,
-            password: str,
-            gga_period: int,
-            lat: Optional[float],
-            lon: Optional[float],
-            alt: Optional[float],
-            output_type: str,
+        self,
+        url: str,
+        username: str,
+        password: str,
+        gga_period: int,
+        lat: Optional[float],
+        lon: Optional[float],
+        alt: Optional[float],
+        output_type: str,
     ) -> None:
         Message = self.messages.Message
         msg = self.messages.Message()

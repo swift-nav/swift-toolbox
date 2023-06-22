@@ -311,8 +311,12 @@ args = [
 command = "${DIST_PYTHON}"
 args = ["-m", "pip", "install", "flit"]
 
+[tasks.check-git-status]
+command = "git"
+args = ["status"]
+
 [tasks.build-frontend-wheel]
-dependencies = ["dist-install-pip-flit"]
+dependencies = ["dist-install-pip-flit", "check-git-status"]
 command = "${DIST_PYTHON}"
 args = ["-m", "flit", "build", "--no-setup-py"]
 

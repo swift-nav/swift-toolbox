@@ -14,9 +14,10 @@ use crate::errors::{
     SOLUTION_POSITION_UNIT_SELECTION_NOT_AVAILABLE,
 };
 use crate::log_panel::LogLevel;
+use crate::ntrip_tab::NtripOptions;
 use crate::output::CsvLogging;
 use crate::settings_tab;
-use crate::shared_state::{AdvancedNetworkingState, SharedState};
+use crate::shared_state::{AdvancedNetworkingState, ConnectionState, SharedState};
 use crate::solution_tab::LatLonUnits;
 use crate::types::{FlowControl, RealtimeDelay};
 use crate::update_tab::UpdateTabUpdate;
@@ -321,6 +322,54 @@ pub fn server_recv_thread(
                 }
                 m::message::ConfirmInsChange(Ok(_)) => {
                     shared_state.set_settings_confirm_ins_change(true);
+                }
+                m::message::NtripConnect(Ok(cv_in)) => {
+                    let url = cv_in
+                        .get_url()
+                        .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE)
+                        .to_string();
+                    let usr = cv_in
+                        .get_username()
+                        .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE)
+                        .to_string();
+                    let pwd = cv_in
+                        .get_password()
+                        .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE)
+                        .to_string();
+                    let gga_period = cv_in.get_gga_period();
+                    let output_type = cv_in
+                        .get_output_type()
+                        .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE)
+                        .to_string();
+                    let position: Option<(f64, f64, f64)> = match cv_in.get_position().which() {
+                        Ok(m::ntrip_connect::position::Pos(Ok(pos))) => {
+                            Some((pos.get_lat(), pos.get_lon(), pos.get_alt()))
+                        }
+                        Err(e) => {
+                            error!("{}", e);
+                            None
+                        }
+                        _ => None,
+                    };
+                    let mut guard = shared_state.lock();
+                    let heartbeat = guard.heartbeat_data.clone();
+                    match guard.conn.get() {
+                        ConnectionState::Connected { msg_sender, .. } => {
+                            let options = NtripOptions::new(
+                                url,
+                                usr,
+                                pwd,
+                                position,
+                                gga_period,
+                                &output_type,
+                            );
+                            guard.ntrip_tab.connect(msg_sender, heartbeat, options);
+                        }
+                        _ => error!("ntrip unable to find connected device"),
+                    }
+                }
+                m::message::NtripDisconnect(Ok(_)) => {
+                    shared_state.lock().ntrip_tab.disconnect();
                 }
                 _ => {
                     error!("unknown message from front-end");

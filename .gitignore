@@ -21,3 +21,5 @@ installers/Windows/*.exe
 installers/Linux/*.deb
 installers/Windows/NSIS/*
 !installers/Windows/NSIS/*.zip
+.idea
+resources/base

@@ -226,7 +226,7 @@ git describe --tags --always > console_backend/src/version.txt
 
 [tasks.install-backend]
 command = "${PYTHON}"
-args = ["-m", "pip", "install", "-e", "./console_backend"]
+args = ["-m", "pip", "install", "-v", "-e", "./console_backend"]
 
 [tasks.prod-install-backend]
 command = "${PYTHON}"
@@ -343,7 +343,7 @@ script_runner = "@duckscript"
 script = '''
 wget -O imagemagick.tool.7.1.0.nupkg https://github.com/swift-nav/swift-toolchains/releases/download/imagemagick-7.1.0/imagemagick.tool.7.1.0.nupkg
 exec --fail-on-error choco install -q -y --side-by-side vcredist2010 --version=10.0.40219.32503
-exec --fail-on-error choco install -q -y ./imagemagick.tool.7.1.0.nupkg
+exec --fail-on-error choco install imagemagick.tool --version="7.1.0" --source="./" --pre -y -q
 rm imagemagick.tool.7.1.0.nupkg
 '''
 
@@ -455,6 +455,9 @@ args = ["-m", "pip", "install", "console_backend/dist/${BACKEND_WHEEL}"]
 script_runner = "@duckscript"
 script = '''
 cp src/main/resources py39-dist/
+
+os = os_family
+glob_cp binaries/${os}/rtcm3tosbp* py39-dist/binaries/${os}
 '''
 
 [tasks.build-dist-freeze]

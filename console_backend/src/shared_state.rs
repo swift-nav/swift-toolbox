@@ -11,6 +11,7 @@ use std::{
 };
 
 use anyhow::{Context, Result as AHResult};
+
 use chrono::{DateTime, Utc};
 use crossbeam::channel::Sender;
 use directories::{ProjectDirs, UserDirs};
@@ -28,10 +29,12 @@ use crate::constants::{
 };
 use crate::errors::CONVERT_TO_STR_FAILURE;
 use crate::log_panel::LogLevel;
+use crate::ntrip_tab::NtripState;
 use crate::output::{CsvLogging, CsvSerializer};
 use crate::process_messages::StopToken;
 use crate::settings_tab;
 use crate::solution_tab::LatLonUnits;
+use crate::types::MsgSender;
 use crate::update_tab::UpdateTabUpdate;
 use crate::utils::send_conn_state;
 use crate::watch::{WatchReceiver, Watched};
@@ -333,6 +336,13 @@ impl SharedState {
     pub fn heartbeat_data(&self) -> Heartbeat {
         self.lock().heartbeat_data.clone()
     }
+
+    pub fn msg_sender(&self) -> Option<MsgSender> {
+        match self.connection() {
+            ConnectionState::Connected { msg_sender, .. } => Some(msg_sender),
+            _ => None,
+        }
+    }
 }
 
 impl Deref for SharedState {
@@ -358,6 +368,7 @@ impl Clone for SharedState {
 pub struct SharedStateInner {
     pub(crate) logging_bar: LoggingBarState,
     pub(crate) log_panel: LogPanelState,
+    pub(crate) ntrip_tab: NtripState,
     pub(crate) tracking_tab: TrackingTabState,
     pub(crate) connection_history: ConnectionHistory,
     pub(crate) conn: Watched<ConnectionState>,
@@ -384,6 +395,7 @@ impl SharedStateInner {
         SharedStateInner {
             logging_bar: LoggingBarState::new(log_directory),
             log_panel: LogPanelState::new(),
+            ntrip_tab: NtripState::default(),
             tracking_tab: TrackingTabState::new(),
             debug: false,
             connection_history,
@@ -883,6 +895,7 @@ pub enum ConnectionState {
     Connected {
         conn: Connection,
         stop_token: StopToken,
+        msg_sender: MsgSender,
     },
 
     /// Attempting to connect

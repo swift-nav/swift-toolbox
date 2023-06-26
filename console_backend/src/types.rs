@@ -17,6 +17,7 @@ use crate::piksi_tools_constants::{
 };
 
 use crate::utils::{mm_to_m, ms_to_sec};
+
 use anyhow::Context;
 use chrono::{DateTime, Utc};
 use ordered_float::OrderedFloat;
@@ -33,9 +34,10 @@ use sbp::messages::{
     piksi::{Latency, MsgSpecan, MsgSpecanDep, MsgUartState, MsgUartStateDepa, Period},
     ConcreteMessage,
 };
-use sbp::{Sbp, SbpEncoder, SbpMessage};
+use sbp::{Sbp, SbpMessage};
 use serialport::FlowControl as SPFlowControl;
-use std::io;
+use std::fmt::Formatter;
+use std::io::Write;
 use std::{
     cmp::{Eq, PartialEq},
     collections::HashMap,
@@ -49,13 +51,20 @@ use std::{
         Arc, Mutex,
     },
 };
+
 pub type Error = anyhow::Error;
 pub type Result<T> = anyhow::Result<T>;
 pub type UtcDateTime = DateTime<Utc>;
 
-/// Sends Sbp messages to the connected device
+/// Sends messages to the connected device
 pub struct MsgSender {
-    inner: Arc<Mutex<SbpEncoder<Box<dyn io::Write + Send>>>>,
+    inner: Arc<Mutex<Box<dyn Write + Send>>>,
+}
+
+impl Debug for MsgSender {
+    fn fmt(&self, _f: &mut Formatter<'_>) -> fmt::Result {
+        Ok(())
+    }
 }
 
 impl MsgSender {
@@ -63,23 +72,30 @@ impl MsgSender {
     const SENDER_ID: u16 = 42;
     const LOCK_FAILURE: &'static str = "failed to aquire sender lock";
 
-    pub fn new<W>(writer: W) -> Self
-    where
-        W: io::Write + Send + 'static,
-    {
+    pub fn new<W: Write + Send + 'static>(writer: W) -> Self {
         Self {
-            inner: Arc::new(Mutex::new(SbpEncoder::new(Box::new(writer)))),
+            inner: Arc::new(Mutex::new(Box::new(writer))),
         }
     }
 
+    /// Send SBP Message
     pub fn send(&self, msg: impl Into<Sbp>) -> Result<()> {
         let mut msg = msg.into();
         if msg.sender_id().is_none() {
             msg.set_sender_id(Self::SENDER_ID);
         }
         let mut framed = self.inner.lock().expect(Self::LOCK_FAILURE);
-        framed.send(&msg).context("while sending a message")?;
-        Ok(())
+        Ok(framed.write_all(&sbp::to_vec(&msg).context("while serializing into bytes")?)?)
+    }
+}
+
+impl Write for MsgSender {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        self.inner.lock().expect(MsgSender::LOCK_FAILURE).write(buf)
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        self.inner.lock().expect(MsgSender::LOCK_FAILURE).flush()
     }
 }
 

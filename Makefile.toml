@@ -578,7 +578,7 @@ script = '''
 cp src/main/resources py311-dist/
 
 os = os_family
-glob_cp binaries/${os}/rtcm3tosbp* py39-dist/binaries/${os}
+glob_cp binaries/${os}/rtcm3tosbp* py311-dist/binaries/${os}
 '''
 
 [tasks.build-dist-freeze]

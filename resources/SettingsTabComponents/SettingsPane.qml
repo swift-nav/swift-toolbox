@@ -234,7 +234,7 @@ Rectangle {
                 property string _fieldName: "description"
 
                 visible: !!selectedRowField(_fieldName)
-                Layout.rowSpan: parents.rows - 8
+                Layout.rowSpan: parent.rows - 8
                 Layout.columnSpan: 1
                 Layout.preferredWidth: parent.colWidthLabel
                 Layout.preferredHeight: Math.max(1, parent.height - 8 * parent.smallRowHeight)
@@ -245,7 +245,7 @@ Rectangle {
                 property string _fieldName: "description"
 
                 visible: !!selectedRowField(_fieldName)
-                Layout.rowSpan: parents.rows - 8
+                Layout.rowSpan: parent.rows - 8
                 Layout.columnSpan: parent.columns - 1
                 Layout.preferredWidth: parent.colWidthField
                 Layout.preferredHeight: Math.max(1, parent.height - 8 * parent.smallRowHeight)

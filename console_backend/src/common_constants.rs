@@ -293,6 +293,8 @@ pub enum Keys {
     NOTIFICATION,
     #[strum(serialize = "SOLUTION_LINE")]
     SOLUTION_LINE,
+    #[strum(serialize = "NTRIP_DISPLAY")]
+    NTRIP_DISPLAY,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]

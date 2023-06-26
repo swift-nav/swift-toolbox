@@ -19,6 +19,7 @@
 
 use std::collections::HashMap;
 use std::ops::Index;
+use std::path::{Path, PathBuf};
 
 use capnp::message::Builder;
 use capnp::message::HeapAllocator;
@@ -37,6 +38,46 @@ use crate::types::SignalCodes;
 
 pub mod date_conv;
 pub mod formatters;
+
+pub fn app_dir() -> crate::types::Result<PathBuf> {
+    std::env::current_exe()?
+        .parent()
+        .ok_or(anyhow::format_err!("no parent directory"))
+        .map(Path::to_path_buf)
+}
+
+/// Returns directory to packaged python, or workspace when ran locally in dev environment
+/// This is used to locate rtcm3tosbp
+pub fn pythonhome_dir() -> crate::types::Result<PathBuf> {
+    let app_dir = app_dir()?;
+    // If dev environment, hard code check to py311 path "${WORKSPACE}\\py311"
+    // Mac and Linux both share python3 in "${WORKSPACE}/py311/bin"
+    let py311 = if cfg!(target_os = "windows") {
+        Some(app_dir.as_path())
+    } else {
+        app_dir.parent()
+    };
+    if let Some(py311) = py311 {
+        // if we are in the "${WORKSPACE}/py311" directory,
+        // we are in dev environment, move up one folder.
+        if py311.file_name().filter(|&x| x.eq("py311")).is_some() {
+            let workspace = py311
+                .parent()
+                .ok_or(anyhow::format_err!("no workspace found?"));
+            return workspace.map(Path::to_path_buf);
+        }
+        // if compiled on mac, exe should be in "Swift Console.app/MacOS/Swift Console"
+        // app_dir gives "Swift Console.app/MacOS"
+        // returns "Swift Console.app/Resources/lib"
+        if cfg!(target_os = "macos") {
+            let resources = py311.join("Resources/lib");
+            if resources.exists() {
+                return Ok(py311.join("Resources"));
+            }
+        }
+    }
+    Ok(app_dir)
+}
 
 /// Formats DOPS field into string, used in SolutionPositionTab
 pub fn dops_into_string(field: u16) -> String {

@@ -30,7 +30,7 @@ import QtQuick.Layouts
 MainTab {
     id: advancedTab
 
-    subTabNames: ["System Monitor", "IMU", "Magnetometer", "Networking", "Spectrum Analyzer", "INS"]
+    subTabNames: Globals.enableNtrip ? ["System Monitor", "IMU", "Magnetometer", "Networking", "Spectrum Analyzer", "INS", "NTRIP"] : ["System Monitor", "IMU", "Magnetometer", "Networking", "Spectrum Analyzer", "INS"]
     curSubTabIndex: 0
 
     StackLayout {
@@ -55,6 +55,9 @@ MainTab {
         }
 
         AdvancedTabComponents.AdvancedInsTab {
+        }
+
+        AdvancedTabComponents.NtripClientTab {
         }
     }
 }

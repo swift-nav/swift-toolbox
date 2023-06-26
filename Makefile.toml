@@ -311,8 +311,12 @@ args = [
 command = "${DIST_PYTHON}"
 args = ["-m", "pip", "install", "flit"]
 
+[tasks.check-git-status]
+command = "git"
+args = ["status"]
+
 [tasks.build-frontend-wheel]
-dependencies = ["dist-install-pip-flit"]
+dependencies = ["dist-install-pip-flit", "check-git-status"]
 command = "${DIST_PYTHON}"
 args = ["-m", "flit", "build", "--no-setup-py"]
 
@@ -572,6 +576,9 @@ args = ["-m", "pip", "install", "console_backend/dist/${BACKEND_WHEEL}"]
 script_runner = "@duckscript"
 script = '''
 cp src/main/resources py311-dist/
+
+os = os_family
+glob_cp binaries/${os}/rtcm3tosbp* py311-dist/binaries/${os}
 '''
 
 [tasks.build-dist-freeze]

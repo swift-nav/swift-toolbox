@@ -42,6 +42,7 @@
     <file>AdvancedTabComponents/UnknownStatus.qml</file>
     <file>AdvancedTabComponents/WarningStatus.qml</file>
     <file>AdvancedTabComponents/OkStatus.qml</file>
+    <file>AdvancedTabComponents/NtripClientTab.qml</file>
     <file>BaselineTab.qml</file>
     <file>BaselineTabComponents/BaselinePlot.qml</file>
     <file>SettingsTab.qml</file>

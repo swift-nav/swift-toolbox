@@ -173,6 +173,9 @@ struct StatusBarStatus {
     dataRate @6: Float64;
     solidConnection @7: Bool;
     title @8: Text;
+    ntripConnected @9: Bool;
+    ntripDownload @10: Float64;
+    ntripUpload @11: Float64;
 }
 
 struct BaselinePlotStatus {
@@ -454,6 +457,28 @@ struct SolutionProtectionLevel {
     hpl @2: UInt16;
 }
 
+struct Position {
+    lat @0: Float64;
+    lon @1: Float64;
+    alt @2: Float64;
+}
+
+struct NtripConnect {
+    url @0 :Text;
+    username @1 :Text;
+    password @2 :Text;
+    ggaPeriod @3 :UInt64;
+    position :union {
+        pos @4 :Position;
+        none @5 :Void;
+    }
+    outputType @6: Text;
+}
+
+struct NtripDisconnect {
+
+}
+
 struct Message {
     union {
         solutionVelocityStatus @0 :SolutionVelocityStatus;
@@ -514,5 +539,7 @@ struct Message {
         loggingBarStartRecording @55 : LoggingBarStartRecording;
         loggingBarRecordingSize @56 : LoggingBarRecordingSize;
         solutionProtectionLevel @57: SolutionProtectionLevel;
+        ntripConnect @58 :NtripConnect;
+        ntripDisconnect @59 :NtripDisconnect;
     }
 }

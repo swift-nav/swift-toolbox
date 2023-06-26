@@ -52,10 +52,11 @@ use crate::log_panel::LogLevel;
 use crate::output::{CsvLogging, CsvSerializer};
 use crate::process_messages::StopToken;
 use crate::shared_state::EventType::Refresh;
+use crate::tabs::advanced_tab::ntrip_tab::NtripState;
 use crate::tabs::{settings_tab, solution_tab::LatLonUnits, update_tab::UpdateTabUpdate};
 use crate::utils::{send_conn_state, OkOrLog};
 use crate::watch::{WatchReceiver, Watched};
-use crate::{common_constants::ConnectionType, connection::Connection};
+use crate::{common_constants::ConnectionType, connection::Connection, MsgSender};
 use crate::{
     common_constants::{self as cc, SbpLogging},
     status_bar::Heartbeat,
@@ -347,6 +348,13 @@ impl SharedState {
         self.lock().heartbeat_data.clone()
     }
 
+    pub fn msg_sender(&self) -> Option<MsgSender> {
+        match self.connection() {
+            ConnectionState::Connected { msg_sender, .. } => Some(msg_sender),
+            _ => None,
+        }
+    }
+
     pub fn set_check_visibility(&self, check_visibility: Vec<String>) {
         let mut guard = self.lock();
         guard.tracking_tab.signals_tab.check_visibility = check_visibility;
@@ -379,6 +387,7 @@ impl Clone for SharedState {
 pub struct SharedStateInner {
     pub(crate) logging_bar: LoggingBarState,
     pub(crate) log_panel: LogPanelState,
+    pub(crate) ntrip_tab: NtripState,
     pub(crate) tracking_tab: TrackingTabState,
     pub(crate) connection_history: ConnectionHistory,
     pub(crate) conn: Watched<ConnectionState>,
@@ -408,6 +417,7 @@ impl SharedStateInner {
         SharedStateInner {
             logging_bar: LoggingBarState::new(log_directory),
             log_panel: LogPanelState::new(),
+            ntrip_tab: NtripState::default(),
             tracking_tab: TrackingTabState::new(),
             debug: false,
             connection_history,
@@ -922,6 +932,7 @@ pub enum ConnectionState {
     Connected {
         conn: Connection,
         stop_token: StopToken,
+        msg_sender: MsgSender,
     },
 
     /// Attempting to connect

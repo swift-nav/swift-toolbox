@@ -38,13 +38,14 @@ def status_bar_update() -> Dict[str, Any]:
         Keys.SOLID_CONNECTION: bool,
         Keys.TITLE: str,
         Keys.ANTENNA_STATUS: str,
+        Keys.NTRIP_DISPLAY: str,
     }
 
 
 STATUS_BAR: List[Dict[str, Any]] = [status_bar_update()]
 
 
-class StatusBarData(QObject):  # pylint: disable=too-many-instance-attributes
+class StatusBarData(QObject):  # pylint: disable=too-many-instance-attributes, too-many-public-methods
     _instance: "StatusBarData"
     _pos: str = ""
     _rtk: str = ""
@@ -56,6 +57,7 @@ class StatusBarData(QObject):  # pylint: disable=too-many-instance-attributes
     _title: str = ""
     _antenna_status: str = ""
     _data_updated = Signal()
+    _ntrip_display: str = ""
     status_bar: Dict[str, Any] = {}
 
     def __init__(self):
@@ -147,6 +149,14 @@ class StatusBarData(QObject):  # pylint: disable=too-many-instance-attributes
 
     antenna_status = Property(str, get_antenna_status, set_antenna_status)
 
+    def get_ntrip_display(self) -> str:
+        return self._ntrip_display
+
+    def set_ntrip_display(self, ntrip_display: str) -> None:
+        self._ntrip_display = ntrip_display
+
+    ntrip_display = Property(str, get_ntrip_display, set_ntrip_display)
+
 
 class StatusBarModel(QObject):  # pylint: disable=too-few-public-methods
     @Slot(StatusBarData)  # type: ignore
@@ -160,4 +170,5 @@ class StatusBarModel(QObject):  # pylint: disable=too-few-public-methods
         cp.set_solid_connection(cp.status_bar[Keys.SOLID_CONNECTION])
         cp.set_title(cp.status_bar[Keys.TITLE])
         cp.set_antenna_status(cp.status_bar[Keys.ANTENNA_STATUS])
+        cp.set_ntrip_display(cp.status_bar[Keys.NTRIP_DISPLAY])
         return cp

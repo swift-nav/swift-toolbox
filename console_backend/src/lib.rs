@@ -32,6 +32,7 @@ pub mod fft_monitor;
 pub mod fileio;
 pub mod fusion_status_flags;
 pub mod log_panel;
+pub mod ntrip_output;
 pub mod output;
 pub mod piksi_tools_constants;
 pub mod process_messages;
@@ -47,9 +48,9 @@ pub mod updater;
 pub mod utils;
 pub mod watch;
 
+use crate::client_sender::BoxedClientSender;
+use crate::shared_state::SharedState;
 use crate::status_bar::StatusBar;
-use std::sync::Mutex;
-
 use crate::tabs::{
     advanced_tab::{
         advanced_imu_tab::AdvancedImuTab, advanced_magnetometer_tab::AdvancedMagnetometerTab,
@@ -69,6 +70,8 @@ use crate::tabs::{
     },
     update_tab::UpdateTab,
 };
+use crate::types::MsgSender;
+use std::sync::Mutex;
 
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
@@ -89,13 +92,14 @@ struct Tabs {
     pub status_bar: Mutex<StatusBar>,
     pub update: Mutex<UpdateTab>,
     pub settings: Option<SettingsTab>, // settings only enabled on TCP / Serial
+    pub shared_state: SharedState,
 }
 
 impl Tabs {
     fn new(
-        shared_state: shared_state::SharedState,
-        client_sender: client_sender::BoxedClientSender,
-        msg_sender: types::MsgSender,
+        shared_state: SharedState,
+        client_sender: BoxedClientSender,
+        msg_sender: MsgSender,
     ) -> Self {
         Self {
             main: MainTab::new(shared_state.clone(), client_sender.clone()).into(),
@@ -139,15 +143,16 @@ impl Tabs {
             )
             .into(),
             status_bar: StatusBar::new(shared_state.clone()).into(),
-            update: UpdateTab::new(shared_state).into(),
+            update: UpdateTab::new(shared_state.clone()).into(),
             settings: None,
+            shared_state,
         }
     }
 
     fn with_settings(
-        shared_state: shared_state::SharedState,
-        client_sender: client_sender::BoxedClientSender,
-        msg_sender: types::MsgSender,
+        shared_state: SharedState,
+        client_sender: BoxedClientSender,
+        msg_sender: MsgSender,
     ) -> Self {
         let mut tabs = Self::new(
             shared_state.clone(),

@@ -82,6 +82,9 @@ pub struct StatusBarUpdate {
     ant_status: String,
     port: String,
     version: String,
+    ntrip_connected: bool,
+    ntrip_upload_bytes: f64,
+    ntrip_download_bytes: f64,
 }
 impl StatusBarUpdate {
     pub fn new() -> StatusBarUpdate {
@@ -96,6 +99,9 @@ impl StatusBarUpdate {
             ant_status: String::from(EMPTY_STR),
             port: String::from(""),
             version: String::from(""),
+            ntrip_connected: false,
+            ntrip_upload_bytes: 0.0,
+            ntrip_download_bytes: 0.0,
         }
     }
 }
@@ -188,6 +194,9 @@ impl StatusBar {
             sb_update.port + " - "
         };
         status_bar_status.set_title(&format!("{port}Swift Console {}", sb_update.version));
+        status_bar_status.set_ntrip_upload(sb_update.ntrip_upload_bytes);
+        status_bar_status.set_ntrip_download(sb_update.ntrip_download_bytes);
+        status_bar_status.set_ntrip_connected(sb_update.ntrip_connected);
         client_sender.send_data(serialize_capnproto_builder(builder));
     }
 
@@ -335,6 +344,9 @@ pub struct HeartbeatInner {
     last_bytes_read: usize,
     last_time_bytes_read: Instant,
     version: String,
+    ntrip_connected: bool,
+    ntrip_upload_bytes: f64,
+    ntrip_download_bytes: f64,
 }
 impl HeartbeatInner {
     pub fn new() -> HeartbeatInner {
@@ -368,6 +380,9 @@ impl HeartbeatInner {
             last_bytes_read: 0,
             last_time_bytes_read: Instant::now(),
             version: String::from(""),
+            ntrip_download_bytes: 0.0,
+            ntrip_upload_bytes: 0.0,
+            ntrip_connected: false,
         }
     }
 
@@ -488,6 +503,9 @@ impl HeartbeatInner {
                 solid_connection: self.solid_connection,
                 port: self.port.clone(),
                 version: self.version.clone(),
+                ntrip_connected: self.ntrip_connected,
+                ntrip_upload_bytes: self.ntrip_upload_bytes,
+                ntrip_download_bytes: self.ntrip_download_bytes,
             }
         } else {
             let packet = StatusBarUpdate {
@@ -495,6 +513,9 @@ impl HeartbeatInner {
                 ant_status: self.ant_status.clone(),
                 num_sats: self.llh_num_sats,
                 version: self.version.clone(),
+                ntrip_connected: self.ntrip_connected,
+                ntrip_upload_bytes: self.ntrip_upload_bytes,
+                ntrip_download_bytes: self.ntrip_download_bytes,
                 ..Default::default()
             };
             self.llh_num_sats = 0;
@@ -545,6 +566,26 @@ impl Heartbeat {
     }
     pub fn reset(&mut self) {
         *self.lock().expect(HEARTBEAT_LOCK_MUTEX_FAILURE) = HeartbeatInner::new();
+    }
+    pub fn set_ntrip_ul(&mut self, ul: f64) {
+        self.lock()
+            .expect(HEARTBEAT_LOCK_MUTEX_FAILURE)
+            .ntrip_upload_bytes = ul
+    }
+    pub fn set_ntrip_dl(&mut self, dl: f64) {
+        self.lock()
+            .expect(HEARTBEAT_LOCK_MUTEX_FAILURE)
+            .ntrip_download_bytes = dl
+    }
+    pub fn set_ntrip_connected(&mut self, connected: bool) {
+        self.lock()
+            .expect(HEARTBEAT_LOCK_MUTEX_FAILURE)
+            .ntrip_connected = connected
+    }
+    pub fn get_ntrip_connected(&self) -> bool {
+        self.lock()
+            .expect(HEARTBEAT_LOCK_MUTEX_FAILURE)
+            .ntrip_connected
     }
 }
 

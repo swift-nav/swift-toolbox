@@ -24,6 +24,7 @@ use async_logger_log::Logger;
 use capnp::message::Builder;
 use chrono::Local;
 use log::{debug, error, info, warn, LevelFilter, Record};
+use regex::Regex;
 use sbp::messages::logging::MsgLog;
 use serde::{Deserialize, Serialize};
 
@@ -65,6 +66,7 @@ pub fn handle_log_msg(msg: MsgLog) {
 }
 
 pub fn setup_logging(client_sender: BoxedClientSender, shared_state: SharedState) {
+    let log_level = shared_state.log_level();
     let log_panel = LogPanelWriter::new(client_sender, shared_state);
     let logger = Logger::builder()
         .buf_size(LOG_WRITER_BUFFER_MESSAGE_COUNT)
@@ -74,7 +76,7 @@ pub fn setup_logging(client_sender: BoxedClientSender, shared_state: SharedState
         .unwrap();
 
     log::set_boxed_logger(Box::new(logger)).expect("Failed to set logger");
-    log::set_max_level(LevelFilter::Warn);
+    log::set_max_level(log_level.level_filter());
 }
 
 #[derive(Debug)]
@@ -82,12 +84,14 @@ struct LogPanelWriter {
     client_sender: BoxedClientSender,
     shared_state: SharedState,
     log_file: Option<File>,
+    log_stdout: bool,
 }
 
 impl LogPanelWriter {
     pub fn new(client_sender: BoxedClientSender, shared_state: SharedState) -> LogPanelWriter {
         LogPanelWriter {
             log_file: init_log_file(&shared_state),
+            log_stdout: shared_state.log_stdout(),
             client_sender,
             shared_state,
         }
@@ -114,10 +118,19 @@ impl Writer<Box<String>> for LogPanelWriter {
         self.client_sender
             .send_data(serialize_capnproto_builder(builder));
 
-        if let Some(ref mut f) = self.log_file {
-            for item in slice {
-                let packet = serde_json::from_str(item).expect(CONSOLE_LOG_JSON_TO_STRING_FAILURE);
-                write_packet(packet, f);
+        for item in slice {
+            let msg = match prepare_packet(item.to_string()) {
+                Ok(msg) => msg,
+                Err(e) => {
+                    eprintln!("log error ({e}) - {item}");
+                    continue;
+                }
+            };
+            if let Some(ref mut f) = self.log_file {
+                let _ = writeln!(f, "{msg}");
+            }
+            if self.log_stdout {
+                println!("{msg}");
             }
         }
     }
@@ -176,18 +189,19 @@ fn init_log_file(shared_state: &SharedState) -> Option<File> {
     })
 }
 
-fn write_packet(packet: ConsoleLogPacket, f: &mut File) {
+fn prepare_packet(raw_packet: String) -> Result<String, String> {
+    let reg = Regex::new(r#"\\[nrt\\"]"#).map_err(|e| e.to_string())?;
+    let safe_item = reg.replace_all(&raw_packet, "").to_string();
+    let packet: ConsoleLogPacket = serde_json::from_str(&safe_item).map_err(|e| e.to_string())?;
     // Min one space plus the longest log level
     const MIN_SPACES: usize = "CONSOLE".len() + 1;
-
     let spaces = " ".repeat(MIN_SPACES - packet.level.len());
-    let _ = writeln!(
-        f,
+    Ok(format!(
         "{timestamp} {level}{spaces}{msg}",
         timestamp = packet.timestamp,
         level = packet.level,
-        msg = packet.msg,
-    );
+        msg = packet.msg
+    ))
 }
 
 // Custom formatting of `log::Record` to account for SbpLog values

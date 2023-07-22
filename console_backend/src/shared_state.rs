@@ -120,6 +120,12 @@ impl SharedState {
     pub fn set_log_filename(&self, filename: Option<PathBuf>) {
         self.lock().log_panel.filename = filename;
     }
+    pub fn log_stdout(&self) -> bool {
+        self.lock().log_panel.stdout
+    }
+    pub fn set_log_stdout(&self, stdout: bool) {
+        self.lock().log_panel.stdout = stdout;
+    }
     pub fn reset_logging(&self) {
         let mut guard = self.lock();
         guard.logging_bar.sbp_logging = false;
@@ -515,6 +521,7 @@ impl LoggingBarState {
 pub struct LogPanelState {
     pub level: LogLevel,
     pub filename: Option<PathBuf>,
+    pub stdout: bool,
 }
 
 impl LogPanelState {
@@ -522,6 +529,7 @@ impl LogPanelState {
         LogPanelState {
             level: LogLevel::WARNING,
             filename: None,
+            stdout: false,
         }
     }
 }

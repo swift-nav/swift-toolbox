@@ -85,6 +85,14 @@ pub struct CliOptions {
     #[clap(long)]
     pub log_console: bool,
 
+    /// Log to stdout.
+    #[clap(long)]
+    pub log_stdout: bool,
+
+    /// Set log level.
+    #[clap(long, value_parser = log_level)]
+    pub log_level: Option<LogLevel>,
+
     /// Log CSV data to default / specified log file.
     #[clap(long)]
     pub csv_log: bool,
@@ -307,9 +315,15 @@ pub fn handle_cli(opt: CliOptions, conn_manager: &ConnectionManager, shared_stat
         shared_state.set_logging_directory(PathBuf::from(folder));
     }
     shared_state.lock().logging_bar.csv_logging = CsvLogging::from(opt.csv_log);
+    if let Some(log_level) = opt.log_level {
+        shared_state.set_log_level(log_level);
+    }
     if opt.log_console {
         let filename = chrono::Local::now().format(LOG_FILENAME).to_string().into();
         shared_state.set_log_filename(Some(filename));
+    }
+    if opt.log_stdout {
+        shared_state.set_log_stdout(true);
     }
     if let Some(path) = opt.sbp_log_filename {
         shared_state.set_sbp_logging_filename(Some(path));

@@ -66,7 +66,7 @@ ndarray = "0.15.6"
 criterion = "0.4.0"
 sysinfo = "0.29.6"
 tempfile = "3.6.0"
-rstest = "0.17.0"
+rstest = "0.18.1"
 
 [build-dependencies]
 capnpc = "0.17.1"

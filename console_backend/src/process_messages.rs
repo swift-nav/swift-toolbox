@@ -13,8 +13,7 @@ use sbp::{
         piksi::{MsgDeviceMonitor, MsgNetworkStateResp, MsgThreadState},
         system::{
             MsgCsacTelemetry, MsgCsacTelemetryLabels, MsgHeartbeat, MsgInsStatus, MsgInsUpdates,
-            MsgStartup, MsgStatusReport
-
+            MsgStartup, MsgStatusReport,
         },
         tracking::{MsgMeasurementState, MsgTrackingState},
     },

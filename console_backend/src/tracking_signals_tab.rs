@@ -3,13 +3,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-use capnp::message::Builder;
-use log::warn;
-use ordered_float::OrderedFloat;
-use sbp::messages::{
-    system::{msg_status_report::System, MsgStatusReport},
-    tracking::{MeasurementState, TrackingChannelState},
-};
 use crate::client_sender::BoxedClientSender;
 use crate::constants::{
     CHART_XMIN_OFFSET_NO_TRACKING, CHART_XMIN_OFFSET_TRACKING, GLO_FCN_OFFSET, GLO_SLOT_SAT_MAX,
@@ -22,6 +15,13 @@ use crate::piksi_tools_constants::{
 use crate::shared_state::SharedState;
 use crate::types::{Cn0Age, Cn0Dict, Deque, ObservationMsg, SignalCodes};
 use crate::utils::{serialize_capnproto_builder, signal_key_color, signal_key_label};
+use capnp::message::Builder;
+use log::warn;
+use ordered_float::OrderedFloat;
+use sbp::messages::{
+    system::{msg_status_report::System, MsgStatusReport},
+    tracking::{MeasurementState, TrackingChannelState},
+};
 
 /// TrackingSignalsTab struct.
 ///

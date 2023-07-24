@@ -31,7 +31,7 @@ use sbp::{
         observation::{MsgObsDepA, MsgSvAzEl},
         orientation::{MsgAngularRate, MsgBaselineHeading, MsgOrientEuler},
         piksi::{MsgDeviceMonitor, MsgNetworkStateResp, MsgThreadState},
-        system::{MsgHeartbeat, MsgInsStatus, MsgInsUpdates, MsgStartup},
+        system::{MsgHeartbeat, MsgInsStatus, MsgInsUpdates, MsgStartup, MsgStatusReport},
         tracking::{MsgMeasurementState, MsgTrackingState},
     },
 };
@@ -320,6 +320,12 @@ fn register_events(link: sbp::link::Link<Tabs>) {
             .lock()
             .unwrap()
             .handle_specan(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgStatusReport| {
+        tabs.tracking_signals
+            .lock()
+            .unwrap()
+            .handle_msg_status_report(msg);
     });
     link.register(|tabs: &Tabs, msg: MsgSvAzEl| {
         tabs.tracking_sky_plot.lock().unwrap().handle_sv_az_el(msg);

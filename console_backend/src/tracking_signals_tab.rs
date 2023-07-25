@@ -3,11 +3,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-use capnp::message::Builder;
-use log::warn;
-use ordered_float::OrderedFloat;
-use sbp::messages::tracking::{MeasurementState, TrackingChannelState};
-
 use crate::client_sender::BoxedClientSender;
 use crate::constants::{
     CHART_XMIN_OFFSET_NO_TRACKING, CHART_XMIN_OFFSET_TRACKING, GLO_FCN_OFFSET, GLO_SLOT_SAT_MAX,
@@ -20,6 +15,13 @@ use crate::piksi_tools_constants::{
 use crate::shared_state::SharedState;
 use crate::types::{Cn0Age, Cn0Dict, Deque, ObservationMsg, SignalCodes};
 use crate::utils::{serialize_capnproto_builder, signal_key_color, signal_key_label};
+use capnp::message::Builder;
+use log::warn;
+use ordered_float::OrderedFloat;
+use sbp::messages::{
+    system::{msg_status_report::System, MsgStatusReport},
+    tracking::{MeasurementState, TrackingChannelState},
+};
 
 /// TrackingSignalsTab struct.
 ///
@@ -46,6 +48,8 @@ use crate::utils::{serialize_capnproto_builder, signal_key_color, signal_key_lab
 #[derive(Debug)]
 pub struct TrackingSignalsTab {
     pub at_least_one_track_received: bool,
+    /// Whether to disable processing of MsgTrackingState and MsgMeasurementState messages.
+    pub disable_track: bool,
     pub check_labels: [&'static str; 13],
     pub client_sender: BoxedClientSender,
     pub cn0_age: Cn0Age,
@@ -72,6 +76,7 @@ impl TrackingSignalsTab {
     pub fn new(shared_state: SharedState, client_sender: BoxedClientSender) -> TrackingSignalsTab {
         TrackingSignalsTab {
             at_least_one_track_received: false,
+            disable_track: false,
             check_labels: [
                 GPS_L1CA_STR,
                 GPS_L2CM_STR,
@@ -208,6 +213,9 @@ impl TrackingSignalsTab {
     ///
     /// - `states`: All states contained within the measurementstate message.
     pub fn handle_msg_measurement_state(&mut self, states: Vec<MeasurementState>) {
+        if self.disable_track {
+            return;
+        }
         self.at_least_one_track_received = true;
         let mut codes_that_came: Vec<(SignalCodes, i16)> = Vec::new();
         let t = (Instant::now()).duration_since(self.t_init).as_secs_f64();
@@ -245,12 +253,28 @@ impl TrackingSignalsTab {
         self.update_plot();
         self.send_data();
     }
+
+    /// Handle MsgStatusReport message states.
+    ///
+    /// # Parameters:
+    ///
+    /// - `msg`: The full SBP message cast as an MsgStatusReport variant.
+    pub fn handle_msg_status_report(&mut self, msg: MsgStatusReport) {
+        if let Ok(system) = msg.system() {
+            self.disable_track = system == System::PrecisionGnssModule;
+            self.at_least_one_track_received = false;
+        }
+    }
+
     /// Handle MsgTrackingState message states.
     ///
     /// # Parameters:
     ///
     /// - `states`: All states contained within the trackingstate message.
     pub fn handle_msg_tracking_state(&mut self, states: Vec<TrackingChannelState>) {
+        if self.disable_track {
+            return;
+        }
         self.at_least_one_track_received = true;
         let mut codes_that_came: Vec<(SignalCodes, i16)> = Vec::new();
         let t = (Instant::now()).duration_since(self.t_init).as_secs_f64();

@@ -40,7 +40,7 @@ optional = true
 [dependencies.pyo3]
 default-features = false
 features = ["auto-initialize"]
-version = "0.19.1"
+version = "0.19.2"
 optional = true
 
 [target]

@@ -1981,7 +1981,7 @@ dependencies = [
  "cfg-if 1.0.0",
  "indoc",
  "libc",
- "parking_lot 0.12.1",
+ "parking_lot 0.11.2",
  "pyo3-build-config",
  "pyo3-ffi",
  "pyo3-macros",
@@ -2294,9 +2294,9 @@ dependencies = [
 
 [[package]]
 name = "sbp-settings"
-version = "0.6.14"
+version = "0.6.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce7f60f338d315059026153166aff831fdc8ef0b0c2ad84ea07a298e830e036f"
+checksum = "9c7806d5ee9473fa88f1a88d69303e7b8bb2ec6f9ab4f2255ac501f8df6f45c5"
 dependencies = [
  "crossbeam-channel",
  "crossbeam-utils",

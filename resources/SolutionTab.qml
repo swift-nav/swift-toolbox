@@ -25,6 +25,7 @@ import QtCharts
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+
 import "SolutionTabComponents" as SolutionTabComponents
 
 MainTab {
@@ -57,7 +58,15 @@ MainTab {
             SolutionTabComponents.SolutionVelocityTab {
             }
 
-            SolutionTabComponents.SolutionMapTab {
+            Rectangle {
+                width: parent.width
+                height: parent.height
+                Loader {
+                    sourceComponent: Globals.enableMap ? solutionMap : null
+                }
+            }
+
+            property Component solutionMap: SolutionTabComponents.SolutionMapTab {
             }
         }
     }

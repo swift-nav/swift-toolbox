@@ -148,8 +148,6 @@ from .settings_tab import (
     settings_rows_to_dict,
 )
 
-from .solution_map import SolutionMap
-
 from .solution_position_tab import (
     SolutionPositionModel,
     SolutionPositionPoints,
@@ -261,7 +259,7 @@ TAB_LAYOUT = {
 capnp.remove_import_hook()  # pylint: disable=no-member
 
 MAP_ENABLED = [False]
-
+SolutionMap = QObject
 
 class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attributes
     _request_quit: Signal = Signal()
@@ -493,12 +491,10 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                 up = m.statusBarStatus.ntripUpload
                 down = m.statusBarStatus.ntripDownload
                 down_units = "B/s"
-
                 if down >= 1000:
                     down /= 1000
                     down = round(down, 1)
                     down_units = "KB/s"
-
                 connected = m.statusBarStatus.ntripConnected
                 if connected:
                     data[Keys.NTRIP_DISPLAY] = f"{up}B/s ⬆ {down}{down_units} ⬇"
@@ -797,6 +793,11 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     QFontDatabase.addApplicationFont(":/fonts/RobotoCondensed-Regular.ttf")
     QQuickStyle.setStyle("Material")
     # We specifically *don't* want the RobotoCondensed-Bold.ttf font so we get the right look when bolded.
+
+    if MAP_ENABLED[0]:
+        global SolutionMap  # pylint: disable=global-statement
+        from .solution_map import SolutionMap as SolutionMap_  # pylint: disable=import-outside-toplevel
+        SolutionMap = SolutionMap_  # type: ignore
 
     qmlRegisterType(ConnectionData, "SwiftConsole", 1, 0, "ConnectionData")  # type: ignore
     qmlRegisterType(AdvancedImuPoints, "SwiftConsole", 1, 0, "AdvancedImuPoints")  # type: ignore

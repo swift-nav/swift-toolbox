@@ -599,7 +599,7 @@ dependencies = [
  "regex",
  "rstest",
  "rust-ini",
- "sbp",
+ "sbp 5.0.0",
  "sbp-settings",
  "serde",
  "serde-pickle",
@@ -2599,6 +2599,19 @@ version = "4.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "db425529eaeb2433689387c7567e43320f5bae4c5fdea307c11a225aace12f7b"
 dependencies = [
+ "bytes",
+ "crc16",
+ "dencode",
+ "log",
+ "slotmap",
+]
+
+[[package]]
+name = "sbp"
+version = "5.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "95bfac42dc0fc72b89f17426a68c504a30291ecbf46f3645fb232adcb5b2396b"
+dependencies = [
  "base64",
  "bytes",
  "crc16",
@@ -2622,7 +2635,7 @@ dependencies = [
  "log",
  "once_cell",
  "parking_lot",
- "sbp",
+ "sbp 4.17.0",
  "serde",
  "serde_yaml",
 ]

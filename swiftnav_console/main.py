@@ -261,6 +261,7 @@ capnp.remove_import_hook()  # pylint: disable=no-member
 MAP_ENABLED = [False]
 SolutionMap = QObject
 
+
 class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attributes
     _request_quit: Signal = Signal()
 
@@ -797,6 +798,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     if MAP_ENABLED[0]:
         global SolutionMap  # pylint: disable=global-statement
         from .solution_map import SolutionMap as SolutionMap_  # pylint: disable=import-outside-toplevel
+
         SolutionMap = SolutionMap_  # type: ignore
 
     qmlRegisterType(ConnectionData, "SwiftConsole", 1, 0, "ConnectionData")  # type: ignore

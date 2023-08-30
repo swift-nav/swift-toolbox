@@ -25,7 +25,6 @@ import QtCharts
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-
 import "SolutionTabComponents" as SolutionTabComponents
 
 MainTab {

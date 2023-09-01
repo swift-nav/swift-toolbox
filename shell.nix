@@ -7,7 +7,7 @@
       libxcrypt-legacy
       glib
       capnproto
-      openssl
+      openssl.dev
       pkg-config
       cmake
       clang
@@ -22,7 +22,7 @@
       alsa-lib
       dbus
       libkrb5
-      zlib
+      zlib.dev
       gdb
     ]) ++ (with pkgs.xorg;
     [ libX11
@@ -49,7 +49,7 @@
     unset QTWEBKIT_PLUGIN_PATH
     unset QT_PLUGIN_PATH
 
-    export PKG_CONFIG_PATH="${pkgs.openssl.dev}/lib/pkgconfig"
+    export PKG_CONFIG_PATH="${pkgs.openssl.dev}/lib/pkgconfig:${pkgs.zlib.dev}/lib/pkgconfig"
     export LIBCLANG_PATH="${pkgs.llvmPackages_11.libclang.lib}/lib"
   '';
   runScript = "bash";

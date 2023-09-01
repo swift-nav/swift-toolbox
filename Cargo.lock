@@ -2595,9 +2595,9 @@ dependencies = [
 
 [[package]]
 name = "sbp"
-version = "4.17.0"
+version = "5.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db425529eaeb2433689387c7567e43320f5bae4c5fdea307c11a225aace12f7b"
+checksum = "95bfac42dc0fc72b89f17426a68c504a30291ecbf46f3645fb232adcb5b2396b"
 dependencies = [
  "base64",
  "bytes",
@@ -2614,8 +2614,7 @@ dependencies = [
 [[package]]
 name = "sbp-settings"
 version = "0.6.17"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c7806d5ee9473fa88f1a88d69303e7b8bb2ec6f9ab4f2255ac501f8df6f45c5"
+source = "git+https://github.com/swift-nav/libsettings-rs.git?branch=adrian/update-baudrate-enum#c1d9672d22e51ad66f60a3c2730973cea1eb93a1"
 dependencies = [
  "crossbeam-channel",
  "crossbeam-utils",

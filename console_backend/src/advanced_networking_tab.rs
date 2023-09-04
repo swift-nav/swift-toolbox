@@ -157,10 +157,12 @@ impl AdvancedNetworkingTab {
 
         if self.running {
             if let Some(client) = &mut self.client {
-                if self.all_messages || OBS_MSGS.contains(&msg.message_type()) {
-                    if let Ok(frame) = sbp::to_vec(msg) {
-                        if let Err(_e) = client.send(&frame) {
-                            // Need to squelch error for the case of no client listening.
+                if let Some(msg_type) = &msg.message_type() {
+                    if self.all_messages || OBS_MSGS.contains(msg_type) {
+                        if let Ok(frame) = sbp::to_vec(msg) {
+                            if let Err(_e) = client.send(&frame) {
+                                // Need to squelch error for the case of no client listening.
+                            }
                         }
                     }
                 }

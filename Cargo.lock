@@ -2594,9 +2594,9 @@ dependencies = [
 
 [[package]]
 name = "sbp"
-version = "4.17.0"
+version = "5.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db425529eaeb2433689387c7567e43320f5bae4c5fdea307c11a225aace12f7b"
+checksum = "95bfac42dc0fc72b89f17426a68c504a30291ecbf46f3645fb232adcb5b2396b"
 dependencies = [
  "base64",
  "bytes",
@@ -2612,9 +2612,9 @@ dependencies = [
 
 [[package]]
 name = "sbp-settings"
-version = "0.6.17"
+version = "0.6.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c7806d5ee9473fa88f1a88d69303e7b8bb2ec6f9ab4f2255ac501f8df6f45c5"
+checksum = "fd6e9f139b0752b2b7cee4998f972e76eb183bb3aa6a22952b20167c4796b346"
 dependencies = [
  "crossbeam-channel",
  "crossbeam-utils",

@@ -41,8 +41,10 @@ pub fn utc_time(
     seconds: u32,
     nanoseconds: u32,
 ) -> UtcDateTime {
-    Utc.ymd(year, month, day)
-        .and_hms_nano(hours, minutes, seconds, nanoseconds)
+    Utc.with_ymd_and_hms(year, month, day, hours, minutes, seconds)
+        .latest()
+        .and_then(|dt| dt.with_nanosecond(nanoseconds))
+        .unwrap()
 }
 
 /// Return generic datetime as date and seconds.
@@ -78,7 +80,7 @@ pub fn convert_gps_time_to_logging_format(
 
     if let Some(wn) = week {
         if gnss_tow > 0_f64 {
-            let t_gps = Utc.ymd(1980, 1, 6).and_hms(0, 0, 0)
+            let t_gps = Utc.with_ymd_and_hms(1980, 1, 6, 0, 0, 0).unwrap()
                 + Duration::weeks(wn as i64)
                 + Duration::seconds(gnss_tow as i64);
             let (t_gps_date_, t_gps_secs_) = datetime_to_string_and_seconds(t_gps);

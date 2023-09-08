@@ -28,7 +28,7 @@ serde_yaml = "0.9"
 anyhow = { version = "1", features = ["backtrace"] }
 clap = { version = "4.4", features = ["derive"] }
 indexmap = { version = "2.0.0", features = ["serde"] }
-chrono = { version = "0.4.28", features = [
+chrono = { version = "0.4.30", features = [
   "serde",
   "clock",
   "std",

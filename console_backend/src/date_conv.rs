@@ -2,7 +2,6 @@ use chrono::{prelude::*, DateTime, Duration, Local, TimeZone, Utc};
 use std::fmt::Display;
 
 use crate::constants::{DECODED_THIS_SESSION, FACTORY_DEFAULT, NON_VOLATILE_MEMORY, UNKNOWN};
-use crate::date_conv;
 use crate::types::UtcDateTime;
 
 /// Get string corresponding to UTC source.

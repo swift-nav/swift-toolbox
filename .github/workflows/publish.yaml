@@ -150,9 +150,9 @@ jobs:
         env:
           BINARY_TARGET: ${{ matrix.binary_target }}
         run: |
-          cargo build --release --target ${BINARY_TARGET} --bin swift_settings
-          cargo build --release --target ${BINARY_TARGET} --bin swift-files
-          cargo build --release --target ${BINARY_TARGET} --bin fft_monitor
+          cargo build --release --target ${BINARY_TARGET} --bin swift-settings --features="env_logger"
+          cargo build --release --target ${BINARY_TARGET} --bin swift-files --features="env_logger indicatif"
+          cargo build --release --target ${BINARY_TARGET} --bin fft_monitor --features="fft"
           cargo build --release --target ${BINARY_TARGET} --bin headless-console
           cargo build --release --target ${BINARY_TARGET} --bin swift-updater
           cargo make \
@@ -189,7 +189,7 @@ jobs:
         DL_LINUX_aarch64: "swift-console-tools-${{ steps.get_tag.outputs.tag }}-aarch64-unknown-linux-gnu.zip"
         DL_MAC_x86_64: "swift-console-tools-${{ steps.get_tag.outputs.tag }}-x86_64-apple-darwin.zip"
         DL_MAC_aarch64: "swift-console-tools-${{ steps.get_tag.outputs.tag }}-aarch64-apple-darwin.zip"
-        LINKED_TOOLS: "swift_settings,swift-files,fft_monitor,headless-console,swift-updater"
+        LINKED_TOOLS: "swift-settings,swift-files,fft_monitor,headless-console,swift-updater"
       with:
         token: ${{ secrets.GH_TOKEN }}
         gh-name: ${{ secrets.GH_NAME }}

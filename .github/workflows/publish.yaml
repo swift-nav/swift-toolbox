@@ -5,8 +5,11 @@ on:
       - "*"
   pull_request:
 
-jobs:
+env:
+  PIP_CACHE_DIR: ~/.cache/pip
+  LIBCLANG_PATH_WIN: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
 
+jobs:
   pre-publish:
     runs-on: ubuntu-latest
     steps:

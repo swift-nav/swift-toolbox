@@ -90,7 +90,21 @@ PY_BASE_URL = "https://github.com/indygreg/python-build-standalone/releases/down
 MACOSX_DEPLOYMENT_TARGET = "10.15"
 APP_NAME = "swift-console"
 QT_VERSION = "6.4.3"                                                                           # Also needs to be updated in .github/workflows/main.yml
+CARGO_MAKE_TOOL_PROJECT_NAME = "swift-console-tools"
 
+[env.'release+mac_intel']
+CARGO_MAKE_RELEASE_FLOW_TARGET = "x86_64-apple-darwin"
+
+[env.'release+mac_arm']
+CARGO_MAKE_RELEASE_FLOW_TARGET = "aarch64-apple-darwin"
+
+[env.'release+x86_64']
+CARGO_MAKE_RELEASE_FLOW_TARGET = "x86_64-unknown-linux-gnu"
+
+[env.'release+aarch64']
+CARGO_MAKE_RELEASE_FLOW_TARGET = "aarch64-unknown-linux-gnu"
+
+#
 [tasks.init]
 
 # Two proposed methods of simplifying path globbing # https://github.com/sagiegurari/cargo-make/issues/542 # https://github.com/sagiegurari/cargo-make/issues/543
@@ -1370,4 +1384,38 @@ script = '''
 file = readfile resources/web/map/js/trajectory_raw.js
 file_modified = replace ${file} "@ACCESS_TOKEN@" ${MAPBOX_TOKEN}
 writefile "resources/web/map/js/trajectory.js" ${file_modified}
+'''
+
+[tasks.zip-release-binary-for-target]
+description = "Zips up the release binary, README, and license(s)"
+category = "Publish"
+condition = { env_set = [
+  "CARGO_MAKE_RELEASE_FLOW_TARGET",
+  "CARGO_MAKE_TOOL_PROJECT_NAME",
+  "CARGO_MAKE_PROJECT_VERSION",
+], env_true = [
+  "CARGO_MAKE_CI",
+] }
+env.OUTPUT_NAME = "${CARGO_MAKE_TOOL_PROJECT_NAME}-v${CARGO_MAKE_PROJECT_VERSION}-${CARGO_MAKE_RELEASE_FLOW_TARGET}"
+env.TARGET_RELEASE_DIRECTORY = "target/${CARGO_MAKE_RELEASE_FLOW_TARGET}/release"
+script_runner = "@duckscript"
+script = '''
+mkdir ${OUTPUT_NAME}
+
+cp ${TARGET_RELEASE_DIRECTORY}/swift_settings ${OUTPUT_NAME}/swift_settings
+cp ${TARGET_RELEASE_DIRECTORY}/swift-files ${OUTPUT_NAME}/swift-files
+cp ${TARGET_RELEASE_DIRECTORY}/fft_monitor ${OUTPUT_NAME}/fft_monitor
+cp ${TARGET_RELEASE_DIRECTORY}/headless-console ${OUTPUT_NAME}/headless-console
+cp ${TARGET_RELEASE_DIRECTORY}/swift-updater ${OUTPUT_NAME}/swift-updater
+
+cp ./README.md ${OUTPUT_NAME}/README.md
+glob_cp ./LICENSE* ${OUTPUT_NAME}/
+
+ls -l ${OUTPUT_NAME}/
+
+if is_windows
+    exec --fail-on-error powershell Compress-Archive -Path ${OUTPUT_NAME}/* -DestinationPath ${OUTPUT_NAME}.zip
+else
+    exec --fail-on-error zip -r ${OUTPUT_NAME}.zip ${OUTPUT_NAME}
+end
 '''

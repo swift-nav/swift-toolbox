@@ -145,11 +145,9 @@ args = ["update", "stable"]
 
 [tasks.cargo-make-deps-update]
 dependencies = ["rustup-update"]
-install_crate = { crate_name = "cargo-update", binary = "cargo-install-update", test_arg = [
-  "-V",
-], min_version = "7.0.1" }
-command = "cargo"
-args = ["install-update", "taplo-cli", "cargo-make"]
+script = '''
+cargo install taplo-cli@0.8.1 --locked
+'''
 
 [tasks.generate-common-constants-rs]
 script_runner = "@duckscript"

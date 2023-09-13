@@ -1,0 +1,192 @@
+name: Publish
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+
+  pre-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Create release notes
+        env:
+          GITHUB_USER: "${{ secrets.GH_NAME }}"
+          GITHUB_TOKEN: "${{ secrets.GH_TOKEN }}"
+        run: |
+          gh auth setup-git
+          gh release create --latest --generate-notes ${{ github.ref }} || :
+
+  publish:
+    name: Publish ${{ matrix.os }}
+    runs-on: ${{ matrix.runs_on }}
+    needs: [pre-publish]
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-20.04
+            binary_target: x86_64-unknown-linux-gnu
+            profile: release+x86_64
+            needs_musl: true
+            runs_on: ubuntu-20.04
+          - os: ubuntu-20.04
+            binary_target: aarch64-unknown-linux-gnu
+            profile: release+aarch64
+            needs_musl: true
+            build_cargo_make: true
+            runs_on: [self-hosted, Linux, prod, ARM64]
+          - os: macos-11
+            binary_target: x86_64-apple-darwin
+            profile: release+mac_intel
+            runs_on: macos-11
+          - os: macos-11
+            binary_target: aarch64-apple-darwin
+            profile: release+mac_arm
+            runs_on: macos-11
+
+    outputs:
+      version: ${{ steps.get_tag.outputs.tag }}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          ssh-key: ${{ secrets.SSH_KEY }}
+          ssh-strict: false
+
+      - uses: webfactory/ssh-agent@v0.5.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Run ssh-keyscan
+        run: ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      - name: Setup SSH for Windows Git LFS
+        run: |
+          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
+          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
+        if: matrix.os == 'windows-2019'
+
+      - name: Install ${{ runner.os }} Dependencies.
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+              sudo apt-get update && sudo apt-get install -y capnproto libudev-dev libssl-dev
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+              brew install capnp llvm
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+              choco install -y capnproto
+              echo "LIBCLANG_PATH=${{ env.LIBCLANG_PATH_WIN }}" >> $GITHUB_ENV
+          fi
+
+      - name: Pull Git LFS objects
+        run: git lfs pull
+        env:
+          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
+
+      - name: Install rust ${{ matrix.binary_target }}
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.binary_target }}
+          profile: minimal
+
+      - uses: Swatinem/rust-cache@v1
+        with:
+          key: ${{ secrets.CACHE_VERSION }}
+
+      - name: Store tags
+        id: get_tag
+        shell: bash
+        run: echo ::set-output name=tag::${GITHUB_REF##refs/tags/v}
+
+      - name: Install musl tools
+        if: matrix.needs_musl
+        run: >-
+          sudo apt-get update &&
+          sudo apt-get install -y
+          clang
+          llvm
+          musl-tools
+          gcc-aarch64-linux-gnu
+          g++-aarch64-linux-gnu
+          binutils-aarch64-linux-gnu
+          qemu-user
+
+      - uses: davidB/rust-cargo-make@v1
+        if: '!matrix.build_cargo_make'
+
+      - name: Build cargo-make
+        if: matrix.build_cargo_make
+        run: |
+          cargo install cargo-make
+
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.PIP_CACHE_DIR }}
+          key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
+
+      - name: Install ImageMagick
+        shell: bash
+        run: cargo make install-imagemagick
+
+      - name: Set up python builder
+        shell: bash
+        run: cargo make setup-builder
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Package Release
+        shell: bash
+        env:
+          BINARY_TARGET: ${{ matrix.binary_target }}
+        run: |
+          cargo build --release --target ${BINARY_TARGET} --bin swift_settings
+          cargo build --release --target ${BINARY_TARGET} --bin swift-files
+          cargo build --release --target ${BINARY_TARGET} --bin fft_monitor
+          cargo build --release --target ${BINARY_TARGET} --bin headless-console
+          cargo build --release --target ${BINARY_TARGET} --bin swift-updater
+          cargo make \
+            --profile ${{ matrix.profile }} \
+            --env CARGO_MAKE_PROJECT_VERSION=${{ steps.get_tag.outputs.tag }} \
+            zip-release-binary-for-target
+          ls *.zip
+
+      - name: Upload Release
+        uses: svenstaro/upload-release-action@v1-release
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: "*.zip"
+          tag: ${{ github.ref }}
+          overwrite: true
+          file_glob: true
+
+  post-publish:
+
+    name: Post publish
+    runs-on: ubuntu-20.04
+    needs: [publish]
+
+    steps:
+    - name: Store tags
+      id: get_tag
+      shell: bash
+      run: echo ::set-output name=tag::${GITHUB_REF##refs/tags/}
+
+    - name: Hook into package registry
+      uses: swift-nav/swift-cli-publisher@v2
+      env:
+        DL_LINUX_x86_64: "swift-console-tools-${{ steps.get_tag.outputs.tag }}-x86_64-unknown-linux-gnu.zip"
+        DL_LINUX_aarch64: "swift-console-tools-${{ steps.get_tag.outputs.tag }}-aarch64-unknown-linux-gnu.zip"
+        DL_MAC_x86_64: "swift-console-tools-${{ steps.get_tag.outputs.tag }}-x86_64-apple-darwin.zip"
+        DL_MAC_aarch64: "swift-console-tools-${{ steps.get_tag.outputs.tag }}-aarch64-apple-darwin.zip"
+        LINKED_TOOLS: "swift_settings,swift-files,fft_monitor,headless-console,swift-updater"
+      with:
+        token: ${{ secrets.GH_TOKEN }}
+        gh-name: ${{ secrets.GH_NAME }}
+        gh-email: ${{ secrets.GH_EMAIL }}

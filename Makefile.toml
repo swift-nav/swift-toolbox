@@ -1400,7 +1400,7 @@ script_runner = "@duckscript"
 script = '''
 mkdir ${OUTPUT_NAME}
 
-cp ${TARGET_RELEASE_DIRECTORY}/swift_settings ${OUTPUT_NAME}/swift_settings
+cp ${TARGET_RELEASE_DIRECTORY}/swift-settings ${OUTPUT_NAME}/swift-settings
 cp ${TARGET_RELEASE_DIRECTORY}/swift-files ${OUTPUT_NAME}/swift-files
 cp ${TARGET_RELEASE_DIRECTORY}/fft_monitor ${OUTPUT_NAME}/fft_monitor
 cp ${TARGET_RELEASE_DIRECTORY}/headless-console ${OUTPUT_NAME}/headless-console

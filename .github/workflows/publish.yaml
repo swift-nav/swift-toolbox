@@ -145,9 +145,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Copy Capnp into working path
+      - name: Copy Capnp into working path and set version
         shell: bash
-        run: cargo make copy-capnp
+        run: |
+          cargo make copy-capnp
+          cargo make store-version
 
       - name: Package Release
         shell: bash

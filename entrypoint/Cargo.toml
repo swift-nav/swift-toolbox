@@ -28,7 +28,7 @@ version = "1.4.0"
 version = "0.24.7"
 
 [dependencies.winit]
-version = "0.28.6"
+version = "0.28.7"
 optional = true
 
 [dependencies.minifb]

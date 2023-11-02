@@ -15,7 +15,6 @@ use crate::errors::{
 };
 use crate::log_panel::LogLevel;
 use crate::ntrip_tab::NtripOptions;
-use crate::output::CsvLogging;
 use crate::settings_tab;
 use crate::shared_state::{AdvancedNetworkingState, ConnectionState, SharedState};
 use crate::solution_tab::LatLonUnits;
@@ -107,8 +106,7 @@ pub fn server_recv_thread(
                         .get_directory()
                         .expect(CAP_N_PROTO_DESERIALIZATION_FAILURE);
                     shared_state.set_logging_directory(PathBuf::from(directory));
-                    shared_state.lock().logging_bar.csv_logging =
-                        CsvLogging::from(cv_in.get_csv_logging());
+                    shared_state.set_csv_logging(cv_in.get_csv_logging().into());
                     shared_state.set_sbp_logging(cv_in.get_sbp_logging(), client_sender.clone());
                     let sbp_logging_format = cv_in
                         .get_sbp_logging_format()

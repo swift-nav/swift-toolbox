@@ -33,7 +33,7 @@ chrono = { version = "0.4.31", features = [
   "clock",
   "std",
 ], default-features = false }
-serde = { version = "1.0.188", features = ["derive"] }
+serde = { version = "1.0.193", features = ["derive"] }
 sbp = { version = "5", features = ["json", "link", "swiftnav"] }
 mimalloc = { version = "0.1", default-features = false }
 serialport = { git = "https://github.com/swift-nav/serialport-rs.git", default-features = false }

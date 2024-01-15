@@ -351,12 +351,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "95e65021d89250bbfe7c2791789ced2c4bdc21b0e8bb59c64f3fd6145a5fd678"
 
 [[package]]
-name = "capnpc"
-version = "0.17.2"
+name = "capnp"
+version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fbbc3763fb3e6635188e9cc51ee11a26f8777c553ca377430818dbebaaf6042b"
+checksum = "5555adc392d19e38339531d9751cda671492a6346e65ed3f6113e9d0b0eb4ab3"
 dependencies = [
- "capnp",
+ "embedded-io",
+]
+
+[[package]]
+name = "capnpc"
+version = "0.19.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c75ba30e0f08582d53c2f3710cf4bb65ff562614b1ba86906d7391adffe189ec"
+dependencies = [
+ "capnp 0.19.0",
 ]
 
 [[package]]
@@ -573,7 +582,7 @@ dependencies = [
  "anyhow",
  "async_logger",
  "async_logger_log",
- "capnp",
+ "capnp 0.17.2",
  "capnpc",
  "chrono",
  "clap 4.4.6",
@@ -992,6 +1001,12 @@ name = "either"
 version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "90e5c1c8368803113bf0c9584fc495a58b86dc8a29edbf8fe877d21d9507e797"
+
+[[package]]
+name = "embedded-io"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "edd0f118536f44f5ccd48bcb8b111bdc3de888b58c74639dfb034a357d0f206d"
 
 [[package]]
 name = "encode_unicode"

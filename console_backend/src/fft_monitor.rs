@@ -277,7 +277,7 @@ mod tests {
         fftmon.capture_fft(msg).unwrap();
         let ffts = fftmon.ffts.get(&channel_tag).unwrap();
         assert_eq!(ffts.len(), 1);
-        let fft_mkval = ffts.get(0).unwrap();
+        let fft_mkval = ffts.first().unwrap();
         let freqs = fft_mkval.get(FREQUENCIES).unwrap();
         let amps = fft_mkval.get(AMPLITUDES).unwrap();
         assert_eq!(freqs.len(), SIGNALS_TOTAL);
@@ -302,7 +302,7 @@ mod tests {
         fftmon.capture_fft(msg).unwrap();
         let ffts = fftmon.ffts.get(&channel_tag).unwrap();
         assert_eq!(ffts.len(), 1);
-        let fft_mkval = ffts.get(0).unwrap();
+        let fft_mkval = ffts.first().unwrap();
         let freqs = fft_mkval.get(FREQUENCIES).unwrap();
         let amps = fft_mkval.get(AMPLITUDES).unwrap();
         assert_eq!(freqs.len(), SIGNALS_TOTAL);
@@ -319,7 +319,7 @@ mod tests {
 
         let ffts = fftmon.get_ffts(channel_tag).unwrap();
         assert_eq!(ffts.len(), 1);
-        let fft_mkval = ffts.get(0).unwrap();
+        let fft_mkval = ffts.first().unwrap();
         let freqs = fft_mkval.get(FREQUENCIES).unwrap();
         let amps = fft_mkval.get(AMPLITUDES).unwrap();
         assert_eq!(freqs.len(), SIGNALS_TOTAL);

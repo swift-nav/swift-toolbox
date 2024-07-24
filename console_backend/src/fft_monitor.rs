@@ -152,7 +152,7 @@ impl FftMonitor {
         if let Some(chan) = channel {
             channels.append(&mut vec![chan]);
         } else {
-            channels = self.channels.clone();
+            channels.clone_from(&self.channels);
         }
         for chan in channels {
             if let Some(chan_en) = self.enabled.get_mut(&chan) {

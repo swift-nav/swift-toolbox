@@ -13,7 +13,7 @@ fn glob_paths_excluding_target
         filename = concat ${cargo_home} "/" ${i}
         unix_filename = replace ${filename} \\ /
         ignored = array_contains ${gi_unix} ${unix_filename}
-        if not contains ${ignored} \"false\"
+        if not contains ${ignored} "false"
             array_push ${out} ${unix_filename}
         end
     end

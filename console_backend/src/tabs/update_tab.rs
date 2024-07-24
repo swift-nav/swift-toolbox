@@ -446,11 +446,12 @@ fn send_file(update_tab_context: UpdateTabContext, fileio: &mut Fileio) -> anyho
         let size = file_blob.metadata()?.len() as usize;
         let mut bytes_written = 0;
         update_tab_context.fw_log_replace_last("Writing 0.0%...".to_string());
-        match fileio.overwrite_with_progress(destination, file_blob, |n| {
+        let on_progress = |n| {
             bytes_written += n;
             let progress = (bytes_written as f64) / (size as f64) * 100.0;
             update_tab_context.fw_log_replace_last(format!("Writing {progress:.2}%..."));
-        }) {
+        };
+        match fileio.overwrite_with_progress(destination, file_blob, on_progress) {
             Ok(_) => {
                 update_tab_context.fw_log_append(String::from("File transfer complete."));
             }

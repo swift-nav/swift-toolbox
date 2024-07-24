@@ -79,10 +79,10 @@ impl AdvancedSpectrumAnalyzerTab {
                     if let Some(most_recent_fft) = ffts.pop() {
                         self.fft_monitor.clear_ffts(None);
                         if let Some(amplitudes) = most_recent_fft.get(&String::from(AMPLITUDES)) {
-                            self.most_recent_amplitudes = amplitudes.clone();
+                            self.most_recent_amplitudes.clone_from(amplitudes);
                         }
                         if let Some(frequencies) = most_recent_fft.get(&String::from(FREQUENCIES)) {
-                            self.most_recent_frequencies = frequencies.clone();
+                            self.most_recent_frequencies.clone_from(frequencies);
                         }
 
                         self.send_data();

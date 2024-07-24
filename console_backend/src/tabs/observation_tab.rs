@@ -111,7 +111,7 @@ impl ObservationTable {
         self.gps_week = wn;
         self.prev_obs_total = obs_total;
         self.prev_obs_count = 0;
-        self.old_carrier_phase = self.new_carrier_phase.clone();
+        self.old_carrier_phase.clone_from(&self.new_carrier_phase);
         self.incoming_obs.clear();
         self.new_carrier_phase.clear();
         self.rows.clear();

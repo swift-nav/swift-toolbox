@@ -181,7 +181,7 @@ impl SettingsTab {
     }
 
     pub fn get(&self, group: &str, name: &str) -> Result<SettingsEntry> {
-        self.settings.lock().get(group, name).map(Clone::clone)
+        self.settings.lock().get(group, name).cloned()
     }
 
     pub fn group(&self, group: &str) -> Result<Vec<SettingsEntry>> {

@@ -216,14 +216,14 @@ mod tests {
             uart_ftdi: uart_ftdi.clone(),
             latency,
         }));
-        assert_eq!(*tab.obs_latency.get(&CURR.to_string()).unwrap(), current);
-        assert_eq!(*tab.obs_latency.get(&AVG.to_string()).unwrap(), avg);
-        assert_eq!(*tab.obs_latency.get(&MIN.to_string()).unwrap(), lmin);
-        assert_eq!(*tab.obs_latency.get(&MAX.to_string()).unwrap(), lmax);
-        assert_eq!(*tab.obs_period.get(&CURR.to_string()).unwrap(), no_period);
-        assert_eq!(*tab.obs_period.get(&AVG.to_string()).unwrap(), no_period);
-        assert_eq!(*tab.obs_period.get(&MIN.to_string()).unwrap(), no_period);
-        assert_eq!(*tab.obs_period.get(&MAX.to_string()).unwrap(), no_period);
+        assert_eq!(*tab.obs_latency.get(CURR).unwrap(), current);
+        assert_eq!(*tab.obs_latency.get(AVG).unwrap(), avg);
+        assert_eq!(*tab.obs_latency.get(MIN).unwrap(), lmin);
+        assert_eq!(*tab.obs_latency.get(MAX).unwrap(), lmax);
+        assert_eq!(*tab.obs_period.get(CURR).unwrap(), no_period);
+        assert_eq!(*tab.obs_period.get(AVG).unwrap(), no_period);
+        assert_eq!(*tab.obs_period.get(MIN).unwrap(), no_period);
+        assert_eq!(*tab.obs_period.get(MAX).unwrap(), no_period);
         let avg = 1;
         let current = 2;
         let lmin = 3;
@@ -250,14 +250,14 @@ mod tests {
             latency,
             obs_period,
         }));
-        assert_eq!(*tab.obs_latency.get(&CURR.to_string()).unwrap(), current);
-        assert_eq!(*tab.obs_latency.get(&AVG.to_string()).unwrap(), avg);
-        assert_eq!(*tab.obs_latency.get(&MIN.to_string()).unwrap(), lmin);
-        assert_eq!(*tab.obs_latency.get(&MAX.to_string()).unwrap(), lmax);
-        assert_eq!(*tab.obs_period.get(&CURR.to_string()).unwrap(), current);
-        assert_eq!(*tab.obs_period.get(&AVG.to_string()).unwrap(), avg);
-        assert_eq!(*tab.obs_period.get(&MIN.to_string()).unwrap(), pmin);
-        assert_eq!(*tab.obs_period.get(&MAX.to_string()).unwrap(), pmax);
+        assert_eq!(*tab.obs_latency.get(CURR).unwrap(), current);
+        assert_eq!(*tab.obs_latency.get(AVG).unwrap(), avg);
+        assert_eq!(*tab.obs_latency.get(MIN).unwrap(), lmin);
+        assert_eq!(*tab.obs_latency.get(MAX).unwrap(), lmax);
+        assert_eq!(*tab.obs_period.get(CURR).unwrap(), current);
+        assert_eq!(*tab.obs_period.get(AVG).unwrap(), avg);
+        assert_eq!(*tab.obs_period.get(MIN).unwrap(), pmin);
+        assert_eq!(*tab.obs_period.get(MAX).unwrap(), pmax);
     }
 
     #[test]

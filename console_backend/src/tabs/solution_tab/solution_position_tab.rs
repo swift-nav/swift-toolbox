@@ -138,12 +138,16 @@ impl SolutionPositionTab {
             nsec: Some(0),
             shared_state,
             sln_cur_data: {
-                let mut data = vec![Vec::with_capacity(1); NUM_GNSS_MODES];
+                let mut data = (0..NUM_GNSS_MODES)
+                    .map(|_| Vec::with_capacity(1))
+                    .collect::<Vec<_>>();
                 data.reserve_exact(NUM_GNSS_MODES);
                 data
             },
             sln_data: {
-                let mut data = vec![Vec::with_capacity(PLOT_HISTORY_MAX); NUM_GNSS_MODES];
+                let mut data = (0..NUM_GNSS_MODES)
+                    .map(|_| Vec::with_capacity(PLOT_HISTORY_MAX))
+                    .collect::<Vec<_>>();
                 data.reserve_exact(NUM_GNSS_MODES);
                 data
             },

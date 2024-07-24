@@ -35,7 +35,6 @@ include = ["swiftnav_console/console_resources.py"]
 
 [tool.black]
 line-length = 120
-exclude = "standalone-py/"
 
 [tool.pylint.MASTER]
 jobs = 0

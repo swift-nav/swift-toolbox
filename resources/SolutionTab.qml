@@ -58,6 +58,7 @@ MainTab {
             }
 
             SolutionTabComponents.SolutionMapTab {
+                visible: Globals.enableMap
             }
         }
     }

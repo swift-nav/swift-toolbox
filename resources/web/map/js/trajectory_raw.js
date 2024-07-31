@@ -130,7 +130,9 @@ function setupLayers() {
 }
 
 function syncCrumbCoords(){
-    map.getSource('breadcrumb').setData({
+    let breadcrumb = map.getSource('breadcrumb');
+    if (breadcrumb === undefined) return;
+    breadcrumb.setData({
         type: 'Feature',
         geometry: {
             type: 'LineString',
@@ -142,10 +144,12 @@ function syncCrumbCoords(){
 function syncLayers() {
     // sync route datas with stored points
     for (let i = 0; i < lines.length; i++) {
-        map.getSource(`route${i}`).setData(data[i]);
+        let route = map.getSource(`route${i}`);
+        if (route !== undefined) route.setData(data[i]);
     }
     // clear protection, since its only one point and temporary
-    map.getSource('prot').setData({
+    let prot = map.getSource('prot');
+    if (prot !== undefined) prot.setData({
         type: 'FeatureCollection',
         features: []
     });

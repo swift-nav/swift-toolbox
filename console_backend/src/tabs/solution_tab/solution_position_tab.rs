@@ -752,7 +752,7 @@ impl SolutionPositionTab {
     /// # Parameters
     /// - `mode_string`: The mode string to attempt to prepare data for frontend.
     /// - `update_current`: Indicating whether the current solution should be updated by
-    /// this modes last lat/lon entry.
+    ///     this modes last lat/lon entry.
     fn _synchronize_plot_data_by_mode(&mut self, mode_string: &str, update_current: bool) {
         let idx = match self.mode_strings.iter().position(|x| x == mode_string) {
             Some(idx) => idx,

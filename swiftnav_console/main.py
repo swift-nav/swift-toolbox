@@ -667,8 +667,6 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
             globals_.setProperty("width", args.width)  # type: ignore
     if args.show_file_connection:
         globals_.setProperty("showFileConnection", True)  # type: ignore
-    if args.enable_map:
-        globals_.setProperty("enableMap", True)  # type: ignore
     if args.enable_ntrip:
         globals_.setProperty("enableNtrip", True)  # type: ignore
     try:
@@ -729,7 +727,6 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     parser.add_argument("--record-capnp-recording", action="store_true")
     parser.add_argument("--debug-with-no-backend", action="store_true")
     parser.add_argument("--show-fileio", action="store_true")
-    parser.add_argument("--enable-map", action="store_true")
     parser.add_argument("--show-file-connection", action="store_true")
     parser.add_argument("--no-prompts", action="store_true")
     parser.add_argument("--use-opengl", action="store_true")

@@ -778,7 +778,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
 
     QLocale.setDefault(QLocale.c())
     # Silence webengine context logging.
-    web_engine_context_log = QLoggingCategory("qt.webenginecontext")
+    web_engine_context_log = QLoggingCategory("qt.webenginecontext")  # type: ignore
     web_engine_context_log.setFilterRules("*.info=false")
     QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
     QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_UseDesktopOpenGL)
@@ -793,7 +793,6 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     QFontDatabase.addApplicationFont(":/fonts/RobotoCondensed-Regular.ttf")
     QQuickStyle.setStyle("Material")
     # We specifically *don't* want the RobotoCondensed-Bold.ttf font so we get the right look when bolded.
-
 
     qmlRegisterType(ConnectionData, "SwiftConsole", 1, 0, "ConnectionData")  # type: ignore
     qmlRegisterType(AdvancedImuPoints, "SwiftConsole", 1, 0, "AdvancedImuPoints")  # type: ignore

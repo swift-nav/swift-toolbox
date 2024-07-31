@@ -44,10 +44,10 @@ from PySide6.QtWebEngineQuick import QtWebEngineQuick
 
 from PySide6.QtWidgets import QApplication, QSplashScreen  # type: ignore
 
-from PySide6.QtCore import QObject, QUrl, QThread, QTimer, Slot, Signal, Qt, QLocale
+from PySide6.QtCore import QCoreApplication, QLoggingCategory, QObject, QUrl, QThread, QTimer, Slot, Signal, Qt, QLocale
 from PySide6 import QtCharts  # pylint: disable=unused-import
 
-from PySide6 import QtQml, QtCore
+from PySide6 import QtQml
 
 from PySide6.QtGui import QFontDatabase, QIcon, QPixmap
 
@@ -166,6 +166,8 @@ from .solution_velocity_tab import (
     solution_velocity_update,
 )
 
+from .solution_map import SolutionMap
+
 from .status_bar import (
     status_bar_update,
     StatusBarData,
@@ -257,9 +259,6 @@ TAB_LAYOUT = {
 }
 
 capnp.remove_import_hook()  # pylint: disable=no-member
-
-MAP_ENABLED = [False]
-SolutionMap = QObject
 
 
 class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attributes
@@ -356,8 +355,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                     data = settings_table_update()
                     SettingsTableEntries.post_data_update(data)
                 ConnectionData.post_connection_state_update(app_state)
-                if MAP_ENABLED[0]:
-                    SolutionMap.clear()
+                SolutionMap.clear()
             elif m.which == Message.Union.ConnectionNotification:
                 data = m.connectionNotification.message
                 ConnectionData.post_connection_message_update(data)
@@ -372,10 +370,9 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                 data[Keys.AVAILABLE_UNITS][:] = m.solutionPositionStatus.availableUnits
                 data[Keys.SOLUTION_LINE] = m.solutionPositionStatus.lineData
 
-                if MAP_ENABLED[0]:
-                    SolutionMap.send_pos(m.solutionPositionStatus)
+                SolutionMap.send_pos(m.solutionPositionStatus)
                 SolutionPositionPoints.post_data_update(data)
-            elif m.which == Message.Union.SolutionProtectionLevel and MAP_ENABLED[0]:
+            elif m.which == Message.Union.SolutionProtectionLevel:
                 SolutionMap.send_prot_lvl(m.solutionProtectionLevel)
             elif m.which == Message.Union.SolutionTableStatus:
                 data = solution_table_update()
@@ -672,7 +669,6 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
         globals_.setProperty("showFileConnection", True)  # type: ignore
     if args.enable_map:
         globals_.setProperty("enableMap", True)  # type: ignore
-        MAP_ENABLED[0] = True
     if args.enable_ntrip:
         globals_.setProperty("enableNtrip", True)  # type: ignore
     try:
@@ -775,14 +771,17 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
                 found_help_arg = True
         args_main, _ = parser.parse_known_args(passed_args)
     if args_main.no_high_dpi:
-        QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_Use96Dpi)  # type: ignore
+        QCoreApplication.setAttribute(Qt.AA_Use96Dpi)  # type: ignore
     if args_main.qmldebug:
         sys.argv.append("-qmljsdebugger=port:10002,block")
         debug = QQmlDebuggingEnabler()  # pylint: disable=unused-variable
 
     QLocale.setDefault(QLocale.c())
-    QtCore.QCoreApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
-    QtCore.QCoreApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_UseDesktopOpenGL)
+    # Silence webengine context logging.
+    web_engine_context_log = QLoggingCategory("qt.webenginecontext")
+    web_engine_context_log.setFilterRules("*.info=false")
+    QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
+    QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_UseDesktopOpenGL)
     QtWebEngineQuick.initialize()
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon(":/images/icon.ico"))
@@ -795,11 +794,6 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     QQuickStyle.setStyle("Material")
     # We specifically *don't* want the RobotoCondensed-Bold.ttf font so we get the right look when bolded.
 
-    if MAP_ENABLED[0]:
-        global SolutionMap  # pylint: disable=global-statement
-        from .solution_map import SolutionMap as SolutionMap_  # pylint: disable=import-outside-toplevel
-
-        SolutionMap = SolutionMap_  # type: ignore
 
     qmlRegisterType(ConnectionData, "SwiftConsole", 1, 0, "ConnectionData")  # type: ignore
     qmlRegisterType(AdvancedImuPoints, "SwiftConsole", 1, 0, "AdvancedImuPoints")  # type: ignore

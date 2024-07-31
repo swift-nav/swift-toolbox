@@ -57,15 +57,7 @@ MainTab {
             SolutionTabComponents.SolutionVelocityTab {
             }
 
-            Rectangle {
-                width: parent.width
-                height: parent.height
-                Loader {
-                    sourceComponent: Globals.enableMap ? solutionMap : null
-                }
-            }
-
-            property Component solutionMap: SolutionTabComponents.SolutionMapTab {
+            SolutionTabComponents.SolutionMapTab {
             }
         }
     }

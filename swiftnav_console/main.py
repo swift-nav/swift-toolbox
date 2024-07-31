@@ -44,10 +44,10 @@ from PySide6.QtWebEngineQuick import QtWebEngineQuick
 
 from PySide6.QtWidgets import QApplication, QSplashScreen  # type: ignore
 
-from PySide6.QtCore import QCoreApplication, QLoggingCategory, QObject, QUrl, QThread, QTimer, Slot, Signal, Qt, QLocale
+from PySide6.QtCore import QLoggingCategory, QObject, QUrl, QThread, QTimer, Slot, Signal, Qt, QLocale
 from PySide6 import QtCharts  # pylint: disable=unused-import
 
-from PySide6 import QtQml
+from PySide6 import QtQml, QtCore
 
 from PySide6.QtGui import QFontDatabase, QIcon, QPixmap
 
@@ -771,7 +771,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
                 found_help_arg = True
         args_main, _ = parser.parse_known_args(passed_args)
     if args_main.no_high_dpi:
-        QCoreApplication.setAttribute(Qt.AA_Use96Dpi)  # type: ignore
+        QtCore.QCoreApplication.setAttribute(Qt.AA_Use96Dpi)  # type: ignore
     if args_main.qmldebug:
         sys.argv.append("-qmljsdebugger=port:10002,block")
         debug = QQmlDebuggingEnabler()  # pylint: disable=unused-variable
@@ -780,8 +780,8 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     # Silence webengine context logging.
     web_engine_context_log = QLoggingCategory("qt.webenginecontext")  # type: ignore
     web_engine_context_log.setFilterRules("*.info=false")
-    QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
-    QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_UseDesktopOpenGL)
+    QtCore.QCoreApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
+    QtCore.QCoreApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_UseDesktopOpenGL)
     QtWebEngineQuick.initialize()
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon(":/images/icon.ico"))

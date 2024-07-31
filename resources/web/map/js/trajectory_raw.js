@@ -2,16 +2,21 @@ import mapboxGlStyleSwitcher from 'https://cdn.skypack.dev/mapbox-gl-style-switc
 
 const lines = ["#FF0000", "#FF00FF", "#00FFFF", "#0000FF", "#00FF00", "#000000"];
 const LNG_KM = 111.320, LAT_KM = 110.574;
+const mapContainer =  'map';
+const mapStyle = "mapbox://styles/mapbox/light-v11?optimize=true";
+const mapCenter = [-122.486052, 37.830348];  // Initial focus coordinate
+const mapZoom = 16;
+const mapPerformanceMetricsCollection = false;
 
 function decode(r){var n=r,t=[0,10,13,34,38,92],e=new Uint8Array(1.75*n.length|0),f=0,o=0,a=0;function i(r){o|=(r<<=1)>>>a,8<=(a+=7)&&(e[f++]=o,o=r<<7-(a-=8)&255)}for(var u=0;u<n.length;u++){var c,d=n.charCodeAt(u);127<d?(7!=(c=d>>>8&7)&&i(t[c]),i(127&d)):i(d)}r=new Uint8Array(e,0,f);var s=new TextDecoder().decode(r);while (s.slice(-1)=="\x00") s=s.slice(0,-1); return s;}
 
 mapboxgl.accessToken = decode("@ACCESS_TOKEN@");
 var map = new mapboxgl.Map({
-    container: 'map',
-    style: "mapbox://styles/mapbox/light-v11?optimize=true",
-    center: [-122.486052, 37.830348],  // Initial focus coordinate
-    zoom: 16,
-    performanceMetricsCollection: false,
+    container: mapContainer,
+    style: mapStyle,
+    center: mapCenter,
+    zoom: mapZoom,
+    performanceMetricsCollection: mapPerformanceMetricsCollection,
 });
 
 var focusCurrent = false;
@@ -242,4 +247,18 @@ map.on('style.load', () => {
 map.on('load', () => {
     console.log("loaded");
     setupLayers();
+});
+map.on('error', () => {
+    if (mapboxgl.accessToken != "@ACCESS_TOKEN@") {
+        console.log("Attempting to use local environment variable MAPBOX_TOKEN");
+        mapboxgl.accessToken = "@ACCESS_TOKEN@";
+        map.remove();
+        map = new mapboxgl.Map({
+            container: mapContainer,
+            style: mapStyle,
+            center: mapCenter,
+            zoom: mapZoom,
+            performanceMetricsCollection: mapPerformanceMetricsCollection,
+        });
+    }
 });

@@ -109,10 +109,6 @@ pub struct CliOptions {
     #[clap(long)]
     pub show_file_connection: bool,
 
-    /// Enable map.
-    #[clap(long)]
-    pub enable_map: bool,
-
     /// Enable ntrip client
     #[clap(long)]
     pub enable_ntrip: bool,

@@ -35,8 +35,10 @@ use crate::constants::{
     NUM_POINTS, TRACKING_UPDATE_PERIOD, TRK_RATE,
 };
 use crate::piksi_tools_constants::{
-    BDS2_B1_STR, BDS2_B2_STR, GAL_E1B_STR, GAL_E1X_STR, GAL_E7I_STR, GAL_E7Q_STR, GLO_L1OF_STR,
-    GLO_L2OF_STR, GPS_L1CA_STR, GPS_L2CM_STR, QZS_L1CA_STR, QZS_L2CM_STR, SBAS_L1_STR,
+    BDS2_B1_FAMILY, BDS2_B2_FAMILY, BDS3_B1C_FAMILY, BDS3_B2A_FAMILY, BDS3_B2B_FAMILY,
+    BDS3_B3_FAMILY, GAL_E1_FAMILY, GAL_E5AB_FAMILY, GAL_E5A_FAMILY, GAL_E5B_FAMILY, GAL_E6_FAMILY,
+    GLO_L1_FAMILY, GLO_L2_FAMILY, GPS_L1_FAMILY, GPS_L2_FAMILY, GPS_L5_FAMILY, QZS_L1_FAMILY,
+    QZS_L2_FAMILY, QZS_L5_FAMILY, SBAS_L1_FAMILY, SBAS_L5_FAMILY,
 };
 use crate::shared_state::{SharedState, TabName};
 use crate::types::{Cn0Age, Cn0Dict, ObservationMsg, RingBuffer, SignalCodes};
@@ -49,7 +51,7 @@ pub struct TrackingSignalsTab {
     /// Whether to disable processing of MsgTrackingState and MsgMeasurementState messages.
     pub disable_track: bool,
 
-    pub check_labels: [&'static str; 13],
+    pub check_labels: [&'static str; 21],
     pub client_sender: BoxedClientSender,
     /// Main storage of (code, sat) keys corresponding to cn0 age.
     pub cn0_age: Cn0Age,
@@ -92,19 +94,27 @@ impl TrackingSignalsTab {
             at_least_one_track_received: false,
             disable_track: false,
             check_labels: [
-                GPS_L1CA_STR,
-                GPS_L2CM_STR,
-                GLO_L1OF_STR,
-                GLO_L2OF_STR,
-                BDS2_B1_STR,
-                BDS2_B2_STR,
-                GAL_E1B_STR,
-                GAL_E1X_STR,
-                GAL_E7I_STR,
-                GAL_E7Q_STR,
-                QZS_L1CA_STR,
-                QZS_L2CM_STR,
-                SBAS_L1_STR,
+                GPS_L1_FAMILY,
+                GPS_L2_FAMILY,
+                GPS_L5_FAMILY,
+                GLO_L1_FAMILY,
+                GLO_L2_FAMILY,
+                BDS2_B1_FAMILY,
+                BDS2_B2_FAMILY,
+                BDS3_B1C_FAMILY,
+                BDS3_B2A_FAMILY,
+                BDS3_B2B_FAMILY,
+                BDS3_B3_FAMILY,
+                GAL_E1_FAMILY,
+                GAL_E5A_FAMILY,
+                GAL_E5B_FAMILY,
+                GAL_E5AB_FAMILY,
+                GAL_E6_FAMILY,
+                QZS_L1_FAMILY,
+                QZS_L2_FAMILY,
+                QZS_L5_FAMILY,
+                SBAS_L1_FAMILY,
+                SBAS_L5_FAMILY,
             ],
             client_sender,
             cn0_dict: Cn0Dict::new(),
@@ -689,7 +699,7 @@ mod tests {
             .lock()
             .tracking_tab
             .signals_tab
-            .check_visibility = vec![String::from(BDS2_B1_STR)];
+            .check_visibility = vec![String::from(BDS2_B1_FAMILY)];
         tracking_signals_tab.update_plot();
         assert_eq!(tracking_signals_tab.sv_labels.len(), 2);
         assert_eq!(tracking_signals_tab.colors.len(), 2);

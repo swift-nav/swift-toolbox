@@ -136,7 +136,7 @@ Item {
             rowSpacing: 0
             Layout.margins: 0
             Layout.alignment: Qt.AlignHCenter
-            Layout.preferredHeight: 20
+            Layout.preferredHeight: 20 * Math.max(rows, 1)
 
             SmallCheckBox {
                 id: toggleAllCheckBox

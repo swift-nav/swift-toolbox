@@ -24,15 +24,19 @@ use crate::constants::{
     RTK, SBAS, SBAS_COLOR, SBAS_LABEL, SPP, SPP_COLOR, SPP_LABEL,
 };
 use crate::piksi_tools_constants::{
-    BDS2_B1_STR, BDS2_B2_STR, BDS3_B1CI_STR, BDS3_B1CQ_STR, BDS3_B1CX_STR, BDS3_B3I_STR,
-    BDS3_B3Q_STR, BDS3_B3X_STR, BDS3_B5I_STR, BDS3_B5Q_STR, BDS3_B5X_STR, BDS3_B7I_STR,
+    BDS2_B1_FAMILY, BDS2_B1_STR, BDS2_B2_FAMILY, BDS2_B2_STR, BDS3_B1CI_STR, BDS3_B1CQ_STR,
+    BDS3_B1CX_STR, BDS3_B1C_FAMILY, BDS3_B2A_FAMILY, BDS3_B2B_FAMILY, BDS3_B3I_STR, BDS3_B3Q_STR,
+    BDS3_B3X_STR, BDS3_B3_FAMILY, BDS3_B5I_STR, BDS3_B5Q_STR, BDS3_B5X_STR, BDS3_B7I_STR,
     BDS3_B7Q_STR, BDS3_B7X_STR, CODE_NOT_AVAILABLE, GAL_AUX_STR, GAL_E1B_STR, GAL_E1C_STR,
-    GAL_E1X_STR, GAL_E5I_STR, GAL_E5Q_STR, GAL_E5X_STR, GAL_E6B_STR, GAL_E6C_STR, GAL_E6X_STR,
-    GAL_E7I_STR, GAL_E7Q_STR, GAL_E7X_STR, GAL_E8I_STR, GAL_E8Q_STR, GAL_E8X_STR, GLO_L1OF_STR,
-    GLO_L1P_STR, GLO_L2OF_STR, GLO_L2P_STR, GPS_AUX_STR, GPS_L1CA_STR, GPS_L1P_STR, GPS_L2CL_STR,
-    GPS_L2CM_STR, GPS_L2CX_STR, GPS_L2P_STR, GPS_L5I_STR, GPS_L5Q_STR, GPS_L5X_STR, QZS_AUX_STR,
-    QZS_L1CA_STR, QZS_L2CL_STR, QZS_L2CM_STR, QZS_L2CX_STR, QZS_L5I_STR, QZS_L5Q_STR, QZS_L5X_STR,
-    SBAS_AUX_STR, SBAS_L1_STR, SBAS_L5I_STR, SBAS_L5Q_STR, SBAS_L5X_STR,
+    GAL_E1X_STR, GAL_E1_FAMILY, GAL_E5A_FAMILY, GAL_E5AB_FAMILY, GAL_E5B_FAMILY, GAL_E5I_STR,
+    GAL_E5Q_STR, GAL_E5X_STR, GAL_E6B_STR, GAL_E6C_STR, GAL_E6X_STR, GAL_E6_FAMILY, GAL_E7I_STR,
+    GAL_E7Q_STR, GAL_E7X_STR, GAL_E8I_STR, GAL_E8Q_STR, GAL_E8X_STR, GLO_L1OF_STR, GLO_L1P_STR,
+    GLO_L1_FAMILY, GLO_L2OF_STR, GLO_L2P_STR, GLO_L2_FAMILY, GPS_AUX_STR, GPS_L1CA_STR,
+    GPS_L1P_STR, GPS_L1_FAMILY, GPS_L2CL_STR, GPS_L2CM_STR, GPS_L2CX_STR, GPS_L2P_STR,
+    GPS_L2_FAMILY, GPS_L5I_STR, GPS_L5Q_STR, GPS_L5X_STR, GPS_L5_FAMILY, QZS_AUX_STR, QZS_L1CA_STR,
+    QZS_L1_FAMILY, QZS_L2CL_STR, QZS_L2CM_STR, QZS_L2CX_STR, QZS_L2_FAMILY, QZS_L5I_STR,
+    QZS_L5Q_STR, QZS_L5X_STR, QZS_L5_FAMILY, SBAS_AUX_STR, SBAS_L1_FAMILY, SBAS_L1_STR,
+    SBAS_L5I_STR, SBAS_L5Q_STR, SBAS_L5X_STR, SBAS_L5_FAMILY,
 };
 
 use crate::utils::{mm_to_m, ms_to_sec};
@@ -556,23 +560,74 @@ impl SignalCodes {
         )
     }
 
+    /// Family label used by the tracking-signals visibility filter.
+    /// Each variant maps to its frequency-band family so a single checkbox
+    /// hides every variant in the family.
     pub fn filters(&self) -> Option<String> {
-        match self {
-            SignalCodes::CodeGpsL1Ca => Some(GPS_L1CA_STR.to_string()),
-            SignalCodes::CodeGpsL2Cm => Some(GPS_L2CM_STR.to_string()),
-            SignalCodes::CodeGloL1Of => Some(GLO_L1OF_STR.to_string()),
-            SignalCodes::CodeGloL2Of => Some(GLO_L2OF_STR.to_string()),
-            SignalCodes::CodeBds2B1 => Some(BDS2_B1_STR.to_string()),
-            SignalCodes::CodeBds2B2 => Some(BDS2_B2_STR.to_string()),
-            SignalCodes::CodeGalE1B => Some(GAL_E1B_STR.to_string()),
-            SignalCodes::CodeGalE1X => Some(GAL_E1X_STR.to_string()),
-            SignalCodes::CodeGalE7I => Some(GAL_E7I_STR.to_string()),
-            SignalCodes::CodeGalE7Q => Some(GAL_E7Q_STR.to_string()),
-            SignalCodes::CodeQzsL1Ca => Some(QZS_L1CA_STR.to_string()),
-            SignalCodes::CodeQzsL2Cm => Some(QZS_L2CM_STR.to_string()),
-            SignalCodes::CodeSbasL1Ca => Some(SBAS_L1_STR.to_string()),
-            _ => None,
-        }
+        let family = match self {
+            SignalCodes::CodeGpsL1Ca
+            | SignalCodes::CodeGpsL1P
+            | SignalCodes::CodeGpsL1Ci
+            | SignalCodes::CodeGpsL1Cq
+            | SignalCodes::CodeGpsL1Cx
+            | SignalCodes::CodeAuxGps => GPS_L1_FAMILY,
+            SignalCodes::CodeGpsL2Cm
+            | SignalCodes::CodeGpsL2Cl
+            | SignalCodes::CodeGpsL2Cx
+            | SignalCodes::CodeGpsL2P => GPS_L2_FAMILY,
+            SignalCodes::CodeGpsL5I | SignalCodes::CodeGpsL5Q | SignalCodes::CodeGpsL5X => {
+                GPS_L5_FAMILY
+            }
+            SignalCodes::CodeGloL1Of | SignalCodes::CodeGloL1P => GLO_L1_FAMILY,
+            SignalCodes::CodeGloL2Of | SignalCodes::CodeGloL2P => GLO_L2_FAMILY,
+            SignalCodes::CodeSbasL1Ca | SignalCodes::CodeAuxSbas => SBAS_L1_FAMILY,
+            SignalCodes::CodeSbasL5I | SignalCodes::CodeSbasL5Q | SignalCodes::CodeSbasL5X => {
+                SBAS_L5_FAMILY
+            }
+            SignalCodes::CodeBds2B1 => BDS2_B1_FAMILY,
+            SignalCodes::CodeBds2B2 => BDS2_B2_FAMILY,
+            SignalCodes::CodeBds3B1Ci | SignalCodes::CodeBds3B1Cq | SignalCodes::CodeBds3B1Cx => {
+                BDS3_B1C_FAMILY
+            }
+            SignalCodes::CodeBds3B5I | SignalCodes::CodeBds3B5Q | SignalCodes::CodeBds3B5X => {
+                BDS3_B2A_FAMILY
+            }
+            SignalCodes::CodeBds3B7I | SignalCodes::CodeBds3B7Q | SignalCodes::CodeBds3B7X => {
+                BDS3_B2B_FAMILY
+            }
+            SignalCodes::CodeBds3B3I | SignalCodes::CodeBds3B3Q | SignalCodes::CodeBds3B3X => {
+                BDS3_B3_FAMILY
+            }
+            SignalCodes::CodeGalE1B
+            | SignalCodes::CodeGalE1C
+            | SignalCodes::CodeGalE1X
+            | SignalCodes::CodeAuxGal => GAL_E1_FAMILY,
+            SignalCodes::CodeGalE5I | SignalCodes::CodeGalE5Q | SignalCodes::CodeGalE5X => {
+                GAL_E5A_FAMILY
+            }
+            SignalCodes::CodeGalE7I | SignalCodes::CodeGalE7Q | SignalCodes::CodeGalE7X => {
+                GAL_E5B_FAMILY
+            }
+            SignalCodes::CodeGalE8I | SignalCodes::CodeGalE8Q | SignalCodes::CodeGalE8X => {
+                GAL_E5AB_FAMILY
+            }
+            SignalCodes::CodeGalE6B | SignalCodes::CodeGalE6C | SignalCodes::CodeGalE6X => {
+                GAL_E6_FAMILY
+            }
+            SignalCodes::CodeQzsL1Ca
+            | SignalCodes::CodeQzsL1Ci
+            | SignalCodes::CodeQzsL1Cq
+            | SignalCodes::CodeQzsL1Cx
+            | SignalCodes::CodeAuxQzs => QZS_L1_FAMILY,
+            SignalCodes::CodeQzsL2Cm | SignalCodes::CodeQzsL2Cl | SignalCodes::CodeQzsL2Cx => {
+                QZS_L2_FAMILY
+            }
+            SignalCodes::CodeQzsL5I | SignalCodes::CodeQzsL5Q | SignalCodes::CodeQzsL5X => {
+                QZS_L5_FAMILY
+            }
+            SignalCodes::NotAvailable => return None,
+        };
+        Some(family.to_string())
     }
 }
 

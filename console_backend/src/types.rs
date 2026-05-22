@@ -24,19 +24,19 @@ use crate::constants::{
     RTK, SBAS, SBAS_COLOR, SBAS_LABEL, SPP, SPP_COLOR, SPP_LABEL,
 };
 use crate::piksi_tools_constants::{
-    BDS2_B1_FAMILY, BDS2_B1_STR, BDS2_B2_FAMILY, BDS2_B2_STR, BDS3_B1CI_STR, BDS3_B1CQ_STR,
-    BDS3_B1CX_STR, BDS3_B1C_FAMILY, BDS3_B2A_FAMILY, BDS3_B2B_FAMILY, BDS3_B3I_STR, BDS3_B3Q_STR,
-    BDS3_B3X_STR, BDS3_B3_FAMILY, BDS3_B5I_STR, BDS3_B5Q_STR, BDS3_B5X_STR, BDS3_B7I_STR,
-    BDS3_B7Q_STR, BDS3_B7X_STR, CODE_NOT_AVAILABLE, GAL_AUX_STR, GAL_E1B_STR, GAL_E1C_STR,
-    GAL_E1X_STR, GAL_E1_FAMILY, GAL_E5A_FAMILY, GAL_E5AB_FAMILY, GAL_E5B_FAMILY, GAL_E5I_STR,
-    GAL_E5Q_STR, GAL_E5X_STR, GAL_E6B_STR, GAL_E6C_STR, GAL_E6X_STR, GAL_E6_FAMILY, GAL_E7I_STR,
-    GAL_E7Q_STR, GAL_E7X_STR, GAL_E8I_STR, GAL_E8Q_STR, GAL_E8X_STR, GLO_L1OF_STR, GLO_L1P_STR,
-    GLO_L1_FAMILY, GLO_L2OF_STR, GLO_L2P_STR, GLO_L2_FAMILY, GPS_AUX_STR, GPS_L1CA_STR,
-    GPS_L1P_STR, GPS_L1_FAMILY, GPS_L2CL_STR, GPS_L2CM_STR, GPS_L2CX_STR, GPS_L2P_STR,
-    GPS_L2_FAMILY, GPS_L5I_STR, GPS_L5Q_STR, GPS_L5X_STR, GPS_L5_FAMILY, QZS_AUX_STR, QZS_L1CA_STR,
-    QZS_L1_FAMILY, QZS_L2CL_STR, QZS_L2CM_STR, QZS_L2CX_STR, QZS_L2_FAMILY, QZS_L5I_STR,
-    QZS_L5Q_STR, QZS_L5X_STR, QZS_L5_FAMILY, SBAS_AUX_STR, SBAS_L1_FAMILY, SBAS_L1_STR,
-    SBAS_L5I_STR, SBAS_L5Q_STR, SBAS_L5X_STR, SBAS_L5_FAMILY,
+    BDS2_B1_STR, BDS2_B2_STR, BDS3_B1CI_STR, BDS3_B1CQ_STR, BDS3_B1CX_STR, BDS3_B3I_STR,
+    BDS3_B3Q_STR, BDS3_B3X_STR, BDS3_B5I_STR, BDS3_B5Q_STR, BDS3_B5X_STR, BDS3_B7I_STR,
+    BDS3_B7Q_STR, BDS3_B7X_STR, BDS_B1_B1C_FAMILY, BDS_B2A_FAMILY, BDS_B2B_B3_FAMILY,
+    BDS_B2I_FAMILY, CODE_NOT_AVAILABLE, GAL_AUX_STR, GAL_E1B_STR, GAL_E1C_STR, GAL_E1X_STR,
+    GAL_E1_FAMILY, GAL_E5A_FAMILY, GAL_E5AB_E6_FAMILY, GAL_E5B_FAMILY, GAL_E5I_STR, GAL_E5Q_STR,
+    GAL_E5X_STR, GAL_E6B_STR, GAL_E6C_STR, GAL_E6X_STR, GAL_E7I_STR, GAL_E7Q_STR, GAL_E7X_STR,
+    GAL_E8I_STR, GAL_E8Q_STR, GAL_E8X_STR, GLO_G1_FAMILY, GLO_G2_FAMILY, GLO_L1OF_STR, GLO_L1P_STR,
+    GLO_L2OF_STR, GLO_L2P_STR, GPS_AUX_STR, GPS_L1CA_STR, GPS_L1P_STR, GPS_L1_FAMILY, GPS_L2CL_STR,
+    GPS_L2CM_STR, GPS_L2CX_STR, GPS_L2P_STR, GPS_L2_FAMILY, GPS_L5I_STR, GPS_L5Q_STR, GPS_L5X_STR,
+    GPS_L5_FAMILY, QZS_AUX_STR, QZS_L1CA_STR, QZS_L1_FAMILY, QZS_L2CL_STR, QZS_L2CM_STR,
+    QZS_L2CX_STR, QZS_L2_FAMILY, QZS_L5I_STR, QZS_L5Q_STR, QZS_L5X_STR, QZS_L5_FAMILY,
+    SBAS_AUX_STR, SBAS_L1_FAMILY, SBAS_L1_STR, SBAS_L5I_STR, SBAS_L5Q_STR, SBAS_L5X_STR,
+    SBAS_L5_FAMILY,
 };
 
 use crate::utils::{mm_to_m, ms_to_sec};
@@ -578,26 +578,26 @@ impl SignalCodes {
             SignalCodes::CodeGpsL5I | SignalCodes::CodeGpsL5Q | SignalCodes::CodeGpsL5X => {
                 GPS_L5_FAMILY
             }
-            SignalCodes::CodeGloL1Of | SignalCodes::CodeGloL1P => GLO_L1_FAMILY,
-            SignalCodes::CodeGloL2Of | SignalCodes::CodeGloL2P => GLO_L2_FAMILY,
+            SignalCodes::CodeGloL1Of | SignalCodes::CodeGloL1P => GLO_G1_FAMILY,
+            SignalCodes::CodeGloL2Of | SignalCodes::CodeGloL2P => GLO_G2_FAMILY,
             SignalCodes::CodeSbasL1Ca | SignalCodes::CodeAuxSbas => SBAS_L1_FAMILY,
             SignalCodes::CodeSbasL5I | SignalCodes::CodeSbasL5Q | SignalCodes::CodeSbasL5X => {
                 SBAS_L5_FAMILY
             }
-            SignalCodes::CodeBds2B1 => BDS2_B1_FAMILY,
-            SignalCodes::CodeBds2B2 => BDS2_B2_FAMILY,
-            SignalCodes::CodeBds3B1Ci | SignalCodes::CodeBds3B1Cq | SignalCodes::CodeBds3B1Cx => {
-                BDS3_B1C_FAMILY
-            }
+            SignalCodes::CodeBds2B1
+            | SignalCodes::CodeBds3B1Ci
+            | SignalCodes::CodeBds3B1Cq
+            | SignalCodes::CodeBds3B1Cx => BDS_B1_B1C_FAMILY,
+            SignalCodes::CodeBds2B2 => BDS_B2I_FAMILY,
             SignalCodes::CodeBds3B5I | SignalCodes::CodeBds3B5Q | SignalCodes::CodeBds3B5X => {
-                BDS3_B2A_FAMILY
+                BDS_B2A_FAMILY
             }
-            SignalCodes::CodeBds3B7I | SignalCodes::CodeBds3B7Q | SignalCodes::CodeBds3B7X => {
-                BDS3_B2B_FAMILY
-            }
-            SignalCodes::CodeBds3B3I | SignalCodes::CodeBds3B3Q | SignalCodes::CodeBds3B3X => {
-                BDS3_B3_FAMILY
-            }
+            SignalCodes::CodeBds3B7I
+            | SignalCodes::CodeBds3B7Q
+            | SignalCodes::CodeBds3B7X
+            | SignalCodes::CodeBds3B3I
+            | SignalCodes::CodeBds3B3Q
+            | SignalCodes::CodeBds3B3X => BDS_B2B_B3_FAMILY,
             SignalCodes::CodeGalE1B
             | SignalCodes::CodeGalE1C
             | SignalCodes::CodeGalE1X
@@ -608,12 +608,12 @@ impl SignalCodes {
             SignalCodes::CodeGalE7I | SignalCodes::CodeGalE7Q | SignalCodes::CodeGalE7X => {
                 GAL_E5B_FAMILY
             }
-            SignalCodes::CodeGalE8I | SignalCodes::CodeGalE8Q | SignalCodes::CodeGalE8X => {
-                GAL_E5AB_FAMILY
-            }
-            SignalCodes::CodeGalE6B | SignalCodes::CodeGalE6C | SignalCodes::CodeGalE6X => {
-                GAL_E6_FAMILY
-            }
+            SignalCodes::CodeGalE8I
+            | SignalCodes::CodeGalE8Q
+            | SignalCodes::CodeGalE8X
+            | SignalCodes::CodeGalE6B
+            | SignalCodes::CodeGalE6C
+            | SignalCodes::CodeGalE6X => GAL_E5AB_E6_FAMILY,
             SignalCodes::CodeQzsL1Ca
             | SignalCodes::CodeQzsL1Ci
             | SignalCodes::CodeQzsL1Cq

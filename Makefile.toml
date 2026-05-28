@@ -91,6 +91,9 @@ MACOSX_DEPLOYMENT_TARGET = "10.15"
 APP_NAME = "swift-console"
 QT_VERSION = "6.4.3"                                                                           # Also needs to be updated in .github/workflows/main.yml
 CARGO_MAKE_TOOL_PROJECT_NAME = "swift-console-tools"
+# Allow CMake 4.x to configure old vendored libraries (e.g. swiftnav-sys) whose
+# CMakeLists.txt still declares cmake_minimum_required < 3.5.
+CMAKE_POLICY_VERSION_MINIMUM = "3.5"
 
 [env.'release+mac_intel']
 CARGO_MAKE_RELEASE_FLOW_TARGET = "x86_64-apple-darwin"
@@ -153,7 +156,7 @@ cargo install taplo-cli@0.8.1 --locked
 script_runner = "@duckscript"
 script = '''
 python = get_env PYTHON
-exec ${python} -m py2many --rust swiftnav_console/constants.py
+exec ${python} -m py2many --rust=1 swiftnav_console/constants.py
 mv swiftnav_console/constants.rs console_backend/src/common_constants.rs
 '''
 
@@ -163,7 +166,7 @@ script = '''
 python = get_env PYTHON
 output = exec --fail-on-error ${python} utils/extract_piksi_tools_constants.py
 writefile /tmp/piksi_tools_constants.py ${output.stdout}
-exec --fail-on-error ${python} -m py2many --rust /tmp/piksi_tools_constants.py --outdir console_backend/src/
+exec --fail-on-error ${python} -m py2many --rust=1 /tmp/piksi_tools_constants.py --outdir console_backend/src/
 '''
 
 [tasks.check-python-exists]

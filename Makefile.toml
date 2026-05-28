@@ -153,7 +153,7 @@ cargo install taplo-cli@0.8.1 --locked
 script_runner = "@duckscript"
 script = '''
 python = get_env PYTHON
-exec ${python} -m py2many --rust=1 swiftnav_console/constants.py
+exec ${python} -m py2many --rust swiftnav_console/constants.py
 mv swiftnav_console/constants.rs console_backend/src/common_constants.rs
 '''
 
@@ -163,7 +163,7 @@ script = '''
 python = get_env PYTHON
 output = exec --fail-on-error ${python} utils/extract_piksi_tools_constants.py
 writefile /tmp/piksi_tools_constants.py ${output.stdout}
-exec --fail-on-error ${python} -m py2many --rust=1 /tmp/piksi_tools_constants.py --outdir console_backend/src/
+exec --fail-on-error ${python} -m py2many --rust /tmp/piksi_tools_constants.py --outdir console_backend/src/
 '''
 
 [tasks.check-python-exists]

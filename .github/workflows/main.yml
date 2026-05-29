@@ -111,9 +111,9 @@ jobs:
         run: cargo make setup-builder
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Run Backend Benchmarks
-        run: cargo make backend-benches
+      # temporary disable backend benchmarks as hardware machines are out-of-service.
+      # - name: Run Backend Benchmarks
+      #   run: cargo make backend-benches
 
   checks:
     name: Code Quality Checks

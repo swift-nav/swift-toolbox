@@ -44,7 +44,11 @@ jobs:
     name: Backend Benchmarks
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        # Pinned (not *-latest) for reproducible release-equivalent builds.
+        # macos-13 is Intel/x86_64: the build is hardcoded to x86_64-apple-darwin
+        # and runs on Apple Silicon via Rosetta, so it covers both architectures.
+        # macos-latest is now arm64 and would build under Rosetta (brew/prefix errors).
+        os: [ubuntu-22.04, macos-13, windows-2022]
     runs-on: ${{ matrix.os }}
     steps:
 

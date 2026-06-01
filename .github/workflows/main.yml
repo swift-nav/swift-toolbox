@@ -60,11 +60,12 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
       - name: Run ssh-keyscan
-        run: ssh-keyscan -o KexAlgorithms=-sntrup761x25519-sha512@openssh.com github.com >> ~/.ssh/known_hosts
+        shell: bash
+        run: ssh-keyscan github.com >> ~/.ssh/known_hosts
 
       - name: Setup SSH for Windows Git LFS
         run: |
-          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan -o KexAlgorithms=-sntrup761x25519-sha512@openssh.com github.com >> ~/.ssh/known_hosts"
+          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
           & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
         if: matrix.os == 'windows-latest'
 

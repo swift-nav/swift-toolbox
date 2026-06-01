@@ -71,7 +71,7 @@ jobs:
         run: |
           & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
           & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
-        if: matrix.os == 'windows-latest'
+        if: runner.os == 'Windows'
 
       - name: Install ${{ runner.os }} Dependencies.
         shell: bash

@@ -31,7 +31,9 @@ name: main
 env:
   PIP_CACHE_DIR: ~/.cache/pip
   RUST_CACHE_DIRS: "~/.cargo/registry\n~/.cargo/git\ntarget\n"
-  LIBCLANG_PATH_WIN: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
+  # Standalone LLVM preinstalled on the GitHub Windows images (version-independent,
+  # unlike the per-VS-version Llvm dir). libclang.dll lives here; bindgen needs it.
+  LIBCLANG_PATH_WIN: "C:/Program Files/LLVM/bin"
   CODE_SIGNER_PATH_WIN: "%win10sdk%/x64/signtool.exe"
   CARGO_INCREMENTAL: 0
   RUSTFLAGS: "-C debuginfo=0"

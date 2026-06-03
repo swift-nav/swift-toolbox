@@ -239,10 +239,22 @@ impl TrackingSignalsTab {
             let signal_code = SignalCodes::from(state.mesid.code);
             if signal_code.code_is_glo() {
                 if state.mesid.sat > GLO_SLOT_SAT_MAX {
-                    self.glo_fcn_dict
-                        .insert(idx as u8, state.mesid.sat as i16 - 100);
+                    sat -= 100.0 as i16;
+                    self.glo_fcn_dict.insert(idx as u8, sat);
+                } else {
+                    let mut found_fcn = None;
+                    for (fcn, slot) in self.glo_slot_dict.iter() {
+                        if *slot == state.mesid.sat as i16 {
+                            found_fcn = Some(*fcn);
+                            break;
+                        }
+                    }
+                    if let Some(fcn) = found_fcn {
+                        sat = fcn;
+                    } else {
+                        sat = self.glo_fcn_dict.get(&(idx as u8)).copied().unwrap_or(state.mesid.sat as i16);
+                    }
                 }
-                sat = *self.glo_fcn_dict.get(&(idx as u8)).unwrap_or(&(0_i16));
 
                 if state.mesid.sat <= GLO_SLOT_SAT_MAX {
                     self.glo_slot_dict.insert(sat, state.mesid.sat as i16);

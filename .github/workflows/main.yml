@@ -188,7 +188,7 @@ jobs:
 
   frontend_distribute:
     name: Run frontend benchmarks, build, sign and distribute
-    needs: [checks]
+    needs: [checks, backend_bench]
     runs-on: ubuntu-latest
     steps:
       - shell: bash

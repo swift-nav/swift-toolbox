@@ -39,82 +39,79 @@ env:
   APP_BUNDLE_ID: com.swift-nav.SwiftConsole
 
 jobs:
+  backend_bench:
+    name: Backend Benchmarks
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, macos-15-intel, windows-2025]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          ssh-key: ${{ secrets.SSH_KEY }}
+          ssh-strict: false
 
-  # backend_bench:
-  #   name: Backend Benchmarks
-  #   strategy:
-  #     matrix:
-  #       os: [ubuntu-24.04, macos-15-intel, windows-2025]
-  #   runs-on: ${{ matrix.os }}
-  #   steps:
+      - uses: webfactory/ssh-agent@v0.5.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
 
-  #     - name: Checkout source
-  #       uses: actions/checkout@v4
-  #       with:
-  #         submodules: recursive
-  #         ssh-key: ${{ secrets.SSH_KEY }}
-  #         ssh-strict: false
+      - name: Run ssh-keyscan
+        shell: bash
+        run: ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-  #     - uses: webfactory/ssh-agent@v0.5.0
-  #       with:
-  #         ssh-private-key: ${{ secrets.SSH_KEY }}
+      - name: Setup SSH for Windows Git LFS
+        run: |
+          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
+          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
+        if: runner.os == 'Windows'
 
-  #     - name: Run ssh-keyscan
-  #       shell: bash
-  #       run: ssh-keyscan github.com >> ~/.ssh/known_hosts
+      - name: Install ${{ runner.os }} Dependencies.
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+              sudo apt-get update && sudo apt-get install -y capnproto libudev-dev libssl-dev
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+              brew install capnp llvm
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+              choco install -y capnproto
+              echo "LIBCLANG_PATH=${{ env.LIBCLANG_PATH_WIN }}" >> $GITHUB_ENV
+          fi
 
-  #     - name: Setup SSH for Windows Git LFS
-  #       run: |
-  #         & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
-  #         & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
-  #       if: runner.os == 'Windows'
+      - name: Pull Git LFS objects
+        run: git lfs pull
+        env:
+          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
 
-  #     - name: Install ${{ runner.os }} Dependencies.
-  #       shell: bash
-  #       run: |
-  #         if [ "$RUNNER_OS" == "Linux" ]; then
-  #             sudo apt-get update && sudo apt-get install -y capnproto libudev-dev libssl-dev
-  #         elif [ "$RUNNER_OS" == "macOS" ]; then
-  #             brew install capnp llvm
-  #         elif [ "$RUNNER_OS" == "Windows" ]; then
-  #             choco install -y capnproto
-  #             echo "LIBCLANG_PATH=${{ env.LIBCLANG_PATH_WIN }}" >> $GITHUB_ENV
-  #         fi
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
 
-  #     - name: Pull Git LFS objects
-  #       run: git lfs pull
-  #       env:
-  #         GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
+      - uses: Swatinem/rust-cache@v1
+        with:
+          key: ${{ secrets.CACHE_VERSION }}
 
-  #     - uses: actions-rs/toolchain@v1
-  #       with:
-  #         profile: minimal
-  #         toolchain: stable
+      - uses: davidB/rust-cargo-make@v1
 
-  #     - uses: Swatinem/rust-cache@v1
-  #       with:
-  #         key: ${{ secrets.CACHE_VERSION }}
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PIP_CACHE_DIR }}
+          key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
 
-  #     - uses: davidB/rust-cargo-make@v1
+      - name: Install ImageMagick
+        shell: bash
+        run: cargo make install-imagemagick
 
-  #     - name: Cache pip
-  #       uses: actions/cache@v4
-  #       with:
-  #         path: ${{ env.PIP_CACHE_DIR }}
-  #         key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
-
-  #     - name: Install ImageMagick
-  #       shell: bash
-  #       run: cargo make install-imagemagick
-
-  #     - name: Set up python builder
-  #       shell: bash
-  #       run: cargo make setup-builder
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # temporary disable backend benchmarks as hardware machines are out-of-service.
-      # - name: Run Backend Benchmarks
-      #   run: cargo make backend-benches
+      - name: Set up python builder
+        shell: bash
+        run: cargo make setup-builder
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run Backend Benchmarks
+        run: cargo make backend-benches
 
   checks:
     name: Code Quality Checks

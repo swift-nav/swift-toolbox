@@ -19,7 +19,7 @@ test = [
   "py2many ==0.4",
   "types-requests ~= 2.31.0",
 ]
-ssh-tunnel = ["sshtunnel >= 0.4.0"]
+ssh-tunnel = ["sshtunnel >= 0.4.0", "cryptography < 47"]
 
 [build-system]
 requires = [

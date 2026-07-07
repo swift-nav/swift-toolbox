@@ -71,6 +71,9 @@ jobs:
         shell: bash
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
+              # Drop the preinstalled Microsoft/Azure apt repos; their InRelease files
+              # intermittently break signing and none of our deps come from them.
+              sudo rm -f /etc/apt/sources.list.d/*microsoft* /etc/apt/sources.list.d/*azure* || true
               sudo apt-get update && sudo apt-get install -y capnproto libudev-dev libssl-dev
           elif [ "$RUNNER_OS" == "macOS" ]; then
               brew install capnp llvm
@@ -146,7 +149,11 @@ jobs:
       - uses: davidB/rust-cargo-make@v1
 
       - name: Install Dependencies.
-        run: sudo apt-get update && sudo apt-get install -y capnproto libudev-dev libssl-dev
+        run: |
+          # Drop the preinstalled Microsoft/Azure apt repos; their InRelease files
+          # intermittently break signing and none of our deps come from them.
+          sudo rm -f /etc/apt/sources.list.d/*microsoft* /etc/apt/sources.list.d/*azure* || true
+          sudo apt-get update && sudo apt-get install -y capnproto libudev-dev libssl-dev
 
       - name: Cache pip
         uses: actions/cache@v4

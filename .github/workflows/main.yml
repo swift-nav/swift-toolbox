@@ -80,6 +80,9 @@ jobs:
           elif [ "$RUNNER_OS" == "Windows" ]; then
               choco install -y capnproto
               echo "LIBCLANG_PATH=${{ env.LIBCLANG_PATH_WIN }}" >> $GITHUB_ENV
+              # windows-2025 ships Visual Studio 2026; swiftnav-sys's pinned cmake 0.1.49
+              # can't auto-detect it, so set the generator explicitly to skip detection.
+              echo "CMAKE_GENERATOR=Visual Studio 18 2026" >> $GITHUB_ENV
           fi
 
       - name: Pull Git LFS objects

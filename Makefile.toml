@@ -979,7 +979,7 @@ for path in ${old_dmgs}
     rm ${path}
 end
 
-exec --fail-on-error create-dmg --volname "${app_file_prefix}" --volicon "${icns_path}" --background "${background_path}" --hdiutil-verbose --window-pos 200 120 --window-size 800 400 --icon-size 100 --icon "${app_dir_name}" 200 190 --hide-extension "${app_dir_name}" --app-drop-link 600 185 "${dmg_path}" "${tmp_dir}"
+exec --fail-on-error create-dmg --skip-jenkins --volname "${app_file_prefix}" --volicon "${icns_path}" --background "${background_path}" --hdiutil-verbose --window-pos 200 120 --window-size 800 400 --icon-size 100 --icon "${app_dir_name}" 200 190 --hide-extension "${app_dir_name}" --app-drop-link 600 185 "${dmg_path}" "${tmp_dir}"
 '''
 
 [tasks.dist-to-installer.mac]

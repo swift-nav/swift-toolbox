@@ -212,7 +212,7 @@ jobs:
         with:
           owner: swift-nav
           repo: swift-toolbox-ci
-          ref: jack/fix_ci
+          ref: main
           workflow_file_name: distribute.yml
           client_payload: '{
             "branch": "${{ github.head_ref || github.ref_name }}",

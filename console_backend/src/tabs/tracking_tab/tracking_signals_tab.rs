@@ -242,18 +242,17 @@ impl TrackingSignalsTab {
                     sat -= 100.0 as i16;
                     self.glo_fcn_dict.insert(idx as u8, sat);
                 } else {
-                    let mut found_fcn = None;
-                    for (fcn, slot) in self.glo_slot_dict.iter() {
-                        if *slot == state.mesid.sat as i16 {
-                            found_fcn = Some(*fcn);
-                            break;
-                        }
-                    }
-                    if let Some(fcn) = found_fcn {
-                        sat = fcn;
-                    } else {
-                        sat = self.glo_fcn_dict.get(&(idx as u8)).copied().unwrap_or(state.mesid.sat as i16);
-                    }
+                    let target = state.mesid.sat as i16;
+                    let found_fcn = self
+                        .glo_slot_dict
+                        .iter()
+                        .find_map(|(fcn, slot)| (*slot == target).then(|| fcn));
+                    sat = found_fcn.unwrap_or_else(|| {
+                        self.glo_fcn_dict
+                            .get(&(idx as u8))
+                            .copied()
+                            .unwrap_or(target)
+                    });
                 }
 
                 if state.mesid.sat <= GLO_SLOT_SAT_MAX {

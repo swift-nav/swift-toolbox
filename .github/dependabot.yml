@@ -24,12 +24,24 @@ updates:
   schedule:
     interval: daily
     time: "13:00"
+  groups:
+      minor-and-patch:
+        applies-to: version-updates
+        update-types:
+          - patch
+          - minor
   open-pull-requests-limit: 10
 - package-ecosystem: pip
   directory: "/"
   schedule:
     interval: daily
     time: "13:00"
+  groups:
+      minor-and-patch:
+        applies-to: version-updates
+        update-types:
+          - patch
+          - minor
   open-pull-requests-limit: 10
 - package-ecosystem: github-actions
   directory: "/"

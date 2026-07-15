@@ -246,13 +246,9 @@ impl TrackingSignalsTab {
                     let found_fcn = self
                         .glo_slot_dict
                         .iter()
-                        .find_map(|(fcn, slot)| (*slot == target).then(|| fcn));
-                    sat = found_fcn.unwrap_or_else(|| {
-                        self.glo_fcn_dict
-                            .get(&(idx as u8))
-                            .copied()
-                            .unwrap_or(target)
-                    });
+                        .find_map(|(fcn, slot)| (*slot == target).then_some(fcn));
+                    sat = *found_fcn
+                        .unwrap_or_else(|| self.glo_fcn_dict.get(&(idx as u8)).unwrap_or(&target));
                 }
 
                 if state.mesid.sat <= GLO_SLOT_SAT_MAX {

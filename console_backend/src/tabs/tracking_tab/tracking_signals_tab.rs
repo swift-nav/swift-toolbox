@@ -585,28 +585,36 @@ mod tests {
 
         // Additional testing for GLO sat mapping logic
         // Receive GLO signal <= 100 at same index 0. It falls back to glo_fcn_dict to get FCN.
-        let states2 = vec![
-            MeasurementState {
-                cn0: 200_u8,
-                mesid: GnssSignal {
-                    sat: 24, // slot <= GLO_SLOT_SAT_MAX, targets slot 24
-                    code: 3,
-                },
-            }
-        ];
+        let states2 = vec![MeasurementState {
+            cn0: 200_u8,
+            mesid: GnssSignal {
+                sat: 24, // slot <= GLO_SLOT_SAT_MAX, targets slot 24
+                code: 3,
+            },
+        }];
         tracking_signals_tab.handle_msg_measurement_state(states2);
         // Found fcn=3 from glo_fcn_dict index 0 (103 - 100), associates fcn=3 with slot=24
         assert_eq!(tracking_signals_tab.glo_slot_dict.get(&3), Some(&24));
-        assert!(tracking_signals_tab.cn0_dict.contains_key(&(SignalCodes::from(3_u8), 3)));
+        assert!(tracking_signals_tab
+            .cn0_dict
+            .contains_key(&(SignalCodes::from(3_u8), 3)));
 
         // Receive GLO signal <= 100 at a DIFFERENT index. It finds it through glo_slot_dict.
         let states3 = vec![
-            MeasurementState { cn0: 200_u8, mesid: GnssSignal { sat: 10, code: 0 } }, // index 0 (unrelated)
-            MeasurementState { cn0: 200_u8, mesid: GnssSignal { sat: 24, code: 3 } }, // index 1 (GLO code, slot 24)
+            MeasurementState {
+                cn0: 200_u8,
+                mesid: GnssSignal { sat: 10, code: 0 },
+            }, // index 0 (unrelated)
+            MeasurementState {
+                cn0: 200_u8,
+                mesid: GnssSignal { sat: 24, code: 3 },
+            }, // index 1 (GLO code, slot 24)
         ];
         tracking_signals_tab.handle_msg_measurement_state(states3);
         // Successfully uses the found_fcn fallback mapping (fcn=3 for slot 24)
-        assert!(tracking_signals_tab.cn0_dict.contains_key(&(SignalCodes::from(3_u8), 3)));
+        assert!(tracking_signals_tab
+            .cn0_dict
+            .contains_key(&(SignalCodes::from(3_u8), 3)));
     }
 
     #[test]

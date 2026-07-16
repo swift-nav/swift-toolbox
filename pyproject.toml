@@ -16,10 +16,10 @@ test = [
   "pytest ~= 7.4.0",
   "setuptools-rust ~= 0.12.1",
   "psutil ~= 5.9.3",
-  "py2many >=0.3",
+  "py2many ==0.4",
   "types-requests ~= 2.31.0",
 ]
-ssh-tunnel = ["sshtunnel >= 0.4.0"]
+ssh-tunnel = ["sshtunnel >= 0.4.0", "cryptography < 47"]
 
 [build-system]
 requires = [

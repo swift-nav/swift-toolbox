@@ -31,7 +31,7 @@ name: main
 env:
   PIP_CACHE_DIR: ~/.cache/pip
   RUST_CACHE_DIRS: "~/.cargo/registry\n~/.cargo/git\ntarget\n"
-  LIBCLANG_PATH_WIN: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
+  LIBCLANG_PATH_WIN: "C:/Program Files/LLVM/bin"
   CODE_SIGNER_PATH_WIN: "%win10sdk%/x64/signtool.exe"
   CARGO_INCREMENTAL: 0
   RUSTFLAGS: "-C debuginfo=0"
@@ -39,17 +39,15 @@ env:
   APP_BUNDLE_ID: com.swift-nav.SwiftConsole
 
 jobs:
-
   backend_bench:
     name: Backend Benchmarks
     strategy:
       matrix:
-        os: [ubuntu-20.04, macos-12, windows-2019]
+        os: [ubuntu-24.04, macos-15-intel, windows-2025]
     runs-on: ${{ matrix.os }}
     steps:
-
       - name: Checkout source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v7
         with:
           submodules: recursive
           ssh-key: ${{ secrets.SSH_KEY }}
@@ -60,24 +58,31 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
       - name: Run ssh-keyscan
+        shell: bash
         run: ssh-keyscan github.com >> ~/.ssh/known_hosts
 
       - name: Setup SSH for Windows Git LFS
         run: |
           & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
           & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
-        if: matrix.os == 'windows-2019'
+        if: runner.os == 'Windows'
 
       - name: Install ${{ runner.os }} Dependencies.
         shell: bash
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
+              # Drop the preinstalled Microsoft/Azure apt repos; their InRelease files
+              # intermittently break signing and none of our deps come from them.
+              sudo rm -f /etc/apt/sources.list.d/*microsoft* /etc/apt/sources.list.d/*azure* || true
               sudo apt-get update && sudo apt-get install -y capnproto libudev-dev libssl-dev
           elif [ "$RUNNER_OS" == "macOS" ]; then
               brew install capnp llvm
           elif [ "$RUNNER_OS" == "Windows" ]; then
               choco install -y capnproto
               echo "LIBCLANG_PATH=${{ env.LIBCLANG_PATH_WIN }}" >> $GITHUB_ENV
+              # windows-2025 ships Visual Studio 2026; swiftnav-sys's pinned cmake 0.1.49
+              # can't auto-detect it, so set the generator explicitly to skip detection.
+              echo "CMAKE_GENERATOR=Visual Studio 18 2026" >> $GITHUB_ENV
           fi
 
       - name: Pull Git LFS objects
@@ -90,14 +95,14 @@ jobs:
           profile: minimal
           toolchain: stable
 
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
         with:
           key: ${{ secrets.CACHE_VERSION }}
 
       - uses: davidB/rust-cargo-make@v1
 
       - name: Cache pip
-        uses: actions/cache@v2
+        uses: actions/cache@v6
         with:
           path: ${{ env.PIP_CACHE_DIR }}
           key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
@@ -111,16 +116,15 @@ jobs:
         run: cargo make setup-builder
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Run Backend Benchmarks
         run: cargo make backend-benches
 
   checks:
     name: Code Quality Checks
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v7
         with:
           submodules: recursive
           ssh-key: ${{ secrets.SSH_KEY }}
@@ -141,17 +145,21 @@ jobs:
           profile: minimal
           toolchain: stable
 
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
         with:
           key: ${{ secrets.CACHE_VERSION }}
 
       - uses: davidB/rust-cargo-make@v1
 
       - name: Install Dependencies.
-        run: sudo apt-get update && sudo apt-get install -y capnproto libudev-dev libssl-dev
+        run: |
+          # Drop the preinstalled Microsoft/Azure apt repos; their InRelease files
+          # intermittently break signing and none of our deps come from them.
+          sudo rm -f /etc/apt/sources.list.d/*microsoft* /etc/apt/sources.list.d/*azure* || true
+          sudo apt-get update && sudo apt-get install -y capnproto libudev-dev libssl-dev
 
       - name: Cache pip
-        uses: actions/cache@v2
+        uses: actions/cache@v6
         with:
           path: ${{ env.PIP_CACHE_DIR }}
           key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
@@ -200,7 +208,7 @@ jobs:
       - shell: bash
         run: echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
 
-      - uses: convictional/trigger-workflow-and-wait@v1.6.1
+      - uses: convictional/trigger-workflow-and-wait@v1.6.5
         with:
           owner: swift-nav
           repo: swift-toolbox-ci
@@ -213,9 +221,8 @@ jobs:
             "version": "${{ env.VERSION }}",
             "pr_number": "${{ github.event.number }}"
           }'
-          github_user: ${{ secrets.GH_NAME }}
           github_token: ${{ secrets.GH_TOKEN }}
           propagate_failure: true
           wait_workflow: true
           trigger_workflow: true
-          wait_interval: 120
+          wait_interval: 30

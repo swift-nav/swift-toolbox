@@ -237,7 +237,9 @@ def get_nested_key(nested_dict: dict, key_path: str) -> Optional[Any]:
     """
     current_key, *next_keys = key_path.split(".", 1)
     value = nested_dict.get(current_key, None)
-    return value if not isinstance(value, dict) and len(next_keys) != 1 else get_nested_key(value, next_keys[0])
+    if not next_keys or not isinstance(value, dict):
+        return value
+    return get_nested_key(value, next_keys[0])
 
 
 def run_disk_usage_benchmark():

@@ -91,6 +91,9 @@ MACOSX_DEPLOYMENT_TARGET = "10.15"
 APP_NAME = "swift-console"
 QT_VERSION = "6.4.3"                                                                           # Also needs to be updated in .github/workflows/main.yml
 CARGO_MAKE_TOOL_PROJECT_NAME = "swift-console-tools"
+# Allow CMake 4.x to configure old vendored libraries (e.g. swiftnav-sys) whose
+# CMakeLists.txt still declares cmake_minimum_required < 3.5.
+CMAKE_POLICY_VERSION_MINIMUM = "3.5"
 
 [env.'release+mac_intel']
 CARGO_MAKE_RELEASE_FLOW_TARGET = "x86_64-apple-darwin"
@@ -976,7 +979,7 @@ for path in ${old_dmgs}
     rm ${path}
 end
 
-exec --fail-on-error create-dmg --volname "${app_file_prefix}" --volicon "${icns_path}" --background "${background_path}" --hdiutil-verbose --window-pos 200 120 --window-size 800 400 --icon-size 100 --icon "${app_dir_name}" 200 190 --hide-extension "${app_dir_name}" --app-drop-link 600 185 "${dmg_path}" "${tmp_dir}"
+exec --fail-on-error create-dmg --skip-jenkins --volname "${app_file_prefix}" --volicon "${icns_path}" --background "${background_path}" --hdiutil-verbose --window-pos 200 120 --window-size 800 400 --icon-size 100 --icon "${app_dir_name}" 200 190 --hide-extension "${app_dir_name}" --app-drop-link 600 185 "${dmg_path}" "${tmp_dir}"
 '''
 
 [tasks.dist-to-installer.mac]

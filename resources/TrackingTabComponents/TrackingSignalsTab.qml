@@ -128,25 +128,97 @@ Item {
             id: trackingSignalsCheckboxes
 
             readonly property var familyMeta: ({
-                "GPS L1":      { c: "GPS",  b: "L1",     d: "L1" },
-                "GPS L2":      { c: "GPS",  b: "L2",     d: "L2" },
-                "GPS L5":      { c: "GPS",  b: "L5",     d: "L5" },
-                "GLO G1":      { c: "GLO",  b: "L1",     d: "G1" },
-                "GLO G2":      { c: "GLO",  b: "L2",     d: "G2" },
-                "GAL E1":      { c: "GAL",  b: "L1",     d: "E1" },
-                "GAL E5b":     { c: "GAL",  b: "L2",     d: "E5b" },
-                "GAL E5a":     { c: "GAL",  b: "L5",     d: "E5a" },
-                "GAL E5ab/E6": { c: "GAL",  b: "Others", d: "E5ab/E6" },
-                "BDS B1/B1C":  { c: "BDS",  b: "L1",     d: "B1/B1C" },
-                "BDS B2I":     { c: "BDS",  b: "L2",     d: "B2I" },
-                "BDS B2a":     { c: "BDS",  b: "L5",     d: "B2a" },
-                "BDS B2b/B3":  { c: "BDS",  b: "Others", d: "B2b/B3" },
-                "SBAS L1":     { c: "SBAS", b: "L1",     d: "L1" },
-                "SBAS L5":     { c: "SBAS", b: "L5",     d: "L5" },
-                "QZS L1":      { c: "QZSS", b: "L1",     d: "L1" },
-                "QZS L2":      { c: "QZSS", b: "L2",     d: "L2" },
-                "QZS L5":      { c: "QZSS", b: "L5",     d: "L5" }
-            })
+                    "GPS L1": {
+                        "c": "GPS",
+                        "b": "L1",
+                        "d": "L1"
+                    },
+                    "GPS L2": {
+                        "c": "GPS",
+                        "b": "L2",
+                        "d": "L2"
+                    },
+                    "GPS L5": {
+                        "c": "GPS",
+                        "b": "L5",
+                        "d": "L5"
+                    },
+                    "GLO G1": {
+                        "c": "GLO",
+                        "b": "L1",
+                        "d": "G1"
+                    },
+                    "GLO G2": {
+                        "c": "GLO",
+                        "b": "L2",
+                        "d": "G2"
+                    },
+                    "GAL E1": {
+                        "c": "GAL",
+                        "b": "L1",
+                        "d": "E1"
+                    },
+                    "GAL E5b": {
+                        "c": "GAL",
+                        "b": "L2",
+                        "d": "E5b"
+                    },
+                    "GAL E5a": {
+                        "c": "GAL",
+                        "b": "L5",
+                        "d": "E5a"
+                    },
+                    "GAL E5ab/E6": {
+                        "c": "GAL",
+                        "b": "Others",
+                        "d": "E5ab/E6"
+                    },
+                    "BDS B1/B1C": {
+                        "c": "BDS",
+                        "b": "L1",
+                        "d": "B1/B1C"
+                    },
+                    "BDS B2I": {
+                        "c": "BDS",
+                        "b": "L2",
+                        "d": "B2I"
+                    },
+                    "BDS B2a": {
+                        "c": "BDS",
+                        "b": "L5",
+                        "d": "B2a"
+                    },
+                    "BDS B2b/B3": {
+                        "c": "BDS",
+                        "b": "Others",
+                        "d": "B2b/B3"
+                    },
+                    "SBAS L1": {
+                        "c": "SBAS",
+                        "b": "L1",
+                        "d": "L1"
+                    },
+                    "SBAS L5": {
+                        "c": "SBAS",
+                        "b": "L5",
+                        "d": "L5"
+                    },
+                    "QZS L1": {
+                        "c": "QZSS",
+                        "b": "L1",
+                        "d": "L1"
+                    },
+                    "QZS L2": {
+                        "c": "QZSS",
+                        "b": "L2",
+                        "d": "L2"
+                    },
+                    "QZS L5": {
+                        "c": "QZSS",
+                        "b": "L5",
+                        "d": "L5"
+                    }
+                })
             readonly property var constellations: ["GPS", "GLO", "GAL", "BDS", "QZSS", "SBAS"]
             readonly property var bands: ["L1", "L2", "L5", "Others"]
 
@@ -157,24 +229,29 @@ Item {
                 for (var i = 0; i < check_labels.length; i++) {
                     var k = check_labels[i];
                     var meta = familyMeta[k];
-                    if (meta && meta[predKey] === predValue) out.push(k);
+                    if (meta && meta[predKey] === predValue)
+                        out.push(k);
                 }
                 return out;
             }
 
             function computeState(families) {
-                if (families.length === 0) return Qt.Unchecked;
+                if (families.length === 0)
+                    return Qt.Unchecked;
                 var checked = 0;
                 for (var i = 0; i < families.length; i++) {
-                    if (familyChecked[families[i]] !== false) checked++;
+                    if (familyChecked[families[i]] !== false)
+                        checked++;
                 }
                 return checked === families.length ? Qt.Checked : checked === 0 ? Qt.Unchecked : Qt.PartiallyChecked;
             }
 
             function setFamilies(families, checked) {
                 var newState = {};
-                for (var k in familyChecked) newState[k] = familyChecked[k];
-                for (var i = 0; i < families.length; i++) newState[families[i]] = checked;
+                for (var k in familyChecked)
+                    newState[k] = familyChecked[k];
+                for (var i = 0; i < families.length; i++)
+                    newState[families[i]] = checked;
                 familyChecked = newState;
                 sendVisibility();
             }
@@ -183,7 +260,8 @@ Item {
                 var labels_not_visible = [];
                 for (var i = 0; i < check_labels.length; i++) {
                     var f = check_labels[i];
-                    if (familyChecked[f] === false) labels_not_visible.push(f);
+                    if (familyChecked[f] === false)
+                        labels_not_visible.push(f);
                 }
                 check_visibility = labels_not_visible;
                 backend_request_broker.tracking_signals_check_visibility(labels_not_visible);
@@ -203,7 +281,8 @@ Item {
 
             Component.onCompleted: {
                 var init = {};
-                for (var i = 0; i < check_labels.length; i++) init[check_labels[i]] = true;
+                for (var i = 0; i < check_labels.length; i++)
+                    init[check_labels[i]] = true;
                 familyChecked = init;
             }
 
@@ -291,9 +370,7 @@ Item {
 
                                 SmallCheckBox {
                                     property string family: modelData
-                                    text: trackingSignalsCheckboxes.familyMeta[family]
-                                        ? trackingSignalsCheckboxes.familyMeta[family].d
-                                        : family
+                                    text: trackingSignalsCheckboxes.familyMeta[family] ? trackingSignalsCheckboxes.familyMeta[family].d : family
                                     checkState: trackingSignalsCheckboxes.familyChecked[family] === false ? Qt.Unchecked : Qt.Checked
                                     onClicked: trackingSignalsCheckboxes.setFamilies([family], checkState === Qt.Checked)
                                     nextCheckState: function () {

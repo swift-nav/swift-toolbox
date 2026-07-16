@@ -303,7 +303,6 @@ pub const QZS_L5I_STR: &'static str = "QZS L5 I";
 pub const QZS_L5Q_STR: &'static str = "QZS L5 Q";
 pub const QZS_L5X_STR: &'static str = "QZS L5 I+Q";
 pub const QZS_AUX_STR: &'static str = "AUX QZS L1";
-
 lazy_static! {
     pub static ref CODE_TO_STR_MAP: HashMap<i32, &'static str> = [
         (CODE_GPS_L1CA, GPS_L1CA_STR),

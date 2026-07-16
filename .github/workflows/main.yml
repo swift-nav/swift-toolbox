@@ -208,7 +208,7 @@ jobs:
       - shell: bash
         run: echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
 
-      - uses: convictional/trigger-workflow-and-wait@v1.6.1
+      - uses: convictional/trigger-workflow-and-wait@v1.6.5
         with:
           owner: swift-nav
           repo: swift-toolbox-ci
@@ -221,9 +221,8 @@ jobs:
             "version": "${{ env.VERSION }}",
             "pr_number": "${{ github.event.number }}"
           }'
-          github_user: ${{ secrets.GH_NAME }}
           github_token: ${{ secrets.GH_TOKEN }}
           propagate_failure: true
           wait_workflow: true
           trigger_workflow: true
-          wait_interval: 120
+          wait_interval: 30

@@ -304,29 +304,6 @@ pub const QZS_L5Q_STR: &'static str = "QZS L5 Q";
 pub const QZS_L5X_STR: &'static str = "QZS L5 I+Q";
 pub const QZS_AUX_STR: &'static str = "AUX QZS L1";
 
-// Family labels used by the tracking-signals checkbox filter. Each
-// SignalCode maps to one of these via SignalCodes::filters(), so a single
-// checkbox hides every variant in the family (e.g. "GPS L2" hides
-// L2C M / L2C L / L2C M+L / L2P).
-pub const GPS_L1_FAMILY: &'static str = "GPS L1";
-pub const GPS_L2_FAMILY: &'static str = "GPS L2";
-pub const GPS_L5_FAMILY: &'static str = "GPS L5";
-pub const GLO_G1_FAMILY: &'static str = "GLO G1";
-pub const GLO_G2_FAMILY: &'static str = "GLO G2";
-pub const SBAS_L1_FAMILY: &'static str = "SBAS L1";
-pub const SBAS_L5_FAMILY: &'static str = "SBAS L5";
-pub const BDS_B1_B1C_FAMILY: &'static str = "BDS B1/B1C";
-pub const BDS_B2I_FAMILY: &'static str = "BDS B2I";
-pub const BDS_B2A_FAMILY: &'static str = "BDS B2a";
-pub const BDS_B2B_B3_FAMILY: &'static str = "BDS B2b/B3";
-pub const GAL_E1_FAMILY: &'static str = "GAL E1";
-pub const GAL_E5A_FAMILY: &'static str = "GAL E5a";
-pub const GAL_E5B_FAMILY: &'static str = "GAL E5b";
-pub const GAL_E5AB_E6_FAMILY: &'static str = "GAL E5ab/E6";
-pub const QZS_L1_FAMILY: &'static str = "QZS L1";
-pub const QZS_L2_FAMILY: &'static str = "QZS L2";
-pub const QZS_L5_FAMILY: &'static str = "QZS L5";
-
 lazy_static! {
     pub static ref CODE_TO_STR_MAP: HashMap<i32, &'static str> = [
         (CODE_GPS_L1CA, GPS_L1CA_STR),

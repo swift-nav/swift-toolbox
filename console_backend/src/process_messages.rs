@@ -31,6 +31,10 @@ use sbp::{
         observation::{MsgObsDepA, MsgSvAzEl},
         orientation::{MsgAngularRate, MsgBaselineHeading, MsgOrientEuler},
         piksi::{MsgDeviceMonitor, MsgNetworkStateResp, MsgThreadState},
+        ssr::{
+            MsgSsrCodeBiases, MsgSsrGriddedCorrection, MsgSsrOrbitClock, MsgSsrPhaseBiases,
+            MsgSsrStecCorrection, MsgSsrTileDefinition,
+        },
         system::{MsgHeartbeat, MsgInsStatus, MsgInsUpdates, MsgStartup, MsgStatusReport},
         tracking::{MsgMeasurementState, MsgTrackingState},
     },
@@ -175,6 +179,9 @@ fn process_shared_state_events(rx: Receiver<EventType>, tabs: &Tabs) {
                     tab.send_data(true);
                     tab.send_data(false);
                 }
+                TabName::Corrections => {
+                    tabs.corrections.lock().unwrap().send_data();
+                }
                 TabName::Settings | TabName::Update => {}
                 TabName::Unknown => error!("failed to process unknown tab in channel"),
             },
@@ -290,6 +297,27 @@ fn register_events(link: sbp::link::Link<Tabs>) {
     });
     link.register(|_: MsgObsDepA| {
         debug!("The message type, MsgObsDepA, is not handled in the Tracking->SignalsPlot or Observation tab.");
+    });
+    link.register(|tabs: &Tabs, msg: MsgSsrOrbitClock| {
+        tabs.corrections.lock().unwrap().handle_orbit_clock(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgSsrCodeBiases| {
+        tabs.corrections.lock().unwrap().handle_code_biases(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgSsrPhaseBiases| {
+        tabs.corrections.lock().unwrap().handle_phase_biases(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgSsrTileDefinition| {
+        tabs.corrections.lock().unwrap().handle_tile_definition(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgSsrGriddedCorrection| {
+        tabs.corrections
+            .lock()
+            .unwrap()
+            .handle_gridded_correction(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgSsrStecCorrection| {
+        tabs.corrections.lock().unwrap().handle_stec_correction(msg);
     });
     link.register(|tabs: &Tabs, msg: MsgOrientEuler| {
         tabs.solution_position

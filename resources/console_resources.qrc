@@ -62,6 +62,8 @@
     <file>ObservationTab.qml</file>
     <file>ObservationTabComponents/ObservationTable.qml</file>
     <file>ObservationTabComponents/ObservationFilterColumn.qml</file>
+    <file>CorrectionsTab.qml</file>
+    <file>CorrectionsTabComponents/SsrTable.qml</file>
     <file>LogoPopupComponents/Licenses.qml</file>
     <file>LogoPopupComponents/AboutMe.qml</file>
     <file>LogoPopup.qml</file>

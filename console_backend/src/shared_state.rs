@@ -464,6 +464,7 @@ pub enum TabName {
     Settings,
     Update,
     Advanced,
+    Corrections,
 }
 
 pub enum EventType {

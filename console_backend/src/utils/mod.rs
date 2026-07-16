@@ -608,6 +608,20 @@ pub fn format_bool(b: bool) -> String {
     if b { "True" } else { "False" }.into()
 }
 
+/// Decode an SSR `update_interval` byte (RTCM DF391) into seconds.
+///
+/// # Parameters
+/// - `code`: The coded update interval, as carried in SSR messages.
+///
+/// # Returns
+/// - The decoded update interval in seconds, or 0.0 if `code` is out of the DF391 range.
+pub fn decode_ssr_update_interval(code: u8) -> f64 {
+    const TABLE: [f64; 16] = [
+        1., 2., 5., 10., 15., 30., 60., 120., 240., 300., 600., 900., 1800., 3600., 7200., 10800.,
+    ];
+    TABLE.get(code as usize).copied().unwrap_or(0.0)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

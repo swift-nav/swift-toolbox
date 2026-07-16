@@ -19,6 +19,7 @@
 
 pub mod advanced_tab;
 pub mod baseline_tab;
+pub mod corrections_tab;
 pub mod main_tab;
 pub mod observation_tab;
 pub mod settings_tab;

@@ -138,6 +138,18 @@ from .observation_tab import (
     obs_rows_to_dict,
 )
 
+from .corrections_tab import (
+    SsrStreamTableModel,
+    SsrSatCorrectionTableModel,
+    SsrTileTableModel,
+    ssr_stream_update,
+    ssr_sat_correction_update,
+    ssr_tile_update,
+    ssr_stream_rows_to_dicts,
+    ssr_sat_correction_rows_to_dicts,
+    ssr_tile_rows_to_dicts,
+)
+
 from .settings_tab import (
     SettingsTabModel,
     SettingsTabData,
@@ -253,6 +265,10 @@ TAB_LAYOUT = {
     Tabs.ADVANCED_INS: {
         MAIN_INDEX: 6,
         SUB_INDEX: 5,
+    },
+    Tabs.CORRECTIONS: {
+        MAIN_INDEX: 7,
+        SUB_INDEX: 0,
     },
 }
 
@@ -478,6 +494,20 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                     ObservationRemoteTableModel.post_data_update(data)
                 else:
                     ObservationLocalTableModel.post_data_update(data)
+            elif m.which == Message.Union.CorrectionsStatus:
+                stream_data = ssr_stream_update()
+                stream_data[Keys.STREAMS] = ssr_stream_rows_to_dicts(m.correctionsStatus.streams)
+                SsrStreamTableModel.post_data_update(stream_data)
+
+                sat_correction_data = ssr_sat_correction_update()
+                sat_correction_data[Keys.SAT_CORRECTIONS] = ssr_sat_correction_rows_to_dicts(
+                    m.correctionsStatus.satCorrections
+                )
+                SsrSatCorrectionTableModel.post_data_update(sat_correction_data)
+
+                tile_data = ssr_tile_update()
+                tile_data[Keys.TILES] = ssr_tile_rows_to_dicts(m.correctionsStatus.tiles)
+                SsrTileTableModel.post_data_update(tile_data)
             elif m.which == Message.Union.StatusBarStatus:
                 data = status_bar_update()
                 data[Keys.POS] = m.statusBarStatus.pos
@@ -824,6 +854,9 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     qmlRegisterType(TrackingSkyPlotPoints, "SwiftConsole", 1, 0, "TrackingSkyPlotPoints")  # type: ignore
     qmlRegisterType(ObservationRemoteTableModel, "SwiftConsole", 1, 0, "ObservationRemoteTableModel")  # type: ignore
     qmlRegisterType(ObservationLocalTableModel, "SwiftConsole", 1, 0, "ObservationLocalTableModel")  # type: ignore
+    qmlRegisterType(SsrStreamTableModel, "SwiftConsole", 1, 0, "SsrStreamTableModel")  # type: ignore
+    qmlRegisterType(SsrSatCorrectionTableModel, "SwiftConsole", 1, 0, "SsrSatCorrectionTableModel")  # type: ignore
+    qmlRegisterType(SsrTileTableModel, "SwiftConsole", 1, 0, "SsrTileTableModel")  # type: ignore
     qmlRegisterType(UpdateTabData, "SwiftConsole", 1, 0, "UpdateTabData")  # type: ignore
     qmlRegisterType(FileIO, "SwiftConsole", 1, 0, "FileIO")  # type: ignore
 

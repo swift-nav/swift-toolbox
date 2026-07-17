@@ -243,10 +243,17 @@ impl TrackingSignalsTab {
             let signal_code = SignalCodes::from(state.mesid.code);
             if signal_code.code_is_glo() {
                 if state.mesid.sat > GLO_SLOT_SAT_MAX {
-                    self.glo_fcn_dict
-                        .insert(idx as u8, state.mesid.sat as i16 - 100);
+                    sat -= 100.0 as i16;
+                    self.glo_fcn_dict.insert(idx as u8, sat);
+                } else {
+                    let target = state.mesid.sat as i16;
+                    let found_fcn = self
+                        .glo_slot_dict
+                        .iter()
+                        .find_map(|(fcn, slot)| (*slot == target).then_some(fcn));
+                    sat = *found_fcn
+                        .unwrap_or_else(|| self.glo_fcn_dict.get(&(idx as u8)).unwrap_or(&target));
                 }
-                sat = *self.glo_fcn_dict.get(&(idx as u8)).unwrap_or(&(0_i16));
 
                 if state.mesid.sat <= GLO_SLOT_SAT_MAX {
                     self.glo_slot_dict.insert(sat, state.mesid.sat as i16);
@@ -572,13 +579,46 @@ mod tests {
         );
         assert_eq!(tracking_signals_tab.glo_slot_dict.len(), 1);
         assert_eq!(
-            tracking_signals_tab.glo_slot_dict[&0_i16],
+            tracking_signals_tab.glo_slot_dict[&(glo_sat_under_one_hundred as i16)],
             glo_sat_under_one_hundred as i16
         );
         assert_eq!(tracking_signals_tab.cn0_dict.len(), 3);
         assert_eq!(tracking_signals_tab.sv_labels.len(), 3);
         assert_eq!(tracking_signals_tab.colors.len(), 3);
         assert_eq!(tracking_signals_tab.sats.len(), 3);
+
+        // Additional testing for GLO sat mapping logic
+        // Receive GLO signal <= 100 at same index 0. It falls back to glo_fcn_dict to get FCN.
+        let states2 = vec![MeasurementState {
+            cn0: 200_u8,
+            mesid: GnssSignal {
+                sat: 24, // slot <= GLO_SLOT_SAT_MAX, targets slot 24
+                code: 3,
+            },
+        }];
+        tracking_signals_tab.handle_msg_measurement_state(states2);
+        // Found fcn=3 from glo_fcn_dict index 0 (103 - 100), associates fcn=3 with slot=24
+        assert_eq!(tracking_signals_tab.glo_slot_dict.get(&3), Some(&24));
+        assert!(tracking_signals_tab
+            .cn0_dict
+            .contains_key(&(SignalCodes::from(3_u8), 3)));
+
+        // Receive GLO signal <= 100 at a DIFFERENT index. It finds it through glo_slot_dict.
+        let states3 = vec![
+            MeasurementState {
+                cn0: 200_u8,
+                mesid: GnssSignal { sat: 10, code: 0 },
+            }, // index 0 (unrelated)
+            MeasurementState {
+                cn0: 200_u8,
+                mesid: GnssSignal { sat: 24, code: 3 },
+            }, // index 1 (GLO code, slot 24)
+        ];
+        tracking_signals_tab.handle_msg_measurement_state(states3);
+        // Successfully uses the found_fcn fallback mapping (fcn=3 for slot 24)
+        assert!(tracking_signals_tab
+            .cn0_dict
+            .contains_key(&(SignalCodes::from(3_u8), 3)));
     }
 
     #[test]

@@ -281,3 +281,26 @@ pub const EXAMPLE_SERIAL_NAME: &str = "COM1";
 pub const EXAMPLE_SERIAL_NAME: &str = "/dev/ttyUSB0";
 #[cfg(target_os = "macos")]
 pub const EXAMPLE_SERIAL_NAME: &str = "/dev/cu.usbserial";
+
+// Family labels used by the tracking-signals checkbox filter. Each
+// SignalCode maps to one of these via SignalCodes::filters(), so a single
+// checkbox hides every variant in the family (e.g. "GPS L2" hides
+// L2C M / L2C L / L2C M+L / L2P).
+pub const GPS_L1_FAMILY: &str = "GPS L1";
+pub const GPS_L2_FAMILY: &str = "GPS L2";
+pub const GPS_L5_FAMILY: &str = "GPS L5";
+pub const GLO_G1_FAMILY: &str = "GLO G1";
+pub const GLO_G2_FAMILY: &str = "GLO G2";
+pub const SBAS_L1_FAMILY: &str = "SBAS L1";
+pub const SBAS_L5_FAMILY: &str = "SBAS L5";
+pub const BDS_B1_B1C_FAMILY: &str = "BDS B1/B1C";
+pub const BDS_B2I_FAMILY: &str = "BDS B2I";
+pub const BDS_B2A_FAMILY: &str = "BDS B2a";
+pub const BDS_B2B_B3_FAMILY: &str = "BDS B2b/B3";
+pub const GAL_E1_FAMILY: &str = "GAL E1";
+pub const GAL_E5A_FAMILY: &str = "GAL E5a";
+pub const GAL_E5B_FAMILY: &str = "GAL E5b";
+pub const GAL_E5AB_E6_FAMILY: &str = "GAL E5ab/E6";
+pub const QZS_L1_FAMILY: &str = "QZS L1";
+pub const QZS_L2_FAMILY: &str = "QZS L2";
+pub const QZS_L5_FAMILY: &str = "QZS L5";

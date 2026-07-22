@@ -46,7 +46,7 @@ jobs:
         uses: rlespinasse/git-commit-data-action@v1.x
 
       - name: Commit changed files
-        uses: stefanzweifel/git-auto-commit-action@v4.9.2
+        uses: stefanzweifel/git-auto-commit-action@v7.2.0
         with:
           commit_message: sync draw.io exported files
           commit_user_name: "${{ env.GIT_COMMIT_COMMITTER_NAME }}"

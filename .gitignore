@@ -31,3 +31,4 @@ installers/Windows/NSIS/*
 swiftnav_console/.idea
 /resources/base/
 /resources/web/map/js/trajectory.js
+.companion/

@@ -30,7 +30,7 @@ import QtQuick.Layouts
 import SwiftConsole
 
 // Monitors incoming corrections: auto-detects which bundle (Generic RTCM,
-// Swift NXRTK-MSM5, Swift OSR, Swift SSR) is active and shows only the
+// MSM5, Swift NXRTK-MSM5, Swift OSR, Swift SSR) is active and shows only the
 // panels relevant to it, based on the SBP messages the device itself
 // reports (MsgSsr* / MsgObs+MsgOsr with sender_id=0) - this works regardless
 // of whether corrections are relayed through this console's NTRIP client or
@@ -45,11 +45,15 @@ MainTab {
     property var overrideOptions: [
         { text: "Auto", value: "AUTO" },
         { text: "Generic RTCM", value: "GENERIC" },
+        { text: "MSM5", value: "MSM5" },
         { text: "Swift NXRTK-MSM5", value: "NXRTK_MSM5" },
         { text: "Swift OSR", value: "OSR" },
         { text: "Swift SSR", value: "SSR" }
     ]
-    property bool showObservationsPanel: bundleOverride === "OSR" || bundleOverride === "NXRTK_MSM5" || (bundleOverride === "AUTO" && osrObservationTableModel.row_count > 0)
+    // MSM5 and NXRTK-MSM5 are distinct correction types, but both decode
+    // through the same MsgObs/MsgOsr pipeline as OSR, so all three currently
+    // drive the same "Decoded Observations" panel when manually selected.
+    property bool showObservationsPanel: bundleOverride === "OSR" || bundleOverride === "MSM5" || bundleOverride === "NXRTK_MSM5" || (bundleOverride === "AUTO" && osrObservationTableModel.row_count > 0)
     // ssrSatCorrectionTableModel/ssrTileTableModel are only ever populated by
     // genuine MSG_SSR_* content, unlike ssrStreamTableModel which also
     // carries MSG_OBS/MSG_OSR rows.

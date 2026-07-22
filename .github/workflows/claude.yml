@@ -12,7 +12,7 @@ on:
 
 jobs:
   claude_review:
-    uses: swift-nav/swift-context-hub/.github/workflows/claude.yml@v0.1.6
+    uses: swift-nav/swift-context-hub/.github/workflows/claude.yml@v0.1.10
     secrets:
       anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
       SSH_KEY: ${{ secrets.SSH_KEY }}

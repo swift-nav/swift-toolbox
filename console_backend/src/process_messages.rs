@@ -31,6 +31,10 @@ use sbp::{
         observation::{MsgObsDepA, MsgSvAzEl},
         orientation::{MsgAngularRate, MsgBaselineHeading, MsgOrientEuler},
         piksi::{MsgDeviceMonitor, MsgNetworkStateResp, MsgThreadState},
+        ssr::{
+            MsgSsrCodeBiases, MsgSsrGriddedCorrection, MsgSsrOrbitClock, MsgSsrPhaseBiases,
+            MsgSsrStecCorrection, MsgSsrTileDefinition,
+        },
         system::{MsgHeartbeat, MsgInsStatus, MsgInsUpdates, MsgStartup, MsgStatusReport},
         tracking::{MsgMeasurementState, MsgTrackingState},
     },
@@ -171,9 +175,15 @@ fn process_shared_state_events(rx: Receiver<EventType>, tabs: &Tabs) {
                     tabs.advanced_system_monitor.lock().unwrap().send_data();
                 }
                 TabName::Observations => {
-                    let mut tab = tabs.observation.lock().unwrap();
-                    tab.send_data(true);
-                    tab.send_data(false);
+                    tabs.observation.lock().unwrap().send_data();
+                }
+                TabName::Corrections => {
+                    let mut tab = tabs.corrections.lock().unwrap();
+                    tab.send_data();
+                    tab.send_osr_data();
+                    let client_sender = tab.client_sender.clone();
+                    drop(tab);
+                    crate::utils::send_rtcm_status(&client_sender, &tabs.shared_state);
                 }
                 TabName::Settings | TabName::Update => {}
                 TabName::Unknown => error!("failed to process unknown tab in channel"),
@@ -286,10 +296,38 @@ fn register_events(link: sbp::link::Link<Tabs>) {
             .lock()
             .unwrap()
             .handle_obs(msg.clone());
-        tabs.observation.lock().unwrap().handle_obs(msg);
+        // sender_id 0 marks decoded corrections content (OSR/NXRTK-MSM5),
+        // re-emitted by the device rather than tracked locally; route it to
+        // the Corrections tab instead of Observations.
+        if msg.sender_id() == Some(0) {
+            tabs.corrections.lock().unwrap().handle_osr_obs(msg);
+        } else {
+            tabs.observation.lock().unwrap().handle_obs(msg);
+        }
     });
     link.register(|_: MsgObsDepA| {
         debug!("The message type, MsgObsDepA, is not handled in the Tracking->SignalsPlot or Observation tab.");
+    });
+    link.register(|tabs: &Tabs, msg: MsgSsrOrbitClock| {
+        tabs.corrections.lock().unwrap().handle_orbit_clock(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgSsrCodeBiases| {
+        tabs.corrections.lock().unwrap().handle_code_biases(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgSsrPhaseBiases| {
+        tabs.corrections.lock().unwrap().handle_phase_biases(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgSsrTileDefinition| {
+        tabs.corrections.lock().unwrap().handle_tile_definition(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgSsrGriddedCorrection| {
+        tabs.corrections
+            .lock()
+            .unwrap()
+            .handle_gridded_correction(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgSsrStecCorrection| {
+        tabs.corrections.lock().unwrap().handle_stec_correction(msg);
     });
     link.register(|tabs: &Tabs, msg: MsgOrientEuler| {
         tabs.solution_position

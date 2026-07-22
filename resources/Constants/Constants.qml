@@ -678,6 +678,7 @@ QtObject {
         readonly property string solutionPath: "qrc:/images/swift-nav/Solution.svg"
         readonly property string settingsPath: "qrc:/images/swift-nav/Settings.svg"
         readonly property string updatePath: "qrc:/images/swift-nav/Update.svg"
+        readonly property string correctionsPath: "qrc:/images/fontawesome/satellite-solid.svg"
     }
 
     insSettingsPopup: QtObject {

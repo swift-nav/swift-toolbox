@@ -143,7 +143,6 @@ impl Default for ObservationTable {
 pub struct ObservationTab {
     pub client_sender: BoxedClientSender,
     pub shared_state: SharedState,
-    pub remote: ObservationTable,
     pub local: ObservationTable,
 }
 
@@ -152,12 +151,14 @@ impl ObservationTab {
         ObservationTab {
             client_sender,
             shared_state,
-            remote: ObservationTable::new(true),
             local: ObservationTable::new(false),
         }
     }
 
-    /// Handle MsgObs, MsgObsDepB, MsgObsDepC and MsgOsr full messages.
+    /// Handle MsgObs, MsgObsDepB, MsgObsDepC and MsgOsr full messages from the
+    /// locally connected receiver. Messages with `sender_id == 0` (decoded
+    /// corrections content) are routed to `CorrectionsTab::handle_osr_obs`
+    /// instead, upstream in `process_messages.rs`.
     ///
     /// # Parameters:
     ///
@@ -165,39 +166,14 @@ impl ObservationTab {
     pub fn handle_obs(&mut self, msg: ObservationMsg) {
         let msg_fields = msg.fields();
 
-        let mut is_remote: bool = false;
-        if let Some(sender_id) = msg_fields.sender_id {
-            if sender_id == 0 {
-                is_remote = true;
-            }
-        }
-
         let total = msg_fields.n_obs >> 4;
         let count = msg_fields.n_obs & ((1 << 4) - 1);
-        if (is_remote
-            && !self
-                .remote
-                .obs_check(msg_fields.tow, msg_fields.wn, total, count))
-            || (!is_remote
-                && !self
-                    .local
-                    .obs_check(msg_fields.tow, msg_fields.wn, total, count))
+        if !self
+            .local
+            .obs_check(msg_fields.tow, msg_fields.wn, total, count)
         {
             return;
         }
-
-        let old_carrier_phase = match is_remote {
-            true => &self.remote.old_carrier_phase,
-            false => &self.local.old_carrier_phase,
-        };
-        let new_carrier_phase = match is_remote {
-            true => &mut self.remote.new_carrier_phase,
-            false => &mut self.local.new_carrier_phase,
-        };
-        let incoming_obs = match is_remote {
-            true => &mut self.remote.incoming_obs,
-            false => &mut self.local.incoming_obs,
-        };
 
         for state in msg_fields.states.iter() {
             let obs_fields = state.fields();
@@ -212,31 +188,18 @@ impl ObservationTab {
             let is_deprecated_msg_type = obs_fields.is_deprecated_msg_type;
 
             if msg_fields.ns_residual != 0 {
-                let ns_residual = sec_to_ns(msg_fields.ns_residual as f64);
-                if is_remote {
-                    self.remote.gps_tow += ns_residual;
-                } else {
-                    self.local.gps_tow += ns_residual;
-                }
+                self.local.gps_tow += sec_to_ns(msg_fields.ns_residual as f64);
             }
 
             let computed_doppler = match (
-                old_carrier_phase.get(&table_key),
+                self.local.old_carrier_phase.get(&table_key),
                 is_deprecated_msg_type || is_valid,
             ) {
                 (Some(val), true) => compute_doppler(
                     obs_fields.carrier_phase,
                     *val,
-                    if is_remote {
-                        self.remote.gps_tow
-                    } else {
-                        self.local.gps_tow
-                    },
-                    if is_remote {
-                        self.remote.prev_tow
-                    } else {
-                        self.local.prev_tow
-                    },
+                    self.local.gps_tow,
+                    self.local.prev_tow,
                     is_deprecated_msg_type,
                 ),
                 _ => 0 as f64,
@@ -254,47 +217,35 @@ impl ObservationTab {
             // Note: piksi_tools console did not show flags when is_deprecated_msg_type
             row.flags = obs_fields.flags;
 
-            incoming_obs.insert((obs_fields.sat, obs_fields.code), row);
+            self.local
+                .incoming_obs
+                .insert((obs_fields.sat, obs_fields.code), row);
             if is_deprecated_msg_type || is_valid {
-                new_carrier_phase.insert(table_key, obs_fields.carrier_phase);
+                self.local
+                    .new_carrier_phase
+                    .insert(table_key, obs_fields.carrier_phase);
             }
         }
 
         if count == (total - 1) {
-            self.update_from_obs(is_remote);
+            self.update_from_obs();
         }
     }
 
-    /// Update remote or local table using the observation data accumulated by handle_obs.
-    ///
-    /// # Parameters:
-    ///
-    /// - `is_remote`: Whether self.incoming_obs was remote or local
-    pub fn update_from_obs(&mut self, is_remote: bool) {
-        let table: &mut ObservationTable = match is_remote {
-            true => &mut self.remote,
-            false => &mut self.local,
-        };
-
-        for ((sat, code), row) in table.incoming_obs.iter() {
-            table.rows.insert((*sat, *code), row.clone());
+    /// Update the local table using the observation data accumulated by handle_obs.
+    pub fn update_from_obs(&mut self) {
+        for ((sat, code), row) in self.local.incoming_obs.iter() {
+            self.local.rows.insert((*sat, *code), row.clone());
         }
-        self.send_data(is_remote);
+        self.send_data();
     }
 
     /// Package data into a message buffer and send to frontend.
-    ///
-    /// # Parameters:
-    ///
-    /// - `is_remote`: Sender local or remote table
-    pub fn send_data(&mut self, is_remote: bool) {
+    pub fn send_data(&mut self) {
         if self.shared_state.current_tab() != TabName::Observations {
             return;
         }
-        let table: &ObservationTable = match is_remote {
-            true => &self.remote,
-            false => &self.local,
-        };
+        let table = &self.local;
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
 
@@ -334,15 +285,14 @@ mod tests {
         observation::{Doppler, MsgObs, ObservationHeader, PackedObsContent},
     };
 
-    // Validate that both local and remote messages received by handle_obs() populate ObservationTable's
-    // incoming obs struct.
+    // Validate that a locally-received message handled by handle_obs() populates
+    // ObservationTable's incoming obs struct.
     #[test]
     fn handle_obs_msgobs_test() {
         let shared_state = SharedState::new();
         let client_send = TestSender::boxed();
         let mut obs_tab = ObservationTab::new(shared_state, client_send);
 
-        // local test
         let mut local_obs_msg = MsgObs {
             // arbitrary non-zero identifier
             sender_id: Some(11),
@@ -394,57 +344,5 @@ mod tests {
         assert_eq!(obs_table_object.1.sat as u8, local_sat);
 
         assert_eq!(obs_tab.local.gps_week, 1);
-
-        // remote test
-        let mut remote_obs_msg = MsgObs {
-            sender_id: Some(0),
-            obs: Vec::new(),
-            header: ObservationHeader {
-                t: GpsTime {
-                    tow: 0,
-                    ns_residual: 0,
-                    wn: 1,
-                },
-                n_obs: 16,
-            },
-        };
-        let remote_signal_code = 4;
-        let remote_cn0 = 5;
-        let remote_lock = 0;
-        let remote_flags = 0b00000001;
-        let remote_sat: u8 = 25;
-        remote_obs_msg.obs.push(PackedObsContent {
-            p: 0_u32,
-            l: CarrierPhase { i: 0_i32, f: 0_u8 },
-            d: Doppler { i: 0_i16, f: 0_u8 },
-            cn0: remote_cn0,
-            lock: remote_lock,
-            flags: remote_flags,
-            sid: GnssSignal {
-                code: remote_signal_code,
-                sat: remote_sat,
-            },
-        });
-
-        assert_eq!(obs_tab.remote.gps_week, 0);
-        assert!(obs_tab.remote.incoming_obs.is_empty());
-        obs_tab.handle_obs(ObservationMsg::MsgObs(remote_obs_msg));
-        assert_eq!(obs_tab.remote.incoming_obs.len(), 1);
-        let obs_table_object = obs_tab
-            .local
-            .incoming_obs
-            .iter()
-            .next()
-            .expect("No elements present within obversation table");
-
-        // Expect identifiers and metadata fields to match obs_msg fields
-        assert_eq!(
-            obs_table_object.1.code,
-            DEFAULT_OBSERVATION_CODE.to_string()
-        );
-        assert_eq!(obs_table_object.1.flags, remote_flags);
-        assert_eq!(obs_table_object.1.sat as u8, remote_sat);
-
-        assert_eq!(obs_tab.remote.gps_week, 1);
     }
 }

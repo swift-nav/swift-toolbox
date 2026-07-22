@@ -479,6 +479,58 @@ struct NtripDisconnect {
 
 }
 
+struct SsrStreamRow {
+    msgType @0 :Text;
+    lastAgeSec @1 :Float64;
+    updateIntervalSec @2 :Float64;
+    iodSsr @3 :UInt8;
+    count @4 :UInt32;
+}
+
+struct SsrSatCorrectionRow {
+    sid @0 :Text;
+    radial @1 :Int32;
+    along @2 :Int32;
+    cross @3 :Int32;
+    clockC0 @4 :Int32;
+    codeBias @5 :Int16;
+    phaseBias @6 :Int32;
+    ageSec @7 :Float64;
+}
+
+struct SsrTileStatus {
+    tileSetId @0 :UInt16;
+    tileId @1 :UInt16;
+    cornerNwLat @2 :Float64;
+    cornerNwLon @3 :Float64;
+    rows @4 :UInt16;
+    cols @5 :UInt16;
+    nSats @6 :UInt8;
+}
+
+struct CorrectionsStatus {
+    streams @0 :List(SsrStreamRow);
+    satCorrections @1 :List(SsrSatCorrectionRow);
+    tiles @2 :List(SsrTileStatus);
+}
+
+struct RtcmMessageRow {
+    msgId @0 :UInt16;
+    rate @1 :Float64;
+    ageSec @2 :Float64;
+    bundle @3 :Text;
+}
+
+struct RtcmStatus {
+    rows @0 :List(RtcmMessageRow);
+}
+
+struct OsrCorrectionStatus {
+    tow @0 :Float64;
+    week @1 :UInt16;
+    rows @2 :List(ObservationTableRow);
+}
+
 struct Message {
     union {
         solutionVelocityStatus @0 :SolutionVelocityStatus;
@@ -541,5 +593,8 @@ struct Message {
         solutionProtectionLevel @57: SolutionProtectionLevel;
         ntripConnect @58 :NtripConnect;
         ntripDisconnect @59 :NtripDisconnect;
+        correctionsStatus @60 :CorrectionsStatus;
+        rtcmStatus @61 :RtcmStatus;
+        osrCorrectionStatus @62 :OsrCorrectionStatus;
     }
 }

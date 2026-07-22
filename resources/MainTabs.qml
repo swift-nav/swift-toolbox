@@ -68,5 +68,9 @@ Item {
         AdvancedTab {
             curSubTabIndex: mainTabs.curSubTabIndex
         }
+
+        CorrectionsTab {
+            curSubTabIndex: mainTabs.curSubTabIndex
+        }
     }
 }

@@ -64,6 +64,10 @@ Item {
             "name": "Advanced",
             "tooltip": "Advanced",
             "source": Constants.icons.advancedPath
+        }, {
+            "name": "Corrections",
+            "tooltip": "Corrections",
+            "source": Constants.icons.correctionsPath
         }]
 
     function clickButton(index) {

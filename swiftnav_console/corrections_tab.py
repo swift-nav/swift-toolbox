@@ -21,8 +21,8 @@ from typing import Dict, List, Any
 
 from PySide6.QtCore import Property, Slot, Signal, QAbstractTableModel, Qt, QModelIndex
 
-from .constants import Keys
-from .observation_tab import localPadFloat
+from .constants import Keys, QTKeys
+from .observation_tab import ObservationTableModel, localPadFloat, observation_update
 
 
 def ssr_stream_update() -> Dict[str, Any]:
@@ -37,9 +37,15 @@ def ssr_tile_update() -> Dict[str, Any]:
     return {Keys.TILES: []}
 
 
+def rtcm_status_update() -> Dict[str, Any]:
+    return {Keys.RTCM_ROWS: []}
+
+
 SSR_STREAM_TAB: List[Dict[str, Any]] = [ssr_stream_update()]
 SSR_SAT_CORRECTION_TAB: List[Dict[str, Any]] = [ssr_sat_correction_update()]
 SSR_TILE_TAB: List[Dict[str, Any]] = [ssr_tile_update()]
+RTCM_STATUS_TAB: List[Dict[str, Any]] = [rtcm_status_update()]
+OSR_OBSERVATION_TAB: List[Dict[str, Any]] = [observation_update()]
 
 
 def ssr_stream_rows_to_dicts(rows) -> List[Dict[str, Any]]:
@@ -81,6 +87,18 @@ def ssr_tile_rows_to_dicts(rows) -> List[Dict[str, Any]]:
             "rows": entry.rows,
             "cols": entry.cols,
             "nSats": entry.nSats,
+        }
+        for entry in rows
+    ]
+
+
+def rtcm_rows_to_dicts(rows) -> List[Dict[str, Any]]:
+    return [
+        {
+            "msgId": entry.msgId,
+            "rate": entry.rate,
+            "ageSec": entry.ageSec,
+            "bundle": entry.bundle,
         }
         for entry in rows
     ]
@@ -184,3 +202,52 @@ class SsrTileTableModel(SsrTableModel):
         ("Grid Size", lambda r: f"{r['rows']}x{r['cols']}"),
         ("Sats", lambda r: r["nSats"]),
     ]
+
+
+STALE_BUNDLE_AGE_SEC = 10
+
+
+class RtcmMessageTableModel(SsrTableModel):
+    """Every RTCM3 message ID seen on the raw corrections byte stream, with
+    its empirical rate and detected bundle. This is the ground truth the
+    Corrections tab QML uses to decide which bundle-specific panels
+    (Decoded Observations / SSR Streams / etc.) to show.
+    """
+
+    _instance: "RtcmMessageTableModel"
+    _backing_store = RTCM_STATUS_TAB
+    _rows_key = Keys.RTCM_ROWS
+    column_metadata = [
+        ("Message ID", lambda r: r["msgId"]),
+        ("Bundle", lambda r: r["bundle"]),
+        ("Rate (Hz)", lambda r: localPadFloat(r["rate"], 3)),
+        ("Age (s)", lambda r: localPadFloat(r["ageSec"], 3)),
+    ]
+
+    detected_bundles_changed = Signal()
+
+    @Slot()  # type: ignore
+    def update(self) -> None:
+        super().update()
+        self.detected_bundles_changed.emit()  # type: ignore
+
+    def get_detected_bundles(self) -> List[str]:
+        return sorted({r["bundle"] for r in self._rows if r["ageSec"] < STALE_BUNDLE_AGE_SEC})
+
+    # Bundles seen recently enough to be considered "currently active" -
+    # used by CorrectionsTab.qml to decide which panels to show in Auto mode.
+    detected_bundles = Property(QTKeys.QVARIANTLIST, get_detected_bundles, notify=detected_bundles_changed)  # type: ignore
+
+
+class OsrObservationTableModel(ObservationTableModel):
+    """Decoded per-satellite content of the OSR/NXRTK-MSM5 correction
+    stream (what used to be the "Remote" section of the Observations tab).
+    """
+
+    _instance: "OsrObservationTableModel"
+    _backing_store = OSR_OBSERVATION_TAB
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        assert getattr(self.__class__, "_instance", None) is None
+        self.__class__._instance = self

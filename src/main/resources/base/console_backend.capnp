@@ -514,6 +514,23 @@ struct CorrectionsStatus {
     tiles @2 :List(SsrTileStatus);
 }
 
+struct RtcmMessageRow {
+    msgId @0 :UInt16;
+    rate @1 :Float64;
+    ageSec @2 :Float64;
+    bundle @3 :Text;
+}
+
+struct RtcmStatus {
+    rows @0 :List(RtcmMessageRow);
+}
+
+struct OsrCorrectionStatus {
+    tow @0 :Float64;
+    week @1 :UInt16;
+    rows @2 :List(ObservationTableRow);
+}
+
 struct Message {
     union {
         solutionVelocityStatus @0 :SolutionVelocityStatus;
@@ -577,5 +594,7 @@ struct Message {
         ntripConnect @58 :NtripConnect;
         ntripDisconnect @59 :NtripDisconnect;
         correctionsStatus @60 :CorrectionsStatus;
+        rtcmStatus @61 :RtcmStatus;
+        osrCorrectionStatus @62 :OsrCorrectionStatus;
     }
 }

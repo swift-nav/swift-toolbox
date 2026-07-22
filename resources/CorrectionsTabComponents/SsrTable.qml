@@ -34,7 +34,6 @@ ColumnLayout {
     id: ssrTable
 
     property alias tableModel: innerTable.model
-    property string title: ""
     property variant columnWidths: []
     property variant columnNames: []
     property real mouse_x: 0
@@ -49,12 +48,6 @@ ColumnLayout {
     }
     onHeightChanged: {
         innerTable.forceLayout();
-    }
-
-    Label {
-        text: ssrTable.title
-        padding: 3
-        font.bold: true
     }
 
     HorizontalHeaderView {

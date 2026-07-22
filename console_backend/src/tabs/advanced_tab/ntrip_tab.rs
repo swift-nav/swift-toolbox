@@ -1,6 +1,9 @@
+use crate::client_sender::BoxedClientSender;
 use crate::ntrip_output::MessageConverter;
+use crate::shared_state::{SharedState, TabName};
 use crate::status_bar::Heartbeat;
 use crate::types::{ArcBool, MsgSender, PosLLH};
+use crate::utils::send_rtcm_status;
 use anyhow::Context;
 use chrono::{DateTime, Utc};
 use crossbeam::channel;
@@ -14,7 +17,7 @@ use std::rc::Rc;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration, Instant, SystemTime};
 use std::{iter, thread};
 use strum_macros::EnumString;
 
@@ -221,6 +224,7 @@ fn main(
     last_data: Arc<Mutex<LastData>>,
     is_running: ArcBool,
     rtcm_tx: Sender<Vec<u8>>,
+    rtcm_monitor_tx: Sender<Vec<u8>>,
 ) -> anyhow::Result<()> {
     let mut curl = Easy::new();
     let mut headers = List::new();
@@ -294,6 +298,12 @@ fn main(
     })?;
 
     transfer.borrow_mut().write_function(move |data| {
+        // Non-invasive tap: the RTCM message-rate monitor observes the same
+        // bytes as they arrive, independent of the existing forwarding
+        // below. A failure here is logged but never aborts the transfer.
+        if let Err(e) = rtcm_monitor_tx.send(data.to_owned()) {
+            error!("rtcm monitor tap error: {e}");
+        }
         if let Err(e) = rtcm_tx.send(data.to_owned()) {
             error!("ntrip write error: {e}");
             return Ok(0);
@@ -347,6 +357,8 @@ impl NtripState {
         msg_sender: MsgSender,
         mut heartbeat: Heartbeat,
         options: NtripOptions,
+        client_sender: BoxedClientSender,
+        shared_state: SharedState,
     ) {
         if self.connected_thd.is_some() && heartbeat.get_ntrip_connected() {
             // is already connected
@@ -361,6 +373,23 @@ impl NtripState {
             let running = self.is_running.clone();
             move || {
                 let (conv_tx, conv_rx) = channel::unbounded::<Vec<u8>>();
+                let (rtcm_monitor_tx, rtcm_monitor_rx) = channel::unbounded::<Vec<u8>>();
+                thread::spawn(move || {
+                    let mut last_sent: Option<Instant> = None;
+                    while let Ok(bytes) = rtcm_monitor_rx.recv() {
+                        shared_state.lock().rtcm_monitor.feed(&bytes);
+                        if shared_state.current_tab() != TabName::Corrections {
+                            continue;
+                        }
+                        let now = Instant::now();
+                        if last_sent
+                            .map_or(true, |t| now.duration_since(t) >= Duration::from_millis(500))
+                        {
+                            send_rtcm_status(&client_sender, &shared_state);
+                            last_sent = Some(now);
+                        }
+                    }
+                });
                 let output_type = options.output_type.clone().unwrap_or(OutputType::RTCM);
                 let mut output_converter = MessageConverter::new(conv_rx, output_type);
                 if let Err(e) = output_converter.start(msg_sender).and(main(
@@ -369,6 +398,7 @@ impl NtripState {
                     last_data,
                     running.clone(),
                     conv_tx,
+                    rtcm_monitor_tx,
                 )) {
                     error!("{e}");
                 }

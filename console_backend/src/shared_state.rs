@@ -51,6 +51,7 @@ use crate::errors::CONVERT_TO_STR_FAILURE;
 use crate::log_panel::LogLevel;
 use crate::output::{CsvLogging, CsvSerializer};
 use crate::process_messages::StopToken;
+use crate::rtcm_monitor::RtcmMonitor;
 use crate::shared_state::EventType::Refresh;
 use crate::tabs::advanced_tab::ntrip_tab::NtripState;
 use crate::tabs::{settings_tab, solution_tab::LatLonUnits, update_tab::UpdateTabUpdate};
@@ -394,6 +395,7 @@ pub struct SharedStateInner {
     pub(crate) logging_bar: LoggingBarState,
     pub(crate) log_panel: LogPanelState,
     pub(crate) ntrip_tab: NtripState,
+    pub(crate) rtcm_monitor: RtcmMonitor,
     pub(crate) tracking_tab: TrackingTabState,
     pub(crate) connection_history: ConnectionHistory,
     pub(crate) conn: Watched<ConnectionState>,
@@ -424,6 +426,7 @@ impl SharedStateInner {
             logging_bar: LoggingBarState::new(log_directory),
             log_panel: LogPanelState::new(),
             ntrip_tab: NtripState::default(),
+            rtcm_monitor: RtcmMonitor::new(),
             tracking_tab: TrackingTabState::new(),
             debug: false,
             connection_history,

@@ -175,12 +175,15 @@ fn process_shared_state_events(rx: Receiver<EventType>, tabs: &Tabs) {
                     tabs.advanced_system_monitor.lock().unwrap().send_data();
                 }
                 TabName::Observations => {
-                    let mut tab = tabs.observation.lock().unwrap();
-                    tab.send_data(true);
-                    tab.send_data(false);
+                    tabs.observation.lock().unwrap().send_data();
                 }
                 TabName::Corrections => {
-                    tabs.corrections.lock().unwrap().send_data();
+                    let mut tab = tabs.corrections.lock().unwrap();
+                    tab.send_data();
+                    tab.send_osr_data();
+                    let client_sender = tab.client_sender.clone();
+                    drop(tab);
+                    crate::utils::send_rtcm_status(&client_sender, &tabs.shared_state);
                 }
                 TabName::Settings | TabName::Update => {}
                 TabName::Unknown => error!("failed to process unknown tab in channel"),
@@ -293,7 +296,14 @@ fn register_events(link: sbp::link::Link<Tabs>) {
             .lock()
             .unwrap()
             .handle_obs(msg.clone());
-        tabs.observation.lock().unwrap().handle_obs(msg);
+        // sender_id 0 marks decoded corrections content (OSR/NXRTK-MSM5),
+        // re-emitted by the device rather than tracked locally; route it to
+        // the Corrections tab instead of Observations.
+        if msg.sender_id() == Some(0) {
+            tabs.corrections.lock().unwrap().handle_osr_obs(msg);
+        } else {
+            tabs.observation.lock().unwrap().handle_obs(msg);
+        }
     });
     link.register(|_: MsgObsDepA| {
         debug!("The message type, MsgObsDepA, is not handled in the Tracking->SignalsPlot or Observation tab.");

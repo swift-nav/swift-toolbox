@@ -249,6 +249,23 @@ pub fn serialize_capnproto_builder(builder: Builder<HeapAllocator>) -> Vec<u8> {
     msg_bytes
 }
 
+/// Send the current RTCM message-ID/rate table to the frontend.
+pub fn send_rtcm_status(client_sender: &BoxedClientSender, shared_state: &SharedState) {
+    let rows = shared_state.lock().rtcm_monitor.rows();
+    let mut builder = Builder::new_default();
+    let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
+    let rtcm_status = msg.init_rtcm_status();
+    let mut cap_rows = rtcm_status.init_rows(rows.len() as u32);
+    for (idx, row) in rows.iter().enumerate() {
+        let mut list_item = cap_rows.reborrow().get(idx as u32);
+        list_item.set_msg_id(row.msg_id);
+        list_item.set_rate(row.rate);
+        list_item.set_age_sec(row.age_sec);
+        list_item.set_bundle(row.bundle.as_str());
+    }
+    client_sender.send_data(serialize_capnproto_builder(builder));
+}
+
 pub fn refresh_loggingbar(client_sender: &BoxedClientSender, shared_state: &SharedState) {
     let mut builder = Builder::new_default();
     let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();

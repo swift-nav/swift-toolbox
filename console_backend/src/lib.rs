@@ -36,6 +36,7 @@ pub mod ntrip_output;
 pub mod output;
 pub mod piksi_tools_constants;
 pub mod process_messages;
+pub mod rtcm_monitor;
 #[cfg(not(test))]
 #[cfg(all(not(feature = "benches"), not(feature = "tests"), feature = "pyo3"))]
 pub mod server;

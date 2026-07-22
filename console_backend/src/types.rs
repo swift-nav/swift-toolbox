@@ -826,6 +826,19 @@ pub enum ObservationMsg {
 }
 
 impl ObservationMsg {
+    /// The message's `sender_id`, without the allocation cost of building
+    /// the full `states` vec via `fields()`. `sender_id == Some(0)` marks
+    /// decoded corrections content (OSR/NXRTK-MSM5) rather than the locally
+    /// connected receiver's own tracking.
+    pub fn sender_id(&self) -> Option<u16> {
+        match self {
+            ObservationMsg::MsgObs(obs) => obs.sender_id,
+            ObservationMsg::MsgObsDepB(obs) => obs.sender_id,
+            ObservationMsg::MsgObsDepC(obs) => obs.sender_id,
+            ObservationMsg::MsgOsr(obs) => obs.sender_id,
+        }
+    }
+
     pub fn fields(&self) -> ObservationMsgFields {
         let (n_obs, tow, wn, ns_residual, states, sender_id) = match &self {
             ObservationMsg::MsgObs(obs) => {

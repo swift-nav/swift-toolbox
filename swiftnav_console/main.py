@@ -133,7 +133,6 @@ from .baseline_table import (
 
 from .observation_tab import (
     ObservationLocalTableModel,
-    ObservationRemoteTableModel,
     observation_update,
     obs_rows_to_dict,
 )
@@ -142,6 +141,7 @@ from .corrections_tab import (
     SsrStreamTableModel,
     SsrSatCorrectionTableModel,
     SsrTileTableModel,
+    OsrObservationTableModel,
     ssr_stream_update,
     ssr_sat_correction_update,
     ssr_tile_update,
@@ -490,10 +490,13 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                 data[Keys.TOW] = m.observationStatus.tow
                 data[Keys.WEEK] = m.observationStatus.week
                 data[Keys.ROWS][:] = obs_rows_to_dict(m.observationStatus.rows)
-                if m.observationStatus.isRemote:
-                    ObservationRemoteTableModel.post_data_update(data)
-                else:
-                    ObservationLocalTableModel.post_data_update(data)
+                ObservationLocalTableModel.post_data_update(data)
+            elif m.which == Message.Union.OsrCorrectionStatus:
+                data = observation_update()
+                data[Keys.TOW] = m.osrCorrectionStatus.tow
+                data[Keys.WEEK] = m.osrCorrectionStatus.week
+                data[Keys.ROWS][:] = obs_rows_to_dict(m.osrCorrectionStatus.rows)
+                OsrObservationTableModel.post_data_update(data)
             elif m.which == Message.Union.CorrectionsStatus:
                 stream_data = ssr_stream_update()
                 stream_data[Keys.STREAMS] = ssr_stream_rows_to_dicts(m.correctionsStatus.streams)
@@ -852,11 +855,11 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     qmlRegisterType(NtripStatusData, "SwiftConsole", 1, 0, "NtripStatusData")  # type: ignore
     qmlRegisterType(TrackingSignalsPoints, "SwiftConsole", 1, 0, "TrackingSignalsPoints")  # type: ignore
     qmlRegisterType(TrackingSkyPlotPoints, "SwiftConsole", 1, 0, "TrackingSkyPlotPoints")  # type: ignore
-    qmlRegisterType(ObservationRemoteTableModel, "SwiftConsole", 1, 0, "ObservationRemoteTableModel")  # type: ignore
     qmlRegisterType(ObservationLocalTableModel, "SwiftConsole", 1, 0, "ObservationLocalTableModel")  # type: ignore
     qmlRegisterType(SsrStreamTableModel, "SwiftConsole", 1, 0, "SsrStreamTableModel")  # type: ignore
     qmlRegisterType(SsrSatCorrectionTableModel, "SwiftConsole", 1, 0, "SsrSatCorrectionTableModel")  # type: ignore
     qmlRegisterType(SsrTileTableModel, "SwiftConsole", 1, 0, "SsrTileTableModel")  # type: ignore
+    qmlRegisterType(OsrObservationTableModel, "SwiftConsole", 1, 0, "OsrObservationTableModel")  # type: ignore
     qmlRegisterType(UpdateTabData, "SwiftConsole", 1, 0, "UpdateTabData")  # type: ignore
     qmlRegisterType(FileIO, "SwiftConsole", 1, 0, "FileIO")  # type: ignore
 

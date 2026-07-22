@@ -15,7 +15,7 @@ test = [
   "pylint ~= 3.0.1",
   "pytest ~= 7.4.0",
   "setuptools-rust ~= 0.12.1",
-  "psutil ~= 5.9.3",
+  "psutil ~= 7.2.2",
   "py2many ==0.4",
   "types-requests ~= 2.31.0",
 ]

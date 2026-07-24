@@ -750,7 +750,8 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     args_main, unknown_args = parser.parse_known_args()
     if args_main.show_file_connection:
         parser.error(
-            "--show-file-connection argument is now permanently enabled and does not need to be passed anymore. Argument will be removed in future releases."
+            "--show-file-connection argument is now permanently enabled and does not need to be passed anymore. "
+            "Argument will be removed in future releases."
         )
     for unknown_arg in unknown_args:
         for tunnel_arg in ("--ssh-tunnel", "--ssh-remote-bind-address"):

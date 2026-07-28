@@ -41,7 +41,6 @@ QtObject {
     property string conn_state: Constants.connection.disconnected.toUpperCase()
     property string copyClipboard: ""
     property var currentSelectedTable: null
-    property bool showFileConnection: false
     property QtObject updateTabData
 
     updateTabData: QtObject {

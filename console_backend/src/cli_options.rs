@@ -105,10 +105,6 @@ pub struct CliOptions {
     #[clap(long)]
     pub show_fileio: bool,
 
-    /// Allow File Connections.
-    #[clap(long)]
-    pub show_file_connection: bool,
-
     /// Enable map.
     #[clap(long)]
     pub enable_map: bool,

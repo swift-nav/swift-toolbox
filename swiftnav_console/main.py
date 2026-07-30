@@ -234,41 +234,41 @@ TAB_LAYOUT = {
         MAIN_INDEX: 3,
         SUB_INDEX: 0,
     },
-    Tabs.SETTINGS: {
+    Tabs.CORRECTIONS: {
         MAIN_INDEX: 4,
         SUB_INDEX: 0,
     },
-    Tabs.UPDATE: {
+    Tabs.SETTINGS: {
         MAIN_INDEX: 5,
         SUB_INDEX: 0,
     },
-    Tabs.ADVANCED_SYSTEM_MONITOR: {
+    Tabs.UPDATE: {
         MAIN_INDEX: 6,
+        SUB_INDEX: 0,
+    },
+    Tabs.ADVANCED_SYSTEM_MONITOR: {
+        MAIN_INDEX: 7,
         SUB_INDEX: 0,
     },
     Tabs.ADVANCED_IMU: {
-        MAIN_INDEX: 6,
+        MAIN_INDEX: 7,
         SUB_INDEX: 1,
     },
     Tabs.ADVANCED_MAGNETOMETER: {
-        MAIN_INDEX: 6,
+        MAIN_INDEX: 7,
         SUB_INDEX: 2,
     },
     Tabs.ADVANCED_NETWORKING: {
-        MAIN_INDEX: 6,
+        MAIN_INDEX: 7,
         SUB_INDEX: 3,
     },
     Tabs.ADVANCED_SPECTRUM_ANALYZER: {
-        MAIN_INDEX: 6,
+        MAIN_INDEX: 7,
         SUB_INDEX: 4,
     },
     Tabs.ADVANCED_INS: {
-        MAIN_INDEX: 6,
-        SUB_INDEX: 5,
-    },
-    Tabs.CORRECTIONS: {
         MAIN_INDEX: 7,
-        SUB_INDEX: 0,
+        SUB_INDEX: 5,
     },
 }
 

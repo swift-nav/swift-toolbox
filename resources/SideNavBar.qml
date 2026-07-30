@@ -53,6 +53,10 @@ Item {
             "tooltip": "Observations",
             "source": Constants.icons.observationsPath
         }, {
+            "name": "Corrections",
+            "tooltip": "Corrections",
+            "source": Constants.icons.correctionsPath
+        }, {
             "name": "Settings",
             "tooltip": "Settings",
             "source": Constants.icons.settingsPath
@@ -64,10 +68,6 @@ Item {
             "name": "Advanced",
             "tooltip": "Advanced",
             "source": Constants.icons.advancedPath
-        }, {
-            "name": "Corrections",
-            "tooltip": "Corrections",
-            "source": Constants.icons.correctionsPath
         }]
 
     function clickButton(index) {

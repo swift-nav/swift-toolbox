@@ -162,6 +162,20 @@ class SsrTableModel(QAbstractTableModel):  # pylint: disable=too-few-public-meth
     row_count = Property(int, total_rows, notify=row_count_changed)  # type: ignore
 
 
+def format_rate_hz(interval_sec) -> str:
+    if not interval_sec or interval_sec <= 0:
+        return "--"
+    hz = 1.0 / interval_sec
+    if hz > 1:
+        # Snap to the nearest 5 Hz bucket (5, 10, 15, ...) to match how
+        # GNSS correction/observation rates are actually published, rather
+        # than showing a noisy empirically-measured value like "4.87 Hz".
+        # Floored at 5 so anything already established as >1Hz doesn't
+        # round down to a confusing "0 Hz".
+        return f"{max(5, round(hz / 5) * 5):.0f} Hz"
+    return f"{hz:.2f} Hz"
+
+
 class SsrStreamTableModel(SsrTableModel):
     _instance: "SsrStreamTableModel"
     _backing_store = SSR_STREAM_TAB
@@ -169,7 +183,7 @@ class SsrStreamTableModel(SsrTableModel):
     column_metadata = [
         ("Message", lambda r: r["msgType"]),
         ("Age (s)", lambda r: localPadFloat(r["lastAgeSec"], 3)),
-        ("Rate (s)", lambda r: localPadFloat(r["updateIntervalSec"], 3)),
+        ("Rate (Hz)", lambda r: format_rate_hz(r["updateIntervalSec"])),
         ("IOD", lambda r: r["iodSsr"]),
         ("Count", lambda r: r["count"]),
     ]

@@ -57,6 +57,10 @@ Item {
             curSubTabIndex: mainTabs.curSubTabIndex
         }
 
+        CorrectionsTab {
+            curSubTabIndex: mainTabs.curSubTabIndex
+        }
+
         SettingsTab {
             curSubTabIndex: mainTabs.curSubTabIndex
         }
@@ -66,10 +70,6 @@ Item {
         }
 
         AdvancedTab {
-            curSubTabIndex: mainTabs.curSubTabIndex
-        }
-
-        CorrectionsTab {
             curSubTabIndex: mainTabs.curSubTabIndex
         }
     }

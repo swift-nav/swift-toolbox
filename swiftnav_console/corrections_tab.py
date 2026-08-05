@@ -112,6 +112,7 @@ class SsrTableModel(QAbstractTableModel):  # pylint: disable=too-few-public-meth
     (per RTCM DF391), unlike per-epoch observation data.
     """
 
+    _instance: "SsrTableModel"
     row_count_changed = Signal(int, arguments="row_count")
     _data_updated = Signal()
     column_metadata: List[Any] = []
@@ -250,7 +251,9 @@ class RtcmMessageTableModel(SsrTableModel):
 
     # Bundles seen recently enough to be considered "currently active" -
     # used by CorrectionsTab.qml to decide which panels to show in Auto mode.
-    detected_bundles = Property(QTKeys.QVARIANTLIST, get_detected_bundles, notify=detected_bundles_changed)  # type: ignore
+    detected_bundles = Property(
+        QTKeys.QVARIANTLIST, get_detected_bundles, notify=detected_bundles_changed  # type: ignore
+    )
 
 
 class OsrObservationTableModel(ObservationTableModel):

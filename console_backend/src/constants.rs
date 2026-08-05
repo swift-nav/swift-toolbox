@@ -112,8 +112,24 @@ pub(crate) const BASE_POS_LLH: &str = "Base Pos LLH [°,°,m]";
 pub const BASELINE_DATA_KEYS: &[&str] = &[N_FLOAT, N_FIXED, N_DGNSS, E_FLOAT, E_FIXED, E_DGNSS];
 
 pub const BASELINE_TABLE_KEYS: &[&str] = &[
-    GPS_WEEK, GPS_TOW, GPS_TIME, UTC_TIME, UTC_SRC, NORTH, EAST, DOWN, HORIZ_ACC, VERT_ACC, DIST,
-    SATS_USED, FLAGS, MODE, HEADING, CORR_AGE_S, BASE_POS_ECEF, BASE_POS_LLH,
+    GPS_WEEK,
+    GPS_TOW,
+    GPS_TIME,
+    UTC_TIME,
+    UTC_SRC,
+    NORTH,
+    EAST,
+    DOWN,
+    HORIZ_ACC,
+    VERT_ACC,
+    DIST,
+    SATS_USED,
+    FLAGS,
+    MODE,
+    HEADING,
+    CORR_AGE_S,
+    BASE_POS_ECEF,
+    BASE_POS_LLH,
 ];
 
 // Solution Table.

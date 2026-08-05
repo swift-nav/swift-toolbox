@@ -27,7 +27,7 @@
 use std::collections::BTreeMap;
 use std::time::Instant;
 
-const CRC24_POLY: u32 = 0x1864_CFB;
+const CRC24_POLY: u32 = 0x0186_4CFB;
 
 fn crc24q(data: &[u8]) -> u32 {
     let mut crc: u32 = 0;
@@ -176,7 +176,9 @@ impl RtcmMonitor {
         self.stats
             .iter()
             .map(|(&msg_id, stats)| {
-                let elapsed = now.saturating_duration_since(stats.first_seen).as_secs_f64();
+                let elapsed = now
+                    .saturating_duration_since(stats.first_seen)
+                    .as_secs_f64();
                 let rate = if elapsed > f64::EPSILON {
                     stats.count as f64 / elapsed
                 } else {

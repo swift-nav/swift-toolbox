@@ -382,9 +382,9 @@ impl NtripState {
                             continue;
                         }
                         let now = Instant::now();
-                        if last_sent
-                            .map_or(true, |t| now.duration_since(t) >= Duration::from_millis(500))
-                        {
+                        if last_sent.map_or(true, |t| {
+                            now.duration_since(t) >= Duration::from_millis(500)
+                        }) {
                             send_rtcm_status(&client_sender, &shared_state);
                             last_sent = Some(now);
                         }

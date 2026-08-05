@@ -42,14 +42,25 @@ MainTab {
     id: correctionsTab
 
     property string bundleOverride: "AUTO"
-    property var overrideOptions: [
-        { text: "Auto", value: "AUTO" },
-        { text: "Generic RTCM", value: "GENERIC" },
-        { text: "MSM5", value: "MSM5" },
-        { text: "Swift NXRTK-MSM5", value: "NXRTK_MSM5" },
-        { text: "Swift OSR", value: "OSR" },
-        { text: "Swift SSR", value: "SSR" }
-    ]
+    property var overrideOptions: [{
+            "text": "Auto",
+            "value": "AUTO"
+        }, {
+            "text": "Generic RTCM",
+            "value": "GENERIC"
+        }, {
+            "text": "MSM5",
+            "value": "MSM5"
+        }, {
+            "text": "Swift NXRTK-MSM5",
+            "value": "NXRTK_MSM5"
+        }, {
+            "text": "Swift OSR",
+            "value": "OSR"
+        }, {
+            "text": "Swift SSR",
+            "value": "SSR"
+        }]
     // MSM5 and NXRTK-MSM5 are distinct correction types, but both decode
     // through the same MsgObs/MsgOsr pipeline as OSR, so all three currently
     // drive the same "Decoded Observations" panel when manually selected.

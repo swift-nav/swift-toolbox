@@ -531,6 +531,16 @@ struct OsrCorrectionStatus {
     rows @2 :List(ObservationTableRow);
 }
 
+struct BasePositionStatus {
+    x @0 :Float64;
+    y @1 :Float64;
+    z @2 :Float64;
+    lat @3 :Float64;
+    lon @4 :Float64;
+    height @5 :Float64;
+    ageSec @6 :Float64;
+}
+
 struct Message {
     union {
         solutionVelocityStatus @0 :SolutionVelocityStatus;
@@ -596,5 +606,6 @@ struct Message {
         correctionsStatus @60 :CorrectionsStatus;
         rtcmStatus @61 :RtcmStatus;
         osrCorrectionStatus @62 :OsrCorrectionStatus;
+        basePositionStatus @63 :BasePositionStatus;
     }
 }

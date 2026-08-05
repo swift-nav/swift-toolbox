@@ -21,6 +21,7 @@ use capnp::message::Builder;
 use std::collections::BTreeMap;
 use std::time::Instant;
 
+use sbp::messages::observation::MsgBasePosEcef;
 use sbp::messages::ssr::{
     MsgSsrCodeBiases, MsgSsrGriddedCorrection, MsgSsrOrbitClock, MsgSsrPhaseBiases,
     MsgSsrStecCorrection, MsgSsrTileDefinition,
@@ -31,7 +32,8 @@ use crate::shared_state::{SharedState, TabName};
 use crate::tabs::observation_tab::{ObservationTable, ObservationTableRow};
 use crate::types::{ObservationMsg, SignalCodes};
 use crate::utils::{
-    compute_doppler, decode_ssr_update_interval, sec_to_ns, serialize_capnproto_builder,
+    compute_doppler, decode_ssr_update_interval, ecef_to_llh_deg, sec_to_ns,
+    serialize_capnproto_builder,
 };
 
 /// Prototype only: the `code`/`value` shown for a satellite's code and phase
@@ -78,6 +80,18 @@ pub struct SsrStreamRow {
     pub count: u32,
 }
 
+/// Base station position, from `MsgBasePosEcef` (SBP message 72).
+#[derive(Clone, Debug)]
+pub struct BasePositionRow {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    pub lat: f64,
+    pub lon: f64,
+    pub height: f64,
+    pub last_seen: Instant,
+}
+
 #[derive(Debug)]
 pub struct CorrectionsTab {
     pub client_sender: BoxedClientSender,
@@ -89,6 +103,7 @@ pub struct CorrectionsTab {
     /// stream, i.e. what used to be the "Remote" section of the
     /// Observations tab (SBP `ObservationMsg` with `sender_id == 0`).
     osr: ObservationTable,
+    base_pos: Option<BasePositionRow>,
 }
 
 /// Decode a North-West corner correction point coordinate.
@@ -117,6 +132,7 @@ impl CorrectionsTab {
             sat_corrections: BTreeMap::new(),
             tiles: BTreeMap::new(),
             osr: ObservationTable::new(true),
+            base_pos: None,
         }
     }
 
@@ -331,6 +347,46 @@ impl CorrectionsTab {
             list_item.set_lock(row.lock);
             list_item.set_flags(row.flags);
         }
+        self.client_sender
+            .send_data(serialize_capnproto_builder(builder));
+    }
+
+    /// Handle MsgBasePosEcef (SBP message 72): the base station's surveyed
+    /// position, broadcast as ECEF x/y/z. Also converted to geodetic
+    /// lat/lon/height for display.
+    pub fn handle_base_pos_ecef(&mut self, msg: MsgBasePosEcef) {
+        let (lat, lon, height) = ecef_to_llh_deg(msg.x, msg.y, msg.z);
+        self.base_pos = Some(BasePositionRow {
+            x: msg.x,
+            y: msg.y,
+            z: msg.z,
+            lat,
+            lon,
+            height,
+            last_seen: Instant::now(),
+        });
+        self.send_base_position();
+    }
+
+    /// Package the base station position into a message buffer and send to
+    /// frontend, if one has been received yet.
+    pub fn send_base_position(&mut self) {
+        if self.shared_state.current_tab() != TabName::Corrections {
+            return;
+        }
+        let Some(base_pos) = &self.base_pos else {
+            return;
+        };
+        let mut builder = Builder::new_default();
+        let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
+        let mut status = msg.init_base_position_status();
+        status.set_x(base_pos.x);
+        status.set_y(base_pos.y);
+        status.set_z(base_pos.z);
+        status.set_lat(base_pos.lat);
+        status.set_lon(base_pos.lon);
+        status.set_height(base_pos.height);
+        status.set_age_sec(base_pos.last_seen.elapsed().as_secs_f64());
         self.client_sender
             .send_data(serialize_capnproto_builder(builder));
     }

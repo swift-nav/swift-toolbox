@@ -19,7 +19,7 @@
 
 from typing import Dict, List, Any
 
-from PySide6.QtCore import Property, Slot, Signal, QAbstractTableModel, Qt, QModelIndex
+from PySide6.QtCore import Property, Slot, Signal, QAbstractTableModel, QObject, Qt, QModelIndex
 
 from .constants import Keys, QTKeys
 from .observation_tab import ObservationTableModel, localPadFloat, observation_update
@@ -182,10 +182,10 @@ class SsrStreamTableModel(SsrTableModel):
     _rows_key = Keys.STREAMS
     column_metadata = [
         ("Message", lambda r: r["msgType"]),
+        ("Count", lambda r: r["count"]),
         ("Age (s)", lambda r: localPadFloat(r["lastAgeSec"], 3)),
         ("Rate (Hz)", lambda r: format_rate_hz(r["updateIntervalSec"])),
         ("IOD", lambda r: r["iodSsr"]),
-        ("Count", lambda r: r["count"]),
     ]
 
 
@@ -265,3 +265,80 @@ class OsrObservationTableModel(ObservationTableModel):
         super().__init__(parent)
         assert getattr(self.__class__, "_instance", None) is None
         self.__class__._instance = self
+
+
+def base_position_update() -> Dict[str, Any]:
+    return {"ecef": "--", "llh": "--", "ageSec": 0.0}
+
+
+def base_position_to_dict(status) -> Dict[str, Any]:
+    return {
+        "ecef": f"{status.x:.3f}, {status.y:.3f}, {status.z:.3f}",
+        "llh": f"{status.lat:.7f}, {status.lon:.7f}, {status.height:.3f}",
+        "ageSec": status.ageSec,
+    }
+
+
+BASE_POSITION_TAB: List[Dict[str, Any]] = [base_position_update()]
+
+
+class BasePositionData(QObject):
+    """The base station's surveyed position (SBP message 72,
+    MsgBasePosEcef), shown on the Corrections tab. The same content is also
+    added as a row on the Baseline tab (see BASE_POS_ECEF/BASE_POS_LLH in
+    console_backend/src/constants.rs), independently of this class.
+    """
+
+    _instance: "BasePositionData"
+    _data_updated = Signal()
+    ecef_changed = Signal(str, arguments="ecef")
+    llh_changed = Signal(str, arguments="llh")
+    age_sec_changed = Signal(float, arguments="age_sec")
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        assert getattr(self.__class__, "_instance", None) is None
+        self.__class__._instance = self
+        self._ecef = "--"
+        self._llh = "--"
+        self._age_sec = 0.0
+        self._data_updated.connect(self.handle_data_updated)
+
+    @classmethod
+    def post_data_update(cls, update_data: Dict[str, Any]) -> None:
+        BASE_POSITION_TAB[0] = update_data
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
+
+    @Slot()  # type: ignore
+    def handle_data_updated(self) -> None:
+        data = BASE_POSITION_TAB[0]
+        self.set_ecef(data["ecef"])
+        self.set_llh(data["llh"])
+        self.set_age_sec(data["ageSec"])
+
+    def get_ecef(self) -> str:
+        return self._ecef
+
+    def set_ecef(self, ecef: str) -> None:
+        self._ecef = ecef
+        self.ecef_changed.emit(self._ecef)  # type: ignore
+
+    ecef = Property(str, get_ecef, set_ecef, notify=ecef_changed)  # type: ignore
+
+    def get_llh(self) -> str:
+        return self._llh
+
+    def set_llh(self, llh: str) -> None:
+        self._llh = llh
+        self.llh_changed.emit(self._llh)  # type: ignore
+
+    llh = Property(str, get_llh, set_llh, notify=llh_changed)  # type: ignore
+
+    def get_age_sec(self) -> float:
+        return self._age_sec
+
+    def set_age_sec(self, age_sec: float) -> None:
+        self._age_sec = age_sec
+        self.age_sec_changed.emit(self._age_sec)  # type: ignore
+
+    age_sec = Property(float, get_age_sec, set_age_sec, notify=age_sec_changed)  # type: ignore

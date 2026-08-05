@@ -28,7 +28,7 @@ use sbp::{
         logging::MsgLog,
         mag::MsgMagRaw,
         navigation::{MsgAgeCorrections, MsgPosLlhCov, MsgUtcTime, MsgVelNed},
-        observation::{MsgObsDepA, MsgSvAzEl},
+        observation::{MsgBasePosEcef, MsgObsDepA, MsgSvAzEl},
         orientation::{MsgAngularRate, MsgBaselineHeading, MsgOrientEuler},
         piksi::{MsgDeviceMonitor, MsgNetworkStateResp, MsgThreadState},
         ssr::{
@@ -181,6 +181,7 @@ fn process_shared_state_events(rx: Receiver<EventType>, tabs: &Tabs) {
                     let mut tab = tabs.corrections.lock().unwrap();
                     tab.send_data();
                     tab.send_osr_data();
+                    tab.send_base_position();
                     let client_sender = tab.client_sender.clone();
                     drop(tab);
                     crate::utils::send_rtcm_status(&client_sender, &tabs.shared_state);
@@ -328,6 +329,13 @@ fn register_events(link: sbp::link::Link<Tabs>) {
     });
     link.register(|tabs: &Tabs, msg: MsgSsrStecCorrection| {
         tabs.corrections.lock().unwrap().handle_stec_correction(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgBasePosEcef| {
+        tabs.corrections
+            .lock()
+            .unwrap()
+            .handle_base_pos_ecef(msg.clone());
+        tabs.baseline.lock().unwrap().handle_base_pos_ecef(msg);
     });
     link.register(|tabs: &Tabs, msg: MsgOrientEuler| {
         tabs.solution_position

@@ -35,6 +35,7 @@ use crate::constants::*;
 use crate::errors::*;
 use crate::shared_state::{ConnectionState, SerialConfig, SharedState};
 use crate::types::SignalCodes;
+use swiftnav::coords::{LLHDegrees, ECEF};
 
 pub mod date_conv;
 pub mod formatters;
@@ -623,6 +624,13 @@ pub fn format_fixed_decimal_and_sign(num: f32, width: usize, precision: usize) -
 /// Formats bools with uppercase T's and F's
 pub fn format_bool(b: bool) -> String {
     if b { "True" } else { "False" }.into()
+}
+
+/// Convert an ECEF position (meters) to geodetic latitude/longitude
+/// (degrees) and height (meters).
+pub fn ecef_to_llh_deg(x: f64, y: f64, z: f64) -> (f64, f64, f64) {
+    let llh = LLHDegrees::from(ECEF::new(x, y, z));
+    (llh.latitude(), llh.longitude(), llh.height())
 }
 
 /// Decode an SSR `update_interval` byte (RTCM DF391) into seconds.

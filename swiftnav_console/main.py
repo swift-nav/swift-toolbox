@@ -142,12 +142,14 @@ from .corrections_tab import (
     SsrSatCorrectionTableModel,
     SsrTileTableModel,
     OsrObservationTableModel,
+    BasePositionData,
     ssr_stream_update,
     ssr_sat_correction_update,
     ssr_tile_update,
     ssr_stream_rows_to_dicts,
     ssr_sat_correction_rows_to_dicts,
     ssr_tile_rows_to_dicts,
+    base_position_to_dict,
 )
 
 from .settings_tab import (
@@ -497,6 +499,8 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                 data[Keys.WEEK] = m.osrCorrectionStatus.week
                 data[Keys.ROWS][:] = obs_rows_to_dict(m.osrCorrectionStatus.rows)
                 OsrObservationTableModel.post_data_update(data)
+            elif m.which == Message.Union.BasePositionStatus:
+                BasePositionData.post_data_update(base_position_to_dict(m.basePositionStatus))
             elif m.which == Message.Union.CorrectionsStatus:
                 stream_data = ssr_stream_update()
                 stream_data[Keys.STREAMS] = ssr_stream_rows_to_dicts(m.correctionsStatus.streams)
@@ -860,6 +864,7 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     qmlRegisterType(SsrSatCorrectionTableModel, "SwiftConsole", 1, 0, "SsrSatCorrectionTableModel")  # type: ignore
     qmlRegisterType(SsrTileTableModel, "SwiftConsole", 1, 0, "SsrTileTableModel")  # type: ignore
     qmlRegisterType(OsrObservationTableModel, "SwiftConsole", 1, 0, "OsrObservationTableModel")  # type: ignore
+    qmlRegisterType(BasePositionData, "SwiftConsole", 1, 0, "BasePositionData")  # type: ignore
     qmlRegisterType(UpdateTabData, "SwiftConsole", 1, 0, "UpdateTabData")  # type: ignore
     qmlRegisterType(FileIO, "SwiftConsole", 1, 0, "FileIO")  # type: ignore
 

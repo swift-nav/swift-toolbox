@@ -70,6 +70,10 @@ MainTab {
         return Constants.genericTable.cellHeight * (rows + 1) + chrome;
     }
 
+    BasePositionData {
+        id: basePositionData
+    }
+
     OsrObservationTableModel {
         id: osrObservationTableModel
     }
@@ -104,6 +108,18 @@ MainTab {
                 model: overrideOptions.map(o => o.text)
                 onCurrentIndexChanged: correctionsTab.bundleOverride = overrideOptions[currentIndex].value
             }
+
+            // Base station position (SBP message 72, MsgBasePosEcef), also
+            // shown as a row on the Baseline tab.
+            Label {
+                Layout.leftMargin: 16
+                text: "Base ECEF x, y, z [m]: " + basePositionData.ecef
+            }
+
+            Label {
+                Layout.leftMargin: 16
+                text: "Base LLH lat, lon, height [°, °, m]: " + basePositionData.llh
+            }
         }
 
         // Each panel below sizes itself to its decoded row count (see
@@ -133,8 +149,8 @@ MainTab {
                     CorrectionsTabComponents.SsrTable {
                         anchors.fill: parent
                         tableModel: ssrStreamTableModel
-                        columnNames: ["Message", "Age (s)", "Rate (Hz)", "IOD", "Count"]
-                        columnWidths: [parent.width / 3, parent.width / 6, parent.width / 6, parent.width / 8, parent.width / 8]
+                        columnNames: ["Message", "Count", "Age (s)", "Rate (Hz)", "IOD"]
+                        columnWidths: [parent.width / 3, parent.width / 8, parent.width / 6, parent.width / 6, parent.width / 8]
                     }
                 }
 

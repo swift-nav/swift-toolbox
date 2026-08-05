@@ -705,8 +705,6 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
             )
         else:
             globals_.setProperty("width", args.width)  # type: ignore
-    if args.show_file_connection:
-        globals_.setProperty("showFileConnection", True)  # type: ignore
     if args.enable_map:
         globals_.setProperty("enableMap", True)  # type: ignore
         MAP_ENABLED[0] = True
@@ -770,8 +768,8 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     parser.add_argument("--record-capnp-recording", action="store_true")
     parser.add_argument("--debug-with-no-backend", action="store_true")
     parser.add_argument("--show-fileio", action="store_true")
-    parser.add_argument("--enable-map", action="store_true")
     parser.add_argument("--show-file-connection", action="store_true")
+    parser.add_argument("--enable-map", action="store_true")
     parser.add_argument("--no-prompts", action="store_true")
     parser.add_argument("--use-opengl", action="store_true")
     parser.add_argument("--no-high-dpi", action="store_true")
@@ -787,6 +785,11 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
         parser.add_argument("--ssh-remote-bind-address", type=str, default=None)
 
     args_main, unknown_args = parser.parse_known_args()
+    if args_main.show_file_connection:
+        parser.error(
+            "--show-file-connection argument is now permanently enabled and does not need to be passed anymore. "
+            "Argument will be removed in future releases."
+        )
     for unknown_arg in unknown_args:
         for tunnel_arg in ("--ssh-tunnel", "--ssh-remote-bind-address"):
             if tunnel_arg in unknown_arg:

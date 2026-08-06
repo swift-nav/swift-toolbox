@@ -19,7 +19,7 @@
 
 use capnp::message::Builder;
 use std::collections::BTreeMap;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use sbp::messages::observation::MsgBasePosEcef;
 use sbp::messages::ssr::{
@@ -62,6 +62,14 @@ pub struct SsrTileRow {
     pub n_sats: u8,
 }
 
+/// Messages arriving within this long of the previous one of the same type
+/// are treated as part of the same "burst" rather than the start of a new
+/// one - e.g. a single SSR correction update sends one MsgSsrOrbitClock per
+/// currently-tracked satellite, all back-to-back, followed by a gap until
+/// the next update. Comfortably longer than any realistic intra-burst gap
+/// and shorter than the fastest real bundle cadence.
+const BURST_GAP: Duration = Duration::from_millis(500);
+
 /// Tracks arrival of any repeatedly-received SBP message type (SSR message
 /// families, but also `MSG_OBS`/`MSG_OSR`), whether or not it carries a
 /// declared update interval. Works regardless of how the device got its
@@ -69,12 +77,18 @@ pub struct SsrTileRow {
 /// since it's driven purely by the SBP messages the device already reports.
 #[derive(Clone, Debug)]
 pub struct SsrStreamRow {
-    pub first_seen: Instant,
     pub last_seen: Instant,
+    /// Start time of the first and most recently detected burst (see
+    /// `BURST_GAP`), used to compute the average time *between* bundles of
+    /// corrections rather than between individual messages within one
+    /// bundle.
+    pub first_burst_start: Instant,
+    pub last_burst_start: Instant,
+    pub burst_count: u32,
     /// The message's own declared update interval (decoded DF391), when it
     /// has one (SSR message families). `None` for message types with no
-    /// such field (`MSG_OBS`/`MSG_OSR`) - callers fall back to an
-    /// empirically measured average interval in that case.
+    /// such field (`MSG_OBS`/`MSG_OSR`) - callers fall back to the
+    /// empirically measured burst period in that case.
     pub declared_interval_sec: Option<f64>,
     pub iod_ssr: Option<u8>,
     pub count: u32,
@@ -143,17 +157,33 @@ impl CorrectionsTab {
         iod_ssr: Option<u8>,
     ) {
         let now = Instant::now();
-        let row = self.streams.entry(name).or_insert_with(|| SsrStreamRow {
-            first_seen: now,
-            last_seen: now,
-            declared_interval_sec: None,
-            iod_ssr: None,
-            count: 0,
-        });
-        row.last_seen = now;
-        row.declared_interval_sec = declared_interval_code.map(decode_ssr_update_interval);
-        row.iod_ssr = iod_ssr;
-        row.count += 1;
+        match self.streams.get_mut(name) {
+            Some(row) => {
+                if now.duration_since(row.last_seen) >= BURST_GAP {
+                    row.last_burst_start = now;
+                    row.burst_count += 1;
+                }
+                row.last_seen = now;
+                row.declared_interval_sec = declared_interval_code.map(decode_ssr_update_interval);
+                row.iod_ssr = iod_ssr;
+                row.count += 1;
+            }
+            None => {
+                self.streams.insert(
+                    name,
+                    SsrStreamRow {
+                        last_seen: now,
+                        first_burst_start: now,
+                        last_burst_start: now,
+                        burst_count: 1,
+                        declared_interval_sec: declared_interval_code
+                            .map(decode_ssr_update_interval),
+                        iod_ssr,
+                        count: 1,
+                    },
+                );
+            }
+        }
     }
 
     pub fn handle_orbit_clock(&mut self, msg: MsgSsrOrbitClock) {
@@ -409,17 +439,22 @@ impl CorrectionsTab {
                 list_item.set_msg_type(name);
                 list_item.set_last_age_sec(row.last_seen.elapsed().as_secs_f64());
                 // Prefer the message's own declared interval (SSR families);
-                // fall back to an empirically measured average interval for
-                // message types with no such field (MSG_OBS/MSG_OSR).
-                let interval_sec = row.declared_interval_sec.unwrap_or_else(|| {
-                    let elapsed = row.last_seen.duration_since(row.first_seen).as_secs_f64();
-                    if row.count > 1 {
-                        elapsed / (row.count - 1) as f64
+                // fall back to the empirically measured period *between
+                // bursts* for message types with no such field (MSG_OBS/
+                // MSG_OSR) - not the (much shorter) average gap between the
+                // individual messages within one burst.
+                let period_sec = row.declared_interval_sec.unwrap_or_else(|| {
+                    if row.burst_count > 1 {
+                        let elapsed = row
+                            .last_burst_start
+                            .duration_since(row.first_burst_start)
+                            .as_secs_f64();
+                        elapsed / (row.burst_count - 1) as f64
                     } else {
                         0.0
                     }
                 });
-                list_item.set_update_interval_sec(interval_sec);
+                list_item.set_update_interval_sec(period_sec);
                 list_item.set_iod_ssr(row.iod_ssr.unwrap_or(0));
                 list_item.set_count(row.count);
             }

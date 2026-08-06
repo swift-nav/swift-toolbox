@@ -127,7 +127,7 @@ MainTab {
                     CorrectionsTabComponents.SsrTable {
                         anchors.fill: parent
                         tableModel: ssrStreamTableModel
-                        columnNames: ["Message", "Count", "Age (s)", "Rate (Hz)", "IOD"]
+                        columnNames: ["Message", "Count", "Age (s)", "Period (s)", "IOD"]
                         columnWidths: [parent.width / 3, parent.width / 8, parent.width / 6, parent.width / 6, parent.width / 8]
                     }
                 }

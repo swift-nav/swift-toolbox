@@ -41,34 +41,14 @@ import SwiftConsole
 MainTab {
     id: correctionsTab
 
-    property string bundleOverride: "AUTO"
-    property var overrideOptions: [{
-            "text": "Auto",
-            "value": "AUTO"
-        }, {
-            "text": "Generic RTCM",
-            "value": "GENERIC"
-        }, {
-            "text": "MSM5",
-            "value": "MSM5"
-        }, {
-            "text": "Swift NXRTK-MSM5",
-            "value": "NXRTK_MSM5"
-        }, {
-            "text": "Swift OSR",
-            "value": "OSR"
-        }, {
-            "text": "Swift SSR",
-            "value": "SSR"
-        }]
-    // MSM5 and NXRTK-MSM5 are distinct correction types, but both decode
-    // through the same MsgObs/MsgOsr pipeline as OSR, so all three currently
-    // drive the same "Decoded Observations" panel when manually selected.
-    property bool showObservationsPanel: bundleOverride === "OSR" || bundleOverride === "MSM5" || bundleOverride === "NXRTK_MSM5" || (bundleOverride === "AUTO" && osrObservationTableModel.row_count > 0)
+    // Always auto-detected from the SBP messages the device itself reports -
+    // no manual bundle selection. MSM5, NXRTK-MSM5, and OSR all decode
+    // through the same MsgObs/MsgOsr pipeline, so they share this signal.
+    property bool showObservationsPanel: osrObservationTableModel.row_count > 0
     // ssrSatCorrectionTableModel/ssrTileTableModel are only ever populated by
     // genuine MSG_SSR_* content, unlike ssrStreamTableModel which also
     // carries MSG_OBS/MSG_OSR rows.
-    property bool showSsrPanels: bundleOverride === "SSR" || (bundleOverride === "AUTO" && (ssrSatCorrectionTableModel.row_count > 0 || ssrTileTableModel.row_count > 0))
+    property bool showSsrPanels: ssrSatCorrectionTableModel.row_count > 0 || ssrTileTableModel.row_count > 0
 
     // Scales a panel to its content: one row of height per decoded message
     // plus one for the table header, clamped to [minRows, maxRows] so an
@@ -108,22 +88,9 @@ MainTab {
         RowLayout {
             Layout.fillWidth: true
 
-            Label {
-                text: "Corrections bundle:"
-                padding: 4
-            }
-
-            ComboBox {
-                id: bundleComboBox
-
-                model: overrideOptions.map(o => o.text)
-                onCurrentIndexChanged: correctionsTab.bundleOverride = overrideOptions[currentIndex].value
-            }
-
             // Base station position (SBP message 72, MsgBasePosEcef), also
             // shown as a row on the Baseline tab.
             Label {
-                Layout.leftMargin: 16
                 text: "Base ECEF x, y, z [m]: " + basePositionData.ecef
             }
 

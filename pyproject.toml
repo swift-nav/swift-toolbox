@@ -14,7 +14,7 @@ test = [
   "mypy ~= 1.1",
   "pylint ~= 3.0.1",
   "pytest ~= 7.4.0",
-  "setuptools-rust ~= 0.12.1",
+  "setuptools-rust ~= 1.13.0",
   "psutil ~= 5.9.3",
   "py2many ==0.4",
   "types-requests ~= 2.31.0",
@@ -26,7 +26,7 @@ requires = [
   "flit_core >=2,<4",
   "setuptools>=41.0.0",
   "wheel",
-  "setuptools_rust>=0.12.1",
+  "setuptools_rust>=1.13.0",
 ]
 build-backend = "flit_core.buildapi"
 

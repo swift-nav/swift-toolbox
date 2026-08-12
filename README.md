@@ -133,7 +133,7 @@ The main github actions workflow will detect a new tag was created. If all check
 succeed a new release will be made with all assests attached to it. This process typically 
 takes about 40 minutes. Although any official release should be triggered off the main branch,
 you can use this process to create a "test release" for debugging purposes (you can append a
-moniker to denote the release is a test e.g. v4.0.6-test)
+moniker to denote the release is a test e.g. v4.0.6-test).
 
 ```
 git tag vX.X.X && git push origin vX.X.X

@@ -446,6 +446,6 @@ Fill environment variable `MAPBOX_TOKEN` before any resource generation (compile
 
 ## LICENSE
 
-Copyright © 2021-2022 Swift Navigation
+Copyright © 2021-2026 Swift Navigation
 
 Distributed under the [MIT open source license](LICENSE).

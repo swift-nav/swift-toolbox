@@ -439,10 +439,11 @@ not be relied on even though these internal packets are being exposed.
 
 ### Mapping support
 
-To modify map: https://github.com/swift-nav/swift-toolbox/tree/main/resources/web/map/js/trajectory_raw.js 
-`Makefile.toml` uses task called `map-js-token` to replace `@ACCES_TOKEN@` in trajectory_raw.
+The Solution tab's Map view uses [Leaflet](https://leafletjs.com/) with [Stadia Maps](https://stadiamaps.com/) tiles.
+To modify the map: https://github.com/swift-nav/swift-toolbox/tree/main/resources/web/map/js/trajectory_raw.js
+`Makefile.toml` uses a task called `map-js-token` to replace `@STADIA_TOKEN@` in trajectory_raw.
 
-Fill environment variable `MAPBOX_TOKEN` before any resource generation (compile / run) will populate the access token.
+Fill environment variable `STADIA_TOKEN` with a Stadia Maps API key before any resource generation (compile / run) to populate the tile access token. The Map tab is always shown; without a valid token, tiles will simply fail to load.
 
 ## LICENSE
 

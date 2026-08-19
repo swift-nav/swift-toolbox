@@ -36,12 +36,35 @@ use crate::utils::{
     serialize_capnproto_builder,
 };
 
+/// A satellite correction row's signal identity: either a proper SBP `Code`
+/// (from `MsgSsrOrbitClock`'s `sid.code`) or a raw RTCM
+/// DF380/381/382/467-encoded signal id (from a code/phase bias entry).
+/// These are two different numbering schemes with no conversion table in
+/// this repo or the `sbp` crate, so a raw RTCM code must never be run
+/// through `SignalCodes::from` - it would silently produce a
+/// plausible-looking but wrong SBP signal name instead of an error.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub enum SatCorrectionSignal {
+    Sbp(SignalCodes),
+    RtcmRaw(u8),
+}
+
+impl std::fmt::Display for SatCorrectionSignal {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SatCorrectionSignal::Sbp(code) => write!(f, "{code}"),
+            SatCorrectionSignal::RtcmRaw(code) => write!(f, "RTCM code {code}"),
+        }
+    }
+}
+
 /// Prototype only: the `code`/`value` shown for a satellite's code and phase
-/// biases are taken from the first entry in that message's bias list. Each
-/// MsgSsrCodeBiases/MsgSsrPhaseBiases can carry biases for several signals per
-/// satellite, keyed by an RTCM DF380/381/382/467-encoded signal code that has
-/// no decode table in this repo or the sbp crate, so per-signal biases aren't
-/// broken out individually here.
+/// biases are taken from the first entry in that message's bias list - each
+/// MsgSsrCodeBiases/MsgSsrPhaseBiases can carry biases for several signals
+/// per satellite, and only the first is surfaced here. That first entry's
+/// own signal code is used for the row's identity (see
+/// `SatCorrectionSignal`), so the value shown is always attributed to the
+/// signal it actually belongs to.
 #[derive(Clone, Debug, Default)]
 pub struct SsrSatCorrectionRow {
     pub radial: i32,
@@ -111,7 +134,7 @@ pub struct CorrectionsTab {
     pub client_sender: BoxedClientSender,
     pub shared_state: SharedState,
     streams: BTreeMap<&'static str, SsrStreamRow>,
-    sat_corrections: BTreeMap<(i16, SignalCodes), SsrSatCorrectionRow>,
+    sat_corrections: BTreeMap<(i16, SatCorrectionSignal), SsrSatCorrectionRow>,
     tiles: BTreeMap<(u16, u16), SsrTileRow>,
     /// Decoded per-satellite content of the OSR/NXRTK-MSM5 correction
     /// stream, i.e. what used to be the "Remote" section of the
@@ -135,6 +158,43 @@ fn obs_stream_name(msg: &ObservationMsg) -> &'static str {
         ObservationMsg::MsgObsDepC(_) => "MSG_OBS_DEP_C",
         ObservationMsg::MsgOsr(_) => "MSG_OSR",
     }
+}
+
+/// SBP message types belonging to the SSR correction family, as opposed to
+/// the OSR/NXRTK-MSM5 pipeline (`OSR_STREAM_NAMES`) - kept in sync with the
+/// `touch_stream` call sites in the `handle_*` methods below.
+const SSR_STREAM_NAMES: [&str; 6] = [
+    "MSG_SSR_ORBIT_CLOCK",
+    "MSG_SSR_CODE_BIASES",
+    "MSG_SSR_PHASE_BIASES",
+    "MSG_SSR_TILE_DEFINITION",
+    "MSG_SSR_GRIDDED_CORRECTION",
+    "MSG_SSR_STEC_CORRECTION",
+];
+
+/// SBP message types belonging to the OSR/NXRTK-MSM5 observation pipeline -
+/// kept in sync with `obs_stream_name` above.
+const OSR_STREAM_NAMES: [&str; 4] = ["MSG_OBS", "MSG_OBS_DEP_B", "MSG_OBS_DEP_C", "MSG_OSR"];
+
+/// A stream counts as still active if a message arrived within this many
+/// multiples of its own declared update interval - loose enough to tolerate
+/// a missed update or two without the panel flickering, tight enough that a
+/// correction type that's genuinely stopped (bundle switch, or the device
+/// went quiet) gets its stale rows cleared out promptly. Streams with no
+/// declared interval (MSG_OBS/MSG_OSR) fall back to `DEFAULT_STALE_TIMEOUT`.
+const STALE_MULTIPLIER: f64 = 3.0;
+const DEFAULT_STALE_TIMEOUT: Duration = Duration::from_secs(10);
+
+fn is_stream_active(row: &SsrStreamRow) -> bool {
+    let timeout = row
+        .declared_interval_sec
+        .map(|interval_sec| {
+            Duration::from_secs_f64(
+                (interval_sec * STALE_MULTIPLIER).max(DEFAULT_STALE_TIMEOUT.as_secs_f64()),
+            )
+        })
+        .unwrap_or(DEFAULT_STALE_TIMEOUT);
+    row.last_seen.elapsed() < timeout
 }
 
 impl CorrectionsTab {
@@ -192,7 +252,10 @@ impl CorrectionsTab {
             Some(msg.update_interval),
             Some(msg.iod_ssr),
         );
-        let key = (msg.sid.sat as i16, SignalCodes::from(msg.sid.code));
+        let key = (
+            msg.sid.sat as i16,
+            SatCorrectionSignal::Sbp(SignalCodes::from(msg.sid.code)),
+        );
         let row = self.sat_corrections.entry(key).or_default();
         row.radial = msg.radial;
         row.along = msg.along;
@@ -208,12 +271,14 @@ impl CorrectionsTab {
             Some(msg.update_interval),
             Some(msg.iod_ssr),
         );
-        let key = (msg.sid.sat as i16, SignalCodes::from(msg.sid.code));
-        let row = self.sat_corrections.entry(key).or_default();
+        // The value's own signal code (`first.code`) is used for the row's
+        // identity, not `msg.sid.code` - see `SatCorrectionSignal`.
         if let Some(first) = msg.biases.first() {
+            let key = (msg.sid.sat as i16, SatCorrectionSignal::RtcmRaw(first.code));
+            let row = self.sat_corrections.entry(key).or_default();
             row.code_bias = first.value;
+            row.last_seen = Some(Instant::now());
         }
-        row.last_seen = Some(Instant::now());
         self.send_data();
     }
 
@@ -223,12 +288,14 @@ impl CorrectionsTab {
             Some(msg.update_interval),
             Some(msg.iod_ssr),
         );
-        let key = (msg.sid.sat as i16, SignalCodes::from(msg.sid.code));
-        let row = self.sat_corrections.entry(key).or_default();
+        // The value's own signal code (`first.code`) is used for the row's
+        // identity, not `msg.sid.code` - see `SatCorrectionSignal`.
         if let Some(first) = msg.biases.first() {
+            let key = (msg.sid.sat as i16, SatCorrectionSignal::RtcmRaw(first.code));
+            let row = self.sat_corrections.entry(key).or_default();
             row.phase_bias = first.bias;
+            row.last_seen = Some(Instant::now());
         }
-        row.last_seen = Some(Instant::now());
         self.send_data();
     }
 
@@ -294,6 +361,11 @@ impl CorrectionsTab {
             return;
         }
 
+        // Header-level field, applied once per message - not per signal row.
+        if msg_fields.ns_residual != 0 {
+            self.osr.gps_tow += sec_to_ns(msg_fields.ns_residual as f64);
+        }
+
         for state in msg_fields.states.iter() {
             let obs_fields = state.fields();
 
@@ -305,10 +377,6 @@ impl CorrectionsTab {
             let is_carrier_phase_valid = obs_fields.flags & 0x02 != 0;
             let is_valid = is_pseudo_range_valid && is_carrier_phase_valid;
             let is_deprecated_msg_type = obs_fields.is_deprecated_msg_type;
-
-            if msg_fields.ns_residual != 0 {
-                self.osr.gps_tow += sec_to_ns(msg_fields.ns_residual as f64);
-            }
 
             let computed_doppler = match (
                 self.osr.old_carrier_phase.get(&table_key),
@@ -421,11 +489,34 @@ impl CorrectionsTab {
             .send_data(serialize_capnproto_builder(builder));
     }
 
+    fn any_stream_active(&self, names: &[&str]) -> bool {
+        names
+            .iter()
+            .filter_map(|name| self.streams.get(name))
+            .any(is_stream_active)
+    }
+
     /// Package data into a message buffer and send to frontend.
     pub fn send_data(&mut self) {
         if self.shared_state.current_tab() != TabName::Corrections {
             return;
         }
+
+        // The SSR/OSR panels' visibility is driven by whether their backing
+        // models have any rows (see showSsrPanels/showObservationsPanel in
+        // CorrectionsTab.qml) - so a correction type that's stopped (bundle
+        // switch, or gone quiet) needs its rows actually cleared, not just
+        // left in place, or its panel stays visible indefinitely.
+        if !self.any_stream_active(&SSR_STREAM_NAMES) {
+            self.sat_corrections.clear();
+            self.tiles.clear();
+        }
+        if !self.any_stream_active(&OSR_STREAM_NAMES) && !self.osr.rows.is_empty() {
+            self.osr.rows.clear();
+            self.osr.incoming_obs.clear();
+            self.send_osr_data();
+        }
+
         let mut builder = Builder::new_default();
         let msg = builder.init_root::<crate::console_backend_capnp::message::Builder>();
         let mut corrections_status = msg.init_corrections_status();

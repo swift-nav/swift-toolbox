@@ -175,6 +175,11 @@ impl ObservationTab {
             return;
         }
 
+        // Header-level field, applied once per message - not per signal row.
+        if msg_fields.ns_residual != 0 {
+            self.local.gps_tow += sec_to_ns(msg_fields.ns_residual as f64);
+        }
+
         for state in msg_fields.states.iter() {
             let obs_fields = state.fields();
 
@@ -186,10 +191,6 @@ impl ObservationTab {
             let is_carrier_phase_valid = obs_fields.flags & 0x02 != 0;
             let is_valid = is_pseudo_range_valid && is_carrier_phase_valid;
             let is_deprecated_msg_type = obs_fields.is_deprecated_msg_type;
-
-            if msg_fields.ns_residual != 0 {
-                self.local.gps_tow += sec_to_ns(msg_fields.ns_residual as f64);
-            }
 
             let computed_doppler = match (
                 self.local.old_carrier_phase.get(&table_key),

@@ -373,6 +373,16 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                 if app_state == ConnectionState.DISCONNECTED:
                     data = settings_table_update()
                     SettingsTableEntries.post_data_update(data)
+                    # The Corrections tab's panel visibility is driven by
+                    # whether these models have any rows - without an
+                    # explicit reset here they'd keep showing whatever was
+                    # last received indefinitely, since nothing else notifies
+                    # them once the connection (and the corrections_tab.rs
+                    # state backing them) is gone.
+                    SsrStreamTableModel.post_data_update(ssr_stream_update())
+                    SsrSatCorrectionTableModel.post_data_update(ssr_sat_correction_update())
+                    SsrTileTableModel.post_data_update(ssr_tile_update())
+                    OsrObservationTableModel.post_data_update(observation_update())
                 ConnectionData.post_connection_state_update(app_state)
                 if MAP_ENABLED[0]:
                     SolutionMap.clear()

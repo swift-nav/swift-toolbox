@@ -15,6 +15,7 @@ RUN apt-get update \
                         libnss3 \
                         libasound2 \
                         libxkbfile1 \
+                        xz-utils \
   && cargo install --force cargo-make taplo-cli
 
 ENV PATH=/usr/local/cargo/bin:/usr/lib/qt6/bin:${PATH}
@@ -26,7 +27,13 @@ WORKDIR /work
 
 ENV HOME=/home/builder
 ENV CARGO_HOME=${HOME}/.cargo
-ENV XDG_SESSION_TYPE=xcb
+ENV XDG_SESSION_TYPE=x11
 
-# change `build-console` to `run` to execute without fully compiling
-CMD cargo make setup-builder; cargo make build-console
+# Change `cargo make create-dist` to `cargo make run` to build and execute the
+# console in-place (using a debug build).  Note that this requires Docker to be
+# configured to forward the display to the host, e.g.:
+# docker run -it --net=host -v $PWD:/work:rw -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/home/builder/.Xauthority -e DISPLAY=$DISPLAY -h $HOSTNAME <image hash>
+#
+# Developers may also wish to use `cargo make build-console` to perform
+# the compilation stages without creating the entire redistributable package.
+CMD cargo make setup-builder; cargo make create-dist

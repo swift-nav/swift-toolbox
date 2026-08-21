@@ -9,7 +9,6 @@ RUN apt-get update \
                         fonts-freefont-otf \
                         git \
                         qt6-declarative-dev-tools \
-                        python-is-python3 \
                         pkgconf \
                         libssl-dev \
                         g++ \

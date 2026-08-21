@@ -443,7 +443,7 @@ The Solution tab's Map view uses [Leaflet](https://leafletjs.com/) with [Stadia 
 To modify the map: https://github.com/swift-nav/swift-toolbox/tree/main/resources/web/map/js/trajectory_raw.js
 `Makefile.toml` uses a task called `map-js-token` to replace `@STADIA_TOKEN@` in trajectory_raw.
 
-Fill environment variable `STADIA_TOKEN` with a Stadia Maps API key before any resource generation (compile / run) to populate the tile access token. The Map tab is always shown; without a valid token, tiles will simply fail to load.
+Fill environment variable `STADIA_TOKEN` with a Stadia Maps API key before any resource generation (compile / run) to populate the tile access token. [Stadia Maps](https://stadiamaps.com/pricing/) offers a free tier that's sufficient for local development — sign up and create a key from their dashboard. The Map tab is always shown; without a valid token, tiles will simply fail to load.
 
 ## LICENSE
 

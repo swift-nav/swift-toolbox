@@ -333,7 +333,10 @@ args = ["status"]
 [tasks.build-frontend-wheel]
 dependencies = ["dist-install-pip-flit", "check-git-status"]
 command = "${DIST_PYTHON}"
-args = ["-m", "flit", "build", "--no-setup-py"]
+# --no-setup-py was removed in flit 4.x; it's also already the default
+# behavior (flit stopped generating setup.py a while back), so dropping the
+# flag is forward-compatible instead of pinning flit to a specific version.
+args = ["-m", "flit", "build"]
 
 [tasks.dist-install-pip-setuptools-rust]
 command = "${DIST_PYTHON}"

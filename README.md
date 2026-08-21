@@ -103,7 +103,7 @@ If you want to run the application without the standard development envionrment.
 pip install flit
 
 # Generate the wheel.
-python -m flit build --no-setup-py
+python -m flit build
 
 # Install the wheel.
 pip install dist/swiftnav_console-0.1.0-py3-none-any.whl --force-reinstall

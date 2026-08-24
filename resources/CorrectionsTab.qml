@@ -153,7 +153,7 @@ MainTab {
                     CorrectionsTabComponents.SsrTable {
                         anchors.fill: parent
                         tableModel: ssrSatCorrectionTableModel
-                        columnNames: ["Signal", "Radial", "Along", "Cross", "Clock C0", "Code Bias", "Phase Bias", "Age (s)"]
+                        columnNames: ["Signal", "Radial (mm)", "Along (mm)", "Cross (mm)", "Clock C0 (mm)", "Code Bias (cm)", "Phase Bias (mm)", "Age (s)"]
                         columnWidths: [parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8, parent.width / 8]
                     }
                 }

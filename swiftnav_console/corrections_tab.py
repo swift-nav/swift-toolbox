@@ -167,6 +167,11 @@ class SsrTableModel(QAbstractTableModel):  # pylint: disable=too-few-public-meth
     row_count = Property(int, total_rows, notify=row_count_changed)  # type: ignore
 
 
+# MSG_OBS/MSG_OSR-family streams (the OSR/NXRTK-MSM5 pipeline) carry no IOD
+# SSR field at all - kept in sync with OSR_STREAM_NAMES in corrections_tab.rs.
+_OSR_STREAM_MSG_TYPES = frozenset({"MSG_OBS", "MSG_OBS_DEP_B", "MSG_OBS_DEP_C", "MSG_OSR"})
+
+
 class SsrStreamTableModel(SsrTableModel):
     _instance: "SsrStreamTableModel"
     _backing_store = SSR_STREAM_TAB
@@ -174,12 +179,12 @@ class SsrStreamTableModel(SsrTableModel):
     column_metadata = [
         ("Message", lambda r: r["msgType"]),
         ("Count", lambda r: r["count"]),
-        ("Age (s)", lambda r: localPadFloat(r["lastAgeSec"], 3)),
+        ("Age (s)", lambda r: localPadFloat(r["lastAgeSec"], 2, 0)),
         # updateIntervalSec is the time between bundles/bursts of this
         # message type, not between individual messages within one bundle
         # (see BURST_GAP in corrections_tab.rs).
         ("Period (s)", lambda r: localPadFloat(r["updateIntervalSec"], 3)),
-        ("IOD", lambda r: r["iodSsr"]),
+        ("IOD", lambda r: "NA" if r["msgType"] in _OSR_STREAM_MSG_TYPES else r["iodSsr"]),
     ]
 
 
@@ -194,8 +199,8 @@ class SsrSatCorrectionTableModel(SsrTableModel):
         ("Cross (mm)", lambda r: localPadFloat(r["cross"], 5)),
         ("Clock C0 (mm)", lambda r: localPadFloat(r["clockC0"], 5)),
         ("Code Bias (cm)", lambda r: localPadFloat(r["codeBias"], 4)),
-        ("Phase Bias", lambda r: localPadFloat(r["phaseBias"], 5)),
-        ("Age (s)", lambda r: localPadFloat(r["ageSec"], 3)),
+        ("Phase Bias (mm)", lambda r: localPadFloat(r["phaseBias"], 5)),
+        ("Age (s)", lambda r: localPadFloat(r["ageSec"], 2, 0)),
     ]
 
 
@@ -249,6 +254,9 @@ class RtcmMessageTableModel(SsrTableModel):
     )
 
 
+_NOT_APPLICABLE_COLUMNS = frozenset({"C/N0 (dB-Hz)", "Meas. Doppler (Hz)"})
+
+
 class OsrObservationTableModel(ObservationTableModel):
     """Decoded per-satellite content of the OSR/NXRTK-MSM5 correction
     stream (what used to be the "Remote" section of the Observations tab).
@@ -256,6 +264,13 @@ class OsrObservationTableModel(ObservationTableModel):
 
     _instance: "OsrObservationTableModel"
     _backing_store = OSR_OBSERVATION_TAB
+    # MSM5/OSR-derived observations don't carry a real C/N0 or measured
+    # Doppler measurement (those only exist for the receiver's own tracked
+    # signals), so show them as not-applicable rather than a misleading 0.
+    column_metadata = [
+        (header, (lambda r: "NA") if header in _NOT_APPLICABLE_COLUMNS else fn)
+        for header, fn in ObservationTableModel.column_metadata
+    ]
 
     def __init__(self, parent=None):
         super().__init__(parent)

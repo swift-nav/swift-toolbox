@@ -324,7 +324,7 @@ args = [
 
 [tasks.dist-install-pip-flit]
 command = "${DIST_PYTHON}"
-args = ["-m", "pip", "install", "flit"]
+args = ["-m", "pip", "install", "flit<4"]
 
 [tasks.check-git-status]
 command = "git"

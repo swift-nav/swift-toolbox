@@ -20,7 +20,7 @@ RUN apt-get update \
 
 ENV PATH=/usr/local/cargo/bin:/usr/lib/qt6/bin:${PATH}
 
-RUN useradd -u 1000 -ms /bin/bash -G sudo builder
+RUN useradd -u 1000 -ms /bin/bash builder
 
 USER builder
 WORKDIR /work

@@ -36,4 +36,4 @@ ENV XDG_SESSION_TYPE=x11
 #
 # Developers may also wish to use `cargo make build-console` to perform
 # the compilation stages without creating the entire redistributable package.
-CMD cargo make setup-builder; cargo make create-dist
+CMD cargo make setup-builder && cargo make create-dist

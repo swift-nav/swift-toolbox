@@ -2,21 +2,29 @@ FROM rust:1.88.0-slim
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
-                        cmake \
-                        libclang-dev \
                         capnproto \
-                        zstd \
-                        imagemagick \
+                        cmake \
                         fonts-freefont-otf \
-                        git \
-                        qt6-declarative-dev-tools \
-                        pkgconf \
-                        libssl-dev \
                         g++ \
-                        libnss3 \
+                        git \
+                        imagemagick \
                         libasound2 \
+                        libclang-dev \
+                        libgl1 \
+                        libnss3 \
+                        libssl-dev \
+                        libxcomposite1 \
+                        libxdamage1 \
+                        libxi6 \
                         libxkbfile1 \
+                        libxrandr2 \
+                        libxrender1 \
+                        libxtst6 \
+                        make \
+                        pkgconf \
+                        qt6-declarative-dev-tools \
                         xz-utils \
+                        zstd \
   && cargo install --force cargo-make taplo-cli \
   && rm -rf /var/lib/apt/lists/*
 

@@ -57,6 +57,10 @@ clang by setting an environment variable:
 export BINDGEN_EXTRA_CLANG_ARGS=-I$(xcrun --show-sdk-path)/usr/include
 ```
 
+### Building with Docker
+
+This repository includes a `Dockerfile` which can be used to build and run the Swift Navigation Console on Linux platforms.  See the section [Linux Docker Image](#linux-docker-image) below for more details.
+
 ## Running
 
 To run the app (in dev mode):
@@ -103,7 +107,7 @@ If you want to run the application without the standard development envionrment.
 pip install flit
 
 # Generate the wheel.
-python -m flit build --no-setup-py
+python -m flit build
 
 # Install the wheel.
 pip install dist/swiftnav_console-0.1.0-py3-none-any.whl --force-reinstall
@@ -126,6 +130,34 @@ cargo make create-dist
 
 # In order to create an installer:
 cargo make dist-to-installer
+```
+
+## Linux Docker Image
+
+The Linux Docker Image can be built as follows:
+
+```
+docker build --network=host .
+```
+
+Once the image is built, it can be run using:
+
+```
+docker run -it --net=host -v $PWD:/work:rw <image hash>
+```
+
+By default, the image executes the `cargo make setup-builder` and `cargo make create-dist` commands.
+Developers who wish to run other build steps can prevent these commands from running and drop to a shell by providing the `--entrypoint` argument to Docker, i.e.:
+
+```
+docker run -it --net=host --entrypoint /bin/bash -v $PWD:/work:rw <image hash>
+```
+
+It is also possible to build and execute the Swift Navigation Console in-place using a debug build within the Docker image via the `cargo make run` command.
+This requires Docker to be configured to forward the X display to the host, e.g.:
+
+```
+docker run -it --net=host -v $PWD:/work:rw -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/home/builder/.Xauthority -e DISPLAY=$DISPLAY -h $HOSTNAME --entrypoint /bin/bash <image hash>
 ```
 
 ## Create a new release via CI

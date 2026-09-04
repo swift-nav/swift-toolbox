@@ -59,7 +59,7 @@ export BINDGEN_EXTRA_CLANG_ARGS=-I$(xcrun --show-sdk-path)/usr/include
 
 ### Building with Docker
 
-This repository includes a `Dockerfile` which can be used to build and run the Swift Navigation Console on Linux platforms.  See the section [Linux Docker Image](#docker-image) below for more details.
+This repository includes a `Dockerfile` which can be used to build and run the Swift Navigation Console on Linux platforms.  See the section [Linux Docker Image](#linux-docker-image) below for more details.
 
 ## Running
 

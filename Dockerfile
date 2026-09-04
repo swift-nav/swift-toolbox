@@ -1,7 +1,8 @@
 FROM rust:1.88.0-slim
 
 RUN apt-get update \
-  && apt-get install -y cmake \
+  && apt-get install -y --no-install-recommends \
+                        cmake \
                         libclang-dev \
                         capnproto \
                         zstd \
@@ -16,7 +17,8 @@ RUN apt-get update \
                         libasound2 \
                         libxkbfile1 \
                         xz-utils \
-  && cargo install --force cargo-make taplo-cli
+  && cargo install --force cargo-make taplo-cli \
+  && rm -rf /var/lib/apt/lists/*
 
 ENV PATH=/usr/local/cargo/bin:/usr/lib/qt6/bin:${PATH}
 

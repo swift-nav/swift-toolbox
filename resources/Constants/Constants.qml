@@ -138,7 +138,7 @@ QtObject {
             readonly property int bottomPadding: 20
             readonly property string supportWebsite: "https://www.swiftnav.com/support"
             readonly property string website: "https://www.swiftnav.com"
-            readonly property string copyrightText: "Copyright © 2011-2022 Swift Navigation Inc."
+            readonly property string copyrightText: "Copyright © 2011-2026 Swift Navigation Inc."
             readonly property int titlePixelSize: 14
             readonly property int secondaryPixelSize: 10
         }

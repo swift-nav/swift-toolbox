@@ -1,63 +1,180 @@
 const lines = ["#FF0000", "#FF00FF", "#00FFFF", "#0000FF", "#00FF00", "#000000"];
 const LNG_KM = 111.320, LAT_KM = 110.574;
 
-const map = L.map('map').setView([37.830348, -122.486052], 16);
-
-L.tileLayer(`https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png?api_key=@STADIA_TOKEN@`, {
-    maxZoom: 20,
-    attribution: '&copy; <a href="https://stadiamaps.com/" target="_blank">Stadia Maps</a> ' +
-        '&copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> ' +
-        '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
-}).addTo(map);
+const map = new maplibregl.Map({
+    container: 'map',
+    style: 'https://tiles.stadiamaps.com/styles/alidade_smooth.json?api_key=@STADIA_TOKEN@',
+    center: [-122.486052, 37.830348],  // Initial focus coordinate
+    zoom: 16,
+});
 
 var focusCurrent = false;
 var startMarker = null;
 var currentMarker = null;
-var protLayer = null;
 
-const FocusToggle = L.Control.extend({
-    options: { position: "topright" },
-    onAdd: function () {
+class FocusToggle {
+    onAdd(map) {
+        this._map = map;
         this._btn = document.createElement("button");
-        this._btn.className = "leaflet-ctrl-focus-toggle";
+        this._btn.className = "maplibregl-ctrl-icon maplibregl-ctrl-focus-toggle";
         this._btn.type = "button";
         this._btn.onclick = () => {
             focusCurrent = !focusCurrent;
-            this._btn.className = focusCurrent ? "leaflet-ctrl-unfocus-toggle" : "leaflet-ctrl-focus-toggle";
+            this._btn.className = focusCurrent ? "maplibregl-ctrl-icon maplibregl-ctrl-unfocus-toggle" : "maplibregl-ctrl-icon maplibregl-ctrl-focus-toggle";
         };
-        const container = L.DomUtil.create("div", "leaflet-bar leaflet-control");
-        container.appendChild(this._btn);
-        L.DomEvent.disableClickPropagation(container);
-        return container;
-    },
-});
+        this._container = document.createElement("div");
+        this._container.className = "maplibregl-ctrl-group maplibregl-ctrl";
+        this._container.appendChild(this._btn);
+        return this._container;
+    }
 
-new FocusToggle().addTo(map);
+    onRemove() {
+        this._container.parentNode.removeChild(this._container);
+        this._map = undefined;
+    }
+}
 
-const routeGroups = lines.map(() => L.layerGroup().addTo(map));
-const crumbLine = L.polyline([], { color: "#888", weight: 1 }).addTo(map);
+map.addControl(new FocusToggle(), "top-right");
+map.addControl(new maplibregl.NavigationControl());
+
+var data = [];
+var crumbCoords = [];
+
+function setupData() {
+    data = [];
+    for (let i = 0; i < lines.length; i++) {
+        data.push({
+            type: 'FeatureCollection',
+            features: []
+        });
+    }
+    crumbCoords = [];
+}
+
+setupData();
+
+function setupLayers() {
+    for (let i = 0; i < lines.length; i++) {
+        if (map.getSource(`route${i}`) != null) continue;
+        map.addSource(`route${i}`, {
+            type: 'geojson',
+            cluster: false,
+            data: {
+                type: 'FeatureCollection',
+                features: data[i]
+            }
+        });
+        map.addLayer({
+            id: `route${i}`,
+            type: 'fill',
+            source: `route${i}`,
+            paint: {
+                'fill-color': lines[i],
+                'fill-opacity': 0.3,
+                'fill-outline-color': '#000000'
+            }
+        });
+    }
+    if (map.getSource('prot') == null) {
+        map.addSource('prot', {
+            type: 'geojson',
+            cluster: false,
+            data: {
+                type: 'FeatureCollection',
+                features: []
+            }
+        })
+        map.addLayer({
+            id: 'prot',
+            type: 'fill',
+            source: 'prot',
+            paint: {
+                'fill-color': "#00FF00",
+                'fill-opacity': 0.5
+            }
+        });
+    }
+    if (map.getSource('breadcrumb') == null) {
+        map.addSource('breadcrumb', {
+            type: 'geojson',
+            data: {
+                type: 'Feature',
+                geometry: {
+                    type: "LineString",
+                    coordinates: []
+                }
+            }
+        })
+        map.addLayer({
+            id: 'breadcrumb',
+            type: 'line',
+            source: 'breadcrumb',
+            layout: {
+                'line-join': 'round',
+                'line-cap': 'round'
+            },
+            paint: {
+                'line-color': '#888',
+                'line-width': 1
+            }
+        })
+    }
+}
+
+function syncCrumbCoords(){
+    map.getSource('breadcrumb').setData({
+        type: 'Feature',
+        geometry: {
+            type: 'LineString',
+            coordinates: crumbCoords
+        }
+    })
+}
+
+function syncLayers() {
+    // sync route datas with stored points
+    for (let i = 0; i < lines.length; i++) {
+        map.getSource(`route${i}`).setData(data[i]);
+    }
+    // clear protection, since its only one point and temporary
+    map.getSource('prot').setData({
+        type: 'FeatureCollection',
+        features: []
+    });
+    syncCrumbCoords();
+}
 
 /**
- * Helper method to create a Leaflet polygon ring approximating an ellipse.
- * @param center {[lat: number, lng: number]}
+ * Helper method to create elliptical geojson data
+ * @param center {[lng: number, lat: number]}
  * @param rX horizontal radius in kilometers of ellipse
  * @param rY vertical radius in kilometers of ellipse
- * @return {[lat: number, lng: number][]}
+ * @return {{geometry: {coordinates: [][], type: string}, type: string}}
  */
-function createEllipsePoints(center, rX, rY) {
-    const lat = center[0], lng = center[1];
-    const dX = rX / (LNG_KM * Math.cos(lat * Math.PI / 180));
-    const dY = rY / LAT_KM;
+function createGeoJsonEllipse(center, rX, rY) {
+    let coords = {latitude: center[1], longitude: center[0]};
+    let ret = [];
+    let dX = rX / (LNG_KM * Math.cos(coords.latitude * Math.PI / 180));
+    let dY = rY / LAT_KM;
 
-    const points = 16;
-    const ring = [];
+    let points = 16;
+    let theta, x, y;
     for (let i = 0; i < points; i++) {
-        const theta = (i / points) * (2 * Math.PI);
-        const x = dX * Math.cos(theta);
-        const y = dY * Math.sin(theta);
-        ring.push([lat + y, lng + x]);
+        theta = (i / points) * (2 * Math.PI);
+        x = dX * Math.cos(theta);
+        y = dY * Math.sin(theta);
+
+        ret.push([coords.longitude + x, coords.latitude + y]);
     }
-    return ring;
+    ret.push(ret[0]);
+
+    return {
+        type: "Feature",
+        geometry: {
+            type: "Polygon",
+            coordinates: [ret]
+        }
+    };
 }
 
 new QWebChannel(qt.webChannelTransport, (channel) => {
@@ -65,12 +182,8 @@ new QWebChannel(qt.webChannelTransport, (channel) => {
     let chn = channel.objects.currPos;
 
     chn.clearPos.connect(() => {
-        routeGroups.forEach((group) => group.clearLayers());
-        crumbLine.setLatLngs([]);
-        if (protLayer) {
-            protLayer.remove();
-            protLayer = null;
-        }
+        setupData();
+        if (map) syncLayers();
         if (startMarker) {
             startMarker.remove();
             startMarker = null;
@@ -82,31 +195,39 @@ new QWebChannel(qt.webChannelTransport, (channel) => {
     });
 
     chn.recvPos.connect((id, lon, lat, hAcc) => {
-        const pos = [lat, lon], rX = hAcc / 1000;
-        L.polygon(createEllipsePoints(pos, rX, rX), {
-            weight: 0,
-            color: lines[id],
-            fillColor: lines[id],
-            fillOpacity: 0.3,
-        }).addTo(routeGroups[id]);
-        crumbLine.addLatLng(pos);
-
-        if (!currentMarker) currentMarker = L.marker(pos).addTo(map);
-        else currentMarker.setLatLng(pos);
-
+        const pos = [lon, lat], rX = hAcc / 1000;
+        data[id].features.push(createGeoJsonEllipse(pos, rX, rX));
+        crumbCoords.push(pos);
+        if (!map) return;
+        if (!currentMarker) currentMarker = new maplibregl.Marker().setLngLat(pos).addTo(map);
+        else currentMarker.setLngLat(pos);
         if (!startMarker) {
-            startMarker = L.marker(pos).addTo(map);
+            startMarker = new maplibregl.Marker().setLngLat(pos).addTo(map);
             map.panTo(pos);
         } else if (focusCurrent) map.panTo(pos);
-    });
+        let src = map.getSource(`route${id}`);
+        if (src) src.setData(data[id]);
 
-    chn.protPos.connect((lat, lon, hpl) => {
-        const pos = [lat, lon], rX = hpl / 100_000; // hpl in cm, convert to km
-        const ring = createEllipsePoints(pos, rX, rX);
-        if (!protLayer) {
-            protLayer = L.polygon(ring, { weight: 0, color: "#00FF00", fillColor: "#00FF00", fillOpacity: 0.5 }).addTo(map);
-        } else {
-            protLayer.setLatLngs(ring);
-        }
-    });
+        if (map.getSource('breadcrumb')) syncCrumbCoords();
+    })
+
+    chn.protPos.connect((lat, lng, hpl) => {
+        const pos = [lng, lat], rX = hpl / 100_000; // hpl in cm, convert to km
+        if (!map) return;
+        let src = map.getSource(`prot`);
+        if (src) src.setData({
+            type: 'FeatureCollection',
+            features: [createGeoJsonEllipse(pos, rX, rX)]
+        });
+    })
+});
+
+map.on('style.load', () => {
+    setupLayers();
+    syncLayers();
+})
+
+map.on('load', () => {
+    console.log("loaded");
+    setupLayers();
 });

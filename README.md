@@ -8,6 +8,13 @@ This is the open source repository for code that implements the Swift Navigation
 
 ![main](docs/swift-console.png)
 
+## Platform support
+
+The Swift Console currently supports the following platforms:
+- Ubuntu 24.04 and newer
+- macOS Intel 11. Build to support, but not verified, on Apple Silicon.
+- Windows 10 and newer
+
 ## Development Setup
 
 Install Rust: https://rustup.rs/

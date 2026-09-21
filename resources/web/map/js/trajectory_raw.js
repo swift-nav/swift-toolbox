@@ -12,6 +12,26 @@ var focusCurrent = false;
 var startMarker = null;
 var currentMarker = null;
 
+// Flag icon for the start position -- pole is centered horizontally so it lines
+// up with the marker's default "bottom" anchor (base of the pole = the coordinate).
+const START_MARKER_SVG = `<svg width="22" height="30" viewBox="0 0 22 30" xmlns="http://www.w3.org/2000/svg">
+    <line x1="11" y1="29" x2="11" y2="1" stroke="#1b5e20" stroke-width="2" stroke-linecap="round"/>
+    <path d="M11 2 L21 7 L11 12 Z" fill="#2e7d32" stroke="#1b5e20" stroke-width="1" stroke-linejoin="round"/>
+</svg>`;
+
+// "Current location" dot for the live position -- symmetric, so the default
+// "center" anchor lines up its center with the coordinate.
+const CURRENT_MARKER_SVG = `<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="10" cy="10" r="9" fill="#1976d2" fill-opacity="0.25"/>
+    <circle cx="10" cy="10" r="5" fill="#1976d2" stroke="#ffffff" stroke-width="2"/>
+</svg>`;
+
+function createMarkerElement(svgMarkup) {
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = svgMarkup;
+    return wrapper.firstElementChild;
+}
+
 class FocusToggle {
     onAdd(map) {
         this._map = map;
@@ -199,10 +219,10 @@ new QWebChannel(qt.webChannelTransport, (channel) => {
         data[id].features.push(createGeoJsonEllipse(pos, rX, rX));
         crumbCoords.push(pos);
         if (!map) return;
-        if (!currentMarker) currentMarker = new maplibregl.Marker().setLngLat(pos).addTo(map);
+        if (!currentMarker) currentMarker = new maplibregl.Marker({element: createMarkerElement(CURRENT_MARKER_SVG)}).setLngLat(pos).addTo(map);
         else currentMarker.setLngLat(pos);
         if (!startMarker) {
-            startMarker = new maplibregl.Marker().setLngLat(pos).addTo(map);
+            startMarker = new maplibregl.Marker({element: createMarkerElement(START_MARKER_SVG), anchor: 'bottom'}).setLngLat(pos).addTo(map);
             map.panTo(pos);
         } else if (focusCurrent) map.panTo(pos);
         let src = map.getSource(`route${id}`);

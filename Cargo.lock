@@ -584,6 +584,7 @@ dependencies = [
  "serialport",
  "strum",
  "strum_macros",
+ "swiftnav",
  "sysinfo",
  "tempfile",
  "windows",

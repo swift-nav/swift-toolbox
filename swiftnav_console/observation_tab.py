@@ -29,7 +29,7 @@ PrnEntry = namedtuple("PrnEntry", ["sat", "code"])
 
 
 def localPadFloat(num, length, digits=2, allowNegative=True):
-    if not num:
+    if num is None:
         return "--"
     s = f"{num:.{digits}f}"
     padLength = length if not allowNegative else length + 1
@@ -69,7 +69,6 @@ def observation_update() -> Dict[str, Any]:
     }
 
 
-REMOTE_OBSERVATION_TAB: List[Dict[str, Any]] = [observation_update()]
 LOCAL_OBSERVATION_TAB: List[Dict[str, Any]] = [observation_update()]
 
 
@@ -77,11 +76,16 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
     # pylint: disable=too-many-instance-attributes
     # Might want to move the column_widths logic into QML and use QML's
     # FontMetrics, but for now this is ok.
+    #
+    # `_backing_store` is a per-subclass class attribute (a single-element
+    # list used as a mutable box) so ObservationLocalTableModel and, for the
+    # Corrections tab, OsrObservationTableModel can each reuse this whole
+    # class against their own independent data feed.
     _instance: "ObservationTableModel"
+    _backing_store: List[Dict[str, Any]] = [observation_update()]
     tow_changed = Signal(float, arguments="tow")
     week_changed = Signal(int, arguments="week")
     row_count_changed = Signal(int, arguments="row_count")
-    remote_changed = Signal(bool, arguments="remote")
     show_gps_only_changed = Signal(bool, arguments="show_gps_only")
     codes_changed = Signal()
     dataPopulated = Signal()
@@ -110,7 +114,6 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
         self._tow = 0
         self._week = 0
         self._rows = []
-        self._remote = False
         self._column_widths = [None] * len(ObservationTableModel.column_metadata)
         self._columnWidth_calls = [0] * len(self._column_widths)
         self.json_col_names = None
@@ -120,18 +123,12 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
 
     @classmethod
     def post_data_update(cls, update_data: Dict[str, Any]) -> None:
-        if cls._instance.get_remote():
-            REMOTE_OBSERVATION_TAB[0] = update_data
-        else:
-            LOCAL_OBSERVATION_TAB[0] = update_data
-        cls._instance._data_updated.emit()  # pylint: disable=protected-access  # pylint: disable=protected-access
+        cls._backing_store[0] = update_data
+        cls._instance._data_updated.emit()  # pylint: disable=protected-access
 
     @Slot()  # type: ignore
     def handle_data_updated(self) -> None:
-        if self._remote:
-            self._observation_tab = REMOTE_OBSERVATION_TAB[0]
-        else:
-            self._observation_tab = LOCAL_OBSERVATION_TAB[0]
+        self._observation_tab = self._backing_store[0]
         self.update()
 
     def get_codes(self) -> List[List[str]]:
@@ -187,14 +184,6 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
 
     def get_week(self) -> int:
         return self._week
-
-    def set_remote(self, remote) -> None:
-        """Setter for _remote."""
-        self._remote = remote
-        self.remote_changed.emit(self._remote)  # type: ignore
-
-    def get_remote(self) -> bool:
-        return self._remote
 
     def total_rows(self) -> int:
         return len(self._observation_tab[Keys.ROWS])
@@ -276,8 +265,6 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
     week = Property(float, get_week, notify=week_changed)  # type: ignore
     tow = Property(float, get_tow, notify=tow_changed)  # type: ignore
     row_count = Property(int, total_rows, notify=row_count_changed)  # type: ignore
-    # Except this one - QML needs to specify if the model should be returning local data or remote data.
-    remote = Property(bool, get_remote, set_remote, notify=remote_changed)  # type: ignore
     gps_codes = Property(QTKeys.QVARIANTLIST, get_gps_codes, notify=codes_changed)  # type: ignore
     glo_codes = Property(QTKeys.QVARIANTLIST, get_glo_codes, notify=codes_changed)  # type: ignore
     bds_codes = Property(QTKeys.QVARIANTLIST, get_bds_codes, notify=codes_changed)  # type: ignore
@@ -289,28 +276,17 @@ class ObservationTableModel(QAbstractTableModel):  # pylint: disable=too-many-pu
     code_filters = Property(QTKeys.QVARIANTLIST, get_code_filters, constant=True)  # type: ignore
 
 
-class ObservationRemoteTableModel(ObservationTableModel):
-    """
-    A model for the remote observation tab.
-    """
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        assert getattr(self.__class__, "_instance", None) is None
-        self.__class__._instance = self
-        self.set_remote(True)
-
-
 class ObservationLocalTableModel(ObservationTableModel):
     """
     A model for the local observation tab.
     """
 
+    _backing_store = LOCAL_OBSERVATION_TAB
+
     def __init__(self, parent=None):
         super().__init__(parent)
         assert getattr(self.__class__, "_instance", None) is None
         self.__class__._instance = self
-        self.set_remote(False)
 
 
 def obs_rows_to_dict(rows):

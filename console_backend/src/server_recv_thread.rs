@@ -385,7 +385,13 @@ pub fn server_recv_thread(
                                 gga_period,
                                 &output_type,
                             );
-                            guard.ntrip_tab.connect(msg_sender, heartbeat, options);
+                            guard.ntrip_tab.connect(
+                                msg_sender,
+                                heartbeat,
+                                options,
+                                client_sender.clone(),
+                                shared_state.clone(),
+                            );
                         }
                         _ => error!("ntrip unable to find connected device"),
                     }

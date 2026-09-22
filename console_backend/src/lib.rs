@@ -36,6 +36,7 @@ pub mod ntrip_output;
 pub mod output;
 pub mod piksi_tools_constants;
 pub mod process_messages;
+pub mod rtcm_monitor;
 #[cfg(not(test))]
 #[cfg(all(not(feature = "benches"), not(feature = "tests"), feature = "pyo3"))]
 pub mod server;
@@ -59,6 +60,7 @@ use crate::tabs::{
         advanced_system_monitor_tab::AdvancedSystemMonitorTab,
     },
     baseline_tab::BaselineTab,
+    corrections_tab::CorrectionsTab,
     main_tab::MainTab,
     observation_tab::ObservationTab,
     settings_tab::SettingsTab,
@@ -87,6 +89,7 @@ struct Tabs {
     pub tracking_sky_plot: Mutex<TrackingSkyPlotTab>,
     pub solution_position: Mutex<SolutionPositionTab>,
     pub observation: Mutex<ObservationTab>,
+    pub corrections: Mutex<CorrectionsTab>,
     pub solution_velocity: Mutex<SolutionVelocityTab>,
     pub advanced_spectrum_analyzer: Mutex<AdvancedSpectrumAnalyzerTab>,
     pub status_bar: Mutex<StatusBar>,
@@ -127,6 +130,7 @@ impl Tabs {
             tracking_sky_plot: TrackingSkyPlotTab::new(client_sender.clone(), shared_state.clone())
                 .into(),
             observation: ObservationTab::new(shared_state.clone(), client_sender.clone()).into(),
+            corrections: CorrectionsTab::new(shared_state.clone(), client_sender.clone()).into(),
             solution_position: SolutionPositionTab::new(
                 shared_state.clone(),
                 client_sender.clone(),

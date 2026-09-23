@@ -38,7 +38,7 @@ ApplicationWindow {
     minimumHeight: Globals.minimumHeight
     font.pixelSize: Constants.mediumPixelSize
     visible: true
-    title: (loggingBar.sbpRecording ? "[L] " : "     ") + statusBar.title
+    title: (loggingBar.sbpRecording ? "[L] " : "     ") + (statusBar.title || ("Swift Console " + Globals.consoleVersion))
     color: Constants.swiftWhite
     Component.onCompleted: {
         this.x = Screen.width / 2 - width / 2;

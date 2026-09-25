@@ -166,6 +166,8 @@ from .solution_velocity_tab import (
     solution_velocity_update,
 )
 
+from .solution_map import SolutionMap
+
 from .status_bar import (
     status_bar_update,
     StatusBarData,
@@ -257,9 +259,6 @@ TAB_LAYOUT = {
 }
 
 capnp.remove_import_hook()  # pylint: disable=no-member
-
-MAP_ENABLED = [False]
-SolutionMap = QObject
 
 
 class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attributes
@@ -356,8 +355,7 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                     data = settings_table_update()
                     SettingsTableEntries.post_data_update(data)
                 ConnectionData.post_connection_state_update(app_state)
-                if MAP_ENABLED[0]:
-                    SolutionMap.clear()
+                SolutionMap.clear()
             elif m.which == Message.Union.ConnectionNotification:
                 data = m.connectionNotification.message
                 ConnectionData.post_connection_message_update(data)
@@ -372,10 +370,9 @@ class BackendMessageReceiver(QObject):  # pylint: disable=too-many-instance-attr
                 data[Keys.AVAILABLE_UNITS][:] = m.solutionPositionStatus.availableUnits
                 data[Keys.SOLUTION_LINE] = m.solutionPositionStatus.lineData
 
-                if MAP_ENABLED[0]:
-                    SolutionMap.send_pos(m.solutionPositionStatus)
+                SolutionMap.send_pos(m.solutionPositionStatus)
                 SolutionPositionPoints.post_data_update(data)
-            elif m.which == Message.Union.SolutionProtectionLevel and MAP_ENABLED[0]:
+            elif m.which == Message.Union.SolutionProtectionLevel:
                 SolutionMap.send_prot_lvl(m.solutionProtectionLevel)
             elif m.which == Message.Union.SolutionTableStatus:
                 data = solution_table_update()
@@ -668,9 +665,6 @@ def handle_cli_arguments(args: argparse.Namespace, globals_: QObject):
             )
         else:
             globals_.setProperty("width", args.width)  # type: ignore
-    if args.enable_map:
-        globals_.setProperty("enableMap", True)  # type: ignore
-        MAP_ENABLED[0] = True
     if args.enable_ntrip:
         globals_.setProperty("enableNtrip", True)  # type: ignore
     try:
@@ -753,6 +747,11 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
             "--show-file-connection argument is now permanently enabled and does not need to be passed anymore. "
             "Argument will be removed in future releases."
         )
+    if args_main.enable_map:
+        parser.error(
+            "--enable-map argument is now permanently enabled and does not need to be passed anymore. "
+            "Argument will be removed in future releases."
+        )
     for unknown_arg in unknown_args:
         for tunnel_arg in ("--ssh-tunnel", "--ssh-remote-bind-address"):
             if tunnel_arg in unknown_arg:
@@ -797,12 +796,6 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     QFontDatabase.addApplicationFont(":/fonts/RobotoCondensed-Regular.ttf")
     QQuickStyle.setStyle("Material")
     # We specifically *don't* want the RobotoCondensed-Bold.ttf font so we get the right look when bolded.
-
-    if MAP_ENABLED[0]:
-        global SolutionMap  # pylint: disable=global-statement
-        from .solution_map import SolutionMap as SolutionMap_  # pylint: disable=import-outside-toplevel
-
-        SolutionMap = SolutionMap_  # type: ignore
 
     qmlRegisterType(ConnectionData, "SwiftConsole", 1, 0, "ConnectionData")  # type: ignore
     qmlRegisterType(AdvancedImuPoints, "SwiftConsole", 1, 0, "AdvancedImuPoints")  # type: ignore

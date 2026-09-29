@@ -57,6 +57,8 @@ pub enum Tabs {
     ADVANCED_SPECTRUM_ANALYZER,
     #[strum(serialize = "ADVANCED_INS")]
     ADVANCED_INS,
+    #[strum(serialize = "CORRECTIONS")]
+    CORRECTIONS,
 }
 
 #[derive(Clone, Debug, Display, EnumString, EnumVariantNames, Eq, Hash, PartialEq)]
@@ -149,6 +151,14 @@ pub enum Keys {
     WEEK,
     #[strum(serialize = "ROWS")]
     ROWS,
+    #[strum(serialize = "STREAMS")]
+    STREAMS,
+    #[strum(serialize = "SAT_CORRECTIONS")]
+    SAT_CORRECTIONS,
+    #[strum(serialize = "TILES")]
+    TILES,
+    #[strum(serialize = "RTCM_ROWS")]
+    RTCM_ROWS,
     #[strum(serialize = "PREVIOUS_HOSTS")]
     PREVIOUS_HOSTS,
     #[strum(serialize = "PREVIOUS_PORTS")]

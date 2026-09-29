@@ -25,6 +25,7 @@ use std::{
 use capnp::message::Builder;
 use log::warn;
 use sbp::messages::{
+    observation::MsgEphemerisGlo,
     system::{msg_status_report::System, MsgStatusReport},
     tracking::{MeasurementState, TrackingChannelState},
 };
@@ -242,6 +243,32 @@ impl TrackingSignalsTab {
         }
     }
 
+    /// Key for a GLONASS signal whose slot is unknown: the learned slot for its FCN,
+    /// or 100 + FCN.
+    fn glo_key_for_fcn(&self, fcn: i16) -> i16 {
+        self.glo_slot_for_fcn(fcn).unwrap_or(fcn + 100)
+    }
+
+    /// Drop temporary 100 + FCN keys once the signal is plotted under its slot.
+    fn drop_resolved_glo_fcn_keys(&mut self) {
+        let resolved: Vec<(SignalCodes, i16)> = self
+            .cn0_dict
+            .keys()
+            .filter(|(code, sat)| {
+                code.code_is_glo()
+                    && *sat > GLO_SLOT_SAT_MAX as i16
+                    && self
+                        .glo_slot_for_fcn(*sat - 100)
+                        .is_some_and(|slot| self.cn0_dict.contains_key(&(*code, slot)))
+            })
+            .copied()
+            .collect();
+        for key in resolved {
+            self.cn0_dict.remove(&key);
+            self.cn0_age.remove(&key);
+        }
+    }
+
     /// Handle MsgMeasurementState message states.
     ///
     /// # Parameters:
@@ -292,7 +319,7 @@ impl TrackingSignalsTab {
                 }
                 sat = match (slot, fcn) {
                     (Some(slot), _) => slot,
-                    (None, Some(fcn)) => self.glo_slot_for_fcn(fcn).unwrap_or(fcn + 100),
+                    (None, Some(fcn)) => self.glo_key_for_fcn(fcn),
                     (None, None) => continue,
                 };
             }
@@ -311,26 +338,27 @@ impl TrackingSignalsTab {
                 cn0_deque.push((t, 0.0));
             }
         }
-        // Drop temporary 100 + FCN keys once the signal is plotted under its slot.
-        let resolved: Vec<(SignalCodes, i16)> = self
-            .cn0_dict
-            .keys()
-            .filter(|(code, sat)| {
-                code.code_is_glo()
-                    && *sat > GLO_SLOT_SAT_MAX as i16
-                    && self
-                        .glo_slot_for_fcn(*sat - 100)
-                        .is_some_and(|slot| self.cn0_dict.contains_key(&(*code, slot)))
-            })
-            .copied()
-            .collect();
-        for key in resolved {
-            self.cn0_dict.remove(&key);
-            self.cn0_age.remove(&key);
-        }
+        self.drop_resolved_glo_fcn_keys();
         self.clean_cn0();
         self.update_plot();
         self.send_data();
+    }
+
+    /// Handle MsgEphemerisGlo messages.
+    ///
+    /// The ephemeris carries both the slot and the FCN, which slot-only receivers
+    /// never pair in their tracking messages.
+    ///
+    /// # Parameters:
+    ///
+    /// - `msg`: The GLONASS ephemeris.
+    pub fn handle_ephemeris_glo(&mut self, msg: MsgEphemerisGlo) {
+        let slot = msg.common.sid.sat;
+        // fcn is FCN + 8, in [1, 14]; 0 or 0xFF means invalid.
+        if (1..=GLO_SLOT_SAT_MAX).contains(&slot) && (1..=14).contains(&msg.fcn) {
+            self.glo_fcn_by_slot
+                .insert(slot as i16, msg.fcn as i16 - GLO_FCN_OFFSET);
+        }
     }
 
     /// Handle MsgStatusReport message states.
@@ -359,13 +387,24 @@ impl TrackingSignalsTab {
         let t = (Instant::now()).duration_since(self.t_init).as_secs_f64();
         self.time.push(t);
         for state in states.iter() {
-            let sat = state.sid.sat as i16;
+            let mut sat = state.sid.sat as i16;
             let signal_code = SignalCodes::from(state.sid.code);
             if signal_code.code_is_glo() {
-                // Keyed by slot, or by 100 + FCN while the slot is unknown.
-                if state.sid.sat <= GLO_SLOT_SAT_MAX {
-                    self.glo_fcn_by_slot
-                        .insert(sat, state.fcn as i16 - GLO_FCN_OFFSET);
+                // Keyed by slot, or like measurement states while the slot is unknown
+                // (sat 0 with the FCN in the fcn field, or sat 100 + FCN).
+                let fcn = state.fcn as i16 - GLO_FCN_OFFSET;
+                let fcn = (-7..=6).contains(&fcn).then_some(fcn);
+                if state.sid.sat > GLO_SLOT_SAT_MAX {
+                    sat = self.glo_key_for_fcn(sat - 100);
+                } else if sat != 0 {
+                    if let Some(fcn) = fcn {
+                        self.glo_fcn_by_slot.insert(sat, fcn);
+                    }
+                } else {
+                    let Some(fcn) = fcn else {
+                        continue;
+                    };
+                    sat = self.glo_key_for_fcn(fcn);
                 }
             }
             let key = (signal_code, sat);
@@ -375,6 +414,7 @@ impl TrackingSignalsTab {
                 self.push_to_cn0_age(key, t);
             }
         }
+        self.drop_resolved_glo_fcn_keys();
         self.clean_cn0();
         self.update_plot();
         self.send_data();
@@ -556,8 +596,10 @@ mod tests {
     use super::*;
     use crate::client_sender::TestSender;
     use sbp::messages::{
-        gnss::{CarrierPhase, GnssSignal, GpsTime},
-        observation::{Doppler, MsgObs, ObservationHeader, PackedObsContent},
+        gnss::{CarrierPhase, GnssSignal, GpsTime, GpsTimeSec},
+        observation::{
+            Doppler, EphemerisCommonContent, MsgObs, ObservationHeader, PackedObsContent,
+        },
     };
 
     #[test]
@@ -841,6 +883,113 @@ mod tests {
             assert!(series.iter().rev().take(3).all(|(_, cn0)| *cn0 > 0.0));
         }
         assert_eq!(tracking_signals_tab.cn0_dict.len(), 2);
+    }
+
+    #[test]
+    fn handle_msg_tracking_state_glo_unknown_slot_test() {
+        // Tracking states report an unknown slot as sat 0 (FCN in the fcn field)
+        // or as 100 + FCN. Both must resolve through the learned slot for that FCN.
+        let shared_state = SharedState::new();
+        let client_send = TestSender::boxed();
+        let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state, client_send);
+        let l1of = 3_u8;
+        let l2of = 4_u8;
+        let fcn_3 = (3 + GLO_FCN_OFFSET) as u8;
+        let state = |sat: u8, code: u8, fcn: u8| TrackingChannelState {
+            cn0: 200_u8,
+            fcn,
+            sid: GnssSignal { sat, code },
+        };
+
+        // Slot unknown and not yet learned: keyed by 100 + FCN, slot 0 never stored.
+        tracking_signals_tab.handle_msg_tracking_state(vec![state(0, l2of, fcn_3)]);
+        assert!(tracking_signals_tab
+            .cn0_dict
+            .contains_key(&(SignalCodes::from(l2of), 103)));
+        assert!(!tracking_signals_tab.glo_fcn_by_slot.contains_key(&0));
+
+        // L1OF learns slot 19 for FCN 3; the L2OF signal moves to slot 19.
+        tracking_signals_tab
+            .handle_msg_tracking_state(vec![state(19, l1of, fcn_3), state(0, l2of, fcn_3)]);
+        assert_eq!(tracking_signals_tab.glo_fcn_by_slot.get(&19), Some(&3));
+        assert!(!tracking_signals_tab.glo_fcn_by_slot.contains_key(&0));
+        assert!(tracking_signals_tab
+            .cn0_dict
+            .contains_key(&(SignalCodes::from(l2of), 19)));
+        assert!(!tracking_signals_tab
+            .cn0_dict
+            .contains_key(&(SignalCodes::from(l2of), 103)));
+
+        // A 100 + FCN state also resolves to the known slot.
+        tracking_signals_tab.handle_msg_tracking_state(vec![state(103, l2of, fcn_3)]);
+        assert!(!tracking_signals_tab
+            .cn0_dict
+            .contains_key(&(SignalCodes::from(l2of), 103)));
+        let l2_values: Vec<f64> = tracking_signals_tab.cn0_dict[&(SignalCodes::from(l2of), 19)]
+            .iter()
+            .map(|(_, cn0)| *cn0)
+            .collect();
+        assert_eq!(l2_values, vec![50.0; 2]);
+    }
+
+    #[test]
+    fn handle_ephemeris_glo_test() {
+        // Slot-only receivers never pair FCNs with slots in measurement states;
+        // the GLONASS ephemeris carries both.
+        let shared_state = SharedState::new();
+        let client_send = TestSender::boxed();
+        let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state, client_send);
+        let l1of = 3_u8;
+        let ephemeris = |sat: u8, fcn: u8| MsgEphemerisGlo {
+            sender_id: Some(1),
+            common: EphemerisCommonContent {
+                sid: GnssSignal { sat, code: l1of },
+                toe: GpsTimeSec { tow: 0, wn: 0 },
+                ura: 0.0,
+                fit_interval: 0,
+                valid: 1,
+                health_bits: 0,
+            },
+            gamma: 0.0,
+            tau: 0.0,
+            d_tau: 0.0,
+            pos: [0.0; 3],
+            vel: [0.0; 3],
+            acc: [0.0; 3],
+            fcn,
+            iod: 0,
+        };
+        tracking_signals_tab.handle_ephemeris_glo(ephemeris(10, 1));
+        // FCN 0 and 0xFF mean invalid.
+        tracking_signals_tab.handle_ephemeris_glo(ephemeris(20, 0));
+        tracking_signals_tab.handle_ephemeris_glo(ephemeris(21, 0xFF));
+        tracking_signals_tab.handle_msg_measurement_state(vec![
+            MeasurementState {
+                cn0: 160_u8,
+                mesid: GnssSignal {
+                    sat: 10,
+                    code: l1of,
+                },
+            },
+            MeasurementState {
+                cn0: 190_u8,
+                mesid: GnssSignal {
+                    sat: 20,
+                    code: l1of,
+                },
+            },
+        ]);
+
+        assert_eq!(tracking_signals_tab.glo_fcn_by_slot.get(&10), Some(&-7));
+        assert_eq!(tracking_signals_tab.glo_fcn_by_slot.len(), 1);
+        assert!(tracking_signals_tab
+            .sv_labels
+            .iter()
+            .any(|label| label.ends_with("GLO L1OF F-07 R10")));
+        assert!(tracking_signals_tab
+            .sv_labels
+            .iter()
+            .any(|label| label.ends_with("GLO L1OF R20")));
     }
 
     #[test]

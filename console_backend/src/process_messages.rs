@@ -28,7 +28,7 @@ use sbp::{
         logging::MsgLog,
         mag::MsgMagRaw,
         navigation::{MsgAgeCorrections, MsgPosLlhCov, MsgUtcTime, MsgVelNed},
-        observation::{MsgObsDepA, MsgSvAzEl},
+        observation::{MsgEphemerisGlo, MsgObsDepA, MsgSvAzEl},
         orientation::{MsgAngularRate, MsgBaselineHeading, MsgOrientEuler},
         piksi::{MsgDeviceMonitor, MsgNetworkStateResp, MsgThreadState},
         system::{MsgHeartbeat, MsgInsStatus, MsgInsUpdates, MsgStartup, MsgStatusReport},
@@ -268,6 +268,12 @@ fn register_events(link: sbp::link::Link<Tabs>) {
             .lock()
             .unwrap()
             .handle_mag_raw(msg);
+    });
+    link.register(|tabs: &Tabs, msg: MsgEphemerisGlo| {
+        tabs.tracking_signals
+            .lock()
+            .unwrap()
+            .handle_ephemeris_glo(msg);
     });
     link.register(|tabs: &Tabs, msg: MsgMeasurementState| {
         tabs.tracking_signals

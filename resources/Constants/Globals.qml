@@ -33,7 +33,6 @@ QtObject {
     property int initialSubTabIndex: 0 // Signals
     property bool showCsvLog: false
     property bool showFileio: false
-    property bool enableMap: false
     property int height: 600
     property int minimumHeight: 600
     property int width: 1000

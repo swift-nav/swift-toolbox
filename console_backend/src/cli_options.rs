@@ -105,10 +105,6 @@ pub struct CliOptions {
     #[clap(long)]
     pub show_fileio: bool,
 
-    /// Enable map.
-    #[clap(long)]
-    pub enable_map: bool,
-
     /// Enable ntrip client
     #[clap(long)]
     pub enable_ntrip: bool,

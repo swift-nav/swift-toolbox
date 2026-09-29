@@ -1,35 +1,49 @@
-import mapboxGlStyleSwitcher from 'https://cdn.skypack.dev/mapbox-gl-style-switcher';
-
 const lines = ["#FF0000", "#FF00FF", "#00FFFF", "#0000FF", "#00FF00", "#000000"];
 const LNG_KM = 111.320, LAT_KM = 110.574;
 
-function decode(r){var n=r,t=[0,10,13,34,38,92],e=new Uint8Array(1.75*n.length|0),f=0,o=0,a=0;function i(r){o|=(r<<=1)>>>a,8<=(a+=7)&&(e[f++]=o,o=r<<7-(a-=8)&255)}for(var u=0;u<n.length;u++){var c,d=n.charCodeAt(u);127<d?(7!=(c=d>>>8&7)&&i(t[c]),i(127&d)):i(d)}r=new Uint8Array(e,0,f);var s=new TextDecoder().decode(r);while (s.slice(-1)=="\x00") s=s.slice(0,-1); return s;}
-
-mapboxgl.accessToken = decode("@ACCESS_TOKEN@");
-var map = new mapboxgl.Map({
+const map = new maplibregl.Map({
     container: 'map',
-    style: "mapbox://styles/mapbox/light-v11?optimize=true",
+    style: 'https://tiles.stadiamaps.com/styles/alidade_smooth.json?api_key=@STADIA_TOKEN@',
     center: [-122.486052, 37.830348],  // Initial focus coordinate
     zoom: 16,
-    performanceMetricsCollection: false,
 });
 
 var focusCurrent = false;
 var startMarker = null;
 var currentMarker = null;
 
+// Flag icon for the start position -- pole is centered horizontally so it lines
+// up with the marker's default "bottom" anchor (base of the pole = the coordinate).
+const START_MARKER_SVG = `<svg width="22" height="30" viewBox="0 0 22 30" xmlns="http://www.w3.org/2000/svg">
+    <line x1="11" y1="29" x2="11" y2="1" stroke="#1b5e20" stroke-width="2" stroke-linecap="round"/>
+    <path d="M11 2 L21 7 L11 12 Z" fill="#2e7d32" stroke="#1b5e20" stroke-width="1" stroke-linejoin="round"/>
+</svg>`;
+
+// "Current location" dot for the live position -- symmetric, so the default
+// "center" anchor lines up its center with the coordinate.
+const CURRENT_MARKER_SVG = `<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="10" cy="10" r="9" fill="#1976d2" fill-opacity="0.25"/>
+    <circle cx="10" cy="10" r="5" fill="#1976d2" stroke="#ffffff" stroke-width="2"/>
+</svg>`;
+
+function createMarkerElement(svgMarkup) {
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = svgMarkup;
+    return wrapper.firstElementChild;
+}
+
 class FocusToggle {
     onAdd(map) {
         this._map = map;
         this._btn = document.createElement("button");
-        this._btn.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-focus-toggle";
+        this._btn.className = "maplibregl-ctrl-icon maplibregl-ctrl-focus-toggle";
         this._btn.type = "button";
         this._btn.onclick = () => {
             focusCurrent = !focusCurrent;
-            this._btn.className = focusCurrent ? "mapboxgl-ctrl-icon mapboxgl-ctrl-unfocus-toggle" : "mapboxgl-ctrl-icon mapboxgl-ctrl-focus-toggle";
+            this._btn.className = focusCurrent ? "maplibregl-ctrl-icon maplibregl-ctrl-unfocus-toggle" : "maplibregl-ctrl-icon maplibregl-ctrl-focus-toggle";
         };
         this._container = document.createElement("div");
-        this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
+        this._container.className = "maplibregl-ctrl-group maplibregl-ctrl";
         this._container.appendChild(this._btn);
         return this._container;
     }
@@ -40,10 +54,8 @@ class FocusToggle {
     }
 }
 
-map.addControl(new mapboxGlStyleSwitcher.MapboxStyleSwitcherControl());
 map.addControl(new FocusToggle(), "top-right");
-map.addControl(new mapboxgl.NavigationControl());
-
+map.addControl(new maplibregl.NavigationControl());
 
 var data = [];
 var crumbCoords = [];
@@ -202,15 +214,15 @@ new QWebChannel(qt.webChannelTransport, (channel) => {
         }
     });
 
-    chn.recvPos.connect((id, lat, lng, hAcc) => {
-        const pos = [lat, lng], rX = hAcc / 1000;
+    chn.recvPos.connect((id, lon, lat, hAcc) => {
+        const pos = [lon, lat], rX = hAcc / 1000;
         data[id].features.push(createGeoJsonEllipse(pos, rX, rX));
         crumbCoords.push(pos);
         if (!map) return;
-        if (!currentMarker) currentMarker = new mapboxgl.Marker().setLngLat(pos).addTo(map);
+        if (!currentMarker) currentMarker = new maplibregl.Marker({element: createMarkerElement(CURRENT_MARKER_SVG)}).setLngLat(pos).addTo(map);
         else currentMarker.setLngLat(pos);
         if (!startMarker) {
-            startMarker = new mapboxgl.Marker().setLngLat(pos).addTo(map);
+            startMarker = new maplibregl.Marker({element: createMarkerElement(START_MARKER_SVG), anchor: 'bottom'}).setLngLat(pos).addTo(map);
             map.panTo(pos);
         } else if (focusCurrent) map.panTo(pos);
         let src = map.getSource(`route${id}`);

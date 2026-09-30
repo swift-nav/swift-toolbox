@@ -310,11 +310,13 @@ pub fn signal_key_label(
     let extra = extra.unwrap_or(&default_extra);
 
     if code.code_is_glo() {
-        let freq_lbl_ = format!("F+{sat:02}");
-        freq_lbl = Some(freq_lbl_);
-        if extra.contains_key(&sat) {
-            id_lbl = Some(format!("R{:<02}", extra[&sat]));
+        // GLONASS sat is the slot, or 100 + FCN while the slot is unknown.
+        // `extra` maps slot to FCN.
+        if sat > GLO_SLOT_SAT_MAX as i16 {
+            freq_lbl = Some(format!("F{:+03}", sat - 100));
+            id_lbl = None;
         } else {
+            freq_lbl = extra.get(&sat).map(|fcn| format!("F{fcn:+03}"));
             id_lbl = Some(format!("R{sat:<02}"));
         }
     } else if code.code_is_sbas() {
@@ -664,8 +666,15 @@ mod tests {
             Some(&extra),
         );
         assert_eq!(code_lbl.unwrap(), GLO_L2OF_STR);
-        assert_eq!(freq_lbl.unwrap(), "F+04");
+        assert_eq!(freq_lbl, None);
         assert_eq!(id_lbl.unwrap(), "R04");
+
+        // Slot unknown: sat is 100 + FCN.
+        let (_, freq_lbl, id_lbl) = signal_key_label((SignalCodes::CodeGloL1Of, 99), None);
+        assert_eq!(freq_lbl.unwrap(), "F-01");
+        assert_eq!(id_lbl, None);
+        let (_, freq_lbl, _) = signal_key_label((SignalCodes::CodeGloL1Of, 103), None);
+        assert_eq!(freq_lbl.unwrap(), "F+03");
 
         let (code_lbl, freq_lbl, id_lbl) = signal_key_label(
             (SignalCodes::CodeSbasL5Q, SignalCodes::CodeSbasL5Q as i16),

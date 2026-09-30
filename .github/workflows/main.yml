@@ -53,7 +53,7 @@ jobs:
           ssh-key: ${{ secrets.SSH_KEY }}
           ssh-strict: false
 
-      - uses: webfactory/ssh-agent@v0.5.0
+      - uses: webfactory/ssh-agent@v0.10.0
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
@@ -130,7 +130,7 @@ jobs:
           ssh-key: ${{ secrets.SSH_KEY }}
           ssh-strict: false
 
-      - uses: webfactory/ssh-agent@v0.5.0
+      - uses: webfactory/ssh-agent@v0.10.0
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 

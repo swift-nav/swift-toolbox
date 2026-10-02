@@ -12,7 +12,7 @@ This is the open source repository for code that implements the Swift Navigation
 
 The Swift Console currently supports the following platforms:
 - Ubuntu 24.04 and newer
-- macOS Intel 11. Build to support, but not verified, on Apple Silicon.
+- macOS Intel 11. Built to support, but not verified, on Apple Silicon.
 - Windows 10 and newer
 
 ## Development Setup

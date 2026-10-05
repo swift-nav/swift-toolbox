@@ -214,13 +214,14 @@ jobs:
           repo: swift-toolbox-ci
           ref: main
           workflow_file_name: distribute.yml
-          client_payload: '{
+          client_payload: >-
+            {
             "branch": "${{ github.head_ref || github.ref_name }}",
             "run_id": "${{ github.run_id }}",
             "should_release": "${{ env.SHOULD_RELEASE || false}}",
             "version": "${{ env.VERSION }}",
             "pr_number": "${{ github.event.number }}"
-          }'
+            }
           github_token: ${{ secrets.GH_TOKEN }}
           propagate_failure: true
           wait_workflow: true

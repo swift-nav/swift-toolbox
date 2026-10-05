@@ -47,13 +47,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout source
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
           ssh-key: ${{ secrets.SSH_KEY }}
           ssh-strict: false
 
-      - uses: webfactory/ssh-agent@v0.5.0
+      - uses: webfactory/ssh-agent@6b2f2c5354ff41f1edbbf7a17ea9b6178c89be9f # v0.5.0
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
@@ -90,19 +90,19 @@ jobs:
         env:
           GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
 
-      - uses: actions-rs/toolchain@v1
+      - uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af # v1.0.7
         with:
           profile: minimal
           toolchain: stable
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           key: ${{ secrets.CACHE_VERSION }}
 
-      - uses: davidB/rust-cargo-make@v1
+      - uses: davidB/rust-cargo-make@eb4338cc4e8145107109b722ee749f23e61455f0 # v1.17.0
 
       - name: Cache pip
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.PIP_CACHE_DIR }}
           key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
@@ -124,13 +124,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
           ssh-key: ${{ secrets.SSH_KEY }}
           ssh-strict: false
 
-      - uses: webfactory/ssh-agent@v0.5.0
+      - uses: webfactory/ssh-agent@6b2f2c5354ff41f1edbbf7a17ea9b6178c89be9f # v0.5.0
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
@@ -140,16 +140,16 @@ jobs:
           GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
 
       - name: Install stable Rust
-        uses: actions-rs/toolchain@v1
+        uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af # v1.0.7
         with:
           profile: minimal
           toolchain: stable
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           key: ${{ secrets.CACHE_VERSION }}
 
-      - uses: davidB/rust-cargo-make@v1
+      - uses: davidB/rust-cargo-make@eb4338cc4e8145107109b722ee749f23e61455f0 # v1.17.0
 
       - name: Install Dependencies.
         run: |
@@ -159,7 +159,7 @@ jobs:
           sudo apt-get update && sudo apt-get install -y capnproto libudev-dev libssl-dev
 
       - name: Cache pip
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.PIP_CACHE_DIR }}
           key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
@@ -189,7 +189,7 @@ jobs:
         run: cargo make qml-lint
 
       - name: Run Tests
-        uses: nick-invision/retry@v2
+        uses: nick-invision/retry@14672906e672a08bd6eeb15720e9ed3ce869cdd4 # v2.9.0
         with:
           timeout_minutes: 5
           max_attempts: 3
@@ -208,7 +208,7 @@ jobs:
       - shell: bash
         run: echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
 
-      - uses: convictional/trigger-workflow-and-wait@v1.6.5
+      - uses: convictional/trigger-workflow-and-wait@f69fa9eedd3c62a599220f4d5745230e237904be # v1.6.5
         with:
           owner: swift-nav
           repo: swift-toolbox-ci

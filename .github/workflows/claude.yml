@@ -14,6 +14,12 @@ on:
 
 jobs:
   claude_review:
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
     uses: swift-nav/swift-context-hub/.github/workflows/claude.yml@ea14e653cabb8e9681f32d3ed4ed00fc918eae74 # v0.3.0
     secrets:
       anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}

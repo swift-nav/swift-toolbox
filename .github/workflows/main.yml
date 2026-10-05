@@ -38,6 +38,9 @@ env:
   APP_NAME: swift-console
   APP_BUNDLE_ID: com.swift-nav.SwiftConsole
 
+permissions:
+  contents: read
+
 jobs:
   backend_bench:
     name: Backend Benchmarks

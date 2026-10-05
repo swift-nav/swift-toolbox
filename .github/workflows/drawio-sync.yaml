@@ -25,6 +25,10 @@ on:
     paths:
       - "docs/imgs/*.drawio"
       - .github/workflows/drawio-sync.yaml
+
+permissions:
+  contents: read
+
 jobs:
   drawio-sync:
     runs-on: ubuntu-latest

@@ -20,6 +20,9 @@
 name: Cancelling previous actions runs.
 on: pull_request
 
+permissions:
+  actions: write
+
 jobs:
   cancel:
     name: auto-cancellation-running-action

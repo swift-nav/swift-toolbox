@@ -101,6 +101,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
+          # zizmor: ignore[cache-poisoning] job publishes nothing; release builds run in swift-toolbox-ci.
           key: ${{ secrets.CACHE_VERSION }}
 
       - uses: davidB/rust-cargo-make@eb4338cc4e8145107109b722ee749f23e61455f0 # v1.17.0
@@ -108,6 +109,7 @@ jobs:
       - name: Cache pip
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
+          # zizmor: ignore[cache-poisoning] job publishes nothing; release builds run in swift-toolbox-ci.
           path: ${{ env.PIP_CACHE_DIR }}
           key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
 
@@ -152,6 +154,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
+          # zizmor: ignore[cache-poisoning] job publishes nothing; release builds run in swift-toolbox-ci.
           key: ${{ secrets.CACHE_VERSION }}
 
       - uses: davidB/rust-cargo-make@eb4338cc4e8145107109b722ee749f23e61455f0 # v1.17.0
@@ -166,6 +169,7 @@ jobs:
       - name: Cache pip
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
+          # zizmor: ignore[cache-poisoning] job publishes nothing; release builds run in swift-toolbox-ci.
           path: ${{ env.PIP_CACHE_DIR }}
           key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
 

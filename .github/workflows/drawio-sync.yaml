@@ -36,6 +36,7 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
+          # zizmor: ignore[artipacked] git-auto-commit-action pushes with the persisted SSH key.
           ssh-key: ${{ secrets.SSH_KEY }}
           ssh-strict: false
 

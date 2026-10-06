@@ -38,6 +38,9 @@ env:
   APP_NAME: swift-console
   APP_BUNDLE_ID: com.swift-nav.SwiftConsole
 
+permissions:
+  contents: read
+
 jobs:
   backend_bench:
     name: Backend Benchmarks
@@ -47,13 +50,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout source
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
           ssh-key: ${{ secrets.SSH_KEY }}
           ssh-strict: false
+          persist-credentials: false
 
-      - uses: webfactory/ssh-agent@v0.5.0
+      - uses: webfactory/ssh-agent@e83874834305fe9a4a2997156cb26c5de65a8555 # v0.10.0
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
@@ -90,20 +94,19 @@ jobs:
         env:
           GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
 
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
+      - uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
+          # zizmor: ignore[cache-poisoning] job publishes nothing; release builds run in swift-toolbox-ci.
           key: ${{ secrets.CACHE_VERSION }}
 
-      - uses: davidB/rust-cargo-make@v1
+      - uses: davidB/rust-cargo-make@eb4338cc4e8145107109b722ee749f23e61455f0 # v1.17.0
 
       - name: Cache pip
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
+          # zizmor: ignore[cache-poisoning] job publishes nothing; release builds run in swift-toolbox-ci.
           path: ${{ env.PIP_CACHE_DIR }}
           key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
 
@@ -124,13 +127,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
           ssh-key: ${{ secrets.SSH_KEY }}
           ssh-strict: false
+          persist-credentials: false
 
-      - uses: webfactory/ssh-agent@v0.5.0
+      - uses: webfactory/ssh-agent@e83874834305fe9a4a2997156cb26c5de65a8555 # v0.10.0
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
@@ -140,16 +144,14 @@ jobs:
           GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
 
       - name: Install stable Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
+        uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
+          # zizmor: ignore[cache-poisoning] job publishes nothing; release builds run in swift-toolbox-ci.
           key: ${{ secrets.CACHE_VERSION }}
 
-      - uses: davidB/rust-cargo-make@v1
+      - uses: davidB/rust-cargo-make@eb4338cc4e8145107109b722ee749f23e61455f0 # v1.17.0
 
       - name: Install Dependencies.
         run: |
@@ -159,8 +161,9 @@ jobs:
           sudo apt-get update && sudo apt-get install -y capnproto libudev-dev libssl-dev
 
       - name: Cache pip
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
+          # zizmor: ignore[cache-poisoning] job publishes nothing; release builds run in swift-toolbox-ci.
           path: ${{ env.PIP_CACHE_DIR }}
           key: ${{ runner.os }}-pyproject-toml-${{ secrets.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
 
@@ -174,7 +177,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Qt
-        uses: jurplel/install-qt-action@910f37ee23653fd4b243fe5c7f81ff26a8a6a64e
+        uses: jurplel/install-qt-action@a9c63c7c123f3069cff414e7e482d95dfa9d8125 # v4.4.1
         with:
           version: '6.4.3'
           setup-python: false
@@ -189,7 +192,7 @@ jobs:
         run: cargo make qml-lint
 
       - name: Run Tests
-        uses: nick-invision/retry@v2
+        uses: nick-invision/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
         with:
           timeout_minutes: 5
           max_attempts: 3
@@ -208,19 +211,20 @@ jobs:
       - shell: bash
         run: echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
 
-      - uses: convictional/trigger-workflow-and-wait@v1.6.5
+      - uses: convictional/trigger-workflow-and-wait@f69fa9eedd3c62a599220f4d5745230e237904be # v1.6.5
         with:
           owner: swift-nav
           repo: swift-toolbox-ci
           ref: main
           workflow_file_name: distribute.yml
-          client_payload: '{
+          client_payload: >-
+            {
             "branch": "${{ github.head_ref || github.ref_name }}",
             "run_id": "${{ github.run_id }}",
             "should_release": "${{ env.SHOULD_RELEASE || false}}",
             "version": "${{ env.VERSION }}",
             "pr_number": "${{ github.event.number }}"
-          }'
+            }
           github_token: ${{ secrets.GH_TOKEN }}
           propagate_failure: true
           wait_workflow: true

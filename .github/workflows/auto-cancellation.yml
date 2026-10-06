@@ -20,11 +20,14 @@
 name: Cancelling previous actions runs.
 on: pull_request
 
+permissions:
+  actions: write
+
 jobs:
   cancel:
     name: auto-cancellation-running-action
     runs-on: ubuntu-latest
     steps:
-      - uses: fauguste/auto-cancellation-running-action@0.1.4
+      - uses: fauguste/auto-cancellation-running-action@fb5555e5913347f53f2e4fdea18b0166063c6f15 # 0.1.4
         with:
           githubToken: ${{ secrets.GITHUB_TOKEN }}

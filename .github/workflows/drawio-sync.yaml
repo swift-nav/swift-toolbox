@@ -34,14 +34,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # zizmor: ignore[artipacked] git-auto-commit-action pushes with the persisted SSH key.
           ssh-key: ${{ secrets.SSH_KEY }}
           ssh-strict: false
 
       - name: Export drawio diagrams as png files
-        uses: rlespinasse/drawio-export-action@ffefecf1457bddb310085ff5729fab6a52083478 # 1.2.0
+        uses: rlespinasse/drawio-export-action@711aa4f0ebbee18099c3ed8911819128b23eee21 # v2.54.1
         with:
           format: png
           remove-page-suffix: true
@@ -51,7 +51,7 @@ jobs:
         uses: rlespinasse/git-commit-data-action@d3d5d8e0de9e9545cb1fadd33f9664db98c64cc7 # v1.5.1
 
       - name: Commit changed files
-        uses: stefanzweifel/git-auto-commit-action@be7095c202abcf573b09f20541e0ee2f6a3a9d9b # v4.9.2
+        uses: stefanzweifel/git-auto-commit-action@4a55954c782fc1ea30b9056cd3e7a2b40ca8887d # v7.2.0
         with:
           commit_message: sync draw.io exported files
           commit_user_name: "${{ env.GIT_COMMIT_COMMITTER_NAME }}"

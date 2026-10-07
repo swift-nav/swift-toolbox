@@ -741,16 +741,20 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
         parser.add_argument("--ssh-tunnel", type=str, default=None)
         parser.add_argument("--ssh-remote-bind-address", type=str, default=None)
 
-    args_main, unknown_args = parser.parse_known_args()
+    args_main, unknown_args = parser.parse_known_args(passed_args)
     if args_main.show_file_connection:
-        parser.error(
+        print(
+            f"{parser.prog}: warning: "
             "--show-file-connection argument is now permanently enabled and does not need to be passed anymore. "
-            "Argument will be removed in future releases."
+            "Argument will be removed in future releases.",
+            file=sys.stderr,
         )
     if args_main.enable_map:
-        parser.error(
+        print(
+            f"{parser.prog}: warning: "
             "--enable-map argument is now permanently enabled and does not need to be passed anymore. "
-            "Argument will be removed in future releases."
+            "Argument will be removed in future releases.",
+            file=sys.stderr,
         )
     for unknown_arg in unknown_args:
         for tunnel_arg in ("--ssh-tunnel", "--ssh-remote-bind-address"):
@@ -771,11 +775,6 @@ def main(passed_args: Optional[Tuple[str, ...]] = None) -> int:
     for arg in unknown_args:
         if arg in HELP_CLI_ARGS:
             found_help_arg = True
-    if passed_args is not None:
-        for arg in passed_args:
-            if arg in HELP_CLI_ARGS:
-                found_help_arg = True
-        args_main, _ = parser.parse_known_args(passed_args)
     if args_main.no_high_dpi:
         QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_Use96Dpi)  # type: ignore
     if args_main.qmldebug:

@@ -202,7 +202,7 @@ impl TrackingSignalsTab {
             }
             let (code_lbl, freq_lbl, id_lbl) = signal_key_label(*key, Some(&self.glo_fcn_by_slot));
             let mut label = String::from("");
-            if let Some(lbl) = code_lbl {
+            if let Some(lbl) = &code_lbl {
                 label = format!("{label} {lbl}");
             }
             if let Some(lbl) = freq_lbl {
@@ -213,11 +213,13 @@ impl TrackingSignalsTab {
                 label = format!("{label} {lbl}");
             }
 
-            temp_labels.push((label, *key));
+            temp_labels.push((code_lbl, label, *key));
         }
-        temp_labels.sort_by(|x, y| (x.0).cmp(&(y.0)));
+        // Group by signal, then order by satellite. GLONASS signals
+        // with an unknown slot (keyed 100 + FCN) come after those with a slot.
+        temp_labels.sort_by(|x, y| (&x.0, x.2 .1).cmp(&(&y.0, y.2 .1)));
 
-        for (label, key) in temp_labels.iter() {
+        for (_, label, key) in temp_labels.iter() {
             self.sv_labels.push(label.clone());
             self.colors.push(String::from(signal_key_color(*key)));
             self.sats.push(self.cn0_dict[key].clone());
@@ -1111,6 +1113,45 @@ mod tests {
         assert_eq!(
             tracking_signals_tab.sv_labels,
             vec![" GPS L1CA G06", " SBAS L1 S  7"]
+        );
+    }
+
+    #[test]
+    fn update_plot_glo_order_test() {
+        let shared_state = SharedState::new();
+        let client_send = TestSender::boxed();
+        let mut tracking_signals_tab = TrackingSignalsTab::new(shared_state, client_send);
+        let t = (Instant::now())
+            .duration_since(tracking_signals_tab.t_init)
+            .as_secs_f64();
+        let l1of = SignalCodes::from(3);
+        let l2of = SignalCodes::from(4);
+        tracking_signals_tab.glo_fcn_by_slot.insert(3, 5);
+        tracking_signals_tab.glo_fcn_by_slot.insert(12, -1);
+        tracking_signals_tab.glo_fcn_by_slot.insert(19, 3);
+        for key in [
+            (l2of, 3_i16),
+            (l1of, 19),
+            (l1of, 102), // slot unknown, FCN +2
+            (l1of, 3),
+            (l2of, 19),
+            (l1of, 12),
+            (l1of, 95), // slot unknown, FCN -5
+        ] {
+            tracking_signals_tab.push_to_cn0_dict(key, t, 40_f64);
+        }
+        tracking_signals_tab.update_plot();
+        assert_eq!(
+            tracking_signals_tab.sv_labels,
+            vec![
+                " GLO L1OF F+05 R03",
+                " GLO L1OF F-01 R12",
+                " GLO L1OF F+03 R19",
+                " GLO L1OF F-05",
+                " GLO L1OF F+02",
+                " GLO L2OF F+05 R03",
+                " GLO L2OF F+03 R19",
+            ]
         );
     }
 }

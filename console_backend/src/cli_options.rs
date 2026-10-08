@@ -105,6 +105,14 @@ pub struct CliOptions {
     #[clap(long)]
     pub show_fileio: bool,
 
+    /// Show file connection option.
+    #[clap(long, hide = true)]
+    pub show_file_connection: bool,
+
+    /// Enable map in Solution tab.
+    #[clap(long, hide = true)]
+    pub enable_map: bool,
+
     /// Enable ntrip client
     #[clap(long)]
     pub enable_ntrip: bool,

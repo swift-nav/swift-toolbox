@@ -512,6 +512,7 @@ impl HeartbeatInner {
                 solid_connection: self.solid_connection,
                 ant_status: self.ant_status.clone(),
                 num_sats: self.llh_num_sats,
+                port: self.port.clone(),
                 version: self.version.clone(),
                 ntrip_connected: self.ntrip_connected,
                 ntrip_upload_bytes: self.ntrip_upload_bytes,

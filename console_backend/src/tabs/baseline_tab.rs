@@ -23,6 +23,7 @@ use capnp::message::Builder;
 use log::error;
 use sbp::messages::{
     navigation::{MsgAgeCorrections, MsgUtcTime},
+    observation::MsgBasePosEcef,
     orientation::MsgBaselineHeading,
     piksi::MsgResetFilters,
 };
@@ -396,6 +397,23 @@ impl BaselineTab {
             return;
         }
         self.send_solution_data();
+        self.send_table_data();
+    }
+
+    /// Handle MsgBasePosEcef (SBP message 72): the base station's surveyed
+    /// position, broadcast as ECEF x/y/z. Displayed alongside the converted
+    /// geodetic lat/lon/height.
+    pub fn handle_base_pos_ecef(&mut self, msg: MsgBasePosEcef) {
+        let (lat, lon, height) = ecef_to_llh_deg(msg.x, msg.y, msg.z);
+        self.table.insert(
+            BASE_POS_ECEF,
+            format!("{:.3}, {:.3}, {:.3}", msg.x, msg.y, msg.z),
+        );
+        self.table
+            .insert(BASE_POS_LLH, format!("{lat:.7}, {lon:.7}, {height:.3}"));
+        if self.shared_state.current_tab() != TabName::Baseline {
+            return;
+        }
         self.send_table_data();
     }
 

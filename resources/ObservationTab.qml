@@ -28,62 +28,26 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import SwiftConsole
 
+// Shows what the locally connected receiver is tracking. Decoded content of
+// an incoming correction stream (OSR/NXRTK-MSM5) lives on the Corrections
+// tab instead - see CorrectionsTab.qml.
 MainTab {
     id: observationTab
-
-    ObservationRemoteTableModel {
-        id: observationRemoteTableModel
-    }
 
     ObservationLocalTableModel {
         id: observationLocalTableModel
     }
 
-    SplitView {
-        id: observationView
-
+    SwiftGroupBox {
         anchors.fill: parent
-        orientation: Qt.Vertical
-        width: parent.width
-        height: parent.height
-        visible: true
+        anchors.topMargin: 4
+        title: "Observations"
 
-        Rectangle {
-            SplitView.minimumHeight: Constants.observationTab.titleAreaHight
-            SplitView.preferredHeight: 0.5 * parent.height
-            width: parent.width
+        ObservationTabComponents.ObservationTable {
+            id: localTable
 
-            SwiftGroupBox {
-                anchors.fill: parent
-                anchors.topMargin: 4
-                title: "Local"
-
-                ObservationTabComponents.ObservationTable {
-                    id: localTable
-
-                    anchors.fill: parent
-                    observationTableModel: observationLocalTableModel
-                }
-            }
-        }
-
-        Rectangle {
-            SplitView.minimumHeight: Constants.observationTab.titleAreaHight
-            Layout.fillHeight: true
-            width: parent.width
-
-            SwiftGroupBox {
-                anchors.fill: parent
-                anchors.topMargin: 4
-                title: "Remote"
-
-                ObservationTabComponents.ObservationTable {
-                    id: remoteTable
-
-                    anchors.fill: parent
-                    observationTableModel: observationRemoteTableModel
-                }
-            }
+            anchors.fill: parent
+            observationTableModel: observationLocalTableModel
         }
     }
 }

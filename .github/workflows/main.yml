@@ -53,23 +53,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
-          ssh-key: ${{ secrets.SSH_KEY }}
-          ssh-strict: false
           persist-credentials: false
-
-      - uses: webfactory/ssh-agent@e83874834305fe9a4a2997156cb26c5de65a8555 # v0.10.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_KEY }}
-
-      - name: Run ssh-keyscan
-        shell: bash
-        run: ssh-keyscan github.com >> ~/.ssh/known_hosts
-
-      - name: Setup SSH for Windows Git LFS
-        run: |
-          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "ssh-keyscan github.com >> ~/.ssh/known_hosts"
-          & "C:\\Program Files\\Git\\bin\\sh.exe" -c "echo '${{ secrets.SSH_KEY }}' >> ~/.ssh/id_rsa"
-        if: runner.os == 'Windows'
 
       - name: Install ${{ runner.os }} Dependencies.
         shell: bash
@@ -91,8 +75,6 @@ jobs:
 
       - name: Pull Git LFS objects
         run: git lfs pull
-        env:
-          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
 
       - uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
 
@@ -130,18 +112,10 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
-          ssh-key: ${{ secrets.SSH_KEY }}
-          ssh-strict: false
           persist-credentials: false
-
-      - uses: webfactory/ssh-agent@e83874834305fe9a4a2997156cb26c5de65a8555 # v0.10.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_KEY }}
 
       - name: Pull Git LFS objects
         run: git lfs pull
-        env:
-          GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
 
       - name: Install stable Rust
         uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable

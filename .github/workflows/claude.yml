@@ -20,8 +20,7 @@ jobs:
       issues: write
       id-token: write
       actions: read
-    uses: swift-nav/swift-context-hub/.github/workflows/claude.yml@ea14e653cabb8e9681f32d3ed4ed00fc918eae74 # v0.3.0
+    uses: swift-nav/swift-context-hub/.github/workflows/claude.yml@77d222c292b46306566342c9331e49897de6fbdd # v0.4.0
     secrets:
       anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-      SSH_KEY: ${{ secrets.SSH_KEY }}
 

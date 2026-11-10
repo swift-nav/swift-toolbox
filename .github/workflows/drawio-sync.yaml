@@ -36,9 +36,8 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # zizmor: ignore[artipacked] git-auto-commit-action pushes with the persisted SSH key.
-          ssh-key: ${{ secrets.SSH_KEY }}
-          ssh-strict: false
+          # zizmor: ignore[artipacked] git-auto-commit-action pushes with the persisted token.
+          token: ${{ secrets.GH_TOKEN }}
 
       - name: Export drawio diagrams as png files
         uses: rlespinasse/drawio-export-action@711aa4f0ebbee18099c3ed8911819128b23eee21 # v2.54.1
